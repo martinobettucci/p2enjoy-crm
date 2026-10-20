@@ -5426,3 +5426,50 @@ focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (diff
 
 - **Aucune couleur, aucun jeton nouveau.** Sept icônes Lucide nouvelles, aucune ne servant déjà un autre objet (§9) :
   `ShieldCheck`, `ShieldPlus`, `ShieldMinus`, `UserPlus`, `UserMinus`, `MailPlus`, `MailMinus`.
+
+### 5.57 Les pages du connecteur MCP — `CRM-102`
+
+*Écrit le 2026-10-20, avec la tranche T3, après relecture intégrale de ce document.* Le connecteur (`mcp/`) est un service
+Python qui rend lui-même quatre pages publiques — accueil, « Droits en attente », « Compte en attente de vérification »,
+« La connexion n'a pas abouti » — et sert la page de **consentement** de FastMCP. Ce qu'elles disent et quand elles
+paraissent est spécifié par `docs/SPEC-mcp.md` §3 et §4 ; ces règles ne disent que de quoi elles ont l'air.
+
+- **CE SONT DES SURFACES AUTONOMES DU §5.12** : fond `--color-bg`, une carte `--color-surface`, `--radius-lg`, bordure
+  `--color-border`, ombre de carte, à la largeur d'un formulaire court ; centrée à partir de 768 px, alignée en haut avec
+  16 px de marge en dessous. Aucune coquille : ni barre latérale, ni onglets — elles vivent hors de la webapp.
+- **LES JETONS SONT CEUX DE `webapp/src/styles/tokens.css`, mêmes valeurs ET mêmes mélanges `color-mix`**, déclarés une
+  fois sur `:root` dans `mcp/crm_mcp/pages.py` et consommés par les règles. Deux déclarations du même jeton qui
+  divergeraient feraient deux chartes : la première écriture, reprise d'Evoliz, portait trois valeurs de la charte
+  d'Evoliz — trouvées à la relecture de ce document, corrigées avant toute livraison. Le corps du texte est en
+  `--color-text` (§2).
+- **UNE LIGNE DE MARQUE OUVRE LA CARTE** : l'icône Lucide `Plug` en `--color-brand`, puis « P2Enjoy CRM — connecteur
+  MCP » en 13 px `--color-text-2`. `Plug` ne sert aucun autre objet (§9) : il dit ce qu'est le service — une prise entre
+  l'assistant et le CRM.
+- **UNE ATTENTE ET UN REFUS SONT LES DEUX SURFACES DU §5.12, et rien d'autre.** Attente — « Droits en attente », « Compte
+  en attente de vérification » : `--color-accent-soft` / `--color-accent-on-soft`, icône `CircleDashed`, `role="status"`,
+  l'adresse concernée en donnée technique. Refus — « La connexion n'a pas abouti » : `--color-danger-soft` /
+  `--color-danger-on-soft`, icône `TriangleAlert`, `role="alert"`. **Jamais le sablier** que la page d'Evoliz employait :
+  dans le CRM, `Hourglass` porte « Affaires figées » (§5.37), et le §9 interdit qu'une icône serve deux objets.
+- **L'ACCUEIL DONNE L'ADRESSE DU CONNECTEUR** dans un champ en lecture seule, en donnée technique, avec « Copier
+  l'adresse du connecteur » — secondaire, icône `Copy`, celle de la copie d'adresse de la fiche d'affaire (§5.3 bis), le
+  même geste. La confirmation remplace l'état dans une région `role="status"`, et **son échec est dit** : le champ est
+  alors sélectionné pour une copie au clavier (§5.3 bis).
+- **LA PAGE DE CONSENTEMENT EST CELLE DE FASTMCP, ET C'EST UN ÉCART NOMMÉ.** Sa mise en page, ses textes en anglais et son
+  lien d'aide « Why am I seeing this? » appartiennent à la bibliothèque, dont la version est épinglée
+  (`docs/SPEC-mcp.md` §14). Le connecteur y insère trois choses, et seulement trois :
+  - **la case « Stay signed in »**, décochée, 24 px à l'accent `--color-brand`, sur une ligne de `--size-target` dont le
+    libellé est la cible étendue (§5.7 bis), avec son texte d'aide ;
+  - **la charte** : l'accord « Allow Access » en **primaire** `--color-brand`, le refus « Deny » en **secondaire** —
+    l'accord vert et le refus gris de la bibliothèque dérogeaient au §5.5 —, le focus visible 2 px `--color-brand`, les
+    noms de l'application et du serveur en `--color-brand` ;
+  - **le monogramme « P2 » à la place du logo de FastMCP**, comme icône du serveur MCP. Le logo de la bibliothèque était
+    chargé depuis un **domaine tiers** à chaque affichage, ce qui transmettait l'adresse de la personne à ce tiers sans
+    rien lui demander (`CLAUDE.md` §11) : la page ne charge plus aucune ressource hors du connecteur, et la preuve
+    `e2e/ui/connecteur-mcp.spec.ts` le mesure. Le lien d'aide vers la documentation de FastMCP reste : c'est un lien que
+    l'on suit ou non, pas une ressource chargée.
+- **LES TEXTES DES PAGES SONT ÉCRITS DANS LE SERVICE**, en français, sans le système de traduction de la webapp (§10) :
+  c'est un autre processus, sans bundle ni clé partagée. L'écart est borné à ces quatre pages. Les guillemets français et
+  les deux-points y portent leurs espaces insécables (§5.51).
+- **QUATRE PALIERS, AUCUN DÉFILEMENT HORIZONTAL** (§7), mesuré par `e2e/ui/connecteur-mcp.spec.ts` sur les cinq pages ;
+  cibles d'au moins `--size-target` (§8), focus visible partout.
+- **Aucune couleur, aucun jeton nouveau.** Une icône Lucide nouvelle, `Plug`, qui ne sert aucun autre objet (§9).

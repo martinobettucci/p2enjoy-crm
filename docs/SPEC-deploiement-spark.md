@@ -61,6 +61,13 @@ tableau `SPARK_COMPOSE` ; aucun appel ne compose ces fichiers à la main.
 - **`/functions/v1/*` rejoint les préfixes relayés.** `docs/PROD_MIGRATIONS.md` §5.10 exige que
   `POST /functions/v1/example` traverse Kong, et Kong déclare cette route depuis `CRM-016` ; le
   Caddyfile ne la relayait pas, ce qui aurait fait échouer cette vérification au premier déploiement.
+- **Le connecteur MCP est aiguillé par l'hôte** (`CRM-102` T3, `docs/SPEC-mcp.md` §2.2). La Forge fait suivre la seconde
+  route, `crm.mcp.lelabs.tech 8080 tls`, vers le même port que celle du CRM ; le site `:8080` reçoit donc les deux
+  hôtes, et un matcher en tête de `routes.caddy` relaie celui du connecteur vers `mcp:8080`, chemins intacts. Caddy
+  reçoit pour cela une seule variable, `MCP_HOTE` — un nom d'hôte public, jamais un secret —, dérivée de
+  `CRM_MCP_HOTE` et valant `mcp.invalid` tant que le connecteur est éteint : un matcher vide ferait refuser à Caddy sa
+  configuration entière. Le service `mcp` n'est assemblé que sous le profil `mcp`, que `compose_prod` active quand
+  `CRM_MCP_HOTE` est posée ; `scripts/verify-spark.sh` résout la cellule dans les deux états.
 
 ### 3.3 Stockage objet : un MinIO interne
 
@@ -233,7 +240,8 @@ avant l'extraction, les fichiers que `git diff --diff-filter=D` nomme entre la r
 
 **Kong et Caddy ne relisent pas leurs fichiers montés**, que l'extraction remplace sous les conteneurs
 en service. Chacun porte donc un label de révision — `com.p2enjoy.kong-config-revision` et
-`com.p2enjoy.caddy-routes-revision`, **`crm-092`** depuis le retrait de GoTrue — que tout changement
+`com.p2enjoy.caddy-routes-revision`, **`crm-092`** depuis le retrait de GoTrue pour Kong, et **`crm-102`** pour Caddy
+depuis l'aiguillage du connecteur MCP (`docs/SPEC-mcp.md` §2.2) — que tout changement
 de `kong.yml` ou de `caddy/routes.caddy` incrémente dans le même commit : Compose voit une définition
 différente et recrée le conteneur au `up` ordinaire. `scripts/verify-spark.sh` exige les deux labels.
 
@@ -307,6 +315,7 @@ Caddy : un compte créé, 40 connexions et 200 lectures REST — **240 réponses
 | `kong` (un processus) | 81 Mio | 84 Mio | 256 Mio |
 | `rest` | 45 Mio | 45 Mio | 128 Mio |
 | `mail-sync` | 43 Mio | 42 Mio | 256 Mio |
+| `mcp` (`CRM-102`, profil `mcp`) | — | — | 256 Mio, **provisoire** : le plafond de `mail-sync`, son voisin Python, en attendant la mesure dans la cellule au premier allumage ; absent tant que `CRM_MCP_HOTE` n'est pas posée |
 | `functions` | 23 Mio | 23 Mio | 256 Mio |
 | `caddy` | 13 Mio | 15 Mio | 128 Mio |
 | ~~`auth-templates`~~ | 12 Mio | 12 Mio | ~~64 Mio~~ — retiré (`CRM-092` T6) |

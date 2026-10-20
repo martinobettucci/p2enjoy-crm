@@ -16,7 +16,9 @@
 -- 6. Les cascades et les `check` fermés.
 --
 -- La suite pose ses propres fixtures et fait `rollback`. Elle vide `superadmins` DANS SA TRANSACTION pour éprouver
--- l'amorçage (le seed y inscrit Sabine Plateforme, docs/SPEC-seed.md §19).
+-- l'amorçage (le seed y inscrit Sabine Plateforme, docs/SPEC-seed.md §19). Elle tient sur un registre DÉJÀ VIVANT : les
+-- preuves d'intégration y inscrivent des comptes et y écrivent le journal — elle tolère un compte présent, efface dans sa
+-- transaction les droits de ses deux comptes, et ne lit que les lignes de journal nées après son point de départ.
 
 begin;
 
@@ -60,10 +62,15 @@ $$;
 -- Fixtures : l'espace du seed (…0001), un second espace, Driss (…0012) et Farida (…0013) du seed, et deux comptes du
 -- connecteur sans profil.
 delete from public.superadmins;
+create temporary table depart_mcp_journal on commit drop as
+	select coalesce(max(id), 0) as id from public.mcp_journal;
 insert into public.workspaces (id, name, slug) values ('a0900000-0000-4000-8000-0000000000b0', 'Second 0085', 'second-0085');
 insert into public.mcp_comptes (sub, email, nom) values
 	('5eed0000-0000-4000-8000-000000000012', 'driss@exemple.test', 'Driss'),
-	('5eed0000-0000-4000-8000-000000000013', 'farida@exemple.test', 'Farida');
+	('5eed0000-0000-4000-8000-000000000013', 'farida@exemple.test', 'Farida')
+on conflict (sub) do nothing;
+delete from public.mcp_droits
+ where sub in ('5eed0000-0000-4000-8000-000000000012', '5eed0000-0000-4000-8000-000000000013');
 insert into public.mcp_droits (sub, workspace_id, famille, action) values
 	('5eed0000-0000-4000-8000-000000000012', '5eed0000-0000-4000-8000-000000000001', 'affaires', 'consulter');
 
@@ -299,7 +306,8 @@ select is(
 	(select pg_catalog.count(*)::integer from public.mcp_droits where sub = '5eed0000-0000-4000-8000-000000000012'),
 	0, 'retirer un compte du connecteur retire sa matrice');
 select is(
-	(select pg_catalog.count(*)::integer from public.mcp_journal where sub = '5eed0000-0000-4000-8000-000000000012'),
+	(select pg_catalog.count(*)::integer from public.mcp_journal
+	  where sub = '5eed0000-0000-4000-8000-000000000012' and id > (select id from depart_mcp_journal)),
 	1, 'le journal survit au compte retiré');
 
 select * from finish();

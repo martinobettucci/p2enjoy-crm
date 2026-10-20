@@ -35,6 +35,13 @@ services:
   mail-sync:
     restart: always
 
+  # @spec CRM-102 (docs/BACKLOG.md), docs/SPEC-mcp.md §2.1, §10 — actif seulement sous le profil `mcp` (compose_prod) ;
+  # son origine publique est dérivée de l'hôte posé, jamais saisie.
+  mcp:
+    restart: always
+    environment:
+      CRM_MCP_ORIGINE_PUBLIQUE: https://${CRM_MCP_HOTE:-mcp.invalid}
+
   # Le stockage vise le fournisseur S3 réel, décrit par les variables d'environnement de
   # production (docs/PROD_MIGRATIONS.md §2.3). Aucune valeur n'est codée en dur ici.
   storage:
@@ -57,9 +64,10 @@ services:
     # Révision des routes, sur le modèle de Kong (docs/SPEC-edge-functions.md §2) : Caddy ne relit pas
     # `routes.caddy`, et la livraison remplace le fichier sous le conteneur en service. Changer ce label
     # dans le même changement que les routes fait recréer Caddy par le `up` ordinaire. `crm-092` :
-    # `/auth/v1/*` répond 404 (docs/JOURNAL.md décision 589).
+    # `/auth/v1/*` répond 404 (docs/JOURNAL.md décision 589). `crm-102` : l'hôte du connecteur MCP est aiguillé
+    # vers `mcp` avant toute autre route (docs/SPEC-mcp.md §2.2).
     labels:
-      com.p2enjoy.caddy-routes-revision: crm-092
+      com.p2enjoy.caddy-routes-revision: crm-102
     depends_on:
       kong:
         condition: service_healthy
@@ -77,6 +85,10 @@ services:
     environment:
       APP_DOMAIN: ${APP_DOMAIN}
       CADDY_ACME_EMAIL: ${CADDY_ACME_EMAIL}
+      # @spec CRM-102 (docs/BACKLOG.md), docs/SPEC-mcp.md §2.2 — dérivées de la seule `CRM_MCP_HOTE` : le matcher
+      # reçoit `mcp.invalid` à défaut (jamais vide), la liste d'adresses la valeur nue. Aucun secret.
+      MCP_HOTE: ${CRM_MCP_HOTE:-mcp.invalid}
+      MCP_SITE: ${CRM_MCP_HOTE:-}
     healthcheck:
       test: ["CMD", "caddy", "version"]
       interval: 30s

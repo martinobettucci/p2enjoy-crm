@@ -126,7 +126,7 @@ monopage. Un hôte à part est la forme d'Evoliz (`evoliz.mcp.lelabs.tech`).
 
 **À vérifier avant la livraison de `CRM-102`** : une **seconde route** de la Forge vers la même
 cellule (`crm.mcp.lelabs.tech 8080 tls`) est une demande au propriétaire du Spark. Elle se propose
-par `scripts/spark/proposer.sh --route-seule`, révisé pour proposer les deux routes. Si la Forge ne
+par `scripts/spark/proposer.sh --connecteur-mcp`, avec la variable `CRM_MCP_HOTE` (§10). Si la Forge ne
 l'accepte pas, la question revient au responsable avant tout code de production : elle n'est pas
 tranchée implicitement.
 

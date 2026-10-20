@@ -11,6 +11,21 @@
 
 encode zstd gzip
 
+# @spec CRM-102 (docs/BACKLOG.md) — tranche T3 : l'hôte du connecteur MCP, aiguillé AVANT toute autre route
+# @spec docs/SPEC-mcp.md §2.2 ; docs/JOURNAL.md décision 627 (D4, précision T3)
+# Sur `MCP_HOTE`, tout part vers le service `mcp`, chemins intacts : ses métadonnées OAuth (RFC 8414, RFC 9728),
+# `/authorize`, `/auth/callback`… y sont les siennes — le 404 de GoTrue plus bas ne vaut que pour l'application.
+# Un matcher `host` vide fait refuser à Caddy sa configuration ENTIÈRE, mesuré contre caddy 2.9. Deux replis, et il faut
+# les deux : `{$MCP_HOTE:mcp.invalid}` couvre la variable ABSENTE (Caddy lancé hors de Compose, `caddy validate`), et
+# Compose pose `mcp.invalid` quand elle serait VIDE — le repli de Caddy ne joue pas sur une valeur vide. Le tampon est vidé
+# à chaque écriture : les réponses en flux du protocole MCP traversent `encode` sans attendre.
+@connecteur_mcp host {$MCP_HOTE:mcp.invalid}
+handle @connecteur_mcp {
+	reverse_proxy mcp:8080 {
+		flush_interval -1
+	}
+}
+
 # API Supabase : les chemins sont conservés tels quels, car Kong route sur les préfixes
 # versionnés (`/rest/v1/`, `/functions/v1/`, …). Aucune réécriture ici, sous peine de rendre la
 # configuration déclarative de Kong inopérante. `/functions/v1/` est la route edge déclarée par

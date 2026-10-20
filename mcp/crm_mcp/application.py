@@ -1,4 +1,5 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : l'assemblage du connecteur
+# @spec CRM-102 tranche T3 — docs/DESIGN_SYSTEM.md §5.57 (l’icône du serveur, monogramme du CRM, sur la page de consentement)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
 # @spec Modèle : `evoliz_mcp/application.py` (p2enjoy-evoliz, révision 80a3e27). Écarts : aucune administration
@@ -13,6 +14,7 @@ from dataclasses import dataclass
 import fastmcp
 import httpx2
 from fastmcp import FastMCP
+from mcp_types import Icon
 from starlette.requests import Request
 from starlette.responses import HTMLResponse, JSONResponse
 
@@ -86,7 +88,14 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
         registre=registre,
         stockage=stockage.chiffre,
     )
-    serveur = FastMCP(name="P2Enjoy CRM", instructions=INSTRUCTIONS, auth=mandataire)
+    # L'icône du serveur est le monogramme du CRM : les clients MCP l'affichent, et la page de consentement aussi, au lieu
+    # du logo de FastMCP chargé depuis un domaine tiers (docs/DESIGN_SYSTEM.md §5.57 ; CLAUDE.md §11).
+    serveur = FastMCP(
+        name="P2Enjoy CRM",
+        instructions=INSTRUCTIONS,
+        auth=mandataire,
+        icons=[Icon(src=pages.FAVICON, mime_type="image/svg+xml", sizes=["any"])],
+    )
     moteur = MoteurPolitique(registre=registre, crm=crm, jwt_secret=reglages.jwt_secret)
     reference.ajouter(serveur, moteur, crm)
     # L'ordre compte : l'audit enveloppe la politique, qui précède l'outil (docs/SPEC-mcp.md §6.2).

@@ -9,6 +9,9 @@
 #           les propositions ; `--demandes-seules` pour une cellule en service (décisions 589 et 590) ;
 #           T7 (décision 591) : Kong et Caddy portent leur label de révision `crm-092` ; valeurs de la
 #           cellule entre guillemets, lues comme la cellule les écrit (décision 599)
+# @verifies CRM-102 (docs/BACKLOG.md) tranche T3 — docs/SPEC-mcp.md §2.1, §2.2, §10 : le connecteur n'est assemblé
+#           qu'avec CRM_MCP_HOTE (profil `mcp`), Caddy ne reçoit que l'hôte, révision de routes `crm-102`,
+#           `proposer.sh --connecteur-mcp`
 # @verifies docs/SPEC-deploiement-spark.md §5.1 ; docs/JOURNAL.md décision 603 — la cellule est jointe
 #           par ses IP, jamais par un alias : livrer.sh et verifier.sh refusent un nom d'hôte
 #
@@ -211,16 +214,21 @@ echo
 echo "3. Assemblage résolu de la cellule"
 
 # Vérifie un assemblage à trois fichiers ; rend le nombre d'écarts, et n'imprime que s'il est bavard.
-#   verifier_assemblage <répertoire des fichiers Compose> <environnement fusionné> <bavard 0|1>
+# @spec CRM-102 (docs/BACKLOG.md) tranche T3 — docs/SPEC-mcp.md §2.1, §2.2 : le connecteur n'existe que configuré. Le
+# 4e argument dit si l'environnement pose `CRM_MCP_HOTE` : le profil `mcp` est alors activé, comme `compose_prod` le fait.
+#   verifier_assemblage <répertoire des fichiers Compose> <environnement fusionné> <bavard 0|1> [connecteur 0|1]
 verifier_assemblage() {
-	local dir=$1 env=$2 bavard=$3 json erreurs
+	local dir=$1 env=$2 bavard=$3 connecteur=${4:-0} json erreurs profils=()
+	[ "$connecteur" = 1 ] && profils=(--profile mcp)
 	if ! json=$(docker compose --env-file "$env" -f "$dir/docker-compose.yml" \
-		-f "$dir/docker-compose.prod.yml" -f "$dir/docker-compose.spark.yml" config --format json 2>"$WORK/config.err"); then
+		-f "$dir/docker-compose.prod.yml" -f "$dir/docker-compose.spark.yml" ${profils[@]+"${profils[@]}"} \
+		config --format json 2>"$WORK/config.err"); then
 		[ "$bavard" = 1 ] && fail "docker compose config : $(head -n 2 "$WORK/config.err" | tr '\n' ' ')"
 		return 1
 	fi
 	[ -s "$WORK/config.err" ] && [ "$bavard" = 1 ] && fail "avertissements de Compose : $(head -n 2 "$WORK/config.err" | tr '\n' ' ')"
-	erreurs=$(printf '%s' "$json" | SPARK_HTTP_PORT=$(env_get "$env" SPARK_HTTP_PORT) ENVF=$env \
+	erreurs=$(printf '%s' "$json" | SPARK_HTTP_PORT=$(env_get "$env" SPARK_HTTP_PORT) ENVF=$env CONNECTEUR=$connecteur \
+		HOTE_MCP=$(env_get "$env" CRM_MCP_HOTE) \
 		REMPLISSAGE=$SPARK_SANS_OBJET_VALEUR MINIO_USER=$(env_get "$env" MINIO_ROOT_USER) python3 -c '
 import json, os, sys
 d = json.load(sys.stdin)
@@ -258,26 +266,42 @@ if st.get("GLOBAL_S3_ENDPOINT") != "http://minio:9000" or st.get("AWS_ACCESS_KEY
 montages = {v.get("target"): os.path.basename(v.get("source", "")) for v in s.get("caddy", {}).get("volumes", [])}
 if montages.get("/etc/caddy/Caddyfile") != "Caddyfile.spark" or montages.get("/etc/caddy/routes.caddy") != "routes.caddy":
     e.append(f"montages de caddy {montages}")
-if s.get("caddy", {}).get("environment"):
-    e.append("caddy reçoit encore un environnement")
+# Caddy ne reçoit QUE l’hôte du connecteur (CRM-102, docs/SPEC-mcp.md §2.2) : une valeur publique, jamais vide —
+# `mcp.invalid` quand le connecteur est éteint, sans quoi Caddy refuserait sa configuration entière.
+connecteur = os.environ["CONNECTEUR"] == "1"
+hote = os.environ["HOTE_MCP"]
+attendu_caddy = {"MCP_HOTE": hote if connecteur else "mcp.invalid"}
+recu_caddy = s.get("caddy", {}).get("environment")
+if recu_caddy != attendu_caddy:
+    e.append(f"environnement de caddy {recu_caddy}, attendu {attendu_caddy}")
+if connecteur:
+    origine = s.get("mcp", {}).get("environment", {}).get("CRM_MCP_ORIGINE_PUBLIQUE")
+    if origine != f"https://{hote}":
+        e.append(f"origine du connecteur {origine}, attendu https://{hote}")
+elif "mcp" in s:
+    e.append("le connecteur est assemblé sans CRM_MCP_HOTE")
 # Révisions de configuration (CRM-092 T6, décision 589) : ni Kong ni Caddy ne relisent leurs fichiers
 # montés, et la livraison les remplace sous les conteneurs en service. Un label changé dans le même
 # commit que la configuration les fait recréer par le up ordinaire.
 if s.get("kong", {}).get("labels", {}).get("com.p2enjoy.kong-config-revision") != "crm-092":
     e.append("Kong sans la révision de configuration crm-092")
-if s.get("caddy", {}).get("labels", {}).get("com.p2enjoy.caddy-routes-revision") != "crm-092":
-    e.append("Caddy sans la révision de routes crm-092")
+if s.get("caddy", {}).get("labels", {}).get("com.p2enjoy.caddy-routes-revision") != "crm-102":
+    e.append("Caddy sans la révision de routes crm-102")
 # Moindre privilège, mesuré le 2026-09-23 (docs/SPEC-deploiement-spark.md §3, décision 567) :
 # chaque secret atteint SEULEMENT les services qui le consomment. Un env_file posé sur un service
 # le remettrait à tous ; Compose le résout dans environment, et cette comparaison le voit.
+# mcp depuis CRM-102 (décision 627, D2), et SEULEMENT quand son profil est actif : le jeton interne, le registre,
+# et le secret du client LeLabs qu’il partage avec l’échangeur (docs/SPEC-mcp.md §3.2, §5).
+mcp = ["mcp"] if connecteur else []
 attendus = {
     # functions depuis CRM-092 (décision 584) : son échangeur de session signe le jeton interne.
     # auth ne reçoit plus rien depuis CRM-092 T6 : GoTrue a quitté la pile (décision 589).
-    "JWT_SECRET": ["db", "functions", "realtime", "rest", "storage"],
+    "JWT_SECRET": sorted(["db", "functions", "realtime", "rest", "storage"] + mcp),
     "POSTGRES_PASSWORD": ["db", "migrations-runner", "realtime", "rest", "storage"],
-    "SERVICE_ROLE_KEY": ["functions", "kong", "mail-sync", "storage"],
+    "SERVICE_ROLE_KEY": sorted(["functions", "kong", "mail-sync", "storage"] + mcp),
     "MINIO_ROOT_PASSWORD": ["minio", "minio-createbucket", "storage"],
     "MAIL_SYNC_INTERNAL_TOKEN": ["mail-sync"],
+    "OIDC_CLIENT_SECRET": sorted(["functions"] + mcp),
 }
 for nom, qui in attendus.items():
     recu = sorted(n for n, v in s.items() if valeurs[nom] in json.dumps(v))
@@ -299,9 +323,19 @@ if docker compose version >/dev/null 2>&1; then
 	if verifier_assemblage "$REPO_ROOT" "$ENV_A" 1; then
 		ok "un seul port publié (caddy, SPARK_HTTP_PORT → 8080), aucun 80/443, MinIO sans port"
 		ok "aucune valeur de remplissage consommée ; Kong à un processus ; limite mémoire partout"
-		ok "Caddy monte Caddyfile.spark et routes.caddy, sans environnement"
-		ok "Kong et Caddy portent la révision crm-092 : recréés par le up ordinaire quand leur configuration change"
+		ok "Caddy monte Caddyfile.spark et routes.caddy, et ne reçoit que MCP_HOTE=mcp.invalid"
+		ok "Kong (crm-092) et Caddy (crm-102) portent leur révision : recréés par le up ordinaire quand leur configuration change"
 		ok "chaque secret n'atteint que les services qui le consomment — Caddy n'en reçoit aucun"
+		ok "connecteur éteint (sans CRM_MCP_HOTE) : le service mcp n'est pas assemblé et ne reçoit aucun secret"
+	fi
+	# Le même couple, connecteur allumé : l'hôte posé par la console active le profil `mcp` (CRM-102).
+	B="$WORK/b"
+	fichiers_conformes "$B"
+	printf 'CRM_MCP_HOTE=crm.mcp.exemple.tld\n' >> "$B/env"
+	ENV_B=$(fusion "$B/env" "$B/secrets" "$B/run")
+	if verifier_assemblage "$REPO_ROOT" "$ENV_B" 1 1; then
+		ok "connecteur allumé : mcp borné en mémoire, origine https://crm.mcp.exemple.tld dérivée de l'hôte"
+		ok "connecteur allumé : JWT_SECRET, SERVICE_ROLE_KEY et OIDC_CLIENT_SECRET atteignent mcp, et Caddy ne reçoit que l'hôte"
 	fi
 else
 	skip "docker compose indisponible : assemblage non résolu"
@@ -625,6 +659,48 @@ proposer "$P" --assistant-ia --demandes-seules --ollama-host "$HOTE_LLM" >/dev/n
 	&& ok "--assistant-ia refuse un hôte absent ou en http, un hôte sans l'option, et --demandes-seules à la fois" \
 	|| fail "--assistant-ia accepte :$refus_ia"
 
+# `--connecteur-mcp` (`CRM-102` T3) : une cellule EN SERVICE, sans le connecteur. Rien n'est tiré ; la variable publique
+# et la seconde route proposées, aucun secret proposé, aucun fichier réel touché.
+cellule_vierge "$P"
+fichiers_conformes "$P"
+reels_avant=$(sha256sum "$P/env" "$P/secrets")
+if out=$(proposer "$P" --connecteur-mcp); then
+	props_env=$(sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
+	props_secrets=$(sed -n "/^$MARQUE\$/,\$p" "$P/secrets.?" | grep -E '^[A-Z0-9_]+=' | tr '\n' ';')
+	[ "$props_env" = "CRM_MCP_HOTE=crm.mcp.lelabs.tech;" ] && [ -z "$props_secrets" ] \
+		&& ok "--connecteur-mcp, cellule en service : l'hôte du connecteur, aucun secret" \
+		|| fail "--connecteur-mcp : variables « $props_env » secrets « $props_secrets »"
+	[ "$(grep -vE '^#|^$' "$P/routes.?")" = "crm.mcp.lelabs.tech 8080 tls" ] && [ "$(sha256sum "$P/env" "$P/secrets")" = "$reels_avant" ] \
+		&& ok "--connecteur-mcp : la seconde route crm.mcp.lelabs.tech 8080 tls, aucun fichier réel touché" \
+		|| fail "--connecteur-mcp : route « $(grep -vE '^#|^$' "$P/routes.?") » ou fichiers réels modifiés"
+	avant=$(empreintes "$P")
+	if proposer "$P" --connecteur-mcp >/dev/null; then fail "--connecteur-mcp : proposition pendante écrasée"
+	else [ "$(empreintes "$P")" = "$avant" ] && ok "--connecteur-mcp : proposition pendante, refus, fichiers inchangés" || fail "--connecteur-mcp : refus, mais fichiers modifiés"; fi
+else
+	fail "--connecteur-mcp refusé sur une cellule en service : $(printf '%s' "$out" | head -n 1)"
+fi
+# Déjà allumé, au format réel de la cellule : la variable n'est pas reproposée ; seule la route l'est.
+cellule_vierge "$P"
+fichiers_conformes "$P"
+printf 'CRM_MCP_HOTE="crm.mcp.lelabs.tech"\n' >> "$P/env"
+if proposer "$P" --connecteur-mcp >/dev/null; then
+	[ -z "$(sed -n "/^$MARQUE\$/,\$p" "$P/env.?" | grep -E '^[A-Z0-9_]+=')" ] \
+		&& ok "--connecteur-mcp, hôte déjà posé : la variable n'est pas reproposée" \
+		|| fail "--connecteur-mcp : variable reproposée alors qu'elle est posée"
+else
+	fail "--connecteur-mcp refusé, hôte déjà posé"
+fi
+cellule_vierge "$P"
+fichiers_conformes "$P"
+avant=$(empreintes "$P")
+refus_mcp=""
+proposer "$P" --connecteur-mcp --hote-mcp 'Mauvais_Hote' >/dev/null && refus_mcp="$refus_mcp hôte-hors-forme"
+proposer "$P" --connecteur-mcp --hote-mcp crm.lelabs.tech >/dev/null && refus_mcp="$refus_mcp hôte-du-crm"
+proposer "$P" --connecteur-mcp --route-seule >/dev/null && refus_mcp="$refus_mcp avec-route-seule"
+[ -z "$refus_mcp" ] && [ "$(empreintes "$P")" = "$avant" ] \
+	&& ok "--connecteur-mcp refuse un hôte hors forme, l'hôte du CRM lui-même, et un autre mode à la fois" \
+	|| fail "--connecteur-mcp accepte :$refus_mcp"
+
 # --- 6. livrer.sh contre une cellule simulée --------------------------------------------------------
 
 echo
@@ -781,10 +857,21 @@ if docker compose version >/dev/null 2>&1; then
 	degrader_temoin
 	degrader "Caddy publie 443" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("      - \"${SPARK_HTTP_PORT}:8080\"", "      - \"${SPARK_HTTP_PORT}:8080\"\n      - \"443:443\"",1); open(p,"w").write(s)'
 	degrader "limite mémoire retirée de storage" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("  storage:\n    mem_limit: 512m\n","  storage:\n",1); open(p,"w").write(s)'
-	degrader "environnement de Caddy hérité" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("    environment: !reset {}\n","",1); open(p,"w").write(s)'
+	degrader "environnement de Caddy hérité" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("    environment: !override\n      MCP_HOTE: ${CRM_MCP_HOTE:-mcp.invalid}\n","",1); open(p,"w").write(s)'
+	degrader "matcher du connecteur sans repli : vide quand il est éteint" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("MCP_HOTE: ${CRM_MCP_HOTE:-mcp.invalid}","MCP_HOTE: ${CRM_MCP_HOTE:-}",1); open(p,"w").write(s)'
 	degrader "env_file des secrets posé sur Caddy" "import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace('  caddy:\n    mem_limit: 128m\n','  caddy:\n    mem_limit: 128m\n    env_file:\n      - $ENV_A\n',1); open(p,'w').write(s)"
 	degrader "Kong sans borne de processus" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("KONG_NGINX_WORKER_PROCESSES: \"1\"","KONG_NGINX_WORKER_PROCESSES: \"auto\"",1); open(p,"w").write(s)'
 	degrader "révision des routes de Caddy laissée à l'ancienne valeur" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("  caddy:\n    mem_limit: 128m\n","  caddy:\n    mem_limit: 128m\n    labels:\n      com.p2enjoy.caddy-routes-revision: crm-090\n",1); open(p,"w").write(s)'
+	degrader_allume() {
+		local libelle=$1 script=$2
+		rm -rf "$D"; mkdir -p "$D"
+		cp "$REPO_ROOT"/docker-compose.yml "$REPO_ROOT"/docker-compose.prod.yml "$REPO_ROOT"/docker-compose.spark.yml "$D/"
+		ln -s "$REPO_ROOT/caddy" "$D/caddy"
+		python3 -c "$script" "$D/docker-compose.spark.yml"
+		if verifier_assemblage "$D" "$ENV_B" 0 1; then fail "dégradation non détectée : $libelle"
+		else ok "détectée : $libelle"; fi
+	}
+	degrader_allume "connecteur allumé sans limite mémoire" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("  mcp:\n    mem_limit: 256m","  mcp:\n",1); open(p,"w").write(s)'
 else
 	skip "docker compose indisponible : dégradations d'assemblage non exécutées"
 fi

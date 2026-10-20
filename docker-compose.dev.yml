@@ -166,6 +166,8 @@ services:
       # Substituées à l'import dans keycloak/realm-lelabs.json : l'origine de la webapp varie d'un
       # poste à l'autre, et l'URL de retour doit lui être égale au caractère près.
       SSO_DEV_REDIRECT_URI: ${SITE_URL}/auth/retour
+      # @spec CRM-102 (docs/BACKLOG.md), docs/SPEC-mcp.md §12 — le retour du mandataire MCP, sur le même client.
+      SSO_DEV_MCP_REDIRECT_URI: http://localhost:${MCP_DEV_PORT}/auth/callback
       SSO_DEV_WEB_ORIGIN: ${SITE_URL}
       SSO_DEV_DOMAINE: ${MAIL_DEV_PERSONAL_DOMAIN}
       # Client CONFIDENTIEL du CRM (`CRM-092`, décision 586) : identifiant et secret du `.env`, les mêmes
@@ -405,6 +407,26 @@ services:
     depends_on:
       ollama-simule:
         condition: service_healthy
+
+  # @spec CRM-102 (docs/BACKLOG.md) — tranche T3 : le connecteur MCP, toujours actif en développement
+  # @spec docs/SPEC-mcp.md §2.1 (profil levé), §2.2 (adresse de développement), §10 (débits relevés), §12 (realm)
+  #
+  # Le profil `mcp` est levé : la pile locale porte toujours le connecteur. Son origine est `localhost` — celle que
+  # les clients MCP du poste et le navigateur joignent —, d'où la publication sur 127.0.0.1, comme Keycloak. Les
+  # débits sont relevés : toute une campagne de preuves vient d'une seule adresse. Le mandataire lit la découverte
+  # OIDC à son démarrage : il attend Keycloak sain.
+  mcp:
+    profiles: !reset []
+    depends_on:
+      keycloak:
+        condition: service_healthy
+    environment:
+      CRM_MCP_ORIGINE_PUBLIQUE: http://localhost:${MCP_DEV_PORT}
+      CRM_SUPERADMINS_INITIAUX: ${CRM_SUPERADMINS_INITIAUX:-plateforme@${MAIL_DEV_PERSONAL_DOMAIN}}
+      CRM_MCP_DEBIT_OAUTH_MINUTE: ${CRM_MCP_DEBIT_OAUTH_MINUTE:-1000}
+      CRM_MCP_ENREGISTREMENTS_HEURE: ${CRM_MCP_ENREGISTREMENTS_HEURE:-1000}
+    ports:
+      - 127.0.0.1:${MCP_DEV_PORT}:8080
 
 secrets:
   # `/dev/null` est une source vide acceptée par Compose et BuildKit. Le `Dockerfile` teste la

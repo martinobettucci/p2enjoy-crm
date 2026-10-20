@@ -183,6 +183,24 @@ def test_case_inseree_dans_le_formulaire_decochee():
     assert formulaire.index("connexion_longue") < formulaire.index('class="button-group"')
     assert '<label for="connexion_longue">' in formulaire and "Stay signed in" in formulaire
     assert inserer_case_connexion_longue("<html>sans formulaire</html>") is None
+    # La charte P2Enjoy (docs/DESIGN_SYSTEM.md §5.57) : accord primaire en bleu de marque, refus secondaire.
+    assert ".btn-approve { background: var(--color-brand)" in avec and "--color-brand: #23468c" in avec
+    assert ".btn-deny { background: var(--color-surface)" in avec
+
+
+def test_consentement_sans_ressource_tierce():
+    """Avec l'icône du serveur, la page ne charge plus le logo de FastMCP depuis un domaine tiers (CLAUDE.md §11)."""
+    from fastmcp.server.auth.oauth_proxy.ui import create_consent_html
+
+    from html import escape
+
+    from crm_mcp.pages import FAVICON
+
+    page = create_consent_html(client_id="c", redirect_uri="http://127.0.0.1:9/cb", scopes=["openid"], txn_id="t",
+                               csrf_token="x", server_name="P2Enjoy CRM", server_icon_url=FAVICON)
+    assert 'src="https://gofastmcp' not in page, "aucune ressource chargée d'un domaine tiers ; un lien d'aide n'en est pas une"
+    assert f'src="{escape(FAVICON)}"' in page, "le monogramme du CRM, en URI data:"
+    assert FAVICON.startswith("data:image/svg+xml,") and "img-src https: data:" in page
 
 
 def test_portee_hors_ligne_ajoutee_une_fois():

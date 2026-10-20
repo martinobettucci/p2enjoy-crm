@@ -405,6 +405,72 @@ services:
       retries: 5
       start_period: 10s
 
+  # --- Connecteur MCP ----------------------------------------------------------------------------
+  #
+  # @spec CRM-102 (docs/BACKLOG.md) — tranche T3 : le service `mcp` dans la pile
+  # @spec docs/SPEC-mcp.md §2.1 (profil, durcissement, image), §5 (jeton interne : JWT_SECRET), §7 (registre : clé de
+  #       service), §10 (configuration) ; docs/DAT.md §3.7 ter ; docs/JOURNAL.md décision 627 (D1, D2, D8, précision T3)
+  #
+  # Sous le PROFIL `mcp` : l'overlay de développement le rend toujours actif ; en production, `compose_prod` ne
+  # l'active que si `CRM_MCP_HOTE` est posée (scripts/lib/env.sh). Éteint, il n'est ni construit ni démarré, et ne
+  # reçoit aucun secret. Son origine publique n'est jamais posée à la main : chaque overlay la dérive.
+  mcp:
+    container_name: p2enjoy-mcp
+    profiles: ["mcp"]
+    build:
+      context: ./mcp
+      target: production
+      secrets:
+        - pip_ca
+    restart: unless-stopped
+    # `kong` conditionne l'accès réseau, `rest` la donnée (même garde que `mail-sync`).
+    depends_on:
+      kong:
+        condition: service_healthy
+      rest:
+        condition: service_healthy
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    tmpfs:
+      - /tmp
+    volumes:
+      - mcp-etat:/var/lib/crm-mcp
+    environment:
+      CRM_MCP_ORIGINE_PUBLIQUE: ${CRM_MCP_ORIGINE_PUBLIQUE:-}
+      SSO_OIDC_ISSUER: ${SSO_OIDC_ISSUER}
+      SSO_OIDC_CLIENT_ID: ${SSO_OIDC_CLIENT_ID}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_ANON_KEY: ${ANON_KEY}
+      SUPABASE_SERVICE_ROLE_KEY: ${SERVICE_ROLE_KEY}
+      CRM_SUPERADMINS_INITIAUX: ${CRM_SUPERADMINS_INITIAUX:-}
+      CRM_MCP_REDIRECTIONS_CLIENTS: ${CRM_MCP_REDIRECTIONS_CLIENTS:-}
+      CRM_MCP_TAILLE_MAX_REPONSE: ${CRM_MCP_TAILLE_MAX_REPONSE:-}
+      CRM_MCP_DEBIT_OAUTH_MINUTE: ${CRM_MCP_DEBIT_OAUTH_MINUTE:-}
+      CRM_MCP_ENREGISTREMENTS_HEURE: ${CRM_MCP_ENREGISTREMENTS_HEURE:-}
+      CRM_MCP_JOURNAL_NIVEAU: ${CRM_MCP_JOURNAL_NIVEAU:-}
+      CRM_MCP_CHEMIN_ETAT: /var/lib/crm-mcp
+      CRM_MCP_PORT: 8080
+    # L'image n'a ni `curl` ni `wget` : la sonde emprunte l'interpréteur. `/sante` dit que le processus vit ; `/pret`
+    # (SSO et CRM) ne sert pas ici, un fournisseur momentanément injoignable ne devant pas faire redémarrer la pile.
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - |
+          import sys, urllib.request
+          with urllib.request.urlopen("http://127.0.0.1:8080/sante", timeout=3) as reponse:
+              sys.exit(0 if reponse.status == 200 else 1)
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
 secrets:
   # @spec CRM-015 (docs/BACKLOG.md), docs/JOURNAL.md décisions 280 et 356
   # Même construction que `npm_ca` dans `docker-compose.dev.yml` : `/dev/null` est une source vide
@@ -417,3 +483,5 @@ secrets:
 volumes:
   db-config:
   mail-sync-state:
+  # @spec CRM-102 (docs/BACKLOG.md), docs/SPEC-mcp.md §3.4 — l'état chiffré du mandataire : clients, transactions, codes.
+  mcp-etat:

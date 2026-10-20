@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # @verifies CRM-092 (docs/BACKLOG.md) — le SSO, seule source d'identité : harnais de l'unité
+# @verifies CRM-101 (docs/BACKLOG.md), docs/JOURNAL.md décision 627 — la 89 clôt le rejeu (signatures à huit arguments)
 # @verifies docs/SPEC-session-sso.md §7.1 (fonctions auth.*), §7.2 (modèle), §10 (realm préchargé),
 #           §13 (preuves), §14 (T1, T2, T6), §7.5 (migration 0077), §2 (ce qui est retiré)
 # @verifies docs/JOURNAL.md décisions 580 (K11, K12), 581 (migration élevée, harnais de l'unité),
@@ -93,6 +94,9 @@ MIGRATION_SESSIONS=supabase/migrations/0076_sessions_serveur.sql
 MIGRATION_RETRAIT=supabase/migrations/0077_retrait_gotrue.sql
 MIGRATION_ADMISSION=supabase/migrations/0078_admission_patiente.sql
 MIGRATION_ADMIN=supabase/migrations/0079_admin_du_domaine.sql
+# @spec CRM-101 (docs/BACKLOG.md) — la 89 redéfinit à son tour `ouvrir_session_sso` et les deux fonctions de session
+# serveur (huit arguments), et retire les signatures à sept que la 76 recrée : c'est elle qui clôt désormais la chaîne.
+MIGRATION_PLATEFORME=supabase/migrations/0089_plateforme.sql
 TEST_SQL=supabase/tests/0069_identite_sso.test.sql
 TEST_SQL_SESSIONS=supabase/tests/0070_sessions_serveur.test.sql
 TEST_SQL_RETRAIT=supabase/tests/0071_retrait_gotrue.test.sql
@@ -131,7 +135,8 @@ appliquer_migrations_dev() {
 
 role_a_rendre=false
 fichier_mute=''
-UNITES_SESSION=126
+# 126 jusqu'à `CRM-101` T2 (décision 627) : huit preuves de plus, la liste d'amorçage normalisée et transmise.
+UNITES_SESSION=134
 SCENARIOS_SESSION=24
 
 cleanup() {
@@ -277,7 +282,7 @@ docker rm -f "$BASE_NEUVE" >/dev/null 2>&1 || true
 # 2. Base de développement — rejeu convergent sous le rôle de chaque migration
 # =================================================================================================
 echo
-echo "2. Base de développement : rejeu des migrations 0074 à 0079"
+echo "2. Base de développement : rejeu des migrations 0074 à 0079, puis de la 89 qui clôt la chaîne"
 
 for passage in premier second; do
 	if psql_admin --single-transaction -f - < "$MIGRATION_CLAIMS" >"$WORK/dev-claims-$passage.log" 2>&1; then
@@ -315,7 +320,21 @@ for passage in premier second; do
 	else
 		fail "0079 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-admin-$passage.log")"
 	fi
+	# `CRM-101` (décision 627) : la 76 vient de recréer les fonctions de session serveur à SEPT arguments ; la 89 les
+	# retire et pose celles à huit. Sans elle, les deux coexistent, l'appel de la suite 0070 devient ambigu et le §3
+	# rougit pour une raison que le produit n'a pas — MESURÉ le 2026-10-20, comme au premier rejeu de la 79.
+	if psql_dev --single-transaction -f - < "$MIGRATION_PLATEFORME" >"$WORK/dev-plateforme-$passage.log" 2>&1; then
+		ok "0089 rejouée sous postgres, et retire les signatures à sept arguments que la 76 recrée ($passage passage)"
+	else
+		fail "0089 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-plateforme-$passage.log")"
+	fi
 done
+if [ "$(psql_dev -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+                     where n.nspname = 'public' and p.proname in ('ouvrir_session_serveur', 'renouveler_session_serveur')")" = 2 ]; then
+	ok "une seule signature de chaque fonction de session serveur après le rejeu"
+else
+	fail "des signatures de session serveur coexistent après le rejeu : les appels de la suite 0070 sont ambigus"
+fi
 if [ "$(psql_dev -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                      where n.nspname = 'public' and p.proname = 'ouvrir_session_sso'")" = 1 ]; then
 	ok "une seule \`ouvrir_session_sso\` après le rejeu : aucun appel ambigu"
@@ -340,7 +359,8 @@ echo "3. pgTAP : $TEST_SQL, $TEST_SQL_SESSIONS, $TEST_SQL_RETRAIT, $TEST_SQL_ADM
 if suite_verte; then
 	ok "cinq suites vertes, $ASSERTIONS_T1 + $ASSERTIONS_T3BIS + $ASSERTIONS_T6 + $ASSERTIONS_INC249 + $ASSERTIONS_T8 = $ASSERTIONS_UNITE assertions"
 else
-	fail "suites non vertes ou nombre d'assertions différent de $ASSERTIONS_UNITE : $(tail -n 3 "$WORK/tap.log")"
+	# Le message NOMME la suite et ses assertions rouges : les trois dernières lignes du journal ne disaient que leur nombre.
+	fail "suites non vertes ou nombre d'assertions différent de $ASSERTIONS_UNITE : $(sed 's/\x1b\[[0-9;]*m//g' "$WORK/tap.log" | grep -E 'ECHEC|not ok|#   ' | head -n 6 | tr '\n' ' ')"
 fi
 
 # =================================================================================================
@@ -631,8 +651,8 @@ muter "jeton interne non borné par l'échéance du jeton LeLabs" supabase/funct
 	"Math.min(identite.exp, maintenant + DUREE_MAX_JETON_INTERNE)" \
 	"maintenant + DUREE_MAX_JETON_INTERNE" ../supabase/functions/session
 muter "JWT_SECRET remis à la fonction d'exemple" supabase/functions/main/environnement.ts \
-	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET']," \
-	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET'], example: ['JWT_SECRET']," ../supabase/functions/main
+	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET', 'CRM_SUPERADMINS_INITIAUX']," \
+	"session: ['JWT_SECRET', 'SSO_OIDC_ISSUER', 'SSO_OIDC_CLIENT_ID', 'OIDC_CLIENT_SECRET', 'CRM_SUPERADMINS_INITIAUX'], example: ['JWT_SECRET']," ../supabase/functions/main
 muter "le secret du client omis de l'échange du code" supabase/functions/session/handler.ts \
 	$'\t\t\tclient_secret: c.clientSecret,\n' \
 	"" ../supabase/functions/session

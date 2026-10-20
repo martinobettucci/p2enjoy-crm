@@ -15173,12 +15173,30 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       l'espace de son droit, Sabine aucun (RLS, D7), Farida aucun outil. **Elle a trouvé un défaut** que le simulé
       masquait : `/pret` sondait `/rest/v1/`, que Kong refuse en `403` à la clé anonyme ; corrigé sur le point de
       `scripts/spark/verifier.sh`, simulé aligné, mutant vu rouge.
-- [ ] **T3** — la pile : service `mcp` dans les fichiers Compose (développement, production, cellule) **sous le profil
+- [x] **T3** — la pile : service `mcp` dans les fichiers Compose (développement, production, cellule) **sous le profil
       `mcp`**, activé en production par `CRM_MCP_HOTE` (`compose_prod`), volume `mcp-etat`, aiguillage par l'hôte dans
       `caddy/routes.caddy` (révision `crm-102`), realm de développement (`redirectUri`, portées déclarées), variables
       (`.env.example`, `scripts/lib/env.sh`, `scripts/spark/proposer.sh`) ; intégration contre le vrai Keycloak et la
       vraie base ; E2E d'un vrai client MCP ; `scripts/verify-spark.sh` révisé ; `scripts/verify-mcp.sh`. Spécifiée
       avant le code (`docs/SPEC-mcp.md` §2.1, §2.2, §10, §12, §13 ; journal, décision 627, précision T3).
+      *Vérifié le 2026-10-20, en développement* : le service démarre sain dans la pile, `/pret` à `200` (SSO et CRM).
+      **Intégration** `mcp/tests/test_integration_oauth.py` **13/13** contre le vrai Keycloak et la vraie base, en
+      direct **et à travers un Caddy de la cellule** joint par l'hôte du connecteur (aiguillage, chemins intacts, réponses
+      en flux à travers `encode`) — `plateforme@` et `exploitante@` entrent, la RLS reste juge, `admin@` attend ses
+      droits, `attendu@` et `adresse-non-verifiee@` leur vérification, aucun code sur un refus, `offline_access` si et
+      seulement si la case est cochée, connexion longue qui survit à la fin de la session du SSO, jetons forgé et
+      étranger refusés, retour hors liste refusé. **E2E** `e2e/ui/connecteur-mcp.spec.ts` **7/7** : un vrai client MCP
+      dans le navigateur, case cochée au clavier, pages d'attente et de refus, accueil, aucune requête vers un tiers ;
+      **20 captures** aux quatre paliers, observées. Défauts trouvés en regardant et corrigés : pages aux couleurs
+      d'Evoliz et au sablier (§5.57 écrit après relecture intégrale du design system), page de consentement verte au
+      logo de FastMCP chargé d'un domaine tiers. **Assemblage** `verify-spark.sh` **108** : cellule résolue connecteur
+      éteint et allumé, cinq contrôles de `proposer.sh --connecteur-mcp`, deux dégradations nouvelles. **`verify-mcp.sh`
+      53 contrôles**, dont trois dégradations réelles (code, base, aiguillage) et la restauration constatée. pytest
+      unitaires **102**. Suite `0085` rendue tenable sur un registre vivant (elle rougissait après l'intégration) ; ses
+      sept mutations rejouées, toutes rouges. Campagnes : pgTAP **85 fichiers, 3 681 assertions** ; API **1 129/1 129** ;
+      interface ciblée (connexion, plateforme, connecteur) **27/27** ; `verify-session-sso.sh` **69** (harnais périmé par
+      `CRM-101`, corrigé), `verify-identites.sh` **23**, `verify-stack.sh` **52**, `verify-seed-demo.sh` **69** ;
+      `typecheck` vert. La campagne d'interface complète n'a **pas** été rejouée : aucun écran de la webapp ne change.
 - [ ] **T4** — documentation (README, DAT, `docs/SSO-client-lelabs-crm.md` redéclaré, `docs/SPEC-deploiement-spark.md`),
       campagnes.
 - [ ] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,

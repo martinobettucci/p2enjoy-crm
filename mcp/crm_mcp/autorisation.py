@@ -6,6 +6,8 @@
 #       le 2026-10-06) : vérificateur, magasin chiffré, case « Stay signed in », contrôles au retour et à l'échange. Écarts :
 #       registre asynchrone (PostgreSQL derrière la clé de service), adresse vérifiée exigée, rôle `admin` lu (il vaut
 #       superadministrateur, arbitrage A1, là où Evoliz l'ignore).
+# @spec CRM-102 tranche T3 — docs/DESIGN_SYSTEM.md §5.57 : la page de consentement de FastMCP porte la charte (accord
+#       primaire, refus secondaire, focus) et la case « Stay signed in »
 """Serveur d'autorisation MCP adossé au realm ``lelabs`` : plancher ``verified``.
 
 Le mandataire (``MandataireLelabs``) présente aux clients MCP le serveur d'autorisation qu'ils attendent et délègue
@@ -78,12 +80,25 @@ CASE_CONNEXION_LONGUE = f"""
                 inactivity, or when you revoke it from your lelabs account (Applications).</p>
             </div>
             <style>
+                /* La charte P2Enjoy sur la page de FastMCP (docs/DESIGN_SYSTEM.md §5.57) : l'action d'accord est
+                   primaire, le refus secondaire, le focus visible ; les jetons sont ceux de webapp/src/styles/tokens.css. */
+                :root {{ --color-brand: #23468c; --color-brand-hover: #1b3670; --color-ink: #0d0d0d;
+                    --color-surface: #ffffff; --color-border: #e5e7eb; --color-hover: #f3f4f6; --color-text-2: #4b5563; }}
+                .btn-approve {{ background: var(--color-brand); color: var(--color-surface); min-height: 40px; }}
+                .btn-approve:hover {{ background: var(--color-brand-hover); }}
+                .btn-deny {{ background: var(--color-surface); color: var(--color-ink); border: 1px solid var(--color-border);
+                    min-height: 40px; }}
+                .btn-deny:hover {{ background: var(--color-hover); }}
+                button:hover {{ transform: none; box-shadow: none; }}
+                button:focus-visible, summary:focus-visible, a:focus-visible {{ outline: 2px solid var(--color-brand);
+                    outline-offset: 2px; }}
+                .info-box strong, .info-box .server-name-link, .warning-box strong, .warning-box a {{ color: var(--color-brand); }}
                 .connexion-longue {{ margin: 16px 0; text-align: left; }}
                 .connexion-longue label {{ display: flex; gap: 8px; align-items: center; min-height: 40px;
                     cursor: pointer; font-weight: 600; }}
-                .connexion-longue input {{ width: 24px; height: 24px; margin: 0; accent-color: #23468C; }}
-                .connexion-longue input:focus-visible {{ outline: 2px solid #23468C; outline-offset: 2px; }}
-                .connexion-longue p {{ margin: 0 0 0 32px; font-size: 13px; line-height: 1.5; color: #4B5563; }}
+                .connexion-longue input {{ width: 24px; height: 24px; margin: 0; accent-color: var(--color-brand); }}
+                .connexion-longue input:focus-visible {{ outline: 2px solid var(--color-brand); outline-offset: 2px; }}
+                .connexion-longue p {{ margin: 0 0 0 32px; font-size: 13px; line-height: 1.5; color: var(--color-text-2); }}
             </style>
 """
 _GROUPE_BOUTONS = '<div class="button-group">'

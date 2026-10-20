@@ -255,6 +255,7 @@ SPARK_HTTP_PORT:gabarit
 OLLAMA_HOST:gabarit
 OLLAMA_MODEL:gabarit
 OLLAMA_CONTEXT_LENGTH:gabarit
+MCP_DEV_PORT:gabarit
 "
 
 # Complète un `.env` amorcé **avant** l'unité qui a introduit une variable. Sans cela, toute unité
@@ -631,7 +632,19 @@ require_docker() {
 }
 
 compose_dev()  { docker compose --env-file "$ENV_FILE" "${DEV_COMPOSE[@]}" "$@"; }
-compose_prod() { docker compose --env-file "$ENV_FILE" "${PROD_COMPOSE[@]}" "$@"; }
+# @spec CRM-102 (docs/BACKLOG.md) — tranche T3 : le connecteur MCP n'existe en production que configuré
+# @spec docs/SPEC-mcp.md §2.1 (profil `mcp`), §10 (`CRM_MCP_HOTE`) ; docs/JOURNAL.md décision 627 (précision T3)
+# Le profil `mcp` n'est actif que si `CRM_MCP_HOTE` est posée : éteint, le service n'est ni construit, ni démarré,
+# et ne reçoit aucun secret. Le développement n'en dépend pas : son overlay lève le profil.
+compose_profils_prod() {
+	[ -n "$(env_get "$ENV_FILE" CRM_MCP_HOTE)" ] && printf '%s\n' --profile mcp
+	return 0
+}
+compose_prod() {
+	local profils=()
+	mapfile -t profils < <(compose_profils_prod)
+	docker compose --env-file "$ENV_FILE" "${PROD_COMPOSE[@]}" ${profils[@]+"${profils[@]}"} "$@"
+}
 
 # --- Cellule Spark -------------------------------------------------------------------------------
 #

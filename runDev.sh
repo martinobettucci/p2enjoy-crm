@@ -143,6 +143,9 @@ info "ClamAV (clamd)        ${BIND}:${CLAMAV_PORT}"
 # `mail-sync` ne publie aucun port : son API n'est joignable que depuis le réseau Compose
 # (docs/SPEC-mail-subsystem.md §12.1). Ses journaux restent la surface d'observation.
 info "mail-sync             interne, sans port publié · ./runDev.sh --withLog mail-sync"
+# @spec CRM-102 (docs/BACKLOG.md) tranche T3 — docs/SPEC-mcp.md §2.2 : le connecteur MCP, publié sur 127.0.0.1 comme
+# Keycloak, son origine étant `localhost` ; c'est l'adresse à donner à un client MCP du poste.
+info "Connecteur MCP        http://localhost:$(env_get "$ENV_FILE" MCP_DEV_PORT)/mcp"
 
 # Rappel des identifiants de développement : comptes seedés, boîtes et administration des
 # services. Le rendu vit dans la bibliothèque d'environnement afin d'être prouvable sans

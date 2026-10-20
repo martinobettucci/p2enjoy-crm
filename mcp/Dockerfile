@@ -10,8 +10,15 @@
 #   dev        — la même, plus pytest et les tests.
 #
 # Aucune étape apt : les dépendances sont des roues Python pures ou précompilées.
+#
+# Le secret de construction `pip_ca` est **facultatif**, comme pour `mail-sync` (décision 356) : derrière un proxy
+# HTTPS à certificat interposé, `pip` ne joint PyPI qu'avec l'autorité du proxy. Le fichier n'entre jamais dans
+# l'image ; sans lui, chaque étape se déroule normalement.
+#
+#   docker build --secret id=pip_ca,src=/chemin/vers/ca.crt --target dev -t crm-mcp:dev mcp
 
-FROM python:3.13-slim AS base
+# Même base, épinglée, que `mail-sync` : une version exacte, et des couches partagées dans la cellule.
+FROM python:3.13.13-slim-bookworm AS base
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -20,17 +27,23 @@ ENV PYTHONUNBUFFERED=1 \
 
 WORKDIR /app
 COPY requirements.lock ./
-RUN pip install --root-user-action=ignore --no-deps -r requirements.lock
+RUN --mount=type=secret,id=pip_ca,required=false \
+    sh -eu -c 'if [ -s /run/secrets/pip_ca ]; then echo "pip_ca: actif"; export PIP_CERT=/run/secrets/pip_ca; else echo "pip_ca: inactif"; fi; \
+    pip install --root-user-action=ignore --no-deps -r requirements.lock'
 
 COPY pyproject.toml ./
 COPY crm_mcp/ ./crm_mcp/
-RUN pip install --root-user-action=ignore --no-deps .
+RUN --mount=type=secret,id=pip_ca,required=false \
+    sh -eu -c 'if [ -s /run/secrets/pip_ca ]; then export PIP_CERT=/run/secrets/pip_ca; fi; \
+    pip install --root-user-action=ignore --no-deps .'
 
 # --------------------------------------------------------------------------
 FROM base AS dev
 
 COPY requirements-dev.lock ./
-RUN pip install --root-user-action=ignore -r requirements-dev.lock
+RUN --mount=type=secret,id=pip_ca,required=false \
+    sh -eu -c 'if [ -s /run/secrets/pip_ca ]; then export PIP_CERT=/run/secrets/pip_ca; fi; \
+    pip install --root-user-action=ignore -r requirements-dev.lock'
 COPY tests/ ./tests/
 CMD ["python", "-m", "pytest", "-q"]
 

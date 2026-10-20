@@ -12,6 +12,8 @@
 	email {$CADDY_ACME_EMAIL}
 }
 
-{$APP_DOMAIN} {
+# `MCP_SITE` (CRM-102, docs/SPEC-mcp.md §2.2) : l'hôte du connecteur MCP, ou VIDE quand il est éteint — la liste se
+# réduit alors à l'application, et aucun certificat n'est demandé pour rien.
+{$APP_DOMAIN} {$MCP_SITE} {
 	import /etc/caddy/routes.caddy
 }

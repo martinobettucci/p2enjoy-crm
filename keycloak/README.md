@@ -32,12 +32,18 @@ d'adresse exigée. La version de l'image est celle du SSO réel, `26.7.3`.
   lui ; seul l'échangeur de session le détient, et le harnais le lit dans le `.env` pour les preuves
   qui ont besoin d'un jeton LeLabs brut. Le client public `lelabs-crm` de `CRM-091` est **retiré** : il
   n'avait plus d'emploi.
-- Le client du CRM a **deux** URL de retour exactes : `SITE_URL` + `/auth/retour`, **substituée
+- Le client du CRM a **trois** URL de retour exactes : `SITE_URL` + `/auth/retour`, **substituée
   à l'import** (`${SSO_DEV_REDIRECT_URI}`) parce que l'origine du Vite de développement varie d'un
-  poste à l'autre ; et `http://127.0.0.1:4173/auth/retour`, l'origine du `vite preview` que le
+  poste à l'autre ; `http://127.0.0.1:4173/auth/retour`, l'origine du `vite preview` que le
   harnais Playwright construit et sert (`e2e/playwright.config.ts`, `WEBAPP_PREVIEW_PORT` par
-  défaut). Un harnais lancé sur un autre port verra Keycloak refuser l'URL — « Paramètre invalide :
-  redirect_uri » —, et c'est voulu : le fournisseur réel compare au caractère près.
+  défaut) ; et, depuis `CRM-102` T3, le retour du **mandataire du connecteur MCP**,
+  `http://localhost:${MCP_DEV_PORT}/auth/callback`, substitué de même (`${SSO_DEV_MCP_REDIRECT_URI}`) — le
+  même client sert l'échangeur et le connecteur, comme en production (`docs/SPEC-mcp.md` §3.2). Un harnais
+  lancé sur un autre port verra Keycloak refuser l'URL — « Paramètre invalide : redirect_uri » —, et
+  c'est voulu : le fournisseur réel compare au caractère près.
+- Ses **portées sont déclarées** (`CRM-102` T3, `docs/SPEC-mcp.md` §12) : les six par défaut que le realm
+  lui donnait déjà, et `offline_access` **seule** en facultative — la connexion longue du connecteur ne
+  dépend plus d'un défaut implicite. Le rôle `offline_access` vient de `default-roles-lelabs`.
 - Le client `crm-audience-etrangere` n'existe qu'ici, public : il sert à prouver le refus d'un code
   émis pour une autre application.
 

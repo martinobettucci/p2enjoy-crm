@@ -31742,3 +31742,43 @@ réduit à l'hôte de l'application quand elle est vide. Les deux comportements 
 **Conséquences écrites avant le code** : `docs/SPEC-mcp.md` §2.1, §2.2, §10, §12, §13 ; `docs/DAT.md` §3.7 ter ;
 `docs/PROD_MIGRATIONS.md` §2.14 (geste 3 : `CRM_MCP_HOTE`). `scripts/verify-spark.sh` devra accepter que Caddy reçoive
 `MCP_HOTE` — une valeur publique, aucun secret — et porter la révision de routes `crm-102`.
+
+### décision 627, mise en œuvre — `CRM-102` T3 : le connecteur dans la pile
+
+*2026-10-20.*
+
+**Ce que la mesure a imposé, avant le code.** Caddy refuse sa configuration entière sur un matcher `host` vide, et
+`{$VAR:défaut}` ne joue que pour une variable absente : d'où deux replis, Compose pour la valeur vide, Caddy pour la
+variable absente — le second a été réclamé par `caddy validate` dans `verify-spark.sh`, qui valide les Caddyfile hors
+de Compose. Un Caddy lancé sans la variable aurait fait tomber tout le site.
+
+**Ce que la relecture du design system a trouvé.** Les pages reprises d'Evoliz portaient trois valeurs de la charte
+d'Evoliz, une attente teintée de bleu et un sablier — l'icône d'« Affaires figées » dans le CRM. Le §5.57 est écrit après
+relecture intégrale, et les pages prennent les jetons de la webapp, mélanges compris.
+
+**Ce que la vérification visuelle a trouvé.** La page de consentement de FastMCP était verte, signée de son logo — et ce
+logo était chargé depuis `gofastmcp.com` à chaque affichage : l'adresse de la personne partait chez un tiers sans rien
+lui demander (`CLAUDE.md` §11). L'icône du serveur est désormais le monogramme du CRM, en URI `data:` — les clients MCP
+la reçoivent aussi —, et la preuve d'interface constate qu'aucune requête ne quitte le connecteur.
+
+**Ce que les preuves de pile ont trouvé, hors de l'unité.**
+
+1. **Les cookies de Keycloak sont `Secure` en `http`** ; un navigateur les rend sur `*.localhost`, `httpx` non, et sa
+   politique de bocal ne survit pas aux requêtes — il recopie les cookies dans un bocal neuf. Le report se fait donc au
+   transport, comme `e2e/api/sso.ts` le fait à la main (décision 578, K2).
+2. **La suite `0085` de T1 n'était tenable que sur un registre vide** : rejouée après l'intégration, elle tombait sur un
+   compte déjà inscrit et comptait un journal partagé. Elle tolère désormais un registre vivant, sur le modèle de la
+   `0084` ; ses sept mutations ont été rejouées, toutes rouges.
+3. **`verify-session-sso.sh` était rouge depuis `CRM-101` T1**, livrée plus tôt dans cette session sans le rejouer : son
+   rejeu manuel s'arrêtait à la 79, alors que la 89 retire désormais les signatures de session serveur à sept arguments
+   que la 76 recrée ; ses comptes d'unitaires et un motif de mutation dataient d'avant `CRM-101` T2. Corrigé : la 89
+   clôt le rejeu, et un contrôle compte les signatures. Le message d'échec nomme désormais la suite rouge.
+4. **`verify-seed-demo.sh` a rougi une fois** (convergence du seed), juste après `verify-session-sso.sh` qui rejoue des
+   migrations à la main ; relancé seul, il est vert, et un rejeu isolé du seed laisse l'empreinte intacte. Observé, non
+   expliqué en totalité : consigné ici plutôt que tu.
+5. **`proposer.sh` ne propose pas `CRM_SUPERADMINS_INITIAUX`**, que le contrat de `CRM-101` annonce : **INC-276**, à
+   trancher avec `CRM-101` T5.
+
+**Vérifications.** Celles du backlog (`CRM-102` T3). Restent la tranche T4 (documentation : client LeLabs redéclaré,
+manuel avec `CRM-103`) et la livraison (T5), qui attend l'instruction du responsable et la confirmation de la seconde
+route par le propriétaire du Spark.

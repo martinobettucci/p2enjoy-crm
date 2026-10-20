@@ -474,7 +474,8 @@ la base vieillit avec l'image : la production devra prévoir son rafraîchisseme
   où la Forge termine TLS et où Caddy sert **en clair** sur `SPARK_HTTP_PORT` (`CRM-090`,
   `docs/SPEC-deploiement-spark.md` §3.2). `/functions/v1/*` fait partie des préfixes relayés vers
   Kong depuis `CRM-090` : la vérification §5.10 du contrat de déploiement l'exigeait.
-- Caddy porte le label `com.p2enjoy.caddy-routes-revision` (**`crm-092`**), incrémenté avec toute
+- Caddy porte le label `com.p2enjoy.caddy-routes-revision` (**`crm-102`** depuis l'aiguillage du connecteur MCP,
+  `crm-092` avant), incrémenté avec toute
   modification de `caddy/routes.caddy` : Caddy ne relit pas ce fichier monté, et le label le fait
   recréer au `up` ordinaire, comme celui de Kong (`docs/SPEC-deploiement-spark.md` §5.1).
 - Depuis `CRM-092` T6, Caddy **répond lui-même `404`** sur `/auth/v1/*` et
@@ -595,7 +596,7 @@ lit la composition vivante et l'occupation **avec le jeton de l'appelant**, avan
 illisible n'en ouvre aucune, et le modèle ne reçoit que la configuration et des nombres d'affaires (`docs/SPEC-ia.md`
 §13.5).
 
-### 3.7 ter Connecteur MCP — service `mcp` (`CRM-102` à `CRM-104` ; spécifié le 2026-10-20, non livré)
+### 3.7 ter Connecteur MCP — service `mcp` (`CRM-102` à `CRM-104` ; `CRM-102` T1 à T3 en développement, non livré)
 
 Spécification : `docs/SPEC-mcp.md` ; décision 627.
 

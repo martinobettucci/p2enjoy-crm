@@ -238,6 +238,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-channels.sh` | Rejoue les preuves des channels : modèle, cloisonnement par clé composite, ordre par track, archivage, politiques RLS, seed, non-complaisance | **disponible** |
 | `scripts/verify-catalogue.sh` | Rejoue les preuves du catalogue de nœuds : modèle, bornes, ordre par workspace, archivage, politiques RLS, seed, non-complaisance | **disponible** |
 | `scripts/verify-plateforme.sh` | Rejoue les preuves de la **plateforme** (`CRM-101`) : traçabilité, le catalogue mesuré — tables fermées, quatorze fonctions `SECURITY DEFINER` réservées à `authenticated` —, le seed (Sabine Plateforme seule superadministratrice, sans appartenance, unique espace gardé), pgTAP, unitaires, API, interface, **trois dégradations réelles** de la migration et la restauration constatée par empreinte ; `--rapide` omet Playwright et le dit | **disponible** |
+| `scripts/verify-mcp.sh` | Rejoue les preuves du **connecteur MCP** (`CRM-102`) : traçabilité, registre mesuré, service sain et prêt, pgTAP 0085, pytest unitaires, intégration OAuth contre le vrai Keycloak et la vraie base — en direct puis **à travers un Caddy de la cellule**, par l'hôte du connecteur —, un vrai client MCP dans le navigateur, et trois dégradations réelles (code, base, aiguillage) avec la restauration constatée ; `--rapide` omet Playwright et le dit | **disponible** |
 
 Les trois scripts acceptent `--help`. Ils s'appuient sur le fichier `.env` de la racine, ou sur
 celui que désigne la variable `P2ENJOY_ENV_FILE` — ce qui permet aux preuves de travailler sur un
@@ -364,6 +365,13 @@ de passe que le seed, `SeedDev2026Local`, et leur `sub` est l'identifiant stable
 `inconnu@p2enjoy.test` n'est attendu par aucun espace, `attendu@p2enjoy.test` n'est pas vérifié par
 LeLabs, `adresse-non-verifiee@p2enjoy.test` n'a pas prouvé son adresse. Le realm est réimporté à
 chaque recréation du conteneur.
+
+**Le connecteur MCP** (`CRM-102`) tourne dans la pile de développement, publié sur
+`http://localhost:${MCP_DEV_PORT}` (défaut `18490`, sur 127.0.0.1 comme Keycloak) : c'est l'adresse à donner à un client
+MCP du poste, par exemple `claude mcp add --transport http crm http://localhost:18490/mcp`. La connexion passe par le
+realm de développement — le client du CRM accepte le retour `http://localhost:18490/auth/callback` —, et seuls entrent
+un superadministrateur (`plateforme@`, `exploitante@`) ou un compte à qui la matrice accorde un droit ; les autres lisent
+« Droits en attente ». `scripts/verify-mcp.sh` rejoue ses preuves.
 
 **Pourquoi un vrai serveur mail en développement ?** Le produit doit *lire* des boîtes en IMAP, y
 créer des dossiers imbriqués et y déposer des messages, et *envoyer* par les identités de ses
@@ -655,6 +663,7 @@ preuves.
 | Chiffrement | `PG_META_CRYPTO_KEY`, `REALTIME_DB_ENC_KEY` | Obligatoires. Longueurs imposées : 32 et 16 caractères. Les secrets de messagerie ne sont pas ici : ils vivent dans le Vault de la base, chiffrés par sa clé racine (décision 366, INC-098) |
 | Durée des jetons | `JWT_EXPIRY` | Obligatoire, lue par la base et PostgREST. `DISABLE_SIGNUP` et `PASSWORD_MIN_LENGTH` sont retirées avec GoTrue (`CRM-092` T6) |
 | Superadministration | `CRM_SUPERADMINS_INITIAUX` | `CRM-101`. **Facultative.** Adresses LeLabs amorcées superadministratrices de la plateforme à leur première connexion admise, **tant qu'aucune ne l'est** ; sans effet ensuite (`docs/SPEC-plateforme.md` §3). Remise au seul worker `session`. Vide dans le gabarit ; en développement, l'overlay lui donne pour défaut le compte de démonstration `plateforme@<domaine du seed>` ; en production, le propriétaire du Spark y pose l'adresse du responsable |
+| Connecteur MCP | `CRM_MCP_HOTE`, `CRM_MCP_REDIRECTIONS_CLIENTS`, `CRM_MCP_TAILLE_MAX_REPONSE`, `CRM_MCP_DEBIT_OAUTH_MINUTE`, `CRM_MCP_ENREGISTREMENTS_HEURE`, `CRM_MCP_JOURNAL_NIVEAU`, `MCP_DEV_PORT` | `CRM-102`. **Toutes facultatives.** `CRM_MCP_HOTE` (un nom d'hôte, par exemple `crm.mcp.lelabs.tech`) allume le connecteur en production — profil Compose `mcp` et aiguillage de Caddy — ; vide, il reste éteint et ne reçoit aucun secret. `CRM_MCP_ORIGINE_PUBLIQUE` n'est jamais posée à la main : Compose la dérive. Les autres règlent les adresses de retour acceptées, la taille des réponses, les débits et les journaux (`docs/SPEC-mcp.md` §10) ; `MCP_DEV_PORT` (`18490`) publie le connecteur en développement |
 | Connexion unique | `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `SSO_DEV_PORT`, `SSO_DEV_ADMIN_PASSWORD` | `CRM-091`, révisé par `CRM-092`. Les trois premières sont obligatoires partout : émetteur exact, client OIDC **confidentiel** (`lelabs-crm-serveur`) et son secret, lus par l'échangeur de session — le secret n'atteint que lui, et jamais le bundle ; l'émetteur et le client sont en outre figés au build de la webapp. En production, le secret est posé par l'administrateur du realm LeLabs ; en développement, tiré au hasard par `./runDev.sh`. Les deux dernières ne servent qu'au Keycloak de développement ; le mot de passe d'administration est tiré au hasard par `./runDev.sh` et **sans objet** dans la cellule Spark |
 | Pile | `STACK_RLIMIT_NOFILE`, `APPLY_MIGRATIONS` | Facultatives, avec défauts. `APPLY_MIGRATIONS=false` est imposé en production **et doit y rester** : c'est ce qui empêche une migration non décidée. Les migrations de production s'appliquent dans une fenêtre de maintenance ouverte par `./runProd.sh --migrate`, qui surcharge la variable pour sa seule invocation sans réécrire `.env`, et dont le retour arrière est la restauration de l'instantané de VM (décision 489, `CRM-087`) |
 | Production | `APP_DOMAIN`, `CADDY_ACME_EMAIL` | Obligatoires en production uniquement. `CADDY_ACME_EMAIL` est **sans objet dans la cellule Spark**, où la Forge porte le certificat |
@@ -761,8 +770,9 @@ mail-sync/
 └── Dockerfile              Image épinglée, utilisateur non privilégié, racine en lecture seule
 ```
 
-Le connecteur MCP livré par `CRM-102` T2 (`docs/SPEC-mcp.md`) — **pas encore câblé dans la pile** : le service
-Compose, son volume, le bloc d'hôte Caddy et le realm viennent avec la tranche T3 :
+Le connecteur MCP de `CRM-102` (`docs/SPEC-mcp.md`), câblé dans la pile depuis la tranche T3 — service Compose `mcp`
+sous le profil `mcp` (toujours actif en développement, allumé en production par `CRM_MCP_HOTE`), volume `mcp-etat`,
+aiguillage par l'hôte dans `caddy/routes.caddy` :
 
 ```
 mcp/

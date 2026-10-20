@@ -26,10 +26,13 @@ services:
 
   caddy:
     mem_limit: 128m
-    # `caddy/Caddyfile.spark` ne lit aucune variable : ni domaine, ni adresse ACME. L'environnement
-    # hérité de l'overlay de production est donc vidé, et `CADDY_ACME_EMAIL` n'atteint rien
-    # (docs/SPEC-deploiement-spark.md §4.2).
-    environment: !reset {}
+    # `caddy/Caddyfile.spark` ne lit ni domaine, ni adresse ACME. L'environnement hérité de l'overlay de
+    # production est donc REMPLACÉ, et `CADDY_ACME_EMAIL` n'atteint rien (docs/SPEC-deploiement-spark.md §4.2).
+    # Seule demeure `MCP_HOTE` (CRM-102, docs/SPEC-mcp.md §2.2) : le site `:8080` reçoit tous les hôtes de la Forge,
+    # et le matcher de `routes.caddy` en sépare celui du connecteur. Un nom d'hôte public, jamais un secret ; jamais
+    # vide, `mcp.invalid` à défaut.
+    environment: !override
+      MCP_HOTE: ${CRM_MCP_HOTE:-mcp.invalid}
     ports: !override
       - "${SPARK_HTTP_PORT}:8080"
     volumes: !override
@@ -128,6 +131,12 @@ services:
   functions:
     mem_limit: 256m
   mail-sync:
+    mem_limit: 256m
+
+  # @spec CRM-102 (docs/BACKLOG.md), docs/SPEC-mcp.md §2.1 — sous le profil `mcp`, allumé par `CRM_MCP_HOTE`. Plafond
+  # provisoire, celui de `mail-sync`, son voisin Python : à chiffrer au §8 de docs/SPEC-deploiement-spark.md après
+  # mesure dans la cellule.
+  mcp:
     mem_limit: 256m
 
 volumes:

@@ -7260,3 +7260,20 @@ unité.
 **Issue proposée, à arbitrer** : attendre l'événement de preuve LUI-MÊME —
 `expect.poll(() => temoin.recues.some((e) => e.new['id'] === essai('20')))` — au lieu du premier événement venu ; le
 scénario prouverait la même chose, sans dépendre de l'ordre d'arrivée d'un canari.
+
+### INC-276 — le contrat de déploiement annonce une proposition de `CRM_SUPERADMINS_INITIAUX` que `proposer.sh` ne fait pas
+
+*Relevée le 2026-10-20 en écrivant `proposer.sh --connecteur-mcp` (`CRM-102` T3) ; ouverte, à trancher avec `CRM-101` T5.*
+
+**Le constat.** `docs/PROD_MIGRATIONS.md` §2.13, geste 1, écrit : « Poser `CRM_SUPERADMINS_INITIAUX` […] à partir de la
+proposition — proposition par `scripts/spark/proposer.sh` ». Aucun mode de `proposer.sh` ne propose cette variable : ni la
+proposition complète d'une cellule vierge, ni `--demandes-seules`, ni `--assistant-ia`. Le geste resterait à faire à la
+main, sur la foi d'un contrat qui le décrit autrement.
+
+**Pourquoi ce n'est pas tranché ici.** La variable relève de `CRM-101`, dont la livraison (T5) attend l'instruction du
+responsable ; et sa valeur — l'adresse LeLabs du responsable — ne se devine pas : la proposer demande une option nommée,
+comme `--ollama-host` pour l'assistant IA.
+
+**Issues à arbitrer** : (1) une option `--superadmin adresse`, qui propose la variable à une cellule en service sans rien
+tirer, sur le modèle de `--connecteur-mcp` ; (2) réécrire le geste 1 du §2.13 pour une saisie directe à la console, sans
+proposition.

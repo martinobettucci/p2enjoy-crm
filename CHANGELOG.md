@@ -13,9 +13,9 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-102` T1 et T2 — le connecteur MCP : son registre en base, son service (décision 627)
+### `CRM-102` T1 à T3 — le connecteur MCP : son registre en base, son service, sa place dans la pile (décision 627)
 
-*Migration `0090` prouvée en développement (pgTAP, mutations, types) ; service `mcp/` prouvé par ses tests unitaires et une sonde contre la pile de développement. Le service n'est câblé dans la pile qu'avec T3 ; livraison avec la tranche T5.*
+*Migration `0090`, service `mcp/` et pile prouvés en développement de bout en bout (pgTAP, unitaires, intégration contre le vrai Keycloak, à travers le Caddy de la cellule, un vrai client MCP dans le navigateur). Livraison avec la tranche T5.*
 
 - **Trois tables fermées à l'API** : les comptes qui se sont connectés au connecteur, la **matrice** de leurs droits
   (par espace, famille — structure, affaires, contacts, budgets, temps, objectifs, messagerie — et action — consulter,
@@ -28,6 +28,10 @@ d'exécuter le code attendu.
   des seuls comptes vérifiés, page « Droits en attente » ; chaque appel agit **sous l'identité de la personne** (la
   RLS du CRM s'applique), après le contrôle de la matrice ; un outil caché reste inconnu ; chaque appel est journalisé
   sans ses arguments. Un premier outil : la liste des espaces ouverts au connecteur.
+- **T3 — le connecteur dans la pile** : un service Compose qui n'existe que configuré — toujours actif en développement
+  sur `http://localhost:18490/mcp`, allumé en production par la seule variable `CRM_MCP_HOTE` (sinon éteint, sans aucun
+  secret) — ; Caddy aiguille l'hôte du connecteur vers lui ; la page de consentement porte la charte P2Enjoy et ne
+  charge plus rien d'un domaine tiers ; `proposer.sh --connecteur-mcp` propose l'hôte et la seconde route à la cellule.
 
 ### `CRM-101` T1 à T4 — la plateforme et son superadministrateur : la base, la connexion, l'écran, le seed (décision 627)
 

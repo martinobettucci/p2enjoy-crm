@@ -9,6 +9,8 @@
 #       (docs/JOURNAL.md décisions 589 et 590)
 # @spec CRM-097 (docs/BACKLOG.md) tranche T4 — docs/SPEC-deploiement-spark.md §4.3 et §4.4 (`--assistant-ia` :
 #       les variables OLLAMA_* proposées, la clé demandée vide, rien de tiré) ; docs/SPEC-ia.md §3 ; décision 620
+# @spec CRM-102 (docs/BACKLOG.md) tranche T3 — docs/SPEC-mcp.md §2.2, §10, §15 (`--connecteur-mcp` : l'hôte du connecteur
+#       et sa route, proposés à une cellule en service ; rien n'est tiré) ; docs/JOURNAL.md décision 627 (D4, précision T3)
 #
 # S'exécute DANS la cellule, sous le compte `spark-docker`, depuis le dépôt livré (/srv/crm).
 #
@@ -28,6 +30,7 @@
 #   scripts/spark/proposer.sh --route-seule [--domaine crm.lelabs.tech] [--port 8080]
 #   scripts/spark/proposer.sh --demandes-seules [--client-sso lelabs-crm-serveur]
 #   scripts/spark/proposer.sh --assistant-ia --ollama-host https://hôte:port
+#   scripts/spark/proposer.sh --connecteur-mcp [--hote-mcp crm.mcp.lelabs.tech] [--port 8080]
 #   scripts/spark/proposer.sh --help
 #
 # La route se propose en `tls` : c'est ce que la FORGE expose au public, et non ce que la pile sert.
@@ -51,6 +54,12 @@
 # n'est ni lue ni redemandée. Le propriétaire saisit la clé en console et fait autoriser la plage d'adresses de
 # la cellule par le serveur LLM.
 #
+# `--connecteur-mcp` (`CRM-102` T3) allume le connecteur MCP d'une cellule EN SERVICE, sans rien tirer : la variable
+# `CRM_MCP_HOTE` si elle n'est pas à la valeur attendue — Compose en dérive l'origine publique et active le profil
+# `mcp` —, et la SECONDE route de la cellule, `hôte port tls`, vers le même port que celle du CRM : Caddy sépare les
+# deux hôtes. Le connecteur réemploie les secrets de la pile et le secret du client LeLabs : rien n'est à saisir. La
+# seconde route est à confirmer par le propriétaire du Spark (docs/SPEC-mcp.md §2.2).
+#
 # Plus aucune option SMTP depuis `CRM-092` T6 : les courriels transactionnels étaient ceux de GoTrue,
 # retiré de la pile (décision 589).
 #
@@ -72,6 +81,8 @@ EMETTEUR_SSO=https://oauth.lelabs.tech/realms/lelabs
 ROUTE_SEULE=0
 DEMANDES_SEULES=0
 ASSISTANT_IA=0
+CONNECTEUR_MCP=0
+HOTE_MCP=crm.mcp.lelabs.tech
 OLLAMA_HOTE=""
 OLLAMA_MODELE=gemma4:e2b
 OLLAMA_CONTEXTE=36864
@@ -87,6 +98,8 @@ while [ $# -gt 0 ]; do
 		--demandes-seules) DEMANDES_SEULES=1 ;;
 		--assistant-ia) ASSISTANT_IA=1 ;;
 		--ollama-host) OLLAMA_HOTE=${2:?--ollama-host exige une valeur}; shift ;;
+		--connecteur-mcp) CONNECTEUR_MCP=1 ;;
+		--hote-mcp)   HOTE_MCP=${2:?--hote-mcp exige une valeur}; shift ;;
 		--help|-h)    usage; exit 0 ;;
 		*)            die "option inconnue « $1 ». Voir scripts/spark/proposer.sh --help." ;;
 	esac
@@ -115,6 +128,14 @@ if [ "$ASSISTANT_IA" = 1 ]; then
 else
 	[ -z "$OLLAMA_HOTE" ] || die "--ollama-host n'a de sens qu'avec --assistant-ia."
 fi
+if [ "$CONNECTEUR_MCP" = 1 ]; then
+	[ "$ROUTE_SEULE" = 0 ] && [ "$DEMANDES_SEULES" = 0 ] && [ "$ASSISTANT_IA" = 0 ] \
+		|| die "--connecteur-mcp exclut --route-seule, --demandes-seules et --assistant-ia."
+	case "$HOTE_MCP" in
+		*[!a-z0-9.-]* | "" | .* | *. ) die "hôte du connecteur « $HOTE_MCP » hors forme : lettres minuscules, chiffres, points et tirets." ;;
+	esac
+	[ "$HOTE_MCP" != "$DOMAINE" ] || die "l'hôte du connecteur doit différer de celui du CRM ($DOMAINE) : Caddy les sépare par l'hôte."
+fi
 
 PROPOSITION_ENV="${SPARK_ENV_PROPOSAL:-${SPARK_ENV_FILE}.?}"
 PROPOSITION_SECRETS="${SPARK_SECRETS_PROPOSAL:-${SPARK_SECRETS_FILE}.?}"
@@ -123,7 +144,8 @@ MARQUE="# --- fin du bloc posé par sparkd, écrivez ci-dessous ---"
 
 # --- Gardes --------------------------------------------------------------------------------------
 
-if [ "$ROUTE_SEULE" = 0 ] && [ "$DEMANDES_SEULES" = 0 ] && [ "$ASSISTANT_IA" = 0 ] && [ -f "$SPARK_SECRETS_FILE" ] \
+if [ "$ROUTE_SEULE" = 0 ] && [ "$DEMANDES_SEULES" = 0 ] && [ "$ASSISTANT_IA" = 0 ] && [ "$CONNECTEUR_MCP" = 0 ] \
+	&& [ -f "$SPARK_SECRETS_FILE" ] \
 	&& grep -q '^JWT_SECRET=' "$SPARK_SECRETS_FILE"; then
 	die "$SPARK_SECRETS_FILE porte déjà JWT_SECRET : des secrets sont en service.
         Proposer d'autres secrets invaliderait les jetons émis et le mot de passe de la base.
@@ -140,6 +162,7 @@ FICHIERS=("$PROPOSITION_ENV" "$PROPOSITION_SECRETS" "$PROPOSITION_ROUTES")
 [ "$ROUTE_SEULE" = 0 ] || FICHIERS=("$PROPOSITION_ROUTES")
 [ "$DEMANDES_SEULES" = 0 ] || FICHIERS=("$PROPOSITION_ENV" "$PROPOSITION_SECRETS")
 [ "$ASSISTANT_IA" = 0 ] || FICHIERS=("$PROPOSITION_ENV" "$PROPOSITION_SECRETS")
+[ "$CONNECTEUR_MCP" = 0 ] || FICHIERS=("$PROPOSITION_ENV" "$PROPOSITION_ROUTES")
 for fichier in "${FICHIERS[@]}"; do
 	[ -e "$fichier" ] || die "$fichier absent : ce script s'exécute dans la cellule, où le plan de contrôle le pose."
 	[ -w "$fichier" ] || die "$fichier non inscriptible par le compte $(id -un)."
@@ -257,6 +280,31 @@ if [ "$ASSISTANT_IA" = 1 ]; then
 		info "Variables : $PROPOSITION_ENV · Secrets : $PROPOSITION_SECRETS"
 		info "Le propriétaire les importe depuis la console, saisit la clé, et fait autoriser la plage d'adresses de la cellule par le serveur LLM."
 	fi
+	exit 0
+fi
+
+# --- Le connecteur MCP, pour une cellule en service (CRM-102 T3) ------------------------------
+#
+# Rien n'est tiré, rien de secret n'est lu : la variable publique est comparée à l'attendue, et la route proposée.
+
+if [ "$CONNECTEUR_MCP" = 1 ]; then
+	proposees=""
+	if [ "$( [ -f "$SPARK_ENV_FILE" ] && env_get "$SPARK_ENV_FILE" CRM_MCP_HOTE)" != "$HOTE_MCP" ]; then
+		{
+			printf '\n'
+			ligne CRM_MCP_HOTE "Hôte du connecteur MCP : allume le service mcp et l'aiguillage de Caddy (CRM-102)." "$HOTE_MCP"
+		} >> "$PROPOSITION_ENV"
+		proposees=" CRM_MCP_HOTE"
+	fi
+	{
+		printf '\n# Seconde route de la cellule : le connecteur MCP, aiguillé par Caddy selon l'"'"'hôte (CRM-102). À confirmer.\n'
+		printf '%s %s tls\n' "$HOTE_MCP" "$PORT"
+	} >> "$PROPOSITION_ROUTES"
+	say "Connecteur MCP proposé — rien n'est appliqué"
+	[ -z "$proposees" ] || info "Proposée :$proposees · Variables : $PROPOSITION_ENV"
+	info "Route : $PROPOSITION_ROUTES — $HOTE_MCP $PORT tls"
+	info "Le propriétaire du Spark relit, importe la variable et accepte la route depuis la console ; le DNS de $HOTE_MCP vise la Forge."
+	info "Préalable : la déclaration du client LeLabs porte le retour https://$HOTE_MCP/auth/callback (docs/PROD_MIGRATIONS.md §2.14)."
 	exit 0
 fi
 
