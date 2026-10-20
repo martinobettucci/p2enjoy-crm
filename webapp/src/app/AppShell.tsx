@@ -26,6 +26,7 @@ import { clientCrm } from '../lib/supabase'
 import type { Channel } from '../lib/channels'
 import { useEstSuperadmin } from '../lib/plateforme'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
+import { useCapacitesEspace } from '../lib/capacites'
 import { useApresTracksModifies, useTracks } from '../lib/tracks'
 import { useWorkspaces } from '../lib/workspaces'
 import { useAuthentification } from './Authentification'
@@ -86,7 +87,10 @@ export function AppShell({
 	const idWorkspace = etat.statut === 'pret' ? (etat.donnees[0]?.id ?? null) : null
 	const { etat: etatRole } = useRoleWorkspace(clientCrm, idWorkspace, idUtilisateur)
 	const estAdmin = estAdministrateur(etatRole)
-	const contexteEspace = useMemo(() => ({ idWorkspace, estAdmin }), [idWorkspace, estAdmin])
+	// `CRM-093` — les capacités de l'espace, lues sur sa ligne (docs/SPEC-droits-interface.md §2.2) : une requête à
+	// part, pour qu'un défaut de lecture ne fasse jamais tomber la coquille, seulement l'aide d'interface.
+	const capacites = useCapacitesEspace(clientCrm, idWorkspace)
+	const contexteEspace = useMemo(() => ({ idWorkspace, estAdmin, capacites }), [idWorkspace, estAdmin, capacites])
 	// `CRM-101` — l'entrée « Plateforme » n'est rendue que si la base le dit (docs/DESIGN_SYSTEM.md §5.56) ;
 	// pendant la lecture et en cas d'échec, elle est absente.
 	const etatSuperadmin = useEstSuperadmin(clientCrm, idUtilisateur)

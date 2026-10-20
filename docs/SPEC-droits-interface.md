@@ -83,7 +83,7 @@ avec la ligne de l'espace qu'elle lit déjà (`workspaces?select=…,administrat
   lié par `aria-describedby`. C'est le patron du canevas en lecture seule (`docs/DESIGN_SYSTEM.md` §5.29 ter :
   bandeau neutre `--color-hover`, bordure `--color-border`, texte `--color-ink`, icône `Eye`, `role="status"`, motif
   une fois et chaque commande y renvoie) et d'une ligne soldée (§5.31 bis) ; la tranche T2 l'écrit une fois pour toutes
-  dans `docs/DESIGN_SYSTEM.md` (§5.58), comme composant partagé de `webapp/src/components/ui`, et en étend la
+  dans `docs/DESIGN_SYSTEM.md` (§5.59), comme composant partagé de `webapp/src/components/ui`, et en étend la
   frontière à tout le produit.
 - **Les motifs**, centralisés dans `webapp/src/i18n/fr.ts` : « Réservé aux administrateurs de l'espace. » ;
   « Réservé aux administrateurs et aux business developers. » ; « Lecture seule : vos droits sur ce channel ne

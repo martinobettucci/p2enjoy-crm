@@ -31958,7 +31958,7 @@ d'avance selon le rôle » visaient la déduction d'écran, non la capacité con
 calculées de plus, sur la ligne de l'espace — `administration_permise` et `edition_permise` —, migration `0092`,
 calculées par les fonctions mêmes des politiques. La décision 628 est tenue à la lettre (« rôle et droits fins, lus par
 la base ») ; seule la forme de lecture change. `docs/SPEC-droits-interface.md` §2 et §2.2 sont révisés en ce sens ;
-`docs/DESIGN_SYSTEM.md` §5.58 généralisera la frontière du §5.29 ter à tout le produit avec la tranche T2.
+`docs/DESIGN_SYSTEM.md` §5.59 (le §5.58 étant pris par `CRM-105`) généralisera la frontière du §5.29 ter à tout le produit avec la tranche T2.
 
 ## décision 629 — CRM-105 : la description d'un track, d'un channel et d'une affaire paraît en infobulle sur l'élément qui la porte
 

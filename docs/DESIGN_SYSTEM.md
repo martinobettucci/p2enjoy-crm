@@ -5580,3 +5580,50 @@ montrent de la même façon.
 
 - **Aucune couleur, aucun jeton de couleur, aucune icône nouvelle.** Deux durées nouvelles, déclarées une fois dans le
   composant et nommées ici ; la surface emprunte au §5.49 son relief et au §5.43 sa largeur et sa règle de cadre.
+
+### 5.59 La commande refusée par une capacité de la base — `CRM-093`
+
+*Écrit le 2026-10-21, avant le code des écrans (décision 628 et sa précision), après relecture intégrale de ce document.*
+Ce que l'interface lit et ce qu'elle fait d'une commande est spécifié par `docs/SPEC-droits-interface.md` §2 à §4 ; ces
+règles ne disent que de quoi cela a l'air.
+
+**LA FRONTIÈRE DU §5.29 TER VAUT DÉSORMAIS POUR TOUT LE PRODUIT.** Le canevas d'objectifs (§5.29 ter) et la plateforme
+(§5.56) l'appliquaient seuls : si l'écran doit **lire un rôle** pour éteindre, c'est interdit ; si **la base lui dit sur
+la ligne** qu'il ne peut pas écrire, l'éteindre est la forme juste. Trois capacités sont rendues ainsi, par les fonctions
+mêmes de la RLS : **administrer l'espace** et **éditer l'espace** (colonnes calculées de `workspaces`), **écrire sur un
+channel** (colonnes calculées de `channels` et `cards`). **Les mentions « aucune commande n'est éteinte d'avance selon le
+rôle »** des §5.3, §5.3 ter, §5.3 quater, §5.4 ter, §5.4 quater, §5.13, §5.16, §5.18, §5.21, §5.23, §5.25 à §5.28, §5.40,
+§5.42 et §5.50 restent vraies au mot près — aucun rôle n'est lu — ; elles se lisent désormais avec celle-ci : une
+commande dont la capacité est **refusée par la base** est rendue désactivée avec son motif, et c'est l'arbitrage du
+responsable (décision 628 : « désactivé avec motif », et non masqué).
+
+- **La commande reste MONTÉE, `disabled`, LISIBLE** — contraste conservé, jamais `opacity-50`, son étiquette intacte : une
+  commande éteinte apprend ce qu'on pourrait faire ailleurs (§5.29 ter). Elle n'est **jamais masquée**.
+- **UN MOTIF PAR BLOC, PAS PAR COMMANDE.** Le motif est le composant partagé `MotifLectureSeule`
+  (`webapp/src/components/ui/MotifLectureSeule.tsx`), la forme exacte du bandeau du §5.29 ter : fond `--color-hover`,
+  bordure `--color-border`, texte `--color-ink`, icône `Eye` décorative, `role="status"`, `max-w-[70ch]`. Il est posé en
+  tête du bloc dont les commandes sont refusées, et chacune le cite par `aria-describedby`. Il dit d'abord ce que l'écran
+  permet — consulter —, puis ce qu'il refuse et à qui le geste revient ; il ne promet aucune démarche.
+- **Quatre motifs, pas un de plus** : l'écran réservé aux administrateurs, l'écran réservé aux administrateurs et aux
+  business developers, le channel dont on ne peut pas modifier les affaires, l'affaire qu'on ne peut pas modifier
+  (`rights.readonly.*`).
+- **PENDANT LA LECTURE de la capacité, la commande est désactivée SANS motif** : aucun texte de refus ne s'affiche avant
+  d'être su — l'écart inverse ferait clignoter un reproche à chaque chargement.
+- **SUR UN DÉFAUT DE LECTURE, la commande reste OFFERTE** : l'aide d'interface s'efface, la base refusera si besoin, et
+  l'écran traduira son refus comme aujourd'hui. Un défaut de lecture ne prive jamais un administrateur de ses gestes.
+- **UN LIEN QUI MÈNE À UN GESTE REFUSÉ** — « Nouveau channel » de la barre d'onglets (§5.55), les liens d'administration
+  du guide (§5.17, §5.49) — **ne se désactive pas** : il est rendu comme **texte** à la même place, avec la même icône et
+  le même libellé, en `--color-text-2`, et cite le même motif. Un `a` désactivé n'existe pas ; un lien qui mène à un écran
+  refusé est la commande morte du §5.10.
+- **UN CHAMP qu'on ne peut pas enregistrer est `readOnly`, jamais `disabled`** : il reste lisible et sélectionnable au
+  clavier ; c'est le bouton d'enregistrement qui est désactivé avec le motif. *Écart borné avec le §5.15* (« une valeur qui
+  ne se modifie plus se rend en phrase ») : là, la valeur ne se modifie **jamais** ; ici, elle se modifie, mais pas par
+  cette personne.
+- **LES GESTES PERSONNELS NE S'ÉTEIGNENT JAMAIS** : son temps, ses préférences de notification, son profil, la correction
+  ou le retrait de ses propres commentaires (§5.10). Ils ne dépendent d'aucune des trois capacités.
+- **UN ÉCRAN D'ADMINISTRATION atteint par son adresse** garde son état « réservé aux administrateurs » (§5.8, absence de
+  droit) ; le motif de bloc vaut pour les écrans qui se **consultent** sans s'administrer.
+- **UN REFUS SERVEUR MALGRÉ UNE COMMANDE OFFERTE** — droit retiré entre l'affichage et le geste — reste traduit dans son
+  bloc, comme partout (§5.13), et la capacité est relue.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : le motif emprunte au §5.29 ter sa forme entière et son icône
+  `Eye`, les commandes au §5.5 leurs variantes, l'état désactivé au §8.
