@@ -401,7 +401,15 @@ aucune donnée métier.
 | 5 | Vérifier : `GET https://crm.mcp.lelabs.tech/pret` rend `200`, `POST /mcp` sans jeton rend `401` avec `resource_metadata`, et le refus de redirection d'un client non listé | poste, lecture seule | `scripts/spark/verifier.sh`, étendu par `CRM-102` T4 |
 | 6 | Ajouter le connecteur dans Claude ou ChatGPT, se connecter avec « Stay signed in », poser une matrice dans `/plateforme`, puis voir l'appel au journal | le responsable | l'assistant et l'application |
 
-**État au 2026-10-21 — propositions déposées dans la cellule, rien n'est importé.** Sur instruction du responsable,
+**État au 2026-10-21, relevé en lecture seule après les gestes du propriétaire du Spark** : `CRM_MCP_HOTE` et
+`CRM_SUPERADMINS_INITIAUX` **importées** dans `/etc/spark/env`, route `crm.mcp.lelabs.tech 8080 tls` **acceptée**, plus
+aucune proposition pendante ; DNS `crm.mcp.lelabs.tech → 51.158.54.202` **publié** (résolveurs publics) ; certificat TLS
+de la Forge **valide** pour ce nom ; l'hôte mène encore à la webapp, l'aiguillage n'étant pas livré (`/srv/crm` à
+`7d819786`). **Reste à faire chez LeLabs (geste 1)** : la sonde du point d'autorisation rend `400 Paramètre invalide :
+redirect_uri` pour `https://crm.mcp.lelabs.tech/auth/callback` — la redéclaration n'est pas appliquée —, et `302` pour le
+retour de la webapp, inchangé. Reste aussi l'instantané, puis la livraison (geste 4).
+
+**Avant cela, propositions déposées dans la cellule, rien n'était importé.** Sur instruction du responsable,
 `/etc/spark/env.?` porte `CRM_MCP_HOTE=crm.mcp.lelabs.tech` (geste 3) et `CRM_SUPERADMINS_INITIAUX=martino@p2enjoy.studio`
 (geste 1 du §2.13, écrit à la main faute d'option de `proposer.sh` : INC-276), et `/etc/spark/routes.?` la route
 `crm.mcp.lelabs.tech 8080 tls` (geste 2). Déposées par `proposer.sh --connecteur-mcp` de `HEAD`, extrait dans un
