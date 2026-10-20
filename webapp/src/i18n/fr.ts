@@ -615,6 +615,11 @@ export const fr = {
 	// pas un rôle qui produit cet état, mais la capacité que la base rend sur la ligne du tableau
 	// (INC-170, décision 546) —, et elle ne promet aucune démarche : qui accorde ce droit dépend du
 	// workspace, et l'écran l'ignore.
+	// --- Gestes offerts selon les droits — CRM-093, docs/SPEC-droits-interface.md §3, DESIGN_SYSTEM §5.59 -----------
+	// Chaque motif dit d'abord ce que l'écran permet — consulter —, puis ce qu'il refuse, et à qui le geste revient. Il
+	// ne promet aucune démarche : qui accorde un droit dépend de l'espace, et l'écran l'ignore (§5.29 ter).
+	'rights.readonly.edition':
+		'Vous consultez cet écran. Ses modifications sont réservées aux administrateurs et aux business developers de l’espace : les commandes restent visibles mais sont inactives.',
 	'goals.readonly.notice':
 		'Vous consultez ce tableau. Vous n’avez pas le droit d’y écrire : les commandes de modification restent visibles mais sont inactives.',
 	// LA FICHE A SA PROPRE PHRASE, plus courte : elle REMPLACE la consigne d'édition, qui serait
@@ -3613,6 +3618,7 @@ export const fr = {
 	'platform.title': 'Plateforme',
 	'platform.tabs.aria': 'Sections de la plateforme',
 	'platform.tabs.espaces': 'Espaces',
+	'platform.tabs.utilisateurs': 'Utilisateurs',
 	'platform.tabs.superadmins': 'Superadministrateurs',
 	'platform.tabs.journal': 'Journal',
 	'platform.refusAcces.title': 'Accès réservé',
@@ -3720,6 +3726,21 @@ export const fr = {
 	'platform.danger.definitif': 'La suppression est définitive : seule la restauration d’une sauvegarde la défait.',
 	'platform.danger.saisie': 'Saisissez « {slug} » pour confirmer',
 	'platform.danger.confirmer': 'Supprimer définitivement',
+	'platform.utilisateurs.titre': 'Utilisateurs',
+	'platform.utilisateurs.lelabs': 'Toutes les personnes admises au moins une fois dans le CRM. Le rôle admin LeLabs n’y est pas affiché : le CRM ne le connaît que par la connexion.',
+	'platform.utilisateurs.recherche': 'Rechercher un utilisateur',
+	'platform.utilisateurs.colonne.nom': 'Nom',
+	'platform.utilisateurs.colonne.espaces': 'Espaces',
+	'platform.utilisateurs.colonne.connecteur': 'Connecteur MCP',
+	'platform.utilisateurs.colonne.depuis': 'Depuis',
+	'platform.utilisateurs.aucunEspace': 'Aucun espace',
+	'platform.utilisateurs.jamaisConnecte': 'Jamais connecté',
+	'platform.utilisateurs.troncature': 'Les {n} premiers utilisateurs : affinez la recherche.',
+	'platform.utilisateurs.vide.title': 'Aucun utilisateur',
+	'platform.utilisateurs.vide.body': 'Personne n’a encore été admis dans le CRM.',
+	'platform.utilisateurs.vide.recherche': 'Aucun utilisateur ne correspond à « {terme} ».',
+	'platform.utilisateurs.erreur.title': 'Les utilisateurs n’ont pas pu être lus',
+	'platform.utilisateurs.erreur.body': 'La liste n’a pas pu être chargée. Réessayez dans un instant.',
 	'platform.superadmins.titre': 'Superadministrateurs',
 	'platform.superadmins.lelabs': 'Les porteurs du rôle admin LeLabs sont aussi superadministrateurs, sans figurer dans cette liste : le CRM ne les connaît que par leur connexion.',
 	'platform.superadmins.colonne.accordePar': 'Accordé par',

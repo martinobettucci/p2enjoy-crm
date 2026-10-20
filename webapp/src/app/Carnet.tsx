@@ -7,6 +7,8 @@
 // @spec docs/SPEC-contacts.md §14 (sous-tranche 4e : la CRÉATION d'un contact) — §14.2 (où le
 //       geste s'ancre), §14.5 (contrat de comportement, cas a à l), §14.6 (l'écran ne calcule
 //       aucun droit), §14.7 (limites nommées)
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouveau contact » désactivé avec son motif quand la base refuse
+//       l'édition de l'espace (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec docs/DESIGN_SYSTEM.md §5.19 (cette surface, révisé), §5.20 (la fiche, destination du
 //       lien), §5.9 (tableau de données),
 //       §5.8 (états systématiques), §2 (données techniques), §12.6 (débordement signalé)
@@ -40,6 +42,12 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useWorkspaces } from '../lib/workspaces'
 import { cheminContact, cheminOrganisation } from './chemins'
 import { FormulaireCreationContact } from './FormulaireCreationContact'
+import { useContexteEspace } from './ContexteEspace'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { motifVisible, proprietesCommande } from '../lib/capacites'
+
+/** Le motif du carnet, cité par sa commande de création quand la base refuse l'édition de l'espace. */
+const ID_MOTIF_CARNET = 'carnet-lecture-seule'
 
 /** Cellule ordinaire : une seule ligne de texte en ellipse, hauteur de cible (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[28ch]'
@@ -58,6 +66,7 @@ export type ProprietesCarnet = {
 }
 
 export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
+	const { capacites } = useContexteEspace()
 	const [etat, setEtat] = useState<EtatAsync<readonly ContactDuCarnet[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	// Une réponse arrivée après le démontage, ou périmée par une nouvelle tentative, ne doit pas
@@ -174,6 +183,9 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 		gauche.full_name.localeCompare(droite.full_name, 'fr'),
 	)
 	const idWorkspace = espaces.etat.statut === 'pret' ? (espaces.etat.donnees[0]?.id ?? null) : null
+	// `CRM-093` — la capacité d'éditer l'espace, rendue par la base sur sa ligne (§5.59) : refusée, la commande reste
+	// montée, désactivée, et cite le motif dit une fois en tête du carnet.
+	const commande = proprietesCommande(capacites.edition, ID_MOTIF_CARNET)
 
 	// LE GESTE DE CRÉATION — §14.2. Il vit entre le titre et le tableau, dans le FLUX du document,
 	// et il est le MÊME dans l'état vide : un carnet vide est précisément celui où l'on veut
@@ -191,15 +203,21 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 				onFermer={fermer}
 			/>
 		) : (
-			<button
-				type="button"
-				ref={commandeOuverture}
-				data-testid="ouvrir-creation-contact"
-				className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface"
-				onClick={() => setOuvert(true)}
-			>
-				{t('contacts.creation.open')}
-			</button>
+			<>
+				{motifVisible(capacites.edition) ? (
+					<MotifLectureSeule id={ID_MOTIF_CARNET}>{t('rights.readonly.edition')}</MotifLectureSeule>
+				) : null}
+				<button
+					type="button"
+					ref={commandeOuverture}
+					data-testid="ouvrir-creation-contact"
+					className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface disabled:cursor-not-allowed disabled:opacity-70"
+					{...commande}
+					onClick={() => setOuvert(true)}
+				>
+					{t('contacts.creation.open')}
+				</button>
+			</>
 		)
 
 	if (contacts.length === 0) {

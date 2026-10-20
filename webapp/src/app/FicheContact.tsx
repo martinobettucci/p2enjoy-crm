@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Modifier » et « Supprimer » désactivés avec leur motif quand la base
+//       refuse l'édition de l'espace (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4f :
 //       la fiche d'un contact, et l'HISTORIQUE TRANSVERSE que la Definition of Done nomme
 // @spec docs/SPEC-contacts.md §15.2 (où la fiche s'ancre, et pourquoi hors de `ROUTES`),
@@ -106,6 +108,12 @@ import {
 	CommandeSuppressionContact,
 	ConfirmationSuppressionContact,
 } from './SuppressionContact'
+import { useContexteEspace } from './ContexteEspace'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { motifVisible, proprietesCommande } from '../lib/capacites'
+
+/** Le motif de la zone de commandes, cité par « Modifier » et « Supprimer » quand la base refuse l'édition (CRM-093). */
+const ID_MOTIF_FICHE_CONTACT = 'fiche-contact-lecture-seule'
 
 /** Cellule ordinaire du tableau des affaires — mêmes règles qu'au carnet (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
@@ -194,6 +202,8 @@ export function ContenuFicheContact({
 	idContact,
 	onNomConnu,
 }: ProprietesContenuFicheContact & { readonly onNomConnu?: (nom: string | null) => void }) {
+	// `CRM-093` — lue ICI, sous la coquille qui fournit le contexte : `FicheContact` rend `AppShell` elle-même.
+	const { capacites } = useContexteEspace()
 	const [etat, setEtat] = useState<EtatAsync<FicheContactLue | null>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 
@@ -594,7 +604,8 @@ export function ContenuFicheContact({
 						type="button"
 						ref={commandeOuverture}
 						data-testid="ouvrir-modification-contact"
-						className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface"
+						className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface disabled:cursor-not-allowed disabled:opacity-70"
+						{...proprietesCommande(capacites.edition, ID_MOTIF_FICHE_CONTACT)}
 						// RÉCIPROQUE DU CAS l DU §20.7 : ouvrir la modification referme la
 						// confirmation de suppression. Une question destructrice laissée ouverte
 						// derrière un formulaire que l'on vient d'ouvrir attendrait une réponse que
@@ -625,7 +636,13 @@ export function ContenuFicheContact({
 						commande={commandeSuppression}
 						confirmationOuverte={suppressionOuverte}
 						onDemander={ouvrirSuppression}
+						refus={proprietesCommande(capacites.edition, ID_MOTIF_FICHE_CONTACT)}
 					/>
+				)
+			}
+			motifCommandes={
+				client === null || contact === null || !motifVisible(capacites.edition) ? null : (
+					<MotifLectureSeule id={ID_MOTIF_FICHE_CONTACT}>{t('rights.readonly.edition')}</MotifLectureSeule>
 				)
 			}
 			confirmationSuppression={
@@ -658,6 +675,8 @@ type ProprietesContenu = {
 	readonly gesteRattachement?: React.ReactNode
 	/** La COMMANDE de suppression, ou `null` quand il n'y a rien à supprimer (§20.7 cas k). */
 	readonly gesteSuppression?: React.ReactNode
+	/** Le motif des deux commandes quand la base refuse l'édition (`CRM-093`), dit une fois AU-DESSUS d'elles. */
+	readonly motifCommandes?: React.ReactNode
 	/**
 	 * La CONFIRMATION de suppression, rendue SOUS les deux commandes (§5.40) et non à côté d'elles.
 	 *
@@ -706,6 +725,7 @@ function ContenuFiche({
 	geste = null,
 	gesteRattachement = null,
 	gesteSuppression = null,
+	motifCommandes = null,
 	confirmationSuppression = null,
 	messageSuppression = null,
 	gestesLigne,
@@ -761,6 +781,7 @@ function ContenuFiche({
 			  ouvrir l'une referme l'autre.
 			*/}
 			<div className="flex flex-col items-start gap-3">
+				{motifCommandes}
 				{/*
 				  LES DEUX COMMANDES SUR UNE MÊME LIGNE, la destructive en second. Quand le
 				  formulaire de modification est ouvert il REMPLACE sa commande (§16.5) et occupe

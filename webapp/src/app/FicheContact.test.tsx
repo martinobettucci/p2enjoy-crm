@@ -1,3 +1,5 @@
+// @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — « Modifier » et « Supprimer » selon la capacité d'éditer l'espace
+//           (docs/SPEC-droits-interface.md §3, §4 ; docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4, sous-tranches 4f
 //           (la fiche) et 4g (la MODIFICATION depuis la fiche)
 // @verifies docs/SPEC-contacts.md §16.3 (ce que l'écriture envoie, et le silence des mesures 3,
@@ -26,6 +28,8 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ContenuFicheContact } from './FicheContact'
+import { FournisseurEspace } from './ContexteEspace'
+import type { Capacite } from '../lib/capacites'
 import { fr } from '../i18n/fr'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -1907,5 +1911,42 @@ describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () => {
 		await userEvent.click(screen.getByTestId('ouvrir-modification-contact'))
 		expect(screen.queryByTestId('confirmation-suppression-contact')).toBeNull()
 		expect(screen.getByTestId('formulaire-modification-contact')).toBeTruthy()
+	})
+})
+
+// --- CRM-093 — « Modifier » et « Supprimer » selon la capacité d'éditer l'espace (docs/SPEC-droits-interface.md §3) -----
+
+describe('fiche de contact — les commandes selon la capacité d’éditer (CRM-093)', () => {
+	function monterAvec(edition: Capacite) {
+		return render(
+			<MemoryRouter>
+				<FournisseurEspace valeur={{ idWorkspace: ID_WORKSPACE, estAdmin: false, capacites: { administration: 'refusee', edition } }}>
+					<ContenuFicheContact client={clientQuiRend(OK(LEO))} idContact={ID_LEO} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+	}
+
+	it('refusée : les deux commandes restent montées, désactivées, et citent un seul motif posé au-dessus d’elles', async () => {
+		monterAvec('refusee')
+		const modifier = (await screen.findByTestId('ouvrir-modification-contact')) as HTMLButtonElement
+		const supprimer = screen.getByTestId('ouvrir-suppression-contact') as HTMLButtonElement
+		const motifs = screen.getAllByTestId('motif-lecture-seule')
+		expect(motifs).toHaveLength(1)
+		expect(motifs[0]?.textContent).toBe(fr['rights.readonly.edition'])
+		for (const commande of [modifier, supprimer]) {
+			expect(commande.disabled).toBe(true)
+			expect(commande.getAttribute('aria-describedby')).toBe(motifs[0]?.id)
+		}
+	})
+
+	it('permise ou inconnue : les deux commandes sont offertes, sans motif', async () => {
+		for (const edition of ['permise', 'inconnue'] as const) {
+			monterAvec(edition)
+			expect(((await screen.findByTestId('ouvrir-modification-contact')) as HTMLButtonElement).disabled, edition).toBe(false)
+			expect((screen.getByTestId('ouvrir-suppression-contact') as HTMLButtonElement).disabled).toBe(false)
+			expect(screen.queryByTestId('motif-lecture-seule')).toBeNull()
+			cleanup()
+		}
 	})
 })

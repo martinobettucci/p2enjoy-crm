@@ -1,4 +1,6 @@
 // @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranches 4a et 4b
+// @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouveau contact » selon la capacité d'éditer l'espace
+//           (docs/SPEC-droits-interface.md §3, §4 ; docs/DESIGN_SYSTEM.md §5.59)
 // @verifies docs/SPEC-contacts.md §10.5 (de quoi l'écran a l'air), §10.6 (cas a à f du contrat
 //           de comportement), §10.7 (aucun geste)
 // @verifies docs/SPEC-contacts.md §11.6 (le nom d'organisation est désormais un LIEN vers sa
@@ -15,6 +17,8 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Carnet } from './Carnet'
+import { FournisseurEspace } from './ContexteEspace'
+import type { Capacite } from '../lib/capacites'
 import { fr } from '../i18n/fr'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -540,5 +544,51 @@ describe('Carnet — la création d’un contact (§14)', () => {
 		rendreCarnet(client)
 		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
 		expect(await screen.findByTestId('ouvrir-creation-contact')).toBeTruthy()
+	})
+})
+
+// --- CRM-093 — « Nouveau contact » selon la capacité d'éditer l'espace (docs/SPEC-droits-interface.md §3, §4) ---------
+
+function rendreCarnetAvec(client: ClientCrm, edition: Capacite) {
+	return render(
+		<MemoryRouter>
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration: 'refusee', edition } }}>
+				<Carnet client={client} />
+			</FournisseurEspace>
+		</MemoryRouter>,
+	)
+}
+
+describe('Carnet — « Nouveau contact » selon la capacité d’éditer (CRM-093)', () => {
+	it('refusée par la base : la commande reste montée, désactivée, et cite le motif dit une fois', async () => {
+		const { client } = clientCarnet({ contacts: { data: SEED, error: null, status: 200 } })
+		rendreCarnetAvec(client, 'refusee')
+		const commande = (await screen.findByTestId('ouvrir-creation-contact')) as HTMLButtonElement
+		expect(commande.disabled).toBe(true)
+		const motif = screen.getByTestId('motif-lecture-seule')
+		expect(motif.textContent).toBe(fr['rights.readonly.edition'])
+		expect(commande.getAttribute('aria-describedby')).toBe(motif.id)
+		// Le tableau reste entier : on consulte, on ne perd rien de la lecture.
+		expect(screen.getAllByTestId('ligne-contact')).toHaveLength(3)
+	})
+
+	it('pendant la lecture de la capacité : désactivée SANS motif', async () => {
+		const { client } = clientCarnet({ contacts: { data: SEED, error: null, status: 200 } })
+		rendreCarnetAvec(client, 'en-lecture')
+		const commande = (await screen.findByTestId('ouvrir-creation-contact')) as HTMLButtonElement
+		expect(commande.disabled).toBe(true)
+		expect(commande.hasAttribute('aria-describedby')).toBe(false)
+		expect(screen.queryByTestId('motif-lecture-seule')).toBeNull()
+	})
+
+	it('inconnue — lecture en échec — ou permise : la commande est offerte, sans motif', async () => {
+		for (const edition of ['inconnue', 'permise'] as const) {
+			const { client } = clientCarnet({ contacts: { data: SEED, error: null, status: 200 } })
+			rendreCarnetAvec(client, edition)
+			const commande = (await screen.findByTestId('ouvrir-creation-contact')) as HTMLButtonElement
+			expect(commande.disabled, edition).toBe(false)
+			expect(screen.queryByTestId('motif-lecture-seule')).toBeNull()
+			cleanup()
+		}
 	})
 })

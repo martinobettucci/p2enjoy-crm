@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — la commande désactivée avec son motif quand la base refuse l'édition
+//       (docs/SPEC-droits-interface.md §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 6 : la SUPPRESSION d'un
 //       contact depuis sa fiche
 // @spec docs/SPEC-contacts.md §20.2 (les neuf mesures du 2026-08-26, et les quatre qui décident),
@@ -34,6 +36,7 @@
 // une phrase que la mesure 9 rend vraie sans qu'on ait à compter.
 
 import { Trash2 } from 'lucide-react'
+import type { ProprietesCommande } from '../lib/capacites'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button } from '../components/ui/Button'
 import { t, type CleTraduction } from '../i18n'
@@ -68,6 +71,8 @@ export type ProprietesCommandeSuppression = {
 	readonly confirmationOuverte: boolean
 	readonly onDemander: () => void
 	readonly commande: React.Ref<HTMLButtonElement>
+	/** `CRM-093` — désactivée et citant son motif quand la base refuse l'édition de l'espace (§5.59). */
+	readonly refus?: ProprietesCommande
 }
 
 /**
@@ -86,12 +91,14 @@ export function CommandeSuppressionContact({
 	confirmationOuverte,
 	onDemander,
 	commande,
+	refus = {},
 }: ProprietesCommandeSuppression) {
 	return (
 		<Button
 			ref={commande}
 			variante="destructif"
-			disabled={confirmationOuverte}
+			{...refus}
+			disabled={confirmationOuverte || refus.disabled === true}
 			onClick={onDemander}
 			data-testid="ouvrir-suppression-contact"
 		>
