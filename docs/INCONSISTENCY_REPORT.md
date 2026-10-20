@@ -7308,3 +7308,19 @@ instruction explicite ; et relever une limite de mémoire revient sur le dimensi
 le compteur à zéro sans rien perdre, et surveiller ; (2) relever la limite de `rest` ou de Kong dans
 `docker-compose.spark.yml`, à mesurer d'abord sur la durée ; (3) laisser en l'état, en sachant `verifier.sh` rouge sur
 ce seul contrôle.
+
+### INC-278 — la preuve « Ma journée » du contrat du seed suppose un seed appliqué le jour même
+
+> **OUVERTE le 2026-10-21**, à arbitrer par le responsable ; aucun comportement n'est changé.
+
+*Mesuré au harnais du 2026-10-12* : `e2e/api/ma-journee.spec.ts` « les trois sections de l'administratrice sont
+peuplées, quel que soit le jour » et son pendant `e2e/ui/ma-journee.spec.ts` rougissent sur une base seedée la veille
+(section « Aujourd'hui » vide), et repassent après `supabase/seed/apply-seed.sh`. Le seed cale les échéances sur le jour
+local de SON passage (INC-248, décision 592) : le lendemain, l'échéance « aujourd'hui » est devenue « en retard ».
+« Quel que soit le jour » vaut donc pour le jour de la semaine, pas pour l'âge du seed. Même famille qu'INC-257, mais ici
+le contrat du seed veut, par nature, une échéance du jour.
+
+**Issues possibles** : (1) la campagne (configuration globale de Playwright, ou le harnais) rejoue la section
+d'échéances du seed — ou le seed entier, convergent — avant de mesurer ; (2) la preuve accepte une base d'un autre jour
+et le dit, en vérifiant alors que la section « Aujourd'hui » se peuple au prochain passage du seed ; (3) documenter
+qu'une campagne suppose un seed du jour, et que le harnais le vérifie en prérequis, avec un message explicite.
