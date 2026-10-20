@@ -998,6 +998,10 @@ type _vueDerivationColonnes = Expect<
 // `ecriture_permise`, déjà comptée. `0092` ajoute `administration_permise` et `edition_permise`, les capacités de
 // l'espace (docs/SPEC-droits-interface.md §2.2, décision 628). SECURITY INVOKER : une colonne CALCULÉE que PostgREST
 // rend avec la ligne de `workspaces`, jamais une RPC qu'un écran appellerait. Quatre-vingts devient QUATRE-VINGT-DEUX.
+// `0093` de `CRM-101` TRANCHE T6 ajoute `plateforme_utilisateurs` — la liste des utilisateurs de la plateforme, leurs
+// espaces, leur drapeau et leur dernière activité au connecteur (docs/SPEC-plateforme.md §6.5, décision 627, A6).
+// SECURITY DEFINER, gardée comme les autres `plateforme_*` : le type ne dit pas le refus `42501` à qui n'est pas
+// superadministrateur. Quatre-vingt-deux devient QUATRE-VINGT-TROIS.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1022,6 +1026,7 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'plateforme_superadmins'
     | 'plateforme_poser_superadmin'
     | 'plateforme_journal_liste'
+    | 'plateforme_utilisateurs'
     | 'temps_valorise'
     | 'accepter_suggestion_ia'
     | 'proposition_du_workflow'
