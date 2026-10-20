@@ -253,6 +253,12 @@ désormais porté par la route.
 GET /rest/v1/channels?select=id,name,slug,position,workflow_id&track_id=eq.<id>&archived_at=is.null&order=position,name
 ```
 
+**`description` a rejoint la sélection avec `CRM-105`** (décision 629, 2026-10-21) — `select=id,name,slug,position,
+workflow_id,description`. Elle est affichée en infobulle sur l'onglet du channel (`docs/DESIGN_SYSTEM.md` §5.58) ; le
+motif qui l'écartait — « une requête ne rapporte que ce qui est affiché » — tombe avec l'affichage. Comme `workflow_id`,
+elle est lue dans la lecture déjà émise par la coquille, et non par une seconde. Une description nulle, vide ou
+blanche ne rend aucune infobulle.
+
 La requête est **filtrée côté serveur** sur `track_id` : rapporter les channels de tous les tracks
 pour n'en afficher qu'une barre ferait transiter des lignes que l'écran ne montrera jamais.
 

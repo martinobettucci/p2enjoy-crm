@@ -5513,3 +5513,70 @@ paraissent est spécifié par `docs/SPEC-mcp.md` §3 et §4 ; ces règles ne dis
   cibles d'au moins `--size-target` (§8), focus visible partout.
 - **Aucune couleur, aucun jeton nouveau.** Une icône Lucide nouvelle, `Plug`, qui ne sert aucun autre objet (§9) ;
   `ShieldCheck` est reprise du §5.56 depuis T6, pour le même objet.
+
+### 5.58 L'infobulle de description — `CRM-105`
+
+*Écrit le 2026-10-21, avant le code (décision 629), après relecture intégrale de ce document.* Ce que les écrans lisent
+est spécifié par `docs/SPEC-tracks.md` §7, `docs/SPEC-channels.md` §5, `docs/SPEC-workflow-engine.md` §7.2 et
+`docs/SPEC-cards.md` §12.3 ; ces règles ne disent que de quoi l'infobulle a l'air et comment elle se comporte. Le
+composant est unique, `webapp/src/components/ui/Infobulle.tsx` : quatre écrans qui montrent la même sorte de donnée la
+montrent de la même façon.
+
+- **ELLE VIT SUR QUATRE ÉLÉMENTS, ET SUR EUX SEULS** : la pilule d'un track dans la barre latérale (§5.5 bis), l'onglet
+  d'un channel (§12.1), le titre d'une affaire sur sa carte de board (§5.1) et dans sa ligne de vue liste (§5.9).
+  L'élément ne change ni de forme, ni de cible, ni de rôle : c'est toujours le même lien.
+
+- **ELLE N'EXISTE QUE S'IL Y A UNE DESCRIPTION.** Une description absente, vide ou faite de blancs ne rend **rien** —
+  ni bulle, ni texte masqué, ni changement de l'élément, dont le `title` reste celui d'avant. Une bulle qui ne dirait
+  que le nom déjà écrit serait du bruit (§5.36).
+
+- **ELLE REMPLACE LE `title` NATIF, ET C'EST POURQUOI ELLE NOMME L'OBJET EN TÊTE.** Deux infobulles superposées — celle
+  du système, puis la nôtre — se liraient comme un défaut. Le `title` portait le nom complet : d'un libellé ellipsé
+  (§5.9), et de la pilule réduite à son icône au palier 1024–1279 px (§7, §12.3). La bulle le porte donc à son tour,
+  en graisse moyenne `--color-ink`, puis la description en 13 px `--color-text-2`. Rien de ce que le `title` donnait
+  n'est perdu.
+
+- **LA DESCRIPTION EST UNE DONNÉE, JAMAIS UNE TRADUCTION** (§10), rendue en texte pur, **retours à la ligne préservés**
+  (`white-space: pre-line`, §5.39) et repliée sur les mots longs. Aucun markdown n'est interprété (§5.10).
+
+- **SURFACE.** `--color-surface`, bordure `--color-border`, `--radius-sm`, ombre `--shadow-card-hover` — le relief de la
+  seule autre surface flottante, le guide (§5.49) —, rembourrage 8 px / 12 px. Largeur au plus `40ch`, la colonne de
+  prose courte du §5.43, et au plus la fenêtre moins 32 px. **Hauteur au plus `min(50vh, 320px)`, et au-delà la bulle
+  défile en elle-même** : une description d'affaire n'a pas de longueur bornée en base, et la tronquer en perdrait la
+  fin — elle n'est lue nulle part ailleurs dans l'interface.
+
+- **ELLE EST RENDUE À LA RACINE DU DOCUMENT, PAS DANS SON ÉLÉMENT.** La barre latérale, la barre d'onglets, le board et
+  le tableau défilent dans leur propre conteneur (§7, §12.6) ; une bulle posée dedans y serait rognée. Elle est donc
+  positionnée sur l'élément (`position: fixed`) : **sous** lui, à 8 px, pour un onglet, une carte et une ligne ; **à
+  sa droite** pour une pilule de la barre latérale, qui occupe le bord gauche de l'écran. Faute de place, elle passe
+  de l'autre côté. **Son cadre est borné à la fenêtre, 16 px de marge** : bord gauche ≥ 16, bord droit ≤ largeur − 16 —
+  la règle de mesure du §5.43, que la preuve de palier vérifie sur la bulle elle-même.
+
+- **EMPILEMENT `z-50`**, au-dessus de tout : du tiroir et des panneaux de l'en-tête (`z-40`), du voile (`z-30`) et du
+  guide flottant (`z-20`, §5.49). Elle n'est ouverte que sur l'élément sous le pointeur ou sous le focus : rien de ce
+  qu'elle couvre n'est alors ce qu'on vise.
+
+- **QUAND ELLE S'OUVRE.** Au **survol**, après **400 ms** (`DELAI_OUVERTURE_INFOBULLE`) : traverser la barre latérale
+  ou une colonne du board ne fait pas clignoter une bulle par élément. Au **focus clavier** (`:focus-visible`), **sans
+  délai** — la parité du §8. **Jamais au clic** : un focus posé par la souris n'ouvre rien, et appuyer referme une
+  bulle ouverte, sans quoi elle resterait sur l'écran d'arrivée après la navigation.
+
+- **QUAND ELLE SE FERME — les trois critères du WCAG 1.4.13.** *Masquable* : `Échap` la referme sans déplacer ni le
+  pointeur ni le focus. *Survolable* : le pointeur peut passer de l'élément à la bulle, qui reste ouverte tant qu'il
+  est sur l'un ou l'autre ; elle se ferme **150 ms** après qu'il les a quittés (`DELAI_FERMETURE_INFOBULLE`), le temps
+  de franchir l'écart de 8 px. *Persistante* : aucune minuterie ne la ferme d'elle-même. Elle se ferme aussi à la perte
+  du focus, au début d'un glisser-déposer, au défilement et au redimensionnement — sa position deviendrait fausse.
+
+- **LE LECTEUR D'ÉCRAN N'ATTEND PAS LA BULLE.** La description est aussi un texte `sr-only`, toujours présent à côté du
+  lien et cité par son `aria-describedby` ; la bulle visuelle est `aria-hidden`. Un lecteur d'écran l'entend au focus,
+  ouverte ou non — y compris sur mobile, où il n'y a pas de survol. Le nom de l'objet n'est pas répété dans ce texte :
+  c'est déjà le nom accessible du lien.
+
+- **AUCUN MOUVEMENT.** Ni fondu, ni translation : une bulle qui paraît sous le pointeur n'a rien à raconter de son
+  arrivée, et `prefers-reduced-motion` n'a donc rien à retirer (§6).
+
+- **LIMITE ASSUMÉE : AU TOUCHER, LA BULLE NE PARAÎT PAS.** Toucher l'un de ces quatre éléments navigue ; aucun appui
+  long n'est inventé. La description reste annoncée aux lecteurs d'écran par `aria-describedby`.
+
+- **Aucune couleur, aucun jeton de couleur, aucune icône nouvelle.** Deux durées nouvelles, déclarées une fois dans le
+  composant et nommées ici ; la surface emprunte au §5.49 son relief et au §5.43 sa largeur et sa règle de cadre.

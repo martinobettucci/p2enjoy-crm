@@ -752,6 +752,13 @@ d'un `count(*)` exact est assumé et **borné** : le filtre `channel_id` est ser
 La colonne « Responsable » rend avatar et nom ; une card sans `owner_id` garde une cellule vide.
 Aucun UUID technique n'est présenté et aucune requête par ligne n'est émise.
 
+**Révisé par `CRM-105` (décision 629, 2026-10-21) : `description` rejoint la requête 2.** Elle est affichée en
+infobulle sur le titre de la ligne (`docs/DESIGN_SYSTEM.md` §5.58), et le motif qui l'écartait — « une requête ne
+rapporte que ce qui est affiché » (`webapp/src/lib/colonnes-liste.ts`) — tombe avec l'affichage. La page reste bornée
+à 25 lignes (§12.6) : la charge ajoutée l'est aussi. Quand l'infobulle est rendue, elle **remplace** le `title` du lien
+et porte le titre complet en tête : la règle du §12.7 — « la valeur entière portée par l'attribut `title` » — reste
+tenue par la bulle. Une description nulle, vide ou blanche laisse la ligne exactement comme avant, `title` compris.
+
 ### 12.4 Le tri, et pourquoi il doit être TOTAL
 
 Quatre tris sont offerts, chacun dans les deux sens :

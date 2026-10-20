@@ -2853,6 +2853,15 @@ embarque le profil par la FK `cards_owner_id_fkey`; le board affiche avatar et n
 card. Une card sans responsable n'affiche rien à cet emplacement, et aucun UUID ne devient une
 valeur de présentation.
 
+**Révisé par `CRM-105` (décision 629, 2026-10-21) : `description` rejoint les colonnes de la requête 3.** Elle est
+affichée en infobulle sur le titre de la carte (`docs/DESIGN_SYSTEM.md` §5.58), et le motif qui l'écartait — « une
+requête ne rapporte que ce qui est affiché » (`webapp/src/lib/colonnes-board.ts`) — tombe avec l'affichage. Aucune
+requête n'est ajoutée : la colonne rejoint la lecture des cards, et l'infobulle s'ouvre sans attendre le réseau.
+**Le coût est nommé** : la description d'une affaire n'a pas de longueur bornée en base, et le board lit toutes les
+cards actives du channel sans pagination. Aucune borne n'est posée sans mesure (`CLAUDE.md` §21) ; si le volume
+l'impose, la lecture de la description au survol — une requête par affaire survolée — est l'alternative, au prix d'une
+bulle qui attend le réseau.
+
 ### 7.3 Composition des colonnes
 
 > « Le board affiche une colonne par étape, ordonnée par `position`. »

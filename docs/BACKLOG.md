@@ -15426,3 +15426,24 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
       valide, aucune adresse bannie), rouge quand l'exemption est retirée du serveur ; deux campagnes `e2e:mail`
       consécutives 44/44, sans `security.authentication-ban` ni `security.ip-blocked`.
 
+
+## Demande du 2026-10-21 — décision 629
+
+### CRM-105 — La description d'un track, d'un channel et d'une affaire en infobulle sur l'élément qui la porte `[ ]`
+*Créée le 2026-10-21 — demande du responsable : « les tracks, les channels et les affaires ont un champ description qui
+devrait afficher une tooltip au survol de la souris sur l'élément correspondant en UI ». Mesuré : les trois colonnes
+existent, aucune n'est lue par les écrans qui montrent ces objets. Choix de forme de l'agent, écrits pour relecture
+(`docs/JOURNAL.md` décision 629).*
+
+- [~] **T1 — spécification, écrite avant le code** : `docs/DESIGN_SYSTEM.md` §5.58 (le composant, ses quatre
+      emplacements, ouverture au survol et au focus clavier, fermeture selon le WCAG 1.4.13, rendu à la racine du
+      document, cadre borné à la fenêtre, `aria-describedby`, limite au toucher) ; `docs/SPEC-tracks.md` §7,
+      `docs/SPEC-channels.md` §5, `docs/SPEC-workflow-engine.md` §7.2, `docs/SPEC-cards.md` §12.3 (la colonne rejoint
+      les quatre lectures) ; `docs/SPEC-seed.md` §20 (deux tracks, trois channels, trois affaires décrits, les autres
+      non). Écrite le 2026-10-21 ; passe à `[x]` à la validation du responsable.
+- [ ] **T2 — mise en œuvre et preuves** : composant `Infobulle` et ses tests unitaires ; les quatre lectures et leurs
+      tests ; barre latérale, onglets, carte de board, ligne de vue liste ; seed ; preuves d'API des quatre lectures ;
+      `e2e/ui/infobulle-description.spec.ts` (survol, clavier, `Échap`, survolable, absence, cadre aux quatre paliers) ;
+      captures `docs/captures/CRM-105/` observées ; `docs/manual.md` ; `CHANGELOG.md`.
+- [ ] **T3 — livraison** : reconstruction de la webapp en production, constat sur un track décrit
+      (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.

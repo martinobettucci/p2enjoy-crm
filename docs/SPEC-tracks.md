@@ -239,6 +239,12 @@ La section « Tracks » de `docs/DESIGN_SYSTEM.md` §4 lisait `public.workspaces
 GET /rest/v1/tracks?select=id,name,slug,color,icon,position&archived_at=is.null&order=position,name
 ```
 
+**`description` a rejoint la sélection avec `CRM-105`** (décision 629, 2026-10-21) — `select=id,name,slug,color,icon,
+position,description`. Elle était écartée parce qu'« une requête ne rapporte que ce qui est affiché » : elle est
+désormais affichée, en infobulle sur la pilule (`docs/DESIGN_SYSTEM.md` §5.58). Une colonne de plus à la lecture déjà
+émise, et non une lecture par survol : l'infobulle s'ouvre sans attendre le réseau, et le survol de six pilules
+n'émet aucune requête. Une description nulle, vide ou blanche ne rend aucune infobulle.
+
 Les quatre états de `docs/DESIGN_SYSTEM.md` §5.8 restent traités par le contrat asynchrone commun
 (`docs/SPEC-webapp.md` §6.4) : chargement en squelettes, vide, erreur avec reprise réelle, refus.
 

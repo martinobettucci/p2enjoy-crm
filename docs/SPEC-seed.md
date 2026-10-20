@@ -2214,3 +2214,51 @@ Une seconde connexion n'amorce plus rien : la table n'est plus vide.
   journal nées dans cette transaction.
 - **`e2e/api/plateforme.spec.ts`** relève les drapeaux qu'il trouve et les rend tels quels.
 
+
+## 20. Les descriptions des tracks, des channels et des affaires — `CRM-105` (décision 629)
+
+*Écrit le 2026-10-21, avant le code.* L'infobulle de description (`docs/DESIGN_SYSTEM.md` §5.58) n'est démontrable que
+si des objets en portent une, et sa branche contraire — aucune infobulle, l'élément rendu comme avant — que si d'autres
+n'en portent pas. Jusqu'ici aucun track, aucun channel, aucune affaire du seed ne portait de description.
+
+### 20.1 Ce que le jeu porte
+
+| Objet | Identifiant | Description |
+|---|---|---|
+| track `conseil-ia` | `…021` | « Missions de conseil et de mise en œuvre de l'intelligence artificielle : diagnostic, prototype, déploiement. » |
+| track `studio-web` | `…022` | « Conception, développement et maintenance de sites et d'applications web. » |
+| channel `prospection` | `…031` | « Premiers contacts et pistes à qualifier avant toute proposition chiffrée. » |
+| channel `grands-comptes` | `…032` | « Clients stratégiques suivis par un interlocuteur dédié, sur des cycles de décision longs. » |
+| channel `maintenance` | `…035` | « Contrats récurrents de support et d'évolution des applications livrées. » |
+| affaire « Migration ERP Sogexia » | `…0c2` | deux lignes : la bascule de progiciel, puis la décision attendue — un **retour à la ligne** démontré |
+| affaire « Socle analytique — Vertuo » | `…0cd` | une phrase |
+| affaire « Renouvellement TMA — Clinique Saint-Ambroise » | `…d002` | trois paragraphes, environ 600 caractères — la **donnée longue** de l'infobulle |
+
+Sans description, et c'est voulu : le track `formation`, les channels `refonte`, `inter-entreprises`, et toutes les
+autres affaires — dont `…0c1` et `…0c3`, que les preuves d'API supposent nulles (`e2e/api/colonnes-protegees.spec.ts`,
+`e2e/api/move-card.spec.ts`), et `…d001`, dont la preuve du titre long lit le `title` du lien
+(`e2e/ui/liste-cards.spec.ts`).
+
+**Les descriptions tiennent hors des termes des preuves de recherche.** `cards.search_tsv` indexe la description
+(`docs/SPEC-cards.md` §2.7) : aucune des trois descriptions d'affaire ne contient « audit », « astreinte », « refonte »,
+« vitrine », « gabarit », « candidature », « sécurité », « histor », « Sogexia », « Élise », « plafondier », ni un mot
+qu'un de ces termes préfixe. Les descriptions de track et de channel ne sont indexées par aucune recherche.
+
+### 20.2 Le vrai chemin
+
+Les descriptions entrent par les écritures déjà émises par le seed — l'`upsert` REST des sections 3, 4, 8 ter et 8 ter bis
+—, comme toute autre colonne de ces lignes. Aucune écriture de plus.
+
+### 20.3 Convergence
+
+**Chaque** track, channel et affaire posé par le seed envoie sa colonne `description` : la valeur déclarée, ou `null`.
+Une description saisie à la main pendant une session de développement est donc ramenée au contrat au rejeu suivant —
+la règle déjà tenue par `owner_id`, `amount` et `next_action` (section 8 ter).
+
+### 20.4 Ce que les preuves en attendent
+
+- **`e2e/ui/infobulle-description.spec.ts`** survole et atteint au clavier la pilule `conseil-ia`, l'onglet
+  `grands-comptes`, la carte et la ligne de `…0c2`, et la ligne de `…d002` ; il constate l'absence d'infobulle sur
+  `formation` et sur `…0c1`.
+- **`e2e/api/board.spec.ts`** et **`e2e/api/liste-cards.spec.ts`** lisent la description de `…0c2` par les colonnes du
+  produit, et `null` pour `…0c1`.

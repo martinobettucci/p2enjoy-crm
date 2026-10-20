@@ -31960,3 +31960,71 @@ calculées par les fonctions mêmes des politiques. La décision 628 est tenue �
 la base ») ; seule la forme de lecture change. `docs/SPEC-droits-interface.md` §2 et §2.2 sont révisés en ce sens ;
 `docs/DESIGN_SYSTEM.md` §5.58 généralisera la frontière du §5.29 ter à tout le produit avec la tranche T2.
 
+## décision 629 — CRM-105 : la description d'un track, d'un channel et d'une affaire paraît en infobulle sur l'élément qui la porte
+
+*2026-10-21 ; demande du responsable : « les tracks, les channels et les affaires ont un champ « description » qui
+devrait afficher une tooltip au survol de la souris sur l'élément correspondant en UI ». Les choix de forme ci-dessous
+sont ceux de l'agent, faute d'arbitrage demandé ; ils sont écrits pour être relus et, au besoin, renversés.*
+
+**Le problème, mesuré dans le code.** Les trois colonnes existent depuis `CRM-020`, `CRM-021` et `CRM-034`
+(`tracks.description`, `channels.description`, `cards.description`, `text` nullable). La description d'un track et
+celle d'un channel se SAISISSENT dans l'administration de l'arborescence (`CRM-075`) ; celle d'une affaire s'écrit par
+l'API et par le connecteur, et elle est déjà indexée par la recherche plein texte (`cards.search_tsv`). Aucune n'est
+LUE par les écrans qui montrent ces objets : les quatre lectures concernées l'écartent en écrivant « une requête ne
+rapporte que ce qui est affiché » — `COLONNES_TRACK` (barre latérale), `COLONNES_CHANNEL` (barre d'onglets),
+`COLONNES_CARD_BOARD` (carte du board), `COLONNES_CARD_LISTE` (ligne de la vue liste). Le motif était juste ; c'est
+l'affichage qui manquait. Le seed ne pose aucune description sur ces trois tables.
+
+**Observations qui décident la forme.**
+- `docs/DESIGN_SYSTEM.md` §5.3 bis : « une infobulle native n'apparaît ni au clavier, ni au toucher » — un `title`
+  seul ne suffit pas. La parité souris / clavier du §8 ne connaît pas d'exception.
+- La barre latérale (`overflow-y-auto`), la barre d'onglets (`overflow-x-auto`), le board et le tableau de la vue liste
+  défilent dans leur propre conteneur (§7, §12.6) : une bulle positionnée dans ces conteneurs y serait rognée. Elle est
+  donc rendue à la racine du document, positionnée sur l'élément, et bornée à la fenêtre — la leçon du §5.43 (mesurer
+  le cadre, bord gauche ≥ 0, bord droit ≤ largeur).
+- Les pilules de track et les onglets portent déjà `title` = nom ; le lien du titre d'une ligne de la vue liste aussi
+  (§5.9). Deux infobulles superposées — la native, puis la nôtre — se liraient comme un défaut.
+- Les preuves d'API supposent `description` NULLE sur les affaires `…0c1` et `…0c3` du seed
+  (`e2e/api/colonnes-protegees.spec.ts`, `e2e/api/move-card.spec.ts`), et la preuve du titre long de la vue liste lit
+  le `title` du lien de `…d001` (`e2e/ui/liste-cards.spec.ts`). La recherche plein texte indexe la description d'une
+  affaire : les termes des preuves de recherche (« audit », « astreinte », « refonte », « vitrine », « gabarit »,
+  « candidature », « sécurité », « histor », « Sogexia », « Élise », « plafondier ») sont à tenir hors des descriptions
+  seedées.
+
+**Solutions envisagées.**
+1. `title` natif portant la description — écarté : invisible au clavier (§5.3 bis), délai et rendu du système, aucune
+   maîtrise du texte long.
+2. Bulle positionnée en CSS dans l'élément — écartée : rognée par les quatre conteneurs défilants.
+3. **Retenue** : un composant partagé `Infobulle` (`webapp/src/components/ui/Infobulle.tsx`), bulle rendue à la racine du
+   document, ouverte au survol et au focus clavier, refermée par `Échap`, survolable, sans aucune requête de plus — la
+   colonne rejoint les quatre lectures déjà émises.
+
+**Décision (spécifiée au §5.58 du design system, aux §7 de `docs/SPEC-tracks.md`, §5 de `docs/SPEC-channels.md`, §7.2
+de `docs/SPEC-workflow-engine.md`, §12.3 de `docs/SPEC-cards.md`, §20 de `docs/SPEC-seed.md`).**
+- **Où** : la pilule d'un track dans la barre latérale, l'onglet d'un channel, le titre d'une affaire sur sa carte de
+  board et dans sa ligne de vue liste. Aucun autre écran dans cette unité — l'arborescence affiche déjà la description
+  dans ses formulaires, et la fiche d'une affaire relève d'une autre demande.
+- **Quand** : seulement si la description, une fois les blancs retirés, n'est pas vide. Sans description, l'élément
+  est rendu EXACTEMENT comme avant, `title` compris.
+- **Ce qu'elle montre** : le nom de l'objet en tête, puis la description, retours à la ligne préservés. Quand elle est
+  rendue, elle REMPLACE le `title` natif — elle en porte le nom, ce que la colonne d'icônes (1024–1279 px) exige.
+- **Comment** : au survol après 400 ms, au focus clavier (`:focus-visible`) sans délai ; jamais au clic. Elle reste
+  ouverte quand le pointeur passe sur elle, se ferme 150 ms après sa sortie, à `Échap`, à la perte du focus, au
+  défilement et au redimensionnement — les trois critères du WCAG 1.4.13 (« masquable, survolable, persistante »).
+- **Accessibilité** : la description est aussi un texte `sr-only` toujours présent, cité par `aria-describedby` sur le
+  lien ; la bulle visuelle est `aria-hidden`. Le lecteur d'écran n'attend donc pas qu'un rendu ait lieu.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** ; deux durées nouvelles, nommées dans le design system.
+
+**Conséquences.**
+- Quatre lectures gagnent une colonne ; la charge utile du board et de la vue liste grandit de la taille des
+  descriptions. Aucune pagination n'est ajoutée au board pour autant (`CLAUDE.md` §21 : pas d'optimisation sans
+  mesure) ; le point est nommé dans les limites de `docs/SPEC-workflow-engine.md` §7.2.
+- **Limite assumée** : au toucher, sans survol ni focus clavier, la description n'est pas montrée — un toucher sur ces
+  éléments navigue. Elle reste lue par les lecteurs d'écran mobiles (`aria-describedby`).
+- Le seed pose des descriptions sur deux tracks, trois channels et trois affaires, et en laisse d'autres sans
+  description : les deux branches sont démontrables.
+- Aucune migration, aucune fonction, aucune variable : la livraison est une reconstruction de la webapp et un rejeu du
+  seed en développement.
+
+**Vérifications prévues** : unitaires du composant et des quatre écrans, preuves d'API des quatre lectures, scénario E2E
+sur la pile réelle et le seed (survol, clavier, `Échap`, absence, cadre aux quatre paliers), captures observées.
