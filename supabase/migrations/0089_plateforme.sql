@@ -163,7 +163,7 @@ begin
 
 	insert into public.superadmins (sub, accorde_par) values (p_sub, null);
 	insert into public.plateforme_journal (acteur, geste, cible)
-	values (null, 'superadmin_amorce', pg_catalog.jsonb_build_object('sub', p_sub));
+	values (null, 'superadmin_amorce', pg_catalog.jsonb_build_object('sub', p_sub, 'nom', app.plateforme_nom_profil(p_sub)));
 	return true;
 end;
 $$;
@@ -218,6 +218,27 @@ begin
 	end if;
 	return p_role;
 end;
+$$;
+
+-- Les noms inscrits au journal : le journal se lit sans jointure, et survit à la personne ou à l'espace qu'il nomme.
+create or replace function app.plateforme_nom_profil(p_user uuid)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+	select p.full_name from public.profiles p where p.id = p_user;
+$$;
+
+create or replace function app.plateforme_nom_espace(p_ws uuid)
+returns text
+language sql
+stable
+security definer
+set search_path = ''
+as $$
+	select w.name from public.workspaces w where w.id = p_ws;
 $$;
 
 create or replace function app.plateforme_espace_existe(p_ws uuid)
@@ -430,7 +451,8 @@ begin
 	end if;
 
 	perform app.journaliser_plateforme('membre_pose', p_ws, pg_catalog.jsonb_build_object(
-		'user_id', p_user, 'avant', role_avant, 'apres', role_voulu));
+		'user_id', p_user, 'nom', app.plateforme_nom_profil(p_user), 'espace', app.plateforme_nom_espace(p_ws),
+		'avant', role_avant, 'apres', role_voulu));
 end;
 $$;
 
@@ -465,7 +487,8 @@ begin
 	 where cm.channel_id = c.id and c.workspace_id = p_ws and cm.user_id = p_user;
 
 	perform app.journaliser_plateforme('membre_retire', p_ws, pg_catalog.jsonb_build_object(
-		'user_id', p_user, 'role', role_avant));
+		'user_id', p_user, 'nom', app.plateforme_nom_profil(p_user), 'espace', app.plateforme_nom_espace(p_ws),
+		'role', role_avant));
 end;
 $$;
 
@@ -523,7 +546,7 @@ begin
 	end;
 
 	perform app.journaliser_plateforme('attente_inscrite', p_ws, pg_catalog.jsonb_build_object(
-		'email', adresse, 'avant', role_avant, 'apres', role_voulu));
+		'email', adresse, 'espace', app.plateforme_nom_espace(p_ws), 'avant', role_avant, 'apres', role_voulu));
 end;
 $$;
 
@@ -549,7 +572,7 @@ begin
 	end if;
 
 	perform app.journaliser_plateforme('attente_retiree', p_ws, pg_catalog.jsonb_build_object(
-		'email', adresse, 'role', role_avant));
+		'email', adresse, 'espace', app.plateforme_nom_espace(p_ws), 'role', role_avant));
 end;
 $$;
 
@@ -627,7 +650,7 @@ begin
 		on conflict (sub) do nothing;
 		if found then
 			perform app.journaliser_plateforme('superadmin_accorde', null,
-				pg_catalog.jsonb_build_object('sub', p_user));
+				pg_catalog.jsonb_build_object('sub', p_user, 'nom', app.plateforme_nom_profil(p_user)));
 		end if;
 	else
 		if not exists (select 1 from public.superadmins s where s.sub = p_user) then
@@ -637,7 +660,8 @@ begin
 			raise exception 'dernier_superadministrateur' using errcode = 'P0001';
 		end if;
 		delete from public.superadmins s where s.sub = p_user;
-		perform app.journaliser_plateforme('superadmin_retire', null, pg_catalog.jsonb_build_object('sub', p_user));
+		perform app.journaliser_plateforme('superadmin_retire', null,
+			pg_catalog.jsonb_build_object('sub', p_user, 'nom', app.plateforme_nom_profil(p_user)));
 	end if;
 end;
 $$;
@@ -858,6 +882,8 @@ begin
 		'app.plateforme_domaine(text)',
 		'app.plateforme_role(text)',
 		'app.plateforme_espace_existe(uuid)',
+		'app.plateforme_nom_profil(uuid)',
+		'app.plateforme_nom_espace(uuid)',
 		'public.est_superadmin()',
 		'public.plateforme_espaces()',
 		'public.plateforme_creer_espace(text, text, text)',

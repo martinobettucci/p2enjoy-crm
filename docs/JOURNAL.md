@@ -31590,3 +31590,25 @@ inchangée : sans liste, il n'y a pas d'amorçage. La 89 peut donc précéder la
 
 **Vérifications.** Elles sont au backlog, `CRM-101` T1.
 
+### décision 627, mise en œuvre — `CRM-101` T3 : l'écran de la plateforme
+
+*2026-10-20.*
+
+**Deux écarts trouvés à la relecture intégrale du design system, avant le code.**
+
+1. **La spécification prévoyait des modales** pour renommer et pour supprimer un espace. Le §5.13 n'en admet aucune.
+   Les deux deviennent des blocs dans le flux, et `docs/SPEC-plateforme.md` §7.3 et §7.4 sont corrigés dans le commit
+   du §5.56.
+2. **Le journal n'inscrivait que des identifiants**, ce qui aurait rendu sa colonne « Détail » illisible. La 89, que
+   rien n'a encore livré, inscrit désormais le nom de la personne et celui de l'espace. Le journal se lit sans jointure,
+   et il survit à leur suppression.
+
+**La frontière du §5.29 ter, appliquée.** L'entrée « Plateforme » de la barre latérale n'est pas une extinction selon
+le rôle : la coquille demande `public.est_superadmin()` et rend ce que la base consent. Pendant la lecture, et en cas
+d'échec, l'entrée est absente. L'écran, lui, refuse seul toute adresse ouverte sans le drapeau.
+
+**Un défaut trouvé par la preuve.** Les confirmations gardent leur commande montée, mais désactivée. `Échap` lui
+rendait le focus dans le même geste, et un bouton désactivé le refuse : le focus tombait sur le document. Le remède
+est celui du §5.29 tranche 2 b-2 c, un drapeau puis un effet. Il est appliqué aux trois confirmations, sans
+temporisation (`CLAUDE.md` §18).
+

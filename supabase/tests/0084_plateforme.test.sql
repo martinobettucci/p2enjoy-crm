@@ -24,7 +24,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(70);
+select plan(71);
 
 create or replace function pg_temp.endosser(utilisateur uuid, admin_domaine boolean default false)
 returns void language plpgsql as $$
@@ -348,6 +348,11 @@ select is(
 	  where geste <> 'superadmin_amorce'),
 	'espace_supprime,superadmin_accorde,attente_retiree,attente_inscrite,attente_inscrite,membre_retire,membre_pose,membre_pose,membre_pose,espace_modifie,espace_cree',
 	'chaque geste est journalisé, le plus récent d''abord');
+select is(
+	(select cible ->> 'nom' || '|' || (cible ->> 'espace') || '|' || coalesce(cible ->> 'avant', 'null') || '|' || (cible ->> 'apres')
+	   from public.plateforme_journal_liste(null, 200) where geste = 'membre_pose' order by id limit 1),
+	'Driss Lemoine|Espace renommé|null|admin',
+	'le journal nomme la personne et l''espace : il se lit sans jointure et survit à leur suppression');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');

@@ -4,6 +4,8 @@
 // @spec CRM-094 (docs/BACKLOG.md) tranches T2 et T3 — l'espace courant et son rôle rendus par un contexte,
 //       et le guide flottant monté au bas de la zone principale (docs/SPEC-onboarding.md §10.2,
 //       docs/DESIGN_SYSTEM.md §5.49)
+// @spec CRM-101 (docs/BACKLOG.md) tranche T3 — le drapeau superadministrateur lu une fois, pour l'entrée « Plateforme »
+//       (docs/SPEC-plateforme.md §7.1, docs/DESIGN_SYSTEM.md §5.56)
 // @spec INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : la barre latérale relit ses tracks au
 //       signal des écritures de l'arborescence, sans squelette ; docs/DESIGN_SYSTEM.md §5.13
 //
@@ -22,6 +24,7 @@ import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import { clientCrm } from '../lib/supabase'
 import type { Channel } from '../lib/channels'
+import { useEstSuperadmin } from '../lib/plateforme'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { useApresTracksModifies, useTracks } from '../lib/tracks'
 import { useWorkspaces } from '../lib/workspaces'
@@ -84,6 +87,10 @@ export function AppShell({
 	const { etat: etatRole } = useRoleWorkspace(clientCrm, idWorkspace, idUtilisateur)
 	const estAdmin = estAdministrateur(etatRole)
 	const contexteEspace = useMemo(() => ({ idWorkspace, estAdmin }), [idWorkspace, estAdmin])
+	// `CRM-101` — l'entrée « Plateforme » n'est rendue que si la base le dit (docs/DESIGN_SYSTEM.md §5.56) ;
+	// pendant la lecture et en cas d'échec, elle est absente.
+	const etatSuperadmin = useEstSuperadmin(clientCrm, idUtilisateur)
+	const plateforme = etatSuperadmin.statut === 'pret' && etatSuperadmin.donnees
 
 	const toutRecharger = useCallback(() => {
 		recharger()
@@ -147,6 +154,7 @@ export function AppShell({
 					tiroirOuvert={tiroirOuvert}
 					onFermerTiroir={fermerTiroir}
 					etatTracks={etatTracks}
+					plateforme={plateforme}
 				/>
 
 				<div className="flex flex-col flex-1 min-w-0">

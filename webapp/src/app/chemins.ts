@@ -281,3 +281,20 @@ export const CHEMIN_TEMPS = '/temps' as const
 
 /** Réglages ▸ « Coût du personnel » — `CRM-098`, `docs/SPEC-temps.md` §7.4. Réservé aux administrateurs. */
 export const CHEMIN_ADMIN_COUT_PERSONNEL = '/reglages/cout-personnel' as const
+
+// @spec CRM-101 (docs/BACKLOG.md) — adresses de la plateforme (docs/SPEC-plateforme.md §7, docs/DESIGN_SYSTEM.md §5.56)
+//
+// Hors de `ROUTES`, comme les surfaces d'administration : l'entrée de navigation n'est rendue qu'aux
+// superadministrateurs, et la couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` reste inchangée.
+
+/** La plateforme : `/plateforme` mène à ses espaces. */
+export const CHEMIN_PLATEFORME = '/plateforme' as const
+export const CHEMIN_PLATEFORME_ESPACES = '/plateforme/espaces' as const
+/** La fiche d'un espace, désigné par son identifiant court, qui ne se modifie pas. */
+export const CHEMIN_PLATEFORME_ESPACE = '/plateforme/espaces/:slug' as const
+export const CHEMIN_PLATEFORME_SUPERADMINS = '/plateforme/superadmins' as const
+export const CHEMIN_PLATEFORME_JOURNAL = '/plateforme/journal' as const
+
+export function cheminFicheEspace(slug: string): string {
+	return `${CHEMIN_PLATEFORME_ESPACES}/${encodeURIComponent(slug)}`
+}

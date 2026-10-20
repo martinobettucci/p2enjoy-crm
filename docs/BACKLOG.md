@@ -15098,8 +15098,18 @@ LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : 
       aucune donnée métier lue, retrait qui ferme la session à la prolongation ; **rouge** sous `functions` recréé avec
       une liste vide, vert une fois rétabli. Voisins rejoués : `session.spec.ts` **24/24**, `verify-scripts.sh` **115**,
       unitaires **3 822**, `typecheck`.
-- [ ] **T3** — l'écran `/plateforme` (Espaces et fiche d'un espace, Superadministrateurs, Journal) ;
+- [x] **T3** — l'écran `/plateforme` (Espaces et fiche d'un espace, Superadministrateurs, Journal) ;
       `docs/DESIGN_SYSTEM.md` écrit **après lecture intégrale** ; preuves unitaires.
+      *Vérifié le 2026-10-20, par les preuves unitaires* (l'E2E, les captures observées et le seed sont la tranche T4) :
+      `docs/DESIGN_SYSTEM.md` §5.56 écrit après lecture intégrale et committé avant le code — la spécification renonçait
+      à deux modales que le §5.13 interdit. Écran `Plateforme` (accès, onglets-liens) et ses quatre vues, entrée
+      « Plateforme » de la barre latérale rendue sur le seul `est_superadmin()` de la base. `lib/plateforme.test` **14**,
+      `Plateforme.test` **13** — quatre mutations (garde d'accès levée, suppression sans saisie, refus non traduit,
+      attente en suspens tue), chacune rouge. **Un défaut trouvé par la preuve et corrigé** : `Échap` rendait le focus
+      à une commande encore désactivée, qui le refusait ; remède du §5.29 (drapeau, puis effet), vu rouge avant. Suite
+      unitaire **127 fichiers, 3 865 tests** ; `typecheck`, build et `classes-css` (394 classes) verts. **Migration 89
+      enrichie** : le journal inscrit aussi les noms de la personne et de l'espace, pour se lire sans jointure ;
+      `0084_plateforme.test.sql` **71** assertions.
 - [ ] **T4** — seed (`docs/SPEC-seed.md`, compte Keycloak « Sabine Plateforme »), API, E2E à la souris et au clavier,
       captures aux quatre paliers observées, manuel (chapitre 18, chapitre 17 révisé), `scripts/verify-plateforme.sh`,
       campagnes.

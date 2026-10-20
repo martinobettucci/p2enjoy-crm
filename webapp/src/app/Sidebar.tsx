@@ -1,6 +1,8 @@
 // @spec CRM-007 (docs/BACKLOG.md) — barre latérale de la coquille
 // @spec docs/DESIGN_SYSTEM.md §4 (barre latérale, repli), §7 (paliers), §8 (clavier, cibles)
 // @spec docs/SPEC-webapp.md §5.1 (coquille), §8 (responsive), §9 (accessibilité)
+// @spec CRM-101 (docs/BACKLOG.md) tranche T3 — l'entrée « Plateforme », rendue seulement quand la base le dit
+//       (docs/DESIGN_SYSTEM.md §5.56, frontière du §5.29 ter)
 //
 // Comportement par palier (docs/DESIGN_SYSTEM.md §7), obtenu par les classes et non par une
 // mesure JavaScript de la fenêtre — un `resize` non écouté ne peut donc pas désynchroniser
@@ -13,10 +15,11 @@
 // Le repli n'est proposé qu'au dernier palier : en dessous, la barre est déjà réduite, et
 // offrir un bouton sans effet visible serait une commande morte.
 
-import { PanelLeftClose, PanelLeftOpen, X } from 'lucide-react'
+import { PanelLeftClose, PanelLeftOpen, ShieldCheck, X } from 'lucide-react'
 import { NavLink } from 'react-router'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
+import { CHEMIN_PLATEFORME } from './chemins'
 import { ENTREES_TRANSVERSES } from './navigation'
 import { classesPilule, iconeTrack } from './presentation-tracks'
 import type { EtatAsync } from '../lib/async'
@@ -28,6 +31,8 @@ export type ProprietesSidebar = {
 	readonly tiroirOuvert: boolean
 	readonly onFermerTiroir: () => void
 	readonly etatTracks: EtatAsync<readonly Track[]>
+	/** La base a dit que l'appelant est superadministrateur : l'entrée « Plateforme » est rendue (§5.56). */
+	readonly plateforme?: boolean
 }
 
 export function Sidebar({
@@ -36,6 +41,7 @@ export function Sidebar({
 	tiroirOuvert,
 	onFermerTiroir,
 	etatTracks,
+	plateforme = false,
 }: ProprietesSidebar) {
 	// Au-delà de `lg`, les libellés ne réapparaissent qu'à `xl` et seulement si l'utilisateur
 	// n'a pas replié la barre. Ils sont **masqués visuellement**, jamais retirés du document :
@@ -147,6 +153,25 @@ export function Sidebar({
 						<span className={['truncate', classeLibelle].join(' ')}>{t(entree.cleLibelle)}</span>
 					</NavLink>
 				))}
+				{/* APRÈS « Réglages », en dernier : la plateforme est au-dessus des espaces, qu'elle crée (§5.56). */}
+				{plateforme && (
+					<NavLink
+						to={CHEMIN_PLATEFORME}
+						onClick={onFermerTiroir}
+						title={t('nav.item.platform')}
+						data-testid="entree-plateforme"
+						className={({ isActive }) =>
+							[
+								'flex items-center gap-3 px-2 min-h-[var(--size-target)] rounded-sm',
+								'transition-colors duration-[var(--transition-duration-fast)]',
+								isActive ? 'bg-brand-soft text-brand font-medium' : 'text-text-2 hover:bg-hover',
+							].join(' ')
+						}
+					>
+						<ShieldCheck aria-hidden="true" size={20} className="shrink-0" />
+						<span className={['truncate', classeLibelle].join(' ')}>{t('nav.item.platform')}</span>
+					</NavLink>
+				)}
 			</nav>
 
 			<section aria-labelledby="titre-tracks" className="flex flex-col gap-2">

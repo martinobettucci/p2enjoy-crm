@@ -14,6 +14,7 @@
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.2 (session), §12.3 (chargement différé)
 // @spec docs/SPEC-auth.md §9.1 ; docs/JOURNAL.md décision 248
 // @spec CRM-098 (docs/BACKLOG.md) — route de Réglages ▸ « Coût du personnel » (docs/SPEC-temps.md §7.4)
+// @spec CRM-101 (docs/BACKLOG.md) — routes de la plateforme (docs/SPEC-plateforme.md §7, docs/DESIGN_SYSTEM.md §5.56)
 //
 // Le routage est déclaré à partir de la table de `routes.tsx` : ajouter une route ne demande
 // pas de toucher à ce fichier, et le titre affiché par l'en-tête ne peut pas diverger de la
@@ -28,6 +29,14 @@ import { FournisseurAuthentification, useAuthentification, type EchecSession } f
 import { ChargementAuthentification, EcranConnexion } from './EcranConnexion'
 import { RetourSso } from './RetourSso'
 import { CHEMIN_RETOUR_SSO } from '../lib/sso'
+import {
+	CHEMIN_PLATEFORME,
+	CHEMIN_PLATEFORME_ESPACE,
+	CHEMIN_PLATEFORME_ESPACES,
+	CHEMIN_PLATEFORME_JOURNAL,
+	CHEMIN_PLATEFORME_SUPERADMINS,
+} from './chemins'
+import type { VuePlateforme } from './Plateforme'
 import { GuideDemarrage } from './GuideDemarrage'
 import {
 	CHEMIN_ADMIN_ARBORESCENCE,
@@ -64,6 +73,7 @@ import {
 	CLE_TITRE_ETAT_MESSAGERIE,
 	CLE_TITRE_INTROUVABLE,
 	CLE_TITRE_OBJECTIFS,
+	CLE_TITRE_PLATEFORME,
 	PageIntrouvable,
 	ROUTES,
 } from './routes'
@@ -139,6 +149,19 @@ const ReglagesCoutPersonnel = lazy(async () => ({
 const ReglagesNotifications = lazy(async () => ({
 	default: (await import('./ReglagesNotifications')).ReglagesNotifications,
 }))
+/**
+ * La plateforme de `CRM-101`, chargée à la demande : seuls les superadministrateurs l'ouvrent, et elle n'a pas à
+ * peser sur le premier rendu des autres sessions (`CLAUDE.md` §21).
+ */
+const Plateforme = lazy(async () => ({ default: (await import('./Plateforme')).Plateforme }))
+
+const VUES_PLATEFORME: readonly { readonly chemin: string; readonly vue: VuePlateforme }[] = [
+	{ chemin: CHEMIN_PLATEFORME_ESPACES, vue: 'espaces' },
+	{ chemin: CHEMIN_PLATEFORME_ESPACE, vue: 'espace' },
+	{ chemin: CHEMIN_PLATEFORME_SUPERADMINS, vue: 'superadmins' },
+	{ chemin: CHEMIN_PLATEFORME_JOURNAL, vue: 'journal' },
+]
+
 /**
  * Le guide de démarrage de `CRM-079`. Il n'est PAS chargé à la demande, contrairement aux quatre
  * surfaces d'administration : `AccueilDemarrage` le rend déjà sur `/`, la toute première route
@@ -466,6 +489,20 @@ function RoutesPages() {
 						</AppShell>
 					}
 				/>
+				{/* La plateforme — `CRM-101`, docs/SPEC-plateforme.md §7. Hors de `ROUTES` : son entrée de navigation n'est
+				    rendue qu'aux superadministrateurs (docs/DESIGN_SYSTEM.md §5.56), et l'écran refuse lui-même les autres. */}
+				<Route path={CHEMIN_PLATEFORME} element={<Navigate to={CHEMIN_PLATEFORME_ESPACES} replace />} />
+				{VUES_PLATEFORME.map(({ chemin, vue }) => (
+					<Route
+						key={chemin}
+						path={chemin}
+						element={
+							<AppShell cleTitreRoute={CLE_TITRE_PLATEFORME}>
+								<Plateforme vue={vue} />
+							</AppShell>
+						}
+					/>
+				))}
 				<Route
 					path="*"
 					element={

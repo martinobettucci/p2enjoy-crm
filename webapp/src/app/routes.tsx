@@ -210,6 +210,9 @@ export const CLE_TITRE_CORBEILLE: CleTraduction = 'admin.trash.title'
 
 export const CLE_TITRE_COUT_PERSONNEL: CleTraduction = 'staffCost.title'
 
+/** Titre de la plateforme — `CRM-101`, docs/SPEC-plateforme.md §7 (hors de `ROUTES`, comme les réglages). */
+export const CLE_TITRE_PLATEFORME: CleTraduction = 'platform.title'
+
 /** `CRM-064` tranche 4 — `docs/DESIGN_SYSTEM.md` §5.45. */
 export const CLE_TITRE_REGLAGES_NOTIFICATIONS: CleTraduction = 'settings.notifications.title'
 
