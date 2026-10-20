@@ -15299,12 +15299,15 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
 
 ## Arbitrage du 2026-09-29 — INC-257 (décision 610)
 
-- [ ] **INC-257 — la preuve B5 « aucune card archivée n'est vieillie par le seed » mesure le temps
+- [x] **INC-257 — la preuve B5 « aucune card archivée n'est vieillie par le seed » mesure le temps
       écoulé, non le geste du seed** (`CRM-046` tranche 3, `CRM-041` ; `e2e/api/board.spec.ts`).
       Arbitrage du responsable : **réinitialiser la base de développement** (`./resetMe.sh`), sans
       corriger la mesure à ce stade. Reste à faire, sur instruction : une mesure qui ne dépende pas du
       jour — par exemple `entered_step_at ≥ created_at` —, vue rouge sous un seed qui vieillirait
       l'affaire archivée, puis la ligne *f* de `docs/SPEC-seed.md` §9.12.6 précisée en ce sens.
+      **Fait le 2026-10-21** : la mesure retenue est `entered_step_at = created_at`, plus discriminante que `≥` — sur une
+      base ancienne, un seed qui vieillirait la card à `now() - N jours` resterait au-dessus de sa date de création, et
+      `≥` ne le verrait pas. `e2e/api/board.spec.ts` 27/27 ; mutation (card vieillie de dix jours) tuée, puis restaurée.
 
 ## Arbitrage du 2026-09-29 — INC-261 (décision 613)
 

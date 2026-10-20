@@ -31834,3 +31834,17 @@ après le démarrage. Le relevé complet est au §8 de `docs/PROD_MIGRATIONS.md`
 **Ce que la livraison ne change pas.** Tant que `CRM-103` n'est pas livré, aucun écran ne pose de matrice : seul un
 superadministrateur, qui la franchit, peut appeler `crm_workspace_list`. `CRM-101` T5 et `CRM-102` T5 restent `[~]`
 jusqu'au constat du responsable.
+
+## 2026-10-21 — INC-257 : B5 ne dépend plus du jour (suite de la décision 610)
+
+*Mise en œuvre de ce que la décision 610 laissait « à faire, sur instruction » ; l'instruction est l'objectif du
+responsable du 2026-10-21 : terminer les éléments du backlog et livrer entre chaque itération stable.*
+
+**Le problème** : B5 (`e2e/api/board.spec.ts`) comptait les jours écoulés depuis `entered_step_at` de la card archivée
+`…0c8` et exigeait zéro ; vert dans les 24 heures d'une reconstruction de la base, rouge ensuite — encore observé au
+harnais du 2026-10-12. **La décision** : mesurer ce que la ligne *f* du §9.12.6 promet — le seed ne touche jamais une
+card archivée —, donc `entered_step_at = created_at`. L'exemple du backlog (`≥`) est écarté : sur une base de plus de
+N jours, un seed fautif qui poserait `now() - N jours` resterait au-dessus de la date de création, et `≥` serait vert.
+**Vérifications** : 27/27 sur `board.spec.ts` ; mutation tuée (card vieillie de dix jours en développement), base
+restaurée à `entered_step_at = created_at`. Aucun code produit : rien à livrer pour cette itération.
+

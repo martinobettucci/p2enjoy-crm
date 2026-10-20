@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Correctif du 2026-10-21 — INC-257
+
+*Preuves seulement : rien à livrer.*
+
+- **La preuve B5 du board ne dépend plus du jour** : elle vérifie que la card archivée du seed garde l'ancienneté de sa
+  création, au lieu de compter les jours écoulés — elle ne rougit plus 24 heures après chaque reconstruction de la base.
+
 ### `CRM-102` T1 à T4 — le connecteur MCP : son registre en base, son service, sa place dans la pile (décision 627)
 
 *Migration `0090`, service `mcp/` et pile prouvés en développement de bout en bout (pgTAP, unitaires, intégration contre le vrai Keycloak, à travers le Caddy de la cellule, un vrai client MCP dans le navigateur). **Livré en production le 2026-10-21** (`85d8bb7b`, migration 90 appliquée par une fenêtre avec instantané ; `https://crm.mcp.lelabs.tech` répond, client LeLabs redéclaré) ; publié après le constat du responsable (`docs/PROD_MIGRATIONS.md` §2.14).*

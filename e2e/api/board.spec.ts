@@ -1,3 +1,4 @@
+// @verifies INC-257 (docs/INCONSISTENCY_REPORT.md) — B5 ligne f mesurée sans dépendre du jour
 // @verifies CRM-041 (docs/BACKLOG.md) — les quatre lectures du board, hors interface
 // @verifies CRM-022 (docs/BACKLOG.md) — l'identité du responsable embarquée dans chaque card
 // @verifies docs/SPEC-workflow-engine.md §7.2 (ce que le board lit), §7.3 (composition des
@@ -449,16 +450,25 @@ test.describe('B5 — les identités consenties au board sont mesurées (§7.4)'
 	// Ligne *f* : la card ARCHIVÉE de « Livré » n'est pas vieillie. Sans cette ligne, un seed qui
 	// vieillirait tout ce qu'il trouve passerait les deux scénarios ci-dessus — l'étape « Livré »
 	// ne portant aucun seuil, ses cards ne sont comptées nulle part.
+	//
+	// INC-257 — LA MESURE NE DÉPEND PLUS DU JOUR. Elle comptait les jours écoulés depuis
+	// `entered_step_at` et exigeait zéro : verte dans les 24 heures d'une reconstruction de la base,
+	// rouge ensuite, sans que le seed n'ait rien fait. Or le seed ne touche JAMAIS une card archivée
+	// (section 8 octies bis : `archived_at is null` seulement) : son ancienneté reste celle de sa
+	// création. La preuve exige donc `entered_step_at = created_at`, vrai à toute heure ; un seed qui
+	// la vieillirait — ou la rafraîchirait — l'écarterait de sa date de création, et la preuve rougirait.
 	test('aucune card archivée n’est vieillie par le seed', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id,entered_step_at&id=eq.${CARD_ARCHIVEE}`,
+			`${CARDS}?select=id,entered_step_at,created_at,archived_at&id=eq.${CARD_ARCHIVEE}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const [card] = (await reponse.json()) as { entered_step_at: string }[]
+		const [card] = (await reponse.json()) as { entered_step_at: string; created_at: string; archived_at: string | null }[]
 		expect(card, 'la card archivée du seed est bien là').toBeDefined()
-		const JOUR = 24 * 60 * 60 * 1000
-		const age = Date.now() - new Date(card?.entered_step_at ?? 0).getTime()
-		expect(Math.floor(age / JOUR)).toBe(0)
+		expect(card?.archived_at, 'elle est bien archivée').not.toBeNull()
+		expect(
+			new Date(card?.entered_step_at ?? 0).getTime(),
+			'son ancienneté est celle de sa création : le seed ne l’a ni vieillie ni rafraîchie',
+		).toBe(new Date(card?.created_at ?? 1).getTime())
 	})
 })
 

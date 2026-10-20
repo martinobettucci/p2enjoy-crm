@@ -6826,6 +6826,11 @@ mesure n'est pas corrigée à ce stade, et INC-257 **reste ouverte**. Conséquen
 nouveau 24 heures après chaque reconstruction de la base. Suivi : `docs/BACKLOG.md`, « Arbitrage du
 2026-09-29 ».
 
+**RÉSOLUE le 2026-10-21** (backlog, « Arbitrage du 2026-09-29 » ; journal, entrée du 2026-10-21) : B5 exige désormais
+`entered_step_at = created_at` sur la card archivée — vrai à toute heure, puisque le seed ne la touche jamais ; la
+mesure en jours écoulés est retirée. Mutation : la card vieillie de dix jours en base de développement, B5 rougit ;
+remise à sa date de création, B5 repasse.
+
 ### INC-258 — deux états vides disent encore « par l'API » alors que l'écran qui fait le geste est livré
 
 *Relevée le 2026-09-29 en préparant `CRM-095` T2, à la lecture de `webapp/src/i18n/fr.ts`.* Sur le chemin

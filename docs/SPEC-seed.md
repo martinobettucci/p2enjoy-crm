@@ -1475,7 +1475,7 @@ spécification qui survit à sa mesure est un mensonge à retardement.
 | c | Son ancienneté est d'au moins **30** jours et de moins de **31** | `now() - entered_step_at` |
 | d | Son seuil est de **14** jours, hérité du nœud et non surchargé par l'étape | `stale_after_days is null` et `default_stale_after_days = 14` |
 | e | Au moins une card active porte un seuil et reste **en deçà** | `count(*) >= 1` sur le complément de *a* |
-| f | Aucune card **archivée** ou **en corbeille** n'est vieillie | `archived_at`, `deleted_at` |
+| f | Aucune card **archivée** ou **en corbeille** n'est vieillie | `archived_at`, `deleted_at` ; pour la card archivée `…0c8`, `entered_step_at = created_at` — le seed ne la touche jamais, et la mesure ne dépend pas du jour (INC-257) |
 | g | Les cards à l'étape `Livré`, sans seuil, n'ont **aucune** pastille — inchangé | seuil `null` |
 
 #### 9.12.7 Preuves exigées
