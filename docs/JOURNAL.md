@@ -31566,3 +31566,27 @@ design system seront écrites avec les tranches d'interface, **après lecture in
 comme l'exige le `CLAUDE.md`. Elles ne sont pas anticipées ici.
 
 **Vérifications** : aucune à ce stade. Ce sont des documents, et chaque unité porte ses preuves.
+
+### décision 627, mise en œuvre — `CRM-101` T1 : la plateforme en base
+
+*2026-10-20.*
+
+**Trois faits mesurés en écrivant la migration `0089`, et ce qu'ils ont changé :**
+
+1. **La RLS de `workspaces` cache l'espace créé à son créateur.** Mesuré par la suite : un superadministrateur en base
+   sans appartenance relit `null` dans `public.workspaces` juste après `plateforme_creer_espace`. C'est la règle D7
+   appliquée, pas un défaut. Les preuves relisent donc par `plateforme_espaces()`, et l'écran fera de même.
+2. **`unaccent` à un argument ne trouve pas son dictionnaire sous `search_path` vide.** La recherche de personnes
+   emploie la forme à deux arguments, avec le dictionnaire qualifié (`extensions.unaccent`). Les métacaractères de
+   `ilike` saisis sont échappés : la recherche est littérale, et la suite le prouve.
+3. **Un droit fin orphelin n'ouvre rien** : sans rôle d'espace, `app.resolve_access` rend `none`. Il se réactiverait
+   pourtant en silence si la personne revenait dans l'espace. `plateforme_retirer_membre` retire donc dans la même
+   transaction ses lignes de `track_members` et `channel_members` de cet espace. Les tables ne portant pas
+   `workspace_id` (INC-011), le retrait remonte par `tracks` et `channels`. La mutation qui le retire rougit la suite.
+
+**Compatibilité de l'échangeur.** Les fonctions de session serveur prennent un huitième paramètre avec un défaut.
+`e2e/api/session.spec.ts` (24/24) prouve que la fonction `session` actuelle, qui ne le passe pas, fonctionne
+inchangée : sans liste, il n'y a pas d'amorçage. La 89 peut donc précéder la fonction de T2 en production.
+
+**Vérifications.** Elles sont au backlog, `CRM-101` T1.
+

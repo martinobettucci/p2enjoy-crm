@@ -2130,6 +2130,41 @@ export type Database = {
           },
         ]
       }
+      plateforme_journal: {
+        Row: {
+          acteur: string | null
+          cible: Json
+          cree_le: string
+          geste: string
+          id: number
+          workspace_id: string | null
+        }
+        Insert: {
+          acteur?: string | null
+          cible?: Json
+          cree_le?: string
+          geste: string
+          id?: never
+          workspace_id?: string | null
+        }
+        Update: {
+          acteur?: string | null
+          cible?: Json
+          cree_le?: string
+          geste?: string
+          id?: never
+          workspace_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plateforme_journal_acteur_fkey"
+            columns: ["acteur"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -2478,6 +2513,39 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "suggestions_ia"
             referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
+      superadmins: {
+        Row: {
+          accorde_le: string
+          accorde_par: string | null
+          sub: string
+        }
+        Insert: {
+          accorde_le?: string
+          accorde_par?: string | null
+          sub: string
+        }
+        Update: {
+          accorde_le?: string
+          accorde_par?: string | null
+          sub?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "superadmins_accorde_par_fkey"
+            columns: ["accorde_par"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "superadmins_sub_fkey"
+            columns: ["sub"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -3254,6 +3322,7 @@ export type Database = {
           workspace_id: string
         }[]
       }
+      est_superadmin: { Args: never; Returns: boolean }
       etat_messagerie: {
         Args: never
         Returns: {
@@ -3456,6 +3525,7 @@ export type Database = {
           p_nom: string
           p_rafraichissement: string
           p_sub: string
+          p_superadmins_initiaux?: string[]
         }
         Returns: Json
       }
@@ -3475,6 +3545,100 @@ export type Database = {
           target_version_id: string
         }
         Returns: Json
+      }
+      plateforme_attentes: {
+        Args: { p_ws: string }
+        Returns: {
+          depuis: string
+          email: string
+          invite_par: string
+          role: string
+        }[]
+      }
+      plateforme_creer_espace: {
+        Args: { p_domaine_entrant?: string; p_nom: string; p_slug: string }
+        Returns: string
+      }
+      plateforme_espaces: {
+        Args: never
+        Returns: {
+          administrateurs: number
+          attentes: number
+          cree_le: string
+          domaine_entrant: string
+          id: string
+          membres: number
+          nom: string
+          slug: string
+        }[]
+      }
+      plateforme_inviter: {
+        Args: { p_email: string; p_role: string; p_ws: string }
+        Returns: undefined
+      }
+      plateforme_journal_liste: {
+        Args: { p_avant?: number; p_limite?: number }
+        Returns: {
+          acteur_nom: string
+          cible: Json
+          cree_le: string
+          geste: string
+          id: number
+          workspace_id: string
+        }[]
+      }
+      plateforme_membres: {
+        Args: { p_ws: string }
+        Returns: {
+          depuis: string
+          nom: string
+          role: string
+          superadmin: boolean
+          user_id: string
+        }[]
+      }
+      plateforme_modifier_espace: {
+        Args: { p_domaine_entrant: string; p_id: string; p_nom: string }
+        Returns: undefined
+      }
+      plateforme_poser_membre: {
+        Args: { p_role: string; p_user: string; p_ws: string }
+        Returns: undefined
+      }
+      plateforme_poser_superadmin: {
+        Args: { p_actif: boolean; p_user: string }
+        Returns: undefined
+      }
+      plateforme_profils: {
+        Args: { p_limite?: number; p_recherche?: string }
+        Returns: {
+          cree_le: string
+          espaces: number
+          id: string
+          nom: string
+          superadmin: boolean
+        }[]
+      }
+      plateforme_retirer_attente: {
+        Args: { p_email: string; p_ws: string }
+        Returns: undefined
+      }
+      plateforme_retirer_membre: {
+        Args: { p_user: string; p_ws: string }
+        Returns: undefined
+      }
+      plateforme_superadmins: {
+        Args: never
+        Returns: {
+          accorde_le: string
+          accorde_par_nom: string
+          nom: string
+          sub: string
+        }[]
+      }
+      plateforme_supprimer_espace: {
+        Args: { p_id: string; p_slug_confirme: string }
+        Returns: undefined
       }
       previsualiser_exigence: {
         Args: {
@@ -3558,6 +3722,7 @@ export type Database = {
           p_nom: string
           p_rafraichissement: string
           p_sub: string
+          p_superadmins_initiaux?: string[]
         }
         Returns: Json
       }

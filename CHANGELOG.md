@@ -13,6 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-101` T1 — la plateforme et son superadministrateur, en base (décision 627)
+
+*Migration `0089`, prouvée en développement ; aucun écran encore. Livraison avec la tranche T5.*
+
+- **Un superadministrateur de la plateforme** : le porteur du rôle `admin` LeLabs, ou un drapeau en base, amorcé une
+  seule fois à la première connexion d'une adresse listée dans `CRM_SUPERADMINS_INITIAUX`.
+- **Les fonctions de la plateforme**, réservées aux superadministrateurs :
+  - créer, renommer et supprimer un espace (suppression confirmée par son identifiant court) ;
+  - poser, changer et retirer une appartenance (les droits fins de la personne dans l'espace partent avec elle) ;
+  - inscrire et retirer une attente ;
+  - accorder et retirer le drapeau (le dernier ne se retire pas) ;
+  - lire le journal de chaque geste.
+- **Un superadministrateur en base est admis sans appartenance** : il peut créer le premier espace.
+
 ### Correctif du 2026-10-12 — INC-273 (décision 626)
 
 *Développement seulement : aucun code produit, aucune migration, rien à livrer.*

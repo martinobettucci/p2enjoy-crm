@@ -15073,9 +15073,19 @@ service. Un superadministrateur — drapeau en base amorcé une seule fois par `
 LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : `docs/SPEC-plateforme.md`,
 `docs/SCHEMA.md` §1 bis (migration `0089`), `docs/SPEC-session-sso.md` §6.1 (admission révisée).*
 
-- [ ] **T1** — migration `0089_plateforme.sql` : `superadmins`, `plateforme_journal`, `app.est_superadmin`,
+- [x] **T1** — migration `0089_plateforme.sql` : `superadmins`, `plateforme_journal`, `app.est_superadmin`,
       `app.exiger_superadmin`, `app.amorcer_superadmin`, les fonctions du §6 et l'admission révisée (§4) ; suite pgTAP
       `0084_plateforme.test.sql` avec mutations ; types régénérés ; `docs/PROD_MIGRATIONS.md`.
+      *Vérifié le 2026-10-20, en développement* : `0084_plateforme.test.sql` **70** assertions — forme et fermeture des
+      deux tables, privilèges mesurés dans le catalogue, refus `42501` des quatorze fonctions pour l'anonyme, la lectrice
+      et l'administratrice d'espace, accès du porteur de `lelabs_admin`, amorçage unique par la vraie fonction de
+      session serveur, chaque geste et son refus voisin, journal, dernier superadministrateur, admission retirée au
+      renouvellement. **Sept mutations** de la migration (garde, table vide, dernier superadministrateur, droits fins,
+      admission, privilège `anon`, drapeau sans effet), chacune rouge, restauration constatée. `0070` révisée (nouvelles
+      signatures). Campagne pgTAP sur base reconstruite : **84 fichiers, 3 628 assertions**, aucune anomalie. Types
+      régénérés, témoin révisé (deux tables, soixante-seize fonctions), `typecheck` et `types:check` verts.
+      `e2e/api/session.spec.ts` **24/24** avec la fonction `session` inchangée : l'ancienne arité se résout sur la
+      nouvelle signature, sans amorçage.
 - [ ] **T2** — la fonction `session` : `CRM_SUPERADMINS_INITIAUX` remise au seul worker `session` et transmise ;
       amorçage et admission exercés par une vraie connexion ; preuves unitaires et d'API aux jetons réels.
 - [ ] **T3** — l'écran `/plateforme` (Espaces et fiche d'un espace, Superadministrateurs, Journal) ;

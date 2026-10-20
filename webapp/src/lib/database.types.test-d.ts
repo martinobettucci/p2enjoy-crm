@@ -216,6 +216,11 @@ type _tables = Expect<
     // `app`, que PostgREST n'expose pas.
     | 'notification_preferences'
     | 'organizations'
+    // `0089` de `CRM-101` TRANCHE T1 ajoute `plateforme_journal` et `superadmins` (docs/SPEC-plateforme.md §5, décision
+    // 627). CE QUI ÉCHAPPE AU GÉNÉRATEUR : les deux tables sont FERMÉES à l'API — RLS sans politique, aucun privilège
+    // client —, et `Row`, `Insert`, `Update` décrivent des gestes qu'aucun jeton de la webapp ne peut faire ; tout passe
+    // par les fonctions `plateforme_*`, gardées.
+    | 'plateforme_journal'
     | 'profiles'
     // `0076` de `CRM-092` TRANCHE T3 BIS ajoute `sessions_sso`, ET LE TÉMOIN NE L'A PAS VUE EN SON
     // TEMPS : la tranche a été committée sans que `scripts/generate-types.sh` soit rejoué, et le
@@ -224,6 +229,7 @@ type _tables = Expect<
     // exactement son rôle. Le type n'ouvre rien : la table n'accorde AUCUN privilège à `anon` ni
     // à `authenticated`, seule la clé de service de l'échangeur la lit (docs/SPEC-session-sso.md §5.6).
     | 'sessions_sso'
+    | 'superadmins'
     // `0087` de `CRM-098` TRANCHE T1 ajoute `couts_personnel` et `saisies_temps` — le coût d'un quart versionné par
     // date d'effet, et le temps passé en minutes (docs/SPEC-temps.md §3, décision 621). CE QUI ÉCHAPPE AU
     // GÉNÉRATEUR : `Update` expose toutes les colonnes de `saisies_temps`, quand le privilège de colonne n'ouvre que
@@ -972,9 +978,30 @@ type _vueDerivationColonnes = Expect<
 // `0087` de `CRM-098` TRANCHE T1 ajoute `temps_valorise` — le temps et son coût sur une période, par personne × cible
 // × devise (docs/SPEC-temps.md §6.2, décision 621). SECURITY INVOKER : un montant que l'appelant ne lit pas est `null`,
 // comme celui d'une saisie sans version, ce que le type ne distingue pas. Soixante devient SOIXANTE ET UNE.
-type _lesSoixanteEtUneFonctions = Expect<
+// `0089` de `CRM-101` TRANCHE T1 ajoute `est_superadmin` et les quatorze fonctions `plateforme_*` — la gestion des
+// espaces, des appartenances, des attentes et des superadministrateurs (docs/SPEC-plateforme.md §6, décision 627).
+// SECURITY DEFINER, gardées par `app.exiger_superadmin()` : chacune compile pour tout jeton de la webapp, et le serveur
+// la refuse en `42501 reserve_aux_superadministrateurs` à qui n'est pas superadministrateur, ce que le type ne dit pas.
+// Les deux fonctions de session serveur y gagnent `p_superadmins_initiaux`, facultatif. Soixante et une devient
+// SOIXANTE-SEIZE.
+type _lesSoixanteSeizeFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'est_superadmin'
+    | 'plateforme_espaces'
+    | 'plateforme_creer_espace'
+    | 'plateforme_modifier_espace'
+    | 'plateforme_supprimer_espace'
+    | 'plateforme_membres'
+    | 'plateforme_poser_membre'
+    | 'plateforme_retirer_membre'
+    | 'plateforme_attentes'
+    | 'plateforme_inviter'
+    | 'plateforme_retirer_attente'
+    | 'plateforme_profils'
+    | 'plateforme_superadmins'
+    | 'plateforme_poser_superadmin'
+    | 'plateforme_journal_liste'
     | 'temps_valorise'
     | 'accepter_suggestion_ia'
     | 'proposition_du_workflow'
@@ -1241,7 +1268,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesSoixanteEtUneFonctions,
+  _lesSoixanteSeizeFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigneDeTableau,
