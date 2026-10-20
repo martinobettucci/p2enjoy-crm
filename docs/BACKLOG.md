@@ -15275,7 +15275,9 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
 
 - [ ] **T1** — les RPC `mcp_comptes_liste`, `mcp_compte`, `mcp_poser_droits` et `mcp_journal_liste`, et la clé de
       `mcp_droits.sub` vers `profiles` après le retrait des droits d'un compte sans profil (migration dédiée, D9) ;
-      pgTAP ; types.
+      pgTAP ; types. Contrat exact précisé avant le code (`docs/SPEC-mcp.md` §8.2, 2026-10-21) : fiche d'un utilisateur
+      jamais connecté, refus `profil_introuvable`, `droit_invalide` et `issue_invalide`, remplacement à l'identique
+      sans journal.
 - [ ] **T2** — l'onglet et la fiche d'un compte ; `docs/DESIGN_SYSTEM.md` écrit après lecture intégrale ; preuves
       unitaires.
 - [ ] **T3** — API aux jetons réels, E2E à la souris et au clavier avec un effet constaté par un appel MCP réel, seed,

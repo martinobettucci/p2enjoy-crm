@@ -32028,3 +32028,26 @@ de `docs/SPEC-workflow-engine.md`, §12.3 de `docs/SPEC-cards.md`, §20 de `docs
 
 **Vérifications prévues** : unitaires du composant et des quatre écrans, preuves d'API des quatre lectures, scénario E2E
 sur la pile réelle et le seed (survol, clavier, `Échap`, absence, cadre aux quatre paliers), captures observées.
+
+### décision 627, précision — `CRM-103` T1 spécifiée avant le code : le contrat des RPC d'administration du connecteur
+
+*2026-10-21.*
+
+**Pourquoi préciser.** Le §8.2 de `docs/SPEC-mcp.md` fixait quatre noms de fonctions, mais il a été écrit avant les
+arbitrages A5 et D9. Il ne disait ni ce que rend la fiche d'un utilisateur jamais venu au connecteur, ni comment refuser
+un droit pour un compte sans profil, ni comment valider une matrice reçue.
+
+**Ce qui est fixé.**
+
+- **La fiche (`mcp_compte`) sert tout utilisateur :** un profil, venu ou non au connecteur, ou un compte du connecteur
+  sans profil. Elle porte tous les espaces, avec le rôle d'appartenance ou `null`, et la matrice de chacun. Le sélecteur
+  d'espace de l'écran n'a ainsi besoin d'aucune seconde lecture.
+- **Poser une matrice (`mcp_poser_droits`) exige un profil.** C'est la conséquence de D9 : un droit sans profil serait
+  sans effet sous la RLS (A2).
+- **La validation est fermée :** un tableau de couples famille et action du §6.1, sinon `droit_invalide`.
+- **Un remplacement à l'identique ne journalise rien.** Enregistrer la même matrice ne doit pas remplir le journal de
+  gestes qui n'ont rien changé.
+- **Le journal des appels refuse une issue inconnue** (`issue_invalide`), plutôt que de rendre une liste vide qui se
+  lirait comme « aucun appel ».
+- **La bascule de la clé précède les fonctions**, dans la même migration. Les droits orphelins sont retirés et comptés
+  par `raise notice` ; le registre de production est vide.

@@ -491,6 +491,49 @@ Toutes sont gardées par `app.exiger_superadmin()`, mêmes formes que `docs/SPEC
 | `mcp_poser_droits(p_sub uuid, p_ws uuid, p_droits jsonb) returns void` | **remplace** la matrice d'un espace par `[["affaires","consulter"], …]` ; valide chaque couple ; journalise `mcp_droits_poses` à `plateforme_journal`, avec l'avant et l'après |
 | `mcp_journal_liste(p_sub uuid default null, p_issue text default null, p_avant bigint default null, p_limite int default 50)` | le journal des appels, paginé, borné à 200 |
 
+**Précisé le 2026-10-21, avant le code de T1, après les arbitrages A5 et D9.** Le tableau ci-dessus fixe les noms ; voici
+le contrat exact. Chaque fonction est `SECURITY DEFINER`, à `search_path` vide, gardée **en premier** par
+`app.exiger_superadmin()`, exécutable par `authenticated` seul et révoquée nommément à `public` et `anon`, comme les
+fonctions de la plateforme.
+
+- **`mcp_comptes_liste(p_limite integer default 200)`** rend `table(sub, nom, email, premiere_connexion,
+  derniere_activite, espaces_ouverts, superadmin, avec_profil)` : les comptes **venus au connecteur** (`mcp_comptes`),
+  la dernière activité d'abord, bornés à 200.
+  - `espaces_ouverts` compte les espaces où la matrice porte au moins une case.
+  - `superadmin` est le drapeau **en base** : le rôle `admin` LeLabs ne se lit que dans un jeton.
+  - `avec_profil` dit si la personne a un profil dans le CRM.
+- **`mcp_compte(p_sub uuid) returns jsonb`** rend la fiche d'un utilisateur, **venu ou non au connecteur** (A5) :
+  `{sub, nom, email, avec_profil, connecte, premiere_connexion, derniere_activite, superadmin, espaces}`.
+  - **Valeurs absentes.** Le nom est celui du profil, ou à défaut celui du compte du connecteur. L'adresse est connue par
+    le connecteur seulement, sinon `null`. Les dates sont `null` pour qui n'est jamais venu.
+  - **`espaces`** porte **tous** les espaces, dans l'ordre des noms : `{workspace_id, slug, nom, role, droits}`. `role`
+    vaut le rôle d'appartenance, ou `null` hors de l'espace. `droits` liste les couples `[famille, action]`, dans
+    l'ordre des familles puis des actions du §6.1.
+  - **Ni profil ni compte du connecteur** : `P0002` `profil_introuvable`.
+- **`mcp_poser_droits(p_sub uuid, p_ws uuid, p_droits jsonb) returns void`** **remplace** la matrice d'un espace.
+  - **Validation**, dans cet ordre : profil exigé (`P0002` `profil_introuvable` — D9, un droit sans profil serait sans
+    effet) ; espace exigé (`P0002` `espace_introuvable`) ; `p_droits` doit être un tableau de couples de deux chaînes,
+    famille et action du §6.1 (`22023` `droit_invalide`). Les doublons se confondent.
+  - **Écriture.** `accorde_par` reçoit `auth.uid()`.
+  - **Journal.** Un remplacement qui change l'ensemble inscrit `mcp_droits_poses` à `plateforme_journal`, avec l'espace
+    et `cible = {nom, espace, avant, apres}`, deux listes triées. Un remplacement à l'identique n'écrit et ne journalise
+    rien.
+- **`mcp_journal_liste(…)`** rend `table(id, sub, nom, outil, workspace_id, espace_nom, issue, duree_ms, cree_le)`, le
+  plus récent d'abord, curseur `p_avant` exclusif, borné à 200. Une issue hors des cinq du §7.1 est refusée en `22023`
+  `issue_invalide`.
+- **Deux codes de refus nouveaux**, `droit_invalide` et `issue_invalide`, rejoignent le dictionnaire fermé de la webapp
+  (`docs/SPEC-plateforme.md` §6.1).
+
+**La bascule de la clé (D9), dans la même migration et avant les fonctions** :
+
+1. les droits d'un `sub` sans profil sont retirés, et leur nombre est écrit par `raise notice` ; la production n'en a
+   aucun ;
+2. la contrainte `mcp_droits_sub_fkey` est remplacée par une clé vers `public.profiles (id)`, en cascade.
+
+`mcp_etat_compte` et `mcp_autorise` ne changent pas : elles lisent `mcp_droits` par `sub`. Le numéro de la migration est
+pris au moment de l'écrire, et sa suite pgTAP prouve la garde, chaque refus, la bascule, le remplacement, le journal et
+au moins deux mutations.
+
 ## 9. Les outils — `CRM-104`
 
 ### 9.1 Conventions
