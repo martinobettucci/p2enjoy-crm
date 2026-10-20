@@ -78,7 +78,8 @@ réellement créés côté serveur IMAP.
 | Messagerie | Service Python `mail-sync` (IMAP IDLE, file d'envoi SMTP) ; ordonnancement durable par `pg_cron` |
 | Antivirus | ClamAV (pièces jointes entrantes) |
 | Stockage | Supabase Storage sur S3 (MinIO en développement) |
-| Tests | pgTAP (SQL), Vitest (webapp et modules edge purs), pytest (mail-sync), Playwright (API, UI, mail) |
+| Connecteur MCP | Service Python `mcp` (FastMCP 4.0.11) : mandataire OAuth adossé au SSO LeLabs, agit sous l'identité de la personne dans la matrice accordée par un superadministrateur (`CRM-102`, câblé dans la pile par T3) |
+| Tests | pgTAP (SQL), Vitest (webapp et modules edge purs), pytest (mail-sync, connecteur MCP), Playwright (API, UI, mail) |
 | Exécution | Docker Compose ; Caddy en production |
 
 Les règles d'accès sont appliquées **côté base**. L'interface ne fait que refléter ce que le
@@ -471,6 +472,7 @@ npm run e2e:ui             # Playwright — parcours utilisateur et captures    
 npm run e2e:mail           # Playwright — IMAP, SMTP, ClamAV et Roundcube réels  (pile)
 npm run e2e:report         # sert le dernier rapport HTML sur http://localhost:9323
 pytest mail-sync/tests     # pytest, 40 tests du service mail-sync — aucune pile requise
+docker build -q --target dev -t crm-mcp:dev mcp && docker run --rm crm-mcp:dev   # pytest du connecteur MCP — aucune pile requise
 ```
 
 Les tests d'autorisation interrogent la base **directement**, avec les jetons réels de chaque
@@ -757,6 +759,18 @@ mail-sync/
 ├── src/mail_sync/          Configuration, état durable, journaux JSONL, API interne
 ├── tests/                  pytest — 40 cas, sans pile
 └── Dockerfile              Image épinglée, utilisateur non privilégié, racine en lecture seule
+```
+
+Le connecteur MCP livré par `CRM-102` T2 (`docs/SPEC-mcp.md`) — **pas encore câblé dans la pile** : le service
+Compose, son volume, le bloc d'hôte Caddy et le realm viennent avec la tranche T3 :
+
+```
+mcp/
+├── crm_mcp/                Réglages, mandataire OAuth (repris d'Evoliz), garde, jeton interne, client du CRM,
+│                           registre, politique (la matrice), audit, pages, outils (`outils/`, un module par famille)
+├── tests/                  pytest — sans pile, devant un CRM simulé qui modèle le contrat de PostgREST
+├── requirements*.lock      Dépendances figées (FastMCP 4.0.11, reprises d'Evoliz)
+└── Dockerfile              Cibles `dev` (pytest) et `production` (utilisateur non privilégié, sonde `/sante`)
 ```
 
 Le répertoire des fonctions edge livré par `CRM-016` est volontairement petit et sans dépendance

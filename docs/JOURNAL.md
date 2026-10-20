@@ -31681,3 +31681,34 @@ peut se clore sur un canari tardif : **INC-275**, avec son correctif proposé, �
 autre unité.
 
 **Vérifications.** Celles du backlog (`CRM-102` T1).
+
+### décision 627, mise en œuvre — `CRM-102` T2 : le service du connecteur
+
+*2026-10-20.*
+
+**Ce qui est repris d'Evoliz, et ce qui ne l'est pas.** Le mandataire OAuth, la garde, la journalisation, les pages et
+l'audit sont des copies tracées de la révision `80a3e27`, chacune avec ses écarts en tête de fichier. La politique,
+elle, est neuve : Evoliz tient le périmètre dans son propre registre, quand le CRM le tient par sa RLS. Le service ne
+décide donc que de la matrice ; toute donnée passe sous le jeton interne de la personne, et un objet qu'elle ne lit
+pas est « introuvable » quelle qu'en soit la cause.
+
+**La déclaration de chaque outil est vérifiée à l'enregistrement, non par une liste à part.** `MoteurPolitique.enregistrer`
+refuse un outil sans déclaration valide : famille, action, cases `aussi` et genres d'ancre fermés, ancre présente
+dans la signature, **tout argument d'identifiant déclaré**, `destructiveHint` cohérent avec l'action. Un outil ne peut
+donc pas exister sans sa déclaration, et le service ne démarre pas sur une déclaration fausse (§14 : la matrice tenue
+par le service, jamais sans la RLS).
+
+**Trois écarts trouvés en écrivant, chacun corrigé avec sa preuve.**
+
+1. La spécification (§2.1) attribue au client du CRM des **reprises**, que la première écriture omettait. Une seule
+   reprise, après une erreur de transport, pour les seuls appels idempotents : une écriture n'est jamais rejouée,
+   elle a peut-être abouti.
+2. Un journal refusé par le registre était **ignoré en silence**. Il est désormais dit (`journal_refuse`), sans faire
+   échouer l'appel : la ligne de la sortie standard reste la trace (`CLAUDE.md` §18).
+3. **La sonde contre la vraie pile a trouvé ce que le simulé masquait** : `/pret` sondait la racine `/rest/v1/`, que
+   Kong refuse en `403` à la clé anonyme, et aurait déclaré le CRM en défaut alors qu'il répond. Le point sondé est
+   désormais celui de `scripts/spark/verifier.sh` ; le CRM simulé refuse la racine comme le vrai, et l'ancienne sonde
+   y est vue rouge. Leçon gardée pour T3 : un contrat simulé n'est fiable que confronté au réel.
+
+**Vérifications.** Celles du backlog (`CRM-102` T2). L'intégration contre le vrai Keycloak et le câblage dans la pile
+sont la tranche T3.

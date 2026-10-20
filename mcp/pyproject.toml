@@ -1,0 +1,37 @@
+# @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : le paquet Python du connecteur
+# @spec docs/SPEC-mcp.md §14 (FastMCP épinglé : le mandataire étend des points internes) ; docs/DAT.md §3.7 ter
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "crm-mcp"
+version = "0.1.0"
+description = "Connecteur MCP du CRM P2Enjoy, adossé au SSO lelabs"
+requires-python = ">=3.13"
+# Versions exactes : le mandataire OAuth est étendu par des points internes de FastMCP. Les dépendances transitives
+# sont figées dans requirements.lock (reprise de la révision 80a3e27 d'Evoliz), que l'image installe.
+dependencies = [
+  "fastmcp==4.0.11",
+  # Frappe du jeton interne (docs/SPEC-mcp.md §5) ; déjà tirée par FastMCP, nommée parce qu'importée directement.
+  "PyJWT==2.15.1",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest==9.0.3",
+  "pytest-asyncio==1.4.0",
+]
+
+[project.scripts]
+crm-mcp = "crm_mcp.__main__:main"
+
+[tool.setuptools.packages.find]
+include = ["crm_mcp*"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+markers = [
+  "integration: exige la pile de développement (Keycloak, Kong, PostgreSQL)",
+]

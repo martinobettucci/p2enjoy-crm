@@ -15156,8 +15156,23 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       vert 5 fois isolé et 3 fois avec son fichier, étranger à la tranche — **INC-275**, à arbitrer.
       `mcp_droits_de` de la spécification devient `mcp_etat_compte` (drapeau et matrice en un appel, `docs/SPEC-mcp.md`
       §7.3, `docs/SCHEMA.md` §9 quinquies).
-- [ ] **T2** — le service `mcp/` : réglages, mandataire OAuth et case « Stay signed in », garde, jeton interne,
+- [x] **T2** — le service `mcp/` : réglages, mandataire OAuth et case « Stay signed in », garde, jeton interne,
       client du CRM, registre, politique, pages, audit ; un seul outil, `crm_workspace_list` ; pytest unitaires.
+      *Vérifié le 2026-10-20, par les preuves unitaires et une sonde contre la vraie pile* (le service n'est câblé dans
+      la pile qu'en T3, avec l'intégration OAuth contre le vrai Keycloak) : pytest **100** tests, dans l'image `dev`,
+      devant un CRM simulé qui modèle le contrat de PostgREST — jeton interne (revendications, échéance bornée,
+      `lelabs_admin`), réglages, vérificateur (RS256, `azp`, `verified`, confusion d'algorithme), admission, case
+      « Stay signed in », garde, client (reprise unique des seuls appels idempotents, deux identités jamais mêlées),
+      registre, politique par un vrai client MCP en mémoire (visibilité, outil caché = inconnu, espace lu sous le
+      jeton, refus uniforme et refus nommé, cases `aussi`, ancres secondaires, superadministrateur, journal sans
+      argument, garde de taille, déclaration vérifiée à l'enregistrement), `crm_workspace_list`, `/pret`, pages.
+      **Sept mutations** du code (matrice non appelée, visibilité ouverte, échéance non bornée, refus non journalisé,
+      complétude absente, liste non filtrée, sonde sur la racine), chacune rouge. **Sonde contre la vraie pile de
+      développement** (jetable, non versionnée) : jeton interne accepté par PostgREST, RPC du registre, `22023`,
+      résolution d'espace directe et par relation, et `crm_workspace_list` par un vrai client MCP — Driss voit
+      l'espace de son droit, Sabine aucun (RLS, D7), Farida aucun outil. **Elle a trouvé un défaut** que le simulé
+      masquait : `/pret` sondait `/rest/v1/`, que Kong refuse en `403` à la clé anonyme ; corrigé sur le point de
+      `scripts/spark/verifier.sh`, simulé aligné, mutant vu rouge.
 - [ ] **T3** — la pile : service `mcp` dans les fichiers Compose (développement, production, cellule), volume
       `mcp-etat`, bloc d'hôte Caddy, realm de développement (`redirectUri`, `offline_access`), variables (`.env.example`,
       `scripts/lib/env.sh`, `runDev.sh`, `scripts/spark/proposer.sh`) ; intégration contre le vrai Keycloak et la vraie

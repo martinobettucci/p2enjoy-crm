@@ -13,9 +13,9 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-102` T1 — le registre du connecteur MCP, en base (décision 627)
+### `CRM-102` T1 et T2 — le connecteur MCP : son registre en base, son service (décision 627)
 
-*Migration `0090`, prouvée en développement (pgTAP, mutations, types). Rien ne la lit avant le service `mcp` (T2, T3) ; livraison avec la tranche T5.*
+*Migration `0090` prouvée en développement (pgTAP, mutations, types) ; service `mcp/` prouvé par ses tests unitaires et une sonde contre la pile de développement. Le service n'est câblé dans la pile qu'avec T3 ; livraison avec la tranche T5.*
 
 - **Trois tables fermées à l'API** : les comptes qui se sont connectés au connecteur, la **matrice** de leurs droits
   (par espace, famille — structure, affaires, contacts, budgets, temps, objectifs, messagerie — et action — consulter,
@@ -24,6 +24,10 @@ d'exécuter le code attendu.
   compte doit y porter la case. Elle n'ouvre jamais ce que le CRM ferme.
 - **Trois fonctions réservées au service** : l'inscription d'un compte (avec l'amorçage de la plateforme), son état
   (drapeau et matrice) et le journal d'un appel.
+- **T2 — le service `mcp/`** (Python, FastMCP) : connexion par le SSO LeLabs avec la case « Stay signed in », admission
+  des seuls comptes vérifiés, page « Droits en attente » ; chaque appel agit **sous l'identité de la personne** (la
+  RLS du CRM s'applique), après le contrôle de la matrice ; un outil caché reste inconnu ; chaque appel est journalisé
+  sans ses arguments. Un premier outil : la liste des espaces ouverts au connecteur.
 
 ### `CRM-101` T1 à T4 — la plateforme et son superadministrateur : la base, la connexion, l'écran, le seed (décision 627)
 
