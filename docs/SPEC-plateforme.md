@@ -255,14 +255,15 @@ administrateur (décision 593) : l'écran l'affiche comme telle (§7.3).
 ## 7. L'écran `/plateforme`
 
 Section de la webapp **réservée aux superadministrateurs**. Composition détaillée, tokens et états :
-`docs/DESIGN_SYSTEM.md`, section « Plateforme », écrite avec la tranche T3 **après lecture intégrale**
-du design system. Ce qui suit fixe le contrat.
+`docs/DESIGN_SYSTEM.md` §5.56, écrite avec la tranche T3 **après lecture intégrale** du design system.
+Ce qui suit fixe le contrat.
 
 ### 7.1 Accès
 
 - **L'entrée de navigation** « Plateforme » (icône `ShieldCheck`) apparaît dans la barre latérale,
-  en bas, près des réglages, si et seulement si `public.est_superadmin()` rend vrai. L'appel est fait
-  une fois par session, puis rejoué à chaque prolongation.
+  après « Réglages », si et seulement si `public.est_superadmin()` rend vrai. La coquille fait
+  l'appel à son montage ; un retrait du drapeau la fait disparaître au rechargement suivant, et la
+  base refuse dès l'appel suivant.
 - **Une adresse ouverte sans le drapeau** (`/plateforme` et ses sous-adresses) rend l'état de
   refus : « Cette section est réservée aux superadministrateurs de la plateforme. » Aucune requête
   métier ne part. La base refuserait de toute façon, et c'est elle qui fait foi (`CLAUDE.md` §10).
@@ -281,8 +282,9 @@ L'écran porte trois onglets, sous forme de liens dans l'adresse :
 
 ### 7.3 Fiche d'un espace — `/plateforme/espaces/:slug`
 
-- **En-tête :** le nom et le slug, puis les actions « Renommer » et « Domaine entrant » (modale
-  limitée à ces champs) et « Supprimer l'espace » (zone de danger, en bas de fiche).
+- **En-tête :** le nom et le slug, puis « Modifier » (nom et domaine entrant, formulaire **dans le
+  flux** — le design system n'admet aucune modale, §5.13) et « Supprimer l'espace » (zone de danger,
+  en bas de fiche).
 - **Section Membres :**
   - un tableau (nom, rôle, superadministrateur, depuis) ;
   - un sélecteur de rôle par ligne, qui écrit à la sélection puis relit l'état ;
@@ -297,10 +299,12 @@ L'écran porte trois onglets, sous forme de liens dans l'adresse :
 
 ### 7.4 Supprimer un espace
 
-Une modale de danger :
+Une confirmation **dans le flux**, sous sa commande — jamais une modale (`docs/DESIGN_SYSTEM.md`
+§5.13, §5.56) :
 
-- elle nomme ce qui disparaît, avec les compteurs de l'espace : tracks, affaires, workflows, comptes
-  de messagerie ;
+- elle nomme ce qui disparaît, à partir des données déjà lues — membres et attentes —, puis dit en
+  une phrase que tout ce que l'espace contient part avec lui (tracks, affaires, workflows,
+  messagerie) ;
 - elle dit que la suppression est **définitive**, et que seule la restauration d'une sauvegarde la
   défait ;
 - elle exige de **saisir le slug** ; le bouton reste inactif tant que la saisie diffère.

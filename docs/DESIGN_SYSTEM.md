@@ -5301,3 +5301,128 @@ dans le premier champ et rendu à la commande qui l'a ouvert, alerte de refus da
   sa saisie.
 - **Aucune couleur, aucun jeton nouveau** ; une seule icône nouvelle dans ces écrans, `ArrowLeft`, déjà employée par le
   canevas d'objectifs (§5.29).
+
+### 5.56 La plateforme — espaces, appartenances, attentes, superadministrateurs — `CRM-101`
+
+*Écrit le 2026-10-20, avant le code (décision 627), après relecture intégrale de ce document.* Ce que l'écran lit,
+envoie et refuse est spécifié par `docs/SPEC-plateforme.md` §6 et §7 ; ces règles ne disent que de quoi il a l'air.
+Tout ce que le §5.13 pose vaut ici sans être répété : formulaires et confirmations **dans le flux — aucune modale**,
+focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (différé d'un rendu si elle a été démontée,
+§5.25), alerte de refus `role="alert"` dans le bloc concerné, un seul bloc ouvert à la fois (§5.28).
+
+- **L'ENTRÉE DE BARRE LATÉRALE « Plateforme », icône `ShieldCheck`, vient APRÈS « Réglages », en dernier.**
+  La plateforme est au-dessus des espaces, qu'elle crée. Les autres entrées portent le travail ou la structure d'un
+  espace. `ShieldCheck` ne sert aucun autre objet (§9).
+  - **Elle n'est rendue que si la base dit `public.est_superadmin() = true`.** C'est la frontière du §5.29 ter, et
+    non une extinction selon le rôle : l'écran ne lit aucun rôle dans le jeton, il rend une capacité que la base
+    lui consent. Pendant la lecture, et en cas d'échec, l'entrée est absente : rendue « en attendant », elle
+    proposerait une destination refusée.
+  - **L'adresse ouverte sans le drapeau rend l'état de refus du §5.8**, `EtatRefus`, avec sa phrase. Aucune
+    requête métier ne part, et la base refuserait de toute façon (`CLAUDE.md` §10).
+
+- **LA SECTION EST UN ÉCRAN À ONGLETS-LIENS** — « Espaces », « Superadministrateurs », « Journal » —, sur le patron
+  du §12.1 : `nav` étiquetée « Sections de la plateforme », liens, `aria-current="page"`, bordure basse de même
+  épaisseur dans les deux états. Chaque onglet change l'adresse. `CRM-103` y ajoutera « Connecteur MCP ».
+
+- **LES ESPACES SONT UN TABLEAU DU §5.9**, avec ses six colonnes : nom, identifiant court, domaine entrant,
+  membres, administrateurs, attentes.
+  - **Le nom est le lien vers la fiche**, jamais la ligne entière (§5.9).
+  - **L'identifiant court et le domaine sont des données techniques** (`code`, §2). Un domaine absent laisse la
+    cellule **vide** (§5.9).
+  - **Les trois compteurs** sont alignés à droite, en chiffres tabulaires.
+  - **Un espace sans administrateur porte la pilule `accent` « Aucun administrateur »** dans sa cellule, à côté du
+    `0`. C'est un mot et non une teinte (§1), et une pilule de l'accent, pas du danger : c'est un travail à faire,
+    pas une panne.
+
+- **« NOUVEL ESPACE » EST PRIMAIRE, icône `Plus`, au-dessus du tableau ; l'état vide le porte aussi** (§5.13,
+  surface qui agit).
+  - **Le formulaire s'ouvre sous l'en-tête, dans le flux**, et la commande et lui s'excluent (§5.23). Il porte
+    trois champs : « Nom », « Identifiant court », et « Domaine entrant », facultatif.
+  - **Le texte d'aide de l'identifiant court dit ce que la base fera** : minuscules, chiffres et tirets, et il ne
+    se modifie plus ensuite. Ce n'est **pas** une garde de saisie : aucune expression n'est vérifiée à l'écran,
+    la base tranche et l'écran traduit (§5.3 ter).
+  - **« Créer » est désactivé tant que le nom ou l'identifiant est blanc** : deux champs requis, non un droit
+    (§5.50).
+  - **Un succès ouvre la fiche du nouvel espace**, qui porte la suite : son premier administrateur (§5.50).
+
+- **LA FICHE D'UN ESPACE** se compose de trois blocs, dans cet ordre : l'identité, les membres, les attentes. Une
+  zone de danger les suit, séparée par une bordure haute `--color-border`, en bas de page (§5.3 : un retrait n'est
+  pas ce qu'on vient faire sur une fiche).
+  - **L'identité est une `dl`** (§5.20) : identifiant court et domaine entrant, en données techniques.
+  - **« Modifier », secondaire compacte (`PencilLine`)**, ouvre un formulaire de deux champs, « Nom » et « Domaine
+    entrant », avec **une seule commande d'enregistrement** : la fonction réécrit les deux à la fois (§5.34).
+    L'identifiant court s'y lit **en phrase** et jamais en champ désactivé (§5.15) : « Identifiant court : … Il ne
+    se modifie pas. »
+  - **Un espace sans administrateur porte un bandeau `role="status"`** en `--color-accent-soft` /
+    `--color-accent-on-soft`, icône `TriangleAlert`, sous l'identité : « Aucun administrateur : inscrivez une
+    attente administratrice ou ajoutez un administrateur. » Il n'est pas une alerte : rien n'a échoué.
+
+- **LES MEMBRES SONT UN TABLEAU DU §5.9** : nom, rôle, superadministrateur, depuis, commandes.
+  - **Le rôle est un `select` dans sa cellule, qui écrit au choix** (§5.7 ter). Pendant le vol, la ligne garde sa
+    valeur choisie. Sur un refus, la cellule revient à la valeur relue, et le message vit **sous le tableau**,
+    `role="alert"` (§5.27). Le refus du dernier administrateur nomme le recours : « Un espace garde au moins un
+    administrateur : nommez-en un autre avant de changer ce rôle. »
+  - **« Superadministrateur » est une pilule `brand`, et seulement là où c'est vrai** : une pilule « non » sur
+    chaque autre ligne dirait ce que son absence dit déjà (§5.35).
+  - **« Retirer » est discret compact, icône `UserMinus`.** Il ouvre une **confirmation sur une ligne à elle**, en
+    `colSpan`, sous la ligne concernée (§5.27). Elle nomme la personne et dit ce qui part avec l'appartenance : ses
+    droits fins dans cet espace. Son bouton est destructif.
+  - **« Ajouter un membre », secondaire, icône `UserPlus`**, ouvre sous le tableau un formulaire dans le flux. Il
+    porte un champ de recherche « Personne » (nom, au moins deux caractères), la liste des résultats en `select`,
+    le rôle, puis « Ajouter » (primaire).
+    - **Une personne jamais venue n'est pas trouvable** : elle n'a pas de profil. Le texte d'aide le dit, et
+      renvoie à l'inscription d'une attente.
+    - **La liste n'offre que les personnes NON ENCORE membres** : c'est le refus d'une commande vouée à l'échec,
+      non une garde de droit (§5.21).
+
+- **LES ATTENTES SONT UN TABLEAU DU §5.9** : adresse, rôle, invitée par, depuis, commandes.
+  - **L'adresse est une donnée technique** (`code`).
+  - **« Invitée par » absent s'écrit « Auteur inconnu »** (§5.16).
+  - **Une attente en suspens porte la pilule `accent` « En suspens »** à côté de son rôle, avec un nom accessible
+    qui dit pourquoi : « En suspens : l'espace n'a pas encore d'administrateur ». Le calcul vient des données déjà
+    lues — l'espace n'a aucun administrateur et l'attente n'est pas administratrice —, la même règle que la base
+    (décision 593), jamais un droit.
+  - **« Retirer » est discret compact, icône `MailMinus`, et n'a pas de confirmation.** Le geste ne détruit rien
+    qu'un formulaire de deux champs ne repose : c'est l'écart motivé du §5.41.
+  - **« Inscrire une attente », secondaire, icône `MailPlus`**, ouvre un formulaire : « Adresse » et « Rôle », puis
+    « Inscrire » (primaire). Réinscrire une adresse remplace son rôle, et le texte d'aide le dit.
+
+- **SUPPRIMER UN ESPACE.** « Supprimer l'espace », secondaire compacte avec `Trash2`, ouvre une confirmation dans le
+  flux, sous la commande. La commande reste montée et devient désactivée (§5.40).
+  - **La confirmation nomme l'espace, dit que la suppression est DÉFINITIVE**, qu'elle emporte tout ce qu'il
+    contient, et que seule la restauration d'une sauvegarde la défait. Ce qu'elle emporte s'énumère depuis les
+    données déjà lues : membres, attentes, puis une phrase pour le reste.
+  - **Elle exige de SAISIR l'identifiant court.** Le bouton destructif reste désactivé tant que la saisie diffère :
+    c'est l'état de la confirmation, pas un droit (§5.50). Le texte d'aide cite l'identifiant à saisir, entouré
+    d'espaces insécables (§5.51).
+  - **Le succès quitte la fiche pour la liste**, où un `role="status"` dit « Espace « … » supprimé ». La fiche d'un
+    espace supprimé n'a plus de sujet (§5.40).
+
+- **LES SUPERADMINISTRATEURS SONT UN TABLEAU DU §5.9** : nom, accordé par, depuis, commandes.
+  - **Un drapeau amorcé s'écrit « Amorçage »** dans « accordé par » : c'est un fait à nommer, pas une cellule vide
+    (§5.16).
+  - **Une phrase sous le titre dit que les porteurs du rôle `admin` LeLabs le sont aussi**, sans figurer dans la
+    liste : le CRM ne les connaît que par leur jeton (`docs/SPEC-plateforme.md` §10).
+  - **« Retirer », discret compact `ShieldMinus`, ouvre une confirmation sur une ligne à elle** (§5.27). Le refus
+    du dernier superadministrateur se lit sous le tableau et nomme le recours : « en accorder un autre d'abord ».
+  - **« Accorder le drapeau », secondaire `ShieldPlus`**, ouvre le formulaire de recherche des membres, sans champ
+    de rôle.
+
+- **LE JOURNAL EST UN TABLEAU DU §5.9** : date, acteur, geste, détail.
+  - **Le geste est un MOT, traduit par un dictionnaire fermé.** Un geste inconnu laisse la cellule **vide** et
+    n'affiche jamais le code brut (§5.14).
+  - **Le détail se compose par une clé par geste**, jamais par concaténation (§10) : « Rôle de {nom} : {avant} →
+    {après} ».
+  - **L'acteur absent s'écrit « Amorçage »** pour l'amorçage, et « Compte supprimé » sinon (§5.10).
+  - **La pagination est une commande « Entrées plus anciennes »**, secondaire, sous le tableau, rendue tant que la
+    page lue est pleine. Le tableau relu garde les lignes déjà lues, comme le §5.29 tranche 2 c.
+
+- **LES REFUS SONT TRADUITS PAR UN DICTIONNAIRE FERMÉ** — un texte par code du §6.1 de la spécification —, et un
+  code inconnu rend le texte générique, jamais le message brut de la base (§5.34).
+
+- **SOUS LE PALIER `md`, LES TABLEAUX DÉFILENT DANS LEUR CONTENEUR** `.indique-debordement-x` (§12.6), les blocs dans
+  une ligne de tableau sont épinglés au bord visible (§5.27), et les formulaires passent en une colonne. La page ne
+  défile jamais horizontalement (§7).
+
+- **Aucune couleur, aucun jeton nouveau.** Sept icônes Lucide nouvelles, aucune ne servant déjà un autre objet (§9) :
+  `ShieldCheck`, `ShieldPlus`, `ShieldMinus`, `UserPlus`, `UserMinus`, `MailPlus`, `MailMinus`.
