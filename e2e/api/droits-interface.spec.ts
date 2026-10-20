@@ -1,6 +1,7 @@
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T1 : la capacité d'écriture, lue par la route REST avec les jetons réels
 // @verifies docs/SPEC-droits-interface.md §2.1 (deux colonnes calculées : la capacité du rôle ET des droits fins ;
-//           aucune ligne de plus que la RLS) ; docs/SPEC-permissions-rls.md §3.3 bis, §7 ; CLAUDE.md §10
+//           aucune ligne de plus que la RLS), §2.2 (les deux capacités de l'espace) ; docs/SPEC-permissions-rls.md §3.3 bis,
+//           §7 ; CLAUDE.md §10
 //
 // La colonne est une AIDE : la règle reste la politique. Ce fichier prouve donc aussi que ce que la colonne annonce
 // est ce que la base fait — une affaire annoncée en lecture seule refuse réellement l'écriture, une affaire annoncée
@@ -71,6 +72,22 @@ test.describe('la capacité d’écriture lue par l’interface (docs/SPEC-droit
 	test('le business developer : une affaire de « maintenance » est annoncée en lecture seule', async ({ request }) => {
 		const affaire = await premiereAffaire(request, await jetonDe(BIZDEV.adresse), MAINTENANCE)
 		expect(affaire.ecriture_permise).toBe(false)
+	})
+
+	test('par espace : l’administratrice administre et édite, le business developer édite, la lectrice ni l’un ni l’autre', async ({
+		request,
+	}) => {
+		const capacites = async (adresse: string) => {
+			const reponse = await request.get(
+				`${URL_API}/rest/v1/workspaces?select=administration_permise,edition_permise&id=eq.5eed0000-0000-4000-8000-000000000001`,
+				{ headers: enTetesAuthentifies(await jetonDe(adresse)) },
+			)
+			expect(reponse.status(), await reponse.text()).toBe(200)
+			return (await reponse.json()) as { administration_permise: boolean; edition_permise: boolean }[]
+		}
+		expect(await capacites(ADMIN.adresse)).toEqual([{ administration_permise: true, edition_permise: true }])
+		expect(await capacites(BIZDEV.adresse)).toEqual([{ administration_permise: false, edition_permise: true }])
+		expect(await capacites(VIEWER.adresse)).toEqual([{ administration_permise: false, edition_permise: false }])
 	})
 
 	test('un channel illisible n’est pas rendu, et l’anonyme ne reçoit aucune ligne, sans erreur', async ({ request }) => {

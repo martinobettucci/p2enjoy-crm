@@ -1556,6 +1556,14 @@ outre un budget lisible et ouvert. En SQL brut, la colonne se lit en notation qu
 PostgREST la résout dans `select=`. Preuves : `supabase/tests/0086_droits_interface.test.sql` (matrice des trois
 profils du seed et de leurs droits fins), `e2e/api/droits-interface.spec.ts`.
 
+**Les deux capacités de l'espace — migration 92**, au même patron : `public.administration_permise(w public.workspaces)`
+rend `app.is_workspace_admin(w.id)` — la règle des politiques d'écriture de la structure — et
+`public.edition_permise(w public.workspaces)` rend `coalesce(app.workspace_role(w.id) in ('admin', 'business_developer'),
+false)` — le prédicat, recopié à l'identique, des politiques des contacts, organisations, objectifs, modèles et
+séquences. `stable`, `security invoker`, `execute` à `anon`, `authenticated`, `service_role`. Elles existent pour que
+l'interface éteigne une commande sur une capacité que la BASE rend, jamais sur un rôle qu'elle lirait
+(`docs/DESIGN_SYSTEM.md` §5.29 ter, décision 628 et sa précision).
+
 ### 9 bis.9 `public.cards_figees()` — les affaires figées de l'appelant, migration 53
 
 Ajoutée le 2026-08-24 par `CRM-062` tranche 1 (`docs/SPEC-relances.md` §2 et §3).

@@ -994,9 +994,15 @@ type _vueDerivationColonnes = Expect<
 // `0090` de `CRM-102` TRANCHE T1 ajoute les quatre fonctions `mcp_*` du connecteur (docs/SPEC-mcp.md §6.3, §7.3, décision
 // 627). CE QUE LE TYPE NE DIT PAS : `mcp_autorise` est la seule qu'un jeton de la webapp puisse appeler ; les trois
 // autres compilent mais sont refusées en `42501` à tout rôle sauf `service_role`. Soixante-seize devient QUATRE-VINGTS.
+// `0091` de `CRM-093` TRANCHE T1 n'ajoute AUCUN nom : ses deux colonnes calculées sont des surcharges de
+// `ecriture_permise`, déjà comptée. `0092` ajoute `administration_permise` et `edition_permise`, les capacités de
+// l'espace (docs/SPEC-droits-interface.md §2.2, décision 628). SECURITY INVOKER : une colonne CALCULÉE que PostgREST
+// rend avec la ligne de `workspaces`, jamais une RPC qu'un écran appellerait. Quatre-vingts devient QUATRE-VINGT-DEUX.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'administration_permise'
+    | 'edition_permise'
     | 'mcp_autorise'
     | 'mcp_inscrire_compte'
     | 'mcp_etat_compte'
@@ -1120,6 +1126,20 @@ type _ecriturePermisePrendUneLigne = Expect<
 >
 type _ecriturePermiseRendUnBooleen = Expect<
   Equal<Database['public']['Functions']['ecriture_permise']['Returns'], boolean>
+>
+// Les deux capacités de l'espace — `CRM-093` T1, migration 92, `docs/SCHEMA.md` §9 bis.8 ter : une ligne de
+// `workspaces` en argument, un booléen en retour.
+type _administrationPermise = Expect<
+  Equal<
+    Database['public']['Functions']['administration_permise'],
+    { Args: { w: Database['public']['Tables']['workspaces']['Row'] }; Returns: boolean }
+  >
+>
+type _editionPermise = Expect<
+  Equal<
+    Database['public']['Functions']['edition_permise'],
+    { Args: { w: Database['public']['Tables']['workspaces']['Row'] }; Returns: boolean }
+  >
 >
 
 // L'arborescence de l'inbox ne prend AUCUN argument, et c'est le contrat : elle rend ce que
@@ -1295,6 +1315,8 @@ export type AssertionsDuContratDeTypes = [
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigne,
   _ecriturePermiseRendUnBooleen,
+  _administrationPermise,
+  _editionPermise,
   _signatureArborescence,
   _signatureCopie,
   _retourCopie,

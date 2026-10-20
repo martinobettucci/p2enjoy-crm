@@ -3275,6 +3275,10 @@ export type Database = {
         Args: { p_suggestion: string }
         Returns: string
       }
+      administration_permise: {
+        Args: { w: Database["public"]["Tables"]["workspaces"]["Row"] }
+        Returns: boolean
+      }
       armer_sequence_relance: {
         Args: {
           p_card_id: string
@@ -3417,6 +3421,10 @@ export type Database = {
             }
             Returns: boolean
           }
+      edition_permise: {
+        Args: { w: Database["public"]["Tables"]["workspaces"]["Row"] }
+        Returns: boolean
+      }
       entonnoir_conversion: {
         Args: never
         Returns: {

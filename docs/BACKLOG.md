@@ -14688,6 +14688,9 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       tuée), types régénérés, `docs/SCHEMA.md` §9 bis.8 ter, preuve d'API aux jetons réels (4 : matrice des droits fins,
       ce que la colonne annonce est ce que la base fait), `docs/PROD_MIGRATIONS.md` (91 en attente). Vérifié le
       2026-10-21 ; série pgTAP complète 86 fichiers, 3703 assertions.
+      **Complétée le même jour** par la migration `0092` (capacités de l'espace, après lecture intégrale du design
+      system — décision 628, précision) : `0086` passe à 29 assertions (mutation « l'édition réduite à
+      l'administrateur » tuée), API 5/5, types et inventaire des fonctions révisés (quatre-vingt-deux).
 - [ ] Mise en œuvre, preuves unitaires et E2E par rôle, captures, manuel, redéploiement.
 
 ### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[x]`

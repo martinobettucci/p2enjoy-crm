@@ -2,7 +2,8 @@
 --           par l'interface
 -- @verifies docs/SPEC-droits-interface.md §2.1 (deux colonnes calculées, SECURITY INVOKER, droits d'exécution, aucune
 --           ligne de plus que la RLS) ; docs/SPEC-permissions-rls.md §3.3 bis (le plus spécifique gagne, transitif),
---           §7 (zéro ligne pour l'anonyme) ; docs/SCHEMA.md §9 bis.8 ter ; docs/JOURNAL.md décision 628
+--           §7 (zéro ligne pour l'anonyme) ; docs/SCHEMA.md §9 bis.8 ter ; docs/JOURNAL.md décision 628 et sa précision ;
+--           docs/SPEC-droits-interface.md §2.2 (les deux colonnes de l'espace, migration 0092)
 --
 -- CE QUE CETTE SUITE PROUVE, AVEC LES PROFILS ET LES DROITS FINS RÉELS DU SEED (`supabase/seed/apply-seed.sh`, droits
 -- fins : Farida `member` sur « prospection » …031 sous « Conseil & IA » …021 qui lui est fermé ; Driss `viewer` sur
@@ -22,7 +23,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(22);
+select plan(29);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -130,6 +131,30 @@ select ok(not exists (select 1 from public.cards k
 select pg_temp.redevenir_proprietaire();
 
 -- ---------------------------------------------------------------------------------------------
+-- 6. Les deux capacités de l'espace
+-- ---------------------------------------------------------------------------------------------
+
+select has_function('public', 'administration_permise', array['workspaces'], 'la capacité d''administration existe');
+select has_function('public', 'edition_permise', array['workspaces'], 'la capacité d''édition existe');
+select is((select bool_or(prosecdef) from pg_proc where proname in ('administration_permise', 'edition_permise')),
+          false, 'les deux sont SECURITY INVOKER');
+
+create or replace function pg_temp.capacites() returns text language sql as $$
+	select coalesce(string_agg(w.administration_permise::text || '/' || w.edition_permise::text, ','), '')
+	  from public.workspaces w where w.id = '5eed0000-0000-4000-8000-000000000001'
+$$;
+
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+select is(pg_temp.capacites(), 'true/true', 'l''administratrice administre et édite l''espace');
+select pg_temp.redevenir_proprietaire();
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
+select is(pg_temp.capacites(), 'false/true', 'le business developer édite sans administrer');
+select pg_temp.redevenir_proprietaire();
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
+select is(pg_temp.capacites(), 'false/false', 'la lectrice n''administre ni n''édite');
+select pg_temp.redevenir_proprietaire();
+
+-- ---------------------------------------------------------------------------------------------
 -- 5. L'anonyme : zéro ligne, sans erreur
 -- ---------------------------------------------------------------------------------------------
 
@@ -140,6 +165,8 @@ select is((select count(*) from public.channels c where c.ecriture_permise is no
           'l''anonyme ne reçoit aucune ligne de channel');
 select is((select count(*) from public.cards k where k.ecriture_permise is not null), 0::bigint,
           'l''anonyme ne reçoit aucune ligne d''affaire');
+select is((select count(*) from public.workspaces w where w.administration_permise is not null), 0::bigint,
+          'l''anonyme ne reçoit aucune ligne d''espace');
 reset role;
 
 select * from finish();
