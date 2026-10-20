@@ -15152,11 +15152,22 @@ LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : 
       antérieur à la livraison (redémarrage de `rest` du 2026-10-15, INC-277). **Le drapeau est amorcé** à la première
       connexion du responsable (relevé en base, `docs/PROD_MIGRATIONS.md` §8). **Reste le constat du responsable** :
       `/plateforme` liste l'espace et ses membres.
-- [ ] **T6** — l'onglet « Utilisateurs » (arbitrage A6 du 2026-10-21 : « on doit pouvoir chercher parmi les
+- [x] **T6** — l'onglet « Utilisateurs » (arbitrage A6 du 2026-10-21 : « on doit pouvoir chercher parmi les
       utilisateurs déjà enregistrés en base ») : `plateforme_utilisateurs` et sa migration, au prochain numéro libre au
       moment de l'écrire ; pgTAP avec mutations ; types ; l'onglet ; API aux jetons réels (refus sans le drapeau), E2E
       à la souris et au clavier, seed si nécessaire, captures observées, manuel (chapitre 10), campagnes. Spécifiée avant
       le code : `docs/SPEC-plateforme.md` §6.5, §7.2, §12 ; `docs/DESIGN_SYSTEM.md` §5.56 ; décision 627, A6.
+      *Vérifié le 2026-10-21, en développement* : migration `0093` appliquée par le vrai runner, au delta, après les 91
+      et 92 ; types régénérés (la seule fonction nouvelle). pgTAP `0084` **80** assertions (+9 : tous les profils dans
+      la borne, recherche sans accent ni métacaractère, espaces et rôles, profil sans appartenance, dernière activité au
+      connecteur et son absence, drapeau, bornes, ordre ; la fonction comptée dans la forme et la garde) ; **deux
+      mutations réelles** — garde retirée, activité au connecteur nulle —, chacune rouge, puis la définition restaurée
+      et la suite verte. Unitaires **32** (onglet et lecture). API **8/8** aux jetons réels (la fonction refusée à
+      l'anonyme, à la lectrice et à l'administratrice d'espace ; la superadministratrice lit tous les profils). E2E
+      **5/5** : l'onglet au clavier, la recherche « camillé », le lien d'espace suivi jusqu'à sa fiche, le vide nommé ;
+      captures `docs/captures/CRM-101/plateforme-utilisateurs-*` observées aux quatre paliers. `verify-plateforme.sh`
+      **32** contrôles sans anomalie. Compteurs du harnais mesurés : 3719 assertions, 1135 scénarios d'API. Manuel
+      §10.6 bis. **Non livré** : la livraison attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md` §2.13).
 
 ### CRM-102 — Connecteur MCP : socle, mandataire OAuth, connexion longue, registre `[~]`
 *Créée le 2026-10-20 — décision 627 (A2, D1 à D5, D8). Un service Python FastMCP `mcp/`, repris du connecteur Evoliz,

@@ -4119,7 +4119,7 @@ membre de cet espace, et ce geste est inscrit au journal.
 Un superadministrateur voit l'entrée **« Plateforme »** en bas de la barre latérale, après « Réglages ». Personne
 d'autre ne la voit. Une adresse de la plateforme ouverte sans le drapeau affiche **« Accès réservé »**.
 
-La plateforme a trois onglets : **« Espaces »**, **« Superadministrateurs »** et **« Journal »**.
+La plateforme a quatre onglets : **« Espaces »**, **« Utilisateurs »**, **« Superadministrateurs »** et **« Journal »**.
 
 ### 10.3 Créer un espace
 
@@ -4167,6 +4167,24 @@ suspens »** : elle ne se consommera qu'après l'arrivée d'un administrateur. I
 - **Ce qu'elle demande :** de **saisir l'identifiant court** de l'espace. **« Supprimer définitivement »** reste
   inactif tant que la saisie diffère.
 - **Ce qui ne se rattrape pas :** la suppression est définitive. Seule la restauration d'une sauvegarde la défait.
+
+### 10.6 bis Les utilisateurs
+
+L'onglet **« Utilisateurs »** liste toutes les personnes admises au moins une fois dans le CRM. Pour chacune, il
+affiche :
+
+- ses **espaces**, chacun suivi de son rôle ; un clic sur un espace ouvre sa fiche. « Aucun espace » dit qu'elle n'en a
+  plus ;
+- la pilule **« Superadministrateur »**, si elle porte le drapeau ;
+- sa **dernière activité au connecteur MCP**, ou « Jamais connecté » ;
+- la date de sa première admission.
+
+**« Rechercher un utilisateur »** filtre la liste par nom pendant que vous tapez, sans tenir compte des accents ni des
+majuscules. La liste montre au plus 200 personnes ; au-delà, elle le dit, et la recherche affine.
+
+L'onglet ne modifie rien. Pour ajouter une personne à un espace, ouvrez la fiche de l'espace (§10.4). Pour lui donner
+le drapeau, passez par l'onglet « Superadministrateurs » (§10.7). Le rôle `admin` LeLabs n'y est pas affiché : le CRM
+ne le connaît que par la connexion.
 
 ### 10.7 Les superadministrateurs et le journal
 

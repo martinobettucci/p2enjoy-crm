@@ -292,6 +292,8 @@ export const CHEMIN_PLATEFORME = '/plateforme' as const
 export const CHEMIN_PLATEFORME_ESPACES = '/plateforme/espaces' as const
 /** La fiche d'un espace, désigné par son identifiant court, qui ne se modifie pas. */
 export const CHEMIN_PLATEFORME_ESPACE = '/plateforme/espaces/:slug' as const
+/** Tous les utilisateurs du CRM, en lecture seule (`CRM-101` T6, docs/SPEC-plateforme.md §7.2). */
+export const CHEMIN_PLATEFORME_UTILISATEURS = '/plateforme/utilisateurs' as const
 export const CHEMIN_PLATEFORME_SUPERADMINS = '/plateforme/superadmins' as const
 export const CHEMIN_PLATEFORME_JOURNAL = '/plateforme/journal' as const
 

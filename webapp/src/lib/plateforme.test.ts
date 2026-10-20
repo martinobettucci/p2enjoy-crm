@@ -1,6 +1,8 @@
 // @verifies CRM-101 (docs/BACKLOG.md) — tranche T3 : les appels de la plateforme, leurs refus, et la logique de l'écran
 // @verifies docs/SPEC-plateforme.md §6 (fonctions, dictionnaire des refus §6.1), §7 (écran) ; docs/DESIGN_SYSTEM.md §5.56
 //           (dictionnaire fermé, confirmation par l'identifiant court, attente en suspens, journal paginé)
+// @verifies CRM-101 T6 — docs/SPEC-plateforme.md §6.5 (`plateforme_utilisateurs` : terme nettoyé, borne de 200, rôle
+//           confronté à la liste, connecteur absent rendu `null`)
 
 import { describe, expect, it } from 'vitest'
 import { CLES_APPARTENANCES, compter, detailJournal, libelleActeur, libelleGeste, texteRefus } from '../app/presentation-plateforme'
@@ -13,6 +15,7 @@ import {
 	curseurSuivant,
 	lireEspaces,
 	lireEstSuperadmin,
+	lireUtilisateurs,
 	rechercheEmissible,
 	roleConnu,
 	type EntreeJournal,
@@ -152,5 +155,42 @@ describe('présentation', () => {
 		expect(libelleActeur(entree('superadmin_amorce', {}, null))).toBe('Amorçage')
 		expect(libelleActeur(entree('espace_cree', {}, null))).toBe('Compte supprimé')
 		expect(libelleGeste(null)).toBe('')
+	})
+})
+
+describe('utilisateurs (T6)', () => {
+	it('envoie le terme nettoyé et la borne, et lit espaces, rôles et connecteur sans rien deviner', async () => {
+		const appels: Appel[] = []
+		const etat = await lireUtilisateurs(
+			client(
+				() => ({
+					data: [
+						{
+							id: 'u-12',
+							nom: 'Driss Lemoine',
+							cree_le: '2026-10-01T09:00:00Z',
+							superadmin: false,
+							espaces: [{ slug: 'p2enjoy', nom: 'P2Enjoy', role: 'roi' }],
+							connecteur_derniere_activite: null,
+						},
+					],
+					error: null,
+					status: 200,
+				}),
+				appels,
+			),
+			'  Driss ',
+		)
+		expect(appels).toEqual([{ nom: 'plateforme_utilisateurs', args: { p_recherche: 'Driss', p_limite: 200 } }])
+		expect(etat.statut === 'pret' && etat.donnees).toEqual([
+			{
+				id: 'u-12',
+				nom: 'Driss Lemoine',
+				creeLe: '2026-10-01T09:00:00Z',
+				superadmin: false,
+				espaces: [{ slug: 'p2enjoy', nom: 'P2Enjoy', role: null }],
+				connecteurDerniereActivite: null,
+			},
+		])
 	})
 })

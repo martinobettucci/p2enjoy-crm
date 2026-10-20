@@ -2,6 +2,7 @@
 // @spec docs/SPEC-plateforme.md §5.3 (`public.est_superadmin`, aide d'interface), §6 (les fonctions et le dictionnaire
 //       des refus), §7 (l'écran) ; docs/DESIGN_SYSTEM.md §5.56 ; docs/SCHEMA.md §1 bis
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; CLAUDE.md §10 — ce module ne décide AUCUN droit
+// @spec CRM-101 tranche T6 — docs/SPEC-plateforme.md §6.5 (`plateforme_utilisateurs`), arbitrage A6
 //
 // Toutes les lectures et écritures passent par les fonctions `public.plateforme_*`, gardées en base par
 // `app.exiger_superadmin()`. L'écran n'en déduit rien : il envoie, et traduit ce que la base rend. Un refus est
@@ -270,6 +271,46 @@ export async function lireProfils(client: ClientCrm, terme: string): Promise<Eta
 			id: texte(ligne['id']),
 			nom: texte(ligne['nom']),
 			superadmin: ligne['superadmin'] === true,
+		})),
+	)
+}
+
+// --- Utilisateurs (§6.5, `CRM-101` T6, arbitrage A6) -----------------------------------------------------------
+
+/** La borne de `plateforme_utilisateurs` : au-delà, la troncature est écrite (`docs/DESIGN_SYSTEM.md` §5.56). */
+export const BORNE_UTILISATEURS = 200
+
+export type AppartenanceUtilisateur = {
+	readonly slug: string
+	readonly nom: string
+	/** Confronté à la liste des rôles, jamais casté : une valeur inconnue devient `null`. */
+	readonly role: RoleEspace | null
+}
+
+export type UtilisateurPlateforme = {
+	readonly id: string
+	readonly nom: string
+	readonly creeLe: string
+	readonly superadmin: boolean
+	readonly espaces: readonly AppartenanceUtilisateur[]
+	/** `null` pour qui n'est jamais venu au connecteur : « Jamais connecté » à l'écran. */
+	readonly connecteurDerniereActivite: string | null
+}
+
+/** Les utilisateurs du CRM — les profils —, filtrés par nom ; un terme vide les rend tous, dans la borne. */
+export async function lireUtilisateurs(client: ClientCrm, terme: string): Promise<EtatAsync<readonly UtilisateurPlateforme[]>> {
+	return await lire(client, 'plateforme_utilisateurs', { p_recherche: terme.trim(), p_limite: BORNE_UTILISATEURS }, (data) =>
+		tableau(data).map((ligne) => ({
+			id: texte(ligne['id']),
+			nom: texte(ligne['nom']),
+			creeLe: texte(ligne['cree_le']),
+			superadmin: ligne['superadmin'] === true,
+			espaces: tableau(ligne['espaces']).map((espace) => ({
+				slug: texte(espace['slug']),
+				nom: texte(espace['nom']),
+				role: roleConnu(espace['role']),
+			})),
+			connecteurDerniereActivite: texteOuNul(ligne['connecteur_derniere_activite']),
 		})),
 	)
 }

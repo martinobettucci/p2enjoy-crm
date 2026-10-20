@@ -3790,6 +3790,17 @@ export type Database = {
         Args: { p_id: string; p_slug_confirme: string }
         Returns: undefined
       }
+      plateforme_utilisateurs: {
+        Args: { p_limite?: number; p_recherche?: string }
+        Returns: {
+          connecteur_derniere_activite: string
+          cree_le: string
+          espaces: Json
+          id: string
+          nom: string
+          superadmin: boolean
+        }[]
+      }
       previsualiser_exigence: {
         Args: {
           p_field_id: string

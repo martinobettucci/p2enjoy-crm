@@ -3,6 +3,9 @@
 //           docs/DESIGN_SYSTEM.md §5.56 (onglets-liens, tableaux, formulaires et confirmations dans le flux, suppression
 //           confirmée par l'identifiant court, refus traduits, « Amorçage », attente en suspens), §5.27, §5.41, §5.50
 // @verifies CLAUDE.md §10 — l'écran ne décide aucun droit : il envoie et traduit le refus de la base
+// @verifies CRM-101 T6 — docs/SPEC-plateforme.md §6.5, §7.2 ; docs/DESIGN_SYSTEM.md §5.56 (onglet « Utilisateurs » :
+//           recherche par nom émise au repos, liste précédente gardée, espaces en liens vers leur fiche, « Aucun
+//           espace », « Jamais connecté », troncature écrite, vide nommé avec le terme, erreur avec reprise)
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -233,5 +236,95 @@ describe('superadministrateurs et journal (§5.56)', () => {
 		expect(within(lignes[1] as HTMLElement).getByText('Amorçage')).toBeTruthy()
 		expect(lignes[2]?.textContent).not.toContain('geste_inconnu')
 		expect(screen.queryByTestId('journal-suite')).toBeNull()
+	})
+})
+
+describe('utilisateurs (§5.56, T6)', () => {
+	const SABINE_U = {
+		id: 'u-18',
+		nom: 'Sabine Plateforme',
+		cree_le: '2026-10-20T09:00:00Z',
+		superadmin: true,
+		espaces: [],
+		connecteur_derniere_activite: '2026-10-21T08:30:00Z',
+	}
+	const DRISS_U = {
+		id: 'u-12',
+		nom: 'Driss Lemoine',
+		cree_le: '2026-10-01T09:00:00Z',
+		superadmin: false,
+		espaces: [
+			{ slug: 'atelier', nom: 'Atelier', role: 'admin' },
+			{ slug: 'p2enjoy', nom: 'P2Enjoy', role: 'business_developer' },
+		],
+		connecteur_derniere_activite: null,
+	}
+
+	it('marque l’onglet, lit tous les utilisateurs, et rend espaces, drapeau et connecteur', async () => {
+		const appels: string[] = []
+		rendre('utilisateurs', '/plateforme/utilisateurs', client({ ...SUPERADMIN, plateforme_utilisateurs: () => ok([DRISS_U, SABINE_U]) }, appels))
+		const lignes = await screen.findAllByTestId('ligne-utilisateur')
+		expect(screen.getByRole('link', { name: 'Utilisateurs' }).getAttribute('aria-current')).toBe('page')
+		const driss = lignes[0] as HTMLElement
+		expect(within(driss).getByRole('link', { name: 'Atelier' }).getAttribute('href')).toBe('/plateforme/espaces/atelier')
+		expect(within(driss).getByRole('link', { name: 'P2Enjoy' }).getAttribute('href')).toBe('/plateforme/espaces/p2enjoy')
+		expect(within(driss).getByText('Business developer')).toBeTruthy()
+		expect(within(driss).getByText('Jamais connecté')).toBeTruthy()
+		expect(within(driss).queryByText('Superadministrateur')).toBeNull()
+		const sabine = lignes[1] as HTMLElement
+		expect(within(sabine).getByText('Aucun espace')).toBeTruthy()
+		expect(within(sabine).getByText('Superadministrateur')).toBeTruthy()
+		expect(sabine.textContent).not.toContain('Jamais connecté')
+		expect(appels).toContain('plateforme_utilisateurs')
+		expect(screen.queryByTestId('troncature-utilisateurs')).toBeNull()
+	})
+
+	it('cherche par nom au repos, garde la liste pendant la lecture, et nomme le terme quand rien ne répond', async () => {
+		const utilisateur = userEvent.setup()
+		const termes: unknown[] = []
+		rendre(
+			'utilisateurs',
+			'/plateforme/utilisateurs',
+			client({
+				...SUPERADMIN,
+				plateforme_utilisateurs: (args) => {
+					termes.push(args['p_recherche'])
+					return ok(args['p_recherche'] === '' ? [DRISS_U, SABINE_U] : [])
+				},
+			}),
+		)
+		await screen.findAllByTestId('ligne-utilisateur')
+		await utilisateur.type(screen.getByLabelText('Rechercher un utilisateur'), 'Zoé')
+		// La liste reste affichée, sous `aria-busy`, tant que la nouvelle lecture n'a pas répondu (§5.46).
+		expect(screen.getAllByTestId('ligne-utilisateur')).toHaveLength(2)
+		expect(screen.getByTestId('tableau-utilisateurs').closest('[aria-busy]')?.getAttribute('aria-busy')).toBe('true')
+		// La normalisation de testing-library ramène les espaces insécables du texte rendu à des espaces ordinaires.
+		expect(await screen.findByText('Aucun utilisateur ne correspond à « Zoé ».')).toBeTruthy()
+		expect(termes[0]).toBe('')
+		expect(termes.at(-1)).toBe('Zoé')
+		expect(termes.length).toBeLessThan(4)
+	})
+
+	it('écrit la troncature à la borne, et rend l’erreur avec sa reprise', async () => {
+		const pleins = Array.from({ length: 200 }, (_, i) => ({ ...DRISS_U, id: `u-${i}`, nom: `Personne ${String(i).padStart(3, '0')}` }))
+		rendre('utilisateurs', '/plateforme/utilisateurs', client({ ...SUPERADMIN, plateforme_utilisateurs: () => ok(pleins) }))
+		expect((await screen.findByTestId('troncature-utilisateurs')).textContent).toBe('Les 200 premiers utilisateurs\u00a0: affinez la recherche.')
+		cleanup()
+
+		const utilisateur = userEvent.setup()
+		let essais = 0
+		rendre(
+			'utilisateurs',
+			'/plateforme/utilisateurs',
+			client({
+				...SUPERADMIN,
+				plateforme_utilisateurs: () => {
+					essais += 1
+					return essais === 1 ? refus('panne', 500) : ok([SABINE_U])
+				},
+			}),
+		)
+		await utilisateur.click(await screen.findByRole('button', { name: 'Réessayer' }))
+		expect(await screen.findByTestId('ligne-utilisateur')).toBeTruthy()
 	})
 })

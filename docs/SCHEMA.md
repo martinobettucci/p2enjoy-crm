@@ -205,7 +205,9 @@ Le journal des gestes de la plateforme et du connecteur, en ajout seul.
 
 - `public.est_superadmin()`, une aide d'interface ;
 - les fonctions `public.plateforme_*` (`docs/SPEC-plateforme.md` §6). Elles sont `SECURITY DEFINER`, gardées,
-  `EXECUTE` à `authenticated` seul.
+  `EXECUTE` à `authenticated` seul. **Depuis `CRM-101` T6, migration `0093`** : `public.plateforme_utilisateurs(p_recherche,
+  p_limite)`, une lecture de même forme, qui rend les profils avec leurs appartenances (`jsonb`), le drapeau et la
+  dernière activité au connecteur lue dans `mcp_comptes` (arbitrage A6).
 
 **Admission révisée.** `public.ouvrir_session_sso` admet un superadministrateur en base sans appartenance.
 `public.ouvrir_session_serveur` et `public.renouveler_session_serveur` reçoivent

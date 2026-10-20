@@ -1,11 +1,14 @@
 -- @verifies CRM-101 (docs/BACKLOG.md) — tranche T1 : la plateforme et son superadministrateur, en base
+-- @verifies CRM-101 tranche T6 — docs/SPEC-plateforme.md §6.5 (`plateforme_utilisateurs` : la garde, tous les profils
+--           dans la borne, recherche sans accent ni métacaractère, espaces et rôles, drapeau, dernière activité au
+--           connecteur, ordre des noms), arbitrage A6
 -- @verifies docs/SPEC-plateforme.md §2 (le drapeau n'élargit aucune politique métier), §3 (amorçage unique), §4
 --           (admission révisée), §5 (tables fermées), §6 (garde, dictionnaire des refus, journal) ; docs/SCHEMA.md
 --           §1 bis ; docs/SPEC-session-sso.md §6.1 (condition 3 révisée) ; CLAUDE.md §10
 --
 -- CE QUE CETTE SUITE PROUVE, ET DANS QUEL ORDRE.
 --
--- 1. La forme : deux tables fermées (RLS sans politique, aucun privilège client), quinze fonctions de la plateforme
+-- 1. La forme : deux tables fermées (RLS sans politique, aucun privilège client), seize fonctions de la plateforme
 --    `SECURITY DEFINER` à `search_path` vide, exécutables par `authenticated` seul, et les fonctions de session
 --    toujours réservées à la clé de service.
 -- 2. La garde : CHAQUE fonction plateforme_* refusée en `42501` à l'anonyme, à la lectrice et à l'administratrice d'espace — un
@@ -24,7 +27,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(71);
+select plan(80);
 
 create or replace function pg_temp.endosser(utilisateur uuid, admin_domaine boolean default false)
 returns void language plpgsql as $$
@@ -51,7 +54,7 @@ begin
 end;
 $$;
 
--- Appelle les quatorze fonctions de la plateforme avec des arguments plausibles, et compte celles qui refusent par la
+-- Appelle les quinze fonctions de la plateforme avec des arguments plausibles, et compte celles qui refusent par la
 -- garde. Chaque appel est isolé dans son propre bloc : un refus n'arrête pas les suivants.
 create or replace function pg_temp.refus_de_la_garde()
 returns integer language plpgsql as $$
@@ -70,7 +73,8 @@ declare
 		'select public.plateforme_profils()',
 		'select public.plateforme_superadmins()',
 		'select public.plateforme_poser_superadmin(''5eed0000-0000-4000-8000-000000000013'', true)',
-		'select public.plateforme_journal_liste()'
+		'select public.plateforme_journal_liste()',
+		'select public.plateforme_utilisateurs()'
 	];
 	appel text;
 	refus integer := 0;
@@ -135,7 +139,7 @@ select is(
 	  join pg_catalog.pg_namespace n on n.oid = p.pronamespace
 	 where n.nspname = 'public' and p.proname like 'plateforme\_%'
 	   and p.prosecdef and p.proconfig @> array['search_path=""']),
-	14, 'les quatorze fonctions plateforme_* sont SECURITY DEFINER à search_path vide');
+	15, 'les quinze fonctions plateforme_* sont SECURITY DEFINER à search_path vide');
 
 select is(
 	(select pg_catalog.count(*)::integer from pg_catalog.pg_proc p
@@ -143,7 +147,7 @@ select is(
 	 where n.nspname = 'public' and (p.proname like 'plateforme\_%' or p.proname = 'est_superadmin')
 	   and has_function_privilege('authenticated', p.oid, 'execute')
 	   and not has_function_privilege('anon', p.oid, 'execute')),
-	15, 'les quinze fonctions sont exécutables par authenticated, jamais par anon');
+	16, 'les seize fonctions sont exécutables par authenticated, jamais par anon');
 
 select ok(
 	not has_function_privilege('authenticated',
@@ -170,17 +174,17 @@ select ok(
 -- =============================================================================================
 
 select pg_temp.anonyme();
-select is(pg_temp.refus_de_la_garde(), 14, 'l''anonyme est refusé par les quatorze fonctions');
+select is(pg_temp.refus_de_la_garde(), 15, 'l''anonyme est refusé par les quinze fonctions');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
-select is(pg_temp.refus_de_la_garde(), 14, 'la lectrice est refusée par les quatorze fonctions');
+select is(pg_temp.refus_de_la_garde(), 15, 'la lectrice est refusée par les quinze fonctions');
 select is(public.est_superadmin(), false, 'est_superadmin() est faux pour la lectrice');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
-select is(pg_temp.refus_de_la_garde(), 14,
-	'l''administratrice d''espace est refusée par les quatorze fonctions : un pouvoir d''espace n''est pas de plateforme');
+select is(pg_temp.refus_de_la_garde(), 15,
+	'l''administratrice d''espace est refusée par les quinze fonctions : un pouvoir d''espace n''est pas de plateforme');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013', true);
@@ -323,6 +327,48 @@ select is((select string_agg(nom, ',') from public.plateforme_profils('CAMILLÉ'
 	'la recherche de personnes ignore casse et accents');
 select is((select pg_catalog.count(*)::integer from public.plateforme_profils('%')), 0,
 	'un métacaractère saisi est cherché littéralement');
+
+-- Utilisateurs (`CRM-101` T6, §6.5), sous le jeton de Sabine : superadministratrice en base SANS appartenance — la RLS
+-- des profils ne lui ouvrirait rien, la fonction lit pour elle. Driss est venu au connecteur, Farida jamais, dans la
+-- transaction de la suite.
+select pg_temp.redevenir_proprietaire();
+insert into public.mcp_comptes (sub, email, nom, derniere_activite)
+	values ('5eed0000-0000-4000-8000-000000000012', 'driss@exemple.test', 'Driss Lemoine', '2026-10-21 08:30:00+00')
+	on conflict (sub) do update set derniere_activite = excluded.derniere_activite;
+delete from public.mcp_comptes where sub = '5eed0000-0000-4000-8000-000000000013';
+create temporary table attendu_utilisateurs on commit drop as
+	select least(pg_catalog.count(*), 200)::integer as n from public.profiles;
+grant select on attendu_utilisateurs to authenticated;
+select pg_temp.endosser('a0890000-0000-4000-8000-000000000001');
+
+select is((select pg_catalog.count(*)::integer from public.plateforme_utilisateurs()), (select n from attendu_utilisateurs),
+	'sans terme, les utilisateurs sont tous les profils, dans la borne');
+select ok(
+	(select nom = 'Camille Aubert' and espaces @> '[{"slug": "p2enjoy", "role": "admin"}]'::jsonb
+	   from public.plateforme_utilisateurs('CAMILLÉ')),
+	'la recherche ignore casse et accents, et rend les espaces avec leur rôle');
+select ok(
+	(select espaces = '[]'::jsonb and not superadmin and connecteur_derniere_activite is null
+	   from public.plateforme_utilisateurs('Xavier Témoin')),
+	'un profil sans appartenance rend une liste vide, sans drapeau, jamais venu au connecteur');
+select is((select connecteur_derniere_activite from public.plateforme_utilisateurs()
+	        where id = '5eed0000-0000-4000-8000-000000000012'), '2026-10-21 08:30:00+00'::timestamptz,
+	'la dernière activité au connecteur vient du registre du connecteur');
+select is((select connecteur_derniere_activite from public.plateforme_utilisateurs()
+	        where id = '5eed0000-0000-4000-8000-000000000013'), null,
+	'qui n''est jamais venu au connecteur rend null');
+select ok((select superadmin from public.plateforme_utilisateurs() where id = 'a0890000-0000-4000-8000-000000000001'),
+	'le drapeau en base est rendu');
+select is((select pg_catalog.count(*)::integer from public.plateforme_utilisateurs('%')), 0,
+	'un métacaractère saisi est cherché littéralement');
+select is(
+	(select pg_catalog.count(*)::integer from public.plateforme_utilisateurs(null, 1)) || '|' ||
+	(select pg_catalog.count(*)::integer from public.plateforme_utilisateurs(null, 0)),
+	'1|1', 'la borne demandée est tenue, et jamais sous une ligne');
+select ok(
+	(select array_agg(nom) from public.plateforme_utilisateurs()) =
+	(select array_agg(nom order by nom, id) from public.plateforme_utilisateurs()),
+	'les utilisateurs sont rendus dans l''ordre des noms');
 
 -- =============================================================================================
 -- 5. Le drapeau n'ouvre aucune donnée métier

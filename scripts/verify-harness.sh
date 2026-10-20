@@ -647,7 +647,9 @@ FICHIERS_SQL_ATTENDUS=86
 # **3703 depuis `CRM-093` T1, 2026-10-21**, MESURÉ (86 fichiers, aucune anomalie) : 3558 + 71 (`0084`) + 50 (`0085`)
 # + 2 (`0003_seed_socle`, 32 → 34, révisée par `CRM-101`) + 22 (`0086`) = 3703.
 # **3710**, même jour : `0086` gagne 7 assertions avec la migration 92 (les deux capacités de l'espace), 22 → 29.
-ASSERTIONS_ATTENDUES=3710
+# **3719**, même jour, `CRM-101` T6 : `0084` gagne 9 assertions avec la migration 93 (`plateforme_utilisateurs`),
+# 71 → 80. MESURÉ — somme des `plan()` des 86 suites, et `0084` jouée verte à 80.
+ASSERTIONS_ATTENDUES=3719
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -995,7 +997,9 @@ ASSERTIONS_ATTENDUES=3710
 # **1133 depuis `CRM-093` T1, 2026-10-21**, COMPTÉ par `--list` (77 fichiers) : 1122 + 7 apportés par `CRM-101` et
 # `CRM-102` sans report du compteur + 4 (`e2e/api/droits-interface.spec.ts`, fichier neuf) = 1133.
 # **1134**, même jour : `droits-interface.spec.ts` gagne le scénario des capacités de l'espace (migration 92).
-SCENARIOS_API=1134
+# **1135**, même jour, `CRM-101` T6 : `plateforme.spec.ts` gagne la lecture des utilisateurs par la superadministratrice.
+# COMPTÉ — « Total: 1135 tests in 77 files ».
+SCENARIOS_API=1135
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

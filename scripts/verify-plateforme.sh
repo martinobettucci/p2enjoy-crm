@@ -68,7 +68,8 @@ titre '1. Traçabilité'
 for fichier in "$MIGRATION" "$SUITE" webapp/src/lib/plateforme.ts webapp/src/lib/plateforme.test.ts \
 	webapp/src/app/Plateforme.tsx webapp/src/app/PlateformeEspaces.tsx webapp/src/app/PlateformeEspace.tsx \
 	webapp/src/app/PlateformeSuperadmins.tsx webapp/src/app/PlateformeJournal.tsx webapp/src/app/RecherchePersonne.tsx \
-	webapp/src/app/presentation-plateforme.ts webapp/src/app/Plateforme.test.tsx e2e/api/plateforme.spec.ts \
+	webapp/src/app/presentation-plateforme.ts webapp/src/app/Plateforme.test.tsx webapp/src/app/PlateformeUtilisateurs.tsx \
+	supabase/migrations/0093_plateforme_utilisateurs.sql e2e/api/plateforme.spec.ts \
 	e2e/ui/plateforme.spec.ts; do
 	if head -6 "$fichier" | grep -Eq '@(spec|verifies) CRM-101'; then ok "$fichier cite CRM-101"; else fail "$fichier ne cite pas CRM-101"; fi
 done
@@ -80,8 +81,8 @@ titre '2. Le catalogue, mesuré'
 	&& ok 'aucune politique : aucune lecture ni écriture par l’API' || fail 'une politique ouvre une table fermée'
 [ "$(psql_base -c "select bool_or(has_table_privilege(r, t, 'select') or has_table_privilege(r, t, 'insert'))::text from unnest(array['anon','authenticated']) r, unnest(array['public.superadmins','public.plateforme_journal']) t")" = false ] \
 	&& ok 'aucun privilège client sur les deux tables' || fail 'un rôle client garde un privilège'
-[ "$(psql_base -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname like 'plateforme\_%' and p.prosecdef and p.proconfig @> array['search_path=\"\"'] and has_function_privilege('authenticated', p.oid, 'execute') and not has_function_privilege('anon', p.oid, 'execute')")" = 14 ] \
-	&& ok 'quatorze fonctions plateforme_* : SECURITY DEFINER, search_path vide, authenticated seul' \
+[ "$(psql_base -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname like 'plateforme\_%' and p.prosecdef and p.proconfig @> array['search_path=\"\"'] and has_function_privilege('authenticated', p.oid, 'execute') and not has_function_privilege('anon', p.oid, 'execute')")" = 15 ] \
+	&& ok 'quinze fonctions plateforme_* : SECURITY DEFINER, search_path vide, authenticated seul (CRM-101 T6 : plateforme_utilisateurs)' \
 	|| fail 'une fonction plateforme_* s’écarte de sa forme'
 
 titre '3. Le seed'

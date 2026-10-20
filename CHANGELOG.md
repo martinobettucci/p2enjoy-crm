@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-101` T6 — l'onglet « Utilisateurs » de la plateforme (décision 627, arbitrage A6)
+
+*Migration `0093` (une fonction de lecture, aucune table touchée) et webapp. Prouvé en développement ; à livrer.*
+
+- **La plateforme liste tous les utilisateurs du CRM**, avec une recherche par nom qui ignore accents et majuscules.
+  Pour chacun : ses espaces et son rôle dans chacun (un clic ouvre la fiche de l'espace), le drapeau
+  superadministrateur, sa dernière activité au connecteur MCP ou « Jamais connecté », et la date de son admission.
+- L'onglet ne modifie rien : les appartenances se posent dans la fiche d'un espace, le drapeau dans l'onglet des
+  superadministrateurs.
+
 ### `CRM-102` T6 — du connecteur MCP vers son administration (décision 627)
 
 *Service `mcp/` seulement : aucune migration, aucune variable nouvelle. À la livraison, l'image `mcp` est reconstruite.*

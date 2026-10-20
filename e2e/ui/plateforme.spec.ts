@@ -1,4 +1,6 @@
 // @verifies CRM-101 (docs/BACKLOG.md) — tranche T4 : l'écran de la plateforme, sur la pile réelle
+// @verifies CRM-101 tranche T6 — docs/SPEC-plateforme.md §7.2 et docs/DESIGN_SYSTEM.md §5.56 : l'onglet « Utilisateurs »
+//           au clavier (recherche, lien d'espace suivi jusqu'à sa fiche), le vide nommé, quatre paliers
 // @verifies docs/SPEC-plateforme.md §7 (accès, onglets, fiche, suppression), §6 (effets constatés en base), §8 (seed :
 //           Sabine Plateforme amorcée par sa connexion) ; docs/DESIGN_SYSTEM.md §5.56, §7 (quatre paliers, aucun
 //           défilement horizontal de la page), §8 (clavier seul, focus rendu)
@@ -137,6 +139,35 @@ test.describe('La plateforme (docs/DESIGN_SYSTEM.md §5.56)', () => {
 		expect(await espaceEnBase(request, `${PREFIXE}-clavier`)).toBeUndefined()
 	})
 
+	test('l’onglet « Utilisateurs » : chercher au clavier, puis suivre un espace jusqu’à sa fiche', async ({ page }) => {
+		await connecterAvecLeLabs(page, SABINE)
+		await page.goto('/plateforme/espaces')
+		const onglet = page.getByRole('link', { name: 'Utilisateurs', exact: true })
+		await onglet.focus()
+		await page.keyboard.press('Enter')
+		await expect(page).toHaveURL(/\/plateforme\/utilisateurs$/u)
+		await expect(onglet).toHaveAttribute('aria-current', 'page')
+		const lignes = page.getByTestId('ligne-utilisateur')
+		await expect(lignes.filter({ hasText: 'Sabine Plateforme' })).toContainText('Superadministrateur')
+		await expect(lignes.filter({ hasText: 'Camille Aubert' }).locator('a[href="/plateforme/espaces/p2enjoy"]')).toBeVisible()
+
+		await page.getByLabel('Rechercher un utilisateur').focus()
+		await page.keyboard.type('camillé')
+		await expect(lignes).toHaveCount(1)
+		await expect(lignes).toContainText('Camille Aubert')
+		await page.keyboard.press('Tab')
+		const espace = lignes.locator('a[href="/plateforme/espaces/p2enjoy"]')
+		await expect(espace).toBeFocused()
+		await page.keyboard.press('Enter')
+		await expect(page).toHaveURL(/\/plateforme\/espaces\/p2enjoy$/u)
+		await expect(page.getByRole('link', { name: 'Espaces', exact: true })).toHaveAttribute('aria-current', 'page')
+
+		await page.goto('/plateforme/utilisateurs')
+		await page.getByLabel('Rechercher un utilisateur').fill('personne-inconnue-101')
+		await expect(page.getByText('Aucun utilisateur ne correspond à « personne-inconnue-101 ».')).toBeVisible()
+		await capturer(page, 'plateforme-utilisateurs-vide-xl-1440', UNITE)
+	})
+
 	test('une administratrice d’espace ne voit pas l’entrée, et l’adresse ouverte lui rend le refus', async ({ page }) => {
 		await connecterAvecLeLabs(page, CAMILLE)
 		await expect(page.getByRole('navigation', { name: 'Navigation principale' }).getByRole('link', { name: 'Réglages' })).toBeVisible()
@@ -146,7 +177,7 @@ test.describe('La plateforme (docs/DESIGN_SYSTEM.md §5.56)', () => {
 		await capturer(page, 'plateforme-refus-xl-1440', UNITE)
 	})
 
-	test('les trois onglets et la fiche de l’espace seedé, aux quatre paliers, sans défilement horizontal', async ({ page }) => {
+	test('les quatre onglets et la fiche de l’espace seedé, aux quatre paliers, sans défilement horizontal', async ({ page }) => {
 		await connecterAvecLeLabs(page, SABINE)
 		for (const palier of PALIERS) {
 			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
@@ -160,6 +191,11 @@ test.describe('La plateforme (docs/DESIGN_SYSTEM.md §5.56)', () => {
 			await expect(page.getByTestId('ligne-attente')).toHaveAttribute('data-email', 'attendu@p2enjoy.test')
 			await capturer(page, `plateforme-fiche-${palier.nom}`, UNITE)
 			await sansDefilementHorizontal(page, `fiche ${palier.nom}`)
+
+			await page.goto('/plateforme/utilisateurs')
+			await expect(page.getByTestId('ligne-utilisateur').filter({ hasText: 'Sabine Plateforme' })).toContainText('Superadministrateur')
+			await capturer(page, `plateforme-utilisateurs-${palier.nom}`, UNITE)
+			await sansDefilementHorizontal(page, `utilisateurs ${palier.nom}`)
 
 			await page.goto('/plateforme/superadmins')
 			await expect(page.getByTestId('ligne-superadmin').filter({ hasText: 'Sabine Plateforme' })).toContainText('Amorçage')

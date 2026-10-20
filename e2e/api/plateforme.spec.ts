@@ -5,6 +5,9 @@
 // @verifies CRM-101 (docs/BACKLOG.md) — tranche T4 : CHAQUE fonction de la plateforme refusée en requête directe à
 //           l'anonyme, à la lectrice et à l'administratrice d'espace ; le parcours d'un superadministrateur, aux vrais
 //           jetons, et la base rendue telle qu'il l'a trouvée (docs/SPEC-plateforme.md §6, §9)
+// @verifies CRM-101 tranche T6 — `plateforme_utilisateurs` (docs/SPEC-plateforme.md §6.5) : gardée comme les autres en
+//           requête directe, et lue par la superadministratrice — tous les profils, espaces et rôles, recherche sans
+//           accent (arbitrage A6)
 //
 // Aucune de ces preuves ne passe par l'interface. Le code est émis par le Keycloak de développement au terme d'une vraie
 // connexion PKCE, puis remis à l'échangeur par la vraie passerelle : c'est la fonction `session`, avec la liste que
@@ -148,6 +151,7 @@ const APPELS: readonly [string, Record<string, unknown>][] = [
 	['plateforme_superadmins', {}],
 	['plateforme_poser_superadmin', { p_user: '5eed0000-0000-4000-8000-000000000013', p_actif: true }],
 	['plateforme_journal_liste', {}],
+	['plateforme_utilisateurs', {}],
 ]
 
 async function appelBrut(enTetes: Record<string, string>, fonction: string, corps: Record<string, unknown>) {
@@ -171,7 +175,7 @@ test.describe('La garde de chaque fonction, en requête directe (docs/SPEC-plate
 		['la lectrice', `viewer@${DOMAINE}`],
 		['l’administratrice d’espace : un pouvoir d’espace n’est pas un pouvoir de plateforme', `admin@${DOMAINE}`],
 	] as const) {
-		test(`${libelle} est refusée par la garde, sur les quatorze fonctions`, async () => {
+		test(`${libelle} est refusée par la garde, sur les quinze fonctions`, async () => {
 			const jeton = await jetonDe(adresse)
 			for (const [fonction, corps] of APPELS) {
 				const { statut, texte } = await appelBrut(enTetesAuthentifies(jeton), fonction, corps)
@@ -236,5 +240,18 @@ test.describe('Le parcours d’une superadministratrice, aux vrais jetons (docs/
 				await fetch(`${URL_API}/rest/v1/workspaces?id=eq.${idEspace}`, { method: 'DELETE', headers: enTetesService() })
 			}
 		}
+	})
+
+	test('lire les utilisateurs : tous les profils, avec leurs espaces et leurs rôles, recherche sans accent', async () => {
+		const jeton = await jetonDe(SABINE.adresse)
+		const tous = await rpc(jeton, 'plateforme_utilisateurs')
+		expect(tous.statut).toBe(200)
+		const lignes = tous.corps as Array<{ id: string; nom: string; superadmin: boolean; espaces: Array<{ slug: string; role: string }> }>
+		const profils = (await (await fetch(`${URL_API}/rest/v1/profiles?select=id`, { headers: enTetesService() })).json()) as unknown[]
+		expect(lignes.length, 'tous les profils, la borne de 200 n’étant pas atteinte').toBe(Math.min(profils.length, 200))
+		expect(lignes.find((l) => l.id === CAMILLE.sub)?.espaces).toContainEqual(expect.objectContaining({ slug: 'p2enjoy', role: 'admin' }))
+		expect(lignes.find((l) => l.id === SABINE.sub)?.superadmin).toBe(true)
+		const recherche = await rpc(jeton, 'plateforme_utilisateurs', { p_recherche: 'camillé' })
+		expect((recherche.corps as Array<{ nom: string }>).map((l) => l.nom)).toEqual(['Camille Aubert'])
 	})
 })

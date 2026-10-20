@@ -35,6 +35,7 @@ import {
 	CHEMIN_PLATEFORME_ESPACES,
 	CHEMIN_PLATEFORME_JOURNAL,
 	CHEMIN_PLATEFORME_SUPERADMINS,
+	CHEMIN_PLATEFORME_UTILISATEURS,
 } from './chemins'
 import type { VuePlateforme } from './Plateforme'
 import { GuideDemarrage } from './GuideDemarrage'
@@ -158,6 +159,7 @@ const Plateforme = lazy(async () => ({ default: (await import('./Plateforme')).P
 const VUES_PLATEFORME: readonly { readonly chemin: string; readonly vue: VuePlateforme }[] = [
 	{ chemin: CHEMIN_PLATEFORME_ESPACES, vue: 'espaces' },
 	{ chemin: CHEMIN_PLATEFORME_ESPACE, vue: 'espace' },
+	{ chemin: CHEMIN_PLATEFORME_UTILISATEURS, vue: 'utilisateurs' },
 	{ chemin: CHEMIN_PLATEFORME_SUPERADMINS, vue: 'superadmins' },
 	{ chemin: CHEMIN_PLATEFORME_JOURNAL, vue: 'journal' },
 ]
