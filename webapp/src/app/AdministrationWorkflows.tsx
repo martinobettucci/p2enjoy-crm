@@ -1,3 +1,6 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — les commandes d'écriture de l'éditeur désactivées avec leur motif quand la
+//       base refuse l'administration ; choisir un workflow, comparer, ouvrir une suggestion et annuler restent offerts
+//       (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.15, §5.59)
 // @spec CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
 //       troisième, quatrième et cinquième tranches
 // @spec docs/SPEC-workflow-engine.md §7 bis.2 (adresse), §7 bis.3 (les trois lectures),
@@ -57,6 +60,10 @@
 // d'ajout : l'unicité `(workflow_id, node_id)` refuserait l'insertion de toute façon, et il évite
 // d'offrir un choix dont on sait qu'il sera refusé — une aide d'interface, pas une garde.
 
+import { useContexteEspace } from './ContexteEspace'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { FournisseurRefus, useRefus } from '../components/ui/RefusCommandes'
+import { motifVisible, proprietesCommande } from '../lib/capacites'
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import {
@@ -210,6 +217,9 @@ import {
 } from '../lib/assistant-ia'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { lireWorkspaces } from '../lib/workspaces'
+
+/** Le motif de l'éditeur, cité par ses commandes d'écriture quand la base refuse l'administration (CRM-093). */
+const ID_MOTIF_WORKFLOWS = 'workflows-lecture-seule'
 
 // ---------------------------------------------------------------------------------------------
 // Refus et ouvertures
@@ -556,6 +566,7 @@ function FormulaireCreationWorkflow({
 	onValider,
 	onAnnuler,
 }: ProprietesFormulaireCreation) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const [saisie, setSaisie] = useState<SaisieCreation>(initial)
 	const premier = useRef<HTMLInputElement | null>(null)
@@ -679,7 +690,7 @@ function FormulaireCreationWorkflow({
 			) : null}
 
 			<div className="flex flex-wrap gap-2">
-				<Button type="submit" variante="primaire" disabled={!conforme || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={!conforme || enCours}>
 					{t('admin.action.create')}
 				</Button>
 				<Button type="button" variante="discret" onClick={onAnnuler}>
@@ -705,6 +716,7 @@ function FormulaireSurcharge({
 	onValider,
 	onAnnuler,
 }: ProprietesFormulaireSurcharge) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const [saisie, setSaisie] = useState(() => saisieDepuis(etape))
 	const premier = useRef<HTMLInputElement>(null)
@@ -763,7 +775,7 @@ function FormulaireSurcharge({
 			/>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
 					{t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -803,6 +815,7 @@ function ConfirmationRetrait({
 	readonly onConfirmer: () => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const premier = useRef<HTMLButtonElement>(null)
 	useEffect(() => {
 		premier.current?.focus()
@@ -816,10 +829,10 @@ function ConfirmationRetrait({
 			<p className="text-sm text-text-2">{corps}</p>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<button
+				<button {...droit}
 					ref={premier}
 					type="button"
-					disabled={enCours}
+					disabled={droit.disabled === true || (enCours)}
 					onClick={onConfirmer}
 					className="inline-flex items-center justify-center gap-2 min-h-[var(--size-target)] rounded-sm px-4 font-medium bg-danger text-white hover:opacity-90 disabled:opacity-70"
 				>
@@ -852,6 +865,7 @@ function SelecteurAjout({
 	readonly onAjouter: (noeud: NoeudAjoutable) => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	return (
 		<div
 			data-testid="selecteur-ajout"
@@ -890,9 +904,9 @@ function SelecteurAjout({
 							<ul className="flex flex-col gap-1">
 								{restants.map((noeud) => (
 									<li key={noeud.id}>
-										<button
+										<button {...droit}
 											type="button"
-											disabled={enCours}
+											disabled={droit.disabled === true || (enCours)}
 											onClick={() => onAjouter(noeud)}
 											aria-label={t('admin.workflows.action.addNode', { nom: noeud.label })}
 											className="flex w-full items-center gap-2 min-h-[var(--size-target)] rounded-sm px-3 text-left hover:bg-hover disabled:opacity-70"
@@ -937,6 +951,7 @@ function LigneEtape({
 	readonly onDesignerInitiale: () => void
 	readonly onOuvrirRetrait: () => void
 }) {
+	const droit = useRefus()
 	const nom = libelleEtape(etape)
 	const surcharge = etape.label_override !== null && etape.label_override.trim() !== ''
 	return (
@@ -966,41 +981,41 @@ function LigneEtape({
 					: t('admin.workflows.stale', { valeur: String(etape.stale_after_days) })}
 			</span>
 			<div className="ml-auto flex items-center gap-1">
-				<Button
+				<Button {...droit}
 					taille="compacte"
-					disabled={enCours || !deplacementPossible(liste, etape.id, 'monter')}
+					disabled={droit.disabled === true || (enCours || !deplacementPossible(liste, etape.id, 'monter'))}
 					aria-label={t('admin.action.up', { nom })}
 					onClick={() => onDeplacer('monter')}
 				>
 					<ArrowUp aria-hidden="true" size={16} strokeWidth={2} />
 				</Button>
-				<Button
+				<Button {...droit}
 					taille="compacte"
-					disabled={enCours || !deplacementPossible(liste, etape.id, 'descendre')}
+					disabled={droit.disabled === true || (enCours || !deplacementPossible(liste, etape.id, 'descendre'))}
 					aria-label={t('admin.action.down', { nom })}
 					onClick={() => onDeplacer('descendre')}
 				>
 					<ArrowDown aria-hidden="true" size={16} strokeWidth={2} />
 				</Button>
-				<Button
+				<Button {...droit}
 					taille="compacte"
-					disabled={enCours}
+					disabled={droit.disabled === true || (enCours)}
 					aria-label={t('admin.workflows.action.override', { nom })}
 					onClick={onOuvrirSurcharge}
 				>
 					<Pencil aria-hidden="true" size={16} strokeWidth={2} />
 				</Button>
-				<Button
+				<Button {...droit}
 					taille="compacte"
-					disabled={enCours || etape.is_initial}
+					disabled={droit.disabled === true || (enCours || etape.is_initial)}
 					aria-label={t('admin.workflows.action.setInitial', { nom })}
 					onClick={onDesignerInitiale}
 				>
 					<Flag aria-hidden="true" size={16} strokeWidth={2} />
 				</Button>
-				<Button
+				<Button {...droit}
 					taille="compacte"
-					disabled={enCours}
+					disabled={droit.disabled === true || (enCours)}
 					aria-label={t('admin.workflows.action.remove', { nom })}
 					onClick={onOuvrirRetrait}
 				>
@@ -1080,6 +1095,7 @@ function FormulaireDeclarationTransition({
 	readonly onValider: (saisie: SaisieTransition) => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const premier = useRef<HTMLSelectElement>(null)
 	const [idDepart, setIdDepart] = useState(() => etapes[0]?.id ?? '')
@@ -1163,7 +1179,7 @@ function FormulaireDeclarationTransition({
 			<CaseMotif id={`${prefixe}-motif`} valeur={motifExige} onChange={setMotifExige} />
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
 					{t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -1197,6 +1213,7 @@ function FormulaireEditionTransition({
 	readonly onValider: (libelle: string, motifExige: boolean) => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const premier = useRef<HTMLInputElement>(null)
 	// La saisie repart de ce que l'arête PORTE : un libellé absent reste absent, et le pré-remplir
@@ -1236,7 +1253,7 @@ function FormulaireEditionTransition({
 			<CaseMotif id={`${prefixe}-motif`} valeur={motifExige} onChange={setMotifExige} />
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={libelleInvalide || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={libelleInvalide || enCours}>
 					{t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -1263,6 +1280,7 @@ function LigneTransition({
 	readonly onOuvrirEdition: () => void
 	readonly onOuvrirRetrait: () => void
 }) {
+	const droit = useRefus()
 	return (
 		<div
 			data-testid="ligne-transition"
@@ -1285,17 +1303,17 @@ function LigneTransition({
 				</span>
 			) : null}
 			<div className="ml-auto flex items-center gap-1">
-				<Button
+				<Button {...droit}
 					taille="compacte"
-					disabled={enCours}
+					disabled={droit.disabled === true || (enCours)}
 					aria-label={t('admin.workflows.transitions.action.edit', { depart, arrivee })}
 					onClick={onOuvrirEdition}
 				>
 					<Pencil aria-hidden="true" size={16} strokeWidth={2} />
 				</Button>
-				<Button
+				<Button {...droit}
 					taille="compacte"
-					disabled={enCours}
+					disabled={droit.disabled === true || (enCours)}
 					aria-label={t('admin.workflows.transitions.action.remove', { depart, arrivee })}
 					onClick={onOuvrirRetrait}
 				>
@@ -1371,6 +1389,7 @@ function EditeurChoix({
 	readonly erreur?: string
 	readonly enCours: boolean
 }) {
+	const droit = useRefus()
 	const idErreur = `${prefixe}-choix-erreur`
 	return (
 		<fieldset className="flex flex-col gap-2 rounded-sm border border-border p-3" data-testid="editeur-choix">
@@ -1416,9 +1435,9 @@ function EditeurChoix({
 								className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
 							/>
 						</div>
-						<Button
+						<Button {...droit}
 							taille="compacte"
-							disabled={enCours}
+							disabled={droit.disabled === true || (enCours)}
 							aria-label={t('admin.workflows.fields.form.choices.remove', {
 								nom: entree.label.trim() === '' ? entree.key : entree.label,
 							})}
@@ -1430,10 +1449,10 @@ function EditeurChoix({
 				))}
 			</ul>
 			<div className="flex">
-				<Button
+				<Button {...droit}
 					variante="secondaire"
 					taille="compacte"
-					disabled={enCours}
+					disabled={droit.disabled === true || (enCours)}
 					onClick={() => onChange([...choix, { key: '', label: '' }])}
 				>
 					<Plus aria-hidden="true" size={16} strokeWidth={2} />
@@ -1492,6 +1511,7 @@ function FormulaireChamp({
 	readonly onValider: (saisie: SaisieChamp) => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const [saisie, setSaisie] = useState<SaisieChamp>(() =>
 		champ === null
@@ -1627,7 +1647,7 @@ function FormulaireChamp({
 
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
 					{t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -1656,6 +1676,7 @@ function LigneChamp({
 	readonly onOuvrirArchivage: () => void
 	readonly onRestaurer: () => void
 }) {
+	const droit = useRefus()
 	const archive = champ.archived_at !== null
 	return (
 		<div
@@ -1684,43 +1705,43 @@ function LigneChamp({
 				</span>
 			)}
 			<div className="ml-auto flex items-center gap-1">
-				<Button
+				<Button {...droit}
 					taille="compacte"
-					disabled={enCours || !deplacementPossible(liste, champ.id, 'monter')}
+					disabled={droit.disabled === true || (enCours || !deplacementPossible(liste, champ.id, 'monter'))}
 					aria-label={t('admin.action.up', { nom: champ.label })}
 					onClick={() => onDeplacer('monter')}
 				>
 					<ArrowUp aria-hidden="true" size={16} strokeWidth={2} />
 				</Button>
-				<Button
+				<Button {...droit}
 					taille="compacte"
-					disabled={enCours || !deplacementPossible(liste, champ.id, 'descendre')}
+					disabled={droit.disabled === true || (enCours || !deplacementPossible(liste, champ.id, 'descendre'))}
 					aria-label={t('admin.action.down', { nom: champ.label })}
 					onClick={() => onDeplacer('descendre')}
 				>
 					<ArrowDown aria-hidden="true" size={16} strokeWidth={2} />
 				</Button>
-				<Button
+				<Button {...droit}
 					taille="compacte"
-					disabled={enCours}
+					disabled={droit.disabled === true || (enCours)}
 					aria-label={t('admin.workflows.fields.action.edit', { nom: champ.label })}
 					onClick={onOuvrirEdition}
 				>
 					<Pencil aria-hidden="true" size={16} strokeWidth={2} />
 				</Button>
 				{archive ? (
-					<Button
+					<Button {...droit}
 						taille="compacte"
-						disabled={enCours}
+						disabled={droit.disabled === true || (enCours)}
 						aria-label={t('admin.workflows.fields.action.restore', { nom: champ.label })}
 						onClick={onRestaurer}
 					>
 						<ArchiveRestore aria-hidden="true" size={16} strokeWidth={2} />
 					</Button>
 				) : (
-					<Button
+					<Button {...droit}
 						taille="compacte"
-						disabled={enCours}
+						disabled={droit.disabled === true || (enCours)}
 						aria-label={t('admin.workflows.fields.action.archive', { nom: champ.label })}
 						onClick={onOuvrirArchivage}
 					>
@@ -1772,13 +1793,14 @@ function CaseVisibilite({
 	readonly enCours: boolean
 	readonly onRegler: (etat: EtatCase) => void
 }) {
+	const droit = useRefus()
 	return (
-		<select
+		<select {...droit}
 			data-testid="case-visibilite"
 			data-champ={champ.key}
 			data-etape={etape.id}
 			value={etat}
-			disabled={enCours}
+			disabled={droit.disabled === true || (enCours)}
 			aria-label={t('admin.workflows.rules.cell.aria', {
 				champ: champ.label,
 				etape: libelleEtape(etape),
@@ -1983,6 +2005,7 @@ function ConfirmationExigence({
 	readonly onConfirmer: () => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	return (
 		<div
 			data-testid="confirmation-exigence-case"
@@ -1995,9 +2018,9 @@ function ConfirmationExigence({
 			<div className="flex gap-2">
 				{/* `autoFocus` plutôt qu'un `ref` : `Button` n'expose pas de `ref`, et le §11 du design
 				    system interdit à un composant métier de redéfinir un style de base — recopier un
-				    `<button>` primaire ici pour porter un `ref` aurait dupliqué la variante. Le focus
+				    `<button {...droit}>` primaire ici pour porter un `ref` aurait dupliqué la variante. Le focus
 				    entrant est la règle du §5.13, déjà tenue par les autres confirmations. */}
-				<Button variante="primaire" autoFocus disabled={enCours} onClick={onConfirmer}>
+				<Button {...droit} variante="primaire" autoFocus disabled={enCours} onClick={onConfirmer}>
 					{t('admin.workflows.effets.confirm.action')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -2047,6 +2070,7 @@ function LigneExigence({
 	readonly enCours: boolean
 	readonly onOuvrirRetrait: () => void
 }) {
+	const droit = useRefus()
 	const retirable = exigence.origine !== 'regle'
 	return (
 		<div
@@ -2059,9 +2083,9 @@ function LigneExigence({
 			<code className="rounded-sm bg-hover px-1 text-sm text-text-2">{exigence.champ.key}</code>
 			<span className="text-sm text-text-2">{t(LIBELLES_ORIGINE[exigence.origine])}</span>
 			{retirable ? (
-				<button
+				<button {...droit}
 					type="button"
-					disabled={enCours}
+					disabled={droit.disabled === true || (enCours)}
 					onClick={onOuvrirRetrait}
 					aria-label={t('admin.workflows.requirements.remove.aria', {
 						champ: exigence.champ.label,
@@ -2109,6 +2133,7 @@ function FormulaireExigence({
 	readonly onValider: (idChamp: string) => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const premier = useRef<HTMLSelectElement>(null)
 	const [idChamp, setIdChamp] = useState(() => champs[0]?.id ?? '')
@@ -2179,7 +2204,7 @@ function FormulaireExigence({
 			)}
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={champs.length === 0 || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={champs.length === 0 || enCours}>
 					{t('admin.workflows.requirements.add.submit')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -2483,6 +2508,9 @@ export function AdministrationWorkflows({
 	client = clientCrm,
 	acces = accesAssistantCrm,
 }: ProprietesAdministrationWorkflows = {}) {
+	// `CRM-093` — ce composant FOURNIT le refus à ses blocs ; ses propres commandes le lisent ici directement.
+	const { capacites } = useContexteEspace()
+	const droit = proprietesCommande(capacites.administration, ID_MOTIF_WORKFLOWS)
 	const [workflows, setWorkflows] = useState<EtatAsync<readonly WorkflowAdministrable[]>>(enChargement)
 	const [idChoisi, setIdChoisi] = useState<string | null>(null)
 	const [etapes, setEtapes] = useState<EtatAsync<readonly EtapeAdministrable[]>>(enChargement)
@@ -2806,7 +2834,7 @@ export function AdministrationWorkflows({
 
 	/** « Créer avec l'IA » : secondaire, `Sparkles`, et il porte l'état de la demande qu'il ouvre (§5.52). */
 	const commandeCreerAvecIa = (
-		<Button
+		<Button {...droit}
 			ref={commandeIa}
 			variante="secondaire"
 			aria-expanded={panneauIa?.type === 'demande'}
@@ -2859,7 +2887,7 @@ export function AdministrationWorkflows({
 
 	/** « Suggérer », en tête d'un bloc du workflow choisi (§5.53) : discret compact, `Sparkles`, nom complet. */
 	const commandeSuggerer = (portee: PorteeModification, nomWorkflow: string) => (
-		<Button
+		<Button {...droit}
 			ref={(element: HTMLButtonElement | null) => {
 				commandesSuggerer.current[portee] = element
 			}}
@@ -3397,8 +3425,12 @@ export function AdministrationWorkflows({
 			: null
 
 	return (
+		<FournisseurRefus valeur={droit}>
 		<section aria-label={t('admin.workflows.aria')} className="flex flex-col gap-4">
 			<LiveRegion libelle={t('live.admin.aria')} message={annonce} />
+			{motifVisible(capacites.administration) ? (
+				<MotifLectureSeule id={ID_MOTIF_WORKFLOWS}>{t('rights.readonly.administration')}</MotifLectureSeule>
+			) : null}
 
 			{retour === null ? null : (
 				<BandeauRetourChannel
@@ -3436,7 +3468,7 @@ export function AdministrationWorkflows({
 						action={
 							<span className="flex flex-wrap gap-2">
 								{creationOuverte ? null : (
-									<Button variante="primaire" onClick={() => ouvrirLaCreation()}>
+									<Button {...droit} variante="primaire" onClick={() => ouvrirLaCreation()}>
 										<Plus aria-hidden="true" size={16} strokeWidth={2} />
 										{t('admin.workflows.create.action')}
 									</Button>
@@ -3484,7 +3516,7 @@ export function AdministrationWorkflows({
 								onAnnuler={() => fermerLaCreation()}
 							/>
 						) : (
-							<Button variante="secondaire" onClick={() => ouvrirLaCreation()}>
+							<Button {...droit} variante="secondaire" onClick={() => ouvrirLaCreation()}>
 								<Plus aria-hidden="true" size={16} strokeWidth={2} />
 								{t('admin.workflows.create.action')}
 							</Button>
@@ -3716,9 +3748,9 @@ export function AdministrationWorkflows({
 											/>
 										) : (
 											<div className="flex">
-												<Button
+												<Button {...droit}
 													variante="primaire"
-													disabled={enCours}
+													disabled={droit.disabled === true || (enCours)}
 													onClick={() => {
 														setRefus(null)
 														setOuverture({ type: 'ajout' })
@@ -3889,9 +3921,9 @@ export function AdministrationWorkflows({
 														/>
 													) : (
 														<div className="flex">
-															<Button
+															<Button {...droit}
 																variante="primaire"
-																disabled={enCours}
+																disabled={droit.disabled === true || (enCours)}
 																onClick={() => {
 																	setRefus(null)
 																	setOuverture({ type: 'transition-declaration' })
@@ -4047,9 +4079,9 @@ export function AdministrationWorkflows({
 														/>
 													) : (
 														<div className="flex">
-															<Button
+															<Button {...droit}
 																variante="primaire"
-																disabled={enCours}
+																disabled={droit.disabled === true || (enCours)}
 																onClick={() => {
 																	setRefus(null)
 																	setOuverture({ type: 'champ-declaration' })
@@ -4399,9 +4431,9 @@ export function AdministrationWorkflows({
 																				/>
 																			) : (
 																				<div className="flex">
-																					<Button
+																					<Button {...droit}
 																						variante="secondaire"
-																						disabled={enCours}
+																						disabled={droit.disabled === true || (enCours)}
 																						onClick={() => {
 																							setRefus(null)
 																							setOuverture({
@@ -4450,5 +4482,6 @@ export function AdministrationWorkflows({
 				</div>
 			) : null}
 		</section>
+		</FournisseurRefus>
 	)
 }

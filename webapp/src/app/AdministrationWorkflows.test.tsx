@@ -1,3 +1,5 @@
+// @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — l'éditeur sous une administration refusée : commandes d'écriture
+//           éteintes avec leur motif, le choix d'un workflow offert (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-076 (docs/BACKLOG.md) — éditeur administrateur de workflows, première, deuxième,
 //           troisième, quatrième et cinquième tranches
 // @verifies docs/SPEC-workflow-engine.md §7 bis.3 (les lectures et le catalogue à la demande),
@@ -40,6 +42,8 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { AdministrationWorkflows } from './AdministrationWorkflows'
+import { FournisseurEspace } from './ContexteEspace'
+import { fr } from '../i18n/fr'
 import { EVENEMENT_WORKFLOW_DEPART } from '../lib/demarrage'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -2381,5 +2385,38 @@ describe('faire évoluer le workflow choisi (CRM-097 T3)', () => {
 		if (autre === undefined) throw new Error('le banc n’a qu’un workflow')
 		await userEvent.click(autre)
 		await waitFor(() => expect(screen.queryByTestId('ia-panneau')).toBeNull())
+	})
+})
+
+// --- CRM-093 — l'administration refusée par la base (docs/SPEC-droits-interface.md §3 ; DESIGN_SYSTEM §5.59) ----------
+
+describe('éditeur de workflows — l’administration refusée par la base (CRM-093)', () => {
+	it('créer et retirer sont désactivés et citent le motif ; choisir un workflow reste offert', async () => {
+		const factice = clientFactice()
+		render(
+			<MemoryRouter initialEntries={['/reglages/workflows']}>
+				<FournisseurEspace
+					valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration: 'refusee', edition: 'refusee' } }}
+				>
+					<AdministrationWorkflows client={factice.client} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+		await attendreEcran()
+		const motif = screen.getByTestId('motif-lecture-seule')
+		expect(motif.textContent).toBe(fr['rights.readonly.administration'])
+		const creer = screen.getAllByRole('button', { name: fr['admin.workflows.create.action'] }) as HTMLButtonElement[]
+		const retirer = screen.getAllByRole('button', { name: /^Retirer / }) as HTMLButtonElement[]
+		for (const commande of [...creer, ...retirer]) {
+			expect(commande.disabled).toBe(true)
+			expect(commande.getAttribute('aria-describedby')).toBe(motif.id)
+		}
+		const choix = screen.getByRole('button', { name: /Pipeline grands comptes/ }) as HTMLButtonElement
+		expect(choix.disabled).toBe(false)
+		const avant = factice.lectures.filter((table) => table === 'workflow_steps').length
+		await userEvent.click(choix)
+		await waitFor(() =>
+			expect(factice.lectures.filter((table) => table === 'workflow_steps').length).toBeGreaterThan(avant),
+		)
 	})
 })
