@@ -31946,3 +31946,17 @@ connecteur prévue (`docs/SPEC-mcp.md` §8) ne listait que les comptes déjà ve
 - **Ordre :** `CRM-101` T6, puis `CRM-103`. Les numéros de migration se prennent au moment d'écrire, sans
   réservation : c'est la règle convenue avec la session parallèle, car le registre refuse un fichier antérieur au
   dernier inscrit.
+
+### décision 628, précision — les trois faits sont des capacités rendues par la base, aucun n'est un rôle lu
+
+*2026-10-21, après lecture intégrale de `docs/DESIGN_SYSTEM.md`, avant tout code d'interface.*
+
+La spécification lisait l'« administrateur » et l'« éditeur » par `public.mon_role_espace`. Le design system tranche
+cette question depuis `CRM-083` (§5.29 ter) et la reconduit au §5.56 : lire un rôle pour éteindre est interdit ; une
+capacité que la base rend sur une ligne s'éteint légitimement. Ses neuf mentions « aucune commande n'est éteinte
+d'avance selon le rôle » visaient la déduction d'écran, non la capacité consentie. **Conséquence** : deux colonnes
+calculées de plus, sur la ligne de l'espace — `administration_permise` et `edition_permise` —, migration `0092`,
+calculées par les fonctions mêmes des politiques. La décision 628 est tenue à la lettre (« rôle et droits fins, lus par
+la base ») ; seule la forme de lecture change. `docs/SPEC-droits-interface.md` §2 et §2.2 sont révisés en ce sens ;
+`docs/DESIGN_SYSTEM.md` §5.58 généralisera la frontière du §5.29 ter à tout le produit avec la tranche T2.
+

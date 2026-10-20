@@ -28,8 +28,17 @@ Les 90 politiques d'écriture de la base se ramènent à trois faits (mesuré pa
 
 | Fait | Ce qu'il ouvre | Lu par |
 |---|---|---|
-| **administrateur** de l'espace | tracks, channels, workflows et leurs versions, champs et règles, catalogue de nœuds, budgets et occurrences, coût du personnel, droits fins, appartenances et attentes, assistant IA, comptes entrants | `public.mon_role_espace(ws) = 'admin'` — existant (`app.workspace_role`, administrateur du domaine LeLabs compris) |
-| **éditeur** de l'espace — `admin` ou `business_developer` | contacts, organisations, tableaux et blocs d'objectifs, modèles d'emails, séquences de relance | `public.mon_role_espace(ws) in ('admin', 'business_developer')` — existant |
+| **administrateur** de l'espace | tracks, channels, workflows et leurs versions, champs et règles, catalogue de nœuds, budgets et occurrences, coût du personnel, droits fins, appartenances et attentes, assistant IA, comptes entrants | **nouveau** : `public.administration_permise(public.workspaces)` — `app.is_workspace_admin`, administrateur du domaine LeLabs compris |
+| **éditeur** de l'espace — `admin` ou `business_developer` | contacts, organisations, tableaux et blocs d'objectifs, modèles d'emails, séquences de relance | **nouveau** : `public.edition_permise(public.workspaces)` — `app.workspace_role` dans (`admin`, `business_developer`), exactement le prédicat de ces politiques |
+
+**RÉVISÉ le 2026-10-21, après lecture intégrale de `docs/DESIGN_SYSTEM.md`, avant tout code de l'interface.** La
+première rédaction lisait les deux premiers faits par `public.mon_role_espace`. Le design system pose une frontière que
+cette lecture franchissait (§5.29 ter, reprise au §5.56) : « si l'écran doit LIRE UN RÔLE pour éteindre, c'est interdit ;
+si la BASE lui dit sur la ligne qu'il ne peut pas écrire, l'éteindre est la forme juste ». Les trois faits sont donc
+TOUS des capacités rendues par la base sur une ligne — celle de l'espace pour les deux premiers, celle du channel ou de
+l'affaire pour le troisième —, calculées par les fonctions mêmes de la RLS. La décision 628 n'en est pas changée : la
+source reste « le rôle et les droits fins », lus par la base et non déduits par l'écran. Les deux colonnes de l'espace
+viennent par la migration `0092` (§2.2).
 | **écriture sur un channel** — rôle et droits fins, « le plus spécifique gagne » | les cards du channel et tout ce qui s'y rattache : créer, déplacer, modifier l'en-tête et le formulaire, contacts rattachés, lignes de coût et réels, commentaires, classement et déclassement d'un message, envoi, relance, mise en sommeil | **nouveau** : `public.ecriture_permise(public.channels)` et `public.ecriture_permise(public.cards)` |
 
 Les gestes **personnels** n'ont pas besoin d'un fait de plus : son propre profil, ses préférences de notification, la
@@ -61,12 +70,21 @@ create function public.ecriture_permise(c public.cards) returns boolean
 - Une card hérite de son channel : `app.can_write_card(card)` est défini ainsi, et la colonne des cards ne fait que le
   dire sans relire la table.
 
+### 2.2 Les deux colonnes de l'espace — migration `0092`
+
+Même patron que le §2.1 : `public.administration_permise(w public.workspaces)` rend `app.is_workspace_admin(w.id)` ;
+`public.edition_permise(w public.workspaces)` rend `coalesce(app.workspace_role(w.id) in ('admin', 'business_developer'),
+false)`. `stable`, `security invoker`, `execute` à `anon`, `authenticated` et `service_role`. L'interface les demande
+avec la ligne de l'espace qu'elle lit déjà (`workspaces?select=…,administration_permise,edition_permise`).
+
 ## 3. Le rendu d'une commande refusée
 
-- La commande reste **montée**, `disabled`, avec un **motif visible** à côté d'elle ou en tête du bloc, lié par
-  `aria-describedby`. C'est le patron déjà établi par une ligne soldée (`ReelsLigne`, §5.31 bis) et par le canevas
-  en lecture seule (`goals.readonly.notice`) ; la tranche T2 l'écrit une fois pour toutes dans
-  `docs/DESIGN_SYSTEM.md`, après lecture intégrale, comme un composant partagé.
+- La commande reste **montée**, `disabled`, **lisible** (jamais `opacity-50`), avec un **motif visible** en tête du bloc,
+  lié par `aria-describedby`. C'est le patron du canevas en lecture seule (`docs/DESIGN_SYSTEM.md` §5.29 ter :
+  bandeau neutre `--color-hover`, bordure `--color-border`, texte `--color-ink`, icône `Eye`, `role="status"`, motif
+  une fois et chaque commande y renvoie) et d'une ligne soldée (§5.31 bis) ; la tranche T2 l'écrit une fois pour toutes
+  dans `docs/DESIGN_SYSTEM.md` (§5.58), comme composant partagé de `webapp/src/components/ui`, et en étend la
+  frontière à tout le produit.
 - **Les motifs**, centralisés dans `webapp/src/i18n/fr.ts` : « Réservé aux administrateurs de l'espace. » ;
   « Réservé aux administrateurs et aux business developers. » ; « Lecture seule : vos droits sur ce channel ne
   permettent pas de modifier ses affaires. »
@@ -139,7 +157,7 @@ ont leur propre garde de superadministrateur.
 
 | Tranche | Contenu |
 |---|---|
-| T1 | Migration `0091` (les deux colonnes), suite pgTAP, types régénérés, `docs/SCHEMA.md`, preuve d'API |
+| T1 | Migrations `0091` (channels, affaires) et `0092` (espace), suite pgTAP, types régénérés, `docs/SCHEMA.md`, preuves d'API |
 | T2 | La lecture des droits côté webapp, le composant de la commande refusée et ses motifs, `docs/DESIGN_SYSTEM.md` ; preuves unitaires |
 | T3 | Familles A et E : réglages, guide, arborescence, budgets, contacts, modèles, séquences |
 | T4 | Famille C : board, liste, fiche d'une affaire, inbox, corbeille |
