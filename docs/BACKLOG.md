@@ -15132,7 +15132,13 @@ LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : 
       **Captures des autres unités** : 343 réécrites par la campagne, comparées pixel à pixel à leur version committée ;
       342 restaurées (données datées, défilement), **une gardée** — `CRM-092/admin-domaine-moderation-1440.jpg`, où Inès,
       porteuse de `lelabs_admin`, voit désormais l'entrée « Plateforme » (arbitrage A1).
-- [ ] **T5** — livraison en production (migration 89, instantané confirmé, `CRM_SUPERADMINS_INITIAUX`) et constat.
+- [~] **T5** — livraison en production (migration 89, instantané confirmé, `CRM_SUPERADMINS_INITIAUX`) et constat.
+      *Livré le 2026-10-21* sur l'instruction du responsable (« livre ») : révision `85d8bb7b`, migrations 89 et 90 dans la
+      même fenêtre ; registre à 90 lignes aux empreintes du dépôt ; aucune fonction nouvelle exécutable par `anon`,
+      `plateforme_espaces` et `est_superadmin` refusées sans session (`401`) ; `verifier.sh` 27 contrôles, un échec
+      antérieur à la livraison (redémarrage de `rest` du 2026-10-15, INC-277). **Le drapeau est amorcé** à la première
+      connexion du responsable (relevé en base, `docs/PROD_MIGRATIONS.md` §8). **Reste le constat du responsable** :
+      `/plateforme` liste l'espace et ses membres.
 
 ### CRM-102 — Connecteur MCP : socle, mandataire OAuth, connexion longue, registre `[~]`
 *Créée le 2026-10-20 — décision 627 (A2, D1 à D5, D8). Un service Python FastMCP `mcp/`, repris du connecteur Evoliz,
@@ -15206,8 +15212,15 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       supprimé —, et la déclaration porte `ACCUEIL`, devenu obligatoire. `docs/SSO.md` est aligné sur la référence du service
       du 2026-10-16, qui décrit la redéclaration d'une intégration vivante. Campagnes : celles de T3, aucun code changé
       depuis hors un commentaire ; pytest **102** rejoué.
-- [ ] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,
+- [~] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,
       route et DNS, variables), et constat.
+      *Livré le 2026-10-21* avec `CRM-101` T5 : révision `85d8bb7b`, migration 90, image `mcp` construite dans la cellule,
+      service sain. Préalables relevés : variables importées, route et DNS, client `lelabs-crm-serveur` redéclaré (sonde
+      `200` sur le retour du connecteur, `400` sur un témoin). Par la route publique : `/pret` `200` (SSO et CRM), `POST
+      /mcp` sans jeton `401` avec `resource_metadata`, client au retour non listé refusé `400`, `mcp_autorise` refusée
+      sans session. Ces contrôles sont faits à la main. **Restent** : porter ces contrôles dans `scripts/spark/verifier.sh`,
+      comme le geste 5 du §2.14 du contrat de déploiement l'annonçait, et le constat du responsable — ajouter le
+      connecteur dans Claude ou ChatGPT et appeler `crm_workspace_list` (la matrice attend `CRM-103`).
 
 ### CRM-103 — Administration du connecteur MCP dans la webapp `[ ]`
 *Créée le 2026-10-20 — décision 627 (A3). Quatrième onglet de `/plateforme` : comptes connectés, matrice familles ×

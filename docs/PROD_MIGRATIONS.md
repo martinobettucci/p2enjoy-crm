@@ -33,14 +33,16 @@ source d'identité.
 | Élément | État |
 |---|---|
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
-| Schéma appliqué | Les **88 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03), 87 par `CRM-098` T5 et 88 par `CRM-099` T3 (2026-10-11). **Le registre `app.migrations_appliquees` le dit** : 88 lignes — les 82 premières en `adoption`, les 83 à 88 en `application` —, empreintes égales à celles du dépôt livré |
-| Dernière migration appliquée | `0088_reels_multiples.sql` — relue en base le 2026-10-11, en lecture seule : 88 lignes au registre, empreinte de la 88 égale à celle du dépôt ; les deux lignes de coût au réel connu portent chacune UN réel repris, égal au réel d'avant la fenêtre (210,00 et 200,00), et restent ouvertes ; refus sans session `401` par la route publique |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`7d819786`** le 2026-10-11 (`CRM-099` T1 et T2, migration 88 ; après `521b3f5d` — `CRM-098` T1 à T4, migration 87, et la webapp de `CRM-100` —, après `38237656` — `CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 —, après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
+| Schéma appliqué | Les **90 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03), 87 par `CRM-098` T5 et 88 par `CRM-099` T3 (2026-10-11), 89 par `CRM-101` T5 et 90 par `CRM-102` T5 (2026-10-21). **Le registre `app.migrations_appliquees` le dit** : 90 lignes — les 82 premières en `adoption`, les 83 à 90 en `application` —, empreintes égales à celles du dépôt livré |
+| Dernière migration appliquée | `0090_connecteur_mcp.sql`, avec `0089_plateforme.sql` dans la même fenêtre — relues en base le 2026-10-21, en lecture seule : 90 lignes au registre, empreintes des 89 et 90 égales à celles du dépôt (`sha256sum`) ; aucune fonction nouvelle exécutable par `anon`, les trois fonctions du registre du connecteur fermées à `authenticated` ; refus sans session `401` (`42501`) par la route publique sur `plateforme_espaces`, `est_superadmin`, `mcp_autorise` et les cinq tables nouvelles |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`85d8bb7b`** le 2026-10-21 (`CRM-101` T1 à T4 et `CRM-102` T1 à T4, migrations 89 et 90, service `mcp` ; après **`7d819786`** — `CRM-099` T1 et T2, migration 88 —, après `521b3f5d` — `CRM-098` T1 à T4, migration 87, et la webapp de `CRM-100` —, après `38237656` — `CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 —, après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
 | Assistant IA | Variables `OLLAMA_HOST`, `OLLAMA_CONTEXT_LENGTH` et secret `OLLAMA_API_KEY` **présents** dans la cellule et remis à `functions` (relevé du 2026-10-03, présence seule) ; `OLLAMA_MODEL` absent, d'où le défaut `gemma4:e2b` de Compose. Refusée le 2026-10-03 (403), la cellule est **autorisée par LeLabs** : `GET /functions/v1/ia/etat` rend `{"disponible":true,"modele":"gemma4:e2b"}` le 2026-10-11 (§2.9, geste 7) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092`, et les données qu'y écrit le responsable — relevé du 2026-10-01, en lecture seule : 2 profils, 2 workflows dont celui de départ, 8 affaires ; aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
 | Client OIDC `lelabs-crm` | Déclaré et créé au realm le 2026-09-23 à 16:08:44 (`docs/SSO-client-lelabs-crm.md`), **supprimé du realm avant le déploiement de `CRM-092`** : sonde `400` « Client non trouvé » le 2026-09-24 à 18 h, retrait confirmé par l'instantané de reprise du dépôt du SSO (décision 598). Sans effet sur le service : aucune connexion n'avait encore été faite, elle attend `CRM-092` (§3) |
-| Client OIDC `lelabs-crm-serveur` | **Déclaré et créé** : sonde `302` vers `https://crm.lelabs.tech/auth/retour`, PKCE exigé, le 2026-09-24 (décision 598). Son secret est **saisi** dans la cellule (relu le 2026-09-24, présence seule, décision 599) ; `SSO_OIDC_CLIENT_ID` y vaut encore `lelabs-crm` (§2.5, étapes 2 et 3) |
+| Client OIDC `lelabs-crm-serveur` | **Déclaré et créé** : sonde `302` vers `https://crm.lelabs.tech/auth/retour`, PKCE exigé, le 2026-09-24 (décision 598). Son secret est **saisi** dans la cellule (relu le 2026-09-24, présence seule, décision 599) ; `SSO_OIDC_CLIENT_ID` y vaut encore `lelabs-crm` (§2.5, étapes 2 et 3). **Redéclaré le 2026-10-21** (§2.14, geste 1) avec le retour du connecteur `https://crm.mcp.lelabs.tech/auth/callback` et `HORS_LIGNE=oui` : récapitulatif versé à `docs/SSO-client-lelabs-crm.md` §1, sonde `200` sur les deux retours |
+| Plateforme (`CRM-101`) | Livrée le 2026-10-21 (§2.13). `CRM_SUPERADMINS_INITIAUX` posée ; **le drapeau est amorcé** : une ligne dans `superadmins` et l'entrée `superadmin_amorce` au journal de la plateforme, le 2026-10-20 à 23:04:00 UTC, à la première connexion du responsable après la livraison (relevé en lecture seule) |
+| Connecteur MCP (`CRM-102`) | Livré le 2026-10-21 (§2.14) : service `mcp` sain, image construite dans la cellule, volume `p2enjoy-crm_mcp-etat` ; `https://crm.mcp.lelabs.tech` (route `crm.mcp.lelabs.tech 8080 tls`), origine publique dérivée par Compose. Registre vide au relevé : aucun compte, aucun droit, aucun appel. Seul outil livré : `crm_workspace_list` |
 | Relais SMTP | **Sans objet depuis la reprise `CRM-092`** : GoTrue a quitté la pile ; `SMTP_HOST`, `SMTP_PORT`, `SMTP_ADMIN_EMAIL` et `ADDITIONAL_REDIRECT_URLS` restent dans la cellule, inertes, à retirer en console si souhaité |
 | Reprise `CRM-092` | **Exécutée le 2026-09-24** (§2.5, §8) : migrations 74 à 79, client confidentiel `lelabs-crm-serveur`, GoTrue retiré, compte invité repris ; connexion réelle du responsable relue en base. Notes du Spark reproposées et acceptées (2026-09-25) |
 
@@ -356,7 +358,7 @@ dépensé ».
 **Retour arrière** : par l'instantané si la fenêtre échoue (§6) ; après la fenêtre, par la ligne 88 du §3.2, **puis**
 la webapp précédente — jamais la webapp seule.
 
-### 2.13 `CRM-101` — la plateforme et son superadministrateur (PRÉVUE — spécifiée le 2026-10-20, rien n'est encore livré)
+### 2.13 `CRM-101` — la plateforme et son superadministrateur (GESTES 1 À 4 EXÉCUTÉS le 2026-10-21 ; geste 5 : drapeau amorcé constaté en base, l'écran reste à constater par le responsable)
 
 `docs/SPEC-plateforme.md` ; décision 627. **Ce qui sera livré :**
 
@@ -365,8 +367,8 @@ la webapp précédente — jamais la webapp seule.
 - **la webapp**, avec l'écran `/plateforme` ;
 - **une variable facultative**, `CRM_SUPERADMINS_INITIAUX`.
 
-Les gestes ci-dessous sont le **contrat prévu**. Ils seront confirmés par la tranche T5, et rien n'est exécuté sans
-instruction du responsable.
+Les gestes ci-dessous ont été exécutés le 2026-10-21 sur l'instruction du responsable (« livre ») ; le relevé est au §8.
+Le geste 1 a été écrit à la main dans la proposition de la cellule, faute d'option de `proposer.sh` (INC-276).
 
 | # | Geste | Qui | Commande ou lieu |
 |---|---|---|---|
@@ -380,7 +382,7 @@ instruction du responsable.
 fonction `session` et la webapp précédentes. L'amorçage n'écrit qu'une ligne et le journal : les retirer n'enlève
 aucune donnée métier.
 
-### 2.14 `CRM-102` à `CRM-104` — le connecteur MCP (PRÉVUE — spécifiée le 2026-10-20, rien n'est encore livré)
+### 2.14 `CRM-102` à `CRM-104` — le connecteur MCP (`CRM-102` : GESTES 1 À 5 EXÉCUTÉS le 2026-10-21 ; geste 6 à constater par le responsable ; `CRM-103` et `CRM-104` restent à livrer)
 
 `docs/SPEC-mcp.md` §15 ; décision 627. **Ce qui sera livré :**
 
@@ -398,8 +400,8 @@ aucune donnée métier.
 | 2 | DNS `crm.mcp.lelabs.tech` vers la Forge, et route `crm.mcp.lelabs.tech 8080 tls` vers la cellule `crm`. **La possibilité d'une seconde route vers la même cellule est à confirmer** (`docs/SPEC-mcp.md` §2.2) | propriétaire du Spark | console de la Forge ; proposition par `scripts/spark/proposer.sh --connecteur-mcp`, qui propose aussi le geste 3 |
 | 3 | Poser `CRM_MCP_HOTE=crm.mcp.lelabs.tech` : elle active le service `mcp` (profil Compose) et l'aiguillage de Caddy ; Compose en dérive `CRM_MCP_ORIGINE_PUBLIQUE` (`docs/SPEC-mcp.md` §2.1, §10). Sans elle, le connecteur reste éteint et ne reçoit aucun secret | propriétaire du Spark | console ; proposition par `scripts/spark/proposer.sh --connecteur-mcp` |
 | 4 | Instantané, puis livrer et migrer (la 90, **après** la 89 de `CRM-101`, dont elle emploie `app.amorcer_superadmin` et `app.est_superadmin_pour`), et démarrer le service `mcp` | poste, puis cellule | `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, **puis** `./runProd.sh --spark` |
-| 5 | Vérifier : `GET https://crm.mcp.lelabs.tech/pret` rend `200`, `POST /mcp` sans jeton rend `401` avec `resource_metadata`, et le refus de redirection d'un client non listé | poste, lecture seule | `scripts/spark/verifier.sh`, étendu par `CRM-102` T4 |
-| 6 | Ajouter le connecteur dans Claude ou ChatGPT, se connecter avec « Stay signed in », poser une matrice dans `/plateforme`, puis voir l'appel au journal | le responsable | l'assistant et l'application |
+| 5 | Vérifier : `GET https://crm.mcp.lelabs.tech/pret` rend `200`, `POST /mcp` sans jeton rend `401` avec `resource_metadata`, et le refus de redirection d'un client non listé | poste, lecture seule | `scripts/spark/verifier.sh` pour la pile ; **les contrôles du connecteur se font encore à la main** (`curl`, relevé du §8) : `verifier.sh` n'a pas été étendu par `CRM-102` T4, contrairement à ce que ce geste annonçait : c'est un reste de `CRM-102` T5 (`docs/BACKLOG.md`) |
+| 6 | Ajouter le connecteur dans Claude ou ChatGPT, se connecter avec « Stay signed in », poser une matrice dans `/plateforme`, puis voir l'appel au journal. **Tant que `CRM-103` n'est pas livré**, aucun écran ne pose de matrice : seul un superadministrateur, qui la franchit, peut appeler `crm_workspace_list` ; tout autre compte voit « Droits en attente » | le responsable | l'assistant et l'application |
 
 **État au 2026-10-21, relevé en lecture seule après les gestes du propriétaire du Spark** : `CRM_MCP_HOTE` et
 `CRM_SUPERADMINS_INITIAUX` **importées** dans `/etc/spark/env`, route `crm.mcp.lelabs.tech 8080 tls` **acceptée**, plus
@@ -417,6 +419,9 @@ PKCE S256 obligatoire, aucune `post_logout_redirect_uri`. La sonde du point d'au
 (`https://crm.mcp.lelabs.tech/auth/autre`). La découverte publie `offline_access` et `S256`. Le mandataire transmet
 PKCE S256 en amont : le client du realm de développement l'impose aussi, et le parcours OAuth y passe.
 
+**Gestes 4 et 5 exécutés le 2026-10-21** sur l'instruction du responsable (« livre ») : révision `85d8bb7b`, migrations 89
+et 90, service `mcp` démarré et sain. Relevé complet au §8.
+
 **Avant cela, propositions déposées dans la cellule, rien n'était importé.** Sur instruction du responsable,
 `/etc/spark/env.?` porte `CRM_MCP_HOTE=crm.mcp.lelabs.tech` (geste 3) et `CRM_SUPERADMINS_INITIAUX=martino@p2enjoy.studio`
 (geste 1 du §2.13, écrit à la main faute d'option de `proposer.sh` : INC-276), et `/etc/spark/routes.?` la route
@@ -429,7 +434,9 @@ connecteur : la garder ne gêne pas la webapp.
 
 ## 3. Migrations en attente
 
-**Aucune migration en attente depuis le 2026-10-11.** La migration **89** (`CRM-101` T1, décision 627) est **écrite et prouvée en développement, pas encore livrée** : elle attend la tranche T5 (§2.13) ; sa ligne de retrait est au §3.2. La **90** (`CRM-102` T1, décision 627) est **écrite et prouvée en développement, pas encore livrée** : elle attend la tranche T5 de `CRM-102` (§2.14) ; sa ligne de retrait est au §3.2. Baseline de production : la migration **88**
+**Aucune migration en attente depuis le 2026-10-21.** Baseline de production : les migrations **89** (`CRM-101`) et **90**
+(`CRM-102`), décision 627, appliquées le 2026-10-21 par une même fenêtre après l'instantané (§2.13, §2.14, §8) ; leurs
+lignes de retrait sont au §3.2. Avant elles, la migration **88**
 (`CRM-099`, décision 622), appliquée le 2026-10-11 par une fenêtre avec instantané (§2.12, §8) ; avant elle, la **87**
 (`CRM-098`, décision 621), appliquée le 2026-10-11 par une fenêtre avec instantané (§2.11, §8) — son retrait est sa
 ligne du §3.2 ; avant elle, la **86**
@@ -955,6 +962,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong. **`CRM-092` T3 et T3 bis (en attente de la reprise complète, §3)** : nouvelle fonction `session`, et le conteneur reçoit `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et **`OIDC_CLIENT_SECRET`**, que le service principal ne remet qu'au worker `session` — la phrase « ne reçoit pas `JWT_SECRET` » plus bas est révisée par la décision 584. Recréer `functions` **après** la pose du secret par l'administrateur du realm et la correction de `SSO_OIDC_CLIENT_ID` (§2.3) |
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml`, qui incrémente le label `com.p2enjoy.kong-config-revision` — **`crm-092`** depuis `CRM-092` T6 : routes `/auth/v1/*` et `/.well-known/oauth-authorization-server` retirées, Kong répond 404 |
 | `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** ; **`CRM-092` T6** : `/auth/v1/*` répond 404, et le label `com.p2enjoy.caddy-routes-revision` (`crm-092`) fait recréer Caddy au `up` ordinaire ; **`CRM-102` T3** : l'hôte du connecteur MCP aiguillé vers `mcp` (`MCP_HOTE`, `mcp.invalid` tant qu'il est éteint), label `crm-102` |
+| `mcp` | Sous le profil `mcp`, présent seulement si `CRM_MCP_HOTE` est posée (`CRM-102`, `docs/SPEC-mcp.md` §2.1). **Image construite dans la cellule** à sa première livraison (2026-10-21) ; comme pour `mail-sync`, `up -d` ne reconstruit jamais une image présente : **toute modification sous `mcp/` se livre par une reconstruction explicite** (`up -d --build --no-deps --wait mcp`, par `compose_prod`). Le volume `mcp-etat` (clients enregistrés, transactions, codes, chiffrés) survit aux recréations |
 | `minio`, `minio-createbucket` | Cellule Spark seulement (`CRM-090`) : stockage objet interne, sans port publié |
 | `realtime` dans la cellule | À chaque montée de version de Realtime : reconstruire l'image dérivée, que `scripts/spark/livrer.sh` recharge (décision 571) |
 | ~~`auth`~~, ~~`auth-templates`~~ | **Retirés de la pile par `CRM-092` T6** (décision 589). À la reprise : les arrêter et les supprimer explicitement (`docker rm -f p2enjoy-auth p2enjoy-auth-templates`) — `./runProd.sh` ne retire aucun orphelin —, après l'application de la migration 77 ; `scripts/spark/verifier.sh` contrôle qu'aucun ne subsiste. Caddy répond lui-même 404 sur `/auth/v1/*` |
@@ -1421,3 +1429,44 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   `card_cost_actuals` répond `401`. Aucune donnée de preuve écrite en production.
 - **Geste 5, à constater par le responsable** : ajouter un réel à une ligne depuis la fiche d'une affaire, puis solder
   une ligne dans l'onglet « À saisir ».
+
+### `CRM-101` T5 et `CRM-102` T5 — la plateforme et le connecteur MCP, 2026-10-21 (décision 627)
+
+- **Préalables, relevés en lecture seule** : `CRM_MCP_HOTE` et `CRM_SUPERADMINS_INITIAUX` importées, route
+  `crm.mcp.lelabs.tech 8080 tls` acceptée, DNS et certificat de la Forge en place (§2.14) ; client `lelabs-crm-serveur`
+  redéclaré chez LeLabs — sonde `200` sur `https://crm.mcp.lelabs.tech/auth/callback` et sur le retour de la webapp, `400`
+  sur une adresse témoin (`docs/SSO-client-lelabs-crm.md` §1).
+- **Instantané** : le responsable a répondu « livre » à la demande qui posait l'instantané de VM pris comme condition de la
+  livraison ; cette réponse vaut confirmation, consignée telle quelle. Il n'a pas été vérifié depuis le poste.
+- **Avant la fenêtre**, en lecture seule : révision `7d819786`, registre à **88** lignes (`0088_reels_multiples.sql`), un
+  espace et une appartenance, tous les conteneurs sains.
+- **Fenêtre** : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` par les IP — révision **`85d8bb7b`**, image
+  Realtime identique, « Migrations appliquées avec succès — cache de schéma rechargé par le runner ». Puis
+  `./runProd.sh --spark` dans la cellule : l'image `mcp` construite dans la cellule, `functions` (nouvelle variable) et
+  `caddy` (révision `crm-102`) recréés, `mcp` démarré ; onze conteneurs sains ou terminés en 0.
+- **Registre** : **90** lignes ; empreintes de `0089_plateforme.sql` et `0090_connecteur_mcp.sql` égales à celles du dépôt
+  (`sha256sum`), en mode `application`. Catalogue relu : aucune fonction nouvelle exécutable par `anon` ;
+  `mcp_inscrire_compte`, `mcp_etat_compte` et `mcp_journaliser` fermées à `authenticated` ; les `plateforme_*` ouvertes à
+  `authenticated` et gardées par le drapeau.
+- **`verifier.sh`** : **27 contrôles, 1 échec** — `p2enjoy-rest` compte un redémarrage. Il est **antérieur à la
+  livraison** : le conteneur date du 2026-09-23 et n'a pas été recréé ; son redémarrage date du **2026-10-15 à 00:11:25
+  UTC**, sans `OOMKilled` au relevé et sans aucune ligne de journal avant l'arrêt. Cause non établie (INC-277). Les 26
+  autres contrôles, dont le client SSO (retour accepté, PKCE exigé), sont verts.
+- **Connecteur, par la route publique** : `/sante` `200` ; `/pret` `200` `{"pret":true,"controles":{"sso":"ok","crm":"ok"}}`
+  sur 15 essais sur 16 — **le premier essai, quelques minutes après le démarrage, n'a reçu aucune réponse** (`000`) ; les 15
+  suivants ont réussi, comme les 7 essais de `/sante` : observé, non reproduit ; `POST /mcp` sans jeton `401` avec
+  `resource_metadata="https://crm.mcp.lelabs.tech/.well-known/oauth-protected-resource/mcp"` ; métadonnées de la ressource
+  et du serveur d'autorisation publiées (PKCE `S256`) ; enregistrement d'un client au retour
+  `https://malveillant.exemple.test/cb` refusé `400 invalid_redirect_uri`, rien n'est donc écrit ; la racine sert la page
+  d'accueil du connecteur. Ces contrôles sont faits à la main : `verifier.sh` ne les porte pas encore, reste de
+  `CRM-102` T5.
+- **Plateforme et registre** : sans session, `plateforme_espaces`, `est_superadmin` et `mcp_autorise` rendent `401`
+  (`42501`), comme les tables `superadmins`, `plateforme_journal`, `mcp_comptes`, `mcp_droits` et `mcp_journal`. **Le
+  drapeau est amorcé** : une ligne dans `superadmins` et l'entrée `superadmin_amorce` au journal de la plateforme, le
+  2026-10-20 à 23:04:00 UTC, à la première connexion du responsable — deux minutes après le démarrage de la pile.
+  Registre du connecteur vide. Aucune donnée de preuve n'est écrite en production.
+- **Observé au passage, sans rapport établi avec la livraison** : Kong occupe 237 Mio sur sa limite de 256 Mio (93 %) ;
+  aucune mesure antérieure ne permet de dire s'il croît (INC-277).
+- **Reste à constater par le responsable** : `/plateforme` liste l'espace et ses membres (§2.13, geste 5) ; ajouter le
+  connecteur dans Claude ou ChatGPT, se connecter avec « Stay signed in » et appeler `crm_workspace_list` (§2.14, geste 6
+  — la matrice attend `CRM-103`).

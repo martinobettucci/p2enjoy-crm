@@ -15,7 +15,7 @@ d'exécuter le code attendu.
 
 ### `CRM-102` T1 à T4 — le connecteur MCP : son registre en base, son service, sa place dans la pile (décision 627)
 
-*Migration `0090`, service `mcp/` et pile prouvés en développement de bout en bout (pgTAP, unitaires, intégration contre le vrai Keycloak, à travers le Caddy de la cellule, un vrai client MCP dans le navigateur). Livraison avec la tranche T5.*
+*Migration `0090`, service `mcp/` et pile prouvés en développement de bout en bout (pgTAP, unitaires, intégration contre le vrai Keycloak, à travers le Caddy de la cellule, un vrai client MCP dans le navigateur). **Livré en production le 2026-10-21** (`85d8bb7b`, migration 90 appliquée par une fenêtre avec instantané ; `https://crm.mcp.lelabs.tech` répond, client LeLabs redéclaré) ; publié après le constat du responsable (`docs/PROD_MIGRATIONS.md` §2.14).*
 
 - **Trois tables fermées à l'API** : les comptes qui se sont connectés au connecteur, la **matrice** de leurs droits
   (par espace, famille — structure, affaires, contacts, budgets, temps, objectifs, messagerie — et action — consulter,
@@ -38,7 +38,7 @@ d'exécuter le code attendu.
 
 ### `CRM-101` T1 à T4 — la plateforme et son superadministrateur : la base, la connexion, l'écran, le seed (décision 627)
 
-*Migration `0089`, fonction `session`, écran et seed, prouvés en développement de bout en bout (pgTAP, unitaires, API, E2E aux quatre paliers, captures observées). Livraison avec la tranche T5.*
+*Migration `0089`, fonction `session`, écran et seed, prouvés en développement de bout en bout (pgTAP, unitaires, API, E2E aux quatre paliers, captures observées). **Livré en production le 2026-10-21** (`85d8bb7b`, migration 89 appliquée par une fenêtre avec instantané ; le drapeau du responsable amorcé à sa première connexion) ; publié après le constat du responsable (`docs/PROD_MIGRATIONS.md` §2.13).*
 
 - **Un superadministrateur de la plateforme** : le porteur du rôle `admin` LeLabs, ou un drapeau en base, amorcé une
   seule fois à la première connexion d'une adresse listée dans `CRM_SUPERADMINS_INITIAUX`.

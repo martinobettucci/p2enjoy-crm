@@ -31800,3 +31800,37 @@ retire du client toute URL absente de la redéclaration, rend `ACCUEIL` obligato
 
 **La déclaration à remettre** est écrite en entier au §3.2 de `docs/SPEC-mcp.md`, et le geste 1 du §2.14 du contrat de
 déploiement y renvoie.
+
+### décision 627, livraison — `CRM-101` T5 et `CRM-102` T5 en production
+
+*2026-10-21.*
+
+**L'instruction.** Le responsable a remis le récapitulatif du service pour `lelabs-crm-serveur`, qui porte le retour du
+connecteur et `offline_access`, puis a écrit « livre », en réponse à la demande qui posait deux conditions : l'instantané
+de VM pris, et ce mot. La réponse est prise comme confirmation des deux, et consignée telle quelle : l'instantané n'est
+pas vérifiable depuis le poste.
+
+**Avant de livrer, en lecture seule.** La sonde du point d'autorisation (PKCE S256, `openid offline_access`) rend `200`
+pour les deux retours déclarés et `400` pour une adresse témoin : la redéclaration est appliquée. Le mandataire satisfait
+déjà le PKCE S256 exigé, puisque le client du realm de développement l'impose aussi. Le récapitulatif est versé à
+`docs/SSO-client-lelabs-crm.md` §1, et l'ancien bloc du client public y reste en archive.
+
+**La livraison.** Révision `85d8bb7b`, migrations 89 et 90 dans une même fenêtre, puis `./runProd.sh --spark` : l'image
+`mcp` est construite dans la cellule, `functions` et `caddy` sont recréés, et les onze conteneurs sont sains. Le registre
+compte 90 lignes, aux empreintes du dépôt. Le drapeau du responsable s'est amorcé à sa première connexion, deux minutes
+après le démarrage. Le relevé complet est au §8 de `docs/PROD_MIGRATIONS.md`.
+
+**Trois constats, chacun traité à sa mesure.**
+
+1. **Les contrôles du connecteur.** Le geste 5 du §2.14 annonçait un `verifier.sh` étendu par `CRM-102` T4 ; il ne l'est
+   pas. Les contrôles ont été faits à la main par la route publique. Les porter dans le script est un reste de
+   `CRM-102` T5, sans arbitrage à demander.
+2. **Le redémarrage de PostgREST.** `verifier.sh` est rouge sur un redémarrage de `rest` du 2026-10-15, antérieur à la
+   livraison et de cause non établie. Kong est à 93 % de sa limite de mémoire. Les deux issues touchent la production :
+   INC-277.
+3. **Un essai sans réponse.** Le premier essai de `/pret` n'a reçu aucune réponse, et les quinze suivants ont réussi.
+   C'est observé, non reproduit, et consigné sans conclusion.
+
+**Ce que la livraison ne change pas.** Tant que `CRM-103` n'est pas livré, aucun écran ne pose de matrice : seul un
+superadministrateur, qui la franchit, peut appeler `crm_workspace_list`. `CRM-101` T5 et `CRM-102` T5 restent `[~]`
+jusqu'au constat du responsable.

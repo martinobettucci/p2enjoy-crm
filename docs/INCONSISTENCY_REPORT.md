@@ -7277,3 +7277,29 @@ comme `--ollama-host` pour l'assistant IA.
 **Issues à arbitrer** : (1) une option `--superadmin adresse`, qui propose la variable à une cellule en service sans rien
 tirer, sur le modèle de `--connecteur-mcp` ; (2) réécrire le geste 1 du §2.13 pour une saisie directe à la console, sans
 proposition.
+
+**État au 2026-10-21.** La livraison de `CRM-101` T5 a eu lieu : la variable a été écrite à la main dans la proposition de
+la cellule, importée par le propriétaire du Spark, et le drapeau s'est amorcé à la première connexion du responsable. Le
+geste est fait ; reste à choisir la forme du contrat pour une prochaine cellule.
+
+### INC-277 — en production, `verifier.sh` reste rouge sur un redémarrage de PostgREST antérieur à la livraison, et Kong frôle sa limite de mémoire
+
+*Relevée le 2026-10-21 pendant la livraison de `CRM-101` T5 et `CRM-102` T5 ; ouverte : l'arbitrage touche la
+production.*
+
+**Le constat.** `scripts/spark/verifier.sh` compte 27 contrôles et **un échec** : `p2enjoy-rest` porte `RestartCount=1`.
+Ce redémarrage n'est pas dû à la livraison : le conteneur date du 2026-09-23 et n'a pas été recréé ; il a redémarré le
+**2026-10-15 à 00:11:25 UTC**, et son journal ne porte **aucune ligne avant l'arrêt**. `OOMKilled` est faux au relevé,
+mais Docker ne garde que l'état du dernier démarrage : un arrêt par manque de mémoire n'est pas exclu (limite de 128 Mio,
+82 Mio occupés au relevé). Le contrôle restera rouge à chaque vérification tant que le conteneur n'est pas recréé :
+le compteur ne se remet à zéro qu'à la recréation. Au même relevé, **Kong occupe 237 Mio sur 256** (93 %) ; aucune
+mesure antérieure ne dit s'il croît.
+
+**Pourquoi ce n'est pas tranché ici.** Chaque issue est une action en production, que `CLAUDE.md` §9 réserve à une
+instruction explicite ; et relever une limite de mémoire revient sur le dimensionnement de la cellule
+(`docs/SPEC-deploiement-spark.md`).
+
+**Issues à arbitrer** : (1) recréer `rest` (`compose_prod up -d --no-deps --force-recreate --wait rest`), ce qui remet
+le compteur à zéro sans rien perdre, et surveiller ; (2) relever la limite de `rest` ou de Kong dans
+`docker-compose.spark.yml`, à mesurer d'abord sur la durée ; (3) laisser en l'état, en sachant `verifier.sh` rouge sur
+ce seul contrôle.
