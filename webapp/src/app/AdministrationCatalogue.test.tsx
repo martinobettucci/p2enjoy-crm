@@ -1,3 +1,4 @@
+// @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — le catalogue sous une administration refusée (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.3 : le catalogue de nœuds se
 //           relit au signal du workflow de départ, qui pose ses sept nœuds (docs/SPEC-workflow-engine.md
 //           §7 quater) ; docs/JOURNAL.md décision 607
@@ -13,6 +14,8 @@
 import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { AdministrationCatalogue } from './AdministrationCatalogue'
+import { FournisseurEspace } from './ContexteEspace'
+import { fr } from '../i18n/fr'
 import { EVENEMENT_WORKFLOW_DEPART } from '../lib/demarrage'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -86,5 +89,26 @@ describe('le signal du workflow de départ (CRM-094, docs/SPEC-onboarding.md §1
 			globalThis.dispatchEvent(new Event(EVENEMENT_WORKFLOW_DEPART))
 		})
 		expect(lectures.length).toBe(avant)
+	})
+})
+
+describe('catalogue — l’administration refusée par la base (CRM-093, docs/DESIGN_SYSTEM.md §5.59)', () => {
+	it('« Nouveau nœud » et les commandes de ligne sont désactivés et citent un motif unique', async () => {
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'ws-1', estAdmin: false, capacites: { administration: 'refusee', edition: 'refusee' } }}>
+				<AdministrationCatalogue client={clientFactice([PROSPECTION]).client} />
+			</FournisseurEspace>,
+		)
+		await screen.findByText('Prospection')
+		const motif = screen.getByTestId('motif-lecture-seule')
+		expect(motif.textContent).toBe(fr['rights.readonly.administration'])
+		const commandes = [
+			screen.getByTestId('ouvrir-creation-noeud'),
+			screen.getByRole('button', { name: fr['admin.catalog.edit.aria'].replace('{nom}', 'Prospection') }),
+		] as HTMLButtonElement[]
+		for (const commande of commandes) {
+			expect(commande.disabled).toBe(true)
+			expect(commande.getAttribute('aria-describedby')).toBe(motif.id)
+		}
 	})
 })

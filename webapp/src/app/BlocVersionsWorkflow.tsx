@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — publier, planifier et restaurer lisent le refus de l'éditeur ; comparer
+//       deux versions, une lecture, reste offert (docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-078 (docs/BACKLOG.md) — cinquième tranche : les écrans du versionnement
 // @spec docs/SPEC-workflow-engine.md §7 ter.14.1 (ce que le bloc est et n'est pas),
 //       §7 ter.14.2 (sixième bloc de l'éditeur, aucune route nouvelle), §7 ter.14.3 (lecture 8),
@@ -14,6 +16,7 @@
 // n'est pas applicable : la garde est la vérification 7 du §7 ter.13.6, et un bouton grisé ferait
 // passer une règle de base pour une décision d'interface (`CLAUDE.md` §10).
 
+import { useRefus } from '../components/ui/RefusCommandes'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { History, Plus, RotateCcw } from 'lucide-react'
 import { ListeCollections } from './CollectionsComparees'
@@ -166,6 +169,7 @@ export function BlocVersionsWorkflow({
 	onStructureRestauree,
 	onAnnonce,
 }: ProprietesBlocVersions) {
+	const droit = useRefus()
 	const [versions, setVersions] = useState<EtatAsync<readonly VersionWorkflow[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	const [note, setNote] = useState('')
@@ -410,9 +414,9 @@ export function BlocVersionsWorkflow({
 				/>
 				<p className="text-sm text-text-3">{t('admin.workflows.versions.publish.note.hint')}</p>
 				<div className="flex">
-					<Button
+					<Button {...droit}
 						variante="primaire"
-						disabled={enCours !== null}
+						disabled={droit.disabled === true || (enCours !== null)}
 						data-testid="publier-version"
 						onClick={() => void publier()}
 					>
@@ -543,9 +547,9 @@ export function BlocVersionsWorkflow({
 						</select>
 					</span>
 					<div className="flex">
-						<Button
+						<Button {...droit}
 							variante="secondaire"
-							disabled={enCours !== null}
+							disabled={droit.disabled === true || (enCours !== null)}
 							data-testid="planifier-restauration"
 							onClick={() => void planifier(choix)}
 						>
@@ -718,9 +722,9 @@ export function BlocVersionsWorkflow({
 										<AlerteRefus marqueur="refus-restauration" message={refus.texte} />
 									) : null}
 									<div className="flex flex-wrap gap-2">
-										<Button
+										<Button {...droit}
 											variante="destructif"
-											disabled={enCours !== null}
+											disabled={droit.disabled === true || (enCours !== null)}
 											data-testid="confirmer-restauration"
 											onClick={() => void restaurer()}
 										>
@@ -741,9 +745,9 @@ export function BlocVersionsWorkflow({
 								</div>
 							) : (
 								<div className="flex">
-									<Button
+									<Button {...droit}
 										variante="secondaire"
-										disabled={enCours !== null}
+										disabled={droit.disabled === true || (enCours !== null)}
 										data-testid="ouvrir-restauration"
 										onClick={() => {
 											setRefus(null)

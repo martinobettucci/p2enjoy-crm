@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — les commandes d'écriture du catalogue désactivées avec leur motif quand la
+//       base refuse l'administration (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.18, §5.59)
 // @spec CRM-030 (docs/BACKLOG.md) — administration du catalogue de nœuds : l'écran
 // @spec docs/SPEC-workflow-engine.md §2 bis.1 (ce que l'écran est), §2 bis.2 (l'adresse),
 //       §2 bis.3 (la lecture unique), §2 bis.4 (les quatre gestes), §2 bis.5 (les refus mesurés),
@@ -52,6 +54,13 @@ import {
 import { classesPilule } from './presentation-tracks'
 import { lireWorkspaces } from '../lib/workspaces'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { useContexteEspace } from './ContexteEspace'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { FournisseurRefus, useRefus } from '../components/ui/RefusCommandes'
+import { motifVisible, proprietesCommande } from '../lib/capacites'
+
+/** Le motif du catalogue, cité par ses commandes d'écriture quand la base refuse l'administration (CRM-093). */
+const ID_MOTIF_CATALOGUE = 'catalogue-lecture-seule'
 
 /** Le type est un MOT, jamais une teinte (`docs/DESIGN_SYSTEM.md` §5.18). */
 const CLES_TYPE: Readonly<Record<TypeNoeud, CleTraduction>> = {
@@ -156,6 +165,9 @@ export type ProprietesAdministrationCatalogue = {
 export function AdministrationCatalogue({
 	client = clientCrm,
 }: ProprietesAdministrationCatalogue = {}) {
+	// `CRM-093` — ce composant FOURNIT le refus à ses lignes ; sa propre commande le lit ici directement.
+	const { capacites } = useContexteEspace()
+	const droitAdministration = proprietesCommande(capacites.administration, ID_MOTIF_CATALOGUE)
 	const [idWorkspace, setIdWorkspace] = useState<string | null>(null)
 	const [etat, setEtat] = useState<EtatAsync<readonly NoeudCatalogue[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
@@ -298,16 +310,21 @@ export function AdministrationCatalogue({
 	const noeuds = etat.donnees
 
 	return (
+		<FournisseurRefus valeur={droitAdministration}>
 		<section aria-label={t('admin.catalog.aria')} className="flex flex-col gap-4">
 			<p role="status" className="sr-only">
 				{annonce}
 			</p>
+			{motifVisible(capacites.administration) ? (
+				<MotifLectureSeule id={ID_MOTIF_CATALOGUE}>{t('rights.readonly.administration')}</MotifLectureSeule>
+			) : null}
 
 			<div className="flex items-center justify-between gap-4">
 				<p className="text-sm text-text-2 max-w-[70ch]">{t('admin.catalog.intro')}</p>
 				<button
 					type="button"
 					data-testid="ouvrir-creation-noeud"
+					{...droitAdministration}
 					onClick={(evenement) => {
 						setSaisie(SAISIE_VIDE)
 						ouvrir({ quoi: 'creation' }, evenement.currentTarget)
@@ -423,6 +440,7 @@ export function AdministrationCatalogue({
 				</ul>
 			)}
 		</section>
+		</FournisseurRefus>
 	)
 }
 
@@ -501,6 +519,7 @@ function LigneNoeud({
 	readonly onValiderModification: () => void
 	readonly onConfirmerArchivage: () => void
 }) {
+	const droit = useRefus()
 	const archive = noeud.archived_at !== null
 	const enModification = ouverture.quoi === 'modification' && ouverture.id === noeud.id
 	const enArchivage = ouverture.quoi === 'archivage' && ouverture.id === noeud.id
@@ -565,7 +584,7 @@ function LigneNoeud({
 					{/* Modifier disparaît sur un nœud archivé : le geste n'a aucun effet observable sur
 					    un nœud masqué des sélecteurs, exactement comme au §5.13 pour un objet archivé. */}
 					{!archive && (
-						<button
+						<button {...droit}
 							type="button"
 							data-testid="modifier-noeud"
 							onClick={(evenement) => onOuvrirModification(evenement.currentTarget)}
@@ -577,11 +596,11 @@ function LigneNoeud({
 						</button>
 					)}
 					{archive ? (
-						<button
+						<button {...droit}
 							type="button"
 							data-testid="desarchiver-noeud"
 							onClick={onDesarchiver}
-							disabled={enCours}
+							disabled={droit.disabled === true || (enCours)}
 							aria-label={t('admin.catalog.unarchive.aria', { nom: noeud.label })}
 							className={CLASSES_BOUTON_DISCRET}
 						>
@@ -589,7 +608,7 @@ function LigneNoeud({
 							{t('admin.catalog.unarchive')}
 						</button>
 					) : (
-						<button
+						<button {...droit}
 							type="button"
 							data-testid="archiver-noeud"
 							onClick={(evenement) => onOuvrirArchivage(evenement.currentTarget)}
@@ -631,11 +650,11 @@ function LigneNoeud({
 						</p>
 					)}
 					<div className="flex items-center gap-2">
-						<button
+						<button {...droit}
 							type="button"
 							data-testid="confirmer-archivage"
 							onClick={onConfirmerArchivage}
-							disabled={enCours}
+							disabled={droit.disabled === true || (enCours)}
 							className={CLASSES_BOUTON_DESTRUCTIF}
 						>
 							{t('admin.catalog.archive.confirmAction')}
@@ -675,6 +694,7 @@ function CommandesOrdre({
 	readonly enCours: boolean
 	readonly onDeplacer: (sens: Sens) => void
 }) {
+	const droit = useRefus()
 	const monter = calculerDeplacement(liste, noeud.id, 'monter')
 	const descendre = calculerDeplacement(liste, noeud.id, 'descendre')
 
@@ -693,10 +713,10 @@ function CommandesOrdre({
 
 	return (
 		<>
-			<button
+			<button {...droit}
 				type="button"
 				data-testid="monter-noeud"
-				disabled={monter.statut !== 'calcule' || enCours}
+				disabled={droit.disabled === true || (monter.statut !== 'calcule' || enCours)}
 				onClick={() => onDeplacer('monter')}
 				aria-label={t('admin.catalog.moveUp.aria', { nom: noeud.label })}
 				title={explication(monter, 'admin.move.disabled.top')}
@@ -704,10 +724,10 @@ function CommandesOrdre({
 			>
 				<ArrowUp aria-hidden="true" className="size-4" />
 			</button>
-			<button
+			<button {...droit}
 				type="button"
 				data-testid="descendre-noeud"
-				disabled={descendre.statut !== 'calcule' || enCours}
+				disabled={droit.disabled === true || (descendre.statut !== 'calcule' || enCours)}
 				onClick={() => onDeplacer('descendre')}
 				aria-label={t('admin.catalog.moveDown.aria', { nom: noeud.label })}
 				title={explication(descendre, 'admin.move.disabled.bottom')}
@@ -745,6 +765,7 @@ function FormulaireNoeud({
 	readonly onAnnuler: () => void
 	readonly onValider: () => void
 }) {
+	const droit = useRefus()
 	const premier = useRef<HTMLInputElement | null>(null)
 	// Ouvrir un formulaire déplace le focus dans son premier champ (§5.13).
 	useEffect(() => {
@@ -883,10 +904,10 @@ function FormulaireNoeud({
 			)}
 
 			<div className="flex items-center gap-2">
-				<button
+				<button {...droit}
 					type="submit"
 					data-testid="valider-noeud"
-					disabled={!valide || enCours}
+					disabled={droit.disabled === true || (!valide || enCours)}
 					className={CLASSES_BOUTON_PRIMAIRE}
 				>
 					{t('admin.catalog.save')}
