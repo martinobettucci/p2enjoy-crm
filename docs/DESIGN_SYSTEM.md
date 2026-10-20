@@ -5454,6 +5454,18 @@ paraissent est spécifié par `docs/SPEC-mcp.md` §3 et §4 ; ces règles ne dis
   l'adresse du connecteur » — secondaire, icône `Copy`, celle de la copie d'adresse de la fiche d'affaire (§5.3 bis), le
   même geste. La confirmation remplace l'état dans une région `role="status"`, et **son échec est dit** : le champ est
   alors sélectionné pour une copie au clavier (§5.3 bis).
+- **L'ACCUEIL MÈNE À L'ADMINISTRATION — précision T6, écrite le 2026-10-21 avant le code, après relecture intégrale de
+  ce document.** Sous le titre « Administrer », la phrase dit qui accorde les droits et où ; un **lien en forme de bouton
+  secondaire** la suit : « Ouvrir la plateforme du CRM », icône `ShieldCheck` en `aria-hidden`.
+  - **`ShieldCheck` est celle de l'entrée « Plateforme » de la webapp** (§5.56). C'est le même objet, et le §9
+    n'interdit une icône partagée qu'entre deux objets distincts (§5.33).
+  - **Un lien, parce qu'il change d'adresse** (§12.1) ; **en forme de bouton**, parce qu'un lien pris dans une phrase
+    n'atteint pas la cible de 40 px du §8. Il garde la hauteur `--size-target` et le focus visible.
+  - **Secondaire et non primaire** : l'objet de la page reste l'adresse du connecteur, et l'administration ne concerne
+    que les superadministrateurs.
+  - **Rendu à tous** (§5.51) : la webapp refuse elle-même à qui n'a pas le drapeau (§5.56).
+  - **Il s'ouvre dans le même onglet.** La webapp est le même produit : ce n'est pas la sortie annoncée d'un lien
+    externe (§5.20).
 - **LA PAGE DE CONSENTEMENT EST CELLE DE FASTMCP, ET C'EST UN ÉCART NOMMÉ.** Sa mise en page, ses textes en anglais et son
   lien d'aide « Why am I seeing this? » appartiennent à la bibliothèque, dont la version est épinglée
   (`docs/SPEC-mcp.md` §14). Le connecteur y insère trois choses, et seulement trois :
@@ -5472,4 +5484,5 @@ paraissent est spécifié par `docs/SPEC-mcp.md` §3 et §4 ; ces règles ne dis
   les deux-points y portent leurs espaces insécables (§5.51).
 - **QUATRE PALIERS, AUCUN DÉFILEMENT HORIZONTAL** (§7), mesuré par `e2e/ui/connecteur-mcp.spec.ts` sur les cinq pages ;
   cibles d'au moins `--size-target` (§8), focus visible partout.
-- **Aucune couleur, aucun jeton nouveau.** Une icône Lucide nouvelle, `Plug`, qui ne sert aucun autre objet (§9).
+- **Aucune couleur, aucun jeton nouveau.** Une icône Lucide nouvelle, `Plug`, qui ne sert aucun autre objet (§9) ;
+  `ShieldCheck` est reprise du §5.56 depuis T6, pour le même objet.

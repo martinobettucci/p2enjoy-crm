@@ -120,6 +120,18 @@ n'atteint `mcp`, qui n'est d'ailleurs pas démarré.
 - L'étiquette `com.p2enjoy.caddy-routes-revision` est incrémentée dans le même commit
   (`docs/SPEC-deploiement-spark.md`).
 
+**Les chemins `/plateforme` et `/admin` mènent à l'administration — précision T6, 2026-10-21.** L'administration du
+connecteur vit dans la webapp (arbitrage A3), à `${SITE_URL}/plateforme`. Sur l'hôte du connecteur :
+
+- `GET /plateforme` et `GET /admin` — ce dernier étant le chemin de l'administration d'Evoliz — répondent `302` vers
+  cette adresse ;
+- aucun autre chemin n'est redirigé, et la chaîne de requête n'est pas transmise ;
+- la page d'accueil porte le même lien (`docs/DESIGN_SYSTEM.md` §5.57) ;
+- la webapp reste seule juge de l'accès : sans le drapeau, elle rend son état de refus (`docs/SPEC-plateforme.md` §6).
+
+`302` et non `301` : la destination changera avec `CRM-103` (onglet « Connecteur MCP »), et un navigateur garde en
+mémoire une redirection permanente.
+
 **Pourquoi pas un chemin sous `crm.lelabs.tech`.** Les métadonnées OAuth (RFC 8414, RFC 9728)
 s'insèrent au **début** du chemin, et elles entreraient en collision avec le repli de l'application
 monopage. Un hôte à part est la forme d'Evoliz (`evoliz.mcp.lelabs.tech`).
@@ -534,6 +546,7 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 | `CRM_MCP_DEBIT_OAUTH_MINUTE` | requêtes par minute et par adresse sur les points OAuth | entier | non, défaut `60` ; relevée seulement en développement | `60` |
 | `CRM_MCP_ENREGISTREMENTS_HEURE` | enregistrements de clients par adresse et par heure | entier | non, défaut `20` | `20` |
 | `CRM_MCP_JOURNAL_NIVEAU` | niveau des journaux | `debug`, `info`, `warning` | non, défaut `info` | `info` |
+| `SITE_URL` | **réutilisée** : l'origine de la webapp, vers laquelle mènent le lien de l'accueil et les redirections `/plateforme` et `/admin` (§2.2, T6) ; le service refuse de démarrer sans elle, en la nommant | URL sans barre finale | oui, comme pour la webapp | `https://crm.lelabs.tech` |
 | `MCP_DEV_PORT` | port publié du connecteur en développement | entier | développement seulement, défaut `18490` | `18490` |
 
 **En développement**, l'overlay relève `CRM_MCP_DEBIT_OAUTH_MINUTE` et `CRM_MCP_ENREGISTREMENTS_HEURE` à `1000` : toute
@@ -542,11 +555,11 @@ une campagne de preuves vient d'une seule adresse (même choix qu'Evoliz). L'ét
 
 **Ce que le service reçoit de Compose** : `SUPABASE_URL=http://kong:8000`, `SUPABASE_ANON_KEY=${ANON_KEY}`,
 `SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}`, `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`,
-`OIDC_CLIENT_SECRET`, `CRM_SUPERADMINS_INITIAUX` et les variables `CRM_MCP_*`. `scripts/verify-spark.sh` mesure que
+`OIDC_CLIENT_SECRET`, `CRM_SUPERADMINS_INITIAUX`, `SITE_URL` (depuis T6) et les variables `CRM_MCP_*`. `scripts/verify-spark.sh` mesure que
 `JWT_SECRET` et `SERVICE_ROLE_KEY` n'atteignent `mcp` que lorsque son profil est actif.
 
 **Variables réutilisées, sans changement de nom :** `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`,
-`OIDC_CLIENT_SECRET`, `SSO_OIDC_ISSUER` et `SSO_OIDC_CLIENT_ID`.
+`OIDC_CLIENT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et, depuis T6, `SITE_URL`.
 
 **Documentation de chaque variable :** `.env.example`, `docs/DAT.md`, `scripts/lib/env.sh` (contrat
 du profil), `scripts/spark/proposer.sh`, `docs/PROD_MIGRATIONS.md` et le README, dans le même
@@ -590,6 +603,7 @@ commit que le code qui la lit.
 |---|---|
 | `CRM-102` T3 | **Intégration** (`mcp/tests/test_integration_oauth.py`, marque `integration`), jouée par `scripts/verify-mcp.sh` dans l'image `dev` **sur le réseau Compose**, contre le vrai Keycloak, la vraie base et le vrai service `mcp` ; seule l'origine publique `localhost:${MCP_DEV_PORT}` est réécrite vers `mcp:8080`, `sso.localhost` étant le même dedans et dehors : `401` et métadonnées (`resource`, `issuer` = l'origine) ; parcours complet de `plateforme@` (superadministratrice en base) et d'`exploitante@` (`admin` LeLabs), jusqu'à `crm_workspace_list` — vide pour la première (RLS, D7), l'espace seedé pour la seconde — et la ligne au `mcp_journal` ; « Droits en attente » pour `admin@` (vérifié, sans droit) ; « Compte en attente de vérification » pour `attendu@` (sans `verified`) et `adresse-non-verifiee@` ; aucun code émis sur un refus ; `offline_access` demandé **si et seulement si** la case est cochée, et le renouvellement qui survit à la fin de la session du SSO **seulement** dans ce cas ; jeton forgé, et vrai jeton du realm émis pour un autre client (`crm-audience-etrangere`), refusés ; adresse de retour hors liste refusée ; `/pret` à `200`. **E2E** : un vrai client MCP, connecté **dans le navigateur**, case cochée. **Assemblage** : `scripts/verify-spark.sh` résout la cellule profil éteint et allumé — limites mémoire, secrets de `mcp` présents seulement allumé, Caddy sans secret, révision des routes. `scripts/verify-mcp.sh` rejoue le tout, avec des dégradations réelles |
 | `CRM-102` | **pytest unitaires** : jeton interne (revendications, échéance bornée, `lelabs_admin`), garde, réglages, déclaration des outils. **Intégration** contre le vrai Keycloak et la vraie base : parcours OAuth complet en requêtes directes ; refus sans `verified` et sans adresse vérifiée ; « Droits en attente » ; `offline_access` demandé **seulement** case cochée ; jeton forgé, d'un autre client ou HS256 refusé ; amorçage par la première connexion ; `crm_workspace_list` sous la RLS. **pgTAP** `0085_connecteur_mcp.test.sql` : fermeture, privilèges, `mcp_autorise` (superadministrateur, porteur de `lelabs_admin`, matrice, famille invalide en `22023`), cascade d'un espace supprimé, mutations. **E2E** : un vrai client MCP connecté dans le navigateur, case cochée. `scripts/verify-mcp.sh` |
+| `CRM-102` T6 | **pytest unitaires** : `SITE_URL` obligatoire et nommée quand elle manque ; l'accueil porte le lien vers `${SITE_URL}/plateforme`, échappé ; `/plateforme` et `/admin` en `302` vers cette adresse, sans chaîne de requête, et `/plateforme/autre` non redirigé. **Intégration** contre la vraie pile : le service en route rend ce `302`. **E2E** : depuis l'accueil, le lien mène à l'écran Plateforme de la webapp, à la souris et au clavier ; captures de l'accueil renouvelées aux quatre paliers, observées. **Assemblage** : `scripts/verify-spark.sh` mesure que `SITE_URL` atteint `mcp` allumé |
 | `CRM-103` | **pgTAP** et **API** : chaque RPC refusée à l'anonyme, à la lectrice et à l'administrateur d'espace. **E2E UI** : matrice posée à la souris et au clavier, avertissement « pas membre », effet constaté par un appel MCP réel ; captures aux quatre paliers, observées ; manuel (chapitre 11) |
 | `CRM-104` | Par tranche et pour **chaque** outil, contre la vraie base et un vrai client MCP : succès ; **refus par la matrice** (case décochée) ; **refus par le CRM** malgré la matrice ouverte (lectrice, objet d'un autre espace) ; journal écrit. **E2E** : l'effet est constaté dans la webapp (une affaire créée par le connecteur apparaît au board, et sa timeline nomme la personne) |
 

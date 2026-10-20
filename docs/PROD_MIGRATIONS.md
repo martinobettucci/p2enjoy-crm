@@ -422,6 +422,12 @@ PKCE S256 en amont : le client du realm de développement l'impose aussi, et le 
 **Gestes 4 et 5 exécutés le 2026-10-21** sur l'instruction du responsable (« livre ») : révision `85d8bb7b`, migrations 89
 et 90, service `mcp` démarré et sain. Relevé complet au §8.
 
+**`CRM-102` T6, à livrer** (le lien de l'accueil et les redirections `/plateforme` et `/admin`, `docs/SPEC-mcp.md` §2.2) :
+aucune migration, aucune variable nouvelle — `SITE_URL` est déjà posée dans la cellule (`https://crm.lelabs.tech`,
+relevée en lecture seule le 2026-10-21). Gestes : `scripts/spark/livrer.sh` **sans** `--migrate`, puis la
+**reconstruction explicite** de l'image `mcp` (§4 : `up -d` ne reconstruit pas une image présente) ; vérifier ensuite
+que `https://crm.mcp.lelabs.tech/plateforme` rend `302` vers `https://crm.lelabs.tech/plateforme`.
+
 **Avant cela, propositions déposées dans la cellule, rien n'était importé.** Sur instruction du responsable,
 `/etc/spark/env.?` porte `CRM_MCP_HOTE=crm.mcp.lelabs.tech` (geste 3) et `CRM_SUPERADMINS_INITIAUX=martino@p2enjoy.studio`
 (geste 1 du §2.13, écrit à la main faute d'option de `proposer.sh` : INC-276), et `/etc/spark/routes.?` la route

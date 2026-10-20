@@ -31848,3 +31848,37 @@ N jours, un seed fautif qui poserait `now() - N jours` resterait au-dessus de la
 **Vérifications** : 27/27 sur `board.spec.ts` ; mutation tuée (card vieillie de dix jours en développement), base
 restaurée à `entered_step_at = created_at`. Aucun code produit : rien à livrer pour cette itération.
 
+
+### décision 627, précision — `CRM-102` T6 spécifiée avant le code : du connecteur vers l'administration
+
+*2026-10-21.*
+
+**Le constat du responsable.** « Je ne vois pas le lien vers la page d'administration sur l'accueil du MCP ; de plus
+`crm.mcp.lelabs.tech/plateforme` ne fonctionne pas. » Les deux sont exacts, mesurés le jour même. L'accueil écrit
+« depuis le CRM, dans « Plateforme » », en texte, sans lien. Sur l'hôte du connecteur, `/plateforme` rend `404` : tout
+cet hôte est aiguillé vers le service `mcp`, qui ne connaît pas ce chemin. Le connecteur d'Evoliz, que le responsable a
+en tête, porte son administration sur son propre hôte, à `/admin`, et son accueil y renvoie par un lien.
+
+**Deux formes possibles.**
+
+1. **Porter une administration sur l'hôte du connecteur, comme Evoliz.** C'est écarté : l'arbitrage A3 l'a placée dans
+   la webapp, et une seconde interface ferait deux écrans pour un même registre.
+2. **Mener à la webapp.** C'est la forme retenue, et elle a trois parties :
+   - **un lien sur l'accueil**, « Ouvrir la plateforme du CRM » (`docs/DESIGN_SYSTEM.md` §5.57) ;
+   - **une redirection `302` des chemins `/plateforme` et `/admin`** vers `${SITE_URL}/plateforme`. `/plateforme` est le
+     chemin que le responsable a tapé, et `/admin` celui d'Evoliz ; aucun autre chemin n'est redirigé ;
+   - **`SITE_URL` remise au service.** Elle est déjà obligatoire partout et déjà posée dans la cellule
+     (`https://crm.lelabs.tech`, relevé en lecture seule). Aucune variable nouvelle n'est donc à poser.
+
+**Pourquoi `302`.** La destination changera avec `CRM-103` : l'onglet « Connecteur MCP » pourra devenir la cible. Une
+redirection permanente resterait en mémoire dans les navigateurs.
+
+**Ce que cela ne change pas.**
+
+- **La webapp reste seule juge de l'accès.** Le lien est rendu à tous, et sans le drapeau la webapp rend son état de
+  refus.
+- **La matrice du connecteur arrive avec `CRM-103`.** D'ici là, `/plateforme` montre les espaces, les
+  superadministrateurs et le journal.
+
+**Livraison.** Il n'y a ni migration ni variable à poser, mais l'image `mcp` doit être reconstruite explicitement, comme
+celle de `mail-sync` (`docs/PROD_MIGRATIONS.md` §4).
