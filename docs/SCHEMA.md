@@ -1950,7 +1950,8 @@ Spécification complète : `docs/SPEC-mcp.md` §6 à §8 ; décision 627.
 - **`public.mcp_autorise(ws, famille, action)`** est appelée **sous le jeton de la personne**, avec `EXECUTE` à
   `authenticated`. Elle rend `app.est_superadmin()` ou la présence de la case. Elle ne lit pas l'appartenance au
   CRM : la RLS fait l'intersection.
-- **Fonctions du service** (`service_role` seul) : `mcp_inscrire_compte`, `mcp_droits_de` et `mcp_journaliser`.
+- **Fonctions du service** (`service_role` seul) : `mcp_inscrire_compte` (avec l'amorçage de la plateforme),
+  `mcp_etat_compte` (drapeau et matrice d'un compte, en `jsonb`) et `mcp_journaliser`.
 - **Fonctions de l'administration** (gardées par `app.exiger_superadmin()`) : `mcp_comptes_liste`, `mcp_compte`,
   `mcp_poser_droits` et `mcp_journal_liste`.
 

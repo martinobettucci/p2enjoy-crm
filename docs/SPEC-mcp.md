@@ -9,7 +9,7 @@ Documents liés : `docs/SPEC-plateforme.md` (superadministrateurs, amorçage, jo
 `docs/SPEC-session-sso.md` (échangeur, jeton interne, admission), `docs/SPEC-permissions-rls.md`,
 `docs/SSO.md`, `docs/SSO-client-lelabs-crm.md` (déclaration du client, révisée), `docs/SCHEMA.md` §9 quinquies,
 `docs/DAT.md` §3 et §7, `docs/SPEC-deploiement-spark.md`, `docs/DESIGN_SYSTEM.md` (section
-« Connecteur MCP », écrite avec `CRM-103`), `docs/manual.md` (chapitre 19, écrit avec `CRM-103`).
+« Connecteur MCP », écrite avec `CRM-103`), `docs/manual.md` (chapitre 11, écrit avec `CRM-103`).
 Modèle éprouvé : le connecteur Evoliz du même responsable (`p2enjoy-evoliz`, en production depuis le
 2026-10-06), dont le mandataire OAuth, la garde d'entrée et la connexion longue sont repris.
 
@@ -278,7 +278,9 @@ Elle est appliquée **côté serveur**, à deux endroits.
    - un outil caché répond « outil inconnu ».
 
    Le client MCP garde la liste reçue à la connexion : un changement de droits l'atteint à sa
-   prochaine connexion, et un appel devenu fermé est refusé au point 2.
+   prochaine connexion, et un appel devenu fermé est refusé au point 2. L'état du compte lu pour la
+   visibilité est gardé **2 secondes** par compte, le temps d'un `tools/list` (un contrôle par
+   outil) ; un registre injoignable cache tous les outils, jamais il ne les ouvre.
 2. **Chaque appel.** `politique.py`, placé après l'audit et avant toute donnée :
    1. **résout l'espace** de l'appel, selon la déclaration de l'outil (§9.1). C'est soit l'argument
       `workspace` (slug ou identifiant), soit l'espace de l'objet visé, **lu sous le jeton de la
@@ -354,11 +356,13 @@ la timeline du CRM, qui nomme son auteur.
 
 ### 7.2 Inscription et amorçage
 
-**`public.mcp_inscrire_compte(p_sub uuid, p_email text, p_nom text, p_superadmins_initiaux text[])
-returns jsonb`.** Elle est réservée à `service_role`, et le service ne l'appelle qu'après la
-vérification du §4. Elle :
+**`public.mcp_inscrire_compte(p_sub uuid, p_email text, p_nom text, p_superadmins_initiaux text[]
+default '{}', p_admin_lelabs boolean default false) returns jsonb`.** Elle est réservée à
+`service_role`, et le service ne l'appelle qu'après la vérification du §4. Elle :
 
-1. insère le compte ou met à jour son adresse, son nom et sa `derniere_activite` ;
+1. insère le compte ou met à jour son adresse (normalisée), son nom (resserré, borné à 120 caractères,
+   avec la chaîne de repli du profil) et sa `derniere_activite`. Une adresse mal formée ou un `sub`
+   absent lèvent `22023`. L'inscription seule **ne crée pas de profil** ;
 2. appelle `app.amorcer_superadmin(p_sub, p_email, p_nom, p_superadmins_initiaux)`
    (`docs/SPEC-plateforme.md` §3) ;
 3. rend `{"superadmin": <app.est_superadmin pour ce sub>, "droits": <nombre de lignes>}`.
@@ -372,7 +376,7 @@ reçoit le drapeau LeLabs du jeton vérifié par le service.
 | Fonction | Rôle |
 |---|---|
 | `mcp_inscrire_compte(…)` | §7.2 ; appelée au retour du SSO et à chaque renouvellement du jeton LeLabs, ce qui met `derniere_activite` à jour au plus toutes les 300 s |
-| `mcp_droits_de(p_sub uuid) returns table(workspace_id, famille, action)` | la matrice d'un compte, pour la **visibilité** des outils (§6.2, point 1), relue à chaque `tools/list` |
+| `mcp_etat_compte(p_sub uuid, p_admin_lelabs boolean default false) returns jsonb` | le drapeau et la matrice d'un compte en un appel — `{"superadmin": bool, "droits": [{"workspace_id", "famille", "action"}]}` —, pour la **visibilité** des outils (§6.2, point 1), relue à chaque `tools/list` et à chaque appel |
 | `mcp_journaliser(p_sub, p_outil, p_ws, p_issue, p_duree_ms) returns void` | une ligne du journal |
 
 Toutes sont `SECURITY DEFINER`, avec `search_path` vide. `EXECUTE` est accordé à `service_role`
@@ -429,12 +433,20 @@ Toutes sont gardées par `app.exiger_superadmin()`, mêmes formes que `docs/SPEC
     `budget:<arg>`, `board:<arg>` : l'espace de l'objet, lu sous le jeton ;
   - `reference` : pas d'espace unique, résultats filtrés.
 
-  La déclaration est **vérifiée au démarrage** : une déclaration absente ou invalide arrête le
-  service, et un test vérifie que **tout argument d'identifiant** de chaque outil est l'ancre ou est
-  déclaré, sur le modèle d'`evoliz_mcp` (`tests/test_politique.py`).
-- **Annotations.** `readOnlyHint` sur toute consultation. `destructiveHint` sur toute mise à la
-  corbeille, tout archivage, tout déplacement d'étape et tout envoi d'email, avec une description qui
-  nomme l'effet.
+  Un outil qui reçoit **plusieurs** identifiants nomme les autres dans `autres` (même forme
+  `<genre>:<argument>`) : chacun est résolu sous le jeton et soumis à la **même** matrice (action et
+  cases `aussi`), de sorte qu'un identifiant d'un autre espace ne passe jamais sans être lu.
+
+  La déclaration est **vérifiée au démarrage**, à l'enregistrement de chaque outil
+  (`MoteurPolitique.enregistrer`) : une déclaration absente ou invalide arrête le service. Elle est
+  invalide si sa famille, son action, une case `aussi` ou un genre d'ancre sort de la liste fermée,
+  si une ancre nomme un argument absent de la signature, ou si **un argument d'identifiant** (nommé
+  `workspace` ou terminé par `_id`) n'est ni l'ancre ni dans `autres` — sur le modèle d'`evoliz_mcp`
+  (`tests/test_politique.py`).
+- **Annotations.** `readOnlyHint` sur toute consultation : il découle de l'action. `destructiveHint`
+  sur toute mise à la corbeille, tout archivage, tout déplacement d'étape et tout envoi d'email, avec
+  une description qui nomme l'effet. La vérification de démarrage l'exige d'une suppression et le
+  refuse à une consultation. `openWorldHint` vaut faux : le connecteur n'agit que dans le CRM.
 - **Pas de chemin parallèle.** Un outil appelle **uniquement** les tables, vues et RPC que la webapp
   appelle pour le même geste (`move_card`, `creer_affaire`, `move_card_to_channel`, `snooze_card`,
   `queue_outbound_email`, `recherche_globale`…). Les règles métier restent en base.
@@ -517,7 +529,7 @@ commit que le code qui la lit.
 | Unité | Preuves |
 |---|---|
 | `CRM-102` | **pytest unitaires** : jeton interne (revendications, échéance bornée, `lelabs_admin`), garde, réglages, déclaration des outils. **Intégration** contre le vrai Keycloak et la vraie base : parcours OAuth complet en requêtes directes ; refus sans `verified` et sans adresse vérifiée ; « Droits en attente » ; `offline_access` demandé **seulement** case cochée ; jeton forgé, d'un autre client ou HS256 refusé ; amorçage par la première connexion ; `crm_workspace_list` sous la RLS. **pgTAP** `0085_connecteur_mcp.test.sql` : fermeture, privilèges, `mcp_autorise` (superadministrateur, porteur de `lelabs_admin`, matrice, famille invalide en `22023`), cascade d'un espace supprimé, mutations. **E2E** : un vrai client MCP connecté dans le navigateur, case cochée. `scripts/verify-mcp.sh` |
-| `CRM-103` | **pgTAP** et **API** : chaque RPC refusée à l'anonyme, à la lectrice et à l'administrateur d'espace. **E2E UI** : matrice posée à la souris et au clavier, avertissement « pas membre », effet constaté par un appel MCP réel ; captures aux quatre paliers, observées ; manuel |
+| `CRM-103` | **pgTAP** et **API** : chaque RPC refusée à l'anonyme, à la lectrice et à l'administrateur d'espace. **E2E UI** : matrice posée à la souris et au clavier, avertissement « pas membre », effet constaté par un appel MCP réel ; captures aux quatre paliers, observées ; manuel (chapitre 11) |
 | `CRM-104` | Par tranche et pour **chaque** outil, contre la vraie base et un vrai client MCP : succès ; **refus par la matrice** (case décochée) ; **refus par le CRM** malgré la matrice ouverte (lectrice, objet d'un autre espace) ; journal écrit. **E2E** : l'effet est constaté dans la webapp (une affaire créée par le connecteur apparaît au board, et sa timeline nomme la personne) |
 
 ## 14. Compromis connus

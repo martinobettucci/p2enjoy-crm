@@ -221,6 +221,12 @@ type _tables = Expect<
     // client —, et `Row`, `Insert`, `Update` décrivent des gestes qu'aucun jeton de la webapp ne peut faire ; tout passe
     // par les fonctions `plateforme_*`, gardées.
     | 'plateforme_journal'
+    // `0090` de `CRM-102` TRANCHE T1 ajoute `mcp_comptes`, `mcp_droits` et `mcp_journal` — le registre du connecteur MCP
+    // (docs/SPEC-mcp.md §7.1, décision 627). CE QUI ÉCHAPPE AU GÉNÉRATEUR : les trois tables sont FERMÉES à l'API — RLS
+    // sans politique, aucun privilège client — ; seul le service `mcp`, sous la clé de service, les touche par ses RPC.
+    | 'mcp_comptes'
+    | 'mcp_droits'
+    | 'mcp_journal'
     | 'profiles'
     // `0076` de `CRM-092` TRANCHE T3 BIS ajoute `sessions_sso`, ET LE TÉMOIN NE L'A PAS VUE EN SON
     // TEMPS : la tranche a été committée sans que `scripts/generate-types.sh` soit rejoué, et le
@@ -984,9 +990,16 @@ type _vueDerivationColonnes = Expect<
 // la refuse en `42501 reserve_aux_superadministrateurs` à qui n'est pas superadministrateur, ce que le type ne dit pas.
 // Les deux fonctions de session serveur y gagnent `p_superadmins_initiaux`, facultatif. Soixante et une devient
 // SOIXANTE-SEIZE.
-type _lesSoixanteSeizeFonctions = Expect<
+// `0090` de `CRM-102` TRANCHE T1 ajoute les quatre fonctions `mcp_*` du connecteur (docs/SPEC-mcp.md §6.3, §7.3, décision
+// 627). CE QUE LE TYPE NE DIT PAS : `mcp_autorise` est la seule qu'un jeton de la webapp puisse appeler ; les trois
+// autres compilent mais sont refusées en `42501` à tout rôle sauf `service_role`. Soixante-seize devient QUATRE-VINGTS.
+type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'mcp_autorise'
+    | 'mcp_inscrire_compte'
+    | 'mcp_etat_compte'
+    | 'mcp_journaliser'
     | 'est_superadmin'
     | 'plateforme_espaces'
     | 'plateforme_creer_espace'
@@ -1268,7 +1281,7 @@ export type AssertionsDuContratDeTypes = [
   _relationsWorkspaceMembers,
   _laSeuleVue,
   _vueDerivationColonnes,
-  _lesSoixanteSeizeFonctions,
+  _lesQuatreVingtsFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
   _ecriturePermisePrendUneLigneDeTableau,

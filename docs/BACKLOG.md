@@ -15140,9 +15140,22 @@ agit sous l'identité de la personne par un jeton interne : droit effectif = mat
 code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinquies (migration `0090`). Dépend de `CRM-101`
 (drapeau, amorçage).*
 
-- [ ] **T1** — migration `0090_connecteur_mcp.sql` : `mcp_comptes`, `mcp_droits`, `mcp_journal`, `mcp_autorise`,
-      `mcp_inscrire_compte`, `mcp_droits_de`, `mcp_journaliser` ; pgTAP `0085_connecteur_mcp.test.sql` avec mutations ;
+- [x] **T1** — migration `0090_connecteur_mcp.sql` : `mcp_comptes`, `mcp_droits`, `mcp_journal`, `mcp_autorise`,
+      `mcp_inscrire_compte`, `mcp_etat_compte`, `mcp_journaliser` ; pgTAP `0085_connecteur_mcp.test.sql` avec mutations ;
       types régénérés.
+      *Vérifié le 2026-10-20, en développement* : la 90 appliquée par le vrai runner (inscrite au registre), puis
+      **réappliquée deux fois** sans erreur. `0085_connecteur_mcp.test.sql` **50** assertions — forme et fermeture des
+      trois tables, privilèges mesurés dans le catalogue, garde des RPC du registre (`42501` pour l'anonyme et une
+      personne connectée), `mcp_autorise` case par case (espace, famille, action ; personnelle ; `22023` pour une famille
+      ou une action inconnue ou absente ; porteur de `lelabs_admin` et superadministrateur en base), inscription
+      (normalisation, relève, aucun profil créé, `22023`), amorçage unique, état, journal, cascades et `check` fermés.
+      **Sept mutations** (espace ignoré, famille inconnue rendue `false`, état ouvert à `authenticated`, inscription
+      sans amorçage, superadministrateur soumis à la matrice, durée non bornée, RLS ôtée), chacune rouge, restauration
+      constatée. Campagne pgTAP **85 fichiers, 3 681 assertions**. Types régénérés (`types:check` octet à octet), témoin
+      révisé — trois tables, **quatre-vingts** fonctions —, vu rouge sans ses entrées ; `typecheck` vert. API **1 128/1 129** : un échec intermittent de `commentaires.spec.ts` (Temps réel §13.9), rejoué
+      vert 5 fois isolé et 3 fois avec son fichier, étranger à la tranche — **INC-275**, à arbitrer.
+      `mcp_droits_de` de la spécification devient `mcp_etat_compte` (drapeau et matrice en un appel, `docs/SPEC-mcp.md`
+      §7.3, `docs/SCHEMA.md` §9 quinquies).
 - [ ] **T2** — le service `mcp/` : réglages, mandataire OAuth et case « Stay signed in », garde, jeton interne,
       client du CRM, registre, politique, pages, audit ; un seul outil, `crm_workspace_list` ; pytest unitaires.
 - [ ] **T3** — la pile : service `mcp` dans les fichiers Compose (développement, production, cellule), volume

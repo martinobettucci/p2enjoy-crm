@@ -7238,3 +7238,25 @@ et `DEV_VARIABLES_AJOUTEES` ne complète que les variables ABSENTES : une valeur
 **Issues à arbitrer** : (1) une liste de valeurs EXIGÉES en développement, que `env_validate` compare et refuse ;
 (2) une migration de valeur dans `env_ensure_dev_completions` (ancienne valeur connue → nouvelle) ; (3) ne rien changer
 et documenter la relecture de `.env.example` à chaque mise à jour du dépôt.
+
+### INC-275 — le scénario Temps réel §13.9 de `commentaires.spec.ts` peut conclure sur un canari tardif
+
+*Relevée le 2026-10-20 pendant la campagne d'API de `CRM-102` T1 ; ouverte, à arbitrer. Unité concernée : `CRM-043`
+(`e2e/api/commentaires.spec.ts:435`).*
+
+**Le constat, mesuré.** Une fois sur la campagne (1 128/1 129) : `expect(temoin.recues.at(-1)?.new['id'])` attendait
+`…0020` (l'événement de preuve) et a reçu `…0021` (le canari). Rejoué ensuite : le scénario isolé **5/5**, le fichier
+entier **3 × 51/51**. Rien de la tranche n'y touche : les trois tables `mcp_*` n'appartiennent à aucune publication.
+
+**La cause, lue dans le code (hypothèse, non reproduite).** La boucle d'établissement insère le canari `…0021`, attend
+5 s qu'un événement arrive, sinon le supprime et recommence. Si l'événement d'une tentative arrive EN RETARD — après
+`temoin.recues.length = 0` —, l'attente `expect.poll(() => temoin.recues.length > 0)` peut se clore sur lui, avant
+l'événement de preuve : `at(-1)` vaut alors le canari. La décision 195 avait mesuré la fenêtre d'établissement sans la
+caractériser ; ce scénario la rencontre encore quand Realtime est lent.
+
+**Geste fait : aucun.** Le comportement du produit n'est pas en cause, et la correction touche la preuve d'une autre
+unité.
+
+**Issue proposée, à arbitrer** : attendre l'événement de preuve LUI-MÊME —
+`expect.poll(() => temoin.recues.some((e) => e.new['id'] === essai('20')))` — au lieu du premier événement venu ; le
+scénario prouverait la même chose, sans dépendre de l'ordre d'arrivée d'un canari.

@@ -31651,3 +31651,33 @@ script de vérification et la campagne mail rejoués dessus : verts.
 
 **Vérifications.** Celles du backlog (`CRM-101` T4). La tranche T5 — la production — attend l'instruction du
 responsable (`docs/PROD_MIGRATIONS.md` §2.13).
+
+### décision 627, mise en œuvre — `CRM-102` T1 : le registre du connecteur, en base
+
+*2026-10-20.*
+
+**Une fonction de la spécification change de forme avant d'être livrée.** `docs/SPEC-mcp.md` §7.3 prévoyait
+`mcp_droits_de(p_sub)`, qui rendait la seule matrice. Or le service a besoin, à chaque `tools/list` et à chaque appel,
+du drapeau **et** de la matrice : deux appels là où un suffit, et un drapeau que la base ne peut pas calculer seule,
+puisqu'elle ne voit pas le jeton LeLabs. `mcp_etat_compte(p_sub, p_admin_lelabs)` rend les deux en un `jsonb` ; le
+drapeau LeLabs est celui du jeton que le service vient de vérifier, comme pour `mcp_inscrire_compte`. La spécification
+et `docs/SCHEMA.md` sont révisées dans le même commit que la migration.
+
+**Ce que `mcp_autorise` ne fait pas, et c'est voulu.** Elle ne lit pas l'appartenance au CRM : l'intersection de la
+matrice et des droits du CRM (arbitrage A2) est faite par la RLS au moment de l'accès, sous le même jeton. La recopier
+ici en ferait une seconde définition, qui dériverait. La suite le dit par l'épreuve inverse : un superadministrateur
+franchit la matrice, et rien dans `mcp_autorise` ne lui ouvre une donnée.
+
+**Une famille inconnue lève `22023` au lieu de rendre `false`.** Une erreur de déclaration d'un outil se voit ainsi
+comme une erreur, et ne se confond jamais avec un refus ; la mutation qui rend `false` est rouge.
+
+**La spécification de T2 est précisée dans ce même commit, avant le code du service** : les ancres secondaires
+(`autres`), la règle de complétude des identifiants, la cohérence de `destructiveHint` vérifiée au démarrage, et la
+mémoire de deux secondes de la visibilité (`docs/SPEC-mcp.md` §6.2, §9.1).
+
+**Un échec intermittent, étranger à la tranche, consigné et non corrigé.** La campagne d'API a rendu une fois un
+scénario Temps réel de `commentaires.spec.ts` rouge ; rejoué vert huit fois. La lecture du code montre que l'attente
+peut se clore sur un canari tardif : **INC-275**, avec son correctif proposé, à arbitrer — la preuve est celle d'une
+autre unité.
+
+**Vérifications.** Celles du backlog (`CRM-102` T1).

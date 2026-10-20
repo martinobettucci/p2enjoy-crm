@@ -2008,6 +2008,109 @@ export type Database = {
           },
         ]
       }
+      mcp_comptes: {
+        Row: {
+          derniere_activite: string
+          email: string
+          nom: string
+          premiere_connexion: string
+          sub: string
+        }
+        Insert: {
+          derniere_activite?: string
+          email: string
+          nom: string
+          premiere_connexion?: string
+          sub: string
+        }
+        Update: {
+          derniere_activite?: string
+          email?: string
+          nom?: string
+          premiere_connexion?: string
+          sub?: string
+        }
+        Relationships: []
+      }
+      mcp_droits: {
+        Row: {
+          accorde_le: string
+          accorde_par: string | null
+          action: string
+          famille: string
+          sub: string
+          workspace_id: string
+        }
+        Insert: {
+          accorde_le?: string
+          accorde_par?: string | null
+          action: string
+          famille: string
+          sub: string
+          workspace_id: string
+        }
+        Update: {
+          accorde_le?: string
+          accorde_par?: string | null
+          action?: string
+          famille?: string
+          sub?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mcp_droits_accorde_par_fkey"
+            columns: ["accorde_par"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mcp_droits_sub_fkey"
+            columns: ["sub"]
+            isOneToOne: false
+            referencedRelation: "mcp_comptes"
+            referencedColumns: ["sub"]
+          },
+          {
+            foreignKeyName: "mcp_droits_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      mcp_journal: {
+        Row: {
+          cree_le: string
+          duree_ms: number
+          id: number
+          issue: string
+          outil: string
+          sub: string
+          workspace_id: string | null
+        }
+        Insert: {
+          cree_le?: string
+          duree_ms: number
+          id?: never
+          issue: string
+          outil: string
+          sub: string
+          workspace_id?: string | null
+        }
+        Update: {
+          cree_le?: string
+          duree_ms?: number
+          id?: never
+          issue?: string
+          outil?: string
+          sub?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
       notification_preferences: {
         Row: {
           in_app: boolean
@@ -3418,6 +3521,34 @@ export type Database = {
       }
       marquer_message_range: {
         Args: { p_message_id: string }
+        Returns: undefined
+      }
+      mcp_autorise: {
+        Args: { p_action: string; p_famille: string; p_ws: string }
+        Returns: boolean
+      }
+      mcp_etat_compte: {
+        Args: { p_admin_lelabs?: boolean; p_sub: string }
+        Returns: Json
+      }
+      mcp_inscrire_compte: {
+        Args: {
+          p_admin_lelabs?: boolean
+          p_email: string
+          p_nom: string
+          p_sub: string
+          p_superadmins_initiaux?: string[]
+        }
+        Returns: Json
+      }
+      mcp_journaliser: {
+        Args: {
+          p_duree_ms: number
+          p_issue: string
+          p_outil: string
+          p_sub: string
+          p_ws: string
+        }
         Returns: undefined
       }
       mentionnables: {

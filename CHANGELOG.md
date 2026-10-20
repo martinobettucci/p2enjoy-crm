@@ -13,6 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-102` T1 — le registre du connecteur MCP, en base (décision 627)
+
+*Migration `0090`, prouvée en développement (pgTAP, mutations, types). Rien ne la lit avant le service `mcp` (T2, T3) ; livraison avec la tranche T5.*
+
+- **Trois tables fermées à l'API** : les comptes qui se sont connectés au connecteur, la **matrice** de leurs droits
+  (par espace, famille — structure, affaires, contacts, budgets, temps, objectifs, messagerie — et action — consulter,
+  ajouter, modifier, supprimer), et le journal des appels, sans aucun argument.
+- **`mcp_autorise`**, appelée sous l'identité de la personne : un superadministrateur franchit la matrice, tout autre
+  compte doit y porter la case. Elle n'ouvre jamais ce que le CRM ferme.
+- **Trois fonctions réservées au service** : l'inscription d'un compte (avec l'amorçage de la plateforme), son état
+  (drapeau et matrice) et le journal d'un appel.
+
 ### `CRM-101` T1 à T4 — la plateforme et son superadministrateur : la base, la connexion, l'écran, le seed (décision 627)
 
 *Migration `0089`, fonction `session`, écran et seed, prouvés en développement de bout en bout (pgTAP, unitaires, API, E2E aux quatre paliers, captures observées). Livraison avec la tranche T5.*
