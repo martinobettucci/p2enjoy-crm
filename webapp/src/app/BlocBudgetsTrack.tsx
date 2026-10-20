@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — les commandes d'écriture lisent le refus de l'arborescence qui les accueille
+//       (docs/DESIGN_SYSTEM.md §5.59) ; déplier reste offert
 // @spec CRM-084 (docs/BACKLOG.md) — budgets, occurrences et clôture, TRANCHE 2 : l'écran
 //       d'administration des budgets d'un track
 // @spec docs/SPEC-costs.md §2.1 (ce qu'est un budget), §3.2 (qui écrit), §4.1 (cette surface),
@@ -20,6 +22,7 @@
 // masquée sur la foi d'un rôle lu au chargement cacherait un geste **permis** le jour où ce rôle a
 // changé depuis.
 
+import { useRefus } from '../components/ui/RefusCommandes'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { ArrowDown, ArrowUp, Lock, LockOpen, Pencil, Plus, TriangleAlert } from 'lucide-react'
 import { Button } from '../components/ui/Button'
@@ -115,6 +118,7 @@ function FormulaireBudget({
 	readonly onValider: (saisie: SaisieBudget) => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const [saisie, setSaisie] = useState(initial)
 	const premier = useRef<HTMLInputElement>(null)
@@ -264,7 +268,7 @@ function FormulaireBudget({
 			</label>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
 					{creation ? t('admin.action.create') : t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -315,6 +319,7 @@ function ConfirmationCloture({
 	readonly onConfirmer: () => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const premier = useRef<HTMLButtonElement>(null)
 	useEffect(() => {
 		premier.current?.focus()
@@ -353,7 +358,7 @@ function ConfirmationCloture({
 			</p>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button ref={premier} variante="destructif" disabled={enCours} onClick={onConfirmer}>
+				<Button {...droit} ref={premier} variante="destructif" disabled={enCours} onClick={onConfirmer}>
 					{t('admin.budgets.close.action')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -404,6 +409,7 @@ export type ProprietesBlocBudgets = {
  * son état ne survit pas plus longtemps que celui qu'il remplacerait.
  */
 export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: ProprietesBlocBudgets) {
+	const droit = useRefus()
 	const [inclureClotures, setInclureClotures] = useState(false)
 	const [budgets, setBudgets] = useState<EtatAsync<readonly BudgetAdministrable[]>>(enChargement)
 	const [occurrences, setOccurrences] = useState<EtatAsync<Readonly<Record<string, number>>>>(
@@ -678,10 +684,10 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 										</td>
 										<td className={CLASSES_CELLULE}>
 											<span className="flex items-center gap-1">
-												<Button
+												<Button {...droit}
 													taille="compacte"
 													variante="discret"
-													disabled={peutMonter.statut !== 'calcule'}
+													disabled={droit.disabled === true || (peutMonter.statut !== 'calcule')}
 													onClick={() => deplacer(budgets.donnees, budget.id, 'monter')}
 													aria-label={t('admin.action.up', { nom: budget.name })}
 													title={
@@ -694,10 +700,10 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 												>
 													<ArrowUp aria-hidden="true" size={16} strokeWidth={2} />
 												</Button>
-												<Button
+												<Button {...droit}
 													taille="compacte"
 													variante="discret"
-													disabled={peutDescendre.statut !== 'calcule'}
+													disabled={droit.disabled === true || (peutDescendre.statut !== 'calcule')}
 													onClick={() =>
 														deplacer(budgets.donnees, budget.id, 'descendre')
 													}
@@ -712,7 +718,7 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 												>
 													<ArrowDown aria-hidden="true" size={16} strokeWidth={2} />
 												</Button>
-												<Button
+												<Button {...droit}
 													taille="compacte"
 													variante="discret"
 													onClick={() => {
@@ -735,7 +741,7 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 												 * repris) est traduit à sa réception.
 												 */}
 												{clos ? (
-													<Button
+													<Button {...droit}
 														taille="compacte"
 														variante="discret"
 														onClick={() => {
@@ -752,7 +758,7 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 														<LockOpen aria-hidden="true" size={16} strokeWidth={2} />
 													</Button>
 												) : (
-													<Button
+													<Button {...droit}
 														taille="compacte"
 														variante="discret"
 														onClick={() => {
@@ -910,7 +916,7 @@ export function BlocBudgetsTrack({ client, idTrack, nomTrack, onAnnonce }: Propr
 					}}
 				/>
 			) : (
-				<Button
+				<Button {...droit}
 					taille="compacte"
 					variante="secondaire"
 					onClick={() => {

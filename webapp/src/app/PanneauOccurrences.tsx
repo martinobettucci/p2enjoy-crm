@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — les commandes d'écriture lisent le refus de l'arborescence qui les accueille
+//       (docs/DESIGN_SYSTEM.md §5.59) ; déplier reste offert
 // @spec CRM-084 (docs/BACKLOG.md) — budgets, occurrences et clôture, TRANCHE 3c : la sous-surface
 //       de gestion des occurrences d'un budget récurrent
 // @spec docs/SPEC-costs.md §2.2 (ce qu'est une occurrence), §3.2 (qui écrit), §4.1 bis (cette
@@ -18,6 +20,7 @@
 // d'un rôle lu au chargement cacherait un geste **permis** le jour où ce rôle a changé depuis
 // (`CLAUDE.md` §10).
 
+import { useRefus } from '../components/ui/RefusCommandes'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 import { Lock, LockOpen, Pencil, Plus, Trash2, TriangleAlert } from 'lucide-react'
 import { Button } from '../components/ui/Button'
@@ -104,6 +107,7 @@ function FormulaireOccurrence({
 	readonly onValider: (saisie: SaisieOccurrence) => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const [saisie, setSaisie] = useState(initial)
 	const premier = useRef<HTMLInputElement>(null)
@@ -218,7 +222,7 @@ function FormulaireOccurrence({
 			</div>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
 					{creation ? t('admin.action.create') : t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -257,6 +261,7 @@ function ConfirmationRetrait({
 	readonly onConfirmer: () => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const premier = useRef<HTMLButtonElement>(null)
 	useEffect(() => {
 		premier.current?.focus()
@@ -271,7 +276,7 @@ function ConfirmationRetrait({
 			<p className="text-sm text-text-2">{t('admin.occurrences.remove.body')}</p>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button ref={premier} variante="destructif" disabled={enCours} onClick={onConfirmer}>
+				<Button {...droit} ref={premier} variante="destructif" disabled={enCours} onClick={onConfirmer}>
 					{t('admin.occurrences.remove.action')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -333,6 +338,7 @@ export function PanneauOccurrences({
 	onAnnonce,
 	onComptesPerimes,
 }: ProprietesPanneauOccurrences) {
+	const droit = useRefus()
 	const [occurrences, setOccurrences] =
 		useState<EtatAsync<readonly OccurrenceAdministrable[]>>(enChargement)
 	const [ouverture, setOuverture] = useState<OuvertureOccurrence>(AUCUNE)
@@ -525,7 +531,7 @@ export function PanneauOccurrences({
 										: t('admin.occurrences.state.open')}
 								</span>
 								<span className="flex items-center gap-1">
-									<Button
+									<Button {...droit}
 										taille="compacte"
 										variante="discret"
 										onClick={() => {
@@ -545,7 +551,7 @@ export function PanneauOccurrences({
 									 * défont d'un clic (mesures M7 et M8).
 									 */}
 									{close ? (
-										<Button
+										<Button {...droit}
 											taille="compacte"
 											variante="discret"
 											onClick={() => {
@@ -562,7 +568,7 @@ export function PanneauOccurrences({
 											<LockOpen aria-hidden="true" size={16} strokeWidth={2} />
 										</Button>
 									) : (
-										<Button
+										<Button {...droit}
 											taille="compacte"
 											variante="discret"
 											onClick={() => {
@@ -579,7 +585,7 @@ export function PanneauOccurrences({
 											<Lock aria-hidden="true" size={16} strokeWidth={2} />
 										</Button>
 									)}
-									<Button
+									<Button {...droit}
 										taille="compacte"
 										variante="discret"
 										onClick={() => {
@@ -699,7 +705,7 @@ export function PanneauOccurrences({
 					}}
 				/>
 			) : (
-				<Button
+				<Button {...droit}
 					taille="compacte"
 					variante="secondaire"
 					onClick={() => {
