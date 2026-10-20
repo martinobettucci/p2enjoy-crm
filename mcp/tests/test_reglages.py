@@ -1,6 +1,7 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : preuves unitaires des réglages
 # @verifies CRM-102 T2 — docs/SPEC-mcp.md §10 (variables, formats, défauts, refus nommé d'une configuration
 #           incomplète) ; docs/SPEC-plateforme.md §3 (liste d'amorçage normalisée comme par la fonction `session`)
+# @verifies CRM-102 T6 — docs/SPEC-mcp.md §2.2, §10 (`SITE_URL` obligatoire, l'adresse de la plateforme de la webapp)
 from __future__ import annotations
 
 from pathlib import Path
@@ -14,6 +15,8 @@ def test_configuration_complete_et_defauts(env_complet):
     r = Reglages.depuis_environnement(env_complet)
     assert r.origine_publique == "https://crm.mcp.exemple.test"
     assert r.url_mcp == "https://crm.mcp.exemple.test/mcp"
+    assert r.origine_webapp == "https://crm.exemple.test"
+    assert r.url_plateforme == "https://crm.exemple.test/plateforme"
     assert r.oidc_emetteur == "https://sso.exemple.test/realms/lelabs"
     assert r.decouverte == "https://sso.exemple.test/realms/lelabs/.well-known/openid-configuration"
     assert r.api_crm == "http://kong:8000"
@@ -31,6 +34,14 @@ def test_chaque_variable_manquante_est_nommee(env_complet):
         Reglages.depuis_environnement(env_complet)
     assert erreur.value.manquantes == ["SSO_OIDC_CLIENT_ID", "JWT_SECRET", "SUPABASE_SERVICE_ROLE_KEY"]
     assert "JWT_SECRET" in str(erreur.value)
+
+
+def test_site_url_manquante_est_nommee(env_complet):
+    """Sans l'origine de la webapp, l'accueil et `/plateforme` ne sauraient où mener : le démarrage refuse."""
+    env_complet["SITE_URL"] = " / "
+    with pytest.raises(ReglagesIncomplets) as erreur:
+        Reglages.depuis_environnement(env_complet)
+    assert erreur.value.manquantes == ["SITE_URL"]
 
 
 def test_valeurs_facultatives_lues(env_complet):

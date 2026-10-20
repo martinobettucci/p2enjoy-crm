@@ -596,7 +596,7 @@ lit la composition vivante et l'occupation **avec le jeton de l'appelant**, avan
 illisible n'en ouvre aucune, et le modèle ne reçoit que la configuration et des nombres d'affaires (`docs/SPEC-ia.md`
 §13.5).
 
-### 3.7 ter Connecteur MCP — service `mcp` (`CRM-102` à `CRM-104` ; `CRM-102` T1 à T3 en développement, non livré)
+### 3.7 ter Connecteur MCP — service `mcp` (`CRM-102` à `CRM-104` ; `CRM-102` T1 à T4 livrées en production le 2026-10-21, T6 en cours)
 
 Spécification : `docs/SPEC-mcp.md` ; décision 627.
 
@@ -626,6 +626,10 @@ Le droit effectif est l'intersection des deux.
 **Un service qui n'existe que configuré.** Profil Compose `mcp` : toujours actif en développement, activé en
 production par la seule variable d'exploitation `CRM_MCP_HOTE`, dont Compose dérive l'origine publique. Éteint, il
 n'est ni construit ni démarré, et ne reçoit aucun secret ; la plateforme se livre sans lui (`docs/SPEC-mcp.md` §2.1).
+
+**Son administration vit dans la webapp** (arbitrage A3), à `${SITE_URL}/plateforme`. Le service reçoit `SITE_URL`,
+déjà obligatoire, pour y mener : un lien sur son accueil, et une redirection `302` de ses chemins `/plateforme` et
+`/admin` (`CRM-102` T6, `docs/SPEC-mcp.md` §2.2). Sans `SITE_URL`, il refuse de démarrer en la nommant.
 
 ### 3.8 Contraintes d'exécution de l'hôte
 

@@ -4,6 +4,8 @@
 //           vérification attendue ; aucun code émis sur un refus ; registre injoignable = refus), §5 (la donnée lue sous la
 //           RLS), §7.1 (une ligne au journal) ; docs/DESIGN_SYSTEM.md §5.57 (pages du connecteur), §5.12 (attente et
 //           refus), §7 (quatre paliers, aucun défilement horizontal), §8 (clavier) ; CLAUDE.md §15, §16
+// @verifies CRM-102 T6 — docs/SPEC-mcp.md §2.2 et docs/DESIGN_SYSTEM.md §5.57 : l'accueil mène, au clavier, à la plateforme
+//           de la webapp (`SITE_URL`), où la superadministratrice arrive après sa connexion ; `/admin` y mène aussi
 //
 // Le navigateur ne fait que ce qu'un humain fait — consentir, se connecter au SSO —, et le client MCP de test
 // (`e2e/mcp/client.ts`) fait le reste : enregistrement, échange du code, JSON-RPC. Tout part des comptes du realm de
@@ -11,9 +13,10 @@
 // l'état d'erreur, provoqué par un retrait de privilège rétabli dans le même scénario.
 
 import { execFileSync } from 'node:child_process'
-import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, expect, test, type Page } from './fixtures'
+import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
 import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { lireEnv } from '../env'
 import { ORIGINE_MCP, RETOUR_CLIENT, SessionMcp, echangerCode, preparerAutorisation } from '../mcp/client'
 
 const UNITE = 'CRM-102'
@@ -175,6 +178,33 @@ test.describe('Le connecteur MCP, par un vrai client (docs/SPEC-mcp.md §3, §4)
 			await capturer(page, `accueil-${palier.nom}`, UNITE)
 			await sansDefilementHorizontal(page, `accueil ${palier.nom}`)
 		}
+	})
+
+	test('l’accueil mène à la plateforme de la webapp, au clavier ; « /admin » y mène aussi', async ({ page }) => {
+		const webapp = lireEnv('SITE_URL')
+		await page.goto(`${ORIGINE_MCP}/`)
+		const lien = page.getByRole('link', { name: 'Ouvrir la plateforme du CRM' })
+		await expect(lien).toHaveAttribute('href', `${webapp}/plateforme`)
+		expect(await lien.getAttribute('target'), 'même onglet : la webapp est le même produit (§5.57)').toBeNull()
+		for (const palier of PALIERS) {
+			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await lien.scrollIntoViewIfNeeded()
+			expect((await lien.boundingBox())?.height ?? 0, `cible de 40 px (§8), ${palier.nom}`).toBeGreaterThanOrEqual(40)
+			await capturer(page, `accueil-administration-${palier.nom}`, UNITE)
+			await sansDefilementHorizontal(page, `accueil, lien de la plateforme, ${palier.nom}`)
+		}
+		await page.setViewportSize({ width: 1440, height: 900 })
+		await lien.focus()
+		await page.keyboard.press('Enter')
+		// Sans session, la webapp demande la connexion et retient l'adresse demandée (§5.12) ; la superadministratrice
+		// arrive ensuite sur la plateforme.
+		await expect(page.getByRole('button', { name: 'Se connecter avec LeLabs' })).toBeVisible()
+		expect(new URL(page.url()).origin).toBe(new URL(webapp).origin)
+		await connecterAvecLeLabs(page, SABINE.adresse, { naviguer: false })
+		await expect(page).toHaveURL(`${webapp}/plateforme/espaces`)
+		await page.goto(`${ORIGINE_MCP}/admin`)
+		await expect(page).toHaveURL(`${webapp}/plateforme/espaces`)
+		await expect(page.getByTestId('ligne-espace').first()).toBeVisible()
 	})
 
 	test('la page de consentement porte la charte, ne charge rien d’un tiers, et tient aux quatre paliers', async ({ page }) => {

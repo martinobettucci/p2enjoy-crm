@@ -228,7 +228,7 @@ verifier_assemblage() {
 	fi
 	[ -s "$WORK/config.err" ] && [ "$bavard" = 1 ] && fail "avertissements de Compose : $(head -n 2 "$WORK/config.err" | tr '\n' ' ')"
 	erreurs=$(printf '%s' "$json" | SPARK_HTTP_PORT=$(env_get "$env" SPARK_HTTP_PORT) ENVF=$env CONNECTEUR=$connecteur \
-		HOTE_MCP=$(env_get "$env" CRM_MCP_HOTE) \
+		HOTE_MCP=$(env_get "$env" CRM_MCP_HOTE) SITE_URL=$(env_get "$env" SITE_URL) \
 		REMPLISSAGE=$SPARK_SANS_OBJET_VALEUR MINIO_USER=$(env_get "$env" MINIO_ROOT_USER) python3 -c '
 import json, os, sys
 d = json.load(sys.stdin)
@@ -278,6 +278,11 @@ if connecteur:
     origine = s.get("mcp", {}).get("environment", {}).get("CRM_MCP_ORIGINE_PUBLIQUE")
     if origine != f"https://{hote}":
         e.append(f"origine du connecteur {origine}, attendu https://{hote}")
+    # CRM-102 T6 (docs/SPEC-mcp.md §2.2, §10) : l’accueil et `/plateforme` mènent à la webapp, `SITE_URL`.
+    webapp = s.get("mcp", {}).get("environment", {}).get("SITE_URL")
+    attendu_webapp = os.environ["SITE_URL"]
+    if webapp != attendu_webapp:
+        e.append(f"SITE_URL du connecteur {webapp}, attendu {attendu_webapp}")
 elif "mcp" in s:
     e.append("le connecteur est assemblé sans CRM_MCP_HOTE")
 # Révisions de configuration (CRM-092 T6, décision 589) : ni Kong ni Caddy ne relisent leurs fichiers
@@ -334,7 +339,7 @@ if docker compose version >/dev/null 2>&1; then
 	printf 'CRM_MCP_HOTE=crm.mcp.exemple.tld\n' >> "$B/env"
 	ENV_B=$(fusion "$B/env" "$B/secrets" "$B/run")
 	if verifier_assemblage "$REPO_ROOT" "$ENV_B" 1 1; then
-		ok "connecteur allumé : mcp borné en mémoire, origine https://crm.mcp.exemple.tld dérivée de l'hôte"
+		ok "connecteur allumé : mcp borné en mémoire, origine https://crm.mcp.exemple.tld dérivée de l'hôte, SITE_URL de la webapp reçue"
 		ok "connecteur allumé : JWT_SECRET, SERVICE_ROLE_KEY et OIDC_CLIENT_SECRET atteignent mcp, et Caddy ne reçoit que l'hôte"
 	fi
 else
@@ -863,15 +868,17 @@ if docker compose version >/dev/null 2>&1; then
 	degrader "Kong sans borne de processus" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("KONG_NGINX_WORKER_PROCESSES: \"1\"","KONG_NGINX_WORKER_PROCESSES: \"auto\"",1); open(p,"w").write(s)'
 	degrader "révision des routes de Caddy laissée à l'ancienne valeur" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("  caddy:\n    mem_limit: 128m\n","  caddy:\n    mem_limit: 128m\n    labels:\n      com.p2enjoy.caddy-routes-revision: crm-090\n",1); open(p,"w").write(s)'
 	degrader_allume() {
-		local libelle=$1 script=$2
+		local libelle=$1 script=$2 cible=${3:-docker-compose.spark.yml}
 		rm -rf "$D"; mkdir -p "$D"
 		cp "$REPO_ROOT"/docker-compose.yml "$REPO_ROOT"/docker-compose.prod.yml "$REPO_ROOT"/docker-compose.spark.yml "$D/"
 		ln -s "$REPO_ROOT/caddy" "$D/caddy"
-		python3 -c "$script" "$D/docker-compose.spark.yml"
+		python3 -c "$script" "$D/$cible"
 		if verifier_assemblage "$D" "$ENV_B" 0 1; then fail "dégradation non détectée : $libelle"
 		else ok "détectée : $libelle"; fi
 	}
 	degrader_allume "connecteur allumé sans limite mémoire" 'import sys; p=sys.argv[1]; s=open(p).read(); s=s.replace("  mcp:\n    mem_limit: 256m","  mcp:\n",1); open(p,"w").write(s)'
+	# CRM-102 T6 : sans SITE_URL, le connecteur refuserait de démarrer en production (docs/SPEC-mcp.md §10).
+	degrader_allume "SITE_URL retirée du connecteur" 'import sys; p=sys.argv[1]; s=open(p).read(); t=s.replace("      SITE_URL: ${SITE_URL}\n","",1); assert t != s; open(p,"w").write(t)' docker-compose.yml
 else
 	skip "docker compose indisponible : dégradations d'assemblage non exécutées"
 fi

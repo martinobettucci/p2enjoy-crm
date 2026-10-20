@@ -3,19 +3,34 @@
 #           attentes, pas des erreurs ; la connexion refusée est une alerte), §3.3 (« Stay signed in » expliqué)
 # @verifies Repris des preuves d'Evoliz (p2enjoy-evoliz, `tests/test_pages.py`, révision 80a3e27) ; l'administration vit
 #           dans la webapp du CRM (arbitrage A3).
+# @verifies CRM-102 T6 — docs/DESIGN_SYSTEM.md §5.57 (l'accueil mène à la plateforme : lien secondaire « Ouvrir la
+#           plateforme du CRM », icône `ShieldCheck`, adresse échappée) ; docs/SPEC-mcp.md §2.2
 from __future__ import annotations
 
 from crm_mcp import pages
 
 
 def test_accueil_donne_l_adresse_et_la_regle():
-    html = pages.accueil("https://crm.mcp.exemple.test/mcp")
+    html = pages.accueil("https://crm.mcp.exemple.test/mcp", "https://crm.exemple.test/plateforme")
     assert 'value="https://crm.mcp.exemple.test/mcp"' in html
     assert "comptes vérifiés du SSO lelabs" in html and "superadministrateur" in html
     assert "«&nbsp;Stay signed in&nbsp;»" in html and "«&nbsp;Plateforme&nbsp;»" in html
     assert "assistant&nbsp;:" in html, "espace insécable avant les deux-points (docs/DESIGN_SYSTEM.md §5.51)"
     assert "/admin" not in html
     assert 'lang="fr"' in html and 'rel="icon"' in html
+
+
+def test_accueil_mene_a_la_plateforme_de_la_webapp():
+    """Un lien — il change d'adresse — en forme de bouton secondaire, pour la cible de 40 px ; `ShieldCheck`, l'icône de
+    l'entrée « Plateforme » de la webapp ; même onglet (docs/DESIGN_SYSTEM.md §5.57)."""
+    html = pages.accueil("https://crm.mcp.exemple.test/mcp", "https://crm.exemple.test/plateforme")
+    lien = (
+        '<a class="bouton bouton-secondaire" href="https://crm.exemple.test/plateforme">'
+        '<svg class="icone" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95'
+    )
+    assert lien in html
+    assert '<path d="m9 12 2 2 4-4"/></svg><span>Ouvrir la plateforme du CRM</span></a>' in html
+    assert html.count("<a ") == 1 and "target=" not in html
 
 
 def test_attente_et_refus_portent_les_formes_du_5_12():
@@ -43,7 +58,8 @@ def test_valeurs_echappees():
     assert "<script>alert(1)</script>" not in pages.droits_en_attente(courriel='"><script>alert(1)</script>')
     html = pages.verification_attendue(courriel="<b>", compte_url='javascript:x"')
     assert "&lt;b&gt;" in html and 'javascript:x"' not in html
-    assert '"><img' not in pages.accueil('https://x/"><img src=x>')
+    assert '"><img' not in pages.accueil('https://x/"><img src=x>', "https://crm.exemple.test/plateforme")
+    assert '"><img' not in pages.accueil("https://x/mcp", 'https://x/"><img src=x>')
 
 
 def test_erreur_connexion_est_une_alerte():

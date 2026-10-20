@@ -4,6 +4,8 @@
 #           renouvellement qui survit à la fin de la session du SSO), §3.4 (adresses de retour restreintes), §4 (qui
 #           entre : superadministratrice en base, `admin` LeLabs, un droit ; « Droits en attente » ; vérification
 #           attendue ; aucun code sur un refus), §5 (la donnée lue sous la RLS), §7.1 (une ligne au journal), §11 (`/pret`)
+# @verifies CRM-102 T6 — docs/SPEC-mcp.md §2.2 : le service en route redirige `/plateforme` et `/admin` vers la plateforme
+#           de la webapp (`SITE_URL`), et son accueil porte le lien ; en direct comme à travers le Caddy de la cellule
 # @verifies Modèle : `tests/test_integration_oauth.py` d'Evoliz (p2enjoy-evoliz, révision 80a3e27). Écarts : les comptes
 #           du realm du CRM ; `sso.localhost` est le même dedans et dehors (décision 568), seule l'origine publique du
 #           connecteur est réécrite ; le registre est lu en base par la clé de service.
@@ -228,6 +230,15 @@ async def test_pret_dit_sso_et_crm():
         reponse = await http.get(f"{MCP}/pret")
     assert reponse.status_code == 200, reponse.text
     assert reponse.json()["controles"] == {"sso": "ok", "crm": "ok"}
+
+
+async def test_plateforme_et_admin_menent_a_la_webapp():
+    async with httpx2.AsyncClient() as http:
+        for chemin in ("/plateforme", "/admin"):
+            reponse = await http.get(f"{MCP}{chemin}")
+            assert (reponse.status_code, reponse.headers.get("location")) == (302, f"{SITE}/plateforme"), chemin
+        accueil = (await http.get(f"{MCP}/")).text
+    assert f'class="bouton bouton-secondaire" href="{SITE}/plateforme"' in accueil
 
 
 async def test_adresse_de_retour_hors_liste_refusee():

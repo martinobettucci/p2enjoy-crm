@@ -40,6 +40,7 @@ ENV_COMPLET = {
     "SUPABASE_URL": "http://kong:8000/",
     "SUPABASE_ANON_KEY": CLE_ANONYME,
     "SUPABASE_SERVICE_ROLE_KEY": CLE_SERVICE,
+    "SITE_URL": "https://crm.exemple.test/",
 }
 
 

@@ -15227,12 +15227,21 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       sans session. Ces contrôles sont faits à la main. **Restent** : porter ces contrôles dans `scripts/spark/verifier.sh`,
       comme le geste 5 du §2.14 du contrat de déploiement l'annonçait, et le constat du responsable — ajouter le
       connecteur dans Claude ou ChatGPT et appeler `crm_workspace_list` (la matrice attend `CRM-103`).
-- [ ] **T6** — du connecteur vers l'administration : l'accueil du connecteur porte le lien « Ouvrir la plateforme du
+- [x] **T6** — du connecteur vers l'administration : l'accueil du connecteur porte le lien « Ouvrir la plateforme du
       CRM » vers `${SITE_URL}/plateforme`, et `GET /plateforme` et `GET /admin` sur l'hôte du connecteur répondent `302`
       vers la même adresse ; `SITE_URL`, déjà obligatoire partout, est remise au service. Demandée par le responsable le
       2026-10-21 : le lien manquait sur l'accueil, et `crm.mcp.lelabs.tech/plateforme` rendait `404`. Spécifiée avant le
       code : `docs/SPEC-mcp.md` §2.2, §10, §13 ; `docs/DESIGN_SYSTEM.md` §5.57 ; `docs/JOURNAL.md`, décision 627,
       précision T6.
+      *Vérifié le 2026-10-21, en développement* : pytest **105** (trois nouveaux : `SITE_URL` nommée quand elle manque,
+      le lien de l'accueil et son adresse échappée, `302` des deux chemins sans chaîne de requête et rien d'autre) ;
+      `scripts/verify-mcp.sh` **53** contrôles sans anomalie — intégration **14/14** en direct et à travers le Caddy de la
+      cellule (le service en route redirige, son accueil porte le lien), interface **8/8** : le lien suivi au clavier
+      mène à la webapp, qui demande la connexion, puis Sabine arrive sur `/plateforme/espaces`, et `/admin` y mène aussi ;
+      `scripts/verify-spark.sh` **109** — `SITE_URL` atteint `mcp` allumé, et son retrait est détecté. Captures
+      `docs/captures/CRM-102/accueil-administration-*` observées aux quatre paliers : bouton secondaire, `ShieldCheck`,
+      cible pleine, aucun débordement. **Non livré** : la livraison attend l'instruction du responsable
+      (`docs/PROD_MIGRATIONS.md` §2.14).
 
 ### CRM-103 — Administration du connecteur MCP dans la webapp `[ ]`
 *Créée le 2026-10-20 — décision 627 (A3). Quatrième onglet de `/plateforme` : comptes connectés, matrice familles ×

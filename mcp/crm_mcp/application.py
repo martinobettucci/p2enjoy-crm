@@ -1,5 +1,6 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : l'assemblage du connecteur
 # @spec CRM-102 tranche T3 — docs/DESIGN_SYSTEM.md §5.57 (l’icône du serveur, monogramme du CRM, sur la page de consentement)
+# @spec CRM-102 tranche T6 — docs/SPEC-mcp.md §2.2 (`/plateforme` et `/admin` mènent à l'administration de la webapp)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
 # @spec Modèle : `evoliz_mcp/application.py` (p2enjoy-evoliz, révision 80a3e27). Écarts : aucune administration
@@ -16,7 +17,7 @@ import httpx2
 from fastmcp import FastMCP
 from mcp_types import Icon
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse
+from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse
 
 from crm_mcp import pages
 from crm_mcp.audit import AuditOutils
@@ -44,6 +45,21 @@ you see and change exactly what you could in the CRM web app, never more.
 - Lists are paginated: use limit (max 100) and offset.
 - Nothing is ever purged through this connector: "supprimer" moves to the trash or archives.
 """
+
+
+#: Chemins de l'hôte du connecteur qui mènent à l'administration, dans la webapp : celui que le responsable a tapé, et
+#: celui de l'administration d'Evoliz (docs/SPEC-mcp.md §2.2). Aucun autre chemin n'est redirigé.
+CHEMINS_ADMINISTRATION = ("/plateforme", "/admin")
+
+
+def vers_l_administration(url_plateforme: str):
+    """Le point qui répond `302` vers la plateforme de la webapp. `302` et non `301` : la destination changera avec
+    `CRM-103`. La chaîne de requête n'est pas transmise."""
+
+    async def rediriger(_: Request) -> RedirectResponse:
+        return RedirectResponse(url_plateforme, status_code=302)
+
+    return rediriger
 
 
 @dataclass
@@ -104,7 +120,11 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
 
     @serveur.custom_route("/", methods=["GET"])
     async def accueil(_: Request) -> HTMLResponse:
-        return HTMLResponse(pages.accueil(reglages.url_mcp))
+        return HTMLResponse(pages.accueil(reglages.url_mcp, reglages.url_plateforme))
+
+    rediriger = vers_l_administration(reglages.url_plateforme)
+    for chemin in CHEMINS_ADMINISTRATION:
+        serveur.custom_route(chemin, methods=["GET"])(rediriger)
 
     @serveur.custom_route("/sante", methods=["GET"])
     async def sante(_: Request) -> JSONResponse:

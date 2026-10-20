@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-102` T6 — du connecteur MCP vers son administration (décision 627)
+
+*Service `mcp/` seulement : aucune migration, aucune variable nouvelle. À la livraison, l'image `mcp` est reconstruite.*
+
+- **L'accueil du connecteur mène à la plateforme du CRM** par le lien « Ouvrir la plateforme du CRM ».
+- **`/plateforme` et `/admin` sur l'hôte du connecteur** redirigent vers la plateforme de la webapp. Ils rendaient une
+  erreur `404`.
+- Le connecteur reçoit l'origine de la webapp, `SITE_URL`, déjà obligatoire, et refuse de démarrer sans elle.
+
 ### Correctif du 2026-10-21 — INC-257
 
 *Preuves seulement : rien à livrer.*

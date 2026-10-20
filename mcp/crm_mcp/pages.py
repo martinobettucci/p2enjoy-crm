@@ -2,6 +2,8 @@
 # @spec docs/SPEC-mcp.md §4 (« Compte en attente de vérification », « Droits en attente », « La connexion n'a pas abouti »),
 #       §2.2 (adresse du connecteur) ; docs/DESIGN_SYSTEM.md §5.57 (les pages du connecteur), §5.12 (surface autonome,
 #       attente et refus), §1 (jetons de la webapp) — tranche T3 : jetons, icônes d'attente et de refus, espaces insécables
+# @spec CRM-102 tranche T6 — docs/DESIGN_SYSTEM.md §5.57 (« Ouvrir la plateforme du CRM », lien secondaire, `ShieldCheck`) ;
+#       docs/SPEC-mcp.md §2.2 (l'administration vit dans la webapp)
 # @spec Repris du connecteur Evoliz (p2enjoy-evoliz, `evoliz_mcp/pages.py`, révision 80a3e27). Écarts : textes du CRM,
 #       aucune administration propre — elle vit dans la webapp (arbitrage A3) —, favicon du CRM (monogramme « P2 »).
 """Pages publiques : accueil, attentes (vérification, droits), erreur de connexion.
@@ -48,6 +50,12 @@ _ICONE_ALERTE = (
     '<svg class="icone" aria-hidden="true" viewBox="0 0 24 24">'
     '<path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/>'
     '<path d="M12 9v4"/><path d="M12 17h.01"/></svg>'
+)
+# `ShieldCheck`, l'icône de l'entrée « Plateforme » de la webapp (§5.56) : le même objet (§9).
+_ICONE_PLATEFORME = (
+    '<svg class="icone" aria-hidden="true" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01'
+    'C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/>'
+    '<path d="m9 12 2 2 4-4"/></svg>'
 )
 _ICONE_COPIE = (
     '<svg class="icone" aria-hidden="true" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" '
@@ -166,8 +174,8 @@ def _page(titre: str, corps: str, script: str = "") -> str:
 """
 
 
-def accueil(url_mcp: str) -> str:
-    """Page d'accueil : ce qu'est le service, son adresse, sa règle d'accès."""
+def accueil(url_mcp: str, url_plateforme: str) -> str:
+    """Page d'accueil : ce qu'est le service, son adresse, sa règle d'accès, et le chemin de son administration."""
     corps = f"""<h1>Connecteur MCP du CRM</h1>
 <p>Pilotez le CRM P2Enjoy depuis votre assistant&nbsp;: tracks et channels, affaires, contacts, budgets, temps passé,
 objectifs et messagerie.</p>
@@ -188,7 +196,8 @@ ceux qu'un superadministrateur de la plateforme accorde au connecteur.</p>
   <li>Connectez-vous avec votre compte lelabs.</li>
 </ol>
 <h2>Administrer</h2>
-<p>Les superadministrateurs accordent les droits du connecteur depuis le CRM, dans «&nbsp;Plateforme&nbsp;».</p>"""
+<p>Les superadministrateurs accordent les droits du connecteur depuis le CRM, dans «&nbsp;Plateforme&nbsp;».</p>
+<p class="actions"><a class="bouton bouton-secondaire" href="{escape(url_plateforme)}">{_ICONE_PLATEFORME}<span>Ouvrir la plateforme du CRM</span></a></p>"""
     script = """<script>
 document.getElementById('copier').addEventListener('click', async function () {
   var champ = document.getElementById('adresse');

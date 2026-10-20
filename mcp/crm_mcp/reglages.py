@@ -1,6 +1,7 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : la configuration du connecteur
 # @spec docs/SPEC-mcp.md §10 (variables, formats, caractère obligatoire), §2.2 (adresses) ; docs/SPEC-plateforme.md §3
 #       (la liste d'amorçage, normalisée comme par la fonction `session`)
+# @spec CRM-102 tranche T6 — docs/SPEC-mcp.md §2.2, §10 : `SITE_URL` réutilisée, l'adresse de la plateforme de la webapp
 """Réglages lus dans l'environnement, une fois, au démarrage.
 
 Le démarrage refuse une configuration incomplète en NOMMANT chaque variable manquante : un service qui partirait
@@ -57,6 +58,7 @@ def _entier(valeur: str | None, defaut: int) -> int:
 @dataclass(frozen=True)
 class Reglages:
     origine_publique: str
+    origine_webapp: str
     oidc_emetteur: str
     oidc_client_id: str
     oidc_client_secret: str
@@ -81,6 +83,11 @@ class Reglages:
     def url_mcp(self) -> str:
         return f"{self.origine_publique}/mcp"
 
+    @property
+    def url_plateforme(self) -> str:
+        """L'administration du connecteur, dans la webapp (arbitrage A3, docs/SPEC-mcp.md §2.2)."""
+        return f"{self.origine_webapp}/plateforme"
+
     @classmethod
     def depuis_environnement(cls, env: Mapping[str, str]) -> Reglages:
         obligatoires = {
@@ -92,6 +99,7 @@ class Reglages:
             "SUPABASE_URL": env.get("SUPABASE_URL", "").strip().rstrip("/"),
             "SUPABASE_ANON_KEY": env.get("SUPABASE_ANON_KEY", ""),
             "SUPABASE_SERVICE_ROLE_KEY": env.get("SUPABASE_SERVICE_ROLE_KEY", ""),
+            "SITE_URL": env.get("SITE_URL", "").strip().rstrip("/"),
         }
         manquantes = [nom for nom, valeur in obligatoires.items() if not valeur]
         if manquantes:
@@ -101,6 +109,7 @@ class Reglages:
         )
         return cls(
             origine_publique=obligatoires["CRM_MCP_ORIGINE_PUBLIQUE"],
+            origine_webapp=obligatoires["SITE_URL"],
             oidc_emetteur=obligatoires["SSO_OIDC_ISSUER"],
             oidc_client_id=obligatoires["SSO_OIDC_CLIENT_ID"],
             oidc_client_secret=obligatoires["OIDC_CLIENT_SECRET"],
