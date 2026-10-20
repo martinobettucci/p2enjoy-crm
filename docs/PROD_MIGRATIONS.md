@@ -387,7 +387,8 @@ aucune donnée métier.
 - **une migration, la 90**, puis celle des RPC d'administration de `CRM-103` ;
 - **un service nouveau**, `mcp`, avec un volume `mcp-etat` ;
 - **un bloc d'hôte Caddy** ;
-- **des variables :** `CRM_MCP_ORIGINE_PUBLIQUE`, obligatoire, et les facultatives de `docs/SPEC-mcp.md` §10.
+- **des variables :** `CRM_MCP_HOTE`, qui allume le connecteur (vide, il reste éteint), et les facultatives de
+  `docs/SPEC-mcp.md` §10 ; `CRM_MCP_ORIGINE_PUBLIQUE` n'est jamais posée à la main, Compose la dérive.
 
 **Les préalables sont des gestes extérieurs au dépôt.**
 
@@ -395,7 +396,7 @@ aucune donnée métier.
 |---|---|---|---|
 | 1 | Renvoyer la déclaration **complète** de `lelabs-crm` avec `REDIRECT=https://crm.mcp.lelabs.tech/auth/callback` et `HORS_LIGNE=oui` ; le secret est inchangé | administrateur du realm LeLabs | `https://oauth.lelabs.tech/verification/`, onglet *Intégrations* |
 | 2 | DNS `crm.mcp.lelabs.tech` vers la Forge, et route `crm.mcp.lelabs.tech 8080 tls` vers la cellule `crm`. **La possibilité d'une seconde route vers la même cellule est à confirmer** (`docs/SPEC-mcp.md` §2.2) | propriétaire du Spark | console de la Forge ; proposition par `scripts/spark/proposer.sh --route-seule` |
-| 3 | Poser `CRM_MCP_ORIGINE_PUBLIQUE=https://crm.mcp.lelabs.tech` | propriétaire du Spark | console |
+| 3 | Poser `CRM_MCP_HOTE=crm.mcp.lelabs.tech` : elle active le service `mcp` (profil Compose) et l'aiguillage de Caddy ; Compose en dérive `CRM_MCP_ORIGINE_PUBLIQUE` (`docs/SPEC-mcp.md` §2.1, §10). Sans elle, le connecteur reste éteint et ne reçoit aucun secret | propriétaire du Spark | console ; proposition par `scripts/spark/proposer.sh` |
 | 4 | Instantané, puis livrer et migrer (la 90, **après** la 89 de `CRM-101`, dont elle emploie `app.amorcer_superadmin` et `app.est_superadmin_pour`), et démarrer le service `mcp` | poste, puis cellule | `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, **puis** `./runProd.sh --spark` |
 | 5 | Vérifier : `GET https://crm.mcp.lelabs.tech/pret` rend `200`, `POST /mcp` sans jeton rend `401` avec `resource_metadata`, et le refus de redirection d'un client non listé | poste, lecture seule | `scripts/spark/verifier.sh`, étendu par `CRM-102` T4 |
 | 6 | Ajouter le connecteur dans Claude ou ChatGPT, se connecter avec « Stay signed in », poser une matrice dans `/plateforme`, puis voir l'appel au journal | le responsable | l'assistant et l'application |

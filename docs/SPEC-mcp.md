@@ -76,6 +76,19 @@ les deux dépôts : leurs cycles de déploiement sont indépendants. Ce compromi
 - l'état écrit sur le seul volume `mcp-etat` ;
 - une sonde de santé par l'interpréteur.
 
+**Un service démarré seulement s'il est configuré** — *précisé le 2026-10-20 en spécifiant la tranche T3, avant son
+code*. Le service `mcp` est déclaré dans `docker-compose.yml` sous le **profil Compose `mcp`** :
+
+- **en développement**, l'overlay le rend toujours actif (`profiles: !reset []`) : la pile locale porte le connecteur ;
+- **en production**, `compose_prod` (`scripts/lib/env.sh`) n'active le profil que si `CRM_MCP_HOTE` est posée (§10).
+  Sans elle, le service n'est ni construit, ni démarré, et **ne reçoit aucun secret** : le moindre privilège se tient
+  dans le temps, comme pour `mail-sync` (`CRM-052`). La livraison de la plateforme (`CRM-101` T5) ne dépend donc
+  pas de celle du connecteur, dont la route est encore à confirmer (§2.2).
+
+L'image est construite depuis `mcp/Dockerfile`, cible `production`, avec le même secret de construction **facultatif**
+`pip_ca` que `mail-sync` (décision 356), pour un poste derrière un proxy TLS. Elle attend `kong` et `rest` sains, et,
+en développement, Keycloak sain : le mandataire lit la découverte OIDC au démarrage.
+
 ### 2.2 Adresses
 
 | Environnement | Origine publique | Connecteur |
@@ -83,8 +96,21 @@ les deux dépôts : leurs cycles de déploiement sont indépendants. Ce compromi
 | Développement | `http://localhost:${MCP_DEV_PORT}` (défaut `18490`), port publié par l'overlay de développement | `http://localhost:18490/mcp` |
 | Production (cellule `crm`) | `https://crm.mcp.lelabs.tech` | `https://crm.mcp.lelabs.tech/mcp` |
 
-**En production, un hôte dédié (D4).** Caddy sert déjà `crm.lelabs.tech`. Il reçoit un bloc par
-hôte : `crm.mcp.lelabs.tech` est relayé **entièrement** vers `mcp:8080`, sans retirer de préfixe.
+**En production, un hôte dédié (D4).** Caddy sert déjà `crm.lelabs.tech`. Les requêtes dont l'en-tête `Host` vaut
+`crm.mcp.lelabs.tech` sont relayées **entièrement** vers `mcp:8080`, sans retirer de préfixe.
+
+**Comment, mesuré contre `caddy:2.9-alpine` le 2026-10-20.** L'aiguillage vit dans `caddy/routes.caddy`, partagé par
+les deux Caddyfile : un matcher `@connecteur_mcp host {$MCP_HOTE}`, placé **avant** toutes les autres routes. Deux
+variables internes à Caddy dérivent de la seule variable d'exploitation `CRM_MCP_HOTE` (§10) :
+
+| Variable de Caddy | Valeur | Pourquoi |
+|---|---|---|
+| `MCP_HOTE` | `${CRM_MCP_HOTE:-mcp.invalid}` | **jamais vide** : un matcher `host` vide fait refuser à Caddy sa configuration ENTIÈRE — le site tomberait avec le connecteur ; `.invalid` (RFC 6761) ne correspond à aucun hôte |
+| `MCP_SITE` | `${CRM_MCP_HOTE:-}` | dans la liste d'adresses du Caddyfile ACME seulement (`{$APP_DOMAIN} {$MCP_SITE}`) : vide, la liste se réduit à l'hôte de l'application, et aucun certificat n'est demandé pour rien |
+
+Dans la cellule Spark, le site `:8080` reçoit tous les hôtes de la Forge, et le matcher seul les sépare ; Caddy y
+reçoit donc `MCP_HOTE`, et rien d'autre — **aucun secret**. Un hôte non posé laisse `mcp.invalid` : aucune requête
+n'atteint `mcp`, qui n'est d'ailleurs pas démarré.
 
 - Les routes OAuth du connecteur (`/.well-known/oauth-protected-resource/mcp`,
   `/.well-known/oauth-authorization-server`, `/register`, `/authorize`, `/consent`, `/token`,
@@ -482,7 +508,8 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 
 | Variable | Rôle | Format | Obligatoire | Exemple non sensible |
 |---|---|---|---|---|
-| `CRM_MCP_ORIGINE_PUBLIQUE` | origine publique du connecteur, sans barre finale | URL | oui | `https://crm.mcp.lelabs.tech` ; développement `http://localhost:18490` |
+| `CRM_MCP_HOTE` | **variable d'exploitation** : l'hôte public du connecteur. Posée, elle active le profil `mcp` en production et l'aiguillage de Caddy ; vide, le connecteur est éteint (§2.1, §2.2) | nom d'hôte, sans schéma ni port | non, défaut : vide (connecteur éteint) ; sans objet en développement | `crm.mcp.lelabs.tech` |
+| `CRM_MCP_ORIGINE_PUBLIQUE` | origine publique, lue par le **service** ; **jamais posée à la main** : Compose la dérive — `https://${CRM_MCP_HOTE}` en production, `http://localhost:${MCP_DEV_PORT}` en développement | URL sans barre finale | oui, pour le service | `https://crm.mcp.lelabs.tech` |
 | `CRM_SUPERADMINS_INITIAUX` | adresses amorcées superadministratrices tant qu'aucune n'existe (`docs/SPEC-plateforme.md` §3) ; lue aussi par l'échangeur | adresses séparées par des virgules | non, défaut : aucune | `responsable@exemple.test` |
 | `CRM_MCP_REDIRECTIONS_CLIENTS` | adresses de retour acceptées des clients MCP (`*` : port ou segment quelconque) | liste | non, défaut : boucle locale, Claude, ChatGPT | `http://localhost:*,https://claude.ai/api/mcp/auth_callback` |
 | `CRM_MCP_TAILLE_MAX_REPONSE` | taille maximale d'une réponse d'outil, en caractères | entier | non, défaut `200000` | `200000` |
@@ -490,6 +517,15 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 | `CRM_MCP_ENREGISTREMENTS_HEURE` | enregistrements de clients par adresse et par heure | entier | non, défaut `20` | `20` |
 | `CRM_MCP_JOURNAL_NIVEAU` | niveau des journaux | `debug`, `info`, `warning` | non, défaut `info` | `info` |
 | `MCP_DEV_PORT` | port publié du connecteur en développement | entier | développement seulement, défaut `18490` | `18490` |
+
+**En développement**, l'overlay relève `CRM_MCP_DEBIT_OAUTH_MINUTE` et `CRM_MCP_ENREGISTREMENTS_HEURE` à `1000` : toute
+une campagne de preuves vient d'une seule adresse (même choix qu'Evoliz). L'état du mandataire vit dans le volume
+`mcp-etat` monté sur `/var/lib/crm-mcp`.
+
+**Ce que le service reçoit de Compose** : `SUPABASE_URL=http://kong:8000`, `SUPABASE_ANON_KEY=${ANON_KEY}`,
+`SUPABASE_SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}`, `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID`,
+`OIDC_CLIENT_SECRET`, `CRM_SUPERADMINS_INITIAUX` et les variables `CRM_MCP_*`. `scripts/verify-spark.sh` mesure que
+`JWT_SECRET` et `SERVICE_ROLE_KEY` n'atteignent `mcp` que lorsque son profil est actif.
 
 **Variables réutilisées, sans changement de nom :** `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`,
 `OIDC_CLIENT_SECRET`, `SSO_OIDC_ISSUER` et `SSO_OIDC_CLIENT_ID`.
@@ -510,11 +546,17 @@ commit que le code qui la lit.
 
 ## 12. Données de développement
 
-- **Keycloak.** Le realm de développement (`keycloak/realm-lelabs.json`) reçoit :
-  - pour le client `${SSO_OIDC_CLIENT_ID}`, le `redirectUri`
-    `http://localhost:${MCP_DEV_PORT}/auth/callback` ;
-  - la portée `offline_access` en portée facultative ;
-  - l'attribut qui autorise le hors-ligne.
+- **Keycloak.** Le realm de développement (`keycloak/realm-lelabs.json`) reçoit, pour le client
+  `${SSO_OIDC_CLIENT_ID}` :
+  - le `redirectUri` `${SSO_DEV_MCP_REDIRECT_URI}`, que l'overlay pose à
+    `http://localhost:${MCP_DEV_PORT}/auth/callback` (substitué à l'import, comme celui de la webapp) ;
+  - ses portées **déclarées** au lieu d'être héritées : les six portées par défaut que le realm lui attribuait déjà
+    (`web-origins`, `acr`, `roles`, `profile`, `basic`, `email` — relevées par l'API d'administration le 2026-10-20) et
+    `offline_access` **seule** en portée facultative. Le client l'avait déjà par défaut du realm, avec quatre autres
+    sans usage (`address`, `phone`, `organization`, `microprofile-jwt`) : la déclarer rend la connexion longue
+    indépendante d'un défaut implicite.
+  - Le hors-ligne n'exige rien de plus en développement : le rôle `offline_access` vient de `default-roles-lelabs`.
+    En production, c'est `HORS_LIGNE=oui` de la déclaration du client (§3.2).
 - **Ce que le seed démontre** (`docs/SPEC-seed.md`, paragraphe écrit avec `CRM-103`), par les vrais
   chemins :
   - les comptes sont inscrits par une **vraie connexion OAuth** d'un client MCP de test
@@ -528,6 +570,7 @@ commit que le code qui la lit.
 
 | Unité | Preuves |
 |---|---|
+| `CRM-102` T3 | **Intégration** (`mcp/tests/test_integration_oauth.py`, marque `integration`), jouée par `scripts/verify-mcp.sh` dans l'image `dev` **sur le réseau Compose**, contre le vrai Keycloak, la vraie base et le vrai service `mcp` ; seule l'origine publique `localhost:${MCP_DEV_PORT}` est réécrite vers `mcp:8080`, `sso.localhost` étant le même dedans et dehors : `401` et métadonnées (`resource`, `issuer` = l'origine) ; parcours complet de `plateforme@` (superadministratrice en base) et d'`exploitante@` (`admin` LeLabs), jusqu'à `crm_workspace_list` — vide pour la première (RLS, D7), l'espace seedé pour la seconde — et la ligne au `mcp_journal` ; « Droits en attente » pour `admin@` (vérifié, sans droit) ; « Compte en attente de vérification » pour `attendu@` (sans `verified`) et `adresse-non-verifiee@` ; aucun code émis sur un refus ; `offline_access` demandé **si et seulement si** la case est cochée, et le renouvellement qui survit à la fin de la session du SSO **seulement** dans ce cas ; jeton forgé, et vrai jeton du realm émis pour un autre client (`crm-audience-etrangere`), refusés ; adresse de retour hors liste refusée ; `/pret` à `200`. **E2E** : un vrai client MCP, connecté **dans le navigateur**, case cochée. **Assemblage** : `scripts/verify-spark.sh` résout la cellule profil éteint et allumé — limites mémoire, secrets de `mcp` présents seulement allumé, Caddy sans secret, révision des routes. `scripts/verify-mcp.sh` rejoue le tout, avec des dégradations réelles |
 | `CRM-102` | **pytest unitaires** : jeton interne (revendications, échéance bornée, `lelabs_admin`), garde, réglages, déclaration des outils. **Intégration** contre le vrai Keycloak et la vraie base : parcours OAuth complet en requêtes directes ; refus sans `verified` et sans adresse vérifiée ; « Droits en attente » ; `offline_access` demandé **seulement** case cochée ; jeton forgé, d'un autre client ou HS256 refusé ; amorçage par la première connexion ; `crm_workspace_list` sous la RLS. **pgTAP** `0085_connecteur_mcp.test.sql` : fermeture, privilèges, `mcp_autorise` (superadministrateur, porteur de `lelabs_admin`, matrice, famille invalide en `22023`), cascade d'un espace supprimé, mutations. **E2E** : un vrai client MCP connecté dans le navigateur, case cochée. `scripts/verify-mcp.sh` |
 | `CRM-103` | **pgTAP** et **API** : chaque RPC refusée à l'anonyme, à la lectrice et à l'administrateur d'espace. **E2E UI** : matrice posée à la souris et au clavier, avertissement « pas membre », effet constaté par un appel MCP réel ; captures aux quatre paliers, observées ; manuel (chapitre 11) |
 | `CRM-104` | Par tranche et pour **chaque** outil, contre la vraie base et un vrai client MCP : succès ; **refus par la matrice** (case décochée) ; **refus par le CRM** malgré la matrice ouverte (lectrice, objet d'un autre espace) ; journal écrit. **E2E** : l'effet est constaté dans la webapp (une affaire créée par le connecteur apparaît au board, et sa timeline nomme la personne) |
@@ -556,7 +599,7 @@ Elles sont tenues dans `docs/PROD_MIGRATIONS.md` §3, et aucune n'est exécutée
    `REDIRECT` du connecteur et `HORS_LIGNE=oui` (§3.2).
 2. **Le propriétaire du Spark :**
    - pose le DNS et la route `crm.mcp.lelabs.tech 8080 tls` (§2.2) ;
-   - pose les variables `CRM_MCP_ORIGINE_PUBLIQUE` et `CRM_SUPERADMINS_INITIAUX` ;
+   - pose les variables `CRM_MCP_HOTE` (qui allume le connecteur) et `CRM_SUPERADMINS_INITIAUX` ;
    - applique la migration `0090`, instantané d'abord.
 3. **Le responsable fait le constat** : il ajoute le connecteur dans Claude ou ChatGPT, se connecte
    avec « Stay signed in », pose une matrice et voit un appel au journal.

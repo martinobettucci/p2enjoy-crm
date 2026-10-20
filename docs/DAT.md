@@ -618,8 +618,13 @@ Le droit effectif est l'intersection des deux.
   frappait des jetons ;
 - **`SERVICE_ROLE_KEY`**, pour les seules RPC de son registre.
 
-**Hôte dédié en production.** `crm.mcp.lelabs.tech`, aiguillé par Caddy selon l'hôte. En développement, il est
-publié sur `MCP_DEV_PORT` (défaut `18490`).
+**Hôte dédié en production.** `crm.mcp.lelabs.tech`, aiguillé par Caddy selon l'hôte (un matcher dans
+`caddy/routes.caddy`, jamais vide : `mcp.invalid` à défaut). En développement, il est publié sur `MCP_DEV_PORT`
+(défaut `18490`).
+
+**Un service qui n'existe que configuré.** Profil Compose `mcp` : toujours actif en développement, activé en
+production par la seule variable d'exploitation `CRM_MCP_HOTE`, dont Compose dérive l'origine publique. Éteint, il
+n'est ni construit ni démarré, et ne reçoit aucun secret ; la plateforme se livre sans lui (`docs/SPEC-mcp.md` §2.1).
 
 ### 3.8 Contraintes d'exécution de l'hôte
 

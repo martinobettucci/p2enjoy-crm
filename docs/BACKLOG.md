@@ -15173,10 +15173,12 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       l'espace de son droit, Sabine aucun (RLS, D7), Farida aucun outil. **Elle a trouvé un défaut** que le simulé
       masquait : `/pret` sondait `/rest/v1/`, que Kong refuse en `403` à la clé anonyme ; corrigé sur le point de
       `scripts/spark/verifier.sh`, simulé aligné, mutant vu rouge.
-- [ ] **T3** — la pile : service `mcp` dans les fichiers Compose (développement, production, cellule), volume
-      `mcp-etat`, bloc d'hôte Caddy, realm de développement (`redirectUri`, `offline_access`), variables (`.env.example`,
-      `scripts/lib/env.sh`, `runDev.sh`, `scripts/spark/proposer.sh`) ; intégration contre le vrai Keycloak et la vraie
-      base ; E2E d'un vrai client MCP ; `scripts/verify-mcp.sh`.
+- [ ] **T3** — la pile : service `mcp` dans les fichiers Compose (développement, production, cellule) **sous le profil
+      `mcp`**, activé en production par `CRM_MCP_HOTE` (`compose_prod`), volume `mcp-etat`, aiguillage par l'hôte dans
+      `caddy/routes.caddy` (révision `crm-102`), realm de développement (`redirectUri`, portées déclarées), variables
+      (`.env.example`, `scripts/lib/env.sh`, `scripts/spark/proposer.sh`) ; intégration contre le vrai Keycloak et la
+      vraie base ; E2E d'un vrai client MCP ; `scripts/verify-spark.sh` révisé ; `scripts/verify-mcp.sh`. Spécifiée
+      avant le code (`docs/SPEC-mcp.md` §2.1, §2.2, §10, §12, §13 ; journal, décision 627, précision T3).
 - [ ] **T4** — documentation (README, DAT, `docs/SSO-client-lelabs-crm.md` redéclaré, `docs/SPEC-deploiement-spark.md`),
       campagnes.
 - [ ] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,

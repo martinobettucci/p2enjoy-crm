@@ -31712,3 +31712,33 @@ par le service, jamais sans la RLS).
 
 **Vérifications.** Celles du backlog (`CRM-102` T2). L'intégration contre le vrai Keycloak et le câblage dans la pile
 sont la tranche T3.
+
+### décision 627, précision — `CRM-102` T3 spécifiée avant son code : un connecteur qui n'existe que configuré
+
+*2026-10-20.*
+
+**Le problème.** Le service `mcp` refuse de démarrer sans son origine publique, et le contrat `.env.example` rend
+obligatoire toute variable dont l'exemple n'est pas vide. Déclarer `CRM_MCP_ORIGINE_PUBLIQUE` obligatoire aurait lié la
+livraison de la plateforme (`CRM-101` T5) à celle du connecteur, dont la route de la Forge n'est pas confirmée ; la
+laisser facultative aurait laissé `mcp` redémarrer en boucle en production, et `up --wait` échouer.
+
+**Les solutions envisagées.** (1) Un service toujours démarré, inerte sans configuration : il tiendrait de la mémoire
+dans une cellule de 2 Gio et recevrait `JWT_SECRET` et `SERVICE_ROLE_KEY` sans s'en servir — le contraire du moindre
+privilège « dans le temps » posé pour `mail-sync`. (2) **Un profil Compose `mcp`**, toujours actif en développement,
+activé en production par `compose_prod` quand l'hôte est posé. Retenue.
+
+**Une seule variable d'exploitation, `CRM_MCP_HOTE`.** Caddy ne sait pas extraire un hôte d'une URL ; Compose ne sait pas
+transformer une chaîne. L'hôte est donc la variable posée à la main, et Compose en dérive l'origine
+(`https://${CRM_MCP_HOTE}` ; `http://localhost:${MCP_DEV_PORT}` en développement).
+
+**Mesuré contre `caddy:2.9-alpine`, avant d'écrire.** Un matcher `host` dont la variable est VIDE fait refuser à Caddy
+sa configuration entière : `{$VAR:défaut}` ne joue que pour une variable ABSENTE, et Compose la pose vide. Le matcher
+reçoit donc `${CRM_MCP_HOTE:-mcp.invalid}` ; la liste d'adresses du Caddyfile ACME, elle, reçoit la valeur nue, qui se
+réduit à l'hôte de l'application quand elle est vide. Les deux comportements ont été constatés à l'exécution.
+
+**Le realm de développement.** Le client portait déjà `offline_access` en portée facultative, mais par défaut du realm,
+à côté de quatre portées sans usage ; il les déclare désormais, relevées par l'API d'administration.
+
+**Conséquences écrites avant le code** : `docs/SPEC-mcp.md` §2.1, §2.2, §10, §12, §13 ; `docs/DAT.md` §3.7 ter ;
+`docs/PROD_MIGRATIONS.md` §2.14 (geste 3 : `CRM_MCP_HOTE`). `scripts/verify-spark.sh` devra accepter que Caddy reçoive
+`MCP_HOTE` — une valeur publique, aucun secret — et porter la révision de routes `crm-102`.
