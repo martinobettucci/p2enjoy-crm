@@ -409,6 +409,14 @@ de la Forge **valide** pour ce nom ; l'hôte mène encore à la webapp, l'aiguil
 redirect_uri` pour `https://crm.mcp.lelabs.tech/auth/callback` — la redéclaration n'est pas appliquée —, et `302` pour le
 retour de la webapp, inchangé. Reste aussi l'instantané, puis la livraison (geste 4).
 
+**Geste 1 constaté le 2026-10-21, en lecture seule.** Le responsable a transmis le récapitulatif `llms.txt` du
+service pour `lelabs-crm-serveur` : les deux `redirect_uri`, les deux origines web, `offline_access` parmi les portées,
+PKCE S256 obligatoire, aucune `post_logout_redirect_uri`. La sonde du point d'autorisation (PKCE S256, portée
+`openid offline_access`) le confirme : `200` pour `https://crm.mcp.lelabs.tech/auth/callback` et pour
+`https://crm.lelabs.tech/auth/retour`, `400 Paramètre invalide : redirect_uri` pour une adresse témoin non déclarée
+(`https://crm.mcp.lelabs.tech/auth/autre`). La découverte publie `offline_access` et `S256`. Le mandataire transmet
+PKCE S256 en amont : le client du realm de développement l'impose aussi, et le parcours OAuth y passe.
+
 **Avant cela, propositions déposées dans la cellule, rien n'était importé.** Sur instruction du responsable,
 `/etc/spark/env.?` porte `CRM_MCP_HOTE=crm.mcp.lelabs.tech` (geste 3) et `CRM_SUPERADMINS_INITIAUX=martino@p2enjoy.studio`
 (geste 1 du §2.13, écrit à la main faute d'option de `proposer.sh` : INC-276), et `/etc/spark/routes.?` la route
