@@ -43,15 +43,21 @@ la ligne de la table, que PostgREST expose comme **colonne calculée** (`select=
 
 ```sql
 create function public.ecriture_permise(ch public.channels) returns boolean
-  language sql stable set search_path = '' as $$ select app.can_write_channel(ch.id) $$;
+  language sql stable as $$ select app.can_write_channel(ch.id) $$;
 create function public.ecriture_permise(c public.cards) returns boolean
-  language sql stable set search_path = '' as $$ select app.can_write_channel(c.channel_id) $$;
+  language sql stable as $$ select app.can_write_channel(c.channel_id) $$;
 ```
 
 - **Aucune ligne n'est rendue que la RLS ne rende déjà** : la colonne s'évalue sur des lignes déjà filtrées par la
   politique de lecture. Elle n'apprend rien qu'un essai d'écriture n'apprendrait.
-- `EXECUTE` accordé à `authenticated` seulement ; retiré à `public` et `anon`, nommément.
-- `stable`, `security invoker` : `app.can_write_channel` est déjà `security definer`.
+- **Condition suffisante de refus, jamais nécessaire** : certains gestes exigent davantage (une ligne de coût, un
+  budget lisible et ouvert). L'écran éteint sur la colonne et continue de traduire les refus.
+- `EXECUTE` retiré à `public`, puis accordé nommément à `anon`, `authenticated` et `service_role` — **même motif qu'à
+  la migration 71** : sans lui, un appel anonyme qui demanderait la colonne recevrait une erreur de privilège là où
+  `docs/SPEC-permissions-rls.md` §7 exige zéro ligne ; le droit n'ouvre rien (`auth.uid()` nul rend faux). *Précision
+  apportée en écrivant la migration, le 2026-10-21 : la première rédaction retirait le droit à `anon`.*
+- `stable`, `security invoker` — critique : en `definer`, la fonction répondrait pour `postgres` et rendrait `true` à la
+  lectrice ; aucun `set search_path`, comme aux migrations 52 et 71.
 - Une card hérite de son channel : `app.can_write_card(card)` est défini ainsi, et la colonne des cards ne fait que le
   dire sans relire la table.
 
