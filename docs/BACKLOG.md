@@ -15442,7 +15442,7 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
 
 ## Demande du 2026-10-21 — décision 629
 
-### CRM-105 — La description d'un track, d'un channel et d'une affaire en infobulle sur l'élément qui la porte `[ ]`
+### CRM-105 — La description d'un track, d'un channel et d'une affaire en infobulle sur l'élément qui la porte `[~]`
 *Créée le 2026-10-21 — demande du responsable : « les tracks, les channels et les affaires ont un champ description qui
 devrait afficher une tooltip au survol de la souris sur l'élément correspondant en UI ». Mesuré : les trois colonnes
 existent, aucune n'est lue par les écrans qui montrent ces objets. Choix de forme de l'agent, écrits pour relecture
@@ -15454,9 +15454,19 @@ existent, aucune n'est lue par les écrans qui montrent ces objets. Choix de for
       `docs/SPEC-channels.md` §5, `docs/SPEC-workflow-engine.md` §7.2, `docs/SPEC-cards.md` §12.3 (la colonne rejoint
       les quatre lectures) ; `docs/SPEC-seed.md` §20 (deux tracks, trois channels, trois affaires décrits, les autres
       non). Écrite le 2026-10-21 ; passe à `[x]` à la validation du responsable.
-- [ ] **T2 — mise en œuvre et preuves** : composant `Infobulle` et ses tests unitaires ; les quatre lectures et leurs
+- [x] **T2 — mise en œuvre et preuves** : composant `Infobulle` et ses tests unitaires ; les quatre lectures et leurs
       tests ; barre latérale, onglets, carte de board, ligne de vue liste ; seed ; preuves d'API des quatre lectures ;
       `e2e/ui/infobulle-description.spec.ts` (survol, clavier, `Échap`, survolable, absence, cadre aux quatre paliers) ;
       captures `docs/captures/CRM-105/` observées ; `docs/manual.md` ; `CHANGELOG.md`.
+      **Mesuré le 2026-10-21**, seed rejoué : `Infobulle.test.tsx` et `infobulle.test.ts` **26/26**, deux mutations tuées
+      (ouverture au focus retirée, `aria-describedby` de l'onglet retiré) ; tests des quatre écrans et des quatre
+      lectures **301/301** ; suite unitaire **3 940** verts — le seul rouge est une clé `rights.readonly.*` de `CRM-093` en
+      cours, étrangère à l'unité ; `e2e/api` **170/170** (dont `descriptions.spec.ts` 4/4, `colonnes-protegees`,
+      `move-card`, `recherche-globale`, `recherche-palette`) ; pgTAP `0003`, `0012`, `0065` **159 assertions** ;
+      `e2e/ui/infobulle-description.spec.ts` **13/13** et specs voisines (tracks, channels, coquille, board, liste,
+      sommeil, nouveau channel) **119/119** ; build et contrôle des classes : **400 classes, aucune manquante** ; neuf
+      captures observées (pilule à 1440 et en colonne d'icônes à 1152, onglet au survol et au clavier, carte, ligne
+      longue aux quatre paliers). Le typecheck garde un rouge étranger à l'unité (`database.types.test-d.ts`, fonctions
+      des migrations 0092-0093 en cours).
 - [ ] **T3 — livraison** : reconstruction de la webapp en production, constat sur un track décrit
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.

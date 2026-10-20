@@ -3,6 +3,8 @@
 // @verifies docs/SPEC-channels.md §5 (ce que la barre lit), §5.3 (patron ARIA), §4 (archivage)
 // @verifies docs/DESIGN_SYSTEM.md §4 (onglets), §5.8 (états), §8 (clavier, cibles), §12.1 (écart)
 // @verifies docs/SPEC-webapp.md §7 (états systématiques), §10 (aucun texte en dur)
+// @verifies CRM-105 (docs/BACKLOG.md) — la description d'un channel en infobulle sur son onglet :
+//           docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-channels.md §5
 // @verifies CRM-100 (docs/BACKLOG.md) tranche T1 — la commande « Nouveau channel » :
 //           docs/SPEC-administration-arborescence.md §13.3 (un lien qui ouvre le formulaire par l'adresse, la vue
 //           liste conservée, la racine du track hors d'une vue de track, absente pendant la saisie) ;
@@ -21,9 +23,11 @@ import type { Channel } from '../lib/channels'
 
 // `workflow_id` a rejoint la lecture partagée à `CRM-041` (docs/SPEC-channels.md §5) : la barre
 // d'onglets ne l'affiche pas, mais elle la transporte, et une fixture amputée ne compilerait plus.
+// `description` l'a rejointe avec `CRM-105` (docs/DESIGN_SYSTEM.md §5.58) : nulle ici, l'onglet est rendu
+// comme avant ; l'infobulle est éprouvée plus bas.
 const CHANNELS: readonly Channel[] = [
-	{ id: 'c-1', name: 'Prospection', slug: 'prospection', position: 1, workflow_id: 'wf-1' },
-	{ id: 'c-2', name: 'Grands comptes', slug: 'grands-comptes', position: 2, workflow_id: 'wf-1' },
+	{ id: 'c-1', name: 'Prospection', slug: 'prospection', position: 1, workflow_id: 'wf-1', description: null },
+	{ id: 'c-2', name: 'Grands comptes', slug: 'grands-comptes', position: 2, workflow_id: 'wf-1', description: null },
 ]
 
 function monter(
@@ -230,5 +234,17 @@ describe('barre d’onglets — « Nouveau channel » (CRM-100, §13.3)', () => 
 			</MemoryRouter>,
 		)
 		expect(commande()).toBeNull()
+	})
+})
+
+describe('infobulle de description (docs/DESIGN_SYSTEM.md §5.58) — CRM-105', () => {
+	it('un onglet décrit cite sa description ; un onglet sans description garde son `title`', () => {
+		monter(pret([{ ...CHANNELS[0]!, description: 'Premiers contacts à qualifier.' }, CHANNELS[1]!]))
+		const [decrit, nu] = screen.getAllByTestId('onglet-channel')
+		const id = decrit?.getAttribute('aria-describedby') ?? ''
+		expect(document.getElementById(id)?.textContent).toBe('Premiers contacts à qualifier.')
+		expect(decrit?.hasAttribute('title')).toBe(false)
+		expect(nu?.getAttribute('title')).toBe('Grands comptes')
+		expect(nu?.hasAttribute('aria-describedby')).toBe(false)
 	})
 })

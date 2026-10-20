@@ -2,6 +2,8 @@
 // @spec CRM-022 (docs/BACKLOG.md) — responsable embarqué dans chaque ligne
 // @spec docs/SPEC-cards.md §12.3 (ce que la liste lit), §12.7 (colonnes du tableau)
 // @spec docs/SPEC-types.md §4
+// @spec CRM-105 (docs/BACKLOG.md) — `description` lue pour l'infobulle du titre de la ligne
+//       (docs/SPEC-cards.md §12.3, docs/DESIGN_SYSTEM.md §5.58, décision 629)
 //
 // CE MODULE N'IMPORTE RIEN, ET C'EST TOUT SON OBJET.
 //
@@ -19,8 +21,9 @@
  * Cards d'une page de la vue liste.
  *
  * `position` n'est pas demandée : l'ordre de la liste est celui du §12.4, jamais celui d'une
- * colonne de board. `description`, `probability_override`, `health_score` et les horodatages
- * techniques non plus — une requête ne rapporte que ce qui est affiché.
+ * colonne de board. `probability_override`, `health_score` et les horodatages techniques non
+ * plus — une requête ne rapporte que ce qui est affiché. `description` l'est depuis `CRM-105` :
+ * elle est affichée, en infobulle sur le titre de la ligne (docs/DESIGN_SYSTEM.md §5.58).
  *
  * Le responsable est embarqué par la FK : la colonne « Responsable » rend désormais avatar et
  * nom sans requête par ligne. Une card sans `owner_id` garde une cellule réellement vide.
@@ -31,7 +34,7 @@
  * que la colonne soit rapportée — c'est la marque qui l'exige.
  */
 export const COLONNES_CARD_LISTE =
-	'id, title, amount, currency, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url)'
+	'id, title, description, amount, currency, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url)'
 
 /**
  * Nombre de lignes d'une page.

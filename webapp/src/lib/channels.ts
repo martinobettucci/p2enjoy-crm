@@ -6,6 +6,8 @@
 // @spec docs/SPEC-permissions-rls.md §4 (lecture par les membres du workspace)
 // @spec CRM-100 (docs/BACKLOG.md) tranche T1 — docs/SPEC-administration-arborescence.md §13.3 : le track ouvert
 //       porte son `workspace_id`
+// @spec CRM-105 (docs/BACKLOG.md) — `description` lue pour l'infobulle de l'onglet : docs/SPEC-channels.md §5,
+//       docs/DESIGN_SYSTEM.md §5.58 (décision 629)
 //
 // `public.channels` porte, depuis `CRM-021`, une politique de lecture réservée aux membres du
 // workspace. Sans session les deux requêtes rendent `200` et `[]` ; avec la session restaurée par
@@ -23,8 +25,9 @@ import type { ClientCrm } from './supabase'
 /**
  * Ce que la barre d'onglets a besoin de savoir d'un channel, et rien de plus.
  *
- * `description` et les horodatages ne sont pas demandés : une requête ne rapporte que ce qui est
- * affiché.
+ * Les horodatages ne sont pas demandés : une requête ne rapporte que ce qui est affiché.
+ * `description` l'est depuis `CRM-105` : elle est affichée, en infobulle sur l'onglet
+ * (docs/DESIGN_SYSTEM.md §5.58).
  *
  * `workflow_id` FAIT EXCEPTION DEPUIS `CRM-041`, et l'exception est écrite plutôt que subie.
  * `CRM-021` l'écartait parce qu'elle « est de surcroît nulle partout jusqu'à `CRM-031` (INC-029) —
@@ -38,7 +41,7 @@ import type { ClientCrm } from './supabase'
  */
 export type Channel = Pick<
 	Database['public']['Tables']['channels']['Row'],
-	'id' | 'name' | 'slug' | 'position' | 'workflow_id'
+	'id' | 'name' | 'slug' | 'position' | 'workflow_id' | 'description'
 >
 
 /**
@@ -54,7 +57,7 @@ export type TrackOuvert = Pick<
 >
 
 /** Colonnes réellement demandées. Exportées pour que les tests unitaires vérifient la requête. */
-export const COLONNES_CHANNEL = 'id, name, slug, position, workflow_id'
+export const COLONNES_CHANNEL = 'id, name, slug, position, workflow_id, description'
 export const COLONNES_TRACK_OUVERT = 'id, name, slug, workspace_id'
 
 /**

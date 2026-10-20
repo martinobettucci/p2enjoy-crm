@@ -8,6 +8,8 @@
 // @spec docs/SPEC-cards.md §16.12.1 (le prédicat d'exclusion), §16.12.2 (l'instant du client),
 //       §16.12.3 (pourquoi la liste filtre au SERVEUR), §16.12.4 (le cinquième paramètre d'adresse)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.9 (tableau)
+// @spec CRM-105 (docs/BACKLOG.md) — `description` portée par chaque ligne, pour l'infobulle du titre
+//       (docs/SPEC-cards.md §12.3, docs/DESIGN_SYSTEM.md §5.58)
 //
 // Ce module ne rend rien : il **compose**, et il lit. La séparation est ce qui rend les règles du
 // §12 vérifiables sans navigateur — la clôture des tris, l'ordre total, le repli des paramètres
@@ -228,6 +230,8 @@ export type CardListe = Pick<
 	Database['public']['Tables']['cards']['Row'],
 	| 'id'
 	| 'title'
+	// Lue depuis `CRM-105` : l'infobulle du titre de la ligne (docs/DESIGN_SYSTEM.md §5.58).
+	| 'description'
 	| 'amount'
 	| 'currency'
 	| 'next_action'

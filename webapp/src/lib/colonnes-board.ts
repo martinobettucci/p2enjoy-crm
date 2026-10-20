@@ -4,6 +4,8 @@
 // @spec docs/SPEC-cards.md §2.6 (ordre dans une colonne) ; docs/SPEC-types.md §4
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape initiale lue avec les colonnes
 //       (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
+// @spec CRM-105 (docs/BACKLOG.md) — `description` lue pour l'infobulle du titre de la carte
+//       (docs/SPEC-workflow-engine.md §7.2, docs/DESIGN_SYSTEM.md §5.58, décision 629)
 //
 // CE MODULE N'IMPORTE RIEN, ET C'EST TOUT SON OBJET.
 //
@@ -39,8 +41,9 @@ export const COLONNES_TRANSITION = 'id, from_step_id, to_step_id, label, require
 /**
  * Cards affichées sur une carte de board.
  *
- * `description`, `probability_override`, `health_score` et les horodatages de création ne sont pas
- * demandés : une requête ne rapporte que ce qui est affiché. `owner_id` et son profil sont en
+ * `probability_override`, `health_score` et les horodatages de création ne sont pas demandés : une
+ * requête ne rapporte que ce qui est affiché. `description` l'est depuis `CRM-105` : elle est
+ * affichée, en infobulle sur le titre de la carte (docs/DESIGN_SYSTEM.md §5.58). `owner_id` et son profil sont en
  * revanche embarqués par la FK : `CRM-022` rend enfin l'identité d'équipe lisible, sans seconde
  * requête ni identifiant technique à l'écran.
  *
@@ -49,7 +52,7 @@ export const COLONNES_TRANSITION = 'id, from_step_id, to_step_id, label, require
  * ne peut faire sans lire la colonne. Elle est lue une fois pour les deux usages.
  */
 export const COLONNES_CARD_BOARD =
-	'id, title, position, amount, currency, next_action, current_step_id, entered_step_at, email_local_part, owner_id, snoozed_until, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url)'
+	'id, title, description, position, amount, currency, next_action, current_step_id, entered_step_at, email_local_part, owner_id, snoozed_until, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url)'
 
 /**
  * Champs du workflow, réduits à ce qui traduit un refus.

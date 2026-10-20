@@ -1,5 +1,7 @@
 // @verifies CRM-041 (docs/BACKLOG.md) — rendu réel du board, de son menu et de ses refus
 // @verifies CRM-022 (docs/BACKLOG.md) — avatar du responsable sans UUID
+// @verifies CRM-105 (docs/BACKLOG.md) — la description d'une affaire en infobulle sur le titre de sa carte :
+//           docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-workflow-engine.md §7.2
 // @verifies docs/SPEC-workflow-engine.md §7.3 (colonnes), §7.4 (carte de card), §7.5 (menu),
 //           §7.7 (déplacement au clavier), §7.8 (motif exigé, jamais optimiste),
 //           §7.9 (optimisme et retour arrière), §7.10 (les sept refus), §7.11 (accessibilité)
@@ -41,6 +43,8 @@ const MAINTENANT = new Date('2026-08-05T12:00:00.000Z')
 function card(partiel: Partial<CardBoard> & Pick<CardBoard, 'id' | 'current_step_id'>): CardBoard {
 	return {
 		title: partiel.id,
+		// `description` a rejoint les lectures avec `CRM-105` (infobulle, docs/DESIGN_SYSTEM.md §5.58).
+		description: null,
 		position: 1,
 		amount: null,
 		currency: 'EUR',
@@ -851,5 +855,25 @@ describe('« Nouvelle affaire » sur le board (CRM-095, docs/DESIGN_SYSTEM.md §
 			fr['affaire.creation.refus.ferme'],
 		)
 		expect(appels).toEqual([{ nom: 'creer_affaire', arguments: { p_channel: 'ch-1', p_titre: 'Refonte' } }])
+	})
+})
+
+describe('infobulle de description (docs/DESIGN_SYSTEM.md §5.58) — CRM-105', () => {
+	it('le titre d’une carte décrite cite sa description ; celui d’une carte sans description, rien', () => {
+		monter({
+			cards: [
+				card({ id: 'decrite', title: 'Migration ERP', current_step_id: 's1', description: 'Bascule du progiciel.' }),
+				card({ id: 'nue', title: 'Audit', current_step_id: 's1' }),
+			],
+			client: clientRpc().client,
+		})
+		const decrite = screen.getByRole('link', { name: 'Migration ERP' })
+		const id = decrite.getAttribute('aria-describedby') ?? ''
+		expect(document.getElementById(id)?.textContent).toBe('Bascule du progiciel.')
+		const nue = screen.getByRole('link', { name: 'Audit' })
+		expect(nue.hasAttribute('aria-describedby')).toBe(false)
+		// Le titre d'une carte ne portait aucun `title` : il n'en gagne pas.
+		expect(decrite.hasAttribute('title')).toBe(false)
+		expect(nue.hasAttribute('title')).toBe(false)
 	})
 })

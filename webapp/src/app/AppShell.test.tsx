@@ -77,7 +77,7 @@ const UNE_LIGNE: Reponse = {
 }
 const TROIS_TRACKS: Reponse = {
 	data: [
-		{ id: 't-1', name: 'Conseil & IA', slug: 'conseil-ia', color: 'brand', icon: 'sparkles', position: 1 },
+		{ id: 't-1', name: 'Conseil & IA', slug: 'conseil-ia', color: 'brand', icon: 'sparkles', position: 1, description: null },
 		{
 			id: 't-2',
 			name: 'Studio web',
@@ -85,8 +85,9 @@ const TROIS_TRACKS: Reponse = {
 			color: 'success',
 			icon: 'layout-dashboard',
 			position: 2,
+			description: null,
 		},
-		{ id: 't-3', name: 'Formation', slug: 'formation', color: 'accent', icon: 'inconnue', position: 3 },
+		{ id: 't-3', name: 'Formation', slug: 'formation', color: 'accent', icon: 'inconnue', position: 3, description: null },
 	],
 	error: null,
 	status: 200,

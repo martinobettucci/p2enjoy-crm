@@ -40,9 +40,13 @@
 // avant le filet des entrées transverses, qui portent sur le track entier. C'est un LIEN — elle ouvre le formulaire en
 // écrivant `nouveau-channel=1` dans l'adresse —, mais elle n'a ni bordure basse ni `aria-current` : rien ne la lit
 // comme la page courante. Pendant la saisie, elle quitte la barre (§5.50 : la commande et le formulaire s'excluent).
+//
+// @spec CRM-105 (docs/BACKLOG.md) — la description d'un channel en infobulle sous son onglet
+//       (docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-channels.md §5, décision 629)
 
 import { Link, NavLink, useLocation } from 'react-router'
 import { ChartColumn, Plus } from 'lucide-react'
+import { Infobulle } from '../components/ui/Infobulle'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { EtatAsync } from '../lib/async'
@@ -139,11 +143,15 @@ function Contenu({ etat, slugTrack }: ProprietesTabBar) {
 			<ul className="flex items-center gap-1">
 				{channels.map((channel) => (
 					<li key={channel.id}>
+						{/* L'infobulle porte le nom en tête et REMPLACE alors le `title` (§5.58). */}
+						<Infobulle titre={channel.name} description={channel.description}>
+						{({ idDescription }) => (
 						<NavLink
 							to={`/tracks/${slugTrack}/${channel.slug}`}
 							data-testid="onglet-channel"
 							data-slug={channel.slug}
-							title={channel.name}
+							title={idDescription === undefined ? channel.name : undefined}
+							aria-describedby={idDescription}
 							className={({ isActive }) =>
 								[
 									'inline-flex items-center px-3 whitespace-nowrap',
@@ -163,6 +171,8 @@ function Contenu({ etat, slugTrack }: ProprietesTabBar) {
 						>
 							{channel.name}
 						</NavLink>
+						)}
+						</Infobulle>
 					</li>
 				))}
 			</ul>

@@ -12,6 +12,8 @@
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape INITIALE résolue avec chaque colonne
 //       (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
+// @spec CRM-105 (docs/BACKLOG.md) — `description` portée par chaque card, pour l'infobulle du titre
+//       (docs/SPEC-workflow-engine.md §7.2, docs/DESIGN_SYSTEM.md §5.58)
 //
 // Ce module ne rend rien : il **compose**, et il appelle. La séparation est ce qui rend les
 // règles du §7.3 vérifiables sans navigateur — l'ordre des colonnes, le départage à position
@@ -89,6 +91,8 @@ export type CardBoard = Pick<
 	Database['public']['Tables']['cards']['Row'],
 	| 'id'
 	| 'title'
+	// Lue depuis `CRM-105` : l'infobulle du titre de la carte (docs/DESIGN_SYSTEM.md §5.58).
+	| 'description'
 	| 'position'
 	| 'amount'
 	| 'currency'

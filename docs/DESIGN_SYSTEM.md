@@ -5578,6 +5578,11 @@ montrent de la même façon.
 - **LIMITE ASSUMÉE : AU TOUCHER, LA BULLE NE PARAÎT PAS.** Toucher l'un de ces quatre éléments navigue ; aucun appui
   long n'est inventé. La description reste annoncée aux lecteurs d'écran par `aria-describedby`.
 
+- **LIMITE ASSUMÉE : AU CLAVIER, UNE BULLE QUI DÉFILE NE SE FAIT PAS DÉFILER** — *écrit à la mise en œuvre*. La bulle est
+  `aria-hidden` et ne prend pas le focus ; au-delà de `min(50vh, 320px)`, sa fin ne se lit qu'à la souris, ou entière par
+  le lecteur d'écran. Mesuré sur la plus longue description du seed (549 caractères) : elle tient sans défiler aux quatre
+  paliers (`docs/captures/CRM-105/`).
+
 - **Aucune couleur, aucun jeton de couleur, aucune icône nouvelle.** Deux durées nouvelles, déclarées une fois dans le
   composant et nommées ici ; la surface emprunte au §5.49 son relief et au §5.43 sa largeur et sa règle de cadre.
 

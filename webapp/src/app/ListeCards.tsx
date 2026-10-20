@@ -12,6 +12,8 @@
 //       §5.3 quinquies (la bascule et la pastille compacte)
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : la commande « Nouvelle affaire » en tête de la barre
 //       de filtres, le formulaire sous elle (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.50)
+// @spec CRM-105 (docs/BACKLOG.md) — la description d'une affaire en infobulle sur le titre de sa ligne
+//       (docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-cards.md §12.3, décision 629)
 //
 // Ce composant **rend** ; il ne compose pas. La clôture des tris, l'ordre total, le repli des
 // paramètres d'adresse, le bornage du rang de page et la classification du `416` vivent dans
@@ -26,6 +28,7 @@ import { Link } from 'react-router'
 import { Badge, type TonBadge } from '../components/ui/Badge'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'
+import { Infobulle } from '../components/ui/Infobulle'
 import { BasculeSommeil, PastilleSommeil } from '../components/ui/Sommeil'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
@@ -354,13 +357,20 @@ function Ligne({
 			    aurait rogné la pastille avec le texte. */}
 			<td className={CLASSES_CELLULE_AFFAIRE}>
 				<span className="flex items-center gap-2 min-w-0">
-					<Link
-						to={`/tracks/${slugTrack}/${slugChannel}/cards/${card.id}`}
-						title={card.title}
-						className="text-ink font-medium hover:text-brand truncate min-w-0"
-					>
-						{card.title}
-					</Link>
+					{/* La description en infobulle sur le titre — `CRM-105`, §5.58. Rendue, la bulle porte le
+					    titre complet en tête et REMPLACE le `title` : la valeur entière reste lisible (§5.9). */}
+					<Infobulle titre={card.title} description={card.description}>
+						{({ idDescription }) => (
+							<Link
+								to={`/tracks/${slugTrack}/${slugChannel}/cards/${card.id}`}
+								title={idDescription === undefined ? card.title : undefined}
+								aria-describedby={idDescription}
+								className="text-ink font-medium hover:text-brand truncate min-w-0"
+							>
+								{card.title}
+							</Link>
+						)}
+					</Infobulle>
 					<PastilleSommeil
 						enSommeil={estEnSommeil(card.snoozed_until, maintenant)}
 						echeance={card.snoozed_until}

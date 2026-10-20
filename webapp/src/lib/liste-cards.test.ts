@@ -47,6 +47,8 @@ function parametres(partiel: Partial<ParametresListe> = {}): ParametresListe {
 function card(partiel: Partial<CardListe> & Pick<CardListe, 'id'>): CardListe {
 	return {
 		title: partiel.id,
+		// `description` a rejoint les lectures avec `CRM-105` (infobulle, docs/DESIGN_SYSTEM.md §5.58).
+		description: null,
 		amount: null,
 		currency: 'EUR',
 		next_action: null,
@@ -400,9 +402,15 @@ describe('la lecture d’une page (§12.3)', () => {
 	it('embarque le responsable et ne demande aucune colonne non affichée', () => {
 		expect(COLONNES_CARD_LISTE).toContain('owner_id')
 		expect(COLONNES_CARD_LISTE).toContain('responsable:profiles!cards_owner_id_fkey')
-		for (const absente of ['position', 'description', 'health_score']) {
+		for (const absente of ['position', 'health_score']) {
 			expect(COLONNES_CARD_LISTE).not.toContain(absente)
 		}
+	})
+
+	// @verifies CRM-105 — docs/SPEC-cards.md §12.3, docs/DESIGN_SYSTEM.md §5.58 : la description est
+	// affichée en infobulle sur le titre de la ligne, donc demandée dans la requête de la page.
+	it('demande `description`, affichée en infobulle', () => {
+		expect(COLONNES_CARD_LISTE).toContain('description')
 	})
 
 	// MESURÉ : `count=planned` rend 1 là où la table en porte 3 (décision 187).

@@ -1,5 +1,7 @@
 // @verifies CRM-042 (docs/BACKLOG.md) — rendu réel du tableau, de ses tris, filtres et pages
 // @verifies CRM-022 (docs/BACKLOG.md) — colonne Responsable avec avatar et nom
+// @verifies CRM-105 (docs/BACKLOG.md) — la description d'une affaire en infobulle sur le titre de sa ligne :
+//           docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-cards.md §12.3
 // @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 : la commande « Nouvelle affaire » et son formulaire,
 //           placés par la vue liste (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.50)
 // @verifies docs/SPEC-cards.md §12.4 (bascule de tri), §12.5 (filtres), §12.6 (pagination),
@@ -36,6 +38,8 @@ const ETAPES: readonly EtapeBoard[] = [
 function card(partiel: Partial<CardListe> & Pick<CardListe, 'id'>): CardListe {
 	return {
 		title: partiel.id,
+		// `description` a rejoint les lectures avec `CRM-105` (infobulle, docs/DESIGN_SYSTEM.md §5.58).
+		description: null,
 		amount: null,
 		currency: 'EUR',
 		next_action: null,
@@ -766,5 +770,25 @@ describe('« Nouvelle affaire » dans la vue liste (CRM-095, docs/DESIGN_SYSTEM.
 		const formulaire = screen.getByTestId('formulaire-recu')
 		expect(barre.compareDocumentPosition(formulaire) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 		expect(formulaire.compareDocumentPosition(screen.getByRole('table')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+	})
+})
+
+describe('infobulle de description (docs/DESIGN_SYSTEM.md §5.58) — CRM-105', () => {
+	it('le titre d’une ligne décrite cite sa description et laisse le titre complet à l’infobulle', () => {
+		rendre({
+			cards: [
+				card({ id: 'decrite', title: 'Migration ERP', description: 'Bascule du progiciel.' }),
+				card({ id: 'nue', title: 'Audit' }),
+			],
+			total: 2,
+		})
+		const decrite = screen.getByRole('link', { name: 'Migration ERP' })
+		const id = decrite.getAttribute('aria-describedby') ?? ''
+		expect(document.getElementById(id)?.textContent).toBe('Bascule du progiciel.')
+		expect(decrite.hasAttribute('title')).toBe(false)
+		// Sans description, la règle du §5.9 reste tenue par le `title`, comme avant.
+		const nue = screen.getByRole('link', { name: 'Audit' })
+		expect(nue.getAttribute('title')).toBe('Audit')
+		expect(nue.hasAttribute('aria-describedby')).toBe(false)
 	})
 })

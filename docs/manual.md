@@ -765,6 +765,35 @@ personnes **administratrices** de l'espace de travail, exactement comme pour les
 règle est appliquée par le serveur. La suppression définitive n'est jamais proposée. **Aucun écran
 ne permet encore de les gérer**.
 
+### 3.2 quinquies La description d'un track, d'un channel ou d'une affaire, au survol
+
+*Livrée par `CRM-105`. Captures dans `docs/captures/CRM-105/`.*
+
+Un track, un channel et une affaire peuvent porter une **description** : un texte libre qui dit à quoi
+sert l'activité, ce que regroupe le channel, ou ce que recouvre l'affaire. Celle d'un track et d'un
+channel se saisit dans **Réglages ▸ Arborescence** (chapitre 5), dans le champ « Description » du
+formulaire.
+
+Quand une description existe, elle paraît dans une **infobulle** :
+
+- **au survol de la souris**, après un court instant, sur la pilule du track dans la barre
+  latérale (la bulle s'ouvre à sa droite), sur l'onglet du channel, et sur le titre de l'affaire —
+  dans sa carte du tableau comme dans sa ligne de la vue liste (la bulle s'ouvre dessous) ;
+- **au clavier**, dès que l'élément reçoit le focus par la touche **Tab**.
+
+La bulle écrit d'abord le **nom** de l'objet, puis sa description, avec ses retours à la ligne. Une
+description très longue défile à l'intérieur de la bulle. Vous pouvez y amener la souris pour la
+lire : elle reste ouverte tant que le pointeur est sur l'élément ou sur elle. La touche **Échap** la
+ferme ; un clic sur l'élément ouvre l'objet, comme avant, sans laisser de bulle.
+
+**Sans description, rien ne change** : aucune bulle, et le nom complet reste lisible au survol comme
+auparavant. Un lecteur d'écran annonce la description avec le nom de l'élément, que la bulle soit
+ouverte ou non.
+
+**Ce qui n'est pas proposé** : sur un écran tactile, il n'y a pas de survol, et toucher l'élément
+l'ouvre ; la description ne paraît donc pas en bulle. La description d'une affaire ne se saisit pas
+encore depuis l'interface.
+
 ### 3.3 Replier la barre latérale
 
 Le bouton en haut de la barre latérale la replie en colonne d'icônes, et la déplie à nouveau. Ce

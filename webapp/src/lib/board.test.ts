@@ -61,6 +61,8 @@ const MAINTENANT = new Date('2026-08-05T12:00:00.000Z')
 function card(partiel: Partial<CardBoard> & Pick<CardBoard, 'id' | 'current_step_id'>): CardBoard {
 	return {
 		title: partiel.id,
+		// `description` a rejoint les lectures avec `CRM-105` (infobulle, docs/DESIGN_SYSTEM.md §5.58).
+		description: null,
 		position: 1,
 		amount: null,
 		currency: 'EUR',
@@ -705,6 +707,12 @@ describe('le compte des masquées et les compteurs (§16.12.6, §16.12.8)', () =
 	// possibles : le board lit toutes ses cards en une fois (§7.2).
 	it('demande `snoozed_until` dans les colonnes lues', () => {
 		expect(COLONNES_CARD_BOARD).toContain('snoozed_until')
+	})
+
+	// @verifies CRM-105 — docs/SPEC-workflow-engine.md §7.2, docs/DESIGN_SYSTEM.md §5.58 : l'infobulle du
+	// titre de la carte lit la description dans la lecture des cards, sans requête de plus.
+	it('demande `description`, affichée en infobulle sur le titre', () => {
+		expect(COLONNES_CARD_BOARD).toContain('description')
 	})
 })
 

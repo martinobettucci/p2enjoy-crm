@@ -20,6 +20,8 @@
 //       sous elle, et l'action de la colonne initiale vide (docs/SPEC-cards.md §18.3 ;
 //       docs/DESIGN_SYSTEM.md §5.50, §5.2) ; tranche T2 ter : la saisie du motif dit qu'il est conservé
 //       (INC-259, décision 612 ; docs/SPEC-workflow-engine.md §7.8 révisé)
+// @spec CRM-105 (docs/BACKLOG.md) — la description d'une affaire en infobulle sur le titre de sa carte
+//       (docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-workflow-engine.md §7.2, décision 629)
 //
 // Ce composant **rend** ; il ne compose pas. Les colonnes, l'ordre, les cumuls, l'ancienneté et
 // la classification des refus vivent dans `webapp/src/lib/board.ts`, où ils sont vérifiables sans
@@ -34,6 +36,7 @@ import { Link } from 'react-router'
 import { Badge, type TonBadge } from '../components/ui/Badge'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'
+import { Infobulle } from '../components/ui/Infobulle'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import {
 	BasculeSommeil,
@@ -566,12 +569,18 @@ function CarteDeCard({
 			<div className="flex flex-col gap-2 p-3 min-w-0">
 				<div className="flex items-start gap-2 min-w-0">
 					<GripVertical aria-hidden="true" size={16} strokeWidth={2} className="text-text-3 shrink-0" />
-					<Link
-						to={`/tracks/${slugTrack}/${slugChannel}/cards/${card.id}`}
-						className="text-ink font-medium line-clamp-2 min-w-0 hover:text-brand"
-					>
-						{card.title}
-					</Link>
+					{/* La description de l'affaire en infobulle sur son titre — `CRM-105`, §5.58. */}
+					<Infobulle titre={card.title} description={card.description}>
+						{({ idDescription }) => (
+							<Link
+								to={`/tracks/${slugTrack}/${slugChannel}/cards/${card.id}`}
+								aria-describedby={idDescription}
+								className="text-ink font-medium line-clamp-2 min-w-0 hover:text-brand"
+							>
+								{card.title}
+							</Link>
+						)}
+					</Infobulle>
 				</div>
 
 				{card.amount === null ? null : (

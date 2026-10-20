@@ -35,6 +35,8 @@
 #       §4 (formulaires conditionnels)
 # @spec docs/SPEC-permissions-rls.md §2.1 (rôles de workspace)
 # @spec docs/DAT.md §11 (données de développement) ; README.md §5 et §8
+# @spec CRM-105 (docs/BACKLOG.md) — descriptions des tracks, channels et affaires : docs/SPEC-seed.md §20,
+#       docs/DESIGN_SYSTEM.md §5.58 (décision 629)
 #
 # Applique le seed socle sur la pile de développement en cours d'exécution.
 #
@@ -202,6 +204,36 @@ CHANNELS=(
 # confondraient, et l'assertion ne prouverait plus laquelle agit.
 #
 # table | cible | compte | access
+# Descriptions des tracks, des channels et des affaires — `CRM-105`, docs/SPEC-seed.md §20.
+#
+# L'infobulle de description (docs/DESIGN_SYSTEM.md §5.58) n'est démontrable que si des objets en portent
+# une, et sa branche contraire — l'élément rendu comme avant — que si d'autres n'en portent pas. Les objets
+# absents de ce tableau envoient `description: null` : un rejeu ramène la colonne au contrat (§20.3).
+#
+# CE QUI N'Y EST PAS EST VOULU (§20.1) : `…0c1` et `…0c3`, que les preuves d'API supposent nulles ; `…d001`,
+# dont la preuve du titre long lit le `title` du lien, que l'infobulle remplacerait. Aucune description
+# d'affaire ne contient un terme des preuves de recherche — `cards.search_tsv` les indexe.
+#
+# Les retours à la ligne sont écrits `\n` et rendus par `printf '%b'` : la description de `…0c2` en porte un,
+# celle de `…d002` sépare trois paragraphes — la donnée longue de l'infobulle.
+declare -A DESCRIPTIONS=(
+	[5eed0000-0000-4000-8000-000000000021]="Missions de conseil et de mise en œuvre de l'intelligence artificielle : diagnostic, prototype, déploiement."
+	[5eed0000-0000-4000-8000-000000000022]="Conception, développement et maintenance de sites et d'applications web."
+	[5eed0000-0000-4000-8000-000000000031]="Premiers contacts et pistes à qualifier avant toute proposition chiffrée."
+	[5eed0000-0000-4000-8000-000000000032]="Clients stratégiques suivis par un interlocuteur dédié, sur des cycles de décision longs."
+	[5eed0000-0000-4000-8000-000000000035]="Contrats récurrents de support et d'évolution des applications livrées."
+	[5eed0000-0000-4000-8000-0000000000c2]="Bascule de l'ancien progiciel de gestion vers la nouvelle plateforme comptable.\nDécision attendue de la direction financière avant la clôture de l'exercice."
+	[5eed0000-0000-4000-8000-0000000000cd]="Entrepôt de données et tableaux de bord pour les équipes commerciales."
+	[5eed0000-0000-4000-8000-00000000d002]="Reconduction de la tierce maintenance applicative du dossier patient informatisé et du portail de prise de rendez-vous.\n\nPérimètre demandé par la clinique : correctifs sous quarante-huit heures ouvrées, deux montées de version par an, accompagnement des équipes soignantes lors des mises en production, et un comité de suivi trimestriel avec la direction des systèmes d'information.\n\nPoints ouverts : le volume d'heures inclus, la reprise des tickets en cours chez le prestataire sortant, et la clause de réversibilité en fin de contrat."
+)
+
+# La description déclarée d'un objet, en JSON : une chaîne, ou `null` s'il n'en déclare aucune.
+description_json() {
+	local texte="${DESCRIPTIONS[$1]:-}"
+	if [ -z "$texte" ]; then printf 'null'; return; fi
+	jq -nc --arg v "$(printf '%b' "$texte")" '$v'
+}
+
 DROITS_FINS=(
 	'track_members|5eed0000-0000-4000-8000-000000000021|5eed0000-0000-4000-8000-000000000013|none'
 	'channel_members|5eed0000-0000-4000-8000-000000000031|5eed0000-0000-4000-8000-000000000013|member'
@@ -963,17 +995,20 @@ say "3. Tracks"
 for ligne in "${TRACKS[@]}"; do
 	IFS='|' read -r id slug nom couleur icone position archive <<< "$ligne"
 
+	# `description` est TOUJOURS envoyée, déclarée ou nulle : le rejeu converge (docs/SPEC-seed.md §20.3).
+	description=$(description_json "$id")
 	if [ "$archive" = '-' ]; then
 		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg nom "$nom" --arg slug "$slug" \
 		               --arg couleur "$couleur" --arg icone "$icone" --argjson position "$position" \
+		               --argjson description "$description" \
 		     '{id: $id, workspace_id: $ws, name: $nom, slug: $slug, color: $couleur,
-		       icon: $icone, position: $position, archived_at: null}')
+		       icon: $icone, position: $position, description: $description, archived_at: null}')
 	else
 		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg nom "$nom" --arg slug "$slug" \
 		               --arg couleur "$couleur" --arg icone "$icone" --argjson position "$position" \
-		               --arg archive "$archive" \
+		               --arg archive "$archive" --argjson description "$description" \
 		     '{id: $id, workspace_id: $ws, name: $nom, slug: $slug, color: $couleur,
-		       icon: $icone, position: $position, archived_at: $archive}')
+		       icon: $icone, position: $position, description: $description, archived_at: $archive}')
 	fi
 
 	code=$(api POST /rest/v1/tracks \
@@ -1075,17 +1110,20 @@ for ligne in "${CHANNELS[@]}"; do
 		note=' — workflow inchangé (déjà sur la copie)'
 	fi
 
+	# `description` est TOUJOURS envoyée, déclarée ou nulle : le rejeu converge (docs/SPEC-seed.md §20.3).
+	description=$(description_json "$id")
 	if [ "$archive" = '-' ]; then
 		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg track "$track" --arg nom "$nom" \
 		               --arg slug "$slug" --argjson position "$position" --arg wf "$wf_envoye" \
+		               --argjson description "$description" \
 		     '{id: $id, workspace_id: $ws, track_id: $track, name: $nom, slug: $slug,
-		       workflow_id: $wf, position: $position, archived_at: null}')
+		       workflow_id: $wf, position: $position, description: $description, archived_at: null}')
 	else
 		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg track "$track" --arg nom "$nom" \
 		               --arg slug "$slug" --argjson position "$position" --arg archive "$archive" \
-		               --arg wf "$wf_envoye" \
+		               --arg wf "$wf_envoye" --argjson description "$description" \
 		     '{id: $id, workspace_id: $ws, track_id: $track, name: $nom, slug: $slug,
-		       workflow_id: $wf, position: $position, archived_at: $archive}')
+		       workflow_id: $wf, position: $position, description: $description, archived_at: $archive}')
 	fi
 
 	code=$(api POST /rest/v1/channels \
@@ -1672,9 +1710,9 @@ poser_card_globale() {
 	               --argjson position "$position" --argjson owner "$owner_json" \
 	               --argjson montant "$montant_json" --argjson action "$action_json" \
 	               --argjson echeance "$echeance_json" --argjson archive "$archive_json" \
-	               --argjson corbeille "$corbeille_json" \
+	               --argjson corbeille "$corbeille_json" --argjson description "$(description_json "$id")" \
 	     '{id: $id, workspace_id: $ws, channel_id: $ch, workflow_id: $wf, current_step_id: $etape,
-	       title: $titre, owner_id: $owner, amount: $montant, currency: $devise,
+	       title: $titre, description: $description, owner_id: $owner, amount: $montant, currency: $devise,
 	       position: $position, next_action: $action, next_action_at: $echeance,
 	       created_by: "5eed0000-0000-4000-8000-000000000011",
 	       archived_at: $archive, deleted_at: $corbeille}')
@@ -1760,9 +1798,9 @@ for ligne in "${CARDS_DERIVE[@]}"; do
 	               --arg etape "$etape" --arg titre "$titre" --arg devise "$devise" \
 	               --argjson position "$position" --argjson owner "$owner_json" \
 	               --argjson montant "$montant_json" --argjson action "$action_json" \
-	               --argjson echeance "$echeance_json" \
+	               --argjson echeance "$echeance_json" --argjson description "$(description_json "$id")" \
 	     '{id: $id, workspace_id: $ws, channel_id: $ch, workflow_id: $wf, current_step_id: $etape,
-	       title: $titre, owner_id: $owner, amount: $montant, currency: $devise,
+	       title: $titre, description: $description, owner_id: $owner, amount: $montant, currency: $devise,
 	       position: $position, next_action: $action, next_action_at: $echeance,
 	       created_by: "5eed0000-0000-4000-8000-000000000011",
 	       archived_at: null, deleted_at: null}')

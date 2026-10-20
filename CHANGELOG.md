@@ -13,6 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-105` — la description d'un track, d'un channel et d'une affaire en infobulle (décision 629)
+
+*Webapp et seed de développement ; aucune migration. Prouvé en développement ; à livrer (`docs/PROD_MIGRATIONS.md` §2.15).*
+
+- **La description paraît en infobulle** au survol (après 400 ms) et au focus clavier, sur la pilule d'un track, l'onglet
+  d'un channel et le titre d'une affaire — carte du board et ligne de la vue liste. La bulle nomme l'objet puis le décrit,
+  retours à la ligne préservés ; elle reste ouverte sous le pointeur, se ferme à `Échap`, et tient dans la fenêtre aux
+  quatre paliers. Sans description, l'élément est rendu comme avant, `title` compris.
+- **Composant partagé** `webapp/src/components/ui/Infobulle.tsx`, rendu à la racine du document ; règle de cadre dans
+  `webapp/src/lib/infobulle.ts`. La description est aussi citée par `aria-describedby`.
+- **Quatre lectures gagnent `description`** : barre latérale, barre d'onglets, cards du board, page de la vue liste.
+- **Seed** : descriptions sur deux tracks, trois channels et trois affaires (`docs/SPEC-seed.md` §20).
+
 ### `CRM-101` T6 — l'onglet « Utilisateurs » de la plateforme (décision 627, arbitrage A6)
 
 *Migration `0093` (une fonction de lecture, aucune table touchée) et webapp. Prouvé en développement ; à livrer.*

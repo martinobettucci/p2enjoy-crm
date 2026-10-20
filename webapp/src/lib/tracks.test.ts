@@ -4,6 +4,8 @@
 // @verifies INC-254, décision 608 — docs/BACKLOG.md « Correctif arbitré le 2026-09-28 » ;
 //           docs/SPEC-webapp.md §6.3 bis (la relecture silencieuse et le signal `p2enjoy:tracks-modifies`),
 //           docs/DESIGN_SYSTEM.md §5.13, §5.29 tranche 2 c (un rechargement n'efface pas la liste qu'il relit)
+// @verifies CRM-105 (docs/BACKLOG.md) — `description` demandée pour l'infobulle : docs/SPEC-tracks.md §7,
+//           docs/DESIGN_SYSTEM.md §5.58
 //
 // Ce fichier éprouve **la requête réellement émise** et la classification des échecs, pas
 // seulement la valeur rendue. Motif : deux des trois exigences de `docs/SPEC-tracks.md` §7 sont
@@ -89,6 +91,7 @@ const TRACK: Track = {
 	color: 'brand',
 	icon: 'sparkles',
 	position: 1,
+	description: null,
 }
 
 describe('la requête émise porte les règles de docs/SPEC-tracks.md', () => {
@@ -97,9 +100,9 @@ describe('la requête émise porte les règles de docs/SPEC-tracks.md', () => {
 		await lireTracks(client)
 		expect(appel.table).toBe('tracks')
 		expect(appel.colonnes).toBe(COLONNES_TRACK)
-		// `description` et les horodatages ne sont pas demandés : une requête ne rapporte que ce
-		// qui est affiché.
-		expect(appel.colonnes).not.toContain('description')
+		// Les horodatages ne sont pas demandés : une requête ne rapporte que ce qui est affiché.
+		// `description` l'est depuis `CRM-105` — l'infobulle de la pilule (docs/DESIGN_SYSTEM.md §5.58).
+		expect(appel.colonnes).toContain('description')
 		expect(appel.colonnes).not.toContain('created_at')
 	})
 

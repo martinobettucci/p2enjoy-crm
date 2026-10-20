@@ -7,6 +7,8 @@
 // @spec INC-254, décision 608 — docs/BACKLOG.md « Correctif arbitré le 2026-09-28 » ; docs/SPEC-webapp.md
 //       §6.3 bis (la relecture silencieuse et le signal `p2enjoy:tracks-modifies`) ; docs/DESIGN_SYSTEM.md
 //       §5.13, §5.29 tranche 2 c
+// @spec CRM-105 (docs/BACKLOG.md) — `description` lue pour l'infobulle de la pilule : docs/SPEC-tracks.md §7,
+//       docs/DESIGN_SYSTEM.md §5.58 (décision 629)
 //
 // `public.tracks` porte, depuis `CRM-020`, une politique de lecture réservée aux membres du
 // workspace. Sans session la requête rend `200` et `[]` ; avec la session restaurée par `CRM-009`,
@@ -23,16 +25,18 @@ import type { ClientCrm } from './supabase'
 /**
  * Ce que la barre latérale a besoin de savoir d'un track, et rien de plus.
  *
- * `description` et les horodatages ne sont pas demandés : une requête ne rapporte que ce qui est
- * affiché, sans quoi la charge utile grossit à chaque colonne ajoutée au modèle.
+ * Les horodatages ne sont pas demandés : une requête ne rapporte que ce qui est affiché, sans quoi
+ * la charge utile grossit à chaque colonne ajoutée au modèle. `description` l'est depuis `CRM-105` :
+ * elle est affichée, en infobulle sur la pilule (docs/DESIGN_SYSTEM.md §5.58), et la lire ici évite
+ * une requête par survol.
  */
 export type Track = Pick<
 	Database['public']['Tables']['tracks']['Row'],
-	'id' | 'name' | 'slug' | 'color' | 'icon' | 'position'
+	'id' | 'name' | 'slug' | 'color' | 'icon' | 'position' | 'description'
 >
 
 /** Colonnes réellement demandées. Exportée pour que le test unitaire vérifie la requête émise. */
-export const COLONNES_TRACK = 'id, name, slug, color, icon, position'
+export const COLONNES_TRACK = 'id, name, slug, color, icon, position, description'
 
 /**
  * Interroge PostgREST. Ne lève jamais : tout échec est rendu comme un état d'erreur classé, sur

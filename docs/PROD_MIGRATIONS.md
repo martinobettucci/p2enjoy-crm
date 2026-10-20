@@ -442,6 +442,21 @@ répertoire temporaire de la cellule puis retiré : `/srv/crm` est resté à la 
 **Retour arrière.** Arrêter le service `mcp` et retirer le bloc d'hôte. La 90 n'est lue par rien d'autre que le
 connecteur : la garder ne gêne pas la webapp.
 
+### 2.15 `CRM-105` — la description en infobulle (À LIVRER)
+
+`docs/DESIGN_SYSTEM.md` §5.58 ; décision 629. **Webapp seule** : aucune migration, aucune variable, aucun service
+nouveau, aucun droit changé. Quatre lectures demandent une colonne de plus, `description`, déjà lisible sous les mêmes
+politiques. La baseline de migrations ne bouge pas. Le seed n'est pas joué en production : les descriptions de
+production sont celles que les administrateurs ont saisies dans l'arborescence.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Livrer la webapp — aucune migration en attente pour cette unité | poste, par les IP | `scripts/spark/livrer.sh` (sans `--migrate`), `./runProd.sh --spark` enchaîné par le script |
+| 2 | Vérifier | poste, lecture seule | `scripts/spark/verifier.sh` |
+| 3 | Survoler la pilule d'un track dont la description est renseignée dans Réglages ▸ Arborescence : la bulle paraît à sa droite, nom puis description ; `Échap` la ferme | le responsable | l'application |
+
+**Retour arrière** : la révision précédente de la webapp. Aucune donnée n'est écrite par cette unité.
+
 ## 3. Migrations en attente
 
 **Trois migrations en attente : la 91 et la 92** (`CRM-093`, décision 628 — quatre colonnes calculées, aucune table

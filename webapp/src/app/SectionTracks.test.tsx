@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-tracks.md §7 (ce que la barre latérale lit), §7.1 (pilule)
 // @verifies docs/DESIGN_SYSTEM.md §4 (tracks en pilules), §5.6 (icône obligatoire), §7 (paliers)
 // @verifies docs/SPEC-webapp.md §7 (états systématiques), §10 (aucun texte en dur)
+// @verifies CRM-105 (docs/BACKLOG.md) — la description d'un track en infobulle sur sa pilule :
+//           docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-tracks.md §7
 //
 // Ces tests montent la **vraie** barre latérale et isolent ses variantes par leurs rôles accessibles
 // et attributs de données. Le parcours connecté complet, lui, est prouvé par
@@ -15,7 +17,7 @@ import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import type { Track } from '../lib/tracks'
 
 const TRACKS: readonly Track[] = [
-	{ id: 't-1', name: 'Conseil & IA', slug: 'conseil-ia', color: 'brand', icon: 'sparkles', position: 1 },
+	{ id: 't-1', name: 'Conseil & IA', slug: 'conseil-ia', color: 'brand', icon: 'sparkles', position: 1, description: null },
 	{
 		id: 't-2',
 		name: 'Studio web',
@@ -23,9 +25,10 @@ const TRACKS: readonly Track[] = [
 		color: 'success',
 		icon: 'layout-dashboard',
 		position: 2,
+		description: null,
 	},
 	// Icône inconnue du catalogue : elle doit se replier, pas casser le rendu.
-	{ id: 't-3', name: 'Formation', slug: 'formation', color: 'accent', icon: 'inexistante', position: 3 },
+	{ id: 't-3', name: 'Formation', slug: 'formation', color: 'accent', icon: 'inexistante', position: 3, description: null },
 ]
 
 function monter(etat: EtatAsync<readonly Track[]>, replie = false) {
@@ -145,5 +148,20 @@ describe('paliers et lecteurs d’écran (docs/DESIGN_SYSTEM.md §7, §8)', () =
 		expect(screen.getByRole('list')).toBeTruthy()
 		expect(screen.getAllByRole('listitem')).toHaveLength(3)
 		expect(screen.getByRole('heading', { level: 2, name: 'Tracks' })).toBeTruthy()
+	})
+})
+
+describe('infobulle de description (docs/DESIGN_SYSTEM.md §5.58) — CRM-105', () => {
+	const DECRIT: Track = { ...TRACKS[0]!, description: 'Missions de conseil et de mise en œuvre.' }
+
+	it('une pilule décrite cite sa description et laisse le nom à l’infobulle, à la place du `title`', () => {
+		monter(pret([DECRIT, TRACKS[1]!]))
+		const [decrite, nue] = screen.getAllByTestId('entree-track')
+		const id = decrite?.getAttribute('aria-describedby') ?? ''
+		expect(document.getElementById(id)?.textContent).toBe('Missions de conseil et de mise en œuvre.')
+		expect(decrite?.hasAttribute('title')).toBe(false)
+		// Sans description, la pilule est rendue exactement comme avant.
+		expect(nue?.getAttribute('title')).toBe('Studio web')
+		expect(nue?.hasAttribute('aria-describedby')).toBe(false)
 	})
 })

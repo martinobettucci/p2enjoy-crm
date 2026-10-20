@@ -76,6 +76,7 @@ const CHANNEL: Channel = {
 	slug: 'prospection',
 	position: 1,
 	workflow_id: 'wf-1',
+	description: null,
 }
 
 describe('lireTrackParSlug', () => {
@@ -150,6 +151,12 @@ describe('lireChannels', () => {
 	// lecture des mêmes lignes (docs/SPEC-channels.md §5, décision 169).
 	it('demande `workflow_id`, dont le board a besoin, dans la lecture PARTAGÉE', () => {
 		expect(COLONNES_CHANNEL).toContain('workflow_id')
+	})
+
+	// @verifies CRM-105 — docs/SPEC-channels.md §5, docs/DESIGN_SYSTEM.md §5.58 : l'infobulle de l'onglet
+	// lit la description dans la lecture déjà émise, jamais par une requête de survol.
+	it('demande `description`, affichée en infobulle sur l’onglet', () => {
+		expect(COLONNES_CHANNEL).toContain('description')
 	})
 
 	it('rend les channels consentis par le backend', async () => {

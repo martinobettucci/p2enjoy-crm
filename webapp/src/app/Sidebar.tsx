@@ -3,6 +3,8 @@
 // @spec docs/SPEC-webapp.md §5.1 (coquille), §8 (responsive), §9 (accessibilité)
 // @spec CRM-101 (docs/BACKLOG.md) tranche T3 — l'entrée « Plateforme », rendue seulement quand la base le dit
 //       (docs/DESIGN_SYSTEM.md §5.56, frontière du §5.29 ter)
+// @spec CRM-105 (docs/BACKLOG.md) — la description d'un track en infobulle sur sa pilule, posée à sa droite
+//       (docs/DESIGN_SYSTEM.md §5.58, docs/SPEC-tracks.md §7, décision 629)
 //
 // Comportement par palier (docs/DESIGN_SYSTEM.md §7), obtenu par les classes et non par une
 // mesure JavaScript de la fenêtre — un `resize` non écouté ne peut donc pas désynchroniser
@@ -17,6 +19,7 @@
 
 import { PanelLeftClose, PanelLeftOpen, ShieldCheck, X } from 'lucide-react'
 import { NavLink } from 'react-router'
+import { Infobulle } from '../components/ui/Infobulle'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import { CHEMIN_PLATEFORME } from './chemins'
@@ -231,6 +234,11 @@ function SectionTracks({
 				const Icone = iconeTrack(track.icon)
 				return (
 					<li key={track.id}>
+						{/* L'infobulle porte le nom en tête et REMPLACE alors le `title` (§5.58) : le nom
+						    reste lisible au palier « colonne d'icônes ». À droite de la pilule, qui occupe
+						    le bord gauche de l'écran. */}
+						<Infobulle titre={track.name} description={track.description} cote="droite">
+						{({ idDescription }) => (
 						<NavLink
 							to={`/tracks/${track.slug}`}
 							// Le tiroir se referme après la navigation, comme pour les entrées
@@ -239,7 +247,8 @@ function SectionTracks({
 							onClick={onNaviguer}
 							data-testid="entree-track"
 							data-slug={track.slug}
-							title={track.name}
+							title={idDescription === undefined ? track.name : undefined}
+							aria-describedby={idDescription}
 							className={({ isActive }) =>
 								[
 									'flex items-center gap-2 px-2 min-h-[var(--size-target)] rounded-full',
@@ -256,6 +265,8 @@ function SectionTracks({
 							<Icone aria-hidden="true" size={18} className="shrink-0" />
 							<span className={['truncate', classeTexte].join(' ')}>{track.name}</span>
 						</NavLink>
+						)}
+						</Infobulle>
 					</li>
 				)
 			})}

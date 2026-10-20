@@ -6,6 +6,7 @@
 // @verifies docs/SPEC-permissions-rls.md §7 (preuves hors interface, jetons réels)
 // @verifies docs/SPEC-cards.md §5 (« active » : ni archivée, ni en corbeille)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-105 (docs/BACKLOG.md) — `description` n'est plus une colonne écartée : docs/SPEC-cards.md §12.3
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. La vue liste construit une requête paginée, triée et
 // filtrée (§12.3 à §12.6). Cette construction est éprouvée par `webapp/src/lib/liste-cards.test.ts`
@@ -152,11 +153,12 @@ test.describe('les deux lectures de la vue liste (§12.3)', () => {
 	})
 
 	// CRM-022 clôt INC-014 : l'identité est demandée par jointure, tandis que les colonnes qui ne
-	// sont jamais affichées restent absentes.
+	// sont jamais affichées restent absentes. `description` en est sortie avec `CRM-105` : elle est
+	// affichée en infobulle (docs/DESIGN_SYSTEM.md §5.58), et `e2e/api/descriptions.spec.ts` la lit.
 	test('la lecture embarque le responsable, sans colonne technique non affichée', () => {
 		expect(COLONNES_CARD_LISTE).toContain('owner_id')
 		expect(COLONNES_CARD_LISTE).toContain('responsable:profiles!cards_owner_id_fkey')
-		for (const absente of ['position', 'description', 'health_score', 'search_tsv']) {
+		for (const absente of ['position', 'health_score', 'search_tsv']) {
 			expect(COLONNES_CARD_LISTE).not.toContain(absente)
 		}
 	})

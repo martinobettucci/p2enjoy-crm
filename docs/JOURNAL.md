@@ -32051,3 +32051,14 @@ un droit pour un compte sans profil, ni comment valider une matrice reçue.
   lirait comme « aucun appel ».
 - **La bascule de la clé précède les fonctions**, dans la même migration. Les droits orphelins sont retirés et comptés
   par `raise notice` ; le registre de production est vide.
+
+### décision 629, mise en œuvre — `CRM-105` T2 : l'infobulle sur la pile réelle
+
+*2026-10-21.* Trois faits relevés à l'écriture, aucun ne change la décision :
+- **jsdom rend `:focus-visible` FAUX en toute circonstance** (mesuré par une sonde : focus posé, `matches(':focus')` vrai,
+  `matches(':focus-visible')` faux). Les deux scénarios unitaires du clavier simulent donc la modalité clavier du
+  navigateur sur ce seul sélecteur ; l'ouverture au `Tab` réel est prouvée par `e2e/ui/infobulle-description.spec.ts`.
+- **Une bulle `fixed` déplacée vers la droite se rétrécit** : sa largeur de contenu dépend de la place restante. La largeur
+  mesurée est donc reposée avec la position, sans quoi la bulle grandirait en hauteur après sa mesure.
+- **La donnée longue du seed (549 caractères) tient sans défiler aux quatre paliers** : la limite « au clavier, une bulle
+  qui défile ne se fait pas défiler » est écrite au §5.58 sans être atteinte par le seed.

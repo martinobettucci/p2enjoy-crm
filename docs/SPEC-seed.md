@@ -2232,7 +2232,7 @@ n'en portent pas. Jusqu'ici aucun track, aucun channel, aucune affaire du seed n
 | channel `maintenance` | `…035` | « Contrats récurrents de support et d'évolution des applications livrées. » |
 | affaire « Migration ERP Sogexia » | `…0c2` | deux lignes : la bascule de progiciel, puis la décision attendue — un **retour à la ligne** démontré |
 | affaire « Socle analytique — Vertuo » | `…0cd` | une phrase |
-| affaire « Renouvellement TMA — Clinique Saint-Ambroise » | `…d002` | trois paragraphes, environ 600 caractères — la **donnée longue** de l'infobulle |
+| affaire « Renouvellement TMA — Clinique Saint-Ambroise » | `…d002` | trois paragraphes, 549 caractères — la **donnée longue** de l'infobulle |
 
 Sans description, et c'est voulu : le track `formation`, les channels `refonte`, `inter-entreprises`, et toutes les
 autres affaires — dont `…0c1` et `…0c3`, que les preuves d'API supposent nulles (`e2e/api/colonnes-protegees.spec.ts`,
