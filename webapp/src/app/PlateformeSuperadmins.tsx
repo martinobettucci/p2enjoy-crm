@@ -16,7 +16,7 @@ import type { ClientCrm } from '../lib/supabase'
 import { formaterDate, texteRefus } from './presentation-plateforme'
 import { RecherchePersonne } from './RecherchePersonne'
 
-const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left'
+const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left whitespace-nowrap'
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
 const CLASSES_DATE = 'h-[var(--size-target)] px-3 text-right tabular-nums whitespace-nowrap'
 

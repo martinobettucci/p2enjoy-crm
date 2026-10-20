@@ -31612,3 +31612,42 @@ rendait le focus dans le même geste, et un bouton désactivé le refuse : le fo
 est celui du §5.29 tranche 2 b-2 c, un drapeau puis un effet. Il est appliqué aux trois confirmations, sans
 temporisation (`CLAUDE.md` §18).
 
+
+### décision 627, mise en œuvre — `CRM-101` T4 : le seed, les preuves de bout en bout, le manuel
+
+*2026-10-20.*
+
+**Le seed ne porte pas d'espace de plus, et c'est une décision mesurée.** La première rédaction du §8 de
+`docs/SPEC-plateforme.md` prévoyait un espace « Atelier » de démonstration. Avant d'écrire le seed, j'ai cherché qui
+tient pour acquis l'**unique** espace du seed (`CRM-005`) : la suite `0003`, les démontages de
+`premier-lancement.spec.ts` et `guide-flottant.spec.ts`, et `objectifs.spec.ts`, qui prend l'espace « premier par
+ordre de nom » — « Atelier » précéderait « P2Enjoy SAS ». Un espace de plus aurait cassé quatre unités sans rien
+démontrer que l'E2E de la plateforme ne démontre déjà, en rendant la base telle qu'il l'a trouvée. Le §8 est révisé
+**avant** le code ; le seed n'amorce que Sabine, par une vraie connexion.
+
+**Deux écarts de mesure, nommés.**
+
+1. **L'empreinte du catalogue de `verify-plateforme.sh`** comparait d'abord les ACL brutes des fonctions. Après une
+   réapplication de la 89 par `psql`, l'**ordre** des entrées d'`app.est_superadmin()` diffère — pas le contenu.
+   L'empreinte compare désormais les définitions et `has_function_privilege` rôle par rôle : ce qu'un rôle peut
+   faire, non l'ordre où le catalogue l'écrit.
+2. **Cinq échecs de `liste-cards` à la campagne d'API** ne venaient pas du code : le `.env` de ce poste gardait une
+   valeur de `PGRST_DB_EXTRA_SEARCH_PATH` antérieure au contrat. Valeur locale alignée, campagne verte ; la faille de
+   l'outillage (une valeur devenue fausse passe en silence) est consignée en **INC-274**, à arbitrer, sans retouche
+   des scripts.
+
+**La campagne d'interface a réécrit 343 captures d'autres unités.** Elles ont été comparées pixel à pixel à leur
+version committée, puis les écarts touchant la barre latérale ont été regardés côte à côte. Une seule change pour
+de bon : `CRM-092/admin-domaine-moderation-1440.jpg`, où Inès Carvalho — porteuse de `lelabs_admin`, donc
+superadministratrice par l'arbitrage A1 — voit l'entrée « Plateforme ». Elle est gardée ; les 342 autres (dates des
+données, défilement horizontal du rail) sont restaurées, comme les quatre captures Roundcube que la campagne mail a
+réécrites (données datées).
+
+**La base de développement avait une migration d'avance sur l'arbre.** La `0090` de `CRM-102`, appliquée plus tôt
+puis mise de côté le temps de ce commit, restait inscrite au registre : au redémarrage de `mail-sync` par la
+campagne mail, le runner a refusé — à raison — un fichier inscrit mais absent (DAT §3.2 bis), et cinq scénarios ont
+échoué en cascade. Base reconstruite sur les 89 migrations de l'arbre, puis pgTAP, l'E2E de la plateforme, son
+script de vérification et la campagne mail rejoués dessus : verts.
+
+**Vérifications.** Celles du backlog (`CRM-101` T4). La tranche T5 — la production — attend l'instruction du
+responsable (`docs/PROD_MIGRATIONS.md` §2.13).

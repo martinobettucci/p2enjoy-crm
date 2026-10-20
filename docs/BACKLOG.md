@@ -15066,7 +15066,7 @@ d'accès nouvelle. Spécifié avant le code : `docs/SPEC-administration-arboresc
       Seed inchangé : le track « Formation » et ses workflows suffisent à la démonstration.
 - [ ] **T3** — livraison de la webapp en production et constat.
 
-### CRM-101 — Superadministration de la plateforme : espaces, appartenances, attentes `[ ]`
+### CRM-101 — Superadministration de la plateforme : espaces, appartenances, attentes `[~]`
 *Créée le 2026-10-20 — décision 627, arbitrages du responsable A1 et D7. Le CRM n'avait aucun écran pour créer un
 espace ni gérer ses appartenances et ses attentes : seul `scripts/spark/amorcer-espace.sh` le faisait, sous la clé de
 service. Un superadministrateur — drapeau en base amorcé une seule fois par `CRM_SUPERADMINS_INITIAUX`, ou rôle `admin`
@@ -15110,9 +15110,28 @@ LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : 
       unitaire **127 fichiers, 3 865 tests** ; `typecheck`, build et `classes-css` (394 classes) verts. **Migration 89
       enrichie** : le journal inscrit aussi les noms de la personne et de l'espace, pour se lire sans jointure ;
       `0084_plateforme.test.sql` **71** assertions.
-- [ ] **T4** — seed (`docs/SPEC-seed.md`, compte Keycloak « Sabine Plateforme »), API, E2E à la souris et au clavier,
-      captures aux quatre paliers observées, manuel (chapitre 18, chapitre 17 révisé), `scripts/verify-plateforme.sh`,
+- [x] **T4** — seed (`docs/SPEC-seed.md`, compte Keycloak « Sabine Plateforme »), API, E2E à la souris et au clavier,
+      captures aux quatre paliers observées, manuel (chapitre 10 ; lignes 17 et 17 *bis* du sommaire), `scripts/verify-plateforme.sh`,
       campagnes.
+      *Vérifié le 2026-10-20, en développement* : **seed** — Sabine amorcée par une vraie connexion (section `8 unvicies`,
+      `docs/SPEC-seed.md` §19), le seed constate le drapeau sous son jeton ; **aucun espace de démonstration de plus**,
+      décision mesurée et écrite avant le code (`docs/SPEC-plateforme.md` §8) ; `0003_seed_socle` **34** assertions.
+      **API** `e2e/api/plateforme.spec.ts` **7/7** aux vrais jetons (amorçage, garde des quatorze fonctions pour
+      l'anonyme, la lectrice et l'administrateur d'espace, aucune écriture par ces refus, parcours complet de Sabine).
+      **E2E UI** `e2e/ui/plateforme.spec.ts` **4/4** : souris, clavier seul (`Échap` et focus rendu), refus de Camille,
+      trois onglets et la fiche aux quatre paliers sans défilement horizontal ; **19 captures** observées
+      (`docs/captures/CRM-101/`). **Manuel** chapitre 10, `verify-manual.sh` **209** contrôles ;
+      `verify-plateforme.sh` **30** contrôles, Playwright compris (trois dégradations réelles, chacune rouge, restauration
+      constatée par l'empreinte du catalogue). **Campagnes** : unitaires **127 fichiers, 3 866 tests** ; API **1 129/1 129** (cinq échecs de `liste-cards` d'abord,
+      dus au `.env` local et non au code : INC-274) ; UI **822/822** — ces deux campagnes sur une base qui portait déjà,
+      en plus, les trois tables fermées de la future `0090` (`CRM-102`), qu'aucun écran ne lit. Base ensuite
+      **reconstruite sur les 89 migrations de l'arbre** (`./resetMe.sh`), puis rejoués dessus : pgTAP **84 fichiers,
+      3 631 assertions**, `e2e/ui/plateforme.spec.ts` **4/4**, `verify-plateforme.sh` complet, mail **44/44** — une
+      première campagne mail avait rendu 5 échecs, tous dus au refus du runner devant la `0090` inscrite au registre
+      et absente du répertoire (DAT §3.2 bis), cause d'environnement levée par la reconstruction. `typecheck`, build et `classes-css` (394) verts.
+      **Captures des autres unités** : 343 réécrites par la campagne, comparées pixel à pixel à leur version committée ;
+      342 restaurées (données datées, défilement), **une gardée** — `CRM-092/admin-domaine-moderation-1440.jpg`, où Inès,
+      porteuse de `lelabs_admin`, voit désormais l'entrée « Plateforme » (arbitrage A1).
 - [ ] **T5** — livraison en production (migration 89, instantané confirmé, `CRM_SUPERADMINS_INITIAUX`) et constat.
 
 ### CRM-102 — Connecteur MCP : socle, mandataire OAuth, connexion longue, registre `[ ]`
@@ -15145,7 +15164,7 @@ actions par espace, avertissement « pas membre de cet espace », journal des ap
 - [ ] **T2** — l'onglet et la fiche d'un compte ; `docs/DESIGN_SYSTEM.md` écrit après lecture intégrale ; preuves
       unitaires.
 - [ ] **T3** — API aux jetons réels, E2E à la souris et au clavier avec un effet constaté par un appel MCP réel, seed,
-      captures observées, manuel (chapitre 19), campagnes.
+      captures observées, manuel (chapitre 11), campagnes.
 - [ ] **T4** — livraison en production et constat.
 
 ### CRM-104 — Outils MCP par famille `[ ]`

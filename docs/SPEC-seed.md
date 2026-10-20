@@ -2180,3 +2180,37 @@ L'onglet « À saisir » rend donc quatre lignes au commercial, dont deux sur le
 les jetons réels. **Convergence** : une ligne qui porte déjà des réels n'en reçoit pas d'autres, et le soldé n'est posé
 que sur une ligne ouverte. Une base antérieure à `0088` garde le réel repris par la migration — un seul réel de 880
 pour « Achat d'espace » — : seule une base recréée porte les deux réels.
+
+## 19. Le superadministrateur de la plateforme — `CRM-101` tranche T4
+
+*Écrit le 2026-10-20 avec la section `8 unvicies` de `supabase/seed/apply-seed.sh` ; contrat :
+`docs/SPEC-plateforme.md` §3 et §8.*
+
+### 19.1 Ce que le jeu porte
+
+Une quatrième personne, **Sabine Plateforme** (`plateforme@p2enjoy.test`, `5eed0000-0000-4000-8000-000000000018`),
+**superadministratrice** de la plateforme et **membre d'aucun espace**. Son profil est né de son amorçage, et le
+journal de la plateforme porte l'entrée « Superadministrateur amorcé ».
+
+**Aucun espace de plus.** Le jeu garde son unique espace « P2Enjoy SAS », sur lequel reposent de nombreuses preuves
+(`docs/SPEC-plateforme.md` §8, pour la liste mesurée).
+
+### 19.2 Le vrai chemin
+
+Le seed **se connecte** comme Sabine par la vraie page du SSO de développement (`sso_jeton_interne`). La fonction
+`session`, qui reçoit `CRM_SUPERADMINS_INITIAUX` de l'overlay de développement, amorce le drapeau avant l'admission.
+Le seed ne pose aucune ligne lui-même : il **constate** par `public.est_superadmin()`, sous le jeton de Sabine, que le
+drapeau est posé, et s'arrête en nommant la cause sinon.
+
+### 19.3 Convergence
+
+Une seconde connexion n'amorce plus rien : la table n'est plus vide.
+
+### 19.4 Ce que les preuves en attendent
+
+- **`0003_seed_socle`** compte **quatre** profils `5eed…`, dont **trois** membres, et vérifie que Sabine est la seule
+  superadministratrice.
+- **`0084_plateforme`** vide `superadmins` dans sa transaction, l'annule à la fin, et ne lit que les entrées du
+  journal nées dans cette transaction.
+- **`e2e/api/plateforme.spec.ts`** relève les drapeaux qu'il trouve et les rend tels quels.
+

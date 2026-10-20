@@ -10,6 +10,7 @@
 # @verifies CRM-098 (docs/BACKLOG.md) tranche T4 — les libellés de la saisie de temps et du coût du personnel, et les
 #           versions de coût de l'annexe A (docs/SPEC-temps.md §7, chapitre 5 undecies)
 # @verifies CRM-099 (docs/BACKLOG.md) — les libellés des réels d'une ligne de coût (chapitre 5 octies)
+# @verifies CRM-101 (docs/BACKLOG.md) tranche T4 — les libellés de la plateforme (docs/SPEC-plateforme.md §7, chapitre 10)
 #
 # Vérifie que `docs/manual.md` décrit le produit **réellement exécuté**, hors interface, contre la
 # base réelle et contre les fichiers du dépôt.
@@ -180,6 +181,29 @@ LIBELLES_PARCOURS=(
 	"Ajouter le réel"
 	"Sans libellé"
 	"Soldé"
+	# CRM-101 — la plateforme (chapitre 10)
+	"Plateforme"
+	"Accès réservé"
+	"Espaces"
+	"Superadministrateurs"
+	"Journal"
+	"Nouvel espace"
+	"Nom"
+	"Identifiant court"
+	"Domaine entrant (facultatif)"
+	"Créer"
+	"Aucun administrateur"
+	"Membres"
+	"Ajouter un membre"
+	"Retirer"
+	"Inscrire une attente"
+	"En suspens"
+	"Modifier"
+	"Supprimer l’espace"
+	"Supprimer définitivement"
+	"Amorçage"
+	"Accorder le drapeau"
+	"Entrées plus anciennes"
 )
 
 # ---------------------------------------------------------------------------------------------

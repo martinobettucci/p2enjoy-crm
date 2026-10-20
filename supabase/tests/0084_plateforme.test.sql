@@ -98,6 +98,11 @@ $$;
 
 delete from public.superadmins;
 insert into public.profiles (id, full_name) values ('a0890000-0000-4000-8000-000000000002', 'Xavier Témoin');
+-- Le journal est en ajout seul, et les preuves d'API et d'interface y laissent leurs entrées : la suite ne lit que les
+-- entrées nées dans SA transaction, au-delà de ce point de départ.
+create temporary table depart_journal on commit drop as
+	select coalesce(max(id), 0) as id from public.plateforme_journal;
+grant select on depart_journal to authenticated;
 
 -- =============================================================================================
 -- 1. La forme
@@ -210,7 +215,8 @@ select is((select full_name from public.profiles where id = 'a0890000-0000-4000-
 select is((select pg_catalog.count(*)::integer from public.sessions_sso
 	        where sub = 'a0890000-0000-4000-8000-000000000001'), 1, 'la session serveur est enregistrée');
 select is((select geste || ':' || coalesce(acteur::text, 'null') from public.plateforme_journal
-	        order by id desc limit 1), 'superadmin_amorce:null', 'l''amorçage est journalisé, sans acteur');
+	        where id > (select id from depart_journal) order by id desc limit 1), 'superadmin_amorce:null',
+	'l''amorçage est journalisé, sans acteur');
 
 select is(app.amorcer_superadmin('a0890000-0000-4000-8000-000000000002', 'xavier@exemple.test', 'Xavier',
 	array['xavier@exemple.test']), false, 'une fois amorcé, une seconde adresse listée n''a plus d''effet');
@@ -345,12 +351,13 @@ select is((select pg_catalog.count(*)::integer from public.workspaces where slug
 
 select is(
 	(select string_agg(geste, ',' order by id desc) from public.plateforme_journal_liste(null, 200)
-	  where geste <> 'superadmin_amorce'),
+	  where geste <> 'superadmin_amorce' and id > (select id from depart_journal)),
 	'espace_supprime,superadmin_accorde,attente_retiree,attente_inscrite,attente_inscrite,membre_retire,membre_pose,membre_pose,membre_pose,espace_modifie,espace_cree',
 	'chaque geste est journalisé, le plus récent d''abord');
 select is(
 	(select cible ->> 'nom' || '|' || (cible ->> 'espace') || '|' || coalesce(cible ->> 'avant', 'null') || '|' || (cible ->> 'apres')
-	   from public.plateforme_journal_liste(null, 200) where geste = 'membre_pose' order by id limit 1),
+	   from public.plateforme_journal_liste(null, 200)
+	  where geste = 'membre_pose' and id > (select id from depart_journal) order by id limit 1),
 	'Driss Lemoine|Espace renommé|null|admin',
 	'le journal nomme la personne et l''espace : il se lit sans jointure et survit à leur suppression');
 select pg_temp.redevenir_proprietaire();

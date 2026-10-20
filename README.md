@@ -236,6 +236,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-tracks.sh` | Rejoue les preuves des tracks : modèle, ordre, archivage, politiques RLS, seed, non-complaisance | **disponible** |
 | `scripts/verify-channels.sh` | Rejoue les preuves des channels : modèle, cloisonnement par clé composite, ordre par track, archivage, politiques RLS, seed, non-complaisance | **disponible** |
 | `scripts/verify-catalogue.sh` | Rejoue les preuves du catalogue de nœuds : modèle, bornes, ordre par workspace, archivage, politiques RLS, seed, non-complaisance | **disponible** |
+| `scripts/verify-plateforme.sh` | Rejoue les preuves de la **plateforme** (`CRM-101`) : traçabilité, le catalogue mesuré — tables fermées, quatorze fonctions `SECURITY DEFINER` réservées à `authenticated` —, le seed (Sabine Plateforme seule superadministratrice, sans appartenance, unique espace gardé), pgTAP, unitaires, API, interface, **trois dégradations réelles** de la migration et la restauration constatée par empreinte ; `--rapide` omet Playwright et le dit | **disponible** |
 
 Les trois scripts acceptent `--help`. Ils s'appuient sur le fichier `.env` de la racine, ou sur
 celui que désigne la variable `P2ENJOY_ENV_FILE` — ce qui permet aux preuves de travailler sur un

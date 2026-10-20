@@ -3,7 +3,7 @@
 //           (dictionnaire fermé, confirmation par l'identifiant court, attente en suspens, journal paginé)
 
 import { describe, expect, it } from 'vitest'
-import { detailJournal, libelleActeur, libelleGeste, texteRefus } from '../app/presentation-plateforme'
+import { CLES_APPARTENANCES, compter, detailJournal, libelleActeur, libelleGeste, texteRefus } from '../app/presentation-plateforme'
 import {
 	PAGE_JOURNAL,
 	attenteEnSuspens,
@@ -134,14 +134,18 @@ describe('présentation', () => {
 
 	it('compose le détail par une clé par geste, sans jamais rendre `undefined`', () => {
 		expect(detailJournal(entree('membre_pose', { nom: 'Driss Lemoine', espace: 'Atelier', avant: null, apres: 'admin' }))).toBe(
-			'Driss Lemoine dans «\u00a0Atelier\u00a0» : Administrateur',
+			'Driss Lemoine dans «\u00a0Atelier\u00a0»\u00a0: Administrateur',
 		)
 		expect(detailJournal(entree('membre_pose', { nom: 'Driss Lemoine', espace: 'Atelier', avant: 'viewer', apres: 'admin' }))).toBe(
-			'Driss Lemoine dans «\u00a0Atelier\u00a0» : Lecteur → Administrateur',
+			'Driss Lemoine dans «\u00a0Atelier\u00a0»\u00a0: Lecteur → Administrateur',
 		)
 		expect(detailJournal(entree('espace_modifie', { avant: { nom: 'A' }, apres: { nom: 'B' } }))).toBe('A → B')
 		expect(detailJournal(entree('membre_retire', {}))).not.toContain('undefined')
 		expect(detailJournal(entree(null, { nom: 'x' }))).toBe('')
+	})
+
+	it('accorde un compte par clé, jamais par un gabarit à « (s) » (§10) — défaut trouvé sur la capture', () => {
+		expect([0, 1, 4].map((n) => compter(n, CLES_APPARTENANCES))).toEqual(['aucune appartenance', 'une appartenance', '4 appartenances'])
 	})
 
 	it('nomme l’acteur absent : « Amorçage » pour l’amorçage, « Compte supprimé » sinon', () => {

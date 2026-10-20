@@ -13,9 +13,9 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-101` T1 à T3 — la plateforme et son superadministrateur : la base, la connexion, l'écran (décision 627)
+### `CRM-101` T1 à T4 — la plateforme et son superadministrateur : la base, la connexion, l'écran, le seed (décision 627)
 
-*Migration `0089`, fonction `session` et écran, prouvés en développement par les preuves unitaires et d'API ; l'E2E et les captures viennent avec T4. Livraison avec la tranche T5.*
+*Migration `0089`, fonction `session`, écran et seed, prouvés en développement de bout en bout (pgTAP, unitaires, API, E2E aux quatre paliers, captures observées). Livraison avec la tranche T5.*
 
 - **Un superadministrateur de la plateforme** : le porteur du rôle `admin` LeLabs, ou un drapeau en base, amorcé une
   seule fois à la première connexion d'une adresse listée dans `CRM_SUPERADMINS_INITIAUX`.
@@ -34,6 +34,9 @@ d'exécuter le code attendu.
 - **T2 — l'amorçage passe par la vraie connexion** : la fonction de session reçoit `CRM_SUPERADMINS_INITIAUX`
   (facultative) et la transmet ; en développement, le compte de démonstration « Sabine Plateforme » est amorcé à sa
   première connexion.
+- **T4 — le seed amorce « Sabine Plateforme »** par une vraie connexion, sans espace de plus ; le manuel reçoit son
+  chapitre 10 (« La plateforme : espaces, membres et superadministrateurs »). Un porteur du rôle `admin` LeLabs voit
+  désormais l'entrée « Plateforme » dans la barre latérale.
 
 ### Correctif du 2026-10-12 — INC-273 (décision 626)
 

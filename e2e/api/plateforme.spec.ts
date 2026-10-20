@@ -2,6 +2,9 @@
 // @verifies docs/SPEC-plateforme.md §3 (amorçage unique par `CRM_SUPERADMINS_INITIAUX`), §4 (admis sans appartenance,
 //           retrait effectif au renouvellement), §2 (le drapeau n'ouvre aucune donnée métier), §6 (garde des fonctions)
 // @verifies docs/SPEC-session-sso.md §6.1 (condition 3 révisée) ; CLAUDE.md §10 (requêtes directes, vrais identifiants)
+// @verifies CRM-101 (docs/BACKLOG.md) — tranche T4 : CHAQUE fonction de la plateforme refusée en requête directe à
+//           l'anonyme, à la lectrice et à l'administratrice d'espace ; le parcours d'un superadministrateur, aux vrais
+//           jetons, et la base rendue telle qu'il l'a trouvée (docs/SPEC-plateforme.md §6, §9)
 //
 // Aucune de ces preuves ne passe par l'interface. Le code est émis par le Keycloak de développement au terme d'une vraie
 // connexion PKCE, puis remis à l'échangeur par la vraie passerelle : c'est la fonction `session`, avec la liste que
@@ -11,7 +14,7 @@
 // puis rend EXACTEMENT ce qu'elle a trouvé dans un `finally`, par la clé de service.
 
 import { expect, test } from '@playwright/test'
-import { URL_API, enTetesAuthentifies, enTetesService } from './jetons'
+import { CLE_ANONYME, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 import { DOMAINE, ouvrirSession, prolonger } from './sso'
 
 test.describe.configure({ mode: 'serial' })
@@ -122,6 +125,116 @@ test.describe('L’amorçage unique du superadministrateur (docs/SPEC-plateforme
 			expect(fermee.corps?.erreur).toBe('attente_espace')
 		} finally {
 			await rendre(trouvees)
+		}
+	})
+})
+
+/**
+ * Les quatorze fonctions, appelées avec des arguments plausibles : une fonction refusée ne doit rien laisser filtrer,
+ * quel que soit l'argument (docs/SPEC-plateforme.md §6, la garde EN PREMIER).
+ */
+const APPELS: readonly [string, Record<string, unknown>][] = [
+	['plateforme_espaces', {}],
+	['plateforme_creer_espace', { p_nom: 'Garde', p_slug: 'garde-api' }],
+	['plateforme_modifier_espace', { p_id: '5eed0000-0000-4000-8000-000000000001', p_nom: 'Garde', p_domaine_entrant: null }],
+	['plateforme_supprimer_espace', { p_id: '5eed0000-0000-4000-8000-000000000001', p_slug_confirme: 'p2enjoy' }],
+	['plateforme_membres', { p_ws: '5eed0000-0000-4000-8000-000000000001' }],
+	['plateforme_poser_membre', { p_ws: '5eed0000-0000-4000-8000-000000000001', p_user: '5eed0000-0000-4000-8000-000000000013', p_role: 'admin' }],
+	['plateforme_retirer_membre', { p_ws: '5eed0000-0000-4000-8000-000000000001', p_user: '5eed0000-0000-4000-8000-000000000013' }],
+	['plateforme_attentes', { p_ws: '5eed0000-0000-4000-8000-000000000001' }],
+	['plateforme_inviter', { p_ws: '5eed0000-0000-4000-8000-000000000001', p_email: 'garde@p2enjoy.test', p_role: 'admin' }],
+	['plateforme_retirer_attente', { p_ws: '5eed0000-0000-4000-8000-000000000001', p_email: 'attendu@p2enjoy.test' }],
+	['plateforme_profils', {}],
+	['plateforme_superadmins', {}],
+	['plateforme_poser_superadmin', { p_user: '5eed0000-0000-4000-8000-000000000013', p_actif: true }],
+	['plateforme_journal_liste', {}],
+]
+
+async function appelBrut(enTetes: Record<string, string>, fonction: string, corps: Record<string, unknown>) {
+	const reponse = await fetch(`${URL_API}/rest/v1/rpc/${fonction}`, {
+		method: 'POST',
+		headers: { ...enTetes, 'content-type': 'application/json' },
+		body: JSON.stringify(corps),
+	})
+	return { statut: reponse.status, texte: await reponse.text() }
+}
+
+test.describe('La garde de chaque fonction, en requête directe (docs/SPEC-plateforme.md §6, CLAUDE.md §10)', () => {
+	test('l’anonyme est refusé par le PRIVILÈGE, avant toute garde', async () => {
+		for (const [fonction, corps] of APPELS) {
+			const { statut } = await appelBrut({ apikey: CLE_ANONYME }, fonction, corps)
+			expect(statut, fonction).toBe(401)
+		}
+	})
+
+	for (const [libelle, adresse] of [
+		['la lectrice', `viewer@${DOMAINE}`],
+		['l’administratrice d’espace : un pouvoir d’espace n’est pas un pouvoir de plateforme', `admin@${DOMAINE}`],
+	] as const) {
+		test(`${libelle} est refusée par la garde, sur les quatorze fonctions`, async () => {
+			const jeton = await jetonDe(adresse)
+			for (const [fonction, corps] of APPELS) {
+				const { statut, texte } = await appelBrut(enTetesAuthentifies(jeton), fonction, corps)
+				expect(statut, fonction).toBe(403)
+				expect(texte, fonction).toContain('reserve_aux_superadministrateurs')
+			}
+		})
+	}
+
+	test('rien n’a été écrit par ces refus : l’espace seedé, ses membres et ses attentes sont intacts', async () => {
+		const espaces = await (await fetch(`${URL_API}/rest/v1/workspaces?select=slug,name`, { headers: enTetesService() })).json()
+		expect(espaces).toEqual([{ slug: 'p2enjoy', name: expect.any(String) }])
+		const attentes = await (
+			await fetch(`${URL_API}/rest/v1/workspace_invitations?select=email&order=email`, { headers: enTetesService() })
+		).json()
+		expect(attentes).toEqual([{ email: `attendu@${DOMAINE}` }])
+	})
+})
+
+test.describe('Le parcours d’une superadministratrice, aux vrais jetons (docs/SPEC-plateforme.md §6)', () => {
+	test('créer un espace, y poser un administrateur, inscrire et retirer une attente, le supprimer — journal compris', async () => {
+		const jeton = await jetonDe(SABINE.adresse)
+		const DRISS = '5eed0000-0000-4000-8000-000000000012'
+		let idEspace: string | null = null
+		try {
+			const creation = await rpc(jeton, 'plateforme_creer_espace', { p_nom: 'Preuve API', p_slug: 'preuve-api', p_domaine_entrant: 'Crm.Preuve.TEST' })
+			expect(creation.statut).toBe(200)
+			idEspace = creation.corps as string
+
+			const doublon = await rpc(jeton, 'plateforme_creer_espace', { p_nom: 'Autre', p_slug: 'preuve-api' })
+			expect([doublon.statut, JSON.stringify(doublon.corps)]).toEqual([409, expect.stringContaining('identifiant_pris')])
+
+			const premierLecteur = await rpc(jeton, 'plateforme_poser_membre', { p_ws: idEspace, p_user: DRISS, p_role: 'viewer' })
+			expect(JSON.stringify(premierLecteur.corps)).toContain('last_workspace_admin')
+			expect((await rpc(jeton, 'plateforme_poser_membre', { p_ws: idEspace, p_user: DRISS, p_role: 'admin' })).statut, 'une fonction `returns void` répond 204').toBe(204)
+
+			expect((await rpc(jeton, 'plateforme_inviter', { p_ws: idEspace, p_email: ' Lea@Preuve.TEST ', p_role: 'viewer' })).statut, 'une fonction `returns void` répond 204').toBe(204)
+			const attentes = await rpc(jeton, 'plateforme_attentes', { p_ws: idEspace })
+			expect((attentes.corps as Array<{ email: string }>).map((a) => a.email)).toEqual(['lea@preuve.test'])
+			expect((await rpc(jeton, 'plateforme_retirer_attente', { p_ws: idEspace, p_email: 'lea@preuve.test' })).statut, 'une fonction `returns void` répond 204').toBe(204)
+
+			// Driss, administrateur du nouvel espace, ne voit pas pour autant la plateforme.
+			const jetonDriss = await jetonDe(`bizdev@${DOMAINE}`)
+			expect((await rpc(jetonDriss, 'plateforme_espaces')).statut).toBe(403)
+
+			const mauvaiseSaisie = await rpc(jeton, 'plateforme_supprimer_espace', { p_id: idEspace, p_slug_confirme: 'Preuve-API' })
+			expect(JSON.stringify(mauvaiseSaisie.corps)).toContain('confirmation_incorrecte')
+			expect((await rpc(jeton, 'plateforme_supprimer_espace', { p_id: idEspace, p_slug_confirme: 'preuve-api' })).statut, 'une fonction `returns void` répond 204').toBe(204)
+			idEspace = null
+
+			const journal = await rpc(jeton, 'plateforme_journal_liste', { p_limite: 6 })
+			expect((journal.corps as Array<{ geste: string }>).map((e) => e.geste)).toEqual([
+				'espace_supprime',
+				'attente_retiree',
+				'attente_inscrite',
+				'membre_pose',
+				'espace_cree',
+				expect.any(String),
+			])
+		} finally {
+			if (idEspace !== null) {
+				await fetch(`${URL_API}/rest/v1/workspaces?id=eq.${idEspace}`, { method: 'DELETE', headers: enTetesService() })
+			}
 		}
 	})
 })

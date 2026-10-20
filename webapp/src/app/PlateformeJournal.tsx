@@ -12,7 +12,7 @@ import { curseurSuivant, lireJournal, type EntreeJournal } from '../lib/platefor
 import type { ClientCrm } from '../lib/supabase'
 import { detailJournal, formaterDate, libelleActeur, libelleGeste } from './presentation-plateforme'
 
-const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left'
+const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left whitespace-nowrap'
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
 
 type EtatJournal =

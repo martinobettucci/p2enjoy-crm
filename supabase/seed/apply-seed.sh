@@ -4357,6 +4357,32 @@ else
 	info "Temps de démonstration : ${#DRISS_LIGNES[@]} saisies de Driss (dont une journée en heures), ${#FARIDA_LIGNES[@]} de Farida, ${#CAMILLE_LIGNES[@]} de Camille"
 fi
 
+# --- 8 unvicies. Le superadministrateur de la plateforme — CRM-101, docs/SPEC-seed.md §19 -------------------------
+# @spec CRM-101 (docs/BACKLOG.md) — tranche T4 : le superadministrateur amorcé par une VRAIE connexion
+#       (docs/SPEC-plateforme.md §3, §8 ; docs/SPEC-seed.md §19) ; décision 627
+#
+# Sabine Plateforme (`plateforme@`, `5eed…0018`) est le compte que l'overlay de développement liste dans
+# `CRM_SUPERADMINS_INITIAUX`. Sa première connexion admise l'amorce — la fonction `session` appelle
+# `app.amorcer_superadmin` avant l'admission —, crée son profil et inscrit l'amorçage au journal. Le seed ne pose
+# AUCUNE ligne lui-même : il se connecte, et constate.
+#
+# AUCUN ESPACE DE DÉMONSTRATION N'EST CRÉÉ, et c'est délibéré : de nombreuses preuves tiennent pour acquis que le seed
+# porte un unique espace (`CRM-005`) — la suite `0003`, les démontages de `premier-lancement` et `guide-flottant`, et
+# l'espace « premier par ordre de nom » d'`objectifs`. La création d'un espace se démontre dans l'E2E de la
+# plateforme, qui rend la base telle qu'il l'a trouvée.
+#
+# Convergence : la seconde connexion ne fait rien de plus — la table n'est plus vide, l'amorçage n'agit plus.
+JETON_PLATEFORME=$(sso_jeton_interne "$API" "$ANON_KEY" 'plateforme@p2enjoy.test' || true)
+if [ -z "$JETON_PLATEFORME" ]; then
+	die "Sabine Plateforme ne se connecte pas : la plateforme ne peut pas être amorcée (docs/SPEC-seed.md §19)."
+fi
+EST_SUPERADMIN=$(curl -sS -X POST "$API/rest/v1/rpc/est_superadmin" \
+	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_PLATEFORME" -H 'Content-Type: application/json' -d '{}')
+if [ "$EST_SUPERADMIN" != "true" ]; then
+	die "Sabine Plateforme s'est connectée sans être superadministratrice (rendu : $EST_SUPERADMIN). Une autre adresse a-t-elle été amorcée avant elle ? Voir docs/SPEC-seed.md §19."
+fi
+info "Plateforme : Sabine Plateforme est superadministratrice, amorcée par sa connexion — CRM-101, docs/SPEC-seed.md §19"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -4395,6 +4421,7 @@ info "Organisations : ${#ORGANIZATIONS_SEED[@]}, contacts : ${#CONTACTS_SEED[@]}
 info "Suggestion de l'assistant IA : 1, en revue, créée par la vraie fonction et le simulateur — CRM-097, docs/SPEC-ia.md §12.8"
 info "Suggestion de modification du workflow par défaut : 1, en revue, avec son défaut remappage_requis — CRM-097, docs/SPEC-seed.md §16 bis"
 info "Temps et coût du personnel : trois versions de coût, dont une programmée ; quatre semaines de temps — CRM-098, docs/SPEC-seed.md §17"
+info "Plateforme : une superadministratrice, Sabine Plateforme, amorcée par sa connexion ; aucun espace de plus — CRM-101, docs/SPEC-seed.md §19"
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."

@@ -7,7 +7,7 @@ Documents liés : `docs/SPEC-session-sso.md` §6 (admission, révisée par le §
 `docs/SPEC-permissions-rls.md` §2 et §3, `docs/SPEC-identite.md` §5 (invariant du dernier
 administrateur), `docs/SPEC-mcp.md` (le connecteur, qui s'appuie sur ce document), `docs/SCHEMA.md`
 §1 bis, `docs/DAT.md` §7, `docs/DESIGN_SYSTEM.md` (section de l'écran, écrite avec la tranche T3),
-`docs/manual.md` (chapitre 18, écrit avec la tranche T4).
+`docs/manual.md` (chapitre 10, écrit avec la tranche T4).
 
 Écrite le 2026-10-20 **avant la première ligne de code**.
 
@@ -332,18 +332,24 @@ Aucune règle de droit n'est calculée dans le navigateur.
 
 ## 8. Seed
 
-`docs/SPEC-seed.md` reçoit un paragraphe, écrit avec la tranche T4.
+`docs/SPEC-seed.md` §19 ; section `8 unvicies` de `supabase/seed/apply-seed.sh`.
 
 - **Comptes Keycloak.** `keycloak/realm-lelabs.json` reçoit un compte **« Sabine Plateforme »**
-  (`plateforme@p2enjoy.test`, rôle `verified` seul, identifiant stable), membre d'**aucun** espace.
-- **Variable de développement.** `CRM_SUPERADMINS_INITIAUX` vaut cette adresse dans `.env.example`
-  et dans l'amorçage de `runDev.sh`.
-- **L'amorçage passe par une vraie connexion**, par le chemin de `connecterAvecLeLabs`, jamais par
-  une insertion directe (`CLAUDE.md` §8).
-- **Les écritures de démonstration** sont faites par les vraies fonctions du §6, sous le jeton de
-  Sabine : un espace de démonstration supplémentaire « Atelier » (`atelier`), un administrateur posé,
-  une attente en suspens, un rôle changé. Le journal est donc peuplé par le vrai mécanisme.
-- **Convergence :** un second passage n'écrit rien.
+  (`plateforme@p2enjoy.test`, rôle `verified` seul, identifiant stable `5eed…0018`), membre d'**aucun** espace.
+- **Variable de développement.** L'overlay `docker-compose.dev.yml` donne à `CRM_SUPERADMINS_INITIAUX` cette adresse
+  pour défaut ; `.env.example` la laisse vide, comme en production.
+- **L'amorçage passe par une vraie connexion** (`sso_jeton_interne`), jamais par une insertion directe
+  (`CLAUDE.md` §8). Le seed constate ensuite, par `public.est_superadmin()` sous le jeton de Sabine, que le drapeau
+  est posé, et s'arrête sinon.
+- **Aucun espace de démonstration n'est créé** — *révisé le 2026-10-20 en écrivant la tranche T4, avant le code du
+  seed*. La première rédaction prévoyait un espace « Atelier ». Mesuré : de nombreuses preuves tiennent pour acquis
+  que le seed porte un **unique** espace (`CRM-005`). C'est le cas de la suite `0003`, des démontages de
+  `e2e/ui/premier-lancement.spec.ts` et `e2e/ui/guide-flottant.spec.ts`, et de l'espace « premier par ordre de nom »
+  qu'emploie `e2e/ui/objectifs.spec.ts` (« Atelier » précéderait « P2Enjoy SAS »). La création, les appartenances,
+  les attentes et la suppression se démontrent donc dans l'E2E de la plateforme, qui rend la base telle qu'il l'a
+  trouvée. La fiche de l'espace seedé, avec ses trois membres et l'attente d'`attendu@`, sert de démonstration en
+  lecture.
+- **Convergence :** la seconde connexion ne fait rien de plus, la table n'étant plus vide.
 
 ## 9. Preuves
 
@@ -384,5 +390,5 @@ Les opérations sont détaillées dans `docs/PROD_MIGRATIONS.md` §3, « en atte
 | T1 | Migration `0089`, sa suite pgTAP, les types régénérés, `docs/SCHEMA.md` |
 | T2 | La fonction `session` : la liste remise et transmise, l'amorçage et l'admission exercés par une vraie connexion ; preuves unitaires et d'API |
 | T3 | L'écran `/plateforme` (Espaces, Superadministrateurs, Journal) ; `docs/DESIGN_SYSTEM.md` après lecture intégrale ; preuves unitaires |
-| T4 | Seed, E2E, captures observées, manuel (chapitre 18 ; le chapitre 17 est révisé, l'invitation n'étant plus une opération d'exploitation), `verify-plateforme.sh`, campagnes |
+| T4 | Seed, E2E, captures observées, manuel (chapitre 10 du corps et ligne 17 *bis* du sommaire ; la ligne 17 est révisée, l'invitation n'étant plus une opération d'exploitation), `verify-plateforme.sh`, campagnes |
 | T5 | Livraison en production et constat |

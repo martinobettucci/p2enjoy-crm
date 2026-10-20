@@ -59,7 +59,8 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | À livrer. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **L'écran qui inscrit une attente n'existe pas encore** : c'est aujourd'hui une opération d'exploitation, et le premier administrateur d'un espace est attendu par l'opérateur. Aucun écran n'est promis avant `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
+| 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | À livrer. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses propres membres reste à `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
+| 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
 | 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Aucun effacement définitif n'est offert** : la durée de conservation n'est pas arrêtée |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
@@ -4089,6 +4090,108 @@ nécessairement la même liste, et c'est voulu.
   atteignable » et non cliquable — plutôt que de disparaître ou de mener à un écran cassé.
 - **Sans être connecté, la recherche n'existe pas** : aucune page ne s'affiche sans session
   (chapitre 1).
+
+## 10. La plateforme : espaces, membres et superadministrateurs
+
+*Livré par `CRM-101` ; captures : `docs/captures/CRM-101/`.*
+
+La **plateforme** est l'étage au-dessus des espaces de travail. On y crée un espace, on y désigne qui en est membre et
+avec quel rôle, et on y inscrit les personnes attendues. Elle est réservée aux **superadministrateurs**.
+
+### 10.1 Qui est superadministrateur
+
+Deux sortes de personnes le sont :
+
+- celles qui portent le rôle **`admin` chez LeLabs** : elles exploitent le SSO, et la règle du domaine fait d'elles les
+  administratrices de toute application qui s'y branche ;
+- celles qui ont reçu le **drapeau** dans le CRM.
+
+**Le tout premier drapeau** est posé une seule fois, à la première connexion d'une adresse que l'exploitant a désignée
+à l'installation. La connexion doit être vérifiée chez LeLabs. Dès qu'un superadministrateur existe, plus aucun ne
+s'amorce de cette façon : les suivants reçoivent le drapeau de la main d'un superadministrateur.
+
+**Être superadministrateur ne donne accès à aucune donnée commerciale.** On ne lit ni les tracks, ni les affaires, ni
+les coûts d'un espace dont on n'est pas membre. Pour y travailler, un superadministrateur s'ajoute lui-même comme
+membre de cet espace, et ce geste est inscrit au journal.
+
+### 10.2 Ouvrir la plateforme
+
+Un superadministrateur voit l'entrée **« Plateforme »** en bas de la barre latérale, après « Réglages ». Personne
+d'autre ne la voit. Une adresse de la plateforme ouverte sans le drapeau affiche **« Accès réservé »**.
+
+La plateforme a trois onglets : **« Espaces »**, **« Superadministrateurs »** et **« Journal »**.
+
+### 10.3 Créer un espace
+
+Dans l'onglet « Espaces », **« Nouvel espace »** ouvre un formulaire à trois champs :
+
+- **« Nom »** ;
+- **« Identifiant court »** : en minuscules, chiffres et tirets. Il nomme les dossiers de la messagerie et **ne se
+  modifie plus ensuite** ;
+- **« Domaine entrant (facultatif) »** : le domaine des adresses de ses affaires.
+
+**« Créer »** ouvre la fiche du nouvel espace. Un espace naît **sans membre** : sa fiche le dit, et la liste porte
+« Aucun administrateur ». Donnez-lui son premier administrateur, comme décrit ci-dessous. À sa première connexion, cet
+administrateur trouvera le guide de démarrage, qui pose le workflow de départ (chapitre 1 *bis*).
+
+### 10.4 Les membres d'un espace
+
+La fiche d'un espace liste ses **« Membres »**. Le rôle d'un membre se change dans sa ligne, et s'enregistre dès qu'on
+le choisit.
+
+- **« Ajouter un membre »** cherche une personne **par son nom**, deux caractères au moins, puis lui donne un rôle. Seules
+  les personnes qui se sont déjà connectées au CRM y figurent.
+- **« Retirer »** demande confirmation. Les droits fins de la personne sur les tracks et les channels de cet espace
+  partent avec son appartenance.
+
+**Un espace garde toujours au moins un administrateur.** Le premier membre d'un espace doit être administrateur, et le
+dernier administrateur ne se retire ni ne se rétrograde. Le refus le dit, et indique quoi faire.
+
+### 10.5 Les attentes
+
+Une personne qui ne s'est jamais connectée n'a pas encore de nom dans le CRM. On l'**attend** à son adresse :
+**« Inscrire une attente »**, avec l'adresse et le rôle. Elle devient membre à sa première connexion LeLabs, si son
+adresse et son compte sont vérifiés (chapitre 1). Réinscrire une adresse remplace son rôle, et **« Retirer »** efface
+l'attente, sans confirmation.
+
+Dans un espace qui n'a encore aucun administrateur, une attente qui n'est pas administratrice porte **« En
+suspens »** : elle ne se consommera qu'après l'arrivée d'un administrateur. Inscrivez donc d'abord l'administrateur.
+
+### 10.6 Modifier ou supprimer un espace
+
+**« Modifier »** change le nom et le domaine entrant d'un espace. Son identifiant court ne change pas.
+
+**« Supprimer l’espace »**, en bas de la fiche, ouvre une confirmation.
+
+- **Ce qu'elle dit :** ce que l'espace emporte avec lui — ses appartenances, ses attentes, et tout son contenu.
+- **Ce qu'elle demande :** de **saisir l'identifiant court** de l'espace. **« Supprimer définitivement »** reste
+  inactif tant que la saisie diffère.
+- **Ce qui ne se rattrape pas :** la suppression est définitive. Seule la restauration d'une sauvegarde la défait.
+
+### 10.7 Les superadministrateurs et le journal
+
+L'onglet **« Superadministrateurs »** liste les drapeaux posés dans le CRM.
+
+- **« Amorçage »** désigne le premier drapeau, posé à l'installation.
+- **« Accorder le drapeau »** le donne à une personne déjà connectée ; **« Retirer »** le lui reprend, après
+  confirmation. Le dernier drapeau ne se retire pas : accordez-en un autre d'abord.
+- **Les porteurs du rôle `admin` LeLabs** sont aussi superadministrateurs, mais n'y figurent pas.
+
+L'onglet **« Journal »** retrace chaque geste de la plateforme, du plus récent au plus ancien :
+
+- la date ;
+- qui a agi ;
+- le geste, en mots ;
+- son détail.
+
+**« Entrées plus anciennes »** remonte le temps, une page après l'autre.
+
+### 10.8 Ce que la plateforme n'offre pas
+
+- **Gérer ses propres membres en tant qu'administrateur d'espace**, sans être superadministrateur : cet écran viendra
+  avec `CRM-070`, comme les droits fins par track et par channel.
+- **Changer l'identifiant court d'un espace.**
+- **Annuler une suppression.**
 
 ## Annexe A — Ce que contient l'espace de démonstration
 

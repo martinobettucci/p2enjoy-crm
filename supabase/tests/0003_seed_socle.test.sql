@@ -1,4 +1,6 @@
 -- @verifies CRM-005 (docs/BACKLOG.md) — seed socle : contrat des données de développement
+-- @verifies CRM-101 (docs/BACKLOG.md) — tranche T4 : le seed amorce une quatrième personne, Sabine Plateforme,
+--           superadministratrice sans appartenance (docs/SPEC-seed.md §19, docs/SPEC-plateforme.md §3, §8)
 -- @verifies CRM-022 (docs/BACKLOG.md) — avatars seedés et sept politiques d'identité
 -- @verifies docs/SPEC-seed.md §2 (contrat), §4 (identifiants stables), §7 (preuves n° 1 à 4)
 -- @verifies docs/SCHEMA.md §1 (`profiles`, `workspaces`, `workspace_members`)
@@ -30,7 +32,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(32);
+select plan(34);
 
 -- =============================================================================================
 -- 1. L'espace de travail — docs/SPEC-seed.md §2.1
@@ -81,10 +83,24 @@ select is(
 -- MESURÉ le 2026-09-24 : cette section restait VERTE après T4 pour une seule raison — les lignes
 -- GoTrue des seeds antérieurs survivaient dans `auth.users` ; sur une base neuve, elle serait tombée.
 
+-- RÉVISÉE par `CRM-101` T4 : la quatrième personne est Sabine Plateforme (`5eed…0018`), que sa connexion amorce
+-- superadministratrice de la plateforme. Elle n'a AUCUNE appartenance — un superadministrateur en base n'est membre
+-- implicite d'aucun espace (docs/SPEC-plateforme.md §2) — et les assertions d'appartenance ci-dessous en comptent
+-- toujours trois.
 select is(
 	(select count(*)::int from public.profiles where id::text like '5eed%'),
-	3,
-	'le seed installe exactement trois personnes, reconnaissables à leur préfixe « 5eed »');
+	4,
+	'le seed installe exactement quatre personnes, reconnaissables à leur préfixe « 5eed »');
+
+select is(
+	(select string_agg(s.sub::text, ',') from public.superadmins s),
+	'5eed0000-0000-4000-8000-000000000018',
+	'Sabine Plateforme, et elle seule, est superadministratrice : sa connexion l''a amorcée');
+
+select is(
+	(select count(*)::int from public.workspace_members where user_id = '5eed0000-0000-4000-8000-000000000018'::uuid),
+	0,
+	'la superadministratrice n''a aucune appartenance : le drapeau n''ouvre aucune donnée métier');
 
 select is(
 	(select count(*)::int from public.workspace_invitations
@@ -143,7 +159,7 @@ select is(
 	                 where m.user_id = p.id
 	                   and m.workspace_id = '5eed0000-0000-4000-8000-000000000001'::uuid)),
 	3,
-	'chaque profil seedé est né d''une admission : il porte son appartenance à l''espace');
+	'chaque profil seedé membre est né d''une admission par attente : il porte son appartenance à l''espace');
 
 select is(
 	(select full_name from public.profiles where id = '5eed0000-0000-4000-8000-000000000011'::uuid),
@@ -162,11 +178,11 @@ select is(
 
 select is(
 	(select count(*)::int from public.profiles where id::text like '5eed%' and locale = 'fr'),
-	3,
-	'les trois profils sont en français, langue par défaut du produit');
+	4,
+	'les quatre profils sont en français, langue par défaut du produit');
 
 select results_eq(
-	$$ select id, avatar_url from public.profiles where id::text like '5eed%' order by id $$,
+	$$ select id, avatar_url from public.profiles where id::text like '5eed%' and id <> '5eed0000-0000-4000-8000-000000000018' order by id $$,
 	$$ values
 		('5eed0000-0000-4000-8000-000000000011'::uuid, '/avatars/camille-aubert.svg'::text),
 		('5eed0000-0000-4000-8000-000000000012'::uuid, '/avatars/driss-lemoine.svg'::text),

@@ -131,6 +131,27 @@ export function detailJournal(entree: EntreeJournal): string {
 	}
 }
 
+/**
+ * Un compte en toutes lettres, accordé PAR CLÉ — jamais « 1 appartenance(s) » ni « les 1 flèches » (§10, §5.29).
+ */
+export function compter(n: number, cles: { readonly zero: CleTraduction; readonly un: CleTraduction; readonly plusieurs: CleTraduction }): string {
+	if (n === 0) return t(cles.zero)
+	if (n === 1) return t(cles.un)
+	return t(cles.plusieurs, { n: String(n) })
+}
+
+export const CLES_APPARTENANCES = {
+	zero: 'platform.compte.appartenances.zero',
+	un: 'platform.compte.appartenances.un',
+	plusieurs: 'platform.compte.appartenances.plusieurs',
+} as const satisfies Record<'zero' | 'un' | 'plusieurs', CleTraduction>
+
+export const CLES_ATTENTES = {
+	zero: 'platform.compte.attentes.zero',
+	un: 'platform.compte.attentes.un',
+	plusieurs: 'platform.compte.attentes.plusieurs',
+} as const satisfies Record<'zero' | 'un' | 'plusieurs', CleTraduction>
+
 /** L'acteur : son nom, « Amorçage » pour l'amorçage, « Compte supprimé » sinon (§5.56, §5.10). */
 export function libelleActeur(entree: EntreeJournal): string {
 	if (entree.acteur !== null) return entree.acteur

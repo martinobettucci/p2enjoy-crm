@@ -19,7 +19,7 @@ import type { ClientCrm } from '../lib/supabase'
 import { cheminFicheEspace } from './chemins'
 import { texteRefus } from './presentation-plateforme'
 
-const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left'
+const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left whitespace-nowrap'
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
 const CLASSES_NOMBRE = 'h-[var(--size-target)] px-3 text-right tabular-nums'
 const CLASSES_CHAMP =

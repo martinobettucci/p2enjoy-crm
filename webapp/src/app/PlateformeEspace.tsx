@@ -39,11 +39,11 @@ import {
 } from '../lib/plateforme'
 import type { ClientCrm } from '../lib/supabase'
 import { CHEMIN_PLATEFORME_ESPACES } from './chemins'
-import { formaterDate, libelleRole, texteRefus } from './presentation-plateforme'
+import { CLES_APPARTENANCES, CLES_ATTENTES, compter, formaterDate, libelleRole, texteRefus } from './presentation-plateforme'
 import { RecherchePersonne } from './RecherchePersonne'
 import type { EtatNavigationEspaces } from './PlateformeEspaces'
 
-const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left'
+const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left whitespace-nowrap'
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
 const CLASSES_DATE = 'h-[var(--size-target)] px-3 text-right tabular-nums whitespace-nowrap'
 const CLASSES_COMMANDES = 'h-[var(--size-target)] px-3 whitespace-nowrap'
@@ -919,7 +919,7 @@ function ZoneDanger({
 					<p id="question-suppression" className="font-medium">
 						{t('platform.danger.question', { nom: espace.nom })}
 					</p>
-					<p className="text-sm text-text-2">{t('platform.danger.emporte', { membres: String(membres), attentes: String(attentes) })}</p>
+					<p className="text-sm text-text-2">{t('platform.danger.emporte', { membres: compter(membres, CLES_APPARTENANCES), attentes: compter(attentes, CLES_ATTENTES) })}</p>
 					<p className="text-sm text-text-2">{t('platform.danger.definitif')}</p>
 					<Champ id="confirmation-slug" libelle={t('platform.danger.saisie', { slug: espace.slug })}>
 						<input

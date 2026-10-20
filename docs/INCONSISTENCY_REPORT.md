@@ -7220,3 +7220,21 @@ sont rebannis dans la campagne suivante. Une adresse bannie peut aussi être ré
 conteneur jetable de preuve en portait une —, d'où des échecs qui paraissent aléatoires. Même famille qu'INC-272 : un
 garde-fou par défaut du serveur que les preuves rencontrent par construction.
 
+
+### INC-274 — un `.env` existant garde l'ancienne VALEUR d'une variable dont le contrat a changé, et rien ne le dit
+
+*Relevée le 2026-10-20 pendant la campagne d'API de `CRM-101` T4 ; ouverte, à arbitrer.*
+
+**Le constat, mesuré.** Cinq scénarios de `e2e/api/liste-cards.spec.ts` (la recherche plein texte de la vue liste)
+répondaient `400` : « text search configuration "francais_sans_accent" does not exist ». La cause : le `.env` du poste
+portait `PGRST_DB_EXTRA_SEARCH_PATH=public,extensions`, valeur d'avant le 2026-08-27 (commit `538525c6`), alors que
+`.env.example` exige `public,extensions,app` depuis — la configuration de recherche vit dans le schéma `app`. Un `.env`
+existant n'est jamais réécrit (`scripts/lib/env.sh`), `env_validate` ne contrôle que la PRÉSENCE et le `CHANGE_ME_*`,
+et `DEV_VARIABLES_AJOUTEES` ne complète que les variables ABSENTES : une valeur devenue fausse passe en silence.
+
+**Geste fait, et seulement lui.** La valeur locale de ce poste a été alignée sur le contrat (fichier non versionné),
+`rest` recréé, et la spec rejouée : 33/33. Rien n'est changé dans les scripts.
+
+**Issues à arbitrer** : (1) une liste de valeurs EXIGÉES en développement, que `env_validate` compare et refuse ;
+(2) une migration de valeur dans `env_ensure_dev_completions` (ancienne valeur connue → nouvelle) ; (3) ne rien changer
+et documenter la relecture de `.env.example` à chaque mise à jour du dépôt.
