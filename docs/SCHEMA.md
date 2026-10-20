@@ -1536,6 +1536,26 @@ mesure D) : poser un lien exige en outre `app.can_write_channel` sur la destinat
 donc une condition **suffisante** de refus, jamais **nécessaire** — l'écran continue d'envoyer et de
 traduire quand elle vaut `true`.
 
+### 9 bis.8 ter `public.ecriture_permise(channels)` et `public.ecriture_permise(cards)` — colonnes calculées, migration 91
+
+Ajoutées le 2026-10-21 par `CRM-093` tranche T1 (`docs/SPEC-droits-interface.md` §2.1, décision 628).
+
+| | `channels` | `cards` |
+|---|---|---|
+| Signature | `public.ecriture_permise(ch public.channels) returns boolean` | `public.ecriture_permise(c public.cards) returns boolean` |
+| Corps | `select app.can_write_channel(ch.id)` | `select app.can_write_channel(c.channel_id)` |
+| Volatilité | `stable`, **`security invoker`** | idem |
+| Privilèges | `execute` à `anon`, `authenticated`, `service_role` | idem |
+
+**Le même mécanisme que le §9 bis.8 bis, étendu aux affaires** : l'interface doit savoir, avant de rendre ses commandes,
+si l'appelant peut écrire sur un channel — rôle ET droits fins, « le plus spécifique gagne » (`docs/SPEC-permissions-rls.md`
+§3.3 bis). Toutes les politiques d'écriture de la famille « affaire » s'y ramènent (`app.can_write_card` est défini par
+le channel de la card). Les colonnes **n'ouvrent ni ne referment rien** : elles ne sont rendues que sur des lignes que la
+RLS a déjà consenties, et sont une condition **suffisante** de refus, jamais nécessaire — une ligne de coût exige en
+outre un budget lisible et ouvert. En SQL brut, la colonne se lit en notation qualifiée (`c.ecriture_permise`) ;
+PostgREST la résout dans `select=`. Preuves : `supabase/tests/0086_droits_interface.test.sql` (matrice des trois
+profils du seed et de leurs droits fins), `e2e/api/droits-interface.spec.ts`.
+
 ### 9 bis.9 `public.cards_figees()` — les affaires figées de l'appelant, migration 53
 
 Ajoutée le 2026-08-24 par `CRM-062` tranche 1 (`docs/SPEC-relances.md` §2 et §3).

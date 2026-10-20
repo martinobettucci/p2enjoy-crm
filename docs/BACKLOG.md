@@ -14683,7 +14683,11 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       **Écrite le 2026-10-21** : trois faits suffisent (administrateur, éditeur, écriture sur un channel — mesuré sur
       les 90 politiques d'écriture) ; deux colonnes calculées `ecriture_permise(channels)` et `ecriture_permise(cards)`
       au patron de `0071`, migration `0091` ; inventaire écran par écran, états, preuves, tranches T1 à T6. En attente
-      de la validation du responsable.
+      de la validation du responsable. **Validée le 2026-10-21.**
+- [x] **T1** — migration `0091` (deux colonnes calculées), suite pgTAP `0086` (22, mutation « lire au lieu d'écrire »
+      tuée), types régénérés, `docs/SCHEMA.md` §9 bis.8 ter, preuve d'API aux jetons réels (4 : matrice des droits fins,
+      ce que la colonne annonce est ce que la base fait), `docs/PROD_MIGRATIONS.md` (91 en attente). Vérifié le
+      2026-10-21 ; série pgTAP complète 86 fichiers, 3703 assertions.
 - [ ] Mise en œuvre, preuves unitaires et E2E par rôle, captures, manuel, redéploiement.
 
 ### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[x]`

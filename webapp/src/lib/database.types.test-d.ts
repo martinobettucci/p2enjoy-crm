@@ -1,3 +1,4 @@
+// @verifies CRM-093 (docs/BACKLOG.md) — tranche T1 : les trois surcharges de `ecriture_permise`, docs/SCHEMA.md §9 bis.8 ter
 // @verifies CRM-006 (docs/BACKLOG.md) — contrat des types générés depuis le schéma
 // @verifies docs/SPEC-types.md §5 (fichier produit), §7 (ce que les types n'expriment pas)
 // @verifies docs/SCHEMA.md §1 (socle d'identité) ; docs/INCONSISTENCY_REPORT.md INC-010
@@ -1103,10 +1104,18 @@ type _retourReelSaisissable = Expect<
 // valeur rendue, et un cache de schéma PostgREST périmé rend la colonne absente. Le SENS du repli
 // n'est pas indifférent ici — il FERME l'écriture, il ne l'ouvre pas (`docs/SPEC-goals.md` §5.7.4,
 // ligne c).
-type _ecriturePermisePrendUneLigneDeTableau = Expect<
+//
+// TROIS SURCHARGES DEPUIS `CRM-093` T1 (migration 91, `docs/SCHEMA.md` §9 bis.8 ter) : la même colonne sur
+// `channels` et sur `cards`. Le générateur les rend comme une UNION d'arguments ; chacune rend un booléen.
+// Le repli, lui, diffère de celui du canevas : `docs/SPEC-droits-interface.md` §4 laisse les commandes ACTIVES
+// quand la capacité est inconnue — le serveur refuse, et un défaut de lecture ne doit pas priver un
+// administrateur de ses gestes.
+type _ecriturePermisePrendUneLigne = Expect<
   Equal<
     Database['public']['Functions']['ecriture_permise']['Args'],
-    { tableau: Database['public']['Tables']['goal_boards']['Row'] }
+    | { c: Database['public']['Tables']['cards']['Row'] }
+    | { ch: Database['public']['Tables']['channels']['Row'] }
+    | { tableau: Database['public']['Tables']['goal_boards']['Row'] }
   >
 >
 type _ecriturePermiseRendUnBooleen = Expect<
@@ -1284,7 +1293,7 @@ export type AssertionsDuContratDeTypes = [
   _lesQuatreVingtsFonctions,
   _signatureReelSaisissable,
   _retourReelSaisissable,
-  _ecriturePermisePrendUneLigneDeTableau,
+  _ecriturePermisePrendUneLigne,
   _ecriturePermiseRendUnBooleen,
   _signatureArborescence,
   _signatureCopie,

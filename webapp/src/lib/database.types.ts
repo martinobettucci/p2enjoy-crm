@@ -3402,10 +3402,21 @@ export type Database = {
           requested_path: string
         }[]
       }
-      ecriture_permise: {
-        Args: { tableau: Database["public"]["Tables"]["goal_boards"]["Row"] }
-        Returns: boolean
-      }
+      ecriture_permise:
+        | {
+            Args: { c: Database["public"]["Tables"]["cards"]["Row"] }
+            Returns: boolean
+          }
+        | {
+            Args: { ch: Database["public"]["Tables"]["channels"]["Row"] }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              tableau: Database["public"]["Tables"]["goal_boards"]["Row"]
+            }
+            Returns: boolean
+          }
       entonnoir_conversion: {
         Args: never
         Returns: {
