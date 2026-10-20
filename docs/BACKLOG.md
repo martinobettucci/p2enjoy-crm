@@ -14677,7 +14677,9 @@ faire valider avant tout code : inventaire des gestes offerts par rôle, règle 
 que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
 
 - [ ] Spécification : inventaire des écrans et des gestes offerts à `viewer`, règle d'affichage
-      selon `mon_role_espace`, états, preuves.
+      ~~selon `mon_role_espace`~~ **selon le rôle ET les droits fins, par une fonction de lecture calculée par les
+      fonctions de la RLS ; une commande refusée reste montée, désactivée, avec son motif** (décision 628, 2026-10-21),
+      états, preuves. Document : `docs/SPEC-droits-interface.md`.
 - [ ] Mise en œuvre, preuves unitaires et E2E par rôle, captures, manuel, redéploiement.
 
 ### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[x]`

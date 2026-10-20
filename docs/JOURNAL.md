@@ -31882,3 +31882,28 @@ redirection permanente resterait en mémoire dans les navigateurs.
 
 **Livraison.** Il n'y a ni migration ni variable à poser, mais l'image `mcp` doit être reconstruite explicitement, comme
 celle de `mail-sync` (`docs/PROD_MIGRATIONS.md` §4).
+
+## décision 628 — CRM-093 : l'interface n'offre un geste d'écriture que selon le rôle ET les droits fins, et désactive avec motif ce qu'elle n'offre pas
+
+*2026-10-21 ; arbitrages du responsable, rendus sur question, dans le cadre de l'objectif du jour : terminer les
+éléments du backlog et livrer entre chaque itération stable.*
+
+**Le constat, mesuré dans le code** : 41 écrans portent des commandes d'écriture, 33 ne consultent aucun rôle. La
+lectrice du seed voit « Nouveau contact » et les liens d'administration du guide (décision 603) ; le serveur les refuse,
+l'interface les propose.
+
+**Arbitrage 1 — la source** : « Rôle + droits fins ». Une fonction en lecture seule rend, pour l'utilisateur courant, ce
+qu'il peut écrire — l'espace, chaque track, chaque channel —, calculée par les MÊMES fonctions d'autorisation que la RLS
+(`app.can_*`, `app.is_workspace_admin`), jamais recomposée côté client. Une lectrice rouverte en écriture sur un channel
+par un droit fin y garde ses gestes ; un business developer fermé sur un track les y perd. Écartée : le rôle d'espace
+seul (`mon_role_espace`), faux pour les droits fins.
+
+**Arbitrage 2 — l'affichage** : « Désactivé avec motif ». Une commande que l'utilisateur ne peut pas exercer reste
+montée, désactivée, et dit pourquoi (« lecture seule »), lié par `aria-describedby` — le patron déjà établi pour une
+ligne soldée (`ReelsLigne`) et pour les gestes éteints. Écartés : le masquage, et le mixte.
+
+**Ce qui ne change pas** : le refus serveur reste la seule règle (`CLAUDE.md` §10) ; l'aide d'interface ne remplace
+aucune politique, et chaque écran garde la traduction de son refus si le droit change entre l'affichage et le geste.
+**Suite** : `docs/SPEC-droits-interface.md` (inventaire écran par écran, contrat de la fonction, états, preuves), écrite
+et committée avant tout code.
+
