@@ -1,0 +1,550 @@
+# Spécification — Le connecteur MCP du CRM
+
+Unités de backlog : `CRM-102` (socle : service, mandataire OAuth, connexion longue, registre),
+`CRM-103` (administration dans la webapp), `CRM-104` (outils, une tranche par famille) —
+`docs/BACKLOG.md`.
+Décision : `docs/JOURNAL.md` 627 (arbitrages A1 à A4 du responsable, décisions techniques D1 à D8,
+2026-10-20).
+Documents liés : `docs/SPEC-plateforme.md` (superadministrateurs, amorçage, journal),
+`docs/SPEC-session-sso.md` (échangeur, jeton interne, admission), `docs/SPEC-permissions-rls.md`,
+`docs/SSO.md`, `docs/SSO-client-lelabs-crm.md` (déclaration du client, révisée), `docs/SCHEMA.md` §9 quinquies,
+`docs/DAT.md` §3 et §7, `docs/SPEC-deploiement-spark.md`, `docs/DESIGN_SYSTEM.md` (section
+« Connecteur MCP », écrite avec `CRM-103`), `docs/manual.md` (chapitre 19, écrit avec `CRM-103`).
+Modèle éprouvé : le connecteur Evoliz du même responsable (`p2enjoy-evoliz`, en production depuis le
+2026-10-06), dont le mandataire OAuth, la garde d'entrée et la connexion longue sont repris.
+
+Écrite le 2026-10-20 **avant la première ligne de code**.
+
+---
+
+## 1. Objet et principe
+
+Un **serveur MCP distant** permet de piloter le CRM depuis un assistant — Claude (web, Desktop, Code)
+ou ChatGPT. Il couvre les tracks, les channels, les affaires, les contacts, les budgets et les coûts,
+les saisies de temps, les objectifs et la messagerie.
+
+**Le principe tient en une phrase (arbitrage A2) :** le connecteur agit **sous l'identité de la
+personne connectée**, à travers la même API et les mêmes règles que la webapp. La **matrice** du
+connecteur restreint en plus ce que l'assistant peut faire en son nom. Il en découle :
+
+> **droit effectif = matrice du connecteur ∩ droits de la personne dans le CRM.**
+
+- La matrice **ne donne jamais plus** que le CRM. Accorder `affaires:ajouter` sur un espace dont la
+  personne est lectrice n'ouvre rien : la RLS refuse.
+- La RLS et les règles métier — gardes de transition, plafond de temps, corbeille — restent les
+  **seuls juges** de la donnée. Le connecteur n'a **aucun chemin parallèle** : il appelle les tables
+  et les RPC que la webapp appelle.
+- Un **superadministrateur** (`docs/SPEC-plateforme.md` §2) franchit la matrice, comme dans Evoliz.
+  Il ne franchit **jamais** la RLS.
+
+## 2. Composant et hébergement — décisions D1 et D4
+
+### 2.1 Le service `mcp`
+
+Le service est écrit en Python 3.13 avec FastMCP (`4.0.11`, SDK MCP `2.3.0`, versions épinglées dans
+`mcp/requirements.lock`, comme dans Evoliz), sous Uvicorn, avec `httpx`.
+
+| Module | Rôle | Origine |
+|---|---|---|
+| `mcp/crm_mcp/reglages.py` | configuration (§10) ; refuse de démarrer en nommant chaque variable manquante | nouveau |
+| `mcp/crm_mcp/autorisation.py` | mandataire OAuth adossé au realm `lelabs` (§3), vérificateur du rôle, admission (§4) | repris d'`evoliz_mcp/autorisation.py` |
+| `mcp/crm_mcp/garde.py` | garde d'entrée ASGI : corps bornés, débit, purge (§3.5) | repris d'`evoliz_mcp/garde.py` |
+| `mcp/crm_mcp/jeton_interne.py` | frappe du jeton interne (§5) | nouveau |
+| `mcp/crm_mcp/crm.py` | client de PostgREST et des RPC sous le jeton interne : délais, reprises, traduction des refus | nouveau |
+| `mcp/crm_mcp/registre.py` | appels des RPC `mcp_*` sous la clé de service (§7) | nouveau |
+| `mcp/crm_mcp/politique.py` | déclaration des outils, résolution de l'espace, contrôle de la matrice (§6) | nouveau, sur le modèle d'`evoliz_mcp/politique.py` |
+| `mcp/crm_mcp/outils/<famille>.py` | les outils, une famille par module (§9) | nouveau |
+| `mcp/crm_mcp/audit.py`, `journalisation.py` | audit des appels, journaux JSON | repris |
+| `mcp/crm_mcp/pages.py` | accueil, « Compte en attente de vérification », « Droits en attente », « La connexion n'a pas abouti » | repris, textes adaptés |
+
+**Pourquoi Python, et pas une fonction edge.**
+
+- C'est la préférence du `CLAUDE.md` §3 pour un service backend.
+- Le mandataire d'Evoliz est en production et prouvé.
+- Les **10 s de temps mur** d'un worker edge (`docs/SPEC-edge-functions.md` §2) ne conviennent ni
+  à un mandataire OAuth, ni à un appel d'outil qui enchaîne plusieurs requêtes.
+
+`mail-sync` établit déjà le précédent d'un service Python dans la pile.
+
+**La reprise de code est une copie tracée.** Chaque fichier repris porte, sous son `@spec`, la
+mention de sa source et de la révision d'Evoliz copiée. Il n'y a pas de bibliothèque partagée entre
+les deux dépôts : leurs cycles de déploiement sont indépendants. Ce compromis est nommé au §14.
+
+**Durcissement du conteneur**, comme pour `mail-sync` :
+
+- `read_only`, `cap_drop: ALL`, `no-new-privileges`, utilisateur non root ;
+- l'état écrit sur le seul volume `mcp-etat` ;
+- une sonde de santé par l'interpréteur.
+
+### 2.2 Adresses
+
+| Environnement | Origine publique | Connecteur |
+|---|---|---|
+| Développement | `http://localhost:${MCP_DEV_PORT}` (défaut `18490`), port publié par l'overlay de développement | `http://localhost:18490/mcp` |
+| Production (cellule `crm`) | `https://crm.mcp.lelabs.tech` | `https://crm.mcp.lelabs.tech/mcp` |
+
+**En production, un hôte dédié (D4).** Caddy sert déjà `crm.lelabs.tech`. Il reçoit un bloc par
+hôte : `crm.mcp.lelabs.tech` est relayé **entièrement** vers `mcp:8080`, sans retirer de préfixe.
+
+- Les routes OAuth du connecteur (`/.well-known/oauth-protected-resource/mcp`,
+  `/.well-known/oauth-authorization-server`, `/register`, `/authorize`, `/consent`, `/token`,
+  `/auth/callback`, `/revoke`) restent **propres à cet hôte**.
+- Le `404` explicite de `/.well-known/oauth-authorization-server` sur `crm.lelabs.tech`
+  (décision 589) **ne change pas**.
+- L'étiquette `com.p2enjoy.caddy-routes-revision` est incrémentée dans le même commit
+  (`docs/SPEC-deploiement-spark.md`).
+
+**Pourquoi pas un chemin sous `crm.lelabs.tech`.** Les métadonnées OAuth (RFC 8414, RFC 9728)
+s'insèrent au **début** du chemin, et elles entreraient en collision avec le repli de l'application
+monopage. Un hôte à part est la forme d'Evoliz (`evoliz.mcp.lelabs.tech`).
+
+**À vérifier avant la livraison de `CRM-102`** : une **seconde route** de la Forge vers la même
+cellule (`crm.mcp.lelabs.tech 8080 tls`) est une demande au propriétaire du Spark. Elle se propose
+par `scripts/spark/proposer.sh --route-seule`, révisé pour proposer les deux routes. Si la Forge ne
+l'accepte pas, la question revient au responsable avant tout code de production : elle n'est pas
+tranchée implicitement.
+
+## 3. Mandataire OAuth
+
+### 3.1 Flux
+
+```
+client MCP ──► POST /mcp                               401 + WWW-Authenticate (resource_metadata)
+           ──► GET /.well-known/oauth-protected-resource/mcp
+           ──► GET /.well-known/oauth-authorization-server
+           ──► POST /register  (ou client_id = URL de métadonnées, CIMD)
+           ──► GET /authorize?…&code_challenge=…        → page de consentement (§3.3)
+navigateur ──► consentement accepté                     → realm lelabs (PKCE S256)
+           ──► connexion au SSO                         → GET /auth/callback?code=…
+mcp        ──► échange du code au realm (client confidentiel lelabs-crm, secret)
+           ──► vérification du jeton d'accès, admission (§4) : refus → page, aucun code émis
+           ──► redirection vers le client MCP avec un code
+client MCP ──► POST /token (PKCE)                       → jeton émis par le mandataire
+           ──► POST /mcp  Authorization: Bearer …        → outils
+```
+
+**Ce que le client MCP détient.** Le jeton qu'il reçoit est une **référence** signée par le
+mandataire. Le jeton LeLabs correspondant est conservé **chiffré côté serveur** (§3.4). Aucun jeton
+LeLabs ni aucun jeton interne n'atteint le client MCP.
+
+### 3.2 Client LeLabs — décision D3
+
+Le connecteur **réutilise le client confidentiel `lelabs-crm`** de l'échangeur de session. Sa
+déclaration (`docs/SSO-client-lelabs-crm.md`) est **renvoyée complète** à un administrateur du realm,
+avec :
+
+- un `REDIRECT` de plus : `https://crm.mcp.lelabs.tech/auth/callback` ;
+- `HORS_LIGNE=oui`, qui autorise `offline_access`.
+
+Le secret n'est ni retouché ni réémis (`docs/SSO.md`, « Changer une intégration déjà créée »), et il
+reste lu sous `OIDC_CLIENT_SECRET`.
+
+**Pourquoi le même client.** La cellule ne peut porter qu'un seul `OIDC_CLIENT_SECRET`, nom imposé à
+toute intégration du domaine : un second client y créerait une collision de nom. Le `azp` des jetons
+est donc le même pour l'échangeur et pour le connecteur, et chacun vérifie celui de son jeton.
+
+**Conséquence assumée.** `HORS_LIGNE=oui` permet à `lelabs-crm` de **demander** `offline_access`.
+L'échangeur de session, lui, ne le demande pas et ne change pas : la session de la webapp garde sa
+durée.
+
+### 3.3 Connexion longue — « Stay signed in »
+
+La page de consentement porte la case **« Stay signed in »** (textes de FastMCP, en anglais ; écart
+documenté au design system, comme dans Evoliz). Elle est **décochée par défaut**.
+
+- **Décochée :** le jeton de rafraîchissement remis au client MCP vit autant que la session du SSO,
+  bornée par son inactivité. Après une longue pause, l'assistant repasse par la connexion.
+- **Cochée :** le mandataire ajoute `offline_access` aux portées demandées au realm. Le jeton de
+  rafraîchissement survit alors aux pauses. Son inactivité et sa révocation sont réglées par le SSO,
+  et la personne le révoque depuis son espace de compte LeLabs (section *Applications*).
+- **Dans les deux cas,** le jeton d'accès LeLabs vit 300 s, et **chaque renouvellement relit**
+  `verified`, `admin` et l'admission (§4). Un rôle retiré ferme l'accès en 300 s au plus.
+
+### 3.4 Clients MCP acceptés et état du mandataire — décision D8
+
+**Clients acceptés.**
+
+- L'enregistrement dynamique (RFC 7591) et les documents de métadonnées (CIMD) sont ouverts.
+- Les **adresses de retour sont restreintes** à `CRM_MCP_REDIRECTIONS_CLIENTS` : la boucle locale
+  (`http://localhost:*`, `http://127.0.0.1:*`), Claude (`https://claude.ai/api/mcp/auth_callback`)
+  et ChatGPT (`https://chatgpt.com/connector_platform_oauth_redirect`).
+- Le consentement reste exigé dans le navigateur qui se connecte : un cookie de liaison protège
+  contre l'adjoint confus.
+
+**État du mandataire.** Clients enregistrés, transactions, codes et correspondance entre jetons émis
+et jetons LeLabs sont conservés dans le volume `mcp-etat`. Ils sont chiffrés (Fernet) par une clé
+dérivée d'`OIDC_CLIENT_SECRET` par HKDF-SHA256, et la clé qui signe les jetons émis en dérive de même.
+
+**Perdre le volume** déconnecte les clients MCP, qui se réenregistrent. Aucune donnée métier n'y vit
+: le registre est en base (§7), donc couvert par les sauvegardes (`CRM-080`).
+
+### 3.5 Garde d'entrée
+
+Une garde ASGI est placée devant toute l'application, reprise d'Evoliz, valeurs comprises :
+
+- **corps bornés :** 64 Kio, et 1 Mio sur `/mcp` (aucun outil n'accepte de fichier dans cette
+  unité) ; au-delà, `413` ;
+- **débit par adresse :** `CRM_MCP_DEBIT_OAUTH_MINUTE` requêtes par minute (défaut 60) sur les
+  points OAuth ;
+- **enregistrements de clients :** `CRM_MCP_ENREGISTREMENTS_HEURE` par adresse et par heure
+  (défaut 20 ; 200 au total) ;
+- **purge horaire** de l'état expiré.
+
+L'adresse est celle que transmet Caddy (`X-Forwarded-For`).
+
+## 4. Accès — qui entre
+
+Le rôle `verified` est vérifié côté serveur à **trois** endroits, comme dans Evoliz :
+
+| Où | Contrôle | Refus |
+|---|---|---|
+| Retour du SSO (`/auth/callback`) | jeton d'accès LeLabs vérifié (signature au `jwks_uri`, `iss` exact, `azp = lelabs-crm`, `typ = Bearer`, `exp`, `alg` ∈ {RS256, ES256} avant toute clé) ; `email_verified` ; **`verified`** ; puis **inscription** au registre et **amorçage** (§7.2) ; puis **au moins un droit** ou le drapeau superadministrateur | `403`, aucun code émis : « Compte en attente de vérification » (sans `verified` ou sans adresse vérifiée), « Droits en attente » (vérifié, aucun droit), « La connexion n'a pas abouti » (jeton invérifiable) |
+| Échange du code (`/token`) | `verified` sur les jetons attachés au code | `invalid_grant` |
+| Chaque requête `/mcp` | jeton LeLabs conservé, contrôles ci-dessus ; renouvelé auprès du realm à l'échéance | `401` |
+
+**Le rôle `admin` LeLabs** n'est pas un écart ici, contrairement à Evoliz (décision 18 de ce
+dépôt-là). Il vaut superadministrateur de la plateforme (A1), donc franchit la matrice ; il ne
+franchit pas la RLS, qui lui accorde déjà l'administration de tout espace (décision 597).
+
+**L'inscription n'est pas une admission au CRM.** Un compte vérifié qui se connecte au connecteur
+est inscrit à `mcp_comptes` (§7.1), pour que le superadministrateur le voie et puisse lui accorder
+des droits. Il n'obtient ni profil, ni appartenance (minimisation), sauf l'amorçage du
+superadministrateur, qui crée son profil (`docs/SPEC-plateforme.md` §3).
+
+## 5. Le jeton interne du connecteur — décision D2
+
+Pour chaque requête `/mcp`, après la vérification du §4, le service frappe un jeton **HS256** signé
+par `JWT_SECRET`, la clé que PostgREST, Realtime et Storage connaissent :
+
+| Revendication | Valeur |
+|---|---|
+| `iss` | `p2enjoy-crm/mcp` — distinct de `p2enjoy-crm/session` ; jamais confondu avec un jeton LeLabs |
+| `sub` | le `sub` LeLabs |
+| `role`, `aud` | `authenticated` |
+| `iat` | l'instant de la requête |
+| `exp` | le plus proche de l'`exp` du jeton LeLabs et de `iat + 300` |
+| `lelabs_admin` | `true` **si et seulement si** `admin` est présent dans `realm_access.roles` ; absente sinon — même règle que l'échangeur |
+| `canal` | `mcp` |
+
+**Règles du jeton :**
+
+- Il **ne quitte jamais le service**. Il n'est pas journalisé, et il n'est pas mis en cache au-delà
+  de la requête qui l'a frappé.
+- **Toute la donnée passe sous ce jeton** : PostgREST (`/rest/v1/…`) et les RPC, par Kong sur le
+  réseau Compose (`http://kong:8000`), avec l'en-tête `apikey` (clé anonyme) que Kong exige. La RLS
+  s'applique donc **exactement** comme pour la webapp.
+- **La clé de service** n'est employée que pour les RPC du registre (§7.3), réservées à
+  `service_role`, et jamais pour lire ou écrire une donnée métier.
+
+**Compromis nommé (§14).** Une **deuxième** entité détient `JWT_SECRET`, et peut donc frapper un
+jeton pour n'importe quel `sub`. `docs/SPEC-session-sso.md` §5.7 réservait jusqu'ici ce pouvoir à
+la fonction `session`. Les deux processus vivent dans la même pile et sur le même hôte. La
+revendication `canal` permet à la base, si un besoin le justifie un jour, de distinguer un appel du
+connecteur.
+
+## 6. La matrice — décisions D5 et D6
+
+### 6.1 Familles et actions
+
+| Famille | Ce qu'elle couvre |
+|---|---|
+| `structure` | tracks, channels, lecture des workflows et de leurs étapes |
+| `affaires` | affaires (cards) : champs, étape, déplacement, sommeil, commentaires, timeline, contacts liés |
+| `contacts` | contacts et organisations |
+| `budgets` | budgets, occurrences, lignes de coût d'une affaire et leurs réels |
+| `temps` | saisies de temps ; le coût du personnel en lecture, dans ce que la RLS ouvre |
+| `objectifs` | tableaux d'objectifs, blocs, flèches |
+| `messagerie` | lecture des fils d'une affaire et des messages ; envoi d'un email |
+
+| Action | Sens |
+|---|---|
+| `consulter` | lire |
+| `ajouter` | créer ; **envoyer un email** est un ajout, avec `destructiveHint` |
+| `modifier` | changer un objet existant, déplacer une affaire, la mettre en sommeil |
+| `supprimer` | **mettre à la corbeille ou archiver**, selon ce que le CRM offre pour l'objet — jamais purger (arbitrage A4). Un objet que le CRM ne sait que détruire (une saisie de temps, une ligne de coût, un bloc d'objectif) **n'a pas d'outil de suppression** : on le corrige par `modifier` |
+
+La liste des espaces accessibles et la recherche globale sont des outils de **référence** : visibles
+dès qu'un droit existe dans au moins un espace, avec des résultats filtrés par la matrice (§9.2).
+
+### 6.2 Où la matrice est appliquée
+
+Elle est appliquée **côté serveur**, à deux endroits.
+
+1. **Visibilité.** Chaque outil porte un contrôle FastMCP (`Tool.auth`), évalué à `tools/list` et à
+   la résolution d'un appel :
+   - un superadministrateur voit tout ;
+   - un autre compte voit un outil si **au moins un espace** ouvre sa famille et son action, ainsi
+     que les cases `aussi` de l'outil (§9.1) ;
+   - un outil caché répond « outil inconnu ».
+
+   Le client MCP garde la liste reçue à la connexion : un changement de droits l'atteint à sa
+   prochaine connexion, et un appel devenu fermé est refusé au point 2.
+2. **Chaque appel.** `politique.py`, placé après l'audit et avant toute donnée :
+   1. **résout l'espace** de l'appel, selon la déclaration de l'outil (§9.1). C'est soit l'argument
+      `workspace` (slug ou identifiant), soit l'espace de l'objet visé, **lu sous le jeton de la
+      personne** : un objet qu'elle ne lit pas est « introuvable », quelle qu'en soit la cause ;
+   2. appelle `public.mcp_autorise(p_ws, p_famille, p_action)` **sous le jeton de la personne**,
+      pour l'action de l'outil puis pour chaque case `aussi` ;
+   3. en cas de refus, rend le **refus uniforme** et l'inscrit au journal (§7.1) ;
+   4. en cas d'accord, exécute l'outil, toujours sous le jeton de la personne. La RLS a le dernier
+      mot, et un refus de la base est traduit sans détail technique (§9.3).
+
+**Le refus uniforme :** « Introuvable ou hors de votre périmètre : <objet> <identifiant> ». C'est le
+même texte pour un objet inexistant, un objet d'un espace que la matrice ferme et un objet que la RLS
+cache. Un refus de la matrice sur un espace **nommé** par la personne dit à la place : « Le connecteur
+n'a pas le droit <action> sur <famille> dans l'espace <slug> ». Elle a donné cet espace, et elle
+apprend seulement ce que sa matrice lui accorde.
+
+### 6.3 `public.mcp_autorise(p_ws uuid, p_famille text, p_action text) returns boolean`
+
+- **Forme :** `SECURITY DEFINER` (elle lit `mcp_droits`, fermée), `STABLE`, `search_path` vide.
+  `EXECUTE` est accordé à `authenticated` seul, et révoqué nommément à `anon`.
+- **Ce qu'elle rend :** `app.est_superadmin() or exists(select 1 from public.mcp_droits where sub =
+  auth.uid() and workspace_id = p_ws and famille = p_famille and action = p_action)`.
+- **Validation :** une famille ou une action hors liste rend `22023`, jamais `false` ; une erreur de
+  déclaration se voit ainsi au lieu de se confondre avec un refus.
+- **Ce qu'elle ne fait pas :** elle ne lit pas l'appartenance au CRM. L'intersection est faite par la
+  RLS au moment de l'accès, et non recopiée ici.
+
+## 7. Le registre — migration `0090_connecteur_mcp.sql`
+
+Migration ordinaire et idempotente, qui ne modifie aucune donnée existante.
+
+### 7.1 Tables
+
+**`public.mcp_comptes`** — les comptes vérifiés qui se sont connectés au connecteur.
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `sub` | `uuid` | PK ; **aucune** clé vers `profiles` : un compte connecté n'a pas forcément de profil (§4) |
+| `email` | `text` | non nul, normalisé ; **mis à jour** à chaque connexion, l'adresse pouvant changer chez LeLabs |
+| `nom` | `text` | non nul, borné à 120 caractères, même chaîne de repli que le profil |
+| `premiere_connexion`, `derniere_activite` | `timestamptz` | non nuls |
+
+**`public.mcp_droits`** — la matrice.
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `sub` | `uuid` | FK `mcp_comptes` `ON DELETE CASCADE` |
+| `workspace_id` | `uuid` | FK `workspaces` `ON DELETE CASCADE` — supprimer un espace retire ses droits |
+| `famille` | `text` | `check` fermé (§6.1) |
+| `action` | `text` | `check` : `consulter`, `ajouter`, `modifier`, `supprimer` |
+| `accorde_par` | `uuid` | FK `profiles` `ON DELETE SET NULL` |
+| `accorde_le` | `timestamptz` | non nul, `now()` |
+
+Clé primaire `(sub, workspace_id, famille, action)`.
+
+**`public.mcp_journal`** — un appel d'outil par ligne.
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `id` | `bigint` | PK, identité |
+| `sub` | `uuid` | non nul ; sans clé étrangère, pour survivre à un compte retiré |
+| `outil` | `text` | non nul |
+| `workspace_id` | `uuid` | nullable, sans clé |
+| `issue` | `text` | `check` : `ok`, `refus_matrice`, `refus_crm`, `erreur`, `trop_volumineux` |
+| `duree_ms` | `integer` | non nul, ≥ 0 |
+| `cree_le` | `timestamptz` | non nul, `now()` ; indexée |
+
+**`mcp_journal` ne porte jamais d'arguments**, de contenu ni de jeton. L'objet créé est retrouvé par
+la timeline du CRM, qui nomme son auteur.
+
+**Fermeture des trois tables :** RLS activée sans politique, privilèges retirés nommément à `anon` et
+`authenticated`.
+
+### 7.2 Inscription et amorçage
+
+**`public.mcp_inscrire_compte(p_sub uuid, p_email text, p_nom text, p_superadmins_initiaux text[])
+returns jsonb`.** Elle est réservée à `service_role`, et le service ne l'appelle qu'après la
+vérification du §4. Elle :
+
+1. insère le compte ou met à jour son adresse, son nom et sa `derniere_activite` ;
+2. appelle `app.amorcer_superadmin(p_sub, p_email, p_nom, p_superadmins_initiaux)`
+   (`docs/SPEC-plateforme.md` §3) ;
+3. rend `{"superadmin": <app.est_superadmin pour ce sub>, "droits": <nombre de lignes>}`.
+
+La vérification ne passe pas par `auth.uid()` : l'appel est fait sous la clé de service. Elle est
+faite par une variante interne, `app.est_superadmin_pour(p_sub, p_admin_lelabs boolean)`, qui
+reçoit le drapeau LeLabs du jeton vérifié par le service.
+
+### 7.3 RPC réservées au service
+
+| Fonction | Rôle |
+|---|---|
+| `mcp_inscrire_compte(…)` | §7.2 ; appelée au retour du SSO et à chaque renouvellement du jeton LeLabs, ce qui met `derniere_activite` à jour au plus toutes les 300 s |
+| `mcp_droits_de(p_sub uuid) returns table(workspace_id, famille, action)` | la matrice d'un compte, pour la **visibilité** des outils (§6.2, point 1), relue à chaque `tools/list` |
+| `mcp_journaliser(p_sub, p_outil, p_ws, p_issue, p_duree_ms) returns void` | une ligne du journal |
+
+Toutes sont `SECURITY DEFINER`, avec `search_path` vide. `EXECUTE` est accordé à `service_role`
+seul, et révoqué nommément à `public`, `anon` et `authenticated`.
+
+## 8. L'administration du connecteur — `CRM-103`
+
+Arbitrage A3 : l'administration du connecteur est un **quatrième onglet de `/plateforme`**,
+« Connecteur MCP » (`/plateforme/mcp`), réservé aux superadministrateurs.
+
+### 8.1 Écrans
+
+- **Comptes connectés** : nom, adresse, première connexion, dernière activité, nombre d'espaces
+  ouverts, drapeau superadministrateur.
+- **Fiche d'un compte**, `/plateforme/mcp/:sub` :
+  - un **sélecteur d'espace**, qui liste tous les espaces ;
+  - pour l'espace choisi, la **matrice** : familles en lignes, actions en colonnes, une case à
+    cocher par cellule ;
+  - un en-tête de ligne qui coche toute la famille, et un en-tête de colonne qui coche toute
+    l'action ;
+  - « Enregistrer » remplace la matrice de cet espace, puis relit l'état.
+- **Le rôle de la personne dans le CRM** est affiché pour l'espace choisi : « administratrice »,
+  « business developer », « lectrice », ou « **pas membre de cet espace** ». Dans ce dernier cas, un
+  avertissement dit : « Ces droits resteront sans effet tant que cette personne n'est pas membre de
+  l'espace : le connecteur agit en son nom » (conséquence d'A2). L'écran n'interdit pas d'accorder,
+  car le superadministrateur peut ajouter l'appartenance ensuite.
+- **Un compte superadministrateur** affiche « Franchit la matrice » à la place des cases, qui sont
+  désactivées.
+- **Journal des appels** : date, compte, outil, espace, issue, durée, paginé, avec des filtres par
+  compte et par issue.
+
+### 8.2 RPC
+
+Toutes sont gardées par `app.exiger_superadmin()`, mêmes formes que `docs/SPEC-plateforme.md` §6.
+
+| Fonction | Rôle |
+|---|---|
+| `mcp_comptes_liste() returns table(sub, nom, email, premiere_connexion, derniere_activite, espaces_ouverts, superadmin)` | la liste des comptes |
+| `mcp_compte(p_sub uuid) returns jsonb` | le compte, sa matrice par espace, son rôle dans chaque espace (`app.workspace_role_pour`, appartenances enregistrées seulement), son drapeau |
+| `mcp_poser_droits(p_sub uuid, p_ws uuid, p_droits jsonb) returns void` | **remplace** la matrice d'un espace par `[["affaires","consulter"], …]` ; valide chaque couple ; journalise `mcp_droits_poses` à `plateforme_journal`, avec l'avant et l'après |
+| `mcp_journal_liste(p_sub uuid default null, p_issue text default null, p_avant bigint default null, p_limite int default 50)` | le journal des appels, paginé, borné à 200 |
+
+## 9. Les outils — `CRM-104`
+
+### 9.1 Conventions
+
+- **Langue.** Les noms et les descriptions destinées au modèle sont en anglais, avec le terme métier
+  français entre parenthèses (« affaire », « channel »), comme dans Evoliz. Les noms suivent la forme
+  `crm_<objet>_<verbe>`.
+- **Déclaration.** Chaque outil déclare sa `famille`, son `action`, ses cases `aussi` et la façon de
+  résoudre son espace :
+  - `workspace:<argument>` : l'espace est donné par l'argument ;
+  - `track:<arg>`, `channel:<arg>`, `card:<arg>`, `contact:<arg>`, `organisation:<arg>`,
+    `budget:<arg>`, `board:<arg>` : l'espace de l'objet, lu sous le jeton ;
+  - `reference` : pas d'espace unique, résultats filtrés.
+
+  La déclaration est **vérifiée au démarrage** : une déclaration absente ou invalide arrête le
+  service, et un test vérifie que **tout argument d'identifiant** de chaque outil est l'ancre ou est
+  déclaré, sur le modèle d'`evoliz_mcp` (`tests/test_politique.py`).
+- **Annotations.** `readOnlyHint` sur toute consultation. `destructiveHint` sur toute mise à la
+  corbeille, tout archivage, tout déplacement d'étape et tout envoi d'email, avec une description qui
+  nomme l'effet.
+- **Pas de chemin parallèle.** Un outil appelle **uniquement** les tables, vues et RPC que la webapp
+  appelle pour le même geste (`move_card`, `creer_affaire`, `move_card_to_channel`, `snooze_card`,
+  `queue_outbound_email`, `recherche_globale`…). Les règles métier restent en base.
+
+### 9.2 Catalogue initial
+
+Chaque tranche **fixe** la liste exacte de ses outils dans ce paragraphe, par un commit de
+documentation, **avant** son code. Le catalogue ci-dessous est la cible.
+
+| Famille | Consulter | Ajouter | Modifier | Supprimer (corbeille ou archive) |
+|---|---|---|---|---|
+| référence | `crm_workspace_list`, `crm_search` (recherche globale ; chaque ligne est filtrée par la matrice de sa famille) | — | — | — |
+| `structure` | `crm_track_list`, `crm_track_get`, `crm_channel_list`, `crm_channel_get`, `crm_workflow_get` (étapes, transitions, champs exigés) | `crm_track_create`, `crm_channel_create` | `crm_track_update`, `crm_channel_update` | `crm_track_trash`, `crm_channel_trash` |
+| `affaires` | `crm_card_list` (par channel, étape, échéance), `crm_card_get` (champs, étape, contacts, prochaine action), `crm_card_timeline`, `crm_card_comment_list`, `crm_stale_card_list` (affaires figées) | `crm_card_create`, `crm_card_comment_add` | `crm_card_update` (titre, champs, prochaine action, échéance), `crm_card_move` (étape, par `move_card`), `crm_card_move_to_channel`, `crm_card_snooze`, `crm_card_wake`, `crm_card_contact_link` (`aussi` : `contacts:consulter`) | `crm_card_trash` |
+| `contacts` | `crm_contact_list`, `crm_contact_get`, `crm_organization_list`, `crm_organization_get` | `crm_contact_create`, `crm_organization_create` | `crm_contact_update`, `crm_organization_update` | selon ce que le CRM offre, fixé en tranche |
+| `budgets` | `crm_budget_list`, `crm_budget_get` (occurrences), `crm_card_cost_list`, `crm_costs_to_enter` (« à saisir ») | `crm_card_cost_add`, `crm_card_cost_actual_add` | `crm_card_cost_update`, `crm_card_cost_settle` (soldé) | `crm_budget_archive` si le CRM l'offre |
+| `temps` | `crm_time_entry_list` (semaine, personne, cible), `crm_time_report` (rapport mensuel, dans ce que la RLS ouvre) | `crm_time_entry_add` | `crm_time_entry_update` | — (une saisie se corrige) |
+| `objectifs` | `crm_goal_board_list`, `crm_goal_board_get` | `crm_goal_block_add`, `crm_goal_link_add` | `crm_goal_block_update` | `crm_goal_board_archive` |
+| `messagerie` | `crm_card_mail_list` (fils et messages d'une affaire, sans pièce jointe), `crm_mail_get` | `crm_mail_send` (`queue_outbound_email`, `destructiveHint`, `aussi` : `affaires:consulter`) | — | — |
+
+### 9.3 Réponses
+
+- **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,
+  étape, slug de l'espace. Les listes sont paginées (`limit` borné à 100, `offset`).
+- **Garde de taille.** Une réponse de plus de `CRM_MCP_TAILLE_MAX_REPONSE` caractères (défaut
+  `200000`) est remplacée par une erreur qui donne sa taille et propose de paginer ou de filtrer.
+- **Traduction des refus du CRM.** Les refus nommés de la base (`transition_not_allowed`,
+  `comment_required`, `channel ferme`, plafond de temps…) sont traduits en un message pour le modèle
+  : le code et une phrase, jamais une pile ni un détail d'infrastructure. Un refus RLS (`42501`, ou
+  une ligne absente) devient le refus uniforme (§6.2).
+
+## 10. Configuration
+
+| Variable | Rôle | Format | Obligatoire | Exemple non sensible |
+|---|---|---|---|---|
+| `CRM_MCP_ORIGINE_PUBLIQUE` | origine publique du connecteur, sans barre finale | URL | oui | `https://crm.mcp.lelabs.tech` ; développement `http://localhost:18490` |
+| `CRM_SUPERADMINS_INITIAUX` | adresses amorcées superadministratrices tant qu'aucune n'existe (`docs/SPEC-plateforme.md` §3) ; lue aussi par l'échangeur | adresses séparées par des virgules | non, défaut : aucune | `responsable@exemple.test` |
+| `CRM_MCP_REDIRECTIONS_CLIENTS` | adresses de retour acceptées des clients MCP (`*` : port ou segment quelconque) | liste | non, défaut : boucle locale, Claude, ChatGPT | `http://localhost:*,https://claude.ai/api/mcp/auth_callback` |
+| `CRM_MCP_TAILLE_MAX_REPONSE` | taille maximale d'une réponse d'outil, en caractères | entier | non, défaut `200000` | `200000` |
+| `CRM_MCP_DEBIT_OAUTH_MINUTE` | requêtes par minute et par adresse sur les points OAuth | entier | non, défaut `60` ; relevée seulement en développement | `60` |
+| `CRM_MCP_ENREGISTREMENTS_HEURE` | enregistrements de clients par adresse et par heure | entier | non, défaut `20` | `20` |
+| `CRM_MCP_JOURNAL_NIVEAU` | niveau des journaux | `debug`, `info`, `warning` | non, défaut `info` | `info` |
+| `MCP_DEV_PORT` | port publié du connecteur en développement | entier | développement seulement, défaut `18490` | `18490` |
+
+**Variables réutilisées, sans changement de nom :** `JWT_SECRET`, `ANON_KEY`, `SERVICE_ROLE_KEY`,
+`OIDC_CLIENT_SECRET`, `SSO_OIDC_ISSUER` et `SSO_OIDC_CLIENT_ID`.
+
+**Documentation de chaque variable :** `.env.example`, `docs/DAT.md`, `scripts/lib/env.sh` (contrat
+du profil), `scripts/spark/proposer.sh`, `docs/PROD_MIGRATIONS.md` et le README, dans le même
+commit que le code qui la lit.
+
+## 11. Observabilité
+
+- **Journaux.** Des journaux JSON sur la sortie standard, une ligne par événement, jamais à `debug`
+  pour FastMCP, qui y écrirait les arguments. On n'y trouve jamais de jeton, de code, d'adresse ni
+  d'argument d'outil.
+- **Audit.** Une ligne par appel, à la sortie standard **et** à `mcp_journal` (§7.1).
+- **`GET /sante`** rend `200` tant que le processus répond.
+- **`GET /pret`** rend `200` si la découverte OIDC répond et si `rest` répond à travers Kong ; sinon
+  `503`, avec le contrôle en défaut nommé.
+
+## 12. Données de développement
+
+- **Keycloak.** Le realm de développement (`keycloak/realm-lelabs.json`) reçoit :
+  - pour le client `${SSO_OIDC_CLIENT_ID}`, le `redirectUri`
+    `http://localhost:${MCP_DEV_PORT}/auth/callback` ;
+  - la portée `offline_access` en portée facultative ;
+  - l'attribut qui autorise le hors-ligne.
+- **Ce que le seed démontre** (`docs/SPEC-seed.md`, paragraphe écrit avec `CRM-103`), par les vrais
+  chemins :
+  - les comptes sont inscrits par une **vraie connexion OAuth** d'un client MCP de test
+    (`e2e/mcp/client.ts`, repris d'`e2e/mcp.ts` d'Evoliz) ;
+  - la matrice est posée par l'écran d'administration (ou par `mcp_poser_droits` sous le jeton de
+    Sabine), et des créations sont faites par le connecteur ;
+  - cela couvre un compte en attente, un compte avec droits de lecture sur un espace, un compte avec
+    écriture sur `affaires`, un refus de la matrice et un refus du CRM au journal.
+
+## 13. Preuves
+
+| Unité | Preuves |
+|---|---|
+| `CRM-102` | **pytest unitaires** : jeton interne (revendications, échéance bornée, `lelabs_admin`), garde, réglages, déclaration des outils. **Intégration** contre le vrai Keycloak et la vraie base : parcours OAuth complet en requêtes directes ; refus sans `verified` et sans adresse vérifiée ; « Droits en attente » ; `offline_access` demandé **seulement** case cochée ; jeton forgé, d'un autre client ou HS256 refusé ; amorçage par la première connexion ; `crm_workspace_list` sous la RLS. **pgTAP** `0085_connecteur_mcp.test.sql` : fermeture, privilèges, `mcp_autorise` (superadministrateur, porteur de `lelabs_admin`, matrice, famille invalide en `22023`), cascade d'un espace supprimé, mutations. **E2E** : un vrai client MCP connecté dans le navigateur, case cochée. `scripts/verify-mcp.sh` |
+| `CRM-103` | **pgTAP** et **API** : chaque RPC refusée à l'anonyme, à la lectrice et à l'administrateur d'espace. **E2E UI** : matrice posée à la souris et au clavier, avertissement « pas membre », effet constaté par un appel MCP réel ; captures aux quatre paliers, observées ; manuel |
+| `CRM-104` | Par tranche et pour **chaque** outil, contre la vraie base et un vrai client MCP : succès ; **refus par la matrice** (case décochée) ; **refus par le CRM** malgré la matrice ouverte (lectrice, objet d'un autre espace) ; journal écrit. **E2E** : l'effet est constaté dans la webapp (une affaire créée par le connecteur apparaît au board, et sa timeline nomme la personne) |
+
+## 14. Compromis connus
+
+- **`JWT_SECRET` partagé avec un second processus** (§5).
+- **La matrice est appliquée par le service**, non par la RLS. Un défaut de déclaration d'un outil
+  ouvrirait l'outil sans la matrice, **jamais** sans la RLS. La vérification de démarrage et le
+  test de complétude le bornent.
+- **Un changement de droits atteint le modèle à sa prochaine connexion** pour la liste des outils.
+  L'appel, lui, est revérifié tout de suite.
+- **Le code repris d'Evoliz est une copie** : un correctif de sécurité du mandataire se reporte à la
+  main dans les deux dépôts. La provenance tracée en tête de chaque fichier le rend repérable.
+- **Le mandataire s'appuie sur des points internes de FastMCP** (contrôle du rôle au retour et à
+  l'échange). La version est épinglée, et les tests sont rejoués à chaque montée.
+- **Les définitions d'outils ont un coût.** Le catalogue complet pèse sur le contexte des clients qui
+  chargent toutes les définitions ; la visibilité par matrice le réduit pour un compte restreint.
+- **Le connecteur n'a pas d'environnement de staging** : la Forge ne fournit qu'une cellule.
+
+## 15. Production — actions humaines
+
+Elles sont tenues dans `docs/PROD_MIGRATIONS.md` §3, et aucune n'est exécutée sans instruction.
+
+1. **Un administrateur du realm LeLabs** renvoie la déclaration complète de `lelabs-crm`, avec le
+   `REDIRECT` du connecteur et `HORS_LIGNE=oui` (§3.2).
+2. **Le propriétaire du Spark :**
+   - pose le DNS et la route `crm.mcp.lelabs.tech 8080 tls` (§2.2) ;
+   - pose les variables `CRM_MCP_ORIGINE_PUBLIQUE` et `CRM_SUPERADMINS_INITIAUX` ;
+   - applique la migration `0090`, instantané d'abord.
+3. **Le responsable fait le constat** : il ajoute le connecteur dans Claude ou ChatGPT, se connecte
+   avec « Stay signed in », pose une matrice et voit un appel au journal.

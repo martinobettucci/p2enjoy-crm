@@ -356,9 +356,56 @@ dépensé ».
 **Retour arrière** : par l'instantané si la fenêtre échoue (§6) ; après la fenêtre, par la ligne 88 du §3.2, **puis**
 la webapp précédente — jamais la webapp seule.
 
+### 2.13 `CRM-101` — la plateforme et son superadministrateur (PRÉVUE — spécifiée le 2026-10-20, rien n'est encore livré)
+
+`docs/SPEC-plateforme.md` ; décision 627. **Ce qui sera livré :**
+
+- **une migration, la 89** ;
+- **la fonction Edge `session`**, révisée : elle amorce le superadministrateur et révise l'admission ;
+- **la webapp**, avec l'écran `/plateforme` ;
+- **une variable facultative**, `CRM_SUPERADMINS_INITIAUX`.
+
+Les gestes ci-dessous sont le **contrat prévu**. Ils seront confirmés par la tranche T5, et rien n'est exécuté sans
+instruction du responsable.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Poser `CRM_SUPERADMINS_INITIAUX` (l'adresse LeLabs du responsable) dans `/etc/spark/env`, à partir de la proposition | propriétaire du Spark | console ; proposition par `scripts/spark/proposer.sh` |
+| 2 | Instantané de VM, avant la fenêtre de migration (§3.1) | propriétaire de la cellule | console de l'hébergeur |
+| 3 | Livrer et migrer : la 89, la fonction `session` et la webapp | poste, par les IP | `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, **puis** `./runProd.sh --spark` dans la cellule |
+| 4 | Vérifier : registre à 89 lignes, refus anonyme de `plateforme_espaces` | poste, lecture seule | `scripts/spark/verifier.sh` |
+| 5 | Se connecter : le drapeau est amorcé, et `/plateforme` liste les espaces | le responsable | l'application |
+
+**Retour arrière.** Par l'instantané si la fenêtre échoue. Après la fenêtre, par la ligne 89 du §3.2, puis la
+fonction `session` et la webapp précédentes. L'amorçage n'écrit qu'une ligne et le journal : les retirer n'enlève
+aucune donnée métier.
+
+### 2.14 `CRM-102` à `CRM-104` — le connecteur MCP (PRÉVUE — spécifiée le 2026-10-20, rien n'est encore livré)
+
+`docs/SPEC-mcp.md` §15 ; décision 627. **Ce qui sera livré :**
+
+- **une migration, la 90**, puis celle des RPC d'administration de `CRM-103` ;
+- **un service nouveau**, `mcp`, avec un volume `mcp-etat` ;
+- **un bloc d'hôte Caddy** ;
+- **des variables :** `CRM_MCP_ORIGINE_PUBLIQUE`, obligatoire, et les facultatives de `docs/SPEC-mcp.md` §10.
+
+**Les préalables sont des gestes extérieurs au dépôt.**
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Renvoyer la déclaration **complète** de `lelabs-crm` avec `REDIRECT=https://crm.mcp.lelabs.tech/auth/callback` et `HORS_LIGNE=oui` ; le secret est inchangé | administrateur du realm LeLabs | `https://oauth.lelabs.tech/verification/`, onglet *Intégrations* |
+| 2 | DNS `crm.mcp.lelabs.tech` vers la Forge, et route `crm.mcp.lelabs.tech 8080 tls` vers la cellule `crm`. **La possibilité d'une seconde route vers la même cellule est à confirmer** (`docs/SPEC-mcp.md` §2.2) | propriétaire du Spark | console de la Forge ; proposition par `scripts/spark/proposer.sh --route-seule` |
+| 3 | Poser `CRM_MCP_ORIGINE_PUBLIQUE=https://crm.mcp.lelabs.tech` | propriétaire du Spark | console |
+| 4 | Instantané, puis livrer et migrer (la 90), et démarrer le service `mcp` | poste, puis cellule | `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, **puis** `./runProd.sh --spark` |
+| 5 | Vérifier : `GET https://crm.mcp.lelabs.tech/pret` rend `200`, `POST /mcp` sans jeton rend `401` avec `resource_metadata`, et le refus de redirection d'un client non listé | poste, lecture seule | `scripts/spark/verifier.sh`, étendu par `CRM-102` T4 |
+| 6 | Ajouter le connecteur dans Claude ou ChatGPT, se connecter avec « Stay signed in », poser une matrice dans `/plateforme`, puis voir l'appel au journal | le responsable | l'assistant et l'application |
+
+**Retour arrière.** Arrêter le service `mcp` et retirer le bloc d'hôte. La 90 n'est lue par rien d'autre que le
+connecteur : la garder ne gêne pas la webapp.
+
 ## 3. Migrations en attente
 
-**Aucune migration en attente depuis le 2026-10-11.** Baseline de production : la migration **88**
+**Aucune migration en attente depuis le 2026-10-11.** Les migrations **89** (`CRM-101`) et **90** (`CRM-102`) sont **spécifiées, pas encore écrites** (§2.13, §2.14) : elles entreront dans ce paragraphe avec leur fichier. Baseline de production : la migration **88**
 (`CRM-099`, décision 622), appliquée le 2026-10-11 par une fenêtre avec instantané (§2.12, §8) ; avant elle, la **87**
 (`CRM-098`, décision 621), appliquée le 2026-10-11 par une fenêtre avec instantané (§2.11, §8) — son retrait est sa
 ligne du §3.2 ; avant elle, la **86**

@@ -8334,7 +8334,7 @@ inventés au passage (`CLAUDE.md` §1).
 table du chunk 5 la nommait en une ligne, et sept endroits du dépôt la citaient sans lui donner de
 contrat (`docs/SPEC-cards.md` §17, tableau d'ouverture). Le modèle est livré depuis `CRM-040` —
 `cards.next_action`, `cards.next_action_at` et l'index `cards_workspace_next_action_idx`, dont la
-colonne « Usage » porte le nom de cette vue depuis `docs/SCHEMA.md` §10. Il ne manquait que
+colonne « Usage » porte le nom de cette vue depuis `docs/SCHEMA.md` §9 quinquies. Il ne manquait que
 l'écran.*
 
 Une surface transverse qui répond à **« que dois-je faire aujourd'hui ? »** : les affaires actives
@@ -10617,6 +10617,10 @@ pas un produit.
       **opérateur** disposant de la clé de service, hors interface — est **nommé explicitement dans
       `docs/manual.md`**, chapitre 17. Un manuel qui décrit un écran qui n'existe pas est un défaut,
       pas une anticipation.
+- [ ] **Précision du 2026-10-20 (décision 627)** : `CRM-101` livre l'inscription et le retrait d'une attente, et la
+      gestion des appartenances, au niveau du **superadministrateur de la plateforme** (`docs/SPEC-plateforme.md` §6).
+      `CRM-070` garde l'écran d'un **administrateur d'espace** sur ses propres membres et les droits fins ; il pourra
+      réutiliser l'écran de `CRM-101` limité à un espace.
 - [ ] **Reste ouvert sciemment** : les trois choix d'architecture ci-dessus sont **reportés, pas
       tranchés**. `CRM-070` devra les prendre explicitement, et INC-014 — les politiques RLS des
       tables d'identité — posera la même question pour l'éventuelle table d'invitations.
@@ -15061,6 +15065,76 @@ d'accès nouvelle. Spécifié avant le code : `docs/SPEC-administration-arboresc
       d'API : aucune écriture ni politique nouvelle, les refus restent prouvés par `e2e/api/administration-arborescence.spec.ts`.
       Seed inchangé : le track « Formation » et ses workflows suffisent à la démonstration.
 - [ ] **T3** — livraison de la webapp en production et constat.
+
+### CRM-101 — Superadministration de la plateforme : espaces, appartenances, attentes `[ ]`
+*Créée le 2026-10-20 — décision 627, arbitrages du responsable A1 et D7. Le CRM n'avait aucun écran pour créer un
+espace ni gérer ses appartenances et ses attentes : seul `scripts/spark/amorcer-espace.sh` le faisait, sous la clé de
+service. Un superadministrateur — drapeau en base amorcé une seule fois par `CRM_SUPERADMINS_INITIAUX`, ou rôle `admin`
+LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : `docs/SPEC-plateforme.md`,
+`docs/SCHEMA.md` §1 bis (migration `0089`), `docs/SPEC-session-sso.md` §6.1 (admission révisée).*
+
+- [ ] **T1** — migration `0089_plateforme.sql` : `superadmins`, `plateforme_journal`, `app.est_superadmin`,
+      `app.exiger_superadmin`, `app.amorcer_superadmin`, les fonctions du §6 et l'admission révisée (§4) ; suite pgTAP
+      `0084_plateforme.test.sql` avec mutations ; types régénérés ; `docs/PROD_MIGRATIONS.md`.
+- [ ] **T2** — la fonction `session` : `CRM_SUPERADMINS_INITIAUX` remise au seul worker `session` et transmise ;
+      amorçage et admission exercés par une vraie connexion ; preuves unitaires et d'API aux jetons réels.
+- [ ] **T3** — l'écran `/plateforme` (Espaces et fiche d'un espace, Superadministrateurs, Journal) ;
+      `docs/DESIGN_SYSTEM.md` écrit **après lecture intégrale** ; preuves unitaires.
+- [ ] **T4** — seed (`docs/SPEC-seed.md`, compte Keycloak « Sabine Plateforme »), API, E2E à la souris et au clavier,
+      captures aux quatre paliers observées, manuel (chapitre 18, chapitre 17 révisé), `scripts/verify-plateforme.sh`,
+      campagnes.
+- [ ] **T5** — livraison en production (migration 89, instantané confirmé, `CRM_SUPERADMINS_INITIAUX`) et constat.
+
+### CRM-102 — Connecteur MCP : socle, mandataire OAuth, connexion longue, registre `[ ]`
+*Créée le 2026-10-20 — décision 627 (A2, D1 à D5, D8). Un service Python FastMCP `mcp/`, repris du connecteur Evoliz,
+agit sous l'identité de la personne par un jeton interne : droit effectif = matrice ∩ droits du CRM. Spécifié avant le
+code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinquies (migration `0090`). Dépend de `CRM-101`
+(drapeau, amorçage).*
+
+- [ ] **T1** — migration `0090_connecteur_mcp.sql` : `mcp_comptes`, `mcp_droits`, `mcp_journal`, `mcp_autorise`,
+      `mcp_inscrire_compte`, `mcp_droits_de`, `mcp_journaliser` ; pgTAP `0085_connecteur_mcp.test.sql` avec mutations ;
+      types régénérés.
+- [ ] **T2** — le service `mcp/` : réglages, mandataire OAuth et case « Stay signed in », garde, jeton interne,
+      client du CRM, registre, politique, pages, audit ; un seul outil, `crm_workspace_list` ; pytest unitaires.
+- [ ] **T3** — la pile : service `mcp` dans les fichiers Compose (développement, production, cellule), volume
+      `mcp-etat`, bloc d'hôte Caddy, realm de développement (`redirectUri`, `offline_access`), variables (`.env.example`,
+      `scripts/lib/env.sh`, `runDev.sh`, `scripts/spark/proposer.sh`) ; intégration contre le vrai Keycloak et la vraie
+      base ; E2E d'un vrai client MCP ; `scripts/verify-mcp.sh`.
+- [ ] **T4** — documentation (README, DAT, `docs/SSO-client-lelabs-crm.md` redéclaré, `docs/SPEC-deploiement-spark.md`),
+      campagnes.
+- [ ] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,
+      route et DNS, variables), et constat.
+
+### CRM-103 — Administration du connecteur MCP dans la webapp `[ ]`
+*Créée le 2026-10-20 — décision 627 (A3). Quatrième onglet de `/plateforme` : comptes connectés, matrice familles ×
+actions par espace, avertissement « pas membre de cet espace », journal des appels. Spécifié avant le code :
+`docs/SPEC-mcp.md` §8. Dépend de `CRM-101` et de `CRM-102`.*
+
+- [ ] **T1** — les RPC `mcp_comptes_liste`, `mcp_compte`, `mcp_poser_droits` et `mcp_journal_liste` (migration dédiée) ;
+      pgTAP ; types.
+- [ ] **T2** — l'onglet et la fiche d'un compte ; `docs/DESIGN_SYSTEM.md` écrit après lecture intégrale ; preuves
+      unitaires.
+- [ ] **T3** — API aux jetons réels, E2E à la souris et au clavier avec un effet constaté par un appel MCP réel, seed,
+      captures observées, manuel (chapitre 19), campagnes.
+- [ ] **T4** — livraison en production et constat.
+
+### CRM-104 — Outils MCP par famille `[ ]`
+*Créée le 2026-10-20 — décision 627 (A4, D6). Une tranche par famille ; chaque tranche fixe d'abord la liste exacte de
+ses outils dans `docs/SPEC-mcp.md` §9.2, par un commit de documentation, puis la livre. Les outils n'appellent que les
+tables et RPC de la webapp ; « supprimer » veut dire corbeille ou archive, jamais purge. Dépend de `CRM-102` et de
+`CRM-103`.*
+
+- [ ] **T1** — `structure` (et la recherche globale de référence).
+- [ ] **T2** — `affaires`.
+- [ ] **T3** — `contacts`.
+- [ ] **T4** — `budgets`.
+- [ ] **T5** — `temps`.
+- [ ] **T6** — `objectifs`.
+- [ ] **T7** — `messagerie`.
+
+Preuves exigées **par tranche et par outil** (`docs/SPEC-mcp.md` §13) : succès, refus par la matrice, refus par le
+CRM malgré la matrice ouverte, journal écrit, et effet constaté dans la webapp. Chaque tranche se livre en production et
+attend le constat du responsable avant la suivante.
 
 ## Arbitrage du 2026-10-03 — INC-265 à INC-269 (décision 619)
 

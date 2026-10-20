@@ -595,6 +595,32 @@ lit la composition vivante et l'occupation **avec le jeton de l'appelant**, avan
 illisible n'en ouvre aucune, et le modèle ne reçoit que la configuration et des nombres d'affaires (`docs/SPEC-ia.md`
 §13.5).
 
+### 3.7 ter Connecteur MCP — service `mcp` (`CRM-102` à `CRM-104` ; spécifié le 2026-10-20, non livré)
+
+Spécification : `docs/SPEC-mcp.md` ; décision 627.
+
+**Ce que c'est.** Un **serveur MCP distant**, en Python 3.13 et FastMCP épinglé, qui permet à Claude ou à ChatGPT de
+piloter le CRM au nom d'une personne connectée par le SSO LeLabs. Il porte :
+
+- **un mandataire OAuth**, repris par copie tracée du connecteur Evoliz du même responsable, avec la case « Stay
+  signed in » qui demande `offline_access` ;
+- **une garde d'entrée** ;
+- **un état chiffré** sur le volume `mcp-etat`.
+
+**Il agit sous l'identité de la personne.** Pour chaque requête, il frappe un **jeton interne**
+(`iss = p2enjoy-crm/mcp`, 300 s au plus) et passe par Kong vers PostgREST et les RPC existantes : la RLS reste juge.
+Une **matrice** par compte, espace, famille et action (`mcp_droits`) restreint en plus ce que l'assistant peut faire.
+Le droit effectif est l'intersection des deux.
+
+**Ses deux clés :**
+
+- **`JWT_SECRET`**, pour frapper le jeton interne. C'est un compromis nommé : jusqu'ici, seule la fonction `session`
+  frappait des jetons ;
+- **`SERVICE_ROLE_KEY`**, pour les seules RPC de son registre.
+
+**Hôte dédié en production.** `crm.mcp.lelabs.tech`, aiguillé par Caddy selon l'hôte. En développement, il est
+publié sur `MCP_DEV_PORT` (défaut `18490`).
+
 ### 3.8 Contraintes d'exécution de l'hôte
 
 Realtime élève son nombre de descripteurs de fichiers au démarrage. Le besoin est
@@ -765,6 +791,18 @@ restauration).
   par `docs/SPEC-session-sso.md`, prouvée par `scripts/verify-session-sso.sh` et
   `e2e/api/session.spec.ts`. GoTrue, ses gabarits et Inbucket ont quitté la pile (T6, décision 589) ;
   `docs/SPEC-auth.md` n'est plus qu'un renvoi.
+- **Superadministrateur de la plateforme** — `CRM-101`, décision 627 : `app.est_superadmin()`, vraie pour un porteur
+  de `lelabs_admin` **ou** une ligne de `public.superadmins`.
+  - **Amorçage :** une seule fois, par `CRM_SUPERADMINS_INITIAUX`, à la première connexion admise d'une adresse
+    vérifiée listée, tant qu'aucune ligne n'existe.
+  - **Ce qu'il ouvre :** les fonctions `public.plateforme_*` (espaces, appartenances, attentes, superadministrateurs,
+    journal) et l'administration du connecteur. Aucune politique RLS des données métier n'est élargie : un
+    superadministrateur en base sans appartenance ne lit aucune donnée commerciale.
+  - **Admission :** il est admis à une session sans appartenance (`docs/SPEC-session-sso.md` §6.1, révisé).
+  - Spécifié par `docs/SPEC-plateforme.md`.
+- **Connecteur MCP** — `CRM-102` à `CRM-104` : le rôle `verified` est contrôlé au retour du SSO, à l'échange et à
+  chaque requête. Le jeton interne du connecteur porte le `sub` de la personne, la RLS s'applique, et la matrice
+  `public.mcp_autorise` est contrôlée par le service avant chaque appel (`docs/SPEC-mcp.md` §4 à §6).
 - **Mot de passe** : le CRM n'en connaît aucun. La politique de mot de passe est celle de LeLabs.
 - **Rôles de workspace** : `admin`, `business_developer`, `viewer`.
 - **Droits fins** : `track_members` et `channel_members` accordent l'accès à un sous-arbre.
@@ -1231,6 +1269,7 @@ livraison contre une cellule simulée, avec leurs dégradations.
 | React Router 8 | Routage | Nommé par ce document dès l'origine |
 | `@supabase/supabase-js` | Accès aux données | Typé par le schéma généré ; réessaie **trois fois** une lecture en échec (1 s, 2 s, 4 s) — mesuré |
 | IMAPClient 3.1.0 | Connexions UID/IDLE et manipulation future des dossiers (`CRM-052`/`CRM-054`) | BSD-3-Clause, maintenu, Python 3.13 ; choisi par `CRM-051` mais installé seulement avec son premier consommateur ; contexte TLS vérificateur explicite |
+| FastMCP 4.0.11 (SDK MCP 2.3.0) | Serveur MCP distant et mandataire OAuth du connecteur (`CRM-102`) | Apache-2.0, maintenu ; déjà en production dans le connecteur Evoliz du même responsable ; le mandataire s'appuie sur des points internes, d'où la version épinglée et les tests rejoués à chaque montée (`docs/SPEC-mcp.md` §14) |
 | ClamAV | Analyse antivirale | Base de signatures à rafraîchir |
 | Serveur Ollama de LeLabs (`gemma4:e2b`) | Génération des suggestions de l'assistant IA (`CRM-097`) | Service externe opéré par LeLabs ; clé liée à une plage d'adresses ; borne de 120 s, aucune nouvelle tentative automatique, mode dégradé ; simulateur local pour les tests (`docs/SPEC-ia.md`) |
 | Caddy | TLS et service des fichiers statiques | Production uniquement |

@@ -31487,3 +31487,82 @@ trois échecs étrangers à ces correctifs : « Ma journée » (vert après réa
 consignée), qui supposent un seed appliqué le jour même. Les captures régénérées par les campagnes ne différaient que par
 la card choisie après réapplication du seed ; elles sont restaurées.
 
+
+## décision 627 — La plateforme et son superadministrateur ; le connecteur MCP du CRM
+
+*2026-10-20 ; demande et arbitrages du responsable, rendus sur question.*
+
+**La demande.** Un connecteur MCP rattaché au SSO, avec un mode de connexion longue, utilisable avec
+ChatGPT et Claude, pour gérer les tracks, les channels, les affaires, les budgets et les saisies de
+temps — « tout ». Comme pour le connecteur Evoliz, il faut une interface d'administration, avec un
+superadministrateur amorcé une seule fois, qui octroie ensuite les droits **en matrice** aux comptes
+qui se sont connectés, **par espace**. Le responsable relève au passage que l'application n'offre
+aucune interface de superadministration pour gérer les espaces et les appartenances.
+
+**Le constat, mesuré.**
+
+- `public.workspaces` n'accorde que `select` à `authenticated` (`0021`).
+- Un espace ne naît que par `scripts/spark/amorcer-espace.sh`, sous la clé de service.
+- L'écran des membres et des invitations appartient à `CRM-070`, `[ ]`.
+- Le seul pouvoir transverse est la revendication `lelabs_admin` (décision 597).
+- L'échangeur `session` frappe un jeton interne HS256 que PostgREST, la RLS et Realtime consomment.
+  Le connecteur Evoliz (`p2enjoy-evoliz`, en production depuis le 2026-10-06) porte un mandataire
+  OAuth FastMCP, une garde d'entrée, une connexion longue (« Stay signed in », `offline_access`) et
+  un registre avec drapeau superadministrateur et matrice.
+
+**Arbitrages du responsable**, sur quatre questions, chacune avec une option recommandée :
+
+- **A1 — qui est superadministrateur.** Un **drapeau en base**, amorcé une seule fois par
+  `CRM_SUPERADMINS_INITIAUX` (sans effet dès qu'il en existe un), **et** le rôle `admin` LeLabs, qui
+  garde ses droits de la décision 597. Options écartées : le drapeau seul (l'écart d'Evoliz,
+  décision 18 de ce dépôt-là) et le rôle LeLabs seul.
+- **A2 — ce que vaut un droit de la matrice.** Une **restriction en plus du CRM** : le connecteur
+  agit sous l'identité de la personne, et le droit effectif est l'intersection de la matrice et des
+  droits du CRM. Option écartée : un octroi indépendant sous la clé de service, qui aurait créé un
+  second système de droits parallèle à la RLS.
+- **A3 — où vit l'administration du connecteur.** **Dans la webapp du CRM**, section « Plateforme ».
+  Option écartée : une application séparée servie par le connecteur, comme dans Evoliz.
+- **A4 — ce que le connecteur peut supprimer.** La **corbeille seulement**, sans purge définitive.
+  Options écartées : aucune suppression, ou la suppression complète.
+
+**Décisions techniques** prises dans le plan validé par le responsable le même jour, et révisables
+par lui :
+
+- **D1** — un service **Python FastMCP** `mcp/`, qui reprend par copie tracée le mandataire, la
+  garde et les pages d'Evoliz. Motifs : la préférence Python du `CLAUDE.md`, un code prouvé en
+  production, et les 10 s de temps mur d'un worker edge.
+- **D2** — le connecteur frappe un **jeton interne** (`iss = p2enjoy-crm/mcp`, `canal = mcp`,
+  300 s au plus, `lelabs_admin` selon le jeton LeLabs) et passe toute donnée par PostgREST et les RPC
+  existantes. **Compromis nommé** : une seconde entité détient `JWT_SECRET`.
+- **D3** — le **client `lelabs-crm` est réutilisé**, redéclaré avec le `REDIRECT` du connecteur et
+  `HORS_LIGNE=oui`. Une cellule ne porte qu'un seul `OIDC_CLIENT_SECRET`.
+- **D4** — un **hôte dédié**, `crm.mcp.lelabs.tech`, aiguillé par Caddy selon l'hôte. La seconde
+  route de la Forge est **à vérifier** auprès du propriétaire du Spark avant la livraison.
+- **D5** — la matrice est appliquée côté serveur, à la **visibilité** des outils et à **chaque
+  appel** (`public.mcp_autorise`, sous le jeton de la personne). Un superadministrateur la franchit,
+  jamais la RLS.
+- **D6** — sept familles (`structure`, `affaires`, `contacts`, `budgets`, `temps`, `objectifs`,
+  `messagerie`) et quatre actions (`consulter`, `ajouter`, `modifier`, `supprimer` = corbeille ou
+  archive).
+- **D7** — un superadministrateur **en base** gère la plateforme sans être membre implicite des
+  espaces ; il est admis à une session sans appartenance ; la dernière ligne de `superadmins` ne se
+  retire pas.
+- **D8** — l'état du mandataire est conservé dans un volume chiffré (Fernet, clé dérivée
+  d'`OIDC_CLIENT_SECRET`), le registre en PostgreSQL, sous migrations et sauvegardes.
+
+**Conséquences.** Quatre unités sont créées, dans cet ordre :
+
+| Unité | Objet | Spécification |
+|---|---|---|
+| `CRM-101` | Superadministration de la plateforme : espaces, appartenances, attentes | `docs/SPEC-plateforme.md` |
+| `CRM-102` | Connecteur MCP : socle | `docs/SPEC-mcp.md` §1 à §7 |
+| `CRM-103` | Administration du connecteur | `docs/SPEC-mcp.md` §8 |
+| `CRM-104` | Outils MCP, une tranche par famille | `docs/SPEC-mcp.md` §9 |
+
+Elles sont spécifiées et committées **avant tout code**. L'admission de
+`docs/SPEC-session-sso.md` §6.1 est révisée : un superadministrateur en base entre sans
+appartenance. `CRM-070` garde l'écran d'un administrateur d'espace et les droits fins. Les sections du
+design system seront écrites avec les tranches d'interface, **après lecture intégrale** du document,
+comme l'exige le `CLAUDE.md`. Elles ne sont pas anticipées ici.
+
+**Vérifications** : aucune à ce stade. Ce sont des documents, et chaque unité porte ses preuves.

@@ -278,7 +278,9 @@ Une connexion LeLabs ouvre une session du CRM **si et seulement si** (décision 
 1. l'adresse du jeton est **vérifiée** (`email_verified = true`) ;
 2. la personne porte le rôle de realm **`verified`** ;
 3. la personne est **membre** d'au moins un espace, ou **attendue** à cette adresse par au moins un,
-   **ou porte le rôle de realm `admin`** (§6.1 bis).
+   **ou porte le rôle de realm `admin`** (§6.1 bis), **ou est superadministratrice en base**
+   (`docs/SPEC-plateforme.md` §4 — `CRM-101`, décision 627 ; révision du 2026-10-20, effective avec la
+   migration `0089`).
 
 Une personne attendue devient membre à sa première connexion admise : ses attentes sont
 **consommées** et changées en appartenances, avec le rôle choisi par l'administrateur. Elles se

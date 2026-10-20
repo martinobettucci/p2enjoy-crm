@@ -156,6 +156,63 @@ hérité, non la suppression d'une donnée métier.
 
 ---
 
+## 1 bis. Plateforme — `CRM-101`, migration `0089` (écrite le 2026-10-20, avant le code)
+
+Spécification complète : `docs/SPEC-plateforme.md` ; décision 627.
+
+### `superadmins`
+Le **drapeau superadministrateur en base** (`docs/SPEC-plateforme.md` §2). Le porteur du rôle `admin` LeLabs est
+aussi superadministrateur, mais par son jeton (`lelabs_admin`) : il n'a pas de ligne ici.
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `sub` | `uuid` | PK, FK `profiles` `ON DELETE CASCADE` |
+| `accorde_par` | `uuid` | FK `profiles` `ON DELETE SET NULL` ; `null` pour l'amorçage |
+| `accorde_le` | `timestamptz` | non nul, `now()` |
+
+**Contrat :**
+
+- **Personne ne la lit par l'API** : RLS activée sans politique, privilèges retirés nommément à `anon` et
+  `authenticated`.
+- **Une seule écriture hors produit** : `app.amorcer_superadmin`, sous verrou consultatif, quand la table est vide et
+  que l'adresse vérifiée figure dans `CRM_SUPERADMINS_INITIAUX`.
+- **Le reste passe par les fonctions gardées** du §6 de la spécification. La dernière ligne ne se retire pas.
+
+### `plateforme_journal`
+Le journal des gestes de la plateforme et du connecteur, en ajout seul.
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `id` | `bigint` | PK, identité |
+| `acteur` | `uuid` | FK `profiles` `ON DELETE SET NULL` ; `null` pour l'amorçage |
+| `geste` | `text` | non nul, `check` fermé (`docs/SPEC-plateforme.md` §5.2) |
+| `workspace_id` | `uuid` | sans clé étrangère : l'entrée survit à l'espace supprimé |
+| `cible` | `jsonb` | non nul, `'{}'` |
+| `cree_le` | `timestamptz` | non nul, `now()` ; indexée |
+
+**Contrat :** même fermeture que `superadmins`, lecture par `plateforme_journal_liste()` seulement.
+
+### Fonctions
+
+**Fonctions d'appui** (schéma `app`) :
+
+- `app.est_superadmin()` ;
+- `app.exiger_superadmin()` ;
+- `app.amorcer_superadmin(p_sub, p_email, p_nom, p_liste)` ;
+- `app.est_superadmin_pour(p_sub, p_admin_lelabs)`, pour le registre du connecteur.
+
+**Fonctions exposées :**
+
+- `public.est_superadmin()`, une aide d'interface ;
+- les fonctions `public.plateforme_*` (`docs/SPEC-plateforme.md` §6). Elles sont `SECURITY DEFINER`, gardées,
+  `EXECUTE` à `authenticated` seul.
+
+**Admission révisée.** `public.ouvrir_session_sso` admet un superadministrateur en base sans appartenance.
+`public.ouvrir_session_serveur` et `public.renouveler_session_serveur` reçoivent
+`p_superadmins_initiaux text[] default '{}'`, et appellent l'amorçage avant l'admission.
+
+---
+
 ## 2. Organisation
 
 ### `tracks`
@@ -1876,6 +1933,28 @@ des spécifications antérieures gardent leur sens — le refus d'une suppressio
 - **L'onglet « À saisir »** filtre `settled_at is null` au lieu de `actual_cost is null` ; l'index partiel de `0051`
   (`where actual_cost is null`) est remplacé par son équivalent sur `settled_at is null`. `public.reel_saisissable`
   (migration 52), qui ne rend qu'un droit d'écriture, ne change pas.
+
+## 9 quinquies. Connecteur MCP — `CRM-102` et `CRM-103`, migration `0090` (écrite le 2026-10-20, avant le code)
+
+Spécification complète : `docs/SPEC-mcp.md` §6 à §8 ; décision 627.
+
+| Table | Rôle | Clé |
+|---|---|---|
+| `mcp_comptes` | comptes vérifiés qui se sont connectés au connecteur : `sub`, `email` (mis à jour à chaque connexion), `nom`, `premiere_connexion`, `derniere_activite` | PK `sub`, **sans** clé vers `profiles` : un compte connecté n'a pas forcément de profil |
+| `mcp_droits` | la matrice : `sub`, `workspace_id`, `famille`, `action`, `accorde_par`, `accorde_le` | PK `(sub, workspace_id, famille, action)` ; FK `mcp_comptes` et `workspaces` en cascade ; `check` fermés sur les sept familles et les quatre actions |
+| `mcp_journal` | un appel d'outil par ligne : `sub`, `outil`, `workspace_id`, `issue`, `duree_ms`, `cree_le` — **jamais d'argument** | PK `id` ; sans clé étrangère |
+
+**Contrat :**
+
+- **Les trois tables sont fermées** comme `superadmins` (RLS sans politique, privilèges retirés nommément).
+- **`public.mcp_autorise(ws, famille, action)`** est appelée **sous le jeton de la personne**, avec `EXECUTE` à
+  `authenticated`. Elle rend `app.est_superadmin()` ou la présence de la case. Elle ne lit pas l'appartenance au
+  CRM : la RLS fait l'intersection.
+- **Fonctions du service** (`service_role` seul) : `mcp_inscrire_compte`, `mcp_droits_de` et `mcp_journaliser`.
+- **Fonctions de l'administration** (gardées par `app.exiger_superadmin()`) : `mcp_comptes_liste`, `mcp_compte`,
+  `mcp_poser_droits` et `mcp_journal_liste`.
+
+---
 
 ## 10. Index principaux
 
