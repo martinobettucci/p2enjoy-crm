@@ -14680,6 +14680,10 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       ~~selon `mon_role_espace`~~ **selon le rôle ET les droits fins, par une fonction de lecture calculée par les
       fonctions de la RLS ; une commande refusée reste montée, désactivée, avec son motif** (décision 628, 2026-10-21),
       états, preuves. Document : `docs/SPEC-droits-interface.md`.
+      **Écrite le 2026-10-21** : trois faits suffisent (administrateur, éditeur, écriture sur un channel — mesuré sur
+      les 90 politiques d'écriture) ; deux colonnes calculées `ecriture_permise(channels)` et `ecriture_permise(cards)`
+      au patron de `0071`, migration `0091` ; inventaire écran par écran, états, preuves, tranches T1 à T6. En attente
+      de la validation du responsable.
 - [ ] Mise en œuvre, preuves unitaires et E2E par rôle, captures, manuel, redéploiement.
 
 ### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[x]`
