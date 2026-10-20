@@ -401,6 +401,13 @@ aucune donnée métier.
 | 5 | Vérifier : `GET https://crm.mcp.lelabs.tech/pret` rend `200`, `POST /mcp` sans jeton rend `401` avec `resource_metadata`, et le refus de redirection d'un client non listé | poste, lecture seule | `scripts/spark/verifier.sh`, étendu par `CRM-102` T4 |
 | 6 | Ajouter le connecteur dans Claude ou ChatGPT, se connecter avec « Stay signed in », poser une matrice dans `/plateforme`, puis voir l'appel au journal | le responsable | l'assistant et l'application |
 
+**État au 2026-10-21 — propositions déposées dans la cellule, rien n'est importé.** Sur instruction du responsable,
+`/etc/spark/env.?` porte `CRM_MCP_HOTE=crm.mcp.lelabs.tech` (geste 3) et `CRM_SUPERADMINS_INITIAUX=martino@p2enjoy.studio`
+(geste 1 du §2.13, écrit à la main faute d'option de `proposer.sh` : INC-276), et `/etc/spark/routes.?` la route
+`crm.mcp.lelabs.tech 8080 tls` (geste 2). Déposées par `proposer.sh --connecteur-mcp` de `HEAD`, extrait dans un
+répertoire temporaire de la cellule puis retiré : `/srv/crm` est resté à la révision `7d819786`. Le DNS de
+`crm.mcp.lelabs.tech` n'existe pas encore (relevé le 2026-10-21) ; il vise `51.158.54.202`, comme `crm.lelabs.tech`.
+
 **Retour arrière.** Arrêter le service `mcp` et retirer le bloc d'hôte. La 90 n'est lue par rien d'autre que le
 connecteur : la garder ne gêne pas la webapp.
 
