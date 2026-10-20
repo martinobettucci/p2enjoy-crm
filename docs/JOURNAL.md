@@ -31907,3 +31907,42 @@ aucune politique, et chaque écran garde la traduction de son refus si le droit 
 **Suite** : `docs/SPEC-droits-interface.md` (inventaire écran par écran, contrat de la fonction, états, preuves), écrite
 et committée avant tout code.
 
+
+### décision 627, arbitrages A5 et A6 — chercher parmi les utilisateurs déjà enregistrés
+
+*2026-10-21.*
+
+**La demande.** « Et on doit pouvoir chercher parmi les utilisateurs déjà enregistrés en base. » Elle est faite en
+regardant l'administration, après la livraison de la plateforme.
+
+**Ce qui existait.** La plateforme cherche une personne par son nom, à partir de deux caractères, et seulement dans
+deux formulaires : « Ajouter un membre » et « Accorder le drapeau ». La recherche fonctionne en production : la requête,
+relue en lecture seule, trouve les deux profils. Mais il n'existe aucune liste des utilisateurs. Et l'administration du
+connecteur prévue (`docs/SPEC-mcp.md` §8) ne listait que les comptes déjà venus au connecteur, car la clé étrangère de
+`mcp_droits.sub` vise `mcp_comptes`.
+
+**Arbitrages du responsable**, par une question à trois choix multiples :
+
+| # | Arbitrage | Choix |
+|---|---|---|
+| A5 | Accorder des droits MCP à tout utilisateur du CRM, même avant sa première connexion au connecteur | **retenu** |
+| A6 | Un onglet « Utilisateurs » dans la plateforme : liste, recherche, espaces et rôles, drapeau, connexion au connecteur | **retenu** |
+| — | Chercher aussi par adresse, ce qui obligerait à conserver l'adresse vérifiée à chaque connexion | **écarté** |
+
+**Décisions techniques qui en découlent.**
+
+- **D9 — le droit vise le profil.** `CRM-103` T1 fait pointer `mcp_droits.sub` vers `profiles (id)`, en cascade. Le
+  `sub` LeLabs est l'identifiant du profil depuis `CRM-092`. Pour un compte venu au connecteur sans profil, un droit
+  serait sans effet, puisque le connecteur agit sous la RLS (A2) : la fiche ne lui offre pas de matrice et renvoie à
+  l'inscription d'une attente. La migration retire d'abord les droits d'un compte sans profil, et en écrit le nombre ;
+  la production n'en a aucun.
+- **Un utilisateur est un profil.** L'onglet liste les personnes admises au moins une fois. Un compte venu seulement au
+  connecteur paraît dans l'onglet du connecteur (`CRM-103`).
+- **Une seule lecture, `plateforme_utilisateurs`,** qui sert l'onglet (`CRM-101` T6) puis la recherche du connecteur
+  (`CRM-103`). Elle est bornée à 200 lignes, et la troncature est écrite. Elle ne pagine pas : le volume se mesure
+  avant de paginer (`CLAUDE.md` §21).
+- **L'onglet est en lecture seule.** Les gestes restent dans la fiche d'un espace et dans l'onglet des
+  superadministrateurs, pour ne pas définir deux fois le même geste.
+- **Ordre :** `CRM-101` T6, puis `CRM-103`. Les numéros de migration se prennent au moment d'écrire, sans
+  réservation : c'est la règle convenue avec la session parallèle, car le registre refuse un fichier antérieur au
+  dernier inscrit.

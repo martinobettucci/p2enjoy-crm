@@ -1961,7 +1961,7 @@ Spécification complète : `docs/SPEC-mcp.md` §6 à §8 ; décision 627.
 | Table | Rôle | Clé |
 |---|---|---|
 | `mcp_comptes` | comptes vérifiés qui se sont connectés au connecteur : `sub`, `email` (mis à jour à chaque connexion), `nom`, `premiere_connexion`, `derniere_activite` | PK `sub`, **sans** clé vers `profiles` : un compte connecté n'a pas forcément de profil |
-| `mcp_droits` | la matrice : `sub`, `workspace_id`, `famille`, `action`, `accorde_par`, `accorde_le` | PK `(sub, workspace_id, famille, action)` ; FK `mcp_comptes` et `workspaces` en cascade ; `check` fermés sur les sept familles et les quatre actions |
+| `mcp_droits` | la matrice : `sub`, `workspace_id`, `famille`, `action`, `accorde_par`, `accorde_le` | PK `(sub, workspace_id, famille, action)` ; FK `mcp_comptes` et `workspaces` en cascade ; `check` fermés sur les sept familles et les quatre actions. **`CRM-103` T1 fera pointer `sub` vers `profiles (id)`, en cascade** (décision 627, A5 et D9 : les droits se posent avant la première connexion ; ceux d'un compte sans profil sont retirés avant la bascule) |
 | `mcp_journal` | un appel d'outil par ligne : `sub`, `outil`, `workspace_id`, `issue`, `duree_ms`, `cree_le` — **jamais d'argument** | PK `id` ; sans clé étrangère |
 
 **Contrat :**

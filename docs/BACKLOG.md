@@ -15149,6 +15149,11 @@ LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : 
       antérieur à la livraison (redémarrage de `rest` du 2026-10-15, INC-277). **Le drapeau est amorcé** à la première
       connexion du responsable (relevé en base, `docs/PROD_MIGRATIONS.md` §8). **Reste le constat du responsable** :
       `/plateforme` liste l'espace et ses membres.
+- [ ] **T6** — l'onglet « Utilisateurs » (arbitrage A6 du 2026-10-21 : « on doit pouvoir chercher parmi les
+      utilisateurs déjà enregistrés en base ») : `plateforme_utilisateurs` et sa migration, au prochain numéro libre au
+      moment de l'écrire ; pgTAP avec mutations ; types ; l'onglet ; API aux jetons réels (refus sans le drapeau), E2E
+      à la souris et au clavier, seed si nécessaire, captures observées, manuel (chapitre 10), campagnes. Spécifiée avant
+      le code : `docs/SPEC-plateforme.md` §6.5, §7.2, §12 ; `docs/DESIGN_SYSTEM.md` §5.56 ; décision 627, A6.
 
 ### CRM-102 — Connecteur MCP : socle, mandataire OAuth, connexion longue, registre `[~]`
 *Créée le 2026-10-20 — décision 627 (A2, D1 à D5, D8). Un service Python FastMCP `mcp/`, repris du connecteur Evoliz,
@@ -15250,9 +15255,12 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
 ### CRM-103 — Administration du connecteur MCP dans la webapp `[ ]`
 *Créée le 2026-10-20 — décision 627 (A3). Quatrième onglet de `/plateforme` : comptes connectés, matrice familles ×
 actions par espace, avertissement « pas membre de cet espace », journal des appels. Spécifié avant le code :
-`docs/SPEC-mcp.md` §8. Dépend de `CRM-101` et de `CRM-102`.*
+`docs/SPEC-mcp.md` §8. Dépend de `CRM-101` et de `CRM-102`. **Révisée le 2026-10-21 par l'arbitrage A5** : les droits
+s'accordent à tout utilisateur du CRM, cherché par nom, même avant sa première connexion au connecteur (D9 : le droit
+vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_utilisateurs`.*
 
-- [ ] **T1** — les RPC `mcp_comptes_liste`, `mcp_compte`, `mcp_poser_droits` et `mcp_journal_liste` (migration dédiée) ;
+- [ ] **T1** — les RPC `mcp_comptes_liste`, `mcp_compte`, `mcp_poser_droits` et `mcp_journal_liste`, et la clé de
+      `mcp_droits.sub` vers `profiles` après le retrait des droits d'un compte sans profil (migration dédiée, D9) ;
       pgTAP ; types.
 - [ ] **T2** — l'onglet et la fiche d'un compte ; `docs/DESIGN_SYSTEM.md` écrit après lecture intégrale ; preuves
       unitaires.

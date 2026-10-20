@@ -5417,6 +5417,32 @@ focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (diff
   - **La pagination est une commande « Entrées plus anciennes »**, secondaire, sous le tableau, rendue tant que la
     page lue est pleine. Le tableau relu garde les lignes déjà lues, comme le §5.29 tranche 2 c.
 
+- **L'ONGLET « Utilisateurs » — `CRM-101` T6, arbitrage A6, écrit le 2026-10-21 avant le code, après relecture
+  intégrale de ce document.** Il vient entre « Espaces » et « Superadministrateurs ».
+  - **Un champ de recherche au-dessus du tableau** : `input type="search"` du §5.7, libellé **visible** « Rechercher un
+    utilisateur », icône `Search` en `aria-hidden` — celle de la palette (§5.46) : c'est le même geste. Il filtre par
+    nom pendant la frappe, après 200 ms de repos. La liste précédente reste affichée sous `aria-busy` pendant la
+    lecture suivante (§5.46) ; le squelette est réservé au premier chargement.
+  - **Une phrase sous le titre** dit que les porteurs du rôle `admin` LeLabs y figurent sans que leur rôle de domaine
+    soit affiché : le CRM ne le connaît que par leur jeton.
+  - **UN TABLEAU DU §5.9** : nom, espaces, superadministrateur, connecteur, depuis.
+    - **La cellule « Espaces » est une liste** (`ul`) : chaque appartenance est un **lien vers la fiche de l'espace**,
+      suivi du rôle en pilule neutre (§5.6). La cellule se replie, et la ligne gagne de la hauteur pour une personne de
+      plusieurs espaces. C'est l'écart que le §5.31 assume pour sa mention, et il est pris pour la même raison : en
+      ellipse, des liens disparaîtraient. Aucun espace s'écrit « Aucun espace » (§5.16), jamais une cellule vide : ne
+      plus appartenir à rien est un fait à nommer.
+    - **« Superadministrateur » est une pilule `brand`, seulement là où c'est vrai** (§5.56, membres).
+    - **« Connecteur »** porte la date de dernière activité, en donnée technique alignée à droite, ou le texte
+      « Jamais connecté » (§5.14).
+    - **« Depuis »** est la date du profil, en donnée technique alignée à droite (§5.16).
+  - **La troncature est écrite** : à 200 lignes, « Les 200 premiers utilisateurs : affinez la recherche » sous le
+    tableau (§5.43).
+  - **États** (§5.8) : squelette au premier chargement, erreur avec reprise. Une recherche sans résultat s'écrit
+    « Aucun utilisateur ne correspond à « … » », sans action. La liste n'est jamais vide sans recherche : le
+    superadministrateur qui la lit en fait partie.
+  - **Lecture seule, et l'absence est assumée** : poser une appartenance ou le drapeau reste dans la fiche d'un espace
+    et dans l'onglet des superadministrateurs. Un second chemin d'écriture ferait une seconde définition du même geste
+    (§5.48). `CRM-103` ajoutera à chaque ligne le lien vers les droits du connecteur.
 - **LES REFUS SONT TRADUITS PAR UN DICTIONNAIRE FERMÉ** — un texte par code du §6.1 de la spécification —, et un
   code inconnu rend le texte générique, jamais le message brut de la base (§5.34).
 
@@ -5425,7 +5451,8 @@ focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (diff
   défile jamais horizontalement (§7).
 
 - **Aucune couleur, aucun jeton nouveau.** Sept icônes Lucide nouvelles, aucune ne servant déjà un autre objet (§9) :
-  `ShieldCheck`, `ShieldPlus`, `ShieldMinus`, `UserPlus`, `UserMinus`, `MailPlus`, `MailMinus`.
+  `ShieldCheck`, `ShieldPlus`, `ShieldMinus`, `UserPlus`, `UserMinus`, `MailPlus`, `MailMinus`. L'onglet
+  « Utilisateurs » (T6) n'en ajoute aucune : `Search` est reprise de la palette (§5.46), pour le même geste.
 
 ### 5.57 Les pages du connecteur MCP — `CRM-102`
 

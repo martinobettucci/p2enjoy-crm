@@ -443,11 +443,27 @@ seul, et révoqué nommément à `public`, `anon` et `authenticated`.
 Arbitrage A3 : l'administration du connecteur est un **quatrième onglet de `/plateforme`**,
 « Connecteur MCP » (`/plateforme/mcp`), réservé aux superadministrateurs.
 
+**Arbitrage A5 (2026-10-21) : on accorde des droits à tout utilisateur du CRM, pas seulement aux comptes déjà venus au
+connecteur.** Le responsable : « on doit pouvoir chercher parmi les utilisateurs déjà enregistrés en base ». Les droits
+se posent donc à l'avance, et valent dès la première connexion.
+
+- **Le droit vise le profil (décision D9).** `CRM-103` T1 fait pointer la clé étrangère de `mcp_droits.sub` vers
+  `public.profiles (id)`, en cascade, au lieu de `mcp_comptes`. Le `sub` LeLabs est l'identifiant du profil depuis
+  `CRM-092`.
+- **Un compte venu au connecteur sans profil ne reçoit pas de matrice.** Un droit serait sans effet, puisque le
+  connecteur agit sous la RLS (A2). La fiche le dit et renvoie à l'inscription d'une attente dans un espace.
+- **Avant la bascule de la clé**, la migration retire les droits d'un compte sans profil, et en écrit le nombre. Il n'y
+  en a aucun en production au 2026-10-21, où le registre est vide.
+
 ### 8.1 Écrans
 
-- **Comptes connectés** : nom, adresse, première connexion, dernière activité, nombre d'espaces
-  ouverts, drapeau superadministrateur.
-- **Fiche d'un compte**, `/plateforme/mcp/:sub` :
+- **Comptes** : les comptes venus au connecteur — nom, adresse, première connexion, dernière activité, nombre d'espaces
+  ouverts, drapeau superadministrateur —, plus **« Accorder des droits à un utilisateur »**, qui cherche par nom parmi
+  **tous** les utilisateurs du CRM (`plateforme_utilisateurs`, `docs/SPEC-plateforme.md` §6.5) et ouvre sa fiche.
+  Un compte sans profil y porte la mention « Sans profil dans le CRM ». L'onglet « Utilisateurs » de la plateforme mène
+  aussi à la fiche d'un utilisateur.
+- **Fiche d'un compte**, `/plateforme/mcp/:sub`, pour un utilisateur venu ou non au connecteur ; jamais venu, elle dit
+  « Jamais connecté au connecteur : ces droits vaudront dès sa première connexion » :
   - un **sélecteur d'espace**, qui liste tous les espaces ;
   - pour l'espace choisi, la **matrice** : familles en lignes, actions en colonnes, une case à
     cocher par cellule ;

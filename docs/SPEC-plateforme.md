@@ -251,6 +251,7 @@ administrateur (décision 593) : l'écran l'affiche comme telle (§7.3).
 | `plateforme_superadmins() returns table(sub, nom, accorde_par_nom, accorde_le)` | Les superadministrateurs **en base**. Les porteurs d'`admin` LeLabs n'y figurent pas : le CRM ne les connaît que par leur jeton (§10) |
 | `plateforme_poser_superadmin(p_user uuid, p_actif boolean) returns void` | Accorde le drapeau (profil exigé) ou le retire. La **dernière** ligne ne se retire pas (`dernier_superadministrateur`), même par un porteur d'`admin` LeLabs : la plateforme garde toujours un superadministrateur en base, indépendant du SSO. Journal : `superadmin_accorde` ou `superadmin_retire` |
 | `plateforme_journal_liste(p_avant bigint default null, p_limite int default 50) returns table(id, acteur_nom, geste, workspace_id, cible, cree_le)` | Le journal, pagination par curseur, le plus récent d'abord, borné à 200 |
+| `plateforme_utilisateurs(p_recherche text default null, p_limite int default 200) returns table(id, nom, cree_le, superadmin, espaces, connecteur_derniere_activite)` | **T6, arbitrage A6 (2026-10-21).** Les utilisateurs du CRM, c'est-à-dire les profils, filtrés par nom comme `plateforme_profils` (sans accent, métacaractères échappés), dans l'ordre des noms, bornés à 200. `espaces` est un tableau JSON `[{"slug", "nom", "role"}]` des appartenances, dans l'ordre des noms d'espace ; `connecteur_derniere_activite` vient de `mcp_comptes`, nulle pour qui n'est jamais venu au connecteur. Lecture seule, rien n'est journalisé. Migration propre à T6, prochain numéro libre au moment de l'écrire |
 
 ## 7. L'écran `/plateforme`
 
@@ -276,9 +277,15 @@ L'écran porte trois onglets, sous forme de liens dans l'adresse :
 |---|---|---|
 | **Espaces** | `/plateforme/espaces` | Le tableau des espaces (nom, slug, membres, administrateurs, attentes) et l'action « Nouvel espace ». Une ligne ouvre la fiche de l'espace (§7.3) |
 | **Superadministrateurs** | `/plateforme/superadmins` | La liste des superadministrateurs en base, « Ajouter » (recherche dans `plateforme_profils`) et « Retirer ». Une note rappelle que les porteurs d'`admin` LeLabs le sont aussi |
+| **Utilisateurs** | `/plateforme/utilisateurs` | **T6, arbitrage A6.** Tous les utilisateurs du CRM, avec une recherche par nom : leurs espaces et leurs rôles (chaque espace mène à sa fiche), le drapeau, leur dernière activité au connecteur ou « Jamais connecté », la date de leur profil. Lecture seule : les gestes restent dans la fiche d'un espace et dans l'onglet des superadministrateurs. Placé entre « Espaces » et « Superadministrateurs » |
 | **Journal** | `/plateforme/journal` | Le journal paginé, en lecture seule |
 
-`CRM-103` ajoute un quatrième onglet, **Connecteur MCP** (`docs/SPEC-mcp.md` §8).
+`CRM-103` ajoute un dernier onglet, **Connecteur MCP** (`docs/SPEC-mcp.md` §8).
+
+**Qui est un utilisateur (A6).** Une personne qui a un **profil** : elle a été admise au moins une fois. Un compte
+venu seulement au connecteur, sans profil, n'en est pas un : il paraît dans l'onglet « Connecteur MCP » (`CRM-103`).
+Les porteurs d'`admin` LeLabs figurent dans la liste s'ils ont un profil ; leur rôle de domaine n'est pas affiché, le
+CRM ne le connaissant que par leur jeton (§10). Une phrase sous le titre le dit.
 
 ### 7.3 Fiche d'un espace — `/plateforme/espaces/:slug`
 
@@ -392,3 +399,4 @@ Les opérations sont détaillées dans `docs/PROD_MIGRATIONS.md` §3, « en atte
 | T3 | L'écran `/plateforme` (Espaces, Superadministrateurs, Journal) ; `docs/DESIGN_SYSTEM.md` après lecture intégrale ; preuves unitaires |
 | T4 | Seed, E2E, captures observées, manuel (chapitre 10 du corps et ligne 17 *bis* du sommaire ; la ligne 17 est révisée, l'invitation n'étant plus une opération d'exploitation), `verify-plateforme.sh`, campagnes |
 | T5 | Livraison en production et constat |
+| T6 | **L'onglet « Utilisateurs »** (arbitrage A6, 2026-10-21) : `plateforme_utilisateurs` et sa migration, pgTAP (refus sans le drapeau, recherche, bornes, espaces et connecteur), types ; l'onglet, `docs/DESIGN_SYSTEM.md` §5.56 ; API aux jetons réels, E2E à la souris et au clavier, captures, manuel (chapitre 10), campagnes |
