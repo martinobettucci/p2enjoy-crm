@@ -123,7 +123,6 @@ REDIRECT=https://mon-application.lelabs.tech/auth/retour
 REDIRECT=https://www.mon-application.lelabs.tech/auth/retour
 DECONNEXION=https://mon-application.lelabs.tech/connexion
 ROLE=verified
-SECRET_VAR=MON_APP_OIDC_CLIENT_SECRET
 ```
 
 | Clé | Rôle | Obligatoire | Défaut | Répétable |
@@ -134,10 +133,18 @@ SECRET_VAR=MON_APP_OIDC_CLIENT_SECRET
 | `REDIRECT` | URL **exacte** qui reçoit le code d'autorisation | oui | — | oui |
 | `DECONNEXION` | URL **exacte** où revenir après déconnexion | non | aucune | oui |
 | `ORIGINE` | origine autorisée à appeler le service depuis un navigateur | non | les origines des `REDIRECT` | oui |
-| `ACCUEIL` | adresse de l'application, affichée dans l'espace de compte | non | l'origine du premier `REDIRECT` | non |
-| `ROLE` | rôle de realm dont votre application dépend | non | aucun | oui |
-| `SECRET_VAR` | nom de la variable où votre environnement porte le secret | non | `OIDC_CLIENT_SECRET` | non |
-| `HORS_LIGNE` | `oui` pour demander `offline_access` | non | `non` | non |
+| `ACCUEIL` | adresse de l'application, affichée dans l'espace de compte | **oui** (référence du service, 2026-10-16) | l'origine du premier `REDIRECT` | non |
+| `ROLE` | rôle de realm dont votre application dépend | non | `verified`, toujours ajouté | oui |
+| `HORS_LIGNE` | `oui` autorise `offline_access` (jeton de rafraîchissement qui survit à la fin de la session) ; `non` refuse toute demande de `offline_access` | non | `non` | non |
+
+**Gardez les valeurs par défaut.** N'écrivez une clé que si votre application a
+vraiment besoin d'autre chose : les défauts sont ceux qui conviennent presque
+toujours, et une déclaration courte se relit.
+
+**Le secret se lit sous `OIDC_CLIENT_SECRET`**, et sous ce nom seulement. Il n'y
+a rien à déclarer : c'est le même nom pour toutes les intégrations du domaine,
+et on le retrouve sans ouvrir la déclaration de personne. Une ancienne clé
+`SECRET_VAR` est refusée, en disant quoi mettre à la place.
 
 Si vous servez un apex **et** son `www`, donnez les deux, partout : les URL sont
 comparées caractère par caractère, et une différence d'un seul caractère fait
@@ -151,16 +158,19 @@ Une fois le client créé, votre application figure d'office dans l'onglet
 trouvent donc votre service sans que personne ne leur en ait donné l'adresse, et
 **avant** même de s'y être connectées une première fois.
 
-Deux clés de votre déclaration décident de ce qu'elles y voient :
+Votre entrée porte **toujours un libellé et un lien cliquable** : le service les
+pose, que vous y ayez pensé ou non, et une preuve du dépôt l'empêche de
+régresser. Deux clés vous permettent seulement de choisir lesquels :
 
-- `NOM` est le **libellé** affiché. Nommez-y la page que l'entrée ouvre, pas le
-  projet : c'est ce que la personne lit pour décider de cliquer.
-- `ACCUEIL` est le **lien**. Par défaut, c'est l'origine de votre premier
+- `NOM` est le **libellé**. À défaut, c'est votre `CLIENTID`. Nommez-y la page
+  que l'entrée ouvre, pas le projet : c'est ce que la personne lit pour décider
+  de cliquer.
+- `ACCUEIL` est le **lien**. À défaut, c'est l'origine de votre premier
   `REDIRECT` — presque toujours juste. Ne le donnez que si votre application
   s'ouvre ailleurs que sur sa racine, par exemple sous un chemin.
 
-Rien d'autre n'est à demander : l'inscription au portail n'est pas une option de
-la déclaration, elle est systématique.
+Si vous voyez dans ce portail une entrée sans lien, elle n'est pas à vous : les
+clients internes de Keycloak n'en portent pas, et ne sont jamais affichés.
 
 ### Ce qui est refusé, et pourquoi
 
@@ -177,6 +187,24 @@ la déclaration, elle est systématique.
 
 Le refus est rendu ligne par ligne, avec ce qu'il faut corriger. Rien n'est créé
 tant qu'une ligne est fautive.
+
+### Changer une intégration déjà créée
+
+Une URL qui bouge, un nom qui change, un `www` qu'on ajoute : **renvoyez votre
+déclaration complète**, avec le même `CLIENTID` et les valeurs à jour. Elle
+n'est pas refusée comme un doublon : l'administrateur voit ce qu'elle change,
+avant et après, et l'applique.
+
+Ce qui ne change pas dans l'opération :
+
+- **votre secret**. Il n'est ni retouché ni réémis, et votre application n'est
+  pas coupée. C'est tout l'intérêt de modifier plutôt que de supprimer pour
+  recréer ;
+- votre `CLIENTID`. Le changer ne modifie rien : c'est une autre intégration.
+
+Ce qui change, en revanche, est **ce que vous envoyez et rien d'autre** : une
+URL absente de votre nouvelle déclaration est retirée du client. Renvoyez donc
+la déclaration entière, pas seulement la ligne modifiée.
 
 ### Ce que vous recevez
 

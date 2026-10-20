@@ -1,5 +1,5 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : le mandataire OAuth du connecteur, adossé au realm `lelabs`
-# @spec docs/SPEC-mcp.md §3 (flux, client `lelabs-crm` réutilisé, connexion longue, clients acceptés, état chiffré),
+# @spec docs/SPEC-mcp.md §3 (flux, client confidentiel du CRM réutilisé, connexion longue, clients acceptés, état chiffré),
 #       §4 (qui entre : `verified` au retour, à l'échange et à chaque requête ; adresse vérifiée ; inscription ;
 #       « Droits en attente ») ; docs/SSO.md (les deux règles du domaine) ; docs/JOURNAL.md décision 627 (D1, D3, D8)
 # @spec Repris du connecteur Evoliz (p2enjoy-evoliz, `evoliz_mcp/autorisation.py`, révision 80a3e27, en production depuis

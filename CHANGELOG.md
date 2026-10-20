@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-102` T1 à T3 — le connecteur MCP : son registre en base, son service, sa place dans la pile (décision 627)
+### `CRM-102` T1 à T4 — le connecteur MCP : son registre en base, son service, sa place dans la pile (décision 627)
 
 *Migration `0090`, service `mcp/` et pile prouvés en développement de bout en bout (pgTAP, unitaires, intégration contre le vrai Keycloak, à travers le Caddy de la cellule, un vrai client MCP dans le navigateur). Livraison avec la tranche T5.*
 
@@ -32,6 +32,9 @@ d'exécuter le code attendu.
   sur `http://localhost:18490/mcp`, allumé en production par la seule variable `CRM_MCP_HOTE` (sinon éteint, sans aucun
   secret) — ; Caddy aiguille l'hôte du connecteur vers lui ; la page de consentement porte la charte P2Enjoy et ne
   charge plus rien d'un domaine tiers ; `proposer.sh --connecteur-mcp` propose l'hôte et la seconde route à la cellule.
+- **T4 — la déclaration du client LeLabs** à remettre à l'administrateur du realm (`docs/SPEC-mcp.md` §3.2) : le client
+  confidentiel du CRM, `lelabs-crm-serveur`, avec le retour du connecteur et `HORS_LIGNE=oui` ; la note d'intégration du
+  SSO alignée sur la référence du service.
 
 ### `CRM-101` T1 à T4 — la plateforme et son superadministrateur : la base, la connexion, l'écran, le seed (décision 627)
 

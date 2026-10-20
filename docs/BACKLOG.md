@@ -15134,7 +15134,7 @@ LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : 
       porteuse de `lelabs_admin`, voit désormais l'entrée « Plateforme » (arbitrage A1).
 - [ ] **T5** — livraison en production (migration 89, instantané confirmé, `CRM_SUPERADMINS_INITIAUX`) et constat.
 
-### CRM-102 — Connecteur MCP : socle, mandataire OAuth, connexion longue, registre `[ ]`
+### CRM-102 — Connecteur MCP : socle, mandataire OAuth, connexion longue, registre `[~]`
 *Créée le 2026-10-20 — décision 627 (A2, D1 à D5, D8). Un service Python FastMCP `mcp/`, repris du connecteur Evoliz,
 agit sous l'identité de la personne par un jeton interne : droit effectif = matrice ∩ droits du CRM. Spécifié avant le
 code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinquies (migration `0090`). Dépend de `CRM-101`
@@ -15197,8 +15197,15 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       interface ciblée (connexion, plateforme, connecteur) **27/27** ; `verify-session-sso.sh` **69** (harnais périmé par
       `CRM-101`, corrigé), `verify-identites.sh` **23**, `verify-stack.sh` **52**, `verify-seed-demo.sh` **69** ;
       `typecheck` vert. La campagne d'interface complète n'a **pas** été rejouée : aucun écran de la webapp ne change.
-- [ ] **T4** — documentation (README, DAT, `docs/SSO-client-lelabs-crm.md` redéclaré, `docs/SPEC-deploiement-spark.md`),
+- [x] **T4** — documentation (README, DAT, `docs/SSO-client-lelabs-crm.md` redéclaré, `docs/SPEC-deploiement-spark.md`),
       campagnes.
+      *Fait le 2026-10-20* : README (service, adresse de développement, variables, `verify-mcp.sh`), DAT §3.7 ter,
+      `docs/SPEC-deploiement-spark.md` (aiguillage, mémoire, révision des routes) et `docs/PROD_MIGRATIONS.md` §2.14 écrits
+      avec T3. **La redéclaration du client** est au §3.2 de `docs/SPEC-mcp.md`, et elle corrige deux erreurs de la
+      spécification d'origine : le client réemployé est `lelabs-crm-serveur` — `lelabs-crm` était l'ancien client public,
+      supprimé —, et la déclaration porte `ACCUEIL`, devenu obligatoire. `docs/SSO.md` est aligné sur la référence du service
+      du 2026-10-16, qui décrit la redéclaration d'une intégration vivante. Campagnes : celles de T3, aucun code changé
+      depuis hors un commentaire ; pytest **102** rejoué.
 - [ ] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,
       route et DNS, variables), et constat.
 

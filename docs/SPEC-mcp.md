@@ -7,7 +7,7 @@ Décision : `docs/JOURNAL.md` 627 (arbitrages A1 à A4 du responsable, décision
 2026-10-20).
 Documents liés : `docs/SPEC-plateforme.md` (superadministrateurs, amorçage, journal),
 `docs/SPEC-session-sso.md` (échangeur, jeton interne, admission), `docs/SPEC-permissions-rls.md`,
-`docs/SSO.md`, `docs/SSO-client-lelabs-crm.md` (déclaration du client, révisée), `docs/SCHEMA.md` §9 quinquies,
+`docs/SSO.md`, `docs/SPEC-session-sso.md` §12 (le client confidentiel du CRM), `docs/SCHEMA.md` §9 quinquies,
 `docs/DAT.md` §3 et §7, `docs/SPEC-deploiement-spark.md`, `docs/DESIGN_SYSTEM.md` (section
 « Connecteur MCP », écrite avec `CRM-103`), `docs/manual.md` (chapitre 11, écrit avec `CRM-103`).
 Modèle éprouvé : le connecteur Evoliz du même responsable (`p2enjoy-evoliz`, en production depuis le
@@ -142,7 +142,7 @@ client MCP ──► POST /mcp                               401 + WWW-Authentic
            ──► GET /authorize?…&code_challenge=…        → page de consentement (§3.3)
 navigateur ──► consentement accepté                     → realm lelabs (PKCE S256)
            ──► connexion au SSO                         → GET /auth/callback?code=…
-mcp        ──► échange du code au realm (client confidentiel lelabs-crm, secret)
+mcp        ──► échange du code au realm (client confidentiel lelabs-crm-serveur, secret)
            ──► vérification du jeton d'accès, admission (§4) : refus → page, aucun code émis
            ──► redirection vers le client MCP avec un code
 client MCP ──► POST /token (PKCE)                       → jeton émis par le mandataire
@@ -155,21 +155,39 @@ LeLabs ni aucun jeton interne n'atteint le client MCP.
 
 ### 3.2 Client LeLabs — décision D3
 
-Le connecteur **réutilise le client confidentiel `lelabs-crm`** de l'échangeur de session. Sa
-déclaration (`docs/SSO-client-lelabs-crm.md`) est **renvoyée complète** à un administrateur du realm,
-avec :
+Le connecteur **réutilise le client confidentiel du CRM**, celui de l'échangeur de session : **`lelabs-crm-serveur`**,
+l'identifiant retenu par le service et porté par `SSO_OIDC_CLIENT_ID` (`docs/SPEC-session-sso.md` §12). *Corrigé le
+2026-10-20, avec la tranche T4 : la première rédaction nommait `lelabs-crm`, l'ancien client public, supprimé du realm le
+2026-09-24 (décision 598).*
 
-- un `REDIRECT` de plus : `https://crm.mcp.lelabs.tech/auth/callback` ;
-- `HORS_LIGNE=oui`, qui autorise `offline_access`.
+Sa déclaration est **renvoyée complète** à un administrateur du realm, avec le même `CLIENTID` — la règle « Changer une
+intégration déjà créée » de `docs/SSO.md`, aligné le 2026-10-20 sur la référence du service : la déclaration n'est pas
+refusée comme un doublon, le secret n'est ni retouché ni réémis, et l'échangeur n'est pas coupé. **Une URL absente de la
+nouvelle déclaration est retirée du client** : elle porte donc les deux retours. La déclaration à remettre :
 
-Le secret n'est ni retouché ni réémis (`docs/SSO.md`, « Changer une intégration déjà créée »), et il
-reste lu sous `OIDC_CLIENT_SECRET`.
+```
+CLIENTID=lelabs-crm-serveur
+NOM=P2Enjoy CRM
+TYPE=serveur
+REDIRECT=https://crm.lelabs.tech/auth/retour
+REDIRECT=https://crm.mcp.lelabs.tech/auth/callback
+ACCUEIL=https://crm.lelabs.tech
+ROLE=verified
+HORS_LIGNE=oui
+```
+
+- `REDIRECT=https://crm.mcp.lelabs.tech/auth/callback` est **ajouté** : le retour du mandataire (§3.1) ;
+- `HORS_LIGNE=oui` est **ajouté** : il autorise `offline_access` (§3.3) — avec `non`, le SSO refuse toute demande ;
+- `ACCUEIL` est **désormais obligatoire** pour le service (référence du 2026-10-16) : la webapp, l'entrée que les
+  personnes ouvrent depuis leur espace de compte ;
+- `ROLE=verified` est gardé tel que déclaré : le service l'ajoute de toute façon. Aucune clé `SECRET_VAR` : le service la
+  refuse, et le secret reste lu sous `OIDC_CLIENT_SECRET`.
 
 **Pourquoi le même client.** La cellule ne peut porter qu'un seul `OIDC_CLIENT_SECRET`, nom imposé à
 toute intégration du domaine : un second client y créerait une collision de nom. Le `azp` des jetons
 est donc le même pour l'échangeur et pour le connecteur, et chacun vérifie celui de son jeton.
 
-**Conséquence assumée.** `HORS_LIGNE=oui` permet à `lelabs-crm` de **demander** `offline_access`.
+**Conséquence assumée.** `HORS_LIGNE=oui` permet à ce client de **demander** `offline_access`.
 L'échangeur de session, lui, ne le demande pas et ne change pas : la session de la webapp garde sa
 durée.
 
@@ -224,7 +242,7 @@ Le rôle `verified` est vérifié côté serveur à **trois** endroits, comme da
 
 | Où | Contrôle | Refus |
 |---|---|---|
-| Retour du SSO (`/auth/callback`) | jeton d'accès LeLabs vérifié (signature au `jwks_uri`, `iss` exact, `azp = lelabs-crm`, `typ = Bearer`, `exp`, `alg` ∈ {RS256, ES256} avant toute clé) ; `email_verified` ; **`verified`** ; puis **inscription** au registre et **amorçage** (§7.2) ; puis **au moins un droit** ou le drapeau superadministrateur | `403`, aucun code émis : « Compte en attente de vérification » (sans `verified` ou sans adresse vérifiée), « Droits en attente » (vérifié, aucun droit), « La connexion n'a pas abouti » (jeton invérifiable) |
+| Retour du SSO (`/auth/callback`) | jeton d'accès LeLabs vérifié (signature au `jwks_uri`, `iss` exact, `azp` = `SSO_OIDC_CLIENT_ID`, `typ = Bearer`, `exp`, `alg` ∈ {RS256, ES256} avant toute clé) ; `email_verified` ; **`verified`** ; puis **inscription** au registre et **amorçage** (§7.2) ; puis **au moins un droit** ou le drapeau superadministrateur | `403`, aucun code émis : « Compte en attente de vérification » (sans `verified` ou sans adresse vérifiée), « Droits en attente » (vérifié, aucun droit), « La connexion n'a pas abouti » (jeton invérifiable) |
 | Échange du code (`/token`) | `verified` sur les jetons attachés au code | `invalid_grant` |
 | Chaque requête `/mcp` | jeton LeLabs conservé, contrôles ci-dessus ; renouvelé auprès du realm à l'échéance | `401` |
 
@@ -595,7 +613,7 @@ commit que le code qui la lit.
 
 Elles sont tenues dans `docs/PROD_MIGRATIONS.md` §3, et aucune n'est exécutée sans instruction.
 
-1. **Un administrateur du realm LeLabs** renvoie la déclaration complète de `lelabs-crm`, avec le
+1. **Un administrateur du realm LeLabs** renvoie la déclaration complète de `lelabs-crm-serveur` (§3.2), avec le
    `REDIRECT` du connecteur et `HORS_LIGNE=oui` (§3.2).
 2. **Le propriétaire du Spark :**
    - pose le DNS et la route `crm.mcp.lelabs.tech 8080 tls` (§2.2) ;

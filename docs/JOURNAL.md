@@ -31782,3 +31782,21 @@ la reçoivent aussi —, et la preuve d'interface constate qu'aucune requête ne
 **Vérifications.** Celles du backlog (`CRM-102` T3). Restent la tranche T4 (documentation : client LeLabs redéclaré,
 manuel avec `CRM-103`) et la livraison (T5), qui attend l'instruction du responsable et la confirmation de la seconde
 route par le propriétaire du Spark.
+
+### décision 627, correction — `CRM-102` T4 : le client que le connecteur réemploie
+
+*2026-10-20.*
+
+**L'erreur.** La décision 627 (D3) et `docs/SPEC-mcp.md` §3.2 nommaient le client réemployé `lelabs-crm`. C'est l'ancien
+client **public** de `CRM-091`, supprimé du realm le 2026-09-24 (décision 598). Le client du CRM est le client
+**confidentiel** `lelabs-crm-serveur`, l'identifiant retenu par le service, porté par `SSO_OIDC_CLIENT_ID`. Le fond de D3
+ne change pas — un seul client pour l'échangeur et le connecteur, un seul `OIDC_CLIENT_SECRET` —, seul le nom était faux.
+
+**Le contrat du fournisseur était en retard dans ce dépôt.** D3 citait la règle « Changer une intégration déjà créée » de
+`docs/SSO.md`, qui n'y figurait pas : notre copie disait au contraire qu'un identifiant déjà pris est refusé. La note du
+service a été alignée sur sa référence du 2026-10-16 dans le dépôt du connecteur Evoliz (`5c55df0`) ; elle y est reprise
+telle quelle. Elle autorise la redéclaration d'une intégration vivante — même `CLIENTID`, secret ni retouché ni réémis —,
+retire du client toute URL absente de la redéclaration, rend `ACCUEIL` obligatoire et refuse `SECRET_VAR`.
+
+**La déclaration à remettre** est écrite en entier au §3.2 de `docs/SPEC-mcp.md`, et le geste 1 du §2.14 du contrat de
+déploiement y renvoie.

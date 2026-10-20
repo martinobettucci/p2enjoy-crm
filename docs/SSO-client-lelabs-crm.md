@@ -15,6 +15,10 @@ Sonde publique rejouée le 2026-09-23 après réception (`docs/SPEC-auth.md` §1
 non trouvé. » (`docs/JOURNAL.md`, décision 598). Ce bloc n'est plus qu'une archive ; le client du CRM
 est désormais `lelabs-crm-serveur` (`docs/SPEC-session-sso.md` §12).
 
+**Le client en vigueur et sa redéclaration.** Le client confidentiel `lelabs-crm-serveur` est déclaré au §12 de
+`docs/SPEC-session-sso.md`. Le connecteur MCP (`CRM-102`) le réemploie : sa déclaration complète, à renvoyer avec le
+retour du mandataire et `HORS_LIGNE=oui`, est au §3.2 de `docs/SPEC-mcp.md`.
+
 ---
 
 ```
