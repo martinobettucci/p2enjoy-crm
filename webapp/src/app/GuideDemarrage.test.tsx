@@ -1,3 +1,5 @@
+// @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — les liens d'administration du guide rendus en texte citant le motif
+//           quand la base refuse l'administration (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-079 (docs/BACKLOG.md) — guide de démarrage : l'écran et ses deux surfaces
 // @verifies docs/SPEC-onboarding.md §4.1 (le guide est toujours rendu à son adresse),
 //           §4.2 (les quatre cas de l'accueil), §5 (interruption limitée à la session),
@@ -20,6 +22,7 @@
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { fr } from '../i18n/fr'
 import { MemoryRouter } from 'react-router'
 import { FournisseurEspace } from './ContexteEspace'
 import { AccueilDemarrage, GuideDemarrage } from './GuideDemarrage'
@@ -554,5 +557,42 @@ describe('l’étape « affaire » mène au board du premier channel — CRM-095
 		const lien = screen.getByTestId('lien-affaire')
 		expect(lien.getAttribute('href')).toBe('/reglages/arborescence')
 		expect(lien.textContent).toBe('Choisir un channel où créer l’affaire')
+	})
+})
+
+// --- CRM-093 — les liens d'administration quand la base la refuse (docs/DESIGN_SYSTEM.md §5.59) ------------------------
+
+describe('le guide quand la base refuse l’administration (CRM-093)', () => {
+	it('les liens des étapes d’administration deviennent des TEXTES qui citent le motif ; l’état de la messagerie reste un lien', async () => {
+		render(
+			<MemoryRouter>
+				<FournisseurEspace
+					valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration: 'refusee', edition: 'refusee' } }}
+				>
+					<GuideDemarrage sessionOuverte client={client(NEUF)} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+		await screen.findByTestId('guide-demarrage')
+		const motif = screen.getByTestId('motif-lecture-seule')
+		expect(motif.textContent).toBe(fr['rights.readonly.administration'])
+		for (const cle of ['track', 'workflow', 'channel']) {
+			const element = await screen.findByTestId(`lien-${cle}`)
+			expect(element.tagName, cle).toBe('SPAN')
+			expect(element.getAttribute('aria-describedby')).toBe(motif.id)
+		}
+		expect((await screen.findByTestId('lien-messagerie')).tagName).toBe('A')
+	})
+
+	it('permise ou inconnue : les liens restent des liens, sans motif', async () => {
+		render(
+			<MemoryRouter>
+				<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: true, capacites: { administration: 'inconnue', edition: 'inconnue' } }}>
+					<GuideDemarrage sessionOuverte client={client(NEUF)} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+		expect((await screen.findByTestId('lien-track')).tagName).toBe('A')
+		expect(screen.queryByTestId('motif-lecture-seule')).toBeNull()
 	})
 })

@@ -1,3 +1,6 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — un lien d'étape qui mène à un geste d'administration refusé par la base
+//       est rendu en TEXTE citant le motif, posé une fois au-dessus de la liste (docs/SPEC-droits-interface.md §3, §5 ;
+//       docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-079 (docs/BACKLOG.md) — guide de démarrage : l'écran
 // @spec docs/SPEC-onboarding.md §4 (où le guide vit), §4.4 (aucune mesure sans session),
 //       §5 (interruption et reprise),
@@ -45,6 +48,11 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { CHEMIN_ADMIN_ARBORESCENCE, CHEMIN_ADMIN_WORKFLOWS, CHEMIN_DEMARRAGE, CHEMIN_ETAT_MESSAGERIE } from './chemins'
 import { useContexteEspace } from './ContexteEspace'
 import { useMasqueDemarrage } from './preferences'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { motifVisible, type Capacite } from '../lib/capacites'
+
+/** Le motif du guide, cité par ses liens d'administration quand la base la refuse (CRM-093). */
+const ID_MOTIF_GUIDE = 'guide-lecture-seule'
 
 /**
  * Ce que chaque étape dit et où elle mène. Une table, et non six blocs de JSX : les six lignes
@@ -70,6 +78,11 @@ type DescriptionEtape = {
 	readonly cleVide: CleTraduction
 	readonly destination?: string
 	readonly cleAction?: CleTraduction
+	/**
+	 * L'étape mène-t-elle à un geste d'ADMINISTRATION (`CRM-093`) ? Quand la base refuse l'administration de l'espace,
+	 * son lien devient un texte qui cite le motif : un lien vers un écran refusé est une commande morte (§5.59).
+	 */
+	readonly administration?: boolean
 }
 
 export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
@@ -86,6 +99,7 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 		cleVide: 'onboarding.step.track.vide',
 		destination: CHEMIN_ADMIN_ARBORESCENCE,
 		cleAction: 'onboarding.step.track.action',
+		administration: true,
 	},
 	{
 		cle: 'workflow',
@@ -94,6 +108,7 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 		cleVide: 'onboarding.step.workflow.vide',
 		destination: CHEMIN_ADMIN_WORKFLOWS,
 		cleAction: 'onboarding.step.workflow.action',
+		administration: true,
 	},
 	{
 		cle: 'channel',
@@ -102,6 +117,7 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 		cleVide: 'onboarding.step.channel.vide',
 		destination: CHEMIN_ADMIN_ARBORESCENCE,
 		cleAction: 'onboarding.step.channel.action',
+		administration: true,
 	},
 	{
 		cle: 'affaire',
@@ -110,6 +126,7 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
 		cleVide: 'onboarding.step.affaire.vide',
 		destination: CHEMIN_ADMIN_ARBORESCENCE,
 		cleAction: 'onboarding.step.affaire.action',
+		administration: true,
 	},
 	{
 		cle: 'messagerie',
@@ -130,7 +147,8 @@ export const ETAPES_DEMARRAGE: readonly DescriptionEtape[] = [
  */
 export function descriptionMesuree(description: DescriptionEtape, boardAffaire: string | null): DescriptionEtape {
 	if (description.cle !== 'affaire' || boardAffaire === null) return description
-	return { ...description, destination: boardAffaire, cleAction: 'onboarding.step.affaire.action.board' }
+	// Le board n'est pas un écran d'administration : « Nouvelle affaire » y relève du channel (`CRM-093`).
+	return { ...description, destination: boardAffaire, cleAction: 'onboarding.step.affaire.action.board', administration: false }
 }
 
 /**
@@ -211,8 +229,12 @@ export function ListeEtapesDemarrage({
 	readonly geste: GesteDepart | null
 }) {
 	const [annonce, setAnnonce] = useState('')
+	const { capacites } = useContexteEspace()
 	return (
 		<>
+			{motifVisible(capacites.administration) ? (
+				<MotifLectureSeule id={ID_MOTIF_GUIDE}>{t('rights.readonly.administration')}</MotifLectureSeule>
+			) : null}
 			<ol className="flex flex-col rounded-lg border border-border bg-surface">
 				{ETAPES_DEMARRAGE.map((description, rang) => (
 					<LigneEtape
@@ -220,6 +242,7 @@ export function ListeEtapesDemarrage({
 						description={descriptionMesuree(description, progression.boardAffaire)}
 						etat={progression.etapes[rang] ?? { statut: 'chargement' }}
 						onReprise={recharger}
+						capaciteAdministration={capacites.administration}
 						geste={description.cle === 'workflow' ? geste : null}
 						onGesteAbouti={(issue) => {
 							setAnnonce(t(CLES_ANNONCE_DEPART[issue]))
@@ -282,12 +305,14 @@ function LigneEtape({
 	description,
 	etat,
 	onReprise,
+	capaciteAdministration = 'inconnue',
 	geste,
 	onGesteAbouti,
 }: {
 	readonly description: DescriptionEtape
 	readonly etat: EtatAsync<EtapeDemarrage>
 	readonly onReprise: () => void
+	readonly capaciteAdministration?: Capacite
 	readonly geste: GesteDepart | null
 	readonly onGesteAbouti: (issue: IssueAboutie) => void
 }) {
@@ -320,7 +345,19 @@ function LigneEtape({
 					}}
 				/>
 			) : null}
-			{description.destination === undefined || description.cleAction === undefined ? null : (
+			{description.destination === undefined || description.cleAction === undefined ? null : description.administration ===
+					true && (capaciteAdministration === 'refusee' || capaciteAdministration === 'en-lecture') ? (
+				// LE LIEN DEVIENT UN TEXTE, à la même place et sous le même libellé, et cite le motif de la liste (§5.59) :
+				// un lien vers un écran dont le geste est refusé serait la commande morte du §5.10.
+				<span
+					data-testid={`lien-${description.cle}`}
+					aria-disabled="true"
+					{...(capaciteAdministration === 'refusee' ? { 'aria-describedby': ID_MOTIF_GUIDE } : {})}
+					className="inline-flex items-center self-start min-h-[var(--size-target)] px-4 rounded-sm border border-border text-text-2 font-medium"
+				>
+					{t(description.cleAction)}
+				</span>
+			) : (
 				<Link
 					ref={lien}
 					to={description.destination}
