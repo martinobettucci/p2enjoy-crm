@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouvelle séquence » et « Modifier » désactivés avec leur motif quand la
+//       base refuse l'édition de l'espace (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
 //       TRANCHE 4, SOUS-TRANCHE 4c : L'ÉCRAN
 // @spec docs/SPEC-modeles-emails.md §13.4 (ce que l'écran est et où il vit), §13.5 (la liste),
@@ -48,6 +50,12 @@ import {
 import { lireModelesEmails, type ModeleEmail } from '../lib/modeles-emails'
 import { lireWorkspaces } from '../lib/workspaces'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { useContexteEspace } from './ContexteEspace'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { motifVisible, proprietesCommande, type ProprietesCommande } from '../lib/capacites'
+
+/** Le motif de la surface, cité par ses commandes d'écriture quand la base refuse l'édition (CRM-093). */
+const ID_MOTIF_SEQUENCES = 'sequences-lecture-seule'
 
 /**
  * Le dictionnaire fermé des refus du §13.7 — aucune phrase du serveur n'atteint l'écran.
@@ -95,6 +103,8 @@ export type ProprietesReglagesSequencesRelance = {
 export function ReglagesSequencesRelance({
 	client = clientCrm,
 }: ProprietesReglagesSequencesRelance = {}) {
+	const { capacites } = useContexteEspace()
+	const refusEdition = proprietesCommande(capacites.edition, ID_MOTIF_SEQUENCES)
 	const [idWorkspace, setIdWorkspace] = useState<string | null>(null)
 	const [etat, setEtat] = useState<EtatAsync<readonly SequenceRelance[]>>(enChargement)
 	const [modeles, setModeles] = useState<EtatAsync<readonly ModeleEmail[]>>(enChargement)
@@ -266,6 +276,9 @@ export function ReglagesSequencesRelance({
 		// commande, et la borne d'un paragraphe de prose l'y replierait.
 		<section aria-label={t('admin.sequences.aria')} className="flex flex-col gap-4 max-w-[104ch]">
 			<LiveRegion libelle={t('admin.sequences.live.aria')} message={annonce} />
+			{motifVisible(capacites.edition) ? (
+				<MotifLectureSeule id={ID_MOTIF_SEQUENCES}>{t('rights.readonly.edition')}</MotifLectureSeule>
+			) : null}
 
 			{sequences.length === 0 ? (
 				// L'état vide PORTE le geste — §5.13, §13.5.
@@ -278,6 +291,7 @@ export function ReglagesSequencesRelance({
 								type="button"
 								ref={commandeDuBas}
 								data-testid="ouvrir-sequence"
+								{...refusEdition}
 								onClick={(evenement) => ouvrir(null, evenement.currentTarget, true)}
 								className={CLASSES_COMMANDE_PRIMAIRE}
 							>
@@ -298,6 +312,7 @@ export function ReglagesSequencesRelance({
 							sequence={sequence}
 							enCours={enCours}
 							onModifier={(depuis) => ouvrir(sequence, depuis)}
+							refusEdition={refusEdition}
 						/>
 					))}
 				</ul>
@@ -310,6 +325,7 @@ export function ReglagesSequencesRelance({
 								type="button"
 								ref={commandeDuBas}
 								data-testid="ouvrir-sequence"
+								{...refusEdition}
 								onClick={(evenement) => ouvrir(null, evenement.currentTarget, true)}
 								className={CLASSES_COMMANDE_PRIMAIRE}
 							>
@@ -357,10 +373,13 @@ function LigneSequence({
 	sequence,
 	enCours,
 	onModifier,
+	refusEdition = {},
 }: {
 	readonly sequence: SequenceRelance
 	readonly enCours: boolean
 	readonly onModifier: (depuis: HTMLButtonElement) => void
+	/** `CRM-093` — « Modifier » désactivé et citant le motif quand la base refuse l'édition. */
+	readonly refusEdition?: ProprietesCommande
 }) {
 	return (
 		<li
@@ -391,7 +410,8 @@ function LigneSequence({
 			<button
 				type="button"
 				data-testid="modifier-sequence"
-				disabled={enCours}
+				{...refusEdition}
+				disabled={enCours || refusEdition.disabled === true}
 				onClick={(evenement) => onModifier(evenement.currentTarget)}
 				aria-label={t('admin.sequences.edit.aria', { sequence: sequence.name })}
 				className="inline-flex items-center gap-2 shrink-0 min-h-[var(--size-target)] px-3 rounded-sm border border-border bg-surface text-sm hover:bg-hover disabled:opacity-60"

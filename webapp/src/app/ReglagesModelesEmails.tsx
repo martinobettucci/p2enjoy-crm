@@ -1,3 +1,6 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Nouveau modèle » et « Modifier » désactivés avec leur motif quand la
+//       base refuse l'édition de l'espace ; la prévisualisation, une lecture, reste offerte
+//       (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, tranche 2, sous-tranche 2b : L'ÉCRAN
 // @spec docs/SPEC-modeles-emails.md §9.1 (ce que l'écran est et où il vit), §9.2 (ce qu'il lit),
 //       §9.3 (la palette des douze variables et son insertion), §9.4 (la liste), §9.5 (les trois
@@ -45,6 +48,12 @@ import { lireContactsDuCarnet, type ContactDuCarnet } from '../lib/contacts'
 import { lireIdentitesSortantes, type IdentiteSortante } from '../lib/mail-identites'
 import { lireWorkspaces } from '../lib/workspaces'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { useContexteEspace } from './ContexteEspace'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { motifVisible, proprietesCommande, type ProprietesCommande } from '../lib/capacites'
+
+/** Le motif de la surface, cité par ses commandes d'écriture quand la base refuse l'édition (CRM-093). */
+const ID_MOTIF_MODELES = 'modeles-emails-lecture-seule'
 
 /**
  * Le dictionnaire fermé des refus du §9.8 — aucune phrase du serveur n'atteint l'écran.
@@ -91,6 +100,8 @@ export type ProprietesReglagesModelesEmails = {
 export function ReglagesModelesEmails({
 	client = clientCrm,
 }: ProprietesReglagesModelesEmails = {}) {
+	const { capacites } = useContexteEspace()
+	const refusEdition = proprietesCommande(capacites.edition, ID_MOTIF_MODELES)
 	const [idWorkspace, setIdWorkspace] = useState<string | null>(null)
 	const [etat, setEtat] = useState<EtatAsync<readonly ModeleEmail[]>>(enChargement)
 	const [variables, setVariables] = useState<EtatAsync<readonly string[]>>(enChargement)
@@ -272,6 +283,9 @@ export function ReglagesModelesEmails({
 			className="flex flex-col gap-4 max-w-[104ch]"
 		>
 			<LiveRegion libelle={t('admin.mailTemplates.live.aria')} message={annonce} />
+			{motifVisible(capacites.edition) ? (
+				<MotifLectureSeule id={ID_MOTIF_MODELES}>{t('rights.readonly.edition')}</MotifLectureSeule>
+			) : null}
 
 			{modeles.length === 0 ? (
 				// L'état vide PORTE le geste — §5.13, §9.4.
@@ -284,6 +298,7 @@ export function ReglagesModelesEmails({
 								type="button"
 								ref={commandeDuBas}
 								data-testid="ouvrir-modele"
+								{...refusEdition}
 								onClick={(evenement) => ouvrir(null, evenement.currentTarget, true)}
 								className="inline-flex items-center gap-2 shrink-0 min-h-[var(--size-target)] px-4 rounded-sm bg-brand text-white text-sm font-medium transition-colors duration-[var(--transition-duration-fast)] hover:bg-brand-hover disabled:opacity-60"
 							>
@@ -309,6 +324,7 @@ export function ReglagesModelesEmails({
 								setPrevisualise(modele)
 							}}
 							onModifier={(depuis) => ouvrir(modele, depuis)}
+							refusEdition={refusEdition}
 						/>
 					))}
 				</ul>
@@ -321,6 +337,7 @@ export function ReglagesModelesEmails({
 								type="button"
 								ref={commandeDuBas}
 								data-testid="ouvrir-modele"
+								{...refusEdition}
 								onClick={(evenement) => ouvrir(null, evenement.currentTarget, true)}
 								className="inline-flex items-center gap-2 shrink-0 min-h-[var(--size-target)] px-4 rounded-sm bg-brand text-white text-sm font-medium transition-colors duration-[var(--transition-duration-fast)] hover:bg-brand-hover disabled:opacity-60"
 							>
@@ -373,11 +390,14 @@ function LigneModele({
 	enCours,
 	onPrevisualiser,
 	onModifier,
+	refusEdition = {},
 }: {
 	readonly modele: ModeleEmail
 	readonly enCours: boolean
 	readonly onPrevisualiser: () => void
 	readonly onModifier: (depuis: HTMLButtonElement | null) => void
+	/** `CRM-093` — « Modifier » désactivé et citant le motif quand la base refuse l'édition. */
+	readonly refusEdition?: ProprietesCommande
 }) {
 	return (
 		<li
@@ -417,7 +437,8 @@ function LigneModele({
 			<button
 				type="button"
 				data-testid="modifier-modele"
-				disabled={enCours}
+				{...refusEdition}
+				disabled={enCours || refusEdition.disabled === true}
 				onClick={(evenement) => onModifier(evenement.currentTarget)}
 				aria-label={t('admin.mailTemplates.edit.aria', { modele: modele.name })}
 				className="inline-flex items-center gap-2 shrink-0 min-h-[var(--size-target)] px-2 rounded-sm text-text-2 text-sm font-medium hover:bg-hover disabled:opacity-60"
