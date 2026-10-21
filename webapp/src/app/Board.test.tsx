@@ -1,3 +1,4 @@
+// @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — le board sous le refus du channel (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-041 (docs/BACKLOG.md) — rendu réel du board, de son menu et de ses refus
 // @verifies CRM-022 (docs/BACKLOG.md) — avatar du responsable sans UUID
 // @verifies CRM-105 (docs/BACKLOG.md) — la description d'une affaire en infobulle sur le titre de sa carte :
@@ -20,6 +21,8 @@ import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Board } from './Board'
+import { FournisseurRefus } from '../components/ui/RefusCommandes'
+import type { ProprietesCommande } from '../lib/capacites'
 import { fr } from '../i18n'
 import { composerBoard, type CardBoard, type EtapeBoard, type TransitionLue } from '../lib/board'
 import type { ModeSommeil } from '../lib/filtre-sommeil'
@@ -98,7 +101,10 @@ function monter({
 	transitions = TRANSITIONS,
 	modeSommeil = 'masquees',
 	onModeSommeil = () => {},
+	refus = {},
 }: {
+	/** `CRM-093` — le refus du channel, tel que la route le fournit (docs/DESIGN_SYSTEM.md §5.59). */
+	readonly refus?: ProprietesCommande
 	readonly cards: readonly CardBoard[]
 	readonly client: ClientCrm
 	readonly onCards?: (cards: readonly CardBoard[]) => void
@@ -117,6 +123,7 @@ function monter({
 	})
 	return render(
 		<MemoryRouter>
+			<FournisseurRefus valeur={refus}>
 			<Board
 				modele={modele}
 				cards={cards}
@@ -129,6 +136,7 @@ function monter({
 				modeSommeil={modeSommeil}
 				onModeSommeil={onModeSommeil}
 			/>
+			</FournisseurRefus>
 		</MemoryRouter>,
 	)
 }
@@ -875,5 +883,31 @@ describe('infobulle de description (docs/DESIGN_SYSTEM.md §5.58) — CRM-105', 
 		// Le titre d'une carte ne portait aucun `title` : il n'en gagne pas.
 		expect(decrite.hasAttribute('title')).toBe(false)
 		expect(nue.hasAttribute('title')).toBe(false)
+	})
+})
+
+
+describe('le board sous le refus du channel (CRM-093)', () => {
+	it('la carte ne se glisse plus ; son menu s’ouvre, et ses transitions sont éteintes en citant le motif', async () => {
+		const utilisateur = userEvent.setup()
+		monter({
+			cards: [card({ id: 'c1', current_step_id: 's1' })],
+			client: clientRpc().client,
+			refus: { disabled: true, 'aria-describedby': 'channel-lecture-seule' },
+		})
+		expect(screen.getByTestId('carte-card').getAttribute('draggable')).toBe('false')
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		for (const geste of screen.getAllByTestId('transition') as HTMLButtonElement[]) {
+			expect(geste.disabled).toBe(true)
+			expect(geste.getAttribute('aria-describedby')).toBe('channel-lecture-seule')
+		}
+	})
+
+	it('sans refus, la carte se glisse et les transitions sont offertes', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ cards: [card({ id: 'c1', current_step_id: 's1' })], client: clientRpc().client })
+		expect(screen.getByTestId('carte-card').getAttribute('draggable')).toBe('true')
+		await utilisateur.click(screen.getByTestId('menu-transitions'))
+		expect((screen.getAllByTestId('transition')[0] as HTMLButtonElement).disabled).toBe(false)
 	})
 })

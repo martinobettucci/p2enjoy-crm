@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — « Nouveau channel » rendu en texte citant son motif quand la base refuse
+//       l'administration (docs/SPEC-droits-interface.md §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-021 (docs/BACKLOG.md) — barre d'onglets : les channels du track courant
 // @spec docs/SPEC-channels.md §5 (ce que la barre lit), §5.3 (patron ARIA), §4 (archivage)
 // @spec docs/DESIGN_SYSTEM.md §4 (onglets), §5.8 (états), §7 (débordement), §8 (clavier)
@@ -58,6 +60,10 @@ import {
 	estVueTrack,
 } from '../lib/nouveau-channel'
 import { cheminCoutsTrack } from './chemins'
+import { useContexteEspace } from './ContexteEspace'
+
+/** Le motif de « Nouveau channel » refusé, porté par le texte lui-même (CRM-093). */
+const ID_MOTIF_NOUVEAU_CHANNEL = 'nouveau-channel-lecture-seule'
 
 export type ProprietesTabBar = {
 	/**
@@ -192,10 +198,33 @@ function Contenu({ etat, slugTrack }: ProprietesTabBar) {
  */
 function CommandeNouveauChannel({ slugTrack }: { readonly slugTrack: string }) {
 	const { pathname, search } = useLocation()
+	const { capacites } = useContexteEspace()
 	const formulaireOuvert =
 		estVueTrack(pathname) &&
 		new URLSearchParams(search).get(PARAM_NOUVEAU_CHANNEL) === VALEUR_NOUVEAU_CHANNEL_TRACK
 	if (formulaireOuvert) return null
+	// `CRM-093` — refusée par la base, l'administration rend le lien en TEXTE, même icône et même libellé (§5.59). Un
+	// bandeau sur chaque page de track serait du bruit : le motif est porté par une description accessible et par
+	// l'infobulle native du texte — écart borné, écrit au §5.59.
+	if (capacites.administration === 'refusee' || capacites.administration === 'en-lecture') {
+		const refusee = capacites.administration === 'refusee'
+		return (
+			<span
+				data-testid="commande-nouveau-channel"
+				aria-disabled="true"
+				{...(refusee ? { 'aria-describedby': ID_MOTIF_NOUVEAU_CHANNEL, title: t('rights.readonly.administration') } : {})}
+				className="shrink-0 inline-flex items-center gap-2 px-3 whitespace-nowrap rounded-sm min-h-[var(--size-target)] text-text-2"
+			>
+				<Plus aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
+				{t('tabs.newChannel')}
+				{refusee ? (
+					<span id={ID_MOTIF_NOUVEAU_CHANNEL} className="sr-only">
+						{t('rights.readonly.administration')}
+					</span>
+				) : null}
+			</span>
+		)
+	}
 	return (
 		<Link
 			to={cheminOuvertureNouveauChannel(pathname, search, slugTrack)}

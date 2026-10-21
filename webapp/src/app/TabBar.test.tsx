@@ -1,3 +1,5 @@
+// @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — « Nouveau channel » en texte citant son motif quand la base refuse
+//           l'administration (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-021 (docs/BACKLOG.md) — barre d'onglets : rendu réel des channels
 // @verifies CRM-086 (docs/BACKLOG.md) — l'entrée « Coûts » du track, docs/SPEC-costs.md §4.0
 // @verifies docs/SPEC-channels.md §5 (ce que la barre lit), §5.3 (patron ARIA), §4 (archivage)
@@ -17,6 +19,8 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { TabBar } from './TabBar'
+import { FournisseurEspace } from './ContexteEspace'
+import type { Capacite } from '../lib/capacites'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import { fr } from '../i18n'
 import type { Channel } from '../lib/channels'
@@ -246,5 +250,36 @@ describe('infobulle de description (docs/DESIGN_SYSTEM.md §5.58) — CRM-105', 
 		expect(decrit?.hasAttribute('title')).toBe(false)
 		expect(nu?.getAttribute('title')).toBe('Grands comptes')
 		expect(nu?.hasAttribute('aria-describedby')).toBe(false)
+	})
+})
+
+// --- CRM-093 — « Nouveau channel » quand la base refuse l'administration (docs/DESIGN_SYSTEM.md §5.59) ---------------
+
+describe('« Nouveau channel » selon la capacité d’administrer (CRM-093)', () => {
+	function monterAvec(administration: Capacite) {
+		return render(
+			<MemoryRouter initialEntries={['/tracks/conseil-ia']}>
+				<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration, edition: 'permise' } }}>
+					<TabBar etat={pret([])} slugTrack="conseil-ia" />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+	}
+
+	it('refusée : le lien devient un texte, au même libellé, qui cite son motif', () => {
+		monterAvec('refusee')
+		const commande = screen.getByTestId('commande-nouveau-channel')
+		expect(commande.tagName).toBe('SPAN')
+		expect(commande.textContent).toContain(fr['tabs.newChannel'])
+		const motif = document.getElementById(commande.getAttribute('aria-describedby') ?? '')
+		expect(motif?.textContent).toBe(fr['rights.readonly.administration'])
+	})
+
+	it('permise ou inconnue : la commande reste un lien', () => {
+		for (const administration of ['permise', 'inconnue'] as const) {
+			monterAvec(administration)
+			expect(screen.getByTestId('commande-nouveau-channel').tagName, administration).toBe('A')
+			cleanup()
+		}
 	})
 })

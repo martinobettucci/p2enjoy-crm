@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — le board et la liste lisent la capacité d'écrire sur le channel et la
+//       fournissent à leurs commandes (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-021 (docs/BACKLOG.md) — route d'un track : ses onglets et le contenu d'un channel
 // @spec CRM-041 (docs/BACKLOG.md) — le board d'un channel ouvert
 // @spec CRM-042 (docs/BACKLOG.md) — la vue liste du même channel, seconde lecture du même contenu
@@ -65,6 +67,12 @@ import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { BasculeVue, ListeCards } from './ListeCards'
 import { ZoneNouveauChannel } from './NouveauChannelTrack'
 import { CommandeNouvelleAffaire, FormulaireNouvelleAffaire, useCreationAffaire } from './NouvelleAffaire'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { FournisseurRefus } from '../components/ui/RefusCommandes'
+import { motifVisible, proprietesCommande, useEcriturePermise } from '../lib/capacites'
+
+/** Le motif d'un channel, cité par ses commandes quand la base refuse d'y écrire (CRM-093). */
+const ID_MOTIF_CHANNEL = 'channel-lecture-seule'
 
 /** Les deux lectures d'un même channel. Le board est la vue par défaut (docs/SPEC-cards.md §12.2). */
 export type VueChannel = 'board' | 'liste'
@@ -262,11 +270,13 @@ function ContenuTrack({
 					modeSommeil={lireModeSommeil(parametresVue.get(CLE_URL_SOMMEIL))}
 				/>
 			</div>
-			{vue === 'liste' ? (
-				<ZoneListe channel={channelOuvert} slugTrack={slugTrack} />
-			) : (
-				<ZoneBoard channel={channelOuvert} slugTrack={slugTrack} />
-			)}
+			<DroitChannel idChannel={channelOuvert.id}>
+				{vue === 'liste' ? (
+					<ZoneListe channel={channelOuvert} slugTrack={slugTrack} />
+				) : (
+					<ZoneBoard channel={channelOuvert} slugTrack={slugTrack} />
+				)}
+			</DroitChannel>
 		</div>
 	)
 }
@@ -278,6 +288,25 @@ function ContenuTrack({
  * retour arrière remplacent la liste entière (§7.9), et un état interne au board serait
  * réinitialisé à chaque rechargement du contenu.
  */
+/**
+ * `CRM-093` — LA CAPACITÉ D'ÉCRIRE SUR LE CHANNEL, rendue par la base sur sa ligne (docs/SPEC-droits-interface.md
+ * §2.1), lue à part du board et de la liste : un défaut de lecture n'efface que l'aide d'interface (§4). Refusée, le
+ * motif se pose une fois en tête de la vue, et chaque commande d'écriture du board ou de la liste le cite (§5.59).
+ */
+function DroitChannel({ idChannel, children }: { readonly idChannel: string; readonly children: ReactNode }) {
+	const capacite = useEcriturePermise(clientCrm, 'channels', idChannel)
+	return (
+		<FournisseurRefus valeur={proprietesCommande(capacite, ID_MOTIF_CHANNEL)}>
+			{motifVisible(capacite) ? (
+				<div className="px-4 pt-4">
+					<MotifLectureSeule id={ID_MOTIF_CHANNEL}>{t('rights.readonly.channel')}</MotifLectureSeule>
+				</div>
+			) : null}
+			{children}
+		</FournisseurRefus>
+	)
+}
+
 function ZoneBoard({ channel, slugTrack }: { readonly channel: Channel; readonly slugTrack: string }) {
 	const { etat, recharger } = useContenuBoard(
 		clientCrm,

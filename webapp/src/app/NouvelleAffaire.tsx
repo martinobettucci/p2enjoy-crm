@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les gestes d'écriture lisent le refus du channel (docs/DESIGN_SYSTEM.md
+//       §5.59)
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : « Nouvelle affaire », sur le board et dans la vue liste
 // @spec docs/SPEC-cards.md §18.1 (les arbitrages : le board, le titre seul, la fiche qui s'ouvre),
 //       §18.3 (l'écran : bouton, formulaire dans le flux, refus, succès) ; docs/JOURNAL.md décision 609
@@ -20,6 +22,7 @@ import { t, type CleTraduction } from '../i18n'
 import { creerAffaire, type RefusCreationAffaire } from '../lib/creer-affaire'
 import type { ClientCrm } from '../lib/supabase'
 import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
+import { useRefus } from '../components/ui/RefusCommandes'
 
 /** Qui a ouvert le formulaire : c'est à lui que le focus revient (docs/DESIGN_SYSTEM.md §5.13). */
 export type OrigineCreation = 'barre' | 'colonne'
@@ -77,9 +80,10 @@ export function useCreationAffaire(): CreationAffaire {
 
 /** La commande « Nouvelle affaire », primaire, en tête de sa barre (§5.50). Absente pendant la saisie. */
 export function CommandeNouvelleAffaire({ creation }: { readonly creation: CreationAffaire }) {
+	const droit = useRefus()
 	if (creation.ouvert) return null
 	return (
-		<Button
+		<Button {...droit}
 			ref={creation.refBarre}
 			variante="primaire"
 			data-testid="nouvelle-affaire"
@@ -98,9 +102,10 @@ export function CommandeNouvelleAffaire({ creation }: { readonly creation: Creat
  * diraient plus lequel est le chemin principal (§5.5). Absente pendant la saisie, comme la commande.
  */
 export function ActionColonneInitiale({ creation }: { readonly creation: CreationAffaire }) {
+	const droit = useRefus()
 	if (creation.ouvert) return null
 	return (
-		<Button
+		<Button {...droit}
 			ref={creation.refColonne}
 			variante="secondaire"
 			className="self-start"
@@ -156,6 +161,7 @@ export function FormulaireNouvelleAffaire({
 	slugTrack,
 	slugChannel,
 }: ProprietesFormulaireNouvelleAffaire) {
+	const droit = useRefus()
 	const naviguer = useNavigate()
 	const idChamp = useId()
 	const idRefus = useId()
@@ -256,7 +262,7 @@ export function FormulaireNouvelleAffaire({
 			)}
 
 			<div className="flex flex-wrap items-center gap-2">
-				<Button variante="primaire" type="submit" disabled={blanc || enCours} data-testid="creer-affaire">
+				<Button {...droit} variante="primaire" type="submit" disabled={blanc || enCours} data-testid="creer-affaire">
 					{t(enCours ? 'affaire.creation.encours' : 'affaire.creation.creer')}
 				</Button>
 				<Button variante="secondaire" disabled={enCours} data-testid="annuler-nouvelle-affaire" onClick={fermer}>

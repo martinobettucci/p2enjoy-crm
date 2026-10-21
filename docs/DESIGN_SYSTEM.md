@@ -5620,6 +5620,9 @@ responsable (décision 628 : « désactivé avec motif », et non masqué).
   du guide (§5.17, §5.49) — **ne se désactive pas** : il est rendu comme **texte** à la même place, avec la même icône et
   le même libellé, en `--color-text-2`, et cite le même motif. Un `a` désactivé n'existe pas ; un lien qui mène à un écran
   refusé est la commande morte du §5.10.
+  *Écart borné, la barre d'onglets* : « Nouveau channel » vit sur chaque page de track, et un bandeau de motif sur
+  chacune serait du bruit. Son texte porte donc lui-même le motif — description accessible (`aria-describedby` vers un
+  `sr-only` adjacent) et infobulle native (`title`). Le board, la liste et la fiche, eux, posent leur bandeau.
 - **UN CHAMP qu'on ne peut pas enregistrer est rendu INACTIF, sa valeur restant lisible**, et il cite le motif à côté de
   ce qu'il citait déjà. *Révisé à l'écriture de la fiche d'affaire* : la première rédaction voulait `readOnly`, mais une
   liste et une case à cocher n'en admettent pas, et le formulaire d'une affaire désactive déjà ses contrôles par un

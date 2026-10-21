@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les gestes d'écriture lisent le refus du channel (docs/DESIGN_SYSTEM.md
+//       §5.59)
 // @spec CRM-041 (docs/BACKLOG.md) — board kanban : colonnes, glisser-déposer, menu de transitions
 // @spec CRM-022 (docs/BACKLOG.md) — avatar du responsable embarqué sur la card
 // @spec docs/SPEC-workflow-engine.md §7.3 (composition des colonnes), §7.4 (carte de card),
@@ -75,6 +77,7 @@ import {
 	useCreationAffaire,
 	type CreationAffaire,
 } from './NouvelleAffaire'
+import { useRefus } from '../components/ui/RefusCommandes'
 
 /**
  * Liseré supérieur de 3 px à la couleur du nœud (docs/DESIGN_SYSTEM.md §5.1).
@@ -547,12 +550,14 @@ function CarteDeCard({
 	readonly onSommeil: (idCard: string, until: string | null) => Promise<IssueSommeil>
 }) {
 	const { card } = carte
+	// `CRM-093` — refusée par la base, la carte ne se glisse pas : son menu porte les mêmes gestes, éteints avec le motif.
+	const droit = useRefus()
 	return (
 		<li
 			data-testid="carte-card"
 			data-card={card.id}
 			data-en-cours={enCours ? 'oui' : 'non'}
-			draggable
+			draggable={droit.disabled !== true}
 			onDragStart={(evenement) => {
 				evenement.dataTransfer.effectAllowed = 'move'
 				evenement.dataTransfer.setData('text/plain', card.id)
@@ -682,6 +687,7 @@ function MenuCarte({
 	readonly onTransition: (idCard: string, transition: TransitionBoard) => void
 	readonly onSommeil: (idCard: string, until: string | null) => Promise<IssueSommeil>
 }) {
+	const droit = useRefus()
 	const idMenu = useId()
 	const [ouvert, setOuvert] = useState(false)
 	const [issue, setIssue] = useState<IssueSommeil | null>(null)
@@ -747,7 +753,7 @@ function MenuCarte({
 						<ul data-testid="liste-transitions" className="flex flex-col gap-2">
 							{transitions.map((transition) => (
 								<li key={transition.id}>
-									<Button
+									<Button {...droit}
 										variante="discret"
 										className="w-full justify-start text-left"
 										data-testid="transition"
@@ -776,11 +782,11 @@ function MenuCarte({
 					    fiche, elle, garde son panneau — elle a la place, et elle porte aussi l'échéance
 					    choisie, que 288 px n'admettent pas. */}
 					{enSommeil ? (
-						<Button
+						<Button {...droit}
 							variante="discret"
 							className="w-full justify-start text-left"
 							data-testid="carte-reveiller"
-							disabled={enVol !== null}
+							disabled={droit.disabled === true || (enVol !== null)}
 							aria-label={t('card.sleep.wake.aria')}
 							onClick={() => void jouer('reveil', null)}
 						>
@@ -791,11 +797,11 @@ function MenuCarte({
 						<ul data-testid="liste-echeances" className="flex flex-col gap-2">
 							{ECHEANCES_USUELLES.map((usuelle) => (
 								<li key={usuelle.cle}>
-									<Button
+									<Button {...droit}
 										variante="discret"
 										className="w-full justify-start text-left"
 										data-testid={`carte-sommeil-${usuelle.cle}`}
-										disabled={enVol !== null}
+										disabled={droit.disabled === true || (enVol !== null)}
 										// L'ÉCHÉANCE EST COMPTÉE DEPUIS L'INSTANT DU GESTE (§16.13.2), jamais
 										// depuis l'instant du rendu du board : une carte rendue le matin et
 										// endormie le soir doit dormir un jour à partir du soir.
@@ -839,6 +845,7 @@ function SaisieMotif({
 	readonly onAnnuler: () => void
 	readonly onValider: (motif: string) => void
 }) {
+	const droit = useRefus()
 	const idChamp = useId()
 	const [motif, setMotif] = useState('')
 	const vide = motif.trim() === ''
@@ -867,7 +874,7 @@ function SaisieMotif({
 				{t('board.comment.stored')}
 			</p>
 			<div className="flex gap-2">
-				<Button variante="primaire" type="submit" disabled={vide} data-testid="valider-motif">
+				<Button {...droit} variante="primaire" type="submit" disabled={vide} data-testid="valider-motif">
 					{t('board.comment.submit')}
 				</Button>
 				<Button variante="discret" onClick={onAnnuler} data-testid="annuler-motif">
