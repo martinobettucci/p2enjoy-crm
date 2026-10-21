@@ -11,6 +11,8 @@
 #           versions de coût de l'annexe A (docs/SPEC-temps.md §7, chapitre 5 undecies)
 # @verifies CRM-099 (docs/BACKLOG.md) — les libellés des réels d'une ligne de coût (chapitre 5 octies)
 # @verifies CRM-101 (docs/BACKLOG.md) tranche T4 — les libellés de la plateforme (docs/SPEC-plateforme.md §7, chapitre 10)
+# @verifies CRM-103 (docs/BACKLOG.md) tranche T3 — les libellés de l'administration du connecteur (docs/SPEC-mcp.md §8.1,
+#           chapitre 11)
 #
 # Vérifie que `docs/manual.md` décrit le produit **réellement exécuté**, hors interface, contre la
 # base réelle et contre les fichiers du dépôt.
@@ -204,6 +206,24 @@ LIBELLES_PARCOURS=(
 	"Amorçage"
 	"Accorder le drapeau"
 	"Entrées plus anciennes"
+	# CRM-101 T6 et CRM-103 — les utilisateurs et le connecteur (chapitres 10.6 bis et 11)
+	"Utilisateurs"
+	"Rechercher un utilisateur"
+	"Droits du connecteur"
+	"Connecteur MCP"
+	"Sans profil dans le CRM"
+	"Accorder des droits à un utilisateur"
+	"Jamais connecté"
+	"Toute la famille"
+	"Toute l’action"
+	"Enregistrer les droits"
+	"Annuler les modifications"
+	"Droits enregistrés."
+	"Journal des appels"
+	"Réussi"
+	"Refusé par la matrice"
+	"Refusé par le CRM"
+	"Réponse trop volumineuse"
 )
 
 # ---------------------------------------------------------------------------------------------

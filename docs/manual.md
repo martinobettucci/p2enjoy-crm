@@ -62,6 +62,7 @@
 |---|---|---|---|
 | 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | À livrer. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses propres membres reste à `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
 | 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
+| 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Un seul outil pour l'instant : la liste des espaces |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
 | 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Aucun effacement définitif n'est offert** : la durée de conservation n'est pas arrêtée |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
@@ -4260,7 +4261,8 @@ affiche :
 majuscules. La liste montre au plus 200 personnes ; au-delà, elle le dit, et la recherche affine.
 
 L'onglet ne modifie rien. Pour ajouter une personne à un espace, ouvrez la fiche de l'espace (§10.4). Pour lui donner
-le drapeau, passez par l'onglet « Superadministrateurs » (§10.7). Le rôle `admin` LeLabs n'y est pas affiché : le CRM
+le drapeau, passez par l'onglet « Superadministrateurs » (§10.7). **« Droits du connecteur »**, sur chaque ligne, mène
+à ses droits du connecteur MCP (chapitre 11). Le rôle `admin` LeLabs n'y est pas affiché : le CRM
 ne le connaît que par la connexion.
 
 ### 10.7 Les superadministrateurs et le journal
@@ -4287,6 +4289,91 @@ L'onglet **« Journal »** retrace chaque geste de la plateforme, du plus récen
   avec `CRM-070`, comme les droits fins par track et par channel.
 - **Changer l'identifiant court d'un espace.**
 - **Annuler une suppression.**
+
+## 11. Le connecteur MCP : piloter le CRM depuis votre assistant
+
+*Livré par `CRM-102` (le connecteur) et `CRM-103` (son administration, en développement).*
+
+Le **connecteur MCP** relie votre assistant — Claude, ChatGPT, ou tout client MCP — au CRM. L'assistant agit **en votre
+nom** : il voit et modifie exactement ce que vous pourriez voir et modifier dans le CRM, jamais davantage.
+
+### 11.1 Ce que l'assistant a le droit de faire
+
+Deux règles se cumulent :
+
+- **vos droits dans le CRM**, ceux de votre rôle dans chaque espace ;
+- **les droits du connecteur**, qu'un superadministrateur vous accorde espace par espace, par **famille** et par
+  **action**.
+
+L'assistant ne peut faire que ce que **les deux** permettent. Un droit du connecteur dans un espace dont vous n'êtes pas
+membre reste sans effet.
+
+Les sept familles, et ce que chacune couvre :
+
+- **Structure** : tracks, channels, lecture des workflows ;
+- **Affaires** : affaires, champs, étapes, commentaires, contacts liés ;
+- **Contacts** : contacts et organisations ;
+- **Budgets** : budgets, occurrences, lignes de coût, réels ;
+- **Temps** : saisies de temps, et le coût du personnel en lecture ;
+- **Objectifs** : tableaux d'objectifs ;
+- **Messagerie** : lecture des fils ; l'envoi compte comme « ajouter ».
+
+Les quatre actions sont **Consulter**, **Ajouter**, **Modifier** et **Supprimer**. « Supprimer » place en corbeille ou
+archive ; le connecteur ne détruit jamais rien définitivement.
+
+**Un superadministrateur franchit les droits du connecteur** : l'assistant lui ouvre tout ce que le CRM lui permet.
+
+### 11.2 Ajouter le connecteur à votre assistant
+
+1. Ouvrez la **page d'accueil du connecteur**, et cliquez sur **« Copier l'adresse du connecteur »**.
+2. Dans votre assistant, ajoutez un **connecteur personnalisé** avec cette adresse.
+3. Sur la page de consentement, autorisez l'accès. Cochez **« Stay signed in »** pour rester connecté entre deux pauses.
+4. Connectez-vous avec votre compte LeLabs.
+
+Si aucun droit ne vous est encore accordé, une page **« Droits en attente »** le dit : demandez à un superadministrateur
+de vous en accorder, puis relancez la connexion.
+
+La page d'accueil porte aussi **« Ouvrir la plateforme du CRM »**, qui mène à l'administration décrite ci-dessous.
+
+### 11.3 Accorder des droits du connecteur
+
+Dans la plateforme (chapitre 10), l'onglet **« Connecteur MCP »** réunit trois blocs.
+
+- **Les comptes venus au connecteur** : leur dernière activité et le nombre d'espaces où ils ont des droits. Un compte
+  marqué **« Sans profil dans le CRM »** s'est connecté au connecteur sans avoir jamais été admis dans le CRM : il faut
+  d'abord inscrire une attente à son adresse dans un espace (§10.5).
+- **« Accorder des droits à un utilisateur »** : cherchez une personne par son nom, parmi **tous** les utilisateurs du
+  CRM, même ceux qui ne se sont jamais connectés au connecteur. Leurs droits vaudront dès leur première connexion.
+  L'onglet « Utilisateurs » mène au même endroit, par **« Droits du connecteur »** sur chaque ligne.
+- **Le journal des appels** (§11.4).
+
+**La fiche d'un utilisateur** montre :
+
+- en haut, son nom et sa dernière activité au connecteur, ou « Jamais connecté » ;
+- un **espace** à choisir, et son rôle dans cet espace. S'il n'en est pas membre, un avertissement rappelle que les
+  droits resteront sans effet ;
+- **la grille des droits** : les familles en lignes, les actions en colonnes, une case par droit. **« Toute la
+  famille »** et **« Toute l’action »** cochent une ligne ou une colonne entière, ou la décochent quand elle est déjà
+  pleine.
+
+Rien ne s'écrit case par case : **« Enregistrer les droits »** enregistre la grille de l'espace en une fois, et
+**« Annuler les modifications »** revient à l'état enregistré. Tant qu'une modification n'est pas enregistrée, le choix
+de l'espace est verrouillé, pour qu'aucune saisie ne se perde. Une fois l'enregistrement fait, **« Droits
+enregistrés. »** le confirme, et le geste est inscrit au journal de la plateforme.
+
+Pour un superadministrateur, la grille reste visible mais ne se modifie pas, puisqu'il la franchit.
+
+### 11.4 Le journal des appels
+
+Chaque appel de l'assistant est inscrit, sans son contenu : la date, le compte, l'outil appelé, l'espace et l'issue —
+« Réussi », « Refusé par la matrice », « Refusé par le CRM », « Erreur » ou « Réponse trop volumineuse ». Un filtre
+retient une seule issue, et **« Entrées plus anciennes »** remonte le temps. La fiche d'un utilisateur montre ses
+propres appels.
+
+### 11.5 Ce que le connecteur n'offre pas encore
+
+L'assistant ne dispose pour l'instant que d'**un seul outil** : la liste des espaces qui lui sont ouverts. Les outils de
+chaque famille arrivent avec `CRM-104`, une famille après l'autre.
 
 ## Annexe A — Ce que contient l'espace de démonstration
 

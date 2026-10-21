@@ -15323,6 +15323,11 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       vérification visuelle, les captures et l'E2E viennent avec T3, la pile étant occupée par une autre session.
 - [ ] **T3** — API aux jetons réels, E2E à la souris et au clavier avec un effet constaté par un appel MCP réel, seed,
       captures observées, manuel (chapitre 11), campagnes.
+      *Commencée le 2026-10-21* : le chapitre 11 du manuel est écrit d'après les écrans de T2 (§11.1 à §11.5, et le lien
+      « Droits du connecteur » au §10.6 bis), et ses dix-sept libellés sont ajoutés au contrôle de `verify-manual.sh`,
+      tous présents dans `fr.ts`. Le harnais rend 231 contrôles, dont 9 écarts de l'annexe A, tous dus aux données
+      d'une campagne E2E en cours dans une autre session (plus de tracks, de channels et d'affaires que le seed). **À
+      rejouer sur le seed**, avec le reste de T3, quand la pile sera libre.
 - [ ] **T4** — livraison en production et constat.
 
 ### CRM-104 — Outils MCP par famille `[ ]`
