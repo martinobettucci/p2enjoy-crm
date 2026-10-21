@@ -8,7 +8,8 @@
 # et exige que les preuves rougissent, avant de restaurer et de CONSTATER la restauration.
 #
 #   1. traçabilité : chaque fichier de l'unité porte son `@spec` ou son `@verifies` ;
-#   2. le registre, MESURÉ : trois tables fermées, quatre fonctions `SECURITY DEFINER`, privilèges exacts ;
+#   2. le registre, MESURÉ : trois tables fermées, huit fonctions `SECURITY DEFINER` — quatre du registre, quatre de
+#      l'administration (`CRM-103` T1) —, privilèges exacts, et la clé de la matrice vers les profils (D9) ;
 #   3. le service : sain, prêt (`/pret` : SSO et CRM), `401` et métadonnées sans jeton ;
 #   4. les suites : pgTAP 0085, pytest unitaires (image `dev`) ;
 #   5. l'intégration OAuth contre le vrai Keycloak et la vraie base — en direct, puis À TRAVERS un Caddy de la cellule
@@ -127,9 +128,11 @@ titre '2. Le registre, mesuré'
 	&& ok 'aucune politique : le registre est fermé à l’API' || fail 'une politique ouvre le registre'
 [ "$(psql_base -c "select bool_or(has_table_privilege(r, t, p))::text from unnest(array['anon','authenticated']) r, unnest(array['public.mcp_comptes','public.mcp_droits','public.mcp_journal']) t, unnest(array['select','insert','update','delete']) p")" = false ] \
 	&& ok 'aucun privilège client sur le registre' || fail 'un rôle client garde un privilège sur le registre'
-[ "$(psql_base -c "select string_agg(p.proname || ':' || has_function_privilege('authenticated', p.oid, 'execute')::text || ':' || has_function_privilege('service_role', p.oid, 'execute')::text, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname like 'mcp\_%' and p.prosecdef and p.proconfig @> array['search_path=\"\"'] and not has_function_privilege('anon', p.oid, 'execute')")" = 'mcp_autorise:true:false,mcp_etat_compte:false:true,mcp_inscrire_compte:false:true,mcp_journaliser:false:true' ] \
-	&& ok 'mcp_autorise pour authenticated seul, les trois RPC du registre pour service_role seul' \
+[ "$(psql_base -c "select string_agg(p.proname || ':' || has_function_privilege('authenticated', p.oid, 'execute')::text || ':' || has_function_privilege('service_role', p.oid, 'execute')::text, ',' order by p.proname) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.proname like 'mcp\_%' and p.prosecdef and p.proconfig @> array['search_path=\"\"'] and not has_function_privilege('anon', p.oid, 'execute')")" = 'mcp_autorise:true:false,mcp_compte:true:true,mcp_comptes_liste:true:true,mcp_etat_compte:false:true,mcp_inscrire_compte:false:true,mcp_journal_liste:true:true,mcp_journaliser:false:true,mcp_poser_droits:true:true' ] \
+	&& ok 'mcp_autorise pour authenticated seul, les trois RPC du registre pour service_role seul, les quatre d’administration pour authenticated (service_role par défaut, comme les plateforme_*), gardées par le drapeau' \
 	|| fail 'une fonction mcp_* s’écarte de sa forme ou de ses privilèges'
+[ "$(psql_base -c "select pg_get_constraintdef(oid) from pg_constraint where conname = 'mcp_droits_sub_fkey'")" = 'FOREIGN KEY (sub) REFERENCES profiles(id) ON DELETE CASCADE' ] \
+	&& ok 'la matrice vise le profil, en cascade (CRM-103, D9)' || fail 'la clé de mcp_droits.sub ne vise pas les profils'
 
 titre '3. Le service'
 ORIGINE="http://localhost:$(valeur MCP_DEV_PORT)"

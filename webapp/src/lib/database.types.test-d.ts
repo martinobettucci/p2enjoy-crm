@@ -1002,6 +1002,10 @@ type _vueDerivationColonnes = Expect<
 // espaces, leur drapeau et leur dernière activité au connecteur (docs/SPEC-plateforme.md §6.5, décision 627, A6).
 // SECURITY DEFINER, gardée comme les autres `plateforme_*` : le type ne dit pas le refus `42501` à qui n'est pas
 // superadministrateur. Quatre-vingt-deux devient QUATRE-VINGT-TROIS.
+// `0094` de `CRM-103` TRANCHE T1 ajoute les quatre fonctions d'administration du connecteur — `mcp_comptes_liste`,
+// `mcp_compte`, `mcp_poser_droits` et `mcp_journal_liste` (docs/SPEC-mcp.md §8.2, décision 627, A5 et D9). SECURITY
+// DEFINER, gardées par le drapeau : le type ne dit pas le refus `42501` à qui n'est pas superadministrateur, ni les refus
+// `profil_introuvable`, `droit_invalide` et `issue_invalide`. Quatre-vingt-trois devient QUATRE-VINGT-SEPT.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1011,6 +1015,10 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'mcp_inscrire_compte'
     | 'mcp_etat_compte'
     | 'mcp_journaliser'
+    | 'mcp_comptes_liste'
+    | 'mcp_compte'
+    | 'mcp_poser_droits'
+    | 'mcp_journal_liste'
     | 'est_superadmin'
     | 'plateforme_espaces'
     | 'plateforme_creer_espace'

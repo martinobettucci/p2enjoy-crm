@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-103` T1 — l'administration du connecteur MCP, en base (décision 627, A5 et D9)
+
+*Migration `0094`. L'écran qui s'en sert vient avec la tranche T2.*
+
+- **Les droits du connecteur s'accordent à tout utilisateur du CRM**, même avant sa première connexion au connecteur :
+  ils visent désormais le profil de la personne.
+- **Quatre fonctions réservées aux superadministrateurs** : la liste des comptes venus au connecteur ; la fiche d'un
+  utilisateur, avec tous les espaces, son rôle et ses droits dans chacun ; le remplacement de ses droits dans un espace,
+  inscrit au journal de la plateforme ; le journal des appels, filtrable par compte et par issue.
+
 ### `CRM-105` — la description d'un track, d'un channel et d'une affaire en infobulle (décision 629)
 
 *Webapp et seed de développement ; aucune migration. Prouvé en développement ; à livrer (`docs/PROD_MIGRATIONS.md` §2.15).*

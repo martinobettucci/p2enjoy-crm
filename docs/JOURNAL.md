@@ -32062,3 +32062,17 @@ un droit pour un compte sans profil, ni comment valider une matrice reçue.
   mesurée est donc reposée avec la position, sans quoi la bulle grandirait en hauteur après sa mesure.
 - **La donnée longue du seed (549 caractères) tient sans défiler aux quatre paliers** : la limite « au clavier, une bulle
   qui défile ne se fait pas défiler » est écrite au §5.58 sans être atteinte par le seed.
+
+### décision 627, mise en œuvre — `CRM-103` T1 : l'administration du connecteur, en base
+
+*2026-10-21.* La migration `0094` applique D9 puis les quatre fonctions du §8.2 de `docs/SPEC-mcp.md`.
+
+**Deux constats en l'écrivant.**
+
+- **`service_role` garde le droit d'exécution** des quatre fonctions, par les privilèges par défaut de l'image. C'est
+  déjà le cas des quinze `plateforme_*`, mesuré en développement comme en production. La garde du drapeau le refuse de
+  toute façon : la forme est celle de la plateforme, sans révocation de plus. `scripts/verify-mcp.sh` mesure désormais
+  les huit fonctions `mcp_*` et la clé D9.
+- **La suite `0085` affirmait qu'un compte retiré du connecteur perd sa matrice.** Depuis D9, c'est faux par
+  construction. L'assertion est révisée : le compte retiré garde sa matrice, et c'est le profil retiré qui l'emporte.
+  Deux preuves sont ajoutées : la cascade du profil, et le refus d'un droit sans profil.

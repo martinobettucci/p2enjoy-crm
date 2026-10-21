@@ -15273,11 +15273,23 @@ actions par espace, avertissement « pas membre de cet espace », journal des ap
 s'accordent à tout utilisateur du CRM, cherché par nom, même avant sa première connexion au connecteur (D9 : le droit
 vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_utilisateurs`.*
 
-- [ ] **T1** — les RPC `mcp_comptes_liste`, `mcp_compte`, `mcp_poser_droits` et `mcp_journal_liste`, et la clé de
+- [x] **T1** — les RPC `mcp_comptes_liste`, `mcp_compte`, `mcp_poser_droits` et `mcp_journal_liste`, et la clé de
       `mcp_droits.sub` vers `profiles` après le retrait des droits d'un compte sans profil (migration dédiée, D9) ;
       pgTAP ; types. Contrat exact précisé avant le code (`docs/SPEC-mcp.md` §8.2, 2026-10-21) : fiche d'un utilisateur
       jamais connecté, refus `profil_introuvable`, `droit_invalide` et `issue_invalide`, remplacement à l'identique
       sans journal.
+      *Vérifié le 2026-10-21, en développement* : migration `0094` appliquée par le vrai runner, au delta (« 0 droit
+      d'un compte sans profil retiré ») ; types régénérés (les quatre fonctions et la relation de `mcp_droits` vers
+      `profiles`), témoin à 87 fonctions, typecheck complet vert. pgTAP `0085` **79** assertions (+29 : forme, garde de
+      l'anonyme, de la lectrice et de l'administratrice d'espace, liste, fiche d'un profil jamais venu et d'un compte
+      sans profil, introuvable, refus D9, matrice posée puis remplacée, doublons, ordre, droits valant avant la première
+      connexion, remplacement à l'identique sans journal, avant et après au journal, auteur des cases, trois validations,
+      espace inconnu, journal des appels filtré, issue inconnue, curseur exclusif ; la cascade révisée : un compte retiré
+      garde sa matrice, un profil retiré l'emporte, un droit sans profil ne s'inscrit pas) ; **trois mutations
+      réelles** — garde retirée, journal à l'identique, clé ramenée vers `mcp_comptes` —, chacune rouge, puis la
+      migration rejouée et la suite verte. `scripts/verify-mcp.sh --rapide` **53** contrôles sans anomalie (privilèges
+      des huit fonctions et clé D9 mesurés, intégration OAuth 14/14 en direct et par le Caddy de la cellule) ; la preuve
+      Playwright n'y a pas été rejouée. Compteur du harnais mesuré : 3748 assertions. **Non livré.**
 - [ ] **T2** — l'onglet et la fiche d'un compte ; `docs/DESIGN_SYSTEM.md` écrit après lecture intégrale ; preuves
       unitaires.
 - [ ] **T3** — API aux jetons réels, E2E à la souris et au clavier avec un effet constaté par un appel MCP réel, seed,

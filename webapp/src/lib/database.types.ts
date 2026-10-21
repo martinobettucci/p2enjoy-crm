@@ -2069,8 +2069,8 @@ export type Database = {
             foreignKeyName: "mcp_droits_sub_fkey"
             columns: ["sub"]
             isOneToOne: false
-            referencedRelation: "mcp_comptes"
-            referencedColumns: ["sub"]
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "mcp_droits_workspace_id_fkey"
@@ -3546,6 +3546,20 @@ export type Database = {
         Args: { p_action: string; p_famille: string; p_ws: string }
         Returns: boolean
       }
+      mcp_compte: { Args: { p_sub: string }; Returns: Json }
+      mcp_comptes_liste: {
+        Args: { p_limite?: number }
+        Returns: {
+          avec_profil: boolean
+          derniere_activite: string
+          email: string
+          espaces_ouverts: number
+          nom: string
+          premiere_connexion: string
+          sub: string
+          superadmin: boolean
+        }[]
+      }
       mcp_etat_compte: {
         Args: { p_admin_lelabs?: boolean; p_sub: string }
         Returns: Json
@@ -3560,6 +3574,25 @@ export type Database = {
         }
         Returns: Json
       }
+      mcp_journal_liste: {
+        Args: {
+          p_avant?: number
+          p_issue?: string
+          p_limite?: number
+          p_sub?: string
+        }
+        Returns: {
+          cree_le: string
+          duree_ms: number
+          espace_nom: string
+          id: number
+          issue: string
+          nom: string
+          outil: string
+          sub: string
+          workspace_id: string
+        }[]
+      }
       mcp_journaliser: {
         Args: {
           p_duree_ms: number
@@ -3568,6 +3601,10 @@ export type Database = {
           p_sub: string
           p_ws: string
         }
+        Returns: undefined
+      }
+      mcp_poser_droits: {
+        Args: { p_droits: Json; p_sub: string; p_ws: string }
         Returns: undefined
       }
       mentionnables: {

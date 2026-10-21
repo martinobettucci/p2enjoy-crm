@@ -649,7 +649,9 @@ FICHIERS_SQL_ATTENDUS=86
 # **3710**, même jour : `0086` gagne 7 assertions avec la migration 92 (les deux capacités de l'espace), 22 → 29.
 # **3719**, même jour, `CRM-101` T6 : `0084` gagne 9 assertions avec la migration 93 (`plateforme_utilisateurs`),
 # 71 → 80. MESURÉ — somme des `plan()` des 86 suites, et `0084` jouée verte à 80.
-ASSERTIONS_ATTENDUES=3719
+# **3748**, même jour, `CRM-103` T1 : `0085` gagne 29 assertions avec la migration 94 (administration du connecteur, D9),
+# 50 → 79. MESURÉ — somme des `plan()` des 86 suites, et `0085` jouée verte à 79, trois mutations tuées.
+ASSERTIONS_ATTENDUES=3748
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
