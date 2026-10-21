@@ -94,6 +94,11 @@ avec la ligne de l'espace qu'elle lit déjà (`workspaces?select=…,administrat
   et chaque commande y renvoie par `aria-describedby`.
 - **Un lien qui mène à un écran d'administration** (guide de démarrage, navigation des réglages) devient une commande
   désactivée de même forme : un lien ne se désactive pas, il est rendu comme texte, avec le même motif.
+  *Précision de la tranche T4 (2026-10-21)* : la règle vise le lien dont la destination est un GESTE refusé (les
+  actions du guide) ou un écran REFUSÉ (§5.10 du design system). Dans la navigation des réglages, les écrans
+  d'administration se consultent désormais en lecture seule, leurs commandes éteintes à l'arrivée avec leur motif :
+  leurs entrées restent des liens. Seule l'entrée « Coût du personnel », dont l'écran est refusé (§3, dernier alinéa),
+  devient un texte, et un motif en tête de la liste le dit.
 - **Un écran d'administration atteint par son adresse** garde son état « réservé aux administrateurs », tel
   qu'aujourd'hui (`ReglagesCoutPersonnel`, `AdministrationWorkflows`…).
 - **Les champs d'un formulaire** qu'on ne peut pas enregistrer sont `readOnly` plutôt que `disabled` — ils restent
