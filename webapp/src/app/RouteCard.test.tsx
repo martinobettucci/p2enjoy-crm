@@ -1,3 +1,4 @@
+// @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — la commande sous le refus de la fiche (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-077 (docs/BACKLOG.md) — corbeille : le GESTE de mise à la corbeille d'une AFFAIRE,
 //           huitième tranche
 // @verifies docs/SPEC-corbeille.md §4 ter.2 (la confirmation ne porte AUCUNE énumération),
@@ -18,6 +19,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BlocCorbeilleCard } from './RouteCard'
+import { FournisseurRefus } from '../components/ui/RefusCommandes'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
@@ -150,5 +152,20 @@ describe('le geste de mise à la corbeille d’une affaire', () => {
 		monter(APPLIQUEE)
 		const commande = screen.getByRole('button', { name: 'Mettre à la corbeille' })
 		expect(commande.hasAttribute('disabled')).toBe(false)
+	})
+})
+
+// --- CRM-093 — la commande sous le refus de la fiche (docs/DESIGN_SYSTEM.md §5.59) -----------------------------------
+
+describe('le retrait d’une affaire sous le refus de la fiche (CRM-093)', () => {
+	it('la base refuse l’écriture : la commande est montée, désactivée, et cite le motif de la fiche', () => {
+		render(
+			<FournisseurRefus valeur={{ disabled: true, 'aria-describedby': 'fiche-affaire-lecture-seule' }}>
+				<BlocCorbeilleCard idCard={AFFAIRE.id} titre={AFFAIRE.titre} onRetiree={vi.fn()} client={client(APPLIQUEE)} />
+			</FournisseurRefus>,
+		)
+		const commande = screen.getByRole('button', { name: /Mettre à la corbeille/ }) as HTMLButtonElement
+		expect(commande.disabled).toBe(true)
+		expect(commande.getAttribute('aria-describedby')).toBe('fiche-affaire-lecture-seule')
 	})
 })

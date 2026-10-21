@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
+//       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-085 (docs/BACKLOG.md) — lignes de coût d'une affaire, TRANCHE 2 : la section « Coûts »
 //       de la fiche d'affaire
 // @spec docs/SPEC-costs.md §2.3 (ce qu'est une ligne, et « nul n'est pas zéro »), §3.2 (qui écrit),
@@ -48,6 +50,7 @@ import {
 } from '../lib/card-costs'
 import type { ClientCrm } from '../lib/supabase'
 import { ReelsLigne } from './ReelsLigne'
+import { useRefus } from '../components/ui/RefusCommandes'
 
 const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left'
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3'
@@ -192,6 +195,7 @@ function FormulaireCout({
 	readonly onValider: (saisie: SaisieCout) => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const prefixe = useId()
 	const [saisie, setSaisie] = useState(initial)
 	const premier = useRef<HTMLInputElement>(null)
@@ -335,7 +339,7 @@ function FormulaireCout({
 
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
 					{creation ? t('card.costs.action.add') : t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -363,6 +367,7 @@ function ConfirmationSuppression({
 	readonly onConfirmer: () => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const premier = useRef<HTMLButtonElement>(null)
 	useEffect(() => {
 		premier.current?.focus()
@@ -376,7 +381,7 @@ function ConfirmationSuppression({
 			<p className="text-sm text-text-2">{t('card.costs.delete.body')}</p>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button ref={premier} variante="destructif" disabled={enCours} onClick={onConfirmer}>
+				<Button {...droit} ref={premier} variante="destructif" disabled={enCours} onClick={onConfirmer}>
 					{t('card.costs.delete.action')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -470,6 +475,7 @@ export function BlocCoutsCard({
 	/** Nomme la section dans son étiquette accessible, comme le track nomme la table des budgets. */
 	readonly titreCard: string
 }) {
+	const droit = useRefus()
 	const [lignes, setLignes] = useState<EtatAsync<readonly LigneCout[]>>(enChargement)
 	const [budgets, setBudgets] = useState<EtatAsync<readonly BudgetRattachable[]>>(enChargement)
 	const [ouverture, setOuverture] = useState<OuvertureCout>(AUCUNE)
@@ -695,7 +701,7 @@ export function BlocCoutsCard({
 										</td>
 										<td className={CLASSES_CELLULE}>
 											<span className="flex items-center gap-1">
-												<Button
+												<Button {...droit}
 													taille="compacte"
 													variante="discret"
 													aria-expanded={ouverture.type === 'reels' && ouverture.id === ligne.id}
@@ -716,7 +722,7 @@ export function BlocCoutsCard({
 														<ChevronRight aria-hidden="true" size={16} strokeWidth={2} />
 													)}
 												</Button>
-												<Button
+												<Button {...droit}
 													taille="compacte"
 													variante="discret"
 													onClick={() => {
@@ -727,10 +733,10 @@ export function BlocCoutsCard({
 												>
 													<Pencil aria-hidden="true" size={16} strokeWidth={2} />
 												</Button>
-												<Button
+												<Button {...droit}
 													taille="compacte"
 													variante="discret"
-													disabled={rattachementFige}
+													disabled={droit.disabled === true || (rattachementFige)}
 													title={rattachementFige ? t('card.costs.delete.closed') : undefined}
 													onClick={() => {
 														setRefus(null)
@@ -887,7 +893,7 @@ export function BlocCoutsCard({
 						</p>
 					) : null}
 					<div>
-						<Button
+						<Button {...droit}
 							taille="compacte"
 							variante="secondaire"
 							onClick={() => {

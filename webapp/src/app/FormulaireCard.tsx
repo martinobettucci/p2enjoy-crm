@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les champs inactifs, valeurs lisibles, et citant le motif de la fiche quand
+//       la base refuse l'écriture sur l'affaire (docs/SPEC-droits-interface.md §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-037 (docs/BACKLOG.md) — rendu du formulaire conditionnel d'une card, et sa saisie
 // @spec docs/SPEC-form-composer.md §4.2 (trois destinations), §4.4 (champ exigé),
 //       §4.5 (erreurs et accessibilité), §4 bis.1 (ce que le geste est), §4 bis.2 (un champ, une
@@ -45,6 +47,7 @@ import {
 } from '../lib/formulaire'
 import type { Json } from '../lib/database.types'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { useRefus } from '../components/ui/RefusCommandes'
 
 /** Classes communes à tous les contrôles : 40 px de haut, bordure, focus `brand` (§5.7). */
 const CLASSES_CONTROLE = [
@@ -133,6 +136,8 @@ export function FormulaireCard({
 	idWorkspace,
 	client = clientCrm,
 }: ProprietesFormulaireCard) {
+	// `CRM-093` — le refus de la fiche (§5.59) : refusée par la base, aucun champ ne s'enregistre.
+	const droit = useRefus()
 	// Le modèle vit ici pendant la visite : une écriture confirmée le met à jour **en place**
 	// (§4 bis.8), sans rejouer les cinq requêtes du chargement ni faire clignoter la colonne. Il est
 	// resynchronisé dès que la fiche recharge — c'est alors la base qui a raison, pas l'écran.
@@ -273,7 +278,8 @@ export function FormulaireCard({
 							resolu={resolu}
 							etape={modele.etape.label}
 							etat={etats[resolu.champ.id] ?? INACTIF}
-							ecrituresPossibles={client !== null}
+							ecrituresPossibles={client !== null && droit.disabled !== true}
+							motifRefus={droit['aria-describedby']}
 							listes={listes}
 							onReprise={() => setReprises((tour) => tour + 1)}
 							onEnregistrer={enregistrer}
@@ -303,6 +309,7 @@ function ChampSaisie({
 	etape,
 	etat,
 	ecrituresPossibles,
+	motifRefus,
 	listes,
 	onReprise,
 	onEnregistrer,
@@ -311,6 +318,8 @@ function ChampSaisie({
 	readonly etape: string
 	readonly etat: EtatEcriture
 	readonly ecrituresPossibles: boolean
+	/** `CRM-093` — l'identifiant du motif de la fiche, cité par le contrôle quand la base refuse l'écriture. */
+	readonly motifRefus?: string | undefined
 	readonly listes: ListesReference
 	readonly onReprise: () => void
 	readonly onEnregistrer: (resolu: ChampResolu, valeur: Json) => Promise<void>
@@ -392,6 +401,7 @@ function ChampSaisie({
 				resolu={resolu}
 				invalide={manquant || enRefus}
 				ecrituresPossibles={ecrituresPossibles}
+				motifRefus={motifRefus}
 				listes={listes}
 				onReprise={onReprise}
 				onProposer={proposer}
@@ -479,6 +489,7 @@ function Controle({
 	resolu,
 	invalide,
 	ecrituresPossibles,
+	motifRefus,
 	listes,
 	onReprise,
 	onProposer,
@@ -488,6 +499,7 @@ function Controle({
 	readonly resolu: ChampResolu
 	readonly invalide: boolean
 	readonly ecrituresPossibles: boolean
+	readonly motifRefus?: string | undefined
 	readonly listes: ListesReference
 	readonly onReprise: () => void
 	readonly onProposer: (saisie: string | boolean | readonly string[]) => void
@@ -498,7 +510,10 @@ function Controle({
 		id,
 		disabled: !ecrituresPossibles,
 		'aria-invalid': invalide,
-		...(decritPar === undefined ? {} : { 'aria-describedby': decritPar }),
+		// `CRM-093` — le contrôle inactif cite aussi le motif de la fiche (§5.59), à côté de ce qu'il citait déjà.
+		...(decritPar === undefined && motifRefus === undefined
+			? {}
+			: { 'aria-describedby': [decritPar, motifRefus].filter((id) => id !== undefined).join(' ') }),
 	}
 
 	if (champ.type === 'contact' || champ.type === 'user') {

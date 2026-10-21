@@ -5620,12 +5620,16 @@ responsable (décision 628 : « désactivé avec motif », et non masqué).
   du guide (§5.17, §5.49) — **ne se désactive pas** : il est rendu comme **texte** à la même place, avec la même icône et
   le même libellé, en `--color-text-2`, et cite le même motif. Un `a` désactivé n'existe pas ; un lien qui mène à un écran
   refusé est la commande morte du §5.10.
-- **UN CHAMP qu'on ne peut pas enregistrer est `readOnly`, jamais `disabled`** : il reste lisible et sélectionnable au
-  clavier ; c'est le bouton d'enregistrement qui est désactivé avec le motif. *Écart borné avec le §5.15* (« une valeur qui
-  ne se modifie plus se rend en phrase ») : là, la valeur ne se modifie **jamais** ; ici, elle se modifie, mais pas par
-  cette personne.
-- **LES GESTES PERSONNELS NE S'ÉTEIGNENT JAMAIS** : son temps, ses préférences de notification, son profil, la correction
-  ou le retrait de ses propres commentaires (§5.10). Ils ne dépendent d'aucune des trois capacités.
+- **UN CHAMP qu'on ne peut pas enregistrer est rendu INACTIF, sa valeur restant lisible**, et il cite le motif à côté de
+  ce qu'il citait déjà. *Révisé à l'écriture de la fiche d'affaire* : la première rédaction voulait `readOnly`, mais une
+  liste et une case à cocher n'en admettent pas, et le formulaire d'une affaire désactive déjà ses contrôles par un
+  seul interrupteur (`ecrituresPossibles`) ; le motif y est désormais branché. *Écart borné avec le §5.15* (« une valeur
+  qui ne se modifie plus se rend en phrase ») : là, la valeur ne se modifie **jamais** ; ici, elle se modifie, mais pas
+  par cette personne.
+- **LES GESTES PERSONNELS NE S'ÉTEIGNENT JAMAIS** : son temps, ses préférences de notification, son profil. Ils ne
+  dépendent d'aucune des trois capacités. *Corrigé à l'écriture de la fiche* : la correction ou le retrait de ses propres
+  commentaires n'en est pas — la politique `card_comments` exige l'auteur **et** le droit d'écrire sur l'affaire —, ils
+  suivent donc la capacité de l'affaire.
 - **UN ÉCRAN D'ADMINISTRATION atteint par son adresse** garde son état « réservé aux administrateurs » (§5.8, absence de
   droit) ; le motif de bloc vaut pour les écrans qui se **consultent** sans s'administrer.
 - **UN REFUS SERVEUR MALGRÉ UNE COMMANDE OFFERTE** — droit retiré entre l'affichage et le geste — reste traduit dans son

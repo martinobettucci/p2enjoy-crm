@@ -1,5 +1,5 @@
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T2 : la capacité lue par l'interface et ce qu'elle fait d'une commande
-// @verifies docs/SPEC-droits-interface.md §2.2 (la lecture des deux capacités de l'espace, sur sa ligne), §3 (refusée :
+// @verifies docs/SPEC-droits-interface.md §2.1 (la capacité d'une affaire ou d'un channel, sur sa ligne), §2.2 (la lecture des deux capacités de l'espace, sur sa ligne), §3 (refusée :
 //           désactivée, citant son motif), §4 (en lecture : désactivée sans motif ; inconnue : offerte)
 
 import { describe, expect, it } from 'vitest'
@@ -9,6 +9,7 @@ import {
 	capaciteDeLEtat,
 	capacitesDeLEtat,
 	lireCapacitesEspace,
+	lireEcriturePermise,
 	motifVisible,
 	proprietesCommande,
 } from './capacites'
@@ -105,5 +106,26 @@ describe('les deux capacités de l’espace', () => {
 
 	it('pendant la lecture, les deux sont en lecture', () => {
 		expect(capacitesDeLEtat(enChargement())).toEqual({ administration: 'en-lecture', edition: 'en-lecture' })
+	})
+})
+
+describe('la capacité d’écrire sur une affaire ou un channel (§2.1)', () => {
+	it('se lit par la colonne calculée de SA ligne', async () => {
+		const { client, appels } = espion({ data: [{ ecriture_permise: false }], error: null, status: 200 })
+		expect(await lireEcriturePermise(client, 'cards', 'c1')).toEqual(pret(false))
+		expect(appels[0]).toEqual({ table: 'cards', colonnes: 'ecriture_permise', filtres: [['id', 'c1']] })
+	})
+
+	it('une ligne absente, ou une valeur qui n’est pas un booléen, est inconnue', async () => {
+		expect(await lireEcriturePermise(espion({ data: [], error: null, status: 200 }).client, 'channels', 'x')).toEqual(pret(null))
+		expect(
+			await lireEcriturePermise(espion({ data: [{ ecriture_permise: 'oui' }], error: null, status: 200 }).client, 'channels', 'x'),
+		).toEqual(pret(null))
+		expect(capaciteDeLEtat(pret(null))).toBe('inconnue')
+	})
+
+	it('une erreur — colonne inconnue d’un cache périmé — rend une erreur, donc une capacité inconnue', async () => {
+		const etat = await lireEcriturePermise(espion({ data: null, error: { message: 'PGRST204' }, status: 400 }).client, 'cards', 'c1')
+		expect(capaciteDeLEtat(etat)).toBe('inconnue')
 	})
 })

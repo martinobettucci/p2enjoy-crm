@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
+//       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-040 (docs/BACKLOG.md) — les champs d'en-tête de la fiche d'affaire, et leur écriture
 // @spec docs/SPEC-cards.md §15.2 (où l'en-tête vit), §15.4 (les six données), §15.5 (l'action de
 //       copie et ce qu'elle promet), §15.6 (accessibilité), §15.7 (les trois états de donnée),
@@ -52,6 +54,7 @@ import {
 import { CLE_PRESET_SOMMEIL, mentionSommeil } from '../components/ui/Sommeil'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { t, type CleTraduction } from '../i18n'
+import { useRefus } from '../components/ui/RefusCommandes'
 
 /** Durée de la confirmation « Copié », en millisecondes (§15.5, point 3). */
 const DUREE_CONFIRMATION = 2000
@@ -93,6 +96,7 @@ export function EnTeteCard({
 	 */
 	readonly maintenant?: Date
 }) {
+	const droit = useRefus()
 	// La card vit ici pendant la visite : une écriture confirmée la met à jour EN PLACE, à partir de
 	// la ligne que le serveur a RENDUE — jamais de la saisie (§15 bis.7). Elle est resynchronisée dès
 	// que la fiche recharge : c'est alors la base qui a raison, pas l'écran.
@@ -181,7 +185,7 @@ export function EnTeteCard({
 				    pour une décision d'écran (`CLAUDE.md` §10). Un lecteur seul l'ouvre, écrit, et lit
 				    « rien n'a été enregistré » — le refus est MONTRÉ, il n'est pas anticipé. */}
 				{client === null || edition ? null : (
-					<Button
+					<Button {...droit}
 						ref={commande}
 						taille="compacte"
 						variante="secondaire"
@@ -813,6 +817,7 @@ function BlocSommeil({
 	readonly maintenant?: Date
 	readonly onAppliquer: (snoozedUntil: string | null) => void
 }) {
+	const droit = useRefus()
 	const [panneau, setPanneau] = useState(false)
 	const [enCours, setEnCours] = useState(false)
 	const [issue, setIssue] = useState<IssueSommeil | null>(null)
@@ -865,11 +870,11 @@ function BlocSommeil({
 		<div className="flex flex-col gap-2">
 			<div className="flex flex-wrap items-center gap-2">
 				{dort ? (
-					<Button
+					<Button {...droit}
 						ref={commande}
 						taille="compacte"
 						variante="secondaire"
-						disabled={enCours}
+						disabled={droit.disabled === true || (enCours)}
 						aria-label={t('card.sleep.wake.aria')}
 						data-testid="entete-card-reveiller"
 						onClick={() => void eveiller()}
@@ -878,7 +883,7 @@ function BlocSommeil({
 						{t(enCours ? 'card.sleep.pending' : CLE_REVEILLER)}
 					</Button>
 				) : panneau ? null : (
-					<Button
+					<Button {...droit}
 						ref={commande}
 						taille="compacte"
 						variante="secondaire"
@@ -912,11 +917,11 @@ function BlocSommeil({
 					<legend className="text-sm text-text-2">{t('card.sleep.legend')}</legend>
 					<div className="flex flex-wrap gap-2">
 						{ECHEANCES_USUELLES.map((usuelle) => (
-							<Button
+							<Button {...droit}
 								key={usuelle.cle}
 								taille="compacte"
 								variante="discret"
-								disabled={enCours}
+								disabled={droit.disabled === true || (enCours)}
 								data-testid={`entete-card-sommeil-${usuelle.cle}`}
 								onClick={() => void envoyer(echeanceUsuelle(usuelle.jours, maintenant))}
 							>
@@ -945,10 +950,10 @@ function BlocSommeil({
 								onChange={(evenement) => setSaisie(evenement.target.value)}
 							/>
 						</div>
-						<Button
+						<Button {...droit}
 							taille="compacte"
 							variante="primaire"
-							disabled={enCours}
+							disabled={droit.disabled === true || (enCours)}
 							data-testid="entete-card-sommeil-envoyer"
 							onClick={() => void envoyer(echeanceSaisie(saisie))}
 						>

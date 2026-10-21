@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
+//       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-099 (docs/BACKLOG.md) — tranche T2 : les réels d'une ligne de coût dans la fiche d'une affaire, et la
 //       case « Soldé »
 // @spec docs/SPEC-costs.md §2.3 bis (plusieurs réels ; montant, date du jour par défaut, libellé facultatif ; une
@@ -27,6 +29,7 @@ import {
 } from '../lib/reels-ligne'
 import type { ClientCrm } from '../lib/supabase'
 import { jourLocal } from '../lib/temps'
+import { useRefus } from '../components/ui/RefusCommandes'
 
 const REFUS: Readonly<Record<MotifRefusReel, CleTraduction>> = {
 	soldee: 'costs.actuals.refused.settled',
@@ -55,6 +58,7 @@ export type ProprietesReelsLigne = {
 }
 
 export function ReelsLigne({ client, idLigne, nature, devise, soldee, onChange, aujourdhui = jourLocal(new Date()) }: ProprietesReelsLigne) {
+	const droit = useRefus()
 	const [reels, setReels] = useState<EtatAsync<readonly Reel[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	const [enEdition, setEnEdition] = useState<string | null>(null)
@@ -104,10 +108,10 @@ export function ReelsLigne({ client, idLigne, nature, devise, soldee, onChange, 
 			<div className="flex flex-wrap items-center justify-between gap-2">
 				<h4 className="text-sm font-medium">{t('costs.actuals.title', { nature })}</h4>
 				<label className="inline-flex min-h-[var(--size-target)] items-center gap-2 text-sm">
-					<input
+					<input {...droit}
 						type="checkbox"
 						checked={coche ?? soldee}
-						disabled={enCours}
+						disabled={droit.disabled === true || (enCours)}
 						onChange={(e) => {
 							const voulu = e.target.checked
 							setCoche(voulu)
@@ -172,20 +176,20 @@ export function ReelsLigne({ client, idLigne, nature, devise, soldee, onChange, 
 								</span>
 								<span className="whitespace-nowrap text-sm tabular-nums">{montant(reel.amount)}</span>
 								<span className="flex gap-1">
-									<Button
+									<Button {...droit}
 										variante="discret"
 										taille="compacte"
-										disabled={soldee || enCours}
+										disabled={droit.disabled === true || (soldee || enCours)}
 										aria-label={t('costs.actuals.edit.aria', { date: dateEnMots(reel.spent_on) })}
 										{...(soldee ? { 'aria-describedby': idMotif, title: t('costs.actuals.settled.reason') } : {})}
 										onClick={() => setEnEdition(reel.id)}
 									>
 										<Pencil aria-hidden="true" size={16} />
 									</Button>
-									<Button
+									<Button {...droit}
 										variante="discret"
 										taille="compacte"
-										disabled={soldee || enCours}
+										disabled={droit.disabled === true || (soldee || enCours)}
 										aria-label={t('costs.actuals.delete.aria', { date: dateEnMots(reel.spent_on) })}
 										{...(soldee ? { 'aria-describedby': idMotif, title: t('costs.actuals.settled.reason') } : {})}
 										onClick={() => setARetirer(reel)}
@@ -237,6 +241,7 @@ function FormulaireReel({
 	readonly onValider: (saisie: SaisieReel) => void
 	readonly onAnnuler?: () => void
 }) {
+	const droit = useRefus()
 	const [champs, setChamps] = useState(initial)
 	const [invalide, setInvalide] = useState(false)
 	const idErreur = useId()
@@ -284,7 +289,7 @@ function FormulaireReel({
 					className={CLASSES_CHAMP}
 				/>
 			</label>
-			<Button type="submit" variante="secondaire" taille="compacte" disabled={enCours}>
+			<Button {...droit} type="submit" variante="secondaire" taille="compacte" disabled={enCours}>
 				{libelleAction}
 			</Button>
 			{onAnnuler !== undefined ? (

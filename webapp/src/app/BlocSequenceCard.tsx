@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
+//       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
 //       TRANCHE 4, SOUS-TRANCHE 4c : l'armement depuis l'affaire
 // @spec docs/SPEC-modeles-emails.md §13.8 (où le bloc vit, ses deux états, son dictionnaire fermé
@@ -37,6 +39,7 @@ import {
 } from '../lib/sequences-relance'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
+import { useRefus } from '../components/ui/RefusCommandes'
 
 /**
  * Le dictionnaire fermé des refus de l'armement — §13.8, chaque ligne MESURÉE le 2026-08-26.
@@ -71,6 +74,7 @@ export type ProprietesBlocSequenceCard = {
 }
 
 export function BlocSequenceCard({ idCard, client = clientCrm }: ProprietesBlocSequenceCard) {
+	const droit = useRefus()
 	const [inscription, setInscription] = useState<EtatAsync<InscriptionSequence | null>>(enChargement)
 	const [sequences, setSequences] = useState<readonly SequenceRelance[]>([])
 	const [identites, setIdentites] = useState<readonly IdentiteEnvoi[]>([])
@@ -238,10 +242,10 @@ export function BlocSequenceCard({ idCard, client = clientCrm }: ProprietesBlocS
 								})}
 					</p>
 					<div>
-						<Button
+						<Button {...droit}
 							variante="secondaire"
 							data-testid="interrompre-sequence"
-							disabled={enCours}
+							disabled={droit.disabled === true || (enCours)}
 							onClick={() => void interrompre()}
 						>
 							<Square aria-hidden="true" className="size-4" />
@@ -309,10 +313,10 @@ export function BlocSequenceCard({ idCard, client = clientCrm }: ProprietesBlocS
 					<div>
 						{/* LA COMMANDE N'EST JAMAIS DÉSACTIVÉE PAR L'ÉTAT DES CHAMPS (§5.3 ter) : une
 						    séquence non choisie part, et la base refuse en `sequence_not_available`. */}
-						<Button
+						<Button {...droit}
 							variante="primaire"
 							data-testid="armer-sequence"
-							disabled={enCours}
+							disabled={droit.disabled === true || (enCours)}
 							onClick={() => void armer()}
 						>
 							<Play aria-hidden="true" className="size-4" />

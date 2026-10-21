@@ -133,3 +133,59 @@ export function useCapacitesEspace(client: ClientCrm | null, idWorkspace: string
 
 	return capacitesDeLEtat(etat)
 }
+
+/** Les deux tables dont une ligne porte `ecriture_permise` — migration 91 (§2.1). */
+export type TableEcrivable = 'cards' | 'channels'
+
+/**
+ * Lit la capacité d'écrire sur UNE affaire ou UN channel, par sa colonne calculée. Une requête à part de la lecture
+ * de l'écran, pour la raison de `lireCapacitesEspace` : une colonne absente ne doit faire tomber que l'aide
+ * d'interface. Aucune ligne rendue — l'objet n'est pas lisible — : rien n'est su, rien n'est éteint.
+ */
+export async function lireEcriturePermise(
+	client: ClientCrm,
+	table: TableEcrivable,
+	id: string,
+): Promise<EtatAsync<boolean | null>> {
+	try {
+		const reponse = await client.from(table).select('ecriture_permise').eq('id', id)
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const [ligne] = (reponse.data ?? []) as unknown as readonly { readonly ecriture_permise: unknown }[]
+		const valeur = ligne?.ecriture_permise
+		return pret(typeof valeur === 'boolean' ? valeur : null)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * La capacité d'écrire sur une affaire ou un channel, relue quand `tentative` change — après un geste refusé, par
+ * exemple (§4 : « le refus est traduit, et les droits sont relus »).
+ */
+export function useEcriturePermise(
+	client: ClientCrm | null,
+	table: TableEcrivable,
+	id: string | null | undefined,
+	tentative = 0,
+): Capacite {
+	const [etat, setEtat] = useState<EtatAsync<boolean | null>>(enChargement)
+
+	useEffect(() => {
+		if (client === null || id === null || id === undefined) {
+			setEtat(pret(null))
+			return
+		}
+		let vivant = true
+		setEtat(enChargement)
+		void lireEcriturePermise(client, table, id).then((resultat) => {
+			if (vivant) setEtat(resultat)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [client, table, id, tentative])
+
+	return capaciteDeLEtat(etat)
+}

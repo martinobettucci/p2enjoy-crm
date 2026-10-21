@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
+//       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-058 (docs/BACKLOG.md) — composer et répondre, par le même chemin
 // @spec docs/SPEC-mail-subsystem.md §19.6 (le même chemin de code depuis la card et depuis
 //       l'inbox), §19.4 (les refus tels que l'écran doit les présenter)
@@ -22,6 +24,7 @@ import {
 } from '../lib/envoi'
 import { clientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
+import { useRefus } from '../components/ui/RefusCommandes'
 
 /** Les cinq refus possibles, nommés LITTÉRALEMENT — une clé composée échappe au contrôle des
  *  clés mortes, défaut mesuré sur l'inbox de `CRM-057`. */
@@ -50,6 +53,7 @@ export function FormulaireEnvoi({
 	repondA,
 	onEnvoye,
 }: ProprietesFormulaireEnvoi) {
+	const droit = useRefus()
 	const [ouvert, setOuvert] = useState(false)
 	const [identites, setIdentites] = useState<readonly IdentiteEnvoi[]>([])
 	const [identite, setIdentite] = useState('')
@@ -125,7 +129,7 @@ export function FormulaireEnvoi({
 	if (!ouvert) {
 		return (
 			<div className="flex flex-col gap-1">
-				<Button variante="secondaire" onClick={() => setOuvert(true)} data-testid="envoi-ouvrir">
+				<Button {...droit} variante="secondaire" onClick={() => setOuvert(true)} data-testid="envoi-ouvrir">
 					{repondA === undefined ? t('envoi.open') : t('envoi.reply')}
 				</Button>
 				{/* UNE RÉGION VIVE DE PLUS, ET C'EST VOULU : la coquille en porte déjà une, la
@@ -213,7 +217,7 @@ export function FormulaireEnvoi({
 			)}
 
 			<div className="flex gap-2">
-				<Button variante="primaire" type="submit" disabled={envoi} data-testid="envoi-valider">
+				<Button {...droit} variante="primaire" type="submit" disabled={envoi} data-testid="envoi-valider">
 					{envoi ? t('envoi.sending') : t('envoi.submit')}
 				</Button>
 				<Button variante="secondaire" onClick={() => setOuvert(false)}>

@@ -622,6 +622,8 @@ export const fr = {
 		'Vous consultez cet écran. Ses modifications sont réservées aux administrateurs de l’espace : les commandes restent visibles mais sont inactives.',
 	'rights.readonly.edition':
 		'Vous consultez cet écran. Ses modifications sont réservées aux administrateurs et aux business developers de l’espace : les commandes restent visibles mais sont inactives.',
+	'rights.readonly.card':
+		'Vous consultez cette affaire. Vos droits ne vous permettent pas de la modifier : les commandes restent visibles mais sont inactives.',
 	'goals.readonly.notice':
 		'Vous consultez ce tableau. Vous n’avez pas le droit d’y écrire : les commandes de modification restent visibles mais sont inactives.',
 	// LA FICHE A SA PROPRE PHRASE, plus courte : elle REMPLACE la consigne d'édition, qui serait

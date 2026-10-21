@@ -1,3 +1,4 @@
+// @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — la commande sous le refus de la fiche (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-040 (docs/BACKLOG.md) — le rendu réel de l'en-tête de la fiche d'affaire
 // @verifies docs/SPEC-cards.md §15.4 (les six données), §15.5 (l'action de copie et son échec),
 //           §15.6 (accessibilité), §15.7 (les trois états de donnée)
@@ -12,6 +13,7 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EnTeteCard } from './EnTeteCard'
+import { FournisseurRefus } from '../components/ui/RefusCommandes'
 import type { CardOuverte } from '../lib/formulaire'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -664,5 +666,23 @@ describe("la mise en sommeil (CRM-081, docs/SPEC-cards.md §16.11)", () => {
 		fireEvent.keyDown(await screen.findByTestId('entete-card-panneau-sommeil'), { key: 'Escape' })
 		await waitFor(() => expect(screen.queryByTestId('entete-card-panneau-sommeil')).toBeNull())
 		expect(appels).toHaveLength(0)
+	})
+})
+
+// --- CRM-093 — « Modifier » et le sommeil sous le refus de la fiche (docs/DESIGN_SYSTEM.md §5.59) ---------------------
+
+describe('l’en-tête sous le refus de la fiche (CRM-093)', () => {
+	it('« Modifier » et « Mettre en sommeil » sont désactivés et citent le motif ; copier l’adresse reste offert', () => {
+		render(
+			<FournisseurRefus valeur={{ disabled: true, 'aria-describedby': 'motif-fiche' }}>
+				<EnTeteCard card={card()} copier={copieQuiReussit} client={clientEntete().client} />
+			</FournisseurRefus>,
+		)
+		for (const id of ['entete-card-modifier', 'entete-card-endormir']) {
+			const commande = screen.getByTestId(id) as HTMLButtonElement
+			expect(commande.disabled, id).toBe(true)
+			expect(commande.getAttribute('aria-describedby')).toBe('motif-fiche')
+		}
+		expect((screen.getByTestId('entete-card-copier') as HTMLButtonElement).disabled).toBe(false)
 	})
 })

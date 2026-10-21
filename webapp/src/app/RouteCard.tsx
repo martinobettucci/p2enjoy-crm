@@ -1,3 +1,6 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — la fiche lit la capacité d'écrire sur l'affaire et la FOURNIT à ses blocs ;
+//       refusée par la base, le motif se pose en tête de la colonne de gauche (docs/SPEC-droits-interface.md §2.1, §3 ;
+//       docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-037 (docs/BACKLOG.md) — écran hôte du formulaire conditionnel
 // @spec CRM-040 (docs/BACKLOG.md) — les champs d'en-tête de la fiche, en haut de la colonne gauche
 // @spec docs/SPEC-cards.md §15.2 (où l'en-tête vit, et pourquoi au-dessus du formulaire)
@@ -86,6 +89,12 @@ import { FormulaireCard } from './FormulaireCard'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
 import { PanneauTimeline } from './PanneauTimeline'
 import { CHEMIN_CORBEILLE } from './routes'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { FournisseurRefus, useRefus } from '../components/ui/RefusCommandes'
+import { motifVisible, proprietesCommande, useEcriturePermise } from '../lib/capacites'
+
+/** Le motif de la fiche, cité par ses commandes quand la base refuse l'écriture sur l'affaire (CRM-093). */
+const ID_MOTIF_CARD = 'fiche-affaire-lecture-seule'
 
 /** Classes du lien de retour, identiques à celles de `PageIntrouvable` (docs/DESIGN_SYSTEM.md §5.5). */
 const CLASSES_RETOUR = [
@@ -179,6 +188,12 @@ function ContenuCard({
 	const workspaceDeLaCard = etat.statut === 'pret' ? (etat.donnees.card?.workspace_id ?? null) : null
 	const role = useRoleWorkspace(clientCrm, workspaceDeLaCard, idUtilisateur)
 
+	// `CRM-093` — LA CAPACITÉ D'ÉCRIRE SUR L'AFFAIRE, rendue par la base sur sa ligne (§2.1), lue à part de l'affaire
+	// elle-même : un défaut de lecture n'efface que l'aide d'interface (§4). Le hook précède tout retour anticipé.
+	const idDeLaCard = etat.statut === 'pret' ? (etat.donnees.card?.id ?? null) : null
+	const capaciteCard = useEcriturePermise(clientCrm, 'cards', idDeLaCard)
+	const droitCard = proprietesCommande(capaciteCard, ID_MOTIF_CARD)
+
 	// L'AFFAIRE A ÉTÉ RETIRÉE PENDANT CETTE VISITE — §4 ter.5. L'état vit ici, et non dans le bloc du
 	// geste, parce qu'il décide de TOUT l'écran : la card quitte la lecture de sa propre route
 	// (`deleted_at=is.null`, MESURÉ), et une relecture ne rendrait plus rien à afficher. Il n'est
@@ -233,8 +248,12 @@ function ContenuCard({
 	// Sous ce palier, le fil passe SOUS le formulaire, dans l'ordre du document : une histoire se
 	// lit après le dossier qu'elle raconte (§5.10, §5.11).
 	return (
+		<FournisseurRefus valeur={droitCard}>
 		<div className="mx-auto max-w-[104rem] grid gap-6 px-4 py-6 lg:grid-cols-[minmax(0,72ch)_minmax(0,1fr)]">
 			<div className="flex flex-col gap-6 min-w-0">
+				{motifVisible(capaciteCard) ? (
+					<MotifLectureSeule id={ID_MOTIF_CARD}>{t('rights.readonly.card')}</MotifLectureSeule>
+				) : null}
 				{/* L'EN-TÊTE EST EN HAUT DE CETTE COLONNE — CRM-040, docs/SPEC-cards.md §15.2. Il dit ce
 				    QU'EST l'affaire, là où le formulaire dit ce qu'on en sait ; et le bas de la colonne
 				    est déjà pris par le geste de retrait. Placé en dessous, il aurait de plus été poussé
@@ -312,6 +331,7 @@ function ContenuCard({
 				/>
 			</div>
 		</div>
+		</FournisseurRefus>
 	)
 }
 
@@ -359,6 +379,7 @@ export function BlocCorbeilleCard({
 	/** Injectable pour les preuves ; en production, le client réel du module `supabase`. */
 	readonly client?: ClientCrm | null
 }) {
+	const droit = useRefus()
 	const [phase, setPhase] = useState<PhaseGeste>('inactif')
 	const [message, setMessage] = useState<string | null>(null)
 	const commande = useRef<HTMLButtonElement>(null)
@@ -423,7 +444,7 @@ export function BlocCorbeilleCard({
 			</h2>
 			{phase === 'inactif' ? (
 				<div>
-					<Button ref={commande} onClick={() => setPhase('confirmation')}>
+					<Button ref={commande} {...droit} onClick={() => setPhase('confirmation')}>
 						<Trash2 aria-hidden="true" size={16} strokeWidth={2} />
 						{t('card.trash.action')}
 					</Button>

@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
+//       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-044 (docs/BACKLOG.md) — timeline unifiée du détail de card
 // @spec CRM-043 (docs/BACKLOG.md) — le fil des commentaires, que cette unité REPREND
 // @spec CRM-022 (docs/BACKLOG.md) — auteurs et acteurs nommés sans UUID
@@ -101,6 +103,7 @@ import {
 	type LigneEvenement,
 	type LigneFil,
 } from '../lib/timeline'
+import { useRefus } from '../components/ui/RefusCommandes'
 
 /**
  * Libellé, icône et pastille de chaque type — écrits UNE FOIS, jamais construits par
@@ -282,6 +285,7 @@ export function PanneauTimeline({
 	idUtilisateur,
 	estAdminWorkspace,
 }: ProprietesPanneauTimeline) {
+	const droit = useRefus()
 	const { etat, recharger, reprendre } = useFilCommentaires(client, idCard)
 	const [brouillon, setBrouillon] = useState('')
 	const [envoiEnCours, setEnvoiEnCours] = useState(false)
@@ -687,10 +691,10 @@ export function PanneauTimeline({
 				)}
 
 				<div className="flex justify-end">
-					<Button
+					<Button {...droit}
 						type="submit"
 						variante="primaire"
-						disabled={brouillon.trim() === '' || envoiEnCours}
+						disabled={droit.disabled === true || (brouillon.trim() === '' || envoiEnCours)}
 					>
 						{envoiEnCours ? t('comments.compose.sending') : t('comments.compose.submit')}
 					</Button>
@@ -1044,6 +1048,7 @@ function Commentaire({
 	readonly onModifier: (corps: string) => PromesseGeste
 	readonly onSupprimer: (parModeration: boolean) => PromesseGeste
 }) {
+	const droit = useRefus()
 	const auteurSupprime = commentaire.auteurId === null
 	const nom = auteurSupprime
 		? t('comments.author.deleted')
@@ -1124,7 +1129,7 @@ function Commentaire({
 						    droit temporairement indisponible, quand celui-ci ne le sera jamais
 						    (docs/DESIGN_SYSTEM.md §8). */}
 						{actionsOffertes ? (
-							<Button
+							<Button {...droit}
 								variante="discret"
 								taille="compacte"
 								onClick={() => {
@@ -1135,7 +1140,7 @@ function Commentaire({
 								{t('comments.action.edit')}
 							</Button>
 						) : null}
-						<Button variante="discret" taille="compacte" onClick={() => setMode('confirmation')}>
+						<Button {...droit} variante="discret" taille="compacte" onClick={() => setMode('confirmation')}>
 							{t('comments.action.delete')}
 						</Button>
 					</div>

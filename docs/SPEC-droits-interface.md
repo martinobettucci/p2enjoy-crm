@@ -42,8 +42,10 @@ viennent par la migration `0092` (§2.2).
 | **écriture sur un channel** — rôle et droits fins, « le plus spécifique gagne » | les cards du channel et tout ce qui s'y rattache : créer, déplacer, modifier l'en-tête et le formulaire, contacts rattachés, lignes de coût et réels, commentaires, classement et déclassement d'un message, envoi, relance, mise en sommeil | **nouveau** : `public.ecriture_permise(public.channels)` et `public.ecriture_permise(public.cards)` |
 
 Les gestes **personnels** n'ont pas besoin d'un fait de plus : son propre profil, ses préférences de notification, la
-saisie de son propre temps sur une cible qu'on lit (`app.saisie_temps_permise`), la correction ou le retrait de ses
-propres commentaires. La lectrice les garde ; l'interface ne les éteint pas.
+saisie de son propre temps sur une cible qu'on lit (`app.saisie_temps_permise`). La lectrice les garde ; l'interface ne
+les éteint pas. *Corrigé à l'écriture de la fiche (T4)* : la correction ou le retrait de ses propres commentaires n'est
+pas un geste personnel — la politique `card_comments` exige l'auteur ET `app.can_write_card` — ; il suit la capacité de
+l'affaire.
 
 ### 2.1 Les deux colonnes calculées — migration `0091`
 
@@ -128,7 +130,7 @@ avec la ligne de l'espace qu'elle lit déjà (`workspaces?select=…,administrat
 | Fiche d'une affaire — en-tête, formulaire | modifier, enregistrer | C |
 | Fiche — contacts rattachés | rattacher, changer le rôle, détacher | C |
 | Fiche — coûts, réels, « Soldé » | ajouter, modifier, supprimer, solder | C (déjà éteint pour une ligne soldée : inchangé) |
-| Fiche — timeline | écrire un commentaire | C ; modifier ou supprimer **le sien** : P |
+| Fiche — timeline | écrire un commentaire ; modifier ou supprimer **le sien** (l'auteur ET l'écriture sur l'affaire) | C |
 | Fiche — envoi, relance, mise en sommeil | répondre, mettre en file, armer, interrompre, endormir, réveiller | C |
 | Inbox | classer, déclasser | C sur l'affaire de destination ; la liste des affaires proposées ne retient déjà que les modifiables |
 | Coûts à saisir | réel de plus, « Soldé » | C (déjà tenu ligne par ligne : inchangé) |

@@ -1,3 +1,5 @@
+// @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
+//       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4c :
 //       le rattachement d'un contact à une affaire, PREMIÈRE ÉCRITURE de la tranche
 // @spec docs/SPEC-contacts.md §12.2 (où le bloc s'ancre), §12.3 (ce qu'il lit),
@@ -43,6 +45,7 @@ import {
 } from '../lib/contacts'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { CHEMIN_CONTACTS, cheminOrganisation } from './chemins'
+import { useRefus } from '../components/ui/RefusCommandes'
 
 /**
  * Le lien de l'espace sans contact vers le carnet — la forme du lien de retour d'un état « introuvable »
@@ -282,6 +285,7 @@ function LigneContactRattache({
 	/** Remonte le message du geste au BLOC, qui survit à la relecture, et relit la liste. */
 	readonly onGeste: (message: string | null) => void
 }) {
+	const droit = useRefus()
 	const [confirmation, setConfirmation] = useState(false)
 	const [enVol, setEnVol] = useState(false)
 	const commande = useRef<HTMLButtonElement>(null)
@@ -356,7 +360,7 @@ function LigneContactRattache({
 				)}
 				<span className="grow" />
 				{confirmation ? null : (
-					<Button
+					<Button {...droit}
 						ref={commande}
 						taille="compacte"
 						onClick={() => setConfirmation(true)}
@@ -397,6 +401,7 @@ function ConfirmationDetachement({
 	readonly onConfirmer: () => void
 	readonly onAnnuler: () => void
 }) {
+	const droit = useRefus()
 	const premier = useRef<HTMLButtonElement>(null)
 	useEffect(() => {
 		premier.current?.focus()
@@ -409,10 +414,10 @@ function ConfirmationDetachement({
 			<p className="font-medium">{t('cardContacts.detach.confirm.title', { nom })}</p>
 			<p className="text-sm text-text-2">{t('cardContacts.detach.confirm.body')}</p>
 			<div className="flex gap-2">
-				<Button
+				<Button {...droit}
 					ref={premier}
 					variante="destructif"
-					disabled={enCours}
+					disabled={droit.disabled === true || (enCours)}
 					onClick={onConfirmer}
 					data-testid="confirmer-detachement"
 				>
@@ -449,6 +454,7 @@ function FormulaireRattachement({
 	readonly client: ClientCrm
 	readonly onRelire: () => void
 }) {
+	const droit = useRefus()
 	const [ouvert, setOuvert] = useState(false)
 	const [idContact, setIdContact] = useState('')
 	const [role, setRole] = useState('')
@@ -533,7 +539,7 @@ function FormulaireRattachement({
 	if (!ouvert) {
 		return (
 			<div>
-				<Button ref={commande} onClick={() => setOuvert(true)} data-testid="ouvrir-rattachement">
+				<Button {...droit} ref={commande} onClick={() => setOuvert(true)} data-testid="ouvrir-rattachement">
 					<Link2 aria-hidden="true" size={16} strokeWidth={2} />
 					{t('cardContacts.attach.action')}
 				</Button>
@@ -603,9 +609,9 @@ function FormulaireRattachement({
 				  contact n'est CHOISI, ce qui est autre chose : il n'y a alors rien à envoyer, et
 				  l'état désactivé reste lisible et s'explique par le sélecteur juste au-dessus (§8).
 				*/}
-				<Button
+				<Button {...droit}
 					variante="primaire"
-					disabled={enVol || idContact === ''}
+					disabled={droit.disabled === true || (enVol || idContact === '')}
 					onClick={() => void envoyer()}
 					data-testid="confirmer-rattachement"
 				>
