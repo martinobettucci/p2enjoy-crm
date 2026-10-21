@@ -5623,6 +5623,9 @@ responsable (décision 628 : « désactivé avec motif », et non masqué).
   *Écart borné, la barre d'onglets* : « Nouveau channel » vit sur chaque page de track, et un bandeau de motif sur
   chacune serait du bruit. Son texte porte donc lui-même le motif — description accessible (`aria-describedby` vers un
   `sr-only` adjacent) et infobulle native (`title`). Le board, la liste et la fiche, eux, posent leur bandeau.
+  *Un tableau qui mêle deux familles*, la corbeille : la structure se restaure sous l'administration, une affaire sous
+  l'écriture de son channel. Un bandeau par famille refusée, deux au plus, en tête du tableau ; chaque « Restaurer »
+  éteinte cite celui de sa ligne. Aucun bandeau quand aucune ligne de sa famille n'est refusée.
 - **UN CHAMP qu'on ne peut pas enregistrer est rendu INACTIF, sa valeur restant lisible**, et il cite le motif à côté de
   ce qu'il citait déjà. *Révisé à l'écriture de la fiche d'affaire* : la première rédaction voulait `readOnly`, mais une
   liste et une case à cocher n'en admettent pas, et le formulaire d'une affaire désactive déjà ses contrôles par un

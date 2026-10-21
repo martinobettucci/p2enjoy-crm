@@ -7,6 +7,10 @@
 // @verifies CLAUDE.md §10 (la garde est backend, jamais une aide d'interface)
 // @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : restaurer un TRACK émet
 //           `p2enjoy:tracks-modifies`, que la coquille écoute ; ni un channel, ni un « sans effet »
+// @verifies CRM-093 (docs/BACKLOG.md) — tranche T4 : « Restaurer » s'éteint avec son motif sur une capacité refusée
+//           par la base — l'administration pour la structure, l'écriture de l'affaire pour une affaire — et reste
+//           offerte sur une capacité inconnue ; docs/SPEC-droits-interface.md §4, §5 (« La corbeille, précisée ») ;
+//           docs/DESIGN_SYSTEM.md §5.59
 //
 // Ces preuves montent le VRAI écran avec un client factice, comme `EtatMessagerie.test.tsx`. Le
 // parcours connecté sur la vraie base relève de `e2e/ui/corbeille.spec.ts`.
@@ -21,6 +25,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Corbeille } from './Corbeille'
+import { FournisseurEspace } from './ContexteEspace'
 import { EVENEMENT_TRACKS_MODIFIES } from '../lib/tracks'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -55,18 +60,26 @@ type Options = {
 	readonly enumerations?: readonly Reponse[]
 	readonly ecriture?: Reponse
 	readonly surEcriture?: () => void
+	/** La lecture groupée de la capacité des affaires (`id, ecriture_permise` puis `in`) — CRM-093. */
+	readonly ecritures?: Reponse
 }
 
 /**
  * Client factice distinguant les trois usages : la lecture de la corbeille (`select` puis `not`),
  * l'énumération (`select` puis `eq`/`in`), et la restauration (`update`).
  */
-function client({ lectures = {}, enumerations = [], ecriture = VIDE, surEcriture }: Options): ClientCrm {
+function client({ lectures = {}, enumerations = [], ecriture = VIDE, surEcriture, ecritures = VIDE }: Options): ClientCrm {
 	let rangEnumeration = 0
 	return {
 		from: (table: string) => ({
-			select: (_colonnes: string, options?: unknown) => {
+			select: (colonnes: string, options?: unknown) => {
 				const chaine: Record<string, unknown> = {}
+				// Capacité des affaires : elle seule demande `ecriture_permise`.
+				if (colonnes.includes('ecriture_permise')) {
+					chaine['in'] = () => chaine
+					chaine['then'] = (resoudre: (valeur: unknown) => unknown) => Promise.resolve(ecritures).then(resoudre)
+					return chaine
+				}
 				// Lecture de la corbeille : elle seule appelle `not`.
 				chaine['not'] = () => chaine
 				chaine['order'] = () => chaine
@@ -189,7 +202,7 @@ describe('Corbeille — ce que le tableau montre (§4.3, §4.4)', () => {
 })
 
 describe('Corbeille — la restauration et ses trois issues (§4.5)', () => {
-	it("n'éteint AUCUNE commande d'avance, la garde étant backend (§4.5, CLAUDE.md §10)", async () => {
+	it("n'éteint AUCUNE commande sur la garde de la donnée, qui est backend (§4.5, CLAUDE.md §10)", async () => {
 		render(
 			<Corbeille
 				client={client({
@@ -364,3 +377,59 @@ describe('Corbeille — le signal des tracks modifiés (INC-254, docs/SPEC-webap
 	})
 })
 
+
+describe('Corbeille — la capacité de restaurer, rendue par la base (CRM-093 T4)', () => {
+	const trois = (ecritures: Reponse) =>
+		client({
+			lectures: {
+				tracks: { data: [TRACK], error: null, status: 200 },
+				channels: { data: [CHANNEL], error: null, status: 200 },
+				cards: { data: [CARD], error: null, status: 200 },
+			},
+			enumerations: [VIDE, VIDE, VIDE],
+			ecritures,
+		})
+	const commandeDe = (nom: string) => screen.getByRole('button', { name: new RegExp(nom) }) as HTMLButtonElement
+
+	it('l’administration refusée éteint la structure et cite son motif ; l’affaire modifiable reste offerte', async () => {
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration: 'refusee', edition: 'permise' } }}>
+				<Corbeille client={trois({ data: [{ id: 'c-9', ecriture_permise: true }], error: null, status: 200 })} />
+			</FournisseurEspace>,
+		)
+		const motif = await screen.findByTestId('motif-corbeille-structure')
+		expect(motif.textContent).toContain('réservé aux administrateurs')
+		for (const nom of ['Legacy 2023', 'Annexes 2023']) {
+			expect(commandeDe(nom).disabled).toBe(true)
+			expect(commandeDe(nom).getAttribute('aria-describedby')).toBe(motif.id)
+		}
+		await waitFor(() => expect(commandeDe('Saisie erronée').disabled).toBe(false))
+		expect(screen.queryByTestId('motif-corbeille-affaires')).toBeNull()
+	})
+
+	it('une affaire que la base refuse s’éteint avec le motif des affaires ; la structure administrée reste offerte', async () => {
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: true, capacites: { administration: 'permise', edition: 'permise' } }}>
+				<Corbeille client={trois({ data: [{ id: 'c-9', ecriture_permise: false }], error: null, status: 200 })} />
+			</FournisseurEspace>,
+		)
+		const motif = await screen.findByTestId('motif-corbeille-affaires')
+		expect(commandeDe('Saisie erronée').disabled).toBe(true)
+		expect(commandeDe('Saisie erronée').getAttribute('aria-describedby')).toBe(motif.id)
+		expect(commandeDe('Legacy 2023').disabled).toBe(false)
+		expect(screen.queryByTestId('motif-corbeille-structure')).toBeNull()
+	})
+
+	it('une capacité illisible n’éteint rien et ne dit aucun motif (§4 : inconnue, donc offerte)', async () => {
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false }}>
+				<Corbeille client={trois({ data: null, error: { message: 'colonne absente' }, status: 400 })} />
+			</FournisseurEspace>,
+		)
+		await screen.findByText('Saisie erronée')
+		await waitFor(() => expect(commandeDe('Saisie erronée').disabled).toBe(false))
+		for (const nom of ['Legacy 2023', 'Annexes 2023']) expect(commandeDe(nom).disabled).toBe(false)
+		expect(screen.queryByTestId('motif-corbeille-affaires')).toBeNull()
+		expect(screen.queryByTestId('motif-corbeille-structure')).toBeNull()
+	})
+})

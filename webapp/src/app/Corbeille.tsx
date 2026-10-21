@@ -7,19 +7,32 @@
 //       construite par concaténation)
 // @spec INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : restaurer un track émet
 //       `p2enjoy:tracks-modifies`, que la coquille écoute pour relire sa barre latérale
+// @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : « Restaurer » s'éteint avec son motif quand la base refuse
+//       l'écriture ; docs/SPEC-droits-interface.md §5 (« La corbeille, précisée »), §4 ; docs/SPEC-corbeille.md §4.5 ;
+//       docs/DESIGN_SYSTEM.md §5.59
 //
-// L'ÉCRAN N'ANTICIPE AUCUN REFUS. Il affiche la même commande sur toutes les lignes, envoie, puis
-// traduit ce qu'il reçoit : la garde de `0038` vit dans la base, et une commande éteinte d'avance
-// ferait passer une règle du produit pour une décision d'interface — sans compter qu'elle se
-// tromperait dès qu'un autre utilisateur aurait restauré le parent entre le chargement et le clic.
+// L'ÉCRAN N'ANTICIPE PAS LA GARDE DE LA DONNÉE. Restaurer une entrée dont le parent est en corbeille
+// est refusé par `0038`, et l'écran ne le calcule pas d'avance : il se tromperait dès qu'un autre
+// utilisateur aurait restauré le parent entre le chargement et le clic. Le DROIT, lui, est une
+// capacité que la base rend sur la ligne (CRM-093) : la structure lit l'administration de l'espace,
+// une affaire sa propre écriture — et c'est elle seule qui éteint une commande.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { RotateCcw } from 'lucide-react'
 import { EtatErreur, EtatVide } from '../components/ui/States'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
+import {
+	capaciteDansLEtat,
+	lireEcrituresPermises,
+	motifVisible,
+	proprietesCommande,
+	type Capacite,
+	type ProprietesCommande,
+} from '../lib/capacites'
 import {
 	compterEnfantsInaccessibles,
 	composerEnumeration,
@@ -32,6 +45,10 @@ import {
 import { texteLigneEnumeration, type EtatEnumeration } from './presentation-corbeille'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { signalerTracksModifies } from '../lib/tracks'
+import { useContexteEspace } from './ContexteEspace'
+
+const ID_MOTIF_STRUCTURE = 'corbeille-motif-structure'
+const ID_MOTIF_AFFAIRES = 'corbeille-motif-affaires'
 
 /** Le type est un MOT, jamais une icône seule (`docs/DESIGN_SYSTEM.md` §5.16). */
 const CLES_TYPE: Readonly<Record<TypeObjetCorbeille, CleTraduction>> = {
@@ -85,6 +102,8 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 	const [enumerations, setEnumerations] = useState<Readonly<Record<string, EtatEnumeration>>>({})
 	const [restaurations, setRestaurations] = useState<Readonly<Record<string, EtatRestauration>>>({})
 	const [succes, setSucces] = useState<string | null>(null)
+	const [ecrituresCards, setEcrituresCards] = useState<EtatAsync<Readonly<Record<string, boolean>>>>(enChargement)
+	const { capacites } = useContexteEspace()
 	// Une réponse arrivée après le démontage, ou périmée par un rechargement, ne doit pas écraser un
 	// état plus récent — même garde que `AdministrationArborescence` et `EtatMessagerie`.
 	const courant = useRef(0)
@@ -107,6 +126,14 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 			}
 			if (lecture.statut !== 'pret') return
 			setEtat(pret(lecture.donnees))
+
+			// La capacité des affaires, en UNE lecture à part de la liste : une colonne absente ne fait
+			// tomber que l'aide d'interface (docs/SPEC-droits-interface.md §4).
+			setEcrituresCards(enChargement())
+			const idsCards = lecture.donnees.filter((entree) => entree.type === 'card').map((entree) => entree.id)
+			void lireEcrituresPermises(client, 'cards', idsCards).then((ecritures) => {
+				if (rang === courant.current) setEcrituresCards(ecritures)
+			})
 
 			// LES ÉNUMÉRATIONS SONT DEMANDÉES APRÈS LA LISTE, ET EN PARALLÈLE. Une énumération en
 			// échec n'invalide pas la liste (§4.4) : l'entrée reste affichée, et seule sa colonne
@@ -190,6 +217,11 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 	}
 
 	const entrees = etat.donnees
+	// La structure se restaure sous l'administration de l'espace, une affaire sous l'écriture de son channel.
+	const capaciteDeRestauration = (entree: EntreeCorbeille): Capacite =>
+		entree.type === 'card' ? capaciteDansLEtat(ecrituresCards, entree.id) : capacites.administration
+	const motifStructure = entrees.some((entree) => entree.type !== 'card' && motifVisible(capaciteDeRestauration(entree)))
+	const motifAffaires = entrees.some((entree) => entree.type === 'card' && motifVisible(capaciteDeRestauration(entree)))
 
 	// L'ÉTAT VIDE EST LE CAS NORMAL, et il n'offre AUCUNE action (§4.6, §5.16) : il n'y a rien à
 	// faire d'une corbeille vide, et un bouton y serait un chemin vers nulle part. C'est l'écart
@@ -208,6 +240,17 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 				>
 					{succes}
 				</p>
+			)}
+
+			{motifStructure && (
+				<MotifLectureSeule id={ID_MOTIF_STRUCTURE} data-testid="motif-corbeille-structure">
+					{t('rights.readonly.trash.structure')}
+				</MotifLectureSeule>
+			)}
+			{motifAffaires && (
+				<MotifLectureSeule id={ID_MOTIF_AFFAIRES} data-testid="motif-corbeille-affaires">
+					{t('rights.readonly.trash.card')}
+				</MotifLectureSeule>
 			)}
 
 			<div className="overflow-x-auto indique-debordement-x">
@@ -245,6 +288,11 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 									entree={entree}
 									enumeration={enumerations[cle]}
 									restauration={restauration}
+									commande={proprietesCommande(
+										capaciteDeRestauration(entree),
+										entree.type === 'card' ? ID_MOTIF_AFFAIRES : ID_MOTIF_STRUCTURE,
+										restauration?.statut === 'en-cours',
+									)}
 									onRestaurer={() => void lancerRestauration(entree)}
 								/>
 							)
@@ -271,11 +319,14 @@ function LigneCorbeille({
 	entree,
 	enumeration,
 	restauration,
+	commande,
 	onRestaurer,
 }: {
 	readonly entree: EntreeCorbeille
 	readonly enumeration: EtatEnumeration | undefined
 	readonly restauration: EtatRestauration | undefined
+	/** Désactivée pendant l'envoi, ou par une capacité refusée — et citant alors son motif. */
+	readonly commande: ProprietesCommande
 	readonly onRestaurer: () => void
 }) {
 	const enCours = restauration?.statut === 'en-cours'
@@ -308,14 +359,14 @@ function LigneCorbeille({
 						type="button"
 						data-testid="bouton-restaurer"
 						onClick={onRestaurer}
-						disabled={enCours}
+						{...commande}
 						aria-label={t('admin.trash.restore.aria', { nom: entree.nom })}
 						className={[
 							'inline-flex items-center gap-2',
 							'min-h-[var(--size-target)] px-3 rounded-sm',
 							'border border-border bg-surface text-ink text-sm font-medium',
 							'transition-colors duration-[var(--transition-duration-fast)]',
-							'hover:bg-hover disabled:opacity-60 disabled:cursor-not-allowed',
+							'hover:bg-hover disabled:opacity-70 disabled:cursor-not-allowed',
 						].join(' ')}
 					>
 						<RotateCcw aria-hidden="true" className="size-4" />

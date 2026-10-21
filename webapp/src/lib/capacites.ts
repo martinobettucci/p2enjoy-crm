@@ -189,3 +189,37 @@ export function useEcriturePermise(
 
 	return capaciteDeLEtat(etat)
 }
+
+/**
+ * Lit la capacité d'écrire sur PLUSIEURS lignes d'une table, en une requête — la corbeille la demande pour toutes ses
+ * affaires (`docs/SPEC-droits-interface.md` §5, « La corbeille, précisée »). Une ligne non rendue reste absente du
+ * dictionnaire : inconnue, donc offerte.
+ */
+export async function lireEcrituresPermises(
+	client: ClientCrm,
+	table: TableEcrivable,
+	ids: readonly string[],
+): Promise<EtatAsync<Readonly<Record<string, boolean>>>> {
+	if (ids.length === 0) return pret({})
+	try {
+		const reponse = await client.from(table).select('id, ecriture_permise').in('id', [...ids])
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const lignes = (reponse.data ?? []) as unknown as readonly { readonly id: string; readonly ecriture_permise: unknown }[]
+		const capacites: Record<string, boolean> = {}
+		for (const ligne of lignes) {
+			if (typeof ligne.ecriture_permise === 'boolean') capacites[ligne.id] = ligne.ecriture_permise
+		}
+		return pret(capacites)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** La capacité d'une ligne dans l'état d'une lecture groupée, au sens du §4. */
+export function capaciteDansLEtat(etat: EtatAsync<Readonly<Record<string, boolean>>>, id: string): Capacite {
+	if (etat.statut === 'chargement') return 'en-lecture'
+	if (etat.statut === 'erreur') return 'inconnue'
+	return capaciteDe(etat.donnees[id])
+}

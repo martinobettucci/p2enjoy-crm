@@ -626,6 +626,11 @@ export const fr = {
 		'Vous consultez ce channel. Vos droits ne vous permettent pas d’en modifier les affaires : les commandes restent visibles mais sont inactives.',
 	'rights.readonly.card':
 		'Vous consultez cette affaire. Vos droits ne vous permettent pas de la modifier : les commandes restent visibles mais sont inactives.',
+	// La corbeille mêle la structure et les affaires : chaque motif dit quelles lignes il éteint (CRM-093 T4).
+	'rights.readonly.trash.structure':
+		'Restaurer un track ou un channel est réservé aux administrateurs de l’espace : leurs commandes restent visibles mais sont inactives.',
+	'rights.readonly.trash.card':
+		'Vos droits ne vous permettent pas de restaurer les affaires des channels que vous ne pouvez pas modifier : leurs commandes restent visibles mais sont inactives.',
 	'goals.readonly.notice':
 		'Vous consultez ce tableau. Vous n’avez pas le droit d’y écrire : les commandes de modification restent visibles mais sont inactives.',
 	// LA FICHE A SA PROPRE PHRASE, plus courte : elle REMPLACE la consigne d'édition, qui serait

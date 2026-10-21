@@ -1,15 +1,18 @@
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T2 : la capacité lue par l'interface et ce qu'elle fait d'une commande
 // @verifies docs/SPEC-droits-interface.md §2.1 (la capacité d'une affaire ou d'un channel, sur sa ligne), §2.2 (la lecture des deux capacités de l'espace, sur sa ligne), §3 (refusée :
-//           désactivée, citant son motif), §4 (en lecture : désactivée sans motif ; inconnue : offerte)
+//           désactivée, citant son motif), §4 (en lecture : désactivée sans motif ; inconnue : offerte), §5 (« La
+//           corbeille, précisée » : la capacité de plusieurs affaires en une lecture — tranche T4)
 
 import { describe, expect, it } from 'vitest'
 import {
 	CAPACITES_INCONNUES,
+	capaciteDansLEtat,
 	capaciteDe,
 	capaciteDeLEtat,
 	capacitesDeLEtat,
 	lireCapacitesEspace,
 	lireEcriturePermise,
+	lireEcrituresPermises,
 	motifVisible,
 	proprietesCommande,
 } from './capacites'
@@ -27,6 +30,10 @@ function espion(reponse: Reponse | Error) {
 			const chaine: Record<string, unknown> = {}
 			chaine.select = (colonnes: string) => {
 				appel.colonnes = colonnes
+				return chaine
+			}
+			chaine.in = (colonne: string, valeur: unknown) => {
+				appel.filtres.push([colonne, valeur])
 				return chaine
 			}
 			chaine.eq = (colonne: string, valeur: unknown) => {
@@ -127,5 +134,39 @@ describe('la capacité d’écrire sur une affaire ou un channel (§2.1)', () =>
 	it('une erreur — colonne inconnue d’un cache périmé — rend une erreur, donc une capacité inconnue', async () => {
 		const etat = await lireEcriturePermise(espion({ data: null, error: { message: 'PGRST204' }, status: 400 }).client, 'cards', 'c1')
 		expect(capaciteDeLEtat(etat)).toBe('inconnue')
+	})
+})
+
+describe('la capacité d’écrire sur plusieurs affaires, en une lecture (§5, la corbeille)', () => {
+	it('se lit par la colonne calculée des lignes demandées, en un seul appel', async () => {
+		const { client, appels } = espion({
+			data: [
+				{ id: 'c1', ecriture_permise: true },
+				{ id: 'c2', ecriture_permise: false },
+				{ id: 'c3', ecriture_permise: null },
+			],
+			error: null,
+			status: 200,
+		})
+		const etat = await lireEcrituresPermises(client, 'cards', ['c1', 'c2', 'c3', 'c4'])
+		expect(appels).toEqual([{ table: 'cards', colonnes: 'id, ecriture_permise', filtres: [['id', ['c1', 'c2', 'c3', 'c4']]] }])
+		expect(capaciteDansLEtat(etat, 'c1')).toBe('permise')
+		expect(capaciteDansLEtat(etat, 'c2')).toBe('refusee')
+		expect(capaciteDansLEtat(etat, 'c3'), 'une valeur qui n’est pas un booléen est inconnue').toBe('inconnue')
+		expect(capaciteDansLEtat(etat, 'c4'), 'une ligne non rendue est inconnue').toBe('inconnue')
+	})
+
+	it('aucune affaire : aucune requête', async () => {
+		const { client, appels } = espion({ data: [], error: null, status: 200 })
+		expect(await lireEcrituresPermises(client, 'cards', [])).toEqual(pret({}))
+		expect(appels).toEqual([])
+	})
+
+	it('pendant la lecture : en lecture ; sur une erreur ou une panne de transport : inconnue', async () => {
+		expect(capaciteDansLEtat(enChargement(), 'c1')).toBe('en-lecture')
+		const erreur = await lireEcrituresPermises(espion({ data: null, error: { message: 'PGRST204' }, status: 400 }).client, 'cards', ['c1'])
+		expect(capaciteDansLEtat(erreur, 'c1')).toBe('inconnue')
+		const panne = await lireEcrituresPermises(espion(new Error('réseau')).client, 'cards', ['c1'])
+		expect(panne.statut).toBe('erreur')
 	})
 })
