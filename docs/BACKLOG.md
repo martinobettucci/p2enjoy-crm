@@ -14691,7 +14691,21 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       **Complétée le même jour** par la migration `0092` (capacités de l'espace, après lecture intégrale du design
       system — décision 628, précision) : `0086` passe à 29 assertions (mutation « l'édition réduite à
       l'administrateur » tuée), API 5/5, types et inventaire des fonctions révisés (quatre-vingt-deux).
-- [ ] Mise en œuvre, preuves unitaires et E2E par rôle, captures, manuel, redéploiement.
+- [~] **T2** — le socle d'interface : `webapp/src/lib/capacites.ts` (quatre états, `proprietesCommande`, lectures de
+      l'espace, d'une ligne et groupée), `MotifLectureSeule`, `FournisseurRefus`/`useRefus`, capacités de l'espace
+      dans la coquille ; `docs/DESIGN_SYSTEM.md` §5.59. Vérifié en unitaire le 2026-10-21.
+- [~] **T3** — la famille A et E : carnet, fiche et suppression de contact, modèles et séquences, arborescence et
+      formulaire de channel, workflows et versions, catalogue, budgets du track et occurrences, guide de démarrage.
+      Vérifié en unitaire, mutations tuées.
+- [~] **T4** — la famille C et le reste de l'inventaire : la fiche d'affaire (tous ses blocs), le board, la liste,
+      « Nouvelle affaire », « Nouveau channel » de la barre d'onglets ; coût du personnel (garde de l'écran par la
+      capacité, plus le rôle), corbeille (par ligne : administration ou écriture de l'affaire), inbox (suggestion et
+      retrait), comptes entrants et identités mail (la sienne P, les autres A), navigation des réglages (seule
+      l'entrée d'un écran refusé devient un texte — précision du §3). Mesuré le 2026-10-21 : suite unitaire
+      **133 fichiers, 3 977 tests** verts ; chaque lot vu échouer sous mutation. Reste : E2E par rôle (T5).
+- [ ] **T5** — preuves E2E par rôle (lectrice, business developer, administratrice ; Farida rouverte sur
+      « prospection »), captures observées, `docs/manual.md`, seed, campagnes.
+- [ ] **T6** — livraison en production (migrations 91 et 92), constat.
 
 ### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[x]`
 *Créée le 2026-09-28 — décision 606, arbitrages du responsable. Relevé en production : dans un espace
