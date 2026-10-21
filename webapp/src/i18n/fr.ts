@@ -635,6 +635,10 @@ export const fr = {
 		'Vos droits ne vous permettent pas de modifier l’affaire où ce message est classé : la commande de retrait reste visible mais inactive.',
 	'rights.readonly.inbox.suggestion':
 		'Vos droits ne vous permettent pas de modifier l’affaire suggérée : vous pouvez la consulter, ou classer ce message ailleurs.',
+	'rights.readonly.mail.accounts':
+		'Vous consultez ces boîtes. La boîte système et celles des autres membres sont configurées par les administrateurs de l’espace : leurs commandes restent visibles mais sont inactives. Votre propre boîte reste configurable.',
+	'rights.readonly.mail.identities':
+		'Vous consultez ces identités. L’identité de service et celles des autres membres sont configurées par les administrateurs de l’espace : leurs commandes restent visibles mais sont inactives. Vos propres identités restent configurables.',
 	'goals.readonly.notice':
 		'Vous consultez ce tableau. Vous n’avez pas le droit d’y écrire : les commandes de modification restent visibles mais sont inactives.',
 	// LA FICHE A SA PROPRE PHRASE, plus courte : elle REMPLACE la consigne d'édition, qui serait

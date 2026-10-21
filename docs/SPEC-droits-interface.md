@@ -147,6 +147,13 @@ une ligne de sa famille est refusée, et chaque « Restaurer » éteinte cite le
 n'est PAS anticipée** (`docs/SPEC-corbeille.md` §4.5) : c'est un état de la donnée, qu'un autre utilisateur peut
 changer entre le chargement et le clic, pas une capacité rendue par la base.
 
+**Comptes entrants et identités mail, précisés (tranche T4, 2026-10-21).** La règle mesurée d'`upsert_mail_inbound_account`
+et d'`upsert_mail_outbound_identity` (migrations 22, 33, 58) : `forbidden` quand l'appelant n'administre pas l'espace
+et vise la boîte système, l'identité de service ou celle d'un autre. La capacité se lit donc **par propriétaire** : la
+sienne est P, jamais éteinte ; les autres suivent `administration_permise`. « Configurer » d'une ligne et
+« Enregistrer » du formulaire (selon la boîte visée) s'éteignent ; ouvrir le formulaire reste offert, puisqu'on y vise
+aussi sa propre boîte. Un motif en tête de l'écran, rendu seulement quand une commande affichée est éteinte.
+
 Les écrans de la plateforme (`/plateforme`, `CRM-101`) et du connecteur MCP (`CRM-103`) sont hors de cette unité : ils
 ont leur propre garde de superadministrateur.
 

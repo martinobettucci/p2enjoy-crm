@@ -9,12 +9,19 @@
 // `CRM-052` sous la RLS de `0022`, et l'écriture passe par `upsert_mail_inbound_account`, seul
 // chemin d'écriture de la table. Aucun droit n'est calculé ici (§5.34) : l'écran envoie, et
 // traduit le refus.
+//
+// @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : la boîte système et celles des autres s'éteignent avec leur motif
+//       quand la base refuse l'administration de l'espace ; la sienne reste toujours offerte (famille P) ;
+//       docs/SPEC-droits-interface.md §4, §5 (« Comptes entrants, identités mail ») ; docs/DESIGN_SYSTEM.md §5.59
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PencilLine, Plus } from 'lucide-react'
 import { Badge, type TonBadge } from '../components/ui/Badge'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { LiveRegion } from '../components/ui/LiveRegion'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { capaciteDeBoiteMail, motifVisible, proprietesCommande, type ProprietesCommande } from '../lib/capacites'
+import { useContexteEspace } from './ContexteEspace'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
@@ -74,6 +81,8 @@ const REFUS: Readonly<Record<Exclude<IssueEnregistrement, 'enregistre'>, CleTrad
  * Toute autre valeur est un identifiant de profil.
  */
 const VALEUR_SYSTEME = 'systeme'
+
+const ID_MOTIF_COMPTES = 'comptes-mail-motif'
 
 type Cible = {
 	readonly valeur: string
@@ -173,6 +182,7 @@ export function ReglagesComptesMail({
 	const [refus, setRefus] = useState<CleTraduction | null>(null)
 	const [enCours, setEnCours] = useState(false)
 	const [annonce, setAnnonce] = useState('')
+	const { capacites } = useContexteEspace()
 	// Une réponse arrivée après le démontage, ou périmée par un rechargement, ne doit pas écraser un
 	// état plus récent — même garde que les cinq autres surfaces de réglages.
 	const courant = useRef(0)
@@ -280,6 +290,12 @@ export function ReglagesComptesMail({
 	}
 
 	const cibles = ciblesPossibles(comptes, idSession)
+	const capaciteDe = (idProprietaire: string | null) =>
+		capaciteDeBoiteMail(idProprietaire, idSession, capacites.administration)
+	// Le motif n'est dit que si une commande À L'ÉCRAN est éteinte : une ligne, ou la boîte que vise le formulaire.
+	const motif = [...comptes.map((compte) => compte.owner_id), ...(saisie === null ? [] : [saisie.idProprietaire])].some(
+		(idProprietaire) => motifVisible(capaciteDe(idProprietaire)),
+	)
 
 	return (
 		// LA BORNE EST À `104ch`, ET C'EST UN DÉFAUT TROUVÉ EN REGARDANT UNE CAPTURE (`CLAUDE.md`
@@ -290,6 +306,11 @@ export function ReglagesComptesMail({
 		// trois données techniques ; sa borne est celle de son contenu, pas celle d'un paragraphe.
 		<section aria-label={t('admin.mailAccounts.aria')} className="flex flex-col gap-4 max-w-[104ch]">
 			<LiveRegion libelle={t('admin.mailAccounts.live.aria')} message={annonce} />
+			{motif ? (
+				<MotifLectureSeule id={ID_MOTIF_COMPTES} data-testid="motif-comptes-mail">
+					{t('rights.readonly.mail.accounts')}
+				</MotifLectureSeule>
+			) : null}
 
 			{comptes.length === 0 ? (
 				// L'état vide PORTE le geste — §5.13, §21.8 : c'est lui qui le comble, et c'est
@@ -320,7 +341,7 @@ export function ReglagesComptesMail({
 						<LigneCompte
 							key={compte.id}
 							compte={compte}
-							enCours={enCours}
+							commande={proprietesCommande(capaciteDe(compte.owner_id), ID_MOTIF_COMPTES, enCours)}
 							onConfigurer={(depuis) => ouvrir(compte.owner_id, depuis)}
 						/>
 					))}
@@ -347,6 +368,7 @@ export function ReglagesComptesMail({
 					cibles={cibles}
 					creation={compteDe(comptes, saisie.idProprietaire) === undefined}
 					enCours={enCours}
+					commandeValider={proprietesCommande(capaciteDe(saisie.idProprietaire), ID_MOTIF_COMPTES, enCours)}
 					refus={refus}
 					onCible={viser}
 					onChangement={setSaisie}
@@ -366,11 +388,12 @@ export function ReglagesComptesMail({
  */
 function LigneCompte({
 	compte,
-	enCours,
+	commande,
 	onConfigurer,
 }: {
 	readonly compte: CompteEntrant
-	readonly enCours: boolean
+	/** Désactivée pendant un envoi, ou par une capacité refusée — et citant alors son motif. */
+	readonly commande: ProprietesCommande
 	readonly onConfigurer: (depuis: HTMLButtonElement | null) => void
 }) {
 	return (
@@ -402,7 +425,7 @@ function LigneCompte({
 			<button
 				type="button"
 				data-testid="configurer-compte"
-				disabled={enCours}
+				{...commande}
 				onClick={(evenement) => onConfigurer(evenement.currentTarget)}
 				aria-label={t('admin.mailAccounts.configure.aria', { boite: compte.label })}
 				className={CLASSES_BOUTON_DISCRET}
@@ -427,6 +450,7 @@ function FormulaireCompte({
 	cibles,
 	creation,
 	enCours,
+	commandeValider,
 	refus,
 	onCible,
 	onChangement,
@@ -438,6 +462,8 @@ function FormulaireCompte({
 	/** La boîte visée n'existe pas encore : le mot de passe est alors EXIGÉ, et le dire change. */
 	readonly creation: boolean
 	readonly enCours: boolean
+	/** Désactivée pendant le vol, ou quand la base refuse d'écrire la boîte visée (CRM-093). */
+	readonly commandeValider: ProprietesCommande
 	readonly refus: CleTraduction | null
 	readonly onCible: (valeur: string) => void
 	readonly onChangement: (saisie: SaisieCompteEntrant) => void
@@ -587,7 +613,7 @@ function FormulaireCompte({
 				<button
 					type="submit"
 					data-testid="valider-compte-mail"
-					disabled={enCours}
+					{...commandeValider}
 					className={CLASSES_BOUTON_PRIMAIRE}
 				>
 					{enCours ? t('admin.mailAccounts.saving') : t('admin.mailAccounts.save')}

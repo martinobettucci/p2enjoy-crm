@@ -7,12 +7,17 @@
 // Ces preuves montent le VRAI écran avec un client factice qui enregistre les requêtes émises,
 // comme `EtatMessagerie.test.tsx`. Le parcours connecté complet relève de
 // `e2e/ui/reglages-comptes-mail.spec.ts`, qui ne peut pas être exécuté sans la pile.
+// @verifies CRM-093 (docs/BACKLOG.md) — tranche T4 : la boîte système et celles des autres s'éteignent avec leur motif
+//           quand la base refuse l'administration ; la sienne reste offerte (famille P) ; docs/SPEC-droits-interface.md
+//           §4, §5 (« Comptes entrants, identités mail ») ; docs/DESIGN_SYSTEM.md §5.59
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { ReglagesComptesMail } from './ReglagesComptesMail'
+import { FournisseurEspace } from './ContexteEspace'
+import type { Capacite } from '../lib/capacites'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
@@ -373,5 +378,47 @@ describe('ReglagesComptesMail — le clavier', () => {
 		await waitFor(() =>
 			expect(document.activeElement).toBe(screen.getAllByTestId('configurer-compte')[0]),
 		)
+	})
+})
+
+describe('ReglagesComptesMail — la capacité d’administration rendue par la base (CRM-093 T4)', () => {
+	const monterAvec = (administration: Capacite) =>
+		render(
+			<MemoryRouter>
+				<FournisseurEspace valeur={{ idWorkspace: WORKSPACE, estAdmin: false, capacites: { administration, edition: 'permise' } }}>
+					<ReglagesComptesMail client={client()} idUtilisateur={CAMILLE} />
+				</FournisseurEspace>
+			</MemoryRouter>,
+		)
+	const ligneDe = (id: string) =>
+		document.querySelector(`[data-compte="${id}"] [data-testid="configurer-compte"]`) as HTMLButtonElement
+
+	it('refusée : la ligne système s’éteint et cite le motif ; la sienne reste offerte', async () => {
+		monterAvec('refusee')
+		const motif = await screen.findByTestId('motif-comptes-mail')
+		expect(ligneDe('c-2').disabled).toBe(true)
+		expect(ligneDe('c-2').getAttribute('aria-describedby')).toBe(motif.id)
+		expect(ligneDe('c-1').disabled).toBe(false)
+	})
+
+	it('refusée : le formulaire ouvert sur la sienne s’enregistre ; visant la boîte système, « Enregistrer » s’éteint', async () => {
+		monterAvec('refusee')
+		await screen.findAllByTestId('configurer-compte')
+		await userEvent.click(ligneDe('c-1'))
+		expect((screen.getByTestId('valider-compte-mail') as HTMLButtonElement).disabled).toBe(false)
+		await userEvent.selectOptions(screen.getByTestId('champ-boite'), 'systeme')
+		const valider = screen.getByTestId('valider-compte-mail') as HTMLButtonElement
+		expect(valider.disabled).toBe(true)
+		expect(valider.getAttribute('aria-describedby')).toBe(screen.getByTestId('motif-comptes-mail').id)
+	})
+
+	it('permise ou inconnue : rien n’est éteint, aucun motif', async () => {
+		for (const administration of ['permise', 'inconnue'] as const) {
+			monterAvec(administration)
+			await waitFor(() => expect(ligneDe('c-2')).not.toBeNull())
+			expect(ligneDe('c-2').disabled).toBe(false)
+			expect(screen.queryByTestId('motif-comptes-mail')).toBeNull()
+			cleanup()
+		}
 	})
 })

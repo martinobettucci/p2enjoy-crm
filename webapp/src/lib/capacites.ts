@@ -223,3 +223,18 @@ export function capaciteDansLEtat(etat: EtatAsync<Readonly<Record<string, boolea
 	if (etat.statut === 'erreur') return 'inconnue'
 	return capaciteDe(etat.donnees[id])
 }
+
+/**
+ * La capacité d'écrire une boîte entrante ou une identité sortante. La SIENNE est personnelle — famille P, jamais
+ * éteinte ; la boîte système (`owner_id` nul) et celles des autres relèvent de l'administration de l'espace — la règle
+ * exacte d'`upsert_mail_inbound_account` et d'`upsert_mail_outbound_identity` (migrations 22, 33, 58 :
+ * `forbidden` si l'appelant n'administre pas et vise une autre boîte que la sienne). Spécification §5, ligne
+ * « Comptes entrants, identités mail ».
+ */
+export function capaciteDeBoiteMail(
+	idProprietaire: string | null,
+	idSession: string | null,
+	administration: Capacite,
+): Capacite {
+	return idProprietaire !== null && idProprietaire === idSession ? 'permise' : administration
+}

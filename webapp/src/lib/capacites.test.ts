@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	CAPACITES_INCONNUES,
 	capaciteDansLEtat,
+	capaciteDeBoiteMail,
 	capaciteDe,
 	capaciteDeLEtat,
 	capacitesDeLEtat,
@@ -168,5 +169,21 @@ describe('la capacité d’écrire sur plusieurs affaires, en une lecture (§5, 
 		expect(capaciteDansLEtat(erreur, 'c1')).toBe('inconnue')
 		const panne = await lireEcrituresPermises(espion(new Error('réseau')).client, 'cards', ['c1'])
 		expect(panne.statut).toBe('erreur')
+	})
+})
+
+describe('la capacité d’écrire une boîte ou une identité mail (§5)', () => {
+	it('la sienne est personnelle : jamais éteinte, même quand l’administration est refusée ou en lecture', () => {
+		expect(capaciteDeBoiteMail('moi', 'moi', 'refusee')).toBe('permise')
+		expect(capaciteDeBoiteMail('moi', 'moi', 'en-lecture')).toBe('permise')
+	})
+	it('la boîte système et celle d’un autre suivent l’administration de l’espace', () => {
+		for (const administration of ['permise', 'refusee', 'en-lecture', 'inconnue'] as const) {
+			expect(capaciteDeBoiteMail(null, 'moi', administration)).toBe(administration)
+			expect(capaciteDeBoiteMail('autre', 'moi', administration)).toBe(administration)
+		}
+	})
+	it('sans session connue, aucune boîte n’est « la sienne »', () => {
+		expect(capaciteDeBoiteMail(null, null, 'refusee')).toBe('refusee')
 	})
 })

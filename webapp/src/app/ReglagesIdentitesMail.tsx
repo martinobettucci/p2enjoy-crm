@@ -9,12 +9,19 @@
 // `CRM-053` sous la RLS de `0023`, et l'écriture passe par `upsert_mail_outbound_identity`, seul
 // chemin d'écriture de la table. Aucun droit n'est calculé ici : l'écran envoie, et traduit le
 // refus.
+//
+// @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : la boîte système et celles des autres s'éteignent avec leur motif
+//       quand la base refuse l'administration de l'espace ; la sienne reste toujours offerte (famille P) ;
+//       docs/SPEC-droits-interface.md §4, §5 (« Comptes entrants, identités mail ») ; docs/DESIGN_SYSTEM.md §5.59
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { PencilLine, Plus } from 'lucide-react'
 import { Badge, type TonBadge } from '../components/ui/Badge'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { LiveRegion } from '../components/ui/LiveRegion'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { capaciteDeBoiteMail, motifVisible, proprietesCommande, type ProprietesCommande } from '../lib/capacites'
+import { useContexteEspace } from './ContexteEspace'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
@@ -171,6 +178,8 @@ export type ProprietesReglagesIdentitesMail = {
 	readonly idUtilisateur?: string | null
 }
 
+const ID_MOTIF_IDENTITES = 'identites-mail-motif'
+
 export function ReglagesIdentitesMail({
 	client = clientCrm,
 	idUtilisateur,
@@ -189,6 +198,7 @@ export function ReglagesIdentitesMail({
 	const [refus, setRefus] = useState<CleTraduction | null>(null)
 	const [enCours, setEnCours] = useState(false)
 	const [annonce, setAnnonce] = useState('')
+	const { capacites } = useContexteEspace()
 	// Une réponse arrivée après le démontage, ou périmée par un rechargement, ne doit pas écraser un
 	// état plus récent — même garde que les six autres surfaces de réglages.
 	const courant = useRef(0)
@@ -324,6 +334,12 @@ export function ReglagesIdentitesMail({
 	const declaration = identiteDe(identites, cible) === undefined
 	/** Le geste d'ouverture par défaut : une déclaration personnelle, ou celle de service à défaut. */
 	const cibleNeuve = idSession === null ? VALEUR_NOUVELLE_SERVICE : VALEUR_NOUVELLE_PERSONNELLE
+	const capaciteDe = (idProprietaire: string | null) =>
+		capaciteDeBoiteMail(idProprietaire, idSession, capacites.administration)
+	// Le motif n'est dit que si une commande À L'ÉCRAN est éteinte : une ligne, ou l'identité que vise le formulaire.
+	const motif = [...identites.map((identite) => identite.owner_id), ...(saisie === null ? [] : [saisie.idProprietaire])].some(
+		(idProprietaire) => motifVisible(capaciteDe(idProprietaire)),
+	)
 
 	return (
 		// La borne est celle du §5.34, pour la même raison : une ligne porte ici sept éléments, dont
@@ -333,6 +349,11 @@ export function ReglagesIdentitesMail({
 			className="flex flex-col gap-4 max-w-[104ch]"
 		>
 			<LiveRegion libelle={t('admin.mailIdentities.live.aria')} message={annonce} />
+			{motif ? (
+				<MotifLectureSeule id={ID_MOTIF_IDENTITES} data-testid="motif-identites-mail">
+					{t('rights.readonly.mail.identities')}
+				</MotifLectureSeule>
+			) : null}
 
 			{identites.length === 0 ? (
 				// L'état vide PORTE le geste — §5.13, §22.9.
@@ -363,7 +384,7 @@ export function ReglagesIdentitesMail({
 						<LigneIdentite
 							key={identite.id}
 							identite={identite}
-							enCours={enCours}
+							commande={proprietesCommande(capaciteDe(identite.owner_id), ID_MOTIF_IDENTITES, enCours)}
 							onConfigurer={(depuis) => ouvrir(identite.id, depuis)}
 						/>
 					))}
@@ -392,6 +413,7 @@ export function ReglagesIdentitesMail({
 					valeurCible={cible}
 					declaration={declaration}
 					enCours={enCours}
+					commandeValider={proprietesCommande(capaciteDe(saisie.idProprietaire), ID_MOTIF_IDENTITES, enCours)}
 					refus={refus}
 					onCible={(valeur) => ouvrir(valeur, null)}
 					onChangement={setSaisie}
@@ -412,11 +434,12 @@ export function ReglagesIdentitesMail({
  */
 function LigneIdentite({
 	identite,
-	enCours,
+	commande,
 	onConfigurer,
 }: {
 	readonly identite: IdentiteSortante
-	readonly enCours: boolean
+	/** Désactivée pendant un envoi, ou par une capacité refusée — et citant alors son motif. */
+	readonly commande: ProprietesCommande
 	readonly onConfigurer: (depuis: HTMLButtonElement | null) => void
 }) {
 	const expediteur = expediteurLisible(identite)
@@ -468,7 +491,7 @@ function LigneIdentite({
 			<button
 				type="button"
 				data-testid="configurer-identite"
-				disabled={enCours}
+				{...commande}
 				onClick={(evenement) => onConfigurer(evenement.currentTarget)}
 				aria-label={t('admin.mailIdentities.configure.aria', { identite: expediteur })}
 				className={CLASSES_BOUTON_DISCRET}
@@ -493,6 +516,7 @@ function FormulaireIdentite({
 	valeurCible,
 	declaration,
 	enCours,
+	commandeValider,
 	refus,
 	onCible,
 	onChangement,
@@ -505,6 +529,8 @@ function FormulaireIdentite({
 	/** L'identité visée n'existe pas encore : le mot de passe est alors EXIGÉ, et le dire change. */
 	readonly declaration: boolean
 	readonly enCours: boolean
+	/** Désactivée pendant le vol, ou quand la base refuse d'écrire l'identité visée (CRM-093). */
+	readonly commandeValider: ProprietesCommande
 	readonly refus: CleTraduction | null
 	readonly onCible: (valeur: string) => void
 	readonly onChangement: (saisie: SaisieIdentiteSortante) => void
@@ -727,7 +753,7 @@ function FormulaireIdentite({
 				<button
 					type="submit"
 					data-testid="valider-identite-mail"
-					disabled={enCours}
+					{...commandeValider}
 					className={CLASSES_BOUTON_PRIMAIRE}
 				>
 					{enCours ? t('admin.mailIdentities.saving') : t('admin.mailIdentities.save')}
