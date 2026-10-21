@@ -3,6 +3,8 @@
 //       des refus), §7 (l'écran) ; docs/DESIGN_SYSTEM.md §5.56 ; docs/SCHEMA.md §1 bis
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; CLAUDE.md §10 — ce module ne décide AUCUN droit
 // @spec CRM-101 tranche T6 — docs/SPEC-plateforme.md §6.5 (`plateforme_utilisateurs`), arbitrage A6
+// @spec CRM-103 tranche T2 — docs/SPEC-mcp.md §8.1 (écrans), §8.2 (les quatre RPC d'administration, leurs refus), §6.1
+//       (familles et actions), §7.1 (issues du journal) ; arbitrages A3, A5 et D9
 //
 // Toutes les lectures et écritures passent par les fonctions `public.plateforme_*`, gardées en base par
 // `app.exiger_superadmin()`. L'écran n'en déduit rien : il envoie, et traduit ce que la base rend. Un refus est
@@ -34,6 +36,9 @@ export const CODES_REFUS_PLATEFORME = [
 	'identifiant_pris',
 	'last_workspace_admin',
 	'dernier_superadministrateur',
+	// `CRM-103` (docs/SPEC-mcp.md §8.2) : une matrice hors des familles et actions fermées, une issue inconnue.
+	'droit_invalide',
+	'issue_invalide',
 ] as const
 export type CodeRefusPlateforme = (typeof CODES_REFUS_PLATEFORME)[number]
 
@@ -383,4 +388,149 @@ export async function lireJournal(client: ClientCrm, avant: number | null): Prom
 export function curseurSuivant(page: readonly EntreeJournal[]): number | null {
 	if (page.length < PAGE_JOURNAL) return null
 	return page.reduce((plusAncien, entree) => Math.min(plusAncien, entree.id), Number.POSITIVE_INFINITY)
+}
+
+// --- Le connecteur MCP (`CRM-103`, docs/SPEC-mcp.md §8) ---------------------------------------------------------
+
+/** Les sept familles de la matrice, dans l'ordre du §6.1 : l'ordre des lignes, et celui que la base rend. */
+export const FAMILLES_MCP = ['structure', 'affaires', 'contacts', 'budgets', 'temps', 'objectifs', 'messagerie'] as const
+export type FamilleMcp = (typeof FAMILLES_MCP)[number]
+/** Les quatre actions, dans l'ordre des colonnes. « Supprimer » veut dire corbeille ou archive, jamais purge (A4). */
+export const ACTIONS_MCP = ['consulter', 'ajouter', 'modifier', 'supprimer'] as const
+export type ActionMcp = (typeof ACTIONS_MCP)[number]
+/** Les cinq issues d'un appel au journal du connecteur (§7.1). */
+export const ISSUES_MCP = ['ok', 'refus_matrice', 'refus_crm', 'erreur', 'trop_volumineux'] as const
+export type IssueMcp = (typeof ISSUES_MCP)[number]
+
+/** Une case de la matrice, sous la forme `famille:action` : la clé d'un ensemble, et ce que la base attend en couple. */
+export type CaseMcp = `${FamilleMcp}:${ActionMcp}`
+
+export function caseMcp(famille: FamilleMcp, action: ActionMcp): CaseMcp {
+	return `${famille}:${action}`
+}
+
+const familleConnue = (v: unknown): v is FamilleMcp => (FAMILLES_MCP as readonly unknown[]).includes(v)
+const actionConnue = (v: unknown): v is ActionMcp => (ACTIONS_MCP as readonly unknown[]).includes(v)
+
+export type CompteMcp = {
+	readonly sub: string
+	readonly nom: string
+	readonly email: string
+	readonly derniereActivite: string
+	readonly espacesOuverts: number
+	readonly superadmin: boolean
+	readonly avecProfil: boolean
+}
+
+export async function lireComptesMcp(client: ClientCrm): Promise<EtatAsync<readonly CompteMcp[]>> {
+	return await lire(client, 'mcp_comptes_liste', {}, (data) =>
+		tableau(data).map((ligne) => ({
+			sub: texte(ligne['sub']),
+			nom: texte(ligne['nom']),
+			email: texte(ligne['email']),
+			derniereActivite: texte(ligne['derniere_activite']),
+			espacesOuverts: entier(ligne['espaces_ouverts']),
+			superadmin: ligne['superadmin'] === true,
+			avecProfil: ligne['avec_profil'] === true,
+		})),
+	)
+}
+
+export type EspaceFicheMcp = {
+	readonly workspaceId: string
+	readonly slug: string
+	readonly nom: string
+	/** Le rôle d'appartenance, ou `null` hors de l'espace : les droits resteraient alors sans effet (A2). */
+	readonly role: RoleEspace | null
+	readonly droits: ReadonlySet<CaseMcp>
+}
+
+export type FicheMcp = {
+	readonly sub: string
+	readonly nom: string
+	readonly email: string | null
+	readonly avecProfil: boolean
+	readonly connecte: boolean
+	readonly derniereActivite: string | null
+	readonly superadmin: boolean
+	readonly espaces: readonly EspaceFicheMcp[]
+}
+
+/** Les couples rendus par la base ; un couple hors des listes fermées est ignoré, jamais deviné. */
+function cases(valeur: unknown): ReadonlySet<CaseMcp> {
+	const ensemble = new Set<CaseMcp>()
+	for (const couple of Array.isArray(valeur) ? valeur : []) {
+		if (Array.isArray(couple) && familleConnue(couple[0]) && actionConnue(couple[1])) ensemble.add(caseMcp(couple[0], couple[1]))
+	}
+	return ensemble
+}
+
+export async function lireFicheMcp(client: ClientCrm, sub: string): Promise<EtatAsync<FicheMcp>> {
+	return await lire(client, 'mcp_compte', { p_sub: sub }, (data) => {
+		const fiche = typeof data === 'object' && data !== null ? (data as Record<string, unknown>) : {}
+		return {
+			sub: texte(fiche['sub']),
+			nom: texte(fiche['nom']),
+			email: texteOuNul(fiche['email']),
+			avecProfil: fiche['avec_profil'] === true,
+			connecte: fiche['connecte'] === true,
+			derniereActivite: texteOuNul(fiche['derniere_activite']),
+			superadmin: fiche['superadmin'] === true,
+			espaces: tableau(fiche['espaces']).map((espace) => ({
+				workspaceId: texte(espace['workspace_id']),
+				slug: texte(espace['slug']),
+				nom: texte(espace['nom']),
+				role: roleConnu(espace['role']),
+				droits: cases(espace['droits']),
+			})),
+		}
+	})
+}
+
+/** Remplace la matrice d'un espace (§8.2) : l'ensemble entier part, dans l'ordre des familles puis des actions. */
+export async function poserDroitsMcp(client: ClientCrm, sub: string, workspaceId: string, droits: ReadonlySet<CaseMcp>): Promise<Issue<null>> {
+	const couples: [FamilleMcp, ActionMcp][] = []
+	for (const famille of FAMILLES_MCP) {
+		for (const action of ACTIONS_MCP) if (droits.has(caseMcp(famille, action))) couples.push([famille, action])
+	}
+	const issue = await ecrire(client, 'mcp_poser_droits', { p_sub: sub, p_ws: workspaceId, p_droits: couples })
+	return issue.statut === 'ok' ? { statut: 'ok', valeur: null } : issue
+}
+
+export type AppelMcp = {
+	readonly id: number
+	readonly nom: string
+	readonly outil: string
+	readonly espaceNom: string | null
+	/** `null` pour une issue que l'écran ne connaît pas : la cellule reste vide (§5.14). */
+	readonly issue: IssueMcp | null
+	readonly dureeMs: number
+	readonly creeLe: string
+}
+
+export async function lireJournalMcp(
+	client: ClientCrm,
+	filtre: { readonly sub?: string | null; readonly issue?: IssueMcp | null; readonly avant?: number | null },
+): Promise<EtatAsync<readonly AppelMcp[]>> {
+	return await lire(
+		client,
+		'mcp_journal_liste',
+		{ p_sub: filtre.sub ?? null, p_issue: filtre.issue ?? null, p_avant: filtre.avant ?? null, p_limite: PAGE_JOURNAL },
+		(data) =>
+			tableau(data).map((ligne) => ({
+				id: entier(ligne['id']),
+				nom: texte(ligne['nom']),
+				outil: texte(ligne['outil']),
+				espaceNom: texteOuNul(ligne['espace_nom']),
+				issue: (ISSUES_MCP as readonly unknown[]).includes(ligne['issue']) ? (ligne['issue'] as IssueMcp) : null,
+				dureeMs: entier(ligne['duree_ms']),
+				creeLe: texte(ligne['cree_le']),
+			})),
+	)
+}
+
+/** Le curseur de la page suivante du journal des appels, comme celui de la plateforme. */
+export function curseurSuivantMcp(page: readonly AppelMcp[]): number | null {
+	if (page.length < PAGE_JOURNAL) return null
+	return page.reduce((plusAncien, appel) => Math.min(plusAncien, appel.id), Number.POSITIVE_INFINITY)
 }

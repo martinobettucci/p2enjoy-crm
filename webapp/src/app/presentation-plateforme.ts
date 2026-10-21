@@ -1,11 +1,13 @@
 // @spec CRM-101 (docs/BACKLOG.md) — tranche T3 : ce que l'écran de la plateforme écrit, et comment
+// @spec CRM-103 tranche T2 — docs/DESIGN_SYSTEM.md §5.56 (onglet « Connecteur MCP » : familles, actions et issues en MOT,
+//       détail de `mcp_droits_poses` accordé par clé), docs/SPEC-mcp.md §8.1, §6.1, §7.1
 // @spec docs/DESIGN_SYSTEM.md §5.56 (dictionnaire fermé des refus, geste du journal en MOT, détail composé par clé),
 //       §10 (aucune phrase par concaténation) ; docs/SPEC-plateforme.md §5.2 (gestes), §6.1 (refus)
 //
 // Module sans rendu : les composants de la plateforme le partagent, et ses fonctions se prouvent seules.
 
 import { t, type CleTraduction } from '../i18n'
-import type { EntreeJournal, GesteJournal, RefusPlateforme, RoleEspace } from '../lib/plateforme'
+import type { ActionMcp, EntreeJournal, FamilleMcp, GesteJournal, IssueMcp, RefusPlateforme, RoleEspace } from '../lib/plateforme'
 
 /** Un texte par refus ; un code inconnu rend le texte générique, jamais le message brut de la base (§5.56). */
 const CLES_REFUS: Readonly<Record<RefusPlateforme, CleTraduction>> = {
@@ -21,6 +23,8 @@ const CLES_REFUS: Readonly<Record<RefusPlateforme, CleTraduction>> = {
 	identifiant_pris: 'platform.refus.identifiantPris',
 	last_workspace_admin: 'platform.refus.dernierAdministrateur',
 	dernier_superadministrateur: 'platform.refus.dernierSuperadmin',
+	droit_invalide: 'platform.refus.droit',
+	issue_invalide: 'platform.refus.issue',
 	network: 'platform.refus.reseau',
 	unknown: 'platform.refus.inconnu',
 }
@@ -126,6 +130,12 @@ export function detailJournal(entree: EntreeJournal): string {
 				role: roleLu(c['role']),
 			})
 		case 'mcp_droits_poses':
+			return t('platform.journal.detail.mcpDroits', {
+				nom: chaine(c['nom']),
+				espace: chaine(c['espace']),
+				avant: compter(Array.isArray(c['avant']) ? c['avant'].length : 0, CLES_CASES),
+				apres: compter(Array.isArray(c['apres']) ? c['apres'].length : 0, CLES_CASES),
+			})
 		case null:
 			return ''
 	}
@@ -157,3 +167,43 @@ export function libelleActeur(entree: EntreeJournal): string {
 	if (entree.acteur !== null) return entree.acteur
 	return entree.geste === 'superadmin_amorce' ? t('platform.amorcage') : t('platform.journal.acteurSupprime')
 }
+
+// --- Le connecteur MCP (`CRM-103`) ------------------------------------------------------------------------------
+
+/** Un compte de cases de la matrice, accordé par clé (§10). */
+export const CLES_CASES = {
+	zero: 'platform.mcp.cases.zero',
+	un: 'platform.mcp.cases.un',
+	plusieurs: 'platform.mcp.cases.plusieurs',
+} as const satisfies Record<'zero' | 'un' | 'plusieurs', CleTraduction>
+
+const CLES_FAMILLE: Readonly<Record<FamilleMcp, { readonly libelle: CleTraduction; readonly portee: CleTraduction }>> = {
+	structure: { libelle: 'platform.mcp.famille.structure', portee: 'platform.mcp.famille.structure.portee' },
+	affaires: { libelle: 'platform.mcp.famille.affaires', portee: 'platform.mcp.famille.affaires.portee' },
+	contacts: { libelle: 'platform.mcp.famille.contacts', portee: 'platform.mcp.famille.contacts.portee' },
+	budgets: { libelle: 'platform.mcp.famille.budgets', portee: 'platform.mcp.famille.budgets.portee' },
+	temps: { libelle: 'platform.mcp.famille.temps', portee: 'platform.mcp.famille.temps.portee' },
+	objectifs: { libelle: 'platform.mcp.famille.objectifs', portee: 'platform.mcp.famille.objectifs.portee' },
+	messagerie: { libelle: 'platform.mcp.famille.messagerie', portee: 'platform.mcp.famille.messagerie.portee' },
+}
+
+const CLES_ACTION: Readonly<Record<ActionMcp, CleTraduction>> = {
+	consulter: 'platform.mcp.action.consulter',
+	ajouter: 'platform.mcp.action.ajouter',
+	modifier: 'platform.mcp.action.modifier',
+	supprimer: 'platform.mcp.action.supprimer',
+}
+
+const CLES_ISSUE: Readonly<Record<IssueMcp, CleTraduction>> = {
+	ok: 'platform.mcp.issue.ok',
+	refus_matrice: 'platform.mcp.issue.refus_matrice',
+	refus_crm: 'platform.mcp.issue.refus_crm',
+	erreur: 'platform.mcp.issue.erreur',
+	trop_volumineux: 'platform.mcp.issue.trop_volumineux',
+}
+
+export const libelleFamille = (famille: FamilleMcp): string => t(CLES_FAMILLE[famille].libelle)
+export const porteeFamille = (famille: FamilleMcp): string => t(CLES_FAMILLE[famille].portee)
+export const libelleAction = (action: ActionMcp): string => t(CLES_ACTION[action])
+/** Une issue inconnue laisse un texte vide, jamais la valeur brute (§5.14). */
+export const libelleIssue = (issue: IssueMcp | null): string => (issue === null ? '' : t(CLES_ISSUE[issue]))

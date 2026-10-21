@@ -5465,7 +5465,11 @@ focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (diff
     même icône `Search`, même délai de repos), suivi d'une **liste de liens** vers la fiche de chaque utilisateur trouvé :
     le nom, puis « Jamais connecté » en `--color-text-2` s'il n'est jamais venu. Rien n'est listé tant que le champ est
     vide : la liste complète vit dans l'onglet « Utilisateurs », qui porte aussi, par ligne, un lien « Droits du
-    connecteur » vers la même fiche.
+    connecteur » vers la même fiche. *Précisé à l'écriture du code* : ce lien vit dans une colonne « Commandes » à part,
+    comme dans les autres tableaux de la plateforme, à la cible de 40 px (§8). Glissé sous la date du connecteur, il
+    aurait été une cible de vingt pixels. Son nom accessible nomme la personne.
+  - **Le nom accessible d'une case écrit l'action en minuscules**, « Affaires : modifier », comme une phrase ; l'en-tête
+    de colonne garde sa majuscule. *Écrit à l'écriture du code.*
   - **Le journal des appels est un tableau du §5.9** : date, compte, outil, espace, issue, durée.
     - **L'issue est un MOT**, traduit par un dictionnaire fermé : « Réussi », « Refusé par la matrice », « Refusé par le
       CRM », « Erreur », « Réponse trop volumineuse ». Une issue autre que « Réussi » porte la pilule `accent` ; aucune

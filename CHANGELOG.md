@@ -13,6 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-103` T2 — l'onglet « Connecteur MCP » de la plateforme (décision 627, A3 et A5)
+
+*Webapp seulement. Prouvé en tests unitaires ; parcours réel et captures avec la tranche T3.*
+
+- **Les comptes venus au connecteur**, avec leur dernière activité, le nombre d'espaces où ils ont des droits, et la
+  mention « Sans profil dans le CRM » quand c'est le cas.
+- **« Accorder des droits à un utilisateur »** cherche par nom parmi tous les utilisateurs du CRM, même ceux qui ne se
+  sont jamais connectés au connecteur. L'onglet « Utilisateurs » mène aussi aux droits du connecteur de chacun.
+- **La fiche d'un utilisateur** : un espace à choisir, son rôle dans cet espace (ou un avertissement s'il n'en est pas
+  membre), et la grille des droits, sept familles × quatre actions, enregistrée en une fois. Un superadministrateur
+  franchit la grille ; un compte sans profil n'en a pas.
+- **Le journal des appels**, filtrable par résultat, et le détail des droits posés au journal de la plateforme.
+
 ### `CRM-093` — l'interface n'offre plus les gestes que le serveur refuse (décision 628)
 
 *Migrations `0091` et `0092` ; webapp. Prouvé en développement ; à livrer (`docs/PROD_MIGRATIONS.md`, lignes 91 et 92).*

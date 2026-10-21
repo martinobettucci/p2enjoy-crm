@@ -2,6 +2,7 @@
 // @spec docs/SPEC-plateforme.md §6.5 (`plateforme_utilisateurs`), §7.2 (qui est un utilisateur) ; docs/DESIGN_SYSTEM.md
 //       §5.56 (onglet « Utilisateurs » : recherche, tableau, espaces en liste de liens, « Jamais connecté », troncature
 //       écrite), §5.46 (la liste précédente reste affichée pendant la lecture suivante), §5.9, §5.8 ; arbitrage A6
+// @spec CRM-103 tranche T2 — chaque ligne mène aux droits du connecteur de la personne (docs/SPEC-mcp.md §8.1, A5)
 // @spec CLAUDE.md §10 — l'écran ne décide aucun droit : la base garde la lecture par le drapeau
 //
 // Lecture seule, et l'absence de geste est assumée : poser une appartenance ou le drapeau reste dans la fiche d'un espace
@@ -17,7 +18,7 @@ import { t } from '../i18n'
 import { BORNE_UTILISATEURS, lireUtilisateurs, type UtilisateurPlateforme } from '../lib/plateforme'
 import { DELAI_FRAPPE_MS } from '../lib/recherche'
 import type { ClientCrm } from '../lib/supabase'
-import { cheminFicheEspace } from './chemins'
+import { cheminFicheEspace, cheminFicheMcp } from './chemins'
 import { formaterDate, libelleRole } from './presentation-plateforme'
 
 const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left whitespace-nowrap'
@@ -128,6 +129,7 @@ function ContenuUtilisateurs({
 							<th scope="col" className={CLASSES_ENTETE}>{t('platform.membres.colonne.superadmin')}</th>
 							<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('platform.utilisateurs.colonne.connecteur')}</th>
 							<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('platform.utilisateurs.colonne.depuis')}</th>
+							<th scope="col" className={CLASSES_ENTETE}>{t('platform.colonne.commandes')}</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -179,6 +181,16 @@ function LigneUtilisateur({ utilisateur }: { readonly utilisateur: UtilisateurPl
 				)}
 			</td>
 			<td className={`${CLASSES_CELLULE} text-right tabular-nums whitespace-nowrap`}>{formaterDate(utilisateur.creeLe)}</td>
+			<td className="h-[var(--size-target)] px-3 whitespace-nowrap">
+				{/* `CRM-103` : un lien, il change d'adresse (§12.1), à la cible de 40 px (§8) dans sa propre colonne. */}
+				<Link
+					to={cheminFicheMcp(utilisateur.id)}
+					aria-label={t('platform.utilisateurs.droitsConnecteur.aria', { nom: utilisateur.nom })}
+					className="inline-flex items-center min-h-[var(--size-target)] text-sm text-brand font-medium underline-offset-2 hover:underline"
+				>
+					{t('platform.utilisateurs.droitsConnecteur')}
+				</Link>
+			</td>
 		</tr>
 	)
 }

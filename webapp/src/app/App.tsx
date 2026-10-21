@@ -34,6 +34,8 @@ import {
 	CHEMIN_PLATEFORME_ESPACE,
 	CHEMIN_PLATEFORME_ESPACES,
 	CHEMIN_PLATEFORME_JOURNAL,
+	CHEMIN_PLATEFORME_MCP,
+	CHEMIN_PLATEFORME_MCP_COMPTE,
 	CHEMIN_PLATEFORME_SUPERADMINS,
 	CHEMIN_PLATEFORME_UTILISATEURS,
 } from './chemins'
@@ -162,6 +164,8 @@ const VUES_PLATEFORME: readonly { readonly chemin: string; readonly vue: VuePlat
 	{ chemin: CHEMIN_PLATEFORME_UTILISATEURS, vue: 'utilisateurs' },
 	{ chemin: CHEMIN_PLATEFORME_SUPERADMINS, vue: 'superadmins' },
 	{ chemin: CHEMIN_PLATEFORME_JOURNAL, vue: 'journal' },
+	{ chemin: CHEMIN_PLATEFORME_MCP, vue: 'mcp' },
+	{ chemin: CHEMIN_PLATEFORME_MCP_COMPTE, vue: 'mcp-compte' },
 ]
 
 /**

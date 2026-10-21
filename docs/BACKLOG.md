@@ -15313,6 +15313,14 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
 - [ ] **T2** — l'onglet et la fiche d'un compte ; `docs/DESIGN_SYSTEM.md` écrit après lecture intégrale ; preuves
       unitaires. Règles et écrans fixés avant le code le 2026-10-21 : `docs/DESIGN_SYSTEM.md` §5.56 (onglet « Connecteur
       MCP »), `docs/SPEC-mcp.md` §8.1 (adresses, recherche, enregistrement, refus, détail du journal).
+      *Codé le 2026-10-21, prouvé en unitaires* : `PlateformeMcp` (comptes, recherche, journal), `PlateformeMcpCompte`
+      (fiche, matrice), `JournalAppelsMcp`, les lectures et l'écriture de `lib/plateforme.ts`, le lien « Droits du
+      connecteur » de l'onglet « Utilisateurs », le détail de `mcp_droits_poses` au journal de la plateforme. Vitest
+      **43** pour la plateforme (dont 11 nouveaux), **3998** au complet ; **deux mutations réelles** tuées (verrou du
+      sélecteur, ordre des couples envoyés) ; typecheck vert ; build vert et **402 classes** citées toutes présentes au
+      CSS produit. Deux défauts trouvés à l'écriture : le message d'enregistrement effacé par la relecture (clé de la
+      matrice corrigée), et un lien de vingt pixels (colonne « Commandes », design system précisé). **Reste `[~]`** : la
+      vérification visuelle, les captures et l'E2E viennent avec T3, la pile étant occupée par une autre session.
 - [ ] **T3** — API aux jetons réels, E2E à la souris et au clavier avec un effet constaté par un appel MCP réel, seed,
       captures observées, manuel (chapitre 11), campagnes.
 - [ ] **T4** — livraison en production et constat.

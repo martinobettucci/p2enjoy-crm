@@ -2,6 +2,8 @@
 // @spec docs/SPEC-plateforme.md §7.1 (accès), §7.2 (composition) ; docs/DESIGN_SYSTEM.md §5.56, §12.1 (onglets-liens),
 //       §5.8 (états) ; CLAUDE.md §10 — l'écran rend ce que la base consent, il ne décide aucun droit
 // @spec CRM-101 tranche T6 — l'onglet « Utilisateurs », entre « Espaces » et « Superadministrateurs » (arbitrage A6)
+// @spec CRM-103 tranche T2 — l'onglet « Connecteur MCP », en dernier, et la fiche d'un utilisateur sous lui
+//       (docs/SPEC-mcp.md §8.1, docs/DESIGN_SYSTEM.md §5.56)
 //
 // L'adresse ouverte sans le drapeau rend l'état de refus, et AUCUNE lecture métier ne part : la base refuserait de
 // toute façon chaque fonction de la plateforme, et c'est elle qui fait foi.
@@ -17,22 +19,26 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 import {
 	CHEMIN_PLATEFORME_ESPACES,
 	CHEMIN_PLATEFORME_JOURNAL,
+	CHEMIN_PLATEFORME_MCP,
 	CHEMIN_PLATEFORME_SUPERADMINS,
 	CHEMIN_PLATEFORME_UTILISATEURS,
 } from './chemins'
 import { PlateformeEspace } from './PlateformeEspace'
 import { PlateformeEspaces } from './PlateformeEspaces'
 import { PlateformeJournal } from './PlateformeJournal'
+import { PlateformeMcp } from './PlateformeMcp'
+import { PlateformeMcpCompte } from './PlateformeMcpCompte'
 import { PlateformeSuperadmins } from './PlateformeSuperadmins'
 import { PlateformeUtilisateurs } from './PlateformeUtilisateurs'
 
-export type VuePlateforme = 'espaces' | 'espace' | 'utilisateurs' | 'superadmins' | 'journal'
+export type VuePlateforme = 'espaces' | 'espace' | 'utilisateurs' | 'superadmins' | 'journal' | 'mcp' | 'mcp-compte'
 
 const ONGLETS: readonly { readonly chemin: string; readonly cle: CleTraduction; readonly vues: readonly VuePlateforme[] }[] = [
 	{ chemin: CHEMIN_PLATEFORME_ESPACES, cle: 'platform.tabs.espaces', vues: ['espaces', 'espace'] },
 	{ chemin: CHEMIN_PLATEFORME_UTILISATEURS, cle: 'platform.tabs.utilisateurs', vues: ['utilisateurs'] },
 	{ chemin: CHEMIN_PLATEFORME_SUPERADMINS, cle: 'platform.tabs.superadmins', vues: ['superadmins'] },
 	{ chemin: CHEMIN_PLATEFORME_JOURNAL, cle: 'platform.tabs.journal', vues: ['journal'] },
+	{ chemin: CHEMIN_PLATEFORME_MCP, cle: 'platform.tabs.mcp', vues: ['mcp', 'mcp-compte'] },
 ]
 
 export type ProprietesPlateforme = {
@@ -106,6 +112,8 @@ export function Plateforme({ vue, client = clientCrm }: ProprietesPlateforme) {
 			{vue === 'utilisateurs' && <PlateformeUtilisateurs client={client} />}
 			{vue === 'superadmins' && <PlateformeSuperadmins client={client} />}
 			{vue === 'journal' && <PlateformeJournal client={client} />}
+			{vue === 'mcp' && <PlateformeMcp client={client} />}
+			{vue === 'mcp-compte' && <PlateformeMcpCompte client={client} />}
 		</div>
 	)
 }

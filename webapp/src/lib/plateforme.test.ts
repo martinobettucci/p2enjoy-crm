@@ -3,6 +3,8 @@
 //           (dictionnaire fermé, confirmation par l'identifiant court, attente en suspens, journal paginé)
 // @verifies CRM-101 T6 — docs/SPEC-plateforme.md §6.5 (`plateforme_utilisateurs` : terme nettoyé, borne de 200, rôle
 //           confronté à la liste, connecteur absent rendu `null`)
+// @verifies CRM-103 T2 — docs/SPEC-mcp.md §8.2 (lectures du connecteur, couples envoyés dans l'ordre du §6.1, refus
+//           `droit_invalide` et `issue_invalide` reconnus), §7.1 (issue inconnue rendue `null`)
 
 import { describe, expect, it } from 'vitest'
 import { CLES_APPARTENANCES, compter, detailJournal, libelleActeur, libelleGeste, texteRefus } from '../app/presentation-plateforme'
@@ -16,6 +18,12 @@ import {
 	lireEspaces,
 	lireEstSuperadmin,
 	lireUtilisateurs,
+	lireComptesMcp,
+	lireFicheMcp,
+	lireJournalMcp,
+	poserDroitsMcp,
+	caseMcp,
+	curseurSuivantMcp,
 	rechercheEmissible,
 	roleConnu,
 	type EntreeJournal,
@@ -192,5 +200,81 @@ describe('utilisateurs (T6)', () => {
 				connecteurDerniereActivite: null,
 			},
 		])
+	})
+})
+
+describe('le connecteur MCP (CRM-103 T2)', () => {
+	const repondre = (data: unknown) => () => ({ data, error: null, status: 200 })
+
+	it('reconnaît les deux refus nouveaux par leur code exact', () => {
+		expect(classerRefus(400, 'droit_invalide')).toBe('droit_invalide')
+		expect(classerRefus(400, 'issue_invalide')).toBe('issue_invalide')
+	})
+
+	it('lit les comptes venus au connecteur, et dit un compte sans profil', async () => {
+		const etat = await lireComptesMcp(
+			client(
+				repondre([
+					{ sub: 'u-12', nom: 'Driss Lemoine', email: 'driss@exemple.test', derniere_activite: '2026-10-21T08:30:00Z', espaces_ouverts: 1, superadmin: false, avec_profil: true },
+					{ sub: 'u-x', nom: 'Sans Profil', email: 'x@exemple.test', derniere_activite: '2026-10-21T08:00:00Z', espaces_ouverts: 0, superadmin: false, avec_profil: false },
+				]),
+			),
+		)
+		expect(etat.statut === 'pret' && etat.donnees.map((c) => [c.nom, c.espacesOuverts, c.avecProfil])).toEqual([
+			['Driss Lemoine', 1, true],
+			['Sans Profil', 0, false],
+		])
+	})
+
+	it('lit une fiche : rôle confronté à la liste, cases hors des listes fermées ignorées, valeurs absentes en `null`', async () => {
+		const etat = await lireFicheMcp(
+			client(
+				repondre({
+					sub: 'u-y',
+					nom: 'Yannick Témoin',
+					email: null,
+					avec_profil: true,
+					connecte: false,
+					derniere_activite: null,
+					superadmin: false,
+					espaces: [
+						{ workspace_id: 'w-1', slug: 'p2enjoy', nom: 'P2Enjoy', role: null, droits: [['affaires', 'consulter'], ['finances', 'consulter'], ['affaires', 'purger']] },
+						{ workspace_id: 'w-2', slug: 'atelier', nom: 'Atelier', role: 'viewer', droits: [] },
+					],
+				}),
+			),
+			'u-y',
+		)
+		expect(etat.statut).toBe('pret')
+		if (etat.statut !== 'pret') return
+		expect([etat.donnees.email, etat.donnees.derniereActivite, etat.donnees.connecte]).toEqual([null, null, false])
+		expect([...(etat.donnees.espaces[0]?.droits ?? [])]).toEqual(['affaires:consulter'])
+		expect(etat.donnees.espaces.map((e) => e.role)).toEqual([null, 'viewer'])
+	})
+
+	it('envoie la matrice entière, dans l’ordre des familles puis des actions, et rend le refus par son code', async () => {
+		const appels: Appel[] = []
+		const droits = new Set([caseMcp('messagerie', 'ajouter'), caseMcp('affaires', 'modifier'), caseMcp('affaires', 'consulter'), caseMcp('structure', 'supprimer')])
+		const ok = await poserDroitsMcp(client(() => ({ data: null, error: null, status: 204 }), appels), 'u-y', 'w-1', droits)
+		expect(ok).toEqual({ statut: 'ok', valeur: null })
+		expect(appels[0]).toEqual({
+			nom: 'mcp_poser_droits',
+			args: { p_sub: 'u-y', p_ws: 'w-1', p_droits: [['structure', 'supprimer'], ['affaires', 'consulter'], ['affaires', 'modifier'], ['messagerie', 'ajouter']] },
+		})
+		const refus = await poserDroitsMcp(client(() => ({ data: null, error: { message: 'profil_introuvable' }, status: 404 })), 'u-x', 'w-1', droits)
+		expect(refus).toEqual({ statut: 'refus', refus: 'profil_introuvable' })
+	})
+
+	it('filtre le journal des appels, rend une issue inconnue `null`, et pagine sur une page pleine', async () => {
+		const appels: Appel[] = []
+		const etat = await lireJournalMcp(
+			client(repondre([{ id: 7, nom: 'Driss Lemoine', outil: 'crm_workspace_list', espace_nom: null, issue: 'inconnue', duree_ms: 12, cree_le: '2026-10-21T08:30:00Z' }]), appels),
+			{ sub: 'u-12', issue: 'refus_matrice' },
+		)
+		expect(appels[0]?.args).toEqual({ p_sub: 'u-12', p_issue: 'refus_matrice', p_avant: null, p_limite: 50 })
+		expect(etat.statut === 'pret' && etat.donnees[0]?.issue).toBe(null)
+		expect(curseurSuivantMcp(etat.statut === 'pret' ? etat.donnees : [])).toBe(null)
+		const pleine = Array.from({ length: 50 }, (_, i) => ({ id: 100 - i, nom: '', outil: '', espaceNom: null, issue: null, dureeMs: 0, creeLe: '' }))
+		expect(curseurSuivantMcp(pleine)).toBe(51)
 	})
 })

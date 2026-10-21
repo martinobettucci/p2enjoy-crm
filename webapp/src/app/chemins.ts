@@ -296,6 +296,15 @@ export const CHEMIN_PLATEFORME_ESPACE = '/plateforme/espaces/:slug' as const
 export const CHEMIN_PLATEFORME_UTILISATEURS = '/plateforme/utilisateurs' as const
 export const CHEMIN_PLATEFORME_SUPERADMINS = '/plateforme/superadmins' as const
 export const CHEMIN_PLATEFORME_JOURNAL = '/plateforme/journal' as const
+/** Le connecteur MCP (`CRM-103`, docs/SPEC-mcp.md §8.1) : les comptes, la recherche, le journal des appels. */
+export const CHEMIN_PLATEFORME_MCP = '/plateforme/mcp' as const
+/** La fiche d'un utilisateur pour le connecteur, désigné par son identifiant ; l'espace choisi vit dans `?espace=`. */
+export const CHEMIN_PLATEFORME_MCP_COMPTE = '/plateforme/mcp/:sub' as const
+
+export function cheminFicheMcp(sub: string, espace?: string): string {
+	const base = `${CHEMIN_PLATEFORME_MCP}/${encodeURIComponent(sub)}`
+	return espace === undefined ? base : `${base}?espace=${encodeURIComponent(espace)}`
+}
 
 export function cheminFicheEspace(slug: string): string {
 	return `${CHEMIN_PLATEFORME_ESPACES}/${encodeURIComponent(slug)}`
