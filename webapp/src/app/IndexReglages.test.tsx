@@ -1,0 +1,55 @@
+// @verifies CRM-093 (docs/BACKLOG.md) — tranche T4 : la navigation des réglages ; l'entrée d'un écran REFUSÉ devient un
+//           texte citant son motif, les écrans consultables gardent leur lien
+// @verifies docs/SPEC-droits-interface.md §3 (précision T4), §4 (en lecture : éteinte sans motif ; inconnue : offerte) ;
+//           docs/DESIGN_SYSTEM.md §5.59, §5.10
+
+import { cleanup, render, screen } from '@testing-library/react'
+import { MemoryRouter } from 'react-router'
+import { afterEach, describe, expect, it } from 'vitest'
+import { FournisseurEspace } from './ContexteEspace'
+import { IndexReglages } from './routes'
+import type { Capacite } from '../lib/capacites'
+
+afterEach(cleanup)
+
+function monter(administration: Capacite) {
+	render(
+		<MemoryRouter>
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration, edition: 'permise' } }}>
+				<IndexReglages />
+			</FournisseurEspace>
+		</MemoryRouter>,
+	)
+	return screen.getByTestId('entree-cout-personnel')
+}
+
+describe('la navigation des réglages et la capacité d’administration (CRM-093 T4)', () => {
+	it('refusée : « Coût du personnel » devient un texte qui cite le motif, en tête de la liste', () => {
+		const entree = monter('refusee')
+		const motif = screen.getByTestId('motif-reglages')
+		expect(entree.tagName).not.toBe('A')
+		expect(entree.getAttribute('aria-disabled')).toBe('true')
+		expect(entree.getAttribute('aria-describedby')).toBe(motif.id)
+		expect(motif.textContent).toContain('« Coût du personnel » est réservé aux administrateurs')
+	})
+
+	it('refusée : les écrans consultables en lecture seule gardent leur lien', () => {
+		monter('refusee')
+		for (const nom of [/Arborescence/, /Corbeille/, /Notifications/]) {
+			expect(screen.getByRole('link', { name: nom })).toBeTruthy()
+		}
+	})
+
+	it('en lecture : texte sans motif ; permise ou inconnue : lien, sans motif', () => {
+		const enLecture = monter('en-lecture')
+		expect(enLecture.tagName).not.toBe('A')
+		expect(enLecture.hasAttribute('aria-describedby')).toBe(false)
+		expect(screen.queryByTestId('motif-reglages')).toBeNull()
+		cleanup()
+		for (const administration of ['permise', 'inconnue'] as const) {
+			expect(monter(administration).tagName).toBe('A')
+			expect(screen.queryByTestId('motif-reglages')).toBeNull()
+			cleanup()
+		}
+	})
+})

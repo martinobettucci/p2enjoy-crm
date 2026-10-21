@@ -1,5 +1,7 @@
 // @spec CRM-007 (docs/BACKLOG.md) — routes de premier niveau et leur contenu
 // @spec CRM-075 (docs/BACKLOG.md) — index des réglages et route de l'administration
+// @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : l'entrée « Coût du personnel » devient un texte citant son motif quand
+//       la base refuse l'administration ; docs/SPEC-droits-interface.md §3 (précision T4) ; docs/DESIGN_SYSTEM.md §5.59
 // @spec CRM-076 (docs/BACKLOG.md) — adresse de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec CRM-062 (docs/BACKLOG.md) — route de l'écran des affaires figées (docs/SPEC-relances.md §10.4)
@@ -18,7 +20,9 @@
 import { Link } from 'react-router'
 import { lazy } from 'react'
 import { EtatVide } from '../components/ui/States'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { AccueilDemarrage } from './GuideDemarrage'
+import { useContexteEspace } from './ContexteEspace'
 import { t } from '../i18n'
 import type { CleTraduction } from '../i18n'
 
@@ -332,10 +336,21 @@ export const ROUTES: readonly DescriptionRoute[] = [
  * configuration de l'instance reste tenue par le fichier d'environnement du serveur, ce que la
  * phrase de `CRM-007` disait déjà et qui reste vrai.
  */
+const ID_MOTIF_REGLAGES = 'reglages-lecture-seule'
+
 export function IndexReglages() {
+	// CRM-093 T4 — docs/SPEC-droits-interface.md §3 (précision T4) : seule l'entrée d'un écran REFUSÉ devient un texte.
+	// Les autres écrans d'administration se consultent en lecture seule : leurs entrées restent des liens.
+	const { capacites } = useContexteEspace()
+	const coutRefuse = capacites.administration === 'refusee' || capacites.administration === 'en-lecture'
 	return (
 		<div className="flex flex-col gap-4 max-w-[60ch]">
 			<h2 className="text-h3">{t('admin.settings.index.title')}</h2>
+			{capacites.administration === 'refusee' ? (
+				<MotifLectureSeule id={ID_MOTIF_REGLAGES} data-testid="motif-reglages">
+					{t('rights.readonly.settings')}
+				</MotifLectureSeule>
+			) : null}
 			<ul className="flex flex-col rounded-lg border border-border bg-surface">
 				{/* Le guide vient en PREMIER — `CRM-079`, docs/SPEC-onboarding.md §4.3 : un guide de
 				    démarrage se lit avant les écrans qu'il présente. */}
@@ -446,13 +461,28 @@ export function IndexReglages() {
 				{/* Le coût du personnel — `CRM-098`, docs/SPEC-temps.md §7.4. AVANT la corbeille : c'est un réglage de
 				    l'espace, la corbeille un recours. */}
 				<li>
-					<Link
-						to={CHEMIN_ADMIN_COUT_PERSONNEL}
-						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
-					>
-						<span className="font-medium">{t('admin.settings.index.staffCost')}</span>
-						<span className="text-sm text-text-2">{t('admin.settings.index.staffCost.body')}</span>
-					</Link>
+					{coutRefuse ? (
+						// LE LIEN DEVIENT UN TEXTE, à la même place et sous le même libellé (§5.59) : un lien vers un écran
+						// refusé serait la commande morte du §5.10. Pendant la lecture, aucun motif n'est cité.
+						<div
+							data-testid="entree-cout-personnel"
+							aria-disabled="true"
+							{...(capacites.administration === 'refusee' ? { 'aria-describedby': ID_MOTIF_REGLAGES } : {})}
+							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] rounded-lg text-text-2"
+						>
+							<span className="font-medium">{t('admin.settings.index.staffCost')}</span>
+							<span className="text-sm">{t('admin.settings.index.staffCost.body')}</span>
+						</div>
+					) : (
+						<Link
+							to={CHEMIN_ADMIN_COUT_PERSONNEL}
+							data-testid="entree-cout-personnel"
+							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+						>
+							<span className="font-medium">{t('admin.settings.index.staffCost')}</span>
+							<span className="text-sm text-text-2">{t('admin.settings.index.staffCost.body')}</span>
+						</Link>
+					)}
 				</li>
 				<li>
 					<Link

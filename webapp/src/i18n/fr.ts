@@ -639,6 +639,8 @@ export const fr = {
 		'Vous consultez ces boîtes. La boîte système et celles des autres membres sont configurées par les administrateurs de l’espace : leurs commandes restent visibles mais sont inactives. Votre propre boîte reste configurable.',
 	'rights.readonly.mail.identities':
 		'Vous consultez ces identités. L’identité de service et celles des autres membres sont configurées par les administrateurs de l’espace : leurs commandes restent visibles mais sont inactives. Vos propres identités restent configurables.',
+	'rights.readonly.settings':
+		'Vous consultez les réglages. « Coût du personnel » est réservé aux administrateurs de l’espace : son entrée reste visible mais inactive.',
 	'goals.readonly.notice':
 		'Vous consultez ce tableau. Vous n’avez pas le droit d’y écrire : les commandes de modification restent visibles mais sont inactives.',
 	// LA FICHE A SA PROPRE PHRASE, plus courte : elle REMPLACE la consigne d'édition, qui serait
