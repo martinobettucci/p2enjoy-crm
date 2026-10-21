@@ -1417,7 +1417,12 @@ SCENARIOS_API=1135
 # souris, clavier seul, journée en heures, ajout d'une affaire, « Saisir pour », navigation, quatre paliers ;
 # `cout-personnel.spec.ts`, **5** — rapport d'un membre, « Toute l'équipe », série « Personnel » et fiche,
 # réglages du coût, refus d'un membre. 801 + 5 + 7 + 5 = 818, valeur COMPTÉE — « Total: 818 tests in 67 files ».
-SCENARIOS_UI=818
+# **850 depuis `CRM-093` tranche T5, 2026-10-21** (décision 628) : quatre fichiers NEUFS, dont trois livrés sans réviser ce
+# compteur — `plateforme.spec.ts` de `CRM-101`, **5** ; `connecteur-mcp.spec.ts` de `CRM-102`, **8** ;
+# `infobulle-description.spec.ts` de `CRM-105`, **13** — et `droits-interface.spec.ts` de `CRM-093`, **6** : la
+# lectrice (familles A, E, C éteintes avec leur motif, « Prospection » rouvert, le clavier, les réglages, 390 px), le
+# business developer, l'administratrice. 818 + 5 + 8 + 13 + 6 = 850, valeur COMPTÉE — « Total: 850 tests in 71 files ».
+SCENARIOS_UI=850
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

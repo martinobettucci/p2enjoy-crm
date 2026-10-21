@@ -26,6 +26,7 @@
 | 1 bis | Le guide de démarrage : par où commencer | `CRM-079`, `CRM-094` | **Livré et vérifié** — voir le chapitre 1 *bis*. **Six** étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise ; le workflow y précède le channel. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Depuis `CRM-094`, un administrateur y **crée le workflow de départ en un geste**, et le guide le **suit sur toutes les pages** sous forme de pastille (§1 bis.4 et §1 bis.5). Pour le reste, il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
 | 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
 | 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
+| 3.6 | Les commandes grisées : ce que votre rôle vous laisse faire | `CRM-093` | **Livré en développement** — voir la section 3.6. Une commande que le serveur vous refuserait reste à sa place, grisée, et un bandeau dit pourquoi : administrer l'espace, éditer le carnet et les modèles, travailler une affaire sur un onglet où vous écrivez. Vos préférences, vos propres boîtes et la saisie de votre temps ne sont jamais grisées. Le serveur reste la seule règle |
 | 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Il **se rattache à une affaire** depuis sa fiche (sous-tranche 4h) : le bouton « Rattacher à une affaire » vit dans le bloc des affaires, et il **s'en détache** depuis la même page (sous-tranche 4i), chaque ligne du tableau portant sa commande. Le **rôle** d'un rattachement **se corrige** depuis la même page (sous-tranche 4j) : un bouton « Modifier le rôle » par ligne, et vider le champ efface le rôle sans défaire le lien. Ce qui manque est dit : aucune suppression d'un contact, aucune création d'organisation, aucune recherche |
 | 3 quater | Ma journée : ce qui est en retard, ce qui est dû aujourd'hui | `CRM-061` | **Livré en LECTURE, vérifié visuellement** — voir la section 3 *quater*. L'entrée « Ma journée » rassemble les affaires à échéance de tout l'espace, en trois sections : **En retard** (sans limite d'ancienneté), **Aujourd'hui** (dans le fuseau de votre appareil) et **À venir** (sept jours, horizon non réglable). Deux portées, dont le choix vit dans l'adresse : vos affaires, ou tout ce que vos droits vous laissent lire. Les affaires archivées, à la corbeille et **en sommeil** en sont absentes. Ce qui manque est dit : l'écran **lit** et n'écrit pas — reporter une échéance reste le geste de l'en-tête de la fiche —, il n'est ni un agenda, ni la liste des relances |
 
@@ -235,7 +236,8 @@ n'ont donc pas nécessairement le même guide — un compte en lecture seule peu
 de réception là où l'espace en porte trois, et sa dernière étape restera « à faire ». Ce n'est pas
 un défaut d'affichage : ce sont ses droits, et le guide ne prétend jamais les contourner.
 
-Aucun lien n'est jamais éteint, quel que soit votre rôle. Les écrans vers lesquels le guide renvoie
+Si vous n'administrez pas l'espace, les liens du guide vers un geste d'administration deviennent un texte
+grisé, et un bandeau en tête de la liste dit pourquoi (section 3.6). Les écrans vers lesquels le guide renvoie
 portent eux-mêmes leurs refus, et c'est là que vous les rencontrerez, expliqués.
 
 Lorsqu'une étape **n'a pas pu être mesurée** — une coupure réseau, une session expirée —, sa ligne
@@ -474,8 +476,8 @@ ne change rien à ce sur quoi elle travaille.
 
 **Pourquoi « Rien n'a été modifié » ne dit pas pourquoi.** Deux situations donnent exactement la
 même réponse du serveur, et le produit ne peut pas les distinguer : soit votre rôle ne vous permet
-pas de modifier ce contact — un compte en **lecture seule** voit le bouton et le formulaire, comme
-partout, et c'est le serveur qui refuse —, soit le contact a été supprimé entre le moment où vous
+pas de modifier ce contact — d'ordinaire, « Modifier » est alors grisé (section 3.6) ; ce message ne paraît
+que si vos droits ont changé entre-temps ou n'ont pas pu être lus —, soit le contact a été supprimé entre le moment où vous
 avez ouvert sa fiche et celui où vous avez enregistré. Le message ne tranche donc pas, et vous
 invite à **recharger la fiche** : son état actuel répondra à la question. Le formulaire reste
 ouvert et votre saisie est intacte, pour que vous ne perdiez rien.
@@ -507,9 +509,9 @@ vérifiez que le geste a abouti.
 
 **Si rien n'a été supprimé, l'écran le dit.** Vous restez sur la fiche, elle est relue, et un
 message vous annonce qu'« aucun contact n'a été supprimé ». Deux causes mènent là et le produit ne
-peut pas les distinguer : soit vous n'avez pas le droit de supprimer ce contact — un compte en
-**lecture seule** voit le bouton et la confirmation, comme partout, et c'est le serveur qui refuse
-—, soit le contact avait déjà été supprimé. La fiche relue répond à la question.
+peut pas les distinguer : soit vous n'avez pas le droit de supprimer ce contact — d'ordinaire, le
+bouton est alors grisé (section 3.6) ; ce message ne paraît que si vos droits ont changé entre-temps
+ou n'ont pas pu être lus —, soit le contact avait déjà été supprimé. La fiche relue répond à la question.
 
 **La suppression est définitive : il n'y a pas de corbeille pour les contacts.** Les affaires en
 ont une (chapitre 5 *ter*), les contacts n'en ont pas. Recréer un contact supprimé est possible,
@@ -646,9 +648,9 @@ page ne se recharge.
   quelle que soit la casse ;
 - *« Cette organisation n'existe plus »* — la liste que vous aviez sous les yeux a vieilli ;
   relisez-la et choisissez-en une autre ;
-- *« Votre rôle ne permet pas de créer un contact »* — un compte en **lecture seule** voit le
-  bouton et le formulaire, comme partout dans le produit, et c'est le serveur qui refuse. Rien
-  n'est grisé d'avance.
+- *« Votre rôle ne permet pas de créer un contact »* — d'ordinaire, « Nouveau contact » est grisé
+  pour un compte qui ne peut pas créer (section 3.6) ; ce message ne paraît que si vos droits ont
+  changé entre-temps ou n'ont pas pu être lus. Le serveur reste la règle.
 
 **Ce que ce formulaire ne fait pas**, et c'est dit plutôt que caché : il ne **supprime** pas un
 contact existant et il ne crée pas d'organisation ; il n'existe que sur le carnet — ni depuis la
@@ -825,6 +827,42 @@ L'application s'utilise entièrement au clavier :
 
 En cas de panne du serveur, l'application **réessaie trois fois** avant d'afficher l'erreur : le
 message peut donc mettre quelques secondes à apparaître.
+
+### 3.6 Les commandes grisées : ce que votre rôle vous laisse faire
+
+Le produit ne vous propose pas un geste que le serveur vous refuserait. Une commande que vous ne pouvez
+pas utiliser **reste à sa place, grisée**, et un **bandeau** — une icône en forme d'œil sur fond gris
+clair — dit en tête du bloc pourquoi : « Vous consultez … : les commandes restent visibles mais sont
+inactives. » Un seul bandeau par bloc ; chaque commande grisée y renvoie, et un lecteur d'écran le lit
+quand elle a le focus.
+
+Trois choses décident de ce que vous pouvez faire, et le serveur les mesure pour vous :
+
+| Ce que vous voulez faire | Il faut | Exemples |
+|---|---|---|
+| Administrer l'espace | être **administrateur** de l'espace | l'arborescence, les workflows, le catalogue, les budgets, le coût du personnel, la boîte système |
+| Éditer le carnet et les modèles | être administrateur ou **business developer** | créer ou modifier un contact, un modèle d'email, une séquence de relance |
+| Travailler une affaire | pouvoir **écrire sur son onglet** | créer, modifier, déplacer, endormir une affaire ; ses contacts, ses coûts, ses commentaires, ses envois |
+
+Le troisième dépend des **accès par track et par channel** (chapitre 3.2 *quater*) : un business
+developer peut être limité à la lecture sur un onglet, et une personne en lecture seule peut être
+rouverte en écriture sur un autre. Le produit suit exactement ces accès, onglet par onglet.
+
+**Ce qui n'est jamais grisé** : ce qui ne regarde que vous — vos préférences de notifications, votre
+propre boîte de réception et vos propres identités d'expédition, la saisie de votre temps.
+
+**Juste après l'ouverture d'un écran**, le temps que vos droits soient lus, les commandes peuvent être
+grisées un instant **sans bandeau** : rien n'est encore dit, rien n'est refusé. Si vos droits ne peuvent
+pas être lus — une coupure réseau —, les commandes restent offertes, et c'est la réponse du serveur
+qui s'affiche si vous tentez un geste.
+
+**Le serveur reste la seule règle.** Griser une commande aide à ne pas tenter un geste voué au refus ;
+cela ne protège rien à soi seul. Si vos droits changent pendant que vous travaillez, le serveur refuse,
+et l'écran affiche son refus.
+
+Dans **Réglages**, l'entrée « Coût du personnel » devient un texte grisé si vous n'administrez pas
+l'espace : son écran vous serait refusé. Les autres écrans d'administration restent ouverts **en
+lecture** : vous y voyez la configuration, commandes grisées.
 
 ---
 
@@ -1154,8 +1192,8 @@ refuse, plutôt que de faire disparaître une colonne du tableau sous les affair
   masque les affaires comme elle masque l'onglet, et un accès `Membre` posé sur un onglet les rouvre
   même si le track est fermé.
 - **Créer et modifier** une affaire suppose le droit d'**écriture** sur l'onglet. Une personne en
-  lecture seule voit les affaires et ne peut pas les toucher — et sa tentative ne produit aucun
-  message d'erreur : la modification n'a simplement aucun effet.
+  lecture seule voit les affaires et ne peut pas les toucher : les commandes sont grisées, et un
+  bandeau en tête de l'onglet et de la fiche dit pourquoi (section 3.6).
 - **Déplacer** une affaire vers un onglet où vous n'avez pas le droit d'écrire est refusé, même si
   vous aviez le droit d'écrire là où elle se trouvait.
 
@@ -1382,9 +1420,9 @@ de la retirer.
 | « Aucune modification : votre compte ne peut pas écrire dans cette affaire. » | Votre compte lit l'affaire mais n'a pas le droit d'y écrire. **Rien n'a changé** |
 | « Votre compte n'a pas le droit de retirer cette affaire. » | Le serveur a refusé explicitement |
 
-**Le bouton reste offert même si votre compte ne peut pas aboutir**, et c'est voulu : la règle est
-celle du serveur, qui peut changer entre le moment où vous ouvrez la fiche et celui où vous cliquez.
-Un bouton éteint par l'écran ferait passer une règle du serveur pour une décision d'affichage.
+**Le bouton est grisé si vous ne pouvez pas écrire sur l'onglet**, et la fiche dit pourquoi
+(section 3.6). La règle reste celle du serveur : si vos droits changent entre l'ouverture de la fiche
+et le clic, c'est sa réponse, ci-dessus, qui s'affiche.
 
 **Qui peut le faire.** Toute personne ayant le droit d'**écrire** sur l'onglet de l'affaire — ce
 n'est pas réservé à une administratrice, contrairement au retrait d'un track ou d'un channel. Une
@@ -1569,9 +1607,10 @@ L'**échéance libre**, elle, ne se saisit que depuis la fiche : une carte de ta
 pour un champ de date. Sur une affaire endormie que la case « Afficher les affaires en sommeil »
 ramène, ce même menu porte **Réveiller** à la place des quatre échéances.
 
-Si le serveur refuse — vous lisez cette affaire sans avoir le droit de l'écrire —, **le menu reste
-ouvert** et la raison s'affiche dessous, mot pour mot celle de la fiche. Le geste n'est jamais
-éteint d'avance : c'est le serveur qui décide, jamais l'écran.
+Quand vous lisez cette affaire sans avoir le droit de l'écrire, le geste est grisé et un bandeau
+en tête de l'onglet dit pourquoi (section 3.6). Si le serveur refuse malgré tout — vos droits ont
+changé entre-temps —, **le menu reste ouvert** et la raison s'affiche dessous, mot pour mot celle de
+la fiche.
 
 Une échéance **déjà passée** est refusée, et le message le dit sous le champ sans effacer votre
 saisie. Une affaire peut être **à la fois archivée et endormie** : les deux mentions coexistent, car
@@ -1851,8 +1890,9 @@ on configure une boîte avant d'en superviser la relève.
   vous pouvez créer — la vôtre si vous n'en avez pas encore, et la boîte système de l'espace de
   travail. Choisir une boîte déjà déclarée remplit le formulaire de ses valeurs.
 - **La boîte système et celle d'un collègue sont réservées à une administratrice ou un
-  administrateur.** L'option reste proposée à tout le monde, et le produit vous répond en toutes
-  lettres si vous n'en avez pas le droit : un bouton grisé ne dirait pas pourquoi.
+  administrateur.** L'option reste proposée à tout le monde ; si vous n'administrez pas l'espace,
+  « Configurer » et « Enregistrer » sont grisés sur ces boîtes, et un bandeau en tête de l'écran dit
+  pourquoi. Votre propre boîte reste configurable (section 3.6).
 - **Le mot de passe est toujours vide à l'ouverture, et il n'est jamais affiché.** Le laisser vide
   **conserve** celui qui est enregistré ; le remplir le **remplace**. Sur une boîte qui n'existe
   pas encore, il est obligatoire — sans lui, aucune connexion ne serait possible.
@@ -1909,8 +1949,9 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
 - **Choisissez d'abord l'identité visée.** La liste propose celles que vous voyez, plus deux
   entrées pour en déclarer une nouvelle : la vôtre, ou celle de service de l'espace de travail.
 - **L'identité de service et celle d'un collègue sont réservées à une administratrice ou un
-  administrateur.** L'entrée reste proposée à tout le monde, et le produit vous répond en toutes
-  lettres si vous n'en avez pas le droit : un bouton grisé ne dirait pas pourquoi.
+  administrateur.** L'entrée reste proposée à tout le monde ; si vous n'administrez pas l'espace,
+  « Configurer » et « Enregistrer » sont grisés sur ces identités, et un bandeau en tête de l'écran
+  dit pourquoi. Vos propres identités restent configurables (section 3.6).
 - **ATTENTION — changer l'adresse d'expédition ne renomme pas une identité : cela en déclare une
   seconde**, et la première demeure. L'adresse fait partie de ce qui identifie la configuration, au
   même titre que son propriétaire. L'écran vous le rappelle sous le champ, et la liste relue vous
@@ -2046,7 +2087,8 @@ C'est une **suggestion, pas une décision** :
 - « Classer dans une affaire » reste offert à côté, et propose **toutes** les affaires : une
   suggestion peut désigner la mauvaise, et vous gardez le dernier mot ;
 - elle ne vous donne **aucun droit de plus**. Si vous n'avez pas le droit d'écrire sur l'affaire
-  proposée, le geste est refusé, exactement comme un rangement à la main ;
+  proposée, « Classer ici » est grisé et l'encadré dit pourquoi ; vous pouvez la consulter, ou
+  ranger le message ailleurs ;
 - elle n'apparaît que si vous **pouvez voir** l'affaire suggérée. Sinon, l'encadré n'est pas
   affiché du tout : le produit ne nomme jamais une affaire qui ne vous est pas ouverte ;
 - elle est calculée **à l'arrivée du message** et n'est plus recalculée ensuite. Rattacher le
@@ -2097,9 +2139,9 @@ demande d'abord confirmation. La confirmation dit deux choses, et elles comptent
   est plus ouvert, et c'est à une personne qui suit la boîte de le ranger de nouveau. La phrase
   vous le dit **avant** le geste, jamais après.
 
-« Annuler » referme sans rien envoyer. La commande est proposée à tout le monde : c'est le serveur
-qui décide, et s'il refuse, l'écran vous l'écrit sous la confirmation plutôt que de vous priver
-d'essayer.
+« Annuler » referme sans rien envoyer. Si vous ne pouvez pas modifier l'affaire où le message est
+rangé, la commande est grisée et un bandeau dit pourquoi (section 3.6). Le serveur reste la règle :
+s'il refuse malgré tout, l'écran vous l'écrit sous la confirmation.
 
 **L'affaire garde la mémoire des deux faits.** Dans l'historique de l'affaire, la ligne
 « Message reçu » **reste** — le courrier y est bien arrivé, et le produit ne réécrit pas ce qui a
@@ -2587,8 +2629,8 @@ texte d'aide s'il en porte un.
   supprimée. Une question archivée reste dans la liste, marquée « Archivé », et le bouton de
   restauration la remet en place.
 
-Comme partout ailleurs, l'écran ne décide d'aucun droit : si vous n'êtes pas administrateur de
-l'espace de travail, l'enregistrement est refusé par le serveur et l'écran vous le dit.
+Si vous n'êtes pas administrateur de l'espace de travail, les commandes de l'éditeur sont grisées et
+un bandeau dit pourquoi (section 3.6) ; le serveur refuse de toute façon l'enregistrement.
 
 ### 5 bis.4 bis La visibilité des questions, étape par étape
 
@@ -2752,8 +2794,8 @@ et son caractère par défaut. Ce sont son identité et son placement, pas sa co
 devenue surnuméraire est **archivée**, jamais supprimée : les réponses déjà saisies sont conservées.
 
 **Qui peut le faire.** Publier, prévoir et restaurer sont réservés aux **administrateurs** de
-l'espace de travail. Les commandes restent visibles pour tout le monde — c'est le serveur qui
-refuse, et l'écran affiche son refus plutôt que de faire disparaître un bouton.
+l'espace de travail. Les commandes restent visibles pour tout le monde, grisées pour qui n'administre
+pas l'espace, avec un bandeau qui dit pourquoi (section 3.6) ; le serveur refuse de toute façon.
 
 ### 5 bis.7 Ce qui n'est pas encore là, côté versions
 
@@ -2793,6 +2835,11 @@ Trois réponses sont possibles, et l'écran les distingue :
 | La ligne disparaît, un message confirme | L'objet est rendu, exactement dans l'état où il était |
 | « Son parent est lui-même en corbeille : restaurez-le d'abord. » | Le rendre seul l'aurait rendu **à un endroit invisible** — un channel dans un track retiré, une affaire dans un channel retiré |
 | « Rien n'a été restauré : cet objet n'est plus modifiable avec votre compte. » | Votre compte n'a pas le droit d'écrire sur cet objet. **Rien n'a changé** |
+
+**« Restaurer » est grisé quand vous ne pouvez pas le faire** (section 3.6) : un track ou un channel se restaure
+par un administrateur de l'espace, une affaire par qui peut écrire sur son onglet. Un bandeau en tête du
+tableau dit lequel des deux cas vous concerne. Le message « Rien n'a été restauré » ne paraît plus que si
+vos droits ont changé entre-temps ou n'ont pas pu être lus.
 
 **La deuxième réponse est une règle du serveur, pas une précaution de l'écran** : elle vaut aussi
 pour un script ou une intégration qui tenterait la même chose.
@@ -3532,7 +3579,8 @@ qui rend une section par personne.
 
 ### 5 undecies.5 Régler le coût du personnel
 
-Dans **Réglages ▸ « Coût du personnel »**, réservé aux administrateurs, chaque personne a sa carte : son coût en
+Dans **Réglages ▸ « Coût du personnel »**, réservé aux administrateurs — pour les autres, l'entrée des
+réglages est un texte grisé (section 3.6) —, chaque personne a sa carte : son coût en
 vigueur, sa prochaine version s'il y en a une. **« Nouvelle version »** fixe un coût par quart, une devise et une date
 d'effet : augmenter quelqu'un, c'est créer une version, qui vaut à partir de sa date. Une version ne se modifie jamais ;
 une date d'effet n'est jamais passée, sauf pour la toute première version d'une personne, qui peut valoriser du temps

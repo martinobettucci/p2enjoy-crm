@@ -13,6 +13,28 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-093` — l'interface n'offre plus les gestes que le serveur refuse (décision 628)
+
+*Migrations `0091` et `0092` ; webapp. Prouvé en développement ; à livrer (`docs/PROD_MIGRATIONS.md`, lignes 91 et 92).*
+
+- **Trois capacités lues sur la ligne que la base rend**, par les fonctions mêmes de la RLS : écrire sur un channel ou
+  une affaire (`ecriture_permise`), administrer l'espace (`administration_permise`), éditer le carnet et les modèles
+  (`edition_permise`). Aucun rôle n'est lu par l'écran pour éteindre une commande ; les droits fins par track et par
+  channel sont suivis.
+- **Une commande refusée reste à sa place, désactivée et lisible**, et un bandeau neutre (`MotifLectureSeule`) dit en
+  tête du bloc pourquoi ; chaque commande y renvoie par `aria-describedby`. Pendant la lecture des droits : éteinte
+  sans motif. Droits illisibles : offerte, le serveur répond.
+- **Écrans couverts** : carnet, fiche et suppression de contact ; modèles et séquences ; arborescence, formulaire de
+  channel, workflows, versions, catalogue, budgets et occurrences ; guide de démarrage ; board, liste, « Nouvelle
+  affaire », « Nouveau channel » ; la fiche d'une affaire et tous ses blocs ; coût du personnel ; corbeille (par
+  ligne) ; inbox (suggestion, retrait) ; comptes entrants et identités mail (la sienne reste offerte) ; navigation des
+  réglages (« Coût du personnel » devient un texte).
+- **Correctif INC-279** : dix-sept commandes rallumées par un `disabled` posé après la capacité ; gardé par
+  `commandes-refusees.test.ts`.
+- **Preuves** : pgTAP `0086` (29), API `droits-interface.spec.ts` (5), unitaires (3 981 au total), E2E par rôle
+  `e2e/ui/droits-interface.spec.ts` (6, vu rouge sous mutation), captures `docs/captures/CRM-093/` observées ; manuel,
+  section 3.6.
+
 ### `CRM-103` T1 — l'administration du connecteur MCP, en base (décision 627, A5 et D9)
 
 *Migration `0094`. L'écran qui s'en sert vient avec la tranche T2.*

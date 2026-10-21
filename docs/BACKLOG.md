@@ -14705,8 +14705,12 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       **133 fichiers, 3 977 tests** verts ; chaque lot vu échouer sous mutation. Reste : E2E par rôle (T5).
       **INC-279** (journal) : dix-sept `disabled` posés après `{...droit}` rallumaient une commande refusée ; composés
       avec la capacité, gardés par `commandes-refusees.test.ts` (vu rouge sur les dix-sept, puis vert).
-- [ ] **T5** — preuves E2E par rôle (lectrice, business developer, administratrice ; Farida rouverte sur
+- [~] **T5** — preuves E2E par rôle (lectrice, business developer, administratrice ; Farida rouverte sur
       « prospection »), captures observées, `docs/manual.md`, seed, campagnes.
+      Mesuré le 2026-10-21 : `e2e/ui/droits-interface.spec.ts` **6/6** (vu rouge sous la mutation « refusée n'éteint
+      rien ») ; captures `docs/captures/CRM-093/` observées (1440 et 390 px) ; manuel section 3.6 et douze passages
+      corrigés, `verify-manual.sh` **212 contrôles** ; seed inchangé (la lectrice rouverte y est) ; `SCENARIOS_UI` 850.
+      Reste : la campagne complète `verify-webapp.sh`.
 - [ ] **T6** — livraison en production (migrations 91 et 92), constat.
 
 ### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[x]`
