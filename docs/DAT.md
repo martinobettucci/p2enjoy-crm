@@ -984,6 +984,31 @@ cette lecture d'un téléchargement du portefeuille, que `CLAUDE.md` §21 interd
 croît. La pagination n'est donc pas due ici ; elle le deviendrait si un espace de travail portait
 des centaines de channels.
 
+## 7 quater. Les capacités lues par l'interface — composants et flux (`CRM-093`)
+
+*Décision 628 ; `docs/SPEC-droits-interface.md` ; migrations 91 et 92 ; `docs/DESIGN_SYSTEM.md` §5.59.*
+
+**Le principe.** L'interface ne déduit jamais un droit d'un rôle. Elle lit des **capacités** que la base calcule avec
+les fonctions mêmes de la RLS, sur la ligne qu'elle rend : `ecriture_permise` de `channels` et de `cards`
+(`app.can_write_channel`, droits fins compris), `administration_permise` et `edition_permise` de `workspaces`. Les
+quatre sont des colonnes calculées `stable` et **`security invoker`** : une ligne que la RLS ne rend pas n'apprend
+rien de plus. La règle reste la politique ; la colonne n'est qu'une aide d'affichage.
+
+**Les composants.** `webapp/src/lib/capacites.ts` porte les quatre états (`permise`, `refusee`, `en-lecture`,
+`inconnue`), les lectures (l'espace par la coquille, une ligne, une lecture groupée pour la corbeille) et
+`proprietesCommande`. La coquille fournit les capacités de l'espace par `ContexteEspace` ; un écran de channel ou
+d'affaire lit la sienne et la fournit à ses blocs par `FournisseurRefus` / `useRefus`. `MotifLectureSeule` rend le
+motif une fois par bloc.
+
+**Les flux.** Chaque capacité est une requête **à part** de la lecture de l'écran : une colonne absente — un cache de
+schéma périmé après une livraison partielle — ne fait tomber que l'aide, jamais l'écran. Une capacité illisible est
+`inconnue` et laisse la commande offerte : le serveur répond.
+
+**Compromis connus.** Une requête de plus par écran de channel ou d'affaire, et une par corbeille. Le refus serveur
+reste la seule garantie (`CLAUDE.md` §10) : une capacité lue au chargement peut avoir changé au moment du clic, et
+l'écran traduit alors le refus comme avant. Garde de source : `commandes-refusees.test.ts` (INC-279) interdit qu'un
+`disabled` posé après la capacité ne la rallume.
+
 ## 8. Chiffrement des secrets
 
 Les mots de passe IMAP/SMTP sont chiffrés via **Supabase Vault** : l'application ne stocke
