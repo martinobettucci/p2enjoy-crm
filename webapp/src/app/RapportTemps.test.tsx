@@ -6,7 +6,7 @@
 
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { FournisseurEspace } from './ContexteEspace'
 import { CelluleCout, RapportTemps, lireMois, montantsEnMots } from './RapportTemps'
 import { ReglagesCoutPersonnel } from './ReglagesCoutPersonnel'
@@ -104,14 +104,45 @@ describe('la série « Personnel » de l’affaire', () => {
 })
 
 describe('les réglages du coût du personnel', () => {
-	it('sont refusés à un membre, qui est renvoyé à son rapport', () => {
+	it('sont refusés quand la base refuse l’administration de l’espace, qui renvoie au rapport', () => {
 		render(
-			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false }}>
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration: 'refusee', edition: 'permise' } }}>
 				<ReglagesCoutPersonnel client={clientFactice([])} aujourdhui="2026-10-11" />
 			</FournisseurEspace>,
 		)
 		expect(screen.getByRole('heading', { name: 'Réservé aux administrateurs' })).toBeTruthy()
 		expect(screen.queryByTestId('cout-personnel')).toBeNull()
+	})
+	it('lisent la capacité, pas le rôle : un rôle lu « admin » ne rouvre pas un refus de la base (CRM-093)', () => {
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: true, capacites: { administration: 'refusee', edition: 'permise' } }}>
+				<ReglagesCoutPersonnel client={clientFactice([])} aujourdhui="2026-10-11" />
+			</FournisseurEspace>,
+		)
+		expect(screen.getByRole('heading', { name: 'Réservé aux administrateurs' })).toBeTruthy()
+	})
+	it('ne disent aucun refus pendant la lecture de la capacité, ni sur une capacité inconnue (CRM-093 §4)', async () => {
+		const client = clientFactice([], {
+			workspace_members: [{ user_id: 'p1', profiles: { id: 'p1', full_name: 'Driss Lemoine' } }],
+			saisies_temps: [],
+			couts_personnel: [],
+		})
+		const requetes = vi.spyOn(client, 'from')
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration: 'en-lecture', edition: 'en-lecture' } }}>
+				<ReglagesCoutPersonnel client={client} aujourdhui="2026-10-11" />
+			</FournisseurEspace>,
+		)
+		expect(screen.queryByRole('heading', { name: 'Réservé aux administrateurs' })).toBeNull()
+		expect(screen.queryByTestId('cout-personne')).toBeNull()
+		expect(requetes, 'rien n’est lu tant que la capacité ne l’est pas').not.toHaveBeenCalled()
+		cleanup()
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false }}>
+				<ReglagesCoutPersonnel client={client} aujourdhui="2026-10-11" />
+			</FournisseurEspace>,
+		)
+		expect((await screen.findByTestId('cout-personne')).textContent).toContain('Driss Lemoine')
 	})
 	it('montrent à un administrateur le coût en vigueur et la prochaine version de chacun', async () => {
 		render(

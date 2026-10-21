@@ -3,6 +3,9 @@
 //       programmée se retire), §5.2 (administrateurs seuls, règle tenue en base), §7.4 (la liste des personnes, le coût
 //       en vigueur, la prochaine version, l'ajout, l'historique, le retrait d'une version programmée) ;
 //       docs/DESIGN_SYSTEM.md §5.54 (une carte par personne), §5.13 (confirmation en ligne), §5.7, §5.8, §8
+// @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : la garde de l'écran lit la capacité d'administration rendue par la
+//       base sur la ligne de l'espace, plus le rôle ; docs/SPEC-droits-interface.md §4 (les états), §5 (« Coût du
+//       personnel » : A) ; docs/DESIGN_SYSTEM.md §5.29 ter, §5.59
 //
 // L'écran reflète les règles sans les tenir : la date minimale du formulaire et l'absence de corbeille sur une version
 // en vigueur sont des aides, la base refuse de toute façon et l'écran dit son refus.
@@ -53,13 +56,15 @@ type Donnees = { readonly personnes: readonly Personne[]; readonly versions: rea
 export type ProprietesReglagesCoutPersonnel = { readonly client?: ClientCrm | null; readonly aujourdhui?: string }
 
 export function ReglagesCoutPersonnel({ client = clientCrm, aujourdhui = jourLocal(new Date()) }: ProprietesReglagesCoutPersonnel = {}) {
-	const { idWorkspace, estAdmin } = useContexteEspace()
+	const { idWorkspace, capacites } = useContexteEspace()
+	// Seul un refus su ferme l'écran ; une capacité inconnue laisse lire, et la base répond de ce qu'elle rend (§4).
+	const administration = capacites.administration
 	const [etat, setEtat] = useState<EtatAsync<Donnees>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	const [annonce, setAnnonce] = useState('')
 
 	useEffect(() => {
-		if (client === null || idWorkspace === null || !estAdmin) return
+		if (client === null || idWorkspace === null || administration === 'refusee' || administration === 'en-lecture') return
 		let courant = true
 		setEtat(enChargement)
 		void Promise.all([lirePersonnes(client, idWorkspace), lireVersions(client, idWorkspace)]).then(([personnes, versions]) => {
@@ -71,14 +76,14 @@ export function ReglagesCoutPersonnel({ client = clientCrm, aujourdhui = jourLoc
 		return () => {
 			courant = false
 		}
-	}, [client, idWorkspace, estAdmin, tentative])
+	}, [client, idWorkspace, administration, tentative])
 
 	const recharger = useCallback(() => setTentative((n) => n + 1), [])
 
 	if (client === null || idWorkspace === null) {
 		return <EtatVide titre={t('time.noworkspace.title')} corps={t('staffCost.noworkspace.body')} />
 	}
-	if (!estAdmin) {
+	if (administration === 'refusee') {
 		return <EtatRefus titre={t('staffCost.forbidden.title')} corps={t('staffCost.forbidden.body')} />
 	}
 
