@@ -339,7 +339,7 @@ function FormulaireCout({
 
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || !complet || enCours}>
 					{creation ? t('card.costs.action.add') : t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -381,7 +381,7 @@ function ConfirmationSuppression({
 			<p className="text-sm text-text-2">{t('card.costs.delete.body')}</p>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button {...droit} ref={premier} variante="destructif" disabled={enCours} onClick={onConfirmer}>
+				<Button {...droit} ref={premier} variante="destructif" disabled={droit.disabled === true || enCours} onClick={onConfirmer}>
 					{t('card.costs.delete.action')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>

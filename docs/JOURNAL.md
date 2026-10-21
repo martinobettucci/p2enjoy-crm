@@ -32076,3 +32076,17 @@ un droit pour un compte sans profil, ni comment valider une matrice reçue.
 - **La suite `0085` affirmait qu'un compte retiré du connecteur perd sa matrice.** Depuis D9, c'est faux par
   construction. L'assertion est révisée : le compte retiré garde sa matrice, et c'est le profil retiré qui l'emporte.
   Deux preuves sont ajoutées : la cascade du profil, et le refus d'un droit sans profil.
+
+### INC-279 — une commande refusée rallumée par le `disabled` qui la suit (`CRM-093` T2 à T4)
+
+*2026-10-21.* **Problème.** En JSX, l'attribut écrit le dernier gagne. `<Button {...droit} disabled={enCours}>` efface la
+désactivation que la capacité vient de poser : la commande se rallume dès que rien n'est en vol. **Observation.** En
+préparant les E2E de T5, la ligne « Créer » de `NouvelleAffaire.tsx` l'a montré ; un relevé de source en a trouvé
+**dix-sept**, dans les workflows (7), les budgets du track (2), les coûts d'une affaire (2), les occurrences (2), le board
+(motif de sortie), l'envoi, « Nouvelle affaire » et les réels. Les autres formulaires composaient déjà
+`droit.disabled === true || …`. **Portée.** Ces commandes vivent dans des formulaires dont la commande d'ouverture était
+éteinte : le défaut ne se voyait que sur un formulaire ouvert avant que la capacité relue ne passe à « refusée » — ou à
+l'envoi d'une réponse. Le refus serveur, lui, n'a jamais cédé. **Décision.** Chaque `disabled` qui suit une capacité
+étalée la compose. **Preuves.** Un test de comportement (« Créer » reste éteint, titre saisi, sous un refus) et un garde
+de source (`commandes-refusees.test.ts`) qui parcourt toute l'application ; les deux vus rouges sans le correctif — le
+garde listait les dix-sept —, verts avec. Suite unitaire complète : **134 fichiers, 3 981 tests**.

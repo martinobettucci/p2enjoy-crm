@@ -217,7 +217,7 @@ export function FormulaireEnvoi({
 			)}
 
 			<div className="flex gap-2">
-				<Button {...droit} variante="primaire" type="submit" disabled={envoi} data-testid="envoi-valider">
+				<Button {...droit} variante="primaire" type="submit" disabled={droit.disabled === true || envoi} data-testid="envoi-valider">
 					{envoi ? t('envoi.sending') : t('envoi.submit')}
 				</Button>
 				<Button variante="secondaire" onClick={() => setOuvert(false)}>

@@ -690,7 +690,7 @@ function FormulaireCreationWorkflow({
 			) : null}
 
 			<div className="flex flex-wrap gap-2">
-				<Button {...droit} type="submit" variante="primaire" disabled={!conforme || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || !conforme || enCours}>
 					{t('admin.action.create')}
 				</Button>
 				<Button type="button" variante="discret" onClick={onAnnuler}>
@@ -775,7 +775,7 @@ function FormulaireSurcharge({
 			/>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || !complet || enCours}>
 					{t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -1179,7 +1179,7 @@ function FormulaireDeclarationTransition({
 			<CaseMotif id={`${prefixe}-motif`} valeur={motifExige} onChange={setMotifExige} />
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || !complet || enCours}>
 					{t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -1253,7 +1253,7 @@ function FormulaireEditionTransition({
 			<CaseMotif id={`${prefixe}-motif`} valeur={motifExige} onChange={setMotifExige} />
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button {...droit} type="submit" variante="primaire" disabled={libelleInvalide || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || libelleInvalide || enCours}>
 					{t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -1647,7 +1647,7 @@ function FormulaireChamp({
 
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || !complet || enCours}>
 					{t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -2020,7 +2020,7 @@ function ConfirmationExigence({
 				    system interdit à un composant métier de redéfinir un style de base — recopier un
 				    `<button {...droit}>` primaire ici pour porter un `ref` aurait dupliqué la variante. Le focus
 				    entrant est la règle du §5.13, déjà tenue par les autres confirmations. */}
-				<Button {...droit} variante="primaire" autoFocus disabled={enCours} onClick={onConfirmer}>
+				<Button {...droit} variante="primaire" autoFocus disabled={droit.disabled === true || enCours} onClick={onConfirmer}>
 					{t('admin.workflows.effets.confirm.action')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -2204,7 +2204,7 @@ function FormulaireExigence({
 			)}
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button {...droit} type="submit" variante="primaire" disabled={champs.length === 0 || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || champs.length === 0 || enCours}>
 					{t('admin.workflows.requirements.add.submit')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>

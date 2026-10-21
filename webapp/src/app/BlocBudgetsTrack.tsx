@@ -268,7 +268,7 @@ function FormulaireBudget({
 			</label>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button {...droit} type="submit" variante="primaire" disabled={!complet || enCours}>
+				<Button {...droit} type="submit" variante="primaire" disabled={droit.disabled === true || !complet || enCours}>
 					{creation ? t('admin.action.create') : t('admin.action.save')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>
@@ -358,7 +358,7 @@ function ConfirmationCloture({
 			</p>
 			{refus === null ? null : <AlerteRefus message={refus} />}
 			<div className="flex gap-2">
-				<Button {...droit} ref={premier} variante="destructif" disabled={enCours} onClick={onConfirmer}>
+				<Button {...droit} ref={premier} variante="destructif" disabled={droit.disabled === true || enCours} onClick={onConfirmer}>
 					{t('admin.budgets.close.action')}
 				</Button>
 				<Button variante="secondaire" onClick={onAnnuler}>

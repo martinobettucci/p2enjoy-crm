@@ -4,6 +4,9 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.50 (Nouvelle affaire), §5.2 (l'action de la colonne initiale),
 //           §5.13 (focus entrant puis rendu à la commande qui a ouvert), §5.25 (retour différé d'un tour
 //           de rendu), §5.29 bis (le refus nomme le geste qui le lève), §8 (état désactivé lisible)
+// @verifies CRM-093 (docs/BACKLOG.md) — tranche T4 : « Créer » d'un formulaire déjà ouvert s'éteint et cite son motif
+//           quand la capacité relue est refusée, même titre saisi ; docs/SPEC-droits-interface.md §4 ;
+//           docs/DESIGN_SYSTEM.md §5.59
 //
 // Ces tests montent le VRAI module — commandes, formulaire, état partagé — derrière un vrai routeur :
 // l'ouverture de la fiche est observée sur l'adresse atteinte, jamais sur un appel simulé à la navigation.
@@ -21,6 +24,7 @@ import {
 	FormulaireNouvelleAffaire,
 	useCreationAffaire,
 } from './NouvelleAffaire'
+import { FournisseurRefus } from '../components/ui/RefusCommandes'
 
 afterEach(cleanup)
 
@@ -207,5 +211,30 @@ describe('les refus : écrits sous le champ, la saisie gardée (docs/SPEC-cards.
 		await userEvent.type(champ(), 'Refonte{Enter}')
 		await screen.findByRole('alert')
 		expect(screen.queryByTestId('lien-editeur-workflows')).toBeNull()
+	})
+})
+
+describe('« Créer » sous une capacité refusée (CRM-093 T4)', () => {
+	it('un titre saisi ne rallume pas « Créer » quand la base refuse l’écriture du channel', async () => {
+		const { client: c, appels } = client({ data: ID_CARD, error: null })
+		function BancRefuse() {
+			const creation = useCreationAffaire()
+			return (
+				<FournisseurRefus valeur={{ disabled: true, 'aria-describedby': 'motif-channel' }}>
+					<FormulaireNouvelleAffaire creation={creation} client={c} idChannel="ch-1" slugTrack="conseil-ia" slugChannel="grands-comptes" />
+				</FournisseurRefus>
+			)
+		}
+		render(
+			<MemoryRouter>
+				<BancRefuse />
+			</MemoryRouter>,
+		)
+		await userEvent.type(screen.getByTestId('champ-titre-affaire'), 'Audit ERP')
+		const creer = screen.getByTestId('creer-affaire') as HTMLButtonElement
+		expect(creer.disabled).toBe(true)
+		expect(creer.getAttribute('aria-describedby')).toBe('motif-channel')
+		await userEvent.click(creer)
+		expect(appels).toEqual([])
 	})
 })

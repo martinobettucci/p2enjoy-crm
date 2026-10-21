@@ -14703,6 +14703,8 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       retrait), comptes entrants et identités mail (la sienne P, les autres A), navigation des réglages (seule
       l'entrée d'un écran refusé devient un texte — précision du §3). Mesuré le 2026-10-21 : suite unitaire
       **133 fichiers, 3 977 tests** verts ; chaque lot vu échouer sous mutation. Reste : E2E par rôle (T5).
+      **INC-279** (journal) : dix-sept `disabled` posés après `{...droit}` rallumaient une commande refusée ; composés
+      avec la capacité, gardés par `commandes-refusees.test.ts` (vu rouge sur les dix-sept, puis vert).
 - [ ] **T5** — preuves E2E par rôle (lectrice, business developer, administratrice ; Farida rouverte sur
       « prospection »), captures observées, `docs/manual.md`, seed, campagnes.
 - [ ] **T6** — livraison en production (migrations 91 et 92), constat.

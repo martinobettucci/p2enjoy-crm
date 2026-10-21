@@ -262,7 +262,7 @@ export function FormulaireNouvelleAffaire({
 			)}
 
 			<div className="flex flex-wrap items-center gap-2">
-				<Button {...droit} variante="primaire" type="submit" disabled={blanc || enCours} data-testid="creer-affaire">
+				<Button {...droit} variante="primaire" type="submit" disabled={droit.disabled === true || blanc || enCours} data-testid="creer-affaire">
 					{t(enCours ? 'affaire.creation.encours' : 'affaire.creation.creer')}
 				</Button>
 				<Button variante="secondaire" disabled={enCours} data-testid="annuler-nouvelle-affaire" onClick={fermer}>

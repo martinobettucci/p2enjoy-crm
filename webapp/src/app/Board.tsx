@@ -874,7 +874,7 @@ function SaisieMotif({
 				{t('board.comment.stored')}
 			</p>
 			<div className="flex gap-2">
-				<Button {...droit} variante="primaire" type="submit" disabled={vide} data-testid="valider-motif">
+				<Button {...droit} variante="primaire" type="submit" disabled={droit.disabled === true || vide} data-testid="valider-motif">
 					{t('board.comment.submit')}
 				</Button>
 				<Button variante="discret" onClick={onAnnuler} data-testid="annuler-motif">

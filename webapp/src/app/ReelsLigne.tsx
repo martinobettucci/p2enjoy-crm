@@ -289,7 +289,7 @@ function FormulaireReel({
 					className={CLASSES_CHAMP}
 				/>
 			</label>
-			<Button {...droit} type="submit" variante="secondaire" taille="compacte" disabled={enCours}>
+			<Button {...droit} type="submit" variante="secondaire" taille="compacte" disabled={droit.disabled === true || enCours}>
 				{libelleAction}
 			</Button>
 			{onAnnuler !== undefined ? (
