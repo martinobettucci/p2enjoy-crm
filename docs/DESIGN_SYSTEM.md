@@ -5447,6 +5447,71 @@ focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (diff
   - **Lecture seule, et l'absence est assumée** : poser une appartenance ou le drapeau reste dans la fiche d'un espace
     et dans l'onglet des superadministrateurs. Un second chemin d'écriture ferait une seconde définition du même geste
     (§5.48). `CRM-103` ajoutera à chaque ligne le lien vers les droits du connecteur.
+- **L'ONGLET « Connecteur MCP » — `CRM-103` T2, écrit le 2026-10-21 avant le code, après relecture intégrale de ce
+  document et de ses §5.58 et §5.59 ajoutés depuis.** Il vient en dernier, après « Journal ». Ce qu'il lit, envoie et
+  refuse est au §8 de `docs/SPEC-mcp.md`.
+  - **La page de l'onglet porte trois blocs, dans cet ordre :** les comptes venus au connecteur ; « Accorder des droits à
+    un utilisateur » ; le journal des appels. On lit d'abord qui se sert du connecteur, puis comment en ouvrir l'accès
+    à quelqu'un, puis ce qui s'y est passé.
+  - **Les comptes sont un tableau du §5.9** : nom, adresse, dernière activité, espaces ouverts, drapeau.
+    - **Le nom est le lien vers la fiche**, jamais la ligne entière.
+    - **L'adresse est une donnée technique** ; la dernière activité et le nombre d'espaces ouverts sont alignés à droite,
+      en chiffres tabulaires.
+    - **« Superadministrateur » est une pilule `brand`**, seulement là où c'est vrai (§5.56, membres).
+    - **Un compte sans profil porte la pilule `accent` « Sans profil dans le CRM »** à côté de son nom : c'est un mot,
+      et un travail à faire (inscrire une attente), pas une panne.
+    - **Vide** : « Personne n'est encore venu au connecteur. », sans action ; le bloc suivant porte le geste.
+  - **« Accorder des droits à un utilisateur »** est le champ de recherche de l'onglet « Utilisateurs » (même libellé,
+    même icône `Search`, même délai de repos), suivi d'une **liste de liens** vers la fiche de chaque utilisateur trouvé :
+    le nom, puis « Jamais connecté » en `--color-text-2` s'il n'est jamais venu. Rien n'est listé tant que le champ est
+    vide : la liste complète vit dans l'onglet « Utilisateurs », qui porte aussi, par ligne, un lien « Droits du
+    connecteur » vers la même fiche.
+  - **Le journal des appels est un tableau du §5.9** : date, compte, outil, espace, issue, durée.
+    - **L'issue est un MOT**, traduit par un dictionnaire fermé : « Réussi », « Refusé par la matrice », « Refusé par le
+      CRM », « Erreur », « Réponse trop volumineuse ». Une issue autre que « Réussi » porte la pilule `accent` ; aucune
+      ne porte la teinte de danger : un refus est le contrôle qui joue, pas une panne.
+    - **L'outil est une donnée technique** (`code`) ; la durée est alignée à droite, suffixée « ms » dans son propre
+      élément (§5.11).
+    - **Un filtre par issue**, `select` du §5.7 avec une option vide en tête qui le lève (§5.22), au-dessus du tableau.
+    - **« Entrées plus anciennes »** pagine, comme le journal de la plateforme.
+  - **LA FICHE D'UN UTILISATEUR, `/plateforme/mcp/:sub`**, porte dans cet ordre : son identité, l'espace choisi, la
+    matrice, puis son propre journal des appels.
+    - **L'identité** : le nom en titre ; l'adresse en donnée technique quand le connecteur la connaît ; la dernière
+      activité, ou la phrase « Jamais connecté au connecteur : ces droits vaudront dès sa première connexion. » ; la
+      pilule « Superadministrateur » le cas échéant.
+    - **Un compte sans profil n'a pas de matrice.** Un bandeau `role="status"` `--color-accent-soft` /
+      `--color-accent-on-soft`, icône `TriangleAlert`, le dit : ses droits seraient sans effet ; inscrivez une attente
+      à son adresse dans un espace (§5.56). C'est une information, pas une alerte : rien n'a échoué.
+    - **Le sélecteur d'espace est un `select` natif** à libellé visible, sans option vide : on choisit toujours un
+      espace. Chaque option porte le nom de l'espace, puis le rôle de la personne ou « pas membre ». L'espace choisi vit
+      dans l'adresse (`?espace=<slug>`), le premier par défaut.
+    - **Le rôle dans l'espace choisi s'écrit sous le sélecteur.** Hors de l'espace, un bandeau `role="status"`
+      `--color-accent-soft` / `--color-accent-on-soft`, icône `TriangleAlert`, dit : « Ces droits resteront sans effet
+      tant que cette personne n'est pas membre de l'espace : le connecteur agit en son nom. » L'écran n'interdit pas
+      d'accorder : l'appartenance peut venir ensuite.
+    - **LA MATRICE EST UN TABLEAU DU §5.9** : les sept familles en lignes (`th scope="row"`, leur libellé et, dessous en
+      13 px `--color-text-2`, ce qu'elles couvrent), les quatre actions en colonnes (`th scope="col"`). Chaque cellule
+      porte une case native de 24 px (§5.7 bis), sa ligne à la hauteur de cible, et un **nom accessible qui nomme la
+      famille ET l'action** — « Affaires : modifier » (§5.15, grille champ × étape). Une case n'écrit rien seule.
+    - **« Toute la famille » et « Toute l'action »** sont deux boutons discrets compacts, dans l'en-tête de leur ligne et
+      de leur colonne : ils cochent tout, ou décochent tout quand tout est déjà coché. Leur nom accessible nomme la
+      famille ou l'action.
+    - **UNE SEULE COMMANDE D'ENREGISTREMENT**, « Enregistrer les droits » (primaire), et « Annuler les modifications »
+      (secondaire) : la fonction remplace la matrice entière d'un espace, et une case qui écrirait seule renverrait les
+      vingt-sept autres (§5.34). Toutes deux sont désactivées tant que rien n'est modifié — un état de la saisie, jamais
+      un droit (§5.50) ; une mention « Modifications non enregistrées » en 13 px `--color-text-3` le dit dès qu'il y en a.
+    - **Tant que des modifications ne sont pas enregistrées, le sélecteur d'espace est désactivé**, et son texte d'aide
+      dit pourquoi : « Enregistrez ou annulez les modifications avant de changer d'espace. » Changer d'espace les
+      perdrait sans le dire.
+    - **Un superadministrateur franchit la matrice** : un bandeau neutre `role="status"` (`--color-hover`, icône `Eye`,
+      la forme du §5.29 ter) le dit en tête de la matrice, et les cases restent rendues et **désactivées lisibles**,
+      avec leur valeur — la frontière du §5.29 ter : c'est la base qui rend le drapeau sur la fiche, jamais un rôle lu.
+    - **L'issue d'un enregistrement** se lit sous la commande : « Droits enregistrés. » en `role="status"`, ou le refus
+      traduit en `role="alert"`, la saisie conservée (§5.7 ter). La matrice est relue après un succès.
+  - **Le journal de la plateforme détaille `mcp_droits_poses`** : « Droits de {nom} dans {espace} : {avant} → {après} »,
+    les deux comptes de cases accordés par clé (« aucune case », « 1 case », « n cases », §10).
+  - **Aucune couleur, aucun jeton nouveau ; aucune icône nouvelle** : `Search`, `TriangleAlert` et `Eye` sont reprises
+    pour les mêmes objets.
 - **LES REFUS SONT TRADUITS PAR UN DICTIONNAIRE FERMÉ** — un texte par code du §6.1 de la spécification —, et un
   code inconnu rend le texte générique, jamais le message brut de la base (§5.34).
 

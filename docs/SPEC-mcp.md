@@ -480,6 +480,18 @@ se posent donc à l'avance, et valent dès la première connexion.
 - **Journal des appels** : date, compte, outil, espace, issue, durée, paginé, avec des filtres par
   compte et par issue.
 
+**Précisé le 2026-10-21, avant le code de T2** (forme : `docs/DESIGN_SYSTEM.md` §5.56, onglet « Connecteur MCP ») :
+
+- **Adresses.** `/plateforme/mcp` porte les comptes, « Accorder des droits à un utilisateur » et le journal des appels,
+  filtré par issue. `/plateforme/mcp/:sub` porte la fiche, avec son propre journal (filtre par compte) ; l'espace choisi
+  vit dans `?espace=<slug>`, le premier par défaut.
+- **La recherche d'un utilisateur** emploie `plateforme_utilisateurs` (`docs/SPEC-plateforme.md` §6.5). L'onglet
+  « Utilisateurs » de la plateforme porte, par ligne, un lien « Droits du connecteur » vers la fiche.
+- **L'enregistrement** envoie la matrice entière de l'espace choisi à `mcp_poser_droits`, puis relit la fiche.
+- **Les refus** `droit_invalide` et `issue_invalide` rejoignent le dictionnaire fermé de la webapp, avec un texte chacun.
+- **Le détail du journal de la plateforme** pour `mcp_droits_poses` nomme la personne, l'espace, et le nombre de cases
+  avant et après.
+
 ### 8.2 RPC
 
 Toutes sont gardées par `app.exiger_superadmin()`, mêmes formes que `docs/SPEC-plateforme.md` §6.
