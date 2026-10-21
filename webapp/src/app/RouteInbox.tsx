@@ -26,6 +26,9 @@
 //       docs/SPEC-cards.md §16.17.1 (la décision, son motif et le contrat ligne à ligne),
 //       §16.15.5 point 3 (révisé le 2026-08-29), §16.12.4 (la clé, la valeur et le repli, réemployés)
 // @spec docs/JOURNAL.md décision 327, décision 536, décision 551
+// @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : le retrait et l'acceptation d'une suggestion s'éteignent avec leur
+//       motif quand la base refuse l'écriture de l'affaire visée ; docs/SPEC-droits-interface.md §4, §5 (« Inbox ») ;
+//       docs/DESIGN_SYSTEM.md §5.59
 //
 // TROIS PANNEAUX SUR GRAND ÉCRAN, UNE PILE EN DESSOUS DE 1024 PX — et la pile est une vraie pile,
 // non trois colonnes rétrécies : à cette largeur, trois colonnes ne montreraient ni un objet, ni un
@@ -39,10 +42,12 @@ import { ChevronDown, ChevronRight, Inbox, MailX, Moon, Paperclip, Download, Spa
 import { Link, useSearchParams } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
+import { motifVisible, proprietesCommande, useEcriturePermise } from '../lib/capacites'
 import {
 	MEME_SELECTION,
 	classerMessage,
@@ -744,7 +749,9 @@ function FormulaireClassement({
  *
  * AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (`docs/DESIGN_SYSTEM.md` §5.3, §5.13,
  * §5.16, §5.21, §5.23, §5.25, §5.27, §5.28). L'écran offre, envoie, et TRADUIT le refus : la règle
- * vit dans `public.unclassify_message`, jamais ici.
+ * vit dans `public.unclassify_message`, jamais ici. Depuis `CRM-093` (§5.59), la commande s'éteint
+ * avec son motif quand la BASE rend refusée l'écriture de l'affaire quittée — une capacité lue sur
+ * sa ligne, pas un rôle (docs/SPEC-droits-interface.md §5, ligne « Inbox »).
  *
  * LA CONFIRMATION VIT DANS LE FLUX, JAMAIS EN MODALE — le §5 n'en déclare aucune, et le §5.3 quater
  * a déjà tranché ce cas pour la mise à la corbeille. La commande qui l'ouvre est SECONDAIRE ; c'est
@@ -757,6 +764,9 @@ function FormulaireClassement({
  * de deviner un rôle : l'écran ne sait pas de quelles boîtes l'appelant répond, et l'inventer
  * ferait passer une décision de la base pour une décision d'écran (`CLAUDE.md` §10).
  */
+const ID_MOTIF_RETRAIT = 'inbox-retrait-motif'
+const ID_MOTIF_SUGGESTION = 'inbox-suggestion-motif'
+
 function CommandeRetrait({
 	message,
 	onRetire,
@@ -769,6 +779,7 @@ function CommandeRetrait({
 	const [refus, setRefus] = useState<string | null>(null)
 	const commande = useRef<HTMLButtonElement | null>(null)
 	const confirmer = useRef<HTMLButtonElement | null>(null)
+	const capacite = useEcriturePermise(clientCrm, 'cards', message.cardId)
 
 	// LE FOCUS ENTRE DANS LA CONFIRMATION (§5.13) : sans cela le clavier resterait sur un bouton
 	// qui vient de disparaître et repartirait du début du document.
@@ -812,12 +823,18 @@ function CommandeRetrait({
 
 	if (!ouverte) {
 		return (
-			<div className="border-t border-border pt-3">
+			<div className="flex flex-col items-start gap-2 border-t border-border pt-3">
+				{motifVisible(capacite) ? (
+					<MotifLectureSeule id={ID_MOTIF_RETRAIT} data-testid="inbox-retrait-motif">
+						{t('rights.readonly.inbox.unclassify')}
+					</MotifLectureSeule>
+				) : null}
 				<Button
 					ref={commande}
 					variante="secondaire"
 					onClick={() => setOuverte(true)}
 					data-testid="inbox-retirer"
+					{...proprietesCommande(capacite, ID_MOTIF_RETRAIT)}
 				>
 					<MailX aria-hidden="true" className="size-4" />
 					{t('inbox.unclassify.open')}
@@ -905,9 +922,10 @@ function PiluleCard({ idCard }: { readonly idCard: string }) {
  * doit rester UNE.
  *
  * LA SUGGESTION N'ACCORDE AUCUN DROIT (§8.1) : elle peut désigner une affaire que l'appelant n'a
- * pas le droit d'écrire, et le geste échoue alors comme tout classement manuel non autorisé. La
- * commande n'est donc jamais éteinte d'avance (docs/DESIGN_SYSTEM.md §5.4 ter) : l'écran appuie et
- * traduit le refus.
+ * pas le droit d'écrire, et le geste échoue alors comme tout classement manuel non autorisé. Aucun
+ * rôle n'éteint la commande (docs/DESIGN_SYSTEM.md §5.4 ter) ; depuis `CRM-093` (§5.59), la capacité
+ * d'écrire l'affaire suggérée, rendue par la base sur sa ligne, l'éteint avec son motif — et l'écran
+ * traduit toujours le refus quand elle n'a pas pu être lue.
  */
 function BlocSuggestion({
 	idMessage,
@@ -924,6 +942,7 @@ function BlocSuggestion({
 }) {
 	const [enVol, setEnVol] = useState(false)
 	const [refus, setRefus] = useState<string | null>(null)
+	const capacite = useEcriturePermise(clientCrm, 'cards', idCard)
 
 	const accepter = useCallback(async () => {
 		setEnVol(true)
@@ -980,10 +999,15 @@ function BlocSuggestion({
 			) : null}
 			{/* `items-start` : dans une colonne flex, un bouton prend toute la largeur disponible et
 			    traverserait le panneau de lecture entier (§5.3 septies, défaut mesuré). */}
+			{motifVisible(capacite) ? (
+				<MotifLectureSeule id={ID_MOTIF_SUGGESTION} data-testid="inbox-suggestion-motif">
+					{t('rights.readonly.inbox.suggestion')}
+				</MotifLectureSeule>
+			) : null}
 			<div className="flex items-start">
 				<Button
 					variante="primaire"
-					disabled={enVol}
+					{...proprietesCommande(capacite, ID_MOTIF_SUGGESTION, enVol)}
 					onClick={() => void accepter()}
 					data-testid="inbox-suggestion-accepter"
 				>

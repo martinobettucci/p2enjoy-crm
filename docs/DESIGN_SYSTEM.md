@@ -635,7 +635,9 @@ il a l'air.
   bouton qui l'a demandé (§5.3 sexies).
 
 - **La commande n'est jamais éteinte d'avance, quel que soit le rôle** (§5.3, §5.13, §5.16, §5.21,
-  sans exception) : l'écran ne calcule aucun droit, il appuie et traduit le refus.
+  sans exception) : l'écran ne calcule aucun droit, il appuie et traduit le refus. *Depuis `CRM-093`
+  (§5.59)* : la capacité d'écrire l'affaire suggérée, rendue par la base sur sa ligne, l'éteint avec
+  son motif — une capacité, jamais un rôle ; le refus reste traduit quand elle n'a pas pu être lue.
 
 - **Une suggestion dont l'affaire n'est pas lisible ne rend RIEN** — ni bloc, ni mention, ni
   identifiant. C'est la règle du §5.29 pour un bloc masqué et du §5.33 pour un budget masqué :
@@ -674,7 +676,9 @@ uniquement quand ce message est CLASSÉ : un message non classé n'a aucune affa
   l'appelant répond, et le déduire ferait passer une décision de la base pour une décision d'écran.
 
 - **Aucune commande n'est éteinte d'avance selon le rôle** — §5.3, §5.13, §5.16, §5.21, §5.23,
-  §5.25, §5.27, §5.28, sans exception ici non plus. L'écran offre, envoie, et traduit le refus.
+  §5.25, §5.27, §5.28, sans exception ici non plus. L'écran offre, envoie, et traduit le refus. *Depuis
+  `CRM-093` (§5.59)* : « Retirer de l'affaire » s'éteint avec son motif quand la base rend refusée
+  l'écriture de l'affaire quittée.
 
 - **Le refus a son PROPRE dictionnaire**, distinct de celui du classement. Réemployer « Vous ne
   pouvez pas classer ce message dans cette affaire » sur un retrait décrirait le geste inverse de

@@ -631,6 +631,10 @@ export const fr = {
 		'Restaurer un track ou un channel est réservé aux administrateurs de l’espace : leurs commandes restent visibles mais sont inactives.',
 	'rights.readonly.trash.card':
 		'Vos droits ne vous permettent pas de restaurer les affaires des channels que vous ne pouvez pas modifier : leurs commandes restent visibles mais sont inactives.',
+	'rights.readonly.inbox.unclassify':
+		'Vos droits ne vous permettent pas de modifier l’affaire où ce message est classé : la commande de retrait reste visible mais inactive.',
+	'rights.readonly.inbox.suggestion':
+		'Vos droits ne vous permettent pas de modifier l’affaire suggérée : vous pouvez la consulter, ou classer ce message ailleurs.',
 	'goals.readonly.notice':
 		'Vous consultez ce tableau. Vous n’avez pas le droit d’y écrire : les commandes de modification restent visibles mais sont inactives.',
 	// LA FICHE A SA PROPRE PHRASE, plus courte : elle REMPLACE la consigne d'édition, qui serait

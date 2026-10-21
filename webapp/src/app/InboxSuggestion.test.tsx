@@ -6,6 +6,9 @@
 //           §8.8.9 (contrat de comportement, cas a à j)
 // @verifies docs/DESIGN_SYSTEM.md §5.4 ter (de quoi le bloc a l'air, la hiérarchie des deux
 //           actions du pied), §5.4 (un message classé porte sa pilule, non une suggestion)
+// @verifies CRM-093 (docs/BACKLOG.md) — tranche T4 : accepter la suggestion et retirer un message classé s'éteignent
+//           avec leur motif quand la base refuse l'écriture de l'affaire visée ; docs/SPEC-droits-interface.md §4, §5
+//           (« Inbox ») ; docs/DESIGN_SYSTEM.md §5.59
 //
 // CES PREUVES MONTENT LE VRAI ÉCRAN avec un client factice, comme `RouteInbox.test.tsx`. Le
 // parcours connecté complet relève de `e2e/ui/inbox.spec.ts`, qui exige la pile.
@@ -67,6 +70,8 @@ let lecturesCards = 0
 let classements: Array<{ message: string; card: string }> = []
 /** Le refus que `classify_message` doit opposer, ou `null` pour un succès. */
 let refusClassement: { code: string; status: number } | null = null
+/** La capacité d'écrire que la base rend sur la ligne de l'affaire (CRM-093) ; `undefined` : colonne non rendue. */
+let ecriturePermise: boolean | undefined = undefined
 
 /**
  * Le client factice — il rend ce que la base rendrait.
@@ -132,7 +137,9 @@ function clientFactice() {
 			if (table === 'cards') {
 				lecturesCards += 1
 				return {
-					select: () => ({
+					select: (colonnes?: string) => colonnes === 'ecriture_permise'
+						? { eq: () => reponse(ecriturePermise === undefined ? [{}] : [{ ecriture_permise: ecriturePermise }]) }
+						: ({
 						eq: () => ({
 							limit: () =>
 								reponse(
@@ -179,6 +186,7 @@ beforeEach(() => {
 	lecturesCards = 0
 	classements = []
 	refusClassement = null
+	ecriturePermise = undefined
 })
 
 afterEach(cleanup)
@@ -299,5 +307,42 @@ describe('L’inbox montre la suggestion du classement assisté (§8.8)', () => 
 		// affaire, et un écran qui n'offrirait que l'indice enfermerait l'utilisateur.
 		expect(await screen.findByTestId('inbox-formulaire-classement')).not.toBeNull()
 		expect(screen.getByTestId('inbox-suggestion')).not.toBeNull()
+	})
+})
+
+describe('L’inbox lit la capacité d’écrire l’affaire visée (CRM-093 T4)', () => {
+	it('une affaire suggérée que la base refuse : « Classer ici » s’éteint, cite son motif, et rien n’est envoyé', async () => {
+		ecriturePermise = false
+		await ouvrirLeMessage()
+
+		const motif = await screen.findByTestId('inbox-suggestion-motif')
+		expect(motif.textContent).toContain('l’affaire suggérée')
+		const accepter = screen.getByTestId('inbox-suggestion-accepter') as HTMLButtonElement
+		expect(accepter.disabled).toBe(true)
+		expect(accepter.getAttribute('aria-describedby')).toBe(motif.id)
+		await userEvent.click(accepter)
+		expect(classements).toEqual([])
+		// Le chemin manuel reste offert : il ne propose que des affaires modifiables.
+		expect((screen.getByTestId('inbox-classer') as HTMLButtonElement).disabled).toBe(false)
+	})
+
+	it('une affaire suggérée modifiable : la commande est offerte, sans motif', async () => {
+		ecriturePermise = true
+		await ouvrirLeMessage()
+
+		await screen.findByTestId('inbox-suggestion')
+		await waitFor(() => expect((screen.getByTestId('inbox-suggestion-accepter') as HTMLButtonElement).disabled).toBe(false))
+		expect(screen.queryByTestId('inbox-suggestion-motif')).toBeNull()
+	})
+
+	it('un message classé dans une affaire que la base refuse : « Retirer de l’affaire » s’éteint et cite son motif', async () => {
+		messagesRendus = [CLASSE]
+		ecriturePermise = false
+		await ouvrirLeMessage()
+
+		const motif = await screen.findByTestId('inbox-retrait-motif')
+		const retirer = screen.getByTestId('inbox-retirer') as HTMLButtonElement
+		expect(retirer.disabled).toBe(true)
+		expect(retirer.getAttribute('aria-describedby')).toBe(motif.id)
 	})
 })
