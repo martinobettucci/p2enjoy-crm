@@ -335,6 +335,11 @@ restauration qui n'a pas eu lieu — le défaut que `ResultatEcriture` traite d�
 C'est pourquoi chaque écriture porte un `select()` : sans lui, PostgREST ne rend aucun corps et
 « zéro ligne touchée » serait indistinguable d'un succès.
 
+**Le droit, lui, s'anticipe depuis `CRM-093` (décision 628).** La phrase ci-dessus vise la garde de la donnée — le parent
+en corbeille —, qu'aucune lecture ne fige. La capacité d'écrire est d'une autre nature : la base la rend sur la ligne
+(`docs/SPEC-droits-interface.md` §2, §5 « La corbeille, précisée »), et « Restaurer » s'éteint avec son motif quand elle
+est refusée. L'issue « sans effet » reste traduite pour le cas où la capacité n'a pas pu être lue.
+
 **Le refus `parent_en_corbeille` dit quoi restaurer d'abord**, et l'écran le dit avec ses propres
 mots, jamais avec le `details` du serveur : ce texte est écrit dans une migration, en français, mais
 il n'est pas un texte d'interface — même position que le dictionnaire fermé des codes d'incident du

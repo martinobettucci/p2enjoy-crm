@@ -137,6 +137,16 @@ avec la ligne de l'espace qu'elle lit déjà (`workspaces?select=…,administrat
 | Temps — saisie | saisir son temps | P ; « Saisir pour » un autre : A (déjà tenu) |
 | Notifications, profil | préférences, nom | P |
 
+**La corbeille, précisée (tranche T4, 2026-10-21).** L'écran est ouvert à tout membre et mêle trois types d'entrées ;
+la capacité est donc lue **par ligne**, selon la règle qui juge réellement la restauration — mesurée sur les politiques :
+`tracks` et `channels` se restaurent sous `app.is_workspace_admin` (migrations 3 et 4), une affaire sous
+`app.can_write_channel(channel_id)` (`cards_maj`). Une entrée de structure lit `administration_permise` de l'espace ;
+une affaire lit sa propre `ecriture_permise`, par **une** lecture à part de la liste (`id in (…)`), pour la raison du
+§4 : une colonne absente ne fait tomber que l'aide. Deux motifs au plus, en tête du tableau, chacun rendu seulement si
+une ligne de sa famille est refusée, et chaque « Restaurer » éteinte cite le sien. **La garde `parent_en_corbeille`
+n'est PAS anticipée** (`docs/SPEC-corbeille.md` §4.5) : c'est un état de la donnée, qu'un autre utilisateur peut
+changer entre le chargement et le clic, pas une capacité rendue par la base.
+
 Les écrans de la plateforme (`/plateforme`, `CRM-101`) et du connecteur MCP (`CRM-103`) sont hors de cette unité : ils
 ont leur propre garde de superadministrateur.
 
