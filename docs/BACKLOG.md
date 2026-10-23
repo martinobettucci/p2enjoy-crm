@@ -15556,8 +15556,16 @@ charges en % du brut, frais et avantages en montant ; calculateur seulement. Sp�
 `docs/SPEC-temps.md` §7.4 bis, `docs/DESIGN_SYSTEM.md` §5.54 ter. Aucune migration.*
 
 - [x] **T1 — spécification, écrite avant le code** sur les trois arbitrages du 2026-10-23.
-- [ ] **T2 — le calculateur** dans « Nouvelle version » : la fonction de calcul et ses bornes, le dépli, le résultat en
+- [~] **T2 — le calculateur** dans « Nouvelle version » : la fonction de calcul et ses bornes, le dépli, le résultat en
       direct, « Utiliser ce coût » ; preuves unitaires.
+      *Implémenté le 2026-10-23* : `calculerCoutQuart` (`lib/cout-personnel.ts`), `CalculateurCoutQuart.tsx`, branché dans
+      `FormulaireVersion`. `cout-personnel.test` **13** (+7 : l'exemple 4 510 → 62,06, 218 par défaut, 240 jours = ÷ 80,
+      virgule décimale, salaire manquant, bornes, arrondi de 1,005), `CalculateurCoutQuart.test` **6** — **cinq
+      mutations** (× 12 retiré, 228 par défaut, borne des charges retirée, valeurs gardées à la fermeture, focus non
+      rendu au champ), chacune rouge. `RapportTemps.test` 10, `commandes-refusees.test` 2, `i18n.test` 411 verts ; `tsc`
+      sans erreur. Le design system nomme la variante réelle du bouton de dépli (`discret`, §5.5 n'a pas de
+      « tertiaire »). **Restent avant `[x]`** : le build et le contrôle des classes, différés tant qu'une campagne UI
+      d'une autre unité occupe la pile.
 - [ ] **T3 — preuves sur la pile réelle** : E2E d'une version créée par le calculateur, relue en base, à la souris et au
       clavier ; captures `docs/captures/CRM-107/` aux quatre paliers observées ; `docs/manual.md` 5 undecies.5 ;
       `CHANGELOG.md` ; campagnes.

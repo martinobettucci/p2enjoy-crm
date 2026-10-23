@@ -5299,7 +5299,7 @@ Spécifié avant code, `docs/SPEC-temps.md` §7.4 bis (décision 631).
 
 **Place.** Dans le formulaire « Nouvelle version » d'une carte de Réglages ▸ « Coût du personnel » (§5.54), sous la
 rangée des champs et avant la phrase de la règle de date. Un bouton de dépli **« Calculer depuis le coût mensuel »**
-(icône Lucide `Calculator`, 16 px, variante tertiaire, `aria-expanded`) ; replié par défaut.
+(icône Lucide `Calculator`, 16 px, variante `discret` du §5.5, taille compacte, `aria-expanded`) ; replié par défaut.
 
 **Déplié** : un `fieldset` en carte `--color-surface`, bordure `--color-border`, `rounded-md`, 12 px de marge
 intérieure, `legend` « Calcul du coût par quart » en 14 px `font-medium`. Cinq champs en rangée qui passe à la ligne

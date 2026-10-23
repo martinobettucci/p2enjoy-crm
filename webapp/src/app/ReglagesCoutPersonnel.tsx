@@ -7,6 +7,10 @@
 //       base sur la ligne de l'espace, plus le rôle ; docs/SPEC-droits-interface.md §4 (les états), §5 (« Coût du
 //       personnel » : A) ; docs/DESIGN_SYSTEM.md §5.29 ter, §5.59
 //
+// @spec CRM-107 (docs/BACKLOG.md) — tranche T2 : le calculateur se déplie dans « Nouvelle version » et ne remplit
+//       « Coût par quart » que par « Utiliser ce coût », qui y place le focus ; docs/SPEC-temps.md §7.4 bis ;
+//       docs/DESIGN_SYSTEM.md §5.54 ter
+//
 // L'écran reflète les règles sans les tenir : la date minimale du formulaire et l'absence de corbeille sur une version
 // en vigueur sont des aides, la base refuse de toute façon et l'écran dit son refus.
 
@@ -33,6 +37,7 @@ import {
 } from '../lib/cout-personnel'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { jourLocal } from '../lib/temps'
+import { CalculateurCoutQuart } from './CalculateurCoutQuart'
 import { useContexteEspace } from './ContexteEspace'
 
 const FORMAT_MONTANT = new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -332,6 +337,14 @@ function FormulaireVersion({
 					{t('staffCost.form.cancel')}
 				</Button>
 			</div>
+			<CalculateurCoutQuart
+				devise={devise.trim().toUpperCase()}
+				onUtiliser={(valeur) => {
+					setCout(valeur)
+					setRefus(null)
+					premierChamp.current?.focus()
+				}}
+			/>
 			<p className="basis-full text-[13px] text-text-2">{premiere ? t('staffCost.form.firstHint') : t('staffCost.form.hint')}</p>
 			{refus !== null ? (
 				<p role="alert" className="basis-full text-sm text-danger">

@@ -1,8 +1,15 @@
 // @verifies CRM-098 (docs/BACKLOG.md) — tranche T3 : le coût du personnel, versionné par date d'effet
 // @verifies docs/SPEC-temps.md §3.1 (version en vigueur, version programmée, refus de la base traduits), §7.4
+// @verifies CRM-107 (docs/BACKLOG.md) — tranche T2 : `calculerCoutQuart` ; docs/SPEC-temps.md §7.4 bis (1 : vide vaut
+//           zéro, salaire requis, 218 jours par défaut ; 2 : la formule et l'exemple, l'arrondi ; 5 : les bornes, la
+//           virgule décimale) ; décision 631
 
 import { describe, expect, it } from 'vitest'
 import {
+	ENTREES_VIDES,
+	JOURS_TRAVAILLES_PAR_AN,
+	auCentime,
+	calculerCoutQuart,
 	classerRefusVersion,
 	creerVersion,
 	estProgrammee,
@@ -81,5 +88,56 @@ describe('créer et retirer une version', () => {
 	it('un retrait qui ne touche aucune ligne est un refus, jamais un succès', async () => {
 		const { client: c } = client({ data: [], error: null, status: 200 })
 		expect(await supprimerVersion(c, 'x')).toEqual({ ok: false, motif: 'droit' })
+	})
+})
+
+describe('CRM-107 — le coût par quart calculé depuis le coût mensuel', () => {
+	const entrees = (champs: Partial<typeof ENTREES_VIDES>) => ({ ...ENTREES_VIDES, ...champs })
+
+	it('l’exemple de la spécification : 3 000 de brut, 42 %, 150 de frais, 100 d’avantages, 218 jours → 4 510 et 62,06', () => {
+		expect(calculerCoutQuart(entrees({ brut: '3 000', charges: '42', frais: '150', avantages: '100' }))).toEqual({
+			statut: 'calcule',
+			mensuel: 4510,
+			quart: 62.06,
+			jours: 218,
+		})
+	})
+
+	it('218 jours par défaut, et un champ de jours vidé y revient', () => {
+		expect(JOURS_TRAVAILLES_PAR_AN).toBe(218)
+		expect(ENTREES_VIDES.jours).toBe('218')
+		expect(calculerCoutQuart(entrees({ brut: '872', jours: '' }))).toEqual({ statut: 'calcule', mensuel: 872, quart: 12, jours: 218 })
+	})
+
+	it('les jours changent le diviseur : 240 jours, c’est le mensuel ÷ 80', () => {
+		const resultat = calculerCoutQuart(entrees({ brut: '4000', jours: '240' }))
+		expect(resultat).toEqual({ statut: 'calcule', mensuel: 4000, quart: 50, jours: 240 })
+	})
+
+	it('charges, frais et avantages vides valent zéro ; la virgule et le point sont décimaux', () => {
+		expect(calculerCoutQuart(entrees({ brut: '2500,50' }))).toMatchObject({ mensuel: 2500.5 })
+		expect(calculerCoutQuart(entrees({ brut: '2500.5', charges: '10,5' }))).toMatchObject({ mensuel: 2763.05 })
+	})
+
+	it('sans salaire brut, rien n’est calculé et rien n’est faux', () => {
+		expect(calculerCoutQuart(entrees({ charges: '42', frais: '100' }))).toEqual({ statut: 'incomplet' })
+	})
+
+	it('refuse ce qui n’est pas un nombre positif, des charges au-delà de 100 %, des jours hors de 1 à 366 ou non entiers', () => {
+		expect(calculerCoutQuart(entrees({ brut: '-3000' }))).toEqual({ statut: 'invalide', erreurs: { brut: 'format' } })
+		expect(calculerCoutQuart(entrees({ brut: '3000', charges: '101' }))).toEqual({ statut: 'invalide', erreurs: { charges: 'borne' } })
+		expect(calculerCoutQuart(entrees({ brut: '3000', charges: '100' }))).toMatchObject({ statut: 'calcule', mensuel: 6000 })
+		expect(calculerCoutQuart(entrees({ brut: '3000', jours: '0' }))).toEqual({ statut: 'invalide', erreurs: { jours: 'borne' } })
+		expect(calculerCoutQuart(entrees({ brut: '3000', jours: '367' }))).toEqual({ statut: 'invalide', erreurs: { jours: 'borne' } })
+		expect(calculerCoutQuart(entrees({ brut: '3000', jours: '218,5' }))).toEqual({ statut: 'invalide', erreurs: { jours: 'entier' } })
+		expect(calculerCoutQuart(entrees({ brut: '3000', jours: '366' }))).toMatchObject({ statut: 'calcule' })
+		// Une erreur sur un champ l'emporte sur le salaire manquant : le motif se dit tout de suite.
+		expect(calculerCoutQuart(entrees({ frais: 'abc' }))).toEqual({ statut: 'invalide', erreurs: { frais: 'format' } })
+	})
+
+	it('arrondit au centime le plus proche, sans l’écueil binaire de 1,005', () => {
+		expect(auCentime(1.005)).toBe(1.01)
+		expect(auCentime(62.0642)).toBe(62.06)
+		expect(auCentime(62.065)).toBe(62.07)
 	})
 })

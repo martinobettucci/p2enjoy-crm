@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-107` T2 — calculer le coût par quart depuis le coût mensuel (décision 631)
+
+*Webapp seulement. Prouvé en tests unitaires ; parcours réel, captures et manuel avec la tranche T3.*
+
+- Dans Réglages ▸ « Coût du personnel », le formulaire **« Nouvelle version »** se complète d'un calculateur, **« Calculer
+  depuis le coût mensuel »** : salaire brut mensuel, charges sociales en % du brut, frais de gestion et avantages par
+  mois, jours travaillés par an (**218** par défaut).
+- Le coût mensuel complet et le coût par quart se lisent en direct — `coût mensuel × 12 ÷ (jours × 4)` ; **« Utiliser ce
+  coût »** remplit le champ « Coût par quart ». Seul ce coût est enregistré, par « Enregistrer la version » ; rien
+  d'autre n'est conservé.
+
 ### `CRM-106` T2 — saisir son temps depuis la fiche d'une affaire (décision 630)
 
 *Webapp seulement. Prouvé en tests unitaires ; parcours réel, captures et manuel avec la tranche T3.*

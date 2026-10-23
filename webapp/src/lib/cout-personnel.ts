@@ -131,3 +131,71 @@ export async function supprimerVersion(client: ClientCrm, id: string): Promise<I
 		return { ok: false, motif: classerRefusVersion(undefined, undefined, cause instanceof Error ? cause.message : String(cause)) }
 	}
 }
+
+// ---------------------------------------------------------------------------------------------
+// @spec CRM-107 (docs/BACKLOG.md) — tranche T2 : le calcul du coût par quart depuis le coût mensuel
+// @spec docs/SPEC-temps.md §7.4 bis (1 : les champs, vide vaut zéro sauf le salaire requis et les jours à 218 ;
+//       2 : la formule et l'arrondi au centime ; 5 : les bornes, la virgule décimale) ; décision 631
+// ---------------------------------------------------------------------------------------------
+
+/** Les jours travaillés par an par défaut : le forfait jours des cadres (décision 631, arbitrage 1). */
+export const JOURS_TRAVAILLES_PAR_AN = 218
+const QUARTS_PAR_JOUR = 4
+const MOIS_PAR_AN = 12
+
+export type ChampCalcul = 'brut' | 'charges' | 'frais' | 'avantages' | 'jours'
+export type EntreesCalcul = Readonly<Record<ChampCalcul, string>>
+/** `format` : pas un nombre ; `borne` : hors de ses bornes ; `entier` : des jours non entiers. */
+export type MotifCalcul = 'format' | 'borne' | 'entier'
+
+export type ResultatCalcul =
+	| { readonly statut: 'calcule'; readonly mensuel: number; readonly quart: number; readonly jours: number }
+	/** Le salaire brut manque : rien à calculer, et rien de faux à dire. */
+	| { readonly statut: 'incomplet' }
+	| { readonly statut: 'invalide'; readonly erreurs: Readonly<Partial<Record<ChampCalcul, MotifCalcul>>> }
+
+export const ENTREES_VIDES: EntreesCalcul = { brut: '', charges: '', frais: '', avantages: '', jours: String(JOURS_TRAVAILLES_PAR_AN) }
+
+/** Au centime le plus proche ; `EPSILON` évite que 1,005 ne s'arrondisse à 1,00 par la représentation binaire. */
+export const auCentime = (valeur: number) => Math.round((valeur + Number.EPSILON) * 100) / 100
+
+/** Un nombre tapé à la française ou non : « 3 000,50 », « 3000.5 ». Vide rend `null`. */
+function lireNombre(texte: string): number | null | 'format' {
+	const brut = texte.replace(/[\s  ]/g, '').replace(',', '.')
+	if (brut === '') return null
+	if (!/^\d+(\.\d+)?$/.test(brut)) return 'format'
+	return Number(brut)
+}
+
+/**
+ * `coût mensuel complet = brut × (1 + charges ÷ 100) + frais + avantages` ;
+ * `coût par quart = coût mensuel complet × 12 ÷ (jours × 4)`, arrondi au centime (§7.4 bis, point 2).
+ */
+export function calculerCoutQuart(entrees: EntreesCalcul): ResultatCalcul {
+	const erreurs: Partial<Record<ChampCalcul, MotifCalcul>> = {}
+	const lire = (champ: ChampCalcul, max?: number): number | null => {
+		const valeur = lireNombre(entrees[champ])
+		if (valeur === 'format') {
+			erreurs[champ] = 'format'
+			return null
+		}
+		if (valeur !== null && max !== undefined && valeur > max) erreurs[champ] = 'borne'
+		return valeur
+	}
+	const brut = lire('brut')
+	const charges = lire('charges', 100) ?? 0
+	const frais = lire('frais') ?? 0
+	const avantages = lire('avantages') ?? 0
+	const jours = lire('jours', 366) ?? JOURS_TRAVAILLES_PAR_AN
+	if (erreurs.jours === undefined && !Number.isInteger(jours)) erreurs.jours = 'entier'
+	else if (erreurs.jours === undefined && jours < 1) erreurs.jours = 'borne'
+	if (Object.keys(erreurs).length > 0) return { statut: 'invalide', erreurs }
+	if (brut === null) return { statut: 'incomplet' }
+	const mensuel = brut * (1 + charges / 100) + frais + avantages
+	return {
+		statut: 'calcule',
+		mensuel: auCentime(mensuel),
+		quart: auCentime((mensuel * MOIS_PAR_AN) / (jours * QUARTS_PAR_JOUR)),
+		jours,
+	}
+}
