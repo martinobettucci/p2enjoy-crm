@@ -15706,3 +15706,24 @@ peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi e
 - [ ] Spécification : quoi journaliser (adresse normalisée, motif d'admission refusée, horodatage), où (échange de
       session SSO), qui lit (administrateur de l'espace pour ses attentes, superadministrateur), conservation (RGPD),
       question du connecteur MCP. À valider avant tout code.
+
+### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[ ]`
+*Créée le 2026-10-23 — demande du responsable : « le navbar en haut ne montre pas l'arborescence quand on a une affaire
+ouverte, donc difficile de savoir où on est ». Arbitrages du responsable le même jour (`docs/JOURNAL.md` décision 636).
+Spécifiée avant le code : `docs/SPEC-webapp.md` §5.1 bis, `docs/DESIGN_SYSTEM.md` §5.62 et §12.2. Connecteur MCP :
+non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
+
+- [x] **T1 — spécification, écrite avant le code**, sur les cinq arbitrages du 2026-10-23 ; les choix de forme de
+      l'agent sont marqués dans la décision 636.
+- [ ] **T2 — mise en œuvre et preuves unitaires** : composition pure des ancêtres d'une route de track
+      (`webapp/src/lib/fil-ariane.ts`) ; `Header` rend le workspace, les ancêtres en liens, le titre `h1` en
+      `aria-current`, et le repli « … » ; contexte d'espace retiré de la fin de ligne ; les cinq routes d'un track
+      passent leurs ancêtres. Unitaires de la composition (chaque route, donnée absente ou non lue) et de l'en-tête
+      (liens, `aria-current`, repli au clavier, Échap, clic extérieur, états du workspace), mutations tuées.
+- [ ] **T3 — preuves sur la pile réelle** : `e2e/ui/fil-ariane.spec.ts` sur le seed (chemin complet d'une affaire et
+      navigation par ses liens, channel et liste, coûts et budget, repli au clavier à 900 et 390 px, aucun défilement
+      horizontal aux quatre paliers, recherche ouverte sous `lg`) ; preuves de `CRM-007` révisées (`coquille.spec.ts`,
+      `manuel.spec.ts`) ; captures `docs/captures/CRM-110/` observées aux quatre paliers ; `docs/manual.md` ;
+      `CHANGELOG.md` ; campagnes.
+- [ ] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
+      (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.

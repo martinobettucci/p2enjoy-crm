@@ -224,6 +224,46 @@ Conforme à `docs/DESIGN_SYSTEM.md` §4 :
 - La barre d'onglets liste les channels du track courant. Sans track ni channel, elle affiche son
   état vide plutôt que de disparaître : la structure de l'écran reste lisible.
 
+### 5.1 bis Fil d'Ariane — `CRM-110`, décision 636
+
+*Écrit le 2026-10-23, avant le code.* Le fil d'Ariane de l'en-tête dit **où l'on est dans l'arborescence**, du
+workspace à l'objet ouvert. Son apparence est réglée par `docs/DESIGN_SYSTEM.md` §5.62 ; cette section fixe ce que
+chaque route y place.
+
+**Niveaux par route.** Le premier niveau est **toujours le workspace courant**, le premier rendu par `lireWorkspaces`
+(§6.3), lien vers `/`. Le dernier est le **titre de la route**, seul `h1` de la page. Entre les deux viennent les
+**ancêtres** de l'objet ouvert, chacun lien vers sa route :
+
+| Route | Ancêtres, après le workspace | Titre (`h1`) |
+|---|---|---|
+| toute route hors d'un track | — | titre de la route, inchangé |
+| `/tracks/:slugTrack` | — | nom du track |
+| `/tracks/:slugTrack/:slugChannel` et `…/liste` | track → `/tracks/:slugTrack` | nom du channel |
+| `/tracks/:slugTrack/:slugChannel/cards/:idCard` | track ; channel → son board | titre de l'affaire |
+| `/tracks/:slugTrack/couts` | track | « Coûts » |
+| `/tracks/:slugTrack/couts/:idBudget` | track ; « Coûts » → `/tracks/:slugTrack/couts` | nom du budget |
+
+**Règles.**
+
+1. **Aucune requête nouvelle.** Les noms viennent des lignes que la route lit déjà : le track et ses channels
+   (`useContenuTrack`, lus pour la barre d'onglets), l'affaire, le budget. Le channel d'une affaire est résolu par son
+   slug dans la liste déjà chargée, comme l'onglet actif.
+2. **Un niveau dont la donnée n'est pas lue n'est pas rendu** : pendant le chargement, pour un slug inconnu ou refusé,
+   pour un channel absent de la liste. Jamais un libellé inventé, jamais un slug à la place d'un nom (`CLAUDE.md` §18).
+   Le titre de repli de chaque route reste celui d'aujourd'hui.
+3. **Aucune information de plus qu'ailleurs sur l'écran.** Le fil ne nomme que des lignes que la RLS a rendues et que
+   la barre latérale ou la barre d'onglets montrent déjà : un refus et une inexistence restent indiscernables
+   (`docs/SPEC-permissions-rls.md` §7). Aucune règle d'accès n'est ajoutée ; aucune preuve d'API n'est donc due.
+4. **Le workspace sans donnée** : squelette pendant la lecture ; « Aucun workspace accessible », sans lien, sur un échec
+   ou sans workspace. C'est le message que portait le contexte d'espace de fin de ligne, dont le fil prend la place.
+5. **Contrat entre la route et la coquille** : la route passe à `AppShell` ses ancêtres (libellé et adresse) à côté de
+   son titre ; la coquille y ajoute le workspace. La composition des ancêtres d'une route de track est une fonction
+   pure, testée seule.
+6. **Hors périmètre** : les fiches d'un contact et d'une organisation gardent `Workspace / nom` ; les faire descendre du
+   carnet est une évolution distincte, non demandée.
+7. **Connecteur MCP : non** (décision 636) : le fil est de la navigation d'écran, et un assistant lit déjà le track et
+   le channel d'une affaire.
+
 ### 5.2 Routes
 
 | Chemin | Contenu à ce stade |

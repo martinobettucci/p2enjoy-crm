@@ -32477,3 +32477,28 @@ emprunte le motif générique. **Garde.** Le garde de source d'INC-279 a refusé
 || …`) plutôt que d'affaiblir le garde. **Vérifications.** Unitaires 4130/4130 (dont `membres-espace` 10 et l'écran 12,
 onze mutations tuées) ; `Plateforme.test.tsx` 22/22 et `plateforme.spec.ts` inchangés et verts ; E2E `membres.spec.ts`
 7/7 sur la pile seedée, seed rendu à son état ; `verify-plateforme.sh --rapide` 31 contrôles ; captures observées.
+
+### décision 636 — `CRM-110` : le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert
+
+*2026-10-23, demande et arbitrages du responsable.* **Problème.** « Le navbar en haut ne montre pas l'arborescence
+quand on a une affaire ouverte, donc difficile de savoir où on est », sur la capture d'une affaire en production :
+l'en-tête disait « P2Enjoy CRM / VideoCoding ». **Observation**, dans le code : le fil d'Ariane
+(`webapp/src/app/Header.tsx`) a deux niveaux fixes, le nom du produit et le titre de la route, et sur une affaire
+`RouteCard` ne lui passe que le titre de l'affaire. Le track et le channel, que la route lit pourtant pour la barre
+d'onglets, n'y figurent jamais ; aucune règle du design system ne prévoyait de fil hiérarchique. **Arbitrages.**
+1. **Connecteur MCP : non.** C'est de la navigation d'écran ; un assistant lit déjà le track et le channel d'une
+   affaire.
+2. **Le premier niveau est le workspace**, et non le nom du produit — correction du responsable sur la proposition
+   « Track / Channel / Affaire » : `Workspace / Track / Channel / Affaire`.
+3. **Le fil absorbe le contexte d'espace** : le workspace ouvre le fil sur toutes les routes, à la place de
+   « P2Enjoy CRM », et le nom isolé en fin de ligne de l'en-tête est retiré.
+4. **Portée : toutes les routes d'un track** — board et liste d'un channel, affaire, coûts du track, détail d'un budget.
+5. **Sous les écrans étroits, les ancêtres se replient** dans un « … » atteignable au clavier ; le titre ne cède jamais
+   (`docs/DESIGN_SYSTEM.md` §12.2).
+**Choix de forme de l'agent, marqués pour relecture** : le dernier niveau reste le seul `h1`, si bien que sur un
+channel le titre devient le nom du channel, et sur les coûts d'un track « Coûts » ; le track mène à
+`/tracks/:slugTrack`, la cible de sa pilule ; les seuils du repli, `lg` pour le workspace et `md` pour tout sauf le
+parent immédiat. **Conséquences.** Aucune migration, aucune règle d'accès, aucune requête nouvelle : le fil ne nomme
+que des lignes que la route a déjà lues. Les preuves de `CRM-007` qui lisent `workspace-courant` suivront le contexte
+dans le fil. **Persisté avant le code** : `docs/SPEC-webapp.md` §5.1 bis, `docs/DESIGN_SYSTEM.md` §5.62 et §12.2,
+`docs/BACKLOG.md` `CRM-110`.

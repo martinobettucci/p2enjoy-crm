@@ -2908,6 +2908,13 @@ La règle générale qui en sort, et qui vaut au-delà de cet en-tête : **un é
 dans une ligne partagée déplace le manque de place sur ses voisins élastiques**, et le seuil auquel
 il doit céder se recalcule à chaque nouvel occupant de la ligne.
 
+**RÉVISION DU 2026-10-23 — `CRM-110` (décision 636). LE NOM DU PRODUIT QUITTE L'EN-TÊTE, LE WORKSPACE OUVRE LE
+FIL.** Le fil d'Ariane porte désormais le workspace et les ancêtres de l'objet ouvert (§5.62), et le contexte d'espace
+isolé en fin de ligne est retiré : il ne reste plus ni nom de produit ni contexte à sacrifier. L'ordre devient :
+**sous `lg`**, le workspace passe dans le repli « … » ; **sous `md`**, tous les ancêtres sauf le parent immédiat y
+passent. **Le titre de la route ne cède toujours jamais**, et chaque niveau masqué garde un point d'accès, le repli
+(§7).
+
 ### 12.3 Libellés masqués visuellement, jamais retirés — `CRM-007`
 
 Au palier « colonne d'icônes » (1024–1279 px) et lorsque la barre est repliée, les libellés de
@@ -5900,3 +5907,37 @@ envoie et refuse est spécifié par `docs/SPEC-membres.md` §3 et §4 ; ces règ
   changé » (zéro ligne rendue), réservé aux administrateurs, réseau, inconnu. Le détail du serveur n'atteint jamais
   l'écran.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
+### 5.62 Fil d'Ariane de l'en-tête : du workspace à l'objet ouvert — `CRM-110`
+
+*Écrit le 2026-10-23, avant le code, sur les arbitrages du responsable (`docs/JOURNAL.md` décision 636), après
+relecture des §4, §5.43, §5.46, §7, §8 et §12.2.* Ce que chaque route place dans le fil est spécifié par
+`docs/SPEC-webapp.md` §5.1 bis ; ces règles disent de quoi il a l'air.
+
+- **LE FIL NOMME OÙ L'ON EST, DU WORKSPACE À L'OBJET OUVERT** : `Workspace / Track / Channel / Affaire` sur une affaire.
+  Le **workspace est le premier niveau sur toutes les routes** ; il remplace « P2Enjoy CRM », que la barre latérale et
+  l'onglet du navigateur portent déjà. Défaut d'origine, relevé par le responsable sur une affaire en production :
+  l'en-tête disait « P2Enjoy CRM / VideoCoding », sans le track ni le channel.
+- **LE CONTEXTE D'ESPACE ISOLÉ EN FIN DE LIGNE EST RETIRÉ** : le fil l'absorbe, et le même nom deux fois sur une ligne
+  qui manque de place serait payé par le titre (§12.2). L'ordre de la ligne devient : fil, recherche, cloche, identité
+  (§5.43, §5.46).
+- **LES ANCÊTRES SONT DES LIENS, LE DERNIER NIVEAU EST LE TITRE.** Workspace → `/` ; track → `/tracks/:slugTrack`, la
+  cible de sa pilule ; channel → son board ; « Coûts » → les coûts du track. Ancêtres en 13 px `--color-text-2`,
+  soulignés au survol, focus visible, cible ≥ 40 px de haut (§8) ; séparateur `/` en `--color-text-3`, `aria-hidden`.
+  Le dernier niveau reste le `h1` en `--text-h2`, seul titre de la page, et porte `aria-current="page"`. Le `nav`
+  « Fil d'Ariane » contient une `ol` : la structure est annoncée comme une liste ordonnée de niveaux.
+- **UN NOM EST UNE DONNÉE : TRONQUÉ, JAMAIS PERDU.** Chaque ancêtre est borné à `24ch` et tronqué par `…`, son nom
+  complet en `title` ; le titre prend le reste de la ligne et se tronque en dernier.
+- **ORDRE DE SACRIFICE** (révise §12.2) : ≥ 1024 px, tout le fil ; 768–1023 px, le workspace passe dans le repli ;
+  < 768 px, seuls le **parent immédiat** et le titre restent visibles. **Le titre ne cède jamais.**
+- **LE REPLI « … »** n'est rendu que s'il cache au moins un niveau. `button` de 40 px, icône Lucide `Ellipsis`, nom
+  accessible « Afficher le chemin complet », `aria-expanded`, `aria-controls`. Il ouvre sous lui un panneau — surface
+  `--color-surface`, bordure `--color-border`, `--radius-lg`, `--shadow-card-hover` — qui liste les niveaux masqués
+  comme liens, dans l'ordre du chemin. Échap et un clic extérieur le referment, et le focus revient au bouton ;
+  suivre un lien le referme. Le panneau s'ancre à l'en-tête et non au bouton, patron du panneau de notifications
+  (§5.43) : ancré au bouton, il sortirait de l'écran à 390 px.
+- **ÉTATS** (§5.8) : pendant la lecture du workspace, un squelette d'une ligne à sa place ; sur un échec ou sans
+  workspace, « Aucun workspace accessible » en texte, sans lien — le message que portait le contexte d'espace. Un
+  ancêtre dont la donnée n'est pas lue **n'est pas rendu** : ni libellé inventé, ni slug à la place d'un nom.
+- **PENDANT LA RECHERCHE OUVERTE SOUS `lg`, LE FIL ENTIER CÈDE**, comme avant (§5.46) : inchangé.
+- **Aucune couleur ni aucun jeton nouveaux** ; une icône Lucide de plus, `Ellipsis`.
