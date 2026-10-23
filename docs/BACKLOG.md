@@ -15736,8 +15736,14 @@ peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi e
       une trace, une inconnue aucune (`docs/SPEC-session-sso.md` §6.1 inchangé) ; conservation **90 jours au plus**, la
       trace partant avec l'attente ; lecteurs : l'**administrateur de l'espace** pour les adresses qu'il attend, le
       **superadministrateur**.
-- [ ] Spécification `docs/SPEC-refus-admission.md` : quoi journaliser (adresse normalisée, motif, horodatage), où
-      (échange de session SSO), la table et ses politiques, l'effacement, l'affichage. À valider avant tout code.
+- [x] **Spécification** `docs/SPEC-refus-admission.md`, **validée le 2026-10-23** (décision 644) : une trace par attente
+      (dernier motif, premier et dernier refus, nombre), table `admission_refus` en cascade sur l'attente — remplacer une
+      attente efface sa trace —, purge à 90 jours, écriture par l'échangeur via une fonction réservée à `service_role`.
+- [ ] **T1** — migration : table, fonction, purge `pg_cron`, politique ; pgTAP ; contrat de déploiement.
+- [ ] **T2** — l'échangeur journalise les trois refus d'une adresse attendue ; unitaires ; intégration réelle.
+- [ ] **T3** — les écrans : Réglages ▸ Membres et la plateforme (`plateforme_attentes` étendue) ; unitaires, API, E2E,
+      manuel, seed.
+- [ ] **T4** — livraison en production, sur instruction du responsable.
 
 ### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[ ]`
 *Créée le 2026-10-23 — demande du responsable : « le navbar en haut ne montre pas l'arborescence quand on a une affaire

@@ -4,7 +4,7 @@
   « refusée ».
 - Arbitrages : `docs/JOURNAL.md`, décision 640 (2026-10-23) ; décision 635 pour la séparation d'avec `CRM-070` ;
   décisions 579 et 593 pour la règle d'admission et la suspension.
-- État : **brouillon, à valider par le responsable avant tout code.**
+- État : **validée le 2026-10-23** (décision 644), avec la cascade au remplacement d'une attente (§3).
 - Connecteur MCP : **non** (décision 640, point 1). Le journal se lit dans Réglages ▸ Membres et sur la plateforme.
 
 ## 1. Le problème

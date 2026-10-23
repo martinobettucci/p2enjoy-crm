@@ -32708,3 +32708,15 @@ archive un rattachement (décision 639), et le retrait reste un geste d'administ
 **État.** Les points ouverts des décisions 638, 639 et 642 sont tous tranchés. **Suite** : brouillon de spécification,
 puis unités de backlog et découpage en tranches, à valider avant tout code ; les champs communs de portée espace
 (décision 642, arbitrage 4) peuvent former une unité distincte.
+
+### décision 644 — `CRM-109` : la spécification validée, et la trace qui part au remplacement d'une attente
+
+*2026-10-23, validation du responsable sur `docs/SPEC-refus-admission.md`.* **Validée** telle qu'écrite sur les
+arbitrages de la décision 640 : une trace **par attente** — dernier motif, premier et dernier refus, nombre —, sans
+`sub`, nom, adresse IP ni agent utilisateur ; table `admission_refus` en cascade sur `workspace_invitations` ; purge
+quotidienne à 90 jours, doublée d'un filtre à la lecture ; écriture par l'échangeur au moyen d'une fonction réservée à
+`service_role`, qui n'écrit rien pour une adresse que personne n'attend ; lecture par l'administrateur de l'espace et
+par la plateforme. **Choix confirmé** : remplacer une attente (`inscrire_attente`, qui la retire puis la réinscrit)
+**efface sa trace** — une attente changée repart de zéro, et une nouvelle tentative refusée la recrée. **Découpage
+persisté au backlog** : T1 migration, T2 échangeur, T3 écrans, T4 livraison.
+
