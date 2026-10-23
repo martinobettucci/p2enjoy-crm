@@ -15601,7 +15601,7 @@ déjà la saisie sur une affaire.*
       `SaisieTemps.test` 9, `RapportTemps.test` 10, `RouteCard.test` 8, `commandes-refusees.test` 2, `i18n.test` 408 ;
       `tsc` de la webapp et des tests sans erreur. *Le 2026-10-23, sur la pile* : build vert, contrôle des classes
       « aucune classe manquante » (407 citées).
-- [~] **T3 — preuves sur la pile réelle** : preuve d'API (saisie sur une affaire, refus à qui ne la lit pas) ; E2E souris
+- [x] **T3 — preuves sur la pile réelle** : preuve d'API (saisie sur une affaire, refus à qui ne la lit pas) ; E2E souris
       et clavier, journée en heures, remplacement, retrait, plafond, lectrice, administrateur ; captures
       `docs/captures/CRM-106/` aux quatre paliers observées ; `docs/manual.md` 5 undecies.6 bis ; `CHANGELOG.md` ;
       campagnes.
@@ -15614,7 +15614,11 @@ déjà la saisie sur une affaire.*
       la colonne de la fiche dès 1440 px — cases « En heures » sans libellé visible et nommées par une phrase, total de
       la semaine sous la bande (`docs/DESIGN_SYSTEM.md` §5.54 bis) ; captures refaites et observées aux quatre paliers.
       **Un défaut de `CRM-098` révélé par la campagne de contrôle et corrigé** : INC-282. `verify-manual.sh` **239**
-      contrôles sans anomalie. **Reste avant `[x]`** : les campagnes complètes après ces corrections.
+      contrôles sans anomalie. *Campagnes complètes du 2026-10-23, sur `652d890e`, jouées par une autre session* : API
+      **1 157/1 157** ; interface **869** verts, **18** rouges, aucun dans les fichiers de l'unité — `saisie-temps` 7/7,
+      `temps-fiche-affaire` 7/7, `cout-personnel` 5/5 ; les rouges relèvent d'autres unités (en-tête de `CRM-110` en
+      cours à 390 px, connecteur MCP) ou de `502` transitoires de la passerelle, dont un sur une fiche d'affaire
+      (`contacts-affaire.spec.ts:202`), que rien ne relie à la bande.
 - [ ] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
 
@@ -15636,14 +15640,16 @@ charges en % du brut, frais et avantages en montant ; calculateur seulement. Sp�
       rendu au champ), chacune rouge. `RapportTemps.test` 10, `commandes-refusees.test` 2, `i18n.test` 411 verts ; `tsc`
       sans erreur. Le design system nomme la variante réelle du bouton de dépli (`discret`, §5.5 n'a pas de
       « tertiaire »). *Le 2026-10-23, sur la pile* : build vert, contrôle des classes « aucune classe manquante ».
-- [~] **T3 — preuves sur la pile réelle** : E2E d'une version créée par le calculateur, relue en base, à la souris et au
+- [x] **T3 — preuves sur la pile réelle** : E2E d'une version créée par le calculateur, relue en base, à la souris et au
       clavier ; captures `docs/captures/CRM-107/` aux quatre paliers observées ; `docs/manual.md` 5 undecies.5 ;
       `CHANGELOG.md` ; campagnes.
       *Vérifié le 2026-10-23, sur la pile et le seed* : `e2e/ui/cout-personnel-calcul.spec.ts` **3** — l'exemple 4 510 →
       62,06 reporté puis enregistré, la version relue en base (`cout_quart` 62,06, seule valeur écrite ; rien d'écrit par
       le calcul ni par « Utiliser ce coût ») ; au clavier, 240 jours → 50,00 et des charges à 120 % qui taisent le
       résultat ; quatre paliers sans défilement de page. Captures observées (1440 et 390 px, l'état d'erreur).
-      `verify-manual.sh` **239** contrôles sans anomalie. **Reste avant `[x]`** : les campagnes complètes.
+      `verify-manual.sh` **239** contrôles sans anomalie. *Campagnes complètes du 2026-10-23, sur `652d890e`* : API
+      **1 157/1 157** ; interface 869 verts, 18 rouges étrangers à l'unité — `cout-personnel-calcul` 3/3,
+      `cout-personnel` 5/5.
 - [ ] **T4 — livraison** : reconstruction de la webapp en production, constat. Aucune migration, aucune fonction, aucune
       variable.
 
