@@ -8,6 +8,8 @@
 // @verifies CLAUDE.md §16 (vérification visuelle), §10 (le refus se mesure avec le vrai profil)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario de la lectrice révisé : la commande ou le champ refusé est inactif et cite son moti
+//           f (docs/SPEC-droits-interface.md §3, §5)
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE : ces scénarios se connectent réellement, appellent les vrais
 // `snooze_card` et `wake_card`, et lisent le résultat par la vraie route. C'est l'objet même de la
@@ -26,9 +28,7 @@
 // qu'une affaire livrée est précisément celle qu'on range.
 
 import {
-	autoriserErreursConsole,
 	connecterAvecLeLabs,
-	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type Page,
@@ -192,10 +192,11 @@ test.describe('endormir depuis la carte range l’affaire (§16.13.3)', () => {
 })
 
 test.describe('le refus est mesuré avec le vrai profil (§16.13.4, CLAUDE.md §10)', () => {
-	// LA COMMANDE N'EST JAMAIS ÉTEINTE D'AVANCE : la lectrice l'ouvre, appuie, et LIT le refus que
-	// la base oppose. Éteindre le geste par supposition remplacerait un refus mesuré par une
-	// devinette — et masquerait la disparition de la garde le jour où elle disparaîtrait.
-	test('la lectrice obtient les quatre échéances, appuie, et lit le refus dans le menu', async ({
+	// RÉVISÉ PAR `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'écrire sur le channel est rendue
+	// par la base sur sa ligne. La lectrice ouvre le menu ; les quatre échéances restent montées, désactivées, et citent
+	// le motif du channel. Le `403` de la garde reste prouvé hors interface (`e2e/api/sommeil-card.spec.ts`), et sa
+	// traduction — la mention de la fiche, mot pour mot — par la preuve unitaire du board.
+	test('la lectrice ouvre le menu : les quatre échéances sont ÉTEINTES, avec le motif du channel', async ({
 		page,
 	}) => {
 		await connecter(page, LECTRICE)
@@ -207,20 +208,9 @@ test.describe('le refus est mesuré avec le vrai profil (§16.13.4, CLAUDE.md §
 
 		const gestes = carte.locator('[data-testid^="carte-sommeil-"]')
 		await expect(gestes).toHaveCount(4)
-		for (let rang = 0; rang < 4; rang += 1) await expect(gestes.nth(rang)).toBeEnabled()
-
-		await carte.getByTestId('carte-sommeil-demain').click()
-
-		// LA MENTION EST CELLE DE LA FICHE, mot pour mot : un même refus ne se formule pas de deux
-		// façons selon l'écran d'où il a été demandé.
-		const mention = carte.getByTestId('carte-sommeil-mention')
-		await expect(mention).toHaveText('Vous ne pouvez pas modifier cette affaire.')
-		await mention.scrollIntoViewIfNeeded()
-		// LE MENU RESTE OUVERT : le refermer effacerait le message avant qu'il soit lu.
-		await expect(carte.getByTestId('menu-carte')).toBeVisible()
-		// LE `403` TRAVERSE LA CONSOLE, ET C'EST LA PREUVE QUE LE REFUS VIENT DU SERVEUR : la liste
-		// est consommée ici, exactement, plutôt que filtrée globalement.
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+		for (let rang = 0; rang < 4; rang += 1) await expect(gestes.nth(rang)).toBeDisabled()
+		const motif = page.locator(`[id="${await gestes.first().getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('Vos droits ne vous permettent pas d’en modifier les affaires')
 		await capturer(page, 'menu-sommeil-board-refus-1440', UNITE)
 
 		// Et rien n'a été écrit : l'affaire est toujours là, sans pastille, après rechargement.

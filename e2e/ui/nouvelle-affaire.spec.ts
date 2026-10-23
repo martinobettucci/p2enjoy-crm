@@ -6,6 +6,8 @@
 //           §7 (quatre paliers, aucun défilement horizontal de la page), §8 (clavier, focus rendu)
 // @verifies CLAUDE.md §10 (le refus prouvé avec les droits réels de la lectrice), §15 (état déterministe,
 //           effets en base vérifiés), §16 (captures observées)
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario du refus révisé : la commande refusée est éteinte avec son motif (docs/SPEC-droits-
+//           interface.md §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
 //
 // Tout part du SEED et de ses comptes réels, connectés par la vraie page du SSO. `studio-web / refonte`
 // est retenu parce que sa colonne initiale est VIDE — mesuré le 2026-09-29 : deux affaires, aucune à
@@ -14,8 +16,6 @@
 // et sont retirées après chaque scénario par la clé de service, dont le retrait est CONSTATÉ.
 
 import {
-	ERREUR_RESSOURCE_HTTP,
-	autoriserErreursConsole,
 	connecterAvecLeLabs,
 	expect,
 	test,
@@ -148,28 +148,21 @@ test.describe('Nouvelle affaire sur le seed (docs/SPEC-cards.md §18)', () => {
 		expect((await lireAffaire(request, idCard))?.workflow_steps?.is_initial).toBe(true)
 	})
 
-	test('la lectrice voit la commande ; la base refuse, et le refus est écrit sans perdre la saisie', async ({
-		page,
-		request,
-	}) => {
-		const titre = `${PREFIXE} — lectrice`
+	test('la lectrice voit « Nouvelle affaire » ÉTEINTE, avec le motif du channel (CRM-093)', async ({ page, request }) => {
 		await connecterAvecLeLabs(page, VIEWER)
 		await page.goto(REFONTE.board)
 
-		// Rendue à TOUS les rôles (§5.50) : l'écran ne calcule aucun droit.
-		await page.getByTestId('nouvelle-affaire').click()
-		await page.getByTestId('champ-titre-affaire').fill(titre)
-		await page.getByTestId('champ-titre-affaire').press('Enter')
-
-		const refus = page.getByTestId('refus-nouvelle-affaire')
-		await expect(refus).toHaveText("Vous ne pouvez pas créer d'affaire dans ce channel.")
-		await expect(refus).toHaveAttribute('role', 'alert')
-		await expect(page.getByTestId('champ-titre-affaire')).toHaveValue(titre)
-		await expect(page.getByTestId('champ-titre-affaire')).toBeFocused()
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+		// RÉVISÉ PAR `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'écrire sur le channel est rendue
+		// par la base sur sa ligne ; la commande refusée reste montée, désactivée, et cite le motif du channel. Le `403`
+		// de la création reste prouvé hors interface (`e2e/api/nouvelle-affaire.spec.ts`), et sa traduction par la
+		// preuve unitaire du formulaire.
+		const commande = page.getByTestId('nouvelle-affaire')
+		await expect(commande).toBeVisible()
+		await expect(commande).toBeDisabled()
+		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('Vos droits ne vous permettent pas d’en modifier les affaires')
 		await capturer(page, 'nouvelle-affaire-refus-lectrice-xl-1440', UNITE)
 
-		// Rien n'est écrit : le refus vient de la base, avec le jeton réel de la lectrice (CLAUDE.md §10).
 		const ecrites = await request.get(rest(`cards?select=id&${FILTRE_SONDES}`), { headers: enTetesService() })
 		expect(await ecrites.json()).toEqual([])
 	})

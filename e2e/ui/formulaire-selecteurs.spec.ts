@@ -7,6 +7,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.22 (les deux sélecteurs), §7 (paliers) ; CLAUDE.md §16
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario de la lectrice révisé : la commande ou le champ refusé est inactif et cite son moti
+//           f (docs/SPEC-droits-interface.md §3, §5)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et l'écriture passe par le sélecteur de l'écran.
@@ -18,9 +20,7 @@
 // remet la valeur seedée si un scénario s'est interrompu entre les deux.
 
 import {
-	autoriserErreursConsole,
 	connecterAvecLeLabs,
-	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type Page,
@@ -152,26 +152,23 @@ test.describe('sélecteurs de contact et de membre (docs/SPEC-contacts.md §13)'
 		await expect(page.getByTestId('etat-referent-technique')).toHaveText('Enregistré')
 	})
 
-	test('la LECTRICE voit les deux sélecteurs et reçoit le refus TRADUIT — cas f', async ({
+	test('la LECTRICE voit les deux sélecteurs INACTIFS, qui citent le motif de l’affaire — cas f (CRM-093)', async ({
 		page,
 	}) => {
 		await connecter(page, VIEWER)
 		await page.goto(AFFAIRE_LECTRICE.adresse)
 
-		// AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE (§13.7) : la règle vit dans la politique RLS, et
-		// une liste grisée ferait passer une décision de la base pour une décision d'écran.
-		const contact = await selecteurPret(page, 'contact-principal')
-		await expect(contact).toBeEnabled()
-		await contact.selectOption(CONTACT_ELISE)
-
-		const refus = page.getByTestId('refus-contact-principal')
-		await expect(refus).toBeVisible()
-		await expect(refus).toContainText("Vous n'avez pas le droit d'écrire sur ce channel")
-		// La saisie n'est PAS effacée par le refus (§5.7 ter).
-		await expect(contact).toHaveValue(CONTACT_ELISE)
-		// Le `403` traverse la console : il est consommé nommément, parce que le scénario vient de
-		// le provoquer ET de vérifier que l'écran l'explique (décision 248).
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+		// RÉVISÉ PAR `CRM-093` (docs/SPEC-droits-interface.md §3, §5 ; docs/DESIGN_SYSTEM.md §5.59) : la capacité
+		// d'écrire sur l'affaire est rendue par la base ; un champ qu'on ne peut pas enregistrer est inactif, sa valeur
+		// restant lisible, et cite le motif de la fiche. Le `403` reste prouvé hors interface, et sa traduction par la
+		// preuve unitaire du formulaire.
+		for (const cle of ['contact-principal', 'referent-technique']) {
+			const selecteur = await selecteurPret(page, cle)
+			await expect(selecteur).toBeDisabled()
+			const cites = ((await selecteur.getAttribute('aria-describedby')) ?? '').split(' ')
+			const textes = await Promise.all(cites.map((id) => page.locator(`[id="${id}"]`).textContent()))
+			expect(textes.join(' '), `le sélecteur ${cle} cite le motif`).toContain('Vos droits ne vous permettent pas de la modifier')
+		}
 
 		await page.getByTestId('champ-contact-principal').scrollIntoViewIfNeeded()
 		await capturer(page, 'formulaire-selecteurs-refus-1440', UNITE)

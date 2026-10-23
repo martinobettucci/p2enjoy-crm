@@ -6,6 +6,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.23 (le formulaire dans le flux du carnet)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — le cas i révisé : la commande refusée est éteinte avec son motif (docs/SPEC-droits-interface.md
+//            §3, §5)
 //
 // LE SEED EST RENDU INTACT (§14.8) : le contact créé par le scénario est SUPPRIMÉ par l'API à la
 // fin, avec un filet de sécurité en `afterAll`. `apply-seed.sh` échoue si le carnet ne compte pas
@@ -68,7 +70,7 @@ test.describe('Création d’un contact depuis le carnet — CRM-060 §14', () =
 		await supprimerContactDePreuve()
 	})
 
-	test('i — la lectrice voit le geste, envoie, et reçoit le refus TRADUIT avec sa saisie conservée', async ({
+	test('i — la lectrice voit le geste ÉTEINT, avec son motif : la base lui refuse l’édition (CRM-093)', async ({
 		page,
 	}) => {
 		const erreurs: string[] = []
@@ -76,18 +78,14 @@ test.describe('Création d’un contact depuis le carnet — CRM-060 §14', () =
 		await connecter(page, LECTRICE)
 		await page.goto('/contacts')
 
-		// AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE (§14.6) : la lectrice voit le geste et peut l'ouvrir.
-		await page.getByTestId('ouvrir-creation-contact').click()
-		await page.getByTestId('champ-nom-contact').fill('Refus attendu')
-		await page.getByTestId('envoyer-creation-contact').click()
-
-		const refus = page.getByTestId('refus-creation-contact')
-		await expect(refus).toBeVisible()
-		await expect(refus).toHaveText(
-			'Votre rôle ne permet pas de créer un contact dans cet espace de travail.',
-		)
-		// LA SAISIE EST CONSERVÉE : elle est ce qu'il faut corriger.
-		await expect(page.getByTestId('champ-nom-contact')).toHaveValue('Refus attendu')
+		// DEPUIS `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'éditer est rendue par la base sur la
+		// ligne de l'espace, et la commande refusée reste montée, désactivée, citant son motif. Le refus serveur, lui,
+		// reste prouvé hors interface (`e2e/api/contacts.spec.ts`), et sa traduction par la preuve unitaire du formulaire.
+		const commande = page.getByTestId('ouvrir-creation-contact')
+		await expect(commande).toBeVisible()
+		await expect(commande).toBeDisabled()
+		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('réservées aux administrateurs et aux business developers')
 		await capturer(page, 'carnet-creation-refus-1440', UNITE)
 		expect(erreurs).toEqual([])
 	})

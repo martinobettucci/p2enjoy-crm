@@ -32307,3 +32307,25 @@ structure des lignes de coût est le modèle demandé.
 - Seed : §21 de `docs/SPEC-seed.md`.
 - Découpage en six tranches, consigné au backlog (`CRM-108`) et au §10 de la spécification.
 - La session qui tient le connecteur (`CRM-102` à `CRM-104`) est prévenue avant tout code touchant `mcp/` ou la matrice.
+
+### INC-280 — trois régressions de `CRM-093` trouvées par la campagne UI (T5)
+
+*2026-10-23.* La campagne complète (850 scénarios), rejouée sur une base remise à zéro, a laissé **cinq** échecs, dont
+trois défauts réels de l'interface et non des scénarios à réviser :
+- **La zone de commentaire restait active** pour la lectrice : seul « Publier » lisait la capacité. Corrigé : la zone et
+  « Mentionner » sont inactifs et citent le motif de la fiche (§5.59, « un champ qu'on ne peut pas enregistrer est
+  inactif »).
+- **Le focus sur le premier champ exigé était perdu** (reprise d'un déplacement refusé, `docs/SPEC-form-composer.md`
+  §4 ter.6) : pendant la lecture de la capacité, les champs sont inactifs ; le focus posé au montage tombait sur un champ
+  inactif, et la demande, marquée honorée, n'était jamais rejouée. Corrigé : la demande attend la fin de la lecture ;
+  sous une capacité refusée, elle n'est honorée que par le défilement.
+- **La page débordait à 390 px** sur la vue d'un track, pour la lectrice : le motif `sr-only` du « Nouveau channel »
+  refusé, positionné en absolu sans ancêtre positionné, s'échappait du conteneur de défilement de la barre d'onglets.
+  Corrigé par `relative` sur le texte.
+
+**Les vingt et un autres scénarios** de la lectrice ou du commercial attendaient le refus du serveur après un clic : ils
+prouvent désormais la commande éteinte et son motif, le refus serveur restant prouvé par les suites d'API et les
+preuves unitaires. **Les autres échecs** relevaient d'une base dérivée — affaires jetables laissées par des campagnes
+interrompues, seed vieilli de deux jours — et ont disparu après `./resetMe.sh --yes`, accordé par le responsable.
+**Preuves** : unitaires de la timeline et du formulaire, vues rouges sans leur correctif ; rejeu ciblé 250/255 avant ces
+trois correctifs.

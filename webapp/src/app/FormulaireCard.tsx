@@ -202,9 +202,15 @@ export function FormulaireCard({
 	// celui qui saisit.
 	const demandeHonoree = useRef<string | null>(null)
 	const signature = modele.clesExigeesRetenues.join(',')
+	// `CRM-093` — PENDANT LA LECTURE DE LA CAPACITÉ, les champs sont inactifs (désactivés SANS motif, §4) : un focus posé
+	// sur eux serait perdu, et la demande, marquée honorée, ne serait jamais rejouée. Elle attend donc la fin de la
+	// lecture. Une capacité REFUSÉE (désactivée AVEC motif) ne rendra jamais le champ actif : la demande est alors
+	// honorée par le seul défilement, qui montre ce qui manque.
+	const capaciteEnLecture = droit.disabled === true && droit['aria-describedby'] === undefined
 	useEffect(() => {
 		if (signature === '') return
 		if (demandeHonoree.current === signature) return
+		if (capaciteEnLecture) return
 		demandeHonoree.current = signature
 		const premiere = modele.clesExigeesRetenues[0]
 		if (premiere === undefined) return
@@ -228,7 +234,7 @@ export function FormulaireCard({
 		if (typeof controle.scrollIntoView === 'function') {
 			controle.scrollIntoView({ block: 'center', behavior: sobre ? 'auto' : 'smooth' })
 		}
-	}, [signature, modele.clesExigeesRetenues])
+	}, [signature, modele.clesExigeesRetenues, capaciteEnLecture])
 
 	const enregistrer = useCallback(
 		async (resolu: ChampResolu, valeur: Json) => {

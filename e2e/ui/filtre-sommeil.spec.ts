@@ -160,6 +160,9 @@ test.describe('le board masque, ramène et marque (docs/SPEC-cards.md §16.12.3,
 	test('la case mesure 24 px, sur une ligne cliquable d’au moins 40 px (§5.7 bis, INC-253)', async ({ page }) => {
 		await connecter(page)
 		await page.goto(PROSPECTION.board)
+		// La case est ATTENDUE avant d'être mesurée : `boundingBox()` n'attend rien, et rend `null` sur un board encore
+		// en chargement — une course qui existait, rendue visible par la lecture de la capacité du channel (`CRM-093`).
+		await expect(page.getByRole('checkbox', { name: AFFICHER })).toBeVisible()
 		const caseSommeil = await page.getByRole('checkbox', { name: AFFICHER }).boundingBox()
 		const ligne = await page.getByTestId('bascule-sommeil').boundingBox()
 		expect(caseSommeil?.width, 'largeur de la case').toBe(24)

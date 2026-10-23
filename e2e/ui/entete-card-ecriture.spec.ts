@@ -8,6 +8,8 @@
 // @verifies CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario de la lectrice révisé : la commande refusée est éteinte avec le motif de l'affaire 
+//           (docs/SPEC-droits-interface.md §3, §5)
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE. Ces scénarios se connectent réellement, ouvrent une affaire du
 // seed, écrivent par la vraie route et RELISENT l'effet — soit dans le fil de l'affaire, soit après
@@ -148,28 +150,22 @@ test.describe("écriture des champs d'en-tête (docs/SPEC-cards.md §15 bis)", (
 		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
 	})
 
-	// LE CAS MESURÉ QUI COMMANDE TOUT LE GESTE : le lecteur seul reçoit 200 et ZÉRO ligne. L'écran
-	// doit dire que rien n'a été enregistré — annoncer « Enregistré » serait une simulation de succès.
-	test("un LECTEUR SEUL ouvre l'édition, écrit, et lit « rien n'a été enregistré »", async ({
+	// LE CAS MESURÉ QUI COMMANDAIT TOUT LE GESTE : le lecteur seul reçoit 200 et ZÉRO ligne. Depuis `CRM-093`
+	// (docs/SPEC-droits-interface.md §3, §5), la base rend sa capacité sur la ligne de l'affaire : « Modifier » reste
+	// monté, désactivé, et cite le motif de la fiche. Le « rien n'a été enregistré » reste prouvé hors interface
+	// (`e2e/api/cards.spec.ts`) et par la preuve unitaire de l'en-tête.
+	test('un LECTEUR SEUL voit « Modifier » ÉTEINT, avec le motif de l’affaire, et la base reste intacte', async ({
 		page,
 		request,
 	}) => {
 		await connecter(page, VIEWER)
 		await page.goto(DEPOUILLEE.adresse)
-		// La commande n'est jamais éteinte d'avance, quel que soit le rôle (§5.3 ter).
-		await expect(page.getByTestId('entete-card-modifier')).toBeEnabled()
-		await page.getByTestId('entete-card-modifier').click()
+		const commande = page.getByTestId('entete-card-modifier')
+		await expect(commande).toBeVisible()
+		await expect(commande).toBeDisabled()
+		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('Vos droits ne vous permettent pas de la modifier')
 
-		const titre = page.getByTestId('entete-title')
-		await titre.fill('tentative du lecteur')
-		await titre.blur()
-
-		const refus = page.getByTestId('entete-title-refus')
-		await expect(refus).toBeVisible()
-		await expect(refus).toContainText("Rien n'a été enregistré")
-		await expect(page.getByTestId('entete-title-etat')).toHaveCount(0)
-
-		// ET LA BASE EST BIEN INTACTE : l'écran ne se contente pas de dire, la ligne est relue.
 		const relecture = await request.get(
 			`${URL_API}/rest/v1/cards?id=eq.${DEPOUILLEE.id}&select=title`,
 			{ headers: enTetesService() },

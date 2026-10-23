@@ -13,6 +13,8 @@
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario du non-administrateur ou de la lectrice révisé : la commande refusée est éteinte av
+//           ec son motif (docs/SPEC-droits-interface.md §3, §5)
 //
 // LES GESTES SONT ÉPROUVÉS SUR DE VRAIS CLICS ET DE VRAIES FRAPPES, jamais par appel d'une fonction
 // interne, et le parcours clavier atteint son focus par `Tab` — Chromium ne pose `:focus-visible`
@@ -31,9 +33,7 @@
 // compte les budgets du seed, et un résidu clôturé reste une ligne.
 
 import {
-	autoriserErreursConsole,
 	connecterAvecLeLabs,
-	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type Page,
@@ -471,43 +471,21 @@ test.describe("les gestes d'administration (docs/SPEC-costs.md §3.2, §4.1)", (
 // -------------------------------------------------------------------------------------------
 
 test.describe('ce que voit un membre non administrateur (docs/SPEC-costs.md §3.2, §4.7)', () => {
-	test('il LIT les budgets, ses commandes restent visibles, et son écriture est REFUSÉE', async ({
-		page,
-		request,
-	}) => {
-		const nom = 'E2E Budget Refusé'
-		await supprimerParNom(request, nom)
-		try {
-			await connecter(page, NON_ADMIN)
-			const bloc = await ouvrirBudgetsDuTrack(page)
+	test('il LIT les budgets ; « Nouveau budget » reste visible, ÉTEINT, avec son motif (CRM-093)', async ({ page }) => {
+		await connecter(page, NON_ADMIN)
+		const bloc = await ouvrirBudgetsDuTrack(page)
 
-			// La lecture suit `app.can_read_track` (§3.1) : il voit les budgets du track.
-			await expect(bloc.getByRole('rowheader', { name: BUDGET_RECURRENT })).toBeVisible()
+		// La lecture suit `app.can_read_track` (§3.1) : il voit les budgets du track.
+		await expect(bloc.getByRole('rowheader', { name: BUDGET_RECURRENT })).toBeVisible()
 
-			// AUCUN DROIT N'EST CALCULÉ DANS L'ÉCRAN : la commande n'est pas masquée sur la foi d'un
-			// rôle lu au chargement — elle part, et le refus du backend est traduit.
-			await bloc.getByRole('button', { name: 'Nouveau budget' }).click()
-			const creation = bloc.getByTestId('formulaire-budget')
-			await creation.getByLabel('Nom').fill(nom)
-			await creation.getByRole('button', { name: 'Créer' }).click()
-
-			const refus = creation.getByTestId('budget-refus')
-			await expect(refus).toBeVisible()
-			await expect(refus).toContainText(
-				'Seul un administrateur de cet espace de travail peut gérer les budgets.',
-			)
-			// Le formulaire RESTE ouvert : la saisie n'est pas perdue par un refus.
-			await expect(creation.getByLabel('Nom')).toHaveValue(nom)
-
-			// LE `403` EST LE SUJET DE CE SCÉNARIO, pas une anomalie : Chromium journalise tout
-			// chargement de ressource en échec, et l'écran vient d'en rendre le refus lisible à
-			// l'utilisateur. Il est consommé NOMMÉMENT — statut, nombre et ordre exacts —, jamais
-			// filtré globalement, de sorte qu'un second refus inattendu ferait toujours rougir le
-			// verdict final.
-			autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
-		} finally {
-			await supprimerParNom(request, nom)
-		}
+		// DEPUIS `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'administrer est rendue par la base
+		// sur la ligne de l'espace, et la commande refusée reste montée, désactivée, citant son motif. Le `403` du
+		// backend reste prouvé hors interface (`e2e/api/budgets.spec.ts`) et par la preuve unitaire du bloc.
+		const commande = bloc.getByRole('button', { name: 'Nouveau budget' })
+		await expect(commande).toBeVisible()
+		await expect(commande).toBeDisabled()
+		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('réservées aux administrateurs')
 	})
 })
 

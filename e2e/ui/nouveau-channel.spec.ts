@@ -8,6 +8,8 @@
 //           défilement horizontal de la page), §8 (clavier seul, focus rendu)
 // @verifies CLAUDE.md §10 (le refus prouvé avec les droits réels d'un commercial), §15 (état déterministe, effets
 //           confirmés en base), §16 (captures observées)
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario du refus révisé : la commande refusée est éteinte avec son motif (docs/SPEC-droits-
+//           interface.md §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
 //
 // Tout part du SEED et de ses comptes réels, connectés par la vraie page du SSO. Le track « Formation » est retenu :
 // un seul channel, et un seul workflow affectable — le global par défaut —, mesuré le 2026-10-11. Les channels et
@@ -15,8 +17,6 @@
 // et les versions d'un workflow suivent en cascade), retrait CONSTATÉ par une relecture.
 
 import {
-	ERREUR_RESSOURCE_HTTP,
-	autoriserErreursConsole,
 	connecterAvecLeLabs,
 	expect,
 	test,
@@ -257,24 +257,25 @@ test.describe('CRM-100 — « Nouveau channel » depuis la vue du track', () => 
 		})
 	})
 
-	test('un commercial voit la commande ; la base refuse, et le refus est écrit sans perdre la saisie', async ({
+	test('un commercial voit « Nouveau channel » en TEXTE inactif, qui porte le motif de l’administration (CRM-093)', async ({
 		page,
 		request,
 	}) => {
 		await connecterAvecLeLabs(page, BIZDEV)
 		await page.goto(`/tracks/${TRACK.slug}`)
-		await commande(page).click()
-		const formulaire = page.getByTestId('formulaire-channel')
-		await formulaire.getByLabel('Nom').fill(`${PREFIXE_NOM} refus`)
-		await formulaire.getByLabel('Workflow').selectOption({ label: WORKFLOW_DEFAUT })
-		await formulaire.getByRole('button', { name: 'Créer' }).click()
-
-		const refus = formulaire.getByTestId('admin-refus')
-		await expect(refus).toHaveText("Seul un administrateur de cet espace de travail peut modifier l'arborescence.")
-		await expect(refus).toHaveAttribute('role', 'alert')
-		await expect(formulaire.getByLabel('Nom')).toHaveValue(`${PREFIXE_NOM} refus`)
-		await expect(page).toHaveURL(`/tracks/${TRACK.slug}?nouveau-channel=1`)
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+		// RÉVISÉ PAR `CRM-093` (docs/DESIGN_SYSTEM.md §5.59, écart borné de la barre d'onglets) : la capacité
+		// d'administrer est rendue par la base ; refusée, le lien devient un texte à la même place, qui porte son motif
+		// en description accessible et en infobulle native. Le `403` reste prouvé hors interface
+		// (`e2e/api/nouveau-channel.spec.ts`).
+		const texte = commande(page)
+		await expect(texte).toBeVisible()
+		await expect(texte).toHaveAttribute('aria-disabled', 'true')
+		expect(await texte.evaluate((element) => element.tagName)).toBe('SPAN')
+		await expect(texte).toHaveAttribute('title', /réservées aux administrateurs/)
+		const motif = page.locator(`[id="${await texte.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('réservées aux administrateurs')
+		await texte.click()
+		await expect(page.getByTestId('formulaire-channel')).toHaveCount(0)
 		await capturer(page, 'nouveau-channel-refus-commercial-xl-1440', UNITE)
 		expect(await channelEnBase(request, `${PREFIXE_SLUG}-refus`)).toBeUndefined()
 	})

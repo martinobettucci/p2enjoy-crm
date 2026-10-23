@@ -8,6 +8,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.11 (timeline unifiée), §5.10 (panneau de commentaires),
 //           §5.8 (états systématiques), §8 (libellé de formulaire, état désactivé lisible),
 //           §10 (aucun texte en dur)
+// @verifies CRM-093 (docs/BACKLOG.md) — tranche T5 : sous le refus de la fiche, la zone de saisie et « Mentionner »
+//           sont inactives et citent le motif, comme « Publier » (docs/SPEC-droits-interface.md §3 ; DESIGN_SYSTEM §5.59)
 //
 // Ces tests montent le **vrai** composant et isolent les formes du fil et ses refus par leurs rôles
 // accessibles. La publication connectée réelle et le refus du `viewer` sont prouvés en complément
@@ -17,6 +19,7 @@ import { cleanup, render, screen, waitFor, within } from '@testing-library/react
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { PanneauTimeline } from './PanneauTimeline'
+import { FournisseurRefus } from '../components/ui/RefusCommandes'
 import { fr } from '../i18n'
 import type { CommentaireLu } from '../lib/commentaires'
 import type { ClientCrm } from '../lib/supabase'
@@ -1288,5 +1291,31 @@ describe('le sélecteur de mentions du composeur (§5.44)', () => {
 		await waitFor(() => expect(journal.charge?.['body']).toBe('Sans mention.'))
 		expect(journal.mentionsPosees).toHaveLength(0)
 		expect(screen.queryByTestId('mentions-refusees')).toBeNull()
+	})
+})
+
+describe('la composition sous le refus de la fiche (CRM-093)', () => {
+	it('la zone de saisie, « Mentionner » et « Publier » sont inactifs et citent le motif de la fiche', async () => {
+		const { client } = clientFactice({})
+		render(
+			<FournisseurRefus valeur={{ disabled: true, 'aria-describedby': 'motif-fiche' }}>
+				<PanneauTimeline
+					client={client}
+					idCard="card-1"
+					idWorkspace="ws-1"
+					idWorkflow="wf-1"
+					libellesChamps={new Map()}
+					idUtilisateur="moi"
+					estAdminWorkspace={false}
+				/>
+			</FournisseurRefus>,
+		)
+		const zone = await screen.findByLabelText(fr['comments.compose.label'])
+		expect((zone as HTMLTextAreaElement).disabled).toBe(true)
+		expect(zone.getAttribute('aria-describedby')).toBe('motif-fiche')
+		const mentionner = screen.getByRole('button', { name: fr['comments.mentions.toggle'] })
+		expect((mentionner as HTMLButtonElement).disabled).toBe(true)
+		expect(mentionner.getAttribute('aria-describedby')).toBe('motif-fiche')
+		expect((screen.getByRole('button', { name: fr['comments.compose.submit'] }) as HTMLButtonElement).disabled).toBe(true)
 	})
 })

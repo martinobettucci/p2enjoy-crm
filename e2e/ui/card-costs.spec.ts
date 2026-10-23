@@ -13,6 +13,8 @@
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario du non-administrateur ou de la lectrice révisé : la commande refusée est éteinte av
+//           ec son motif (docs/SPEC-droits-interface.md §3, §5)
 //
 // LES GESTES SONT ÉPROUVÉS SUR DE VRAIS CLICS ET DE VRAIES FRAPPES, jamais par appel d'une fonction
 // interne, et le parcours clavier atteint son focus par `Tab` — Chromium ne pose `:focus-visible`
@@ -32,9 +34,7 @@
 // silencieux ignorerait. Le filtre porte sur une colonne `text`, et l'épilogue échoue bruyamment.
 
 import {
-	autoriserErreursConsole,
 	connecterAvecLeLabs,
-	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type Page,
@@ -484,30 +484,17 @@ test.describe('une ligne rattachée à un budget clôturé (docs/SPEC-costs.md �
 // -------------------------------------------------------------------------------------------
 
 test.describe('la lecture seule (docs/SPEC-costs.md §3.2, §4.7)', () => {
-	test('la lectrice se voit refuser l’ajout, et l’écran NOMME le refus', async ({ page }) => {
-		// La commande n'est pas masquée sur la foi d'un rôle : l'écriture PART, et le refus du
-		// backend est traduit.
+	test('la lectrice voit « Ajouter une dépense » ÉTEINT, avec le motif de l’affaire (CRM-093)', async ({ page }) => {
+		// DEPUIS `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'écrire sur l'affaire est rendue par
+		// la base sur sa ligne, et la commande refusée reste montée, désactivée, citant son motif. Le `403` du backend
+		// reste prouvé hors interface (`e2e/api/card-costs.spec.ts`), et sa traduction par la preuve unitaire du bloc.
 		await connecter(page, VIEWER)
 		const section = await ouvrirSectionCouts(page)
-		await section.getByRole('button', { name: 'Ajouter une dépense' }).click()
-		const formulaire = section.getByTestId('formulaire-cout')
-		await formulaire.getByLabel('Nature de la dépense').fill(`${PREFIXE} refus`)
-		await formulaire.getByTestId('cout-selecteur-budget').selectOption({ label: `${BUDGET_RECURRENT} (EUR)` })
-		await formulaire.getByTestId('cout-selecteur-occurrence').selectOption({ label: OCCURRENCE_OUVERTE })
-		await formulaire.getByLabel('Coût estimé').fill('9')
-		await formulaire.getByRole('button', { name: 'Ajouter' }).click()
-
-		const refus = formulaire.getByTestId('cout-refus')
-		await expect(refus).toBeVisible()
-		await expect(refus).toContainText('droit')
-		// Aucune ligne n'a été ajoutée.
-		await expect(section.getByRole('row', { name: new RegExp(`${PREFIXE} refus`) })).toHaveCount(0)
-
-		// LE `403` QUE CE SCÉNARIO PROVOQUE est un chargement de ressource en échec, que Chromium
-		// journalise, et l'écran vient d'en rendre le refus lisible à l'utilisateur. Il est consommé
-		// NOMMÉMENT — statut, nombre et ordre exacts —, jamais filtré globalement, de sorte qu'un
-		// second refus inattendu ferait toujours rougir le verdict final.
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+		const commande = section.getByRole('button', { name: 'Ajouter une dépense' })
+		await expect(commande).toBeVisible()
+		await expect(commande).toBeDisabled()
+		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('Vos droits ne vous permettent pas de la modifier')
 	})
 })
 

@@ -104,6 +104,7 @@ import {
 	type LigneFil,
 } from '../lib/timeline'
 import { useRefus } from '../components/ui/RefusCommandes'
+import type { ProprietesCommande } from '../lib/capacites'
 
 /**
  * Libellé, icône et pastille de chaque type — écrits UNE FOIS, jamais construits par
@@ -642,10 +643,13 @@ export function PanneauTimeline({
 					value={brouillon}
 					onChange={(evenement) => setBrouillon(evenement.target.value)}
 					placeholder={t('comments.compose.placeholder')}
+					// `CRM-093` (§5.59) : un champ qu'on ne peut pas enregistrer est INACTIF, et cite le motif de la fiche.
+					{...droit}
 					className={[
 						'w-full rounded-sm border border-border bg-surface px-3 py-2',
 						'text-base text-ink placeholder:text-text-3',
 						'focus:outline-none focus:ring-2 focus:ring-brand',
+						'disabled:bg-hover disabled:text-text-2 disabled:cursor-not-allowed',
 					].join(' ')}
 				/>
 				{refus === null ? null : (
@@ -655,6 +659,7 @@ export function PanneauTimeline({
 				)}
 
 				<SelecteurMentions
+					commande={droit}
 					ouvert={selecteurOuvert}
 					onBasculer={() => setSelecteurOuvert((precedent) => !precedent)}
 					etat={mentionnables}
@@ -729,6 +734,7 @@ function natureDe(issue: IssueMention | undefined): NatureRefusMention {
  * appelle `app.can_read_card_pour` : le composant n'écarte personne, il rend ce que la base donne.
  */
 function SelecteurMentions({
+	commande,
 	ouvert,
 	onBasculer,
 	etat,
@@ -736,6 +742,8 @@ function SelecteurMentions({
 	onBasculerPersonne,
 	onReprise,
 }: {
+	/** `CRM-093` : mentionner compose un commentaire ; refusé avec lui, et citant le même motif. */
+	readonly commande: ProprietesCommande
 	readonly ouvert: boolean
 	readonly onBasculer: () => void
 	readonly etat: EtatAsync<readonly PersonneMentionnable[]> | null
@@ -753,12 +761,14 @@ function SelecteurMentions({
 			<button
 				type="button"
 				onClick={onBasculer}
+				{...commande}
 				aria-expanded={ouvert}
 				aria-controls="mentions-liste"
 				className={[
 					'inline-flex w-fit items-center gap-2 rounded-sm px-3',
 					'min-h-[var(--size-target)] text-sm text-text-2 hover:bg-hover',
 					'focus:outline-none focus:ring-2 focus:ring-brand focus:ring-offset-2',
+					'disabled:opacity-70 disabled:cursor-not-allowed',
 				].join(' ')}
 			>
 				<AtSign aria-hidden="true" className="size-4" />

@@ -14711,6 +14711,9 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       rien ») ; captures `docs/captures/CRM-093/` observées (1440 et 390 px) ; manuel section 3.6 et douze passages
       corrigés, `verify-manual.sh` **212 contrôles** ; seed inchangé (la lectrice rouverte y est) ; `SCENARIOS_UI` 850.
       Reste : la campagne complète `verify-webapp.sh`.
+      **Campagne du 2026-10-23** : 807/850 sur une base dérivée ; après `resetMe` (accordé par le responsable), rejeu
+      ciblé 250/255. Vingt et un scénarios révisés (le refus serveur reste prouvé par l'API) ; **INC-280**, trois
+      régressions corrigées (zone de commentaire, focus du champ exigé, débordement à 390 px). Reste : rejouer les cinq.
 - [ ] **T6** — livraison en production (migrations 91 et 92), constat.
 
 ### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[x]`

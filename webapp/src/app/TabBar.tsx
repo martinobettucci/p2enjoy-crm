@@ -213,7 +213,9 @@ function CommandeNouveauChannel({ slugTrack }: { readonly slugTrack: string }) {
 				data-testid="commande-nouveau-channel"
 				aria-disabled="true"
 				{...(refusee ? { 'aria-describedby': ID_MOTIF_NOUVEAU_CHANNEL, title: t('rights.readonly.administration') } : {})}
-				className="shrink-0 inline-flex items-center gap-2 px-3 whitespace-nowrap rounded-sm min-h-[var(--size-target)] text-text-2"
+				// `relative` CONFINE le motif `sr-only` (positionné en absolu) : sans ancêtre positionné, il s'échappait du
+				// conteneur de défilement de la barre et élargissait le document à 390 px — mesuré par `channels.spec.ts`.
+				className="relative shrink-0 inline-flex items-center gap-2 px-3 whitespace-nowrap rounded-sm min-h-[var(--size-target)] text-text-2"
 			>
 				<Plus aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
 				{t('tabs.newChannel')}

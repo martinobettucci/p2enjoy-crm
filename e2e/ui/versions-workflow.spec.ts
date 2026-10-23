@@ -7,6 +7,8 @@
 // @verifies CLAUDE.md §10 (une règle d'accès se prouve avec les droits réels du profil)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario de la lectrice révisé : la commande refusée est éteinte avec son motif (docs/SPEC-d
+//           roits-interface.md §3, §5)
 //
 // AUCUN SCÉNARIO DE CE FICHIER N'ÉCRIT DANS LE SEED, et c'est une contrainte de forme, pas une
 // prudence : publier ajouterait une version au workflow par défaut à **chaque** exécution, et une
@@ -115,21 +117,17 @@ test.describe('les gestes (§7 ter.14.4)', () => {
 })
 
 test.describe('le refus opposé à la lectrice, avec ses droits réels (CLAUDE.md §10)', () => {
-	test('la commande est OFFERTE à la lectrice, et c’est la base qui refuse', async ({ page }) => {
+	test('la commande est ÉTEINTE pour la lectrice, avec le motif de l’administration (CRM-093)', async ({ page }) => {
 		await connecter(page, VIEWER)
 		await ouvrirEditeur(page)
 
-		// Aucun droit n'est calculé par l'écran : la commande est rendue pour tout le monde
-		// (§7 ter.14.1). Le refus est celui de la vérification 3 du §7 ter.5, avec le jeton réel
-		// de la lectrice — il n'est ni simulé, ni deviné.
+		// RÉVISÉ PAR `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'administrer est rendue par la base
+		// sur la ligne de l'espace ; la commande refusée reste montée, désactivée, et cite son motif. Le refus de la
+		// vérification 3 du §7 ter.5 (`42501` en `403`) reste prouvé hors interface (`e2e/api/versions-workflow.spec.ts`).
 		const commande = page.getByTestId('publier-version')
-		await expect(commande).toBeEnabled()
-		await commande.click()
-		await expect(page.getByTestId('refus-publication')).toContainText(
-			'réservé aux administrateurs',
-		)
-		// `42501` voyage en `403` (§7 ter.6) : le refus est celui de la base, pas de l'écran.
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+		await expect(commande).toBeDisabled()
+		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('réservées aux administrateurs')
 	})
 })
 

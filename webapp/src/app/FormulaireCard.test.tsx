@@ -23,6 +23,8 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { FormulaireCard } from './FormulaireCard'
+import { FournisseurRefus } from '../components/ui/RefusCommandes'
+import type { ProprietesCommande } from '../lib/capacites'
 import { composerFormulaire, type ChampFormulaire, type ValeurChamp } from '../lib/formulaire'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -519,6 +521,33 @@ describe('champs exigés par un déplacement refusé (§4 ter)', () => {
 		// `source` est en position 2, `motif-perte` en position 4 : le premier au sens du §4 ter.3.
 		monterExige(['motif-perte', 'source'])
 		expect(document.activeElement).toBe(screen.getByLabelText(/Origine du contact/))
+	})
+
+	it('CRM-093 : pendant la lecture de la capacité, le focus ATTEND, puis se pose sur le premier champ exigé', () => {
+		const modele = composerFormulaire({ champs: CHAMPS, regles: REGLES, valeurs: [], etape: ETAPE, clesExigees: ['motif-perte', 'source'] })
+		const factice = clientFactice()
+		const avec = (droit: ProprietesCommande) => (
+			<FournisseurRefus valeur={droit}>
+				<FormulaireCard modele={modele} {...CARD} client={factice.client} />
+			</FournisseurRefus>
+		)
+		const rendu = render(avec({ disabled: true }))
+		// En lecture : les champs sont inactifs, et aucun focus n'est posé sur eux.
+		expect(document.activeElement).toBe(document.body)
+		rendu.rerender(avec({}))
+		expect(document.activeElement).toBe(screen.getByLabelText(/Origine du contact/))
+	})
+
+	it('CRM-093 : sous une capacité REFUSÉE, aucun focus n’est posé sur un champ inactif', () => {
+		const modele = composerFormulaire({ champs: CHAMPS, regles: REGLES, valeurs: [], etape: ETAPE, clesExigees: ['source'] })
+		const factice = clientFactice()
+		render(
+			<FournisseurRefus valeur={{ disabled: true, 'aria-describedby': 'motif-fiche' }}>
+				<FormulaireCard modele={modele} {...CARD} client={factice.client} />
+			</FournisseurRefus>,
+		)
+		expect((screen.getByLabelText(/Origine du contact/) as HTMLSelectElement).disabled).toBe(true)
+		expect(document.activeElement).toBe(document.body)
 	})
 
 	it('sans `exiges`, aucun focus n’est volé et aucune mise en évidence n’apparaît', () => {

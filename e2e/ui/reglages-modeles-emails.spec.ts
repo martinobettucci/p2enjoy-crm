@@ -6,6 +6,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.39 (cette surface), §7 (paliers) ; CLAUDE.md §16
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario de la lectrice révisé : la commande refusée est éteinte avec son motif (docs/SPEC-d
+//           roits-interface.md §3, §5)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et l'écran est atteint depuis l'index des réglages, jamais par une
@@ -366,41 +368,23 @@ test.describe('administration des modèles d’emails (docs/SPEC-modeles-emails.
 		await rendreLeSeedIntact(page)
 	})
 
-	test('la lectrice LIT les modèles, et son écriture est refusée SANS erreur', async ({ page }) => {
+	test('la lectrice LIT les modèles ; « Modifier » est ÉTEINT, avec son motif (CRM-093)', async ({ page }) => {
 		await connecter(page, VIEWER)
 		await page.goto('/reglages/modeles-emails')
 
 		// La lectrice LIT : tout membre du workspace lit (§2.6).
 		await expect(page.getByTestId('ligne-modele-email')).toHaveCount(MODELES_DU_SEED)
 
-		// AUCUNE COMMANDE N'EST ÉTEINTE SELON LE RÔLE (§5.3, §5.13, §5.21, §5.27, sans exception) :
-		// l'écran ne calcule aucun droit, et c'est la base qui refuse.
+		// RÉVISÉ PAR `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'éditer est rendue par la base sur
+		// la ligne de l'espace. Prévisualiser n'écrit rien et reste offert ; « Modifier » reste monté, désactivé, et cite
+		// son motif. Le silence de la clause `using` (`200`, zéro ligne) reste prouvé hors interface
+		// (`e2e/api/modeles-emails.spec.ts`) et sa traduction par la preuve unitaire de l'écran.
 		await expect(page.getByTestId('previsualiser-modele').first()).toBeEnabled()
-		await expect(page.getByTestId('modifier-modele').first()).toBeEnabled()
-
-		await page
-			.getByTestId('ligne-modele-email')
-			.filter({ hasText: MODELE_RELANCE })
-			.getByTestId('modifier-modele')
-			.click()
-		await page.getByTestId('champ-objet-modele').click()
-		await page.keyboard.type(' modifié par la lectrice')
-		await page.getByTestId('valider-modele-email').click()
-
-		// LE SILENCE DE LA CLAUSE `using` SE DIT EN TOUTES LETTRES : la lectrice reçoit `200` et
-		// ZÉRO LIGNE — la base ne lève AUCUNE erreur (§2.7 ligne 7). L'écran n'annonce jamais un
-		// enregistrement qui n'a pas eu lieu.
-		const refus = page.getByTestId('refus-modele-email')
-		await expect(refus).toBeVisible()
-		await expect(refus).toContainText('Aucun modèle n’a été enregistré')
-
+		const modifier = page.getByTestId('modifier-modele').first()
+		await expect(modifier).toBeDisabled()
+		const motif = page.locator(`[id="${await modifier.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('réservées aux administrateurs et aux business developers')
 		await capturer(page, 'modeles-emails-lectrice-1440', UNITE)
-
-		// LA LIGNE EST RELUE ET CONSTATÉE INCHANGÉE — la preuve du refus, et non sa promesse.
-		await page.getByTestId('annuler-modele-email').click()
-		await expect(
-			page.getByTestId('objet-modele').filter({ hasText: 'modifié par la lectrice' }),
-		).toHaveCount(0)
 	})
 
 })

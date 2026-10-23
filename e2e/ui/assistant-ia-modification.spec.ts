@@ -7,6 +7,8 @@
 //           texte), §7 (quatre paliers, aucun défilement horizontal de la page), §8 (clavier)
 // @verifies CLAUDE.md §10 (le refus prouvé avec le jeton réel du commercial), §15 (état déterministe, effets relus en
 //           base), §16 (captures observées)
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario du commercial révisé : la commande refusée est éteinte avec le motif de l'administr
+//           ation (docs/SPEC-droits-interface.md §3, §5)
 //
 // LE SERVEUR LLM N'EST JAMAIS APPELÉ (docs/SPEC-ia.md §8) : l'en-tête `x-ia-simulateur: modification` choisit le
 // scénario qui retire la DEUXIÈME étape et ajoute « qualification-ia ». JAMAIS SUR LE WORKFLOW DU SEED, que toutes les
@@ -249,18 +251,19 @@ test.describe('Faire évoluer un workflow avec l’IA (docs/SPEC-ia.md §13)', (
 		expect(suggestion?.statut).toBe('en_revue')
 	})
 
-	test('le commercial voit « Suggérer » ; la base refuse, et le refus est écrit sous la demande', async ({ page, request }) => {
+	test('le commercial voit « Suggérer » ÉTEINT, avec le motif de l’administration (CRM-093)', async ({ page, request }) => {
 		const w = await workflowJetable(request)
 		await simuler(page)
 		await connecterAvecLeLabs(page, BIZDEV)
 		await ouvrirLeWorkflow(page, w.nom)
 		await expect(page.getByTestId('ia-suggestions-du-workflow')).toHaveCount(0)
-		await page.getByRole('button', { name: suggerer('étapes', w.nom) }).click()
-		await page.getByLabel('Décrivez ce qui doit changer').fill(`${PREFIXE} — commercial`)
-		await page.getByRole('button', { name: 'Générer la suggestion' }).click()
-		const refus = page.getByTestId('ia-refus-demande')
-		await expect(refus).toHaveText('L’assistant est réservé aux administrateurs de l’espace de travail.')
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
+		// RÉVISÉ PAR `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la commande refusée reste montée, désactivée, et
+		// cite son motif ; le `403` de l'assistant reste prouvé hors interface (`e2e/api/assistant-ia.spec.ts`).
+		const commande = page.getByRole('button', { name: suggerer('étapes', w.nom) })
+		await expect(commande).toBeVisible()
+		await expect(commande).toBeDisabled()
+		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('réservées aux administrateurs')
 		expect(await lireService(request, `suggestions_ia?select=id&${FILTRE}`)).toEqual([])
 	})
 

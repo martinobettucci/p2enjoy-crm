@@ -8,6 +8,8 @@
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : sans session, aucune page
 //           de l'application ; l'adresse demandée mène à /connexion (docs/JOURNAL.md décision 601)
+// @verifies CRM-093 (docs/BACKLOG.md) — les deux scénarios du viewer révisés : commenter et déplacer sont éteints avec leur motif (docs
+//           /SPEC-droits-interface.md §3, §5)
 //
 // Ces scénarios sont la jonction que les preuves d’interface précédentes ne pouvaient pas faire :
 // le navigateur obtient sa session par la vraie connexion, puis parle à la vraie API sans aucune
@@ -20,9 +22,7 @@
 // par `e2e/ui/connexion.spec.ts` ; l'inscription d'une attente, par `e2e/api/session.spec.ts`.
 
 import {
-	autoriserErreursConsole,
 	connecterAvecLeLabs,
-	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type APIRequestContext,
@@ -115,45 +115,28 @@ test('le retour à la card publie réellement le commentaire de l’administratr
 	}
 })
 
-test('le viewer voit la card mais son commentaire est refusé sans perdre son texte', async ({
+test('le viewer voit la card ; écrire un commentaire est ÉTEINT, avec le motif de l’affaire (CRM-093)', async ({
 	page,
-	request,
 }) => {
-	const corps = `Refus viewer CRM-009 ${randomUUID()}`
-	try {
-		// RÉVISÉ PAR `CRM-092` T9 : l'adresse mène d'elle-même à `/connexion`, qui la retient.
-		await page.goto(ROUTE_MAINTENANCE)
-		await expect(page).toHaveURL(/\/connexion$/)
-		await connecter(page, VIEWER)
+	// RÉVISÉ PAR `CRM-092` T9 : l'adresse mène d'elle-même à `/connexion`, qui la retient.
+	await page.goto(ROUTE_MAINTENANCE)
+	await expect(page).toHaveURL(/\/connexion$/)
+	await connecter(page, VIEWER)
 
-		await expect(page).toHaveURL(new RegExp(`${ROUTE_MAINTENANCE}$`))
-		const champ = page.getByLabel('Votre commentaire')
-		await expect(champ).toBeVisible()
-		await champ.fill(corps)
-		await page.getByRole('button', { name: 'Publier' }).click()
-		await expect(
-			page.getByRole('alert').filter({ hasText: 'Vous ne pouvez pas commenter cette affaire' }),
-		).toBeVisible()
-		await expect(champ).toHaveValue(corps)
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
-
-		const reponse = await request.get(
-			urlRest('card_comments', {
-				card_id: `eq.${CARD_MAINTENANCE}`,
-				body: `eq.${corps}`,
-				select: 'id',
-			}),
-			{ headers: enTetesService() },
-		)
-		expect(reponse.status()).toBe(200)
-		expect(await reponse.json()).toEqual([])
-	} finally {
-		// Défensif : si la politique régressait et acceptait l’écriture, le scénario resterait propre.
-		await retirerCommentaires(request, CARD_MAINTENANCE, corps)
-	}
+	await expect(page).toHaveURL(new RegExp(`${ROUTE_MAINTENANCE}$`))
+	// RÉVISÉ PAR `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'écrire sur l'affaire est rendue
+	// par la base sur sa ligne ; le champ et « Publier » sont inactifs, et citent le motif de la fiche. Le `403` de
+	// `card_comments` reste prouvé hors interface (`e2e/api/commentaires.spec.ts`).
+	const champ = page.getByLabel('Votre commentaire')
+	await expect(champ).toBeVisible()
+	await expect(champ).toBeDisabled()
+	const publier = page.getByRole('button', { name: 'Publier' })
+	await expect(publier).toBeDisabled()
+	const motif = page.locator(`[id="${await publier.getAttribute('aria-describedby')}"]`)
+	await expect(motif).toContainText('Vos droits ne vous permettent pas de la modifier')
 })
 
-test('le viewer tente un vrai déplacement, voit le refus et la card reste en place', async ({
+test('le viewer ouvre les actions d’une carte : le déplacement est ÉTEINT, avec le motif du channel (CRM-093)', async ({
 	page,
 	request,
 }) => {
@@ -165,21 +148,14 @@ test('le viewer tente un vrai déplacement, voit le refus et la card reste en pl
 		`[data-testid="carte-card"][data-card="${CARD_MAINTENANCE}"]`,
 	)
 	await expect(card).toBeVisible()
-	// LE MENU DE LA CARTE S'APPELLE « ACTIONS » DEPUIS `CRM-081` TRANCHE 2 d : il ne porte plus les
-	// seuls déplacements, mais aussi le geste de sommeil (docs/SPEC-cards.md §16.13.1). Son nom
-	// accessible suit son contenu ; le déplacement, lui, est inchangé et se joue dans la section
-	// « Déplacer vers » que ce bouton dévoile.
+	// LE MENU DE LA CARTE S'APPELLE « ACTIONS » DEPUIS `CRM-081` TRANCHE 2 d (docs/SPEC-cards.md §16.13.1). RÉVISÉ
+	// PAR `CRM-093` : la transition refusée reste montée, désactivée, et cite le motif du channel ; le `403` de la
+	// garde reste prouvé hors interface (`e2e/api/board.spec.ts`).
 	await card.getByRole('button', { name: /Actions Support niveau 2/ }).click()
-	await card.getByRole('button', { name: 'Relancer' }).click()
-
-	await expect(
-		page.getByRole('alert').filter({ hasText: "Votre compte n'a pas le droit d'écrire" }),
-	).toBeVisible()
-	autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
-	const colonneProspection = page.locator(
-		`[data-testid="colonne"][data-etape="${ETAPE_PROSPECTION}"]`,
-	)
-	await expect(colonneProspection.locator(`[data-card="${CARD_MAINTENANCE}"]`)).toBeVisible()
+	const relancer = card.getByRole('button', { name: 'Relancer' })
+	await expect(relancer).toBeDisabled()
+	const motif = page.locator(`[id="${await relancer.getAttribute('aria-describedby')}"]`)
+	await expect(motif).toContainText('Vos droits ne vous permettent pas d’en modifier les affaires')
 
 	const relecture = await request.get(
 		urlRest('cards', { id: `eq.${CARD_MAINTENANCE}`, select: 'id,current_step_id' }),

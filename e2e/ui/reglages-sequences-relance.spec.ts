@@ -8,6 +8,8 @@
 // @verifies CLAUDE.md §16 (vérification visuelle) ; docs/SPEC-permissions-rls.md §7
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario de la lectrice révisé : la commande refusée est éteinte avec son motif (docs/SPEC-d
+//           roits-interface.md §3, §5)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et l'écran est atteint depuis l'index des réglages.
@@ -290,32 +292,19 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		await rendreLeSeedIntact(page)
 	})
 
-	test('LA LECTRICE VOIT L’ÉCRAN, ET SON DÉPLACEMENT REND « aucun palier réordonné »', async ({
-		page,
-	}) => {
+	test('LA LECTRICE VOIT L’ÉCRAN ; « Modifier » est ÉTEINT, avec son motif (CRM-093)', async ({ page }) => {
 		await connecter(page, VIEWER)
 		await page.goto('/reglages/sequences-relance')
 
-		// AUCUNE COMMANDE N'EST ÉTEINTE SELON LE RÔLE (§5.3, §5.13, §5.21, sans exception) : la
-		// lectrice voit la liste et sa commande, et c'est la BASE qui refuse.
+		// RÉVISÉ PAR `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'éditer est rendue par la base ; la
+		// lectrice voit la liste, et la commande refusée reste montée, désactivée, citant son motif. Le zéro-ligne de la
+		// RPC reste prouvé hors interface (`e2e/api/sequences-relance.spec.ts`) et par la preuve unitaire de l'écran.
 		await expect(page.getByTestId('ligne-sequence')).toHaveCount(SEQUENCES_DU_SEED)
-		await page.getByTestId('modifier-sequence').click()
-		const paliers = page.getByTestId('ligne-palier')
-		await expect(paliers).toHaveCount(3)
-		await expect(paliers.nth(1).getByTestId('monter-palier')).toBeEnabled()
-
-		await paliers.nth(1).getByTestId('monter-palier').click()
-
-		// LE ZÉRO-LIGNE SE DIT EN TOUTES LETTRES (§13.3) : la RPC a rendu `200` et `0` — un succès
-		// HTTP portant un refus métier —, et l'écran n'annonce JAMAIS un succès qui n'a pas eu lieu.
-		await expect(page.getByTestId('refus-palier')).toContainText('Aucun palier n’a été réordonné')
-		// ET L'ORDRE EST INCHANGÉ.
-		await expect(paliers.nth(0).getByTestId('libelle-palier')).toHaveText(
-			`J+3 · ${MODELE_RELANCE}`,
-		)
-
+		const modifier = page.getByTestId('modifier-sequence').first()
+		await expect(modifier).toBeDisabled()
+		const motif = page.locator(`[id="${await modifier.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('réservées aux administrateurs et aux business developers')
 		await capturer(page, 'sequences-lectrice-1440', UNITE)
-		await rendreLeSeedIntact(page)
 	})
 
 	test('LA CONFIRMATION DE SUPPRESSION D’UN MODÈLE ANNONCE LA RÈGLE, et le refus est traduit', async ({

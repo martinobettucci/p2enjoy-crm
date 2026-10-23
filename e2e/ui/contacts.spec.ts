@@ -14,6 +14,8 @@
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : les scénarios anonymes
 //           se connectent ou sont convertis, aucune page n'étant rendue sans session (décision 601)
+// @verifies CRM-093 (docs/BACKLOG.md) — les cas m (modification) et h, j (suppression) de la lectrice révisés : la commande refusée est
+//            éteinte avec son motif (docs/SPEC-droits-interface.md §3, §5)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et la navigation passe par la BARRE LATÉRALE, jamais par un `goto` sur
@@ -678,31 +680,21 @@ test.describe('modification d’un contact (docs/SPEC-contacts.md §16.9)', () =
 		await expect(page.getByTestId('ouvrir-modification-contact')).toBeFocused()
 	})
 
-	test('cas m : la LECTRICE voit le geste, envoie, et reçoit le silence DIT, saisie conservée', async ({
+	test('cas m : la LECTRICE voit « Modifier » ÉTEINT, avec son motif — la base lui refuse l’édition (CRM-093)', async ({
 		page,
 	}) => {
 		await connecter(page, VIEWER)
 		await page.goto(`/contacts/${ID_LEO_UI}`)
 
-		// AUCUNE COMMANDE ÉTEINTE D'AVANCE (§16.6) : la lectrice voit le geste comme tout le monde.
+		// DEPUIS `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'éditer est rendue par la base, et la
+		// commande refusée reste montée, désactivée, citant son motif. Le « silence dit » du serveur (`200` et zéro
+		// ligne) reste prouvé hors interface (`e2e/api/contacts.spec.ts`) et par la preuve unitaire du formulaire.
 		const commande = page.getByTestId('ouvrir-modification-contact')
 		await expect(commande).toBeVisible()
-		await expect(commande).toBeEnabled()
-		await commande.click()
-		await page.getByTestId('champ-fonction-contact').fill('Fonction usurpée')
-		await page.getByTestId('envoyer-modification-contact').click()
-
-		// LE SILENCE DU SERVEUR EST DIT : `200` et zéro ligne, que l'écran traduit plutôt que de
-		// refermer le formulaire sur une modification qui n'a jamais eu lieu (§16.3).
-		const refus = page.getByTestId('refus-modification-contact')
-		await expect(refus).toBeVisible()
-		// La saisie est CONSERVÉE, et le formulaire reste ouvert.
-		await expect(page.getByTestId('champ-fonction-contact')).toHaveValue('Fonction usurpée')
-		await expect(page.getByTestId('formulaire-modification-contact')).toBeVisible()
+		await expect(commande).toBeDisabled()
+		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('réservées aux administrateurs et aux business developers')
 		await capturer(page, 'fiche-contact-modification-sans-effet-1440', UNITE)
-
-		// LE SEED EST INTACT : rien n'a été écrit, et la fiche rechargée le montre.
-		await page.reload()
 		await expect(page.getByText(FONCTION_SEED_LEO)).toBeVisible()
 	})
 
@@ -1508,28 +1500,20 @@ test.describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () =>
 		await expect(page.getByRole('heading', { name: 'Élise Fabre' })).toBeVisible()
 	})
 
-	test('cas h et j : la LECTRICE voit la commande, confirme, et reçoit « sans effet » — l’écran ne calcule aucun droit', async ({
+	test('cas h et j : la LECTRICE voit « Supprimer » ÉTEINT, avec son motif — la base lui refuse l’édition (CRM-093)', async ({
 		page,
 	}) => {
 		await connecter(page, VIEWER)
 		await page.goto(`/contacts/${ID_SOPHIE_UI}`)
 		await expect(page.getByRole('heading', { name: 'Sophie Dupont' })).toBeVisible()
 
-		// Cas j : AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE SELON LE RÔLE (§5.40, décision 509).
+		// DEPUIS `CRM-093` : la commande refusée reste montée, désactivée, citant son motif ; le « sans effet » du
+		// serveur reste prouvé hors interface et par la preuve unitaire de `SuppressionContact`.
 		const supprimer = page.getByTestId('ouvrir-suppression-contact')
 		await expect(supprimer).toBeVisible()
-		await expect(supprimer).toBeEnabled()
-
-		await supprimer.click()
-		await page.getByTestId('confirmer-suppression-contact').click()
-
-		// Cas h : le message « sans effet », `role="alert"`, sous les commandes. L'écran RESTE sur
-		// la fiche, la relit, et le contact est TOUJOURS LÀ — la base l'a gardé (§20.2, mesure 3).
-		const message = page.getByTestId('message-suppression-contact')
-		await expect(message).toBeVisible()
-		await expect(message).toContainText('Aucun contact n’a été supprimé')
-		await expect(page.getByTestId('confirmation-suppression-contact')).toHaveCount(0)
-		await expect(page.getByRole('heading', { name: 'Sophie Dupont' })).toBeVisible()
+		await expect(supprimer).toBeDisabled()
+		const motif = page.locator(`[id="${await supprimer.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('réservées aux administrateurs et aux business developers')
 		await expect(page.getByTestId('caracteristiques-contact')).toBeVisible()
 		await capturer(page, 'fiche-contact-suppression-sans-effet-1440', UNITE)
 	})

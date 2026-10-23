@@ -7,6 +7,8 @@
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies CRM-100 (docs/BACKLOG.md) tranche T2 — la barre d'onglets porte la commande « Nouveau channel »,
 //           comptée et nommée (docs/DESIGN_SYSTEM.md §5.55)
+// @verifies CRM-093 (docs/BACKLOG.md) — « Nouveau channel » n'est plus un lien pour la lectrice : un texte inactif, à la même place (do
+//           cs/DESIGN_SYSTEM.md §5.59)
 //
 // CE QUE CES SCÉNARIOS PROUVENT.
 //
@@ -112,10 +114,15 @@ test('…et son ouverture n’expose que l’onglet consenti, à la souris', asy
 	// RÉVISÉ PAR `CRM-100`, NON AFFAIBLI : la barre porte depuis la commande « Nouveau channel »
 	// (docs/DESIGN_SYSTEM.md §5.55), qui n'est pas un onglet. Le total passe à trois, et chacun des
 	// trois est NOMMÉ — un quatrième lien reste une régression que ce compte verrait.
+	// RÉVISÉ PAR `CRM-093`, NON AFFAIBLI : la lectrice n'administre pas l'espace, et « Nouveau channel » n'est plus un
+	// lien pour elle — un texte, à la même place, qui porte son motif (docs/DESIGN_SYSTEM.md §5.59, écart borné de la
+	// barre d'onglets). Le total des LIENS passe à deux, chacun nommé ; la commande reste comptée, inactive.
 	const tousLesLiens = page.getByTestId('barre-onglets').getByRole('link')
-	await expect(tousLesLiens).toHaveCount(3)
+	await expect(tousLesLiens).toHaveCount(2)
 	await expect(page.getByTestId('onglet-couts-track')).toHaveCount(1)
-	await expect(page.getByTestId('commande-nouveau-channel')).toHaveCount(1)
+	const nouveauChannel = page.getByTestId('commande-nouveau-channel')
+	await expect(nouveauChannel).toHaveCount(1)
+	await expect(nouveauChannel).toHaveAttribute('aria-disabled', 'true')
 
 	// Les deux autres channels du track restent fermés : l'élargissement de la politique de
 	// `tracks` ne déteint pas sur celle des `channels` (§3.3 bis, deuxième tiret). Un track
@@ -163,9 +170,11 @@ test('l’adresse directe du track rend la même chose que le clic, et rien de p
 	const onglets = page.getByTestId('onglet-channel')
 	await expect(onglets).toHaveCount(1)
 	await expect(onglets.first()).toHaveText(CONSENTI)
-	// `CRM-100` : l'onglet, la commande « Nouveau channel » et « Coûts » — chacun nommé.
-	await expect(page.getByTestId('barre-onglets').getByRole('link')).toHaveCount(3)
+	// `CRM-100` : l'onglet, la commande « Nouveau channel » et « Coûts » — chacun nommé. `CRM-093` : la commande n'est
+	// plus un lien pour la lectrice, mais un texte inactif à la même place.
+	await expect(page.getByTestId('barre-onglets').getByRole('link')).toHaveCount(2)
 	await expect(page.getByTestId('commande-nouveau-channel')).toHaveCount(1)
+	await expect(page.getByTestId('commande-nouveau-channel')).toHaveAttribute('aria-disabled', 'true')
 	await expect(page.getByTestId('onglet-couts-track')).toHaveCount(1)
 	await expect(page.getByTestId('onglet-couts-track')).toHaveCount(1)
 

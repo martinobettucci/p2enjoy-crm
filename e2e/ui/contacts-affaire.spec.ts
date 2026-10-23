@@ -7,6 +7,8 @@
 //           flux), §7 (paliers) ; CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — les cas h et o de la lectrice révisés : rattacher et détacher sont éteints avec le motif de l'a
+//           ffaire (docs/SPEC-droits-interface.md §3, §5)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, et l'écriture passe par le formulaire de l'écran.
@@ -20,9 +22,7 @@
 // de sécurité en fin de fichier retire le rattachement si un scénario s'est interrompu avant lui.
 
 import {
-	autoriserErreursConsole,
 	connecterAvecLeLabs,
-	ERREUR_RESSOURCE_HTTP,
 	expect,
 	test,
 	type Page,
@@ -168,7 +168,7 @@ test.describe("contacts d'une affaire (docs/SPEC-contacts.md §12)", () => {
 		await expect(page.getByTestId('ligne-contact-card')).toHaveCount(1)
 	})
 
-	test('la lectrice LIT le bloc, et son rattachement est REFUSÉ en toutes lettres — cas h', async ({
+	test('la lectrice LIT le bloc ; rattacher et détacher sont ÉTEINTS avec le motif de l’affaire — cas h, o (CRM-093)', async ({
 		page,
 	}) => {
 		await connecter(page, VIEWER)
@@ -181,51 +181,19 @@ test.describe("contacts d'une affaire (docs/SPEC-contacts.md §12)", () => {
 		// Un rattachement SANS organisation ne porte aucun lien — cas c.
 		await expect(ligne.getByRole('link')).toHaveCount(0)
 
-		// AUCUNE COMMANDE N'EST ÉTEINTE D'AVANCE, quel que soit le rôle — cas p. La règle vit dans
-		// `card_contacts_insertion`, et une commande grisée ferait passer une décision de la base
-		// pour une décision d'écran (`CLAUDE.md` §10).
-		await expect(page.getByTestId('ouvrir-rattachement')).toBeEnabled()
-		await page.getByTestId('ouvrir-rattachement').click()
-		await page.getByTestId('champ-contact').selectOption(ELISE)
-		await page.getByTestId('champ-role').fill('technique')
-		await page.getByTestId('confirmer-rattachement').click()
-
-		// Le refus est écrit DANS le formulaire, avec le texte du dictionnaire FERMÉ (§12.5) —
-		// jamais le message du serveur.
-		const refus = page.getByTestId('refus-rattachement')
-		await expect(refus).toHaveText('Vous ne pouvez pas modifier cette affaire.')
-		// UN REFUS N'EFFACE PAS LA SAISIE (§5.7 ter).
-		await expect(page.getByTestId('champ-role')).toHaveValue('technique')
-		await expect(page.getByTestId('champ-contact')).toHaveValue(ELISE)
+		// DEPUIS `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'écrire sur l'affaire est rendue par la
+		// base sur sa ligne ; les deux commandes refusées restent montées, désactivées, et citent le motif de la fiche.
+		// Le refus d'insertion (`403`) et le refus silencieux de suppression (`200`, zéro ligne) restent prouvés hors
+		// interface (`e2e/api/contacts-affaire.spec.ts`) et par les preuves unitaires du bloc.
+		for (const commande of [page.getByTestId('ouvrir-rattachement'), page.getByTestId('detacher-contact')]) {
+			await expect(commande).toBeVisible()
+			await expect(commande).toBeDisabled()
+			const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+			await expect(motif).toContainText('Vos droits ne vous permettent pas de la modifier')
+		}
 		await capturer(page, 'contacts-affaire-refus-1440', UNITE)
-
-		// LE `403` EST CELUI QUE CE SCÉNARIO VIENT DE PROVOQUER ET D'EXPLIQUER À L'UTILISATEUR :
-		// il est consommé nommément, jamais filtré globalement. Un statut, un nombre ou un ordre
-		// différent échoue ici, et toute anomalie postérieure reste dans le verdict final.
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
-
-		// La ligne n'a pas bougé : le refus n'a rien écrit.
+		// La ligne n'a pas bougé.
 		await expect(page.getByTestId('ligne-contact-card')).toHaveCount(1)
-	})
-
-	test('la lectrice qui détache lit « sans effet », et la ligne RESTE — cas o', async ({ page }) => {
-		// MESURE 12 du §12.4, la plus instructive de toutes : le refus de SUPPRESSION est
-		// SILENCIEUX — `200` et zéro ligne —, là où celui d'INSERTION est un `403`. La clause
-		// `USING` filtre la ligne avant de supprimer. Annoncer un retrait qui n'a pas eu lieu
-		// serait la simulation de succès que `CLAUDE.md` §18 interdit.
-		await connecter(page, VIEWER)
-		await page.goto(AFFAIRE_LECTRICE.adresse)
-		await expect(page.getByTestId('ligne-contact-card')).toHaveCount(1)
-
-		await page.getByTestId('detacher-contact').click()
-		await page.getByTestId('confirmer-detachement').click()
-
-		await expect(page.getByTestId('refus-detachement')).toHaveText(
-			'Aucun rattachement n’a été retiré.',
-		)
-		// La liste est RELUE, et la ligne est toujours là : rien n'a changé côté serveur.
-		await expect(page.getByTestId('ligne-contact-card')).toHaveCount(1)
-		await expect(page.getByTestId('ligne-contact-card')).toContainText('Sophie Dupont')
 	})
 
 	test("une affaire sans aucun rattachement rend l'état vide, qui GARDE son formulaire — cas d", async ({

@@ -10,6 +10,8 @@
 //           latérale sans rechargement
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario de la lectrice révisé : la commande refusée est éteinte avec le motif de l'affaire 
+//           (docs/SPEC-droits-interface.md §3, §5)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, sur la VRAIE base : aucune fonction interne n'est
 // appelée, et chaque effet est CONSTATÉ EN BASE par une relecture, jamais déduit de l'écran. Un
@@ -639,23 +641,21 @@ test.describe('le geste de mise à la corbeille d’une affaire (§4 ter)', () =
 		}
 	})
 
-	test('la LECTRICE reçoit « sans effet », et la base ne bouge pas (§4 ter.3)', async ({ page }) => {
+	test('la LECTRICE voit « Mettre à la corbeille » ÉTEINT, avec le motif de l’affaire (§4 ter.3, CRM-093)', async ({ page }) => {
 		await supprimerAffaireJetable(page)
 		try {
 			const idCard = await creerAffaireJetable(page, 'lectrice')
 			await connecter(page, VIEWER)
 			await page.goto(adresseAffaire(idCard))
 
-			// LA COMMANDE EST OFFERTE, et c'est le propos : la règle vit dans `cards_maj`, et
-			// l'éteindre d'avance ferait passer une décision de la base pour une décision d'écran.
-			await page.getByRole('button', { name: 'Mettre à la corbeille' }).click()
-			await page.getByTestId('confirmer-corbeille-card').click()
-
-			const refus = page.getByTestId('refus-corbeille-card')
-			await expect(refus).toBeVisible()
-			await expect(refus).toContainText('Aucune modification')
-			// Ni succès ni erreur : la confirmation reste ouverte, et la base est INCHANGÉE.
-			await expect(page.getByTestId('affaire-retiree')).toHaveCount(0)
+			// DEPUIS `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'écrire sur l'affaire est rendue par
+			// la base, et la commande refusée reste montée, désactivée, citant son motif. Le « sans effet » de
+			// `cards_maj` reste prouvé hors interface (`e2e/api/corbeille.spec.ts`) et par la preuve unitaire de la fiche.
+			const commande = page.getByRole('button', { name: 'Mettre à la corbeille' })
+			await expect(commande).toBeVisible()
+			await expect(commande).toBeDisabled()
+			const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+			await expect(motif).toContainText('Vos droits ne vous permettent pas de la modifier')
 			expect(await deletedAt(page, 'cards', idCard)).toBeNull()
 			await capturer(page, 'card-geste-sans-effet', UNITE)
 		} finally {

@@ -6,6 +6,8 @@
 //           le focus), §7 (quatre paliers, aucun défilement horizontal de la page), §8 (clavier)
 // @verifies CLAUDE.md §10 (le refus prouvé avec le jeton réel du commercial), §15 (état déterministe, effets en base
 //           relus), §16 (captures observées)
+// @verifies CRM-093 (docs/BACKLOG.md) — le scénario du commercial révisé : la commande refusée est éteinte avec le motif de l'administr
+//           ation (docs/SPEC-droits-interface.md §3, §5)
 //
 // LE SERVEUR LLM N'EST JAMAIS APPELÉ (docs/SPEC-ia.md §8) : chaque requête de la page vers la fonction `ia` reçoit
 // l'en-tête `x-ia-simulateur`, qui choisit le scénario du simulateur — instrumentation du seul développement
@@ -15,8 +17,6 @@
 // seed n'est jamais décidée.
 
 import {
-	ERREUR_RESSOURCE_HTTP,
-	autoriserErreursConsole,
 	connecterAvecLeLabs,
 	expect,
 	test,
@@ -265,20 +265,20 @@ test.describe('Créer un workflow avec l’IA (docs/SPEC-ia.md §12)', () => {
 		await expect(page.getByTestId('ia-etape')).toHaveCount(4)
 	})
 
-	test('le commercial voit la commande ; la base refuse, et le refus est écrit sous la demande — aucune liste ne lui est montrée', async ({ page, request }) => {
+	test('le commercial voit « Créer avec l’IA » ÉTEINT, avec le motif de l’administration — aucune liste ne lui est montrée (CRM-093)', async ({ page, request }) => {
 		await simuler(page, { scenario: 'valide', retenir: null })
 		await connecterAvecLeLabs(page, BIZDEV)
 		await page.goto(EDITEUR)
-		await expect(page.getByRole('button', { name: 'Créer avec l’IA' })).toBeVisible()
+		// RÉVISÉ PAR `CRM-093` (docs/SPEC-droits-interface.md §3, §5) : la capacité d'administrer est rendue par la base
+		// sur la ligne de l'espace ; la commande refusée reste montée, désactivée, et cite son motif. Le `403` de
+		// l'assistant reste prouvé hors interface (`e2e/api/assistant-ia.spec.ts`).
+		const commande = page.getByRole('button', { name: 'Créer avec l’IA' })
+		await expect(commande).toBeVisible()
+		await expect(commande).toBeDisabled()
+		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
+		await expect(motif).toContainText('réservées aux administrateurs')
 		// La RLS ne lui rend aucune suggestion, pas même celle du seed : l'écran ne nomme pas ce qu'il ne montre pas.
 		await expect(page.getByTestId('ia-suggestions-en-revue')).toHaveCount(0)
-
-		await demander(page, `${PREFIXE} — commercial`)
-		const refus = page.getByTestId('ia-refus-demande')
-		await expect(refus).toHaveText('L’assistant est réservé aux administrateurs de l’espace de travail.')
-		await expect(refus).toHaveAttribute('role', 'alert')
-		await expect(page.getByLabel('Décrivez le workflow')).toHaveValue(`${PREFIXE} — commercial`)
-		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])
 		await capturer(page, 'ia-refus-commercial-xl-1440', UNITE)
 		expect(await lireService(request, `suggestions_ia?select=id&${FILTRE}`)).toEqual([])
 	})
