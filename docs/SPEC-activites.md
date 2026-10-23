@@ -77,7 +77,7 @@ Les participants suivent leur activité : lus avec elle, écrits par qui peut co
   activité retirée s'y lit « Activité retirée », sans contenu.
 - **Aucun écran transverse** dans cette unité (pas de liste de toutes les activités) : à arbitrer plus tard si le
   besoin vient.
-- **Design system** : une section nouvelle, écrite après lecture intégrale du document, avant le code de l'écran.
+- **Design system** : `docs/DESIGN_SYSTEM.md` §5.63, écrite après lecture intégrale du document, avant le code de l'écran (décision 651).
 
 ## 5. États et refus
 

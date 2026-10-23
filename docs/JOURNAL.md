@@ -32976,3 +32976,25 @@ pierre tombale de `card_comments` ; le sujet, les participants et la pierre tomb
 codes d'erreur suivent `card_comments`. **Conséquences** : spécification et `SCHEMA.md` §5 révisés avant le code ; la
 migration écrite en français, appliquée seulement en développement et jamais committée, est réécrite.
 
+
+### décision 651 — `CRM-067` T2 : la forme du bloc « Activités » et sa place dans le fil
+
+*2026-10-23, écrit avant le code de la tranche T2, après relecture intégrale de `docs/DESIGN_SYSTEM.md`.*
+
+**Problème.** La spécification validée (décision 649) place le bloc, liste la plus récente en tête, et ajoute une
+troisième source au fil. Trois questions de forme restaient ouvertes. Aucune ne change ce que la base accepte ni ce
+que le produit fait, et aucune n'appelle d'arbitrage.
+
+**Décisions, écrites au §5.63 de `docs/DESIGN_SYSTEM.md`.**
+
+1. **La commande « Consigner une activité » vit en tête du bloc**, et non sous la liste comme celle des contacts. La
+   liste croît sans borne, et la commande ne doit pas être poussée hors de vue.
+2. **Le fil range une activité à `occurred_at`, la date où elle a eu lieu, et non à `created_at`.** Un appel consigné
+   le lendemain s'insère à sa place dans l'histoire. C'est la raison d'être d'une date propre, et la fusion reste
+   totale sur `(date, clé)`.
+3. **La sixième bascule « Activités » est un écart assumé au §5.11**, qui en avait refusé une au sommeil et à la
+   relance. Elle vient de l'arbitrage de la décision 648 (« une famille de filtre « Activités » »), et le §5.11 est
+   annoté.
+
+**Vérifications.** Les icônes `Phone`, `Users` et `Video` ne sont importées nulle part dans `webapp/src` et ne sont
+citées par aucune section du design system (§9).

@@ -1019,7 +1019,7 @@ s'ajoutent, elles ne les remplacent pas.
   fil **chargé**, jamais sur le fil filtré — sinon éteindre toutes les familles ferait disparaître
   le moyen de les rallumer.
 
-- **Filtres : une barre de cinq bascules**, en haut du panneau, hauteur `--size-target`,
+- **Filtres : une barre de cinq bascules** — *six depuis `CRM-067`, qui ajoute « Activités » (§5.63)* —, en haut du panneau, hauteur `--size-target`,
   `rounded-full`, état actif en `--color-brand-soft` / `--color-brand` **et en graisse moyenne** —
   la couleur douce seule ne distinguait pas assez une bascule éteinte d'une bascule active, vu sur
   `docs/captures/CRM-044/fil-filtre-1440.jpg`. L'état éteint porte une bordure `--color-border` sur
@@ -5995,3 +5995,122 @@ relecture des §4, §5.43, §5.46, §7, §8 et §12.2.* Ce que chaque route plac
   ancêtre dont la donnée n'est pas lue **n'est pas rendu** : ni libellé inventé, ni slug à la place d'un nom.
 - **PENDANT LA RECHERCHE OUVERTE SOUS `lg`, LE FIL ENTIER CÈDE**, comme avant (§5.46) : inchangé.
 - **Aucune couleur ni aucun jeton nouveaux** ; une icône Lucide de plus, `Ellipsis`.
+
+### 5.63 Les activités d'une affaire : appels, réunions, visios — `CRM-067`
+
+*Écrit le 2026-10-23, avant le code de la tranche T2, après relecture intégrale de ce document.* Ce que le bloc lit,
+envoie et refuse est spécifié par `docs/SPEC-activites.md` §2 à §5. Ces règles ne disent que de quoi il a l'air. Tout
+ce que les §5.13 et §5.21 posent vaut ici sans être répété :
+- formulaire et confirmation **dans le flux**, aucune modale ;
+- focus entrant dans le premier champ, puis rendu à la commande qui a ouvert (différé d'un rendu, §5.25) ;
+- refus dit dans le formulaire, la saisie conservée (§5.7 ter) ;
+- liste relue après chaque écriture, jamais complétée localement.
+
+- **LE BLOC « Activités » VIENT JUSTE APRÈS « Contacts de l'affaire »**, dans la colonne gauche (§5.3, §5.21), et
+  avant « Recettes ». Les contacts disent avec qui l'affaire se traite, les activités ce qu'on a fait avec eux, et
+  l'argent vient ensuite. Le bloc a la forme des blocs voisins : `section`, filet haut `--color-border`, titre `h2`.
+
+- **« Consigner une activité » EST EN TÊTE DU BLOC, sous le titre** : bouton secondaire, icône `Plus`. C'est l'écart
+  assumé avec les contacts, dont la commande suit la liste. Ici la liste croît sans borne, la plus récente en tête, et
+  une commande placée sous trente activités serait hors de vue à chaque visite (§5.50 : créer précède ce qu'on lit). La
+  commande et le formulaire **s'excluent** (§5.23).
+
+- **LA LISTE EST LA LISTE PLATE DU §5.18, LA PLUS RÉCENTE EN TÊTE.** C'est l'inverse du fil (§5.10), et c'est
+  délibéré : le bloc répond à « qu'a-t-on fait dernièrement ? », alors que le fil raconte une histoire dans l'ordre où
+  elle s'est tenue. Une ligne porte, dans cet ordre :
+  - **la pastille du type** — 28 px, `--radius-md`, `--color-brand-soft` et icône `--color-brand` 16 px, la forme
+    d'une ligne d'événement du §5.11 —, puis **le sujet**, en `font-medium`, qui se replie et n'est jamais en ellipse
+    (§5.46 : il nomme l'objet) ;
+  - **une ligne de métadonnées** en 13 px `--color-text-2` : le **type en mot** — « Appel », « Réunion », « Visio » —,
+    la date et l'heure de l'activité, la durée — « 45 min », dans son propre élément (§5.11) — et « par {auteur} ». La
+    mention « modifiée » suit si l'activité a été corrigée (§5.10). L'icône ne porte jamais seule le type (§1, §9) ;
+  - **les participants**, en 13 px : « Avec Léo Marchand, Camille Aubert ». Une activité sans participant ne rend
+    **rien** à cette place, ni tiret ni « personne » (§5.9). Un participant dont le nom n'est plus lisible n'est pas
+    nommé : on ne fait jamais un nom avec un identifiant (§5.11) ;
+  - **le compte rendu replié**, dans un `details` dont le `summary` « Compte rendu » a la hauteur de cible (§8). Le
+    texte se lit déplié en texte brut, `white-space: pre-wrap`, jamais en markdown (§5.10). Sans compte rendu, il n'y
+    a pas de `details` ;
+  - **les commandes**, sur leur propre ligne et alignées à droite. C'est la leçon du §5.10 : partager la ligne des
+    métadonnées les coupait. Ce sont des boutons discrets compacts **toujours visibles**, et non au survol comme ceux
+    d'un commentaire : une liste de colonne gauche porte ses gestes à découvert, comme « Détacher » (§5.21).
+
+- **« Corriger » N'EST OFFERT QU'À L'AUTEUR, « Retirer » À L'AUTEUR ET, SUR L'ACTIVITÉ D'UN TIERS, À L'ADMINISTRATEUR.**
+  La forme porte la règle de la base (`docs/SPEC-activites.md` §3), exactement comme pour un commentaire (§5.10) :
+  - comparer l'auteur à la session et lire le rôle ne sert qu'à **ne pas offrir une commande morte** ;
+  - un refus qui arrive malgré tout — droit retombé entre-temps, `200` et zéro ligne — se dit sous la liste, dans le
+    bloc, avec le texte « sans effet », et la liste est relue ;
+  - quand la base refuse l'écriture sur l'affaire, les deux commandes et « Consigner une activité » sont **montées,
+    désactivées, lisibles**, et citent le motif de la fiche (§5.59).
+
+- **LE FORMULAIRE EST LE MÊME POUR CONSIGNER ET POUR CORRIGER.** Pour consigner, il s'ouvre sous la commande d'en-tête.
+  Pour corriger, il remplace la ligne, prérempli, comme la correction d'un commentaire remplace son corps (§5.10). Une
+  carte `--color-surface`, bordure `--color-border`, `--radius-lg`, 16 px de marge intérieure, et ces champs, dans cet
+  ordre :
+  - **le type est un groupe de trois boutons radio** dans un `fieldset` à `legend` visible, chacun portant son icône et
+    son mot. Il y a un seul choix possible, et le contrôle natif le dit (§5.52). « Appel » est coché par défaut, et
+    l'œil le voit ;
+  - **« Date et heure »** est un `input type="datetime-local"`, maintenant par défaut, avec `max` à maintenant. Le
+    `max` n'est qu'une aide : la base reste seule juge, avec sa tolérance de cinq minutes ;
+  - **« Durée (minutes) »** est un `input type="number"`, facultatif, de 1 à 1440. Dessous, en 13 px `--color-text-2`
+    et relié par `aria-describedby`, la phrase que la spécification impose : « Facultative. Elle ne compte pas dans le
+    temps passé : votre temps se saisit dans « Temps ». » ;
+  - **« Sujet »** est requis, 200 caractères au plus ;
+  - **« Compte rendu »** est un `textarea` de quatre lignes, facultatif ;
+  - **« Participants »** est un `fieldset` à `legend` visible, fait de deux groupes de cases à cocher natives de 24 px
+    (§5.7 bis) : « Contacts de l'affaire » et « Membres de l'espace ». Les cases passent sur deux colonnes à partir de
+    `md`. Un groupe vide le dit en une phrase — « Aucun contact lié à cette affaire. » —, jamais un groupe sans case.
+    Un groupe dont la lecture a échoué le dit aussi, et le reste du formulaire reste utilisable : un participant est
+    facultatif.
+
+- **« Consigner » OU « Enregistrer » (primaire), PUIS « Annuler » (secondaire).** Le bouton primaire est désactivé tant
+  que le sujet est blanc. C'est un champ requis, et non un droit (§5.50). Pendant l'envoi, il dit « Enregistrement… ».
+  `Échap` referme depuis n'importe quel champ, comme « Annuler ».
+
+- **LES PARTICIPANTS S'ÉCRIVENT APRÈS L'ACTIVITÉ, ET UN ÉCHEC PARTIEL EST UNE TROISIÈME ISSUE** : le patron des
+  mentions (§5.44).
+  - **L'activité est consignée et n'est jamais retirée par l'écran.** Le formulaire se referme, la liste est relue
+    et montre les participants réellement posés.
+  - **Une alerte sous la liste dit combien n'ont pas pu être ajoutés et pourquoi**, par clé (§10).
+
+- **RETIRER DEMANDE UNE CONFIRMATION SUR LA LIGNE**, qui remplace les commandes : sa question, sa conséquence, un bouton
+  destructif « Retirer l'activité » et « Annuler ».
+  - **La conséquence dit ce qui part** — sujet, compte rendu, participants — **et ce qui reste** : la ligne, marquée
+    « Activité retirée ».
+  - **Sur l'activité d'un tiers, le texte est distinct** (§5.10). Il dit que l'activité appartient à quelqu'un
+    d'autre et que le retrait sera enregistré sous votre nom.
+  - **Le focus entre sur le bouton destructif** et revient à la commande à l'annulation.
+
+- **UNE ACTIVITÉ RETIRÉE TIENT SA PLACE** (§5.10) : pastille `--color-hover` / `--color-text-3`, « Activité retirée » en
+  italique `--color-text-2`, la date de l'activité conservée, et aucune commande. Retirée par un tiers, elle se lit
+  « Activité retirée par la modération ». Le nom du modérateur n'est pas affiché.
+
+- **LES QUATRE ÉTATS DU §5.8** :
+  - **chargement** : le squelette de deux lignes ;
+  - **erreur** : la mention `role="alert"` et « Réessayer », dans le bloc ;
+  - **vide** : « Aucune activité consignée sur cette affaire. », la commande restant offerte en tête ;
+  - **succès** : annoncé dans une région vivante polie — « Activité consignée », « Activité corrigée », « Activité
+    retirée ».
+
+- **LE FIL UNIFIÉ GAGNE UNE TROISIÈME SOURCE ET UNE SIXIÈME FAMILLE, « Activités »** (`docs/SPEC-activites.md` §4).
+  Elle vient après « Discussion » : une activité est un échange.
+  - **C'est un écart au §5.11, qui a refusé une sixième bascule pour le sommeil, puis pour la relance.** Ces deux-là
+    répondaient à une question déjà posée, « qu'est devenue cette affaire ? ». Une activité répond à une autre : que
+    s'est-il passé avec le client hors du CRM ? Le responsable l'a arbitré (décision 648). La barre se replie toujours
+    (§5.11) : six bascules tiennent dans la colonne de droite sans rien cacher.
+  - **Une activité est une LIGNE du fil, pas une carte** : c'est un fait consigné, pas un tour de parole (§5.11). Sa
+    pastille et son icône sont celles du bloc, puis viennent le type en mot et le sujet après le séparateur `·`. La
+    seconde ligne porte la date de l'activité, la durée et « par {auteur} ».
+  - **Elle se range à la date où elle A EU LIEU, `occurred_at`, et non à celle de sa saisie.** Un appel consigné le
+    lendemain s'insère à sa place dans l'histoire, ce qui est la raison d'être d'une date propre (§2 de la
+    spécification).
+  - **Le compte rendu et les participants ne sont pas repris dans le fil**, qui reste une suite de lignes courtes ; le
+    bloc les porte.
+  - **Une activité retirée s'y lit « Activité retirée »**, pastille neutre, sans sujet.
+  - **Le fil relit sa troisième source après chaque geste du bloc**, sans être remonté.
+
+- **SOUS `md`, LES CHAMPS DU FORMULAIRE PRENNENT TOUTE LA LARGEUR**, les cases des participants passent sur une colonne
+  et les commandes d'une ligne se replient, cibles conservées. `md` et jamais `sm` (§11). La page ne défile jamais
+  horizontalement (§7).
+
+- **Aucune couleur, aucun jeton nouveau.** Trois icônes Lucide nouvelles, une par type, et aucune ne sert déjà un autre
+  objet (§9) : `Phone` (appel), `Users` (réunion), `Video` (visio). `Plus` est reprise, pour le même geste d'ajout.
