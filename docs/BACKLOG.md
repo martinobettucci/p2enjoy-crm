@@ -10629,6 +10629,15 @@ pas un produit.
       channel ; consultable par tout membre, commandes réservées aux administrateurs (capacité de `CRM-093`) ; **pas de
       connecteur MCP**. Spécification à écrire, `docs/SPEC-membres.md`, après mesure des politiques existantes, puis
       validation du responsable.
+- [x] **Spécification** `docs/SPEC-membres.md`, **validée le 2026-10-23** (décision 635) : la RLS ouvre déjà toutes les
+      écritures à l'administrateur d'espace ; l'accès effectif se lit par une fonction réservée à l'administrateur.
+- [ ] **T1** — mesures (remplacer une attente : atomique ou fonction), fonction `acces_effectif_membre` (migration au
+      prochain numéro libre), pgTAP, API aux jetons réels.
+- [ ] **T2** — les membres et leurs rôles : composant partagé avec la plateforme, écran Réglages ▸ « Membres », unitaires.
+- [ ] **T3** — les attentes et leur état (en attente, en suspens).
+- [ ] **T4** — les droits fins par track et channel, avec l'accès effectif.
+- [ ] **T5** — E2E par rôle, captures, manuel (chapitre 17), seed, campagnes.
+- [ ] **T6** — livraison en production, sur instruction du responsable.
 
 ---
 
@@ -15675,3 +15684,14 @@ règle dans la webapp et le connecteur, et les captures observées.
       mouvement) ; « 0 jour » au singulier ; manuel chapitre 5 duodecies et chapitre 11 (huit familles),
       `verify-manual.sh` **241 contrôles verts**. **Reste avant `[x]`** : l'effet d'un outil du connecteur constaté dans
       la fiche, avec l'intégration réelle de T4.
+
+
+### CRM-109 — Journaliser les refus d'admission, pour dire d'une attente « jamais connectée » ou « refusée » `[ ]`
+*Créée le 2026-10-23 — décision 635, arbitrage du responsable, détachée de `CRM-070`.* Une attente consommée disparaît,
+et rien ne garde une connexion refusée à une adresse : ni l'administrateur d'espace ni le superadministrateur ne
+peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi elle a été refusée
+(`docs/SPEC-session-sso.md` §6, décision 593). Relevé par une connexion refusée en production.
+
+- [ ] Spécification : quoi journaliser (adresse normalisée, motif d'admission refusée, horodatage), où (échange de
+      session SSO), qui lit (administrateur de l'espace pour ses attentes, superadministrateur), conservation (RGPD),
+      question du connecteur MCP. À valider avant tout code.

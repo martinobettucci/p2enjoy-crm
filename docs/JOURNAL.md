@@ -32451,3 +32451,12 @@ un dépôt où les sessions committent sans toujours pousser, ce push a emporté
 une réécriture de l'historique demande l'instruction du responsable. **Corrections.** Le script refuse désormais de
 committer et de pousser si `origin/main..HEAD` n'est pas vide ; un fichier partagé ne s'écrit plus que par un blob
 construit depuis HEAD, et sa copie de travail se lit avant d'être réécrite.
+
+### décision 635 — `CRM-070` : la spécification validée ; le journal des refus d'admission devient `CRM-109`
+
+*2026-10-23, arbitrages du responsable sur `docs/SPEC-membres.md`.* **Validée**, avec deux choix : l'accès effectif
+d'une personne sur un track ou un channel se **lit en base**, par une fonction réservée à l'administrateur de l'espace,
+pour que la règle « le plus spécifique gagne » ne soit jamais recalculée à l'écran ; « jamais connectée » et
+« connexion refusée » demandent de journaliser les refus d'admission par adresse — **une unité propre, `CRM-109`**,
+hors de `CRM-070`. Découpage persisté au backlog : T1 mesures et fonction de lecture, T2 membres et rôles, T3 attentes,
+T4 droits fins, T5 preuves de bout en bout, T6 livraison.

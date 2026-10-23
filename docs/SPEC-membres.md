@@ -6,7 +6,7 @@
 - Documents liés : `docs/SPEC-permissions-rls.md` §3 (droits fins, « le plus spécifique gagne »), `docs/SPEC-session-sso.md`
   §6 et §7 (attentes, admission), `docs/SPEC-plateforme.md` §6 et §7 (l'écran du superadministrateur),
   `docs/SPEC-droits-interface.md` (les capacités, `CRM-093`), `docs/DESIGN_SYSTEM.md` §5.56 et §5.59.
-- État : **brouillon, à valider par le responsable avant tout code** (`CLAUDE.md` §5).
+- État : **validée par le responsable le 2026-10-23** (décision 635), avec les choix du §5.
 
 ## 1. Objet
 
@@ -101,18 +101,17 @@ en coordination avec la session qui tient `CRM-103` (fichiers `plateforme.ts` et
 couche d'accès est distincte : l'écran de l'administrateur parle aux tables par la RLS, celui de la plateforme aux
 fonctions `plateforme_*`. Les libellés de rôle sont communs.
 
-## 5. Points ouverts à trancher à la validation
+## 5. Points tranchés à la validation (décision 635)
 
-1. **La lecture de l'accès effectif** d'une personne sur un track ou un channel. `app.resolve_track_access` et
-   `app.resolve_channel_access` existent mais lisent les droits de l'appelant. Faut-il une fonction de lecture
-   `public.acces_effectif(p_user, …)`, réservée à l'administrateur de l'espace (migration, prochain numéro libre) ?
-   Recommandation : oui, pour ne jamais recalculer la règle à l'écran.
-2. **« Jamais connectée » / connexion refusée.** Le montrer exige de journaliser les refus d'admission par adresse (une
-   table et une écriture dans l'échange de session SSO). Recommandation : hors de `CRM-070`, à ouvrir comme unité
-   propre si le responsable le souhaite (proposé par une autre session après une connexion refusée).
-3. **Remplacer une attente** : deux écritures depuis l'écran, ou une fonction `poser_attente` gardée par
-   `app.is_workspace_admin`. Recommandation : mesurer en T1 ; une fonction si les deux écritures ne peuvent pas être
-   atomiques.
+1. **L'accès effectif se lit en base.** Une fonction de lecture `public.acces_effectif_membre(p_ws uuid, p_user uuid)`
+   rend, pour chaque track et chaque channel de l'espace, le droit posé et l'accès effectif (« le plus spécifique
+   gagne », par les fonctions mêmes de la RLS). Elle est **réservée à l'administrateur de l'espace** :
+   `SECURITY DEFINER`, `search_path` vide, garde `app.is_workspace_admin(p_ws)` en premier, refus `42501` sinon ;
+   `execute` à `authenticated` seul. Migration au prochain numéro libre au moment de l'écrire (T1).
+2. **« Jamais connectée » et « connexion refusée » sortent de `CRM-070`.** Journaliser les refus d'admission par
+   adresse devient une unité propre (`CRM-109`). `CRM-070` montre « en attente » et « en suspens ».
+3. **Remplacer une attente** : mesuré en T1 ; une fonction gardée par `app.is_workspace_admin` si les deux écritures ne
+   peuvent pas être atomiques depuis l'écran.
 
 ## 6. Preuves
 
