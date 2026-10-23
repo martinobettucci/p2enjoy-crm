@@ -64,7 +64,15 @@ $$;
 --   * …0cb « Assistant IA support — Nordis », que le temps non valorisé de Farida fait paraître ;
 --   * …0cc « Portail adhérents — MGEN Loire », mise à la corbeille dans la suite.
 -- Les identifiants de la suite commencent par `c0870000`.
+--
+-- LES RECETTES DU SEED (§21) SONT RETIRÉES DANS LA TRANSACTION, que le `rollback` final rend intactes : les sommes
+-- prouvées ici sont celles des fixtures de la suite, et ne dépendent pas du jeu de démonstration (trouvé par la série
+-- complète, une fois le seed §21 joué).
 -- ---------------------------------------------------------------------------------------------
+delete from public.card_revenues
+ where card_id in ('5eed0000-0000-4000-8000-0000000000c4', '5eed0000-0000-4000-8000-0000000000c7',
+                   '5eed0000-0000-4000-8000-0000000000cd', '5eed0000-0000-4000-8000-0000000000cc');
+
 insert into public.card_revenues (id, card_id, label, estimated_amount)
 values
 	('c0870000-0000-4000-8000-0000000000a1', '5eed0000-0000-4000-8000-0000000000c4', 'Lot 1 0087', 20000),
@@ -273,7 +281,7 @@ select throws_ok(
 select pg_temp.redevenir_proprietaire();
 select lives_ok(
 	$$insert into public.mcp_droits (sub, workspace_id, famille, action)
-	  values ('5eed0000-0000-4000-8000-000000000012', '5eed0000-0000-4000-8000-000000000001', 'recettes', 'ajouter')$$,
+	  values ('5eed0000-0000-4000-8000-000000000012', '5eed0000-0000-4000-8000-000000000001', 'recettes', 'modifier')$$,
 	'46 — la contrainte de la matrice accepte `recettes`');
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000018');
 select lives_ok(
