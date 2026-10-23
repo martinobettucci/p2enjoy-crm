@@ -15392,6 +15392,9 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       preuves d'intégration extrait dans `mcp/tests/parcours_oauth.py` ; **T3.c** l'E2E de l'onglet et de la fiche,
       souris et clavier, avec l'effet constaté par un vrai client MCP ; **T3.d** captures observées aux quatre paliers,
       manuel rejoué sur le seed, `verify-mcp.sh` complet, campagnes.
+      *T3.a fait le 2026-10-23* : `e2e/api/connecteur-administration.spec.ts` 8/8, deux mutations tuées (75ea1fa1).
+      *T3.b fait le 2026-10-23* : seed §22 par de vraies connexions OAuth, convergent ; sans `refus_matrice`, impossible
+      à un seul espace (journal) ; intégration 22/22, `connecteur-mcp.spec.ts` 8/8.
 - [ ] **T4** — livraison en production et constat.
 
 ### CRM-104 — Outils MCP par famille `[ ]`

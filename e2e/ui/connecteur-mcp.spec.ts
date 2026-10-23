@@ -4,6 +4,7 @@
 //           vérification attendue ; aucun code émis sur un refus ; registre injoignable = refus), §5 (la donnée lue sous la
 //           RLS), §7.1 (une ligne au journal) ; docs/DESIGN_SYSTEM.md §5.57 (pages du connecteur), §5.12 (attente et
 //           refus), §7 (quatre paliers, aucun défilement horizontal), §8 (clavier) ; CLAUDE.md §15, §16
+// @verifies CRM-103 T3.b — « Droits en attente » prouvé sur la lectrice, sans matrice au seed (docs/SPEC-seed.md §22.5)
 // @verifies CRM-102 T6 — docs/SPEC-mcp.md §2.2 et docs/DESIGN_SYSTEM.md §5.57 : l'accueil mène, au clavier, à la plateforme
 //           de la webapp (`SITE_URL`), où la superadministratrice arrive après sa connexion ; `/admin` y mène aussi
 //
@@ -22,7 +23,8 @@ import { ORIGINE_MCP, RETOUR_CLIENT, SessionMcp, echangerCode, preparerAutorisat
 const UNITE = 'CRM-102'
 const SABINE = { adresse: 'plateforme@p2enjoy.test', sub: '5eed0000-0000-4000-8000-000000000018' }
 const EXPLOITANTE = 'exploitante@p2enjoy.test'
-const CAMILLE = 'admin@p2enjoy.test'
+/** La lectrice, que le seed laisse SANS matrice : le compte « en attente » (docs/SPEC-seed.md §22.1). */
+const FARIDA = 'viewer@p2enjoy.test'
 const ATTENDU = 'attendu@p2enjoy.test'
 const ESPACE_SEEDE = '5eed0000-0000-4000-8000-000000000001'
 
@@ -114,9 +116,9 @@ test.describe('Le connecteur MCP, par un vrai client (docs/SPEC-mcp.md §3, §4)
 			if (r.url().startsWith(RETOUR_CLIENT)) codes.push(r.url())
 		})
 		await consentir(page, (await preparerAutorisation()).url)
-		await connexionSso(page, CAMILLE)
+		await connexionSso(page, FARIDA)
 		await expect(page.getByRole('heading', { level: 1, name: 'Droits en attente' })).toBeVisible()
-		await expect(page.getByRole('status')).toContainText(CAMILLE)
+		await expect(page.getByRole('status')).toContainText(FARIDA)
 		await expect(page.getByRole('alert')).toHaveCount(0)
 		expect(codes, 'aucun code ne doit partir vers le client MCP').toEqual([])
 		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[403]])

@@ -2322,9 +2322,15 @@ matrice du business developer posée par `CRM-108` (§21.4), sans la toucher.*
 | Personne | Matrice sur « P2Enjoy SAS » | Venue au connecteur | Ce que l'administration du connecteur montre |
 |---|---|---|---|
 | **Farida Nowak** (lectrice) | **aucune** | une connexion refusée | le compte **en attente** : la page « Droits en attente », un compte au registre, « 0 » espace ouvert |
-| **Camille Aubert** (administratrice) | `recettes:consulter` **seule** | connectée, trois appels | la **lecture** : la liste des espaces et les lignes de recette d'une affaire (`ok`) ; le rapport de rentabilité **refusé par la matrice** (`refus_matrice`), qui exige aussi `budgets` et `temps` — l'administratrice le lirait dans le CRM |
+| **Camille Aubert** (administratrice) | `recettes:consulter` **seule** | connectée, deux appels | la **lecture** : la liste des espaces et les lignes de recette d'une affaire (`ok`) ; le rapport de rentabilité est **absent de ses outils**, car il exige aussi `budgets` et `temps` — l'administratrice le lirait pourtant dans le CRM |
 | **Driss Lemoine** (business developer) | celle du §21.4, inchangée (`recettes` consulter et ajouter, `budgets` et `temps` consulter) | connecté, deux appels | les lignes de recette d'une affaire (`ok`) ; le rapport **refusé par le CRM** (`refus_crm`, `42501` `rentabilite_reservee`), matrice ouverte |
 | **Sabine Plateforme** (superadministratrice) | — | **jamais** | sa fiche dit « Jamais connecté au connecteur » et « Franchit la matrice » |
+
+**Aucun `refus_matrice` au seed** (constaté le 2026-10-23 sur la pile). Un outil que la matrice ferme est
+**invisible**, cases `aussi` comprises : l'appeler rend « outil inconnu », sans ligne au journal. Un refus de la matrice
+exige un outil ouvert dans un espace et appelé sur un autre, et le jeu n'a qu'un espace (§19.1). Ce refus est prouvé par
+`mcp/tests/test_politique.py`, avec deux espaces simulés. Le filtre « Refus de la matrice » du journal montre donc
+l'état vide de son filtre.
 
 L'exploitante (`admin` LeLabs, sans profil) n'est pas connectée par le seed. Les preuves qui la connectent l'inscrivent au
 registre, et la liste la montre alors avec la mention « Sans profil dans le CRM ».
@@ -2345,7 +2351,8 @@ registre, et la liste la montre alors avec la mention « Sans profil dans le CRM
 
 `mcp_poser_droits` à l'identique n'écrit rien. Un appel n'est rejoué que si le journal ne porte pas encore la ligne
 `(compte, outil, issue)` qu'il produit, et la connexion refusée de Farida seulement si elle n'a pas de compte au
-registre. Deux exécutions laissent donc le même registre.
+registre. Deux exécutions laissent donc le même registre. Camille est reconnectée à chaque exécution pour constater que le rapport
+reste absent de ses outils, sans appel, donc sans ligne de plus.
 
 ### 22.4 Ce qui attend `CRM-104`
 

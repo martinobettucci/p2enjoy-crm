@@ -32785,3 +32785,29 @@ par PostgREST, qui réserve 404 à d'autres codes. Le contrat ne fixe que le SQL
 l'interface n'en souffre pas, mais un 500 se lit comme une panne dans une supervision. `CRM-101` a le même comportement
 depuis sa livraison. Le changer toucherait le dictionnaire des refus des deux unités : à soumettre au responsable, sans
 modification d'ici là.
+
+### `CRM-103` T3.b — le seed du connecteur, et pourquoi il ne montre pas de refus de la matrice — 2026-10-23
+
+**Fait.** `mcp/tests/parcours_oauth.py` porte désormais le parcours OAuth des preuves d'intégration, sans `pytest`.
+`test_integration_oauth.py` en réexporte les noms : l'import de `test_integration_recettes.py` ne change pas.
+`mcp/tests/seed_connecteur.py` joue le seed par de vraies connexions et de vrais appels. Il est lancé par la section
+`8 tervicies` d'`apply-seed.sh` (`compose_dev run` du service `mcp`, `mcp/tests` monté en lecture seule).
+
+**Constat sur la pile, qui corrige l'entrée « découpage » du même jour.** Le rapport de rentabilité n'est pas refusé à
+Camille par la matrice : il lui est **invisible**. La visibilité compte aussi les cases `aussi`, et l'appel rend
+« Unknown tool » sans ligne au journal. Avec un seul espace, aucun `refus_matrice` n'est possible : il faut un outil
+ouvert dans un espace et appelé sur un autre. Le seed constate donc l'**absence** du rapport chez Camille. Le refus de
+la matrice reste prouvé par `mcp/tests/test_politique.py`, à deux espaces simulés. `docs/SPEC-seed.md` §22.1 et
+`docs/SPEC-mcp.md` §12 sont révisés dans le même commit.
+
+**Vérifications.**
+- Seed complet joué deux fois, vert, convergent : 369 lignes au journal du connecteur avant comme après, et aucune
+  ligne `mcp_droits_poses` de plus.
+- **Branches de première exécution** (connexion refusée de Farida, deux appels de Driss), forcées sur la pile de
+  développement par la clé de service, puis le module rejoué seul : vert, et le constat retrouve trois comptes et
+  quatre lignes.
+  **Écart à signaler** : le retrait visait les deux lignes de Driss que le seed produit, mais le filtre a retiré
+  **36** lignes identiques, laissées par les preuves d'intégration. Ce sont des traces de développement, recréées
+  à chaque campagne ; aucune donnée de seed n'est perdue.
+- Intégration 22/22 (OAuth et recettes) après l'extraction ; pytest unitaires 122 ; `connecteur-mcp.spec.ts` 8/8,
+  « Droits en attente » prouvé sur Farida.

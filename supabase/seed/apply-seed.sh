@@ -35,6 +35,8 @@
 #       §4 (formulaires conditionnels)
 # @spec docs/SPEC-permissions-rls.md §2.1 (rôles de workspace)
 # @spec docs/DAT.md §11 (données de développement) ; README.md §5 et §8
+# @spec CRM-103 (docs/BACKLOG.md) — tranche T3.b : le connecteur MCP, comptes, matrices et journal par de vraies
+#       connexions OAuth (docs/SPEC-seed.md §22, docs/SPEC-mcp.md §12)
 # @spec CRM-105 (docs/BACKLOG.md) — descriptions des tracks, channels et affaires : docs/SPEC-seed.md §20,
 #       docs/DESIGN_SYSTEM.md §5.58 (décision 629)
 #
@@ -4508,6 +4510,35 @@ attendu "$code" "matrice du connecteur du business developer" 200 204
 info "Recettes : ${#RECETTES_SEED[@]} lignes sur 4 affaires, dont 2 soldées (une à zéro) et 1 en CHF ; rentabilité lue
       par l'administratrice, refusée au business developer ; matrice du connecteur posée — docs/SPEC-seed.md §21"
 
+# --- 8 tervicies. Le connecteur MCP : comptes, matrice et journal — CRM-103, docs/SPEC-seed.md §22 --------------------
+# LES MATRICES, par la vraie fonction et sous le jeton de la superadministratrice : Farida n'en a AUCUNE — c'est le
+# compte « en attente » —, Camille a `recettes:consulter` SEULE. `mcp_poser_droits` à l'identique n'écrit ni ne
+# journalise rien (§22.3). Celle de Driss est posée plus haut (§21.4) et n'est pas touchée.
+JETON_PLATEFORME_CONNECTEUR=$(sso_jeton_interne "$API" "$ANON_KEY" 'plateforme@p2enjoy.test' || true)
+[ -n "$JETON_PLATEFORME_CONNECTEUR" ] || die "Sabine Plateforme ne se connecte pas : les matrices du connecteur ne
+        peuvent pas être posées (docs/SPEC-seed.md §22.2)."
+for matrice in \
+	'5eed0000-0000-4000-8000-000000000013|[]|de Farida (aucune)' \
+	'5eed0000-0000-4000-8000-000000000011|[["recettes","consulter"]]|de Camille (recettes:consulter)'; do
+	IFS='|' read -r sub droits libelle <<<"$matrice"
+	code=$(api_jeton "$JETON_PLATEFORME_CONNECTEUR" POST /rest/v1/rpc/mcp_poser_droits \
+		-d "$(jq -nc --arg sub "$sub" --arg ws "$WS_ID" --argjson d "$droits" '{p_sub: $sub, p_ws: $ws, p_droits: $d}')")
+	attendu "$code" "matrice du connecteur $libelle" 200 204
+done
+
+# LES COMPTES ET LE JOURNAL, par de VRAIES connexions OAuth et de vrais appels MCP (§22.2) : le parcours des preuves
+# d'intégration, joué dans l'image du service `mcp`, sur le réseau Compose, `mcp/tests` monté en lecture seule. Le
+# module constate lui-même le registre et s'arrête en nommant la cause.
+RACINE_DEPOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+if ! sortie=$(compose_dev run --rm --no-deps -T -v "$RACINE_DEPOT/mcp/tests:/app/tests:ro" \
+	-e CRM_MCP_URL=http://p2enjoy-mcp:8080 mcp python -m tests.seed_connecteur 2>&1); then
+	die "le seed du connecteur a échoué (docs/SPEC-seed.md §22) :
+        $(printf '%s' "$sortie" | tail -n 5)"
+fi
+printf '%s\n' "$sortie" | sed 's/^/  /'
+info "Connecteur : Farida en attente, Camille en lecture (recettes, rapport invisible), Driss refusé par le CRM ;
+      Sabine jamais connectée — docs/SPEC-seed.md §22"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -4547,6 +4578,7 @@ info "Suggestion de l'assistant IA : 1, en revue, créée par la vraie fonction 
 info "Suggestion de modification du workflow par défaut : 1, en revue, avec son défaut remappage_requis — CRM-097, docs/SPEC-seed.md §16 bis"
 info "Temps et coût du personnel : trois versions de coût, dont une programmée ; quatre semaines de temps — CRM-098, docs/SPEC-seed.md §17"
 info "Plateforme : une superadministratrice, Sabine Plateforme, amorcée par sa connexion ; aucun espace de plus — CRM-101, docs/SPEC-seed.md §19"
+info "Connecteur MCP : trois comptes connectés par de vraies connexions OAuth, quatre lignes au journal — CRM-103, docs/SPEC-seed.md §22"
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."
