@@ -15416,6 +15416,8 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       vers `profiles(id)`, 0 droit orphelin avant et après, `401` sans session sur `rpc/mcp_comptes_liste` et
       `rpc/plateforme_utilisateurs`. **Reste** : le constat du responsable à l'écran, connexion LeLabs réelle, puis
       l'image `mcp` reconstruite. Elle n'est pas de `CRM-103`, mais un droit posé ici n'a d'effet qu'à travers elle.
+      *2026-10-23, quatrième fenêtre* : **image `mcp` reconstruite** dans la cellule (révision `0242d845`, sur
+      instruction du responsable). Reste le constat du responsable à l'écran.
 
 ### CRM-104 — Outils MCP par famille `[ ]`
 *Créée le 2026-10-20 — décision 627 (A4, D6). Une tranche par famille ; chaque tranche fixe d'abord la liste exacte de
@@ -15439,7 +15441,10 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - `scripts/verify-mcp.sh` **64 contrôles, aucune anomalie** (en direct et à travers Caddy, 25 intégrations ;
         unitaires 139).
       - Manuel 11.1, 11.5, 11.6 ; phrase de portée de la matrice ; DAT.
-      - **Reste** : la livraison (image `mcp` à reconstruire en production) et le constat du responsable.
+      - **Livrée le 2026-10-23, quatrième fenêtre** : révision `0242d845`, image `mcp` reconstruite dans la cellule,
+        conteneur sain, module `affaires` présent ; `verifier.sh` 26/27 (compteur de redémarrage antérieur) ; `/mcp`
+        sans jeton `401`.
+      - **Reste `[~]`** : le constat du responsable — un assistant connecté qui lit une affaire.
 - [ ] **T2.b** — `affaires`, **écriture** : créer, commenter, consigner, modifier, déplacer, changer de channel,
       sommeil, réveil, lier et délier un contact, corbeille ; dont `crm_card_activity_add` et `crm_card_activity_update`.
 - [ ] **T1** — `structure` (et la recherche globale de référence).

@@ -13,9 +13,28 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-104` T2.a — le connecteur MCP lit les affaires (décisions 652 à 654)
+### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
-*En développement ; vit dans le service `mcp`, dont l'image de production est à reconstruire.*
+*Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
+
+- **Données de démonstration du connecteur** : Farida en attente de droits, Camille en lecture sur les recettes, Driss
+  refusé par le CRM sur le rapport de rentabilité ; les comptes et le journal naissent de vraies connexions au
+  connecteur (`docs/SPEC-seed.md` §22).
+
+## [Publié]
+
+### Déployé en production, 2026-10-23 — quatrième fenêtre : l'image `mcp`
+
+Cellule Spark `crm`, révision `0242d845`, sur instruction du responsable : `scripts/spark/livrer.sh` **sans** migration
+(aucune en attente), puis la **reconstruction explicite** de l'image `mcp` dans la cellule
+(`compose_prod up -d --build --no-deps --wait mcp`), sain. **Avant** : `scripts/verify-mcp.sh` en développement,
+64 contrôles sans anomalie. **Vérifié** : `verifier.sh` 26 contrôles sur 27 (le même compteur de
+redémarrage de `kong` et `rest`, antérieur) ; dans le conteneur, le module `affaires` présent et `opentelemetry-api`
+1.45.1 ; `https://crm.mcp.lelabs.tech/plateforme` rend `302` vers `https://crm.lelabs.tech/plateforme` ; `/mcp` sans jeton
+rend `401`. **Non constaté** : un appel réel d'un assistant connecté, qui demande la connexion LeLabs du responsable.
+
+#### `CRM-104` T2.a — le connecteur MCP lit les affaires (décisions 652 à 654)
+
 
 - **Sept outils de lecture** (« Affaires ▸ Consulter ») :
   - lister les affaires d'un espace, avec des filtres : channel, mots du titre, étape, échéance ;
@@ -27,39 +46,27 @@ d'exécuter le code attendu.
 - **Les mêmes lectures que la webapp**, sous l'identité de la personne : une affaire qu'elle ne lit pas reste
   introuvable pour l'assistant.
 
-### `CRM-108` — la famille « Recettes » du connecteur MCP (reste à livrer : l'image `mcp`)
+#### `CRM-108` — la famille « Recettes » du connecteur MCP
 
-*La migration `0095`, la fiche et l'écran « Rentabilité » sont en production depuis le 2026-10-23 ; ces outils vivent dans le service `mcp`, dont l'image de production n'est pas encore reconstruite. D'ici là, une case « Recettes » cochée dans la matrice reste sans effet, sans erreur.*
 
 - **Connecteur MCP** : la huitième famille **« Recettes »** paraît dans la matrice de l'onglet « Connecteur MCP », avec
   ses huit outils (lister les lignes d'une affaire, les recettes à saisir, le rapport de rentabilité ; ajouter une ligne
   ou une recette réelle ; corriger, solder ou rouvrir) — prouvés devant un CRM simulé et contre la vraie base, par un
   vrai client MCP ; une ligne écrite par le connecteur se lit dans la fiche.
 
-### Sécurité — revue des dépendances du 2026-10-23 (reste à livrer : l'image `mcp`)
+#### Sécurité — revue des dépendances du 2026-10-23
 
 - **Connecteur MCP** : `opentelemetry-api` 1.45.1 (CVE-2026-114603, une requête authentifiée pouvait occuper le service
   plusieurs secondes). C'est une dépendance imposée par le SDK MCP, inerte : le CRM n'a aucune télémétrie.
 - **Tests de `mail-sync`** : `httpx2` 2.13.1 (cinq avis, sans effet en production).
 
-### `CRM-103` T3 — le seed du connecteur (développement seulement)
+#### `CRM-102` T6 — du connecteur MCP vers son administration (décision 627)
 
-*Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
-
-- **Données de démonstration du connecteur** : Farida en attente de droits, Camille en lecture sur les recettes, Driss
-  refusé par le CRM sur le rapport de rentabilité ; les comptes et le journal naissent de vraies connexions au
-  connecteur (`docs/SPEC-seed.md` §22).
-
-### `CRM-102` T6 — du connecteur MCP vers son administration (décision 627)
-
-*Service `mcp/` seulement : aucune migration, aucune variable nouvelle. À la livraison, l'image `mcp` est reconstruite.*
 
 - **L'accueil du connecteur mène à la plateforme du CRM** par le lien « Ouvrir la plateforme du CRM ».
 - **`/plateforme` et `/admin` sur l'hôte du connecteur** redirigent vers la plateforme de la webapp. Ils rendaient une
   erreur `404`.
 - Le connecteur reçoit l'origine de la webapp, `SITE_URL`, déjà obligatoire, et refuse de démarrer sans elle.
-
-## [Publié]
 
 ### Déployé en production, 2026-10-23 — troisième fenêtre
 
