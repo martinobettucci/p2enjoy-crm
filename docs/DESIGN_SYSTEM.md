@@ -144,7 +144,8 @@ valeur n'existe. Écrire `p-5` ne produit rien.
 ```
 
 - **Barre latérale** : tracks en pilules, plus les entrées transverses (Inbox, **Contacts**,
-  Objectifs, **Coûts**, Ma journée, Réglages). Repliable ;
+  Objectifs, **Coûts**, Pilotage, **Rentabilité**, Temps, Ma journée, Réglages). Repliable ;
+  *« Rentabilité » est ajoutée par `CRM-108` (`docs/SPEC-recettes.md` §6.0) — voir §5.60.*
   *« Coûts » a été ajouté le 2026-08-20 par `CRM-086` (`docs/SPEC-costs.md` §4.0 et §4.5) — voir
   §5.33. Une route de PREMIER NIVEAU pour le motif exact du carnet ci-dessous : un histogramme de
   coûts n'administre rien, il porte le travail.*
@@ -5551,7 +5552,8 @@ focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (diff
       `--color-accent-soft` / `--color-accent-on-soft`, icône `TriangleAlert`, dit : « Ces droits resteront sans effet
       tant que cette personne n'est pas membre de l'espace : le connecteur agit en son nom. » L'écran n'interdit pas
       d'accorder : l'appartenance peut venir ensuite.
-    - **LA MATRICE EST UN TABLEAU DU §5.9** : les sept familles en lignes (`th scope="row"`, leur libellé et, dessous en
+    - **LA MATRICE EST UN TABLEAU DU §5.9** : les familles en lignes — sept, **huit depuis `CRM-108`**, qui ajoute
+      « Recettes » après « Budgets » (§5.60) — (`th scope="row"`, leur libellé et, dessous en
       13 px `--color-text-2`, ce qu'elles couvrent), les quatre actions en colonnes (`th scope="col"`). Chaque cellule
       porte une case native de 24 px (§5.7 bis), sa ligne à la hauteur de cible, et un **nom accessible qui nomme la
       famille ET l'action** — « Affaires : modifier » (§5.15, grille champ × étape). Une case n'écrit rien seule.
@@ -5773,3 +5775,80 @@ responsable (décision 628 : « désactivé avec motif », et non masqué).
   bloc, comme partout (§5.13), et la capacité est relue.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : le motif emprunte au §5.29 ter sa forme entière et son icône
   `Eye`, les commandes au §5.5 leurs variantes, l'état désactivé au §8.
+
+### 5.60 Recettes d'une affaire et rapport de rentabilité — `CRM-108`
+
+*Écrit le 2026-10-23, avant le code (décision 632), après relecture intégrale de ce document.* Ce que les écrans lisent,
+envoient et refusent est spécifié par `docs/SPEC-recettes.md` §4 à §6 ; ces règles ne disent que de quoi ils ont l'air.
+**Tout ce que les §5.31 et §5.31 bis posent pour les coûts vaut pour les recettes sans être répété** : réels dépliés
+sous la table, case « Soldé » qui bascule au clic, ligne soldée en pilule neutre avec gestes désactivés lisibles, saisie
+en série où `Entrée` mène à la ligne suivante, ligne enregistrée qui reste en place, badge absent tant que le compte
+n'est pas connu. Seuls les écarts et ce qui est propre au rapport sont écrits.
+
+- **LE BLOC « Recettes » DE LA FICHE VIENT AVANT « Coûts »**, dans la colonne gauche (§5.3, §5.21) : on lit ce que
+  l'affaire rapporte avant ce qu'elle coûte. Il est la table de `BlocCoutsCard` **moins deux colonnes** — budget et
+  occurrence — : nature (`th scope="row"`), prévu, déjà saisi, état, actions. Les montants sont des données techniques
+  alignées à droite (§2, §5.9) ; **la devise est nommée dans l'en-tête des colonnes de montant** — « Prévu (EUR) » —,
+  la règle générale du §5.48 : aucun titre de devise n'existe dans la fiche, la devise doit donc être dite ailleurs, et
+  sans condition.
+- **LE BLOC « Rentabilité » DE LA FICHE VIENT APRÈS « Temps passé »**, en carte bordée comme lui (§5.54). Une liste de
+  définitions (`dl`, §5.20) à deux colonnes de valeurs — « Prévu », « Réel » — et quatre termes : Recettes, Coûts,
+  Personnel, Marge ; le taux de marge réelle dessous, en 13 px `--color-text-2`. Les valeurs sont des données
+  techniques. **Le bloc n'est pas rendu quand la base refuse en `42501`** : c'est une capacité refusée par la base,
+  jamais un rôle lu (§5.29 ter, §5.59), et un bandeau « réservé » posé sur chaque fiche de chaque membre serait du
+  bruit sur un écran qui se consulte. Son lien « Ouvrir dans Rentabilité » suit la forme du lien « Ouvrir dans Temps »
+  (§5.54 bis), icône `Scale` 16 px.
+- **UNE MARGE NÉGATIVE PORTE SON SIGNE, ET LA TEINTE DE DANGER SUR LA VALEUR SEULE** — `--color-danger-on-soft` sur
+  `--color-danger-soft`, en pastille moulée sur le nombre (`inline-flex`, `rounded-full`, `px-2`), jamais sur la cellule
+  ni la ligne : la règle du §5.31, « la teinte est portée par la valeur, jamais par la cellule ». Le signe moins et le
+  mot « Marge » de l'en-tête portent l'information (§1) ; la teinte l'accompagne. **Une marge positive ne porte aucune
+  teinte** : `--color-success` y introduirait un jugement que la jauge d'un objectif s'interdit déjà (§5.29) — une marge
+  est un fait, et la teinte de danger signale seulement qu'elle est négative.
+- **« PARTIELLE » EST UNE PILULE NEUTRE APRÈS LA MARGE**, `--color-hover` / `--color-text-2`, `rounded-full`, `--text-xs`
+  (§5.6), précédée du **point** neutre du §5.6 et d'aucune icône : `CircleDashed`, l'icône de l'attente, est réservée
+  par le §5.12 à un seul objet (§9). Ce qui manque est une saisie à venir, pas une faute. Son **nom accessible dit pourquoi**, par clé et avec ses comptes : « Marge partielle :
+  1 ligne de coût sans réel, 2 h non valorisées ». Elle n'est jamais une teinte seule.
+- **« NON CALCULABLE — PLUSIEURS DEVISES » EST UN TEXTE**, en 13 px `--color-text-2` à la place de la marge — jamais une
+  cellule vide (qui dirait « rien ») ni un tiret (§5.9). C'est un fait de la ligne à nommer, comme « Auteur inconnu »
+  (§5.16).
+- **L'ÉCRAN « Rentabilité » EST UNE ENTRÉE DE BARRE LATÉRALE, ICÔNE `Scale`, APRÈS « Pilotage » ET AVANT « Temps »**
+  (`docs/SPEC-recettes.md` §6.0). `Scale` ne sert aucun autre objet (§9) : une balance dit ce qu'on met en regard —
+  ce qui rentre et ce qui sort —, là où `ChartColumn` dit deux séries comparées (§5.33) et `Gauge` l'instrument qui mesure
+  (§5.48). Route de premier niveau : un rapport n'administre rien, il porte le travail. Deux onglets-liens « Vue
+  d'ensemble » et « À saisir », le patron des écrans de coûts (§5.31), `aria-current` posé à la main (même chemin, chaîne
+  de requête différente).
+- **LES FILTRES VIVENT EN TÊTE, SUR UNE LIGNE QUI SE REPLIE**, au-dessus des tableaux qu'ils qualifient (§5.48 bis) :
+  deux champs `date` libellés « Du » et « Au » (§5.7, libellé visible), un `select` « État » sans option vide — « Toutes »
+  en est la valeur par défaut —, et la paire de liens **« Réel » / « Prévu »**, deux vues nommées et non une option : le
+  patron de la portée de « Ma journée » (§5.36), `aria-current="page"`, bordure basse de même épaisseur dans les deux
+  états. Les filtres **restent rendus sur l'état vide** (§5.48 bis) ; chacun remplace l'entrée d'historique au lieu d'en
+  empiler (§5.48 bis). Un changement de filtre relit — la période et l'état sont des paramètres de la fonction, pas un
+  repli local — ; la liste précédente reste affichée sous `aria-busy` pendant la relecture, le squelette étant réservé au
+  premier chargement (§5.29 tranche 2 c, §5.46).
+- **LE TABLEAU EST CELUI DU §5.9, EN ARBORESCENCE COMME LE RAPPORT MENSUEL** (§5.54) : un track en 15 px `font-medium`, ses
+  channels à 24 px, leurs affaires à 36 px (`pl-[36px]`, valeur arbitraire assumée). **Les lignes de track et de channel
+  sont des sous-totaux** : leurs montants sont en `font-medium`, et leur en-tête de ligne le dit par un `sr-only`
+  « Sous-total ». Le total du tableau ferme le `tfoot`, séparé d'un filet `--color-border`. Colonnes fixes
+  (`table-fixed`) pour que les tableaux de plusieurs devises s'alignent (§5.54). Aucune colonne n'est triable : l'ordre
+  est celui de l'arborescence, track puis channel, comme partout ailleurs (§5.48 bis).
+- **L'ÉTAT D'UNE AFFAIRE EST UN MOT** — « Gagnée », « En cours », « Perdue » — accordé à « affaire », et non les mots
+  « Gagné » / « Ouvert » / « Perdu » des nœuds (§5.18, §5.48) : là le mot qualifie un **nœud**, ici une **affaire**. Une
+  affaire archivée porte en plus la pilule « Archivée » du §5.24.
+- **UN TITRE D'AFFAIRE EST UN LIEN VERS SA FICHE** quand elle est adressable, un texte sinon (§5.32).
+- **LES MENTIONS SOUS LES TABLEAUX** suivent la graduation du §5.30 — 13 px `--color-text-2` — et ne sont rendues que pour un
+  compte non nul (§5.48), accord par clé (§10). La phrase de la marge prévue est toujours rendue avec la vue « Prévu » ;
+  « Les prévus portent sur toute l'affaire » l'est dès qu'une période est choisie ; la phrase de portée ferme le bloc
+  (§5.33), jamais sur l'état vide.
+- **POUR UN NON-ADMINISTRATEUR, L'ONGLET « Vue d'ensemble » REND L'ÉTAT « Réservé aux administrateurs » DU §5.8** —
+  `EtatRefus`, avec sa phrase qui dit pourquoi — et un lien vers l'onglet « À saisir » (§5.51 : un état nomme l'écran
+  qui le comble). Les filtres ne sont pas rendus : ils ne qualifient rien.
+- **L'ONGLET « À saisir » EST LA TABLE DU §5.31 bis SANS COLONNE DE BUDGET NI D'OCCURRENCE**, avec une colonne « Affaire »
+  — lien — après l'ancienneté. **L'ancienneté reste neutre, toujours** : aucun seuil n'existe pour une recette, et le
+  §5.31 refuse d'en inventer un.
+- **SOUS LES PALIERS ÉTROITS, LES TABLEAUX DÉFILENT DANS LEUR CONTENEUR** `.indique-debordement-x` (§12.6), première colonne
+  collante (§5.54) ; la ligne des filtres se replie, chaque champ prenant la largeur sous `md`. `md` et jamais `sm`
+  (§11). La page ne défile jamais horizontalement (§7).
+- **LA MATRICE DU CONNECTEUR GAGNE UNE LIGNE, « Recettes », APRÈS « Budgets »** (§5.56), avec sa phrase de portée :
+  « Lignes de recette d'une affaire et leurs réels ; rapport de rentabilité, réservé aux administrateurs ». Aucune autre
+  forme ne change.
+- **Aucune couleur, aucun jeton nouveau.** Une icône Lucide nouvelle, `Scale`, qui ne sert aucun autre objet (§9).

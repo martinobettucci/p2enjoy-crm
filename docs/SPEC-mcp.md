@@ -21,7 +21,7 @@ Modèle éprouvé : le connecteur Evoliz du même responsable (`p2enjoy-evoliz`,
 
 Un **serveur MCP distant** permet de piloter le CRM depuis un assistant — Claude (web, Desktop, Code)
 ou ChatGPT. Il couvre les tracks, les channels, les affaires, les contacts, les budgets et les coûts,
-les saisies de temps, les objectifs et la messagerie.
+les recettes et la rentabilité (depuis `CRM-108`), les saisies de temps, les objectifs et la messagerie.
 
 **Le principe tient en une phrase (arbitrage A2) :** le connecteur agit **sous l'identité de la
 personne connectée**, à travers la même API et les mêmes règles que la webapp. La **matrice** du
@@ -308,6 +308,7 @@ connecteur.
 | `affaires` | affaires (cards) : champs, étape, déplacement, sommeil, commentaires, timeline, contacts liés |
 | `contacts` | contacts et organisations |
 | `budgets` | budgets, occurrences, lignes de coût d'une affaire et leurs réels |
+| `recettes` | lignes de recette d'une affaire et leurs réels ; rapport de rentabilité, réservé aux administrateurs par la base — **ajoutée par `CRM-108`** (`docs/SPEC-recettes.md` §7, décision 632, migration `0095`) |
 | `temps` | saisies de temps ; le coût du personnel en lecture, dans ce que la RLS ouvre |
 | `objectifs` | tableaux d'objectifs, blocs, flèches |
 | `messagerie` | lecture des fils d'une affaire et des messages ; envoi d'un email |
@@ -557,7 +558,9 @@ au moins deux mutations.
   résoudre son espace :
   - `workspace:<argument>` : l'espace est donné par l'argument ;
   - `track:<arg>`, `channel:<arg>`, `card:<arg>`, `contact:<arg>`, `organisation:<arg>`,
-    `budget:<arg>`, `board:<arg>` : l'espace de l'objet, lu sous le jeton ;
+    `budget:<arg>`, `board:<arg>` : l'espace de l'objet, lu sous le jeton ; **depuis `CRM-108`**, `revenue:<arg>`
+    (une ligne de recette, par `card_revenues → cards`) et `revenue_actual:<arg>` (un réel de recette, par
+    `card_revenue_actuals → card_revenues → cards`) ;
   - `reference` : pas d'espace unique, résultats filtrés.
 
   Un outil qui reçoit **plusieurs** identifiants nomme les autres dans `autres` (même forme
@@ -590,6 +593,7 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 | `affaires` | `crm_card_list` (par channel, étape, échéance), `crm_card_get` (champs, étape, contacts, prochaine action), `crm_card_timeline`, `crm_card_comment_list`, `crm_stale_card_list` (affaires figées) | `crm_card_create`, `crm_card_comment_add` | `crm_card_update` (titre, champs, prochaine action, échéance), `crm_card_move` (étape, par `move_card`), `crm_card_move_to_channel`, `crm_card_snooze`, `crm_card_wake`, `crm_card_contact_link` (`aussi` : `contacts:consulter`) | `crm_card_trash` |
 | `contacts` | `crm_contact_list`, `crm_contact_get`, `crm_organization_list`, `crm_organization_get` | `crm_contact_create`, `crm_organization_create` | `crm_contact_update`, `crm_organization_update` | selon ce que le CRM offre, fixé en tranche |
 | `budgets` | `crm_budget_list`, `crm_budget_get` (occurrences), `crm_card_cost_list`, `crm_costs_to_enter` (« à saisir ») | `crm_card_cost_add`, `crm_card_cost_actual_add` | `crm_card_cost_update`, `crm_card_cost_settle` (soldé) | `crm_budget_archive` si le CRM l'offre |
+| `recettes` — **livrée par `CRM-108` T4, liste fixée le 2026-10-23** (`docs/SPEC-recettes.md` §7) | `crm_card_revenue_list` (ancre `card:card_id`), `crm_revenues_to_enter` (`workspace:workspace`, paginé), `crm_profitability_report` (`workspace:workspace`, période et état facultatifs ; `aussi` : `budgets:consulter`, `temps:consulter`) | `crm_card_revenue_add` (`card:card_id`), `crm_card_revenue_actual_add` (`revenue:revenue_id`) | `crm_card_revenue_update` (`revenue:revenue_id`), `crm_card_revenue_actual_update` (`revenue_actual:revenue_actual_id`), `crm_card_revenue_settle` (`revenue:revenue_id`, soldé ou rouvert) | — (une ligne et un réel se corrigent) |
 | `temps` | `crm_time_entry_list` (semaine, personne, cible), `crm_time_report` (rapport mensuel, dans ce que la RLS ouvre) | `crm_time_entry_add` | `crm_time_entry_update` | — (une saisie se corrige) |
 | `objectifs` | `crm_goal_board_list`, `crm_goal_board_get` | `crm_goal_block_add`, `crm_goal_link_add` | `crm_goal_block_update` | `crm_goal_board_archive` |
 | `messagerie` | `crm_card_mail_list` (fils et messages d'une affaire, sans pièce jointe), `crm_mail_get` | `crm_mail_send` (`queue_outbound_email`, `destructiveHint`, `aussi` : `affaires:consulter`) | — | — |
@@ -676,6 +680,7 @@ commit que le code qui la lit.
 | `CRM-102` | **pytest unitaires** : jeton interne (revendications, échéance bornée, `lelabs_admin`), garde, réglages, déclaration des outils. **Intégration** contre le vrai Keycloak et la vraie base : parcours OAuth complet en requêtes directes ; refus sans `verified` et sans adresse vérifiée ; « Droits en attente » ; `offline_access` demandé **seulement** case cochée ; jeton forgé, d'un autre client ou HS256 refusé ; amorçage par la première connexion ; `crm_workspace_list` sous la RLS. **pgTAP** `0085_connecteur_mcp.test.sql` : fermeture, privilèges, `mcp_autorise` (superadministrateur, porteur de `lelabs_admin`, matrice, famille invalide en `22023`), cascade d'un espace supprimé, mutations. **E2E** : un vrai client MCP connecté dans le navigateur, case cochée. `scripts/verify-mcp.sh` |
 | `CRM-102` T6 | **pytest unitaires** : `SITE_URL` obligatoire et nommée quand elle manque ; l'accueil porte le lien vers `${SITE_URL}/plateforme`, échappé ; `/plateforme` et `/admin` en `302` vers cette adresse, sans chaîne de requête, et `/plateforme/autre` non redirigé. **Intégration** contre la vraie pile : le service en route rend ce `302`. **E2E** : depuis l'accueil, le lien mène à l'écran Plateforme de la webapp, à la souris et au clavier ; captures de l'accueil renouvelées aux quatre paliers, observées. **Assemblage** : `scripts/verify-spark.sh` mesure que `SITE_URL` atteint `mcp` allumé |
 | `CRM-103` | **pgTAP** et **API** : chaque RPC refusée à l'anonyme, à la lectrice et à l'administrateur d'espace. **E2E UI** : matrice posée à la souris et au clavier, avertissement « pas membre », effet constaté par un appel MCP réel ; captures aux quatre paliers, observées ; manuel (chapitre 11) |
+| `CRM-108` T4 | Pour **chaque** outil de la famille `recettes`, contre la vraie base : succès ; **refus par la matrice** (case `recettes` décochée ; pour le rapport, case `budgets:consulter` ou `temps:consulter` décochée) ; **refus par le CRM** malgré la matrice ouverte (la lectrice qui ajoute une ligne, le business developer qui demande le rapport en `42501`) ; journal écrit. Déclarations des genres `revenue` et `revenue_actual` vérifiées au démarrage. La marge Python prouvée sur les mêmes cas que `webapp/src/lib/rentabilite.ts`. **E2E** : une ligne ajoutée par le connecteur paraît dans le bloc « Recettes » de la fiche |
 | `CRM-104` | Par tranche et pour **chaque** outil, contre la vraie base et un vrai client MCP : succès ; **refus par la matrice** (case décochée) ; **refus par le CRM** malgré la matrice ouverte (lectrice, objet d'un autre espace) ; journal écrit. **E2E** : l'effet est constaté dans la webapp (une affaire créée par le connecteur apparaît au board, et sa timeline nomme la personne) |
 
 ## 14. Compromis connus
@@ -725,6 +730,10 @@ continue d'évoluer pendant que le connecteur se construit. Quand la boucle de d
 
 Cette actualisation est committée comme documentation avant le code de la tranche, comme toute spécification (`CLAUDE.md`
 §5).
+
+**Première application, `CRM-108` (2026-10-23).** La question a été posée pour les recettes et la rentabilité : oui,
+dans une **famille nouvelle**, `recettes`, sur décision du responsable (décision 632, arbitrages 5 et 6) — la migration
+`0095` l'ajoute à la liste fermée, et les outils sont livrés par `CRM-108` T4.
 
 **Règle permanente, 2026-10-23.** Pour ne plus rattraper l'écart après coup, `CLAUDE.md` (« Spécificités du projet »)
 impose désormais de demander au responsable, **avant de spécifier toute fonctionnalité**, si elle doit aussi exister dans

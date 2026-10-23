@@ -473,6 +473,24 @@ lui est propre.
 
 **Retour arrière** : la révision précédente de la webapp. Aucune donnée n'est écrite par cette unité.
 
+### 2.16 `CRM-108` — recettes d'une affaire et rapport de rentabilité (À ÉCRIRE puis À LIVRER)
+
+`docs/SPEC-recettes.md` ; décision 632. **Spécifiée le 2026-10-23, aucun code encore.** Ce qu'elle demandera, écrit ici
+avant le code pour que le contrat ne dérive pas :
+
+- **la migration `0095_recettes.sql`** (T2) — deux tables neuves, un déclencheur sur `cards` (devise verrouillée par les
+  recettes), une colonne calculée, la fonction `rentabilite_affaires`, et la huitième famille `recettes` du connecteur
+  (le `check` de `mcp_droits`, `mcp_autorise`, `mcp_compte`, `mcp_poser_droits`). Aucune donnée existante réécrite.
+  Elle se range dans la fenêtre de migrations (§3.1), après les 91 à 94, avec instantané ;
+- **la webapp** reconstruite (écran « Rentabilité », blocs de la fiche, matrice du connecteur) ;
+- **le service `mcp`** reconstruit (famille `recettes`, huit outils) — seulement si le connecteur est allumé
+  (`CRM_MCP_HOTE` posée) ;
+- **aucune variable d'environnement, aucun secret.**
+
+**Retour arrière** (à détailler avec la migration) : la révision précédente de la webapp et du service ; la `0095` se
+retire par sa ligne du §3.2, refusée tant qu'un droit `recettes` existe dans la matrice. Les lignes de recette saisies
+entre-temps seraient perdues avec les tables : l'instantané de la fenêtre les garde.
+
 ## 3. Migrations en attente
 
 **Quatre migrations en attente : la 91 et la 92** (`CRM-093`, décision 628 — quatre colonnes calculées, aucune table

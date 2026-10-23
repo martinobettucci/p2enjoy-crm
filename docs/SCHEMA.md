@@ -1971,7 +1971,7 @@ Spécification complète : `docs/SPEC-mcp.md` §6 à §8 ; décision 627.
 | Table | Rôle | Clé |
 |---|---|---|
 | `mcp_comptes` | comptes vérifiés qui se sont connectés au connecteur : `sub`, `email` (mis à jour à chaque connexion), `nom`, `premiere_connexion`, `derniere_activite` | PK `sub`, **sans** clé vers `profiles` : un compte connecté n'a pas forcément de profil |
-| `mcp_droits` | la matrice : `sub`, `workspace_id`, `famille`, `action`, `accorde_par`, `accorde_le` | PK `(sub, workspace_id, famille, action)` ; FK `mcp_comptes` et `workspaces` en cascade ; `check` fermés sur les sept familles et les quatre actions. **Depuis `CRM-103` T1 (migration `0094`), `sub` vise `profiles (id)`, en cascade** (décision 627, A5 et D9 : les droits se posent avant la première connexion ; ceux d'un compte sans profil sont retirés avant la bascule). Les quatre fonctions d'administration du §8.2 de `docs/SPEC-mcp.md` — `mcp_comptes_liste`, `mcp_compte`, `mcp_poser_droits`, `mcp_journal_liste` — sont de la forme des `plateforme_*` |
+| `mcp_droits` | la matrice : `sub`, `workspace_id`, `famille`, `action`, `accorde_par`, `accorde_le` | PK `(sub, workspace_id, famille, action)` ; FK `mcp_comptes` et `workspaces` en cascade ; `check` fermés sur les sept familles — **huit depuis la migration `0095`** (`recettes`, `CRM-108`, §9 sexies) — et les quatre actions. **Depuis `CRM-103` T1 (migration `0094`), `sub` vise `profiles (id)`, en cascade** (décision 627, A5 et D9 : les droits se posent avant la première connexion ; ceux d'un compte sans profil sont retirés avant la bascule). Les quatre fonctions d'administration du §8.2 de `docs/SPEC-mcp.md` — `mcp_comptes_liste`, `mcp_compte`, `mcp_poser_droits`, `mcp_journal_liste` — sont de la forme des `plateforme_*` |
 | `mcp_journal` | un appel d'outil par ligne : `sub`, `outil`, `workspace_id`, `issue`, `duree_ms`, `cree_le` — **jamais d'argument** | PK `id` ; sans clé étrangère |
 
 **Contrat :**
@@ -1984,6 +1984,39 @@ Spécification complète : `docs/SPEC-mcp.md` §6 à §8 ; décision 627.
   `mcp_etat_compte` (drapeau et matrice d'un compte, en `jsonb`) et `mcp_journaliser`.
 - **Fonctions de l'administration** (gardées par `app.exiger_superadmin()`) : `mcp_comptes_liste`, `mcp_compte`,
   `mcp_poser_droits` et `mcp_journal_liste`.
+
+## 9 sexies. Recettes d'une affaire et rentabilité — `CRM-108`, migration `0095` (écrite le 2026-10-23, avant le code)
+
+Spécification complète : `docs/SPEC-recettes.md` §2 à §5 et §7 ; décision 632. La migration reprend à l'identique les
+formes de `0088` (réel dérivé, ligne soldée figée, lecture et écriture par la ligne).
+
+- **`public.card_revenues`** — `id uuid` ; `card_id` → `cards` (cascade) ; `label text` non vide après `btrim` ;
+  `estimated_amount numeric(14,2)` non nul, sans contrainte de signe ; `actual_amount numeric(14,2)` **dérivé** ;
+  `settled_at timestamptz`, `settled_by` → `profiles` (set null) ; `position numeric`, attribuée par déclencheur si
+  omise ; `created_by` (set null), `created_at`, `updated_at`. Aucune colonne de devise : c'est `cards.currency`.
+  Index `(card_id, position)` et index partiel `(created_at, id) where settled_at is null` (onglet « À saisir »).
+- **`public.card_revenue_actuals`** — `id uuid` ; `card_revenue_id` → `card_revenues` (cascade) ; `amount numeric(14,2)`
+  non nul ; `received_on date default current_date` ; `label text` nul ou non vide ; `created_by` (set null),
+  `created_at`, `updated_at`. `card_revenue_id` immuable ; refus en base sur une ligne soldée.
+- **`actual_amount` dérivé** par déclencheurs (somme des réels ; `0` si soldée sans réel ; nul sinon) ; écriture directe
+  refusée en `23514` « reel derive » ; `settled_at` et `settled_by` posés par la base — la règle exacte de
+  `card_costs.actual_cost` (migration `0088`).
+- **Devise verrouillée** : un déclencheur sur `cards` refuse en `23514` de changer `currency` tant que l'affaire porte une
+  ligne de recette.
+- **RLS** : lecture `app.can_read_card` ; écriture `app.can_write_card` ; réels par `app.card_revenue_lisible` et
+  `app.card_revenue_ecrivable` (`security definer`, lecture de la ligne hors RLS). Privilèges : `select` à `anon` et
+  `authenticated` (la RLS ferme l'anonyme), `insert`, `update`, `delete` à `authenticated`.
+- **`public.recette_saisissable(card_revenues) returns boolean`** — colonne calculée, `stable`, **jamais `security
+  definer`** : `app.can_write_card(card_id)`, la forme de `public.reel_saisissable` (§9 bis.8).
+- **`public.rentabilite_affaires(p_debut date default null, p_fin date default null, p_card uuid default null)`** —
+  `stable`, `security invoker`, `search_path` vide, `EXECUTE` à `authenticated` et `service_role`, révoqué nommément à
+  `public` et `anon`. Une ligne par affaire × devise : chemin, `node_kind`, `archivee`, `currency`, recettes et coûts
+  prévus et réels, comptes de lignes et de lignes sans réel, `personnel`, `minutes`, `minutes_non_valorisees`. Garde :
+  seules les affaires d'un espace administré par l'appelant ; `42501` `rentabilite_reservee` s'il n'en administre aucun,
+  ou si `p_card` désigne une affaire lue mais non administrée.
+- **Famille `recettes` du connecteur** : le `check` `mcp_droits_famille`, la liste de `public.mcp_autorise` (`0090`) et
+  les tableaux `familles` de `public.mcp_compte` et `public.mcp_poser_droits` (`0094`) reçoivent `recettes`, placée après
+  `budgets`. Retour arrière : refusé tant qu'un droit `recettes` existe.
 
 ---
 

@@ -2270,3 +2270,44 @@ la règle déjà tenue par `owner_id`, `amount` et `next_action` (section 8 ter)
   `formation` et sur `…0c1`.
 - **`e2e/api/board.spec.ts`** et **`e2e/api/liste-cards.spec.ts`** lisent la description de `…0c2` par les colonnes du
   produit, et `null` pour `…0c1`.
+
+## 21. Les recettes et la rentabilité — `CRM-108` (décision 632)
+
+*Écrit le 2026-10-23, avant le code ; contrat : `docs/SPEC-recettes.md` §8. La section du script s'écrit avec la tranche
+T5.*
+
+### 21.1 Ce que le jeu porte
+
+| Affaire | État | Lignes de recette (prévu → réels) | Ce que la rentabilité montre |
+|---|---|---|---|
+| `…0cd` « Socle analytique — Vertuo » | gagnée (`livre`), archivée | « Acompte 30 % » 63 000 → 63 000, **soldée** ; « Solde » 147 000 → 100 000, ouverte | **rentable** : aucune ligne de coût, aucun temps ; marge réelle 163 000, taux 100,0 % |
+| `…0c4` « Refonte intranet Ville de Lyon » | en cours | « Lot 1 — conception » 20 000 → 4 000 ; « Lot 2 — réalisation » 52 000, **aucun réel** | **déficitaire et partielle** : ses coûts « Publicité » (sans réel) et « Production » (375), et les 2 quarts par jour de Driss |
+| `…0cc` « Portail adhérents — MGEN Loire » | en cours | « Frais de mise en service » 1 500, **soldée sans réel** | une recette réelle à **0** — « finalement rien encaissé » — à côté de « Achat d'espace » (880) |
+| `…0c7` « Formation Data & IA — promo 2026 » | en cours | « Convention » 28 000 CHF → 14 000 CHF | un **tableau CHF** sur l'écran « Rentabilité » |
+| `…0cb` « Assistant IA support — Nordis » | en cours | **aucune** | paraît par le seul temps de Farida, **non valorisé** : marge partielle, mention « temps non valorisé » |
+
+Les réels portent des dates **antérieures** au jour d'exécution, réparties sur les deux derniers mois, pour qu'une
+période choisie sur l'écran en retienne une partie et pas l'autre. Les lignes non soldées — « Solde », « Lot 1 »,
+« Lot 2 », « Convention » — peuplent l'onglet « À saisir ».
+
+### 21.2 Le vrai chemin
+
+Les lignes et les réels sont créés par `POST /rest/v1/card_revenues` et `POST /rest/v1/card_revenue_actuals`, le soldé
+par `PATCH … settled_at`, **sous le jeton du business developer** pour les affaires qu'il écrit et de
+**l'administratrice** pour les autres — jamais par la clé de service. Le seed **constate** ensuite, sous le jeton de
+l'administratrice, que `rentabilite_affaires()` rend les cinq affaires, et sous celui du business developer qu'elle
+refuse en `42501` ; il s'arrête en nommant la cause sinon.
+
+### 21.3 Convergence
+
+Une ligne se reconnaît à son affaire et à sa nature : une ligne déjà présente n'est pas recréée, une ligne qui porte
+déjà des réels n'en reçoit pas d'autres, et le soldé n'est posé que sur une ligne ouverte — la règle du §18.
+
+### 21.4 Ce que les preuves en attendent
+
+- **`0087_recettes`** (pgTAP) pose ses propres données dans sa transaction et ne dépend pas de ces lignes.
+- **`e2e/api/recettes.spec.ts`** et **`e2e/ui/rentabilite.spec.ts`** lisent les cinq affaires ci-dessus par leurs
+  identifiants stables.
+- **Le connecteur** : la matrice de démonstration (`docs/SPEC-mcp.md` §12) ouvre `recettes:consulter`,
+  `recettes:ajouter`, `budgets:consulter` et `temps:consulter` au business developer sur l'espace du jeu, pour que ses
+  outils soient visibles et que le refus du rapport par le CRM (`42501`, matrice ouverte) soit démontrable.

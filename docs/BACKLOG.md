@@ -15574,3 +15574,33 @@ charges en % du brut, frais et avantages en montant ; calculateur seulement. Sp�
       `CHANGELOG.md` ; campagnes.
 - [ ] **T4 — livraison** : reconstruction de la webapp en production, constat. Aucune migration, aucune fonction, aucune
       variable.
+
+### CRM-108 — Recettes d'une affaire et rapport de rentabilité `[ ]`
+*Créée le 2026-10-23 — demande du responsable : « pouvoir saisir les résultats par affaire, comme on le fait pour les
+coûts, et avoir un rapport de rentabilité ». Six arbitrages du responsable le même jour (`docs/JOURNAL.md` décision
+632). Spécifié avant le code : `docs/SPEC-recettes.md`, `docs/DESIGN_SYSTEM.md` §5.60, `docs/SCHEMA.md` §9 sexies,
+`docs/SPEC-mcp.md` §6.1 et §9.2, `docs/SPEC-seed.md` §21, `docs/PROD_MIGRATIONS.md` §2.16. Connecteur MCP : **oui**, famille
+nouvelle `recettes`, outils livrés par cette unité.*
+
+- [x] **T1 — spécification, écrite avant le code** sur les six arbitrages du 2026-10-23 ; les choix de rédaction sont
+      marqués dans `docs/SPEC-recettes.md`.
+- [ ] **T2 — migration `0095_recettes.sql`** : `card_revenues`, `card_revenue_actuals`, réel dérivé et ligne soldée figée,
+      devise verrouillée, `recette_saisissable`, `rentabilite_affaires` et sa garde `42501`, famille `recettes` du
+      connecteur ; pgTAP `0087_recettes.test.sql` et mise à jour de `0085_connecteur_mcp.test.sql`, mutations
+      (`docs/SPEC-recettes.md` §11).
+- [ ] **T3 — webapp** : `lib/card-revenues.ts`, `lib/rentabilite.ts` (la règle du §4), bloc « Recettes » et bloc
+      « Rentabilité » de la fiche, écran `/rentabilite` et ses onglets « Vue d'ensemble » et « À saisir », entrée de barre
+      latérale, famille `recettes` de la matrice ; unitaires et mutations ; build et contrôle des classes.
+- [ ] **T4 — connecteur** : `FAMILLES`, genres `revenue` et `revenue_actual`, les huit outils de
+      `mcp/crm_mcp/outils/recettes.py` ; pytest unitaires et intégration par outil (succès, refus matrice, refus CRM,
+      journal) ; `scripts/verify-mcp.sh`.
+- [ ] **T5 — preuves sur la pile réelle** : seed §21 ; API (refus avec jetons réels) ; E2E souris et clavier, fiche, saisie
+      en série, rapport et filtres, membre refusé, effet d'un outil du connecteur ; captures `docs/captures/CRM-108/` aux
+      quatre paliers observées ; `docs/manual.md` (chapitre des recettes et de la rentabilité, chapitre 11 du
+      connecteur) ; `README.md` si besoin ; `CHANGELOG.md` ; campagnes après synchronisation.
+- [ ] **T6 — livraison** : migration `0095` en fenêtre avec instantané, webapp et service `mcp`, constat
+      (`docs/PROD_MIGRATIONS.md` §2.16), sur instruction du responsable.
+
+**Definition of Done** : `CLAUDE.md` §17 au complet ; en particulier, chaque refus prouvé par une requête directe avec le
+jeton réel du profil (lectrice qui écrit, business developer qui demande la rentabilité), la marge appliquée par la même
+règle dans la webapp et le connecteur, et les captures observées.

@@ -32240,3 +32240,70 @@ suite du code.
   pendant qu'elle tourne la casserait, comme un build l'a déjà fait.
 - **L'image `mcp` de production** part avec la reconstruction déjà prévue pour `CRM-102` T6 (`docs/PROD_MIGRATIONS.md`
   §2.14).
+
+## décision 632 — `CRM-108` : saisir les recettes d'une affaire, comme les coûts, et un rapport de rentabilité
+
+*2026-10-23 ; demande du responsable : « il faudrait pouvoir saisir les résultats par affaire, comme on le fait pour les
+coûts, et avoir un rapport de rentabilité ». Six arbitrages demandés et rendus le même jour ; les autres choix sont ceux
+de l'agent, marqués **[choix de rédaction]** dans `docs/SPEC-recettes.md`, écrits pour être relus et, au besoin,
+renversés.*
+
+**Le problème, mesuré dans le code.** Une affaire porte un montant (`cards.amount`), que le pilotage pondère comme une
+espérance (`docs/SPEC-analytique.md` §7.2) ; elle porte des lignes de coût avec plusieurs réels et « Soldé »
+(`card_costs`, `card_cost_actuals`, migration `0088`) et du temps valorisé (`saisies_temps`, `public.temps_valorise`,
+migration `0087`). **Rien ne dit ce qu'elle a rapporté** : aucune table, aucun écran, aucun calcul de marge. Le montant
+n'en tient pas lieu — il est une prévision unique, sans date ni encaissement.
+
+**Hypothèse levée par la question.** « Comme on le fait pour les comuts » a été lu « comme pour les coûts » : la
+structure des lignes de coût est le modèle demandé.
+
+**Solutions envisagées.**
+1. **Retenue** : des **lignes de recette**, pendant exact des lignes de coût — prévu, réels datés, « Soldé ».
+2. Des réels seuls sur le montant de l'affaire, sans lignes nommées : écartée par le responsable.
+3. Un réel unique par affaire : écartée par le responsable (pas d'historique des factures).
+
+**Arbitrages du responsable (2026-10-23).**
+1. **Lignes de recette** : autant que nécessaire par affaire, chacune avec un prévu et plusieurs réels jusqu'à « Soldé » ;
+   pas de budget ; la devise de l'affaire ; une saisie en série « À saisir ».
+2. **Marge = recettes − lignes de coût − coût du personnel valorisé.**
+3. **Le rapport est réservé aux administrateurs** de l'espace, seuls à lire le coût de toute l'équipe ; les membres
+   voient et saisissent les recettes dans la fiche.
+4. **Un écran de premier niveau « Rentabilité »** : track › channel › affaire, prévu et réel, période et état ; un résumé
+   de marge dans la fiche.
+5. **Connecteur MCP : oui** (question de `CLAUDE.md`, « Spécificités du projet »), dans une **famille nouvelle,
+   `recettes`**, réglable à part des coûts — la liste des familles étant fermée en base, une migration l'ajoute.
+6. **Les outils du connecteur sont construits dans cette unité**, pas renvoyés au catalogue de `CRM-104`.
+
+**Choix de rédaction de l'agent** (`docs/SPEC-recettes.md`).
+- Le montant de l'affaire **n'est pas** une ligne de recette et ne le devient jamais par défaut ; le rapport le montre à
+  côté pour comparaison.
+- **Changer la devise d'une affaire qui porte des recettes est refusé** en base : sinon les montants changeraient de
+  sens sans décision.
+- **La marge prévue soustrait le personnel déjà valorisé** : le produit ne prévoit pas le temps, et une marge prévue qui
+  l'ignorerait resterait flatteuse jusqu'au bout. L'écran le dit.
+- **La marge est « partielle »** tant qu'une ligne de recette ou de coût est ouverte sans réel, ou qu'un temps est non
+  valorisé ; elle est rendue et marquée, jamais masquée.
+- **Les devises ne s'additionnent jamais** ; une affaire qui en mêle plusieurs a une marge « non calculable ».
+- **La période filtre les réels** (date d'encaissement, de dépense, jour travaillé) ; les prévus portent sur toute
+  l'affaire.
+- **Paraissent** les affaires lues, hors corbeille, qui portent une recette, un coût ou du temps — **archivées
+  comprises**, l'affaire livrée puis archivée étant celle qu'on veut mesurer ; le filtre d'état vaut **toutes** par
+  défaut.
+- La base rend des **sommes** (`public.rentabilite_affaires`, `security invoker`, garde `42501`) ; la marge, le taux et le
+  caractère partiel sont appliqués par une fonction pure, la même règle dans la webapp et dans le connecteur.
+- Pour qui la base refuse la rentabilité, **le bloc de la fiche n'est pas rendu** (refus de la base, jamais un rôle lu) ;
+  l'onglet « Vue d'ensemble » rend « Réservé aux administrateurs » et renvoie à « À saisir », ouvert à tous.
+- Le bloc « Recettes » vient **avant** « Coûts » dans la fiche ; « Rentabilité » vient après « Temps passé ». L'entrée de
+  barre latérale vient après « Pilotage », icône `Scale`.
+- Connecteur : deux genres d'ancre nouveaux, `revenue` et `revenue_actual` ; aucun outil de suppression (une ligne se
+  détruit, elle ne va pas à la corbeille) ; le rapport exige aussi `budgets:consulter` et `temps:consulter`.
+
+**Conséquences.**
+- Une migration, `0095` : deux tables, la devise verrouillée, une colonne calculée, la fonction de rentabilité, la
+  huitième famille du connecteur (`docs/SCHEMA.md` §9 sexies, `docs/PROD_MIGRATIONS.md` §2.16).
+- Webapp : bloc « Recettes », bloc « Rentabilité », écran « Rentabilité » et ses deux onglets, une ligne de plus dans la
+  matrice du connecteur (`docs/DESIGN_SYSTEM.md` §5.60).
+- Connecteur : `FAMILLES`, deux genres d'ancre, huit outils (`docs/SPEC-mcp.md` §6.1, §9.1, §9.2, §13).
+- Seed : §21 de `docs/SPEC-seed.md`.
+- Découpage en six tranches, consigné au backlog (`CRM-108`) et au §10 de la spécification.
+- La session qui tient le connecteur (`CRM-102` à `CRM-104`) est prévenue avant tout code touchant `mcp/` ou la matrice.
