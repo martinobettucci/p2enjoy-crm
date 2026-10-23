@@ -15795,7 +15795,7 @@ règle dans la webapp et le connecteur, et les captures observées.
       `crm_affaire_activite_modifier`, inscrits au catalogue (`docs/SPEC-mcp.md` §9.2) et construits avec `CRM-104` T2.
 - [ ] **T5** — livraison en production, sur instruction du responsable.
 
-### CRM-109 — Journaliser les refus d'admission, pour dire d'une attente « jamais connectée » ou « refusée » `[ ]`
+### CRM-109 — Journaliser les refus d'admission, pour dire d'une attente « jamais connectée » ou « refusée » `[x]`
 *Créée le 2026-10-23 — décision 635, arbitrage du responsable, détachée de `CRM-070`.* Une attente consommée disparaît,
 et rien ne garde une connexion refusée à une adresse : ni l'administrateur d'espace ni le superadministrateur ne
 peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi elle a été refusée
@@ -15832,7 +15832,7 @@ peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi e
       étendus —, sept mutations tuées ; **seed** : la connexion d'`attendu@` est tentée par l'échangeur réel, le refus
       laisse sa trace, rejoué deux fois avec le compte à un ; E2E `membres.spec.ts` et `plateforme.spec.ts` **15/15** ;
       capture `attentes-inscrite-1440` observée ; manuel 10.5 et 10 bis.5 ; DS §5.61 ; SCHEMA ; contrat, ligne 99.
-- [ ] **T4** — livraison en production, sur instruction du responsable.
+- [x] **T4** — livraison en production, sur instruction du responsable : T1 et T2 par la fenêtre `8026e90e` (migration 98), T3 par la seconde fenêtre `e9255249` (migration 99) le 2026-10-23 ; `verifier.sh` 26/27, registre à 99, `401` sans session ; constat visuel en production à faire par le responsable.
 
 ### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[~]`
 *Créée le 2026-10-23 — demande du responsable : « le navbar en haut ne montre pas l'arborescence quand on a une affaire
