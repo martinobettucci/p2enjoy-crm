@@ -658,6 +658,36 @@ restaurer une affaire de la corbeille ; ni archiver une affaire ; ni poser une m
 par le CRM malgré la matrice ouverte, journal écrit ; et **E2E** : une affaire créée par le connecteur paraît au board,
 et sa timeline nomme la personne.
 
+### 9.2 quater Tranche `structure` et recherche — `CRM-104` T1 (liste fixée, *proposée le 2026-10-23, à valider*)
+
+Décision 652 : elle suit la tranche `affaires`. **Douze outils**, qui lisent et écrivent ce que l'arborescence et la
+palette de recherche de la webapp lisent et écrivent (`administration-arborescence.ts`, `recherche.ts`). Les écritures
+sont réservées par la base à qui administre l'espace ; l'outil traduit son refus.
+
+| Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_search` | référence | — | `recherche_globale(p_terme, p_limite)` | chaque ligne n'est rendue que si la matrice ouvre `consulter` sur la famille de son objet **dans son espace** : affaire et commentaire → `affaires`, contact et organisation → `contacts`, message → `messagerie` |
+| `crm_track_list` | `consulter` | `workspace:workspace` | `tracks` | nom, slug, description, couleur, icône, rang, archivé ; les tracks à la corbeille n'y sont pas |
+| `crm_track_get` | `consulter` | `track:track_id` | `tracks`, `channels` | le track et ses channels, avec leur workflow nommé et `can_write` (`ecriture_permise`, `CRM-093`) |
+| `crm_channel_list` | `consulter` | `workspace:workspace` ; `autres` : `track:track_id`, **facultative** | `channels` | par track au besoin |
+| `crm_channel_get` | `consulter` | `channel:channel_id` | `channels`, `workflows` | description, workflow nommé, `can_write`, nombre d'affaires actives |
+| `crm_workflow_get` | `consulter` | `workflow:workflow_id` (genre nouveau : `workflows.workspace_id`) | `workflows`, `workflow_steps`, `workflow_transitions`, `form_fields`, `workflow_transition_required_fields` | les étapes dans l'ordre (initiale, probabilité, seuil de relance), les transitions déclarées (motif exigé, champs exigés **par libellé**), les champs du formulaire |
+| `crm_track_create` | `ajouter` | `workspace:workspace` | `POST tracks` | nom, slug, couleur, icône, description |
+| `crm_channel_create` | `ajouter` | `track:track_id` ; `autres` : `workflow:workflow_id` | `POST channels` | le workflow est obligatoire (`CRM-033`) |
+| `crm_track_update` | `modifier` | `track:track_id` | `PATCH tracks` | nom, couleur, icône, description — **jamais le slug**, l'adresse du track (`administration-arborescence.ts`) |
+| `crm_channel_update` | `modifier` | `channel:channel_id` | `PATCH channels` | nom, description — **jamais le workflow** : le changer passe par `change_channel_workflow` et le remappage des affaires (`CRM-019`), un geste d'écran |
+| `crm_track_trash` | `supprimer`, `destructiveHint` | `track:track_id` | `PATCH tracks set deleted_at` | le geste de l'arborescence (`CRM-077`) ; restaurable par un administrateur |
+| `crm_channel_trash` | `supprimer`, `destructiveHint` | `channel:channel_id` | `PATCH channels set deleted_at` | idem |
+
+**Ce que la tranche ne fait pas.** Ni archiver ni réordonner un track ou un channel ; ni éditer un workflow, ni le
+publier, ni le restaurer ; ni le catalogue des nœuds. Ce sont des gestes d'écran d'administration. `crm_workflow_get`
+dit ce qu'il faut savoir pour déplacer une affaire (`crm_card_move`).
+
+**Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus
+par le CRM malgré la matrice ouverte (un business developer qui crée un track : la base le réserve à l'administrateur),
+journal écrit ; la recherche **filtrée par la matrice**, une famille fermée retirant ses lignes ; et **E2E** : un channel
+créé par le connecteur paraît dans la barre d'onglets du track.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,
