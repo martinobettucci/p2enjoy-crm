@@ -491,6 +491,27 @@ avant le code pour que le contrat ne dérive pas :
 retire par sa ligne du §3.2, refusée tant qu'un droit `recettes` existe dans la matrice. Les lignes de recette saisies
 entre-temps seraient perdues avec les tables : l'instantané de la fenêtre les garde.
 
+### 2.17 `CRM-093` — l'interface n'offre plus les gestes que le serveur refuse (À LIVRER)
+
+`docs/SPEC-droits-interface.md` ; décision 628 ; INC-279 à INC-281. **Migrations 91 et 92** (§3.2) : quatre colonnes
+calculées, `security invoker`, aucune table, politique ni donnée touchée. **Webapp** : chaque écran lit sa capacité sur
+la ligne que la base rend, et une commande refusée reste montée, désactivée, avec son motif. Aucune variable, aucun
+service nouveau, aucun droit changé : la règle reste la politique ; les colonnes ne sont qu'une aide d'affichage.
+
+**Ordre.** Les migrations précèdent la webapp, dans la même fenêtre (§3.1) : livrée sans elles, la webapp lirait des
+colonnes absentes — ses lectures de capacité tomberaient en erreur, donc en capacité « inconnue », commandes offertes
+comme avant : une dégradation sans casse, mais pas la livraison attendue. `CRM-093` part avec la prochaine livraison
+de `main`, sur l'instruction du responsable et après la confirmation de l'instantané.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Livrer `main` **avec** la fenêtre des migrations en attente (§3.1), 91 et 92 comprises | poste, par les IP | `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, après l'instantané confirmé, puis `./runProd.sh --spark` |
+| 2 | Vérifier en lecture seule : avec un jeton `viewer` de production, `GET /rest/v1/workspaces?select=administration_permise,edition_permise` rend `false/false`, et `GET /rest/v1/channels?select=id,ecriture_permise` ne rend pas `true` partout | poste, lecture seule | `scripts/spark/verifier.sh`, puis la requête |
+| 3 | Ouvrir un channel où l'on ne peut pas écrire : « Nouvelle affaire » est grisée, un bandeau dit pourquoi ; dans Réglages, « Coût du personnel » est un texte pour qui n'administre pas | le responsable | l'application |
+
+**Retour arrière** : la révision précédente de la webapp ; les colonnes peuvent rester en place (sans lecteur, elles ne
+changent rien), ou être retirées par les `drop function` de leurs lignes au §3.2.
+
 ## 3. Migrations en attente
 
 **Cinq migrations en attente : la 95** (`CRM-108` T2, décision 632 — les recettes et la rentabilité ; §2.16 et sa ligne au §3.2, écrite et appliquée en développement le 2026-10-23), **la 91 et la 92** (`CRM-093`, décision 628 — quatre colonnes calculées, aucune table
