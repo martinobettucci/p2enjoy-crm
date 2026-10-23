@@ -454,9 +454,16 @@ nouveau, aucun droit changé. Quatre lectures demandent une colonne de plus, `de
 politiques. La baseline de migrations ne bouge pas. Le seed n'est pas joué en production : les descriptions de
 production sont celles que les administrateurs ont saisies dans l'arborescence.
 
+**Elle ne se livre plus seule — relevé le 2026-10-23.** `CRM-105` ne demande aucune migration, mais la webapp de `main`
+qui la porte contient aussi `CRM-093`, `CRM-101` T6 et `CRM-103`, dont les écrans lisent les migrations **91 à 94**,
+absentes de la production (§3). Livrer cette webapp sans `--migrate` mettrait en ligne des écrans qui lisent des
+colonnes et des fonctions que la base n'a pas. `CRM-105` part donc avec la **prochaine livraison de `main`**, dans la
+fenêtre qui applique les migrations en attente (§3.1), sur l'instruction du responsable ; seul le geste 3 ci-dessous
+lui est propre.
+
 | # | Geste | Qui | Commande ou lieu |
 |---|---|---|---|
-| 1 | Livrer la webapp — aucune migration en attente pour cette unité | poste, par les IP | `scripts/spark/livrer.sh` (sans `--migrate`), `./runProd.sh --spark` enchaîné par le script |
+| 1 | Livrer la webapp **avec** la fenêtre des migrations en attente (§3.1) — aucune migration propre à cette unité | poste, par les IP | `scripts/spark/livrer.sh --migrate`, après l'instantané, `./runProd.sh --spark` enchaîné par le script |
 | 2 | Vérifier | poste, lecture seule | `scripts/spark/verifier.sh` |
 | 3 | Survoler la pilule d'un track dont la description est renseignée dans Réglages ▸ Arborescence : la bulle paraît à sa droite, nom puis description ; `Échap` la ferme | le responsable | l'application |
 

@@ -15516,3 +15516,7 @@ existent, aucune n'est lue par les écrans qui montrent ces objets. Choix de for
       des migrations 0092-0093 en cours).
 - [ ] **T3 — livraison** : reconstruction de la webapp en production, constat sur un track décrit
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
+      **Relevé le 2026-10-23** : la webapp de `main` porte aussi des unités qui lisent les migrations 91 à 94, non
+      appliquées en production ; `CRM-105` part avec la prochaine livraison de `main` et sa fenêtre de migrations
+      (`docs/PROD_MIGRATIONS.md` §2.15), sur instruction du responsable. Après synchronisation, le 2026-10-23 : les tests
+      unitaires de l'unité rejoués, **331/331** ; les preuves E2E restent à rejouer sur la pile relancée.
