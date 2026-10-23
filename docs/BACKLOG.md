@@ -15636,8 +15636,10 @@ déjà la saisie sur une affaire.*
 - [~] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
       *Le 2026-10-23* : livrée avec `main` sur `8026e90e` (migrations 91 à 98 et webapp), par la session chargée de la
-      livraison, sur instruction du responsable — rapporté, non vérifié par l'auteur de l'unité. **Reste le constat du
-      responsable** : une semaine saisie depuis la fiche d'une affaire, relue dans « Temps ».
+      livraison, sur instruction du responsable ; contrôles techniques et changelog passé en « Publié » consignés par
+      `d7fe8def` (`docs/PROD_MIGRATIONS.md` §8), qui précise « non vérifié visuellement en production ». **Reste le
+      constat visuel du responsable**, connecté par LeLabs : une semaine saisie depuis la fiche d'une affaire, relue dans
+      « Temps ».
 
 ### CRM-107 — Calculer le coût par quart depuis le coût mensuel `[ ]`
 *Créée le 2026-10-23 — demande du responsable : un mini formulaire, dans Réglages ▸ « Coût du personnel », qui part du
@@ -15669,8 +15671,9 @@ charges en % du brut, frais et avantages en montant ; calculateur seulement. Sp�
       `cout-personnel` 5/5.
 - [~] **T4 — livraison** : reconstruction de la webapp en production, constat. Aucune migration, aucune fonction, aucune
       variable.
-      *Le 2026-10-23* : livrée avec `main` sur `8026e90e`, par la session chargée de la livraison — rapporté, non vérifié
-      par l'auteur de l'unité. **Reste le constat du responsable** : une version de coût créée par le calculateur.
+      *Le 2026-10-23* : livrée avec `main` sur `8026e90e`, par la session chargée de la livraison ; contrôles techniques
+      consignés par `d7fe8def`, sans vérification visuelle. **Reste le constat visuel du responsable** : une version de
+      coût créée par le calculateur.
 
 ### CRM-108 — Recettes d'une affaire et rapport de rentabilité `[~]`
 *Créée le 2026-10-23 — demande du responsable : « pouvoir saisir les résultats par affaire, comme on le fait pour les
