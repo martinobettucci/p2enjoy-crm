@@ -3,6 +3,7 @@
 //           désactivée, citant son motif), §4 (en lecture : désactivée sans motif ; inconnue : offerte), §5 (« La
 //           corbeille, précisée » : la capacité de plusieurs affaires en une lecture — tranche T4)
 
+import { act, renderHook } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import {
 	CAPACITES_INCONNUES,
@@ -16,6 +17,8 @@ import {
 	lireEcrituresPermises,
 	motifVisible,
 	proprietesCommande,
+	useCapacitesEspace,
+	useEcriturePermise,
 } from './capacites'
 import { enChargement, enErreur, pret } from './async'
 import type { ClientCrm } from './supabase'
@@ -185,5 +188,73 @@ describe('la capacité d’écrire une boîte ou une identité mail (§5)', () =
 	})
 	it('sans session connue, aucune boîte n’est « la sienne »', () => {
 		expect(capaciteDeBoiteMail(null, null, 'refusee')).toBe('refusee')
+	})
+})
+
+/** Un client dont chaque lecture attend que le test la libère : l'état intermédiaire devient observable. */
+function clientEnAttente() {
+	const enAttente: ((valeur: boolean) => void)[] = []
+	const client = {
+		from: () => {
+			const chaine: Record<string, unknown> = {}
+			chaine.select = () => chaine
+			chaine.eq = () => chaine
+			chaine.then = (ok: (r: unknown) => unknown) =>
+				new Promise<boolean>((resoudre) => enAttente.push(resoudre)).then((valeur) =>
+					ok({ data: [{ ecriture_permise: valeur, administration_permise: valeur, edition_permise: valeur }], error: null, status: 200 }),
+				)
+			return chaine
+		},
+	}
+	const liberer = async (valeur: boolean) =>
+		act(async () => {
+			// TOUTES les lectures en attente : une lecture abandonnée (effet rejoué) reste dans la file, et libérer la seule
+			// première laisserait la vivante en suspens.
+			// `await` n'appelle le `then` du client qu'au tour suivant : la lecture n'est inscrite qu'après lui.
+			await new Promise((fin) => setTimeout(fin, 0))
+			for (const resoudre of enAttente.splice(0)) resoudre(valeur)
+			await new Promise((fin) => setTimeout(fin, 0))
+		})
+	return { client: client as unknown as ClientCrm, liberer }
+}
+
+describe('la capacité appartient à la ligne lue, jamais à la précédente (INC-281)', () => {
+	it('aucun rendu ne porte, pour un identifiant connu, l’état d’un autre identifiant', async () => {
+		const { client, liberer } = clientEnAttente()
+		// CHAQUE RENDU est consigné : `rerender` exécute les effets, et seul ce journal voit le rendu intermédiaire où
+		// l'identifiant est déjà neuf et l'état encore ancien — le défaut qu'INC-281 corrige.
+		const rendus: [string | null, string][] = []
+		const { rerender } = renderHook(({ id }: { id: string | null }) => {
+			const capacite = useEcriturePermise(client, 'cards', id)
+			rendus.push([id, capacite])
+			return capacite
+		}, { initialProps: { id: null as string | null } })
+		rerender({ id: 'c1' })
+		await liberer(false)
+		rerender({ id: 'c2' })
+		await liberer(true)
+		const deC1 = rendus.filter(([id]) => id === 'c1').map(([, c]) => c)
+		const deC2 = rendus.filter(([id]) => id === 'c2').map(([, c]) => c)
+		expect(deC1, 'c1 : en lecture, puis refusée — jamais l’« inconnue » de l’absence').toEqual(
+			expect.arrayContaining(['en-lecture', 'refusee']),
+		)
+		expect(deC1).not.toContain('inconnue')
+		expect(deC2, 'c2 : jamais la capacité de c1').not.toContain('refusee')
+		expect(deC2.at(-1)).toBe('permise')
+	})
+
+	it('l’espace aussi : un espace qui change ne rend jamais les capacités de l’ancien', async () => {
+		const { client, liberer } = clientEnAttente()
+		const rendus: [string, string][] = []
+		const { rerender } = renderHook(({ id }: { id: string }) => {
+			const capacites = useCapacitesEspace(client, id)
+			rendus.push([id, capacites.administration])
+			return capacites
+		}, { initialProps: { id: 'w1' } })
+		await liberer(false)
+		rerender({ id: 'w2' })
+		const deW2 = rendus.filter(([id]) => id === 'w2').map(([, c]) => c)
+		expect(deW2).not.toContain('refusee')
+		expect(deW2.at(-1)).toBe('en-lecture')
 	})
 })

@@ -14714,6 +14714,8 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       **Campagne du 2026-10-23** : 807/850 sur une base dérivée ; après `resetMe` (accordé par le responsable), rejeu
       ciblé 250/255. Vingt et un scénarios révisés (le refus serveur reste prouvé par l'API) ; **INC-280**, trois
       régressions corrigées (zone de commentaire, focus du champ exigé, débordement à 390 px). Reste : rejouer les cinq.
+      Premier rejeu : le focus restait perdu — **INC-281**, une capacité qui survivait à sa ligne, corrigée dans les deux
+      crochets ; les scénarios attendent désormais le motif avant de le lire. Reste : rejouer les cinq.
 - [ ] **T6** — livraison en production (migrations 91 et 92), constat.
 
 ### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[x]`

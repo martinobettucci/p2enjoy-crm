@@ -112,26 +112,31 @@ export function capacitesDeLEtat(etat: EtatAsync<CapacitesEspace>): CapacitesEsp
 /**
  * Le crochet de la coquille. Comme `useRoleWorkspace`, il n'expose AUCUNE reprise : une capacité illisible ne rend pas
  * l'écran indisponible, elle laisse les commandes offertes.
+ *
+ * L'ÉTAT LU EST LIÉ À L'ESPACE QU'IL DÉCRIT (INC-281) : tant que l'espace courant n'a pas sa réponse, la capacité est
+ * `en-lecture`, jamais celle de l'espace précédent.
  */
 export function useCapacitesEspace(client: ClientCrm | null, idWorkspace: string | null): CapacitesEspace {
-	const [etat, setEtat] = useState<EtatAsync<CapacitesEspace>>(enChargement)
+	const [lu, setLu] = useState<{ readonly cle: string | null; readonly etat: EtatAsync<CapacitesEspace> }>({
+		cle: null,
+		etat: enChargement(),
+	})
+	const cle = client === null || idWorkspace === null ? null : idWorkspace
 
 	useEffect(() => {
-		if (client === null || idWorkspace === null) {
-			setEtat(pret(CAPACITES_INCONNUES))
-			return
-		}
+		if (client === null || idWorkspace === null) return
 		let vivant = true
-		setEtat(enChargement)
 		void lireCapacitesEspace(client, idWorkspace).then((resultat) => {
-			if (vivant) setEtat(resultat)
+			if (vivant) setLu({ cle: idWorkspace, etat: resultat })
 		})
 		return () => {
 			vivant = false
 		}
 	}, [client, idWorkspace])
 
-	return capacitesDeLEtat(etat)
+	// Hors session, ou avant que l'espace ne soit connu : rien n'est su, rien n'est éteint.
+	if (cle === null) return CAPACITES_INCONNUES
+	return capacitesDeLEtat(lu.cle === cle ? lu.etat : enChargement())
 }
 
 /** Les deux tables dont une ligne porte `ecriture_permise` — migration 91 (§2.1). */
@@ -163,6 +168,11 @@ export async function lireEcriturePermise(
 /**
  * La capacité d'écrire sur une affaire ou un channel, relue quand `tentative` change — après un geste refusé, par
  * exemple (§4 : « le refus est traduit, et les droits sont relus »).
+ *
+ * L'ÉTAT LU EST LIÉ À LA LIGNE ET À LA TENTATIVE QU'IL DÉCRIT (INC-281). Un état non lié laissait, au rendu même où un
+ * identifiant arrivait, l'état de l'identifiant précédent : l'« inconnue » de l'absence — commandes offertes, focus posé
+ * sur un champ qui s'éteignait un instant plus tard — ou la capacité d'une autre affaire. Tant que la clé courante n'a
+ * pas sa réponse, la capacité est `en-lecture`.
  */
 export function useEcriturePermise(
 	client: ClientCrm | null,
@@ -170,24 +180,27 @@ export function useEcriturePermise(
 	id: string | null | undefined,
 	tentative = 0,
 ): Capacite {
-	const [etat, setEtat] = useState<EtatAsync<boolean | null>>(enChargement)
+	const [lu, setLu] = useState<{ readonly cle: string | null; readonly etat: EtatAsync<boolean | null> }>({
+		cle: null,
+		etat: enChargement(),
+	})
+	const cle = client === null || id === null || id === undefined ? null : `${table}:${id}:${tentative}`
 
 	useEffect(() => {
-		if (client === null || id === null || id === undefined) {
-			setEtat(pret(null))
-			return
-		}
+		if (client === null || id === null || id === undefined) return
 		let vivant = true
-		setEtat(enChargement)
+		const cleLue = `${table}:${id}:${tentative}`
 		void lireEcriturePermise(client, table, id).then((resultat) => {
-			if (vivant) setEtat(resultat)
+			if (vivant) setLu({ cle: cleLue, etat: resultat })
 		})
 		return () => {
 			vivant = false
 		}
 	}, [client, table, id, tentative])
 
-	return capaciteDeLEtat(etat)
+	// Aucune ligne désignée : rien n'est su, rien n'est éteint.
+	if (cle === null) return 'inconnue'
+	return capaciteDeLEtat(lu.cle === cle ? lu.etat : enChargement())
 }
 
 /**

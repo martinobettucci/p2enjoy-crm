@@ -32329,3 +32329,17 @@ preuves unitaires. **Les autres échecs** relevaient d'une base dérivée — af
 interrompues, seed vieilli de deux jours — et ont disparu après `./resetMe.sh --yes`, accordé par le responsable.
 **Preuves** : unitaires de la timeline et du formulaire, vues rouges sans leur correctif ; rejeu ciblé 250/255 avant ces
 trois correctifs.
+
+### INC-281 — une capacité qui survivait à la ligne qu'elle décrivait (`CRM-093`)
+
+*2026-10-23.* **Problème.** Le rejeu de la campagne a gardé rouges les scénarios du focus sur le premier champ exigé
+(`formulaire.spec.ts`, `parcours-transition.spec.ts`), malgré le correctif d'INC-280. **Cause.** `useEcriturePermise`
+et `useCapacitesEspace` gardaient leur état entre deux identifiants. Au rendu même où la fiche recevait son affaire,
+l'état était encore celui de l'absence d'identifiant — `inconnue`, donc commandes offertes et champs actifs —, l'effet
+du focus s'exécutait et marquait la demande honorée ; l'effet de lecture passait ensuite à `en-lecture`, le champ
+s'éteignait, et le navigateur lui retirait le focus. Le même défaut montrait, en passant d'une affaire à une autre, la
+capacité de la précédente pendant un rendu. **Décision.** L'état lu est lié à sa clé (table, identifiant, tentative ;
+l'espace) : tant que la clé courante n'a pas sa réponse, la capacité est `en-lecture`. **Preuves.** Deux tests de
+crochet qui consignent CHAQUE rendu — `rerender` exécute les effets, seul ce journal voit le rendu intermédiaire —, vus
+rouges sur le défaut, verts avec le correctif ; suite unitaire 4 019 verts (quatre fichiers de `CRM-108` ne se chargent
+pas, travail en cours d'une autre session). Le rejeu E2E reste à faire.
