@@ -1,6 +1,8 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : la matrice appliquée par le service, à la visibilité et à chaque appel
 # @spec CRM-108 (docs/BACKLOG.md) — tranche T4 : la famille `recettes`, les ancres `revenue` et `revenue_actual`
 #       (docs/SPEC-recettes.md §7, docs/SPEC-mcp.md §6.1, §9.1)
+# @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : l'ancre `autres` FACULTATIVE, permise si son argument vaut `None` par
+#       défaut, et pour elle seule (docs/SPEC-mcp.md §9.2 bis, décision 654)
 # @spec docs/SPEC-mcp.md §5 (le jeton interne frappé à chaque appel), §6.1 (familles et actions), §6.2 (visibilité,
 #       résolution de l'espace, `mcp_autorise`, refus uniforme), §9.1 (déclaration vérifiée au démarrage), §9.3
 #       (traduction des refus du CRM), §14 (la matrice tenue par le service, jamais sans la RLS) ;
@@ -124,8 +126,11 @@ class Declaration:
     def ancres(self) -> tuple[str, ...]:
         return () if self.espace == REFERENCE else (self.espace, *self.autres)
 
-    def verifier(self, nom: str, parametres: set[str], destructif: bool) -> None:
-        """Refuse une déclaration incohérente avec la liste fermée, avec la signature ou avec les annotations."""
+    def verifier(self, nom: str, parametres: set[str], destructif: bool, facultatifs: frozenset[str] = frozenset()) -> None:
+        """Refuse une déclaration incohérente avec la liste fermée, avec la signature ou avec les annotations.
+
+        `facultatifs` nomme les arguments qui valent `None` par défaut. Seule une ancre `autres` peut en être un : un
+        identifiant absent n'a rien à résoudre, mais l'espace de l'appel, lui, est toujours donné (§9.2 bis)."""
         defauts: list[str] = []
         if self.famille == REFERENCE:
             if self.espace != REFERENCE or self.action != "consulter" or self.aussi or self.autres:
@@ -147,6 +152,8 @@ class Declaration:
             if argument not in parametres:
                 defauts.append(f"ancre {ancre!r} : argument absent de la signature")
             ancrees.add(argument)
+        if self.espace != REFERENCE and self.espace.partition(":")[2] in facultatifs:
+            defauts.append("l'ancre d'espace est obligatoire : son argument n'a pas de valeur par défaut")
         # Complétude : tout argument d'identifiant est une ancre — sinon un identifiant d'un autre espace passerait
         # la matrice sans être lu (docs/SPEC-mcp.md §9.1, modèle : `tests/test_politique.py` d'Evoliz).
         for parametre in sorted(parametres):
@@ -204,6 +211,11 @@ def _parametres(fonction: Callable[..., Any]) -> set[str]:
     return set(inspect.signature(fonction).parameters)
 
 
+def _facultatifs(fonction: Callable[..., Any]) -> frozenset[str]:
+    """Les arguments dont la valeur par défaut est `None`."""
+    return frozenset(n for n, p in inspect.signature(fonction).parameters.items() if p.default is None)
+
+
 @dataclass
 class MoteurPolitique:
     registre: Registre
@@ -213,6 +225,8 @@ class MoteurPolitique:
     #: L'identité d'un jeton LeLabs vérifié ; les tests l'injectent, comme le mandataire le fait en service.
     identite_du_jeton: Callable[[Any], Identite | None] = identite_de
     declarations: dict[str, Declaration] = field(default_factory=dict)
+    #: Par outil, les arguments d'ancre `autres` facultatifs (valeur par défaut `None`) : absents, ils ne sont pas résolus.
+    facultatives: dict[str, frozenset[str]] = field(default_factory=dict)
     _visibilites: dict[tuple[str, bool], tuple[float, EtatCompte]] = field(default_factory=dict)
     _inscrits: dict[str, int | None] = field(default_factory=dict)
 
@@ -231,10 +245,14 @@ class MoteurPolitique:
         """Enregistre un outil AVEC sa déclaration, vérifiée ici : sans elle, le service ne démarre pas."""
         nom = fonction.__name__
         lecture_seule = declaration.action == "consulter"
-        declaration.verifier(nom, _parametres(fonction), destructif)
+        facultatifs = _facultatifs(fonction)
+        declaration.verifier(nom, _parametres(fonction), destructif, facultatifs)
         if nom in self.declarations:
             raise DeclarationInvalide(f"{nom} : déclaré deux fois")
         self.declarations[nom] = declaration
+        self.facultatives[nom] = frozenset(
+            a.partition(":")[2] for a in declaration.autres if a.partition(":")[2] in facultatifs
+        )
         serveur.tool(
             fonction,
             name=nom,
@@ -360,7 +378,12 @@ class MoteurPolitique:
         except JetonExpire as erreur:
             raise RefusCrm("Session échue : reconnectez votre client MCP.") from erreur
         cases = ((declaration.famille, declaration.action), *declaration.aussi)
+        facultatives = self.facultatives.get(nom, frozenset())
         for ancre in declaration.ancres:
+            argument = ancre.partition(":")[2]
+            if argument in facultatives and arguments.get(argument) is None:
+                # Une ancre `autres` facultative et absente : aucun identifiant, rien à lire ni à autoriser de plus.
+                continue
             espace, nomme, libelle = await self.resoudre(appel.jeton, ancre, arguments)
             appel.espace = appel.espace or espace
             for famille, action in cases:

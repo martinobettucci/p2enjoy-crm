@@ -13,6 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-104` T2.a — le connecteur MCP lit les affaires (décisions 652 à 654)
+
+*En développement ; vit dans le service `mcp`, dont l'image de production est à reconstruire.*
+
+- **Sept outils de lecture** (« Affaires ▸ Consulter ») :
+  - lister les affaires d'un espace, avec des filtres : channel, mots du titre, étape, échéance ;
+  - lire une affaire : en-tête, description, probabilité, contacts liés, réponses au formulaire, et si la personne
+    peut la modifier ;
+  - son historique, ses commentaires, ses activités ;
+  - les affaires figées ;
+  - « Ma journée ».
+- **Les mêmes lectures que la webapp**, sous l'identité de la personne : une affaire qu'elle ne lit pas reste
+  introuvable pour l'assistant.
+
 ### `CRM-108` — la famille « Recettes » du connecteur MCP (reste à livrer : l'image `mcp`)
 
 *La migration `0095`, la fiche et l'écran « Rentabilité » sont en production depuis le 2026-10-23 ; ces outils vivent dans le service `mcp`, dont l'image de production n'est pas encore reconstruite. D'ici là, une case « Recettes » cochée dans la matrice reste sans effet, sans erreur.*

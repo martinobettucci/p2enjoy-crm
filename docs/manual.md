@@ -63,7 +63,7 @@
 |---|---|---|---|
 | 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | **Livré en développement** — voir le chapitre 10 *bis*. Un administrateur d'espace y change un rôle, retire un membre, inscrit, remplace et retire une attente, et pose les droits fins de chacun par track et par channel ; chaque membre consulte la liste des membres. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses membres et ses attentes est livré par `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
 | 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
-| 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103`, `CRM-108` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Ses outils : la liste des espaces et, **en développement**, les huit outils de la famille « Recettes » (`CRM-108`) ; les autres familles arrivent avec `CRM-104` |
+| 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103`, `CRM-108` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Ses outils : la liste des espaces et, **en développement**, les huit outils de la famille « Recettes » (`CRM-108`) et les sept outils de lecture des affaires (`CRM-104` T2.a) ; l'écriture des affaires et les autres familles arrivent avec la suite de `CRM-104` |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
 | 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Aucun effacement définitif n'est offert** : la durée de conservation n'est pas arrêtée |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
@@ -4613,7 +4613,7 @@ membre reste sans effet.
 Les huit familles, et ce que chacune couvre :
 
 - **Structure** : tracks, channels, lecture des workflows ;
-- **Affaires** : affaires, champs, étapes, commentaires, contacts liés ;
+- **Affaires** : affaires, champs, étapes, commentaires, contacts liés, activités (appels, réunions, visios) ;
 - **Contacts** : contacts et organisations ;
 - **Budgets** : budgets, occurrences, lignes de coût, réels ;
 - **Recettes** : lignes de recette d'une affaire et leurs réels ; le rapport de rentabilité, réservé aux
@@ -4690,11 +4690,28 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   Aucun outil ne supprime une ligne de recette. Les règles sont celles de la fiche (chapitre 5 *duodecies*) : une ligne
   soldée n'accepte plus de recette réelle, la recette réelle d'une ligne est la somme de ses réels, et la marge du
   rapport se calcule comme sur l'écran « Rentabilité ». Ce que l'assistant écrit apparaît aussitôt dans la fiche.
+- **Affaires, en lecture** — *livrés en développement par `CRM-104`, tranche T2.a* (« Affaires ▸ Consulter ») :
+  - **lister les affaires** d'un espace, par titre, avec leur track, leur channel, leur étape, leur responsable et leur
+    prochaine action — filtrées au besoin par channel, par mots du titre, par étape ou par échéance (en retard,
+    aujourd'hui, dans la semaine). Les affaires en sommeil n'y paraissent que si on le demande ;
+  - **lire une affaire** : son en-tête, sa description, sa probabilité, ses contacts liés et leur rôle, ses réponses au
+    formulaire, et si vous pouvez la modifier ;
+  - **lire son historique**, comme le fil de la fiche (chapitre 4.10) : événements, commentaires et activités, du plus
+    ancien au plus récent ;
+  - **lire ses commentaires**, et **ses activités** (chapitre 4.7 *quater*) ;
+  - **les affaires figées** de l'espace (chapitre 3 *quinquies*) ;
+  - **votre journée** (chapitre 3 *quater*) : ce qui est en retard, dû aujourd'hui ou à venir dans les sept jours, pour
+    vos affaires ou pour tout ce que vous lisez.
+
+  L'assistant lit ce que vous liriez dans la webapp, et rien de plus : une affaire d'un track qui vous est fermé est
+  « introuvable » pour lui aussi.
 
 ### 11.6 Ce que le connecteur n'offre pas encore
 
-Les outils des autres familles — structure, affaires, contacts, budgets, temps, objectifs, messagerie — arrivent avec
-`CRM-104`, une famille après l'autre. D'ici là, une case cochée pour l'une d'elles n'ouvre aucun outil.
+Écrire sur une affaire depuis l'assistant — la créer, la commenter, y consigner une activité, la modifier, la déplacer —
+arrive avec la tranche T2.b de `CRM-104`. Les outils des autres familles — structure, contacts, budgets, temps,
+objectifs, messagerie — suivent, une famille après l'autre. D'ici là, une case cochée pour l'une d'elles n'ouvre aucun
+outil.
 
 ## Annexe A — Ce que contient l'espace de démonstration
 

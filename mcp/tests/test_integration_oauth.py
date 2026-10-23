@@ -61,6 +61,12 @@ from .parcours_oauth import (  # noqa: F401 — réexportés pour `test_integrat
     _suivre,
 )
 
+#: Les sept consultations de la famille `affaires`, livrées par `CRM-104` T2.a (docs/SPEC-mcp.md §9.2 bis).
+CONSULTATIONS_AFFAIRES = frozenset({
+    "crm_card_list", "crm_card_get", "crm_card_timeline", "crm_card_comment_list", "crm_card_activity_list",
+    "crm_stale_card_list", "crm_card_mine",
+})
+
 pytestmark = [
     pytest.mark.integration,
     pytest.mark.skipif(os.environ.get("CRM_MCP_INTEGRATION") != "1", reason="exige la pile (scripts/verify-mcp.sh)"),
@@ -161,9 +167,11 @@ async def test_un_droit_suffit_pour_entrer_dans_la_matrice_et_la_rls():
     assert (await _service("POST", "/mcp_droits", json=droit)).status_code == 201
     try:
         reponse, contexte = await _parcours(FARIDA)
-        # `affaires:consulter` seul : aucun outil d'une autre famille n'est montré (visibilité de D5).
+        # `affaires:consulter` seul : aucun outil d'une autre famille n'est montré (visibilité de D5). Depuis `CRM-104`
+        # T2.a, les sept consultations de la famille le sont, et elles seules (docs/SPEC-mcp.md §9.2 bis).
         espaces = await _espaces(
-            (await _jetons(contexte, reponse))["access_token"], outils_exacts=frozenset({"crm_workspace_list"})
+            (await _jetons(contexte, reponse))["access_token"],
+            outils_exacts=frozenset({"crm_workspace_list", *CONSULTATIONS_AFFAIRES}),
         )
         assert [(e["slug"], e["role"], e["rights"]) for e in espaces["workspaces"]] == [
             ("p2enjoy", "viewer", ["affaires:consulter"])

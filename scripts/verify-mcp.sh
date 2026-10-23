@@ -5,6 +5,8 @@
 #           docs/SCHEMA.md §9 quinquies ; docs/DESIGN_SYSTEM.md §5.57 ; CLAUDE.md §15, §18 (preuves non complaisantes)
 # @verifies CRM-108 (docs/BACKLOG.md) — tranche T4 : la traçabilité accepte les modules de la famille `recettes`
 #           (docs/SPEC-recettes.md §7)
+# @verifies CRM-104 (docs/BACKLOG.md) — tranche T2.a : la traçabilité accepte les modules de la famille `affaires`, et
+#           l'intégration rejoue ses sept outils de lecture (docs/SPEC-mcp.md §9.2 bis, §13)
 #
 # Rejoue les preuves du connecteur sur la pile de développement, puis DÉGRADE réellement le code, la base et l'aiguillage,
 # et exige que les preuves rougissent, avant de restaurer et de CONSTATER la restauration.
@@ -93,7 +95,7 @@ integration() { # integration <url du connecteur> [arguments pytest…]
 	local url=$1
 	shift
 	docker run --rm --network "$RESEAU" --env-file "$ENV_INTEGRATION" -e CRM_MCP_URL="$url" "$IMAGE" \
-		python -m pytest -q -p no:cacheprovider tests/test_integration_oauth.py tests/test_integration_recettes.py "$@" >"$TRAVAIL/integration.log" 2>&1
+		python -m pytest -q -p no:cacheprovider tests/test_integration_oauth.py tests/test_integration_recettes.py tests/test_integration_affaires.py "$@" >"$TRAVAIL/integration.log" 2>&1
 }
 caddy_de_la_cellule() { # caddy_de_la_cellule [hôte du connecteur]
 	docker rm -f "$CADDY" >/dev/null 2>&1 || true
@@ -117,9 +119,9 @@ printf '\033[1mPreuves de CRM-102 — le connecteur MCP\033[0m\n'
 titre '1. Traçabilité'
 while IFS= read -r fichier; do
 	# Un fichier du connecteur cite son unité : `CRM-102` pour le socle, `CRM-103` pour le seed du connecteur
-	# (docs/SPEC-seed.md §22), `CRM-108` pour la famille `recettes` (docs/SPEC-recettes.md §7), qui y ajoutent leurs
-	# propres modules sans les rattacher au socle.
-	if head -8 "$fichier" | grep -Eq '@(spec|verifies) CRM-10[238]'; then ok "$fichier cite son unité (CRM-102, CRM-103 ou CRM-108)"; else fail "$fichier ne cite ni CRM-102, ni CRM-103, ni CRM-108"; fi
+	# (docs/SPEC-seed.md §22), `CRM-108` pour la famille `recettes` (docs/SPEC-recettes.md §7), `CRM-104` pour les familles
+	# de son catalogue (docs/SPEC-mcp.md §9.2 bis), qui y ajoutent leurs propres modules sans les rattacher au socle.
+	if head -8 "$fichier" | grep -Eq '@(spec|verifies) CRM-10[2348]'; then ok "$fichier cite son unité (CRM-102, CRM-103, CRM-104 ou CRM-108)"; else fail "$fichier ne cite ni CRM-102, ni CRM-103, ni CRM-104, ni CRM-108"; fi
 done < <(
 	find mcp -type f \( -name '*.py' -o -name 'Dockerfile' -o -name '*.toml' -o -name '*.lock' \) | sort
 	printf '%s\n' supabase/migrations/0090_connecteur_mcp.sql supabase/tests/0085_connecteur_mcp.test.sql \

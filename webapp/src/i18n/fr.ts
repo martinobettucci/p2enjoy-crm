@@ -3882,7 +3882,7 @@ export const fr = {
 	'platform.mcp.famille.structure': 'Structure',
 	'platform.mcp.famille.structure.portee': 'Tracks, channels, lecture des workflows',
 	'platform.mcp.famille.affaires': 'Affaires',
-	'platform.mcp.famille.affaires.portee': 'Affaires, champs, étapes, commentaires, contacts liés',
+	'platform.mcp.famille.affaires.portee': 'Affaires, champs, étapes, commentaires, contacts liés, activités',
 	'platform.mcp.famille.contacts': 'Contacts',
 	'platform.mcp.famille.contacts.portee': 'Contacts et organisations',
 	'platform.mcp.famille.budgets': 'Budgets',

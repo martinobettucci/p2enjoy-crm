@@ -15427,7 +15427,19 @@ tables et RPC de la webapp ; « supprimer » veut dire corbeille ou archive, jam
 *Ordre révisé le 2026-10-23 (décision 652, arbitrage du responsable) : la tranche `affaires` vient la première, en deux
 sous-tranches livrées séparément ; `structure` la suit.*
 
-- [ ] **T2.a** — `affaires`, **lecture** : les outils de consultation, dont `crm_card_activity_list` (`CRM-067` T4).
+- [~] **T2.a** — `affaires`, **lecture** : les outils de consultation, dont `crm_card_activity_list` (`CRM-067` T4).
+      **Implémentée et vérifiée en développement le 2026-10-23** (spécification validée, décision 654).
+      - `mcp/crm_mcp/outils/affaires.py` : sept outils `affaires:consulter`. La politique admet l'ancre `autres`
+        facultative (valeur par défaut `None`), et refuse une ancre d'espace facultative.
+      - Unitaires `tests/test_affaires.py` **17** ; **douze mutations tuées sur douze**.
+      - Intégration `tests/test_integration_affaires.py` contre le vrai Keycloak, la vraie base et le vrai service :
+        fermés par la matrice du seed ; chaque outil réussi, journal `ok` ; la lectrice refusée par le CRM malgré la
+        matrice ouverte, journal `refus_crm`.
+      - `test_integration_oauth.py` révisé : `affaires:consulter` ouvre désormais ses sept outils.
+      - `scripts/verify-mcp.sh` **64 contrôles, aucune anomalie** (en direct et à travers Caddy, 25 intégrations ;
+        unitaires 139).
+      - Manuel 11.1, 11.5, 11.6 ; phrase de portée de la matrice ; DAT.
+      - **Reste** : la livraison (image `mcp` à reconstruire en production) et le constat du responsable.
 - [ ] **T2.b** — `affaires`, **écriture** : créer, commenter, consigner, modifier, déplacer, changer de channel,
       sommeil, réveil, lier et délier un contact, corbeille ; dont `crm_card_activity_add` et `crm_card_activity_update`.
 - [ ] **T1** — `structure` (et la recherche globale de référence).
