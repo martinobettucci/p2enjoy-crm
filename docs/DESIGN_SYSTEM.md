@@ -5538,6 +5538,13 @@ focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (diff
     connecteur » vers la même fiche. *Précisé à l'écriture du code* : ce lien vit dans une colonne « Commandes » à part,
     comme dans les autres tableaux de la plateforme, à la cible de 40 px (§8). Glissé sous la date du connecteur, il
     aurait été une cible de vingt pixels. Son nom accessible nomme la personne.
+  - **UNE LIGNE PAR CELLULE, ET LES TABLEAUX DÉFILENT — deux défauts trouvés en regardant les captures de T3** (`CLAUDE.md`
+    §16, 2026-10-23). À 900 px puis à 390 px, la cellule du nom des comptes se repliait : le nom sur deux lignes, et la
+    pilule « Sans profil dans le CRM » cassée mot à mot en une bulle de cinq lignes. C'est la règle du §5.9 — une seule
+    ligne par cellule — que le tableau doit tenir en défilant dans son conteneur (§12.6). La cellule est donc
+    `whitespace-nowrap`. Dans la matrice, la colonne des familles, écrasée à 390 px, cassait « Toute la famille » dans son
+    propre bouton : c'est le §5.28 pour une colonne de commandes. Elle garde `28ch` au moins, sa ligne de commande est
+    `whitespace-nowrap`, et la matrice défile dans son conteneur. La preuve de palier mesure les deux hauteurs.
   - **Le nom accessible d'une case écrit l'action en minuscules**, « Affaires : modifier », comme une phrase ; l'en-tête
     de colonne garde sa majuscule. *Écrit à l'écriture du code.*
   - **Le journal des appels est un tableau du §5.9** : date, compte, outil, espace, issue, durée.

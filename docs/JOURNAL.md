@@ -32811,3 +32811,32 @@ la matrice reste prouvé par `mcp/tests/test_politique.py`, à deux espaces simu
   à chaque campagne ; aucune donnée de seed n'est perdue.
 - Intégration 22/22 (OAuth et recettes) après l'extraction ; pytest unitaires 122 ; `connecteur-mcp.spec.ts` 8/8,
   « Droits en attente » prouvé sur Farida.
+
+### `CRM-103` T3.c — l'E2E de l'onglet « Connecteur MCP », et deux défauts vus sur les captures — 2026-10-23
+
+**Fait.** `e2e/ui/plateforme-mcp.spec.ts`, six scénarios sur le seed du §22, les matrices rendues à l'état du seed avant et
+après chacun par la clé de service, et ce retour constaté.
+- **À la souris** : la superadministratrice cherche Farida, coche « Affaires : consulter » et enregistre. La base porte
+  la case. Puis un **vrai client MCP**, connecté dans un autre contexte de navigateur, reçoit l'espace avec
+  `affaires:consulter`, et la fiche relue montre l'appel « Réussi ». Retirer la case vide la matrice.
+- **Au clavier** : « Toute la famille », « Annuler les modifications » (rien n'est écrit), une case à la barre d'espace,
+  « Enregistrer » à `Entrée`.
+- **La fiche de la superadministratrice** : « pas membre », l'avertissement, la matrice franchie et désactivée.
+- **Le journal filtré** : « Refusé par le CRM » montre le refus de Driss du seed. « Refusé par la matrice » montre l'état
+  vide de son filtre, puisqu'un seul espace n'en permet aucun (entrée T3.b).
+- **Quatre paliers**, sans défilement horizontal de la page.
+- **Le refus d'une administratrice d'espace** à l'écran. Il ne produit aucune erreur console : l'écran refuse sur le
+  drapeau, avant tout appel gardé.
+
+**Défauts trouvés en regardant les captures** (`CLAUDE.md` §16), après relecture intégrale de `docs/DESIGN_SYSTEM.md` :
+- à 900 et 390 px, la pilule « Sans profil dans le CRM » se cassait mot à mot et les noms passaient sur deux lignes
+  (§5.9) ;
+- à 390 px, « Toute la famille » se cassait dans son bouton (§5.28).
+
+Les corrections sont `whitespace-nowrap` sur la cellule, et `min-w-[28ch]` avec `whitespace-nowrap` sur la colonne des
+familles. La preuve de palier mesure désormais les deux hauteurs. Sans le correctif, elle est **rouge** : pilule de 48 px
+à 900 px. Avec lui, 6/6, deux fois. Classes vérifiées contre un build fait à part : aucune manquante.
+
+**Livraison de 27 pendant ce travail.** `livrer.sh` refuse un arbre modifié, fichiers suivis comme non suivis. Mes deux
+`.tsx`, la spec et les captures ont été mis de côté hors du dépôt le temps de la fenêtre, puis remis : rien de ce travail
+n'est parti en production.

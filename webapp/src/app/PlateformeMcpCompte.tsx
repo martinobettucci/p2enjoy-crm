@@ -278,8 +278,10 @@ function MatriceMcp({ client, fiche, espace, onEspace, onEnregistre }: Propriete
 							const lot = caseDeFamille(famille)
 							return (
 								<tr key={famille} data-testid="ligne-famille" data-famille={famille} className="border-b border-border">
-									<th scope="row" className="px-3 py-2 text-left font-normal align-top">
-										<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+									{/* La colonne garde 28ch et ses commandes une ligne (§5.28) : à 390 px, écrasée, « Toute la famille »
+									    se cassait dans son propre bouton — constaté sur les captures de T3. La matrice défile dans son conteneur. */}
+									<th scope="row" className="px-3 py-2 text-left font-normal align-top min-w-[28ch]">
+										<span className="flex items-center gap-x-3 whitespace-nowrap">
 											<span className="font-medium text-ink">{libelleFamille(famille)}</span>
 											<Button
 												variante="discret"

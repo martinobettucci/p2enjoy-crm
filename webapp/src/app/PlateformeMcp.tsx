@@ -87,8 +87,10 @@ function ComptesMcp({ client }: { readonly client: ClientCrm }) {
 						<tbody>
 							{etat.donnees.map((compte) => (
 								<tr key={compte.sub} data-testid="ligne-compte-mcp" data-sub={compte.sub} className="border-b border-border hover:bg-hover">
-									<th scope="row" className="h-[var(--size-target)] px-3 text-left font-normal">
-										<span className="flex flex-wrap items-center gap-2">
+									{/* Une seule ligne (§5.9) : replié, le nom passait sur deux lignes et la pilule « Sans profil » se
+									    cassait mot à mot sous 1024 px — constaté sur les captures de T3. Le tableau défile dans son conteneur. */}
+									<th scope="row" className="h-[var(--size-target)] px-3 text-left font-normal whitespace-nowrap">
+										<span className="flex items-center gap-2">
 											<Link to={cheminFicheMcp(compte.sub)} className={CLASSES_LIEN}>
 												{compte.nom}
 											</Link>

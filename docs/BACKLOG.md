@@ -15395,6 +15395,12 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       *T3.a fait le 2026-10-23* : `e2e/api/connecteur-administration.spec.ts` 8/8, deux mutations tuées (75ea1fa1).
       *T3.b fait le 2026-10-23* : seed §22 par de vraies connexions OAuth, convergent ; sans `refus_matrice`, impossible
       à un seul espace (journal) ; intégration 22/22, `connecteur-mcp.spec.ts` 8/8.
+      *T3.c fait le 2026-10-23* : `e2e/ui/plateforme-mcp.spec.ts` 6/6, deux fois — à la souris, Farida reçoit
+      « Affaires : consulter » et un vrai client MCP le constate, son appel paraît « Réussi » sur sa fiche ; au clavier,
+      toute une famille, « Annuler », une case, « Enregistrer » ; la superadministratrice et sa matrice franchie ; le
+      journal filtré ; quatre paliers ; l'administratrice d'espace refusée. Deux défauts de mise en page trouvés sur les
+      captures et corrigés (`docs/DESIGN_SYSTEM.md` §5.56), leur mesure vue rouge sans le correctif. Captures
+      `docs/captures/CRM-103/` observées.
 - [ ] **T4** — livraison en production et constat.
 
 ### CRM-104 — Outils MCP par famille `[ ]`

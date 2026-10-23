@@ -1467,7 +1467,11 @@ SCENARIOS_API=1165
 # un droit posé puis rendu à « hérité », l'administratrice jamais restreinte. 872 + 1 = 873. Au même relevé, la liste
 # compte 887 : `fil-ariane.spec.ts` (`CRM-110`, **14**) est dans l'arbre de travail sans être committé, et sa session
 # révisera ce compteur avec lui.
-SCENARIOS_UI=873
+# **879 depuis `CRM-103` tranche T3.c, même jour** : `plateforme-mcp.spec.ts`, fichier NEUF, **6** scénarios — l'onglet
+# « Connecteur MCP » à la souris avec l'effet constaté par un vrai client MCP, au clavier, la fiche d'une
+# superadministratrice, le journal filtré, quatre paliers, le refus d'une administratrice d'espace. 873 + 6 = 879. Au même
+# relevé, la liste compte 893 : les 14 de `fil-ariane.spec.ts` (`CRM-110`) restent hors de ce compte.
+SCENARIOS_UI=879
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
