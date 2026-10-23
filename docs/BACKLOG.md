@@ -15530,7 +15530,8 @@ qui remplace, son temps seulement. Spécifié avant le code : `docs/SPEC-temps.m
 déjà la saisie sur une affaire.*
 
 - [x] **T1 — spécification, écrite avant le code** sur les trois arbitrages du 2026-10-23 ; les choix de rédaction sont
-      marqués dans `docs/SPEC-temps.md` §7.6.
+      marqués dans `docs/SPEC-temps.md` §7.6. Connecteur MCP : déjà couvert par `CRM-104`, famille `temps` (§7.6,
+      point 11).
 - [~] **T2 — la bande dans le bloc « Temps passé »** : réemploi de la cellule, de l'en-tête et du pied de la matrice ;
       navigation de semaine ; lien « Ouvrir dans Temps » ; relecture du résumé ; preuves unitaires (`docs/SPEC-temps.md`
       §11 bis).
@@ -15556,7 +15557,8 @@ responsable le même jour (`docs/JOURNAL.md` décision 631) : jours travaillés 
 charges en % du brut, frais et avantages en montant ; calculateur seulement. Spécifié avant le code :
 `docs/SPEC-temps.md` §7.4 bis, `docs/DESIGN_SYSTEM.md` §5.54 ter. Aucune migration.*
 
-- [x] **T1 — spécification, écrite avant le code** sur les trois arbitrages du 2026-10-23.
+- [x] **T1 — spécification, écrite avant le code** sur les trois arbitrages du 2026-10-23. Connecteur MCP : non
+      (`docs/SPEC-temps.md` §7.4 bis, point 7).
 - [~] **T2 — le calculateur** dans « Nouvelle version » : la fonction de calcul et ses bornes, le dépli, le résultat en
       direct, « Utiliser ce coût » ; preuves unitaires.
       *Implémenté le 2026-10-23* : `calculerCoutQuart` (`lib/cout-personnel.ts`), `CalculateurCoutQuart.tsx`, branché dans

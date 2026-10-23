@@ -32202,3 +32202,15 @@ projet », que chaque session lit au démarrage. Avant de spécifier une fonctio
 au responsable si elle doit aussi exister dans le connecteur. La réponse, oui avec sa famille et son action, ou non en
 une phrase, est écrite dans la spécification de l'unité et committée avant le code. Le §16 de `docs/SPEC-mcp.md` est
 aligné : son inventaire ne couvre plus que le passé.
+
+### décisions 630 et 631, précision — la question du connecteur MCP
+
+*2026-10-23.* La consigne du responsable entrée dans `CLAUDE.md` (« Spécificités du projet », `4e4dfd15`) est arrivée
+après l'écriture des deux spécifications ; la question lui a été posée, et ses réponses sont consignées avant toute
+suite du code.
+- **`CRM-106`** : **déjà couvert** par `CRM-104`, famille `temps`, actions `ajouter` et `modifier`
+  (`crm_time_entry_add`, `crm_time_entry_update`, qui prennent une affaire pour cible) ; aucun outil de plus
+  (`docs/SPEC-temps.md` §7.6, point 11).
+- **`CRM-107`** : **non** — une aide de calcul d'interface, qui n'enregistre rien (`docs/SPEC-temps.md` §7.4 bis,
+  point 7).
+

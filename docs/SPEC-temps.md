@@ -188,6 +188,8 @@ depuis le coût mensuel ». Les points 1 à 3 sont les arbitrages du responsable
 5. **Bornes** [choix de rédaction] : montants ≥ 0 ; charges de 0 à 100 ; jours entiers de 1 à 366. Hors bornes, le
    résultat ne s'affiche pas et le champ fautif dit pourquoi. La virgule et le point valent séparateur décimal.
 6. **Rien ne persiste côté client** (`CLAUDE.md` §11) : refermer le formulaire oublie les valeurs.
+7. **Connecteur MCP** (réponse du responsable, 2026-10-23, `CLAUDE.md` « Spécificités du projet ») : **non** — une aide
+   de calcul d'interface, qui n'enregistre rien, n'a pas d'outil.
 
 ### 7.5 La série « Personnel » — à côté des coûts existants (point 8)
 
@@ -229,6 +231,9 @@ extraite de la matrice (§7.2). Les points 1 à 3 sont les arbitrages du respons
    les messages de la matrice.
 10. **Aucune règle nouvelle en base** : `app.saisie_temps_permise` exige déjà que la personne lise l'affaire, le plafond
     compte toutes les cibles, l'unicité tient une ligne par personne, jour et affaire (migration `0087`).
+11. **Connecteur MCP** (réponse du responsable, 2026-10-23, `CLAUDE.md` « Spécificités du projet ») : **déjà couvert**
+    par `CRM-104` — famille `temps`, actions `ajouter` et `modifier` (`docs/SPEC-mcp.md` §6.1) ; `crm_time_entry_add` et
+    `crm_time_entry_update` (§9.2) prennent déjà une affaire pour cible. Aucun outil de plus au catalogue.
 
 ## 8. Jeu de démonstration
 
