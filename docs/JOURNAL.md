@@ -32254,8 +32254,10 @@ vitest@4.1.12`, puis `npm update undici nanoid source-map-js` : aucun changement
     session qui tient `CRM-108` ;
   - `saisie-temps.spec.ts:102` : rouge à chaque fois, avec un total variable (« 5 h 30 », puis « 6 h », au lieu de
     « 7 h »). La trace réseau montre que l'écran « Temps » émet des `DELETE` d'entrées qu'il vient de créer : 7 `POST`
-    et 2 `DELETE` pour 5 valeurs saisies. Suspect : `CRM-106` T2 (96336a75), qui réemploie les cellules de la matrice
-    et dont l'E2E était différé. Signalé aux sessions concernées.
+    et 2 `DELETE` pour 5 valeurs saisies. D'abord suspecté : `CRM-106` T2 (96336a75). La
+    session qui la tient l'a infirmé : le défaut est **INC-282**, et il date de `CRM-098` T2. Une cellule reprise
+    pendant son envoi revenait à sa valeur vide, puis envoyait zéro à sa sortie, d'où le `DELETE`. Et Entrée déplaçait
+    le focus à la réponse, même quand il était déjà parti ailleurs. Correction et tests de régression par cette session.
 - **Incident de pile pendant la campagne.** Après le redémarrage des sessions, `p2enjoy-db` était arrêtée
   (« Exited (0) »), d'où `rest` en échec et `storage` et `realtime` en boucle (`EAI_AGAIN db`). Elle a été relancée
   par `docker start`, puis les trois services redémarrés, sans reset, sans seed ni migration (registre 95/95).
