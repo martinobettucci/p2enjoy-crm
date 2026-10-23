@@ -20,6 +20,41 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      admission_refus: {
+        Row: {
+          dernier_refus: string
+          email: string
+          motif: string
+          premier_refus: string
+          refus: number
+          workspace_id: string
+        }
+        Insert: {
+          dernier_refus?: string
+          email: string
+          motif: string
+          premier_refus?: string
+          refus?: number
+          workspace_id: string
+        }
+        Update: {
+          dernier_refus?: string
+          email?: string
+          motif?: string
+          premier_refus?: string
+          refus?: number
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admission_refus_attente_fkey"
+            columns: ["workspace_id", "email"]
+            isOneToOne: true
+            referencedRelation: "workspace_invitations"
+            referencedColumns: ["workspace_id", "email"]
+          },
+        ]
+      }
       budget_occurrences: {
         Row: {
           budget_id: string
@@ -3604,6 +3639,10 @@ export type Database = {
       }
       interrompre_sequence_relance: {
         Args: { p_enrollment_id: string }
+        Returns: undefined
+      }
+      journaliser_refus_admission: {
+        Args: { p_email: string; p_motif: string }
         Returns: undefined
       }
       lire_session_serveur: {

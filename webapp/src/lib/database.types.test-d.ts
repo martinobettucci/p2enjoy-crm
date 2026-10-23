@@ -266,6 +266,12 @@ type _tables = Expect<
     // `0075` de `CRM-092` tranche T1 ajoute `workspace_invitations`, les attentes d'un espace
     // (docs/SPEC-session-sso.md §7.2), et le témoin la voit dans le même changement.
     | 'workspace_invitations'
+    // `0098` de `CRM-109` TRANCHE T1 ajoute `admission_refus` — la trace du dernier refus d'admission d'une adresse
+    // attendue (docs/SPEC-refus-admission.md §3, décisions 640 et 644). CE QUI ÉCHAPPE AU GÉNÉRATEUR : aucune écriture
+    // cliente (`Insert` et `Update` décrivent des gestes qu'aucun jeton de la webapp ne peut faire, seule
+    // `journaliser_refus_admission` écrit, sous la clé de service) ; la lecture est réservée à l'administrateur de
+    // l'espace et bornée à 90 jours ; `motif` est un texte libre pour le type, une liste fermée de trois pour la base.
+    | 'admission_refus'
     | 'workspace_members'
     | 'workspaces'
   >
@@ -1022,11 +1028,15 @@ type _vueDerivationColonnes = Expect<
 // (docs/SPEC-membres.md §3.2, §5 point 3). SECURITY INVOKER : le type ne dit ni le refus `42501
 // reserve_aux_administrateurs`, ni `adresse_invalide` et `role_invalide` (`22023`), ni que le rôle rendu est `null` pour
 // une inscription neuve. Quatre-vingt-dix devient QUATRE-VINGT-ONZE.
+// `0098` de `CRM-109` TRANCHE T1 ajoute `journaliser_refus_admission` (docs/SPEC-refus-admission.md §3). Exécutable par
+// `service_role` SEUL : le type la montre à la webapp, qui ne peut pas l'appeler (`42501`) ; seul l'échangeur de
+// session l'appelle, sous la clé de service. Quatre-vingt-onze devient QUATRE-VINGT-DOUZE.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'acces_effectif_membre'
     | 'inscrire_attente'
+    | 'journaliser_refus_admission'
     | 'administration_permise'
     | 'edition_permise'
     | 'mcp_autorise'

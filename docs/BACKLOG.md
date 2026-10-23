@@ -15759,7 +15759,12 @@ peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi e
 - [x] **Spécification** `docs/SPEC-refus-admission.md`, **validée le 2026-10-23** (décision 644) : une trace par attente
       (dernier motif, premier et dernier refus, nombre), table `admission_refus` en cascade sur l'attente — remplacer une
       attente efface sa trace —, purge à 90 jours, écriture par l'échangeur via une fonction réservée à `service_role`.
-- [ ] **T1** — migration : table, fonction, purge `pg_cron`, politique ; pgTAP ; contrat de déploiement.
+- [x] **T1** — migration : table, fonction, purge `pg_cron`, politique ; pgTAP ; contrat de déploiement.
+      **Vérifiée le 2026-10-23** : migration `0098` appliquée en développement ; pgTAP `0090` **26**, quatre mutations
+      tuées ; `0016` à 150 politiques ; série complète 90 fichiers, 3863 assertions, aucune anomalie ; job
+      `p2enjoy-purge-refus-admission` à 3 h 53 — la minute 41 d'abord choisie était celle des séquences de relance,
+      relevée par `verify-armement-sequences.sh` (minutes distinctes 7, 23, 41, 53) ; types régénérés, témoins à 92
+      fonctions et la table ; SCHEMA §9 bis.8 sexies ; contrat, ligne 98.
 - [ ] **T2** — l'échangeur journalise les trois refus d'une adresse attendue ; unitaires ; intégration réelle.
 - [ ] **T3** — les écrans : Réglages ▸ Membres et la plateforme (`plateforme_attentes` étendue) ; unitaires, API, E2E,
       manuel, seed.

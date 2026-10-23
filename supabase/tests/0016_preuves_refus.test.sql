@@ -6,6 +6,8 @@
 --           docs/SPEC-costs.md §2.3 bis
 --           docs/SPEC-temps.md §5
 -- @verifies CRM-108 (docs/BACKLOG.md) — tranche T2 : les huit politiques des recettes (149) ; docs/SPEC-recettes.md §3
+-- @verifies CRM-109 (docs/BACKLOG.md) — tranche T1 : l'unique politique de lecture des refus d'admission (150) ;
+--           docs/SPEC-refus-admission.md §3
 -- @verifies docs/SPEC-permissions-rls.md §7 (les douze preuves), §7.2 (contrat mesuré),
 --           §7.3 (ce qui n'est pas satisfaisable, et comment l'absence est figée),
 --           §7.4 (non-complaisance)
@@ -45,7 +47,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(63);
+select plan(64);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -216,8 +218,12 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	149,
-	'CENT QUARANTE-NEUF politiques dans `public`, et pas une de plus — 141 avant `CRM-108` tranche 2, plus les HUIT des '
+	150,
+	'CENT CINQUANTE politiques dans `public`, et pas une de plus — 149 avant `CRM-109` tranche 1, plus l''UNIQUE '
+	'politique de LECTURE de `admission_refus` (docs/SPEC-refus-admission.md §3) : l''administrateur de l''espace lit '
+	'les refus de ses attentes, 90 jours au plus. AUCUNE ÉCRITURE, et c''est un refus double : ni politique ni '
+	'privilège — seule `journaliser_refus_admission`, sous la clé de service, écrit. Avant elle : 149, soit '
+	'141 avant `CRM-108` tranche 2, plus les HUIT des '
 	'recettes (docs/SPEC-recettes.md §3) : lecture, création, mise à jour et retrait de `card_revenues`, celles de '
 	'l''affaire, et de `card_revenue_actuals`, déléguées à la ligne. Avant elles : 141, soit '
 	'137 avant `CRM-099` tranche 1, plus les QUATRE '
@@ -407,6 +413,11 @@ select is(pg_temp.politiques('workspace_invitations'),
 	array['workspace_invitations_insertion_admin','workspace_invitations_lecture_admin',
 	      'workspace_invitations_suppression_admin']::text[],
 	'`workspace_invitations` porte exactement ses trois politiques administrateur, sans mise à jour');
+
+-- Ajoutée par `CRM-109` T1 (docs/SPEC-refus-admission.md §3) : une trace de refus se LIT par l'administrateur de
+-- l'espace, et ne s'écrit par PERSONNE — la fonction de l'échangeur est le seul chemin.
+select is(pg_temp.politiques('admission_refus'), array['admission_refus_lecture_admin']::text[],
+	'`admission_refus` porte sa seule politique de lecture administrateur, aucune écriture');
 
 select is(pg_temp.politiques('workspaces'), array['workspaces_lecture_membre']::text[],
 	'`workspaces` porte exactement sa politique de lecture membre');

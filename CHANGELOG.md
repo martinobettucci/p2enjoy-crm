@@ -60,6 +60,17 @@ prochaine fenêtre de production.*
 - **Plateforme** : le tableau des membres et le bloc des attentes de la fiche d'un espace sont désormais partagés avec
   cet écran ; leur rendu ne change pas.
 
+### `CRM-109` — le journal des refus d'admission d'une adresse attendue (décisions 640 et 644)
+
+*En développement seulement, tranche T1 : la base. Prouvée en pgTAP ; l'échangeur de session l'alimentera avec T2, et
+les écrans la montreront avec T3. La migration `0098` attend la prochaine fenêtre de production.*
+
+- **Migration `0098`** : une table `admission_refus` garde, **pour chaque attente**, le dernier refus de connexion de
+  l'adresse attendue — adresse non vérifiée chez LeLabs, compte LeLabs non vérifié, espace sans administrateur —, avec
+  la date du premier et du dernier refus et leur nombre. **Une adresse que personne n'attend ne laisse aucune trace.**
+  La trace part avec l'attente (consommée, retirée ou remplacée) et au plus tard **90 jours** après le dernier refus,
+  par une purge quotidienne. Seul l'administrateur de l'espace la lit ; seul l'échangeur de session l'écrit.
+
 ### Sécurité — revue des dépendances du 2026-10-23
 
 - **Connecteur MCP** : `opentelemetry-api` 1.45.1 (CVE-2026-114603, une requête authentifiée pouvait occuper le service

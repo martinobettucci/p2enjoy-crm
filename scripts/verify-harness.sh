@@ -587,7 +587,9 @@ PORT_RAPPORT=9323
 # MESURÉ par `npm run test:sql` — « 87 fichiers ».
 # **89 depuis `CRM-070` T3, 2026-10-23** : `0088_acces_effectif_membre` (T1, ajoutée sans report de ce compteur) et
 # `0089_inscrire_attente` (T3). 87 + 2 = 89, MESURÉ par `npm run test:sql` — « 89 fichiers ».
-FICHIERS_SQL_ATTENDUS=89
+# **90 depuis `CRM-109` T1, 2026-10-23** (décisions 640 et 644) : `0090_refus_admission.test.sql`, seul fichier ajouté.
+# 89 + 1 = 90, MESURÉ par `npm run test:sql` — « 90 fichiers ».
+FICHIERS_SQL_ATTENDUS=90
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -663,7 +665,11 @@ FICHIERS_SQL_ATTENDUS=89
 # **3836 depuis `CRM-070` T3, 2026-10-23** : la suite neuve `0089_inscrire_attente`, 18 assertions, trois mutations
 # tuées (garde levée, suppression préalable retirée, SECURITY DEFINER). 3818 + 18 = 3836, MESURÉ — « 89 fichiers, 3836
 # assertions, aucune anomalie ».
-ASSERTIONS_ATTENDUES=3836
+# **3863 depuis `CRM-109` T1, 2026-10-23** : la suite neuve `0090_refus_admission`, **26** assertions, quatre mutations
+# tuées (adresse non filtrée, lecture sans borne de 90 jours, adresse non normalisée, exécution ouverte à
+# `authenticated`) ; `0016` gagne **1** assertion — l'unique politique de `admission_refus` nommée — et son compte passe
+# à 150 politiques. 3836 + 26 + 1 = 3863, MESURÉ — « 90 fichiers, 3863 assertions, aucune anomalie ».
+ASSERTIONS_ATTENDUES=3863
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

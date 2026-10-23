@@ -1593,6 +1593,21 @@ remplacé**, `NULL` pour une inscription neuve. `search_path` vide ; `execute` �
 reste une suppression directe sous la politique. Prouvée par `supabase/tests/0089_inscrire_attente.test.sql` (18, trois
 mutations tuées) et `e2e/api/membres.spec.ts` (3 scénarios, jetons réels).
 
+### 9 bis.8 sexies `public.admission_refus` et `public.journaliser_refus_admission(p_email, p_motif)` — les refus d'admission d'une adresse attendue, migration 98
+
+`CRM-109` T1 (`docs/SPEC-refus-admission.md` §2, §3 ; décisions 640 et 644). **Une trace par attente** : clé
+`(workspace_id, email)`, **clé étrangère vers `workspace_invitations (workspace_id, email)`, `on delete cascade`** — la
+trace part avec l'attente, consommée à l'admission, retirée, ou remplacée par `inscrire_attente`. Colonnes : `motif`
+(`adresse_non_verifiee`, `attente_verification`, `attente_administrateur`, contrainte fermée), `premier_refus`,
+`dernier_refus` (`≥ premier_refus`), `refus` (`≥ 1`). **Aucun `sub`, nom, adresse IP ni agent utilisateur.** RLS : une
+seule politique, `SELECT` à `app.is_workspace_admin(workspace_id)` et `dernier_refus` dans les 90 derniers jours ; aucune
+écriture cliente (`insert`, `update`, `delete` révoqués à `anon` et `authenticated`). **Écriture** :
+`journaliser_refus_admission`, `SECURITY DEFINER`, `search_path` vide, exécutable par **`service_role` seul** ; elle
+normalise l'adresse, refuse un autre motif (`22023` `motif_invalide`), et pose ou met à jour la trace de chaque attente
+de l'adresse — **sans attente, elle n'écrit rien** (minimisation, `docs/SPEC-session-sso.md` §6.1). **Purge** :
+`app.purger_refus_admission()` supprime les traces de plus de 90 jours, chaque jour à 3 h 53 (`pg_cron`,
+`p2enjoy-purge-refus-admission`). Prouvée par `supabase/tests/0090_refus_admission.test.sql` (26).
+
 ### 9 bis.9 `public.cards_figees()` — les affaires figées de l'appelant, migration 53
 
 Ajoutée le 2026-08-24 par `CRM-062` tranche 1 (`docs/SPEC-relances.md` §2 et §3).
