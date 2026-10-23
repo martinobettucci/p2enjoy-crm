@@ -33,9 +33,9 @@ source d'identité.
 | Élément | État |
 |---|---|
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
-| Schéma appliqué | Les **90 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03), 87 par `CRM-098` T5 et 88 par `CRM-099` T3 (2026-10-11), 89 par `CRM-101` T5 et 90 par `CRM-102` T5 (2026-10-21). **Le registre `app.migrations_appliquees` le dit** : 90 lignes — les 82 premières en `adoption`, les 83 à 90 en `application` —, empreintes égales à celles du dépôt livré |
-| Dernière migration appliquée | `0090_connecteur_mcp.sql`, avec `0089_plateforme.sql` dans la même fenêtre — relues en base le 2026-10-21, en lecture seule : 90 lignes au registre, empreintes des 89 et 90 égales à celles du dépôt (`sha256sum`) ; aucune fonction nouvelle exécutable par `anon`, les trois fonctions du registre du connecteur fermées à `authenticated` ; refus sans session `401` (`42501`) par la route publique sur `plateforme_espaces`, `est_superadmin`, `mcp_autorise` et les cinq tables nouvelles |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`85d8bb7b`** le 2026-10-21 (`CRM-101` T1 à T4 et `CRM-102` T1 à T4, migrations 89 et 90, service `mcp` ; après **`7d819786`** — `CRM-099` T1 et T2, migration 88 —, après `521b3f5d` — `CRM-098` T1 à T4, migration 87, et la webapp de `CRM-100` —, après `38237656` — `CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 —, après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
+| Schéma appliqué | Les **98 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03), 87 par `CRM-098` T5 et 88 par `CRM-099` T3 (2026-10-11), 89 par `CRM-101` T5 et 90 par `CRM-102` T5 (2026-10-21), 91 à 98 par une même fenêtre (2026-10-23 : `CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-108`, `CRM-070`, `CRM-109`). **Le registre `app.migrations_appliquees` le dit** : 98 lignes — les 82 premières en `adoption`, les 83 à 98 en `application` —, empreintes égales à celles du dépôt livré |
+| Dernière migration appliquée | `0098_refus_admission.sql`, avec les 91 à 97 dans la même fenêtre du 2026-10-23 — relues en base en lecture seule : 98 lignes au registre ; `mcp_droits_sub_fkey` vers `profiles(id)`, 0 droit orphelin avant et 0 droit après ; quatre jobs `pg_cron` actifs sur des minutes distinctes (7, 23, 41, 53) ; refus sans session `401` par la route publique sur `plateforme_utilisateurs`, `mcp_comptes_liste`, `acces_effectif_membre` et `inscrire_attente`. Avant elles : `0090_connecteur_mcp.sql`, le 2026-10-21 |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`8026e90e`** le 2026-10-23 (migrations 91 à 98, webapp et échangeur de session de `CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-105`, `CRM-106`, `CRM-107`, `CRM-108`, `CRM-070`, `CRM-109` ; **l'image `mcp` n'est pas reconstruite** — elle reste celle du 2026-10-21) ; après `85d8bb7b` le 2026-10-21 (`CRM-101` T1 à T4 et `CRM-102` T1 à T4, migrations 89 et 90, service `mcp`), après **`7d819786`** — `CRM-099` T1 et T2, migration 88 —, après `521b3f5d` — `CRM-098` T1 à T4, migration 87, et la webapp de `CRM-100` —, après `38237656` — `CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 —, après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
 | Assistant IA | Variables `OLLAMA_HOST`, `OLLAMA_CONTEXT_LENGTH` et secret `OLLAMA_API_KEY` **présents** dans la cellule et remis à `functions` (relevé du 2026-10-03, présence seule) ; `OLLAMA_MODEL` absent, d'où le défaut `gemma4:e2b` de Compose. Refusée le 2026-10-03 (403), la cellule est **autorisée par LeLabs** : `GET /functions/v1/ia/etat` rend `{"disponible":true,"modele":"gemma4:e2b"}` le 2026-10-11 (§2.9, geste 7) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092`, et les données qu'y écrit le responsable — relevé du 2026-10-01, en lecture seule : 2 profils, 2 workflows dont celui de départ, 8 affaires ; aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
@@ -451,7 +451,7 @@ répertoire temporaire de la cellule puis retiré : `/srv/crm` est resté à la 
 **Retour arrière.** Arrêter le service `mcp` et retirer le bloc d'hôte. La 90 n'est lue par rien d'autre que le
 connecteur : la garder ne gêne pas la webapp.
 
-### 2.15 `CRM-105` — la description en infobulle (À LIVRER)
+### 2.15 `CRM-105` — la description en infobulle (EXÉCUTÉE le 2026-10-23 avec la fenêtre des migrations 91 à 98)
 
 `docs/DESIGN_SYSTEM.md` §5.58 ; décision 629. **Webapp seule** : aucune migration, aucune variable, aucun service
 nouveau, aucun droit changé. Quatre lectures demandent une colonne de plus, `description`, déjà lisible sous les mêmes
@@ -473,7 +473,7 @@ lui est propre.
 
 **Retour arrière** : la révision précédente de la webapp. Aucune donnée n'est écrite par cette unité.
 
-### 2.16 `CRM-108` — recettes d'une affaire et rapport de rentabilité (MIGRATION ÉCRITE ; À LIVRER)
+### 2.16 `CRM-108` — recettes d'une affaire et rapport de rentabilité (MIGRATION 95 ET WEBAPP EXÉCUTÉES le 2026-10-23 ; l'image `mcp` des outils « Recettes » reste à reconstruire)
 
 `docs/SPEC-recettes.md` ; décision 632. **Spécifiée le 2026-10-23, aucun code encore.** Ce qu'elle demandera, écrit ici
 avant le code pour que le contrat ne dérive pas :
@@ -491,7 +491,7 @@ avant le code pour que le contrat ne dérive pas :
 retire par sa ligne du §3.2, refusée tant qu'un droit `recettes` existe dans la matrice. Les lignes de recette saisies
 entre-temps seraient perdues avec les tables : l'instantané de la fenêtre les garde.
 
-### 2.17 `CRM-093` — l'interface n'offre plus les gestes que le serveur refuse (À LIVRER — différée, décision 633)
+### 2.17 `CRM-093` — l'interface n'offre plus les gestes que le serveur refuse (EXÉCUTÉE le 2026-10-23 : migrations 91 et 92 et webapp)
 
 **Différée par le responsable le 2026-10-23 (décision 633)** : `main` ne part qu'une fois `CRM-106`, `CRM-107` et
 `CRM-108` terminées. L'instantané confirmé ce jour-là sera redemandé au moment d'ouvrir la fenêtre.
@@ -517,11 +517,7 @@ changent rien), ou être retirées par les `drop function` de leurs lignes au §
 
 ## 3. Migrations en attente
 
-**Huit migrations en attente : la 98** (`CRM-109` T1, décisions 640 et 644 — une table de traces de refus, une fonction réservée à `service_role`, une purge `pg_cron` ; sa ligne au §3.2, appliquée en développement le 2026-10-23), **la 97** (`CRM-070` T3 — une fonction `security invoker`, aucune table ni politique touchée ; sa ligne au §3.2, appliquée en développement le 2026-10-23), **la 96** (`CRM-070` T1, décision 635 — une fonction de lecture, aucune table touchée ; sa ligne au §3.2, appliquée en développement le 2026-10-23), **la 95** (`CRM-108` T2, décision 632 — les recettes et la rentabilité ; §2.16 et sa ligne au §3.2, écrite et appliquée en développement le 2026-10-23), **la 91 et la 92** (`CRM-093`, décision 628 — quatre colonnes calculées, aucune table
-touchée ; leurs lignes sont au §3.2), **la 93** (`CRM-101` T6, l'onglet « Utilisateurs » — une fonction de lecture,
-aucune table touchée ; §2.13 et sa ligne au §3.2) **et la 94** (`CRM-103` T1, l'administration du connecteur — quatre
-fonctions et la clé de `mcp_droits.sub` vers les profils ; §2.14 et sa ligne au §3.2). Les 91 et 92 attendent la tranche
-T6 de `CRM-093`, les 93 et 94 l'instruction du responsable, et toutes la confirmation de l'instantané. Baseline de production : les migrations **89** (`CRM-101`) et **90**
+**Aucune migration en attente** depuis la fenêtre du 2026-10-23 (§8). Baseline de production : les migrations **91 à 98** (`CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-108`, `CRM-070`, `CRM-109`), appliquées le 2026-10-23 par une même fenêtre après l'instantané confirmé par le responsable ; leurs lignes de retrait sont au §3.2. Avant elles, les migrations **89** (`CRM-101`) et **90**
 (`CRM-102`), décision 627, appliquées le 2026-10-21 par une même fenêtre après l'instantané (§2.13, §2.14, §8) ; leurs
 lignes de retrait sont au §3.2. Avant elles, la migration **88**
 (`CRM-099`, décision 622), appliquée le 2026-10-11 par une fenêtre avec instantané (§2.12, §8) ; avant elle, la **87**
@@ -1565,3 +1561,24 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
 - **Reste à constater par le responsable** : `/plateforme` liste l'espace et ses membres (§2.13, geste 5) ; ajouter le
   connecteur dans Claude ou ChatGPT, se connecter avec « Stay signed in » et appeler `crm_workspace_list` (§2.14, geste 6
   — la matrice attend `CRM-103`).
+
+### Fenêtre des migrations 91 à 98 — `CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-105` à `CRM-108`, `CRM-070`, `CRM-109`, 2026-10-23
+
+- **Instantané** : le responsable a répondu « Oui, pris maintenant, livre » à la question qui posait l'instantané de la
+  base comme condition, au moment d'ouvrir la fenêtre ; réponse consignée telle quelle, non vérifiée depuis le poste.
+- **Avant la fenêtre**, en lecture seule : révision `85d8bb7b`, registre à **90** lignes (`0090_connecteur_mcp.sql`),
+  `mcp_droits` : 0 ligne, 0 droit orphelin (contrôle demandé par la session du connecteur avant la clé de la 94).
+- **Arbre de travail** : `livrer.sh` refuse un arbre modifié ou porteur de fichiers non suivis — il construit la webapp
+  depuis l'arbre. Trois sessions ont mis leur travail en cours hors du dépôt le temps de la livraison ; deux premiers
+  essais ont été refusés (fichiers suivis, puis non suivis), sans rien déposer.
+- **Fenêtre** : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` par les IP — révision **`8026e90e`**,
+  « Migrations appliquées avec succès — cache de schéma rechargé par le runner ».
+- **Constat** : `scripts/spark/verifier.sh` **26 contrôles sur 27** ; le seul échec compte un redémarrage de
+  `p2enjoy-kong` et de `p2enjoy-rest`, en marche depuis le 21 et le 15 octobre, donc antérieur à la fenêtre — `rest` a
+  rechargé son cache (69 relations, 107 RPC). Registre à **98** ; clé `mcp_droits_sub_fkey` vers `profiles(id)` et
+  toujours 0 droit ; jobs `pg_cron` sur 7, 23, 41 et 53 ; `401` sans session sur `plateforme_utilisateurs`,
+  `mcp_comptes_liste`, `acces_effectif_membre`, `inscrire_attente`.
+- **Reste** : reconstruire l'image `mcp` de production (`CRM-102` T6, outils « Recettes », `opentelemetry-api` 1.45.1),
+  geste de la session du connecteur sur instruction du responsable ; constater visuellement en production les écrans
+  livrés (une connexion LeLabs réelle est requise).
+

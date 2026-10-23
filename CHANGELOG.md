@@ -13,6 +13,52 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-108` — la famille « Recettes » du connecteur MCP (reste à livrer : l'image `mcp`)
+
+*La migration `0095`, la fiche et l'écran « Rentabilité » sont en production depuis le 2026-10-23 ; ces outils vivent dans le service `mcp`, dont l'image de production n'est pas encore reconstruite. D'ici là, une case « Recettes » cochée dans la matrice reste sans effet, sans erreur.*
+
+- **Connecteur MCP** : la huitième famille **« Recettes »** paraît dans la matrice de l'onglet « Connecteur MCP », avec
+  ses huit outils (lister les lignes d'une affaire, les recettes à saisir, le rapport de rentabilité ; ajouter une ligne
+  ou une recette réelle ; corriger, solder ou rouvrir) — prouvés devant un CRM simulé et contre la vraie base, par un
+  vrai client MCP ; une ligne écrite par le connecteur se lit dans la fiche.
+
+### Sécurité — revue des dépendances du 2026-10-23 (reste à livrer : l'image `mcp`)
+
+- **Connecteur MCP** : `opentelemetry-api` 1.45.1 (CVE-2026-114603, une requête authentifiée pouvait occuper le service
+  plusieurs secondes). C'est une dépendance imposée par le SDK MCP, inerte : le CRM n'a aucune télémétrie.
+- **Tests de `mail-sync`** : `httpx2` 2.13.1 (cinq avis, sans effet en production).
+
+### `CRM-102` T6 — du connecteur MCP vers son administration (décision 627)
+
+*Service `mcp/` seulement : aucune migration, aucune variable nouvelle. À la livraison, l'image `mcp` est reconstruite.*
+
+- **L'accueil du connecteur mène à la plateforme du CRM** par le lien « Ouvrir la plateforme du CRM ».
+- **`/plateforme` et `/admin` sur l'hôte du connecteur** redirigent vers la plateforme de la webapp. Ils rendaient une
+  erreur `404`.
+- Le connecteur reçoit l'origine de la webapp, `SITE_URL`, déjà obligatoire, et refuse de démarrer sans elle.
+
+## [Publié]
+
+### Déployé en production, 2026-10-23
+
+Cellule Spark `crm`, révision `8026e90e`, fenêtre de migration après l'instantané de la base confirmé par le responsable
+le jour même : `scripts/spark/livrer.sh -- --migrate --instantane-verifie`, qui a construit la webapp sur le poste,
+déposé l'archive et lancé `./runProd.sh --spark --migrate --instantane-verifie` ; le registre est passé de **90 à 98**
+(migrations **91 à 98** : `CRM-093` capacités, `CRM-101` T6 utilisateurs de la plateforme, `CRM-103` administration du
+connecteur, `CRM-108` recettes, `CRM-070` accès effectif et attentes, `CRM-109` refus d'admission). **Vérifié** :
+`verifier.sh` 26 contrôles sur 27 — le seul échec compte un redémarrage de `p2enjoy-kong` et de `p2enjoy-rest`, en
+marche depuis le 21 et le 15 octobre, donc antérieur à la fenêtre ; registre à `0098_refus_admission.sql` ; cache de
+schéma rechargé (69 relations, 107 RPC) ; `mcp_droits_sub_fkey` vers `profiles(id)`, 0 droit orphelin avant la
+fenêtre et 0 droit après ; quatre jobs `pg_cron` actifs sur des minutes distinctes ; sans session,
+`rpc/plateforme_utilisateurs`, `rpc/mcp_comptes_liste`, `rpc/acces_effectif_membre` et `rpc/inscrire_attente` rendent
+`401`. **Non reconstruit** : l'image `mcp` de production — geste de la session qui tient le connecteur, sur
+instruction du responsable ; `CRM-102` T6, les outils « Recettes » et le correctif `opentelemetry-api` restent donc
+sous « Non publié ». **Non vérifié visuellement en production** : les écrans demandent une connexion LeLabs réelle.
+
+Les sous-sections ci-dessous sont celles qui attendaient sous « Non publié » ; leurs mentions « en développement
+seulement » décrivent leur état avant cette livraison. Plusieurs avaient en réalité été livrées par des fenêtres
+antérieures (migrations 87 à 90), que ce journal n'avait pas reportées : elles sont toutes actives depuis cette révision.
+
 ### `CRM-108` — recettes d'une affaire et rapport de rentabilité (décision 632)
 
 *En développement seulement. Prouvé en pgTAP, en tests unitaires et en E2E sur la pile seedée (API et navigateur),
@@ -29,10 +75,6 @@ captures observées, manuel au chapitre 5 duodecies ; l'intégration réelle des
 - **Écran « Rentabilité »** (`/rentabilite`, après « Pilotage ») : un tableau par devise, track › channel › affaire avec
   sous-totaux ; période, état, vues « Réel » et « Prévu » ; un onglet **« À saisir »** pour saisir les recettes réelles à
   la suite, ouvert à tout membre.
-- **Connecteur MCP** : la huitième famille **« Recettes »** paraît dans la matrice de l'onglet « Connecteur MCP », avec
-  ses huit outils (lister les lignes d'une affaire, les recettes à saisir, le rapport de rentabilité ; ajouter une ligne
-  ou une recette réelle ; corriger, solder ou rouvrir) — prouvés devant un CRM simulé et contre la vraie base, par un
-  vrai client MCP ; une ligne écrite par le connecteur se lit dans la fiche.
 
 ### `CRM-070` — Réglages ▸ Membres : les membres d'un espace et leurs rôles (décisions 634 et 635)
 
@@ -74,11 +116,8 @@ fenêtre de production.*
 - **Échangeur de session** : chaque refus d'une adresse attendue est journalisé avant la réponse ; un échec de
   journalisation ne change jamais la réponse.
 
-### Sécurité — revue des dépendances du 2026-10-23
+### Sécurité — revue des dépendances du 2026-10-23 (outillage)
 
-- **Connecteur MCP** : `opentelemetry-api` 1.45.1 (CVE-2026-114603, une requête authentifiée pouvait occuper le service
-  plusieurs secondes). C'est une dépendance imposée par le SDK MCP, inerte : le CRM n'a aucune télémétrie.
-- **Tests de `mail-sync`** : `httpx2` 2.13.1 (cinq avis, sans effet en production).
 - **Outillage npm** : `vite` 8.3.5 et `vitest` 4.1.12 ; dans le verrou, `undici` 8.12.3 (via `jsdom`), `nanoid` 3.3.20
   et `source-map-js` 1.2.2. Les 21 alertes GitHub portaient sur ces seuls paquets d'outillage ; `npm audit` n'en
   compte plus aucune. La webapp de production est construite par `vite` : la prochaine livraison la construit avec la
@@ -189,15 +228,6 @@ fenêtre de production.*
   superadministrateur, sa dernière activité au connecteur MCP ou « Jamais connecté », et la date de son admission.
 - L'onglet ne modifie rien : les appartenances se posent dans la fiche d'un espace, le drapeau dans l'onglet des
   superadministrateurs.
-
-### `CRM-102` T6 — du connecteur MCP vers son administration (décision 627)
-
-*Service `mcp/` seulement : aucune migration, aucune variable nouvelle. À la livraison, l'image `mcp` est reconstruite.*
-
-- **L'accueil du connecteur mène à la plateforme du CRM** par le lien « Ouvrir la plateforme du CRM ».
-- **`/plateforme` et `/admin` sur l'hôte du connecteur** redirigent vers la plateforme de la webapp. Ils rendaient une
-  erreur `404`.
-- Le connecteur reçoit l'origine de la webapp, `SITE_URL`, déjà obligatoire, et refuse de démarrer sans elle.
 
 ### Correctif du 2026-10-21 — INC-257
 
@@ -399,8 +429,6 @@ la pose d'un bloc sur son canevas.*
   déplace ou redimensionne. L'ordre de tabulation reste celui de la lecture.
 - **Pendant la pose, un clic sur un bloc existant pose seulement** ; il ouvrait en plus la fiche du bloc
   cliqué.
-
-## [Publié]
 
 ### Déployé en production, 2026-10-03
 

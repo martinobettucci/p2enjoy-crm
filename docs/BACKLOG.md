@@ -7325,7 +7325,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-067 | Activités typées : appels, réunions, visios | `[ ]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
-| CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[~]` |
+| CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD | `[ ]` |
 | CRM-073 | Webhooks sortants signés et jetons d'API | `[ ]` |
@@ -10672,7 +10672,7 @@ pas un produit.
       travail (titre `h1` masqué à 390 px), 2 erreurs console 502 transitoires (`contacts-affaire:202`,
       `versions-workflow:42`), et `connecteur-mcp.spec.ts:59`, qui attend un seul outil MCP et voit ceux de `CRM-108` ;
       chacun signalé à sa session.
-- [ ] **T6** — livraison en production, sur instruction du responsable.
+- [x] **T6** — livraison en production, sur instruction du responsable : livrée en production le 2026-10-23 par la fenêtre des migrations 91 à 98 (révision `8026e90e`, `docs/PROD_MIGRATIONS.md` §8) : registre à 98, `verifier.sh` 26/27 — l'échec, un compteur de redémarrage antérieur à la fenêtre —, `401` sans session sur les fonctions nouvelles. Constat visuel en production à faire par le responsable (connexion LeLabs requise).
 
 ---
 
@@ -14718,7 +14718,7 @@ décision 594.
       **En production le 2026-09-27** (révision `f99a9b32`), connexion réelle vérifiée ; le retrait de
       l'ancien nom revient au responsable (`docs/PROD_MIGRATIONS.md` §2.6, étape 6).
 
-### CRM-093 — L'interface n'offre pas à un compte les gestes que le serveur lui refuse `[~]`
+### CRM-093 — L'interface n'offre pas à un compte les gestes que le serveur lui refuse `[x]`
 *Créée le 2026-09-26 — décision 603, arbitrage du responsable. Relevé en relisant les captures de
 `CRM-092` T9 : la lectrice du seed voit « Nouveau contact » et les liens d'administration du guide de
 démarrage ; le serveur refuse ces gestes, mais l'interface les propose. Spécification à écrire et à
@@ -14767,9 +14767,8 @@ que le refus serveur reste la seule règle (`CLAUDE.md` §10).*
       crochets ; les scénarios attendent désormais le motif avant de le lire. Reste : rejouer les cinq.
 - [x] **Vérification de bout en bout, 2026-10-23** (décision 633) : campagne `e2e:ui` complète 856/859 sur le build
       corrigé, les trois rouges étrangers à `CRM-093` ; tous les scénarios de `CRM-093` verts.
-- [ ] **T6** — livraison en production (migrations 91 et 92), constat. **Différée par le responsable** (décision 633)
-      jusqu'à la fin de `CRM-106`, `CRM-107` et `CRM-108`, puisqu'une livraison emporte tout `main` ; contrat prêt,
-      `docs/PROD_MIGRATIONS.md` §2.17.
+- [x] **T6** — livraison en production (migrations 91 et 92), constat. Différée par le responsable (décision 633)
+      jusqu'à la fin de `CRM-106`, `CRM-107` et `CRM-108` ; livrée en production le 2026-10-23 par la fenêtre des migrations 91 à 98 (révision `8026e90e`, `docs/PROD_MIGRATIONS.md` §8) : registre à 98, `verifier.sh` 26/27 — l'échec, un compteur de redémarrage antérieur à la fenêtre —, `401` sans session sur les fonctions nouvelles. Constat visuel en production à faire par le responsable (connexion LeLabs requise).
 
 ### CRM-094 — Démarrer un espace neuf : le workflow de départ et le guide flottant `[x]`
 *Créée le 2026-09-28 — décision 606, arbitrages du responsable. Relevé en production : dans un espace
