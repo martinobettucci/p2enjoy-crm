@@ -32934,3 +32934,21 @@ de `CLAUDE.md`, « Spécificités du projet ») — la spécification proposera 
 **Suite** : brouillon `docs/SPEC-activites.md`, puis validation avant tout code. Au même arbitrage, le responsable
 demande la livraison de `CRM-109` T3 (migration 99), instantané pris.
 
+### décision 648 — `CRM-067` : quatre arbitrages avant la spécification des activités typées
+
+*2026-10-23, arbitrages du responsable.* **Problème** : consigner sur une affaire les appels, réunions et visios, ce
+que ni la timeline ni la « prochaine action » ne portent (`docs/SPEC-cards.md` §17 : « un agenda » n'est pas demandé).
+**Arbitrages**, les quatre options recommandées :
+
+1. **Activités réalisées seulement.** On consigne ce qui a eu lieu : type (appel, réunion, visio), date et heure,
+   durée, participants — contacts de l'affaire et membres de l'espace —, sujet, compte rendu. **Aucune planification** :
+   l'action à venir reste la « prochaine action » et son échéance (`CRM-061`), seul chemin de ce geste.
+2. **Durée indépendante du temps passé.** La durée est une information de l'activité ; la saisie de temps (`CRM-098`)
+   reste le seul chemin du temps compté. Aucun double comptage possible.
+3. **Connecteur MCP : dans la famille `affaires`**, qui couvre déjà commentaires et timeline : consulter, ajouter,
+   modifier. **Aucune famille nouvelle**, donc aucune migration de la liste fermée.
+4. **Droits comme un commentaire** : consigner, qui peut écrire sur l'affaire ; corriger ou retirer, son auteur s'il
+   peut toujours écrire sur l'affaire ; un administrateur de l'espace retire. Règle tenue en base.
+
+**Suite** : brouillon `docs/SPEC-activites.md` sur ces quatre points, puis validation avant tout code.
+
