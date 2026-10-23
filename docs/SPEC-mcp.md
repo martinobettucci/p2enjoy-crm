@@ -709,7 +709,7 @@ Elles sont tenues dans `docs/PROD_MIGRATIONS.md` §3, et aucune n'est exécutée
 
 ## 16. Actualisation — à reprendre quand la boucle du backlog atteint `CRM-104`
 
-*Consigne du responsable, 2026-10-21.* Cette spécification décrit le CRM tel qu'il était le 2026-10-20. Le produit
+*Consigne du responsable, 2026-10-23.* Cette spécification décrit le CRM tel qu'il était le 2026-10-20. Le produit
 continue d'évoluer pendant que le connecteur se construit. Quand la boucle de développement du backlog arrive à
 `CRM-104`, **avant d'écrire le catalogue d'une tranche** :
 

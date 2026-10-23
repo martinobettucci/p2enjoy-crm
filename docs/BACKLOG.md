@@ -15335,7 +15335,7 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
 ses outils dans `docs/SPEC-mcp.md` §9.2, par un commit de documentation, puis la livre. Les outils n'appellent que les
 tables et RPC de la webapp ; « supprimer » veut dire corbeille ou archive, jamais purge. Dépend de `CRM-102` et de
 `CRM-103`. **Avant la première tranche, actualiser `docs/SPEC-mcp.md` avec les fonctionnalités livrées depuis le
-2026-10-20 (§16, consigne du responsable du 2026-10-21).***
+2026-10-20 (§16, consigne du responsable du 2026-10-23).***
 
 - [ ] **T1** — `structure` (et la recherche globale de référence).
 - [ ] **T2** — `affaires`.

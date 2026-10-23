@@ -32188,7 +32188,7 @@ version créée par le calculateur et relue en base ; captures aux quatre palier
 
 ### décision 627, consigne — actualiser la spécification du connecteur avant `CRM-104`
 
-*2026-10-21.* Le responsable demande que la spécification du connecteur soit actualisée avec les nouvelles fonctionnalités
+*2026-10-23.* Le responsable demande que la spécification du connecteur soit actualisée avec les nouvelles fonctionnalités
 quand la boucle de développement du backlog atteindra son entrée. La consigne est inscrite en dernière section de
 `docs/SPEC-mcp.md` (§16) : avant le catalogue de chaque tranche de `CRM-104`, il faut inventorier ce qui a été livré
 depuis le 2026-10-20, puis actualiser le catalogue, les familles et les consignes au modèle. Une fonctionnalité sans
