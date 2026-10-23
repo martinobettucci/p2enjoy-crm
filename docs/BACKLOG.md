@@ -15736,8 +15736,14 @@ nouvelle `recettes`, outils livrés par cette unité.*
       en série, rapport et filtres, membre refusé, effet d'un outil du connecteur ; captures `docs/captures/CRM-108/` aux
       quatre paliers observées ; `docs/manual.md` (chapitre des recettes et de la rentabilité, chapitre 11 du
       connecteur) ; `README.md` si besoin ; `CHANGELOG.md` ; campagnes après synchronisation.
-- [ ] **T6 — livraison** : migration `0095` en fenêtre avec instantané, webapp et service `mcp`, constat
+- [~] **T6 — livraison** : migration `0095` en fenêtre avec instantané, webapp et service `mcp`, constat
       (`docs/PROD_MIGRATIONS.md` §2.16), sur instruction du responsable.
+      *Livrée en partie le 2026-10-23* (constat `d7fe8def`) : la session de livraison a passé la fenêtre des migrations
+      91 à 98 sur `8026e90e`, après l'instantané confirmé par le responsable. La migration `0095` est appliquée
+      (registre à 98), et la webapp construite et déposée : fiche, écran « Rentabilité ». **Reste** : reconstruire l'image
+      `mcp` de production, qui porte les huit outils « Recettes », puis constater qu'ils paraissent sous la matrice. D'ici
+      là, une case « Recettes » cochée en production reste sans effet et sans erreur : le registre de l'image en place lit
+      les droits sans filtrer les familles.
 
 **Definition of Done** : `CLAUDE.md` §17 au complet ; en particulier, chaque refus prouvé par une requête directe avec le
 jeton réel du profil (lectrice qui écrit, business developer qui demande la rentabilité), la marge appliquée par la même
