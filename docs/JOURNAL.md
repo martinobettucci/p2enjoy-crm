@@ -32720,3 +32720,16 @@ par la plateforme. **Choix confirmé** : remplacer une attente (`inscrire_attent
 **efface sa trace** — une attente changée repart de zéro, et une nouvelle tentative refusée la recrée. **Découpage
 persisté au backlog** : T1 migration, T2 échangeur, T3 écrans, T4 livraison.
 
+
+### décision 645 — rattachements multiples : deux unités, les rattachements d'abord, le mot « rattachement »
+
+*2026-10-23, réponses du responsable.* **Arbitrages.**
+1. **Un brouillon de spécification est écrit maintenant**, à partir des décisions 637 à 643 et du schéma réel, puis
+   soumis à validation avant toute unité de backlog et tout code.
+2. **Deux unités** : les rattachements multiples d'une part, les champs personnalisés communs de portée espace
+   (décision 642, arbitrage 4) d'autre part — chacune avec sa spécification et ses tranches.
+3. **Les rattachements d'abord** : c'est la migration la plus lourde, et les champs communs viendront se poser sur la
+   partie commune de la fiche, déjà séparée des blocs.
+4. **Le vocabulaire de l'interface et du manuel est « rattachement »** : « rattacher à un channel », « retirer le
+   rattachement », « aussi rattachée à … ». « Suivre » est écarté : il désigne déjà l'abonnement aux notifications
+   (`card_watchers`).
