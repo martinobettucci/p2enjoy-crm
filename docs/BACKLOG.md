@@ -15367,7 +15367,7 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       migration rejouée et la suite verte. `scripts/verify-mcp.sh --rapide` **53** contrôles sans anomalie (privilèges
       des huit fonctions et clé D9 mesurés, intégration OAuth 14/14 en direct et par le Caddy de la cellule) ; la preuve
       Playwright n'y a pas été rejouée. Compteur du harnais mesuré : 3748 assertions. **Non livré.**
-- [ ] **T2** — l'onglet et la fiche d'un compte ; `docs/DESIGN_SYSTEM.md` écrit après lecture intégrale ; preuves
+- [x] **T2** — l'onglet et la fiche d'un compte ; `docs/DESIGN_SYSTEM.md` écrit après lecture intégrale ; preuves
       unitaires. Règles et écrans fixés avant le code le 2026-10-21 : `docs/DESIGN_SYSTEM.md` §5.56 (onglet « Connecteur
       MCP »), `docs/SPEC-mcp.md` §8.1 (adresses, recherche, enregistrement, refus, détail du journal).
       *Codé le 2026-10-21, prouvé en unitaires* : `PlateformeMcp` (comptes, recherche, journal), `PlateformeMcpCompte`
@@ -15400,6 +15400,12 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       journal filtré ; quatre paliers ; l'administratrice d'espace refusée. Deux défauts de mise en page trouvés sur les
       captures et corrigés (`docs/DESIGN_SYSTEM.md` §5.56), leur mesure vue rouge sans le correctif. Captures
       `docs/captures/CRM-103/` observées.
+      *T3.d, 2026-10-23* : `scripts/verify-mcp.sh` complet, **61** contrôles, preuve Playwright comprise, une seule
+      anomalie, de traçabilité : `seed_connecteur.py` cite `CRM-103`, que le contrôle n'admettait pas. Le contrôle est
+      élargi, 60/60 rejoué en `--rapide`. `verify-manual.sh` **243** contrôles sur le seed, sans anomalie. `e2e:api`
+      complet **1165/1165**. **T2 passe à `[x]`**, ses preuves visuelles et E2E étant faites par T3.c. **Reste pour fermer
+      T3** : rejouer la campagne `e2e:ui` complète après ces changements. Seuls ses propres fichiers et des passages
+      partiels l'ont été.
 - [ ] **T4** — livraison en production et constat.
 
 ### CRM-104 — Outils MCP par famille `[ ]`
