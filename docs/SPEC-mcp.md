@@ -598,7 +598,7 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 | `objectifs` | `crm_goal_board_list`, `crm_goal_board_get` | `crm_goal_block_add`, `crm_goal_link_add` | `crm_goal_block_update` | `crm_goal_board_archive` |
 | `messagerie` | `crm_card_mail_list` (fils et messages d'une affaire, sans pièce jointe), `crm_mail_get` | `crm_mail_send` (`queue_outbound_email`, `destructiveHint`, `aussi` : `affaires:consulter`) | — | — |
 
-### 9.2 bis Tranche `affaires`, lecture — `CRM-104` T2.a (liste fixée, *proposée le 2026-10-23, à valider*)
+### 9.2 bis Tranche `affaires`, lecture — `CRM-104` T2.a (liste fixée, **validée le 2026-10-23**, décision 654)
 
 Décisions 652 et 653. Sept outils, tous `affaires:consulter`, `readOnlyHint`, sans case `aussi`. Ils lisent **les mêmes
 tables et fonctions que la webapp**, sous le jeton de la personne. La RLS décide de ce qui est rendu.

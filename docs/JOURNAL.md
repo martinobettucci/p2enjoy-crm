@@ -33019,3 +33019,11 @@ de `docs/SPEC-mcp.md` est fait et committé.
 3. **Les outils d'activités de `CRM-067` prennent des noms anglais** — `crm_card_activity_list`, `crm_card_activity_add`,
    `crm_card_activity_update` —, la convention `crm_<objet>_<verbe>` du §9.1. `docs/SPEC-activites.md` §6 est révisée.
 
+### décision 654 — `CRM-104` T2.a : la lecture des affaires, validée
+
+*2026-10-23, validation du responsable sur `docs/SPEC-mcp.md` §9.2 bis (commit `6ddb7cc7`).* Sept outils
+`affaires:consulter` : `crm_card_list` (ancre `channel` facultative), `crm_card_get`, `crm_card_timeline`,
+`crm_card_comment_list`, `crm_card_activity_list`, `crm_stale_card_list` et `crm_card_mine` — ce dernier ajouté par
+l'inventaire du §16, validé avec le reste. Ils lisent les tables et fonctions de la webapp sous le jeton de la personne.
+**Suite** : code, preuves du §13 (succès, refus par la matrice, refus par le CRM, journal, effet constaté), livraison.
+
