@@ -7322,7 +7322,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-064 | @mentions, notifications temps réel et préférences | `[x]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[~]` |
-| CRM-067 | Activités typées : appels, réunions, visios | `[ ]` |
+| CRM-067 | Activités typées : appels, réunions, visios — **arbitrée le 2026-10-23 (décision 647) : unité suivante, connecteur MCP : oui** ; spécification à écrire (`docs/SPEC-activites.md`) | `[ ]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |

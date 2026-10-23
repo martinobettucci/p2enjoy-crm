@@ -32923,3 +32923,14 @@ channels, manuel, droits fins, recherche, infobulles) et les six specs dont les 
 pendant le développement (budgets, administration de l'arborescence et des workflows, contacts, occurrences, versions).
 Dix captures `docs/captures/CRM-110/` observées, et des captures d'autres unités à 390 px (« ··· / Board »).
 `verify-manual.sh` **245** contrôles sans anomalie, avec la section 3.1 bis du manuel.
+
+### décision 647 — `CRM-067`, unité suivante, et elle existera aussi dans le connecteur MCP
+
+*2026-10-23, arbitrage du responsable.* **Problème** : `CRM-070` et `CRM-109` terminées côté code, les unités `CRM-067`
+à `CRM-074` n'ont qu'une ligne de table, sans spécification ni arbitrage. **Arbitrages** : (1) l'unité suivante est
+**`CRM-067` — activités typées : appels, réunions, visios** ; (2) **elle existe aussi dans le connecteur MCP** (règle
+de `CLAUDE.md`, « Spécificités du projet ») — la spécification proposera la famille et les actions de la matrice
+(`docs/SPEC-mcp.md` §6.1), à valider : une famille nouvelle exige une migration, la liste étant fermée en base.
+**Suite** : brouillon `docs/SPEC-activites.md`, puis validation avant tout code. Au même arbitrage, le responsable
+demande la livraison de `CRM-109` T3 (migration 99), instantané pris.
+
