@@ -15872,8 +15872,16 @@ non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
       captures observées, et des captures d'autres unités refaites par ce passage ; `docs/manual.md` section 3.1 bis, `verify-manual.sh` **245** contrôles sans anomalie ;
       `CHANGELOG.md` ; harnais à **893** scénarios ui. **Reste avant `[x]`** : la campagne ui complète, et les captures
       des unités que ce passage n'a pas refaites, qui montrent encore l'ancien en-tête.
-- [ ] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
+      *Campagne ui complète le 2026-10-23*, demandée par le responsable avant la livraison, jouée par la session de
+      `CRM-109` sur `main` (`e9255249^`) : **892/893**, aucun échec venu de `CRM-110` — l'unique échec, une preuve de
+      `CRM-109` T3, est corrigé et rejoué 10/10 (`2b048ba0`). Résultat rapporté par cette session, son journal non relu
+      ici. **Reste avant `[x]`** : les captures des unités que ni ce passage ni `b9dcdf48` et `4ee9160a` n'ont refaites,
+      qui montrent encore l'ancien en-tête — la campagne les a régénérées sans qu'elles soient committées.
+- [~] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
+      *Livrée le 2026-10-23, seconde fenêtre* : révision **`e9255249`** en production, avec la migration 99 de `CRM-109`
+      (`2b048ba0`) ; `verifier.sh` 26/27, l'écart étant un compteur de redémarrage antérieur. **Reste avant `[x]`** : le
+      constat visuel du fil sur une affaire en production, à faire par le responsable.
 
 ## Constat du 2026-10-23 — décision 646
 
