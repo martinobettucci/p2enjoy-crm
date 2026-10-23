@@ -302,6 +302,9 @@ test.describe('administration des séquences de relance (docs/SPEC-modeles-email
 		await expect(page.getByTestId('ligne-sequence')).toHaveCount(SEQUENCES_DU_SEED)
 		const modifier = page.getByTestId('modifier-sequence').first()
 		await expect(modifier).toBeDisabled()
+		// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+		// l'état lu.
+		await expect(modifier).toHaveAttribute('aria-describedby', /.+/)
 		const motif = page.locator(`[id="${await modifier.getAttribute('aria-describedby')}"]`)
 		await expect(motif).toContainText('réservées aux administrateurs et aux business developers')
 		await capturer(page, 'sequences-lectrice-1440', UNITE)

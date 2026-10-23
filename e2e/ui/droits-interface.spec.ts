@@ -27,6 +27,9 @@ const PROSPECTION = '/tracks/conseil-ia/prospection'
 async function attendreEteinte(page: Page, commande: Locator, texte: RegExp): Promise<void> {
 	await expect(commande).toBeVisible()
 	await expect(commande).toBeDisabled()
+	// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+	// l'état lu.
+	await expect(commande).toHaveAttribute('aria-describedby', /.+/)
 	const idMotif = await commande.getAttribute('aria-describedby')
 	expect(idMotif, 'la commande éteinte cite son motif').not.toBeNull()
 	const motif = page.locator(`[id="${idMotif}"]`)

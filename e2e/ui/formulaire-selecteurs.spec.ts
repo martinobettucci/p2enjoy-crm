@@ -165,6 +165,8 @@ test.describe('sélecteurs de contact et de membre (docs/SPEC-contacts.md §13)'
 		for (const cle of ['contact-principal', 'referent-technique']) {
 			const selecteur = await selecteurPret(page, cle)
 			await expect(selecteur).toBeDisabled()
+			// Attendre l'état LU : pendant la lecture de la capacité, le champ est inactif sans citer le motif (§4).
+			await expect(selecteur).toHaveAttribute('aria-describedby', /fiche-affaire-lecture-seule/)
 			const cites = ((await selecteur.getAttribute('aria-describedby')) ?? '').split(' ')
 			const textes = await Promise.all(cites.map((id) => page.locator(`[id="${id}"]`).textContent()))
 			expect(textes.join(' '), `le sélecteur ${cle} cite le motif`).toContain('Vos droits ne vous permettent pas de la modifier')

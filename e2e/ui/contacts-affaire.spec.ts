@@ -188,6 +188,9 @@ test.describe("contacts d'une affaire (docs/SPEC-contacts.md §12)", () => {
 		for (const commande of [page.getByTestId('ouvrir-rattachement'), page.getByTestId('detacher-contact')]) {
 			await expect(commande).toBeVisible()
 			await expect(commande).toBeDisabled()
+			// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+			// l'état lu.
+			await expect(commande).toHaveAttribute('aria-describedby', /.+/)
 			const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
 			await expect(motif).toContainText('Vos droits ne vous permettent pas de la modifier')
 		}

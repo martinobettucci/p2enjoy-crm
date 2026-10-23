@@ -132,6 +132,9 @@ test('le viewer voit la card ; écrire un commentaire est ÉTEINT, avec le motif
 	await expect(champ).toBeDisabled()
 	const publier = page.getByRole('button', { name: 'Publier' })
 	await expect(publier).toBeDisabled()
+	// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+	// l'état lu.
+	await expect(publier).toHaveAttribute('aria-describedby', /.+/)
 	const motif = page.locator(`[id="${await publier.getAttribute('aria-describedby')}"]`)
 	await expect(motif).toContainText('Vos droits ne vous permettent pas de la modifier')
 })
@@ -154,6 +157,9 @@ test('le viewer ouvre les actions d’une carte : le déplacement est ÉTEINT, a
 	await card.getByRole('button', { name: /Actions Support niveau 2/ }).click()
 	const relancer = card.getByRole('button', { name: 'Relancer' })
 	await expect(relancer).toBeDisabled()
+	// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+	// l'état lu.
+	await expect(relancer).toHaveAttribute('aria-describedby', /.+/)
 	const motif = page.locator(`[id="${await relancer.getAttribute('aria-describedby')}"]`)
 	await expect(motif).toContainText('Vos droits ne vous permettent pas d’en modifier les affaires')
 

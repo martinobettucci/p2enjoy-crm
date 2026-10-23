@@ -484,6 +484,9 @@ test.describe('ce que voit un membre non administrateur (docs/SPEC-costs.md §3.
 		const commande = bloc.getByRole('button', { name: 'Nouveau budget' })
 		await expect(commande).toBeVisible()
 		await expect(commande).toBeDisabled()
+		// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+		// l'état lu.
+		await expect(commande).toHaveAttribute('aria-describedby', /.+/)
 		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
 		await expect(motif).toContainText('réservées aux administrateurs')
 	})

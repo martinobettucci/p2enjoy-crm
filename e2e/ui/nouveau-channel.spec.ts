@@ -272,6 +272,9 @@ test.describe('CRM-100 — « Nouveau channel » depuis la vue du track', () => 
 		await expect(texte).toHaveAttribute('aria-disabled', 'true')
 		expect(await texte.evaluate((element) => element.tagName)).toBe('SPAN')
 		await expect(texte).toHaveAttribute('title', /réservées aux administrateurs/)
+		// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+		// l'état lu.
+		await expect(texte).toHaveAttribute('aria-describedby', /.+/)
 		const motif = page.locator(`[id="${await texte.getAttribute('aria-describedby')}"]`)
 		await expect(motif).toContainText('réservées aux administrateurs')
 		await texte.click()

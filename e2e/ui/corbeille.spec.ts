@@ -654,6 +654,9 @@ test.describe('le geste de mise à la corbeille d’une affaire (§4 ter)', () =
 			const commande = page.getByRole('button', { name: 'Mettre à la corbeille' })
 			await expect(commande).toBeVisible()
 			await expect(commande).toBeDisabled()
+			// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+			// l'état lu.
+			await expect(commande).toHaveAttribute('aria-describedby', /.+/)
 			const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
 			await expect(motif).toContainText('Vos droits ne vous permettent pas de la modifier')
 			expect(await deletedAt(page, 'cards', idCard)).toBeNull()

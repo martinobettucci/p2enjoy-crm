@@ -275,6 +275,9 @@ test.describe('Créer un workflow avec l’IA (docs/SPEC-ia.md §12)', () => {
 		const commande = page.getByRole('button', { name: 'Créer avec l’IA' })
 		await expect(commande).toBeVisible()
 		await expect(commande).toBeDisabled()
+		// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+		// l'état lu.
+		await expect(commande).toHaveAttribute('aria-describedby', /.+/)
 		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
 		await expect(motif).toContainText('réservées aux administrateurs')
 		// La RLS ne lui rend aucune suggestion, pas même celle du seed : l'écran ne nomme pas ce qu'il ne montre pas.

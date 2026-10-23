@@ -692,6 +692,9 @@ test.describe('modification d’un contact (docs/SPEC-contacts.md §16.9)', () =
 		const commande = page.getByTestId('ouvrir-modification-contact')
 		await expect(commande).toBeVisible()
 		await expect(commande).toBeDisabled()
+		// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+		// l'état lu.
+		await expect(commande).toHaveAttribute('aria-describedby', /.+/)
 		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
 		await expect(motif).toContainText('réservées aux administrateurs et aux business developers')
 		await capturer(page, 'fiche-contact-modification-sans-effet-1440', UNITE)
@@ -1512,6 +1515,9 @@ test.describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () =>
 		const supprimer = page.getByTestId('ouvrir-suppression-contact')
 		await expect(supprimer).toBeVisible()
 		await expect(supprimer).toBeDisabled()
+		// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+		// l'état lu.
+		await expect(supprimer).toHaveAttribute('aria-describedby', /.+/)
 		const motif = page.locator(`[id="${await supprimer.getAttribute('aria-describedby')}"]`)
 		await expect(motif).toContainText('réservées aux administrateurs et aux business developers')
 		await expect(page.getByTestId('caracteristiques-contact')).toBeVisible()

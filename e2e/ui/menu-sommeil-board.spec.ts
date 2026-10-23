@@ -209,6 +209,9 @@ test.describe('le refus est mesuré avec le vrai profil (§16.13.4, CLAUDE.md §
 		const gestes = carte.locator('[data-testid^="carte-sommeil-"]')
 		await expect(gestes).toHaveCount(4)
 		for (let rang = 0; rang < 4; rang += 1) await expect(gestes.nth(rang)).toBeDisabled()
+		// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+		// l'état lu.
+		await expect(gestes.first()).toHaveAttribute('aria-describedby', /.+/)
 		const motif = page.locator(`[id="${await gestes.first().getAttribute('aria-describedby')}"]`)
 		await expect(motif).toContainText('Vos droits ne vous permettent pas d’en modifier les affaires')
 		await capturer(page, 'menu-sommeil-board-refus-1440', UNITE)

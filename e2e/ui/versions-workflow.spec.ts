@@ -126,6 +126,9 @@ test.describe('le refus opposé à la lectrice, avec ses droits réels (CLAUDE.m
 		// vérification 3 du §7 ter.5 (`42501` en `403`) reste prouvé hors interface (`e2e/api/versions-workflow.spec.ts`).
 		const commande = page.getByTestId('publier-version')
 		await expect(commande).toBeDisabled()
+		// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+		// l'état lu.
+		await expect(commande).toHaveAttribute('aria-describedby', /.+/)
 		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
 		await expect(motif).toContainText('réservées aux administrateurs')
 	})

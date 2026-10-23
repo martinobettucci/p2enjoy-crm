@@ -493,6 +493,9 @@ test.describe('la lecture seule (docs/SPEC-costs.md §3.2, §4.7)', () => {
 		const commande = section.getByRole('button', { name: 'Ajouter une dépense' })
 		await expect(commande).toBeVisible()
 		await expect(commande).toBeDisabled()
+		// Pendant la lecture de la capacité, la commande est éteinte SANS motif (§4) : attendre le motif, c'est attendre
+		// l'état lu.
+		await expect(commande).toHaveAttribute('aria-describedby', /.+/)
 		const motif = page.locator(`[id="${await commande.getAttribute('aria-describedby')}"]`)
 		await expect(motif).toContainText('Vos droits ne vous permettent pas de la modifier')
 	})
