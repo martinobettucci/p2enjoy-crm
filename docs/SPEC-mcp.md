@@ -726,3 +726,8 @@ continue d'évoluer pendant que le connecteur se construit. Quand la boucle de d
 Cette actualisation est committée comme documentation avant le code de la tranche, comme toute spécification (`CLAUDE.md`
 §5).
 
+**Règle permanente, 2026-10-23.** Pour ne plus rattraper l'écart après coup, `CLAUDE.md` (« Spécificités du projet »)
+impose désormais de demander au responsable, **avant de spécifier toute fonctionnalité**, si elle doit aussi exister dans
+le connecteur. La réponse est écrite dans la spécification de l'unité. L'inventaire du point 1 ne couvre donc que les
+fonctionnalités antérieures à cette règle, ou celles pour lesquelles la question n'a pas été posée.
+

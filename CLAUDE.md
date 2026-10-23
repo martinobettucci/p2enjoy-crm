@@ -1026,4 +1026,20 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
 
 ## Spécificités du projet
 
-TBD
+### Toute fonctionnalité pose la question du connecteur MCP
+
+*Consigne du responsable, 2026-10-23 (`docs/JOURNAL.md`, décision 627).* Le CRM a un connecteur MCP (`mcp/`,
+`docs/SPEC-mcp.md`), qui permet à un assistant, Claude ou ChatGPT, de piloter le CRM au nom d'une personne.
+
+**Avant de spécifier toute fonctionnalité nouvelle ou modifiée**, qu'il s'agisse d'une unité de backlog ou d'une tranche,
+demander au responsable si elle doit **aussi exister dans le connecteur MCP**.
+
+- **Si oui** : la spécification de l'unité le dit, et nomme la famille et l'action de la matrice concernées
+  (`docs/SPEC-mcp.md` §6.1). L'outil s'inscrit au catalogue de `CRM-104` (`docs/SPEC-mcp.md` §9.2), ou dans une tranche
+  dédiée si `CRM-104` est déjà livrée.
+- **Si non** : la spécification le dit aussi, en une phrase, pour que la question ne se repose pas.
+- **Une fonctionnalité qui n'entre dans aucune famille** demande une décision du responsable : une famille nouvelle
+  exige une migration, car la liste est fermée en base.
+
+La réponse est consignée et committée avec la spécification, avant le code (§5, « Persistance immédiate des
+décisions »).

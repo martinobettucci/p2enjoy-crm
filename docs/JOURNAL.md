@@ -32193,3 +32193,12 @@ quand la boucle de développement du backlog atteindra son entrée. La consigne 
 `docs/SPEC-mcp.md` (§16) : avant le catalogue de chaque tranche de `CRM-104`, il faut inventorier ce qui a été livré
 depuis le 2026-10-20, puis actualiser le catalogue, les familles et les consignes au modèle. Une fonctionnalité sans
 famille fait l'objet d'une décision du responsable. L'entrée `CRM-104` du backlog renvoie à cette section.
+
+### décision 627, consigne — toute fonctionnalité pose la question du connecteur MCP
+
+*2026-10-23.* Le responsable étend la consigne précédente : il préfère que la question soit posée à chaque
+fonctionnalité, plutôt que rattrapée avant `CRM-104`. Elle est inscrite dans `CLAUDE.md`, section « Spécificités du
+projet », que chaque session lit au démarrage. Avant de spécifier une fonctionnalité nouvelle ou modifiée, on demande
+au responsable si elle doit aussi exister dans le connecteur. La réponse, oui avec sa famille et son action, ou non en
+une phrase, est écrite dans la spécification de l'unité et committée avant le code. Le §16 de `docs/SPEC-mcp.md` est
+aligné : son inventaire ne couvre plus que le passé.
