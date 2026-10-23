@@ -32143,3 +32143,45 @@ le plafond de 420 minutes compte toutes les cibles du jour, l'unicité tient une
 résumé, double envoi) ; preuve d'API d'une saisie sur une affaire refusée à qui ne la lit pas ; E2E sur la pile réelle
 et le seed (souris, clavier, journée en heures, remplacement, retrait, plafond, lectrice, administrateur), captures aux
 quatre paliers observées ; manuel 5 undecies.6 bis.
+
+## décision 631 — `CRM-107` : calculer le coût par quart depuis le coût mensuel, dans « Nouvelle version »
+
+*2026-10-23 ; demande du responsable : « dans l'onglet saisie du coût du personnel ajoute un mini formulaire qui saisit
+le coût mensuel, les frais de gestion, les charges sociales, les avantages par mois et calcule le coût par quart de
+journée (240 jours ouvrés par an, 20,5 jours par mois… cela semble correct ?) ». Trois arbitrages demandés et rendus le
+même jour ; les autres choix sont ceux de l'agent, marqués **[choix de rédaction]** dans `docs/SPEC-temps.md` §7.4 bis.*
+
+**La question posée, et la réponse donnée.** 240 jours par an et 20,5 jours par mois ne sont pas cohérents : 240 ÷ 12 =
+20, et 20,5 × 12 = 246. Le coût par quart vaut `coût mensuel complet × 12 ÷ (jours travaillés par an × 4)` : 240 jours
+donnent le mensuel ÷ 80, 20,5 jours par mois le mensuel ÷ 82. Le salaire étant versé pendant les congés, le coût se
+répartit sur les jours **réellement travaillés** : environ 228 en France (365 − 104 jours de week-end − 25 congés payés
+− environ 8 fériés), 218 au forfait jours des cadres. 240 sous-estime le coût d'un quart.
+
+**Le problème, mesuré dans le code.** Le formulaire « Nouvelle version » de Réglages ▸ « Coût du personnel »
+(`webapp/src/app/ReglagesCoutPersonnel.tsx`, `FormulaireVersion`) attend directement un coût par quart : l'administrateur
+fait le calcul ailleurs. La base ne stocke que `couts_personnel.cout_quart` (migration `0087`).
+
+**Arbitrages du responsable (2026-10-23).**
+1. **Jours travaillés par an** : un paramètre du calcul, **218 par défaut**, modifiable.
+2. **Saisie** : salaire brut mensuel en montant, **charges sociales patronales en % du brut**, frais de gestion en
+   montant par mois, avantages en montant par mois.
+3. **Calculateur seulement** : il remplit le champ « Coût par quart » ; seul le coût par quart est enregistré, comme
+   aujourd'hui. Aucune migration.
+
+**Choix de rédaction de l'agent.**
+- Le calculateur se **déplie** dans le formulaire (« Calculer depuis le coût mensuel ») ; replié par défaut, le
+  formulaire reste celui d'aujourd'hui.
+- Le résultat se lit **en direct** (coût mensuel complet, coût par quart) ; il ne passe dans le champ que par un geste,
+  **« Utiliser ce coût »** — un calcul ne réécrit jamais en silence ce que l'administrateur a tapé.
+- Arrondi au centime, au plus proche. Les montants sont dans la devise de la version.
+- Bornes : montants ≥ 0 ; charges de 0 à 100 % ; jours de 1 à 366, entiers.
+- **Rien n'est conservé** des valeurs saisies — ni en base, ni dans le navigateur (`CLAUDE.md` §11) : refermer le
+  formulaire les oublie.
+
+**Conséquences.** Aucune migration, aucune fonction, aucune règle d'accès : l'écran reste réservé aux administrateurs
+par la capacité de la base (`CRM-093`), et la version se crée par le chemin d'aujourd'hui. Le seed n'a rien à ajouter :
+le formulaire s'ouvre sur toute personne du jeu.
+
+**Vérifications prévues** : unitaires du calcul (formule, défaut 218, arrondi, bornes, virgule décimale) et du
+formulaire (dépli, résultat en direct, « Utiliser ce coût », rien n'écrit sans « Enregistrer la version ») ; E2E : une
+version créée par le calculateur et relue en base ; captures aux quatre paliers observées ; manuel 5 undecies.5.

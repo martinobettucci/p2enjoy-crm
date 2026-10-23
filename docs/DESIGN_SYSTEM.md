@@ -5293,6 +5293,32 @@ motif de la fiche (§5.59) — chacun saisit son temps.
 **Paliers.** La bande tient dans la colonne de la fiche dès `lg` ; en dessous, elle défile horizontalement dans son
 conteneur (`overflow-x-auto`, `indique-debordement-x`), jamais la page. La navigation passe sur deux lignes sous `md`.
 
+### 5.54 ter Le calculateur du coût par quart — `CRM-107`
+
+Spécifié avant code, `docs/SPEC-temps.md` §7.4 bis (décision 631).
+
+**Place.** Dans le formulaire « Nouvelle version » d'une carte de Réglages ▸ « Coût du personnel » (§5.54), sous la
+rangée des champs et avant la phrase de la règle de date. Un bouton de dépli **« Calculer depuis le coût mensuel »**
+(icône Lucide `Calculator`, 16 px, variante tertiaire, `aria-expanded`) ; replié par défaut.
+
+**Déplié** : un `fieldset` en carte `--color-surface`, bordure `--color-border`, `rounded-md`, 12 px de marge
+intérieure, `legend` « Calcul du coût par quart » en 14 px `font-medium`. Cinq champs en rangée qui passe à la ligne
+(`flex-wrap`, 12 px d'écart), du gabarit des champs du formulaire : salaire brut mensuel, charges sociales (suffixe
+« % » dans le libellé), frais de gestion par mois, avantages par mois, jours travaillés par an. Montants alignés à
+droite, `tabular-nums`, `inputmode="decimal"` ; les jours en `inputmode="numeric"`.
+
+**Résultat.** Sous les champs, une ligne `<output>` en `aria-live="polite"` : « Coût mensuel complet : 4 510,00 EUR ·
+Coût par quart : 62,06 EUR », le coût par quart en `font-medium`. Dessous, en 13 px `--color-text-2`, la formule :
+« Coût mensuel × 12 ÷ (218 jours × 4 quarts) », avec le nombre de jours saisi. Puis le bouton secondaire compact
+**« Utiliser ce coût »**, qui remplit « Coût par quart », y place le focus et annonce « Coût par quart rempli ».
+Sans salaire, le résultat dit « Saisissez le salaire brut pour calculer » et le bouton est désactivé.
+
+**Erreurs.** Un champ hors bornes passe en bordure `--color-danger` de 2 px, `aria-invalid`, avec son motif en 13 px
+`--color-danger` sous lui, relié par `aria-describedby` ; le résultat ne s'affiche pas.
+
+**Paliers.** Les champs passent à la ligne d'eux-mêmes ; sous `md`, chacun prend toute la largeur. Jamais de
+défilement horizontal de la page.
+
 ### 5.55 « Nouveau channel » dans la barre d'onglets, et l'aller-retour vers l'éditeur de workflows — `CRM-100`
 
 *Écrit le 2026-10-11, avant le code (décision 623).* Ce que les gestes envoient, l'adresse qui les porte et sa validation

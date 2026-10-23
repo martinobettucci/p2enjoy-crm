@@ -15547,3 +15547,19 @@ déjà la saisie sur une affaire.*
       campagnes.
 - [ ] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
+
+### CRM-107 — Calculer le coût par quart depuis le coût mensuel `[ ]`
+*Créée le 2026-10-23 — demande du responsable : un mini formulaire, dans Réglages ▸ « Coût du personnel », qui part du
+coût mensuel, des frais de gestion, des charges sociales et des avantages, et calcule le coût par quart. Arbitrages du
+responsable le même jour (`docs/JOURNAL.md` décision 631) : jours travaillés par an en paramètre, 218 par défaut ;
+charges en % du brut, frais et avantages en montant ; calculateur seulement. Spécifié avant le code :
+`docs/SPEC-temps.md` §7.4 bis, `docs/DESIGN_SYSTEM.md` §5.54 ter. Aucune migration.*
+
+- [x] **T1 — spécification, écrite avant le code** sur les trois arbitrages du 2026-10-23.
+- [ ] **T2 — le calculateur** dans « Nouvelle version » : la fonction de calcul et ses bornes, le dépli, le résultat en
+      direct, « Utiliser ce coût » ; preuves unitaires.
+- [ ] **T3 — preuves sur la pile réelle** : E2E d'une version créée par le calculateur, relue en base, à la souris et au
+      clavier ; captures `docs/captures/CRM-107/` aux quatre paliers observées ; `docs/manual.md` 5 undecies.5 ;
+      `CHANGELOG.md` ; campagnes.
+- [ ] **T4 — livraison** : reconstruction de la webapp en production, constat. Aucune migration, aucune fonction, aucune
+      variable.

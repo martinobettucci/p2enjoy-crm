@@ -168,6 +168,27 @@ La liste des membres, avec le coût en vigueur et la prochaine version programm�
 quart, devise, date d'effet — aujourd'hui au plus tôt, toute date pour une première version) ; l'historique des versions
 de chacun ; la suppression d'une version programmée.
 
+### 7.4 bis Calculer le coût par quart depuis le coût mensuel — `CRM-107` (décision 631)
+
+Le formulaire « Nouvelle version » (§7.4) porte un calculateur, **replié** par défaut [choix de rédaction] : « Calculer
+depuis le coût mensuel ». Les points 1 à 3 sont les arbitrages du responsable (2026-10-23).
+
+1. **Les champs** : salaire brut mensuel (montant), charges sociales patronales (**% du brut**), frais de gestion
+   (montant par mois), avantages (montant par mois), **jours travaillés par an** (entier, **218** par défaut). Les
+   montants sont dans la devise de la version. Un champ vide vaut zéro, sauf le salaire, requis, et les jours, qui
+   reprennent 218.
+2. **Le calcul** :
+   `coût mensuel complet = brut × (1 + charges ÷ 100) + frais + avantages` ;
+   `coût par quart = coût mensuel complet × 12 ÷ (jours × 4)`, arrondi au centime le plus proche.
+   Exemple : 3 000 de brut, 42 % de charges, 150 de frais, 100 d'avantages, 218 jours → 4 510 par mois, 62,06 par quart.
+3. **Calculateur seulement** : rien de ce qu'il reçoit n'est enregistré. Seul le coût par quart l'est, par le geste
+   « Enregistrer la version » d'aujourd'hui. Aucune migration.
+4. Le résultat — coût mensuel complet et coût par quart — se lit **en direct** ; il ne passe dans « Coût par quart » que
+   par le geste **« Utiliser ce coût »**, qui ne crée rien [choix de rédaction].
+5. **Bornes** [choix de rédaction] : montants ≥ 0 ; charges de 0 à 100 ; jours entiers de 1 à 366. Hors bornes, le
+   résultat ne s'affiche pas et le champ fautif dit pourquoi. La virgule et le point valent séparateur décimal.
+6. **Rien ne persiste côté client** (`CLAUDE.md` §11) : refermer le formulaire oublie les valeurs.
+
 ### 7.5 La série « Personnel » — à côté des coûts existants (point 8)
 
 Sur l'**écran de coûts d'un track** : un bloc « Coût du personnel » — temps et montant du track, par channel, sur la
