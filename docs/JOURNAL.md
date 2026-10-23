@@ -33027,3 +33027,13 @@ de `docs/SPEC-mcp.md` est fait et committé.
 l'inventaire du §16, validé avec le reste. Ils lisent les tables et fonctions de la webapp sous le jeton de la personne.
 **Suite** : code, preuves du §13 (succès, refus par la matrice, refus par le CRM, journal, effet constaté), livraison.
 
+### décision 655 — `CRM-104` T2.b : l'écriture des affaires, validée
+
+*2026-10-23, validation du responsable sur `docs/SPEC-mcp.md` §9.2 ter (commit `3c68a860`).* Les outils du tableau :
+`crm_card_create`, `crm_card_comment_add`, `crm_card_activity_add`, `crm_card_update`, `crm_card_move`,
+`crm_card_move_to_channel`, `crm_card_snooze`, `crm_card_wake`, `crm_card_contact_link`, `crm_card_contact_unlink`,
+`crm_card_activity_update`, `crm_card_trash`. **Ils sont douze** : la proposition et la question posée disaient
+« treize ». C'est une erreur de compte de ma part, et aucun outil ne manque au tableau validé. Les identifiants jugés dans
+l'affaire (étape et responsable par leur nom, participants par la base) sont validés avec la liste. Un genre d'ancre
+nouveau, `activity`, est ajouté.
+

@@ -620,9 +620,10 @@ pour une ancre `autres` dont l'argument a une valeur par défaut `None`, et pour
 **Ce que la tranche ne fait pas.** Aucune écriture : c'est T2.b. Aucune pièce jointe, aucun message : c'est la famille
 `messagerie`. Aucune lecture des recettes ni des coûts d'une affaire : ce sont les familles `recettes` et `budgets`.
 
-### 9.2 ter Tranche `affaires`, écriture — `CRM-104` T2.b (liste fixée, *proposée le 2026-10-23, à valider*)
+### 9.2 ter Tranche `affaires`, écriture — `CRM-104` T2.b (liste fixée, **validée le 2026-10-23**, décision 655)
 
-Décision 652. Treize outils. Chacun appelle **la table ou la fonction que la webapp appelle pour le même geste**, sous le
+Décision 652. **Douze** outils — le texte proposé disait « treize », une erreur de compte ; la liste est celle du
+tableau. Chacun appelle **la table ou la fonction que la webapp appelle pour le même geste**, sous le
 jeton de la personne : la base garde ses règles, et l'outil traduit ses refus (§9.3).
 
 | Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
