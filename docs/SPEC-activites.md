@@ -92,9 +92,12 @@ tranche T2 :
 
 | Outil | Action | Ce qu'il fait |
 |---|---|---|
-| `crm_affaire_activites_lister` | `consulter` | les activités d'une affaire, les plus récentes en tête, retirées comprises en pierre tombale |
-| `crm_affaire_activite_ajouter` | `ajouter` | consigne une activité réalisée — mêmes règles qu'à l'écran |
-| `crm_affaire_activite_modifier` | `modifier` | corrige une activité dont la personne est l'auteur |
+| `crm_card_activity_list` | `consulter` | les activités d'une affaire, les plus récentes en tête, retirées comprises en pierre tombale |
+| `crm_card_activity_add` | `ajouter` | consigne une activité réalisée — mêmes règles qu'à l'écran |
+| `crm_card_activity_update` | `modifier` | corrige une activité dont la personne est l'auteur |
+
+*Noms révisés le 2026-10-23 (décision 653) : la convention du connecteur, `crm_<objet>_<verbe>` en anglais
+(`docs/SPEC-mcp.md` §9.1). Les outils se construisent avec `CRM-104` T2.a (lecture) et T2.b (écriture).*
 
 **Aucun outil de retrait** : retirer reste un geste d'écran. Le connecteur agit dans les droits de la personne et
 dans la matrice ; la base refuse comme elle refuse à l'écran.

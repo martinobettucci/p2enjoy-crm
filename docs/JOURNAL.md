@@ -32998,3 +32998,24 @@ que le produit fait, et aucune n'appelle d'arbitrage.
 
 **Vérifications.** Les icônes `Phone`, `Users` et `Video` ne sont importées nulle part dans `webapp/src` et ne sont
 citées par aucune section du design system (§9).
+
+### décision 652 — `CRM-104` : la tranche `affaires` d'abord, en deux sous-tranches
+
+*2026-10-23, arbitrage du responsable.* `CRM-067` livrée en production, l'unité suivante choisie est `CRM-104`, la
+tranche « affaires » en premier — elle débloque `CRM-067` T4 et donne au connecteur ses premiers outils métier. Le
+backlog plaçait `structure` en T1 ; l'ordre est révisé. La tranche, de dix-huit outils environ, est **découpée en deux
+sous-tranches livrées séparément** : T2.a les consultations, T2.b les écritures. Chacune a sa liste fixée dans
+`docs/SPEC-mcp.md` §9.2 avant son code, ses preuves (§13) et sa livraison. **Avant le catalogue**, l'inventaire du §16
+de `docs/SPEC-mcp.md` est fait et committé.
+
+### décision 653 — `CRM-104` : trois réponses de périmètre
+
+*2026-10-23, arbitrage du responsable, pour l'inventaire du §16 de `docs/SPEC-mcp.md`.*
+
+1. **Réglages ▸ Membres et droits fins (`CRM-070`) : hors du connecteur.** La gestion des membres et des droits fins
+   reste un geste d'écran d'administrateur.
+2. **Les suggestions de l'assistant IA pour les workflows (`CRM-097`) : hors du connecteur.** L'assistant MCP est
+   déjà une IA, et la création de workflow par suggestion reste un geste d'écran.
+3. **Les outils d'activités de `CRM-067` prennent des noms anglais** — `crm_card_activity_list`, `crm_card_activity_add`,
+   `crm_card_activity_update` —, la convention `crm_<objet>_<verbe>` du §9.1. `docs/SPEC-activites.md` §6 est révisée.
+

@@ -15424,8 +15424,13 @@ tables et RPC de la webapp ; « supprimer » veut dire corbeille ou archive, jam
 `CRM-103`. **Avant la première tranche, actualiser `docs/SPEC-mcp.md` avec les fonctionnalités livrées depuis le
 2026-10-20 (§16, consigne du responsable du 2026-10-23).***
 
+*Ordre révisé le 2026-10-23 (décision 652, arbitrage du responsable) : la tranche `affaires` vient la première, en deux
+sous-tranches livrées séparément ; `structure` la suit.*
+
+- [ ] **T2.a** — `affaires`, **lecture** : les outils de consultation, dont `crm_card_activity_list` (`CRM-067` T4).
+- [ ] **T2.b** — `affaires`, **écriture** : créer, commenter, consigner, modifier, déplacer, changer de channel,
+      sommeil, réveil, lier et délier un contact, corbeille ; dont `crm_card_activity_add` et `crm_card_activity_update`.
 - [ ] **T1** — `structure` (et la recherche globale de référence).
-- [ ] **T2** — `affaires`.
 - [ ] **T3** — `contacts`.
 - [ ] **T4** — `budgets`.
 - [ ] **T5** — `temps`.
@@ -15829,8 +15834,8 @@ règle dans la webapp et le connecteur, et les captures observées.
       - Manuel 4.7 *quater* ; fil 4.10 à six filtres.
       - Campagnes **complètes** : ui **905/905**, api **1169/1169** ; pgTAP 91 fichiers, 3897 assertions. Harnais :
         `SCENARIOS_UI=905` (compté).
-- [ ] **T4** — outils MCP `crm_affaire_activites_lister`, `crm_affaire_activite_ajouter`,
-      `crm_affaire_activite_modifier`, inscrits au catalogue (`docs/SPEC-mcp.md` §9.2) et construits avec `CRM-104` T2.
+- [ ] **T4** — outils MCP `crm_card_activity_list`, `crm_card_activity_add`,
+      `crm_card_activity_update` (noms anglais, décision 653), inscrits au catalogue (`docs/SPEC-mcp.md` §9.2) et construits avec `CRM-104` T2.
 - [~] **T5** — livraison en production, sur instruction du responsable.
       **Livrée le 2026-10-23, troisième fenêtre** : révision `77b17fa1`, instantané confirmé par le responsable ; registre
       de production à 100 ; `verifier.sh` 26/27 (compteur de redémarrage antérieur) ; deux tables, sept politiques,
