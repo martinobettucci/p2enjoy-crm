@@ -32856,3 +32856,47 @@ celle du fichier, plutôt qu'un `resetMe` qui aurait effacé la base partagée p
 n'est pas concernée : elle a reçu `0098` dans sa forme finale, inscrite avec l'empreinte du dépôt. **Règle retenue** :
 une migration déjà appliquée ne se corrige plus — sa correction est une migration nouvelle, comme le runner le dit.
 
+
+### décision 646 — `CRM-113` : le générateur de workflow connaît l'affaire et le catalogue
+
+*2026-10-23, constat et réponses du responsable.* **Problème.** Deux défauts vus sur des suggestions réelles :
+1. le générateur propose des champs que l'affaire porte déjà (« montant ») ;
+2. il déclare des nœuds nouveaux au lieu de réutiliser le nœud canonique du catalogue sous un libellé surchargé, et
+   « Utiliser le nœud du catalogue » perd le nom personnalisé de l'étape.
+
+**Hypothèse du responsable** : le générateur ne connaît pas les champs natifs. **Vérifiée.**
+
+**Observations**, dans le code :
+- `REGLES` (`supabase/functions/ia/consignes.ts`) ne nomme aucune colonne native de `cards`, et sa phrase sur les
+  champs pousse vers un champ `money`.
+- Aucun des défauts de `app.defauts_proposition_ia` ne relève un doublon d'une colonne native.
+- Une étape du format `version: 1` ne porte que `noeud` et `initiale`, alors que `workflow_steps` porte
+  `label_override` et `probability_override`, que l'éditeur manuel expose. Nommer une étape oblige donc le modèle à
+  déclarer un nœud.
+- `utiliserNoeudDuCatalogue` retire le nœud proposé avec son libellé et sa probabilité.
+- La mise en forme de la fonction (`proposition.ts`) ne garderait de toute façon d'une étape que `noeud` et
+  `initiale`.
+- **Le catalogue, lui, atteint bien le modèle** (`dependances.ts`, `lireCatalogue`, sous le jeton de l'appelant) :
+  ce n'est pas un défaut de transmission.
+
+Constat annexe : les exigences de transition ne visent que `form_fields`. Même informé, le modèle ne pourrait pas
+exiger le montant natif ; créer un champ était le seul moyen que le format lui laissait.
+
+**Arbitrages** :
+1. **Périmètre** : une seule unité pour les nœuds et les champs natifs. Exiger un champ natif à une transition est
+   écarté de cette unité.
+2. **Format** : extension compatible de `version: 1`, avec `libelle` et `probabilite` facultatifs sur l'étape.
+3. **Connecteur MCP** : non, la génération par IA n'y est pas exposée.
+
+**Choix de forme de l'agent**, écrits dans la spécification et soumis à la relecture du responsable :
+- **Règle d'écriture des surcharges** : valeur égale à celle du nœud → `null` ; valeur différente → surcharge ;
+  absente ou `null` → gardée pour une étape conservée. Un modèle qui omet ou annule la clé ne retire donc rien.
+- **`proposition_du_workflow` rend les noms effectifs**.
+- **Liste réservée des champs natifs** dans `app.champs_natifs_reserves()`, en correspondance exacte de la clé ou du
+  libellé normalisé, appliquée aux seuls champs nouveaux.
+- **Probabilité par défaut ajoutée au catalogue** envoyé au modèle.
+- **Scénario `catalogue`** du simulateur.
+
+**Conséquences** : `docs/SPEC-ia.md` §14, qui révise les §6.1, §12.1, §12.3, §12.5, §13.1 et §13.2 ; unité `CRM-113`
+au backlog, découpée en T1 base, T2 fonction, T3 écran et T4 livraison. Les numéros `CRM-111` et `CRM-112` sont
+réservés par `docs/SPEC-rattachements.md` (décision 645). **Aucun code avant ce commit.**

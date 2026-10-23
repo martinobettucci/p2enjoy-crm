@@ -15836,3 +15836,34 @@ non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
       `CHANGELOG.md` ; campagnes.
 - [ ] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
+
+## Constat du 2026-10-23 — décision 646
+
+### CRM-113 — Le générateur de workflow connaît les champs natifs de l'affaire et réutilise le catalogue sous un libellé surchargé `[ ]`
+*Créée le 2026-10-23 — décision 646, constat et arbitrages du responsable : le générateur proposait un champ
+« montant » que l'affaire porte déjà, et déclarait des nœuds nouveaux au lieu de viser le nœud du catalogue sous un
+libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'étape. Spécifiée avant le code :
+`docs/SPEC-ia.md` §14. Connecteur MCP : non, la génération par IA n'y est pas exposée. Révise `CRM-097`.*
+
+**DoD** :
+- une étape d'une suggestion porte son libellé et sa probabilité, écrits en surcharge à l'acceptation quand ils
+  diffèrent de ceux du nœud, gardés quand la cible n'en dit rien ;
+- « Utiliser le nœud du catalogue » garde le nom de l'étape ;
+- le modèle reçoit la liste des champs natifs et la consigne de réutiliser le catalogue ;
+- la base relève `champ_natif` sur un champ nouveau qui doublonne une colonne native, et ce défaut bloque
+  l'acceptation ;
+- les révisions `version: 1` déjà enregistrées restent valides ;
+- refus et effets prouvés en requête directe ; aucune campagne n'appelle le serveur réel.
+
+- [x] **Spécification** `docs/SPEC-ia.md` §14, écrite le 2026-10-23 sur les arbitrages de la décision 646. Les choix de
+      forme de l'agent y sont marqués et restent soumis à la relecture du responsable.
+- [ ] **T1** — base : une migration — forme de l'étape, défauts `probabilite_etape_invalide` et `champ_natif`,
+      `app.champs_natifs_reserves()`, acceptation d'une création et `app.document_cible_ia`, `proposition_du_workflow`
+      aux noms effectifs ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement.
+- [ ] **T2** — fonction `ia` : règles (champs natifs, réutilisation du catalogue), catalogue avec probabilité, schéma
+      de sortie, mise en forme, scénario `catalogue` du simulateur ; unitaires, API aux jetons réels.
+- [ ] **T3** — écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; libellé et probabilité d'étape éditables,
+      bouton qui garde le nom, différentiel, traductions ; unitaires, E2E à la souris et au clavier, captures aux
+      quatre paliers, `docs/manual.md`, seed, `CHANGELOG.md`.
+- [ ] **T4** — livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp
+      reconstruite ; constat.

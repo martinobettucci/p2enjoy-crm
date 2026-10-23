@@ -147,6 +147,9 @@ fixé par la tranche T1 (§11.5), versionné (`version: 1`).
 > la forme et normalise les clés, et les défauts de toute révision sont écrits par le trigger de création.
 > Le paragraphe ci-dessus décrit la règle, plus son lieu.
 
+> **Révisé par `CRM-113`, le 2026-10-23 (§14.3).** Une étape porte aussi `libelle` et `probabilite`, facultatifs :
+> son nom affiché et sa probabilité effective, écrits en surcharge quand ils diffèrent de ceux du nœud.
+
 ## 7. L'écran
 
 - « **Créer avec l'IA** » à côté de « Nouveau workflow » ; « **Suggérer** » dans les vues étapes,
@@ -506,6 +509,9 @@ n'atteint le modèle :
 seuil d'ancienneté d'une étape, le libellé d'un nœud du catalogue, les champs déjà archivés. La position d'une étape
 et d'un champ suit l'ordre de la proposition.
 
+> **Révisé par `CRM-113`, le 2026-10-23 (§14.3).** La surcharge de libellé et de probabilité d'une étape conservée
+> n'est plus gardée sans condition : la cible peut la poser ou la retirer, et ne la garde que si elle n'en dit rien.
+
 **Le libellé d'une transition, dans une modification** (précisé le 2026-10-03, à l'écriture de T3.a). Une transition
 vivante peut n'avoir aucun libellé propre — l'éditeur affiche alors celui de son étape d'arrivée. La composition
 vivante la rend avec `"libelle": ""`, et, pour une modification, **un libellé vide vaut l'absence de libellé propre** :
@@ -635,3 +641,213 @@ ce qui change.
 - **Unitaires** : le différentiel, le remappage dans le brouillon, le panneau en mode modification.
 - **E2E** : « Suggérer » depuis les étapes, le différentiel, une étape occupée retirée et remappée, acceptée, le
   graphe relu ; au clavier ; les quatre paliers ; captures observées.
+
+## 14. `CRM-113` — le générateur connaît l'affaire et le catalogue (écrit le 2026-10-23, avant son code)
+
+*Constat et arbitrages du responsable le 2026-10-23 (`docs/JOURNAL.md`, décision 646). Cette section révise les §6.1,
+§12.1, §12.3, §12.5, §13.1 et §13.2 ; chaque révision y est signalée.*
+
+### 14.1 Le constat
+
+Le responsable a relevé deux défauts sur des suggestions réelles :
+
+1. **Le générateur propose des champs que l'affaire porte déjà**, comme « montant ».
+2. **Il déclare des nœuds nouveaux au lieu de réutiliser le nœud du catalogue** sous un libellé surchargé. Et le
+   bouton « Utiliser le nœud du catalogue » perd le nom que la suggestion donnait à l'étape.
+
+Les causes, relues dans le code le même jour :
+
+- **Les règles envoyées au modèle ne nomment aucun champ natif** (`supabase/functions/ia/consignes.ts`, `REGLES`).
+  La seule phrase sur les champs (« les informations à saisir sur une affaire ; […] un champ « money » a une
+  « devise » ») conduit le modèle à déclarer un montant.
+- **Aucun défaut ne relève un champ qui doublonne une colonne native** (§12.1). Un champ `montant` passe donc, et
+  l'affaire porte deux montants.
+- **Une étape du format `version: 1` ne porte que `noeud` et `initiale`** (§6.1). La base sait pourtant surcharger
+  le libellé et la probabilité d'une étape (`workflow_steps.label_override`, `probability_override`), et
+  l'éditeur manuel l'expose. Le seul moyen qu'a le modèle de nommer une étape est donc de déclarer un nœud.
+- **`utiliserNoeudDuCatalogue`** (`webapp/src/lib/brouillon-ia.ts`) retire le nœud proposé. Son libellé et sa
+  probabilité partent avec lui : l'étape n'a nulle part où les garder.
+
+Le catalogue, lui, atteint bien le modèle : la fonction lit les nœuds non archivés de l'espace sous le jeton de
+l'appelant.
+
+### 14.2 Les arbitrages (décision 646)
+
+| Question | Décision |
+|---|---|
+| Périmètre | **Les nœuds et les champs natifs, dans une seule unité** : surcharges d'étape dans le format, bouton qui les garde, règles qui font réutiliser le catalogue ; champs natifs nommés au modèle, avec un défaut en base pour un champ qui en doublonne un |
+| Format | **Extension compatible de `version: 1`** : deux clés facultatives sur l'étape. Une révision déjà enregistrée reste valide |
+| Connecteur MCP | **Non.** La génération par IA n'est pas exposée au connecteur (`docs/SPEC-mcp.md` §6.1) |
+| Exiger un champ natif à une transition ou le rendre requis sur une étape | **Hors de cette unité** (§14.9) |
+
+### 14.3 Le format : l'étape porte son libellé et sa probabilité (révision du §6.1)
+
+```
+"etapes": [ { "noeud": cle, "initiale": booléen, "libelle": texte | null, "probabilite": 0–100 | null } ]
+```
+
+`libelle` est le **nom affiché** de l'étape ; `probabilite`, sa **probabilité effective**. Les deux clés sont
+facultatives dans la forme. Le « nœud de l'étape » désigne le nœud proposé de même clé s'il existe, sinon le nœud
+du catalogue.
+
+**Règle d'écriture**, la même à la création et à la modification :
+
+| Valeur proposée | Effet sur `label_override` (resp. `probability_override`) |
+|---|---|
+| un texte (resp. un nombre) **différent** du libellé (resp. de la probabilité par défaut) du nœud de l'étape | la surcharge vaut cette valeur |
+| un texte (resp. un nombre) **égal** à celui du nœud | aucune surcharge : `null` |
+| clé absente, `null` ou texte blanc — **étape nouvelle** | aucune surcharge : `null` |
+| clé absente, `null` ou texte blanc — **étape conservée** (§13.1) | la surcharge vivante est **gardée** |
+
+Les textes sont comparés sans leurs espaces de bord, à la casse près ; les nombres, en valeur. Le seul moyen de
+retirer une surcharge est donc de proposer le libellé ou la probabilité du nœud. Un modèle qui omet ou annule la
+clé ne retire rien. C'est voulu : un petit modèle omet ou annule plus volontiers qu'il ne recopie.
+
+**Ce que la base vérifie** :
+
+- **La forme** (trigger de révision, §12.1) : `libelle` est `null` ou un texte, et `probabilite` est `null` ou un
+  nombre. Sinon, `22023` « proposition mal formée ».
+- **Un défaut s'ajoute**, `probabilite_etape_invalide` (`cle`) : une probabilité d'étape non nulle hors de 0 à 100.
+  Il est rendu après `etape_initiale`.
+
+### 14.4 La composition vivante rend les noms effectifs (révision du §13.2)
+
+`public.proposition_du_workflow` rend, pour chaque étape, `libelle` (la surcharge, sinon le libellé du nœud) et
+`probabilite` (la surcharge, sinon la probabilité par défaut du nœud). Le modèle voit donc l'étape telle que
+l'écran la montre. Il garde un nom surchargé en le recopiant, et la règle du §14.3 ne réécrit rien.
+
+**Le différentiel de l'écran** (§13.6) compte comme **modifiée** une étape conservée dont le libellé ou la probabilité
+effective change.
+
+**L'acceptation** applique la règle du §14.3 :
+
+- pour une création : étape 3 du §12.3 ;
+- pour une modification : dans `app.document_cible_ia` (§13.4), à la place de la conservation inconditionnelle du
+  §13.1.
+
+Le seuil d'ancienneté (`stale_after_days`) reste hors du format et suit le §13.1.
+
+### 14.5 Les champs natifs de l'affaire
+
+**Ce que le modèle apprend** (une règle ajoutée à `REGLES`) : toute affaire porte déjà, sans champ à déclarer :
+
+- son titre et sa description ;
+- son responsable ;
+- son montant et sa devise ;
+- sa probabilité ;
+- sa prochaine action et son échéance ;
+- ses contacts et son organisation ;
+- ses coûts, ses recettes et son temps ;
+- ses commentaires et ses e-mails.
+
+**Il ne déclare jamais de champ pour ces informations.** Une règle ou une exigence ne vise qu'un champ déclaré : un
+champ natif ne s'exige pas ici, et il ne crée pas de champ pour le contourner. Cette liste est une donnée statique
+du produit, et non une donnée du CRM : le §3 reste tenu.
+
+**Le défaut `champ_natif`** (`cle`, `natif`) est rendu après `champ_en_double`. Il relève un champ **nouveau** dans
+l'un de ces deux cas :
+
+- sa clé appartient à la liste réservée ;
+- son libellé appartient à la liste réservée, une fois mis à la forme des clés (dérivation des choix, §12.3).
+
+Pour une modification, un champ vivant conservé n'est **jamais** relevé : un workflow existant peut déjà en porter un,
+et cette unité n'y touche pas.
+
+La liste réservée vit **en un seul endroit**, `app.champs_natifs_reserves()`. Elle rend `(cle, natif)` et se révise
+par migration. Sa première version :
+
+| `natif` | Clés réservées |
+|---|---|
+| `title` | `titre`, `title`, `nom`, `nom-affaire`, `intitule` |
+| `description` | `description` |
+| `owner` | `responsable`, `owner`, `proprietaire` |
+| `amount` | `montant`, `amount`, `montant-affaire`, `valeur`, `valeur-affaire`, `montant-estime` |
+| `currency` | `devise`, `currency`, `monnaie` |
+| `probability` | `probabilite`, `probability`, `probabilite-de-gain` |
+| `next_action` | `prochaine-action`, `next-action` |
+| `next_action_at` | `echeance`, `date-prochaine-action`, `next-action-at` |
+| `contacts` | `contact`, `contacts`, `contact-principal`, `interlocuteur` |
+| `organization` | `organisation`, `organization`, `societe`, `entreprise`, `client` |
+
+La comparaison est **exacte** : `montant-ht` ou `valeur-a-vie` passent. Un défaut bloque l'acceptation comme les
+autres (§12.3, contrôle 7). L'administrateur retire ou renomme le champ, ou le fait revoir : les défauts sont
+transmis au modèle (§12.6). L'écran traduit `natif` par une clé de traduction : « le montant », « le responsable »…
+
+### 14.6 La fonction `ia`
+
+- **Règles** (`REGLES`), deux ajouts :
+  - pour une étape dont le **rôle** existe au catalogue, viser ce nœud et mettre le nom voulu dans le `libelle` de
+    l'étape ; ne déclarer un nœud que si aucun nœud du catalogue ne joue ce rôle ;
+  - les champs natifs du §14.5.
+- **Le catalogue envoyé** porte aussi la probabilité par défaut de chaque nœud : `- cle — libelle (nature, 30 %)`.
+  Le modèle peut ainsi ne surcharger que ce qui diffère.
+- **Le schéma de sortie structurée** exige `libelle` et `probabilite` sur chaque étape, `null` permis, pour la
+  raison écrite au §13.5 à propos de `remappages`.
+- **La mise en forme** (`proposition.ts`) garde `libelle` (texte sans ses espaces de bord, ou `null`) et `probabilite`
+  (nombre ou `null`). Toute autre forme est une `reponse_invalide`, comme pour `remappages`.
+- **Le simulateur** gagne le scénario `catalogue` (développement seul). Il rend une création qui :
+  - vise un nœud du catalogue du seed sous un libellé surchargé ;
+  - redéclare un nœud du catalogue sous sa propre clé avec un autre libellé, ce qui provoque
+    `noeud_deja_au_catalogue` ;
+  - déclare un champ `montant` de type `money`, ce qui provoque `champ_natif`.
+
+### 14.7 L'écran (révision du §12.5 ; règles visuelles : `docs/DESIGN_SYSTEM.md` §5.52, révisé avant le code)
+
+- **Le nom d'une étape** dans l'aperçu est son `libelle` s'il est renseigné, sinon celui de son nœud.
+- **Corriger à la main** gagne, pour **toute** étape, son libellé et sa probabilité. Un libellé vidé revient à celui
+  du nœud.
+- **« Utiliser le nœud du catalogue »** retire le nœud proposé, comme avant, mais reporte sur l'étape :
+  - son libellé, s'il diffère de celui du nœud du catalogue ;
+  - sa probabilité, si elle diffère de la probabilité par défaut du catalogue.
+
+  L'annonce dit que le nom est gardé. L'écran lit à cette fin la probabilité par défaut du catalogue
+  (`lireCatalogueActif`).
+- **Le défaut `champ_natif`** est rendu en tête de l'aperçu, traduit (« Le champ « montant » reprend le montant,
+  déjà porté par l'affaire : retirez-le ou renommez-le. »).
+
+### 14.8 Preuves
+
+- **pgTAP** :
+  - la forme : `libelle` et `probabilite` mal typés refusés ;
+  - les défauts `probabilite_etape_invalide` et `champ_natif` : par la clé, par le libellé normalisé, une clé voisine
+    qui passe, un champ vivant conservé non relevé ;
+  - `app.champs_natifs_reserves()` ;
+  - l'acceptation d'une création : surcharge posée, égalité qui rend `null` ;
+  - l'acceptation d'une modification : clé absente qui garde, valeur différente qui pose, égalité qui retire ;
+  - `proposition_du_workflow` qui rend les noms effectifs.
+- **API, aux jetons réels** :
+  - une correction portant un libellé d'étape, acceptée, puis `workflow_steps.label_override` relu ;
+  - une suggestion du scénario `catalogue` : ses deux défauts écrits par la base.
+- **Unitaires** :
+  - les règles : liste native présente, consigne de réutilisation, probabilité au catalogue ;
+  - le schéma et la mise en forme ;
+  - `utiliserNoeudDuCatalogue`, qui reporte le libellé et la probabilité, ou rien quand ils sont égaux ;
+  - le différentiel ;
+  - le panneau.
+- **E2E, à la souris et au clavier**, contre le simulateur. Le parcours : générer avec le scénario `catalogue`, voir
+  les deux défauts, utiliser le nœud du catalogue en gardant le nom, retirer `montant`, accepter. L'éditeur montre
+  ensuite l'étape sous son nom surchargé. Captures observées aux quatre paliers.
+- **Contrôle facultatif contre le modèle réel** (§8) : sur le catalogue du seed, mesurer si `gemma4:e2b` vise les
+  nœuds existants et cesse de déclarer un montant. C'est une mesure consignée au journal, jamais une campagne.
+- **Seed** : une suggestion en revue créée par le scénario `catalogue`, au travers de la vraie fonction (§12.8).
+
+### 14.9 Ce que cette unité ne fait pas
+
+- **Exiger un champ natif** à une transition, ou le rendre requis sur une étape. `workflow_transition_required_fields`
+  et les règles ne visent que `form_fields`. Le rendre possible toucherait le modèle de données, `move_card` et
+  l'éditeur ; c'est écarté par la décision 646 et reste une unité possible.
+- **Toucher les champs qui doublonnent déjà une colonne native** dans des workflows existants.
+- **Le seuil d'ancienneté** d'une étape dans le format.
+- **Le connecteur MCP** (§14.2).
+- **Les champs communs d'espace** et le passage de colonnes natives au rattachement, qu'étudient `CRM-111` et
+  `CRM-112` (`docs/SPEC-rattachements.md`). La liste du §14.5 décrit ce que porte **l'affaire**, à quelque niveau que
+  la base le range ; ces unités la réviseront si elles changent ce que l'affaire porte.
+
+### 14.10 Découpage
+
+| Tranche | Contenu |
+|---|---|
+| **T1** | Base : une migration — forme, `probabilite_etape_invalide`, `champ_natif` et `app.champs_natifs_reserves()`, acceptation (création et `app.document_cible_ia`), `proposition_du_workflow` ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement |
+| **T2** | Fonction `ia` : règles, catalogue avec probabilité, schéma, mise en forme, scénario `catalogue` du simulateur ; unitaires, API |
+| **T3** | Écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; nom et probabilité d'étape éditables, bouton qui garde le nom, différentiel, traductions ; unitaires, E2E, captures, manuel, seed |
+| **T4** | Livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp reconstruite ; constat |
