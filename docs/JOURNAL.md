@@ -32437,3 +32437,17 @@ s'élargissent pas : l'administrateur d'espace passe par ses propres règles (po
 `app.is_workspace_admin`). L'écran de `CRM-101` (`PlateformeEspace.tsx`) peut être réemployé par extraction d'un
 composant partagé, en coordination avec la session qui tient `CRM-103`. **Suite.** Spécification à écrire
 (`docs/SPEC-membres.md`) après mesure des politiques existantes, puis validation du responsable avant tout code.
+
+### INC-283 — deux fautes de coordination de la session `CRM-093`/`CRM-070`, le 2026-10-23
+
+*2026-10-23.* **1. Deux fichiers partagés vidés dans l'arbre de travail.** Un script écrivait la copie de travail de
+`docs/BACKLOG.md` et `docs/JOURNAL.md` par `open(f, 'w').write(fn(open(f).read()))` : l'ouverture en écriture tronque
+le fichier **avant** sa lecture. Le backlog est resté vide et le journal réduit à une entrée, quelques minutes, vers
+15 h 15. Les deux fichiers ont été remis au contenu de HEAD, et les quatre sessions prévenues. **Aucune ligne perdue,
+vérifié par chacune** : leurs modifications étaient committées. Le commit lui-même (`dca853f3`) était sain, construit
+depuis HEAD. **2. Des commits d'autrui poussés.** Le script de commit poussait la branche `main` locale entière. Dans
+un dépôt où les sessions committent sans toujours pousser, ce push a emporté `424bdd99` et `f5a74623` (`CRM-106` et
+`CRM-107` T3), que leur session gardait pour la relecture du responsable, et `b0072f0b`. **Rien n'a été réécrit** :
+une réécriture de l'historique demande l'instruction du responsable. **Corrections.** Le script refuse désormais de
+committer et de pousser si `origin/main..HEAD` n'est pas vide ; un fichier partagé ne s'écrit plus que par un blob
+construit depuis HEAD, et sa copie de travail se lit avant d'être réécrite.
