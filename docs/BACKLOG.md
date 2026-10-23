@@ -15459,7 +15459,9 @@ sous-tranches livrées séparément ; `structure` la suit.*
         et son fil nomme Driss. Captures observées.
       - `verify-mcp.sh` **67 contrôles, aucune anomalie** (intégration 29) ; harnais `SCENARIOS_UI=906`.
       - Manuel 11.5 et 11.6, DAT.
-      - **Reste** : la livraison (image `mcp`) et le constat du responsable.
+      - **Livrée le 2026-10-23, cinquième fenêtre** : révision `b57de7b5`, image `mcp` reconstruite et saine,
+        `verifier.sh` 26/27 (compteur antérieur).
+      - **Reste `[~]`** : le constat du responsable, un assistant connecté qui écrit sur une affaire.
 - [ ] **T1** — `structure` (et la recherche globale de référence).
 - [ ] **T3** — `contacts`.
 - [ ] **T4** — `budgets`.
@@ -15864,8 +15866,10 @@ règle dans la webapp et le connecteur, et les captures observées.
       - Manuel 4.7 *quater* ; fil 4.10 à six filtres.
       - Campagnes **complètes** : ui **905/905**, api **1169/1169** ; pgTAP 91 fichiers, 3897 assertions. Harnais :
         `SCENARIOS_UI=905` (compté).
-- [ ] **T4** — outils MCP `crm_card_activity_list`, `crm_card_activity_add`,
+- [~] **T4** — outils MCP `crm_card_activity_list`, `crm_card_activity_add`,
       `crm_card_activity_update` (noms anglais, décision 653), inscrits au catalogue (`docs/SPEC-mcp.md` §9.2) et construits avec `CRM-104` T2.
+      **Livrés avec `CRM-104` T2.a et T2.b** (production le 2026-10-23, révisions `0242d845` et `b57de7b5`) : lecture,
+      ajout et correction prouvés contre la vraie pile. Reste le constat du responsable.
 - [~] **T5** — livraison en production, sur instruction du responsable.
       **Livrée le 2026-10-23, troisième fenêtre** : révision `77b17fa1`, instantané confirmé par le responsable ; registre
       de production à 100 ; `verifier.sh` 26/27 (compteur de redémarrage antérieur) ; deux tables, sept politiques,

@@ -13,9 +13,25 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-104` T2.b — le connecteur MCP écrit sur les affaires (décision 655)
+### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
-*En développement ; vit dans le service `mcp`, dont l'image de production est à reconstruire.*
+*Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
+
+- **Données de démonstration du connecteur** : Farida en attente de droits, Camille en lecture sur les recettes, Driss
+  refusé par le CRM sur le rapport de rentabilité ; les comptes et le journal naissent de vraies connexions au
+  connecteur (`docs/SPEC-seed.md` §22).
+
+## [Publié]
+
+### Déployé en production, 2026-10-23 — cinquième fenêtre : l'image `mcp`, écriture des affaires
+
+Cellule Spark `crm`, révision `b57de7b5` : `scripts/spark/livrer.sh` sans migration, puis la reconstruction explicite de
+l'image `mcp` dans la cellule, saine. **Avant** : `verify-mcp.sh` 67 contrôles sans anomalie ; `plateforme-mcp`,
+`connecteur-mcp` et `connecteur-affaires` 15/15. **Vérifié** : `verifier.sh` 26 contrôles sur 27 (le même compteur
+antérieur) ; dans le conteneur, le module `affaires_ecriture` présent ; `/mcp` sans jeton rend `401`. **Non constaté** :
+un appel réel d'un assistant connecté.
+
+#### `CRM-104` T2.b — le connecteur MCP écrit sur les affaires (décision 655)
 
 - **Douze outils**, aux règles de l'écran et signés du nom de la personne dans l'historique :
   - créer une affaire, la commenter, y consigner une activité et la corriger ;
@@ -27,16 +43,6 @@ d'exécuter le code attendu.
   - la mettre à la corbeille.
 - **Le motif d'un refus** — déplacement non déclaré, motif exigé, question obligatoire sans réponse — est rendu à
   l'assistant.
-
-### `CRM-103` T3 — le seed du connecteur (développement seulement)
-
-*Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
-
-- **Données de démonstration du connecteur** : Farida en attente de droits, Camille en lecture sur les recettes, Driss
-  refusé par le CRM sur le rapport de rentabilité ; les comptes et le journal naissent de vraies connexions au
-  connecteur (`docs/SPEC-seed.md` §22).
-
-## [Publié]
 
 ### Déployé en production, 2026-10-23 — quatrième fenêtre : l'image `mcp`
 
