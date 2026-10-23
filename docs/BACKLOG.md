@@ -15795,8 +15795,13 @@ règle dans la webapp et le connecteur, et les captures observées.
 
 - [x] **Spécification** validée (décision 649) : activités réalisées seulement, durée indépendante du temps passé,
       droits d'un commentaire, pierre tombale au retrait, aucun outil MCP de retrait.
-- [ ] **T1** — migration : `card_activities` et `card_activity_participants`, contraintes, trigger des participants,
+- [x] **T1** — migration : `card_activities` et `card_activity_participants`, contraintes, trigger des participants,
       politiques ; pgTAP ; API aux jetons réels ; contrat de déploiement.
+      **Vérifiée le 2026-10-23** : migration `0100` (noms anglais, décision 650) appliquée en développement ; pgTAP
+      `0091` **29**, six mutations tuées (modération, date future, participant hors de l'affaire, nettoyage des
+      participants au retrait, politique d'insertion, vidage du compte rendu) ; `0016` à 157 politiques, `0017` et
+      `0018` révisées ; série complète 91 fichiers, 3897 assertions, aucune anomalie ; API `activites.spec.ts` **4/4**
+      aux jetons réels, sans reste en base ; types régénérés et témoin des tables ; `SCHEMA.md` §5 ; contrat, ligne 100.
 - [ ] **T2** — webapp : lecture, bloc « Activités » de la fiche, formulaire, troisième source de la timeline ; design
       system écrit avant l'écran ; unitaires.
 - [ ] **T3** — E2E, captures, seed, manuel, campagnes.

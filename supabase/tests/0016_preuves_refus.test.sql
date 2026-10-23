@@ -6,6 +6,8 @@
 --           docs/SPEC-costs.md §2.3 bis
 --           docs/SPEC-temps.md §5
 -- @verifies CRM-108 (docs/BACKLOG.md) — tranche T2 : les huit politiques des recettes (149) ; docs/SPEC-recettes.md §3
+-- @verifies CRM-067 (docs/BACKLOG.md) — tranche T1 : les sept politiques des activités et de leurs participants (157) ;
+--           docs/SPEC-activites.md §3
 -- @verifies CRM-109 (docs/BACKLOG.md) — tranche T1 : l'unique politique de lecture des refus d'admission (150) ;
 --           docs/SPEC-refus-admission.md §3
 -- @verifies docs/SPEC-permissions-rls.md §7 (les douze preuves), §7.2 (contrat mesuré),
@@ -47,7 +49,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(64);
+select plan(66);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -218,8 +220,12 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	150,
-	'CENT CINQUANTE politiques dans `public`, et pas une de plus — 149 avant `CRM-109` tranche 1, plus l''UNIQUE '
+	157,
+	'CENT CINQUANTE-SEPT politiques dans `public`, et pas une de plus — 150 avant `CRM-067` tranche 1, plus les SEPT des '
+	'activités (docs/SPEC-activites.md §3) : lecture, insertion, correction par l''auteur et modération de '
+	'`card_activities` — celles d''un commentaire, la modération bornée au retrait par trigger —, puis lecture, ajout '
+	'et retrait de ses participants, réservés à l''auteur. AUCUNE SUPPRESSION D''ACTIVITÉ, et c''est un refus double : ni '
+	'politique ni privilège — retirer pose la pierre tombale. Avant elles : 150, soit 149 avant `CRM-109` tranche 1, plus l''UNIQUE '
 	'politique de LECTURE de `admission_refus` (docs/SPEC-refus-admission.md §3) : l''administrateur de l''espace lit '
 	'les refus de ses attentes, 90 jours au plus. AUCUNE ÉCRITURE, et c''est un refus double : ni politique ni '
 	'privilège — seule `journaliser_refus_admission`, sous la clé de service, écrit. Avant elle : 149, soit '
@@ -416,6 +422,14 @@ select is(pg_temp.politiques('workspace_invitations'),
 
 -- Ajoutée par `CRM-109` T1 (docs/SPEC-refus-admission.md §3) : une trace de refus se LIT par l'administrateur de
 -- l'espace, et ne s'écrit par PERSONNE — la fonction de l'échangeur est le seul chemin.
+-- Ajoutées par `CRM-067` T1 (docs/SPEC-activites.md §3) : les politiques d'un commentaire, et celles des participants.
+select is(pg_temp.politiques('card_activities'),
+	array['card_activities_insertion','card_activities_lecture','card_activities_maj','card_activities_moderation']::text[],
+	'`card_activities` porte les quatre politiques d''un commentaire, aucune suppression');
+select is(pg_temp.politiques('card_activity_participants'),
+	array['card_activity_participants_ecriture','card_activity_participants_lecture','card_activity_participants_retrait']::text[],
+	'`card_activity_participants` : lecture, ajout et retrait, aucune mise à jour');
+
 select is(pg_temp.politiques('admission_refus'), array['admission_refus_lecture_admin']::text[],
 	'`admission_refus` porte sa seule politique de lecture administrateur, aucune écriture');
 

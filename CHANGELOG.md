@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-067` T1 — les activités d'une affaire : la base (décisions 647 à 650)
+
+*En développement seulement, tranche T1. Prouvée en pgTAP et aux jetons réels ; l'écran viendra avec T2. La migration
+`0100` attend la prochaine fenêtre de production.*
+
+- **Migration `0100`** : une affaire peut porter des **activités réalisées** — appel, réunion ou visio —, avec leur
+  date (jamais dans le futur), leur durée, leur sujet, leur compte rendu et leurs participants, pris parmi les contacts
+  de l'affaire et les membres de l'espace. Les droits sont ceux d'un commentaire : qui écrit sur l'affaire consigne,
+  l'auteur corrige et retire, un administrateur de l'espace retire sans pouvoir réécrire. Retirer laisse une trace
+  vide à sa place.
+
 ### `CRM-108` — la famille « Recettes » du connecteur MCP (reste à livrer : l'image `mcp`)
 
 *La migration `0095`, la fiche et l'écran « Rentabilité » sont en production depuis le 2026-10-23 ; ces outils vivent dans le service `mcp`, dont l'image de production n'est pas encore reconstruite. D'ici là, une case « Recettes » cochée dans la matrice reste sans effet, sans erreur.*

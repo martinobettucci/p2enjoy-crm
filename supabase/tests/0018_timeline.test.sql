@@ -538,9 +538,11 @@ select is(
 -- 9. Ce qui reste dû, figé par des assertions — mécanisme de la décision 51
 -- =============================================================================================
 
-select hasnt_table('public', 'card_activities',
-	'`card_activities` n''existe pas : appels, réunions et visios ne sont portés par AUCUNE unité '
-	'du chunk 3, et le fil unifié s''en tient à deux sources sur cinq');
+-- Révisée par `CRM-067` T1 (migration 100, décision 650) — mécanisme de la décision 51 : l'assertion reste, son
+-- contenu suit la livraison.
+select has_table('public', 'card_activities',
+	'`card_activities` existe depuis `CRM-067` (migration 100) : appels, réunions et visios réalisés ; le fil unifié '
+	'la lira comme troisième source avec sa tranche T2 (docs/SPEC-activites.md §4)');
 
 select hasnt_table('public', 'audit_log',
 	'`audit_log` reste due par `CRM-072` : la preuve de refus n° 8 n''est satisfaisable que pour '

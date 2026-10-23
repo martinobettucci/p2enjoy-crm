@@ -589,7 +589,9 @@ PORT_RAPPORT=9323
 # `0089_inscrire_attente` (T3). 87 + 2 = 89, MESURÉ par `npm run test:sql` — « 89 fichiers ».
 # **90 depuis `CRM-109` T1, 2026-10-23** (décisions 640 et 644) : `0090_refus_admission.test.sql`, seul fichier ajouté.
 # 89 + 1 = 90, MESURÉ par `npm run test:sql` — « 90 fichiers ».
-FICHIERS_SQL_ATTENDUS=90
+# **91 depuis `CRM-067` T1, 2026-10-23** (décisions 647 à 650) : `0091_activites.test.sql`, seul fichier ajouté. 90 + 1 =
+# 91, MESURÉ par `npm run test:sql` — « 91 fichiers ».
+FICHIERS_SQL_ATTENDUS=91
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -674,7 +676,11 @@ FICHIERS_SQL_ATTENDUS=90
 # série complète a rendu 88 fichiers verts et deux rouges (`0041`, `0080`), qui dépendent des workflows du seed et
 # tournaient pendant un passage E2E d'une autre session qui les modifie — rejouées seules : 55 assertions, aucune
 # anomalie.
-ASSERTIONS_ATTENDUES=3866
+# **3897 depuis `CRM-067` T1, 2026-10-23** : la suite neuve `0091_activites`, **29** assertions, six mutations tuées ;
+# `0016` gagne **2** assertions — les politiques de `card_activities` et de ses participants nommées — et son compte
+# passe à 157 politiques ; `0017` et `0018` révisent leur garde (`card_activities` existe), sans changer leur plan.
+# 3866 + 29 + 2 = 3897, MESURÉ — « 91 fichiers, 3897 assertions, aucune anomalie ».
+ASSERTIONS_ATTENDUES=3897
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1038,7 +1044,11 @@ ASSERTIONS_ATTENDUES=3866
 # `CRM-103` T3.a, fichier NEUF, **8** scénarios — la garde des quatre fonctions du connecteur (anonyme par le privilège,
 # lectrice et administratrice d'espace par la garde), la liste des comptes, la fiche, la pose d'une matrice, ses refus,
 # et le journal des appels.
-SCENARIOS_API=1165
+# **1169, COMPTÉE le 2026-10-23** (« Total: 1169 tests in 83 files ») : `e2e/api/activites.spec.ts` de `CRM-067` T1,
+# fichier NEUF, **4** scénarios — consigner là où l'on écrit et pas ailleurs, date future refusée ; le business developer
+# refusé sur « Maintenance » ; correction par l'auteur, rien pour un non-auteur, modération bornée au retrait, pierre
+# tombale, aucune suppression ; participants pris dans l'affaire.
+SCENARIOS_API=1169
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

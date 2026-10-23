@@ -159,6 +159,123 @@ export type Database = {
           },
         ]
       }
+      card_activities: {
+        Row: {
+          author_id: string | null
+          body: string | null
+          card_id: string
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          duration_minutes: number | null
+          edited_at: string | null
+          id: string
+          occurred_at: string
+          subject: string
+          type: string
+          workspace_id: string
+        }
+        Insert: {
+          author_id?: string | null
+          body?: string | null
+          card_id: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          duration_minutes?: number | null
+          edited_at?: string | null
+          id?: string
+          occurred_at: string
+          subject: string
+          type: string
+          workspace_id: string
+        }
+        Update: {
+          author_id?: string | null
+          body?: string | null
+          card_id?: string
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          duration_minutes?: number | null
+          edited_at?: string | null
+          id?: string
+          occurred_at?: string
+          subject?: string
+          type?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_activities_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_activities_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_activities_deleted_by_fkey"
+            columns: ["deleted_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_activities_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_activity_participants: {
+        Row: {
+          activity_id: string
+          contact_id: string | null
+          profile_id: string | null
+        }
+        Insert: {
+          activity_id: string
+          contact_id?: string | null
+          profile_id?: string | null
+        }
+        Update: {
+          activity_id?: string
+          contact_id?: string | null
+          profile_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_activity_participants_activity_id_fkey"
+            columns: ["activity_id"]
+            isOneToOne: false
+            referencedRelation: "card_activities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_activity_participants_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_activity_participants_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_comment_mentions: {
         Row: {
           comment_id: string

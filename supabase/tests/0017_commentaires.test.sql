@@ -618,9 +618,10 @@ select is(
 	'MENTION qui le fait — `CRM-064` tranche 2, docs/SPEC-notifications.md §14. Sans cette moitié, '
 	'une table créée sans production passerait l''assertion précédente');
 
-select is(to_regclass('public.card_activities')::text, null,
-	'`card_activities` n''existe pas : le §5 de docs/SCHEMA.md la décrit, aucune unité du chunk 3 '
-	'ne la porte');
+-- Révisée par `CRM-067` T1 (migration 100, décision 650) — mécanisme de la décision 51.
+select is(to_regclass('public.card_activities')::text, 'card_activities',
+	'`card_activities` existe depuis `CRM-067` (migration 100), table DISTINCTE des commentaires : une activité '
+	'réalisée n''est pas un propos libre (docs/SPEC-activites.md §3, docs/SCHEMA.md §5)');
 
 -- --- 8.5 LA MODÉRATION — INC-072, arbitrage du lot G (décision 367), mise en œuvre 374 ---------
 --

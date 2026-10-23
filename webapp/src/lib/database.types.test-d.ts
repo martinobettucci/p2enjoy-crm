@@ -272,6 +272,13 @@ type _tables = Expect<
     // `journaliser_refus_admission` écrit, sous la clé de service) ; la lecture est réservée à l'administrateur de
     // l'espace et bornée à 90 jours ; `motif` est un texte libre pour le type, une liste fermée de trois pour la base.
     | 'admission_refus'
+    // `0100` de `CRM-067` TRANCHE T1 ajoute `card_activities` et `card_activity_participants` (docs/SPEC-activites.md §3,
+    // décisions 647 à 650). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `workspace_id`, `author_id`, les dates et la pierre tombale
+    // sont posés par les triggers, jamais par le client, et les privilèges de colonne l'imposent ; la date jamais
+    // future et la borne de la modération sont des triggers ; un participant porte EXACTEMENT un de `contact_id` ou
+    // `profile_id`, que le type laisse tous deux facultatifs.
+    | 'card_activities'
+    | 'card_activity_participants'
     | 'workspace_members'
     | 'workspaces'
   >
