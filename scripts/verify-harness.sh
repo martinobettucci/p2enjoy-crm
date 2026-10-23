@@ -1029,7 +1029,11 @@ ASSERTIONS_ATTENDUES=3863
 # **1157, COMPTÉE le 2026-10-23** (« Total: 1157 tests in 81 files ») : `e2e/api/membres.spec.ts` gagne **3** scénarios
 # de `CRM-070` T4 — l'administratrice pose, modifie et retire un droit fin de la lectrice et relit l'accès effectif ; le
 # business developer et la lectrice ne posent ni ne retirent rien.
-SCENARIOS_API=1157
+# **1165, COMPTÉE le 2026-10-23** (« Total: 1165 tests in 82 files ») : `e2e/api/connecteur-administration.spec.ts` de
+# `CRM-103` T3.a, fichier NEUF, **8** scénarios — la garde des quatre fonctions du connecteur (anonyme par le privilège,
+# lectrice et administratrice d'espace par la garde), la liste des comptes, la fiche, la pose d'une matrice, ses refus,
+# et le journal des appels.
+SCENARIOS_API=1165
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
