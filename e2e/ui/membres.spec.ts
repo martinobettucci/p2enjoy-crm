@@ -4,6 +4,9 @@
 //           traduits), §6 (E2E par rôle) ; docs/DESIGN_SYSTEM.md §5.61, §5.59 ; CLAUDE.md §16 (captures observées)
 // @verifies CRM-070 (docs/BACKLOG.md) — tranche T3 : la section « Attentes » sur la pile réelle — inscrire au clavier,
 //           remplacer, retirer ; absente pour la lectrice ; docs/SPEC-membres.md §3.2 ; docs/DESIGN_SYSTEM.md §5.61
+// @verifies CRM-070 (docs/BACKLOG.md) — tranche T4 : la matrice des droits fins sur la pile réelle — l'accès effectif rendu
+//           par la base, un droit posé puis retiré au clavier, l'administratrice jamais restreinte ; absente pour la
+//           lectrice ; docs/SPEC-membres.md §3.3
 //
 // LE SEED : Camille Aubert seule administratrice de l'espace de démonstration, Driss Lemoine business developer, Farida
 // Nowak lectrice. Chaque scénario qui écrit REND l'état du seed avant de finir : le rôle de Farida revient à « Lecteur »,
@@ -121,7 +124,35 @@ test.describe('l’administratrice — Camille Aubert', () => {
 		await expect(section.getByTestId('ligne-attente')).toHaveAttribute('data-email', 'attendu@p2enjoy.test')
 	})
 
-	for (const [largeur, palier] of [
+	test('droits fins : la matrice de Farida, un droit posé puis rendu à « hérité », l’administratrice jamais restreinte', async ({ page }) => {
+		await page.goto(MEMBRES)
+		const droits = page.getByTestId('droits-fins')
+		// Le premier membre qui n'administre pas est choisi d'abord : Driss Lemoine, dans l'ordre de la liste.
+		await expect(droits.getByLabel('Membre')).toHaveValue('5eed0000-0000-4000-8000-000000000012')
+		await expect(droits.getByRole('row', { name: /^Maintenance/ }).getByTestId('acces-effectif')).toHaveText('Lecture')
+		await droits.getByLabel('Membre').selectOption({ label: 'Farida Nowak' })
+		const effectif = (nom: string) => droits.getByRole('row', { name: new RegExp(`^${nom}`) }).getByTestId('acces-effectif')
+		await expect(effectif('Conseil & IA')).toHaveText('Aucun accèsLisible par l’un de ses channels')
+		await expect(effectif('Prospection')).toHaveText('Écriture')
+		await expect(effectif('Grands comptes')).toHaveText('Aucun accès')
+		await capturer(page, 'droits-fins-farida-1440', UNITE)
+
+		const grandsComptes = droits.getByLabel('Droit posé sur Grands comptes')
+		await grandsComptes.focus()
+		await grandsComptes.selectOption('viewer')
+		await expect(droits.getByTestId('message-droits')).toHaveText('Droit de Farida Nowak sur « Grands comptes » : Lecture.')
+		await expect(effectif('Grands comptes')).toHaveText('Lecture')
+		await grandsComptes.selectOption('herite')
+		await expect(droits.getByTestId('message-droits')).toHaveText('Droit de Farida Nowak sur « Grands comptes » : Hérité.')
+		await expect(effectif('Grands comptes')).toHaveText('Aucun accès')
+
+		await droits.getByLabel('Membre').selectOption({ label: 'Camille Aubert' })
+		await expect(droits.getByTestId('droits-administrateur')).toContainText('n’est jamais restreint')
+		await expect(effectif('Conseil & IA')).toHaveText('Écriture')
+		await expect(droits.getByLabel('Droit posé sur Conseil & IA')).toBeDisabled()
+	})
+
+		for (const [largeur, palier] of [
 		[390, 'sm'],
 		[900, 'md'],
 		[1152, 'lg'],
@@ -154,6 +185,7 @@ test.describe('la lectrice — Farida Nowak', () => {
 		// Les attentes sont réservées à l'administrateur : la section est absente, sans phrase qui dirait qu'elle existe.
 		await expect(page.getByRole('heading', { name: 'Attentes' })).toHaveCount(0)
 		await expect(page.getByTestId('inscrire-attente')).toHaveCount(0)
+		await expect(page.getByTestId('droits-fins')).toHaveCount(0)
 		await capturer(page, 'membres-lectrice-1440', UNITE)
 	})
 })

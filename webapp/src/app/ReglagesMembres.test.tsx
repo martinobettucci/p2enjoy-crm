@@ -4,6 +4,8 @@
 //           docs/DESIGN_SYSTEM.md §5.61, §5.59 (motif de bloc, éteinte sans motif pendant la lecture), §5.27
 // @verifies CRM-070 (docs/BACKLOG.md) — tranche T3 : la section « Attentes », rendue au seul administrateur ; inscrire,
 //           remplacer, retirer ; les refus traduits ; un seul bloc ouvert ; docs/SPEC-membres.md §3.2 ; DS §5.28, §5.61
+// @verifies CRM-070 (docs/BACKLOG.md) — tranche T4 : la section « Droits fins » n'est rendue qu'à l'administrateur
+//           (docs/SPEC-membres.md §3.3, §5 point 1)
 //
 // La base est simulée en mémoire, au format de PostgREST : une écriture rend ses lignes, ou une erreur, ou zéro ligne.
 // Le refus réel par la RLS est prouvé hors interface (`e2e/api/membres.spec.ts`) ; ici, l'écran et sa traduction.
@@ -46,6 +48,8 @@ function base(options: { refus?: Reponse; lecture?: Reponse; refusAttente?: Repo
 	const ecrituresAttentes: { operation: string; charge?: unknown; filtres?: Record<string, unknown> }[] = []
 	const client = {
 		rpc(fonction: string, args: { p_email: string; p_role: string }) {
+			// La matrice des droits fins (T4) a sa preuve propre (`DroitsFins.test.tsx`) : ici, une matrice vide.
+			if (fonction === 'acces_effectif_membre') return Promise.resolve({ data: [], error: null, status: 200 })
 			ecrituresAttentes.push({ operation: fonction, charge: args })
 			if (options.refusAttente !== undefined) return Promise.resolve(options.refusAttente)
 			const email = args.p_email.trim().toLowerCase()
@@ -248,6 +252,8 @@ describe('les attentes (T3)', () => {
 		expect(attentes()).toEqual(['attendu@p2enjoy.test'])
 		expect(within(section).getByText('Auteur inconnu')).toBeTruthy()
 		expect(screen.queryByText('En suspens')).toBeNull()
+		// La section des droits fins suit, pour le même seul administrateur (T4).
+		expect(await screen.findByTestId('droits-fins')).toBeTruthy()
 	})
 
 	for (const administration of ['refusee', 'en-lecture', 'inconnue'] as const) {
@@ -256,6 +262,7 @@ describe('les attentes (T3)', () => {
 			await screen.findByTestId('tableau-membres')
 			expect(screen.queryByText('Attentes')).toBeNull()
 			expect(screen.queryByTestId('inscrire-attente')).toBeNull()
+			expect(screen.queryByTestId('droits-fins')).toBeNull()
 		})
 	}
 

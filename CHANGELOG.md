@@ -36,9 +36,9 @@ captures observées, manuel au chapitre 5 duodecies ; l'intégration réelle des
 
 ### `CRM-070` — Réglages ▸ Membres : les membres d'un espace et leurs rôles (décisions 634 et 635)
 
-*En développement seulement. Tranches T1 à T3 : prouvées en pgTAP, aux jetons réels (API), en tests unitaires et en
-E2E sur la pile seedée, captures observées ; manuel, chapitre 10 bis. Les droits fins viendront avec T4. Les migrations
-`0096` et `0097` attendent la prochaine fenêtre de production.*
+*En développement seulement. Tranches T1 à T4 : prouvées en pgTAP, aux jetons réels (API), en tests unitaires et en
+E2E sur la pile seedée, captures observées ; manuel, chapitre 10 bis. Les migrations `0096` et `0097` attendent la
+prochaine fenêtre de production.*
 
 - **Écran « Membres »** (`/reglages/membres`, après « Arborescence » dans l'index des réglages) : la liste des membres
   de l'espace, administrateurs d'abord. Un administrateur de l'espace y **change un rôle** — enregistré dès le choix — et
@@ -51,9 +51,12 @@ E2E sur la pile seedée, captures observées ; manuel, chapitre 10 bis. Les droi
   adresse et un rôle, la **remplace** en réinscrivant la même adresse (le message dit le rôle d'avant et d'après), et
   la retire. Une attente « en suspens » est signalée. **Migration `0097`** : `inscrire_attente`, qui retire et
   réinscrit en une seule transaction, sous les règles d'accès existantes.
+- **Droits fins** : en dernière section, l'administrateur choisit un membre et lit, track par track et channel par
+  channel, le droit posé et l'**accès effectif** qui en résulte, calculé par le CRM. Il pose « Membre », « Lecture » ou
+  « Aucun accès », ou revient à « Hérité » ; l'accès est relu après chaque choix. Un administrateur n'est jamais
+  restreint, et l'écran le dit.
 - **Migration `0096`** : `acces_effectif_membre`, la lecture des droits fins posés pour une personne et de l'accès qui
-  en résulte, track par track et channel par channel, **réservée à l'administrateur de l'espace**. L'écran l'emploiera
-  avec T4.
+  en résulte, **réservée à l'administrateur de l'espace**.
 - **Plateforme** : le tableau des membres et le bloc des attentes de la fiche d'un espace sont désormais partagés avec
   cet écran ; leur rendu ne change pas.
 

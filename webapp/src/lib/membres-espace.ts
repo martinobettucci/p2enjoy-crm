@@ -6,6 +6,9 @@
 // @spec CRM-070 (docs/BACKLOG.md) — tranche T3 : les attentes, lues sous `workspace_invitations_lecture_admin`,
 //       inscrites ou remplacées par `inscrire_attente` (migration 97), retirées sous la politique de suppression ;
 //       docs/SPEC-membres.md §3.2 (en attente, en suspens), §5 point 3 ; docs/SCHEMA.md §9 bis.8 quinquies
+// @spec CRM-070 (docs/BACKLOG.md) — tranche T4 : les droits fins d'un membre, lus par `acces_effectif_membre`
+//       (migration 96, réservée à l'administrateur), posés dans `track_members` et `channel_members` sous leurs politiques
+//       `*_admin`, retirés pour revenir à « hérité » ; docs/SPEC-membres.md §3.3 ; docs/SCHEMA.md §9 bis.8 quater
 // @spec CLAUDE.md §10 — ce module ne décide AUCUN droit : il écrit dans la table, et la politique décide
 //
 // Ce module ne passe PAS par les fonctions `plateforme_*`, gardées par le drapeau de superadministrateur : l'écran d'un
@@ -239,5 +242,111 @@ export function retirerAttenteEspace(client: ClientCrm, idWorkspace: string, ema
 			.eq('workspace_id', idWorkspace)
 			.eq('email', email)
 			.select('email') as unknown as PromiseLike<ReponseEcriture>,
+	)
+}
+
+// --- Les droits fins (T4) ---------------------------------------------------------------------------------------
+
+/** Un droit posé sur un track ou un channel ; l'absence de ligne est « hérité ». */
+export type AccesPose = 'member' | 'viewer' | 'none'
+export type AccesEffectif = 'write' | 'read' | 'none'
+
+const ACCES_POSES: ReadonlySet<string> = new Set(['member', 'viewer', 'none'])
+const ACCES_EFFECTIFS: ReadonlySet<string> = new Set(['write', 'read', 'none'])
+
+/** Une ligne de la matrice, telle que `acces_effectif_membre` la rend. L'accès effectif n'est JAMAIS recalculé ici. */
+export type DroitFin = {
+	readonly objet: 'track' | 'channel'
+	readonly id: string
+	readonly idTrack: string
+	readonly nom: string
+	readonly archive: boolean
+	readonly pose: AccesPose | null
+	readonly effectif: AccesEffectif
+	/** Pour un track : lisible parce que l'un de ses channels l'est (migration 34). `null` pour un channel. */
+	readonly lisibleParUnChannel: boolean | null
+}
+
+type LigneDroit = {
+	readonly objet: string
+	readonly id: string
+	readonly track_id: string
+	readonly nom: string
+	readonly archive: boolean
+	readonly acces_pose: string | null
+	readonly acces_effectif: string
+	readonly lisible_par_un_channel: boolean | null
+}
+
+/**
+ * L'ordre de la matrice : chaque track, par nom, suivi de ses channels, par nom. La fonction de lecture ne rend pas la
+ * position de l'arborescence ; l'ordre alphabétique est stable et se dit (`docs/DESIGN_SYSTEM.md` §5.61).
+ */
+export function ordonnerDroits(droits: readonly DroitFin[]): readonly DroitFin[] {
+	const parNom = (a: DroitFin, b: DroitFin) => a.nom.localeCompare(b.nom, 'fr')
+	const tracks = droits.filter((droit) => droit.objet === 'track').sort(parNom)
+	return tracks.flatMap((track) => [track, ...droits.filter((droit) => droit.objet === 'channel' && droit.idTrack === track.id).sort(parNom)])
+}
+
+/** La matrice d'un membre. Réservée à l'administrateur de l'espace : tout autre appelant reçoit un refus `42501`. */
+export async function lireDroitsFins(
+	client: ClientCrm,
+	idWorkspace: string,
+	idUtilisateur: string,
+): Promise<EtatAsync<readonly DroitFin[]>> {
+	try {
+		const reponse = await client.rpc('acces_effectif_membre', { p_ws: idWorkspace, p_user: idUtilisateur })
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		const lignes = (reponse.data ?? []) as unknown as readonly LigneDroit[]
+		return pret(
+			ordonnerDroits(
+				lignes
+					// Une valeur hors du vocabulaire est un défaut de la fonction, pas une valeur à deviner : la ligne est écartée.
+					.filter((ligne) => (ligne.objet === 'track' || ligne.objet === 'channel') && ACCES_EFFECTIFS.has(ligne.acces_effectif))
+					.map((ligne) => ({
+						objet: ligne.objet as 'track' | 'channel',
+						id: ligne.id,
+						idTrack: ligne.track_id,
+						nom: ligne.nom,
+						archive: ligne.archive,
+						pose: ligne.acces_pose !== null && ACCES_POSES.has(ligne.acces_pose) ? (ligne.acces_pose as AccesPose) : null,
+						effectif: ligne.acces_effectif as AccesEffectif,
+						lisibleParUnChannel: ligne.lisible_par_un_channel,
+					})),
+			),
+		)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * Pose un droit fin, ou le retire (`null`) pour revenir à « hérité ». Poser est un `upsert` sur la clé
+ * `(track_id | channel_id, user_id)` : la politique d'insertion et celle de mise à jour décident l'une et l'autre.
+ */
+export function poserDroitFin(
+	client: ClientCrm,
+	objet: 'track' | 'channel',
+	idObjet: string,
+	idUtilisateur: string,
+	acces: AccesPose | null,
+): Promise<IssueMembre> {
+	if (objet === 'track') {
+		return ecrire(() =>
+			(acces === null
+				? client.from('track_members').delete().eq('track_id', idObjet).eq('user_id', idUtilisateur).select('user_id')
+				: client
+						.from('track_members')
+						.upsert({ track_id: idObjet, user_id: idUtilisateur, access: acces }, { onConflict: 'track_id,user_id' })
+						.select('user_id')) as unknown as PromiseLike<ReponseEcriture>,
+		)
+	}
+	return ecrire(() =>
+		(acces === null
+			? client.from('channel_members').delete().eq('channel_id', idObjet).eq('user_id', idUtilisateur).select('user_id')
+			: client
+					.from('channel_members')
+					.upsert({ channel_id: idObjet, user_id: idUtilisateur, access: acces }, { onConflict: 'channel_id,user_id' })
+					.select('user_id')) as unknown as PromiseLike<ReponseEcriture>,
 	)
 }

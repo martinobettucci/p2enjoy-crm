@@ -87,6 +87,10 @@ Pour une personne choisie dans la liste des membres : la matrice de ses accès *
 - Écritures : `track_members` et `channel_members`, insertion, mise à jour ou suppression (retour à « hérité »).
 - Un administrateur n'est jamais restreint (`SPEC-permissions-rls.md`) : la matrice d'un administrateur l'affiche et
   désactive ses cellules, avec cette phrase.
+- *Précisé à l'écriture de T4* : la section n'est rendue qu'à qui administre l'espace — la lecture de l'accès effectif
+  lui est réservée par la base (§5 point 1), comme celle des attentes (§3.2). Poser un droit est un `upsert` sur la clé
+  `(track_id | channel_id, user_id)`, « hérité » une suppression ; aucune migration. L'ordre de la matrice est
+  alphabétique, la fonction ne rendant pas la position de l'arborescence (`docs/DESIGN_SYSTEM.md` §5.61).
 
 ### 3.4 États et refus
 

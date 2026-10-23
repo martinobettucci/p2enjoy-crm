@@ -5922,6 +5922,23 @@ envoie et refuse est spécifié par `docs/SPEC-membres.md` §3 et §4 ; ces règ
   y mentirait (« aucune attente »).
 - **UN SEUL BLOC OUVERT SUR L'ÉCRAN** (§5.28) : ouvrir le formulaire d'une attente referme la confirmation de retrait
   d'un membre, et inversement ; ouvrir un bloc efface les messages des deux sections.
+- **LA MATRICE DES DROITS FINS** (`CRM-070` T4, `webapp/src/app/DroitsFins.tsx`) vient en dernière section, **rendue au
+  seul administrateur** pour la même raison que les attentes : la lecture de l'accès effectif lui est réservée par la
+  base. Titre `h3` « Droits fins », phrase d'introduction qui dit la règle (« le droit le plus précis l'emporte »), puis
+  un sélecteur **« Membre »** à libellé visible (§5.7), `max-w-[40ch]`, qui choisit d'abord le premier membre **qui
+  n'administre pas** — le seul dont la matrice restreint quelque chose.
+- **UN TABLEAU DU §5.9 À TROIS COLONNES** : « Track ou channel » en `th scope="row"` — un track en `font-medium`, ses
+  channels à 32 px (`pl-8`), la mention « archivé » en 14 px `--color-text-3` après le nom —, « Droit posé » — un
+  sélecteur écrit au choix (§5.7 ter), « Hérité », « Membre », « Lecture », « Aucun accès », nommé « Droit posé sur
+  {objet} » —, « Accès effectif » — un **mot**, « Écriture », « Lecture » ou « Aucun accès », jamais une couleur seule.
+  Un track fermé qu'un de ses channels rend lisible porte dessous, en 14 px `--color-text-2`, « Lisible par l'un de ses
+  channels ». **L'ordre est alphabétique** — chaque track par nom, suivi de ses channels par nom — : la fonction de
+  lecture ne rend pas la position de l'arborescence, et un ordre stable qui se dit vaut mieux qu'un ordre deviné.
+- **L'ACCÈS EFFECTIF N'EST JAMAIS RECALCULÉ À L'ÉCRAN** : chaque écriture est suivie d'une relecture de la matrice, qui
+  reste affichée sous `aria-busy` pendant ce temps (§5.29 tranche 2 c) ; tous les sélecteurs sont désactivés tant
+  qu'une écriture est en vol. Le message sous le tableau dit « Droit de {nom} sur « {objet} » : {droit}. » (§5.27).
+- **UN ADMINISTRATEUR N'EST JAMAIS RESTREINT** : sa matrice s'affiche, une phrase en 14 px `--color-text-2` le dit au-dessus
+  du tableau, et chaque sélecteur est désactivé, sa valeur lisible.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
 
 ### 5.62 Fil d'Ariane de l'en-tête : du workspace à l'objet ouvert — `CRM-110`

@@ -32576,3 +32576,21 @@ Plusieurs ventes au même client font **plusieurs affaires**. C'est cette lectur
 8. **Connecteur MCP** : la question reste à poser au responsable (`CLAUDE.md`, « Spécificités du projet »).
 **Suite.** Aucune unité de backlog ni spécification tant que les points 1 à 8 ne sont pas tranchés ; un brouillon
 `docs/SPEC-*.md` les portera ensuite, comme `docs/SPEC-membres.md`.
+
+### `CRM-070` T4 — la matrice des droits fins, sans migration
+
+*2026-10-23.* **Observation.** Les politiques `track_members_*_admin` et `channel_members_*_admin` ouvrent déjà
+l'insertion, la mise à jour et la suppression à l'administrateur de l'espace : poser un droit est un `upsert` sur la clé
+`(track_id | channel_id, user_id)`, revenir à « hérité » une suppression. **Aucune migration.** **Décisions d'écran**
+(`docs/DESIGN_SYSTEM.md` §5.61) : l'accès effectif n'est jamais déduit à l'écran, il est **relu** par
+`acces_effectif_membre` après chaque écriture ; la section n'est rendue qu'à l'administrateur, la lecture lui étant
+réservée par la base ; l'ordre est alphabétique, la fonction ne rendant pas la position de l'arborescence ; le membre
+choisi d'abord est le premier qui n'administre pas. **Défauts trouvés en écrivant les preuves.** Le scénario E2E
+supposait Farida choisie d'abord : c'est Driss, premier non-administrateur dans l'ordre de la liste — le scénario est
+corrigé, l'écran suit la règle. Une mutation (« lisible par un channel » affiché quel que soit l'accès) survivait,
+faute d'un track lisible dont l'accès n'est pas « aucun » dans la base simulée : la simulation est corrigée, la mutation
+tuée. **Faute de coordination.** Deux boucles d'attente `pgrep -f "playwright test"` se reconnaissaient elles-mêmes et
+n'auraient jamais rendu la main ; elles ont été arrêtées. Un de mes passages a été refusé au démarrage (port 4173
+pris par une autre session) ; le suivant a tourné **en même temps** que `fil-ariane.spec.ts` (`CRM-110`, 16 h 21), sur
+le même arbre de travail, donc le même `dist` — sans rougeur attribuable, mais sans annonce croisée. L'attente se fait
+désormais sur le processus nommé, jamais sur un motif qui se reconnaît, et le passage final a été rejoué pile libre.

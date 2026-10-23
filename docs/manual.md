@@ -60,7 +60,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | **En cours : la liste des membres, leurs rôles et les attentes sont livrés en développement** — voir le chapitre 10 *bis*. Un administrateur d'espace y change un rôle, retire un membre, inscrit, remplace et retire une attente ; chaque membre consulte la liste des membres. Les droits fins viendront avec la tranche suivante. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses membres et ses attentes est livré par `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
+| 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | **Livré en développement** — voir le chapitre 10 *bis*. Un administrateur d'espace y change un rôle, retire un membre, inscrit, remplace et retire une attente, et pose les droits fins de chacun par track et par channel ; chaque membre consulte la liste des membres. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses membres et ses attentes est livré par `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
 | 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
 | 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Un seul outil pour l'instant : la liste des espaces |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
@@ -74,7 +74,7 @@
 | 22 | Choisir le workflow d'un channel | `CRM-033`, `CRM-019` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute affectation directe incohérente est refusée. Même lorsque le channel contient des affaires, une administratrice peut changer son workflow par l'API en donnant le mapping exhaustif de toutes les étapes occupées ; aucune affaire n'est laissée à moitié remappée et toute perte de réponse doit être acceptée explicitement. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore ce geste |
 | 23 | Composer le formulaire d'un workflow | `CRM-035`, `CRM-018`, `CRM-076` | **Partiellement livré dans l'écran** — voir le chapitre 5 bis.4. Un workflow porte son propre formulaire : budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié et lien vers la proposition, ainsi qu'un champ retiré dont les réponses restent consultables (volumes en annexe A). Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Lorsqu'un workflow est copié vers un track, son formulaire, ses règles et ses exigences sont remappés avec lui ; il est utilisable immédiatement sans partager les identifiants de la source. L'obligation est appliquée : voir le chapitre 24. Depuis `CRM-076`, un administrateur **déclare, modifie, réordonne, archive et restaure** les questions depuis « Réglages ▸ Workflows ». Ce qui manque est la **grille champ × étape** : régler la visibilité d'une question sur une étape reste un geste d'API |
 | 24 | Répondre aux questions d'une affaire | `CRM-036`, `CRM-037` | **Partiellement livré dans l'écran.** Une affaire porte ses réponses, et le produit les **vérifie** : une réponse doit correspondre au type de la question — un montant est un nombre, une case est cochée ou non, une date est une date, et une liste de choix n'accepte que les choix déclarés. Les réponses et les exigences sont consultables sur la fiche, et **s'y enregistrent** : chaque question s'écrit pour elle-même, dit ce qu'elle a fait, et montre son refus sous elle |
-| 24 bis | Restreindre l'accès à un track ou à un channel | `CRM-070` | À livrer |
+| 24 bis | Restreindre l'accès à un track ou à un channel | `CRM-070` | **Livré en développement** — voir le chapitre 10 *bis*.6. Un administrateur pose, pour chaque membre, un droit sur un track ou un channel — membre, lecture ou aucun accès — et lit l'accès qui en résulte |
 | 12 bis | Ce que le produit fait d'un message reçu | `CRM-054`, `CRM-055` | **Livré côté serveur, sans écran** — voir le chapitre 4.14. Les messages sont relevés, rangés dans l'affaire à qui ils s'adressent, et une trace en apparaît dans son historique. Un message qu'on ne sait pas rattacher est conservé et reste « non classé » ; le ranger exige le droit d'**écrire** sur l'affaire. Une affaire archivée ne reçoit plus. Les pièces jointes sont **analysées** : une pièce n'est téléchargeable qu'une fois déclarée saine, et une pièce non analysée ne l'est pas davantage |
 | 25 bis | Écrire depuis une autre adresse que celle où l'on reçoit | `CRM-053` | **Livré côté serveur, sans écran** — voir le chapitre 4.13. Recevoir et expédier sont deux choses distinctes : une personne peut relever `bizdev@` et écrire depuis `contact@`, et l'espace de démonstration le montre. Une adresse par défaut existe toujours, et en déclarer une nouvelle **déplace** la marque au lieu d'exiger qu'on retire l'ancienne. L'adresse d'expédition est vérifiée à l'enregistrement, puisque c'est la seule donnée que vos destinataires verront. Le quota quotidien peut être déclaré mais **n'est appliqué par rien** tant que l'envoi n'est pas livré |
 | 25 | Boîte mail système de l'espace | `CRM-052` | **Livré côté serveur, sans écran** — voir le chapitre 4.12. L'espace de travail et chaque personne peuvent avoir une boîte de réception déclarée, avec son serveur, son identifiant et son mot de passe **chiffré**. Le mot de passe n'est jamais réaffiché, ni même sa référence : personne ne peut le relire, pas même un administrateur. Le produit sait **essayer réellement la connexion** et dire ce qui a échoué. Ce qui manque est l'écran : aucun formulaire ne permet encore de déclarer une boîte depuis l'application |
@@ -4370,14 +4370,14 @@ L'onglet **« Journal »** retrace chaque geste de la plateforme, du plus récen
 ### 10.8 Ce que la plateforme n'offre pas
 
 - **Gérer ses propres membres en tant qu'administrateur d'espace**, sans être superadministrateur : c'est l'écran
-  « Réglages ▸ Membres » (chapitre 10 *bis*). Les droits fins par track et par channel y viendront avec `CRM-070`.
+  « Réglages ▸ Membres » (chapitre 10 *bis*), avec les attentes et les droits fins par track et par channel.
 - **Changer l'identifiant court d'un espace.**
 - **Annuler une suppression.**
 
 ## 10 bis. Les membres de votre espace : qui y travaille, avec quel rôle
 
-*En cours de livraison par `CRM-070` : la liste des membres, leurs rôles et les attentes sont livrés en développement ;
-les droits fins par track et par channel viendront ensuite.*
+*Livré en développement par `CRM-070` : la liste des membres, leurs rôles, les attentes et les droits fins par track et
+par channel.*
 
 Chaque espace de travail a ses **membres**, et chacun y tient un **rôle** : **Administrateur**, **Business developer**
 ou **Lecteur**. Cet écran les montre à tous les membres ; seuls les administrateurs de l'espace y changent quelque chose.
@@ -4438,7 +4438,28 @@ les autres membres, elle n'apparaît pas.
 
 Une adresse mal formée est refusée, et le formulaire reste ouvert pour la corriger.
 
-### 10 bis.6 Quand un geste n'aboutit pas
+### 10 bis.6 Les droits fins : restreindre ou rouvrir un track ou un channel
+
+Le rôle d'un membre vaut pour tout l'espace. Les **droits fins** le précisent, track par track et channel par channel.
+La section **« Droits fins »** vient en dernier ; **seuls les administrateurs de l'espace la voient**.
+
+1. Choisissez la personne dans **« Membre »**. L'écran propose d'abord le premier membre qui n'est pas administrateur.
+2. Le tableau liste chaque track, suivi de ses channels, par ordre alphabétique. Pour chacun :
+   - **« Droit posé »** : **Hérité** (rien n'est posé : le droit vient du track, ou du rôle), **Membre** (lecture et
+     écriture), **Lecture**, ou **Aucun accès** ;
+   - **« Accès effectif »** : ce que la personne peut réellement faire — **Écriture**, **Lecture** ou **Aucun accès**.
+     C'est le CRM qui le calcule, avec la même règle que partout ailleurs.
+3. Choisissez un autre droit dans la liste : il est enregistré **dès le choix**, un message le confirme, et l'accès
+   effectif est relu. **« Hérité »** retire le droit posé.
+
+**Le droit le plus précis l'emporte** : celui d'un channel sur celui de son track, celui d'un track sur le rôle. On
+peut donc fermer un track à quelqu'un et lui rouvrir un seul de ses channels. Le track apparaît alors « Aucun accès »,
+avec la mention **« Lisible par l'un de ses channels »** : la personne voit son nom, pour atteindre le channel ouvert.
+
+**Un administrateur n'est jamais restreint.** Sa matrice s'affiche, une phrase le rappelle, et ses droits ne se
+modifient pas ici.
+
+### 10 bis.7 Quand un geste n'aboutit pas
 
 Le message sous la liste dit pourquoi :
 
@@ -4448,9 +4469,8 @@ Le message sous la liste dit pourquoi :
 - **ce geste est réservé aux administrateurs de l'espace** ;
 - **le serveur n'a pas répondu** : vérifiez votre connexion et réessayez.
 
-### 10 bis.7 Ce que cet écran n'offre pas encore
+### 10 bis.8 Ce que cet écran n'offre pas encore
 
-- **Restreindre l'accès d'un membre** à un track ou à un channel.
 - **Savoir si une personne attendue a déjà essayé de se connecter** : une connexion refusée n'est pas encore gardée
   (`CRM-109`).
 

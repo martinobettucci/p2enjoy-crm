@@ -10654,7 +10654,15 @@ pas un produit.
       sept mutations tuées ; E2E `membres.spec.ts` **9/9** — attente inscrite au clavier, remplacée, retirée, celle du
       seed intacte ; la lectrice ne voit pas la section ; capture `attentes-inscrite-1440` observée ; manuel 10 bis.5 ;
       DS §5.61 ; SCHEMA §9 bis.8 quinquies ; contrat, ligne 97 ; harnais 89 fichiers, 3836 assertions, API 1154, UI 872.
-- [ ] **T4** — les droits fins par track et channel, avec l'accès effectif.
+- [x] **T4** — les droits fins par track et channel, avec l'accès effectif.
+      **Vérifiée le 2026-10-23** : aucune migration — la RLS de `track_members` et `channel_members` ouvre déjà
+      l'insertion, la mise à jour et la suppression à l'administrateur ; `lib/membres-espace` 20 unitaires (lecture
+      ordonnée, `upsert` sur la clé, « hérité » par suppression) ; `DroitsFins.tsx` 7 unitaires, six mutations tuées,
+      plus une tuée sur l'écran (section rendue sans la capacité) ; API `membres.spec.ts` **+3** aux jetons réels
+      (poser, modifier, retirer, accès effectif relu ; business developer et lectrice refusés, 403 et zéro ligne) ;
+      E2E `membres.spec.ts` **10/10** — Driss choisi d'abord, la matrice de Farida, un droit posé puis rendu, Camille
+      jamais restreinte ; la lectrice ne voit pas la section ; seed rendu (droits fins et attente intacts) ; capture
+      `droits-fins-farida-1440` observée ; manuel 10 bis.6 et chapitre 24 bis ; DS §5.61 ; harnais API 1157, UI 873.
 - [ ] **T5** — E2E par rôle des attentes et des droits fins, captures, manuel (chapitre 10 bis, complété), seed, campagnes.
 - [ ] **T6** — livraison en production, sur instruction du responsable.
 

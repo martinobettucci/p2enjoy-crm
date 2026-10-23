@@ -1020,7 +1020,10 @@ ASSERTIONS_ATTENDUES=3836
 # **1154, COMPTÉE le 2026-10-23** (« Total: 1154 tests in 81 files ») : `e2e/api/membres.spec.ts` gagne **3** scénarios
 # de `CRM-070` T3 — l'administratrice inscrit, remplace et retire une attente ; le business developer et la lectrice
 # n'en lisent aucune, n'en inscrivent ni n'en retirent.
-SCENARIOS_API=1154
+# **1157, COMPTÉE le 2026-10-23** (« Total: 1157 tests in 81 files ») : `e2e/api/membres.spec.ts` gagne **3** scénarios
+# de `CRM-070` T4 — l'administratrice pose, modifie et retire un droit fin de la lectrice et relit l'accès effectif ; le
+# business developer et la lectrice ne posent ni ne retirent rien.
+SCENARIOS_API=1157
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1450,7 +1453,11 @@ SCENARIOS_API=1154
 # **872 depuis `CRM-070` tranche T3, même jour** : `membres.spec.ts` gagne **1** scénario — inscrire une attente au
 # clavier, la remplacer, la retirer, l'attente du seed intacte —, et `rentabilite.spec.ts` (`CRM-108`) **1**, au même
 # relevé, non encore committé par sa session. 870 + 1 + 1 = 872, valeur COMPTÉE — « Total: 872 tests in 75 files ».
-SCENARIOS_UI=872
+# **873 depuis `CRM-070` tranche T4, même jour** : `membres.spec.ts` gagne **1** scénario — la matrice des droits fins,
+# un droit posé puis rendu à « hérité », l'administratrice jamais restreinte. 872 + 1 = 873. Au même relevé, la liste
+# compte 887 : `fil-ariane.spec.ts` (`CRM-110`, **14**) est dans l'arbre de travail sans être committé, et sa session
+# révisera ce compteur avec lui.
+SCENARIOS_UI=873
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -7,6 +7,8 @@
 // @spec CRM-070 (docs/BACKLOG.md) — tranche T3 : la section « Attentes », rendue au seul administrateur de l'espace ;
 //       docs/SPEC-membres.md §3.2 (inscrire, remplacer, retirer ; en attente, en suspens), §5 point 3 ;
 //       docs/DESIGN_SYSTEM.md §5.61, §5.28 (un seul bloc ouvert)
+// @spec CRM-070 (docs/BACKLOG.md) — tranche T4 : la section « Droits fins », rendue au seul administrateur de l'espace —
+//       la lecture de l'accès effectif lui est réservée par la base (docs/SPEC-membres.md §3.3, §5 point 1)
 // @spec CLAUDE.md §10 — l'écran n'éteint que ce que la base refuse sur la ligne de l'espace ; chaque geste garde son refus
 //
 // L'ÉCRAN EST RELU APRÈS CHAQUE ÉCRITURE, JAMAIS COMPLÉTÉ LOCALEMENT, et la relecture garde à l'écran ce qu'elle relit :
@@ -38,6 +40,7 @@ import { lireWorkspaces } from '../lib/workspaces'
 import { useAuthentification } from './Authentification'
 import { useContexteEspace } from './ContexteEspace'
 import { BlocAttentes, type IssueFormulaire } from './BlocAttentes'
+import { DroitsFins } from './DroitsFins'
 import { libelleRole } from './presentation-plateforme'
 import { BlocMessage, TableauMembres, type MembreTableau, type Message } from './TableauMembres'
 
@@ -215,6 +218,18 @@ export function ReglagesMembres({ client = clientCrm, idUtilisateur }: Propriete
 							t('platform.attentes.retiree', { email: attente.email }),
 						)
 					}
+				/>
+			)}
+			{etat.statut === 'pret' && administre && (
+				<DroitsFins
+					client={client}
+					idWorkspace={idWorkspace}
+					membres={etat.donnees.membres.map((membre) => ({
+						idUtilisateur: membre.idUtilisateur,
+						nom: nomDe(membre),
+						administrateur: membre.role === 'admin',
+					}))}
+					texteRefus={(motif) => t(REFUS[motif])}
 				/>
 			)}
 		</div>

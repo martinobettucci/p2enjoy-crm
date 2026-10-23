@@ -5,6 +5,8 @@
 //           traduits : dernier administrateur, sans effet, droit, réseau, inconnu)
 // @verifies CRM-070 (docs/BACKLOG.md) — tranche T3 : les attentes lues, inscrites par `inscrire_attente`, retirées ; « en
 //           suspens » ; docs/SPEC-membres.md §3.2, §5 point 3
+// @verifies CRM-070 (docs/BACKLOG.md) — tranche T4 : la matrice lue par `acces_effectif_membre`, ordonnée track puis ses
+//           channels ; un droit posé par `upsert`, retiré pour « hérité » ; docs/SPEC-membres.md §3.3
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -12,6 +14,9 @@ import {
 	changerRoleMembre,
 	inscrireAttente,
 	issueEcriture,
+	lireDroitsFins,
+	ordonnerDroits,
+	poserDroitFin,
 	lireAttentesEspace,
 	lireMembresEspace,
 	retirerAttenteEspace,
@@ -37,6 +42,11 @@ function espion(reponse: Reponse | Error) {
 			chaine.update = (charge: unknown) => {
 				appel.operation = 'update'
 				appel.charge = charge
+				return chaine
+			}
+			chaine.upsert = (charge: unknown, options: unknown) => {
+				appel.operation = 'upsert'
+				appel.charge = { charge, options }
 				return chaine
 			}
 			chaine.delete = () => {
@@ -193,5 +203,78 @@ describe('les attentes (T3)', () => {
 		expect(attenteSuspendue('viewer', 0)).toBe(true)
 		expect(attenteSuspendue('admin', 0)).toBe(false)
 		expect(attenteSuspendue('viewer', 1)).toBe(false)
+	})
+})
+
+describe('les droits fins (T4)', () => {
+	const ligne = (objet: string, id: string, track: string, nom: string, pose: string | null, effectif: string) => ({
+		objet,
+		id,
+		track_id: track,
+		nom,
+		archive: false,
+		acces_pose: pose,
+		acces_effectif: effectif,
+		lisible_par_un_channel: objet === 'track' ? false : null,
+	})
+
+	it('lit acces_effectif_membre, ordonne chaque track suivi de ses channels, et écarte un vocabulaire inconnu', async () => {
+		const { client, appels } = espion({
+			data: [
+				ligne('channel', 'c2', 't1', 'Prospection', 'member', 'write'),
+				ligne('track', 't2', 't2', 'Studio web', null, 'read'),
+				ligne('channel', 'c1', 't1', 'Grands comptes', null, 'none'),
+				ligne('track', 't1', 't1', 'Conseil & IA', 'none', 'none'),
+				ligne('channel', 'c3', 't2', 'Maintenance', 'owner', 'read'),
+				ligne('channel', 'c4', 't2', 'Refonte', null, 'admin'),
+			],
+			error: null,
+			status: 200,
+		})
+		const etat = await lireDroitsFins(client, 'w1', 'u3')
+		expect(appels[0]).toMatchObject({ table: 'rpc:acces_effectif_membre', charge: { p_ws: 'w1', p_user: 'u3' } })
+		expect(etat.statut === 'pret' && etat.donnees.map((d) => `${d.nom}:${d.pose ?? 'hérité'}:${d.effectif}`)).toEqual([
+			'Conseil & IA:none:none',
+			'Grands comptes:hérité:none',
+			'Prospection:member:write',
+			'Studio web:hérité:read',
+			'Maintenance:hérité:read',
+		])
+	})
+
+	it('un refus de la fonction rend une erreur, jamais une matrice vide', async () => {
+		const etat = await lireDroitsFins(espion({ data: null, error: { code: '42501', message: 'reserve_aux_administrateurs' }, status: 403 }).client, 'w1', 'u3')
+		expect(etat.statut).toBe('erreur')
+	})
+
+	it('poser écrit par upsert dans la table de l’objet, sur sa clé', async () => {
+		const track = espion({ data: [{ user_id: 'u3' }], error: null, status: 200 })
+		expect(await poserDroitFin(track.client, 'track', 't1', 'u3', 'viewer')).toEqual({ ok: true })
+		expect(track.appels[0]).toMatchObject({
+			table: 'track_members',
+			operation: 'upsert',
+			charge: { charge: { track_id: 't1', user_id: 'u3', access: 'viewer' }, options: { onConflict: 'track_id,user_id' } },
+		})
+		const channel = espion({ data: [{ user_id: 'u3' }], error: null, status: 200 })
+		await poserDroitFin(channel.client, 'channel', 'c1', 'u3', 'none')
+		expect(channel.appels[0]).toMatchObject({
+			table: 'channel_members',
+			charge: { charge: { channel_id: 'c1', user_id: 'u3', access: 'none' }, options: { onConflict: 'channel_id,user_id' } },
+		})
+	})
+
+	it('« hérité » supprime la ligne posée ; zéro ligne rendue est « sans effet »', async () => {
+		const { client, appels } = espion({ data: [{ user_id: 'u3' }], error: null, status: 200 })
+		expect(await poserDroitFin(client, 'channel', 'c1', 'u3', null)).toEqual({ ok: true })
+		expect(appels[0]).toMatchObject({ table: 'channel_members', operation: 'delete', filtres: [['channel_id', 'c1'], ['user_id', 'u3']] })
+		expect(await poserDroitFin(espion({ data: [], error: null, status: 200 }).client, 'track', 't1', 'u3', null)).toEqual({
+			ok: false,
+			motif: 'sans-effet',
+		})
+	})
+
+	it('un channel dont le track n’est pas rendu n’apparaît pas : la matrice ne montre rien hors de son arbre', () => {
+		const orphelin = { objet: 'channel' as const, id: 'c9', idTrack: 'tx', nom: 'Orphelin', archive: false, pose: null, effectif: 'none' as const, lisibleParUnChannel: null }
+		expect(ordonnerDroits([orphelin])).toEqual([])
 	})
 })
