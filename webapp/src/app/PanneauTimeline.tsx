@@ -17,6 +17,9 @@
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone), §11 (aucun stockage côté client)
 // @spec docs/JOURNAL.md décisions 201 (le flux déclenche la lecture), 209 (le fil est unifié à la
 //       LECTURE)
+// @spec CRM-067 (docs/BACKLOG.md) — tranche T2 : les activités, troisième source lue par sa propre requête, sixième
+//       famille « Activités », une LIGNE par activité, relue après chaque geste du bloc de la fiche
+//       (docs/SPEC-activites.md §4 ; docs/DESIGN_SYSTEM.md §5.63 ; docs/JOURNAL.md décision 651)
 //
 // LE COMPOSANT NE PORTE AUCUNE RÈGLE. L'ordre du fil, la fusion des deux sources, les familles de
 // filtres, la résolution des libellés et la classification des refus vivent dans
@@ -86,6 +89,13 @@ import {
 } from '../lib/mentions'
 import { lireMessagesDeCard } from '../lib/inbox'
 import { lireNomsDeContacts } from '../lib/contacts'
+import { lireActivites, type ActiviteAffichee } from '../lib/activites'
+import {
+	PASTILLE_ACTIVITE,
+	PASTILLE_ACTIVITE_RETIREE,
+	PRESENTATION_ACTIVITE,
+	formaterDateActivite,
+} from './presentationActivites'
 import { enChargement, type EtatAsync } from '../lib/async'
 import type { ClientCrm } from '../lib/supabase'
 import {
@@ -188,6 +198,7 @@ const REPLI = {
 
 const LIBELLES_FILTRES: Readonly<Record<Famille, CleTraduction>> = {
 	discussion: 'timeline.filter.discussion',
+	activites: 'timeline.filter.activites',
 	etapes: 'timeline.filter.etapes',
 	champs: 'timeline.filter.champs',
 	organisation: 'timeline.filter.organisation',
@@ -275,6 +286,12 @@ export type ProprietesPanneauTimeline = {
 	 * §5.10 du design system refuse. Lorsqu'il se trompe, `sans-effet` le dit.
 	 */
 	readonly estAdminWorkspace: boolean
+	/**
+	 * Compteur de relecture des activités — `CRM-067` (§5.63). Le bloc « Activités » de la fiche l'incrémente après
+	 * chaque geste appliqué : `card_activities` n'est pas publiée au temps réel, et le fil ne saurait pas autrement
+	 * qu'une activité vient d'être consignée.
+	 */
+	readonly relectureActivites?: number
 }
 
 export function PanneauTimeline({
@@ -285,6 +302,7 @@ export function PanneauTimeline({
 	libellesChamps,
 	idUtilisateur,
 	estAdminWorkspace,
+	relectureActivites = 0,
 }: ProprietesPanneauTimeline) {
 	const droit = useRefus()
 	const { etat, recharger, reprendre } = useFilCommentaires(client, idCard)
@@ -333,6 +351,8 @@ export function PanneauTimeline({
 	// filtre n'est pas nécessaire au fonctionnement, et repartir complet est la seule valeur qui
 	// ne cache jamais rien.
 	const [actives, setActives] = useState<FamillesActives>(() => new Set(FAMILLES))
+	// LA TROISIÈME SOURCE — `CRM-067`, décision 209 : une requête de plus, sa propre politique, fusionnée en mémoire.
+	const [activites, setActivites] = useState<readonly ActiviteAffichee[]>([])
 
 	useEffect(() => {
 		if (client === null) return
@@ -349,6 +369,20 @@ export function PanneauTimeline({
 			vivant = false
 		}
 	}, [client, idCard, etat])
+
+	useEffect(() => {
+		if (client === null) return
+		let vivant = true
+		void (async () => {
+			const resultat = await lireActivites(client, idCard)
+			// Même règle que les événements : une source en échec ampute le fil, elle ne le rend pas muet ; le compte de
+			// la famille tombe à zéro, ce qui se voit.
+			if (vivant) setActivites(resultat.statut === 'pret' ? resultat.donnees : [])
+		})()
+		return () => {
+			vivant = false
+		}
+	}, [client, idCard, etat, relectureActivites])
 
 	useEffect(() => {
 		if (client === null) return
@@ -467,7 +501,10 @@ export function PanneauTimeline({
 	}, [idCard])
 
 	const commentaires = etat.statut === 'pret' ? etat.donnees : []
-	const fil = useMemo(() => fusionnerFil(commentaires, evenements), [commentaires, evenements])
+	const fil = useMemo(
+		() => fusionnerFil(commentaires, evenements, activites),
+		[commentaires, evenements, activites],
+	)
 	const comptes = useMemo(() => compterParFamille(fil), [fil])
 	const visibles = useMemo(() => filtrer(fil, actives), [fil, actives])
 
@@ -959,6 +996,8 @@ function Fil({
 								onSupprimer(ligne.commentaire.id, parModeration)
 							}
 						/>
+					) : ligne.genre === 'activite' ? (
+						<ActiviteDuFil activite={ligne.activite} />
 					) : (
 						<Evenement ligne={ligne} libelles={libelles} />
 					)}
@@ -1016,6 +1055,54 @@ function Evenement({
 					{ligne.acteur === null ? null : (
 						<span className="before:content-['·'] before:mx-1">
 							{t('timeline.actor', { nom: ligne.acteur.full_name })}
+						</span>
+					)}
+				</p>
+			</div>
+		</div>
+	)
+}
+
+/**
+ * Une activité dans le fil : une LIGNE, comme un événement — c'est un fait consigné, pas un tour de parole (§5.63).
+ *
+ * Le type en mot puis le sujet ; dessous la date où elle a eu lieu, la durée et l'auteur. Le compte rendu et les
+ * participants restent dans le bloc de la fiche : le fil est une suite de lignes courtes. Une pierre tombale dit
+ * « Activité retirée », sans sujet.
+ */
+function ActiviteDuFil({ activite }: { readonly activite: ActiviteAffichee }) {
+	const presentation = PRESENTATION_ACTIVITE[activite.type]
+	const Icone = presentation.icone
+	return (
+		<div className="flex items-start gap-3" data-testid="activite-fil" data-activite={activite.id}>
+			<span
+				aria-hidden="true"
+				className={[
+					'flex size-[1.75rem] shrink-0 items-center justify-center rounded-md',
+					activite.retiree ? PASTILLE_ACTIVITE_RETIREE : PASTILLE_ACTIVITE,
+				].join(' ')}
+			>
+				<Icone size={16} strokeWidth={2} />
+			</span>
+			<div className="min-w-0 flex-1">
+				{activite.retiree ? (
+					<p className="text-base italic text-text-2">{t('timeline.activity.retired')}</p>
+				) : (
+					<p className="text-base text-ink">
+						{t(presentation.cle)}
+						<span className="text-text-3 before:content-['·'] before:mx-1 break-words">{activite.sujet}</span>
+					</p>
+				)}
+				<p className="text-sm text-text-3">
+					<time dateTime={activite.survenueLe}>{formaterDateActivite(activite.survenueLe)}</time>
+					{activite.retiree || activite.dureeMinutes === null ? null : (
+						<span className="before:content-['·'] before:mx-1 tabular-nums">
+							{t('activities.duration', { minutes: String(activite.dureeMinutes) })}
+						</span>
+					)}
+					{activite.retiree || activite.auteur === null ? null : (
+						<span className="before:content-['·'] before:mx-1">
+							{t('timeline.actor', { nom: activite.auteur.full_name })}
 						</span>
 					)}
 				</p>

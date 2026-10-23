@@ -9,6 +9,9 @@
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone), §11 (stockage côté client)
 // @spec docs/JOURNAL.md décisions 204 (`clock_timestamp()`), 208 (la clé `from` absente),
 //       209 (le fil est unifié à la LECTURE)
+// @spec CRM-067 (docs/BACKLOG.md) — tranche T2 : les activités, troisième source du fil et sixième famille
+//       « Activités », rangées à la date où elles ont eu lieu (docs/SPEC-activites.md §4 ; docs/DESIGN_SYSTEM.md §5.63 ;
+//       docs/JOURNAL.md décision 651)
 //
 // Ce module ne rend rien : il **lit et fusionne**. La séparation est ce qui rend l'ordre du fil,
 // les familles de filtres et la résolution des libellés vérifiables **sans navigateur**.
@@ -23,6 +26,7 @@ import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 // (`CLAUDE.md` §23) : ce module importe donc la traduction, comme il importe déjà `Intl` pour la
 // date courte du sommeil. Aucun texte visible n'est écrit en dur ici.
 import { t } from '../i18n'
+import type { ActiviteAffichee } from './activites'
 import type { CommentaireAffiche } from './commentaires'
 import type { Database } from './database.types'
 import type { ProfilAffiche } from './identites'
@@ -99,12 +103,16 @@ export const TYPES_EVENEMENT = [
 export type TypeEvenement = (typeof TYPES_EVENEMENT)[number]
 
 /**
- * Les cinq familles de filtres du §5.11 — et pas dix.
+ * Les familles de filtres du §5.11 — six depuis `CRM-067`, et pas dix.
  *
  * Huit bascules pour un fil de vingt-sept lignes seraient un contrôle plus gros que son objet. Les
  * six types du cycle de vie partagent une même question : « qu'est devenue cette affaire ? »
+ *
+ * « Activités » est la sixième, arbitrée par le responsable (décision 648) : un appel ou une réunion
+ * répond à une autre question — « que s'est-il passé avec le client hors du CRM ? » —, et elle suit
+ * « Discussion » parce qu'une activité est un échange (docs/DESIGN_SYSTEM.md §5.63).
  */
-export const FAMILLES = ['discussion', 'etapes', 'champs', 'organisation', 'cycle'] as const
+export const FAMILLES = ['discussion', 'activites', 'etapes', 'champs', 'organisation', 'cycle'] as const
 export type Famille = (typeof FAMILLES)[number]
 
 /**
@@ -179,9 +187,10 @@ export function familleDe(type: string): Famille {
 	return FAMILLE_PAR_TYPE[type as TypeEvenement] ?? 'cycle'
 }
 
-/** Une ligne du fil unifié : une parole, ou un fait. */
+/** Une ligne du fil unifié : une parole, une activité consignée, ou un fait. */
 export type LigneFil =
 	| { readonly genre: 'commentaire'; readonly cle: string; readonly date: string; readonly commentaire: CommentaireAffiche }
+	| { readonly genre: 'activite'; readonly cle: string; readonly date: string; readonly activite: ActiviteAffichee }
 	| {
 			readonly genre: 'evenement'
 			readonly cle: string
@@ -225,6 +234,7 @@ export function projeterEvenements(lignes: readonly EvenementLu[]): readonly Lig
 export function fusionnerFil(
 	commentaires: readonly CommentaireAffiche[],
 	evenements: readonly LigneFil[],
+	activites: readonly ActiviteAffichee[] = [],
 ): readonly LigneFil[] {
 	const lignes: LigneFil[] = [
 		...commentaires.map((commentaire) => ({
@@ -233,6 +243,14 @@ export function fusionnerFil(
 			date: commentaire.creeLe,
 			commentaire,
 		})),
+		// UNE ACTIVITÉ SE RANGE À LA DATE OÙ ELLE A EU LIEU, `occurred_at`, jamais à celle de sa saisie (décision 651) :
+		// un appel consigné le lendemain s'insère à sa place dans l'histoire. Le préfixe `a:` tient l'ordre total.
+		...activites.map((activite) => ({
+			genre: 'activite' as const,
+			cle: `a:${activite.id}`,
+			date: activite.survenueLe,
+			activite,
+		})),
 		...evenements,
 	]
 	return lignes.sort((a, b) => (a.date === b.date ? compare(a.cle, b.cle) : compare(a.date, b.date)))
@@ -240,7 +258,7 @@ export function fusionnerFil(
 
 /** Famille d'une ligne, quelle que soit sa nature. */
 export const familleDeLigne = (ligne: LigneFil): Famille =>
-	ligne.genre === 'commentaire' ? 'discussion' : ligne.famille
+	ligne.genre === 'commentaire' ? 'discussion' : ligne.genre === 'activite' ? 'activites' : ligne.famille
 
 /**
  * Compte les lignes par famille.
@@ -251,6 +269,7 @@ export const familleDeLigne = (ligne: LigneFil): Famille =>
 export function compterParFamille(lignes: readonly LigneFil[]): Readonly<Record<Famille, number>> {
 	const comptes: Record<Famille, number> = {
 		discussion: 0,
+		activites: 0,
 		etapes: 0,
 		champs: 0,
 		organisation: 0,

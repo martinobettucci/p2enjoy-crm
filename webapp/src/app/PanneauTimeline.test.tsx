@@ -8,6 +8,9 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.11 (timeline unifiée), §5.10 (panneau de commentaires),
 //           §5.8 (états systématiques), §8 (libellé de formulaire, état désactivé lisible),
 //           §10 (aucun texte en dur)
+// @verifies CRM-067 (docs/BACKLOG.md) — tranche T2 : les activités, troisième source du fil — une LIGNE rangée à la
+//           date où elle a eu lieu, la sixième bascule « Activités », la pierre tombale, la relecture après un geste du
+//           bloc de la fiche (docs/SPEC-activites.md §4 ; docs/DESIGN_SYSTEM.md §5.63 ; docs/JOURNAL.md décision 651)
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T5 : sous le refus de la fiche, la zone de saisie et « Mentionner »
 //           sont inactives et citent le motif, comme « Publier » (docs/SPEC-droits-interface.md §3 ; DESIGN_SYSTEM §5.59)
 //
@@ -21,6 +24,7 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { PanneauTimeline } from './PanneauTimeline'
 import { FournisseurRefus } from '../components/ui/RefusCommandes'
 import { fr } from '../i18n'
+import type { ActiviteLue } from '../lib/activites'
 import type { CommentaireLu } from '../lib/commentaires'
 import type { ClientCrm } from '../lib/supabase'
 import type { EvenementLu } from '../lib/timeline'
@@ -37,6 +41,25 @@ function ligne(partiel: Partial<CommentaireLu> & { id: string }): CommentaireLu 
 		deleted_at: null,
 		deleted_by: null,
 		auteur: null,
+		...partiel,
+	}
+}
+
+function activite(partiel: Partial<ActiviteLue> & { id: string }): ActiviteLue {
+	return {
+		card_id: 'card-1',
+		type: 'call',
+		occurred_at: '2026-08-05T09:30:00+00:00',
+		duration_minutes: 30,
+		subject: 'Appel de découverte',
+		body: null,
+		author_id: 'profil-1',
+		created_at: '2026-08-06T08:00:00+00:00',
+		edited_at: null,
+		deleted_at: null,
+		deleted_by: null,
+		auteur: { id: 'profil-1', full_name: 'Driss Benali', avatar_url: null },
+		participants: [],
 		...partiel,
 	}
 }
@@ -75,6 +98,8 @@ type Journal = {
 	nbLecturesMentionnables: number
 	/** Les charges de mention posées, DANS L'ORDRE : une par requête, jamais un tableau (§35.2). */
 	readonly mentionsPosees: Record<string, unknown>[]
+	/** Lectures de `card_activities` — la troisième source, `CRM-067`. */
+	nbLecturesActivites: number
 }
 
 /**
@@ -87,6 +112,7 @@ type Journal = {
 function clientFactice({
 	lignes = [],
 	evenements = [],
+	activites = [],
 	etapes = [],
 	statutCanal = 'SUBSCRIBED',
 	insertion = { error: null, status: 201 },
@@ -107,6 +133,7 @@ function clientFactice({
 }: {
 	lignes?: readonly CommentaireLu[]
 	evenements?: readonly EvenementLu[]
+	activites?: readonly ActiviteLue[]
 	etapes?: readonly { id: string; workflow_nodes_catalog: { label: string } | null }[]
 	statutCanal?: string
 	insertion?: { error: { message: string; code?: string } | null; status: number }
@@ -143,6 +170,7 @@ function clientFactice({
 		liberer: new Map(),
 		nbLecturesMentionnables: 0,
 		mentionsPosees: [],
+		nbLecturesActivites: 0,
 	}
 
 	// LE CLIENT DISTINGUE LES TABLES, et il le doit : le panneau lit désormais TROIS sources —
@@ -214,7 +242,9 @@ function clientFactice({
 					? chaineDe(lignes, true)
 					: table === 'card_events'
 						? chaineDe(evenements, false)
-						: chaineDe(etapes, false),
+						: table === 'card_activities'
+							? ((journal.nbLecturesActivites += 1), chaineDe(activites, false))
+							: chaineDe(etapes, false),
 			// `insert(...).select('id')` : LA FORME EXACTE QUE LA BIBLIOTHÈQUE EMPLOIE DEPUIS
 			// `CRM-064` SOUS-TRANCHE 3B. Le `select` final n'est pas décoratif — l'identifiant de
 			// la ligne créée est le seul lien entre le commentaire et les mentions qu'il porte, la
@@ -278,7 +308,7 @@ function monter(
 	estAdminWorkspace = false,
 ) {
 	const { client, journal } = clientFactice(options)
-	render(
+	const panneau = (relectureActivites: number) => (
 		<PanneauTimeline
 			client={client}
 			idCard="card-1"
@@ -287,9 +317,13 @@ function monter(
 			libellesChamps={new Map([['champ-1', 'Budget']])}
 			idUtilisateur={idUtilisateur}
 			estAdminWorkspace={estAdminWorkspace}
-		/>,
+			relectureActivites={relectureActivites}
+		/>
 	)
-	return journal
+	const { rerender } = render(panneau(0))
+	// `CRM-067` : le bloc de la fiche incrémente ce compteur après un geste ; le test le rejoue.
+	const relireActivites = (rang: number) => rerender(panneau(rang))
+	return Object.assign(journal, { relireActivites })
 }
 
 describe('le fil (docs/DESIGN_SYSTEM.md §5.10)', () => {
@@ -728,7 +762,8 @@ describe('le fil unifié (docs/DESIGN_SYSTEM.md §5.11)', () => {
 })
 
 describe('les filtres (docs/DESIGN_SYSTEM.md §5.11)', () => {
-	it('rend cinq bascules, toutes actives, dont le compte suit la SOURCE et non le filtre', async () => {
+	// SIX BASCULES DEPUIS `CRM-067` (docs/DESIGN_SYSTEM.md §5.63) : « Activités » s'ajoute aux cinq du §5.11.
+	it('rend six bascules, toutes actives, dont le compte suit la SOURCE et non le filtre', async () => {
 		monter({
 			lignes: [ligne({ id: 'c' })],
 			evenements: [
@@ -740,7 +775,7 @@ describe('les filtres (docs/DESIGN_SYSTEM.md §5.11)', () => {
 		// La barre n'existe qu'une fois le fil chargé : elle n'a rien à filtrer avant (décision 212).
 		const barre = await screen.findByRole('group', { name: fr['timeline.filters.aria'] })
 		const bascules = within(barre).getAllByRole('button')
-		expect(bascules).toHaveLength(5)
+		expect(bascules).toHaveLength(6)
 		for (const bascule of bascules) expect(bascule.getAttribute('aria-pressed')).toBe('true')
 
 		await waitFor(() => {
@@ -1317,5 +1352,60 @@ describe('la composition sous le refus de la fiche (CRM-093)', () => {
 		expect((mentionner as HTMLButtonElement).disabled).toBe(true)
 		expect(mentionner.getAttribute('aria-describedby')).toBe('motif-fiche')
 		expect((screen.getByRole('button', { name: fr['comments.compose.submit'] }) as HTMLButtonElement).disabled).toBe(true)
+	})
+})
+
+describe('les activités dans le fil — CRM-067 (docs/DESIGN_SYSTEM.md §5.63)', () => {
+	it('une activité est une LIGNE rangée à la date où elle a EU LIEU, avec le type en mot puis le sujet', async () => {
+		monter({
+			lignes: [ligne({ id: 'c', body: 'Une parole', created_at: '2026-08-05T10:00:00.000Z' })],
+			evenements: [evenement({ id: 'e1', type: 'created', created_at: '2026-08-05T09:00:00.000Z' })],
+			// Consignée le LENDEMAIN (`created_at` le 6), elle a eu lieu le 5 à 9 h 30 : entre la création et la parole.
+			activites: [activite({ id: 'a1' })],
+		})
+		const ligneActivite = await screen.findByTestId('activite-fil')
+		expect(ligneActivite.textContent).toContain(fr['activities.type.call'])
+		expect(ligneActivite.textContent).toContain('Appel de découverte')
+		expect(ligneActivite.textContent).toContain('30 min')
+		expect(ligneActivite.textContent).toContain('Driss Benali')
+		const elements = within(screen.getByRole('list')).getAllByRole('listitem')
+		const rang = (texte: string) => elements.findIndex((element) => element.textContent?.includes(texte))
+		expect(rang(fr['timeline.event.created'])).toBeLessThan(rang('Appel de découverte'))
+		expect(rang('Appel de découverte')).toBeLessThan(rang('Une parole'))
+		// Une ligne, pas une carte : aucune activité n'est rendue comme un commentaire.
+		expect(within(ligneActivite).queryByRole('article')).toBeNull()
+	})
+
+	it('la bascule « Activités » compte la source, et l’éteindre masque la ligne sans rien relire', async () => {
+		const journal = monter({ activites: [activite({ id: 'a1' }), activite({ id: 'a2', type: 'visio', subject: 'Démo' })] })
+		const barre = await screen.findByRole('group', { name: fr['timeline.filters.aria'] })
+		const bascule = within(barre).getByRole('button', { name: new RegExp(fr['timeline.filter.activites']) })
+		await waitFor(() => expect(bascule.textContent).toContain('2'))
+		const lectures = journal.nbLecturesActivites
+		await userEvent.click(bascule)
+		expect(screen.queryByTestId('activite-fil')).toBeNull()
+		expect(bascule.getAttribute('aria-pressed')).toBe('false')
+		expect(bascule.textContent).toContain('2')
+		expect(journal.nbLecturesActivites).toBe(lectures)
+	})
+
+	it('une activité retirée dit « Activité retirée », sans sujet ni auteur', async () => {
+		monter({
+			activites: [
+				activite({ id: 'a1', subject: '', deleted_at: '2026-08-06T09:00:00+00:00', deleted_by: 'profil-1' }),
+			],
+		})
+		const ligneActivite = await screen.findByTestId('activite-fil')
+		expect(ligneActivite.textContent).toContain(fr['timeline.activity.retired'])
+		expect(ligneActivite.textContent).not.toContain('Driss Benali')
+		expect(ligneActivite.textContent).not.toContain('30 min')
+	})
+
+	it('le fil relit sa troisième source quand le bloc de la fiche le demande', async () => {
+		const journal = monter({ activites: [activite({ id: 'a1' })] })
+		await screen.findByTestId('activite-fil')
+		const avant = journal.nbLecturesActivites
+		journal.relireActivites(1)
+		await waitFor(() => expect(journal.nbLecturesActivites).toBe(avant + 1))
 	})
 })

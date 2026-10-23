@@ -23,6 +23,14 @@ d'exécuter le code attendu.
   de l'affaire et les membres de l'espace. Les droits sont ceux d'un commentaire : qui écrit sur l'affaire consigne,
   l'auteur corrige et retire, un administrateur de l'espace retire sans pouvoir réécrire. Retirer laisse une trace
   vide à sa place.
+- **Fiche d'une affaire, bloc « Activités »** (T2), juste après les contacts.
+  - **La liste**, la plus récente en tête : type, date et heure, durée, auteur, participants nommés, et le compte rendu
+    à déplier.
+  - **« Consigner une activité »** ouvre un formulaire dans la page, avec le type, la date (maintenant par défaut), la
+    durée, le sujet, le compte rendu et les participants.
+  - **L'auteur corrige et retire** ; un administrateur retire l'activité d'un autre. Le retrait est confirmé sur la
+    ligne.
+  - **Le fil de l'affaire** montre chaque activité à la date où elle a eu lieu, avec un sixième filtre « Activités ».
 
 ### `CRM-108` — la famille « Recettes » du connecteur MCP (reste à livrer : l'image `mcp`)
 

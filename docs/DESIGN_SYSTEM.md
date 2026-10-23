@@ -6066,6 +6066,15 @@ ce que les §5.13 et §5.21 posent vaut ici sans être répété :
   que le sujet est blanc. C'est un champ requis, et non un droit (§5.50). Pendant l'envoi, il dit « Enregistrement… ».
   `Échap` referme depuis n'importe quel champ, comme « Annuler ».
 
+- **LE FORMULAIRE PORTE `noValidate`** — *écrit à l'écriture du code*. Un refus se dit dans le formulaire, par le
+  dictionnaire (§5.7 ter), et jamais par la bulle du navigateur, qui parle une autre langue que l'écran et disparaît
+  d'elle-même. La preuve unitaire l'a montré : sans `noValidate`, une durée « 1.5 » bloquait l'envoi en silence, sans
+  aucun motif à l'écran. `required`, `min` et `max` restent sur les champs. Ils disent au lecteur d'écran ce qui est
+  attendu, et la base reste seule juge.
+- **UNE CORRECTION QUI NE TOUCHE PAS LA DATE RENVOIE L'INSTANT EXACT QUE LA BASE PORTE** — *écrit à l'écriture du
+  code*. Le champ arrondit à la minute. Réécrire l'instant arrondi ferait marquer « modifiée » une activité dont on
+  n'a corrigé que les participants.
+
 - **LES PARTICIPANTS S'ÉCRIVENT APRÈS L'ACTIVITÉ, ET UN ÉCHEC PARTIEL EST UNE TROISIÈME ISSUE** : le patron des
   mentions (§5.44).
   - **L'activité est consignée et n'est jamais retirée par l'écran.** Le formulaire se referme, la liste est relue

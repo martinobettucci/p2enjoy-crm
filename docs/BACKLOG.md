@@ -15802,8 +15802,18 @@ règle dans la webapp et le connecteur, et les captures observées.
       participants au retrait, politique d'insertion, vidage du compte rendu) ; `0016` à 157 politiques, `0017` et
       `0018` révisées ; série complète 91 fichiers, 3897 assertions, aucune anomalie ; API `activites.spec.ts` **4/4**
       aux jetons réels, sans reste en base ; types régénérés et témoin des tables ; `SCHEMA.md` §5 ; contrat, ligne 100.
-- [ ] **T2** — webapp : lecture, bloc « Activités » de la fiche, formulaire, troisième source de la timeline ; design
+- [~] **T2** — webapp : lecture, bloc « Activités » de la fiche, formulaire, troisième source de la timeline ; design
       system écrit avant l'écran ; unitaires.
+      **Implémentée le 2026-10-23, unitaires et mutations vérifiés.**
+      - Design system écrit avant l'écran (`DESIGN_SYSTEM.md` §5.63, décision 651, commit `ae3d8544`).
+      - Code : `lib/activites.ts` (lecture, refus traduits, écritures, participants un par un),
+        `BlocActivitesCard.tsx` juste après les contacts, troisième source et sixième famille du fil, rangée à
+        `occurred_at`.
+      - Unitaires : 42 sur la bibliothèque, 17 sur le bloc, 4 sur le fil, 1 de fusion ; **douze mutations tuées sur
+        douze** (ordre, modération, commandes offertes, date du fil, « sans effet », date arrondie, durée décimale,
+        refus participant, famille, relecture du fil, participants un par un, retrait offert).
+      - Série unitaire complète **4281/4281**, typecheck et build verts.
+      - **Reste `[~]`** : le constat visuel et l'E2E viennent avec T3.
 - [ ] **T3** — E2E, captures, seed, manuel, campagnes.
 - [ ] **T4** — outils MCP `crm_affaire_activites_lister`, `crm_affaire_activite_ajouter`,
       `crm_affaire_activite_modifier`, inscrits au catalogue (`docs/SPEC-mcp.md` §9.2) et construits avec `CRM-104` T2.

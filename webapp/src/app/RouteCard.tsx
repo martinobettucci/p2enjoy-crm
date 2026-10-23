@@ -72,6 +72,8 @@
 //       (docs/SPEC-temps.md §7.6, docs/DESIGN_SYSTEM.md §5.54 bis)
 // @spec CRM-108 (docs/BACKLOG.md) tranche T3 — blocs « Recettes » et « Rentabilité » de la fiche (docs/SPEC-recettes.md §6.1,
 //       §6.2 ; docs/DESIGN_SYSTEM.md §5.60)
+// @spec CRM-067 (docs/BACKLOG.md) tranche T2 — le bloc « Activités », juste après les contacts, et la relecture du fil
+//       après chacun de ses gestes (docs/SPEC-activites.md §4 ; docs/DESIGN_SYSTEM.md §5.63)
 
 import { Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -87,6 +89,7 @@ import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
+import { BlocActivitesCard } from './BlocActivitesCard'
 import { BlocContactsCard } from './BlocContactsCard'
 import { BlocCoutsCard } from './BlocCoutsCard'
 import { BlocRecettesCard } from './BlocRecettesCard'
@@ -219,6 +222,9 @@ function ContenuCard({
 	// `CRM-108` : une recette écrite fait relire la rentabilité de la fiche (docs/SPEC-recettes.md §6.2).
 	const [relectureRentabilite, setRelectureRentabilite] = useState(0)
 	const relireRentabilite = useCallback(() => setRelectureRentabilite((n) => n + 1), [])
+	// `CRM-067` : un geste du bloc « Activités » fait relire la troisième source du fil (docs/DESIGN_SYSTEM.md §5.63).
+	const [relectureActivites, setRelectureActivites] = useState(0)
+	const relireActivites = useCallback(() => setRelectureActivites((n) => n + 1), [])
 	const marquerRetiree = useCallback(() => setRetiree(true), [])
 
 	// Placé AVANT toute lecture de l'état de chargement : l'écran ne relit rien après le geste, et
@@ -300,6 +306,16 @@ function ContenuCard({
 					idCard={etat.donnees.card.id}
 					idWorkspace={etat.donnees.card.workspace_id}
 				/>
+				{/* LES ACTIVITÉS — `CRM-067`, docs/SPEC-activites.md §4 : juste après les contacts — avec qui l'affaire se traite,
+				    puis ce qu'on a fait avec eux — et avant l'argent (docs/DESIGN_SYSTEM.md §5.63). L'identité de session et le
+				    rôle n'y décident que des commandes OFFERTES ; les politiques de `card_activities` tiennent la règle. */}
+				<BlocActivitesCard
+					idCard={etat.donnees.card.id}
+					idWorkspace={etat.donnees.card.workspace_id}
+					idUtilisateur={idUtilisateur}
+					estAdminWorkspace={estAdministrateur(role.etat)}
+					onChange={relireActivites}
+				/>
 				{/* LES COÛTS DE L'AFFAIRE — CRM-085 tranche 2, docs/SPEC-costs.md §4.6. Ils vivent
 				    ENTRE les contacts et le bloc de corbeille, pour la raison qui a déjà placé les
 				    contacts là : la colonne DROITE raconte et n'accueille aucun geste, et le retrait
@@ -373,6 +389,7 @@ function ContenuCard({
 				libellesChamps={libellesChamps(etat.donnees.modele)}
 				idUtilisateur={idUtilisateur}
 				estAdminWorkspace={estAdministrateur(role.etat)}
+				relectureActivites={relectureActivites}
 				/>
 			</div>
 		</div>

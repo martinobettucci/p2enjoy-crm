@@ -6,11 +6,14 @@
 //           §14.10 (une requête par source, fusion en mémoire, ordre total)
 // @verifies docs/DESIGN_SYSTEM.md §5.11 (timeline unifiée, cinq familles, compte de la source)
 // @verifies docs/JOURNAL.md décisions 204 (`clock_timestamp()`), 209 (fusion à la lecture)
+// @verifies CRM-067 (docs/BACKLOG.md) — tranche T2 : la troisième source, rangée à `occurred_at`, et la sixième famille
+//           « Activités » (docs/SPEC-activites.md §4 ; docs/DESIGN_SYSTEM.md §5.63 ; docs/JOURNAL.md décision 651)
 //
 // Ces tests portent sur la LOGIQUE, sans navigateur : c'est ce que la séparation du module rend
 // possible. Le rendu est éprouvé par `webapp/src/app/PanneauTimeline.test.tsx`.
 
 import { describe, expect, it } from 'vitest'
+import { projeterActivites, type ActiviteLue } from './activites'
 import type { CommentaireAffiche } from './commentaires'
 import {
 	COLONNES_EVENEMENT,
@@ -19,6 +22,7 @@ import {
 	TYPES_EVENEMENT,
 	compterParFamille,
 	familleDe,
+	familleDeLigne,
 	filtrer,
 	fusionnerFil,
 	projeterEvenements,
@@ -152,8 +156,11 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// d'un message (§16.5.3). L'arrivée, l'envoi et le départ répondent à la même question — « que
 	// s'est-il dit sur cette affaire ? » —, et séparer le départ de l'arrivée couperait en deux
 	// l'histoire d'un même message dès que l'utilisateur filtre sur « Discussion ».
-	it('déclare cinq familles, dont la discussion que les TROIS gestes de courrier portent', () => {
-		expect([...FAMILLES]).toEqual(['discussion', 'etapes', 'champs', 'organisation', 'cycle'])
+	// SIX FAMILLES DEPUIS `CRM-067` (décision 648, docs/DESIGN_SYSTEM.md §5.63) : « Activités » suit « Discussion », et
+	// AUCUN type d'événement n'y est rangé — elle ne compte que la troisième source, les activités consignées.
+	it('déclare six familles, dont la discussion que les TROIS gestes de courrier portent', () => {
+		expect([...FAMILLES]).toEqual(['discussion', 'activites', 'etapes', 'champs', 'organisation', 'cycle'])
+		expect(TYPES_EVENEMENT.filter((type) => familleDe(type) === 'activites')).toEqual([])
 		expect(TYPES_EVENEMENT.filter((type) => familleDe(type) === 'discussion')).toEqual([
 			'mail_received',
 			'mail_sent',
@@ -207,6 +214,36 @@ describe('la fusion (décision 209)', () => {
 		expect(premier.map((ligne) => ligne.cle)).toEqual(['c:x', 'e:x'])
 	})
 
+	// `CRM-067`, décision 651 : une activité se range à la date où elle a EU LIEU — consignée le lendemain, elle
+	// s'insère à sa place dans l'histoire, jamais en queue du fil.
+	it('range une activité à `occurred_at`, jamais à sa date de saisie, dans la famille « Activités »', () => {
+		const activite: ActiviteLue = {
+			id: 'a1',
+			card_id: 'card-1',
+			type: 'meeting',
+			occurred_at: '2026-08-05T10:30:00.000Z',
+			duration_minutes: null,
+			subject: 'Réunion de cadrage',
+			body: null,
+			author_id: 'profil-1',
+			created_at: '2026-08-06T08:00:00.000Z',
+			edited_at: null,
+			deleted_at: null,
+			deleted_by: null,
+			auteur: null,
+			participants: [],
+		}
+		const fil = fusionnerFil(
+			[commentaire({ id: 'c1', creeLe: '2026-08-05T11:00:00.000Z' })],
+			projeterEvenements([evenement({ id: 'e1', created_at: '2026-08-05T10:00:00.000Z' })]),
+			projeterActivites([activite]),
+		)
+		expect(fil.map((ligne) => ligne.cle)).toEqual(['e:e1', 'a:a1', 'c:c1'])
+		expect(fil.map(familleDeLigne)).toEqual(['cycle', 'activites', 'discussion'])
+		expect(compterParFamille(fil).activites).toBe(1)
+		expect(filtrer(fil, new Set<Famille>(['activites'])).map((ligne) => ligne.cle)).toEqual(['a:a1'])
+	})
+
 	it('ne masque aucun commentaire supprimé : sa place est tenue', () => {
 		const fil = fusionnerFil([commentaire({ id: 'c1', supprime: true, corps: '' })], [])
 		expect(fil).toHaveLength(1)
@@ -234,6 +271,7 @@ describe('les comptes et les filtres (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	it('compte chaque famille', () => {
 		expect(compterParFamille(fil)).toEqual({
 			discussion: 1,
+			activites: 0,
 			etapes: 1,
 			champs: 1,
 			organisation: 1,
