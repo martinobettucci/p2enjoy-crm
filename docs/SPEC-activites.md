@@ -3,7 +3,7 @@
 - Unité de backlog : `CRM-067` — activités typées : appels, réunions, visios.
 - Arbitrages : `docs/JOURNAL.md`, décisions 647 (unité suivante, connecteur MCP : oui) et 648 (quatre arbitrages),
   2026-10-23.
-- État : **brouillon, à valider par le responsable avant tout code.**
+- État : **validée le 2026-10-23** (décision 649), avec la pierre tombale au retrait et aucun outil MCP de retrait.
 - Connecteur MCP : **oui, dans la famille `affaires`** (décision 648, point 3) — actions `consulter`, `ajouter`,
   `modifier` ; aucune famille nouvelle. `CRM-104` n'étant pas livrée, les outils s'inscrivent à son catalogue
   (`docs/SPEC-mcp.md` §9.2) et se construisent avec sa tranche T2 (`affaires`) — §6 ci-dessous.

@@ -7322,7 +7322,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-064 | @mentions, notifications temps réel et préférences | `[x]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[~]` |
-| CRM-067 | Activités typées : appels, réunions, visios — **arbitrée le 2026-10-23 (décisions 647 et 648)** : réalisées seulement, durée indépendante du temps, connecteur MCP dans la famille `affaires`, droits comme un commentaire ; spécification à écrire (`docs/SPEC-activites.md`) | `[ ]` |
+| CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[ ]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
@@ -15779,6 +15779,21 @@ règle dans la webapp et le connecteur, et les captures observées.
       l'intégration), rejoué **8/8**. Les dix-sept autres sont hors `CRM-108` : treize au palier 390 px (en-tête en cours
       de `CRM-110`), deux 502 transitoires en console. L'unité reste `[~]` jusqu'à T6.
 
+
+### CRM-067 — Activités typées : appels, réunions, visios `[ ]`
+*Arbitrée et spécifiée le 2026-10-23 (décisions 647 à 649) : `docs/SPEC-activites.md`. Connecteur MCP : oui, famille
+`affaires` (consulter, ajouter, modifier), au catalogue de `CRM-104`.*
+
+- [x] **Spécification** validée (décision 649) : activités réalisées seulement, durée indépendante du temps passé,
+      droits d'un commentaire, pierre tombale au retrait, aucun outil MCP de retrait.
+- [ ] **T1** — migration : `card_activities` et `card_activity_participants`, contraintes, trigger des participants,
+      politiques ; pgTAP ; API aux jetons réels ; contrat de déploiement.
+- [ ] **T2** — webapp : lecture, bloc « Activités » de la fiche, formulaire, troisième source de la timeline ; design
+      system écrit avant l'écran ; unitaires.
+- [ ] **T3** — E2E, captures, seed, manuel, campagnes.
+- [ ] **T4** — outils MCP `crm_affaire_activites_lister`, `crm_affaire_activite_ajouter`,
+      `crm_affaire_activite_modifier`, inscrits au catalogue (`docs/SPEC-mcp.md` §9.2) et construits avec `CRM-104` T2.
+- [ ] **T5** — livraison en production, sur instruction du responsable.
 
 ### CRM-109 — Journaliser les refus d'admission, pour dire d'une attente « jamais connectée » ou « refusée » `[ ]`
 *Créée le 2026-10-23 — décision 635, arbitrage du responsable, détachée de `CRM-070`.* Une attente consommée disparaît,

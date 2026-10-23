@@ -32952,3 +32952,13 @@ que ni la timeline ni la « prochaine action » ne portent (`docs/SPEC-cards.md`
 
 **Suite** : brouillon `docs/SPEC-activites.md` sur ces quatre points, puis validation avant tout code.
 
+### décision 649 — `CRM-067` : la spécification validée
+
+*2026-10-23, validation du responsable sur `docs/SPEC-activites.md`.* **Validée** telle qu'écrite sur les décisions
+647 et 648 : une activité **réalisée** — type fermé, date jamais future (tolérance de 5 minutes), durée facultative,
+sujet, compte rendu, participants pris parmi les contacts de l'affaire et les membres de l'espace — ; deux tables aux
+politiques d'un commentaire ; bloc « Activités » de la fiche et troisième source de la timeline unifiée ; trois outils
+MCP dans la famille `affaires`, au catalogue de `CRM-104`. **Choix confirmés** : retirer vide l'activité en **pierre
+tombale** (la ligne reste, le fil dit « Activité retirée »), et **aucun outil MCP de retrait**. **Découpage persisté au
+backlog** : T1 migration, T2 webapp, T3 preuves de bout en bout, T4 outils MCP (avec `CRM-104` T2), T5 livraison.
+
