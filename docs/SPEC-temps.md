@@ -233,7 +233,8 @@ extraite de la matrice (§7.2). Les points 1 à 3 sont les arbitrages du respons
     compte toutes les cibles, l'unicité tient une ligne par personne, jour et affaire (migration `0087`).
 11. **Connecteur MCP** (réponse du responsable, 2026-10-23, `CLAUDE.md` « Spécificités du projet ») : **déjà couvert**
     par `CRM-104` — famille `temps`, actions `ajouter` et `modifier` (`docs/SPEC-mcp.md` §6.1) ; `crm_time_entry_add` et
-    `crm_time_entry_update` (§9.2) prennent déjà une affaire pour cible. Aucun outil de plus au catalogue.
+    `crm_time_entry_update` figurent à son catalogue cible (§9.2), **pas encore codé** : la tranche `temps` de `CRM-104`
+    devra accepter une affaire pour cible, comme la base le permet déjà. Aucun outil de plus au catalogue.
 
 ## 8. Jeu de démonstration
 

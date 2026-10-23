@@ -32209,8 +32209,9 @@ aligné : son inventaire ne couvre plus que le passé.
 après l'écriture des deux spécifications ; la question lui a été posée, et ses réponses sont consignées avant toute
 suite du code.
 - **`CRM-106`** : **déjà couvert** par `CRM-104`, famille `temps`, actions `ajouter` et `modifier`
-  (`crm_time_entry_add`, `crm_time_entry_update`, qui prennent une affaire pour cible) ; aucun outil de plus
-  (`docs/SPEC-temps.md` §7.6, point 11).
+  (`crm_time_entry_add`, `crm_time_entry_update`, au catalogue cible, pas encore codé — sa tranche `temps` devra
+  accepter une affaire pour cible) ; aucun outil de plus (`docs/SPEC-temps.md` §7.6, point 11). Lecture confirmée par la
+  session qui tient `CRM-104`.
 - **`CRM-107`** : **non** — une aide de calcul d'interface, qui n'enregistre rien (`docs/SPEC-temps.md` §7.4 bis,
   point 7).
 
