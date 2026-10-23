@@ -305,7 +305,7 @@ connecteur.
 | Famille | Ce qu'elle couvre |
 |---|---|
 | `structure` | tracks, channels, lecture des workflows et de leurs étapes |
-| `affaires` | affaires (cards) : champs, étape, déplacement, sommeil, commentaires, timeline, contacts liés |
+| `affaires` | affaires (cards) : champs, description, probabilité, étape, déplacement, sommeil, commentaires, timeline, contacts liés, **activités réalisées** (appels, réunions, visios — `CRM-067`, décision 647) |
 | `contacts` | contacts et organisations |
 | `budgets` | budgets, occurrences, lignes de coût d'une affaire et leurs réels |
 | `recettes` | lignes de recette d'une affaire et leurs réels ; rapport de rentabilité, réservé aux administrateurs par la base — **ajoutée par `CRM-108`** (`docs/SPEC-recettes.md` §7, décision 632, migration `0095`) |
@@ -598,6 +598,28 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 | `objectifs` | `crm_goal_board_list`, `crm_goal_board_get` | `crm_goal_block_add`, `crm_goal_link_add` | `crm_goal_block_update` | `crm_goal_board_archive` |
 | `messagerie` | `crm_card_mail_list` (fils et messages d'une affaire, sans pièce jointe), `crm_mail_get` | `crm_mail_send` (`queue_outbound_email`, `destructiveHint`, `aussi` : `affaires:consulter`) | — | — |
 
+### 9.2 bis Tranche `affaires`, lecture — `CRM-104` T2.a (liste fixée, *proposée le 2026-10-23, à valider*)
+
+Décisions 652 et 653. Sept outils, tous `affaires:consulter`, `readOnlyHint`, sans case `aussi`. Ils lisent **les mêmes
+tables et fonctions que la webapp**, sous le jeton de la personne. La RLS décide de ce qui est rendu.
+
+| Outil | Ancre | Ce qu'il lit | Ce qu'il rend |
+|---|---|---|---|
+| `crm_card_list` | `workspace:workspace` ; `autres` : `channel:channel_id`, **facultative** | `cards` (colonnes de la vue liste, `COLONNES_CARD_LISTE`), avec le channel, le track et l'étape nommés | les affaires actives (ni archivées, ni à la corbeille), filtrables par channel, par **texte** du titre (`query`), par **étape** (libellé exact) et par **échéance** de la prochaine action (`due` : `overdue`, `today`, `week`) ; `include_snoozed` faux par défaut ; paginé |
+| `crm_card_get` | `card:card_id` | `cards`, `ecriture_permise` (`CRM-093`), le responsable, `card_contacts` (contact, organisation, rôle), `card_field_values` avec leurs `form_fields` | l'en-tête — titre, **description** (`CRM-105`), montant et devise, **probabilité** (surcharge, ou celle de l'étape), prochaine action et échéance, sommeil, responsable —, track, channel, workflow et étape **nommés**, adresse email de l'affaire, `can_write`, contacts liés, réponses au formulaire **par libellé** |
+| `crm_card_timeline` | `card:card_id` | `card_events`, `card_comments`, `card_activities` — trois requêtes, fusionnées comme la webapp (décision 209, `docs/SPEC-activites.md` §4) | le fil du plus ancien au plus récent : chaque ligne avec son genre (`event`, `comment`, `activity`), sa date, son auteur ou acteur nommé, et son libellé résolu (étapes, champs, contacts), jamais un identifiant à la place d'un nom ; paginé |
+| `crm_card_comment_list` | `card:card_id` | `card_comments` | les commentaires, du plus ancien au plus récent ; une pierre tombale reste à sa place, sans corps, avec « retiré par la modération » si c'est le cas |
+| `crm_card_activity_list` | `card:card_id` | `card_activities` et leurs participants (`CRM-067` T4) | les activités, la plus récente en tête : type, date, durée, sujet, compte rendu, auteur, participants nommés ; une activité retirée en pierre tombale |
+| `crm_stale_card_list` | `workspace:workspace` | `cards_figees()` | les affaires figées de l'espace, du plus gros retard au plus petit, avec l'étape, le seuil et le retard |
+| `crm_card_mine` | `workspace:workspace` | la lecture de « Ma journée » (`CRM-061`) | les affaires à échéance en trois groupes — en retard, aujourd'hui, à venir sur sept jours — pour **la personne**, ou pour tout ce qu'elle lit (`scope` : `mine`, `all`) |
+
+**L'ancre facultative.** `crm_card_list` accepte un `channel_id` facultatif. Absent, aucune ancre n'est résolue pour
+lui. Présent, il est lu sous le jeton et soumis à la même matrice que l'espace. La vérification de démarrage le permet
+pour une ancre `autres` dont l'argument a une valeur par défaut `None`, et pour elle seule.
+
+**Ce que la tranche ne fait pas.** Aucune écriture : c'est T2.b. Aucune pièce jointe, aucun message : c'est la famille
+`messagerie`. Aucune lecture des recettes ni des coûts d'une affaire : ce sont les familles `recettes` et `budgets`.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,
@@ -740,6 +762,30 @@ Cette actualisation est committée comme documentation avant le code de la tranc
 **Première application, `CRM-108` (2026-10-23).** La question a été posée pour les recettes et la rentabilité : oui,
 dans une **famille nouvelle**, `recettes`, sur décision du responsable (décision 632, arbitrages 5 et 6) — la migration
 `0095` l'ajoute à la liste fermée, et les outils sont livrés par `CRM-108` T4.
+
+**Inventaire du 2026-10-23, pour `CRM-104`** (décisions 652 et 653). Les fonctionnalités livrées depuis le 2026-10-20,
+d'après `CHANGELOG.md` et `docs/BACKLOG.md` :
+
+| Unité | Fonctionnalité | Dans le connecteur |
+|---|---|---|
+| `CRM-067` | activités réalisées d'une affaire | **oui**, `affaires` — `crm_card_activity_list` (T2.a), `crm_card_activity_add`, `crm_card_activity_update` (T2.b) ; aucun retrait (décisions 648, 653) |
+| `CRM-093` | capacités lues par l'interface | **oui**, en lecture : `crm_card_get` rend `can_write` ; `structure` rendra celles des channels (T1) |
+| `CRM-105` | description d'un track, d'un channel, d'une affaire | **oui** : lue par `crm_card_get` (T2.a), écrite par `crm_card_update` (T2.b) ; tracks et channels avec `structure` (T1) |
+| `CRM-066` | surcharge de probabilité d'une affaire | **oui** : lue par `crm_card_get`, écrite par `crm_card_update` (T2.b) |
+| `CRM-061` | « Ma journée » | **oui** : `crm_card_mine` (T2.a) |
+| `CRM-095` | créer une affaire depuis le board | **oui** : `crm_card_create` (T2.b), par `creer_affaire` |
+| `CRM-099` | plusieurs réels par ligne de coût | **oui**, `budgets` (T4) |
+| `CRM-098`, `CRM-106` | saisie de temps, bande de la semaine | **oui**, `temps` (T5) ; la bande est une forme d'écran |
+| `CRM-107` | calculateur du coût par quart | **non** : une aide de saisie d'écran, sans donnée |
+| `CRM-108` | recettes et rentabilité | **oui**, `recettes` — livrée (`CRM-108` T4) |
+| `CRM-070` | membres et droits fins | **non** (décision 653) |
+| `CRM-097` | suggestions de l'assistant IA | **non** (décision 653) |
+| `CRM-109` | refus d'admission | **non** (décision 640) |
+| `CRM-101`, `CRM-103` | plateforme, administration du connecteur | **non** : écrans du superadministrateur |
+| `CRM-110` | fil d'Ariane | **non** : une forme d'écran |
+
+Les consignes au modèle (`INSTRUCTIONS`, §2) gagnent une ligne avec T2.a : « Affaires (cards) : start with
+crm_card_list or crm_card_mine; crm_card_get gives the header, contacts and form answers; crm_card_timeline the history. »
 
 **Règle permanente, 2026-10-23.** Pour ne plus rattraper l'écart après coup, `CLAUDE.md` (« Spécificités du projet »)
 impose désormais de demander au responsable, **avant de spécifier toute fonctionnalité**, si elle doit aussi exister dans
