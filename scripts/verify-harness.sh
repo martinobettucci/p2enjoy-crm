@@ -655,7 +655,10 @@ FICHIERS_SQL_ATTENDUS=87
 # 50 → 79. MESURÉ — somme des `plan()` des 86 suites, et `0085` jouée verte à 79, trois mutations tuées.
 # **3796 depuis `CRM-108` T2, 2026-10-23** (décision 632) : `0087` apporte **48** assertions — 3748 + 48 = 3796 ; `0016`
 # est révisée sans changer son plan (149 politiques). MESURÉ — « 87 fichiers, 3796 assertions, aucune anomalie ».
-ASSERTIONS_ATTENDUES=3796
+# **3818 depuis `CRM-070` T1, 2026-10-23** : la suite neuve `0088_acces_effectif_membre`, 22 assertions. 3796 + 22 =
+# 3818, sur 88 fichiers ; mesurée seule (22, aucune anomalie). Au même relevé, `0087` (`CRM-108`) rougit sur quatre
+# assertions qui attendent la section §21 du seed, non encore appliquée — consigné à sa session.
+ASSERTIONS_ATTENDUES=3818
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1005,7 +1008,11 @@ ASSERTIONS_ATTENDUES=3796
 # **1134**, même jour : `droits-interface.spec.ts` gagne le scénario des capacités de l'espace (migration 92).
 # **1135**, même jour, `CRM-101` T6 : `plateforme.spec.ts` gagne la lecture des utilisateurs par la superadministratrice.
 # COMPTÉ — « Total: 1135 tests in 77 files ».
-SCENARIOS_API=1135
+# **1151, COMPTÉE le 2026-10-23** (« Total: 1151 tests in 81 files ») avec `e2e/api/membres.spec.ts` de `CRM-070` T1,
+# fichier NEUF, **4** scénarios — l'administratrice lit l'accès effectif de la lectrice, le business developer et la
+# lectrice sont refusés en 403, l'anonyme aussi. Les douze autres depuis 1135 viennent des unités `CRM-103` à `CRM-108`,
+# livrées sans réviser ce compteur.
+SCENARIOS_API=1151
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

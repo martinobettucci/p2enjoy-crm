@@ -1566,6 +1566,19 @@ séquences. `stable`, `security invoker`, `execute` à `anon`, `authenticated`, 
 l'interface éteigne une commande sur une capacité que la BASE rend, jamais sur un rôle qu'elle lirait
 (`docs/DESIGN_SYSTEM.md` §5.29 ter, décision 628 et sa précision).
 
+### 9 bis.8 quater `public.acces_effectif_membre(p_ws, p_user)` — l'accès d'un membre, lu par l'administrateur, migration 96
+
+`CRM-070` T1 (`docs/SPEC-membres.md` §3.3, §5 point 1 ; décision 635). Une fonction de **lecture**, aucune table ni
+politique touchée. Pour chaque track et chaque channel **vivants** (hors corbeille) de l'espace `p_ws`, elle rend :
+`objet` (`track` ou `channel`), `id`, `track_id`, `nom`, `archive`, `acces_pose` (la ligne de `track_members` ou de
+`channel_members` de `p_user`, NULL si rien n'est posé : hérité), `acces_effectif` (`none`, `read` ou `write`) et, pour
+un track, `lisible_par_un_channel`. L'accès effectif vient des fonctions mêmes de la RLS — `app.resolve_access` sur
+`app.workspace_role_pour` pour un track, `app.resolve_channel_access_pour` pour un channel — et la lisibilité d'un track
+reprend l'élargissement de la migration 34. **Réservée à l'administrateur de l'espace** : `SECURITY DEFINER` (elle lit
+pour une autre personne), `search_path` vide, garde `app.is_workspace_admin(p_ws)` en premier, refus `42501`
+`reserve_aux_administrateurs` ; `execute` révoqué à `public` et à `anon`, accordé à `authenticated`. Prouvée par
+`supabase/tests/0088_acces_effectif_membre.test.sql` (22) et `e2e/api/membres.spec.ts` (4, jetons réels).
+
 ### 9 bis.9 `public.cards_figees()` — les affaires figées de l'appelant, migration 53
 
 Ajoutée le 2026-08-24 par `CRM-062` tranche 1 (`docs/SPEC-relances.md` §2 et §3).

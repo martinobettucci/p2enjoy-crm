@@ -10631,8 +10631,13 @@ pas un produit.
       validation du responsable.
 - [x] **Spécification** `docs/SPEC-membres.md`, **validée le 2026-10-23** (décision 635) : la RLS ouvre déjà toutes les
       écritures à l'administrateur d'espace ; l'accès effectif se lit par une fonction réservée à l'administrateur.
-- [ ] **T1** — mesures (remplacer une attente : atomique ou fonction), fonction `acces_effectif_membre` (migration au
+- [x] **T1** — mesures (remplacer une attente : atomique ou fonction), fonction `acces_effectif_membre` (migration au
       prochain numéro libre), pgTAP, API aux jetons réels.
+      **Vérifiée le 2026-10-23** : migration `0096` appliquée en développement par le runner ; pgTAP `0088` **22**, deux
+      mutations tuées (garde retirée, droit de channel ignoré) ; API `membres.spec.ts` **4/4** aux jetons réels ; types
+      régénérés et témoin à quatre-vingt-dix fonctions ; `docs/SCHEMA.md` §9 bis.8 quater ; contrat, ligne 96. **Mesure** :
+      `workspace_invitations` n'a pas de politique UPDATE et sa clé est `(workspace_id, email)` — remplacer une attente
+      demande deux écritures, non atomiques depuis l'écran : une fonction `SECURITY INVOKER`, en T3.
 - [ ] **T2** — les membres et leurs rôles : composant partagé avec la plateforme, écran Réglages ▸ « Membres », unitaires.
 - [ ] **T3** — les attentes et leur état (en attente, en suspens).
 - [ ] **T4** — les droits fins par track et channel, avec l'accès effectif.

@@ -3387,6 +3387,19 @@ export type Database = {
         Args: { p_suggestion: string }
         Returns: string
       }
+      acces_effectif_membre: {
+        Args: { p_user: string; p_ws: string }
+        Returns: {
+          acces_effectif: string
+          acces_pose: string
+          archive: boolean
+          id: string
+          lisible_par_un_channel: boolean
+          nom: string
+          objet: string
+          track_id: string
+        }[]
+      }
       administration_permise: {
         Args: { w: Database["public"]["Tables"]["workspaces"]["Row"] }
         Returns: boolean

@@ -1015,9 +1015,13 @@ type _vueDerivationColonnes = Expect<
 // « À saisir » lit avec la ligne — et `rentabilite_affaires` (docs/SPEC-recettes.md §5, §6.4, décision 632). SECURITY
 // INVOKER : le type ne dit pas le refus `42501 rentabilite_reservee` à qui n'administre aucun espace. Quatre-vingt-sept
 // devient QUATRE-VINGT-NEUF.
+// `0096` de `CRM-070` TRANCHE T1 ajoute `acces_effectif_membre` — les droits posés et l'accès effectif d'un membre, par
+// track et par channel (docs/SPEC-membres.md §3.3, décision 635). SECURITY DEFINER, gardée par l'administration de
+// l'espace : le type ne dit pas le refus `42501 reserve_aux_administrateurs`. Quatre-vingt-neuf devient QUATRE-VINGT-DIX.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
+    | 'acces_effectif_membre'
     | 'administration_permise'
     | 'edition_permise'
     | 'mcp_autorise'
