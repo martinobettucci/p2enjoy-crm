@@ -620,6 +620,43 @@ pour une ancre `autres` dont l'argument a une valeur par défaut `None`, et pour
 **Ce que la tranche ne fait pas.** Aucune écriture : c'est T2.b. Aucune pièce jointe, aucun message : c'est la famille
 `messagerie`. Aucune lecture des recettes ni des coûts d'une affaire : ce sont les familles `recettes` et `budgets`.
 
+### 9.2 ter Tranche `affaires`, écriture — `CRM-104` T2.b (liste fixée, *proposée le 2026-10-23, à valider*)
+
+Décision 652. Treize outils. Chacun appelle **la table ou la fonction que la webapp appelle pour le même geste**, sous le
+jeton de la personne : la base garde ses règles, et l'outil traduit ses refus (§9.3).
+
+| Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_card_create` | `ajouter` | `channel:channel_id` | `creer_affaire(p_channel, p_titre)` | l'affaire naît à l'étape initiale ; rend son identifiant et sa fiche résumée |
+| `crm_card_comment_add` | `ajouter` | `card:card_id` | `POST card_comments` | texte brut, 10 000 caractères au plus ; aucune mention |
+| `crm_card_activity_add` | `ajouter` | `card:card_id` | `POST card_activities`, puis un `POST card_activity_participants` par participant | `CRM-067` T4 ; mêmes règles qu'à l'écran — date jamais future, durée 1 à 1440 ; un participant refusé n'annule pas l'activité, l'issue le compte |
+| `crm_card_update` | `modifier` | `card:card_id` | `PATCH cards` (titre, description, montant, probabilité, prochaine action et échéance, responsable) ; `card_field_values` en `upsert` sur `(card_id, field_id)` pour les réponses au formulaire | seuls les champs donnés sont écrits ; le responsable est **nommé** parmi les membres de l'espace, une réponse est désignée par la **clé** de son champ dans le workflow de l'affaire |
+| `crm_card_move` | `modifier`, `destructiveHint` | `card:card_id` | `move_card(card_id, to_step_id, comment)` | l'étape d'arrivée est **nommée**, résolue dans le workflow de l'affaire ; refus traduits : transition non déclarée, motif exigé, champs exigés manquants (nommés par leur libellé) |
+| `crm_card_move_to_channel` | `modifier`, `destructiveHint` | `card:card_id` ; `autres` : `channel:to_channel_id` | `move_card_to_channel(card_id, to_channel_id, to_step_id, discard_field_values)` | sur un changement de workflow, l'étape d'arrivée doit être nommée et la perte des réponses **acceptée** (`discard_field_values`), sinon le refus dit combien seraient perdues |
+| `crm_card_snooze` | `modifier` | `card:card_id` | `snooze_card(card_id, until)` | — |
+| `crm_card_wake` | `modifier` | `card:card_id` | `wake_card(card_id)` | — |
+| `crm_card_contact_link` | `modifier` ; `aussi` : `contacts:consulter` | `card:card_id` ; `autres` : `contact:contact_id` | `POST card_contacts` | rôle libre, facultatif |
+| `crm_card_contact_unlink` | `modifier` ; `aussi` : `contacts:consulter` | `card:card_id` ; `autres` : `contact:contact_id` | `DELETE card_contacts` | zéro ligne rendue est un refus, jamais un succès |
+| `crm_card_activity_update` | `modifier` | `activity:activity_id` (genre nouveau : `card_activities.workspace_id`) | `PATCH card_activities`, puis les participants par différence | l'auteur seul, comme à l'écran ; aucun outil de retrait (décision 648) |
+| `crm_card_trash` | `supprimer`, `destructiveHint` | `card:card_id` | `PATCH cards set deleted_at` — le geste de la fiche (`CRM-077`) | l'affaire part à la corbeille, d'où un administrateur la restaure ; rien n'est purgé |
+
+**Les identifiants qui ne sont pas des ancres.** Trois arguments désignent un objet sans être résolus par la politique,
+parce que l'objet est **jugé dans l'affaire** par la base ou par l'outil :
+- l'étape d'arrivée, **par son nom**, cherchée parmi les étapes du workflow de l'affaire lue sous le jeton ;
+- le responsable, **par son nom**, cherché parmi les membres de l'espace de l'affaire ;
+- les participants d'une activité (`participant_contact_ids`, `participant_member_ids`), que le trigger de la base
+  refuse hors de l'affaire (`participant_outside_card`, `docs/SPEC-activites.md` §3).
+
+Aucun ne peut donc désigner un objet d'un autre espace. La vérification de démarrage (§9.1) ne vise que les arguments
+terminés par `_id` : ces listes finissent par `_ids`, et la raison est écrite ici.
+
+**Ce que la tranche ne fait pas.** Ni corriger ni retirer un commentaire ; ni retirer une activité (décision 648) ; ni
+restaurer une affaire de la corbeille ; ni archiver une affaire ; ni poser une mention. Ce sont des gestes d'écran.
+
+**Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus
+par le CRM malgré la matrice ouverte, journal écrit ; et **E2E** : une affaire créée par le connecteur paraît au board,
+et sa timeline nomme la personne.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,
