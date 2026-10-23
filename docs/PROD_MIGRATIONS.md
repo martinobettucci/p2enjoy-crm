@@ -491,7 +491,10 @@ avant le code pour que le contrat ne dérive pas :
 retire par sa ligne du §3.2, refusée tant qu'un droit `recettes` existe dans la matrice. Les lignes de recette saisies
 entre-temps seraient perdues avec les tables : l'instantané de la fenêtre les garde.
 
-### 2.17 `CRM-093` — l'interface n'offre plus les gestes que le serveur refuse (À LIVRER)
+### 2.17 `CRM-093` — l'interface n'offre plus les gestes que le serveur refuse (À LIVRER — différée, décision 633)
+
+**Différée par le responsable le 2026-10-23 (décision 633)** : `main` ne part qu'une fois `CRM-106`, `CRM-107` et
+`CRM-108` terminées. L'instantané confirmé ce jour-là sera redemandé au moment d'ouvrir la fenêtre.
 
 `docs/SPEC-droits-interface.md` ; décision 628 ; INC-279 à INC-281. **Migrations 91 et 92** (§3.2) : quatre colonnes
 calculées, `security invoker`, aucune table, politique ni donnée touchée. **Webapp** : chaque écran lit sa capacité sur
