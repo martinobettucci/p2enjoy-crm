@@ -15541,7 +15541,7 @@ déjà la saisie sur une affaire.*
 - [x] **T1 — spécification, écrite avant le code** sur les trois arbitrages du 2026-10-23 ; les choix de rédaction sont
       marqués dans `docs/SPEC-temps.md` §7.6. Connecteur MCP : déjà couvert par `CRM-104`, famille `temps` (§7.6,
       point 11).
-- [~] **T2 — la bande dans le bloc « Temps passé »** : réemploi de la cellule, de l'en-tête et du pied de la matrice ;
+- [x] **T2 — la bande dans le bloc « Temps passé »** : réemploi de la cellule, de l'en-tête et du pied de la matrice ;
       navigation de semaine ; lien « Ouvrir dans Temps » ; relecture du résumé ; preuves unitaires (`docs/SPEC-temps.md`
       §11 bis).
       *Implémenté le 2026-10-23* : `BandeTempsCard.tsx` ; la cellule, l'en-tête d'un jour, le pied, la case « En heures »
@@ -15550,12 +15550,22 @@ déjà la saisie sur une affaire.*
       `BandeTempsCard.test` **14** — **quatre mutations** (mode lu sur la seule affaire, `Entrée` vers la ligne, résumé
       non relu, pied limité à l'affaire), chacune rouge ; `temps.test` **24** (+3). Suites voisines rejouées vertes :
       `SaisieTemps.test` 9, `RapportTemps.test` 10, `RouteCard.test` 8, `commandes-refusees.test` 2, `i18n.test` 408 ;
-      `tsc` de la webapp et des tests sans erreur. **Restent avant `[x]`** : le build et le contrôle des classes, différés
-      tant qu'une campagne UI d'une autre unité occupe la pile.
-- [ ] **T3 — preuves sur la pile réelle** : preuve d'API (saisie sur une affaire, refus à qui ne la lit pas) ; E2E souris
+      `tsc` de la webapp et des tests sans erreur. *Le 2026-10-23, sur la pile* : build vert, contrôle des classes
+      « aucune classe manquante » (407 citées).
+- [~] **T3 — preuves sur la pile réelle** : preuve d'API (saisie sur une affaire, refus à qui ne la lit pas) ; E2E souris
       et clavier, journée en heures, remplacement, retrait, plafond, lectrice, administrateur ; captures
       `docs/captures/CRM-106/` aux quatre paliers observées ; `docs/manual.md` 5 undecies.6 bis ; `CHANGELOG.md` ;
       campagnes.
+      *Vérifié le 2026-10-23, sur la pile et le seed* : `e2e/api/saisie-temps-affaire.spec.ts` **3** (saisie, remplacement
+      et retrait par le membre ; la lectrice sur l'affaire qu'elle lit, `403`/`42501` sur celle qu'elle ne lit pas ; pas
+      pour un collègue), avec `saisie-temps.spec.ts` 10 ; `e2e/ui/temps-fiche-affaire.spec.ts` **7** (souris, clavier,
+      remplacement, retrait, pied et plafond par une autre cible, journée en heures et « Ouvrir dans Temps » relu dans
+      la matrice, lectrice malgré la fiche en lecture seule, administratrice qui ne saisit que son temps, quatre paliers
+      sans défilement de page), avec `saisie-temps.spec.ts` 7. **Une retouche tirée des captures** : la bande débordait
+      la colonne de la fiche dès 1440 px — cases « En heures » sans libellé visible et nommées par une phrase, total de
+      la semaine sous la bande (`docs/DESIGN_SYSTEM.md` §5.54 bis) ; captures refaites et observées aux quatre paliers.
+      **Un défaut de `CRM-098` révélé par la campagne de contrôle et corrigé** : INC-282. `verify-manual.sh` **239**
+      contrôles sans anomalie. **Reste avant `[x]`** : les campagnes complètes après ces corrections.
 - [ ] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
 
@@ -15568,7 +15578,7 @@ charges en % du brut, frais et avantages en montant ; calculateur seulement. Sp�
 
 - [x] **T1 — spécification, écrite avant le code** sur les trois arbitrages du 2026-10-23. Connecteur MCP : non
       (`docs/SPEC-temps.md` §7.4 bis, point 7).
-- [~] **T2 — le calculateur** dans « Nouvelle version » : la fonction de calcul et ses bornes, le dépli, le résultat en
+- [x] **T2 — le calculateur** dans « Nouvelle version » : la fonction de calcul et ses bornes, le dépli, le résultat en
       direct, « Utiliser ce coût » ; preuves unitaires.
       *Implémenté le 2026-10-23* : `calculerCoutQuart` (`lib/cout-personnel.ts`), `CalculateurCoutQuart.tsx`, branché dans
       `FormulaireVersion`. `cout-personnel.test` **13** (+7 : l'exemple 4 510 → 62,06, 218 par défaut, 240 jours = ÷ 80,
@@ -15576,11 +15586,15 @@ charges en % du brut, frais et avantages en montant ; calculateur seulement. Sp�
       mutations** (× 12 retiré, 228 par défaut, borne des charges retirée, valeurs gardées à la fermeture, focus non
       rendu au champ), chacune rouge. `RapportTemps.test` 10, `commandes-refusees.test` 2, `i18n.test` 411 verts ; `tsc`
       sans erreur. Le design system nomme la variante réelle du bouton de dépli (`discret`, §5.5 n'a pas de
-      « tertiaire »). **Restent avant `[x]`** : le build et le contrôle des classes, différés tant qu'une campagne UI
-      d'une autre unité occupe la pile.
-- [ ] **T3 — preuves sur la pile réelle** : E2E d'une version créée par le calculateur, relue en base, à la souris et au
+      « tertiaire »). *Le 2026-10-23, sur la pile* : build vert, contrôle des classes « aucune classe manquante ».
+- [~] **T3 — preuves sur la pile réelle** : E2E d'une version créée par le calculateur, relue en base, à la souris et au
       clavier ; captures `docs/captures/CRM-107/` aux quatre paliers observées ; `docs/manual.md` 5 undecies.5 ;
       `CHANGELOG.md` ; campagnes.
+      *Vérifié le 2026-10-23, sur la pile et le seed* : `e2e/ui/cout-personnel-calcul.spec.ts` **3** — l'exemple 4 510 →
+      62,06 reporté puis enregistré, la version relue en base (`cout_quart` 62,06, seule valeur écrite ; rien d'écrit par
+      le calcul ni par « Utiliser ce coût ») ; au clavier, 240 jours → 50,00 et des charges à 120 % qui taisent le
+      résultat ; quatre paliers sans défilement de page. Captures observées (1440 et 390 px, l'état d'erreur).
+      `verify-manual.sh` **239** contrôles sans anomalie. **Reste avant `[x]`** : les campagnes complètes.
 - [ ] **T4 — livraison** : reconstruction de la webapp en production, constat. Aucune migration, aucune fonction, aucune
       variable.
 

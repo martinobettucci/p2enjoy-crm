@@ -10,6 +10,8 @@
 # @verifies CRM-098 (docs/BACKLOG.md) tranche T4 — les libellés de la saisie de temps et du coût du personnel, et les
 #           versions de coût de l'annexe A (docs/SPEC-temps.md §7, chapitre 5 undecies)
 # @verifies CRM-099 (docs/BACKLOG.md) — les libellés des réels d'une ligne de coût (chapitre 5 octies)
+# @verifies CRM-106 (docs/BACKLOG.md) tranche T3 — les libellés de la bande de la fiche (docs/SPEC-temps.md §7.6,
+#           chapitre 5 undecies.6 bis) ; CRM-107 tranche T3 — ceux du calculateur (§7.4 bis, chapitre 5 undecies.5)
 # @verifies CRM-101 (docs/BACKLOG.md) tranche T4 — les libellés de la plateforme (docs/SPEC-plateforme.md §7, chapitre 10)
 # @verifies CRM-103 (docs/BACKLOG.md) tranche T3 — les libellés de l'administration du connecteur (docs/SPEC-mcp.md §8.1,
 #           chapitre 11)
@@ -177,6 +179,14 @@ LIBELLES_PARCOURS=(
 	"Temps passé"
 	"Votre temps"
 	"Le temps de toute l’équipe"
+	# CRM-106 — saisir son temps depuis la fiche (chapitre 5 undecies.6 bis)
+	"Votre semaine"
+	"Ouvrir dans Temps"
+	# CRM-107 — le calculateur du coût par quart (chapitre 5 undecies.5)
+	"Calculer depuis le coût mensuel"
+	"Utiliser ce coût"
+	"Enregistrer la version"
+	"Coût par quart"
 	# CRM-099 — plusieurs réels par ligne de coût (chapitre 5 octies)
 	"Un réel de plus"
 	"Déjà saisi"

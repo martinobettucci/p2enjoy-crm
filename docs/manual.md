@@ -3588,12 +3588,41 @@ une date d'effet n'est jamais passée, sauf pour la toute première version d'un
 déjà saisi. **« Historique »** liste les versions ; une version **programmée** peut encore être retirée, une version
 en vigueur jamais.
 
+**Calculer le coût par quart.** Dans le formulaire « Nouvelle version », **« Calculer depuis le coût mensuel »** ouvre un
+petit calcul (*livré par `CRM-107` ; captures : `docs/captures/CRM-107/`*). Saisissez le salaire brut mensuel, les charges sociales en pourcentage du brut,
+les frais de gestion et les avantages par mois, et le nombre de jours travaillés par an — 218 par défaut, le forfait
+jours ; un salarié qui n’est pas au forfait en travaille plutôt 228 environ (365 jours, moins les week-ends, 25 jours de congés et les
+fériés). Le calcul affiche, à mesure que vous tapez, le coût mensuel complet et le coût par quart :
+
+> coût mensuel complet = brut × (1 + charges) + frais + avantages ;
+> coût par quart = coût mensuel complet × 12 ÷ (jours × 4).
+
+Par exemple, 3 000 € de brut, 42 % de charges, 150 € de frais et 100 € d'avantages font 4 510 € par mois, soit
+62,06 € par quart sur 218 jours. **« Utiliser ce coût »** recopie le résultat dans « Coût par quart » ; rien n'est
+enregistré tant que vous n'avez pas cliqué **« Enregistrer la version »**, et seul le coût par quart l'est — le salaire
+et les charges ne sont conservés nulle part.
+
 ### 5 undecies.6 Le coût du personnel à côté des coûts
 
 Sur l'écran de coûts d'un track (chapitre 5 quinquies), sous l'histogramme, **« Coût du personnel »** donne le temps et
 son coût du mois choisi, channel par channel. Dans la fiche d'une affaire, **« Temps passé »** donne le temps passé
 depuis le premier jour et son coût. Ces chiffres ne se mêlent ni aux budgets ni aux lignes de coût. Ils disent leur
 portée : « Votre temps » pour un membre, « Le temps de toute l’équipe » pour un administrateur.
+
+### 5 undecies.6 bis Saisir son temps depuis la fiche d'une affaire
+
+*Livré par `CRM-106` ; captures : `docs/captures/CRM-106/`.* Sous le résumé « Temps passé », **« Votre semaine »** montre la ligne de l'affaire, du lundi au
+dimanche : les mêmes cases que l'écran « Temps », au quart de journée ou, en cochant la case sous un jour, au quart
+d'heure. Une case s'enregistre seule ; `Entrée` passe au jour suivant. Taper une nouvelle valeur **remplace** celle du jour ; vider
+la case retire ce temps. Sous la bande, le total de la semaine sur l'affaire.
+
+Le total sous chaque jour compte **tout** votre temps de la journée, sur toutes les cibles : c'est lui qui ne dépasse
+pas 7 heures. « Semaine précédente », « Semaine suivante » et « Cette semaine » changent de semaine ;
+**« Ouvrir dans Temps »** ouvre la matrice sur la même semaine, pour le reste de votre journée.
+
+Chacun n'y saisit que **son** temps — un administrateur aussi : pour saisir le temps de quelqu'un d'autre, passez par
+« Saisir pour », sur l'écran « Temps ». Une lectrice saisit son temps sur une affaire qu'elle lit, même si elle ne peut
+pas modifier l'affaire.
 
 ### 5 undecies.7 Ce qui n'est pas offert
 

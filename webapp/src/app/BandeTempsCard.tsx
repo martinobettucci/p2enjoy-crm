@@ -208,7 +208,12 @@ function Bande({
 }) {
 	const modes = modesDesJours(saisies, jours, heuresForcees)
 	const totalSemaine = totalLigne(saisies, ligne.cle, jours)
+	// RETOUCHE TIRÉE DES CAPTURES (2026-10-23) : avec le libellé « En heures » sous chaque jour et une colonne de total, la
+	// bande débordait la colonne de la fiche dès 1440 px — samedi, dimanche et le total hors de vue. Les cases gardent
+	// leur nom accessible et une phrase les nomme ; le total de la semaine passe sous la bande (§5.54 bis).
 	return (
+		<div className="flex flex-col gap-2">
+		<p className="text-[13px] text-text-2">{t('personnel.card.week.hoursHint')}</p>
 		<div className="overflow-x-auto rounded-lg border border-border indique-debordement-x">
 			<table ref={tableau} className="w-full border-collapse text-sm" data-testid="temps-card-tableau">
 				<caption className="sr-only">{t('personnel.card.week.caption', { titre: ligne.libelle })}</caption>
@@ -217,11 +222,15 @@ function Bande({
 						{/* Aucune première colonne visible : la fiche nomme déjà l'affaire (§5.54 bis). */}
 						<td className="sr-only" />
 						{jours.map((jour) => (
-							<EnTeteJour key={jour} jour={jour} aujourdhui={aujourdhui} mode={modes[jour] ?? 'quarts'} onBasculer={onBasculerHeures} />
+							<EnTeteJour
+								key={jour}
+								jour={jour}
+								aujourdhui={aujourdhui}
+								mode={modes[jour] ?? 'quarts'}
+								onBasculer={onBasculerHeures}
+								libelleVisible={false}
+							/>
 						))}
-						<th scope="col" className="px-3 py-2 text-right font-medium">
-							{t('time.matrix.total')}
-						</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -249,9 +258,6 @@ function Bande({
 								/>
 							</td>
 						))}
-						<td className="whitespace-nowrap px-3 py-1 text-right tabular-nums text-text-2" data-testid="temps-total-ligne">
-							{totalSemaine > 0 ? formaterDuree(enJours(totalSemaine)) : ''}
-						</td>
 					</tr>
 				</tbody>
 				<tfoot>
@@ -262,10 +268,19 @@ function Bande({
 						{jours.map((jour) => (
 							<PiedJour key={jour} jour={jour} total={totalJour(saisies, jour)} mode={modes[jour] ?? 'quarts'} />
 						))}
-						<td />
 					</tr>
 				</tfoot>
 			</table>
+		</div>
+		{/* Un total nul ne s'écrit pas, comme dans la matrice (§5.54) : « 0 h » se lirait comme une semaine remplie. */}
+		{totalSemaine > 0 ? (
+			<p className="text-sm">
+				{t('personnel.card.week.total')}{' '}
+				<span className="font-medium tabular-nums" data-testid="temps-total-ligne">
+					{formaterDuree(enJours(totalSemaine))}
+				</span>
+			</p>
+		) : null}
 		</div>
 	)
 }

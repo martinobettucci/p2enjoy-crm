@@ -122,6 +122,11 @@ describe('la lecture de la bande', () => {
 		expect(screen.getAllByTestId('temps-cellule')).toHaveLength(7)
 		expect(cellule('lundi 19 octobre')).toBeTruthy()
 		expect(cellule('dimanche 25 octobre')).toBeTruthy()
+		// Trop étroite pour sept libellés, la bande nomme les cases « En heures » par une phrase, et chacune par son nom.
+		expect(screen.getByText(fr['personnel.card.week.hoursHint'])).toBeTruthy()
+		expect(screen.queryByText(fr['time.hours.short'])).toBeNull()
+		expect(screen.getByRole('checkbox', { name: 'Saisir le lundi 19 octobre en heures' })).toBeTruthy()
+		expect(screen.queryByTestId('temps-total-ligne')).toBeNull()
 	})
 
 	it('compte au pied du jour les AUTRES cibles, et au total de la ligne la seule affaire', async () => {
@@ -195,7 +200,8 @@ describe('la saisie depuis la bande', () => {
 		await user.tab()
 		await waitFor(() => expect(ecritures).toHaveLength(2))
 		expect(ecritures[1]?.action).toBe('delete')
-		await waitFor(() => expect(screen.getByTestId('temps-total-ligne').textContent).toBe(''))
+		// Un total nul ne s'écrit pas (§5.54 bis).
+		await waitFor(() => expect(screen.queryByTestId('temps-total-ligne')).toBeNull())
 	})
 
 	it('annonce le plafond sans rien envoyer quand une autre cible remplit déjà la journée', async () => {

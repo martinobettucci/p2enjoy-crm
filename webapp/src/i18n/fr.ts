@@ -3621,6 +3621,8 @@ export const fr = {
 	'personnel.card.week.open': 'Ouvrir dans Temps',
 	'personnel.card.week.caption': 'Votre temps sur {titre}, jour par jour',
 	'personnel.card.week.dayTotal': 'Total de la journée, toutes cibles',
+	'personnel.card.week.hoursHint': 'Cochez la case sous un jour pour le saisir en heures.',
+	'personnel.card.week.total': 'Total de la semaine sur cette affaire :',
 	// `CRM-099` T2 — plusieurs réels par ligne de coût, et la case « Soldé » (docs/SPEC-costs.md §2.3 bis).
 	'costs.pending.column.already': 'Déjà saisi',
 	'costs.pending.column.settled': 'Soldé',

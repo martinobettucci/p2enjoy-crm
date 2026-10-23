@@ -43,9 +43,9 @@ captures observées, manuel au chapitre 5 duodecies ; l'intégration réelle des
   compte plus aucune. La webapp de production est construite par `vite` : la prochaine livraison la construit avec la
   8.3.5, sans autre geste.
 
-### `CRM-107` T2 — calculer le coût par quart depuis le coût mensuel (décision 631)
+### `CRM-107` — calculer le coût par quart depuis le coût mensuel (décision 631)
 
-*Webapp seulement. Prouvé en tests unitaires ; parcours réel, captures et manuel avec la tranche T3.*
+*Webapp seulement. Prouvé en tests unitaires et en E2E sur la pile ; manuel, chapitre 5 undecies.5.*
 
 - Dans Réglages ▸ « Coût du personnel », le formulaire **« Nouvelle version »** se complète d'un calculateur, **« Calculer
   depuis le coût mensuel »** : salaire brut mensuel, charges sociales en % du brut, frais de gestion et avantages par
@@ -54,9 +54,9 @@ captures observées, manuel au chapitre 5 duodecies ; l'intégration réelle des
   coût »** remplit le champ « Coût par quart ». Seul ce coût est enregistré, par « Enregistrer la version » ; rien
   d'autre n'est conservé.
 
-### `CRM-106` T2 — saisir son temps depuis la fiche d'une affaire (décision 630)
+### `CRM-106` — saisir son temps depuis la fiche d'une affaire (décision 630)
 
-*Webapp seulement. Prouvé en tests unitaires ; parcours réel, captures et manuel avec la tranche T3.*
+*Webapp seulement. Prouvé en tests unitaires, d'API et E2E sur la pile ; manuel, chapitre 5 undecies.6 bis.*
 
 - **Le bloc « Temps passé » de la fiche porte « Votre semaine »** : sept cases du lundi au dimanche, les mêmes que sur
   l'écran « Temps » — en quarts ou en heures, enregistrées seules ; une valeur remplace celle du jour, une case vidée
@@ -64,7 +64,7 @@ captures observées, manuel au chapitre 5 duodecies ; l'intégration réelle des
 - Chacun n'y saisit **que son propre temps**, administrateur compris. Le total de chaque jour compte toutes les cibles,
   et une valeur qui dépasserait la journée de 7 heures est annoncée avant l'envoi.
 - Semaine précédente, suivante, « Cette semaine » ; **« Ouvrir dans Temps »** mène à la matrice de la même semaine. Le
-  résumé du bloc se met à jour après chaque saisie.
+  résumé du bloc se met à jour après chaque saisie. Le total de la semaine sur l'affaire s'affiche sous la bande.
 - **Correction (INC-282)** : sur l'écran « Temps », une case quittée puis reprise pendant son enregistrement pouvait
   retirer le temps qu'elle venait d'enregistrer, et `Entrée` pouvait déplacer le curseur alors qu'on était déjà passé à
   une autre case.

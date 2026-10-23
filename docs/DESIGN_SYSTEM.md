@@ -5276,10 +5276,14 @@ octobre 2026 », 14 px), puis « Cette semaine » en lien d'action `--color-bran
 icônes, et non les libellés de la matrice : la colonne de la fiche mesure 72 caractères au plus. À droite, le lien
 **« Ouvrir dans Temps »** (icône `Timer` de l'entrée de navigation, 16 px), en `--color-brand`.
 
-**La bande** réemploie le tableau, l'en-tête d'un jour, la cellule et le pied de la matrice (§5.54), sans redessin :
-jour abrégé et date, jour courant souligné, case « En heures » ; cellule de 4 rem ; pied « 3 quarts sur 4 », pastille
-de succès pour une journée pleine ; colonne de droite, le total de la semaine de l'affaire. **Aucune première colonne
-visible** : la fiche nomme déjà l'affaire. La ligne garde un en-tête de ligne `sr-only` (le titre de l'affaire), et
+**La bande** réemploie le tableau, l'en-tête d'un jour, la cellule et le pied de la matrice (§5.54) : jour abrégé et
+date, jour courant souligné, case « En heures » ; cellule de 4 rem ; pied « 3 / 4 quarts », pastille de succès pour une
+journée pleine. **Deux écarts à la matrice, tirés des captures du 2026-10-23** — sept libellés « En heures » et une
+colonne de total débordaient la colonne de la fiche dès 1440 px, samedi, dimanche et le total hors de vue : la case
+d'un jour n'a **pas de libellé visible** (elle garde son nom accessible « Saisir le {jour} en heures »), et une phrase
+en 13 px `--color-text-2` au-dessus de la bande la nomme : « Cochez la case sous un jour pour le saisir en heures. » ;
+le **total de la semaine** de l'affaire passe **sous la bande**, en 14 px — « Total de la semaine sur cette affaire :
+**3 h 30** » —, et ne s'écrit pas quand il est nul. **Aucune première colonne visible** : la fiche nomme déjà l'affaire. La ligne garde un en-tête de ligne `sr-only` (le titre de l'affaire), et
 chaque cellule son nom accessible « {affaire}, {jour long} ». Le pied compte **toutes** les cibles du jour, et son
 en-tête `sr-only` le dit : « Total de la journée, toutes cibles ».
 

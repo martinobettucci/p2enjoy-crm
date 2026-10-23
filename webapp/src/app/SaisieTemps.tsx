@@ -452,11 +452,14 @@ export function EnTeteJour({
 	aujourdhui,
 	mode,
 	onBasculer,
+	libelleVisible = true,
 }: {
 	readonly jour: string
 	readonly aujourdhui: string
 	readonly mode: ModeJour
 	readonly onBasculer: (jour: string, coche: boolean) => void
+	/** Faux dans la bande de la fiche, trop étroite pour sept libellés : la case garde son nom accessible (§5.54 bis). */
+	readonly libelleVisible?: boolean
 }) {
 	return (
 		<th scope="col" className="px-1 py-2 text-center font-medium">
@@ -475,7 +478,7 @@ export function EnTeteJour({
 					data-testid={`temps-heures-${jour}`}
 					className="size-6 accent-[var(--color-brand)]"
 				/>
-				<span aria-hidden="true">{t('time.hours.short')}</span>
+				{libelleVisible ? <span aria-hidden="true">{t('time.hours.short')}</span> : null}
 			</label>
 		</th>
 	)
