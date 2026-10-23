@@ -13,10 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-108` T1 à T3 — recettes d'une affaire et rapport de rentabilité (décision 632)
+### `CRM-108` — recettes d'une affaire et rapport de rentabilité (décision 632)
 
-*Base et webapp, en développement seulement. Prouvé en pgTAP et en tests unitaires ; parcours réel, seed, captures,
-connecteur MCP et manuel avec les tranches T4 et T5. La migration `0095` attend la prochaine fenêtre de production.*
+*En développement seulement. Prouvé en pgTAP, en tests unitaires et en E2E sur la pile seedée (API et navigateur),
+captures observées, manuel au chapitre 5 duodecies ; l'intégration réelle des outils MCP reste à faire. La migration
+`0095` attend la prochaine fenêtre de production, après `CRM-106` et `CRM-107` (décision du responsable).*
 
 - **Migration `0095`** : une affaire porte des **lignes de recette** (« Acompte », « Solde »…), chacune avec un prévu et
   plusieurs **recettes réelles** datées jusqu'à « Soldé » — les mêmes règles que les lignes de coût. La devise est celle

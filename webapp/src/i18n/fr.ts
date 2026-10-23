@@ -3959,7 +3959,7 @@ export const fr = {
 	'rentab.pending.column.estimated': 'Prévu',
 	'rentab.pending.column.done': 'Déjà saisi',
 	'rentab.pending.column.add': 'Une recette de plus',
-	'rentab.pending.age.one': '1 jour',
+	'rentab.pending.age.one': '{n} jour',
 	'rentab.pending.age.many': '{n} jours',
 	'rentab.pending.input.aria': 'Recette réelle de plus : {nature} de {affaire}',
 	'rentab.pending.settle.aria': 'Soldé : {nature} de {affaire}',

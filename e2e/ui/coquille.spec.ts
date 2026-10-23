@@ -13,6 +13,7 @@
 // Les états de chargement et d'erreur, eux, sont provoqués en agissant sur le **réseau** —
 // retard réel, échec réel — et non en injectant un état dans l'application. Une simulation
 // interne prouverait que le composant sait s'afficher, pas que l'application sait échouer.
+// @verifies CRM-108 (docs/BACKLOG.md) tranche T3 — l'entrée « Rentabilité » dans le parcours clavier de la barre latérale
 
 import {
 	autoriserErreursConsole,
@@ -299,6 +300,8 @@ test.describe('navigation au clavier (docs/DESIGN_SYSTEM.md §8)', () => {
 			'Objectifs',
 			'Coûts',
 			'Pilotage',
+			// `CRM-108` : « Rentabilité » suit « Pilotage » (docs/SPEC-recettes.md §6.0, docs/DESIGN_SYSTEM.md §5.60).
+			'Rentabilité',
 			// `CRM-098` : « Temps » suit « Pilotage » (docs/DESIGN_SYSTEM.md §5.54) — preuve révisée avec l'ordre réel.
 			'Temps',
 			'Ma journée',

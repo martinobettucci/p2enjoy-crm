@@ -5832,6 +5832,9 @@ n'est pas connu. Seuls les écarts et ce qui est propre au rapport sont écrits.
   channels à 24 px, leurs affaires à 36 px (`pl-[36px]`, valeur arbitraire assumée). **Les lignes de track et de channel
   sont des sous-totaux** : leurs montants sont en `font-medium`, et leur en-tête de ligne le dit par un `sr-only`
   « Sous-total ». Le total du tableau ferme le `tfoot`, séparé d'un filet `--color-border`. Colonnes fixes
+- **LES TABLEAUX DU RAPPORT ET DE « À saisir » REPOSENT SUR UNE SURFACE BORDÉE** — `--color-surface`, bordure
+  `--color-border`, `--radius-lg`, comme les tableaux du pilotage (§5.48). *Ajouté en regardant la capture (T5)* : posés
+  à même le fond, la première colonne collante portait seule le fond blanc, et chaque ligne se lisait en deux teintes.
   (`table-fixed`) pour que les tableaux de plusieurs devises s'alignent (§5.54). Aucune colonne n'est triable : l'ordre
   est celui de l'arborescence, track puis channel, comme partout ailleurs (§5.48 bis).
 - **L'ÉTAT D'UNE AFFAIRE EST UN MOT** — « Gagnée », « En cours », « Perdue » — accordé à « affaire », et non les mots

@@ -4421,6 +4421,93 @@ if [ "$EST_SUPERADMIN" != "true" ]; then
 fi
 info "Plateforme : Sabine Plateforme est superadministratrice, amorcée par sa connexion — CRM-101, docs/SPEC-seed.md §19"
 
+# --- 8 duovicies. Les recettes et la rentabilité — CRM-108, docs/SPEC-seed.md §21 ------------------------------------
+# @spec CRM-108 (docs/BACKLOG.md) — tranche T5 : des recettes de démonstration par la VRAIE API, sous le jeton de qui écrit
+#       l'affaire (docs/SPEC-recettes.md §8 ; docs/SPEC-seed.md §21) ; décision 632
+#
+# Une affaire gagnée et rentable (…0cd), une affaire en cours déficitaire et partielle (…0c4), une ligne soldée à zéro
+# (…0cc), une affaire en CHF (…0c7) ; …0cb paraît par le seul temps non valorisé de Farida (§17). Les réels sont datés
+# dans les deux derniers mois, calculés à chaque exécution, pour qu'une période en retienne une partie.
+#
+# id | affaire | jeton (admin|bizdev) | nature | prévu | réels « montant@jours » séparés par des espaces | soldée
+RECETTES_SEED=(
+	"5eed0000-0000-4000-8000-0000000000f1|5eed0000-0000-4000-8000-0000000000cd|admin|Acompte 30 %|63000.00|63000.00@50|oui"
+	"5eed0000-0000-4000-8000-0000000000f2|5eed0000-0000-4000-8000-0000000000cd|admin|Solde|147000.00|100000.00@10|"
+	"5eed0000-0000-4000-8000-0000000000f3|5eed0000-0000-4000-8000-0000000000c4|bizdev|Lot 1 — conception|20000.00|4000.00@35|"
+	"5eed0000-0000-4000-8000-0000000000f4|5eed0000-0000-4000-8000-0000000000c4|bizdev|Lot 2 — réalisation|52000.00||"
+	"5eed0000-0000-4000-8000-0000000000f5|5eed0000-0000-4000-8000-0000000000cc|bizdev|Frais de mise en service|1500.00||oui"
+	"5eed0000-0000-4000-8000-0000000000f6|5eed0000-0000-4000-8000-0000000000c7|admin|Convention|28000.00|14000.00@20|"
+)
+
+echo
+say "8 duovicies. Recettes et rentabilité"
+
+# Des jetons FRAIS, comme au §8 vicies : le jeton interne vit 300 s.
+JETON_ADMIN_RECETTES=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+JETON_BIZDEV_RECETTES=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_RECETTES" ] && [ -n "$JETON_BIZDEV_RECETTES" ] || die "connexion de l'administratrice ou du business
+        developer impossible : les recettes se créent sous leur jeton (docs/SPEC-seed.md §21.2)."
+
+for ligne in "${RECETTES_SEED[@]}"; do
+	IFS='|' read -r id card qui libelle prevu reels soldee <<< "$ligne"
+	jeton=$JETON_ADMIN_RECETTES
+	[ "$qui" = bizdev ] && jeton=$JETON_BIZDEV_RECETTES
+
+	# L'upsert sur l'identifiant stable : un rejeu ne duplique pas la ligne (§21.3). Aucune recette réelle n'est
+	# envoyée — la base la tient (docs/SPEC-recettes.md §2.3).
+	code=$(api_jeton "$jeton" POST /rest/v1/card_revenues \
+		-H 'Prefer: return=representation,resolution=merge-duplicates' \
+		-d "$(jq -nc --arg id "$id" --arg card "$card" --arg l "$libelle" --argjson p "$prevu" \
+			'{id: $id, card_id: $card, label: $l, estimated_amount: $p}')")
+	attendu "$code" "ligne de recette « $libelle »" 200 201
+
+	code=$(api_jeton "$jeton" GET "/rest/v1/card_revenue_actuals?select=id&card_revenue_id=eq.$id")
+	attendu "$code" "lecture des recettes réelles de « $libelle »" 200
+	poses='déjà présentes, non réécrites'
+	[ "$(jq -r 'length' "$CORPS")" = "0" ] && poses='— aucune'
+	if [ "$(jq -r 'length' "$CORPS")" = "0" ] && [ -n "$reels" ]; then
+		poses="$reels"
+		for reel in $reels; do
+			montant=${reel%@*}
+			jours=${reel#*@}
+			code=$(api_jeton "$jeton" POST /rest/v1/card_revenue_actuals \
+				-d "$(jq -nc --arg ligne "$id" --argjson m "$montant" --arg d "$(date -u -d "-${jours} days" '+%Y-%m-%d')" \
+					'{card_revenue_id: $ligne, amount: $m, received_on: $d}')")
+			attendu "$code" "recette réelle de « $libelle »" 201
+		done
+	fi
+	if [ "$soldee" = "oui" ]; then
+		code=$(api_jeton "$jeton" PATCH "/rest/v1/card_revenues?id=eq.$id&settled_at=is.null" \
+			-d "$(jq -nc --arg maintenant "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" '{settled_at: $maintenant}')")
+		attendu "$code" "soldé de « $libelle »" 200 204
+	fi
+	printf '  %-26s prévu %10s   réels %s%s\n' "${libelle:0:26}" "$prevu" "$poses" "${soldee:+ — soldée}"
+done
+
+# LE CONSTAT, sous les jetons réels : l'administratrice lit la rentabilité des cinq affaires, le business developer en
+# est refusé en 42501 (docs/SPEC-recettes.md §3, §5).
+code=$(api_jeton "$JETON_ADMIN_RECETTES" POST /rest/v1/rpc/rentabilite_affaires -d '{}')
+attendu "$code" "rentabilité lue par l'administratrice" 200
+for card in 0cd 0c4 0cc 0c7 0cb; do
+	[ "$(jq -r --arg c "5eed0000-0000-4000-8000-000000000$card" '[.[] | select(.card_id == $c)] | length' "$CORPS")" -ge 1 ] \
+		|| die "la rentabilité ne rend pas l'affaire …$card (docs/SPEC-seed.md §21.1)."
+done
+code=$(api_jeton "$JETON_BIZDEV_RECETTES" POST /rest/v1/rpc/rentabilite_affaires -d '{}')
+attendu "$code" "rentabilité refusée au business developer" 403
+
+# LA MATRICE DU CONNECTEUR, par la vraie fonction et sous le jeton de la superadministratrice (§8 unvicies) : le
+# business developer reçoit les quatre cases qui rendent les outils `recettes` visibles et le refus du rapport par le
+# CRM démontrable (docs/SPEC-seed.md §21.4). `mcp_poser_droits` REMPLACE la matrice de cet espace pour lui.
+JETON_PLATEFORME_RECETTES=$(sso_jeton_interne "$API" "$ANON_KEY" 'plateforme@p2enjoy.test' || true)
+[ -n "$JETON_PLATEFORME_RECETTES" ] || die "Sabine Plateforme ne se connecte pas : la matrice de démonstration ne peut
+        pas être posée (docs/SPEC-seed.md §21.4)."
+code=$(api_jeton "$JETON_PLATEFORME_RECETTES" POST /rest/v1/rpc/mcp_poser_droits \
+	-d "$(jq -nc --arg ws "$WS_ID" '{p_sub: "5eed0000-0000-4000-8000-000000000012", p_ws: $ws,
+		p_droits: [["budgets","consulter"],["recettes","consulter"],["recettes","ajouter"],["temps","consulter"]]}')")
+attendu "$code" "matrice du connecteur du business developer" 200 204
+info "Recettes : ${#RECETTES_SEED[@]} lignes sur 4 affaires, dont 2 soldées (une à zéro) et 1 en CHF ; rentabilité lue
+      par l'administratrice, refusée au business developer ; matrice du connecteur posée — docs/SPEC-seed.md §21"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens

@@ -77,7 +77,7 @@ export function RecettesASaisir({
 					{t('rentab.pending.readonly.all')}
 				</p>
 			) : null}
-			<div className="overflow-x-auto indique-debordement-x [contain:paint]">
+			<div className="overflow-x-auto indique-debordement-x [contain:paint] rounded-lg border border-border bg-surface">
 				<table data-testid="tableau-recettes-a-saisir" className="w-full min-w-[52rem] border-collapse">
 					<caption className="sr-only">{t('rentab.pending.caption')}</caption>
 					<thead>
@@ -157,13 +157,13 @@ function LigneASaisir({
 		else setEtat({ statut: 'refus', message: texteRefusRecette(r.refus) })
 	}
 
+	// Calculée HORS du littéral `className` : le contrôle des classes lit chaque mot de ce littéral comme une classe, et
+	// une comparaison à `'enregistre'` y passerait pour une classe absente (le piège de `CoutsASaisir.tsx`).
+	const fondEnregistre = etat.statut === 'enregistre' || soldee ? 'bg-success-soft' : ''
 	return (
-		<tr
-			data-testid="ligne-recette-a-saisir"
-			className={`border-b border-border align-top ${etat.statut === 'enregistre' || soldee ? 'bg-success-soft' : ''}`}
-		>
+		<tr data-testid="ligne-recette-a-saisir" className={`border-b border-border align-top ${fondEnregistre}`}>
 			<td className="py-2 px-3 text-sm text-text-2 whitespace-nowrap">
-				{jours === null ? '' : t(jours === 1 ? 'rentab.pending.age.one' : 'rentab.pending.age.many', { n: String(jours) })}
+				{jours === null ? '' : t(jours <= 1 ? 'rentab.pending.age.one' : 'rentab.pending.age.many', { n: String(jours) })}
 			</td>
 			<th scope="row" className="py-2 px-3 text-left font-normal max-w-[28ch] truncate" title={ligne.cards?.title ?? ''}>
 				{adresse === null ? (ligne.cards?.title ?? '') : (

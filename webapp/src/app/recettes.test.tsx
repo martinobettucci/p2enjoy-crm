@@ -216,11 +216,29 @@ describe('l’écran « Rentabilité »', () => {
 		const { client } = clientFactice({ rpc: { data: null, error: { message: 'rentabilite_reservee', code: '42501' }, status: 403 } })
 		render(
 			<MemoryRouter initialEntries={['/rentabilite']}>
-				<Rentabilite client={client} />
+				<Rentabilite client={client} administration="permise" />
 			</MemoryRouter>,
 		)
 		expect(await screen.findByText(fr['rentab.refused.title'])).toBeTruthy()
 		expect(screen.getByRole('link', { name: fr['rentab.refused.toPending'] }).getAttribute('href')).toContain('onglet=saisir')
+	})
+
+	it('n’appelle PAS la fonction tant que l’espace n’est pas connu, ni quand la capacité est refusée', async () => {
+		const { client, rpcs } = clientFactice({})
+		render(
+			<MemoryRouter initialEntries={['/rentabilite']}>
+				<Rentabilite client={client} />
+			</MemoryRouter>,
+		)
+		await screen.findAllByLabelText(fr['state.loading.aria'])
+		const refusee = clientFactice({})
+		render(
+			<MemoryRouter initialEntries={['/rentabilite']}>
+				<Rentabilite client={refusee.client} administration="refusee" />
+			</MemoryRouter>,
+		)
+		expect(await screen.findByText(fr['rentab.refused.title'])).toBeTruthy()
+		expect([...rpcs, ...refusee.rpcs]).toEqual([])
 	})
 
 	it('rend un tableau par devise, la devise nommée dans les en-têtes, et retire le taux en vue « Prévu »', async () => {
@@ -235,7 +253,7 @@ describe('l’écran « Rentabilité »', () => {
 		})
 		render(
 			<MemoryRouter initialEntries={['/rentabilite?vue=prevu']}>
-				<Rentabilite client={client} />
+				<Rentabilite client={client} administration="permise" />
 			</MemoryRouter>,
 		)
 		const tableaux = await screen.findAllByTestId('rentab-tableau')

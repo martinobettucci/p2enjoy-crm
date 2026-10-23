@@ -3600,6 +3600,61 @@ portée : « Votre temps » pour un membre, « Le temps de toute l’équipe » 
 Aucune validation ni clôture d'un mois, aucun calendrier de congés ou de jours fériés, aucune facturation au temps
 passé, aucune conversion de devise, aucun export.
 
+## 5 duodecies. Les recettes d'une affaire et sa rentabilité
+
+*Livré par `CRM-108`.* Une affaire porte ce qu'elle doit rapporter et ce qu'elle a rapporté, comme elle porte ce qu'elle
+coûte. Le rapport de rentabilité rapproche les trois : recettes, coûts et coût du personnel. Captures :
+`docs/captures/CRM-108/`.
+
+### 5 duodecies.1 Saisir les recettes dans la fiche
+
+Dans la fiche d'une affaire, le bloc **« Recettes »** vient avant « Coûts ». **« Nouvelle ligne de recette »** ajoute une
+ligne : sa nature — « Acompte », « Solde », « Lot 1 » — et sa recette prévue. Les montants sont dans la devise de
+l'affaire, rappelée dans l'en-tête des colonnes.
+
+Chaque ligne se déplie : on y ajoute une **recette réelle** par facture ou par encaissement — un montant, une date
+(celle du jour par défaut) et un libellé facultatif. La colonne « Réel » est leur somme ; tant qu'aucune n'est saisie,
+elle montre un tiret : la recette réelle est **inconnue**, pas nulle. Quand tout est encaissé, cochez **« Soldé »** :
+la ligne ne reçoit plus de recette réelle, et une ligne soldée sans recette réelle vaut zéro. Décocher la rouvre.
+
+Il faut pouvoir modifier l'affaire pour saisir ses recettes. Tant qu'une affaire porte des lignes de recette, sa devise
+ne change plus.
+
+### 5 duodecies.2 La rentabilité d'une affaire
+
+Pour un administrateur de l'espace, le bloc **« Rentabilité »** suit « Temps passé » : recettes, coûts, coût du
+personnel et marge, en **prévu** et en **réel**, et le taux de marge réelle. La marge est **recettes − coûts −
+personnel**. Une marge négative est écrite avec son signe, sur fond rouge. La mention **« partielle »** dit qu'il manque
+encore quelque chose — une recette ou un coût sans réel, du temps sans coût défini ; survolez-la pour savoir quoi.
+
+La marge prévue soustrait le temps **déjà passé** : le CRM ne prévoit pas le temps. Une affaire dont les montants sont
+dans plusieurs devises a une marge **« Non calculable — plusieurs devises »** : le CRM ne convertit pas les devises.
+
+### 5 duodecies.3 L'écran « Rentabilité »
+
+Barre latérale ▸ **« Rentabilité »**, après « Pilotage ». L'onglet **« Vue d'ensemble »** rend un tableau par devise :
+chaque track, ses channels et leurs affaires, avec un sous-total à chaque niveau et le total. Les filtres :
+
+- **« Du »** et **« Au »** retiennent les recettes réelles, les coûts réels et le temps par leur date ; les montants
+  prévus portent toujours sur toute l'affaire ;
+- **« État »** : toutes les affaires, les gagnées, les en cours ou les perdues ;
+- **« Réel »** et **« Prévu »** changent de vue.
+
+Seuls les **administrateurs** de l'espace lisent ce rapport : il soustrait le coût du temps de toute l'équipe, que
+seuls eux peuvent lire. Un autre membre lit « Réservé aux administrateurs » et un lien vers l'onglet « À saisir ».
+
+### 5 duodecies.4 L'onglet « À saisir »
+
+Il liste les lignes de recette **non soldées**, de la plus ancienne à la plus récente, pour tout membre. Tapez un montant
+dans **« Une recette de plus »** : `Entrée` l'enregistre, à la date du jour, et passe à la ligne suivante. Saisir 0
+enregistre une recette nulle ; laisser le champ vide ne change rien. Cochez « Soldé » quand la ligne est encaissée. Une
+ligne que vous ne pouvez pas modifier reste visible, son champ éteint, avec le motif.
+
+### 5 duodecies.5 Ce qui n'est pas offert
+
+Aucune facturation ni relance d'impayé, aucune conversion de devise, aucune prévision du temps, aucune répartition d'une
+recette entre plusieurs affaires, aucun export.
+
 ## 6. Consulter l'état de la messagerie
 
 *Livré par `CRM-059` ; les règles d'accès sont celles de `CRM-052` (comptes entrants) et de
@@ -4308,12 +4363,14 @@ Deux règles se cumulent :
 L'assistant ne peut faire que ce que **les deux** permettent. Un droit du connecteur dans un espace dont vous n'êtes pas
 membre reste sans effet.
 
-Les sept familles, et ce que chacune couvre :
+Les huit familles, et ce que chacune couvre :
 
 - **Structure** : tracks, channels, lecture des workflows ;
 - **Affaires** : affaires, champs, étapes, commentaires, contacts liés ;
 - **Contacts** : contacts et organisations ;
 - **Budgets** : budgets, occurrences, lignes de coût, réels ;
+- **Recettes** : lignes de recette d'une affaire et leurs réels ; le rapport de rentabilité, réservé aux
+  administrateurs de l'espace ;
 - **Temps** : saisies de temps, et le coût du personnel en lecture ;
 - **Objectifs** : tableaux d'objectifs ;
 - **Messagerie** : lecture des fils ; l'envoi compte comme « ajouter ».

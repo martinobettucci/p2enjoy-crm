@@ -35,6 +35,7 @@ import { dureeEnClair, Marge, montantEnClair } from './BlocRentabiliteCard'
 import { RecettesASaisir } from './RecettesASaisir'
 import { CHEMIN_RENTABILITE } from './chemins'
 import { useContexteEspace } from './ContexteEspace'
+import type { Capacite } from '../lib/capacites'
 
 const CLE_ONGLET = 'onglet'
 const DATE_ISO = /^\d{4}-\d{2}-\d{2}$/
@@ -54,7 +55,14 @@ type LectureRapport =
 	| { readonly statut: 'erreur'; readonly nature: string }
 	| { readonly statut: 'pret'; readonly lignes: readonly LigneRentabilite[]; readonly noms: Noms; readonly cle: string }
 
-export function Rentabilite({ client = clientCrm }: { readonly client?: ClientCrm | null } = {}) {
+export function Rentabilite({
+	client = clientCrm,
+	administration,
+}: {
+	readonly client?: ClientCrm | null
+	/** Pour une preuve hors coquille : la capacité d'administrer, sinon celle que la coquille a lue. */
+	readonly administration?: Capacite
+} = {}) {
 	const [parametres, setParametres] = useSearchParams()
 	const onglet = parametres.get(CLE_ONGLET) === 'saisir' ? 'saisir' : 'ensemble'
 	const [aSaisir, setASaisir] = useState<EtatAsync<readonly RecetteASaisir[]>>(enChargement)
@@ -114,7 +122,7 @@ export function Rentabilite({ client = clientCrm }: { readonly client?: ClientCr
 			{onglet === 'saisir' ? (
 				<RecettesASaisir client={client} lecture={aSaisir} onRelire={() => setTentativeSaisir((n) => n + 1)} />
 			) : (
-				<VueEnsemble client={client} parametres={parametres} setParametres={setParametres} versSaisir={vers('saisir')} />
+				<VueEnsemble client={client} parametres={parametres} setParametres={setParametres} versSaisir={vers('saisir')} capaciteSouveraine={administration} />
 			)}
 		</div>
 	)
@@ -125,7 +133,9 @@ function VueEnsemble({
 	parametres,
 	setParametres,
 	versSaisir,
+	capaciteSouveraine,
 }: {
+	readonly capaciteSouveraine: Capacite | undefined
 	readonly client: ClientCrm | null
 	readonly parametres: URLSearchParams
 	readonly setParametres: ReturnType<typeof useSearchParams>[1]
@@ -142,10 +152,16 @@ function VueEnsemble({
 	// La capacité d'administrer l'espace, rendue par la base à la coquille (`CRM-093`) : refusée, l'écran dit « réservé »
 	// SANS appeler la fonction, dont le refus laisserait une erreur 403 dans la console (précision de T3, §6.3). Illisible
 	// (hors coquille, échec), la fonction reste juge.
-	const administration = useContexteEspace().capacites.administration
+	const contexte = useContexteEspace()
+	const administration = capaciteSouveraine ?? contexte.capacites.administration
+	// Tant que l'espace n'est pas connu, la capacité est « inconnue » sans avoir été lue : attendre, sinon l'appel part
+	// et un non-administrateur reçoit une 403 (défaut trouvé par l'E2E, chargement direct de l'adresse). Inconnue APRÈS
+	// lecture (échec), la fonction reste juge.
+	const enAttente =
+		administration === 'en-lecture' || (administration === 'inconnue' && capaciteSouveraine === undefined && contexte.idWorkspace === null)
 
 	useEffect(() => {
-		if (client === null || administration === 'en-lecture' || administration === 'refusee') return
+		if (client === null || enAttente || administration === 'refusee') return
 		const r = ++rang.current
 		void (async () => {
 			const lu = await lireRentabilite(client, { du, au })
@@ -164,7 +180,7 @@ function VueEnsemble({
 			}
 			setLecture({ statut: 'pret', lignes: lu.donnees.lignes, noms: noms.donnees, cle })
 		})()
-	}, [client, du, au, cle, tentative, administration])
+	}, [client, du, au, cle, tentative, administration, enAttente])
 
 	const changer = (cleParam: string, valeur: string | null) => {
 		const p = new URLSearchParams(parametres)
@@ -301,7 +317,9 @@ function TableauRentabilite({ tableau, vue, titre }: { readonly tableau: Tableau
 	return (
 		<section aria-label={t('rentab.table.aria', { devise: d })} data-testid="rentab-tableau" data-devise={d} className="flex flex-col gap-2 min-w-0">
 			{titre ? <h2 className="text-h2 font-bold">{d}</h2> : null}
-			<div className="overflow-x-auto indique-debordement-x [contain:paint]">
+			{/* Une surface bordée, comme les tableaux du pilotage (§5.48) : les cellules collantes portent le même fond que la
+			    ligne, et la ligne ne se lit plus en deux teintes (constaté sur la capture du 2026-10-23). */}
+			<div className="overflow-x-auto indique-debordement-x [contain:paint] rounded-lg border border-border bg-surface">
 				<table className="w-full min-w-[56rem] table-fixed border-collapse">
 					<thead>
 						<tr className="border-b border-border">

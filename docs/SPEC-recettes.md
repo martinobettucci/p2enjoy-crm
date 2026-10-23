@@ -258,7 +258,8 @@ une erreur réseau 403 dans la console de chaque fiche d'un non-administrateur, 
 défaut. Le bloc lit donc D'ABORD la capacité d'administrer l'espace de l'affaire (`workspaces.administration_permise`,
 `CRM-093`, `docs/SPEC-droits-interface.md` §2.2) et n'appelle la fonction que si la base la permet ; l'écran fait de même
 avec la capacité que la coquille a lue. La garde `42501` reste en base, seule juge ; la capacité n'évite qu'un appel voué
-au refus. Mesuré par requête directe : jeton de l'administratrice `200`, du business developer `403`.
+au refus. L'écran attend en outre que l'espace soit connu : avant, la capacité est « inconnue » sans avoir été lue, et
+l'appel partait au chargement direct de `/rentabilite` (trouvé par l'E2E). Mesuré par requête directe : jeton de l'administratrice `200`, du business developer `403`.
 
 **Pour qui la base répond `42501`, le bloc n'est pas rendu** [choix de rédaction]. Ce n'est pas un rôle deviné par
 l'écran : c'est le refus de la base, lu à la première requête. Rendre un bloc qui dirait à chaque membre, sur chaque

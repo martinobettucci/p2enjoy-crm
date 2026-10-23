@@ -15604,7 +15604,7 @@ nouvelle `recettes`, outils livrés par cette unité.*
       87 / 3796. **Deux mutations tuées** (verrou de devise retiré : 21 rouge ; garde administrateur retirée : 31 et 32
       rouges), chacune dans une transaction annulée. *Précision de T2* : le temps non valorisé se range sous la devise de
       l'affaire (`docs/SPEC-recettes.md` §5). Types TypeScript régénérés (139 lignes ajoutées, aucune autre).
-- [~] **T3 — webapp** : `lib/card-revenues.ts`, `lib/rentabilite.ts` (la règle du §4), bloc « Recettes » et bloc
+- [x] **T3 — webapp** : `lib/card-revenues.ts`, `lib/rentabilite.ts` (la règle du §4), bloc « Recettes » et bloc
       « Rentabilité » de la fiche, écran `/rentabilite` et ses onglets « Vue d'ensemble » et « À saisir », entrée de barre
       latérale, famille `recettes` de la matrice ; unitaires et mutations ; build et contrôle des classes.
       *Implémenté le 2026-10-23* : `lib/card-revenues.ts`, `lib/rentabilite.ts`, `lib/rentabilite-lecture.ts`,
@@ -15618,8 +15618,10 @@ nouvelle `recettes`, outils livrés par cette unité.*
       refus `42501` ; Entrée qui ne passe pas à la ligne suivante). *Corrigé le même jour* : le bloc de la fiche et l'écran lisent d'abord la capacité `administration_permise` et
       n'appellent la fonction que si elle est permise — un 42501 attendu laissait une 403 dans la console de chaque fiche
       (signalé par les campagnes de `CRM-093`) ; preuve unitaire « n'appelle PAS la fonction », et mesure directe :
-      administratrice 200, business developer 403. **Restent avant `[x]`** : le build et le contrôle des
-      classes, différés tant que d'autres sessions jouent leurs campagnes sur `dist` ; la vérification visuelle (T5).
+      administratrice 200, business developer 403. *Vérifié le 2026-10-23, sur la pile* : build vert, contrôle des classes vert (407 classes ; une comparaison écrite dans
+      un littéral `className` y passait pour une classe absente, signalé par une autre session et corrigé) ; l'écran
+      attend désormais que l'espace soit connu avant d'appeler la fonction (une 403 au chargement direct de
+      `/rentabilite`, trouvée par l'E2E) ; vérification visuelle avec T5 ; campagne unitaire **4 100 tests verts**.
 - [~] **T4 — connecteur** : `FAMILLES`, genres `revenue` et `revenue_actual`, les huit outils de
       `mcp/crm_mcp/outils/recettes.py` ; pytest unitaires et intégration par outil (succès, refus matrice, refus CRM,
       journal) ; `scripts/verify-mcp.sh`.
@@ -15632,7 +15634,7 @@ nouvelle `recettes`, outils livrés par cette unité.*
       et `test_rentabilite` 9 ; **une mutation tuée** (cases `aussi` retirées). **Restent avant `[x]`** : l'intégration
       par outil contre la vraie base et un vrai client MCP (succès, refus matrice, refus CRM, journal) et
       `scripts/verify-mcp.sh`, sur la pile, avec T5.
-- [ ] **T5 — preuves sur la pile réelle** : seed §21 ; API (refus avec jetons réels) ; E2E souris et clavier, fiche, saisie
+- [~] **T5 — preuves sur la pile réelle** : seed §21 ; API (refus avec jetons réels) ; E2E souris et clavier, fiche, saisie
       en série, rapport et filtres, membre refusé, effet d'un outil du connecteur ; captures `docs/captures/CRM-108/` aux
       quatre paliers observées ; `docs/manual.md` (chapitre des recettes et de la rentabilité, chapitre 11 du
       connecteur) ; `README.md` si besoin ; `CHANGELOG.md` ; campagnes après synchronisation.
@@ -15642,3 +15644,15 @@ nouvelle `recettes`, outils livrés par cette unité.*
 **Definition of Done** : `CLAUDE.md` §17 au complet ; en particulier, chaque refus prouvé par une requête directe avec le
 jeton réel du profil (lectrice qui écrit, business developer qui demande la rentabilité), la marge appliquée par la même
 règle dans la webapp et le connecteur, et les captures observées.
+      *Fait le 2026-10-23, sur la pile* : seed §21 joué **deux fois**, convergent (6 lignes, 4 recettes réelles, rien de
+      réécrit), avec ses constats sous jetons réels (administratrice 200, business developer 403) et la matrice MCP de
+      démonstration posée par `mcp_poser_droits` sous le jeton de la superadministratrice ; `e2e/api/recettes` **5/5**
+      (rentabilité 200 / 403 / 403, lectrice qui lit sans créer, réel écrit directement 400/23514, devise verrouillée) ;
+      `e2e/ui/rentabilite` **3/3** (une ligne et deux réels saisis à la souris et au clavier, soldée, relue en base ; la
+      rentabilité de l'administratrice dans la fiche et l'écran, vues et filtres ; « Réservé aux administrateurs » et
+      « À saisir » du commercial) sans aucune erreur de console ; `coquille.spec.ts:231` révisée (« Rentabilité » dans le
+      parcours clavier) et verte ; **13 captures observées** aux quatre paliers — trois défauts trouvés à l'œil et
+      corrigés (tableaux en surface bordée, capture prise pendant la transition d'un onglet, tiroir capturé en
+      mouvement) ; « 0 jour » au singulier ; manuel chapitre 5 duodecies et chapitre 11 (huit familles),
+      `verify-manual.sh` **241 contrôles verts**. **Reste avant `[x]`** : l'effet d'un outil du connecteur constaté dans
+      la fiche, avec l'intégration réelle de T4.
