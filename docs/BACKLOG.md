@@ -15343,7 +15343,7 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       cible pleine, aucun débordement. **Non livré** : la livraison attend l'instruction du responsable
       (`docs/PROD_MIGRATIONS.md` §2.14).
 
-### CRM-103 — Administration du connecteur MCP dans la webapp `[ ]`
+### CRM-103 — Administration du connecteur MCP dans la webapp `[~]`
 *Créée le 2026-10-20 — décision 627 (A3). Quatrième onglet de `/plateforme` : comptes connectés, matrice familles ×
 actions par espace, avertissement « pas membre de cet espace », journal des appels. Spécifié avant le code :
 `docs/SPEC-mcp.md` §8. Dépend de `CRM-101` et de `CRM-102`. **Révisée le 2026-10-21 par l'arbitrage A5** : les droits
@@ -15378,7 +15378,7 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       CSS produit. Deux défauts trouvés à l'écriture : le message d'enregistrement effacé par la relecture (clé de la
       matrice corrigée), et un lien de vingt pixels (colonne « Commandes », design system précisé). **Reste `[~]`** : la
       vérification visuelle, les captures et l'E2E viennent avec T3, la pile étant occupée par une autre session.
-- [ ] **T3** — API aux jetons réels, E2E à la souris et au clavier avec un effet constaté par un appel MCP réel, seed,
+- [x] **T3** — API aux jetons réels, E2E à la souris et au clavier avec un effet constaté par un appel MCP réel, seed,
       captures observées, manuel (chapitre 11), campagnes.
       *Commencée le 2026-10-21* : le chapitre 11 du manuel est écrit d'après les écrans de T2 (§11.1 à §11.5, et le lien
       « Droits du connecteur » au §10.6 bis), et ses dix-sept libellés sont ajoutés au contrôle de `verify-manual.sh`,
@@ -15406,7 +15406,16 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       complet **1165/1165**. **T2 passe à `[x]`**, ses preuves visuelles et E2E étant faites par T3.c. **Reste pour fermer
       T3** : rejouer la campagne `e2e:ui` complète après ces changements. Seuls ses propres fichiers et des passages
       partiels l'ont été.
-- [ ] **T4** — livraison en production et constat.
+      *Fermée le 2026-10-23* : campagne `e2e:ui` complète sur `main` (révision `55fb3e99`, qui contient tous les commits de
+      T3), jouée par la session de `CRM-109`, **892/893** en 23,6 min. L'unique échec est une preuve de `CRM-109` T3,
+      corrigée par sa session. `plateforme-mcp.spec.ts` 6, `connecteur-mcp.spec.ts` 8 et `plateforme.spec.ts` 5 :
+      **19 scénarios verts**, relus dans le journal de la campagne. **T3 passe à `[x]`.**
+- [~] **T4** — livraison en production et constat.
+      *2026-10-23* : migrations `0093` et `0094` livrées par la fenêtre `8026e90e`, avec l'onglet de T2. Le correctif de
+      T3 est livré par `e9255249`. **Constaté en lecture seule** par la session de livraison : `mcp_droits_sub_fkey`
+      vers `profiles(id)`, 0 droit orphelin avant et après, `401` sans session sur `rpc/mcp_comptes_liste` et
+      `rpc/plateforme_utilisateurs`. **Reste** : le constat du responsable à l'écran, connexion LeLabs réelle, puis
+      l'image `mcp` reconstruite. Elle n'est pas de `CRM-103`, mais un droit posé ici n'a d'effet qu'à travers elle.
 
 ### CRM-104 — Outils MCP par famille `[ ]`
 *Créée le 2026-10-20 — décision 627 (A4, D6). Une tranche par famille ; chaque tranche fixe d'abord la liste exacte de
