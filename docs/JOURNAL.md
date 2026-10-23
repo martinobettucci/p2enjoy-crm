@@ -32687,3 +32687,24 @@ Connecteur MCP : les champs communs relèvent de la famille `affaires` (`modifie
 **Restent ouverts** : le filtre d'état et la ventilation par track ou channel de la rentabilité quand une affaire a
 plusieurs issues (décision 638, points 4 et 5) ; l'étape initiale d'un rattachement ajouté, et le retrait d'un
 rattachement (point 7).
+
+### décision 643 — rattachements multiples : rentabilité ventilée, ajout à l'étape initiale, retrait réservé à l'administrateur
+
+*2026-10-23, troisième série de réponses du responsable ; elle ferme les points ouverts des décisions 638, 639 et 642.*
+**Arbitrages.**
+1. **Rentabilité ventilée par rattachement.** Le rapport (`docs/SPEC-recettes.md` §4.6 et §5) rend **une ligne par
+   rattachement** : l'état et le montant sont ceux du rattachement ; les coûts, recettes et temps de l'affaire y sont
+   rappelés et **marqués partagés**, et le total ne les compte **qu'une fois**. Le filtre d'état s'applique à l'état du
+   rattachement.
+2. **Un rattachement ajouté entre à l'étape initiale** du workflow de son channel, comme une création ; son bloc démarre
+   vide.
+3. **Retirer un rattachement est réservé aux administrateurs de l'espace** (`app.is_workspace_admin`, en base). Le retrait
+   détruit le bloc et ses valeurs après une confirmation qui nomme la perte ; la timeline garde l'historique ; le
+   **dernier** rattachement ne se retire jamais — on met l'affaire à la corbeille. Les autres membres archivent.
+**Conséquences relevées par l'agent.** `public.rentabilite_affaires` rend déjà le chemin `track_id`, `channel_id` de
+chaque ligne : sa granularité passe de l'affaire × devise au rattachement × devise, ce qui change son contrat d'API et
+le connecteur (`crm_profitability_report`, famille `recettes`). Le connecteur n'offre pas le retrait : `supprimer`
+archive un rattachement (décision 639), et le retrait reste un geste d'administrateur dans la webapp.
+**État.** Les points ouverts des décisions 638, 639 et 642 sont tous tranchés. **Suite** : brouillon de spécification,
+puis unités de backlog et découpage en tranches, à valider avant tout code ; les champs communs de portée espace
+(décision 642, arbitrage 4) peuvent former une unité distincte.
