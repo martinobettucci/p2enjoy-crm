@@ -37,6 +37,10 @@ connecteur MCP et manuel avec les tranches T4 et T5. La migration `0095` attend 
 - **Connecteur MCP** : `opentelemetry-api` 1.45.1 (CVE-2026-114603, une requête authentifiée pouvait occuper le service
   plusieurs secondes). C'est une dépendance imposée par le SDK MCP, inerte : le CRM n'a aucune télémétrie.
 - **Tests de `mail-sync`** : `httpx2` 2.13.1 (cinq avis, sans effet en production).
+- **Outillage npm** : `vite` 8.3.5 et `vitest` 4.1.12 ; dans le verrou, `undici` 8.12.3 (via `jsdom`), `nanoid` 3.3.20
+  et `source-map-js` 1.2.2. Les 21 alertes GitHub portaient sur ces seuls paquets d'outillage ; `npm audit` n'en
+  compte plus aucune. La webapp de production est construite par `vite` : la prochaine livraison la construit avec la
+  8.3.5, sans autre geste.
 
 ### `CRM-107` T2 — calculer le coût par quart depuis le coût mensuel (décision 631)
 

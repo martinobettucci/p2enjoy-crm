@@ -19,7 +19,7 @@
     "test:unit": "vitest run --config webapp/vitest.config.ts",
     "e2e:api": "E2E_PROJETS=api playwright test --config e2e/playwright.config.ts --project=api",
     "e2e:mail": "E2E_PROJETS=mail playwright test --config e2e/playwright.config.ts --project=mail",
-  "e2e:ui": "E2E_PROJETS=ui playwright test --config e2e/playwright.config.ts --project=ui",
+    "e2e:ui": "E2E_PROJETS=ui playwright test --config e2e/playwright.config.ts --project=ui",
     "e2e:report": "playwright show-report e2e/report"
   },
   "devDependencies": {
@@ -34,8 +34,8 @@
     "jsdom": "30.0.1",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
-    "vite": "8.2.0",
-    "vitest": "4.1.10"
+    "vite": "8.3.5",
+    "vitest": "4.1.12"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.0",

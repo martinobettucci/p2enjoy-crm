@@ -32241,6 +32241,25 @@ suite du code.
 - **L'image `mcp` de production** part avec la reconstruction déjà prévue pour `CRM-102` T6 (`docs/PROD_MIGRATIONS.md`
   §2.14).
 
+**Partie npm, faite dans le créneau de pile convenu entre sessions.** `npm install --save-exact vite@8.3.5
+vitest@4.1.12`, puis `npm update undici nanoid source-map-js` : aucun changement majeur, aucune ligne applicative.
+
+- `npm audit` : 0 vulnérabilité ; typecheck : 0 erreur ; unitaires : 137 fichiers, 4057 tests verts ; build vert ;
+  contrôle des classes : 404 citées, aucune manquante.
+- `e2e:api` : 1142 verts.
+- `e2e:ui` : 856 verts, 3 rouges, aucun dû à la montée — chacun rejoué seul :
+  - `assistant-ia.spec.ts:96` : vert au rejeu, donc instable, sans lien avec l'outillage ;
+  - `coquille.spec.ts:231` : rouge à chaque fois. La route « Rentabilité » de `CRM-108` T3 (d2860ed1) s'insère entre
+    « Pilotage » et « Temps », alors que le test de l'ordre clavier attend « Temps » après « Pilotage ». Signalé à la
+    session qui tient `CRM-108` ;
+  - `saisie-temps.spec.ts:102` : rouge à chaque fois, avec un total variable (« 5 h 30 », puis « 6 h », au lieu de
+    « 7 h »). La trace réseau montre que l'écran « Temps » émet des `DELETE` d'entrées qu'il vient de créer : 7 `POST`
+    et 2 `DELETE` pour 5 valeurs saisies. Suspect : `CRM-106` T2 (96336a75), qui réemploie les cellules de la matrice
+    et dont l'E2E était différé. Signalé aux sessions concernées.
+- **Incident de pile pendant la campagne.** Après le redémarrage des sessions, `p2enjoy-db` était arrêtée
+  (« Exited (0) »), d'où `rest` en échec et `storage` et `realtime` en boucle (`EAI_AGAIN db`). Elle a été relancée
+  par `docker start`, puis les trois services redémarrés, sans reset, sans seed ni migration (registre 95/95).
+
 ## décision 632 — `CRM-108` : saisir les recettes d'une affaire, comme les coûts, et un rapport de rentabilité
 
 *2026-10-23 ; demande du responsable : « il faudrait pouvoir saisir les résultats par affaire, comme on le fait pour les
