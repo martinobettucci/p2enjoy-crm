@@ -32594,3 +32594,36 @@ n'auraient jamais rendu la main ; elles ont été arrêtées. Un de mes passages
 pris par une autre session) ; le suivant a tourné **en même temps** que `fil-ariane.spec.ts` (`CRM-110`, 16 h 21), sur
 le même arbre de travail, donc le même `dist` — sans rougeur attribuable, mais sans annonce croisée. L'attente se fait
 désormais sur le processus nommé, jamais sur un motif qui se reconnaît, et le passage final a été rejoué pile libre.
+
+### décision 639 — rattachements multiples : quatre arbitrages du responsable
+
+*2026-10-23, réponses du responsable aux points ouverts de la décision 638.* **Arbitrages.**
+1. **Passent au rattachement** — propres à chaque channel où l'affaire est rattachée : le **responsable**, la **prochaine
+   action** et son échéance, l'**archivage**, le **sommeil**. Ils s'ajoutent à ce qui le suivait déjà (étape,
+   `entered_step_at`, position, probabilité forcée, score de santé). Restent à l'affaire : titre, description, contacts,
+   commentaires, mails et adresse mail, coûts, recettes, temps, étiquettes, corbeille.
+2. **Le montant est porté par chaque rattachement**, avec sa propre issue gagnée ou perdue : chaque processus a sa
+   valeur. Les montants des rattachements **s'additionnent** dans le total de l'espace, sans dédoublonnage ; aucun
+   rattachement « principal » n'est nécessaire pour le montant. Les coûts et les recettes restent comptés **une seule
+   fois**, par l'affaire (décision 638).
+3. **Écrire les parties communes** — titre, description, contacts, coûts, recettes — exige l'écriture sur **au moins un**
+   des channels rattachés. Écrire le bloc d'un rattachement exige l'écriture sur **son** channel.
+4. **Connecteur MCP : oui.** Famille **`affaires`** de la matrice (`docs/SPEC-mcp.md` §6.1), au catalogue de `CRM-104`,
+   non encore livrée (§9.2) : `consulter` rend les rattachements et leurs états, `ajouter` rattache l'affaire à un
+   channel, `modifier` fait avancer ou déplace **un rattachement désigné**, le met en sommeil ou le réveille,
+   `supprimer` archive un rattachement. La liste exacte des outils sera fixée par la spécification.
+**Conséquences relevées par l'agent, à reprendre dans la spécification.**
+- `cards.amount`, `owner_id`, `next_action`, `next_action_at`, `snoozed_until`, `archived_at` et `probability_override`
+  quittent `cards` pour la table des rattachements ; la vue « Ma journée », l'événement `assigned`, `snooze_card` et
+  `wake_card`, l'entonnoir et les relances lisent le rattachement.
+- **La devise** : `cards.currency` est celle des recettes (`docs/SPEC-recettes.md` §2.4). Proposition : elle reste à
+  l'affaire, et les montants des rattachements s'expriment dans cette devise. À confirmer.
+- **Une affaire archivée** devient une affaire dont **tous** les rattachements sont archivés ; la corbeille reste un
+  geste de l'affaire entière.
+- Un outil MCP `supprimer` archive un rattachement et ne le retire jamais : le retrait détruit les valeurs du bloc, et
+  la matrice n'offre pas d'outil de suppression pour ce que le CRM ne sait que détruire (§6.1).
+**Restent ouverts** (décision 638) : les champs personnalisés communs à la fiche (point 2) ; les valeurs de champ
+rattachées au rattachement quand deux channels partagent un workflow (point 3, proposition de l'agent) ; le filtre
+d'état et la ventilation par track de la rentabilité (points 4 et 5) ; les règles de **lecture** — fiche lisible par qui
+lit un channel rattaché, rattachements illisibles masqués, mails et commentaires partagés (point 6) ; l'étape initiale
+d'un rattachement ajouté et le retrait (point 7) ; la devise.
