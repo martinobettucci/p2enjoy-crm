@@ -253,6 +253,13 @@ Après le bloc « Temps passé ». Il lit `rentabilite_affaires(p_card => …)`,
 - « non calculable — plusieurs devises » et les montants par devise quand c'est le cas (§4.4) ;
 - un lien « Ouvrir dans Rentabilité » vers l'écran, filtré sur rien de plus.
 
+**Précision de T3 (2026-10-23), défaut trouvé par les campagnes E2E d'autres unités** : un refus `42501` ATTENDU laisse
+une erreur réseau 403 dans la console de chaque fiche d'un non-administrateur, que les fixtures E2E tiennent pour un
+défaut. Le bloc lit donc D'ABORD la capacité d'administrer l'espace de l'affaire (`workspaces.administration_permise`,
+`CRM-093`, `docs/SPEC-droits-interface.md` §2.2) et n'appelle la fonction que si la base la permet ; l'écran fait de même
+avec la capacité que la coquille a lue. La garde `42501` reste en base, seule juge ; la capacité n'évite qu'un appel voué
+au refus. Mesuré par requête directe : jeton de l'administratrice `200`, du business developer `403`.
+
 **Pour qui la base répond `42501`, le bloc n'est pas rendu** [choix de rédaction]. Ce n'est pas un rôle deviné par
 l'écran : c'est le refus de la base, lu à la première requête. Rendre un bloc qui dirait à chaque membre, sur chaque
 fiche, « réservé aux administrateurs » serait du bruit — la fiche n'est pas un écran d'administration (§5.59 :

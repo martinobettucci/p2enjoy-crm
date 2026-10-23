@@ -1,0 +1,47 @@
+{
+  "_spec": "CRM-108 (docs/BACKLOG.md) — tranche T3 et T4 : les cas qui prouvent la règle de rentabilité de docs/SPEC-recettes.md §4.1 à §4.4, lus À LA FOIS par webapp/src/lib/rentabilite.test.ts et par mcp/tests/test_rentabilite.py. Une seule source de cas : la webapp et le connecteur appliquent la même règle, ou l'un des deux rougit.",
+  "cas": [
+    {
+      "nom": "rentable, tout est connu",
+      "montants": {"recettesPrevues": 210000, "recettesReelles": 163000, "lignesRecette": 2, "lignesRecetteSansReel": 0, "coutsPrevus": null, "coutsReels": null, "lignesCout": 0, "lignesCoutSansReel": 0, "personnel": null, "minutes": 0, "minutesNonValorisees": 0},
+      "vue": "reel", "calculable": true,
+      "attendu": {"recettes": 163000, "couts": null, "personnel": null, "marge": 163000, "taux": 100, "partielle": null}
+    },
+    {
+      "nom": "déficitaire et partielle : une ligne de coût et une ligne de recette sans réel",
+      "montants": {"recettesPrevues": 72000, "recettesReelles": 4000, "lignesRecette": 2, "lignesRecetteSansReel": 1, "coutsPrevus": 450, "coutsReels": 375, "lignesCout": 2, "lignesCoutSansReel": 1, "personnel": 4800, "minutes": 4200, "minutesNonValorisees": 0},
+      "vue": "reel", "calculable": true,
+      "attendu": {"recettes": 4000, "couts": 375, "personnel": 4800, "marge": -1175, "taux": -29.4, "partielle": {"recettesSansReel": 1, "coutsSansReel": 1, "minutesNonValorisees": 0}}
+    },
+    {
+      "nom": "la marge prévue soustrait le personnel déjà valorisé, et n'a pas de taux",
+      "montants": {"recettesPrevues": 72000, "recettesReelles": 4000, "lignesRecette": 2, "lignesRecetteSansReel": 1, "coutsPrevus": 450, "coutsReels": 375, "lignesCout": 2, "lignesCoutSansReel": 1, "personnel": 4800, "minutes": 4200, "minutesNonValorisees": 0},
+      "vue": "prevu", "calculable": true,
+      "attendu": {"recettes": 72000, "couts": 450, "personnel": 4800, "marge": 66750, "taux": null, "partielle": null}
+    },
+    {
+      "nom": "recettes réelles à zéro : pas de taux, la marge reste calculée",
+      "montants": {"recettesPrevues": 1500, "recettesReelles": 0, "lignesRecette": 1, "lignesRecetteSansReel": 0, "coutsPrevus": 900, "coutsReels": 880, "lignesCout": 1, "lignesCoutSansReel": 0, "personnel": null, "minutes": 0, "minutesNonValorisees": 0},
+      "vue": "reel", "calculable": true,
+      "attendu": {"recettes": 0, "couts": 880, "personnel": null, "marge": -880, "taux": null, "partielle": null}
+    },
+    {
+      "nom": "seul du temps non valorisé : rien de connu, marge vide, partielle",
+      "montants": {"recettesPrevues": null, "recettesReelles": null, "lignesRecette": 0, "lignesRecetteSansReel": 0, "coutsPrevus": null, "coutsReels": null, "lignesCout": 0, "lignesCoutSansReel": 0, "personnel": null, "minutes": 1050, "minutesNonValorisees": 1050},
+      "vue": "reel", "calculable": true,
+      "attendu": {"recettes": null, "couts": null, "personnel": null, "marge": null, "taux": null, "partielle": {"recettesSansReel": 0, "coutsSansReel": 0, "minutesNonValorisees": 1050}}
+    },
+    {
+      "nom": "plusieurs devises : la marge n'est pas calculable, les montants restent",
+      "montants": {"recettesPrevues": 28000, "recettesReelles": 14000, "lignesRecette": 1, "lignesRecetteSansReel": 0, "coutsPrevus": null, "coutsReels": null, "lignesCout": 0, "lignesCoutSansReel": 0, "personnel": null, "minutes": 0, "minutesNonValorisees": 0},
+      "vue": "reel", "calculable": false,
+      "attendu": {"recettes": 14000, "couts": null, "personnel": null, "marge": null, "taux": null, "partielle": null}
+    },
+    {
+      "nom": "des centimes sans reste binaire",
+      "montants": {"recettesPrevues": null, "recettesReelles": 0.3, "lignesRecette": 1, "lignesRecetteSansReel": 0, "coutsPrevus": null, "coutsReels": 0.1, "lignesCout": 1, "lignesCoutSansReel": 0, "personnel": 0.1, "minutes": 105, "minutesNonValorisees": 0},
+      "vue": "reel", "calculable": true,
+      "attendu": {"recettes": 0.3, "couts": 0.1, "personnel": 0.1, "marge": 0.1, "taux": 33.3, "partielle": null}
+    }
+  ]
+}

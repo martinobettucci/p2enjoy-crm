@@ -1,6 +1,8 @@
 // @verifies CRM-099 (docs/BACKLOG.md) — tranche T2 : les réels d'une ligne de coût, et la case « Soldé »
 // @verifies docs/SPEC-costs.md §2.3 bis (ajouter, corriger, retirer un réel ; date du jour par défaut, libellé
 //           facultatif ; soldé : un drapeau, l'horodatage et l'auteur posés par la base ; refus d'une ligne soldée)
+// @verifies CRM-108 (docs/BACKLOG.md) — tranche T3 : les mêmes gestes sur une ligne de recette (docs/SPEC-recettes.md
+//           §2.2, §2.3) — `card_revenue_actuals`, la date `received_on` lue sous le nom commun, `card_revenues`
 
 import { describe, expect, it } from 'vitest'
 import { ajouterReel, classerRefusReel, lireReels, modifierReel, solderLigne, supprimerReel } from './reels-ligne'
@@ -99,5 +101,36 @@ describe('classer un refus', () => {
 		expect(classerRefusReel(403, '42501', 'rls')).toBe('droit')
 		expect(classerRefusReel(undefined, undefined, 'Failed to fetch')).toBe('reseau')
 		expect(classerRefusReel(500, 'XX000', 'boom')).toBe('inconnu')
+	})
+})
+
+describe('la sorte « recette »', () => {
+	it('lit les réels d’une ligne de recette, la date d’encaissement sous le nom commun', async () => {
+		const { client, appels } = espion({ data: [], error: null, status: 200 })
+		await lireReels(client, 'l9', 'recette')
+		expect(appels[0]).toMatchObject({
+			table: 'card_revenue_actuals',
+			filtres: [['card_revenue_id', 'l9']],
+			colonnes: 'id, amount, spent_on:received_on, label',
+		})
+	})
+
+	it('écrit `received_on`, jamais `spent_on`, dans la table des recettes', async () => {
+		const { client, appels } = espion(UNE_LIGNE)
+		await ajouterReel(client, 'l9', { montant: 14000, date: '2026-03-15', libelle: 'Facture mars' }, 'recette')
+		expect(appels[0]?.table).toBe('card_revenue_actuals')
+		expect(appels[0]?.charge).toEqual({ card_revenue_id: 'l9', amount: 14000, label: 'Facture mars', received_on: '2026-03-15' })
+		const corrige = espion(UNE_LIGNE)
+		await modifierReel(corrige.client, 'r9', { montant: 1, date: '2026-03-16', libelle: null }, 'recette')
+		expect(corrige.appels[0]).toMatchObject({ table: 'card_revenue_actuals', charge: { received_on: '2026-03-16' } })
+		const retire = espion(UNE_LIGNE)
+		await supprimerReel(retire.client, 'r9', 'recette')
+		expect(retire.appels[0]).toMatchObject({ table: 'card_revenue_actuals', action: 'delete' })
+	})
+
+	it('solde une ligne de recette et rend son réel dérivé', async () => {
+		const { client, appels } = espion({ data: [{ actual_amount: 0 }], error: null, status: 200 })
+		expect(await solderLigne(client, 'l9', true, 'recette')).toEqual({ ok: true, reel: 0 })
+		expect(appels[0]).toMatchObject({ table: 'card_revenues', action: 'update', colonnes: 'actual_amount' })
 	})
 })

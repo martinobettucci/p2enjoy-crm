@@ -68,6 +68,8 @@
 // @spec CRM-098 (docs/BACKLOG.md) — tranche T3 : le bloc « Temps passé » de la fiche (docs/SPEC-temps.md §7.5)
 // @spec CRM-106 (docs/BACKLOG.md) — tranche T2 : la bande de la semaine du bloc, pour la personne connectée
 //       (docs/SPEC-temps.md §7.6, docs/DESIGN_SYSTEM.md §5.54 bis)
+// @spec CRM-108 (docs/BACKLOG.md) tranche T3 — blocs « Recettes » et « Rentabilité » de la fiche (docs/SPEC-recettes.md §6.1,
+//       §6.2 ; docs/DESIGN_SYSTEM.md §5.60)
 
 import { Trash2 } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -84,6 +86,8 @@ import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
 import { BlocContactsCard } from './BlocContactsCard'
 import { BlocCoutsCard } from './BlocCoutsCard'
+import { BlocRecettesCard } from './BlocRecettesCard'
+import { BlocRentabiliteCard } from './BlocRentabiliteCard'
 import { BlocTempsCard } from './SeriePersonnel'
 import { BlocSequenceCard } from './BlocSequenceCard'
 import { EnTeteCard } from './EnTeteCard'
@@ -201,6 +205,9 @@ function ContenuCard({
 	// (`deleted_at=is.null`, MESURÉ), et une relecture ne rendrait plus rien à afficher. Il n'est
 	// jamais dérivé de la donnée : c'est le résultat du `PATCH` qui le pose.
 	const [retiree, setRetiree] = useState(false)
+	// `CRM-108` : une recette écrite fait relire la rentabilité de la fiche (docs/SPEC-recettes.md §6.2).
+	const [relectureRentabilite, setRelectureRentabilite] = useState(0)
+	const relireRentabilite = useCallback(() => setRelectureRentabilite((n) => n + 1), [])
 	const marquerRetiree = useCallback(() => setRetiree(true), [])
 
 	// Placé AVANT toute lecture de l'état de chargement : l'écran ne relit rien après le geste, et
@@ -291,6 +298,15 @@ function ContenuCard({
 				    Le titre nomme la section dans son étiquette accessible ; aucune autre donnée de la
 				    card n'est nécessaire — la section lit son track depuis le CHANNEL de l'affaire et
 				    non depuis l'adresse, que rien ne confronte à la card (INC-065). */}
+				{/* LES RECETTES — `CRM-108`, docs/SPEC-recettes.md §6.1 : AVANT les coûts — on lit ce que l'affaire rapporte avant
+				    ce qu'elle coûte, l'ordre du calcul (docs/DESIGN_SYSTEM.md §5.60). Leur devise est celle de l'affaire. */}
+				<BlocRecettesCard
+					client={clientCrm}
+					idCard={etat.donnees.card.id}
+					titreCard={etat.donnees.card.title}
+					devise={etat.donnees.card.currency}
+					onChange={relireRentabilite}
+				/>
 				<BlocCoutsCard
 					client={clientCrm}
 					idCard={etat.donnees.card.id}
@@ -306,6 +322,14 @@ function ContenuCard({
 					{...(idUtilisateur === null
 						? {}
 						: { saisie: { idWorkspace: etat.donnees.card.workspace_id, idUtilisateur, titreCard: etat.donnees.card.title } })}
+				/>
+				{/* LA RENTABILITÉ — `CRM-108`, docs/SPEC-recettes.md §6.2 : après le temps passé, qu'elle soustrait. Absente pour qui
+				    la base la refuse (`42501`) : un refus de la base, jamais un rôle lu par l'écran. */}
+				<BlocRentabiliteCard
+					client={clientCrm}
+					idCard={etat.donnees.card.id}
+					idWorkspace={etat.donnees.card.workspace_id}
+					relecture={relectureRentabilite}
 				/>
 				{/* ARMER UNE RELANCE — CRM-063 sous-tranche 4c, docs/SPEC-modeles-emails.md §13.8.
 				    Le bloc vit ENTRE les coûts et le bloc de corbeille, pour la raison qui a déjà placé

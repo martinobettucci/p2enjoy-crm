@@ -279,6 +279,12 @@ export const CHEMIN_PILOTAGE = '/pilotage' as const
  */
 export const CHEMIN_TEMPS = '/temps' as const
 
+/**
+ * L'écran « Rentabilité » — `CRM-108`, `docs/SPEC-recettes.md` §6.0. L'onglet (`?onglet=saisir`), la période
+ * (`?du=`, `?au=`), l'état (`?etat=`) et la vue (`?vue=prevu`) vivent dans la chaîne de requête.
+ */
+export const CHEMIN_RENTABILITE = '/rentabilite' as const
+
 /** Réglages ▸ « Coût du personnel » — `CRM-098`, `docs/SPEC-temps.md` §7.4. Réservé aux administrateurs. */
 export const CHEMIN_ADMIN_COUT_PERSONNEL = '/reglages/cout-personnel' as const
 

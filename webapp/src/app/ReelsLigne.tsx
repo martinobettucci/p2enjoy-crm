@@ -6,6 +6,8 @@
 //       ligne soldée est figée, décocher la rouvre ; soldée sans réel, elle vaut zéro), §4.6 ;
 //       docs/DESIGN_SYSTEM.md §5.31 bis (dépli, liste date · libellé · montant, `Pencil` et `Trash2`, case « Soldé »
 //       de 24 px, pilule « Soldé », gestes désactivés et lisibles sur une ligne soldée), §5.13 (confirmation), §8
+// @spec CRM-108 (docs/BACKLOG.md) — tranche T3 : le même composant pour les recettes réelles d'une ligne de recette,
+//       par sa `sorte` (docs/SPEC-recettes.md §6.1 ; docs/DESIGN_SYSTEM.md §5.60 : tout le §5.31 bis vaut pour elles)
 //
 // La base tient la somme, le zéro et le refus d'écrire sur une ligne soldée. L'écran éteint les gestes d'une ligne
 // soldée AVEC LEUR MOTIF — une aide, la base refusant de toute façon — et dit tout refus qu'elle rend.
@@ -26,6 +28,7 @@ import {
 	type MotifRefusReel,
 	type Reel,
 	type SaisieReel,
+	type SorteLigne,
 } from '../lib/reels-ligne'
 import type { ClientCrm } from '../lib/supabase'
 import { jourLocal } from '../lib/temps'
@@ -48,6 +51,8 @@ const CLASSES_CHAMP = 'min-h-[var(--size-target)] rounded-sm border border-borde
 
 export type ProprietesReelsLigne = {
 	readonly client: ClientCrm
+	/** Une ligne de coût par défaut ; une ligne de recette pour le bloc « Recettes » (CRM-108). */
+	readonly sorte?: SorteLigne
 	readonly idLigne: string
 	readonly nature: string
 	readonly devise: string
@@ -57,7 +62,7 @@ export type ProprietesReelsLigne = {
 	readonly aujourdhui?: string
 }
 
-export function ReelsLigne({ client, idLigne, nature, devise, soldee, onChange, aujourdhui = jourLocal(new Date()) }: ProprietesReelsLigne) {
+export function ReelsLigne({ client, sorte = 'cout', idLigne, nature, devise, soldee, onChange, aujourdhui = jourLocal(new Date()) }: ProprietesReelsLigne) {
 	const droit = useRefus()
 	const [reels, setReels] = useState<EtatAsync<readonly Reel[]>>(enChargement)
 	const [tentative, setTentative] = useState(0)
@@ -77,13 +82,13 @@ export function ReelsLigne({ client, idLigne, nature, devise, soldee, onChange, 
 	useEffect(() => {
 		let courant = true
 		setReels(enChargement)
-		void lireReels(client, idLigne).then((etat) => {
+		void lireReels(client, idLigne, sorte).then((etat) => {
 			if (courant) setReels(etat)
 		})
 		return () => {
 			courant = false
 		}
-	}, [client, idLigne, tentative])
+	}, [client, idLigne, sorte, tentative])
 
 	const apres = (annonce: string) => {
 		setRefus(null)
@@ -98,9 +103,12 @@ export function ReelsLigne({ client, idLigne, nature, devise, soldee, onChange, 
 		const issue = await action()
 		setEnCours(false)
 		if (issue.ok) apres(annonce)
-		else setRefus(REFUS[issue.motif ?? 'inconnu'])
+		else setRefus(cleRefus(issue.motif ?? 'inconnu'))
 	}
 
+	// Le refus de droit nomme ce qu'on ne peut pas modifier : les coûts, ou les recettes, de l'affaire.
+	const cleRefus = (motif: MotifRefusReel): CleTraduction =>
+		motif === 'droit' && sorte === 'recette' ? 'revenues.actuals.refused.forbidden' : REFUS[motif]
 	const montant = (valeur: number) => t('costs.actuals.amount', { montant: FORMAT_MONTANT.format(valeur), devise })
 
 	return (
@@ -117,12 +125,12 @@ export function ReelsLigne({ client, idLigne, nature, devise, soldee, onChange, 
 							setCoche(voulu)
 							void (async () => {
 								setEnCours(true)
-								const issue = await solderLigne(client, idLigne, voulu)
+								const issue = await solderLigne(client, idLigne, voulu, sorte)
 								setEnCours(false)
 								if (issue.ok) apres(t(voulu ? 'costs.actuals.settled.done' : 'costs.actuals.settled.undone', { nature }))
 								else {
 									setCoche(null)
-									setRefus(REFUS[issue.motif])
+									setRefus(cleRefus(issue.motif))
 								}
 							})()
 						}}
@@ -164,7 +172,7 @@ export function ReelsLigne({ client, idLigne, nature, devise, soldee, onChange, 
 									aujourdhui={aujourdhui}
 									libelleAction={t('costs.actuals.save')}
 									enCours={enCours}
-									onValider={(saisie) => void geste(() => modifierReel(client, reel.id, saisie), t('costs.actuals.updated', { nature }))}
+									onValider={(saisie) => void geste(() => modifierReel(client, reel.id, saisie, sorte), t('costs.actuals.updated', { nature }))}
 									onAnnuler={() => setEnEdition(null)}
 								/>
 							</li>
@@ -206,7 +214,7 @@ export function ReelsLigne({ client, idLigne, nature, devise, soldee, onChange, 
 			{aRetirer !== null ? (
 				<Confirmation
 					question={t('costs.actuals.delete.confirm', { montant: montant(aRetirer.amount), date: dateEnMots(aRetirer.spent_on) })}
-					onConfirmer={() => void geste(() => supprimerReel(client, aRetirer.id), t('costs.actuals.deleted', { nature }))}
+					onConfirmer={() => void geste(() => supprimerReel(client, aRetirer.id, sorte), t('costs.actuals.deleted', { nature }))}
 					onAnnuler={() => setARetirer(null)}
 				/>
 			) : null}
@@ -217,7 +225,7 @@ export function ReelsLigne({ client, idLigne, nature, devise, soldee, onChange, 
 					aujourdhui={aujourdhui}
 					libelleAction={t('costs.actuals.add')}
 					enCours={enCours}
-					onValider={(saisie) => void geste(() => ajouterReel(client, idLigne, saisie), t('costs.actuals.added', { nature }))}
+					onValider={(saisie) => void geste(() => ajouterReel(client, idLigne, saisie, sorte), t('costs.actuals.added', { nature }))}
 				/>
 			) : null}
 		</div>

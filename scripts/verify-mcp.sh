@@ -3,6 +3,8 @@
 # @verifies docs/SPEC-mcp.md §2 (service, profil, hôte dédié aiguillé par Caddy), §3 (mandataire OAuth, connexion longue),
 #           §4 (admission), §5 (jeton interne, RLS), §6 (matrice), §7 (registre), §11 (sondes), §13 (preuves attendues) ;
 #           docs/SCHEMA.md §9 quinquies ; docs/DESIGN_SYSTEM.md §5.57 ; CLAUDE.md §15, §18 (preuves non complaisantes)
+# @verifies CRM-108 (docs/BACKLOG.md) — tranche T4 : la traçabilité accepte les modules de la famille `recettes`
+#           (docs/SPEC-recettes.md §7)
 #
 # Rejoue les preuves du connecteur sur la pile de développement, puis DÉGRADE réellement le code, la base et l'aiguillage,
 # et exige que les preuves rougissent, avant de restaurer et de CONSTATER la restauration.
@@ -114,7 +116,9 @@ printf '\033[1mPreuves de CRM-102 — le connecteur MCP\033[0m\n'
 
 titre '1. Traçabilité'
 while IFS= read -r fichier; do
-	if head -8 "$fichier" | grep -Eq '@(spec|verifies) CRM-102'; then ok "$fichier cite CRM-102"; else fail "$fichier ne cite pas CRM-102"; fi
+	# Un fichier du connecteur cite son unité : `CRM-102` pour le socle, `CRM-108` pour la famille `recettes`
+	# (docs/SPEC-recettes.md §7), qui y ajoute ses propres modules sans les rattacher au socle.
+	if head -8 "$fichier" | grep -Eq '@(spec|verifies) CRM-10[28]'; then ok "$fichier cite son unité (CRM-102 ou CRM-108)"; else fail "$fichier ne cite ni CRM-102 ni CRM-108"; fi
 done < <(
 	find mcp -type f \( -name '*.py' -o -name 'Dockerfile' -o -name '*.toml' -o -name '*.lock' \) | sort
 	printf '%s\n' supabase/migrations/0090_connecteur_mcp.sql supabase/tests/0085_connecteur_mcp.test.sql \

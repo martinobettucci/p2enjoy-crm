@@ -9,6 +9,7 @@
 // @spec CRM-060 (docs/BACKLOG.md) — route du carnet de contacts (docs/SPEC-contacts.md §10.2)
 // @spec CRM-086 (docs/BACKLOG.md) — adresse de l'écran de coûts d'un track (docs/SPEC-costs.md §4.0)
 // @spec CRM-098 (docs/BACKLOG.md) — route de l'écran « Temps » (docs/SPEC-temps.md §7.1)
+// @spec CRM-108 (docs/BACKLOG.md) — route de l'écran « Rentabilité » (docs/SPEC-recettes.md §6.0)
 // @spec docs/SPEC-webapp.md §5.2 (routes) ; docs/DESIGN_SYSTEM.md §5.8 (états)
 // @spec docs/SPEC-administration-arborescence.md §3.1 (deux adresses, et non une)
 // @spec docs/SPEC-mail-subsystem.md §20.11.1 (adresse dédiée, hors de ROUTES)
@@ -65,6 +66,7 @@ import {
 	cheminOrganisation,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_TEMPS,
+	CHEMIN_RENTABILITE,
 	CHEMIN_ADMIN_COUT_PERSONNEL,
 } from './chemins'
 
@@ -98,6 +100,7 @@ export {
 	cheminOrganisation,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_TEMPS,
+	CHEMIN_RENTABILITE,
 	CHEMIN_ADMIN_COUT_PERSONNEL,
 }
 
@@ -166,6 +169,9 @@ const Pilotage = lazy(async () => ({ default: (await import('./Pilotage')).Pilot
 
 // `CRM-098` — l'écran « Temps », chargé à la demande comme « Pilotage » : il n'est pas sur le chemin du premier rendu.
 const Temps = lazy(async () => ({ default: (await import('./Temps')).Temps }))
+
+// `CRM-108` — l'écran « Rentabilité », chargé à la demande pour le même motif.
+const Rentabilite = lazy(async () => ({ default: (await import('./Rentabilite')).Rentabilite }))
 
 /**
  * Titre de la route d'administration — `CRM-075`.
@@ -293,6 +299,12 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		chemin: CHEMIN_PILOTAGE,
 		cleTitre: 'route.pilotage.title',
 		rendu: () => <Pilotage />,
+	},
+	{
+		// `CRM-108`, docs/SPEC-recettes.md §6.0 — une route de premier niveau, après « Pilotage ».
+		chemin: CHEMIN_RENTABILITE,
+		cleTitre: 'route.rentabilite.title',
+		rendu: () => <Rentabilite />,
 	},
 	{
 		chemin: CHEMIN_TEMPS,

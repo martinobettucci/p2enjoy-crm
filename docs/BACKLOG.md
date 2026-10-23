@@ -15600,9 +15600,22 @@ nouvelle `recettes`, outils livrés par cette unité.*
       87 / 3796. **Deux mutations tuées** (verrou de devise retiré : 21 rouge ; garde administrateur retirée : 31 et 32
       rouges), chacune dans une transaction annulée. *Précision de T2* : le temps non valorisé se range sous la devise de
       l'affaire (`docs/SPEC-recettes.md` §5). Types TypeScript régénérés (139 lignes ajoutées, aucune autre).
-- [ ] **T3 — webapp** : `lib/card-revenues.ts`, `lib/rentabilite.ts` (la règle du §4), bloc « Recettes » et bloc
+- [~] **T3 — webapp** : `lib/card-revenues.ts`, `lib/rentabilite.ts` (la règle du §4), bloc « Recettes » et bloc
       « Rentabilité » de la fiche, écran `/rentabilite` et ses onglets « Vue d'ensemble » et « À saisir », entrée de barre
       latérale, famille `recettes` de la matrice ; unitaires et mutations ; build et contrôle des classes.
+      *Implémenté le 2026-10-23* : `lib/card-revenues.ts`, `lib/rentabilite.ts`, `lib/rentabilite-lecture.ts`,
+      `lib/reels-ligne.ts` généralisé à la sorte « recette », `BlocRecettesCard`, `BlocRentabiliteCard`, `Rentabilite`,
+      `RecettesASaisir`, `ReelsLigne` (prop `sorte`), route et entrée « Rentabilité » (icône `Scale`), famille `recettes` de
+      la matrice. La règle du §4 est prouvée par des cas PARTAGÉS avec le connecteur (`mcp/tests/rentabilite_cas.json`,
+      lus par `rentabilite.test.ts` et `mcp/tests/test_rentabilite.py`, 9 cas verts des deux côtés). Unitaires :
+      `rentabilite.test` 18, `recettes.test` 11, `card-revenues.test` 9, `reels-ligne.test` 11, `plateforme.test` 21,
+      `routes.test` (route `/rentabilite`) ; **campagne complète 139 fichiers, 4 095 tests verts** ; `tsc` et typecheck
+      complet verts. **Quatre mutations tuées** (personnel non soustrait ; taux en vue « Prévu » ; bloc rendu malgré le
+      refus `42501` ; Entrée qui ne passe pas à la ligne suivante). *Corrigé le même jour* : le bloc de la fiche et l'écran lisent d'abord la capacité `administration_permise` et
+      n'appellent la fonction que si elle est permise — un 42501 attendu laissait une 403 dans la console de chaque fiche
+      (signalé par les campagnes de `CRM-093`) ; preuve unitaire « n'appelle PAS la fonction », et mesure directe :
+      administratrice 200, business developer 403. **Restent avant `[x]`** : le build et le contrôle des
+      classes, différés tant que d'autres sessions jouent leurs campagnes sur `dist` ; la vérification visuelle (T5).
 - [ ] **T4 — connecteur** : `FAMILLES`, genres `revenue` et `revenue_actual`, les huit outils de
       `mcp/crm_mcp/outils/recettes.py` ; pytest unitaires et intégration par outil (succès, refus matrice, refus CRM,
       journal) ; `scripts/verify-mcp.sh`.

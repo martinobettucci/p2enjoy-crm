@@ -13,6 +13,24 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-108` T1 à T3 — recettes d'une affaire et rapport de rentabilité (décision 632)
+
+*Base et webapp, en développement seulement. Prouvé en pgTAP et en tests unitaires ; parcours réel, seed, captures,
+connecteur MCP et manuel avec les tranches T4 et T5. La migration `0095` attend la prochaine fenêtre de production.*
+
+- **Migration `0095`** : une affaire porte des **lignes de recette** (« Acompte », « Solde »…), chacune avec un prévu et
+  plusieurs **recettes réelles** datées jusqu'à « Soldé » — les mêmes règles que les lignes de coût. La devise est celle
+  de l'affaire, qui ne change plus tant qu'elle porte des recettes. `rentabilite_affaires` rend recettes, coûts et coût
+  du personnel par affaire et par devise ; elle est **réservée aux administrateurs** de l'espace.
+- **Fiche d'une affaire** : un bloc **« Recettes »** avant « Coûts » (lignes, réels dépliés, « Soldé ») et un bloc
+  **« Rentabilité »** après « Temps passé » (prévu et réel, marge, taux, marge « partielle »), absent pour qui n'est pas
+  administrateur.
+- **Écran « Rentabilité »** (`/rentabilite`, après « Pilotage ») : un tableau par devise, track › channel › affaire avec
+  sous-totaux ; période, état, vues « Réel » et « Prévu » ; un onglet **« À saisir »** pour saisir les recettes réelles à
+  la suite, ouvert à tout membre.
+- **Connecteur MCP** : la huitième famille **« Recettes »** paraît dans la matrice de l'onglet « Connecteur MCP » ; ses
+  outils arrivent avec T4.
+
 ### Sécurité — revue des dépendances du 2026-10-23
 
 - **Connecteur MCP** : `opentelemetry-api` 1.45.1 (CVE-2026-114603, une requête authentifiée pouvait occuper le service

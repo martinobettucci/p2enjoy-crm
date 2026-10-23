@@ -5791,10 +5791,13 @@ n'est pas connu. Seuls les écarts et ce qui est propre au rapport sont écrits.
   alignées à droite (§2, §5.9) ; **la devise est nommée dans l'en-tête des colonnes de montant** — « Prévu (EUR) » —,
   la règle générale du §5.48 : aucun titre de devise n'existe dans la fiche, la devise doit donc être dite ailleurs, et
   sans condition.
-- **LE BLOC « Rentabilité » DE LA FICHE VIENT APRÈS « Temps passé »**, en carte bordée comme lui (§5.54). Une liste de
-  définitions (`dl`, §5.20) à deux colonnes de valeurs — « Prévu », « Réel » — et quatre termes : Recettes, Coûts,
-  Personnel, Marge ; le taux de marge réelle dessous, en 13 px `--color-text-2`. Les valeurs sont des données
-  techniques. **Le bloc n'est pas rendu quand la base refuse en `42501`** : c'est une capacité refusée par la base,
+- **LE BLOC « Rentabilité » DE LA FICHE VIENT APRÈS « Temps passé »**, en carte bordée comme lui (§5.54). Un petit
+  tableau du §5.9 : quatre lignes — Recettes, Coûts, Personnel, Marge, en `th scope="row"` — et deux colonnes de valeurs,
+  « Prévu (EUR) » et « Réel (EUR) », la devise dans l'en-tête ; le taux de marge réelle dessous, en 13 px
+  `--color-text-2`, puis la phrase de la marge prévue. *Révisé à l'écriture du code (T3)* : la première rédaction
+  voulait une `dl` ; mais prévu et réel se COMPARENT ligne à ligne, ce qui est le critère du tableau (§5.19), et une
+  `dl` à deux valeurs par terme n'a pas de forme native. Les valeurs sont des données
+  techniques. **Le bloc n'est pas rendu quand la base refuse la capacité d'administrer l'espace, ou en `42501`** — la capacité est lue AVANT l'appel, pour qu'aucune 403 n'atteigne la console (précision de T3) : c'est une capacité refusée par la base,
   jamais un rôle lu (§5.29 ter, §5.59), et un bandeau « réservé » posé sur chaque fiche de chaque membre serait du
   bruit sur un écran qui se consulte. Son lien « Ouvrir dans Rentabilité » suit la forme du lien « Ouvrir dans Temps »
   (§5.54 bis), icône `Scale` 16 px.

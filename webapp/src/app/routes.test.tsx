@@ -6,6 +6,7 @@
 // @verifies docs/DESIGN_SYSTEM.md §10 (libellés issus du dictionnaire)
 // @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 b ; docs/JOURNAL.md décision 594 — le
 //           module chargé à la demande est importé AVANT le rendu : l'attente ne mesure que le rendu
+// @verifies CRM-108 (docs/BACKLOG.md) tranche T3 — la route « Rentabilité » (docs/SPEC-recettes.md §6.0, §6.5)
 
 import { Suspense } from 'react'
 import { cleanup, render, screen } from '@testing-library/react'
@@ -21,6 +22,7 @@ import {
 	CHEMIN_AFFAIRES_FIGEES,
 	CHEMIN_PILOTAGE,
 	CHEMIN_TEMPS,
+	CHEMIN_RENTABILITE,
 	CHEMIN_MA_JOURNEE,
 	CHEMIN_OBJECTIFS,
 	CHEMIN_DEMARRAGE,
@@ -125,6 +127,7 @@ describe('table des routes', () => {
 			route.chemin !== CHEMIN_AFFAIRES_FIGEES &&
 			route.chemin !== CHEMIN_PILOTAGE &&
 			route.chemin !== CHEMIN_TEMPS &&
+			route.chemin !== CHEMIN_RENTABILITE &&
 			route.chemin !== '/reglages' &&
 			route.chemin !== '/',
 	)
@@ -300,6 +303,20 @@ describe('table des routes', () => {
 		)
 		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
 		expect(screen.getByRole('heading').textContent).toBe(fr['time.noworkspace.title'])
+	})
+
+	it('la route /rentabilite rend son écran, chargé à la demande derrière un repli — CRM-108', async () => {
+		// Créée avec son écran (docs/SPEC-recettes.md §6.0). Montée sans configuration d'API, elle rend l'état vide
+		// « aucun espace de travail » — jamais un squelette perpétuel qui attendrait une lecture que rien n'émettra.
+		const route = ROUTES.find((candidate) => candidate.chemin === CHEMIN_RENTABILITE)
+		expect(route).toBeDefined()
+		render(
+			<MemoryRouter>
+				<Suspense fallback={<ChargementRoute />}>{route!.rendu()}</Suspense>
+			</MemoryRouter>,
+		)
+		expect(await screen.findByTestId('etat-vide')).toBeTruthy()
+		expect(screen.getByRole('heading').textContent).toBe(fr['rentab.noworkspace.title'])
 	})
 
 	it('la route /contacts rend son écran, chargé à la demande derrière un repli — CRM-060', async () => {
