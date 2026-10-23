@@ -514,6 +514,118 @@ export type Database = {
           },
         ]
       }
+      card_revenue_actuals: {
+        Row: {
+          amount: number
+          card_revenue_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string | null
+          received_on: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          card_revenue_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          received_on?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          card_revenue_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string | null
+          received_on?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_revenue_actuals_card_revenue_id_fkey"
+            columns: ["card_revenue_id"]
+            isOneToOne: false
+            referencedRelation: "card_revenues"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_revenue_actuals_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      card_revenues: {
+        Row: {
+          actual_amount: number | null
+          card_id: string
+          created_at: string
+          created_by: string | null
+          estimated_amount: number
+          id: string
+          label: string
+          position: number
+          settled_at: string | null
+          settled_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          actual_amount?: number | null
+          card_id: string
+          created_at?: string
+          created_by?: string | null
+          estimated_amount: number
+          id?: string
+          label: string
+          position: number
+          settled_at?: string | null
+          settled_by?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actual_amount?: number | null
+          card_id?: string
+          created_at?: string
+          created_by?: string | null
+          estimated_amount?: number
+          id?: string
+          label?: string
+          position?: number
+          settled_at?: string | null
+          settled_by?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_revenues_card_id_fkey"
+            columns: ["card_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_revenues_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_revenues_settled_by_fkey"
+            columns: ["settled_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_sequence_enrollments: {
         Row: {
           armed_at: string
@@ -3882,6 +3994,10 @@ export type Database = {
         }
         Returns: string
       }
+      recette_saisissable: {
+        Args: { ligne: Database["public"]["Tables"]["card_revenues"]["Row"] }
+        Returns: boolean
+      }
       recherche_globale: {
         Args: { p_limite?: number; p_terme: string }
         Returns: {
@@ -3923,6 +4039,29 @@ export type Database = {
           p_superadmins_initiaux?: string[]
         }
         Returns: Json
+      }
+      rentabilite_affaires: {
+        Args: { p_card?: string; p_debut?: string; p_fin?: string }
+        Returns: {
+          archivee: boolean
+          card_id: string
+          channel_id: string
+          couts_prevus: number
+          couts_reels: number
+          currency: string
+          lignes_cout: number
+          lignes_cout_sans_reel: number
+          lignes_recette: number
+          lignes_recette_sans_reel: number
+          minutes: number
+          minutes_non_valorisees: number
+          node_kind: string
+          personnel: number
+          recettes_prevues: number
+          recettes_reelles: number
+          track_id: string
+          workspace_id: string
+        }[]
       }
       reordonner_paliers_sequence: {
         Args: { p_paliers: string[]; p_sequence_id: string }

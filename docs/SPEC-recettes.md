@@ -198,7 +198,7 @@ rentabilité à montrer, et la lister ajouterait des lignes vides par centaines]
 | `couts_prevus`, `couts_reels` | §4.1, mêmes règles |
 | `lignes_cout`, `lignes_cout_sans_reel` | idem pour les coûts |
 | `personnel` | §4.1, nul si rien n'est valorisé dans cette devise |
-| `minutes`, `minutes_non_valorisees` | le temps passé et sa part non valorisée — rendus sur une ligne de devise **nulle** quand aucune version ne s'applique |
+| `minutes`, `minutes_non_valorisees` | le temps passé et sa part non valorisée ; le temps **non valorisé** (sans version de coût, donc sans devise) se range sous la **devise de l'affaire**, sans montant — *précision de T2* : une ligne de devise nulle laissait l'écran sans tableau où ranger une affaire qui n'a que cela |
 
 - **Sommes arrondies une seule fois**, au centime, comme l'entonnoir.
 - **La période** (§4.5) filtre les réels et le temps ; `p_debut` et `p_fin` nuls valent « depuis toujours ».

@@ -15584,10 +15584,17 @@ nouvelle `recettes`, outils livrés par cette unité.*
 
 - [x] **T1 — spécification, écrite avant le code** sur les six arbitrages du 2026-10-23 ; les choix de rédaction sont
       marqués dans `docs/SPEC-recettes.md`.
-- [ ] **T2 — migration `0095_recettes.sql`** : `card_revenues`, `card_revenue_actuals`, réel dérivé et ligne soldée figée,
+- [x] **T2 — migration `0095_recettes.sql`** : `card_revenues`, `card_revenue_actuals`, réel dérivé et ligne soldée figée,
       devise verrouillée, `recette_saisissable`, `rentabilite_affaires` et sa garde `42501`, famille `recettes` du
       connecteur ; pgTAP `0087_recettes.test.sql` et mise à jour de `0085_connecteur_mcp.test.sql`, mutations
       (`docs/SPEC-recettes.md` §11).
+      *Vérifié le 2026-10-23* : appliquée en développement par le `migrations-runner` (inscrite au registre, cache de
+      PostgREST rechargé), après préavis aux autres sessions. `0087_recettes` **48** assertions vertes ; `0085` inchangée
+      (79, ses listes restent vraies ; la preuve d'ordre avec `recettes` est dans `0087`) ; `0016` révisée à **149**
+      politiques. Campagne complète : **87 fichiers, 3 796 assertions, aucune anomalie** ; `verify-harness.sh` porté à
+      87 / 3796. **Deux mutations tuées** (verrou de devise retiré : 21 rouge ; garde administrateur retirée : 31 et 32
+      rouges), chacune dans une transaction annulée. *Précision de T2* : le temps non valorisé se range sous la devise de
+      l'affaire (`docs/SPEC-recettes.md` §5). Types TypeScript régénérés (139 lignes ajoutées, aucune autre).
 - [ ] **T3 — webapp** : `lib/card-revenues.ts`, `lib/rentabilite.ts` (la règle du §4), bloc « Recettes » et bloc
       « Rentabilité » de la fiche, écran `/rentabilite` et ses onglets « Vue d'ensemble » et « À saisir », entrée de barre
       latérale, famille `recettes` de la matrice ; unitaires et mutations ; build et contrôle des classes.

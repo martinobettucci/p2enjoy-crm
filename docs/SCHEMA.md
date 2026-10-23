@@ -1985,7 +1985,7 @@ Spécification complète : `docs/SPEC-mcp.md` §6 à §8 ; décision 627.
 - **Fonctions de l'administration** (gardées par `app.exiger_superadmin()`) : `mcp_comptes_liste`, `mcp_compte`,
   `mcp_poser_droits` et `mcp_journal_liste`.
 
-## 9 sexies. Recettes d'une affaire et rentabilité — `CRM-108`, migration `0095` (écrite le 2026-10-23, avant le code)
+## 9 sexies. Recettes d'une affaire et rentabilité — `CRM-108`, migration `0095` (spécifiée le 2026-10-23 avant le code ; écrite et appliquée en développement le même jour)
 
 Spécification complète : `docs/SPEC-recettes.md` §2 à §5 et §7 ; décision 632. La migration reprend à l'identique les
 formes de `0088` (réel dérivé, ligne soldée figée, lecture et écriture par la ligne).
@@ -2030,6 +2030,8 @@ formes de `0088` (réel dérivé, ligne soldée figée, lecture et écriture par
 | `mail_outbox` | partiel sur `status IN ('queued','sending')` trié par `next_attempt_at` |
 | `contacts` | unique sur `(workspace_id, lower(email))` |
 | `card_events` | `(card_id, created_at DESC)` |
+| `card_revenues` | `(card_id, position)` ; partiel `(created_at, id)` sur `settled_at IS NULL` — l'onglet « À saisir » (migration `0095`, §9 sexies) |
+| `card_revenue_actuals` | `(card_revenue_id, received_on, created_at)` |
 
 ---
 

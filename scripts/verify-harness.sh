@@ -583,7 +583,9 @@ PORT_RAPPORT=9323
 # 82 + 1 = 83, valeur COMPTÉE — « 83 fichiers ».
 # **86 depuis `CRM-093` T1, 2026-10-21** (décision 628), MESURÉ par `npm run test:sql` : `0084_plateforme` (`CRM-101`)
 # et `0085_connecteur_mcp` (`CRM-102`), ajoutées sans report du compteur, puis `0086_droits_interface` (`CRM-093`).
-FICHIERS_SQL_ATTENDUS=86
+# **87 depuis `CRM-108` T2, 2026-10-23** (décision 632) : `0087_recettes.test.sql`, seul fichier ajouté. 86 + 1 = 87,
+# MESURÉ par `npm run test:sql` — « 87 fichiers ».
+FICHIERS_SQL_ATTENDUS=87
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -651,7 +653,9 @@ FICHIERS_SQL_ATTENDUS=86
 # 71 → 80. MESURÉ — somme des `plan()` des 86 suites, et `0084` jouée verte à 80.
 # **3748**, même jour, `CRM-103` T1 : `0085` gagne 29 assertions avec la migration 94 (administration du connecteur, D9),
 # 50 → 79. MESURÉ — somme des `plan()` des 86 suites, et `0085` jouée verte à 79, trois mutations tuées.
-ASSERTIONS_ATTENDUES=3748
+# **3796 depuis `CRM-108` T2, 2026-10-23** (décision 632) : `0087` apporte **48** assertions — 3748 + 48 = 3796 ; `0016`
+# est révisée sans changer son plan (149 politiques). MESURÉ — « 87 fichiers, 3796 assertions, aucune anomalie ».
+ASSERTIONS_ATTENDUES=3796
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

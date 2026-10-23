@@ -5,6 +5,7 @@
 -- @verifies CRM-099 (docs/BACKLOG.md) — tranche T1 : les quatre politiques des réels d'une ligne de coût (141) ;
 --           docs/SPEC-costs.md §2.3 bis
 --           docs/SPEC-temps.md §5
+-- @verifies CRM-108 (docs/BACKLOG.md) — tranche T2 : les huit politiques des recettes (149) ; docs/SPEC-recettes.md §3
 -- @verifies docs/SPEC-permissions-rls.md §7 (les douze preuves), §7.2 (contrat mesuré),
 --           §7.3 (ce qui n'est pas satisfaisable, et comment l'absence est figée),
 --           §7.4 (non-complaisance)
@@ -215,8 +216,11 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	141,
-	'CENT QUARANTE ET UNE politiques dans `public`, et pas une de plus — 137 avant `CRM-099` tranche 1, plus les QUATRE '
+	149,
+	'CENT QUARANTE-NEUF politiques dans `public`, et pas une de plus — 141 avant `CRM-108` tranche 2, plus les HUIT des '
+	'recettes (docs/SPEC-recettes.md §3) : lecture, création, mise à jour et retrait de `card_revenues`, celles de '
+	'l''affaire, et de `card_revenue_actuals`, déléguées à la ligne. Avant elles : 141, soit '
+	'137 avant `CRM-099` tranche 1, plus les QUATRE '
 	'de `card_cost_actuals` (docs/SPEC-costs.md §2.3 bis) : lecture, création, mise à jour et retrait des réels d''une '
 	'ligne de coût, chacune déléguée à la ligne — la lire, ou pouvoir la mettre à jour —, sans exiger le budget ouvert : '
 	'une facture arrive après la clôture. Avant elles : 137, soit 130 avant `CRM-098` tranche 1, plus les SEPT de '
