@@ -32185,3 +32185,11 @@ le formulaire s'ouvre sur toute personne du jeu.
 **Vérifications prévues** : unitaires du calcul (formule, défaut 218, arrondi, bornes, virgule décimale) et du
 formulaire (dépli, résultat en direct, « Utiliser ce coût », rien n'écrit sans « Enregistrer la version ») ; E2E : une
 version créée par le calculateur et relue en base ; captures aux quatre paliers observées ; manuel 5 undecies.5.
+
+### décision 627, consigne — actualiser la spécification du connecteur avant `CRM-104`
+
+*2026-10-21.* Le responsable demande que la spécification du connecteur soit actualisée avec les nouvelles fonctionnalités
+quand la boucle de développement du backlog atteindra son entrée. La consigne est inscrite en dernière section de
+`docs/SPEC-mcp.md` (§16) : avant le catalogue de chaque tranche de `CRM-104`, il faut inventorier ce qui a été livré
+depuis le 2026-10-20, puis actualiser le catalogue, les familles et les consignes au modèle. Une fonctionnalité sans
+famille fait l'objet d'une décision du responsable. L'entrée `CRM-104` du backlog renvoie à cette section.

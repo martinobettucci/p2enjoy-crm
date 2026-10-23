@@ -706,3 +706,23 @@ Elles sont tenues dans `docs/PROD_MIGRATIONS.md` §3, et aucune n'est exécutée
    - applique la migration `0090`, instantané d'abord.
 3. **Le responsable fait le constat** : il ajoute le connecteur dans Claude ou ChatGPT, se connecte
    avec « Stay signed in », pose une matrice et voit un appel au journal.
+
+## 16. Actualisation — à reprendre quand la boucle du backlog atteint `CRM-104`
+
+*Consigne du responsable, 2026-10-21.* Cette spécification décrit le CRM tel qu'il était le 2026-10-20. Le produit
+continue d'évoluer pendant que le connecteur se construit. Quand la boucle de développement du backlog arrive à
+`CRM-104`, **avant d'écrire le catalogue d'une tranche** :
+
+1. **Faire l'inventaire des fonctionnalités livrées depuis le 2026-10-20**, d'après `CHANGELOG.md` et `docs/BACKLOG.md`.
+   Exemples connus à cette date : les capacités lues par l'interface (`CRM-093`), la description des tracks, des channels
+   et des affaires (`CRM-105`), les réels multiples d'une ligne de coût (`CRM-099`), la saisie de temps (`CRM-098`).
+2. **Actualiser cette spécification en conséquence** :
+   - le catalogue des outils (§9.2), pour que le connecteur couvre toutes ces fonctionnalités ;
+   - la portée de chaque famille (§6.1, et sa phrase dans l'onglet « Connecteur MCP ») ;
+   - les consignes données au modèle (§2, `INSTRUCTIONS`).
+3. **Une fonctionnalité qui n'entre dans aucune famille** se consigne comme une décision du responsable, et n'est pas
+   rangée implicitement. Une famille nouvelle demande une migration, puisque la liste est fermée en base (§6.1, §7.1).
+
+Cette actualisation est committée comme documentation avant le code de la tranche, comme toute spécification (`CLAUDE.md`
+§5).
+
