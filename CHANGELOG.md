@@ -28,8 +28,9 @@ connecteur MCP et manuel avec les tranches T4 et T5. La migration `0095` attend 
 - **Écran « Rentabilité »** (`/rentabilite`, après « Pilotage ») : un tableau par devise, track › channel › affaire avec
   sous-totaux ; période, état, vues « Réel » et « Prévu » ; un onglet **« À saisir »** pour saisir les recettes réelles à
   la suite, ouvert à tout membre.
-- **Connecteur MCP** : la huitième famille **« Recettes »** paraît dans la matrice de l'onglet « Connecteur MCP » ; ses
-  outils arrivent avec T4.
+- **Connecteur MCP** : la huitième famille **« Recettes »** paraît dans la matrice de l'onglet « Connecteur MCP », avec
+  ses huit outils (lister les lignes d'une affaire, les recettes à saisir, le rapport de rentabilité ; ajouter une ligne
+  ou une recette réelle ; corriger, solder ou rouvrir) — prouvés devant un CRM simulé, l'intégration réelle avec T5.
 
 ### Sécurité — revue des dépendances du 2026-10-23
 

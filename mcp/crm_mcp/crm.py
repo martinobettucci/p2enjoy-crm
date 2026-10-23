@@ -1,4 +1,6 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : le client du CRM, sous le jeton de la personne ou la clé de service
+# @spec CRM-108 (docs/BACKLOG.md) — tranche T4 : `ecrire`, la première écriture de table du connecteur (docs/SPEC-mcp.md
+#       §9.1 : les mêmes tables que la webapp ; docs/SPEC-recettes.md §7)
 # @spec docs/SPEC-mcp.md §5 (toute donnée sous le jeton interne ; la clé de service pour le seul registre), §9.3
 #       (traduction des refus), §11 (aucun jeton journalisé) ; CLAUDE.md §19 (délai, erreurs, aucun secret dans les traces)
 """Appels HTTP vers PostgREST, par Kong, sur le réseau Compose.
@@ -57,12 +59,21 @@ class ClientCrm:
         return {"apikey": self._cle_anonyme, "Authorization": f"Bearer {jeton}"}
 
     async def _envoyer(
-        self, methode: str, chemin: str, jeton: str | None, *, idempotent: bool = False, **options: Any
+        self,
+        methode: str,
+        chemin: str,
+        jeton: str | None,
+        *,
+        idempotent: bool = False,
+        entetes: dict[str, str] | None = None,
+        **options: Any,
     ) -> Reponse:
         tentatives = TENTATIVES_IDEMPOTENTES if idempotent else 1
         for tentative in range(1, tentatives + 1):
             try:
-                reponse = await self.http.request(methode, chemin, headers=self._entetes(jeton), **options)
+                reponse = await self.http.request(
+                    methode, chemin, headers={**self._entetes(jeton), **(entetes or {})}, **options
+                )
                 break
             except httpx2.HTTPError as erreur:
                 # Le type seul : un message de transport peut porter une adresse interne.
@@ -88,6 +99,27 @@ class ClientCrm:
     async def lire(self, jeton: str, table: str, parametres: dict[str, str]) -> Reponse:
         """Une lecture PostgREST sous le jeton interne de la personne : la RLS rend ce qu'elle consent."""
         return await self._envoyer("GET", f"/{table}", jeton, idempotent=True, params=parametres)
+
+    async def ecrire(
+        self,
+        jeton: str,
+        methode: str,
+        table: str,
+        *,
+        parametres: dict[str, str] | None = None,
+        corps: dict[str, Any] | None = None,
+    ) -> Reponse:
+        """Une écriture PostgREST sous le jeton de la personne — `POST`, `PATCH` ou `DELETE` —, qui rend les lignes
+        touchées (`return=representation`) : zéro ligne est le refus silencieux d'une clause `USING`, jamais un succès.
+        Jamais rejouée : une écriture n'est pas idempotente."""
+        if methode not in ("POST", "PATCH", "DELETE"):
+            raise ValueError(f"méthode d'écriture inconnue {methode!r}")
+        options: dict[str, Any] = {"params": parametres or {}}
+        if corps is not None:
+            options["json"] = corps
+        return await self._envoyer(
+            methode, f"/{table}", jeton, entetes={"Prefer": "return=representation"}, **options
+        )
 
     async def rpc_service(
         self, fonction: str, arguments: dict[str, Any] | None = None, *, idempotent: bool = False

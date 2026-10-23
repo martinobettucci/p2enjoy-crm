@@ -1,4 +1,6 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : la matrice appliquée par le service, à la visibilité et à chaque appel
+# @spec CRM-108 (docs/BACKLOG.md) — tranche T4 : la famille `recettes`, les ancres `revenue` et `revenue_actual`
+#       (docs/SPEC-recettes.md §7, docs/SPEC-mcp.md §6.1, §9.1)
 # @spec docs/SPEC-mcp.md §5 (le jeton interne frappé à chaque appel), §6.1 (familles et actions), §6.2 (visibilité,
 #       résolution de l'espace, `mcp_autorise`, refus uniforme), §9.1 (déclaration vérifiée au démarrage), §9.3
 #       (traduction des refus du CRM), §14 (la matrice tenue par le service, jamais sans la RLS) ;
@@ -41,8 +43,9 @@ from crm_mcp.registre import EtatCompte, Registre, RegistreIndisponible
 
 journal = logging.getLogger("crm_mcp.politique")
 
-#: Les familles de la matrice (docs/SPEC-mcp.md §6.1) — la même liste fermée que le `check` de `mcp_droits`.
-FAMILLES = ("structure", "affaires", "contacts", "budgets", "temps", "objectifs", "messagerie")
+#: Les familles de la matrice (docs/SPEC-mcp.md §6.1) — la même liste fermée que le `check` de `mcp_droits` ;
+#: `recettes` depuis `CRM-108` (docs/SPEC-recettes.md §7, migration 0095).
+FAMILLES = ("structure", "affaires", "contacts", "budgets", "recettes", "temps", "objectifs", "messagerie")
 ACTIONS = ("consulter", "ajouter", "modifier", "supprimer")
 #: Un outil de référence : pas d'espace unique, visible dès qu'un droit existe, résultats filtrés par la matrice.
 REFERENCE = "reference"
@@ -56,6 +59,13 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "organisation": ("organizations", "workspace_id", ("workspace_id",)),
     "budget": ("budgets", "track:tracks(workspace_id)", ("track", "workspace_id")),
     "board": ("goal_boards", "workspace_id", ("workspace_id",)),
+    # `CRM-108` : une ligne de recette, et un réel de recette, résolus jusqu'à l'espace par leur affaire.
+    "revenue": ("card_revenues", "card:cards(workspace_id)", ("card", "workspace_id")),
+    "revenue_actual": (
+        "card_revenue_actuals",
+        "ligne:card_revenues(card:cards(workspace_id))",
+        ("ligne", "card", "workspace_id"),
+    ),
 }
 #: Le libellé d'un objet dans un refus : le terme métier français.
 LIBELLES = {
@@ -67,6 +77,8 @@ LIBELLES = {
     "organisation": "organisation",
     "budget": "budget",
     "board": "tableau d'objectifs",
+    "revenue": "ligne de recette",
+    "revenue_actual": "recette réelle",
 }
 
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")

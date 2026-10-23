@@ -15616,9 +15616,18 @@ nouvelle `recettes`, outils livrés par cette unité.*
       (signalé par les campagnes de `CRM-093`) ; preuve unitaire « n'appelle PAS la fonction », et mesure directe :
       administratrice 200, business developer 403. **Restent avant `[x]`** : le build et le contrôle des
       classes, différés tant que d'autres sessions jouent leurs campagnes sur `dist` ; la vérification visuelle (T5).
-- [ ] **T4 — connecteur** : `FAMILLES`, genres `revenue` et `revenue_actual`, les huit outils de
+- [~] **T4 — connecteur** : `FAMILLES`, genres `revenue` et `revenue_actual`, les huit outils de
       `mcp/crm_mcp/outils/recettes.py` ; pytest unitaires et intégration par outil (succès, refus matrice, refus CRM,
       journal) ; `scripts/verify-mcp.sh`.
+      *Implémenté le 2026-10-23* : `FAMILLES` à huit, ancres `revenue` et `revenue_actual` dans `RESOLUTIONS`, les huit
+      outils (`outils/recettes.py`), `ClientCrm.ecrire` — la première écriture de table du connecteur, `Prefer:
+      return=representation`, jamais rejouée —, la famille nommée dans `INSTRUCTIONS`, `crm_mcp/rentabilite.py` (la règle
+      partagée). pytest unitaires **121 verts** dans l'image `dev`, dont `test_recettes` 7 (déclarations, aucun outil de
+      suppression, visibilité par la matrice et cases `aussi` du rapport, corps d'écriture sans réel, refus uniforme
+      d'une affaire d'un autre espace, « ligne soldée » et `rentabilite_reservee` traduits, règle appliquée au rapport)
+      et `test_rentabilite` 9 ; **une mutation tuée** (cases `aussi` retirées). **Restent avant `[x]`** : l'intégration
+      par outil contre la vraie base et un vrai client MCP (succès, refus matrice, refus CRM, journal) et
+      `scripts/verify-mcp.sh`, sur la pile, avec T5.
 - [ ] **T5 — preuves sur la pile réelle** : seed §21 ; API (refus avec jetons réels) ; E2E souris et clavier, fiche, saisie
       en série, rapport et filtres, membre refusé, effet d'un outil du connecteur ; captures `docs/captures/CRM-108/` aux
       quatre paliers observées ; `docs/manual.md` (chapitre des recettes et de la rentabilité, chapitre 11 du
