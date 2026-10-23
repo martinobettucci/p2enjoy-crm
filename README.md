@@ -1,8 +1,11 @@
 # P2Enjoy CRM
 
-CRM de suivi de projets commerciaux, organisé en **Tracks** → **Channels** → **Cards**, avec
-workflows à transitions contraintes, formulaires conditionnels par étape, et une messagerie
-intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
+**CRM veut dire *Company Resource Mastering*** — la maîtrise des ressources de l'entreprise —, et non
+*Customer Relationship Management* (`docs/JOURNAL.md`, décision 637). Le produit pilote toute
+activité de l'entreprise, commerciale ou non, organisée en **Tracks** → **Channels** → **Cards**,
+avec workflows à transitions contraintes, formulaires conditionnels par étape, et une messagerie
+intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards. La gestion commerciale
+n'en est qu'un sous-ensemble.
 
 > **État d'avancement — lisez ceci en premier.**
 > *Ce bandeau est réécrit à partir de `docs/BACKLOG.md` à chaque livraison, au même titre que le
@@ -53,7 +56,20 @@ intégrée (IMAP entrant / SMTP sortant) qui classe les emails dans les cards.
 
 ## 1. Objectif
 
-Suivre des projets, clients ou sujets commerciaux dans une arborescence libre :
+Maîtriser les ressources de l'entreprise — son temps, son argent, ses relations, sa
+correspondance et ses objectifs — autour des affaires qu'elle mène, quelle qu'en soit la nature :
+une vente, une production, un événement, un recrutement, un projet interne. C'est le sens de
+**CRM, *Company Resource Mastering*** (`docs/JOURNAL.md`, décision 637).
+
+**La gestion commerciale est un sous-ensemble des fonctionnalités couvertes**, pas leur
+périmètre. Un channel commercial (prospection, devis, signature) n'est qu'un channel parmi
+d'autres : son workflow est une donnée, comme celui d'un channel de production ou de suivi
+administratif. Autour des affaires, le produit couvre aussi les budgets et les coûts, le temps
+passé et le coût du personnel, les recettes et la rentabilité, les tableaux d'objectifs, les
+contacts, la messagerie, et le pilotage par un assistant au travers du connecteur MCP — chacun
+spécifié dans son document `docs/SPEC-*.md`.
+
+L'organisation est une arborescence libre :
 
 - un **Workspace** cloisonne une entité (membres, tracks, workflows, boîtes mail) ;
 - un **Track** (« Chaîne YouTube », « Eventos », « Blog ») regroupe des channels ;

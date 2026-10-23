@@ -13,10 +13,18 @@ changement** que le code.
 
 ## 1. Contexte et objectifs
 
-P2Enjoy CRM est un outil interne de suivi de projets commerciaux. Il doit permettre à une
-petite équipe (administrateurs et business developers) d'organiser librement son suivi en
-**Tracks** et **Channels**, de faire avancer des **Cards** dans des workflows différents selon
-le canal, et de conserver dans chaque card la correspondance email associée.
+P2Enjoy CRM est un outil interne de **maîtrise des ressources de l'entreprise** : le sigle se
+lit *Company Resource Mastering*, et non *Customer Relationship Management* (`docs/JOURNAL.md`,
+décision 637). Il doit permettre à une petite équipe d'organiser librement ses activités en
+**Tracks** et **Channels**, de faire avancer des **Cards** — les affaires — dans des workflows
+différents selon le canal, et de rattacher à chaque affaire les ressources qu'elle mobilise : la
+correspondance email, les contacts, les coûts, le temps passé, les recettes.
+
+**La gestion commerciale n'est qu'un sous-ensemble du périmètre.** Aucune hypothèse
+d'architecture ne doit supposer qu'une affaire est une vente : un workflow est une donnée, et un
+channel de production ou d'administration a le même statut qu'un channel de prospection. Les
+noms hérités du premier périmètre — le rôle `business_developer`, `cards.amount` comme montant
+du portefeuille pondéré par l'entonnoir — restent en place ; ils ne définissent pas le produit.
 
 Contraintes structurantes :
 

@@ -32502,3 +32502,60 @@ parent immédiat. **Conséquences.** Aucune migration, aucune règle d'accès, a
 que des lignes que la route a déjà lues. Les preuves de `CRM-007` qui lisent `workspace-courant` suivront le contexte
 dans le fil. **Persisté avant le code** : `docs/SPEC-webapp.md` §5.1 bis, `docs/DESIGN_SYSTEM.md` §5.62 et §12.2,
 `docs/BACKLOG.md` `CRM-110`.
+
+### décision 637 — CRM veut dire *Company Resource Mastering* ; la gestion commerciale n'est qu'un sous-ensemble
+
+*2026-10-23, consigne du responsable, à persister.* **Problème.** Le README et le DAT présentaient le produit comme un
+« outil de suivi de projets commerciaux », et le sigle se lisait implicitement *Customer Relationship Management*. La
+question est apparue en explorant le rattachement d'une affaire à plusieurs channels (décision 638) : une même affaire
+qui traverse la vente puis la production n'a de sens que si le produit n'est pas réduit à la vente. **Décision.**
+1. **CRM se lit *Company Resource Mastering*** : la maîtrise des ressources de l'entreprise — temps, argent, relations,
+   correspondance, objectifs — autour des affaires qu'elle mène, quelle qu'en soit la nature.
+2. **La gestion commerciale est un sous-ensemble des fonctionnalités couvertes.** Un channel commercial est un channel
+   parmi d'autres ; aucune spécification ne doit supposer qu'une affaire est une vente.
+**Conséquences.** Le nom du produit, « P2Enjoy CRM », ne change pas. Les noms hérités du premier périmètre — le rôle
+`business_developer`, `cards.amount` pondéré par l'entonnoir (`docs/SPEC-analytique.md` §7.2) — restent en place : les
+renommer serait une migration sans demande. Aucun code ni écran n'est touché ; le manuel ne développe pas le sigle.
+**Persisté** : `README.md` (en-tête et §1), `docs/DAT.md` §1.
+
+### décision 638 — rattacher une affaire à plusieurs channels : exploration, et le sens arbitré
+
+*2026-10-23, exploration demandée par le responsable, sans code.* **Problème.** Rattacher une même affaire à plusieurs
+channels, y compris de tracks différents. **Proposition du responsable.**
+- L'**état** — étape du workflow — est tenu **séparément par rattachement** ;
+- la fiche montre **un bloc par channel** portant les champs spécifiques de ce rattachement ;
+- les autres champs de l'affaire, qui dépendent de la fiche, sont **les mêmes pour tous les rattachements** ;
+- les **coûts et recettes** sont comptés **une seule fois**, et se reportent dans la vue de chaque rattachement.
+**Observations**, dans le modèle livré : `cards` porte en une ligne `channel_id`, `workflow_id` et `current_step_id`
+(`docs/SCHEMA.md` §5) ; les champs configurables appartiennent au **workflow** (`docs/SPEC-form-composer.md` §2) ; coûts,
+recettes, temps, contacts, commentaires et mails sont déjà portés par l'affaire (`docs/SPEC-costs.md` §2.3,
+`docs/SPEC-recettes.md` §2.1). La proposition revient donc à sortir le triplet channel / workflow / étape de `cards`
+vers une table de rattachements.
+**Arbitrage 1 — le sens.** Deux lectures étaient possibles : (a) la même affaire traverse plusieurs processus en
+parallèle — vente, production, administration ; (b) plusieurs ventes au même client. **La lecture (a) est retenue.**
+Plusieurs ventes au même client font **plusieurs affaires**. C'est cette lecture qui a fait poser la décision 637.
+**Points relevés, encore ouverts** — à trancher avant toute spécification :
+1. Les colonnes natives à classer : **responsable**, **prochaine action** et son échéance, **sommeil**, **archivage**,
+   **montant** — au niveau de l'affaire ou du rattachement ? L'étape, `entered_step_at`, la position, la probabilité
+   forcée et le score de santé suivent manifestement le rattachement.
+2. **Aucun champ personnalisé de fiche n'existe** : tous les champs configurables sont de workflow, donc de bloc. Des
+   champs communs à tous les rattachements seraient un niveau de formulaire nouveau.
+3. **Deux rattachements peuvent suivre le même workflow** (un workflow global partagé) ; la clé de `card_field_values`
+   est `(card_id, field_id)`, donc leurs deux blocs écriraient les mêmes valeurs. Proposition de l'agent : rattacher les
+   valeurs au rattachement.
+4. **Montant et issue** : l'entonnoir pondère le montant par la probabilité de l'étape ; avec N rattachements, le total
+   de l'espace le compterait N fois sans règle explicite. L'issue gagnée ou perdue est propre au rattachement, ce qui
+   rend ambigu le filtre d'état de la rentabilité (`docs/SPEC-recettes.md` §4.6).
+5. **Totaux reportés** : les écrans de budgets ne sont pas touchés (ils regroupent par budget) ; la rentabilité par track
+   ou par channel compterait l'affaire dans chaque vue, et la somme des tracks dépasserait le total de l'espace.
+6. **Droits** : lire un channel suffit-il à lire la fiche ? Un bloc ne se lit que si l'on lit son channel (RLS de
+   `card_field_values`) ; un rattachement à un channel illisible ne doit pas se révéler ; écrire les parties
+   partagées exige-t-il l'écriture sur un channel ou sur tous ? Les mails classés et les commentaires deviennent
+   visibles de toutes les équipes rattachées. La politique de `cards` devra lire les rattachements sans relire sa
+   propre table (`docs/SPEC-permissions-rls.md` §3.5) ; son coût est à mesurer.
+7. **Moteur et gestes** : `card_events`, champs obligatoires de transition, relances des affaires figées, cadences de
+   mails, `move_card_to_channel` et `change_channel_workflow` raisonnent sur l'étape de l'affaire ; ajouter et retirer
+   un rattachement sont des gestes nouveaux, le retrait perdant explicitement les valeurs du bloc.
+8. **Connecteur MCP** : la question reste à poser au responsable (`CLAUDE.md`, « Spécificités du projet »).
+**Suite.** Aucune unité de backlog ni spécification tant que les points 1 à 8 ne sont pas tranchés ; un brouillon
+`docs/SPEC-*.md` les portera ensuite, comme `docs/SPEC-membres.md`.
