@@ -7325,7 +7325,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-067 | Activités typées : appels, réunions, visios | `[ ]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
-| CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[ ]` |
+| CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[~]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD | `[ ]` |
 | CRM-073 | Webhooks sortants signés et jetons d'API | `[ ]` |
@@ -10663,7 +10663,15 @@ pas un produit.
       E2E `membres.spec.ts` **10/10** — Driss choisi d'abord, la matrice de Farida, un droit posé puis rendu, Camille
       jamais restreinte ; la lectrice ne voit pas la section ; seed rendu (droits fins et attente intacts) ; capture
       `droits-fins-farida-1440` observée ; manuel 10 bis.6 et chapitre 24 bis ; DS §5.61 ; harnais API 1157, UI 873.
-- [ ] **T5** — E2E par rôle des attentes et des droits fins, captures, manuel (chapitre 10 bis, complété), seed, campagnes.
+- [x] **T5** — E2E par rôle des attentes et des droits fins, captures, manuel (chapitre 10 bis, complété), seed, campagnes.
+      **Vérifiée le 2026-10-23** : les E2E par rôle sont livrés avec T2 à T4 (`e2e/ui/membres.spec.ts` 10, `e2e/api/membres.spec.ts`
+      10) ; le seed porte déjà une attente et un droit fin de chaque sorte (membre, lecture, aucun accès) ; captures
+      `docs/captures/CRM-070/` observées ; manuel 10 bis complet. **Campagnes complètes sur `652d890e`** : API **1157/1157** ;
+      UI **869 passés, 18 échoués**, aucun dans les specs de `CRM-070` ni de la plateforme (`membres` 10/10,
+      `plateforme` 5/5, `droits-interface` 6/6) — 13 « sm-390 » dus à l'en-tête de `CRM-110` en cours dans l'arbre de
+      travail (titre `h1` masqué à 390 px), 2 erreurs console 502 transitoires (`contacts-affaire:202`,
+      `versions-workflow:42`), et `connecteur-mcp.spec.ts:59`, qui attend un seul outil MCP et voit ceux de `CRM-108` ;
+      chacun signalé à sa session.
 - [ ] **T6** — livraison en production, sur instruction du responsable.
 
 ---

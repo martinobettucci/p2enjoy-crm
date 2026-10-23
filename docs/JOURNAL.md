@@ -32733,3 +32733,17 @@ persisté au backlog** : T1 migration, T2 échangeur, T3 écrans, T4 livraison.
 4. **Le vocabulaire de l'interface et du manuel est « rattachement »** : « rattacher à un channel », « retirer le
    rattachement », « aussi rattachée à … ». « Suivre » est écarté : il désigne déjà l'abonnement aux notifications
    (`card_watchers`).
+
+### `CRM-070` T5 — les campagnes complètes, et ce qu'elles disent des autres unités
+
+*2026-10-23.* Campagnes complètes jouées sur `652d890e`, annoncées à chaque session. **API : 1157/1157.** **UI : 869
+passés, 18 échoués, 30,1 min.** Aucun échec n'appartient à `CRM-070` ni à la plateforme dont il partage les
+composants. **Diagnostic des 18**, chacun relu dans son message d'erreur, aucun supposé : (1) **13 « sm-390 »** — le
+titre `h1` de la page est masqué à 390 px ; c'est l'en-tête que `CRM-110` réécrit dans l'arbre de travail commun (fil
+d'Ariane sur sa propre ligne, décision 641), non committé ; signalé à sa session. (2) **2 erreurs console « 502 Bad
+Gateway »** (`contacts-affaire.spec.ts:202`, `versions-workflow.spec.ts:42`), transitoires, sans lien avec le code ; à
+rejouer. (3) **`connecteur-mcp.spec.ts:59`** attend `tools/list` = `crm_workspace_list` seul et voit les outils
+« recettes » de `CRM-108` : l'assertion de cette spec d'interface n'a pas suivi la révision de la preuve d'intégration
+(`fb13ec43`) ; signalé. **Leçon de coordination** : un build part de l'arbre de travail commun, donc du travail en cours
+des autres sessions ; une campagne n'est probante pour une unité que si l'on sait attribuer chaque échec.
+
