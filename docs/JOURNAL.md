@@ -32840,3 +32840,19 @@ familles. La preuve de palier mesure désormais les deux hauteurs. Sans le corre
 **Livraison de 27 pendant ce travail.** `livrer.sh` refuse un arbre modifié, fichiers suivis comme non suivis. Mes deux
 `.tsx`, la spec et les captures ont été mis de côté hors du dépôt le temps de la fenêtre, puis remis : rien de ce travail
 n'est parti en production.
+
+### `CRM-109` T3 — la « Dernière tentative », et un registre de développement désaccordé par ma faute
+
+*2026-10-23.* **Livré** : la colonne « Dernière tentative » dans le bloc partagé des attentes, sur les deux écrans ;
+la plateforme la lit par `plateforme_attentes` étendue (migration 99), l'écran d'un administrateur d'espace par
+l'embarquement `admission_refus(…)` sous la politique de la table ; le seed **tente réellement** la connexion
+d'`attendu@`, et c'est l'échangeur qui écrit la trace — la règle du §8 de `CLAUDE.md` (« ne pas fabriquer de traces
+censées représenter l'exécution d'un processus réel »). **Incident.** J'avais modifié `0098` (minute du job) après
+l'avoir appliquée en développement, et rejoué le fichier à la main : le registre de développement gardait l'ancienne
+empreinte, et le runner a **refusé toute migration** — « le fichier inscrit 0098 a été modifié depuis son
+application » — entre ce moment et l'écriture de la 99. La base portait pourtant exactement le fichier courant (job à
+3 h 53, reste identique). **Décision** : aligner la seule empreinte de `0098` dans le registre de développement sur
+celle du fichier, plutôt qu'un `resetMe` qui aurait effacé la base partagée par les autres sessions. La production
+n'est pas concernée : elle a reçu `0098` dans sa forme finale, inscrite avec l'empreinte du dépôt. **Règle retenue** :
+une migration déjà appliquée ne se corrige plus — sa correction est une migration nouvelle, comme le runner le dit.
+

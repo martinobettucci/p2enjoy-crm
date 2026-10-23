@@ -1,4 +1,5 @@
 -- @verifies CRM-109 (docs/BACKLOG.md) — tranche T1 : le journal des refus d'admission d'une adresse attendue
+-- @verifies CRM-109 (docs/BACKLOG.md) — tranche T3 : `plateforme_attentes` rend la trace (migration 99), §3, §5
 -- @verifies docs/SPEC-refus-admission.md §2 (trois motifs, une adresse attendue, rien pour une inconnue), §3 (table,
 --           cascade sur l'attente, écriture par `service_role` seul, lecture par l'administrateur, purge à 90 jours),
 --           §6 ; docs/SCHEMA.md §9 bis.8 sexies ; CLAUDE.md §10, §11 (minimisation prouvée)
@@ -13,6 +14,8 @@
 -- 3. La lecture : l'administratrice lit, le business developer et la lectrice rien ; une trace de plus de 90 jours n'est
 --    pas rendue, et la purge la retire.
 -- 4. La cascade : la trace part au remplacement, au retrait et à la consommation de l'attente.
+-- 5. La plateforme (`CRM-109` T3, migration 99) : `plateforme_attentes` rend la trace avec l'attente, `NULL` sans trace
+--    ou au-delà de 90 jours.
 --
 -- `rollback` : rien ne reste.
 
@@ -20,7 +23,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(26);
+select plan(29);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -147,6 +150,35 @@ reset role;
 select is(pg_temp.trace('consommee@p2enjoy.test'), 'attente_verification/1', 'la trace d''une nouvelle attente');
 select public.ouvrir_session_sso(gen_random_uuid(), 'consommee@p2enjoy.test', 'Personne Consommée');
 select is(pg_temp.trace('consommee@p2enjoy.test'), null, 'consommer l''attente à l''admission efface sa trace');
+
+-- ---------------------------------------------------------------------------------------------
+-- 5. La plateforme
+-- ---------------------------------------------------------------------------------------------
+
+-- Une attente neuve et sa trace, lues par la superadministratrice du seed (Sabine, …018).
+insert into public.workspace_invitations (workspace_id, email, role)
+values ('5eed0000-0000-4000-8000-000000000001', 'plateforme@p2enjoy.test', 'viewer');
+set local role service_role;
+select public.journaliser_refus_admission('plateforme@p2enjoy.test', 'adresse_non_verifiee');
+select public.journaliser_refus_admission('plateforme@p2enjoy.test', 'adresse_non_verifiee');
+reset role;
+insert into public.workspace_invitations (workspace_id, email, role)
+values ('5eed0000-0000-4000-8000-000000000001', 'sans-trace@p2enjoy.test', 'viewer');
+
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000018');
+select is((select refus_motif || '/' || refus_nombre from public.plateforme_attentes('5eed0000-0000-4000-8000-000000000001')
+            where email = 'plateforme@p2enjoy.test'), 'adresse_non_verifiee/2',
+          'la plateforme lit la trace avec l''attente : motif et nombre');
+select is((select refus_motif from public.plateforme_attentes('5eed0000-0000-4000-8000-000000000001')
+            where email = 'sans-trace@p2enjoy.test'), null, 'une attente sans trace rend NULL');
+select pg_temp.redevenir_proprietaire();
+
+update public.admission_refus set premier_refus = now() - interval '120 days', dernier_refus = now() - interval '95 days'
+ where email = 'plateforme@p2enjoy.test';
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000018');
+select is((select refus_motif from public.plateforme_attentes('5eed0000-0000-4000-8000-000000000001')
+            where email = 'plateforme@p2enjoy.test'), null, 'une trace de plus de 90 jours n''est plus rendue');
+select pg_temp.redevenir_proprietaire();
 
 select * from finish();
 

@@ -966,7 +966,21 @@ done
 
 IFS='|' read -r email role <<< "$ATTENTE_DEMONTREE"
 inscrire_attente "$email" "$role"
-printf '  %-22s %-20s %s\n' "$email" "$role" "attendu, non vérifié par LeLabs"
+
+# 2.d bis. `CRM-109` (docs/SPEC-refus-admission.md §4, §6) : la connexion d'`attendu@` est TENTÉE par le vrai chemin —
+#          page du realm, puis échangeur. Elle est refusée (`attente_verification`), et c'est l'échangeur qui en laisse
+#          la trace sur l'attente, comme en production. Le rejeu retire d'abord la trace précédente : le compte reste à
+#          un, et l'état démontré est reproductible.
+code=$(api DELETE "/rest/v1/admission_refus?workspace_id=eq.$WS_ID&email=eq.$email")
+attendu "$code" "retrait de la trace de refus précédente de $email" 200 204
+if sso_jeton_interne "$API" "$ANON_KEY" "$email" >/dev/null 2>&1; then
+	die "la connexion de $email a été ADMISE : LeLabs l'a-t-il vérifié ? L'attente démontrée suppose le contraire (§10)."
+fi
+code=$(api GET "/rest/v1/admission_refus?select=motif,refus&workspace_id=eq.$WS_ID&email=eq.$email")
+attendu "$code" "lecture de la trace de refus de $email" 200
+[ "$(jq -c '.' "$CORPS")" = '[{"motif":"attente_verification","refus":1}]' ] \
+	|| die "la connexion refusée de $email n'a pas laissé la trace attendue : $(cat "$CORPS") — l'échangeur journalise-t-il (CRM-109 T2) ?"
+printf '  %-22s %-20s %s\n' "$email" "$role" "attendu, non vérifié par LeLabs — connexion refusée, tracée"
 
 # 2.e. Relecture du contrat du §11 : trois profils et trois appartenances, l'attente d'`attendu@`
 #      intacte, aucune trace d'`inconnu@`.

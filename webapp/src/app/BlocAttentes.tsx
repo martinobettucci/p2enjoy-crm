@@ -5,6 +5,8 @@
 // @spec docs/DESIGN_SYSTEM.md §5.9 (tableaux), §5.13 (formulaire dans le flux), §5.23 (la commande s'exclut du formulaire
 //       qu'elle ouvre), §5.25 (retour du focus), §5.27 (message sous le tableau), §5.41 (retrait sans confirmation de
 //       ce qu'un formulaire repose), §5.61 (le bloc partagé)
+// @spec CRM-109 (docs/BACKLOG.md) — tranche T3 : la colonne « Dernière tentative », le dernier refus d'admission en
+//       mots ; docs/SPEC-refus-admission.md §5 ; docs/DESIGN_SYSTEM.md §5.61
 // @spec CLAUDE.md §10 — le bloc ne décide aucun droit : ses deux gestes sont fournis par l'écran, qui parle à la base
 //
 // COMME `TableauMembres`, LE BLOC NE CONNAÎT NI LA PLATEFORME NI LA RLS : la fiche de la plateforme branche ses gestes
@@ -17,6 +19,8 @@ import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { t } from '../i18n'
 import type { RoleEspace } from '../lib/plateforme'
+import type { MotifRefusAdmission, RefusAdmission } from '../lib/refus-admission'
+import type { CleTraduction } from '../i18n'
 import { formaterDate, libelleRole } from './presentation-plateforme'
 import {
 	BlocMessage,
@@ -39,6 +43,29 @@ export type AttenteTableau = {
 	readonly invitePar: string | null
 	readonly depuis: string
 	readonly enSuspens: boolean
+	/** Le dernier refus d'admission, rendu par la base sur 90 jours au plus (`CRM-109`) ; `null` sans tentative refusée. */
+	readonly refus: RefusAdmission | null
+}
+
+const MOTIFS: Readonly<Record<MotifRefusAdmission, CleTraduction>> = {
+	adresse_non_verifiee: 'platform.attentes.tentative.motif.adresseNonVerifiee',
+	attente_verification: 'platform.attentes.tentative.motif.compteNonVerifie',
+	attente_administrateur: 'platform.attentes.tentative.motif.sansAdministrateur',
+}
+
+const JOUR = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit' })
+const jourDe = (horodatage: string) => {
+	const date = new Date(horodatage)
+	return Number.isNaN(date.getTime()) ? horodatage : JOUR.format(date)
+}
+
+/** « Refusée le 23/10 : … », et « (3 fois depuis le 20/10) » au-delà d'un refus — le motif en mots, jamais un code. */
+export function texteTentative(refus: RefusAdmission | null): string {
+	if (refus === null) return t('platform.attentes.tentative.aucune')
+	const texte = t('platform.attentes.tentative.refusee', { date: jourDe(refus.dernier), motif: t(MOTIFS[refus.motif]) })
+	return refus.nombre > 1
+		? `${texte} ${t('platform.attentes.tentative.compte', { nombre: String(refus.nombre), date: jourDe(refus.premier) })}`
+		: texte
 }
 
 /** L'issue d'une inscription : le message à afficher sous le tableau, ou le refus à dire dans le formulaire. */
@@ -103,6 +130,7 @@ export function BlocAttentes({
 								<th scope="col" className={CLASSES_ENTETE}>{t('platform.attentes.colonne.adresse')}</th>
 								<th scope="col" className={CLASSES_ENTETE}>{t('platform.attentes.colonne.role')}</th>
 								<th scope="col" className={CLASSES_ENTETE}>{t('platform.attentes.colonne.invitePar')}</th>
+								<th scope="col" className={CLASSES_ENTETE}>{t('platform.attentes.colonne.tentative')}</th>
 								<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('platform.colonne.depuis')}</th>
 								<th scope="col" className={CLASSES_ENTETE}>{t('platform.colonne.commandes')}</th>
 							</tr>
@@ -124,6 +152,12 @@ export function BlocAttentes({
 										</span>
 									</td>
 									<td className={CLASSES_CELLULE}>{attente.invitePar ?? t('platform.auteurInconnu')}</td>
+									<td
+										className={`${CLASSES_CELLULE} max-w-[40ch] whitespace-normal ${attente.refus === null ? 'text-text-2' : ''}`}
+										data-testid="tentative-attente"
+									>
+										{texteTentative(attente.refus)}
+									</td>
 									<td className={CLASSES_DATE}>{formaterDate(attente.depuis)}</td>
 									<td className={CLASSES_COMMANDES}>
 										<Button

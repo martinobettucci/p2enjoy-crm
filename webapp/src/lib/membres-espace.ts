@@ -9,6 +9,8 @@
 // @spec CRM-070 (docs/BACKLOG.md) — tranche T4 : les droits fins d'un membre, lus par `acces_effectif_membre`
 //       (migration 96, réservée à l'administrateur), posés dans `track_members` et `channel_members` sous leurs politiques
 //       `*_admin`, retirés pour revenir à « hérité » ; docs/SPEC-membres.md §3.3 ; docs/SCHEMA.md §9 bis.8 quater
+// @spec CRM-109 (docs/BACKLOG.md) — tranche T3 : chaque attente porte la trace de son dernier refus d'admission,
+//       embarquée depuis `admission_refus` (docs/SPEC-refus-admission.md §3, §5)
 // @spec CLAUDE.md §10 — ce module ne décide AUCUN droit : il écrit dans la table, et la politique décide
 //
 // Ce module ne passe PAS par les fonctions `plateforme_*`, gardées par le drapeau de superadministrateur : l'écran d'un
@@ -18,6 +20,7 @@
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { RoleEspace } from './plateforme'
+import { refusAdmissionDe, type RefusAdmission } from './refus-admission'
 import type { ClientCrm } from './supabase'
 
 /** Un membre de l'espace, tel que la RLS le rend à un membre (`workspace_members_lecture_membre`). */
@@ -163,6 +166,15 @@ export type AttenteEspace = {
 	/** Le nom de qui l'a inscrite ; `null` quand l'auteur est inconnu ou son profil effacé. */
 	readonly invitePar: string | null
 	readonly depuis: string
+	/** Le dernier refus d'admission de l'adresse, 90 jours au plus (`CRM-109` T3) ; `null` sans tentative refusée. */
+	readonly refus: RefusAdmission | null
+}
+
+type LigneRefus = {
+	readonly motif: string
+	readonly premier_refus: string
+	readonly dernier_refus: string
+	readonly refus: number
 }
 
 type LigneAttente = {
@@ -170,6 +182,8 @@ type LigneAttente = {
 	readonly role: string
 	readonly created_at: string
 	readonly profiles: { readonly full_name: string | null } | null
+	/** L'embarquement d'une relation un-à-un : un objet, `null`, ou — selon la version de PostgREST — un tableau. */
+	readonly admission_refus: LigneRefus | readonly LigneRefus[] | null
 }
 
 /**
@@ -188,7 +202,7 @@ export async function lireAttentesEspace(
 	try {
 		const reponse = await client
 			.from('workspace_invitations')
-			.select('email, role, created_at, profiles(full_name)')
+			.select('email, role, created_at, profiles(full_name), admission_refus(motif, premier_refus, dernier_refus, refus)')
 			.eq('workspace_id', idWorkspace)
 			.order('email')
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
@@ -201,11 +215,19 @@ export async function lireAttentesEspace(
 					role: ligne.role as RoleEspace,
 					invitePar: ligne.profiles?.full_name ?? null,
 					depuis: ligne.created_at,
+					refus: refusDeLigne(ligne.admission_refus),
 				})),
 		)
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
+}
+
+/** La trace embarquée, que la politique de `admission_refus` borne déjà à l'administrateur et à 90 jours. */
+function refusDeLigne(valeur: LigneAttente['admission_refus']): RefusAdmission | null {
+	const ligne = Array.isArray(valeur) ? (valeur as readonly LigneRefus[])[0] : (valeur as LigneRefus | null)
+	if (ligne === undefined || ligne === null) return null
+	return refusAdmissionDe(ligne.motif, ligne.premier_refus, ligne.dernier_refus, ligne.refus)
 }
 
 /** L'issue d'une inscription : le rôle remplacé, `null` pour une attente neuve. */

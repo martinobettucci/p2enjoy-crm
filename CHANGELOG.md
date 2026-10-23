@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-109` T3 — la « Dernière tentative » d'une attente (décisions 640 et 644)
+
+*En développement seulement. Prouvée en pgTAP, en tests unitaires et en E2E sur la pile seedée ; manuel, chapitres 10.5
+et 10 bis.5. La migration `0099` attend la prochaine fenêtre de production.*
+
+- **Réglages ▸ Membres et la fiche d'un espace de la plateforme** : la liste des attentes gagne une colonne **« Dernière
+  tentative »** — « Refusée le 21/10 : compte LeLabs pas encore vérifié (3 fois depuis le 18/10) », ou « Aucune
+  tentative refusée ». Le motif dit ce qu'il faut faire : adresse à vérifier chez LeLabs, compte à faire vérifier, ou
+  administrateur à nommer.
+- **Migration `0099`** : la fonction de la plateforme qui lit les attentes rend aussi leur trace de refus.
+
 ### `CRM-108` — la famille « Recettes » du connecteur MCP (reste à livrer : l'image `mcp`)
 
 *La migration `0095`, la fiche et l'écran « Rentabilité » sont en production depuis le 2026-10-23 ; ces outils vivent dans le service `mcp`, dont l'image de production n'est pas encore reconstruite. D'ici là, une case « Recettes » cochée dans la matrice reste sans effet, sans erreur.*

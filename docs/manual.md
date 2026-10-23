@@ -4319,6 +4319,14 @@ l'attente, sans confirmation.
 Dans un espace qui n'a encore aucun administrateur, une attente qui n'est pas administratrice porte **« En
 suspens »** : elle ne se consommera qu'après l'arrivée d'un administrateur. Inscrivez donc d'abord l'administrateur.
 
+**« Dernière tentative »** dit si la personne attendue a déjà essayé de se connecter, et pourquoi elle a été refusée :
+« Refusée le 21/10 : compte LeLabs pas encore vérifié », avec le nombre de refus quand il y en a eu plusieurs. Trois
+motifs existent : **adresse non vérifiée chez LeLabs** (la personne doit confirmer son adresse dans son compte
+LeLabs), **compte LeLabs pas encore vérifié** (LeLabs doit vérifier son compte), **l'espace n'a pas encore
+d'administrateur** (nommez-en un). « Aucune tentative refusée » veut dire que la personne n'a pas essayé — ou que son
+dernier essai date de plus de 90 jours : le CRM n'en garde pas la trace au-delà. Une adresse que personne n'attend ne
+laisse jamais de trace, et réinscrire une attente efface la sienne.
+
 ### 10.6 Modifier ou supprimer un espace
 
 **« Modifier »** change le nom et le domaine entrant d'un espace. Son identifiant court ne change pas.
@@ -4435,6 +4443,13 @@ les autres membres, elle n'apparaît pas.
 - Une attente **« En suspens »** ne se consommera qu'à l'arrivée d'un administrateur : c'est le cas d'une attente qui
   n'est pas administratrice, dans un espace qui n'a encore aucun administrateur membre. Vous ne la verrez que rarement
   ici, puisqu'un administrateur membre suffit à lever le suspens ; la plateforme la montre (chapitre 10).
+- **« Dernière tentative »** dit si la personne attendue a déjà essayé de se connecter, et pourquoi elle a été refusée :
+  « Refusée le 21/10 : compte LeLabs pas encore vérifié », avec le nombre de refus quand il y en a eu plusieurs. Trois
+  motifs existent : **adresse non vérifiée chez LeLabs** (la personne doit confirmer son adresse dans son compte
+  LeLabs), **compte LeLabs pas encore vérifié** (LeLabs doit vérifier son compte), **l'espace n'a pas encore
+  d'administrateur** (nommez-en un). « Aucune tentative refusée » veut dire que la personne n'a pas essayé — ou que son
+  dernier essai date de plus de 90 jours : le CRM n'en garde pas la trace au-delà. Une adresse que personne n'attend ne
+  laisse jamais de trace, et réinscrire une attente efface la sienne.
 
 Une adresse mal formée est refusée, et le formulaire reste ouvert pour la corriger.
 
@@ -4468,11 +4483,6 @@ Le message sous la liste dit pourquoi :
   relue ;
 - **ce geste est réservé aux administrateurs de l'espace** ;
 - **le serveur n'a pas répondu** : vérifiez votre connexion et réessayez.
-
-### 10 bis.8 Ce que cet écran n'offre pas encore
-
-- **Savoir si une personne attendue a déjà essayé de se connecter** : une connexion refusée n'est pas encore gardée
-  (`CRM-109`).
 
 ## 11. Le connecteur MCP : piloter le CRM depuis votre assistant
 

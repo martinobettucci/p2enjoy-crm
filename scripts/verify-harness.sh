@@ -669,7 +669,12 @@ FICHIERS_SQL_ATTENDUS=90
 # tuées (adresse non filtrée, lecture sans borne de 90 jours, adresse non normalisée, exécution ouverte à
 # `authenticated`) ; `0016` gagne **1** assertion — l'unique politique de `admission_refus` nommée — et son compte passe
 # à 150 politiques. 3836 + 26 + 1 = 3863, MESURÉ — « 90 fichiers, 3863 assertions, aucune anomalie ».
-ASSERTIONS_ATTENDUES=3863
+# **3866 depuis `CRM-109` T3, 2026-10-23** : `0090_refus_admission` gagne **3** assertions (la trace lue par la
+# plateforme, `NULL` sans trace, `NULL` au-delà de 90 jours). 3863 + 3 = 3866. Relevé : `0090` mesurée seule à 29 ; la
+# série complète a rendu 88 fichiers verts et deux rouges (`0041`, `0080`), qui dépendent des workflows du seed et
+# tournaient pendant un passage E2E d'une autre session qui les modifie — rejouées seules : 55 assertions, aucune
+# anomalie.
+ASSERTIONS_ATTENDUES=3866
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

@@ -1606,7 +1606,11 @@ seule politique, `SELECT` à `app.is_workspace_admin(workspace_id)` et `dernier_
 normalise l'adresse, refuse un autre motif (`22023` `motif_invalide`), et pose ou met à jour la trace de chaque attente
 de l'adresse — **sans attente, elle n'écrit rien** (minimisation, `docs/SPEC-session-sso.md` §6.1). **Purge** :
 `app.purger_refus_admission()` supprime les traces de plus de 90 jours, chaque jour à 3 h 53 (`pg_cron`,
-`p2enjoy-purge-refus-admission`). Prouvée par `supabase/tests/0090_refus_admission.test.sql` (26).
+`p2enjoy-purge-refus-admission`). **Lecture par la plateforme** (migration 99, `CRM-109` T3) : `plateforme_attentes`
+rend avec chaque attente `refus_motif`, `refus_premier`, `refus_dernier` et `refus_nombre`, `NULL` sans trace ou
+au-delà de 90 jours ; l'écran d'un administrateur d'espace lit la même trace par l'embarquement
+`admission_refus(…)` de `workspace_invitations`, sous la politique de la table. Prouvée par
+`supabase/tests/0090_refus_admission.test.sql` (29).
 
 ### 9 bis.9 `public.cards_figees()` — les affaires figées de l'appelant, migration 53
 

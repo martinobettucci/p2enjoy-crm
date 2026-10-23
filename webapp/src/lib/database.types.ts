@@ -3907,6 +3907,10 @@ export type Database = {
           depuis: string
           email: string
           invite_par: string
+          refus_dernier: string
+          refus_motif: string
+          refus_nombre: number
+          refus_premier: string
           role: string
         }[]
       }

@@ -15801,8 +15801,16 @@ peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi e
       une trace `attente_verification` comptée 1, `inconnu@` et une adresse non vérifiée inattendue aucune, l'attente en
       suspens laisse `attente_administrateur` puis la perd à la consommation ; **mutation tuée sur l'échangeur réel**
       (crochet retiré : la preuve rougit) ; pgTAP `0090` rendue indépendante d'une trace laissée par ce passage.
-- [ ] **T3** — les écrans : Réglages ▸ Membres et la plateforme (`plateforme_attentes` étendue) ; unitaires, API, E2E,
+- [x] **T3** — les écrans : Réglages ▸ Membres et la plateforme (`plateforme_attentes` étendue) ; unitaires, API, E2E,
       manuel, seed.
+      **Vérifiée le 2026-10-23** : migration `0099` appliquée en développement — `plateforme_attentes` retirée et
+      recréée avec les quatre colonnes ; pgTAP `0090` **29** (trois de plus : trace lue, `NULL` sans trace, `NULL`
+      au-delà de 90 jours), mutation de la borne tuée ; `0084` inchangée et verte (80) ; colonne « Dernière tentative »
+      dans le bloc partagé `BlocAttentes`, lue par l'embarquement `admission_refus(…)` côté réglages et par la fonction
+      côté plateforme ; unitaires — `refus-admission` 2, `BlocAttentes` 3, `membres-espace`, `plateforme` et l'écran
+      étendus —, sept mutations tuées ; **seed** : la connexion d'`attendu@` est tentée par l'échangeur réel, le refus
+      laisse sa trace, rejoué deux fois avec le compte à un ; E2E `membres.spec.ts` et `plateforme.spec.ts` **15/15** ;
+      capture `attentes-inscrite-1440` observée ; manuel 10.5 et 10 bis.5 ; DS §5.61 ; SCHEMA ; contrat, ligne 99.
 - [ ] **T4** — livraison en production, sur instruction du responsable.
 
 ### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[ ]`

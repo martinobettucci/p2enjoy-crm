@@ -6,6 +6,7 @@
 // @verifies CRM-103 T2 — docs/SPEC-mcp.md §8.2 (lectures du connecteur, couples envoyés dans l'ordre du §6.1, refus
 //           `droit_invalide` et `issue_invalide` reconnus), §7.1 (issue inconnue rendue `null`)
 // @verifies CRM-108 T3 — docs/SPEC-recettes.md §7 (la famille `recettes`, envoyée entre `budgets` et `temps`)
+// @verifies CRM-109 (docs/BACKLOG.md) — tranche T3 : `lireAttentes` lit la trace du dernier refus (docs/SPEC-refus-admission.md §3)
 
 import { describe, expect, it } from 'vitest'
 import { CLES_APPARTENANCES, compter, detailJournal, libelleActeur, libelleGeste, texteRefus } from '../app/presentation-plateforme'
@@ -16,6 +17,7 @@ import {
 	confirmationSuppressionValide,
 	creerEspace,
 	curseurSuivant,
+	lireAttentes,
 	lireEspaces,
 	lireEstSuperadmin,
 	lireUtilisateurs,
@@ -74,7 +76,7 @@ describe('logique de l’écran', () => {
 	})
 
 	it('met en suspens une attente non administratrice dans un espace sans administrateur, et seulement elle', () => {
-		const attente = { email: 'a@b.test', role: 'viewer' as const, invitePar: null, depuis: '' }
+		const attente = { email: 'a@b.test', role: 'viewer' as const, invitePar: null, depuis: '', refus: null }
 		expect(attenteEnSuspens(attente, 0)).toBe(true)
 		expect(attenteEnSuspens({ ...attente, role: 'admin' }, 0)).toBe(false)
 		expect(attenteEnSuspens(attente, 1)).toBe(false)
@@ -112,6 +114,25 @@ describe('appels', () => {
 			statut: 'pret',
 			donnees: [{ id: 'w1', nom: 'Atelier', slug: 'atelier', domaineEntrant: null, membres: 0, administrateurs: 0, attentes: 1 }],
 		})
+	})
+
+	// `CRM-109` T3 (docs/SPEC-refus-admission.md §3, §5) : `plateforme_attentes` rend la trace du dernier refus.
+	it('lit les attentes avec la trace de leur dernier refus, et `null` sans trace', async () => {
+		const etat = await lireAttentes(
+			client(() => ({
+				data: [
+					{ email: 'a@x.test', role: 'viewer', invite_par: 'Sabine', depuis: '2026-10-01', refus_motif: 'attente_verification', refus_premier: '2026-10-18', refus_dernier: '2026-10-21', refus_nombre: 3 },
+					{ email: 'b@x.test', role: 'admin', invite_par: null, depuis: '2026-10-02', refus_motif: null, refus_premier: null, refus_dernier: null, refus_nombre: null },
+				],
+				error: null,
+				status: 200,
+			})),
+			'w1',
+		)
+		expect(etat.statut === 'pret' && etat.donnees.map((attente) => attente.refus)).toEqual([
+			{ motif: 'attente_verification', premier: '2026-10-18', dernier: '2026-10-21', nombre: 3 },
+			null,
+		])
 	})
 
 	it('envoie `null` pour un domaine laissé blanc, et rend le refus par son code', async () => {

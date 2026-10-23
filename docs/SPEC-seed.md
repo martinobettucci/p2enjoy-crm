@@ -73,7 +73,10 @@ ouvre la session de chacun par la **vraie connexion** — page du realm, puis é
 sont l'échangeur et `ouvrir_session_sso` qui créent profils et appartenances. Chaque personne pose
 ensuite son nom et son avatar par la mise à jour de **son propre** profil, avec son propre jeton.
 S'y ajoute une **attente démontrée** : `attendu@p2enjoy.test`, rôle `viewer`, que LeLabs n'a pas
-vérifié — sa connexion est refusée et l'attente demeure. `inconnu@p2enjoy.test`, attendu par personne,
+vérifié — sa connexion est refusée et l'attente demeure. *Depuis `CRM-109` T3*, le seed **tente réellement** cette
+connexion, par la page du realm puis l'échangeur : le refus `attente_verification` laisse sa **trace** sur l'attente
+(`admission_refus`, un refus), écrite par l'échangeur comme en production ; le rejeu retire la trace précédente avant
+la tentative, si bien que le compte reste à un (`docs/SPEC-refus-admission.md` §6). `inconnu@p2enjoy.test`, attendu par personne,
 ne laisse aucune trace. `exploitante@p2enjoy.test` (`5eed…0017`), porteuse du rôle de realm `admin`,
 n'est **pas connectée par le seed** : elle démontre la règle du domaine (`docs/SPEC-session-sso.md`
 §6.1 bis, décision 597) — admise à sa première connexion sans aucune attente, administratrice de tout

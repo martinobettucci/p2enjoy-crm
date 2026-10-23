@@ -6,6 +6,7 @@
 // @spec CRM-103 tranche T2 — docs/SPEC-mcp.md §8.1 (écrans), §8.2 (les quatre RPC d'administration, leurs refus), §6.1
 //       (familles et actions), §7.1 (issues du journal) ; arbitrages A3, A5 et D9
 // @spec CRM-108 tranche T3 — docs/SPEC-recettes.md §7 (la huitième famille, `recettes`) ; docs/SPEC-mcp.md §6.1
+// @spec CRM-109 tranche T3 — docs/SPEC-refus-admission.md §3, §5 : `plateforme_attentes` rend la trace du dernier refus
 //
 // Toutes les lectures et écritures passent par les fonctions `public.plateforme_*`, gardées en base par
 // `app.exiger_superadmin()`. L'écran n'en déduit rien : il envoie, et traduit ce que la base rend. Un refus est
@@ -14,6 +15,7 @@
 
 import { useEffect, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
+import { refusAdmissionDe, type RefusAdmission } from './refus-admission'
 import type { ClientCrm } from './supabase'
 
 /** Les trois rôles d'un espace (`docs/SPEC-permissions-rls.md` §2.1). */
@@ -226,6 +228,8 @@ export type AttentePlateforme = {
 	readonly role: RoleEspace | null
 	readonly invitePar: string | null
 	readonly depuis: string
+	/** Le dernier refus d'admission de l'adresse, 90 jours au plus (`CRM-109`) ; `null` sans tentative refusée. */
+	readonly refus: RefusAdmission | null
 }
 
 export async function lireAttentes(client: ClientCrm, idEspace: string): Promise<EtatAsync<readonly AttentePlateforme[]>> {
@@ -235,6 +239,7 @@ export async function lireAttentes(client: ClientCrm, idEspace: string): Promise
 			role: roleConnu(ligne['role']),
 			invitePar: texteOuNul(ligne['invite_par']),
 			depuis: texte(ligne['depuis']),
+			refus: refusAdmissionDe(ligne['refus_motif'], ligne['refus_premier'], ligne['refus_dernier'], ligne['refus_nombre']),
 		})),
 	)
 }

@@ -7,6 +7,8 @@
 //           suspens » ; docs/SPEC-membres.md §3.2, §5 point 3
 // @verifies CRM-070 (docs/BACKLOG.md) — tranche T4 : la matrice lue par `acces_effectif_membre`, ordonnée track puis ses
 //           channels ; un droit posé par `upsert`, retiré pour « hérité » ; docs/SPEC-membres.md §3.3
+// @verifies CRM-109 (docs/BACKLOG.md) — tranche T3 : la trace du dernier refus, embarquée avec chaque attente ;
+//           docs/SPEC-refus-admission.md §3, §5
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -158,18 +160,44 @@ describe('les attentes (T3)', () => {
 	it('lit workspace_invitations de l’espace, avec le nom de qui l’a inscrite, et écarte un rôle inconnu', async () => {
 		const { client, appels } = espion({
 			data: [
-				{ email: 'a@x.test', role: 'viewer', created_at: '2026-10-01', profiles: { full_name: 'Camille Aubert' } },
-				{ email: 'b@x.test', role: 'admin', created_at: '2026-10-02', profiles: null },
-				{ email: 'c@x.test', role: 'owner', created_at: '2026-10-03', profiles: null },
+				{
+					email: 'a@x.test',
+					role: 'viewer',
+					created_at: '2026-10-01',
+					profiles: { full_name: 'Camille Aubert' },
+					admission_refus: { motif: 'attente_verification', premier_refus: '2026-10-18', dernier_refus: '2026-10-21', refus: 3 },
+				},
+				{
+					email: 'b@x.test',
+					role: 'admin',
+					created_at: '2026-10-02',
+					profiles: null,
+					// Une version de PostgREST qui rend la relation un-à-un en tableau : la trace est lue quand même.
+					admission_refus: [{ motif: 'adresse_non_verifiee', premier_refus: '2026-10-20', dernier_refus: '2026-10-20', refus: 1 }],
+				},
+				{ email: 'c@x.test', role: 'owner', created_at: '2026-10-03', profiles: null, admission_refus: null },
 			],
 			error: null,
 			status: 200,
 		})
 		const etat = await lireAttentesEspace(client, 'w1')
 		expect(appels[0]).toMatchObject({ table: 'workspace_invitations', filtres: [['workspace_id', 'w1']] })
+		expect(appels[0]?.colonnes).toContain('admission_refus(motif, premier_refus, dernier_refus, refus)')
 		expect(etat.statut === 'pret' && etat.donnees).toEqual([
-			{ email: 'a@x.test', role: 'viewer', invitePar: 'Camille Aubert', depuis: '2026-10-01' },
-			{ email: 'b@x.test', role: 'admin', invitePar: null, depuis: '2026-10-02' },
+			{
+				email: 'a@x.test',
+				role: 'viewer',
+				invitePar: 'Camille Aubert',
+				depuis: '2026-10-01',
+				refus: { motif: 'attente_verification', premier: '2026-10-18', dernier: '2026-10-21', nombre: 3 },
+			},
+			{
+				email: 'b@x.test',
+				role: 'admin',
+				invitePar: null,
+				depuis: '2026-10-02',
+				refus: { motif: 'adresse_non_verifiee', premier: '2026-10-20', dernier: '2026-10-20', nombre: 1 },
+			},
 		])
 	})
 

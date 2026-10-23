@@ -4,6 +4,8 @@
 //           traduits), §6 (E2E par rôle) ; docs/DESIGN_SYSTEM.md §5.61, §5.59 ; CLAUDE.md §16 (captures observées)
 // @verifies CRM-070 (docs/BACKLOG.md) — tranche T3 : la section « Attentes » sur la pile réelle — inscrire au clavier,
 //           remplacer, retirer ; absente pour la lectrice ; docs/SPEC-membres.md §3.2 ; docs/DESIGN_SYSTEM.md §5.61
+// @verifies CRM-109 (docs/BACKLOG.md) — tranche T3 : la « Dernière tentative » d'une attente, depuis la trace laissée par
+//           la connexion réelle refusée du seed ; docs/SPEC-refus-admission.md §5, §6
 // @verifies CRM-070 (docs/BACKLOG.md) — tranche T4 : la matrice des droits fins sur la pile réelle — l'accès effectif rendu
 //           par la base, un droit posé puis retiré au clavier, l'administratrice jamais restreinte ; absente pour la
 //           lectrice ; docs/SPEC-membres.md §3.3
@@ -96,6 +98,10 @@ test.describe('l’administratrice — Camille Aubert', () => {
 		const section = page.getByRole('region', { name: 'Attentes' })
 		await expect(section.getByTestId('ligne-attente')).toHaveCount(1)
 		await expect(section.getByTestId('ligne-attente')).toHaveAttribute('data-email', 'attendu@p2enjoy.test')
+		// `CRM-109` T3 : le seed a tenté la connexion d'`attendu@` par l'échangeur réel ; son refus se lit en mots.
+		await expect(section.locator('[data-email="attendu@p2enjoy.test"]').getByTestId('tentative-attente')).toHaveText(
+			/^Refusée le \d{2}\/\d{2} : compte LeLabs pas encore vérifié$/,
+		)
 
 		const inscrire = async (role: string) => {
 			await section.getByTestId('inscrire-attente').focus()
@@ -109,6 +115,7 @@ test.describe('l’administratrice — Camille Aubert', () => {
 		await expect(section.getByTestId('message-attentes')).toHaveText(`Attente de ${ADRESSE} inscrite.`)
 		await expect(section.locator(`[data-email="${ADRESSE}"]`)).toContainText('Business developer')
 		await expect(section.locator(`[data-email="${ADRESSE}"]`)).toContainText('Camille Aubert')
+		await expect(section.locator(`[data-email="${ADRESSE}"]`).getByTestId('tentative-attente')).toHaveText('Aucune tentative refusée')
 		await capturer(page, 'attentes-inscrite-1440', UNITE)
 
 		await inscrire('admin')

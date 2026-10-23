@@ -6,6 +6,7 @@
 //           remplacer, retirer ; les refus traduits ; un seul bloc ouvert ; docs/SPEC-membres.md §3.2 ; DS §5.28, §5.61
 // @verifies CRM-070 (docs/BACKLOG.md) — tranche T4 : la section « Droits fins » n'est rendue qu'à l'administrateur
 //           (docs/SPEC-membres.md §3.3, §5 point 1)
+// @verifies CRM-109 (docs/BACKLOG.md) — tranche T3 : la colonne « Dernière tentative » (docs/SPEC-refus-admission.md §5)
 //
 // La base est simulée en mémoire, au format de PostgREST : une écriture rend ses lignes, ou une erreur, ou zéro ligne.
 // Le refus réel par la RLS est prouvé hors interface (`e2e/api/membres.spec.ts`) ; ici, l'écran et sa traduction.
@@ -31,10 +32,22 @@ const SEED: readonly Ligne[] = [
 	{ user_id: 'anonyme', role: 'viewer', created_at: '2026-09-04T08:00:00Z', profiles: null },
 ]
 
-type Attente = { email: string; role: string; created_at: string; profiles: { full_name: string | null } | null }
+type Attente = {
+	email: string
+	role: string
+	created_at: string
+	profiles: { full_name: string | null } | null
+	admission_refus?: { motif: string; premier_refus: string; dernier_refus: string; refus: number } | null
+}
 
 const ATTENTES_SEED: readonly Attente[] = [
-	{ email: 'attendu@p2enjoy.test', role: 'viewer', created_at: '2026-09-05T08:00:00Z', profiles: null },
+	{
+		email: 'attendu@p2enjoy.test',
+		role: 'viewer',
+		created_at: '2026-09-05T08:00:00Z',
+		profiles: null,
+		admission_refus: { motif: 'attente_verification', premier_refus: '2026-10-18T09:00:00Z', dernier_refus: '2026-10-21T09:00:00Z', refus: 3 },
+	},
 ]
 
 /**
@@ -252,6 +265,10 @@ describe('les attentes (T3)', () => {
 		expect(attentes()).toEqual(['attendu@p2enjoy.test'])
 		expect(within(section).getByText('Auteur inconnu')).toBeTruthy()
 		expect(screen.queryByText('En suspens')).toBeNull()
+		// `CRM-109` T3 : la dernière tentative refusée, en mots, avec son compte.
+		expect(within(section).getByTestId('tentative-attente').textContent).toBe(
+			'Refusée le 21/10 : compte LeLabs pas encore vérifié (3 fois depuis le 18/10)',
+		)
 		// La section des droits fins suit, pour le même seul administrateur (T4).
 		expect(await screen.findByTestId('droits-fins')).toBeTruthy()
 	})
@@ -283,6 +300,8 @@ describe('les attentes (T3)', () => {
 			{ operation: 'inscrire_attente', charge: { p_ws: 'w', p_email: 'Nouvelle@P2Enjoy.test', p_role: 'business_developer' } },
 		])
 		await waitFor(() => expect(attentes()).toEqual(['attendu@p2enjoy.test', 'nouvelle@p2enjoy.test']))
+		// Une attente neuve n'a aucune tentative refusée, et le dit.
+		expect(screen.getAllByTestId('tentative-attente')[1]?.textContent).toBe('Aucune tentative refusée')
 		expect(screen.queryByTestId('formulaire-attente')).toBeNull()
 	})
 

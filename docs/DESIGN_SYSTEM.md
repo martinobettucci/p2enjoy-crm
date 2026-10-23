@@ -5927,6 +5927,13 @@ envoie et refuse est spécifié par `docs/SPEC-membres.md` §3 et §4 ; ces règ
   phrase qui dirait qu'elle existe (`docs/SPEC-membres.md` §3.2). C'est l'exception à « commandes éteintes, jamais
   masquées » : ce n'est pas une commande qu'on masque, c'est une donnée que la base ne lui rend pas, et une liste vide
   y mentirait (« aucune attente »).
+- **LA COLONNE « Dernière tentative »** (`CRM-109` T3, `docs/SPEC-refus-admission.md` §5) vient dans le bloc des
+  attentes après « Inscrite par », sur les deux écrans. Le dernier refus d'admission s'y dit **en mots**, jamais par un
+  code : « Refusée le 21/10 : compte LeLabs pas encore vérifié », suivi de « (3 fois depuis le 18/10) » au-delà d'un
+  refus — la date en jour et mois, le motif en minuscules après les deux-points. Sans trace : « Aucune tentative
+  refusée », en `--color-text-2` : une absence se dit, elle ne s'efface pas (§5.9). La cellule passe à la ligne
+  (`whitespace-normal`, `max-w-[40ch]`) : un motif tronqué perdrait ce qu'il faut faire. **Aucune teinte** : un refus
+  d'admission n'est pas une erreur de l'écran, c'est un fait de la personne attendue.
 - **UN SEUL BLOC OUVERT SUR L'ÉCRAN** (§5.28) : ouvrir le formulaire d'une attente referme la confirmation de retrait
   d'un membre, et inversement ; ouvrir un bloc efface les messages des deux sections.
 - **LA MATRICE DES DROITS FINS** (`CRM-070` T4, `webapp/src/app/DroitsFins.tsx`) vient en dernière section, **rendue au
