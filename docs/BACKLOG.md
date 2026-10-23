@@ -14669,7 +14669,7 @@ décision 594.
       **En production le 2026-09-27** (révision `f99a9b32`), connexion réelle vérifiée ; le retrait de
       l'ancien nom revient au responsable (`docs/PROD_MIGRATIONS.md` §2.6, étape 6).
 
-### CRM-093 — L'interface n'offre pas à un compte les gestes que le serveur lui refuse `[ ]`
+### CRM-093 — L'interface n'offre pas à un compte les gestes que le serveur lui refuse `[~]`
 *Créée le 2026-09-26 — décision 603, arbitrage du responsable. Relevé en relisant les captures de
 `CRM-092` T9 : la lectrice du seed voit « Nouveau contact » et les liens d'administration du guide de
 démarrage ; le serveur refuse ces gestes, mais l'interface les propose. Spécification à écrire et à
