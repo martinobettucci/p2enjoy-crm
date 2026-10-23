@@ -68,6 +68,7 @@ import {
 	CHEMIN_TEMPS,
 	CHEMIN_RENTABILITE,
 	CHEMIN_ADMIN_COUT_PERSONNEL,
+	CHEMIN_ADMIN_MEMBRES,
 } from './chemins'
 
 export {
@@ -102,6 +103,7 @@ export {
 	CHEMIN_TEMPS,
 	CHEMIN_RENTABILITE,
 	CHEMIN_ADMIN_COUT_PERSONNEL,
+	CHEMIN_ADMIN_MEMBRES,
 }
 
 /**
@@ -219,6 +221,9 @@ export const CLE_TITRE_SEQUENCES_MAIL: CleTraduction = 'admin.sequences.title'
 export const CLE_TITRE_CORBEILLE: CleTraduction = 'admin.trash.title'
 
 export const CLE_TITRE_COUT_PERSONNEL: CleTraduction = 'staffCost.title'
+
+/** Titre de Réglages ▸ Membres — `CRM-070`, docs/SPEC-membres.md §3. */
+export const CLE_TITRE_MEMBRES: CleTraduction = 'members.title'
 
 /** Titre de la plateforme — `CRM-101`, docs/SPEC-plateforme.md §7 (hors de `ROUTES`, comme les réglages). */
 export const CLE_TITRE_PLATEFORME: CleTraduction = 'platform.title'
@@ -382,6 +387,18 @@ export function IndexReglages() {
 					>
 						<span className="font-medium">{t('admin.settings.index.tree')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.tree.body')}</span>
+					</Link>
+				</li>
+				{/* Les membres viennent APRÈS l'arborescence — `CRM-070`, docs/SPEC-membres.md §3 : on organise l'espace,
+				    puis on y place les personnes. Un lien pour tous : l'écran se consulte, ses commandes s'éteignent. */}
+				<li>
+					<Link
+						to={CHEMIN_ADMIN_MEMBRES}
+						data-testid="entree-membres"
+						className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+					>
+						<span className="font-medium">{t('admin.settings.index.members')}</span>
+						<span className="text-sm text-text-2">{t('admin.settings.index.members.body')}</span>
 					</Link>
 				</li>
 				<li>

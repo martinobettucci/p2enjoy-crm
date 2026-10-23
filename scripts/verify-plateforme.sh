@@ -69,6 +69,7 @@ for fichier in "$MIGRATION" "$SUITE" webapp/src/lib/plateforme.ts webapp/src/lib
 	webapp/src/app/Plateforme.tsx webapp/src/app/PlateformeEspaces.tsx webapp/src/app/PlateformeEspace.tsx \
 	webapp/src/app/PlateformeSuperadmins.tsx webapp/src/app/PlateformeJournal.tsx webapp/src/app/RecherchePersonne.tsx \
 	webapp/src/app/presentation-plateforme.ts webapp/src/app/Plateforme.test.tsx webapp/src/app/PlateformeUtilisateurs.tsx \
+	webapp/src/app/TableauMembres.tsx \
 	supabase/migrations/0093_plateforme_utilisateurs.sql e2e/api/plateforme.spec.ts \
 	e2e/ui/plateforme.spec.ts; do
 	if head -6 "$fichier" | grep -Eq '@(spec|verifies) CRM-101'; then ok "$fichier cite CRM-101"; else fail "$fichier ne cite pas CRM-101"; fi

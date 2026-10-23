@@ -33,6 +33,25 @@ captures observées, manuel au chapitre 5 duodecies ; l'intégration réelle des
   ses huit outils (lister les lignes d'une affaire, les recettes à saisir, le rapport de rentabilité ; ajouter une ligne
   ou une recette réelle ; corriger, solder ou rouvrir) — prouvés devant un CRM simulé, l'intégration réelle avec T5.
 
+### `CRM-070` — Réglages ▸ Membres : les membres d'un espace et leurs rôles (décisions 634 et 635)
+
+*En développement seulement. Tranches T1 et T2 : prouvées en pgTAP, aux jetons réels (API), en tests unitaires et en
+E2E sur la pile seedée, captures observées ; manuel, chapitre 10 bis. Les attentes et les droits fins viendront avec
+T3 et T4. La migration `0096` attend la prochaine fenêtre de production.*
+
+- **Écran « Membres »** (`/reglages/membres`, après « Arborescence » dans l'index des réglages) : la liste des membres
+  de l'espace, administrateurs d'abord. Un administrateur de l'espace y **change un rôle** — enregistré dès le choix — et
+  **retire un membre** après une confirmation qui nomme la personne et dit ce qui part avec elle, et qui prévient quand
+  on se retire soi-même. Les autres membres consultent la liste ; les commandes restent visibles, inactives, sous un
+  bandeau qui dit pourquoi.
+- **Un espace garde toujours un administrateur** : la base refuse de rétrograder ou de retirer le dernier, et l'écran
+  le dit.
+- **Migration `0096`** : `acces_effectif_membre`, la lecture des droits fins posés pour une personne et de l'accès qui
+  en résulte, track par track et channel par channel, **réservée à l'administrateur de l'espace**. L'écran l'emploiera
+  avec T4.
+- **Plateforme** : le tableau des membres de la fiche d'un espace est désormais partagé avec cet écran ; son rendu ne
+  change pas.
+
 ### Sécurité — revue des dépendances du 2026-10-23
 
 - **Connecteur MCP** : `opentelemetry-api` 1.45.1 (CVE-2026-114603, une requête authentifiée pouvait occuper le service

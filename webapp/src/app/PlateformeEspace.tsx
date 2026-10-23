@@ -8,8 +8,8 @@
 // LA FICHE EST RELUE APRÈS CHAQUE ÉCRITURE, JAMAIS COMPLÉTÉE LOCALEMENT (§5.21), et la relecture garde à l'écran ce
 // qu'elle relit (§5.29 tranche 2 c) : le squelette n'appartient qu'au premier chargement.
 
-import { MailMinus, MailPlus, PencilLine, Trash2, TriangleAlert, UserMinus, UserPlus } from 'lucide-react'
-import { Fragment, useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { MailMinus, MailPlus, PencilLine, Trash2, TriangleAlert, UserPlus } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
@@ -18,7 +18,6 @@ import { EtatErreur, EtatVide } from '../components/ui/States'
 import { t } from '../i18n'
 import type { ErreurDonnees } from '../lib/async'
 import {
-	ROLES_ESPACE,
 	attenteEnSuspens,
 	confirmationSuppressionValide,
 	inviter,
@@ -41,14 +40,18 @@ import type { ClientCrm } from '../lib/supabase'
 import { CHEMIN_PLATEFORME_ESPACES } from './chemins'
 import { CLES_APPARTENANCES, CLES_ATTENTES, compter, formaterDate, libelleRole, texteRefus } from './presentation-plateforme'
 import { RecherchePersonne } from './RecherchePersonne'
+import {
+	BlocMessage,
+	CLASSES_CELLULE,
+	CLASSES_CHAMP,
+	CLASSES_COMMANDES,
+	CLASSES_DATE,
+	CLASSES_ENTETE,
+	SelectRole,
+	TableauMembres,
+	type Message,
+} from './TableauMembres'
 import type { EtatNavigationEspaces } from './PlateformeEspaces'
-
-const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-target)] px-3 text-left whitespace-nowrap'
-const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
-const CLASSES_DATE = 'h-[var(--size-target)] px-3 text-right tabular-nums whitespace-nowrap'
-const CLASSES_COMMANDES = 'h-[var(--size-target)] px-3 whitespace-nowrap'
-const CLASSES_CHAMP =
-	'min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand'
 
 type Fiche = {
 	readonly espace: EspacePlateforme
@@ -70,9 +73,6 @@ type Ouverture =
 	| { readonly type: 'inviter' }
 	| { readonly type: 'supprimer' }
 	| null
-
-/** Un message de bloc : une issue lue sous le tableau, `status` ou `alert` (§5.27). */
-type Message = { readonly ton: 'succes' | 'refus'; readonly texte: string } | null
 
 async function lireFiche(client: ClientCrm, slug: string): Promise<EtatFiche> {
 	const espaces = await lireEspaces(client)
@@ -192,19 +192,6 @@ export function PlateformeEspace({ client }: { readonly client: ClientCrm }) {
 				onFermer={() => setOuverture(null)}
 			/>
 		</article>
-	)
-}
-
-function BlocMessage({ message, testId }: { readonly message: Message; readonly testId: string }) {
-	if (message === null) return null
-	return message.ton === 'succes' ? (
-		<p role="status" data-testid={testId} className="rounded-sm bg-success-soft text-success-on-soft px-3 py-2 text-sm">
-			{message.texte}
-		</p>
-	) : (
-		<p role="alert" data-testid={testId} className="rounded-sm bg-danger-soft text-danger-on-soft px-3 py-2 text-sm">
-			{message.texte}
-		</p>
 	)
 }
 
@@ -363,24 +350,6 @@ function Champ({ id, libelle, aide, children }: { readonly id: string; readonly 
 	)
 }
 
-function SelectRole({ id, valeur, onChange, libelle }: { readonly id: string; readonly valeur: RoleEspace; readonly onChange: (role: RoleEspace) => void; readonly libelle?: string }) {
-	return (
-		<select
-			id={id}
-			value={valeur}
-			aria-label={libelle}
-			onChange={(e) => onChange(e.target.value as RoleEspace)}
-			className={CLASSES_CHAMP}
-		>
-			{ROLES_ESPACE.map((role) => (
-				<option key={role} value={role}>
-					{libelleRole(role)}
-				</option>
-			))}
-		</select>
-	)
-}
-
 // --- Membres -----------------------------------------------------------------------------------------------------
 
 function Membres({
@@ -404,19 +373,6 @@ function Membres({
 }) {
 	const formulaireOuvert = ouverture?.type === 'ajouter-membre'
 	const focus = useRetourFocus(formulaireOuvert)
-	const [roleEnVol, setRoleEnVol] = useState<Readonly<Record<string, RoleEspace>>>({})
-
-	const changerRole = async (membre: MembrePlateforme, role: RoleEspace) => {
-		setRoleEnVol((precedent) => ({ ...precedent, [membre.idUtilisateur]: role }))
-		const issue = await poserMembre(client, espace.id, membre.idUtilisateur, role)
-		setRoleEnVol((precedent) => {
-			const suivant = { ...precedent }
-			delete suivant[membre.idUtilisateur]
-			return suivant
-		})
-		onIssue(issueEnMessage(issue, t('platform.membres.roleChange', { nom: membre.nom })))
-	}
-
 	return (
 		<section aria-labelledby="titre-membres" className="flex flex-col gap-4">
 			<h2 id="titre-membres" className="text-h3">
@@ -427,42 +383,27 @@ function Membres({
 					{t('platform.membres.vide')}
 				</p>
 			) : (
-				<div className="overflow-x-auto indique-debordement-x">
-					<table data-testid="tableau-membres" className="w-full border-collapse">
-						<caption className="sr-only">{t('platform.membres.titre')}</caption>
-						<thead>
-							<tr className="border-b border-border">
-								<th scope="col" className={CLASSES_ENTETE}>{t('platform.membres.colonne.nom')}</th>
-								<th scope="col" className={CLASSES_ENTETE}>{t('platform.membres.colonne.role')}</th>
-								<th scope="col" className={CLASSES_ENTETE}>{t('platform.membres.colonne.superadmin')}</th>
-								<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('platform.colonne.depuis')}</th>
-								<th scope="col" className={CLASSES_ENTETE}>{t('platform.colonne.commandes')}</th>
-							</tr>
-						</thead>
-						<tbody>
-							{membres.map((membre) => {
-								const confirmation = ouverture?.type === 'retirer-membre' && ouverture.idUtilisateur === membre.idUtilisateur
-								return (
-									<LigneMembre
-										key={membre.idUtilisateur}
-										client={client}
-										espace={espace}
-										membre={membre}
-										role={roleEnVol[membre.idUtilisateur] ?? membre.role ?? 'viewer'}
-										confirmation={confirmation}
-										onChangerRole={(role) => void changerRole(membre, role)}
-										onRetirer={() => onOuvrir({ type: 'retirer-membre', idUtilisateur: membre.idUtilisateur })}
-										onAnnuler={onFermer}
-										onIssue={(issue) => {
-											onFermer()
-											onIssue(issue)
-										}}
-									/>
-								)
-							})}
-						</tbody>
-					</table>
-				</div>
+				<TableauMembres
+					membres={membres.map((membre) => ({ ...membre, role: membre.role ?? 'viewer' }))}
+					nomEspace={espace.nom}
+					colonneSuperadmin
+					idConfirmation={ouverture?.type === 'retirer-membre' ? ouverture.idUtilisateur : null}
+					onDemanderRetrait={(membre) => onOuvrir({ type: 'retirer-membre', idUtilisateur: membre.idUtilisateur })}
+					onFermer={onFermer}
+					changerRole={async (membre, role) =>
+						issueEnMessage(
+							await poserMembre(client, espace.id, membre.idUtilisateur, role),
+							t('platform.membres.roleChange', { nom: membre.nom }),
+						)
+					}
+					retirer={async (membre) =>
+						issueEnMessage(
+							await retirerMembre(client, espace.id, membre.idUtilisateur),
+							t('platform.membres.retire', { nom: membre.nom }),
+						)
+					}
+					onMessage={onIssue}
+				/>
 			)}
 			<BlocMessage message={message} testId="message-membres" />
 			{formulaireOuvert ? (
@@ -493,106 +434,6 @@ function Membres({
 
 function issueEnMessage(issue: Issue<unknown>, succes: string): Message {
 	return issue.statut === 'ok' ? { ton: 'succes', texte: succes } : { ton: 'refus', texte: texteRefus(issue.refus) }
-}
-
-function LigneMembre({
-	client,
-	espace,
-	membre,
-	role,
-	confirmation,
-	onChangerRole,
-	onRetirer,
-	onAnnuler,
-	onIssue,
-}: {
-	readonly client: ClientCrm
-	readonly espace: EspacePlateforme
-	readonly membre: MembrePlateforme
-	readonly role: RoleEspace
-	readonly confirmation: boolean
-	readonly onChangerRole: (role: RoleEspace) => void
-	readonly onRetirer: () => void
-	readonly onAnnuler: () => void
-	readonly onIssue: (message: Message) => void
-}) {
-	const commande = useRef<HTMLButtonElement>(null)
-	const [envoi, setEnvoi] = useState(false)
-	// La commande reste montée mais DÉSACTIVÉE pendant sa confirmation, et un bouton désactivé refuse le focus : il lui
-	// est rendu un tour de rendu plus tard, une fois réactivé — un drapeau, puis un effet (§5.29 tranche 2 b-2 c).
-	const rendreFocus = useRef(false)
-	useEffect(() => {
-		if (!confirmation && rendreFocus.current) {
-			rendreFocus.current = false
-			commande.current?.focus()
-		}
-	}, [confirmation])
-	const annuler = () => {
-		rendreFocus.current = true
-		onAnnuler()
-	}
-	const retirer = async () => {
-		setEnvoi(true)
-		const issue = await retirerMembre(client, espace.id, membre.idUtilisateur)
-		setEnvoi(false)
-		onIssue(issueEnMessage(issue, t('platform.membres.retire', { nom: membre.nom })))
-	}
-	return (
-		<Fragment>
-			<tr data-testid="ligne-membre" data-membre={membre.idUtilisateur} className="border-b border-border hover:bg-hover">
-				<td className={CLASSES_CELLULE} title={membre.nom}>{membre.nom}</td>
-				<td className={CLASSES_CELLULE}>
-					<SelectRole
-						id={`role-${membre.idUtilisateur}`}
-						valeur={role}
-						libelle={t('platform.membres.role.aria', { nom: membre.nom })}
-						onChange={onChangerRole}
-					/>
-				</td>
-				<td className={CLASSES_CELLULE}>{membre.superadmin && <Badge ton="brand">{t('platform.membres.superadmin')}</Badge>}</td>
-				<td className={CLASSES_DATE}>{formaterDate(membre.depuis)}</td>
-				<td className={CLASSES_COMMANDES}>
-					{/* La commande reste montée, désactivée pendant sa confirmation : le focus lui revient sans attente (§5.27). */}
-					<Button
-						ref={commande}
-						variante="discret"
-						taille="compacte"
-						disabled={confirmation}
-						onClick={onRetirer}
-						aria-label={t('platform.membres.retirer.aria', { nom: membre.nom })}
-					>
-						<UserMinus aria-hidden="true" size={16} />
-						{t('platform.membres.retirer')}
-					</Button>
-				</td>
-			</tr>
-			{confirmation && (
-				<tr>
-					<td colSpan={5} className="p-0">
-						<div
-							role="group"
-							aria-labelledby={`confirmation-membre-${membre.idUtilisateur}`}
-							onKeyDown={(e) => {
-								if (e.key === 'Escape') annuler()
-							}}
-							className="sticky left-0 max-w-[calc(100vw-32px)] flex flex-col gap-3 bg-surface border-b border-border p-4"
-						>
-							<p id={`confirmation-membre-${membre.idUtilisateur}`} className="font-medium">
-								{t('platform.membres.confirmation', { nom: membre.nom, espace: espace.nom })}
-							</p>
-							<p className="text-sm text-text-2">{t('platform.membres.confirmation.consequence')}</p>
-							<div className="flex flex-wrap gap-2">
-								<Button variante="destructif" disabled={envoi} onClick={() => void retirer()} autoFocus>
-									{envoi ? t('platform.envoi') : t('platform.membres.retirer.confirmer')}
-								</Button>
-								<Button onClick={annuler}>{t('platform.annuler')}</Button>
-							</div>
-						</div>
-					</td>
-				</tr>
-			)}
-		</Fragment>
-	)
 }
 
 function FormulaireMembre({

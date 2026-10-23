@@ -2,6 +2,8 @@
 //           texte citant son motif, les écrans consultables gardent leur lien
 // @verifies docs/SPEC-droits-interface.md §3 (précision T4), §4 (en lecture : éteinte sans motif ; inconnue : offerte) ;
 //           docs/DESIGN_SYSTEM.md §5.59, §5.10
+// @verifies CRM-070 (docs/BACKLOG.md) — tranche T2 : l'entrée « Membres » vient après l'arborescence, et reste un lien
+//           pour tous — l'écran se consulte (docs/SPEC-membres.md §3 ; docs/DESIGN_SYSTEM.md §5.61)
 
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
@@ -35,7 +37,7 @@ describe('la navigation des réglages et la capacité d’administration (CRM-09
 
 	it('refusée : les écrans consultables en lecture seule gardent leur lien', () => {
 		monter('refusee')
-		for (const nom of [/Arborescence/, /Corbeille/, /Notifications/]) {
+		for (const nom of [/Arborescence/, /Membres/, /Corbeille/, /Notifications/]) {
 			expect(screen.getByRole('link', { name: nom })).toBeTruthy()
 		}
 	})
@@ -51,5 +53,13 @@ describe('la navigation des réglages et la capacité d’administration (CRM-09
 			expect(screen.queryByTestId('motif-reglages')).toBeNull()
 			cleanup()
 		}
+	})
+
+	it('« Membres » suit immédiatement l’arborescence et mène à /reglages/membres', () => {
+		monter('permise')
+		const liens = screen.getAllByRole('link')
+		const rang = liens.findIndex((lien) => /Arborescence/.test(lien.textContent ?? ''))
+		expect(liens[rang + 1]?.getAttribute('href')).toBe('/reglages/membres')
+		expect(liens[rang + 1]?.textContent).toContain('Membres : personnes et rôles')
 	})
 })

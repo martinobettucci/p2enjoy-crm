@@ -48,6 +48,7 @@ import {
 	CHEMIN_CARD,
 	CHEMIN_CORBEILLE,
 	CHEMIN_ADMIN_COUT_PERSONNEL,
+	CHEMIN_ADMIN_MEMBRES,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_COUTS_BUDGET,
 	CHEMIN_COUTS_TRACK,
@@ -67,6 +68,7 @@ import {
 	CLE_TITRE_ADMIN_WORKFLOWS,
 	CLE_TITRE_CORBEILLE,
 	CLE_TITRE_COUT_PERSONNEL,
+	CLE_TITRE_MEMBRES,
 	CLE_TITRE_REGLAGES_NOTIFICATIONS,
 	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_COMPTES_MAIL,
@@ -148,6 +150,10 @@ const Corbeille = lazy(async () => ({ default: (await import('./Corbeille')).Cor
 // `CRM-098` — Réglages ▸ « Coût du personnel », chargé à la demande comme la corbeille.
 const ReglagesCoutPersonnel = lazy(async () => ({
 	default: (await import('./ReglagesCoutPersonnel')).ReglagesCoutPersonnel,
+}))
+// `CRM-070` — Réglages ▸ Membres, chargé à la demande comme les autres écrans de réglages.
+const ReglagesMembres = lazy(async () => ({
+	default: (await import('./ReglagesMembres')).ReglagesMembres,
 }))
 const ReglagesNotifications = lazy(async () => ({
 	default: (await import('./ReglagesNotifications')).ReglagesNotifications,
@@ -370,6 +376,16 @@ function RoutesPages() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_ARBORESCENCE}>
 							<AdministrationArborescence />
+						</AppShell>
+					}
+				/>
+				{/* Réglages ▸ Membres — `CRM-070`. Déclarée APRÈS l'arborescence, comme dans l'index des réglages
+				    (docs/SPEC-membres.md §3). */}
+				<Route
+					path={CHEMIN_ADMIN_MEMBRES}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_MEMBRES}>
+							<ReglagesMembres />
 						</AppShell>
 					}
 				/>

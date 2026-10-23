@@ -87,6 +87,9 @@ export const cheminContact = (idContact: string) => `/contacts/${idContact}`
 /** Administration de l'arborescence — `CRM-075`. */
 export const CHEMIN_ADMIN_ARBORESCENCE = '/reglages/arborescence' as const
 
+/** Réglages ▸ Membres — `CRM-070`, `docs/SPEC-membres.md` §3. Consultable par tout membre. */
+export const CHEMIN_ADMIN_MEMBRES = '/reglages/membres' as const
+
 /** Éditeur de workflows — `CRM-076`. */
 export const CHEMIN_ADMIN_WORKFLOWS = '/reglages/workflows' as const
 

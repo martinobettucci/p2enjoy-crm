@@ -32460,3 +32460,20 @@ pour que la règle « le plus spécifique gagne » ne soit jamais recalculée à
 « connexion refusée » demandent de journaliser les refus d'admission par adresse — **une unité propre, `CRM-109`**,
 hors de `CRM-070`. Découpage persisté au backlog : T1 mesures et fonction de lecture, T2 membres et rôles, T3 attentes,
 T4 droits fins, T5 preuves de bout en bout, T6 livraison.
+
+### `CRM-070` T2 — le tableau des membres partagé, et la règle des motifs du §5.59 corrigée
+
+*2026-10-23.* **Problème.** Réglages ▸ Membres devait réemployer le tableau des membres de la fiche d'un espace
+(`CRM-101`) sans dupliquer, alors que les deux écrans parlent à la base par deux couches distinctes — les fonctions
+`plateforme_*` d'un côté, `workspace_members` sous la RLS de l'autre (`docs/SPEC-membres.md` §4). **Décision**, accordée
+avec la session qui tient la plateforme : un composant `TableauMembres` présentationnel, auquel l'écran passe **deux
+gestes qui rendent chacun le message à afficher** ; deux écarts paramétrés seulement (la colonne « Superadministrateur »,
+la conséquence dite sur sa propre ligne) ; libellés laissés sous `platform.membres.*`, leur réemploi dit au design
+system (§5.61). **Observation.** En écrivant l'écran, la phrase « Quatre motifs, pas un de plus » du §5.59 s'est révélée
+fausse depuis `CRM-093` T4 (onze motifs) ; elle est réécrite en règle — un écran entier refusé emprunte un motif
+générique, un motif propre n'existe que pour dire quelles lignes d'un bloc sont éteintes —, et l'écran des membres
+emprunte le motif générique. **Garde.** Le garde de source d'INC-279 a refusé une première écriture correcte
+(`commande?.disabled`), qui échappait à sa forme reconnue : le code a pris la forme du dépôt (`commande.disabled === true
+|| …`) plutôt que d'affaiblir le garde. **Vérifications.** Unitaires 4130/4130 (dont `membres-espace` 10 et l'écran 12,
+onze mutations tuées) ; `Plateforme.test.tsx` 22/22 et `plateforme.spec.ts` inchangés et verts ; E2E `membres.spec.ts`
+7/7 sur la pile seedée, seed rendu à son état ; `verify-plateforme.sh --rapide` 31 contrôles ; captures observées.

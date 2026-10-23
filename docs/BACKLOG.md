@@ -10638,10 +10638,16 @@ pas un produit.
       régénérés et témoin à quatre-vingt-dix fonctions ; `docs/SCHEMA.md` §9 bis.8 quater ; contrat, ligne 96. **Mesure** :
       `workspace_invitations` n'a pas de politique UPDATE et sa clé est `(workspace_id, email)` — remplacer une attente
       demande deux écritures, non atomiques depuis l'écran : une fonction `SECURITY INVOKER`, en T3.
-- [ ] **T2** — les membres et leurs rôles : composant partagé avec la plateforme, écran Réglages ▸ « Membres », unitaires.
+- [x] **T2** — les membres et leurs rôles : composant partagé avec la plateforme, écran Réglages ▸ « Membres », unitaires.
+      **Vérifiée le 2026-10-23** : `TableauMembres` extrait de `PlateformeEspace.tsx` sans changer son rendu
+      (`Plateforme.test.tsx` 22/22, `plateforme.spec.ts` vert) ; `lib/membres-espace.ts` 10 unitaires et quatre mutations
+      tuées ; écran 12 unitaires et sept mutations tuées ; E2E `e2e/ui/membres.spec.ts` **7/7** (administratrice : rôle
+      écrit au clavier et rendu, refus du dernier administrateur au changement de rôle et au retrait, confirmation de
+      soi, Échap ; lectrice : commandes éteintes citant le motif ; trois paliers sans défilement de page) ; captures
+      `docs/captures/CRM-070/` observées ; manuel chapitre 10 bis ; `docs/DESIGN_SYSTEM.md` §5.61 et §5.59 corrigé.
 - [ ] **T3** — les attentes et leur état (en attente, en suspens).
 - [ ] **T4** — les droits fins par track et channel, avec l'accès effectif.
-- [ ] **T5** — E2E par rôle, captures, manuel (chapitre 17), seed, campagnes.
+- [ ] **T5** — E2E par rôle des attentes et des droits fins, captures, manuel (chapitre 10 bis, complété), seed, campagnes.
 - [ ] **T6** — livraison en production, sur instruction du responsable.
 
 ---

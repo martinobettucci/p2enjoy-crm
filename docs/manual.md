@@ -60,7 +60,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | À livrer. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses propres membres reste à `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
+| 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | **En cours : la liste des membres et leurs rôles sont livrés en développement** — voir le chapitre 10 *bis*. Un administrateur d'espace y change un rôle et retire un membre ; chaque membre consulte la liste. Les attentes et les droits fins viendront avec les tranches suivantes. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses propres attentes reste à `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
 | 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
 | 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Un seul outil pour l'instant : la liste des espaces |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
@@ -4369,10 +4369,69 @@ L'onglet **« Journal »** retrace chaque geste de la plateforme, du plus récen
 
 ### 10.8 Ce que la plateforme n'offre pas
 
-- **Gérer ses propres membres en tant qu'administrateur d'espace**, sans être superadministrateur : cet écran viendra
-  avec `CRM-070`, comme les droits fins par track et par channel.
+- **Gérer ses propres membres en tant qu'administrateur d'espace**, sans être superadministrateur : c'est l'écran
+  « Réglages ▸ Membres » (chapitre 10 *bis*). Les droits fins par track et par channel y viendront avec `CRM-070`.
 - **Changer l'identifiant court d'un espace.**
 - **Annuler une suppression.**
+
+## 10 bis. Les membres de votre espace : qui y travaille, avec quel rôle
+
+*En cours de livraison par `CRM-070` : la liste des membres et leurs rôles sont livrés en développement ; les attentes et
+les droits fins par track et par channel viendront ensuite.*
+
+Chaque espace de travail a ses **membres**, et chacun y tient un **rôle** : **Administrateur**, **Business developer**
+ou **Lecteur**. Cet écran les montre à tous les membres ; seuls les administrateurs de l'espace y changent quelque chose.
+
+### 10 bis.1 Ouvrir l'écran
+
+Barre latérale ▸ **Réglages** ▸ **« Membres : personnes et rôles »**, juste après « Arborescence : tracks et channels ».
+
+La liste montre une ligne par membre : son nom, son rôle et la date depuis laquelle il est membre. Les
+administrateurs viennent en tête, puis les autres membres par ordre alphabétique. Une personne dont le profil n'a pas
+de nom apparaît comme **« Compte sans nom »**.
+
+### 10 bis.2 Si vous n'administrez pas l'espace
+
+Vous consultez la liste, mais vous ne la modifiez pas. Un bandeau le dit en tête de l'écran : les modifications sont
+réservées aux administrateurs de l'espace. Les sélecteurs de rôle et les boutons **« Retirer »** restent visibles,
+mais ils sont inactifs.
+
+### 10 bis.3 Changer le rôle d'un membre
+
+Choisissez le nouveau rôle dans le sélecteur de sa ligne : le changement est enregistré **dès le choix**, sans bouton
+à presser. Un message sous la liste le confirme — « Rôle de Driss Lemoine modifié. » —, puis la liste est relue.
+
+**Un espace garde toujours au moins un administrateur.** Retirer le rôle d'administrateur au dernier d'entre eux est
+refusé, et le message le dit : nommez d'abord un autre administrateur. Le sélecteur revient alors au rôle enregistré.
+
+Vous pouvez changer votre propre rôle. Si vous cessez d'être administrateur, vous ne pourrez plus rien modifier sur
+cet écran.
+
+### 10 bis.4 Retirer un membre de l'espace
+
+**« Retirer »**, au bout de sa ligne, ouvre une confirmation sous la ligne. Elle nomme la personne et l'espace, et dit
+ce que le retrait emporte : **ses droits fins sur les tracks et les channels de l'espace partent avec elle**. Le reste
+de son compte n'est pas touché. **« Retirer de l'espace »** confirme ; **« Annuler »**, ou la touche Échap, referme
+la confirmation sans rien changer.
+
+**Vous retirer vous-même** est possible, et la confirmation vous prévient : vous ne serez plus membre de l'espace, et
+vous perdrez l'accès à ses affaires comme à son administration. Le dernier administrateur ne peut pas se retirer.
+
+### 10 bis.5 Quand un geste n'aboutit pas
+
+Le message sous la liste dit pourquoi :
+
+- **le dernier administrateur** : nommez-en un autre d'abord ;
+- **rien n'a changé** : la personne n'était peut-être plus membre, ou vos droits ont changé entre-temps. La liste a été
+  relue ;
+- **ce geste est réservé aux administrateurs de l'espace** ;
+- **le serveur n'a pas répondu** : vérifiez votre connexion et réessayez.
+
+### 10 bis.6 Ce que cet écran n'offre pas encore
+
+- **Inscrire une personne attendue**, par son adresse et un rôle : ce geste viendra sur cet écran. En attendant, un
+  superadministrateur l'inscrit depuis la plateforme (chapitre 10).
+- **Restreindre l'accès d'un membre** à un track ou à un channel.
 
 ## 11. Le connecteur MCP : piloter le CRM depuis votre assistant
 

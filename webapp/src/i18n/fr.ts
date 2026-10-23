@@ -1327,6 +1327,16 @@ export const fr = {
 	'admin.settings.index.tree': "Arborescence : tracks et channels",
 	'admin.settings.index.tree.body':
 		"Créer, renommer, réordonner et archiver les tracks et les channels de l'espace de travail.",
+	// `CRM-070` T2 — Réglages ▸ Membres (docs/SPEC-membres.md §3.1). Le tableau réemploie `platform.membres.*` (DS §5.61).
+	'admin.settings.index.members': 'Membres : personnes et rôles',
+	'admin.settings.index.members.body': 'Les personnes de l’espace et leur rôle : changer un rôle, retirer quelqu’un de l’espace.',
+	'members.title': 'Membres',
+	'members.intro': 'Les personnes de cet espace et leur rôle. Chaque membre consulte cette liste ; les administrateurs de l’espace changent les rôles et retirent une personne.',
+	'members.noworkspace.body': 'Les membres se règlent dans un espace de travail.',
+	'members.unnamed': 'Compte sans nom',
+	'members.confirmation.self': 'C’est votre propre compte : vous ne serez plus membre de cet espace, et vous perdrez l’accès à ses affaires comme à son administration.',
+	'members.refused.noEffect': 'Rien n’a changé : cette personne n’est peut-être plus membre de l’espace, ou vos droits ont changé. La liste a été relue.',
+	'members.refused.forbidden': 'Ce geste est réservé aux administrateurs de l’espace.',
 	'admin.settings.index.notifications': 'Notifications : ce que vous recevez',
 	'admin.settings.index.notifications.body':
 		"Choisir les notifications qui vous parviennent dans l'application. Ce réglage est le vôtre, et personne d'autre ne le voit.",

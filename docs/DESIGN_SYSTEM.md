@@ -5746,9 +5746,14 @@ responsable (décision 628 : « désactivé avec motif », et non masqué).
   bordure `--color-border`, texte `--color-ink`, icône `Eye` décorative, `role="status"`, `max-w-[70ch]`. Il est posé en
   tête du bloc dont les commandes sont refusées, et chacune le cite par `aria-describedby`. Il dit d'abord ce que l'écran
   permet — consulter —, puis ce qu'il refuse et à qui le geste revient ; il ne promet aucune démarche.
-- **Quatre motifs, pas un de plus** : l'écran réservé aux administrateurs, l'écran réservé aux administrateurs et aux
+- **Quatre motifs génériques** : l'écran réservé aux administrateurs, l'écran réservé aux administrateurs et aux
   business developers, le channel dont on ne peut pas modifier les affaires, l'affaire qu'on ne peut pas modifier
-  (`rights.readonly.*`).
+  (`rights.readonly.*`). *Corrigé à l'écriture de `CRM-070` T2* : la première rédaction disait « pas un de plus », mais
+  l'écriture des écrans de `CRM-093` en a ajouté sept, chacun parce qu'un bloc mêlait des lignes permises et refusées
+  et que le motif générique y aurait menti — la corbeille (structure, affaire), l'inbox (retrait, suggestion), les
+  boîtes et les identités de messagerie, l'index des réglages. **La règle est désormais celle-ci** : un écran entier
+  refusé emprunte un motif générique ; un motif propre n'est écrit que pour un bloc dont il faut dire **quelles
+  lignes** sont éteintes. Réglages ▸ Membres (§5.61) emprunte le motif générique de l'administration.
 - **PENDANT LA LECTURE de la capacité, la commande est désactivée SANS motif** : aucun texte de refus ne s'affiche avant
   d'être su — l'écart inverse ferait clignoter un reproche à chaque chargement.
 - **SUR UN DÉFAUT DE LECTURE, la commande reste OFFERTE** : l'aide d'interface s'efface, la base refusera si besoin, et
@@ -5862,3 +5867,36 @@ n'est pas connu. Seuls les écarts et ce qui est propre au rapport sont écrits.
   « Lignes de recette d'une affaire et leurs réels ; rapport de rentabilité, réservé aux administrateurs ». Aucune autre
   forme ne change.
 - **Aucune couleur, aucun jeton nouveau.** Une icône Lucide nouvelle, `Scale`, qui ne sert aucun autre objet (§9).
+
+### 5.61 Réglages ▸ Membres, et le tableau des membres partagé avec la plateforme — `CRM-070`
+
+*Écrit le 2026-10-23 à l'écriture de la tranche T2, après relecture intégrale de ce document.* Ce que l'écran lit,
+envoie et refuse est spécifié par `docs/SPEC-membres.md` §3 et §4 ; ces règles ne disent que de quoi il a l'air.
+
+- **LE TABLEAU DES MEMBRES EST UN COMPOSANT PARTAGÉ**, `TableauMembres` (`webapp/src/app/TableauMembres.tsx`), extrait
+  de la fiche d'un espace de la plateforme (§5.56) **sans changer son rendu** : tableau du §5.9, rôle écrit au choix
+  (§5.7 ter), « Retirer » `UserMinus` montée et désactivée pendant sa confirmation (§5.40), confirmation sur une ligne
+  à elle, collante à gauche (§5.27), message de bloc sous le tableau, `status` ou `alert` (§5.27). Le composant ne
+  connaît aucune couche d'accès : l'écran lui passe ses deux gestes. **Ses libellés restent sous `platform.membres.*`**
+  et sont réemployés tels quels hors de la plateforme — « Rôle de {nom} », « Retirer {nom} de l'espace » — plutôt que
+  dupliqués ; seuls les textes propres à l'écran d'un administrateur d'espace sont sous `members.*`.
+- **DEUX ÉCARTS PARAMÉTRÉS, ET DEUX SEULEMENT.** La colonne « Superadministrateur » n'est rendue que par la plateforme :
+  l'administrateur d'un espace n'a pas à lire le drapeau. La phrase de conséquence de la confirmation est fournie par
+  l'écran : sur sa propre ligne, elle dit en clair « C'est votre propre compte : vous ne serez plus membre de cet
+  espace… » (`docs/SPEC-membres.md` §3.1).
+- **L'ENTRÉE « Membres : personnes et rôles » VIENT APRÈS L'ARBORESCENCE** dans l'index des réglages : on organise
+  l'espace, puis on y place les personnes. Elle reste un **lien pour tous** — l'écran se consulte (§5.59).
+- **L'ÉCRAN SE CONSULTE, SES COMMANDES S'ÉTEIGNENT** : quand la base refuse l'administration de l'espace, le motif
+  générique `rights.readonly.administration` est posé en tête (§5.59), et chaque sélecteur de rôle et chaque « Retirer »
+  est rendu désactivé, **lisible** — valeur et libellé intacts, aucune opacité réduite —, citant le motif. Pendant la
+  lecture de la capacité, désactivés sans motif ; sur un défaut de lecture, offerts.
+- **Titre de page « Membres »** (`h2`, `--text-h3`), une phrase d'introduction en 13 px `--color-text-2`, `max-w-[72ch]`,
+  puis le tableau. Largeur de l'écran `max-w-[960px]`, celle de « Coût du personnel ». Un nom de profil
+  absent s'écrit **« Compte sans nom »** — un fait de la ligne, comme « Auteur inconnu » (§5.16), jamais une cellule
+  vide.
+- **États** (§5.8) : squelette au premier chargement seulement — la relecture après une écriture garde la liste à
+  l'écran (§5.29 tranche 2 c) ; erreur avec « Réessayer » ; « Cet espace n'a encore aucun membre. » si la liste est vide.
+- **Refus traduits par un dictionnaire fermé** (`docs/SPEC-membres.md` §3.4) : dernier administrateur, « rien n'a
+  changé » (zéro ligne rendue), réservé aux administrateurs, réseau, inconnu. Le détail du serveur n'atteint jamais
+  l'écran.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**
