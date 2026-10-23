@@ -32627,3 +32627,23 @@ rattachées au rattachement quand deux channels partagent un workflow (point 3, 
 d'état et la ventilation par track de la rentabilité (points 4 et 5) ; les règles de **lecture** — fiche lisible par qui
 lit un channel rattaché, rattachements illisibles masqués, mails et commentaires partagés (point 6) ; l'étape initiale
 d'un rattachement ajouté et le retrait (point 7) ; la devise.
+
+### décision 640 — `CRM-109` : quatre arbitrages avant la spécification du journal des refus d'admission
+
+*2026-10-23, arbitrages du responsable avant toute spécification (`CLAUDE.md`, « Spécificités du projet »).*
+**Problème** (décision 635) : une attente consommée disparaît, et rien ne garde une connexion refusée ; ni
+l'administrateur d'espace ni le superadministrateur ne savent qu'une personne attendue a essayé d'entrer, ni pourquoi
+elle a été refusée. **Arbitrages**, les quatre options recommandées :
+
+1. **Connecteur MCP : non.** Le journal se lit dans Réglages ▸ Membres et sur la plateforme ; aucune famille touchée.
+2. **Périmètre : les adresses attendues seules.** Seule une connexion refusée dont l'adresse a au moins une attente
+   laisse une trace — adresse non vérifiée, rôle `verified` absent. Une adresse que personne n'attend reste **sans
+   aucune trace** : la minimisation de `docs/SPEC-session-sso.md` §6.1 est conservée telle quelle.
+3. **Conservation : 90 jours au plus.** La trace part avec l'attente — consommée ou retirée —, et au plus tard 90 jours
+   après le refus.
+4. **Lecteurs : l'administrateur de l'espace pour les adresses qu'il attend, et le superadministrateur.** La règle
+   est tenue en base ; l'administrateur la lit dans la section « Attentes », le superadministrateur sur la plateforme.
+
+**Conséquences.** La posture de consentement ne change pas pour une personne inconnue ; pour une personne attendue, le
+CRM garde son adresse, le motif et l'heure d'un refus, au plus 90 jours. **Suite** : `docs/SPEC-refus-admission.md` à
+écrire sur ces quatre points, puis validation du responsable avant tout code.

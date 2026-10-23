@@ -15732,9 +15732,12 @@ et rien ne garde une connexion refusée à une adresse : ni l'administrateur d'e
 peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi elle a été refusée
 (`docs/SPEC-session-sso.md` §6, décision 593). Relevé par une connexion refusée en production.
 
-- [ ] Spécification : quoi journaliser (adresse normalisée, motif d'admission refusée, horodatage), où (échange de
-      session SSO), qui lit (administrateur de l'espace pour ses attentes, superadministrateur), conservation (RGPD),
-      question du connecteur MCP. À valider avant tout code.
+- [x] **Arbitrée le 2026-10-23 (décision 640)** : connecteur MCP **non** ; seules les adresses **attendues** laissent
+      une trace, une inconnue aucune (`docs/SPEC-session-sso.md` §6.1 inchangé) ; conservation **90 jours au plus**, la
+      trace partant avec l'attente ; lecteurs : l'**administrateur de l'espace** pour les adresses qu'il attend, le
+      **superadministrateur**.
+- [ ] Spécification `docs/SPEC-refus-admission.md` : quoi journaliser (adresse normalisée, motif, horodatage), où
+      (échange de session SSO), la table et ses politiques, l'effacement, l'affichage. À valider avant tout code.
 
 ### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[ ]`
 *Créée le 2026-10-23 — demande du responsable : « le navbar en haut ne montre pas l'arborescence quand on a une affaire
