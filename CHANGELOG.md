@@ -28,6 +28,20 @@ d'exécuter le code attendu.
   plusieurs secondes). C'est une dépendance imposée par le SDK MCP, inerte : le CRM n'a aucune télémétrie.
 - **Tests de `mail-sync`** : `httpx2` 2.13.1 (cinq avis, sans effet en production).
 
+### `CRM-103` T3 — les preuves de l'administration du connecteur, et son seed (décision 627)
+
+*Développement seulement : postérieure à la révision livrée `8026e90e`. T3.d (campagnes complètes, `verify-mcp.sh`,
+manuel rejoué) à suivre.*
+
+- **Données de démonstration du connecteur** : Farida en attente de droits, Camille en lecture sur les recettes, Driss
+  refusé par le CRM sur le rapport de rentabilité ; les comptes et le journal naissent de vraies connexions au
+  connecteur (`docs/SPEC-seed.md` §22).
+- **L'onglet « Connecteur MCP » à 900 px et en dessous** : le nom d'un compte et sa mention « Sans profil dans le CRM »
+  tiennent sur une ligne, et « Toute la famille » ne se casse plus dans la grille ; les tableaux défilent dans leur
+  cadre.
+- Preuves : les quatre fonctions en requête directe aux vrais jetons, l'écran à la souris et au clavier avec l'effet
+  constaté par un vrai client MCP.
+
 ### `CRM-102` T6 — du connecteur MCP vers son administration (décision 627)
 
 *Service `mcp/` seulement : aucune migration, aucune variable nouvelle. À la livraison, l'image `mcp` est reconstruite.*
@@ -149,19 +163,7 @@ fenêtre de production.*
   retirer le temps qu'elle venait d'enregistrer, et `Entrée` pouvait déplacer le curseur alors qu'on était déjà passé à
   une autre case.
 
-### `CRM-103` T3 — les preuves de l'administration du connecteur, et son seed (décision 627)
-
-*Développement seulement. T3.d (campagnes complètes, `verify-mcp.sh`, manuel rejoué) à suivre.*
-
-- **Données de démonstration du connecteur** : Farida en attente de droits, Camille en lecture sur les recettes, Driss
-  refusé par le CRM sur le rapport de rentabilité ; les comptes et le journal naissent de vraies connexions au
-  connecteur (`docs/SPEC-seed.md` §22).
-- **L'onglet « Connecteur MCP » à 900 px et en dessous** : le nom d'un compte et sa mention « Sans profil dans le CRM »
-  tiennent sur une ligne, et « Toute la famille » ne se casse plus dans la grille ; les tableaux défilent dans leur
-  cadre.
-- Preuves : les quatre fonctions en requête directe aux vrais jetons, l'écran à la souris et au clavier avec l'effet
-  constaté par un vrai client MCP.
-
+### `CRM-103` T2 — l'onglet « Connecteur MCP » de la plateforme (décision 627, A3 et A5)
 
 *Webapp seulement. Prouvé en tests unitaires ; parcours réel et captures avec la tranche T3.*
 
