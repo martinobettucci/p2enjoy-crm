@@ -32417,3 +32417,23 @@ ses propres droits. Constaté après trois passages : les quatre droits seedés 
 **Vérifications.** Avec la pause de 1,2 s : la nouvelle preuve est verte ; le mutant qui réintroduit `logout` est rouge
 sur les deux cas. Le fichier d'intégration complet passe 14 sur 14, trois fois de suite, contre la pile de
 développement. Seuls les tests changent : aucun code du connecteur n'est modifié.
+
+### décision 634 — `CRM-070` : l'écran « Membres » d'un administrateur d'espace, arbitré avant sa spécification
+
+*2026-10-23, arbitrages du responsable.* **Problème.** Aucun écran ne montre, à un administrateur d'espace, les membres
+de son espace, leurs rôles, leurs droits fins, ni les personnes attendues ; la plateforme (`CRM-101`) ne sert que le
+superadministrateur. Relevé aussi par une connexion refusée : une personne inscrite en attente, jamais admise, n'a pas
+de profil et n'apparaît nulle part (`docs/SPEC-session-sso.md` §6, décision 593). **Arbitrages.**
+1. **Périmètre** : les membres et leurs rôles (lister, changer le rôle, retirer ; le dernier administrateur reste
+   protégé par l'invariant de `0021`) ; les attentes et leur état (inscrire une adresse avec un rôle, la retirer ; voir
+   « en attente », « en suspens » faute d'administrateur membre, « jamais connectée ») ; les droits fins par track et
+   par channel (accès membre, lecture ou aucun, « le plus spécifique gagne »).
+2. **Connecteur MCP : non.** La gestion des membres et des droits reste un geste humain dans la webapp (consigne du
+   2026-10-23, `CLAUDE.md`, « Spécificités du projet »).
+3. **Emplacement** : Réglages ▸ « Membres », consultable en lecture par tout membre ; les commandes sont réservées aux
+   administrateurs par la capacité d'administration de `CRM-093` (`docs/DESIGN_SYSTEM.md` §5.59).
+**Contraintes déjà connues.** Les fonctions `plateforme_*` restent gardées par `app.exiger_superadmin()` et ne
+s'élargissent pas : l'administrateur d'espace passe par ses propres règles (politiques ou fonctions gardées par
+`app.is_workspace_admin`). L'écran de `CRM-101` (`PlateformeEspace.tsx`) peut être réemployé par extraction d'un
+composant partagé, en coordination avec la session qui tient `CRM-103`. **Suite.** Spécification à écrire
+(`docs/SPEC-membres.md`) après mesure des politiques existantes, puis validation du responsable avant tout code.

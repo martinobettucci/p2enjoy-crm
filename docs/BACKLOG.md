@@ -10624,6 +10624,11 @@ pas un produit.
 - [ ] **Reste ouvert sciemment** : les trois choix d'architecture ci-dessus sont **reportés, pas
       tranchés**. `CRM-070` devra les prendre explicitement, et INC-014 — les politiques RLS des
       tables d'identité — posera la même question pour l'éventuelle table d'invitations.
+- [ ] **Arbitrée le 2026-10-23 (décision 634)** : écran Réglages ▸ « Membres » d'un administrateur d'espace —
+      membres et rôles, attentes et leur état (en attente, en suspens, jamais connectée), droits fins par track et
+      channel ; consultable par tout membre, commandes réservées aux administrateurs (capacité de `CRM-093`) ; **pas de
+      connecteur MCP**. Spécification à écrire, `docs/SPEC-membres.md`, après mesure des politiques existantes, puis
+      validation du responsable.
 
 ---
 
