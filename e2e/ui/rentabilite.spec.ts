@@ -3,10 +3,14 @@
 //           au clavier, relus en base), §6.2 (le bloc « Rentabilité » de l'administratrice, absent pour le business
 //           developer — sans aucune 403 en console), §6.3 (l'écran : tableaux par devise, vues, filtres ; « Réservé aux
 //           administrateurs »), §6.4 (la saisie en série au clavier) ; docs/DESIGN_SYSTEM.md §5.60 ; docs/SPEC-seed.md §21
+// @verifies docs/SPEC-recettes.md §7 et §11 (« un outil du connecteur dont l'effet se voit dans la fiche ») ; docs/SPEC-mcp.md
+//           §3.1 (un vrai client MCP, connecté dans le navigateur), §9.1 (aucun chemin parallèle : la fiche lit ce que
+//           l'outil a écrit) ; docs/SPEC-seed.md §21.4 (la matrice de démonstration du business developer)
 // @verifies CLAUDE.md §16 (captures aux quatre paliers, page jamais défilante horizontalement)
 
 import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
-import { URL_API, enTetesService } from '../api/jetons'
+import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
+import { RETOUR_CLIENT, SessionMcp, echangerCode, preparerAutorisation } from '../mcp/client'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-108'
@@ -122,4 +126,42 @@ test('le commercial lit « Réservé aux administrateurs » et saisit à la suit
 		await sansDefilementHorizontal(page)
 		await capturer(page, `a-saisir-${palier.nom}`, UNITE)
 	}
+})
+
+test('une ligne et un réel écrits par le connecteur MCP du commercial se lisent dans sa fiche', async ({ page, browser }) => {
+	// Le consentement et la connexion au SSO, dans un contexte à part : la session du connecteur n'est pas celle de la webapp.
+	const consentement = await browser.newContext()
+	const onglet = await consentement.newPage()
+	const autorisation = await preparerAutorisation()
+	await onglet.goto(autorisation.url)
+	await onglet.getByRole('button', { name: 'Allow Access' }).click()
+	await expect(onglet.locator('#kc-form-login')).toBeVisible()
+	await onglet.locator('#username').fill(BIZDEV)
+	await onglet.locator('#password').fill(MOT_DE_PASSE_SEED)
+	const retour = onglet.waitForRequest((r) => r.url().startsWith(RETOUR_CLIENT), { timeout: 20_000 })
+	await onglet.locator('#kc-login').click()
+	const code = new URL((await retour).url()).searchParams.get('code') ?? ''
+	await consentement.close()
+	const session = new SessionMcp((await echangerCode(autorisation, code)).access_token)
+	await session.ouvrir()
+
+	const ajout = await session.appeler('tools/call', {
+		name: 'crm_card_revenue_add',
+		arguments: { card_id: CARD, label: NATURE, estimated_amount: 1200 },
+	})
+	expect(ajout.isError ?? false, JSON.stringify(ajout.content)).toBe(false)
+	const reel = await session.appeler('tools/call', {
+		name: 'crm_card_revenue_actual_add',
+		arguments: { revenue_id: ajout.structuredContent.revenue_line.id, amount: 300 },
+	})
+	expect(reel.isError ?? false, JSON.stringify(reel.content)).toBe(false)
+
+	await connecterAvecLeLabs(page, BIZDEV)
+	await page.goto(FICHE)
+	const ligne = page.getByTestId('bloc-recettes-card').getByTestId('ligne-recette').filter({ hasText: NATURE })
+	await expect(ligne).toBeVisible()
+	await expect(ligne).toContainText('1200.00')
+	await expect(ligne.getByTestId('recette-cellule-reel')).toContainText('300.00')
+	await ligne.scrollIntoViewIfNeeded()
+	await capturer(page, 'fiche-recette-par-le-connecteur-1440', UNITE)
 })

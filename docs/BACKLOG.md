@@ -15661,7 +15661,7 @@ nouvelle `recettes`, outils livrés par cette unité.*
       un littéral `className` y passait pour une classe absente, signalé par une autre session et corrigé) ; l'écran
       attend désormais que l'espace soit connu avant d'appeler la fonction (une 403 au chargement direct de
       `/rentabilite`, trouvée par l'E2E) ; vérification visuelle avec T5 ; campagne unitaire **4 100 tests verts**.
-- [~] **T4 — connecteur** : `FAMILLES`, genres `revenue` et `revenue_actual`, les huit outils de
+- [x] **T4 — connecteur** : `FAMILLES`, genres `revenue` et `revenue_actual`, les huit outils de
       `mcp/crm_mcp/outils/recettes.py` ; pytest unitaires et intégration par outil (succès, refus matrice, refus CRM,
       journal) ; `scripts/verify-mcp.sh`.
       *Implémenté le 2026-10-23* : `FAMILLES` à huit, ancres `revenue` et `revenue_actual` dans `RESOLUTIONS`, les huit
@@ -15670,9 +15670,19 @@ nouvelle `recettes`, outils livrés par cette unité.*
       partagée). pytest unitaires **121 verts** dans l'image `dev`, dont `test_recettes` 7 (déclarations, aucun outil de
       suppression, visibilité par la matrice et cases `aussi` du rapport, corps d'écriture sans réel, refus uniforme
       d'une affaire d'un autre espace, « ligne soldée » et `rentabilite_reservee` traduits, règle appliquée au rapport)
-      et `test_rentabilite` 9 ; **une mutation tuée** (cases `aussi` retirées). **Restent avant `[x]`** : l'intégration
-      par outil contre la vraie base et un vrai client MCP (succès, refus matrice, refus CRM, journal) et
-      `scripts/verify-mcp.sh`, sur la pile, avec T5.
+      et `test_rentabilite` 9 ; **une mutation tuée** (cases `aussi` retirées).
+      *Vérifié le 2026-10-23, sur la pile* : `mcp/tests/test_integration_recettes.py` (**8**), contre le vrai Keycloak, la
+      vraie base et le vrai service `mcp`, par le parcours OAuth réel — la matrice du seed §21.4 ouvre consultations et
+      ajouts seulement ; **chacun des huit outils réussi** (ajout, réel, liste, « à saisir », correction de la ligne et du
+      réel, « Soldé », rapport de l'exploitante), l'effet relu dans la table que lit la webapp (`created_by`,
+      `settled_by` = le business developer) ; **chacun des huit refusé par la matrice** (invisible) **puis par le CRM
+      malgré la matrice entièrement ouverte** (la lectrice : RLS qui cache ou refuse l'écriture, rapport
+      `rentabilite_reservee`), chaque refus journalisé `refus_crm`, la ligne seedée relue inchangée. Ajoutée à la commande
+      d'intégration de `scripts/verify-mcp.sh` : **58 contrôles, aucune anomalie**, trois fois (intégration 22/22 en
+      direct et à travers Caddy). *Défaut de preuve trouvé et corrigé* : le service retient une visibilité 2 s
+      (`DUREE_VISIBILITE_S`) ; un droit posé juste après un appel du même sujet ne se voit qu'à son expiration — le test
+      rougissait selon la cadence. Il attend désormais l'état dans `tools/list`, borné à trois fois cette durée, au lieu
+      d'une pause.
 - [~] **T5 — preuves sur la pile réelle** : seed §21 ; API (refus avec jetons réels) ; E2E souris et clavier, fiche, saisie
       en série, rapport et filtres, membre refusé, effet d'un outil du connecteur ; captures `docs/captures/CRM-108/` aux
       quatre paliers observées ; `docs/manual.md` (chapitre des recettes et de la rentabilité, chapitre 11 du
@@ -15693,8 +15703,11 @@ règle dans la webapp et le connecteur, et les captures observées.
       parcours clavier) et verte ; **13 captures observées** aux quatre paliers — trois défauts trouvés à l'œil et
       corrigés (tableaux en surface bordée, capture prise pendant la transition d'un onglet, tiroir capturé en
       mouvement) ; « 0 jour » au singulier ; manuel chapitre 5 duodecies et chapitre 11 (huit familles),
-      `verify-manual.sh` **241 contrôles verts**. **Reste avant `[x]`** : l'effet d'un outil du connecteur constaté dans
-      la fiche, avec l'intégration réelle de T4.
+      `verify-manual.sh` **241 contrôles verts**.
+      *Complété le 2026-10-23* : l'effet d'un outil du connecteur **constaté dans la fiche** — `e2e/ui/rentabilite`
+      **4/4** : un vrai client MCP du business developer, consenti et connecté au SSO dans le navigateur, écrit une ligne
+      et un réel sur c4 ; la fiche du même commercial les affiche (capture `fiche-recette-par-le-connecteur-1440`
+      observée). **Reste avant `[x]`** : la campagne E2E complète après synchronisation.
 
 
 ### CRM-109 — Journaliser les refus d'admission, pour dire d'une attente « jamais connectée » ou « refusée » `[ ]`

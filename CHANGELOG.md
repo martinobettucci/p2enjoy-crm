@@ -31,7 +31,8 @@ captures observées, manuel au chapitre 5 duodecies ; l'intégration réelle des
   la suite, ouvert à tout membre.
 - **Connecteur MCP** : la huitième famille **« Recettes »** paraît dans la matrice de l'onglet « Connecteur MCP », avec
   ses huit outils (lister les lignes d'une affaire, les recettes à saisir, le rapport de rentabilité ; ajouter une ligne
-  ou une recette réelle ; corriger, solder ou rouvrir) — prouvés devant un CRM simulé, l'intégration réelle avec T5.
+  ou une recette réelle ; corriger, solder ou rouvrir) — prouvés devant un CRM simulé et contre la vraie base, par un
+  vrai client MCP ; une ligne écrite par le connecteur se lit dans la fiche.
 
 ### `CRM-070` — Réglages ▸ Membres : les membres d'un espace et leurs rôles (décisions 634 et 635)
 
