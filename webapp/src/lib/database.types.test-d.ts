@@ -140,6 +140,11 @@ type _tables = Expect<
     | 'card_contacts'
     | 'card_events'
     | 'card_costs'
+    // `0095` de `CRM-108` TRANCHE T2 ajoute `card_revenues` et `card_revenue_actuals` — les lignes de recette d'une
+    // affaire et leurs réels (docs/SPEC-recettes.md §2, décision 632). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `Update` expose
+    // `actual_amount`, qu'un déclencheur refuse d'écrire (« reel derive »), et `card_id`, qui ne change jamais.
+    | 'card_revenues'
+    | 'card_revenue_actuals'
     | 'card_field_values'
     // `0060` de `CRM-063` sous-tranche 4b ajoute `card_sequence_enrollments`, et LE TÉMOIN NE L'A
     // PAS VU EN SON TEMPS : la sous-tranche ne livrait aucune ligne de TypeScript, donc aucune
@@ -1006,6 +1011,10 @@ type _vueDerivationColonnes = Expect<
 // `mcp_compte`, `mcp_poser_droits` et `mcp_journal_liste` (docs/SPEC-mcp.md §8.2, décision 627, A5 et D9). SECURITY
 // DEFINER, gardées par le drapeau : le type ne dit pas le refus `42501` à qui n'est pas superadministrateur, ni les refus
 // `profil_introuvable`, `droit_invalide` et `issue_invalide`. Quatre-vingt-trois devient QUATRE-VINGT-SEPT.
+// `0095` de `CRM-108` TRANCHE T2 ajoute `recette_saisissable` — une colonne CALCULÉE de `card_revenues`, que l'onglet
+// « À saisir » lit avec la ligne — et `rentabilite_affaires` (docs/SPEC-recettes.md §5, §6.4, décision 632). SECURITY
+// INVOKER : le type ne dit pas le refus `42501 rentabilite_reservee` à qui n'administre aucun espace. Quatre-vingt-sept
+// devient QUATRE-VINGT-NEUF.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1052,6 +1061,8 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'mail_template_variables'
     | 'rendre_modele_email'
     | 'reel_saisissable'
+    | 'recette_saisissable'
+    | 'rentabilite_affaires'
     | 'change_channel_workflow'
     | 'compare_workflow_versions'
     | 'compare_workflow_with_source'
