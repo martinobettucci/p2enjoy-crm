@@ -1,6 +1,7 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : la matrice appliquée par le service, à la visibilité et à chaque appel
 # @spec CRM-108 (docs/BACKLOG.md) — tranche T4 : la famille `recettes`, les ancres `revenue` et `revenue_actual`
 #       (docs/SPEC-recettes.md §7, docs/SPEC-mcp.md §6.1, §9.1)
+# @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `activity` (docs/SPEC-mcp.md §9.2 ter, décision 655)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : l'ancre `autres` FACULTATIVE, permise si son argument vaut `None` par
 #       défaut, et pour elle seule (docs/SPEC-mcp.md §9.2 bis, décision 654)
 # @spec docs/SPEC-mcp.md §5 (le jeton interne frappé à chaque appel), §6.1 (familles et actions), §6.2 (visibilité,
@@ -68,6 +69,8 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
         "ligne:card_revenues(card:cards(workspace_id))",
         ("ligne", "card", "workspace_id"),
     ),
+    # `CRM-104` T2.b : une activité d'affaire, qui porte son espace (`CRM-067`, migration 0100).
+    "activity": ("card_activities", "workspace_id", ("workspace_id",)),
 }
 #: Le libellé d'un objet dans un refus : le terme métier français.
 LIBELLES = {
@@ -81,6 +84,7 @@ LIBELLES = {
     "board": "tableau d'objectifs",
     "revenue": "ligne de recette",
     "revenue_actual": "recette réelle",
+    "activity": "activité",
 }
 
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")

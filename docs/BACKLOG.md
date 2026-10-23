@@ -15445,8 +15445,21 @@ sous-tranches livrées séparément ; `structure` la suit.*
         conteneur sain, module `affaires` présent ; `verifier.sh` 26/27 (compteur de redémarrage antérieur) ; `/mcp`
         sans jeton `401`.
       - **Reste `[~]`** : le constat du responsable — un assistant connecté qui lit une affaire.
-- [ ] **T2.b** — `affaires`, **écriture** : créer, commenter, consigner, modifier, déplacer, changer de channel,
+- [~] **T2.b** — `affaires`, **écriture** : créer, commenter, consigner, modifier, déplacer, changer de channel,
       sommeil, réveil, lier et délier un contact, corbeille ; dont `crm_card_activity_add` et `crm_card_activity_update`.
+      **Implémentée et vérifiée en développement le 2026-10-23** (spécification validée, décision 655 : douze outils).
+      - `mcp/crm_mcp/outils/affaires_ecriture.py` ; genre d'ancre `activity` ; `ecrire(..., fusion=True)` pour l'`upsert`
+        des réponses.
+      - Unitaires `tests/test_affaires_ecriture.py` **18** ; **douze mutations tuées sur douze**.
+      - Intégration `tests/test_integration_affaires_ecriture.py` contre la vraie pile. Le parcours complet d'une
+        affaire, chaque outil avec son journal `ok` et l'effet relu en base ; les refus nommés `transition_not_allowed`
+        et `comment_required` ; la perte des réponses exigée explicitement ; la lectrice refusée par le CRM malgré la
+        matrice ouverte (`refus_crm`) ; la corbeille absente sans la case `supprimer`.
+      - **E2E** `connecteur-affaires.spec.ts` : une affaire créée et commentée par un vrai client MCP paraît au board,
+        et son fil nomme Driss. Captures observées.
+      - `verify-mcp.sh` **67 contrôles, aucune anomalie** (intégration 29) ; harnais `SCENARIOS_UI=906`.
+      - Manuel 11.5 et 11.6, DAT.
+      - **Reste** : la livraison (image `mcp`) et le constat du responsable.
 - [ ] **T1** — `structure` (et la recherche globale de référence).
 - [ ] **T3** — `contacts`.
 - [ ] **T4** — `budgets`.

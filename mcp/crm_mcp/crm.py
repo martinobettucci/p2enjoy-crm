@@ -1,6 +1,8 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : le client du CRM, sous le jeton de la personne ou la clé de service
 # @spec CRM-108 (docs/BACKLOG.md) — tranche T4 : `ecrire`, la première écriture de table du connecteur (docs/SPEC-mcp.md
 #       §9.1 : les mêmes tables que la webapp ; docs/SPEC-recettes.md §7)
+# @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : `ecrire(..., fusion=True)`, l'`upsert` des réponses au formulaire, le
+#       même que la webapp (`card_field_values`, conflit sur `(card_id, field_id)`, docs/SPEC-mcp.md §9.2 ter)
 # @spec docs/SPEC-mcp.md §5 (toute donnée sous le jeton interne ; la clé de service pour le seul registre), §9.3
 #       (traduction des refus), §11 (aucun jeton journalisé) ; CLAUDE.md §19 (délai, erreurs, aucun secret dans les traces)
 """Appels HTTP vers PostgREST, par Kong, sur le réseau Compose.
@@ -108,6 +110,7 @@ class ClientCrm:
         *,
         parametres: dict[str, str] | None = None,
         corps: dict[str, Any] | None = None,
+        fusion: bool = False,
     ) -> Reponse:
         """Une écriture PostgREST sous le jeton de la personne — `POST`, `PATCH` ou `DELETE` —, qui rend les lignes
         touchées (`return=representation`) : zéro ligne est le refus silencieux d'une clause `USING`, jamais un succès.
@@ -121,9 +124,12 @@ class ClientCrm:
         options: dict[str, Any] = {"params": parametres or {}}
         if corps is not None:
             options["json"] = corps
-        return await self._envoyer(
-            methode, f"/{table}", jeton, entetes={"Prefer": "return=representation"}, **options
-        )
+        # `fusion` : un `POST` qui réécrit la ligne en conflit (`on_conflict` dans les paramètres), comme l'`upsert` de
+        # la webapp ; jamais pour un PATCH ou un DELETE.
+        if fusion and methode != "POST":
+            raise ValueError("fusion réservée à un POST")
+        prefer = "return=representation,resolution=merge-duplicates" if fusion else "return=representation"
+        return await self._envoyer(methode, f"/{table}", jeton, entetes={"Prefer": prefer}, **options)
 
     async def rpc_service(
         self, fonction: str, arguments: dict[str, Any] | None = None, *, idempotent: bool = False

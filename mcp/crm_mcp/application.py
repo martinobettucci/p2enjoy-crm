@@ -2,7 +2,8 @@
 # @spec CRM-102 tranche T3 — docs/DESIGN_SYSTEM.md §5.57 (l’icône du serveur, monogramme du CRM, sur la page de consentement)
 # @spec CRM-102 tranche T6 — docs/SPEC-mcp.md §2.2 (`/plateforme` et `/admin` mènent à l'administration de la webapp)
 # @spec CRM-108 (docs/BACKLOG.md) tranche T4 — la famille `recettes` enregistrée et nommée au modèle (docs/SPEC-recettes.md §7)
-# @spec CRM-104 (docs/BACKLOG.md) tranche T2.a — la lecture des affaires enregistrée et nommée au modèle (docs/SPEC-mcp.md §9.2 bis)
+# @spec CRM-104 (docs/BACKLOG.md) tranches T2.a et T2.b — la lecture et l'écriture des affaires enregistrées et nommées au
+#       modèle (docs/SPEC-mcp.md §9.2 bis, §9.2 ter)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
 # @spec Modèle : `evoliz_mcp/application.py` (p2enjoy-evoliz, révision 80a3e27). Écarts : aucune administration
@@ -26,7 +27,7 @@ from crm_mcp.audit import AuditOutils
 from crm_mcp.autorisation import MandataireLelabs, construire_stockage
 from crm_mcp.crm import ClientCrm, CrmIndisponible
 from crm_mcp.garde import GardeEntree
-from crm_mcp.outils import affaires, recettes, reference
+from crm_mcp.outils import affaires, affaires_ecriture, recettes, reference
 from crm_mcp.politique import MoteurPolitique, PolitiqueOutils
 from crm_mcp.registre import Registre
 from crm_mcp.reglages import Reglages
@@ -122,6 +123,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     recettes.ajouter(serveur, moteur, crm)
     # `CRM-104` T2.a : la lecture des affaires (docs/SPEC-mcp.md §9.2 bis).
     affaires.ajouter(serveur, moteur, crm)
+    # `CRM-104` T2.b : l'écriture des affaires (docs/SPEC-mcp.md §9.2 ter).
+    affaires_ecriture.ajouter(serveur, moteur, crm)
     # L'ordre compte : l'audit enveloppe la politique, qui précède l'outil (docs/SPEC-mcp.md §6.2).
     serveur.add_middleware(AuditOutils(registre, reglages.taille_max_reponse))
     serveur.add_middleware(PolitiqueOutils(moteur))

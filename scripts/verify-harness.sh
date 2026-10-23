@@ -1496,7 +1496,10 @@ SCENARIOS_API=1169
 # clavier avec l'effet relu en base, la date future refusée dans le formulaire, la modération de l'administratrice, la
 # lectrice éteinte avec le motif, la visio de la lectrice, quatre paliers. 893 + 12 = 905, valeur COMPTÉE — « Total: 905
 # tests in 78 files ».
-SCENARIOS_UI=905
+# **906 depuis `CRM-104` T2.b, 2026-10-23** : `connecteur-affaires.spec.ts`, fichier NEUF, **1** scénario — une affaire
+# créée et commentée par un vrai client MCP paraît au board, et son fil nomme la personne. 905 + 1 = 906, valeur COMPTÉE —
+# « Total: 906 tests in 79 files ».
+SCENARIOS_UI=906
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

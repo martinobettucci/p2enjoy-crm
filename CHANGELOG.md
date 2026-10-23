@@ -13,6 +13,21 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-104` T2.b — le connecteur MCP écrit sur les affaires (décision 655)
+
+*En développement ; vit dans le service `mcp`, dont l'image de production est à reconstruire.*
+
+- **Douze outils**, aux règles de l'écran et signés du nom de la personne dans l'historique :
+  - créer une affaire, la commenter, y consigner une activité et la corriger ;
+  - modifier son en-tête et ses réponses au formulaire ;
+  - la déplacer dans les étapes que le workflow déclare, ou la changer de channel — la perte des réponses doit être
+    acceptée explicitement ;
+  - la mettre en sommeil ou la réveiller ;
+  - lier ou délier un contact ;
+  - la mettre à la corbeille.
+- **Le motif d'un refus** — déplacement non déclaré, motif exigé, question obligatoire sans réponse — est rendu à
+  l'assistant.
+
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
