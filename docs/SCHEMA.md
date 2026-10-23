@@ -701,16 +701,26 @@ public.card_comments` : `realtime.apply_rls` évalue alors la politique `SELECT`
 de sorte qu'un membre sans accès à la card ne reçoit **rien** (`docs/SPEC-cards.md` §13.9).
 
 ### `card_activities`
-Activités typées, distinctes des commentaires libres.
+Activités typées **réalisées**, distinctes des commentaires libres — `CRM-067` (`docs/SPEC-activites.md` §3, décisions
+647 à 650). *Révisé par la décision 650* : le type `note` est retiré — un commentaire en est déjà une — ; `subject`, la
+pierre tombale et les participants sont ajoutés, comme la spécification validée le prévoit.
 
 | Colonne | Type | Contraintes |
 |---|---|---|
-| `id`, `card_id`, `workspace_id` | `uuid` | |
-| `type` | `text` | `CHECK (type IN ('call','meeting','visio','note'))` |
-| `occurred_at` | `timestamptz` | non nul |
-| `duration_minutes` | `integer` | |
-| `body` | `text` | compte rendu |
-| `author_id` | `uuid` | FK `profiles` |
+| `id`, `card_id`, `workspace_id` | `uuid` | `workspace_id` dérivé de l'affaire par trigger |
+| `type` | `text` | `CHECK (type IN ('call','meeting','visio'))` |
+| `occurred_at` | `timestamptz` | non nul ; jamais futur à plus de 5 minutes (trigger, `23514` `activity_in_future`) |
+| `duration_minutes` | `integer` | de 1 à 1440, ou nul |
+| `subject` | `text` | 1 à 200 caractères, vide seulement en pierre tombale |
+| `body` | `text` | compte rendu, 20 000 caractères au plus |
+| `author_id` | `uuid` | défaut `auth.uid()`, FK `profiles` `ON DELETE SET NULL` |
+| `created_at`, `edited_at`, `deleted_at` | `timestamptz` | posés par les triggers, jamais par le client |
+| `deleted_by` | `uuid` | qui a retiré, FK `profiles` `ON DELETE SET NULL` |
+
+### `card_activity_participants`
+Les participants d'une activité : `activity_id` (cascade), et **exactement un** de `contact_id` — un contact **lié à
+l'affaire** — ou `profile_id` — un **membre de l'espace** (trigger, `23514` `participant_outside_card`). Un retrait de
+l'activité retire ses participants.
 
 ### `card_events`
 Timeline **append-only**, alimentée par triggers. Aucune écriture directe par un client.

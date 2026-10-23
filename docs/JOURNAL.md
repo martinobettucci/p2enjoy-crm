@@ -32962,3 +32962,17 @@ MCP dans la famille `affaires`, au catalogue de `CRM-104`. **Choix confirmés** 
 tombale** (la ligne reste, le fil dit « Activité retirée »), et **aucun outil MCP de retrait**. **Découpage persisté au
 backlog** : T1 migration, T2 webapp, T3 preuves de bout en bout, T4 outils MCP (avec `CRM-104` T2), T5 livraison.
 
+### décision 650 — `CRM-067` : les noms du modèle en anglais, sans le type `note`
+
+*2026-10-23, arbitrage du responsable.* **Problème** : en écrivant la migration de `CRM-067`, les suites `0017` et
+`0018` ont rappelé que `docs/SCHEMA.md` §5 décrivait déjà `card_activities` — colonnes anglaises (`occurred_at`,
+`duration_minutes`, `body`), types `call`, `meeting`, `visio`, `note` —, ce que la spécification validée
+(décision 649) n'avait pas repris : elle nommait les colonnes en français et ignorait `note`. **Ma faute** : la
+spécification aurait dû partir de `SCHEMA.md`. **Mesure présentée** : toute la famille `card_*` est en anglais
+(`card_comments`, `card_costs`, `card_revenues` écrite le jour même, `card_events`) ; le français n'existe que dans des
+tables récentes isolées (`saisies_temps`, `couts_personnel`, `admission_refus`…). **Arbitrage** : **noms anglais, sans
+`note`** — `type` `call`/`meeting`/`visio`, `occurred_at`, `duration_minutes`, `subject`, `body`, et les colonnes de la
+pierre tombale de `card_comments` ; le sujet, les participants et la pierre tombale de la spécification sont gardés ; les
+codes d'erreur suivent `card_comments`. **Conséquences** : spécification et `SCHEMA.md` §5 révisés avant le code ; la
+migration écrite en français, appliquée seulement en développement et jamais committée, est réécrite.
+

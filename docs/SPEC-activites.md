@@ -3,7 +3,8 @@
 - Unité de backlog : `CRM-067` — activités typées : appels, réunions, visios.
 - Arbitrages : `docs/JOURNAL.md`, décisions 647 (unité suivante, connecteur MCP : oui) et 648 (quatre arbitrages),
   2026-10-23.
-- État : **validée le 2026-10-23** (décision 649), avec la pierre tombale au retrait et aucun outil MCP de retrait.
+- État : **validée le 2026-10-23** (décision 649), avec la pierre tombale au retrait et aucun outil MCP de retrait ;
+  **noms du modèle révisés** par la décision 650 (§3).
 - Connecteur MCP : **oui, dans la famille `affaires`** (décision 648, point 3) — actions `consulter`, `ajouter`,
   `modifier` ; aucune famille nouvelle. `CRM-104` n'étant pas livrée, les outils s'inscrivent à son catalogue
   (`docs/SPEC-mcp.md` §9.2) et se construisent avec sa tranche T2 (`affaires`) — §6 ci-dessous.
@@ -21,11 +22,11 @@ Aujourd'hui, ils ne laissent de trace que dans un commentaire libre, sans type, 
 
 | Donnée | Règle |
 |---|---|
-| Type | `appel`, `reunion` ou `visio` — liste fermée |
-| Survenue le | date et heure, obligatoires ; **jamais dans le futur** (une activité réalisée a eu lieu) — tolérance de 5 minutes pour l'horloge du poste |
-| Durée | en minutes, facultative, de 1 à 1440 |
-| Sujet | texte court, obligatoire, 1 à 200 caractères |
-| Compte rendu | texte long, facultatif, 20 000 caractères au plus |
+| Type | `call` (appel), `meeting` (réunion) ou `visio` — liste fermée ; **pas de `note`** : un commentaire en est déjà une (décision 650) |
+| Date et heure (`occurred_at`) | obligatoires ; **jamais dans le futur** (une activité réalisée a eu lieu) — tolérance de 5 minutes pour l'horloge du poste |
+| Durée (`duration_minutes`) | en minutes, facultative, de 1 à 1440 |
+| Sujet (`subject`) | texte court, obligatoire, 1 à 200 caractères |
+| Compte rendu (`body`) | texte long, facultatif, 20 000 caractères au plus |
 | Participants | **contacts liés à l'affaire** (`card_contacts`) et **membres de l'espace** ; zéro, un ou plusieurs |
 | Auteur | la personne qui consigne, posée par la base (`auth.uid()`) |
 
@@ -38,15 +39,19 @@ l'écran le dit en une phrase sous le champ.
 
 Deux tables, migration au prochain numéro libre au moment de l'écrire.
 
+**Noms en anglais** (décision 650) : la famille `card_*` l'est tout entière (`card_comments`, `card_costs`,
+`card_revenues`, `card_events`), et `docs/SCHEMA.md` §5 décrivait déjà `card_activities` ainsi. Les codes d'erreur
+suivent `card_comments` (`card_not_found`, `comment_deleted`…).
+
 **`public.card_activities`** : `id`, `card_id`, `workspace_id` (dérivé de l'affaire par trigger, comme
-`card_comments`), `type`, `survenue_le`, `duree_minutes`, `sujet`, `compte_rendu`, `author_id` (défaut `auth.uid()`),
+`card_comments`), `type`, `occurred_at`, `duration_minutes`, `subject`, `body`, `author_id` (défaut `auth.uid()`),
 `created_at`, `edited_at`, `deleted_at`, `deleted_by`. **Retirer une activité la vide en pierre tombale** — la règle des
 commentaires (`docs/SPEC-cards.md` §13.4) : `deleted_at` posé, sujet et compte rendu effacés, participants retirés ; la
 ligne reste, pour que le fil dise « Activité retirée » à sa place. Aucune suppression physique par un client.
 
 **`public.card_activity_participants`** : `activity_id`, et **exactement un** de `contact_id` ou `profile_id`
 (contrainte). Un trigger refuse un contact **non lié à l'affaire** et un profil **non membre de l'espace** de
-l'affaire (`23514`, `participant_hors_affaire`). Cascade depuis l'activité.
+l'affaire (`23514`, `participant_outside_card`). Cascade depuis l'activité.
 
 **Politiques — comme un commentaire** (décision 648, point 4 ; `docs/SPEC-cards.md` §13) :
 
