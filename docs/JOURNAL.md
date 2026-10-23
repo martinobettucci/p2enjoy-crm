@@ -32392,3 +32392,28 @@ migrations 91 à 95 et webapp de `CRM-093`, `CRM-105`, `CRM-101` T6, `CRM-103` T
 `CRM-108`** avant de livrer. Il a confirmé que l'instantané de la VM est pris ; la livraison étant différée, la
 confirmation sera redemandée au moment d'ouvrir la fenêtre. La reconstruction de l'image `mcp` reste le geste de la
 session qui tient le connecteur, sur instruction du responsable.
+
+### `CRM-102` T3 — la preuve de la connexion longue était juste par hasard ; le seed de `CRM-108` respecté — 2026-10-23
+
+**Problème 1.** Le seed de `CRM-108` T5 (docs/SPEC-seed.md §21.4) pose une matrice MCP de démonstration au business
+developer. `test_un_droit_suffit_pour_entrer_dans_la_matrice_et_la_rls` présupposait qu'il n'en avait aucune
+(« Droits en attente »), et son `finally` effaçait TOUS ses droits, donc la matrice du seed.
+
+**Décision.** La preuve prend la lectrice (Farida, `…013`), membre de l'espace seedé sans matrice. Elle retire seulement
+ses propres droits. Constaté après trois passages : les quatre droits seedés du business developer sont intacts.
+
+**Problème 2.** `test_connexion_longue_survit_a_la_fin_de_la_session_sso[True]` rougissait par intermittence
+(« Upstream refresh failed: invalid_grant: Stale token »).
+
+- **Cause, mesurée.** Pour simuler l'expiration de la session du SSO, la preuve appelait `POST /users/{sub}/logout`.
+  Cet appel pose aussi le `notBefore` de la personne, qui révoque les jetons hors ligne émis dans une seconde
+  antérieure. La preuve ne passait que si la connexion et la fermeture tombaient dans la même seconde. Une pause de
+  1,2 s la rend rouge à chaque fois.
+- **Ce qui manquait à la preuve.** Une expiration ne pose aucun `notBefore`. Elle passe désormais par la fermeture
+  des sessions EN LIGNE, une à une : `GET /users/{sub}/sessions`, puis `DELETE /sessions/{id}`.
+- **Observé au passage.** Avec `offline_access`, aucune session en ligne ne reste après la pause, et zéro est alors
+  le cas réel. Sans connexion longue, la preuve exige qu'au moins une session ait pris fin.
+
+**Vérifications.** Avec la pause de 1,2 s : la nouvelle preuve est verte ; le mutant qui réintroduit `logout` est rouge
+sur les deux cas. Le fichier d'intégration complet passe 14 sur 14, trois fois de suite, contre la pile de
+développement. Seuls les tests changent : aucun code du connecteur n'est modifié.

@@ -53,7 +53,9 @@ RETOUR_CLIENT = "http://127.0.0.1:9999/callback"
 
 SABINE = ("plateforme", "5eed0000-0000-4000-8000-000000000018")
 EXPLOITANTE = ("exploitante", "5eed0000-0000-4000-8000-000000000017")
-DRISS = ("bizdev", "5eed0000-0000-4000-8000-000000000012")
+#: La lectrice, membre de l'espace seedé SANS matrice de démonstration : le business developer en porte une
+#: (docs/SPEC-seed.md §21.4, `CRM-108`), que ce test ne doit ni présupposer absente, ni effacer.
+FARIDA = ("viewer", "5eed0000-0000-4000-8000-000000000013")
 ESPACE_SEEDE = "5eed0000-0000-4000-8000-000000000001"
 
 
@@ -272,19 +274,19 @@ async def test_admin_lelabs_entre_et_lit_tout_espace():
 
 
 async def test_un_droit_suffit_pour_entrer_dans_la_matrice_et_la_rls():
-    """Driss, vérifié et sans droit, attend ; un droit sur l'espace seedé le fait entrer, et lui seul est rendu."""
-    reponse, _ = await _parcours(DRISS)
+    """Farida, vérifiée et sans droit, attend ; un droit sur l'espace seedé la fait entrer, et lui seul est rendu."""
+    reponse, _ = await _parcours(FARIDA)
     assert reponse.status_code == 403 and "Droits en attente" in reponse.text
-    droit = {"sub": DRISS[1], "workspace_id": ESPACE_SEEDE, "famille": "affaires", "action": "consulter"}
+    droit = {"sub": FARIDA[1], "workspace_id": ESPACE_SEEDE, "famille": "affaires", "action": "consulter"}
     assert (await _service("POST", "/mcp_droits", json=droit)).status_code == 201
     try:
-        reponse, contexte = await _parcours(DRISS)
+        reponse, contexte = await _parcours(FARIDA)
         espaces = await _espaces((await _jetons(contexte, reponse))["access_token"])
         assert [(e["slug"], e["role"], e["rights"]) for e in espaces["workspaces"]] == [
-            ("p2enjoy", "business_developer", ["affaires:consulter"])
+            ("p2enjoy", "viewer", ["affaires:consulter"])
         ]
     finally:
-        await _service("DELETE", "/mcp_droits", params={"sub": f"eq.{DRISS[1]}"})
+        await _service("DELETE", "/mcp_droits", params={"sub": f"eq.{FARIDA[1]}"})
 
 
 @pytest.mark.parametrize(("qui", "titre"), [("admin", "Droits en attente"), ("attendu", "Compte en attente de vérification")])
@@ -360,9 +362,18 @@ async def test_vrai_jeton_du_realm_pour_un_autre_client_refuse():
 # --- Connexion longue (§3.3) ----------------------------------------------------------------------------------------------
 
 
-async def _fermer_les_sessions_sso(sub: str) -> None:
-    """Ce que fait l'expiration de la session du SSO après une longue pause."""
-    assert (await _admin_sso("POST", f"/users/{sub}/logout")).status_code == 204
+async def _fermer_les_sessions_sso(sub: str) -> int:
+    """Ce que fait l'expiration de la session du SSO après une longue pause : les sessions EN LIGNE disparaissent, une
+    à une ; rend leur nombre. Pas `POST /users/{sub}/logout` : il pose aussi le `notBefore` de la personne, qui révoque
+    les jetons hors ligne émis dans une seconde antérieure (« Stale token », mesuré avec une pause de 1,2 s) — la preuve
+    ne passait que si connexion et fermeture tombaient dans la même seconde. Une expiration ne pose aucun `notBefore`.
+    Avec `offline_access`, la session en ligne peut avoir déjà disparu : zéro est alors le cas réel."""
+    sessions = await _admin_sso("GET", f"/users/{sub}/sessions")
+    assert sessions.status_code == 200
+    for session in sessions.json():
+        assert (await _admin_sso("DELETE", f"/sessions/{session['id']}")).status_code == 204
+    assert (await _admin_sso("GET", f"/users/{sub}/sessions")).json() == []
+    return len(sessions.json())
 
 
 @pytest.mark.parametrize("longue", [True, False])
@@ -371,7 +382,9 @@ async def test_connexion_longue_survit_a_la_fin_de_la_session_sso(longue):
     portees = parse_qs(urlsplit(contexte["vers_sso"]).query)["scope"][0].split()
     assert ("offline_access" in portees) is longue
     jetons = await _jetons(contexte, reponse)
-    await _fermer_les_sessions_sso(SABINE[1])
+    fermees = await _fermer_les_sessions_sso(SABINE[1])
+    # Sans connexion longue, la preuve n'a de sens que si une session en ligne existait et a pris fin.
+    assert longue or fermees >= 1
     async with httpx2.AsyncClient() as http:
         renouvele = await http.post(
             f"{MCP}/token",
