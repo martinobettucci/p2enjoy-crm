@@ -32663,3 +32663,27 @@ Le seuil du repli descend donc de `lg` à `md`. **Conséquences** : l'en-tête g
 1024 px ; la preuve E2E mesure désormais la LARGEUR du titre rendu, et non plus seulement son bord. **Relevé au
 passage** : INC-284, la commande de recherche à icône ne donne pas le focus au champ. **Persisté avant le code** :
 `docs/DESIGN_SYSTEM.md` §5.62 et §12.2, `docs/BACKLOG.md` `CRM-110`, `docs/INCONSISTENCY_REPORT.md` INC-284.
+
+### décision 642 — rattachements multiples : lecture, valeurs, devise et champs communs
+
+*2026-10-23, seconde série de réponses du responsable aux points ouverts des décisions 638 et 639.* **Arbitrages.**
+1. **Lecture.** Lire **au moins un** des channels rattachés ouvre la fiche, parties communes comprises — mails,
+   commentaires, contacts, coûts, recettes. On ne voit que les **blocs** des channels qu'on lit ; un rattachement à un
+   channel illisible est **masqué, existence comprise**. La règle s'applique en base : RLS des valeurs de bloc et des
+   rattachements, jamais par l'interface seule.
+2. **Valeurs de bloc séparées.** Les valeurs de champs appartiennent au **rattachement** : deux rattachements qui suivent
+   le même workflow ont chacun les leurs. La clé de `card_field_values` passe de `(card_id, field_id)` au rattachement ;
+   migration à écrire, chaque valeur existante revenant à l'unique rattachement de son affaire.
+3. **Devise.** Elle reste **à l'affaire** (`cards.currency`), comme pour les recettes (`docs/SPEC-recettes.md` §2.4) ;
+   les montants de tous ses rattachements s'expriment dans cette devise.
+4. **Champs personnalisés communs : oui, de portée espace.** Un administrateur définit des champs au niveau de
+   l'espace ; ils paraissent dans la partie commune de toute affaire, à côté des champs natifs. Leur écriture suit la
+   règle des parties communes (décision 639, arbitrage 3).
+**Conséquences relevées par l'agent.** `form_fields` appartient aujourd'hui à un workflow par une clé composite, et sa
+visibilité dépend de l'étape (`form_field_rules`, `docs/SPEC-form-composer.md` §2 et §3) ; un champ d'espace n'a pas
+d'étape. La spécification choisira entre une portée ajoutée à `form_fields` et une table distincte, et dira si un champ
+d'espace peut être obligatoire. Ce niveau est séparable des rattachements : il peut faire l'objet de sa propre unité.
+Connecteur MCP : les champs communs relèvent de la famille `affaires` (`modifier`), comme les champs de bloc.
+**Restent ouverts** : le filtre d'état et la ventilation par track ou channel de la rentabilité quand une affaire a
+plusieurs issues (décision 638, points 4 et 5) ; l'étape initiale d'un rattachement ajouté, et le retrait d'un
+rattachement (point 7).
