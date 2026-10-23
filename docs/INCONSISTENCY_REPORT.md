@@ -7356,3 +7356,21 @@ sur le document.
 (`docs/SPEC-recherche.md` §14.3, `docs/DESIGN_SYSTEM.md` §5.46) et demande sa propre preuve clavier sous `lg`. **Issue
 proposée** : poser le focus dans un effet après l'ouverture, comme le fait le panneau de notifications (§5.43). À
 arbitrer par le responsable.
+
+### INC-285 — `verify-armement-sequences.sh` attend encore `ON DELETE RESTRICT` sur deux clés que la migration 85 a rendues ajournables
+
+*Relevé le 2026-10-23 par la session `CRM-070`/`CRM-109`, en vérifiant que le job de purge de `CRM-109` ne partage la
+minute d'aucun autre.* **Constat.** `scripts/verify-armement-sequences.sh` rend deux anomalies :
+« `card_sequence_enrollments_sequence_fk` porte `a` au lieu de `r` — l'asymétrie du §12.3 est perdue », et de même pour
+`card_sequence_enrollments_identity_fk`. **Cause, mesurée.** La migration `0085_suppression_espace.sql` (INC-268,
+décision 619, `87052311`, 2026-10-03) a remplacé ces deux clés `ON DELETE RESTRICT` par `ON DELETE NO ACTION DEFERRABLE
+INITIALLY IMMEDIATE`, pour que la suppression d'un espace puisse les ajourner (`app.workspaces_avant_suppression`). Le
+script de preuve de `CRM-063` sous-tranche 4b n'a pas suivi. **Lecture.** Hors de la transaction de suppression d'un
+espace, une clé `NO ACTION` immédiate refuse la même suppression d'une identité ou d'une séquence employée :
+l'asymétrie du §12.3 de `docs/SPEC-modeles-emails.md` paraît tenue, et c'est le contrôle qui est périmé, non le schéma.
+Le reste du script est vert (47 assertions de `0058`, minutes de `pg_cron` distinctes : 7, 23, 41, 53).
+**Comportement laissé inchangé** : aucune session ne tient `CRM-063`, et la correction touche un script de preuve hors
+de l'unité qui l'a relevé. **Résolution proposée** : que le script accepte `confdeltype = 'a'` avec
+`condeferrable` et `not condeferred`, en le disant (INC-268), et qu'il prouve le refus par une suppression réelle plutôt
+que par le seul type de la clé.
+
