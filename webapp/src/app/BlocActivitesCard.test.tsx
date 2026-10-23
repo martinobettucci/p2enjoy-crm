@@ -3,7 +3,7 @@
 //           refus traduits) ; docs/DESIGN_SYSTEM.md §5.63 (ce bloc), §5.10 (pierre tombale, modération), §5.13 (focus
 //           entrant puis rendu), §5.59 (commandes éteintes, lisibles, citant le motif), §5.8 (états)
 //
-// Les noms sont ceux du seed — Driss Benali business developer, Camille Aubert administratrice, Léo Marchand contact —
+// Les noms sont ceux du seed — Driss Lemoine business developer, Camille Aubert administratrice, Léo Marchand contact —
 // pour que ces preuves se lisent comme la preuve de bout en bout qui exerce la pile réelle (tranche T3).
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
@@ -34,7 +34,7 @@ function activite(partiel: Partial<ActiviteLue> & { id: string }): ActiviteLue {
 		edited_at: null,
 		deleted_at: null,
 		deleted_by: null,
-		auteur: { id: DRISS, full_name: 'Driss Benali', avatar_url: null },
+		auteur: { id: DRISS, full_name: 'Driss Lemoine', avatar_url: null },
 		participants: [],
 		...partiel,
 	}
@@ -95,7 +95,7 @@ function clientDouble({
 					return chaine(() => ({
 						data: [
 							{ user_id: CAMILLE, role: 'admin', created_at: '2026-01-01', profiles: { full_name: 'Camille Aubert' } },
-							{ user_id: DRISS, role: 'business_developer', created_at: '2026-01-01', profiles: { full_name: 'Driss Benali' } },
+							{ user_id: DRISS, role: 'business_developer', created_at: '2026-01-01', profiles: { full_name: 'Driss Lemoine' } },
 						],
 					}))
 				}
@@ -171,7 +171,7 @@ describe('la liste (docs/DESIGN_SYSTEM.md §5.63)', () => {
 		const premiere = lignes[0] as HTMLElement
 		expect(within(premiere).getByTestId('type-activite').textContent).toBe(fr['activities.type.meeting'])
 		expect(premiere.textContent).toContain('45 min')
-		expect(premiere.textContent).toContain('par Driss Benali')
+		expect(premiere.textContent).toContain('par Driss Lemoine')
 		expect(within(premiere).getByTestId('participants-activite').textContent).toBe('Avec Léo Marchand')
 		const compteRendu = within(premiere).getByTestId('compte-rendu-activite')
 		expect(compteRendu.closest('details')?.open).toBe(false)
@@ -302,6 +302,12 @@ describe('consigner (docs/DESIGN_SYSTEM.md §5.63, §5.13)', () => {
 		expect((await screen.findByTestId('refus-activite')).textContent).toBe(fr['activities.refus.future'])
 		expect((sujet as HTMLInputElement).value).toBe('Demain')
 		expect(onChange).not.toHaveBeenCalled()
+		// LE FOCUS EST SUR LE BOUTON D'ENVOI, et `Échap` referme. LIMITE NOMMÉE : jsdom ne retire pas le focus d'un bouton
+		// désactivé, si bien que cette assertion passe aussi sans la correction. Le défaut — focus perdu au profit du `body`
+		// pendant le vol — n'est observable que dans un navigateur, et `e2e/ui/activites.spec.ts` le prouve (§5.63).
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('envoyer-activite')))
+		await userEvent.keyboard('{Escape}')
+		expect(screen.queryByTestId('formulaire-activite')).toBeNull()
 	})
 
 	it('une durée qui n’est pas un entier est refusée AVANT tout envoi', async () => {
@@ -394,7 +400,7 @@ describe('corriger et retirer', () => {
 		monter({ activites: [[activite({ id: 'a1' })]] }, { idUtilisateur: CAMILLE, estAdminWorkspace: true })
 		await userEvent.click(await screen.findByRole('button', { name: /Retirer l’activité/ }))
 		expect(screen.getByTestId('confirmation-retrait-activite').textContent).toContain(
-			fr['activities.retire.body.moderation'].replace('{nom}', 'Driss Benali'),
+			fr['activities.retire.body.moderation'].replace('{nom}', 'Driss Lemoine'),
 		)
 	})
 

@@ -31,6 +31,8 @@ d'exécuter le code attendu.
   - **L'auteur corrige et retire** ; un administrateur retire l'activité d'un autre. Le retrait est confirmé sur la
     ligne.
   - **Le fil de l'affaire** montre chaque activité à la date où elle a eu lieu, avec un sixième filtre « Activités ».
+  - **Jeu de démonstration** (T3) : quatre activités sur « Migration ERP Sogexia » et « Assistant IA support — Nordis »,
+    dont une corrigée par son auteur et une retirée par la modération. Manuel, chapitre 4.7 *quater*.
 
 ### `CRM-108` — la famille « Recettes » du connecteur MCP (reste à livrer : l'image `mcp`)
 

@@ -4553,6 +4553,92 @@ printf '%s\n' "$sortie" | sed 's/^/  /'
 info "Connecteur : Farida en attente, Camille en lecture (recettes, rapport invisible), Driss refusé par le CRM ;
       Sabine jamais connectée — docs/SPEC-seed.md §22"
 
+# --- 8 quatervicies. Les activités d'une affaire — CRM-067, docs/SPEC-seed.md §23 ------------------------------------
+# @spec CRM-067 (docs/BACKLOG.md) — tranche T3 : une activité de chaque type, consignée par la VRAIE route sous le jeton
+#       de qui l'a menée, une corrigée par son auteur, une retirée par la modération (docs/SPEC-activites.md §7 ;
+#       docs/SPEC-seed.md §23)
+#
+# Sur `…0c2` « Migration ERP Sogexia » — Léo Marchand y est rattaché — et `…0cb` « Assistant IA support — Nordis »,
+# que Farida écrit. JAMAIS sur `…0ca`, `…0c4` ni `…d005` : la suite pgTAP `0091` et `e2e/api/activites.spec.ts` y posent
+# et y retirent leurs propres activités, et une ligne du jeu y fausserait leurs comptes (§23.4).
+#
+# id | affaire | jeton (admin|bizdev|viewer) | type | survenue | durée | sujet | compte rendu (`\n` pour un retour à la
+# ligne : `read` s'arrête au premier) | participants (contact:id ou profil:id)
+ACTIVITES_SEED=(
+	"5eed0000-0000-4000-8000-0000000a0c01|5eed0000-0000-4000-8000-0000000000c2|bizdev|call|2026-10-14T08:30:00Z|30|Appel de qualification|Besoin confirmé : migration des achats et de la paie avant juin.|contact:$CONTACT_MARCHAND profil:5eed0000-0000-4000-8000-000000000011"
+	"5eed0000-0000-4000-8000-0000000a0c02|5eed0000-0000-4000-8000-0000000000c2|admin|meeting|2026-10-16T13:00:00Z|90|Atelier de cadrage du lot 1|Périmètre : achats, stocks.\nPlanning : recette en mars.\nRisque : reprise des données historiques.|contact:$CONTACT_MARCHAND profil:5eed0000-0000-4000-8000-000000000012"
+	"5eed0000-0000-4000-8000-0000000a0c03|5eed0000-0000-4000-8000-0000000000c2|bizdev|call|2026-10-17T10:00:00Z|15|Relance tarifaire|Note interne sur la marge, notée ici par erreur.|"
+	"5eed0000-0000-4000-8000-0000000a0c04|5eed0000-0000-4000-8000-0000000000cb|viewer|visio|2026-10-20T15:00:00Z|45|Démonstration de l'assistant||"
+)
+# Le compte rendu de `…a0c01` après correction par son auteur : `edited_at` est posé par le trigger, jamais par le seed.
+ACTIVITE_A0C01_CORRIGEE='Besoin confirmé : migration des achats et de la paie avant juin. Budget validé par la DAF.'
+
+echo
+say "8 quatervicies. Activités d'une affaire"
+
+JETON_ADMIN_ACTIVITES=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+JETON_BIZDEV_ACTIVITES=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
+JETON_VIEWER_ACTIVITES=$(sso_jeton_interne "$API" "$ANON_KEY" 'viewer@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_ACTIVITES" ] && [ -n "$JETON_BIZDEV_ACTIVITES" ] && [ -n "$JETON_VIEWER_ACTIVITES" ] || die "connexion
+        d'un compte du jeu impossible : les activités se consignent sous le jeton de qui les a menées (docs/SPEC-seed.md §23.2)."
+
+for ligne in "${ACTIVITES_SEED[@]}"; do
+	IFS='|' read -r id card qui type survenue duree sujet compte_rendu participants <<< "$ligne"
+	case "$qui" in
+		admin) jeton=$JETON_ADMIN_ACTIVITES ;;
+		bizdev) jeton=$JETON_BIZDEV_ACTIVITES ;;
+		*) jeton=$JETON_VIEWER_ACTIVITES ;;
+	esac
+	# CONVERGENCE PAR PRÉSENCE (§23.3) : une activité est une trace, non un paramètre — la réécrire effacerait une
+	# correction ou buterait sur une pierre tombale (`activity_deleted`). Présente, elle n'est ni réécrite ni recomplétée.
+	code=$(api GET "/rest/v1/card_activities?select=id&id=eq.$id")
+	attendu "$code" "lecture de l'activité « $sujet »" 200
+	if [ "$(jq -r 'length' "$CORPS")" != "0" ]; then
+		printf '  %-30s déjà présente, non réécrite\n' "${sujet:0:30}"
+		continue
+	fi
+	code=$(api_jeton "$jeton" POST /rest/v1/card_activities -H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg id "$id" --arg card "$card" --arg type "$type" --arg survenue "$survenue" --argjson duree "$duree" \
+			--arg sujet "$sujet" --arg cr "$compte_rendu" \
+			'{id: $id, card_id: $card, type: $type, occurred_at: $survenue, duration_minutes: $duree, subject: $sujet,
+			  body: (if $cr == "" then null else ($cr | gsub("\\\\n"; "\n")) end)}')")
+	attendu "$code" "activité « $sujet »" 201
+	# LES PARTICIPANTS, UN PAR UN, comme l'écran les pose (docs/DESIGN_SYSTEM.md §5.63) : le trigger juge chacun.
+	for participant in $participants; do
+		colonne=contact_id
+		[ "${participant%%:*}" = profil ] && colonne=profile_id
+		code=$(api_jeton "$jeton" POST /rest/v1/card_activity_participants \
+			-d "$(jq -nc --arg a "$id" --arg c "$colonne" --arg v "${participant#*:}" '{activity_id: $a} + {($c): $v}')")
+		attendu "$code" "participant de « $sujet »" 201
+	done
+	printf '  %-30s %-7s %s, %s participant(s)\n' "${sujet:0:30}" "$type" "$qui" "$(wc -w <<< "$participants" | tr -d ' ')"
+done
+
+# LA CORRECTION PAR SON AUTEUR — Driss, sous son jeton : la base pose `edited_at` parce que le compte rendu change.
+code=$(api GET "/rest/v1/card_activities?select=edited_at&id=eq.5eed0000-0000-4000-8000-0000000a0c01")
+attendu "$code" "lecture de l'activité corrigée" 200
+if [ "$(jq -r '.[0].edited_at // "null"' "$CORPS")" = 'null' ]; then
+	code=$(api_jeton "$JETON_BIZDEV_ACTIVITES" PATCH '/rest/v1/card_activities?id=eq.5eed0000-0000-4000-8000-0000000a0c01' \
+		-H 'Prefer: return=representation' -d "$(jq -nc --arg cr "$ACTIVITE_A0C01_CORRIGEE" '{body: $cr}')")
+	attendu "$code" "correction de « Appel de qualification » par son auteur" 200
+	[ "$(jq -r '.[0].edited_at // "null"' "$CORPS")" != 'null' ] || die "la correction de …a0c01 n'a pas posé edited_at."
+fi
+
+# LE RETRAIT PAR LA MODÉRATION — Camille, sous SON jeton, sur l'activité de Driss : la clé de service écrirait
+# `deleted_by = NULL` et ne démontrerait aucune modération (le motif du §8 quinquies pour `…d4`).
+code=$(api GET "/rest/v1/card_activities?select=deleted_at&id=eq.5eed0000-0000-4000-8000-0000000a0c03")
+attendu "$code" "lecture de l'activité à retirer" 200
+if [ "$(jq -r '.[0].deleted_at // "null"' "$CORPS")" = 'null' ]; then
+	code=$(api_jeton "$JETON_ADMIN_ACTIVITES" PATCH '/rest/v1/card_activities?id=eq.5eed0000-0000-4000-8000-0000000a0c03' \
+		-H 'Prefer: return=representation' -d '{"deleted_at": "2026-10-18T09:00:00Z"}')
+	attendu "$code" "retrait de « Relance tarifaire » par la modération" 200
+	[ "$(jq -r '.[0].subject' "$CORPS")" = '' ] || die "…a0c03 retirée mais son sujet n'est pas vidé."
+	[ "$(jq -r '.[0].deleted_by' "$CORPS")" = '5eed0000-0000-4000-8000-000000000011' ] || die "…a0c03 retirée sans que
+        deleted_by nomme l'administratrice : le jeu ne démontre alors aucune modération (docs/SPEC-seed.md §23.1)."
+fi
+info "Activités : ${#ACTIVITES_SEED[@]} sur 2 affaires — appel, réunion, visio —, une corrigée par son auteur, une
+      retirée par la modération — docs/SPEC-seed.md §23"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens
@@ -4593,6 +4679,7 @@ info "Suggestion de modification du workflow par défaut : 1, en revue, avec son
 info "Temps et coût du personnel : trois versions de coût, dont une programmée ; quatre semaines de temps — CRM-098, docs/SPEC-seed.md §17"
 info "Plateforme : une superadministratrice, Sabine Plateforme, amorcée par sa connexion ; aucun espace de plus — CRM-101, docs/SPEC-seed.md §19"
 info "Connecteur MCP : trois comptes connectés par de vraies connexions OAuth, quatre lignes au journal — CRM-103, docs/SPEC-seed.md §22"
+info "Activités : quatre sur deux affaires, une de chaque type, une corrigée, une retirée par la modération — CRM-067, docs/SPEC-seed.md §23"
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."

@@ -7322,7 +7322,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-064 | @mentions, notifications temps réel et préférences | `[x]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[~]` |
-| CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[ ]` |
+| CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[~]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
@@ -15789,7 +15789,7 @@ règle dans la webapp et le connecteur, et les captures observées.
       de `CRM-110`), deux 502 transitoires en console. L'unité reste `[~]` jusqu'à T6.
 
 
-### CRM-067 — Activités typées : appels, réunions, visios `[ ]`
+### CRM-067 — Activités typées : appels, réunions, visios `[~]`
 *Arbitrée et spécifiée le 2026-10-23 (décisions 647 à 649) : `docs/SPEC-activites.md`. Connecteur MCP : oui, famille
 `affaires` (consulter, ajouter, modifier), au catalogue de `CRM-104`.*
 
@@ -15802,7 +15802,7 @@ règle dans la webapp et le connecteur, et les captures observées.
       participants au retrait, politique d'insertion, vidage du compte rendu) ; `0016` à 157 politiques, `0017` et
       `0018` révisées ; série complète 91 fichiers, 3897 assertions, aucune anomalie ; API `activites.spec.ts` **4/4**
       aux jetons réels, sans reste en base ; types régénérés et témoin des tables ; `SCHEMA.md` §5 ; contrat, ligne 100.
-- [~] **T2** — webapp : lecture, bloc « Activités » de la fiche, formulaire, troisième source de la timeline ; design
+- [x] **T2** — webapp : lecture, bloc « Activités » de la fiche, formulaire, troisième source de la timeline ; design
       system écrit avant l'écran ; unitaires.
       **Implémentée le 2026-10-23, unitaires et mutations vérifiés.**
       - Design system écrit avant l'écran (`DESIGN_SYSTEM.md` §5.63, décision 651, commit `ae3d8544`).
@@ -15813,8 +15813,22 @@ règle dans la webapp et le connecteur, et les captures observées.
         douze** (ordre, modération, commandes offertes, date du fil, « sans effet », date arrondie, durée décimale,
         refus participant, famille, relecture du fil, participants un par un, retrait offert).
       - Série unitaire complète **4281/4281**, typecheck et build verts.
-      - **Reste `[~]`** : le constat visuel et l'E2E viennent avec T3.
-- [ ] **T3** — E2E, captures, seed, manuel, campagnes.
+      - **Constat visuel et E2E faits avec T3** (ci-dessous) : la tranche passe `[x]` avec elle.
+- [x] **T3** — E2E, captures, seed, manuel, campagnes.
+      **Vérifiée le 2026-10-23.**
+      - Seed §8 quatervicies (`docs/SPEC-seed.md` §23) : quatre activités sur `…0c2` et `…0cb`, par la vraie route sous
+        le jeton de chacun ; une corrigée par son auteur (`edited_at` posé par la base), une retirée par
+        l'administratrice (`deleted_by` la nomme). Le rejeu converge : rien n'est réécrit.
+      - `e2e/ui/activites.spec.ts` **12/12** : liste et commandes de l'auteur, place du bloc, fil et sixième bascule,
+        consigner-corriger-retirer au clavier avec l'effet relu en base, date future refusée dans le formulaire,
+        modération, lectrice éteinte avec le motif, quatre paliers sans défilement horizontal.
+      - `timeline.spec.ts` passe à six bascules.
+      - **Défaut trouvé par l'E2E et corrigé** : après un refus, le focus était perdu (bouton désactivé pendant le vol),
+        et `Échap` ne refermait plus. jsdom ne le voit pas (DS §5.63).
+      - Captures `docs/captures/CRM-067/` observées.
+      - Manuel 4.7 *quater* ; fil 4.10 à six filtres.
+      - Campagnes **complètes** : ui **905/905**, api **1169/1169** ; pgTAP 91 fichiers, 3897 assertions. Harnais :
+        `SCENARIOS_UI=905` (compté).
 - [ ] **T4** — outils MCP `crm_affaire_activites_lister`, `crm_affaire_activite_ajouter`,
       `crm_affaire_activite_modifier`, inscrits au catalogue (`docs/SPEC-mcp.md` §9.2) et construits avec `CRM-104` T2.
 - [ ] **T5** — livraison en production, sur instruction du responsable.

@@ -38,6 +38,7 @@
 | 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** : une affaire ne peut pas entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Le tableau kanban, son glisser-déposer et son menu de déplacements sont utilisables après connexion |
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger est réservé à l'auteur**, et **supprimer lui est ouvert ainsi qu'aux administrateurs du workspace**, avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; **le retrait par un administrateur a son bouton depuis le 2026-08-14**, unique — *Supprimer*, jamais *Modifier* —, et le fil distingue un retrait par la modération d'une suppression par l'auteur. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
+| 4.7 quater | Les activités d’une affaire : appels, réunions, visios | `CRM-067` | **Livré en développement** — voir le chapitre 4.7 *quater*. Le bloc « Activités » de la fiche consigne ce qui a eu lieu : type, date (jamais dans le futur), durée, sujet, compte rendu et participants choisis parmi les contacts de l'affaire et les membres de l'espace. L'auteur corrige et retire ; un administrateur retire l'activité d'une autre personne. Chaque activité paraît dans l'historique à la date où elle a eu lieu, sous un sixième filtre « Activités ». La durée ne compte pas dans le temps passé |
 | 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace **« Dossier changé »** dans l'historique, y compris quand personne ne passe par l'application. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement |
 | 4.7 bis | Mettre une affaire à la corbeille | `CRM-077` | **Livré et vérifié** — voir le chapitre 4.7 *bis*. Le bouton vit en bas de la fiche de l'affaire, demande une confirmation qui la nomme, et remplace ensuite l'écran par les deux chemins utiles : revenir au channel, ou ouvrir la corbeille. Le geste suppose le droit d'**écrire** sur l'onglet, et non un rôle d'administrateur |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
@@ -1429,6 +1430,72 @@ fiche de l'affaire est atteignable en un clic depuis là.
 fiche d'organisation — le geste part toujours de l'affaire ou de la fiche du contact. Et un
 rattachement n'apparaît **pas** dans l'historique de l'affaire (chapitre 4.10).
 
+### 4.7 quater Les activités d'une affaire : appels, réunions, visios
+
+*Livré par `CRM-067`, tranches T2 et T3, en développement. Captures dans `docs/captures/CRM-067/`, préfixées
+`activites-`.*
+
+**À quoi cela sert.** Garder la trace de ce qui **a eu lieu** avec le client hors du CRM : un appel, une réunion, une
+visio. La « prochaine action » de l'en-tête dit ce qui **vient** ; les activités disent ce qui **s'est passé**.
+
+**Où.** Dans la colonne de gauche de la fiche, **juste après « Contacts de l'affaire »** : le bloc **« Activités »**.
+Les activités sont listées de la plus récente à la plus ancienne.
+
+**Ce que chaque ligne montre.**
+- Une icône, puis le **sujet**.
+- Dessous, le **type en toutes lettres** (Appel, Réunion, Visio), la **date et l'heure** de l'activité, sa **durée**
+  si elle a été saisie, et **qui l'a consignée**. La mention « modifiée » paraît si son auteur l'a corrigée depuis.
+- Les **participants** : « Avec Léo Marchand, Camille Aubert ». Une activité sans participant n'affiche rien à cette
+  place.
+- Le **compte rendu**, replié sous « Compte rendu » : cliquez, ou appuyez sur Entrée, pour le lire.
+
+**Consigner une activité.** Le bouton **« Consigner une activité »**, en tête du bloc, ouvre un formulaire dans la
+page, sans fenêtre par-dessus :
+- **Type** : Appel, Réunion ou Visio. Appel est choisi d'avance.
+- **Date et heure** : maintenant, par défaut. Vous pouvez la reculer pour un appel d'hier, mais **pas l'avancer** : une
+  activité consignée est une activité qui a déjà eu lieu. Le produit tolère cinq minutes d'avance pour l'horloge de
+  votre poste.
+- **Durée (minutes)** : facultative, de 1 à 1440. **Elle ne compte pas dans votre temps passé** : votre temps se
+  saisit dans « Temps » (chapitre 5 *undecies*), et le formulaire le rappelle.
+- **Sujet** : obligatoire, 200 caractères au plus. Tant qu'il est vide, « Consigner » reste grisé.
+- **Compte rendu** : facultatif.
+- **Participants** : les **contacts liés à cette affaire** et les **membres de l'espace**, à cocher. Un contact qui
+  n'est pas lié à l'affaire ne peut pas être choisi : rattachez-le d'abord (chapitre 4.7 *ter*).
+
+« Annuler », ou la touche Échap, referme le formulaire sans rien écrire.
+
+**Corriger, retirer.**
+- **Seul l'auteur corrige** son activité, avec le même formulaire, prérempli. Si vous ne touchez pas à la date, elle
+  reste exactement celle d'origine.
+- **L'auteur la retire**, et **un administrateur de l'espace** peut retirer l'activité d'une autre personne, sans
+  pouvoir la corriger.
+- Retirer demande une **confirmation sur la ligne**. Le sujet, le compte rendu et les participants sont effacés, mais
+  la ligne reste à sa place : « Activité retirée », ou « Activité retirée par la modération » quand ce n'est pas
+  l'auteur qui l'a retirée. Le nom de la personne qui a retiré n'est pas affiché.
+- **Une activité retirée ne se rétablit pas.**
+
+**Si vous ne pouvez pas écrire sur cette affaire.** Les boutons restent visibles mais grisés, et le bandeau en tête de
+la fiche dit pourquoi (chapitre 3.6). Vous lisez les activités comme les autres.
+
+**Ce que le produit refuse, et comment il le dit.** Chaque refus s'écrit **dans le formulaire**, en français, et votre
+saisie est conservée :
+- une date dans le futur ;
+- un sujet vide ou trop long ;
+- une durée qui n'est pas un nombre entier de minutes entre 1 et 1440 ;
+- un participant qui n'est plus lié à l'affaire ;
+- une affaire qui ne vous est pas ouverte en écriture.
+
+Si un participant est refusé alors que l'activité, elle, est enregistrée, le bloc le dit sous la liste : l'activité
+n'est pas annulée pour autant.
+
+**Dans l'historique de l'affaire.** Chaque activité paraît aussi dans le fil (chapitre 4.10), **à la date où elle a eu
+lieu** et non à celle où elle a été saisie : un appel consigné le lendemain s'insère à sa place dans l'histoire. Le fil
+montre le type, le sujet, la durée et l'auteur. Le compte rendu et les participants restent dans le bloc.
+
+**Ce qui n'est pas livré.** Aucune planification, aucun rappel, aucune liste de toutes les activités de l'espace. Le
+connecteur MCP saura lister, consigner et corriger les activités d'une affaire avec la tranche des outils
+« affaires » de `CRM-104`. Il ne saura pas les retirer : le retrait reste un geste de l'écran.
+
 ### 4.7 bis Mettre une affaire à la corbeille
 
 *Livré par `CRM-077`. Captures dans `docs/captures/CRM-077/`, préfixées `card-geste-`.*
@@ -1721,6 +1788,7 @@ lieu :
 | Un courrier est arrivé sur l'affaire, ou en est parti | *Message reçu* / *Message envoyé*, avec son objet et son correspondant |
 | Un contact a été rattaché à l'affaire, ou détaché | *Contact rattaché* / *Contact détaché*, avec son nom et son rôle |
 | Le rôle d'un contact rattaché a changé | *Rôle du contact modifié*, avec l'ancien rôle et le nouveau |
+| Un appel, une réunion ou une visio a été consigné (chapitre 4.7 *quater*) | *Appel*, *Réunion* ou *Visio*, avec son sujet, à la date où l'activité a eu lieu ; *Activité retirée* une fois retirée |
 | L'affaire a été mise en sommeil, ou réveillée | *Affaire mise en sommeil* / *Affaire réveillée*, avec l'échéance |
 | L'affaire est restée trop longtemps dans son étape | *Relance automatique*, avec le retard et le seuil |
 
@@ -1740,7 +1808,7 @@ l'historique préfère se taire que d'inventer.
 **Une action qui ne change rien ne laisse rien.** Réenregistrer une réponse identique, ou
 réattribuer une affaire à la personne qui en est déjà responsable, n'ajoute aucune ligne au fil.
 
-**Filtrer le fil.** Cinq bascules le trient par famille : *Discussion*, *Étapes*, *Champs*,
+**Filtrer le fil.** Six bascules le trient par famille : *Discussion*, *Activités*, *Étapes*, *Champs*,
 *Organisation*, *Cycle de vie*. Toutes sont actives à l'ouverture, et le nombre porté par chacune
 compte ce que l'affaire contient — il ne bouge pas quand vous éteignez la famille. Éteindre tout
 affiche « Aucun élément pour ces filtres », qui ne se confond pas avec « Aucun événement pour le moment » : le
@@ -1748,7 +1816,7 @@ premier dit que vous filtrez, le second qu'il n'y a rien. **Rien n'est retenu** 
 rétablit le fil complet, et aucune préférence n'est enregistrée sur votre appareil.
 
 **La barre de filtres n'apparaît que s'il y a quelque chose à filtrer.** Sur une affaire dont le
-fil est vide, elle est absente : cinq bascules affichant « 0 » au-dessus de « aucun événement pour
+fil est vide, elle est absente : six bascules affichant « 0 » au-dessus de « aucun événement pour
 le moment » seraient un contrôle sans objet.
 
 **Les changements de contexte sont nommés.** Lorsqu'une affaire change de dossier (chapitre 4.11),

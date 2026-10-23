@@ -6071,6 +6071,10 @@ ce que les §5.13 et §5.21 posent vaut ici sans être répété :
   d'elle-même. La preuve unitaire l'a montré : sans `noValidate`, une durée « 1.5 » bloquait l'envoi en silence, sans
   aucun motif à l'écran. `required`, `min` et `max` restent sur les champs. Ils disent au lecteur d'écran ce qui est
   attendu, et la base reste seule juge.
+- **APRÈS UN REFUS, LE FOCUS REVIENT AU BOUTON D'ENVOI**, une fois réactivé — *trouvé par la preuve de bout en bout de
+  T3*. Désactivé pendant l'envoi, le bouton perdait le focus au profit du `body`. `Échap` ne refermait alors plus rien,
+  et le clavier repartait du haut de la page. jsdom ne retire pas le focus d'un bouton désactivé : seule la preuve dans
+  un navigateur voit ce défaut.
 - **UNE CORRECTION QUI NE TOUCHE PAS LA DATE RENVOIE L'INSTANT EXACT QUE LA BASE PORTE** — *écrit à l'écriture du
   code*. Le champ arrondit à la minute. Réécrire l'instant arrondi ferait marquer « modifiée » une activité dont on
   n'a corrigé que les participants.

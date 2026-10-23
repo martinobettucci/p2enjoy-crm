@@ -58,7 +58,7 @@ function activite(partiel: Partial<ActiviteLue> & { id: string }): ActiviteLue {
 		edited_at: null,
 		deleted_at: null,
 		deleted_by: null,
-		auteur: { id: 'profil-1', full_name: 'Driss Benali', avatar_url: null },
+		auteur: { id: 'profil-1', full_name: 'Driss Lemoine', avatar_url: null },
 		participants: [],
 		...partiel,
 	}
@@ -1367,7 +1367,7 @@ describe('les activités dans le fil — CRM-067 (docs/DESIGN_SYSTEM.md §5.63)'
 		expect(ligneActivite.textContent).toContain(fr['activities.type.call'])
 		expect(ligneActivite.textContent).toContain('Appel de découverte')
 		expect(ligneActivite.textContent).toContain('30 min')
-		expect(ligneActivite.textContent).toContain('Driss Benali')
+		expect(ligneActivite.textContent).toContain('Driss Lemoine')
 		const elements = within(screen.getByRole('list')).getAllByRole('listitem')
 		const rang = (texte: string) => elements.findIndex((element) => element.textContent?.includes(texte))
 		expect(rang(fr['timeline.event.created'])).toBeLessThan(rang('Appel de découverte'))
@@ -1397,7 +1397,7 @@ describe('les activités dans le fil — CRM-067 (docs/DESIGN_SYSTEM.md §5.63)'
 		})
 		const ligneActivite = await screen.findByTestId('activite-fil')
 		expect(ligneActivite.textContent).toContain(fr['timeline.activity.retired'])
-		expect(ligneActivite.textContent).not.toContain('Driss Benali')
+		expect(ligneActivite.textContent).not.toContain('Driss Lemoine')
 		expect(ligneActivite.textContent).not.toContain('30 min')
 	})
 

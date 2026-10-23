@@ -2371,3 +2371,42 @@ les six lignes du §21.1, sur lesquelles reposent les preuves de `CRM-108`. Ces 
   `mcp/tests/test_integration_recettes.py`). « Droits en attente » se prouve sur Farida, dans
   `mcp/tests/test_integration_oauth.py` comme dans `e2e/ui/connecteur-mcp.spec.ts`.
 - `e2e/api/connecteur-administration.spec.ts` relève la matrice de Farida et la rend à l'identique.
+
+## 23. Les activités d'une affaire — `CRM-067` tranche T3 (décisions 647 à 651)
+
+*Écrit le 2026-10-23 avec la section du script. Contrat : `docs/SPEC-activites.md` §7 (« une activité de chaque type
+sur les affaires de démonstration, créées par l'API comme à l'écran, dont une retirée »).*
+
+### 23.1 Ce que le jeu porte
+
+| Activité | Affaire | Consignée par | Ce qu'elle démontre |
+|---|---|---|---|
+| `…a0c01` appel « Appel de qualification », 30 min, le 14/10 | `…0c2` « Migration ERP Sogexia » | Driss | des participants des deux sortes (Léo Marchand, contact lié ; Camille, membre), un compte rendu **corrigé par son auteur** : « modifiée » |
+| `…a0c02` réunion « Atelier de cadrage du lot 1 », 90 min, le 16/10 | `…0c2` | Camille | un compte rendu sur trois lignes, Léo et Driss participants |
+| `…a0c03` appel « Relance tarifaire », le 17/10 | `…0c2` | Driss | la **pierre tombale posée par la modération** : Camille la retire, `deleted_by` la nomme, le sujet est vidé |
+| `…a0c04` visio « Démonstration de l'assistant », 45 min, le 20/10 | `…0cb` « Assistant IA support — Nordis » | Farida | la lectrice consigne là où son channel lui est rouvert, sans participant ni compte rendu |
+
+Les dates sont fixes et passées : les captures et les preuves les lisent telles quelles.
+
+### 23.2 Le vrai chemin
+
+Chaque activité est créée par `POST /rest/v1/card_activities`, ses participants un par un par
+`POST /rest/v1/card_activity_participants`, **sous le jeton de qui l'a menée** et jamais par la clé de service : la
+politique, le trigger de la date et celui des participants jugent comme à l'écran. La correction passe par le `PATCH`
+de l'auteur, et `edited_at` est posée par la base. Le retrait passe par le `PATCH` de l'administratrice : un retrait par
+la clé de service écrirait `deleted_by = NULL` et ne démontrerait aucune modération (le motif du §2.14 pour `…d4`). Le
+script s'arrête en nommant la cause si la correction ne pose pas `edited_at`, ou si le retrait ne vide pas le sujet ou
+ne nomme pas l'administratrice.
+
+### 23.3 Convergence
+
+**Par présence et par état**, comme les commentaires (§2.14) : une activité présente n'est ni réécrite ni recomplétée.
+La réécrire effacerait une correction ou buterait sur une pierre tombale (`activity_deleted`). La correction n'est faite
+que si `edited_at` est nulle, et le retrait que si `deleted_at` l'est.
+
+### 23.4 Ce que les preuves en attendent
+
+- **Aucune activité du jeu sur `…0ca`, `…0c4` ni `…d005`.** La suite pgTAP `0091` et `e2e/api/activites.spec.ts` y
+  posent et y retirent leurs propres activités, et les comptent : `0091` relit « la » pierre tombale de `…0c4`.
+- **`e2e/ui/activites.spec.ts`** lit les quatre activités par leurs identifiants stables. La lectrice y constate
+  `…0c4` vide, où ses commandes sont éteintes avec le motif de la fiche.

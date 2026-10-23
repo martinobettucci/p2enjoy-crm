@@ -1,5 +1,6 @@
 // @verifies CRM-044 (docs/BACKLOG.md) — la timeline unifiée, contre le build de production
 // @verifies CRM-022 (docs/BACKLOG.md) — auteurs et acteurs nommés par relations embarquées
+// @verifies CRM-067 (docs/BACKLOG.md) — tranche T3 : six bascules, la sixième « Activités » (docs/DESIGN_SYSTEM.md §5.63)
 // @verifies docs/SPEC-cards.md §14.10 (ce que le fil unifié montre), §14.6 (aucun libellé dans le
 //           `payload`), §14.14 (preuves attendues)
 // @verifies docs/DESIGN_SYSTEM.md §5.11 (timeline unifiée), §5.10 (le fil des commentaires),
@@ -37,6 +38,9 @@ const ROUTE_ETAPES = '**/rest/v1/workflow_steps*'
 const ROUTE_CARDS = '**/rest/v1/cards*'
 const ROUTE_TRACKS = '**/rest/v1/tracks*'
 const ROUTE_CHANNELS = '**/rest/v1/channels*'
+// `CRM-067` : la troisième source du fil. Servie VIDE ici — ce fichier éprouve les deux premières ; les activités ont
+// leur preuve, `e2e/ui/activites.spec.ts`, sur la pile réelle.
+const ROUTE_ACTIVITES = '**/rest/v1/card_activities*'
 
 /** Identifiants du seed, employés tels quels : l'adresse doit être une adresse réelle du produit. */
 const CARD = '5eed0000-0000-4000-8000-0000000000c6'
@@ -187,6 +191,7 @@ async function servirEcran(
 	await page.route(ROUTE_CARDS, servir(CARD_SERVIE))
 	await page.route(ROUTE_CHANNELS, servir(CHANNELS_SERVIS))
 	await page.route(ROUTE_TRACKS, servir(TRACK_SERVI))
+	await page.route(ROUTE_ACTIVITES, servir([]))
 }
 
 const fil = (page: Page) => page.getByRole('region', { name: 'Fil de cette affaire' })
@@ -253,17 +258,19 @@ test.describe('le fil unifié (réponses substituées, docs/DESIGN_SYSTEM.md §1
 })
 
 test.describe('les filtres (docs/DESIGN_SYSTEM.md §5.11)', () => {
-	test('cinq bascules, toutes actives, dont le compte suit la SOURCE', async ({ page }) => {
+	// SIX BASCULES DEPUIS `CRM-067` (docs/DESIGN_SYSTEM.md §5.63) : « Activités » suit « Discussion », et compte zéro ici.
+	test('six bascules, toutes actives, dont le compte suit la SOURCE', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await servirEcran(page)
 		await page.goto(ADRESSE)
 
 		const bascules = filtres(page).getByRole('button')
-		await expect(bascules).toHaveCount(5)
-		for (let rang = 0; rang < 5; rang += 1) {
+		await expect(bascules).toHaveCount(6)
+		for (let rang = 0; rang < 6; rang += 1) {
 			await expect(bascules.nth(rang)).toHaveAttribute('aria-pressed', 'true')
 		}
 		await expect(filtres(page).getByRole('button', { name: /Discussion/ })).toContainText('1')
+		await expect(filtres(page).getByRole('button', { name: /Activités/ })).toContainText('0')
 		await expect(filtres(page).getByRole('button', { name: /Organisation/ })).toContainText('1')
 		await expect(filtres(page).getByRole('button', { name: /Cycle de vie/ })).toContainText('2')
 	})

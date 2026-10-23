@@ -600,12 +600,21 @@ function FormulaireActivite({
 	const [enVol, setEnVol] = useState(false)
 	const [refus, setRefus] = useState<CleTraduction | null>(null)
 	const premierChamp = useRef<HTMLInputElement>(null)
+	const boutonEnvoi = useRef<HTMLButtonElement>(null)
 	// Le `max` du champ de date : une aide, jamais la règle — la base juge, avec sa tolérance (§2).
 	const [maintenant] = useState(() => versChampLocal(new Date().toISOString()))
 
 	useEffect(() => {
 		premierChamp.current?.focus()
 	}, [])
+
+	// APRÈS UN REFUS, LE FOCUS REVIENT AU BOUTON D'ENVOI, une fois réactivé (§5.63). Désactivé pendant le vol, il avait
+	// perdu le focus au profit du `body` : `Échap` ne refermait plus rien, et le clavier repartait du haut de la page.
+	// Défaut trouvé par `e2e/ui/activites.spec.ts` — jsdom ne retire pas le focus d'un bouton désactivé, et la preuve
+	// unitaire ne pouvait pas le voir.
+	useEffect(() => {
+		if (!enVol && refus !== null) boutonEnvoi.current?.focus()
+	}, [enVol, refus])
 
 	const envoyer = async () => {
 		const dureeLue = lireDuree(duree)
@@ -787,6 +796,7 @@ function FormulaireActivite({
 			<div className="flex flex-wrap gap-2">
 				<Button
 					{...droit}
+					ref={boutonEnvoi}
 					type="submit"
 					variante="primaire"
 					disabled={droit.disabled === true || enVol || sujet.trim() === ''}

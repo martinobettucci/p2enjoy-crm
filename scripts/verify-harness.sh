@@ -1491,7 +1491,12 @@ SCENARIOS_API=1169
 # hors d'un track, un slug inconnu jamais affiché, la lectrice et son channel refusé, la ligne propre à 900 px, le repli
 # au clavier à 390 px, la recherche ouverte sous `lg`, et le titre le plus long du seed aux quatre paliers. 879 + 14 =
 # 893, valeur COMPTÉE — « Total: 893 tests in 77 files ».
-SCENARIOS_UI=893
+# **905 depuis `CRM-067` tranche T3, 2026-10-23** : `activites.spec.ts`, fichier NEUF, **12** scénarios — les activités
+# du seed et les commandes de l'auteur, la place du bloc, le fil et sa sixième bascule, consigner-corriger-retirer au
+# clavier avec l'effet relu en base, la date future refusée dans le formulaire, la modération de l'administratrice, la
+# lectrice éteinte avec le motif, la visio de la lectrice, quatre paliers. 893 + 12 = 905, valeur COMPTÉE — « Total: 905
+# tests in 78 files ».
+SCENARIOS_UI=905
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

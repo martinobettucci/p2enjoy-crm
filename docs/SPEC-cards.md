@@ -1832,6 +1832,11 @@ unifié ». `CRM-044` fond les deux : la colonne de droite du détail de card de
 alimenté par **deux sources**, avec des filtres par type. Le §5.11 du design system écrit ce que
 l'écran montre ; les règles ci-dessous sont celles du produit.
 
+*Depuis `CRM-067` (2026-10-23) : **trois sources**. Les activités réalisées (`card_activities`) sont lues par leur
+propre requête, rangées à la date où elles ont eu lieu (`occurred_at`), sous une sixième famille « Activités »
+(`docs/SPEC-activites.md` §4, `docs/DESIGN_SYSTEM.md` §5.63, décision 651). Les règles ci-dessous valent pour elles sans
+changement.*
+
 - **Une seule requête par source, jamais une jointure côté client sur des pages différentes.** Le
   fil lit `card_comments` et `card_events` séparément — ce sont deux tables, deux politiques — puis
   **fusionne en mémoire** sur `(created_at, id)`. Aucune des deux n'est paginée (§14.1).
