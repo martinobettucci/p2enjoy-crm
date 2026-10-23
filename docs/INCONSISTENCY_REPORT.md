@@ -7324,3 +7324,21 @@ le contrat du seed veut, par nature, une échéance du jour.
 d'échéances du seed — ou le seed entier, convergent — avant de mesurer ; (2) la preuve accepte une base d'un autre jour
 et le dit, en vérifiant alors que la section « Aujourd'hui » se peuple au prochain passage du seed ; (3) documenter
 qu'une campagne suppose un seed du jour, et que le harnais le vérifie en prérequis, avec un message explicite.
+
+### INC-282 — une cellule de temps reprise pendant son envoi renvoyait l'ancienne valeur, et retirait la ligne qu'elle venait de créer
+
+> **CORRIGÉE le 2026-10-23** (`CRM-098` T2, révélée après la montée npm ; code commun à `CRM-106`).
+
+*Mesuré par la campagne de contrôle du 2026-10-23* : `e2e/ui/saisie-temps.spec.ts:102` (« une journée en heures »)
+rouge de façon déterministe, le mardi à « 5 h 30 » puis « 6 h » au lieu de « 7 h ». La trace montre, pour cinq valeurs,
+sept `POST` et deux `DELETE` : la cellule « Refonte de site » est retirée 11 ms après sa création, puis recréée.
+
+**Cause, reproduite en test unitaire, et identique avant et après `96336a75`** : deux défauts de la cellule.
+(1) Pendant un envoi, la reprise du focus et l'effet « hors du focus, le champ suit la valeur retenue » remettaient le
+champ à la valeur des propriétés, qui ne portent pas encore la valeur envoyée — soit vide ; la sortie suivante envoyait
+zéro, donc un `DELETE`. (2) `Entrée` déplaçait le focus à la réponse, même s'il était parti ailleurs entre-temps — la
+saisie suivante, qui saute une ligne, se le faisait voler, puis le reprenait. La cadence de Playwright réunit les deux.
+
+**Correction** : la cellule ne relit pas les propriétés tant qu'un envoi vole, et `Entrée` n'avance le focus que s'il
+est resté sur elle (`webapp/src/app/SaisieTemps.tsx`). **Preuves** : trois tests de `SaisieTemps.test.tsx`, chacun
+rouge sous la mutation qui retire son correctif ; `e2e/ui/saisie-temps.spec.ts` **7/7** sur la pile, deux fois.

@@ -2,8 +2,11 @@
 // @verifies docs/SPEC-temps.md §6.3 (la case « En heures » qui ne se décoche pas), §7.1 (« Saisir pour » réservé aux
 //           administrateurs), §7.2 (lignes, cellule qui s'enregistre seule, Entrée qui descend, une seule écriture à la
 //           fois, annonce du dépassement) ; docs/DESIGN_SYSTEM.md §5.54
+// @verifies INC-282 (docs/INCONSISTENCY_REPORT.md) — une cellule quittée puis reprise pendant son envoi ne renvoie pas
+//           l'ancienne valeur (aucun `DELETE` de la ligne qu'elle vient de créer), et `Entrée` ne vole pas le focus parti
+//           ailleurs pendant l'envoi ; reproduit d'après la trace de e2e/ui/saisie-temps.spec.ts:102
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -156,5 +159,102 @@ describe('la matrice', () => {
 		await waitFor(() => expect(screen.getByRole('option', { name: 'Driss Lemoine' })).toBeTruthy())
 		await userEvent.selectOptions(selecteur, 'p2')
 		expect(screen.getByTestId('temps-bandeau-autrui').textContent).toBe('Vous saisissez le temps de Driss Lemoine.')
+	})
+})
+
+describe('INC-282 — la cadence de Playwright : la saisie suivante commence pendant l’envoi de la précédente', () => {
+	/** Quatre lignes, dont une que la saisie saute ; chaque écriture répond après 40 ms et est consignée. */
+	function clientLent() {
+		const ecritures: string[] = []
+		let numero = 0
+		const lectures: Record<string, unknown[]> = {
+			tracks: [
+				{ id: 't1', name: 'Conseil', position: 1, channels: [{ id: 'c1', name: 'Prospection', position: 1 }, { id: 'c2', name: 'Grands comptes', position: 2 }] },
+				{ id: 't2', name: 'Studio', position: 2, channels: [] },
+			],
+			saisies_temps: [],
+			cards: [],
+		}
+		const client = {
+			from: (table: string) => {
+				let action = 'select'
+				let charge: Record<string, unknown> = {}
+				const chaine: Record<string, unknown> = {}
+				for (const nom of ['eq', 'is', 'in', 'gte', 'lte', 'ilike', 'order', 'limit', 'select']) chaine[nom] = () => chaine
+				for (const nom of ['insert', 'update', 'delete']) {
+					chaine[nom] = (valeur?: Record<string, unknown>) => {
+						action = nom
+						charge = valeur ?? {}
+						return chaine
+					}
+				}
+				chaine.then = (resoudre: (r: unknown) => unknown) => {
+					if (action === 'select') return Promise.resolve({ data: lectures[table] ?? [], error: null, status: 200 }).then(resoudre)
+					ecritures.push(action)
+					const ligne = { id: `s${++numero}`, jour: '2026-06-02', minutes: 0, track_id: null, channel_id: null, card_id: null, ...charge }
+					return new Promise((ok) => setTimeout(() => ok({ data: [ligne], error: null, status: 201 }), 40)).then(resoudre)
+				}
+				return chaine
+			},
+		}
+		return { client: client as unknown as ClientCrm, ecritures }
+	}
+
+	it('une cellule quittée puis reprise pendant son envoi garde sa valeur : aucune ligne créée n’est retirée', async () => {
+		const { client, ecritures } = clientLent()
+		monter(client)
+		fireEvent.click(await screen.findByRole('checkbox', { name: 'Saisir le mardi 2 juin en heures' }))
+		const champ = (cible: string) => screen.getByRole('textbox', { name: `${cible}, mardi 2 juin` })
+		act(() => champ('Prospection').focus())
+		fireEvent.change(champ('Prospection'), { target: { value: '1,5' } })
+		fireEvent.keyDown(champ('Prospection'), { key: 'Enter' })
+		// La saisie suivante saute « Grands comptes » et remplit « Studio » sans attendre la réponse …
+		act(() => champ('Studio').focus())
+		fireEvent.change(champ('Studio'), { target: { value: '1,5' } })
+		await act(() => new Promise((ok) => setTimeout(ok, 60)))
+		// … puis reprend « Studio » pour y presser Entrée, pendant que son écriture vole.
+		act(() => champ('Studio').focus())
+		fireEvent.keyDown(champ('Studio'), { key: 'Enter' })
+		await act(() => new Promise((ok) => setTimeout(ok, 120)))
+		act(() => champ('Grands comptes').focus())
+		await act(() => new Promise((ok) => setTimeout(ok, 60)))
+		expect(ecritures).toEqual(['insert', 'insert'])
+		expect(screen.getByTestId('temps-total-2026-06-02').textContent).toBe('3 h / 7 h')
+	})
+
+	it('quittée puis reprise pendant son propre envoi, la cellule ne revient pas à l’ancienne valeur', async () => {
+		const { client, ecritures } = clientLent()
+		monter(client)
+		await screen.findByRole('textbox', { name: 'Prospection, mardi 2 juin' })
+		const champ = (cible: string) => screen.getByRole('textbox', { name: `${cible}, mardi 2 juin` })
+		act(() => champ('Prospection').focus())
+		fireEvent.change(champ('Prospection'), { target: { value: '2' } })
+		// La sortie du champ envoie ; on y revient aussitôt, et `Entrée` attend l'envoi en cours.
+		act(() => champ('Studio').focus())
+		act(() => champ('Prospection').focus())
+		expect((champ('Prospection') as HTMLInputElement).value).toBe('2')
+		fireEvent.keyDown(champ('Prospection'), { key: 'Enter' })
+		await waitFor(() => expect(document.activeElement).toBe(champ('Grands comptes')))
+		await act(() => new Promise((ok) => setTimeout(ok, 60)))
+		expect(ecritures).toEqual(['insert'])
+		expect(screen.getByTestId('temps-total-2026-06-02').textContent).toBe('2 / 4 quarts')
+	})
+
+	it('`Entrée` n’avance pas le focus qui est parti ailleurs pendant l’envoi', async () => {
+		const { client } = clientLent()
+		monter(client)
+		await screen.findByRole('textbox', { name: 'Prospection, mardi 2 juin' })
+		const champ = (cible: string) => screen.getByRole('textbox', { name: `${cible}, mardi 2 juin` })
+		act(() => champ('Prospection').focus())
+		fireEvent.change(champ('Prospection'), { target: { value: '1' } })
+		fireEvent.keyDown(champ('Prospection'), { key: 'Enter' })
+		act(() => champ('Studio').focus())
+		await act(() => new Promise((ok) => setTimeout(ok, 80)))
+		expect(document.activeElement).toBe(champ('Studio'))
+		// Resté sur la cellule, `Entrée` descend bien d'une ligne.
+		act(() => champ('Grands comptes').focus())
+		fireEvent.change(champ('Grands comptes'), { target: { value: '1' } })
+		fireEvent.keyDown(champ('Grands comptes'), { key: 'Enter' })
+		await waitFor(() => expect(document.activeElement).toBe(champ('Studio')))
 	})
 })

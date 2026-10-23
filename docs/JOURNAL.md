@@ -32365,6 +32365,21 @@ crochet qui consignent CHAQUE rendu — `rerender` exécute les effets, seul ce 
 rouges sur le défaut, verts avec le correctif ; suite unitaire 4 019 verts (quatre fichiers de `CRM-108` ne se chargent
 pas, travail en cours d'une autre session). Le rejeu E2E reste à faire.
 
+### INC-282 — la cellule de temps qui retirait ce qu'elle venait de créer (`CRM-098`, `CRM-106`)
+
+*2026-10-23.* **Problème.** Signalé par la session de la montée npm : `e2e/ui/saisie-temps.spec.ts:102` rouge de façon
+déterministe, une valeur perdue sur cinq ; la trace montre des `DELETE` de lignes à peine créées. **Hypothèse
+examinée** : `96336a75` (`CRM-106` T2, cellule exportée), seul commit à toucher `SaisieTemps.tsx` depuis `CRM-098`.
+**Observation** : le scénario reconstitué en test unitaire d'après la trace (une ligne sautée, la cellule reprise
+pendant son envoi) émet le `DELETE` **avec l'ancienne version du fichier comme avec la nouvelle** : le défaut date de
+`CRM-098` T2, la cadence du rejeu l'a seulement rendu certain. La bissection sur la pile, envisagée, n'était donc plus
+nécessaire — et elle aurait changé l'arbre partagé sous les builds des autres sessions. **Décision** : deux corrections
+dans la cellule — elle ne relit pas les propriétés pendant un envoi ; `Entrée` n'avance le focus que s'il est resté
+sur elle. **Vérifications** : trois tests de régression, chacun rouge sous sa mutation ; `BandeTempsCard.test` vert (la
+bande réemploie la cellule) ; sur la pile, `e2e/ui/saisie-temps.spec.ts` **7/7**, le scénario de la journée en heures
+compris, rejoué deux fois — avant et après le seed de `CRM-108` — avec les specs de `CRM-106` et `CRM-107`
+(`docs/INCONSISTENCY_REPORT.md`, INC-282).
+
 ### décision 633 — `CRM-093` vérifiée de bout en bout ; la livraison de `main` attend la fin de `CRM-106` à `CRM-108`
 
 *2026-10-23, arbitrage du responsable.* **Constat.** La campagne `e2e:ui` complète du 2026-10-23, rejouée sur un build

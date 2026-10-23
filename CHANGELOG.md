@@ -64,6 +64,9 @@ connecteur MCP et manuel avec les tranches T4 et T5. La migration `0095` attend 
   et une valeur qui dépasserait la journée de 7 heures est annoncée avant l'envoi.
 - Semaine précédente, suivante, « Cette semaine » ; **« Ouvrir dans Temps »** mène à la matrice de la même semaine. Le
   résumé du bloc se met à jour après chaque saisie.
+- **Correction (INC-282)** : sur l'écran « Temps », une case quittée puis reprise pendant son enregistrement pouvait
+  retirer le temps qu'elle venait d'enregistrer, et `Entrée` pouvait déplacer le curseur alors qu'on était déjà passé à
+  une autre case.
 
 ### `CRM-103` T2 — l'onglet « Connecteur MCP » de la plateforme (décision 627, A3 et A5)
 

@@ -4,6 +4,9 @@
 //       pied, navigation, ajout d'une affaire) ; docs/DESIGN_SYSTEM.md §5.54 (matrice, en-tête d'un jour, cellule,
 //       clavier, pied, navigation, bandeau « Vous saisissez le temps de… »), §5.7 ter, §5.9, §5.21 (combobox), §8
 //
+// @spec INC-282 (docs/INCONSISTENCY_REPORT.md, docs/JOURNAL.md) — la cellule ne reprend pas l'ancienne valeur pendant un
+//       envoi, et `Entrée` n'avance le focus que s'il est resté sur elle ; docs/DESIGN_SYSTEM.md §5.54 (une seule
+//       écriture par cellule, `Entrée` descend d'une ligne)
 // @spec CRM-106 (docs/BACKLOG.md) — tranche T2 : la cellule, l'en-tête d'un jour, son pied et la case « En heures »
 //       sont exportés pour la bande de la fiche d'une affaire, qui les réemploie sans redessin ; docs/SPEC-temps.md
 //       §7.6 (points 1 et 4) ; docs/DESIGN_SYSTEM.md §5.54 bis (`Entrée` passe au jour suivant dans la bande)
@@ -604,10 +607,13 @@ export function CelluleTemps({
 		if (enVol.current === null) retenue.current = { minutes, existante }
 	}, [minutes, existante])
 
-	// Hors du focus, le champ suit la valeur retenue et le mode du jour.
+	// Hors du focus, le champ suit la valeur retenue et le mode du jour — SAUF PENDANT UN ENVOI (INC-282) : les propriétés
+	// ne portent pas encore la valeur envoyée, et le champ, ramené à l'ancienne, la renverrait à la sortie suivante (mesuré
+	// par l'E2E : la cellule quittée puis reprise pendant l'envoi émettait un `DELETE` de la ligne qu'elle venait de créer).
 	useEffect(() => {
-		if (!focus) setTexte(valeurDeChamp(minutes, mode))
+		if (!focus && enVol.current === null) setTexte(valeurDeChamp(minutes, mode))
 	}, [minutes, mode, focus])
+	const refChamp = useRef<HTMLInputElement>(null)
 
 	const nom = t('time.cell.aria', { cible: ligne.libelle, jour: nomJourLong(jour) })
 
@@ -667,7 +673,9 @@ export function CelluleTemps({
 		if (e.key === 'Enter') {
 			e.preventDefault()
 			void enregistrer().then((ok) => {
-				if (!ok) return
+				// INC-282 : le focus n'avance que s'il est encore ici. Parti ailleurs pendant l'envoi — un clic, la saisie
+				// suivante —, le ramener le volerait à la cellule que la personne est en train de remplir.
+				if (!ok || document.activeElement !== refChamp.current) return
 				if (entreeVers === 'jour') {
 					if (colonne < 6) deplacer(rang, colonne + 1)
 				} else if (rang + 1 < nombreLignes) deplacer(rang + 1, colonne)
@@ -709,11 +717,13 @@ export function CelluleTemps({
 				data-colonne={colonne}
 				data-testid="temps-cellule"
 				data-etat={etat.statut}
+				ref={refChamp}
 				onFocus={(e) => {
 					setFocus(true)
-					setTexte(valeurDeChamp(minutes, mode))
-					const champ = e.currentTarget
-					requestAnimationFrame(() => champ.select())
+					// Reprise pendant un envoi : le champ garde la valeur envoyée, non l'ancienne (INC-282).
+					if (enVol.current === null) setTexte(valeurDeChamp(minutes, mode))
+					const element = e.currentTarget
+					requestAnimationFrame(() => element.select())
 				}}
 				onChange={(e) => {
 					setTexte(e.target.value)
