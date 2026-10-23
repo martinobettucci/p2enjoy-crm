@@ -82,7 +82,10 @@ test.describe('Le connecteur MCP, par un vrai client (docs/SPEC-mcp.md §3, §4)
 		const session = new SessionMcp(jetons.access_token)
 		await session.ouvrir()
 		const { tools } = await session.appeler('tools/list')
-		expect(tools.map((o: { name: string }) => o.name)).toEqual(['crm_workspace_list'])
+		// Elle franchit la matrice : elle voit tout le catalogue, qui grandit avec les familles livrées (`recettes`,
+		// `CRM-108`). L'outil de référence en fait partie ; l'égalité stricte se prouve sur un compte à matrice connue
+		// (mcp/tests/test_integration_oauth.py, la lectrice).
+		expect(tools.map((o: { name: string }) => o.name)).toContain('crm_workspace_list')
 		const resultat = await session.appeler('tools/call', { name: 'crm_workspace_list', arguments: {} })
 		expect(resultat.isError ?? false).toBe(false)
 		// Superadministratrice en base, membre d'aucun espace : elle franchit la matrice, pas la RLS (D7).
