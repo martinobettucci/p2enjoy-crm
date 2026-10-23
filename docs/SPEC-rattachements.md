@@ -1,0 +1,331 @@
+# Spécification — Rattacher une affaire à plusieurs channels
+
+- Unité de backlog : **à créer à la validation** — proposée `CRM-111`, « Rattachements multiples d'une affaire ». Les
+  champs personnalisés communs de portée espace forment une **seconde unité**, proposée `CRM-112`, livrée **après**
+  celle-ci (décision 645) ; elle n'est pas spécifiée ici (§16). Les numéros seront vérifiés contre `docs/BACKLOG.md` au
+  moment de la validation : d'autres sessions en créent.
+- Arbitrages : `docs/JOURNAL.md`, décisions **637** (CRM se lit *Company Resource Mastering*), **638** (exploration, sens
+  arbitré), **639**, **642** et **643** (arbitrages des points ouverts), **645** (découpage, ordre, vocabulaire).
+- Documents liés : `docs/SCHEMA.md` §4 et §5, `docs/SPEC-cards.md`, `docs/SPEC-form-composer.md` §2 et §6,
+  `docs/SPEC-permissions-rls.md` §3 et §4, `docs/SPEC-workflow-engine.md` §6, `docs/SPEC-change-channel-workflow.md`,
+  `docs/SPEC-analytique.md`, `docs/SPEC-relances.md`, `docs/SPEC-recettes.md` §4 à §7, `docs/SPEC-costs.md` §3,
+  `docs/SPEC-mail-subsystem.md`, `docs/SPEC-mcp.md` §6.1 et §9.2, `docs/SPEC-webapp.md` §5.1 bis.
+- État : **brouillon, à valider par le responsable avant toute unité de backlog et tout code** (`CLAUDE.md` §5).
+
+Les passages marqués **[proposition]** sont des choix de rédaction de l'agent, non arbitrés ; ceux marqués **[à
+trancher]** sont des questions nouvelles, apparues en lisant le schéma réel, et listées au §15.
+
+---
+
+## 1. Objet
+
+Une **affaire** peut être **rattachée à plusieurs channels**, y compris de tracks différents. Le sens retenu (décision
+638, arbitrage 1) : **la même affaire traverse plusieurs processus en parallèle** — vente, production, administration.
+Plusieurs ventes au même client restent **plusieurs affaires**.
+
+- **Chaque rattachement a son propre état** : étape du workflow de son channel, responsable, prochaine action, montant,
+  issue, sommeil, archivage (décision 639).
+- **La fiche montre une partie commune et un bloc par rattachement.** Le bloc porte les champs du workflow du channel ;
+  la partie commune porte ce qui appartient à l'affaire.
+- **Coûts, recettes et temps sont comptés une seule fois**, par l'affaire, et se reportent dans la vue de chaque
+  rattachement.
+
+**Vocabulaire** (décision 645, arbitrage 4) : l'interface et le manuel disent **« rattachement »** — « rattacher à un
+channel », « retirer le rattachement », « aussi rattachée à … ». « Suivre » est réservé à l'abonnement aux
+notifications.
+
+**Connecteur MCP : oui** (décision 639, arbitrage 4), famille `affaires` — §11.
+
+## 2. Ce que la base porte aujourd'hui — mesuré le 2026-10-23 sur la pile locale
+
+**`public.cards`** porte en une ligne l'identité de l'affaire **et** son unique rattachement :
+
+```
+id, workspace_id, channel_id, workflow_id, current_step_id, title, description, position, owner_id, amount,
+currency, probability_override, next_action, next_action_at, entered_step_at, health_score, email_local_part,
+snoozed_until, archived_at, deleted_at, created_by, created_at, updated_at, search_tsv, deleted_by
+```
+
+- **Trois politiques**, toutes sur la colonne `channel_id` : lecture `app.can_read_channel(channel_id)`, insertion et
+  mise à jour `app.can_write_channel(channel_id)`. Aucune suppression.
+- **Colonnes modifiables par `authenticated`** : `amount`, `archived_at`, `currency`, `deleted_at`, `description`,
+  `next_action`, `next_action_at`, `owner_id`, `position`, `probability_override`, `title`.
+- **Clés sortantes** : `(channel_id, workflow_id) → channels (id, workflow_id)` *deferrable* — l'affaire suit le workflow
+  de son channel ; `(current_step_id, workflow_id) → workflow_steps` ; `(channel_id, workspace_id) → channels`.
+- **Tables filles** : `card_field_values` par `(card_id, workflow_id)` ; `card_comments`, `card_contacts`, `card_events`,
+  `card_sequence_enrollments`, `notifications`, `saisies_temps` par `(card_id, workspace_id)` ; `card_costs`,
+  `card_revenues`, `mail_messages`, `mail_attachments`, `mail_outbox` par `card_id`.
+- **Huit déclencheurs** : événements de timeline (insertion, mise à jour, sommeil), position, corbeille, devise
+  verrouillée, adresse mail, restauration, `updated_at`.
+- **Trente-neuf fonctions** des schémas `public` et `app` lisent `cards`. Celles qui lisent au moins une colonne qui
+  change de table (§3.2), par groupe :
+
+| Groupe | Fonctions |
+|---|---|
+| Droits | `app.can_read_card_pour`, `app.can_write_card` (`channel_id`) |
+| Gestes | `creer_affaire`, `move_card`, `move_card_to_channel`, `snooze_card`, `wake_card`, `change_channel_workflow`, `plan_card_remapping`, `restore_workflow_version`, `app.appliquer_composition`, `app.cards_attribuer_position` |
+| Lectures métier | `cards_figees`, `entonnoir_conversion`, `rentabilite_affaires`, `temps_valorise`, `recherche_globale`, `occupation_du_workflow`, `previsualiser_exigence`, `app.catalogue_refuser_archivage_noeud_occupe`, `app.defauts_proposition_ia` |
+| Ordonnanceur | `app.relancer_cards_figees`, `app.executer_sequences_relance` (`entered_step_at`), `armer_sequence_relance` (`owner_id`) |
+| Messagerie | `chemin_dossier_card`, `inbox_arborescence` (`channel_id`), `rendre_modele_email`, `app.mail_template_variables` (`amount`, `next_action`, `next_action_at`), `queue_outbound_email` (`owner_id`), `app.card_par_adresse`, `classify_message`, `classer_message_automatiquement` |
+
+Certaines occurrences d'`archived_at` visent celui d'un channel ou d'un track, non de l'affaire : la tranche T1 relit
+chaque fonction et rend la liste exacte, **mesurée**, de celles qui changent.
+
+- **Côté webapp**, dix-neuf modules lisent `channel_id` et une trentaine `archived_at` ; écrans directement concernés :
+  `Board`, `ListeCards`, `RouteCard`, `EnTeteCard`, `FormulaireCard`, `MaJournee`, `AffairesFigees`, `Pilotage`,
+  `Rentabilite`, `BlocRentabiliteCard`, `BlocSequenceCard`.
+- **Volume** : 41 affaires dans la base de développement seedée.
+
+## 3. Le modèle
+
+### 3.1 `public.card_rattachements` — table nouvelle
+
+**[proposition]** Le nom suit le vocabulaire arrêté. `card_attachments` est écarté : « attachments » désigne déjà les
+pièces jointes (`mail_attachments`).
+
+| Colonne | Type | Règle |
+|---|---|---|
+| `id` | `uuid` | PK, `gen_random_uuid()` |
+| `workspace_id` | `uuid` | non nul ; clé composite `(card_id, workspace_id) → cards (id, workspace_id)` `on delete cascade` |
+| `card_id` | `uuid` | non nul |
+| `channel_id` | `uuid` | non nul ; clés composites `(channel_id, workspace_id) → channels` et `(channel_id, workflow_id) → channels (id, workflow_id)` *deferrable* — reprises de `cards` |
+| `workflow_id` | `uuid` | non nul ; suit le channel, comme aujourd'hui |
+| `current_step_id` | `uuid` | non nul ; `(current_step_id, workflow_id) → workflow_steps` ; **non modifiable directement**, comme aujourd'hui |
+| `position` | `numeric` | position dans le board du channel ; attribuée par déclencheur |
+| `owner_id` | `uuid` | responsable du rattachement ; FK `profiles` `on delete set null` |
+| `amount` | `numeric(14,2)` | montant du rattachement ; **devise de l'affaire** (décision 642, arbitrage 3) |
+| `probability_override` | `numeric(5,2)` | sinon celle de l'étape |
+| `next_action`, `next_action_at` | `text`, `timestamptz` | prochaine action du rattachement |
+| `entered_step_at` | `timestamptz` | base des relances |
+| `health_score` | `integer` | |
+| `snoozed_until` | `timestamptz` | fermée en écriture, écrite par `snooze_card` et `wake_card` |
+| `archived_at` | `timestamptz` | rattachement archivé |
+| `created_by`, `created_at`, `updated_at` | | posés par la base |
+
+**Contraintes.**
+
+- `UNIQUE (card_id, channel_id)` : une affaire n'est rattachée qu'une fois à un channel. Un rattachement archivé compte :
+  rattacher de nouveau, c'est désarchiver **[proposition]**.
+- `UNIQUE (id, workflow_id)` : condition de la clé composite de `card_field_values` (§3.3).
+- **Toute affaire a au moins un rattachement**, archivé ou non. Tenu par un déclencheur de contrainte *deferred* : la
+  création insère l'affaire puis son rattachement dans la même transaction.
+
+### 3.2 Ce qui reste à l'affaire, et ce qui la quitte
+
+**Restent sur `cards`** : `id`, `workspace_id`, `title`, `description`, `currency`, `email_local_part`, `deleted_at`,
+`deleted_by`, `created_by`, `created_at`, `updated_at`, `search_tsv`. Restent aussi attachés à l'affaire : commentaires,
+contacts, mails, coûts, recettes, saisies de temps, notifications.
+
+**Quittent `cards`** : `channel_id`, `workflow_id`, `current_step_id`, `position`, `owner_id`, `amount`,
+`probability_override`, `next_action`, `next_action_at`, `entered_step_at`, `health_score`, `snoozed_until`,
+`archived_at`.
+
+**Une affaire archivée** est une affaire dont **tous** les rattachements sont archivés (décision 639). La corbeille reste
+un geste de l'affaire entière : `deleted_at` est sur `cards`, et une affaire à la corbeille disparaît de tous ses
+channels.
+
+**[proposition] Les colonnes sont retirées de `cards`, pas conservées en miroir.** Une copie synchronisée par
+déclencheur serait une seconde vérité, qui mentirait dès qu'une affaire a deux rattachements.
+
+### 3.3 `card_field_values` — les valeurs appartiennent au rattachement
+
+Décision 642, arbitrage 2. La clé passe de `(card_id, field_id)` à **`(rattachement_id, field_id)`**. La charnière
+`workflow_id` est conservée, avec la clé composite `(rattachement_id, workflow_id) → card_rattachements (id,
+workflow_id)` : elle garantit, comme aujourd'hui, qu'une valeur ne répond qu'à une question de son workflow.
+
+**[proposition]** `card_id` est conservé et dénormalisé, sa vérité garantie par une clé composite `(rattachement_id,
+card_id)`. Il sert la timeline (`field_changed`) et la recherche, sans relire le rattachement.
+
+### 3.4 Champs obligatoires et transitions
+
+Les champs exigés par une transition (`workflow_transition_required_fields`) et la visibilité par étape
+(`form_field_rules`) se lisent **sur le rattachement** : son étape, ses valeurs. Rien ne change dans leurs tables.
+
+## 4. Autorisations — toutes appliquées en base (`CLAUDE.md` §10)
+
+| Objet ou geste | Autorisé lorsque |
+|---|---|
+| Lire l'**affaire** et sa partie commune (commentaires, contacts, mails, coûts, recettes, temps) | l'appelant lit **au moins un** des channels rattachés, archivés compris (décision 642, arbitrage 1) |
+| Lire un **rattachement** et ses **valeurs de bloc** | `app.can_read_channel(channel_id)` du rattachement |
+| Écrire la **partie commune** (titre, description, contacts, coûts, recettes) | l'appelant écrit **au moins un** des channels rattachés (décision 639, arbitrage 3) |
+| Écrire un **rattachement** : bloc, étape, responsable, prochaine action, montant, sommeil, archivage | `app.can_write_channel(channel_id)` du rattachement |
+| **Rattacher** à un channel | l'appelant écrit l'affaire (un channel suffit) **et** écrit le channel cible |
+| **Retirer** un rattachement | `app.is_workspace_admin` ; jamais le dernier (décision 643, arbitrage 3) |
+
+**Un rattachement à un channel illisible est masqué, existence comprise.** La RLS de `card_rattachements` ne le rend
+pas. Aucune fonction ne révèle le nombre total de rattachements d'une affaire à qui ne les lit pas tous.
+
+**Ce qui change dans la chaîne d'accès.** `app.can_read_card_pour` et `app.can_write_card` deviennent « il existe un
+rattachement dont le channel est lisible (ou écrivable) ». Les politiques de `cards` cessent de lire une colonne de la
+ligne : elles appellent une fonction `security definer` qui lit `card_rattachements`, une autre table. La règle du §3.5
+de `docs/SPEC-permissions-rls.md` — une politique ne relit jamais sa propre table — est donc respectée. **Le coût est à
+mesurer** en T1 (`EXPLAIN ANALYZE` du board et de la liste sur le seed) : c'est le chemin le plus emprunté du produit.
+
+**Conséquences pour les tables filles.**
+- `card_costs` garde sa double condition (affaire **et** budget, `docs/SPEC-costs.md` §3.1).
+- Les mentions et notifications s'appuient sur `app.can_read_card_pour`, donc sur la nouvelle règle.
+- Un changement d'étape du rattachement B ne prévient que qui lit le channel de B **[proposition]**.
+
+## 5. Les gestes
+
+| Geste | Fonction | Règle |
+|---|---|---|
+| Créer une affaire | `creer_affaire(p_channel, p_titre)` — signature inchangée | crée l'affaire **et** son premier rattachement, à l'étape initiale |
+| Rattacher | `rattacher_affaire(p_card, p_channel)` — nouvelle | **étape initiale** du workflow du channel, bloc vide (décision 643, arbitrage 2) ; si un rattachement archivé existe déjà, il est désarchivé tel quel |
+| Faire avancer | `move_card(card_id, to_step_id, comment)` | voir la compatibilité ci-dessous |
+| Déplacer vers un autre channel | `move_card_to_channel(...)` | déplace **un rattachement** ; refusé si l'affaire est déjà rattachée au channel cible |
+| Sommeil, réveil | `snooze_card`, `wake_card` | par rattachement |
+| Archiver, désarchiver | mise à jour de `archived_at` du rattachement | droit d'écriture sur son channel |
+| Retirer | `retirer_rattachement(p_rattachement, discard_field_values)` — nouvelle | administrateur ; refusé sur le dernier ; la perte des valeurs exige `discard_field_values = true`, selon la doctrine de `move_card_to_channel` |
+| Changer le workflow d'un channel | `change_channel_workflow` | remappe **les rattachements** du channel |
+
+**Compatibilité des signatures [proposition].** Les fonctions qui prennent `card_id` gardent leur signature. Elles
+agissent quand l'affaire a **un seul** rattachement que l'appelant peut écrire, et refusent avec un code nommé
+`rattachement_ambigu` sinon. Elles reçoivent une variante qui désigne le rattachement (`p_rattachement uuid`). Le
+connecteur MCP et la webapp passent à la variante ; l'ancienne forme ne casse rien pendant la transition.
+
+**Timeline.** `card_events` reçoit une colonne `rattachement_id`, nulle pour les événements de l'affaire (création,
+corbeille, contacts, mails), et renseignée pour `moved`, `assigned`, `snoozed`, `woken`, `stalled`, `archived`,
+`unarchived` et `field_changed`. **Deux valeurs s'ajoutent au vocabulaire** : `attached` et `detached`. Elles sont
+ajoutées dans le **même** changement que le déclencheur qui les écrit, comme l'a été `channel_changed`. Les événements
+existants reçoivent le rattachement unique de leur affaire à la migration.
+
+## 6. Analytique et relances
+
+- **Entonnoir** (`entonnoir_conversion`) : une ligne par **rattachement**, montant et probabilité du rattachement. Le
+  total de l'espace **additionne** les montants des rattachements (décision 639, arbitrage 2).
+- **Affaires figées** (`cards_figees`, `app.relancer_cards_figees`) : par rattachement, sur son `entered_step_at`. Un
+  rattachement peut être figé pendant que l'autre avance.
+- **Ma journée** : les prochaines actions des rattachements dont l'appelant est responsable.
+- **Rentabilité** (`rentabilite_affaires`) : **une ligne par rattachement × devise** (décision 643, arbitrage 1).
+  L'état et le montant sont ceux du rattachement. Les coûts, les recettes et le personnel de l'affaire sont rappelés
+  sur chaque ligne avec une colonne `partage` (vrai quand l'affaire a plusieurs rattachements lisibles), et le total de
+  l'écran ne les compte **qu'une fois**. Le filtre d'état s'applique à l'état du rattachement. Le contrat d'API change :
+  `docs/SPEC-recettes.md` §5 et l'outil `crm_profitability_report` sont mis à jour dans la même tranche.
+- **Temps valorisé** (`temps_valorise`) : les saisies restent attachées à l'affaire. La ventilation par channel montre
+  l'affaire dans chaque channel rattaché, marquée partagée, comme la rentabilité **[proposition]**.
+
+## 7. Messagerie
+
+- **L'adresse de l'affaire ne change pas** (`email_local_part` reste sur `cards`), et un mail classé appartient à
+  l'affaire : il est lisible depuis tout rattachement lisible (décision 642, arbitrage 1).
+- **[à trancher] Le dossier IMAP de l'affaire.** `chemin_dossier_card` rend aujourd'hui `CRM/<track>/<channel>/<affaire>`,
+  et ce dossier existe réellement sur le serveur IMAP. Une affaire à deux rattachements n'a qu'un dossier. §15, point 1.
+- **[à trancher] Les cadences de relance.** `armer_sequence_relance` lit le responsable de l'affaire, et
+  `app.executer_sequences_relance` lit `entered_step_at`. §15, point 2.
+- **[à trancher] Les variables des modèles d'email.** `app.mail_template_variables` et `rendre_modele_email` exposent
+  le montant, la prochaine action et le channel de l'affaire. §15, point 3.
+
+## 8. Écrans
+
+- **Board et liste d'un channel** : l'affaire paraît dans chaque channel où elle est rattachée, à l'étape de **ce**
+  rattachement, avec ses responsable, montant et prochaine action. Une pastille « aussi rattachée à N » ne compte que
+  les rattachements lisibles ; son survol, ou son focus, les nomme.
+- **La fiche** (`/tracks/:slugTrack/:slugChannel/cards/:idCard`) :
+  - **en tête, la partie commune** : titre, description, contacts, mails, commentaires, coûts, recettes, temps ;
+  - **puis un bloc par rattachement lisible**. Le bloc du channel de l'adresse vient en premier et est ouvert ; les
+    autres sont repliés **[proposition]**. Chaque bloc porte l'étape et ses transitions, les champs du workflow, le
+    responsable, la prochaine action, le montant, le sommeil et l'archivage ;
+  - le bouton **« Rattacher à un channel »** propose les channels que l'appelant écrit et auxquels l'affaire n'est pas
+    rattachée ;
+  - **« Retirer le rattachement »** n'est rendu qu'aux administrateurs, désactivé sur le dernier rattachement, avec une
+    confirmation qui nomme la perte des valeurs.
+- **Adresse d'un channel sans rattachement** : l'affaire n'est pas introuvable, mais elle n'est pas là. L'écran le dit
+  et propose les rattachements lisibles **[proposition]**. Le fil d'Ariane de `CRM-110` suit le channel de l'adresse.
+- **Ma journée, Affaires figées, Pilotage, Rentabilité** : une ligne par rattachement, la partie commune rappelée.
+- `docs/DESIGN_SYSTEM.md` recevra le bloc de rattachement, la pastille « aussi rattachée à » et la confirmation de
+  retrait, et `docs/manual.md` un chapitre « Rattacher une affaire à plusieurs channels », dans les tranches qui les
+  livrent.
+
+## 9. Recherche
+
+`recherche_globale` rend **une ligne par affaire**. Elle nomme les rattachements lisibles, et le lien mène au premier
+d'entre eux dans l'ordre des tracks et des channels **[proposition]**.
+
+## 10. Migration et reprise
+
+1. Créer `card_rattachements`, puis y copier une ligne par affaire depuis les colonnes de `cards`, en conservant les
+   valeurs. Le rattachement unique de chaque affaire existante a l'`id` d'une nouvelle ligne.
+2. Repointer `card_field_values` vers le rattachement unique de son affaire, puis renseigner `card_events.rattachement_id`
+   pour les événements de rattachement.
+3. Réécrire les fonctions du §2, les politiques et les déclencheurs ; retirer les colonnes de `cards` en dernier.
+4. Régénérer les types (`webapp/src/lib/database.types.ts`).
+
+**Retour arrière.** Il reste possible tant que chaque affaire n'a qu'un rattachement : on recopie les colonnes. Il ne
+l'est plus dès qu'une affaire en a deux, car il faudrait choisir lequel perdre. `docs/PROD_MIGRATIONS.md` le dit, et
+recommande une sauvegarde avant application.
+
+**Production** : migration à appliquer par l'humain, jamais automatiquement (`CLAUDE.md` §9 et §24).
+
+## 11. Connecteur MCP — famille `affaires`
+
+`CRM-104` n'est pas livrée : ses outils s'inscrivent à son catalogue (`docs/SPEC-mcp.md` §9.2), mis à jour à la
+validation de cette spécification.
+
+| Action | Outils |
+|---|---|
+| `consulter` | `crm_card_get` rend la partie commune et les rattachements lisibles ; `crm_card_list` liste les rattachements d'un channel |
+| `ajouter` | `crm_card_attach` — rattacher à un channel |
+| `modifier` | `crm_card_move` et `crm_card_move_to_channel` désignent **un rattachement** ; `crm_card_snooze`, `crm_card_wake` ; `crm_card_attachment_update` — responsable, prochaine action, montant, champs du bloc |
+| `supprimer` | `crm_card_attachment_archive` — **archiver** un rattachement ; **aucun outil de retrait** : c'est un geste d'administrateur dans la webapp (décision 643) |
+
+**Famille `recettes`** : `crm_profitability_report` suit le nouveau contrat de `rentabilite_affaires` (§6).
+
+## 12. Seed
+
+Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`, `rattacher_affaire`) :
+
+- une affaire rattachée à **deux channels de deux tracks** — une vente et une production —, avec deux responsables,
+  deux montants et deux étapes ;
+- une affaire avec un **rattachement archivé** et un actif ;
+- un **rattachement en sommeil** sur une affaire dont l'autre rattachement est actif ;
+- deux rattachements qui suivent le **même workflow** global, avec des valeurs de bloc différentes ;
+- la **lectrice** du seed lit un seul des deux channels : elle voit la partie commune et un seul bloc, et rien ne lui
+  révèle l'autre.
+
+## 13. Preuves attendues
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | invariants (au moins un rattachement, unicité, clés composites, dernier rattachement non retirable) ; masquage d'un rattachement illisible ; `rattachement_ambigu` ; vocabulaire `attached` et `detached` ; une mutation tuée par règle |
+| API, avec les jetons réels | la lectrice ne lit ni le rattachement ni les valeurs du channel qu'elle ne lit pas ; un membre qui écrit un seul channel modifie le titre mais pas le bloc de l'autre ; un non-administrateur ne retire pas ; entonnoir et rentabilité rejoués sur le seed |
+| Unitaires | la fiche (partie commune et blocs), la pastille, la confirmation de retrait, l'agrégation « comptée une fois » |
+| E2E | rattacher une affaire depuis la fiche, la voir dans le board de l'autre channel, la faire avancer dans un seul, archiver un rattachement, retrait par l'administratrice, masquage pour la lectrice |
+| Visuel | captures JPEG de la fiche à deux blocs aux quatre paliers, du board avec la pastille, de la confirmation de retrait, de l'état de la lectrice |
+| MCP | les outils du §11 contre la vraie base, refusés par la matrice puis par le CRM |
+
+## 14. Tranches proposées
+
+| Tranche | Contenu |
+|---|---|
+| T1 | Mesures : liste exacte des fonctions touchées, coût de la RLS. Migration : table, reprise des données, `card_field_values`, `card_events`, invariants, politiques ; pgTAP et API des droits |
+| T2 | Réécriture des fonctions de gestes (`creer_affaire`, `move_card`, `move_card_to_channel`, sommeil, `change_channel_workflow`, remappage) et des nouvelles (`rattacher_affaire`, `retirer_rattachement`) ; types régénérés |
+| T3 | Lectures métier : entonnoir, figées et relances, Ma journée, recherche, temps valorisé |
+| T4 | Rentabilité ventilée : fonction, écran, outil `crm_profitability_report` |
+| T5 | Messagerie, selon les arbitrages du §15 |
+| T6 | Webapp : board et liste, fiche à blocs, rattacher, archiver, retirer ; design system ; manuel ; captures |
+| T7 | Seed du §12 et campagne E2E complète |
+| T8 | Outils MCP du §11, au catalogue de `CRM-104` |
+
+## 15. Points à trancher avant validation
+
+1. **Le dossier IMAP de l'affaire.** Il en existe un seul, sous un track et un channel. Options :
+   (a) sous le **plus ancien** rattachement, stable tant qu'il n'est pas retiré **[recommandation]** ;
+   (b) hors de l'arborescence, par exemple `CRM/Affaires/<affaire>` ;
+   (c) un dossier par rattachement, avec des copies des messages.
+2. **Les cadences de relance** : l'inscription reste à l'affaire, mais l'expéditeur par défaut est le responsable, et le
+   déclenchement lit `entered_step_at`. **[recommandation]** L'inscription désigne un rattachement, qui donne le
+   responsable et l'étape.
+3. **Les variables des modèles d'email** (`{{montant}}`, prochaine action, channel) : **[recommandation]** le rendu prend
+   le rattachement depuis le bloc duquel on écrit. Un envoi par MCP le désigne explicitement.
+4. **Les noms et signatures** proposés : `card_rattachements`, `rattacher_affaire`, `retirer_rattachement`,
+   `rattachement_ambigu`, ainsi que le maintien des signatures par `card_id`.
+
+## 16. Hors périmètre
+
+- **Les champs personnalisés communs de portée espace** (décision 642, arbitrage 4) : seconde unité, proposée
+  `CRM-112`, spécifiée après celle-ci (décision 645). Elle posera son champ dans la partie commune de la fiche, que la
+  présente unité aura séparée des blocs.
+- **Plusieurs ventes au même client** : plusieurs affaires, sans lien nouveau (décision 638).
+- **Une affaire rattachée à deux espaces** : un rattachement reste dans l'espace de son affaire, par les clés
+  composites.
