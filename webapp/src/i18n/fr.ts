@@ -1339,9 +1339,6 @@ export const fr = {
 	'members.refused.forbidden': 'Ce geste est réservé aux administrateurs de l’espace.',
 	// `CRM-070` T3 — les attentes (docs/SPEC-membres.md §3.2). Le bloc réemploie `platform.attentes.*` (DS §5.61).
 	'members.attentes.remplacee': 'Attente de {email} remplacée : {avant} devient {apres}.',
-	'admin.settings.index.notifications': 'Notifications : ce que vous recevez',
-	'admin.settings.index.notifications.body':
-		"Choisir les notifications qui vous parviennent dans l'application. Ce réglage est le vôtre, et personne d'autre ne le voit.",
 	// `CRM-070` T4 — les droits fins d'un membre (docs/SPEC-membres.md §3.3, DS §5.61).
 	'members.rights.title': 'Droits fins',
 	'members.rights.intro': 'Restreindre ou rouvrir l’accès d’un membre à un track ou à un channel. Le droit le plus précis l’emporte : celui d’un channel sur celui de son track, celui d’un track sur le rôle.',
@@ -1363,6 +1360,9 @@ export const fr = {
 	'members.rights.effective.none': 'Aucun accès',
 	'members.rights.readableByChannel': 'Lisible par l’un de ses channels',
 	'members.rights.changed': 'Droit de {nom} sur « {objet} » : {droit}.',
+	'admin.settings.index.notifications': 'Notifications : ce que vous recevez',
+	'admin.settings.index.notifications.body':
+		"Choisir les notifications qui vous parviennent dans l'application. Ce réglage est le vôtre, et personne d'autre ne le voit.",
 
 	// --- Préférences de notification — CRM-064 tranche 4 -----------------------------------
 	// docs/SPEC-notifications.md §42 à §46, docs/DESIGN_SYSTEM.md §5.45.
