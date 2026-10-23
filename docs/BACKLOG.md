@@ -15653,7 +15653,7 @@ charges en % du brut, frais et avantages en montant ; calculateur seulement. Sp�
 - [ ] **T4 — livraison** : reconstruction de la webapp en production, constat. Aucune migration, aucune fonction, aucune
       variable.
 
-### CRM-108 — Recettes d'une affaire et rapport de rentabilité `[ ]`
+### CRM-108 — Recettes d'une affaire et rapport de rentabilité `[~]`
 *Créée le 2026-10-23 — demande du responsable : « pouvoir saisir les résultats par affaire, comme on le fait pour les
 coûts, et avoir un rapport de rentabilité ». Six arbitrages du responsable le même jour (`docs/JOURNAL.md` décision
 632). Spécifié avant le code : `docs/SPEC-recettes.md`, `docs/DESIGN_SYSTEM.md` §5.60, `docs/SCHEMA.md` §9 sexies,
@@ -15713,7 +15713,7 @@ nouvelle `recettes`, outils livrés par cette unité.*
       (`DUREE_VISIBILITE_S`) ; un droit posé juste après un appel du même sujet ne se voit qu'à son expiration — le test
       rougissait selon la cadence. Il attend désormais l'état dans `tools/list`, borné à trois fois cette durée, au lieu
       d'une pause.
-- [~] **T5 — preuves sur la pile réelle** : seed §21 ; API (refus avec jetons réels) ; E2E souris et clavier, fiche, saisie
+- [x] **T5 — preuves sur la pile réelle** : seed §21 ; API (refus avec jetons réels) ; E2E souris et clavier, fiche, saisie
       en série, rapport et filtres, membre refusé, effet d'un outil du connecteur ; captures `docs/captures/CRM-108/` aux
       quatre paliers observées ; `docs/manual.md` (chapitre des recettes et de la rentabilité, chapitre 11 du
       connecteur) ; `README.md` si besoin ; `CHANGELOG.md` ; campagnes après synchronisation.
@@ -15737,7 +15737,13 @@ règle dans la webapp et le connecteur, et les captures observées.
       *Complété le 2026-10-23* : l'effet d'un outil du connecteur **constaté dans la fiche** — `e2e/ui/rentabilite`
       **4/4** : un vrai client MCP du business developer, consenti et connecté au SSO dans le navigateur, écrit une ligne
       et un réel sur c4 ; la fiche du même commercial les affiche (capture `fiche-recette-par-le-connecteur-1440`
-      observée). **Reste avant `[x]`** : la campagne E2E complète après synchronisation.
+      observée).
+      *Campagnes complètes le 2026-10-23*, sur `652d890e` synchronisée (jouées par la session de `CRM-070`) : API
+      **1157/1157** (recettes comprises) ; UI 869 passés, 18 échoués, dont `e2e/ui/rentabilite` **4/4**. Un seul échec
+      venait de `CRM-108` : `connecteur-mcp.spec.ts:59` exigeait le seul outil de référence pour la superadministratrice,
+      qui voit désormais aussi les outils « recettes » — corrigé en `363bc1af` (inclusion, comme `fb13ec43` pour
+      l'intégration), rejoué **8/8**. Les dix-sept autres sont hors `CRM-108` : treize au palier 390 px (en-tête en cours
+      de `CRM-110`), deux 502 transitoires en console. L'unité reste `[~]` jusqu'à T6.
 
 
 ### CRM-109 — Journaliser les refus d'admission, pour dire d'une attente « jamais connectée » ou « refusée » `[ ]`
