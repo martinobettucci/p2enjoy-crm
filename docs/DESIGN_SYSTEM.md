@@ -5974,7 +5974,9 @@ relecture des §4, §5.43, §5.46, §7, §8 et §12.2.* Ce que chaque route plac
   Le dernier niveau reste le `h1` en `--text-h2`, seul titre de la page, et porte `aria-current="page"`. Le `nav`
   « Fil d'Ariane » contient une `ol` : la structure est annoncée comme une liste ordonnée de niveaux.
 - **UN NOM EST UNE DONNÉE : TRONQUÉ, JAMAIS PERDU.** Chaque ancêtre est borné à `24ch` et tronqué par `…`, son nom
-  complet en `title` ; le titre prend le reste de la ligne et se tronque en dernier.
+  complet en `title` ; le titre prend le reste de la ligne et se tronque en dernier. **Un ancêtre ne descend jamais sous
+  `10ch`** : il cède avant le titre, mais à 1152 px, sur le titre le plus long du seed, « P2E… / Stu… / Mai… » ne
+  nommait plus rien (capture de la tranche T2).
 - **SOUS 1024 px, LE FIL A SA PROPRE LIGNE** (décision 641) : l'en-tête passe sur deux lignes — le tiroir, la
   recherche, la cloche et l'identité en haut, le fil sur toute la largeur en dessous. ≥ 1024 px, une seule ligne.
   Mesuré avant cette règle : à 390 px, la ligne unique ne laissait au titre qu'une vingtaine de pixels — « B. » pour

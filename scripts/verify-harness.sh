@@ -1476,7 +1476,12 @@ SCENARIOS_API=1165
 # « Connecteur MCP » à la souris avec l'effet constaté par un vrai client MCP, au clavier, la fiche d'une
 # superadministratrice, le journal filtré, quatre paliers, le refus d'une administratrice d'espace. 873 + 6 = 879. Au même
 # relevé, la liste compte 893 : les 14 de `fil-ariane.spec.ts` (`CRM-110`) restent hors de ce compte.
-SCENARIOS_UI=879
+# **893 depuis `CRM-110` tranches T2 et T3, même jour** : `fil-ariane.spec.ts`, fichier NEUF, **14** scénarios — le
+# chemin d'une affaire à 1440 px et la navigation par ses liens, channel et liste, coûts et budget, `Workspace / titre`
+# hors d'un track, un slug inconnu jamais affiché, la lectrice et son channel refusé, la ligne propre à 900 px, le repli
+# au clavier à 390 px, la recherche ouverte sous `lg`, et le titre le plus long du seed aux quatre paliers. 879 + 14 =
+# 893, valeur COMPTÉE — « Total: 893 tests in 77 files ».
+SCENARIOS_UI=893
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

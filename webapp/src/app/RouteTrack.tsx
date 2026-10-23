@@ -17,6 +17,8 @@
 //       channels relus, l'annonce et le focus sur son onglet ; refermé, le focus rendu à la commande ; l'état vide
 //       « aucun channel » sans lien (docs/SPEC-administration-arborescence.md §13.3, §13.6 ; docs/DESIGN_SYSTEM.md
 //       §5.51, §5.55 ; docs/JOURNAL.md décision 623)
+// @spec CRM-110 (docs/BACKLOG.md) tranche T2 — le fil d'Ariane : sur un channel ouvert, le track le précède et le
+//       titre est le nom du channel ; sans channel lu, le titre reste le nom du track (docs/SPEC-webapp.md §5.1 bis)
 //
 // La destination que `CRM-020` avait annoncée sans pouvoir la livrer : « un track s'ouvre sur ses
 // channels, livrés par `CRM-021` » (docs/DESIGN_SYSTEM.md §12.4).
@@ -45,6 +47,7 @@ import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
 import { composerBoard, useContenuBoard, type CardBoard, type EtapeBoard } from '../lib/board'
 import { projeterChannels, useContenuTrack, type Channel, type TrackOuvert } from '../lib/channels'
+import { ancetresChannel } from '../lib/fil-ariane'
 import { PARAM_NOUVEAU_CHANNEL, VALEUR_NOUVEAU_CHANNEL_TRACK } from '../lib/nouveau-channel'
 import {
 	CLE_URL_SOMMEIL,
@@ -143,10 +146,14 @@ export function RouteTrack({ vue = 'board' }: { readonly vue?: VueChannel } = {}
 	)
 	const apresFermeture = useCallback(() => setFocusApres({ cible: 'commande' }), [])
 
+	// Le titre est l'objet le plus profond que la route a lu : le channel ouvert, sinon le track (§5.1 bis).
+	const titre = channelOuvert?.name ?? track?.name
+
 	return (
 		<AppShell
 			cleTitreRoute={CLE_TITRE_TRACK}
-			{...(track === null ? {} : { titreRoute: track.name })}
+			{...(titre === undefined ? {} : { titreRoute: titre })}
+			ancetres={ancetresChannel(track, channelOuvert)}
 			etatChannels={etatChannels}
 			onRechargerChannels={recharger}
 			{...(slugTrack === undefined ? {} : { slugTrack })}

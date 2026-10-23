@@ -8,6 +8,8 @@
 // @spec docs/DESIGN_SYSTEM.md §5.30 (l'histogramme), §5.8 (états systématiques), §4 (architecture),
 //       §7 (responsive), §8 (accessibilité), §10 (aucun texte en dur)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.4 (contrat asynchrone)
+// @spec CRM-110 (docs/BACKLOG.md) tranche T2 — le fil d'Ariane : le track précède « Coûts », titre de l'écran
+//       (docs/SPEC-webapp.md §5.1 bis ; docs/DESIGN_SYSTEM.md §5.62)
 //
 // CET ÉCRAN NE CALCULE RIEN LUI-MÊME. L'agrégation, le groupement par devise et la lecture vivent
 // dans `webapp/src/lib/couts-ecrans.ts` ; le rendu des barres, du tableau équivalent et de la
@@ -34,6 +36,7 @@ import { t, type CleTraduction } from '../i18n'
 import { projeterChannels, useContenuTrack } from '../lib/channels'
 import { enChargement, type EtatAsync } from '../lib/async'
 import { lireHistogrammeTrack, type HistogrammeDevise } from '../lib/couts-ecrans'
+import { ancetresCoutsTrack } from '../lib/fil-ariane'
 import { clientCrm } from '../lib/supabase'
 import type { ClientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
@@ -51,11 +54,12 @@ const CLASSES_RETOUR = [
 ].join(' ')
 
 /**
- * Repli du titre de l'en-tête, remplacé par le nom du track dès qu'il est connu — le patron exact
- * de `RouteTrack`. Déclarée en constante et non écrite dans le JSX : le contrôle de clés mortes de
- * `webapp/src/i18n/i18n.test.ts` cherche les clés citées entre apostrophes.
+ * Titre de l'en-tête : « Coûts », le libellé de l'entrée de la barre d'onglets qui mène ici. Depuis `CRM-110`, le
+ * nom du track ne le remplace plus : il le PRÉCÈDE dans le fil d'Ariane (docs/SPEC-webapp.md §5.1 bis). Déclarée en
+ * constante et non écrite dans le JSX : le contrôle de clés mortes de `webapp/src/i18n/i18n.test.ts` cherche les
+ * clés citées entre apostrophes.
  */
-const CLE_TITRE_COUTS: CleTraduction = 'route.costs.track.title'
+const CLE_TITRE_COUTS: CleTraduction = 'tabs.track.costs'
 
 export function CoutsTrack() {
 	const { slugTrack } = useParams()
@@ -66,7 +70,7 @@ export function CoutsTrack() {
 	return (
 		<AppShell
 			cleTitreRoute={CLE_TITRE_COUTS}
-			{...(track === null ? {} : { titreRoute: track.name })}
+			ancetres={ancetresCoutsTrack(track)}
 			etatChannels={projeterChannels(etat)}
 			onRechargerChannels={recharger}
 			{...(slugTrack === undefined ? {} : { slugTrack })}

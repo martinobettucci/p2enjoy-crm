@@ -30,6 +30,8 @@
 // @spec docs/DESIGN_SYSTEM.md §4 (onglets : les channels du track courant), §5.3 (détail de card),
 //       §5.8 (états explicites), §7 (responsive)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.4 (contrat asynchrone)
+// @spec CRM-110 (docs/BACKLOG.md) tranche T2 — le fil d'Ariane d'une affaire : workspace, track, channel, affaire
+//       (docs/SPEC-webapp.md §5.1 bis ; docs/DESIGN_SYSTEM.md §5.62)
 //
 // Le formulaire est la colonne gauche du détail de card (docs/DESIGN_SYSTEM.md §5.3). Il lui faut
 // une adresse : c'est le procédé de `CRM-021`, qui a livré la route d'un track parce que la barre
@@ -78,6 +80,7 @@ import { Button } from '../components/ui/Button'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
 import { projeterChannels, useContenuTrack } from '../lib/channels'
+import { ancetresAffaire } from '../lib/fil-ariane'
 import { mettreCardALaCorbeille, type NatureRefusGeste } from '../lib/corbeille'
 import { lireClesExigees, useContenuCard, type ModeleFormulaire } from '../lib/formulaire'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
@@ -155,10 +158,18 @@ export function RouteCard() {
 			? null
 			: `/tracks/${slugTrack}/${slugChannel}`
 
+	// `CRM-110` (§5.1 bis) — le track et le channel lus pour la barre d'onglets nomment le chemin de l'affaire.
+	const ancetres = ancetresAffaire(
+		etatTrack.statut === 'pret' ? etatTrack.donnees.track : null,
+		etatTrack.statut === 'pret' ? etatTrack.donnees.channels : [],
+		slugChannel,
+	)
+
 	return (
 		<AppShell
 			cleTitreRoute={CLE_TITRE_CARD}
 			{...(card === null ? {} : { titreRoute: card.title })}
+			ancetres={ancetres}
 			etatChannels={projeterChannels(etatTrack)}
 			onRechargerChannels={rechargerTrack}
 			{...(slugTrack === undefined ? {} : { slugTrack })}

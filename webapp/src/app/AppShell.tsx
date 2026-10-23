@@ -8,6 +8,8 @@
 //       (docs/SPEC-plateforme.md §7.1, docs/DESIGN_SYSTEM.md §5.56)
 // @spec INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : la barre latérale relit ses tracks au
 //       signal des écritures de l'arborescence, sans squelette ; docs/DESIGN_SYSTEM.md §5.13
+// @spec CRM-110 (docs/BACKLOG.md) tranche T2 — la route passe ses ancêtres, la coquille y ajoute le workspace
+//       (docs/SPEC-webapp.md §5.1 bis, règle 5)
 //
 // La coquille assemble les points de repère sémantiques exigés par docs/DESIGN_SYSTEM.md §8 —
 // `aside`, `nav`, `header`, `main` — et décide, à un seul endroit, lequel des états de
@@ -24,6 +26,7 @@ import { t, type CleTraduction } from '../i18n'
 import type { EtatAsync } from '../lib/async'
 import { clientCrm } from '../lib/supabase'
 import type { Channel } from '../lib/channels'
+import type { NiveauAriane } from '../lib/fil-ariane'
 import { useEstSuperadmin } from '../lib/plateforme'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
 import { useCapacitesEspace } from '../lib/capacites'
@@ -38,6 +41,7 @@ import { TabBar } from './TabBar'
 import { useReplisidebar } from './preferences'
 
 const ID_CONTENU = 'contenu-principal'
+const AUCUN_ANCETRE: readonly NiveauAriane[] = []
 
 export type ProprietesAppShell = {
 	readonly cleTitreRoute: CleTraduction
@@ -48,6 +52,11 @@ export type ProprietesAppShell = {
 	 * pendant le chargement ou lorsque le track est introuvable.
 	 */
 	readonly titreRoute?: string
+	/**
+	 * Les niveaux du fil d'Ariane entre le workspace et le titre — `CRM-110`. Absents hors d'une route de track : le
+	 * fil y est alors `Workspace / titre` (docs/SPEC-webapp.md §5.1 bis).
+	 */
+	readonly ancetres?: readonly NiveauAriane[]
 	/**
 	 * Channels du track courant, pour la barre d'onglets — `CRM-021`. Absent hors d'une route de
 	 * track : la barre affiche alors son état vide, comme depuis `CRM-007`.
@@ -62,6 +71,7 @@ export type ProprietesAppShell = {
 export function AppShell({
 	cleTitreRoute,
 	titreRoute,
+	ancetres = AUCUN_ANCETRE,
 	etatChannels,
 	onRechargerChannels,
 	slugTrack,
@@ -164,6 +174,7 @@ export function AppShell({
 				<div className="flex flex-col flex-1 min-w-0">
 					<Header
 						titreRoute={titreRoute ?? t(cleTitreRoute)}
+						ancetres={ancetres}
 						onOuvrirTiroir={ouvrirTiroir}
 						etatWorkspaces={etat}
 					/>

@@ -32900,3 +32900,26 @@ exiger le montant natif ; créer un champ était le seul moyen que le format lui
 **Conséquences** : `docs/SPEC-ia.md` §14, qui révise les §6.1, §12.1, §12.3, §12.5, §13.1 et §13.2 ; unité `CRM-113`
 au backlog, découpée en T1 base, T2 fonction, T3 écran et T4 livraison. Les numéros `CRM-111` et `CRM-112` sont
 réservés par `docs/SPEC-rattachements.md` (décision 645). **Aucun code avant ce commit.**
+
+### `CRM-110` T2 et T3 — le fil d'Ariane mis en œuvre, et deux défauts que seules les captures ont montrés
+
+*2026-10-23.* **Mise en œuvre.** La composition des ancêtres est une fonction pure (`webapp/src/lib/fil-ariane.ts`),
+appelée par les cinq routes d'un track sur les lignes qu'elles lisent déjà ; `FilAriane.tsx` rend le workspace, les
+ancêtres en liens, le titre `h1` en `aria-current` et le repli « … », sur le patron de fermeture du panneau de
+notifications. Le contexte d'espace de fin de ligne est retiré, et la clé `route.costs.track.title` avec lui.
+**Observations.** (1) Les preuves étaient vertes alors que la capture à 390 px montrait un en-tête **sans titre** : le
+test mesurait le bord droit du titre, pas sa largeur. La capture de HEAD rendait déjà « B. » pour « Board » : arbitrage
+du responsable, décision 641, et la preuve mesure désormais la largeur du titre et son écart à la cloche. (2) À
+1152 px, sur le titre le plus long du seed, les ancêtres tombaient à « P2E… / Stu… » : plancher de `10ch` sous lequel
+un ancêtre ne descend plus (`docs/DESIGN_SYSTEM.md` §5.62). (3) Mesuré au passage, sous `lg`, la commande de recherche à
+icône ne donne pas le focus au champ : INC-284, consignée sans correction. **Coordination.** Le travail non committé a
+été mis hors du dépôt pendant la livraison en production de `8026e90e`, puis remis en place à l'identique. Les captures
+des autres unités refaites par le passage E2E montrent le nouvel en-tête : seules celles de ce passage sont committées.
+**Vérifications.** Unitaires **4195/4195** ; `fil-ariane.test.ts` 9 et `FilAriane.test.tsx` 19, **cinq mutations
+tuées** (slug affiché, focus non rendu à `Échap`, parent immédiat dans le panneau, `aria-current` retiré, ligne propre
+retirée). La mesure de largeur du titre de la preuve E2E n'a pas été éprouvée par une mutation. Trois `tsc` sans erreur ; build vert, contrôle des classes « aucune
+classe manquante ». E2E **271/271** sur la pile seedée : `fil-ariane.spec.ts` 14, les voisines de l'en-tête (coquille,
+channels, manuel, droits fins, recherche, infobulles) et les six specs dont les treize scénarios à 390 px échouaient
+pendant le développement (budgets, administration de l'arborescence et des workflows, contacts, occurrences, versions).
+Dix captures `docs/captures/CRM-110/` observées, et des captures d'autres unités à 390 px (« ··· / Board »).
+`verify-manual.sh` **245** contrôles sans anomalie, avec la section 3.1 bis du manuel.

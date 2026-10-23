@@ -47,6 +47,9 @@ export const fr = {
 	// --- En-tête ------------------------------------------------------------------------
 	'header.aria': "En-tête de l'application",
 	'header.breadcrumb.aria': "Fil d'Ariane",
+	// CRM-110 (docs/DESIGN_SYSTEM.md §5.62) : le repli des niveaux que l'en-tête n'a pas la place de montrer.
+	'header.breadcrumb.more': 'Afficher le chemin complet',
+	'header.breadcrumb.panel.aria': 'Chemin complet',
 	'header.workspace.unknown': 'Aucun workspace accessible',
 	'header.workspace.loading': 'Chargement du workspace',
 	'header.auth.logout': 'Se déconnecter',
@@ -2708,9 +2711,9 @@ export const fr = {
 	// Ces clés-ci nomment bien « le track », contrairement à celles de l'histogramme ci-dessus :
 	// elles appartiennent à UN écran et non au composant partagé par les trois.
 	// -------------------------------------------------------------------------------------------
-	'route.costs.track.title': 'Coûts du track',
 	// Entrée de la barre d'onglets. Le libellé est court parce qu'il vit à côté des noms de
-	// channels, qui sont des données de longueur libre.
+	// channels, qui sont des données de longueur libre. Depuis `CRM-110`, c'est aussi le titre de
+	// l'écran et son niveau dans le fil d'Ariane : le track le précède et n'a plus à être nommé ici.
 	'tabs.track.costs': 'Coûts',
 	'tabs.track.aria': 'Vues du track',
 	// CRM-100 (docs/SPEC-administration-arborescence.md §13.3, docs/DESIGN_SYSTEM.md §5.55).

@@ -7,6 +7,8 @@
 //       §5.7 (champs), §7 (responsive), §8 (accessibilité), §10 (aucun texte en dur),
 //       §12.6 (débordement signalé)
 // @spec docs/SPEC-webapp.md §5.2 (routes), §6.4 (contrat asynchrone)
+// @spec CRM-110 (docs/BACKLOG.md) tranche T2 — le fil d'Ariane : le track, puis « Coûts », précèdent le budget
+//       (docs/SPEC-webapp.md §5.1 bis ; docs/DESIGN_SYSTEM.md §5.62)
 //
 // CET ÉCRAN NE CALCULE RIEN LUI-MÊME, comme celui du §4.2 : la lecture, le groupement par
 // occurrence et le filtre vivent dans `webapp/src/lib/couts-ecrans.ts` ; le rendu des barres, du
@@ -31,6 +33,7 @@ import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
 import { projeterChannels, useContenuTrack } from '../lib/channels'
+import { ancetresBudget } from '../lib/fil-ariane'
 import { enChargement, type EtatAsync } from '../lib/async'
 import {
 	adresseAffaireLigne,
@@ -75,6 +78,7 @@ export function CoutsBudget() {
 		<AppShell
 			cleTitreRoute={CLE_TITRE_BUDGET}
 			{...(nomBudget === null ? {} : { titreRoute: nomBudget })}
+			ancetres={ancetresBudget(etat.statut === 'pret' ? etat.donnees.track : null)}
 			etatChannels={projeterChannels(etat)}
 			onRechargerChannels={recharger}
 			{...(slugTrack === undefined ? {} : { slugTrack })}

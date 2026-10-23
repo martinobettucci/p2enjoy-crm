@@ -13,6 +13,25 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-110` — le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert (décisions 636 et 641)
+
+*En développement seulement. Prouvé en tests unitaires et en E2E sur la pile seedée, captures observées aux quatre
+paliers, manuel à la section 3.1 bis. Aucune migration, aucune fonction, aucune variable : la livraison est une
+reconstruction de la webapp.*
+
+- **Le fil d'Ariane dit où l'on est** : `Workspace / Track / Channel / Affaire` sur une affaire, `Workspace / Track /
+  Channel` sur le tableau ou la liste d'un channel, `Workspace / Track / Coûts` et `… / Coûts / budget` sur les écrans
+  de coûts, `Workspace / page` partout ailleurs. Chaque niveau qui précède le titre est un lien vers sa page.
+- **Le workspace remplace « P2Enjoy CRM »** en tête du fil, et le nom de l'espace qui s'affichait seul à droite de
+  l'en-tête est retiré.
+- **Le titre d'un channel ouvert est désormais le nom du channel**, et celui des coûts d'un track « Coûts » : le track
+  les précède dans le fil.
+- **Sous 1 024 px, le fil a sa propre ligne** sous la recherche, les notifications et le profil. Sous 768 px, il ne
+  montre que le niveau précédent et le titre, et un bouton « … », utilisable au clavier, ouvre les niveaux masqués.
+  Corrige au passage un défaut antérieur : à 390 px, le titre de la page était réduit à quelques lettres (« B. » pour
+  « Board »).
+- **Le fil ne nomme que ce que la base a rendu** : un channel refusé ou un nom tapé dans l'adresse n'y apparaît jamais.
+
 ### `CRM-109` T3 — la « Dernière tentative » d'une attente (décisions 640 et 644)
 
 *En développement seulement. Prouvée en pgTAP, en tests unitaires et en E2E sur la pile seedée ; manuel, chapitres 10.5

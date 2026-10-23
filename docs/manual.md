@@ -332,10 +332,48 @@ L'écran se lit en trois zones :
 
 - à gauche, la **barre latérale** : le nom du produit, les cinq entrées de navigation — Board,
   Inbox, **Contacts**, Ma journée, Réglages — puis la section **Tracks** ;
-- en haut, l'**en-tête** : le fil d'Ariane, qui nomme la page ouverte, et le contexte d'espace de
-  travail à droite ;
+- en haut, l'**en-tête** : le **fil d'Ariane**, qui dit où vous êtes, de votre espace de travail à la page
+  ouverte (section 3.1 bis), puis la recherche, les notifications et votre profil ;
 - sous l'en-tête, la **barre d'onglets**, qui listera les channels du track courant ;
 - au centre, le **contenu** de la page.
+
+### 3.1 bis Le fil d'Ariane : savoir où vous êtes
+
+*Livré par `CRM-110`. Captures dans `docs/captures/CRM-110/`.*
+
+En haut de l'écran, le **fil d'Ariane** nomme le chemin qui mène à la page ouverte, du plus général au plus précis.
+Sur une affaire, il se lit par exemple :
+
+> P2Enjoy SAS / Conseil & IA / Grands comptes / **Migration ERP Sogexia**
+
+- Le **premier niveau** est votre **espace de travail**. Il mène au Board.
+- Viennent ensuite le **track**, puis le **channel**. Chacun est un lien : cliquez le channel pour revenir à son
+  tableau, ou le track pour revenir à ses onglets.
+- Le **dernier niveau**, en gras, est le titre de la page : l'affaire, le channel, ou l'écran ouvert. Ce n'est pas un
+  lien, puisque vous y êtes.
+
+Le fil suit la page :
+
+| Page ouverte | Ce que dit le fil |
+|---|---|
+| une affaire | espace / track / channel / **affaire** |
+| le tableau ou la liste d'un channel | espace / track / **channel** |
+| un track, sans channel ouvert | espace / **track** |
+| les coûts d'un track | espace / track / **Coûts** |
+| le détail d'un budget | espace / track / Coûts / **budget** |
+| toute autre page (Inbox, Contacts, Réglages…) | espace / **nom de la page** |
+
+**Un nom trop long** est raccourci par « … » ; survolez-le pour lire le nom complet.
+
+**Sur un écran plus étroit qu'un ordinateur portable** (moins de 1 024 pixels), le fil passe sur sa propre ligne, sous
+la recherche, les notifications et votre profil. **Sur un téléphone** (moins de 768 pixels), il ne montre que le
+niveau précédent et le titre : « … / Grands comptes / **Migration ERP Sogexia** ». Le bouton **« … »** ouvre la liste
+des niveaux masqués — votre espace et le track —, chacun cliquable. Au clavier, atteignez-le avec `Tab`, ouvrez-le avec
+`Entrée`, refermez-le avec `Échap`.
+
+**Le fil ne nomme que ce que vous pouvez lire.** Un channel auquel vous n'avez pas accès n'y apparaît jamais, pas plus
+qu'un nom tapé dans l'adresse qui ne correspond à rien : le fil s'arrête au dernier niveau que vos droits vous laissent
+voir.
 
 ### 3.2 Ce que vous voyez aujourd'hui, et pourquoi
 
@@ -729,7 +767,8 @@ et non par l'affichage : elle tient même si l'on s'adresse directement à l'API
 
 Ouvrir un track — en cliquant sa pilule, ou en saisissant son adresse `/tracks/<identifiant>` —
 affiche ses **channels** en onglets, juste sous l'en-tête. Le nom du track devient le titre de la
-page.
+page ; ouvrir un channel en fait le titre à son tour, et le fil d'Ariane nomme alors le track avant lui (section
+3.1 bis).
 
 - L'**ordre** des onglets est celui défini par l'administration, pas l'ordre de création.
 - Un channel **archivé** n'apparaît pas. Comme pour les tracks, l'archivage masque sans détruire,
