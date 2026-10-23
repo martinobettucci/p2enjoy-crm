@@ -13,7 +13,7 @@
 // au design system (§5.61), non dupliqué.
 
 import { UserMinus } from 'lucide-react'
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { t } from '../i18n'
@@ -50,6 +50,35 @@ export function BlocMessage({ message, testId }: { readonly message: Message; re
 		<p role="alert" data-testid={testId} className="rounded-sm bg-danger-soft text-danger-on-soft px-3 py-2 text-sm">
 			{message.texte}
 		</p>
+	)
+}
+
+/** Le focus revient à la commande qui a ouvert, un tour de rendu plus tard si elle a été démontée (§5.25). */
+export function useRetourFocus(ouvert: boolean) {
+	const commande = useRef<HTMLButtonElement>(null)
+	const rendre = useRef(false)
+	useEffect(() => {
+		if (!ouvert && rendre.current) {
+			rendre.current = false
+			commande.current?.focus()
+		}
+	}, [ouvert])
+	return { commande, demander: () => (rendre.current = true) }
+}
+
+export function Champ({ id, libelle, aide, children }: { readonly id: string; readonly libelle: string; readonly aide?: string; readonly children: ReactNode }) {
+	return (
+		<div className="flex flex-col gap-1">
+			<label htmlFor={id} className="text-sm text-text-2">
+				{libelle}
+			</label>
+			{children}
+			{aide !== undefined && (
+				<p id={`${id}-aide`} className="text-sm text-text-3">
+					{aide}
+				</p>
+			)}
+		</div>
 	)
 }
 

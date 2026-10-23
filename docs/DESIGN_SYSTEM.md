@@ -5906,6 +5906,22 @@ envoie et refuse est spécifié par `docs/SPEC-membres.md` §3 et §4 ; ces règ
 - **Refus traduits par un dictionnaire fermé** (`docs/SPEC-membres.md` §3.4) : dernier administrateur, « rien n'a
   changé » (zéro ligne rendue), réservé aux administrateurs, réseau, inconnu. Le détail du serveur n'atteint jamais
   l'écran.
+- **LE BLOC DES ATTENTES EST PARTAGÉ DE MÊME** (`CRM-070` T3), `BlocAttentes` (`webapp/src/app/BlocAttentes.tsx`), extrait
+  de la fiche d'un espace (§5.56) sans changer son rendu : tableau du §5.9 — adresse en `code`, rôle et pastille « En
+  suspens » (`Badge` accent), « Inscrite par », « Depuis », « Retirer » `MailMinus` **sans confirmation** (§5.41) —,
+  message sous le tableau, commande « Inscrire une attente » `MailPlus` qui s'exclut du formulaire qu'elle ouvre
+  (§5.23), formulaire dans le flux à deux champs, refus dit dans le formulaire (§5.13), Échap et « Annuler » rendant le
+  focus à la commande (§5.25). Trois paramètres seulement : le niveau du titre — `h2` sur la fiche, `h3` sous le titre
+  « Membres » des réglages —, le rôle proposé — administrateur pour un espace qui n'en a pas, lecteur sinon —, et les
+  deux gestes. Libellés sous `platform.attentes.*` ; seul le message de remplacement est propre aux réglages
+  (`members.attentes.remplacee`, « … remplacée : Lecteur devient Administrateur. »).
+- **LA SECTION « Attentes » N'EST RENDUE QU'À QUI ADMINISTRE L'ESPACE**, selon la capacité que la base rend (§5.59) :
+  pour un autre membre — et pendant la lecture de la capacité, ou sur son défaut —, elle est **absente**, sans titre ni
+  phrase qui dirait qu'elle existe (`docs/SPEC-membres.md` §3.2). C'est l'exception à « commandes éteintes, jamais
+  masquées » : ce n'est pas une commande qu'on masque, c'est une donnée que la base ne lui rend pas, et une liste vide
+  y mentirait (« aucune attente »).
+- **UN SEUL BLOC OUVERT SUR L'ÉCRAN** (§5.28) : ouvrir le formulaire d'une attente referme la confirmation de retrait
+  d'un membre, et inversement ; ouvrir un bloc efface les messages des deux sections.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
 
 ### 5.62 Fil d'Ariane de l'en-tête : du workspace à l'objet ouvert — `CRM-110`

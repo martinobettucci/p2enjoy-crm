@@ -1337,6 +1337,8 @@ export const fr = {
 	'members.confirmation.self': 'C’est votre propre compte : vous ne serez plus membre de cet espace, et vous perdrez l’accès à ses affaires comme à son administration.',
 	'members.refused.noEffect': 'Rien n’a changé : cette personne n’est peut-être plus membre de l’espace, ou vos droits ont changé. La liste a été relue.',
 	'members.refused.forbidden': 'Ce geste est réservé aux administrateurs de l’espace.',
+	// `CRM-070` T3 — les attentes (docs/SPEC-membres.md §3.2). Le bloc réemploie `platform.attentes.*` (DS §5.61).
+	'members.attentes.remplacee': 'Attente de {email} remplacée : {avant} devient {apres}.',
 	'admin.settings.index.notifications': 'Notifications : ce que vous recevez',
 	'admin.settings.index.notifications.body':
 		"Choisir les notifications qui vous parviennent dans l'application. Ce réglage est le vôtre, et personne d'autre ne le voit.",

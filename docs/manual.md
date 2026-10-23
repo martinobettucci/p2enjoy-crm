@@ -60,7 +60,7 @@
 
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
-| 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | **En cours : la liste des membres et leurs rôles sont livrés en développement** — voir le chapitre 10 *bis*. Un administrateur d'espace y change un rôle et retire un membre ; chaque membre consulte la liste. Les attentes et les droits fins viendront avec les tranches suivantes. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses propres attentes reste à `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
+| 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | **En cours : la liste des membres, leurs rôles et les attentes sont livrés en développement** — voir le chapitre 10 *bis*. Un administrateur d'espace y change un rôle, retire un membre, inscrit, remplace et retire une attente ; chaque membre consulte la liste des membres. Les droits fins viendront avec la tranche suivante. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses membres et ses attentes est livré par `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
 | 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
 | 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Un seul outil pour l'instant : la liste des espaces |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
@@ -4376,7 +4376,7 @@ L'onglet **« Journal »** retrace chaque geste de la plateforme, du plus récen
 
 ## 10 bis. Les membres de votre espace : qui y travaille, avec quel rôle
 
-*En cours de livraison par `CRM-070` : la liste des membres et leurs rôles sont livrés en développement ; les attentes et
+*En cours de livraison par `CRM-070` : la liste des membres, leurs rôles et les attentes sont livrés en développement ;
 les droits fins par track et par channel viendront ensuite.*
 
 Chaque espace de travail a ses **membres**, et chacun y tient un **rôle** : **Administrateur**, **Business developer**
@@ -4417,7 +4417,28 @@ la confirmation sans rien changer.
 **Vous retirer vous-même** est possible, et la confirmation vous prévient : vous ne serez plus membre de l'espace, et
 vous perdrez l'accès à ses affaires comme à son administration. Le dernier administrateur ne peut pas se retirer.
 
-### 10 bis.5 Quand un geste n'aboutit pas
+### 10 bis.5 Les attentes : les personnes qu'on attend
+
+Le CRM ne crée aucun compte : on y entre avec son identité LeLabs. Pour faire entrer quelqu'un dans l'espace, un
+administrateur inscrit une **attente** — une adresse et un rôle. La personne devient membre, avec ce rôle, à sa
+**première connexion LeLabs** avec cette adresse vérifiée (chapitre 1).
+
+La section **« Attentes »** vient sous la liste des membres. **Seuls les administrateurs de l'espace la voient** : pour
+les autres membres, elle n'apparaît pas.
+
+- **Inscrire une attente** ouvre un petit formulaire : **« Adresse »** et **« Rôle »**, puis **« Inscrire »**. La liste
+  montre l'adresse, le rôle, qui l'a inscrite et depuis quand.
+- **Changer le rôle d'une attente** : inscrivez de nouveau la même adresse avec le nouveau rôle. L'attente est
+  **remplacée**, et le message le dit — « Attente de … remplacée : Lecteur devient Administrateur. ».
+- **« Retirer »**, au bout de la ligne, retire l'attente aussitôt, sans confirmation : il suffit de la réinscrire pour
+  revenir en arrière.
+- Une attente **« En suspens »** ne se consommera qu'à l'arrivée d'un administrateur : c'est le cas d'une attente qui
+  n'est pas administratrice, dans un espace qui n'a encore aucun administrateur membre. Vous ne la verrez que rarement
+  ici, puisqu'un administrateur membre suffit à lever le suspens ; la plateforme la montre (chapitre 10).
+
+Une adresse mal formée est refusée, et le formulaire reste ouvert pour la corriger.
+
+### 10 bis.6 Quand un geste n'aboutit pas
 
 Le message sous la liste dit pourquoi :
 
@@ -4427,11 +4448,11 @@ Le message sous la liste dit pourquoi :
 - **ce geste est réservé aux administrateurs de l'espace** ;
 - **le serveur n'a pas répondu** : vérifiez votre connexion et réessayez.
 
-### 10 bis.6 Ce que cet écran n'offre pas encore
+### 10 bis.7 Ce que cet écran n'offre pas encore
 
-- **Inscrire une personne attendue**, par son adresse et un rôle : ce geste viendra sur cet écran. En attendant, un
-  superadministrateur l'inscrit depuis la plateforme (chapitre 10).
 - **Restreindre l'accès d'un membre** à un track ou à un channel.
+- **Savoir si une personne attendue a déjà essayé de se connecter** : une connexion refusée n'est pas encore gardée
+  (`CRM-109`).
 
 ## 11. Le connecteur MCP : piloter le CRM depuis votre assistant
 

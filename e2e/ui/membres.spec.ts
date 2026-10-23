@@ -2,10 +2,13 @@
 // @verifies docs/SPEC-membres.md §3 (consultable par tout membre, commandes éteintes par la capacité d'administration),
 //           §3.1 (le rôle écrit au choix, le retrait confirmé, soi-même, le dernier administrateur), §3.4 (refus
 //           traduits), §6 (E2E par rôle) ; docs/DESIGN_SYSTEM.md §5.61, §5.59 ; CLAUDE.md §16 (captures observées)
+// @verifies CRM-070 (docs/BACKLOG.md) — tranche T3 : la section « Attentes » sur la pile réelle — inscrire au clavier,
+//           remplacer, retirer ; absente pour la lectrice ; docs/SPEC-membres.md §3.2 ; docs/DESIGN_SYSTEM.md §5.61
 //
 // LE SEED : Camille Aubert seule administratrice de l'espace de démonstration, Driss Lemoine business developer, Farida
 // Nowak lectrice. Chaque scénario qui écrit REND l'état du seed avant de finir : le rôle de Farida revient à « Lecteur »,
-// et le seul retrait tenté est celui que la base refuse — celui de la dernière administratrice.
+// et le seul retrait tenté est celui que la base refuse — celui de la dernière administratrice. L'attente du seed,
+// `attendu@p2enjoy.test`, n'est jamais touchée : le scénario des attentes inscrit, remplace et retire sa propre adresse.
 
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { capturer } from './captures'
@@ -84,6 +87,40 @@ test.describe('l’administratrice — Camille Aubert', () => {
 		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
 	})
 
+	test('inscrit une attente au clavier, la remplace, puis la retire ; l’attente du seed reste', async ({ page }) => {
+		const ADRESSE = 'e2e-membres@p2enjoy.test'
+		await page.goto(MEMBRES)
+		const section = page.getByRole('region', { name: 'Attentes' })
+		await expect(section.getByTestId('ligne-attente')).toHaveCount(1)
+		await expect(section.getByTestId('ligne-attente')).toHaveAttribute('data-email', 'attendu@p2enjoy.test')
+
+		const inscrire = async (role: string) => {
+			await section.getByTestId('inscrire-attente').focus()
+			await page.keyboard.press('Enter')
+			await expect(section.getByLabel('Adresse')).toBeFocused()
+			await page.keyboard.type(ADRESSE)
+			await section.locator('select#attente-role').selectOption(role)
+			await section.getByRole('button', { name: 'Inscrire', exact: true }).click()
+		}
+		await inscrire('business_developer')
+		await expect(section.getByTestId('message-attentes')).toHaveText(`Attente de ${ADRESSE} inscrite.`)
+		await expect(section.locator(`[data-email="${ADRESSE}"]`)).toContainText('Business developer')
+		await expect(section.locator(`[data-email="${ADRESSE}"]`)).toContainText('Camille Aubert')
+		await capturer(page, 'attentes-inscrite-1440', UNITE)
+
+		await inscrire('admin')
+		await expect(section.getByTestId('message-attentes')).toHaveText(
+			`Attente de ${ADRESSE} remplacée : Business developer devient Administrateur.`,
+		)
+		await expect(section.locator(`[data-email="${ADRESSE}"]`)).toContainText('Administrateur')
+		await expect(section.getByTestId('ligne-attente')).toHaveCount(2)
+
+		await section.getByRole('button', { name: `Retirer l’attente de ${ADRESSE}` }).click()
+		await expect(section.getByTestId('message-attentes')).toHaveText(`Attente de ${ADRESSE} retirée.`)
+		await expect(section.getByTestId('ligne-attente')).toHaveCount(1)
+		await expect(section.getByTestId('ligne-attente')).toHaveAttribute('data-email', 'attendu@p2enjoy.test')
+	})
+
 	for (const [largeur, palier] of [
 		[390, 'sm'],
 		[900, 'md'],
@@ -114,6 +151,9 @@ test.describe('la lectrice — Farida Nowak', () => {
 			await expect(commande).toHaveAttribute('aria-describedby', idMotif ?? '')
 		}
 		await expect(role(page, 'Driss Lemoine')).toHaveValue('business_developer')
+		// Les attentes sont réservées à l'administrateur : la section est absente, sans phrase qui dirait qu'elle existe.
+		await expect(page.getByRole('heading', { name: 'Attentes' })).toHaveCount(0)
+		await expect(page.getByTestId('inscrire-attente')).toHaveCount(0)
 		await capturer(page, 'membres-lectrice-1440', UNITE)
 	})
 })

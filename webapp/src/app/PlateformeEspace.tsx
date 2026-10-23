@@ -8,10 +8,9 @@
 // LA FICHE EST RELUE APRÈS CHAQUE ÉCRITURE, JAMAIS COMPLÉTÉE LOCALEMENT (§5.21), et la relecture garde à l'écran ce
 // qu'elle relit (§5.29 tranche 2 c) : le squelette n'appartient qu'au premier chargement.
 
-import { MailMinus, MailPlus, PencilLine, Trash2, TriangleAlert, UserPlus } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { PencilLine, Trash2, TriangleAlert, UserPlus } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router'
-import { Badge } from '../components/ui/Badge'
 import { Button } from '../components/ui/Button'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatErreur, EtatVide } from '../components/ui/States'
@@ -38,17 +37,16 @@ import {
 } from '../lib/plateforme'
 import type { ClientCrm } from '../lib/supabase'
 import { CHEMIN_PLATEFORME_ESPACES } from './chemins'
-import { CLES_APPARTENANCES, CLES_ATTENTES, compter, formaterDate, libelleRole, texteRefus } from './presentation-plateforme'
+import { CLES_APPARTENANCES, CLES_ATTENTES, compter, texteRefus } from './presentation-plateforme'
 import { RecherchePersonne } from './RecherchePersonne'
+import { BlocAttentes } from './BlocAttentes'
 import {
 	BlocMessage,
-	CLASSES_CELLULE,
 	CLASSES_CHAMP,
-	CLASSES_COMMANDES,
-	CLASSES_DATE,
-	CLASSES_ENTETE,
+	Champ,
 	SelectRole,
 	TableauMembres,
+	useRetourFocus,
 	type Message,
 } from './TableauMembres'
 import type { EtatNavigationEspaces } from './PlateformeEspaces'
@@ -169,18 +167,27 @@ export function PlateformeEspace({ client }: { readonly client: ClientCrm }) {
 					relire()
 				}}
 			/>
-			<Attentes
-				client={client}
-				espace={espace}
-				attentes={attentes}
+			<BlocAttentes
+				attentes={attentes.map((attente) => ({ ...attente, enSuspens: attenteEnSuspens(attente, espace.administrateurs) }))}
+				niveauTitre="h2"
+				roleParDefaut={espace.administrateurs === 0 ? 'admin' : 'viewer'}
 				ouvert={ouverture?.type === 'inviter'}
 				onOuvrir={() => ouvrir({ type: 'inviter' })}
 				onFermer={() => setOuverture(null)}
 				message={messageAttentes}
-				onIssue={(message) => {
+				onMessage={(message) => {
 					setMessageAttentes(message)
 					relire()
 				}}
+				inscrire={async (email, role) => {
+					const issue = await inviter(client, espace.id, email, role)
+					return issue.statut === 'refus'
+						? { ok: false, refus: texteRefus(issue.refus) }
+						: { ok: true, message: { ton: 'succes', texte: t('platform.attentes.inscrite', { email: email.trim().toLowerCase() }) } }
+				}}
+				retirer={async (attente) =>
+					issueEnMessage(await retirerAttente(client, espace.id, attente.email), t('platform.attentes.retiree', { email: attente.email }))
+				}
 			/>
 			<ZoneDanger
 				client={client}
@@ -193,19 +200,6 @@ export function PlateformeEspace({ client }: { readonly client: ClientCrm }) {
 			/>
 		</article>
 	)
-}
-
-/** Le focus revient à la commande qui a ouvert, un tour de rendu plus tard si elle a été démontée (§5.25). */
-function useRetourFocus(ouvert: boolean) {
-	const commande = useRef<HTMLButtonElement>(null)
-	const rendre = useRef(false)
-	useEffect(() => {
-		if (!ouvert && rendre.current) {
-			rendre.current = false
-			commande.current?.focus()
-		}
-	}, [ouvert])
-	return { commande, demander: () => (rendre.current = true) }
 }
 
 // --- Identité ----------------------------------------------------------------------------------------------------
@@ -331,22 +325,6 @@ function FormulaireIdentite({
 				<Button onClick={onFermer}>{t('platform.annuler')}</Button>
 			</div>
 		</form>
-	)
-}
-
-function Champ({ id, libelle, aide, children }: { readonly id: string; readonly libelle: string; readonly aide?: string; readonly children: ReactNode }) {
-	return (
-		<div className="flex flex-col gap-1">
-			<label htmlFor={id} className="text-sm text-text-2">
-				{libelle}
-			</label>
-			{children}
-			{aide !== undefined && (
-				<p id={`${id}-aide`} className="text-sm text-text-3">
-					{aide}
-				</p>
-			)}
-		</div>
 	)
 }
 
@@ -503,186 +481,6 @@ function FormulaireMembre({
 }
 
 // --- Attentes ----------------------------------------------------------------------------------------------------
-
-function Attentes({
-	client,
-	espace,
-	attentes,
-	ouvert,
-	onOuvrir,
-	onFermer,
-	message,
-	onIssue,
-}: {
-	readonly client: ClientCrm
-	readonly espace: EspacePlateforme
-	readonly attentes: readonly AttentePlateforme[]
-	readonly ouvert: boolean
-	readonly onOuvrir: () => void
-	readonly onFermer: () => void
-	readonly message: Message
-	readonly onIssue: (message: Message) => void
-}) {
-	const focus = useRetourFocus(ouvert)
-	const [enVol, setEnVol] = useState<string | null>(null)
-
-	// Retirer une attente n'a pas de confirmation : rien n'est détruit qu'un formulaire de deux champs ne repose
-	// (§5.41, §5.56).
-	const retirer = async (attente: AttentePlateforme) => {
-		setEnVol(attente.email)
-		const issue = await retirerAttente(client, espace.id, attente.email)
-		setEnVol(null)
-		onIssue(issueEnMessage(issue, t('platform.attentes.retiree', { email: attente.email })))
-	}
-
-	return (
-		<section aria-labelledby="titre-attentes" className="flex flex-col gap-4">
-			<h2 id="titre-attentes" className="text-h3">
-				{t('platform.attentes.titre')}
-			</h2>
-			{attentes.length === 0 ? (
-				<p className="text-text-2" data-testid="attentes-vide">
-					{t('platform.attentes.vide')}
-				</p>
-			) : (
-				<div className="overflow-x-auto indique-debordement-x">
-					<table data-testid="tableau-attentes" className="w-full border-collapse">
-						<caption className="sr-only">{t('platform.attentes.titre')}</caption>
-						<thead>
-							<tr className="border-b border-border">
-								<th scope="col" className={CLASSES_ENTETE}>{t('platform.attentes.colonne.adresse')}</th>
-								<th scope="col" className={CLASSES_ENTETE}>{t('platform.attentes.colonne.role')}</th>
-								<th scope="col" className={CLASSES_ENTETE}>{t('platform.attentes.colonne.invitePar')}</th>
-								<th scope="col" className={`${CLASSES_ENTETE} text-right`}>{t('platform.colonne.depuis')}</th>
-								<th scope="col" className={CLASSES_ENTETE}>{t('platform.colonne.commandes')}</th>
-							</tr>
-						</thead>
-						<tbody>
-							{attentes.map((attente) => (
-								<tr key={attente.email} data-testid="ligne-attente" data-email={attente.email} className="border-b border-border hover:bg-hover">
-									<td className={CLASSES_CELLULE} title={attente.email}>
-										<code>{attente.email}</code>
-									</td>
-									<td className={`${CLASSES_CELLULE} max-w-none`}>
-										<span className="inline-flex items-center gap-2">
-											{libelleRole(attente.role)}
-											{attenteEnSuspens(attente, espace.administrateurs) && (
-												<span aria-label={t('platform.attentes.enSuspens.aria')} role="img">
-													<Badge ton="accent">{t('platform.attentes.enSuspens')}</Badge>
-												</span>
-											)}
-										</span>
-									</td>
-									<td className={CLASSES_CELLULE}>{attente.invitePar ?? t('platform.auteurInconnu')}</td>
-									<td className={CLASSES_DATE}>{formaterDate(attente.depuis)}</td>
-									<td className={CLASSES_COMMANDES}>
-										<Button
-											variante="discret"
-											taille="compacte"
-											disabled={enVol === attente.email}
-											onClick={() => void retirer(attente)}
-											aria-label={t('platform.attentes.retirer.aria', { email: attente.email })}
-										>
-											<MailMinus aria-hidden="true" size={16} />
-											{enVol === attente.email ? t('platform.envoi') : t('platform.attentes.retirer')}
-										</Button>
-									</td>
-								</tr>
-							))}
-						</tbody>
-					</table>
-				</div>
-			)}
-			<BlocMessage message={message} testId="message-attentes" />
-			{ouvert ? (
-				<FormulaireAttente
-					client={client}
-					espace={espace}
-					onFermer={() => {
-						focus.demander()
-						onFermer()
-					}}
-					onInscrite={(email) => {
-						onFermer()
-						onIssue({ ton: 'succes', texte: t('platform.attentes.inscrite', { email }) })
-					}}
-				/>
-			) : (
-				<div>
-					<Button ref={focus.commande} onClick={onOuvrir} data-testid="inscrire-attente">
-						<MailPlus aria-hidden="true" size={18} />
-						{t('platform.attentes.inscrire')}
-					</Button>
-				</div>
-			)}
-		</section>
-	)
-}
-
-function FormulaireAttente({
-	client,
-	espace,
-	onFermer,
-	onInscrite,
-}: {
-	readonly client: ClientCrm
-	readonly espace: EspacePlateforme
-	readonly onFermer: () => void
-	readonly onInscrite: (email: string) => void
-}) {
-	const [email, setEmail] = useState('')
-	const [role, setRole] = useState<RoleEspace>(espace.administrateurs === 0 ? 'admin' : 'viewer')
-	const [envoi, setEnvoi] = useState(false)
-	const [refus, setRefus] = useState<RefusPlateforme | null>(null)
-	const premier = useRef<HTMLInputElement>(null)
-	useEffect(() => premier.current?.focus(), [])
-
-	const soumettre = async (evenement: FormEvent) => {
-		evenement.preventDefault()
-		setEnvoi(true)
-		setRefus(null)
-		const issue = await inviter(client, espace.id, email, role)
-		setEnvoi(false)
-		if (issue.statut === 'refus') setRefus(issue.refus)
-		else onInscrite(email.trim().toLowerCase())
-	}
-
-	return (
-		<form
-			onSubmit={(e) => void soumettre(e)}
-			onKeyDown={(e) => e.key === 'Escape' && onFermer()}
-			aria-label={t('platform.attentes.inscrire')}
-			data-testid="formulaire-attente"
-			className="flex flex-col gap-4 rounded-lg border border-border bg-surface p-4"
-		>
-			<Champ id="attente-email" libelle={t('platform.attentes.colonne.adresse')} aide={t('platform.attentes.aide')}>
-				<input
-					ref={premier}
-					id="attente-email"
-					type="email"
-					value={email}
-					onChange={(e) => setEmail(e.target.value)}
-					aria-describedby="attente-email-aide"
-					className={`${CLASSES_CHAMP} font-mono`}
-				/>
-			</Champ>
-			<Champ id="attente-role" libelle={t('platform.attentes.colonne.role')}>
-				<SelectRole id="attente-role" valeur={role} onChange={setRole} />
-			</Champ>
-			{refus !== null && (
-				<p role="alert" className="rounded-sm bg-danger-soft text-danger-on-soft px-3 py-2 text-sm">
-					{texteRefus(refus)}
-				</p>
-			)}
-			<div className="flex flex-wrap gap-2">
-				<Button type="submit" variante="primaire" disabled={envoi || email.trim() === ''}>
-					{envoi ? t('platform.envoi') : t('platform.attentes.inscrire.confirmer')}
-				</Button>
-				<Button onClick={onFermer}>{t('platform.annuler')}</Button>
-			</div>
-		</form>
-	)
-}
 
 // --- Zone de danger ------------------------------------------------------------------------------------------------
 

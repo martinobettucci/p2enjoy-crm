@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-membres.md §3 (consultable par tout membre ; commandes éteintes par la capacité d'administration),
 //           §3.1 (rôle écrit au choix, retrait confirmé, soi-même, dernier administrateur), §3.4 (états et refus) ;
 //           docs/DESIGN_SYSTEM.md §5.61, §5.59 (motif de bloc, éteinte sans motif pendant la lecture), §5.27
+// @verifies CRM-070 (docs/BACKLOG.md) — tranche T3 : la section « Attentes », rendue au seul administrateur ; inscrire,
+//           remplacer, retirer ; les refus traduits ; un seul bloc ouvert ; docs/SPEC-membres.md §3.2 ; DS §5.28, §5.61
 //
 // La base est simulée en mémoire, au format de PostgREST : une écriture rend ses lignes, ou une erreur, ou zéro ligne.
 // Le refus réel par la RLS est prouvé hors interface (`e2e/api/membres.spec.ts`) ; ici, l'écran et sa traduction.
@@ -27,14 +29,31 @@ const SEED: readonly Ligne[] = [
 	{ user_id: 'anonyme', role: 'viewer', created_at: '2026-09-04T08:00:00Z', profiles: null },
 ]
 
+type Attente = { email: string; role: string; created_at: string; profiles: { full_name: string | null } | null }
+
+const ATTENTES_SEED: readonly Attente[] = [
+	{ email: 'attendu@p2enjoy.test', role: 'viewer', created_at: '2026-09-05T08:00:00Z', profiles: null },
+]
+
 /**
  * Une base en mémoire. `refus` force la réponse d'une écriture : une erreur, ou zéro ligne. `lecture` force celle de la
- * lecture des membres.
+ * lecture des membres. `refusAttente` force la réponse de `inscrire_attente`.
  */
-function base(options: { refus?: Reponse; lecture?: Reponse } = {}) {
+function base(options: { refus?: Reponse; lecture?: Reponse; refusAttente?: Reponse } = {}) {
 	let lignes = SEED.map((ligne) => ({ ...ligne }))
+	let attentes = ATTENTES_SEED.map((attente) => ({ ...attente }))
 	const ecritures: { operation: string; charge?: unknown; filtres: Record<string, unknown> }[] = []
+	const ecrituresAttentes: { operation: string; charge?: unknown; filtres?: Record<string, unknown> }[] = []
 	const client = {
+		rpc(fonction: string, args: { p_email: string; p_role: string }) {
+			ecrituresAttentes.push({ operation: fonction, charge: args })
+			if (options.refusAttente !== undefined) return Promise.resolve(options.refusAttente)
+			const email = args.p_email.trim().toLowerCase()
+			const avant = attentes.find((attente) => attente.email === email)
+			attentes = attentes.filter((attente) => attente.email !== email)
+			attentes.push({ email, role: args.p_role, created_at: '2026-10-23T08:00:00Z', profiles: { full_name: 'Camille Aubert' } })
+			return Promise.resolve({ data: avant?.role ?? null, error: null, status: 200 })
+		},
 		from(table: string) {
 			let operation = 'select'
 			let charge: unknown
@@ -61,6 +80,13 @@ function base(options: { refus?: Reponse; lecture?: Reponse } = {}) {
 			}
 			const repondre = (): Reponse => {
 				if (table === 'workspaces') return { data: [{ id: 'w', name: 'Atelier Nord', slug: 'atelier-nord' }], error: null, status: 200 }
+				if (table === 'workspace_invitations') {
+					if (operation === 'select') return { data: [...attentes].sort((a, b) => a.email.localeCompare(b.email)), error: null, status: 200 }
+					ecrituresAttentes.push({ operation, filtres })
+					const visees = attentes.filter((attente) => attente.email === filtres.email)
+					attentes = attentes.filter((attente) => !visees.includes(attente))
+					return { data: visees.map((attente) => ({ email: attente.email })), error: null, status: 200 }
+				}
 				if (operation === 'select') return options.lecture ?? { data: lignes, error: null, status: 200 }
 				ecritures.push({ operation, charge, filtres })
 				if (options.refus !== undefined) return options.refus
@@ -72,7 +98,7 @@ function base(options: { refus?: Reponse; lecture?: Reponse } = {}) {
 			return chaine
 		},
 	}
-	return { client: client as unknown as ClientCrm, ecritures }
+	return { client: client as unknown as ClientCrm, ecritures, ecrituresAttentes }
 }
 
 function monter(client: ClientCrm, administration: Capacite = 'permise', idUtilisateur = 'camille') {
@@ -92,7 +118,7 @@ describe('la liste des membres', () => {
 		monter(base().client)
 		await screen.findByTestId('tableau-membres')
 		expect(noms()).toEqual(['Camille Aubert', 'Compte sans nom', 'Driss Lemoine', 'Farida Nowak'])
-		expect(screen.getAllByRole('columnheader').map((th) => th.textContent)).toEqual(['Nom', 'Rôle', 'Depuis', 'Commandes'])
+		expect(within(screen.getByTestId('tableau-membres')).getAllByRole('columnheader').map((th) => th.textContent)).toEqual(['Nom', 'Rôle', 'Depuis', 'Commandes'])
 		expect(screen.queryByTestId('motif-membres')).toBeNull()
 	})
 
@@ -209,5 +235,99 @@ describe('retirer un membre', () => {
 		expect(screen.queryByRole('group')).toBeNull()
 		await waitFor(() => expect(document.activeElement).toBe(commande))
 		expect(ecritures).toEqual([])
+	})
+})
+
+describe('les attentes (T3)', () => {
+	const attentes = () => screen.getAllByTestId('ligne-attente').map((ligne) => ligne.getAttribute('data-email'))
+
+	it('l’administratrice voit la section, ses attentes, et aucune n’est « en suspens » : l’espace a un administrateur', async () => {
+		monter(base().client)
+		const section = await screen.findByRole('region', { name: 'Attentes' })
+		expect(within(section).getByRole('heading', { level: 3, name: 'Attentes' })).toBeTruthy()
+		expect(attentes()).toEqual(['attendu@p2enjoy.test'])
+		expect(within(section).getByText('Auteur inconnu')).toBeTruthy()
+		expect(screen.queryByText('En suspens')).toBeNull()
+	})
+
+	for (const administration of ['refusee', 'en-lecture', 'inconnue'] as const) {
+		it(`capacité ${administration} : la section est absente, sans phrase qui dirait qu’elle existe`, async () => {
+			monter(base().client, administration, 'farida')
+			await screen.findByTestId('tableau-membres')
+			expect(screen.queryByText('Attentes')).toBeNull()
+			expect(screen.queryByTestId('inscrire-attente')).toBeNull()
+		})
+	}
+
+	it('inscrit une adresse neuve au clavier, l’annonce, relit, et rend le focus à la commande à l’annulation', async () => {
+		const { client, ecrituresAttentes } = base()
+		monter(client)
+		const utilisateur = userEvent.setup()
+		await utilisateur.click(await screen.findByTestId('inscrire-attente'))
+		await utilisateur.keyboard('{Escape}')
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('inscrire-attente')))
+		await utilisateur.click(screen.getByTestId('inscrire-attente'))
+		await utilisateur.type(screen.getByLabelText('Adresse'), ' Nouvelle@P2Enjoy.test')
+		await utilisateur.selectOptions(screen.getByLabelText('Rôle', { selector: 'select#attente-role' }), 'business_developer')
+		await utilisateur.click(screen.getByRole('button', { name: 'Inscrire' }))
+		expect((await screen.findByTestId('message-attentes')).textContent).toBe('Attente de nouvelle@p2enjoy.test inscrite.')
+		expect(ecrituresAttentes).toEqual([
+			// Un champ `email` retire lui-même les espaces ; la casse part telle quelle, la base la normalise.
+			{ operation: 'inscrire_attente', charge: { p_ws: 'w', p_email: 'Nouvelle@P2Enjoy.test', p_role: 'business_developer' } },
+		])
+		await waitFor(() => expect(attentes()).toEqual(['attendu@p2enjoy.test', 'nouvelle@p2enjoy.test']))
+		expect(screen.queryByTestId('formulaire-attente')).toBeNull()
+	})
+
+	it('réinscrire une adresse remplace l’attente et dit le rôle d’avant et d’après', async () => {
+		monter(base().client)
+		const utilisateur = userEvent.setup()
+		await utilisateur.click(await screen.findByTestId('inscrire-attente'))
+		await utilisateur.type(screen.getByLabelText('Adresse'), 'attendu@p2enjoy.test')
+		await utilisateur.selectOptions(screen.getByLabelText('Rôle', { selector: 'select#attente-role' }), 'admin')
+		await utilisateur.click(screen.getByRole('button', { name: 'Inscrire' }))
+		expect((await screen.findByTestId('message-attentes')).textContent).toBe(
+			'Attente de attendu@p2enjoy.test remplacée : Lecteur devient Administrateur.',
+		)
+	})
+
+	it('une adresse refusée par la base garde le formulaire ouvert et dit le refus', async () => {
+		monter(base({ refusAttente: { data: null, error: { code: '22023', message: 'adresse_invalide' }, status: 400 } }).client)
+		const utilisateur = userEvent.setup()
+		await utilisateur.click(await screen.findByTestId('inscrire-attente'))
+		// Une adresse que le navigateur accepte, et que la base simulée refuse : le refus vient du serveur.
+		await utilisateur.type(screen.getByLabelText('Adresse'), 'refusee@p2enjoy.test')
+		await utilisateur.click(screen.getByRole('button', { name: 'Inscrire' }))
+		const formulaire = screen.getByTestId('formulaire-attente')
+		expect((await within(formulaire).findByRole('alert')).textContent).toContain('n’est pas une adresse électronique valide')
+	})
+
+	it('retire une attente sans confirmation, l’annonce, et relit', async () => {
+		const { client, ecrituresAttentes } = base()
+		monter(client)
+		const utilisateur = userEvent.setup()
+		await utilisateur.click(await screen.findByRole('button', { name: 'Retirer l’attente de attendu@p2enjoy.test' }))
+		expect((await screen.findByTestId('message-attentes')).textContent).toBe('Attente de attendu@p2enjoy.test retirée.')
+		expect(ecrituresAttentes).toEqual([{ operation: 'delete', filtres: { workspace_id: 'w', email: 'attendu@p2enjoy.test' } }])
+		expect(await screen.findByTestId('attentes-vide')).toBeTruthy()
+	})
+
+	it('un seul bloc ouvert : ouvrir le formulaire referme la confirmation de retrait d’un membre', async () => {
+		monter(base().client)
+		const utilisateur = userEvent.setup()
+		await utilisateur.click(await screen.findByRole('button', { name: 'Retirer Driss Lemoine de l’espace' }))
+		expect(screen.getByRole('group')).toBeTruthy()
+		await utilisateur.click(screen.getByTestId('inscrire-attente'))
+		expect(screen.queryByRole('group')).toBeNull()
+		expect(screen.getByTestId('formulaire-attente')).toBeTruthy()
+	})
+
+	it('ouvrir un autre bloc efface le message des attentes : il décrivait un geste fini', async () => {
+		monter(base().client)
+		const utilisateur = userEvent.setup()
+		await utilisateur.click(await screen.findByRole('button', { name: 'Retirer l’attente de attendu@p2enjoy.test' }))
+		await screen.findByTestId('message-attentes')
+		await utilisateur.click(screen.getByRole('button', { name: 'Retirer Driss Lemoine de l’espace' }))
+		expect(screen.queryByTestId('message-attentes')).toBeNull()
 	})
 })

@@ -10641,11 +10641,19 @@ pas un produit.
 - [x] **T2** — les membres et leurs rôles : composant partagé avec la plateforme, écran Réglages ▸ « Membres », unitaires.
       **Vérifiée le 2026-10-23** : `TableauMembres` extrait de `PlateformeEspace.tsx` sans changer son rendu
       (`Plateforme.test.tsx` 22/22, `plateforme.spec.ts` vert) ; `lib/membres-espace.ts` 10 unitaires et quatre mutations
-      tuées ; écran 12 unitaires et sept mutations tuées ; E2E `e2e/ui/membres.spec.ts` **7/7** (administratrice : rôle
+      tuées ; écran 12 unitaires et sept mutations tuées ; E2E `e2e/ui/membres.spec.ts` **8/8** (« 7/7 » au commit `4a9d9c56`, compte erroné : administratrice : rôle
       écrit au clavier et rendu, refus du dernier administrateur au changement de rôle et au retrait, confirmation de
       soi, Échap ; lectrice : commandes éteintes citant le motif ; trois paliers sans défilement de page) ; captures
       `docs/captures/CRM-070/` observées ; manuel chapitre 10 bis ; `docs/DESIGN_SYSTEM.md` §5.61 et §5.59 corrigé.
-- [ ] **T3** — les attentes et leur état (en attente, en suspens).
+- [x] **T3** — les attentes et leur état (en attente, en suspens).
+      **Vérifiée le 2026-10-23** : migration `0097` `inscrire_attente` (`SECURITY INVOKER`) appliquée en développement ;
+      pgTAP `0089` **18**, trois mutations tuées (garde levée, suppression préalable retirée, `SECURITY DEFINER`) ; API
+      `membres.spec.ts` **+3** aux jetons réels (inscrire, remplacer, retirer ; business developer et lectrice ne lisent,
+      n'inscrivent ni ne retirent rien) ; `BlocAttentes` extrait de `PlateformeEspace.tsx` sans changer son rendu
+      (`Plateforme.test.tsx` 22/22, `plateforme.spec.ts` vert) ; `lib/membres-espace` 15 unitaires ; écran 22 unitaires,
+      sept mutations tuées ; E2E `membres.spec.ts` **9/9** — attente inscrite au clavier, remplacée, retirée, celle du
+      seed intacte ; la lectrice ne voit pas la section ; capture `attentes-inscrite-1440` observée ; manuel 10 bis.5 ;
+      DS §5.61 ; SCHEMA §9 bis.8 quinquies ; contrat, ligne 97 ; harnais 89 fichiers, 3836 assertions, API 1154, UI 872.
 - [ ] **T4** — les droits fins par track et channel, avec l'accès effectif.
 - [ ] **T5** — E2E par rôle des attentes et des droits fins, captures, manuel (chapitre 10 bis, complété), seed, campagnes.
 - [ ] **T6** — livraison en production, sur instruction du responsable.

@@ -111,7 +111,10 @@ fonctions `plateforme_*`. Les libellés de rôle sont communs.
 2. **« Jamais connectée » et « connexion refusée » sortent de `CRM-070`.** Journaliser les refus d'admission par
    adresse devient une unité propre (`CRM-109`). `CRM-070` montre « en attente » et « en suspens ».
 3. **Remplacer une attente** : mesuré en T1 ; une fonction gardée par `app.is_workspace_admin` si les deux écritures ne
-   peuvent pas être atomiques depuis l'écran.
+   peuvent pas être atomiques depuis l'écran. *Tranché en T3* : elles ne le peuvent pas — aucune politique UPDATE, clé
+   `(workspace_id, email)`. `public.inscrire_attente(p_ws, p_email, p_role)`, migration 97, **`SECURITY INVOKER`** : les
+   politiques existantes décident, la garde en tête ne fait que nommer le refus (`docs/SCHEMA.md` §9 bis.8 quinquies).
+   Le bloc des attentes de la plateforme est extrait et partagé comme le tableau des membres (§4).
 
 ## 6. Preuves
 

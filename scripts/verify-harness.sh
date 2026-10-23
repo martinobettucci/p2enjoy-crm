@@ -585,7 +585,9 @@ PORT_RAPPORT=9323
 # et `0085_connecteur_mcp` (`CRM-102`), ajoutées sans report du compteur, puis `0086_droits_interface` (`CRM-093`).
 # **87 depuis `CRM-108` T2, 2026-10-23** (décision 632) : `0087_recettes.test.sql`, seul fichier ajouté. 86 + 1 = 87,
 # MESURÉ par `npm run test:sql` — « 87 fichiers ».
-FICHIERS_SQL_ATTENDUS=87
+# **89 depuis `CRM-070` T3, 2026-10-23** : `0088_acces_effectif_membre` (T1, ajoutée sans report de ce compteur) et
+# `0089_inscrire_attente` (T3). 87 + 2 = 89, MESURÉ par `npm run test:sql` — « 89 fichiers ».
+FICHIERS_SQL_ATTENDUS=89
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -658,7 +660,10 @@ FICHIERS_SQL_ATTENDUS=87
 # **3818 depuis `CRM-070` T1, 2026-10-23** : la suite neuve `0088_acces_effectif_membre`, 22 assertions. 3796 + 22 =
 # 3818, sur 88 fichiers ; mesurée seule (22, aucune anomalie). Au même relevé, `0087` (`CRM-108`) rougit sur quatre
 # assertions qui attendent la section §21 du seed, non encore appliquée — consigné à sa session.
-ASSERTIONS_ATTENDUES=3818
+# **3836 depuis `CRM-070` T3, 2026-10-23** : la suite neuve `0089_inscrire_attente`, 18 assertions, trois mutations
+# tuées (garde levée, suppression préalable retirée, SECURITY DEFINER). 3818 + 18 = 3836, MESURÉ — « 89 fichiers, 3836
+# assertions, aucune anomalie ».
+ASSERTIONS_ATTENDUES=3836
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1012,7 +1017,10 @@ ASSERTIONS_ATTENDUES=3818
 # fichier NEUF, **4** scénarios — l'administratrice lit l'accès effectif de la lectrice, le business developer et la
 # lectrice sont refusés en 403, l'anonyme aussi. Les douze autres depuis 1135 viennent des unités `CRM-103` à `CRM-108`,
 # livrées sans réviser ce compteur.
-SCENARIOS_API=1151
+# **1154, COMPTÉE le 2026-10-23** (« Total: 1154 tests in 81 files ») : `e2e/api/membres.spec.ts` gagne **3** scénarios
+# de `CRM-070` T3 — l'administratrice inscrit, remplace et retire une attente ; le business developer et la lectrice
+# n'en lisent aucune, n'en inscrivent ni n'en retirent.
+SCENARIOS_API=1154
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1433,7 +1441,16 @@ SCENARIOS_API=1151
 # `infobulle-description.spec.ts` de `CRM-105`, **13** — et `droits-interface.spec.ts` de `CRM-093`, **6** : la
 # lectrice (familles A, E, C éteintes avec leur motif, « Prospection » rouvert, le clavier, les réglages, 390 px), le
 # business developer, l'administratrice. 818 + 5 + 8 + 13 + 6 = 850, valeur COMPTÉE — « Total: 850 tests in 71 files ».
-SCENARIOS_UI=850
+# **870 depuis `CRM-070` tranche T2, 2026-10-23** : `membres.spec.ts`, fichier NEUF, **8** scénarios — l'index et la
+# liste, le rôle écrit au clavier puis rendu, le refus du dernier administrateur au changement de rôle, la confirmation
+# de soi, Échap et le refus du retrait, trois paliers, la lectrice aux commandes éteintes. Trois autres fichiers neufs,
+# livrés sans réviser ce compteur : `rentabilite.spec.ts` (`CRM-108`) **3**, `temps-fiche-affaire.spec.ts` (`CRM-106`)
+# **7**, `cout-personnel-calcul.spec.ts` (`CRM-107`) **3**. 850 + 8 + 13 = 871 ; le compte est **870** : un scénario a
+# disparu d'un fichier existant entre-temps, NON ATTRIBUÉ à ce relevé. Valeur COMPTÉE — « Total: 870 tests in 75 files ».
+# **872 depuis `CRM-070` tranche T3, même jour** : `membres.spec.ts` gagne **1** scénario — inscrire une attente au
+# clavier, la remplacer, la retirer, l'attente du seed intacte —, et `rentabilite.spec.ts` (`CRM-108`) **1**, au même
+# relevé, non encore committé par sa session. 870 + 1 + 1 = 872, valeur COMPTÉE — « Total: 872 tests in 75 files ».
+SCENARIOS_UI=872
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

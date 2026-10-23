@@ -2,6 +2,8 @@
 //           réels ; la fonction est réservée à l'administrateur de l'espace
 // @verifies docs/SPEC-membres.md §3.3, §5 point 1 ; docs/SPEC-permissions-rls.md §2.2, §3.3 bis ; CLAUDE.md §10 (le refus
 //           prouvé par une requête directe, avec les vrais jetons des profils)
+// @verifies CRM-070 (docs/BACKLOG.md) — tranche T3 : les attentes, lues, inscrites, remplacées et retirées par la route
+//           REST ; docs/SPEC-membres.md §3.2, §5 point 3 ; docs/SCHEMA.md §9 bis.8 quinquies
 //
 // La suite pgTAP `0088` prouve la fonction en base ; ce fichier prouve ce que PostgREST en rend à chaque profil du seed,
 // hors interface : l'administratrice lit, le business developer et la lectrice sont refusés, l'anonyme aussi.
@@ -57,4 +59,57 @@ test.describe('l’accès effectif d’un membre (docs/SPEC-membres.md §3.3)', 
 		})
 		expect([401, 403], await reponse.text()).toContain(reponse.status())
 	})
+})
+
+const ATTENTES = `${URL_API}/rest/v1/workspace_invitations`
+const INSCRIRE = `${URL_API}/rest/v1/rpc/inscrire_attente`
+const ATTENDU = 'attendu@p2enjoy.test'
+
+test.describe('les attentes de l’espace (docs/SPEC-membres.md §3.2)', () => {
+	test('l’administratrice inscrit, remplace et retire, sans toucher l’attente du seed', async ({ request }) => {
+		const entetes = { ...enTetesAuthentifies(await jetonDe(ADMIN.adresse)), 'Content-Type': 'application/json' }
+		const inscrire = (email: string, role: string) =>
+			request.post(INSCRIRE, { headers: entetes, data: { p_ws: ESPACE, p_email: email, p_role: role } })
+		try {
+			const neuve = await inscrire(' Api-Membres@P2Enjoy.test', 'viewer')
+			expect(neuve.status(), await neuve.text()).toBe(200)
+			expect(await neuve.json()).toBeNull()
+			const remplacee = await inscrire('api-membres@p2enjoy.test', 'business_developer')
+			expect(remplacee.status(), await remplacee.text()).toBe(200)
+			expect(await remplacee.json()).toBe('viewer')
+
+			const lues = await request.get(`${ATTENTES}?workspace_id=eq.${ESPACE}&select=email,role&order=email`, { headers: entetes })
+			expect(await lues.json()).toEqual([
+				{ email: 'api-membres@p2enjoy.test', role: 'business_developer' },
+				{ email: ATTENDU, role: 'viewer' },
+			])
+
+			const invalide = await inscrire('sans-arobase', 'viewer')
+			expect(invalide.status()).toBe(400)
+			expect(((await invalide.json()) as { message: string }).message).toBe('adresse_invalide')
+		} finally {
+			const retrait = await request.delete(`${ATTENTES}?workspace_id=eq.${ESPACE}&email=eq.api-membres@p2enjoy.test`, {
+				headers: { ...entetes, Prefer: 'return=representation' },
+			})
+			expect(((await retrait.json()) as unknown[]).length).toBe(1)
+		}
+	})
+
+	for (const compte of [BIZDEV, VIEWER]) {
+		test(`${compte.role} : ne lit aucune attente, n’en inscrit ni n’en retire`, async ({ request }) => {
+			const entetes = { ...enTetesAuthentifies(await jetonDe(compte.adresse)), 'Content-Type': 'application/json' }
+			const lues = await request.get(`${ATTENTES}?workspace_id=eq.${ESPACE}`, { headers: entetes })
+			expect(await lues.json()).toEqual([])
+			const inscription = await request.post(INSCRIRE, {
+				headers: entetes,
+				data: { p_ws: ESPACE, p_email: ATTENDU, p_role: 'admin' },
+			})
+			expect(inscription.status(), await inscription.text()).toBe(403)
+			expect(((await inscription.json()) as { message: string }).message).toBe('reserve_aux_administrateurs')
+			const retrait = await request.delete(`${ATTENTES}?workspace_id=eq.${ESPACE}&email=eq.${ATTENDU}`, {
+				headers: { ...entetes, Prefer: 'return=representation' },
+			})
+			expect(await retrait.json()).toEqual([])
+		})
+	}
 })

@@ -1579,6 +1579,20 @@ pour une autre personne), `search_path` vide, garde `app.is_workspace_admin(p_ws
 `reserve_aux_administrateurs` ; `execute` révoqué à `public` et à `anon`, accordé à `authenticated`. Prouvée par
 `supabase/tests/0088_acces_effectif_membre.test.sql` (22) et `e2e/api/membres.spec.ts` (4, jetons réels).
 
+### 9 bis.8 quinquies `public.inscrire_attente(p_ws, p_email, p_role)` — inscrire ou remplacer une attente, migration 97
+
+`CRM-070` T3 (`docs/SPEC-membres.md` §3.2, §5 point 3). `workspace_invitations` n'a pas de politique UPDATE et sa clé est
+`(workspace_id, email)` : changer le rôle d'une attente, c'est la retirer puis la réinscrire. La fonction tient les deux
+écritures dans **une transaction**, pour qu'un échec entre les deux ne perde jamais l'attente. **`SECURITY INVOKER`** :
+elle n'élève aucun droit, la suppression et l'insertion passent par les politiques `workspace_invitations_*_admin`, et
+`invited_by` reste posé par sa valeur par défaut, `auth.uid()`, que la politique d'insertion exige. La garde
+`app.is_workspace_admin(p_ws)` en tête rend un refus **nommé** — `42501` `reserve_aux_administrateurs` — au lieu de
+l'erreur d'une politique. L'adresse est normalisée (minuscules, sans espaces autour) ; un rôle hors des trois rend
+`22023` `role_invalide`, une adresse que la contrainte refuse `22023` `adresse_invalide`. Elle **rend le rôle
+remplacé**, `NULL` pour une inscription neuve. `search_path` vide ; `execute` à `authenticated` seul. Retirer une attente
+reste une suppression directe sous la politique. Prouvée par `supabase/tests/0089_inscrire_attente.test.sql` (18, trois
+mutations tuées) et `e2e/api/membres.spec.ts` (3 scénarios, jetons réels).
+
 ### 9 bis.9 `public.cards_figees()` — les affaires figées de l'appelant, migration 53
 
 Ajoutée le 2026-08-24 par `CRM-062` tranche 1 (`docs/SPEC-relances.md` §2 et §3).

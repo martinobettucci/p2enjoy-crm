@@ -32476,7 +32476,24 @@ emprunte le motif générique. **Garde.** Le garde de source d'INC-279 a refusé
 (`commande?.disabled`), qui échappait à sa forme reconnue : le code a pris la forme du dépôt (`commande.disabled === true
 || …`) plutôt que d'affaiblir le garde. **Vérifications.** Unitaires 4130/4130 (dont `membres-espace` 10 et l'écran 12,
 onze mutations tuées) ; `Plateforme.test.tsx` 22/22 et `plateforme.spec.ts` inchangés et verts ; E2E `membres.spec.ts`
-7/7 sur la pile seedée, seed rendu à son état ; `verify-plateforme.sh --rapide` 31 contrôles ; captures observées.
+8/8 sur la pile seedée (« 7/7 » au message du commit `4a9d9c56` : compte erroné), seed rendu à son état ; `verify-plateforme.sh --rapide` 31 contrôles ; captures observées.
+
+### `CRM-070` T3 — remplacer une attente en une transaction, et le bloc des attentes partagé
+
+*2026-10-23.* **Problème.** Mesuré en T1 : `workspace_invitations` n'a pas de politique UPDATE et sa clé est
+`(workspace_id, email)` ; changer le rôle d'une attente, c'est la retirer puis la réinscrire, et deux requêtes depuis
+l'écran perdraient l'attente sur un échec entre les deux. **Décision** (`docs/SPEC-membres.md` §5 point 3, tranché) :
+une fonction `public.inscrire_attente`, migration 97, **`SECURITY INVOKER`** — elle n'élève aucun droit ; les politiques
+existantes décident, et la garde `app.is_workspace_admin` en tête ne fait que **nommer** le refus. **Alternative
+écartée** : `SECURITY DEFINER`, comme `plateforme_inviter` — inutile, puisque l'administrateur a déjà les deux droits,
+et dangereuse : la garde serait alors la seule barrière. Une mutation `SECURITY DEFINER` est tuée par la suite.
+**Composant.** Le bloc des attentes de la plateforme est extrait comme le tableau des membres (`BlocAttentes`), avec
+`Champ` et `useRetourFocus`, désormais exportés par `TableauMembres.tsx`. **Écart assumé au §5.59** : la section n'est
+rendue qu'à qui administre, selon la capacité ; absente pendant sa lecture et sur son défaut — la RLS rendrait une liste
+vide, qui mentirait (« aucune attente »). **Constats.** Le premier passage de l'API remplaçait l'attente du seed, ce qui
+posait son `invited_by` : remis à `null`, et le scénario n'inscrit plus que sa propre adresse ; sa date de création reste
+celle du passage jusqu'au prochain seed. Le message du commit `4a9d9c56` disait `membres.spec.ts` « 7/7 » : il en avait
+**8**. **Vérifications.** pgTAP série complète 89 fichiers, 3836 assertions, aucune anomalie ; unitaires et E2E au backlog.
 
 ### décision 636 — `CRM-110` : le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert
 

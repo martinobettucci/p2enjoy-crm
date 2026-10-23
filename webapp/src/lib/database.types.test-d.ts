@@ -1018,10 +1018,15 @@ type _vueDerivationColonnes = Expect<
 // `0096` de `CRM-070` TRANCHE T1 ajoute `acces_effectif_membre` — les droits posés et l'accès effectif d'un membre, par
 // track et par channel (docs/SPEC-membres.md §3.3, décision 635). SECURITY DEFINER, gardée par l'administration de
 // l'espace : le type ne dit pas le refus `42501 reserve_aux_administrateurs`. Quatre-vingt-neuf devient QUATRE-VINGT-DIX.
+// `0097` de `CRM-070` TRANCHE T3 ajoute `inscrire_attente` — inscrire ou remplacer une attente en une transaction
+// (docs/SPEC-membres.md §3.2, §5 point 3). SECURITY INVOKER : le type ne dit ni le refus `42501
+// reserve_aux_administrateurs`, ni `adresse_invalide` et `role_invalide` (`22023`), ni que le rôle rendu est `null` pour
+// une inscription neuve. Quatre-vingt-dix devient QUATRE-VINGT-ONZE.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
     | 'acces_effectif_membre'
+    | 'inscrire_attente'
     | 'administration_permise'
     | 'edition_permise'
     | 'mcp_autorise'

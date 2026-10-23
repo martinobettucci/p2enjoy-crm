@@ -3,9 +3,21 @@
 // @verifies docs/SPEC-membres.md §2 (les écritures passent par `workspace_members` sous la RLS, jamais par les fonctions
 //           `plateforme_*`), §3.1 (administrateurs d'abord, puis par nom ; le dernier administrateur), §3.4 (les refus
 //           traduits : dernier administrateur, sans effet, droit, réseau, inconnu)
+// @verifies CRM-070 (docs/BACKLOG.md) — tranche T3 : les attentes lues, inscrites par `inscrire_attente`, retirées ; « en
+//           suspens » ; docs/SPEC-membres.md §3.2, §5 point 3
 
 import { describe, expect, it } from 'vitest'
-import { changerRoleMembre, issueEcriture, lireMembresEspace, retirerMembreEspace, trierMembres } from './membres-espace'
+import {
+	attenteSuspendue,
+	changerRoleMembre,
+	inscrireAttente,
+	issueEcriture,
+	lireAttentesEspace,
+	lireMembresEspace,
+	retirerAttenteEspace,
+	retirerMembreEspace,
+	trierMembres,
+} from './membres-espace'
 import type { ClientCrm } from './supabase'
 
 type Reponse = { data: unknown; error: { code?: string; message: string } | null; status: number }
@@ -31,6 +43,7 @@ function espion(reponse: Reponse | Error) {
 				appel.operation = 'delete'
 				return chaine
 			}
+			chaine.order = () => chaine
 			chaine.eq = (colonne: string, valeur: unknown) => {
 				appel.filtres.push([colonne, valeur])
 				return chaine
@@ -38,6 +51,10 @@ function espion(reponse: Reponse | Error) {
 			chaine.then = (ok: (r: Reponse) => unknown, ko: (e: unknown) => unknown) =>
 				reponse instanceof Error ? Promise.reject(reponse).then(ok, ko) : Promise.resolve(reponse).then(ok)
 			return chaine
+		},
+		rpc: (fonction: string, args: unknown) => {
+			appels.push({ table: `rpc:${fonction}`, operation: 'rpc', charge: args, filtres: [] })
+			return reponse instanceof Error ? Promise.reject(reponse) : Promise.resolve(reponse)
 		},
 	}
 	return { client: client as unknown as ClientCrm, appels }
@@ -124,5 +141,57 @@ describe('la traduction des issues', () => {
 		expect(issueEcriture({ data: null, error: { message: 'x' }, status: 403 })).toEqual({ ok: false, motif: 'droit' })
 		expect(issueEcriture({ data: null, error: { message: 'x' }, status: 0 })).toEqual({ ok: false, motif: 'reseau' })
 		expect(issueEcriture({ data: null, error: { message: 'x' }, status: 500 })).toEqual({ ok: false, motif: 'inconnu' })
+	})
+})
+
+describe('les attentes (T3)', () => {
+	it('lit workspace_invitations de l’espace, avec le nom de qui l’a inscrite, et écarte un rôle inconnu', async () => {
+		const { client, appels } = espion({
+			data: [
+				{ email: 'a@x.test', role: 'viewer', created_at: '2026-10-01', profiles: { full_name: 'Camille Aubert' } },
+				{ email: 'b@x.test', role: 'admin', created_at: '2026-10-02', profiles: null },
+				{ email: 'c@x.test', role: 'owner', created_at: '2026-10-03', profiles: null },
+			],
+			error: null,
+			status: 200,
+		})
+		const etat = await lireAttentesEspace(client, 'w1')
+		expect(appels[0]).toMatchObject({ table: 'workspace_invitations', filtres: [['workspace_id', 'w1']] })
+		expect(etat.statut === 'pret' && etat.donnees).toEqual([
+			{ email: 'a@x.test', role: 'viewer', invitePar: 'Camille Aubert', depuis: '2026-10-01' },
+			{ email: 'b@x.test', role: 'admin', invitePar: null, depuis: '2026-10-02' },
+		])
+	})
+
+	it('inscrire appelle inscrire_attente et rend le rôle remplacé, ou null pour une attente neuve', async () => {
+		const neuve = espion({ data: null, error: null, status: 200 })
+		expect(await inscrireAttente(neuve.client, 'w1', 'a@x.test', 'viewer')).toEqual({ ok: true, remplace: null })
+		expect(neuve.appels[0]).toMatchObject({ table: 'rpc:inscrire_attente', charge: { p_ws: 'w1', p_email: 'a@x.test', p_role: 'viewer' } })
+		const remplacee = espion({ data: 'business_developer', error: null, status: 200 })
+		expect(await inscrireAttente(remplacee.client, 'w1', 'a@x.test', 'admin')).toEqual({ ok: true, remplace: 'business_developer' })
+	})
+
+	it('les refus de la fonction sont traduits : adresse, rôle, droit, réseau', async () => {
+		const refus = (message: string, status: number) => espion({ data: null, error: { code: '22023', message }, status }).client
+		expect(await inscrireAttente(refus('adresse_invalide', 400), 'w1', 'x', 'viewer')).toEqual({ ok: false, motif: 'adresse-invalide' })
+		expect(await inscrireAttente(refus('role_invalide', 400), 'w1', 'x@y', 'viewer')).toEqual({ ok: false, motif: 'role-invalide' })
+		expect(await inscrireAttente(refus('reserve_aux_administrateurs', 403), 'w1', 'x@y', 'viewer')).toEqual({ ok: false, motif: 'droit' })
+		expect(await inscrireAttente(espion(new Error('réseau')).client, 'w1', 'x@y', 'viewer')).toEqual({ ok: false, motif: 'reseau' })
+	})
+
+	it('retirer supprime l’attente de l’adresse, et zéro ligne est « sans effet »', async () => {
+		const { client, appels } = espion({ data: [{ email: 'a@x.test' }], error: null, status: 200 })
+		expect(await retirerAttenteEspace(client, 'w1', 'a@x.test')).toEqual({ ok: true })
+		expect(appels[0]).toMatchObject({ table: 'workspace_invitations', operation: 'delete', filtres: [['workspace_id', 'w1'], ['email', 'a@x.test']] })
+		expect(await retirerAttenteEspace(espion({ data: [], error: null, status: 200 }).client, 'w1', 'a@x.test')).toEqual({
+			ok: false,
+			motif: 'sans-effet',
+		})
+	})
+
+	it('« en suspens » : une attente non administratrice dans un espace sans administrateur membre', () => {
+		expect(attenteSuspendue('viewer', 0)).toBe(true)
+		expect(attenteSuspendue('admin', 0)).toBe(false)
+		expect(attenteSuspendue('viewer', 1)).toBe(false)
 	})
 })

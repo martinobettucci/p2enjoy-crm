@@ -3598,6 +3598,10 @@ export type Database = {
           track_name: string
         }[]
       }
+      inscrire_attente: {
+        Args: { p_email: string; p_role: string; p_ws: string }
+        Returns: string
+      }
       interrompre_sequence_relance: {
         Args: { p_enrollment_id: string }
         Returns: undefined
