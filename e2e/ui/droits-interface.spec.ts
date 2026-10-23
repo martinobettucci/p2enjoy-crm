@@ -14,7 +14,8 @@
 // et cite son motif, une commande permise est offerte, un geste personnel reste offert à tous. Le refus serveur reste
 // prouvé hors interface par les suites existantes (CLAUDE.md §10) : ce fichier n'en est pas une.
 
-import { connecterAvecLeLabs, expect, test, type Locator, type Page } from './fixtures'
+import type { Locator } from '@playwright/test'
+import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { capturer } from './captures'
 
 const UNITE = 'CRM-093'
