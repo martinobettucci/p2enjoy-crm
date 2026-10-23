@@ -32364,3 +32364,16 @@ l'espace) : tant que la clé courante n'a pas sa réponse, la capacité est `en-
 crochet qui consignent CHAQUE rendu — `rerender` exécute les effets, seul ce journal voit le rendu intermédiaire —, vus
 rouges sur le défaut, verts avec le correctif ; suite unitaire 4 019 verts (quatre fichiers de `CRM-108` ne se chargent
 pas, travail en cours d'une autre session). Le rejeu E2E reste à faire.
+
+### décision 633 — `CRM-093` vérifiée de bout en bout ; la livraison de `main` attend la fin de `CRM-106` à `CRM-108`
+
+*2026-10-23, arbitrage du responsable.* **Constat.** La campagne `e2e:ui` complète du 2026-10-23, rejouée sur un build
+qui embarque les correctifs d'INC-280, d'INC-281 et de la 403 de `rentabilite_affaires`, rend **856 verts sur 859** ;
+les trois rouges sont étrangers à `CRM-093` (une route de `CRM-108` insérée dans la coquille, l'écran Temps de
+`CRM-106`, un scénario instable de l'assistant IA). Les scénarios de `CRM-093` — `droits-interface.spec.ts` et les
+vingt et un scénarios révisés — sont tous verts. **Question posée.** Une livraison emporte forcément tout `main` :
+migrations 91 à 95 et webapp de `CRM-093`, `CRM-105`, `CRM-101` T6, `CRM-103` T1–T2, `CRM-106` T2, `CRM-107` T2,
+`CRM-108` T1–T4, montée de sécurité npm. **Décision du responsable : attendre la fin de `CRM-106`, `CRM-107` et
+`CRM-108`** avant de livrer. Il a confirmé que l'instantané de la VM est pris ; la livraison étant différée, la
+confirmation sera redemandée au moment d'ouvrir la fenêtre. La reconstruction de l'image `mcp` reste le geste de la
+session qui tient le connecteur, sur instruction du responsable.
