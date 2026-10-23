@@ -2,6 +2,8 @@
 # Dépendances figées de l'image, reprises telles quelles du connecteur Evoliz (p2enjoy-evoliz, révision 80a3e27,
 # requirements.lock du 2026-10-06) : le mandataire OAuth s'appuie sur des points internes de FastMCP, et la version
 # éprouvée en production là-bas est celle-ci (docs/SPEC-mcp.md §14).
+# Seul écart, 2026-10-23 (revue de sécurité, docs/JOURNAL.md) : opentelemetry-api 1.45.0 → 1.45.1 (CVE-2026-114603,
+# analyse quadratique de `tracestate`). Dépendance du SDK `mcp`, inerte sans SDK OpenTelemetry : aucune télémétrie.
 aiofile==3.12.3
 annotated-types==0.8.0
 anyio==4.15.1
@@ -41,7 +43,7 @@ mcp-types==2.3.0
 mdurl==0.1.2
 more-itertools==11.1.0
 openapi-pydantic==0.6.0
-opentelemetry-api==1.45.0
+opentelemetry-api==1.45.1
 packaging==26.3
 pathable==0.6.0
 platformdirs==4.12.3

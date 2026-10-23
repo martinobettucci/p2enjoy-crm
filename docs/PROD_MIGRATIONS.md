@@ -431,6 +431,10 @@ et 90, service `mcp` démarré et sain. Relevé complet au §8.
 fenêtre, relever en lecture seule `select count(*) from mcp_droits d where not exists (select 1 from profiles p where
 p.id = d.sub)` : c'est le nombre de droits que la migration retirera, et que son `raise notice` écrira.
 
+**Revue de sécurité du 2026-10-23, à livrer avec la même reconstruction** : l'image `mcp` embarque
+`opentelemetry-api` 1.45.1 au lieu de 1.45.0 (CVE-2026-114603). Aucun autre geste : la reconstruction explicite de
+l'image, prévue ci-dessous pour T6, l'emporte.
+
 **`CRM-102` T6, à livrer** (le lien de l'accueil et les redirections `/plateforme` et `/admin`, `docs/SPEC-mcp.md` §2.2) :
 aucune migration, aucune variable nouvelle — `SITE_URL` est déjà posée dans la cellule (`https://crm.lelabs.tech`,
 relevée en lecture seule le 2026-10-21). Gestes : `scripts/spark/livrer.sh` **sans** `--migrate`, puis la

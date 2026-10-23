@@ -13,6 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### Sécurité — revue des dépendances du 2026-10-23
+
+- **Connecteur MCP** : `opentelemetry-api` 1.45.1 (CVE-2026-114603, une requête authentifiée pouvait occuper le service
+  plusieurs secondes). C'est une dépendance imposée par le SDK MCP, inerte : le CRM n'a aucune télémétrie.
+- **Tests de `mail-sync`** : `httpx2` 2.13.1 (cinq avis, sans effet en production).
+
 ### `CRM-107` T2 — calculer le coût par quart depuis le coût mensuel (décision 631)
 
 *Webapp seulement. Prouvé en tests unitaires ; parcours réel, captures et manuel avec la tranche T3.*

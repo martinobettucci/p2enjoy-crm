@@ -32215,3 +32215,28 @@ suite du code.
 - **`CRM-107`** : **non** — une aide de calcul d'interface, qui n'enregistre rien (`docs/SPEC-temps.md` §7.4 bis,
   point 7).
 
+
+### Revue de sécurité des dépendances — 2026-10-23
+
+**Demande du responsable** : passer en revue les alertes signalées par GitHub (21), puis les corriger.
+
+**Constats.** La revue est faite par audit local des manifestes, le CLI `gh` étant absent du poste.
+
+- **npm.** Les 21 alertes portent sur 6 paquets d'outillage seulement : `vite` 8.2.0 (6 avis), `undici` 8.10.0 via
+  `jsdom` (11), `vitest` 4.1.10 (2), `nanoid` 3.3.17 via `postcss` (1), `source-map-js` 1.2.1 (1). Aucune
+  dépendance livrée dans la webapp n'est concernée.
+- **Python**, audité par `pip-audit`, car Dependabot ne lit pas `requirements.lock` :
+  - `opentelemetry-api` 1.45.0 dans l'image de production du connecteur (CVE-2026-114603). C'est une dépendance du SDK
+    `mcp`, inerte sans SDK OpenTelemetry : aucune télémétrie n'existe. Son analyse de `tracestate` s'exécute
+    pourtant sur les métadonnées d'une requête MCP, donc après authentification ;
+  - `httpx2` 2.7.0 dans les dépendances de test de `mail-sync` (5 avis).
+- **Hors de la revue** : les images Docker de base.
+
+**Décision.** Corriger tout, par des montées sans changement majeur.
+
+- **Python d'abord**, sans toucher à la pile : pytest du connecteur 105 et de `mail-sync` 246, verts. Le seul
+  avertissement de `mail-sync` (`starlette`/`anyio`) est identique avec l'ancienne version.
+- **npm ensuite**, une fois finie la campagne Playwright en cours dans une autre session. Réinstaller `node_modules`
+  pendant qu'elle tourne la casserait, comme un build l'a déjà fait.
+- **L'image `mcp` de production** part avec la reconstruction déjà prévue pour `CRM-102` T6 (`docs/PROD_MIGRATIONS.md`
+  §2.14).
