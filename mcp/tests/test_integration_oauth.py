@@ -185,9 +185,15 @@ async def _jetons(contexte: dict[str, str], reponse: httpx2.Response) -> dict:
     return jetons.json()
 
 
-async def _espaces(jeton: str) -> dict:
+async def _espaces(jeton: str, *, outils_exacts: frozenset[str] | None = None) -> dict:
+    """La liste des espaces, par un vrai client MCP. Les outils visibles suivent la matrice (D5) : un compte qui la
+    franchit (superadministratrice, `admin` LeLabs) voit aussi ceux des familles livrées depuis (`recettes`,
+    `CRM-108`), d'où l'inclusion ; l'égalité stricte n'est affirmée que pour un compte dont on connaît la matrice."""
     async with Client(f"{MCP}/mcp", auth=jeton) as client:
-        assert {o.name for o in await client.list_tools()} == {"crm_workspace_list"}
+        visibles = {o.name for o in await client.list_tools()}
+        assert "crm_workspace_list" in visibles
+        if outils_exacts is not None:
+            assert visibles == outils_exacts
         return (await client.call_tool("crm_workspace_list", {})).structured_content
 
 
@@ -281,7 +287,10 @@ async def test_un_droit_suffit_pour_entrer_dans_la_matrice_et_la_rls():
     assert (await _service("POST", "/mcp_droits", json=droit)).status_code == 201
     try:
         reponse, contexte = await _parcours(FARIDA)
-        espaces = await _espaces((await _jetons(contexte, reponse))["access_token"])
+        # `affaires:consulter` seul : aucun outil d'une autre famille n'est montré (visibilité de D5).
+        espaces = await _espaces(
+            (await _jetons(contexte, reponse))["access_token"], outils_exacts=frozenset({"crm_workspace_list"})
+        )
         assert [(e["slug"], e["role"], e["rights"]) for e in espaces["workspaces"]] == [
             ("p2enjoy", "viewer", ["affaires:consulter"])
         ]
