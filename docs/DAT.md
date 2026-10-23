@@ -689,6 +689,9 @@ comme en production. Le CRM en est un client **confidentiel**, `lelabs-crm-serve
 5. Avant l'échéance, la webapp **prolonge** par la seule poignée : l'échangeur rafraîchit chez
    LeLabs et **rejoue l'admission** — un rôle `verified` ou `admin` retiré, ou une appartenance
    supprimée, ferment l'accès au plus tard à la prolongation suivante. Sans session, prolonger rend `204` (décision 587).
+   Un refus d'une adresse **attendue** — non vérifiée, sans `verified`, ou espace sans administrateur — est d'abord
+   journalisé par `public.journaliser_refus_admission` dans `admission_refus`, une trace par attente, 90 jours au plus
+   (`CRM-109`, `docs/SPEC-refus-admission.md`) ; une adresse que personne n'attend ne laisse rien.
    **Fermer** supprime la session serveur et efface le cookie.
 6. Les politiques RLS résolvent les droits **à partir des tables d'appartenance** : un droit
    d'espace révoqué prend effet immédiatement. **Une seule exception, imposée par le domaine** : le

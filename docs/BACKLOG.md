@@ -15765,7 +15765,14 @@ peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi e
       `p2enjoy-purge-refus-admission` à 3 h 53 — la minute 41 d'abord choisie était celle des séquences de relance,
       relevée par `verify-armement-sequences.sh` (minutes distinctes 7, 23, 41, 53) ; types régénérés, témoins à 92
       fonctions et la table ; SCHEMA §9 bis.8 sexies ; contrat, ligne 98.
-- [ ] **T2** — l'échangeur journalise les trois refus d'une adresse attendue ; unitaires ; intégration réelle.
+- [x] **T2** — l'échangeur journalise les trois refus d'une adresse attendue ; unitaires ; intégration réelle.
+      **Vérifiée le 2026-10-23** : un seul crochet dans `traiterSession`, avant la réponse, pour l'ouverture comme pour
+      la prolongation ; unitaires de l'échangeur (trois codes journalisés, `attente_espace`, jeton refusé et adresse
+      absente non, échec de journalisation sans effet sur la réponse et consigné sans l'adresse, prolongation) — 239/239
+      sur `supabase/functions` ; intégration réelle `e2e/api/session.spec.ts` 24/24 sur Keycloak local — `attendu@` laisse
+      une trace `attente_verification` comptée 1, `inconnu@` et une adresse non vérifiée inattendue aucune, l'attente en
+      suspens laisse `attente_administrateur` puis la perd à la consommation ; **mutation tuée sur l'échangeur réel**
+      (crochet retiré : la preuve rougit) ; pgTAP `0090` rendue indépendante d'une trace laissée par ce passage.
 - [ ] **T3** — les écrans : Réglages ▸ Membres et la plateforme (`plateforme_attentes` étendue) ; unitaires, API, E2E,
       manuel, seed.
 - [ ] **T4** — livraison en production, sur instruction du responsable.

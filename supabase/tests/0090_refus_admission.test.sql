@@ -44,6 +44,10 @@ create or replace function pg_temp.trace(p_email text) returns text language sql
 	 where workspace_id = '5eed0000-0000-4000-8000-000000000001' and email = p_email
 $$;
 
+-- La suite ne dépend pas de l'état de la base : une trace laissée par un passage réel de l'échangeur (`CRM-109` T2,
+-- `e2e/api/session.spec.ts`) est retirée ici, dans la transaction annulée.
+delete from public.admission_refus;
+
 -- ---------------------------------------------------------------------------------------------
 -- 1. La forme
 -- ---------------------------------------------------------------------------------------------

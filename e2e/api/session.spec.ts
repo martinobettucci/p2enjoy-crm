@@ -1,4 +1,6 @@
 // @verifies CRM-092 (docs/BACKLOG.md) — échangeur de session, client CONFIDENTIEL, contre la pile réelle
+// @verifies CRM-109 (docs/BACKLOG.md) — tranche T2 : le refus d'une adresse attendue laisse sa trace par l'échangeur
+//           réel, une adresse inconnue aucune, l'attente consommée emporte la sienne (docs/SPEC-refus-admission.md §2, §4)
 // @verifies docs/SPEC-session-sso.md §5.1 (trois gestes), §5.2 (ouvrir : code, vérificateur, secret),
 //           §5.3 (prolonger, fermer), §5.4 (jeton interne), §5.5 (refus), §5.6 (poignée, cookie),
 //           §6 (admission rejouée), §7.4 (sessions serveur chiffrées), §10 (realm), §13 (preuves API)
@@ -281,14 +283,23 @@ test.describe('Les attentes et les refus du dictionnaire fermé (§5.5)', () => 
 		expect(setCookie).toBeNull()
 		expect(await lireService(`profiles?select=id&id=eq.${INCONNU}`)).toEqual([])
 		expect(await sessionsDe(INCONNU)).toEqual([])
+		// `CRM-109` : personne n'attend l'adresse, aucune trace de refus (docs/SPEC-refus-admission.md §2).
+		expect(await lireService(`admission_refus?select=email&email=eq.inconnu@${DOMAINE}`)).toEqual([])
 	})
 
 	test('attendu@ : pas vérifié par LeLabs — 403 attente_verification, et rien n’est écrit', async () => {
+		// Une trace laissée par un passage précédent est retirée d'abord : le compte prouve CE refus-ci.
+		const retrait = await fetch(`${URL_API}/rest/v1/admission_refus?email=eq.attendu@${DOMAINE}`, { method: 'DELETE', headers: enTetesService() })
+		expect(retrait.status, 'la clé de service retire une trace').toBeLessThan(300)
 		const { statut, corps, setCookie } = await ouvrirSession(`attendu@${DOMAINE}`)
 		expect(statut).toBe(403)
 		expect(corps).toEqual({ erreur: 'attente_verification', adresse: `attendu@${DOMAINE}` })
 		expect(setCookie).toBeNull()
 		expect(await lireService(`profiles?select=id&id=eq.${ATTENDU}`)).toEqual([])
+		// `CRM-109` : l'adresse est attendue — le refus laisse sa trace, par l'échangeur réel, sur son attente.
+		expect(await lireService(`admission_refus?select=motif,refus&email=eq.attendu@${DOMAINE}`)).toEqual([
+			{ motif: 'attente_verification', refus: 1 },
+		])
 	})
 
 	test('une adresse non prouvée — 403 adresse_non_verifiee', async () => {
@@ -300,6 +311,8 @@ test.describe('Les attentes et les refus du dictionnaire fermé (§5.5)', () => 
 			const { statut, corps } = await ouvrirSession(adresse)
 			expect(statut).toBe(403)
 			expect(corps).toEqual({ erreur: 'adresse_non_verifiee', adresse })
+			// `CRM-109` : adresse non vérifiée, mais que personne n'attend — aucune trace.
+			expect(await lireService(`admission_refus?select=email&email=eq.${adresse}`)).toEqual([])
 		} finally {
 			await exigerVerificationAdresse(true)
 			await effacerActionsRequises(sub)
@@ -470,6 +483,10 @@ test.describe('L’admission patiente : un espace sans administrateur n’empêc
 			expect(await lireService(`workspace_invitations?select=role&email=eq.${lectrice.adresse}`)).toEqual([{ role: 'viewer' }])
 			expect(await lireService(`profiles?select=id&id=eq.${lectrice.sub}`)).toEqual([])
 			expect(await sessionsDe(lectrice.sub)).toEqual([])
+			// `CRM-109` : le refus d'une attente en suspens laisse sa trace, motif et compte.
+			expect(await lireService(`admission_refus?select=motif,refus&email=eq.${lectrice.adresse}`)).toEqual([
+				{ motif: 'attente_administrateur', refus: 1 },
+			])
 
 			// L'administratrice attendue entre, elle, dans ce même espace vide.
 			await inscrire(administratrice.adresse, 'admin')
@@ -483,6 +500,8 @@ test.describe('L’admission patiente : un espace sans administrateur n’empêc
 			expect(ensuite.statut).toBe(200)
 			expect(await lireService(`workspace_members?select=role&user_id=eq.${lectrice.sub}`)).toEqual([{ role: 'viewer' }])
 			expect(await lireService(`workspace_invitations?select=email&email=eq.${lectrice.adresse}`)).toEqual([])
+			// `CRM-109` : l'attente consommée emporte sa trace (cascade, décision 644).
+			expect(await lireService(`admission_refus?select=email&email=eq.${lectrice.adresse}`)).toEqual([])
 			expect((await fermer(ensuite.poignee)).statut).toBe(204)
 		} finally {
 			// L'espace d'abord — sa suppression emporte les appartenances, que la garde du dernier

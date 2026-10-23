@@ -62,14 +62,17 @@ prochaine fenêtre de production.*
 
 ### `CRM-109` — le journal des refus d'admission d'une adresse attendue (décisions 640 et 644)
 
-*En développement seulement, tranche T1 : la base. Prouvée en pgTAP ; l'échangeur de session l'alimentera avec T2, et
-les écrans la montreront avec T3. La migration `0098` attend la prochaine fenêtre de production.*
+*En développement seulement, tranches T1 et T2 : la base et l'échangeur de session. Prouvées en pgTAP, en tests
+unitaires et contre le Keycloak local ; les écrans la montreront avec T3. La migration `0098` attend la prochaine
+fenêtre de production.*
 
 - **Migration `0098`** : une table `admission_refus` garde, **pour chaque attente**, le dernier refus de connexion de
   l'adresse attendue — adresse non vérifiée chez LeLabs, compte LeLabs non vérifié, espace sans administrateur —, avec
   la date du premier et du dernier refus et leur nombre. **Une adresse que personne n'attend ne laisse aucune trace.**
   La trace part avec l'attente (consommée, retirée ou remplacée) et au plus tard **90 jours** après le dernier refus,
   par une purge quotidienne. Seul l'administrateur de l'espace la lit ; seul l'échangeur de session l'écrit.
+- **Échangeur de session** : chaque refus d'une adresse attendue est journalisé avant la réponse ; un échec de
+  journalisation ne change jamais la réponse.
 
 ### Sécurité — revue des dépendances du 2026-10-23
 

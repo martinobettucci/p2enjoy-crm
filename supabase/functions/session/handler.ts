@@ -10,6 +10,9 @@
 //       `lelabs_admin`), §6.1 bis ; docs/JOURNAL.md décision 597 — règle du domaine sur `admin`
 // @spec CRM-101 (docs/BACKLOG.md) — tranche T2 ; docs/SPEC-plateforme.md §3 (amorçage unique), §4 (admission
 //       révisée) ; docs/JOURNAL.md décision 627 — la liste d'amorçage transmise à l'ouverture et à la prolongation
+// @spec CRM-109 (docs/BACKLOG.md) — tranche T2 : le refus d'une adresse attendue est journalisé avant la réponse ;
+//       docs/SPEC-refus-admission.md §2 (trois codes), §4 (un échec de journalisation ne change jamais la réponse) ;
+//       docs/JOURNAL.md décisions 640 et 644
 //
 // Module pur : toute entrée-sortie passe par `DependancesSession`, ce qui rend chaque refus prouvable
 // sans réseau. Le navigateur ne reçoit AUCUN jeton LeLabs : il remet un code et son vérificateur,
@@ -396,6 +399,25 @@ const EVENEMENT_SUCCES: Readonly<Record<Geste, string>> = {
 	fermer: 'session_fermee',
 }
 
+/**
+ * Les trois refus qui qualifient une personne peut-être attendue (`docs/SPEC-refus-admission.md` §2). `attente_espace`
+ * n'en est pas : personne n'attend l'adresse, et elle ne laisse aucune trace (`docs/SPEC-session-sso.md` §6.1).
+ */
+const REFUS_JOURNALISES: ReadonlySet<string> = new Set(['adresse_non_verifiee', 'attente_verification', 'attente_administrateur'])
+
+/**
+ * Journalise le refus d'une adresse, que la base ne garde QUE si une attente l'attend. Au mieux : un échec est
+ * consigné sans l'adresse (`CLAUDE.md` §20), et la personne reçoit le même refus (§4).
+ */
+async function journaliserRefus(d: DependancesSession, refus: Refus, echeance: number): Promise<void> {
+	if (!REFUS_JOURNALISES.has(refus.code) || refus.adresse === null) return
+	try {
+		await d.appelerBase('journaliser_refus_admission', { p_email: refus.adresse, p_motif: refus.code }, echeance)
+	} catch {
+		d.journaliser({ event: 'refus_non_journalise', code: refus.code })
+	}
+}
+
 export async function traiterSession(requete: Request, d: DependancesSession): Promise<Response> {
 	if (requete.method === 'OPTIONS') return new Response(null, { status: 204, headers: { allow: ALLOW } })
 	const debut = d.maintenantMs()
@@ -430,7 +452,9 @@ export async function traiterSession(requete: Request, d: DependancesSession): P
 		else conclure(EVENEMENT_SUCCES[geste], 'ok')
 		return reponse
 	} catch (erreur) {
-		if (erreur instanceof RefusSession) return refuser(erreur, erreur.effacerCookie)
-		return refuser(erreur instanceof Refus ? erreur : new Refus('service_indisponible'))
+		const refus = erreur instanceof Refus ? erreur : new Refus('service_indisponible')
+		await journaliserRefus(d, refus, echeance)
+		if (refus instanceof RefusSession) return refuser(refus, refus.effacerCookie)
+		return refuser(refus)
 	}
 }

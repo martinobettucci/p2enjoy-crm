@@ -8,6 +8,8 @@
 //           décision 597 — revendication `lelabs_admin` et drapeau `p_admin_lelabs`, à l'ouverture et à la prolongation
 // @verifies CRM-101 (docs/BACKLOG.md) — tranche T2 : la liste d'amorçage transmise aux deux fonctions de session serveur
 //           (docs/SPEC-plateforme.md §3, §4 ; décision 627)
+// @verifies CRM-109 (docs/BACKLOG.md) — tranche T2 : les trois refus d'une adresse sont journalisés, aucun autre ; un
+//           échec de journalisation ne change pas la réponse (docs/SPEC-refus-admission.md §2, §4 ; décisions 640, 644)
 //
 // Un faux LeLabs sert la découverte, le point de jeton et les clés ; une fausse base reproduit les
 // quatre fonctions de session de `0076_sessions_serveur.sql`. Chacun enregistre ce qu'il reçoit, ce qui
@@ -77,6 +79,8 @@ type Monde = {
 	decouverte?: unknown
 	sessions?: Map<string, Session>
 	superadminsInitiaux?: readonly string[]
+	/** La journalisation d'un refus échoue (`CRM-109` T2). */
+	panneJournal?: boolean
 }
 
 function monde(m: Monde = {}) {
@@ -139,6 +143,9 @@ function monde(m: Monde = {}) {
 				}
 				case 'fermer_session_serveur':
 					sessions.delete(e)
+					return null
+				case 'journaliser_refus_admission':
+					if (m.panneJournal) throw new Error('HTTP 500')
 					return null
 				default:
 					throw new Error(`fonction inconnue ${fonction}`)
@@ -321,12 +328,13 @@ describe('ouvrir — refus (§5.2, §5.5)', () => {
 		expect(m.appelsBase).toEqual([])
 	})
 
-	it('rend 403 attente_verification sans `verified`, adresse comprise, sans rien écrire', async () => {
+	it('rend 403 attente_verification sans `verified`, adresse comprise, sans ouvrir de session', async () => {
 		const m = monde({ jeton: { realm_access: { roles: ['default-roles-lelabs'] } } })
 		const reponse = await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), m.d)
 		expect(reponse.status).toBe(403)
 		expect(await json(reponse)).toEqual({ erreur: 'attente_verification', adresse: 'admin@p2enjoy.test' })
-		expect(m.appelsBase).toEqual([])
+		// Seule écriture : le refus, que la base ne garde que si l'adresse est attendue (`CRM-109`).
+		expect(m.appelsBase.map((a) => a.fonction)).toEqual(['journaliser_refus_admission'])
 	})
 
 	it('rend 403 attente_espace quand la base n’admet pas, sans poser de cookie', async () => {
@@ -561,3 +569,53 @@ describe('chemins, méthodes, configuration, journal (§5.1, §5.7)', () => {
 		}
 	})
 })
+
+describe('le journal des refus d’une adresse attendue (CRM-109, docs/SPEC-refus-admission.md §2, §4)', () => {
+	const journalises = (m: ReturnType<typeof monde>) =>
+		m.appelsBase.filter((a) => a.fonction === 'journaliser_refus_admission').map((a) => a.args)
+
+	it.each([
+		['adresse_non_verifiee', { email_verified: false }, {}],
+		['attente_verification', { realm_access: { roles: ['default-roles-lelabs'] } }, {}],
+		['attente_administrateur', {}, { admis: false, enSuspens: 1 }],
+	] as const)('%s : le refus est journalisé avec l’adresse, avant la même réponse', async (code, jeton, base) => {
+		const m = monde({ jeton, ...base })
+		const reponse = await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), m.d)
+		expect(reponse.status).toBe(403)
+		expect(await json(reponse)).toEqual({ erreur: code, adresse: 'admin@p2enjoy.test' })
+		expect(journalises(m)).toEqual([{ p_email: 'admin@p2enjoy.test', p_motif: code }])
+	})
+
+	it('attente_espace — personne n’attend l’adresse — ne journalise rien (SPEC-session-sso §6.1)', async () => {
+		const m = monde({ admis: false })
+		expect((await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), m.d)).status).toBe(403)
+		expect(journalises(m)).toEqual([])
+	})
+
+	it('un jeton refusé, ou une adresse absente, ne journalise rien', async () => {
+		const refuse = monde({ jeton: { azp: 'lelabs-crm' } })
+		expect((await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), refuse.d)).status).toBe(401)
+		expect(journalises(refuse)).toEqual([])
+		const sansAdresse = monde({ jeton: { email: undefined } })
+		expect((await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), sansAdresse.d)).status).toBe(403)
+		expect(journalises(sansAdresse)).toEqual([])
+	})
+
+	it('un échec de journalisation laisse la réponse identique, et se consigne SANS l’adresse', async () => {
+		const m = monde({ jeton: { email_verified: false }, panneJournal: true })
+		const reponse = await traiterSession(requete('ouvrir', { corps: CORPS_OUVERTURE }), m.d)
+		expect(reponse.status).toBe(403)
+		expect(await json(reponse)).toEqual({ erreur: 'adresse_non_verifiee', adresse: 'admin@p2enjoy.test' })
+		expect(m.journal).toContainEqual({ event: 'refus_non_journalise', code: 'adresse_non_verifiee' })
+		expect(JSON.stringify(m.journal)).not.toContain('admin@p2enjoy.test')
+	})
+
+	it('la prolongation journalise aussi : une attente laissée en suspens', async () => {
+		const sessions = await sessionOuverte()
+		const m = monde({ sessions, admis: false, enSuspens: 1 })
+		const reponse = await traiterSession(requete('prolonger', { cookie: COOKIE }), m.d)
+		expect(reponse.status).toBe(403)
+		expect(journalises(m)).toEqual([{ p_email: 'admin@p2enjoy.test', p_motif: 'attente_administrateur' }])
+	})
+})
+

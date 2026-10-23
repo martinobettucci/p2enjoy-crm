@@ -228,6 +228,12 @@ puisse la nommer. Aucune autre information : ni motif technique, ni message du f
 
 Un `401 jeton_refuse` ne distingue pas ses causes : les distinguer n'aiderait que qui forge des jetons.
 
+*Ajouté par `CRM-109` T2 (décisions 640 et 644).* Avant de répondre `adresse_non_verifiee`, `attente_verification` ou
+`attente_administrateur` avec une adresse, l'échangeur appelle `journaliser_refus_admission` : la base garde une trace
+**seulement si l'adresse est attendue** (`docs/SPEC-refus-admission.md`). `attente_espace` et les autres codes ne sont
+jamais journalisés, et la minimisation du §6.1 reste entière. Un échec de journalisation ne change pas la réponse ; il
+se consigne dans le journal du service (`refus_non_journalise`, le code seul, sans l'adresse).
+
 **L'absence de session n'est pas au dictionnaire** (décision 587) : la prolongation la rend par un
 `204` sans corps (§5.3, points 1 et 2), que la webapp lit comme « aucune session ». Le code
 `session_absente`, qui la nommait en `401`, est retiré.
