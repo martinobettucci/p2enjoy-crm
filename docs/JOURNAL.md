@@ -32747,3 +32747,41 @@ rejouer. (3) **`connecteur-mcp.spec.ts:59`** attend `tools/list` = `crm_workspac
 (`fb13ec43`) ; signalé. **Leçon de coordination** : un build part de l'arbre de travail commun, donc du travail en cours
 des autres sessions ; une campagne n'est probante pour une unité que si l'on sait attribuer chaque échec.
 
+### `CRM-103` T3 — découpage, et ce que le seed du connecteur peut montrer avant `CRM-104` — 2026-10-23
+
+*Précision de la décision 627 (A3, A5), sans nouvel arbitrage.*
+
+**Découpage.** Quatre pas, chacun committé et poussé, persistés au backlog :
+- **T3.a** — les quatre fonctions en requête directe aux vrais jetons ;
+- **T3.b** — le seed du connecteur ;
+- **T3.c** — l'E2E de l'onglet et de la fiche ;
+- **T3.d** — captures, manuel, `verify-mcp.sh`, campagnes.
+
+**Problème.** `docs/SPEC-mcp.md` §12 demande au seed un compte en attente, un compte en lecture, un compte en écriture
+sur `affaires`, des créations par le connecteur, un refus de la matrice et un refus du CRM.
+
+**Observations.**
+- Les outils `affaires` n'existent pas avant `CRM-104` T2.
+- Une recette créée par le connecteur changerait les six lignes de `docs/SPEC-seed.md` §21.1, sur lesquelles reposent
+  les preuves de `CRM-108`.
+- Les preuves existantes supposent sans matrice la lectrice et l'administratrice (« Droits en attente »).
+- Un outil que la matrice ferme est **invisible** : l'appeler rend « outil inconnu », jamais `refus_matrice`. Seule
+  une case `aussi` manquante sur un outil visible produit `refus_matrice`. C'est le cas du rapport de rentabilité, qui
+  exige aussi `budgets` et `temps`.
+
+**Décision** (`docs/SPEC-seed.md` §22) :
+- Farida reste sans matrice : c'est le compte en attente.
+- Camille reçoit `recettes:consulter` seule : c'est la lecture, et le `refus_matrice` sur le rapport.
+- Driss garde la matrice du §21.4 : c'est le `refus_crm` sur le même rapport.
+- Sabine ne vient jamais : sa fiche dit « Jamais connecté ».
+- L'écriture sur `affaires` et les créations viennent avec `CRM-104` T2.
+
+**Conséquences.** Les deux preuves « Droits en attente » qui prenaient Camille passent à Farida
+(`mcp/tests/test_integration_oauth.py`, `e2e/ui/connecteur-mcp.spec.ts`). Le parcours OAuth des preuves est extrait
+dans `mcp/tests/parcours_oauth.py`, sans `pytest`, pour que le seed le joue dans l'image du service.
+
+**Constat de T3.a, à arbitrer plus tard.** `profil_introuvable` et `espace_introuvable` (`P0002`) rendent HTTP **500**
+par PostgREST, qui réserve 404 à d'autres codes. Le contrat ne fixe que le SQLSTATE et le message, que la webapp classe :
+l'interface n'en souffre pas, mais un 500 se lit comme une panne dans une supervision. `CRM-101` a le même comportement
+depuis sa livraison. Le changer toucherait le dictionnaire des refus des deux unités : à soumettre au responsable, sans
+modification d'ici là.

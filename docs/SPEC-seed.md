@@ -2311,3 +2311,53 @@ déjà des réels n'en reçoit pas d'autres, et le soldé n'est posé que sur un
 - **Le connecteur** : la matrice de démonstration (`docs/SPEC-mcp.md` §12) ouvre `recettes:consulter`,
   `recettes:ajouter`, `budgets:consulter` et `temps:consulter` au business developer sur l'espace du jeu, pour que ses
   outils soient visibles et que le refus du rapport par le CRM (`42501`, matrice ouverte) soit démontrable.
+
+## 22. Le connecteur MCP : comptes, matrice et journal — `CRM-103` tranche T3
+
+*Écrit le 2026-10-23, avant le code de la section du script ; contrat : `docs/SPEC-mcp.md` §8 et §12. Il complète la
+matrice du business developer posée par `CRM-108` (§21.4), sans la toucher.*
+
+### 22.1 Ce que le jeu porte
+
+| Personne | Matrice sur « P2Enjoy SAS » | Venue au connecteur | Ce que l'administration du connecteur montre |
+|---|---|---|---|
+| **Farida Nowak** (lectrice) | **aucune** | une connexion refusée | le compte **en attente** : la page « Droits en attente », un compte au registre, « 0 » espace ouvert |
+| **Camille Aubert** (administratrice) | `recettes:consulter` **seule** | connectée, trois appels | la **lecture** : la liste des espaces et les lignes de recette d'une affaire (`ok`) ; le rapport de rentabilité **refusé par la matrice** (`refus_matrice`), qui exige aussi `budgets` et `temps` — l'administratrice le lirait dans le CRM |
+| **Driss Lemoine** (business developer) | celle du §21.4, inchangée (`recettes` consulter et ajouter, `budgets` et `temps` consulter) | connecté, deux appels | les lignes de recette d'une affaire (`ok`) ; le rapport **refusé par le CRM** (`refus_crm`, `42501` `rentabilite_reservee`), matrice ouverte |
+| **Sabine Plateforme** (superadministratrice) | — | **jamais** | sa fiche dit « Jamais connecté au connecteur » et « Franchit la matrice » |
+
+L'exploitante (`admin` LeLabs, sans profil) n'est pas connectée par le seed. Les preuves qui la connectent l'inscrivent au
+registre, et la liste la montre alors avec la mention « Sans profil dans le CRM ».
+
+### 22.2 Le vrai chemin
+
+- **La matrice de Camille** est posée par `mcp_poser_droits`, **sous le jeton de la superadministratrice**, comme celle
+  du §21.4.
+- **Les comptes et le journal** naissent de **vraies connexions OAuth** au connecteur : enregistrement dynamique,
+  consentement, connexion au Keycloak de développement, échange du code. Puis viennent de vrais appels MCP. Le
+  parcours est celui des preuves d'intégration, `mcp/tests/parcours_oauth.py`, joué par
+  `mcp/tests/seed_connecteur.py`. Il est exécuté dans l'image du service `mcp` de la pile, sur le réseau Compose, le
+  dossier `mcp/tests` monté en lecture seule. Rien n'est écrit au registre par la clé de service.
+- **Constat.** Le script relit le registre par la clé de service et s'arrête en nommant la cause si un compte ou une
+  issue attendue manque.
+
+### 22.3 Convergence
+
+`mcp_poser_droits` à l'identique n'écrit rien. Un appel n'est rejoué que si le journal ne porte pas encore la ligne
+`(compte, outil, issue)` qu'il produit, et la connexion refusée de Farida seulement si elle n'a pas de compte au
+registre. Deux exécutions laissent donc le même registre.
+
+### 22.4 Ce qui attend `CRM-104`
+
+`docs/SPEC-mcp.md` §12 demande aussi « un compte avec écriture sur `affaires` » et « des créations faites par le
+connecteur ». Les outils `affaires` naissent avec `CRM-104` T2. Une création de recette par le connecteur changerait
+les six lignes du §21.1, sur lesquelles reposent les preuves de `CRM-108`. Ces deux points viennent donc avec la tranche
+`affaires` de `CRM-104`, qui étend ce paragraphe.
+
+### 22.5 Ce que les preuves en attendent
+
+- **Farida reste sans matrice** et **Camille ne porte que `recettes:consulter`**. Les preuves d'intégration qui
+  posent un droit à Farida le retirent ensuite (`mcp/tests/test_integration_oauth.py`,
+  `mcp/tests/test_integration_recettes.py`). « Droits en attente » se prouve sur Farida, dans
+  `mcp/tests/test_integration_oauth.py` comme dans `e2e/ui/connecteur-mcp.spec.ts`.
+- `e2e/api/connecteur-administration.spec.ts` relève la matrice de Farida et la rend à l'identique.

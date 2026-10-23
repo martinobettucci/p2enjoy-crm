@@ -671,6 +671,11 @@ commit que le code qui la lit.
     Sabine), et des créations sont faites par le connecteur ;
   - cela couvre un compte en attente, un compte avec droits de lecture sur un espace, un compte avec
     écriture sur `affaires`, un refus de la matrice et un refus du CRM au journal.
+  - **Précisé le 2026-10-23, avec `CRM-103` T3** (`docs/SPEC-seed.md` §22). Le seed couvre le compte en attente
+    (Farida), la lecture (Camille, `recettes:consulter`), le refus de la matrice (le rapport de rentabilité de Camille,
+    qui exige aussi `budgets` et `temps`) et le refus du CRM (le même rapport, pour Driss). L'écriture sur `affaires` et
+    les créations par le connecteur attendent les outils `affaires` de `CRM-104` T2. Le parcours OAuth du seed est celui
+    des preuves d'intégration, `mcp/tests/parcours_oauth.py`.
 
 ## 13. Preuves
 

@@ -15386,6 +15386,12 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       tous présents dans `fr.ts`. Le harnais rend 231 contrôles, dont 9 écarts de l'annexe A, tous dus aux données
       d'une campagne E2E en cours dans une autre session (plus de tracks, de channels et d'affaires que le seed). **À
       rejouer sur le seed**, avec le reste de T3, quand la pile sera libre.
+      *Découpage décidé le 2026-10-23* (`docs/JOURNAL.md`, entrée du jour « `CRM-103` T3 — découpage ») :
+      **T3.a** les quatre fonctions en requête directe aux vrais jetons (`e2e/api/connecteur-administration.spec.ts`) ;
+      **T3.b** le seed du connecteur (`docs/SPEC-seed.md` §22) par de vraies connexions OAuth, le parcours des
+      preuves d'intégration extrait dans `mcp/tests/parcours_oauth.py` ; **T3.c** l'E2E de l'onglet et de la fiche,
+      souris et clavier, avec l'effet constaté par un vrai client MCP ; **T3.d** captures observées aux quatre paliers,
+      manuel rejoué sur le seed, `verify-mcp.sh` complet, campagnes.
 - [ ] **T4** — livraison en production et constat.
 
 ### CRM-104 — Outils MCP par famille `[ ]`
