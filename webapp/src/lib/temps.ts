@@ -3,6 +3,9 @@
 //       semaine du lundi au dimanche, la précédente pour reprendre les lignes), §6.3 (le mode d'une journée est une
 //       lecture des valeurs), §7.2 (lignes : tracks, channels, affaires ; colonnes ; pied) ;
 //       docs/DESIGN_SYSTEM.md §5.54 (cellule : 0 à 4 quarts ou 0 à 7 h au pas de 0,25 ; vide vaut zéro)
+// @spec CRM-106 (docs/BACKLOG.md) — tranche T2 : `modesDesJours` et `remplacerDansSaisies`, partagés par la matrice et
+//       la bande de la fiche d'une affaire ; docs/SPEC-temps.md §7.6 (points 2 et 4 : une valeur remplace, le mode
+//       d'un jour se lit sur toutes ses saisies) ; docs/DESIGN_SYSTEM.md §5.54 bis
 //
 // Module pur : il ne lit rien et n'écrit rien. Les dates sont des chaînes ISO `AAAA-MM-JJ` et leur arithmétique se
 // fait en UTC, pour qu'aucun fuseau ni changement d'heure ne déplace un jour.
@@ -198,4 +201,33 @@ export function totalLigne(saisies: readonly Saisie[], cle: string, jours: reado
  */
 export function depasseLaJournee(saisies: readonly Saisie[], cle: string, jour: string, minutes: number): boolean {
 	return totalJour(saisies, jour) - minutesCellule(saisies, cle, jour) + minutes > MINUTES_JOURNEE
+}
+
+/**
+ * Le mode de chaque jour : « en heures » si la case du jour est cochée, sinon ce que disent TOUTES les saisies du jour
+ * (§6.3) — et non celles d'une seule ligne : la bande de la fiche d'une affaire lit le jour comme la matrice (§7.6).
+ */
+export function modesDesJours(
+	saisies: readonly Saisie[],
+	jours: readonly string[],
+	heuresForcees: ReadonlySet<string>,
+): Readonly<Record<string, ModeJour>> {
+	return Object.fromEntries(
+		jours.map((jour) => [jour, heuresForcees.has(jour) ? 'heures' : modeDuJour(saisies.filter((s) => s.jour === jour).map((s) => s.minutes))]),
+	)
+}
+
+/**
+ * Les saisies après une écriture acceptée : la cellule (cible × jour) ne porte plus que la ligne retenue par la base,
+ * ou rien quand elle a été remise à zéro. Une valeur REMPLACE, elle ne s'additionne pas (§3.2, §7.6 point 2).
+ */
+export function remplacerDansSaisies(
+	saisies: readonly Saisie[],
+	ancienne: Saisie | null,
+	nouvelle: Saisie | null,
+	cle: string,
+	jour: string,
+): readonly Saisie[] {
+	const autres = saisies.filter((s) => !(s.jour === jour && cleCible(cibleDe(s)) === cle) && s.id !== ancienne?.id)
+	return nouvelle === null ? autres : [...autres, nouvelle]
 }

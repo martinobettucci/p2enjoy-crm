@@ -1,6 +1,8 @@
 // @verifies CRM-098 (docs/BACKLOG.md) — tranche T2 : la matrice de la semaine, sans rendu
 // @verifies docs/SPEC-temps.md §2 (quart de 105 minutes, journée de 420, heures au quart d'heure), §6.1 (semaine du
 //           lundi), §6.3 (mode d'une journée), §7.2 (lignes, reprise, pied) ; docs/DESIGN_SYSTEM.md §5.54 (cellule)
+// @verifies CRM-106 (docs/BACKLOG.md) — tranche T2 : `modesDesJours` et `remplacerDansSaisies` ; docs/SPEC-temps.md
+//           §7.6 (2 : une valeur remplace, zéro retire ; 4 : le mode d'un jour se lit sur toutes ses saisies)
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -16,6 +18,8 @@ import {
 	lundiDe,
 	minutesCellule,
 	modeDuJour,
+	modesDesJours,
+	remplacerDansSaisies,
 	totalJour,
 	totalLigne,
 	valeurDeChamp,
@@ -156,5 +160,41 @@ describe('les cellules et les totaux', () => {
 		expect(depasseLaJournee(saisies, 'card:a1', '2026-10-12', 315)).toBe(false) // 105 + 315 = 420
 		expect(depasseLaJournee(saisies, 'card:a1', '2026-10-12', 330)).toBe(true)
 		expect(depasseLaJournee(saisies, 'channel:c1', '2026-10-12', 120)).toBe(true) // 315 + 120
+	})
+})
+
+describe('CRM-106 — le mode des jours et le remplacement d’une saisie', () => {
+	const s = (id: string, jour: string, minutes: number, cible: Partial<Pick<Saisie, 'track_id' | 'channel_id' | 'card_id'>>): Saisie => ({
+		id,
+		jour,
+		minutes,
+		track_id: null,
+		channel_id: null,
+		card_id: null,
+		...cible,
+	})
+	const jours = ['2026-10-19', '2026-10-20', '2026-10-21']
+
+	it('un jour se lit sur toutes ses saisies, et la case cochée l’emporte', () => {
+		const saisies = [s('1', '2026-10-19', 105, { card_id: 'a' }), s('2', '2026-10-20', 90, { channel_id: 'c' })]
+		expect(modesDesJours(saisies, jours, new Set(['2026-10-21']))).toEqual({
+			'2026-10-19': 'quarts',
+			'2026-10-20': 'heures',
+			'2026-10-21': 'heures',
+		})
+	})
+
+	it('une valeur remplace celle de la cellule, sans toucher aux autres cibles ni aux autres jours', () => {
+		const ancienne = s('1', '2026-10-19', 105, { card_id: 'a' })
+		const autres = [s('2', '2026-10-19', 210, { channel_id: 'c' }), s('3', '2026-10-20', 105, { card_id: 'a' })]
+		const nouvelle = { ...ancienne, minutes: 315 }
+		expect(remplacerDansSaisies([ancienne, ...autres], ancienne, nouvelle, 'card:a', '2026-10-19')).toEqual([...autres, nouvelle])
+	})
+
+	it('zéro retire la cellule ; une première saisie s’ajoute', () => {
+		const ancienne = s('1', '2026-10-19', 105, { card_id: 'a' })
+		expect(remplacerDansSaisies([ancienne], ancienne, null, 'card:a', '2026-10-19')).toEqual([])
+		const premiere = s('9', '2026-10-21', 60, { card_id: 'a' })
+		expect(remplacerDansSaisies([ancienne], null, premiere, 'card:a', '2026-10-21')).toEqual([ancienne, premiere])
 	})
 })

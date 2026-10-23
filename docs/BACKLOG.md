@@ -15530,9 +15530,17 @@ déjà la saisie sur une affaire.*
 
 - [x] **T1 — spécification, écrite avant le code** sur les trois arbitrages du 2026-10-23 ; les choix de rédaction sont
       marqués dans `docs/SPEC-temps.md` §7.6.
-- [ ] **T2 — la bande dans le bloc « Temps passé »** : réemploi de la cellule, de l'en-tête et du pied de la matrice ;
+- [~] **T2 — la bande dans le bloc « Temps passé »** : réemploi de la cellule, de l'en-tête et du pied de la matrice ;
       navigation de semaine ; lien « Ouvrir dans Temps » ; relecture du résumé ; preuves unitaires (`docs/SPEC-temps.md`
       §11 bis).
+      *Implémenté le 2026-10-23* : `BandeTempsCard.tsx` ; la cellule, l'en-tête d'un jour, le pied, la case « En heures »
+      (`useCasesEnHeures`) et le motif de la case exportés de `SaisieTemps.tsx` sans changement de rendu, la cellule
+      gagnant `entreeVers` ; `modesDesJours` et `remplacerDansSaisies` dans `lib/temps.ts`, partagés avec la matrice.
+      `BandeTempsCard.test` **14** — **quatre mutations** (mode lu sur la seule affaire, `Entrée` vers la ligne, résumé
+      non relu, pied limité à l'affaire), chacune rouge ; `temps.test` **24** (+3). Suites voisines rejouées vertes :
+      `SaisieTemps.test` 9, `RapportTemps.test` 10, `RouteCard.test` 8, `commandes-refusees.test` 2, `i18n.test` 408 ;
+      `tsc` de la webapp et des tests sans erreur. **Restent avant `[x]`** : le build et le contrôle des classes, différés
+      tant qu'une campagne UI d'une autre unité occupe la pile.
 - [ ] **T3 — preuves sur la pile réelle** : preuve d'API (saisie sur une affaire, refus à qui ne la lit pas) ; E2E souris
       et clavier, journée en heures, remplacement, retrait, plafond, lectrice, administrateur ; captures
       `docs/captures/CRM-106/` aux quatre paliers observées ; `docs/manual.md` 5 undecies.6 bis ; `CHANGELOG.md` ;

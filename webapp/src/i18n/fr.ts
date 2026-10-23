@@ -3596,6 +3596,11 @@ export const fr = {
 	'personnel.card.title': 'Temps passé',
 	'personnel.card.empty': 'Aucun temps saisi sur cette affaire.',
 	'personnel.error': 'Le temps passé n’a pas pu être lu.',
+	// `CRM-106` T2 — la bande de la semaine dans la fiche d'une affaire (docs/SPEC-temps.md §7.6).
+	'personnel.card.week.title': 'Votre semaine',
+	'personnel.card.week.open': 'Ouvrir dans Temps',
+	'personnel.card.week.caption': 'Votre temps sur {titre}, jour par jour',
+	'personnel.card.week.dayTotal': 'Total de la journée, toutes cibles',
 	// `CRM-099` T2 — plusieurs réels par ligne de coût, et la case « Soldé » (docs/SPEC-costs.md §2.3 bis).
 	'costs.pending.column.already': 'Déjà saisi',
 	'costs.pending.column.settled': 'Soldé',

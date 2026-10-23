@@ -13,6 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-106` T2 — saisir son temps depuis la fiche d'une affaire (décision 630)
+
+*Webapp seulement. Prouvé en tests unitaires ; parcours réel, captures et manuel avec la tranche T3.*
+
+- **Le bloc « Temps passé » de la fiche porte « Votre semaine »** : sept cases du lundi au dimanche, les mêmes que sur
+  l'écran « Temps » — en quarts ou en heures, enregistrées seules ; une valeur remplace celle du jour, une case vidée
+  retire le temps.
+- Chacun n'y saisit **que son propre temps**, administrateur compris. Le total de chaque jour compte toutes les cibles,
+  et une valeur qui dépasserait la journée de 7 heures est annoncée avant l'envoi.
+- Semaine précédente, suivante, « Cette semaine » ; **« Ouvrir dans Temps »** mène à la matrice de la même semaine. Le
+  résumé du bloc se met à jour après chaque saisie.
+
 ### `CRM-103` T2 — l'onglet « Connecteur MCP » de la plateforme (décision 627, A3 et A5)
 
 *Webapp seulement. Prouvé en tests unitaires ; parcours réel et captures avec la tranche T3.*

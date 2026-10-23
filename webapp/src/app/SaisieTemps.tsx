@@ -4,6 +4,10 @@
 //       pied, navigation, ajout d'une affaire) ; docs/DESIGN_SYSTEM.md §5.54 (matrice, en-tête d'un jour, cellule,
 //       clavier, pied, navigation, bandeau « Vous saisissez le temps de… »), §5.7 ter, §5.9, §5.21 (combobox), §8
 //
+// @spec CRM-106 (docs/BACKLOG.md) — tranche T2 : la cellule, l'en-tête d'un jour, son pied et la case « En heures »
+//       sont exportés pour la bande de la fiche d'une affaire, qui les réemploie sans redessin ; docs/SPEC-temps.md
+//       §7.6 (points 1 et 4) ; docs/DESIGN_SYSTEM.md §5.54 bis (`Entrée` passe au jour suivant dans la bande)
+//
 // L'écran n'impose aucune règle : il annonce avant l'envoi qu'une valeur dépasserait la journée, et dit le refus que la
 // base rend. Le plafond, la cible lisible et qui saisit pour qui sont tenus en base (migration `0087`).
 
@@ -42,6 +46,8 @@ import {
 	lundiDe,
 	minutesCellule,
 	modeDuJour,
+	modesDesJours,
+	remplacerDansSaisies,
 	totalJour,
 	totalLigne,
 	valeurDeChamp,
@@ -69,6 +75,9 @@ const FORMAT_JOUR_MOIS = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', mont
 const FORMAT_JOUR_MOIS_AN = new Intl.DateTimeFormat('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' })
 const enDate = (iso: string) => new Date(`${iso}T00:00:00Z`)
 
+/** « lundi 12 octobre » : le nom d'un jour dans les libellés accessibles et les motifs. */
+export const nomJourLong = (iso: string) => FORMAT_JOUR_LONG.format(enDate(iso))
+
 /** « Semaine du 12 au 18 octobre 2026 », ou « du 26 octobre au 1 novembre 2026 » à cheval sur deux mois. */
 export function libelleSemaine(lundi: string): string {
 	const dimanche = decalerJours(lundi, 6)
@@ -93,7 +102,7 @@ export function formaterDuree(duree: Duree): string {
 	return t('time.duration.hm', { h: String(duree.heures), m })
 }
 
-const REFUS: Readonly<Record<MotifRefusTemps, CleTraduction>> = {
+export const REFUS: Readonly<Record<MotifRefusTemps, CleTraduction>> = {
 	plafond: 'time.cell.refused.cap',
 	droit: 'time.cell.refused.forbidden',
 	conflit: 'time.cell.refused.conflict',
@@ -114,6 +123,43 @@ type Donnees = {
 	readonly affaires: readonly Affaire[]
 }
 
+/**
+ * La case « En heures » de chaque jour (§6.3) : elle se coche à tout moment, et ne se décoche que si les saisies du
+ * jour tombent toutes sur un quart — sinon `motifCase` nomme le jour, et l'écran dit pourquoi elle reste cochée.
+ */
+export function useCasesEnHeures(saisies: readonly Saisie[]) {
+	const [heuresForcees, setHeuresForcees] = useState<ReadonlySet<string>>(new Set())
+	const [motifCase, setMotifCase] = useState<string | null>(null)
+	const basculer = (jour: string, coche: boolean) => {
+		if (!coche && modeDuJour(saisies.filter((s) => s.jour === jour).map((s) => s.minutes)) === 'heures') {
+			setMotifCase(jour)
+			return
+		}
+		setMotifCase(null)
+		setHeuresForcees((precedent) => {
+			const suivant = new Set(precedent)
+			if (coche) suivant.add(jour)
+			else suivant.delete(jour)
+			return suivant
+		})
+	}
+	const reinitialiser = useCallback(() => {
+		setHeuresForcees(new Set())
+		setMotifCase(null)
+	}, [])
+	return { heuresForcees, motifCase, basculer, reinitialiser }
+}
+
+/** Le motif de la case qui ne se décoche pas, posé AU-DESSUS du tableau (§5.54). */
+export function MotifCaseHeures({ jour }: { readonly jour: string | null }) {
+	if (jour === null) return null
+	return (
+		<p role="status" className="text-sm text-danger" data-testid="temps-motif-case">
+			{t('time.hours.locked', { jour: nomJourLong(jour) })}
+		</p>
+	)
+}
+
 export type ProprietesSaisieTemps = {
 	readonly client: ClientCrm
 	readonly idWorkspace: string
@@ -132,9 +178,9 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 	const [etat, setEtat] = useState<EtatAsync<Donnees>>(enChargement)
 	const [tentative, setTentative] = useState(0)
 	const [ajoutees, setAjoutees] = useState<readonly Affaire[]>([])
-	const [heuresForcees, setHeuresForcees] = useState<ReadonlySet<string>>(new Set())
 	const [annonce, setAnnonce] = useState('')
-	const [motifCase, setMotifCase] = useState<string | null>(null)
+	const cases = useCasesEnHeures(etat.statut === 'pret' ? etat.donnees.saisies : [])
+	const { reinitialiser: reinitialiserCases } = cases
 
 	useEffect(() => {
 		if (!estAdmin) return
@@ -173,9 +219,8 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 	// Changer de semaine ou de personne repart d'une matrice sans case forcée ni affaire ajoutée.
 	useEffect(() => {
 		setAjoutees([])
-		setHeuresForcees(new Set())
-		setMotifCase(null)
-	}, [personne, lundi])
+		reinitialiserCases()
+	}, [personne, lundi, reinitialiserCases])
 
 	const allerA = (nouveauLundi: string) => {
 		const suivants = new URLSearchParams(parametres)
@@ -187,10 +232,7 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 	const remplacerSaisie = useCallback((ancienne: Saisie | null, nouvelle: Saisie | null, cle: string, jour: string) => {
 		setEtat((precedent) => {
 			if (precedent.statut !== 'pret') return precedent
-			const autres = precedent.donnees.saisies.filter(
-				(s) => !(s.jour === jour && cleCible(cibleDe(s)) === cle) && s.id !== ancienne?.id,
-			)
-			return { statut: 'pret', donnees: { ...precedent.donnees, saisies: nouvelle === null ? autres : [...autres, nouvelle] } }
+			return { statut: 'pret', donnees: { ...precedent.donnees, saisies: remplacerDansSaisies(precedent.donnees.saisies, ancienne, nouvelle, cle, jour) } }
 		})
 	}, [])
 
@@ -275,22 +317,9 @@ export function SaisieTemps({ client, idWorkspace, idUtilisateur, estAdmin, aujo
 					aujourdhui={aujourdhui}
 					donnees={etat.donnees}
 					ajoutees={ajoutees}
-					heuresForcees={heuresForcees}
-					motifCase={motifCase}
-					onBasculerHeures={(jour, coche) => {
-						const minutes = etat.donnees.saisies.filter((s) => s.jour === jour).map((s) => s.minutes)
-						if (!coche && modeDuJour(minutes) === 'heures') {
-							setMotifCase(jour)
-							return
-						}
-						setMotifCase(null)
-						setHeuresForcees((precedent) => {
-							const suivant = new Set(precedent)
-							if (coche) suivant.add(jour)
-							else suivant.delete(jour)
-							return suivant
-						})
-					}}
+					heuresForcees={cases.heuresForcees}
+					motifCase={cases.motifCase}
+					onBasculerHeures={cases.basculer}
 					onEnregistre={remplacerSaisie}
 					onAnnonce={setAnnonce}
 				/>
@@ -348,12 +377,7 @@ function Matrice({
 		() => lignesMatrice(donnees.arbre, affaires, new Set([...affairesDesSaisies(donnees.saisies), ...ajoutees.map((a) => a.id)])),
 		[donnees.arbre, affaires, donnees.saisies, ajoutees],
 	)
-	const modes: Readonly<Record<string, ModeJour>> = Object.fromEntries(
-		jours.map((jour) => [
-			jour,
-			heuresForcees.has(jour) ? 'heures' : modeDuJour(donnees.saisies.filter((s) => s.jour === jour).map((s) => s.minutes)),
-		]),
-	)
+	const modes = modesDesJours(donnees.saisies, jours, heuresForcees)
 
 	/** Les flèches vont de cellule en cellule quand le champ est vide ou sa valeur entièrement sélectionnée (§5.54). */
 	const deplacer = (ligne: number, colonne: number) => {
@@ -364,11 +388,7 @@ function Matrice({
 		<div className="flex flex-col gap-2">
 			{/* Le motif de la case qui ne se décoche pas vit AU-DESSUS de la matrice : posé dans l'en-tête, il élargissait la
 			    colonne de son jour et déformait toute la grille (constaté sur la capture, §5.54). */}
-			{motifCase !== null ? (
-				<p role="status" className="text-sm text-danger" data-testid="temps-motif-case">
-					{t('time.hours.locked', { jour: FORMAT_JOUR_LONG.format(enDate(motifCase)) })}
-				</p>
-			) : null}
+			<MotifCaseHeures jour={motifCase} />
 			<div className="overflow-x-auto rounded-lg border border-border indique-debordement-x">
 				<table ref={tableau} className="w-full border-collapse text-sm" data-testid="temps-matrice">
 					<caption className="sr-only">{t('time.matrix.caption')}</caption>
@@ -378,25 +398,7 @@ function Matrice({
 								{t('time.matrix.target')}
 							</th>
 							{jours.map((jour) => (
-								<th key={jour} scope="col" className="px-1 py-2 text-center font-medium">
-									<span
-										className={`inline-block pb-1 ${jour === aujourdhui ? 'border-b-2 border-brand' : 'border-b-2 border-transparent'}`}
-										{...(jour === aujourdhui ? { 'aria-current': 'date' as const } : {})}
-									>
-										{FORMAT_JOUR_COURT.format(enDate(jour))}
-									</span>
-									<label className="mt-1 flex min-h-[var(--size-target)] items-center justify-center gap-1 whitespace-nowrap px-1 text-[13px] font-normal text-text-2">
-										<input
-											type="checkbox"
-											checked={modes[jour] === 'heures'}
-											onChange={(e) => onBasculerHeures(jour, e.target.checked)}
-											aria-label={t('time.hours.toggle', { jour: FORMAT_JOUR_LONG.format(enDate(jour)) })}
-											data-testid={`temps-heures-${jour}`}
-											className="size-6 accent-[var(--color-brand)]"
-										/>
-										<span aria-hidden="true">{t('time.hours.short')}</span>
-									</label>
-								</th>
+								<EnTeteJour key={jour} jour={jour} aujourdhui={aujourdhui} mode={modes[jour] ?? 'quarts'} onBasculer={onBasculerHeures} />
 							))}
 							<th scope="col" className="px-3 py-2 text-right font-medium">
 								{t('time.matrix.total')}
@@ -427,19 +429,9 @@ function Matrice({
 							<th scope="row" className="sticky left-0 bg-surface px-3 py-2 text-left font-medium">
 								{t('time.matrix.dayTotal')}
 							</th>
-							{jours.map((jour) => {
-								const total = totalJour(donnees.saisies, jour)
-								const plein = total === MINUTES_JOURNEE
-								const texte =
-									modes[jour] === 'quarts'
-										? t('time.foot.quarters', { n: String(total / MINUTES_QUART) })
-										: t('time.foot.hours', { duree: formaterDuree(enHeures(total)) })
-								return (
-									<td key={jour} className="whitespace-nowrap px-1 py-2 text-center text-[13px] tabular-nums text-text-2" data-testid={`temps-total-${jour}`}>
-										<span className={plein ? 'inline-flex rounded-full bg-success-soft px-2 text-success-on-soft' : ''}>{texte}</span>
-									</td>
-								)
-							})}
+							{jours.map((jour) => (
+								<PiedJour key={jour} jour={jour} total={totalJour(donnees.saisies, jour)} mode={modes[jour] ?? 'quarts'} />
+							))}
 							<td className="whitespace-nowrap px-3 py-2 text-right tabular-nums font-medium" data-testid="temps-total-semaine">
 								{formaterDuree(enJours(jours.reduce((s, j) => s + totalJour(donnees.saisies, j), 0)))}
 							</td>
@@ -448,6 +440,54 @@ function Matrice({
 				</table>
 			</div>
 		</div>
+	)
+}
+
+/** L'en-tête d'un jour (§5.54) : le jour abrégé, souligné s'il est aujourd'hui, et sa case « En heures ». */
+export function EnTeteJour({
+	jour,
+	aujourdhui,
+	mode,
+	onBasculer,
+}: {
+	readonly jour: string
+	readonly aujourdhui: string
+	readonly mode: ModeJour
+	readonly onBasculer: (jour: string, coche: boolean) => void
+}) {
+	return (
+		<th scope="col" className="px-1 py-2 text-center font-medium">
+			<span
+				className={`inline-block pb-1 ${jour === aujourdhui ? 'border-b-2 border-brand' : 'border-b-2 border-transparent'}`}
+				{...(jour === aujourdhui ? { 'aria-current': 'date' as const } : {})}
+			>
+				{FORMAT_JOUR_COURT.format(enDate(jour))}
+			</span>
+			<label className="mt-1 flex min-h-[var(--size-target)] items-center justify-center gap-1 whitespace-nowrap px-1 text-[13px] font-normal text-text-2">
+				<input
+					type="checkbox"
+					checked={mode === 'heures'}
+					onChange={(e) => onBasculer(jour, e.target.checked)}
+					aria-label={t('time.hours.toggle', { jour: nomJourLong(jour) })}
+					data-testid={`temps-heures-${jour}`}
+					className="size-6 accent-[var(--color-brand)]"
+				/>
+				<span aria-hidden="true">{t('time.hours.short')}</span>
+			</label>
+		</th>
+	)
+}
+
+/** Le total d'un jour au pied du tableau (§5.54) : « 3 / 4 quarts » ou « 6 h 30 / 7 h », pastille quand il est plein. */
+export function PiedJour({ jour, total, mode }: { readonly jour: string; readonly total: number; readonly mode: ModeJour }) {
+	const texte =
+		mode === 'quarts'
+			? t('time.foot.quarters', { n: String(total / MINUTES_QUART) })
+			: t('time.foot.hours', { duree: formaterDuree(enHeures(total)) })
+	return (
+		<td className="whitespace-nowrap px-1 py-2 text-center text-[13px] tabular-nums text-text-2" data-testid={`temps-total-${jour}`}>
+			<span className={total === MINUTES_JOURNEE ? 'inline-flex rounded-full bg-success-soft px-2 text-success-on-soft' : ''}>{texte}</span>
+		</td>
 	)
 }
 
@@ -514,7 +554,7 @@ function LigneTemps({
 	)
 }
 
-function CelluleTemps({
+export function CelluleTemps({
 	client,
 	idWorkspace,
 	personne,
@@ -525,6 +565,7 @@ function CelluleTemps({
 	rang,
 	colonne,
 	nombreLignes,
+	entreeVers = 'ligne',
 	deplacer,
 	onEnregistre,
 	onAnnonce,
@@ -539,6 +580,8 @@ function CelluleTemps({
 	readonly rang: number
 	readonly colonne: number
 	readonly nombreLignes: number
+	/** Où `Entrée` mène après l'enregistrement : la ligne suivante dans la matrice, le jour suivant dans la bande (§5.54 bis). */
+	readonly entreeVers?: 'ligne' | 'jour'
 	readonly deplacer: (ligne: number, colonne: number) => void
 	readonly onEnregistre: (ancienne: Saisie | null, nouvelle: Saisie | null, cle: string, jour: string) => void
 	readonly onAnnonce: (message: string) => void
@@ -566,7 +609,7 @@ function CelluleTemps({
 		if (!focus) setTexte(valeurDeChamp(minutes, mode))
 	}, [minutes, mode, focus])
 
-	const nom = t('time.cell.aria', { cible: ligne.libelle, jour: FORMAT_JOUR_LONG.format(enDate(jour)) })
+	const nom = t('time.cell.aria', { cible: ligne.libelle, jour: nomJourLong(jour) })
 
 	const enregistrer = (): Promise<boolean> => {
 		if (enVol.current !== null) return enVol.current
@@ -624,7 +667,10 @@ function CelluleTemps({
 		if (e.key === 'Enter') {
 			e.preventDefault()
 			void enregistrer().then((ok) => {
-				if (ok && rang + 1 < nombreLignes) deplacer(rang + 1, colonne)
+				if (!ok) return
+				if (entreeVers === 'jour') {
+					if (colonne < 6) deplacer(rang, colonne + 1)
+				} else if (rang + 1 < nombreLignes) deplacer(rang + 1, colonne)
 			})
 		} else if (e.key === 'Escape') {
 			e.preventDefault()

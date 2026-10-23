@@ -3,11 +3,13 @@
 //       fiche d'une affaire : « Temps passé » ; ni budgets, ni lignes de coût, ni histogramme ; la portée écrite),
 //       §5.1 (un membre ne lit que son temps), §4 (« non valorisé ») ; docs/DESIGN_SYSTEM.md §5.54 (série « Personnel »,
 //       portée en 13 px `--color-text-2` au-dessus du chiffre), §5.9 ; décision 621, point 8
+// @spec CRM-106 (docs/BACKLOG.md) — tranche T2 : le bloc « Temps passé » porte la bande de la semaine et relit son résumé
+//       après chaque enregistrement ; docs/SPEC-temps.md §7.6 (points 7 et 8) ; docs/DESIGN_SYSTEM.md §5.54 bis
 //
 // LA PORTÉE EST ÉCRITE, ET C'EST LA RÈGLE DU §4.5 DES COÛTS : un total qui ne dit pas ce qu'il compte se lit comme celui
 // de l'équipe. Elle suit le rôle que la base rend ; le périmètre lui-même est tenu par la RLS de `saisies_temps`.
 
-import { useEffect, useId, useState } from 'react'
+import { useCallback, useEffect, useId, useState } from 'react'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t } from '../i18n'
 import { enChargement, type EtatAsync } from '../lib/async'
@@ -24,6 +26,7 @@ import {
 } from '../lib/rapport-temps'
 import type { ClientCrm } from '../lib/supabase'
 import { enJours, jourLocal } from '../lib/temps'
+import { BandeTempsCard } from './BandeTempsCard'
 import { useContexteEspace } from './ContexteEspace'
 import { CelluleCout, libelleMois } from './RapportTemps'
 import { formaterDuree } from './SaisieTemps'
@@ -157,15 +160,34 @@ export function SeriePersonnelTrack({
 	)
 }
 
-/** Dans la fiche d'une affaire : le temps passé depuis le premier jour, et son coût (§7.5). */
-export function BlocTempsCard({ client, idCard }: { readonly client: ClientCrm | null; readonly idCard: string }) {
+/** Ce qu'il faut à la bande de la semaine (§7.6) ; sans identité de session, le bloc ne fait que lire. */
+export type SaisieDepuisLaFiche = {
+	readonly idWorkspace: string
+	readonly idUtilisateur: string
+	readonly titreCard: string
+	readonly aujourdhui?: string
+}
+
+/** Dans la fiche d'une affaire : le temps passé depuis le premier jour, son coût (§7.5), et la semaine à saisir (§7.6). */
+export function BlocTempsCard({
+	client,
+	idCard,
+	saisie,
+}: {
+	readonly client: ClientCrm | null
+	readonly idCard: string
+	readonly saisie?: SaisieDepuisLaFiche
+}) {
 	const [etat, setEtat] = useState<EtatAsync<Cumul>>(enChargement)
+	const [lecture, setLecture] = useState(0)
 	const idTitre = useId()
+	const relire = useCallback(() => setLecture((n) => n + 1), [])
 
 	useEffect(() => {
 		if (client === null) return
 		let courant = true
-		setEtat(enChargement)
+		// La relecture après un enregistrement garde le résumé affiché : un squelette ferait sauter la bande en dessous.
+		if (lecture === 0) setEtat(enChargement)
 		void lireTempsValorise(client, TOUTE_LA_DUREE.debut, TOUTE_LA_DUREE.fin, { affaire: idCard }).then((lignes) => {
 			if (!courant) return
 			setEtat(lignes.statut === 'pret' ? { statut: 'pret', donnees: cumuler(lignes.donnees) } : lignes)
@@ -173,7 +195,7 @@ export function BlocTempsCard({ client, idCard }: { readonly client: ClientCrm |
 		return () => {
 			courant = false
 		}
-	}, [client, idCard])
+	}, [client, idCard, lecture])
 
 	return (
 		<section aria-labelledby={idTitre} className="flex flex-col gap-2 rounded-lg border border-border bg-surface p-4" data-testid="temps-card">
@@ -201,6 +223,17 @@ export function BlocTempsCard({ client, idCard }: { readonly client: ClientCrm |
 					</dd>
 				</dl>
 			)}
+			{client !== null && saisie !== undefined ? (
+				<BandeTempsCard
+					client={client}
+					idWorkspace={saisie.idWorkspace}
+					idUtilisateur={saisie.idUtilisateur}
+					idCard={idCard}
+					titreCard={saisie.titreCard}
+					aujourdhui={saisie.aujourdhui ?? jourLocal(new Date())}
+					onEnregistre={relire}
+				/>
+			) : null}
 		</section>
 	)
 }
