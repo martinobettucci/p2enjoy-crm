@@ -98,9 +98,11 @@ test.describe('l’administratrice — Camille Aubert', () => {
 		const section = page.getByRole('region', { name: 'Attentes' })
 		await expect(section.getByTestId('ligne-attente')).toHaveCount(1)
 		await expect(section.getByTestId('ligne-attente')).toHaveAttribute('data-email', 'attendu@p2enjoy.test')
-		// `CRM-109` T3 : le seed a tenté la connexion d'`attendu@` par l'échangeur réel ; son refus se lit en mots.
+		// `CRM-109` T3 : le seed a tenté la connexion d'`attendu@` par l'échangeur réel ; son refus se lit en mots. D'autres
+		// preuves tentent aussi cette connexion (le compte peut dépasser un) : le compte est donc facultatif ici, et sa
+		// forme exacte est prouvée par les unitaires (`BlocAttentes.test.ts`).
 		await expect(section.locator('[data-email="attendu@p2enjoy.test"]').getByTestId('tentative-attente')).toHaveText(
-			/^Refusée le \d{2}\/\d{2} : compte LeLabs pas encore vérifié$/,
+			/^Refusée le \d{2}\/\d{2} : compte LeLabs pas encore vérifié( \(\d+ fois depuis le \d{2}\/\d{2}\))?$/,
 		)
 
 		const inscrire = async (role: string) => {
