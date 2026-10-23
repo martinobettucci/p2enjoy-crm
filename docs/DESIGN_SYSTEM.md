@@ -2910,10 +2910,10 @@ il doit céder se recalcule à chaque nouvel occupant de la ligne.
 
 **RÉVISION DU 2026-10-23 — `CRM-110` (décision 636). LE NOM DU PRODUIT QUITTE L'EN-TÊTE, LE WORKSPACE OUVRE LE
 FIL.** Le fil d'Ariane porte désormais le workspace et les ancêtres de l'objet ouvert (§5.62), et le contexte d'espace
-isolé en fin de ligne est retiré : il ne reste plus ni nom de produit ni contexte à sacrifier. L'ordre devient :
-**sous `lg`**, le workspace passe dans le repli « … » ; **sous `md`**, tous les ancêtres sauf le parent immédiat y
-passent. **Le titre de la route ne cède toujours jamais**, et chaque niveau masqué garde un point d'accès, le repli
-(§7).
+isolé en fin de ligne est retiré : il ne reste plus ni nom de produit ni contexte à sacrifier. **Sous `lg`, le fil
+prend sa propre ligne**, sous les commandes de l'en-tête (décision 641) ; **sous `md`**, tous les ancêtres sauf le
+parent immédiat passent dans le repli « … ». **Le titre de la route ne cède toujours jamais**, et chaque niveau masqué
+garde un point d'accès, le repli (§7).
 
 ### 12.3 Libellés masqués visuellement, jamais retirés — `CRM-007`
 
@@ -5961,13 +5961,18 @@ relecture des §4, §5.43, §5.46, §7, §8 et §12.2.* Ce que chaque route plac
   « Fil d'Ariane » contient une `ol` : la structure est annoncée comme une liste ordonnée de niveaux.
 - **UN NOM EST UNE DONNÉE : TRONQUÉ, JAMAIS PERDU.** Chaque ancêtre est borné à `24ch` et tronqué par `…`, son nom
   complet en `title` ; le titre prend le reste de la ligne et se tronque en dernier.
-- **ORDRE DE SACRIFICE** (révise §12.2) : ≥ 1024 px, tout le fil ; 768–1023 px, le workspace passe dans le repli ;
-  < 768 px, seuls le **parent immédiat** et le titre restent visibles. **Le titre ne cède jamais.**
+- **SOUS 1024 px, LE FIL A SA PROPRE LIGNE** (décision 641) : l'en-tête passe sur deux lignes — le tiroir, la
+  recherche, la cloche et l'identité en haut, le fil sur toute la largeur en dessous. ≥ 1024 px, une seule ligne.
+  Mesuré avant cette règle : à 390 px, la ligne unique ne laissait au titre qu'une vingtaine de pixels — « B. » pour
+  « Board » sur la capture `docs/captures/CRM-007/palier-sm-390.jpg`, antérieure au fil — et le fil l'effaçait tout à
+  fait ; à 900 px, les ancêtres tombaient à « Con… / Grands… ».
+- **ORDRE DE SACRIFICE** (révise §12.2) : ≥ 768 px, tout le fil ; < 768 px, seuls le **parent immédiat** et le titre
+  restent visibles, les autres niveaux passent dans le repli. **Le titre ne cède jamais.**
 - **LE REPLI « … »** n'est rendu que s'il cache au moins un niveau. `button` de 40 px, icône Lucide `Ellipsis`, nom
   accessible « Afficher le chemin complet », `aria-expanded`, `aria-controls`. Il ouvre sous lui un panneau — surface
   `--color-surface`, bordure `--color-border`, `--radius-lg`, `--shadow-card-hover` — qui liste les niveaux masqués
-  comme liens, dans l'ordre du chemin. Échap et un clic extérieur le referment, et le focus revient au bouton ;
-  suivre un lien le referme. Le panneau s'ancre à l'en-tête et non au bouton, patron du panneau de notifications
+  comme liens, dans l'ordre du chemin. Échap le referme et rend le focus au bouton ; un clic extérieur le referme
+  sans déplacer le focus, que le pointeur a déjà porté ailleurs ; suivre un lien le referme. Le panneau s'ancre à l'en-tête et non au bouton, patron du panneau de notifications
   (§5.43) : ancré au bouton, il sortirait de l'écran à 390 px.
 - **ÉTATS** (§5.8) : pendant la lecture du workspace, un squelette d'une ligne à sa place ; sur un échec ou sans
   workspace, « Aucun workspace accessible » en texte, sans lien — le message que portait le contexte d'espace. Un

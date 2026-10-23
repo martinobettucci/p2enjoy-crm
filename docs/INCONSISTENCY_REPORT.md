@@ -7342,3 +7342,17 @@ saisie suivante, qui saute une ligne, se le faisait voler, puis le reprenait. La
 **Correction** : la cellule ne relit pas les propriétés tant qu'un envoi vole, et `Entrée` n'avance le focus que s'il
 est resté sur elle (`webapp/src/app/SaisieTemps.tsx`). **Preuves** : trois tests de `SaisieTemps.test.tsx`, chacun
 rouge sous la mutation qui retire son correctif ; `e2e/ui/saisie-temps.spec.ts` **7/7** sur la pile, deux fois.
+
+### INC-284 — sous `lg`, la commande de recherche à icône ouvre la palette sans donner le focus au champ
+
+*Mesuré le 2026-10-23 par `e2e/ui/fil-ariane.spec.ts` (`CRM-110`), à 900 px.* Après un clic sur `ouvrir-recherche`, le
+champ `champ-recherche` n'a pas le focus, et `Échap`, que le champ écoute, ne referme pas la palette : le fil d'Ariane
+reste masqué. **Cause probable, lue et non corrigée** : `ouvrir()` (`webapp/src/app/PaletteRecherche.tsx`) appelle
+`champ.current?.focus()` dans le même tour que `setOuvert(true)`. Sous `lg`, le champ n'est affiché qu'au rendu suivant,
+et le focus d'un élément non affiché est sans effet. La commande, elle, est démontée à l'ouverture, et le focus retombe
+sur le document.
+
+**Hors du périmètre de `CRM-110`**, le comportement est laissé inchangé : la correction relève de `CRM-065`
+(`docs/SPEC-recherche.md` §14.3, `docs/DESIGN_SYSTEM.md` §5.46) et demande sa propre preuve clavier sous `lg`. **Issue
+proposée** : poser le focus dans un effet après l'ouverture, comme le fait le panneau de notifications (§5.43). À
+arbitrer par le responsable.

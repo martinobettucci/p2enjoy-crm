@@ -32647,3 +32647,19 @@ elle a été refusée. **Arbitrages**, les quatre options recommandées :
 **Conséquences.** La posture de consentement ne change pas pour une personne inconnue ; pour une personne attendue, le
 CRM garde son adresse, le motif et l'heure d'un refus, au plus 90 jours. **Suite** : `docs/SPEC-refus-admission.md` à
 écrire sur ces quatre points, puis validation du responsable avant tout code.
+
+### décision 641 — `CRM-110` : sous 1024 px, le fil d'Ariane prend sa propre ligne
+
+*2026-10-23, arbitrage du responsable, après observation des captures de la tranche T2.* **Problème.** Mesuré sur la
+pile, captures `docs/captures/CRM-110/` : à 390 px, le titre de l'affaire disparaît, et le fil (« … / Gra… ») passe
+sous la loupe et la cloche ; à 900 px, les ancêtres tombent à « Con… / Grands… ». Les preuves étaient vertes, parce
+qu'elles mesuraient le bord droit du titre et non sa largeur. **Observation, antérieure à `CRM-110`** : la capture de
+HEAD `docs/captures/CRM-007/palier-sm-390.jpg` rend déjà « B. » pour « Board ». La fin de ligne (recherche, cloche,
+identité, déconnexion) ne laissait au titre qu'une vingtaine de pixels, contre le §12.2 du design system, et le fil n'a
+fait que rendre le défaut flagrant. **Solutions présentées** : le fil sur sa propre ligne sous `lg` ; sous `md`
+seulement ; une seule ligne avec le nom du profil masqué. **Décision** : sous `lg`, l'en-tête passe sur deux lignes, le
+fil sur toute la largeur sous les commandes ; de 768 à 1023 px, le chemin complet ; sous 768 px, « … / parent / titre ».
+Le seuil du repli descend donc de `lg` à `md`. **Conséquences** : l'en-tête gagne environ 48 px de hauteur sous
+1024 px ; la preuve E2E mesure désormais la LARGEUR du titre rendu, et non plus seulement son bord. **Relevé au
+passage** : INC-284, la commande de recherche à icône ne donne pas le focus au champ. **Persisté avant le code** :
+`docs/DESIGN_SYSTEM.md` §5.62 et §12.2, `docs/BACKLOG.md` `CRM-110`, `docs/INCONSISTENCY_REPORT.md` INC-284.

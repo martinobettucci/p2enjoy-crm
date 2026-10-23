@@ -15747,6 +15747,9 @@ non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
 
 - [x] **T1 — spécification, écrite avant le code**, sur les cinq arbitrages du 2026-10-23 ; les choix de forme de
       l'agent sont marqués dans la décision 636.
+- [x] **T1 bis — arbitrage de mise en page, le 2026-10-23 (décision 641)** : sous 1024 px, le fil prend sa propre
+      ligne, et le repli ne sert plus que sous 768 px. Relevé par les captures de T2 ; `docs/DESIGN_SYSTEM.md` §5.62 et
+      §12.2 révisés.
 - [ ] **T2 — mise en œuvre et preuves unitaires** : composition pure des ancêtres d'une route de track
       (`webapp/src/lib/fil-ariane.ts`) ; `Header` rend le workspace, les ancêtres en liens, le titre `h1` en
       `aria-current`, et le repli « … » ; contexte d'espace retiré de la fin de ligne ; les cinq routes d'un track
