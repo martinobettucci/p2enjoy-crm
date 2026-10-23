@@ -4,6 +4,9 @@
 (`docs/JOURNAL.md`). Unité de backlog : `CRM-098` (`docs/BACKLOG.md`). Règles visuelles :
 `docs/DESIGN_SYSTEM.md` §5.54. Schéma : `docs/SCHEMA.md`, « Migration `0087` ».*
 
+*Complétée le 2026-10-23 par le §7.6 — la saisie depuis la fiche d'une affaire, unité `CRM-106`, décision 630 ;
+règles visuelles : `docs/DESIGN_SYSTEM.md` §5.54 bis.*
+
 Les choix que la décision 621 ne tranche pas et que cette spécification arrête sont marqués **[choix de
 rédaction]** : ils se contestent comme une décision, pas comme un détail.
 
@@ -171,6 +174,40 @@ Sur l'**écran de coûts d'un track** : un bloc « Coût du personnel » — tem
 période choisie (mois par défaut). Dans la **fiche d'une affaire** : un bloc « Temps passé » — temps et montant. Les deux
 ne se mêlent ni aux budgets, ni aux lignes de coût, ni à l'histogramme. **Leur portée est écrite** : un membre n'y lit
 que **son** temps (§5.1), et le bloc le dit — « votre temps » ; un administrateur lit celui de toute l'équipe.
+Depuis `CRM-106`, le bloc « Temps passé » porte aussi la **saisie** de son temps sur l'affaire (§7.6).
+
+### 7.6 Saisir son temps depuis la fiche d'une affaire — `CRM-106` (décision 630)
+
+Le bloc « Temps passé » de la fiche (§7.5) porte, sous son résumé, la **bande de la semaine** : la ligne de l'affaire
+extraite de la matrice (§7.2). Les points 1 à 3 sont les arbitrages du responsable (2026-10-23) ; les autres sont des
+**[choix de rédaction]**.
+
+1. **Forme.** Sept cellules, du lundi au dimanche, puis le total de la semaine de l'affaire. Chaque cellule est **celle
+   de la matrice** : en quarts de 0 à 4, en heures de 0 à 7 au quart d'heure, vide vaut zéro, elle s'enregistre seule,
+   `Entrée` l'enregistre, `Échap` rétablit la valeur, les flèches gauche et droite vont d'un jour à l'autre.
+2. **Une valeur remplace** celle que la personne a déjà saisie ce jour-là sur l'affaire ; zéro retire la ligne (§3.2).
+   Rien ne s'additionne.
+3. **Son temps seulement.** La bande saisit le temps de la personne connectée, quel que soit son rôle — lectrice
+   comprise (§5.2), administrateur compris. Aucun « Saisir pour » : il reste sur l'écran « Temps » (§7.1).
+4. **Le jour se lit sur toutes ses saisies.** L'en-tête d'un jour porte la case « En heures » du §6.3, et le mode du jour
+   se déduit de **toutes** les saisies de la personne ce jour-là, toutes cibles confondues — le même jour se lit de la
+   même façon dans la fiche et dans la matrice. Le pied de chaque jour dit le total de la journée **toutes cibles
+   confondues** (« 3 quarts sur 4 ») : c'est ce que compte le plafond (§2). Une valeur qui dépasserait la journée est
+   annoncée avant l'envoi ; la base reste seule juge.
+5. **La lecture.** Les saisies de la personne sur la semaine affichée, toutes cibles (`saisies_temps`, filtrées sur
+   l'espace et la personne) — aucune lecture de l'arborescence. Pour un administrateur, la RLS rendrait le temps de
+   chacun : le filtre sur la personne est donc écrit dans la requête.
+6. **La navigation.** « Semaine précédente », « Semaine suivante », « Cette semaine ». La semaine **ne vit pas dans
+   l'adresse** : l'adresse d'une fiche désigne l'affaire, et un lien partagé n'emporte pas de semaine. Un lien **« Ouvrir
+   dans Temps »** mène à la matrice de la même semaine (`/temps?semaine=AAAA-MM-JJ`).
+7. **La portée est écrite.** La bande dit « Votre semaine » : pour un administrateur, le résumé au-dessus compte toute
+   l'équipe, la bande son seul temps.
+8. **Le résumé se relit** après chaque enregistrement accepté — le temps depuis le premier jour et son coût.
+9. **Aucun motif de lecture seule** : le motif de la fiche (`CRM-093`) dit le droit d'écrire l'affaire ; le temps décrit
+   la personne. Un refus de la base (la personne ne lit plus l'affaire, plafond, conflit) se dit sur la cellule, avec
+   les messages de la matrice.
+10. **Aucune règle nouvelle en base** : `app.saisie_temps_permise` exige déjà que la personne lise l'affaire, le plafond
+    compte toutes les cibles, l'unicité tient une ligne par personne, jour et affaire (migration `0087`).
 
 ## 8. Jeu de démonstration
 
@@ -198,6 +235,9 @@ contrat : `docs/SPEC-seed.md` (à écrire avec la tranche qui les pose).
 | **T4** | API (refus avec jetons réels), E2E souris et clavier, captures aux quatre paliers, seed, manuel, campagnes |
 | **T5** | Production : migration en fenêtre avec instantané, constat |
 
+`CRM-106` (§7.6) se découpe à part : T1 la spécification ; T2 la bande et ses unitaires ; T3 l'API, l'E2E, les captures,
+le manuel, les campagnes ; T4 la livraison de la webapp.
+
 ## 11. Preuves
 
 - **pgTAP** : unités et plafond (420, multiple de 15, cible unique, sérialisation) ; versions immuables, non
@@ -208,3 +248,16 @@ contrat : `docs/SPEC-seed.md` (à écrire avec la tranche qui les pose).
 - **Unitaires** : le mode d'une journée, les conversions minutes ↔ quarts ↔ heures, la matrice, le rapport.
 - **E2E** : une semaine saisie à la souris et au clavier, une journée en heures, le rapport mensuel, une version de coût
   programmée, la série « Personnel » ; refus d'un collègue ; quatre paliers ; captures observées.
+
+### 11 bis. Preuves de `CRM-106` (§7.6)
+
+- **Unitaires** : la bande lit la semaine de la seule personne connectée ; le mode d'un jour et le total du pied
+  comptent les saisies des autres cibles ; une valeur remplace, zéro retire ; le plafond annoncé sans envoi ; une seule
+  écriture à la fois (`Entrée` puis sortie du champ) ; le résumé relu après un enregistrement ; la navigation et le lien
+  « Ouvrir dans Temps » ; aucun motif de lecture seule n'éteint la bande.
+- **API** : la saisie sur une affaire avec le jeton réel d'un membre qui la lit ; le refus pour une affaire qu'il ne lit
+  pas.
+- **E2E** : une semaine saisie à la souris et au clavier depuis la fiche, relue dans l'écran « Temps » et en base ; une
+  journée en heures ; un remplacement et un retrait ; le plafond atteint par une autre cible ; la lectrice qui saisit
+  le sien ; l'administrateur dont la bande ne saisit que son temps ; quatre paliers sans défilement de page ; captures
+  observées.

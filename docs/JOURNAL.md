@@ -32090,3 +32090,56 @@ l'envoi d'une réponse. Le refus serveur, lui, n'a jamais cédé. **Décision.**
 étalée la compose. **Preuves.** Un test de comportement (« Créer » reste éteint, titre saisi, sous un refus) et un garde
 de source (`commandes-refusees.test.ts`) qui parcourt toute l'application ; les deux vus rouges sans le correctif — le
 garde listait les dix-sept —, verts avec. Suite unitaire complète : **134 fichiers, 3 981 tests**.
+
+## décision 630 — `CRM-106` : saisir son temps depuis la fiche d'une affaire, par la bande de la semaine
+
+*2026-10-23 ; demande du responsable : « on doit pouvoir saisir ses heures depuis la fiche de l'affaire aussi ». Trois
+arbitrages demandés et rendus le même jour ; les autres choix sont ceux de l'agent, marqués **[choix de rédaction]**
+dans `docs/SPEC-temps.md` §7.6, écrits pour être relus et, au besoin, renversés.*
+
+**Le problème, mesuré dans le code.** La fiche d'une affaire porte, depuis `CRM-098` T3, le bloc « Temps passé »
+(`webapp/src/app/SeriePersonnel.tsx`, `BlocTempsCard`) : il LIT le temps depuis le premier jour et son coût, sans
+aucun geste. Saisir du temps sur une affaire oblige à ouvrir l'écran « Temps », à chercher l'affaire par son titre
+(« Ajouter une affaire ») puis à trouver sa ligne dans la matrice. La base, elle, accepte déjà la saisie sur une
+affaire (`saisies_temps.card_id`, migration `0087`) : `app.saisie_temps_permise` exige que la personne lise l'affaire,
+le plafond de 420 minutes compte toutes les cibles du jour, l'unicité tient une ligne par personne, jour et affaire.
+**Aucune règle nouvelle n'est donc nécessaire en base** : la demande porte sur l'interface.
+
+**Solutions envisagées.**
+1. Un formulaire « jour + durée » dans le bloc : écarté par le responsable.
+2. **Retenue par le responsable** : la **bande de la semaine** — la ligne de l'affaire extraite de la matrice, sept
+   cellules du lundi au dimanche, qui s'enregistrent seules, avec la navigation de semaine.
+
+**Arbitrages du responsable (2026-10-23).**
+1. **Forme** : la bande de la semaine.
+2. **Une nouvelle valeur remplace** celle du jour, comme une cellule de la matrice ; zéro retire la ligne. Aucune
+   addition.
+3. **Son temps seulement** : la fiche ne saisit que le temps de la personne connectée, administrateur compris ;
+   « Saisir pour » reste sur l'écran « Temps ».
+
+**Choix de rédaction de l'agent.**
+- La bande RÉEMPLOIE la cellule, l'en-tête d'un jour (case « En heures ») et le pied de la matrice (§5.54) : une seule
+  écriture du geste, une seule écriture du défaut de double envoi corrigé en `CRM-098` T2.
+- Le **mode d'un jour** et l'**annonce du plafond** se lisent sur **toutes** les saisies du jour de la personne, pas sur
+  la seule affaire : le plafond compte toutes les cibles, et le même jour doit se lire en quarts ou en heures de la
+  même façon dans la fiche et dans l'écran « Temps ». Le pied dit donc le total du jour toutes cibles confondues.
+- La semaine affichée **ne vit pas dans l'adresse** de la fiche : l'adresse d'une fiche désigne l'affaire, et un lien
+  partagé ne doit pas emporter une semaine. Elle revient à la semaine du jour au rechargement.
+- Un lien **« Ouvrir dans Temps »** mène à la matrice de la même semaine (`/temps?semaine=…`), pour le reste de la
+  journée.
+- Le résumé du bloc (temps depuis le premier jour, coût) se **relit après chaque enregistrement**.
+- La bande n'obéit **pas** au motif de lecture seule de la fiche (`CRM-093`) : ce motif dit le droit d'écrire
+  l'affaire, et le temps décrit la personne (`docs/SPEC-temps.md` §5.2, une lectrice saisit le sien). La base reste
+  seule juge, et la cellule dit son refus.
+
+**Conséquences.**
+- Aucune migration, aucune fonction, aucune variable : la livraison est une reconstruction de la webapp.
+- Le seed n'a rien à ajouter : il laisse la semaine en cours saisissable et porte déjà du temps sur des affaires
+  (`docs/SPEC-seed.md` §17.5).
+- Pour un administrateur, le résumé compte le temps de toute l'équipe et la bande le sien : la bande dit sa portée,
+  « Votre semaine ».
+
+**Vérifications prévues** : unitaires de la bande (lecture, mode du jour toutes cibles, plafond annoncé, relecture du
+résumé, double envoi) ; preuve d'API d'une saisie sur une affaire refusée à qui ne la lit pas ; E2E sur la pile réelle
+et le seed (souris, clavier, journée en heures, remplacement, retrait, plafond, lectrice, administrateur), captures aux
+quatre paliers observées ; manuel 5 undecies.6 bis.

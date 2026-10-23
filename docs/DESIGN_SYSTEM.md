@@ -5261,6 +5261,38 @@ chacun saisit son temps (`docs/SPEC-temps.md` §5.2).
 **Paliers.** Sous 768 px, la matrice garde sa première colonne collante et défile horizontalement dans son conteneur
 (`overflow-x-auto`, jamais la page) ; les onglets et la navigation de semaine passent sur deux lignes.
 
+### 5.54 bis La bande de la semaine dans la fiche d'une affaire — `CRM-106`
+
+Spécifiée avant code, `docs/SPEC-temps.md` §7.6 (décision 630).
+
+**Place.** Dans la carte « Temps passé » de la fiche (§5.54, série « Personnel »), sous le résumé, séparée de lui par
+un filet `--color-border` et 16 px. Un sous-titre `h3` en 15 px `font-medium` : « Votre semaine » — la portée est
+écrite, comme au-dessus.
+
+**Navigation.** Sur une ligne au-dessus de la bande : deux boutons icônes de 44 px (`ChevronLeft`, `ChevronRight`), nom
+accessible « Semaine précédente » / « Semaine suivante », le libellé de la semaine entre eux (« Semaine du 19 au 25
+octobre 2026 », 14 px), puis « Cette semaine » en lien d'action `--color-brand` hors de la semaine du jour. Les boutons
+icônes, et non les libellés de la matrice : la colonne de la fiche mesure 72 caractères au plus. À droite, le lien
+**« Ouvrir dans Temps »** (icône `Timer` de l'entrée de navigation, 16 px), en `--color-brand`.
+
+**La bande** réemploie le tableau, l'en-tête d'un jour, la cellule et le pied de la matrice (§5.54), sans redessin :
+jour abrégé et date, jour courant souligné, case « En heures » ; cellule de 4 rem ; pied « 3 quarts sur 4 », pastille
+de succès pour une journée pleine ; colonne de droite, le total de la semaine de l'affaire. **Aucune première colonne
+visible** : la fiche nomme déjà l'affaire. La ligne garde un en-tête de ligne `sr-only` (le titre de l'affaire), et
+chaque cellule son nom accessible « {affaire}, {jour long} ». Le pied compte **toutes** les cibles du jour, et son
+en-tête `sr-only` le dit : « Total de la journée, toutes cibles ».
+
+**Clavier.** Les flèches gauche et droite vont d'un jour à l'autre (champ vide ou valeur entièrement sélectionnée) ;
+`Entrée` enregistre et passe au jour suivant ; `Échap` rétablit la valeur. Une seule écriture par cellule à la fois
+(§5.54).
+
+**États.** Chargement : squelette d'une ligne. Erreur de lecture : le message du bloc et « Réessayer » (§5.9). Refus
+d'une cellule : le motif sous elle, comme dans la matrice. Aucune lecture seule : la bande n'est jamais éteinte par le
+motif de la fiche (§5.59) — chacun saisit son temps.
+
+**Paliers.** La bande tient dans la colonne de la fiche dès `lg` ; en dessous, elle défile horizontalement dans son
+conteneur (`overflow-x-auto`, `indique-debordement-x`), jamais la page. La navigation passe sur deux lignes sous `md`.
+
 ### 5.55 « Nouveau channel » dans la barre d'onglets, et l'aller-retour vers l'éditeur de workflows — `CRM-100`
 
 *Écrit le 2026-10-11, avant le code (décision 623).* Ce que les gestes envoient, l'adresse qui les porte et sa validation

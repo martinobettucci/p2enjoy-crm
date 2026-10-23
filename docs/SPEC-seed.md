@@ -2163,6 +2163,14 @@ temps en 2099 — : une version en vigueur ne se retire jamais, et le jeu ne doi
 pgTAP `0082` retire le temps et les versions du seed au début de sa transaction, déclencheurs suspendus, et les rend au
 `rollback`.
 
+### 17.5 La bande de la fiche — `CRM-106` (décision 630)
+
+Rien n'est ajouté au jeu : la semaine en cours reste saisissable (§17.1), et l'affaire « Refonte intranet Ville de
+Lyon » porte les quarts de Driss sur les jours ouvrés déjà passés de la semaine — sa fiche montre une bande en partie
+remplie, un pied qui compte les autres cibles du jour et une journée pleine. L'affaire « Assistant IA support —
+Nordis » démontre la bande de la lectrice. Les preuves de `CRM-106` travaillent hors de toute fenêtre du seed, comme
+celles de `CRM-098` (§17.4).
+
 ## 18. Plusieurs réels par ligne de coût — `CRM-099` tranche T2
 
 *Écrit le 2026-10-11 avec la révision de la section `8 quindecies` de `supabase/seed/apply-seed.sh` ; contrat :

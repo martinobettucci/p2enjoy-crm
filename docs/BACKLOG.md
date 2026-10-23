@@ -15520,3 +15520,22 @@ existent, aucune n'est lue par les écrans qui montrent ces objets. Choix de for
       appliquées en production ; `CRM-105` part avec la prochaine livraison de `main` et sa fenêtre de migrations
       (`docs/PROD_MIGRATIONS.md` §2.15), sur instruction du responsable. Après synchronisation, le 2026-10-23 : les tests
       unitaires de l'unité rejoués, **331/331** ; les preuves E2E restent à rejouer sur la pile relancée.
+
+### CRM-106 — Saisir son temps depuis la fiche d'une affaire `[ ]`
+*Créée le 2026-10-23 — demande du responsable : « on doit pouvoir saisir ses heures depuis la fiche de l'affaire
+aussi ». Arbitrages du responsable le même jour (`docs/JOURNAL.md` décision 630) : la bande de la semaine, une valeur
+qui remplace, son temps seulement. Spécifié avant le code : `docs/SPEC-temps.md` §7.6, `docs/DESIGN_SYSTEM.md`
+§5.54 bis, `docs/SPEC-seed.md` §17.5. Aucune migration, aucune règle d'accès nouvelle : la base de `CRM-098` T1 tient
+déjà la saisie sur une affaire.*
+
+- [x] **T1 — spécification, écrite avant le code** sur les trois arbitrages du 2026-10-23 ; les choix de rédaction sont
+      marqués dans `docs/SPEC-temps.md` §7.6.
+- [ ] **T2 — la bande dans le bloc « Temps passé »** : réemploi de la cellule, de l'en-tête et du pied de la matrice ;
+      navigation de semaine ; lien « Ouvrir dans Temps » ; relecture du résumé ; preuves unitaires (`docs/SPEC-temps.md`
+      §11 bis).
+- [ ] **T3 — preuves sur la pile réelle** : preuve d'API (saisie sur une affaire, refus à qui ne la lit pas) ; E2E souris
+      et clavier, journée en heures, remplacement, retrait, plafond, lectrice, administrateur ; captures
+      `docs/captures/CRM-106/` aux quatre paliers observées ; `docs/manual.md` 5 undecies.6 bis ; `CHANGELOG.md` ;
+      campagnes.
+- [ ] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
+      (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
