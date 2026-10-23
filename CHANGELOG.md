@@ -13,27 +13,6 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-067` T1 — les activités d'une affaire : la base (décisions 647 à 650)
-
-*En développement seulement, tranche T1. Prouvée en pgTAP et aux jetons réels ; l'écran viendra avec T2. La migration
-`0100` attend la prochaine fenêtre de production.*
-
-- **Migration `0100`** : une affaire peut porter des **activités réalisées** — appel, réunion ou visio —, avec leur
-  date (jamais dans le futur), leur durée, leur sujet, leur compte rendu et leurs participants, pris parmi les contacts
-  de l'affaire et les membres de l'espace. Les droits sont ceux d'un commentaire : qui écrit sur l'affaire consigne,
-  l'auteur corrige et retire, un administrateur de l'espace retire sans pouvoir réécrire. Retirer laisse une trace
-  vide à sa place.
-- **Fiche d'une affaire, bloc « Activités »** (T2), juste après les contacts.
-  - **La liste**, la plus récente en tête : type, date et heure, durée, auteur, participants nommés, et le compte rendu
-    à déplier.
-  - **« Consigner une activité »** ouvre un formulaire dans la page, avec le type, la date (maintenant par défaut), la
-    durée, le sujet, le compte rendu et les participants.
-  - **L'auteur corrige et retire** ; un administrateur retire l'activité d'un autre. Le retrait est confirmé sur la
-    ligne.
-  - **Le fil de l'affaire** montre chaque activité à la date où elle a eu lieu, avec un sixième filtre « Activités ».
-  - **Jeu de démonstration** (T3) : quatre activités sur « Migration ERP Sogexia » et « Assistant IA support — Nordis »,
-    dont une corrigée par son auteur et une retirée par la modération. Manuel, chapitre 4.7 *quater*.
-
 ### `CRM-108` — la famille « Recettes » du connecteur MCP (reste à livrer : l'image `mcp`)
 
 *La migration `0095`, la fiche et l'écran « Rentabilité » sont en production depuis le 2026-10-23 ; ces outils vivent dans le service `mcp`, dont l'image de production n'est pas encore reconstruite. D'ici là, une case « Recettes » cochée dans la matrice reste sans effet, sans erreur.*
@@ -67,6 +46,34 @@ d'exécuter le code attendu.
 - Le connecteur reçoit l'origine de la webapp, `SITE_URL`, déjà obligatoire, et refuse de démarrer sans elle.
 
 ## [Publié]
+
+### Déployé en production, 2026-10-23 — troisième fenêtre
+
+Cellule Spark `crm`, révision `77b17fa1`, sur l'instantané confirmé par le responsable au moment de livrer :
+`scripts/spark/livrer.sh -- --migrate --instantane-verifie` ; le registre est passé de **99 à 100**
+(`0100_activites.sql`, `CRM-067` T1). **Avant** : campagnes complètes ui **905/905** et api **1169/1169**, pgTAP 91
+fichiers et 3897 assertions. **Vérifié** : `verifier.sh` 26 contrôles sur 27 (le même compteur de redémarrage de `kong`
+et `rest`, antérieur aux fenêtres) ; registre à 100 ; `card_activities` et `card_activity_participants` présentes, sept
+politiques, aucune ligne ; `401` sans session. **Non reconstruit** : l'image `mcp`. **Non vérifié visuellement en
+production** : une connexion LeLabs réelle est requise. Le seed n'est pas joué en production.
+
+#### `CRM-067` T1 à T3 — les activités d'une affaire (décisions 647 à 651)
+
+- **Migration `0100`** : une affaire peut porter des **activités réalisées** — appel, réunion ou visio —, avec leur
+  date (jamais dans le futur), leur durée, leur sujet, leur compte rendu et leurs participants, pris parmi les contacts
+  de l'affaire et les membres de l'espace. Les droits sont ceux d'un commentaire : qui écrit sur l'affaire consigne,
+  l'auteur corrige et retire, un administrateur de l'espace retire sans pouvoir réécrire. Retirer laisse une trace
+  vide à sa place.
+- **Fiche d'une affaire, bloc « Activités »** (T2), juste après les contacts.
+  - **La liste**, la plus récente en tête : type, date et heure, durée, auteur, participants nommés, et le compte rendu
+    à déplier.
+  - **« Consigner une activité »** ouvre un formulaire dans la page, avec le type, la date (maintenant par défaut), la
+    durée, le sujet, le compte rendu et les participants.
+  - **L'auteur corrige et retire** ; un administrateur retire l'activité d'un autre. Le retrait est confirmé sur la
+    ligne.
+  - **Le fil de l'affaire** montre chaque activité à la date où elle a eu lieu, avec un sixième filtre « Activités ».
+  - **Jeu de démonstration** (T3) : quatre activités sur « Migration ERP Sogexia » et « Assistant IA support — Nordis »,
+    dont une corrigée par son auteur et une retirée par la modération. Manuel, chapitre 4.7 *quater*.
 
 ### Déployé en production, 2026-10-23 — seconde fenêtre
 

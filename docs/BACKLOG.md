@@ -15831,7 +15831,10 @@ règle dans la webapp et le connecteur, et les captures observées.
         `SCENARIOS_UI=905` (compté).
 - [ ] **T4** — outils MCP `crm_affaire_activites_lister`, `crm_affaire_activite_ajouter`,
       `crm_affaire_activite_modifier`, inscrits au catalogue (`docs/SPEC-mcp.md` §9.2) et construits avec `CRM-104` T2.
-- [ ] **T5** — livraison en production, sur instruction du responsable.
+- [~] **T5** — livraison en production, sur instruction du responsable.
+      **Livrée le 2026-10-23, troisième fenêtre** : révision `77b17fa1`, instantané confirmé par le responsable ; registre
+      de production à 100 ; `verifier.sh` 26/27 (compteur de redémarrage antérieur) ; deux tables, sept politiques,
+      `401` sans session. **Reste `[~]`** : le constat visuel du bloc en production, par le responsable.
 
 ### CRM-109 — Journaliser les refus d'admission, pour dire d'une attente « jamais connectée » ou « refusée » `[x]`
 *Créée le 2026-10-23 — décision 635, arbitrage du responsable, détachée de `CRM-070`.* Une attente consommée disparaît,
