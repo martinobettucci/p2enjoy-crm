@@ -211,3 +211,10 @@ async def test_le_rapport_applique_la_regle_partagee_et_garde_l_espace_demande(m
         "recettesSansReel": 1, "coutsSansReel": 1, "minutesNonValorisees": 0
     }
     assert rapport["rows"][0]["planned"]["marge"] == 66750
+
+
+async def test_un_patch_ou_un_delete_sans_filtre_est_refuse_avant_tout_envoi(monde: Monde) -> None:
+    for methode in ("PATCH", "DELETE"):
+        with pytest.raises(ValueError, match="sans filtre"):
+            await monde.crm.ecrire("jeton", methode, "card_revenues", parametres={"select": "id"}, corps={"label": "x"})
+    assert monde.simule.ecritures == []

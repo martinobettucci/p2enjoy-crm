@@ -114,6 +114,10 @@ class ClientCrm:
         Jamais rejouée : une écriture n'est pas idempotente."""
         if methode not in ("POST", "PATCH", "DELETE"):
             raise ValueError(f"méthode d'écriture inconnue {methode!r}")
+        # Un PATCH ou un DELETE sans filtre s'appliquerait à TOUTES les lignes que la RLS laisse écrire à la personne :
+        # la pile n'a pas de garde `safeupdate`, la voici (remarque de la session du socle, 2026-10-23).
+        if methode != "POST" and not any(cle != "select" for cle in (parametres or {})):
+            raise ValueError(f"{methode} sans filtre refusé : il viserait toutes les lignes écrivables")
         options: dict[str, Any] = {"params": parametres or {}}
         if corps is not None:
             options["json"] = corps
