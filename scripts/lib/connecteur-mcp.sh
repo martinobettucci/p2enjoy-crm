@@ -83,7 +83,7 @@ verifier_connecteur_cellule() {
 	fi
 
 	mode=$(distant "awk -v d='$hote' '\$1 == d { print \$3 }' /etc/spark/routes")
-	propose=$(distant "awk -v d='$hote' '/^#/ { next } \$1 == d { print \$3 }' '/etc/spark/routes.?'")
+	propose=$(distant "awk -v d='$hote' '/^#/ { next } \$1 == d { print \$3 }' '/etc/spark/routes.?' 2>/dev/null")
 	if [ "$mode" = tls ]; then
 		ok "route $hote active en tls"
 	elif [ "$propose" = tls ]; then
