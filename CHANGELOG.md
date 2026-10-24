@@ -13,16 +13,6 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-104` T1 — le connecteur MCP lit et range l'arborescence, et cherche (décision 656)
-
-*En développement ; vit dans le service `mcp`, dont l'image de production est à reconstruire.*
-
-- **La recherche** : affaires, contacts, organisations, commentaires et messages. Chaque résultat suit la matrice de sa
-  famille.
-- **Structure** :
-  - lire les tracks, les channels et les workflows, avec leurs étapes, leurs déplacements et ce qu'ils exigent ;
-  - créer un track ou un channel, les renommer, les mettre à la corbeille — réservé par le CRM aux administrateurs.
-
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
@@ -32,6 +22,21 @@ d'exécuter le code attendu.
   connecteur (`docs/SPEC-seed.md` §22).
 
 ## [Publié]
+
+### Déployé en production, 2026-10-24 — l'image `mcp`, structure et recherche
+
+Cellule Spark `crm`, révision `20ad7541` : `scripts/spark/livrer.sh` sans migration, puis la reconstruction explicite de
+l'image `mcp`, saine. **Avant** : `verify-mcp.sh` 70 contrôles sans anomalie ; les quatre preuves d'interface du
+connecteur 16/16. **Vérifié** : `verifier.sh` 26/27 (le même compteur antérieur) ; le module `structure` présent dans le
+conteneur ; `/mcp` sans jeton `401`. **Non constaté** : un appel réel d'un assistant connecté.
+
+#### `CRM-104` T1 — le connecteur MCP lit et range l'arborescence, et cherche (décision 656)
+
+- **La recherche** : affaires, contacts, organisations, commentaires et messages. Chaque résultat suit la matrice de sa
+  famille.
+- **Structure** :
+  - lire les tracks, les channels et les workflows, avec leurs étapes, leurs déplacements et ce qu'ils exigent ;
+  - créer un track ou un channel, les renommer, les mettre à la corbeille — réservé par le CRM aux administrateurs.
 
 ### Déployé en production, 2026-10-23 — cinquième fenêtre : l'image `mcp`, écriture des affaires
 
