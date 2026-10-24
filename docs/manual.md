@@ -2639,7 +2639,9 @@ acceptée** tant qu'ils demeurent.
 
 **3. Corriger à la main.** Dans l'aperçu, vous pouvez renommer le workflow ; donner à **chaque étape**
 son propre nom (**« Nom de l’étape »**) et sa propre probabilité (**« Probabilité de l’étape »**) — laissés
-vides, l'étape garde le nom et la probabilité de son nœud, que le champ montre en gris ; changer le
+vides, l'étape garde le nom et la probabilité de son nœud, que le champ montre en gris (un nom qui ne
+diffère de celui du nœud que par les majuscules n'est pas un nouveau nom : l'étape garde celui de son nœud, et
+un nom déjà donné à l'étape ne change pas si seules ses majuscules changent) ; changer le
 libellé, la nature et la probabilité d'un nœud nouveau ; choisir l'étape initiale ; retirer une étape, une
 transition, un champ, une règle ou une exigence ; ajouter une transition ; changer le type, les choix,
 la devise ou l'aide d'un champ. Un retrait emporte ce qui en dépend — retirer une étape retire aussi
@@ -2664,7 +2666,8 @@ confirmation, la retire de la liste ; rien n'a été créé.
 portant un autre nom : l'IA y est invitée — par exemple l'étape « Premier contact » sur le nœud
 « Prospection ». Quand elle redéclare malgré tout un nœud du catalogue, le défaut le dit, et
 **« Utiliser le nœud du catalogue »** fait viser le nœud existant **en gardant le nom** que la suggestion
-donnait à l'étape — et sa probabilité, si elle diffère. Le curseur passe dans le nom de l'étape ; l'écran
+donnait à l'étape — et sa probabilité, si elle diffère ; un nom qui ne diffère de celui du catalogue que par
+les majuscules n'est pas gardé. Le curseur passe dans le nom de l'étape ; l'écran
 annonce le nom gardé. Une fois le workflow créé, l'éditeur montre l'étape sous ce nom, avec la mention
 « Libellé surchargé ».
 

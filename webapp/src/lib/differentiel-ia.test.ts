@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-ia.md §13.1 (identité par clés : conservé, nouveau, retiré), §13.6 (le différentiel ; les
 //           affaires des étapes retirées) ; docs/DESIGN_SYSTEM.md §5.53 (le nom du workflow, le rang parmi les étapes
 //           conservées, une étape retirée vide qui ne paraît pas) ; décision 620
+// @verifies CRM-113 tranche T5 — décision 679 : les clés `label` et `probability` ; une différence de casse seule du nom
+//           n'est pas un changement
 // @verifies CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.4 (une étape conservée dont le nom ou la
 //           probabilité EFFECTIFS changent est modifiée ; une cible muette garde la surcharge vivante) ;
 //           docs/DESIGN_SYSTEM.md §5.52 bis ; décision 677
@@ -165,10 +167,13 @@ describe('etapesRetireesOccupees', () => {
 })
 
 describe('CRM-113 T3 — le nom et la probabilité effectifs d’une étape (docs/SPEC-ia.md §14.4)', () => {
-	/** La composition vivante telle que la base la rend depuis `0102` : chaque étape porte son nom et sa probabilité. */
+	/**
+	 * La composition vivante telle que la base la rend depuis `0102`, et par les clés `label` et `probability` depuis
+	 * `0103` (RÉVISÉ PAR LA DÉCISION 679) : chaque étape porte son nom et sa probabilité.
+	 */
 	const NOMMEE: PropositionIa = {
 		...VIVANTE,
-		etapes: VIVANTE.etapes.map((e) => ({ ...e, libelle: e.noeud === 'relance' ? 'Relance client' : e.noeud, probabilite: 20 })),
+		etapes: VIVANTE.etapes.map((e) => ({ ...e, label: e.noeud === 'relance' ? 'Relance client' : e.noeud, probability: 20 })),
 	}
 	const cible = (modif: (e: PropositionIa['etapes'][number]) => PropositionIa['etapes'][number]): PropositionIa => ({
 		...NOMMEE,
@@ -176,7 +181,7 @@ describe('CRM-113 T3 — le nom et la probabilité effectifs d’une étape (doc
 	})
 
 	it('un nom et une probabilité qui changent : l’étape est modifiée, avec ses deux attributs', () => {
-		const changements = differentiel(NOMMEE, cible((e) => (e.noeud === 'relance' ? { ...e, libelle: 'Rappel', probabilite: 30 } : e)))
+		const changements = differentiel(NOMMEE, cible((e) => (e.noeud === 'relance' ? { ...e, label: 'Rappel', probability: 30 } : e)))
 		expect(changements).toEqual([
 			{
 				genre: 'modification',
@@ -190,8 +195,14 @@ describe('CRM-113 T3 — le nom et la probabilité effectifs d’une étape (doc
 	})
 
 	it('une cible muette — `null`, absente, blanche — garde la surcharge vivante : rien ne change', () => {
-		expect(differentiel(NOMMEE, cible((e) => ({ ...e, libelle: null, probabilite: null })))).toEqual([])
+		expect(differentiel(NOMMEE, cible((e) => ({ ...e, label: null, probability: null })))).toEqual([])
 		expect(differentiel(NOMMEE, cible(({ noeud, initiale }) => ({ noeud, initiale })))).toEqual([])
-		expect(differentiel(NOMMEE, cible((e) => ({ ...e, libelle: '  ' })))).toEqual([])
+		expect(differentiel(NOMMEE, cible((e) => ({ ...e, label: '  ' })))).toEqual([])
+	})
+
+	it('T5 — un nom qui ne diffère du vivant que par la casse n’est pas un changement (décision 679)', () => {
+		expect(differentiel(NOMMEE, cible((e) => (e.noeud === 'relance' ? { ...e, label: ' RELANCE CLIENT ' } : e)))).toEqual([])
+		const accent = differentiel(NOMMEE, cible((e) => (e.noeud === 'relance' ? { ...e, label: 'Relance cliént' } : e)))
+		expect(accent).toHaveLength(1)
 	})
 })

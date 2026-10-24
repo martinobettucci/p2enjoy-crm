@@ -9,6 +9,9 @@
 // @spec CRM-097 tranche T3.c — docs/SPEC-ia.md §13.6 (le panneau dans la colonne du workflow, titré par la portée ;
 //       le différentiel ; les affaires des étapes retirées ; accepter, puis l'annonce du point de retour), §13.4
 //       (« workflow modifie », « workflow archive ») ; docs/DESIGN_SYSTEM.md §5.53 ; décision 620
+// @spec CRM-113 (docs/BACKLOG.md) tranches T3 et T5 — docs/SPEC-ia.md §14.5 (`native_field` traduit, `native` nommé par
+//       un mot), §14.7 (le nom effectif d'une étape, lu dans sa clé `label`) ; docs/DESIGN_SYSTEM.md §5.52 bis ;
+//       décisions 646, 677 et 679
 //
 // AUCUN DROIT N'EST CALCULÉ ICI (CLAUDE.md §10) : chaque commande est rendue, la base et la fonction `ia`
 // refusent, et le panneau traduit. Les seules commandes désactivées le sont par l'état de la saisie — rien de
@@ -659,9 +662,9 @@ function VueSuggestion({
 		// Le nom EFFECTIF (§5.52 bis) : dans la proposition, sinon dans le workflow vivant — une étape retirée n'est plus
 		// que là —, sinon au catalogue.
 		etape: (cle) =>
-			(proposition === null ? undefined : proposition.etapes.find((e) => e.noeud === cle)?.libelle?.trim()) ||
+			(proposition === null ? undefined : proposition.etapes.find((e) => e.noeud === cle)?.label?.trim()) ||
 			(proposition === null ? undefined : noeudPropose(proposition, cle)?.libelle) ||
-			vivante?.composition.etapes.find((e) => e.noeud === cle)?.libelle?.trim() ||
+			vivante?.composition.etapes.find((e) => e.noeud === cle)?.label?.trim() ||
 			catalogue.get(cle)?.libelle ||
 			cle,
 		champ: (cle) =>

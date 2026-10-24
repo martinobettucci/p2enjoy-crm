@@ -13,6 +13,25 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-113` T5 — arbitrages du responsable (décision 679) : tout en anglais, la casse ignorée (migration 103)
+
+*Livrée en développement le 2026-10-24 ; part en production avec T1 à T3, migrations 102 puis 103 (le responsable s'en
+charge).*
+
+- **Une différence de majuscules seule ne renomme plus une étape** : un nom égal à celui du nœud, à la casse près, ne
+  crée pas de surcharge ; un nom déjà donné ne change pas si seules ses majuscules changent ; le différentiel ne la
+  compte pas, et « Utiliser le nœud du catalogue » ne la garde pas.
+- **Les clés nouvelles du format sont en anglais** : l'étape porte `label` et `probability` ; les défauts
+  `native_field` et `step_probability_invalid` écrivent `key`. La migration 103 reprend quatre fonctions de la 102,
+  qui n'est pas modifiée (registre des migrations, `docs/DAT.md` §3.2 bis).
+
+### INC-290 et INC-291 — la pile de développement monte sur un poste neuf
+
+- **MinIO et son client sont construits dans le dépôt** (`supabase/docker/minio/Dockerfile`), les dépôts de `quay.io`
+  refusant désormais le tirage anonyme. Développement seul : la cellule Spark n'est pas modifiée.
+- **`./runDev.sh` construit sous Compose 5** : il exporte `BUILDX_BAKE_ENTITLEMENTS_FS=0`, sans quoi `bake` refuse de
+  lire le paquet CA monté en secret de construction.
+
 ### `CRM-113` T1 à T3 — le générateur de workflow connaît l'affaire et le catalogue : base (migration 102), fonction `ia`, écran
 
 *Livrées en développement le 2026-10-24 ; la migration, la fonction `ia` et la webapp partent en production ensemble (T4),

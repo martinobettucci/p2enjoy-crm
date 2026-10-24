@@ -4,7 +4,8 @@
 //           emporte est annoncé : les comptes viennent d'ici)
 // @verifies CRM-097 tranche T3.c — docs/SPEC-ia.md §13.1 (`remappages`, facultative), §13.6 (choisir une destination
 //           écrit le remappage ; « Aucune destination » le retire) ; décision 620
-// @verifies CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.3 (l'étape porte `libelle` et `probabilite`),
+// @verifies CRM-113 (docs/BACKLOG.md) tranches T3 et T5 — docs/SPEC-ia.md §14.3 (l'étape porte `label` et `probability`,
+//           décision 679 ; un libellé qui ne diffère que par la casse est le même nom),
 //           §14.7 (le nom et la probabilité de toute étape se corrigent ; « Utiliser le nœud du catalogue » les garde,
 //           ou rien quand ils sont égaux) ; docs/DESIGN_SYSTEM.md §5.52 bis (le nom effectif) ; décision 677
 
@@ -13,6 +14,7 @@ import {
 	ajouterTransition,
 	definirRemappage,
 	designerInitiale,
+	memeLibelle,
 	memesPropositions,
 	modifierChamp,
 	modifierEtape,
@@ -143,6 +145,8 @@ describe('T3.c — les remappages d’une modification', () => {
 	})
 })
 
+// RÉVISÉ PAR LA DÉCISION 679 (CRM-113 T5) : les clés de l'étape passent à l'anglais, `label` et `probability` ; les
+// gestes gardent leurs noms français, comme tout le code (CLAUDE.md, « La langue des identifiants »).
 describe('CRM-113 T3 — le nom et la probabilité d’une étape (docs/SPEC-ia.md §14.3, §14.7)', () => {
 	const CATALOGUE = new Map([
 		['negociation', { libelle: 'Négociation', probabilite: 50 }],
@@ -156,10 +160,10 @@ describe('CRM-113 T3 — le nom et la probabilité d’une étape (docs/SPEC-ia.
 
 	it('modifier le nom et la probabilité d’une étape ; un nom blanc vaut l’absence de surcharge', () => {
 		const posee = modifierEtape(VALIDE, 'maquette', { libelle: 'Devis', probabilite: 45 })
-		expect(posee.etapes[1]).toEqual({ noeud: 'maquette', initiale: false, libelle: 'Devis', probabilite: 45 })
+		expect(posee.etapes[1]).toEqual({ noeud: 'maquette', initiale: false, label: 'Devis', probability: 45 })
 		const videe = modifierEtape(posee, 'maquette', { libelle: '   ' })
-		expect(videe.etapes[1]).toEqual({ noeud: 'maquette', initiale: false, libelle: null, probabilite: 45 })
-		expect(modifierEtape(videe, 'maquette', { probabilite: null }).etapes[1]?.probabilite).toBeNull()
+		expect(videe.etapes[1]).toEqual({ noeud: 'maquette', initiale: false, label: null, probability: 45 })
+		expect(modifierEtape(videe, 'maquette', { probabilite: null }).etapes[1]?.probability).toBeNull()
 		expect(posee.etapes[0]).toBe(VALIDE.etapes[0])
 	})
 
@@ -176,22 +180,35 @@ describe('CRM-113 T3 — le nom et la probabilité d’une étape (docs/SPEC-ia.
 		const resultat = utiliserNoeudDuCatalogue(avecCatalogue, 'negociation', CATALOGUE.get('negociation'))
 		expect(resultat.noeuds.some((n) => n.cle === 'negociation')).toBe(false)
 		expect(resultat.etapes.find((e) => e.noeud === 'negociation')).toEqual({
-			noeud: 'negociation', initiale: false, libelle: 'Discussion commerciale', probabilite: 60,
+			noeud: 'negociation', initiale: false, label: 'Discussion commerciale', probability: 60,
 		})
 	})
 
 	it('égaux au catalogue, ils ne surchargent rien ; un nom que l’étape porte déjà l’emporte', () => {
 		const egal = modifierNoeud(avecCatalogue, 'negociation', { libelle: ' Négociation ', probabilite: 50 })
 		expect(utiliserNoeudDuCatalogue(egal, 'negociation', CATALOGUE.get('negociation')).etapes.find((e) => e.noeud === 'negociation'))
-			.toEqual({ noeud: 'negociation', initiale: false, libelle: null, probabilite: null })
+			.toEqual({ noeud: 'negociation', initiale: false, label: null, probability: null })
 		const dejaNommee = modifierEtape(avecCatalogue, 'negociation', { libelle: 'Échange' })
-		expect(utiliserNoeudDuCatalogue(dejaNommee, 'negociation', CATALOGUE.get('negociation')).etapes.find((e) => e.noeud === 'negociation')?.libelle)
+		expect(utiliserNoeudDuCatalogue(dejaNommee, 'negociation', CATALOGUE.get('negociation')).etapes.find((e) => e.noeud === 'negociation')?.label)
 			.toBe('Échange')
 	})
 
 	it('la forme canonique porte le nom et la probabilité de chaque étape, `null` quand une révision antérieure ne les a pas', () => {
-		expect(normaliser(VALIDE).etapes[0]).toEqual({ noeud: 'prise-de-contact', initiale: true, libelle: null, probabilite: null })
+		expect(normaliser(VALIDE).etapes[0]).toEqual({ noeud: 'prise-de-contact', initiale: true, label: null, probability: null })
 		expect(memesPropositions(VALIDE, normaliser(VALIDE))).toBe(true)
 		expect(memesPropositions(VALIDE, modifierEtape(VALIDE, 'maquette', { libelle: 'Devis' }))).toBe(false)
+	})
+
+	it('T5 — un libellé qui ne diffère du catalogue que par la casse n’est pas reporté (décision 679)', () => {
+		const casse = modifierNoeud(avecCatalogue, 'negociation', { libelle: 'NÉGOCIATION ', probabilite: 50 })
+		expect(utiliserNoeudDuCatalogue(casse, 'negociation', CATALOGUE.get('negociation')).etapes.find((e) => e.noeud === 'negociation'))
+			.toEqual({ noeud: 'negociation', initiale: false, label: null, probability: null })
+	})
+
+	it('T5 — le même libellé : à la casse et aux espaces de bord près, et rien d’autre', () => {
+		expect(memeLibelle(' Négociation', 'NÉGOCIATION ')).toBe(true)
+		expect(memeLibelle('Négociation', 'Negociation')).toBe(false)
+		expect(memeLibelle(null, '  ')).toBe(true)
+		expect(memeLibelle('Devis', null)).toBe(false)
 	})
 })

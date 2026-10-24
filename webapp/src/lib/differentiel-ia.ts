@@ -6,13 +6,15 @@
 // @spec CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.4 (une étape conservée dont le nom ou la probabilité
 //       EFFECTIFS changent est modifiée ; la cible qui n'en dit rien garde la surcharge vivante) ;
 //       docs/DESIGN_SYSTEM.md §5.52 bis ; décisions 646 et 677
+// @spec CRM-113 tranche T5 — décision 679 : les clés `label` et `probability` ; une différence de casse seule du nom
+//       d'une étape n'est pas un changement (docs/SPEC-ia.md §14.3, §14.4)
 //
 // Module pur : il compare deux propositions `version: 1` — la composition vivante, telle que la base la rend
 // (`proposition_du_workflow`), et la cible — et ne juge rien. Les défauts sont l'affaire de la base (§12.1) ; ce
 // module dit seulement ce qui changerait. Les clés sont celles du §13.1 : étape par son nœud, transition par son
 // couple, champ par sa clé, règle par le couple champ × étape, exigence par le triplet.
 
-import type { PropositionIa } from './brouillon-ia'
+import { memeLibelle, type PropositionIa } from './brouillon-ia'
 
 export type GenreChangement = 'ajout' | 'retrait' | 'modification'
 
@@ -53,6 +55,15 @@ export type Changement = {
 }
 
 const memeValeur = (a: ValeurAttribut, b: ValeurAttribut) => JSON.stringify(a) === JSON.stringify(b)
+
+/**
+ * Le nom qu'une étape conservée portera après l'acceptation, contre son nom vivant : une cible muette garde le nom
+ * vivant ; une cible qui n'en diffère que par la casse aussi, la base gardant alors la surcharge (§14.3, décision 679).
+ */
+function nomCible(vivant: string | null | undefined, cible: string | null | undefined): string | null {
+	const propose = cible?.trim() ?? ''
+	return propose === '' || memeLibelle(propose, vivant) ? (vivant ?? null) : propose
+}
 
 function attributsChanges(paires: readonly (readonly [CodeAttribut, ValeurAttribut, ValeurAttribut])[]): AttributChange[] {
 	return paires.filter(([, avant, apres]) => !memeValeur(avant, apres)).map(([code, avant, apres]) => ({ code, avant, apres }))
@@ -119,9 +130,10 @@ export function differentiel(vivante: PropositionIa, cible: PropositionIa): read
 					['initiale', avant.initiale, apres.initiale],
 					['rang', rangVivant.get(avant.noeud) ?? null, rangCible.get(apres.noeud) ?? null],
 					// Le nom et la probabilité EFFECTIFS (§14.4) : la composition vivante les porte ; une cible muette (`null`,
-					// absent, texte blanc) garde la surcharge vivante, et n'est donc pas un changement.
-					['nom_etape', avant.libelle ?? null, apres.libelle?.trim() || (avant.libelle ?? null)],
-					['probabilite', avant.probabilite ?? null, apres.probabilite ?? avant.probabilite ?? null],
+					// absent, texte blanc) garde la surcharge vivante, et n'est donc pas un changement. Une différence de
+					// casse seule n'en est pas un non plus (décision 679) : la base garde alors la surcharge vivante.
+					['nom_etape', avant.label ?? null, nomCible(avant.label, apres.label)],
+					['probabilite', avant.probability ?? null, apres.probability ?? avant.probability ?? null],
 				]),
 		),
 	)

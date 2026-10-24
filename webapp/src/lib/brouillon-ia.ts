@@ -4,9 +4,11 @@
 //       décision 618 (point 7 : l'aperçu n'est pas un second éditeur)
 // @spec CRM-097 tranche T3.c — docs/SPEC-ia.md §13.1 (`remappages` : où vont les affaires d'une étape retirée, en
 //       clés), §13.6 (choisir une destination écrit le remappage dans le brouillon) ; décision 620
-// @spec CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.3 (l'étape porte `libelle` et `probabilite`), §14.7
+// @spec CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.3 (l'étape porte `label` et `probability`), §14.7
 //       (le nom et la probabilité de toute étape se corrigent ; « Utiliser le nœud du catalogue » les garde) ;
 //       docs/DESIGN_SYSTEM.md §5.52 bis (le nom effectif partout) ; décisions 646 et 677
+// @spec CRM-113 tranche T5 — décision 679 : les clés `label` et `probability` de l'étape ; un libellé qui ne diffère de
+//       celui du catalogue que par la casse n'est pas reporté (docs/SPEC-ia.md §14.3, §14.7)
 //
 // Module pur : chaque geste rend une NOUVELLE proposition, jamais une mutation, et les retraits disent ce qu'ils
 // ont emporté — l'écran l'annonce (docs/DESIGN_SYSTEM.md §5.52). Rien n'est jugé ici : une correction peut
@@ -16,14 +18,15 @@ export type NatureNoeud = 'open' | 'won' | 'lost'
 
 export type NoeudIa = { readonly cle: string; readonly libelle: string; readonly nature: string; readonly probabilite: number | null }
 /**
- * `libelle` et `probabilite` : le nom affiché et la probabilité de l'étape, `null` ou absents quand le nœud convient
+ * `label` et `probability` : le nom affiché et la probabilité de l'étape, `null` ou absents quand le nœud convient
  * (docs/SPEC-ia.md §14.3). Absents d'une révision antérieure à `CRM-113`, ils le restent jusqu'à la normalisation.
+ * Clés anglaises : elles sont nouvelles (décision 679) ; `noeud` et `initiale` existaient avant l'unité.
  */
 export type EtapeIa = {
 	readonly noeud: string
 	readonly initiale: boolean
-	readonly libelle?: string | null
-	readonly probabilite?: number | null
+	readonly label?: string | null
+	readonly probability?: number | null
 }
 /** Ce que le catalogue dit d'un nœud vivant : son libellé et sa probabilité par défaut. */
 export type NoeudDuCatalogueIa = { readonly libelle: string; readonly probabilite: number | null }
@@ -72,7 +75,7 @@ export function normaliser(p: PropositionIa): PropositionIa {
 		version: 1,
 		workflow: { nom: p.workflow.nom },
 		noeuds: p.noeuds.map((n) => ({ cle: n.cle, libelle: n.libelle, nature: n.nature, probabilite: n.probabilite })),
-		etapes: p.etapes.map((e) => ({ noeud: e.noeud, initiale: e.initiale, libelle: e.libelle ?? null, probabilite: e.probabilite ?? null })),
+		etapes: p.etapes.map((e) => ({ noeud: e.noeud, initiale: e.initiale, label: e.label ?? null, probability: e.probability ?? null })),
 		transitions: p.transitions.map((t) => ({ de: t.de, vers: t.vers, libelle: t.libelle, commentaire_requis: t.commentaire_requis })),
 		champs: p.champs.map((c) => ({ cle: c.cle, libelle: c.libelle, type: c.type, choix: c.choix, devise: c.devise, aide: c.aide })),
 		regles: p.regles.map((r) => ({ champ: r.champ, etape: r.etape, visibilite: r.visibilite })),
@@ -105,9 +108,9 @@ export function modifierEtape(
 		...p,
 		etapes: p.etapes.map((e) => {
 			if (e.noeud !== cle) return e
-			const libelle = modification.libelle === undefined ? e.libelle : modification.libelle?.trim() === '' ? null : modification.libelle
-			const probabilite = modification.probabilite === undefined ? e.probabilite : modification.probabilite
-			return { ...e, libelle: libelle ?? null, probabilite: probabilite ?? null }
+			const libelle = modification.libelle === undefined ? e.label : modification.libelle?.trim() === '' ? null : modification.libelle
+			const probabilite = modification.probabilite === undefined ? e.probability : modification.probabilite
+			return { ...e, label: libelle ?? null, probability: probabilite ?? null }
 		}),
 	}
 }
@@ -118,7 +121,15 @@ export function modifierEtape(
  */
 export function nomEffectifEtape(p: PropositionIa, cle: string, catalogue: ReadonlyMap<string, NoeudDuCatalogueIa>): string {
 	const etape = p.etapes.find((e) => e.noeud === cle)
-	return etape?.libelle?.trim() || noeudPropose(p, cle)?.libelle || catalogue.get(cle)?.libelle || cle
+	return etape?.label?.trim() || noeudPropose(p, cle)?.libelle || catalogue.get(cle)?.libelle || cle
+}
+
+/**
+ * Deux libellés d'étape sont le MÊME nom s'ils ne diffèrent que par la casse ou les espaces de bord : une différence de
+ * casse seule n'est jamais un changement (docs/SPEC-ia.md §14.3, décision 679). La base compare de même.
+ */
+export function memeLibelle(a: string | null | undefined, b: string | null | undefined): boolean {
+	return (a ?? '').trim().toLowerCase() === (b ?? '').trim().toLowerCase()
 }
 
 /** L'étape initiale est UNIQUE : la désigner retire la marque des autres. */
@@ -132,7 +143,8 @@ export function designerInitiale(p: PropositionIa, cle: string): PropositionIa {
  *
  * `CRM-113` (docs/SPEC-ia.md §14.7) : le nom et la probabilité que le nœud proposé portait passent sur l'étape quand ils
  * diffèrent de ceux du catalogue — sans quoi le nom voulu partirait avec le nœud. Une valeur que l'étape porte déjà
- * l'emporte : c'est son nom affiché.
+ * l'emporte : c'est son nom affiché. Un libellé qui ne diffère du catalogue que par la casse n'est pas reporté
+ * (décision 679).
  */
 export function utiliserNoeudDuCatalogue(p: PropositionIa, cle: string, duCatalogue?: NoeudDuCatalogueIa): PropositionIa {
 	const propose = noeudPropose(p, cle)
@@ -146,8 +158,8 @@ export function utiliserNoeudDuCatalogue(p: PropositionIa, cle: string, duCatalo
 				? e
 				: {
 						...e,
-						libelle: e.libelle?.trim() || (libelle !== '' && libelle !== duCatalogue.libelle.trim() ? libelle : null),
-						probabilite: e.probabilite ?? (propose.probabilite !== duCatalogue.probabilite ? propose.probabilite : null),
+						label: e.label?.trim() || (libelle !== '' && !memeLibelle(libelle, duCatalogue.libelle) ? libelle : null),
+						probability: e.probability ?? (propose.probabilite !== duCatalogue.probabilite ? propose.probabilite : null),
 					},
 		),
 	}

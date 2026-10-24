@@ -9,6 +9,7 @@
 //           enregistre d'abord le remappage, puis annonce le point de retour), §13.4 (`PT409`) ; docs/DESIGN_SYSTEM.md
 //           §5.53 (précisions : libellé d'acceptation, type d'un champ conservé en texte, indication du libellé vide) ;
 //           décision 620
+// @verifies CRM-113 tranche T5 — décision 679 : l'enveloppe `key` des deux codes nouveaux, l'étape envoyée par `label` et `probability`
 // @verifies CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.7 (le nom et la probabilité de toute étape se
 //           corrigent et partent avec la correction ; « Utiliser le nœud du catalogue » garde le nom et l'annonce ; les
 //           défauts `native_field` et `step_probability_invalid` traduits) ; docs/DESIGN_SYSTEM.md §5.52 bis ; décision 677
@@ -570,17 +571,18 @@ describe('CRM-113 T3 — le nom des étapes et les champs natifs (docs/DESIGN_SY
 	const g = (texte: string) => texte.replace(/« /g, '«\u00a0').replace(/ »/g, '\u00a0»')
 
 	it('native_field nomme l’information native par un mot ; une information inconnue n’affiche jamais son code', () => {
-		expect(phraseDefaut({ code: 'native_field', chemin: 'champs[0]', valeurs: { cle: 'montant', native: 'amount' } }))
+		// RÉVISÉ PAR LA DÉCISION 679 (CRM-113 T5) : l'enveloppe des deux codes nouveaux porte `key`, non plus `cle`.
+		expect(phraseDefaut({ code: 'native_field', chemin: 'champs[0]', valeurs: { key: 'montant', native: 'amount' } }))
 			.toBe(g('Le champ « montant » reprend le montant, déjà porté par l’affaire : retirez-le ou renommez-le.'))
-		expect(phraseDefaut({ code: 'native_field', chemin: 'champs[1]', valeurs: { cle: 'societe', native: 'organization' } }))
+		expect(phraseDefaut({ code: 'native_field', chemin: 'champs[1]', valeurs: { key: 'societe', native: 'organization' } }))
 			.toContain('reprend l’organisation')
-		const inconnue = phraseDefaut({ code: 'native_field', chemin: 'champs[2]', valeurs: { cle: 'x', native: 'vitesse' } })
+		const inconnue = phraseDefaut({ code: 'native_field', chemin: 'champs[2]', valeurs: { key: 'x', native: 'vitesse' } })
 		expect(inconnue).toContain('une information de l’affaire')
 		expect(inconnue).not.toContain('vitesse')
 	})
 
 	it('step_probability_invalid nomme l’étape', () => {
-		expect(phraseDefaut({ code: 'step_probability_invalid', chemin: 'etapes[0].probabilite', valeurs: { cle: 'prospection' } }))
+		expect(phraseDefaut({ code: 'step_probability_invalid', chemin: 'etapes[0].probability', valeurs: { key: 'prospection' } }))
 			.toBe(g('La probabilité de l’étape « prospection » doit être comprise entre 0 et 100.'))
 	})
 
@@ -593,8 +595,9 @@ describe('CRM-113 T3 — le nom des étapes et les champs natifs (docs/DESIGN_SY
 		await userEvent.click(screen.getByRole('button', { name: 'Enregistrer la correction' }))
 		await waitFor(() => expect(rappels.annoncer).toHaveBeenCalledWith('Correction enregistrée, sans défaut.'))
 		const envoi = ecritures.find((e) => e.verbe === 'insert')?.charge as { proposition: PropositionIa }
-		expect(envoi.proposition.etapes[1]).toEqual({ noeud: 'maquette', initiale: false, libelle: 'Devis', probabilite: 45 })
-		expect(envoi.proposition.etapes[0]).toEqual({ noeud: 'prise-de-contact', initiale: true, libelle: null, probabilite: null })
+		// Clés `label` et `probability` depuis la décision 679 (CRM-113 T5) : ce sont elles que la base lit.
+		expect(envoi.proposition.etapes[1]).toEqual({ noeud: 'maquette', initiale: false, label: 'Devis', probability: 45 })
+		expect(envoi.proposition.etapes[0]).toEqual({ noeud: 'prise-de-contact', initiale: true, label: null, probability: null })
 	})
 
 	it('« Utiliser le nœud du catalogue » garde le nom du nœud proposé et l’annonce', async () => {

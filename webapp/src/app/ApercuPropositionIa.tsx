@@ -11,6 +11,7 @@
 // @spec CRM-113 (docs/BACKLOG.md) tranche T3 — docs/DESIGN_SYSTEM.md §5.52 bis (« Nom de l'étape » et « Probabilité de
 //       l'étape » sur chaque étape, l'exemple à la valeur du nœud, le nom effectif partout, « Utiliser le nœud du
 //       catalogue » qui garde le nom) ; docs/SPEC-ia.md §14.7 ; décisions 646 et 677
+// @spec CRM-113 tranche T5 — décision 679 : l'étape lue et écrite par ses clés `label` et `probability`
 //
 // Composant contrôlé : il ne garde que l'état d'ouverture du formulaire d'ajout. Chaque geste rend la proposition
 // modifiée — et, pour un retrait, l'annonce de ce qu'il a emporté — au panneau, qui tient le brouillon.
@@ -174,7 +175,7 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 												else champsNom.current.set(etape.noeud, champ)
 											}}
 											aria-label={t('ia.apercu.nom_etape', { etape: etape.noeud })}
-											value={etape.libelle ?? ''}
+											value={etape.label ?? ''}
 											placeholder={libelleNoeud}
 											disabled={desactive}
 											onChange={(e) => onChange(modifierEtape(p, etape.noeud, { libelle: e.target.value }))}
@@ -266,7 +267,7 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 											<input
 												type="number"
 												aria-label={t('ia.apercu.probabilite_etape', { etape: etape.noeud })}
-												value={etape.probabilite ?? ''}
+												value={etape.probability ?? ''}
 												placeholder={probabiliteNoeud === null || probabiliteNoeud === undefined ? undefined : String(probabiliteNoeud)}
 												disabled={desactive}
 												onChange={(e) =>
@@ -297,7 +298,7 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 													// Le nom et la probabilité du nœud proposé passent sur l'étape quand ils diffèrent du catalogue
 													// (§5.52 bis) ; l'annonce dit le nom gardé.
 													const modifiee = utiliserNoeudDuCatalogue(p, etape.noeud, duCatalogue)
-													const garde = modifiee.etapes.find((e) => e.noeud === etape.noeud)?.libelle ?? null
+													const garde = modifiee.etapes.find((e) => e.noeud === etape.noeud)?.label ?? null
 													onChange(
 														modifiee,
 														garde === null

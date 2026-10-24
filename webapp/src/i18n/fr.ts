@@ -3373,8 +3373,9 @@ export const fr = {
 	'ia.defaut.transition_sans_libelle': 'La transition « {de} » vers « {vers} » n’a pas de libellé.',
 	'ia.defaut.champ_en_double': 'Le champ « {cle} » est déclaré deux fois.',
 	// `CRM-113` (docs/SPEC-ia.md §14.5, docs/DESIGN_SYSTEM.md §5.52 bis) : l'information native nommée par un mot traduit.
-	'ia.defaut.native_field': 'Le champ « {cle} » reprend {native}, déjà porté par l’affaire : retirez-le ou renommez-le.',
-	'ia.defaut.step_probability_invalid': 'La probabilité de l’étape « {cle} » doit être comprise entre 0 et 100.',
+	// `CRM-113` T5 (décision 679) : les deux codes nouveaux écrivent `key` dans leur enveloppe, les codes antérieurs `cle`.
+	'ia.defaut.native_field': 'Le champ « {key} » reprend {native}, déjà porté par l’affaire : retirez-le ou renommez-le.',
+	'ia.defaut.step_probability_invalid': 'La probabilité de l’étape « {key} » doit être comprise entre 0 et 100.',
 	'ia.natif.title': 'le titre',
 	'ia.natif.description': 'la description',
 	'ia.natif.owner': 'le responsable',

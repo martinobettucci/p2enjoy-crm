@@ -5220,7 +5220,9 @@ et §5.53 posent vaut sans être répété** ; seuls les ajouts sont écrits.
   exigences, le différentiel, le bloc des affaires retirées : le nom de l'étape s'il est posé, sinon celui de son nœud.
   Deux noms pour la même étape dans un même panneau en feraient deux étapes.
 - **« Utiliser le nœud du catalogue » GARDE LE NOM ET LA PROBABILITÉ** que le nœud proposé portait, quand ils diffèrent
-  de ceux du catalogue : ils passent dans les deux champs de l'étape, qui restent visibles et modifiables. L'annonce de la
+  de ceux du catalogue : ils passent dans les deux champs de l'étape, qui restent visibles et modifiables. **Un nom qui
+  ne diffère du catalogue que par la casse n'est pas gardé** (décision 679) : une différence de casse seule n'est jamais
+  un nouveau nom. L'annonce de la
   région vivante le dit — « L'étape vise le nœud « negociation » du catalogue et garde son nom « Discussion
   commerciale ». » — ; quand rien n'est gardé, elle garde sa phrase d'avant. **Le focus passe au champ « Nom de
   l'étape »** : la commande disparaît sous le doigt — le nœud n'est plus proposé —, et le focus ne reste jamais sur un
@@ -5232,7 +5234,8 @@ et §5.53 posent vaut sans être répété** ; seuls les ajouts sont écrits.
   0 et 100. ».
 - **LE DIFFÉRENTIEL COMPTE COMME MODIFIÉE UNE ÉTAPE CONSERVÉE DONT LE NOM OU LA PROBABILITÉ EFFECTIFS CHANGENT**, avec deux
   attributs nommés par un mot — « Nom de l'étape », « Probabilité » — et la forme « avant → après » (§5.53). Une étape
-  dont la cible ne dit rien (champ vide) n'est **pas** modifiée : la surcharge vivante est gardée (§14.3).
+  dont la cible ne dit rien (champ vide) n'est **pas** modifiée : la surcharge vivante est gardée (§14.3). Une étape dont
+  le nom ne change que par la casse ne l'est pas non plus (décision 679).
 - **SOUS `md`, la seconde ligne se replie entière** (§5.52), les deux champs nouveaux compris ; cibles à `--size-target`.
   La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
