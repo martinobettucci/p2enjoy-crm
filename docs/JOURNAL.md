@@ -33169,3 +33169,12 @@ avec quatre outils. **Découpage** : T1 migration, T2 webapp, T3 preuves de bout
 l'espace : le contrôle passe à un déclencheur (T5). **Conséquences.** L'unité compte neuf tranches. Une version de
 workflow peut référencer un champ commun, et sa restauration est refusée si le champ est archivé. **Persisté** :
 `docs/SPEC-champs-communs.md` (réécrit) et `docs/BACKLOG.md` `CRM-112`. **État** : brouillon complet, à valider.
+
+### décision 665 — `CRM-112` validée ; `CRM-111` T1 lancée
+
+*2026-10-24, réponse du responsable (« ok »).* **Validation.** `docs/SPEC-champs-communs.md` passe de brouillon à
+**validée** ; les passages **[proposition]** sont acceptés avec elle, et confrontés aux mesures de sa tranche T1. Son code
+attend la tranche T2 de `CRM-111` (décision 645). **Lancement.** La tranche T1 de `CRM-111` — des mesures, sans code
+livré — commence : relevé exact de ce qui lit les colonnes quittant `cards`, et coût de la nouvelle RLS, mesuré sur une
+**base jetable** créée à côté de celle de développement, jamais sur elle. Les résultats seront consignés dans
+`docs/SPEC-rattachements.md`.

@@ -16098,8 +16098,8 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 **Connecteur MCP : oui pour les valeurs** (famille `affaires`, `consulter` et `modifier`), **non pour les définitions**.
 **Noms** : `card_common_fields`, `card_common_field_values` (décision 658).
 
-- [~] **Spécification** — brouillon complet, tous les points tranchés (décision 664), **à valider** par le responsable
-      avant le code.
+- [x] **Spécification**, validée le 2026-10-24 (décision 665) : `docs/SPEC-champs-communs.md` §1 à §16. Le code
+      attend la tranche T2 de `CRM-111`.
 - [ ] **T1** — mesures (coût du filtre et de l'index de recherche) ; migration : deux tables, politiques,
       `app.validate_field_value` partagée ; pgTAP ; API aux jetons réels ; `docs/SCHEMA.md` ; contrat de déploiement.
 - [ ] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et

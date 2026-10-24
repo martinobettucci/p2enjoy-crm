@@ -4,13 +4,13 @@
   (décision 645) : elle pose ses champs dans la partie commune de la fiche, que `CRM-111` sépare des blocs.
 - Arbitrages : `docs/JOURNAL.md`, décisions **642** (arbitrage 4 : champs communs de portée espace ; connecteur MCP,
   famille `affaires`, action `modifier`), **639** (arbitrage 3 : écriture des parties communes), **645** (deux unités,
-  ordre), **658** (langue des noms), **664** (les huit points de ce document).
+  ordre), **658** (langue des noms), **664** (les huit points de ce document), **665** (validation).
 - Documents liés : `docs/SPEC-rattachements.md` §3, §5 et §8, `docs/SPEC-form-composer.md` §2, §3 et §6,
   `docs/SPEC-cards.md` §12 (vue liste), `docs/SPEC-modeles-emails.md` §2 (variables), `docs/SPEC-recherche.md`,
   `docs/SPEC-workflow-engine.md` (garde de `move_card`), `docs/SCHEMA.md` §4, `docs/SPEC-permissions-rls.md` §3,
   `docs/SPEC-ia.md` §14.5 (`CRM-113`), `docs/SPEC-mcp.md` §6.1 et §9.2, `docs/DAT.md` §12 bis.
-- État : **brouillon, tous les points tranchés (décision 664), à valider par le responsable avant tout code**
-  (`CLAUDE.md` §5).
+- État : **validée par le responsable le 2026-10-24** (décision 665). Le code ne commence qu'après la tranche T2 de
+  `CRM-111` (décision 645).
 
 Les passages marqués **[proposition]** sont des choix de rédaction de l'agent, acceptés avec la validation de la
 spécification ; la tranche T1 les confronte aux mesures, et tout écart revient au responsable.
