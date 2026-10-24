@@ -33429,3 +33429,10 @@ des choix de forme marqués au `docs/SPEC-ia.md` §14, puis la livraison sur son
 fenêtre, fonction `ia` redéployée, webapp reconstruite. Le contrôle facultatif contre le modèle réel n'a pas été mené.
 INC-292 rend toute campagne d'interface rouge ; le corriger (`CRM-016`) est le préalable d'une campagne verte d'un bout
 à l'autre.
+
+**Écart de conduite de cette session, consigné sans être maquillé.** La toute première commande (08:39:56 UTC) a été
+un diagnostic, `git status | head -5 && ls docs/CloudWorker.md; wc -l docs/CloudWorker.md`. La lecture intégrale de
+`docs/CloudWorker.md` n'est venue que cinq secondes après (08:40:01 UTC). Elle a précédé Docker, le backlog et toute
+modification, mais pas ce diagnostic, alors que la consigne de la tâche planifiée veut la lecture **avant tout
+diagnostic**. Cet ordre ne peut pas être réparé après coup. **Pour les sessions suivantes** : la première action est la
+lecture intégrale du fichier, sans commande avant ; on ne vérifie sa présence que si cette lecture échoue.
