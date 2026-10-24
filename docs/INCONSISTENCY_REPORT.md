@@ -7433,3 +7433,18 @@ retour arrière. Avant chaque lot, la liste exacte est **relevée de nouveau** d
 **Ordre proposé** : lot 1 d'abord — c'est le plus visible, avant que des clients MCP accumulent des droits — puis les
 lots 2 à 5 par domaine, puis 6 et 7, qui touchent le plus de consommateurs, puis 8, 9 et 10, purement internes. **Aucun
 lot n'est commencé** ; chacun attend une décision du responsable.
+
+### INC-287 — la grille de temps perd parfois la navigation par flèches juste après une saisie (`CRM-106`)
+
+*Relevé le 2026-10-24 par la session `CRM-114`, pendant la campagne complète du harnais.* **Constat.**
+`e2e/ui/temps-fiche-affaire.spec.ts`, « au clavier seul : Entrée passe au jour suivant… », échoue **une fois sur trois**
+(mesuré par `--repeat-each 3`, sur la même pile, sans changement de code) : après deux saisies validées par Entrée, deux
+`ArrowLeft` depuis la case du mercredi ne ramènent pas le focus sur le lundi (`toBeFocused` reçoit « inactive »). Les
+autres passages sont verts, et les campagnes précédentes l'étaient. **Hypothèse, non prouvée.** `SaisieTemps.tsx`
+n'accepte la flèche que si la case est vide ou entièrement sélectionnée (`toutSelectionne`) ; à la prise de focus, la
+case remplace sa valeur affichée par le texte saisi (`affiche`), et React réécrit la valeur : la sélection complète peut
+être perdue si la touche suivante arrive avant qu'elle ne soit rétablie. Une personne rapide au clavier rencontrerait la
+même course. **Comportement laissé inchangé** : la correction touche le code de `CRM-106`, hors de l'unité qui l'a
+relevé. **Résolution proposée** : reproduire en unitaire la séquence focus → flèche, rétablir la sélection dans le même
+rendu que le changement de valeur (ou accepter la flèche quand le curseur est en bout de texte), et garder le scénario
+E2E comme preuve.

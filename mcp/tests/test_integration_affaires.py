@@ -83,7 +83,9 @@ async def test_chaque_outil_reussit_contre_la_vraie_base_et_le_journal_le_nomme(
             activites_du_fil = [e for e in fil["entries"] if e["kind"] == "activity"]
             assert len(activites_du_fil) == 3
             instants = [e["at"] for e in fil["entries"]]
-            assert fil["entries"][0]["kind"] in ("event", "comment", "activity") and len(instants) == fil["total"]
+            # Le fil de Sogexia grandit à chaque campagne E2E : la page en rend au plus 100, le total les compte tous.
+            assert fil["entries"][0]["kind"] in ("event", "comment", "activity")
+            assert len(instants) == min(fil["total"], 100) and instants == sorted(instants)
 
             await appeler("crm_card_comment_list", {"card_id": SOGEXIA})
 

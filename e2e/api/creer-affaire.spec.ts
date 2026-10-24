@@ -22,9 +22,16 @@ const creer = (requete: APIRequestContext, enTetes: Record<string, string>, idCh
 	requete.post(rest('rpc/creer_affaire'), { headers: enTetes, data: { p_channel: idChannel, p_titre: titre } })
 
 /** Un channel vivant, lu AVEC le jeton donné : ce que cet appelant peut voir, jamais un identifiant figé. */
-async function channelLisible(requete: APIRequestContext, jeton: string): Promise<string> {
+/**
+ * Un channel vivant que l'appelant LIT, et dont la capacité d'écriture est celle demandée. Le tri est total
+ * (`position`, puis `id`) : trois channels du seed partagent la position 1, et Farida écrit dans l'un d'eux
+ * (« Prospection », `channel_members` du seed) — sans le filtre, l'ordre de PostgreSQL décidait du verdict.
+ */
+async function channelLisible(requete: APIRequestContext, jeton: string, ecriture: boolean): Promise<string> {
 	const reponse = await requete.get(
-		rest('channels?select=id&archived_at=is.null&deleted_at=is.null&order=position&limit=1'),
+		rest(
+			`channels?select=id&archived_at=is.null&deleted_at=is.null&ecriture_permise=is.${ecriture}&order=position,id&limit=1`,
+		),
 		{ headers: enTetesAuthentifies(jeton) },
 	)
 	expect(reponse.status()).toBe(200)
@@ -48,7 +55,7 @@ test.describe('Créer une affaire (docs/SPEC-cards.md §18.2)', () => {
 
 	test('le commercial crée, et relit l’affaire à l’étape INITIALE de son channel', async ({ request }) => {
 		const jeton = await jetonDe(BIZDEV.adresse)
-		const idChannel = await channelLisible(request, jeton)
+		const idChannel = await channelLisible(request, jeton, true)
 		const reponse = await creer(request, enTetesAuthentifies(jeton), idChannel)
 		expect(reponse.status(), await reponse.text()).toBe(200)
 		const idCarte = (await reponse.json()) as string
@@ -69,7 +76,7 @@ test.describe('Créer une affaire (docs/SPEC-cards.md §18.2)', () => {
 		request,
 	}) => {
 		const jeton = await jetonDe(VIEWER.adresse)
-		const idChannel = await channelLisible(request, jeton)
+		const idChannel = await channelLisible(request, jeton, false)
 		const lectrice = await creer(request, enTetesAuthentifies(jeton), idChannel)
 		expect(lectrice.status(), await lectrice.text()).toBe(403)
 		expect(((await lectrice.json()) as { code: string }).code).toBe('42501')

@@ -106,6 +106,8 @@ test.describe('la lectrice — Farida Nowak', () => {
 		// Famille P : les notifications règlent le compte de qui regarde, jamais éteintes.
 		await page.getByRole('link', { name: /Notifications/ }).click()
 		await expect(page).toHaveURL(/\/reglages\/notifications$/)
+		// La capture attend la préférence RENDUE, et active : l'adresse change avant que la page ne soit peinte.
+		await expect(page.getByRole('checkbox', { name: 'Recevoir les mentions' })).toBeEnabled()
 		await capturer(page, 'droits-lectrice-notifications-xl-1440', UNITE)
 	})
 
