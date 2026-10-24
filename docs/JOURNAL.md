@@ -33326,3 +33326,15 @@ reconstruire à neuf.** L'invariant devient : une base neuve se construit dans l
 l'état qu'il vient de produire. **Conséquences.** `docs/DAT.md` §3.2 et `docs/SPEC-test-harness.md` §3.5 révisés ;
 une tranche **`CRM-111` T1 bis** mesure le mode opératoire compatible avec une pile partagée entre sessions, puis
 réécrit les seize harnais et `verify-migrations.sh`, avant la bascule T2.
+
+
+### décision 676 — `CRM-104` T7 : la famille `messagerie` du connecteur lit et envoie
+
+*2026-10-24, arbitrage du responsable (question posée par `AskUserQuestion`).* **Question** : la tranche `messagerie`
+doit-elle seulement lire, ou aussi envoyer — un geste irréversible qui sort du CRM ? **Décision** : **lire et envoyer** —
+`crm_card_mail_list`, `crm_mail_get` et `crm_mail_send`, par la même file que l'écran (`queue_outbound_email`), marqué
+`destructiveHint` pour que l'assistant demande confirmation, avec la case `aussi` `affaires:consulter` du catalogue ;
+l'identité d'expédition désignée par son adresse. **Écarté** : les pièces jointes, le classement des fils, les modèles et
+les séquences, qui restent à l'écran. **Conséquence** : un genre d'ancre nouveau, `message` ; aucune migration. Liste
+proposée au `docs/SPEC-mcp.md` §9.2 *decies*, à valider avant le code.
+

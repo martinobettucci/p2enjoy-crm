@@ -15544,7 +15544,9 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
       - **Livrée en production le 2026-10-24** (révision `a95e15f7`, image `mcp` reconstruite, module présent, `/mcp`
         sans jeton `401`). **Reste `[~]`** : le constat du responsable.
-- [ ] **T7** — `messagerie`.
+- [ ] **T7** — `messagerie` : lire les messages d'une affaire et un message, envoyer un email depuis une affaire par la
+      file de l'écran (`destructiveHint`, `aussi` `affaires:consulter`) — décision 676 ; ni pièces jointes, ni
+      classement, ni modèles. Liste proposée au `docs/SPEC-mcp.md` §9.2 *decies*, **en attente de validation**.
 
 Preuves exigées **par tranche et par outil** (`docs/SPEC-mcp.md` §13) : succès, refus par la matrice, refus par le
 CRM malgré la matrice ouverte, journal écrit, et effet constaté dans la webapp. Chaque tranche se livre en production et

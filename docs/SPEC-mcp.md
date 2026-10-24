@@ -837,6 +837,39 @@ manuel** (`fill_percent`, `docs/SPEC-goals.md` §1) : le connecteur l'écrit, il
 par le CRM malgré la matrice ouverte (la lectrice qui ajoute un bloc), journal écrit ; et **E2E** : un bloc ajouté par le
 connecteur paraît sur le canevas, avec son avancement.
 
+### 9.2 decies Famille `messagerie` — `CRM-104` T7 (liste **proposée**, en attente de validation ; périmètre arbitré par la décision 676)
+
+**Trois outils** : lire les messages d'une affaire, en lire un, et **envoyer un email depuis une affaire** par la même
+file que l'écran (`envoi.ts`, `inbox.ts`) — `public.queue_outbound_email`, qui garde le droit d'écrire sur l'affaire,
+le droit d'emprunter l'identité d'expédition, la signature, le quota et le journal de l'affaire.
+
+| Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_card_mail_list` | `consulter` | `card:card_id` | `mail_messages` | les messages classés dans l'affaire, du plus ancien au plus récent : sens, date, expéditeur, destinataires, objet, un extrait du texte ; paginé ; **jamais les pièces jointes** |
+| `crm_mail_get` | `consulter` | `message:message_id` | `mail_messages` | un message : en-têtes et **texte** (`body_text`) ; ni le HTML ni les pièces jointes |
+| `crm_mail_send` | `ajouter` (`destructiveHint` ; `aussi` : `affaires:consulter`) | `card:card_id` ; `autres` : `message:in_reply_to_message_id`, **facultative** | `public.queue_outbound_email` | destinataires, copie, objet, texte ; l'identité d'expédition **désignée par son adresse** parmi celles que la personne peut emprunter (la sienne, ou celle du service pour un administrateur) ; en réponse éventuelle à un message de l'affaire |
+
+**Un genre d'ancre nouveau** : `message` (`mail_messages`, qui porte son espace). L'identité d'expédition est désignée
+par son adresse et non par un identifiant : le moteur exige que tout identifiant soit une ancre (§6.2), et l'adresse est
+ce que la personne connaît.
+
+**L'envoi est irréversible et sort du CRM** : `destructiveHint` l'annonce, pour que l'assistant demande confirmation
+avant d'appeler l'outil. Le message part par la file de l'écran, avec la signature de l'identité, et paraît dans le fil
+de l'affaire comme un envoi depuis l'écran.
+
+**Refus nommés** : le quota de l'identité atteint (`23505`), une adresse ou une saisie invalide (`23514`), une écriture
+ou une identité non permises (`42501`) ; une adresse d'expédition inconnue est refusée avant l'appel, en nommant les
+adresses possibles.
+
+**Ce que la tranche ne fait pas, et pourquoi.**
+- **Les pièces jointes** : ni lues ni envoyées.
+- **Classer, déclasser ou mettre en sommeil un fil** de la boîte de réception : gestes de l'écran.
+- **Les modèles et les séquences** : gestes de l'écran.
+
+**Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus
+par le CRM malgré la matrice ouverte (la lectrice qui envoie), journal écrit ; l'envoi est constaté dans `mail_outbox`,
+sans relève réelle ; et **E2E** : un email envoyé par le connecteur paraît dans le fil de l'affaire.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,
