@@ -1778,8 +1778,8 @@ ci-dessous ne disent que de quoi il a l'air.
 
 ### 5.20 Fiche d'organisation — `CRM-060`
 
-Surface de **détail** atteinte depuis le carnet (§5.19), jamais depuis la barre latérale : il
-n'existe aucune liste d'organisations. Ce que l'écran lit est spécifié par `docs/SPEC-contacts.md`
+Surface de **détail** atteinte depuis le carnet (§5.19), jamais depuis la barre latérale. *Depuis `CRM-114`
+(§5.64), elle s'atteint aussi depuis l'onglet « Organisations » du carnet, et porte « Modifier ».* Ce que l'écran lit est spécifié par `docs/SPEC-contacts.md`
 §11 ; les règles ci-dessous ne disent que de quoi il a l'air.
 
 - **Deux zones, et deux structures différentes.** Ce qui caractérise l'organisation — domaine, site
@@ -6127,3 +6127,65 @@ ce que les §5.13 et §5.21 posent vaut ici sans être répété :
 
 - **Aucune couleur, aucun jeton nouveau.** Trois icônes Lucide nouvelles, une par type, et aucune ne sert déjà un autre
   objet (§9) : `Phone` (appel), `Users` (réunion), `Video` (visio). `Plus` est reprise, pour le même geste d'ajout.
+
+### 5.64 Les organisations : l'onglet du carnet, la création, la modification — `CRM-114`
+
+*Écrit le 2026-10-24, avant le code de la tranche T2.* Ce que les écrans lisent, envoient et refusent est spécifié par
+`docs/SPEC-organisations.md` §2 à §4. Ces règles ne disent que de quoi ils ont l'air. Ce que les §5.19, §5.20 et §5.23
+posent vaut ici sans être répété :
+- formulaires **dans le flux**, aucune modale ;
+- la commande et le formulaire qu'elle ouvre **s'excluent** ;
+- le focus entre dans le premier champ, puis revient à la commande (différé d'un rendu, §5.25) ;
+- un refus s'écrit dans le formulaire, la saisie conservée.
+
+- **LE CARNET PASSE À DEUX ONGLETS-LIENS, « Contacts » et « Organisations »**, sur le patron du §12.1 et de la
+  plateforme (§5.56) : une `nav` étiquetée « Sections du carnet », des liens, `aria-current="page"` sur l'onglet
+  courant, une bordure basse de même épaisseur dans les deux états. Ils viennent sous le titre de la route, au-dessus de
+  la commande et du tableau. **Chaque onglet change l'adresse** — `/contacts` et `/contacts/organisations` —, et le
+  titre de la route suit l'onglet. *Révise le §5.20* : la fiche d'organisation se disait atteinte « jamais depuis la
+  barre latérale, il n'existe aucune liste d'organisations ». La liste existe désormais, et la fiche s'atteint aussi
+  depuis elle. Elle reste hors de la barre latérale.
+
+- **LA LISTE EST UN TABLEAU DU §5.9, À QUATRE COLONNES** : nom, domaine, site web, contacts.
+  - **Le nom est le lien vers la fiche**, et le seul lien de la ligne — le §5.19 l'a posé pour le carnet.
+  - **Le domaine et le site web sont des données techniques** (`code`, §2), alignés à droite. Une valeur absente laisse
+    la cellule **vide** (§5.9). Le site web n'est **pas** un lien ici : la fiche le porte, avec l'annonce de sa sortie
+    du produit (§5.20). Deux liens par ligne obligeraient à dire lequel ouvre quoi.
+  - **Le nombre de contacts** est aligné à droite, en chiffres tabulaires. Zéro s'écrit « 0 » : une organisation sans
+    contact est précisément celle que seul cet onglet rend atteignable.
+  - Le conteneur porte `.indique-debordement-x` (§12.6) ; la page ne défile jamais horizontalement (§7).
+
+- **« NOUVELLE ORGANISATION » EST LA COMMANDE PRIMAIRE DE L'ONGLET**, à la place exacte et dans la forme de « Nouveau
+  contact » (§5.23) : rendue aussi sur l'état vide, qu'elle comble. Le formulaire porte trois champs à libellé visible :
+  - **« Nom »**, requis ;
+  - **« Domaine »**, facultatif, avec son aide : « Minuscules, chiffres, tirets et points, par exemple sogexia.fr ».
+    **L'écran le met en minuscules avant l'envoi** : la base refuse une majuscule par la forme, et la casse d'un
+    domaine ne porte aucune information ;
+  - **« Site web »**, facultatif, avec son aide : « Une adresse commençant par http:// ou https:// ».
+
+  « Créer » est désactivé tant que le nom est blanc (§5.50) et dit « Création… » pendant l'envoi. **Après la
+  création, la fiche de l'organisation s'ouvre** : elle porte la suite, ses contacts à rattacher.
+
+- **« MODIFIER » SUR LA FICHE EST UN BOUTON SECONDAIRE COMPACT, ICÔNE `PencilLine`**, à droite de la liste de
+  définitions, comme sur la fiche d'un espace (§5.56). Le formulaire **remplace la liste de définitions**, prérempli,
+  avec les mêmes trois champs que la création, puis « Enregistrer » et « Annuler ». Un champ facultatif vidé est effacé.
+  Après l'enregistrement, la fiche est relue et l'issue s'annonce dans une région vivante polie : « Organisation
+  enregistrée ». Le nom, titre de la route, suit la relecture.
+
+- **LES COMMANDES SUIVENT LA CAPACITÉ D'ÉDITER L'ESPACE** (§5.59). Refusée par la base, « Nouvelle organisation » et
+  « Modifier » sont montées, désactivées, lisibles, et citent le motif générique `rights.readonly.edition`, posé en tête
+  de l'onglet et de la fiche. Pendant la lecture de la capacité, elles sont désactivées sans motif ; sur un défaut de
+  lecture, offertes.
+
+- **LES REFUS SONT TRADUITS PAR UN DICTIONNAIRE FERMÉ** (`docs/SPEC-organisations.md` §3) : nom vide, domaine de forme
+  invalide, site web invalide, domaine déjà pris dans l'espace, droit refusé, réseau, inconnu. Le message du serveur
+  n'atteint jamais l'écran.
+
+- **LES ÉTATS DU §5.8** : squelette au premier chargement seulement ; erreur avec « Réessayer » ; vide — « Aucune
+  organisation dans cet espace. » —, la commande restant offerte.
+
+- **SOUS `md`**, les champs du formulaire prennent toute la largeur, et les onglets restent sur une ligne. `md` et
+  jamais `sm` (§11).
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : `PencilLine` sert déjà la modification d'un espace (§5.56),
+  pour le même geste.
