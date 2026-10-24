@@ -7527,7 +7527,10 @@ pointer les deux fichiers Compose sur une image construite dans le dépôt depui
 **Arbitrage rendu le 2026-10-24 (décision 679) : corriger dans le dépôt, pour le développement.** `docker-compose.dev.yml`
 construit les deux images MinIO depuis un Dockerfile du dépôt fondé sur `bitnamilegacy/minio:2025.4.22`, et
 `scripts/verify-stack.sh` suit. `docker-compose.spark.yml`, l'assemblage de production, n'est pas modifié : la question
-de son alignement reste posée au responsable.
+de son alignement reste posée au responsable. **Vérifié le 2026-10-24** : `./runDev.sh` construit `p2enjoy/minio:2025.4.22` et
+`p2enjoy/minio-mc:2025.4.22` sans rien tirer de `quay.io`, la pile monte (`rc=0`), et `scripts/verify-stack.sh` rend
+« 52 vérifications, aucune anomalie », dont l'objet relu dans le bucket MinIO. **Statut : corrigée pour le
+développement ; ouverte pour la cellule Spark.**
 
 ### INC-291 — `./runDev.sh` s'arrête sous Compose 5 : `bake` exige un droit pour lire le paquet CA monté en secret
 
@@ -7543,7 +7546,9 @@ hors de son unité) : la consigner dans `docs/CloudWorker.md` pour les sessions 
 `runDev.sh` lui-même — passer le droit à `bake` ou exporter la variable — revient à une unité d'outillage.
 
 **Arbitrage rendu le 2026-10-24 (décision 679) : corriger dans le dépôt.** `runDev.sh` exporte
-`BUILDX_BAKE_ENTITLEMENTS_FS=0` avant de construire, et `docs/CloudWorker.md` §2.1 *quater* ne le demande plus.
+`BUILDX_BAKE_ENTITLEMENTS_FS=0` avant de construire, et `docs/CloudWorker.md` §2.1 *quater* ne le demande plus. **Vérifié le 2026-10-24** : sans la variable, `docker compose … build webapp` rend encore « additional
+privileges requested » (`rc=1`) ; avec elle, l'image est construite (`rc=0`) ; `./runDev.sh`, lancé sans la variable dans
+l'environnement appelant, monte la pile (`rc=0`). **Statut : close.**
 
 ### INC-292 — une réponse `204` de la fonction `session` devient parfois un `503` de Kong : une erreur de console fait rougir un scénario étranger
 

@@ -545,8 +545,8 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `kong` | `kong/kong:3.9.1` | dev, prod |
 | `studio` | `supabase/studio:2026.07.07-sha-a6a04f2` | dev |
 | `meta` | `supabase/postgres-meta:v0.96.6` | dev |
-| `minio` | `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z` | dev ; cellule Spark (`CRM-090`) |
-| `minio-createbucket` | `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z` | dev ; cellule Spark (`CRM-090`) |
+| `minio` | dev : **`p2enjoy/minio:2025.4.22`, construite dans le dépôt** (`supabase/docker/minio/Dockerfile`, cible `minio`) sur `bitnamilegacy/minio:2025.4.22` épinglée par empreinte — même binaire que la publication du 2025-04-22 (INC-290, décision 679) ; cellule Spark : `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z` (`CRM-090`), inchangée | dev ; cellule Spark |
+| `minio-createbucket` | dev : **`p2enjoy/minio-mc:2025.4.22`**, même Dockerfile, cible `mc` ; cellule Spark : `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z`, inchangée | dev ; cellule Spark |
 | `keycloak` | `quay.io/keycloak/keycloak:26.7.3` | dev — la version du SSO réel (`CRM-091`) |
 | `stalwart` | `stalwartlabs/stalwart:v0.13.4` | dev |
 | `stalwart-init` | `curlimages/curl:8.16.0` | dev |
@@ -554,6 +554,13 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `clamav` | `clamav/clamav:1.4.3` | dev — **prod due avec `CRM-054`**, voir §3.4 |
 | `mail-sync` | build local `python:3.13.13-slim-bookworm` | dev, prod |
 | `caddy` | `caddy:2.9-alpine` | prod |
+
+**Dette connue — l'image MinIO du développement (INC-290, décision 679).** Depuis le 2026-10-24, les dépôts MinIO de
+`quay.io` refusent le tirage anonyme (`401`). Le développement construit donc ses deux images sur
+`bitnamilegacy/minio:2025.4.22`, qui porte le même binaire (`commit-id=0d7408fc…`, mesuré). C'est un dépôt **gelé**,
+sans mises à jour de sécurité : acceptable pour un stockage lié à la boucle locale, pas comme source durable. La cellule
+Spark tire toujours `quay.io`. Elle garde ses images en cache, mais un déploiement neuf ou une purge échouerait
+(INC-290). Son alignement attend une décision du responsable. Le choix d'un stockage S3 local durable reste ouvert.
 
 Deux familles de la distribution officielle restent **écartées** : `analytics` et `vector`
 (journalisation Logflare), puis `imgproxy` (transformation d'images,

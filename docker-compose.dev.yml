@@ -1,4 +1,5 @@
 # @spec CRM-001 (docs/BACKLOG.md) — overlay de développement de la pile Supabase self-hosted
+# @spec docs/INCONSISTENCY_REPORT.md INC-290, docs/JOURNAL.md décision 679 — MinIO et son client construits dans le dépôt
 # @spec CRM-015 (docs/BACKLOG.md) — secret BuildKit facultatif du registre npm
 # @spec CRM-091 (docs/BACKLOG.md), docs/SPEC-auth.md §10.9 — Keycloak de développement, realm `lelabs`
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §10 — tranche T6 : ni GoTrue ni Inbucket ;
@@ -118,11 +119,15 @@ services:
       start_period: 20s
 
   # Équivalent local de S3 : le développement ne dépend d'aucun stockage objet payant.
-  # Registre `quay.io` : le dépôt `minio/minio` de Docker Hub n'existe plus, les mêmes étiquettes
-  # sont publiées ici (docs/JOURNAL.md décision 569, CRM-090).
+  # CONSTRUITE DANS LE DÉPÔT (INC-290, décision 679) : les dépôts MinIO de `quay.io` refusent désormais le tirage
+  # anonyme. `supabase/docker/minio/Dockerfile` part d'une base qui porte le MÊME binaire (publication du
+  # 2025-04-22) ; la cellule Spark garde son image (`docker-compose.spark.yml`).
   minio:
     container_name: p2enjoy-minio
-    image: quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z
+    image: p2enjoy/minio:2025.4.22
+    build:
+      context: ./supabase/docker/minio
+      target: minio
     restart: unless-stopped
     ports:
       - ${DEV_BIND_ADDRESS:-127.0.0.1}:${MINIO_API_PORT}:9000
@@ -198,7 +203,10 @@ services:
   # Création idempotente du bucket des pièces jointes, par le vrai client S3.
   minio-createbucket:
     container_name: p2enjoy-minio-createbucket
-    image: quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z
+    image: p2enjoy/minio-mc:2025.4.22
+    build:
+      context: ./supabase/docker/minio
+      target: mc
     restart: "no"
     depends_on:
       minio:

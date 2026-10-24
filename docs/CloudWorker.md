@@ -647,23 +647,19 @@ sur une seule base se mesurent l'une l'autre.
 ### 2.1 quater. CACHE D'IMAGES VIDE : QUATRE OBSTACLES MESURÉS LE 2026-10-24, ET LEUR CONTOURNEMENT
 
 Mesurés par la session planifiée du 2026-10-24 (INC-290, INC-291), sur un hôte au cache d'images vide. Aucun ne dit
-rien du produit ; chacun arrête `./runDev.sh` avant le premier service.
+rien du produit ; chacun arrêtait `./runDev.sh` avant le premier service. Les points 2 et 3 sont corrigés dans le dépôt
+depuis la décision 679.
 
 1. **Tire les images une par une**, avec une attente croissante entre deux essais (décision 373) : Docker Hub rend
    `429` aux tirages parallèles de `docker compose`. Les images de base des constructions aussi — `node:24-alpine`,
    `python:3.13.13-slim-bookworm` —, sans quoi la construction de la webapp échoue sur le même `429`.
-2. **MinIO ne se tire plus de `quay.io`** (`401`, INC-290). Construis localement les deux étiquettes attendues depuis
-   `bitnamilegacy/minio:2025.4.22`, qui porte le même binaire (mesuré) :
-   ```
-   FROM bitnamilegacy/minio:2025.4.22
-   USER root
-   RUN ln -sf /opt/bitnami/minio/bin/minio /usr/bin/minio && ln -sf /opt/bitnami/minio-client/bin/mc /usr/bin/mc
-   ENTRYPOINT ["minio"]          # « mc » pour l'image quay.io/minio/mc
-   ```
-   étiquetées `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z` et `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z`.
-   Rien n'est committé : c'est un contournement de session, tant que le responsable n'a pas tranché INC-290.
-3. **Exporte `BUILDX_BAKE_ENTITLEMENTS_FS=0`** avant `./runDev.sh` (INC-291) : sous Compose 5, `bake` refuse de lire le
-   paquet CA monté en secret de construction. `COMPOSE_BAKE=false` n'y change rien.
+2. **MinIO ne se tire plus de `quay.io`** (`401`, INC-290) — **corrigé dans le dépôt le 2026-10-24** (décision 679) :
+   `docker-compose.dev.yml` construit `p2enjoy/minio` et `p2enjoy/minio-mc` depuis `supabase/docker/minio/Dockerfile`.
+   Plus rien à faire à la main ; `./runDev.sh` les construit au premier démarrage.
+3. **`bake` et le paquet CA sous Compose 5** (INC-291) — **corrigé dans le dépôt le 2026-10-24** (décision 679) :
+   `./runDev.sh` exporte lui-même `BUILDX_BAKE_ENTITLEMENTS_FS=0`. Une commande `docker compose … build` lancée hors de
+   `./runDev.sh` doit l'exporter aussi, sans quoi elle rend « additional privileges requested: pass
+   "--allow=fs.read=/root/.ccr/ca-bundle.crt" » (mesuré).
 4. **Ajoute `127.0.0.1 sso.localhost` à `/etc/hosts`** avant toute preuve d'API ou d'interface : les navigateurs
    résolvent `*.localhost`, mais Node ne le fait pas, et `jetonDe` échoue sur `getaddrinfo ENOTFOUND sso.localhost`.
 

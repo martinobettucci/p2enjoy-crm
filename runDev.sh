@@ -11,6 +11,7 @@
 # @spec CRM-051 (docs/BACKLOG.md) — amorçage du jeton interne et journaux du service `mail-sync`,
 #       docs/SPEC-mail-subsystem.md §12.1 (aucun port publié), §12.2 (configuration)
 # @spec README.md §5 (commandes), §6 (développement), §11 (limites connues)
+# @spec docs/INCONSISTENCY_REPORT.md INC-291, docs/JOURNAL.md décision 679 — la construction passe sous Compose 5
 #
 # Démarre la pile de développement, en amorçant `.env` au premier lancement.
 #
@@ -102,6 +103,10 @@ else
 fi
 
 say "Démarrage de la pile de développement"
+# SOUS COMPOSE 5, LA CONSTRUCTION PASSE PAR `bake`, qui refuse de lire le paquet CA monté en secret de construction
+# (décision 356) sans le droit `fs.read` (INC-291, décision 679). `COMPOSE_BAKE=false` n'y change rien ; cette variable,
+# si. Sans effet sur une version de Compose qui ne passe pas par `bake`. Une valeur posée par l'appelant est respectée.
+export BUILDX_BAKE_ENTITLEMENTS_FS="${BUILDX_BAKE_ENTITLEMENTS_FS:-0}"
 # `--dev` écarte la webapp conteneurisée : Vite tourne alors dans l'IDE, sur le même port.
 # Les deux ne peuvent pas coexister, le port serait déjà pris.
 if [ "$WITH_WEBAPP" = true ]; then
