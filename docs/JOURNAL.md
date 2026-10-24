@@ -33418,6 +33418,12 @@ que le seed y place.
 **Compteurs mesurés** : `SCENARIOS_API=1175`, `SCENARIOS_UI=925` (« Total: 925 tests in 87 files »). `verify-harness.sh`
 n'a pas été relancé : il rejoue la campagne entière, dont l'heure d'interface que le `503` rend ininterprétable sans rejeu.
 
+**Harnais exécutés** (`docs/CloudWorker.md` §4.3, ceux que le changement touche d'abord) : `verify-seed.sh` **52
+contrôles, aucune anomalie** ; `verify-seed-demo.sh` **69 contrôles, aucune anomalie** ; `verify-manual.sh` 251/251 (T3).
+`verify-webapp.sh` : étapes 1 à 7 vertes (32 contrôles). Je l'ai **arrêté** à son étape 8, qui relance `npm run e2e:ui`
+en entier, une heure déjà mesurée plus haut. Ses captures réécrites ont été restaurées et le seed réappliqué. Les 78
+autres `verify-*.sh` **n'ont pas été exécutés**.
+
 **Où reprendre.** `CRM-113` reste `[~]` : T1 et T2 `[x]`, T3 `[~]`, T4 `[ ]`. Il reste la relecture par le responsable
 des choix de forme marqués au `docs/SPEC-ia.md` §14, puis la livraison sur son instruction : migration `0102` en
 fenêtre, fonction `ia` redéployée, webapp reconstruite. Le contrôle facultatif contre le modèle réel n'a pas été mené.
