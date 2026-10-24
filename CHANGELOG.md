@@ -13,15 +13,6 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-104` T3 — le connecteur MCP tient le carnet de contacts (décision 660)
-
-*En développement ; vit dans le service `mcp`, dont l'image de production est à reconstruire.*
-
-- **Quatre outils** :
-  - lister les contacts et lire la fiche d'un contact, avec ses affaires et son rôle dans chacune ;
-  - créer et modifier un contact.
-- **Aucune suppression** : le CRM ne sait que détruire un contact. Les organisations viendront avec `CRM-114`.
-
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
@@ -31,6 +22,20 @@ d'exécuter le code attendu.
   connecteur (`docs/SPEC-seed.md` §22).
 
 ## [Publié]
+
+### Déployé en production, 2026-10-24 — l'image `mcp`, contacts
+
+Cellule Spark `crm`, révision `e4f8a8e5` : `scripts/spark/livrer.sh` sans migration, puis la reconstruction explicite de
+l'image `mcp`, saine. **Avant** : `verify-mcp.sh` 73 contrôles sans anomalie ; `connecteur-contacts` vert. **Vérifié** :
+`verifier.sh` 26/27 (le même compteur antérieur) ; le module `contacts` présent ; `/mcp` sans jeton `401`. **Non
+constaté** : un appel réel d'un assistant connecté.
+
+#### `CRM-104` T3 — le connecteur MCP tient le carnet de contacts (décision 660)
+
+- **Quatre outils** :
+  - lister les contacts et lire la fiche d'un contact, avec ses affaires et son rôle dans chacune ;
+  - créer et modifier un contact.
+- **Aucune suppression** : le CRM ne sait que détruire un contact. Les organisations viendront avec `CRM-114`.
 
 ### Déployé en production, 2026-10-24 — l'image `mcp`, structure et recherche
 

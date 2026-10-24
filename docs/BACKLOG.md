@@ -15490,7 +15490,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
         observée.
       - `verify-mcp.sh` **73 contrôles, aucune anomalie** (intégration 34) ; harnais `SCENARIOS_UI=908`.
       - Manuel 11.5 et 11.6, DAT.
-      - **Reste** : la livraison (image `mcp`) et le constat du responsable.
+      - **Livrée le 2026-10-24** : révision `e4f8a8e5`, image `mcp` reconstruite et saine, `verifier.sh` 26/27.
+      - **Reste `[~]`** : le constat du responsable.
 - [ ] **T4** — `budgets`.
 - [ ] **T5** — `temps`.
 - [ ] **T6** — `objectifs`.
