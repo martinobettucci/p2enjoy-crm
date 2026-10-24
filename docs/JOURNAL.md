@@ -33138,3 +33138,13 @@ au responsable. **Backlog** : `CRM-111`, « Rattachements multiples d'une affair
 (connecteur MCP) et sa livraison ; `CRM-112`, « Champs personnalisés communs de portée espace », réservée, sa
 spécification étant à écrire. **Suite** : le brouillon de la spécification de `CRM-112`, soumis à validation avant le
 code ; aucune ligne de code de `CRM-111` avant T1.
+
+### décision 663 — `CRM-114` : la spécification validée
+
+*2026-10-24, validation du responsable sur `docs/SPEC-organisations.md` (commit `52a90206`).* **Un onglet
+« Organisations » du carnet**, ajouté par la spécification parce qu'aucune liste n'existait : une organisation sans contact
+serait introuvable. **« Nouvelle organisation »** et **« Modifier »** dans la page, réservés par la base aux business
+developers et aux administrateurs, refus traduits ; **aucune suppression**. La famille `organizations` est ajoutée aux
+quatre listes fermées du connecteur — contrainte `mcp_droits_famille`, `mcp_autorise`, `mcp_compte`, `mcp_poser_droits` —,
+avec quatre outils. **Découpage** : T1 migration, T2 webapp, T3 preuves de bout en bout, T4 outils MCP, T5 livraison.
+

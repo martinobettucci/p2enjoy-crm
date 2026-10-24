@@ -3,7 +3,7 @@
 - Unité de backlog : `CRM-114` — Organisations : les créer et les modifier depuis l'écran.
 - Arbitrages : `docs/JOURNAL.md`, décision 660 (unité, connecteur oui, famille distincte `organizations`, sans
   suppression) et sa précision sur le nom de la famille (décision 658, règle 8).
-- État : **proposée le 2026-10-24, à valider.**
+- État : **validée le 2026-10-24** (décision 663).
 - Connecteur MCP : **oui**, dans une **famille nouvelle `organizations`** (décision 659 : une permission distincte),
   avec sa migration de la liste fermée (§5 ci-dessous).
 

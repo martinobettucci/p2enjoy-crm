@@ -16022,8 +16022,10 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
       **sans suppression** ; connecteur MCP **oui**, dans une **famille nouvelle `organizations`** (décision 659) —
       lecture, création et modification —, avec la migration de la liste fermée et sa phrase dans l'onglet « Connecteur
       MCP » ; les deux lectures d'organisation quittent `CRM-104` T3 pour cette famille.
-- [ ] **Spécification** à écrire et à valider : écran, refus, famille et outils (`crm_organization_list`,
-      `crm_organization_get`, `crm_organization_create`, `crm_organization_update`), noms anglais (décision 658).
+- [x] **Spécification** `docs/SPEC-organisations.md`, **validée le 2026-10-24** (décision 663) : onglet
+      « Organisations » du carnet, créer et modifier dans la page, refus traduits, aucune suppression ; famille
+      `organizations` aux quatre listes fermées ; outils `crm_organization_list`, `crm_organization_get`,
+      `crm_organization_create`, `crm_organization_update`.
 - [ ] **T1** — migration : la famille `organizations` dans la liste fermée de `mcp_droits` ; pgTAP ; contrat.
 - [ ] **T2** — l'écran : créer depuis le carnet, modifier depuis la fiche d'organisation ; design system ; unitaires.
 - [ ] **T3** — E2E, captures, seed, manuel, campagnes.
