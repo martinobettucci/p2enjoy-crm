@@ -2,8 +2,8 @@
 # @spec CRM-102 tranche T3 — docs/DESIGN_SYSTEM.md §5.57 (l’icône du serveur, monogramme du CRM, sur la page de consentement)
 # @spec CRM-102 tranche T6 — docs/SPEC-mcp.md §2.2 (`/plateforme` et `/admin` mènent à l'administration de la webapp)
 # @spec CRM-108 (docs/BACKLOG.md) tranche T4 — la famille `recettes` enregistrée et nommée au modèle (docs/SPEC-recettes.md §7)
-# @spec CRM-104 (docs/BACKLOG.md) tranches T4 et T5 — les familles `budgets` et `temps` enregistrées (docs/SPEC-mcp.md
-#       §9.2 septies et octies)
+# @spec CRM-104 (docs/BACKLOG.md) tranches T4 à T6 — les familles `budgets`, `temps` et `objectifs` enregistrées
+#       (docs/SPEC-mcp.md §9.2 septies à nonies)
 # @spec CRM-114 (docs/BACKLOG.md) tranche T4 — la famille `organizations` enregistrée et nommée au modèle
 #       (docs/SPEC-mcp.md §9.2 sexies)
 # @spec CRM-104 (docs/BACKLOG.md) tranches T2.a, T2.b, T1 et T3 — les affaires, la structure, la recherche et les contacts
@@ -31,7 +31,18 @@ from crm_mcp.audit import AuditOutils
 from crm_mcp.autorisation import MandataireLelabs, construire_stockage
 from crm_mcp.crm import ClientCrm, CrmIndisponible
 from crm_mcp.garde import GardeEntree
-from crm_mcp.outils import affaires, affaires_ecriture, budgets, contacts, organisations, recettes, reference, structure, temps
+from crm_mcp.outils import (
+    affaires,
+    affaires_ecriture,
+    budgets,
+    contacts,
+    objectifs,
+    organisations,
+    recettes,
+    reference,
+    structure,
+    temps,
+)
 from crm_mcp.politique import MoteurPolitique, PolitiqueOutils
 from crm_mcp.registre import Registre
 from crm_mcp.reglages import Reglages
@@ -53,6 +64,7 @@ you see and change exactly what you could in the CRM web app, never more.
 - Costs: crm_card_cost_list for an affaire, crm_budget_list then crm_budget_get for a budget; a cost line needs a
   budget (and an occurrence when the budget is recurrent). Amounts are never added across currencies.
 - Time: crm_time_entry_set sets one cell of the time grid (a person, a day, one target); 0 clears it.
+- Goals: crm_goal_board_get reads a goal board as text; a block's progress (fill_percent) is entered, never computed.
 - Outside your rights or the CRM's, a call is refused with "Introuvable ou hors de votre périmètre"
   (FR: not found or outside your perimeter), whether the object exists or not.
 - Lists are paginated: use limit (max 100) and offset.
@@ -143,6 +155,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     budgets.ajouter(serveur, moteur, crm)
     # `CRM-104` T5 : le temps passé (docs/SPEC-mcp.md §9.2 octies).
     temps.ajouter(serveur, moteur, crm)
+    # `CRM-104` T6 : les canevas d'objectifs (docs/SPEC-mcp.md §9.2 nonies).
+    objectifs.ajouter(serveur, moteur, crm)
     # L'ordre compte : l'audit enveloppe la politique, qui précède l'outil (docs/SPEC-mcp.md §6.2).
     serveur.add_middleware(AuditOutils(registre, reglages.taille_max_reponse))
     serveur.add_middleware(PolitiqueOutils(moteur))

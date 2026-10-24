@@ -1525,7 +1525,10 @@ SCENARIOS_API=1172
 # **918 depuis `CRM-104` T5, même jour** : `connecteur-temps.spec.ts`, fichier NEUF, **1** scénario — du temps posé par
 # un vrai client MCP paraît dans « Votre semaine » de la fiche. 917 + 1 = 918, valeur COMPTÉE — « Total: 918 tests in 85
 # files ».
-SCENARIOS_UI=918
+# **919 depuis `CRM-104` T6, même jour** : `connecteur-objectifs.spec.ts`, fichier NEUF, **1** scénario — un bloc ajouté
+# par un vrai client MCP paraît sur le canevas avec son avancement. 918 + 1 = 919, valeur COMPTÉE — « Total: 919 tests in
+# 86 files ».
+SCENARIOS_UI=919
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-104` T6 — le connecteur MCP tient les canevas d'objectifs (décisions 673 et 674)
+
+*En développement. Aucune migration ; il faudra reconstruire l'image `mcp` à la livraison.*
+
+- **Six outils** dans la famille « Objectifs » : lire les tableaux et un canevas en texte, ajouter un bloc (posé à
+  droite des blocs existants) et une flèche, modifier le titre, le texte, l'avancement ou le channel d'un bloc, archiver
+  ou désarchiver un tableau.
+- **Aucune suppression** d'un bloc ni d'une flèche ; la géométrie du canevas reste un geste de l'écran.
+
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*

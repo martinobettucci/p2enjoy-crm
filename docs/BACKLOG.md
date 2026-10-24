@@ -15527,9 +15527,22 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
       - **Livrée en production le 2026-10-24** (révision `62654375`, image `mcp` reconstruite, `verifier.sh` 26/27 —
         compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[~]`** : le constat du responsable.
-- [ ] **T6** — `objectifs` : le catalogue — lire les tableaux et leur canevas, ajouter un bloc et une flèche, modifier
+- [~] **T6** — `objectifs` : le catalogue — lire les tableaux et leur canevas, ajouter un bloc et une flèche, modifier
       un bloc (jamais la géométrie), archiver un tableau — décision 673 ; aucune suppression d'un bloc ni d'une flèche.
       Liste au `docs/SPEC-mcp.md` §9.2 *nonies*, **validée le 2026-10-24** (décision 674).
+      **Implémentée et vérifiée en développement le 2026-10-24.**
+      - `mcp/crm_mcp/outils/objectifs.py` : les six outils ; canevas rendu en texte dans l'ordre de lecture, le bloc
+        dont le channel est illisible tu avec ses flèches (`docs/SPEC-goals.md` §4.1) ; bloc neuf placé à droite, à la
+        taille d'un bloc de l'écran ; archive sous « supprimer » avec `destructiveHint` ; refus nommés `link_exists`,
+        `blocks_of_another_board` et contraintes de forme ; genre d'ancre `block`.
+      - Unitaires `test_objectifs.py` **6** ; **quinze mutations tuées sur quinze** (une donnée de preuve resserrée).
+        Intégration `test_integration_objectifs.py` contre la vraie pile : lire, ajouter un bloc à droite, flèche puis
+        doublon refusé par le CRM, modifier l'avancement, désarchiver puis archiver le tableau clos (son horodatage remis
+        tel quel) ; la lectrice refusée par le CRM et la modification fermée par la matrice. `verify-mcp.sh` **85/85**.
+      - E2E `connecteur-objectifs.spec.ts` **1/1** (le bloc du connecteur sur le canevas, à 65 %), capture observée ;
+        `SCENARIOS_UI=919`.
+      - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
+      - **Reste `[~]`** : la livraison, avec la reconstruction de l'image `mcp`.
 - [ ] **T7** — `messagerie`.
 
 Preuves exigées **par tranche et par outil** (`docs/SPEC-mcp.md` §13) : succès, refus par la matrice, refus par le

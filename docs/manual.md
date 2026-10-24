@@ -4846,10 +4846,21 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   du personnel — les taux — reste un geste de l'écran. Deux devises ne s'additionnent jamais, et une minute sans taux
   est comptée à part, jamais à zéro.
 
+- **Objectifs** — *livrés en développement par `CRM-104`, tranche T6* :
+  - *Consulter* : les tableaux d'objectifs de l'espace ; un tableau lu comme un texte — ses blocs dans l'ordre de
+    lecture, avec leur avancement et leur channel lié, et les flèches qui les relient ;
+  - *Ajouter* : un bloc — titre, texte, avancement, channel lié facultatif —, posé à droite des blocs existants ; une
+    flèche entre deux blocs du même tableau ;
+  - *Modifier* : le titre, le texte, l'avancement ou le channel lié d'un bloc ;
+  - *Supprimer* : archiver un tableau, ou le désarchiver.
+
+  L'avancement d'un bloc est **saisi**, jamais calculé : l'assistant l'écrit quand vous le lui demandez. Déplacer,
+  redimensionner ou colorer un bloc, créer ou renommer un tableau restent des gestes de l'écran. **Aucun outil ne
+  supprime un bloc ni une flèche.**
+
 ### 11.6 Ce que le connecteur n'offre pas encore
 
-Les outils des autres familles — objectifs, messagerie — suivent, une famille après
-l'autre. D'ici là, une case cochée pour l'une d'elles n'ouvre aucun outil.
+Les outils de la dernière famille — messagerie — suivront. D'ici là, une case cochée pour elle n'ouvre aucun outil.
 
 ## Annexe A — Ce que contient l'espace de démonstration
 

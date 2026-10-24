@@ -1,6 +1,7 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : la matrice appliquée par le service, à la visibilité et à chaque appel
 # @spec CRM-108 (docs/BACKLOG.md) — tranche T4 : la famille `recettes`, les ancres `revenue` et `revenue_actual`
 #       (docs/SPEC-recettes.md §7, docs/SPEC-mcp.md §6.1, §9.1)
+# @spec CRM-104 (docs/BACKLOG.md) — tranche T6 : le genre d'ancre `block` (docs/SPEC-mcp.md §9.2 nonies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T4 : les genres d'ancre `cost`, `cost_actual` et `occurrence` (docs/SPEC-mcp.md §9.2 septies)
 # @spec CRM-114 (docs/BACKLOG.md) tranche T4 — la famille `organizations` dans la liste fermée (docs/SPEC-organisations.md §5)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T1 : le genre d'ancre `workflow` (docs/SPEC-mcp.md §9.2 quater, décision 656)
@@ -82,6 +83,8 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     # `CRM-104` T4 : une ligne de coût, et un coût réel, résolus jusqu'à l'espace par leur affaire (décision 669).
     "cost": ("card_costs", "card:cards(workspace_id)", ("card", "workspace_id")),
     "cost_actual": ("card_cost_actuals", "ligne:card_costs(card:cards(workspace_id))", ("ligne", "card", "workspace_id")),
+    # `CRM-104` T6 : un bloc d'objectif, résolu par son tableau (décision 674).
+    "block": ("goal_blocks", "board:goal_boards(workspace_id)", ("board", "workspace_id")),
     # Une occurrence de budget, résolue par son budget puis son track : tout identifiant passé à un outil est une ancre.
     "occurrence": (
         "budget_occurrences",
@@ -106,6 +109,7 @@ LIBELLES = {
     "cost": "ligne de coût",
     "cost_actual": "coût réel",
     "occurrence": "occurrence de budget",
+    "block": "bloc d'objectif",
 }
 
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
