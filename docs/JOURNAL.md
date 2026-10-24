@@ -33491,3 +33491,21 @@ reste en infobulle sur l'identité. Le seuil de 120 px de la preuve est **gardé
 
 **Persisté avant le code** : ce journal ; `docs/SPEC-ia.md` §14 ; `docs/BACKLOG.md` (`CRM-113` T5, révision) ;
 `docs/INCONSISTENCY_REPORT.md` (INC-290, INC-291 et INC-293, arbitrage rendu).
+
+**Mise en œuvre de la décision 679, le 2026-10-24 (session interactive).** Le conteneur de la session a été recyclé
+entre deux échanges : Docker arrêté, Node revenu en v22, `/etc/hosts` réinitialisé. Le cache d'images a survécu. La
+pile a été remontée par `./runDev.sh` sans exporter la variable de `bake`, ce qui a servi de preuve aux corrections
+d'INC-290 et d'INC-291. Commits :
+- `3d2d001`, les décisions persistées avant le code ;
+- `a6b52c3`, la migration `0103` : le registre a refusé `0102` modifiée, d'où la correction notée plus haut ;
+- `4eb6765`, INC-290 et INC-291 ;
+- `61a5d40`, la fonction `ia` ;
+- `8cb5fbe`, l'écran de `CRM-113` T5 ;
+- `d90e5a0`, INC-293 (`CRM-110` T5).
+
+`CRM-113` reste `[~]` : T5 `[x]`, T3 `[~]`, T4 `[ ]`, que le responsable livre lui-même, migrations 102 puis 103.
+**Question ouverte au responsable** : `docker-compose.spark.yml` doit-il aussi construire MinIO depuis le dépôt ?
+`0020_pg_cron` a rougi en pleine session sur une ligne de battement vide alors que la tâche avait réussi à 11:07. Les
+harnais de seed ont tourné juste après. **Rejouée après le passage de 13:07 : 48 assertions, verte.** La ligne y renaît
+avec `run_count = 1` : la table avait été vidée entre 11:07 et 13:07, et rien dans `0103` n'y touche. La série pgTAP
+complète est donc verte, à 3944 assertions.

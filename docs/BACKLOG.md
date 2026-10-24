@@ -16089,12 +16089,14 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
         une campagne d'interface verte d'un bout à l'autre attend la correction d'INC-292.
 - [ ] **T4** — livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp
       reconstruite ; constat. **Le responsable s'en charge** (décision 679) ; elle attend T5.
-- [ ] **T5** — révision de la décision 679 (arbitrages du responsable du 2026-10-24), avant toute livraison : les clés
+- [x] **T5** — révision de la décision 679 (arbitrages du responsable du 2026-10-24), avant toute livraison : les clés
       de l'étape deviennent `label` et `probability`, l'enveloppe des deux codes nouveaux `{key}` et `{key, native}` ;
       les libellés se comparent sans la casse, partout (surcharge, surcharge vivante gardée, différentiel, « Utiliser le
       nœud du catalogue »). Migration `0103` (`0102` n'est pas modifiée, `docs/DAT.md` §3.2 bis), fonction `ia`,
       simulateur, écran, seed ; pgTAP, API, unitaires,
-      E2E et captures rejoués ; `docs/SPEC-ia.md` §14 révisé avant le code.
+      E2E et captures rejoués ; `docs/SPEC-ia.md` §14 révisé avant le code. **Vérifiée en développement le
+      2026-10-24** : `0093` à 35 assertions, deux mutations nouvelles tuées, `0077`, `0078` et `0080` vertes ; API 3/3 ;
+      unitaires de la fonction 99/99 et de la webapp 4343/4343 ; E2E de l'IA 25/25 sur le seed recréé ; manuel 251/251.
 
 ### CRM-114 — Organisations : les créer et les modifier depuis l'écran `[~]`
 *Créée le 2026-10-24 — décision 660, arbitrage du responsable.* `CRM-060` a nommé « aucune création d'organisation »
