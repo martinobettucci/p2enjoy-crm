@@ -33256,3 +33256,14 @@ retenus tels que proposés : `crm_budget_list` (ancre `track` facultative, prév
 occurrence si le budget est récurrent), `crm_card_cost_actual_add`, `crm_card_cost_update`, `crm_card_cost_actual_update`,
 `crm_card_cost_settle` ; genres d'ancre `cost` et `cost_actual` ; aucune suppression. Preuve E2E : une ligne ajoutée par
 le connecteur paraît dans la section « Coûts » de la fiche.
+
+### décision 670 — `CRM-111` T2 : les événements existants reçoivent leur rattachement, le déclencheur d'immuabilité suspendu une fois
+
+*2026-10-24, arbitrage du responsable, contre la recommandation de l'agent.* **Problème.** La spécification validée
+(§5) veut que les événements existants de `card_events` reçoivent le rattachement unique de leur affaire ; or la table
+est immuable, et le déclencheur `card_events_refuser_maj` refuse toute mise à jour, « pas même le propriétaire »
+(`docs/SCHEMA.md` §5). Aucune migration ne l'a jamais suspendu. **Options.** Laisser `placement_id` vide sur l'historique
+et écrire la règle de lecture (recommandée) ; ou remplir en suspendant le déclencheur. **Décision : remplir.** La
+migration `0102` suspend le déclencheur dans sa transaction, le temps d'une instruction qui n'écrit que `placement_id`
+sur les événements de rattachement, puis le réactive. **Garde** : une assertion pgTAP prouve que le reste de chaque
+événement existant est inchangé. **Persisté** : `docs/SPEC-rattachements.md` §5, `docs/SCHEMA.md` §5 (`card_events`).

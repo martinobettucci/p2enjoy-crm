@@ -362,7 +362,15 @@ signature, car elle désigne un channel et non un rattachement.
 corbeille, contacts, mails), et renseignée pour `moved`, `assigned`, `snoozed`, `woken`, `stalled`, `archived`,
 `unarchived` et `field_changed`. **Deux valeurs s'ajoutent au vocabulaire** : `attached` et `detached`. Elles sont
 ajoutées dans le **même** changement que le déclencheur qui les écrit, comme l'a été `channel_changed`. Les événements
-existants reçoivent le rattachement unique de leur affaire à la migration.
+existants reçoivent le rattachement unique de leur affaire à la migration (décision 670).
+
+**L'exception à l'immuabilité, et sa seule forme permise** (décision 670). `card_events` refuse toute mise à jour, par le
+déclencheur `card_events_refuser_maj` (`docs/SCHEMA.md` §5). La migration le **suspend** dans sa propre transaction, le
+temps d'une seule instruction : `update … set placement_id = …` sur les événements de rattachement (`moved`, `assigned`,
+`channel_changed`, `workflow_changed`, `archived`, `unarchived`, `snoozed`, `woken`, `stalled`, `field_changed`) dont
+`placement_id` est nul. Elle le **réactive** aussitôt. Aucune autre colonne n'est écrite, et une assertion pgTAP prouve
+que type, charge utile, acteur et horodatage des événements existants sont inchangés. Hors de cette migration, le
+déclencheur n'est jamais suspendu.
 
 ## 6. Analytique et relances
 

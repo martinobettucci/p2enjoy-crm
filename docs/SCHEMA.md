@@ -754,6 +754,10 @@ dixième, portée par `CRM-019`.** Les trois gestes s'excluent : un changement d
 sinon un changement de workflow prévaut, sinon seulement un changement d'étape écrit `moved`
 (`docs/SPEC-change-channel-workflow.md` §6).
 
+**Une seule exception, écrite et bornée** (décision 670) : la migration `0102` de `CRM-111` suspend
+`card_events_refuser_maj` le temps d'une instruction, pour renseigner la colonne nouvelle `placement_id` des événements
+existants, puis le réactive ; aucune autre colonne n'est écrite (`docs/SPEC-rattachements.md` §5).
+
 **Aucune colonne `updated_at`**, et ce n'est pas un écart aux conventions générales mais leur
 conséquence : une ligne qu'aucun rôle ne peut modifier — pas même `service_role`, pas même le
 propriétaire, un trigger `BEFORE UPDATE` levant `card_event_immutable` — n'a pas de date de
