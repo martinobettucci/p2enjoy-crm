@@ -5,6 +5,8 @@
 //       docs/DESIGN_SYSTEM.md §5.53 (une section par collection, « Ajouté » / « Retiré » / « Modifié » de la
 //       comparaison de versions réemployés, « Retiré — archivé » pour un champ, le nom du workflow, l'attribut nommé
 //       par un mot, une étape retirée vide qui ne paraît pas), §5.15, §8, §10 ; décision 620
+// @spec CRM-113 (docs/BACKLOG.md) tranche T3 — docs/DESIGN_SYSTEM.md §5.52 bis (« Nom de l'étape » et « Probabilité »
+//       nommés par un mot dans le différentiel) ; docs/SPEC-ia.md §14.4 ; décision 677
 //
 // Composants de présentation : ils ne lisent rien et ne décident de rien. Le différentiel vient de
 // `lib/differentiel-ia.ts`, et le panneau tient le brouillon où un choix de destination s'écrit.
@@ -39,6 +41,8 @@ const ATTRIBUTS: Readonly<Record<CodeAttribut, CleTraduction>> = {
 	nom: 'ia.differentiel.attribut.nom',
 	initiale: 'ia.differentiel.attribut.initiale',
 	rang: 'ia.differentiel.attribut.rang',
+	nom_etape: 'ia.differentiel.attribut.nom_etape',
+	probabilite: 'ia.differentiel.attribut.probabilite',
 	libelle: 'ia.differentiel.attribut.libelle',
 	commentaire_requis: 'ia.differentiel.attribut.commentaire_requis',
 	type: 'ia.differentiel.attribut.type',
@@ -54,7 +58,7 @@ export type Nommage = { readonly etape: (cle: string) => string; readonly champ:
 function valeurEnMots(code: CodeAttribut, valeur: ValeurAttribut): string | null {
 	if (valeur === null) return null
 	if (typeof valeur === 'boolean') return valeur ? t('ia.differentiel.oui') : t('ia.differentiel.non')
-	if (typeof valeur === 'number') return String(valeur)
+	if (typeof valeur === 'number') return code === 'probabilite' ? t('ia.differentiel.pourcentage', { valeur: String(valeur) }) : String(valeur)
 	if (Array.isArray(valeur)) return valeur.length === 0 ? null : valeur.join(', ')
 	if (code === 'libelle' && valeur === '') return t('ia.apercu.libelle.arrivee')
 	if (code === 'type') return libelleType(valeur as string)

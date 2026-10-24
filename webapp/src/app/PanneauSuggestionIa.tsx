@@ -52,7 +52,7 @@ import {
 	type RevisionIa,
 	type SuggestionLue,
 } from '../lib/assistant-ia'
-import { definirRemappage, memesPropositions, noeudPropose, type PropositionIa } from '../lib/brouillon-ia'
+import { definirRemappage, memesPropositions, noeudPropose, type NoeudDuCatalogueIa, type PropositionIa } from '../lib/brouillon-ia'
 import { differentiel, etapesRetireesOccupees } from '../lib/differentiel-ia'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -98,11 +98,32 @@ const CLES_DEFAUT: Readonly<Record<string, CleTraduction>> = {
 	remappage_origine_inconnue: 'ia.defaut.remappage_origine_inconnue',
 	remappage_cible_absente: 'ia.defaut.remappage_cible_absente',
 	remappage_en_double: 'ia.defaut.remappage_en_double',
+	// `CRM-113` (docs/SPEC-ia.md §14.3, §14.5).
+	native_field: 'ia.defaut.native_field',
+	step_probability_invalid: 'ia.defaut.step_probability_invalid',
+}
+
+/** L'information native qu'un champ doublonne, nommée par un mot traduit — jamais par le code de la base (§5.52 bis). */
+const CLES_NATIF: Readonly<Record<string, CleTraduction>> = {
+	title: 'ia.natif.title',
+	description: 'ia.natif.description',
+	owner: 'ia.natif.owner',
+	amount: 'ia.natif.amount',
+	currency: 'ia.natif.currency',
+	probability: 'ia.natif.probability',
+	next_action: 'ia.natif.next_action',
+	next_action_at: 'ia.natif.next_action_at',
+	contacts: 'ia.natif.contacts',
+	organization: 'ia.natif.organization',
 }
 
 /** La phrase d'un défaut : sa clé de traduction et les valeurs que la base a écrites (docs/SPEC-ia.md §12.1). */
 export function phraseDefaut(defaut: DefautIa): string {
 	const valeurs = Object.fromEntries(Object.entries(defaut.valeurs ?? {}).map(([cle, valeur]) => [cle, String(valeur)]))
+	if (valeurs.native !== undefined) {
+		const natif = Object.hasOwn(CLES_NATIF, valeurs.native) ? CLES_NATIF[valeurs.native] : undefined
+		valeurs.native = t(natif ?? 'ia.natif.inconnu')
+	}
 	const cle = Object.hasOwn(CLES_DEFAUT, defaut.code) ? CLES_DEFAUT[defaut.code] : undefined
 	return cle === undefined ? t('ia.defaut.inconnu', { code: defaut.code }) : t(cle, valeurs)
 }
@@ -451,7 +472,7 @@ function VueSuggestion({
 }: ProprietesPanneauIa & { readonly id: string; readonly titre: RefObject<HTMLHeadingElement | null> }) {
 	const prefixe = useId()
 	const [lue, setLue] = useState<EtatAsync<SuggestionLue | null>>(enChargement)
-	const [catalogue, setCatalogue] = useState<ReadonlyMap<string, string>>(new Map())
+	const [catalogue, setCatalogue] = useState<ReadonlyMap<string, NoeudDuCatalogueIa>>(new Map())
 	const [tentative, setTentative] = useState(0)
 	const [brouillon, setBrouillon] = useState<{ readonly revision: string; readonly proposition: PropositionIa } | null>(null)
 	const [consigne, setConsigne] = useState('')
@@ -477,7 +498,18 @@ function VueSuggestion({
 		void Promise.all([lireSuggestion(client, id), lireCatalogueActif(client)]).then(([suggestion, noeuds]) => {
 			if (!vivant) return
 			setLue(suggestion)
-			if (noeuds.statut === 'pret') setCatalogue(new Map(noeuds.donnees.map((n) => [n.key, n.label])))
+			// `CRM-113` T3 : la probabilité par défaut accompagne le libellé — exemple du champ de l'étape, et report par
+			// « Utiliser le nœud du catalogue » (§5.52 bis).
+			if (noeuds.statut === 'pret') {
+				setCatalogue(
+					new Map(
+						noeuds.donnees.map((n) => {
+							const probabilite = n.default_probability ?? null
+							return [n.key, { libelle: n.label, probabilite: probabilite === null ? null : Number(probabilite) }]
+						}),
+					),
+				)
+			}
 		})
 		return () => {
 			vivant = false
@@ -624,7 +656,14 @@ function VueSuggestion({
 	const modification = suggestion.workflow_id !== null
 	const vivante = modification && vivant.statut === 'pret' && vivant.donnees !== null ? vivant.donnees : null
 	const noms: Nommage = {
-		etape: (cle) => (proposition === null ? undefined : noeudPropose(proposition, cle)?.libelle) || catalogue.get(cle) || cle,
+		// Le nom EFFECTIF (§5.52 bis) : dans la proposition, sinon dans le workflow vivant — une étape retirée n'est plus
+		// que là —, sinon au catalogue.
+		etape: (cle) =>
+			(proposition === null ? undefined : proposition.etapes.find((e) => e.noeud === cle)?.libelle?.trim()) ||
+			(proposition === null ? undefined : noeudPropose(proposition, cle)?.libelle) ||
+			vivante?.composition.etapes.find((e) => e.noeud === cle)?.libelle?.trim() ||
+			catalogue.get(cle)?.libelle ||
+			cle,
 		champ: (cle) =>
 			proposition?.champs.find((c) => c.cle === cle)?.libelle || vivante?.composition.champs.find((c) => c.cle === cle)?.libelle || cle,
 	}

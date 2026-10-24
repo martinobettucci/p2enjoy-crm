@@ -3,6 +3,9 @@
 //       composition vivante), §13.6 (le différentiel en tête de l'aperçu ; les affaires des étapes retirées) ;
 //       docs/DESIGN_SYSTEM.md §5.53 (une section par collection, le nom du workflow, l'attribut nommé, le rang parmi
 //       les étapes conservées) ; docs/JOURNAL.md décision 620
+// @spec CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.4 (une étape conservée dont le nom ou la probabilité
+//       EFFECTIFS changent est modifiée ; la cible qui n'en dit rien garde la surcharge vivante) ;
+//       docs/DESIGN_SYSTEM.md §5.52 bis ; décisions 646 et 677
 //
 // Module pur : il compare deux propositions `version: 1` — la composition vivante, telle que la base la rend
 // (`proposition_du_workflow`), et la cible — et ne juge rien. Les défauts sont l'affaire de la base (§12.1) ; ce
@@ -28,6 +31,8 @@ export type CodeAttribut =
 	| 'nom'
 	| 'initiale'
 	| 'rang'
+	| 'nom_etape'
+	| 'probabilite'
 	| 'libelle'
 	| 'commentaire_requis'
 	| 'type'
@@ -113,6 +118,10 @@ export function differentiel(vivante: PropositionIa, cible: PropositionIa): read
 				attributsChanges([
 					['initiale', avant.initiale, apres.initiale],
 					['rang', rangVivant.get(avant.noeud) ?? null, rangCible.get(apres.noeud) ?? null],
+					// Le nom et la probabilité EFFECTIFS (§14.4) : la composition vivante les porte ; une cible muette (`null`,
+					// absent, texte blanc) garde la surcharge vivante, et n'est donc pas un changement.
+					['nom_etape', avant.libelle ?? null, apres.libelle?.trim() || (avant.libelle ?? null)],
+					['probabilite', avant.probabilite ?? null, apres.probabilite ?? avant.probabilite ?? null],
 				]),
 		),
 	)

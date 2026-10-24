@@ -8,6 +8,9 @@
 // @spec CRM-097 tranche T3.c — docs/DESIGN_SYSTEM.md §5.53 (précisions : le type d'un champ CONSERVÉ se rend en texte
 //       tant qu'il est celui du champ vivant ; un libellé de transition vide porte « Libellé de l'étape d'arrivée ») ;
 //       docs/SPEC-ia.md §13.1 ; décision 620
+// @spec CRM-113 (docs/BACKLOG.md) tranche T3 — docs/DESIGN_SYSTEM.md §5.52 bis (« Nom de l'étape » et « Probabilité de
+//       l'étape » sur chaque étape, l'exemple à la valeur du nœud, le nom effectif partout, « Utiliser le nœud du
+//       catalogue » qui garde le nom) ; docs/SPEC-ia.md §14.7 ; décisions 646 et 677
 //
 // Composant contrôlé : il ne garde que l'état d'ouverture du formulaire d'ajout. Chaque geste rend la proposition
 // modifiée — et, pour un retrait, l'annonce de ce qu'il a emporté — au panneau, qui tient le brouillon.
@@ -21,10 +24,12 @@ import {
 	ajouterTransition,
 	designerInitiale,
 	modifierChamp,
+	modifierEtape,
 	modifierNoeud,
 	modifierRegle,
 	modifierTransition,
 	noeudPropose,
+	nomEffectifEtape,
 	renommerWorkflow,
 	retirerChamp,
 	retirerEtape,
@@ -32,6 +37,7 @@ import {
 	retirerRegle,
 	retirerTransition,
 	utiliserNoeudDuCatalogue,
+	type NoeudDuCatalogueIa,
 	type PropositionIa,
 } from '../lib/brouillon-ia'
 
@@ -87,8 +93,8 @@ const PILULE = 'rounded-full bg-hover px-2 text-xs text-text-2'
 
 type ProprietesApercu = {
 	readonly proposition: PropositionIa
-	/** Les nœuds VIVANTS du catalogue : clé → libellé. */
-	readonly catalogue: ReadonlyMap<string, string>
+	/** Les nœuds VIVANTS du catalogue : clé → libellé et probabilité par défaut. */
+	readonly catalogue: ReadonlyMap<string, NoeudDuCatalogueIa>
 	readonly desactive: boolean
 	readonly onChange: (proposition: PropositionIa, annonce?: string) => void
 	/** La composition vivante, pour une suggestion qui fait évoluer un workflow existant (§5.53) ; absente sinon. */
@@ -112,7 +118,8 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 		setRendreFocus(true)
 	}
 
-	const nomEtape = (cle: string) => noeudPropose(p, cle)?.libelle || catalogue.get(cle) || cle
+	// Le nom EFFECTIF partout (§5.52 bis) : celui de l'étape s'il est posé, sinon celui de son nœud.
+	const nomEtape = (cle: string) => nomEffectifEtape(p, cle, catalogue)
 	// Un groupe de radios ne sait montrer qu'UN choix : quand la proposition porte plusieurs étapes initiales — un
 	// défaut, que la base dit —, aucun radio n'est coché, plutôt que le dernier rendu, qui mentirait (§5.52).
 	const initiales = p.etapes.filter((e) => e.initiale).length
@@ -145,24 +152,27 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 					<ol className={LISTE}>
 						{p.etapes.map((etape) => {
 							const propose = noeudPropose(p, etape.noeud)
-							const auCatalogue = catalogue.has(etape.noeud)
+							const duCatalogue = catalogue.get(etape.noeud)
+							const auCatalogue = duCatalogue !== undefined
 							const nom = nomEtape(etape.noeud)
+							// Ce que l'étape affiche quand elle ne surcharge rien : le libellé et la probabilité de son nœud.
+							const libelleNoeud = propose?.libelle || duCatalogue?.libelle || etape.noeud
+							const probabiliteNoeud = propose === undefined ? duCatalogue?.probabilite : propose.probabilite
 							return (
 								<li key={etape.noeud} className={LIGNE_DOUBLE} data-testid="ia-etape">
 									{/* Deux lignes à tous les paliers : le nom et son retrait, puis les attributs — un repli régulier, jamais
 									    variable d'une ligne à l'autre (§5.37, défaut vu sur les captures à 390 et 1152 px). */}
 									<div className="flex items-center gap-2">
-										{propose === undefined ? (
-											<span className="min-w-0 flex-1 font-medium">{nom}</span>
-										) : (
-											<input
-												aria-label={t('ia.apercu.libelle.de', { objet: etape.noeud })}
-												value={propose.libelle}
-												disabled={desactive}
-												onChange={(e) => onChange(modifierNoeud(p, etape.noeud, { libelle: e.target.value }))}
-												className={`${CHAMP} min-w-0 flex-1`}
-											/>
-										)}
+										{/* Le nom de l'ÉTAPE, pour toute étape (§5.52 bis) : vide, l'étape garde celui de son nœud, que
+										    l'exemple montre. */}
+										<input
+											aria-label={t('ia.apercu.nom_etape', { etape: etape.noeud })}
+											value={etape.libelle ?? ''}
+											placeholder={libelleNoeud}
+											disabled={desactive}
+											onChange={(e) => onChange(modifierEtape(p, etape.noeud, { libelle: e.target.value }))}
+											className={`${CHAMP} min-w-0 flex-1 font-medium placeholder:font-normal placeholder:text-text-3`}
+										/>
 										<Button
 											taille="compacte"
 											variante="discret"
@@ -200,6 +210,13 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 										<span className="flex flex-wrap items-center gap-2">
 										{propose === undefined ? null : (
 											<>
+												<input
+													aria-label={t('ia.apercu.libelle_noeud', { etape: etape.noeud })}
+													value={propose.libelle}
+													disabled={desactive}
+													onChange={(e) => onChange(modifierNoeud(p, etape.noeud, { libelle: e.target.value }))}
+													className={`${CHAMP} min-w-0 basis-[12rem]`}
+												/>
 												<select
 													aria-label={t('ia.apercu.nature', { etape: nom })}
 													value={propose.nature}
@@ -220,7 +237,7 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 													type="number"
 													min={0}
 													max={100}
-													aria-label={t('ia.apercu.probabilite', { etape: nom })}
+													aria-label={t('ia.apercu.probabilite_noeud', { etape: etape.noeud })}
 													value={propose.probabilite ?? ''}
 													disabled={desactive}
 													onChange={(e) =>
@@ -230,6 +247,17 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 												/>
 											</>
 										)}
+										<input
+											type="number"
+											aria-label={t('ia.apercu.probabilite_etape', { etape: etape.noeud })}
+											value={etape.probabilite ?? ''}
+											placeholder={probabiliteNoeud === null || probabiliteNoeud === undefined ? undefined : String(probabiliteNoeud)}
+											disabled={desactive}
+											onChange={(e) =>
+												onChange(modifierEtape(p, etape.noeud, { probabilite: e.target.value === '' ? null : Number(e.target.value) }))
+											}
+											className={`${CHAMP} w-[6rem] tabular-nums placeholder:text-text-3`}
+										/>
 										<label className="inline-flex min-h-[var(--size-target)] items-center gap-2 text-sm">
 											<input
 												type="radio"
@@ -247,9 +275,18 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 												taille="compacte"
 												variante="discret"
 												disabled={desactive}
-												onClick={() =>
-													onChange(utiliserNoeudDuCatalogue(p, etape.noeud), t('ia.annonce.noeud_catalogue', { etape: etape.noeud }))
-												}
+												onClick={() => {
+													// Le nom et la probabilité du nœud proposé passent sur l'étape quand ils diffèrent du catalogue
+													// (§5.52 bis) ; l'annonce dit le nom gardé.
+													const modifiee = utiliserNoeudDuCatalogue(p, etape.noeud, duCatalogue)
+													const garde = modifiee.etapes.find((e) => e.noeud === etape.noeud)?.libelle ?? null
+													onChange(
+														modifiee,
+														garde === null
+															? t('ia.annonce.noeud_catalogue', { etape: etape.noeud })
+															: t('ia.annonce.noeud_catalogue.nom_garde', { etape: etape.noeud, nom: garde }),
+													)
+												}}
 											>
 												{t('ia.apercu.utiliser_catalogue')}
 											</Button>

@@ -4,6 +4,9 @@
 //       décision 618 (point 7 : l'aperçu n'est pas un second éditeur)
 // @spec CRM-097 tranche T3.c — docs/SPEC-ia.md §13.1 (`remappages` : où vont les affaires d'une étape retirée, en
 //       clés), §13.6 (choisir une destination écrit le remappage dans le brouillon) ; décision 620
+// @spec CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.3 (l'étape porte `libelle` et `probabilite`), §14.7
+//       (le nom et la probabilité de toute étape se corrigent ; « Utiliser le nœud du catalogue » les garde) ;
+//       docs/DESIGN_SYSTEM.md §5.52 bis (le nom effectif partout) ; décisions 646 et 677
 //
 // Module pur : chaque geste rend une NOUVELLE proposition, jamais une mutation, et les retraits disent ce qu'ils
 // ont emporté — l'écran l'annonce (docs/DESIGN_SYSTEM.md §5.52). Rien n'est jugé ici : une correction peut
@@ -12,7 +15,18 @@
 export type NatureNoeud = 'open' | 'won' | 'lost'
 
 export type NoeudIa = { readonly cle: string; readonly libelle: string; readonly nature: string; readonly probabilite: number | null }
-export type EtapeIa = { readonly noeud: string; readonly initiale: boolean }
+/**
+ * `libelle` et `probabilite` : le nom affiché et la probabilité de l'étape, `null` ou absents quand le nœud convient
+ * (docs/SPEC-ia.md §14.3). Absents d'une révision antérieure à `CRM-113`, ils le restent jusqu'à la normalisation.
+ */
+export type EtapeIa = {
+	readonly noeud: string
+	readonly initiale: boolean
+	readonly libelle?: string | null
+	readonly probabilite?: number | null
+}
+/** Ce que le catalogue dit d'un nœud vivant : son libellé et sa probabilité par défaut. */
+export type NoeudDuCatalogueIa = { readonly libelle: string; readonly probabilite: number | null }
 export type TransitionIa = { readonly de: string; readonly vers: string; readonly libelle: string; readonly commentaire_requis: boolean }
 export type ChampIa = {
 	readonly cle: string
@@ -58,7 +72,7 @@ export function normaliser(p: PropositionIa): PropositionIa {
 		version: 1,
 		workflow: { nom: p.workflow.nom },
 		noeuds: p.noeuds.map((n) => ({ cle: n.cle, libelle: n.libelle, nature: n.nature, probabilite: n.probabilite })),
-		etapes: p.etapes.map((e) => ({ noeud: e.noeud, initiale: e.initiale })),
+		etapes: p.etapes.map((e) => ({ noeud: e.noeud, initiale: e.initiale, libelle: e.libelle ?? null, probabilite: e.probabilite ?? null })),
 		transitions: p.transitions.map((t) => ({ de: t.de, vers: t.vers, libelle: t.libelle, commentaire_requis: t.commentaire_requis })),
 		champs: p.champs.map((c) => ({ cle: c.cle, libelle: c.libelle, type: c.type, choix: c.choix, devise: c.devise, aide: c.aide })),
 		regles: p.regles.map((r) => ({ champ: r.champ, etape: r.etape, visibilite: r.visibilite })),
@@ -78,6 +92,35 @@ export function modifierNoeud(p: PropositionIa, cle: string, modification: Parti
 	return { ...p, noeuds: p.noeuds.map((n) => (n.cle === cle ? { ...n, ...modification } : n)) }
 }
 
+/**
+ * Le nom et la probabilité d'une étape (docs/SPEC-ia.md §14.7). Un libellé blanc vaut l'absence de surcharge : l'étape
+ * revient au nom de son nœud. Rien n'est comparé ici au nœud : c'est la base qui rend `null` une valeur égale (§14.3).
+ */
+export function modifierEtape(
+	p: PropositionIa,
+	cle: string,
+	modification: { readonly libelle?: string | null; readonly probabilite?: number | null },
+): PropositionIa {
+	return {
+		...p,
+		etapes: p.etapes.map((e) => {
+			if (e.noeud !== cle) return e
+			const libelle = modification.libelle === undefined ? e.libelle : modification.libelle?.trim() === '' ? null : modification.libelle
+			const probabilite = modification.probabilite === undefined ? e.probabilite : modification.probabilite
+			return { ...e, libelle: libelle ?? null, probabilite: probabilite ?? null }
+		}),
+	}
+}
+
+/**
+ * Le nom EFFECTIF d'une étape, partout où l'écran la nomme (docs/DESIGN_SYSTEM.md §5.52 bis) : son nom s'il est posé,
+ * sinon le libellé du nœud proposé, sinon celui du catalogue, sinon sa clé.
+ */
+export function nomEffectifEtape(p: PropositionIa, cle: string, catalogue: ReadonlyMap<string, NoeudDuCatalogueIa>): string {
+	const etape = p.etapes.find((e) => e.noeud === cle)
+	return etape?.libelle?.trim() || noeudPropose(p, cle)?.libelle || catalogue.get(cle)?.libelle || cle
+}
+
 /** L'étape initiale est UNIQUE : la désigner retire la marque des autres. */
 export function designerInitiale(p: PropositionIa, cle: string): PropositionIa {
 	return { ...p, etapes: p.etapes.map((e) => ({ ...e, initiale: e.noeud === cle })) }
@@ -86,9 +129,28 @@ export function designerInitiale(p: PropositionIa, cle: string): PropositionIa {
 /**
  * Un nœud proposé existe déjà au catalogue : l'étape le vise sans le redéclarer. Le nœud quitte la liste des
  * nœuds proposés ; l'étape reste, et vise désormais celui du catalogue.
+ *
+ * `CRM-113` (docs/SPEC-ia.md §14.7) : le nom et la probabilité que le nœud proposé portait passent sur l'étape quand ils
+ * diffèrent de ceux du catalogue — sans quoi le nom voulu partirait avec le nœud. Une valeur que l'étape porte déjà
+ * l'emporte : c'est son nom affiché.
  */
-export function utiliserNoeudDuCatalogue(p: PropositionIa, cle: string): PropositionIa {
-	return { ...p, noeuds: p.noeuds.filter((n) => n.cle !== cle) }
+export function utiliserNoeudDuCatalogue(p: PropositionIa, cle: string, duCatalogue?: NoeudDuCatalogueIa): PropositionIa {
+	const propose = noeudPropose(p, cle)
+	const sansNoeud = { ...p, noeuds: p.noeuds.filter((n) => n.cle !== cle) }
+	if (propose === undefined || duCatalogue === undefined) return sansNoeud
+	const libelle = propose.libelle.trim()
+	return {
+		...sansNoeud,
+		etapes: p.etapes.map((e) =>
+			e.noeud !== cle
+				? e
+				: {
+						...e,
+						libelle: e.libelle?.trim() || (libelle !== '' && libelle !== duCatalogue.libelle.trim() ? libelle : null),
+						probabilite: e.probabilite ?? (propose.probabilite !== duCatalogue.probabilite ? propose.probabilite : null),
+					},
+		),
+	}
 }
 
 /**

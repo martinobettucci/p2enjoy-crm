@@ -2,6 +2,9 @@
 // @verifies docs/SPEC-ia.md §13.1 (identité par clés : conservé, nouveau, retiré), §13.6 (le différentiel ; les
 //           affaires des étapes retirées) ; docs/DESIGN_SYSTEM.md §5.53 (le nom du workflow, le rang parmi les étapes
 //           conservées, une étape retirée vide qui ne paraît pas) ; décision 620
+// @verifies CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.4 (une étape conservée dont le nom ou la
+//           probabilité EFFECTIFS changent est modifiée ; une cible muette garde la surcharge vivante) ;
+//           docs/DESIGN_SYSTEM.md §5.52 bis ; décision 677
 
 import { describe, expect, it } from 'vitest'
 import type { PropositionIa } from './brouillon-ia'
@@ -158,5 +161,37 @@ describe('etapesRetireesOccupees', () => {
 			{ cle: 'relance', affaires: 9, destination: 'negociation' },
 			{ cle: 'perdu', affaires: 1, destination: null },
 		])
+	})
+})
+
+describe('CRM-113 T3 — le nom et la probabilité effectifs d’une étape (docs/SPEC-ia.md §14.4)', () => {
+	/** La composition vivante telle que la base la rend depuis `0102` : chaque étape porte son nom et sa probabilité. */
+	const NOMMEE: PropositionIa = {
+		...VIVANTE,
+		etapes: VIVANTE.etapes.map((e) => ({ ...e, libelle: e.noeud === 'relance' ? 'Relance client' : e.noeud, probabilite: 20 })),
+	}
+	const cible = (modif: (e: PropositionIa['etapes'][number]) => PropositionIa['etapes'][number]): PropositionIa => ({
+		...NOMMEE,
+		etapes: NOMMEE.etapes.map(modif),
+	})
+
+	it('un nom et une probabilité qui changent : l’étape est modifiée, avec ses deux attributs', () => {
+		const changements = differentiel(NOMMEE, cible((e) => (e.noeud === 'relance' ? { ...e, libelle: 'Rappel', probabilite: 30 } : e)))
+		expect(changements).toEqual([
+			{
+				genre: 'modification',
+				objet: { collection: 'etapes', cle: 'relance' },
+				attributs: [
+					{ code: 'nom_etape', avant: 'Relance client', apres: 'Rappel' },
+					{ code: 'probabilite', avant: 20, apres: 30 },
+				],
+			},
+		])
+	})
+
+	it('une cible muette — `null`, absente, blanche — garde la surcharge vivante : rien ne change', () => {
+		expect(differentiel(NOMMEE, cible((e) => ({ ...e, libelle: null, probabilite: null })))).toEqual([])
+		expect(differentiel(NOMMEE, cible(({ noeud, initiale }) => ({ noeud, initiale })))).toEqual([])
+		expect(differentiel(NOMMEE, cible((e) => ({ ...e, libelle: '  ' })))).toEqual([])
 	})
 })

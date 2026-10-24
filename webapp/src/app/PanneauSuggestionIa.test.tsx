@@ -9,6 +9,9 @@
 //           enregistre d'abord le remappage, puis annonce le point de retour), §13.4 (`PT409`) ; docs/DESIGN_SYSTEM.md
 //           §5.53 (précisions : libellé d'acceptation, type d'un champ conservé en texte, indication du libellé vide) ;
 //           décision 620
+// @verifies CRM-113 (docs/BACKLOG.md) tranche T3 — docs/SPEC-ia.md §14.7 (le nom et la probabilité de toute étape se
+//           corrigent et partent avec la correction ; « Utiliser le nœud du catalogue » garde le nom et l'annonce ; les
+//           défauts `native_field` et `step_probability_invalid` traduits) ; docs/DESIGN_SYSTEM.md §5.52 bis ; décision 677
 
 import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -248,7 +251,11 @@ describe('Relire et corriger', () => {
 		expect(screen.getByTestId('ia-demande').textContent).toBe(SUGGESTION.demande)
 		const etapes = await screen.findAllByTestId('ia-etape')
 		expect(within(etapes[3] as HTMLElement).getByText('Du catalogue')).toBeTruthy()
-		expect(within(etapes[3] as HTMLElement).getByText('Relance')).toBeTruthy()
+		// Révisé par `CRM-113` T3 (docs/DESIGN_SYSTEM.md §5.52 bis) : le nom de toute étape est un champ, vide tant qu'aucun
+		// nom n'est posé ; le libellé du nœud du catalogue en est l'exemple, et nomme toujours l'étape (son retrait le dit).
+		const nomEtape = within(etapes[3] as HTMLElement).getByLabelText('Nom de l’étape relance') as HTMLInputElement
+		expect([nomEtape.value, nomEtape.placeholder]).toEqual(['', 'Relance'])
+		expect(within(etapes[3] as HTMLElement).getByRole('button', { name: 'Retirer l’étape Relance' })).toBeTruthy()
 		expect(within(etapes[0] as HTMLElement).getByText('Nouveau nœud')).toBeTruthy()
 	})
 
@@ -558,3 +565,50 @@ describe('T3.c — relire une modification', () => {
 		expect(screen.getByTestId('ia-apercu')).toBeTruthy()
 	})
 })
+
+describe('CRM-113 T3 — le nom des étapes et les champs natifs (docs/DESIGN_SYSTEM.md §5.52 bis)', () => {
+	const g = (texte: string) => texte.replace(/« /g, '«\u00a0').replace(/ »/g, '\u00a0»')
+
+	it('native_field nomme l’information native par un mot ; une information inconnue n’affiche jamais son code', () => {
+		expect(phraseDefaut({ code: 'native_field', chemin: 'champs[0]', valeurs: { cle: 'montant', native: 'amount' } }))
+			.toBe(g('Le champ « montant » reprend le montant, déjà porté par l’affaire : retirez-le ou renommez-le.'))
+		expect(phraseDefaut({ code: 'native_field', chemin: 'champs[1]', valeurs: { cle: 'societe', native: 'organization' } }))
+			.toContain('reprend l’organisation')
+		const inconnue = phraseDefaut({ code: 'native_field', chemin: 'champs[2]', valeurs: { cle: 'x', native: 'vitesse' } })
+		expect(inconnue).toContain('une information de l’affaire')
+		expect(inconnue).not.toContain('vitesse')
+	})
+
+	it('step_probability_invalid nomme l’étape', () => {
+		expect(phraseDefaut({ code: 'step_probability_invalid', chemin: 'etapes[0].probabilite', valeurs: { cle: 'prospection' } }))
+			.toBe(g('La probabilité de l’étape « prospection » doit être comprise entre 0 et 100.'))
+	})
+
+	it('le nom et la probabilité d’une étape se corrigent, et partent avec la correction', async () => {
+		const { client, ecritures } = clientFactice()
+		const rappels = rendre({ client, ouverture: { type: 'suggestion', id: ID } })
+		await userEvent.type(await screen.findByLabelText('Nom de l’étape maquette'), 'Devis')
+		await userEvent.type(screen.getByLabelText('Probabilité de l’étape maquette, en %'), '45')
+		expect(screen.getByRole('button', { name: 'Retirer l’étape Devis' })).toBeTruthy()
+		await userEvent.click(screen.getByRole('button', { name: 'Enregistrer la correction' }))
+		await waitFor(() => expect(rappels.annoncer).toHaveBeenCalledWith('Correction enregistrée, sans défaut.'))
+		const envoi = ecritures.find((e) => e.verbe === 'insert')?.charge as { proposition: PropositionIa }
+		expect(envoi.proposition.etapes[1]).toEqual({ noeud: 'maquette', initiale: false, libelle: 'Devis', probabilite: 45 })
+		expect(envoi.proposition.etapes[0]).toEqual({ noeud: 'prise-de-contact', initiale: true, libelle: null, probabilite: null })
+	})
+
+	it('« Utiliser le nœud du catalogue » garde le nom du nœud proposé et l’annonce', async () => {
+		const redeclare: PropositionIa = {
+			...PROPOSITION,
+			noeuds: [...PROPOSITION.noeuds, { cle: 'relance', libelle: 'Relance client', nature: 'open', probabilite: 25 }],
+		}
+		const { client } = clientFactice({ revisions: [revision(1, [], redeclare)] })
+		const rappels = rendre({ client, ouverture: { type: 'suggestion', id: ID } })
+		await userEvent.click(await screen.findByRole('button', { name: 'Utiliser le nœud du catalogue' }))
+		expect(rappels.annoncer).toHaveBeenCalledWith(g('L’étape vise le nœud « relance » du catalogue et garde son nom « Relance client ».'))
+		const nom = screen.getByLabelText('Nom de l’étape relance') as HTMLInputElement
+		expect([nom.value, (screen.getByLabelText('Probabilité de l’étape relance, en %') as HTMLInputElement).value]).toEqual(['Relance client', '25'])
+		expect(screen.queryByLabelText('Libellé du nœud relance')).toBeNull()
+	})
+})
+
