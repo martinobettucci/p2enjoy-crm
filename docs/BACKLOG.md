@@ -16085,7 +16085,8 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
 - [ ] **T5** — révision de la décision 679 (arbitrages du responsable du 2026-10-24), avant toute livraison : les clés
       de l'étape deviennent `label` et `probability`, l'enveloppe des deux codes nouveaux `{key}` et `{key, native}` ;
       les libellés se comparent sans la casse, partout (surcharge, surcharge vivante gardée, différentiel, « Utiliser le
-      nœud du catalogue »). `0102` révisée sur place, fonction `ia`, simulateur, écran, seed ; pgTAP, API, unitaires,
+      nœud du catalogue »). Migration `0103` (`0102` n'est pas modifiée, `docs/DAT.md` §3.2 bis), fonction `ia`,
+      simulateur, écran, seed ; pgTAP, API, unitaires,
       E2E et captures rejoués ; `docs/SPEC-ia.md` §14 révisé avant le code.
 
 ### CRM-114 — Organisations : les créer et les modifier depuis l'écran `[~]`

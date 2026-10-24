@@ -33460,9 +33460,16 @@ lecture intégrale du fichier, sans commande avant ; on ne vérifie sa présence
   - le différentiel de l'écran ne compte pas l'étape comme modifiée ;
   - « Utiliser le nœud du catalogue » ne reporte pas un libellé qui ne diffère du catalogue que par la casse.
 - La question du connecteur MCP reste tranchée : **non**, la génération par IA n'y est pas exposée.
-- **Où.** La migration `0102` n'est pas livrée en production (`docs/PROD_MIGRATIONS.md` §3.2). Elle est donc
+- **Où.** La migration `0102` n'est pas livrée en production (`docs/PROD_MIGRATIONS.md` §3.2). Elle devait donc être
   **révisée sur place**, plutôt que recouverte par une migration nouvelle qui ferait passer le format par deux formes
   jamais livrées. Révisés en même temps : la fonction `ia`, le simulateur, l'écran, le seed, et les preuves de T1 à T3.
+  **Corrigé le même jour, à l'application** : le registre des migrations a refusé `0102` modifiée (« sa correction est
+  une migration nouvelle »). C'est la règle du `docs/DAT.md` §3.2 bis, que cette décision avait omise : une migration
+  appliquée, même aux seules bases de développement, n'est plus jamais modifiée. Une session interactive parallèle qui
+  a appliqué `0102` buterait sur le même refus. **Retenu** : `0102` reste telle qu'elle a été committée, et la révision
+  est la migration **`0103`**, qui reprend les quatre fonctions concernées. Les deux migrations se livrent ensemble.
+  **Écarté** : réviser `0102` et reconstruire les bases par `./resetMe.sh`, qui imposerait la reconstruction à toute
+  base de développement existante.
 
 **2. Livraison de `CRM-113` en production (T4) : le responsable s'en charge.**
 

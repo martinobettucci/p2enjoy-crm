@@ -2002,6 +2002,21 @@ des spécifications antérieures gardent leur sens — le refus d'une suppressio
 - **`app.document_cible_ia`** (modification) et **`public.accepter_suggestion_ia`** (création) écrivent
   `workflow_steps.label_override` et `probability_override` par `app.ai_step_overrides`.
 
+### Migration `0103` — tout en anglais, la casse ignorée (`CRM-113` T5, décision 679 ; livrée en développement le 2026-10-24)
+
+`docs/SPEC-ia.md` §14.3 à §14.5, révisés par les arbitrages du responsable. **`0102` n'est pas modifiée** : appliquée
+aux bases de développement, le registre la refuserait (`docs/DAT.md` §3.2 bis). Aucune table, aucune donnée ne change ;
+quatre fonctions de `0102` sont reprises à l'identique, aux seuls changements suivants près :
+
+- **`app.ai_step_overrides`** lit `label` et `probability` sur l'étape. Les libellés se comparent **sans la casse** :
+  égal au nœud à la casse près, rien ne surcharge ; une étape conservée dont la surcharge vivante ne diffère du libellé
+  proposé que par la casse garde sa surcharge telle quelle.
+- **`app.proposition_ia_bien_formee`** admet `label` (texte ou `null`) et `probability` (nombre ou `null`) sur une
+  étape, au lieu de `libelle` et `probabilite`.
+- **`app.defauts_proposition_ia`** : `step_probability_invalid` lit `probability` (chemin `etapes[i].probability`) et
+  rend `{key}` ; `native_field` rend `{key, native}`. Les trente-quatre codes existants gardent `cle` (INC-286).
+- **`public.proposition_du_workflow`** rend `label` et `probability` pour chaque étape.
+
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)

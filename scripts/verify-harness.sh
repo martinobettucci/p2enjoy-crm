@@ -691,7 +691,12 @@ FICHIERS_SQL_ATTENDUS=93
 # tuées (surcharge conservée perdue, casse ignorée, libellé non contrôlé, champ vivant relevé, nom effectif perdu, forme
 # non contrôlée, égalité de probabilité ignorée). 3909 + 32 = 3941, MESURÉ — « 93 fichiers, 3941 assertions, aucune
 # anomalie ».
-ASSERTIONS_ATTENDUES=3941
+# **3944 depuis `CRM-113` T5, 2026-10-24** (décision 679) : `0093_generateur_ia_affaire` passe à **35** assertions — une
+# seconde modification où une différence de casse seule garde la surcharge vivante (deux assertions et l'acceptation) ;
+# la « casse ignorée » tuée par T1 est désormais la règle, et deux mutations nouvelles sont tuées (comparaison au nœud
+# casse comprise : quatre échecs ; surcharge vivante non gardée : deux échecs). 3941 + 3 = 3944, MESURÉ hors
+# `0020_pg_cron`, dont le battement horaire manquait au moment de la mesure (« 93 fichiers, 1 en échec »).
+ASSERTIONS_ATTENDUES=3944
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

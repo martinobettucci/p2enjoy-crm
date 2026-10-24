@@ -1,10 +1,12 @@
 -- @verifies CRM-113 (docs/BACKLOG.md) — tranche T1 : le générateur de workflow connaît les champs natifs de l'affaire et
 --           réutilise le catalogue sous un libellé surchargé — la base
--- @verifies docs/SPEC-ia.md §14.3 (la forme de `libelle` et `probabilite` d'une étape, `step_probability_invalid`, la
+-- @verifies CRM-113 tranche T5 — révision de la décision 679 : clés `label` et `probability`, enveloppe `key` des
+--           codes nouveaux, libellés comparés sans la casse (création, modification, surcharge vivante gardée)
+-- @verifies docs/SPEC-ia.md §14.3 (la forme de `label` et `probability` d'une étape, `step_probability_invalid`, la
 --           règle d'écriture des surcharges à la création et à la modification), §14.4 (la composition vivante rend
 --           les noms effectifs), §14.5 (`native_field` par la clé et par le libellé normalisé, comparaison exacte, un
 --           champ vivant conservé épargné ; `app.reserved_native_fields()`) ; docs/SCHEMA.md « Migration `0102` » ;
---           docs/JOURNAL.md décisions 646 et 677
+--           docs/JOURNAL.md décisions 646, 677 et 679
 -- @verifies CLAUDE.md §10 (la règle d'écriture n'est pas exposée aux clients ; la liste réservée ne l'est pas à `anon`)
 --
 -- Tout se joue dans une transaction annulée, sur un espace créé ici : la création, puis une modification du
@@ -14,7 +16,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(32);
+select plan(35);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -49,13 +51,13 @@ insert into public.workflow_nodes_catalog (workspace_id, key, label, kind, color
 	(pg_temp.id('W'), 'relance', 'Relance', 'open', 'brand', 20);
 
 -- Une création : une étape du catalogue renommée, une étape du catalogue sous son propre nom (espaces de bord
--- compris), une étape d'un nœud proposé dont le libellé ne diffère que par la casse.
+-- compris), une étape d'un nœud proposé dont le libellé ne diffère que par la casse (décision 679 : aucune surcharge).
 create or replace function pg_temp.base() returns jsonb language sql immutable as $$
 	select '{"version": 1, "workflow": {"nom": "Ventes 0093"},
 	  "noeuds": [{"cle": "perdu-x", "libelle": "Perdu", "nature": "lost", "probabilite": 0}],
-	  "etapes": [{"noeud": "prospection", "initiale": true, "libelle": "Qualification", "probabilite": 40},
-	             {"noeud": "gagne", "initiale": false, "libelle": "  Gagné  ", "probabilite": 100},
-	             {"noeud": "perdu-x", "initiale": false, "libelle": "perdu"}],
+	  "etapes": [{"noeud": "prospection", "initiale": true, "label": "Qualification", "probability": 40},
+	             {"noeud": "gagne", "initiale": false, "label": "  Gagné  ", "probability": 100},
+	             {"noeud": "perdu-x", "initiale": false, "label": "perdu"}],
 	  "transitions": [{"de": "prospection", "vers": "gagne", "libelle": "Gagner", "commentaire_requis": false},
 	                  {"de": "prospection", "vers": "perdu-x", "libelle": "Perdre", "commentaire_requis": true}],
 	  "champs": [{"cle": "canal", "libelle": "Canal", "type": "text", "choix": null, "devise": null, "aide": null}],
@@ -98,32 +100,32 @@ select ok(
 	'4 — la règle d''écriture des surcharges n''est appelable que par les gestes d''acceptation');
 
 -- =============================================================================================
--- 2. La forme : `libelle` et `probabilite` d'une étape, facultatifs
+-- 2. La forme : `label` et `probability` d'une étape, facultatifs
 -- =============================================================================================
 
 select is(pg_temp.codes(pg_temp.base()), '', '5 — la proposition de base, qui porte les deux clés, ne porte aucun défaut');
 select is(
-	pg_temp.codes(jsonb_set(pg_temp.base(), '{etapes}', (select jsonb_agg(e - 'libelle' - 'probabilite' order by o)
+	pg_temp.codes(jsonb_set(pg_temp.base(), '{etapes}', (select jsonb_agg(e - 'label' - 'probability' order by o)
 		from jsonb_array_elements(pg_temp.base() -> 'etapes') with ordinality x(e, o)))),
 	'', '6 — une révision `version: 1` antérieure, sans les deux clés, reste valide');
 select is(
-	pg_temp.codes(jsonb_set(jsonb_set(pg_temp.base(), '{etapes,0,libelle}', 'null'), '{etapes,0,probabilite}', 'null')),
+	pg_temp.codes(jsonb_set(jsonb_set(pg_temp.base(), '{etapes,0,label}', 'null'), '{etapes,0,probability}', 'null')),
 	'', '7 — `null` est admis pour les deux clés');
-select throws_ok($$select app.defauts_proposition_ia(pg_temp.id('W'), jsonb_set(pg_temp.base(), '{etapes,0,libelle}', '12'))$$,
+select throws_ok($$select app.defauts_proposition_ia(pg_temp.id('W'), jsonb_set(pg_temp.base(), '{etapes,0,label}', '12'))$$,
 	'22023', 'proposition mal formee', '8 — un libellé d''étape qui n''est pas un texte est une forme invalide');
-select throws_ok($$select app.defauts_proposition_ia(pg_temp.id('W'), jsonb_set(pg_temp.base(), '{etapes,0,probabilite}', '"40"'))$$,
+select throws_ok($$select app.defauts_proposition_ia(pg_temp.id('W'), jsonb_set(pg_temp.base(), '{etapes,0,probability}', '"40"'))$$,
 	'22023', 'proposition mal formee', '9 — une probabilité d''étape qui n''est pas un nombre est une forme invalide');
 
 -- =============================================================================================
 -- 3. `step_probability_invalid`
 -- =============================================================================================
 
-select is(app.defauts_proposition_ia(pg_temp.id('W'), jsonb_set(pg_temp.base(), '{etapes,0,probabilite}', '140')),
-	'[{"code": "step_probability_invalid", "chemin": "etapes[0].probabilite", "valeurs": {"cle": "prospection"}}]'::jsonb,
+select is(app.defauts_proposition_ia(pg_temp.id('W'), jsonb_set(pg_temp.base(), '{etapes,0,probability}', '140')),
+	'[{"code": "step_probability_invalid", "chemin": "etapes[0].probability", "valeurs": {"key": "prospection"}}]'::jsonb,
 	'10 — step_probability_invalid : son chemin et la clé de l''étape');
-select is(pg_temp.codes(jsonb_set(pg_temp.base(), '{etapes,2,probabilite}', '-1')), 'step_probability_invalid',
+select is(pg_temp.codes(jsonb_set(pg_temp.base(), '{etapes,2,probability}', '-1')), 'step_probability_invalid',
 	'11 — step_probability_invalid, sous zéro');
-select is(pg_temp.codes(jsonb_set(jsonb_set(pg_temp.base(), '{etapes,1,initiale}', 'true'), '{etapes,0,probabilite}', '101')),
+select is(pg_temp.codes(jsonb_set(jsonb_set(pg_temp.base(), '{etapes,1,initiale}', 'true'), '{etapes,0,probability}', '101')),
 	'etape_initiale,step_probability_invalid', '12 — rendu APRÈS etape_initiale');
 
 -- =============================================================================================
@@ -132,11 +134,11 @@ select is(pg_temp.codes(jsonb_set(jsonb_set(pg_temp.base(), '{etapes,1,initiale}
 
 select is(app.defauts_proposition_ia(pg_temp.id('W'), pg_temp.plus(pg_temp.base(), 'champs',
 		'{"cle": "montant", "libelle": "Montant", "type": "money", "choix": null, "devise": "EUR", "aide": null}')),
-	'[{"code": "native_field", "chemin": "champs[1]", "valeurs": {"cle": "montant", "native": "amount"}}]'::jsonb,
+	'[{"code": "native_field", "chemin": "champs[1]", "valeurs": {"key": "montant", "native": "amount"}}]'::jsonb,
 	'13 — native_field par la clé : son chemin, la clé et l''information native');
 select is(app.defauts_proposition_ia(pg_temp.id('W'), pg_temp.plus(pg_temp.base(), 'champs',
 		'{"cle": "client-final", "libelle": "  Société ", "type": "text", "choix": null, "devise": null, "aide": null}')),
-	'[{"code": "native_field", "chemin": "champs[1]", "valeurs": {"cle": "client-final", "native": "organization"}}]'::jsonb,
+	'[{"code": "native_field", "chemin": "champs[1]", "valeurs": {"key": "client-final", "native": "organization"}}]'::jsonb,
 	'14 — native_field par le libellé mis à la forme des clés (« Société » → societe)');
 select is(pg_temp.codes(pg_temp.plus(pg_temp.plus(pg_temp.base(), 'champs',
 		'{"cle": "montant-ht", "libelle": "Montant HT", "type": "number", "choix": null, "devise": null, "aide": null}'), 'champs',
@@ -162,19 +164,21 @@ select is(pg_temp.surcharges(pg_temp.m('WF'), 'prospection'), 'Qualification|40'
 	'17 — une étape du catalogue renommée : son nom et sa probabilité en surcharge');
 select is(pg_temp.surcharges(pg_temp.m('WF'), 'gagne'), '∅|∅',
 	'18 — le libellé et la probabilité du nœud, espaces de bord retirés : aucune surcharge');
-select is(pg_temp.surcharges(pg_temp.m('WF'), 'perdu-x'), 'perdu|∅',
-	'19 — un libellé qui ne diffère que par la casse surcharge ; une probabilité absente ne surcharge rien');
+-- RÉVISÉE PAR LA DÉCISION 679 : la décision 677 faisait surcharger un libellé qui ne diffère que par la casse ; le
+-- responsable l'a refusé (« juste changer la casse ne peut pas suffire à faire une nouvelle entrée »).
+select is(pg_temp.surcharges(pg_temp.m('WF'), 'perdu-x'), '∅|∅',
+	'19 — un libellé qui ne diffère que par la casse ne surcharge rien ; une probabilité absente non plus');
 
 -- =============================================================================================
 -- 6. La composition vivante rend les noms effectifs
 -- =============================================================================================
 
 select is(
-	(select jsonb_agg(jsonb_build_object('noeud', e ->> 'noeud', 'libelle', e ->> 'libelle', 'probabilite', (e ->> 'probabilite')::numeric::int) order by o)
+	(select jsonb_agg(jsonb_build_object('noeud', e ->> 'noeud', 'label', e ->> 'label', 'probability', (e ->> 'probability')::numeric::int) order by o)
 	   from jsonb_array_elements(public.proposition_du_workflow(pg_temp.m('WF')) -> 'etapes') with ordinality x(e, o)),
-	'[{"noeud": "prospection", "libelle": "Qualification", "probabilite": 40},
-	  {"noeud": "gagne", "libelle": "Gagné", "probabilite": 100},
-	  {"noeud": "perdu-x", "libelle": "perdu", "probabilite": 0}]'::jsonb,
+	'[{"noeud": "prospection", "label": "Qualification", "probability": 40},
+	  {"noeud": "gagne", "label": "Gagné", "probability": 100},
+	  {"noeud": "perdu-x", "label": "Perdu", "probability": 0}]'::jsonb,
 	'20 — chaque étape porte son nom et sa probabilité effectifs, surcharge sinon nœud');
 select is(pg_temp.codes(public.proposition_du_workflow(pg_temp.m('WF')), pg_temp.m('WF')), '',
 	'21 — la composition vivante, relue comme une cible, ne porte aucun défaut');
@@ -196,9 +200,9 @@ select is(pg_temp.codes(public.proposition_du_workflow(pg_temp.m('WF')), null), 
 -- =============================================================================================
 
 create temporary table cible as select public.proposition_du_workflow(pg_temp.m('WF')) as p;
-update cible set p = jsonb_set(p, '{etapes,0}', (p -> 'etapes' -> 0) - 'libelle' || '{"probabilite": null}');
-update cible set p = jsonb_set(jsonb_set(p, '{etapes,1,libelle}', '"Victoire"'), '{etapes,1,probabilite}', '90');
-update cible set p = jsonb_set(p, '{etapes,2,libelle}', '"Perdu"');
+update cible set p = jsonb_set(p, '{etapes,0}', (p -> 'etapes' -> 0) - 'label' || '{"probability": null}');
+update cible set p = jsonb_set(jsonb_set(p, '{etapes,1,label}', '"Victoire"'), '{etapes,1,probability}', '90');
+update cible set p = jsonb_set(p, '{etapes,2,label}', '"PERDU"');
 update cible set p = jsonb_set(p, '{etapes}', (p -> 'etapes') || '[{"noeud": "relance", "initiale": false}]');
 update cible set p = jsonb_set(p, '{transitions}', (p -> 'transitions')
 	|| '[{"de": "prospection", "vers": "relance", "libelle": "Relancer", "commentaire_requis": false}]');
@@ -219,16 +223,38 @@ select is(pg_temp.surcharges(pg_temp.m('WF'), 'prospection'), 'Qualification|40'
 select is(pg_temp.surcharges(pg_temp.m('WF'), 'gagne'), 'Victoire|90',
 	'28 — une étape conservée dont la cible diffère du nœud reçoit la surcharge');
 select is(pg_temp.surcharges(pg_temp.m('WF'), 'perdu-x'), '∅|∅',
-	'29 — le libellé du nœud proposé retire la surcharge');
+	'29 — le libellé du nœud, à la casse près (« PERDU »), ne surcharge rien');
 select is(pg_temp.surcharges(pg_temp.m('WF'), 'relance'), '∅|∅',
 	'30 — une étape nouvelle sans libellé ni probabilité ne surcharge rien');
 select is(
-	(select string_agg(e ->> 'libelle', ',' order by o)
+	(select string_agg(e ->> 'label', ',' order by o)
 	   from jsonb_array_elements(public.proposition_du_workflow(pg_temp.m('WF')) -> 'etapes') with ordinality x(e, o)),
 	'Qualification,Victoire,Perdu,Relance', '31 — relue, la composition nomme les étapes comme l''écran les montrera');
 select is(
 	(select key || ':' || (archived_at is null)::text from public.form_fields where workflow_id = pg_temp.m('WF') and key = 'montant'),
 	'montant:true', '32 — le champ vivant qui doublonnait est conservé, actif : l''unité n''y touche pas (§14.9)');
+
+-- =============================================================================================
+-- 8. Une seconde modification : une différence de casse seule ne change pas une surcharge vivante (décision 679)
+-- =============================================================================================
+
+create temporary table cible2 as select public.proposition_du_workflow(pg_temp.m('WF')) as p;
+update cible2 set p = jsonb_set(p, '{etapes,0,label}', '" qualification "');
+update cible2 set p = jsonb_set(p, '{etapes,1,label}', '"VICTOIRE"');
+grant select on cible2 to authenticated;
+
+select pg_temp.endosser(pg_temp.id('ADM'));
+with cree as (insert into public.suggestions_ia (workspace_id, workflow_id, portee, demande)
+              values (pg_temp.id('W'), pg_temp.m('WF'), 'etapes', 'Casse 0093') returning id)
+insert into mesures select 'SK', id::text from cree;
+insert into public.suggestions_ia_revisions (suggestion_id, origine, proposition) values (pg_temp.m('SK'), 'correction', (select p from cible2));
+select is(public.accepter_suggestion_ia(pg_temp.m('SK')), pg_temp.m('WF'), '33 — l''administratrice accepte la seconde modification');
+reset role;
+
+select is(pg_temp.surcharges(pg_temp.m('WF'), 'prospection'), 'Qualification|40',
+	'34 — « qualification » face à la surcharge vivante « Qualification » : elle est gardée telle quelle');
+select is(pg_temp.surcharges(pg_temp.m('WF'), 'gagne'), 'Victoire|90',
+	'35 — « VICTOIRE » face à « Victoire » : la surcharge vivante est gardée, aucune nouvelle entrée');
 
 select * from finish();
 rollback;
