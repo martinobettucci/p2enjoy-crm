@@ -7532,6 +7532,22 @@ de son alignement reste posée au responsable. **Vérifié le 2026-10-24** : `./
 « 52 vérifications, aucune anomalie », dont l'objet relu dans le bucket MinIO. **Statut : corrigée pour le
 développement ; ouverte pour la cellule Spark.**
 
+
+**Sources mesurées le 2026-10-24, en vue de la décision pour la cellule Spark.**
+- **Docker Hub** : `minio/minio` et `minio/mc` n'existent plus (« object not found »). `bitnami/minio` ne rend aucune étiquette
+  publique. `bitnamilegacy/minio` s'arrête à `2025.7.23`, mise à jour le 2025-08-19, et ne bouge plus.
+- **MinIO lui-même** : `dl.min.io` rend `410`, les binaires ne sont plus distribués. Le README du dépôt annonce « THIS
+  REPOSITORY IS NO LONGER MAINTAINED » et une distribution « source only ». Dernière étiquette :
+  `RELEASE.2025-10-15T17-29-55Z` ; dernier commit sur la branche principale : 2026-02-12. La suite officielle est AIStor,
+  édition commerciale (AIStor Free, sous licence gratuite, n'a pas été examinée). Construire depuis les sources est
+  possible (AGPLv3), mais c'est construire un code que plus personne ne corrige en amont.
+- **Chainguard** : `cgr.dev/chainguard/minio:latest` et `cgr.dev/chainguard/minio-client:latest` se tirent sans
+  authentification. L'image serveur date du 2026-10-23 (`RELEASE.2026-10-23T20-06-51Z`, Go 1.27.3) : elle est
+  reconstruite en continu. Elle tourne en utilisateur `65532`, sans shell ni `mc` dans l'image serveur. **Essai** : sur
+  une COPIE du volume de développement, écrit par la version d'avril 2025 (propriétaire passé à `65532`), le serveur
+  démarre, `mc admin info` répond, et les objets du bucket se listent et se relisent à l'identique (taille et ETag). Le
+  volume d'origine n'a pas été touché ; la copie a été supprimée. **Non vérifié** : les conditions de gratuité de
+  Chainguard dans la durée, pour une étiquette autre que `latest`.
 ### INC-291 — `./runDev.sh` s'arrête sous Compose 5 : `bake` exige un droit pour lire le paquet CA monté en secret
 
 *Relevé le 2026-10-24 par la même session.* **Constat, mesuré** sous Docker Compose `v5.6.1` et buildx `v0.38.1` : la
