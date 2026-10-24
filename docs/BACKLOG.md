@@ -16062,10 +16062,16 @@ commune et un bloc par rattachement ; coûts, recettes et temps sont comptés un
 décision 658 — `card_placements`, `attach_card`, `detach_card`.
 
 - [x] **Spécification**, validée le 2026-10-24 (décision 662) : `docs/SPEC-rattachements.md` §1 à §16.
-- [ ] **T1 — mesures, sans code livré** (§2, §4, §14) : liste exacte des fonctions, déclencheurs, politiques et
+- [~] **T1 — mesures, sans code livré** (§2, §4, §14) : liste exacte des fonctions, déclencheurs, politiques et
       appelants qui lisent une colonne quittant `cards` ; coût de la nouvelle RLS par `EXPLAIN ANALYZE` du board et de la
       liste, sur une copie jetable du seed. Résultats consignés dans la spécification ; tout écart à une **[proposition]**
       revient au responsable.
+      *Mesuré le 2026-10-24 sur une base jetable, supprimée ensuite* (`docs/SPEC-rattachements.md` §2 bis, scripts
+      `docs/mesures/CRM-111/`) : **31 fonctions** cassent au retrait des colonnes (`plpgsql_check`), plus trois politiques,
+      une clé et un déclencheur ; **266 fichiers** appellent `cards` ou une fonction touchée. **La politique livrée coûte
+      ~0,25 ms par ligne** (5 s pour un board de 20 000 affaires) ; la forme proposée au §4 la double ; une forme
+      optimisée, de même sémantique, la ramène à 16 ms (livrée) et 47 ms (rattachements). **Reste avant `[x]`** : deux
+      arbitrages du responsable (§2 bis.4).
 - [ ] **T2 — bascule, en un seul changement** (§3, §4, §5, §10) : migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques, retrait des colonnes de `cards` ; réécriture des fonctions du

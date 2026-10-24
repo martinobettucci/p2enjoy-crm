@@ -77,6 +77,123 @@ chaque fonction et rend la liste exacte, **mesurée**, de celles qui changent.
   `Rentabilite`, `BlocRentabiliteCard`, `BlocSequenceCard`.
 - **Volume** : 41 affaires dans la base de développement seedée.
 
+## 2 bis. Mesures de la tranche T1 — 2026-10-24, base jetable
+
+Mesurées sur `crm111_mesure`, copie par `pg_dump` de la base de développement dans le même conteneur. La copie a été
+supprimée ensuite, et la base de développement n'a reçu aucune écriture. Scripts : `docs/mesures/CRM-111/`.
+
+### 2 bis.1 Ce que le retrait des colonnes casse — relevé exact
+
+Les treize colonnes du §3.2 sont retirées de `cards` dans une transaction annulée. `plpgsql_check` contrôle ensuite
+chaque fonction plpgsql de `public` et `app`, déclencheurs compris, et chaque fonction SQL est recréée telle quelle.
+
+**Dépendances déclarées emportées par le retrait** : les trois politiques de `cards`, la clé
+`card_field_values_card_id_workflow_id_fkey`, et le déclencheur `card_events_apres_maj_sommeil`. Aucune vue n'en
+dépend, ni la colonne `search_tsv`.
+
+**31 fonctions cassent** (contre une erreur sur la copie intacte, hors de propos) :
+
+| Groupe | Fonctions |
+|---|---|
+| Droits | `app.can_read_card_pour`, `app.can_write_card`, `public.ecriture_permise` (colonne calculée) |
+| Déclencheurs de `cards` | `app.card_events_apres_insertion_card`, `app.card_events_apres_maj_card`, `app.cards_attribuer_position`, `app.cards_restauration_verifier_parent` |
+| Gestes | `creer_affaire`, `move_card`, `move_card_to_channel`, `snooze_card`, `wake_card`, `change_channel_workflow`, `plan_card_remapping`, `app.appliquer_composition` |
+| Lectures métier | `cards_figees`, `entonnoir_conversion`, `rentabilite_affaires`, `temps_valorise`, `recherche_globale`, `occupation_du_workflow`, `previsualiser_exigence`, `app.catalogue_refuser_archivage_noeud_occupe`, `app.defauts_proposition_ia` |
+| Messagerie | `chemin_dossier_card`, `inbox_arborescence`, `rendre_modele_email`, `queue_outbound_email`, `classify_message`, `classer_message_automatiquement`, `app.card_par_adresse` |
+
+**Ce que le relevé textuel du §2 avait mal vu.**
+- Il manquait quatre fonctions : les deux déclencheurs de timeline, `app.cards_restauration_verifier_parent` et
+  `public.ecriture_permise`.
+- D'autres qu'il citait ne cassent pas directement : `armer_sequence_relance`, `app.mail_template_variables`,
+  `app.relancer_cards_figees`, `app.executer_sequences_relance`, `restore_workflow_version`. Elles changent pourtant en
+  T2 ou T6 : les deux premières par la décision 657, les relances parce qu'elles passent par `cards_figees()`.
+
+**Hors de propos, consigné pour ne pas le reprendre** : `plpgsql_check` signale « `attempts` is ambiguous » dans
+`reserver_envois` dès la copie intacte. Exécutée sur un envoi réel de la copie, la fonction réserve la ligne sans
+erreur : c'est un faux positif de l'analyse statique, pas un défaut.
+
+### 2 bis.2 Les appelants dans le dépôt
+
+Fichiers qui lisent `cards` par PostgREST ou appellent l'une des fonctions touchées. La lecture et l'appel se
+recoupent, d'où le total.
+
+| Zone | Fichiers |
+|---|---|
+| `webapp/src` | 79 |
+| `e2e` | 104 |
+| `supabase/tests` (pgTAP) | 37, dont 35 lisent `cards` directement, sur 92 |
+| `scripts` | 27 |
+| `mcp` | 14 |
+| `mail-sync` | 4 |
+| seed (`supabase/seed/apply-seed.sh`) | 1 |
+| **Total** | **266** |
+
+Aucune fonction edge n'est concernée. C'est le périmètre de la bascule T2 (décision 661).
+
+### 2 bis.3 Le coût de la RLS — la politique livrée paie déjà à chaque ligne
+
+Les requêtes mesurées sont celles du produit : `COLONNES_CARD_BOARD`, et la page de liste de `liste-cards.ts`. Elles
+sont exécutées sous le rôle `authenticated` et les claims de trois profils du seed : l'administratrice, le business
+developer, la lectrice. Le volume synthétique est concentré dans le channel « Maintenance », autant dans les autres
+channels. Valeurs en millisecondes.
+
+| Volume par channel | Requête | Livrée | Livrée optimisée | Rattachements | Rattachements optimisés |
+|---|---|---|---|---|---|
+| 27 (seed) | board | 7 | — | 20 | — |
+| 2 027 | board | 542 | 7 | 1 705 | 20 |
+| 2 027 | liste, page de 50 | 516 | 7 | 1 724 | 19 |
+| 2 027 | fiche | 2 | 6 | 2 | 13 |
+| 20 027 | board | 5 133 | 16 | 11 381 | 47 |
+| 20 027 | liste, page de 50 | 5 073 | 14 | 11 250 | 45 |
+| 20 027 | recherche | 10 213 | 13 | 11 989 | 28 |
+| 20 027 | fiche | 4 | 10 | 3 | 26 |
+
+À 2 027 lignes : médiane de cinq exécutions ; à 20 027 lignes : une exécution. Les trois profils donnent les mêmes
+valeurs à quelques pour cent près. Toutes les variantes rendent **les mêmes lignes**.
+
+**Constat 1 — la politique livrée coûte environ 0,25 ms par ligne lue**, parce que `app.can_read_channel(channel_id)`
+est évaluée **à chaque ligne**. Un board de 2 000 affaires coûte une demi-seconde, et un de 20 000 en coûte cinq. C'est
+vrai **aujourd'hui**, sans rattachement. Avec 41 affaires dans le seed, rien ne le montre encore.
+
+**Constat 2 — la forme proposée au §4 double ce coût** : une fonction `security definer` par ligne, qui relit les
+rattachements et appelle encore `app.can_read_channel`.
+
+**Constat 3 — la forme optimisée le rend presque constant.**
+- La liste des channels lisibles par l'appelant est calculée **une fois** par requête, par `app.readable_channel_ids()`
+  (`security definer`), qui applique `app.can_read_channel` à chaque channel de l'espace.
+- La politique compare chaque ligne à cette liste : `channel_id in (select unnest(app.readable_channel_ids()))`. Pour
+  `cards`, elle prend la forme `id in (select card_id from card_placements where channel_id in (…))`.
+- La **sémantique est identique**, puisque la même fonction décide, et les lignes rendues le confirment. Le surcoût fixe
+  d'environ 5 ms (le calcul de la liste) se voit sur la fiche ; il est négligeable sur une liste.
+
+**Variante écartée** : une sous-requête corrélée (`exists (… where p.card_id = cards.id and p.channel_id in (…))`)
+recalcule la liste à chaque ligne : 4,4 s pour un board de 2 027 affaires.
+
+### 2 bis.4 Ce que les mesures changent à la spécification — soumis au responsable
+
+- **Le §4 proposait** que la politique de `cards` appelle une fonction `security definer` par ligne. La mesure la donne
+  2,2 fois plus lente que la politique livrée, déjà linéaire. **Proposition révisée** : les politiques de lecture de
+  `card_placements` et de `cards` prennent la forme optimisée du §2 bis.3. **À arbitrer.**
+- **Le coût par ligne de la politique livrée** dépasse `CRM-111` : `card_field_values`, `card_events` et les autres
+  tables filles appellent `app.can_read_card` à chaque ligne. **À arbitrer** : le traiter avant `CRM-111`, dans sa
+  tranche T2 pour les seules tables qu'elle réécrit, ou plus tard.
+
+### 2 bis.5 Mode opératoire
+
+```bash
+docker exec p2enjoy-db psql -U supabase_admin -d postgres -c 'create database crm111_mesure'
+docker exec p2enjoy-db bash -c 'pg_dump -U supabase_admin -d postgres -Fc --exclude-schema=cron > /tmp/m.dump \
+  && pg_restore -U supabase_admin -d crm111_mesure /tmp/m.dump; rm -f /tmp/m.dump'   # seules les erreurs cron sont attendues
+docker cp docs/mesures/CRM-111/. p2enjoy-db:/tmp/mesures/
+docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/01-cron-factice.sql
+docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/02-fonctions-cassees.sql
+docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -v vol=2000 -v reps=5 -f /tmp/mesures/03-cout-rls.sql
+docker exec p2enjoy-db psql -U supabase_admin -d postgres -c 'drop database crm111_mesure'
+```
+
+`supabase_admin` est nécessaire : `postgres` n'est pas superutilisateur dans l'image Supabase. Annoncer la copie aux
+autres sessions, qui partagent le conteneur.
+
 ## 3. Le modèle
 
 ### 3.1 `public.card_placements` — table nouvelle

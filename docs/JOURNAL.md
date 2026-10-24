@@ -33192,3 +33192,22 @@ reste dans les lectures de contact — un attribut du contact, que l'écran mont
 une matrice qui ouvrait `contacts:consulter` cesse de voir les organisations dans la recherche tant que `organizations`
 n'est pas ouverte ; c'est le comportement voulu, et le manuel (chapitre 11) le dit. **Vérification** : un test
 d'intégration de T4 (recherche sans `organizations:consulter`). Consigné au `docs/SPEC-mcp.md` §9.2 *sexies*.
+
+### `CRM-111` T1 — les mesures : 31 fonctions, 266 appelants, et une RLS qui paie déjà à chaque ligne
+
+*2026-10-24, base jetable `crm111_mesure` (copie `pg_dump` de la base de développement, supprimée ensuite ; annoncée à
+la session voisine).* **Problème.** Mesurer avant la bascule ce que le retrait des colonnes de `cards` casse, et ce que
+coûte la nouvelle RLS. **Observations.**
+- **Retrait des colonnes**, dans une transaction annulée : **31 fonctions** cassent selon `plpgsql_check` et la
+  recréation des fonctions SQL. Le relevé textuel en avait manqué quatre et en signalait à tort cinq.
+- **Appelants** : 266 fichiers dans le dépôt.
+- **Coût de la RLS** : la politique livrée de `cards` évalue `app.can_read_channel` **à chaque ligne**, environ 0,25 ms :
+  542 ms pour un board de 2 027 affaires, 5,1 s pour 20 027. La forme proposée au §4 la double (1,7 s et 11,4 s).
+- **Une forme optimisée** calcule une fois la liste des channels lisibles (`app.readable_channel_ids()`) et compare
+  chaque ligne à elle : 7 et 16 ms pour la politique livrée, 20 et 47 ms avec les rattachements. Les lignes rendues sont
+  identiques sous les trois profils du seed. La sous-requête corrélée est écartée (4,4 s).
+- **Faux positif écarté** : `reserver_envois`, « `attempts` is ambiguous » pour `plpgsql_check`, s'exécute sans erreur.
+**Hypothèse non vérifiée** : le volume réel de production n'est pas connu de cette session, et la base de
+développement n'a que 41 affaires ; le seuil où le coût devient visible dépend de lui. **À arbitrer** (`docs/SPEC-
+rattachements.md` §2 bis.4) : adopter la forme optimisée pour `CRM-111`, et le sort du coût par ligne des autres
+tables. **Persisté** : `docs/SPEC-rattachements.md` §2 bis, `docs/mesures/CRM-111/`, `docs/BACKLOG.md` `CRM-111` T1.
