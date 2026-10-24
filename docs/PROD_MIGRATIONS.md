@@ -441,6 +441,15 @@ relevée en lecture seule le 2026-10-21). Gestes : `scripts/spark/livrer.sh` **s
 **reconstruction explicite** de l'image `mcp` (§4 : `up -d` ne reconstruit pas une image présente) ; vérifier ensuite
 que `https://crm.mcp.lelabs.tech/plateforme` rend `302` vers `https://crm.lelabs.tech/plateforme`.
 
+**`CRM-104` T7, à livrer sur instruction du responsable** (la famille `messagerie` : `crm_card_mail_list`, `crm_mail_get`,
+`crm_mail_send`, `docs/SPEC-mcp.md` §9.2 *decies*, décision 684) : aucune migration — la famille est dans la liste fermée
+depuis la 90 —, aucune variable nouvelle. Gestes : `scripts/spark/livrer.sh` **sans** `--migrate`, puis la
+**reconstruction explicite** de l'image `mcp` (§4). Vérifier ensuite que le module `messagerie` est présent dans le
+conteneur et que `/mcp` sans jeton rend `401`. **Constat du responsable** : un assistant connecté, la case
+`messagerie:ajouter` cochée, lit le fil d'une affaire et y envoie un email — un envoi réel, qui sort du CRM : l'outil le
+dit (`destructiveHint`) et l'assistant demande confirmation. Retour arrière : reconstruire l'image de la révision
+précédente.
+
 **Avant cela, propositions déposées dans la cellule, rien n'était importé.** Sur instruction du responsable,
 `/etc/spark/env.?` porte `CRM_MCP_HOTE=crm.mcp.lelabs.tech` (geste 3) et `CRM_SUPERADMINS_INITIAUX=martino@p2enjoy.studio`
 (geste 1 du §2.13, écrit à la main faute d'option de `proposer.sh` : INC-276), et `/etc/spark/routes.?` la route

@@ -662,6 +662,11 @@ n'est ni construit ni démarré, et ne reçoit aucun secret ; la plateforme se l
 déjà obligatoire, pour y mener : un lien sur son accueil, et une redirection `302` de ses chemins `/plateforme` et
 `/admin` (`CRM-102` T6, `docs/SPEC-mcp.md` §2.2). Sans `SITE_URL`, il refuse de démarrer en la nommant.
 
+**Il envoie des emails par la file de l'écran, jamais par un chemin à lui** (`CRM-104` T7, `docs/SPEC-mcp.md` §9.2
+*decies*). `crm_mail_send` appelle `queue_outbound_email` sous le jeton de la personne ; le worker de `mail-sync` soumet
+ensuite le message, comme pour un envoi depuis la fiche. Le connecteur ne détient donc aucun secret SMTP, et la
+dépendance nouvelle est indirecte : un envoi par le connecteur part si et seulement si `mail-sync` tourne.
+
 ### 3.8 Contraintes d'exécution de l'hôte
 
 Realtime élève son nombre de descripteurs de fichiers au démarrage. Le besoin est

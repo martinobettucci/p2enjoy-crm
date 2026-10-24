@@ -13,6 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-104` T7 — le connecteur MCP lit et envoie les emails d'une affaire (décisions 676 et 684)
+
+*Livré en développement ; la livraison en production attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md`
+§2.14).*
+
+- **Trois outils** dans la famille « Messagerie » : lire les emails d'une affaire (extrait et nombre de pièces jointes),
+  lire un email en entier (le texte, extrait du HTML comme à l'écran quand il n'y en a pas d'autre), et **envoyer un
+  email depuis une affaire** par la file de l'écran, en réponse éventuelle à un email de cette affaire.
+- **L'envoi est annoncé comme irréversible** à l'assistant, qui demande confirmation ; l'identité d'expédition est
+  désignée par son adresse, jamais choisie implicitement parmi plusieurs ; les refus de la file sont nommés (droit
+  d'écriture, identité, quota, affaire indisponible).
+- **Ni les pièces jointes, ni le classement, ni les modèles** : ils restent des gestes de l'écran. Aucune migration.
+
 ### `CRM-102` T5 — `verifier.sh` contrôle le connecteur MCP (décision 683)
 
 *Outillage d'exploitation, exécuté depuis le poste en lecture seule : rien ne part en production.*

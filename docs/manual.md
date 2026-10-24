@@ -4879,9 +4879,25 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   redimensionner ou colorer un bloc, créer ou renommer un tableau restent des gestes de l'écran. **Aucun outil ne
   supprime un bloc ni une flèche.**
 
-### 11.6 Ce que le connecteur n'offre pas encore
+- **Messagerie** — *livrée en développement par `CRM-104`, tranche T7* :
+  - *Consulter* : les emails classés dans une affaire, du plus ancien au plus récent — sens, date, expéditeur,
+    destinataires, objet, un extrait, et le **nombre** de pièces jointes ; un email en entier, avec son texte. Quand
+    l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait ;
+  - *Ajouter* : **envoyer un email depuis une affaire**, par la même file que le bouton « Envoyer » de la fiche : la
+    signature de l'identité est ajoutée, le message part, puis paraît dans le fil de l'affaire. L'assistant peut
+    répondre à un email **de cette affaire** ; l'objet est alors repris, précédé de « Re: ».
 
-Les outils de la dernière famille — messagerie — suivront. D'ici là, une case cochée pour elle n'ouvre aucun outil.
+  **Un envoi est irréversible** : l'outil l'annonce, et l'assistant vous demande de confirmer les destinataires,
+  l'objet et le texte avant d'envoyer. Il envoie avec **votre** identité d'expédition, ou avec celle du service si vous
+  administrez l'espace ; si vous en avez plusieurs, il vous demande laquelle — il ne choisit jamais à votre place.
+  L'envoi exige aussi la case « Affaires — Consulter », et le droit d'écrire sur l'affaire. Le quota journalier de
+  l'identité s'applique comme à l'écran.
+
+### 11.6 Ce que le connecteur n'offre pas
+
+Toutes les familles ont désormais leurs outils. Restent des gestes de l'écran : **les pièces jointes**, ni lues ni
+envoyées par le connecteur ; **classer, déclasser ou mettre en sommeil** un fil de la boîte de réception ; **les modèles
+et les séquences** de relance.
 
 ## Annexe A — Ce que contient l'espace de démonstration
 
