@@ -33728,3 +33728,12 @@ reconstruit avec leur code, harnais rejoué 22/22.
 
 **Où reprendre** : `CRM-102` T5 reste `[~]` — première exécution réelle de `verifier.sh` à la prochaine livraison, et le
 constat du responsable. Prise libérée.
+
+**Complément, même session — ligne de base et écart de conduite.** La garde de fin de session a relevé deux manques.
+(1) Les deux échecs d'interface restants avaient été rattachés à INC-292 sur la seule signature du `503`. La ligne de base
+du §2.4 a été établie ensuite : le code de la session retiré de l'arbre de travail par `git apply -R` (ses trois fichiers
+de code, rien de committé n'étant à mettre de côté), `administration-workflows.spec.ts:1356` et `affaires-figees.spec.ts:80`
+rendent 3 passés sur 3 ; le code rétabli, 3 sur 3 aussi. Intermittents des deux côtés : non imputables (INC-292 complétée).
+(2) **Écart de conduite** : la toute première commande de la session (`git status`, `ls docs/CloudWorker.md`) a précédé
+la lecture de `docs/CloudWorker.md`, et l'annonce du §0 bis n'a pas été la première ligne de la première réponse — le même
+écart qu'à la décision 678. Il ne se rattrape pas ; il est consigné pour que la session suivante ouvre par la lecture.
