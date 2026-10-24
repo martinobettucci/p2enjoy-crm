@@ -658,7 +658,7 @@ restaurer une affaire de la corbeille ; ni archiver une affaire ; ni poser une m
 par le CRM malgré la matrice ouverte, journal écrit ; et **E2E** : une affaire créée par le connecteur paraît au board,
 et sa timeline nomme la personne.
 
-### 9.2 quater Tranche `structure` et recherche — `CRM-104` T1 (liste fixée, *proposée le 2026-10-23, à valider*)
+### 9.2 quater Tranche `structure` et recherche — `CRM-104` T1 (liste fixée, **validée le 2026-10-24**, décision 656)
 
 Décision 652 : elle suit la tranche `affaires`. **Douze outils**, qui lisent et écrivent ce que l'arborescence et la
 palette de recherche de la webapp lisent et écrivent (`administration-arborescence.ts`, `recherche.ts`). Les écritures

@@ -33037,3 +33037,11 @@ l'inventaire du §16, validé avec le reste. Ils lisent les tables et fonctions 
 l'affaire (étape et responsable par leur nom, participants par la base) sont validés avec la liste. Un genre d'ancre
 nouveau, `activity`, est ajouté.
 
+### décision 656 — `CRM-104` T1 : la structure et la recherche, validées
+
+*2026-10-24, validation du responsable sur `docs/SPEC-mcp.md` §9.2 quater (commit `dfad87f7`).* Douze outils :
+`crm_search`, outil de référence dont chaque ligne est filtrée par la matrice de sa famille ; la lecture des tracks, des
+channels et des workflows (genre d'ancre nouveau, `workflow`) ; la création d'un track et d'un channel ; leur
+modification, **sans le slug ni le workflow** ; leur mise à la corbeille. **Hors de la tranche** : archivage,
+réordonnancement, édition des workflows, catalogue des nœuds.
+
