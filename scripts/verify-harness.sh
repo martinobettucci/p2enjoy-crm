@@ -591,7 +591,9 @@ PORT_RAPPORT=9323
 # 89 + 1 = 90, MESURÉ par `npm run test:sql` — « 90 fichiers ».
 # **91 depuis `CRM-067` T1, 2026-10-23** (décisions 647 à 650) : `0091_activites.test.sql`, seul fichier ajouté. 90 + 1 =
 # 91, MESURÉ par `npm run test:sql` — « 91 fichiers ».
-FICHIERS_SQL_ATTENDUS=91
+# **92 depuis `CRM-114` T1, 2026-10-24** (décision 663) : `0092_famille_organizations.test.sql`, seul fichier ajouté.
+# 91 + 1 = 92, MESURÉ par `npm run test:sql` — « 92 fichiers ».
+FICHIERS_SQL_ATTENDUS=92
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -680,7 +682,10 @@ FICHIERS_SQL_ATTENDUS=91
 # `0016` gagne **2** assertions — les politiques de `card_activities` et de ses participants nommées — et son compte
 # passe à 157 politiques ; `0017` et `0018` révisent leur garde (`card_activities` existe), sans changer leur plan.
 # 3866 + 29 + 2 = 3897, MESURÉ — « 91 fichiers, 3897 assertions, aucune anomalie ».
-ASSERTIONS_ATTENDUES=3897
+# **3909 depuis `CRM-114` T1, 2026-10-24** : la suite neuve `0092_famille_organizations`, **12** assertions, quatre mutations
+# tuées (chaque liste fermée privée de la famille). 3897 + 12 = 3909, MESURÉ — « 92 fichiers, 3909 assertions, aucune
+# anomalie ».
+ASSERTIONS_ATTENDUES=3909
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

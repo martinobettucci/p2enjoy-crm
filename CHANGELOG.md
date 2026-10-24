@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-114` T1 — la famille `organizations` du connecteur (décision 663)
+
+*En développement seulement. La migration `0101` attend la prochaine fenêtre de production.*
+
+- **Migration `0101`** : la matrice du connecteur MCP accepte une neuvième famille, « Organisations », entre
+  « Contacts » et « Budgets ». Rien d'autre ne change en base ; l'écran et les outils viennent avec les tranches suivantes.
+
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*

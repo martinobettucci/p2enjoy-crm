@@ -306,7 +306,8 @@ connecteur.
 |---|---|
 | `structure` | tracks, channels, lecture des workflows et de leurs étapes |
 | `affaires` | affaires (cards) : champs, description, probabilité, étape, déplacement, sommeil, commentaires, timeline, contacts liés, **activités réalisées** (appels, réunions, visios — `CRM-067`, décision 647) |
-| `contacts` | contacts et organisations |
+| `contacts` | contacts et organisations — **les organisations passent à `organizations` avec `CRM-114` T4** |
+| `organizations` | organisations : les lister, les lire, les créer, les modifier — **ajoutée par `CRM-114`** (`docs/SPEC-organisations.md` §5, décisions 660 et 663, migration `0101`) ; nom anglais (décision 658) |
 | `budgets` | budgets, occurrences, lignes de coût d'une affaire et leurs réels |
 | `recettes` | lignes de recette d'une affaire et leurs réels ; rapport de rentabilité, réservé aux administrateurs par la base — **ajoutée par `CRM-108`** (`docs/SPEC-recettes.md` §7, décision 632, migration `0095`) |
 | `temps` | saisies de temps ; le coût du personnel en lecture, dans ce que la RLS ouvre |

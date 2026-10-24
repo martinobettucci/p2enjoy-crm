@@ -16026,7 +16026,13 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
       « Organisations » du carnet, créer et modifier dans la page, refus traduits, aucune suppression ; famille
       `organizations` aux quatre listes fermées ; outils `crm_organization_list`, `crm_organization_get`,
       `crm_organization_create`, `crm_organization_update`.
-- [ ] **T1** — migration : la famille `organizations` dans la liste fermée de `mcp_droits` ; pgTAP ; contrat.
+- [x] **T1** — migration : la famille `organizations` dans les quatre listes fermées ; pgTAP ; contrat.
+      **Vérifiée le 2026-10-24** : migration `0101` appliquée en développement par le runner ; pgTAP
+      `0092_famille_organizations` **12** (la famille dans la contrainte, `mcp_autorise`, `mcp_poser_droits` et
+      `mcp_compte`, rangée après `contacts` ; les politiques existantes de `organizations` par profil ; le domaine en
+      double) ; **quatre mutations tuées sur quatre**, une par liste privée de la famille, la base restaurée ; série
+      complète **92 fichiers, 3909 assertions**, aucune anomalie. Constat utile pour T2 : un domaine en majuscules est
+      refusé par la **forme** (`organizations_domain_check`) avant l'unicité — l'écran le mettra en minuscules.
 - [ ] **T2** — l'écran : créer depuis le carnet, modifier depuis la fiche d'organisation ; design system ; unitaires.
 - [ ] **T3** — E2E, captures, seed, manuel, campagnes.
 - [ ] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée.
