@@ -33234,3 +33234,16 @@ de la requête, preuve de fraîcheur dans pgTAP. **Persisté** : la spécificati
    dédiée livrée avant) : la bascule T2 n'optimise que ce qu'elle réécrit déjà. La dette est consignée en INC-288.
 **Conséquences.** T1 est close `[x]` ; le §4 de la spécification et le contenu de T2 au backlog sont révisés. Aucune
 unité nouvelle. **Persisté** : `docs/SPEC-rattachements.md` §2 bis.4 et §4, `docs/BACKLOG.md` `CRM-111`, INC-288.
+
+
+### décision 668 — `CRM-104` T4 : la famille `budgets` du connecteur couvre les lignes de coût, pas l'administration des budgets
+
+*2026-10-24, arbitrage du responsable (question posée par `AskUserQuestion`).* **Question** : quel périmètre pour la
+tranche `budgets` du connecteur — lecture seule, lignes de coût, ou lignes et administration des budgets ? **Décision** :
+**les lignes de coût**, en miroir de la famille `recettes` — quatre lectures (`crm_budget_list`, `crm_budget_get`,
+`crm_card_cost_list`, `crm_costs_to_enter`) et cinq écritures (`crm_card_cost_add`, `crm_card_cost_actual_add`,
+`crm_card_cost_update`, `crm_card_cost_actual_update`, `crm_card_cost_settle`). **Écarté** : créer, modifier, clôturer un
+budget et ses occurrences, qui restent des gestes de l'écran ; toute suppression, que le CRM ne sait faire qu'en
+détruisant (A4). **Conséquence** : deux genres d'ancre nouveaux, `cost` et `cost_actual` ; aucune migration — la famille
+`budgets` existe déjà. Liste proposée au `docs/SPEC-mcp.md` §9.2 *septies*, à valider avant le code.
+

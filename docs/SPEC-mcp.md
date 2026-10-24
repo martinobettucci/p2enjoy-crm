@@ -741,6 +741,43 @@ par le CRM malgré la matrice ouverte (la lectrice qui crée une organisation), 
 `organizations:consulter` ne rend aucune organisation ; et **E2E** : une organisation créée par le connecteur paraît dans
 l'onglet « Organisations ».
 
+### 9.2 septies Famille `budgets` — `CRM-104` T4 (liste **proposée**, en attente de validation ; périmètre arbitré par la décision 668)
+
+**Neuf outils** : les lectures des budgets et des coûts, et les **lignes de coût d'une affaire**, en miroir de la famille
+`recettes` (§9.2 et `docs/SPEC-recettes.md` §7). Les mêmes tables que la webapp (`budgets.ts`, `couts-ecrans.ts`,
+`card-costs.ts`, `reels-ligne.ts`, `couts-a-saisir.ts`), sous le jeton de la personne ; la base tient le réel dérivé, la
+ligne soldée figée, le rattachement à un budget ou une occurrence clôturés, et la garde d'écriture de l'affaire.
+
+| Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_budget_list` | `consulter` | `workspace:workspace` ; `autres` : `track:track_id`, **facultative** | `budgets`, `card_costs` | les budgets des tracks lisibles : nom, devise, récurrent, enveloppe, clôturé, seuil d'ancienneté ; prévu et réel cumulés des lignes lisibles, par budget ; `include_closed` |
+| `crm_budget_get` | `consulter` | `budget:budget_id` | `budgets`, `budget_occurrences`, `card_costs` | le budget, ses occurrences (période, enveloppe, clôturée) et ses lignes, chacune avec son affaire ; prévu, réel et lignes sans réel par occurrence |
+| `crm_card_cost_list` | `consulter` | `card:card_id` | `card_costs`, `card_cost_actuals` | les lignes de coût d'une affaire : libellé, prévu, réel (somme des réels), soldée, budget et occurrence nommés, et chaque réel |
+| `crm_costs_to_enter` | `consulter` | `workspace:workspace` ; `autres` : `track:track_id`, **facultative** | `card_costs` (`reel_saisissable`) | l'onglet « À saisir » : lignes non soldées, plus anciennes d'abord ; `you_can_enter` ; paginé |
+| `crm_card_cost_add` | `ajouter` | `card:card_id` ; `autres` : `budget:budget_id` | `POST card_costs` | libellé, prévu, budget ; occurrence exigée si le budget est récurrent, refusée sinon (la base le dit) |
+| `crm_card_cost_actual_add` | `ajouter` | `cost:cost_id` | `POST card_cost_actuals` | montant, date (aujourd'hui par défaut), libellé ; refusé sur une ligne soldée |
+| `crm_card_cost_update` | `modifier` | `cost:cost_id` ; `autres` : `budget:budget_id`, **facultative** | `PATCH card_costs` | libellé, prévu, budget et occurrence ; seuls les champs donnés ; le réel n'est pas écrivable |
+| `crm_card_cost_actual_update` | `modifier` | `cost_actual:cost_actual_id` | `PATCH card_cost_actuals` | montant, date, libellé ; refusé sur une ligne soldée |
+| `crm_card_cost_settle` | `modifier` | `cost:cost_id` | `PATCH card_costs` (`settled_at`) | solder (sans réel, la ligne vaut 0) ou rouvrir |
+
+**Deux genres d'ancre nouveaux** : `cost` (`card_costs`, résolu jusqu'à l'espace par son affaire) et `cost_actual`
+(`card_cost_actuals`, par sa ligne puis son affaire), comme `revenue` et `revenue_actual`.
+
+**Refus nommés** : `ligne soldee` et `reel derive` (les messages de la base, comme pour les recettes) ; l'occurrence
+exigée, interdite ou d'un autre budget, et le rattachement à un budget ou une occurrence clôturés (les fragments de
+`FRAGMENTS_REFUS_COUT`) ; une référence absente (`23503`) ; le reste comme partout.
+
+**Ce que la tranche ne fait pas, et pourquoi.**
+- **Aucune suppression** d'une ligne de coût ni d'un réel : le CRM ne sait que les **détruire** (§6.1, arbitrage A4).
+- **L'administration des budgets** — créer, modifier, clôturer un budget, ses occurrences — reste un geste de l'écran,
+  réservé par la base aux administrateurs (décision 668).
+- **Les histogrammes et cumuls des écrans « Coûts »** ne sont pas des outils : `crm_budget_list` et `crm_budget_get`
+  rendent les sommes, sans additionner deux devises.
+
+**Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus
+par le CRM malgré la matrice ouverte (la lectrice qui ajoute une ligne), journal écrit ; et **E2E** : une ligne de coût
+ajoutée par le connecteur paraît dans la section « Coûts » de la fiche de l'affaire.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,

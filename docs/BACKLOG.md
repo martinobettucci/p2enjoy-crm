@@ -15492,7 +15492,9 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - Manuel 11.5 et 11.6, DAT.
       - **Livrée le 2026-10-24** : révision `e4f8a8e5`, image `mcp` reconstruite et saine, `verifier.sh` 26/27.
       - **Reste `[~]`** : le constat du responsable.
-- [ ] **T4** — `budgets`.
+- [ ] **T4** — `budgets` : les lignes de coût d'une affaire, en miroir de `recettes` (décision 668) — quatre lectures,
+      cinq écritures, genres d'ancre `cost` et `cost_actual`, aucune suppression, administration des budgets laissée à
+      l'écran. Liste proposée au `docs/SPEC-mcp.md` §9.2 *septies*, **en attente de validation**.
 - [ ] **T5** — `temps`.
 - [ ] **T6** — `objectifs`.
 - [ ] **T7** — `messagerie`.
