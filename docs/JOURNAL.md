@@ -33509,3 +33509,48 @@ d'INC-290 et d'INC-291. Commits :
 harnais de seed ont tourné juste après. **Rejouée après le passage de 13:07 : 48 assertions, verte.** La ligne y renaît
 avec `run_count = 1` : la table avait été vidée entre 11:07 et 13:07, et rien dans `0103` n'y touche. La série pgTAP
 complète est donc verte, à 3944 assertions.
+
+### décision 680 — Un état « pris en charge » `[@]`, poussé dès le choix de l'unité : plusieurs agents travaillent en parallèle
+
+*Proposition du responsable, le 2026-10-24, en session interactive.* **Constat** : le backlog connaît trois états,
+`[ ]`, `[~]` et `[x]`. Aucun ne dit qu'un agent **travaille en ce moment** sur une unité. Or plusieurs agents et
+plusieurs instances tournent en parallèle sur la même branche : la tâche planifiée `CloudWorker` toutes les trois heures,
+et des sessions interactives (ce 2026-10-24, `CRM-104` T7 et `CRM-111` étaient en cours dans l'une d'elles pendant que la
+tâche planifiée choisissait `CRM-113`). Deux agents peuvent donc démarrer sur la même tâche. Le choix de la session de
+CRM-113 n'avait évité le doublon qu'en lisant le journal et la date des commits, sans règle écrite.
+
+**Décision du responsable** : un état nouveau, posé et **poussé immédiatement** après la décision de prendre une tâche en
+charge, consigné dans `docs/BACKLOG.md`, dans `CLAUDE.md` et dans `docs/CloudWorker.md`, avec l'explication que plusieurs
+agents et instances tournent en parallèle, et donc qu'il faut se synchroniser (rebase) avant la preuve finale.
+
+**Vérifié** : `CLAUDE.md` §13 (« Synchronisation ») exige déjà de récupérer les modifications distantes et de rejouer les
+tests avant de clore. Mais `docs/CloudWorker.md` §4.3 ne le place pas comme étape avant la campagne : il ne rebase qu'en
+cas d'échec du push et dans la garde finale. Une campagne pouvait donc prouver un état que `main` avait déjà dépassé.
+Aucun harnais ne lit les marques du backlog : l'ajout ne casse rien.
+
+**Ce que l'agent a tranché pour rendre la règle exécutable** (soumis au responsable, qui peut le corriger) :
+1. **La marque est `[@]`**, « pris en charge ». Sous le titre de l'unité, ou au bout de la tranche quand une seule tranche
+   est prise, une ligne : `*Prise en charge : <agent> depuis <AAAA-MM-JJ HH:MM UTC> — état avant : [ ] | [~]*`. L'agent
+   est nommé par l'horodatage d'ouverture de sa session — « CloudWorker 2026-10-24 08:39 UTC », « session interactive
+   2026-10-24 13:20 UTC ». L'état d'avant est gardé, parce que `[@]` remplace la marque.
+2. **Le verrou est le push.** La prise est un commit **seul** — la ligne du backlog, rien d'autre —, poussé aussitôt. Un
+   push refusé (non fast-forward) appelle `git pull --rebase`. Si le rebase entre en conflit sur cette unité, ou si
+   l'unité porte déjà une prise vivante, l'agent abandonne sa propre prise, jamais poussée (`git rebase --skip` sur
+   conflit, sinon `git reset --soft HEAD~1` et la ligne rétablie), puis choisit l'unité suivante. Deux agents ne peuvent
+   pas pousser la même prise.
+3. **Une prise expire.** Une session peut mourir sans libérer la sienne. Une prise **de plus de 6 heures**, sans **aucun
+   commit citant l'identifiant de l'unité sur `origin/main` depuis 6 heures**, peut être reprise. Le nouvel agent le dit
+   dans sa propre prise : « reprise d'une prise expirée de <agent> ».
+4. **La prise se libère en fin de session**, dans le commit de clôture : la ligne est retirée, et l'unité reçoit son état
+   réel, `[~]` ou `[x]`, ou retrouve son état d'avant si rien n'a avancé.
+5. **Les numéros partagés se prennent après synchronisation** — numéro de décision, d'INC, de migration —, et un conflit se
+   résout sur place par renumérotation de ce qui n'est pas encore poussé. Une migration renumérotée doit encore suivre
+   la dernière inscrite (`docs/DAT.md` §3.2 bis).
+6. **Avant la campagne finale, l'agent synchronise** (`git pull --rebase origin main`). Si d'autres commits sont arrivés,
+   il réapplique les migrations et le seed qu'ils apportent, **puis** lance la campagne. Si d'autres commits arrivent
+   entre la campagne et le push, il rejoue les preuves de ce qu'ils touchent (`CLAUDE.md` §13).
+
+**Connecteur MCP** : sans objet. C'est une règle de conduite du dépôt, pas une fonctionnalité du produit.
+
+**Persisté** : `docs/BACKLOG.md` (Marquage), `CLAUDE.md` §5 (Backlog) et §13 (Synchronisation), `docs/CloudWorker.md`
+§0, §1 *bis*, §4.2, §4.3 et §4.4.

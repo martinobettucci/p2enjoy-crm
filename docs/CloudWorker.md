@@ -81,10 +81,11 @@ Ne renonce jamais à pousser, et ne contourne jamais un conflit par une branche.
 
 ```
 annonce d'ouverture (§0 bis) → Git → Docker → pile + seed → choisir l'unité
+     → la PRENDRE EN CHARGE : [@] committé seul et poussé aussitôt (§1 bis)
      → lire et écrire la spéc COMPLÈTE → committer → coder
      → committer et pousser au fil de l'eau → prouver SON unité
-     → [fin de session] campagne complète → boucle de correction → committer, pousser
-     → journal, backlog, garde Git, compte rendu
+     → [fin de session] SYNCHRONISER (pull --rebase) → campagne complète → boucle de correction
+     → journal, backlog (prise libérée, état réel), committer, pousser → garde Git, compte rendu
 ```
 
 **La campagne complète de preuves ne s'exécute JAMAIS en ouverture de session.** Elle dure quarante à
@@ -377,6 +378,59 @@ git log origin/main..HEAD  => sortie vide
 Si une seule de ces conditions est fausse, TU N'AS PAS TERMINÉ.
 
 Corrige l'état Git avant de produire ta réponse finale.
+
+## 1 bis. TU N'ES PAS SEUL : PLUSIEURS AGENTS TRAVAILLENT EN PARALLÈLE — LA PRISE EN CHARGE `[@]`
+
+*Décision 680, proposition du responsable, 2026-10-24.* Cette tâche planifiée n'est pas le seul agent du dépôt. D'autres
+instances — une exécution précédente qui dure encore, des sessions interactives du responsable — travaillent **en même
+temps, sur la même branche `main`**. Mesuré le 2026-10-24 : `CRM-104` T7 et `CRM-111` étaient en cours dans une session
+interactive quand la tâche planifiée a choisi son unité. Deux agents sur la même tâche se gâchent mutuellement leur
+travail ; deux agents sur des tâches voisines se croisent dans les fichiers partagés.
+
+**1. PRENDS EN CHARGE TON UNITÉ AVANT DE LA TOUCHER.** Dès que tu as choisi ton unité (§4.2) — avant de lire sa
+spécification, avant toute ligne de code —, marque-la `[@]` dans `docs/BACKLOG.md` : sur le titre de l'unité, ou sur la
+seule tranche que tu prends. Ajoute sous le titre, ou au bout de la tranche :
+
+```
+*Prise en charge : CloudWorker <horodatage d'ouverture du §0 bis> depuis <AAAA-MM-JJ HH:MM UTC> — état avant : [ ] | [~]*
+```
+
+Committe **cette ligne seule** — message « Prise en charge de CRM-xxx … » — et **pousse-la immédiatement**.
+
+**2. LE PUSH EST LE VERROU.** Si le push est refusé (non fast-forward), un autre agent a poussé entre-temps :
+
+```
+git pull --rebase origin main
+```
+
+- Si le rebase entre en conflit sur cette unité, un autre l'a prise : `git rebase --skip` abandonne ta prise, qui n'a
+  jamais été poussée.
+- Si le rebase passe mais que l'unité porte maintenant la prise vivante d'un autre agent, retire la tienne :
+  `git reset --soft HEAD~1`, puis rétablis la ligne du backlog.
+- Dans les deux cas, choisis l'unité suivante (§4.2) et recommence.
+- **Ne force jamais un push** pour garder une prise.
+
+**3. NE PRENDS JAMAIS UNE UNITÉ `[@]` D'UN AUTRE, SAUF PRISE EXPIRÉE.** Une session peut mourir sans libérer sa prise. La
+prise est expirée si elle date de **plus de 6 heures** et qu'**aucun commit citant l'identifiant de l'unité** n'a été
+poussé depuis 6 heures :
+
+```
+git log origin/main --since="6 hours ago" --oneline --grep="CRM-xxx"   # vide ⇒ prise expirée
+```
+
+Une reprise le dit dans ta propre ligne : « reprise d'une prise expirée de <agent> ».
+
+**4. LIBÈRE TA PRISE EN FIN DE SESSION**, dans le commit de clôture (§4.3, point 4) : retire la ligne et pose l'état réel
+— `[~]`, `[x]`, ou l'état d'avant si rien n'a avancé. Une prise laissée derrière soi bloque l'unité six heures pour rien.
+
+**5. LES NUMÉROS PARTAGÉS SE PRENNENT APRÈS SYNCHRONISATION** : numéro de décision du journal, d'INC du registre, de
+migration. Fais `git fetch origin main` et lis le dernier numéro sur `origin/main`, pas dans ta copie. Un conflit se
+résout **sur place**, en renumérotant ce que tu n'as pas encore poussé. Une migration renumérotée doit encore suivre la
+dernière inscrite : le runner refuse un fichier inséré dans le passé (`docs/DAT.md` §3.2 bis).
+
+**6. LES FICHIERS PARTAGÉS SE MODIFIENT PAR AJOUTS LOCALISÉS** — journal, backlog, changelog, registre. Ne les réécris
+jamais en entier, et ne remplace jamais la version distante par la tienne pour résoudre un conflit : garde les deux
+apports (§1.4, résolution sur place).
 
 ## 2. TU ES ROOT, ET TU DOIS DÉMARRER DOCKER TOI-MÊME
 
@@ -920,7 +974,8 @@ Laisse le comportement inchangé plutôt que de corriger ce défaut au passage.
 **RÈGLE DU RESPONSABLE, 2026-08-15, NON NÉGOCIABLE.** Voici la séquence, et il n'y en a pas d'autre.
 Tu ne réordonnes rien, et tu ne remontes pas la campagne de preuves en tête de session.
 
-**1. Tu choisis ton unité** — §4.1 puis §4.2. Rien n'est écrit avant ce choix.
+**1. Tu choisis ton unité** — §4.1 puis §4.2. Rien n'est écrit avant ce choix, **sauf la prise en charge** : `[@]`
+committé seul et poussé aussitôt (§1 *bis*).
 
 **2. Tu lis les spécifications de l'unité, INTÉGRALEMENT.** Pas en diagonale, pas seulement le
 chapitre qui te paraît concerné : le document entier qui porte la fonctionnalité, plus
@@ -1066,7 +1121,8 @@ N'EST PLUS une file de travail. Des dizaines de sessions l'ont traité comme
 telle, et le dépôt a reçu majoritairement des commits de documentation pendant
 que des écrans entiers du produit restaient non construits. C'est terminé.
 
-L'unité de la session se choisit AINSI, dans cet ordre :
+L'unité de la session se choisit AINSI, dans cet ordre. **Une unité, ou une tranche, marquée `[@]` par un autre agent
+est sautée**, sauf prise expirée (§1 *bis*, point 3) :
 
 1. si la dernière entrée du journal désigne une reprise d'unité PRODUIT en
    cours, tu la suis ;
@@ -1116,6 +1172,18 @@ sont interdits : ce temps appartient au produit.
 C'est **ici**, et nulle part avant, que la campagne complète s'exécute. Ton code est déjà écrit,
 committé et poussé (§3.2, point 5) : ce qui suit ne peut donc plus rien te faire perdre.
 
+**0. Synchronise-toi AVANT la campagne** — d'autres agents ont poussé pendant ta session (§1 *bis*) :
+
+```
+git fetch origin main
+git pull --rebase origin main
+```
+
+Si des commits sont arrivés, applique d'abord ce qu'ils exigent : leurs migrations (la commande complète du §2.2 *bis*
+avec `up migrations-runner`), le seed (`supabase/seed/apply-seed.sh`), leurs dépendances (`npm ci` si `package-lock.json`
+a changé). Puis lance la campagne. Une campagne lancée sur une copie que `main` a déjà dépassée prouve un état qui
+n'existera jamais en production.
+
 **1. Lance la campagne complète, une fois :**
 
 ```
@@ -1156,7 +1224,11 @@ exécuté**. Une campagne partielle annoncée comme telle vaut mieux qu'une sess
    - où l'exécution suivante doit reprendre.
 
 **4. Mets "docs/BACKLOG.md" au véritable état de l'unité**, et nomme précisément les preuves qui
-restent à exécuter.
+restent à exécuter. **Libère ta prise en charge** dans ce même geste : retire la ligne « Prise en charge » et remplace
+`[@]` par l'état réel (§1 *bis*, point 4).
+
+**4 bis. Avant de pousser, synchronise-toi encore une fois** (`git pull --rebase origin main`). Si des commits sont
+arrivés depuis la campagne, rejoue les preuves de ce qu'ils touchent, comme le demande `CLAUDE.md` §13.
 
 **5. Committe ces mises à jour et pousse sur "origin/main".**
 
@@ -1181,7 +1253,8 @@ Il couvre l'INTÉGRALITÉ de la session, pas seulement son dernier geste. La HI�
 2. Les preuves réellement exécutées et leur résultat, avec les formulations du paragraphe 25 de "CLAUDE.md" — n'annonce jamais vérifié ce qui ne l'a pas été.
 3. Ce qui reste "[~]" ou "[ ]", et pourquoi.
 4. En bref, sans développer : les migrations, les entrées de "docs/INCONSISTENCY_REPORT.md" consignées, et tout arbitrage désormais attendu du responsable.
-5. Le commit final et la confirmation que "origin/main" le porte.
+5. Le commit final et la confirmation que "origin/main" le porte, ainsi que la libération de la prise en charge `[@]`
+   (§1 *bis*).
 
 Une session qui n'a livré AUCUN code reste soumise à ce compte rendu, et le dit en PREMIÈRE ligne, sans détour : l'absence de fonctionnalité codée est l'information la plus importante de ce compte rendu-là, pas un fait noyé après le travail documentaire (§4.2 bis).
 

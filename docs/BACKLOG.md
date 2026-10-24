@@ -6,8 +6,20 @@ Unités d'exécution du projet. L'ordre et les règles d'avancement sont dans
 ## Marquage
 
 - `[ ]` non commencé ;
-- `[~]` en cours, ou implémenté mais insuffisamment vérifié ;
+- `[@]` **pris en charge** : un agent y travaille en ce moment (décision 680) ;
+- `[~]` commencé — implémenté en partie, ou implémenté mais insuffisamment vérifié — et personne n'y travaille ;
 - `[x]` terminé **et intégralement vérifié**.
+
+**Plusieurs agents travaillent en parallèle** sur cette branche : tâches planifiées et sessions interactives. Dès qu'un
+agent décide de prendre une unité ou une tranche, il la marque `[@]`, ajoute sous son titre — ou au bout de la tranche —
+la ligne ci-dessous, committe **cette ligne seule** et la pousse **immédiatement**, avant toute autre chose :
+
+*Prise en charge : <agent> depuis <AAAA-MM-JJ HH:MM UTC> — état avant : [ ] | [~]*
+
+Le push est le verrou : un agent ne prend jamais une unité `[@]` d'un autre, sauf prise **expirée** — plus de 6 heures,
+et aucun commit citant l'identifiant de l'unité sur `origin/main` depuis 6 heures —, ce que sa propre prise dit. La prise
+se libère dans le commit de clôture, qui pose l'état réel. Le détail est dans `CLAUDE.md` §5 et `docs/CloudWorker.md`
+§1 *bis*.
 
 Une unité ne passe `[x]` qu'avec ses preuves : test unitaire dédié, test API ou d'intégration
 dédié, test E2E dédié, vérification visuelle observée si l'interface est touchée, seed à jour,

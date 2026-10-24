@@ -308,10 +308,30 @@ Backlog
 "docs/BACKLOG.md" utilise les statuts suivants :
 
 - "[ ]" : non commencé ;
-- "[~]" : en cours ou implémenté mais insuffisamment vérifié ;
+- "[@]" : pris en charge, un agent y travaille en ce moment ;
+- "[~]" : commencé — implémenté en partie, ou implémenté mais insuffisamment vérifié — et personne n'y travaille ;
 - "[x]" : terminé et intégralement vérifié.
 
 Une tâche ne passe à "[x]" qu'après validation de sa Definition of Done.
+
+Prise en charge : plusieurs agents en parallèle
+
+Plusieurs agents et plusieurs instances — tâches planifiées, sessions interactives — peuvent travailler en même temps
+sur le même dépôt et la même branche. Deux d'entre eux ne doivent jamais démarrer sur la même tâche.
+
+- Dès la décision de prendre une tâche, avant toute lecture de spécification et toute ligne de code, la marquer "[@]"
+  dans "docs/BACKLOG.md" — sur l'unité, ou sur la seule tranche prise —, avec une ligne
+  "*Prise en charge : <agent> depuis <AAAA-MM-JJ HH:MM UTC> — état avant : [ ] | [~]*". L'agent se nomme par
+  l'horodatage d'ouverture de sa session.
+- Committer cette ligne seule et la pousser immédiatement : le push est le verrou. Un push refusé appelle
+  "git pull --rebase" ; si la tâche porte alors une prise vivante d'un autre agent, abandonner sa propre prise non
+  poussée et choisir une autre tâche. Ne jamais forcer un push pour garder une prise.
+- Ne pas prendre une tâche marquée "[@]" par un autre agent, sauf prise expirée : plus de 6 heures, et aucun commit
+  citant l'identifiant de la tâche sur la branche distante depuis 6 heures. La reprise le dit dans la nouvelle prise.
+- Libérer la prise dans le commit de clôture : retirer la ligne, et poser l'état réel ("[~]", "[x]", ou l'état d'avant
+  si rien n'a avancé).
+- Les numéros partagés — décisions, incohérences, migrations — se prennent après synchronisation ; un conflit se
+  résout par renumérotation de ce qui n'est pas encore poussé.
 
 ## 6. CHANGELOG
 
@@ -593,12 +613,15 @@ Ne pas contourner un conflit en créant une nouvelle branche.
 
 Synchronisation
 
-Avant de tester définitivement ou de clore une tâche :
+D'autres agents poussent sur la même branche pendant qu'on travaille (§5, « Prise en charge »). Avant de tester
+définitivement ou de clore une tâche :
 
-- récupérer les modifications distantes ;
+- récupérer les modifications distantes et rebaser le travail local dessus ("git pull --rebase") — **avant** la
+  campagne de preuves finale, jamais seulement après ;
 - vérifier que le travail local est compatible avec l'état distant ;
 - résoudre proprement les éventuels conflits ;
-- rejouer les tests nécessaires après synchronisation.
+- appliquer ce que les commits récupérés exigent (migrations, seed, dépendances) avant de prouver ;
+- rejouer les tests nécessaires après synchronisation, y compris ceux des commits arrivés entre la campagne et le push.
 
 Ne pas écraser les modifications d'un autre contributeur.
 
