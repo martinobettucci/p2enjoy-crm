@@ -33280,3 +33280,12 @@ l'on détruit (A4 reste tenu pour les objets). **Écarté** : le coût du person
 l'écran. **Conséquence** : aucune migration ; la personne est désignée par son nom, faute d'ancre « profil ». Liste
 proposée au `docs/SPEC-mcp.md` §9.2 *octies*, à valider avant le code.
 
+
+### décision 672 — `CRM-104` T5 : la liste des outils `temps` validée
+
+*2026-10-24, validation du responsable sur `docs/SPEC-mcp.md` §9.2 *octies*.* Les trois outils sont retenus tels que
+proposés : `crm_time_entry_list` (période de 93 jours au plus, vos saisies par défaut, une personne nommée ou tout
+l'espace dans ce que la RLS rend, filtres track, channel ou affaire), `crm_time_report` (`temps_valorise` ramené aux
+tracks de l'espace, montants par devise, minutes sans taux à part), `crm_time_entry_set` (la case d'une personne, vous ou
+nommée, un jour, sur une cible ; 0 la vide). Refus nommés : plafond journalier, forme des minutes, saisie non permise.
+Preuve E2E : du temps posé par le connecteur paraît dans « Votre semaine » de la fiche.

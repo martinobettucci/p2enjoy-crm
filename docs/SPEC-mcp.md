@@ -781,7 +781,7 @@ exigée, interdite ou d'un autre budget, et le rattachement à un budget ou une 
 par le CRM malgré la matrice ouverte (la lectrice qui ajoute une ligne), journal écrit ; et **E2E** : une ligne de coût
 ajoutée par le connecteur paraît dans la section « Coûts » de la fiche de l'affaire.
 
-### 9.2 octies Famille `temps` — `CRM-104` T5 (liste **proposée**, en attente de validation ; périmètre arbitré par la décision 671)
+### 9.2 octies Famille `temps` — `CRM-104` T5 (liste fixée, **validée le 2026-10-24**, décisions 671 et 672)
 
 **Trois outils** : lire ses saisies de temps et le rapport valorisé, et **poser une case de la grille** — les mêmes tables et
 la même fonction que la webapp (`saisie-temps.ts`, `rapport-temps.ts`), sous le jeton de la personne. La base tient le
