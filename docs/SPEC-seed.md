@@ -2138,6 +2138,22 @@ seed.
   acceptation retirerait la relance du workflow par défaut et déplacerait ses affaires, que toutes les autres preuves
   lisent. Les preuves de T3 travaillent sur des workflows jetables.
 
+### 16 ter. Une suggestion sur le catalogue du seed, en revue — `CRM-113` tranche T3
+
+*Écrit le 2026-10-24, avant la section qui la pose (`docs/SPEC-ia.md` §14.8, décision 677).* Sans elle, ni le nom d'une
+étape visant un nœud du catalogue, ni « Utiliser le nœud du catalogue » qui garde le nom, ni le défaut `native_field`
+(`docs/DESIGN_SYSTEM.md` §5.52 bis) ne seraient montrés par le jeu de démonstration.
+
+- **Ce que le jeu porte** : une suggestion de création (`workflow`), statut `en_revue`, demandée par l'administratrice :
+  « Un cycle de vente accompagné : premier contact, discussion commerciale, puis livré ou perdu. Le montant et la
+  source du contact. » Sa révision 1, d'origine `ia`, est la proposition du scénario `catalogue` du simulateur :
+  l'étape « prospection » du catalogue sous le nom « Premier contact » à 15 %, le nœud « negociation » redéclaré sous le
+  libellé « Discussion commerciale », un champ `montant`. La base relève **deux** défauts, `noeud_deja_au_catalogue` et
+  `native_field`. Section du script : **8 novodecies bis**.
+- **Le vrai chemin** : celui du §16.2, avec la même vérification du simulateur et la relecture des deux défauts.
+- **Convergence** : celle du §16.3, sur la demande. Une preuve qui l'accepte la travaille sur une copie : elle crée sa
+  propre suggestion du même scénario (`e2e/ui/ia-generateur.spec.ts`).
+
 ## 17. Le temps et le coût du personnel — `CRM-098` tranche T4
 
 *Écrit le 2026-10-11 avec la section `8 vicies` de `supabase/seed/apply-seed.sh` ; contrat : `docs/SPEC-temps.md` §8.*

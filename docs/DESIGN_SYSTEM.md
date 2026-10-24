@@ -5192,6 +5192,43 @@ de gestes, confirmation d'abandon, historique, focus et annonces. Seuls les éca
     rafraîchit pas l'empreinte relevée à sa création (`docs/SPEC-ia.md` §13.4) —, on l'abandonne et on en demande une
     nouvelle sur le workflow tel qu'il est.
 
+### 5.52 bis Le nom et la probabilité d'une étape, les champs natifs — `CRM-113` T3
+
+*Écrit le 2026-10-24, avant le code de la tranche T3, après relecture intégrale de ce document.* `docs/SPEC-ia.md` §14.3,
+§14.4 et §14.7 disent ce que l'aperçu lit et envoie ; ces règles ne disent que de quoi il a l'air. **Tout ce que les §5.52
+et §5.53 posent vaut sans être répété** ; seuls les ajouts sont écrits.
+
+- **CHAQUE ÉTAPE PORTE DEUX CHAMPS DE PLUS, « Nom de l'étape » ET « Probabilité de l'étape »**, quelle que soit l'origine de
+  son nœud. Le nom prend la **première ligne** de l'étape, à la place du texte ou du champ qui la nommait, avec le retrait
+  à sa droite ; la probabilité rejoint les réglages de la seconde ligne, avant le radio « Initiale ». Leur **texte
+  d'exemple** est la valeur du nœud — son libellé, sa probabilité par défaut —, en `--color-text-3` : un champ vide dit
+  qu'aucune surcharge n'est posée, et l'exemple dit ce que l'étape affichera alors. Leur nom accessible nomme l'étape par
+  sa clé (« Nom de l'étape prospection »), jamais par le nom qu'on est en train d'écrire.
+  - **Vider un champ revient à la valeur du nœud** : c'est l'absence de surcharge, et la règle de la base (§14.3) rend
+    `null` pour une valeur égale à celle du nœud. Aucune garde de saisie ne double la base (§5.3 ter) : une probabilité
+    hors de 0 à 100 est envoyée, et le défaut `step_probability_invalid` la dit en tête.
+  - **Une étape d'un nœud NOUVEAU garde aussi les champs de son nœud** — « Libellé du nœud », nature, probabilité du
+    nœud — sur la seconde ligne, à leur place d'avant : le nœud entre au catalogue avec eux, et l'étape peut s'en écarter
+    comme de n'importe quel nœud. Les deux noms accessibles disent lequel est lequel.
+- **LE NOM AFFICHÉ D'UNE ÉTAPE EST SON NOM EFFECTIF PARTOUT** — « Vers <étape> », « Depuis <étape> », les règles, les
+  exigences, le différentiel, le bloc des affaires retirées : le nom de l'étape s'il est posé, sinon celui de son nœud.
+  Deux noms pour la même étape dans un même panneau en feraient deux étapes.
+- **« Utiliser le nœud du catalogue » GARDE LE NOM ET LA PROBABILITÉ** que le nœud proposé portait, quand ils diffèrent
+  de ceux du catalogue : ils passent dans les deux champs de l'étape, qui restent visibles et modifiables. L'annonce de la
+  région vivante le dit — « L'étape vise le nœud « negociation » du catalogue et garde son nom « Discussion
+  commerciale ». » — ; quand rien n'est gardé, elle garde sa phrase d'avant.
+- **LES DEUX DÉFAUTS NOUVEAUX S'ÉCRIVENT DANS LE BLOC DES DÉFAUTS** (§5.52), une phrase chacun, par clé :
+  `native_field` — « Le champ « montant » reprend le montant, déjà porté par l'affaire : retirez-le ou renommez-le. » —,
+  l'information native nommée par un **mot traduit** (« le titre », « le responsable », « l'organisation »…), jamais par
+  le code de la base ; `step_probability_invalid` — « La probabilité de l'étape « prospection » doit être comprise entre
+  0 et 100. ».
+- **LE DIFFÉRENTIEL COMPTE COMME MODIFIÉE UNE ÉTAPE CONSERVÉE DONT LE NOM OU LA PROBABILITÉ EFFECTIFS CHANGENT**, avec deux
+  attributs nommés par un mot — « Nom de l'étape », « Probabilité » — et la forme « avant → après » (§5.53). Une étape
+  dont la cible ne dit rien (champ vide) n'est **pas** modifiée : la surcharge vivante est gardée (§14.3).
+- **SOUS `md`, la seconde ligne se replie entière** (§5.52), les deux champs nouveaux compris ; cibles à `--size-target`.
+  La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
 ### 5.54 Saisie de temps et coût du personnel — `CRM-098`
 
 Spécifiée avant code, `docs/SPEC-temps.md` §7 (décision 621).
