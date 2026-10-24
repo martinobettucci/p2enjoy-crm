@@ -644,6 +644,29 @@ s'impute à qui de droit, jamais comme preuve manquante de la tienne. La série 
 mais comme **objet d'une session dédiée** au sens du §4.2, lancée **seule** : deux séries de preuves
 sur une seule base se mesurent l'une l'autre.
 
+### 2.1 quater. CACHE D'IMAGES VIDE : QUATRE OBSTACLES MESURÉS LE 2026-10-24, ET LEUR CONTOURNEMENT
+
+Mesurés par la session planifiée du 2026-10-24 (INC-290, INC-291), sur un hôte au cache d'images vide. Aucun ne dit
+rien du produit ; chacun arrête `./runDev.sh` avant le premier service.
+
+1. **Tire les images une par une**, avec une attente croissante entre deux essais (décision 373) : Docker Hub rend
+   `429` aux tirages parallèles de `docker compose`. Les images de base des constructions aussi — `node:24-alpine`,
+   `python:3.13.13-slim-bookworm` —, sans quoi la construction de la webapp échoue sur le même `429`.
+2. **MinIO ne se tire plus de `quay.io`** (`401`, INC-290). Construis localement les deux étiquettes attendues depuis
+   `bitnamilegacy/minio:2025.4.22`, qui porte le même binaire (mesuré) :
+   ```
+   FROM bitnamilegacy/minio:2025.4.22
+   USER root
+   RUN ln -sf /opt/bitnami/minio/bin/minio /usr/bin/minio && ln -sf /opt/bitnami/minio-client/bin/mc /usr/bin/mc
+   ENTRYPOINT ["minio"]          # « mc » pour l'image quay.io/minio/mc
+   ```
+   étiquetées `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z` et `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z`.
+   Rien n'est committé : c'est un contournement de session, tant que le responsable n'a pas tranché INC-290.
+3. **Exporte `BUILDX_BAKE_ENTITLEMENTS_FS=0`** avant `./runDev.sh` (INC-291) : sous Compose 5, `bake` refuse de lire le
+   paquet CA monté en secret de construction. `COMPOSE_BAKE=false` n'y change rien.
+4. **Ajoute `127.0.0.1 sso.localhost` à `/etc/hosts`** avant toute preuve d'API ou d'interface : les navigateurs
+   résolvent `*.localhost`, mais Node ne le fait pas, et `jetonDe` échoue sur `getaddrinfo ENOTFOUND sso.localhost`.
+
 ### 2.2. DÉMARRAGE DE LA PILE
 
 Ensuite seulement :
