@@ -33708,3 +33708,23 @@ désignée ; laisser répondre à un message d'une autre affaire, que l'écran n
 Aucune migration.
 
 **Persisté avant le code** : ce journal ; `docs/SPEC-mcp.md` §9.2 *decies* ; `docs/BACKLOG.md` (`CRM-104` T7).
+
+### `CRM-102` T5 — fin de session : les contrôles du connecteur portés dans `verifier.sh`, la campagne mesurée
+
+*2026-10-24, session planifiée ouverte à 22:12:30 UTC.* **Livré** (décision 683) : `scripts/lib/connecteur-mcp.sh`,
+branché dans `scripts/spark/verifier.sh` (point 9) ; harnais `scripts/verify-controles-connecteur.sh`. **Vérifié** :
+22/22 contre le vrai service `mcp` et une cellule simulée (faux `distant`, `/etc/spark` jetable, vrai Caddy de la
+cellule avec une webapp minimale, pour qu'un hôte non aiguillé reçoive `200` comme en production) ; dix mutations
+tuées, dont deux qui ne l'étaient pas à la première rédaction (le corps de `/pret` non lu, côté public et côté Caddy) :
+le serveur complaisant rend désormais `"pret": false`, et la webapp minimale a été montée pour tuer la seconde.
+`verify-spark.sh` 108/109 (INC-294, préexistante), `verify-node-toolchain.sh` 5/5.
+
+**Campagne de fin de session**, sur `a627337` : unitaires 4343/4343, typage, build, pgTAP 93 fichiers / 3944
+assertions, API 1175, courrier 44, pytest 246 — verts ; interface 871 passés, 49 échecs, 5 non joués, les 49 rejoués
+seuls 47 verts et 2 rouges sur le `503` d'INC-292 (observation ajoutée au registre). Aucun échec imputable : le
+changement ne touche ni la webapp, ni la base, ni Kong. Les 813 captures réécrites par la campagne, d'autres unités,
+non observées ici, sont restaurées. Synchronisé ensuite sur `CRM-104` T7 et `CRM-111` T1 bis : service `mcp`
+reconstruit avec leur code, harnais rejoué 22/22.
+
+**Où reprendre** : `CRM-102` T5 reste `[~]` — première exécution réelle de `verifier.sh` à la prochaine livraison, et le
+constat du responsable. Prise libérée.

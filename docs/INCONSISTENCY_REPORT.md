@@ -7600,6 +7600,12 @@ rien »), et les trois échecs constants traités ailleurs (INC-236, INC-293, et
 `mentions-composeur.spec.ts`, vert 3/3 sur la ligne de base comme sur `CRM-113`). Le défaut grandit avec la
 durée de la série : il rend une campagne d'interface complète ininterprétable sans rejeu.
 
+*Mesuré de nouveau le 2026-10-24 par la session planifiée de `CRM-102` T5 (décision 683), qui ne touche ni la webapp
+ni Kong* : campagne d'interface **871 passés, 49 échecs, 5 non joués** (55 min) ; les 49 rejoués seuls rendent **47
+passés, 2 échecs**, tous deux sur un `503 (Service Unavailable)` laissé dans la console
+(`administration-workflows.spec.ts` « une exigence déclarée entre-temps… », `affaires-figees.spec.ts` « le retard porte
+la teinte de danger… »). Même signature, même croissance avec la durée de la série.
+
 ### INC-293 — à 1152 px, le titre long d'une affaire mesure 105 px, sous le seuil de 120 px de sa preuve
 
 *Relevé le 2026-10-24 par la session planifiée de `CRM-113`, dans sa campagne de fin de session.* **Constat** :

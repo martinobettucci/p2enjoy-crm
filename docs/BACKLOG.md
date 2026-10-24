@@ -15341,18 +15341,22 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       supprimé —, et la déclaration porte `ACCUEIL`, devenu obligatoire. `docs/SSO.md` est aligné sur la référence du service
       du 2026-10-16, qui décrit la redéclaration d'une intégration vivante. Campagnes : celles de T3, aucun code changé
       depuis hors un commentaire ; pytest **102** rejoué.
-- [@] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,
+- [~] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,
       route et DNS, variables), et constat.
-      *Prise en charge : CloudWorker 2026-10-24 22:12 UTC depuis 2026-10-24 22:15 UTC — état avant : [~]* (la part
-      « porter ces contrôles dans `scripts/spark/verifier.sh` » ; le constat du responsable reste hors de la prise)
-      *Spécifié le 2026-10-24 avant le code (décision 683, `docs/SPEC-deploiement-spark.md` §7, point 7)* : bibliothèque
-      `scripts/lib/connecteur-mcp.sh`, harnais `scripts/verify-controles-connecteur.sh`.
+      *Contrôles portés dans `verifier.sh` le 2026-10-24 — implémenté et vérifié en développement* (décision 683,
+      `docs/SPEC-deploiement-spark.md` §7, point 7) : `scripts/lib/connecteur-mcp.sh` — connecteur éteint sans conteneur
+      restant, ou conteneur présent, `/pret` par Caddy depuis la cellule (en-tête `Host`), route `tls`, puis par la route
+      publique `/pret`, `401` et `resource_metadata`, retour non listé refusé, `/plateforme` en `302`. Harnais
+      `scripts/verify-controles-connecteur.sh` **22/22** contre le vrai service et une cellule simulée devant un vrai
+      Caddy, rejoué après synchronisation contre le service reconstruit avec `CRM-104` T7 ; **dix mutations** de la
+      bibliothèque tuées. `verify-spark.sh` 108/109 (l'écart est INC-294, préexistant). **Non exécuté sur la cellule** :
+      la première exécution réelle de `verifier.sh` vient avec la prochaine livraison, sur instruction du responsable.
       *Livré le 2026-10-21* avec `CRM-101` T5 : révision `85d8bb7b`, migration 90, image `mcp` construite dans la cellule,
       service sain. Préalables relevés : variables importées, route et DNS, client `lelabs-crm-serveur` redéclaré (sonde
       `200` sur le retour du connecteur, `400` sur un témoin). Par la route publique : `/pret` `200` (SSO et CRM), `POST
       /mcp` sans jeton `401` avec `resource_metadata`, client au retour non listé refusé `400`, `mcp_autorise` refusée
-      sans session. Ces contrôles sont faits à la main. **Restent** : porter ces contrôles dans `scripts/spark/verifier.sh`,
-      comme le geste 5 du §2.14 du contrat de déploiement l'annonçait, et le constat du responsable — ajouter le
+      sans session. Ces contrôles étaient faits à la main ; ils sont portés dans `verifier.sh` depuis le 2026-10-24
+      (ci-dessus). **Restent** : leur première exécution sur la cellule, et le constat du responsable — ajouter le
       connecteur dans Claude ou ChatGPT et appeler `crm_workspace_list` (la matrice attend `CRM-103`).
 - [x] **T6** — du connecteur vers l'administration : l'accueil du connecteur porte le lien « Ouvrir la plateforme du
       CRM » vers `${SITE_URL}/plateforme`, et `GET /plateforme` et `GET /admin` sur l'hôte du connecteur répondent `302`
