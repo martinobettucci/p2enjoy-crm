@@ -7635,3 +7635,15 @@ touche MinIO : chacune est **mesurée à l'identique sans le changement** (`git 
 **Comportement laissé inchangé.** **Issue proposée** : l'unité du connecteur (`CRM-102`) tranche si le harnais doit
 exempter `CRM_MCP_ORIGINE_PUBLIQUE` et documente les trois variables au gabarit ; `CRM-090` reprend la garde JWT de
 `verify-spark.sh`. **Statut : ouverte.**
+
+### INC-295 — un test unitaire de focus de l'éditeur de workflows rougit sous la charge d'un harnais, vert seul
+
+*Relevé le 2026-10-24 par la session planifiée de `CRM-111` T1 bis, étranger à l'unité (aucun fichier de `webapp/` n'est
+touché).* **Mesure.** `scripts/verify-tracks.sh --rapide`, étape 5 : `npm run test:unit` rouge sur **un** test,
+`webapp/src/app/AdministrationWorkflows.nouveau-channel.test.tsx:214` (« le formulaire ouvert par l'adresse, remonté par
+une relecture — ne reprend pas le focus ») : `document.activeElement` vaut `<body>` au lieu du champ `nom`. Journal :
+`e2e/output/journaux-unitaires/unitaires-2026-10-24T21-46-00-059Z-24737.log`. Rejoué seul juste après, sur la même pile :
+**151 fichiers, 4343 tests verts**. **Lecture** : une attente de focus sensible au temps, sous la charge des suites que
+le harnais lance en parallèle (pgTAP, reconstructions). **Issue retenue** (`docs/CloudWorker.md` §4.1 bis) : le défaut
+est celui du test, pas du produit ; il relève de l'unité qui l'a écrit (`CRM-100`), qui remplacera l'assertion
+immédiate par l'attente du focus (`waitFor`) comme ses voisines. Comportement laissé inchangé ici.
