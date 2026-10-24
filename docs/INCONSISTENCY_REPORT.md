@@ -7647,3 +7647,13 @@ une relecture — ne reprend pas le focus ») : `document.activeElement` vaut `<
 le harnais lance en parallèle (pgTAP, reconstructions). **Issue retenue** (`docs/CloudWorker.md` §4.1 bis) : le défaut
 est celui du test, pas du produit ; il relève de l'unité qui l'a écrit (`CRM-100`), qui remplacera l'assertion
 immédiate par l'attente du focus (`waitFor`) comme ses voisines. Comportement laissé inchangé ici.
+
+### INC-296 — `verify-commentaires.sh` cherche le `@spec CRM-043` de `PanneauTimeline.tsx` dans ses trois premières lignes, qui n'en portent plus
+
+*Relevé le 2026-10-24 par la session planifiée de `CRM-111` T1 bis, étranger à l'unité.* **Mesure.**
+`scripts/verify-commentaires.sh --rapide` : 54 contrôles, **1 en échec** — « PanneauTimeline.tsx ne cite pas son unité
+de backlog ». Le contrôle lit `head -3` ; l'en-tête de `CRM-093` T4, ajouté en tête du fichier, a fait descendre
+`// @spec CRM-043` en **ligne 4**. Le fichier cite toujours l'unité ; c'est le contrôle qui borne trop court. Aucun
+fichier de la webapp n'est touché par `CRM-111` T1 bis : l'anomalie est identique des deux côtés. **Issue retenue**
+(`docs/CloudWorker.md` §4.1 bis) : le contrôle lira le bloc de commentaires d'en-tête entier, comme les autres harnais
+de traçabilité, plutôt qu'un nombre fixe de lignes ; correction imputée à `CRM-043` (le harnais), hors de cette tranche.
