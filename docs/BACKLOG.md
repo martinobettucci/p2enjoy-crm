@@ -16091,10 +16091,26 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       webapp et connecteur redéployés ensemble ; constat ; `CHANGELOG.md`.
 
 ### CRM-112 — Champs personnalisés communs de portée espace `[ ]`
-*Réservée le 2026-10-24 — décision 642, arbitrage 4 ; ordre fixé par la décision 645 : après `CRM-111`.* Un
-administrateur définit des champs au niveau de l'espace ; ils paraissent dans la partie commune de toute affaire, à
-côté des champs natifs, et s'écrivent selon la règle des parties communes (décision 639, arbitrage 3). **Connecteur
-MCP : oui**, famille `affaires`, action `modifier` (décision 642).
+*Réservée le 2026-10-24 — décision 642, arbitrage 4 ; ordre fixé par la décision 645 : après `CRM-111`. Arbitrée le
+2026-10-24 (décision 664). Spécification : `docs/SPEC-champs-communs.md`.* Un administrateur définit des champs au
+niveau de l'espace ; ils paraissent dans la partie commune de toute affaire, servent d'exigence de transition, de
+colonne et de filtre de la vue liste, de variable des modèles d'email, et sont trouvés par la recherche globale.
+**Connecteur MCP : oui pour les valeurs** (famille `affaires`, `consulter` et `modifier`), **non pour les définitions**.
+**Noms** : `card_common_fields`, `card_common_field_values` (décision 658).
 
-- [ ] **Spécification** à écrire et à valider avant le code : portée ajoutée à `form_fields` ou table distincte, champ
-      obligatoire ou non sans étape, écran d'administration, noms anglais (décision 658).
+- [~] **Spécification** — brouillon complet, tous les points tranchés (décision 664), **à valider** par le responsable
+      avant le code.
+- [ ] **T1** — mesures (coût du filtre et de l'index de recherche) ; migration : deux tables, politiques,
+      `app.validate_field_value` partagée ; pgTAP ; API aux jetons réels ; `docs/SCHEMA.md` ; contrat de déploiement.
+- [ ] **T2** — exigence par une transition (`common_field_id`), sixième vérification de `move_card`, versions et
+      copies, refus `common_field_in_use` et `common_field_archived` ; pgTAP ; API.
+- [ ] **T3** — écrans : Réglages ▸ « Champs de l'affaire », exigence dans l'éditeur de workflow, partie commune de la
+      fiche, timeline ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires.
+- [ ] **T4** — vue liste : colonnes (`is_listed`) et filtres au serveur par type ; unitaires ; API.
+- [ ] **T5** — modèles d'email : `{{card.field.<clé>}}`, contrôle d'écriture par déclencheur, rendu, sélecteur.
+- [ ] **T6** — recherche globale : types textuels et libellés des choix, résultat qui nomme le champ.
+- [ ] **T7** — `CRM-113` : les champs communs rejoignent les champs que le générateur ne doit pas doublonner.
+- [ ] **T8** — seed (`docs/SPEC-champs-communs.md` §13), E2E, captures aux quatre paliers, `docs/manual.md`.
+- [ ] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
+      `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.
+- [ ] **Livraison en production** avec `CRM-111` ou après elle, sur instruction du responsable.

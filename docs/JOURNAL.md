@@ -33148,3 +33148,24 @@ developers et aux administrateurs, refus traduits ; **aucune suppression**. La f
 quatre listes fermées du connecteur — contrainte `mcp_droits_famille`, `mcp_autorise`, `mcp_compte`, `mcp_poser_droits` —,
 avec quatre outils. **Découpage** : T1 migration, T2 webapp, T3 preuves de bout en bout, T4 outils MCP, T5 livraison.
 
+
+### décision 664 — `CRM-112` : les champs communs servent partout où sert un champ de l'affaire
+
+*2026-10-24, réponses du responsable, rendues une par une sur `docs/SPEC-champs-communs.md`.* **Arbitrages.**
+1. **Deux tables distinctes**, `card_common_fields` et `card_common_field_values`, plutôt qu'une portée ajoutée à
+   `form_fields` : les clés composites et les fonctions de composition des workflows restent intactes.
+2. **Exigible par une transition**, contre la recommandation de l'agent (« jamais obligatoire ») : une transition peut
+   exiger un champ commun, contrôlé par la sixième vérification de `move_card` ; jamais obligatoire à la création ni par
+   une étape.
+3. **Connecteur MCP : non pour les définitions** ; les valeurs restent ouvertes (décision 642).
+4. **Dans le périmètre**, contre la recommandation de l'agent (des unités ultérieures) : les **colonnes et filtres** de la
+   vue liste, les **variables** des modèles d'email, la **recherche globale**.
+5. **Noms** tels que proposés : `card_common_fields`, `card_common_field_values`, `app.validate_field_value`,
+   `crm_common_field_list`, `/reglages/champs`, écran « Champs de l'affaire ».
+6. **Archiver un champ exigé ou employé est refusé et nommé** (`common_field_in_use`).
+7. **Variables** : `{{card.field.<clé>}}` ; un champ vide rend une chaîne vide.
+8. **Recherche** : types textuels et libellés des choix, sous les droits de l'affaire.
+**Mesuré en rédigeant.** Les variables des modèles sont contrôlées par deux contraintes `CHECK` qui ne reçoivent pas
+l'espace : le contrôle passe à un déclencheur (T5). **Conséquences.** L'unité compte neuf tranches. Une version de
+workflow peut référencer un champ commun, et sa restauration est refusée si le champ est archivé. **Persisté** :
+`docs/SPEC-champs-communs.md` (réécrit) et `docs/BACKLOG.md` `CRM-112`. **État** : brouillon complet, à valider.
