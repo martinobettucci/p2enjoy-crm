@@ -33644,3 +33644,32 @@ garder le courrier (mesure 1). Deux sessions sur la même pile se suivent par un
 
 **Persisté avant le code** : `docs/SPEC-test-harness.md` §3.6 ; `docs/DAT.md` §3.2 *bis* ; `docs/BACKLOG.md` (`CRM-111`
 T1 bis, découpage). Connecteur MCP : sans objet, c'est de l'outillage.
+
+### décision 683 — `CRM-102` T5 : les contrôles du connecteur portés dans `verifier.sh`, en lecture seule
+
+*2026-10-24, session planifiée ouverte à 22:12:30 UTC (`docs/CloudWorker.md`). Tranché par la session (`docs/CloudWorker.md`
+§4.1 bis) ; le responsable peut le contredire.*
+
+**Choix de l'unité.** La dernière entrée (682) désigne `CRM-111` T1 bis, prise vivante d'une autre session planifiée
+(21:16 UTC, commits jusqu'à 22:11 UTC) : sautée (§1 *bis*). T2 de `CRM-111`, puis `CRM-112`, en dépendent. Dans l'ordre du
+plan, la première unité `[~]` dont il reste du code est `CRM-102` : son T5 nomme un reste qui n'attend personne —
+« porter ces contrôles dans `scripts/spark/verifier.sh` », que le geste 5 du `docs/PROD_MIGRATIONS.md` §2.14 annonçait
+et que les livraisons du 2026-10-21 et du 2026-10-23 ont faits à la main (`curl`). Le constat du responsable reste hors
+de la prise.
+
+**Décision.** Le contrat est écrit au `docs/SPEC-deploiement-spark.md` §7, point 7. Les choix de la session :
+- **connecteur éteint ≠ attente** : `CRM_MCP_HOTE` vide est un état voulu (`docs/SPEC-mcp.md` §2.1). Le seul contrôle
+  utile est l'absence d'un conteneur `p2enjoy-mcp`, qui garderait des secrets ;
+- **l'aiguillage se prouve depuis la cellule**, par Caddy et l'en-tête `Host`, sans attendre le DNS ; la route publique
+  ne se contrôle que si la route est en `tls` et que le nom résout, comme pour l'application ;
+- **les quatre contrôles publics** sont ceux du relevé du 2026-10-21 (`/pret`, `401` et `resource_metadata`,
+  enregistrement refusé) et celui de T6 (`/plateforme` en `302`), dans une bibliothèque `scripts/lib/connecteur-mcp.sh`,
+  pour être éprouvés contre le vrai service de développement ;
+- **une seule tentative** : le premier `/pret` sans réponse du 2026-10-21 est un fait à rapporter, pas à masquer ;
+- **écarté** : enregistrer un vrai client ou ouvrir une autorisation, qui écriraient dans l'état du mandataire de
+  production ; l'enregistrement refusé n'écrit rien, mais consomme une unité du quota de la garde (compromis nommé).
+
+**Preuve prévue** : un harnais dédié, `scripts/verify-controles-connecteur.sh`, avec contre-épreuves. Connecteur MCP :
+sans objet comme fonctionnalité — c'est la vérification de son déploiement.
+
+**Persisté avant le code** : ce journal ; `docs/SPEC-deploiement-spark.md` §7 ; `docs/BACKLOG.md` (`CRM-102` T5).

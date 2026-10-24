@@ -285,7 +285,7 @@ hors de la cellule : le défaut qu'elle corrige est celui de l'assemblage de pro
 
 ## 7. Vérifications
 
-En plus du §5 de `docs/PROD_MIGRATIONS.md`. Les points 1 à 6 et la sonde du client OIDC sont
+En plus du §5 de `docs/PROD_MIGRATIONS.md`. Les points 1 à 7 et la sonde du client OIDC sont
 exécutés, en lecture seule, par `scripts/spark/verifier.sh`, qui distingue un échec d'un contrôle
 « en attente » d'un geste extérieur :
 
@@ -300,6 +300,36 @@ exécutés, en lecture seule, par `scripts/spark/verifier.sh`, qui distingue un 
    publiée qu'en `http://` ; puis, depuis Internet : `https://crm.lelabs.tech/` charge
    l'application, **sans** l'écran « Configuration incomplète ».
 6. `df -h /` laisse au moins 2 Gio libres après le premier déploiement.
+7. **Le connecteur MCP** (`CRM-102` T5, décision 683 ; `docs/SPEC-mcp.md` §2.1, §2.2, §3.4, §11). Les contrôles faits
+   à la main le 2026-10-21 (`docs/PROD_MIGRATIONS.md` §2.14, geste 5) sont portés dans `verifier.sh`, par la
+   bibliothèque `scripts/lib/connecteur-mcp.sh`. `CRM_MCP_HOTE` et `SITE_URL` sont lues dans `/etc/spark/env` :
+   - **`CRM_MCP_HOTE` vide** : le connecteur est éteint par choix, ce n'est ni un échec ni une attente. Le seul contrôle
+     est qu'**aucun conteneur `p2enjoy-mcp`** ne subsiste — il garderait les secrets du connecteur ;
+   - **`CRM_MCP_HOTE` posée** :
+     1. un conteneur `p2enjoy-mcp` existe (sa santé est le contrôle 2, commun à tous les conteneurs) ;
+     2. **depuis la cellule, par Caddy**, avec l'en-tête `Host: <CRM_MCP_HOTE>` : `GET /pret` rend `200` et
+        `"pret": true`. L'aiguillage de Caddy est ainsi prouvé sans dépendre du DNS ;
+     3. la route `<CRM_MCP_HOTE>` de `/etc/spark/routes` est en **`tls`** — même règle que pour l'application : une
+        route `tls` seulement proposée est **en attente**, une route absente ou en `clair` est un **échec** ;
+     4. si la route est en `tls` et que le nom résout, **par la route publique** `https://<CRM_MCP_HOTE>` :
+        - `GET /pret` rend `200` et `"pret": true` ; sinon l'échec cite le début du corps, qui nomme le contrôle en
+          défaut (`sso` ou `crm`) ;
+        - `POST /mcp` sans jeton rend `401`, et l'en-tête `WWW-Authenticate` porte
+          `resource_metadata="https://<CRM_MCP_HOTE>/.well-known/oauth-protected-resource/mcp"` ;
+        - `POST /register` d'un client au retour non listé (`https://malveillant.exemple.test/cb`) rend `400` et
+          `invalid_redirect_uri` : **rien n'est écrit** ;
+        - `GET /plateforme` rend `302` vers `<SITE_URL>/plateforme` (`CRM-102` T6) ;
+
+       sinon, une **attente** : DNS ou route à poser.
+   - **Une seule tentative par contrôle**, bornée à 20 s comme les autres. Le relevé du 2026-10-21 a vu un premier
+     `/pret` sans réponse quelques minutes après le démarrage : un échec ponctuel est rapporté tel quel, jamais masqué
+     par une reprise.
+   - **Compromis nommé** : l'enregistrement refusé passe par la garde d'entrée du connecteur, qui compte les
+     enregistrements par adresse (`CRM_MCP_ENREGISTREMENTS_HEURE`, 20 par heure). Chaque exécution de `verifier.sh` en
+     consomme donc un pour l'adresse du poste.
+   - **Preuve** : `scripts/verify-controles-connecteur.sh`, contre le vrai service `mcp` de développement et une
+     cellule simulée (faux `ssh` qui exécute localement, Caddy de la cellule réel), avec des contre-épreuves : origine,
+     `SITE_URL` et hôte faux, serveur complaisant qui rend `200` à tout, port fermé, conteneur orphelin.
 
 ## 8. Capacité — mesures
 

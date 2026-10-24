@@ -15343,8 +15343,10 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       depuis hors un commentaire ; pytest **102** rejoué.
 - [@] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,
       route et DNS, variables), et constat.
-      *Prise en charge : CloudWorker 2026-10-24 22:12 UTC depuis 2026-10-24 22:27 UTC — état avant : [~]* (la part
+      *Prise en charge : CloudWorker 2026-10-24 22:12 UTC depuis 2026-10-24 22:15 UTC — état avant : [~]* (la part
       « porter ces contrôles dans `scripts/spark/verifier.sh` » ; le constat du responsable reste hors de la prise)
+      *Spécifié le 2026-10-24 avant le code (décision 683, `docs/SPEC-deploiement-spark.md` §7, point 7)* : bibliothèque
+      `scripts/lib/connecteur-mcp.sh`, harnais `scripts/verify-controles-connecteur.sh`.
       *Livré le 2026-10-21* avec `CRM-101` T5 : révision `85d8bb7b`, migration 90, image `mcp` construite dans la cellule,
       service sain. Préalables relevés : variables importées, route et DNS, client `lelabs-crm-serveur` redéclaré (sonde
       `200` sur le retour du connecteur, `400` sur un témoin). Par la route publique : `/pret` `200` (SSO et CRM), `POST
