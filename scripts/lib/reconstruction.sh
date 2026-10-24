@@ -16,6 +16,11 @@
 # `dev`. Deux sessions sur la même pile se suivent par un verrou de l'hôte.
 #
 # Usage : reconstruire_base_dev [--sans-seed]   — code 0 si et seulement si le constat final est tenu.
+#         reconstruire_base_dev --migrations DIR — preuve d'idempotence locale de `scripts/verify-migrations.sh` :
+#           sur la base neuve, seuls `db` et `storage` remontent, et le VRAI runner applique le répertoire DIR
+#           (par `MIGRATIONS_DIR`) au lieu de `supabase/migrations`. Son journal sort sur la sortie standard et
+#           son code est rendu. La pile reste à demi remontée et le registre porte DIR : une reconstruction
+#           ordinaire doit suivre (docs/SPEC-test-harness.md §3.6).
 
 # Les conteneurs qui tiennent une connexion, un cache de schéma, un journal ou un état de la base détruite.
 RECONSTRUCTION_SERVICES=(db migrations-runner storage realtime rest meta studio mail-sync stalwart stalwart-init roundcube)
@@ -26,12 +31,16 @@ RECONSTRUCTION_VERROU=${RECONSTRUCTION_VERROU:-/tmp/p2enjoy-crm-reconstruction.l
 RECONSTRUCTION_ATTENTE=${RECONSTRUCTION_ATTENTE:-1800}
 
 reconstruire_base_dev() {
-	local racine fichier profil seed=true
+	local racine fichier profil seed=true repertoire=''
 	racine=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 	fichier=${ENV_FILE:-$racine/.env}
 	case "${1:-}" in
 		'') ;;
 		--sans-seed) seed=false ;;
+		--migrations)
+			repertoire=${2:-}
+			[ -d "$repertoire" ] || { echo "reconstruire_base_dev : --migrations exige un répertoire existant." >&2; return 2; }
+			repertoire=$(cd "$repertoire" && pwd) ;;
 		*) echo "reconstruire_base_dev : option inconnue « $1 »." >&2; return 2 ;;
 	esac
 	profil=$(sed -n 's/^P2ENJOY_ENV_PROFILE=//p' "$fichier" 2>/dev/null | tail -n 1 | tr -d "\"'\r")
@@ -64,6 +73,13 @@ reconstruire_base_dev() {
 			-c "rm -rf /cible/$(basename "$donnees")"
 		[ ! -e "$donnees" ] || { echo "reconstruire_base_dev : $donnees subsiste après destruction." >&2; exit 1; }
 
+		if [ -n "$repertoire" ]; then
+			compose up -d --wait db storage >/dev/null 2>&1 \
+				|| { echo "reconstruire_base_dev : db et storage ne remontent pas." >&2; exit 1; }
+			compose run --rm --no-deps -v "$repertoire:/migrations-essai:ro" -e MIGRATIONS_DIR=/migrations-essai \
+				migrations-runner 2>&1
+			exit $?
+		fi
 		compose up -d --wait >/dev/null 2>&1 \
 			|| { echo "reconstruire_base_dev : la pile ne remonte pas (docker compose up --wait)." >&2; exit 1; }
 		if [ "$seed" = true ]; then

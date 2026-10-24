@@ -10,8 +10,11 @@
 # @verifies docs/SCHEMA.md §1 (identité et cloisonnement)
 # @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 3 et 11)
 # @verifies docs/PROD_MIGRATIONS.md §3 (migrations en attente)
-# @verifies CRM-096 (docs/BACKLOG.md) — tranche T3 : l'adoption du répertoire entier sur une base peuplée,
-#           puis un passage qui n'applique rien (docs/DAT.md §3.2 bis ; docs/JOURNAL.md décision 616)
+# @verifies CRM-096 (docs/BACKLOG.md) — tranche T3 : l'adoption, puis un passage qui n'applique rien
+#           (docs/DAT.md §3.2 bis ; docs/JOURNAL.md décision 616)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 bis : base neuve construite dans l'ordre, idempotence locale
+#           de chaque fichier par le vrai runner (docs/DAT.md §3.2 révisé ; docs/SPEC-test-harness.md §3.6 ;
+#           docs/JOURNAL.md décisions 675 et 682)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §6, §13 — tranche T4 : le profil naît de
 #           la vraie connexion LeLabs ; plus aucun compte GoTrue ; tranche T6 (§7.5, décision 589) :
 #           le trigger GoTrue retiré, et la mutation qui le visait retournée
@@ -19,8 +22,9 @@
 # Rejoue les preuves exigées par la Definition of Done de `CRM-003` :
 #
 #   1. la suite pgTAP `supabase/tests/0001_identite_et_cloisonnement.test.sql` est verte ;
-#   2. la migration est **rejouable** : réappliquée sur une base déjà migrée, elle réussit sans
-#      erreur ni effet de bord — exigence du `migrations-runner`, qui ne tient aucun registre ;
+#   2. RÉVISÉ par `CRM-111` T1 bis (décision 682) : une base NEUVE se construit dans l'ordre, et chaque
+#      fichier du répertoire se rejoue sans erreur ni effet sur l'état qu'il vient de produire — prouvé par
+#      le vrai runner sur un répertoire doublé ; un passage de plus n'applique rien ;
 #   3. le profil naît par le **véritable** chemin applicatif — révisé par `CRM-092` T4 : compte du
 #      Keycloak de développement, attente, vraie connexion LeLabs ; profil constaté par PostgREST ;
 #   4. le refus anonyme reste réel et le contrat CRM-022 est mesuré **hors interface** avec un vrai
@@ -29,9 +33,10 @@
 #   5. le harnais est **non complaisant** : chaque mutation volontaire de la structure le fait
 #      échouer.
 #
-# Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
-# (`./runDev.sh`). Toutes les mutations de l'étape 5 vivent dans une transaction annulée ; le
-# compte de démonstration créé à l'étape 3 est supprimé en fin de parcours.
+# La pile de développement doit déjà tourner (`./runDev.sh`). L'étape 2 RECONSTRUIT la base de
+# développement trois fois (`scripts/lib/reconstruction.sh`) et la laisse neuve et seedée. Toutes les
+# mutations de l'étape 5 vivent dans une transaction annulée ; le compte de démonstration créé à
+# l'étape 3 est supprimé en fin de parcours.
 #
 # Usage :
 #   scripts/verify-migrations.sh
@@ -39,15 +44,14 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/sso.sh
 source scripts/lib/sso.sh
 sso_env_charger .env
 
 TEST_FILE=supabase/tests/0001_identite_et_cloisonnement.test.sql
-MIGRATION_FILE=supabase/migrations/0001_identite_et_cloisonnement.sql
 DB_CONTAINER=p2enjoy-db
 PREUVE_EMAIL="crm-003-preuve@exemple.test"
 
@@ -128,73 +132,142 @@ else
 	printf '%s\n' "$tap_output" | grep -E '^(not ok|# )' | sed 's/^/        /'
 fi
 
-# --- 2. Rejouabilité de la migration -----------------------------------------------------------
-# Le `migrations-runner` rejouait tout le répertoire à chaque démarrage (`CRM-001`) ; depuis `CRM-096` il
-# n'applique plus que les fichiers absents de son registre, mais l'ADOPTION d'une base rejoue encore tout
-# le répertoire : une migration non rejouable la bloquerait, et PostgREST avec elle.
+# --- 2. Une base neuve se construit dans l'ordre, et chaque fichier se rejoue sur son état -------------
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289 ; docs/SPEC-test-harness.md §3.6). Cette section
+# réappliquait `0001` sur la base peuplée, puis prouvait l'ADOPTION du répertoire entier sur cette même base.
+# Les deux preuves sont RETIRÉES, et leur motif reste écrit ici : l'adoption sur base peuplée est ROUGE depuis
+# `0099` — MESURÉ le 2026-10-24, registre vidé puis runner relancé : code 3 sur `0089_plateforme.sql`,
+# « cannot change return type of existing function » — et elle n'est plus un invariant (décision 675). Un
+# fichier appliqué ne se corrige jamais (registre à empreintes) ; un retrait de colonne ou un changement de
+# signature rend les fichiers antérieurs non rejouables sur l'état final.
+#
+# L'invariant éprouvé est désormais celui du `docs/DAT.md` §3.2 : une base NEUVE se construit en appliquant
+# le répertoire dans l'ordre, et chaque fichier se rejoue sans erreur ni effet sur l'état qu'il vient de
+# produire. Le VRAI runner reçoit un répertoire où chaque `NNNN_nom.sql` est suivi de sa copie à l'identique
+# `NNNN_nom_rejeu.sql` — l'ordre des octets place la copie juste après l'original, avant `NNNN+1`. Trois
+# reconstructions de la base de développement (`scripts/lib/reconstruction.sh`), une minute chacune au plus.
 
 echo
-echo "2. Rejouabilité de la migration"
+echo "2. Base neuve dans l'ordre, et chaque fichier rejoué sur l'état qu'il produit (docs/DAT.md §3.2)"
 
-empreinte_schema() {
-	psql_db -c "
-		select string_agg(t, e'\n' order by t) from (
-			select c.relname || ':' || a.attname || ':' || format_type(a.atttypid, a.atttypmod)
-			       || ':' || a.attnotnull as t
-			  from pg_class c
-			  join pg_namespace n on n.oid = c.relnamespace
-			  join pg_attribute a on a.attrelid = c.oid and a.attnum > 0 and not a.attisdropped
-			 where n.nspname = 'public'
-			   and c.relname in ('profiles','workspaces','workspace_members',
-			                     'track_members','channel_members')
-		) s;"
-}
+# La structure que produisent les migrations : schémas `public` et `app`, compartiments et politiques du
+# stockage, tâches planifiées. Une ligne par catégorie, chacune réduite à son empreinte — le détail n'est
+# relu qu'en cas d'écart. MESURÉ le 2026-10-24, deux faux écarts écartés de l'empreinte : l'ORDRE des entrées
+# d'une ACL change quand un `revoke` puis un `grant` la réécrivent à l'identique (`acl_triee` les trie), et la
+# CADENCE d'une tâche `pg_cron` est un état d'exécution — amorcée à quelques secondes, chaque tâche se ramène
+# elle-même à sa cadence nominale à son premier passage (`0018`, `0054`, `0060`) ; seuls son nom et sa
+# commande sont de la structure.
+REQUETE_EMPREINTE="
+		create or replace function pg_temp.acl_triee(acl aclitem[]) returns text language sql as
+			\$\$ select coalesce(array_to_string(array(select a::text from unnest(acl) a order by 1), ','), '') \$\$;
+		with objets(categorie, t) as (
+			select 'colonnes', n.nspname || '.' || c.relname || '.' || a.attname || ':' || format_type(a.atttypid, a.atttypmod)
+			       || ':' || a.attnotnull || ':' || coalesce(pg_get_expr(d.adbin, d.adrelid), '')
+			  from pg_attribute a join pg_class c on c.oid = a.attrelid join pg_namespace n on n.oid = c.relnamespace
+			  left join pg_attrdef d on d.adrelid = a.attrelid and d.adnum = a.attnum
+			 where n.nspname in ('public', 'app') and a.attnum > 0 and not a.attisdropped
+			   and c.relname <> 'migrations_appliquees'
+			union all
+			select 'contraintes', conrelid::regclass || ':' || conname || ':' || pg_get_constraintdef(oid)
+			  from pg_constraint where connamespace in ('public'::regnamespace, 'app'::regnamespace)
+			union all
+			select 'index', schemaname || '.' || indexname || ':' || indexdef from pg_indexes where schemaname in ('public', 'app')
+			union all
+			select 'politiques', schemaname || '.' || tablename || ':' || policyname || ':' || cmd || ':' || roles::text
+			       || ':' || coalesce(qual, '') || ':' || coalesce(with_check, '')
+			  from pg_policies where schemaname in ('public', 'app', 'storage')
+			union all
+			select 'privileges', n.nspname || '.' || c.relname || ':' || pg_temp.acl_triee(c.relacl) || ':' || c.relrowsecurity
+			  from pg_class c join pg_namespace n on n.oid = c.relnamespace
+			 where n.nspname in ('public', 'app') and c.relkind in ('r', 'v', 'm', 'S', 'p')
+			union all
+			select 'fonctions', p.oid::regprocedure::text || ':' || pg_get_function_result(p.oid) || ':' || p.provolatile::text
+			       || ':' || p.prosecdef || ':' || pg_temp.acl_triee(p.proacl) || ':' || md5(p.prosrc)
+			  from pg_proc p where p.pronamespace in ('public'::regnamespace, 'app'::regnamespace)
+			union all
+			select 'declencheurs', tgrelid::regclass || ':' || tgname || ':' || pg_get_triggerdef(oid)
+			  from pg_trigger where not tgisinternal
+			   and tgrelid in (select c.oid from pg_class c where c.relnamespace in ('public'::regnamespace, 'app'::regnamespace))
+			union all
+			select 'stockage', id || ':' || public || ':' || coalesce(file_size_limit::text, '') || ':' || coalesce(allowed_mime_types::text, '')
+			  from storage.buckets
+			union all
+			select 'planification', jobname || ':' || md5(command) from cron.job
+		)
+		select categorie || ' ' || count(*) || ' ' || md5(string_agg(t, e'\n' order by t)) from objets group by categorie order by categorie;"
+empreinte_structure() { psql_db -v ON_ERROR_STOP=1 -c "$REQUETE_EMPREINTE"; }
+# La même empreinte, prise après une mutation posée dans une transaction annulée : la base n'en garde rien.
+empreinte_mutee() { printf 'begin;\n%s\n%s\nrollback;\n' "$1" "$REQUETE_EMPREINTE" | psql_db -v ON_ERROR_STOP=1 -f -; }
 
-avant=$(empreinte_schema)
-
-if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres --no-psqlrc --quiet \
-	--set ON_ERROR_STOP=1 --single-transaction -f - < "$MIGRATION_FILE" >/tmp/p2enjoy-replay.log 2>&1
-then
-	ok "la migration se réapplique sans erreur sur une base déjà migrée"
-else
-	fail "la migration échoue à la réapplication (voir /tmp/p2enjoy-replay.log)"
-	tail -5 /tmp/p2enjoy-replay.log | sed 's/^/        /'
-fi
-
-apres=$(empreinte_schema)
-if [ "$avant" = "$apres" ]; then
-	ok "la réapplication ne modifie pas la structure des cinq tables"
-else
-	fail "la structure a changé après réapplication de la migration"
-fi
-
-# Le conteneur d'application des migrations doit lui aussi se terminer avec le code 0.
-#
-# CORRIGÉ À CRM-022 : `up -d` rend la main au DÉMARRAGE, et l'inspection immédiate relisait le
-# code de l'exécution précédente. Les appels API ci-dessous partaient alors pendant le rejeu :
-# entre 0001 et 0021, `authenticated` retrouvait temporairement UPDATE sur tout `profiles`, et le
-# harnais a réellement modifié `locale` en HTTP 204. `run --rm` attend l'exécution qu'il lance et
-# relaie son propre code ; aucune mesure ne commence sur une base intermédiaire.
-#
-# RÉVISÉ PAR `CRM-096` T3 (décision 616). Un passage ordinaire n'applique plus que les fichiers absents du
-# registre : relancé tel quel, le runner ne prouverait plus que le RÉPERTOIRE ENTIER se rejoue, ce dont
-# l'adoption dépend. Le registre de la base de développement est donc vidé d'abord : le passage suivant
-# est une ADOPTION sur base peuplée — le cas exact de la première fenêtre de production après `CRM-096` —,
-# qui doit rejouer tout le répertoire, se terminer en 0 et réinscrire chaque fichier. Un second passage,
-# lui, ne doit rien appliquer.
+DOUBLE=$(mktemp -d)
+for migration in supabase/migrations/*.sql; do
+	cp "$migration" "$DOUBLE/"
+	cp "$migration" "$DOUBLE/$(basename "$migration" .sql)_rejeu.sql"
+done
 nombre_migrations=$(find supabase/migrations -maxdepth 1 -name '*.sql' | wc -l | tr -d ' ')
-rejeu_complet_au_prochain_passage
-if docker compose -f docker-compose.yml -f docker-compose.dev.yml \
-	run --rm migrations-runner >/tmp/p2enjoy-runner.log 2>&1 \
-	&& grep -q "adoption" /tmp/p2enjoy-runner.log \
+
+# 2.1 Chaque fichier, rejoué aussitôt sur l'état qu'il vient de produire.
+if reconstruire_base_dev --migrations "$DOUBLE" >/tmp/p2enjoy-runner-double.log 2>&1 \
+	&& grep -q "$((2 * nombre_migrations)) fichier(s) appliqué(s) avec succès" /tmp/p2enjoy-runner-double.log
+then
+	ok "base neuve, répertoire doublé : le runner applique les $((2 * nombre_migrations)) fichiers en 0 — chaque migration se rejoue sur l'état qu'elle produit"
+else
+	fail "une migration ne se rejoue pas sur l'état qu'elle vient de produire (voir /tmp/p2enjoy-runner-double.log)"
+	grep -E 'application de|ERROR' /tmp/p2enjoy-runner-double.log | tail -3 | sed 's/^/        /'
+fi
+empreinte_doublee=$(empreinte_structure)
+
+# 2.2 Non-complaisance : une migration NON idempotente, doublée de même, doit arrêter le runner sur sa copie.
+printf -- '-- sentinelle de verify-migrations.sh : crée une table sans « if not exists »\ncreate table public.sentinelle_rejeu (id int);\n' \
+	> "$DOUBLE/9999_sentinelle_non_idempotente.sql"
+cp "$DOUBLE/9999_sentinelle_non_idempotente.sql" "$DOUBLE/9999_sentinelle_non_idempotente_rejeu.sql"
+if reconstruire_base_dev --migrations "$DOUBLE" >/tmp/p2enjoy-runner-sentinelle.log 2>&1; then
+	fail "une migration non idempotente passe le répertoire doublé : la preuve 2.1 ne prouve rien"
+elif grep -q "application de 9999_sentinelle_non_idempotente_rejeu.sql" /tmp/p2enjoy-runner-sentinelle.log \
+	&& grep -q 'already exists' /tmp/p2enjoy-runner-sentinelle.log
+then
+	ok "non-complaisance : une migration non idempotente arrête le runner sur sa copie (« already exists »)"
+else
+	fail "la sentinelle échoue ailleurs que sur sa copie — contrôle non concluant"
+	tail -3 /tmp/p2enjoy-runner-sentinelle.log | sed 's/^/        /'
+fi
+rm -rf "$DOUBLE"
+
+# 2.3 Une base neuve, construite par le passage ordinaire du runner, puis seedée.
+if reconstruire_base_dev >/tmp/p2enjoy-reconstruction.log 2>&1 \
+	&& grep -q "adoption : rejeu complet de $nombre_migrations fichier(s)" <(docker logs p2enjoy-migrations 2>&1) \
 	&& [ "$(psql_db -c "select count(*) from app.migrations_appliquees where mode = 'adoption'")" = "$nombre_migrations" ]
 then
-	ok "adoption sur base peuplée : le runner rejoue les $nombre_migrations fichiers, se termine en 0 et les inscrit"
+	ok "base neuve : le runner construit les $nombre_migrations fichiers dans l'ordre, se termine en 0 et les inscrit"
 else
-	fail "l'adoption du répertoire entier échoue, ou n'inscrit pas chaque fichier"
-	tail -10 /tmp/p2enjoy-runner.log | sed 's/^/        /'
+	fail "la construction d'une base neuve échoue, ou n'inscrit pas chaque fichier"
+	tail -5 /tmp/p2enjoy-reconstruction.log | sed 's/^/        /'
 fi
-if docker compose -f docker-compose.yml -f docker-compose.dev.yml \
+
+# 2.4 Les copies n'ont rien changé : la base doublée a exactement la structure de la base ordinaire.
+empreinte_ordinaire=$(empreinte_structure)
+if [ -n "$empreinte_ordinaire" ] && [ "$empreinte_doublee" = "$empreinte_ordinaire" ]; then
+	ok "la structure de la base doublée égale celle de la base ordinaire ($(printf '%s\n' "$empreinte_ordinaire" | wc -l | tr -d ' ') catégories) : aucun rejeu n'a d'effet"
+else
+	fail "un rejeu modifie la structure : catégories divergentes"
+	diff <(printf '%s\n' "$empreinte_doublee") <(printf '%s\n' "$empreinte_ordinaire") | sed 's/^/        /' || true
+fi
+
+# Contre-épreuve : l'égalité ne prouve rien si l'empreinte ne voit pas une vraie différence de structure.
+for mutation in \
+	"alter table public.tracks alter column name drop not null;" \
+	"create or replace function app.set_updated_at() returns trigger language plpgsql as \$\$ begin return new; end; \$\$;" \
+	"create policy sentinelle on public.tracks for select to anon using (true);"
+do
+	if [ "$(empreinte_mutee "$mutation")" != "$empreinte_ordinaire" ]; then
+		ok "contre-épreuve : l'empreinte voit « ${mutation:0:60}… »"
+	else
+		fail "contre-épreuve : l'empreinte ne voit pas « ${mutation:0:60}… » — l'égalité 2.4 ne prouve rien"
+	fi
+done
+
+# 2.5 Base à jour : un passage de plus n'applique rien.
+if docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
 	run --rm migrations-runner >/tmp/p2enjoy-runner-2.log 2>&1 \
 	&& grep -q "; 0 à appliquer" /tmp/p2enjoy-runner-2.log
 then

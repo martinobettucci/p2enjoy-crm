@@ -210,7 +210,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-move-card-to-channel.sh` | Rejoue le déplacement entre channels, sa perte explicite, sa trace et ses refus | **disponible** |
 | `scripts/verify-scripts.sh` | Rejoue les preuves des scripts : contrat `.env.example`, amorçage, gardes de profil | **disponible** |
 | `scripts/verify-crochets-git.sh` | Rejoue les preuves des crochets Git : commit et push refusés hors de `main` et en `HEAD` détaché, référence distante contrôlée, identité du responsable toujours exigée | **disponible** |
-| `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, idempotence, refus par défaut mesuré hors interface | **disponible** |
+| `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, base neuve construite dans l'ordre, idempotence de chaque fichier sur l'état qu'il produit, refus par défaut mesuré hors interface. **Reconstruit la base de développement** | **disponible** |
 | `scripts/verify-reconstruction.sh` | Éprouve la reconstruction de la base de développement par laquelle les harnais restaurent : refus hors profil `dev` et sous verrou sans rien arrêter, base neuve construite dans l'ordre, seuls la base et ses dérivés recréés, seed convergent (`CRM-111` T1 bis) | **disponible** |
 | `IA_SERVEUR_REEL=1 npm run e2e:api -- e2e/api/ia-reel.spec.ts` | Contrôle **facultatif** du contrat du serveur Ollama réel (`CRM-097`, `docs/SPEC-ia.md` §8) : une génération par le vrai modèle, une demi-minute à une minute. Ignoré sans la variable ; aucune campagne ne l'exécute | **disponible** |
 | `scripts/verify-registre-migrations.sh` | Éprouve le registre des migrations du runner sur un PostgreSQL jetable : adoption, delta, refus d'un fichier modifié, absent ou inséré dans le passé, migration en échec ni appliquée ni inscrite, chaque garde vue rouge sous dégradation (`CRM-096`) | **disponible** |
@@ -616,8 +616,9 @@ schéma `vault` — puis éprouve le cycle de vie de la clé racine : conservée
 redémarrage ; perdue, il devient définitivement illisible. C'est ce dernier point qui fonde la
 contrainte de sauvegarde de `docs/DAT.md` §10.
 
-`scripts/verify-migrations.sh` exécute la suite pgTAP de `supabase/tests/`, réapplique la
-migration pour prouver son idempotence, crée une personne jetable dans le **LeLabs de développement**,
+`scripts/verify-migrations.sh` exécute la suite pgTAP de `supabase/tests/`, reconstruit la base de
+développement pour prouver qu'une base neuve se construit dans l'ordre et que chaque migration se rejoue sur
+l'état qu'elle vient de produire (le vrai runner sur un répertoire doublé, `docs/SPEC-test-harness.md` §3.6), crée une personne jetable dans le **LeLabs de développement**,
 la connecte par la vraie connexion et constate que son profil naît de l'admission, puis mesure les
 refus **hors interface** avec les jetons réels. Il vérifie enfin sa propre sévérité en mutant la structure : chaque mutation doit le
 faire échouer.

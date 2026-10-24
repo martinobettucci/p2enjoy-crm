@@ -22,6 +22,10 @@ d'exécuter le code attendu.
   constate le registre et la santé de la pile — en une minute environ. Refus hors profil `dev`, verrou entre sessions.
 - `scripts/verify-reconstruction.sh` : 27 contrôles (refus sans rien arrêter, sentinelle effacée, conteneurs et volumes
   conservés, seed convergent).
+- `scripts/verify-migrations.sh` : la preuve d'adoption sur base peuplée, rouge depuis `0099` (INC-289), est remplacée
+  par l'invariant révisé — base neuve construite dans l'ordre, chaque fichier rejoué sur l'état qu'il vient de produire
+  (le vrai runner sur un répertoire doublé, structure identique à celle d'une base ordinaire), sentinelle non
+  idempotente refusée, passage suivant vide. 36 contrôles, aucune anomalie.
 
 ### `CRM-113` T5 — arbitrages du responsable (décision 679) : tout en anglais, la casse ignorée (migration 103)
 
