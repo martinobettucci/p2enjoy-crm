@@ -15525,7 +15525,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - E2E `connecteur-temps.spec.ts` **1/1** (la case du connecteur dans « Votre semaine »), capture observée ;
         `SCENARIOS_UI=918`.
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
-      - **Reste `[~]`** : la livraison, avec la reconstruction de l'image `mcp`.
+      - **Livrée en production le 2026-10-24** (révision `62654375`, image `mcp` reconstruite, `verifier.sh` 26/27 —
+        compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[~]`** : le constat du responsable.
 - [ ] **T6** — `objectifs`.
 - [ ] **T7** — `messagerie`.
 

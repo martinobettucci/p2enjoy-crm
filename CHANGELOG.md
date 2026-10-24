@@ -13,14 +13,6 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-104` T5 — le connecteur MCP tient le temps passé (décisions 671 et 672)
-
-*En développement. Aucune migration ; il faudra reconstruire l'image `mcp` à la livraison.*
-
-- **Trois outils** dans la famille « Temps » : lire ses saisies d'une période (ou celles d'un membre, pour un
-  administrateur), lire le rapport valorisé, et poser une case de la grille — 0 la vide.
-- **Le coût du personnel** reste un geste de l'écran.
-
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
@@ -30,6 +22,19 @@ d'exécuter le code attendu.
   connecteur (`docs/SPEC-seed.md` §22).
 
 ## [Publié]
+
+### Déployé en production, 2026-10-24 — l'image `mcp`, temps passé
+
+Cellule Spark `crm`, révision `62654375` : `scripts/spark/livrer.sh` sans migration, puis la reconstruction explicite de
+l'image `mcp`, saine. **Avant** : `verify-mcp.sh` 82 contrôles sans anomalie ; `connecteur-temps` 1/1. **Vérifié** :
+`verifier.sh` 26/27 (le même compteur antérieur) ; le module `temps` présent ; `/mcp` sans jeton `401`. **Non
+constaté** : un appel réel d'un assistant connecté.
+
+#### `CRM-104` T5 — le connecteur MCP tient le temps passé (décisions 671 et 672)
+
+- **Trois outils** dans la famille « Temps » : lire ses saisies d'une période (ou celles d'un membre, pour un
+  administrateur), lire le rapport valorisé, et poser une case de la grille — 0 la vide.
+- **Le coût du personnel** reste un geste de l'écran.
 
 ### Déployé en production, 2026-10-24 — l'image `mcp`, coûts
 
