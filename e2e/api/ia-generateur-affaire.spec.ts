@@ -5,6 +5,8 @@
 //           base sur une correction, bloquant l'acceptation), §14.8 (preuves d'API) ; docs/JOURNAL.md décision 677
 // @verifies CRM-113 tranche T2 — docs/SPEC-ia.md §14.6 (le scénario `catalogue` du simulateur : ses deux défauts écrits
 //           par la base ; le libellé et la probabilité de l'étape gardés par la mise en forme de la fonction)
+// @verifies CRM-113 tranche T5 — décision 679 : les clés `label` et `probability` de l'étape, l'enveloppe `key` des codes
+//           nouveaux, et un libellé égal au nœud à la casse près qui ne surcharge rien (docs/SPEC-ia.md §14.3)
 // @verifies CLAUDE.md §10 (le commercial ne corrige pas une suggestion, avec son jeton réel), §15 (effets relus en base)
 //
 // La suggestion naît par la vraie fonction et le simulateur (scénario `valide`) ; les corrections passent par
@@ -25,7 +27,7 @@ const FILTRE = `demande=like.${encodeURIComponent(`${PREFIXE}*`)}`
 const NOEUDS_SIMULES = ['prise-de-contact', 'maquette', 'gagne-web', 'perdu-web']
 
 type Noeud = { cle: string; libelle: string; probabilite: number }
-type Etape = { noeud: string; initiale: boolean; libelle?: string | null; probabilite?: number | null }
+type Etape = { noeud: string; initiale: boolean; label?: string | null; probability?: number | null }
 type Champ = { cle: string; libelle: string; type: string; choix: string[] | null; devise: string | null; aide: string | null }
 type Proposition = { noeuds: Noeud[]; etapes: Etape[]; champs: Champ[]; [cle: string]: unknown }
 type Revision = { numero: number; defauts: { code: string; chemin: string; valeurs: Record<string, unknown> }[] }
@@ -86,14 +88,14 @@ test.describe('Le générateur connaît l’affaire et le catalogue — la base 
 		expect(reponse.status(), await reponse.text()).toBe(201)
 		const [ecrite] = (await reponse.json()) as Revision[]
 		expect(ecrite?.defauts).toEqual([
-			{ code: 'native_field', chemin: `champs[${proposition.champs.length}]`, valeurs: { cle: 'montant', native: 'amount' } },
+			{ code: 'native_field', chemin: `champs[${proposition.champs.length}]`, valeurs: { key: 'montant', native: 'amount' } },
 		])
 		const refus = await accepter(request, jeton, id)
 		expect(refus.status()).toBe(400)
 		expect(await refus.json()).toMatchObject({ code: 'P0001', message: 'proposition non conforme', details: '1 defaut(s)' })
 	})
 
-	test('le libellé et la probabilité d’une étape deviennent ses surcharges ; égaux au nœud, ils ne surchargent rien', async ({ request }) => {
+	test('le libellé et la probabilité d’une étape deviennent ses surcharges ; égaux au nœud, même à la casse près, ils ne surchargent rien', async ({ request }) => {
 		const jeton = await jetonDe(ADMIN.adresse)
 		const { id, proposition } = await suggerer(request, jeton, 'surcharges')
 		const noeudDe = (cle: string) => proposition.noeuds.find((n) => n.cle === cle) as Noeud
@@ -101,8 +103,9 @@ test.describe('Le générateur connaît l’affaire et le catalogue — la base 
 		const corrigee: Proposition = {
 			...proposition,
 			etapes: [
-				{ ...premiere, libelle: 'Premier échange', probabilite: 15 },
-				{ ...seconde, libelle: noeudDe(seconde.noeud).libelle, probabilite: noeudDe(seconde.noeud).probabilite },
+				{ ...premiere, label: 'Premier échange', probability: 15 },
+				// Le libellé du nœud EN CAPITALES : une différence de casse seule n'est pas une surcharge (décision 679).
+				{ ...seconde, label: noeudDe(seconde.noeud).libelle.toUpperCase(), probability: noeudDe(seconde.noeud).probabilite },
 				...proposition.etapes.slice(2),
 			],
 		}
@@ -132,8 +135,8 @@ test.describe('Le générateur connaît l’affaire et le catalogue — la base 
 		expect(vivante.status()).toBe(200)
 		const etapesVivantes = ((await vivante.json()) as Proposition).etapes
 		expect(etapesVivantes.slice(0, 2)).toEqual([
-			{ noeud: premiere.noeud, initiale: premiere.initiale, libelle: 'Premier échange', probabilite: 15 },
-			{ noeud: seconde.noeud, initiale: seconde.initiale, libelle: noeudDe(seconde.noeud).libelle, probabilite: noeudDe(seconde.noeud).probabilite },
+			{ noeud: premiere.noeud, initiale: premiere.initiale, label: 'Premier échange', probability: 15 },
+			{ noeud: seconde.noeud, initiale: seconde.initiale, label: noeudDe(seconde.noeud).libelle, probability: noeudDe(seconde.noeud).probabilite },
 		])
 	})
 
@@ -143,12 +146,12 @@ test.describe('Le générateur connaît l’affaire et le catalogue — la base 
 		const [revision] = await lireService<Revision>(request, `suggestions_ia_revisions?suggestion_id=eq.${id}&select=numero,defauts`)
 		expect(revision?.defauts).toEqual([
 			{ code: 'noeud_deja_au_catalogue', chemin: 'noeuds[0]', valeurs: { cle: 'negociation' } },
-			{ code: 'native_field', chemin: 'champs[0]', valeurs: { cle: 'montant', native: 'amount' } },
+			{ code: 'native_field', chemin: 'champs[0]', valeurs: { key: 'montant', native: 'amount' } },
 		])
 		// La mise en forme de la fonction a gardé le nom et la probabilité de l'étape, et `null` là où le nœud convient.
 		expect(proposition.etapes.slice(0, 2)).toEqual([
-			{ noeud: 'prospection', initiale: true, libelle: 'Premier contact', probabilite: 15 },
-			{ noeud: 'negociation', initiale: false, libelle: null, probabilite: null },
+			{ noeud: 'prospection', initiale: true, label: 'Premier contact', probability: 15 },
+			{ noeud: 'negociation', initiale: false, label: null, probability: null },
 		])
 		const refus = await accepter(request, jeton, id)
 		expect(await refus.json()).toMatchObject({ code: 'P0001', message: 'proposition non conforme', details: '2 defaut(s)' })

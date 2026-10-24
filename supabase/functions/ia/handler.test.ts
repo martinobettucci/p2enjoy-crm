@@ -258,9 +258,9 @@ describe('POST /ia/suggestions — le flux', () => {
 			ecriture: { ecrite: true, defauts: 1 },
 		})
 		expect((await lignes(await creer(b))).at(-1)).toEqual({ issue: 'revision', defauts: 1 })
-		// Révisé par `CRM-113` T2 (docs/SPEC-ia.md §14.3) : une étape porte aussi `libelle` et `probabilite`, `null` quand
-		// le modèle ne les rend pas — rien d'autre n'est corrigé.
-		expect(b.revisions[0]?.proposition.etapes).toEqual([{ noeud: 'contact', initiale: false, libelle: null, probabilite: null }])
+		// Révisé par `CRM-113` T2 (docs/SPEC-ia.md §14.3) : une étape porte aussi `label` et `probability`, `null` quand
+		// le modèle ne les rend pas — rien d'autre n'est corrigé. Clés anglaises depuis la décision 679 (T5).
+		expect(b.revisions[0]?.proposition.etapes).toEqual([{ noeud: 'contact', initiale: false, label: null, probability: null }])
 	})
 
 	it('une révision que la base refuse — suggestion abandonnée pendant la génération — rend `sans_suite`', async () => {

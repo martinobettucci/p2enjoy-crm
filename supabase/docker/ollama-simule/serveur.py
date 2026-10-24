@@ -5,6 +5,7 @@
 #       fonction envoie) ; docs/JOURNAL.md décision 620
 # @spec CRM-113 tranche T2 — docs/SPEC-ia.md §14.6 (le scénario `catalogue` : un nœud du catalogue du seed sous un libellé
 #       surchargé, un nœud du catalogue redéclaré, un champ `montant`) ; docs/JOURNAL.md décisions 646 et 677
+# @spec CRM-113 tranche T5 — l'étape du scénario `catalogue` porte `label` et `probability` (décision 679)
 #
 # Bibliothèque standard seule. Le scénario voyage comme clé — `Bearer simule-<scénario>` —, là où le serveur
 # réel attend la sienne : la fonction `ia` n'a qu'un chemin d'appel, et ce sont les preuves qui choisissent.
@@ -56,10 +57,10 @@ CATALOGUE = {
     "workflow": {"nom": "Ventes accompagnées"},
     "noeuds": [{"cle": "negociation", "libelle": "Discussion commerciale", "nature": "open", "probabilite": 50}],
     "etapes": [
-        {"noeud": "prospection", "initiale": True, "libelle": "Premier contact", "probabilite": 15},
-        {"noeud": "negociation", "initiale": False, "libelle": None, "probabilite": None},
-        {"noeud": "livre", "initiale": False, "libelle": None, "probabilite": None},
-        {"noeud": "perdu", "initiale": False, "libelle": None, "probabilite": None},
+        {"noeud": "prospection", "initiale": True, "label": "Premier contact", "probability": 15},
+        {"noeud": "negociation", "initiale": False, "label": None, "probability": None},
+        {"noeud": "livre", "initiale": False, "label": None, "probability": None},
+        {"noeud": "perdu", "initiale": False, "label": None, "probability": None},
     ],
     "transitions": [
         {"de": "prospection", "vers": "negociation", "libelle": "Engager la discussion", "commentaire_requis": False},

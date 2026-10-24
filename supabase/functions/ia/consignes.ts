@@ -3,7 +3,8 @@
 //       le contexte d'une modification — composition vivante, occupation, portée (docs/SPEC-ia.md §13.5, décision 620)
 // @spec CRM-113 (docs/BACKLOG.md) — tranche T2 : les règles qui font réutiliser le catalogue sous un libellé d'étape et
 //       qui nomment les champs natifs de l'affaire ; le catalogue envoyé avec la probabilité par défaut de chaque nœud
-//       (docs/SPEC-ia.md §14.5, §14.6 ; docs/JOURNAL.md décisions 646 et 677)
+//       (docs/SPEC-ia.md §14.5, §14.6 ; docs/JOURNAL.md décisions 646 et 677) ; tranche T5 : les clés `label` et
+//       `probability` de l'étape (décision 679)
 // @spec docs/SPEC-ia.md §2 (rectifier : la dernière révision et la consigne), §3 (« ce qui est envoyé au
 //       modèle » : jamais une affaire, un contact, un message ni une donnée personnelle ; pour un remappage, le
 //       NOMBRE d'affaires par étape), §6.1 (le format) ; docs/JOURNAL.md décision 617
@@ -71,9 +72,9 @@ Règles :
 - les « regles » disent sur quelle étape un champ est visible, requis ou caché ; les « exigences » disent
   quel champ doit être rempli pour franchir une transition ;
 - les clés sont courtes, en minuscules, sans accent, mots séparés par des tirets ;
-- quand un nœud du catalogue joue déjà le rôle d'une étape, vise ce nœud et écris le nom voulu dans le « libelle »
-  de l'étape, et sa probabilité dans « probabilite » si elle diffère de celle du nœud ; ne déclare un nœud que si
-  aucun nœud du catalogue ne joue ce rôle ; « libelle » et « probabilite » valent null quand le nœud convient tel quel ;
+- quand un nœud du catalogue joue déjà le rôle d'une étape, vise ce nœud et écris le nom voulu dans le « label »
+  de l'étape, et sa probabilité dans « probability » si elle diffère de celle du nœud ; ne déclare un nœud que si
+  aucun nœud du catalogue ne joue ce rôle ; « label » et « probability » valent null quand le nœud convient tel quel ;
 - toute affaire porte déjà, sans champ à déclarer :
 ${INFORMATIONS_NATIVES.map((information) => `  - ${information} ;`).join('\n')}
   ne déclare jamais de champ pour ces informations ;

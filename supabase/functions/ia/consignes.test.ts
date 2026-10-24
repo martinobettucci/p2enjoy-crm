@@ -2,7 +2,8 @@
 //           un libellé d'étape, ne jamais déclarer un champ natif — et le catalogue envoyé avec ses probabilités
 // @verifies docs/SPEC-ia.md §14.5 (la liste des informations natives, donnée statique du produit), §14.6 (les deux
 //           règles ajoutées, le catalogue `- cle — libelle (nature, 30 %)`), §3 (rien d'une affaire n'est envoyé) ;
-//           docs/JOURNAL.md décisions 646 et 677
+//           docs/JOURNAL.md décisions 646 et 677 ; tranche T5 : la consigne nomme les clés `label` et `probability`
+//           de l'étape (décision 679)
 //
 // Module pur : les messages se lisent tels qu'ils partiraient au modèle.
 
@@ -40,8 +41,9 @@ describe('les règles envoyées au modèle (docs/SPEC-ia.md §14.6)', () => {
 
 	it('la consigne de réutiliser le catalogue : viser le nœud, et mettre le nom voulu dans le libellé de l’étape', () => {
 		const texte = systeme()
-		expect(texte).toContain('quand un nœud du catalogue joue déjà le rôle d\'une étape, vise ce nœud et écris le nom voulu dans le « libelle »')
+		expect(texte).toContain('quand un nœud du catalogue joue déjà le rôle d\'une étape, vise ce nœud et écris le nom voulu dans le « label »')
 		expect(texte).toContain('ne déclare un nœud que si\n  aucun nœud du catalogue ne joue ce rôle')
+		expect(texte).toContain('« label » et « probability » valent null quand le nœud convient tel quel')
 	})
 
 	it('les règles valent pour une revue comme pour une première génération', () => {

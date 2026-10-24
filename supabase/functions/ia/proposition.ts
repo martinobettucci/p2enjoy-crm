@@ -1,7 +1,8 @@
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : la proposition `version: 1` ; tranche T2.b : sa mise en forme seule ;
 //       tranche T3.b : `remappages` et le schéma d'une modification (docs/SPEC-ia.md §13.1, §13.5 ; décision 620)
-// @spec CRM-113 (docs/BACKLOG.md) — tranche T2 : `libelle` et `probabilite` d'une étape, exigés par le schéma, `null`
-//       permis, gardés par la mise en forme (docs/SPEC-ia.md §14.3, §14.6 ; décisions 646 et 677)
+// @spec CRM-113 (docs/BACKLOG.md) — tranche T2 : `label` et `probability` d'une étape, exigés par le schéma, `null`
+//       permis, gardés par la mise en forme (docs/SPEC-ia.md §14.3, §14.6 ; décisions 646 et 677) ; tranche T5 :
+//       les clés passent à l'anglais (décision 679)
 // @spec docs/SPEC-ia.md §2 (la sortie du modèle n'est jamais crue), §6 (clés normalisées par le produit),
 //       §6.1 (le format), §11.5 ; §12.1 (la base, seule juge des défauts — la fonction ne vérifie plus que la
 //       forme) ; docs/SCHEMA.md §3 et §4 (types de champ) ; docs/JOURNAL.md décisions 617 et 618
@@ -23,8 +24,8 @@ export const VISIBILITES = ['hidden', 'visible', 'required'] as const
 export const ELEMENTS_MAX = 200
 
 export type Noeud = { cle: string; libelle: string; nature: string; probabilite: number | null }
-/** `libelle` et `probabilite` : le nom affiché et la probabilité effective de l'étape, `null` quand le nœud convient. */
-export type Etape = { noeud: string; initiale: boolean; libelle: string | null; probabilite: number | null }
+/** `label` et `probability` : le nom affiché et la probabilité effective de l'étape, `null` quand le nœud convient. */
+export type Etape = { noeud: string; initiale: boolean; label: string | null; probability: number | null }
 export type Transition = { de: string; vers: string; libelle: string; commentaire_requis: boolean }
 export type Champ = { cle: string; libelle: string; type: string; choix: string[] | null; devise: string | null; aide: string | null }
 export type Regle = { champ: string; etape: string; visibilite: string }
@@ -73,14 +74,14 @@ export const SCHEMA_WORKFLOW = {
 			type: 'array',
 			items: {
 				type: 'object',
-				// `libelle` et `probabilite` EXIGÉS, `null` permis (docs/SPEC-ia.md §14.6) : un petit modèle omet plus
+				// `label` et `probability` EXIGÉS, `null` permis (docs/SPEC-ia.md §14.6) : un petit modèle omet plus
 				// volontiers une clé facultative.
-				required: ['noeud', 'initiale', 'libelle', 'probabilite'],
+				required: ['noeud', 'initiale', 'label', 'probability'],
 				properties: {
 					noeud: { type: 'string' },
 					initiale: { type: 'boolean' },
-					libelle: { type: ['string', 'null'] },
-					probabilite: { type: ['number', 'null'] },
+					label: { type: ['string', 'null'] },
+					probability: { type: ['number', 'null'] },
 				},
 			},
 		},
@@ -186,12 +187,12 @@ export function mettreEnForme(sortie: unknown): MiseEnForme {
 	// `remappages` : absente, elle le reste ; présente, un tableau d'objets — sinon la sortie n'a pas la forme.
 	const remappages = sortie.remappages
 	if (remappages !== undefined && (!Array.isArray(remappages) || !remappages.every(estObjet))) return { ok: false }
-	// `libelle` et `probabilite` d'une étape : un texte, un nombre fini, `null` ou absents — sinon la sortie n'a pas la
+	// `label` et `probability` d'une étape : un texte, un nombre fini, `null` ou absents — sinon la sortie n'a pas la
 	// forme (docs/SPEC-ia.md §14.6).
 	const formeEtape = (e: Record<string, unknown>) =>
-		(e.libelle === undefined || e.libelle === null || typeof e.libelle === 'string')
-		&& (e.probabilite === undefined || e.probabilite === null
-			|| (typeof e.probabilite === 'number' && Number.isFinite(e.probabilite)))
+		(e.label === undefined || e.label === null || typeof e.label === 'string')
+		&& (e.probability === undefined || e.probability === null
+			|| (typeof e.probability === 'number' && Number.isFinite(e.probability)))
 	if (!brut('etapes').every(formeEtape)) return { ok: false }
 
 	const cle = (valeur: unknown) => normaliserCle(texte(valeur))
@@ -208,8 +209,8 @@ export function mettreEnForme(sortie: unknown): MiseEnForme {
 		etapes: brut('etapes').map((e) => ({
 			noeud: cle(e.noeud),
 			initiale: e.initiale === true,
-			libelle: texte(e.libelle) === '' ? null : texte(e.libelle),
-			probabilite: typeof e.probabilite === 'number' ? e.probabilite : null,
+			label: texte(e.label) === '' ? null : texte(e.label),
+			probability: typeof e.probability === 'number' ? e.probability : null,
 		})),
 		transitions: brut('transitions').map((t) => ({
 			de: cle(t.de),
