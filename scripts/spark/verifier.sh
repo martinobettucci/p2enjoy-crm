@@ -8,6 +8,8 @@
 # @spec docs/PROD_MIGRATIONS.md §2.4 (étape 6), §5 (vérifications après déploiement)
 # @spec docs/JOURNAL.md décision 576 (une route `clair` n'est publiée qu'en http://)
 # @spec docs/JOURNAL.md décision 603 — la cellule est jointe par ses IP, jamais par un alias
+# @spec CRM-102 (docs/BACKLOG.md) — tranche T5 : les contrôles du connecteur MCP, faits à la main jusque-là
+#       (docs/SPEC-deploiement-spark.md §7, point 7 ; docs/PROD_MIGRATIONS.md §2.14, geste 5 ; décision 683)
 #
 # S'exécute sur le POSTE, en LECTURE SEULE : aucune commande n'écrit, ni dans la cellule, ni dans la
 # base, ni au SSO. Chaque contrôle rend OK ou ECHEC ; ce qui ne peut pas encore être vérifié — route
@@ -22,7 +24,10 @@
 #   6. il reste au moins 2 Gio de disque ;
 #   7. la route active est en `tls` ; depuis Internet, si le domaine résout : webapp et API en
 #      https:// par la route publique ;
-#   8. au SSO réel : le client existe, l'URL de retour est acceptée et PKCE est exigé.
+#   8. au SSO réel : le client existe, l'URL de retour est acceptée et PKCE est exigé ;
+#   9. le connecteur MCP : éteint sans conteneur si `CRM_MCP_HOTE` est vide ; sinon présent, aiguillé par Caddy,
+#      routé en tls et, par la route publique, `/pret`, `401` et `resource_metadata`, retour non listé refusé,
+#      `/plateforme` en 302 (scripts/lib/connecteur-mcp.sh).
 #
 # Usage :
 #   scripts/spark/verifier.sh [--revision <commit>]      défaut : HEAD du poste
@@ -37,6 +42,8 @@ set -uo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/env.sh"
 # shellcheck source=../lib/spark-ssh.sh
 source "$(dirname "${BASH_SOURCE[0]}")/../lib/spark-ssh.sh"
+# shellcheck source=../lib/connecteur-mcp.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../lib/connecteur-mcp.sh"
 set +e
 
 SPARK_REPERTOIRE="${SPARK_REPERTOIRE:-/srv/crm}"
@@ -69,6 +76,8 @@ PORT=$(env_get "$variables" SPARK_HTTP_PORT)
 ANON=$(env_get "$variables" ANON_KEY)
 EMETTEUR=$(env_get "$variables" SSO_OIDC_ISSUER)
 CLIENT=$(env_get "$variables" SSO_OIDC_CLIENT_ID)
+SITE=$(env_get "$variables" SITE_URL)
+HOTE_MCP=$(env_get "$variables" CRM_MCP_HOTE)
 [ -n "$DOMAINE" ] && [ -n "$PORT" ] && [ -n "$ANON" ] || die "variables publiques non importées en console : rien à vérifier."
 
 say "Vérification de la cellule — $cible:$SPARK_REPERTOIRE, domaine $DOMAINE"
@@ -148,6 +157,9 @@ case "$sonde" in
 	400*) attente "client $CLIENT absent du realm, ou URL de retour différente : déclaration à coller (docs/SPEC-auth.md §10.8)" ;;
 	*) echec "sonde du client : $sonde" ;;
 esac
+
+# --- 9. Connecteur MCP -----------------------------------------------------------------------------
+verifier_connecteur_cellule "$HOTE_MCP" "$PORT" "$SITE" "$etats"
 
 echo
 if [ "$echecs" -gt 0 ]; then echo "Bilan : $controles contrôles, $echecs échec(s), $attentes en attente." >&2; exit 1; fi
