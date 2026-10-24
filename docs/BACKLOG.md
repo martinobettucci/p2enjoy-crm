@@ -15512,7 +15512,7 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - **Livrée en production le 2026-10-24** (révision `bf45dc14`, image `mcp` reconstruite, `verifier.sh` 26/27 —
         compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[~]`** : le constat du responsable.
 - [ ] **T5** — `temps` : lire ses saisies et le rapport valorisé, poser une case de la grille (0 la vide, geste
-      `modifier`) — décision 670 ; coût du personnel laissé à l'écran. Liste proposée au `docs/SPEC-mcp.md` §9.2
+      `modifier`) — décision 671 ; coût du personnel laissé à l'écran. Liste proposée au `docs/SPEC-mcp.md` §9.2
       *octies*, **en attente de validation**.
 - [ ] **T6** — `objectifs`.
 - [ ] **T7** — `messagerie`.

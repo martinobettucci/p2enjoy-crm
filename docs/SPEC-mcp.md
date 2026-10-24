@@ -781,7 +781,7 @@ exigée, interdite ou d'un autre budget, et le rattachement à un budget ou une 
 par le CRM malgré la matrice ouverte (la lectrice qui ajoute une ligne), journal écrit ; et **E2E** : une ligne de coût
 ajoutée par le connecteur paraît dans la section « Coûts » de la fiche de l'affaire.
 
-### 9.2 octies Famille `temps` — `CRM-104` T5 (liste **proposée**, en attente de validation ; périmètre arbitré par la décision 670)
+### 9.2 octies Famille `temps` — `CRM-104` T5 (liste **proposée**, en attente de validation ; périmètre arbitré par la décision 671)
 
 **Trois outils** : lire ses saisies de temps et le rapport valorisé, et **poser une case de la grille** — les mêmes tables et
 la même fonction que la webapp (`saisie-temps.ts`, `rapport-temps.ts`), sous le jeton de la personne. La base tient le
@@ -793,7 +793,7 @@ l'espace pour un autre, sur une cible que cette personne peut lire.
 |---|---|---|---|---|
 | `crm_time_entry_list` | `consulter` | `workspace:workspace` ; `autres` : `track:track_id`, `channel:channel_id`, `card:card_id`, **facultatives** | `saisies_temps` | une période (`date_from`, `date_to`, 93 jours au plus) ; vos saisies par défaut, celles d'une personne **nommée**, ou de tout l'espace (`everyone`) — la RLS ne rend que les siennes à qui n'administre pas ; chaque saisie avec sa cible nommée ; total en minutes |
 | `crm_time_report` | `consulter` | `workspace:workspace` ; `autres` : `track:track_id`, `card:card_id`, **facultatives** | `public.temps_valorise` | minutes et coût valorisé par personne et cible sur la période, ramenés aux tracks de l'espace ; montants par devise, jamais additionnés entre devises ; les minutes sans taux comptées à part |
-| `crm_time_entry_set` | `modifier` | `workspace:workspace` ; `autres` : `track:track_id`, `channel:channel_id`, `card:card_id`, **facultatives** (exactement une) | `saisies_temps` (`POST`, `PATCH` ou `DELETE` de la case) | les minutes d'une personne (vous par défaut, ou nommée), un jour, sur une cible ; la case existante est remplacée ; **0 vide la case**, comme l'écran (décision 670) |
+| `crm_time_entry_set` | `modifier` | `workspace:workspace` ; `autres` : `track:track_id`, `channel:channel_id`, `card:card_id`, **facultatives** (exactement une) | `saisies_temps` (`POST`, `PATCH` ou `DELETE` de la case) | les minutes d'une personne (vous par défaut, ou nommée), un jour, sur une cible ; la case existante est remplacée ; **0 vide la case**, comme l'écran (décision 671) |
 
 **La personne est nommée, jamais désignée par un identifiant** : le moteur exige que tout identifiant passé à un outil
 soit une ancre (§6.2), et il n'existe pas d'ancre « profil ». Le nom est résolu parmi les membres de l'espace, comme le
@@ -804,7 +804,7 @@ responsable de `crm_card_update` ; un nom ambigu ou inconnu est refusé.
 
 **Ce que la tranche ne fait pas, et pourquoi.**
 - **Le coût du personnel** — les versions de taux — reste un geste de l'écran, réservé aux administrateurs.
-- **Aucun outil de suppression** distinct : vider une case est le geste de la grille, rangé sous `modifier` (décision 670).
+- **Aucun outil de suppression** distinct : vider une case est le geste de la grille, rangé sous `modifier` (décision 671).
 
 **Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus
 par le CRM malgré la matrice ouverte (la saisie d'une personne qu'on n'administre pas, le plafond), journal écrit ; et

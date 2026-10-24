@@ -33269,7 +33269,7 @@ sur les événements de rattachement, puis le réactive. **Garde** : une asserti
 événement existant est inchangé. **Persisté** : `docs/SPEC-rattachements.md` §5, `docs/SCHEMA.md` §5 (`card_events`).
 
 
-### décision 670 — `CRM-104` T5 : la famille `temps` du connecteur lit et saisit ; vider une case est un geste « modifier »
+### décision 671 — `CRM-104` T5 : la famille `temps` du connecteur lit et saisit ; vider une case est un geste « modifier »
 
 *2026-10-24, arbitrage du responsable (question posée par `AskUserQuestion`).* **Question** : quel périmètre pour la
 tranche `temps` — lecture seule, lecture et saisie sans jamais vider une case, ou lecture et saisie comme la grille ?
