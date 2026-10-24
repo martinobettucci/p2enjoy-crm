@@ -63,7 +63,7 @@
 |---|---|---|---|
 | 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | **Livré en développement** — voir le chapitre 10 *bis*. Un administrateur d'espace y change un rôle, retire un membre, inscrit, remplace et retire une attente, et pose les droits fins de chacun par track et par channel ; chaque membre consulte la liste des membres. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses membres et ses attentes est livré par `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
 | 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
-| 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103`, `CRM-108` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Ses outils : la liste des espaces et, **en développement**, les huit outils de la famille « Recettes » (`CRM-108`) et les outils de lecture et d'écriture des affaires (`CRM-104` T2.a et T2.b) ; les autres familles arrivent avec la suite de `CRM-104` |
+| 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103`, `CRM-108` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Ses outils : la liste des espaces et, **en développement**, les huit outils de la famille « Recettes » (`CRM-108`) et les outils des affaires, de la structure et la recherche (`CRM-104` T2.a, T2.b et T1) ; les autres familles arrivent avec la suite de `CRM-104` |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
 | 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Aucun effacement définitif n'est offert** : la durée de conservation n'est pas arrêtée |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
@@ -4724,9 +4724,23 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   **Ce que l'assistant ne fait pas** : corriger ou retirer un commentaire, retirer une activité, restaurer une affaire
   de la corbeille, l'archiver, mentionner quelqu'un. Ces gestes restent ceux de l'écran.
 
+- **La recherche** — *livrée en développement par `CRM-104`, tranche T1* : retrouver des affaires, des contacts, des
+  organisations, des commentaires et des messages par des mots, comme la barre de recherche de l'en-tête. Un résultat
+  n'est rendu que si le connecteur peut consulter sa famille dans son espace — « Affaires », « Contacts » ou
+  « Messagerie ».
+- **Structure** — *livrés en développement par `CRM-104`, tranche T1* :
+  - *Consulter* : les tracks d'un espace, un track et ses channels, un channel et son nombre d'affaires actives, et un
+    **workflow** — ses étapes, les déplacements qu'il déclare, le motif ou les questions qu'ils exigent ;
+  - *Ajouter* : créer un track, ou un channel avec son workflow ;
+  - *Modifier* : renommer un track ou un channel, changer sa description, la couleur ou l'icône d'un track. Le slug
+    — l'adresse — ne change jamais, et changer le workflow d'un channel reste un geste de l'écran ;
+  - *Supprimer* : mettre un track ou un channel à la corbeille.
+
+  Le CRM réserve ces écritures aux administrateurs de l'espace : pour un autre membre, l'assistant reçoit un refus.
+
 ### 11.6 Ce que le connecteur n'offre pas encore
 
-Les outils des autres familles — structure, contacts, budgets, temps, objectifs, messagerie — suivent, une famille après
+Les outils des autres familles — contacts, budgets, temps, objectifs, messagerie — suivent, une famille après
 l'autre. D'ici là, une case cochée pour l'une d'elles n'ouvre aucun outil.
 
 ## Annexe A — Ce que contient l'espace de démonstration

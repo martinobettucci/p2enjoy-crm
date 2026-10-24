@@ -168,10 +168,11 @@ async def test_un_droit_suffit_pour_entrer_dans_la_matrice_et_la_rls():
     try:
         reponse, contexte = await _parcours(FARIDA)
         # `affaires:consulter` seul : aucun outil d'une autre famille n'est montré (visibilité de D5). Depuis `CRM-104`
-        # T2.a, les sept consultations de la famille le sont, et elles seules (docs/SPEC-mcp.md §9.2 bis).
+        # T2.a, les sept consultations de la famille le sont, et elles seules (docs/SPEC-mcp.md §9.2 bis) ; depuis T1, la
+        # recherche aussi, outil de référence visible dès qu'un droit existe (§9.2 quater).
         espaces = await _espaces(
             (await _jetons(contexte, reponse))["access_token"],
-            outils_exacts=frozenset({"crm_workspace_list", *CONSULTATIONS_AFFAIRES}),
+            outils_exacts=frozenset({"crm_workspace_list", "crm_search", *CONSULTATIONS_AFFAIRES}),
         )
         assert [(e["slug"], e["role"], e["rights"]) for e in espaces["workspaces"]] == [
             ("p2enjoy", "viewer", ["affaires:consulter"])

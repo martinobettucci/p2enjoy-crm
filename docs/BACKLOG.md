@@ -15462,7 +15462,20 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - **Livrée le 2026-10-23, cinquième fenêtre** : révision `b57de7b5`, image `mcp` reconstruite et saine,
         `verifier.sh` 26/27 (compteur antérieur).
       - **Reste `[~]`** : le constat du responsable, un assistant connecté qui écrit sur une affaire.
-- [ ] **T1** — `structure` (et la recherche globale de référence).
+- [~] **T1** — `structure` (et la recherche globale de référence).
+      **Implémentée et vérifiée en développement le 2026-10-24** (spécification validée, décision 656 : douze outils).
+      - `mcp/crm_mcp/outils/structure.py` ; genre d'ancre `workflow` ; refus de slug et de contraintes nommés.
+      - Unitaires `tests/test_structure.py` **8** ; **dix mutations tuées sur dix**, la septième après l'ajout d'une
+        preuve du filtre d'espace de `crm_track_list`, qui manquait.
+      - Intégration `tests/test_integration_structure.py` contre la vraie pile : l'arborescence lue, créée, modifiée et
+        mise à la corbeille par l'administratrice, journal `ok` par outil ; la recherche filtrée par la matrice ; le
+        business developer refusé par le CRM malgré la matrice ouverte ; la corbeille fermée par la matrice.
+      - `test_integration_oauth.py` : `crm_search` visible avec tout droit.
+      - **E2E** `connecteur-structure.spec.ts` : un channel créé par un vrai client MCP paraît dans la barre d'onglets.
+        Capture observée.
+      - `verify-mcp.sh` **70 contrôles, aucune anomalie** (intégration 32) ; harnais `SCENARIOS_UI=907`.
+      - Manuel 11.5 et 11.6, DAT, INSTRUCTIONS.
+      - **Reste** : la livraison (image `mcp`) et le constat du responsable.
 - [ ] **T3** — `contacts`.
 - [ ] **T4** — `budgets`.
 - [ ] **T5** — `temps`.

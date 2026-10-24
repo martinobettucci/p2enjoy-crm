@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-104` T1 — le connecteur MCP lit et range l'arborescence, et cherche (décision 656)
+
+*En développement ; vit dans le service `mcp`, dont l'image de production est à reconstruire.*
+
+- **La recherche** : affaires, contacts, organisations, commentaires et messages. Chaque résultat suit la matrice de sa
+  famille.
+- **Structure** :
+  - lire les tracks, les channels et les workflows, avec leurs étapes, leurs déplacements et ce qu'ils exigent ;
+  - créer un track ou un channel, les renommer, les mettre à la corbeille — réservé par le CRM aux administrateurs.
+
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
