@@ -33045,3 +33045,17 @@ channels et des workflows (genre d'ancre nouveau, `workflow`) ; la création d'u
 modification, **sans le slug ni le workflow** ; leur mise à la corbeille. **Hors de la tranche** : archivage,
 réordonnancement, édition des workflows, catalogue des nœuds.
 
+
+### décision 657 — rattachements multiples : dossier IMAP, cadences, variables des modèles ; la langue des noms est posée
+
+*2026-10-24, réponses du responsable aux points 1 à 4 du §15 de `docs/SPEC-rattachements.md`.* **Arbitrages.**
+1. **Le dossier IMAP sort de l'arborescence** : `CRM/Affaires/<affaire>` pour **toutes** les affaires, au lieu de
+   `CRM/<track>/<channel>/<affaire>`. Conséquence : les dossiers existants sont déplacés par `mail-sync`, et l'inbox ne
+   range plus les affaires sous leurs channels.
+2. **Une cadence de relance s'inscrit à un rattachement**, qui donne son responsable (expéditeur par défaut) et son
+   étape.
+3. **Les variables des modèles d'email viennent du rattachement d'où l'on écrit** ; un envoi MCP le désigne.
+4. **Les noms proposés sont suspendus.** Le responsable relève que le dépôt mélange l'anglais et le français, et demande
+   un état des lieux des noms — tables, fonctions, droits, outils MCP — avant de fixer la convention. Les noms de
+   `docs/SPEC-rattachements.md` suivront la règle qui en sortira.
+**Persisté** : `docs/SPEC-rattachements.md` §7 et §15.

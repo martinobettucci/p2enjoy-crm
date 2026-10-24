@@ -209,12 +209,18 @@ existants reçoivent le rattachement unique de leur affaire à la migration.
 
 - **L'adresse de l'affaire ne change pas** (`email_local_part` reste sur `cards`), et un mail classé appartient à
   l'affaire : il est lisible depuis tout rattachement lisible (décision 642, arbitrage 1).
-- **[à trancher] Le dossier IMAP de l'affaire.** `chemin_dossier_card` rend aujourd'hui `CRM/<track>/<channel>/<affaire>`,
-  et ce dossier existe réellement sur le serveur IMAP. Une affaire à deux rattachements n'a qu'un dossier. §15, point 1.
-- **[à trancher] Les cadences de relance.** `armer_sequence_relance` lit le responsable de l'affaire, et
-  `app.executer_sequences_relance` lit `entered_step_at`. §15, point 2.
-- **[à trancher] Les variables des modèles d'email.** `app.mail_template_variables` et `rendre_modele_email` exposent
-  le montant, la prochaine action et le channel de l'affaire. §15, point 3.
+- **Le dossier IMAP de l'affaire sort de l'arborescence** (décision 657, arbitrage 1). `chemin_dossier_card` rend
+  aujourd'hui `CRM/<track>/<channel>/<affaire>`, et ce dossier existe réellement sur le serveur IMAP. Il devient
+  `CRM/Affaires/<affaire>` pour **toutes** les affaires, quel que soit leur nombre de rattachements. Conséquences : les
+  dossiers existants sont **déplacés** sur le serveur IMAP par `mail-sync`, qui est le seul à écrire dans la boîte ;
+  `inbox_arborescence` ne range plus les affaires sous leurs channels ; deux affaires de même titre restent
+  distinguées par la règle de nommage en vigueur, à relire en T5.
+- **Une cadence de relance s'inscrit à un rattachement** (décision 657, arbitrage 2). `card_sequence_enrollments` reçoit
+  le rattachement ; `armer_sequence_relance` prend son responsable comme expéditeur par défaut, et
+  `app.executer_sequences_relance` lit son `entered_step_at`. Une affaire peut avoir une cadence par rattachement.
+- **Les variables des modèles d'email viennent du rattachement d'où l'on écrit** (décision 657, arbitrage 3).
+  `app.mail_template_variables` et `rendre_modele_email` reçoivent le rattachement : le bloc depuis lequel l'email est
+  rédigé dans la webapp, ou le rattachement désigné par un envoi MCP (`crm_mail_send`).
 
 ## 8. Écrans
 
@@ -309,17 +315,12 @@ Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`
 
 ## 15. Points à trancher avant validation
 
-1. **Le dossier IMAP de l'affaire.** Il en existe un seul, sous un track et un channel. Options :
-   (a) sous le **plus ancien** rattachement, stable tant qu'il n'est pas retiré **[recommandation]** ;
-   (b) hors de l'arborescence, par exemple `CRM/Affaires/<affaire>` ;
-   (c) un dossier par rattachement, avec des copies des messages.
-2. **Les cadences de relance** : l'inscription reste à l'affaire, mais l'expéditeur par défaut est le responsable, et le
-   déclenchement lit `entered_step_at`. **[recommandation]** L'inscription désigne un rattachement, qui donne le
-   responsable et l'étape.
-3. **Les variables des modèles d'email** (`{{montant}}`, prochaine action, channel) : **[recommandation]** le rendu prend
-   le rattachement depuis le bloc duquel on écrit. Un envoi par MCP le désigne explicitement.
+Les points 1 à 3 sont tranchés par la décision 657 : le dossier IMAP sort de l'arborescence, une cadence s'inscrit à
+un rattachement, les variables des modèles viennent du rattachement d'où l'on écrit (§7).
+
 4. **Les noms et signatures** proposés : `card_rattachements`, `rattacher_affaire`, `retirer_rattachement`,
-   `rattachement_ambigu`, ainsi que le maintien des signatures par `card_id`.
+   `rattachement_ambigu`, ainsi que le maintien des signatures par `card_id`. **Suspendu** : le responsable a relevé que
+   le dépôt mélange l'anglais et le français, et a demandé un état des lieux des noms avant de choisir (décision 657).
 
 ## 16. Hors périmètre
 
