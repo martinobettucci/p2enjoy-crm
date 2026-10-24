@@ -1,16 +1,17 @@
 # Spécification — Rattacher une affaire à plusieurs channels
 
-- Unité de backlog : **à créer à la validation** — proposée `CRM-111`, « Rattachements multiples d'une affaire ». Les
-  champs personnalisés communs de portée espace forment une **seconde unité**, proposée `CRM-112`, livrée **après**
-  celle-ci (décision 645) ; elle n'est pas spécifiée ici (§16). Les numéros seront vérifiés contre `docs/BACKLOG.md` au
-  moment de la validation : d'autres sessions en créent.
+- Unité de backlog : **`CRM-111`** — « Rattachements multiples d'une affaire ». Les champs personnalisés communs de
+  portée espace forment une **seconde unité**, `CRM-112`, livrée **après** celle-ci (décision 645) ; elle n'est pas
+  spécifiée ici (§16).
 - Arbitrages : `docs/JOURNAL.md`, décisions **637** (CRM se lit *Company Resource Mastering*), **638** (exploration, sens
-  arbitré), **639**, **642** et **643** (arbitrages des points ouverts), **645** (découpage, ordre, vocabulaire).
+  arbitré), **639**, **642** et **643** (arbitrages des points ouverts), **645** (découpage, ordre, vocabulaire), **657**
+  (messagerie), **658** (langue des noms), **661** (signatures remplacées d'un coup), **662** (validation).
 - Documents liés : `docs/SCHEMA.md` §4 et §5, `docs/SPEC-cards.md`, `docs/SPEC-form-composer.md` §2 et §6,
   `docs/SPEC-permissions-rls.md` §3 et §4, `docs/SPEC-workflow-engine.md` §6, `docs/SPEC-change-channel-workflow.md`,
   `docs/SPEC-analytique.md`, `docs/SPEC-relances.md`, `docs/SPEC-recettes.md` §4 à §7, `docs/SPEC-costs.md` §3,
   `docs/SPEC-mail-subsystem.md`, `docs/SPEC-mcp.md` §6.1 et §9.2, `docs/SPEC-webapp.md` §5.1 bis.
-- État : **brouillon, à valider par le responsable avant toute unité de backlog et tout code** (`CLAUDE.md` §5).
+- État : **validée par le responsable le 2026-10-24** (décision 662). Les passages encore marqués **[proposition]** sont
+  acceptés avec la spécification ; la tranche T1 les confronte aux mesures, et tout écart revient au responsable.
 
 Les passages marqués **[proposition]** sont des choix de rédaction de l'agent, non arbitrés ; ceux marqués **[à
 trancher]** sont des questions nouvelles, apparues en lisant le schéma réel, et listées au §15.
@@ -335,8 +336,8 @@ un rattachement, les variables des modèles viennent du rattachement d'où l'on 
    `crm_card_placement_update`, `crm_card_placement_archive`. **Les signatures sont remplacées d'un coup** (décision
    661, §5), dans la tranche de bascule (§14) ; `placement_ambiguous`, qui ne servait que la compatibilité, disparaît.
 
-**Tous les points sont tranchés.** Le brouillon attend la validation du responsable ; elle créera `CRM-111` au backlog
-avec ses tranches T1 à T9, puis la spécification de `CRM-112`.
+**Tous les points sont tranchés**, et la spécification est validée (décision 662) : `CRM-111` est inscrite au backlog
+avec ses tranches T1 à T9 ; `CRM-112` y est réservée, sa spécification étant à écrire.
 
 ## 16. Hors périmètre
 

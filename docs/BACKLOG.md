@@ -16028,3 +16028,54 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
 - [ ] **T3** — E2E, captures, seed, manuel, campagnes.
 - [ ] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée.
 - [ ] **T5** — livraison en production, sur instruction du responsable.
+
+## Demande du 2026-10-23 — rattachements multiples (décisions 637 à 662)
+
+### CRM-111 — Rattachements multiples d'une affaire `[ ]`
+*Créée le 2026-10-24 — exploration demandée par le responsable le 2026-10-23, arbitrée en sept séries (décisions 638,
+639, 642, 643, 645, 657, 661) et validée le 2026-10-24 (décision 662). Spécification : `docs/SPEC-rattachements.md`.*
+Une affaire peut être rattachée à plusieurs channels, y compris de tracks différents. Chaque rattachement a son étape,
+son responsable, sa prochaine action, son montant, son issue, son sommeil et son archivage ; la fiche montre une partie
+commune et un bloc par rattachement ; coûts, recettes et temps sont comptés une fois. **Connecteur MCP : oui**, famille
+`affaires` (`cards` après le lot 1 d'INC-286), au catalogue de `CRM-104` (spécification §11). **Noms** : règles de la
+décision 658 — `card_placements`, `attach_card`, `detach_card`.
+
+- [x] **Spécification**, validée le 2026-10-24 (décision 662) : `docs/SPEC-rattachements.md` §1 à §16.
+- [ ] **T1 — mesures, sans code livré** (§2, §4, §14) : liste exacte des fonctions, déclencheurs, politiques et
+      appelants qui lisent une colonne quittant `cards` ; coût de la nouvelle RLS par `EXPLAIN ANALYZE` du board et de la
+      liste, sur une copie jetable du seed. Résultats consignés dans la spécification ; tout écart à une **[proposition]**
+      revient au responsable.
+- [ ] **T2 — bascule, en un seul changement** (§3, §4, §5, §10) : migration — `card_placements`, reprise d'un
+      rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
+      `card_sequence_enrollments`, invariants, politiques, retrait des colonnes de `cards` ; réécriture des fonctions du
+      §2 ; signatures du §5 **remplacées** (décision 661) ; types régénérés ; **tous** les appelants (webapp, connecteur,
+      seed, scripts, pgTAP, API, E2E). Preuve : aucun changement visible, toute la suite existante verte, aucune
+      ancienne signature au catalogue ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière
+      possible tant que chaque affaire n'a qu'un rattachement).
+- [ ] **T3 — rattacher et retirer** (§4, §5) : `attach_card` à l'étape initiale, `detach_card` réservé à
+      l'administrateur et refusé sur le dernier rattachement ; événements `attached` et `detached` ; pgTAP ; API aux
+      jetons réels (la lectrice ne voit pas un rattachement illisible ; un membre qui écrit un seul channel modifie la
+      partie commune mais pas le bloc de l'autre ; un non-administrateur ne retire pas).
+- [ ] **T4 — lectures à plusieurs rattachements** (§6, §9) : entonnoir, affaires figées et relances, Ma journée,
+      recherche, temps valorisé ; pgTAP et API.
+- [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
+      écran ; `docs/SPEC-recettes.md` §5 et outil `crm_profitability_report`.
+- [ ] **T6 — messagerie** (§7, décision 657) : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants
+      par `mail-sync` ; cadences et variables des modèles par rattachement ; preuves IMAP réelles.
+- [ ] **T7 — webapp** (§8) : fiche à partie commune et blocs, pastille « aussi rattachée à », rattacher, archiver,
+      retirer avec confirmation ; `docs/DESIGN_SYSTEM.md` avant le code ; unitaires ; captures aux quatre paliers ;
+      `docs/manual.md`, chapitre « Rattacher une affaire à plusieurs channels ».
+- [ ] **T8 — seed et E2E** (§12, §13) : les cinq situations du §12 par les vraies fonctions ; campagne E2E complète.
+- [ ] **T9 — connecteur MCP** (§11) : `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`,
+      outils existants sur le rattachement ; refusés par la matrice puis par le CRM ; `docs/SPEC-mcp.md` §9.2.
+- [ ] **Livraison en production**, sur instruction du responsable : sauvegarde, migration en fenêtre, `mail-sync`,
+      webapp et connecteur redéployés ensemble ; constat ; `CHANGELOG.md`.
+
+### CRM-112 — Champs personnalisés communs de portée espace `[ ]`
+*Réservée le 2026-10-24 — décision 642, arbitrage 4 ; ordre fixé par la décision 645 : après `CRM-111`.* Un
+administrateur définit des champs au niveau de l'espace ; ils paraissent dans la partie commune de toute affaire, à
+côté des champs natifs, et s'écrivent selon la règle des parties communes (décision 639, arbitrage 3). **Connecteur
+MCP : oui**, famille `affaires`, action `modifier` (décision 642).
+
+- [ ] **Spécification** à écrire et à valider avant le code : portée ajoutée à `form_fields` ou table distincte, champ
+      obligatoire ou non sans étape, écran d'administration, noms anglais (décision 658).

@@ -33129,3 +33129,12 @@ devient : T1, des mesures sans code ; **T2, une bascule atomique** — migration
 appelants, sans changement visible, chaque affaire gardant son unique rattachement ; puis T3 à T9, les fonctionnalités
 nouvelles. Le code `placement_ambiguous` disparaît. **Persisté** : `docs/SPEC-rattachements.md` §3.1, §5, §13, §14 et
 §15. **État** : tous les points du brouillon sont tranchés ; il attend la validation du responsable.
+
+### décision 662 — `CRM-111` : la spécification des rattachements multiples est validée ; `CRM-112` réservée
+
+*2026-10-24, validation du responsable (« go »).* `docs/SPEC-rattachements.md` passe de brouillon à **validée** ; les
+passages marqués **[proposition]** sont acceptés avec elle, et la tranche T1 les confronte aux mesures — tout écart revient
+au responsable. **Backlog** : `CRM-111`, « Rattachements multiples d'une affaire », avec ses tranches T1 (mesures) à T9
+(connecteur MCP) et sa livraison ; `CRM-112`, « Champs personnalisés communs de portée espace », réservée, sa
+spécification étant à écrire. **Suite** : le brouillon de la spécification de `CRM-112`, soumis à validation avant le
+code ; aucune ligne de code de `CRM-111` avant T1.
