@@ -3,6 +3,8 @@
 // @verifies docs/SPEC-ia.md §14.3 (l'étape porte `libelle` et `probabilite` ; surcharge posée ou `null` à
 //           l'acceptation), §14.4 (la composition vivante rend les noms effectifs), §14.5 (`native_field` écrit par la
 //           base sur une correction, bloquant l'acceptation), §14.8 (preuves d'API) ; docs/JOURNAL.md décision 677
+// @verifies CRM-113 tranche T2 — docs/SPEC-ia.md §14.6 (le scénario `catalogue` du simulateur : ses deux défauts écrits
+//           par la base ; le libellé et la probabilité de l'étape gardés par la mise en forme de la fonction)
 // @verifies CLAUDE.md §10 (le commercial ne corrige pas une suggestion, avec son jeton réel), §15 (effets relus en base)
 //
 // La suggestion naît par la vraie fonction et le simulateur (scénario `valide`) ; les corrections passent par
@@ -39,9 +41,9 @@ async function lignesDuFlux(reponse: APIResponse): Promise<Record<string, unknow
 }
 
 /** Crée une suggestion par la vraie fonction et le simulateur, et rend son identifiant et sa première proposition. */
-async function suggerer(requete: APIRequestContext, jeton: string, nom: string): Promise<{ id: string; proposition: Proposition }> {
+async function suggerer(requete: APIRequestContext, jeton: string, nom: string, scenario = 'valide'): Promise<{ id: string; proposition: Proposition }> {
 	const reponse = await requete.post(`${IA}/suggestions`, {
-		headers: { ...enTetesAuthentifies(jeton), 'x-ia-simulateur': 'valide' },
+		headers: { ...enTetesAuthentifies(jeton), 'x-ia-simulateur': scenario },
 		data: { workspace_id: ESPACE, portee: 'workflow', demande: `${PREFIXE} — ${nom}` },
 	})
 	expect(reponse.status(), await reponse.text()).toBe(202)
@@ -133,5 +135,22 @@ test.describe('Le générateur connaît l’affaire et le catalogue — la base 
 			{ noeud: premiere.noeud, initiale: premiere.initiale, libelle: 'Premier échange', probabilite: 15 },
 			{ noeud: seconde.noeud, initiale: seconde.initiale, libelle: noeudDe(seconde.noeud).libelle, probabilite: noeudDe(seconde.noeud).probabilite },
 		])
+	})
+
+	test('T2 — le scénario `catalogue` : la base écrit ses deux défauts, et l’étape garde son nom et sa probabilité', async ({ request }) => {
+		const jeton = await jetonDe(ADMIN.adresse)
+		const { id, proposition } = await suggerer(request, jeton, 'catalogue', 'catalogue')
+		const [revision] = await lireService<Revision>(request, `suggestions_ia_revisions?suggestion_id=eq.${id}&select=numero,defauts`)
+		expect(revision?.defauts).toEqual([
+			{ code: 'noeud_deja_au_catalogue', chemin: 'noeuds[0]', valeurs: { cle: 'negociation' } },
+			{ code: 'native_field', chemin: 'champs[0]', valeurs: { cle: 'montant', native: 'amount' } },
+		])
+		// La mise en forme de la fonction a gardé le nom et la probabilité de l'étape, et `null` là où le nœud convient.
+		expect(proposition.etapes.slice(0, 2)).toEqual([
+			{ noeud: 'prospection', initiale: true, libelle: 'Premier contact', probabilite: 15 },
+			{ noeud: 'negociation', initiale: false, libelle: null, probabilite: null },
+		])
+		const refus = await accepter(request, jeton, id)
+		expect(await refus.json()).toMatchObject({ code: 'P0001', message: 'proposition non conforme', details: '2 defaut(s)' })
 	})
 })

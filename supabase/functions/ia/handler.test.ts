@@ -99,7 +99,7 @@ function banc(options: {
 		verrouiller: async () => (options.verrou === undefined ? SUGGESTION : options.verrou),
 		lireSuggestion: async () => options.lue ?? null,
 		lireDerniereRevision: async () => options.derniere ?? null,
-		lireCatalogue: async () => [{ cle: 'relance', libelle: 'Relance', nature: 'open' }],
+		lireCatalogue: async () => [{ cle: 'relance', libelle: 'Relance', nature: 'open', probabilite: 20 }],
 		lireComposition: async (jeton, workflowId) => (
 			b.ordre.push(`composition:${workflowId}:${jeton}`), options.composition === undefined ? VIVANTE : options.composition
 		),
@@ -191,7 +191,8 @@ describe('POST /ia/suggestions — le flux', () => {
 		await lignes(await creer(b))
 		const envoye = JSON.stringify(b.appelsModele[0])
 		expect(envoye).toContain(DEMANDE)
-		expect(envoye).toContain('relance — Relance (open)')
+		// Révisé par `CRM-113` T2 (docs/SPEC-ia.md §14.6) : la probabilité par défaut accompagne chaque nœud du catalogue.
+		expect(envoye).toContain('relance — Relance (open, 20 %)')
 	})
 
 	it('le REFUS DE LA BASE (non-administrateur) rend 403, et le modèle n’est jamais appelé', async () => {
@@ -257,7 +258,9 @@ describe('POST /ia/suggestions — le flux', () => {
 			ecriture: { ecrite: true, defauts: 1 },
 		})
 		expect((await lignes(await creer(b))).at(-1)).toEqual({ issue: 'revision', defauts: 1 })
-		expect(b.revisions[0]?.proposition.etapes).toEqual([{ noeud: 'contact', initiale: false }])
+		// Révisé par `CRM-113` T2 (docs/SPEC-ia.md §14.3) : une étape porte aussi `libelle` et `probabilite`, `null` quand
+		// le modèle ne les rend pas — rien d'autre n'est corrigé.
+		expect(b.revisions[0]?.proposition.etapes).toEqual([{ noeud: 'contact', initiale: false, libelle: null, probabilite: null }])
 	})
 
 	it('une révision que la base refuse — suggestion abandonnée pendant la génération — rend `sans_suite`', async () => {
@@ -348,7 +351,8 @@ describe('T3.b — faire évoluer un workflow existant (docs/SPEC-ia.md §13.5)'
 		await lignes(await modifier(b))
 		const [systeme, contexte, demande] = b.appelsModele[0] ?? []
 		expect(systeme?.content).toContain('Tu fais évoluer un workflow EXISTANT')
-		expect(systeme?.content).toContain('relance — Relance (open)')
+		// Révisé par `CRM-113` T2 (docs/SPEC-ia.md §14.6) : la probabilité par défaut accompagne chaque nœud du catalogue.
+		expect(systeme?.content).toContain('relance — Relance (open, 20 %)')
 		expect(contexte?.content).toContain(JSON.stringify(VIVANTE))
 		expect(contexte?.content).toContain('{"prospection":11,"relance":9}')
 		expect(contexte?.content).toContain('Ne fais évoluer que les étapes')

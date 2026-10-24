@@ -1,6 +1,9 @@
 // @spec CRM-097 (docs/BACKLOG.md) — tranche T1 : ce qui est envoyé au modèle, et rien d'autre ; tranche T2.b : les
 //       défauts relevés par la base accompagnent une revue (docs/SPEC-ia.md §12.6, décision 618) ; tranche T3.b :
 //       le contexte d'une modification — composition vivante, occupation, portée (docs/SPEC-ia.md §13.5, décision 620)
+// @spec CRM-113 (docs/BACKLOG.md) — tranche T2 : les règles qui font réutiliser le catalogue sous un libellé d'étape et
+//       qui nomment les champs natifs de l'affaire ; le catalogue envoyé avec la probabilité par défaut de chaque nœud
+//       (docs/SPEC-ia.md §14.5, §14.6 ; docs/JOURNAL.md décisions 646 et 677)
 // @spec docs/SPEC-ia.md §2 (rectifier : la dernière révision et la consigne), §3 (« ce qui est envoyé au
 //       modèle » : jamais une affaire, un contact, un message ni une donnée personnelle ; pour un remappage, le
 //       NOMBRE d'affaires par étape), §6.1 (le format) ; docs/JOURNAL.md décision 617
@@ -11,7 +14,28 @@
 import type { Message } from './ollama.ts'
 import type { Defaut } from './proposition.ts'
 
-export type NoeudDuCatalogue = { readonly cle: string; readonly libelle: string; readonly nature: string }
+export type NoeudDuCatalogue = {
+	readonly cle: string
+	readonly libelle: string
+	readonly nature: string
+	/** La probabilité par défaut du nœud, `null` quand le catalogue n'en pose pas. */
+	readonly probabilite: number | null
+}
+
+/**
+ * Ce que toute affaire porte déjà, sans champ à déclarer (docs/SPEC-ia.md §14.5). Une donnée statique du produit :
+ * la liste des clés qui les doublonneraient vit en base, `app.reserved_native_fields()`, qui juge.
+ */
+export const INFORMATIONS_NATIVES = [
+	'son titre et sa description',
+	'son responsable',
+	'son montant et sa devise',
+	'sa probabilité',
+	'sa prochaine action et son échéance',
+	'ses contacts et son organisation',
+	'ses coûts, ses recettes et son temps',
+	'ses commentaires et ses e-mails',
+] as const
 
 /** Les portées d'une modification (docs/SPEC-ia.md §13.5) ; `workflow` est celle d'une création. */
 export const PORTEES_DE_MODIFICATION = ['etapes', 'transitions', 'champs'] as const
@@ -46,7 +70,14 @@ Règles :
   des « choix » ; un champ « money » a une « devise » de trois lettres (EUR par défaut) ;
 - les « regles » disent sur quelle étape un champ est visible, requis ou caché ; les « exigences » disent
   quel champ doit être rempli pour franchir une transition ;
-- les clés sont courtes, en minuscules, sans accent, mots séparés par des tirets.`
+- les clés sont courtes, en minuscules, sans accent, mots séparés par des tirets ;
+- quand un nœud du catalogue joue déjà le rôle d'une étape, vise ce nœud et écris le nom voulu dans le « libelle »
+  de l'étape, et sa probabilité dans « probabilite » si elle diffère de celle du nœud ; ne déclare un nœud que si
+  aucun nœud du catalogue ne joue ce rôle ; « libelle » et « probabilite » valent null quand le nœud convient tel quel ;
+- toute affaire porte déjà, sans champ à déclarer :
+${INFORMATIONS_NATIVES.map((information) => `  - ${information} ;`).join('\n')}
+  ne déclare jamais de champ pour ces informations ;
+  une règle ou une exigence ne vise qu'un champ déclaré, et un champ natif ne s'exige pas ici.`
 
 const REGLES_DE_MODIFICATION = `Tu fais évoluer un workflow EXISTANT, décrit plus bas. Rends la composition cible ENTIÈRE, jamais une liste de différences :
 - garde la clé de chaque étape (son nœud), de chaque transition (son couple « de » → « vers ») et de chaque champ
@@ -68,7 +99,7 @@ function catalogueEnTexte(catalogue: readonly NoeudDuCatalogue[]): string {
 	if (catalogue.length === 0) return 'Le catalogue de nœuds de l’espace est vide.'
 	return [
 		'Nœuds déjà au catalogue de l’espace (une étape peut les viser par leur clé, sans les redéclarer) :',
-		...catalogue.map((n) => `- ${n.cle} — ${n.libelle} (${n.nature})`),
+		...catalogue.map((n) => `- ${n.cle} — ${n.libelle} (${n.nature}${n.probabilite === null ? '' : `, ${n.probabilite} %`})`),
 	].join('\n')
 }
 

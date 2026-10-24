@@ -3,6 +3,8 @@
 #       développement ; scénarios), §3 (le contrat MESURÉ que le simulateur reproduit)
 # @spec CRM-097 tranche T3.b — docs/SPEC-ia.md §13.5 (le scénario `modification`, dérivé du workflow vivant que la
 #       fonction envoie) ; docs/JOURNAL.md décision 620
+# @spec CRM-113 tranche T2 — docs/SPEC-ia.md §14.6 (le scénario `catalogue` : un nœud du catalogue du seed sous un libellé
+#       surchargé, un nœud du catalogue redéclaré, un champ `montant`) ; docs/JOURNAL.md décisions 646 et 677
 #
 # Bibliothèque standard seule. Le scénario voyage comme clé — `Bearer simule-<scénario>` —, là où le serveur
 # réel attend la sienne : la fonction `ia` n'a qu'un chemin d'appel, et ce sont les preuves qui choisissent.
@@ -47,8 +49,35 @@ INCOHERENTE = json.loads(json.dumps(VALIDE))
 INCOHERENTE["etapes"][1]["initiale"] = True
 INCOHERENTE["transitions"].append({"de": "Gagne_Web", "vers": "Relance", "libelle": "Relancer", "commentaire_requis": False})
 
+# Une création sur le catalogue du SEED (docs/SPEC-ia.md §14.6) : « prospection » visée sous le nom « Premier contact »
+# et une autre probabilité ; « negociation » redéclarée sous sa propre clé (`noeud_deja_au_catalogue`) ; un champ
+# `montant` (`native_field`). Exactement ces deux défauts, écrits par la base.
+CATALOGUE = {
+    "workflow": {"nom": "Ventes accompagnées"},
+    "noeuds": [{"cle": "negociation", "libelle": "Discussion commerciale", "nature": "open", "probabilite": 50}],
+    "etapes": [
+        {"noeud": "prospection", "initiale": True, "libelle": "Premier contact", "probabilite": 15},
+        {"noeud": "negociation", "initiale": False, "libelle": None, "probabilite": None},
+        {"noeud": "livre", "initiale": False, "libelle": None, "probabilite": None},
+        {"noeud": "perdu", "initiale": False, "libelle": None, "probabilite": None},
+    ],
+    "transitions": [
+        {"de": "prospection", "vers": "negociation", "libelle": "Engager la discussion", "commentaire_requis": False},
+        {"de": "negociation", "vers": "livre", "libelle": "Conclure", "commentaire_requis": False},
+        {"de": "prospection", "vers": "perdu", "libelle": "Abandonner", "commentaire_requis": True},
+        {"de": "negociation", "vers": "perdu", "libelle": "Abandonner", "commentaire_requis": True},
+    ],
+    "champs": [
+        {"cle": "montant", "libelle": "Montant", "type": "money", "choix": None, "devise": "EUR", "aide": None},
+        {"cle": "source", "libelle": "Source", "type": "select", "choix": ["Salon", "Recommandation"], "devise": None, "aide": None},
+    ],
+    "regles": [{"champ": "source", "etape": "prospection", "visibilite": "visible"}],
+    "exigences": [],
+}
+
 CONTENUS = {
     "valide": json.dumps(VALIDE, ensure_ascii=False),
+    "catalogue": json.dumps(CATALOGUE, ensure_ascii=False),
     "incoherente": json.dumps(INCOHERENTE, ensure_ascii=False),
     "invalide": "Voici votre workflow : une prise de contact, puis un devis.",
 }

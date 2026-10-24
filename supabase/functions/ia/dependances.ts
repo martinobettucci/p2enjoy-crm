@@ -107,13 +107,15 @@ export function creerDependances(
 
 		async lireCatalogue(jeton, workspaceId) {
 			const reponse = await requete(
-				rest(`workflow_nodes_catalog?workspace_id=eq.${workspaceId}&archived_at=is.null&select=key,label,kind&order=position`),
+				rest(`workflow_nodes_catalog?workspace_id=eq.${workspaceId}&archived_at=is.null&select=key,label,kind,default_probability&order=position`),
 				{ headers: commeAppelant(jeton), signal: signal() },
 			)
-			return (await lignes<{ key: string; label: string; kind: string }>(reponse)).map((n) => ({
+			// `CRM-113` (docs/SPEC-ia.md §14.6) : la probabilité par défaut accompagne chaque nœud envoyé au modèle.
+			return (await lignes<{ key: string; label: string; kind: string; default_probability: number | null }>(reponse)).map((n) => ({
 				cle: n.key,
 				libelle: n.label,
 				nature: n.kind,
+				probabilite: n.default_probability === null ? null : Number(n.default_probability),
 			}))
 		},
 

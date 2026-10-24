@@ -15,7 +15,8 @@ export const CONTEXTE_PAR_DEFAUT = 36_864
 /** L'en-tête qui choisit un scénario du simulateur — honoré en développement SEULEMENT. */
 export const EN_TETE_SIMULATEUR = 'x-ia-simulateur'
 /** `modification` (`CRM-097` T3.b, docs/SPEC-ia.md §13.5) : une cible dérivée du workflow vivant envoyé au modèle. */
-export const SCENARIOS_SIMULATEUR = ['valide', 'incoherente', 'invalide', 'cle_refusee', 'modification'] as const
+/** `catalogue` (`CRM-113` T2, docs/SPEC-ia.md §14.6) : un nœud du catalogue renommé, un nœud redéclaré, un champ natif. */
+export const SCENARIOS_SIMULATEUR = ['valide', 'incoherente', 'invalide', 'cle_refusee', 'modification', 'catalogue'] as const
 
 export type ConfigurationIa = {
 	readonly hote: string | null

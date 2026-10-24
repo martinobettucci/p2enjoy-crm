@@ -13,10 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-113` T1 — le générateur de workflow connaît l'affaire et le catalogue : la base (migration 102)
+### `CRM-113` T1 et T2 — le générateur de workflow connaît l'affaire et le catalogue : la base (migration 102) et la fonction `ia`
 
-*Livrée en développement le 2026-10-24 ; la fonction `ia` (T2) et l'écran (T3) restent à livrer, et la migration part
-en production avec eux.*
+*Livrées en développement le 2026-10-24 ; l'écran (T3) reste à livrer, et la migration part en production avec la
+fonction `ia` et lui.*
+
+- **Le modèle apprend ce que l'affaire porte déjà** et la consigne de viser un nœud du catalogue sous le nom voulu
+  plutôt que d'en déclarer un ; le catalogue qu'il reçoit donne la probabilité par défaut de chaque nœud. Sa sortie
+  porte le nom et la probabilité de chaque étape (`null` quand le nœud convient), gardés par la fonction.
 
 - **Une étape d'une suggestion porte son nom et sa probabilité** (`libelle`, `probabilite`, facultatifs) : à
   l'acceptation, ils deviennent la surcharge de l'étape quand ils diffèrent de ceux du nœud, et ne surchargent rien

@@ -265,7 +265,8 @@ recréer `functions` (`CLAUDE.md` §15 : instrumentation de test non disponible 
 Scénarios : `valide` (un workflow conforme), `incoherente` (conforme au schéma, mais deux étapes initiales
 et une transition vers une étape absente), `invalide` (JSON hors schéma), `cle_refusee` (`403` « origine non
 autorisée pour cette clé ») ; `modification` depuis T3.b (§13.5) — une cible dérivée du workflow vivant que la
-fonction envoie. Le dépassement de la borne de 120 s est prouvé par les tests unitaires, avec une
+fonction envoie ; `catalogue` depuis `CRM-113` T2 (§14.6) — une création sur le catalogue du seed qui porte exactement
+`noeud_deja_au_catalogue` et `native_field`. Le dépassement de la borne de 120 s est prouvé par les tests unitaires, avec une
 borne injectée : aucune preuve n'attend deux minutes.
 
 ## 12. Tranche T2 — créer un workflow avec l'IA (écrit le 2026-10-02, avant son code)

@@ -3,6 +3,9 @@
 //           §6.1 (le format), §12.1 (la fonction ne juge plus le sens : la base le fait, décision 618)
 // @verifies CRM-097 tranche T3.b — docs/SPEC-ia.md §13.1 (`remappages`, facultative), §13.5 (le schéma d'une
 //           modification l'exige ; sa mise en forme) ; décision 620
+// @verifies CRM-113 (docs/BACKLOG.md) tranche T2 — docs/SPEC-ia.md §14.3 (`libelle` et `probabilite` d'une étape),
+//           §14.6 (le schéma les exige, `null` permis ; la mise en forme les garde, toute autre forme est une réponse
+//           invalide) ; décisions 646 et 677
 //
 // Les défauts — le SENS d'une proposition — sont prouvés en base, code par code, par
 // `supabase/tests/0078_accepter_suggestion_ia.test.sql`. Ce fichier prouve ce qui reste à la fonction : refuser
@@ -139,5 +142,49 @@ describe('T3.b — `remappages` et le schéma d’une modification', () => {
 		expect(SCHEMA_MODIFICATION.properties.remappages.items.required).toEqual(['de', 'vers'])
 		expect(SCHEMA_MODIFICATION.properties.etapes).toBe(SCHEMA_WORKFLOW.properties.etapes)
 		expect(SCHEMA_WORKFLOW.properties).not.toHaveProperty('remappages')
+	})
+})
+
+describe('CRM-113 T2 — le libellé et la probabilité d’une étape (docs/SPEC-ia.md §14.3, §14.6)', () => {
+	const avecEtapes = (etapes: unknown[]) => ({ ...copie(), etapes })
+
+	it('le schéma EXIGE `libelle` et `probabilite` sur chaque étape, `null` permis', () => {
+		const etape = SCHEMA_WORKFLOW.properties.etapes.items
+		expect(etape.required).toEqual(['noeud', 'initiale', 'libelle', 'probabilite'])
+		expect(etape.properties.libelle.type).toEqual(['string', 'null'])
+		expect(etape.properties.probabilite.type).toEqual(['number', 'null'])
+	})
+
+	it('gardés : le libellé sans ses espaces de bord, la probabilité telle quelle ; un libellé blanc vaut null', () => {
+		const forme = mettreEnForme(avecEtapes([
+			{ noeud: 'Prospection', initiale: true, libelle: '  Premier contact ', probabilite: 15 },
+			{ noeud: 'Gagne', initiale: false, libelle: '   ', probabilite: null },
+		]))
+		if (!forme.ok) throw new Error('forme refusée')
+		expect(forme.proposition.etapes).toEqual([
+			{ noeud: 'prospection', initiale: true, libelle: 'Premier contact', probabilite: 15 },
+			{ noeud: 'gagne', initiale: false, libelle: null, probabilite: null },
+		])
+	})
+
+	it('absents (une sortie antérieure au schéma) : `null`, rien d’autre n’est inventé', () => {
+		const forme = mettreEnForme(avecEtapes([{ noeud: 'prospection', initiale: true }]))
+		if (!forme.ok) throw new Error('forme refusée')
+		expect(forme.proposition.etapes).toEqual([{ noeud: 'prospection', initiale: true, libelle: null, probabilite: null }])
+	})
+
+	it.each([
+		['un libellé nombre', { libelle: 12 }],
+		['un libellé objet', { libelle: { texte: 'A' } }],
+		['une probabilité texte', { probabilite: '40' }],
+		['une probabilité infinie', { probabilite: Number.POSITIVE_INFINITY }],
+	])('d’une autre forme (%s) : réponse invalide', (_nom, trait) => {
+		expect(mettreEnForme(avecEtapes([{ noeud: 'prospection', initiale: true, ...trait }])).ok).toBe(false)
+	})
+
+	it('une probabilité hors de 0 à 100 est GARDÉE : c’est la base qui la relève (`step_probability_invalid`)', () => {
+		const forme = mettreEnForme(avecEtapes([{ noeud: 'prospection', initiale: true, libelle: null, probabilite: 140 }]))
+		if (!forme.ok) throw new Error('forme refusée')
+		expect(forme.proposition.etapes[0]?.probabilite).toBe(140)
 	})
 })
