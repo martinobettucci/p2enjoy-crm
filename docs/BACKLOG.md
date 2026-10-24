@@ -16045,7 +16045,9 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
       - Série unitaire **4314/4314**, typecheck et build verts ; harnais `SCENARIOS_API=1172`.
       - **Reste `[~]`** : le constat visuel et l'E2E viennent avec T3.
 - [ ] **T3** — E2E, captures, seed, manuel, campagnes.
-- [ ] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée.
+- [ ] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée. Liste au
+      `docs/SPEC-mcp.md` §9.2 *sexies* ; `crm_search` filtre les organisations par `organizations:consulter`
+      (décision 666).
 - [ ] **T5** — livraison en production, sur instruction du responsable.
 
 ## Demande du 2026-10-23 — rattachements multiples (décisions 637 à 662)

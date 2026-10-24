@@ -712,6 +712,34 @@ nouvelle `organizations` de `CRM-114`, avec leur création et leur modification 
 par le CRM malgré la matrice ouverte (la lectrice qui crée un contact), journal écrit ; et **E2E** : un contact créé par
 le connecteur paraît dans le carnet.
 
+### 9.2 sexies Famille `organizations` — `CRM-114` T4 (liste fixée par `docs/SPEC-organisations.md` §5, **validée le 2026-10-24**, décision 663)
+
+**Quatre outils**, ceux de l'onglet « Organisations » et de la fiche d'organisation de la webapp (`organisations.ts`),
+sous le jeton de la personne. **Aucun outil de suppression** (décision 660).
+
+| Outil | Action | Ancre | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_organization_list` | `consulter` | `workspace:workspace` | `organizations`, compte embarqué `contacts(count)` | par nom ou domaine (`query`) ; par nom ; paginé ; le nombre de contacts de chacune |
+| `crm_organization_get` | `consulter` | `organisation:organization_id` | `organizations`, `contacts` | la fiche, et ses contacts (nom, fonction, adresse, téléphone) |
+| `crm_organization_create` | `ajouter` | `workspace:workspace` | `POST organizations` | nom obligatoire ; domaine (mis en minuscules, comme l'écran) et site web facultatifs |
+| `crm_organization_update` | `modifier` | `organisation:organization_id` | `PATCH organizations` | seuls les champs donnés ; une chaîne vide efface le domaine ou le site web |
+
+**Refus nommés** : `domain_taken` (`23505`, le domaine est unique dans l'espace) ; la contrainte de forme nommée
+(`organizations_name_check`, `organizations_domain_check`, `organizations_website_check`) ; le reste comme partout.
+
+**`crm_search` suit la famille** (décision 666) : un résultat `organisation` est filtré par `organizations:consulter`,
+et non plus par `contacts:consulter`. Une permission distincte (décision 659) qui laisserait la recherche montrer les
+organisations à qui ne la tient pas ne serait pas distincte. Le nom de l'organisation d'un **contact**, lui, reste dans
+les lectures de contact : c'est un attribut du contact, comme l'écran du carnet le montre à tout lecteur du carnet.
+
+**La matrice de l'onglet « Connecteur MCP »** gagne la ligne « Organisations » (phrase de portée : « Organisations du
+carnet, et leurs contacts en lecture ») ; celle de « Contacts » devient « Contacts du carnet ».
+
+**Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus
+par le CRM malgré la matrice ouverte (la lectrice qui crée une organisation), journal écrit ; `crm_search` sans
+`organizations:consulter` ne rend aucune organisation ; et **E2E** : une organisation créée par le connecteur paraît dans
+l'onglet « Organisations ».
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,

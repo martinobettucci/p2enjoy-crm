@@ -79,6 +79,10 @@ pour `recettes` — la contrainte `mcp_droits_famille`, `public.mcp_autorise`, `
 
 **Aucun outil de suppression** (décision 660). Les noms suivent la décision 658 : anglais pour ce qui est exposé.
 
+**La recherche suit la famille** (décision 666, conséquence de la décision 659) : `crm_search` filtre un résultat
+`organisation` par `organizations:consulter`, et non plus par `contacts:consulter`. Le détail de la tranche est au
+`docs/SPEC-mcp.md` §9.2 *sexies*.
+
 ## 6. Preuves
 
 - **pgTAP** : la famille `organizations` acceptée par les quatre listes, refusée hors liste ; `mcp_autorise` sur la

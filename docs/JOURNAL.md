@@ -33178,3 +33178,17 @@ attend la tranche T2 de `CRM-111` (décision 645). **Lancement.** La tranche T1 
 livré — commence : relevé exact de ce qui lit les colonnes quittant `cards`, et coût de la nouvelle RLS, mesuré sur une
 **base jetable** créée à côté de celle de développement, jamais sur elle. Les résultats seront consignés dans
 `docs/SPEC-rattachements.md`.
+
+
+### décision 666 — `CRM-114` T4 : la recherche du connecteur suit la famille `organizations`
+
+*2026-10-24, en écrivant la tranche T4.* **Problème** : `crm_search` filtre chaque résultat par la famille de son objet,
+et rangeait `organisation` sous `contacts` — la seule famille qui existait pour elle. La spécification validée
+(`docs/SPEC-organisations.md` §5) ne dit rien de la recherche. **Observation** : la décision 659 a voulu une permission
+distincte, et la phrase de portée de « Contacts » devient « Contacts du carnet » : une recherche qui montrerait les
+organisations à qui tient `contacts:consulter` sans `organizations:consulter` contredirait les deux. **Décision** : un
+résultat `organisation` de `crm_search` est filtré par `organizations:consulter`. Le nom de l'organisation d'un contact
+reste dans les lectures de contact — un attribut du contact, que l'écran montre à tout lecteur du carnet. **Conséquence** :
+une matrice qui ouvrait `contacts:consulter` cesse de voir les organisations dans la recherche tant que `organizations`
+n'est pas ouverte ; c'est le comportement voulu, et le manuel (chapitre 11) le dit. **Vérification** : un test
+d'intégration de T4 (recherche sans `organizations:consulter`). Consigné au `docs/SPEC-mcp.md` §9.2 *sexies*.
