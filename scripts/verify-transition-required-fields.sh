@@ -269,6 +269,9 @@ fi
 # `migrations-runner` DOIT la rendre à l'octet près. C'est la seule restauration que le §3.5 de
 # `docs/SPEC-test-harness.md` autorise, et c'est elle que le harnais emploie partout ailleurs.
 apres_rejeu_isole=$(empreinte)
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682) : relevées JUSTE APRÈS le rejeu isolé, qui est ce que le contrôle
+# juge. Relevées après la restauration, elles comparaient les OID d'une base reconstruite, tous nouveaux.
+identites_apres=$(identites_structurelles)
 if [ "$avant" != "$apres_rejeu_isole" ]; then
 	ok "le rejeu ISOLÉ fait dériver l'empreinte, comme le lot G l'impose depuis la migration 35"
 else
@@ -281,7 +284,6 @@ if [ "$avant" = "$apres" ]; then
 else
 	fail "l'empreinte reste dérivée APRÈS reconstruction de la base"
 fi
-identites_apres=$(identites_structurelles)
 if [ "$identites_avant" = "$identites_apres" ]; then
 	ok "le rejeu ne reconstruit ni les trois contraintes exactes ni leur index inverse"
 else
@@ -354,6 +356,11 @@ restaurer_etat_courant >/dev/null
 
 echo
 echo "4. Un croisement de workspace arrête lui aussi la migration"
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682) : la référence est le compte relevé JUSTE AVANT la tentative. Il
+# valait « celui de la section 3 », juste tant que la restauration rejouait le répertoire sans reseeder ; la
+# reconstruction rend le seed entier, liaison de la copie comprise (mesuré : 2 au lieu de 1 hors fixture). La
+# propriété éprouvée — un échec ne laisse aucun effet partiel — est la même, et ne dépend plus de l'ordre.
+liaisons_avant_croisement=$(psql_db -c "select count(*) from public.workflow_transition_required_fields;")
 psql_db -c "insert into public.workspaces (id, name, slug)
 	values ('$WORKSPACE_CROISE', 'Workspace croisé CRM-018', 'tst-crm018-croise');
 	insert into public.workflows (id, workspace_id, name)
@@ -376,7 +383,7 @@ apres_croisement=$(psql_db -F '|' -c "select
 	exists (select 1 from pg_attribute where attrelid='public.workflow_transitions'::regclass
 	        and attname='require_fields' and attnum > 0 and not attisdropped),
 	(select count(*) from public.workflow_transition_required_fields);")
-if [ "$apres_croisement" = "t|$liaisons_apres_upgrade" ]; then
+if [ "$apres_croisement" = "t|$liaisons_avant_croisement" ]; then
 	ok "l'échec inter-workspace conserve lui aussi colonne ancienne et liaison valide"
 else
 	fail "l'échec inter-workspace a laissé un effet partiel : $apres_croisement"
