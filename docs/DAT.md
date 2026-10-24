@@ -388,7 +388,8 @@ de développement (`rejeu_complet_au_prochain_passage`, `scripts/lib/registre.sh
 §3.5). **Révisé par `CRM-111` T1 bis (décision 682)** : un harnais qui dégrade
 la structure restaure en **reconstruisant** la base de développement et ses seuls dérivés (courrier de Stalwart, état de
 `mail-sync`), par `reconstruire_base_dev` (`scripts/lib/reconstruction.sh`) : le runner y trouve une base sans registre
-et la construit dans l'ordre. Mode opératoire, coût mesuré et preuves : `docs/SPEC-test-harness.md` §3.6.
+et la construit dans l'ordre. Mode opératoire, coût mesuré et preuves : `docs/SPEC-test-harness.md` §3.6. `rejeu_complet_au_prochain_passage` et
+`scripts/lib/registre.sh` sont retirés avec leur dernier appelant.
 
 ### 3.3 `mail-sync` — service Python
 
