@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-114` T1 à T3 — les organisations : la famille du connecteur, l’onglet du carnet (décision 663)
+### `CRM-114` T1 à T4 — les organisations : la famille du connecteur, l’onglet du carnet (décision 663)
 
 *En développement seulement. La migration `0101` attend la prochaine fenêtre de production.*
 
@@ -26,6 +26,13 @@ d'exécuter le code attendu.
   - **« Modifier »** sur la fiche change ses trois champs.
   - Ces deux gestes sont réservés aux business developers et aux administrateurs.
 - **Le manuel** décrit l'onglet, la création et la modification d'une organisation (chapitre 3 *ter*) (T3).
+- **Le connecteur MCP gère les organisations** (T4), dans leur propre famille « Organisations » : les lister (avec le
+  nombre de contacts), en lire une avec ses contacts, en créer, en modifier. Aucun outil ne les supprime.
+  - **La recherche du connecteur** ne montre plus une organisation qu'avec « Organisations ▸ Consulter » : « Contacts »
+    ne l'ouvre plus (décision 666).
+  - **L'onglet « Connecteur MCP »** de la plateforme gagne la ligne « Organisations » ; celle de « Contacts » se lit
+    « Contacts du carnet ».
+  - *Il faudra reconstruire l'image `mcp` à la livraison.*
 
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 

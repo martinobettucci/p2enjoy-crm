@@ -5571,7 +5571,8 @@ focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (diff
       tant que cette personne n'est pas membre de l'espace : le connecteur agit en son nom. » L'écran n'interdit pas
       d'accorder : l'appartenance peut venir ensuite.
     - **LA MATRICE EST UN TABLEAU DU §5.9** : les familles en lignes — sept, **huit depuis `CRM-108`**, qui ajoute
-      « Recettes » après « Budgets » (§5.60) — (`th scope="row"`, leur libellé et, dessous en
+      « Recettes » après « Budgets » (§5.60), **neuf depuis `CRM-114`**, qui ajoute « Organisations » après
+      « Contacts » (§5.64) — (`th scope="row"`, leur libellé et, dessous en
       13 px `--color-text-2`, ce qu'elles couvrent), les quatre actions en colonnes (`th scope="col"`). Chaque cellule
       porte une case native de 24 px (§5.7 bis), sa ligne à la hauteur de cible, et un **nom accessible qui nomme la
       famille ET l'action** — « Affaires : modifier » (§5.15, grille champ × étape). Une case n'écrit rien seule.
@@ -6189,3 +6190,7 @@ posent vaut ici sans être répété :
 
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : `PencilLine` sert déjà la modification d'un espace (§5.56),
   pour le même geste.
+
+- **LA MATRICE DU CONNECTEUR GAGNE UNE LIGNE, « Organisations », APRÈS « Contacts »** (§5.56, tranche T4), avec sa phrase
+  de portée : « Organisations du carnet, et leurs contacts en lecture ». Celle de « Contacts » devient « Contacts du
+  carnet ». Aucune autre forme ne change (`docs/SPEC-mcp.md` §9.2 *sexies*).

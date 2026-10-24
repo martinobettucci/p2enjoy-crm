@@ -6,6 +6,7 @@
 // @verifies CRM-103 T2 — docs/SPEC-mcp.md §8.2 (lectures du connecteur, couples envoyés dans l'ordre du §6.1, refus
 //           `droit_invalide` et `issue_invalide` reconnus), §7.1 (issue inconnue rendue `null`)
 // @verifies CRM-108 T3 — docs/SPEC-recettes.md §7 (la famille `recettes`, envoyée entre `budgets` et `temps`)
+// @verifies CRM-114 T4 — docs/SPEC-organisations.md §5 (la famille `organizations`, envoyée entre `contacts` et `budgets`)
 // @verifies CRM-109 (docs/BACKLOG.md) — tranche T3 : `lireAttentes` lit la trace du dernier refus (docs/SPEC-refus-admission.md §3)
 
 import { describe, expect, it } from 'vitest'
@@ -276,7 +277,7 @@ describe('le connecteur MCP (CRM-103 T2)', () => {
 
 	it('envoie la matrice entière, dans l’ordre des familles puis des actions, et rend le refus par son code', async () => {
 		const appels: Appel[] = []
-		const droits = new Set([caseMcp('messagerie', 'ajouter'), caseMcp('temps', 'consulter'), caseMcp('recettes', 'consulter'), caseMcp('budgets', 'consulter'), caseMcp('affaires', 'modifier'), caseMcp('affaires', 'consulter'), caseMcp('structure', 'supprimer')])
+		const droits = new Set([caseMcp('messagerie', 'ajouter'), caseMcp('temps', 'consulter'), caseMcp('recettes', 'consulter'), caseMcp('budgets', 'consulter'), caseMcp('organizations', 'ajouter'), caseMcp('contacts', 'consulter'), caseMcp('affaires', 'modifier'), caseMcp('affaires', 'consulter'), caseMcp('structure', 'supprimer')])
 		const ok = await poserDroitsMcp(client(() => ({ data: null, error: null, status: 204 }), appels), 'u-y', 'w-1', droits)
 		expect(ok).toEqual({ statut: 'ok', valeur: null })
 		expect(appels[0]).toEqual({
@@ -284,8 +285,9 @@ describe('le connecteur MCP (CRM-103 T2)', () => {
 			args: {
 				p_sub: 'u-y',
 				p_ws: 'w-1',
-				// `recettes` entre `budgets` et `temps` depuis `CRM-108` (docs/SPEC-recettes.md §7).
-				p_droits: [['structure', 'supprimer'], ['affaires', 'consulter'], ['affaires', 'modifier'], ['budgets', 'consulter'], ['recettes', 'consulter'], ['temps', 'consulter'], ['messagerie', 'ajouter']],
+				// `recettes` entre `budgets` et `temps` depuis `CRM-108` (docs/SPEC-recettes.md §7) ; `organizations` entre
+				// `contacts` et `budgets` depuis `CRM-114` T4 (docs/SPEC-organisations.md §5).
+				p_droits: [['structure', 'supprimer'], ['affaires', 'consulter'], ['affaires', 'modifier'], ['contacts', 'consulter'], ['organizations', 'ajouter'], ['budgets', 'consulter'], ['recettes', 'consulter'], ['temps', 'consulter'], ['messagerie', 'ajouter']],
 			},
 		})
 		const refus = await poserDroitsMcp(client(() => ({ data: null, error: { message: 'profil_introuvable' }, status: 404 })), 'u-x', 'w-1', droits)

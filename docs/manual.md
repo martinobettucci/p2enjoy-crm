@@ -4672,11 +4672,12 @@ Deux règles se cumulent :
 L'assistant ne peut faire que ce que **les deux** permettent. Un droit du connecteur dans un espace dont vous n'êtes pas
 membre reste sans effet.
 
-Les huit familles, et ce que chacune couvre :
+Les neuf familles, et ce que chacune couvre :
 
 - **Structure** : tracks, channels, lecture des workflows ;
 - **Affaires** : affaires, champs, étapes, commentaires, contacts liés, activités (appels, réunions, visios) ;
-- **Contacts** : contacts et organisations ;
+- **Contacts** : les contacts du carnet ;
+- **Organisations** : les organisations du carnet, et leurs contacts en lecture ;
 - **Budgets** : budgets, occurrences, lignes de coût, réels ;
 - **Recettes** : lignes de recette d'une affaire et leurs réels ; le rapport de rentabilité, réservé aux
   administrateurs de l'espace ;
@@ -4788,8 +4789,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 
 - **La recherche** — *livrée en développement par `CRM-104`, tranche T1* : retrouver des affaires, des contacts, des
   organisations, des commentaires et des messages par des mots, comme la barre de recherche de l'en-tête. Un résultat
-  n'est rendu que si le connecteur peut consulter sa famille dans son espace — « Affaires », « Contacts » ou
-  « Messagerie ».
+  n'est rendu que si le connecteur peut consulter sa famille dans son espace — « Affaires », « Contacts »,
+  « Organisations » ou « Messagerie ». **Une organisation demande « Organisations ▸ Consulter »** : « Contacts » ne
+  l'ouvre pas.
 - **Structure** — *livrés en développement par `CRM-104`, tranche T1* :
   - *Consulter* : les tracks d'un espace, un track et ses channels, un channel et son nombre d'affaires actives, et un
     **workflow** — ses étapes, les déplacements qu'il déclare, le motif ou les questions qu'ils exigent ;
@@ -4806,13 +4808,23 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - *Ajouter* : créer un contact, avec une organisation qui existe déjà ;
   - *Modifier* : changer son nom, sa fonction, son adresse, son téléphone ou son organisation.
 
-  **Aucun outil ne supprime un contact** : le CRM ne sait que le détruire, et l'assistant ne détruit rien. Les
-  organisations — les lire, les créer, les modifier — arrivent avec leur propre case de la matrice, et avec leur écran
-  (`CRM-114`).
+  **Aucun outil ne supprime un contact** : le CRM ne sait que le détruire, et l'assistant ne détruit rien. Le nom de
+  l'organisation d'un contact fait partie du contact ; les organisations elles-mêmes sont la famille suivante.
+
+- **Organisations** — *livrées en développement par `CRM-114`, tranche T4* :
+  - *Consulter* : lister les organisations du carnet, par mots du nom ou du domaine, avec le nombre de contacts de
+    chacune — y compris celles qui n'en ont aucun ; lire la fiche d'une organisation, avec ses contacts ;
+  - *Ajouter* : créer une organisation — un nom, et un domaine et un site web facultatifs. Le domaine est enregistré en
+    minuscules, et il est unique dans l'espace : un domaine déjà pris est refusé ;
+  - *Modifier* : changer son nom, son domaine ou son site web ; une valeur vide efface le domaine ou le site.
+
+  Comme à l'écran, le CRM réserve la création et la modification aux administrateurs et aux business developers de
+  l'espace. **Aucun outil ne supprime une organisation** : ses contacts la perdraient sans laisser de trace. Pour
+  rattacher un contact à une organisation, l'assistant modifie le contact (famille « Contacts »).
 
 ### 11.6 Ce que le connecteur n'offre pas encore
 
-Les outils des autres familles — organisations, budgets, temps, objectifs, messagerie — suivent, une famille après
+Les outils des autres familles — budgets, temps, objectifs, messagerie — suivent, une famille après
 l'autre. D'ici là, une case cochée pour l'une d'elles n'ouvre aucun outil.
 
 ## Annexe A — Ce que contient l'espace de démonstration

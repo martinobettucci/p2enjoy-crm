@@ -1,6 +1,7 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : la matrice appliquée par le service, à la visibilité et à chaque appel
 # @spec CRM-108 (docs/BACKLOG.md) — tranche T4 : la famille `recettes`, les ancres `revenue` et `revenue_actual`
 #       (docs/SPEC-recettes.md §7, docs/SPEC-mcp.md §6.1, §9.1)
+# @spec CRM-114 (docs/BACKLOG.md) tranche T4 — la famille `organizations` dans la liste fermée (docs/SPEC-organisations.md §5)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T1 : le genre d'ancre `workflow` (docs/SPEC-mcp.md §9.2 quater, décision 656)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `activity` (docs/SPEC-mcp.md §9.2 ter, décision 655)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : l'ancre `autres` FACULTATIVE, permise si son argument vaut `None` par
@@ -48,8 +49,11 @@ from crm_mcp.registre import EtatCompte, Registre, RegistreIndisponible
 journal = logging.getLogger("crm_mcp.politique")
 
 #: Les familles de la matrice (docs/SPEC-mcp.md §6.1) — la même liste fermée que le `check` de `mcp_droits` ;
-#: `recettes` depuis `CRM-108` (docs/SPEC-recettes.md §7, migration 0095).
-FAMILLES = ("structure", "affaires", "contacts", "budgets", "recettes", "temps", "objectifs", "messagerie")
+#: `recettes` depuis `CRM-108` (docs/SPEC-recettes.md §7, migration 0095) ; `organizations` depuis `CRM-114`, après
+#: `contacts` (docs/SPEC-organisations.md §5, migration 0101).
+FAMILLES = (
+    "structure", "affaires", "contacts", "organizations", "budgets", "recettes", "temps", "objectifs", "messagerie"
+)
 ACTIONS = ("consulter", "ajouter", "modifier", "supprimer")
 #: Un outil de référence : pas d'espace unique, visible dès qu'un droit existe, résultats filtrés par la matrice.
 REFERENCE = "reference"

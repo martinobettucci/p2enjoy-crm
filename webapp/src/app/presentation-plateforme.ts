@@ -2,6 +2,8 @@
 // @spec CRM-103 tranche T2 — docs/DESIGN_SYSTEM.md §5.56 (onglet « Connecteur MCP » : familles, actions et issues en MOT,
 //       détail de `mcp_droits_poses` accordé par clé), docs/SPEC-mcp.md §8.1, §6.1, §7.1
 // @spec CRM-108 tranche T3 — docs/DESIGN_SYSTEM.md §5.60 (la ligne « Recettes » de la matrice, après « Budgets »)
+// @spec CRM-114 tranche T4 — docs/DESIGN_SYSTEM.md §5.64 (la ligne « Organisations » de la matrice, après « Contacts » ;
+//       la portée de « Contacts » devient « Contacts du carnet »)
 // @spec docs/DESIGN_SYSTEM.md §5.56 (dictionnaire fermé des refus, geste du journal en MOT, détail composé par clé),
 //       §10 (aucune phrase par concaténation) ; docs/SPEC-plateforme.md §5.2 (gestes), §6.1 (refus)
 //
@@ -182,6 +184,8 @@ const CLES_FAMILLE: Readonly<Record<FamilleMcp, { readonly libelle: CleTraductio
 	structure: { libelle: 'platform.mcp.famille.structure', portee: 'platform.mcp.famille.structure.portee' },
 	affaires: { libelle: 'platform.mcp.famille.affaires', portee: 'platform.mcp.famille.affaires.portee' },
 	contacts: { libelle: 'platform.mcp.famille.contacts', portee: 'platform.mcp.famille.contacts.portee' },
+	// `CRM-114` T4 (docs/SPEC-mcp.md §9.2 sexies).
+	organizations: { libelle: 'platform.mcp.famille.organizations', portee: 'platform.mcp.famille.organizations.portee' },
 	budgets: { libelle: 'platform.mcp.famille.budgets', portee: 'platform.mcp.famille.budgets.portee' },
 	recettes: { libelle: 'platform.mcp.famille.recettes', portee: 'platform.mcp.famille.recettes.portee' },
 	temps: { libelle: 'platform.mcp.famille.temps', portee: 'platform.mcp.famille.temps.portee' },

@@ -6,6 +6,8 @@
 // @spec CRM-103 tranche T2 — docs/SPEC-mcp.md §8.1 (écrans), §8.2 (les quatre RPC d'administration, leurs refus), §6.1
 //       (familles et actions), §7.1 (issues du journal) ; arbitrages A3, A5 et D9
 // @spec CRM-108 tranche T3 — docs/SPEC-recettes.md §7 (la huitième famille, `recettes`) ; docs/SPEC-mcp.md §6.1
+// @spec CRM-114 tranche T4 — docs/SPEC-organisations.md §5 (la neuvième famille, `organizations`, après `contacts`) ;
+//       docs/SPEC-mcp.md §6.1, §9.2 sexies
 // @spec CRM-109 tranche T3 — docs/SPEC-refus-admission.md §3, §5 : `plateforme_attentes` rend la trace du dernier refus
 //
 // Toutes les lectures et écritures passent par les fonctions `public.plateforme_*`, gardées en base par
@@ -398,9 +400,20 @@ export function curseurSuivant(page: readonly EntreeJournal[]): number | null {
 
 // --- Le connecteur MCP (`CRM-103`, docs/SPEC-mcp.md §8) ---------------------------------------------------------
 
-/** Les huit familles de la matrice, dans l'ordre du §6.1 : l'ordre des lignes, et celui que la base rend. */
+/** Les neuf familles de la matrice, dans l'ordre du §6.1 : l'ordre des lignes, et celui que la base rend. */
 // `recettes` depuis `CRM-108` (docs/SPEC-recettes.md §7, migration 0095) : après `budgets`, l'ordre de la base.
-export const FAMILLES_MCP = ['structure', 'affaires', 'contacts', 'budgets', 'recettes', 'temps', 'objectifs', 'messagerie'] as const
+// `organizations` depuis `CRM-114` T4 (docs/SPEC-organisations.md §5, migration 0101) : après `contacts`.
+export const FAMILLES_MCP = [
+	'structure',
+	'affaires',
+	'contacts',
+	'organizations',
+	'budgets',
+	'recettes',
+	'temps',
+	'objectifs',
+	'messagerie',
+] as const
 export type FamilleMcp = (typeof FAMILLES_MCP)[number]
 /** Les quatre actions, dans l'ordre des colonnes. « Supprimer » veut dire corbeille ou archive, jamais purge (A4). */
 export const ACTIONS_MCP = ['consulter', 'ajouter', 'modifier', 'supprimer'] as const

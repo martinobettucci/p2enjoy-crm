@@ -1,3 +1,4 @@
+# @spec CRM-114 (docs/BACKLOG.md) tranche T4 — un résultat `organisation` filtré par `organizations` (décision 666)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T1 : la famille `structure` et la recherche globale de référence (décision 656)
 # @spec docs/SPEC-mcp.md §9.2 quater (la liste fixée, les ancres, le genre `workflow`, ce que la tranche ne fait pas), §6.1
 #       (`crm_search`, outil de référence filtré par la matrice), §9.1 (les tables et fonctions de la webapp :
@@ -32,7 +33,8 @@ FAMILLE_DU_RESULTAT = {
     "affaire": "affaires",
     "commentaire": "affaires",
     "contact": "contacts",
-    "organisation": "contacts",
+    # `CRM-114` : la famille distincte des organisations (décision 666, docs/SPEC-mcp.md §9.2 sexies).
+    "organisation": "organizations",
     "message": "messagerie",
 }
 

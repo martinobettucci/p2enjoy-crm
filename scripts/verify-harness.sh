@@ -1516,7 +1516,10 @@ SCENARIOS_API=1172
 # carnet et Comptoir Vasseur atteinte par la liste, créer au clavier (domaine en double refusé, puis la fiche ouverte et
 # relue en base) puis modifier, la lectrice éteinte avec le motif, quatre paliers. 908 + 7 = 915, valeur COMPTÉE —
 # « Total: 915 tests in 82 files ».
-SCENARIOS_UI=915
+# **916 depuis `CRM-114` T4, même jour** : `connecteur-organisations.spec.ts`, fichier NEUF, **1** scénario — une
+# organisation créée par un vrai client MCP paraît dans l'onglet « Organisations », son domaine en minuscules. 915 + 1 =
+# 916, valeur COMPTÉE — « Total: 916 tests in 83 files ».
+SCENARIOS_UI=916
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -1,3 +1,5 @@
+# @verifies CRM-114 (docs/BACKLOG.md) tranche T4 — décision 666 : un résultat `organisation` filtré par `organizations`,
+#           et non plus par `contacts` (docs/SPEC-mcp.md §9.2 sexies)
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T1 : les douze outils de structure et la recherche de référence, devant un
 #           CRM simulé
 # @verifies docs/SPEC-mcp.md §9.2 quater (liste, ancres, genre `workflow`, ancre `track` facultative, ni slug ni workflow
@@ -105,6 +107,8 @@ class CrmStructure(CrmSimule):
                  "extrait": None, "rang": 1},
                 {"objet": "contact", "id": "k1", "workspace_id": ESPACE_A, "titre": "Léo", "sous_titre": None,
                  "extrait": None, "rang": 0.9},
+                {"objet": "organisation", "id": "o1", "workspace_id": ESPACE_A, "titre": "Sogexia", "sous_titre": None,
+                 "extrait": None, "rang": 0.85},
                 {"objet": "message", "id": "m1", "workspace_id": ESPACE_A, "titre": "Devis", "sous_titre": None,
                  "extrait": "…", "rang": 0.8},
                 {"objet": "inconnu", "id": "z", "workspace_id": ESPACE_A, "titre": "?", "sous_titre": None,
@@ -176,6 +180,10 @@ async def test_la_recherche_ne_rend_que_les_familles_que_la_matrice_ouvre(monde:
     monde.ouvrir(("contacts", "consulter"), ("messagerie", "consulter"))
     resultats = (await monde.appel("crm_search", {"query": "erp"}))["results"]
     assert [r["kind"] for r in resultats] == ["affaire", "contact", "message"]
+    # `CRM-114` (décision 666) : une organisation suit sa famille, et `contacts` ne l'ouvre plus.
+    monde.ouvrir(("organizations", "consulter"))
+    resultats = (await monde.appel("crm_search", {"query": "erp"}))["results"]
+    assert [r["kind"] for r in resultats] == ["affaire", "contact", "organisation", "message"]
 
 
 async def test_le_workflow_nomme_ses_etapes_ses_transitions_et_les_champs_exiges(monde: Monde) -> None:

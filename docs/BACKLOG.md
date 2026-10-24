@@ -16059,9 +16059,24 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
         (`droits-lectrice-notifications`) prise avant que la page ne soit peinte : le scénario attend désormais la
         préférence rendue.
       - **Reste `[~]`** : la livraison (T5).
-- [ ] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée. Liste au
+- [~] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée. Liste au
       `docs/SPEC-mcp.md` §9.2 *sexies* ; `crm_search` filtre les organisations par `organizations:consulter`
-      (décision 666).
+      (décision 666). **Implémentée et vérifiée en développement le 2026-10-24.**
+      - `mcp/crm_mcp/outils/organisations.py` : `crm_organization_list` (compte embarqué des contacts),
+        `crm_organization_get` (contacts rangés par nom), `crm_organization_create` et `crm_organization_update`
+        (domaine en minuscules, chaîne vide qui efface, `domain_taken` et contraintes nommées) ; `organizations` dans
+        `FAMILLES` ; `crm_search` range `organisation` sous `organizations`.
+      - Unitaires `test_organisations.py` **5** et la recherche de `test_structure.py` ; **onze mutations tuées sur
+        onze** (une donnée de preuve corrigée pour le tri). Intégration `test_integration_organisations.py` contre la vraie
+        pile : succès et journal par outil, `domain_taken` en `refus_crm`, la lectrice refusée par le CRM malgré la
+        matrice et `crm_organization_update` fermé par la matrice, la recherche sans puis avec `organizations:consulter`.
+        `verify-mcp.sh` **76/76**.
+      - Webapp : la ligne « Organisations » de la matrice et les phrases de portée (`FAMILLES_MCP`, clés i18n) ;
+        unitaires de la plateforme 504/504 ; DESIGN_SYSTEM §5.56 et §5.64 ; captures `CRM-103` renouvelées et observées.
+      - E2E `connecteur-organisations.spec.ts` **1/1** (une organisation du connecteur dans l'onglet) ;
+        `SCENARIOS_UI=916`.
+      - Manuel chapitre 11, SPEC-mcp §6.1 et §9.2 catalogue, DAT.
+      - **Reste `[~]`** : la livraison (T5), avec la reconstruction de l'image `mcp`.
 - [ ] **T5** — livraison en production, sur instruction du responsable.
 
 ## Demande du 2026-10-23 — rattachements multiples (décisions 637 à 662)
