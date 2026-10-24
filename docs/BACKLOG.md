@@ -15509,7 +15509,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - E2E `connecteur-budgets.spec.ts` **1/1** (la ligne et sa dépense dans la section « Coûts » de la fiche), capture
         observée ; `SCENARIOS_UI=917`.
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
-      - **Reste `[~]`** : la livraison, avec la reconstruction de l'image `mcp`.
+      - **Livrée en production le 2026-10-24** (révision `bf45dc14`, image `mcp` reconstruite, `verifier.sh` 26/27 —
+        compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[~]`** : le constat du responsable.
 - [ ] **T5** — `temps`.
 - [ ] **T6** — `objectifs`.
 - [ ] **T7** — `messagerie`.
