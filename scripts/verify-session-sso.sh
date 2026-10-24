@@ -89,14 +89,6 @@ KEYCLOAK_BASE=${SSO_OIDC_ISSUER%/realms/lelabs}
 DB_CONTAINER=p2enjoy-db
 IMAGE_DB=$(sed -n 's/^[[:space:]]*image: \(supabase\/postgres:[^[:space:]]*\)$/\1/p' docker-compose.yml | head -n 1)
 MIGRATION_CLAIMS=supabase/migrations/0074_revendications_du_jeton.sql
-MIGRATION_MODELE=supabase/migrations/0075_identite_sso.sql
-MIGRATION_SESSIONS=supabase/migrations/0076_sessions_serveur.sql
-MIGRATION_RETRAIT=supabase/migrations/0077_retrait_gotrue.sql
-MIGRATION_ADMISSION=supabase/migrations/0078_admission_patiente.sql
-MIGRATION_ADMIN=supabase/migrations/0079_admin_du_domaine.sql
-# @spec CRM-101 (docs/BACKLOG.md) — la 89 redéfinit à son tour `ouvrir_session_sso` et les deux fonctions de session
-# serveur (huit arguments), et retire les signatures à sept que la 76 recrée : c'est elle qui clôt désormais la chaîne.
-MIGRATION_PLATEFORME=supabase/migrations/0089_plateforme.sql
 TEST_SQL=supabase/tests/0069_identite_sso.test.sql
 TEST_SQL_SESSIONS=supabase/tests/0070_sessions_serveur.test.sql
 TEST_SQL_RETRAIT=supabase/tests/0071_retrait_gotrue.test.sql
@@ -283,62 +275,30 @@ docker rm -f "$BASE_NEUVE" >/dev/null 2>&1 || true
 # 2. Base de développement — rejeu convergent sous le rôle de chaque migration
 # =================================================================================================
 echo
-echo "2. Base de développement : rejeu des migrations 0074 à 0079, puis de la 89 qui clôt la chaîne"
+echo "2. Base de développement reconstruite : la chaîne 0074 à 0079, puis la 89 qui la clôt"
 
-for passage in premier second; do
-	if psql_admin --single-transaction -f - < "$MIGRATION_CLAIMS" >"$WORK/dev-claims-$passage.log" 2>&1; then
-		ok "0074 rejouée sous supabase_admin ($passage passage)"
-	else
-		fail "0074 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-claims-$passage.log")"
-	fi
-	if psql_dev --single-transaction -f - < "$MIGRATION_MODELE" >"$WORK/dev-modele-$passage.log" 2>&1; then
-		ok "0075 rejouée sous postgres ($passage passage)"
-	else
-		fail "0075 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-modele-$passage.log")"
-	fi
-	if psql_dev --single-transaction -f - < "$MIGRATION_SESSIONS" >"$WORK/dev-sessions-$passage.log" 2>&1; then
-		ok "0076 rejouée sous postgres ($passage passage)"
-	else
-		fail "0076 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-sessions-$passage.log")"
-	fi
-	# T6 : sous `postgres`, SANS élévation — mesuré, `postgres` retire le trigger d'`auth.users`
-	# (décision 589, correction). Rejouée, elle ne trouve plus rien et ne fait rien.
-	if psql_dev --single-transaction -f - < "$MIGRATION_RETRAIT" >"$WORK/dev-retrait-$passage.log" 2>&1; then
-		ok "0077 rejouée sous postgres, sans élévation ($passage passage)"
-	else
-		fail "0077 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-retrait-$passage.log")"
-	fi
-	if psql_dev --single-transaction -f - < "$MIGRATION_ADMISSION" >"$WORK/dev-admission-$passage.log" 2>&1; then
-		ok "0078 rejouée sous postgres ($passage passage)"
-	else
-		fail "0078 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-admission-$passage.log")"
-	fi
-	# T8 (décision 597) : la 79 CLÔT la chaîne. La 75, la 76 et la 78 recréent les signatures qu'elle
-	# retire ; sans elle, les deux versions de `ouvrir_session_sso` coexistent, ses appels deviennent
-	# ambigus, et la suite du §3 rougit pour une raison que le produit n'a pas — MESURÉ au premier rejeu.
-	if psql_dev --single-transaction -f - < "$MIGRATION_ADMIN" >"$WORK/dev-admin-$passage.log" 2>&1; then
-		ok "0079 rejouée sous postgres, et retire les signatures que 75, 76 et 78 recréent ($passage passage)"
-	else
-		fail "0079 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-admin-$passage.log")"
-	fi
-	# `CRM-101` (décision 627) : la 76 vient de recréer les fonctions de session serveur à SEPT arguments ; la 89 les
-	# retire et pose celles à huit. Sans elle, les deux coexistent, l'appel de la suite 0070 devient ambigu et le §3
-	# rougit pour une raison que le produit n'a pas — MESURÉ le 2026-10-20, comme au premier rejeu de la 79.
-	if psql_dev --single-transaction -f - < "$MIGRATION_PLATEFORME" >"$WORK/dev-plateforme-$passage.log" 2>&1; then
-		ok "0089 rejouée sous postgres, et retire les signatures à sept arguments que la 76 recrée ($passage passage)"
-	else
-		fail "0089 refusée ($passage passage) : $(tail -n 2 "$WORK/dev-plateforme-$passage.log")"
-	fi
-done
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289). Cette section rejouait deux fois, sur la base PEUPLÉE,
+# les migrations 0074 à 0079 puis la 89. Ce rejeu n'est plus un invariant (décision 675), et il est rouge :
+# MESURÉ le 2026-10-24, « 0089 refusée : Row type defined by OUT parameters is different » — la 99 a recréé
+# `plateforme_attentes` avec un type de retour élargi, que le `create or replace` de la 89 ne peut plus
+# rejoindre. L'idempotence de chaque fichier sur l'état qu'il vient de produire est prouvée une fois pour tout
+# le dépôt par `scripts/verify-migrations.sh` §2 (le vrai runner sur un répertoire doublé). Ce qui reste prouvé
+# ici est la propriété qui comptait pour cette unité : sur une base construite dans l'ordre, la chaîne ne
+# laisse qu'UNE signature de chaque fonction de session, sans appel ambigu.
+if appliquer_migrations_dev; then
+	ok "base reconstruite : la chaîne 0074 à 0079 et la 89 construites dans l'ordre par le runner"
+else
+	fail "la reconstruction de la base échoue"
+fi
 if [ "$(psql_dev -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                      where n.nspname = 'public' and p.proname in ('ouvrir_session_serveur', 'renouveler_session_serveur')")" = 2 ]; then
-	ok "une seule signature de chaque fonction de session serveur après le rejeu"
+	ok "une seule signature de chaque fonction de session serveur sur la base reconstruite"
 else
-	fail "des signatures de session serveur coexistent après le rejeu : les appels de la suite 0070 sont ambigus"
+	fail "des signatures de session serveur coexistent sur la base reconstruite : les appels de la suite 0070 sont ambigus"
 fi
 if [ "$(psql_dev -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
                      where n.nspname = 'public' and p.proname = 'ouvrir_session_sso'")" = 1 ]; then
-	ok "une seule \`ouvrir_session_sso\` après le rejeu : aucun appel ambigu"
+	ok "une seule \`ouvrir_session_sso\` sur la base reconstruite : aucun appel ambigu"
 else
 	fail "plusieurs \`ouvrir_session_sso\` coexistent après le rejeu : les appels à trois arguments sont ambigus"
 fi
