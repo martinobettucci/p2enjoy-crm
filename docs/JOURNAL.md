@@ -33097,3 +33097,18 @@ les cases ? Précédent : `recettes`, famille propre plutôt qu'une extension de
 Une famille nouvelle entraîne une migration de la liste fermée (§6.1, §7.1) et sa phrase dans l'onglet « Connecteur
 MCP » ; les deux réponses sont écrites dans la spécification de l'unité et committées avant le code. Aucun code ni
 comportement ne change. **Persisté** : `CLAUDE.md` (« Spécificités du projet »), `docs/SPEC-mcp.md` §16.
+
+### décision 660 — les organisations : un oubli de `CRM-060`, une unité, une famille du connecteur
+
+*2026-10-24, arbitrage du responsable, à partir de sa question « pourquoi exclure les organisations ? » sur la proposition
+de `CRM-104` T3.* **Constat.** La proposition excluait l'écriture des organisations, parce qu'aucun écran ne l'offre.
+`CRM-060` l'avait nommée parmi ses limites (`docs/SPEC-contacts.md` §14.7) et s'était close sans qu'une unité ne la porte.
+Ce n'était pas un choix de produit, mais un oubli. La base, elle, est prête : politiques d'insertion et de mise à jour
+pour le business developer et l'administrateur, et les privilèges. **Décisions.**
+1. **`CRM-114`** est ouverte : créer et modifier une organisation à l'écran, **sans suppression**, qui serait une purge.
+2. **Connecteur : oui**, dans une **famille nouvelle `organisations`** (décision 659, une permission distincte). Elle
+   porte la lecture, la création et la modification ; sa migration ajoute la famille à la liste fermée.
+3. **`CRM-104` T3 part maintenant**, avec les **quatre outils de contact**. Les deux lectures d'organisation passent à
+   `CRM-114` : les ranger d'abord dans `contacts`, puis les déplacer, ferait changer de case une permission déjà donnée.
+   Ce point découle des réponses 2 et 3, et le responsable peut le revoir.
+
