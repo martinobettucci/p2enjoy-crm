@@ -7374,3 +7374,31 @@ de l'unité qui l'a relevé. **Résolution proposée** : que le script accepte `
 `condeferrable` et `not condeferred`, en le disant (INC-268), et qu'il prouve le refus par une suppression réelle plutôt
 que par le seul type de la clé.
 
+
+### INC-286 — la langue des noms : la règle écrite dit « anglais », les objets récents sont en français
+
+*Relevé le 2026-10-24 par la session des rattachements multiples, à la demande du responsable (décision 657, arbitrage
+4), en inventoriant le catalogue de la base locale.* **Règle écrite.** `docs/SCHEMA.md`, « Conventions générales » :
+« Les noms de colonnes sont en anglais, les libellés destinés aux utilisateurs sont des données. » Aucune règle n'est
+écrite pour les tables, les fonctions, les codes d'erreur, les valeurs d'énumération, les outils MCP ni le code de la
+webapp. **Constat, mesuré.**
+- **Colonnes** : les tables créées depuis la migration `0076` les nomment en français — `sessions_sso` (`expire_le`,
+  `cree_le`), `suggestions_ia` (`portee`, `statut`, `derniere_erreur`), `couts_personnel` (`date_effet`, `cout_quart`,
+  `devise`), `mcp_droits` (`famille`, `accorde_par`, `accorde_le`), `mcp_journal`, `plateforme_journal`,
+  `admission_refus`. La même notion porte deux noms : `currency` et `devise`, `created_at` et `cree_le`.
+- **Tables** : environ 11 sur 64 sont en français, toutes récentes ; les autres sont en anglais.
+- **Fonctions `public`** : environ un quart en anglais, les plus anciennes (`move_card`, `snooze_card`,
+  `classify_message`, `publish_workflow_version`) ; le reste en français (`creer_affaire`, `entonnoir_conversion`,
+  `rentabilite_affaires`, `inscrire_attente`). Les fonctions `app.*` mêlent les deux dans un même nom
+  (`card_costs_reel_derive`, `can_read_card_pour`).
+- **Codes d'erreur** : 94 distincts, environ 35 en français, dont des formes mixtes (`comment_moderation_limitee`).
+- **Valeurs d'énumération** : en anglais, sauf les tables récentes (`mcp_droits.famille`, `suggestions_ia.statut`).
+- **Politiques RLS** : seul ensemble régulier — `<table>_<verbe français>_<qualificatif>`, 151 sur 157.
+- **Outils MCP** : tous en anglais (`crm_card_move`), mais les familles et les actions de la matrice qui les gardent sont
+  en français (`affaires`, `consulter`).
+- **Webapp** : composants surtout en français (`MaJournee`, `BlocCoutsCard`), avec des noms anglais (`Board`, `Header`,
+  `Sidebar`) et des mixtes (`RouteCard`) ; modules de `lib/` idem (`card-costs`, `rentabilite-lecture`).
+**Lecture.** La règle écrite ne couvre que les colonnes, et elle n'est plus tenue depuis `0076` ; le reste n'a pas de
+règle. **Comportement laissé inchangé** : renommer un objet livré touche la base, l'API PostgREST, les types générés, la
+webapp et le connecteur. **Arbitrage demandé au responsable** : la langue des identifiants à venir, et le sort des
+objets existants. Les noms de `docs/SPEC-rattachements.md` attendent cet arbitrage (§15, point 4).
