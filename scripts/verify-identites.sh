@@ -53,7 +53,7 @@ appliquer_migration() {
 # RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : ce rejeu complet ne restaure plus — il échoue depuis
 # `0099`. La base de développement est RECONSTRUITE (`scripts/lib/reconstruction.sh`, §3.6), puis seedée.
 restaurer() {
-	reconstruire_base_dev >/dev/null 2>&1
+	reconstruire_base_dev >/dev/null
 }
 
 cleanup() {

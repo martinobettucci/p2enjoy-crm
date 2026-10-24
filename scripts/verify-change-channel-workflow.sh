@@ -98,7 +98,7 @@ restaurer() {
 	[ -n "$pid_b" ] && kill "$pid_b" >/dev/null 2>&1 || true
 	[ -s "$WORK/is_workspace_admin.sql" ] \
 		&& psql_db -f - < "$WORK/is_workspace_admin.sql" >/dev/null 2>&1
-	restaurer_etat_courant >/dev/null 2>&1
+	restaurer_etat_courant >/dev/null
 	nettoyer_fixture
 	set -e
 }
@@ -165,7 +165,7 @@ degrader_et_verifier() {
 	else
 		fail "DÉGRADATION NON VUE : $libelle"
 	fi
-	restaurer_etat_courant >/dev/null 2>&1
+	restaurer_etat_courant >/dev/null
 }
 
 echo
@@ -241,7 +241,7 @@ fi
 # laissent la base à l'état que la 20 décrit, et non à celui du dépôt — §3.5 de
 # `docs/SPEC-test-harness.md`. On rend donc l'état courant AVANT toute suite globale, faute de quoi
 # les mesures qui suivent porteraient sur un produit d'un instant révolu (INC-198).
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 
 if suite_verte; then
 	ok "suite pgTAP ciblée verte — 59 assertions"

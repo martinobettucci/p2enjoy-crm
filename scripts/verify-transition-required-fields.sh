@@ -70,7 +70,10 @@ restaurer_etat_courant() {
 	# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : rejouer le répertoire sur la base peuplée ne
 	# restaure plus — c'est rouge depuis `0099`. La base de développement et ses dérivés sont RECONSTRUITS
 	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés.
-	reconstruire_base_dev
+	# La copie de track que le seed recrée porte des identifiants NOUVEAUX : les repères relevés avant la
+	# reconstruction ne désignent plus rien (mesuré le 2026-10-24, « effet partiel : t|2 »). Ils sont relevés
+	# de nouveau sur la base reconstruite (docs/SPEC-test-harness.md §3.6, « ce que la reconstruction efface »).
+	reconstruire_base_dev && relever_copie_seedee
 }
 
 restaurer_liaison_copie() {
@@ -101,7 +104,7 @@ restaurer() {
 		end if;
 	end
 	\$\$;" >/dev/null 2>&1
-	restaurer_etat_courant >/dev/null 2>&1
+	restaurer_etat_courant >/dev/null
 	restaurer_liaison_copie
 	"$SEED" >/dev/null 2>&1
 	set -e
@@ -210,20 +213,24 @@ if [ "$(docker inspect -f '{{.State.Status}}' "$DB_CONTAINER" 2>/dev/null || tru
 	exit 1
 fi
 
-WORKFLOW_DERIVE=$(psql_db -c "select id from public.workflows
-	where derived_from_workflow_id='5eed0000-0000-4000-8000-000000000051'
-	  and name='Cycle commercial — Conseil IA';")
-TRANSITION_DERIVEE=$(psql_db -c "select id from public.workflow_transitions
-	where workflow_id='$WORKFLOW_DERIVE' and label='Démarrer la réalisation' limit 1;")
-CHAMP_DERIVE=$(psql_db -c "select id from public.form_fields
-	where workflow_id='$WORKFLOW_DERIVE' and key='lien-proposition';")
-if [ -z "$WORKFLOW_DERIVE" ] || [ -z "$TRANSITION_DERIVEE" ] || [ -z "$CHAMP_DERIVE" ]; then
-	echo "ERREUR : la copie seedée, sa transition ou son champ remappé est absent." >&2
-	exit 1
-fi
-LIAISONS_HORS_FIXTURE=$(psql_db -c "select count(*)
-	from public.workflow_transition_required_fields
-	where transition_id not in ('$TRANSITION_SOURCE', '$TRANSITION_DERIVEE');")
+# Les repères de la copie de track seedée, relevés à l'ouverture et après chaque reconstruction.
+relever_copie_seedee() {
+	WORKFLOW_DERIVE=$(psql_db -c "select id from public.workflows
+		where derived_from_workflow_id='5eed0000-0000-4000-8000-000000000051'
+		  and name='Cycle commercial — Conseil IA';")
+	TRANSITION_DERIVEE=$(psql_db -c "select id from public.workflow_transitions
+		where workflow_id='$WORKFLOW_DERIVE' and label='Démarrer la réalisation' limit 1;")
+	CHAMP_DERIVE=$(psql_db -c "select id from public.form_fields
+		where workflow_id='$WORKFLOW_DERIVE' and key='lien-proposition';")
+	if [ -z "$WORKFLOW_DERIVE" ] || [ -z "$TRANSITION_DERIVEE" ] || [ -z "$CHAMP_DERIVE" ]; then
+		echo "ERREUR : la copie seedée, sa transition ou son champ remappé est absent." >&2
+		return 1
+	fi
+	LIAISONS_HORS_FIXTURE=$(psql_db -c "select count(*)
+		from public.workflow_transition_required_fields
+		where transition_id not in ('$TRANSITION_SOURCE', '$TRANSITION_DERIVEE');")
+}
+relever_copie_seedee || exit 1
 
 echo "1. Contrat final et rejeu"
 if suite_verte; then
@@ -267,7 +274,7 @@ if [ "$avant" != "$apres_rejeu_isole" ]; then
 else
 	fail "le rejeu isolé ne fait plus dériver l'empreinte : la 19 serait redevenue la dernière autorité sur move_card — relire ce harnais"
 fi
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 apres=$(empreinte)
 if [ "$avant" = "$apres" ]; then
 	ok "la reconstruction rend l'empreinte à l'octet près : schéma, politiques, trigger et fonctions"
@@ -343,7 +350,7 @@ fi
 psql_db -c "update public.workflow_transitions set require_fields='{}'::uuid[];
 	update public.workflow_transitions set require_fields=array['$CHAMP_SOURCE'::uuid]
 	 where id='$TRANSITION_SOURCE';" >/dev/null
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 
 echo
 echo "4. Un croisement de workspace arrête lui aussi la migration"
@@ -377,7 +384,7 @@ fi
 psql_db -c "update public.workflow_transitions set require_fields='{}'::uuid[];
 	update public.workflow_transitions set require_fields=array['$CHAMP_SOURCE'::uuid]
 	 where id='$TRANSITION_SOURCE';" >/dev/null
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 psql_db -c "delete from public.workspaces where id='$WORKSPACE_CROISE';" >/dev/null
 
 # La mise à niveau historique écarte volontairement l'ancien identifiant de champ SOURCE porté par
@@ -461,19 +468,19 @@ psql_db -c "alter table public.workflow_transition_required_fields
 	add constraint workflow_transition_required_fields_field_id_fkey
 	foreign key(field_id) references public.form_fields(id) on delete restrict;" >/dev/null
 if suite_rouge; then ok "affaiblir la cascade rend pgTAP rouge"; else fail "la cascade affaiblie passe pgTAP"; fi
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 
 psql_db -c "drop trigger workflow_transition_required_fields_verifier_workflow
 	on public.workflow_transition_required_fields;" >/dev/null
 if suite_rouge; then ok "retirer le trigger de cohérence rend pgTAP rouge"; else fail "le trigger absent passe pgTAP"; fi
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 
 psql_db -c "drop policy workflow_transition_required_fields_lecture_membre
 	on public.workflow_transition_required_fields;
 	create policy workflow_transition_required_fields_lecture_membre
 	on public.workflow_transition_required_fields for select to anon, authenticated using (true);" >/dev/null
 if suite_rouge; then ok "ouvrir la lecture anonyme rend pgTAP rouge"; else fail "la politique permissive passe pgTAP"; fi
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 
 psql_db -c "create or replace function public.move_card(
 	card_id uuid, to_step_id uuid, comment text default null
@@ -495,7 +502,7 @@ if suite_rouge; then
 else
 	fail "un move_card sans aucune garde passe pgTAP"
 fi
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 
 # Une dérive sémantique à compte constant est précisément l'angle mort de la décision 303. Le seed
 # doit la refuser sans la maquiller, puis réussir après restauration explicite de la fixture.

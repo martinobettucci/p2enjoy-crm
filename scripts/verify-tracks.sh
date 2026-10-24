@@ -246,7 +246,7 @@ if [ "$avant" != "$apres_rejeu_isole" ] \
 else
 	fail "le rejeu isolé ne rouvre plus l'UPDATE de table : la 3 serait redevenue la dernière autorité sur les privilèges de tracks — relire ce harnais"
 fi
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 apres=$(empreinte_tracks)
 if [ "$avant" = "$apres" ]; then
 	ok "la reconstruction rend l'empreinte à l'octet près : structure, contraintes, politiques et privilèges"
@@ -455,7 +455,7 @@ verifier_mutation() {
 	# la politique à l'état de `CRM-020` et laisserait le produit dégradé — mesuré à `CRM-012`.
 	# INC-200 : par le runner complet, seule restauration qui ne vieillisse pas (§3.5). La paire
 	# manuelle laissait l'`UPDATE` de table rouvert sur `tracks`, `deleted_by` comprise.
-	restaurer_etat_courant >/dev/null 2>&1 || true
+	restaurer_etat_courant >/dev/null || true
 }
 
 verifier_mutation "l'écriture est ouverte à tout membre du workspace" \

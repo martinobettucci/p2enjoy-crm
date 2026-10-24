@@ -170,7 +170,7 @@ schema_degrade=false
 menage_complet() {
 	menage
 	if [ "$schema_degrade" = true ]; then
-		restaurer_etat_courant >/dev/null 2>&1 || true
+		restaurer_etat_courant >/dev/null || true
 	fi
 	rm -f "$CORPS"
 }
@@ -236,7 +236,7 @@ if [ "$avant" != "$apres_rejeu_isole" ] \
 else
 	fail "le rejeu isolé ne rouvre plus l'UPDATE de table : la 4 serait redevenue la dernière autorité sur les privilèges de channels — relire ce harnais"
 fi
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 apres=$(empreinte)
 if [ "$avant" = "$apres" ]; then
 	ok "la reconstruction rend l'empreinte à l'octet près : structure, politiques et privilèges"
@@ -454,7 +454,7 @@ fi
 # d. Restauration **constatée**, et non supposée. Par reconstruction depuis `CRM-111` T1 bis — avant, par le
 # runner complet —, seule forme qui ne
 # vieillisse pas (§3.5, INC-200) : la paire manuelle laissait l'`UPDATE` de table rouvert.
-restaurer_etat_courant >/dev/null 2>&1 || true
+restaurer_etat_courant >/dev/null || true
 schema_degrade=false
 sleep 1
 restaure=$(psql_db -c "

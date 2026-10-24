@@ -186,7 +186,12 @@ psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@
 # cards pour éprouver la garde, puis les remet en place par `remettre()`. Compter les lignes ne
 # verrait pas une remise en place oubliée ; comparer l'empreinte la voit.
 CARDS_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.cards where id::text like '5eed%';")
-EMPREINTE_CARDS_A_L_OUVERTURE=$(psql_db -c "select md5(string_agg(id::text || ':' || coalesce(current_step_id::text, '-'), ',' order by id)) from public.cards where id::text like '5eed%';")
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682) : l'étape est désignée par son NŒUD du catalogue et sa POSITION,
+# non par son identifiant. MESURÉ le 2026-10-24 : deux affaires seedées sont sur des étapes de la copie de track,
+# que le seed recrée avec des identifiants nouveaux à chaque reconstruction de la base ; leur identifiant d'étape
+# changeait donc sans qu'aucun déplacement de ce harnais ne reste défait. Le nœud et la position, eux, sont
+# stables, et un déplacement oublié les change toujours.
+EMPREINTE_CARDS_A_L_OUVERTURE=$(psql_db -c "select md5(string_agg(c.id::text || ':' || coalesce(s.node_id::text || '@' || s.position, '-'), ',' order by c.id)) from public.cards c left join public.workflow_steps s on s.id = c.current_step_id where c.id::text like '5eed%';")
 
 # LES COMMENTAIRES SONT RELEVÉS EUX AUSSI, et c'est ce relevé qui manquait : depuis le lot G,
 # `move_card` conserve le motif fourni, donc ce harnais ÉCRIT dans `card_comments` — voir la note de
@@ -660,7 +665,7 @@ titre '7. Le seed est inchangé par cette unité'
 
 # LE COMPTE NE SUFFIT PAS, et c'est le second membre du retournement : ce harnais déplace des cards
 # pour éprouver la garde. Une remise en place oubliée laisserait le compte juste et le seed faux.
-[ "$(psql_db -c "select md5(string_agg(id::text || ':' || coalesce(current_step_id::text, '-'), ',' order by id)) from public.cards where id::text like '5eed%';")" = "$EMPREINTE_CARDS_A_L_OUVERTURE" ] \
+[ "$(psql_db -c "select md5(string_agg(c.id::text || ':' || coalesce(s.node_id::text || '@' || s.position, '-'), ',' order by c.id)) from public.cards c left join public.workflow_steps s on s.id = c.current_step_id where c.id::text like '5eed%';")" = "$EMPREINTE_CARDS_A_L_OUVERTURE" ] \
 	&& ok 'chaque card seedée a retrouvé son étape : les déplacements de ce harnais sont TOUS défaits' \
 	|| fail 'une card seedée n’a pas retrouvé son étape : ce harnais sort sur un seed dégradé'
 

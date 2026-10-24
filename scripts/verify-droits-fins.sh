@@ -264,7 +264,7 @@ psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
 # près. Sans ce retour, tout ce qui s'exécute derrière ce harnais — les sections suivantes
 # comprises, et les harnais suivants d'une série — mesurerait un produit dont la lecture
 # transitive d'un track est amputée.
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 apres=$(empreinte)
 [ "$avant" = "$apres" ] \
 	&& ok "le rejeu COMPLET du répertoire rend l'empreinte à l'octet près : sept fonctions et quatre politiques" \
@@ -463,7 +463,7 @@ titre "7. Restauration constatée, et non supposée"
 # `resolve_track_access`, présent des deux côtés, et son contrôle de compte attendait le nombre
 # que SEUL l'état amputé produit. Une restauration qui se déclare réussie sur l'état qu'elle a
 # elle-même dégradé n'est pas une restauration ; c'est le faux vert que `CLAUDE.md` §17 proscrit.
-restaurer_etat_courant >/dev/null 2>&1
+restaurer_etat_courant >/dev/null
 
 restaure=$(psql_db -c "
 	select (select case when pg_get_expr(polqual, polrelid) like '%resolve_track_access%'
