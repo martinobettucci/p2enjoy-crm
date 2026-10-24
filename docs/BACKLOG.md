@@ -14488,6 +14488,8 @@ décrit la baseline réelle.
 - [x] **Image Realtime transférée seulement si son contenu change** (décision 577) : l'identifiant
       changeait à chaque construction. Harnais porté à **78 vérifications, aucune anomalie**, dont
       une qui rougissait avant la correction.
+- [@] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)**.
+      *Prise en charge : session interactive 2026-10-24 18:28 UTC depuis 2026-10-24 18:28 UTC — état avant : [ ]*
 
 ### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[~]`
 *Créée le 2026-09-23 — décision 568. Motif : GoTrue 2.189.0 ne parle pas PKCE à Keycloak (M1), que le
