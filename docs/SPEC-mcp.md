@@ -688,6 +688,32 @@ par le CRM malgré la matrice ouverte (un business developer qui crée un track 
 journal écrit ; la recherche **filtrée par la matrice**, une famille fermée retirant ses lignes ; et **E2E** : un channel
 créé par le connecteur paraît dans la barre d'onglets du track.
 
+### 9.2 quinquies Tranche `contacts` — `CRM-104` T3 (liste fixée, *proposée le 2026-10-24, à valider*)
+
+**Six outils**, ceux que le carnet de la webapp offre (`contacts.ts`), sous le jeton de la personne.
+
+| Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_contact_list` | `consulter` | `workspace:workspace` ; `autres` : `organisation:organization_id`, **facultative** | `contacts` | par nom, adresse ou fonction (`query`), par organisation ; paginé |
+| `crm_contact_get` | `consulter` | `contact:contact_id` | `contacts`, `card_contacts` | la fiche, son organisation, et les affaires auxquelles il est lié, avec son rôle dans chacune |
+| `crm_organization_list` | `consulter` | `workspace:workspace` | `organizations` | par nom ou domaine (`query`) ; paginé |
+| `crm_organization_get` | `consulter` | `organisation:organization_id` | `organizations`, `contacts` | domaine, site web, contacts rattachés |
+| `crm_contact_create` | `ajouter` | `workspace:workspace` ; `autres` : `organisation:organization_id`, **facultative** | `POST contacts` | nom obligatoire ; fonction, adresse, téléphone, organisation facultatifs |
+| `crm_contact_update` | `modifier` | `contact:contact_id` ; `autres` : `organisation:organization_id`, **facultative** | `PATCH contacts` | seuls les champs donnés ; une chaîne vide efface un champ facultatif ; `detach_organization` retire l'organisation |
+
+**Ce que la tranche ne fait pas, et pourquoi.**
+- **Aucun outil de suppression d'un contact.** Le CRM ne sait que le **détruire** : la ligne disparaît, et ses
+  rattachements partent avec elle. Or « supprimer » ne veut jamais dire purger (§6.1, arbitrage A4). Le geste reste
+  celui de la fiche du contact.
+- **Aucune création ni modification d'organisation** : le CRM ne les offre pas encore (`CRM-060`, chapitre 3 *ter* du
+  manuel).
+- **Le rôle d'un contact dans une affaire** se pose avec `crm_card_contact_link` (`affaires`). Le corriger sans délier
+  ne fait pas partie de cette tranche.
+
+**Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus
+par le CRM malgré la matrice ouverte (la lectrice qui crée un contact, que la base réserve à qui édite l'espace),
+journal écrit ; et **E2E** : un contact créé par le connecteur paraît dans le carnet.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,
