@@ -33374,3 +33374,52 @@ suivant au moment de son écriture. Les mentions de `0102` qui désignent la bas
 `docs/SPEC-test-harness.md`) sont précisées dans le même commit ; celles du journal et du registre sont des faits datés.
 
 **Persisté** : `docs/SPEC-ia.md` §14.3, §14.5, §14.8, §14.10 ; `docs/BACKLOG.md` `CRM-113`.
+
+### décision 678 — `CRM-113`, fin de session : la campagne mesurée, les échecs rejoués et rattachés, les captures de l'éditeur renouvelées
+
+**Ce qui a été livré dans la session** (commits `49591d7` à `a5f7c89`) : T1, la migration `0102` et sa suite pgTAP ; T2,
+la fonction `ia` (règles, catalogue avec probabilité, schéma de sortie, scénario `catalogue` du simulateur) ; T3,
+l'aperçu d'une suggestion (nom et probabilité de chaque étape, « Utiliser le nœud du catalogue » qui garde le nom, défauts
+traduits, différentiel), sa preuve E2E, le seed, le manuel et le changelog. Quatre obstacles d'environnement, contournés
+et consignés : INC-290, INC-291, `docs/CloudWorker.md` §2.1 *quater*.
+
+**Campagne de fin de session, mesurée** (`docs/CloudWorker.md` §4.3), dans l'ordre : `test:unit` vert (4340) ;
+`typecheck` vert ; `build` vert ; `test:sql` vert (93 fichiers, 3941 assertions) ; `e2e:api` **1175 passés** ;
+`e2e:ui` **884 passés, 41 échecs** ; `e2e:mail` **44 passés** ; `pytest mail-sync` **246 passés**.
+
+**Les quarante et un échecs d'interface.** Classés par leur message : 34 portent un `503` de Kong, 4 un `502` de la même
+passerelle (INC-292), 3 autre chose. Les quarante emplacements, rejoués seuls et ensemble : **59 passés, 5 échecs**. Deux
+sont encore un `503`. Les trois constants ont chacun leur ligne de base, `webapp/` et `e2e/ui/` ramenés à `f2a1dd8`,
+avant `CRM-113` :
+- `administration-workflows.spec.ts:1114`, la grille au clavier seul : rouge sur la base comme sur `CRM-113`. C'est
+  INC-236, préexistante. La suggestion que `CRM-113` ajoute au seed allonge le chemin de `tabVers`. Elle a donc été
+  retirée de la base de développement, et le scénario rejoué rougit encore. Le seed, réappliqué, l'a recréée par la
+  vraie fonction. Il a fallu d'abord purger le champ `e2e-wf-grille-clavier` que le scénario expiré laisse derrière
+  lui, et que `apply-seed.sh` refuse ;
+- `fil-ariane.spec.ts:242`, palier `lg-1152` : un titre de 105,36 px pour un seuil de 120, à la même valeur sur la
+  base. **INC-293**, nouvelle, relève de `CRM-110` ;
+- `mentions-composeur.spec.ts:362`, le sélecteur au clavier : vert 3/3 sur la base et vert 3/3 sur `CRM-113`.
+  Le scénario est instable. Ce n'est pas une régression.
+
+**Aucun échec n'est imputable à l'unité.** Sa preuve propre, `ia-generateur.spec.ts`, est tombée une fois en campagne
+sur un `503`, puis elle est verte rejouée seule.
+
+**Captures.** La campagne en a réécrit 827. Elles ont été triées par comparaison pixel à pixel (`compare -metric AE
+-fuzz 15%`) contre `HEAD`. Celles de `CRM-097` et `CRM-113` bougent de 0,12 % au plus : elles sont restaurées. Un
+écart, lui, s'explique par ce changement : la suggestion du seed paraît désormais dans « Suggestions de l'IA en revue »
+de l'éditeur de workflows. Constaté à l'œil sur `CRM-031/workflows-creation-succes-1440` et
+`CRM-076/workflows-sm-390`. **Retenu** : renouveler les 45 captures que `administration-workflows.spec.ts` prend sur
+l'éditeur de l'espace seedé (`CRM-031`, `CRM-032`, `CRM-076`), puisque `CLAUDE.md` §7 veut des captures renouvelées
+quand l'apparence change. Les autres sont restaurées : `CRM-094` (espace neuf), `CRM-078` (défilée jusqu'au plan,
+liste hors cadre), et toutes les autres unités, dont les écarts tiennent aux dates et à la croissance du fil.
+**Écarté** : tout restaurer comme les sessions précédentes, ce qui laisserait l'éditeur documenté sans la suggestion
+que le seed y place.
+
+**Compteurs mesurés** : `SCENARIOS_API=1175`, `SCENARIOS_UI=925` (« Total: 925 tests in 87 files »). `verify-harness.sh`
+n'a pas été relancé : il rejoue la campagne entière, dont l'heure d'interface que le `503` rend ininterprétable sans rejeu.
+
+**Où reprendre.** `CRM-113` reste `[~]` : T1 et T2 `[x]`, T3 `[~]`, T4 `[ ]`. Il reste la relecture par le responsable
+des choix de forme marqués au `docs/SPEC-ia.md` §14, puis la livraison sur son instruction : migration `0102` en
+fenêtre, fonction `ia` redéployée, webapp reconstruite. Le contrôle facultatif contre le modèle réel n'a pas été mené.
+INC-292 rend toute campagne d'interface rouge ; le corriger (`CRM-016`) est le préalable d'une campagne verte d'un bout
+à l'autre.

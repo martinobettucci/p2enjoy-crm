@@ -1062,7 +1062,11 @@ ASSERTIONS_ATTENDUES=3941
 # **1172 depuis `CRM-114` T2, 2026-10-24** : `organisations.spec.ts`, fichier NEUF, **3** scénarios — le business developer
 # crée et modifie, le domaine en double ; la forme du domaine ; la lectrice refusée. 1169 + 3 = 1172, valeur COMPTÉE —
 # « Total: 1172 tests in 84 files ».
-SCENARIOS_API=1172
+# **1175, MESURÉE le 2026-10-24** (« 1175 passed », campagne de fin de session) : `e2e/api/ia-generateur-affaire.spec.ts` de
+# `CRM-113` T1 et T2, fichier NEUF, **3** scénarios — `native_field` écrit par la base et bloquant l'acceptation ; le nom
+# et la probabilité d'une étape posés en surcharge, égaux au nœud sans surcharge, la correction du commercial refusée ;
+# le scénario `catalogue` du simulateur et ses deux défauts. 1172 + 3 = 1175.
+SCENARIOS_API=1175
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1534,7 +1538,11 @@ SCENARIOS_API=1172
 # **919 depuis `CRM-104` T6, même jour** : `connecteur-objectifs.spec.ts`, fichier NEUF, **1** scénario — un bloc ajouté
 # par un vrai client MCP paraît sur le canevas avec son avancement. 918 + 1 = 919, valeur COMPTÉE — « Total: 919 tests in
 # 86 files ».
-SCENARIOS_UI=919
+# **925, MESURÉE le 2026-10-24** (« 884 passed », « 41 failed » en campagne de fin de session, les quarante et un
+# rejoués ; « Total: 925 tests in 87 files ») : `ia-generateur.spec.ts` de `CRM-113` T3, fichier NEUF, **6** scénarios —
+# à la souris (deux défauts, le nœud du catalogue qui garde le nom, « montant » retiré, accepté, surcharges relues en
+# base), au clavier seul, et quatre paliers. 919 + 6 = 925.
+SCENARIOS_UI=925
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

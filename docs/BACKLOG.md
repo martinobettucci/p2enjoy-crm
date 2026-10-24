@@ -16035,7 +16035,7 @@ non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
 
 ## Constat du 2026-10-23 — décision 646
 
-### CRM-113 — Le générateur de workflow connaît les champs natifs de l'affaire et réutilise le catalogue sous un libellé surchargé `[ ]`
+### CRM-113 — Le générateur de workflow connaît les champs natifs de l'affaire et réutilise le catalogue sous un libellé surchargé `[~]`
 *Créée le 2026-10-23 — décision 646, constat et arbitrages du responsable : le générateur proposait un champ
 « montant » que l'affaire porte déjà, et déclarait des nœuds nouveaux au lieu de viser le nœud du catalogue sous un
 libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'étape. Spécifiée avant le code :
@@ -16053,14 +16053,33 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
 
 - [x] **Spécification** `docs/SPEC-ia.md` §14, écrite le 2026-10-23 sur les arbitrages de la décision 646. Les choix de
       forme de l'agent y sont marqués et restent soumis à la relecture du responsable.
-- [ ] **T1** — base : une migration — forme de l'étape, défauts `step_probability_invalid` et `native_field`,
+- [x] **T1** — base : une migration — forme de l'étape, défauts `step_probability_invalid` et `native_field`,
       `app.reserved_native_fields()` (noms anglais, décision 677), acceptation d'une création et `app.document_cible_ia`, `proposition_du_workflow`
-      aux noms effectifs ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement.
-- [ ] **T2** — fonction `ia` : règles (champs natifs, réutilisation du catalogue), catalogue avec probabilité, schéma
-      de sortie, mise en forme, scénario `catalogue` du simulateur ; unitaires, API aux jetons réels.
-- [ ] **T3** — écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; libellé et probabilité d'étape éditables,
+      aux noms effectifs ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement. **Vérifiée en développement le 2026-10-24** :
+      migration `0102_generateur_ia_affaire.sql` ; `supabase/tests/0093_generateur_ia_affaire.test.sql` **32** assertions,
+      sept mutations tuées ; `e2e/api/ia-generateur-affaire.spec.ts` **3/3** aux jetons réels (la correction du commercial
+      refusée en `404`, sans révision écrite) ; `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md` (102 en attente).
+- [x] **T2** — fonction `ia` : règles (champs natifs, réutilisation du catalogue), catalogue avec probabilité, schéma
+      de sortie, mise en forme, scénario `catalogue` du simulateur ; unitaires, API aux jetons réels. **Vérifiée en
+      développement le 2026-10-24** : `consignes.test.ts` (neuf), `proposition.test.ts`, `configuration.test.ts` et
+      `handler.test.ts` révisés avec motif ; le scénario `catalogue` rend exactement ses deux défauts en requête directe.
+      Le contrôle facultatif contre le modèle réel n'a **pas** été mené : aucune campagne n'appelle le serveur réel.
+- [~] **T3** — écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; libellé et probabilité d'étape éditables,
       bouton qui garde le nom, différentiel, traductions ; unitaires, E2E à la souris et au clavier, captures aux
-      quatre paliers, `docs/manual.md`, seed, `CHANGELOG.md`.
+      quatre paliers, `docs/manual.md`, seed, `CHANGELOG.md`. **Implémentée et vérifiée en développement le
+      2026-10-24.**
+      - `DESIGN_SYSTEM.md` §5.52 *bis* ; `e2e/ui/ia-generateur.spec.ts` **6/6** (à la souris, au clavier seul, quatre
+        paliers) ; captures `docs/captures/CRM-113/` **observées** ; captures de `CRM-097` renouvelées ; celles de
+        l'éditeur de `CRM-031`, `CRM-032` et `CRM-076` renouvelées par la campagne, la suggestion du seed paraissant dans
+        « Suggestions de l'IA en revue ».
+      - Seed 8 *novodecies bis* (`docs/SPEC-seed.md` §16 *ter*), convergent ; manuel 5 *bis*.0 *bis* (verify-manual
+        251/251) ; `CHANGELOG.md`.
+      - Campagne de fin de session : unitaires, typecheck, build, pgTAP (93 fichiers, 3941 assertions), API (1175),
+        mail (44) et pytest (246) verts ; interface 884/925, les 41 échecs rejoués seuls donnent 59 passés et 5
+        échecs, tous étrangers à l'unité ou préexistants, lignes de base établies (INC-292, INC-236, INC-293, et un
+        scénario clavier instable de `mentions-composeur.spec.ts`).
+      - **Reste `[~]`** : les choix de forme marqués au `docs/SPEC-ia.md` §14 attendent la relecture du responsable ;
+        une campagne d'interface verte d'un bout à l'autre attend la correction d'INC-292.
 - [ ] **T4** — livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp
       reconstruite ; constat.
 

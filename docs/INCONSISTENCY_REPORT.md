@@ -5972,6 +5972,15 @@ parcours à l'écran, ce qui appartient à l'unité qui porte cet éditeur.
 
 **Relève de `CRM-076`** (éditeur administrateur de workflows), qui porte la grille champ × étape.
 
+**Mesure du 2026-10-24 (session de `CRM-113`).** Toujours rouge, en campagne comme seul, à la même ligne (`:1114`,
+expiration de 30 s, puis la purge sur un contexte fermé). Ligne de base établie : `webapp/` et `e2e/ui/` ramenés à
+`f2a1dd8`, commit antérieur à `CRM-113`, il échoue à l'identique. La suggestion que `CRM-113` ajoute au seed allonge la
+liste « Suggestions de l'IA en revue » de l'éditeur, donc le chemin de `tabVers` : elle a été **retirée** de la base de
+développement et le scénario rejoué, qui échoue encore. Le seed a ensuite été réappliqué, et il a recréé la suggestion
+par la vraie fonction. Le scénario expiré laisse son champ `e2e-wf-grille-clavier` sur le workflow source, et
+`apply-seed.sh` refuse alors de reconstruire la copie (« le workflow source porte des champs étrangers au seed ») : il
+faut purger ce champ avant de réappliquer le seed.
+
 **Statut :** ouvert. Comportement inchangé, aucun test désactivé, aucune temporisation ajoutée.
 
 ### INC-237 — les captures du palier `sm-390` sont prises sur une page DÉCALÉE, et aucune assertion ne le voit
@@ -7543,3 +7552,25 @@ que la réponse vide soit entièrement relayée. **Comportement laissé inchang�
 (`docs/CloudWorker.md` §4.1 bis) : à traiter par l'unité des fonctions edge (`CRM-016`) — reproduire en boucle une
 réponse `204`, puis, si l'hypothèse tient, rendre un corps (`200` et `{}`) ou attendre la fin de l'envoi ; aucune
 temporisation ni filtrage de la console.
+
+**Mesure de la campagne de fin de session, le 2026-10-24.** `npm run e2e:ui` rend **884 passés, 41 échecs** : **34**
+portent `503 (Service Unavailable)` dans la console, **4** un `502 (Bad Gateway)` de la même passerelle, sur des écrans
+que `CRM-113` ne touche pas (board, budgets, contacts, objectifs, pilotage, saisie du temps…), et aussi sur sa propre
+preuve « à la souris » de `ia-generateur.spec.ts`. Les quarante emplacements rejoués **seuls**, ensemble, rendent
+**59 passés, 5 échecs** : deux `503` encore (board `lg-1152`, `mentions-composeur.spec.ts` « le sélecteur n'exige
+rien »), et les trois échecs constants traités ailleurs (INC-236, INC-293, et le scénario clavier de
+`mentions-composeur.spec.ts`, vert 3/3 sur la ligne de base comme sur `CRM-113`). Le défaut grandit avec la
+durée de la série : il rend une campagne d'interface complète ininterprétable sans rejeu.
+
+### INC-293 — à 1152 px, le titre long d'une affaire mesure 105 px, sous le seuil de 120 px de sa preuve
+
+*Relevé le 2026-10-24 par la session planifiée de `CRM-113`, dans sa campagne de fin de session.* **Constat** :
+`e2e/ui/fil-ariane.spec.ts:242`, palier `lg-1152`, « le titre long tient, la page ne défile pas », échoue sur
+`largeur du titre : expected >= 120, received 105.359375`, en campagne comme rejoué seul. Les paliers `xl-1440`,
+`md-900` et `sm-390` passent. **Ligne de base établie** (`docs/CloudWorker.md` §2.4) : `webapp/` et `e2e/ui/`
+ramenés à `f2a1dd8`, avant `CRM-113`, il échoue à l'identique, à la même valeur. Le diff de `CRM-113` ne touche ni
+l'en-tête, ni le fil d'Ariane, ni la fiche d'affaire. **Lecture non vérifiée** : à 1152 px, l'en-tête garde la barre
+latérale, le fil, la recherche, la cloche et le nom de la personne connectée, et le titre « Renouvellement TMA —
+Clinique Saint-Ambroise » reçoit le reste. Soit le seuil de la preuve est trop strict pour ce palier, soit l'ordre de
+sacrifice du `docs/DESIGN_SYSTEM.md` §12.2 n'est plus appliqué à ce palier. **Comportement laissé inchangé**, aucune
+preuve assouplie. **Relève de `CRM-110`** (fil d'Ariane), décision du responsable sur le seuil ou l'ordre de sacrifice.
