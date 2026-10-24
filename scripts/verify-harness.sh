@@ -1547,7 +1547,10 @@ SCENARIOS_API=1175
 # rejoués ; « Total: 925 tests in 87 files ») : `ia-generateur.spec.ts` de `CRM-113` T3, fichier NEUF, **6** scénarios —
 # à la souris (deux défauts, le nœud du catalogue qui garde le nom, « montant » retiré, accepté, surcharges relues en
 # base), au clavier seul, et quatre paliers. 919 + 6 = 925.
-SCENARIOS_UI=925
+# **926 depuis `CRM-104` T7, même jour** : `connecteur-messagerie.spec.ts`, fichier NEUF, **1** scénario — un email
+# envoyé par un vrai client MCP, soumis par le worker, paraît dans le fil de l'affaire. 925 + 1 = 926, valeur COMPTÉE —
+# « Total: 926 tests in 88 files ».
+SCENARIOS_UI=926
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
