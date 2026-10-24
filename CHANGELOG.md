@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-102` T5 — `verifier.sh` contrôle le connecteur MCP (décision 683)
+
+*Outillage d'exploitation, exécuté depuis le poste en lecture seule : rien ne part en production.*
+
+- `scripts/spark/verifier.sh` porte les contrôles du connecteur faits à la main jusque-là : connecteur éteint sans
+  conteneur restant si `CRM_MCP_HOTE` est vide ; sinon conteneur présent, `/pret` par Caddy depuis la cellule, route en
+  `tls`, et par la route publique `/pret`, `401` avec `resource_metadata`, client au retour non listé refusé,
+  `/plateforme` en `302` vers `SITE_URL` (`scripts/lib/connecteur-mcp.sh`).
+- `scripts/verify-controles-connecteur.sh` : 22 contrôles contre le vrai service et une cellule simulée devant un vrai
+  Caddy, avec contre-épreuves ; dix mutations de la bibliothèque tuées.
+
 ### `CRM-111` T1 bis — les harnais restaurent en reconstruisant la base de développement (décision 682)
 
 *Outillage de développement : rien ne part en production.*
