@@ -7462,3 +7462,29 @@ optimisée et ses trois gardes (`docs/SPEC-rattachements.md` §2 bis.3 et §2 bi
 667) : `CRM-111` T2 ne l'applique qu'à `cards`, `card_placements` et `card_field_values`. **Comportement laissé
 inchangé** pour les douze autres tables, en attente d'une unité. **Hypothèse non vérifiée** : le volume réel de
 production, qui décide du moment où le coût deviendra visible.
+
+### INC-289 — le répertoire de migrations ne se rejoue plus en entier sur une base peuplée
+
+*Relevé le 2026-10-24 par la session des rattachements multiples, en mettant au point la migration `0102` de `CRM-111`
+T2 sur une base jetable.* **Règle écrite.** `docs/DAT.md` §3.2 et §3.2 bis : « Toute migration du dépôt reste
+idempotente : l'adoption et les harnais qui restaurent par le runner rejouent encore le répertoire entier » ;
+`scripts/verify-migrations.sh` éprouve « l'adoption du répertoire entier sur une base peuplée ». **Constat, mesuré** sur
+une copie de la base de développement, en rejouant les 101 fichiers dans l'ordre, comme le fait l'adoption :
+- **Avant toute bascule**, `0089_plateforme.sql` échoue déjà : « cannot change return type of existing function ». La
+  migration `0099_attentes_refus.sql` (`CRM-109`) a supprimé puis recréé `public.plateforme_attentes` avec un type de
+  retour élargi ; le `create or replace` de `0089`, rejoué après elle, ne peut plus s'appliquer. L'adoption sur base
+  peuplée est donc **déjà cassée** dans le dépôt courant (les autres échecs mesurés, `0018`, `0054`, `0060`, `0098`,
+  tiennent à `pg_cron`, absent d'une copie, et sont des artefacts).
+- **Avec `0102`** (non livrée), dix-neuf fichiers de plus échouent au rejeu, de `0011_cards.sql` à
+  `0091_droits_interface.sql` : ils recréent des index, des politiques ou des fonctions sur les colonnes de `cards` que
+  `0102` déplace, ou avec des signatures qu'elle remplace (décision 661).
+**Lecture.** L'invariant « le répertoire se rejoue en entier sur une base peuplée » est incompatible avec toute
+migration qui retire une colonne, ou change la signature ou le type de retour d'une fonction : un fichier déjà
+appliqué ne se corrige plus (registre à empreintes, décision 616), et rien ne peut le rendre tolérant après coup. Une
+base NEUVE, elle, se construit toujours, le répertoire s'appliquant dans l'ordre. **Seize harnais** restaurent la base
+par ce rejeu (`rejeu_complet_au_prochain_passage`, `scripts/lib/registre.sh`) : `verify-authz`, `verify-cards`,
+`verify-change-channel-workflow`, `verify-channels`, `verify-colonnes-protegees`, `verify-commentaires`,
+`verify-copie-workflow`, `verify-droits-fins`, `verify-identites`, `verify-migrations`, `verify-move-card`,
+`verify-move-card-to-channel`, `verify-relances`, `verify-session-sso`, `verify-tracks`,
+`verify-transition-required-fields`. **Comportement laissé inchangé** ; `0102` n'est pas livrée. **Arbitrage demandé au
+responsable** : la forme que prend désormais la restauration d'une base de développement et la preuve d'adoption.
