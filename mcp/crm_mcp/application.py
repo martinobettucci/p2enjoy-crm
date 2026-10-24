@@ -4,6 +4,8 @@
 # @spec CRM-108 (docs/BACKLOG.md) tranche T4 — la famille `recettes` enregistrée et nommée au modèle (docs/SPEC-recettes.md §7)
 # @spec CRM-104 (docs/BACKLOG.md) tranches T4 à T6 — les familles `budgets`, `temps` et `objectifs` enregistrées
 #       (docs/SPEC-mcp.md §9.2 septies à nonies)
+# @spec CRM-104 (docs/BACKLOG.md) tranche T7 — la famille `messagerie` enregistrée, sa consigne au modèle
+#       (docs/SPEC-mcp.md §9.2 decies, décision 684)
 # @spec CRM-114 (docs/BACKLOG.md) tranche T4 — la famille `organizations` enregistrée et nommée au modèle
 #       (docs/SPEC-mcp.md §9.2 sexies)
 # @spec CRM-104 (docs/BACKLOG.md) tranches T2.a, T2.b, T1 et T3 — les affaires, la structure, la recherche et les contacts
@@ -36,6 +38,7 @@ from crm_mcp.outils import (
     affaires_ecriture,
     budgets,
     contacts,
+    messagerie,
     objectifs,
     organisations,
     recettes,
@@ -65,6 +68,8 @@ you see and change exactly what you could in the CRM web app, never more.
   budget (and an occurrence when the budget is recurrent). Amounts are never added across currencies.
 - Time: crm_time_entry_set sets one cell of the time grid (a person, a day, one target); 0 clears it.
 - Goals: crm_goal_board_get reads a goal board as text; a block's progress (fill_percent) is entered, never computed.
+- Email: read crm_card_mail_list (then crm_mail_get) before replying. crm_mail_send is irreversible: confirm the
+  recipients, subject and text with the person before sending.
 - Outside your rights or the CRM's, a call is refused with "Introuvable ou hors de votre périmètre"
   (FR: not found or outside your perimeter), whether the object exists or not.
 - Lists are paginated: use limit (max 100) and offset.
@@ -157,6 +162,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     temps.ajouter(serveur, moteur, crm)
     # `CRM-104` T6 : les canevas d'objectifs (docs/SPEC-mcp.md §9.2 nonies).
     objectifs.ajouter(serveur, moteur, crm)
+    # `CRM-104` T7 : la messagerie d'une affaire (docs/SPEC-mcp.md §9.2 decies).
+    messagerie.ajouter(serveur, moteur, crm)
     # L'ordre compte : l'audit enveloppe la politique, qui précède l'outil (docs/SPEC-mcp.md §6.2).
     serveur.add_middleware(AuditOutils(registre, reglages.taille_max_reponse))
     serveur.add_middleware(PolitiqueOutils(moteur))
