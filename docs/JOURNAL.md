@@ -33553,4 +33553,4 @@ Aucun harnais ne lit les marques du backlog : l'ajout ne casse rien.
 **Connecteur MCP** : sans objet. C'est une règle de conduite du dépôt, pas une fonctionnalité du produit.
 
 **Persisté** : `docs/BACKLOG.md` (Marquage), `CLAUDE.md` §5 (Backlog) et §13 (Synchronisation), `docs/CloudWorker.md`
-§0, §1 *bis*, §4.2, §4.3 et §4.4.
+§0, §1 *bis*, §3.2, §4.2, §4.3 et §4.4.
