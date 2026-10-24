@@ -329,6 +329,14 @@ et les harnais qui restaurent par le runner (`docs/SPEC-test-harness.md` §3.5) 
 répertoire entier. Une migration qui échouerait au rejeu bloquerait l'adoption, et `rest` avec elle ;
 `scripts/verify-migrations.sh` le vérifie.
 
+**Révisé le 2026-10-24 (décision 675, INC-289).** Le répertoire ne se rejoue plus en entier sur une base **déjà
+peuplée** : un retrait de colonne ou un changement de signature rend les fichiers antérieurs non rejouables, et un
+fichier appliqué ne se corrige jamais. L'invariant devient : **une base NEUVE se construit en appliquant le répertoire
+dans l'ordre**, et **chaque fichier se rejoue sans erreur sur l'état qu'il vient de produire** (idempotence locale).
+Un harnais qui dégrade la structure restaure la base de développement en la **reconstruisant**, non en rejouant le
+répertoire sur elle (`docs/SPEC-test-harness.md` §3.5). L'adoption sur base peuplée, qui ne concerne que des bases
+antérieures à `CRM-096`, n'est plus éprouvée.
+
 **Une table naît en refus.** Toute table métier créée par une migration active RLS dans la même
 migration. Tant que ses politiques ne sont pas livrées, elle ne retourne aucune ligne et refuse
 toute écriture. Les privilèges de table sont posés explicitement, sans s'en remettre aux

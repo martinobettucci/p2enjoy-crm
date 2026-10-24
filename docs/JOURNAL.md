@@ -33312,3 +33312,17 @@ bloc neuf), `crm_goal_link_add` (sens `forward`, `backward` ou `both`, doublon r
 géométrie ni la couleur), `crm_goal_board_archive` (archiver ou désarchiver, sous « supprimer ») ; genre d'ancre `block` ;
 aucune suppression d'un bloc ni d'une flèche. Preuve E2E : un bloc ajouté par le connecteur paraît sur le canevas avec
 son avancement.
+
+### décision 675 — INC-289 : les harnais restaurent par reconstruction à neuf, le répertoire ne se rejoue plus sur une base peuplée
+
+*2026-10-24, arbitrage du responsable.* **Problème** (INC-289, mesuré sur une base jetable). Rejouer tout le
+répertoire de migrations sur une base déjà peuplée échoue dès qu'une migration retire une colonne ou change une
+signature : `0089` échoue déjà depuis `0099`, et la bascule `0102` de `CRM-111` en rendrait dix-neuf autres non
+rejouables. Un fichier appliqué ne se corrige jamais (registre à empreintes, décision 616). Seize harnais restauraient
+la base par ce rejeu, et `verify-migrations.sh` prouvait ainsi l'adoption. **Options.** Reconstruire à neuf
+(recommandée) ; restauration ciblée par la « dernière autorité » de chaque objet ; garder l'invariant en interdisant
+tout retrait de colonne et tout changement de signature, ce qui contredisait les décisions 642 et 661. **Décision :
+reconstruire à neuf.** L'invariant devient : une base neuve se construit dans l'ordre, et chaque fichier se rejoue sur
+l'état qu'il vient de produire. **Conséquences.** `docs/DAT.md` §3.2 et `docs/SPEC-test-harness.md` §3.5 révisés ;
+une tranche **`CRM-111` T1 bis** mesure le mode opératoire compatible avec une pile partagée entre sessions, puis
+réécrit les seize harnais et `verify-migrations.sh`, avant la bascule T2.

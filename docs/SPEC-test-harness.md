@@ -202,6 +202,15 @@ donc d'abord `rejeu_complet_au_prochain_passage` (`scripts/lib/registre.sh`), qu
 base de développement : le passage suivant est une **adoption**, qui rejoue tout le répertoire puis le
 réinscrit. La fonction refuse d'agir si le fichier d'environnement ne porte pas le profil `dev`.
 
+**Révisé le 2026-10-24 (décision 675, INC-289).** L'adoption ne restaure plus : rejouer le répertoire entier sur une
+base peuplée échoue dès qu'une migration retire une colonne ou change une signature — mesuré, `0089` échoue déjà depuis
+`0099`, et `0102` (`CRM-111`) en ferait échouer dix-neuf autres. **Un harnais qui dégrade la structure restaure la base
+de développement en la RECONSTRUISANT** : base vidée, répertoire appliqué dans l'ordre, seed rejoué — le chemin de
+`./resetMe.sh`. La reconstruction, comme le rejeu qu'elle remplace, est suivie de la suite globale concernée.
+`rejeu_complet_au_prochain_passage` cesse d'être un moyen de restauration. **Le mode opératoire** — une pile partagée
+entre sessions ne se détruit pas à chaque restauration — **est mesuré et spécifié par `CRM-111` T1 bis**, avant la
+bascule T2 ; tout écart à la reconstruction à neuf revient au responsable.
+
 La restauration du schéma ne remplace pas le **ménage des données d'essai**. Un harnais qui crée
 des lignes réservées les retire avant toute suite globale et constate leur absence ; son
 `trap EXIT` n'est qu'une sécurité d'interruption. SQL, API ou UI exécutés pendant que le jeu

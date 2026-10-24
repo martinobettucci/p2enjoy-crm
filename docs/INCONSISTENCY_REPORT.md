@@ -7488,3 +7488,8 @@ par ce rejeu (`rejeu_complet_au_prochain_passage`, `scripts/lib/registre.sh`) : 
 `verify-move-card-to-channel`, `verify-relances`, `verify-session-sso`, `verify-tracks`,
 `verify-transition-required-fields`. **Comportement laissé inchangé** ; `0102` n'est pas livrée. **Arbitrage demandé au
 responsable** : la forme que prend désormais la restauration d'une base de développement et la preuve d'adoption.
+**Arbitrage rendu le 2026-10-24 (décision 675) : reconstruire à neuf.** Un harnais qui dégrade la structure restaure en
+reconstruisant la base de développement (base vidée, répertoire dans l'ordre, seed) ; l'adoption se prouve sur une base
+neuve, et chaque fichier se rejoue sur l'état qu'il vient de produire. `docs/DAT.md` §3.2 et
+`docs/SPEC-test-harness.md` §3.5 sont révisés ; la mise en œuvre — seize harnais et `verify-migrations.sh` — est
+`CRM-111` T1 bis.
