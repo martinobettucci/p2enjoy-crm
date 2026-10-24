@@ -204,7 +204,7 @@ réinscrit. La fonction refuse d'agir si le fichier d'environnement ne porte pas
 
 **Révisé le 2026-10-24 (décision 675, INC-289).** L'adoption ne restaure plus : rejouer le répertoire entier sur une
 base peuplée échoue dès qu'une migration retire une colonne ou change une signature — mesuré, `0089` échoue déjà depuis
-`0099`, et `0102` (`CRM-111`) en ferait échouer dix-neuf autres. **Un harnais qui dégrade la structure restaure la base
+`0099`, et la bascule de `CRM-111` (alors numérotée `0102`, décision 677) en ferait échouer dix-neuf autres. **Un harnais qui dégrade la structure restaure la base
 de développement en la RECONSTRUISANT** : base vidée, répertoire appliqué dans l'ordre, seed rejoué — le chemin de
 `./resetMe.sh`. La reconstruction, comme le rejeu qu'elle remplace, est suivie de la suite globale concernée.
 `rejeu_complet_au_prochain_passage` cesse d'être un moyen de restauration. **Le mode opératoire** — une pile partagée

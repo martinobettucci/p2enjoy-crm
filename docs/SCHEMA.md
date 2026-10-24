@@ -754,7 +754,7 @@ dixième, portée par `CRM-019`.** Les trois gestes s'excluent : un changement d
 sinon un changement de workflow prévaut, sinon seulement un changement d'étape écrit `moved`
 (`docs/SPEC-change-channel-workflow.md` §6).
 
-**Une seule exception, écrite et bornée** (décision 670) : la migration `0102` de `CRM-111` suspend
+**Une seule exception, écrite et bornée** (décision 670) : la migration de bascule de `CRM-111` (numérotée `0102` par la décision 670, renumérotée à son écriture : `0102` est pris par `CRM-113` T1, décision 677) suspend
 `card_events_refuser_maj` le temps d'une instruction, pour renseigner la colonne nouvelle `placement_id` des événements
 existants, puis le réactive ; aucune autre colonne n'est écrite (`docs/SPEC-rattachements.md` §5).
 

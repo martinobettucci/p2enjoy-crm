@@ -33338,3 +33338,39 @@ l'identité d'expédition désignée par son adresse. **Écarté** : les pièces
 les séquences, qui restent à l'écran. **Conséquence** : un genre d'ancre nouveau, `message` ; aucune migration. Liste
 proposée au `docs/SPEC-mcp.md` §9.2 *decies*, à valider avant le code.
 
+
+
+### décision 677 — `CRM-113` T1 : les objets nouveaux de l'unité prennent leur nom anglais, la comparaison des libellés est exacte, la migration prend le numéro `0102`
+
+*2026-10-24, session planifiée ouverte à 08:40:07 UTC (`docs/CloudWorker.md`), en relisant `docs/SPEC-ia.md` §14 avant
+le code de T1. Tranché par la session (`docs/CloudWorker.md` §4.1 bis) ; le responsable peut le contredire.*
+
+**Choix de l'unité.** La dernière entrée (676) désigne `CRM-104` T7, dont la liste attend la validation du responsable
+dans une session interactive active ce matin (dernier commit 07:52 UTC) ; `CRM-111` y est aussi en cours. Les coder ici
+doublerait leur travail. Les unités `[~]` du plan n'ont plus de comportement à livrer qui ne demande pas d'abord une
+livraison en production, un constat du responsable ou, pour `CRM-066` tranche 4, un arbitrage de produit (§11.4 de
+`docs/SPEC-analytique.md`) précédé des deux questions du connecteur MCP, que seule une personne peut trancher. La
+première unité `[ ]` constructible est **`CRM-113`** : spécification écrite (§14), question du connecteur tranchée
+(« non »), T1 n'est que de la base.
+
+**1. Les noms.** Le §14 a été écrit le 2026-10-23 avec trois objets nouveaux nommés en français ; la règle des noms
+(`docs/DAT.md` §12 bis, décision 658) est du lendemain et vaut pour tout objet **nouveau**. **Retenu** : la règle,
+puisque `CLAUDE.md` en fait une consigne du responsable — `step_probability_invalid`, `native_field` (valeur
+`native`), `app.reserved_native_fields()` rendant `(key, native_field)`, et la règle d'écriture partagée
+`app.ai_step_overrides`. **Gardés en français**, parce qu'ils étendent un contrat existant que le lot 4 d'INC-286
+migrera d'un bloc : les clés `libelle` et `probabilite` d'une étape — la même notion que sur un nœud, qui garde un seul
+nom dans le format — et la clé `cle` de l'enveloppe `valeurs`. **Écarté** : tout en français, qui ajouterait trois objets
+à la dette d'INC-286 le jour même où elle est recensée.
+
+**2. « À la casse près ».** Lu comme « au centime près » : comparaison **exacte**, casse comprise. Un libellé qui ne
+diffère que par la casse est un autre nom affiché ; le lire « insensible à la casse » empêcherait de corriger une
+majuscule. Précisé au §14.3.
+
+**3. Le numéro.** La décision 670 nomme `0102` la bascule de `CRM-111`, non écrite à ce jour. Or
+`app.defauts_proposition_ia`, que T1 réécrit, est l'une des fonctions que cette bascule réécrira
+(`docs/SPEC-rattachements.md` §2) : sur une base neuve, la migration de `CRM-113` doit donc passer **avant** la bascule,
+sans quoi elle recouvrirait la réécriture. **Retenu** : `CRM-113` T1 prend `0102`, et la bascule prendra le numéro libre
+suivant au moment de son écriture. Les mentions de `0102` qui désignent la bascule (`docs/SCHEMA.md`,
+`docs/SPEC-test-harness.md`) sont précisées dans le même commit ; celles du journal et du registre sont des faits datés.
+
+**Persisté** : `docs/SPEC-ia.md` §14.3, §14.5, §14.8, §14.10 ; `docs/BACKLOG.md` `CRM-113`.

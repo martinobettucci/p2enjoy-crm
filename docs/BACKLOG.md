@@ -16046,15 +16046,15 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
   diffèrent de ceux du nœud, gardés quand la cible n'en dit rien ;
 - « Utiliser le nœud du catalogue » garde le nom de l'étape ;
 - le modèle reçoit la liste des champs natifs et la consigne de réutiliser le catalogue ;
-- la base relève `champ_natif` sur un champ nouveau qui doublonne une colonne native, et ce défaut bloque
+- la base relève `native_field` sur un champ nouveau qui doublonne une colonne native, et ce défaut bloque
   l'acceptation ;
 - les révisions `version: 1` déjà enregistrées restent valides ;
 - refus et effets prouvés en requête directe ; aucune campagne n'appelle le serveur réel.
 
 - [x] **Spécification** `docs/SPEC-ia.md` §14, écrite le 2026-10-23 sur les arbitrages de la décision 646. Les choix de
       forme de l'agent y sont marqués et restent soumis à la relecture du responsable.
-- [ ] **T1** — base : une migration — forme de l'étape, défauts `probabilite_etape_invalide` et `champ_natif`,
-      `app.champs_natifs_reserves()`, acceptation d'une création et `app.document_cible_ia`, `proposition_du_workflow`
+- [ ] **T1** — base : une migration — forme de l'étape, défauts `step_probability_invalid` et `native_field`,
+      `app.reserved_native_fields()` (noms anglais, décision 677), acceptation d'une création et `app.document_cible_ia`, `proposition_du_workflow`
       aux noms effectifs ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement.
 - [ ] **T2** — fonction `ia` : règles (champs natifs, réutilisation du catalogue), catalogue avec probabilité, schéma
       de sortie, mise en forme, scénario `catalogue` du simulateur ; unitaires, API aux jetons réels.

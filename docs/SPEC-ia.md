@@ -699,7 +699,11 @@ du catalogue.
 | clé absente, `null` ou texte blanc — **étape nouvelle** | aucune surcharge : `null` |
 | clé absente, `null` ou texte blanc — **étape conservée** (§13.1) | la surcharge vivante est **gardée** |
 
-Les textes sont comparés sans leurs espaces de bord, à la casse près ; les nombres, en valeur. Le seul moyen de
+Les textes sont comparés sans leurs espaces de bord, à la casse près ; les nombres, en valeur.
+
+> **Précisé par `CRM-113` T1, le 2026-10-24 (décision 677).** « À la casse près » s'entend comme « au centime près » :
+> la comparaison est **exacte, casse comprise**. Un libellé qui ne diffère que par la casse est un autre nom affiché,
+> et il surcharge. La règle vit en un seul endroit, `app.ai_step_overrides`, appelée par les deux acceptations. Le seul moyen de
 retirer une surcharge est donc de proposer le libellé ou la probabilité du nœud. Un modèle qui omet ou annule la
 clé ne retire rien. C'est voulu : un petit modèle omet ou annule plus volontiers qu'il ne recopie.
 
@@ -707,8 +711,17 @@ clé ne retire rien. C'est voulu : un petit modèle omet ou annule plus volontie
 
 - **La forme** (trigger de révision, §12.1) : `libelle` est `null` ou un texte, et `probabilite` est `null` ou un
   nombre. Sinon, `22023` « proposition mal formée ».
-- **Un défaut s'ajoute**, `probabilite_etape_invalide` (`cle`) : une probabilité d'étape non nulle hors de 0 à 100.
+- **Un défaut s'ajoute**, `step_probability_invalid` (`cle`) : une probabilité d'étape non nulle hors de 0 à 100.
   Il est rendu après `etape_initiale`.
+
+> **Révisé par `CRM-113` T1, le 2026-10-24 (décision 677).** Cette section nommait en français les trois objets
+> nouveaux de l'unité : `probabilite_etape_invalide`, `champ_natif` (valeur `natif`) et `app.champs_natifs_reserves()`
+> rendant `(cle, natif)`. Elle a été écrite la veille de la règle des noms (`docs/DAT.md` §12 bis, décision 658), qui
+> veut en anglais tout objet **nouveau** stocké ou exposé. Ils deviennent `step_probability_invalid`, `native_field`
+> (valeur `native`) et `app.reserved_native_fields()` rendant `(key, native_field)`. Restent en français, parce qu'ils
+> appartiennent à un contrat existant que le lot 4 d'INC-286 migrera d'un bloc : les clés `libelle` et `probabilite` du
+> format `version: 1`, qui nomment la même notion que sur un nœud, et la clé `cle` de l'enveloppe `valeurs`, commune
+> aux trente-quatre codes existants.
 
 ### 14.4 La composition vivante rend les noms effectifs (révision du §13.2)
 
@@ -744,7 +757,7 @@ Le seuil d'ancienneté (`stale_after_days`) reste hors du format et suit le §13
 champ natif ne s'exige pas ici, et il ne crée pas de champ pour le contourner. Cette liste est une donnée statique
 du produit, et non une donnée du CRM : le §3 reste tenu.
 
-**Le défaut `champ_natif`** (`cle`, `natif`) est rendu après `champ_en_double`. Il relève un champ **nouveau** dans
+**Le défaut `native_field`** (`cle`, `native`) est rendu après `champ_en_double`. Il relève un champ **nouveau** dans
 l'un de ces deux cas :
 
 - sa clé appartient à la liste réservée ;
@@ -753,10 +766,10 @@ l'un de ces deux cas :
 Pour une modification, un champ vivant conservé n'est **jamais** relevé : un workflow existant peut déjà en porter un,
 et cette unité n'y touche pas.
 
-La liste réservée vit **en un seul endroit**, `app.champs_natifs_reserves()`. Elle rend `(cle, natif)` et se révise
+La liste réservée vit **en un seul endroit**, `app.reserved_native_fields()`. Elle rend `(key, native_field)` et se révise
 par migration. Sa première version :
 
-| `natif` | Clés réservées |
+| `native_field` | Clés réservées (`key`) |
 |---|---|
 | `title` | `titre`, `title`, `nom`, `nom-affaire`, `intitule` |
 | `description` | `description` |
@@ -771,7 +784,7 @@ par migration. Sa première version :
 
 La comparaison est **exacte** : `montant-ht` ou `valeur-a-vie` passent. Un défaut bloque l'acceptation comme les
 autres (§12.3, contrôle 7). L'administrateur retire ou renomme le champ, ou le fait revoir : les défauts sont
-transmis au modèle (§12.6). L'écran traduit `natif` par une clé de traduction : « le montant », « le responsable »…
+transmis au modèle (§12.6). L'écran traduit `native` par une clé de traduction : « le montant », « le responsable »…
 
 ### 14.6 La fonction `ia`
 
@@ -789,7 +802,7 @@ transmis au modèle (§12.6). L'écran traduit `natif` par une clé de traductio
   - vise un nœud du catalogue du seed sous un libellé surchargé ;
   - redéclare un nœud du catalogue sous sa propre clé avec un autre libellé, ce qui provoque
     `noeud_deja_au_catalogue` ;
-  - déclare un champ `montant` de type `money`, ce qui provoque `champ_natif`.
+  - déclare un champ `montant` de type `money`, ce qui provoque `native_field`.
 
 ### 14.7 L'écran (révision du §12.5 ; règles visuelles : `docs/DESIGN_SYSTEM.md` §5.52, révisé avant le code)
 
@@ -802,16 +815,16 @@ transmis au modèle (§12.6). L'écran traduit `natif` par une clé de traductio
 
   L'annonce dit que le nom est gardé. L'écran lit à cette fin la probabilité par défaut du catalogue
   (`lireCatalogueActif`).
-- **Le défaut `champ_natif`** est rendu en tête de l'aperçu, traduit (« Le champ « montant » reprend le montant,
+- **Le défaut `native_field`** est rendu en tête de l'aperçu, traduit (« Le champ « montant » reprend le montant,
   déjà porté par l'affaire : retirez-le ou renommez-le. »).
 
 ### 14.8 Preuves
 
 - **pgTAP** :
   - la forme : `libelle` et `probabilite` mal typés refusés ;
-  - les défauts `probabilite_etape_invalide` et `champ_natif` : par la clé, par le libellé normalisé, une clé voisine
+  - les défauts `step_probability_invalid` et `native_field` : par la clé, par le libellé normalisé, une clé voisine
     qui passe, un champ vivant conservé non relevé ;
-  - `app.champs_natifs_reserves()` ;
+  - `app.reserved_native_fields()` ;
   - l'acceptation d'une création : surcharge posée, égalité qui rend `null` ;
   - l'acceptation d'une modification : clé absente qui garde, valeur différente qui pose, égalité qui retire ;
   - `proposition_du_workflow` qui rend les noms effectifs.
@@ -847,7 +860,7 @@ transmis au modèle (§12.6). L'écran traduit `natif` par une clé de traductio
 
 | Tranche | Contenu |
 |---|---|
-| **T1** | Base : une migration — forme, `probabilite_etape_invalide`, `champ_natif` et `app.champs_natifs_reserves()`, acceptation (création et `app.document_cible_ia`), `proposition_du_workflow` ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement |
+| **T1** | Base : une migration (`0102`) — forme, `step_probability_invalid`, `native_field` et `app.reserved_native_fields()`, acceptation (création et `app.document_cible_ia`), `proposition_du_workflow` ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement |
 | **T2** | Fonction `ia` : règles, catalogue avec probabilité, schéma, mise en forme, scénario `catalogue` du simulateur ; unitaires, API |
 | **T3** | Écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; nom et probabilité d'étape éditables, bouton qui garde le nom, différentiel, traductions ; unitaires, E2E, captures, manuel, seed |
 | **T4** | Livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp reconstruite ; constat |
