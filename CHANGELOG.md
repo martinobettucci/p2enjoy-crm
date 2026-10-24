@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-104` T3 — le connecteur MCP tient le carnet de contacts (décision 660)
+
+*En développement ; vit dans le service `mcp`, dont l'image de production est à reconstruire.*
+
+- **Quatre outils** :
+  - lister les contacts et lire la fiche d'un contact, avec ses affaires et son rôle dans chacune ;
+  - créer et modifier un contact.
+- **Aucune suppression** : le CRM ne sait que détruire un contact. Les organisations viendront avec `CRM-114`.
+
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*

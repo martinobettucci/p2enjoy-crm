@@ -1502,7 +1502,9 @@ SCENARIOS_API=1169
 # **907 depuis `CRM-104` T1, 2026-10-24** : `connecteur-structure.spec.ts`, fichier NEUF, **1** scénario — un channel
 # créé par un vrai client MCP paraît dans la barre d'onglets du track. 906 + 1 = 907, valeur COMPTÉE — « Total: 907 tests in
 # 80 files ».
-SCENARIOS_UI=907
+# **908 depuis `CRM-104` T3, 2026-10-24** : `connecteur-contacts.spec.ts`, fichier NEUF, **1** scénario — un contact créé
+# par un vrai client MCP paraît dans le carnet. 907 + 1 = 908, valeur COMPTÉE — « Total: 908 tests in 81 files ».
+SCENARIOS_UI=908
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

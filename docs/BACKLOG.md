@@ -15477,8 +15477,20 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - Manuel 11.5 et 11.6, DAT, INSTRUCTIONS.
       - **Livrée le 2026-10-24** : révision `20ad7541`, image `mcp` reconstruite et saine, `verifier.sh` 26/27.
       - **Reste `[~]`** : le constat du responsable.
-- [ ] **T3** — `contacts` : quatre outils de contact (décision 660) ; les organisations passent à `CRM-114`, famille
+- [~] **T3** — `contacts` : quatre outils de contact (décision 660) ; les organisations passent à `CRM-114`, famille
       `organizations`.
+      **Implémentée et vérifiée en développement le 2026-10-24.**
+      - `mcp/crm_mcp/outils/contacts.py`.
+      - Unitaires `tests/test_contacts.py` **5** ; **huit mutations tuées sur huit**, la septième après une donnée de
+        preuve corrigée — le tri par titre et par identifiant donnaient le même ordre.
+      - Intégration `tests/test_integration_contacts.py` contre la vraie pile : lire, créer et modifier, journal `ok`,
+        l'effet relu en base ; la lectrice refusée par le CRM malgré la matrice ouverte ; la modification fermée par la
+        matrice.
+      - **E2E** `connecteur-contacts.spec.ts` : un contact créé par un vrai client MCP paraît dans le carnet. Capture
+        observée.
+      - `verify-mcp.sh` **73 contrôles, aucune anomalie** (intégration 34) ; harnais `SCENARIOS_UI=908`.
+      - Manuel 11.5 et 11.6, DAT.
+      - **Reste** : la livraison (image `mcp`) et le constat du responsable.
 - [ ] **T4** — `budgets`.
 - [ ] **T5** — `temps`.
 - [ ] **T6** — `objectifs`.
