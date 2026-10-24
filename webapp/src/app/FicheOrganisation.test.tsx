@@ -10,12 +10,17 @@
 // contact, Studio Meunier sans domaine ni site, Comptoir Vasseur sans aucun contact. Ce n'est pas
 // une commodité : ce sont les cas a à d du §11.9, et les mêmes que la preuve E2E exerce sur la
 // pile réelle.
+// @verifies CRM-114 (docs/BACKLOG.md) — tranche T2 : « Modifier » sur la fiche — formulaire prérempli à la place de la
+//           liste de définitions, PATCH normalisé, relecture sans squelette, annonce, refus, commande éteinte avec le
+//           motif (docs/SPEC-organisations.md §2 à §4 ; docs/DESIGN_SYSTEM.md §5.64, §5.59)
 
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ContenuFicheOrganisation } from './FicheOrganisation'
+import { FournisseurEspace } from './ContexteEspace'
+import type { Capacite } from '../lib/capacites'
 import { fr } from '../i18n/fr'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -250,5 +255,87 @@ describe("Fiche d'organisation", () => {
 	it('rend un état explicite sans espace de travail, et n’interroge RIEN', async () => {
 		rendreA(ID_SOGEXIA, null)
 		expect(await screen.findByText(fr['organization.noWorkspace.title'])).toBeTruthy()
+	})
+})
+
+
+// --- `CRM-114` T2 : « Modifier » -----------------------------------------------------------------------------------
+
+function clientModifiable(lectures: unknown[][], miseAJour: { data?: unknown; error?: { code?: string; message: string } | null; status?: number }) {
+	let rang = 0
+	const patchs: { charge: unknown; filtres: string[] }[] = []
+	const lecture = {
+		eq: () => lecture,
+		order: () => lecture,
+		then: (resoudre: (v: unknown) => unknown) => {
+			const donnees = lectures[Math.min(rang, lectures.length - 1)]
+			rang += 1
+			return Promise.resolve({ data: donnees, error: null, status: 200 }).then(resoudre)
+		},
+	}
+	const client = {
+		from: () => ({
+			select: () => lecture,
+			update: (charge: unknown) => {
+				const patch = { charge, filtres: [] as string[] }
+				patchs.push(patch)
+				const chaine: Record<string, unknown> = {
+					eq: (c: string, v: string) => { patch.filtres.push(`${c}=${v}`); return chaine },
+					select: () => chaine,
+					then: (resoudre: (v: unknown) => unknown) =>
+						Promise.resolve({ data: miseAJour.data ?? null, error: miseAJour.error ?? null, status: miseAJour.status ?? 200 }).then(resoudre),
+				}
+				return chaine
+			},
+		}),
+	} as unknown as ClientCrm
+	return { client, patchs, lectures: () => rang }
+}
+
+function monterModifiable(client: ClientCrm, edition: Capacite = 'permise') {
+	render(
+		<MemoryRouter>
+			<FournisseurEspace valeur={{ idWorkspace: 'ws', estAdmin: false, capacites: { administration: 'refusee', edition } }}>
+				<ContenuFicheOrganisation client={client} idOrganisation={ID_SOGEXIA} />
+			</FournisseurEspace>
+		</MemoryRouter>,
+	)
+}
+
+describe('« Modifier » sur la fiche (docs/DESIGN_SYSTEM.md §5.64)', () => {
+	it('le formulaire prérempli remplace la liste de définitions ; l’envoi normalise, relit sans squelette et annonce', async () => {
+		const renommee = { ...SOGEXIA, name: 'Sogexia Groupe', website: null }
+		const { client, patchs, lectures } = clientModifiable([[SOGEXIA], [renommee]], { data: [{ id: ID_SOGEXIA }] })
+		monterModifiable(client)
+		await userEvent.click(await screen.findByTestId('modifier-organisation'))
+		expect(screen.queryByTestId('caracteristiques-organisation')).toBeNull()
+		expect((screen.getByTestId('champ-nom-organisation') as HTMLInputElement).value).toBe('Sogexia')
+		expect((screen.getByTestId('champ-site-organisation') as HTMLInputElement).value).toBe('https://www.sogexia.example')
+		await userEvent.clear(screen.getByTestId('champ-nom-organisation'))
+		await userEvent.type(screen.getByTestId('champ-nom-organisation'), 'Sogexia Groupe')
+		await userEvent.clear(screen.getByTestId('champ-site-organisation'))
+		await userEvent.click(screen.getByTestId('envoyer-organisation'))
+		await waitFor(() => expect(lectures()).toBe(2))
+		expect(patchs).toEqual([{ charge: { name: 'Sogexia Groupe', domain: 'sogexia.example', website: null }, filtres: [`id=${ID_SOGEXIA}`] }])
+		expect(await screen.findByTestId('caracteristiques-organisation')).toBeTruthy()
+		expect(screen.getByRole('status', { name: fr['organizations.live.aria'] }).textContent).toBe(fr['organizations.live.saved'])
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('modifier-organisation')))
+	})
+
+	it('un refus reste dans le formulaire ; zéro ligne rendue est un refus', async () => {
+		const { client } = clientModifiable([[SOGEXIA]], { data: [] })
+		monterModifiable(client)
+		await userEvent.click(await screen.findByTestId('modifier-organisation'))
+		await userEvent.click(screen.getByTestId('envoyer-organisation'))
+		expect((await screen.findByTestId('refus-organisation')).textContent).toBe(fr['organizations.refus.interdit'])
+		expect(screen.getByTestId('formulaire-organisation')).toBeTruthy()
+	})
+
+	it('quand la base refuse l’édition, « Modifier » est montée, désactivée, et cite le motif', async () => {
+		const { client } = clientModifiable([[SOGEXIA]], {})
+		monterModifiable(client, 'refusee')
+		const commande = await screen.findByTestId('modifier-organisation')
+		expect((commande as HTMLButtonElement).disabled).toBe(true)
+		expect(document.getElementById(commande.getAttribute('aria-describedby') ?? '')?.textContent).toBe(fr['rights.readonly.edition'])
 	})
 })

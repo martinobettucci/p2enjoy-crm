@@ -1053,7 +1053,10 @@ ASSERTIONS_ATTENDUES=3909
 # fichier NEUF, **4** scénarios — consigner là où l'on écrit et pas ailleurs, date future refusée ; le business developer
 # refusé sur « Maintenance » ; correction par l'auteur, rien pour un non-auteur, modération bornée au retrait, pierre
 # tombale, aucune suppression ; participants pris dans l'affaire.
-SCENARIOS_API=1169
+# **1172 depuis `CRM-114` T2, 2026-10-24** : `organisations.spec.ts`, fichier NEUF, **3** scénarios — le business developer
+# crée et modifie, le domaine en double ; la forme du domaine ; la lectrice refusée. 1169 + 3 = 1172, valeur COMPTÉE —
+# « Total: 1172 tests in 84 files ».
+SCENARIOS_API=1172
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

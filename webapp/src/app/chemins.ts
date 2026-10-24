@@ -60,6 +60,13 @@ export const CHEMIN_MA_JOURNEE = '/ma-journee' as const
  */
 export const CHEMIN_ORGANISATION = '/contacts/organisations/:idOrganisation' as const
 
+/**
+ * L'onglet « Organisations » du carnet — `CRM-114`, `docs/SPEC-organisations.md` §4. Comme la fiche, il ne figure PAS
+ * dans `ROUTES` : il porte sa propre coquille, et la couverture exacte `ROUTES` ⇄ `ENTREES_TRANSVERSES` reste inchangée —
+ * l'entrée « Contacts » de la barre latérale couvre les deux onglets du carnet.
+ */
+export const CHEMIN_ORGANISATIONS = '/contacts/organisations' as const
+
 /** Adresse concrète de la fiche d'une organisation donnée. */
 export const cheminOrganisation = (idOrganisation: string) =>
 	`/contacts/organisations/${idOrganisation}`

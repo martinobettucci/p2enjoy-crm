@@ -16033,7 +16033,17 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
       double) ; **quatre mutations tuées sur quatre**, une par liste privée de la famille, la base restaurée ; série
       complète **92 fichiers, 3909 assertions**, aucune anomalie. Constat utile pour T2 : un domaine en majuscules est
       refusé par la **forme** (`organizations_domain_check`) avant l'unicité — l'écran le mettra en minuscules.
-- [ ] **T2** — l'écran : créer depuis le carnet, modifier depuis la fiche d'organisation ; design system ; unitaires.
+- [~] **T2** — l'écran : créer depuis le carnet, modifier depuis la fiche d'organisation ; design system ; unitaires.
+      **Implémentée le 2026-10-24, unitaires, API et mutations vérifiés.**
+      - Design system §5.64 écrit avant l'écran (`0c5bdda1`).
+      - `lib/organisations.ts` (lecture avec le compte embarqué des contacts, normalisation — domaine en minuscules —,
+        dictionnaire des refus, écritures) ; `OngletsCarnet`, `ListeOrganisations` (route `/contacts/organisations`,
+        hors de `ROUTES` comme la fiche), `FormulaireOrganisation` commun ; « Modifier » sur la fiche, relecture sans
+        squelette, annonce.
+      - Unitaires : 13 sur la bibliothèque, 6 sur l'onglet, 3 de plus sur la fiche ; **huit mutations tuées sur
+        huit**. API `organisations.spec.ts` **3/3** aux jetons réels.
+      - Série unitaire **4314/4314**, typecheck et build verts ; harnais `SCENARIOS_API=1172`.
+      - **Reste `[~]`** : le constat visuel et l'E2E viennent avec T3.
 - [ ] **T3** — E2E, captures, seed, manuel, campagnes.
 - [ ] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée.
 - [ ] **T5** — livraison en production, sur instruction du responsable.

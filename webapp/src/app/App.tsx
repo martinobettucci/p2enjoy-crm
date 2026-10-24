@@ -62,6 +62,7 @@ import {
 	CHEMIN_CONTACT,
 	CHEMIN_OBJECTIFS_TABLEAU,
 	CHEMIN_ORGANISATION,
+	CHEMIN_ORGANISATIONS,
 	CHEMINS_TRACK,
 	CLE_TITRE_ADMIN_ARBORESCENCE,
 	CLE_TITRE_ADMIN_CATALOGUE,
@@ -209,6 +210,11 @@ const FicheOrganisation = lazy(async () => ({
 	default: (await import('./FicheOrganisation')).FicheOrganisation,
 }))
 
+/** L'onglet « Organisations » du carnet — `CRM-114` : sa propre coquille, comme la fiche qu'il ouvre. */
+const RouteOrganisations = lazy(async () => ({
+	default: (await import('./ListeOrganisations')).RouteOrganisations,
+}))
+
 /**
  * La fiche d'un contact — `CRM-060` tranche 4f.
  *
@@ -348,6 +354,8 @@ function RoutesPages() {
 				    route de DÉTAIL sous le carnet, hors de `ROUTES` : son titre est le nom de
 				    l'organisation — une donnée —, et son contenu dépend d'un paramètre d'URL.
 				    Déclarée APRÈS la route du carnet, dont elle prolonge le chemin. */}
+				{/* L'onglet « Organisations » — `CRM-114`, docs/SPEC-organisations.md §4. */}
+				<Route path={CHEMIN_ORGANISATIONS} element={<RouteOrganisations />} />
 				<Route path={CHEMIN_ORGANISATION} element={<FicheOrganisation />} />
 				{/* La fiche d'un contact — `CRM-060` tranche 4f, docs/SPEC-contacts.md §15.2. Elle
 				    est déclarée APRÈS celle de l'organisation, mais l'ordre ne la départage pas :

@@ -24,17 +24,29 @@
 // LA COQUILLE EST PORTÉE ICI, et non par la table `ROUTES` : le titre de la route est le NOM de
 // l'organisation, donc une donnée et non une clé de traduction. C'est le patron exact de
 // `RouteCard`, et il laisse intacte la couverture `ROUTES` ⇄ `ENTREES_TRANSVERSES` (§11.2).
+//
+// @spec CRM-114 (docs/BACKLOG.md) — tranche T2 : « Modifier » sur la fiche, le formulaire qui remplace la liste de
+//       définitions, la relecture sans squelette, l'annonce de l'issue ; la commande suit la capacité d'éditer l'espace
+//       (docs/SPEC-organisations.md §2 à §4 ; docs/DESIGN_SYSTEM.md §5.64, §5.59). L'écran qui lisait seulement, écrit
+//       ci-dessus, porte désormais ce geste-là, et lui seul : ni création ici, ni suppression.
 
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, PencilLine } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useParams } from 'react-router'
+import { Button } from '../components/ui/Button'
+import { LiveRegion } from '../components/ui/LiveRegion'
+import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { t, type CleTraduction } from '../i18n'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
 import { lireFicheOrganisation, type FicheOrganisationLue } from '../lib/contacts'
+import { motifVisible, proprietesCommande } from '../lib/capacites'
+import { modifierOrganisation } from '../lib/organisations'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
+import { useContexteEspace } from './ContexteEspace'
+import { FormulaireOrganisation } from './FormulaireOrganisation'
 import { CHEMIN_CONTACTS, cheminContact } from './chemins'
 
 /** Cellule ordinaire du tableau des contacts — mêmes règles qu'au carnet (§5.9). */
@@ -62,6 +74,9 @@ const CLASSES_RETOUR = [
  * apostrophes, et un attribut JSX entre guillemets lui échapperait.
  */
 const CLE_TITRE_ORGANISATION: CleTraduction = 'organization.route.title'
+
+/** Le motif de la fiche, cité par « Modifier » quand la base refuse l'édition de l'espace (`CRM-114`, §5.59). */
+const ID_MOTIF_FICHE = 'fiche-organisation-lecture-seule'
 
 export type ProprietesFicheOrganisation = {
 	readonly client?: ClientCrm | null
@@ -126,11 +141,16 @@ export function ContenuFicheOrganisation({
 	// Une réponse arrivée après le démontage, ou périmée par une nouvelle tentative, ne doit pas
 	// écraser un état plus récent — même garde que `Carnet` et `EtatMessagerie`.
 	const courant = useRef(0)
+	// `CRM-114` : une relecture après « Modifier » garde la fiche à l'écran ; le squelette est réservé au premier
+	// chargement (docs/DESIGN_SYSTEM.md §5.29 tranche 2 c).
+	const silencieuse = useRef(false)
+	const [annonce, setAnnonce] = useState('')
 
 	useEffect(() => {
 		if (client === null) return
 		const rang = ++courant.current
-		setEtat(enChargement())
+		if (!silencieuse.current) setEtat(enChargement())
+		silencieuse.current = false
 		void (async () => {
 			const lu = await lireFicheOrganisation(client, idOrganisation)
 			if (rang !== courant.current) return
@@ -154,9 +174,23 @@ export function ContenuFicheOrganisation({
 	const reprendre = useCallback(() => setTentative((precedente) => precedente + 1), [])
 
 	const organisation = etat.statut === 'pret' ? etat.donnees : null
+	const relireApresModification = useCallback(() => {
+		silencieuse.current = true
+		setAnnonce(t('organizations.live.saved'))
+		setTentative((precedente) => precedente + 1)
+	}, [])
 
 	return (
-		<ContenuFiche client={client} etat={etat} organisation={organisation} onReprise={reprendre} />
+		<>
+			<LiveRegion libelle={t('organizations.live.aria')} message={annonce} />
+			<ContenuFiche
+				client={client}
+				etat={etat}
+				organisation={organisation}
+				onReprise={reprendre}
+				onModifiee={relireApresModification}
+			/>
+		</>
 	)
 }
 
@@ -165,9 +199,24 @@ type ProprietesContenu = {
 	readonly etat: EtatAsync<FicheOrganisationLue | null>
 	readonly organisation: FicheOrganisationLue | null
 	readonly onReprise: () => void
+	readonly onModifiee: () => void
 }
 
-function ContenuFiche({ client, etat, organisation, onReprise }: ProprietesContenu) {
+function ContenuFiche({ client, etat, organisation, onReprise, onModifiee }: ProprietesContenu) {
+	const { capacites } = useContexteEspace()
+	const [enEdition, setEnEdition] = useState(false)
+	const [focusARendre, setFocusARendre] = useState(false)
+	const commande = useRef<HTMLButtonElement>(null)
+	useEffect(() => {
+		if (enEdition || !focusARendre) return
+		commande.current?.focus()
+		setFocusARendre(false)
+	}, [enEdition, focusARendre])
+	const fermer = () => {
+		setEnEdition(false)
+		setFocusARendre(true)
+	}
+
 	if (client === null) {
 		return (
 			<EtatVide
@@ -210,6 +259,28 @@ function ContenuFiche({ client, etat, organisation, onReprise }: ProprietesConte
 
 	return (
 		<section aria-label={t('organization.aria')} className="flex flex-col gap-6">
+			{motifVisible(capacites.edition) ? (
+				<MotifLectureSeule id={ID_MOTIF_FICHE}>{t('rights.readonly.edition')}</MotifLectureSeule>
+			) : null}
+			{enEdition && client !== null ? (
+				// LE FORMULAIRE REMPLACE LA LISTE DE DÉFINITIONS, prérempli (docs/DESIGN_SYSTEM.md §5.64).
+				<FormulaireOrganisation
+					prefixe={`organisation-${organisation.id}`}
+					titre={t('organizations.edition.title')}
+					saisieInitiale={{ nom: organisation.name, domaine: organisation.domain ?? '', siteWeb: organisation.website ?? '' }}
+					libelleEnvoi={t('organizations.edition.submit')}
+					libelleEnvoiEnCours={t('organizations.edition.pending')}
+					onAnnuler={fermer}
+					onEnvoyer={async (saisie) => {
+						const issue = await modifierOrganisation(client, organisation.id, saisie)
+						if (issue.statut === 'refus') return issue.nature
+						fermer()
+						onModifiee()
+						return null
+					}}
+				/>
+			) : (
+			<div className="flex flex-wrap items-start justify-between gap-3">
 			{/*
 			  ZONE 1 — CE QUI CARACTÉRISE L'ORGANISATION. Une liste de DÉFINITIONS et non un
 			  tableau : ce sont des couples libellé/valeur qui ne se comparent pas entre eux
@@ -249,6 +320,18 @@ function ContenuFiche({ client, etat, organisation, onReprise }: ProprietesConte
 					</dd>
 				</div>
 			</dl>
+			<Button
+				{...proprietesCommande(capacites.edition, ID_MOTIF_FICHE)}
+				ref={commande}
+				taille="compacte"
+				data-testid="modifier-organisation"
+				onClick={() => setEnEdition(true)}
+			>
+				<PencilLine aria-hidden="true" size={16} strokeWidth={2} />
+				{t('organizations.edition.open')}
+			</Button>
+			</div>
+			)}
 
 			{/* ZONE 2 — LES CONTACTS. Lignes homogènes, donc le tableau du §5.9. */}
 			<section className="flex flex-col gap-3">

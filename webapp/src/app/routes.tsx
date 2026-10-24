@@ -63,6 +63,7 @@ import {
 	CHEMIN_OBJECTIFS_TABLEAU,
 	cheminTableauObjectifs,
 	CHEMIN_ORGANISATION,
+	CHEMIN_ORGANISATIONS,
 	cheminOrganisation,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_TEMPS,
@@ -98,6 +99,7 @@ export {
 	CHEMIN_OBJECTIFS_TABLEAU,
 	cheminTableauObjectifs,
 	CHEMIN_ORGANISATION,
+	CHEMIN_ORGANISATIONS,
 	cheminOrganisation,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_TEMPS,
@@ -122,6 +124,7 @@ const RouteInbox = lazy(async () => ({ default: (await import('./RouteInbox')).R
  * (`CLAUDE.md` §21). Le repli de `Suspense` est déjà posé par `App`.
  */
 const Carnet = lazy(async () => ({ default: (await import('./Carnet')).Carnet }))
+const OngletsCarnet = lazy(async () => ({ default: (await import('./OngletsCarnet')).OngletsCarnet }))
 
 // `CRM-061` — l'écran de la journée, chargé À LA DEMANDE comme le carnet et l'inbox : il n'est pas
 // sur le chemin du premier rendu, et son module tire `Intl.DateTimeFormat` et la lecture des cards.
@@ -273,7 +276,13 @@ export const ROUTES: readonly DescriptionRoute[] = [
 		// (`CLAUDE.md` §4), pas un réglage de structure.
 		chemin: CHEMIN_CONTACTS,
 		cleTitre: 'route.contacts.title',
-		rendu: () => <Carnet />,
+		// `CRM-114` : le carnet porte ses deux onglets-liens, « Contacts » et « Organisations » (docs/DESIGN_SYSTEM.md §5.64).
+		rendu: () => (
+			<div className="flex flex-col gap-4">
+				<OngletsCarnet actif="contacts" />
+				<Carnet />
+			</div>
+		),
 	},
 	{
 		// Les objectifs — `CRM-083`, `docs/SPEC-goals.md` §5.1 : « entrée de navigation

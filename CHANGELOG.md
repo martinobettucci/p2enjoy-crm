@@ -13,12 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-114` T1 — la famille `organizations` du connecteur (décision 663)
+### `CRM-114` T1 et T2 — les organisations : la famille du connecteur, l’onglet du carnet (décision 663)
 
 *En développement seulement. La migration `0101` attend la prochaine fenêtre de production.*
 
 - **Migration `0101`** : la matrice du connecteur MCP accepte une neuvième famille, « Organisations », entre
   « Contacts » et « Budgets ». Rien d'autre ne change en base ; l'écran et les outils viennent avec les tranches suivantes.
+- **Le carnet a deux onglets, « Contacts » et « Organisations »** (T2).
+  - **L'onglet « Organisations »** liste les organisations de l'espace — domaine, site web, nombre de contacts —,
+    celles sans contact comprises.
+  - **« Nouvelle organisation »** crée une organisation (nom, domaine, site web), puis ouvre sa fiche.
+  - **« Modifier »** sur la fiche change ses trois champs.
+  - Ces deux gestes sont réservés aux business developers et aux administrateurs.
 
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
