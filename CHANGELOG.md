@@ -30,10 +30,14 @@ charge).*
 - Entre 1024 et 1279 px, le nom de la personne connectée laisse sa place au titre de la page : l'avatar reste, le nom
   reste annoncé aux lecteurs d'écran, et l'adresse reste en infobulle sur l'identité. Webapp seule.
 
-### INC-290 et INC-291 — la pile de développement monte sur un poste neuf
+### INC-290 et INC-291 — la pile de développement monte sur un poste neuf ; MinIO depuis Chainguard
 
-- **MinIO et son client sont construits dans le dépôt** (`supabase/docker/minio/Dockerfile`), les dépôts de `quay.io`
-  refusant désormais le tirage anonyme. Développement seul : la cellule Spark n'est pas modifiée.
+- **MinIO vient de `cgr.dev/chainguard/minio`, épinglé par empreinte, en développement et dans la cellule Spark**
+  (décision 681) : `quay.io` ne sert plus MinIO, que son éditeur ne distribue plus en binaires. Une seule image pour
+  le serveur et la création du bucket, en `root` comme avant : aucune donnée ne change de propriétaire. Le serveur
+  passe de la publication du 2025-04-22 à celle du 2026-10-23. Le Dockerfile `bitnamilegacy` de la décision 679 est
+  retiré. **Cellule** : la nouvelle image se tire à la prochaine livraison, sur instruction du responsable
+  (`docs/PROD_MIGRATIONS.md` §2.18).
 - **`./runDev.sh` construit sous Compose 5** : il exporte `BUILDX_BAKE_ENTITLEMENTS_FS=0`, sans quoi `bake` refuse de
   lire le paquet CA monté en secret de construction.
 

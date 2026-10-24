@@ -33594,3 +33594,15 @@ MCP** : sans objet, c'est de l'infrastructure.
 
 **Persisté avant le code** : ce journal ; `docs/SPEC-deploiement-spark.md` §3.3 ; `docs/DAT.md` §3.7 ;
 `docs/PROD_MIGRATIONS.md` §2.18 et §4 ; `docs/INCONSISTENCY_REPORT.md` INC-290 ; `docs/BACKLOG.md` `CRM-090`.
+
+**Décision 681 — vérifiée en développement le 2026-10-24.** `docker-compose.dev.yml` et `docker-compose.spark.yml`
+tirent la même empreinte Chainguard, en `user: "0:0"`, pour `minio` et `minio-createbucket` ; le Dockerfile
+`bitnamilegacy` est retiré. `verify-stack.sh` lit l'image de la sonde dans le fichier Compose au lieu de la recopier ;
+`verify-spark.sh` garde l'empreinte et l'utilisateur des deux services ; `restore-drill.sh` lance son MinIO jetable en
+`root`. **Preuves** : `./runDev.sh` `rc=0` sur le volume existant, resté à `root` (2 objets relus, serveur
+`RELEASE.2026-10-23T20-06-51Z`) ; `verify-stack.sh` 52/52 ; `verify-sauvegardes.sh` 42/42 ; `verify-restauration.sh`
+36/36 ; `e2e:mail` 44/44, avec `PLAYWRIGHT_CHROMIUM_PATH` (`docs/CloudWorker.md`) ; `e2e/api/inbox.spec.ts` 9/9.
+`verify-spark.sh` : 109 contrôles, la garde MinIO verte, et rouge quand on dégrade l'image ou l'utilisateur ; une
+anomalie hors MinIO, préexistante (INC-294). **Incident de session** : le conteneur de session a été recyclé à 18:16 UTC
+et la base n'était pas repartie ; `./runDev.sh` relancé, puis un `503` de Kong sur storage, 20 s après un redémarrage
+manuel du service, disparu au passage suivant. **Reste** : la livraison à la cellule, par le responsable (§2.18).

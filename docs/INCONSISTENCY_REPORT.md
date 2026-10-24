@@ -7618,3 +7618,20 @@ connectée passe en `sr-only` : l'avatar reste, le nom reste annoncé, et l'adre
 120 px de la preuve est gardé. `docs/DESIGN_SYSTEM.md` §12.2 est révisé dans le même changement que le code.
 **Vérifié le 2026-10-24** : `fil-ariane.spec.ts` vert aux quatre paliers, dont `lg-1152`. Ce palier était rouge avant la
 correction, à 105,36 px. **Statut : close** (`CRM-110` T5).
+
+### INC-294 — deux harnais rendent des anomalies préexistantes, mesurées des deux côtés d'un `git stash`
+
+*Relevé le 2026-10-24 par la session interactive, en prouvant la décision 681 (MinIO depuis Chainguard).* Aucune ne
+touche MinIO : chacune est **mesurée à l'identique sans le changement** (`git stash`), donc préexistante.
+- **`scripts/verify-spark.sh`, section 5** : « jetons proposés incohérents avec JWT_SECRET », à chacun des passages mesurés ce jour.
+  **Observé** : rejoués seuls avec `jwt_hs256` (`scripts/lib/env.sh`) et le même calcul de signature, un jeton `anon`
+  et un jeton `service_role` sont signés juste et portent leur rôle. La cause tient donc à la lecture des fichiers
+  `.?` proposés par `scripts/spark/proposer.sh`, non à la signature. **Non trouvée.**
+- **`scripts/verify-scripts.sh`** : « variables consommées par Compose et absentes du gabarit :
+  `CRM_MCP_ORIGINE_PUBLIQUE` » et « variables sans commentaire Format / Requise : `CRM_MCP_DEBIT_OAUTH_MINUTE`,
+  `CRM_MCP_ENREGISTREMENTS_HEURE`, `CRM_MCP_JOURNAL_NIVEAU` ». La première contredit la règle du connecteur selon
+  laquelle Compose dérive cette variable, jamais posée à la main (`docs/SPEC-mcp.md` §10). Les deux autres anomalies
+  de ce harnais sont celles d'INC-186.
+**Comportement laissé inchangé.** **Issue proposée** : l'unité du connecteur (`CRM-102`) tranche si le harnais doit
+exempter `CRM_MCP_ORIGINE_PUBLIQUE` et documente les trois variables au gabarit ; `CRM-090` reprend la garde JWT de
+`verify-spark.sh`. **Statut : ouverte.**

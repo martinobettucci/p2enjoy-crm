@@ -3,7 +3,7 @@
 # @verifies CRM-016 (docs/BACKLOG.md), docs/SPEC-edge-functions.md §2, §5, §7.2
 # @verifies docs/DAT.md §3 (composants), §3.6 (composants de développement uniquement), §9
 # @verifies README.md §6 (services exposés en développement)
-# @verifies docs/INCONSISTENCY_REPORT.md INC-290, docs/JOURNAL.md décision 679 — le client MinIO de la sonde est l'image construite dans le dépôt
+# @verifies docs/INCONSISTENCY_REPORT.md INC-290, docs/JOURNAL.md décision 681 — le client MinIO de la sonde est l'image du service `minio`, Chainguard épinglé par empreinte
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §13 — tranche T6 : GoTrue, ses
 #           gabarits et Inbucket sont absents des deux assemblages, et `/auth/v1/*` rend 404
 #
@@ -277,9 +277,11 @@ else
 fi
 
 # L'octet doit exister côté MinIO, sous le préfixe du tenant de stockage. Le filtrage se fait
-# ici et non dans le conteneur : l'image du client MinIO ne contient que `mc`, pas `grep`.
+# ici et non dans le conteneur. L'image est celle du service `minio`, lue dans le fichier Compose et jamais recopiée
+# (décision 681) : elle porte `mc` et `/bin/sh`.
+image_minio=$(awk '/^  minio:/{d=1} d && /^    image:/{print $2; exit}' docker-compose.dev.yml)
 minio_listing=$(docker run --rm --network "${COMPOSE_NETWORK:-p2enjoy-crm_default}" \
-	--entrypoint sh p2enjoy/minio-mc:2025.4.22 -ec \
+	--entrypoint sh "$image_minio" -ec \
 	"mc alias set probe http://minio:9000 '$MINIO_ROOT_USER' '$MINIO_ROOT_PASSWORD' >/dev/null \
 	 && mc ls --recursive probe/$GLOBAL_S3_BUCKET/" 2>/dev/null || true)
 if printf '%s' "$minio_listing" | grep -q "$probe_bucket/sonde.txt"; then

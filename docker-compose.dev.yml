@@ -1,5 +1,5 @@
 # @spec CRM-001 (docs/BACKLOG.md) — overlay de développement de la pile Supabase self-hosted
-# @spec docs/INCONSISTENCY_REPORT.md INC-290, docs/JOURNAL.md décision 679 — MinIO et son client construits dans le dépôt
+# @spec docs/INCONSISTENCY_REPORT.md INC-290, docs/JOURNAL.md décision 681 — MinIO depuis Chainguard, épinglé par empreinte
 # @spec CRM-015 (docs/BACKLOG.md) — secret BuildKit facultatif du registre npm
 # @spec CRM-091 (docs/BACKLOG.md), docs/SPEC-auth.md §10.9 — Keycloak de développement, realm `lelabs`
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §10 — tranche T6 : ni GoTrue ni Inbucket ;
@@ -119,15 +119,14 @@ services:
       start_period: 20s
 
   # Équivalent local de S3 : le développement ne dépend d'aucun stockage objet payant.
-  # CONSTRUITE DANS LE DÉPÔT (INC-290, décision 679) : les dépôts MinIO de `quay.io` refusent désormais le tirage
-  # anonyme. `supabase/docker/minio/Dockerfile` part d'une base qui porte le MÊME binaire (publication du
-  # 2025-04-22) ; la cellule Spark garde son image (`docker-compose.spark.yml`).
+  # CHAINGUARD, ÉPINGLÉ PAR EMPREINTE (INC-290, décision 681) : `quay.io` ne sert plus MinIO, que son éditeur ne
+  # distribue plus en binaires. La MÊME empreinte que la cellule Spark (`docker-compose.spark.yml`) : une montée de
+  # version change les deux lignes et rejoue les preuves du stockage. En `root`, comme l'image de `quay.io` : le
+  # volume `minio-data` existant lui appartient (l'image tourne sinon en `65532`).
   minio:
     container_name: p2enjoy-minio
-    image: p2enjoy/minio:2025.4.22
-    build:
-      context: ./supabase/docker/minio
-      target: minio
+    image: cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c
+    user: "0:0"
     restart: unless-stopped
     ports:
       - ${DEV_BIND_ADDRESS:-127.0.0.1}:${MINIO_API_PORT}:9000
@@ -200,13 +199,11 @@ services:
       retries: 30
       start_period: 20s
 
-  # Création idempotente du bucket des pièces jointes, par le vrai client S3.
+  # Création idempotente du bucket des pièces jointes, par le vrai client S3 : `mc`, que porte l'image du serveur.
   minio-createbucket:
     container_name: p2enjoy-minio-createbucket
-    image: p2enjoy/minio-mc:2025.4.22
-    build:
-      context: ./supabase/docker/minio
-      target: mc
+    image: cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c
+    user: "0:0"
     restart: "no"
     depends_on:
       minio:

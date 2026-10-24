@@ -12,6 +12,7 @@
 # @spec CLAUDE.md §9 (aucune écriture non validée, aucune commande destructrice par
 #       commodité), §10 (les politiques d'autorisation sont une règle de backend),
 #       §20 (aucun secret journalisé)
+# @spec docs/JOURNAL.md décision 681, INC-290 — le MinIO jetable tourne en root, comme le service
 #
 # Restaure une archive de scripts/backup.sh dans un environnement JETABLE, compare les
 # invariants avec la pile de référence, puis détruit cet environnement — et lui seul.
@@ -327,7 +328,8 @@ info "restaurée   base.dump appliqué sous supabase_admin, 0 erreur"
 # --- Les objets, si l'archive en porte (§11.3 point 8) ------------------------------------------
 
 if [ "$DEPOT_OBJET" = "minio-local" ] && [ -f "$RACINE/objets.tar" ]; then
-	docker run -d --name "$NOM_MINIO" \
+	# En `root`, comme le service (décision 681) : les objets que `docker cp` extrait appartiennent à `root`.
+	docker run -d --name "$NOM_MINIO" --user 0:0 \
 		--label "com.p2enjoy.restauration=$HORODATAGE" \
 		-e MINIO_ROOT_USER=exercicejetable \
 		-e MINIO_ROOT_PASSWORD=exercicejetable \

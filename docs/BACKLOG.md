@@ -14488,13 +14488,17 @@ décrit la baseline réelle.
 - [x] **Image Realtime transférée seulement si son contenu change** (décision 577) : l'identifiant
       changeait à chaque construction. Harnais porté à **78 vérifications, aucune anomalie**, dont
       une qui rougissait avant la correction.
-- [@] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
+- [~] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
       `cgr.dev/chainguard/minio` épinglé par empreinte, une seule image pour `minio` et `minio-createbucket`, en
       `user: "0:0"` (aucune donnée de production à changer de propriétaire) ; Dockerfile `bitnamilegacy` retiré ;
       `verify-stack.sh`, `verify-spark.sh` et `restore-drill.sh` suivis ; preuves du stockage (stack, sauvegarde,
       restauration, mail) rejouées ; livraison à la cellule sur instruction du responsable
       (`docs/PROD_MIGRATIONS.md` §2.18).
-      *Prise en charge : session interactive 2026-10-24 18:28 UTC depuis 2026-10-24 18:28 UTC — état avant : [ ]*
+      *Livrée dans le dépôt et vérifiée en développement le 2026-10-24 : `./runDev.sh` (`rc=0`) tire l'image et relit le
+      volume existant en `root` ; `verify-stack.sh` 52/52 ; `verify-sauvegardes.sh` 42/42 ; `verify-restauration.sh`
+      36/36 (MinIO jetable Chainguard, 3 objets ressortis) ; `e2e:mail` 44/44 ; `e2e/api/inbox.spec.ts` 9/9 ;
+      `verify-spark.sh` : les gardes MinIO vertes et rouges quand on dégrade l'image ou l'utilisateur, une anomalie
+      préexistante (INC-294). Reste `[~]` : non vérifiée sur la cellule, livrée par le responsable (§2.18).*
 
 ### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[~]`
 *Créée le 2026-09-23 — décision 568. Motif : GoTrue 2.189.0 ne parle pas PKCE à Keycloak (M1), que le

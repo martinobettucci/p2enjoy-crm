@@ -5,6 +5,7 @@
 #           objet), §4.4 (proposer), §5.1 (livrer), §5.2 (premier déploiement), §9 (preuves)
 # @verifies CRM-097 (docs/BACKLOG.md) tranche T4 — docs/SPEC-deploiement-spark.md §4.3 et §4.4 (`--assistant-ia`)
 # @verifies docs/JOURNAL.md décisions 567, 570, 571, 575 et 577 (image Realtime dérivée)
+# @verifies docs/JOURNAL.md décision 681, INC-290 — MinIO depuis Chainguard épinglé par empreinte, en root, pour les deux services
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 — tranche T6 : ni GoTrue ni SMTP dans
 #           les propositions ; `--demandes-seules` pour une cellule en service (décisions 589 et 590) ;
 #           T7 (décision 591) : Kong et Caddy portent leur label de révision `crm-092` ; valeurs de la
@@ -253,8 +254,12 @@ if sans_limite:
     e.append(f"services sans limite mémoire : {sans_limite}")
 if s.get("kong", {}).get("environment", {}).get("KONG_NGINX_WORKER_PROCESSES") != "1":
     e.append("Kong sans KONG_NGINX_WORKER_PROCESSES=1")
-if not s.get("minio", {}).get("image", "").startswith("quay.io/minio/minio:"):
-    e.append("image MinIO hors quay.io")
+# Décision 681 : Chainguard, épinglé par empreinte, la même image pour le serveur et la création du bucket, en root.
+for nom in ("minio", "minio-createbucket"):
+    if not s.get(nom, {}).get("image", "").startswith("cgr.dev/chainguard/minio@sha256:"):
+        e.append(f"{nom} : image hors cgr.dev/chainguard/minio épinglée par empreinte")
+    if s.get(nom, {}).get("user") != "0:0":
+        e.append(f"{nom} : utilisateur autre que 0:0 (le volume minio-data appartient à root)")
 rt = s.get("realtime", {})
 image_rt = rt.get("image")
 tirage_rt = rt.get("pull_policy")
