@@ -837,7 +837,7 @@ manuel** (`fill_percent`, `docs/SPEC-goals.md` §1) : le connecteur l'écrit, il
 par le CRM malgré la matrice ouverte (la lectrice qui ajoute un bloc), journal écrit ; et **E2E** : un bloc ajouté par le
 connecteur paraît sur le canevas, avec son avancement.
 
-### 9.2 decies Famille `messagerie` — `CRM-104` T7 (liste **proposée**, en attente de validation ; périmètre arbitré par la décision 676)
+### 9.2 decies Famille `messagerie` — `CRM-104` T7 (liste fixée, **validée par la session le 2026-10-24**, décision 684 ; périmètre arbitré par la décision 676)
 
 **Trois outils** : lire les messages d'une affaire, en lire un, et **envoyer un email depuis une affaire** par la même
 file que l'écran (`envoi.ts`, `inbox.ts`) — `public.queue_outbound_email`, qui garde le droit d'écrire sur l'affaire,
@@ -869,6 +869,42 @@ adresses possibles.
 **Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus
 par le CRM malgré la matrice ouverte (la lectrice qui envoie), journal écrit ; l'envoi est constaté dans `mail_outbox`,
 sans relève réelle ; et **E2E** : un email envoyé par le connecteur paraît dans le fil de l'affaire.
+
+**Précisions du contrat, mesurées sur la pile de développement le 2026-10-24 avant le code (décision 684)** — la liste
+ci-dessus est inchangée :
+
+- **`crm_card_mail_list`** lit `mail_messages` où `card_id` est l'affaire, du plus ancien au plus récent (`received_at`,
+  puis `id`, ordre total), `limit` 25 par défaut, borné à 100, `offset`. Chaque ligne : `id`, `direction` (`inbound`,
+  `outbound`), `sent_at`, `received_at`, `from` (`address`, `name`), `to`, `cc`, `subject`, `excerpt` — les 280 premiers
+  caractères du corps affichable, espaces resserrés — et `attachment_count`, le **nombre** de pièces jointes (compte
+  embarqué `mail_attachments(count)`). Le nombre est donné pour que leur absence du connecteur ne soit pas une perte
+  silencieuse ; leur contenu ni leur nom ne le sont jamais.
+- **`crm_mail_get`** lit un message que la RLS rend — classé ou non, comme ceux que rend `crm_search` — : en-têtes,
+  `card_id`, `classification`, `attachment_count`, et `body`. **Le corps affichable est celui de l'écran**
+  (`corpsAffichable` d'`inbox.ts`) : `body_text` s'il n'est pas vide, sinon le HTML réduit en texte par la même règle que
+  `reduireHtmlEnTexte`, et `body_from_html` le dit. Le HTML lui-même n'est jamais rendu.
+- **`crm_mail_send`** prend `card_id`, `to` (une à cinquante adresses), `cc` (facultatif, même borne), `subject`, `body`,
+  `from_address` et `in_reply_to_message_id`, ces deux derniers facultatifs. Il appelle `queue_outbound_email` avec
+  `p_cc`, que la fonction accepte déjà — le même appel que l'écran, un paramètre de plus que son formulaire.
+  - **L'identité d'expédition** est cherchée dans `mail_outbound_identities` de l'espace de l'affaire, parmi celles que
+    la personne peut emprunter — la sienne, ou celle du service (sans propriétaire), que la RLS ne montre qu'aux
+    administrateurs : le filtre de `lireIdentitesDisponibles`. L'adresse se compare sans la casse. **Absente**, elle vaut
+    l'unique identité possible ; s'il y en a plusieurs, l'appel est refusé en nommant les adresses possibles, et s'il n'y
+    en a aucune, en le disant. Aucun choix implicite parmi plusieurs.
+  - **Une réponse** désigne un message **classé dans cette affaire** : un message lisible d'une autre affaire, ou non
+    classé, est refusé (`reply_outside_card`) avant l'appel — la fonction ne le vérifie pas, l'écran ne le propose pas.
+    En réponse, `subject` est facultatif et vaut l'objet du message préfixé une seule fois (`objetDeReponse`).
+  - **Refus nommés**, et non le refus uniforme : l'affaire est lisible, la personne doit savoir pourquoi l'envoi
+    échoue — `forbidden` (pas le droit d'écrire sur l'affaire), `identity_not_available`, `card_not_available`
+    (affaire archivée, à la corbeille ou sans adresse), `recipient_required`, `body_required`, `quota_exceeded`.
+  - **Rend** l'identifiant de l'envoi en file, l'adresse d'expédition employée et l'état `queued` : le message part
+    par le worker de `mail-sync`, puis paraît dans le fil de l'affaire (`direction = outbound`).
+- **Le genre d'ancre `message`** : `mail_messages`, qui porte son `workspace_id`.
+- **Les consignes au modèle** (`INSTRUCTIONS`) gagnent une ligne : lire le fil avant de répondre, et confirmer avec la
+  personne avant tout envoi.
+- **L'onglet « Connecteur MCP »** garde sa phrase de portée (« Lecture des fils ; l'envoi compte comme « ajouter » ») :
+  elle décrit déjà la famille.
+- **Aucune migration** : la famille est dans la liste fermée depuis `0090`.
 
 ### 9.3 Réponses
 

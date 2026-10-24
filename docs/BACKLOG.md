@@ -15573,8 +15573,9 @@ sous-tranches livrées séparément ; `structure` la suit.*
         sans jeton `401`). **Reste `[~]`** : le constat du responsable.
 - [@] **T7** — `messagerie` : lire les messages d'une affaire et un message, envoyer un email depuis une affaire par la
       file de l'écran (`destructiveHint`, `aussi` `affaires:consulter`) — décision 676 ; ni pièces jointes, ni
-      classement, ni modèles. Liste proposée au `docs/SPEC-mcp.md` §9.2 *decies*, **en attente de validation**.
-      *Prise en charge : CloudWorker 2026-10-24 23:12 UTC depuis 2026-10-24 23:35 UTC — état avant : [ ]*
+      classement, ni modèles. Liste au `docs/SPEC-mcp.md` §9.2 *decies*, **validée par la session le 2026-10-24**
+      (décision 684, `docs/CloudWorker.md` §4.1 bis ; le responsable peut la contredire), précisions mesurées avant le code.
+      *Prise en charge : CloudWorker 2026-10-24 23:12 UTC depuis 2026-10-24 23:16 UTC — état avant : [ ]*
 
 Preuves exigées **par tranche et par outil** (`docs/SPEC-mcp.md` §13) : succès, refus par la matrice, refus par le
 CRM malgré la matrice ouverte, journal écrit, et effet constaté dans la webapp. Chaque tranche se livre en production et

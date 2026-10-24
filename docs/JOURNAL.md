@@ -33673,3 +33673,38 @@ de la prise.
 sans objet comme fonctionnalité — c'est la vérification de son déploiement.
 
 **Persisté avant le code** : ce journal ; `docs/SPEC-deploiement-spark.md` §7 ; `docs/BACKLOG.md` (`CRM-102` T5).
+
+### décision 684 — `CRM-104` T7 : la liste de la famille `messagerie` validée par la session, ses précisions mesurées
+
+*2026-10-24, session planifiée ouverte à 23:12:23 UTC (`docs/CloudWorker.md`). Tranché par la session (`docs/CloudWorker.md`
+§4.1 bis) ; le responsable peut le contredire.*
+
+**Choix de l'unité.** La dernière entrée (683) désigne `CRM-102` T5, prise vivante d'une autre session planifiée (22:15
+UTC) ; `CRM-111` T1 bis l'est aussi (21:16 UTC, commits jusqu'à 23:1x). Les deux sont sautées (§1 *bis*). Les unités `[~]`
+du plan n'ont pas changé depuis la décision 682 : leur reste attend la production, un constat ou un arbitrage de produit.
+`CRM-104` T7 ne porte aucune prise et aucun commit ne la cite depuis 6 heures. Les sessions 682 et 683 l'avaient
+écartée parce que sa liste « attend la validation » ; or son **périmètre** est arbitré par le responsable (décision 676 :
+lire et envoyer, trois outils nommés), et la validation d'une liste qui en découle n'entre dans aucun cas de la liste
+fermée du §4.1 *bis* : ni irréversible pour le dépôt, ni payante, ni un choix de produit que rien ne permet de déduire.
+La mention « en attente » est le constat d'un travail non fait. **La session valide donc la liste** du `docs/SPEC-mcp.md`
+§9.2 *decies* telle quelle et la livre.
+
+**Mesuré avant d'écrire** (pile de développement) : `queue_outbound_email(p_card_id, p_identity_id, p_to, p_subject,
+p_body_text, p_cc, p_in_reply_to_message_id)` garde l'écriture sur l'affaire (`forbidden`), l'emprunt de l'identité
+(`identity_not_available`), l'affaire vivante et dotée d'une adresse (`card_not_available`), un destinataire, un corps, le
+quota (`23505`) ; elle **ne vérifie pas** que le message auquel on répond appartient à l'affaire. `mail_messages` porte
+son espace ; `mail_outbox` se lit par `can_read_card`. L'envoi effectif inscrit le message sortant au fil de l'affaire
+(`0030`, `direction = outbound`). La phrase de portée de l'onglet existe déjà.
+
+**Précisions retenues** (écrites au §9.2 *decies*) : le corps affichable de l'écran, HTML réduit en texte quand le texte
+manque et dit comme tel ; le **nombre** de pièces jointes, pour que leur absence se nomme ; l'identité désignée par son
+adresse, l'unique possible par défaut, jamais un choix implicite parmi plusieurs ; une réponse limitée aux messages de
+l'affaire (`reply_outside_card`), vérifiée par l'outil faute de l'être par la fonction ; des refus **nommés** pour
+l'envoi, l'affaire étant lisible. **Écartés** : rendre le HTML (le modèle n'en a pas besoin, et l'écran le réduit aussi) ;
+choisir l'identité par défaut (`is_default`) parmi plusieurs — un envoi au nom d'une adresse que la personne n'a pas
+désignée ; laisser répondre à un message d'une autre affaire, que l'écran n'offre pas.
+
+**Connecteur MCP** : c'est la tranche elle-même, famille existante `messagerie`, actions `consulter` et `ajouter`.
+Aucune migration.
+
+**Persisté avant le code** : ce journal ; `docs/SPEC-mcp.md` §9.2 *decies* ; `docs/BACKLOG.md` (`CRM-104` T7).
