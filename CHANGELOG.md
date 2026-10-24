@@ -13,15 +13,6 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-104` T6 — le connecteur MCP tient les canevas d'objectifs (décisions 673 et 674)
-
-*En développement. Aucune migration ; il faudra reconstruire l'image `mcp` à la livraison.*
-
-- **Six outils** dans la famille « Objectifs » : lire les tableaux et un canevas en texte, ajouter un bloc (posé à
-  droite des blocs existants) et une flèche, modifier le titre, le texte, l'avancement ou le channel d'un bloc, archiver
-  ou désarchiver un tableau.
-- **Aucune suppression** d'un bloc ni d'une flèche ; la géométrie du canevas reste un geste de l'écran.
-
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
@@ -31,6 +22,21 @@ d'exécuter le code attendu.
   connecteur (`docs/SPEC-seed.md` §22).
 
 ## [Publié]
+
+### Déployé en production, 2026-10-24 — l'image `mcp`, objectifs
+
+Cellule Spark `crm`, révision `a95e15f7` : `scripts/spark/livrer.sh` sans migration, puis la reconstruction explicite de
+l'image `mcp`, saine. **Avant** : `verify-mcp.sh` 85 contrôles sans anomalie ; `connecteur-objectifs` 1/1. **Vérifié** :
+le module `objectifs` présent ; `/mcp` sans jeton `401` ; `verifier.sh` 25/27 — le compteur de redémarrage antérieur, et
+la révision comparée à un `HEAD` qu'une autre session venait d'avancer d'un commit de documentation seule (`88caf34f`,
+INC-289), sans code. **Non constaté** : un appel réel d'un assistant connecté.
+
+#### `CRM-104` T6 — le connecteur MCP tient les canevas d'objectifs (décisions 673 et 674)
+
+- **Six outils** dans la famille « Objectifs » : lire les tableaux et un canevas en texte, ajouter un bloc (posé à
+  droite des blocs existants) et une flèche, modifier le titre, le texte, l'avancement ou le channel d'un bloc, archiver
+  ou désarchiver un tableau.
+- **Aucune suppression** d'un bloc ni d'une flèche ; la géométrie du canevas reste un geste de l'écran.
 
 ### Déployé en production, 2026-10-24 — l'image `mcp`, temps passé
 

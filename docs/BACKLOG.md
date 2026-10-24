@@ -15542,7 +15542,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - E2E `connecteur-objectifs.spec.ts` **1/1** (le bloc du connecteur sur le canevas, à 65 %), capture observée ;
         `SCENARIOS_UI=919`.
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
-      - **Reste `[~]`** : la livraison, avec la reconstruction de l'image `mcp`.
+      - **Livrée en production le 2026-10-24** (révision `a95e15f7`, image `mcp` reconstruite, module présent, `/mcp`
+        sans jeton `401`). **Reste `[~]`** : le constat du responsable.
 - [ ] **T7** — `messagerie`.
 
 Preuves exigées **par tranche et par outil** (`docs/SPEC-mcp.md` §13) : succès, refus par la matrice, refus par le
