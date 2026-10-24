@@ -810,7 +810,7 @@ responsable de `crm_card_update` ; un nom ambigu ou inconnu est refusé.
 par le CRM malgré la matrice ouverte (la saisie d'une personne qu'on n'administre pas, le plafond), journal écrit ; et
 **E2E** : du temps posé par le connecteur paraît dans la bande « Votre semaine » de la fiche de l'affaire.
 
-### 9.2 nonies Famille `objectifs` — `CRM-104` T6 (liste **proposée**, en attente de validation ; périmètre arbitré par la décision 673)
+### 9.2 nonies Famille `objectifs` — `CRM-104` T6 (liste fixée, **validée le 2026-10-24**, décisions 673 et 674)
 
 **Six outils**, ceux du catalogue (§9.2) : lire les canevas d'objectifs, et les composer sans jamais rien détruire. Les
 mêmes tables que la webapp (`objectifs.ts`, `objectifs-ecriture.ts`) : `goal_boards`, `goal_blocks`, `goal_links`, sous

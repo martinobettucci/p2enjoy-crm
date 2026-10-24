@@ -15529,7 +15529,7 @@ sous-tranches livrées séparément ; `structure` la suit.*
         compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[~]`** : le constat du responsable.
 - [ ] **T6** — `objectifs` : le catalogue — lire les tableaux et leur canevas, ajouter un bloc et une flèche, modifier
       un bloc (jamais la géométrie), archiver un tableau — décision 673 ; aucune suppression d'un bloc ni d'une flèche.
-      Liste proposée au `docs/SPEC-mcp.md` §9.2 *nonies*, **en attente de validation**.
+      Liste au `docs/SPEC-mcp.md` §9.2 *nonies*, **validée le 2026-10-24** (décision 674).
 - [ ] **T7** — `messagerie`.
 
 Preuves exigées **par tranche et par outil** (`docs/SPEC-mcp.md` §13) : succès, refus par la matrice, refus par le

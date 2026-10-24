@@ -33302,3 +33302,13 @@ qui détruit (A4) ; créer, renommer ou réordonner un tableau, la géométrie e
 **Conséquence** : un genre d'ancre nouveau, `block` ; aucune migration. Liste proposée au `docs/SPEC-mcp.md` §9.2
 *nonies*, à valider avant le code.
 
+
+### décision 674 — `CRM-104` T6 : la liste des outils `objectifs` validée
+
+*2026-10-24, validation du responsable sur `docs/SPEC-mcp.md` §9.2 *nonies* (commit `b97f9209`).* Les six outils sont
+retenus tels que proposés : `crm_goal_board_list`, `crm_goal_board_get` (blocs en texte dans l'ordre de lecture,
+avancement, channel lié, flèches, `can_write`), `crm_goal_block_add` (placé à droite des blocs existants, à la taille d'un
+bloc neuf), `crm_goal_link_add` (sens `forward`, `backward` ou `both`, doublon refusé), `crm_goal_block_update` (jamais la
+géométrie ni la couleur), `crm_goal_board_archive` (archiver ou désarchiver, sous « supprimer ») ; genre d'ancre `block` ;
+aucune suppression d'un bloc ni d'une flèche. Preuve E2E : un bloc ajouté par le connecteur paraît sur le canevas avec
+son avancement.
