@@ -169,6 +169,35 @@ rattachements et appelle encore `app.can_read_channel`.
 **Variante écartée** : une sous-requête corrélée (`exists (… where p.card_id = cards.id and p.channel_id in (…))`)
 recalcule la liste à chaque ligne : 4,4 s pour un board de 2 027 affaires.
 
+### 2 bis.3 bis Fraîcheur des droits — la forme optimisée ne donne pas de faux positif, à une condition
+
+Question du responsable : la forme optimisée risque-t-elle de laisser lire une affaire après un changement des
+droits ? Preuve sur la base jetable (`04-fraicheur-des-droits.sql`). Les deux requêtes sont préparées **avant** tout
+changement et exécutées sous **plan générique**, comme le fait PostgREST. La politique livrée est neutralisée, pour que
+chaque requête ne dépende que de sa propre forme. Le profil est le business developer du seed, sur Maintenance.
+
+| Étape | Forme livrée | Forme optimisée (`STABLE`) |
+|---|---|---|
+| 1. droit initial : `viewer` sur le channel | 27 | 27 |
+| 2. droit retiré : `none` | 0 | 0 |
+| 3. droit rendu : `member` | 27 | 27 |
+| 4. surcharge du channel retirée : droit du track | 27 | 27 |
+| 5. rôle d'espace changé, channel fermé | 0 | 0 |
+| 6. retiré de l'espace | 0 | 0 |
+
+**Les deux formes suivent chaque changement immédiatement, et à l'identique.** La liste des channels lisibles n'est
+mise en cache nulle part : elle est recalculée à chaque requête, sur l'instantané des droits de cette requête, comme la
+forme livrée l'est à chaque ligne.
+
+**La condition, prouvée par contre-preuve** (`05-contre-preuve-immutable.sql`). La même fonction déclarée
+**`IMMUTABLE`** est figée dans le plan préparé : elle rend **27** affaires aux étapes 2, 5 et 6, c'est-à-dire à une
+personne qui a perdu le droit, puis qui a quitté l'espace. D'où trois règles, opposables à toute révision :
+- `app.readable_channel_ids()` est **`STABLE`**, jamais `IMMUTABLE` ; un test pgTAP vérifie sa volatilité au catalogue
+  (`provolatile = 's'`) ;
+- son résultat n'est **jamais mis en cache** hors de la requête : ni dans une variable de session, ni dans une table, ni
+  dans une vue matérialisée ;
+- la preuve de fraîcheur, avec requêtes préparées sous plan générique, entre dans la suite pgTAP de la tranche T2.
+
 ### 2 bis.4 Ce que les mesures changent à la spécification — soumis au responsable
 
 - **Le §4 proposait** que la politique de `cards` appelle une fonction `security definer` par ligne. La mesure la donne
@@ -188,6 +217,8 @@ docker cp docs/mesures/CRM-111/. p2enjoy-db:/tmp/mesures/
 docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/01-cron-factice.sql
 docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/02-fonctions-cassees.sql
 docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -v vol=2000 -v reps=5 -f /tmp/mesures/03-cout-rls.sql
+docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/04-fraicheur-des-droits.sql
+docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/05-contre-preuve-immutable.sql
 docker exec p2enjoy-db psql -U supabase_admin -d postgres -c 'drop database crm111_mesure'
 ```
 

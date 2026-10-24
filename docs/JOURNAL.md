@@ -33211,3 +33211,15 @@ coûte la nouvelle RLS. **Observations.**
 développement n'a que 41 affaires ; le seuil où le coût devient visible dépend de lui. **À arbitrer** (`docs/SPEC-
 rattachements.md` §2 bis.4) : adopter la forme optimisée pour `CRM-111`, et le sort du coût par ligne des autres
 tables. **Persisté** : `docs/SPEC-rattachements.md` §2 bis, `docs/mesures/CRM-111/`, `docs/BACKLOG.md` `CRM-111` T1.
+
+### `CRM-111` T1 — la forme optimisée de la RLS ne donne pas de faux positif, sauf déclarée `IMMUTABLE`
+
+*2026-10-24, question du responsable : « la forme optimisée ne risque-t-elle pas de donner des faux positifs de
+permissions si on met à jour la matrice ? ».* **Hypothèse** : non, car la liste des channels lisibles est recalculée à
+chaque requête. **Observation**, sur une base jetable (supprimée ensuite) : requêtes préparées avant tout changement et
+exécutées sous plan générique, comme PostgREST, la politique livrée étant neutralisée. Les formes livrée et optimisée
+rendent les mêmes comptes à chacune des six étapes (droit retiré, rendu, surcharge retirée, rôle changé, sortie de
+l'espace). **Contre-preuve** : déclarée `IMMUTABLE`, la fonction est figée dans le plan et rend 27 affaires à une
+personne sortie de l'espace. **Conséquence** : la forme optimisée est sûre à trois conditions, écrites dans
+`docs/SPEC-rattachements.md` §2 bis.3 bis et prouvées en T2 : fonction `STABLE` vérifiée au catalogue, aucun cache hors
+de la requête, preuve de fraîcheur dans pgTAP. **Persisté** : la spécification, `docs/mesures/CRM-111/04-…` et `05-…`.
