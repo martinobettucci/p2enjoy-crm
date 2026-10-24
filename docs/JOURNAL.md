@@ -33606,3 +33606,41 @@ tirent la même empreinte Chainguard, en `user: "0:0"`, pour `minio` et `minio-c
 anomalie hors MinIO, préexistante (INC-294). **Incident de session** : le conteneur de session a été recyclé à 18:16 UTC
 et la base n'était pas repartie ; `./runDev.sh` relancé, puis un `503` de Kong sur storage, 20 s après un redémarrage
 manuel du service, disparu au passage suivant. **Reste** : la livraison à la cellule, par le responsable (§2.18).
+
+### décision 682 — `CRM-111` T1 bis : le mode opératoire de la reconstruction — la base et ses seuls dérivés, en une minute
+
+*2026-10-24, session planifiée ouverte à 21:12:06 UTC (`docs/CloudWorker.md`). Tranché par la session (`docs/CloudWorker.md`
+§4.1 bis) ; le responsable peut le contredire.*
+
+**Choix de l'unité.** La dernière entrée (681) ne désigne aucune reprise produit. Les unités `[~]` du plan n'ont pas
+changé depuis la décision 677 : leur reste attend la production, un constat ou un arbitrage. Les `[ ]` qui précèdent
+(`CRM-097` à `CRM-099`, `CRM-106`, `CRM-107`) n'attendent plus que leur livraison ; `CRM-104` T7 attend la validation de
+sa liste. `CRM-111` ne porte aucune prise, et aucun commit ne la cite depuis 08:42 UTC : sa tranche T1 bis, préalable de
+la bascule T2, est la première constructible.
+
+**Mesuré sur la pile de développement, avant le code.**
+1. **Reconstruire la base seule ne suffit pas.** Cluster détruit, autres volumes gardés, pile remontée : `up -d --wait`
+   vert, mais le seed échoue (« le message adressé à la card c1 n'a pas été classé »). Même échec en détruisant aussi
+   l'état de `mail-sync`. Cause : les boîtes de Stalwart gardent les messages du seed précédent, adressés à l'adresse
+   générée d'une affaire qui n'existe plus ; le seed les retrouve et ne renvoie rien. Le courrier est un **dérivé** de
+   la base.
+2. **Retenu : la base et ses dérivés.** Retirer `db`, `migrations-runner`, `storage`, `realtime`, `rest`, `meta`,
+   `studio`, `mail-sync`, `stalwart`, `stalwart-init`, `roundcube` ; détruire `mail-sync-state`, `stalwart-data`,
+   `roundcube-data` et le cluster ; `up -d --wait` ; seed. **48 à 60 s**, tout `healthy`, `verify-seed.sh` 52/52,
+   `e2e/api/inbox.spec.ts` 9/9, registre à 103 lignes en adoption, passage suivant « 0 à appliquer ». MinIO, ClamAV,
+   `node_modules`, l'état du connecteur et Keycloak sont gardés et ne sont pas recréés.
+3. **L'idempotence locale se prouve par le vrai runner.** Un répertoire temporaire où chaque fichier est suivi de sa
+   copie `NNNN_nom_rejeu.sql`, passé par `MIGRATIONS_DIR` au runner sur une base neuve (`db` et `storage` seuls) :
+   **206 fichiers appliqués, code 0, 29 s**. Chaque fichier se rejoue sur l'état qu'il vient de produire.
+4. **Le défaut, reproduit avant correction** (`CLAUDE.md` §18) : registre vidé, runner relancé sur la base peuplée —
+   code 3, `0089_plateforme.sql` : « cannot change return type of existing function ». La preuve d'adoption de
+   `verify-migrations.sh` est donc rouge aujourd'hui.
+
+**Écart à la lettre de la décision 675, tranché ici** : elle dit « base vidée, répertoire dans l'ordre, seed ». La
+reconstruction détruit en plus les boîtes de Stalwart et l'état de `mail-sync`, parce que la mesure 1 montre qu'ils
+décrivent la base détruite. **Écartés** : `./resetMe.sh --yes`, qui détruit aussi ce qui ne dérive pas de la base
+(signatures de ClamAV, `node_modules`, état du connecteur) et refuse de tourner pile démarrée (contrôle des ports) ;
+garder le courrier (mesure 1). Deux sessions sur la même pile se suivent par un verrou `flock`.
+
+**Persisté avant le code** : `docs/SPEC-test-harness.md` §3.6 ; `docs/DAT.md` §3.2 *bis* ; `docs/BACKLOG.md` (`CRM-111`
+T1 bis, découpage). Connecteur MCP : sans objet, c'est de l'outillage.

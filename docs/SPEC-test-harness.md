@@ -209,12 +209,95 @@ de développement en la RECONSTRUISANT** : base vidée, répertoire appliqué da
 `./resetMe.sh`. La reconstruction, comme le rejeu qu'elle remplace, est suivie de la suite globale concernée.
 `rejeu_complet_au_prochain_passage` cesse d'être un moyen de restauration. **Le mode opératoire** — une pile partagée
 entre sessions ne se détruit pas à chaque restauration — **est mesuré et spécifié par `CRM-111` T1 bis**, avant la
-bascule T2 ; tout écart à la reconstruction à neuf revient au responsable.
+bascule T2 ; tout écart à la reconstruction à neuf revient au responsable. **Spécifié au §3.6** (décision 682).
 
 La restauration du schéma ne remplace pas le **ménage des données d'essai**. Un harnais qui crée
 des lignes réservées les retire avant toute suite globale et constate leur absence ; son
 `trap EXIT` n'est qu'une sécurité d'interruption. SQL, API ou UI exécutés pendant que le jeu
 d'essai subsiste mesureraient le harnais, pas le seed courant (décision 296, INC-061).
+
+### 3.6 Reconstruire la base de développement — le mode opératoire (`CRM-111` T1 bis, décision 682)
+
+*Mesuré le 2026-10-24 sur la pile de développement, avant le code (`docs/JOURNAL.md`, décision 682).* Le §3.5 dit **quoi**
+faire — reconstruire à neuf. Ce paragraphe dit **comment**, sur une pile que plusieurs sessions partagent et qui ne se
+détruit pas à chaque restauration.
+
+**Ce qui est reconstruit, et pourquoi pas davantage.** La base, et ce qui n'est qu'un **dérivé** de la base :
+
+| Détruit et recréé | Motif, mesuré |
+|---|---|
+| le cluster PostgreSQL (`supabase/docker/volumes/db/data`) | c'est la base ; elle repart des scripts d'initialisation de l'image |
+| les conteneurs `db`, `migrations-runner`, `storage`, `realtime`, `rest`, `meta`, `studio`, `mail-sync` | ils tiennent une connexion, un cache de schéma ou un journal de la base détruite ; `storage` rejoue ses propres migrations sur la base neuve |
+| les boîtes de Stalwart (volume `stalwart-data`), le cache de Roundcube (`roundcube-data`), avec `stalwart`, `stalwart-init` et `roundcube` | **mesuré** : conservées, elles gardent les messages du seed précédent, adressés à l'adresse générée d'une affaire qui n'existe plus ; le seed les retrouve, ne renvoie rien, et échoue sur « le message adressé à la card c1 n'a pas été classé » |
+| l'état de `mail-sync` (volume `mail-sync-state`) | **mesuré** : ce sont ses curseurs de relève sur des comptes de la base détruite ; il échoue de la même façon |
+
+**Conservés**, parce qu'ils ne dérivent pas de la base : MinIO (`minio-data` — un objet orphelin ne gêne rien), les
+signatures de ClamAV (`clamav-data`, longues à retélécharger), les dépendances de la webapp (`webapp-node-modules`),
+l'état chiffré du connecteur (`mcp-etat`), Keycloak, Kong, `functions`, `ollama-simule`, `webapp`, `mcp`. Ces conteneurs
+**ne sont pas recréés** : ils joignent les services recréés par leur nom sur le réseau Compose.
+
+**La séquence**, `reconstruire_base_dev` (`scripts/lib/reconstruction.sh`), dans cet ordre :
+
+1. **Garde de profil** : refus si le fichier d'environnement ne porte pas `P2ENJOY_ENV_PROFILE=dev` — même garde que
+   `./resetMe.sh`. Rien n'est arrêté avant ce contrôle.
+2. **Verrou** : `flock` sur un fichier de verrou de l'hôte (`/tmp/p2enjoy-crm-reconstruction.lock`). Deux sessions qui
+   reconstruisent la même pile en même temps se suivent au lieu de se détruire l'une l'autre.
+3. **Retrait** des conteneurs du tableau (`docker compose … rm -sf`), puis des trois volumes dérivés.
+4. **Destruction du cluster** par un conteneur jetable de l'image du service `db`, comme `./resetMe.sh` : le répertoire
+   appartient au compte du conteneur.
+5. **Remontée** : `docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up -d --wait`. Le
+   runner trouve une base sans registre : son passage est une **adoption sur base vide**, c'est-à-dire la construction
+   du répertoire **dans l'ordre**. `rest` attend sa fin.
+6. **Seed** : `supabase/seed/apply-seed.sh`.
+7. **Constat** : le registre porte une ligne par fichier du répertoire, toutes en mode `adoption`, et aucun service de la
+   pile n'est hors d'état `healthy`. Un constat faux rend un code non nul, avec le motif.
+
+**Coût mesuré : 48 à 60 s**, seed compris (contre une à deux minutes pour `./resetMe.sh`, qui retélécharge en plus les
+signatures de ClamAV). Juste après : `scripts/verify-seed.sh` **52 contrôles, aucune anomalie** ; `e2e/api/inbox.spec.ts`
+**9/9** (stockage, pièce jointe, courrier relevé) ; les vingt conteneurs citent les deux fichiers Compose
+(`docs/CloudWorker.md` §2.2 *bis*).
+
+**Une option, et une seule** : `--sans-seed`, pour un harnais qui enchaîne lui-même une autre reconstruction ou qui
+applique le seed après ses propres préparatifs. Le constat de l'étape 7 vaut alors sans le seed.
+
+**Ce que la reconstruction efface, et ce que chaque harnais en fait.** Tout ce qui vivait dans la base — jeu d'essai
+compris — disparaît. Un harnais qui reconstruit puis poursuit avec des lignes d'essai créées **avant** doit les
+recréer après ; un jeton déjà obtenu reste valable (Keycloak n'est pas touché, les identifiants du seed sont stables).
+Un harnais ne reconstruit que **s'il a dégradé la structure** ; une mutation de données seule se défait par son propre
+ménage (§3.5, dernier alinéa).
+
+**Ce que la reconstruction ne permet pas.** Elle n'est pas un outil de mise au point d'une migration sur une base
+peuplée de données réelles : en développement, la base n'en a pas d'autres que celles du seed. Elle n'est **jamais**
+appelée hors du profil `dev`.
+
+**La preuve d'adoption de `scripts/verify-migrations.sh`** suit l'invariant du `docs/DAT.md` §3.2 révisé :
+
+- **base neuve dans l'ordre** : une reconstruction, dont le runner journalise une adoption de `N` fichiers et inscrit
+  `N` lignes en mode `adoption` ;
+- **base à jour, rien appliqué** : le passage suivant rend « `0 à appliquer` » ;
+- **chaque fichier se rejoue sur l'état qu'il vient de produire** : le **vrai runner**, sur une base neuve (`db` et
+  `storage` seuls remontés), reçoit par `MIGRATIONS_DIR` un répertoire temporaire où chaque fichier `NNNN_nom.sql` est
+  suivi de sa copie à l'identique `NNNN_nom_rejeu.sql` — l'ordre des octets place la copie immédiatement après
+  l'original, avant `NNNN+1`. Un passage en `0` sur `2N` fichiers prouve l'idempotence locale de chacun. **Mesuré le
+  2026-10-24 : 206 fichiers appliqués, code 0, en 29 s.** Une reconstruction normale suit, puisque le registre de
+  cette base porte les copies ;
+- **non-complaisance** : le même répertoire doublé, augmenté d'un fichier sentinelle qui crée une table sans `if not
+  exists`, fait échouer le runner sur la copie de la sentinelle ;
+- **l'ancienne preuve est retirée, et son motif reste écrit dans le fichier** : l'adoption d'une base **peuplée** est
+  **rouge depuis `0099`** — mesuré le 2026-10-24, `0089_plateforme.sql` : « cannot change return type of existing
+  function » — et elle n'est plus un invariant (décision 675).
+
+**Les quinze autres harnais** remplacent leur `rejeu_complet_au_prochain_passage` suivi du runner par
+`reconstruire_base_dev`, recréent après elle le jeu d'essai qu'ils emploient encore, et retirent les contrôles qui
+prouvaient l'adoption sur base peuplée, avec leur motif écrit en place. `rejeu_complet_au_prochain_passage` et
+`scripts/lib/registre.sh` disparaissent avec leur dernier appelant.
+
+**Prouvé par `scripts/verify-reconstruction.sh`** : refus hors profil `dev` sans rien arrêter ; une table sentinelle
+posée dans `public` disparaît ; le registre porte `N` lignes en adoption ; tous les services `healthy` ; le seed
+convergent (`verify-seed.sh` sans anomalie) ; les conteneurs conservés n'ont pas été recréés (même identifiant avant et
+après).
+
+**Connecteur MCP : sans objet** — c'est de l'outillage de développement, pas une fonctionnalité du produit.
 
 ## 4. Projets Playwright
 

@@ -385,7 +385,10 @@ refus nomme `./resetMe.sh`, qui reconstruit la base. **L'idempotence reste exig�
 hors du runner. **Les harnais qui restaurent la base par le runner** vident d'abord le registre de la base
 de développement (`rejeu_complet_au_prochain_passage`, `scripts/lib/registre.sh`, gardé par le profil
 `dev`) : sans cela, le runner n'appliquerait rien et la base resterait dégradée (`docs/SPEC-test-harness.md`
-§3.5).
+§3.5). **Révisé par `CRM-111` T1 bis (décision 682)** : un harnais qui dégrade
+la structure restaure en **reconstruisant** la base de développement et ses seuls dérivés (courrier de Stalwart, état de
+`mail-sync`), par `reconstruire_base_dev` (`scripts/lib/reconstruction.sh`) : le runner y trouve une base sans registre
+et la construit dans l'ordre. Mode opératoire, coût mesuré et preuves : `docs/SPEC-test-harness.md` §3.6.
 
 ### 3.3 `mail-sync` — service Python
 

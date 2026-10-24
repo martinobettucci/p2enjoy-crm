@@ -16220,6 +16220,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       seize harnais qui appelaient `rejeu_complet_au_prochain_passage`, et la preuve de `verify-migrations.sh` (base
       neuve dans l'ordre ; chaque fichier rejoué sur l'état qu'il produit ; base à jour : rien appliqué). Préalable de
       T2 : sans elle, la bascule rendrait ces harnais rouges.
+      *Spécifié le 2026-10-24 (décision 682, `docs/SPEC-test-harness.md` §3.6)* : la base et ses seuls dérivés
+      (Stalwart, `mail-sync`) reconstruits en 48 à 60 s, mesuré. Découpage : (a) `scripts/lib/reconstruction.sh` et
+      `scripts/verify-reconstruction.sh` ; (b) la preuve d'adoption de `verify-migrations.sh` (base neuve dans l'ordre,
+      rien appliqué ensuite, répertoire doublé par le vrai runner, sentinelle non idempotente) ; (c) les quinze autres
+      harnais, puis le retrait de `scripts/lib/registre.sh`.
       *Prise en charge : CloudWorker 2026-10-24 21:12 UTC depuis 2026-10-24 21:16 UTC — état avant : [ ]*
 - [ ] **T2 — bascule, en un seul changement** (§3, §4, §5, §10) : migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
