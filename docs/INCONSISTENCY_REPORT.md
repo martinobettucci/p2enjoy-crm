@@ -7493,3 +7493,37 @@ reconstruisant la base de développement (base vidée, répertoire dans l'ordre,
 neuve, et chaque fichier se rejoue sur l'état qu'il vient de produire. `docs/DAT.md` §3.2 et
 `docs/SPEC-test-harness.md` §3.5 sont révisés ; la mise en œuvre — seize harnais et `verify-migrations.sh` — est
 `CRM-111` T1 bis.
+
+### INC-290 — les images MinIO de la pile ne se tirent plus de `quay.io` : `./runDev.sh` échoue sur un poste neuf
+
+*Relevé le 2026-10-24 par la session planifiée de `CRM-113`, au démarrage de la pile sur un hôte au cache d'images vide.*
+**Règle écrite.** `docker-compose.dev.yml` et `docker-compose.spark.yml` tirent `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z`
+et `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z` (décision 569 : Docker Hub n'avait plus ces dépôts, `quay.io` les
+portait). `CLAUDE.md` §3 veut un développement autonome. **Constat, mesuré** : `docker pull` des deux étiquettes rend
+`401 Unauthorized` ; l'API de `quay.io` rend « Requires authentication » pour le dépôt `minio/minio`, alors qu'un jeton
+anonyme s'obtient (`200`) et que `quay.io/keycloak/keycloak:26.7.3` se tire normalement. Les dépôts MinIO de `quay.io`
+sont donc devenus privés. `ghcr.io/minio/minio` rend `denied` ; `public.ecr.aws/minio/minio` et
+`mirror.gcr.io/minio/minio` n'ont pas l'étiquette. **`docker.io/bitnamilegacy/minio:2025.4.22` se tire**, et son binaire
+`minio` est le MÊME : `minio --version` rend `commit-id=0d7408fc9969caf07de6a8c3a84f9fbb10a6739e`, la publication du
+2025-04-22 ; il porte aussi `mc`. **Contournement de session, hors dépôt** : deux images locales construites depuis
+celle-ci et étiquetées aux noms attendus (`USER root`, liens vers `minio` et `mc`, point d'entrée `minio` ou `mc`), de
+sorte que Compose les trouve sans rien tirer. **Comportement du dépôt laissé inchangé.** **Production** : la cellule
+garde ses images en cache tant qu'elle n'en purge pas ; un premier déploiement neuf ou une purge échouerait de même.
+**Pourquoi un arbitrage** : remplacer la source d'une dépendance qui sert aussi la production (`CLAUDE.md` §19 :
+maintenance, licence) — `bitnamilegacy` est un dépôt gelé, sans mises à jour de sécurité ; les autres voies sont
+construire MinIO depuis ses sources, ou changer de stockage S3 local. **Recommandation de la session** : à court terme,
+pointer les deux fichiers Compose sur une image construite dans le dépôt depuis `bitnamilegacy/minio:2025.4.22`
+(même binaire, mesuré), puis décider du stockage durable.
+
+### INC-291 — `./runDev.sh` s'arrête sous Compose 5 : `bake` exige un droit pour lire le paquet CA monté en secret
+
+*Relevé le 2026-10-24 par la même session.* **Constat, mesuré** sous Docker Compose `v5.6.1` et buildx `v0.38.1` : la
+construction des images `webapp`, `mail-sync` et `mcp` passe désormais par `bake`, qui refuse de lire
+`/root/.ccr/ca-bundle.crt` (le secret de construction de la décision 356) : « additional privileges requested: pass
+"--allow=fs.read=/root/.ccr/ca-bundle.crt" ». `COMPOSE_BAKE=false` n'y change rien. **Contournement mesuré** :
+`BUILDX_BAKE_ENTITLEMENTS_FS=0` exporté avant `./runDev.sh` ; la construction franchit alors ce point. **Second
+constat** : les trois constructions résolvent leurs images de base en parallèle et Docker Hub rend `429` pour
+`node:24-alpine` ; la tirer seule avant `./runDev.sh` suffit (décision 373, même cause). **Comportement du dépôt laissé
+inchangé** ; étranger à `CRM-113`. **Issue retenue par la session** (`docs/CloudWorker.md` §4.1 bis, correction évidente,
+hors de son unité) : la consigner dans `docs/CloudWorker.md` pour les sessions planifiées ; la correction de
+`runDev.sh` lui-même — passer le droit à `bake` ou exporter la variable — revient à une unité d'outillage.
