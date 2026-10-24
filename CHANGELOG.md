@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-104` T4 — le connecteur MCP tient les coûts d'une affaire (décisions 668 et 669)
+
+*En développement. Aucune migration ; il faudra reconstruire l'image `mcp` à la livraison.*
+
+- **Neuf outils** dans la famille « Budgets » :
+  - lire les budgets (prévu et réel connu de leurs lignes), le détail d'un budget par occurrence, les lignes de coût
+    d'une affaire avec leurs dépenses, et les lignes « à saisir » ;
+  - ajouter une ligne de coût (budget ouvert, occurrence si le budget est récurrent) et une dépense réelle ;
+  - corriger une ligne ou une dépense, solder ou rouvrir une ligne.
+- **Aucune suppression**, et l'administration des budgets reste un geste de l'écran.
+
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*

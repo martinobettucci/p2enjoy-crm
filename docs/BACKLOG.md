@@ -15492,9 +15492,24 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - Manuel 11.5 et 11.6, DAT.
       - **Livrée le 2026-10-24** : révision `e4f8a8e5`, image `mcp` reconstruite et saine, `verifier.sh` 26/27.
       - **Reste `[~]`** : le constat du responsable.
-- [ ] **T4** — `budgets` : les lignes de coût d'une affaire, en miroir de `recettes` (décision 668) — quatre lectures,
+- [~] **T4** — `budgets` : les lignes de coût d'une affaire, en miroir de `recettes` (décision 668) — quatre lectures,
       cinq écritures, genres d'ancre `cost` et `cost_actual`, aucune suppression, administration des budgets laissée à
       l'écran. Liste au `docs/SPEC-mcp.md` §9.2 *septies*, **validée le 2026-10-24** (décision 669).
+      **Implémentée et vérifiée en développement le 2026-10-24.**
+      - `mcp/crm_mcp/outils/budgets.py` : les neuf outils ; cumuls par budget sans mélange de devises, un réel nul
+        compté à part ; refus nommés (`ligne soldee`, `reel derive`, occurrence exigée ou interdite, occurrence d'un autre
+        budget, budget ou occurrence clôturés, référence absente). Genre d'ancre `occurrence` ajouté en écrivant le
+        code : le moteur exige que tout identifiant soit une ancre (précision consignée au §9.2 *septies*).
+      - Unitaires `test_budgets.py` **8** ; **quinze mutations tuées sur quinze** (trois données de preuve resserrées, et
+        un vrai défaut trouvé : « clôturé » préfixe de « clôturée » rangeait une occurrence close sous le budget clos).
+        Intégration `test_integration_budgets.py` contre la vraie pile : lectures, ligne ajoutée, dépense ajoutée et
+        corrigée, ligne soldée puis rouverte, `ligne soldée` et `occurrence_required` en `refus_crm`, la lectrice
+        refusée par le CRM et `crm_card_cost_settle` fermé par la matrice ; les cases du seed de Driss ni posées ni
+        retirées. `verify-mcp.sh` **79/79**.
+      - E2E `connecteur-budgets.spec.ts` **1/1** (la ligne et sa dépense dans la section « Coûts » de la fiche), capture
+        observée ; `SCENARIOS_UI=917`.
+      - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
+      - **Reste `[~]`** : la livraison, avec la reconstruction de l'image `mcp`.
 - [ ] **T5** — `temps`.
 - [ ] **T6** — `objectifs`.
 - [ ] **T7** — `messagerie`.

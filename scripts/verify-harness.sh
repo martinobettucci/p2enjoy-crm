@@ -1519,7 +1519,10 @@ SCENARIOS_API=1172
 # **916 depuis `CRM-114` T4, même jour** : `connecteur-organisations.spec.ts`, fichier NEUF, **1** scénario — une
 # organisation créée par un vrai client MCP paraît dans l'onglet « Organisations », son domaine en minuscules. 915 + 1 =
 # 916, valeur COMPTÉE — « Total: 916 tests in 83 files ».
-SCENARIOS_UI=916
+# **917 depuis `CRM-104` T4, même jour** : `connecteur-budgets.spec.ts`, fichier NEUF, **1** scénario — une ligne de coût
+# et sa dépense ajoutées par un vrai client MCP paraissent dans la section « Coûts » de la fiche. 916 + 1 = 917, valeur
+# COMPTÉE — « Total: 917 tests in 84 files ».
+SCENARIOS_UI=917
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

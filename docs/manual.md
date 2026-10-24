@@ -4822,9 +4822,22 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   l'espace. **Aucun outil ne supprime une organisation** : ses contacts la perdraient sans laisser de trace. Pour
   rattacher un contact à une organisation, l'assistant modifie le contact (famille « Contacts »).
 
+- **Budgets** — *livrés en développement par `CRM-104`, tranche T4* :
+  - *Consulter* : les budgets des tracks, avec ce qui est prévu et ce qui est déjà connu de leurs dépenses ; le détail
+    d'un budget, occurrence par occurrence, avec ses lignes et leur affaire ; les lignes de coût d'une affaire et leurs
+    dépenses réelles ; les lignes « à saisir », comme l'onglet du même nom ;
+  - *Ajouter* : une ligne de coût sur une affaire, rattachée à un budget ouvert — et à l'une de ses occurrences quand
+    le budget est récurrent ; une dépense réelle sur une ligne ;
+  - *Modifier* : le libellé, le montant prévu, le budget ou l'occurrence d'une ligne ; corriger une dépense réelle ;
+    solder une ligne, ou la rouvrir.
+
+  Comme à l'écran, le coût réel d'une ligne est la somme de ses dépenses, et une ligne soldée n'en accepte plus : il
+  faut la rouvrir d'abord. Deux devises ne s'additionnent jamais. **Aucun outil ne supprime une ligne ni une dépense** —
+  le CRM ne saurait que les détruire —, et **créer, modifier ou clôturer un budget** reste un geste de l'écran.
+
 ### 11.6 Ce que le connecteur n'offre pas encore
 
-Les outils des autres familles — budgets, temps, objectifs, messagerie — suivent, une famille après
+Les outils des autres familles — temps, objectifs, messagerie — suivent, une famille après
 l'autre. D'ici là, une case cochée pour l'une d'elles n'ouvre aucun outil.
 
 ## Annexe A — Ce que contient l'espace de démonstration

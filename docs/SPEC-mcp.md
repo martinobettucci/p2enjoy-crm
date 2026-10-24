@@ -594,7 +594,7 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 | `affaires` | `crm_card_list` (par channel, étape, échéance), `crm_card_get` (champs, étape, contacts, prochaine action), `crm_card_timeline`, `crm_card_comment_list`, `crm_stale_card_list` (affaires figées) | `crm_card_create`, `crm_card_comment_add` | `crm_card_update` (titre, champs, prochaine action, échéance), `crm_card_move` (étape, par `move_card`), `crm_card_move_to_channel`, `crm_card_snooze`, `crm_card_wake`, `crm_card_contact_link` (`aussi` : `contacts:consulter`) | `crm_card_trash` |
 | `contacts` — **livrée par `CRM-104` T3** (§9.2 *quinquies*) | `crm_contact_list`, `crm_contact_get` | `crm_contact_create` | `crm_contact_update` | — (le CRM ne sait que détruire, A4) |
 | `organizations` — **`CRM-114` T4** (§9.2 *sexies*) | `crm_organization_list`, `crm_organization_get` | `crm_organization_create` | `crm_organization_update` | — (décision 660) |
-| `budgets` | `crm_budget_list`, `crm_budget_get` (occurrences), `crm_card_cost_list`, `crm_costs_to_enter` (« à saisir ») | `crm_card_cost_add`, `crm_card_cost_actual_add` | `crm_card_cost_update`, `crm_card_cost_settle` (soldé) | `crm_budget_archive` si le CRM l'offre |
+| `budgets` — **`CRM-104` T4** (§9.2 *septies*) | `crm_budget_list`, `crm_budget_get` (occurrences), `crm_card_cost_list`, `crm_costs_to_enter` (« à saisir ») | `crm_card_cost_add`, `crm_card_cost_actual_add` | `crm_card_cost_update`, `crm_card_cost_actual_update`, `crm_card_cost_settle` (soldé) | — (le CRM ne sait que détruire, A4 ; l'administration des budgets reste à l'écran, décision 668) |
 | `recettes` — **livrée par `CRM-108` T4, liste fixée le 2026-10-23** (`docs/SPEC-recettes.md` §7) | `crm_card_revenue_list` (ancre `card:card_id`), `crm_revenues_to_enter` (`workspace:workspace`, paginé), `crm_profitability_report` (`workspace:workspace`, période et état facultatifs ; `aussi` : `budgets:consulter`, `temps:consulter`) | `crm_card_revenue_add` (`card:card_id`), `crm_card_revenue_actual_add` (`revenue:revenue_id`) | `crm_card_revenue_update` (`revenue:revenue_id`), `crm_card_revenue_actual_update` (`revenue_actual:revenue_actual_id`), `crm_card_revenue_settle` (`revenue:revenue_id`, soldé ou rouvert) | — (une ligne et un réel se corrigent) |
 | `temps` | `crm_time_entry_list` (semaine, personne, cible), `crm_time_report` (rapport mensuel, dans ce que la RLS ouvre) | `crm_time_entry_add` | `crm_time_entry_update` | — (une saisie se corrige) |
 | `objectifs` | `crm_goal_board_list`, `crm_goal_board_get` | `crm_goal_block_add`, `crm_goal_link_add` | `crm_goal_block_update` | `crm_goal_board_archive` |
@@ -760,8 +760,11 @@ ligne soldée figée, le rattachement à un budget ou une occurrence clôturés,
 | `crm_card_cost_actual_update` | `modifier` | `cost_actual:cost_actual_id` | `PATCH card_cost_actuals` | montant, date, libellé ; refusé sur une ligne soldée |
 | `crm_card_cost_settle` | `modifier` | `cost:cost_id` | `PATCH card_costs` (`settled_at`) | solder (sans réel, la ligne vaut 0) ou rouvrir |
 
-**Deux genres d'ancre nouveaux** : `cost` (`card_costs`, résolu jusqu'à l'espace par son affaire) et `cost_actual`
-(`card_cost_actuals`, par sa ligne puis son affaire), comme `revenue` et `revenue_actual`.
+**Trois genres d'ancre nouveaux** : `cost` (`card_costs`, résolu jusqu'à l'espace par son affaire) et `cost_actual`
+(`card_cost_actuals`, par sa ligne puis son affaire), comme `revenue` et `revenue_actual` ; et `occurrence`
+(`budget_occurrences`, par son budget puis son track), parce que le moteur exige que **tout identifiant** passé à un
+outil soit une ancre déclarée (§6.2) : l'`occurrence_id` de `crm_card_cost_add` et de `crm_card_cost_update` est une
+ancre `autres` facultative. *Précision apportée en écrivant le code, sans changer la liste validée.*
 
 **Refus nommés** : `ligne soldee` et `reel derive` (les messages de la base, comme pour les recettes) ; l'occurrence
 exigée, interdite ou d'un autre budget, et le rattachement à un budget ou une occurrence clôturés (les fragments de

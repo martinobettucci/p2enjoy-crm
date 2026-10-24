@@ -1,6 +1,7 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : la matrice appliquée par le service, à la visibilité et à chaque appel
 # @spec CRM-108 (docs/BACKLOG.md) — tranche T4 : la famille `recettes`, les ancres `revenue` et `revenue_actual`
 #       (docs/SPEC-recettes.md §7, docs/SPEC-mcp.md §6.1, §9.1)
+# @spec CRM-104 (docs/BACKLOG.md) — tranche T4 : les genres d'ancre `cost`, `cost_actual` et `occurrence` (docs/SPEC-mcp.md §9.2 septies)
 # @spec CRM-114 (docs/BACKLOG.md) tranche T4 — la famille `organizations` dans la liste fermée (docs/SPEC-organisations.md §5)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T1 : le genre d'ancre `workflow` (docs/SPEC-mcp.md §9.2 quater, décision 656)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `activity` (docs/SPEC-mcp.md §9.2 ter, décision 655)
@@ -78,6 +79,15 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "activity": ("card_activities", "workspace_id", ("workspace_id",)),
     # `CRM-104` T1 : un workflow porte son espace.
     "workflow": ("workflows", "workspace_id", ("workspace_id",)),
+    # `CRM-104` T4 : une ligne de coût, et un coût réel, résolus jusqu'à l'espace par leur affaire (décision 669).
+    "cost": ("card_costs", "card:cards(workspace_id)", ("card", "workspace_id")),
+    "cost_actual": ("card_cost_actuals", "ligne:card_costs(card:cards(workspace_id))", ("ligne", "card", "workspace_id")),
+    # Une occurrence de budget, résolue par son budget puis son track : tout identifiant passé à un outil est une ancre.
+    "occurrence": (
+        "budget_occurrences",
+        "budget:budgets(track:tracks(workspace_id))",
+        ("budget", "track", "workspace_id"),
+    ),
 }
 #: Le libellé d'un objet dans un refus : le terme métier français.
 LIBELLES = {
@@ -93,6 +103,9 @@ LIBELLES = {
     "revenue_actual": "recette réelle",
     "activity": "activité",
     "workflow": "workflow",
+    "cost": "ligne de coût",
+    "cost_actual": "coût réel",
+    "occurrence": "occurrence de budget",
 }
 
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
