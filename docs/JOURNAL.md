@@ -33223,3 +33223,14 @@ l'espace). **Contre-preuve** : déclarée `IMMUTABLE`, la fonction est figée da
 personne sortie de l'espace. **Conséquence** : la forme optimisée est sûre à trois conditions, écrites dans
 `docs/SPEC-rattachements.md` §2 bis.3 bis et prouvées en T2 : fonction `STABLE` vérifiée au catalogue, aucun cache hors
 de la requête, preuve de fraîcheur dans pgTAP. **Persisté** : la spécification, `docs/mesures/CRM-111/04-…` et `05-…`.
+
+### décision 667 — `CRM-111` : la forme optimisée de la RLS pour les tables réécrites, la dette restante consignée
+
+*2026-10-24, arbitrages du responsable sur les mesures de T1 (`docs/SPEC-rattachements.md` §2 bis.4).*
+1. **La forme optimisée est adoptée**, une fois la fraîcheur des droits prouvée (question du responsable, §2 bis.3 bis) :
+   `app.readable_channel_ids()` `STABLE`, calculée une fois par requête, pour les politiques de lecture de
+   `card_placements`, `cards` et `card_field_values`, avec trois gardes prouvées en T2.
+2. **Le coût par ligne des autres tables filles reste hors de `CRM-111`**, contre la recommandation de l'agent (une unité
+   dédiée livrée avant) : la bascule T2 n'optimise que ce qu'elle réécrit déjà. La dette est consignée en INC-288.
+**Conséquences.** T1 est close `[x]` ; le §4 de la spécification et le contenu de T2 au backlog sont révisés. Aucune
+unité nouvelle. **Persisté** : `docs/SPEC-rattachements.md` §2 bis.4 et §4, `docs/BACKLOG.md` `CRM-111`, INC-288.

@@ -198,14 +198,16 @@ personne qui a perdu le droit, puis qui a quitté l'espace. D'où trois règles,
   dans une vue matérialisée ;
 - la preuve de fraîcheur, avec requêtes préparées sous plan générique, entre dans la suite pgTAP de la tranche T2.
 
-### 2 bis.4 Ce que les mesures changent à la spécification — soumis au responsable
+### 2 bis.4 Ce que les mesures changent à la spécification — arbitré le 2026-10-24 (décision 667)
 
-- **Le §4 proposait** que la politique de `cards` appelle une fonction `security definer` par ligne. La mesure la donne
-  2,2 fois plus lente que la politique livrée, déjà linéaire. **Proposition révisée** : les politiques de lecture de
-  `card_placements` et de `cards` prennent la forme optimisée du §2 bis.3. **À arbitrer.**
-- **Le coût par ligne de la politique livrée** dépasse `CRM-111` : `card_field_values`, `card_events` et les autres
-  tables filles appellent `app.can_read_card` à chaque ligne. **À arbitrer** : le traiter avant `CRM-111`, dans sa
-  tranche T2 pour les seules tables qu'elle réécrit, ou plus tard.
+- **Forme des politiques** : le §4 proposait une fonction `security definer` par ligne, 2,2 fois plus lente que la
+  politique livrée. **Arbitré : la forme optimisée du §2 bis.3**, avec les trois gardes du §2 bis.3 bis, pour
+  `card_placements`, `cards` et `card_field_values`. Le §4 est révisé en conséquence.
+- **Le coût par ligne des autres tables filles** (`card_events`, `card_comments`, `card_comment_mentions`,
+  `card_contacts`, `card_costs`, `card_revenues`, `card_activities`, `card_activity_participants`,
+  `card_sequence_enrollments`, `mail_messages`, `mail_outbox`, `notifications`), qui jugent par `app.can_read_card` à
+  chaque ligne : **arbitré, hors de `CRM-111`**. La tranche T2 n'optimise que les tables qu'elle réécrit déjà ; la
+  dette restante est consignée en **INC-288**, en attente d'une unité.
 
 ### 2 bis.5 Mode opératoire
 
@@ -307,10 +309,28 @@ Les champs exigés par une transition (`workflow_transition_required_fields`) et
 pas. Aucune fonction ne révèle le nombre total de rattachements d'une affaire à qui ne les lit pas tous.
 
 **Ce qui change dans la chaîne d'accès.** `app.can_read_card_pour` et `app.can_write_card` deviennent « il existe un
-rattachement dont le channel est lisible (ou écrivable) ». Les politiques de `cards` cessent de lire une colonne de la
-ligne : elles appellent une fonction `security definer` qui lit `card_placements`, une autre table. La règle du §3.5
-de `docs/SPEC-permissions-rls.md` — une politique ne relit jamais sa propre table — est donc respectée. **Le coût est à
-mesurer** en T1 (`EXPLAIN ANALYZE` du board et de la liste sur le seed) : c'est le chemin le plus emprunté du produit.
+rattachement dont le channel est lisible (ou écrivable) ».
+
+**Les politiques de lecture prennent la forme optimisée** (décision 667, mesures du §2 bis.3). La liste des channels
+lisibles par l'appelant est calculée **une fois par requête** par `app.readable_channel_ids()` — `STABLE`,
+`security definer`, qui applique `app.can_read_channel` à chaque channel —, puis chaque ligne lui est comparée :
+
+```sql
+-- card_placements
+using (channel_id in (select unnest(app.readable_channel_ids())))
+-- cards
+using (id in (select p.card_id from public.card_placements p
+              where p.channel_id in (select unnest(app.readable_channel_ids()))))
+-- card_field_values
+using (placement_id in (select p.id from public.card_placements p
+                        where p.channel_id in (select unnest(app.readable_channel_ids()))))
+```
+
+La politique de `cards` lit `card_placements`, une **autre** table : la règle du §3.5 de
+`docs/SPEC-permissions-rls.md` est respectée. **Trois gardes**, prouvées en T2 (§2 bis.3 bis) : la fonction est `STABLE`
+et un test pgTAP vérifie `provolatile = 's'` ; son résultat n'est jamais mis en cache hors de la requête ; une preuve de
+fraîcheur rejoue, en requêtes préparées sous plan générique, un retrait et un rendu de droit. Les politiques
+d'**écriture** restent jugées ligne à ligne : elles ne portent que sur la ligne écrite.
 
 **Conséquences pour les tables filles.**
 - `card_costs` garde sa double condition (affaire **et** budget, `docs/SPEC-costs.md` §3.1).

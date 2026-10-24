@@ -16095,7 +16095,7 @@ commune et un bloc par rattachement ; coûts, recettes et temps sont comptés un
 décision 658 — `card_placements`, `attach_card`, `detach_card`.
 
 - [x] **Spécification**, validée le 2026-10-24 (décision 662) : `docs/SPEC-rattachements.md` §1 à §16.
-- [~] **T1 — mesures, sans code livré** (§2, §4, §14) : liste exacte des fonctions, déclencheurs, politiques et
+- [x] **T1 — mesures, sans code livré** (§2, §4, §14) : liste exacte des fonctions, déclencheurs, politiques et
       appelants qui lisent une colonne quittant `cards` ; coût de la nouvelle RLS par `EXPLAIN ANALYZE` du board et de la
       liste, sur une copie jetable du seed. Résultats consignés dans la spécification ; tout écart à une **[proposition]**
       revient au responsable.
@@ -16103,11 +16103,15 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       `docs/mesures/CRM-111/`) : **31 fonctions** cassent au retrait des colonnes (`plpgsql_check`), plus trois politiques,
       une clé et un déclencheur ; **266 fichiers** appellent `cards` ou une fonction touchée. **La politique livrée coûte
       ~0,25 ms par ligne** (5 s pour un board de 20 000 affaires) ; la forme proposée au §4 la double ; une forme
-      optimisée, de même sémantique, la ramène à 16 ms (livrée) et 47 ms (rattachements). **Reste avant `[x]`** : deux
-      arbitrages du responsable (§2 bis.4).
+      optimisée, de même sémantique, la ramène à 16 ms (livrée) et 47 ms (rattachements). *Fraîcheur des droits prouvée*
+      (§2 bis.3 bis) : mêmes comptes que la forme livrée à six changements de droits, en requête préparée ; contre-preuve
+      `IMMUTABLE`. *Arbitré le 2026-10-24 (décision 667)* : forme optimisée pour `cards`, `card_placements` et
+      `card_field_values` en T2 ; le coût par ligne des autres tables filles reste hors de l'unité (INC-288).
 - [ ] **T2 — bascule, en un seul changement** (§3, §4, §5, §10) : migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
-      `card_sequence_enrollments`, invariants, politiques, retrait des colonnes de `cards` ; réécriture des fonctions du
+      `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses
+      trois gardes — volatilité `STABLE` vérifiée au catalogue, aucun cache, preuve de fraîcheur en requêtes préparées —,
+      retrait des colonnes de `cards` ; réécriture des **31 fonctions** du §2 bis.1 et des fonctions du
       §2 ; signatures du §5 **remplacées** (décision 661) ; types régénérés ; **tous** les appelants (webapp, connecteur,
       seed, scripts, pgTAP, API, E2E). Preuve : aucun changement visible, toute la suite existante verte, aucune
       ancienne signature au catalogue ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière

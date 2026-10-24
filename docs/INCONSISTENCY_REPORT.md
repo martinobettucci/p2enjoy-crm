@@ -7448,3 +7448,17 @@ même course. **Comportement laissé inchangé** : la correction touche le code 
 relevé. **Résolution proposée** : reproduire en unitaire la séquence focus → flèche, rétablir la sélection dans le même
 rendu que le changement de valeur (ou accepter la flèche quand le curseur est en bout de texte), et garder le scénario
 E2E comme preuve.
+
+### INC-288 — les politiques de lecture des tables filles d'une affaire évaluent les droits à chaque ligne
+
+*Relevé le 2026-10-24 par la session des rattachements multiples, en mesurant `CRM-111` T1 (`docs/SPEC-rattachements.md`
+§2 bis.3).* **Constat, mesuré sur une base jetable.** La politique livrée de `cards` appelle `app.can_read_channel` à
+chaque ligne : environ 0,25 ms par ligne, soit 542 ms pour un board de 2 027 affaires et 5,1 s pour 20 027. Douze tables
+filles jugent de la même façon, par `app.can_read_card` ou `app.can_read_channel` à chaque ligne : `card_events`,
+`card_comments`, `card_comment_mentions`, `card_contacts`, `card_costs`, `card_revenues`, `card_activities`,
+`card_activity_participants`, `card_sequence_enrollments`, `mail_messages`, `mail_outbox`, `notifications`. La même
+lecture appliquée à `goal_blocks` n'est pas mesurée. **Correction connue**, de même sémantique et prouvée : la forme
+optimisée et ses trois gardes (`docs/SPEC-rattachements.md` §2 bis.3 et §2 bis.3 bis). **Arbitrage rendu** (décision
+667) : `CRM-111` T2 ne l'applique qu'à `cards`, `card_placements` et `card_field_values`. **Comportement laissé
+inchangé** pour les douze autres tables, en attente d'une unité. **Hypothèse non vérifiée** : le volume réel de
+production, qui décide du moment où le coût deviendra visible.
