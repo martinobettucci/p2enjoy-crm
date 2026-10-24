@@ -57,8 +57,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -595,11 +595,14 @@ degrader_et_verifier \
 # défaut.
 titre "6. Restauration"
 
-if rejeu_complet_au_prochain_passage && docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
-	run --rm migrations-runner >"$TRAVAIL/rejeu.log" 2>&1; then
-	ok "le runner rejoue tout le répertoire, dans l'ordre livré — 0015, 0021, 0035, 0063 et 0077 compris"
+#
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : rejouer le répertoire sur la base peuplée ne restaure
+# plus — c'est rouge depuis `0099`. La base de développement est RECONSTRUITE (`scripts/lib/reconstruction.sh`,
+# docs/SPEC-test-harness.md §3.6) : le runner y construit tout le répertoire dans l'ordre, puis le seed.
+if reconstruire_base_dev >"$TRAVAIL/rejeu.log" 2>&1; then
+	ok "la reconstruction construit tout le répertoire dans l'ordre livré — 0015, 0021, 0035, 0063 et 0077 compris"
 else
-	fail "le runner ÉCHOUE à rejouer le répertoire : voir $TRAVAIL/rejeu.log"
+	fail "la reconstruction de la base ÉCHOUE : $(tail -n 1 "$TRAVAIL/rejeu.log")"
 fi
 
 for fichier in "$MIGRATION" "$TEST_SQL"; do

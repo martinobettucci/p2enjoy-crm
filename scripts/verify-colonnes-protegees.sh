@@ -47,8 +47,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -209,8 +209,11 @@ restaurer() {
 	# `scripts/verify-preuves-refus.sh` est devenue rouge sans aucun rapport avec les pièces
 	# jointes. Le diagnostic est sans ambiguïté : les conteneurs recréés nus ne citent qu'UN fichier
 	# dans `com.docker.compose.project.config_files`.
-	rejeu_complet_au_prochain_passage || true
-	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate migrations-runner >/dev/null 2>&1 || true
+	# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : le rejeu du répertoire entier sur la base peuplée
+	# ne restaure plus — il échoue depuis `0099`. La base de développement et ses dérivés sont RECONSTRUITS
+	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés. Un échec n'est pas
+	# masqué : son motif sort sur l'erreur standard, et la lecture de la card C1 qui suit l'arrête.
+	reconstruire_base_dev >/dev/null || true
 	psql_db -c "update public.cards set description = null, next_action = 'Relancer la DSI après la démo'
 	             where id = '$CARD_C1';" >/dev/null 2>&1 || true
 	psql_db -c "delete from public.cards where title like 'tst-crm013%';" >/dev/null 2>&1 || true

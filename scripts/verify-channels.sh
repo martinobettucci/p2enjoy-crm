@@ -40,8 +40,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -78,14 +78,11 @@ rejouer_migrations() {
 # `authenticated` pouvait donc écrire `channels.deleted_by` par un `PATCH` direct — falsifier
 # l'audit de mise en corbeille livré par `CRM-077` —, et l'état persistait jusqu'au prochain rejeu
 # complet du répertoire. Le diff d'empreinte tenait en une ligne : `> priv:authenticated:UPDATE`.
-#
-# `--force-recreate` est nécessaire — le `migrations-runner` est un conteneur à usage unique —, et
-# l'appel porte `--env-file` et les DEUX fichiers de composition (`docs/CloudWorker.md` §2.2 bis,
-# décisions 471 et 497) : un appel nu recréerait `storage` et `db` sans les surcharges `dev`.
 restaurer_etat_courant() {
-	rejeu_complet_au_prochain_passage || return 1
-	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
-		up --force-recreate migrations-runner
+	# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : rejouer le répertoire sur la base peuplée ne
+	# restaure plus — c'est rouge depuis `0099`. La base de développement et ses dérivés sont RECONSTRUITS
+	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés.
+	reconstruire_base_dev
 }
 DB_CONTAINER=p2enjoy-db
 
@@ -242,9 +239,9 @@ fi
 restaurer_etat_courant >/dev/null 2>&1
 apres=$(empreinte)
 if [ "$avant" = "$apres" ]; then
-	ok "le runner complet rend l'empreinte à l'octet près : structure, politiques et privilèges"
+	ok "la reconstruction rend l'empreinte à l'octet près : structure, politiques et privilèges"
 else
-	fail "l'empreinte reste dérivée APRÈS rejeu complet du répertoire"
+	fail "l'empreinte reste dérivée APRÈS reconstruction de la base"
 fi
 if ! printf '%s' "$apres" | grep -q 'priv:authenticated:UPDATE'; then
 	ok "après restauration, l'UPDATE de table reste révoqué : \`deleted_by\` n'est pas écrivable par un membre"
@@ -454,7 +451,8 @@ else
 	ok "unicité déplacée au workspace : un slug homonyme dans un autre track est refusé à tort"
 fi
 
-# d. Restauration **constatée**, et non supposée. Par le runner complet, seule forme qui ne
+# d. Restauration **constatée**, et non supposée. Par reconstruction depuis `CRM-111` T1 bis — avant, par le
+# runner complet —, seule forme qui ne
 # vieillisse pas (§3.5, INC-200) : la paire manuelle laissait l'`UPDATE` de table rouvert.
 restaurer_etat_courant >/dev/null 2>&1 || true
 schema_degrade=false

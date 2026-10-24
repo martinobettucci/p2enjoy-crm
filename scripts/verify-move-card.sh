@@ -59,8 +59,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -82,9 +82,10 @@ MIGRATION_FILE=supabase/migrations/0012_move_card.sql
 # est rejouée SEULE — c'est ce qui prouve qu'elle se réapplique —, puis le runner rejoue tout le
 # répertoire dans l'ordre livré et rend son code de sortie.
 restaurer_etat_courant() {
-	rejeu_complet_au_prochain_passage || return 1
-	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
-		run --rm migrations-runner >/tmp/p2enjoy-move-card-runner.log 2>&1
+	# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : rejouer le répertoire sur la base peuplée ne
+	# restaure plus — c'est rouge depuis `0099`. La base de développement et ses dérivés sont RECONSTRUITS
+	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés.
+	reconstruire_base_dev
 }
 
 rejouer_migration() {
@@ -688,7 +689,7 @@ titre '8. Les suites complètes'
 # `0051` rendait « 3 affaires figées au lieu de 4 », `0058` voyait l'affaire de son refus (g) changer
 # d'état. Le contrôle du §7 ne relevait que l'étape. Le seed, convergent, est donc rejoué : c'est lui
 # qui pose l'ancienneté de démonstration (docs/SPEC-seed.md §9.12).
-restaurer_etat_courant || fail 'le runner échoue à restaurer le répertoire — voir /tmp/p2enjoy-move-card-runner.log'
+restaurer_etat_courant || fail 'la reconstruction de la base échoue — motif ci-dessus'
 ./supabase/seed/apply-seed.sh >/tmp/p2enjoy-move-card-seed.log 2>&1 \
 	|| fail 'le seed échoue à rétablir les données — voir /tmp/p2enjoy-move-card-seed.log'
 if npm run test:sql >/tmp/p2enjoy-move-card-sql.log 2>&1; then

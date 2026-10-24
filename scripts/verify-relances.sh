@@ -22,8 +22,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 DB_CONTAINER=p2enjoy-db
 MIGRATION=supabase/migrations/0053_cards_figees.sql
@@ -620,9 +620,10 @@ echo "7 ter. Le répertoire de migrations se rejoue sur une base qui porte « st
 # COMPLAISANT — il l'a été, et c'est la dégradation volontaire de la migration 44 qui l'a montré.
 # Le verdict est donc lu sur l'ÉTAT du conteneur, seul endroit où le `psql` du runner l'écrit.
 rejouer_repertoire() {
-	rejeu_complet_au_prochain_passage || return 1
-	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
-		up --force-recreate migrations-runner >"$TRAVAIL/runner.log" 2>&1
+	# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : rejouer le répertoire sur la base peuplée ne
+	# restaure plus — c'est rouge depuis `0099`. La base de développement et ses dérivés sont RECONSTRUITS
+	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés.
+	reconstruire_base_dev
 	[ "$(docker inspect p2enjoy-migrations --format '{{.State.ExitCode}}')" = '0' ]
 }
 
@@ -654,12 +655,13 @@ vocabulaire_courant() {
 		   and c.conname  = 'card_events_type_check';"
 }
 
-lignes_stalled=$(psql_db -c "select count(*) from public.card_events where type = 'stalled';")
-if [ "$lignes_stalled" -gt 0 ]; then
-	ok "témoin : la base porte $lignes_stalled ligne(s) « stalled » — le rejeu a de quoi buter"
-else
-	fail "témoin ABSENT : aucune ligne « stalled », ce contrôle ne prouverait rien"
-fi
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289). Ce contrôle prouvait que le répertoire entier se
+# REJOUE sur une base peuplée dont le vocabulaire a été réduit sous des lignes `stalled`. Ce rejeu n'est plus
+# un invariant (décision 675) : il échoue depuis `0099`, mesuré, et une base ne reçoit plus jamais qu'une base
+# neuve dans l'ordre ou le delta de son registre. Le témoin des lignes `stalled`, qui justifiait le rejeu, est
+# donc RETIRÉ ; la double garde d'INC-144 reste exigée de chaque migration, statiquement, par
+# `scripts/verify-migrations.sh` §7. Ce qui reste prouvé ici : la dégradation est effacée par la
+# reconstruction, qui rend le vocabulaire entier et la contrainte VALID.
 
 VOCABULAIRE_ATTENDU=$(vocabulaire_courant)
 if printf '%s' "$VOCABULAIRE_ATTENDU" | grep -q '\bstalled\b'; then
@@ -678,15 +680,15 @@ psql_db -c "alter table public.card_events drop constraint card_events_type_chec
 restauration_due=true
 
 if rejouer_repertoire; then
-	ok "le répertoire entier se rejoue sans erreur sur une base au vocabulaire réduit"
+	ok "la reconstruction efface le vocabulaire réduit : base neuve, runner en 0"
 else
-	fail "le rejeu du répertoire ÉCHOUE — les migrations suivantes ne s'appliquent plus"
-	sed 's/^/        /' "$TRAVAIL/runner.log" | tail -n 12
+	fail "la reconstruction ÉCHOUE après réduction du vocabulaire"
+	docker logs p2enjoy-migrations 2>&1 | tail -n 12 | sed 's/^/        /'
 fi
 
 vocabulaire=$(vocabulaire_courant)
 if [ "$vocabulaire" = "$VOCABULAIRE_ATTENDU" ]; then
-	ok "le vocabulaire est rendu ENTIER par le rejeu, à la valeur près de la référence relevée"
+	ok "le vocabulaire est rendu ENTIER par la reconstruction, à la valeur près de la référence relevée"
 else
 	fail "vocabulaire non rendu — attendu « $VOCABULAIRE_ATTENDU », obtenu « $vocabulaire »"
 fi
@@ -696,10 +698,10 @@ if [ "$(psql_db -c "select convalidated from pg_constraint
 	  and conname  = 'card_events_type_check';")" = 't' ]; then
 	ok "la contrainte redevient VALID : elle garde les écritures à venir, et non les seules futures"
 else
-	fail "la contrainte reste NOT VALID après le rejeu"
+	fail "la contrainte reste NOT VALID après la reconstruction"
 fi
 
-# Le rejeu du répertoire remet le job de la 54 à son amorçage de dix secondes (§9.7) : la même
+# La reconstruction remet le job de la 54 à son amorçage de dix secondes (§9.7) : la même
 # promotion immédiate qu'après toute application de cette migration, sans quoi la section 8
 # constaterait une cadence qui n'est pas celle du produit. L'appel est DIRECT et non `promouvoir_job`,
 # qui ne fait rien tant que `MIGRATION_COURANTE` n'est pas la 54 — ici elle est revenue à la 53.

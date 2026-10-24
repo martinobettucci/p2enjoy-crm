@@ -37,8 +37,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -71,13 +71,12 @@ MIGRATION_DROITS_FINS=supabase/migrations/0010_droits_fins.sql
 # `scripts/verify-channels.sh` portait le même défaut sur `public.channels`, que la 37 traite dans
 # le même geste ; les deux sont corrigés ensemble.
 #
-# `--force-recreate` est nécessaire — le `migrations-runner` est un conteneur à usage unique —, et
-# l'appel porte `--env-file` et les DEUX fichiers de composition (`docs/CloudWorker.md` §2.2 bis,
-# décisions 471 et 497) : un appel nu recréerait `storage` et `db` sans les surcharges `dev`.
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : le rejeu complet du répertoire sur la base peuplée ne
+# restaure plus — il échoue depuis `0099`. La restauration RECONSTRUIT la base de développement et ses dérivés
+# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6) : répertoire construit dans l'ordre par le
+# vrai runner, puis seed. Les jetons déjà obtenus restent valables : Keycloak n'est pas touché.
 restaurer_etat_courant() {
-	rejeu_complet_au_prochain_passage || return 1
-	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
-		up --force-recreate migrations-runner
+	reconstruire_base_dev
 }
 DB_CONTAINER=p2enjoy-db
 
@@ -250,9 +249,9 @@ fi
 restaurer_etat_courant >/dev/null 2>&1
 apres=$(empreinte_tracks)
 if [ "$avant" = "$apres" ]; then
-	ok "le runner complet rend l'empreinte à l'octet près : structure, contraintes, politiques et privilèges"
+	ok "la reconstruction rend l'empreinte à l'octet près : structure, contraintes, politiques et privilèges"
 else
-	fail "l'empreinte reste dérivée APRÈS rejeu complet du répertoire"
+	fail "l'empreinte reste dérivée APRÈS reconstruction de la base"
 	diff <(printf '%s\n' "$avant") <(printf '%s\n' "$apres") | sed 's/^/        /' || true
 fi
 if ! printf '%s' "$apres" | grep -q 'authenticated=arw'; then
@@ -261,14 +260,10 @@ else
 	fail "l'UPDATE de table sur tracks subsiste après restauration : l'audit de corbeille est falsifiable"
 fi
 
-# Le `migrations-runner` rejoue **tout** le répertoire à chaque démarrage : c'est lui, et non
-# `psql`, qui décide si la pile démarre.
-if rejeu_complet_au_prochain_passage && docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
-		run --rm migrations-runner >/dev/null 2>&1; then
-	ok "le migrations-runner rejoue le répertoire complet et se termine en 0"
-else
-	fail "le migrations-runner échoue : la pile ne redémarrerait pas"
-fi
+# RETIRÉ PAR `CRM-111` T1 bis (décision 682) : ce contrôle prouvait que le runner rejoue le répertoire entier
+# sur la base peuplée. Ce n'est plus un invariant (décision 675) — c'est rouge depuis `0099`, mesuré. Ce qui le
+# remplace est prouvé une fois pour tout le dépôt par `scripts/verify-migrations.sh` §2 : une base neuve se
+# construit dans l'ordre, et chaque fichier se rejoue sur l'état qu'il vient de produire.
 
 # --- 3. Convergence du seed --------------------------------------------------------------------
 

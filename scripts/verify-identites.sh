@@ -14,8 +14,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -49,15 +49,11 @@ appliquer_migration() {
 # qui recrée `app.handle_new_user` — fonction que `0077` retire depuis. Famille d'INC-142, INC-213 et
 # INC-250 : une migration dépassée rejouée isolément laisse la base dans un état qu'aucune migration
 # ne produit. Le retour à l'état courant passe donc par le `migrations-runner` sur TOUT le répertoire,
-# comme `verify-droits-fins.sh` depuis INC-213 (docs/SPEC-test-harness.md §3.5), avec `--env-file` et
-# les deux fichiers de composition (décisions 471 et 497).
+# comme `verify-droits-fins.sh` depuis INC-213 (docs/SPEC-test-harness.md §3.5).
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : ce rejeu complet ne restaure plus — il échoue depuis
+# `0099`. La base de développement est RECONSTRUITE (`scripts/lib/reconstruction.sh`, §3.6), puis seedée.
 restaurer() {
-	set +e
-	appliquer_migration >/dev/null 2>&1
-	rejeu_complet_au_prochain_passage
-	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
-		up --force-recreate migrations-runner >/dev/null 2>&1
-	set -e
+	reconstruire_base_dev >/dev/null 2>&1
 }
 
 cleanup() {

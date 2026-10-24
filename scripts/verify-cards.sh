@@ -49,8 +49,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -80,13 +80,13 @@ TEST_FILE=supabase/tests/0012_cards.test.sql
 # différable ; SQL et API devenaient rouges après le harnais. Le vrai runner est la seule liste
 # exhaustive et le seul ordre autorisés. `run --rm` attend son code avant toute mesure suivante.
 TRAVAIL=$(mktemp -d)
-RUNNER_LOG="$TRAVAIL/migrations-runner.log"
 
 # Rejoue le véritable runner complet et attend sa terminaison.
 rejouer_migrations() {
-	rejeu_complet_au_prochain_passage || return 1
-	docker compose -f docker-compose.yml -f docker-compose.dev.yml \
-		run --rm migrations-runner >"$RUNNER_LOG" 2>&1
+	# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : rejouer le répertoire sur la base peuplée ne
+	# restaure plus — c'est rouge depuis `0099`. La base de développement et ses dérivés sont RECONSTRUITS
+	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés.
+	reconstruire_base_dev
 }
 DB_CONTAINER=p2enjoy-db
 

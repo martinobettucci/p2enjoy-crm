@@ -43,8 +43,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -198,9 +198,10 @@ empreinte() {
 # (`docs/CloudWorker.md` §2.2 bis, décisions 471 et 497) : un appel nu recréerait `storage` et `db`
 # sans les surcharges `dev`.
 restaurer_etat_courant() {
-	rejeu_complet_au_prochain_passage || return 1
-	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
-		up --force-recreate migrations-runner
+	# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : rejouer le répertoire sur la base peuplée ne
+	# restaure plus — c'est rouge depuis `0099`. La base de développement et ses dérivés sont RECONSTRUITS
+	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés.
+	reconstruire_base_dev
 }
 
 # Rend le NOM des éléments d'empreinte qui diffèrent entre deux relevés. Comparer deux sommes
@@ -267,7 +268,7 @@ restaurer_etat_courant >/dev/null 2>&1
 apres=$(empreinte)
 [ "$avant" = "$apres" ] \
 	&& ok "le rejeu COMPLET du répertoire rend l'empreinte à l'octet près : sept fonctions et quatre politiques" \
-	|| fail "l'empreinte reste dérivée APRÈS rejeu complet du répertoire : « $(elements_derives "$avant" "$apres") »"
+	|| fail "l'empreinte reste dérivée APRÈS reconstruction de la base : « $(elements_derives "$avant" "$apres") »"
 
 titre "3. Le seed est convergent, et pose exactement quatre droits fins"
 

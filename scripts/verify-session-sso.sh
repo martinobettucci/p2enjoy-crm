@@ -67,8 +67,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -128,9 +128,10 @@ psql_admin() { docker exec -i "$DB_CONTAINER" psql -U supabase_admin -d postgres
 # `ouvrir_session_sso` côte à côte et rendait ses appels ambigus. Le runner rejoue tout, dans l'ordre,
 # chaque migration sous son rôle déclaré — `0074` comprise, élevée.
 appliquer_migrations_dev() {
-	rejeu_complet_au_prochain_passage || return 1
-	docker compose --env-file "$ENV_FILE" -f docker-compose.yml -f docker-compose.dev.yml \
-		run --rm migrations-runner >"$WORK/runner.log" 2>&1
+	# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : rejouer le répertoire sur la base peuplée ne
+	# restaure plus — c'est rouge depuis `0099`. La base de développement et ses dérivés sont RECONSTRUITS
+	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés.
+	reconstruire_base_dev
 }
 
 role_a_rendre=false
@@ -149,7 +150,7 @@ cleanup() {
 		attribuer_verified bizdev || { echo "RESTAURATION IMPOSSIBLE : rendre « verified » à bizdev@$DOMAINE" >&2; status=1; }
 	fi
 	if [ "$restore_needed" = true ]; then
-		appliquer_migrations_dev || { echo "RESTAURATION IMPOSSIBLE : rejouer le runner complet (voir $WORK/runner.log)" >&2; status=1; }
+		appliquer_migrations_dev || { echo "RESTAURATION IMPOSSIBLE : reconstruire la base (scripts/lib/reconstruction.sh)" >&2; status=1; }
 	fi
 	docker rm -f "$BASE_NEUVE" >/dev/null 2>&1 || true
 	rm -rf -- "$WORK"
@@ -367,7 +368,7 @@ fi
 # 4. Non-complaisance : chaque dégradation doit rendre la suite rouge
 # =================================================================================================
 echo
-echo "4. Non-complaisance (chaque dégradation est restaurée par le runner complet)"
+echo "4. Non-complaisance (chaque dégradation est restaurée par reconstruction de la base)"
 
 degrader() {
 	local libelle=$1 role=$2 sql=$3

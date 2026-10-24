@@ -10,8 +10,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 DB_CONTAINER=p2enjoy-db
 MIGRATION=supabase/migrations/0019_transition_required_fields.sql
@@ -67,9 +67,10 @@ appliquer_migration() {
 # (`docs/CloudWorker.md` §2.2 bis, décisions 471 et 497) : un appel nu recréerait `storage` et `db`
 # sans les surcharges `dev`.
 restaurer_etat_courant() {
-	rejeu_complet_au_prochain_passage || return 1
-	docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
-		up --force-recreate migrations-runner
+	# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : rejouer le répertoire sur la base peuplée ne
+	# restaure plus — c'est rouge depuis `0099`. La base de développement et ses dérivés sont RECONSTRUITS
+	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés.
+	reconstruire_base_dev
 }
 
 restaurer_liaison_copie() {
@@ -269,9 +270,9 @@ fi
 restaurer_etat_courant >/dev/null 2>&1
 apres=$(empreinte)
 if [ "$avant" = "$apres" ]; then
-	ok "le runner complet rend l'empreinte à l'octet près : schéma, politiques, trigger et fonctions"
+	ok "la reconstruction rend l'empreinte à l'octet près : schéma, politiques, trigger et fonctions"
 else
-	fail "l'empreinte reste dérivée APRÈS rejeu complet du répertoire"
+	fail "l'empreinte reste dérivée APRÈS reconstruction de la base"
 fi
 identites_apres=$(identites_structurelles)
 if [ "$identites_avant" = "$identites_apres" ]; then

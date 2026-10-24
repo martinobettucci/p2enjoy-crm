@@ -45,8 +45,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -499,11 +499,16 @@ fi
 	# `scripts/verify-preuves-refus.sh` est devenue rouge sans aucun rapport avec les pièces
 	# jointes. Le diagnostic est sans ambiguïté : les conteneurs recréés nus ne citent qu'UN fichier
 	# dans `com.docker.compose.project.config_files`.
-if rejeu_complet_au_prochain_passage && docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml up --force-recreate migrations-runner >"$TRAVAIL/rejeu_complet.log" 2>&1 &&
-	! grep -q "ERROR" "$TRAVAIL/rejeu_complet.log"; then
-	ok "le répertoire entier se rejoue sur une base peuplée (INC-144)"
+#
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : ce contrôle prouvait que le répertoire entier se rejoue
+# sur une base PEUPLÉE (INC-144). Ce n'est plus un invariant (décision 675) — c'est rouge depuis `0099`,
+# mesuré. La restauration RECONSTRUIT la base de développement (`scripts/lib/reconstruction.sh`,
+# docs/SPEC-test-harness.md §3.6) ; la double garde d'INC-144 reste exigée de chaque migration, statiquement,
+# par `scripts/verify-migrations.sh` §7, et l'idempotence de chaque fichier sur son propre état par son §2.
+if reconstruire_base_dev >"$TRAVAIL/rejeu_complet.log" 2>&1; then
+	ok "la reconstruction efface le vocabulaire réduit : base neuve construite dans l'ordre, seedée"
 else
-	fail "le rejeu complet du répertoire ÉCHOUE : voir $TRAVAIL/rejeu_complet.log"
+	fail "la reconstruction de la base ÉCHOUE : $(tail -n 1 "$TRAVAIL/rejeu_complet.log")"
 fi
 
 # Le vocabulaire restauré est le COMPLET, celui de la dernière migration qui l'étend — pas les neuf

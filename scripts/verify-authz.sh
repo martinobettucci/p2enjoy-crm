@@ -49,8 +49,8 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-# shellcheck source=scripts/lib/registre.sh
-source scripts/lib/registre.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/sso.sh
 source scripts/lib/sso.sh
@@ -252,13 +252,17 @@ fi
 # `docker compose run --rm` est **synchrone** et rend le code de sortie du rejeu qu'il vient de
 # lancer. C'est déjà le procédé de `scripts/verify-tracks.sh` : ce n'est pas une invention, c'est
 # l'alignement du plus ancien des deux sur le plus sûr.
-if rejeu_complet_au_prochain_passage && docker compose -f docker-compose.yml -f docker-compose.dev.yml \
-	run --rm migrations-runner >/tmp/p2enjoy-authz-runner.log 2>&1
+#
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 682, INC-289) : rejouer le répertoire entier sur la base peuplée ne
+# restaure plus — c'est rouge depuis `0099`, et ce n'est plus un invariant (décision 675). La restauration
+# RECONSTRUIT la base de développement (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6) :
+# le vrai runner construit le répertoire dans l'ordre sur une base neuve, de façon synchrone, puis le seed.
+if reconstruire_base_dev >/tmp/p2enjoy-authz-reconstruction.log 2>&1
 then
-	ok "le migrations-runner rejoue le répertoire complet et se termine avec le code 0"
+	ok "la reconstruction rend une base neuve, construite dans l'ordre par le runner, et seedée"
 else
-	fail "migrations-runner s'est terminé avec un code non nul"
-	tail -10 /tmp/p2enjoy-authz-runner.log | sed 's/^/        /'
+	fail "la reconstruction de la base échoue"
+	tail -10 /tmp/p2enjoy-authz-reconstruction.log | sed 's/^/        /'
 fi
 
 # Et la base est bien celle que le répertoire complet produit, pas un état intermédiaire : la
@@ -268,20 +272,21 @@ qual_tracks=$(psql_db -c "
 	  join pg_class c on c.oid = p.polrelid
 	 where c.relname = 'tracks' and p.polname = 'tracks_lecture_membre';")
 if printf '%s' "$qual_tracks" | grep -q 'resolve_track_access'; then
-	ok "le rejeu laisse la base à l'état complet : les droits fins de CRM-012 sont appliqués"
+	ok "la reconstruction laisse la base à l'état complet : les droits fins de CRM-012 sont appliqués"
 else
-	fail "le rejeu laisse une base intermédiaire : tracks_lecture_membre vaut « $qual_tracks »"
+	fail "la reconstruction laisse une base intermédiaire : tracks_lecture_membre vaut « $qual_tracks »"
 fi
 
-# LE CONTRÔLE QUI COMPTE, AJOUTÉ LE 2026-08-29 (décision 554). Le rejeu du répertoire COMPLET doit
+# LE CONTRÔLE QUI COMPTE, AJOUTÉ LE 2026-08-29 (décision 554), RÉVISÉ PAR `CRM-111` T1 bis : la base
+# reconstruite doit rendre les fonctions telles qu'elles étaient. Avant, le rejeu du répertoire COMPLET devait
 # rendre le schéma `app` exactement tel qu'il était : c'est la propriété dont `CRM-087` a besoin
 # pour rejouer les migrations en production, et c'est elle qu'INC-239 a trouvée en défaut sur les
 # DONNÉES. Ici on l'éprouve sur les FONCTIONS, à l'octet près, sur les 77 fichiers du répertoire.
 empreinte_finale=$(empreinte_fonctions)
 if [ "$avant" = "$empreinte_finale" ]; then
-	ok "le rejeu du répertoire COMPLET rend l'empreinte initiale des fonctions du schéma app"
+	ok "la reconstruction rend l'empreinte initiale des fonctions du schéma app"
 else
-	fail "le rejeu du répertoire complet ne rend PAS l'empreinte initiale des fonctions du schéma app"
+	fail "la reconstruction ne rend PAS l'empreinte initiale des fonctions du schéma app"
 	diff <(printf '%s\n' "$avant") <(printf '%s\n' "$empreinte_finale") | head -20 | sed 's/^/        /'
 fi
 
