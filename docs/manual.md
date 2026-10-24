@@ -4835,9 +4835,20 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   faut la rouvrir d'abord. Deux devises ne s'additionnent jamais. **Aucun outil ne supprime une ligne ni une dépense** —
   le CRM ne saurait que les détruire —, et **créer, modifier ou clôturer un budget** reste un geste de l'écran.
 
+- **Temps** — *livré en développement par `CRM-104`, tranche T5* :
+  - *Consulter* : vos saisies de temps sur une période de trois mois au plus — ou celles d'une personne nommée, ou de
+    tout l'espace, que seul un administrateur peut lire —, chacune avec son jour et sa cible ; le rapport valorisé,
+    minutes et coût par personne et cible, comme le rapport mensuel de l'écran « Temps » ;
+  - *Modifier* : poser les minutes d'un jour sur une cible — un track, un channel ou une affaire —, comme une case de
+    la grille : la case est créée ou remplacée, et **0 la vide**. Par quarts d'heure, sept heures au plus par jour.
+
+  Vous saisissez votre propre temps ; un administrateur peut saisir celui d'un membre, **désigné par son nom**. Le coût
+  du personnel — les taux — reste un geste de l'écran. Deux devises ne s'additionnent jamais, et une minute sans taux
+  est comptée à part, jamais à zéro.
+
 ### 11.6 Ce que le connecteur n'offre pas encore
 
-Les outils des autres familles — temps, objectifs, messagerie — suivent, une famille après
+Les outils des autres familles — objectifs, messagerie — suivent, une famille après
 l'autre. D'ici là, une case cochée pour l'une d'elles n'ouvre aucun outil.
 
 ## Annexe A — Ce que contient l'espace de démonstration

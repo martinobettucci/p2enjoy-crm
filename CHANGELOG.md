@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-104` T5 — le connecteur MCP tient le temps passé (décisions 671 et 672)
+
+*En développement. Aucune migration ; il faudra reconstruire l'image `mcp` à la livraison.*
+
+- **Trois outils** dans la famille « Temps » : lire ses saisies d'une période (ou celles d'un membre, pour un
+  administrateur), lire le rapport valorisé, et poser une case de la grille — 0 la vide.
+- **Le coût du personnel** reste un geste de l'écran.
+
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*

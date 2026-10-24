@@ -15511,9 +15511,21 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
       - **Livrée en production le 2026-10-24** (révision `bf45dc14`, image `mcp` reconstruite, `verifier.sh` 26/27 —
         compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[~]`** : le constat du responsable.
-- [ ] **T5** — `temps` : lire ses saisies et le rapport valorisé, poser une case de la grille (0 la vide, geste
+- [~] **T5** — `temps` : lire ses saisies et le rapport valorisé, poser une case de la grille (0 la vide, geste
       `modifier`) — décision 671 ; coût du personnel laissé à l'écran. Liste au `docs/SPEC-mcp.md` §9.2 *octies*,
-      **validée le 2026-10-24** (décision 672).
+      **validée le 2026-10-24** (décision 672). **Implémentée et vérifiée en développement le 2026-10-24.**
+      - `mcp/crm_mcp/outils/temps.py` : les trois outils ; la personne résolue par son nom parmi les membres ; période
+        bornée à 93 jours ; une seule cible ; la case lue puis créée, remplacée ou vidée ; le rapport ramené aux tracks
+        de l'espace, montants par devise, minutes sans taux à part ; refus nommés `daily_limit`,
+        `saisies_temps_minutes_check`, `entry_not_allowed`.
+      - Unitaires `test_temps.py` **5** ; **quinze mutations tuées sur quinze**. Intégration `test_integration_temps.py`
+        contre la vraie pile (jour de preuve en 2030, hors du seed) : poser, remplacer, lire, rapport, plafond et saisie
+        pour autrui refusés par le CRM, vider la case ; la lectrice sans `modifier` fermée par la matrice ; les cases du
+        seed de Driss intactes. `verify-mcp.sh` **82/82**.
+      - E2E `connecteur-temps.spec.ts` **1/1** (la case du connecteur dans « Votre semaine »), capture observée ;
+        `SCENARIOS_UI=918`.
+      - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
+      - **Reste `[~]`** : la livraison, avec la reconstruction de l'image `mcp`.
 - [ ] **T6** — `objectifs`.
 - [ ] **T7** — `messagerie`.
 
