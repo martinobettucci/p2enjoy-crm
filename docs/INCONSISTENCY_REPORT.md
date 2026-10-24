@@ -7524,6 +7524,11 @@ construire MinIO depuis ses sources, ou changer de stockage S3 local. **Recomman
 pointer les deux fichiers Compose sur une image construite dans le dépôt depuis `bitnamilegacy/minio:2025.4.22`
 (même binaire, mesuré), puis décider du stockage durable.
 
+**Arbitrage rendu le 2026-10-24 (décision 679) : corriger dans le dépôt, pour le développement.** `docker-compose.dev.yml`
+construit les deux images MinIO depuis un Dockerfile du dépôt fondé sur `bitnamilegacy/minio:2025.4.22`, et
+`scripts/verify-stack.sh` suit. `docker-compose.spark.yml`, l'assemblage de production, n'est pas modifié : la question
+de son alignement reste posée au responsable.
+
 ### INC-291 — `./runDev.sh` s'arrête sous Compose 5 : `bake` exige un droit pour lire le paquet CA monté en secret
 
 *Relevé le 2026-10-24 par la même session.* **Constat, mesuré** sous Docker Compose `v5.6.1` et buildx `v0.38.1` : la
@@ -7536,6 +7541,9 @@ constat** : les trois constructions résolvent leurs images de base en parallèl
 inchangé** ; étranger à `CRM-113`. **Issue retenue par la session** (`docs/CloudWorker.md` §4.1 bis, correction évidente,
 hors de son unité) : la consigner dans `docs/CloudWorker.md` pour les sessions planifiées ; la correction de
 `runDev.sh` lui-même — passer le droit à `bake` ou exporter la variable — revient à une unité d'outillage.
+
+**Arbitrage rendu le 2026-10-24 (décision 679) : corriger dans le dépôt.** `runDev.sh` exporte
+`BUILDX_BAKE_ENTITLEMENTS_FS=0` avant de construire, et `docs/CloudWorker.md` §2.1 *quater* ne le demande plus.
 
 ### INC-292 — une réponse `204` de la fonction `session` devient parfois un `503` de Kong : une erreur de console fait rougir un scénario étranger
 
@@ -7574,3 +7582,7 @@ latérale, le fil, la recherche, la cloche et le nom de la personne connectée, 
 Clinique Saint-Ambroise » reçoit le reste. Soit le seuil de la preuve est trop strict pour ce palier, soit l'ordre de
 sacrifice du `docs/DESIGN_SYSTEM.md` §12.2 n'est plus appliqué à ce palier. **Comportement laissé inchangé**, aucune
 preuve assouplie. **Relève de `CRM-110`** (fil d'Ariane), décision du responsable sur le seuil ou l'ordre de sacrifice.
+
+**Arbitrage rendu le 2026-10-24 (décision 679) : option (b).** Entre `lg` et `xl`, le nom de la personne
+connectée passe en `sr-only` : l'avatar reste, le nom reste annoncé, et l'adresse reste en infobulle. Le seuil de
+120 px de la preuve est gardé. `docs/DESIGN_SYSTEM.md` §12.2 est révisé dans le même changement que le code.

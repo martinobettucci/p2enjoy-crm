@@ -33436,3 +33436,51 @@ un diagnostic, `git status | head -5 && ls docs/CloudWorker.md; wc -l docs/Cloud
 modification, mais pas ce diagnostic, alors que la consigne de la tâche planifiée veut la lecture **avant tout
 diagnostic**. Cet ordre ne peut pas être réparé après coup. **Pour les sessions suivantes** : la première action est la
 lecture intégrale du fichier, sans commande avant ; on ne vérifie sa présence que si cette lecture échoue.
+
+### décision 679 — Arbitrages du responsable du 2026-10-24 : `CRM-113` tout en anglais et insensible à la casse ; INC-293 par l'en-tête ; INC-290 et INC-291 corrigées dans le dépôt
+
+*Réponses du responsable aux quatre questions de fin de session, rendues le 2026-10-24 dans une session interactive.*
+
+**1. `CRM-113`, les choix de forme du `docs/SPEC-ia.md` §14 — refusés sur deux points.**
+- **« Tout anglais comme la consigne, et l'application traduit à l'affichage. »** La décision 677 gardait en français
+  les clés `libelle` et `probabilite` de l'étape, pour ne pas mêler deux langues dans le format `version: 1`. Ce choix
+  est renversé. **Lecture retenue** : tout ce que `CRM-113` introduit est en anglais (`docs/DAT.md` §12 bis), y compris
+  ce qui étend un contrat existant. Les clés nouvelles de l'étape deviennent `label` et `probability`. L'enveloppe
+  `valeurs` des deux codes nouveaux devient `{key}` (`step_probability_invalid`) et `{key, native}` (`native_field`).
+  **Restent inchangées**, parce qu'elles existaient avant l'unité et qu'aucun objet existant ne se renomme au passage
+  (`CLAUDE.md`, « La langue des identifiants ») : `noeud`, `initiale`, le `libelle` et la `probabilite` d'un **nœud**,
+  et la clé `cle` des trente-quatre codes existants. Le lot d'INC-286 les migrera. L'écran traduit les codes et
+  `native`, comme avant.
+- **« Juste changer la casse ne peut pas suffire à faire une nouvelle entrée. »** La décision 677 comparait les
+  libellés casse comprise. **Retenu** : la comparaison ignore la casse (et les espaces de bord), et ce, partout.
+  Une différence de casse seule n'est jamais un changement :
+  - un libellé égal à celui du nœud, à la casse près, ne crée pas de surcharge (`null`) ;
+  - face à une étape conservée dont la surcharge vivante ne diffère du libellé proposé que par la casse, la
+    surcharge vivante est gardée telle quelle ;
+  - le différentiel de l'écran ne compte pas l'étape comme modifiée ;
+  - « Utiliser le nœud du catalogue » ne reporte pas un libellé qui ne diffère du catalogue que par la casse.
+- La question du connecteur MCP reste tranchée : **non**, la génération par IA n'y est pas exposée.
+- **Où.** La migration `0102` n'est pas livrée en production (`docs/PROD_MIGRATIONS.md` §3.2). Elle est donc
+  **révisée sur place**, plutôt que recouverte par une migration nouvelle qui ferait passer le format par deux formes
+  jamais livrées. Révisés en même temps : la fonction `ia`, le simulateur, l'écran, le seed, et les preuves de T1 à T3.
+
+**2. Livraison de `CRM-113` en production (T4) : le responsable s'en charge.**
+
+**3. INC-293 : option (b).** Le titre de route ne cède pas, un occupant de l'en-tête cède plus tôt.
+**Retenu** : entre `lg` et `xl` (1024 à 1279 px), le **nom de la personne connectée** passe en `sr-only`. L'avatar
+reste, le nom est encore annoncé (`docs/DESIGN_SYSTEM.md` §12.3 : masqué visuellement, jamais retiré), et l'adresse
+reste en infobulle sur l'identité. Le seuil de 120 px de la preuve est **gardé**. **Écarté** : assouplir la preuve
+(option a). Connecteur MCP : sans objet, c'est une règle de présentation.
+
+**4. INC-290 et INC-291 : corrigées dans le dépôt.**
+- **INC-290** : `docker-compose.dev.yml` construit les deux images MinIO depuis un Dockerfile du dépôt fondé sur
+  `bitnamilegacy/minio:2025.4.22`, qui porte le même binaire (mesuré, `commit-id=0d7408fc…`). `scripts/verify-stack.sh`
+  suit. **Production** : `docker-compose.spark.yml` n'est **pas** modifié dans ce changement. C'est l'assemblage de
+  production, et la question posée au responsable portait sur l'environnement de développement. Il reste à décider
+  s'il doit suivre (question posée dans le compte rendu). La dette de maintenance d'un dépôt gelé est consignée au
+  `docs/DAT.md`.
+- **INC-291** : `runDev.sh` exporte `BUILDX_BAKE_ENTITLEMENTS_FS=0` avant de construire. `docs/CloudWorker.md` §2.1
+  *quater* n'a donc plus à le demander.
+
+**Persisté avant le code** : ce journal ; `docs/SPEC-ia.md` §14 ; `docs/BACKLOG.md` (`CRM-113` T5, révision) ;
+`docs/INCONSISTENCY_REPORT.md` (INC-290, INC-291 et INC-293, arbitrage rendu).

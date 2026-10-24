@@ -16081,7 +16081,12 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
       - **Reste `[~]`** : les choix de forme marqués au `docs/SPEC-ia.md` §14 attendent la relecture du responsable ;
         une campagne d'interface verte d'un bout à l'autre attend la correction d'INC-292.
 - [ ] **T4** — livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp
-      reconstruite ; constat.
+      reconstruite ; constat. **Le responsable s'en charge** (décision 679) ; elle attend T5.
+- [ ] **T5** — révision de la décision 679 (arbitrages du responsable du 2026-10-24), avant toute livraison : les clés
+      de l'étape deviennent `label` et `probability`, l'enveloppe des deux codes nouveaux `{key}` et `{key, native}` ;
+      les libellés se comparent sans la casse, partout (surcharge, surcharge vivante gardée, différentiel, « Utiliser le
+      nœud du catalogue »). `0102` révisée sur place, fonction `ia`, simulateur, écran, seed ; pgTAP, API, unitaires,
+      E2E et captures rejoués ; `docs/SPEC-ia.md` §14 révisé avant le code.
 
 ### CRM-114 — Organisations : les créer et les modifier depuis l'écran `[~]`
 *Créée le 2026-10-24 — décision 660, arbitrage du responsable.* `CRM-060` a nommé « aucune création d'organisation »

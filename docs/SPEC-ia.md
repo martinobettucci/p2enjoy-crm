@@ -147,8 +147,9 @@ fixé par la tranche T1 (§11.5), versionné (`version: 1`).
 > la forme et normalise les clés, et les défauts de toute révision sont écrits par le trigger de création.
 > Le paragraphe ci-dessus décrit la règle, plus son lieu.
 
-> **Révisé par `CRM-113`, le 2026-10-23 (§14.3).** Une étape porte aussi `libelle` et `probabilite`, facultatifs :
-> son nom affiché et sa probabilité effective, écrits en surcharge quand ils diffèrent de ceux du nœud.
+> **Révisé par `CRM-113`, le 2026-10-23 (§14.3), puis le 2026-10-24 (décision 679).** Une étape porte aussi `label`
+> et `probability`, facultatifs : son nom affiché et sa probabilité effective, écrits en surcharge quand ils diffèrent
+> de ceux du nœud.
 
 ## 7. L'écran
 
@@ -684,10 +685,10 @@ l'appelant.
 ### 14.3 Le format : l'étape porte son libellé et sa probabilité (révision du §6.1)
 
 ```
-"etapes": [ { "noeud": cle, "initiale": booléen, "libelle": texte | null, "probabilite": 0–100 | null } ]
+"etapes": [ { "noeud": cle, "initiale": booléen, "label": texte | null, "probability": 0–100 | null } ]
 ```
 
-`libelle` est le **nom affiché** de l'étape ; `probabilite`, sa **probabilité effective**. Les deux clés sont
+`label` est le **nom affiché** de l'étape ; `probability`, sa **probabilité effective**. Les deux clés sont
 facultatives dans la forme. Le « nœud de l'étape » désigne le nœud proposé de même clé s'il existe, sinon le nœud
 du catalogue.
 
@@ -695,24 +696,27 @@ du catalogue.
 
 | Valeur proposée | Effet sur `label_override` (resp. `probability_override`) |
 |---|---|
-| un texte (resp. un nombre) **différent** du libellé (resp. de la probabilité par défaut) du nœud de l'étape | la surcharge vaut cette valeur |
+| un texte (resp. un nombre) **différent** du libellé (resp. de la probabilité par défaut) du nœud de l'étape | la surcharge vaut cette valeur — sauf pour une **étape conservée** dont la surcharge vivante n'en diffère que par la casse : elle est gardée telle quelle |
 | un texte (resp. un nombre) **égal** à celui du nœud | aucune surcharge : `null` |
 | clé absente, `null` ou texte blanc — **étape nouvelle** | aucune surcharge : `null` |
 | clé absente, `null` ou texte blanc — **étape conservée** (§13.1) | la surcharge vivante est **gardée** |
 
-Les textes sont comparés sans leurs espaces de bord, à la casse près ; les nombres, en valeur.
+Les textes sont comparés sans leurs espaces de bord et **sans tenir compte de la casse** ; les nombres, en valeur.
+Une différence de casse seule n'est jamais un changement (décision 679).
 
-> **Précisé par `CRM-113` T1, le 2026-10-24 (décision 677).** « À la casse près » s'entend comme « au centime près » :
-> la comparaison est **exacte, casse comprise**. Un libellé qui ne diffère que par la casse est un autre nom affiché,
-> et il surcharge. La règle vit en un seul endroit, `app.ai_step_overrides`, appelée par les deux acceptations. Le seul moyen de
+> **Révisé le 2026-10-24 par le responsable (décision 679), qui renverse la lecture de la décision 677.** La décision
+> 677 comparait les libellés casse comprise : un libellé qui ne différait que par la casse surchargeait. Le responsable
+> l'a refusé : « juste changer la casse ne peut pas suffire à faire une nouvelle entrée ». La comparaison ignore donc
+> la casse, ici comme dans le différentiel de l'écran et dans « Utiliser le nœud du catalogue » (§14.7). La règle vit
+> en un seul endroit, `app.ai_step_overrides`, appelée par les deux acceptations. Le seul moyen de
 retirer une surcharge est donc de proposer le libellé ou la probabilité du nœud. Un modèle qui omet ou annule la
 clé ne retire rien. C'est voulu : un petit modèle omet ou annule plus volontiers qu'il ne recopie.
 
 **Ce que la base vérifie** :
 
-- **La forme** (trigger de révision, §12.1) : `libelle` est `null` ou un texte, et `probabilite` est `null` ou un
+- **La forme** (trigger de révision, §12.1) : `label` est `null` ou un texte, et `probability` est `null` ou un
   nombre. Sinon, `22023` « proposition mal formée ».
-- **Un défaut s'ajoute**, `step_probability_invalid` (`cle`) : une probabilité d'étape non nulle hors de 0 à 100.
+- **Un défaut s'ajoute**, `step_probability_invalid` (`key`) : une probabilité d'étape non nulle hors de 0 à 100.
   Il est rendu après `etape_initiale`.
 
 > **Révisé par `CRM-113` T1, le 2026-10-24 (décision 677).** Cette section nommait en français les trois objets
@@ -723,15 +727,22 @@ clé ne retire rien. C'est voulu : un petit modèle omet ou annule plus volontie
 > appartiennent à un contrat existant que le lot 4 d'INC-286 migrera d'un bloc : les clés `libelle` et `probabilite` du
 > format `version: 1`, qui nomment la même notion que sur un nœud, et la clé `cle` de l'enveloppe `valeurs`, commune
 > aux trente-quatre codes existants.
+>
+> **Révisé le 2026-10-24 par le responsable (décision 679) : « tout anglais comme la consigne, et l'application
+> traduit à l'affichage ».** Tout ce que `CRM-113` introduit est en anglais, y compris ce qui étend un contrat
+> existant : les clés de l'étape deviennent `label` et `probability`, et l'enveloppe des deux codes nouveaux devient
+> `{key}` et `{key, native}`. Restent inchangées les clés qui existaient avant l'unité : `noeud`, `initiale`, le
+> `libelle` et la `probabilite` d'un nœud, et la clé `cle` des trente-quatre codes existants. Le lot d'INC-286 les
+> migrera.
 
 ### 14.4 La composition vivante rend les noms effectifs (révision du §13.2)
 
-`public.proposition_du_workflow` rend, pour chaque étape, `libelle` (la surcharge, sinon le libellé du nœud) et
-`probabilite` (la surcharge, sinon la probabilité par défaut du nœud). Le modèle voit donc l'étape telle que
+`public.proposition_du_workflow` rend, pour chaque étape, `label` (la surcharge, sinon le libellé du nœud) et
+`probability` (la surcharge, sinon la probabilité par défaut du nœud). Le modèle voit donc l'étape telle que
 l'écran la montre. Il garde un nom surchargé en le recopiant, et la règle du §14.3 ne réécrit rien.
 
-**Le différentiel de l'écran** (§13.6) compte comme **modifiée** une étape conservée dont le libellé ou la probabilité
-effective change.
+**Le différentiel de l'écran** (§13.6) compte comme **modifiée** une étape conservée dont le libellé (casse ignorée)
+ou la probabilité effective change.
 
 **L'acceptation** applique la règle du §14.3 :
 
@@ -758,7 +769,7 @@ Le seuil d'ancienneté (`stale_after_days`) reste hors du format et suit le §13
 champ natif ne s'exige pas ici, et il ne crée pas de champ pour le contourner. Cette liste est une donnée statique
 du produit, et non une donnée du CRM : le §3 reste tenu.
 
-**Le défaut `native_field`** (`cle`, `native`) est rendu après `champ_en_double`. Il relève un champ **nouveau** dans
+**Le défaut `native_field`** (`key`, `native`) est rendu après `champ_en_double`. Il relève un champ **nouveau** dans
 l'un de ces deux cas :
 
 - sa clé appartient à la liste réservée ;
@@ -790,14 +801,14 @@ transmis au modèle (§12.6). L'écran traduit `native` par une clé de traducti
 ### 14.6 La fonction `ia`
 
 - **Règles** (`REGLES`), deux ajouts :
-  - pour une étape dont le **rôle** existe au catalogue, viser ce nœud et mettre le nom voulu dans le `libelle` de
+  - pour une étape dont le **rôle** existe au catalogue, viser ce nœud et mettre le nom voulu dans le `label` de
     l'étape ; ne déclarer un nœud que si aucun nœud du catalogue ne joue ce rôle ;
   - les champs natifs du §14.5.
 - **Le catalogue envoyé** porte aussi la probabilité par défaut de chaque nœud : `- cle — libelle (nature, 30 %)`.
   Le modèle peut ainsi ne surcharger que ce qui diffère.
-- **Le schéma de sortie structurée** exige `libelle` et `probabilite` sur chaque étape, `null` permis, pour la
+- **Le schéma de sortie structurée** exige `label` et `probability` sur chaque étape, `null` permis, pour la
   raison écrite au §13.5 à propos de `remappages`.
-- **La mise en forme** (`proposition.ts`) garde `libelle` (texte sans ses espaces de bord, ou `null`) et `probabilite`
+- **La mise en forme** (`proposition.ts`) garde `label` (texte sans ses espaces de bord, ou `null`) et `probability`
   (nombre ou `null`). Toute autre forme est une `reponse_invalide`, comme pour `remappages`.
 - **Le simulateur** gagne le scénario `catalogue` (développement seul). Il rend une création qui :
   - vise un nœud du catalogue du seed sous un libellé surchargé ;
@@ -807,11 +818,11 @@ transmis au modèle (§12.6). L'écran traduit `native` par une clé de traducti
 
 ### 14.7 L'écran (révision du §12.5 ; règles visuelles : `docs/DESIGN_SYSTEM.md` §5.52, révisé avant le code)
 
-- **Le nom d'une étape** dans l'aperçu est son `libelle` s'il est renseigné, sinon celui de son nœud.
+- **Le nom d'une étape** dans l'aperçu est son `label` s'il est renseigné, sinon celui de son nœud.
 - **Corriger à la main** gagne, pour **toute** étape, son libellé et sa probabilité. Un libellé vidé revient à celui
   du nœud.
 - **« Utiliser le nœud du catalogue »** retire le nœud proposé, comme avant, mais reporte sur l'étape :
-  - son libellé, s'il diffère de celui du nœud du catalogue ;
+  - son libellé, s'il diffère de celui du nœud du catalogue autrement que par la casse ;
   - sa probabilité, si elle diffère de la probabilité par défaut du catalogue.
 
   L'annonce dit que le nom est gardé. L'écran lit à cette fin la probabilité par défaut du catalogue
@@ -822,12 +833,14 @@ transmis au modèle (§12.6). L'écran traduit `native` par une clé de traducti
 ### 14.8 Preuves
 
 - **pgTAP** :
-  - la forme : `libelle` et `probabilite` mal typés refusés ;
+  - la forme : `label` et `probability` mal typés refusés ;
   - les défauts `step_probability_invalid` et `native_field` : par la clé, par le libellé normalisé, une clé voisine
     qui passe, un champ vivant conservé non relevé ;
   - `app.reserved_native_fields()` ;
   - l'acceptation d'une création : surcharge posée, égalité qui rend `null` ;
   - l'acceptation d'une modification : clé absente qui garde, valeur différente qui pose, égalité qui retire ;
+  - la casse (décision 679) : un libellé égal au nœud à la casse près ne surcharge pas, et une surcharge vivante qui
+    n'en diffère que par la casse est gardée ;
   - `proposition_du_workflow` qui rend les noms effectifs.
 - **API, aux jetons réels** :
   - une correction portant un libellé d'étape, acceptée, puis `workflow_steps.label_override` relu ;
@@ -864,4 +877,5 @@ transmis au modèle (§12.6). L'écran traduit `native` par une clé de traducti
 | **T1** | Base : une migration (`0102`) — forme, `step_probability_invalid`, `native_field` et `app.reserved_native_fields()`, acceptation (création et `app.document_cible_ia`), `proposition_du_workflow` ; pgTAP ; `docs/SCHEMA.md` ; contrat de déploiement |
 | **T2** | Fonction `ia` : règles, catalogue avec probabilité, schéma, mise en forme, scénario `catalogue` du simulateur ; unitaires, API |
 | **T3** | Écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; nom et probabilité d'étape éditables, bouton qui garde le nom, différentiel, traductions ; unitaires, E2E, captures, manuel, seed |
-| **T4** | Livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp reconstruite ; constat |
+| **T4** | Livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp reconstruite ; constat. Le responsable s'en charge (décision 679) |
+| **T5** | Révision de la décision 679, avant toute livraison : clés `label` et `probability`, enveloppe `{key}` des codes nouveaux, comparaison des libellés sans la casse — `0102` révisée sur place, fonction `ia`, simulateur, écran, seed, preuves de T1 à T3 |
