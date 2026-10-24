@@ -33083,3 +33083,17 @@ depuis la migration `0076`, et rien ne couvrait le reste. **Arbitrages**, tous c
 `detach_card`, `placement_ambiguous`. **Persisté** : `docs/DAT.md` §12 bis, `docs/SCHEMA.md` (« Conventions
 générales »), `CLAUDE.md` (« Spécificités du projet »), INC-286 (arbitrage et plan), `docs/SPEC-rattachements.md` §3.1,
 §11 et §15.
+
+### décision 659 — la question du connecteur MCP en appelle une seconde : une permission distincte ?
+
+*2026-10-24, consigne du responsable.* **Problème.** La règle de la décision 627 (consigne du 2026-10-23) demande, avant
+de spécifier toute fonctionnalité, si elle doit aussi exister dans le connecteur MCP. Elle ne demande pas sous quelle
+permission. Le rangement dans une famille existante de la matrice (`docs/SPEC-mcp.md` §6.1) restait implicite, alors
+qu'il décide qui pourra s'en servir : une personne à qui l'on ouvre `structure:modifier` pour les tracks recevrait, sans
+qu'on le lui demande, tout ce qui serait rangé dans la même case. **Décision.** Une deuxième question est posée
+**toujours**, avec la première : si la fonctionnalité entre dans le connecteur, relève-t-elle d'une **permission
+distincte**, donc d'une **famille nouvelle** avec sa propre ligne de cases, ou d'une famille existante dont elle partage
+les cases ? Précédent : `recettes`, famille propre plutôt qu'une extension de `budgets` (décision 632). **Conséquences.**
+Une famille nouvelle entraîne une migration de la liste fermée (§6.1, §7.1) et sa phrase dans l'onglet « Connecteur
+MCP » ; les deux réponses sont écrites dans la spécification de l'unité et committées avant le code. Aucun code ni
+comportement ne change. **Persisté** : `CLAUDE.md` (« Spécificités du projet »), `docs/SPEC-mcp.md` §16.

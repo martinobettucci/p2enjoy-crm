@@ -1032,17 +1032,26 @@ Toute règle suffisamment générale pour être utile à plusieurs dépôts doit
 `docs/SPEC-mcp.md`), qui permet à un assistant, Claude ou ChatGPT, de piloter le CRM au nom d'une personne.
 
 **Avant de spécifier toute fonctionnalité nouvelle ou modifiée**, qu'il s'agisse d'une unité de backlog ou d'une tranche,
-demander au responsable si elle doit **aussi exister dans le connecteur MCP**.
+poser au responsable **deux questions**, toujours toutes les deux :
 
-- **Si oui** : la spécification de l'unité le dit, et nomme la famille et l'action de la matrice concernées
-  (`docs/SPEC-mcp.md` §6.1). L'outil s'inscrit au catalogue de `CRM-104` (`docs/SPEC-mcp.md` §9.2), ou dans une tranche
-  dédiée si `CRM-104` est déjà livrée.
+1. **La fonctionnalité doit-elle aussi exister dans le connecteur MCP ?**
+2. **Si oui, relève-t-elle d'une permission distincte dans la matrice du connecteur** (`docs/SPEC-mcp.md` §6.1), donc
+   d'une **famille nouvelle** avec sa propre ligne de cases, ou d'une **famille existante**, dont elle partage les
+   cases ? Précédent : les recettes ont reçu leur propre famille, `recettes`, plutôt que d'entrer dans `budgets`
+   (décision 632). *Consigne du responsable, 2026-10-24 (`docs/JOURNAL.md`, décision 659).*
+
+- **Si oui, dans une famille existante** : la spécification de l'unité le dit, et nomme la famille et l'action de la
+  matrice concernées (`docs/SPEC-mcp.md` §6.1). L'outil s'inscrit au catalogue de `CRM-104` (`docs/SPEC-mcp.md` §9.2), ou
+  dans une tranche dédiée si `CRM-104` est déjà livrée.
+- **Si oui, dans une famille nouvelle** : la spécification nomme la famille et sa portée, et prévoit la migration qui
+  l'ajoute à la liste fermée en base (`docs/SPEC-mcp.md` §6.1, §7.1), ainsi que sa ligne dans l'onglet « Connecteur
+  MCP ».
 - **Si non** : la spécification le dit aussi, en une phrase, pour que la question ne se repose pas.
-- **Une fonctionnalité qui n'entre dans aucune famille** demande une décision du responsable : une famille nouvelle
-  exige une migration, car la liste est fermée en base.
+- **Une fonctionnalité qui n'entre dans aucune famille existante** ne s'y range jamais implicitement : la deuxième
+  question est alors posée explicitement, et la réponse est une décision du responsable.
 
-La réponse est consignée et committée avec la spécification, avant le code (§5, « Persistance immédiate des
-décisions »).
+Les réponses aux deux questions sont consignées et committées avec la spécification, avant le code (§5, « Persistance
+immédiate des décisions »).
 
 ### La langue des identifiants : anglais pour les contrats, français pour le code
 

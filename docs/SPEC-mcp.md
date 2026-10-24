@@ -883,6 +883,12 @@ crm_card_list or crm_card_mine; crm_card_get gives the header, contacts and form
 
 **Règle permanente, 2026-10-23.** Pour ne plus rattraper l'écart après coup, `CLAUDE.md` (« Spécificités du projet »)
 impose désormais de demander au responsable, **avant de spécifier toute fonctionnalité**, si elle doit aussi exister dans
-le connecteur. La réponse est écrite dans la spécification de l'unité. L'inventaire du point 1 ne couvre donc que les
+le connecteur. La réponse est écrite dans la spécification de l'unité.
+
+**Complément, 2026-10-24 (décision 659).** Une deuxième question accompagne toujours la première : **si oui, la
+fonctionnalité relève-t-elle d'une permission distincte**, c'est-à-dire d'une **famille nouvelle** de la matrice (§6.1),
+avec sa propre ligne de cases, ou d'une famille existante dont elle partage les cases ? La réponse est écrite à côté de
+la première. Une famille nouvelle entraîne la migration de la liste fermée (§6.1, §7.1) et sa phrase dans l'onglet
+« Connecteur MCP » (§8.1), comme pour `recettes`. L'inventaire du point 1 ne couvre donc que les
 fonctionnalités antérieures à cette règle, ou celles pour lesquelles la question n'a pas été posée.
 
