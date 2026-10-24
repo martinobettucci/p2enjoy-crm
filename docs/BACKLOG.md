@@ -15494,7 +15494,7 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - **Reste `[~]`** : le constat du responsable.
 - [ ] **T4** — `budgets` : les lignes de coût d'une affaire, en miroir de `recettes` (décision 668) — quatre lectures,
       cinq écritures, genres d'ancre `cost` et `cost_actual`, aucune suppression, administration des budgets laissée à
-      l'écran. Liste proposée au `docs/SPEC-mcp.md` §9.2 *septies*, **en attente de validation**.
+      l'écran. Liste au `docs/SPEC-mcp.md` §9.2 *septies*, **validée le 2026-10-24** (décision 669).
 - [ ] **T5** — `temps`.
 - [ ] **T6** — `objectifs`.
 - [ ] **T7** — `messagerie`.

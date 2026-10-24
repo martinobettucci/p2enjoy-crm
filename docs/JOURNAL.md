@@ -33247,3 +33247,12 @@ budget et ses occurrences, qui restent des gestes de l'écran ; toute suppressio
 détruisant (A4). **Conséquence** : deux genres d'ancre nouveaux, `cost` et `cost_actual` ; aucune migration — la famille
 `budgets` existe déjà. Liste proposée au `docs/SPEC-mcp.md` §9.2 *septies*, à valider avant le code.
 
+
+### décision 669 — `CRM-104` T4 : la liste des outils `budgets` validée
+
+*2026-10-24, validation du responsable sur `docs/SPEC-mcp.md` §9.2 *septies* (commit `9e6976de`).* Les neuf outils sont
+retenus tels que proposés : `crm_budget_list` (ancre `track` facultative, prévu et réel cumulés par budget),
+`crm_budget_get` (occurrences et lignes), `crm_card_cost_list`, `crm_costs_to_enter`, `crm_card_cost_add` (budget exigé,
+occurrence si le budget est récurrent), `crm_card_cost_actual_add`, `crm_card_cost_update`, `crm_card_cost_actual_update`,
+`crm_card_cost_settle` ; genres d'ancre `cost` et `cost_actual` ; aucune suppression. Preuve E2E : une ligne ajoutée par
+le connecteur paraît dans la section « Coûts » de la fiche.

@@ -741,7 +741,7 @@ par le CRM malgré la matrice ouverte (la lectrice qui crée une organisation), 
 `organizations:consulter` ne rend aucune organisation ; et **E2E** : une organisation créée par le connecteur paraît dans
 l'onglet « Organisations ».
 
-### 9.2 septies Famille `budgets` — `CRM-104` T4 (liste **proposée**, en attente de validation ; périmètre arbitré par la décision 668)
+### 9.2 septies Famille `budgets` — `CRM-104` T4 (liste fixée, **validée le 2026-10-24**, décisions 668 et 669)
 
 **Neuf outils** : les lectures des budgets et des coûts, et les **lignes de coût d'une affaire**, en miroir de la famille
 `recettes` (§9.2 et `docs/SPEC-recettes.md` §7). Les mêmes tables que la webapp (`budgets.ts`, `couts-ecrans.ts`,
