@@ -1674,7 +1674,12 @@ partielle sur `lower(domain)` autorise plusieurs lignes à `NULL`.
   ce lien n'est jamais rendu, et la capture ne le montre pas ;
 - **Comptoir Vasseur, sans aucun contact**, est la seule qui exerce l'**état vide** de la liste de
   contacts de la fiche (§11.9, cas d). Sans elle, cet état n'est démontrable que contre une réponse
-  substituée, ce que `CLAUDE.md` §8 proscrit.
+  substituée, ce que `CLAUDE.md` §8 proscrit. Depuis `CRM-114`, elle est aussi l'organisation que
+  **seul l'onglet « Organisations »** rend atteignable, avec un compte de contacts à 0
+  (`docs/SPEC-organisations.md` §6) : la vraie route `/rest/v1/organizations` la crée déjà, et
+  `CRM-114` n'ajoute donc **aucune** organisation au seed. Les organisations que créent
+  `e2e/ui/organisations.spec.ts` et `e2e/api/organisations.spec.ts` sont effacées par leurs
+  scénarios.
 
 **Aucun compteur figé n'est déplacé, et c'est MESURÉ** : le seed compare `organizations_count` à la
 taille du tableau `ORGANIZATIONS_SEED` lui-même ; aucun `scripts/verify-*.sh` ne cite

@@ -1512,7 +1512,11 @@ SCENARIOS_API=1172
 # 80 files ».
 # **908 depuis `CRM-104` T3, 2026-10-24** : `connecteur-contacts.spec.ts`, fichier NEUF, **1** scénario — un contact créé
 # par un vrai client MCP paraît dans le carnet. 907 + 1 = 908, valeur COMPTÉE — « Total: 908 tests in 81 files ».
-SCENARIOS_UI=908
+# **915 depuis `CRM-114` T3, 2026-10-24** : `organisations.spec.ts`, fichier NEUF, **7** scénarios — les onglets du
+# carnet et Comptoir Vasseur atteinte par la liste, créer au clavier (domaine en double refusé, puis la fiche ouverte et
+# relue en base) puis modifier, la lectrice éteinte avec le motif, quatre paliers. 908 + 7 = 915, valeur COMPTÉE —
+# « Total: 915 tests in 82 files ».
+SCENARIOS_UI=915
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

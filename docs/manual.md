@@ -399,11 +399,17 @@ accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs en
 
 ### 3 ter. Le carnet de contacts
 
-*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e, 4f, 4g et 4h, et par la tranche 6. Décrit
-l'application réellement exécutée ; captures dans `docs/captures/CRM-060/`.*
+*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e, 4f, 4g et 4h, et par la tranche 6 ; l'onglet
+« Organisations », la création et la modification d'une organisation par `CRM-114`. Décrit
+l'application réellement exécutée ; captures dans `docs/captures/CRM-060/` et
+`docs/captures/CRM-114/`.*
 
 L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
 personnes avec qui vos affaires se traitent, et l'organisation à laquelle chacune appartient.
+
+Le carnet a **deux onglets**, en tête de page : **Contacts**, la liste des personnes, et
+**Organisations**, la liste des organisations (voir plus bas). Chaque onglet a sa propre adresse :
+vous pouvez l'ajouter à vos favoris ou la partager.
 
 Le carnet se présente en tableau, une ligne par contact, rangé par nom :
 
@@ -438,8 +444,8 @@ règle pas encore depuis un écran.
 
 #### La fiche d'une organisation
 
-Cliquer sur le nom d'une organisation, dans la colonne **Organisation** du carnet, ouvre sa
-**fiche**. C'est le seul chemin qui y mène : il n'existe pas de liste des organisations.
+Cliquer sur le nom d'une organisation, dans la colonne **Organisation** du carnet ou dans l'onglet
+**Organisations**, ouvre sa **fiche**.
 
 La fiche porte le **nom de l'organisation en titre**, puis deux blocs :
 
@@ -458,9 +464,65 @@ de lire donnent toutes le même écran** : « Organisation introuvable », avec 
 carnet. C'est délibéré — distinguer ces cas révélerait à quelqu'un sans droit qu'une organisation
 existe.
 
-**Ce que la fiche ne fait pas encore.** Elle ne permet ni de créer, ni de modifier, ni de supprimer
-une organisation, et elle ne montre pas les affaires de l'organisation. Le nom d'un contact, lui,
-**est désormais un lien** vers sa fiche.
+**Ce que la fiche ne fait pas.** Elle ne **supprime** pas une organisation — c'est délibéré : ses
+contacts perdraient leur organisation sans laisser de trace —, et elle ne montre pas les affaires de
+l'organisation. Le nom d'un contact, lui, est un lien vers sa fiche. Pour **modifier**
+l'organisation, voir « Modifier une organisation » ci-dessous.
+
+#### L'onglet « Organisations »
+
+L'onglet **Organisations** liste toutes les organisations de l'espace de travail, rangées par nom,
+**y compris celles qui n'ont encore aucun contact** : c'est le seul chemin qui mène à elles. Dans
+l'espace de démonstration, Comptoir Vasseur est dans ce cas.
+
+| Colonne | Ce qu'elle porte |
+|---|---|
+| Nom | Le nom de l'organisation. **C'est un lien** : il ouvre sa fiche |
+| Domaine | Son domaine, par exemple `sogexia.example`, lorsqu'il est renseigné |
+| Site web | L'adresse de son site, lorsqu'elle est renseignée. Ici ce n'est pas un lien : la fiche le porte |
+| Contacts | Le nombre de contacts du carnet rattachés à l'organisation |
+
+Comme partout dans le carnet, une valeur absente laisse la cellule **vide**. Sur un écran étroit, le
+tableau défile de côté dans son cadre ; la page, elle, ne défile jamais de côté. Lorsque l'espace ne
+compte aucune organisation, l'onglet le dit, et le bouton « Nouvelle organisation » reste offert.
+
+**Qui voit quoi.** Tout membre de l'espace lit l'onglet. **Créer et modifier** une organisation sont
+réservés aux **administrateurs** et aux **business developers** de l'espace : pour un compte en
+lecture seule, « Nouvelle organisation » et « Modifier » restent visibles mais grisés, avec le motif
+écrit au-dessus (section 3.6). Le serveur applique la même règle.
+
+#### Créer une organisation
+
+Le bouton **« Nouvelle organisation »**, au-dessus du tableau, ouvre un formulaire **dans la page**.
+Trois champs, et un seul est obligatoire :
+
+- **Nom** — obligatoire.
+- **Domaine** — facultatif. Minuscules, chiffres, tirets et points, par exemple `sogexia.fr`. Si
+  vous tapez des majuscules, le domaine est enregistré **en minuscules** : la casse d'un domaine ne
+  change rien.
+- **Site web** — facultatif. Une adresse commençant par `http://` ou `https://`.
+
+Après la création, **la fiche de la nouvelle organisation s'ouvre**. Vous pouvez ensuite lui
+rattacher des contacts depuis le carnet : en créant un contact, ou depuis la fiche d'un contact
+existant, avec « Modifier ».
+
+**Si la création est refusée**, le message le dit en clair, dans le formulaire, et **votre saisie
+est conservée** :
+
+- *« Ce domaine est déjà celui d'une autre organisation de l'espace. »* — un domaine est unique
+  dans l'espace de travail ;
+- *« Le domaine n'a pas la bonne forme… »* ou *« Le site web doit commencer par http:// ou
+  https://. »* — corrigez le champ et renvoyez ;
+- *« Le nom est requis. »* ;
+- *« Vous ne pouvez pas modifier les organisations de cet espace. »* — d'ordinaire, la commande est
+  déjà grisée ; ce message ne paraît que si vos droits ont changé entre-temps.
+
+#### Modifier une organisation
+
+Sur la fiche d'une organisation, le bouton **« Modifier »** remplace les caractéristiques par le
+même formulaire, **prérempli**. **Vider** le domaine ou le site web l'efface. « Enregistrer » relit
+la fiche à jour, et l'annonce « Organisation enregistrée » le confirme ; « Annuler » rend la fiche
+sans rien écrire. Les refus sont ceux de la création.
 
 #### La fiche d'un contact
 
@@ -675,7 +737,7 @@ Cinq champs, et un seul est obligatoire :
 
 - **Nom** — obligatoire. Un nom vide est refusé avant même l'envoi.
 - **Organisation** — au choix parmi celles de l'espace de travail, ou aucune. Le formulaire ne crée
-  pas d'organisation.
+  pas d'organisation : créez-la d'abord dans l'onglet **Organisations**.
 - **Fonction**, **Email**, **Téléphone** — facultatifs. Laissés vides, ils restent vides : le carnet
   n'écrit ni tiret ni « non renseigné ».
 

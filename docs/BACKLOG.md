@@ -16043,8 +16043,22 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
       - Unitaires : 13 sur la bibliothèque, 6 sur l'onglet, 3 de plus sur la fiche ; **huit mutations tuées sur
         huit**. API `organisations.spec.ts` **3/3** aux jetons réels.
       - Série unitaire **4314/4314**, typecheck et build verts ; harnais `SCENARIOS_API=1172`.
-      - **Reste `[~]`** : le constat visuel et l'E2E viennent avec T3.
-- [ ] **T3** — E2E, captures, seed, manuel, campagnes.
+      - **Reste `[~]`** : le constat visuel et l'E2E viennent avec T3 ; ils sont faits (T3 ci-dessous), et la tranche
+        attend la livraison (T5).
+- [~] **T3** — E2E, captures, seed, manuel, campagnes. **Implémentée et vérifiée en développement le 2026-10-24.**
+      - `e2e/ui/organisations.spec.ts` **7/7** : onglets du carnet et Comptoir Vasseur atteinte par la liste (0 contact),
+        création au clavier — domaine en double refusé par la base (409 consommé), puis la fiche ouverte et relue en
+        base, domaine mis en minuscules —, modification (site effacé, annonce, focus rendu), lectrice éteinte avec le
+        motif, aucun défilement horizontal aux quatre paliers. Captures `docs/captures/CRM-114/` **observées** : le
+        tableau défile dans son cadre à 390 px (§5.64), une valeur absente reste vide (§5.20).
+      - **Seed** : aucune organisation ajoutée — Comptoir Vasseur, sans contact, naît déjà par la vraie route
+        `/rest/v1/organizations` (`docs/SPEC-seed.md` §11).
+      - **Manuel** chapitre 3 *ter* (l'onglet, créer, modifier ; le formulaire du contact renvoie à l'onglet).
+      - Harnais : `SCENARIOS_UI=915` ; `verify-mcp.sh` et `verify-plateforme.sh` gagnent la garde Node/npm que
+        `verify-node-toolchain.sh` exige (anomalie antérieure, du 2026-10-20). Capture de `CRM-093`
+        (`droits-lectrice-notifications`) prise avant que la page ne soit peinte : le scénario attend désormais la
+        préférence rendue.
+      - **Reste `[~]`** : la livraison (T5).
 - [ ] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée. Liste au
       `docs/SPEC-mcp.md` §9.2 *sexies* ; `crm_search` filtre les organisations par `organizations:consulter`
       (décision 666).

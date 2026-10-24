@@ -1871,7 +1871,9 @@ CONTACT_ELISE='5eed0000-0000-4000-8000-000000000093'
 #     Sans ce `website`, ce lien n'est jamais rendu et la capture ne le montre pas ;
 #   * Studio Meunier n'a ni domaine ni site : ses deux valeurs restent VIDES (§11.9, cas b) ;
 #   * Comptoir Vasseur n'a AUCUN contact : elle seule exerce l'état vide de la liste de contacts
-#     (§11.9, cas d).
+#     (§11.9, cas d). Depuis CRM-114, c'est aussi l'organisation que SEUL l'onglet « Organisations »
+#     rend atteignable (aucun contact ne mène à elle) : `e2e/ui/organisations.spec.ts` la lit, avec
+#     son compte de contacts à 0 (docs/SPEC-organisations.md §6).
 #
 # AUCUN COMPTEUR FIGÉ N'EST DÉPLACÉ, et c'est MESURÉ : le contrôle ci-dessous compare à la taille
 # du tableau lui-même ; aucun `scripts/verify-*.sh` ne cite `organizations` ; les preuves d'API de
