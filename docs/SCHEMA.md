@@ -1980,6 +1980,28 @@ des spécifications antérieures gardent leur sens — le refus d'une suppressio
   vivante ; nœuds proposés au catalogue ; étapes nouvelles posées ; cœur appliqué ; renommage ;
   `version_retour_id` renseigné.
 
+### Migration `0102` — le générateur connaît l'affaire et le catalogue (`CRM-113` T1, décisions 646 et 677 ; livrée en développement le 2026-10-24)
+
+`docs/SPEC-ia.md` §14. Aucune table, aucune colonne, aucune donnée ne change ; deux fonctions s'ajoutent, cinq changent :
+
+- **`app.reserved_native_fields() returns table (key text, native_field text)`** — `immutable`, exécutable par
+  `authenticated` et `service_role` : les trente-cinq clés de champ réservées aux dix informations natives de l'affaire
+  (`title`, `description`, `owner`, `amount`, `currency`, `probability`, `next_action`, `next_action_at`, `contacts`,
+  `organization`). Une donnée statique du produit, révisée par migration.
+- **`app.ai_step_overrides(p_node uuid, p_step jsonb, p_label text, p_probability numeric, p_conserved boolean) returns
+  jsonb`** — la règle d'écriture du §14.3 : rend `{label_override, probability_override}` d'une étape contre son nœud ;
+  une valeur différente surcharge, une valeur égale (texte sans espaces de bord, casse comprise ; nombre en valeur) rend
+  `null`, une clé absente garde la surcharge vivante d'une étape conservée. Fermée à `anon` et `authenticated`.
+- **`app.proposition_ia_bien_formee`** admet `libelle` (texte ou `null`) et `probabilite` (nombre ou `null`) sur une
+  étape ; une révision antérieure reste bien formée.
+- **`app.defauts_proposition_ia`** relève `step_probability_invalid` (`cle`, après `etape_initiale`) et `native_field`
+  (`cle`, `native`, après `champ_en_double`) — ce dernier pour un champ nouveau seulement : un champ vivant du workflow
+  ciblé n'est jamais relevé.
+- **`public.proposition_du_workflow`** rend, pour chaque étape, `libelle` et `probabilite` effectifs (surcharge, sinon
+  nœud).
+- **`app.document_cible_ia`** (modification) et **`public.accepter_suggestion_ia`** (création) écrivent
+  `workflow_steps.label_override` et `probability_override` par `app.ai_step_overrides`.
+
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)

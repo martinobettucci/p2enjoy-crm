@@ -13,6 +13,21 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-113` T1 — le générateur de workflow connaît l'affaire et le catalogue : la base (migration 102)
+
+*Livrée en développement le 2026-10-24 ; la fonction `ia` (T2) et l'écran (T3) restent à livrer, et la migration part
+en production avec eux.*
+
+- **Une étape d'une suggestion porte son nom et sa probabilité** (`libelle`, `probabilite`, facultatifs) : à
+  l'acceptation, ils deviennent la surcharge de l'étape quand ils diffèrent de ceux du nœud, et ne surchargent rien
+  quand ils lui sont égaux. Dans une modification, une étape dont la suggestion ne dit rien garde ses surcharges.
+- **Un champ proposé qui doublonne une information que l'affaire porte déjà** — montant, responsable, organisation… —
+  est relevé par la base (`native_field`), par sa clé ou par son libellé, et bloque l'acceptation. Un champ qui existe
+  déjà dans un workflow n'est jamais relevé.
+- **Une probabilité d'étape hors de 0 à 100** est relevée (`step_probability_invalid`).
+- **La composition vivante d'un workflow**, envoyée au modèle et lue par l'écran, nomme chaque étape comme l'écran la
+  montre.
+
 ### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
