@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-111` T1 bis — les harnais restaurent en reconstruisant la base de développement (décision 682)
+
+*Outillage de développement : rien ne part en production.*
+
+- `scripts/lib/reconstruction.sh` : `reconstruire_base_dev` reconstruit la base de développement et ses seuls dérivés
+  (boîtes de Stalwart, état de `mail-sync`), construit le répertoire dans l'ordre par le vrai runner, rejoue le seed et
+  constate le registre et la santé de la pile — en une minute environ. Refus hors profil `dev`, verrou entre sessions.
+- `scripts/verify-reconstruction.sh` : 27 contrôles (refus sans rien arrêter, sentinelle effacée, conteneurs et volumes
+  conservés, seed convergent).
+
 ### `CRM-113` T5 — arbitrages du responsable (décision 679) : tout en anglais, la casse ignorée (migration 103)
 
 *Livrée en développement le 2026-10-24 ; part en production avec T1 à T3, migrations 102 puis 103 (le responsable s'en

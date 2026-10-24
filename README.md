@@ -211,6 +211,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-scripts.sh` | Rejoue les preuves des scripts : contrat `.env.example`, amorçage, gardes de profil | **disponible** |
 | `scripts/verify-crochets-git.sh` | Rejoue les preuves des crochets Git : commit et push refusés hors de `main` et en `HEAD` détaché, référence distante contrôlée, identité du responsable toujours exigée | **disponible** |
 | `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, idempotence, refus par défaut mesuré hors interface | **disponible** |
+| `scripts/verify-reconstruction.sh` | Éprouve la reconstruction de la base de développement par laquelle les harnais restaurent : refus hors profil `dev` et sous verrou sans rien arrêter, base neuve construite dans l'ordre, seuls la base et ses dérivés recréés, seed convergent (`CRM-111` T1 bis) | **disponible** |
 | `IA_SERVEUR_REEL=1 npm run e2e:api -- e2e/api/ia-reel.spec.ts` | Contrôle **facultatif** du contrat du serveur Ollama réel (`CRM-097`, `docs/SPEC-ia.md` §8) : une génération par le vrai modèle, une demi-minute à une minute. Ignoré sans la variable ; aucune campagne ne l'exécute | **disponible** |
 | `scripts/verify-registre-migrations.sh` | Éprouve le registre des migrations du runner sur un PostgreSQL jetable : adoption, delta, refus d'un fichier modifié, absent ou inséré dans le passé, migration en échec ni appliquée ni inscrite, chaque garde vue rouge sous dégradation (`CRM-096`) | **disponible** |
 | `scripts/verify-vault.sh` | Rejoue les preuves du chiffrement des secrets : extensions de l'image, chiffrement effectif, cloisonnement par rôle, cycle de vie de la clé racine | **disponible** |
@@ -558,6 +559,7 @@ scripts/verify-functions.sh    # fonctions edge : runtime, Kong, API et journaux
 scripts/verify-scheduler.sh    # pg_cron : passage, convergence et ACL               (CRM-017)
 scripts/verify-scripts.sh      # scripts de lancement et contrat d'environnement    (CRM-002)
 scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut          (CRM-003)
+scripts/verify-reconstruction.sh # reconstruction de la base de développement      (CRM-111)
 scripts/verify-vault.sh        # chiffrement des secrets de messagerie              (CRM-004)
 scripts/verify-authz.sh        # fonctions d'autorisation, jetons réels             (CRM-010)
 scripts/verify-session-sso.sh  # SSO seule identité : échangeur, sessions, admission  (CRM-092)
@@ -734,6 +736,7 @@ Livré à ce jour :
 │   ├── verify-sequences-ecran.sh  Preuves de l'écran des séquences et de l'armement
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
+│   ├── verify-reconstruction.sh Preuves de la reconstruction de la base de développement
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie
 │   ├── verify-authz.sh         Preuves rejouables des fonctions d'autorisation
 │   ├── verify-session-sso.sh   Preuves rejouables de la connexion par le seul SSO LeLabs
