@@ -1,6 +1,7 @@
 // @verifies CRM-022 (docs/BACKLOG.md) — identités exhaustives vues par une utilisatrice réelle
 // @verifies docs/SPEC-identite.md §7 (surfaces UI), §10 (preuve souris/clavier et captures)
 // @verifies docs/DESIGN_SYSTEM.md §7, §8, §11 — responsive, accessibilité, console silencieuse
+// @verifies CRM-110 — INC-293, décision 679 : l'adresse en infobulle sur l'identité de session entière (§5.12, §12.2)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 
@@ -29,7 +30,11 @@ test('Camille parcourt le board, la liste et la fiche avec toutes les identités
 
 	const session = page.getByTestId('identite-session')
 	await expect(session).toContainText('Camille Aubert')
-	await expect(session.getByText('Camille Aubert', { exact: true })).toHaveAttribute('title', ADMIN)
+	// RÉVISÉE PAR INC-293 (décision 679, CRM-110) : l'adresse en infobulle passe du nom à l'identité entière. Entre `lg`
+	// et `xl`, le nom est en `sr-only` pour laisser sa place au titre de route, et une infobulle posée sur lui ne
+	// s'ouvrirait plus au survol ; posée sur l'identité, elle reste sous l'avatar (docs/DESIGN_SYSTEM.md §5.12, §12.2).
+	await expect(session).toHaveAttribute('title', ADMIN)
+	await expect(session.getByText('Camille Aubert', { exact: true })).toBeVisible()
 	await expect(session.locator('img')).toHaveAttribute('src', '/avatars/camille-aubert.svg')
 
 	// Navigation de produit uniquement : le parcours ne tape aucune route interne et ne substitue

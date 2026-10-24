@@ -1114,7 +1114,8 @@ et la seconde voie « ou » de `CRM-091` quittent l'écran, qui ne porte plus qu
 - À partir de 768 px, la carte reste centrée dans les deux axes ; sous ce palier, elle occupe la
   largeur disponible avec 16 px de marge et reste alignée en haut.
 - L'en-tête connecté place l'identité de session — nom et avatar du profil, l'adresse en infobulle
-  et en repli — puis l'action discrète « Se déconnecter ». Sous 768 px, l'adresse passe en `sr-only`
+  sur l'identité entière et en repli — puis l'action discrète « Se déconnecter ». *Entre `lg` et `xl`, le nom passe en
+  `sr-only` pour laisser sa place au titre de route (§12.2, INC-293).* Sous 768 px, l'adresse passe en `sr-only`
   avant le titre de route ; l'action reste une cible d'au moins 40 px avec un libellé accessible
   complet. Se déconnecter ferme la session du CRM, pas celle de LeLabs (`docs/SPEC-session-sso.md`
   §8.5).
@@ -2914,6 +2915,15 @@ isolé en fin de ligne est retiré : il ne reste plus ni nom de produit ni conte
 prend sa propre ligne**, sous les commandes de l'en-tête (décision 641) ; **sous `md`**, tous les ancêtres sauf le
 parent immédiat passent dans le repli « … ». **Le titre de la route ne cède toujours jamais**, et chaque niveau masqué
 garde un point d'accès, le repli (§7).
+
+**RÉVISION DU 2026-10-24 — INC-293, option (b) du responsable (décision 679). ENTRE `lg` ET `xl`, LE NOM DE LA SESSION
+CÈDE.** À 1152 px, la ligne unique porte le fil, le champ de recherche, la cloche, l'avatar, le nom et « Se déconnecter » :
+le titre long d'une affaire n'y recevait plus que 105 px, sous le seuil de lisibilité de 120 px que la preuve mesure.
+Le nom de la personne connectée passe donc en `sr-only` de `lg` à `xl` (§12.3 : masqué, jamais retiré). L'avatar reste,
+et l'adresse reste en infobulle, posée désormais sur l'identité entière. À partir de `xl`, le nom est rendu ; sous `lg`,
+le fil a sa propre ligne et le nom reste. **Écarté** : abaisser le seuil de la preuve, qui aurait accepté un titre
+illisible. C'est la règle de ce paragraphe, appliquée à un nouvel occupant : quand la ligne manque de place, l'occupant
+qui cède est un de ceux que l'écran porte ailleurs — ici l'avatar, et l'adresse en infobulle.
 
 ### 12.3 Libellés masqués visuellement, jamais retirés — `CRM-007`
 

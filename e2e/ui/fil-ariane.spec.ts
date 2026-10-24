@@ -4,6 +4,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.62 (liens, titre, repli au clavier, Échap, panneau dans la fenêtre), §12.2 (ordre
 //           de sacrifice aux paliers), §5.46 (le fil cède à la recherche ouverte), §7 (aucun défilement horizontal)
 // @verifies CLAUDE.md §16 (vérification visuelle) ; CRM-092, docs/SPEC-session-sso.md §13 (connexion réelle)
+// @verifies CRM-110 — INC-293, décision 679 : à 1152 px le titre long tient au-dessus de son seuil, le nom de la session
+//           passant en sr-only entre lg et xl (docs/DESIGN_SYSTEM.md §12.2)
 //
 // Aucune réponse n'est substituée : les noms viennent des lectures réelles du seed, sous la RLS du compte connecté.
 // Le repli est atteint par `Tab` et ouvert par `Entrée` : un focus posé par script ne prouverait rien du clavier.
@@ -245,6 +247,16 @@ test.describe('paliers responsive (§7, §12.2)', () => {
 			await page.goto(AFFAIRE_LONGUE)
 			await expect(titre(page)).toHaveText('Renouvellement TMA — Clinique Saint-Ambroise')
 			await attendreSansDebordement(page)
+			// INC-293 (décision 679) : entre `lg` et `xl`, le nom de la session cède sa place au titre — masqué
+			// visuellement, toujours annoncé (§12.3) ; à partir de `xl`, il est rendu.
+			const identite = page.getByTestId('identite-session')
+			await expect(identite).toContainText('Camille Aubert')
+			const nom = await identite.getByText('Camille Aubert', { exact: true }).boundingBox()
+			if (palier.largeur >= 1024 && palier.largeur < 1280) {
+				expect(nom?.width ?? 0, 'le nom est en sr-only entre lg et xl').toBeLessThanOrEqual(1)
+			} else if (palier.largeur >= 1280) {
+				expect(nom?.width ?? 0, 'le nom est rendu à partir de xl').toBeGreaterThan(40)
+			}
 			await capturer(page, `fil-affaire-longue-${palier.nom}`, UNITE)
 		})
 	}

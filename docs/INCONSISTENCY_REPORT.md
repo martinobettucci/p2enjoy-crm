@@ -7591,3 +7591,5 @@ preuve assouplie. **Relève de `CRM-110`** (fil d'Ariane), décision du responsa
 **Arbitrage rendu le 2026-10-24 (décision 679) : option (b).** Entre `lg` et `xl`, le nom de la personne
 connectée passe en `sr-only` : l'avatar reste, le nom reste annoncé, et l'adresse reste en infobulle. Le seuil de
 120 px de la preuve est gardé. `docs/DESIGN_SYSTEM.md` §12.2 est révisé dans le même changement que le code.
+**Vérifié le 2026-10-24** : `fil-ariane.spec.ts` vert aux quatre paliers, dont `lg-1152`. Ce palier était rouge avant la
+correction, à 105,36 px. **Statut : close** (`CRM-110` T5).

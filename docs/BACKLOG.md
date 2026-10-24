@@ -16032,6 +16032,13 @@ non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
       *Livrée le 2026-10-23, seconde fenêtre* : révision **`e9255249`** en production, avec la migration 99 de `CRM-109`
       (`2b048ba0`) ; `verifier.sh` 26/27, l'écart étant un compteur de redémarrage antérieur. **Reste avant `[x]`** : le
       constat visuel du fil sur une affaire en production, à faire par le responsable.
+- [~] **T5 — INC-293, option (b) du responsable (décision 679)** : à 1152 px, le titre long d'une affaire mesurait
+      105 px pour un seuil de 120. Entre `lg` et `xl`, le nom de la session passe en `sr-only` ; l'adresse passe en
+      infobulle sur l'identité entière. **Implémentée et vérifiée en développement le 2026-10-24** :
+      `fil-ariane.spec.ts` vert aux quatre paliers, rouge à 1152 px avant la correction, avec une assertion nouvelle (le
+      nom masqué entre `lg` et `xl`, rendu à partir de `xl`) ; `identites.spec.ts` révisée avec motif ; captures à
+      1152 px renouvelées et observées (`CRM-007`, `CRM-064`, `CRM-065`, `CRM-110`) ; `docs/DESIGN_SYSTEM.md` §12.2 et
+      §5.12. **Reste** : la livraison de la webapp, avec la prochaine fenêtre.
 
 ## Constat du 2026-10-23 — décision 646
 

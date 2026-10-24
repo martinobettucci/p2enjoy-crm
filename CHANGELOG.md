@@ -25,6 +25,11 @@ charge).*
   `native_field` et `step_probability_invalid` écrivent `key`. La migration 103 reprend quatre fonctions de la 102,
   qui n'est pas modifiée (registre des migrations, `docs/DAT.md` §3.2 bis).
 
+### INC-293 — à 1152 px, le titre long d'une affaire redevient lisible (`CRM-110` T5)
+
+- Entre 1024 et 1279 px, le nom de la personne connectée laisse sa place au titre de la page : l'avatar reste, le nom
+  reste annoncé aux lecteurs d'écran, et l'adresse reste en infobulle sur l'identité. Webapp seule.
+
 ### INC-290 et INC-291 — la pile de développement monte sur un poste neuf
 
 - **MinIO et son client sont construits dans le dépôt** (`supabase/docker/minio/Dockerfile`), les dépôts de `quay.io`

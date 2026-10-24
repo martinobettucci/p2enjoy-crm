@@ -13,6 +13,8 @@
 //       l'en-tête n'a plus de rendu anonyme (docs/JOURNAL.md décision 601)
 // @spec CRM-110 (docs/BACKLOG.md) tranche T2 — le fil d'Ariane nomme l'arborescence, du workspace à l'objet ouvert, et
 //       absorbe le contexte d'espace de fin de ligne (docs/SPEC-webapp.md §5.1 bis ; docs/DESIGN_SYSTEM.md §5.62, §12.2)
+// @spec CRM-110 — INC-293, décision 679 (option b du responsable) : entre `lg` et `xl`, le nom de la session passe en
+//       `sr-only` pour que le titre de route tienne (docs/DESIGN_SYSTEM.md §12.2, §12.3, §5.12)
 //
 // L'en-tête porte le fil d'Ariane et, sous 1024 px, l'ouverture du tiroir de navigation.
 //
@@ -172,12 +174,13 @@ function ControleSession() {
 					{email}
 				</span>
 			) : (
-				<div data-testid="identite-session" className="flex items-center gap-2 min-w-0">
+				// ENTRE `lg` ET `xl`, LE NOM CÈDE SA PLACE AU TITRE DE ROUTE (INC-293, décision 679, docs/DESIGN_SYSTEM.md
+				// §12.2) : sur une seule ligne, le fil, le champ de recherche, la cloche et l'identité laissaient 105 px au
+				// titre long d'une affaire à 1152 px. Le nom passe en `sr-only` — masqué, jamais retiré (§12.3) —, l'avatar
+				// reste, et l'adresse reste en infobulle sur l'identité entière.
+				<div data-testid="identite-session" className="flex items-center gap-2 min-w-0" title={email}>
 					<Avatar profil={profil} taille={32} decoratif />
-					<span
-						className="max-w-[96px] md:max-w-[var(--size-placeholder)] truncate text-sm text-text-2"
-						title={email}
-					>
+					<span className="max-w-[96px] md:max-w-[var(--size-placeholder)] truncate text-sm text-text-2 lg:sr-only xl:not-sr-only">
 						{profil.full_name}
 					</span>
 				</div>
