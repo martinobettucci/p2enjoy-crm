@@ -104,6 +104,9 @@ type ProprietesApercu = {
 export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onChange, vivante = null }: ProprietesApercu) {
 	const prefixe = useId()
 	const [ajoutOuvert, setAjoutOuvert] = useState(false)
+	// Les champs « Nom de l'étape », par clé : « Utiliser le nœud du catalogue » disparaît sous le doigt, et le focus
+	// passe au nom de l'étape, qui reste monté et porte le nom gardé (§5.52 bis, §5.13).
+	const champsNom = useRef(new Map<string, HTMLInputElement>())
 	// Fermé, le formulaire d'ajout rend le focus à la commande qui l'a ouvert — différé d'un rendu, la commande
 	// étant démontée pendant la saisie (§5.25). Aucune temporisation.
 	const boutonAjout = useRef<HTMLButtonElement | null>(null)
@@ -166,6 +169,10 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 										{/* Le nom de l'ÉTAPE, pour toute étape (§5.52 bis) : vide, l'étape garde celui de son nœud, que
 										    l'exemple montre. */}
 										<input
+											ref={(champ) => {
+												if (champ === null) champsNom.current.delete(etape.noeud)
+												else champsNom.current.set(etape.noeud, champ)
+											}}
 											aria-label={t('ia.apercu.nom_etape', { etape: etape.noeud })}
 											value={etape.libelle ?? ''}
 											placeholder={libelleNoeud}
@@ -215,7 +222,7 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 													value={propose.libelle}
 													disabled={desactive}
 													onChange={(e) => onChange(modifierNoeud(p, etape.noeud, { libelle: e.target.value }))}
-													className={`${CHAMP} min-w-0 basis-[12rem]`}
+													className={`${CHAMP} min-w-0 flex-1 basis-[16rem]`}
 												/>
 												<select
 													aria-label={t('ia.apercu.nature', { etape: nom })}
@@ -233,31 +240,42 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 														</option>
 													))}
 												</select>
-												<input
-													type="number"
-													min={0}
-													max={100}
-													aria-label={t('ia.apercu.probabilite_noeud', { etape: etape.noeud })}
-													value={propose.probabilite ?? ''}
-													disabled={desactive}
-													onChange={(e) =>
-														onChange(modifierNoeud(p, etape.noeud, { probabilite: e.target.value === '' ? null : Number(e.target.value) }))
-													}
-													className={`${CHAMP} w-[6rem] tabular-nums`}
-												/>
+												{/* Deux probabilités peuvent se suivre — celle du nœud, celle de l'étape : chacune porte son étiquette
+												    visible et son unité, sans quoi deux « 50 » côte à côte ne disent pas lequel est lequel (§5.52 bis,
+												    défaut vu sur la capture). */}
+												<label className="inline-flex items-center gap-2 text-sm text-text-2">
+													<span>{t('ia.apercu.probabilite_noeud.visible')}</span>
+													<input
+														type="number"
+														min={0}
+														max={100}
+														aria-label={t('ia.apercu.probabilite_noeud', { etape: etape.noeud })}
+														value={propose.probabilite ?? ''}
+														disabled={desactive}
+														onChange={(e) =>
+															onChange(modifierNoeud(p, etape.noeud, { probabilite: e.target.value === '' ? null : Number(e.target.value) }))
+														}
+														className={`${CHAMP} w-[6rem] text-base tabular-nums text-text`}
+													/>
+													<span aria-hidden="true">%</span>
+												</label>
 											</>
 										)}
-										<input
-											type="number"
-											aria-label={t('ia.apercu.probabilite_etape', { etape: etape.noeud })}
-											value={etape.probabilite ?? ''}
-											placeholder={probabiliteNoeud === null || probabiliteNoeud === undefined ? undefined : String(probabiliteNoeud)}
-											disabled={desactive}
-											onChange={(e) =>
-												onChange(modifierEtape(p, etape.noeud, { probabilite: e.target.value === '' ? null : Number(e.target.value) }))
-											}
-											className={`${CHAMP} w-[6rem] tabular-nums placeholder:text-text-3`}
-										/>
+										<label className="inline-flex items-center gap-2 text-sm text-text-2">
+											<span>{t('ia.apercu.probabilite_etape.visible')}</span>
+											<input
+												type="number"
+												aria-label={t('ia.apercu.probabilite_etape', { etape: etape.noeud })}
+												value={etape.probabilite ?? ''}
+												placeholder={probabiliteNoeud === null || probabiliteNoeud === undefined ? undefined : String(probabiliteNoeud)}
+												disabled={desactive}
+												onChange={(e) =>
+													onChange(modifierEtape(p, etape.noeud, { probabilite: e.target.value === '' ? null : Number(e.target.value) }))
+												}
+												className={`${CHAMP} w-[6rem] text-base tabular-nums text-text placeholder:text-text-3`}
+											/>
+											<span aria-hidden="true">%</span>
+										</label>
 										<label className="inline-flex min-h-[var(--size-target)] items-center gap-2 text-sm">
 											<input
 												type="radio"
@@ -286,6 +304,7 @@ export function ApercuPropositionIa({ proposition: p, catalogue, desactive, onCh
 															? t('ia.annonce.noeud_catalogue', { etape: etape.noeud })
 															: t('ia.annonce.noeud_catalogue.nom_garde', { etape: etape.noeud, nom: garde }),
 													)
+													champsNom.current.get(etape.noeud)?.focus()
 												}}
 											>
 												{t('ia.apercu.utiliser_catalogue')}

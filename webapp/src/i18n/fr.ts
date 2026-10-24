@@ -3420,6 +3420,8 @@ export const fr = {
 	'ia.apercu.libelle_noeud': 'Libellé du nœud {etape}',
 	'ia.apercu.nom_etape': 'Nom de l’étape {etape}',
 	'ia.apercu.probabilite_etape': 'Probabilité de l’étape {etape}, en %',
+	'ia.apercu.probabilite_noeud.visible': 'Probabilité du nœud',
+	'ia.apercu.probabilite_etape.visible': 'Probabilité de l’étape',
 	'ia.apercu.utiliser_catalogue': 'Utiliser le nœud du catalogue',
 	'ia.apercu.retirer_etape': 'Retirer l’étape {etape}',
 	'ia.apercu.transitions': 'Transitions',

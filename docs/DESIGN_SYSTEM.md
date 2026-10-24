@@ -5210,13 +5210,21 @@ et §5.53 posent vaut sans être répété** ; seuls les ajouts sont écrits.
   - **Une étape d'un nœud NOUVEAU garde aussi les champs de son nœud** — « Libellé du nœud », nature, probabilité du
     nœud — sur la seconde ligne, à leur place d'avant : le nœud entre au catalogue avec eux, et l'étape peut s'en écarter
     comme de n'importe quel nœud. Les deux noms accessibles disent lequel est lequel.
+  - **CHAQUE PROBABILITÉ PORTE UNE ÉTIQUETTE VISIBLE ET SON UNITÉ** — « Probabilité du nœud … % », « Probabilité de
+    l'étape … % », 13 px `--color-text-2`, le champ dans son `label`. *Défaut trouvé en regardant la capture*
+    (`CLAUDE.md` §16) : deux champs « 50 » se suivaient sur l'étape d'un nœud nouveau, sans rien qui dise lequel était
+    celui du nœud ; un nom accessible n'est pas rendu à l'écran. L'étiquette visible est contenue dans le nom accessible
+    (WCAG 2.5.3). Le libellé du nœud prend la largeur de son contenu (`basis-[16rem]`, extensible) : à `12rem`, il était
+    coupé sur la même capture.
 - **LE NOM AFFICHÉ D'UNE ÉTAPE EST SON NOM EFFECTIF PARTOUT** — « Vers <étape> », « Depuis <étape> », les règles, les
   exigences, le différentiel, le bloc des affaires retirées : le nom de l'étape s'il est posé, sinon celui de son nœud.
   Deux noms pour la même étape dans un même panneau en feraient deux étapes.
 - **« Utiliser le nœud du catalogue » GARDE LE NOM ET LA PROBABILITÉ** que le nœud proposé portait, quand ils diffèrent
   de ceux du catalogue : ils passent dans les deux champs de l'étape, qui restent visibles et modifiables. L'annonce de la
   région vivante le dit — « L'étape vise le nœud « negociation » du catalogue et garde son nom « Discussion
-  commerciale ». » — ; quand rien n'est gardé, elle garde sa phrase d'avant.
+  commerciale ». » — ; quand rien n'est gardé, elle garde sa phrase d'avant. **Le focus passe au champ « Nom de
+  l'étape »** : la commande disparaît sous le doigt — le nœud n'est plus proposé —, et le focus ne reste jamais sur un
+  élément qui disparaît (§5.13) ; le champ, lui, reste monté et porte le nom gardé. *Écrit à l'écriture du code.*
 - **LES DEUX DÉFAUTS NOUVEAUX S'ÉCRIVENT DANS LE BLOC DES DÉFAUTS** (§5.52), une phrase chacun, par clé :
   `native_field` — « Le champ « montant » reprend le montant, déjà porté par l'affaire : retirez-le ou renommez-le. » —,
   l'information native nommée par un **mot traduit** (« le titre », « le responsable », « l'organisation »…), jamais par

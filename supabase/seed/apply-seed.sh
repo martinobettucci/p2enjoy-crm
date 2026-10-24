@@ -4310,6 +4310,40 @@ else
 	info "Suggestion de modification créée par la vraie fonction et le simulateur — $(printf '%s' "$issue_modif" | jq -r '.defauts') défaut(s)"
 fi
 
+# --- 8 novodecies bis. Une suggestion sur le catalogue du seed — CRM-113 T3, docs/SPEC-seed.md §16 ter ----------------
+#
+# Le chemin de 8 octodecies, avec le scénario `catalogue` du simulateur : l'étape « prospection » du catalogue sous le
+# nom « Premier contact », le nœud « negociation » redéclaré, un champ `montant`. La base relève exactement deux
+# défauts, `noeud_deja_au_catalogue` et `native_field` — relus ici, sans quoi l'écran ne montrerait ni « Utiliser le
+# nœud du catalogue » qui garde le nom, ni le défaut d'un champ natif. CONVERGENT sur la demande, comme 8 octodecies.
+echo
+say "8 novodecies bis. Suggestion sur le catalogue du seed"
+
+DEMANDE_IA_CATALOGUE="Un cycle de vente accompagné : premier contact, discussion commerciale, puis livré ou perdu. Le montant et la source du contact."
+demande_catalogue_uri=$(jq -rn --arg d "$DEMANDE_IA_CATALOGUE" '$d | @uri')
+code=$(api GET "/rest/v1/suggestions_ia?select=id&workspace_id=eq.$WS_ID&statut=eq.en_revue&demande=eq.$demande_catalogue_uri")
+attendu "$code" "lecture de la suggestion sur le catalogue" 200
+if [ "$(jq -r 'length' "$CORPS")" != "0" ]; then
+	info "Suggestion sur le catalogue en revue : déjà présente — rien à écrire"
+else
+	etat_simule=$(curl -s "$API/functions/v1/ia/etat" -H "apikey: $ANON_KEY" -H 'x-ia-simulateur: cle_refusee' | jq -r '.raison // empty')
+	[ "$etat_simule" = "cle_refusee" ] || die "le simulateur de l'assistant IA ne répond pas (raison lue : « $etat_simule ») —
+        docs/SPEC-ia.md §11.6."
+	flux_catalogue=$(curl -s -N -X POST "$API/functions/v1/ia/suggestions" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN" \
+		-H 'Content-Type: application/json' -H 'x-ia-simulateur: catalogue' \
+		-d "$(jq -n --arg w "$WS_ID" --arg d "$DEMANDE_IA_CATALOGUE" '{workspace_id: $w, portee: "workflow", demande: $d}')")
+	issue_catalogue=$(printf '%s\n' "$flux_catalogue" | tail -n 1)
+	[ "$(printf '%s' "$issue_catalogue" | jq -r '.issue // empty')" = "revision" ] || die "la suggestion sur le catalogue n'a pas
+        reçu de révision : $(printf '%s' "$flux_catalogue" | head -c 300)"
+	id_catalogue=$(printf '%s\n' "$flux_catalogue" | head -n 1 | jq -r '.suggestion_id')
+	code=$(api GET "/rest/v1/suggestions_ia_revisions?select=defauts&suggestion_id=eq.$id_catalogue&order=numero.desc&limit=1")
+	attendu "$code" "lecture de la révision sur le catalogue" 200
+	[ "$(jq -r '[.[0].defauts[].code] | join(",")' "$CORPS")" = "noeud_deja_au_catalogue,native_field" ] || die "la suggestion sur
+        le catalogue ne porte pas les deux défauts attendus : $(head -c 300 "$CORPS")"
+	info "Suggestion sur le catalogue créée par la vraie fonction et le simulateur — 2 défauts, noeud_deja_au_catalogue et native_field"
+fi
+
 # --- 8 vicies. Temps et coût du personnel — CRM-098, docs/SPEC-seed.md §17 ------------------------------------------
 #
 # Les versions de coût sont créées par l'ADMINISTRATRICE, avec son jeton réel ; le temps de chacun par CHAQUE PROFIL,

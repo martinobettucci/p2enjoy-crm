@@ -609,6 +609,8 @@ describe('CRM-113 T3 — le nom des étapes et les champs natifs (docs/DESIGN_SY
 		const nom = screen.getByLabelText('Nom de l’étape relance') as HTMLInputElement
 		expect([nom.value, (screen.getByLabelText('Probabilité de l’étape relance, en %') as HTMLInputElement).value]).toEqual(['Relance client', '25'])
 		expect(screen.queryByLabelText('Libellé du nœud relance')).toBeNull()
+		// La commande a disparu sous le doigt : le focus est sur le nom de l'étape, qui porte le nom gardé (§5.13).
+		expect(document.activeElement).toBe(nom)
 	})
 })
 
