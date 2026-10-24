@@ -15527,7 +15527,9 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
       - **Livrée en production le 2026-10-24** (révision `62654375`, image `mcp` reconstruite, `verifier.sh` 26/27 —
         compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[~]`** : le constat du responsable.
-- [ ] **T6** — `objectifs`.
+- [ ] **T6** — `objectifs` : le catalogue — lire les tableaux et leur canevas, ajouter un bloc et une flèche, modifier
+      un bloc (jamais la géométrie), archiver un tableau — décision 673 ; aucune suppression d'un bloc ni d'une flèche.
+      Liste proposée au `docs/SPEC-mcp.md` §9.2 *nonies*, **en attente de validation**.
 - [ ] **T7** — `messagerie`.
 
 Preuves exigées **par tranche et par outil** (`docs/SPEC-mcp.md` §13) : succès, refus par la matrice, refus par le

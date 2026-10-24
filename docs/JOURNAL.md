@@ -33289,3 +33289,16 @@ l'espace dans ce que la RLS rend, filtres track, channel ou affaire), `crm_time_
 tracks de l'espace, montants par devise, minutes sans taux à part), `crm_time_entry_set` (la case d'une personne, vous ou
 nommée, un jour, sur une cible ; 0 la vide). Refus nommés : plafond journalier, forme des minutes, saisie non permise.
 Preuve E2E : du temps posé par le connecteur paraît dans « Votre semaine » de la fiche.
+
+
+### décision 673 — `CRM-104` T6 : la famille `objectifs` du connecteur suit le catalogue, sans rien détruire
+
+*2026-10-24, arbitrage du responsable (question posée par `AskUserQuestion`).* **Question** : quel périmètre pour la
+tranche `objectifs` — lecture seule, lecture et avancement, ou le catalogue complet ? **Décision** : **le catalogue
+complet** — `crm_goal_board_list`, `crm_goal_board_get`, `crm_goal_block_add` (placé automatiquement à droite des blocs
+existants), `crm_goal_block_update` (titre, texte, avancement, channel ; jamais la géométrie), `crm_goal_link_add` et
+`crm_goal_board_archive` (archiver ou désarchiver, sous « supprimer »). **Écarté** : supprimer un bloc ou une flèche,
+qui détruit (A4) ; créer, renommer ou réordonner un tableau, la géométrie et la couleur, qui restent à l'écran.
+**Conséquence** : un genre d'ancre nouveau, `block` ; aucune migration. Liste proposée au `docs/SPEC-mcp.md` §9.2
+*nonies*, à valider avant le code.
+

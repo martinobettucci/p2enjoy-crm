@@ -810,6 +810,33 @@ responsable de `crm_card_update` ; un nom ambigu ou inconnu est refusé.
 par le CRM malgré la matrice ouverte (la saisie d'une personne qu'on n'administre pas, le plafond), journal écrit ; et
 **E2E** : du temps posé par le connecteur paraît dans la bande « Votre semaine » de la fiche de l'affaire.
 
+### 9.2 nonies Famille `objectifs` — `CRM-104` T6 (liste **proposée**, en attente de validation ; périmètre arbitré par la décision 673)
+
+**Six outils**, ceux du catalogue (§9.2) : lire les canevas d'objectifs, et les composer sans jamais rien détruire. Les
+mêmes tables que la webapp (`objectifs.ts`, `objectifs-ecriture.ts`) : `goal_boards`, `goal_blocks`, `goal_links`, sous
+le jeton de la personne ; la base décide qui écrit un tableau (`ecriture_permise`). **L'avancement d'un bloc est
+manuel** (`fill_percent`, `docs/SPEC-goals.md` §1) : le connecteur l'écrit, il ne le calcule jamais.
+
+| Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_goal_board_list` | `consulter` | `workspace:workspace` | `goal_boards` | les tableaux de l'espace, par position ; les archivés avec `include_archived` |
+| `crm_goal_board_get` | `consulter` | `board:board_id` | `goal_boards`, `goal_blocks`, `goal_links` | le tableau, `can_write` ; ses blocs **en texte** — titre, texte, avancement, channel lié nommé — dans l'ordre de lecture du canevas (haut en bas, gauche à droite) ; ses flèches entre blocs, avec leur sens |
+| `crm_goal_block_add` | `ajouter` | `board:board_id` ; `autres` : `channel:channel_id`, **facultative** | `POST goal_blocks` | titre, texte, avancement (0 à 100), channel lié ; **placé automatiquement** à droite du bloc le plus à droite, à la taille d'un bloc neuf de l'écran |
+| `crm_goal_link_add` | `ajouter` | `board:board_id` ; `autres` : `block:source_block_id`, `block:target_block_id` | `POST goal_links` | une flèche entre deux blocs du tableau ; sens `forward`, `backward` ou `both` ; libellé facultatif ; un doublon est refusé (`23505`) |
+| `crm_goal_block_update` | `modifier` | `block:block_id` ; `autres` : `channel:channel_id`, **facultative** | `PATCH goal_blocks` | titre, texte (chaîne vide qui efface), avancement, channel lié ou détaché ; **jamais la géométrie** — déplacer ou redimensionner reste un geste de l'écran |
+| `crm_goal_board_archive` | `supprimer` | `board:board_id` | `PATCH goal_boards` (`archived_at`) | archive le tableau, ou le désarchive (`archived=false`) ; c'est le « supprimer » du §6.1, jamais une purge |
+
+**Un genre d'ancre nouveau** : `block` (`goal_blocks`, résolu jusqu'à l'espace par son tableau). `board` existe déjà.
+
+**Ce que la tranche ne fait pas, et pourquoi.**
+- **Aucune suppression d'un bloc ni d'une flèche** : le CRM ne sait que les détruire (A4).
+- **Ni créer, ni renommer, ni réordonner un tableau** : ces gestes restent ceux de l'écran (décision 673).
+- **Ni la géométrie, ni la couleur** d'un bloc : la composition visuelle du canevas reste à l'écran.
+
+**Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus
+par le CRM malgré la matrice ouverte (la lectrice qui ajoute un bloc), journal écrit ; et **E2E** : un bloc ajouté par le
+connecteur paraît sur le canevas, avec son avancement.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,
