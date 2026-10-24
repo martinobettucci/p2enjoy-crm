@@ -82,7 +82,7 @@ chaque fonction et rend la liste exacte, **mesurée**, de celles qui changent.
 
 **Nommage** (décision 658, `docs/DAT.md` §12 bis) : les identifiants sont en anglais, le code et l'interface disent
 « rattachement ». `card_attachments` est écarté, car « attachments » désigne déjà les pièces jointes
-(`mail_attachments`). D'où `card_placements`, `placement_id`, `attach_card`, `detach_card`, `placement_ambiguous`, et
+(`mail_attachments`). D'où `card_placements`, `placement_id`, `attach_card`, `detach_card`, et
 les événements `attached` et `detached`.
 
 | Colonne | Type | Règle |
@@ -174,17 +174,20 @@ mesurer** en T1 (`EXPLAIN ANALYZE` du board et de la liste sur le seed) : c'est 
 |---|---|---|
 | Créer une affaire | `creer_affaire(p_channel, p_titre)` — signature inchangée | crée l'affaire **et** son premier rattachement, à l'étape initiale |
 | Rattacher | `attach_card(p_card, p_channel)` — nouvelle | **étape initiale** du workflow du channel, bloc vide (décision 643, arbitrage 2) ; si un rattachement archivé existe déjà, il est désarchivé tel quel |
-| Faire avancer | `move_card(card_id, to_step_id, comment)` | voir la compatibilité ci-dessous |
-| Déplacer vers un autre channel | `move_card_to_channel(...)` | déplace **un rattachement** ; refusé si l'affaire est déjà rattachée au channel cible |
-| Sommeil, réveil | `snooze_card`, `wake_card` | par rattachement |
+| Faire avancer | `move_card(p_placement, to_step_id, comment)` — signature **remplacée** | fait avancer un rattachement ; les champs exigés se lisent sur ses valeurs |
+| Déplacer vers un autre channel | `move_card_to_channel(p_placement, to_channel_id, to_step_id, discard_field_values)` — signature **remplacée** | déplace **un rattachement** ; refusé si l'affaire est déjà rattachée au channel cible |
+| Sommeil, réveil | `snooze_card(p_placement, until)`, `wake_card(p_placement)` — signatures **remplacées** | par rattachement |
+| Armer une cadence | `armer_sequence_relance(p_placement, p_sequence_id, p_identity_id)` — signature **remplacée** | l'inscription désigne le rattachement (décision 657, arbitrage 2) |
 | Archiver, désarchiver | mise à jour de `archived_at` du rattachement | droit d'écriture sur son channel |
 | Retirer | `detach_card(p_placement, discard_field_values)` — nouvelle | administrateur ; refusé sur le dernier ; la perte des valeurs exige `discard_field_values = true`, selon la doctrine de `move_card_to_channel` |
 | Changer le workflow d'un channel | `change_channel_workflow` | remappe **les rattachements** du channel |
 
-**Compatibilité des signatures [proposition].** Les fonctions qui prennent `card_id` gardent leur signature. Elles
-agissent quand l'affaire a **un seul** rattachement que l'appelant peut écrire, et refusent avec un code nommé
-`placement_ambiguous` sinon. Elles reçoivent une variante qui désigne le rattachement (`p_placement uuid`). Le
-connecteur MCP et la webapp passent à la variante ; l'ancienne forme ne casse rien pendant la transition.
+**Les signatures sont remplacées d'un coup** (décision 661). Aucune forme par `card_id` ne survit pour les gestes d'un
+rattachement, et aucun double contrat n'est maintenu. Les anciennes signatures sont **supprimées** (`drop function`), et
+non surchargées : PostgREST choisit une surcharge par le nom de ses arguments, et une ancienne forme oubliée continuerait
+de répondre. Tous les appelants passent dans le **même** changement — webapp, connecteur MCP, seed, scripts, pgTAP,
+E2E : une centaine de fichiers au relevé du 2026-10-24. C'est la tranche de bascule du §14. `creer_affaire` garde sa
+signature, car elle désigne un channel et non un rattachement.
 
 **Timeline.** `card_events` reçoit une colonne `placement_id`, nulle pour les événements de l'affaire (création,
 corbeille, contacts, mails), et renseignée pour `moved`, `assigned`, `snoozed`, `woken`, `stalled`, `archived`,
@@ -216,7 +219,7 @@ existants reçoivent le rattachement unique de leur affaire à la migration.
   `CRM/Affaires/<affaire>` pour **toutes** les affaires, quel que soit leur nombre de rattachements. Conséquences : les
   dossiers existants sont **déplacés** sur le serveur IMAP par `mail-sync`, qui est le seul à écrire dans la boîte ;
   `inbox_arborescence` ne range plus les affaires sous leurs channels ; deux affaires de même titre restent
-  distinguées par la règle de nommage en vigueur, à relire en T5.
+  distinguées par la règle de nommage en vigueur, à relire en T6.
 - **Une cadence de relance s'inscrit à un rattachement** (décision 657, arbitrage 2). `card_sequence_enrollments` reçoit
   le rattachement ; `armer_sequence_relance` prend son responsable comme expéditeur par défaut, et
   `app.executer_sequences_relance` lit son `entered_step_at`. Une affaire peut avoir une cadence par rattachement.
@@ -296,7 +299,7 @@ Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`
 
 | Niveau | Preuve |
 |---|---|
-| pgTAP | invariants (au moins un rattachement, unicité, clés composites, dernier rattachement non retirable) ; masquage d'un rattachement illisible ; `placement_ambiguous` ; vocabulaire `attached` et `detached` ; une mutation tuée par règle |
+| pgTAP | invariants (au moins un rattachement, unicité, clés composites, dernier rattachement non retirable) ; masquage d'un rattachement illisible ; **aucune** ancienne signature par `card_id` ne subsiste (catalogue) ; vocabulaire `attached` et `detached` ; une mutation tuée par règle |
 | API, avec les jetons réels | la lectrice ne lit ni le rattachement ni les valeurs du channel qu'elle ne lit pas ; un membre qui écrit un seul channel modifie le titre mais pas le bloc de l'autre ; un non-administrateur ne retire pas ; entonnoir et rentabilité rejoués sur le seed |
 | Unitaires | la fiche (partie commune et blocs), la pastille, la confirmation de retrait, l'agrégation « comptée une fois » |
 | E2E | rattacher une affaire depuis la fiche, la voir dans le board de l'autre channel, la faire avancer dans un seul, archiver un rattachement, retrait par l'administratrice, masquage pour la lectrice |
@@ -305,16 +308,22 @@ Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`
 
 ## 14. Tranches proposées
 
+**Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
+ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne
+change **rien de visible**, car chaque affaire garde son unique rattachement : c'est sa preuve, puisque toute la suite
+existante reste verte. Les fonctionnalités nouvelles s'y ajoutent ensuite, tranche par tranche.
+
 | Tranche | Contenu |
 |---|---|
-| T1 | Mesures : liste exacte des fonctions touchées, coût de la RLS. Migration : table, reprise des données, `card_field_values`, `card_events`, invariants, politiques ; pgTAP et API des droits |
-| T2 | Réécriture des fonctions de gestes (`creer_affaire`, `move_card`, `move_card_to_channel`, sommeil, `change_channel_workflow`, remappage) et des nouvelles (`attach_card`, `detach_card`) ; types régénérés |
-| T3 | Lectures métier : entonnoir, figées et relances, Ma journée, recherche, temps valorisé |
-| T4 | Rentabilité ventilée : fonction, écran, outil `crm_profitability_report` |
-| T5 | Messagerie, selon les arbitrages du §15 |
-| T6 | Webapp : board et liste, fiche à blocs, rattacher, archiver, retirer ; design system ; manuel ; captures |
-| T7 | Seed du §12 et campagne E2E complète |
-| T8 | Outils MCP du §11, au catalogue de `CRM-104` |
+| T1 | **Mesures, sans code livré** : la liste exacte des fonctions, déclencheurs, politiques et appelants touchés ; le coût de la nouvelle RLS (`EXPLAIN ANALYZE` du board et de la liste sur le seed, sur une copie jetable) |
+| T2 | **Bascule, en un seul changement** : migration (table, reprise des données, `card_field_values`, `card_events`, `card_sequence_enrollments`, invariants, politiques, retrait des colonnes de `cards`) ; réécriture de toutes les fonctions du §2 et remplacement des signatures du §5 ; types régénérés ; **tous** les appelants — webapp, connecteur, seed, scripts, pgTAP, API, E2E. Une affaire, un rattachement : aucun changement visible, toute la suite existante verte |
+| T3 | Rattacher et retirer : `attach_card`, `detach_card`, `attached` et `detached` ; droits prouvés par l'API avec les jetons réels |
+| T4 | Lectures à plusieurs rattachements : entonnoir, figées et relances, Ma journée, recherche, temps valorisé |
+| T5 | Rentabilité ventilée : fonction, écran, outil `crm_profitability_report` |
+| T6 | Messagerie : dossier `CRM/Affaires/<affaire>` et déplacement des dossiers existants par `mail-sync`, cadences et variables par rattachement (décision 657) |
+| T7 | Webapp : fiche à blocs, pastille « aussi rattachée à », rattacher, archiver, retirer ; design system ; manuel ; captures |
+| T8 | Seed du §12 et campagne E2E complète |
+| T9 | Outils MCP du §11, au catalogue de `CRM-104` |
 
 ## 15. Points à trancher avant validation
 
@@ -322,10 +331,12 @@ Les points 1 à 3 sont tranchés par la décision 657 : le dossier IMAP sort de 
 un rattachement, les variables des modèles viennent du rattachement d'où l'on écrit (§7).
 
 4. **Les noms** suivent les règles de nommage arrêtées par la décision 658 (`docs/DAT.md` §12 bis) : `card_placements`,
-   `placement_id`, `attach_card`, `detach_card`, `placement_ambiguous`, `attached`, `detached`, et les outils
-   `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`. **Reste ouvert** : le maintien des
-   signatures par `card_id` pendant la transition (§5), ou leur remplacement d'un coup par la forme qui désigne le
-   rattachement.
+   `placement_id`, `attach_card`, `detach_card`, `attached`, `detached`, et les outils `crm_card_attach`,
+   `crm_card_placement_update`, `crm_card_placement_archive`. **Les signatures sont remplacées d'un coup** (décision
+   661, §5), dans la tranche de bascule (§14) ; `placement_ambiguous`, qui ne servait que la compatibilité, disparaît.
+
+**Tous les points sont tranchés.** Le brouillon attend la validation du responsable ; elle créera `CRM-111` au backlog
+avec ses tranches T1 à T9, puis la spécification de `CRM-112`.
 
 ## 16. Hors périmètre
 

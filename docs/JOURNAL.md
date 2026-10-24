@@ -33115,3 +33115,17 @@ pour le business developer et l'administrateur, et les privilèges. **Décisions
    décision 658 (`docs/DAT.md` §12 bis) pour tout objet nouveau exposé, relevée par la session des rattachements ; les
    familles existantes gardent leur nom jusqu'au lot 1 du plan d'INC-286.
 
+
+### décision 661 — rattachements multiples : les signatures des gestes sont remplacées d'un coup
+
+*2026-10-24, réponse du responsable au dernier point ouvert de `docs/SPEC-rattachements.md` (§15, point 4).*
+**Problème.** `move_card`, `move_card_to_channel`, `snooze_card`, `wake_card` et `armer_sequence_relance` désignent
+l'affaire ; avec plusieurs rattachements, ils doivent désigner le rattachement. Une centaine de fichiers les appellent
+(webapp, connecteur, seed et scripts, pgTAP, E2E — relevé du 2026-10-24). **Options.** Une compatibilité transitoire,
+l'ancienne forme valant pour une affaire à un seul rattachement, suivie d'une tranche de retrait (recommandée par
+l'agent) ; ou le remplacement d'un coup. **Décision : le remplacement d'un coup.** Les anciennes signatures sont
+supprimées, et non surchargées. Tous les appelants passent dans le même changement. **Conséquences.** Le découpage
+devient : T1, des mesures sans code ; **T2, une bascule atomique** — migration, fonctions, signatures et tous les
+appelants, sans changement visible, chaque affaire gardant son unique rattachement ; puis T3 à T9, les fonctionnalités
+nouvelles. Le code `placement_ambiguous` disparaît. **Persisté** : `docs/SPEC-rattachements.md` §3.1, §5, §13, §14 et
+§15. **État** : tous les points du brouillon sont tranchés ; il attend la validation du responsable.
