@@ -7657,3 +7657,13 @@ de backlog ». Le contrôle lit `head -3` ; l'en-tête de `CRM-093` T4, ajouté 
 fichier de la webapp n'est touché par `CRM-111` T1 bis : l'anomalie est identique des deux côtés. **Issue retenue**
 (`docs/CloudWorker.md` §4.1 bis) : le contrôle lira le bloc de commentaires d'en-tête entier, comme les autres harnais
 de traçabilité, plutôt qu'un nombre fixe de lignes ; correction imputée à `CRM-043` (le harnais), hors de cette tranche.
+
+### INC-297 — `verify-session-sso.sh` fige 134 tests unitaires de `supabase/functions/session`, qui en porte 141
+
+*Relevé le 2026-10-24 par la session planifiée de `CRM-111` T1 bis, étranger à l'unité.* **Mesure.** Étapes 8 et 10 de
+`scripts/verify-session-sso.sh` : « tests unitaires en échec ou compte différent de 134 : Tests 141 passed (141) ». Les
+141 sont **verts** ; c'est le compteur `UNITES_SESSION=134` qui date d'avant `9f83599` (`CRM-114` T3), lequel a ajouté
+`supabase/functions/session/verification.test.ts`. Famille d'INC-191 : un compteur figé que le produit dépasse.
+**Issue retenue** (`docs/CloudWorker.md` §4.1 bis) : comme pour INC-191, l'assertion sera **retournée** — le compte
+attendu lu dans le répertoire des tests au lieu d'une constante —, par `CRM-114`, qui a fait bouger le compte.
+Comportement laissé inchangé ici.
