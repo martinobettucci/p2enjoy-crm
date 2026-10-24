@@ -13,12 +13,31 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-114` T1 à T4 — les organisations : la famille du connecteur, l’onglet du carnet (décision 663)
+### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
-*En développement seulement. La migration `0101` attend la prochaine fenêtre de production.*
+*Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
+
+- **Données de démonstration du connecteur** : Farida en attente de droits, Camille en lecture sur les recettes, Driss
+  refusé par le CRM sur le rapport de rentabilité ; les comptes et le journal naissent de vraies connexions au
+  connecteur (`docs/SPEC-seed.md` §22).
+
+## [Publié]
+
+### Déployé en production, 2026-10-24 — les organisations (`CRM-114`), migration 101
+
+Cellule Spark `crm`, révision `5e55a437` : instantané de la base confirmé par le responsable, puis
+`scripts/spark/livrer.sh -- --migrate --instantane-verifie` (migration **101** appliquée par le runner, cache de schéma
+rechargé), puis la reconstruction explicite de l'image `mcp`, saine. **Avant** : `verify-mcp.sh` 76 contrôles sans
+anomalie ; `organisations` 7/7 et `connecteur-organisations` 1/1 ; API 1172/1172 ; unitaires 4314/4314. **Vérifié en
+lecture seule** : le registre compte 101 migrations, la dernière `0101_famille_organizations.sql` ; la contrainte
+`mcp_droits_famille` cite `organizations` ; le module `organisations` présent dans le conteneur ; `/mcp` sans jeton `401` ;
+`/contacts/organisations` servi ; `verifier.sh` 26/27 (le même compteur antérieur). **Non constaté** : l'écran par le
+responsable, et un appel réel d'un assistant connecté.
+
+#### `CRM-114` T1 à T4 — les organisations : la famille du connecteur, l’onglet du carnet (décision 663)
 
 - **Migration `0101`** : la matrice du connecteur MCP accepte une neuvième famille, « Organisations », entre
-  « Contacts » et « Budgets ». Rien d'autre ne change en base ; l'écran et les outils viennent avec les tranches suivantes.
+  « Contacts » et « Budgets ». Rien d'autre ne change en base.
 - **Le carnet a deux onglets, « Contacts » et « Organisations »** (T2).
   - **L'onglet « Organisations »** liste les organisations de l'espace — domaine, site web, nombre de contacts —,
     celles sans contact comprises.
@@ -32,17 +51,6 @@ d'exécuter le code attendu.
     ne l'ouvre plus (décision 666).
   - **L'onglet « Connecteur MCP »** de la plateforme gagne la ligne « Organisations » ; celle de « Contacts » se lit
     « Contacts du carnet ».
-  - *Il faudra reconstruire l'image `mcp` à la livraison.*
-
-### `CRM-103` T3 — le seed du connecteur (développement seulement)
-
-*Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
-
-- **Données de démonstration du connecteur** : Farida en attente de droits, Camille en lecture sur les recettes, Driss
-  refusé par le CRM sur le rapport de rentabilité ; les comptes et le journal naissent de vraies connexions au
-  connecteur (`docs/SPEC-seed.md` §22).
-
-## [Publié]
 
 ### Déployé en production, 2026-10-24 — l'image `mcp`, contacts
 
