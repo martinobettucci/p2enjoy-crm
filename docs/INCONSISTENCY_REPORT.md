@@ -7527,3 +7527,19 @@ constat** : les trois constructions résolvent leurs images de base en parallèl
 inchangé** ; étranger à `CRM-113`. **Issue retenue par la session** (`docs/CloudWorker.md` §4.1 bis, correction évidente,
 hors de son unité) : la consigner dans `docs/CloudWorker.md` pour les sessions planifiées ; la correction de
 `runDev.sh` lui-même — passer le droit à `bake` ou exporter la variable — revient à une unité d'outillage.
+
+### INC-292 — une réponse `204` de la fonction `session` devient parfois un `503` de Kong : une erreur de console fait rougir un scénario étranger
+
+*Relevé le 2026-10-24 par la session planifiée de `CRM-113`, en rejouant `e2e/ui/assistant-ia.spec.ts`.* **Constat,
+mesuré dans les journaux** : la fonction `session` journalise `edge_request_completed` avec le statut `204`, puis le
+runtime écrit `connection aborted (uri: "/session/prolonger")`, et Kong journalise `POST /functions/v1/session/prolonger
+… 503 0`. Deux occurrences en quarante minutes : `/session/fermer` par curl à 09:22:27 UTC, `/session/prolonger` par le
+navigateur à 09:29:42 UTC. La seconde a laissé `Failed to load resource: … 503` dans la console, et la garde « aucune
+erreur de console » a fait rougir le scénario « à la souris » de `assistant-ia.spec.ts`, qui ne touche pas la session ;
+le même scénario rejoué seul passe trois fois sur trois. **Lecture** : le défaut tient aux réponses sans corps de la
+fonction `session` sous le runtime des fonctions (politique `oneshot`, `docs/SPEC-edge-functions.md` §2), non à
+l'assistant IA ni à `CRM-113`, qui ne touchent pas cette fonction. **Hypothèse non vérifiée** : le worker est retiré avant
+que la réponse vide soit entièrement relayée. **Comportement laissé inchangé.** **Issue retenue par la session**
+(`docs/CloudWorker.md` §4.1 bis) : à traiter par l'unité des fonctions edge (`CRM-016`) — reproduire en boucle une
+réponse `204`, puis, si l'hypothèse tient, rendre un corps (`200` et `{}`) ou attendre la fin de l'envoi ; aucune
+temporisation ni filtrage de la console.

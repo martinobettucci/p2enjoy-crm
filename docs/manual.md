@@ -2607,7 +2607,8 @@ recomposez ensuite ici.
 ### 5 bis.0 bis Créer un workflow avec l'IA
 
 *Livré en développement par `CRM-097` (tranche T2) ; en production avec la tranche T4. Captures dans
-`docs/captures/CRM-097/`.*
+`docs/captures/CRM-097/`. Le nom et la probabilité de chaque étape, et les champs que l'affaire porte déjà : `CRM-113`,
+livré en développement, captures dans `docs/captures/CRM-113/`.*
 
 L'assistant IA **propose** un workflow à partir d'une description écrite en français ; **il ne crée
 rien**. Ce qu'il rend est une **suggestion** : vous la relisez, la corrigez, la faites revoir autant de
@@ -2636,8 +2637,10 @@ transition. Si la proposition a des **défauts** — deux étapes initiales, une
 qui n'existe pas, une liste sans choix… —, ils sont listés en tête, et la suggestion **ne peut pas être
 acceptée** tant qu'ils demeurent.
 
-**3. Corriger à la main.** Dans l'aperçu, vous pouvez renommer le workflow ; changer le libellé, la
-nature et la probabilité d'un nœud nouveau ; choisir l'étape initiale ; retirer une étape, une
+**3. Corriger à la main.** Dans l'aperçu, vous pouvez renommer le workflow ; donner à **chaque étape**
+son propre nom (**« Nom de l’étape »**) et sa propre probabilité (**« Probabilité de l’étape »**) — laissés
+vides, l'étape garde le nom et la probabilité de son nœud, que le champ montre en gris ; changer le
+libellé, la nature et la probabilité d'un nœud nouveau ; choisir l'étape initiale ; retirer une étape, une
 transition, un champ, une règle ou une exigence ; ajouter une transition ; changer le type, les choix,
 la devise ou l'aide d'un champ. Un retrait emporte ce qui en dépend — retirer une étape retire aussi
 ses transitions et les règles qui la visent — et l'écran annonce ce qui a été emporté. Vos modifications
@@ -2656,6 +2659,21 @@ revérifie tout à ce moment : si le catalogue a changé entre-temps, il refuse 
 la proposition porte. Le workflow créé devient le workflow choisi, prêt à être affecté à un channel ;
 il n'est pas le workflow par défaut si l'espace en a déjà un. **« Abandonner la suggestion »**, après
 confirmation, la retire de la liste ; rien n'a été créé.
+
+**Réutiliser le catalogue.** Une étape peut viser un nœud qui existe déjà au catalogue de l'espace tout en
+portant un autre nom : l'IA y est invitée — par exemple l'étape « Premier contact » sur le nœud
+« Prospection ». Quand elle redéclare malgré tout un nœud du catalogue, le défaut le dit, et
+**« Utiliser le nœud du catalogue »** fait viser le nœud existant **en gardant le nom** que la suggestion
+donnait à l'étape — et sa probabilité, si elle diffère. Le curseur passe dans le nom de l'étape ; l'écran
+annonce le nom gardé. Une fois le workflow créé, l'éditeur montre l'étape sous ce nom, avec la mention
+« Libellé surchargé ».
+
+**Les informations que l'affaire porte déjà.** Toute affaire a déjà son titre, sa description, son
+responsable, son montant et sa devise, sa probabilité, sa prochaine action et son échéance, ses contacts et
+son organisation, ses coûts, ses recettes, son temps, ses commentaires et ses e-mails. L'IA ne doit pas
+proposer de champ pour elles ; si un champ nouveau en reprend une — un champ « Montant », par exemple —, le
+défaut le dit : « Le champ « montant » reprend le montant, déjà porté par l'affaire : retirez-le ou
+renommez-le. » Un champ qui existe déjà dans un workflow n'est jamais signalé.
 
 **Les suggestions en revue** sont listées sous les workflows, dans « Suggestions de l’IA en revue » :
 elles survivent au rechargement de la page, et les autres administrateurs les voient et peuvent les

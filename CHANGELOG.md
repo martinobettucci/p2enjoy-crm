@@ -13,10 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-113` T1 et T2 — le générateur de workflow connaît l'affaire et le catalogue : la base (migration 102) et la fonction `ia`
+### `CRM-113` T1 à T3 — le générateur de workflow connaît l'affaire et le catalogue : base (migration 102), fonction `ia`, écran
 
-*Livrées en développement le 2026-10-24 ; l'écran (T3) reste à livrer, et la migration part en production avec la
-fonction `ia` et lui.*
+*Livrées en développement le 2026-10-24 ; la migration, la fonction `ia` et la webapp partent en production ensemble (T4),
+sur instruction du responsable.*
+
+- **Chaque étape d'une suggestion porte « Nom de l'étape » et « Probabilité de l'étape »** : vides, l'étape garde ceux
+  de son nœud, montrés en exemple. **« Utiliser le nœud du catalogue » garde le nom** que la suggestion donnait à
+  l'étape, et l'annonce. Les défauts d'un champ natif et d'une probabilité d'étape sont dits en clair. Une suggestion
+  du scénario `catalogue` est au jeu de démonstration.
 
 - **Le modèle apprend ce que l'affaire porte déjà** et la consigne de viser un nœud du catalogue sous le nom voulu
   plutôt que d'en déclarer un ; le catalogue qu'il reçoit donne la probabilité par défaut de chaque nœud. Sa sortie
