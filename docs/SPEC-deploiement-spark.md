@@ -71,9 +71,11 @@ tableau `SPARK_COMPOSE` ; aucun appel ne compose ces fichiers à la main.
 
 ### 3.3 Stockage objet : un MinIO interne
 
-- Service `minio`, image `quay.io/minio/minio` à l'étiquette déjà épinglée par le développement
-  (décision 569), **aucun port publié**, volume nommé `minio-data`, conteneur `p2enjoy-minio`.
-- Service `minio-createbucket`, image `quay.io/minio/mc`, crée `GLOBAL_S3_BUCKET` s'il manque puis
+- Service `minio`, image `cgr.dev/chainguard/minio` **épinglée par empreinte**, la même que le développement
+  (décision 681 ; avant elle, `quay.io/minio/minio`, décision 569, que `quay.io` ne sert plus — INC-290), en
+  `user: "0:0"` comme l'image qu'elle remplace : le volume existant appartient à `root`. **Aucun port publié**, volume
+  nommé `minio-data`, conteneur `p2enjoy-minio`.
+- Service `minio-createbucket`, **la même image** (elle porte `mc` et `/bin/sh`), crée `GLOBAL_S3_BUCKET` s'il manque puis
   se termine ; `storage` en dépend.
 - `storage` vise `http://minio:9000` avec `MINIO_ROOT_USER` / `MINIO_ROOT_PASSWORD`, exactement comme
   l'overlay de développement.

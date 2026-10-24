@@ -545,8 +545,8 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `kong` | `kong/kong:3.9.1` | dev, prod |
 | `studio` | `supabase/studio:2026.07.07-sha-a6a04f2` | dev |
 | `meta` | `supabase/postgres-meta:v0.96.6` | dev |
-| `minio` | dev : **`p2enjoy/minio:2025.4.22`, construite dans le dépôt** (`supabase/docker/minio/Dockerfile`, cible `minio`) sur `bitnamilegacy/minio:2025.4.22` épinglée par empreinte — même binaire que la publication du 2025-04-22 (INC-290, décision 679) ; cellule Spark : `quay.io/minio/minio:RELEASE.2025-04-22T22-12-26Z` (`CRM-090`), inchangée | dev ; cellule Spark |
-| `minio-createbucket` | dev : **`p2enjoy/minio-mc:2025.4.22`**, même Dockerfile, cible `mc` ; cellule Spark : `quay.io/minio/mc:RELEASE.2025-04-16T18-13-26Z`, inchangée | dev ; cellule Spark |
+| `minio` | **`cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c`** (relevée le 2026-10-24, `RELEASE.2026-10-23T20-06-51Z`), en `user: "0:0"` (INC-290, décision 681) | dev ; cellule Spark |
+| `minio-createbucket` | **la même image** que `minio` : elle porte `mc` et `/bin/sh` (décision 681) | dev ; cellule Spark |
 | `keycloak` | `quay.io/keycloak/keycloak:26.7.3` | dev — la version du SSO réel (`CRM-091`) |
 | `stalwart` | `stalwartlabs/stalwart:v0.13.4` | dev |
 | `stalwart-init` | `curlimages/curl:8.16.0` | dev |
@@ -555,12 +555,16 @@ impose de rejouer `scripts/verify-stack.sh` et de mettre à jour `docs/PROD_MIGR
 | `mail-sync` | build local `python:3.13.13-slim-bookworm` | dev, prod |
 | `caddy` | `caddy:2.9-alpine` | prod |
 
-**Dette connue — l'image MinIO du développement (INC-290, décision 679).** Depuis le 2026-10-24, les dépôts MinIO de
-`quay.io` refusent le tirage anonyme (`401`). Le développement construit donc ses deux images sur
-`bitnamilegacy/minio:2025.4.22`, qui porte le même binaire (`commit-id=0d7408fc…`, mesuré). C'est un dépôt **gelé**,
-sans mises à jour de sécurité : acceptable pour un stockage lié à la boucle locale, pas comme source durable. La cellule
-Spark tire toujours `quay.io`. Elle garde ses images en cache, mais un déploiement neuf ou une purge échouerait
-(INC-290). Son alignement attend une décision du responsable. Le choix d'un stockage S3 local durable reste ouvert.
+**L'image MinIO : Chainguard, épinglée par empreinte (INC-290, décision 681).** Depuis le 2026-10-24, `quay.io` refuse
+le tirage anonyme des dépôts MinIO (`401`), et MinIO n'est plus maintenu ni distribué en binaires par son éditeur.
+`cgr.dev/chainguard/minio` est reconstruit en continu depuis les sources et se tire sans authentification. Le
+développement et la cellule tirent **la même empreinte**. Une montée de version est un commit qui change l'empreinte
+dans les deux fichiers Compose et rejoue les preuves du stockage ; on ne suit jamais `latest`. Les deux services
+tournent en `root` (`user: "0:0"`) : l'image tourne par défaut en `65532`, mais le volume existant appartient à `root`.
+Garder `root` évite tout geste sur les données de production. Dans la cellule rootless, ce `root` n'a aucun privilège
+sur l'hôte. **Compromis connu** : l'amont MinIO est abandonné, et Chainguard reconstruit un code que plus personne ne
+corrige à la source. Remplacer MinIO par un autre serveur S3, local ou fourni, reste à étudier ; le code parle S3 et ne
+changerait pas. Le Dockerfile `bitnamilegacy` de la décision 679 est retiré.
 
 Deux familles de la distribution officielle restent **écartées** : `analytics` et `vector`
 (journalisation Logflare), puis `imgproxy` (transformation d'images,

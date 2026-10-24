@@ -14488,7 +14488,12 @@ décrit la baseline réelle.
 - [x] **Image Realtime transférée seulement si son contenu change** (décision 577) : l'identifiant
       changeait à chaque construction. Harnais porté à **78 vérifications, aucune anomalie**, dont
       une qui rougissait avant la correction.
-- [@] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)**.
+- [@] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
+      `cgr.dev/chainguard/minio` épinglé par empreinte, une seule image pour `minio` et `minio-createbucket`, en
+      `user: "0:0"` (aucune donnée de production à changer de propriétaire) ; Dockerfile `bitnamilegacy` retiré ;
+      `verify-stack.sh`, `verify-spark.sh` et `restore-drill.sh` suivis ; preuves du stockage (stack, sauvegarde,
+      restauration, mail) rejouées ; livraison à la cellule sur instruction du responsable
+      (`docs/PROD_MIGRATIONS.md` §2.18).
       *Prise en charge : session interactive 2026-10-24 18:28 UTC depuis 2026-10-24 18:28 UTC — état avant : [ ]*
 
 ### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[~]`

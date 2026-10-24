@@ -33554,3 +33554,43 @@ Aucun harnais ne lit les marques du backlog : l'ajout ne casse rien.
 
 **Persisté** : `docs/BACKLOG.md` (Marquage), `CLAUDE.md` §5 (Backlog) et §13 (Synchronisation), `docs/CloudWorker.md`
 §0, §1 *bis*, §3.2, §4.2, §4.3 et §4.4.
+
+### décision 681 — MinIO depuis Chainguard, épinglé par empreinte, en développement et dans la cellule Spark (INC-290)
+
+*Recommandation de la session, approuvée par le responsable le 2026-10-24 (« approuvé »).* **Constat** (INC-290, mesures du
+2026-10-24) : le MinIO communautaire n'est plus maintenu ni distribué en binaires. `quay.io` refuse le tirage, Docker Hub
+n'a plus rien de vivant, et `bitnamilegacy` est figé. `cgr.dev/chainguard/minio` est reconstruit en continu (image du
+2026-10-23, `RELEASE.2026-10-23T20-06-51Z`, Go 1.27.3) ; il relit nos données sur une copie du volume.
+
+**Décision** : le développement **et** la cellule Spark tirent `cgr.dev/chainguard/minio`, **épinglé par empreinte**
+(`@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c`, relevée le 2026-10-24). L'empreinte est
+**montée volontairement**, par un commit qui rejoue les preuves du stockage, et jamais en suivant `latest`. Le
+Dockerfile de la décision 679 (`bitnamilegacy`) est retiré.
+
+**Mesuré avant d'écrire, et qui corrige une affirmation de la session** : l'image serveur de Chainguard contient
+`/bin/sh`, `bash`, les utilitaires de base (`test`, `rm`, `cat`, `true`) **et `mc`**. La mesure précédente — « sans
+shell ni `mc` » — était fausse : le test réussissait sans rien afficher. Conséquences :
+- **une seule image pour les deux services** : `minio` et `minio-createbucket`. Le client séparé `minio-client` n'est pas
+  employé ;
+- **la vérification de santé `mc ready local` reste**, mesurée « The cluster 'local' is ready » ;
+- **les harnais qui exécutent des commandes dans le conteneur** (`backup.sh`, `verify-sauvegardes.sh`,
+  `verify-restauration.sh`, `restore-drill.sh`) restent compatibles ; l'image ne porte ni `tar` ni `find`, comme avant
+  (mesure M5).
+
+**Écart avec la recommandation, tranché par la session** : la recommandation prévoyait de changer une fois le
+propriétaire du volume, parce que l'image tourne par défaut en utilisateur `65532`. **Retenu à la place : les deux
+services tournent en `user: "0:0"`**, comme l'image de `quay.io` qu'ils remplacent. Mesuré : le volume existant
+appartient à `root`, et le serveur, lancé en `root` sur une copie, démarre et relit tout. Aucune donnée de production
+n'a donc à changer de propriétaire, et la livraison ne comporte aucun geste manuel sur le volume (`CLAUDE.md` §9). La
+cellule est rootless : `root` dans le conteneur reste un utilisateur sans privilège de l'hôte, exactement comme
+aujourd'hui. Le passage en `65532` reste une amélioration possible, qui demanderait alors ce geste.
+
+**Ensuite, à étudier sans calendrier** (recommandation, partie 2) : quitter MinIO, abandonné en amont, pour un autre
+serveur S3 local ou le S3 d'un fournisseur. Le code parle S3 et ne changerait pas. Aucune unité n'est ouverte.
+
+**Livraison** : la cellule tire la nouvelle image et recrée `minio` et `minio-createbucket` à la prochaine fenêtre,
+**sur instruction du responsable** ; procédure et retour arrière dans `docs/PROD_MIGRATIONS.md` §2.18. **Connecteur
+MCP** : sans objet, c'est de l'infrastructure.
+
+**Persisté avant le code** : ce journal ; `docs/SPEC-deploiement-spark.md` §3.3 ; `docs/DAT.md` §3.7 ;
+`docs/PROD_MIGRATIONS.md` §2.18 et §4 ; `docs/INCONSISTENCY_REPORT.md` INC-290 ; `docs/BACKLOG.md` `CRM-090`.

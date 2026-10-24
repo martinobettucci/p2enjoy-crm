@@ -7548,6 +7548,15 @@ développement ; ouverte pour la cellule Spark.**
   démarre, `mc admin info` répond, et les objets du bucket se listent et se relisent à l'identique (taille et ETag). Le
   volume d'origine n'a pas été touché ; la copie a été supprimée. **Non vérifié** : les conditions de gratuité de
   Chainguard dans la durée, pour une étiquette autre que `latest`.
+  **CORRIGÉ le 2026-10-24 (décision 681)** : « sans shell ni `mc` dans l'image serveur » est faux. L'image porte
+  `/bin/sh`, `bash`, les utilitaires de base **et `mc`** ; le test d'alors réussissait sans rien afficher. Le serveur
+  démarre aussi en `root` sur une copie du volume laissé à son propriétaire d'origine (`root`).
+
+**Arbitrage rendu le 2026-10-24 (décision 681) : Chainguard, épinglé par empreinte, en développement ET dans la cellule.**
+Une seule image pour `minio` et `minio-createbucket`, en `user: "0:0"`, sans geste sur les données. Le Dockerfile
+`bitnamilegacy` de la décision 679 est retiré. La livraison à la cellule attend l'instruction du responsable
+(`docs/PROD_MIGRATIONS.md` §2.18).
+
 ### INC-291 — `./runDev.sh` s'arrête sous Compose 5 : `bake` exige un droit pour lire le paquet CA monté en secret
 
 *Relevé le 2026-10-24 par la même session.* **Constat, mesuré** sous Docker Compose `v5.6.1` et buildx `v0.38.1` : la

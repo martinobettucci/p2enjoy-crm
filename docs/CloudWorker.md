@@ -707,9 +707,9 @@ depuis la décision 679.
 1. **Tire les images une par une**, avec une attente croissante entre deux essais (décision 373) : Docker Hub rend
    `429` aux tirages parallèles de `docker compose`. Les images de base des constructions aussi — `node:24-alpine`,
    `python:3.13.13-slim-bookworm` —, sans quoi la construction de la webapp échoue sur le même `429`.
-2. **MinIO ne se tire plus de `quay.io`** (`401`, INC-290) — **corrigé dans le dépôt le 2026-10-24** (décision 679) :
-   `docker-compose.dev.yml` construit `p2enjoy/minio` et `p2enjoy/minio-mc` depuis `supabase/docker/minio/Dockerfile`.
-   Plus rien à faire à la main ; `./runDev.sh` les construit au premier démarrage.
+2. **MinIO ne se tire plus de `quay.io`** (`401`, INC-290) — **corrigé dans le dépôt le 2026-10-24** (décisions 679
+   puis 681) : les deux services MinIO tirent `cgr.dev/chainguard/minio`, épinglé par empreinte, sans authentification.
+   Plus rien à faire à la main.
 3. **`bake` et le paquet CA sous Compose 5** (INC-291) — **corrigé dans le dépôt le 2026-10-24** (décision 679) :
    `./runDev.sh` exporte lui-même `BUILDX_BAKE_ENTITLEMENTS_FS=0`. Une commande `docker compose … build` lancée hors de
    `./runDev.sh` doit l'exporter aussi, sans quoi elle rend « additional privileges requested: pass

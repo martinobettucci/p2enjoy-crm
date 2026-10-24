@@ -515,6 +515,26 @@ de `main`, sur l'instruction du responsable et après la confirmation de l'insta
 **Retour arrière** : la révision précédente de la webapp ; les colonnes peuvent rester en place (sans lecteur, elles ne
 changent rien), ou être retirées par les `drop function` de leurs lignes au §3.2.
 
+### 2.18 INC-290 — MinIO depuis Chainguard dans la cellule (EN ATTENTE de l'instruction du responsable)
+
+`docker-compose.spark.yml` remplace `quay.io/minio/minio` et `quay.io/minio/mc`, que `quay.io` ne sert plus (`401`), par
+**une seule image** : `cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c` (décision 681). Les deux services tournent en `user: "0:0"`, comme l'image de `quay.io` : le
+volume `minio-data` garde son propriétaire, **aucun geste sur les données**. Aucune migration, aucune variable, aucun
+secret nouveau. Le serveur passe de la publication du 2025-04-22 à `RELEASE.2026-10-23T20-06-51Z`. Mesuré en
+développement sur une copie d'un volume écrit par la version d'avril 2025 : le serveur démarre et les objets se
+relisent à l'identique (taille et ETag).
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Prendre l'**instantané de VM** et le faire confirmer par le responsable, comme pour toute fenêtre (en-tête de ce document) : il couvre le volume `minio-data` | propriétaire de la cellule | console de l'hébergeur |
+| 2 | Livrer `main` : le fichier Compose porte la nouvelle image ; `./runProd.sh --spark` la tire et recrée `minio`, puis rejoue `minio-createbucket` (`--ignore-existing`) | poste, par les IP | `scripts/spark/livrer.sh`, puis `./runProd.sh --spark` |
+| 3 | Vérifier en lecture seule : `minio` sain, `minio-createbucket` terminé en `0`, et une pièce jointe ancienne se télécharge depuis l'application | poste, lecture seule ; le responsable | `scripts/spark/verifier.sh`, puis l'application |
+
+**Retour arrière** : remettre les deux lignes `image:` précédentes. **Limite** : `quay.io` ne servant plus ces images,
+le retour ne fonctionne que si la cellule les garde en cache — ne pas purger les images avant d'avoir validé le geste 3.
+Le serveur de 2025 relit un volume ouvert par celui de 2026 tant qu'aucune fonction nouvelle n'a été activée (aucune
+ne l'est par ce changement) ; en cas de doute, restaurer l'instantané du geste 1.
+
 ## 3. Migrations en attente
 
 **Deux migrations en attente, à livrer ensemble et dans cet ordre : la 102 puis la 103** (`CRM-113` T1 — le générateur de workflow connaît les champs natifs de l'affaire et le catalogue ; `CRM-113` T5 — tout en anglais, la casse ignorée, décision 679 ; leurs lignes au §3.2). Elles ne touchent aucune table : elles n'exigent pas d'instantané au-delà de celui de la procédure nominale (§3.1), et elles se livrent avec la fonction `ia` et la webapp de `CRM-113` (T2, T3, T5). **Le responsable s'en charge** (décision 679). Avant elle, la **101** (`CRM-114` T1 — la famille `organizations` du connecteur ; sa ligne de retrait au §3.2) a été appliquée le 2026-10-24 après l'instantané confirmé par le responsable (§8). La troisième fenêtre du 2026-10-23 (§8) a appliqué la **100** (`CRM-067` T1 — les activités d'une affaire et leurs participants ; sa ligne de retrait au §3.2) ; la seconde, la **99** (`CRM-109` T3). Avant elles, les migrations **91 à 98** (`CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-108`, `CRM-070`, `CRM-109`), appliquées le 2026-10-23 par une même fenêtre après l'instantané confirmé par le responsable ; leurs lignes de retrait sont au §3.2. Avant elles, les migrations **89** (`CRM-101`) et **90**
@@ -1059,7 +1079,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml`, qui incrémente le label `com.p2enjoy.kong-config-revision` — **`crm-092`** depuis `CRM-092` T6 : routes `/auth/v1/*` et `/.well-known/oauth-authorization-server` retirées, Kong répond 404 |
 | `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** ; **`CRM-092` T6** : `/auth/v1/*` répond 404, et le label `com.p2enjoy.caddy-routes-revision` (`crm-092`) fait recréer Caddy au `up` ordinaire ; **`CRM-102` T3** : l'hôte du connecteur MCP aiguillé vers `mcp` (`MCP_HOTE`, `mcp.invalid` tant qu'il est éteint), label `crm-102` |
 | `mcp` | Sous le profil `mcp`, présent seulement si `CRM_MCP_HOTE` est posée (`CRM-102`, `docs/SPEC-mcp.md` §2.1). **Image construite dans la cellule** à sa première livraison (2026-10-21) ; comme pour `mail-sync`, `up -d` ne reconstruit jamais une image présente : **toute modification sous `mcp/` se livre par une reconstruction explicite** (`up -d --build --no-deps --wait mcp`, par `compose_prod`). Le volume `mcp-etat` (clients enregistrés, transactions, codes, chiffrés) survit aux recréations |
-| `minio`, `minio-createbucket` | Cellule Spark seulement (`CRM-090`) : stockage objet interne, sans port publié |
+| `minio`, `minio-createbucket` | Cellule Spark seulement (`CRM-090`) : stockage objet interne, sans port publié. **En attente (décision 681)** : nouvelle image Chainguard épinglée par empreinte, procédure au §2.18 |
 | `realtime` dans la cellule | À chaque montée de version de Realtime : reconstruire l'image dérivée, que `scripts/spark/livrer.sh` recharge (décision 571) |
 | ~~`auth`~~, ~~`auth-templates`~~ | **Retirés de la pile par `CRM-092` T6** (décision 589). À la reprise : les arrêter et les supprimer explicitement (`docker rm -f p2enjoy-auth p2enjoy-auth-templates`) — `./runProd.sh` ne retire aucun orphelin —, après l'application de la migration 77 ; `scripts/spark/verifier.sh` contrôle qu'aucun ne subsiste. Caddy répond lui-même 404 sur `/auth/v1/*` |
 
