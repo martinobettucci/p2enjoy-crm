@@ -692,7 +692,7 @@ créé par le connecteur paraît dans la barre d'onglets du track.
 
 **Quatre outils**, ceux que le carnet de la webapp offre pour un contact (`contacts.ts`), sous le jeton de la personne.
 *Révisée par la décision 660* : la proposition en comptait six. Les deux lectures d'organisation partent dans la famille
-nouvelle `organisations` de `CRM-114`, avec leur création et leur modification (décision 659 : une permission distincte).
+nouvelle `organizations` de `CRM-114`, avec leur création et leur modification (décision 659 : une permission distincte).
 
 | Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
 |---|---|---|---|---|
@@ -704,7 +704,7 @@ nouvelle `organisations` de `CRM-114`, avec leur création et leur modification 
 **Ce que la tranche ne fait pas, et pourquoi.**
 - **Aucun outil de suppression d'un contact.** Le CRM ne sait que le **détruire**, ses rattachements avec lui, et
   « supprimer » ne veut jamais dire purger (§6.1, arbitrage A4). Le geste reste celui de la fiche du contact.
-- **Les organisations** — les lire, les créer, les modifier — sont la famille `organisations` de `CRM-114`.
+- **Les organisations** — les lire, les créer, les modifier — sont la famille `organizations` de `CRM-114`.
 - **Le rôle d'un contact dans une affaire** se pose avec `crm_card_contact_link` (`affaires`).
 
 **Preuves** (§13) : pour chaque outil, contre la vraie base et un vrai client MCP — succès, refus par la matrice, refus

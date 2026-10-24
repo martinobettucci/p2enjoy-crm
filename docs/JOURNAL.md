@@ -33106,9 +33106,12 @@ de `CRM-104` T3.* **Constat.** La proposition excluait l'écriture des organisat
 Ce n'était pas un choix de produit, mais un oubli. La base, elle, est prête : politiques d'insertion et de mise à jour
 pour le business developer et l'administrateur, et les privilèges. **Décisions.**
 1. **`CRM-114`** est ouverte : créer et modifier une organisation à l'écran, **sans suppression**, qui serait une purge.
-2. **Connecteur : oui**, dans une **famille nouvelle `organisations`** (décision 659, une permission distincte). Elle
+2. **Connecteur : oui**, dans une **famille nouvelle `organizations`** (décision 659, une permission distincte). Elle
    porte la lecture, la création et la modification ; sa migration ajoute la famille à la liste fermée.
 3. **`CRM-104` T3 part maintenant**, avec les **quatre outils de contact**. Les deux lectures d'organisation passent à
    `CRM-114` : les ranger d'abord dans `contacts`, puis les déplacer, ferait changer de case une permission déjà donnée.
    Ce point découle des réponses 2 et 3, et le responsable peut le revoir.
+   **Précision, même jour** : la famille s'appelle **`organizations`**, en anglais comme la table. C'est la règle 8 de la
+   décision 658 (`docs/DAT.md` §12 bis) pour tout objet nouveau exposé, relevée par la session des rattachements ; les
+   familles existantes gardent leur nom jusqu'au lot 1 du plan d'INC-286.
 

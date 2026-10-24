@@ -15478,7 +15478,7 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - **Livrée le 2026-10-24** : révision `20ad7541`, image `mcp` reconstruite et saine, `verifier.sh` 26/27.
       - **Reste `[~]`** : le constat du responsable.
 - [ ] **T3** — `contacts` : quatre outils de contact (décision 660) ; les organisations passent à `CRM-114`, famille
-      `organisations`.
+      `organizations`.
 - [ ] **T4** — `budgets`.
 - [ ] **T5** — `temps`.
 - [ ] **T6** — `objectifs`.
@@ -16006,13 +16006,13 @@ parmi ses limites (`docs/SPEC-contacts.md` §14.7) et s'est close sans qu'une un
 prête — politiques `organizations_insertion_bizdev_admin` et `organizations_maj_bizdev_admin`, privilèges.
 
 - [x] **Arbitrée le 2026-10-24 (décision 660)** : créer et modifier une organisation à l'écran (nom, domaine, site web),
-      **sans suppression** ; connecteur MCP **oui**, dans une **famille nouvelle `organisations`** (décision 659) —
+      **sans suppression** ; connecteur MCP **oui**, dans une **famille nouvelle `organizations`** (décision 659) —
       lecture, création et modification —, avec la migration de la liste fermée et sa phrase dans l'onglet « Connecteur
       MCP » ; les deux lectures d'organisation quittent `CRM-104` T3 pour cette famille.
 - [ ] **Spécification** à écrire et à valider : écran, refus, famille et outils (`crm_organization_list`,
       `crm_organization_get`, `crm_organization_create`, `crm_organization_update`), noms anglais (décision 658).
-- [ ] **T1** — migration : la famille `organisations` dans la liste fermée de `mcp_droits` ; pgTAP ; contrat.
+- [ ] **T1** — migration : la famille `organizations` dans la liste fermée de `mcp_droits` ; pgTAP ; contrat.
 - [ ] **T2** — l'écran : créer depuis le carnet, modifier depuis la fiche d'organisation ; design system ; unitaires.
 - [ ] **T3** — E2E, captures, seed, manuel, campagnes.
-- [ ] **T4** — les quatre outils MCP de la famille `organisations` ; matrice et phrase de portée.
+- [ ] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée.
 - [ ] **T5** — livraison en production, sur instruction du responsable.
