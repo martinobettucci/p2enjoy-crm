@@ -7,6 +7,8 @@
 #           (docs/SPEC-recettes.md §7)
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T2.a : la traçabilité accepte les modules de la famille `affaires`, et
 #           l'intégration rejoue ses sept outils de lecture (docs/SPEC-mcp.md §9.2 bis, §13)
+# @verifies CRM-104 (docs/BACKLOG.md) — tranche T7 : l'intégration rejoue les trois outils de la famille `messagerie`
+#           (docs/SPEC-mcp.md §9.2 decies, §13)
 #
 # Rejoue les preuves du connecteur sur la pile de développement, puis DÉGRADE réellement le code, la base et l'aiguillage,
 # et exige que les preuves rougissent, avant de restaurer et de CONSTATER la restauration.
@@ -98,7 +100,7 @@ integration() { # integration <url du connecteur> [arguments pytest…]
 	local url=$1
 	shift
 	docker run --rm --network "$RESEAU" --env-file "$ENV_INTEGRATION" -e CRM_MCP_URL="$url" "$IMAGE" \
-		python -m pytest -q -p no:cacheprovider tests/test_integration_oauth.py tests/test_integration_recettes.py tests/test_integration_affaires.py tests/test_integration_affaires_ecriture.py tests/test_integration_structure.py tests/test_integration_contacts.py tests/test_integration_organisations.py tests/test_integration_budgets.py tests/test_integration_temps.py tests/test_integration_objectifs.py "$@" >"$TRAVAIL/integration.log" 2>&1
+		python -m pytest -q -p no:cacheprovider tests/test_integration_oauth.py tests/test_integration_recettes.py tests/test_integration_affaires.py tests/test_integration_affaires_ecriture.py tests/test_integration_structure.py tests/test_integration_contacts.py tests/test_integration_organisations.py tests/test_integration_budgets.py tests/test_integration_temps.py tests/test_integration_objectifs.py tests/test_integration_messagerie.py "$@" >"$TRAVAIL/integration.log" 2>&1
 }
 caddy_de_la_cellule() { # caddy_de_la_cellule [hôte du connecteur]
 	docker rm -f "$CADDY" >/dev/null 2>&1 || true
