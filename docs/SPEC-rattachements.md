@@ -78,10 +78,12 @@ chaque fonction et rend la liste exacte, **mesurée**, de celles qui changent.
 
 ## 3. Le modèle
 
-### 3.1 `public.card_rattachements` — table nouvelle
+### 3.1 `public.card_placements` — table nouvelle
 
-**[proposition]** Le nom suit le vocabulaire arrêté. `card_attachments` est écarté : « attachments » désigne déjà les
-pièces jointes (`mail_attachments`).
+**Nommage** (décision 658, `docs/DAT.md` §12 bis) : les identifiants sont en anglais, le code et l'interface disent
+« rattachement ». `card_attachments` est écarté, car « attachments » désigne déjà les pièces jointes
+(`mail_attachments`). D'où `card_placements`, `placement_id`, `attach_card`, `detach_card`, `placement_ambiguous`, et
+les événements `attached` et `detached`.
 
 | Colonne | Type | Règle |
 |---|---|---|
@@ -129,11 +131,11 @@ déclencheur serait une seconde vérité, qui mentirait dès qu'une affaire a de
 
 ### 3.3 `card_field_values` — les valeurs appartiennent au rattachement
 
-Décision 642, arbitrage 2. La clé passe de `(card_id, field_id)` à **`(rattachement_id, field_id)`**. La charnière
-`workflow_id` est conservée, avec la clé composite `(rattachement_id, workflow_id) → card_rattachements (id,
+Décision 642, arbitrage 2. La clé passe de `(card_id, field_id)` à **`(placement_id, field_id)`**. La charnière
+`workflow_id` est conservée, avec la clé composite `(placement_id, workflow_id) → card_placements (id,
 workflow_id)` : elle garantit, comme aujourd'hui, qu'une valeur ne répond qu'à une question de son workflow.
 
-**[proposition]** `card_id` est conservé et dénormalisé, sa vérité garantie par une clé composite `(rattachement_id,
+**[proposition]** `card_id` est conservé et dénormalisé, sa vérité garantie par une clé composite `(placement_id,
 card_id)`. Il sert la timeline (`field_changed`) et la recherche, sans relire le rattachement.
 
 ### 3.4 Champs obligatoires et transitions
@@ -152,12 +154,12 @@ Les champs exigés par une transition (`workflow_transition_required_fields`) et
 | **Rattacher** à un channel | l'appelant écrit l'affaire (un channel suffit) **et** écrit le channel cible |
 | **Retirer** un rattachement | `app.is_workspace_admin` ; jamais le dernier (décision 643, arbitrage 3) |
 
-**Un rattachement à un channel illisible est masqué, existence comprise.** La RLS de `card_rattachements` ne le rend
+**Un rattachement à un channel illisible est masqué, existence comprise.** La RLS de `card_placements` ne le rend
 pas. Aucune fonction ne révèle le nombre total de rattachements d'une affaire à qui ne les lit pas tous.
 
 **Ce qui change dans la chaîne d'accès.** `app.can_read_card_pour` et `app.can_write_card` deviennent « il existe un
 rattachement dont le channel est lisible (ou écrivable) ». Les politiques de `cards` cessent de lire une colonne de la
-ligne : elles appellent une fonction `security definer` qui lit `card_rattachements`, une autre table. La règle du §3.5
+ligne : elles appellent une fonction `security definer` qui lit `card_placements`, une autre table. La règle du §3.5
 de `docs/SPEC-permissions-rls.md` — une politique ne relit jamais sa propre table — est donc respectée. **Le coût est à
 mesurer** en T1 (`EXPLAIN ANALYZE` du board et de la liste sur le seed) : c'est le chemin le plus emprunté du produit.
 
@@ -171,20 +173,20 @@ mesurer** en T1 (`EXPLAIN ANALYZE` du board et de la liste sur le seed) : c'est 
 | Geste | Fonction | Règle |
 |---|---|---|
 | Créer une affaire | `creer_affaire(p_channel, p_titre)` — signature inchangée | crée l'affaire **et** son premier rattachement, à l'étape initiale |
-| Rattacher | `rattacher_affaire(p_card, p_channel)` — nouvelle | **étape initiale** du workflow du channel, bloc vide (décision 643, arbitrage 2) ; si un rattachement archivé existe déjà, il est désarchivé tel quel |
+| Rattacher | `attach_card(p_card, p_channel)` — nouvelle | **étape initiale** du workflow du channel, bloc vide (décision 643, arbitrage 2) ; si un rattachement archivé existe déjà, il est désarchivé tel quel |
 | Faire avancer | `move_card(card_id, to_step_id, comment)` | voir la compatibilité ci-dessous |
 | Déplacer vers un autre channel | `move_card_to_channel(...)` | déplace **un rattachement** ; refusé si l'affaire est déjà rattachée au channel cible |
 | Sommeil, réveil | `snooze_card`, `wake_card` | par rattachement |
 | Archiver, désarchiver | mise à jour de `archived_at` du rattachement | droit d'écriture sur son channel |
-| Retirer | `retirer_rattachement(p_rattachement, discard_field_values)` — nouvelle | administrateur ; refusé sur le dernier ; la perte des valeurs exige `discard_field_values = true`, selon la doctrine de `move_card_to_channel` |
+| Retirer | `detach_card(p_placement, discard_field_values)` — nouvelle | administrateur ; refusé sur le dernier ; la perte des valeurs exige `discard_field_values = true`, selon la doctrine de `move_card_to_channel` |
 | Changer le workflow d'un channel | `change_channel_workflow` | remappe **les rattachements** du channel |
 
 **Compatibilité des signatures [proposition].** Les fonctions qui prennent `card_id` gardent leur signature. Elles
 agissent quand l'affaire a **un seul** rattachement que l'appelant peut écrire, et refusent avec un code nommé
-`rattachement_ambigu` sinon. Elles reçoivent une variante qui désigne le rattachement (`p_rattachement uuid`). Le
+`placement_ambiguous` sinon. Elles reçoivent une variante qui désigne le rattachement (`p_placement uuid`). Le
 connecteur MCP et la webapp passent à la variante ; l'ancienne forme ne casse rien pendant la transition.
 
-**Timeline.** `card_events` reçoit une colonne `rattachement_id`, nulle pour les événements de l'affaire (création,
+**Timeline.** `card_events` reçoit une colonne `placement_id`, nulle pour les événements de l'affaire (création,
 corbeille, contacts, mails), et renseignée pour `moved`, `assigned`, `snoozed`, `woken`, `stalled`, `archived`,
 `unarchived` et `field_changed`. **Deux valeurs s'ajoutent au vocabulaire** : `attached` et `detached`. Elles sont
 ajoutées dans le **même** changement que le déclencheur qui les écrit, comme l'a été `channel_changed`. Les événements
@@ -199,7 +201,7 @@ existants reçoivent le rattachement unique de leur affaire à la migration.
 - **Ma journée** : les prochaines actions des rattachements dont l'appelant est responsable.
 - **Rentabilité** (`rentabilite_affaires`) : **une ligne par rattachement × devise** (décision 643, arbitrage 1).
   L'état et le montant sont ceux du rattachement. Les coûts, les recettes et le personnel de l'affaire sont rappelés
-  sur chaque ligne avec une colonne `partage` (vrai quand l'affaire a plusieurs rattachements lisibles), et le total de
+  sur chaque ligne avec une colonne `shared` (vrai quand l'affaire a plusieurs rattachements lisibles), et le total de
   l'écran ne les compte **qu'une fois**. Le filtre d'état s'applique à l'état du rattachement. Le contrat d'API change :
   `docs/SPEC-recettes.md` §5 et l'outil `crm_profitability_report` sont mis à jour dans la même tranche.
 - **Temps valorisé** (`temps_valorise`) : les saisies restent attachées à l'affaire. La ventilation par channel montre
@@ -250,9 +252,9 @@ d'entre eux dans l'ordre des tracks et des channels **[proposition]**.
 
 ## 10. Migration et reprise
 
-1. Créer `card_rattachements`, puis y copier une ligne par affaire depuis les colonnes de `cards`, en conservant les
+1. Créer `card_placements`, puis y copier une ligne par affaire depuis les colonnes de `cards`, en conservant les
    valeurs. Le rattachement unique de chaque affaire existante a l'`id` d'une nouvelle ligne.
-2. Repointer `card_field_values` vers le rattachement unique de son affaire, puis renseigner `card_events.rattachement_id`
+2. Repointer `card_field_values` vers le rattachement unique de son affaire, puis renseigner `card_events.placement_id`
    pour les événements de rattachement.
 3. Réécrire les fonctions du §2, les politiques et les déclencheurs ; retirer les colonnes de `cards` en dernier.
 4. Régénérer les types (`webapp/src/lib/database.types.ts`).
@@ -266,20 +268,21 @@ recommande une sauvegarde avant application.
 ## 11. Connecteur MCP — famille `affaires`
 
 `CRM-104` n'est pas livrée : ses outils s'inscrivent à son catalogue (`docs/SPEC-mcp.md` §9.2), mis à jour à la
-validation de cette spécification.
+validation de cette spécification. La famille s'appellera `cards` quand le lot 1 du plan d'INC-286 aura renommé la
+matrice ; d'ici là, c'est `affaires`.
 
 | Action | Outils |
 |---|---|
 | `consulter` | `crm_card_get` rend la partie commune et les rattachements lisibles ; `crm_card_list` liste les rattachements d'un channel |
 | `ajouter` | `crm_card_attach` — rattacher à un channel |
-| `modifier` | `crm_card_move` et `crm_card_move_to_channel` désignent **un rattachement** ; `crm_card_snooze`, `crm_card_wake` ; `crm_card_attachment_update` — responsable, prochaine action, montant, champs du bloc |
-| `supprimer` | `crm_card_attachment_archive` — **archiver** un rattachement ; **aucun outil de retrait** : c'est un geste d'administrateur dans la webapp (décision 643) |
+| `modifier` | `crm_card_move` et `crm_card_move_to_channel` désignent **un rattachement** ; `crm_card_snooze`, `crm_card_wake` ; `crm_card_placement_update` — responsable, prochaine action, montant, champs du bloc |
+| `supprimer` | `crm_card_placement_archive` — **archiver** un rattachement ; **aucun outil de retrait** : c'est un geste d'administrateur dans la webapp (décision 643) |
 
 **Famille `recettes`** : `crm_profitability_report` suit le nouveau contrat de `rentabilite_affaires` (§6).
 
 ## 12. Seed
 
-Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`, `rattacher_affaire`) :
+Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`, `attach_card`) :
 
 - une affaire rattachée à **deux channels de deux tracks** — une vente et une production —, avec deux responsables,
   deux montants et deux étapes ;
@@ -293,7 +296,7 @@ Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`
 
 | Niveau | Preuve |
 |---|---|
-| pgTAP | invariants (au moins un rattachement, unicité, clés composites, dernier rattachement non retirable) ; masquage d'un rattachement illisible ; `rattachement_ambigu` ; vocabulaire `attached` et `detached` ; une mutation tuée par règle |
+| pgTAP | invariants (au moins un rattachement, unicité, clés composites, dernier rattachement non retirable) ; masquage d'un rattachement illisible ; `placement_ambiguous` ; vocabulaire `attached` et `detached` ; une mutation tuée par règle |
 | API, avec les jetons réels | la lectrice ne lit ni le rattachement ni les valeurs du channel qu'elle ne lit pas ; un membre qui écrit un seul channel modifie le titre mais pas le bloc de l'autre ; un non-administrateur ne retire pas ; entonnoir et rentabilité rejoués sur le seed |
 | Unitaires | la fiche (partie commune et blocs), la pastille, la confirmation de retrait, l'agrégation « comptée une fois » |
 | E2E | rattacher une affaire depuis la fiche, la voir dans le board de l'autre channel, la faire avancer dans un seul, archiver un rattachement, retrait par l'administratrice, masquage pour la lectrice |
@@ -305,7 +308,7 @@ Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`
 | Tranche | Contenu |
 |---|---|
 | T1 | Mesures : liste exacte des fonctions touchées, coût de la RLS. Migration : table, reprise des données, `card_field_values`, `card_events`, invariants, politiques ; pgTAP et API des droits |
-| T2 | Réécriture des fonctions de gestes (`creer_affaire`, `move_card`, `move_card_to_channel`, sommeil, `change_channel_workflow`, remappage) et des nouvelles (`rattacher_affaire`, `retirer_rattachement`) ; types régénérés |
+| T2 | Réécriture des fonctions de gestes (`creer_affaire`, `move_card`, `move_card_to_channel`, sommeil, `change_channel_workflow`, remappage) et des nouvelles (`attach_card`, `detach_card`) ; types régénérés |
 | T3 | Lectures métier : entonnoir, figées et relances, Ma journée, recherche, temps valorisé |
 | T4 | Rentabilité ventilée : fonction, écran, outil `crm_profitability_report` |
 | T5 | Messagerie, selon les arbitrages du §15 |
@@ -318,9 +321,11 @@ Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`
 Les points 1 à 3 sont tranchés par la décision 657 : le dossier IMAP sort de l'arborescence, une cadence s'inscrit à
 un rattachement, les variables des modèles viennent du rattachement d'où l'on écrit (§7).
 
-4. **Les noms et signatures** proposés : `card_rattachements`, `rattacher_affaire`, `retirer_rattachement`,
-   `rattachement_ambigu`, ainsi que le maintien des signatures par `card_id`. **Suspendu** : le responsable a relevé que
-   le dépôt mélange l'anglais et le français, et a demandé un état des lieux des noms avant de choisir (décision 657).
+4. **Les noms** suivent les règles de nommage arrêtées par la décision 658 (`docs/DAT.md` §12 bis) : `card_placements`,
+   `placement_id`, `attach_card`, `detach_card`, `placement_ambiguous`, `attached`, `detached`, et les outils
+   `crm_card_attach`, `crm_card_placement_update`, `crm_card_placement_archive`. **Reste ouvert** : le maintien des
+   signatures par `card_id` pendant la transition (§5), ou leur remplacement d'un coup par la forme qui désigne le
+   rattachement.
 
 ## 16. Hors périmètre
 

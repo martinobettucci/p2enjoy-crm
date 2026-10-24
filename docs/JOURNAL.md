@@ -33059,3 +33059,27 @@ réordonnancement, édition des workflows, catalogue des nœuds.
    un état des lieux des noms — tables, fonctions, droits, outils MCP — avant de fixer la convention. Les noms de
    `docs/SPEC-rattachements.md` suivront la règle qui en sortira.
 **Persisté** : `docs/SPEC-rattachements.md` §7 et §15.
+
+### décision 658 — la langue des identifiants : anglais pour les contrats, français pour le code ; l'existant migré par lots
+
+*2026-10-24, arbitrages du responsable, rendus un par un sur l'état des lieux d'INC-286.* **Problème.** Le dépôt mélange
+l'anglais et le français dans ses noms. La seule règle écrite (`docs/SCHEMA.md` : colonnes en anglais) n'est plus tenue
+depuis la migration `0076`, et rien ne couvrait le reste. **Arbitrages**, tous conformes à la recommandation de l'agent :
+1. **Tables** en anglais, `snake_case`, au pluriel, préfixées par le parent.
+2. **Colonnes** en anglais, avec des suffixes écrits (`*_at`, `*_on`, `*_by`, `*_id`, `is_*`) ; une notion garde un seul
+   nom (`currency`, jamais `devise`).
+3. **Fonctions publiques** en anglais : `<verbe>_<objet>` pour un geste, ce qu'elle rend pour une lecture.
+4. **Fonctions internes** en anglais, sur des modèles fixés (`can_*`, `is_*`, `<table>_<before|after>_<op>`,
+   `require_*`, `*_for`).
+5. **Codes d'erreur** en anglais, `<objet>_<état>` ; le message affiché reste une traduction.
+6. **Valeurs d'énumération** en anglais ; un événement au participe passé.
+7. **Politiques RLS** en anglais, sur le modèle existant : `<table>_<select|insert|update|delete>_<qualificatif>`.
+8. **Connecteur MCP** entièrement en anglais : outils `crm_<objet>_<verbe>`, familles et actions de la matrice.
+9. **Code applicatif** (webapp, Python, scripts, tests) **en français**, avec le vocabulaire de l'interface (« affaire »,
+   « rattachement ») ; la frontière est le contrat.
+10. **L'existant est migré directement, par lots**, sans alias : un lot par domaine, une livraison coordonnée chacun.
+**Ce qui n'est pas fait.** Aucun renommage. Le plan des dix lots est préparé dans INC-286 et chacun attend une décision.
+**Conséquence immédiate.** Les noms de `docs/SPEC-rattachements.md` passent à `card_placements`, `attach_card`,
+`detach_card`, `placement_ambiguous`. **Persisté** : `docs/DAT.md` §12 bis, `docs/SCHEMA.md` (« Conventions
+générales »), `CLAUDE.md` (« Spécificités du projet »), INC-286 (arbitrage et plan), `docs/SPEC-rattachements.md` §3.1,
+§11 et §15.

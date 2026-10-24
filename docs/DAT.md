@@ -1254,6 +1254,32 @@ l'accepte.
 | Index fractionnaire pour l'ordre des cards | Réordonnancement en une écriture | Nécessite une renumérotation lorsque les écarts deviennent trop petits |
 | Dédoublonnage par `Message-ID` | Un message arrive souvent par deux boîtes | Les expéditeurs non conformes sans `Message-ID` exigent une empreinte de repli |
 
+## 12 bis. Conventions de nommage — la langue des identifiants
+
+Arbitrées par le responsable le 2026-10-24 (`docs/JOURNAL.md`, décision 658 ; écart constaté : INC-286). **La frontière
+est le contrat** : tout ce qui est stocké ou exposé hors du code qui l'écrit est nommé **en anglais** ; le code qui
+l'emploie est écrit **en français**. Ces règles valent pour tout objet **nouveau**. L'existant non conforme est un écart
+recensé, migré par lots selon le plan d'INC-286, jamais renommé au passage d'une unité qui ne le prévoit pas.
+
+| N° | Objet | Règle | Exemples conformes |
+|---|---|---|---|
+| 1 | **Tables** | anglais, `snake_case`, au pluriel, préfixées par l'objet parent | `cards`, `card_costs`, `mail_messages`, `workflow_steps` |
+| 2 | **Colonnes** | anglais, `snake_case` ; suffixes : `*_at` horodatage, `*_on` date, `*_by` profil, `*_id` clé étrangère, `is_*` booléen ; **une notion garde un seul nom** partout | `created_at`, `received_on`, `settled_by`, `is_recurrent`, `currency` (jamais `devise`) |
+| 3 | **Fonctions publiques** (`/rpc`) | anglais ; un geste `<verbe>_<objet>`, une lecture par ce qu'elle rend, une famille par son préfixe | `move_card`, `snooze_card`, `stale_cards`, `platform_*`, `mcp_*` |
+| 4 | **Fonctions internes** (`app`) | anglais ; droits `can_<verbe>_<objet>` et `is_*` ; déclencheurs `<table>_<before\|after>_<opération>` ou `<table>_<verbe>` ; gardes `require_*` ; variante pour un tiers `*_for` | `can_read_card`, `is_workspace_admin`, `cards_assign_position`, `card_comments_before_insert`, `require_superadmin` |
+| 5 | **Codes d'erreur** | anglais, `<objet>_<état>` ; le code est un contrat, le message lu par l'utilisateur est une traduction de la webapp | `card_not_found`, `same_workflow`, `transition_not_allowed` |
+| 6 | **Valeurs d'énumération** | anglais, `snake_case` ; un événement au participe passé ; le libellé affiché est toujours traduit | `open`, `won`, `lost`, `queued`, `created`, `moved` |
+| 7 | **Politiques RLS** | `<table>_<select\|insert\|update\|delete>_<qualificatif anglais>` | `cards_select`, `budgets_update_admin`, `mail_templates_insert_writer` |
+| 8 | **Connecteur MCP** | outils `crm_<objet>_<verbe>` ; familles et actions de la matrice en anglais (règle 6), traduites à l'écran | `crm_card_move`, `crm_card_revenue_add` |
+| 9 | **Code applicatif** — webapp (composants, modules, fonctions, variables), code Python, scripts, fichiers de tests | **français**, avec le vocabulaire de l'interface : « affaire » et non `card`, « rattachement » ; `Track` et `Channel` restent, ce sont des noms du produit | `MaJournee`, `lireEntonnoir`, `creerBudget`, `autorisation.py`, `affaires-figees.spec.ts` |
+
+**Ce que la frontière laisse en français** : les textes de l'interface, la documentation, le journal, les messages de
+commit, les commentaires de code. **Ce qu'elle laisse en anglais par nature** : les noms imposés par un outil
+(`created_at` de Supabase, les crochets d'un framework, les clés d'un format standard).
+
+**Un code français qui emploie un contrat anglais ne le traduit pas** : `supabase.from('cards')` reste tel quel, et la
+fonction qui l'appelle s'appelle `lireAffaires`. Le passage d'une langue à l'autre se fait à la frontière, une fois.
+
 ## 13. Commandes de lancement
 
 Voir `README.md` §5. Résumé : `./runDev.sh`, `./runProd.sh`, `./resetMe.sh`,

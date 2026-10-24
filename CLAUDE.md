@@ -1043,3 +1043,15 @@ demander au responsable si elle doit **aussi exister dans le connecteur MCP**.
 
 La réponse est consignée et committée avec la spécification, avant le code (§5, « Persistance immédiate des
 décisions »).
+
+### La langue des identifiants : anglais pour les contrats, français pour le code
+
+*Consigne du responsable, 2026-10-24 (`docs/JOURNAL.md`, décision 658).* Tout objet **nouveau** suit `docs/DAT.md`
+§12 bis :
+- **en anglais**, tout ce qui est stocké ou exposé : tables, colonnes, fonctions publiques et internes, codes d'erreur,
+  valeurs d'énumération, politiques RLS, outils et matrice du connecteur MCP ;
+- **en français**, le code qui les emploie (webapp, Python, scripts, tests), avec le vocabulaire de l'interface
+  (« affaire », « rattachement »), ainsi que les textes, la documentation et les commits.
+
+L'existant non conforme est recensé par INC-286 et migré **par lots** selon son plan. Il n'est jamais renommé au
+passage d'une unité qui ne le prévoit pas.

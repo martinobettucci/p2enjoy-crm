@@ -18,6 +18,9 @@ Documents liés : `docs/DAT.md`, `docs/SPEC-permissions-rls.md`, `docs/SPEC-work
 - Les énumérations sont des types PostgreSQL lorsqu'elles sont stables, des colonnes `text` avec
   contrainte `CHECK` lorsqu'elles sont susceptibles d'évoluer par migration.
 - Les noms de colonnes sont en anglais, les libellés destinés aux utilisateurs sont des données.
+  **Complété le 2026-10-24** (décision 658) : tables, colonnes et leurs suffixes, fonctions, codes d'erreur, valeurs
+  d'énumération et politiques suivent les règles de `docs/DAT.md` §12 bis. Les objets récents qui y dérogent sont
+  recensés par INC-286, avec leur plan de migration.
 - **Les migrations sont idempotentes.** Le conteneur `migrations-runner` rejoue tout le répertoire
   à chaque démarrage de la pile et ne tient aucun registre : une migration doit pouvoir être
   appliquée plusieurs fois sans erreur ni effet de bord (`docs/DAT.md` §3.2, `docs/JOURNAL.md`
