@@ -1353,7 +1353,8 @@ Ce que vous y voyez :
   question sans réglage particulier est **affichée** : c'est la valeur par défaut, et elle évite de
   devoir déclarer une règle par étape pour les questions courantes ;
 - **une étoile et la mention « Requis à l'étape <étape> »** sur les questions obligatoires : l'étape
-  nommée est celle où se trouve l'affaire, dont la règle exige la question.
+  nommée est celle où se trouve l'affaire, dont la règle exige la question. Elle porte le même nom
+  que sur le board : celui que l'administration a donné à l'étape dans ce workflow, s'il en a un.
   L'étoile ne porte jamais l'information seule : la mention l'écrit en toutes lettres, et les
   lecteurs d'écran l'annoncent ;
 - **un message d'alerte** sous chaque question obligatoire restée sans réponse. Il ne bloque pas la

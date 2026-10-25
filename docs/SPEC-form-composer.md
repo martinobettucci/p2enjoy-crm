@@ -411,6 +411,14 @@ l'obligation, l'étape restant nommée. Il est porté par une clé paramétrée,
 (`docs/DESIGN_SYSTEM.md` §10). L'astérisque, son texte lu par les lecteurs d'écran et l'alerte de
 champ manquant sont inchangés.
 
+**PRÉCISÉ le 2026-10-25 — décision 690. L'étape est nommée comme le board la nomme** : la surcharge
+de l'étape (`workflow_steps.label_override`) si elle est posée, sinon le libellé de son nœud — la
+résolution de `resoudreEtape` (`webapp/src/lib/board.ts`) et de `libelleEtape`
+(`webapp/src/lib/affaires-figees.ts`), réemployée. La fiche lisait le seul nœud, et disait
+« Étape courante : Réalisation » d'une affaire que le board range sous « Réalisation en cours ». Le
+défaut a été trouvé par la preuve du §4 quinquies. Le même nom vaut pour l'en-tête du formulaire
+(« Étape courante : … ») et pour la mention ci-dessus.
+
 Le §3.4 pose aussi que « les données déjà existantes ne sont jamais invalidées rétroactivement :
 une card entrée dans *E* avant l'ajout d'une règle `required` y reste, et le champ manquant est
 **signalé dans l'interface sans bloquer la lecture** ». Le rendu tient les deux : un champ exigé et

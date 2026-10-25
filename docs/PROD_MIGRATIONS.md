@@ -562,7 +562,7 @@ accepte l'ancien et le nouveau contrat : l'ordre des deux gestes ci-dessous est 
 **Retour arrière** : relivrer la révision précédente ; la webapp nouvelle tolère l'ancien `204`. **Risque** : un
 `verifier.sh` ancien, joué contre la production nouvelle, rendrait « 204 attendu » — employer celui de la révision livrée.
 
-### 2.20 `CRM-037`, INC-134 — la mention d'une question obligatoire (EN ATTENTE de l'instruction du responsable)
+### 2.20 `CRM-037`, INC-134 et décision 690 — la mention d'une question obligatoire et le nom de l'étape (EN ATTENTE de l'instruction du responsable)
 
 Sur la fiche d'une affaire, la mention d'une question obligatoire à l'étape courante devient « Requis à l'étape
 <étape> » (décision 688). **Webapp seule : aucune migration, aucune fonction, aucune variable, aucun secret, aucun
@@ -573,8 +573,10 @@ changement du service `mcp`.**
 | 1 | Livrer `main` (webapp reconstruite) | poste, par les IP | `scripts/spark/livrer.sh`, puis `./runProd.sh --spark` dans la cellule |
 | 2 | Vérifier en lecture seule | poste, lecture seule | `scripts/spark/verifier.sh` |
 | 3 | Constater : ouvrir une affaire dont l'étape exige une question ; la mention se lit « Requis à l'étape <étape> » | le responsable | l'application |
+| 4 | Constater (décision 690, même livraison) : ouvrir une affaire dont l'étape porte un nom surchargé dans son workflow ; « Étape courante » dit le même nom que la colonne du board | le responsable | l'application |
 
-**Retour arrière** : relivrer la révision précédente de la webapp. **Risque** : aucun connu — un texte d'interface.
+**Retour arrière** : relivrer la révision précédente de la webapp. **Risque** : aucun connu — un texte d'interface, et
+une colonne de plus lue sur `workflow_steps` (`label_override`), déjà lue par le board.
 
 ## 3. Migrations en attente
 

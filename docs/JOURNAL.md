@@ -33993,3 +33993,26 @@ imputable : le changement est un texte et une réponse substituée. La série de
 
 **Où reprendre.** `CRM-037` reste `[~]` : captures « de chaque étape » (seed, `CRM-046`), et la tranche INC-134 attend
 sa livraison (`docs/PROD_MIGRATIONS.md` §2.20) et le constat du responsable. Prise libérée.
+
+### décision 690 — `CRM-037` : la fiche nomme l'étape courante comme le board, surcharge comprise ; le formulaire prouvé à chacune des sept étapes
+
+*2026-10-25, session planifiée ouverte à 04:12:18 UTC (`docs/CloudWorker.md`). Tranché par la session (§4.1 bis) ; le
+responsable peut le contredire.*
+
+**Choix de l'unité.** Aucune unité `[~]` antérieure dans le plan n'a de comportement constructible sans livraison, constat
+ou arbitrage du responsable ; `CRM-111` T1 bis porte une prise vivante (03:19 UTC), et T2 puis `CRM-112` l'attendent ; les
+`[ ]` du chunk 5 (`CRM-068` à `CRM-074`) n'ont pas de spécification et appellent d'abord les deux questions du connecteur
+MCP, que seul le responsable tranche (précédent : décision 677). Reste dû et constructible : les « captures de chaque
+étape » de `CRM-037`, dont le motif d'absence — « sept cards que le seed ne pose pas » — est **caduc** depuis `CRM-046`
+(`docs/SPEC-seed.md` §9.3, mesuré en base : une affaire active à chacune des sept étapes).
+
+**Fait.** Contrat de la preuve écrit après mesure, avant le code (`docs/SPEC-form-composer.md` §4 *quinquies*). Preuve
+`e2e/ui/formulaire-etapes.spec.ts` : session réelle, aucune substitution, composition attendue **recalculée** depuis les
+champs, règles et valeurs relus par l'API, comparée à l'écran étape par étape (ordre, mentions, section repliée, champs
+rendus nulle part), non-complaisance, une capture par étape.
+
+**Le défaut que la preuve a trouvé.** À *Réalisation*, la fiche disait « Étape courante : Réalisation » — le libellé du
+nœud — là où le board dit « Réalisation en cours », la surcharge de l'étape. `lireEtape` ne lisait pas
+`label_override`. **Retenu** : le même nom partout, par `libelleEtape` réemployée (la résolution du board). **Écarté** :
+garder le nœud sur la fiche — deux écrans nommant différemment la même étape apprennent une règle fausse. Test unitaire
+rouge d'abord, E2E rouge puis vert. Le fil d'activité porte le même défaut : consigné en INC-301, non corrigé (`CRM-044`).

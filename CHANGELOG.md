@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-037` — la fiche nomme l'étape comme le board, et le formulaire est prouvé à chacune des sept étapes (décision 690)
+
+*Livré en développement ; la livraison en production (reconstruction de la webapp) attend l'instruction du responsable.*
+
+- Sur la fiche d'une affaire, « Étape courante » et la mention « Requis à l'étape … » nomment désormais l'étape par le
+  nom que l'administration lui a donné dans le workflow, comme le board : « Réalisation en cours » et non plus
+  « Réalisation ».
+- Nouvelle preuve d'interface sur session réelle, `e2e/ui/formulaire-etapes.spec.ts`, et sept captures
+  `docs/captures/CRM-037/formulaire-etape-*-1440.jpg`.
+- Aucune migration, aucune fonction, aucune variable.
+
 ### `CRM-037`, INC-134 — la mention d'une question obligatoire nomme l'étape sans demander d'y « passer » (décision 688)
 
 *Livré en développement ; la livraison en production (reconstruction de la webapp) attend l'instruction du responsable.*

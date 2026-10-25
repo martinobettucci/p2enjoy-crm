@@ -1556,7 +1556,11 @@ SCENARIOS_API=1182
 # **926 depuis `CRM-104` T7, même jour** : `connecteur-messagerie.spec.ts`, fichier NEUF, **1** scénario — un email
 # envoyé par un vrai client MCP, soumis par le worker, paraît dans le fil de l'affaire. 925 + 1 = 926, valeur COMPTÉE —
 # « Total: 926 tests in 88 files ».
-SCENARIOS_UI=926
+# **928 depuis `CRM-037`, le 2026-10-25** : `formulaire-etapes.spec.ts`, fichier NEUF, **1** scénario — le formulaire
+# rendu à chacune des sept étapes du workflow global, sur session réelle (docs/SPEC-form-composer.md §4 quinquies). Le
+# compteur était déjà en retard d'UN : le scénario des quarante rechargements anonymes de `connexion.spec.ts` (INC-292,
+# `3c80b3d`) ne l'avait pas révisé. 926 + 1 + 1 = 928, valeur COMPTÉE — « Total: 928 tests in 89 files ».
+SCENARIOS_UI=928
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

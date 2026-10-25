@@ -7753,3 +7753,14 @@ ne touche ni l'interface ni les commentaires. Même famille que les autres captu
 le commentaire de la preuve cite pour `commentaires-gestes.spec.ts`). **Comportement laissé inchangé.** **Issue proposée**
 (`docs/CloudWorker.md` §4.1 bis) : la preuve survole la carte et attend la fin de la transition avant d'asserter l'opacité
 — ce que fait déjà `commentaires-gestes.spec.ts` —, sans temporisation ajoutée. **Statut : ouverte.**
+
+### INC-301 — le fil d'activité nomme une étape par son nœud, et ignore la surcharge que le board affiche
+
+*Relevé le 2026-10-25 par la session planifiée de `CRM-037` (décision 690), en corrigeant le même défaut sur la fiche.*
+**Constat** : `lireEtapesWorkflow` (`webapp/src/lib/timeline.ts`) lit `workflow_steps` sans `label_override`, si bien qu'un
+« Étape franchie » vers l'étape `…065` du seed dirait « Réalisation » là où le board et, depuis la décision 690, la fiche
+disent « Réalisation en cours ». Son commentaire motive l'omission par « aucune unité n'en fait usage » : **mesuré faux**,
+`resoudreEtape` (`board.ts`) et `libelleEtape` (`affaires-figees.ts`) l'emploient. Étranger à `CRM-037` (le fil est
+`CRM-044`). **Comportement laissé inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : le même nom partout —
+lire `label_override` et résoudre par `libelleEtape`, avec un test unitaire rouge d'abord et une preuve du fil sur
+l'affaire `…0000cc`. **Statut : ouvert.**
