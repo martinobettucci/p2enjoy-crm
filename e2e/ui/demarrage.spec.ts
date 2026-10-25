@@ -11,6 +11,7 @@
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T2 — docs/SPEC-onboarding.md §10.1 : six étapes, le
 //           workflow avant le channel ; le parcours de la pastille est dans `guide-flottant.spec.ts`
+// @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte du guide se reconnaît à sa forme (`estUnCompte`), plus au `HEAD`
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, sur la VRAIE base et avec le VRAI seed : aucune
 // étape n'est accomplie par une réponse substituée. Les six étapes sont accomplies parce que le
@@ -25,7 +26,7 @@
 // AUCUNE ÉCRITURE : le guide lit et renvoie. La base est donc rendue intacte sans aucune remise en
 // état — il n'y a rien à défaire.
 
-import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
+import { connecterAvecLeLabs, estUnCompte, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { ERREUR_CONNEXION_REFUSEE, autoriserErreursConsole } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
 import { creerCompteJetable, supprimerCompte } from '../api/keycloak-dev'
@@ -292,10 +293,12 @@ test.describe('CRM-079 — guide de démarrage', () => {
 		// mesurable » du §6.2, que le seed ne produit pas. Seule la mesure des tracks échoue, et
 		// au niveau du RÉSEAU — la requête n'aboutit jamais.
 		//
-		// Le filtre porte sur la MÉTHODE et non sur la seule adresse : le comptage du guide est un
-		// `HEAD`, là où la barre latérale émet un `GET` sur la même table. Un motif d'URL seul
-		// abattait les deux — la coquille rendait alors son état d'erreur global, et le scénario
-		// n'aurait plus rien mesuré du guide.
+		// Le filtre porte sur la FORME du compte et non sur la seule adresse : le comptage du guide
+		// est un compte (`estUnCompte`), là où la barre latérale émet un `GET` de lignes sur la même
+		// table. Un motif d'URL seul abattait les deux — la coquille rendait alors son état d'erreur
+		// global, et le scénario n'aurait plus rien mesuré du guide. RÉVISÉ par `CRM-001`, INC-299
+		// (décision 700) : le compte était un `HEAD`, et le filtre portait sur cette méthode ; il est
+		// devenu un `GET` borné à zéro ligne, que PostgREST ne ferme pas sans prévenir.
 		//
 		// LA PANNE EST UN ÉTAT, PAS UN QUOTA. `supabase-js` retente une panne de transport trois
 		// fois après la tentative initiale (`coquille.spec.ts`, docs/JOURNAL.md décision 47), et le
@@ -306,7 +309,7 @@ test.describe('CRM-079 — guide de démarrage', () => {
 		let echecs = 0
 		let panne = true
 		await page.route('**/rest/v1/tracks?select=id*', async (route) => {
-			if (route.request().method() !== 'HEAD') return route.continue()
+			if (!estUnCompte(route.request())) return route.continue()
 			if (panne) {
 				echecs += 1
 				await route.abort('connectionrefused')

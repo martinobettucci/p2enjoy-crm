@@ -12,6 +12,7 @@
 // @verifies CRM-092 (docs/BACKLOG.md) — connexion par la vraie page du SSO (`connecterAvecLeLabs`)
 // @verifies INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : le premier track paraît dans la barre
 //           latérale sans rechargement, là où le défaut avait été vu sur les captures de ce parcours
+// @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte du guide se reconnaît à sa forme (`estUnCompte`), plus au `HEAD`
 //
 // LE DÉFAUT RELEVÉ PAR LE RESPONSABLE EST REJOUÉ TEL QU'IL L'A VÉCU, et c'est ce que ce fichier a de plus
 // utile : un espace neuf, un premier track, un channel IMPOSSIBLE faute de workflow — puis la même chose
@@ -30,7 +31,7 @@
 // n° 1 de `scripts/verify-seed.sh` rougiraient ailleurs, là où plus rien ne dirait pourquoi.
 
 import type { Request } from '@playwright/test'
-import { connecterAvecLeLabs, expect, test, type APIRequestContext, type Page } from './fixtures'
+import { connecterAvecLeLabs, estUnCompte, expect, test, type APIRequestContext, type Page } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
 import { creerCompteJetable, supprimerCompte } from '../api/keycloak-dev'
 import { PALIERS, capturer } from './captures'
@@ -351,10 +352,12 @@ test.describe('CRM-094 — le guide flottant, dans un espace neuf', () => {
 
 test.describe('CRM-094 — à qui la pastille ne paraît pas', () => {
 	/**
-	 * Les comptages DU GUIDE : des `HEAD` sur ses six tables (`webapp/src/lib/demarrage.ts`).
+	 * Les comptages DU GUIDE : des comptes (`estUnCompte`) sur ses six tables (`webapp/src/lib/demarrage.ts`).
+	 * RÉVISÉ par `CRM-001`, INC-299 (décision 700) : un compte était un `HEAD`, il est devenu un `GET`
+	 * borné à zéro ligne, que PostgREST ne ferme pas sans prévenir.
 	 *
 	 * Deux pièges MESURÉS le 2026-09-28, et le compteur est écrit contre chacun. La cloche compte elle
-	 * aussi en `HEAD`, sur `notifications` : le filtre nomme donc les tables, pas la seule méthode. Et
+	 * aussi, sur `notifications` : le filtre nomme donc les tables, pas la seule forme. Et
 	 * la connexion aboutit sur l'accueil, dont le guide DANS la page mesure ces mêmes tables : une réponse
 	 * tardive de l'accueil — `cards`, la plus lente — arrivait après la pose du compteur. Il compte donc
 	 * les requêtes ÉMISES après sa pose, et seulement leurs réponses, l'accueil s'étant tu d'abord.
@@ -365,9 +368,10 @@ test.describe('CRM-094 — à qui la pastille ne paraît pas', () => {
 		const emises = new Set<Request>()
 		let rendues = 0
 		page.on('request', (requete) => {
-			if (requete.method() === 'HEAD' && TABLES_DU_GUIDE.test(requete.url())) emises.add(requete)
+			if (estUnCompte(requete) && TABLES_DU_GUIDE.test(requete.url())) emises.add(requete)
 		})
-		// `response` et non `requestfinished` : MESURÉ, ce dernier ne part pas pour ces `HEAD` sans corps.
+		// `response` et non `requestfinished` : MESURÉ sur les `HEAD` d'avant la décision 700, ce dernier ne
+		// partait pas pour une réponse sans corps ; `response` vaut pour les deux formes.
 		page.on('response', (reponse) => {
 			if (emises.has(reponse.request())) rendues += 1
 		})

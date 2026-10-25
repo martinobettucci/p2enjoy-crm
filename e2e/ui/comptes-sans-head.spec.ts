@@ -10,7 +10,7 @@
 // et aucune requête `HEAD` ne doit avoir atteint `/rest/v1/`. Aucun scénario n'écrit : la clôture
 // d'un budget est ouverte puis annulée.
 
-import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
+import { connecterAvecLeLabs, estUnCompte, expect, test, type Page } from './fixtures'
 
 const ADMIN = 'admin@p2enjoy.test'
 
@@ -23,12 +23,10 @@ function relever(page: Page): RequeteVue[] {
 		const adresse = new URL(requete.url())
 		const prefixe = '/rest/v1/'
 		if (!adresse.pathname.startsWith(prefixe)) return
-		const prefer = requete.headers()['prefer'] ?? ''
 		vues.push({
 			methode: requete.method(),
 			table: adresse.pathname.slice(prefixe.length),
-			compte:
-				requete.method() === 'GET' && /count=exact/.test(prefer) && adresse.searchParams.get('limit') === '0',
+			compte: estUnCompte(requete),
 		})
 	})
 	return vues

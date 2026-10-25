@@ -2,13 +2,28 @@
 // @verifies docs/SPEC-webapp.md §12.3, §14 ; docs/JOURNAL.md décision 248
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §4 (parcours), §8.5, §13 — la fixture
 //           `connecterAvecLeLabs`, seule porte d'entrée des specs d'interface
+// @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — `estUnCompte`, la forme d'un compte vue du navigateur
 
-import { expect, test as base, type Page } from '@playwright/test'
+import { expect, test as base, type Page, type Request } from '@playwright/test'
 import { lireEnv } from '../env'
 import { MOT_DE_PASSE_SEED } from '../api/jetons'
 
 export { expect }
-export type { APIRequestContext, Page, Route } from '@playwright/test'
+export type { APIRequestContext, Page, Request, Route } from '@playwright/test'
+
+/**
+ * Un compte de la webapp tel que le navigateur l'émet (`webapp/src/lib/compter.ts`) : un `GET` avec
+ * `Prefer: count=exact`, borné à zéro ligne. Il remplace le `HEAD`, que PostgREST ferme sans
+ * l'annoncer (docs/DAT.md §3.5 bis, décision 700) — une preuve qui reconnaissait un compte à sa
+ * méthode `HEAD` le reconnaît désormais ici.
+ */
+export function estUnCompte(requete: Request): boolean {
+	return (
+		requete.method() === 'GET' &&
+		/count=exact/.test(requete.headers()['prefer'] ?? '') &&
+		new URL(requete.url()).searchParams.get('limit') === '0'
+	)
+}
 
 const ANOMALIES_PAR_PAGE = new WeakMap<Page, string[]>()
 
