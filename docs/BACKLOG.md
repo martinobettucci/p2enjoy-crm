@@ -16295,10 +16295,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       réécrits, `registre.sh` retiré — verts : `channels` 27, `cards` 42, `copie-workflow` 30, `move-card` 58,
       `colonnes-protegees` 44, `move-card-to-channel` 45, `change-channel-workflow` 23, `transition-required-fields` 25,
       `relances` 92, `identites` 23, `authz` 37 ; `commentaires` 53/54 et `session-sso` 54/56, leurs seules anomalies
-      préexistantes et étrangères (INC-296, INC-297). **Reste dû** : `verify-tracks.sh --rapide` et
-      `verify-droits-fins.sh --rapide` rejoués **jusqu'au bout** — tous deux arrêtés dans la dégradation du jeton de
-      couleur de `verify-tracks.sh`, qui relance `e2e:ui` en entier (plus d'une heure) ; leurs restaurations par
-      reconstruction (sections 2 et 7 de l'un, 1 à 7 de l'autre) sont vertes.
+      préexistantes et étrangères (INC-296, INC-297). **Rejoués jusqu'au bout le 2026-10-25** :
+      `verify-tracks.sh --rapide` **42/42** (61 min) ; `verify-droits-fins.sh --rapide` 38/39, sa seule anomalie étant
+      `verify-copie-workflow.sh` rougi par l'état que `verify-workflows.sh` laisse (INC-302, étrangère, `CRM-031`).
+      **Reste dû** pour passer `[x]` : la série complète des `verify-*.sh` n'a pas été rejouée, et INC-302 rend la
+      section 8 de `verify-droits-fins.sh` rouge tant qu'elle n'est pas corrigée.
       *Prise en charge : CloudWorker 2026-10-25 03:11:42 UTC depuis 2026-10-25 03:19 UTC — état avant : [~]*
 - [ ] **T2 — bascule, en un seul changement** (§3, §4, §5, §10) : migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et

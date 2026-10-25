@@ -7764,3 +7764,17 @@ disent « Réalisation en cours ». Son commentaire motive l'omission par « auc
 `CRM-044`). **Comportement laissé inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : le même nom partout —
 lire `label_override` et résoudre par `libelleEtape`, avec un test unitaire rouge d'abord et une preuve du fil sur
 l'affaire `…0000cc`. **Statut : ouvert.**
+
+### INC-302 — `verify-workflows.sh` restaure en réappliquant sa seule migration et laisse une clé étrangère non différable, qui fait rougir `0008_copie_workflow`
+
+*Relevé le 2026-10-25 par la session planifiée de `CRM-111` T1 bis, étranger à la tranche (le harnais n'est pas l'un des
+seize qu'elle réécrit).* **Mesure.** Suite `supabase/tests/0008_copie_workflow.test.sql` **verte**, puis
+`scripts/verify-workflows.sh --rapide` (vert, code 0), puis la même suite : **assertion 68 rouge** — « constraint
+"workflow_steps_node_id_workspace_id_fkey" is not deferrable » — et un espace `tst-crm031-ws` laissé en base. Reproduit
+deux fois dans `scripts/verify-droits-fins.sh --rapide` (section 8, `verify-copie-workflow.sh` rouge juste après
+`verify-workflows.sh`), et une fois à la main. **Cause** : sa section « e. Restauration » réapplique sa propre migration,
+seule ; une migration ultérieure a rendu la clé différable, et la réapplication isolée la recrée dans sa forme
+d'origine — la « liste manuelle » que `docs/SPEC-test-harness.md` §3.5 interdit. **Issue retenue**
+(`docs/CloudWorker.md` §4.1 bis) : le harnais restaure par `reconstruire_base_dev` (§3.6), comme les seize de
+`CRM-111` T1 bis, et retire son espace d'essai ; correction imputée à `CRM-031`. Comportement laissé inchangé ici ; une
+reconstruction a remis la base de développement d'aplomb.

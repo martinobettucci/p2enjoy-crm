@@ -34044,3 +34044,10 @@ la lecture du fichier, et rien avant.
 **Où reprendre.** `CRM-037` reste `[~]` : rien n'y est plus à construire ; la webapp (INC-134 et décision 690) attend sa
 livraison (`docs/PROD_MIGRATIONS.md` §2.20) et le constat du responsable. INC-301 est prête à être tranchée sous
 `CRM-044`. Prise libérée.
+
+**Complément à la décision 689, 2026-10-25.** Les deux rejeux dus ont été menés jusqu'au bout, seuls sur la pile :
+`verify-tracks.sh --rapide` **42 contrôles, aucune anomalie** (61 min) ; `verify-droits-fins.sh --rapide` **38/39**. Sa
+seule anomalie — `verify-copie-workflow.sh` rouge en section 8 — est **INC-302**, mesurée : `verify-workflows.sh` laisse
+`workflow_steps_node_id_workspace_id_fkey` non différable en restaurant par sa seule migration, et la suite `0008` rougit
+ensuite. Étrangère à la tranche, consignée sans correction au passage. `CRM-111` T1 bis reste `[~]` : la série complète
+des `verify-*.sh` reste à rejouer, après correction d'INC-302 (`CRM-031`). Ensuite : T2.
