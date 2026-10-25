@@ -34214,3 +34214,13 @@ c'est une règle de conduite du dépôt.
 
 **Persisté** : `docs/BACKLOG.md` (Marquage), `CLAUDE.md` §5 (Backlog, Prise en charge), `docs/CloudWorker.md` §1 *bis*,
 §4.1, §4.2, §4.3 et §4.5.1, `docs/MASTER_PLAN.md` §4.
+
+**Complément, suite de la série.** Les huit harnais restants ont été joués sur une base re-seedée :
+- verts : `transition-required-fields` 25, `types` 30, `valeurs-champs` 41, `vault` 26, `workflows` 43 ;
+- `tracks`, arrêté à 15 minutes la première fois, rend **42 contrôles, aucune anomalie** rejoué sans plafond ;
+- `webapp` : 1 anomalie, `e2e:ui` refusé sur « port 4173 already used ». C'est un `vite preview` laissé par l'arrêt de
+  `tracks`, la condition d'environnement du §2.1 ter point 2, et non un défaut du produit. Son rejeu, port libéré, a été
+  interrompu à la demande : il reste à rejouer.
+
+Les 84 harnais ont donc tous été joués. Restent non examinés les 24 harnais d'autres unités qui rendent une anomalie
+dans la série jouée d'affilée.
