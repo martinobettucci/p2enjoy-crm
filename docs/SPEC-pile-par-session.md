@@ -116,7 +116,11 @@ Sous verrou, dans cet ordre :
 2. sinon, on prend le plus petit `N` sans entrée, ou dont l'entrée est **périmée** (§4.4), après avoir arrêté la pile
    périmée ;
 3. on vérifie que **chacun** des ports de `N` est libre sur l'interface de bouclage, par une tentative de liaison. Le
-   poste n'a ni `ss` ni `netstat` (INC-044). Un port pris fait passer à `N + 1`, et la cause est nommée ;
+   poste n'a ni `ss` ni `netstat` (INC-044). Un port pris fait passer à `N + 1`, et la cause est nommée. **Précision
+   de la décision 712** : un port que tient déjà un conteneur du projet de `N` **lancé depuis ce même checkout**
+   (étiquette `com.docker.compose.project.working_dir`) n'est pas pris — c'est la pile que le lancement recompose,
+   comme `require_free_ports` l'admet. Sans elle, le premier lancement d'après la T4 d'une pile déjà debout la ferait
+   passer à l'emplacement 1 ;
 4. on écrit l'entrée, puis les variables de `N` dans `.env` (§5).
 
 Si aucun emplacement n'est libre, le lancement **échoue** sans rien démarrer, et liste les sessions en cours.
@@ -250,3 +254,15 @@ périmé au démarrage : ce sera vérifié en T5, pas supposé.
 3. **Péremption à 6 heures d'inactivité**, comme les prises du backlog ; le `boot_id` seul ne périme pas.
 4. **L'emplacement 0 reproduit l'existant** (noms, ports) : production, cellule Spark et postes à pile unique ne
    changent pas.
+
+
+### décision 712 — `CRM-115` T4 : les ports que tient déjà la pile du même checkout ne sont pas « pris »
+
+*2026-10-25, session interactive, en écrivant la T4 — précision technique, sans arbitrage (`docs/CloudWorker.md` §4.1
+bis).* **Problème** : le §4.2 point 3 mesure chaque port de l'emplacement par une liaison. Au premier lancement après
+la T4, la pile de ce checkout est déjà debout sur les ports de l'emplacement 0, **sans entrée au registre** : ses
+propres ports la feraient passer à l'emplacement 1, nom de projet et ports changés, base vide. **Décision** : un port
+tenu par un conteneur du projet candidat **lancé depuis ce checkout** — étiquette Compose
+`com.docker.compose.project.working_dir` — compte comme libre, exactement la règle de `require_free_ports`. Un projet
+homonyme lancé d'un **autre** checkout ne bénéficie de rien : ses ports restent pris. **Conséquence** :
+`docs/SPEC-pile-par-session.md` §4.2 point 3 précisé ; `emplacement_ports_du_checkout`.
