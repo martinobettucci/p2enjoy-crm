@@ -34372,3 +34372,14 @@ passent dans les seuls assemblages de production et de la cellule Spark, qui n'o
 pas, ni `verifier.sh`, ni les gestes du responsable. **Ordre** : ce chantier est la tranche T2 de `CRM-115`, avant le
 registre et les ports, parce qu'il vaut même avec une seule pile. Les quatre points du §11 de la spécification
 (registre, un checkout une pile, 6 h, emplacement 0) restent à valider avant T3.
+
+**Complément de fin de session, après les décisions 698 et 699.** `verify-harness.sh --rapide` a été rejoué sur une base
+reconstruite. Il passe de 3 anomalies à **1** : pgTAP et API sont verts dans le harnais, et le compteur suit.
+
+L'anomalie restante, ce sont **9 échecs de sa campagne d'interface interne**, tous différents de ceux de l'exécution
+précédente. Les neuf, rejoués directement sur le seed : **15/15 verts**. C'est INC-246, la campagne interne qui rend des
+échecs que la campagne directe ne rend pas, et dont le scénario fautif change d'une exécution à l'autre. Elle est
+étrangère à `CRM-084`, et comportement laissé inchangé.
+
+Campagne directe de la session : toutes les suites vertes. Les échecs isolés ont été rejoués verts, et INC-174 est
+désormais close.
