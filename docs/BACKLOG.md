@@ -7394,14 +7394,14 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 
 | Unité | Objet | État |
 |---|---|---|
-| CRM-060 | Contacts et organisations, historique transverse | `[~]` |
+| CRM-060 | Contacts et organisations, historique transverse | `[x]` |
 | CRM-061 | Prochaine action, échéance, vue « Ma journée » | `[x]` |
 | CRM-062 | Relances automatiques des cards figées | `[x]` |
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[x]` |
 | CRM-064 | @mentions, notifications temps réel et préférences | `[x]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[~]` |
-| CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[~]` |
+| CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
@@ -14500,7 +14500,7 @@ harnais propre à cette unité.
 `docs/PROD-SERVER.md` et intègre en prod le SSO `docs/SSO.md` » — `docs/JOURNAL.md` décisions 567 à
 569. Les deux unités se livrent dans cet ordre : le SSO de production suppose une production.*
 
-### CRM-090 — Production sur la cellule Spark « crm » `[~]`
+### CRM-090 — Production sur la cellule Spark « crm » `[P]`
 *Créée le 2026-09-23 — décision 567. Motif : la production n'a jamais été déployée, et sa cible réelle
 contredit l'assemblage de production sur cinq points mesurés — ports, TLS, stockage, variables,
 mémoire.*
@@ -14568,7 +14568,8 @@ décrit la baseline réelle.
 - [x] **Image Realtime transférée seulement si son contenu change** (décision 577) : l'identifiant
       changeait à chaque construction. Harnais porté à **78 vérifications, aucune anomalie**, dont
       une qui rougissait avant la correction.
-- [~] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
+- [P] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       `cgr.dev/chainguard/minio` épinglé par empreinte, une seule image pour `minio` et `minio-createbucket`, en
       `user: "0:0"` (aucune donnée de production à changer de propriétaire) ; Dockerfile `bitnamilegacy` retiré ;
       `verify-stack.sh`, `verify-spark.sh` et `restore-drill.sh` suivis ; preuves du stockage (stack, sauvegarde,
@@ -14580,7 +14581,7 @@ décrit la baseline réelle.
       `verify-spark.sh` : les gardes MinIO vertes et rouges quand on dégrade l'image ou l'utilisateur, une anomalie
       préexistante (INC-294). Reste `[~]` : non vérifiée sur la cellule, livrée par le responsable (§2.18).*
 
-### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[~]`
+### CRM-091 — Connexion unique par `oauth.lelabs.tech` `[x]`
 *Créée le 2026-09-23 — décision 568. Motif : GoTrue 2.189.0 ne parle pas PKCE à Keycloak (M1), que le
 realm impose (M2) ; le client OIDC est donc la webapp, et GoTrue vérifie l'`id_token`.*
 
@@ -14609,9 +14610,12 @@ client est déclaré, la sonde du §10.8 rend `302` et une connexion réelle abo
       de preuve y a été vue et corrigée (capture « annulée » rendue hors palier).
 - [x] Documentation : `docs/manual.md` §1.1, `README.md` §6 et §9, `docs/DAT.md` §3.6, §3.7 et §4.1,
       `docs/PROD_MIGRATIONS.md` §2.3 et §4, `CHANGELOG.md`.
-- [~] Déclaration remise, client `lelabs-crm` créé le 2026-09-23 à 16:08:44
+- [x] Déclaration remise, client `lelabs-crm` créé le 2026-09-23 à 16:08:44
       (`docs/SSO-client-lelabs-crm.md`), sonde `302` rejouée (décision 578, K1). La connexion réelle
       en production n'emploiera **pas** l'échange d'`id_token` de GoTrue : elle revient à `CRM-092`.
+      *Soldée `[x]` le 2026-10-25 (décision 705) : le dernier point de la DoD — une connexion réelle en production — est
+      livré et constaté par `CRM-092`, `[x]`, qui a retiré GoTrue et dont la DoD exige la connexion réelle de
+      `martino@p2enjoy.studio` en production (décision 578).*
 
 ### CRM-092 — Le SSO, seule source d'identité : GoTrue quitte la pile `[x]`
 *Créée le 2026-09-23 — décision 578, arbitrage du responsable. Motif : la décision 568 avait gardé
@@ -15042,7 +15046,7 @@ sont celles des fichiers du dépôt.
       adoption ») ; `verifier.sh` 26 contrôles sans anomalie ; registre relu — 82 lignes en `adoption`,
       `sha256sum -c` conforme au dépôt livré — ; API publique : `PGRST205` et `PGRST106`.
 
-### CRM-097 — L'assistant IA de configuration : workflows, champs, transitions `[ ]`
+### CRM-097 — L'assistant IA de configuration : workflows, champs, transitions `[P]`
 *Créée le 2026-10-02 — décision 617, demande et arbitrages du responsable. Tout ce que crée l'IA est d'abord
 suggéré, puis rectifié et revu, ou accepté. Spécifié avant le code : `docs/SPEC-ia.md`, `docs/SCHEMA.md`
 §9 ter, `docs/DAT.md` §3.7 bis.*
@@ -15127,7 +15131,8 @@ le serveur réel.
             SQL **81 / 3457**, API **1108**, unitaires **3604**, typage, interface **801 sur 801**, courrier **42**
             (au rejeu ; le premier passage rend l'intermittent connu INC-205, 41 sur 42, trace conservée). Les
             captures de l'éditeur des autres unités sont renouvelées : son apparence a changé (« Étapes », « Suggérer »).
-- [ ] **T4** — production : variables proposées dans la cellule, clé saisie en console, plage d'adresses de
+- [P] **T4** — production : variables proposées dans la cellule, clé saisie en console, plage d'adresses de
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       la cellule autorisée par le serveur LLM, migrations `0083` à `0086` en fenêtre avec instantané, constat.
       Procédure : `docs/PROD_MIGRATIONS.md` §2.9 (sept gestes) ; `proposer.sh --assistant-ia` livré pour le geste 5,
       *vérifié le 2026-10-03* par `verify-spark.sh` (98 vérifications, sept nouvelles).
@@ -15138,7 +15143,7 @@ le serveur réel.
       *2026-10-11* : LeLabs a autorisé la cellule ; l'état public rend `disponible` (`gemma4:e2b`). Reste la
       première génération réelle, faite et constatée par le responsable, avant `[x]` et la publication.
 
-### CRM-098 — La saisie de temps et le coût du personnel `[ ]`
+### CRM-098 — La saisie de temps et le coût du personnel `[P]`
 *Créée le 2026-10-11 — décision 621, arbitrages du responsable. Les participants saisissent, dans une matrice de la
 semaine, le temps passé sur les tracks, channels et affaires — au quart de journée, ou en heures par une case à cocher
 sur la journée — ; chaque membre a un coût par quart versionné par date d'effet ; le coût du personnel se pilote par
@@ -15191,13 +15196,14 @@ track, channel et affaire, avec un rapport mensuel. Spécifié avant le code : `
       passage — les trois premiers rouges sur S3, l'avertissement de la veille de `mail-sync` qui court contre deux
       scénarios mail (INC-271, ouverte, étrangère à l'unité). 499 captures renouvelées (la barre latérale porte
       « Temps » ; la fiche d'affaire, « Temps passé »), 36 réécritures sans changement visible restaurées.
-- [~] **T5** — livraison en production (migration 87, instantané confirmé) et constat.
+- [P] **T5** — livraison en production (migration 87, instantané confirmé) et constat.
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       *Livré le 2026-10-11* : révision `521b3f5d`, migration 87 appliquée après instantané confirmé, `verifier.sh` 26
       contrôles sans anomalie, registre à 87 lignes relu (empreinte égale au dépôt), refus anonyme `401`
       (`docs/PROD_MIGRATIONS.md` §2.11, §8). **Reste le constat du responsable** : une version de coût, une journée
       saisie, le rapport relu.
 
-### CRM-099 — Plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde `[ ]`
+### CRM-099 — Plusieurs coûts réels par ligne de coût, jusqu'à ce qu'on la solde `[P]`
 *Créée le 2026-10-11 — décision 622, arbitrages du responsable. Une ligne de coût n'acceptait qu'un réel et quittait
 l'onglet « À saisir » dès qu'il était saisi. Elle reçoit désormais plusieurs réels — montant, date, libellé facultatif —
 jusqu'à ce qu'on coche « Soldé » ; `actual_cost` devient leur somme, tenue par la base ; les réels déjà saisis
@@ -15225,12 +15231,13 @@ deviennent un premier réel, lignes rouvertes. Spécifié avant le code : `docs/
       optimiste. **Campagnes, le 2026-10-11** : pgTAP 83 / 3 558 ; unitaires **3 807** — la mutation qui ne vide plus le
       champ avant l'envoi fait rougir quatre preuves ; API **1 122** ; interface **818** ; messagerie **42**. 84 captures
       renouvelées (le dépli des réels dans la fiche), 160 réécritures sans changement visible restaurées.
-- [~] **T3** — livraison en production (migration 88, instantané confirmé) et constat.
+- [P] **T3** — livraison en production (migration 88, instantané confirmé) et constat.
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       *Livré le 2026-10-11* : révision `7d819786`, migration 88 après instantané confirmé ; `verifier.sh` 26 contrôles sans
       anomalie ; registre à 88 lignes ; les deux réels de production repris à l'identique, lignes rouvertes
       (`docs/PROD_MIGRATIONS.md` §2.12, §8). **Reste le constat du responsable.**
 
-### CRM-100 — Créer un channel depuis le track, et un workflow depuis le formulaire du channel `[~]`
+### CRM-100 — Créer un channel depuis le track, et un workflow depuis le formulaire du channel `[P]`
 *Créée le 2026-10-11 — décision 623, arbitrages du responsable. Créer un channel obligeait à repasser par les réglages,
 et un channel qui avait besoin d'un nouveau workflow obligeait à le créer d'abord, ailleurs. « Nouveau channel » vient
 dans la barre d'onglets du track, formulaire sur place ; « Nouveau workflow » dans le formulaire de création du channel
@@ -15257,9 +15264,10 @@ d'accès nouvelle. Spécifié avant le code : `docs/SPEC-administration-arboresc
       fichiers en échec rejoués : 153 verts et les deux de `droits-fins`, causés par l'unité et révisés. Aucun scénario
       d'API : aucune écriture ni politique nouvelle, les refus restent prouvés par `e2e/api/administration-arborescence.spec.ts`.
       Seed inchangé : le track « Formation » et ses workflows suffisent à la démonstration.
-- [ ] **T3** — livraison de la webapp en production et constat.
+- [P] **T3** — livraison de la webapp en production et constat.
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
 
-### CRM-101 — Superadministration de la plateforme : espaces, appartenances, attentes `[~]`
+### CRM-101 — Superadministration de la plateforme : espaces, appartenances, attentes `[P]`
 *Créée le 2026-10-20 — décision 627, arbitrages du responsable A1 et D7. Le CRM n'avait aucun écran pour créer un
 espace ni gérer ses appartenances et ses attentes : seul `scripts/spark/amorcer-espace.sh` le faisait, sous la clé de
 service. Un superadministrateur — drapeau en base amorcé une seule fois par `CRM_SUPERADMINS_INITIAUX`, ou rôle `admin`
@@ -15325,7 +15333,8 @@ LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : 
       **Captures des autres unités** : 343 réécrites par la campagne, comparées pixel à pixel à leur version committée ;
       342 restaurées (données datées, défilement), **une gardée** — `CRM-092/admin-domaine-moderation-1440.jpg`, où Inès,
       porteuse de `lelabs_admin`, voit désormais l'entrée « Plateforme » (arbitrage A1).
-- [~] **T5** — livraison en production (migration 89, instantané confirmé, `CRM_SUPERADMINS_INITIAUX`) et constat.
+- [P] **T5** — livraison en production (migration 89, instantané confirmé, `CRM_SUPERADMINS_INITIAUX`) et constat.
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       *Livré le 2026-10-21* sur l'instruction du responsable (« livre ») : révision `85d8bb7b`, migrations 89 et 90 dans la
       même fenêtre ; registre à 90 lignes aux empreintes du dépôt ; aucune fonction nouvelle exécutable par `anon`,
       `plateforme_espaces` et `est_superadmin` refusées sans session (`401`) ; `verifier.sh` 27 contrôles, un échec
@@ -15349,7 +15358,7 @@ LeLabs — gère la plateforme depuis `/plateforme`. Spécifié avant le code : 
       **32** contrôles sans anomalie. Compteurs du harnais mesurés : 3719 assertions, 1135 scénarios d'API. Manuel
       §10.6 bis. **Non livré** : la livraison attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md` §2.13).
 
-### CRM-102 — Connecteur MCP : socle, mandataire OAuth, connexion longue, registre `[~]`
+### CRM-102 — Connecteur MCP : socle, mandataire OAuth, connexion longue, registre `[P]`
 *Créée le 2026-10-20 — décision 627 (A2, D1 à D5, D8). Un service Python FastMCP `mcp/`, repris du connecteur Evoliz,
 agit sous l'identité de la personne par un jeton interne : droit effectif = matrice ∩ droits du CRM. Spécifié avant le
 code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinquies (migration `0090`). Dépend de `CRM-101`
@@ -15421,7 +15430,8 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       supprimé —, et la déclaration porte `ACCUEIL`, devenu obligatoire. `docs/SSO.md` est aligné sur la référence du service
       du 2026-10-16, qui décrit la redéclaration d'une intégration vivante. Campagnes : celles de T3, aucun code changé
       depuis hors un commentaire ; pytest **102** rejoué.
-- [~] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,
+- [P] **T5** — livraison en production, après les actions humaines de `docs/SPEC-mcp.md` §15 (client redéclaré,
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       route et DNS, variables), et constat.
       *Contrôles portés dans `verifier.sh` le 2026-10-24 — implémenté et vérifié en développement* (décision 683,
       `docs/SPEC-deploiement-spark.md` §7, point 7) : `scripts/lib/connecteur-mcp.sh` — connecteur éteint sans conteneur
@@ -15454,7 +15464,7 @@ code : `docs/SPEC-mcp.md` §1 à §7 et §10 à §15, `docs/SCHEMA.md` §9 quinq
       cible pleine, aucun débordement. **Non livré** : la livraison attend l'instruction du responsable
       (`docs/PROD_MIGRATIONS.md` §2.14).
 
-### CRM-103 — Administration du connecteur MCP dans la webapp `[~]`
+### CRM-103 — Administration du connecteur MCP dans la webapp `[P]`
 *Créée le 2026-10-20 — décision 627 (A3). Quatrième onglet de `/plateforme` : comptes connectés, matrice familles ×
 actions par espace, avertissement « pas membre de cet espace », journal des appels. Spécifié avant le code :
 `docs/SPEC-mcp.md` §8. Dépend de `CRM-101` et de `CRM-102`. **Révisée le 2026-10-21 par l'arbitrage A5** : les droits
@@ -15521,7 +15531,8 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       T3), jouée par la session de `CRM-109`, **892/893** en 23,6 min. L'unique échec est une preuve de `CRM-109` T3,
       corrigée par sa session. `plateforme-mcp.spec.ts` 6, `connecteur-mcp.spec.ts` 8 et `plateforme.spec.ts` 5 :
       **19 scénarios verts**, relus dans le journal de la campagne. **T3 passe à `[x]`.**
-- [~] **T4** — livraison en production et constat.
+- [P] **T4** — livraison en production et constat.
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       *2026-10-23* : migrations `0093` et `0094` livrées par la fenêtre `8026e90e`, avec l'onglet de T2. Le correctif de
       T3 est livré par `e9255249`. **Constaté en lecture seule** par la session de livraison : `mcp_droits_sub_fkey`
       vers `profiles(id)`, 0 droit orphelin avant et après, `401` sans session sur `rpc/mcp_comptes_liste` et
@@ -15856,7 +15867,7 @@ existent, aucune n'est lue par les écrans qui montrent ces objets. Choix de for
       (`docs/PROD_MIGRATIONS.md` §2.15), sur instruction du responsable. Après synchronisation, le 2026-10-23 : les tests
       unitaires de l'unité rejoués, **331/331** ; les preuves E2E restent à rejouer sur la pile relancée.
 
-### CRM-106 — Saisir son temps depuis la fiche d'une affaire `[ ]`
+### CRM-106 — Saisir son temps depuis la fiche d'une affaire `[P]`
 *Créée le 2026-10-23 — demande du responsable : « on doit pouvoir saisir ses heures depuis la fiche de l'affaire
 aussi ». Arbitrages du responsable le même jour (`docs/JOURNAL.md` décision 630) : la bande de la semaine, une valeur
 qui remplace, son temps seulement. Spécifié avant le code : `docs/SPEC-temps.md` §7.6, `docs/DESIGN_SYSTEM.md`
@@ -15895,7 +15906,8 @@ déjà la saisie sur une affaire.*
       `temps-fiche-affaire` 7/7, `cout-personnel` 5/5 ; les rouges relèvent d'autres unités (en-tête de `CRM-110` en
       cours à 390 px, connecteur MCP) ou de `502` transitoires de la passerelle, dont un sur une fiche d'affaire
       (`contacts-affaire.spec.ts:202`), que rien ne relie à la bande.
-- [~] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
+- [P] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
       *Le 2026-10-23* : livrée avec `main` sur `8026e90e` (migrations 91 à 98 et webapp), par la session chargée de la
       livraison, sur instruction du responsable ; contrôles techniques et changelog passé en « Publié » consignés par
@@ -15903,7 +15915,7 @@ déjà la saisie sur une affaire.*
       constat visuel du responsable**, connecté par LeLabs : une semaine saisie depuis la fiche d'une affaire, relue dans
       « Temps ».
 
-### CRM-107 — Calculer le coût par quart depuis le coût mensuel `[ ]`
+### CRM-107 — Calculer le coût par quart depuis le coût mensuel `[P]`
 *Créée le 2026-10-23 — demande du responsable : un mini formulaire, dans Réglages ▸ « Coût du personnel », qui part du
 coût mensuel, des frais de gestion, des charges sociales et des avantages, et calcule le coût par quart. Arbitrages du
 responsable le même jour (`docs/JOURNAL.md` décision 631) : jours travaillés par an en paramètre, 218 par défaut ;
@@ -15931,13 +15943,14 @@ charges en % du brut, frais et avantages en montant ; calculateur seulement. Sp�
       `verify-manual.sh` **239** contrôles sans anomalie. *Campagnes complètes du 2026-10-23, sur `652d890e`* : API
       **1 157/1 157** ; interface 869 verts, 18 rouges étrangers à l'unité — `cout-personnel-calcul` 3/3,
       `cout-personnel` 5/5.
-- [~] **T4 — livraison** : reconstruction de la webapp en production, constat. Aucune migration, aucune fonction, aucune
+- [P] **T4 — livraison** : reconstruction de la webapp en production, constat. Aucune migration, aucune fonction, aucune
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       variable.
       *Le 2026-10-23* : livrée avec `main` sur `8026e90e`, par la session chargée de la livraison ; contrôles techniques
       consignés par `d7fe8def`, sans vérification visuelle. **Reste le constat visuel du responsable** : une version de
       coût créée par le calculateur.
 
-### CRM-108 — Recettes d'une affaire et rapport de rentabilité `[~]`
+### CRM-108 — Recettes d'une affaire et rapport de rentabilité `[P]`
 *Créée le 2026-10-23 — demande du responsable : « pouvoir saisir les résultats par affaire, comme on le fait pour les
 coûts, et avoir un rapport de rentabilité ». Six arbitrages du responsable le même jour (`docs/JOURNAL.md` décision
 632). Spécifié avant le code : `docs/SPEC-recettes.md`, `docs/DESIGN_SYSTEM.md` §5.60, `docs/SCHEMA.md` §9 sexies,
@@ -16001,7 +16014,8 @@ nouvelle `recettes`, outils livrés par cette unité.*
       en série, rapport et filtres, membre refusé, effet d'un outil du connecteur ; captures `docs/captures/CRM-108/` aux
       quatre paliers observées ; `docs/manual.md` (chapitre des recettes et de la rentabilité, chapitre 11 du
       connecteur) ; `README.md` si besoin ; `CHANGELOG.md` ; campagnes après synchronisation.
-- [~] **T6 — livraison** : migration `0095` en fenêtre avec instantané, webapp et service `mcp`, constat
+- [P] **T6 — livraison** : migration `0095` en fenêtre avec instantané, webapp et service `mcp`, constat
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       (`docs/PROD_MIGRATIONS.md` §2.16), sur instruction du responsable.
       *Livrée en partie le 2026-10-23* (constat `d7fe8def`) : la session de livraison a passé la fenêtre des migrations
       91 à 98 sur `8026e90e`, après l'instantané confirmé par le responsable. La migration `0095` est appliquée
@@ -16036,7 +16050,7 @@ règle dans la webapp et le connecteur, et les captures observées.
       de `CRM-110`), deux 502 transitoires en console. L'unité reste `[~]` jusqu'à T6.
 
 
-### CRM-067 — Activités typées : appels, réunions, visios `[~]`
+### CRM-067 — Activités typées : appels, réunions, visios `[P]`
 *Arbitrée et spécifiée le 2026-10-23 (décisions 647 à 649) : `docs/SPEC-activites.md`. Connecteur MCP : oui, famille
 `affaires` (consulter, ajouter, modifier), au catalogue de `CRM-104`.*
 
@@ -16076,11 +16090,12 @@ règle dans la webapp et le connecteur, et les captures observées.
       - Manuel 4.7 *quater* ; fil 4.10 à six filtres.
       - Campagnes **complètes** : ui **905/905**, api **1169/1169** ; pgTAP 91 fichiers, 3897 assertions. Harnais :
         `SCENARIOS_UI=905` (compté).
-- [~] **T4** — outils MCP `crm_card_activity_list`, `crm_card_activity_add`,
+- [P] **T4** — outils MCP `crm_card_activity_list`, `crm_card_activity_add`,
       `crm_card_activity_update` (noms anglais, décision 653), inscrits au catalogue (`docs/SPEC-mcp.md` §9.2) et construits avec `CRM-104` T2.
       **Livrés avec `CRM-104` T2.a et T2.b** (production le 2026-10-23, révisions `0242d845` et `b57de7b5`) : lecture,
       ajout et correction prouvés contre la vraie pile. Reste le constat du responsable.
-- [~] **T5** — livraison en production, sur instruction du responsable.
+- [P] **T5** — livraison en production, sur instruction du responsable.
+      *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       **Livrée le 2026-10-23, troisième fenêtre** : révision `77b17fa1`, instantané confirmé par le responsable ; registre
       de production à 100 ; `verifier.sh` 26/27 (compteur de redémarrage antérieur) ; deux tables, sept politiques,
       `401` sans session. **Reste `[~]`** : le constat visuel du bloc en production, par le responsable.
