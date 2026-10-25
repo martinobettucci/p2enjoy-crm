@@ -34265,3 +34265,24 @@ en charge a été écrite « 06:40 » par estimation au lieu de l'heure machine 
   restaient rouges sur une version de workflow résiduelle que le seed ne retire pas. Après `reconstruire_base_dev` :
   `versions-workflow` vert, pgTAP 94 / 3974, `budgets.spec.ts` 19/19. Un `console.error` de WebSocket realtime est
   survenu juste après la reconstruction ; il est vert au rejeu. Le compteur figé d'INC-303 reste à corriger par `CRM-013`.
+
+### décision 698 — INC-174 tranchée : le parcours clavier de la grille champ × étape porte un `test.slow()` motivé
+
+*2026-10-25, même session planifiée (ouverte à 05:12:42 UTC). Tranché par la session (`docs/CloudWorker.md` §4.1 bis) ; le
+responsable peut le contredire.*
+
+**Mesure.** `administration-workflows.spec.ts` « les deux gestes se mènent au clavier seul » échoue sur le délai de 30 s, et
+seulement sur lui : avec `--timeout=180000`, il **passe en 31,5 s**. Le comportement prouvé est juste ; la preuve mesure
+le prix réel de son contrat, qui est d'atteindre une case de la grille par `Tab`, et deux fois. Mesures antérieures :
+29,8 s (2026-08-19) et 36,0 s (décision 509), donc sous et au-dessus de la borne selon la charge. La ligne de base faite
+aujourd'hui montre l'échec avant comme après la session.
+
+**Retenu : l'issue n° 1 de l'entrée**, un `test.slow()` sur ce seul scénario, avec son motif écrit dans le fichier. Il
+**nomme** une durée mesurée au lieu de la subir, et ne change rien de ce que la preuve exige.
+
+**Écarté : l'issue n° 2**, une boucle de `Tab` bornée plus serrée ou partant d'un autre point. Elle rendrait la preuve
+dépendante de l'endroit où le focus se trouve après chaque geste. Elle déplacerait aussi le défaut au lieu de le nommer,
+alors que ce scénario existe pour dire qu'un clavier seul suffit.
+
+**Ce n'est pas une temporisation** au sens de `CLAUDE.md` §18 : aucune attente n'est ajoutée au parcours, seul le budget
+du scénario est porté au triple, ce que Playwright prévoit pour un test long. **INC-174 est close.**

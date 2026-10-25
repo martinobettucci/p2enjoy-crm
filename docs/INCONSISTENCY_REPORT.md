@@ -3096,6 +3096,8 @@ réel entre l'envoi et le classement sur une exécution où l'échec se produit.
 
 ### INC-174 — `administration-workflows.spec.ts` § « les deux gestes se mènent au clavier seul » échoue DANS une campagne complète, et passe seul
 
+**CLOSE le 2026-10-25 — décision 698.** Cause mesurée : le scénario passe en 31,5 s pour une borne de 30 s ; son contrat (atteindre une case par `Tab`, deux fois) est simplement long. Issue retenue : la n° 1 ci-dessous, un `test.slow()` motivé dans le fichier ; la n° 2 est écartée (preuve rendue dépendante du point de départ du focus).
+
 **Ce qui est mesuré.** Campagne complète du 2026-08-19, session `CRM-084` tranche 2 :
 
 ```
