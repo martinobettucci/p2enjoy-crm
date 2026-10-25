@@ -34134,3 +34134,33 @@ sortie jetée des sous-harnais de `verify-droits-fins.sh`, sont consignés en IN
 **Écart de conduite** : la première commande de la session (`git status`, `ls docs/CloudWorker.md`) a précédé la lecture
 de `docs/CloudWorker.md`, et l'annonce du §0 bis n'a pas été la première ligne — quatrième occurrence, après les
 décisions 678, 683 et 687.
+
+### décision 695 — `CRM-084` close : le manuel décrit l'administration des budgets, et une preuve le lie à l'écran
+
+*2026-10-25, session planifiée ouverte à 05:12:42 UTC (`docs/CloudWorker.md`). Tranché par la session (§4.1 bis) ; le
+responsable peut le contredire.*
+
+**Choix de l'unité.** `CRM-037` et `CRM-111` T1 bis portaient des prises vivantes ; les autres `[~]` du plan attendent
+une livraison, un constat du responsable ou un environnement sans proxy TLS (`CRM-001`) ; `CRM-112` attend `CRM-111` T2
+(décision 665) ; les `[ ]` du chunk 5 attendent les deux questions du connecteur MCP. **Reste un solde** (§4.2) :
+`CRM-084`, retenue en `[~]` par deux motifs seulement — la série des `verify-*.sh`, qui n'est plus une DoD (décision 553),
+et l'absence de chapitre du manuel sur l'administration des budgets, depuis la tranche 2.
+
+**Fait.** `docs/manual.md` §5.4 *bis*, écrit d'après l'écran réel (`BlocBudgetsTrack.tsx`, `fr.ts`) et ses captures
+renouvelées et observées ; §5.6 ne nomme plus que des absences voulues (`docs/SPEC-costs.md` §5). Code : trois scénarios
+dans `e2e/ui/budgets.spec.ts` qui exigent chaque libellé cité **à la fois** dans le chapitre, lu dans le fichier, et à
+l'écran — deux mutations tuées. `verify-budgets.sh` : un contrôle textuel attendait `disabled={enCours}`, forme d'avant
+`CRM-093` ; révisé en place, motif écrit (le droit refusé est un refus de serveur, pas une garde tirée du décompte).
+**Mesuré en écrivant** : le manuel disait l'écart « consigné au registre » — aucune entrée ne le portait ; rien à fermer.
+
+**Vérifié.** `budgets.spec.ts` 19/19, `verify-budgets.sh` 53/53, pgTAP `0048` 62, API 28/28, unitaires 106/106.
+Campagne de fin de session (après synchronisation, seed rejoué) : typecheck, unitaires 4355, build, pgTAP 94 / 3974,
+API 1182, courrier 44, pytest 246 — verts ; interface 908 passés, 14 échecs, 10 non joués ; les quatorze rejoués seuls :
+treize verts, `administration-workflows.spec.ts:1114` rouge (INC-174, préexistant). **Non exécuté** : la série des
+`verify-*.sh` au-delà de `verify-budgets.sh` ; `verify-harness.sh --rapide` a été arrêté par la limite d'une heure de
+l'outil pendant son étape d'interface, après avoir révélé INC-303 (compteur pgTAP figé à 3944, de `CRM-013`).
+
+**Incidents.** Un rebase en conflit sur la numérotation (INC-302 prise par une autre session) a buté sur le crochet qui
+refuse tout commit en HEAD détaché : rebase annulé, entrée renumérotée INC-303 et réappliquée sur `main` synchronisé.
+
+**Où reprendre.** `CRM-084` est `[x]`, prise libérée. Rien d'autre ne change ; le choix de la session suivante suit §4.2.

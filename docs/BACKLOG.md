@@ -10737,7 +10737,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 |---|---|---|
 | CRM-082 | Objectifs : modèle, RLS et API | `[x]` |
 | CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[~]` |
-| CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[~]` |
+| CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[x]` |
 | CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[x]` |
 | CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[~]` |
 
@@ -11400,8 +11400,7 @@ son clavier n'avait jamais été ni écrit ni éprouvé.
       jamais lié. L'écran lève la mention pour le seul état détectable — une destination partie à
       la corbeille.
 
-### CRM-084 — Budgets, occurrences et clôture `[@]`
-*Prise en charge : CloudWorker 2026-10-25 05:12:42 UTC depuis 2026-10-25 05:20 UTC — état avant : [~]*
+### CRM-084 — Budgets, occurrences et clôture `[x]`
 
 `budgets`, `budget_occurrences` (`docs/SCHEMA.md` §9 bis.4 et §9 bis.5), triggers et politiques,
 plus l'écran d'administration des budgets dans le track (`docs/SPEC-costs.md` §4.1).
@@ -11507,7 +11506,7 @@ budget appartient à un track, et l'écran qui administre le track est celui qui
       « arbitrage attendu » est un travail que personne n'a fait, et il est à la session. INC-173 est
       donc **tranchée** (décision 539) et retirée du registre. Ce qui reste sous l'unité n'est plus
       un arbitrage mais du CODE, décrit à la tranche 3 ci-dessous.
-- [~] **~~AUCUNE SURFACE NE GÈRE LES OCCURRENCES~~ TRANCHÉ ET SPÉCIFIÉ le 2026-08-28** —
+- [x] **~~AUCUNE SURFACE NE GÈRE LES OCCURRENCES~~ TRANCHÉ ET SPÉCIFIÉ le 2026-08-28** — *(livré et prouvé par les tranches 3b et 3c ci-dessous, décision 540 ; case mise à jour le 2026-10-25)*
       `docs/SPEC-costs.md` §4.1 bis (cinq sous-chapitres, dictionnaire fermé des refus),
       `docs/DESIGN_SYSTEM.md` §5.47, décision **539**, écrits et committés **avant la première ligne
       de code** et fondés sur **onze mesures** relevées sur la pile seedée avec les jetons réels des
@@ -11577,12 +11576,12 @@ tranche 1.
 - [x] **Compteurs de `scripts/verify-harness.sh` révisés dans le MÊME changement** : `SCENARIOS_API`
       1023 → **1032**, `SCENARIOS_UI` 701 → **715**. Valeurs COMPTÉES, jamais déduites. Le harnais
       rend **31 contrôles, aucune anomalie** derrière la révision.
-- [ ] **CE QUI RETIENT LA TRANCHE, ET CE N'EST PAS DU COMPORTEMENT** : la série des
+- [x] **~~CE QUI RETIENT LA TRANCHE, ET CE N'EST PAS DU COMPORTEMENT~~ — CADUC** : la série des
       `scripts/verify-*.sh` n'a pas été rejouée en entier — le dépôt en porte plus de soixante, et
-      seul `verify-harness.sh --rapide` l'a été.
-- [ ] **Écart HÉRITÉ, nommé et non comblé** : l'administration des budgets eux-mêmes n'a toujours
-      aucun chapitre de `docs/manual.md`. Il manque depuis la tranche 2 ; le combler ici reviendrait
-      à solder une autre tranche (`CLAUDE.md` §13). `docs/manual.md` chapitre 5.6 le porte.
+      seul `verify-harness.sh --rapide` l'a été. *Depuis la décision 553 (`docs/CloudWorker.md` §2.1 ter), la série
+      complète n'est la Definition of Done d'aucune unité.*
+- [x] **~~Écart HÉRITÉ, nommé et non comblé~~ — COMBLÉ le 2026-10-25** : l'administration des budgets eux-mêmes n'avait
+      aucun chapitre de `docs/manual.md`. Il est écrit : §5.4 *bis* (voir la clôture de l'unité ci-dessous).
 - [x] **La campagne complète a été exécutée, et elle est verte** : `test:unit` **57 fichiers /
       1964 tests**, `test:sql` **48 fichiers / 2405 assertions**, `e2e:api` **801 passés**,
       `e2e:ui` **482 passés**, `e2e:mail` **42 passés**, `pytest` **244**, `typecheck`,
@@ -11673,10 +11672,23 @@ seconde phrase promettait la variante depuis le premier jour.
       campagne rejouée sur le même commit rend **42 passés**. Ligne de base par `git stash` NON
       exécutée, et délibérément : une régression est déterministe, celle-ci disparaît sans qu'une
       ligne du dépôt ne bouge. Aucun chemin de `mail-sync` dans le diff.
-- [ ] **CE QUI RETIENT ENCORE `CRM-084` EN `[~]`, ET CE N'EST PLUS DU COMPORTEMENT** : (1) la série
-      des `scripts/verify-*.sh` n'a pas été rejouée en entier — le dépôt en porte **soixante-dix-sept**,
-      **sept** l'ont été ; (2) l'écart HÉRITÉ de la tranche 2, nommé depuis : l'administration des
-      budgets n'a toujours aucun chapitre de `docs/manual.md`.
+- [x] **~~CE QUI RETIENT ENCORE `CRM-084` EN `[~]`~~ — LEVÉ le 2026-10-25** (décision 695) : (1) la série des
+      `scripts/verify-*.sh` n'est la Definition of Done d'aucune unité (décision 553) ; (2) le chapitre manquant est
+      écrit. **Clôture de l'unité, vérifiée le 2026-10-25** :
+      - `docs/manual.md` §5.4 *bis*, écrit d'après l'écran réel et ses captures observées ; §5.6 ne nomme plus que des
+        absences voulues.
+      - `e2e/ui/budgets.spec.ts` **19/19** (dont trois scénarios neufs exigeant chaque libellé cité à la fois dans le
+        chapitre et à l'écran ; deux mutations tuées — une phrase du manuel, une aide de l'interface) ;
+        `occurrences.spec.ts` et `couts-a-saisir.spec.ts` verts (un `502` de passerelle, INC-299, vert rejoué seul).
+      - `scripts/verify-budgets.sh` **53 contrôles, aucune anomalie** — un contrôle figé depuis `CRM-093` révisé avec
+        son motif, contre-épreuve rejetée.
+      - pgTAP `0048` **62** ; API `budgets` et `occurrences` **28/28** ; unitaires du module et du panneau **106/106**.
+      - Captures `docs/captures/CRM-084/` renouvelées et observées (tableau, formulaire, confirmation de clôture).
+      - Campagne de fin de session sur `main` synchronisé : typecheck, unitaires **4355**, build, pgTAP **94 / 3974**,
+        API **1182**, courrier **44**, pytest **246** verts ; interface **908 passés, 14 échecs, 10 non joués** — les
+        quatorze rejoués seuls : treize verts, `administration-workflows.spec.ts:1114` rouge, INC-174, déjà mesuré sur
+        la ligne de base et étranger à l'unité (aucun code de la webapp n'a changé).
+      - Aucune migration, aucune fonction, aucune variable : rien à livrer en production.
 - [x] **Harnais dédié étendu** : `scripts/verify-budgets.sh` passe de **43 à 53 contrôles, aucune
       anomalie**, avec **cinq** dégradations mordantes au lieu de trois — la comparaison rendue
       large et le seuil absent ouvrant le retard s'ajoutent aux trois de la tranche 2. **Un de ses
