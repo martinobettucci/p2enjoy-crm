@@ -7751,6 +7751,8 @@ d'interface de 08:19 à 09:15 UTC rend encore deux échecs sur `502 (Bad Gateway
 « recv() failed (104: Connection reset by peer) » vers PostgREST à 09:25, 09:26 et 09:28 (`HEAD /rest/v1/cards`, `GET
 /rest/v1/workspaces`, `GET /rest/v1/channels`). Le délai de 3 s **réduit sans éteindre** le défaut ; la pile était partagée
 avec une autre session pendant la mesure. **Reste ouverte.**
+**Arbitrage du responsable, 2026-10-25 (décision 701, option A)** : mesurer en isolation, sur une pile non partagée
+(`CRM-115`), pour établir si PostgREST ferme les connexions sous charge.
 
 ### INC-300 — `connexion.spec.ts:345` lit le fondu des gestes de modération à mi-transition sous la charge d'une campagne
 
@@ -7823,3 +7825,4 @@ cause, qu'il a fallu reproduire. **Comportement laissé inchangé.** **Issue pro
 chaque harnais qui rejoue un fichier de migration compare l'empreinte `pg_dump -s` avant et après lui et reconstruit si
 elle diffère (`docs/SPEC-test-harness.md` §3.6) ; `verify-droits-fins.sh` garde la sortie de chaque sous-harnais dans un
 fichier et en cite la fin sur un échec, comme `reconstruire_base_dev` depuis INC-298. **Statut : ouverte.**
+**Arbitrée le 2026-10-25 (décision 701)** : l'issue proposée est retenue ; portée par `CRM-111` T1 ter.

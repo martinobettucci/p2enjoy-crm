@@ -34324,3 +34324,27 @@ compte, aucune ligne transmise ; une seule constante, `webapp/src/lib/compter.ts
 pose `Connection: close` sur un `HEAD` — essayé et mesuré, 5 et 6 erreurs, car PostgREST n'annonce pas la fermeture ;
 transformer le `HEAD` en `GET` vers l'amont — nginx renverrait un corps au client ; monter PostgREST de version — aucune
 version corrigée n'est connue du dépôt. **Connecteur MCP** : non concerné, il n'émet aucun `HEAD`.
+
+### décision 701 — Arbitrages du responsable du 2026-10-25 : INC-304 traitée, INC-299 mesurée en isolation, une pile par session
+
+*2026-10-25, session interactive, réponses du responsable aux six questions de fin de la session planifiée ouverte à
+03:11:42 UTC (décision 694).*
+
+1. **INC-304 — oui.** Chaque harnais qui rejoue un fichier de migration compare l'empreinte `pg_dump -s` des schémas
+   `public` et `app` avant et après lui, et reconstruit la base si elle diffère (`docs/SPEC-test-harness.md` §3.6) ;
+   `scripts/verify-droits-fins.sh` garde la sortie de chacun de ses sous-harnais dans un fichier et en cite la fin sur un
+   échec, comme `reconstruire_base_dev` depuis INC-298. Portée par **`CRM-111` T1 ter**.
+2. **INC-299 — option A** : mesurer en isolation, sur une pile non partagée, pour établir si c'est PostgREST qui ferme
+   les connexions sous charge. *Réponse écrite « 4 à », lue comme « A » ; le responsable peut corriger.* L'arbitrage
+   va à la tranche INC-299 de `CRM-001`, tenue par une autre session, dont la décision 700 a depuis mesuré une cause
+   (une connexion de `HEAD` fermée sans annonce par PostgREST). La pile non partagée est celle de `CRM-115`.
+3. **Une pile par session — `CRM-115`.** Texte du responsable : « chaque session ne devrait travailler que dans sa
+   pile, donc il faut prévoir des ports configurables à chaque lancement. Un fichier dans l'OS, partagé par chaque
+   session, doit y répertorier les sessions en cours et être vérifié à l'usage, car parfois les VM sont recyclées alors
+   que le FS est maintenu. » **Constaté le jour même** : à 10:04 UTC, VM démarrée depuis 6 minutes, dépôt intact, démon
+   Docker arrêté. Motif : deux sessions sur une seule pile se sont mesurées l'une l'autre et ont fait deux fois le même
+   travail sous une même prise (décision 694). **Connecteur MCP : non** — c'est de l'outillage de développement, pas
+   une fonctionnalité du produit (même réponse qu'au `docs/SPEC-test-harness.md` §3.6).
+
+**Non rendus, en attente** : le découpage de `CRM-111` T2 (bloc unique ou étapes intermédiaires vertes), la prochaine
+unité du chunk 5 avec ses deux questions MCP, le score de santé de `CRM-066` (`CRM-P02`).

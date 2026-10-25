@@ -16340,6 +16340,10 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       reconstruite, mutation tuée ; `verify-droits-fins.sh --rapide` rejoué jusqu'au bout **39/39, aucune anomalie**
       (06:42–08:08 UTC). La série complète des `verify-*.sh` n'est la Definition of Done d'aucune unité
       (`docs/CloudWorker.md` §2.1 *ter*, décision 553) ; les autres harnais qui rejouent une migration sont INC-304.
+- [ ] **T1 ter — INC-304, arbitrée le 2026-10-25 (décision 701)** : chaque harnais qui rejoue un fichier de migration
+      compare l'empreinte `pg_dump -s` de `public` et `app` avant et après lui, et reconstruit si elle diffère
+      (`docs/SPEC-test-harness.md` §3.6) ; `verify-droits-fins.sh` garde la sortie de chaque sous-harnais et en cite la
+      fin sur un échec. Les douze harnais d'INC-304 d'abord mesurés, puis corrigés là où ils laissent un résidu.
 - [ ] **T2 — bascule, en un seul changement** (§3, §4, §5, §10) : migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses
@@ -16392,3 +16396,26 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 - [ ] **T9** — outils MCP : `crm_common_field_list`, valeurs par `crm_card_get` et `crm_card_update`, filtre de
       `crm_card_list` ; `docs/SPEC-mcp.md` §9.2.
 - [ ] **Livraison en production** avec `CRM-111` ou après elle, sur instruction du responsable.
+
+## Demande du 2026-10-25 — une pile de développement par session (décision 701)
+
+### CRM-115 — Une pile de développement par session, des ports attribués à chaque lancement `[ ]`
+*Créée le 2026-10-25 — arbitrage du responsable (décision 701, point 3).* Plusieurs sessions — tâches planifiées,
+sessions interactives — partagent parfois une VM, son démon Docker et son système de fichiers. Elles démarraient
+toutes la même pile, aux mêmes noms de conteneurs (`p2enjoy-db`…) et aux mêmes ports, et se mesuraient l'une l'autre
+(décision 694). **Chaque session ne travaille que dans sa propre pile**, aux ports attribués à son lancement. **Un
+registre**, fichier du système de fichiers partagé, répertorie les sessions en cours ; il est **vérifié à l'usage**,
+car une VM peut être recyclée alors que le système de fichiers est conservé (constaté le 2026-10-25 à 10:04 UTC).
+**Connecteur MCP : non** (outillage de développement). Spécification à écrire avant le code.
+
+- [ ] **T1 — mesures et spécification** : inventaire des ports publiés, des noms de conteneurs figés, des chemins de
+      l'hôte partagés (volumes liés du dépôt, verrou de reconstruction, fichiers de `/tmp`), et des appelants qui
+      nomment un conteneur ou un port en dur ; forme du registre (emplacement, entrée par session, vérification de
+      vie : identifiant de démarrage de la VM, conteneurs du projet présents) ; schéma d'attribution des ports.
+- [ ] **T2 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un
+      recyclage de VM, deux attributions simultanées départagées).
+- [ ] **T3 — la pile paramétrée** : nom de projet Compose, noms de conteneurs, ports et volumes par emplacement ;
+      `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev`.
+- [ ] **T4 — les appelants** : harnais `verify-*.sh`, configuration Playwright, seed, lisent la pile de leur session.
+- [ ] **T5 — preuve** : deux piles debout en même temps sur le même démon, chacune sa preuve courte, sans interférence
+      mesurée ; `README.md`, `docs/DAT.md`, `docs/CloudWorker.md` (démarrage par emplacement).
