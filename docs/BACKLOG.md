@@ -14251,7 +14251,8 @@ harnais propre à cette unité.
 
 **Harnais de l'unité, verdicts de la série du 2026-08-29** : `verify-sauvegardes.sh`, `verify-restauration.sh` et `verify-exploitation.sh` (**59 contrôles**) sont **verts**. La question du §INC-190 point (a)/(b)/(c) qui retenait la promotion est **tranchée** par la décision 553 : voie (a).
 
-### CRM-087 — Migration de production par le runner, sur geste explicite `[~]`
+### CRM-087 — Migration de production par le runner, sur geste explicite `[@]`
+*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 23:21 UTC — état avant : [~]*
 ***Arbitré le 2026-10-25 (décision 707, option B)** : la preuve se fait sur une pile de production **jetable**, sur le poste, par un agent — c'est le travail qui reste à l'unité.*
 ***Reste réel au 2026-10-25 (décision 705)** : la preuve sur une pile de production **jetable** (base vierge, `--migrate`, une table de la dernière migration jointe par l'API sans redémarrage), faisable par un agent sur le poste ; INC-095, que l'unité désignait comme dépendance, est close. Les livraisons de production des 21 au 24 octobre ont migré par le runner (registre à 101 lignes) : si le responsable les juge probantes, l'unité se solde sur elles.*
 *Créée le 2026-08-20 par arbitrage du responsable — `docs/JOURNAL.md` décision 489. Motif :

@@ -34693,3 +34693,15 @@ mort. Une **quatrième** cause a été trouvée par une attribution à blanc con
 `docker ps --format '{{index .Labels "…"}}'` échoue — `.Labels` y est une chaîne — et l'erreur était tue ; la forme
 juste est `{{.Label "…"}}`. `scripts/verify-emplacements.sh` interroge désormais le vrai Docker quand une pile de ce
 checkout tourne (section 5).
+
+
+### décision 714 — `CRM-087` : la preuve du runner sur une pile de production jetable, dans un second clone autorisé
+
+*2026-10-26, instruction du responsable (question posée par `AskUserQuestion`, session interactive).* **Question** :
+prouver le runner de migrations sur une pile de **production** jetable (décision 707, option B) exige un assemblage de
+production dont la base vit, comme en développement, dans un répertoire du dépôt — le faire depuis ce checkout
+risquerait l'incident de la décision 713. **Décision du responsable** : un **second clone jetable du dépôt sous `/tmp`**,
+avec un `.env` de profil `prod` à **secrets jetables tirés localement**, sans aucune connexion à la vraie production ;
+tout est arrêté et retiré ensuite. **Bornes** : aucun commit ni branche dans le clone ; ses ports vérifiés libres avant
+démarrage ; la pile de développement de ce checkout n'est pas touchée.
+
