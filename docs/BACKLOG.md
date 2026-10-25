@@ -16265,7 +16265,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       (§2 bis.3 bis) : mêmes comptes que la forme livrée à six changements de droits, en requête préparée ; contre-preuve
       `IMMUTABLE`. *Arbitré le 2026-10-24 (décision 667)* : forme optimisée pour `cards`, `card_placements` et
       `card_field_values` en T2 ; le coût par ligne des autres tables filles reste hors de l'unité (INC-288).
-- [~] **T1 bis — restaurer par reconstruction** (INC-289, décision 675) : mesurer puis spécifier le mode opératoire
+- [@] **T1 bis — restaurer par reconstruction** (INC-289, décision 675) : mesurer puis spécifier le mode opératoire
       d'une reconstruction de la base de développement compatible avec une pile partagée ; réécrire la restauration des
       seize harnais qui appelaient `rejeu_complet_au_prochain_passage`, et la preuve de `verify-migrations.sh` (base
       neuve dans l'ordre ; chaque fichier rejoué sur l'état qu'il produit ; base à jour : rien appliqué). Préalable de
@@ -16284,6 +16284,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       `verify-droits-fins.sh --rapide` rejoués **jusqu'au bout** — tous deux arrêtés dans la dégradation du jeton de
       couleur de `verify-tracks.sh`, qui relance `e2e:ui` en entier (plus d'une heure) ; leurs restaurations par
       reconstruction (sections 2 et 7 de l'un, 1 à 7 de l'autre) sont vertes.
+      *Prise en charge : CloudWorker 2026-10-25 03:11:42 UTC depuis 2026-10-25 03:19 UTC — état avant : [~]*
 - [ ] **T2 — bascule, en un seul changement** (§3, §4, §5, §10) : migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses
