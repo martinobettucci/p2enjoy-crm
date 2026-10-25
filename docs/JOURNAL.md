@@ -34466,3 +34466,10 @@ sont les rouges classés par INC-309 et corrigés en parallèle par la décision
 `verify-mcp`, `verify-spark`, `verify-scripts`…), `verify-harness` compris — son écart « 932 attendus, 933 énumérés »
 venait d'`aa56773` (`CRM-001`), révisé par `75c460f`. `verify-board` signalait la suite unitaire rouge : rejouée seule
 derrière, **4360/4360**. Aucune anomalie imputable : la boucle de correction du §4.3 n'a rien à corriger.
+
+**Complément, même session — rejeu des 26 harnais rouges sur `main` à jour** (pile recomposée après `CRM-115`, seed avant
+chaque harnais). 24 rejoués avant l'arrêt demandé par le responsable : **19 verts** désormais (décision 704 et suivantes),
+`verify-droits-fins` **39/39** compris. Restent rouges, tous étrangers à `CRM-044` : `verify-harness` (arrêté à 60 min,
+pgTAP 3974 vert), `verify-identites` 22/23, `verify-mail-sync`, `verify-notifications-surface` 42/43, `verify-scripts`
+113/114, `verify-session-sso`. Non rejoués : `verify-spark`, `verify-webapp` et `administration-workflows.spec.ts`
+(INC-236). Aucun n'a été examiné plus avant dans cette session.
