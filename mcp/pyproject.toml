@@ -12,7 +12,7 @@ requires-python = ">=3.13"
 # Versions exactes : le mandataire OAuth est étendu par des points internes de FastMCP. Les dépendances transitives
 # sont figées dans requirements.lock (reprise de la révision 80a3e27 d'Evoliz), que l'image installe.
 dependencies = [
-  "fastmcp==4.0.11",
+  "fastmcp==4.1.2",
   # Frappe du jeton interne (docs/SPEC-mcp.md §5) ; déjà tirée par FastMCP, nommée parce qu'importée directement.
   "PyJWT==2.15.1",
 ]
