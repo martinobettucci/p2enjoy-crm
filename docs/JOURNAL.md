@@ -33831,3 +33831,36 @@ qu'aucun signal ne lit (nommés au §4.4.7). **Connecteur MCP** : sans objet, la
 n'envoient pas ces colonnes. **Migration** : `0104`.
 
 **Persisté avant le code** : ce journal ; `docs/SPEC-permissions-rls.md` §4.4.7 ; `docs/BACKLOG.md` (`CRM-013`).
+
+### décision 688 — `CRM-037`, INC-134 : la mention d'un champ exigé à l'étape courante dit « Requis à l'étape <étape> »
+
+*2026-10-25, session planifiée ouverte à 02:12:29 UTC (`docs/CloudWorker.md`). Tranché par la session (§4.1 bis) ; le
+responsable peut le contredire.*
+
+**Choix de l'unité.** La dernière entrée (687) traite `CRM-013` sous une prise vivante (01:14 UTC) ; `CRM-113` T3 (00:17)
+et `CRM-111` T1 bis (21:16, dernier commit 23:56) portent les leurs. Les trois sont sautées (§1 *bis*). Dans l'ordre du
+plan, `CRM-014` attend `audit_log` (`CRM-072`, `[ ]`), `CRM-034` n'a plus de reste, `CRM-035` et `CRM-036` ne doivent que
+des preuves. `CRM-037` porte un reste de **comportement** : INC-134, ouverte depuis le 2026-08-16, « arbitrage attendu ».
+Ce n'est pas un motif d'attente (§4.1 bis) : la correction est un texte d'interface, réversible, que le journal et la
+spécification permettent de déduire.
+
+**Le défaut.** `FormulaireCard` rend, sous tout champ `required` à l'étape courante, « Requis pour passer à <étape
+courante> ». La mention nomme **toujours** l'étape où l'affaire se trouve (§4.4 de `docs/SPEC-form-composer.md`) : elle
+demande donc à l'utilisateur de « passer à » l'étape qu'il occupe déjà — sur chaque fiche, et non une fois sur deux. La
+règle, la garde et la validation sont justes ; seul l'énoncé ment.
+
+**Décision.** La mention devient **« Requis à l'étape <étape> »**, par une clé paramétrée
+`form.required.reason` = « Requis à l'étape {etape} » (plus de phrase construite par concaténation, `CLAUDE.md` §23,
+`docs/DESIGN_SYSTEM.md` §10). Elle dit ce que la règle pose — le champ est exigé **à cette étape** : contrôlé à l'entrée,
+signalé manquant tant qu'on y est (§3.4) — et garde ce que le §4.4 voulait, la **raison** de l'obligation, puisque l'étape
+reste nommée. L'astérisque, son texte lu, l'alerte de champ manquant et la mention du §4 ter.5 sont inchangés.
+
+**Écartés.** « Requis à cette étape » : perd le nom de l'étape, donc la raison que le §4.4 exige ; le silence : l'astérisque
+seul ne dit pas pourquoi (§4.5, `docs/DESIGN_SYSTEM.md` §8) ; « Requis pour entrer dans <étape> » : décrit un geste passé
+que l'affaire a déjà accompli, et se lit comme une condition encore à remplir ; garder la formule pour une hypothétique étape
+à venir : le rendu ne connaît que l'étape courante (§4.4, §4 ter.5), aucun cas ne l'emploierait. Le libellé du board
+« Motif exigé pour passer à » n'est pas concerné : il nomme réellement l'étape de destination d'un déplacement.
+
+**Connecteur MCP** : sans objet — un texte d'interface, que le connecteur ne rend pas. **Seed, base, API** : inchangés.
+**Persisté avant le code** : ce journal ; `docs/SPEC-form-composer.md` §4.4 et §4 ter.5 ; `docs/DESIGN_SYSTEM.md` §5.7 et
+§5.7 quater ; `docs/INCONSISTENCY_REPORT.md` (INC-134) ; `docs/BACKLOG.md` (`CRM-037`).

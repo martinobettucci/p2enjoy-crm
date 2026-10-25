@@ -4119,9 +4119,15 @@ table, ni statut, ni flux.
   `Signature` et l'arrivée en `Réalisation en cours`. Les sept exigeraient sept affaires, une par
   étape, que le seed ne pose pas. Le manque appartient au **seed de démonstration, `CRM-046`**, et
   l'inventer ici dépasserait l'unité. Aucune autre preuve de la Definition of Done ne manque.
-- **INC-134 est ouverte** (énoncé « Requis pour passer à Signature » sur une affaire déjà à cette
+- ~~**INC-134 est ouverte** (énoncé « Requis pour passer à Signature » sur une affaire déjà à cette
   étape) : elle ne retient pas l'unité, la règle et la garde étant conformes, mais elle attend un
-  arbitrage sur ce que la mention doit dire.
+  arbitrage sur ce que la mention doit dire.~~ **Tranchée le 2026-10-25** (décision 688) : la mention
+  devient « Requis à l'étape <étape> », clé paramétrée `form.required.reason`. Mise en œuvre : voir
+  la tranche INC-134 ci-dessous.
+- [ ] **Tranche INC-134 — la mention d'un champ exigé à l'étape courante** (décision 688,
+      `docs/SPEC-form-composer.md` §4.4, `docs/DESIGN_SYSTEM.md` §5.7). Spécification committée avant
+      le code. Reste : la clé paramétrée et le composant, les preuves unitaire et E2E révisées avec
+      leur motif, le manuel, les captures de `CRM-037` renouvelées et observées, le CHANGELOG.
 - **INC-065 est ouverte** : rien ne confronte le couple `(slugTrack, slugChannel)` de l'adresse à la
   card qu'elle désigne. Aucun droit n'est contourné — chaque lecture reste soumise à sa politique —,
   mais aucune spécification ne dit ce qu'une adresse incohérente doit rendre. Comportement inchangé,

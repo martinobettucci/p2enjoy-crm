@@ -401,6 +401,16 @@ venir : le §3.4 pose qu'un champ `required` sur *E* est exigé « au moment où
 *E* ». Pour une card **déjà** dans *E*, la mention explique donc ce qui a été — ou aurait dû être —
 exigé à l'entrée, et ce que la garde exigera de nouveau à la prochaine entrée dans *E*.
 
+**RÉVISÉ le 2026-10-25 — INC-134, `docs/JOURNAL.md` décision 688. La mention s'écrit « Requis à
+l'étape <étape> ».** La formule d'origine, « requis pour passer à <étape> », citée ci-dessus mot pour
+mot, nommait toujours l'étape où l'affaire **se trouve** — le paragraphe précédent le pose — et
+demandait donc à l'utilisateur de « passer à » l'étape qu'il occupe déjà, sur chaque fiche. Le texte
+retenu dit ce que la règle pose — le champ est exigé **à cette étape** — et garde la raison de
+l'obligation, l'étape restant nommée. Il est porté par une clé paramétrée, `form.required.reason`
+= « Requis à l'étape {etape} », et non plus par une phrase construite par concaténation
+(`docs/DESIGN_SYSTEM.md` §10). L'astérisque, son texte lu par les lecteurs d'écran et l'alerte de
+champ manquant sont inchangés.
+
 Le §3.4 pose aussi que « les données déjà existantes ne sont jamais invalidées rétroactivement :
 une card entrée dans *E* avant l'ajout d'une règle `required` y reste, et le champ manquant est
 **signalé dans l'interface sans bloquer la lecture** ». Le rendu tient les deux : un champ exigé et
@@ -853,9 +863,10 @@ Bornes de cette règle, toutes explicites :
 Un champ exigé par le déplacement porte la mention **« exigé par le déplacement que vous avez
 demandé »**, distincte de celle du §4.4.
 
-Elle est distincte parce que le §4.4 fait dire « requis pour passer à *<étape courante>* », et que
-pour ces champs-là **ce serait faux** : ils ne sont pas exigés par l'étape où l'affaire se trouve,
-mais par celle où l'on a voulu la mener.
+Elle est distincte parce que le §4.4 fait dire « requis à l'étape *<étape courante>* » — « requis
+pour passer à *<étape courante>* » jusqu'à la décision 688 —, et que pour ces champs-là **ce serait
+faux** : ils ne sont pas exigés par l'étape où l'affaire se trouve, mais par celle où l'on a voulu la
+mener.
 
 Les deux mentions **coexistent** lorsque le champ est dans les deux cas — sa règle le rend `required`
 à l'étape courante *et* le déplacement l'exige. C'est le précédent du §4 bis.9 : deux phrases vraies

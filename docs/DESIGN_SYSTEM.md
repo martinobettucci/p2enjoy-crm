@@ -751,6 +751,12 @@ focus `--color-brand`. Texte d'aide sous le champ en 13 px `--color-text-3`. Err
 Un champ **obligatoire pour la transition en cours** est signalé par un astérisque et la mention
 « requis pour passer à <étape> » — l'utilisateur doit comprendre *pourquoi* il est requis.
 
+*Révisé le 2026-10-25 (INC-134, décision 688).* La mention s'écrit **« Requis à l'étape <étape> »** :
+le formulaire ne connaît que l'étape **courante** (`docs/SPEC-form-composer.md` §4.4), et « pour passer
+à » demandait à l'utilisateur de rejoindre l'étape où il se trouve déjà. Elle reste un texte de
+13 px `--color-text-3` sous le libellé, sans rôle ARIA, l'étape interpolée par une clé (§10). Aucun
+jeton, aucune forme nouvelle.
+
 ### 5.7 bis Case à cocher et valeurs en lecture seule — `CRM-037`
 
 Deux règles ajoutées par le premier formulaire réellement rendu, l'une et l'autre trouvées **en
@@ -802,7 +808,7 @@ danger/danger-soft aux erreurs du §5.7.
 ### 5.7 quater Champ exigé par un déplacement refusé — `CRM-037`
 
 Le §5.7 signale un champ « obligatoire pour la transition en cours » par un astérisque et la mention
-« requis pour passer à *<étape>* ». Il en manquait un second cas, que `CRM-041` a rendu possible : un
+« requis à l'étape *<étape>* » (« requis pour passer à *<étape>* » jusqu'à la décision 688). Il en manquait un second cas, que `CRM-041` a rendu possible : un
 déplacement **refusé** pour champs manquants, dont l'utilisateur reprend la saisie sur la fiche
 (`docs/SPEC-form-composer.md` §4 ter). Ce que cet écran **choisit** de mettre en évidence est
 spécifié là-bas ; les règles ci-dessous ne disent que de quoi il a l'air.

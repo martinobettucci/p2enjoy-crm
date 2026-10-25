@@ -2224,6 +2224,13 @@ La corriger suppose de trancher ce qu'elle doit dire quand l'étape exigeante es
 « Requis à cette étape » ? le silence ? — puis de réviser les preuves qui la figent, ce qui dépasse
 la tranche autorisée ici. Le comportement est laissé **inchangé**. Arbitrage attendu.
 
+**TRANCHÉE le 2026-10-25 par la session planifiée — décision 688, mise en œuvre par `CRM-037`.** La
+mention devient « Requis à l'étape <étape> », par une clé paramétrée : elle dit ce que la règle pose et
+garde le nom de l'étape, donc la raison de l'obligation (§4.4). Écartés : « Requis à cette étape »
+(perd la raison), le silence (l'astérisque seul ne dit pas pourquoi), « Requis pour entrer dans »
+(décrit un geste déjà accompli). Les preuves qui figeaient l'ancien texte sont révisées dans le
+changement qui livre le nouveau, avec leur motif.
+
 ## Consigné le 2026-08-16 — un constat de preuve, étranger à `CRM-037`
 
 ### INC-135 — la preuve S3 de `mail-sync` juge l'HISTORIQUE COMPLET du conteneur, et un seul avertissement transitoire la condamne jusqu'à recréation
