@@ -15513,7 +15513,7 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       *2026-10-23, quatrième fenêtre* : **image `mcp` reconstruite** dans la cellule (révision `0242d845`, sur
       instruction du responsable). Reste le constat du responsable à l'écran.
 
-### CRM-104 — Outils MCP par famille `[~]`
+### CRM-104 — Outils MCP par famille `[P]`
 *Créée le 2026-10-20 — décision 627 (A4, D6). Une tranche par famille ; chaque tranche fixe d'abord la liste exacte de
 ses outils dans `docs/SPEC-mcp.md` §9.2, par un commit de documentation, puis la livre. Les outils n'appellent que les
 tables et RPC de la webapp ; « supprimer » veut dire corbeille ou archive, jamais purge. Dépend de `CRM-102` et de
@@ -15523,7 +15523,7 @@ tables et RPC de la webapp ; « supprimer » veut dire corbeille ou archive, jam
 *Ordre révisé le 2026-10-23 (décision 652, arbitrage du responsable) : la tranche `affaires` vient la première, en deux
 sous-tranches livrées séparément ; `structure` la suit.*
 
-- [~] **T2.a** — `affaires`, **lecture** : les outils de consultation, dont `crm_card_activity_list` (`CRM-067` T4).
+- [P] **T2.a** — `affaires`, **lecture** : les outils de consultation, dont `crm_card_activity_list` (`CRM-067` T4).
       **Implémentée et vérifiée en développement le 2026-10-23** (spécification validée, décision 654).
       - `mcp/crm_mcp/outils/affaires.py` : sept outils `affaires:consulter`. La politique admet l'ancre `autres`
         facultative (valeur par défaut `None`), et refuse une ancre d'espace facultative.
@@ -15538,8 +15538,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - **Livrée le 2026-10-23, quatrième fenêtre** : révision `0242d845`, image `mcp` reconstruite dans la cellule,
         conteneur sain, module `affaires` présent ; `verifier.sh` 26/27 (compteur de redémarrage antérieur) ; `/mcp`
         sans jeton `401`.
-      - **Reste `[~]`** : le constat du responsable — un assistant connecté qui lit une affaire.
-- [~] **T2.b** — `affaires`, **écriture** : créer, commenter, consigner, modifier, déplacer, changer de channel,
+      - **Reste `[P]`** : le constat du responsable — un assistant connecté qui lit une affaire.
+- [P] **T2.b** — `affaires`, **écriture** : créer, commenter, consigner, modifier, déplacer, changer de channel,
       sommeil, réveil, lier et délier un contact, corbeille ; dont `crm_card_activity_add` et `crm_card_activity_update`.
       **Implémentée et vérifiée en développement le 2026-10-23** (spécification validée, décision 655 : douze outils).
       - `mcp/crm_mcp/outils/affaires_ecriture.py` ; genre d'ancre `activity` ; `ecrire(..., fusion=True)` pour l'`upsert`
@@ -15555,8 +15555,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - Manuel 11.5 et 11.6, DAT.
       - **Livrée le 2026-10-23, cinquième fenêtre** : révision `b57de7b5`, image `mcp` reconstruite et saine,
         `verifier.sh` 26/27 (compteur antérieur).
-      - **Reste `[~]`** : le constat du responsable, un assistant connecté qui écrit sur une affaire.
-- [~] **T1** — `structure` (et la recherche globale de référence).
+      - **Reste `[P]`** : le constat du responsable, un assistant connecté qui écrit sur une affaire.
+- [P] **T1** — `structure` (et la recherche globale de référence).
       **Implémentée et vérifiée en développement le 2026-10-24** (spécification validée, décision 656 : douze outils).
       - `mcp/crm_mcp/outils/structure.py` ; genre d'ancre `workflow` ; refus de slug et de contraintes nommés.
       - Unitaires `tests/test_structure.py` **8** ; **dix mutations tuées sur dix**, la septième après l'ajout d'une
@@ -15570,8 +15570,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - `verify-mcp.sh` **70 contrôles, aucune anomalie** (intégration 32) ; harnais `SCENARIOS_UI=907`.
       - Manuel 11.5 et 11.6, DAT, INSTRUCTIONS.
       - **Livrée le 2026-10-24** : révision `20ad7541`, image `mcp` reconstruite et saine, `verifier.sh` 26/27.
-      - **Reste `[~]`** : le constat du responsable.
-- [~] **T3** — `contacts` : quatre outils de contact (décision 660) ; les organisations passent à `CRM-114`, famille
+      - **Reste `[P]`** : le constat du responsable.
+- [P] **T3** — `contacts` : quatre outils de contact (décision 660) ; les organisations passent à `CRM-114`, famille
       `organizations`.
       **Implémentée et vérifiée en développement le 2026-10-24.**
       - `mcp/crm_mcp/outils/contacts.py`.
@@ -15585,8 +15585,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - `verify-mcp.sh` **73 contrôles, aucune anomalie** (intégration 34) ; harnais `SCENARIOS_UI=908`.
       - Manuel 11.5 et 11.6, DAT.
       - **Livrée le 2026-10-24** : révision `e4f8a8e5`, image `mcp` reconstruite et saine, `verifier.sh` 26/27.
-      - **Reste `[~]`** : le constat du responsable.
-- [~] **T4** — `budgets` : les lignes de coût d'une affaire, en miroir de `recettes` (décision 668) — quatre lectures,
+      - **Reste `[P]`** : le constat du responsable.
+- [P] **T4** — `budgets` : les lignes de coût d'une affaire, en miroir de `recettes` (décision 668) — quatre lectures,
       cinq écritures, genres d'ancre `cost` et `cost_actual`, aucune suppression, administration des budgets laissée à
       l'écran. Liste au `docs/SPEC-mcp.md` §9.2 *septies*, **validée le 2026-10-24** (décision 669).
       **Implémentée et vérifiée en développement le 2026-10-24.**
@@ -15604,8 +15604,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
         observée ; `SCENARIOS_UI=917`.
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
       - **Livrée en production le 2026-10-24** (révision `bf45dc14`, image `mcp` reconstruite, `verifier.sh` 26/27 —
-        compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[~]`** : le constat du responsable.
-- [~] **T5** — `temps` : lire ses saisies et le rapport valorisé, poser une case de la grille (0 la vide, geste
+        compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[P]`** : le constat du responsable.
+- [P] **T5** — `temps` : lire ses saisies et le rapport valorisé, poser une case de la grille (0 la vide, geste
       `modifier`) — décision 671 ; coût du personnel laissé à l'écran. Liste au `docs/SPEC-mcp.md` §9.2 *octies*,
       **validée le 2026-10-24** (décision 672). **Implémentée et vérifiée en développement le 2026-10-24.**
       - `mcp/crm_mcp/outils/temps.py` : les trois outils ; la personne résolue par son nom parmi les membres ; période
@@ -15620,8 +15620,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
         `SCENARIOS_UI=918`.
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
       - **Livrée en production le 2026-10-24** (révision `62654375`, image `mcp` reconstruite, `verifier.sh` 26/27 —
-        compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[~]`** : le constat du responsable.
-- [~] **T6** — `objectifs` : le catalogue — lire les tableaux et leur canevas, ajouter un bloc et une flèche, modifier
+        compteur antérieur —, module présent, `/mcp` sans jeton `401`). **Reste `[P]`** : le constat du responsable.
+- [P] **T6** — `objectifs` : le catalogue — lire les tableaux et leur canevas, ajouter un bloc et une flèche, modifier
       un bloc (jamais la géométrie), archiver un tableau — décision 673 ; aucune suppression d'un bloc ni d'une flèche.
       Liste au `docs/SPEC-mcp.md` §9.2 *nonies*, **validée le 2026-10-24** (décision 674).
       **Implémentée et vérifiée en développement le 2026-10-24.**
@@ -15637,8 +15637,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
         `SCENARIOS_UI=919`.
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
       - **Livrée en production le 2026-10-24** (révision `a95e15f7`, image `mcp` reconstruite, module présent, `/mcp`
-        sans jeton `401`). **Reste `[~]`** : le constat du responsable.
-- [~] **T7** — `messagerie` : lire les messages d'une affaire et un message, envoyer un email depuis une affaire par la
+        sans jeton `401`). **Reste `[P]`** : le constat du responsable.
+- [P] **T7** — `messagerie` : lire les messages d'une affaire et un message, envoyer un email depuis une affaire par la
       file de l'écran (`destructiveHint`, `aussi` `affaires:consulter`) — décision 676 ; ni pièces jointes, ni
       classement, ni modèles. Liste au `docs/SPEC-mcp.md` §9.2 *decies*, **validée par la session le 2026-10-24**
       (décision 684, `docs/CloudWorker.md` §4.1 bis ; le responsable peut la contredire), précisions mesurées avant le code.
@@ -15659,7 +15659,7 @@ sous-tranches livrées séparément ; `structure` la suit.*
         `card_events` n'efface pas (`CRM-044`), comme `e2e/mail/envoi.spec.ts`.
       - Manuel 11.5 et 11.6 (verify-manual 251/251), SPEC-mcp catalogue, DAT §3.7 ter, CHANGELOG, contrat §2.14. Aucune
         migration, aucun seed : le fil de `c1` et l'identité de Driss existent déjà.
-      - **Reste `[~]`** : la livraison en production (reconstruction de l'image `mcp`, sur instruction) et le constat du
+      - **Reste `[P]`** : la livraison en production (reconstruction de l'image `mcp`, sur instruction) et le constat du
         responsable — un assistant connecté qui lit un fil et envoie un email.
 
 Preuves exigées **par tranche et par outil** (`docs/SPEC-mcp.md` §13) : succès, refus par la matrice, refus par le
@@ -16216,7 +16216,7 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
       2026-10-24** : `0093` à 35 assertions, deux mutations nouvelles tuées, `0077`, `0078` et `0080` vertes ; API 3/3 ;
       unitaires de la fonction 99/99 et de la webapp 4343/4343 ; E2E de l'IA 25/25 sur le seed recréé ; manuel 251/251.
 
-### CRM-114 — Organisations : les créer et les modifier depuis l'écran `[~]`
+### CRM-114 — Organisations : les créer et les modifier depuis l'écran `[P]`
 *Créée le 2026-10-24 — décision 660, arbitrage du responsable.* `CRM-060` a nommé « aucune création d'organisation »
 parmi ses limites (`docs/SPEC-contacts.md` §14.7) et s'est close sans qu'une unité ne la porte : un oubli. La base est
 prête — politiques `organizations_insertion_bizdev_admin` et `organizations_maj_bizdev_admin`, privilèges.
@@ -16236,7 +16236,7 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
       double) ; **quatre mutations tuées sur quatre**, une par liste privée de la famille, la base restaurée ; série
       complète **92 fichiers, 3909 assertions**, aucune anomalie. Constat utile pour T2 : un domaine en majuscules est
       refusé par la **forme** (`organizations_domain_check`) avant l'unicité — l'écran le mettra en minuscules.
-- [~] **T2** — l'écran : créer depuis le carnet, modifier depuis la fiche d'organisation ; design system ; unitaires.
+- [P] **T2** — l'écran : créer depuis le carnet, modifier depuis la fiche d'organisation ; design system ; unitaires.
       **Implémentée le 2026-10-24, unitaires, API et mutations vérifiés.**
       - Design system §5.64 écrit avant l'écran (`0c5bdda1`).
       - `lib/organisations.ts` (lecture avec le compte embarqué des contacts, normalisation — domaine en minuscules —,
@@ -16246,8 +16246,8 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
       - Unitaires : 13 sur la bibliothèque, 6 sur l'onglet, 3 de plus sur la fiche ; **huit mutations tuées sur
         huit**. API `organisations.spec.ts` **3/3** aux jetons réels.
       - Série unitaire **4314/4314**, typecheck et build verts ; harnais `SCENARIOS_API=1172`.
-      - **Reste `[~]`** : livrée le 2026-10-24 (T5) ; reste le constat du responsable à l'écran.
-- [~] **T3** — E2E, captures, seed, manuel, campagnes. **Implémentée et vérifiée en développement le 2026-10-24.**
+      - **Reste `[P]`** : livrée le 2026-10-24 (T5) ; reste le constat du responsable à l'écran.
+- [P] **T3** — E2E, captures, seed, manuel, campagnes. **Implémentée et vérifiée en développement le 2026-10-24.**
       - `e2e/ui/organisations.spec.ts` **7/7** : onglets du carnet et Comptoir Vasseur atteinte par la liste (0 contact),
         création au clavier — domaine en double refusé par la base (409 consommé), puis la fiche ouverte et relue en
         base, domaine mis en minuscules —, modification (site effacé, annonce, focus rendu), lectrice éteinte avec le
@@ -16260,8 +16260,8 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
         `verify-node-toolchain.sh` exige (anomalie antérieure, du 2026-10-20). Capture de `CRM-093`
         (`droits-lectrice-notifications`) prise avant que la page ne soit peinte : le scénario attend désormais la
         préférence rendue.
-      - **Reste `[~]`** : livrée le 2026-10-24 (T5) ; reste le constat du responsable.
-- [~] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée. Liste au
+      - **Reste `[P]`** : livrée le 2026-10-24 (T5) ; reste le constat du responsable.
+- [P] **T4** — les quatre outils MCP de la famille `organizations` ; matrice et phrase de portée. Liste au
       `docs/SPEC-mcp.md` §9.2 *sexies* ; `crm_search` filtre les organisations par `organizations:consulter`
       (décision 666). **Implémentée et vérifiée en développement le 2026-10-24.**
       - `mcp/crm_mcp/outils/organisations.py` : `crm_organization_list` (compte embarqué des contacts),
@@ -16278,7 +16278,7 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
       - E2E `connecteur-organisations.spec.ts` **1/1** (une organisation du connecteur dans l'onglet) ;
         `SCENARIOS_UI=916`.
       - Manuel chapitre 11, SPEC-mcp §6.1 et §9.2 catalogue, DAT.
-      - **Reste `[~]`** : livrée le 2026-10-24 (T5) ; reste le constat du responsable — un assistant connecté qui crée
+      - **Reste `[P]`** : livrée le 2026-10-24 (T5) ; reste le constat du responsable — un assistant connecté qui crée
         une organisation.
 - [x] **T5** — livraison en production, sur instruction du responsable. **Livrée et vérifiée le 2026-10-24** :
       instantané confirmé par le responsable, `livrer.sh -- --migrate --instantane-verifie` (révision `5e55a437`,
