@@ -5404,7 +5404,7 @@ scénarios de `commentaires-gestes.spec.ts` écrivent puis relisent la base sans
   et les captures qui le montraient ne représentaient plus l'état exécuté. Les quatorze captures des
   autres unités, réécrites par le rejeu sans que leur contenu change, ont été **restaurées**.
 
-### CRM-044 — Timeline unifiée `[@]`
+### CRM-044 — Timeline unifiée `[~]`
 `card_events` alimentée par triggers ; fil chronologique filtrable.
 **DoD** : pgTAP (aucune écriture cliente possible) ; E2E ; captures.
 
@@ -5555,10 +5555,17 @@ scénarios de `commentaires-gestes.spec.ts` écrivent puis relisent la base sans
       mesure ; `scripts/verify-harness.sh` rend **25 contrôles, aucune anomalie**.
 - [x] **Le fil réel est atteint depuis `CRM-011`.** La connexion revient à la fiche demandée, le
       fil chargé est rendu et la publication nouvellement écrite y apparaît sans substitution.
-- [@] **Tranche INC-301 — le fil nomme une étape comme le board, surcharge comprise** (issue proposée au registre,
-      même règle que la décision 690 pour la fiche) : `lireEtapesWorkflow` lit `label_override` et le libellé se
-      résout par `libelleEtape` ; unitaire rouge d'abord, preuve du fil sur l'affaire `…0000cc`.
-      *Prise en charge : CloudWorker 2026-10-25 06:13:12 UTC depuis 2026-10-25 06:40 UTC — état avant : [ ]*
+- [~] **Tranche INC-301 — le fil nomme une étape comme le board, surcharge comprise** (décision 693,
+      `docs/SPEC-cards.md` §14.10) : `lireEtapesWorkflow` lit `label_override` et le libellé se résout par
+      `libelleEtape`. **Implémentée et vérifiée en développement le 2026-10-25** : unitaires `timeline.test.ts` (+2) et
+      `PanneauTimeline.test.tsx` (+1), rouges avant la correction ; E2E sur session réelle
+      `e2e/ui/timeline-etape-surchargee.spec.ts` **1/1**, rouge sans la correction (« Signature → Réalisation »), avec une
+      affaire d'essai née puis supprimée (`…0000cc` ne peut pas revenir à *Réalisation*) ; `timeline.spec.ts` **14/14**,
+      sa réponse substituée complétée (les captures montraient « Montant NaN » et « Archivé ») ; captures
+      `docs/captures/CRM-044/` renouvelées et observées ; manuel §4.10 ; `SCENARIOS_UI=932`. `verify-timeline.sh` :
+      sections 1 à 5 vertes (52 contrôles), arrêté par la limite de temps dans la suite d'interface complète, avant ses
+      dégradations — **non rejoué jusqu'au bout**. **Reste** : la livraison de la webapp (`docs/PROD_MIGRATIONS.md`
+      §2.20, geste 5) et le constat du responsable ; `verify-timeline.sh` complet.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP (aucune écriture cliente
 possible) ; E2E ; captures ». **Les trois sont livrés** — 87 assertions pgTAP dont le refus mesuré

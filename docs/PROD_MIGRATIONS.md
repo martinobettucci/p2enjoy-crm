@@ -574,6 +574,7 @@ changement du service `mcp`.**
 | 2 | Vérifier en lecture seule | poste, lecture seule | `scripts/spark/verifier.sh` |
 | 3 | Constater : ouvrir une affaire dont l'étape exige une question ; la mention se lit « Requis à l'étape <étape> » | le responsable | l'application |
 | 4 | Constater (décision 690, même livraison) : ouvrir une affaire dont l'étape porte un nom surchargé dans son workflow ; « Étape courante » dit le même nom que la colonne du board | le responsable | l'application |
+| 5 | Constater (`CRM-044`, INC-301, décision 693, même livraison) : sur une affaire qui a franchi une étape au nom surchargé, la ligne *Étape franchie* du fil dit ce même nom | le responsable | l'application |
 
 **Retour arrière** : relivrer la révision précédente de la webapp. **Risque** : aucun connu — un texte d'interface, et
 une colonne de plus lue sur `workflow_steps` (`label_override`), déjà lue par le board.

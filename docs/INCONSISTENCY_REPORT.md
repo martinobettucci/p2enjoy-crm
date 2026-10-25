@@ -7764,6 +7764,10 @@ disent « Réalisation en cours ». Son commentaire motive l'omission par « auc
 `CRM-044`). **Comportement laissé inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : le même nom partout —
 lire `label_override` et résoudre par `libelleEtape`, avec un test unitaire rouge d'abord et une preuve du fil sur
 l'affaire `…0000cc`. **Statut : ouvert.**
+**Close le 2026-10-25** (`CRM-044`, tranche INC-301, décision 693) : issue retenue telle que proposée. Unitaires rouges
+puis verts ; la preuve du fil se fait sur une affaire d'essai née puis supprimée, `…0000cc` ne pouvant pas revenir à
+*Réalisation* (aucune arête n'y ramène) — `e2e/ui/timeline-etape-surchargee.spec.ts`, rouge sans la correction
+(« Signature → Réalisation »). Livraison de la webapp due (`docs/PROD_MIGRATIONS.md` §2.20, geste 5).
 
 ### INC-302 — `verify-workflows.sh` restaure en réappliquant sa seule migration et laisse une clé étrangère non différable, qui fait rougir `0008_copie_workflow`
 

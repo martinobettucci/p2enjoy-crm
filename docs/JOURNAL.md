@@ -34224,3 +34224,27 @@ c'est une règle de conduite du dépôt.
 
 Les 84 harnais ont donc tous été joués. Restent non examinés les 24 harnais d'autres unités qui rendent une anomalie
 dans la série jouée d'affilée.
+
+### `CRM-044`, INC-301, décision 693 — fin de session : le fil nomme l'étape franchie comme le board
+
+*2026-10-25, session planifiée ouverte à 06:13:12 UTC.* **Livré en développement** : `lireEtapesWorkflow` lit
+`label_override` et résout par `libelleEtape` ; unitaires rouges puis verts ; preuve sur session réelle
+`e2e/ui/timeline-etape-surchargee.spec.ts`, rouge sans la correction, affaire d'essai née puis supprimée ; réponse
+substituée de `timeline.spec.ts` complétée (captures sans « Montant NaN » ni « Archivé ») ; captures `CRM-044` observées ;
+manuel §4.10 ; contrat §2.20 geste 5 ; `SCENARIOS_UI=932`. INC-301 close.
+
+**Campagne de fin de session**, synchronisée avant (seul `14d8361` arrivé, harnais et documents) : typecheck, unitaires
+**4355**, build, courrier **44**, pytest **246** — verts. pgTAP **91/94**, API **1170 passés, 12 échecs**, interface
+**920 passés, 12 échecs**. Les échecs pgTAP et API comptaient tous les affaires : la base portait l'état laissé par
+`verify-timeline.sh`, arrêté par la limite de temps au milieu de sa suite d'interface ; après le seed, les 3 fichiers
+pgTAP (82 assertions) et les 36 scénarios d'API des trois specs sont verts seuls. Interface : les 12 rejoués seuls après
+seed, 10 verts ; restent `administration-workflows.spec.ts:1114` et `:1139`, INC-236, préexistante et étrangère. Aucun
+échec imputable. **Non exécuté jusqu'au bout** : `verify-timeline.sh` (sections 1 à 5 vertes, 52 contrôles, arrêté
+avant ses dégradations, base intacte) et la série des `verify-*.sh`.
+
+**Écart de conduite, rappelé** : la première commande (`git status`, `ls docs/CloudWorker.md`) a précédé la lecture du
+fichier, et la première ligne de la première réponse n'était pas l'annonce du §0 bis. Par ailleurs, l'heure de la prise
+en charge a été écrite « 06:40 » par estimation au lieu de l'heure machine (06:15 environ).
+
+**Où reprendre.** `CRM-044` reste `[~]` : livraison de la webapp et constat du responsable (§2.20), puis
+`verify-timeline.sh` complet, lancé seul avec un délai suffisant. Prise libérée.
