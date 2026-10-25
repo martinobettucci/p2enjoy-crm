@@ -295,8 +295,9 @@ elif "mcp" in s:
 # commit que la configuration les fait recréer par le up ordinaire.
 if s.get("kong", {}).get("labels", {}).get("com.p2enjoy.kong-config-revision") != "crm-092":
     e.append("Kong sans la révision de configuration crm-092")
-if s.get("caddy", {}).get("labels", {}).get("com.p2enjoy.caddy-routes-revision") != "crm-102":
-    e.append("Caddy sans la révision de routes crm-102")
+# `crm-001` depuis INC-299 (décision 696, docs/DAT.md §3.5 bis) : le délai de maintien des connexions amont de Caddy.
+if s.get("caddy", {}).get("labels", {}).get("com.p2enjoy.caddy-routes-revision") != "crm-001":
+    e.append("Caddy sans la révision de routes crm-001")
 # Moindre privilège, mesuré le 2026-09-23 (docs/SPEC-deploiement-spark.md §3, décision 567) :
 # chaque secret atteint SEULEMENT les services qui le consomment. Un env_file posé sur un service
 # le remettrait à tous ; Compose le résout dans environment, et cette comparaison le voit.

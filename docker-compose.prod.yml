@@ -65,9 +65,10 @@ services:
     # `routes.caddy`, et la livraison remplace le fichier sous le conteneur en service. Changer ce label
     # dans le même changement que les routes fait recréer Caddy par le `up` ordinaire. `crm-092` :
     # `/auth/v1/*` répond 404 (docs/JOURNAL.md décision 589). `crm-102` : l'hôte du connecteur MCP est aiguillé
-    # vers `mcp` avant toute autre route (docs/SPEC-mcp.md §2.2).
+    # vers `mcp` avant toute autre route (docs/SPEC-mcp.md §2.2). `crm-001` : Caddy ferme une connexion amont
+    # inactive après 3 s, avant Kong et `mcp` (docs/DAT.md §3.5 bis, INC-299, décision 696).
     labels:
-      com.p2enjoy.caddy-routes-revision: crm-102
+      com.p2enjoy.caddy-routes-revision: crm-001
     depends_on:
       kong:
         condition: service_healthy

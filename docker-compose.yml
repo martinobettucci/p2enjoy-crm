@@ -315,6 +315,10 @@ services:
       KONG_PLUGINS: request-transformer,cors,key-auth,acl,request-termination,post-function
       KONG_NGINX_PROXY_PROXY_BUFFER_SIZE: 160k
       KONG_NGINX_PROXY_PROXY_BUFFERS: 64 160k
+      # @spec CRM-001 (docs/BACKLOG.md), docs/DAT.md §3.5 bis, INC-299 (décision 696) — Kong ferme une connexion amont
+      # inactive avant que l'amont ne la ferme : PostgREST ferme entre 30 et 60 s, `realtime` à 5 s. Le défaut de 60 s
+      # faisait écrire une requête sur une connexion fermée au même instant, d'où un `502`.
+      KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT: 3
       KONG_PROXY_ACCESS_LOG: /dev/stdout combined
       SUPABASE_ANON_KEY: ${ANON_KEY}
       SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}

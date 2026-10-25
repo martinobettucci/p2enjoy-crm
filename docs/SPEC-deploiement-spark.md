@@ -242,8 +242,9 @@ avant l'extraction, les fichiers que `git diff --diff-filter=D` nomme entre la r
 
 **Kong et Caddy ne relisent pas leurs fichiers montés**, que l'extraction remplace sous les conteneurs
 en service. Chacun porte donc un label de révision — `com.p2enjoy.kong-config-revision` et
-`com.p2enjoy.caddy-routes-revision`, **`crm-092`** depuis le retrait de GoTrue pour Kong, et **`crm-102`** pour Caddy
-depuis l'aiguillage du connecteur MCP (`docs/SPEC-mcp.md` §2.2) — que tout changement
+`com.p2enjoy.caddy-routes-revision`, **`crm-092`** depuis le retrait de GoTrue pour Kong, et **`crm-001`** pour Caddy
+depuis le délai de maintien de ses connexions amont (`docs/DAT.md` §3.5 bis ; `crm-102` avant, pour l'aiguillage du
+connecteur MCP, `docs/SPEC-mcp.md` §2.2) — que tout changement
 de `kong.yml` ou de `caddy/routes.caddy` incrémente dans le même commit : Compose voit une définition
 différente et recrée le conteneur au `up` ordinaire. `scripts/verify-spark.sh` exige les deux labels.
 

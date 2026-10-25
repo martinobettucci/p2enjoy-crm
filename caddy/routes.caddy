@@ -4,6 +4,8 @@
 # @spec docs/PROD_MIGRATIONS.md §5.10 (route edge traversant Kong)
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 (point 7), §13 — tranche T6 : les
 #       routes de GoTrue répondent 404 (docs/JOURNAL.md décision 589)
+# @spec CRM-001 (docs/BACKLOG.md), docs/DAT.md §3.5 bis, INC-299 (décision 696) — `keepalive 3s` : Caddy ferme une
+#       connexion amont inactive avant l'amont (Kong ferme à 75 s, `mcp` à 5 s ; le défaut de Caddy est de 2 min)
 #
 # Importé par `caddy/Caddyfile` (hôte disposant de 80 et 443, TLS par ACME) et par
 # `caddy/Caddyfile.spark` (cellule dont la Forge termine TLS). Une seule copie des routes : deux
@@ -23,6 +25,9 @@ encode zstd gzip
 handle @connecteur_mcp {
 	reverse_proxy mcp:8080 {
 		flush_interval -1
+		transport http {
+			keepalive 3s
+		}
 	}
 }
 
@@ -42,6 +47,9 @@ handle @gotrue_retire {
 handle @supabase {
 	reverse_proxy kong:8000 {
 		header_up X-Forwarded-Path {uri}
+		transport http {
+			keepalive 3s
+		}
 	}
 }
 
