@@ -13,6 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-001`, INC-299 — Kong et Caddy ne rendent plus de `502` sur une connexion que l'amont ferme (décision 696)
+
+*Configuration seulement : aucune migration, aucune fonction, aucun secret. Kong et Caddy sont recréés par le `up`
+ordinaire (`docs/PROD_MIGRATIONS.md` §2.21).*
+
+- Kong gardait 60 s une connexion vers PostgREST, qui la ferme entre 30 et 60 s : une requête écrite à l'instant de la
+  fermeture rendait `502` (`upstream prematurely closed connection`), sur des écrans sans rapport. Reproduit : 11 `502`
+  sur 96 requêtes envoyées à cet instant.
+- Kong (`KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT: 3`) et Caddy (`keepalive 3s`, label `crm-001`) ferment désormais une
+  connexion amont inactive après 3 s, avant le plus court délai d'amont mesuré (5 s) — `docs/DAT.md` §3.5 bis.
+- `scripts/verify-stack.sh` section 6 : délais lus dans le dépôt et dans Kong, chaque amont sondé, connexions de Kong et
+  d'un Caddy jetable relues — 64 vérifications.
+
 ### `CRM-044`, INC-301 — le fil d'activité nomme l'étape franchie comme le board (décision 693)
 
 *Webapp seulement : aucune migration, aucune fonction, aucune variable. À livrer par reconstruction de la webapp.*
