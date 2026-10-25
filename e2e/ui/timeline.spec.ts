@@ -7,6 +7,8 @@
 //           §5.8 (états systématiques), §7 (paliers), §8 (accessibilité), §12.5 (réponses
 //           substituées)
 // @verifies CLAUDE.md §11 (aucune persistance côté client), §16 (vérification visuelle)
+// @verifies CRM-044 (docs/BACKLOG.md) — tranche INC-301 : la réponse substituée de l'affaire porte les colonnes de
+//           l'en-tête, pour que les captures représentent un état que le produit rend (docs/JOURNAL.md décision 693)
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
 //           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 //
@@ -67,6 +69,19 @@ const CARD_SERVIE = [
 		workspace_id: WORKSPACE,
 		current_step_id: ETAPE_PROSPECTION.id,
 		email_local_part: 'c-t2dtpcjd',
+		// Les colonnes que l'en-tête de la fiche demande aussi, aux valeurs que la base porte pour `…0000c6` — les mêmes
+		// que la réponse de `e2e/ui/formulaire.spec.ts` (mesurées le 2026-10-25, décision 690). Absentes, l'en-tête lisait
+		// `undefined` là où PostgREST rend `null` : les captures du fil montraient « Montant NaN », « Archivé » et
+		// « Adresse indisponible », états que le produit ne rend jamais pour cette affaire (relevé le 2026-10-25 par la
+		// tranche INC-301 ; CLAUDE.md §16 ; docs/DESIGN_SYSTEM.md §12.5).
+		amount: null,
+		currency: 'EUR',
+		next_action: null,
+		next_action_at: null,
+		archived_at: null,
+		snoozed_until: null,
+		profiles: null,
+		workspaces: { inbound_domain: 'crm.p2enjoy.test' },
 	},
 ]
 
