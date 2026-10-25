@@ -7628,7 +7628,20 @@ Kong, sur `functions:9000`, 3000 appels : un worker qui rend `204` échoue 12 fo
 naît dans le serveur de base du runtime, après que `main` a rendu sa réponse. Transmettre une copie tamponnée de la
 requête ne change rien (4 sur 3000). **Issue retenue** : aucune fonction edge ne rend plus `204` — `prolonger` sans
 session rend `200` `{ "session": "absente" }`, `fermer` `200` `{ "session": "fermee" }`, `OPTIONS` `200` ; la webapp
-accepte encore l'ancien `204` le temps de la livraison. **Statut : en correction** (`CRM-113` T3, préalable).
+accepte encore l'ancien `204` le temps de la livraison.
+
+**Vérifié le 2026-10-25, et RÉDUITE, pas close.** Correctif livré en développement (décision 686) : `session/prolonger`
+et `session/fermer` 0 échec sur 6000 appels sans Kong. Campagne d'interface complète : **921 passés, 6 échecs** (contre 49
+et 41 aux deux campagnes précédentes). **Résidu mesuré** : la fonction `session` perd encore parfois une réponse `200`
+**avec** corps — 1 sur 3000 en direct, cinq fois pendant la campagne de 46 min (`prolonger` quatre fois, `ouvrir` une
+fois, chaque fois `edge_request_completed` `200` puis `connection aborted`) ; trois des six échecs en viennent, dont une
+connexion refusée dans `objectifs.spec.ts:1181`. Le `204` en était la forme la plus fréquente (environ dix fois plus),
+pas la seule. `example` reste à 0 sur 3000. La cause tient au runtime 1.74.2 retirant un worker `oneshot` pendant le
+relais de sa réponse, que le code d'une fonction ne gouverne pas. **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) :
+une tranche de `CRM-016` éprouve une version plus récente du runtime contre la boucle de mesure de la décision 686
+(script `curl` séquentiel, 3000 appels, en direct sur `functions:9000`), sans changer la politique `oneshot` ; aucune
+temporisation, relance ni filtrage de console. Les `502` de la même campagne ont une autre cause : INC-299. **Statut :
+ouverte (réduite).**
 
 ### INC-293 — à 1152 px, le titre long d'une affaire mesure 105 px, sous le seuil de 120 px de sa preuve
 
@@ -7715,3 +7728,17 @@ silencieuse de diagnostic, pas un réglage. **Statut : ouverte.**
 motif d'un échec ; `scripts/verify-reconstruction.sh` le constate (28/28). La même session avait vu l'échec une fois,
 dans `verify-authz.sh`, sans pouvoir le reproduire. **Reste ouverte** pour sa cause : la prochaine occurrence la
 nommera.
+
+### INC-299 — PostgREST coupe parfois une connexion que Kong réutilise : `502` dans la console, sur des écrans sans rapport
+
+*Relevé le 2026-10-25 par la session planifiée d'INC-292 (décision 686), dans sa campagne d'interface de fin de session.*
+**Constat** : trois des six échecs (`corbeille.spec.ts:564`, `liste-cards.spec.ts:470`, `recherche.spec.ts:195`) portent
+`502 (Bad Gateway)` dans la console. Kong journalise alors `recv() failed (104: Connection reset by peer)` ou `upstream
+prematurely closed connection while reading response header from upstream` sur des requêtes `/rest/v1/*` (`HEAD
+/rest/v1/cards`, `GET /rest/v1/workspaces`, `POST /rest/v1/rpc/est_superadmin`…). Rejoués seuls, les trois passent.
+**Lecture non vérifiée** : une connexion maintenue par Kong vers PostgREST est fermée par PostgREST au moment où Kong la
+réutilise ; une requête non idempotente n'est pas rejouée par Kong. C'étaient les « 4 `502` de la même passerelle »
+qu'INC-292 comptait avec ses `503` : la cause est distincte (aucune fonction edge en jeu). **Comportement laissé
+inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-001` mesure le délai de maintien des connexions
+de PostgREST et celui de Kong vers cet amont (`upstream_keepalive_idle_timeout`), puis aligne le second sous le premier —
+un réglage déclaré et prouvé par une boucle de requêtes, pas une relance. **Statut : ouverte.**

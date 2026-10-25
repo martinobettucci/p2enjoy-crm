@@ -16135,7 +16135,7 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
       développement le 2026-10-24** : `consignes.test.ts` (neuf), `proposition.test.ts`, `configuration.test.ts` et
       `handler.test.ts` révisés avec motif ; le scénario `catalogue` rend exactement ses deux défauts en requête directe.
       Le contrôle facultatif contre le modèle réel n'a **pas** été mené : aucune campagne n'appelle le serveur réel.
-- [@] **T3** — écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; libellé et probabilité d'étape éditables,
+- [~] **T3** — écran : `docs/DESIGN_SYSTEM.md` §5.52 révisé avant le code ; libellé et probabilité d'étape éditables,
       bouton qui garde le nom, différentiel, traductions ; unitaires, E2E à la souris et au clavier, captures aux
       quatre paliers, `docs/manual.md`, seed, `CHANGELOG.md`. **Implémentée et vérifiée en développement le
       2026-10-24.**
@@ -16151,8 +16151,10 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
         scénario clavier instable de `mentions-composeur.spec.ts`).
       - **Reste `[~]`** : les choix de forme marqués au `docs/SPEC-ia.md` §14 attendent la relecture du responsable ;
         une campagne d'interface verte d'un bout à l'autre attend la correction d'INC-292.
-      *Prise en charge : CloudWorker 2026-10-25 00:12 UTC depuis 2026-10-25 00:17 UTC — état avant : [~] — reste pris : la
-      correction d'INC-292, préalable de la campagne verte*
+      - *INC-292 réduite le 2026-10-25* (décision 686) : aucune fonction edge ne rend plus `204` ; campagne d'interface
+        **921 passés, 6 échecs** (contre 41), aucun dans les specs de l'unité. **Reste** pour une campagne verte : le
+        résidu d'INC-292 (une réponse `200` de `session` perdue par le runtime, 1 sur 3000) et INC-299 (`502` de
+        PostgREST) — tous deux hors de l'unité, issues proposées au registre.
 - [ ] **T4** — livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp
       reconstruite ; constat. **Le responsable s'en charge** (décision 679) ; elle attend T5.
 - [x] **T5** — révision de la décision 679 (arbitrages du responsable du 2026-10-24), avant toute livraison : les clés

@@ -33913,3 +33913,31 @@ lit trois lignes d'en-tête, `CRM-043`), INC-297 (compteur figé de `verify-sess
 **Où reprendre.** `CRM-111` T1 bis reste `[~]` pour deux rejeux complets : `verify-tracks.sh --rapide` et
 `verify-droits-fins.sh --rapide`, tous deux arrêtés dans la dégradation du jeton de couleur de `verify-tracks.sh`, qui
 relance `e2e:ui` en entier (plus d'une heure). À mener seuls, en début de session. Ensuite : `CRM-111` T2, la bascule.
+
+### INC-292 (préalable de `CRM-113` T3) — fin de session : aucune fonction edge ne rend `204`, le défaut réduit dix fois
+
+*2026-10-25, session planifiée ouverte à 00:12:30 UTC.* **Livré** (décision 686) : `session/prolonger` sans session rend
+`200` `{ "session": "absente" }`, `session/fermer` `200` `{ "session": "fermee" }`, `OPTIONS` `200` (`session`, `example`) ;
+`main` journalise `edge_reponse_204` si un worker en rend encore un ; la webapp lit le nouveau corps et accepte l'ancien
+`204` ; `verifier.sh` contrôle statut et corps ; garde unitaire `main/aucun-204.test.ts` (rouge sur l'ancien code).
+**Vérifié** : en direct, 0 échec sur 6000 appels (12 sur 3000 avant) ; unitaires des fonctions 285 ; API `session.spec.ts`
+30/30 ; E2E `connexion.spec.ts` 22/22, dont un scénario neuf de quarante rechargements anonymes et une déconnexion, rouge
+sur l'ancienne fonction (mutation tuée) ; `verify-functions.sh` 14/14 (compteur révisé à 17 avec motif) ;
+`verify-session-sso.sh` 54 contrôles verts, deux anomalies du compteur figé d'INC-297, préexistante.
+
+**Campagne de fin de session**, synchronisée sur la migration 0104 de `CRM-013` (appliquée par le runner, seed rejoué) :
+typage, unitaires 4350, build, pgTAP 94 fichiers / 3974 assertions, API 1182, courrier 44, pytest 246 — verts ;
+interface **921 passés, 6 échecs** (49 et 41 aux deux campagnes précédentes). Les six, rejoués seuls, passent (17/18 puis
+14/14) : trois `503` résiduels de `session` (une réponse `200` perdue par le runtime, 1 sur 3000 en direct, cinq fois
+pendant la campagne) et trois `502` de PostgREST, cause distincte consignée en INC-299. INC-292 reste **ouverte,
+réduite** ; issue proposée : éprouver une version plus récente du runtime sous `CRM-016`. Un échec ponctuel du seed après
+reconstruction, observé dans `verify-session-sso.sh`, est consigné en INC-298 (traitée depuis par `CRM-111` T1 bis).
+Captures réécrites par les passages d'interface restaurées : le changement n'est pas visuel ; l'écran de connexion et la
+session chargée observés conformes.
+
+**Écart de conduite** : la première commande de la session (`git status`, `ls docs/CloudWorker.md`) a précédé la lecture
+de `docs/CloudWorker.md` — le même écart qu'aux décisions 678 et 683. Un `pkill -f "[c]urlimages"` placé dans le même
+appel qu'une commande contenant ce motif a tué son propre shell (piège du §2.1 *ter*) ; sans conséquence, rejoué séparé.
+
+**Où reprendre** : `CRM-113` T3 reste `[~]` (relecture du responsable, campagne verte attendue par le résidu d'INC-292 et
+INC-299). Livraison : `docs/PROD_MIGRATIONS.md` §2.19 (fonctions, redémarrage de `functions`, webapp). Prise libérée.
