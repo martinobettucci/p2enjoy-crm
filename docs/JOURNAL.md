@@ -34533,3 +34533,17 @@ rejoués seuls, comme sur une pile recomposée avec les fichiers d'avant la tran
 
 **Non rendue, en attente** : la prochaine unité du chunk 5 (`CRM-068` à `CRM-074`) avec ses deux questions MCP. Le score
 de santé de `CRM-066` (`CRM-P02`) reste lui aussi à arbitrer.
+
+### Backlog remis à l'état réel — décision 705, point 4
+
+*2026-10-25, session interactive.* **Critères tenus** : `[P]` seulement quand le seul reste écrit est la livraison ou le
+constat en production (décision 697) ; `[x]` seulement sur une preuve citée dans l'unité ; sinon `[~]`, avec en tête
+le **reste réel**, qui distingue ce qu'un agent peut faire de ce qui attend le responsable. **Fait** : treize unités
+passent `[P]` (`CRM-037`, `067`, `090`, `097` à `103`, `106` à `108`) ; neuf sont soldées `[x]` (`CRM-034`, `035`, `036`,
+`040`, `052`, `053`, `054`, `055`, et `091` par `CRM-092`) ; huit `[~]` portent leur reste réel (`CRM-057`, `058`, `077`,
+`083`, `087`, `105`, `110`, `113`). **Bilan** : 67 `[x]`, 16 `[P]`, 13 `[~]`, 8 `[ ]` (dont six unités du chunk 5 sans
+spécification). **Pour les agents** : `CRM-083` (manuel, INC-214, INC-237, INC-169), `CRM-087` (preuve sur pile
+jetable), `CRM-110` (captures), `CRM-111` (T1 ter puis T2.1), `CRM-115` (T3), et la file des INC du §4.2 point 4 une
+fois tout cela fait. **Pour le responsable** : les choix de produit de `CRM-057` et `CRM-058`, les trois arbitrages de
+`CRM-077`, la validation de `CRM-105` T1, la relecture de `CRM-113` T3, le score de `CRM-066`, la prochaine unité du
+chunk 5, et les livraisons des seize `[P]`.

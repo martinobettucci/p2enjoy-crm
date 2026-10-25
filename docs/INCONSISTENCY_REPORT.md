@@ -7892,6 +7892,9 @@ mais son attente renonce avant que `storage`, puis `rest`, ne se rétablissent (
 … is unhealthy »). Une seconde exécution, puis le seed, rendent une pile saine. **Comportement laissé inchangé.**
 **Issue proposée** : `CRM-115` T5, qui traite le recyclage (`docs/SPEC-pile-par-session.md` §8) — reconnaître la pile
 revenue à moitié par l'identifiant de démarrage, et la recomposer avant d'attendre sa santé. **Statut : ouverte.**
+**Troisième recyclage du jour, mesuré à 20:24 UTC** (VM démarrée depuis 14 minutes, démon arrêté) : deux `./runDev.sh`
+enchaînés échouent (`functions`, puis `storage`, « is unhealthy ») ; le troisième rend `0`, le seed aussi, tous les
+services sains.
 
 ### INC-309 — série complète des `verify-*.sh` du 2026-10-25 : vingt anomalies étrangères à `CRM-111` T1 bis, classées
 
