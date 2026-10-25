@@ -7691,7 +7691,7 @@ une relecture — ne reprend pas le focus ») : `document.activeElement` vaut `<
 **151 fichiers, 4343 tests verts**. **Lecture** : une attente de focus sensible au temps, sous la charge des suites que
 le harnais lance en parallèle (pgTAP, reconstructions). **Issue retenue** (`docs/CloudWorker.md` §4.1 bis) : le défaut
 est celui du test, pas du produit ; il relève de l'unité qui l'a écrit (`CRM-100`), qui remplacera l'assertion
-immédiate par l'attente du focus (`waitFor`) comme ses voisines. Comportement laissé inchangé ici.
+immédiate par l'attente du focus (`waitFor`) comme ses voisines. Comportement laissé inchangé ici. **Close le 2026-10-25 (décision 704)** : le test attend le focus par `waitFor` ; cinq passages sur cinq.
 
 ### INC-296 — `verify-commentaires.sh` cherche le `@spec CRM-043` de `PanneauTimeline.tsx` dans ses trois premières lignes, qui n'en portent plus
 

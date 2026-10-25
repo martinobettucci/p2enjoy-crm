@@ -211,7 +211,9 @@ describe('le formulaire ouvert par l’adresse, remonté par une relecture (§13
 		const workflows: unknown[] = []
 		monter(editeurAvec({ creer: '1', track: 'tr-2', retour: RETOUR }), workflows)
 		const formulaire = await screen.findByTestId('workflows-formulaire-creation')
-		expect(document.activeElement).toBe(within(formulaire).getByLabelText('Nom'))
+		// INC-295 (décision 704) : le focus est posé par un effet, après le montage ; lu aussitôt, il était encore sur
+		// `<body>` sous la charge d'un harnais (mesuré). On l'attend, comme les autres assertions de ce fichier.
+		await waitFor(() => expect(document.activeElement).toBe(within(formulaire).getByLabelText('Nom')))
 		await utilisateur.type(within(formulaire).getByLabelText('Nom'), 'Partenariats')
 
 		// Le guide a le focus quand il pose le workflow de départ : un élément hors de l'éditeur le figure.
