@@ -34662,3 +34662,28 @@ tenu par un conteneur du projet candidat **lancé depuis ce checkout** — étiq
 `com.docker.compose.project.working_dir` — compte comme libre, exactement la règle de `require_free_ports`. Un projet
 homonyme lancé d'un **autre** checkout ne bénéficie de rien : ses ports restent pris. **Conséquence** :
 `docs/SPEC-pile-par-session.md` §4.2 point 3 précisé ; `emplacement_ports_du_checkout`.
+
+
+### décision 713 — `CRM-115` T4, INCIDENT : une seconde pile lancée depuis le même checkout ; trois corrections
+
+*2026-10-25, 22:32–22:40 UTC, session interactive (prise de `CRM-115` T4), pile de développement du poste du
+responsable — jamais la production.* **Ce qui s'est passé.** Le premier `./runDev.sh` de la T4 n'a pas reconnu la pile
+déjà debout de ce checkout : il lui a attribué l'emplacement **2** et **démarré une seconde pile** (`p2enjoy-crm-2`),
+dont le PostgreSQL a monté **le même répertoire de données** — la base vit dans le dépôt (§2). Le PostgreSQL d'origine
+a vu son fichier de verrou réécrit et s'est arrêté de lui-même (22:33:49, code 0) ; la seconde pile a été arrêtée sans
+toucher aux volumes, le `.env` restauré à l'identique depuis sa copie, l'entrée du registre retirée, le seul conteneur
+`db` d'origine redémarré par `docker start`. **Vérifié** : santé `healthy`, 41 affaires, 104 migrations inscrites,
+`pg_dump` complet relu sans erreur, `pg_amcheck --heapallindexed` (superutilisateur, extension retirée après) **sans
+anomalie**. L'autre session, prévenue avant, tenait sa base `crm111_mesure` pour jetable.
+
+**Causes.** (1) **Un défaut de code** : `tr -d ':->'` lit `:->` comme une plage, les ports sortaient `8000-` et la règle
+de la décision 712 n'a jamais reconnu un seul port — aucune preuve ne passait par l'appel réel à Docker, toutes le
+simulaient. (2) **Un défaut de conception** : la base des ports était `.env.example`, alors que ce poste a changé cinq
+ports (5273, 8180, 8181, 54332, 54333) ; l'emplacement 0 ne pouvait pas reproduire l'existant. (3) **L'absence de garde**
+contre une seconde pile d'un même checkout, que la spécification interdit (§3) sans que le code ne l'empêche.
+
+**Décisions.** (1) Le relevé des ports se fait en extrayant les nombres, et une preuve passe désormais par l'analyse
+d'une vraie sortie `docker ps`. (2) **La base d'un checkout est son `.env`** moins `100 ×` son emplacement déclaré
+(§3). (3) **Une pile de ce checkout qui tourne déjà est adoptée, ou l'attribution refuse** (§4.2, point 1 bis) — elle
+remplace la règle des ports de la décision 712, qu'elle englobe. **Avant tout nouveau `./runDev.sh`** : ces trois
+corrections, leurs preuves hors pile, puis l'essai.

@@ -76,7 +76,11 @@ défaut). L'emplacement fixe :
 | ports publiés | valeurs actuelles de `.env.example` | valeur actuelle + `100 × N` |
 | répertoire de travail des harnais (`P2ENJOY_TMP`) | `/tmp/p2enjoy-crm/0` | `/tmp/p2enjoy-crm/N` |
 
-**L'emplacement 0 reproduit les ports actuels**. Les noms de conteneurs de développement, eux, changent une fois pour
+**L'emplacement 0 reproduit les ports actuels** — ceux du `.env` du checkout, et non ceux de `.env.example` : **précisé
+par la décision 713**, après l'incident qu'elle consigne. La **base** d'un checkout est la valeur de chaque port dans son
+`.env`, moins `100 ×` l'emplacement que ce `.env` déclare (`P2ENJOY_EMPLACEMENT`, 0 s'il n'en déclare aucun) ; un `.env`
+neuf, amorcé de `.env.example`, a donc pour base les valeurs de `.env.example`. Un poste qui a changé un port pour
+éviter un conflit le garde. Les noms de conteneurs de développement, eux, changent une fois pour
 toutes, dès la T2 : plus aucun n'est fixé à la main, et nul appelant n'en dépend plus (§6). Les assemblages de
 production et de la cellule Spark **gardent leurs noms** (décision 702, option A, §6 bis).
 
@@ -113,6 +117,12 @@ une pile. Le registre le **refuse** (§4.3) au lieu de le laisser faire.
 
 Sous verrou, dans cet ordre :
 1. si une entrée porte **ce checkout**, c'est l'emplacement de ce checkout : on le reprend (§4.3) ;
+1 bis. **sinon, si une pile de ce checkout tourne déjà** — des conteneurs dont l'étiquette Compose
+   `com.docker.compose.project.working_dir` est ce checkout —, **on l'adopte** : son projet désigne l'emplacement
+   (`p2enjoy-crm` → 0, `p2enjoy-crm-N` → N), sans mesurer ses propres ports. Si son projet ne désigne aucun emplacement,
+   si plusieurs projets tournent, ou si l'emplacement est déjà inscrit pour un autre checkout, **l'attribution refuse**.
+   **Jamais une seconde pile depuis un même checkout** : sa base vit dans le dépôt (§2), et deux PostgreSQL sur un même
+   répertoire de données, c'est l'incident de la décision 713 ;
 2. sinon, on prend le plus petit `N` sans entrée, ou dont l'entrée est **périmée** (§4.4), après avoir arrêté la pile
    périmée ;
 3. on vérifie que **chacun** des ports de `N` est libre sur l'interface de bouclage, par une tentative de liaison. Le
