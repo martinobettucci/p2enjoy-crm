@@ -11,6 +11,8 @@
 // sa copie des deux boîtes, et les cases posées. L'événement `mail_sent` de la timeline, lui, reste : `card_events`
 // n'accorde d'écriture à personne (`CRM-044`), comme pour `e2e/mail/envoi.spec.ts`.
 
+// @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+import { conteneur } from '../conteneur'
 import { execFileSync } from 'node:child_process'
 import type { Browser } from '@playwright/test'
 import { connecterAvecLeLabs, expect, test, type APIRequestContext } from './fixtures'
@@ -63,7 +65,7 @@ test.afterEach(async ({ request }) => {
 
 /** Vide la file par la route interne du service — le vrai chemin, jamais un appel SQL direct (`e2e/mail/envoi.spec.ts`). */
 function viderLaFile(): Record<string, number> {
-	const reseau = execFileSync('docker', ['inspect', 'p2enjoy-mail-sync', '--format', '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}'], { encoding: 'utf8' }).trim()
+	const reseau = execFileSync('docker', ['inspect', conteneur('mail-sync'), '--format', '{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}'], { encoding: 'utf8' }).trim()
 	const source = `
 import os, urllib.error, urllib.request
 requete = urllib.request.Request("http://mail-sync:8080/internal/v1/outbox/flush", data=b"", method="POST")

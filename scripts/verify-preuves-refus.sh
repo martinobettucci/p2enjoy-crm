@@ -68,7 +68,10 @@ SPEC_FILE=e2e/api/preuves-refus.spec.ts
 # contenu (le témoin positif), puis mesure le refus des pièces `infected`, `pending` et `skipped`
 # pour l'administratrice, un `viewer` et l'anonyme.
 SPEC_PREUVE_9=e2e/api/inbox.spec.ts
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 # RETOURNÉS EN PLANCHERS LE 2026-08-21 — INC-191, décision 497. Ces deux garde-fous exigeaient une
 # ÉGALITÉ : « le plan annonce exactement 55 assertions ». Toute unité ultérieure qui ENRICHIT la

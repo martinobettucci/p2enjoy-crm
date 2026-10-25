@@ -50,7 +50,10 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 RACINE=$PWD
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 CONTRE_EPREUVE=false
 while [ $# -gt 0 ]; do
@@ -369,7 +372,8 @@ titre "6. Conteneurs de la messagerie de développement"
 etat_conteneur() { docker inspect -f '{{.State.Status}}' "$1" 2>/dev/null || echo absent; }
 sante_conteneur() { docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}sans{{end}}' "$1" 2>/dev/null || echo absent; }
 
-for conteneur in p2enjoy-stalwart p2enjoy-roundcube p2enjoy-clamav; do
+for service in stalwart roundcube clamav; do
+	conteneur=$(conteneur "$service" 2>/dev/null) || conteneur="$service (aucun conteneur)"
 	if [ "$(etat_conteneur "$conteneur")" = running ]; then
 		ok "$conteneur tourne"
 	else
@@ -383,27 +387,27 @@ for conteneur in p2enjoy-stalwart p2enjoy-roundcube p2enjoy-clamav; do
 done
 
 # Le provisionnement est un service jetable : sa sortie en succès EST la preuve qu'il a abouti.
-code_init=$(docker inspect -f '{{.State.ExitCode}}' p2enjoy-stalwart-init 2>/dev/null || echo absent)
+code_init=$(docker inspect -f '{{.State.ExitCode}}' "$(conteneur stalwart-init)" 2>/dev/null || echo absent)
 if [ "$code_init" = 0 ]; then
-	ok "p2enjoy-stalwart-init s'est terminé en succès"
+	ok "stalwart-init s'est terminé en succès"
 else
-	fail "p2enjoy-stalwart-init n'a pas abouti (code de sortie : $code_init)"
+	fail "stalwart-init n'a pas abouti (code de sortie : $code_init)"
 fi
 
-if docker logs p2enjoy-stalwart-init 2>&1 | grep -q 'Quatre boîtes provisionnées et relues'; then
+if docker logs "$(conteneur stalwart-init)" 2>&1 | grep -q 'Quatre boîtes provisionnées et relues'; then
 	ok "le provisionnement a relu ce qu'il a écrit"
 else
 	fail "le provisionnement n'a pas relu ce qu'il a écrit"
 fi
 
-if docker logs p2enjoy-stalwart-init 2>&1 \
+if docker logs "$(conteneur stalwart-init)" 2>&1 \
 	| grep -q 'réglages IMAP/SMTP et ressource webadmin — relus'; then
 	ok "le provisionnement a écrit et relu les réglages et la ressource modifiables"
 else
 	fail "le provisionnement n'a pas relu les réglages IMAP/SMTP et la ressource webadmin"
 fi
 
-if docker logs p2enjoy-stalwart-init 2>&1 | grep -q 'bundle webadmin local — chargé'; then
+if docker logs "$(conteneur stalwart-init)" 2>&1 | grep -q 'bundle webadmin local — chargé'; then
 	ok "le provisionnement a rendu le bundle webadmin convergent sans supprimer les mails"
 else
 	fail "le provisionnement n'a pas chargé le bundle webadmin local"
@@ -605,7 +609,7 @@ fi
 
 # Ce contrôle vient APRÈS les gestes IMAP et SMTP : placé au démarrage, il ne voyait pas les
 # avertissements de signature que la première soumission authentifiée faisait apparaître.
-if docker logs p2enjoy-stalwart 2>&1 | grep -qE '(^|[[:space:]])(WARN|ERROR)([[:space:]]|$)'; then
+if docker logs "$(conteneur stalwart)" 2>&1 | grep -qE '(^|[[:space:]])(WARN|ERROR)([[:space:]]|$)'; then
 	fail "le journal Stalwart contient au moins un WARN ou ERROR après les protocoles"
 else
 	ok "le journal Stalwart reste sans WARN ni ERROR après les protocoles"

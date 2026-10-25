@@ -11,13 +11,15 @@
 // scénario — selon que la veille était passée ou non —, et une relève de veille partie avant la purge réinsérait encore
 // une ligne `mail_messages` après le ménage. Le reliquat dépendait de l'instant : exactement ce que l'arbitrage exclut.
 
+// @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+import { conteneur } from '../conteneur'
 import { execFileSync } from 'node:child_process'
 import { expect, type APIRequestContext } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { enTetesService } from '../api/jetons'
 import { retirerDeLaBoite, sessionImap } from './protocoles'
 
-const CONTENEUR = 'p2enjoy-mail-sync'
+const CONTENEUR = conteneur('mail-sync')
 const IMAGE = 'python:3.13.13-slim-bookworm'
 const URL_API = urlApi()
 

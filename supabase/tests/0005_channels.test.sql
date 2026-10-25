@@ -24,8 +24,9 @@
 --      `CRM-012`, et ont été retournées dans le changement qui les a rendues fausses — jamais
 --      retirées, jamais laissées survivre à leur cause.
 --
--- Exécution : `npm run test:sql`, `scripts/verify-channels.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-channels.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0005_channels.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier : ni l'extension `pgtap`, ni les

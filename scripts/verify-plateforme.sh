@@ -22,6 +22,10 @@
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
@@ -49,7 +53,7 @@ titre() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 
 MIGRATION=supabase/migrations/0089_plateforme.sql
 SUITE=supabase/tests/0084_plateforme.test.sql
-psql_base() { docker exec -i p2enjoy-db psql -U postgres -v ON_ERROR_STOP=1 -qAt "$@"; }
+psql_base() { docker exec -i "$(conteneur db)" psql -U postgres -v ON_ERROR_STOP=1 -qAt "$@"; }
 appliquer() { psql_base -q <"$1" >/dev/null 2>&1; }
 suite_verte() { scripts/run-sql-tests.sh "$SUITE" >/dev/null 2>&1; }
 empreinte() {

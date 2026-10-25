@@ -26,8 +26,9 @@
 --   6. les reprises de `CRM-018` : formulaire et exigences remappés, empreinte exacte ; ainsi que
 --      la suppression d'un workspace, écart d'INC-039 FERMÉ par INC-268 (migration `0085`, décision 619).
 --
--- Exécution : `npm run test:sql`, `scripts/verify-copie-workflow.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-copie-workflow.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0008_copie_workflow.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier : ni l'extension `pgtap`, ni les

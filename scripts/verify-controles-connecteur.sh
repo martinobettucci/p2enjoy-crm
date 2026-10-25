@@ -25,6 +25,10 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+
 case "${1:-}" in
 	--help | -h)
 		sed -n '/^# Usage :/,/^$/p' "${BASH_SOURCE[0]}" | sed 's/^#\{0,1\} \{0,1\}//'
@@ -100,8 +104,8 @@ bash -n scripts/spark/verifier.sh && bash -n scripts/lib/connecteur-mcp.sh \
 	&& pass 'syntaxe de verifier.sh et de la bibliothèque' || fail 'erreur de syntaxe'
 
 titre '2. Les contrôles publics contre le vrai service de développement'
-[ "$(docker inspect -f '{{.State.Health.Status}}' p2enjoy-mcp 2>/dev/null)" = healthy ] \
-	&& pass 'conteneur p2enjoy-mcp sain' || fail 'conteneur p2enjoy-mcp absent ou malade (./runDev.sh)'
+[ "$(docker inspect -f '{{.State.Health.Status}}' "$(conteneur mcp)" 2>/dev/null)" = healthy ] \
+	&& pass 'conteneur du service mcp sain' || fail 'conteneur du service mcp absent ou malade (./runDev.sh)'
 [ -n "$SITE" ] && pass "SITE_URL lue dans .env : $SITE" || fail 'SITE_URL absente de .env'
 controler_connecteur "$ORIGINE" "$ORIGINE" "$SITE"
 rendu_attendu "service réel, $ORIGINE" 4 0 0

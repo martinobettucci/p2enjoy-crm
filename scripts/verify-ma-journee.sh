@@ -75,7 +75,10 @@ TEST_COMPOSANT=webapp/src/app/MaJournee.test.tsx
 SPEC_API=e2e/api/ma-journee.spec.ts
 SPEC_UI=e2e/ui/ma-journee.spec.ts
 CAPTURES=docs/captures/CRM-061
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 # `docs/SPEC-seed.md` §2.3 et §13.4 — les identifiants sont stables, et c'est leur raison d'être.
 CAMILLE=5eed0000-0000-4000-8000-000000000011

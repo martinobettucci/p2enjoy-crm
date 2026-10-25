@@ -47,9 +47,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+
 RACINE=$PWD
 SERVICE=mail-sync
-CONTENEUR=p2enjoy-mail-sync
+CONTENEUR=$(conteneur mail-sync)
 IMAGE_BASE=python:3.13.13-slim-bookworm
 
 CONTRE_EPREUVE=false
@@ -318,7 +321,8 @@ done
 
 titre "6. Le checkpoint est 404 sous le profil prod"
 
-CONTENEUR_PROD=p2enjoy-mail-sync-preuve-prod
+# Conteneur jetable : son nom dérive de celui du projet, pour ne jamais heurter celui d'une autre pile (CRM-115).
+CONTENEUR_PROD="${CONTENEUR}-preuve-prod"
 docker rm -f "$CONTENEUR_PROD" >/dev/null 2>&1 || true
 # LES DEUX VARIABLES DE `CRM-052` SONT OBLIGATOIRES, et ce conteneur les reçoit. Sans elles, le
 # service refuse de démarrer — ce qui est le contrat voulu (docs/SPEC-mail-subsystem.md §13.5) —,

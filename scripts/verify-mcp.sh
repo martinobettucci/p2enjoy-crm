@@ -35,6 +35,10 @@
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
+
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
@@ -68,7 +72,7 @@ HOTE_CADDY=crm.mcp.exemple.test
 SIGNATURE_ETAT='public.mcp_etat_compte(uuid, boolean)'
 TRAVAIL=$(mktemp -d)
 chmod 700 "$TRAVAIL"
-psql_base() { docker exec -i p2enjoy-db psql -U postgres -v ON_ERROR_STOP=1 -qAt "$@"; }
+psql_base() { docker exec -i "$(conteneur db)" psql -U postgres -v ON_ERROR_STOP=1 -qAt "$@"; }
 nettoyer() {
 	psql_base -c "grant execute on function $SIGNATURE_ETAT to service_role" >/dev/null 2>&1 || true
 	docker rm -f "$CADDY" >/dev/null 2>&1 || true
@@ -148,8 +152,8 @@ titre '2. Le registre, mesuré'
 
 titre '3. Le service'
 ORIGINE="http://localhost:$(valeur MCP_DEV_PORT)"
-[ "$(docker inspect -f '{{.State.Health.Status}}' p2enjoy-mcp 2>/dev/null)" = healthy ] \
-	&& ok 'conteneur p2enjoy-mcp sain' || fail 'conteneur p2enjoy-mcp absent ou malade (./runDev.sh)'
+[ "$(docker inspect -f '{{.State.Health.Status}}' "$(conteneur mcp)" 2>/dev/null)" = healthy ] \
+	&& ok 'conteneur du service mcp sain' || fail 'conteneur du service mcp absent ou malade (./runDev.sh)'
 [ "$(curl -s -o /dev/null -w '%{http_code}' "$ORIGINE/pret")" = 200 ] \
 	&& ok '/pret : SSO et CRM joignables' || fail "/pret : $(curl -s "$ORIGINE/pret")"
 curl -s -D "$TRAVAIL/entetes" -o /dev/null -X POST -H 'content-type: application/json' -d '{}' "$ORIGINE/mcp"

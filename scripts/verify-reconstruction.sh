@@ -27,7 +27,10 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
 
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 COMPOSE=(docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml)
 TRAVAIL=$(mktemp -d)
 trap 'rm -rf "$TRAVAIL"' EXIT
@@ -98,9 +101,11 @@ wait "$porteur" 2>/dev/null || true
 echo
 echo "2. Reconstruction (§3.6, étapes 3 à 7)"
 
-CONSERVES=(p2enjoy-keycloak p2enjoy-kong p2enjoy-minio p2enjoy-webapp p2enjoy-mcp p2enjoy-functions)
+CONSERVES=()
+for s in keycloak kong minio webapp mcp functions; do CONSERVES+=("$(conteneur "$s")"); done
+RECREES=("$DB_CONTAINER" "$(conteneur stalwart)" "$(conteneur mail-sync)")
 declare -A id_avant
-for c in "${CONSERVES[@]}" "$DB_CONTAINER" p2enjoy-stalwart p2enjoy-mail-sync; do id_avant[$c]=$(id_conteneur "$c"); done
+for c in "${CONSERVES[@]}" "${RECREES[@]}"; do id_avant[$c]=$(id_conteneur "$c"); done
 declare -A vol_avant
 for v in minio-data clamav-data mcp-etat webapp-node-modules "${RECONSTRUCTION_VOLUMES[@]}"; do vol_avant[$v]=$(cree_le "$v"); done
 
@@ -118,7 +123,7 @@ else
 fi
 
 # INC-298 : la sortie de la remontée et du seed est gardée, pour qu'un échec intermittent reste diagnosticable.
-grep -q "Container p2enjoy-db" "$RECONSTRUCTION_JOURNAL" && grep -q "verify-seed.sh" "$RECONSTRUCTION_JOURNAL" \
+grep -q "Container $DB_CONTAINER" "$RECONSTRUCTION_JOURNAL" && grep -q "verify-seed.sh" "$RECONSTRUCTION_JOURNAL" \
 	&& ok "le journal $RECONSTRUCTION_JOURNAL garde la sortie de la remontée et du seed (INC-298)" \
 	|| fail "le journal de reconstruction ne garde pas la sortie de la remontée et du seed (INC-298)"
 
@@ -131,7 +136,7 @@ inscrits=$(psql_db -c "select count(*) filter (where mode = 'adoption') || ':' |
 [ "$inscrits" = "$attendus:$attendus" ] \
 	&& ok "le registre porte les $attendus fichiers du répertoire, tous en adoption : construits dans l'ordre sur une base vide" \
 	|| fail "registre « $inscrits » (adoption:total) pour $attendus fichiers"
-grep -q "registre absent ou vide — adoption" <(docker logs p2enjoy-migrations 2>&1) \
+grep -q "registre absent ou vide — adoption" <(docker logs "$(conteneur migrations-runner)" 2>&1) \
 	&& ok "le journal du runner nomme l'adoption sur base vide" \
 	|| fail "le journal du runner ne nomme pas l'adoption"
 
@@ -146,7 +151,7 @@ echo "3. Ce qui est recréé, et ce qui ne l'est pas"
 for c in "${CONSERVES[@]}"; do
 	[ "$(id_conteneur "$c")" = "${id_avant[$c]}" ] && ok "$c conservé : même conteneur" || fail "$c a été recréé"
 done
-for c in "$DB_CONTAINER" p2enjoy-stalwart p2enjoy-mail-sync; do
+for c in "${RECREES[@]}"; do
 	[ "$(id_conteneur "$c")" != "${id_avant[$c]}" ] && ok "$c recréé" || fail "$c n'a pas été recréé"
 done
 for v in minio-data clamav-data mcp-etat webapp-node-modules; do

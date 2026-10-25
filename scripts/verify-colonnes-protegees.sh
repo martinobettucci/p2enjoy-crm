@@ -93,7 +93,10 @@ MIGRATION_FINALE=supabase/migrations/0019_transition_required_fields.sql
 # — consigné INC-154, et corrigé ici parce que le défaut vit dans les fichiers mêmes de cette
 # session (même geste que la décision 447 pour INC-153).
 MIGRATION_LOT_G=supabase/migrations/0035_commentaires_lot_g.sql
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001
 WF_GLOBAL=5eed0000-0000-4000-8000-000000000051

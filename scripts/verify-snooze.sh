@@ -44,7 +44,10 @@ source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 RACINE=$PWD
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 # Les sept fichiers de CODE de l'unité (§16 bis.3, ligne 1).
 CODE=(

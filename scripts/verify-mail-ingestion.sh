@@ -45,7 +45,10 @@ SPEC_MAIL=e2e/mail/ingestion.spec.ts
 MIME=mail-sync/src/mail_sync/mime_analyse.py
 ANTIVIRUS=mail-sync/src/mail_sync/antivirus.py
 INGESTION=mail-sync/src/mail_sync/ingestion.py
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 RAPIDE=false
 while [ $# -gt 0 ]; do

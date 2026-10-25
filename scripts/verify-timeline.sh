@@ -63,7 +63,10 @@ TEST_COMPOSANT=webapp/src/app/PanneauTimeline.test.tsx
 SPEC_UI=e2e/ui/timeline.spec.ts
 CAPTURES=docs/captures/CRM-044
 SEED=supabase/seed/apply-seed.sh
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 RAPIDE=false
 while [ $# -gt 0 ]; do

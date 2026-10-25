@@ -37,7 +37,10 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 SUITE_MUTABLE=supabase/tests/0003_seed_socle.test.sql
 TEST_FAUX=webapp/src/lib/non-complaisance.tmp.test.ts
 # Suite jetable de la dégradation 9.6 : un plan tenu ligne pour ligne, mais des dernières

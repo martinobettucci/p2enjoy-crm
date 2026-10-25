@@ -13,7 +13,10 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
 
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 MIGRATION=supabase/migrations/0019_transition_required_fields.sql
 TEST=supabase/tests/0021_transition_required_fields.test.sql
 SEED=supabase/seed/apply-seed.sh

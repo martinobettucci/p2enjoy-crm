@@ -23,8 +23,9 @@
 --   7. la **conformité du seed** : source et copie portent neuf champs, quinze règles et leur
 --      exigence remappée.
 --
--- Exécution : `npm run test:sql`, `scripts/verify-champs-formulaire.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-champs-formulaire.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0010_champs_formulaire.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier. Comme les suites précédentes, aucun

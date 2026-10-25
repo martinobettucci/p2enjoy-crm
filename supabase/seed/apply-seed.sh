@@ -2520,7 +2520,8 @@ info "Signatures : une identité signe (Driss, deux lignes), l'identité de serv
 # L'ÉCRITURE PASSE PAR LA CLÉ DE SERVICE : `entered_step_at` ne figure pas parmi les colonnes que
 # `CRM-013` ouvre à `authenticated`, et c'est très bien ainsi — un client n'a pas à rajeunir une
 # ancienneté.
-psql_seed() { docker exec -i p2enjoy-db psql -U postgres -d postgres -qtA "$@"; }
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+psql_seed() { docker exec -i "$(conteneur db)" psql -U postgres -d postgres -qtA "$@"; }
 psql_seed -c "update public.cards set entered_step_at = now()
               where id::text like '5eed%' and archived_at is null and deleted_at is null;" >/dev/null
 info "Ancienneté : les cards seedées repartent à zéro dans leur étape — le pipeline reste sain"
@@ -4581,7 +4582,7 @@ done
 # module constate lui-même le registre et s'arrête en nommant la cause.
 RACINE_DEPOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 if ! sortie=$(compose_dev run --rm --no-deps -T -v "$RACINE_DEPOT/mcp/tests:/app/tests:ro" \
-	-e CRM_MCP_URL=http://p2enjoy-mcp:8080 mcp python -m tests.seed_connecteur 2>&1); then
+	-e CRM_MCP_URL=http://mcp:8080 mcp python -m tests.seed_connecteur 2>&1); then
 	die "le seed du connecteur a échoué (docs/SPEC-seed.md §22) :
         $(printf '%s' "$sortie" | tail -n 5)"
 fi

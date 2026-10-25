@@ -12,6 +12,11 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+FONCTIONS=$(conteneur functions)
+
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 
@@ -33,23 +38,23 @@ else
 	exit 1
 fi
 
-status=$(docker inspect -f '{{.State.Status}}' p2enjoy-functions 2>/dev/null || echo absent)
+status=$(docker inspect -f '{{.State.Status}}' "$FONCTIONS" 2>/dev/null || echo absent)
 health=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}sans-sonde{{end}}' \
-	p2enjoy-functions 2>/dev/null || echo absent)
+	"$FONCTIONS" 2>/dev/null || echo absent)
 if [ "$status" = running ] && [ "$health" = healthy ]; then
-	ok "p2enjoy-functions : running / healthy"
+	ok "$FONCTIONS : running / healthy"
 else
-	fail "p2enjoy-functions : status=$status health=$health (attendu running/healthy)"
+	fail "$FONCTIONS : status=$status health=$health (attendu running/healthy)"
 fi
 
-image=$(docker inspect -f '{{.Config.Image}}' p2enjoy-functions 2>/dev/null || true)
+image=$(docker inspect -f '{{.Config.Image}}' "$FONCTIONS" 2>/dev/null || true)
 if [ "$image" = 'public.ecr.aws/supabase/edge-runtime:v1.74.2' ]; then
 	ok "image edge-runtime épinglée : v1.74.2"
 else
 	fail "image du runtime : '$image' (attendu public.ecr.aws/supabase/edge-runtime:v1.74.2)"
 fi
 
-command=$(docker inspect -f '{{json .Config.Cmd}}' p2enjoy-functions 2>/dev/null || true)
+command=$(docker inspect -f '{{json .Config.Cmd}}' "$FONCTIONS" 2>/dev/null || true)
 if [ "$command" = '["start","--policy","oneshot","--main-service","/home/deno/functions/main"]' ]; then
 	ok "politique oneshot et service principal explicites"
 else
@@ -57,21 +62,21 @@ else
 fi
 
 mount=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/home/deno/functions"}}{{.RW}}|{{.Source}}{{end}}{{end}}' \
-	p2enjoy-functions 2>/dev/null || true)
+	"$FONCTIONS" 2>/dev/null || true)
 if [[ "$mount" == false\|*/supabase/functions ]]; then
 	ok "sources montées en lecture seule"
 else
 	fail "montage /home/deno/functions inattendu : '$mount'"
 fi
 
-ports=$(docker inspect -f '{{json .HostConfig.PortBindings}}' p2enjoy-functions 2>/dev/null || true)
+ports=$(docker inspect -f '{{json .HostConfig.PortBindings}}' "$FONCTIONS" 2>/dev/null || true)
 if [ "$ports" = 'null' ] || [ "$ports" = '{}' ]; then
 	ok "aucun port du runtime publié sur l'hôte"
 else
 	fail "ports hôte inattendus pour functions : $ports"
 fi
 
-environment=$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' p2enjoy-functions 2>/dev/null || true)
+environment=$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$FONCTIONS" 2>/dev/null || true)
 environment_ok=true
 for name in SUPABASE_URL SUPABASE_ANON_KEY SUPABASE_SERVICE_ROLE_KEY; do
 	if ! printf '%s\n' "$environment" | grep -q "^${name}="; then
@@ -105,7 +110,7 @@ else
 fi
 
 revision=$(docker inspect -f '{{index .Config.Labels "com.p2enjoy.kong-config-revision"}}' \
-	p2enjoy-kong 2>/dev/null || true)
+	"$(conteneur kong)" 2>/dev/null || true)
 if [ "$revision" = crm-092 ]; then
 	ok "Kong exécute la révision déclarative crm-092"
 else
@@ -146,7 +151,7 @@ fi
 # La terminaison murale fautive est différée jusqu'à la borne de 10 secondes. Lire les journaux
 # immédiatement reproduirait le faux vert qui a précédé la décision 286.
 sleep 11
-docker logs p2enjoy-functions >"$WORK/functions.log" 2>&1 || true
+docker logs "$FONCTIONS" >"$WORK/functions.log" 2>&1 || true
 if grep -Eqi 'warning|error|panic|early termination|wall clock' "$WORK/functions.log"; then
 	fail "les journaux du runtime portent un warning ou une erreur"
 	sed 's/^/        /' "$WORK/functions.log" | tail -n 20

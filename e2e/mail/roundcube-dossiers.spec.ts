@@ -12,6 +12,8 @@
 // Le scénario crée son propre message, l'observe, puis retire dossiers et message : la boîte est
 // rendue telle qu'elle a été reçue.
 
+// @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+import { conteneur } from '../conteneur'
 import { execFileSync } from 'node:child_process'
 import { expect, test, type Page } from '@playwright/test'
 import { capturer } from '../ui/captures'
@@ -36,7 +38,7 @@ let reseauMemo: string | undefined
 function reseau(): string {
 	reseauMemo ??= docker(
 		'inspect',
-		'p2enjoy-mail-sync',
+		conteneur('mail-sync'),
 		'--format',
 		'{{range $k,$v := .NetworkSettings.Networks}}{{$k}}{{end}}',
 	)

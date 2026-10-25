@@ -37,8 +37,9 @@
 --      des assertions d'absence qui deviendront rouges à la naissance de la table ou de la fonction
 --      (mécanisme de la décision 51, convention de `CRM-006` puis `CRM-013`).
 --
--- Exécution : `npm run test:sql`, `scripts/verify-preuves-refus.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-preuves-refus.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0016_preuves_refus.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier. Aucun bloc n'emploie

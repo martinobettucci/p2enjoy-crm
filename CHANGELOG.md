@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-115` T2 — plus aucun nom de conteneur en développement (décision 702)
+
+*Outillage de développement : rien ne part en production.*
+
+- Les harnais, les preuves Playwright, le seed et les modes d'emploi des suites pgTAP désignent un conteneur par son
+  service Compose : `conteneur <service>` (`scripts/lib/conteneur.sh`, chargée aussi par `scripts/lib/env.sh`) et
+  `conteneur()` (`e2e/conteneur.ts`). Le seed joint le connecteur par `http://mcp:8080`.
+
 ### `CRM-001`, INC-299 — Kong et Caddy ne rendent plus de `502` sur une connexion que l'amont ferme (décision 696)
 
 *Aucune migration, aucune fonction, aucun secret. Kong et Caddy sont recréés par le `up` ordinaire, la webapp est

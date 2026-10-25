@@ -30,8 +30,9 @@
 --      la vérification n° 6 (`CRM-036`), le commentaire non conservé (`CRM-043`), l'absence de
 --      `card_events` (`CRM-044`), et `email_local_part` restée ouverte (`CRM-013`, INC-050).
 --
--- Exécution : `npm run test:sql`, `scripts/verify-move-card.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-move-card.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0013_move_card.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier.

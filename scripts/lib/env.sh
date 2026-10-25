@@ -632,6 +632,10 @@ require_docker() {
 }
 
 compose_dev()  { docker compose --env-file "$ENV_FILE" "${DEV_COMPOSE[@]}" "$@"; }
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : `conteneur <service>` désigne un conteneur de
+# la pile de développement par son service Compose, jamais par un nom écrit à la main.
+# shellcheck source=scripts/lib/conteneur.sh
+source "$REPO_ROOT/scripts/lib/conteneur.sh"
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T3 : le connecteur MCP n'existe en production que configuré
 # @spec docs/SPEC-mcp.md §2.1 (profil `mcp`), §10 (`CRM_MCP_HOTE`) ; docs/JOURNAL.md décision 627 (précision T3)
 # Le profil `mcp` n'est actif que si `CRM_MCP_HOTE` est posée : éteint, le service n'est ni construit, ni démarré,

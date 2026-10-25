@@ -13,6 +13,8 @@
 // développement et du seed ; le registre du connecteur est lu par la clé de service, jamais écrit par la preuve, sauf
 // l'état d'erreur, provoqué par un retrait de privilège rétabli dans le même scénario.
 
+// @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+import { conteneur } from '../conteneur'
 import { execFileSync } from 'node:child_process'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -149,7 +151,7 @@ test.describe('Le connecteur MCP, par un vrai client (docs/SPEC-mcp.md §3, §4)
 
 	test('un registre injoignable refuse l’entrée, il ne l’accorde jamais', async ({ page }) => {
 		// L'état d'erreur, provoqué de façon déterministe (CLAUDE.md §15) : le service perd le droit d'inscrire.
-		const psql = (sql: string) => execFileSync('docker', ['exec', 'p2enjoy-db', 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1', '-qc', sql])
+		const psql = (sql: string) => execFileSync('docker', ['exec', conteneur('db'), 'psql', '-U', 'postgres', '-v', 'ON_ERROR_STOP=1', '-qc', sql])
 		const signature = 'public.mcp_inscrire_compte(uuid, text, text, text[], boolean)'
 		psql(`revoke execute on function ${signature} from service_role`)
 		try {

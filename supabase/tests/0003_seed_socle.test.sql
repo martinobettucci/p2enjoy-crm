@@ -21,8 +21,9 @@
 -- l'applique pas — elle passe par la base, or le seed doit passer par les API réelles
 -- (`docs/JOURNAL.md`, décision 32). C'est `scripts/verify-seed.sh` qui enchaîne les deux.
 --
--- Exécution : `scripts/verify-seed.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `scripts/verify-seed.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0003_seed_socle.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier : l'extension `pgtap` ne subsiste

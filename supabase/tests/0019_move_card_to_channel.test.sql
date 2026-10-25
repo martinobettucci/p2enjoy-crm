@@ -28,8 +28,9 @@
 --   8. ce que la migration NE pose PAS : `channel_id` et `workflow_id` fermés depuis `CRM-013`,
 --      figés ici pour qu'un relâchement futur soit dénoncé (décision 214).
 --
--- Exécution : `npm run test:sql`, `scripts/verify-move-card-to-channel.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-move-card-to-channel.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0019_move_card_to_channel.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier.

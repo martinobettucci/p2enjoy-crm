@@ -25,8 +25,9 @@
 --      l'intéressé, écriture et suppression par l'administration seule ;
 --   6. ce qui **reste dû** : `app.can_read_card`, figée par une assertion d'absence.
 --
--- Exécution : `npm run test:sql`, `scripts/verify-droits-fins.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-droits-fins.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0011_droits_fins.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier.

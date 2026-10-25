@@ -37,12 +37,16 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+
 # shellcheck source=scripts/lib/sso.sh
 source scripts/lib/sso.sh
 sso_env_charger .env
 
-FUNCTIONS_CONTAINER=p2enjoy-functions
-DB_CONTAINER=p2enjoy-db
+FUNCTIONS_CONTAINER=$(conteneur functions)
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 if [ ! -f .env ]; then
 	echo "ERREUR : fichier .env absent. Lancez ./runDev.sh, qui l'amorce depuis .env.example." >&2

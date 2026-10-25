@@ -34,8 +34,9 @@
 --      ne laisse son `search_path` au hasard — une preuve qui tombera d'elle-même le jour où une
 --      unité en ajoutera une sans le sien (§3.8 c).
 --
--- Exécution : `scripts/verify-authz.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `scripts/verify-authz.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0002_fonctions_autorisation.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier : ni l'extension `pgtap`, ni les

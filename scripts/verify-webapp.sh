@@ -41,7 +41,10 @@ source scripts/lib/sso.sh
 sso_env_charger .env
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 FICHIER_JETONS=webapp/src/styles/tokens.css
 COMPTE_SEED=admin@p2enjoy.test
 MOT_DE_PASSE_SEED=SeedDev2026Local

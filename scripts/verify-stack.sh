@@ -28,6 +28,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+
 if [ ! -f .env ]; then
 	echo "ERREUR : fichier .env absent. Lancez ./runDev.sh, qui l'amorce depuis .env.example," >&2
 	echo "        où chaque variable est documentée." >&2
@@ -69,15 +72,15 @@ fail() { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mE
 # --- 1. Santé des services de l'assemblage de développement ------------------------------------
 # Services de longue durée porteurs d'un healthcheck : doivent être `running` ET `healthy`.
 # `CRM-092` T6 : `p2enjoy-auth`, `p2enjoy-auth-templates` et `p2enjoy-inbucket` ne sont plus de la pile.
-LONG_RUNNING_HEALTHY="p2enjoy-db p2enjoy-rest realtime-dev.p2enjoy-realtime \
-p2enjoy-storage p2enjoy-functions p2enjoy-kong p2enjoy-studio p2enjoy-meta p2enjoy-minio \
-p2enjoy-webapp p2enjoy-stalwart p2enjoy-roundcube p2enjoy-clamav"
+# `CRM-115` T2 : des SERVICES Compose, et non des noms de conteneurs (docs/SPEC-pile-par-session.md §6).
+LONG_RUNNING_HEALTHY="db rest realtime storage functions kong studio meta minio webapp stalwart roundcube clamav"
 # Conteneurs éphémères : doivent s'être terminés avec le code 0.
-ONE_SHOT="p2enjoy-migrations p2enjoy-minio-createbucket p2enjoy-stalwart-init"
+ONE_SHOT="migrations-runner minio-createbucket stalwart-init"
 
 echo "1. Santé des services (assemblage de développement)"
 
-for container in $LONG_RUNNING_HEALTHY; do
+for service in $LONG_RUNNING_HEALTHY; do
+	container=$(conteneur "$service" 2>/dev/null) || container="$service (aucun conteneur)"
 	status=$(docker inspect -f '{{.State.Status}}' "$container" 2>/dev/null || echo absent)
 	health=$(docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}sans-sonde{{end}}' \
 		"$container" 2>/dev/null || echo absent)
@@ -88,7 +91,8 @@ for container in $LONG_RUNNING_HEALTHY; do
 	fi
 done
 
-for container in $ONE_SHOT; do
+for service in $ONE_SHOT; do
+	container=$(conteneur "$service" 2>/dev/null) || container="$service (aucun conteneur)"
 	status=$(docker inspect -f '{{.State.Status}}' "$container" 2>/dev/null || echo absent)
 	code=$(docker inspect -f '{{.State.ExitCode}}' "$container" 2>/dev/null || echo -1)
 	if [ "$status" = exited ] && [ "$code" = 0 ]; then
@@ -171,7 +175,7 @@ else
 fi
 
 revision=$(docker inspect -f '{{index .Config.Labels "com.p2enjoy.kong-config-revision"}}' \
-	p2enjoy-kong 2>/dev/null || true)
+	"$(conteneur kong)" 2>/dev/null || true)
 if [ "$revision" = crm-092 ]; then
 	ok "Kong exécute la révision déclarative crm-092"
 else
@@ -309,7 +313,7 @@ image_sonde=$(awk '/^FROM /{print $2; exit}' mail-sync/Dockerfile)
 image_caddy=$(awk '/^  caddy:/{d=1} d && /^    image:/{print $2; exit}' docker-compose.prod.yml)
 delai_declare=$(sed -n 's/^[[:space:]]*KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT:[[:space:]]*"\{0,1\}\([0-9]*\)"\{0,1\}[[:space:]]*$/\1/p' \
 	docker-compose.yml)
-delai_kong=$(docker exec p2enjoy-kong sed -n 's/^upstream_keepalive_idle_timeout = //p' /usr/local/kong/.kong_env \
+delai_kong=$(docker exec "$(conteneur kong)" sed -n 's/^upstream_keepalive_idle_timeout = //p' /usr/local/kong/.kong_env \
 	2>/dev/null || true)
 delais_caddy=$(sed -n 's/^[[:space:]]*keepalive[[:space:]]*\([0-9]*\)s[[:space:]]*$/\1/p' caddy/routes.caddy | sort -u)
 nb_proxies_caddy=$(grep -c 'reverse_proxy ' caddy/routes.caddy)
@@ -374,14 +378,14 @@ connexions_vers() {
 
 # Kong : des requêtes passées par la passerelle laissent des connexions vers `rest` ; délai + 1 s plus tard, aucune
 # n'existe encore. Avec le défaut de 60 s, les six de la mesure du 2026-10-25 étaient toutes là.
-ip_rest=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' p2enjoy-rest)
+ip_rest=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(conteneur rest)")
 for _ in 1 2 3 4 5 6; do
 	curl -s -o /dev/null "${auth[@]}" "$KONG_URL/rest/v1/workspaces?select=id&limit=1" &
 done
 wait
-avant=$(connexions_vers p2enjoy-kong "$ip_rest" 3000)
+avant=$(connexions_vers "$(conteneur kong)" "$ip_rest" 3000)
 sleep "$attente"
-apres=$(connexions_vers p2enjoy-kong "$ip_rest" 3000)
+apres=$(connexions_vers "$(conteneur kong)" "$ip_rest" 3000)
 restees=$(comm -12 <(printf '%s\n' "$avant") <(printf '%s\n' "$apres") | grep -c . || true)
 if [ -n "$avant" ] && [ "$restees" -eq 0 ]; then
 	ok "Kong → rest : $(printf '%s\n' "$avant" | grep -c .) connexion(s) ouverte(s), aucune encore là ${attente} s plus tard"
@@ -412,7 +416,7 @@ if docker run -d --name "$sonde_caddy" --network "$reseau" -v "$PWD/caddy:/etc/c
 		[ "${code:-000}" = 200 ] && break
 		sleep 0.5
 	done
-	ip_kong=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' p2enjoy-kong)
+	ip_kong=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' "$(conteneur kong)")
 	avant=$(connexions_vers "$sonde_caddy" "$ip_kong" 8000)
 	sleep "$attente"
 	apres=$(connexions_vers "$sonde_caddy" "$ip_kong" 8000)

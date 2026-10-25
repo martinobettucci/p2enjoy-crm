@@ -8,12 +8,14 @@
 // Rien n'est substitué : le service ouvre de vraies sessions SMTP vers le Stalwart de `CRM-050`,
 // et chaque assertion RELIT la base. Le seed est rendu intact par les `finally`.
 
+// @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+import { conteneur } from '../conteneur'
 import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { CLE_ANONYME, MOT_DE_PASSE_SEED, enTetesService, jetonDe } from '../api/jetons'
 
-const CONTENEUR = 'p2enjoy-mail-sync'
+const CONTENEUR = conteneur('mail-sync')
 const IMAGE_APPELANTE = 'python:3.13.13-slim-bookworm'
 const JETON = lireEnv('MAIL_SYNC_INTERNAL_TOKEN')
 const URL_API = urlApi()

@@ -21,8 +21,9 @@
 --   6. la contrainte `NOT NULL`, et le **silence** du trigger lorsque la clé étrangère parle mieux
 --      que lui.
 --
--- Exécution : `npm run test:sql`, `scripts/verify-coherence-workflow.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-coherence-workflow.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0009_coherence_workflow_channel.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier. Comme les suites précédentes, aucun

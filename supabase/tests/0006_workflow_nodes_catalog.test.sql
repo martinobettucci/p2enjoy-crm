@@ -25,8 +25,9 @@
 --      deviendront rouges à `CRM-031` et à `CRM-040`, et forceront l'écriture de la garde plutôt
 --      que de laisser l'omission dériver en silence (docs/JOURNAL.md, décisions 51 et 66).
 --
--- Exécution : `npm run test:sql`, `scripts/verify-catalogue.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-catalogue.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0006_workflow_nodes_catalog.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier : ni l'extension `pgtap`, ni les

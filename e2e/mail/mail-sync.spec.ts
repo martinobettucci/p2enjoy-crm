@@ -16,13 +16,15 @@
 // d'accès existant, et c'est précisément ce que la preuve doit établir : un appel depuis l'hôte
 // n'aurait aucune chance d'aboutir, puisque aucun port n'est publié.
 
+// @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+import { conteneur } from '../conteneur'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { randomUUID } from 'node:crypto'
 import { join } from 'node:path'
 import { expect, test } from '@playwright/test'
 import { RACINE, lireEnv } from '../env'
 
-const CONTENEUR = 'p2enjoy-mail-sync'
+const CONTENEUR = conteneur('mail-sync')
 const IMAGE_APPELANTE = 'python:3.13.13-slim-bookworm'
 const JETON = lireEnv('MAIL_SYNC_INTERNAL_TOKEN')
 

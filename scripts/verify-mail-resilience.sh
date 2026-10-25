@@ -60,7 +60,10 @@ LIB_ETAT=webapp/src/lib/mail-etat.ts
 TEST_LIB_ETAT=webapp/src/lib/mail-etat.test.ts
 ECRAN_ETAT=webapp/src/app/EtatMessagerie.tsx
 CAPTURES=docs/captures/CRM-059
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 RAPIDE=false
 while [ $# -gt 0 ]; do

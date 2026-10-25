@@ -24,8 +24,9 @@
 --      assertion d'absence deviendra rouge le jour où sa table naîtra sans protection
 --      (mécanisme de la décision 51).
 --
--- Exécution : `npm run test:sql`, `scripts/verify-colonnes-protegees.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-colonnes-protegees.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0015_colonnes_protegees.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier. Aucun bloc n'emploie

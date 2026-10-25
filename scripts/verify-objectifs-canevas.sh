@@ -73,7 +73,10 @@ SPEC_UI=e2e/ui/objectifs.spec.ts
 MIGRATION_CAPACITE=supabase/migrations/0071_objectifs_ecriture_permise.sql
 TEST_CAPACITE=supabase/tests/0067_objectifs_ecriture_permise.test.sql
 CAPTURES=docs/captures/CRM-083
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 # Identifiants du seed, stables par contrat (`docs/SPEC-seed.md`).
 TABLEAU_SEED='5eed0000-0000-4000-8000-0000000000e1'

@@ -92,7 +92,10 @@ rejouer_migration() {
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
 	restaurer_etat_courant
 }
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 WF_GLOBAL=5eed0000-0000-4000-8000-000000000051
 ETAPE_PROSPECT=5eed0000-0000-4000-8000-000000000061

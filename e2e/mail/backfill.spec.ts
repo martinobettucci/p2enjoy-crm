@@ -32,12 +32,14 @@
 //           environnement et la veille désactivée (`MAIL_SYNC_POLL_INTERVAL=0`, §20.10.5), sert les relèves sous
 //           l'alias réseau `mail-sync` ; le `finally` le retire et redémarre le service, attendu sain.
 
+// @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+import { conteneur } from '../conteneur'
 import { execFileSync, spawnSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { CLE_ANONYME, enTetesService, jetonDe } from '../api/jetons'
 
-const CONTENEUR = 'p2enjoy-mail-sync'
+const CONTENEUR = conteneur('mail-sync')
 const IMAGE = 'python:3.13.13-slim-bookworm'
 const JETON = lireEnv('MAIL_SYNC_INTERNAL_TOKEN')
 const URL_API = urlApi()
@@ -74,7 +76,8 @@ function python(source: string, variables: Record<string, string> = {}): string 
 	return docker(...arguments_)
 }
 
-const EXEMPLAIRE = 'p2enjoy-mail-sync-jetable'
+// Conteneur jetable : son nom dérive de celui du projet, pour ne jamais heurter celui d'une autre pile.
+const EXEMPLAIRE = `${conteneur('mail-sync')}-jetable`
 
 type Configuration = { Image: string; Env: string[] }
 

@@ -57,7 +57,10 @@ MIGRATION_ACTUELLE=supabase/migrations/0020_change_channel_workflow.sql
 TEST_SQL=supabase/tests/0019_move_card_to_channel.test.sql
 SPEC_API=e2e/api/move-card-to-channel.spec.ts
 SEED=supabase/seed/apply-seed.sh
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 SIGNATURE='public.move_card_to_channel(uuid, uuid, uuid, boolean)'
 CHANNEL_PROSPECTION=5eed0000-0000-4000-8000-000000000031

@@ -1192,7 +1192,7 @@ port_verdict() {
 		compose_fixture() {
 			case "$1" in
 				config) printf '        published: "%s"\n' 54322 5173 ;;
-				ps)     printf 'p2enjoy-db\n' ;;
+				ps)     printf 'pile-essai-db-1\n' ;;  # nom simulé neutre (CRM-115 T2, docs/SPEC-pile-par-session.md §6)
 			esac
 		}
 		require_free_ports compose_fixture "$@" 2>&1
@@ -1218,7 +1218,7 @@ else
 		|| fail "port pris hors Docker : refus, mais sans nommer la variable"
 fi
 
-if port_verdict '54322' '54322 p2enjoy-db' >/dev/null; then
+if port_verdict '54322' '54322 pile-essai-db-1' >/dev/null; then
 	ok "port tenu par la pile elle-même : relancer reste permis"
 else
 	fail "un port tenu par la pile elle-même bloque son propre redémarrage"

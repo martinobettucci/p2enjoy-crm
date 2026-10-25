@@ -59,7 +59,10 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0006_workflow_nodes_catalog.test.sql
 MIGRATION_FILE=supabase/migrations/0005_workflow_nodes_catalog.sql
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 TABLE=public.workflow_nodes_catalog
 
 WS_SEED=5eed0000-0000-4000-8000-000000000001

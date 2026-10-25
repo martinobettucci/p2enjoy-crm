@@ -34,7 +34,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 MIGRATION=supabase/migrations/0064_notifications.sql
 # LA PUBLICATION VIT DANS SA PROPRE MIGRATION depuis la sous-tranche 3a : `0064` crée la table,
 # `0065` la publie. Restaurer exige donc de rejouer LES DEUX — rejouer `0064` seule laisserait la

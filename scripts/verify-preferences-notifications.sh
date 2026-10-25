@@ -37,7 +37,10 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 MIGRATION=supabase/migrations/0067_preferences_notifications.sql
 MODULE=webapp/src/lib/preferences-notifications.ts
 SURFACE=webapp/src/app/ReglagesNotifications.tsx

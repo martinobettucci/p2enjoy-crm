@@ -25,7 +25,10 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
 
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 MIGRATION=supabase/migrations/0053_cards_figees.sql
 SUITE_SQL=supabase/tests/0051_cards_figees.test.sql
 MIGRATION_2=supabase/migrations/0054_relances_automatiques.sql
@@ -624,7 +627,7 @@ rejouer_repertoire() {
 	# restaure plus — c'est rouge depuis `0099`. La base de développement et ses dérivés sont RECONSTRUITS
 	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés.
 	reconstruire_base_dev
-	[ "$(docker inspect p2enjoy-migrations --format '{{.State.ExitCode}}')" = '0' ]
+	[ "$(docker inspect "$(conteneur migrations-runner)" --format '{{.State.ExitCode}}')" = '0' ]
 }
 
 # LA RÉFÉRENCE N'EST PLUS CODÉE EN DUR, ET C'EST UNE RÉVISION DU 2026-08-29 — INC-239, décision 558.
@@ -683,7 +686,7 @@ if rejouer_repertoire; then
 	ok "la reconstruction efface le vocabulaire réduit : base neuve, runner en 0"
 else
 	fail "la reconstruction ÉCHOUE après réduction du vocabulaire"
-	docker logs p2enjoy-migrations 2>&1 | tail -n 12 | sed 's/^/        /'
+	docker logs "$(conteneur migrations-runner)" 2>&1 | tail -n 12 | sed 's/^/        /'
 fi
 
 vocabulaire=$(vocabulaire_courant)

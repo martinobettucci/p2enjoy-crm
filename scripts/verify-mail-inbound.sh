@@ -64,7 +64,10 @@ SONDE=mail-sync/src/mail_sync/imap_probe.py
 CLIENT=mail-sync/src/mail_sync/postgrest.py
 TEST_SONDE=mail-sync/tests/test_imap_probe.py
 SEED=supabase/seed/apply-seed.sh
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 RAPIDE=false
 while [ $# -gt 0 ]; do
@@ -368,7 +371,7 @@ if [ "$RAPIDE" = false ]; then
 
 	# La bibliothèque du §10 arbitrage n° 1 est réellement dans l'image, et c'est elle que le
 	# service emploie — pas `imaplib`, qui prouverait un chemin que le produit n'emprunte pas.
-	if docker exec p2enjoy-mail-sync python -c 'import imapclient; print(imapclient.__version__)' \
+	if docker exec "$(conteneur mail-sync)" python -c 'import imapclient; print(imapclient.__version__)' \
 		>"$TRAVAIL/imapclient.log" 2>&1 && grep -q '^3\.1\.0$' "$TRAVAIL/imapclient.log"; then
 		ok "le conteneur embarque IMAPClient 3.1.0, la bibliothèque de l'arbitrage n° 1"
 	else

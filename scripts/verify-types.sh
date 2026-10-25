@@ -27,12 +27,16 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
-META_CONTAINER=p2enjoy-meta
-DB_CONTAINER=p2enjoy-db
+META_CONTAINER=$(conteneur meta)
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 TYPES_FILE=webapp/src/lib/database.types.ts
 ASSERTIONS_FILE=webapp/src/lib/database.types.test-d.ts
 TABLE_PREUVE=tst_crm006_table_de_preuve

@@ -52,7 +52,10 @@ source scripts/lib/sso.sh
 sso_env_charger .env
 
 TEST_FILE=supabase/tests/0001_identite_et_cloisonnement.test.sql
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 PREUVE_EMAIL="crm-003-preuve@exemple.test"
 
 if [ ! -f .env ]; then
@@ -235,7 +238,7 @@ rm -rf "$DOUBLE"
 
 # 2.3 Une base neuve, construite par le passage ordinaire du runner, puis seedée.
 if reconstruire_base_dev >/tmp/p2enjoy-reconstruction.log 2>&1 \
-	&& grep -q "adoption : rejeu complet de $nombre_migrations fichier(s)" <(docker logs p2enjoy-migrations 2>&1) \
+	&& grep -q "adoption : rejeu complet de $nombre_migrations fichier(s)" <(docker logs "$(conteneur migrations-runner)" 2>&1) \
 	&& [ "$(psql_db -c "select count(*) from app.migrations_appliquees where mode = 'adoption'")" = "$nombre_migrations" ]
 then
 	ok "base neuve : le runner construit les $nombre_migrations fichiers dans l'ordre, se termine en 0 et les inscrit"

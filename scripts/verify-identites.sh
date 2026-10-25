@@ -21,7 +21,10 @@ source scripts/lib/reconstruction.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 MIGRATION=supabase/migrations/0021_identites_et_memberships_surs.sql
 MIGRATION_COMMENTAIRES=supabase/migrations/0015_commentaires.sql
 TEST_SQL=supabase/tests/0023_identites_et_memberships_surs.test.sql

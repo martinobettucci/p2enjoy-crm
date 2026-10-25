@@ -68,7 +68,10 @@ SONDE=mail-sync/src/mail_sync/smtp_probe.py
 CLIENT=mail-sync/src/mail_sync/postgrest.py
 TEST_SONDE=mail-sync/tests/test_smtp_probe.py
 SEED=supabase/seed/apply-seed.sh
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 RAPIDE=false
 while [ $# -gt 0 ]; do
@@ -380,7 +383,7 @@ if [ "$RAPIDE" = false ]; then
 	# refuser une authentification : un test réglé plus court rapporterait un mot de passe faux
 	# comme un `timeout`, et le diagnostic mentirait. Le contrôle lit la valeur réellement
 	# employée par le conteneur, pas celle du gabarit.
-	if docker exec p2enjoy-mail-sync python -c \
+	if docker exec "$(conteneur mail-sync)" python -c \
 		'from mail_sync.smtp_probe import DEFAULT_TIMEOUT_SECONDS as d; print(int(d))' \
 		>"$TRAVAIL/delai.log" 2>&1 && [ "$(cat "$TRAVAIL/delai.log")" -gt 10 ]; then
 		ok "le délai du test SMTP dépasse le délai de pénalité mesuré du serveur (10 s)"

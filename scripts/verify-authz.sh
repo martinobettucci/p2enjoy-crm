@@ -58,7 +58,10 @@ sso_env_charger .env
 
 TEST_FILE=supabase/tests/0002_fonctions_autorisation.test.sql
 MIGRATION_FILE=supabase/migrations/0002_fonctions_autorisation.sql
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 
 WS_UN=00000000-0000-4000-9000-000000000a01
 WS_DEUX=00000000-0000-4000-9000-000000000a02

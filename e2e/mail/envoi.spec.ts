@@ -13,13 +13,15 @@
 // Rien n'est simulé. Si le `Reply-To` était faux, la réponse n'arriverait nulle part et ce
 // scénario deviendrait rouge — c'est exactement ce qu'on lui demande de garantir.
 
+// @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+import { conteneur } from '../conteneur'
 import { execFileSync } from 'node:child_process'
 import { expect, test } from '@playwright/test'
 import { lireEnv, urlApi } from '../env'
 import { enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { instantaneDesBoites, rendreLesBoites, type Boite } from './menage'
 
-const CONTENEUR = 'p2enjoy-mail-sync'
+const CONTENEUR = conteneur('mail-sync')
 const IMAGE = 'python:3.13.13-slim-bookworm'
 const JETON = lireEnv('MAIL_SYNC_INTERNAL_TOKEN')
 const URL_API = urlApi()

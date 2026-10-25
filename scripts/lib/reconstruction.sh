@@ -23,6 +23,10 @@
 #           ordinaire doit suivre (docs/SPEC-test-harness.md §3.6).
 
 # Les conteneurs qui tiennent une connexion, un cache de schéma, un journal ou un état de la base détruite.
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+# shellcheck source=scripts/lib/conteneur.sh
+source "$(dirname "${BASH_SOURCE[0]}")/conteneur.sh"
+
 RECONSTRUCTION_SERVICES=(db migrations-runner storage realtime rest meta studio mail-sync stalwart stalwart-init roundcube)
 # Les volumes nommés qui ne sont qu'un dérivé de la base (docs/SPEC-test-harness.md §3.6).
 RECONSTRUCTION_VOLUMES=(mail-sync-state stalwart-data roundcube-data)
@@ -93,7 +97,7 @@ reconstruire_base_dev() {
 
 		# Constat : une base NEUVE construite dans l'ordre porte une ligne d'adoption par fichier du répertoire.
 		attendus=$(find supabase/migrations -maxdepth 1 -name '*.sql' | wc -l | tr -d ' ')
-		inscrits=$(docker exec -i p2enjoy-db psql -U postgres -d postgres -qtA -v ON_ERROR_STOP=1 \
+		inscrits=$(docker exec -i "$(conteneur db)" psql -U postgres -d postgres -qtA -v ON_ERROR_STOP=1 \
 			-c "select count(*) filter (where mode = 'adoption') || ':' || count(*) from app.migrations_appliquees")
 		[ "$inscrits" = "$attendus:$attendus" ] \
 			|| { echo "reconstruire_base_dev : registre « $inscrits » (adoption:total), $attendus fichiers attendus en adoption." >&2; exit 1; }

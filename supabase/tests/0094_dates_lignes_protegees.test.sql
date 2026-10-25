@@ -13,8 +13,9 @@
 --      une insertion sans ces colonnes reçoit la date de la base ;
 --   4. `service_role` choisit encore la date : c'est le chemin du seed.
 --
--- Exécution : `npm run test:sql`, `scripts/verify-colonnes-protegees.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `npm run test:sql`, `scripts/verify-colonnes-protegees.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0094_dates_lignes_protegees.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier, sans `rollback to savepoint` (décision 79) : les refus

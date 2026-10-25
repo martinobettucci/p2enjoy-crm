@@ -86,7 +86,10 @@ DOMAINE=$(env_get "$ENV_FILE" MAIL_DEV_PERSONAL_DOMAIN)
 export SSO_OIDC_ISSUER SSO_OIDC_CLIENT_ID OIDC_CLIENT_SECRET SITE_URL
 KEYCLOAK_BASE=${SSO_OIDC_ISSUER%/realms/lelabs}
 
-DB_CONTAINER=p2enjoy-db
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+DB_CONTAINER=$(conteneur db)
 IMAGE_DB=$(sed -n 's/^[[:space:]]*image: \(supabase\/postgres:[^[:space:]]*\)$/\1/p' docker-compose.yml | head -n 1)
 MIGRATION_CLAIMS=supabase/migrations/0074_revendications_du_jeton.sql
 TEST_SQL=supabase/tests/0069_identite_sso.test.sql

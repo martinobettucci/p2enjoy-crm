@@ -29,7 +29,8 @@ set -euo pipefail
 # shellcheck source=scripts/lib/env.sh
 source "$(dirname "${BASH_SOURCE[0]}")/lib/env.sh"
 
-META_CONTAINER=p2enjoy-meta
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+META_CONTAINER=$(conteneur meta)
 META_PORT=8080
 # `included_schemas=public` seulement : le schéma `app` n'est pas exposé par PostgREST, et le
 # décrire produirait un type d'appels impossibles (docs/SPEC-types.md §3).

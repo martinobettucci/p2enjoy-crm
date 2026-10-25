@@ -15,8 +15,9 @@
 --   3. la RLS reste activée et porte désormais les politiques exactes de `CRM-022`, tandis que
 --      les privilèges minimaux empêchent une colonne protégée de reposer sur la seule politique.
 --
--- Exécution : `scripts/verify-migrations.sh`, ou directement
---   docker exec -i p2enjoy-db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+-- Exécution (conteneur désigné par son service, CRM-115 T2, docs/SPEC-pile-par-session.md §6) : `scripts/verify-migrations.sh`, ou directement
+--   docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
+--     exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
 --     -f supabase/tests/0001_identite_et_cloisonnement.test.sql
 --
 -- Tout se joue dans une transaction annulée en fin de fichier : ni l'extension `pgtap`, ni les

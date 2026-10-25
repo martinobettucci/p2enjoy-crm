@@ -7838,3 +7838,39 @@ retour du focus après la confirmation dépend d'un rendu que la charge retarde,
 inchangé**, aucune preuve assouplie. **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-077` mesure l'élément
 focalisé au moment de l'échec (trace Playwright) et fait attendre la preuve sur l'état qui précède le focus, jamais sur
 une temporisation. **Statut : ouverte.**
+
+### INC-306 — `verify-mail-infra.sh` §6 : deux contrôles du journal de `stalwart-init` rendent un faux verdict
+
+*Relevé le 2026-10-25 par la session interactive de `CRM-115` T2, en rejouant le harnais après la conversion de ses
+appelants.* **Constat 1, déterministe** : « le provisionnement a écrit et relu les réglages… » cherche
+`réglages IMAP/SMTP et ressource webadmin — relus`, alors que le journal réel porte « réglages IMAP/SMTP, ressource
+webadmin, limite d'envoi et exemption de la pile — relus ». Le contrôle est rouge à chaque passage, ligne de base
+comprise (version d'avant le changement, rejouée sur la même pile : 91 contrôles, 1 anomalie). **Constat 2,
+aléatoire** : `docker logs … | grep -q 'bundle webadmin local — chargé'` sous `set -o pipefail`. `grep -q` sort à la
+première correspondance, `docker logs` reçoit `SIGPIPE`, et le tube rend un échec alors que la chaîne est présente.
+Mesuré : 19 passages verts sur 20, **dans la forme d'origine comme dans la forme par service** ; c'est le défaut
+qu'INC-106 a corrigé dans `verify-mail-sync.sh`. **Comportement laissé inchangé.** **Issue proposée**
+(`docs/CloudWorker.md` §4.1 bis) : le premier contrôle cherche le texte que `stalwart/provision.sh` écrit réellement ; le
+second lit le journal dans une variable avant de le filtrer, comme INC-106. **Statut : ouverte.**
+
+### INC-307 — `verify-mcp.sh` construit l'image `crm-mcp:dev` sans le paquet CA, et échoue derrière le proxy TLS
+
+*Relevé le même jour, même session.* **Constat** : la section des unitaires lance
+`docker build -q --target dev -t crm-mcp:dev mcp`, sortie jetée. Sans le secret `pip_ca`, que `runDev.sh` fournit à la
+construction des images de la pile, `pip install` échoue derrière le proxy interposé ; l'image manque, et les
+intégrations du harnais tombent (« Unable to find image 'crm-mcp:dev' locally »). Les sessions précédentes ne l'ont
+pas vu : l'image était en cache. Construite une fois avec
+`--secret id=pip_ca,src=/root/.ccr/ca-bundle.crt`, la construction du harnais réussit sur le cache et le harnais rend
+**87 contrôles, aucune anomalie**. **Comportement laissé inchangé.** **Issue proposée** : le harnais passe le secret
+`pip_ca` de `PIP_CA_FILE` lorsqu'il est posé, comme `runDev.sh`, et ne jette plus la sortie d'une construction
+manquée. **Statut : ouverte.**
+
+### INC-308 — Après un recyclage de la VM, le premier `./runDev.sh` échoue sur une pile revenue à moitié
+
+*Relevé le même jour, même session, VM recyclée deux fois (09:58 et 10:21 UTC), système de fichiers conservé.*
+**Constat** : au redémarrage du démon, les conteneurs à politique de redémarrage repartent seuls, mais pas `db`
+(politique `no`, sortie 255). `storage` boucle alors sur `getaddrinfo ENOTFOUND db` ; `./runDev.sh` relance `db`,
+mais son attente renonce avant que `storage`, puis `rest`, ne se rétablissent (« dependency failed to start: container
+… is unhealthy »). Une seconde exécution, puis le seed, rendent une pile saine. **Comportement laissé inchangé.**
+**Issue proposée** : `CRM-115` T5, qui traite le recyclage (`docs/SPEC-pile-par-session.md` §8) — reconnaître la pile
+revenue à moitié par l'identifiant de démarrage, et la recomposer avant d'attendre sa santé. **Statut : ouverte.**
