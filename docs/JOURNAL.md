@@ -34483,3 +34483,23 @@ dépôt (INC-309, motifs écrits en place), et INC-295, INC-296 et INC-297 sont 
   (`suggestion-classement.spec.ts:104`, 2 échecs sur 5) est corrigé — il donnait le focus à un bouton encore désactivé
   pendant la lecture des droits (10/10 ensuite). Les onze autres relevés sur deux passages passent **70 fois sur 70**
   rejoués seuls : aucun défaut reproductible à corriger.
+
+### `CRM-115` T2 — fin de tranche : plus aucun nom de conteneur en développement, la production inchangée
+
+*2026-10-25, session interactive (décisions 702 et 703).* **Fait** : un conteneur de développement se désigne par son
+service (`scripts/lib/conteneur.sh`, `e2e/conteneur.ts`) ; Compose nomme d'après le projet (`p2enjoy-crm-db-1`…) ; la
+production et la cellule gardent leurs noms, prouvés identiques par `config` ; Kong joint Realtime par l'alias
+`realtime-dev.realtime` (`crm-115`, contrat §2.22). La garde `scripts/verify-noms-conteneurs.sh` (12/12, deux mutations)
+interdit le retour d'un littéral.
+
+**Mesuré en chemin.** La VM a été recyclée deux fois (09:58 et 10:21 UTC) avec le système de fichiers conservé : la pile
+revient à moitié, et le premier `./runDev.sh` échoue (INC-308). `verify-mcp.sh` construisait son image sans le paquet CA
+(INC-307), `verify-mail-infra.sh` porte deux faux verdicts (INC-306) ; `verify-plateforme.sh` dégradait la base en
+rejouant `0089` seule (INC-304, corrigé par la décision 704) ; une reconstruction sur douze échoue au seed sur une page
+de Studio (INC-298, motif enfin cité). Une autre session a mené en même temps la série complète et corrigé la plupart des
+rougeurs étrangères (INC-309, décision 704) ; le brouillon d'INC-309 de cette session, en doublon, n'a pas été poussé.
+
+**Vérifié** : 78 harnais modifiés rejoués (rougeurs restantes toutes préexistantes) ; campagne après synchronisation verte
+hors interface (927 passés, 6 échecs), et les 19 scénarios d'interface rougis dans les trois campagnes du jour verts
+rejoués seuls. **Où reprendre** : `CRM-115` T3 (registre et attribution) attend la validation des quatre points du §11 de
+`docs/SPEC-pile-par-session.md` ; T2 est `[P]`, sa livraison (§2.22) attend l'instruction du responsable.

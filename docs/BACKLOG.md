@@ -16409,7 +16409,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 
 ## Demande du 2026-10-25 — une pile de développement par session (décision 701)
 
-### CRM-115 — Une pile de développement par session, des ports attribués à chaque lancement `[ ]`
+### CRM-115 — Une pile de développement par session, des ports attribués à chaque lancement `[~]`
 *Créée le 2026-10-25 — arbitrage du responsable (décision 701, point 3).* Plusieurs sessions — tâches planifiées,
 sessions interactives — partagent parfois une VM, son démon Docker et son système de fichiers. Elles démarraient
 toutes la même pile, aux mêmes noms de conteneurs (`p2enjoy-db`…) et aux mêmes ports, et se mesuraient l'une l'autre
@@ -16426,12 +16426,30 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       figés, quatorze ports déjà dans `.env` sauf une redirection du realm, 97 fichiers qui nomment un conteneur, la base
       dans le dépôt, la pile revenue à moitié après un recyclage de VM). **Reste** : la validation du responsable sur
       les quatre points du §11, avant tout code.
-- [@] **T2 — plus aucun nom de conteneur en développement** (décision 702, spécification §6 et §6 bis) : 243
+- [P] **T2 — plus aucun nom de conteneur en développement** (décision 702, spécification §6 et §6 bis) : 243
       occurrences dans 125 fichiers remplacées par le service Compose (utilitaire shell unique, module TypeScript
       unique), `http://mcp:8080` dans le seed, alias réseau `realtime-dev.realtime` dans `kong.yml` ; garde contre tout
       nom `p2enjoy-<service>` littéral, éprouvée par une mutation ; les neuf `container_name` du fichier de base passent
       dans les assemblages de production et de la cellule, dont les noms sont prouvés inchangés par `config`.
-      *Prise en charge : session interactive 2026-10-25 10:04 UTC depuis 2026-10-25 10:33 UTC — état avant : [ ]*
+      *Implémentée et vérifiée en développement le 2026-10-25 (décisions 702 et 703).* Ligne de base relevée avant le
+      code : 243 occurrences dans 124 fichiers de code, 10 noms de production et 12 de la cellule rendus par `config`.
+      - Livré : `scripts/lib/conteneur.sh` (`conteneur`, `conteneur_en_marche`), `e2e/conteneur.ts` ; 67 harnais,
+        12 preuves Playwright, seed, bibliothèque de reconstruction, modes d'emploi pgTAP ; aucun `container_name` en
+        développement ; les neuf noms de base dans `docker-compose.prod.yml` ; Realtime par l'alias
+        `realtime-dev.realtime`, Kong à la révision `crm-115` ; `backup.sh` et `restore-drill.sh` par le service en
+        développement, le nom de production à l'identique ailleurs (option B) ; documentation (README, DAT,
+        CloudWorker, six spécifications), CHANGELOG, contrat de déploiement §2.22.
+      - Preuves : production et cellule **identiques** avant et après ; garde `scripts/verify-noms-conteneurs.sh`
+        **12/12**, deux mutations dénoncées, témoin propre ; pile recréée par `./runDev.sh` sous des noms dérivés du
+        projet, saine, seed rendu à 0, Kong résolvant l'alias de Realtime. Les **78 harnais modifiés** rejoués : verts
+        sauf des rougeurs préexistantes et étrangères, toutes établies et consignées (INC-296, INC-297, INC-298,
+        INC-304, INC-306 à INC-309), dont la plupart corrigées depuis par la décision 704 ; `verify-droits-fins`
+        **39/39**, `verify-tracks` **42/42**, `verify-stack` **64/64**, `verify-sauvegardes` 42, `verify-restauration`
+        36. Campagne après synchronisation : typecheck, unitaires **4362**, build, pgTAP **94 fichiers / 3974
+        assertions**, API **1182**, courrier **44**, pytest **246** — verts ; interface **927 passés, 6 échecs**, verts
+        rejoués seuls avec les dix des deux campagnes de la série (**19 passés**).
+      - **Reste `[P]`** : la livraison de `docs/PROD_MIGRATIONS.md` §2.22 (Kong et Realtime recréés, noms inchangés),
+        sur l'instruction du responsable, et son constat.
 - [ ] **T3 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un
       recyclage de VM, deux attributions simultanées départagées). Après validation du §11 de la spécification.
 - [ ] **T4 — la pile par emplacement** : nom de projet et ports par emplacement, `.env`, realm Keycloak ;
