@@ -13,6 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-084` — le manuel décrit l'administration des budgets d'un track, et une preuve le lie à l'écran
+
+*Documentation et preuves seulement : aucun changement de l'application, rien à livrer en production.*
+
+- `docs/manual.md` §5.4 *bis* : le tableau des budgets d'un track, la création et ses champs (enveloppe et seuil
+  facultatifs, ce que veut dire le vide), la modification, le réordonnancement, la clôture qui compte les dépenses sans
+  coût réel sans l'empêcher, la réouverture, ce que voit un membre non administrateur, et les messages de refus. Le
+  §5.6 ne dit plus que ce chapitre manque ; il nomme les absences voulues (devises, occurrences automatiques, alertes,
+  export).
+- `e2e/ui/budgets.spec.ts` : trois scénarios exigent chaque libellé cité par le chapitre **à la fois** dans le manuel et
+  à l'écran réel ; une phrase changée d'un seul côté rend la preuve rouge (deux mutations tuées).
+- `scripts/verify-budgets.sh` : le contrôle du bouton de clôture suit la forme posée par `CRM-093`.
+
 ### `CRM-037` — la fiche nomme l'étape comme le board, et le formulaire est prouvé à chacune des sept étapes (décision 690)
 
 *Livré en développement ; la livraison en production (reconstruction de la webapp) attend l'instruction du responsable.*
