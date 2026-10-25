@@ -34501,5 +34501,6 @@ rougeurs étrangères (INC-309, décision 704) ; le brouillon d'INC-309 de cette
 
 **Vérifié** : 78 harnais modifiés rejoués (rougeurs restantes toutes préexistantes) ; campagne après synchronisation verte
 hors interface (927 passés, 6 échecs), et les 19 scénarios d'interface rougis dans les trois campagnes du jour verts
-rejoués seuls. **Où reprendre** : `CRM-115` T3 (registre et attribution) attend la validation des quatre points du §11 de
+rejoués seuls, comme sur une pile recomposée avec les fichiers d'avant la tranche — ligne de base consignée en INC-310.
+**Où reprendre** : `CRM-115` T3 (registre et attribution) attend la validation des quatre points du §11 de
 `docs/SPEC-pile-par-session.md` ; T2 est `[P]`, sa livraison (§2.22) attend l'instruction du responsable.

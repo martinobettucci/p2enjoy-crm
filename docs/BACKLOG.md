@@ -16447,7 +16447,8 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
         **39/39**, `verify-tracks` **42/42**, `verify-stack` **64/64**, `verify-sauvegardes` 42, `verify-restauration`
         36. Campagne après synchronisation : typecheck, unitaires **4362**, build, pgTAP **94 fichiers / 3974
         assertions**, API **1182**, courrier **44**, pytest **246** — verts ; interface **927 passés, 6 échecs**, verts
-        rejoués seuls avec les dix des deux campagnes de la série (**19 passés**).
+        rejoués seuls avec les dix des deux campagnes de la série (**19 passés**), et **19 passés aussi** sur la ligne de base
+        (pile recomposée avec les fichiers d'avant la tranche) — INC-310.
       - **Reste `[P]`** : la livraison de `docs/PROD_MIGRATIONS.md` §2.22 (Kong et Realtime recréés, noms inchangés),
         sur l'instruction du responsable, et son constat.
 - [ ] **T3 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un

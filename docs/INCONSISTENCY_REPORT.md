@@ -7937,3 +7937,20 @@ motif en place et rejouée :
 - **reste, et ne se corrige pas ici** : la branche **sans CA** de `verify-scripts` (`SELF_SIGNED_CERT_IN_CHAIN` : l'hôte
   intercepte TLS, `CRM-001`, autorité externe) ; les scénarios E2E instables sous la charge d'une campagne d'une heure,
   verts rejoués seuls (quatre de `verify-harness`, sept de `verify-webapp`) et sans cause reproductible isolée.
+
+### INC-310 — Seize scénarios d'interface rougissent sous la charge d'une campagne complète, et passent seuls des deux côtés de `CRM-115` T2
+
+*Relevé le 2026-10-25 par la session de `CRM-115` T2, sur les trois campagnes d'interface complètes du jour qui suivent la
+tranche (dans `verify-harness.sh`, dans `verify-webapp.sh`, puis la campagne de fin : 918, 926 et 927 passés ; 5, 5 et
+6 échecs, **jamais les mêmes**).* Les seize scénarios : `administration-workflows.spec.ts:2199`, `board.spec.ts:549` et
+`:633`, `commentaires.spec.ts:300`, `connecteur-affaires.spec.ts:72`, `connexion.spec.ts:165` (INC-292) et `:370`,
+`contacts.spec.ts:199`, `corbeille.spec.ts:609` (INC-305), `liste-cards.spec.ts:357`, `mentions-composeur.spec.ts:362`,
+`objectifs.spec.ts:170` et `:1780`, `reglages-comptes-mail.spec.ts:163`, `saisie-temps.spec.ts:102`,
+`timeline.spec.ts:383`. **Ligne de base, sur ces preuves seules** : rejoués seuls sur la pile de la tranche,
+**19 passés** ; rejoués seuls sur une pile recomposée avec les fichiers Compose et `kong.yml` d'**avant** la tranche
+(`5072c4a`, noms `p2enjoy-db`…), **19 passés**. Les specs et la webapp sont identiques des deux côtés. La campagne de la
+session planifiée du matin, avant la tranche, rendait déjà **9 échecs** d'interface du même ordre (décision 694). **Lecture** : des
+instabilités sous la charge d'une campagne de près d'une heure, préexistantes, non des régressions de la tranche.
+**Comportement laissé inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : chaque scénario qui rougit deux
+fois sous charge est traité par son unité comme INC-295 et INC-305 l'ont été — attendre l'état que le scénario
+asserte (focus, transition, réponse), jamais par une temporisation. **Statut : ouverte.**
