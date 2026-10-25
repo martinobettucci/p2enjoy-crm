@@ -33864,3 +33864,52 @@ que l'affaire a déjà accompli, et se lit comme une condition encore à remplir
 **Connecteur MCP** : sans objet — un texte d'interface, que le connecteur ne rend pas. **Seed, base, API** : inchangés.
 **Persisté avant le code** : ce journal ; `docs/SPEC-form-composer.md` §4.4 et §4 ter.5 ; `docs/DESIGN_SYSTEM.md` §5.7 et
 §5.7 quater ; `docs/INCONSISTENCY_REPORT.md` (INC-134) ; `docs/BACKLOG.md` (`CRM-037`).
+
+### décision 689 — `CRM-111` T1 bis, fin de session : les seize harnais restaurent par reconstruction, la preuve d'adoption suit l'invariant révisé
+
+*2026-10-25, session planifiée ouverte le 2026-10-24 à 21:12:06 UTC (`docs/CloudWorker.md`). Tranché par la session
+(`docs/CloudWorker.md` §4.1 bis) ; le responsable peut le contredire.*
+
+**Livré** (spécification : décision 682, `docs/SPEC-test-harness.md` §3.6). (a) `scripts/lib/reconstruction.sh` :
+`reconstruire_base_dev` reconstruit la base de développement et ses seuls dérivés en une minute, sous garde de profil et
+verrou ; `--migrations DIR` fait appliquer un autre répertoire par le vrai runner. `scripts/verify-reconstruction.sh`
+**27/27**. (b) `scripts/verify-migrations.sh` **36/36** : base neuve dans l'ordre, chaque fichier rejoué sur l'état qu'il
+produit (répertoire doublé, 206 fichiers), structure de la base doublée **égale** à celle de la base ordinaire, trois
+contre-épreuves, sentinelle non idempotente refusée, passage suivant vide ; l'adoption sur base peuplée, reproduite
+rouge (`0089`), est retirée avec son motif. (c) Les quinze autres harnais restaurent par reconstruction ; leurs
+contrôles d'adoption ou de rejeu sur base peuplée (`tracks`, `authz`, `relances`, `move-card-to-channel`,
+`commentaires`, `session-sso`) sont retirés ou retournés, motif écrit en place ; `scripts/lib/registre.sh` retiré.
+
+**Trois enseignements mesurés en rejouant**, chacun corrigé à sa cause :
+1. **Ce qui naît du seed avec des identifiants aléatoires** (la copie de track) change d'identifiant à chaque
+   reconstruction. `transition-required-fields` relève de nouveau ses repères après chaque reconstruction ;
+   `move-card` désigne l'étape d'une affaire par son nœud et sa position, non par son identifiant.
+2. **Une propriété du rejeu isolé se mesure avant la restauration** : les identités structurelles (OID) relevées
+   après une reconstruction sont toutes neuves. Et un « aucun effet partiel » se compare à l'état relevé juste avant la
+   tentative, non à celui d'une section antérieure que la reconstruction a effacé.
+3. **Une restauration n'avale plus son motif** : `>/dev/null 2>&1` masquait l'échec d'une reconstruction, et
+   `change-channel-workflow` mourait sans rien dire sous `set -e`. La bibliothèque n'écrit que ses motifs sur l'erreur
+   standard ; les appels ne la jettent plus.
+
+**Incidents d'environnement, sans rapport avec le produit.** Le processus de la session a été recyclé vers 23:20 UTC :
+Docker arrêté, la base laissée à mi-chemin, `storage` refusant de démarrer — `reconstruire_base_dev` l'a remise d'aplomb
+en une minute. Un `vite preview` laissé par l'arrêt de `verify-tracks.sh` tenait le port 4173 et a fait rougir
+l'interface de `verify-identites.sh` (`docs/CloudWorker.md` §2.1 *ter*) ; libéré, vert. Un autre CloudWorker et une
+session interactive ont poussé pendant la session (`CRM-102` T5, `CRM-104` T7, `CRM-013`/INC-238 avec la migration
+`0104`) ; la campagne a tourné après synchronisation et reconstruction, sur 104 migrations.
+
+**Campagne de fin de session** (`docs/CloudWorker.md` §4.3), après synchronisation et reconstruction sur 104
+migrations : `test:unit` **4350** verts ; `typecheck` vert ; `build` vert ; `test:sql` **94 fichiers, 3974 assertions** ;
+`e2e:api` **1182 passés** ; `e2e:mail` **44 passés** ; `pytest mail-sync` **246 passés** ; `e2e:ui` **916 passés, 11
+échecs**, tous d'environnement : dix portent un `502`/`503` de Kong en console (INC-292) et sont **verts rejoués** ; le
+onzième, `connecteur-messagerie.spec.ts`, attendait l'outil `crm_card_mail_list` de `CRM-104` T7, poussé pendant la
+session, que l'image `mcp` construite avant la synchronisation ne portait pas — **vert** une fois l'image reconstruite.
+Aucun n'est imputable à l'unité, qui ne touche que des scripts de preuve. La série complète des `verify-*.sh` **n'a
+pas été exécutée** en campagne ; seuls l'ont été les dix-sept harnais que le changement touche (ci-dessus).
+
+**Consigné au registre** : INC-295 (test de focus instable sous charge, `CRM-100`), INC-296 (`verify-commentaires`
+lit trois lignes d'en-tête, `CRM-043`), INC-297 (compteur figé de `verify-session-sso`, `CRM-114`).
+
+**Où reprendre.** `CRM-111` T1 bis reste `[~]` pour deux rejeux complets : `verify-tracks.sh --rapide` et
+`verify-droits-fins.sh --rapide`, tous deux arrêtés dans la dégradation du jeton de couleur de `verify-tracks.sh`, qui
+relance `e2e:ui` en entier (plus d'une heure). À mener seuls, en début de session. Ensuite : `CRM-111` T2, la bascule.

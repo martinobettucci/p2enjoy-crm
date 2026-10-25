@@ -85,6 +85,8 @@ migration 104).*
   par l'invariant révisé — base neuve construite dans l'ordre, chaque fichier rejoué sur l'état qu'il vient de produire
   (le vrai runner sur un répertoire doublé, structure identique à celle d'une base ordinaire), sentinelle non
   idempotente refusée, passage suivant vide. 36 contrôles, aucune anomalie.
+- Les quinze autres harnais qui restauraient par rejeu complet reconstruisent la base ; leurs contrôles de rejeu sur
+  base peuplée sont retirés ou retournés, motif écrit en place ; `scripts/lib/registre.sh` est retiré (décision 689).
 
 ### `CRM-113` T5 — arbitrages du responsable (décision 679) : tout en anglais, la casse ignorée (migration 103)
 
