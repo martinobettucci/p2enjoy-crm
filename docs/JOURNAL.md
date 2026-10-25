@@ -33766,3 +33766,46 @@ sont rendues et non renouvelées ici ; leur renouvellement revient à une campag
 
 **Où reprendre.** `CRM-104` T7 attend sa livraison (`docs/PROD_MIGRATIONS.md` §2.14, sur instruction) et le constat du
 responsable, comme T1 à T6. La prochaine session suit le §4.2 : `CRM-111` et INC-292 portent des prises vivantes.
+
+### décision 686 — INC-292 : aucune fonction edge ne rend `204` — le runtime perd parfois la réponse vide d'un worker `oneshot`
+
+*2026-10-25, session planifiée ouverte à 00:12:30 UTC (`docs/CloudWorker.md`). Tranché par la session (`docs/CloudWorker.md`
+§4.1 bis) ; le responsable peut le contredire.*
+
+**Choix de l'unité.** La dernière entrée (685) clôt `CRM-104` T7 ; `CRM-111` T1 bis porte une prise vivante. Les unités
+`[~]` et `[ ]` du plan attendent la production, un constat ou un arbitrage de produit (score de santé de `CRM-066`), et
+`CRM-112` attend `CRM-111` T2. `CRM-113` T3 nomme un reste qui n'attend personne : « une campagne d'interface verte d'un
+bout à l'autre attend la correction d'INC-292 ». INC-292 est traitée comme son préalable (§4.2).
+
+**Mesuré sur la pile de développement, avant le code** (boucles de `curl`, appels séquentiels) :
+1. À travers Kong, `POST /functions/v1/session/prolonger` sans cookie : **1 `503` sur 300**, puis 6 sur 1000 à quatre en
+   parallèle. Kong ne journalise **aucune** erreur.
+2. **Sans Kong**, directement sur `functions:9000` : 2 sur 1000, 4 sur 3000. Le `503` porte `x-served-by: base/server` et
+   un corps vide : il vient du serveur de base du runtime, et le runtime écrit `connection aborted` juste après
+   `edge_request_completed` (`204`). Kong n'y est pour rien.
+3. **Ce qui échoue, et ce qui n'échoue pas** (3000 appels chacun, sans Kong) : `session` refus `404` avec corps **0** ;
+   `session` `GET` (`405`) **0** sur 1500 ; `example` `200` **0** ; une fonction jetable qui rend `204` sans corps **12** ;
+   la même qui rend `200` sans corps **0** ; un `204` rendu par `main` lui-même, sans worker, **0**. Le défaut tient donc au
+   **`204` rendu par un worker** sous `oneshot`, quelle que soit la fonction. Dans `main`, le corps de cette réponse est
+   bien `null` : aucun flux n'est relayé.
+4. **Hypothèse écartée par la mesure** : transmettre au worker une copie tamponnée de la requête (et son étiquette
+   `EdgeRuntime.applySupabaseTag`) laisse 4 échecs sur 3000.
+
+**Décision.** **Aucune fonction edge ne rend `204`.** Les réponses de succès sans contenu deviennent `200` :
+- `session/prolonger` sans session (§5.3, points 1 et 2 ; et la session supprimée entre lecture et renouvellement) :
+  `200`, corps `{ "session": "absente" }` ; le cookie est effacé dans les mêmes cas qu'avant ;
+- `session/fermer` : `200`, corps `{ "session": "fermee" }`, cookie effacé ;
+- `OPTIONS` (`session`, `example`) : `200` sans corps, avec `Allow`.
+Le `200` garde l'intention de la décision 587 — l'absence de session n'est pas une erreur de console —, et un corps qui
+la nomme vaut mieux qu'un statut que la webapp distinguerait seul. La webapp lit le nouveau corps **et** accepte encore
+le `204`, parce que la webapp et les fonctions ne sont pas reconstruites au même instant en production. `main` le garde
+aussi : un worker qui rendrait encore `204` est journalisé `edge_reponse_204` (avertissement), sans changer la réponse.
+
+**Écartés** : `200` sans corps (la webapp ne distinguerait plus l'absence d'une prolongation réussie que par l'absence de
+JSON) ; une temporisation ou une relance dans `main` (le `503` naît après que `main` a rendu sa réponse : il ne la voit
+pas) ; filtrer l'erreur de console des preuves (interdit, `docs/CloudWorker.md` §3.1) ; changer la politique `oneshot`
+(décision 286) ; monter de version le runtime, hors de cette tranche et sans version corrigée connue.
+
+**Connecteur MCP** : sans objet, le connecteur n'appelle pas la fonction `session`. **Persisté avant le code** : ce
+journal ; `docs/SPEC-edge-functions.md` §2 *bis* et §6 ; `docs/SPEC-session-sso.md` §5.1, §5.3, §5.5 ;
+`docs/INCONSISTENCY_REPORT.md` (INC-292).

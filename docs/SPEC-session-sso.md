@@ -105,7 +105,7 @@ Résumé ; le détail est dans `docs/JOURNAL.md`, décisions 578 et 580.
 |---|---|---|
 | **Ouvrir** | `POST /functions/v1/session/ouvrir`, corps JSON `{ "code", "verificateur", "redirect_uri" }` | `200`, corps du §5.4, `Set-Cookie` de la poignée |
 | **Prolonger** | `POST /functions/v1/session/prolonger`, cookie de la poignée, corps vide | `200`, corps du §5.4 |
-| **Fermer** | `POST /functions/v1/session/fermer`, cookie de la poignée, corps vide | `204`, cookie effacé |
+| **Fermer** | `POST /functions/v1/session/fermer`, cookie de la poignée, corps vide | `200`, `{ "session": "fermee" }`, cookie effacé |
 
 Tous portent l'en-tête `apikey` (clé anonyme) que Kong exige (`docs/SPEC-edge-functions.md` §5). Toute
 autre méthode : `405` ; tout autre chemin : `404`.
@@ -154,13 +154,17 @@ le point 5.
 
 **Prolonger** sert au rafraîchissement **et** à la restauration au chargement de la page.
 
-1. Sans cookie de poignée : **`204`, sans corps** — le cas normal d'un navigateur jamais connecté, et
+*Révisé par la décision 686 (INC-292) : `204` devient `200` et `{ "session": "absente" }` partout dans ce paragraphe — le
+runtime perd par intermittence un `204` rendu par un worker (`docs/SPEC-edge-functions.md` §2 bis). L'intention de la
+décision 587 est gardée : l'absence de session n'est pas un refus.*
+
+1. Sans cookie de poignée : **`200`, `{ "session": "absente" }`** — le cas normal d'un navigateur jamais connecté, et
    la restauration de chaque page anonyme. **Ce n'est pas un refus** (décision 587) : un navigateur
    journalise toute réponse `4xx` en erreur de console, et en rendre une à chaque chargement ferait
    d'un état normal une anomalie.
 2. `public.lire_session_serveur(hash(poignée))` rend le `sub` et le jeton de rafraîchissement chiffré
-   d'une session **non révoquée et non échue** ; sinon **`204`**, et le cookie est effacé. Un jeton gardé
-   indéchiffrable ferme la session et rend de même `204`, cookie effacé.
+   d'une session **non révoquée et non échue** ; sinon **`200` `{ "session": "absente" }`**, et le cookie est effacé. Un jeton gardé
+   indéchiffrable ferme la session et rend de même cette absence, cookie effacé.
 3. Découverte, puis `grant_type=refresh_token` avec le secret. Un refus `4xx` de LeLabs — session LeLabs
    échue ou fermée — **supprime** la session serveur, efface le cookie et rend `401 session_expiree`.
 4. Vérification du nouveau jeton d'accès (§5.2, point 4). Son `sub` doit être celui de la session.
@@ -169,9 +173,9 @@ le point 5.
    nouveau à chaque fois — et son échéance. Sinon il **supprime** la session, et l'échangeur efface le
    cookie et rend le refus nommé : un `verified` retiré ou une appartenance retirée ferment l'accès au
    prochain rafraîchissement, donc **au plus tard 300 s après**. Une session supprimée entre la
-   lecture et le renouvellement rend `204`, cookie effacé.
+   lecture et le renouvellement rend l'absence (`200`, `{ "session": "absente" }`), cookie effacé.
 
-**Fermer** supprime la session serveur désignée par la poignée et efface le cookie ; `204` même sans
+**Fermer** supprime la session serveur désignée par la poignée et efface le cookie ; `200` `{ "session": "fermee" }` même sans
 cookie — fermer ce qui n'existe pas n'est pas une erreur. **Rien n'est révoqué chez LeLabs** : révoquer
 le jeton de rafraîchissement fermerait la session LeLabs de la personne (K16), ce que `docs/SSO.md`
 exclut.
@@ -235,7 +239,8 @@ jamais journalisés, et la minimisation du §6.1 reste entière. Un échec de jo
 se consigne dans le journal du service (`refus_non_journalise`, le code seul, sans l'adresse).
 
 **L'absence de session n'est pas au dictionnaire** (décision 587) : la prolongation la rend par un
-`204` sans corps (§5.3, points 1 et 2), que la webapp lit comme « aucune session ». Le code
+`200` `{ "session": "absente" }` (§5.3, points 1 et 2 ; `204` sans corps jusqu'à la décision 686), que la webapp lit
+comme « aucune session » — elle accepte encore l'ancien `204`, le temps que fonctions et webapp soient livrées ensemble. Le code
 `session_absente`, qui la nommait en `401`, est retiré.
 
 ### 5.6 La poignée de session et son cookie

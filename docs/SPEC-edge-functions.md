@@ -81,6 +81,16 @@ après cette réponse n'émet jamais son appel. Une fonction longue doit donc vi
 `ia` répond par un flux NDJSON qui bat toutes les 15 s, sous le délai de lecture de Kong
 (`docs/SPEC-ia.md` §11.1). La politique `oneshot` n'est pas rouverte : ses motifs (décision 286) tiennent.
 
+### 2 bis. Aucune fonction ne rend `204` (INC-292, décision 686)
+
+Sous `oneshot`, le runtime 1.74.2 perd par intermittence la réponse `204` d'un worker : le serveur de base rend `503`
+(`x-served-by: base/server`, corps vide) et journalise `connection aborted`. **Mesuré le 2026-10-25**, 3000 appels sans
+Kong : un worker qui rend `204` échoue 12 fois, le même qui rend `200` sans corps ou avec corps, jamais ; un `204` rendu
+par `main` sans worker, jamais. Une réponse de succès sans contenu est donc un **`200`** — avec un corps JSON qui la
+nomme lorsque l'appelant doit la distinguer (`docs/SPEC-session-sso.md` §5.3). `main` journalise `edge_reponse_204`
+(niveau `warning`) si un worker en rend encore un, sans modifier la réponse ; aucune temporisation ni relance ne le
+masque.
+
 ## 3. Arborescence et traçabilité
 
 ```text
@@ -177,8 +187,8 @@ du produit, pas une porte d'administration.
 ```
 
 Le statut est 200 et le type `application/json; charset=utf-8`. `GET` et toute autre méthode
-métier rendent 405 avec `Allow: POST, OPTIONS`. `OPTIONS` rend 204 pour que la fonction demeure
-correcte même appelée hors du plugin CORS de Kong. Le corps entrant est ignoré ; aucune donnée
+métier rendent 405 avec `Allow: POST, OPTIONS`. `OPTIONS` rend 200 sans corps (§2 *bis* ; 204 jusqu'à la
+décision 686) pour que la fonction demeure correcte même appelée hors du plugin CORS de Kong. Le corps entrant est ignoré ; aucune donnée
 n'est persistée et aucun seed n'est requis.
 
 ## 7. Preuves de `CRM-016`

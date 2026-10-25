@@ -7608,6 +7608,14 @@ la teinte de danger… »). Même signature, même croissance avec la durée de 
 `docs/CloudWorker.md`)** : le code de la session retiré de l'arbre (`git apply -R`, trois fichiers), les deux preuves
 rendent 3 passés sur 3 ; le code rétabli, 3 sur 3 aussi. Intermittentes et identiques des deux côtés : non imputables.
 
+**Cause mesurée le 2026-10-25 (décision 686).** L'hypothèse tient, élargie : ce n'est pas propre à `session`. Sans
+Kong, sur `functions:9000`, 3000 appels : un worker qui rend `204` échoue 12 fois (`503`, `x-served-by: base/server`,
+`connection aborted`) ; `200` sans corps, `200` avec corps, ou un `204` rendu par `main` sans worker : jamais. Le `503`
+naît dans le serveur de base du runtime, après que `main` a rendu sa réponse. Transmettre une copie tamponnée de la
+requête ne change rien (4 sur 3000). **Issue retenue** : aucune fonction edge ne rend plus `204` — `prolonger` sans
+session rend `200` `{ "session": "absente" }`, `fermer` `200` `{ "session": "fermee" }`, `OPTIONS` `200` ; la webapp
+accepte encore l'ancien `204` le temps de la livraison. **Statut : en correction** (`CRM-113` T3, préalable).
+
 ### INC-293 — à 1152 px, le titre long d'une affaire mesure 105 px, sous le seuil de 120 px de sa preuve
 
 *Relevé le 2026-10-24 par la session planifiée de `CRM-113`, dans sa campagne de fin de session.* **Constat** :
