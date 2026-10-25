@@ -480,8 +480,13 @@ if out=$(proposer "$P"); then
 	verifier_jeton() {
 		local jeton=$1 role=$2 signe
 		signe=$(printf '%s' "${jeton%.*}" | openssl dgst -sha256 -hmac "$jwt" -binary | b64url)
-		[ "$signe" = "${jeton##*.}" ] && printf '%s' "${jeton#*.}" | cut -d. -f1 | tr '_-' '/+' \
-			| base64 -d 2>/dev/null | grep -q "\"role\":\"$role\""
+		# RÉVISÉ LE 2026-10-25 (décision 704, INC-309) : la charge utile est en base64url SANS remplissage ; `base64 -d`
+		# la refusait dès que sa longueur n'était pas multiple de 4 (mesuré), et le contrôle rougissait sur des jetons
+		# justes. Le remplissage est rétabli avant décodage, comme `decoder_jwt` de `scripts/verify-migrations.sh`.
+		local charge
+		charge=$(printf '%s' "${jeton#*.}" | cut -d. -f1 | tr '_-' '/+')
+		case $(( ${#charge} % 4 )) in 2) charge="${charge}==" ;; 3) charge="${charge}=" ;; esac
+		[ "$signe" = "${jeton##*.}" ] && printf '%s' "$charge" | base64 -d 2>/dev/null | grep -q "\"role\":\"$role\""
 	}
 	verifier_jeton "$(env_get "$P/env.?" ANON_KEY)" anon && verifier_jeton "$(env_get "$P/secrets.?" SERVICE_ROLE_KEY)" service_role \
 		&& ok "ANON_KEY et SERVICE_ROLE_KEY signées par le JWT_SECRET proposé, rôles justes" \
