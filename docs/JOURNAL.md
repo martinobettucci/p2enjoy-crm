@@ -34458,3 +34458,11 @@ les plus évidentes — un contrôle d'en-tête qui lit trois lignes lira le blo
 compteur figé est retourné en invariant. Chaque preuve révisée garde son motif en place (§3.1) et est rejouée.
 **Écarté** : assouplir une assertion pour la verdir. Ce qui relève de l'environnement (réseau, image) est nommé, pas
 masqué.
+
+**Complément, même session (`CRM-044`, INC-301) — la série des `verify-*.sh`.** Jouée seule et en entier, seed réappliqué
+avant chaque harnais (`--rapide` là où il existe) : **84 joués, 58 verts**, `verify-timeline` **70 contrôles sans
+anomalie**. Les 26 autres sont étrangers à la tranche, qui ne touche que `timeline.ts`, ses tests et un compteur : ils
+sont les rouges classés par INC-309 et corrigés en parallèle par la décision 704 (traçabilité d'en-tête, compteurs,
+`verify-mcp`, `verify-spark`, `verify-scripts`…), `verify-harness` compris — son écart « 932 attendus, 933 énumérés »
+venait d'`aa56773` (`CRM-001`), révisé par `75c460f`. `verify-board` signalait la suite unitaire rouge : rejouée seule
+derrière, **4360/4360**. Aucune anomalie imputable : la boucle de correction du §4.3 n'a rien à corriger.
