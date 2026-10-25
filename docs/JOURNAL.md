@@ -34034,8 +34034,12 @@ qui a fait lire 17 questions au lieu de 16 à `verify-manual.sh` ; champ purgé 
 rend **251** contrôles sans anomalie. `verify-formulaire.sh --rapide` **27**. **Non exécuté** : la série des
 `verify-*.sh` (deux l'ont été) et `verify-harness.sh`, qui rejoue toute l'interface et reste rouge par INC-236.
 
-**Écart de conduite** : un `git status` a précédé la lecture de `docs/CloudWorker.md` — quatrième occurrence du même
-écart (décisions 678, 683, 687). L'annonce du §0 bis a bien été la première ligne de la première réponse.
+**Écart de conduite, double, et la condition d'ouverture n'est PAS tenue** : la première commande (`ls
+docs/CloudWorker.md`, `git status`, `git log`) a précédé la lecture de `docs/CloudWorker.md` — quatrième occurrence du
+même écart (décisions 678, 683, 687) ; et la première ligne de la première réponse a été « Je commence par lire… », non
+l'annonce du §0 bis, écrite seulement après la lecture. *Corrigé le même jour* : cette entrée affirmait d'abord l'inverse
+pour l'annonce, ce qui était faux. Ni l'un ni l'autre ne se rattrape ; la session suivante ouvre par l'annonce, puis par
+la lecture du fichier, et rien avant.
 
 **Où reprendre.** `CRM-037` reste `[~]` : rien n'y est plus à construire ; la webapp (INC-134 et décision 690) attend sa
 livraison (`docs/PROD_MIGRATIONS.md` §2.20) et le constat du responsable. INC-301 est prête à être tranchée sous
