@@ -546,7 +546,8 @@ proposée par le classement assisté, toujours présentée **comme une suggestio
 - **Le dossier retenu et le message retenu portent `aria-current`**, non une simple couleur : une
   sélection qui ne s'annonce qu'en teinte n'existe pas pour un lecteur d'écran, et le §10 l'exige.
 - **L'arborescence est une liste de boutons, dépliable au clavier**, dans l'ordre du board. Chaque
-  nœud porte son nombre de messages **visibles par celui qui regarde**.
+  nœud porte son nombre de messages **visibles par celui qui regarde** — *depuis `CRM-057` tranche 2, son nombre de
+  messages **non lus** par celui qui regarde (§5.4 quinquies)*.
 - **Le corps du message est du texte**, jamais le HTML de l'expéditeur (§18.4). Il conserve ses
   retours à la ligne et se replie sur les mots longs plutôt que de déborder.
 - **Une pièce jointe non saine n'a pas de lien** : elle affiche son statut d'analyse en toutes
@@ -688,6 +689,41 @@ uniquement quand ce message est CLASSÉ : un message non classé n'a aucune affa
 
 - **Aucune couleur, aucun jeton et aucune règle nouvelle** : le bloc emprunte au §5.3 quater sa
   grammaire de confirmation, au §5.5 ses variantes, et au §5.4 son pied de message.
+
+### 5.4 quinquies L'état LU / NON LU dans l'inbox — `CRM-057` tranche 2
+
+*Proposé le 2026-10-26 avec la spécification, `docs/SPEC-mail-subsystem.md` §18 bis, qui dit ce qui est lu, par qui et
+quand ; les règles ci-dessous ne disent que de quoi il a l'air. **Aucun jeton n'est ajouté** : tout est emprunté à la
+ligne non lue des notifications (§5.43).*
+
+- **UNE LIGNE DE FIL NON LUE PORTE LE LISERÉ GAUCHE DE 3 px `--color-brand`, ET SON OBJET EN GRAISSE FORTE.** C'est la
+  ligne non lue du §5.43, réemployée : le même état doit se reconnaître d'une surface à l'autre. La ligne lue garde
+  exactement son aspect d'avant la tranche. **Le liseré se cumule avec la sélection** (`--color-brand-soft`, §5.4) : une
+  ligne ouverte puis remise non lue garde les deux repères, qui disent deux choses.
+
+- **LE §1 EST TENU PAR UN MOT.** Le nom accessible du bouton de la ligne commence par « Non lu, » ; l'état ne repose
+  jamais sur le seul liseré ni sur la seule graisse.
+
+- **L'ARBORESCENCE COMPTE LES NON LUS, AVEC LA PASTILLE DE LA CLOCHE.** Pastille `--color-brand` à texte
+  `--color-white`, `--text-xs` `tabular-nums`, `rounded-full` — celle du §5.43 —, **absente à zéro** et pendant la
+  lecture, « 99+ » au-delà de 99, le nom accessible gardant le compte exact (« 3 messages non lus »). Le nœud qui en
+  porte passe en graisse moyenne. Le total des messages n'est plus affiché : deux nombres par dossier se liraient mal.
+
+- **LE MARQUAGE MANUEL EST LE BOUTON DES NOTIFICATIONS**, posé dans l'en-tête du message ouvert : icône seule dans une
+  cible `--size-target`, `Mail` pour « Marquer comme non lu », `MailOpen` pour « Marquer comme lu », le libellé en
+  `aria-label` et en `title`. Mêmes icônes, même sens qu'au §5.43 ; le §9 n'est pas enfreint, c'est le même geste sur le
+  même état.
+
+- **« TOUT MARQUER COMME LU » EST UN BOUTON DISCRET ET COMPACT DE L'EN-TÊTE DE LA LISTE**, icône `CheckCheck` et
+  libellé visible, à gauche de la bascule de sommeil. Il est **absent** quand la page ne porte aucun non lu — un geste
+  sans effet possible ne s'offre pas — et ne demande pas de confirmation : il se défait ligne à ligne.
+
+- **UN MARQUAGE QUI ÉCHOUE NE CHANGE RIEN À L'ÉCRAN** : le message d'erreur s'affiche dans le panneau de lecture en
+  `role="alert"`, et la ligne garde son état. Montrer lu ce que la base n'a pas enregistré est la simulation de succès
+  que `CLAUDE.md` §18 interdit.
+
+- **LES NON-LUS NE REMONTENT PAS** : l'ordre reste le plus récent en haut (§5.43). Un second critère de tri ferait sauter
+  une ligne au moment où on vient de la lire.
 
 ### 5.5 Boutons
 

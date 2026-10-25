@@ -34705,3 +34705,22 @@ avec un `.env` de profil `prod` à **secrets jetables tirés localement**, sans 
 tout est arrêté et retiré ensuite. **Bornes** : aucun commit ni branche dans le clone ; ses ports vérifiés libres avant
 démarrage ; la pile de développement de ce checkout n'est pas touchée.
 
+
+### décision 715 — `CRM-057` tranche 2, lu / non lu : spécification proposée, en attente de validation
+
+*2026-10-26, session interactive, sous la boucle du backlog.* **Problème** : la décision 705 (point 3) ne fait passer
+aux INC qu'une fois toutes les unités `[x]`, `[P]` ou bloquées. Or les décisions 707 et 708 ont levé tous les
+arbitrages de `CRM-057`, `CRM-058`, `CRM-066`, `CRM-072` et `CRM-077` : ces unités peuvent avancer, et le rapport du
+2026-10-26 qui les disait « en attente de choix de produit » était **faux**, faute d'avoir relu les deux décisions.
+**Choix de l'unité** : la première dans l'ordre du plan, `CRM-057`, dont la tranche lu / non lu est la plus petite.
+
+**Observations** (`docs/SPEC-mail-subsystem.md` §18 bis.1) : rien ne porte la lecture en base ; `flags` des occurrences
+dit l'état IMAP d'une boîte, pas la lecture d'une personne ; la liste énumère des fils ; les notifications ont déjà un
+état de lecture et sa forme (§5.43).
+
+**Propositions soumises au responsable** (§18 bis.2) : état **personnel** ; seul le courrier **reçu** peut être non lu ;
+ouvrir un fil le marque lu **tout entier** ; « Marquer comme non lu » sur le message affiché ; « Tout marquer comme lu »
+sur la page, qui répond aussi au démarrage — les messages existants naissent non lus, la migration ne fabrique aucune
+lecture ; l'arborescence compte les **non lus** au lieu du total ; **seul l'écran de l'inbox marque** (ni le fil de
+l'affaire, ni la recherche, ni le connecteur). Connecteur : `read` dans les deux lectures (décision 708). Migration
+`0105`. **Conséquence** : aucun code avant la validation (`CLAUDE.md` §5).

@@ -1566,10 +1566,135 @@ double visibilité exigée par la Definition of Done.
 
 - **Aucun envoi depuis l'inbox** : répondre appartient à `CRM-058`. L'écran montre le courrier reçu.
 - **Aucun rendu HTML** (§18.4), et l'absence est figée.
-- **Aucune notion de lu / non lu** : rien ne la porte en base, et l'inventer côté client donnerait
-  un état faux dès la seconde session. Elle appartient à une unité qui la persistera.
+- ~~**Aucune notion de lu / non lu**~~ — **à livrer par la tranche 2** (décision 707), §18 bis.
 - **Aucun rôle de tri** (§18.1) : un membre ordinaire ne voit aucun non classé.
 - **Aucune suppression de message** depuis l'écran : la purge relève d'une unité RGPD.
+
+---
+
+## 18 bis. Lu / non lu — `CRM-057` tranche 2
+
+*Spécification proposée le 2026-10-26, avant tout code. Arbitrages déjà rendus : la notion est **à livrer** et le rôle
+de tri des non classés est **hors périmètre** (décision 707, option C) ; **connecteur MCP : oui, famille `messagerie`**,
+l'état lu paraît dans les lectures et **aucun outil ne marque** (décision 708, M1 B) — aucune case nouvelle dans la
+matrice. Les points marqués **[proposition]** sont les choix de cette spécification, soumis à la validation du
+responsable (décision 715).*
+
+### 18 bis.1 Ce que la mesure établit, le 2026-10-26, sur la pile de développement
+
+- **Rien ne porte la lecture en base.** `mail_messages` n'a aucune colonne d'état, et `mail_message_occurrences.flags`
+  porte les drapeaux IMAP **de la boîte** — `\Seen` y dit qu'un client de messagerie a ouvert le message dans cette
+  boîte, pas qu'une personne l'a lu dans le CRM. Le §18.9 le disait : inventer l'état côté client le rendrait faux dès la
+  seconde session.
+- **`mail_messages.direction`** vaut `inbound` ou `outbound` ; le seed porte quatre messages reçus (§18.7), aucun envoyé.
+- **`public.inbox_arborescence()`** rend `(track_id, track_name, channel_id, channel_name, card_id, card_title, nombre)`,
+  `SECURITY INVOKER`, `STABLE` : le compte suit la RLS de l'appelant (§18.3). Elle n'a qu'un appelant, `inbox.ts`.
+- **La liste énumère des fils** (§5.4 bis du design system, `docs/SPEC-cards.md` §16.16) : ouvrir une ligne ouvre le
+  message le plus récent du fil, et le sélecteur du panneau de lecture donne les autres.
+- **Le produit a déjà un état de lecture** : celui des notifications (`docs/SPEC-notifications.md` §15.1,
+  `docs/DESIGN_SYSTEM.md` §5.43) — un liseré, des icônes `Mail` / `MailOpen`, « Marquer comme lue / non lue ». La
+  tranche le réemploie plutôt que d'en inventer un second.
+
+### 18 bis.2 Les choix
+
+1. **[proposition] L'état est PERSONNEL.** Chaque personne a le sien : ce qu'une administratrice a lu reste non lu pour
+   le propriétaire de la boîte. Un état partagé ferait disparaître un message de la vue de tous dès qu'un seul l'a
+   ouvert — c'est le mode de défaillance d'une boîte partagée sans attribution, et le CRM n'a pas d'attribution des
+   messages.
+2. **[proposition] Seul le courrier REÇU peut être non lu.** Un message `outbound` est écrit par le produit au nom d'un
+   membre ; il est toujours lu, sans ligne en base.
+3. **[proposition] Ouvrir un fil le marque lu tout entier.** Ouvrir une ligne affiche le fil (§5.4 bis) : les messages
+   du fil présents dans la page passent lus. Marquer le seul message affiché laisserait la ligne non lue après qu'on l'a
+   ouverte, ce qui ferait mentir la liste.
+4. **[proposition] « Marquer comme non lu » porte sur le message affiché**, depuis le panneau de lecture ; le fil
+   redevient non lu, puisqu'un fil est non lu dès qu'un de ses messages l'est. Le panneau reste ouvert et **ne remarque
+   pas lu** le message tant qu'on ne l'a pas rouvert — sinon le geste s'annulerait de lui-même.
+5. **[proposition] « Tout marquer comme lu »** dans l'en-tête de la liste : marque lus les fils de la page affichée
+   (cinquante messages au plus, `MESSAGES_PAR_PAGE`). C'est aussi la réponse au démarrage : les messages déjà reçus
+   naissent **non lus** pour tous, la migration ne pouvant pas juger qui les a déjà vus — elle ne fabrique aucune
+   lecture (`CLAUDE.md` §8).
+6. **[proposition] Le compte de l'arborescence devient celui des NON LUS.** Chaque dossier affiche ses messages non lus
+   de l'appelant — absent à zéro, « 99+ » au-delà de 99, nom accessible exact (« 3 messages non lus ») — et sa ligne
+   passe en graisse moyenne. Le total des messages, que l'arborescence montrait depuis le §18.3, n'est plus affiché : deux
+   nombres par dossier se liraient mal, et c'est le non lu qui dit où aller. « Non classés » reste affiché à zéro
+   (§18.3), sans nombre.
+7. **[proposition] Seul l'écran de l'inbox marque.** Lire un message dans le fil de l'affaire, par la recherche ou par le
+   connecteur **ne change pas** son état : une lecture ne doit pas écrire, et le fil d'une affaire affiche des
+   événements, pas une boîte de réception. C'est une limite nommée (§18 bis.8).
+
+### 18 bis.3 Le modèle — migration `0105_mail_message_reads.sql`
+
+**`public.mail_message_reads`** — une ligne par message lu par une personne :
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `message_id` | `uuid` | FK `mail_messages` `on delete cascade` ; PK composite |
+| `user_id` | `uuid` | FK `profiles` `on delete cascade` ; PK composite |
+| `read_at` | `timestamptz` | non nul, `now()` |
+
+- **RLS activée ; lecture de SES lignes seules** (`user_id = auth.uid()`). Aucune écriture directe n'est accordée à
+  `authenticated` : les deux fonctions ci-dessous sont les seules portes.
+- **`public.mark_messages_read(p_message_ids uuid[]) returns integer`** — `SECURITY DEFINER`, `search_path` vide.
+  Insère, pour l'appelant, une ligne par message **reçu** que `app.peut_voir_message` lui rend visible, `on conflict do
+  nothing`, et rend le nombre de messages visibles désormais lus. **Un identifiant invisible, inconnu ou envoyé est
+  ignoré sans erreur** : c'est la règle de discrétion (`docs/SPEC-permissions-rls.md` §7), un refus ne se distinguant pas
+  d'une absence. Plus de 200 identifiants : `22023` `too_many_messages`. Sans session : `42501`.
+- **`public.mark_message_unread(p_message_id uuid) returns boolean`** — même forme : retire la ligne de l'appelant, rend
+  vrai si une ligne a été retirée. Un message invisible rend faux.
+- **`public.is_read(public.mail_messages) returns boolean`** — colonne calculée, `STABLE`, `SECURITY INVOKER` : vrai pour
+  un message `outbound`, ou si l'appelant en a une ligne de lecture. La liste la demande avec ses colonnes (`is_read`),
+  sans jointure côté client.
+- **`public.inbox_arborescence()`** gagne une colonne **`unread_count bigint`** : les messages `inbound` sans ligne de
+  lecture de l'appelant. Le type rendu change, donc `drop` puis `create` dans la même migration, privilèges reposés ;
+  son seul appelant est livré dans le même changement, et le contrat de types est régénéré.
+
+**Index** : la clé primaire `(message_id, user_id)` sert `is_read` et le compte ; aucun autre.
+
+### 18 bis.4 L'écran
+
+La forme est au §5.4 quinquies de `docs/DESIGN_SYSTEM.md` ; le contenu ici.
+
+- **Ligne de fil non lue** : liseré gauche 3 px `--color-brand` et objet en graisse forte ; le nom accessible du bouton
+  commence par « Non lu, ».
+- **Arborescence** : le compte des non lus (§18 bis.2 point 6).
+- **Panneau de lecture** : à l'ouverture d'un fil, `mark_messages_read` avec les identifiants du fil présents dans la
+  page ; puis la liste et l'arborescence sont relues. Le bouton « Marquer comme non lu » (`Mail`) / « Marquer comme lu »
+  (`MailOpen`) se pose dans l'en-tête du message, celui des notifications réemployé.
+- **En-tête de la liste** : « Tout marquer comme lu » (`CheckCheck`), présent seulement si la page porte un non lu.
+- **Un refus ou une panne du marquage** s'affiche dans le panneau en `role="alert"`, et l'état affiché **n'est pas
+  changé** : l'écran ne montre jamais lu ce que la base n'a pas enregistré.
+
+### 18 bis.5 Le connecteur
+
+`crm_card_mail_list` et `crm_mail_get` rendent **`read`**, l'état **de la personne** que le connecteur représente
+(`is_read`). Aucun outil ne marque, et **lire par le connecteur ne marque pas** (§18 bis.2 point 7). Aucune case nouvelle
+dans la matrice : c'est l'action `consulter` de la famille `messagerie` (`docs/SPEC-mcp.md` §9.2 decies).
+
+### 18 bis.6 Seed
+
+Le profil administrateur du seed **ouvre** le fil « Demande de devis — refonte » par la vraie fonction, avec son propre jeton
+(`mark_messages_read`, `api_admin`) : ses deux messages sont lus pour ce profil, « Candidature spontanée » et « Point
+d'avancement — migration ERP » restent non lus. Rien n'est écrit en base à la main. Les autres profils voient leurs
+messages visibles non lus.
+
+### 18 bis.7 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | la table et sa RLS (lecture de ses lignes seules, aucune écriture directe) ; `mark_messages_read` ignore un invisible et un envoyé, est idempotente, refuse 201 identifiants et l'anonyme ; `mark_message_unread` ; `is_read` ; `unread_count` personnel |
+| Vitest | le fil non lu dès qu'un de ses messages l'est ; le compte « 99+ » et son nom exact ; le marquage qui échoue ne change pas l'état |
+| API | hors interface, avec les vrais jetons : l'état d'une personne n'est pas celui d'une autre ; le membre ne marque pas un message qu'il ne voit pas (zéro ligne, aucune ligne en base) ; l'insertion directe dans la table est refusée |
+| MCP | `read` dans les deux lectures, et lire ne marque pas |
+| E2E `ui` | ouvrir un fil le marque lu et fait baisser le compte ; « Marquer comme non lu » le rétablit ; « Tout marquer comme lu » ; au clavier et à la souris |
+| Captures | les quatre paliers, une ligne lue et une non lue, l'état d'erreur du marquage |
+
+### 18 bis.8 Limites nommées
+
+- **Aucune synchronisation avec IMAP** : lire dans le CRM ne pose pas `\Seen` dans la boîte, et l'inverse non plus. Les
+  deux états ne disent pas la même chose (§18 bis.1).
+- **Lire dans le fil de l'affaire, la recherche ou le connecteur ne marque pas** (§18 bis.2 point 7).
+- **Aucun temps réel** : le compte se met à jour à la relecture de l'écran, comme aujourd'hui.
+- **Le rôle de tri reste absent** (décision 707) : l'absence figée du §18.1 est inchangée.
 
 ---
 

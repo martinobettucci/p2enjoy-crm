@@ -861,6 +861,10 @@ de l'affaire comme un envoi depuis l'écran.
 ou une identité non permises (`42501`) ; une adresse d'expédition inconnue est refusée avant l'appel, en nommant les
 adresses possibles.
 
+**L'état lu, ajouté par `CRM-057` tranche 2** (décision 708, M1 B ; `docs/SPEC-mail-subsystem.md` §18 bis.5) :
+`crm_card_mail_list` et `crm_mail_get` rendent `read`, l'état de la personne que le connecteur représente. Aucun outil ne
+marque, et lire par le connecteur ne marque pas. Même action `consulter`, aucune case nouvelle.
+
 **Ce que la tranche ne fait pas, et pourquoi.**
 - **Les pièces jointes** : ni lues ni envoyées.
 - **Classer, déclasser ou mettre en sommeil un fil** de la boîte de réception : gestes de l'écran.

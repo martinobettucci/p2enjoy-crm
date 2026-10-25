@@ -7114,12 +7114,33 @@ et dans l'inbox.
       compris et **quatre** dégradations, dont les deux retraits qui portent la garantie du §18.4.
 - [x] **Compteurs de `scripts/verify-harness.sh` révisés** : 28 → **29** fichiers SQL,
       1861 → **1884** assertions, 469 → **478** scénarios d'API, 157 → **163** scénarios d'interface.
-- [ ] **Aucun envoi depuis l'inbox** : répondre appartient à `CRM-058`.
+- [x] **Aucun envoi depuis l'inbox** : répondre appartient à `CRM-058` — *livré depuis par `CRM-058` : le panneau de
+      lecture porte le formulaire de réponse (`FormulaireEnvoi`, `RouteInbox.tsx`).*
 - [ ] **Aucune notion de lu / non lu** : rien ne la porte en base, et l'inventer côté client
-      donnerait un état faux dès la seconde session.
-- [ ] **Aucun rôle de tri** : un membre ordinaire ne voit **aucun** message non classé. L'absence
+      donnerait un état faux dès la seconde session. — *Portée par la **tranche 2** ci-dessous (décision 707).*
+- [x] **Aucun rôle de tri** : un membre ordinaire ne voit **aucun** message non classé. L'absence
       est **figée** par une assertion pgTAP et par un scénario d'API, à réviser le jour où un tel
-      rôle existera.
+      rôle existera. — ***Hors périmètre** par arbitrage du responsable (décision 707, option C) : l'absence figée est
+      juste, et reste.*
+
+#### Tranche 2 — lu / non lu `[ ]`
+
+*Spécification : `docs/SPEC-mail-subsystem.md` §18 bis, `docs/DESIGN_SYSTEM.md` §5.4 quinquies — proposées le
+2026-10-26, **en attente de la validation du responsable** (décision 715). Connecteur MCP : oui, famille `messagerie`,
+action `consulter` — `read` dans `crm_card_mail_list` et `crm_mail_get`, aucun outil pour marquer (décision 708, M1 B) ;
+aucune case nouvelle. Noms : `mail_message_reads`, `mark_messages_read`, `mark_message_unread`, `is_read`,
+`unread_count` (décision 658).*
+
+- [ ] **Spécification validée** par le responsable.
+- [ ] **Migration `0105_mail_message_reads.sql`** : la table, sa RLS, les deux fonctions, `is_read`, `unread_count` dans
+      `inbox_arborescence` ; `docs/SCHEMA.md`, contrat de types régénéré, `docs/PROD_MIGRATIONS.md`.
+- [ ] **pgTAP** dédié, **API** aux jetons réels (`e2e/api/inbox-lecture.spec.ts`), **Vitest**, **MCP** (unitaire et
+      intégration).
+- [ ] **Écran** : ligne non lue, compte de l'arborescence, marquage manuel, « Tout marquer comme lu », refus affiché ;
+      E2E au clavier et à la souris, captures aux quatre paliers observées.
+- [ ] **Seed** : le fil « Demande de devis — refonte » ouvert par le profil administrateur, par la vraie fonction.
+- [ ] **Manuel** (chapitre de l'inbox), `docs/SPEC-mcp.md` §9.2 decies, `README.md` si besoin, `CHANGELOG.md`.
+- [ ] **Livraison** en production, sur instruction du responsable.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E ; captures aux quatre
 paliers ; message classé visible à la fois dans la card et dans l'inbox ». **Les trois sont
