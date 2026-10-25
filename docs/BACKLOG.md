@@ -16408,10 +16408,11 @@ registre**, fichier du système de fichiers partagé, répertorie les sessions e
 car une VM peut être recyclée alors que le système de fichiers est conservé (constaté le 2026-10-25 à 10:04 UTC).
 **Connecteur MCP : non** (outillage de développement). Spécification à écrire avant le code.
 
-- [ ] **T1 — mesures et spécification** : inventaire des ports publiés, des noms de conteneurs figés, des chemins de
+- [@] **T1 — mesures et spécification** : inventaire des ports publiés, des noms de conteneurs figés, des chemins de
       l'hôte partagés (volumes liés du dépôt, verrou de reconstruction, fichiers de `/tmp`), et des appelants qui
       nomment un conteneur ou un port en dur ; forme du registre (emplacement, entrée par session, vérification de
       vie : identifiant de démarrage de la VM, conteneurs du projet présents) ; schéma d'attribution des ports.
+      *Prise en charge : session interactive 2026-10-25 10:04 UTC depuis 2026-10-25 10:12 UTC — état avant : [ ]*
 - [ ] **T2 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un
       recyclage de VM, deux attributions simultanées départagées).
 - [ ] **T3 — la pile paramétrée** : nom de projet Compose, noms de conteneurs, ports et volumes par emplacement ;
