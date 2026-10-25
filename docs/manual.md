@@ -2490,6 +2490,81 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
   étape n'a, elle, toujours pas d'écran.
 - Les **droits fins** par track et par channel relèvent du chapitre 24 bis.
 
+### 5.4 bis Les budgets d'un track
+
+*Livré par `CRM-084` tranche 2 ; le seuil d'ancienneté par sa tranche 4. Captures dans
+`docs/captures/CRM-084/budgets-*.jpg`.*
+
+**À quoi sert un budget.** Un budget est une **enveloppe de dépenses** d'un track — « Publicité
+2026 », « Salon du web 2025 ». Les lignes de coût d'une affaire s'y rattachent, depuis la section
+« Coûts » de sa fiche, et les écrans de coûts comparent, budget par budget, ce qui était prévu à ce qui
+a été dépensé (chapitre 5 *quinquies*).
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Arborescence : tracks et channels ». Dépliez un track avec
+le chevron : sous ses channels paraît le bloc **« Budgets »**.
+
+**Ce que le tableau montre**, une ligne par budget :
+
+| Colonne | Contenu |
+|---|---|
+| Nom | le nom du budget |
+| Devise | trois lettres — `EUR`, `CHF` |
+| Enveloppe | le montant prévu ; **cellule vide** si l'enveloppe n'est pas décidée — ce n'est pas zéro |
+| Récurrent | « Oui » ou « Non » |
+| Occurrences ouvertes | pour un budget récurrent, le nombre de ses occurrences **non clôturées** ; c'est aussi le lien qui les déplie (chapitre 5.5). **Cellule vide** pour un budget non récurrent, qui n'en porte jamais |
+| État | « Ouvert » ou « Clôturé », écrit en toutes lettres |
+| Actions | monter, descendre, modifier, clôturer — ou rouvrir |
+
+**Les budgets clôturés sont masqués par défaut.** Cochez **« Afficher les budgets clôturés »** pour
+les faire reparaître : ils ne sont pas supprimés, ils sortent seulement du chemin.
+
+**Créer un budget.** Le bouton **« Nouveau budget »**, sous le tableau, ouvre le formulaire dans la
+page, le curseur dans le premier champ :
+
+| Champ | Règle |
+|---|---|
+| Nom | obligatoire. Deux budgets **ouverts** d'un même track ne portent pas le même nom ; un budget clôturé peut, lui, garder un nom qu'un nouveau budget reprend — « Salon 2025 » l'année suivante |
+| Devise | trois lettres majuscules, `EUR` par défaut. Une autre écriture est signalée sur le champ, et « Créer » reste indisponible |
+| Enveloppe (facultative) | un nombre. **Laissez vide** si l'enveloppe n'est pas décidée ; un montant **négatif** est accepté — un avoir, un remboursement. Une saisie qui n'est pas un nombre est signalée sur le champ |
+| Seuil d'ancienneté (facultatif) | un nombre de **jours entiers, à partir de 1**. Au delà, une dépense de ce budget qui attend son coût réel est signalée **en retard** dans l'onglet « À saisir » (chapitre 5 *octies*). **Laissez vide pour ne rien signaler** : aucun seuil n'est alors appliqué, pas même un seuil « par défaut ». « 0 » ou « 2,5 » sont signalés sur le champ |
+| Budget récurrent (porte des occurrences) | à cocher pour un budget qui se décline en périodes — « Janvier 2026 », « Février 2026 ». Un budget récurrent ne reçoit aucune ligne de coût tant qu'il ne porte pas au moins une occurrence ouverte (chapitre 5.5) |
+
+**Modifier un budget.** Le crayon rouvre le même formulaire, **prérempli** avec les valeurs
+actuelles. Vider l'enveloppe ou le seuil les **efface** réellement. Un budget qui porte des
+occurrences ne redevient pas non récurrent : retirez d'abord ses occurrences.
+
+**Réordonner.** Les flèches montent ou descendent un budget d'un cran ; elles sont désactivées en tête
+et en fin de liste, et le disent.
+
+**Clôturer un budget.** Le cadenas demande une **confirmation**, dans la page : « Clôturer le budget
+« … » ? ». Elle dit ce que la clôture fait — le budget sort du tableau sans être supprimé, et peut
+être rouvert — et elle **compte** les dépenses du budget qui attendent encore leur coût réel : « Ce
+budget porte n ligne(s) sans coût réel ; elles resteront saisissables après la clôture. » La clôture
+n'est **pas empêchée** par ce décompte : c'est une décision de gestion, elle est seulement éclairée.
+Un budget clôturé **ne reçoit plus de nouvelle ligne de coût** ; celles qu'il porte restent, et leur
+coût réel se saisit encore — les factures arrivent souvent après la clôture.
+
+**Rouvrir un budget.** Affichez les budgets clôturés, puis utilisez le cadenas ouvert. Aucune
+confirmation n'est demandée. Si un budget ouvert du track a repris son nom entre-temps, la
+réouverture est refusée : renommez l'un des deux.
+
+**Un budget ne se supprime pas** : des dépenses le référencent, et le supprimer effacerait la
+dépense constatée. On le clôture.
+
+**Qui.** Créer, modifier, réordonner, clôturer et rouvrir un budget sont réservés aux
+**administrateurs de l'espace de travail** — le serveur l'applique. Un autre membre voit le tableau
+des budgets des tracks qu'il lit ; ses commandes restent à leur place, **grisées**, et le bandeau de
+l'écran dit pourquoi (chapitre 3.6). Afficher les budgets clôturés et déplier les occurrences lui
+restent ouverts.
+
+| Message | Ce qu'il signifie |
+|---|---|
+| « Un budget ouvert de ce track porte déjà ce nom… » | Choisissez un autre nom, ou clôturez l'autre budget |
+| « Ce budget porte des occurrences : supprimez-les avant de le rendre non récurrent. » | Retirez ses occurrences d'abord (chapitre 5.5) |
+| « Cette valeur a été refusée : vérifiez le nom et la devise. » | Le serveur a refusé la forme d'une valeur |
+| « Seul un administrateur de cet espace de travail peut gérer les budgets. » | Le geste demande un droit que votre compte n'a pas |
+| « Rien n'a été modifié… » | Vos droits sur ce budget ont changé depuis l'ouverture de l'écran, ou il a disparu |
+
 ### 5.5 Les occurrences d'un budget récurrent
 
 *Livré par `CRM-084` tranche 3. Captures dans `docs/captures/CRM-084/occurrences-*.jpg`.*
@@ -2546,11 +2621,15 @@ masque pas, parce que vos droits peuvent avoir changé depuis l'ouverture de la 
 | « Seul un administrateur… » | Le geste demande un droit que votre compte n'a pas |
 | « Rien n'a été modifié » | Vos droits sur ce budget ont changé depuis l'ouverture de l'écran |
 
-### 5.6 Ce qui n'est pas encore là, côté budgets
+### 5.6 Ce qui n'est pas là, côté budgets
 
-- **L'administration des budgets eux-mêmes n'a pas de chapitre dans ce manuel.** Le tableau existe
-  depuis `CRM-084` tranche 2 ; sa documentation n'a jamais été écrite, et cette tranche ne l'écrit
-  pas à sa place — l'écart est consigné au registre plutôt que comblé au passage.
+Ces absences sont voulues, et non des oublis :
+
+- **aucune conversion de devise** : chaque budget compte dans sa propre devise, et les écrans de coûts
+  rendent un histogramme par devise plutôt qu'un total qui mélangerait des euros et des francs ;
+- **aucune occurrence engendrée automatiquement**, aucun calendrier (chapitre 5.5) ;
+- **aucune alerte de dépassement** ni aucun envoi d'email : un dépassement se lit sur l'histogramme ;
+- **aucun export comptable**, aucun import de factures.
 
 ## 5 bis. Composer un workflow : ses étapes, ses transitions et son formulaire
 
