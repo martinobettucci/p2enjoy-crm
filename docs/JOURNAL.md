@@ -34582,3 +34582,39 @@ dirais non, aucun intérêt ».*
 relecture des choix de forme de `docs/SPEC-ia.md` §14 (`CRM-113` T3). **À poser avant toute spécification**, par la règle
 du connecteur (`CLAUDE.md`, décision 627) : les deux questions MCP pour lu / non lu, pour les pièces jointes et la copie
 cachée, pour la corbeille et son effacement, et pour le score de santé.
+
+### décision 708 — Arbitrages du responsable du 2026-10-25 (nuit, suite) : les deux scores de santé, les questions du connecteur, le journal d'audit
+
+*2026-10-25, session interactive. Réponse du responsable : « 11b les deux scores, visibles sur la card et en couleurs ; le
+reste ok pour toutes les recommandations ».*
+
+1. **`CRM-066`, le score de santé — les DEUX compositions, toutes deux affichées sur l'affaire, en couleurs.**
+   - **Le score de dynamique** : 100, moins des pénalités affichées une à une — étape figée au-delà du seuil de son nœud
+     (−30), prochaine action en retard (−25) ou absente (−15), aucun contact depuis plus de 14 jours (−20) ou plus de 30
+     jours (−30) ; borné entre 0 et 100. Il dit **quoi faire**.
+   - **La santé commerciale** : moyenne pondérée de quatre signaux notés sur 100 — probabilité de l'étape (40 %),
+     fraîcheur du dernier contact (25 %), ponctualité de la prochaine action (20 %), ancienneté rapportée au seuil
+     (15 %). Elle dit **les chances de gagner**.
+   - **Paliers et couleurs**, communs aux deux : sain à 70 et plus, à surveiller de 40 à 69, en danger sous 40 — les
+     couleurs de signification de la charte (`CLAUDE.md` §4 : vert succès, jaune accent, rouge danger), le palier écrit
+     en toutes lettres et pas seulement en couleur (`CLAUDE.md` §22). « Sur la card » se lit sur la carte du board et
+     sur la fiche de l'affaire ; `docs/DESIGN_SYSTEM.md` reçoit le composant avant le code.
+   - **Calcul à la lecture**, par une fonction en base (option A) : toujours juste, sans ordonnanceur.
+   - **Connecteur MCP : oui, famille `affaires`** (M4, option B) — les deux scores et leurs composantes dans
+     `crm_card_get` et `crm_card_list`.
+2. **`CRM-057`, lu / non lu — connecteur (M1, option B)** : oui, famille `messagerie`, l'état lu paraît dans les
+   lectures ; aucun outil pour marquer.
+3. **`CRM-058`, pièces jointes et copie cachée — connecteur (M2, option B)** : la copie cachée seule, dans
+   `crm_mail_send` (famille `messagerie`) ; aucune pièce jointe par le connecteur.
+4. **`CRM-077`, la corbeille — connecteur (M3, option A)** : aucun outil nouveau ; l'outil de mise à la corbeille existe,
+   et la règle de visibilité (un membre voit ce qu'il a lui-même mis) s'applique d'elle-même à ce qu'il lit.
+5. **`CRM-072`, journal d'audit et RGPD — arbitrages de produit, tous A.** Le journal enregistre les **gestes sensibles** :
+   droits et appartenances, configuration (workflows, champs, réglages), connexions, exports, effacements et corbeille. Il
+   est consulté par les **administrateurs de l'espace**, et par le superadministrateur pour la plateforme. Il est conservé
+   **1 an**, puis effacé automatiquement, l'effacement lui-même journalisé. Le volet RGPD d'une personne (un contact)
+   offre un **export** de ses données (JSON) et un **effacement par anonymisation**. Le journal est **en ajout seul** : nul
+   ne le modifie ni ne le supprime, administrateur compris, et c'est tenu en base. Connecteur MCP : non (décision 707).
+
+**Toujours en attente** : la validation de la spécification de `CRM-105` T1, et la relecture de `docs/SPEC-ia.md` §14
+(`CRM-113` T3). **Conséquence** : `CRM-057`, `CRM-058`, `CRM-066`, `CRM-072` et `CRM-077` ont désormais tous leurs
+arbitrages ; leur spécification peut s'écrire, puis le code.
