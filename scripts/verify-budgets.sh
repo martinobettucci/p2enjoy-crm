@@ -211,10 +211,16 @@ fi
 # La forme sous laquelle l'inverse s'introduirait est un `disabled` calculé sur autre chose que
 # l'écriture en cours. Le contrôle regarde la confirmation : son bouton ne s'éteint que pendant
 # l'écriture.
-if grep -q 'disabled={enCours}' "$ECRAN"; then
-	ok "le bouton de clôture ne s'éteint QUE pendant l'écriture — la clôture n'est pas empêchée (§4.1)"
+# RÉVISÉ le 2026-10-25 (`CRM-084`, clôture de l'unité) : depuis `CRM-093` (docs/SPEC-droits-interface.md §3), le
+# bouton s'éteint AUSSI pour un compte à qui le serveur refuserait le geste — `droit.disabled`, lu sur la ligne de
+# l'espace. C'est un refus de DROIT, que la base applique de toute façon, et non une garde tirée de ce que la
+# confirmation annonce. Le contrôle exigeait le texte d'avant `CRM-093` et rougissait sur du code conforme ; il
+# exige désormais la forme exacte du bouton DESTRUCTIF — le droit, puis l'écriture en cours, et rien d'autre.
+# Une garde tirée du décompte (`sansReel`) y ajouterait un troisième terme, et le ferait rougir.
+if grep -q 'variante="destructif" disabled={droit.disabled === true || enCours}' "$ECRAN"; then
+	ok "le bouton de clôture ne s'éteint que sur le droit refusé ou pendant l'écriture — la clôture n'est pas empêchée (§4.1)"
 else
-	fail "le bouton de clôture ne porte plus « disabled={enCours} » : vérifiez qu'aucune garde ne l'empêche"
+	fail "le bouton de clôture ne porte plus « disabled={droit.disabled === true || enCours} » : vérifiez qu'aucune garde ne l'empêche"
 fi
 
 # `docs/SPEC-costs.md` §4.1 : la clôture « n'est pas silencieuse », et elle COMPTE. Ce contrôle a
