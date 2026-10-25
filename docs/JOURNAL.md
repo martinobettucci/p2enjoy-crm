@@ -33974,3 +33974,22 @@ responsable. `CRM-013` reste `[~]` : `api_tokens` et `audit_log` n'existent touj
 `ls docs/CloudWorker.md`) a précédé la lecture de `docs/CloudWorker.md`, et l'annonce du §0 bis n'a pas été la première
 ligne de la première réponse : troisième occurrence du même écart, après les décisions 678 et 683. Il ne se rattrape pas ;
 il est consigné ici pour que la session suivante ouvre **par la lecture du fichier, et rien avant**.
+### `CRM-037`, INC-134 — fin de session : la mention livrée en développement, la campagne mesurée
+
+*2026-10-25, session planifiée ouverte à 02:12:29 UTC.* **Livré** (décision 688) : « Requis à l'étape <étape> » par
+la clé paramétrée `form.required.reason` ; unitaire au texte entier (mutation tuée), E2E du formulaire et du parcours
+sur session réelle, captures observées. **Trouvé en regardant les captures** : la réponse substituée de
+`formulaire.spec.ts` omettait les colonnes d'en-tête, et l'écran rendait « Montant NaN » et « Archivé » — états que la
+base ne produit pas pour `…0000c6` (mesuré) ; la réponse les porte désormais. `verify-formulaire.sh` rendait 50/51 :
+`RouteCard.tsx` cite `CRM-037` en ligne 4 et le contrôle ne lisait que trois lignes — fenêtre portée à l'en-tête
+complet (remède d'INC-192), 51/51.
+
+**Campagne de fin de session**, synchronisée avant (aucune migration, seed ni dépendance arrivés) : typecheck, unitaires
+4350/4350, build, pgTAP 94 fichiers / 3974 assertions, API 1182, courrier 44, pytest 246 — verts ; interface **915
+passés, 9 échecs** ; les neuf rejoués seuls après seed : tous verts. Huit lignes `502`/`503` en console dans la campagne
+(INC-292, INC-299) ; un scénario de `formulaire.spec.ts` est du nombre, rouge sur un `503` et vert seul. Aucun échec
+imputable : le changement est un texte et une réponse substituée. La série des `verify-*.sh` n'a pas été rejouée
+(seul `verify-formulaire.sh`, celui de l'unité).
+
+**Où reprendre.** `CRM-037` reste `[~]` : captures « de chaque étape » (seed, `CRM-046`), et la tranche INC-134 attend
+sa livraison (`docs/PROD_MIGRATIONS.md` §2.20) et le constat du responsable. Prise libérée.

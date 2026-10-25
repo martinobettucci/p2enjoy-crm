@@ -3773,8 +3773,7 @@ compensée par une preuve de substitution.
   certificat du proxy suivie d'un `npm ci` précédé d'un `npm config set cafile` (INC-032, INC-042),
   et l'arborescence de compatibilité des navigateurs Playwright (INC-036, **sixième** occurrence).
 
-### CRM-037 — Rendu du formulaire conditionnel `[@]`
-*Prise en charge : CloudWorker 2026-10-25 02:12 UTC depuis 2026-10-25 02:15 UTC — état avant : [~] — tranche prise : INC-134, la mention « requis pour passer à » sur l'étape courante*
+### CRM-037 — Rendu du formulaire conditionnel `[~]`
 Champs par étape, section repliée des valeurs d'autres étapes, mention « requis pour passer à ».
 **DoD** : E2E (transition bloquée, saisie, transition réussie) ; captures de chaque étape ;
 accessibilité des erreurs vérifiée.
@@ -4129,10 +4128,16 @@ table, ni statut, ni flux.
   arbitrage sur ce que la mention doit dire.~~ **Tranchée le 2026-10-25** (décision 688) : la mention
   devient « Requis à l'étape <étape> », clé paramétrée `form.required.reason`. Mise en œuvre : voir
   la tranche INC-134 ci-dessous.
-- [ ] **Tranche INC-134 — la mention d'un champ exigé à l'étape courante** (décision 688,
-      `docs/SPEC-form-composer.md` §4.4, `docs/DESIGN_SYSTEM.md` §5.7). Spécification committée avant
-      le code. Reste : la clé paramétrée et le composant, les preuves unitaire et E2E révisées avec
-      leur motif, le manuel, les captures de `CRM-037` renouvelées et observées, le CHANGELOG.
+- [~] **Tranche INC-134 — la mention d'un champ exigé à l'étape courante** (décision 688,
+      `docs/SPEC-form-composer.md` §4.4, `docs/DESIGN_SYSTEM.md` §5.7). **Implémentée et vérifiée en
+      développement le 2026-10-25.** Clé paramétrée `form.required.reason` = « Requis à l'étape {etape} »,
+      `FormulaireCard` l'interpole. Unitaire : texte entier comparé, une mutation tuée (la concaténation
+      rétablie). E2E : `formulaire.spec.ts` 26/26 (réponse substituée, désormais aux colonnes que la base
+      rend pour `…0000c6` : les captures montraient « Montant NaN » et « Archivé ») ; `parcours-transition.spec.ts`
+      lit sur la session réelle « Requis à l'étape Signature » sous les trois champs de l'étape.
+      `verify-formulaire.sh` 51/51 après correction de sa fenêtre d'en-tête (remède d'INC-192). Captures
+      `docs/captures/CRM-037/` renouvelées et observées. Manuel, CHANGELOG, `docs/PROD_MIGRATIONS.md` §2.20.
+      **Reste** : la livraison de la webapp en production (§2.20, sur instruction) et le constat du responsable.
 - **INC-065 est ouverte** : rien ne confronte le couple `(slugTrack, slugChannel)` de l'adresse à la
   card qu'elle désigne. Aucun droit n'est contourné — chaque lecture reste soumise à sa politique —,
   mais aucune spécification ne dit ce qu'une adresse incohérente doit rendre. Comportement inchangé,
