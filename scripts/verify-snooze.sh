@@ -103,7 +103,9 @@ ATTENDU_UNIT_TESTS=67
 ATTENDU_API_SCENARIOS=30
 ATTENDU_UI_SCENARIOS=39
 CAPTURES=docs/captures/CRM-081
-ATTENDU_CAPTURES=50
+# 51 versionnées et présentes, constaté le 2026-10-25 (décision 704, INC-309) : la cinquante et unième est antérieure à
+# l'historique disponible du clone (`9f83599`), et le compte figé n'avait pas suivi.
+ATTENDU_CAPTURES=51
 
 RAPIDE=false
 while [ $# -gt 0 ]; do
