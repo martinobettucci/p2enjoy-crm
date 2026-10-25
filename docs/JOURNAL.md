@@ -34559,3 +34559,26 @@ UTC ne prenne la tranche et ne tranche elle-même (décision 684) ; les deux con
 désormais celle du responsable. Le numéro 677 que la session interactive destinait à cette validation a été pris entre-temps
 par `CRM-113` T1. **Aucun code ne change** : la tranche reste `[P]`, sa livraison suit la fenêtre des migrations 102 à
 104, dont le responsable s'est réservé la conduite (décision 679).
+
+### décision 707 — Arbitrages du responsable du 2026-10-25 (nuit) : `CRM-072` ensuite, sans connecteur ; lu / non lu ; pièces jointes et copie cachée ; la corbeille ; le score de santé ; la preuve du runner
+
+*2026-10-25, session interactive. Réponse du responsable : « toutes les options recommandées me vont ; pour l'audit MCP je
+dirais non, aucun intérêt ».*
+
+1. **La prochaine unité du chunk 5 est `CRM-072`**, journal d'audit consultable et conformité RGPD (elle débloque aussi
+   `CRM-013` et `CRM-014`). **Connecteur MCP : non**, « aucun intérêt » — la deuxième question ne se pose donc pas. Ses
+   arbitrages de produit restent à poser avant la spécification, sur le modèle de la décision 648.
+2. **`CRM-057` — option C** : la notion de **lu / non lu est à livrer**, en une tranche à spécifier ; le **rôle de tri**
+   des messages non classés est **hors périmètre**.
+3. **`CRM-058` — option B** : les **pièces jointes à l'envoi** et la **copie cachée** sont à livrer, en une tranche à
+   spécifier.
+4. **`CRM-077`, la corbeille** : rétention de **30 jours** ; à l'expiration, **effacement définitif automatique, et
+   journalisé** ; un membre ordinaire voit dans la corbeille **ce qu'il y a lui-même mis**. Les trois points d'arbitrage
+   de l'unité sont levés : elle redevient du travail de construction, à spécifier.
+5. **`CRM-066`, le score de santé — option B** : la session propose deux compositions possibles, le responsable choisit.
+6. **`CRM-087` — option B** : un agent prouve le runner sur une pile de production **jetable**, sur le poste.
+
+**Non rendues** (aucune recommandation n'avait été donnée) : la validation de la spécification de `CRM-105` T1, et la
+relecture des choix de forme de `docs/SPEC-ia.md` §14 (`CRM-113` T3). **À poser avant toute spécification**, par la règle
+du connecteur (`CLAUDE.md`, décision 627) : les deux questions MCP pour lu / non lu, pour les pièces jointes et la copie
+cachée, pour la corbeille et son effacement, et pour le score de santé.

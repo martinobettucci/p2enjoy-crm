@@ -7068,6 +7068,7 @@ dégradations comprises.
 - **Un rangement manqué n'est pas rejoué** (voir ci-dessus).
 
 ### CRM-057 — Inbox globale `[~]`
+***Arbitré le 2026-10-25 (décision 707, option C)** : la notion de **lu / non lu est à livrer**, en une tranche à spécifier — les deux questions du connecteur MCP d'abord ; le **rôle de tri** des messages non classés est **hors périmètre**, son absence figée reste juste.*
 ***Reste réel au 2026-10-25 (décision 705)** : deux absences figées qu'aucune spécification ne porte — la notion de lu / non lu et un rôle de tri des messages non classés. Les livrer, ou les déclarer hors périmètre, est un **choix de produit du responsable** ; l'envoi depuis l'inbox relève de `CRM-058`.*
 Trois panneaux, arborescence Track → Channel → Card, « Non classés », pile sous 1024 px.
 **DoD** : E2E ; captures aux quatre paliers ; message classé visible **à la fois** dans la card
@@ -7142,6 +7143,7 @@ Ce qui est **déjà tranché**, et ne le sera pas pendant l'implémentation :
   démontre rien, et une trace fabriquée est interdite (CLAUDE.md §8).
 
 ### CRM-058 — Composition et réponse `[~]`
+***Arbitré le 2026-10-25 (décision 707, option B)** : les **pièces jointes à l'envoi** et la **copie cachée** sont à livrer, en une tranche à spécifier — les deux questions du connecteur MCP d'abord.*
 ***Reste réel au 2026-10-25 (décision 705)** : la reprise et le recul sont livrés par `CRM-059` (`[x]`) et les signatures par `CRM-063` (`[x]`) ; restent les **pièces jointes à l'envoi** et la **copie cachée**, qu'aucune spécification ne porte — **choix de produit du responsable** (les livrer, ou les déclarer hors périmètre).*
 `queue_outbound_email`, `smtp_worker`, `Reply-To` de la card, fil respecté, envoi depuis la card
 ou depuis l'inbox par le même chemin.
@@ -7417,7 +7419,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
-| CRM-072 | Journal d'audit consultable et conformité RGPD | `[ ]` |
+| CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; arbitrages de produit à poser avant la spécification | `[ ]` |
 | CRM-073 | Webhooks sortants signés et jetons d'API | `[ ]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
@@ -10390,6 +10392,7 @@ harnais propre à cette unité.
 **Harnais de l'unité rejoué SEUL le 2026-08-29** : `verify-recherche.sh` **54 contrôles, aucune anomalie**, là où la série lui donnait 1 anomalie — troisième fois que ce harnais démontre la leçon de contention.
 
 ### CRM-066 — Analytique de conversion et prévisionnel pondéré `[~]`
+***Arbitré le 2026-10-25 (décision 707, option B)** : la session propose deux compositions du score de santé, le responsable choisit ; la spécification suit, avec les deux questions du connecteur MCP.*
 
 Entonnoir des affaires actives par nœud, par channel et par track ; prévisionnel pondéré par devise ;
 taux de conversion des affaires décidées. Porte aussi `CRM-P02`, le score de santé transparent
@@ -12718,6 +12721,7 @@ of Done : les deux sont explicitement hors périmètre depuis le §7 bis.11.7, e
 unité qui les portera.
 
 ### CRM-077 — Corbeille et restauration `[~]`
+***Arbitré le 2026-10-25 (décision 707)** : rétention de **30 jours** ; à l'expiration, **effacement définitif automatique et journalisé** ; un membre ordinaire voit dans la corbeille **ce qu'il y a lui-même mis**. L'unité redevient du travail de construction, à spécifier — les deux questions du connecteur MCP d'abord.*
 ***Reste réel au 2026-10-25 (décision 705)** : trois **arbitrages du responsable** — la durée de rétention, l'effacement définitif et son parcours RGPD, la visibilité de la corbeille pour un membre ordinaire. Aucune dette de construction.*
 
 Suppression logique et restauration de cards, tracks et channels avec dépendances visibles,
@@ -14244,6 +14248,7 @@ harnais propre à cette unité.
 **Harnais de l'unité, verdicts de la série du 2026-08-29** : `verify-sauvegardes.sh`, `verify-restauration.sh` et `verify-exploitation.sh` (**59 contrôles**) sont **verts**. La question du §INC-190 point (a)/(b)/(c) qui retenait la promotion est **tranchée** par la décision 553 : voie (a).
 
 ### CRM-087 — Migration de production par le runner, sur geste explicite `[~]`
+***Arbitré le 2026-10-25 (décision 707, option B)** : la preuve se fait sur une pile de production **jetable**, sur le poste, par un agent — c'est le travail qui reste à l'unité.*
 ***Reste réel au 2026-10-25 (décision 705)** : la preuve sur une pile de production **jetable** (base vierge, `--migrate`, une table de la dernière migration jointe par l'API sans redémarrage), faisable par un agent sur le poste ; INC-095, que l'unité désignait comme dépendance, est close. Les livraisons de production des 21 au 24 octobre ont migré par le runner (registre à 101 lignes) : si le responsable les juge probantes, l'unité se solde sur elles.*
 *Créée le 2026-08-20 par arbitrage du responsable — `docs/JOURNAL.md` décision 489. Motif :
 l'application manuelle, fichier par fichier, des 52 migrations du dépôt ne passe pas à l'échelle
