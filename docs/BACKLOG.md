@@ -16520,8 +16520,9 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
         (pile recomposée avec les fichiers d'avant la tranche) — INC-310.
       - **Reste `[P]`** : la livraison de `docs/PROD_MIGRATIONS.md` §2.22 (Kong et Realtime recréés, noms inchangés),
         sur l'instruction du responsable, et son constat.
-- [ ] **T3 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un
+- [@] **T3 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un
       recyclage de VM, deux attributions simultanées départagées). Le §11 de la spécification est validé (décision 705).
+      *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 22:52 UTC — état avant : [ ]*
 - [ ] **T4 — la pile par emplacement** : nom de projet et ports par emplacement, `.env`, realm Keycloak ;
       `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev` ; `P2ENJOY_TMP` ; `docs/CloudWorker.md`.
 - [ ] **T5 — preuve** : deux piles debout en même temps sur le même démon, chacune sa preuve courte, sans interférence
