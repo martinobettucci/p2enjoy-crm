@@ -16549,5 +16549,6 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       `verify-reconstruction.sh` **28/28** ; garde des noms **12/12** ; typecheck ; `organisations` UI 7/7 et API 3/3.
       **Reste `[~]`** : `resetMe.sh` et un emplacement autre que 0 ne sont pas encore exercés — ils le seront par T5,
       dans le clone autorisé (décision 711).
-- [ ] **T5 — preuve** : deux piles debout en même temps sur le même démon, chacune sa preuve courte, sans interférence
+- [@] **T5 — preuve** : deux piles debout en même temps sur le même démon, chacune sa preuve courte, sans interférence
       mesurée ; `README.md`, `docs/DAT.md`, `docs/CloudWorker.md` (démarrage par emplacement).
+      *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 22:51 UTC — état avant : [ ]*
