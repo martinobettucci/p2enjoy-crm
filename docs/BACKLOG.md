@@ -16417,10 +16417,14 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       figés, quatorze ports déjà dans `.env` sauf une redirection du realm, 97 fichiers qui nomment un conteneur, la base
       dans le dépôt, la pile revenue à moitié après un recyclage de VM). **Reste** : la validation du responsable sur
       les quatre points du §11, avant tout code.
-- [ ] **T2 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un
-      recyclage de VM, deux attributions simultanées départagées).
-- [ ] **T3 — la pile paramétrée** : nom de projet Compose, noms de conteneurs, ports et volumes par emplacement ;
-      `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev`.
-- [ ] **T4 — les appelants** : harnais `verify-*.sh`, configuration Playwright, seed, lisent la pile de leur session.
+- [ ] **T2 — plus aucun nom de conteneur en développement** (décision 702, spécification §6 et §6 bis) : 243
+      occurrences dans 125 fichiers remplacées par le service Compose (utilitaire shell unique, module TypeScript
+      unique), `http://mcp:8080` dans le seed, alias réseau `realtime-dev.realtime` dans `kong.yml` ; garde contre tout
+      nom `p2enjoy-<service>` littéral, éprouvée par une mutation ; les neuf `container_name` du fichier de base passent
+      dans les assemblages de production et de la cellule, dont les noms sont prouvés inchangés par `config`.
+- [ ] **T3 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un
+      recyclage de VM, deux attributions simultanées départagées). Après validation du §11 de la spécification.
+- [ ] **T4 — la pile par emplacement** : nom de projet et ports par emplacement, `.env`, realm Keycloak ;
+      `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev` ; `P2ENJOY_TMP` ; `docs/CloudWorker.md`.
 - [ ] **T5 — preuve** : deux piles debout en même temps sur le même démon, chacune sa preuve courte, sans interférence
       mesurée ; `README.md`, `docs/DAT.md`, `docs/CloudWorker.md` (démarrage par emplacement).

@@ -34354,3 +34354,21 @@ en échec**, sa suite d'interface complète, rouge par INC-236 seule (`administr
 isolé ; les 15 scénarios du fil verts au même passage). Dégradations tuées, fichiers rendus intacts, pgTAP verte après
 restauration. Il ne reste à la tranche que la livraison et le constat : `CRM-044` et la tranche passent `[P]`
 (décision 697).
+
+### décision 702 — `CRM-115` : plus aucun nom de conteneur en développement ; la production garde les siens
+
+*2026-10-25, session interactive, arbitrage du responsable (option A).* **Problème** : 243 occurrences de noms de
+conteneurs figés dans 125 fichiers de code (`p2enjoy-db` 144 fois), dont trois usages fonctionnels : `kong.yml` joint
+Realtime par `realtime-dev.p2enjoy-realtime`, le seed appelle `http://p2enjoy-mcp:8080`, et la production comme la
+cellule Spark nomment leurs conteneurs (`docker-compose.prod.yml`, `docker-compose.spark.yml`, `scripts/spark/verifier.sh`,
+gestes du contrat de déploiement). Le responsable : « ce qui me travaille le plus, ce sont les noms en dur ».
+**Retenu, validé par le responsable** : les noms ne sont pas paramétrés mais **supprimés** en développement — un
+conteneur se désigne par son **service Compose** (`compose_dev exec db`, `compose_dev ps -q db`, un utilitaire unique
+pour le shell et un pour TypeScript), un appel réseau par le nom de service (`http://mcp:8080`), Realtime par un alias
+réseau qui garde le tenant (`realtime-dev.realtime`) ; le nom de projet Compose suffit alors à séparer deux piles, et le
+préfixe `P2ENJOY_PREFIXE` de la spécification disparaît. Un contrôle de garde fait échouer la série dès qu'un nom
+`p2enjoy-<service>` littéral réapparaît dans le code. **Option A** : les neuf `container_name` du fichier de base
+passent dans les seuls assemblages de production et de la cellule Spark, qui n'ont qu'une pile : leurs noms ne changent
+pas, ni `verifier.sh`, ni les gestes du responsable. **Ordre** : ce chantier est la tranche T2 de `CRM-115`, avant le
+registre et les ports, parce qu'il vaut même avec une seule pile. Les quatre points du §11 de la spécification
+(registre, un checkout une pile, 6 h, emplacement 0) restent à valider avant T3.

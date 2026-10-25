@@ -1,11 +1,12 @@
 # Spécification — Une pile de développement par session
 
 - Unité de backlog : **`CRM-115`** — « Une pile de développement par session, des ports attribués à chaque lancement ».
-- Arbitrage : `docs/JOURNAL.md`, **décision 701**, point 3 (texte du responsable cité au §1).
+- Arbitrages : `docs/JOURNAL.md`, **décision 701**, point 3 (texte du responsable cité au §1), et **décision 702**
+  (plus aucun nom de conteneur en développement, option A pour la production).
 - Documents liés : `docs/SPEC-test-harness.md` §3.5 et §3.6 (reconstruction), `docs/DAT.md` §3.8 et §13 (commandes de
   lancement), `docs/CloudWorker.md` §2 (démarrage d'une session planifiée), `README.md` §6.
 - **Connecteur MCP : non** — outillage de développement, pas une fonctionnalité du produit (décision 701).
-- État : **brouillon, à valider par le responsable** (§11).
+- État : **§6 et §6 bis validés le 2026-10-25 (décision 702)** ; les quatre points du §11 restent à valider avant T3.
 
 ---
 
@@ -68,13 +69,13 @@ défaut). L'emplacement fixe :
 | Grandeur | Emplacement 0 | Emplacement N |
 |---|---|---|
 | nom de projet Compose (`COMPOSE_PROJECT_NAME`) | `p2enjoy-crm` | `p2enjoy-crm-N` |
-| préfixe des conteneurs (`P2ENJOY_PREFIXE`) | `p2enjoy` | `p2enjoyN` |
+| noms des conteneurs | ceux que Compose dérive du projet : `p2enjoy-crm-db-1` | `p2enjoy-crm-N-db-1` |
 | ports publiés | valeurs actuelles de `.env.example` | valeur actuelle + `100 × N` |
 | répertoire de travail des harnais (`P2ENJOY_TMP`) | `/tmp/p2enjoy-crm/0` | `/tmp/p2enjoy-crm/N` |
 
-**L'emplacement 0 reproduit exactement l'état actuel**, noms et ports compris. Un poste qui ne lance qu'une pile ne
-voit rien changer. Les assemblages de production et de la cellule Spark, qui n'emploient pas `.env` de développement,
-gardent leurs noms : le préfixe par défaut est `p2enjoy`.
+**L'emplacement 0 reproduit les ports actuels**. Les noms de conteneurs de développement, eux, changent une fois pour
+toutes, dès la T2 : plus aucun n'est fixé à la main, et nul appelant n'en dépend plus (§6). Les assemblages de
+production et de la cellule Spark **gardent leurs noms** (décision 702, option A, §6 bis).
 
 **Le pas de 100 est sûr jusqu'à dix emplacements**, mesuré sur les valeurs par défaut. Aucun port de base n'en rejoint
 un autre par un multiple de 100 inférieur à 1 000. Le cas le plus serré est celui de Kong : 8000 + 900 = 8900, sous
@@ -152,23 +153,46 @@ périmé à la main.
 - **Les ports** : les quatorze variables du §2, chacune à sa valeur de base + `100 × N`.
 - **Les URL qui les répètent** : `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `SITE_URL` et les variables `SSO_DEV_*`.
   Elles sont réécrites à partir des ports, jamais à la main.
-- **`COMPOSE_PROJECT_NAME`, `P2ENJOY_PREFIXE`, `P2ENJOY_TMP`** et **`P2ENJOY_EMPLACEMENT`**.
+- **`COMPOSE_PROJECT_NAME`, `P2ENJOY_TMP`** et **`P2ENJOY_EMPLACEMENT`**.
 
 Le `.env` d'un emplacement reste un `.env` ordinaire : ses secrets sont tirés par l'amorçage actuel. La ligne 45 du realm
 Keycloak devient `${SSO_DEV_PREVIEW_REDIRECT_URI}`, à partir de `WEBAPP_PREVIEW_PORT`.
 
-## 6. Les appelants
+## 6. Les appelants — plus aucun nom de conteneur en développement (décision 702)
 
-- **Compose** : `container_name: ${P2ENJOY_PREFIXE:-p2enjoy}-db`, et de même pour les vingt. Le nom de projet est
-  retiré de `name:` et vient de `COMPOSE_PROJECT_NAME`, par défaut `p2enjoy-crm`.
-- **Harnais** : `scripts/lib/emplacement.sh` expose `conteneur db` → `p2enjoyN-db`, ainsi que les ports et
-  `P2ENJOY_TMP`. Les 67 `DB_CONTAINER=p2enjoy-db` deviennent `DB_CONTAINER=$(conteneur db)`, et les chemins
-  `/tmp/p2enjoy-*` passent sous `P2ENJOY_TMP`.
-- **Playwright** : `e2e/playwright.config.ts` lit déjà ses ports dans `.env`. Les deux specs d'interface et les dix de
-  courrier qui appellent `docker` lisent le préfixe dans `.env`.
-- **`docs/CloudWorker.md`** : `pkill -f "[v]ite"` devient l'arrêt du **seul** processus qui écoute sur le
-  `WEBAPP_PREVIEW_PORT` de l'emplacement. Le démarrage d'une session planifiée appelle `./runDev.sh`, qui attribue
-  l'emplacement.
+Les noms ne sont pas paramétrés : ils sont **supprimés**. Un nom fabriqué à la main, même variable, reste une
+convention que chaque appelant doit répéter ; le service Compose est déjà un nom stable, propre au projet.
+
+- **Compose (développement)** : aucun `container_name` dans `docker-compose.yml` ni dans `docker-compose.dev.yml`.
+  Compose nomme les conteneurs à partir du projet. Le nom de projet est retiré de `name:` et vient de
+  `COMPOSE_PROJECT_NAME`, par défaut `p2enjoy-crm`.
+- **Shell** : un utilitaire unique de `scripts/lib/env.sh`, à côté de `compose_dev`, désigne un conteneur par son
+  service : `conteneur db` rend l'identifiant du conteneur du service `db` du projet courant, et échoue en le nommant
+  si le service n'est pas lancé. `docker exec p2enjoy-db …` devient `compose_dev exec -T db …`, ou
+  `docker exec "$(conteneur db)" …` lorsqu'il faut un identifiant (`docker inspect`, `docker logs`). Les 67
+  `DB_CONTAINER=p2enjoy-db` disparaissent avec leur variable.
+- **TypeScript** (`e2e/`) : un module unique, à côté des fixtures, rend le conteneur d'un service par la même commande
+  Compose. Les douze specs qui nomment un conteneur l'emploient.
+- **Réseau** : un service s'appelle par son nom de service sur le réseau Compose — le seed passe de
+  `http://p2enjoy-mcp:8080` à `http://mcp:8080`. **Realtime** tire son tenant du premier segment de l'hôte : `kong.yml`
+  l'appelle par l'**alias réseau** `realtime-dev.realtime`, posé sur le service, sans nom de conteneur global.
+- **Commentaires et documentation** : les modes d'emploi des vingt fichiers pgTAP, `README.md`, `docs/DAT.md` et
+  `docs/CloudWorker.md` donnent la commande par service.
+- **Garde** : un contrôle, inscrit dans `scripts/verify-harness.sh` ou dans un harnais dédié, fait échouer la série
+  dès qu'un nom `p2enjoy-<service>` littéral réapparaît dans le code de développement. Ses exceptions sont nommées : les
+  fichiers de production et de la cellule (§6 bis), et le chemin `/var/lib/p2enjoy-mail-sync`, qui n'est pas un nom de
+  conteneur. Il est éprouvé par une mutation.
+- **Hors des noms** : `P2ENJOY_TMP` remplace les chemins `/tmp/p2enjoy-*` des harnais (T4). `pkill -f "[v]ite"`
+  devient l'arrêt du **seul** processus qui écoute sur le `WEBAPP_PREVIEW_PORT` de l'emplacement.
+
+### 6 bis. La production et la cellule Spark gardent leurs noms (décision 702, option A)
+
+Les neuf `container_name` du fichier de base (`db`, `migrations-runner`, `rest`, `realtime`, `storage`, `functions`,
+`kong`, `mail-sync`, `mcp`) passent dans `docker-compose.prod.yml` et dans `docker-compose.spark.yml`, qui gardent déjà
+les leurs (`p2enjoy-caddy`, `p2enjoy-minio`, `p2enjoy-minio-createbucket`). Une production n'a qu'une pile : ses noms,
+`scripts/spark/verifier.sh` et les gestes de `docs/PROD_MIGRATIONS.md` ne changent pas. La T2 le **prouve** : les noms
+rendus par `docker compose … config` avec les fichiers de production, et avec ceux de la cellule, sont identiques
+avant et après.
 
 ## 7. Ce qui reste partagé, et pourquoi c'est sans risque
 
@@ -200,9 +224,9 @@ périmé au démarrage : ce sera vérifié en T5, pas supposé.
 | Tranche | Contenu |
 |---|---|
 | T1 | Mesures et cette spécification |
-| T2 | Le registre et l'attribution (`scripts/lib/emplacement.sh`, `scripts/sessions.sh`), avec leurs preuves hors pile |
-| T3 | Compose paramétré (nom de projet, noms de conteneurs, ports), `.env` par emplacement, realm Keycloak ; `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev` |
-| T4 | Les 97 appelants : harnais, specs, seed ; `P2ENJOY_TMP` ; `docs/CloudWorker.md` |
+| T2 | **Plus aucun nom de conteneur en développement** (§6, §6 bis) : les 125 fichiers, l'alias de Realtime, le seed, la garde et sa mutation ; production et cellule inchangées, prouvées par `config` |
+| T3 | Le registre et l'attribution (`scripts/lib/emplacement.sh`, `scripts/sessions.sh`), avec leurs preuves hors pile — après validation du §11 |
+| T4 | Compose par emplacement (nom de projet, ports), `.env` par emplacement, realm Keycloak ; `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev` ; `P2ENJOY_TMP` ; `docs/CloudWorker.md` |
 | T5 | Deux piles simultanées ; VM recyclée simulée ; `README.md`, `docs/DAT.md` |
 
 ## 11. Points à valider par le responsable
