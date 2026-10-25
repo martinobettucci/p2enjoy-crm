@@ -34652,3 +34652,13 @@ supprimé à la fin. **Bornes** : l'autre session est prévenue avant toute rela
 identique pour ce checkout ; le clone ne sert qu'à la preuve — aucun commit n'y est fait, aucune branche n'y est créée,
 il est effacé après la mesure.
 
+### décision 712 — `CRM-115` T4 : les ports que tient déjà la pile du même checkout ne sont pas « pris »
+
+*2026-10-25, session interactive, en écrivant la T4 — précision technique, sans arbitrage (`docs/CloudWorker.md` §4.1
+bis).* **Problème** : le §4.2 point 3 mesure chaque port de l'emplacement par une liaison. Au premier lancement après
+la T4, la pile de ce checkout est déjà debout sur les ports de l'emplacement 0, **sans entrée au registre** : ses
+propres ports la feraient passer à l'emplacement 1, nom de projet et ports changés, base vide. **Décision** : un port
+tenu par un conteneur du projet candidat **lancé depuis ce checkout** — étiquette Compose
+`com.docker.compose.project.working_dir` — compte comme libre, exactement la règle de `require_free_ports`. Un projet
+homonyme lancé d'un **autre** checkout ne bénéficie de rien : ses ports restent pris. **Conséquence** :
+`docs/SPEC-pile-par-session.md` §4.2 point 3 précisé ; `emplacement_ports_du_checkout`.
