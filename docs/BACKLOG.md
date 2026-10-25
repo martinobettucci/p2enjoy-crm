@@ -11386,7 +11386,7 @@ son clavier n'avait jamais été ni écrit ni éprouvé.
       la corbeille.
 
 ### CRM-084 — Budgets, occurrences et clôture `[@]`
-*Prise en charge : CloudWorker 2026-10-25 05:12:42 UTC depuis 2026-10-25 05:41 UTC — état avant : [~]*
+*Prise en charge : CloudWorker 2026-10-25 05:12:42 UTC depuis 2026-10-25 05:20 UTC — état avant : [~]*
 
 `budgets`, `budget_occurrences` (`docs/SCHEMA.md` §9 bis.4 et §9 bis.5), triggers et politiques,
 plus l'écran d'administration des budgets dans le track (`docs/SPEC-costs.md` §4.1).
