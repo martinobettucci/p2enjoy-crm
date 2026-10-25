@@ -34079,3 +34079,22 @@ un : ils appartiennent à d'autres unités, et une série jouée d'affilée sur 
 (`docs/CloudWorker.md` §2.1 ter). Les journaux sont restés sur l'hôte ; leur examen, harnais par harnais et sur une base
 re-seedée, revient à une session dédiée. **Écart de méthode, rappelé** : la première commande de cette session a précédé
 la lecture de `docs/CloudWorker.md`.
+
+### décision 693 — `CRM-044`, INC-301 : le fil d'activité nomme l'étape comme le board, surcharge comprise
+
+*2026-10-25, session planifiée ouverte à 06:13:12 UTC (`docs/CloudWorker.md`). Tranché par la session (§4.1 bis) ; le
+responsable peut le contredire.*
+
+**Choix de l'unité.** `CRM-111` T1 bis et `CRM-084` portent des prises vivantes ; les autres unités `[~]` du plan
+n'attendent que des livraisons, des constats ou des relectures du responsable, et les `[ ]` du chunk 5 appellent d'abord
+les deux questions du connecteur MCP (décision 677). La session précédente (décision 690) désignait INC-301, « prête à
+être tranchée sous `CRM-044` » : c'est un comportement faux du produit, constructible et prouvable seul. Tranche ouverte
+sur `CRM-044`.
+
+**Retenu** : le même nom partout. `lireEtapesWorkflow` lit `label_override` et résout par `libelleEtape`, réemployée
+comme pour la fiche (décision 690) ; le commentaire qui motivait l'omission (« aucune unité n'en fait usage ») était faux
+et disparaît. **Écarté** : garder le nœud dans le fil — l'historique dirait « Réalisation » d'une étape que le board, la
+fiche et Affaires figées nomment « Réalisation en cours ». **Connecteur MCP** : non concerné — le fil lu par
+`crm_card_activity_list` est une autre surface (`CRM-067`), et cette tranche ne change aucun contrat stocké ou exposé.
+**Preuve** : `docs/SPEC-cards.md` §14.10, écrit avant le code ; aucune affaire du seed n'est déplacée (aucune arête ne
+ramène à *Réalisation*), l'E2E naît sa propre affaire d'essai et la supprime.

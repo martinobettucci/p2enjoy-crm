@@ -1875,6 +1875,24 @@ changement.*
   n'afficherait **jamais** son détail, et le repli du §5.11 — prévu pour un échec — deviendrait
   l'état normal. Son échec, lui, n'est pas une erreur du fil : la table de libellés est vide et
   chaque `moved` se replie, le fil restant lisible.
+- **Le nom d'une étape est celui que le board affiche** (INC-301, décision 693) : le libellé
+  surchargé de l'étape (`workflow_steps.label_override`) quand il est posé, sinon le libellé de son
+  nœud. La lecture porte donc `label_override` à côté du nœud, et la résolution est `libelleEtape`
+  (`webapp/src/lib/affaires-figees.ts`), réemployée — la même que le board, Affaires figées et,
+  depuis la décision 690, la fiche. Une étape dont ni la surcharge ni le nœud ne sont lus reste
+  absente de la table, et son `moved` se replie comme ci-dessus. *Mesuré le 2026-10-25* : l'étape
+  `…065` du seed surcharge « Réalisation » en « Réalisation en cours » ; un franchissement vers elle
+  se lisait « Signature → Réalisation » dans le fil quand le board et la fiche disaient
+  « Réalisation en cours ».
+  **Preuve de la règle** : unitaire sur `lireEtapesWorkflow` (colonne demandée, surcharge rendue,
+  nœud en repli, étape sans libellé absente) et sur le composant (la surcharge rendue dans la
+  phrase du franchissement), rouges avant la correction ; preuve d'interface sur **session réelle**,
+  sans substitution : une affaire d'essai née par la clé de service dans le channel de `…0cc`
+  (`refonte`), à l'étape *Signature*, reçoit `lien-proposition` sous le jeton de l'administratrice
+  puis franchit « Démarrer la réalisation » par la vraie RPC `move_card` ; sa fiche dit
+  « Signature → Réalisation en cours », jamais « → Réalisation » seul ; l'affaire est supprimée
+  par son identifiant à la fin, et son absence constatée. Aucune affaire du seed n'est déplacée :
+  `…0cc` est à *Réalisation* et aucune arête n'y ramène, un aller-retour y est impossible.
 
 ### 14.11 Ce que le seed livre
 
