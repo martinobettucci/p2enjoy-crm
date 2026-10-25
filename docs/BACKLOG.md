@@ -121,9 +121,18 @@ dev ; aucun service de développement présent en prod.
       `CRM-009` l'a rendu exhaustif ; `CRM-016` porte l'état courant à **17 services persistants**,
       **3 tâches one-shot** et **10 services réservés au développement**, dont `auth-templates` et
       le runtime `functions` réellement appelé à travers Kong.
-- [@] **Tranche INC-299 — Kong réutilise une connexion que PostgREST a fermée : `502`** : mesurer les délais de
-      maintien des deux côtés, aligner celui de Kong sous celui de l'amont, le prouver par une boucle de requêtes.
-      *Prise en charge : CloudWorker 2026-10-25 07:12:34 UTC depuis 2026-10-25 07:20 UTC — état avant : [ ]*
+- [P] **Tranche INC-299 — Kong réutilise une connexion que PostgREST a fermée : `502`** (décisions 696 et 700,
+      `docs/DAT.md` §3.5 bis). Deux causes mesurées et reproduites : (1) Kong gardait 60 s une connexion que PostgREST
+      ferme entre 30 et 60 s — Kong et Caddy ferment désormais après 3 s ; (2) PostgREST ferme sans l'annoncer la
+      connexion d'un `HEAD`, que nginx remettait au pool — la webapp compte par `GET … limit=0` (`compter.ts`).
+      **Vérifié en développement le 2026-10-25** : `verify-stack.sh` section 6 (64/64, trois mutations tuées, rejoué sur
+      la pile recomposée par `CRM-115`) ; reproduction ciblée 11 `502` sur 96 avant, 0 sur 768 après ; charge `HEAD`
+      15 erreurs par minute, `GET` 0 ; unitaires 4360/4360 dont la garde `compter.test.ts` (mutation tuée) ; E2E
+      `comptes-sans-head.spec.ts` (mutation tuée), `demarrage` et `guide-flottant` révisés ; campagne finale :
+      typecheck, build, pgTAP 3974, API 1182, courrier 44, pytest 246 verts, interface 918 passés et 5 échecs rejoués
+      seuls verts, **aucun `502` et aucune erreur amont chez Kong sur toute la campagne** (26 à la précédente). Le saut
+      Caddy est prouvé par un Caddy jetable, pas en production. **Reste** : la livraison (`docs/PROD_MIGRATIONS.md`
+      §2.21 : Kong, Caddy, webapp) et le constat du responsable.
 
 *DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
 aucune logique métier ni parcours utilisateur, seulement l'assemblage d'exécution. Les preuves

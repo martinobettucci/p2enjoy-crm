@@ -34414,3 +34414,28 @@ développement sur vingt services ; `./runDev.sh` recrée la pile sous des noms 
 saine, seed rendu à 0 ; Kong résout `realtime-dev.realtime` (`/realtime/v1/api/ping` 200). La garde
 `scripts/verify-noms-conteneurs.sh` rend 12 contrôles, ses deux mutations dénoncées et son témoin propre ; elle a trouvé
 quatre littéraux en commentaire, réécrits.
+
+### `CRM-001`, INC-299 — fin de session : les deux causes du `502` corrigées, la campagne mesurée
+
+*2026-10-25, session planifiée ouverte à 07:12:34 UTC.* **Livré** (décisions 696 et 700, `docs/DAT.md` §3.5 bis) :
+Kong et Caddy ferment une connexion amont inactive après 3 s (PostgREST la ferme entre 30 et 60 s) ; la webapp compte
+par `GET … limit=0` au lieu de `HEAD`, dont PostgREST ferme la connexion sans l'annoncer. `verify-stack.sh` section 6,
+`compter.ts` et sa garde, `comptes-sans-head.spec.ts`, deux preuves révisées avec motif (`demarrage`,
+`guide-flottant`), contrat de déploiement §2.21. **Mesuré** : la première campagne après la correction (1) rendait
+encore 26 erreurs amont et un `502` — c'est elle qui a fait trouver la cause (2) ; la campagne finale n'en rend aucune.
+
+**Campagne finale**, synchronisée avant : typecheck, unitaires 4360, build, pgTAP 94/3974, API 1182, courrier 44,
+pytest 246, `verify-stack.sh` 64 — verts ; interface 918 passés, 5 échecs, tous verts rejoués seuls (dont un `503` de
+`session`, INC-292). Après synchronisation, `CRM-115` T2 avait retiré les `container_name` et adapté ma section 6 :
+pile recomposée, `verify-stack.sh` 64/64 et preuves dédiées rejouées (un `503` de `session` de plus, 3/3 seul).
+INC-305 consignée (`corbeille.spec.ts:609`, focus perdu une fois sur trois, sur la ligne de base aussi). **Non
+exécuté** : la série des `verify-*.sh` hors `verify-stack.sh`. **Écart de méthode** : un `git checkout` d'un fichier
+en cours de modification a annulé mon propre changement de `mail-etat.ts`, refait aussitôt ; les mutations suivantes
+ont été faites par copie de sauvegarde.
+
+**Écart de conduite** : la première commande (`git status`, `ls docs/CloudWorker.md`) a précédé la lecture de
+`docs/CloudWorker.md`, et la première ligne de la réponse n'a pas été l'annonce du §0 bis — même écart que les
+décisions 678, 683, 687 et 694.
+
+**Où reprendre.** La tranche INC-299 est `[P]` : livraison §2.21 et constat du responsable. `CRM-001` reste `[~]` pour
+ses autres points. Prise libérée.
