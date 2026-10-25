@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-form-composer.md §4.1 (composition), §4.2 (trois destinations),
 //           §4.3 (« renseigné »), §4.4 (champ exigé), §3.1 (défaut « visible »), §5 (archivage)
 // @verifies docs/SPEC-form-composer.md §6.6 (définition de « renseigné », côté SQL)
+// @verifies CRM-037 (docs/BACKLOG.md) — l'étape courante est nommée comme le board la nomme, surcharge comprise
+//           (docs/SPEC-form-composer.md §4.4, §4 quinquies ; docs/JOURNAL.md décision 690)
 //
 // Le jeu d'essai reprend **le seed réellement appliqué**, relu en base le 2026-08-05 : sept
 // champs dont un archivé, l'étape `Prospection` et ses cinq règles pour six champs actifs. Ce
@@ -16,6 +18,7 @@ import {
 	composerFormulaire,
 	estRenseigne,
 	lireClesExigees,
+	lireEtape,
 	memeValeur,
 	MESSAGE_VALEUR_INVALIDE,
 	normaliserSaisie,
@@ -24,6 +27,7 @@ import {
 	type RegleVisibilite,
 	type ValeurChamp,
 } from './formulaire'
+import type { ClientCrm } from './supabase'
 
 const ETAPE = { id: 'etape-prospection', label: 'Prospection' }
 const AUTRE_ETAPE = 'etape-negociation'
@@ -493,5 +497,45 @@ describe('lecture du paramètre `exiges` de l’adresse (§4 ter.2)', () => {
 		expect(lireClesExigees(undefined)).toEqual([])
 		expect(lireClesExigees('')).toEqual([])
 		expect(lireClesExigees('  ,  ')).toEqual([])
+	})
+})
+
+describe('le nom de l’étape courante (§4.4, §4 quinquies)', () => {
+	/** Un client qui rend une seule ligne de `workflow_steps`, et retient les colonnes demandées. */
+	function clientEtape(ligne: Record<string, unknown>): { client: ClientCrm; colonnes: () => string } {
+		let colonnesDemandees = ''
+		const client = {
+			from: () => ({
+				select: (colonnes: string) => {
+					colonnesDemandees = colonnes
+					return {
+						eq: () => ({ limit: async () => ({ data: [ligne], error: null, status: 200 }) }),
+					}
+				},
+			}),
+		} as unknown as ClientCrm
+		return { client, colonnes: () => colonnesDemandees }
+	}
+
+	it('rend le libellé SURCHARGÉ de l’étape quand il est posé — celui que le board affiche', async () => {
+		// MESURÉ sur le seed : l'étape `…065` surcharge « Réalisation » en « Réalisation en cours ».
+		const { client, colonnes } = clientEtape({
+			id: 'etape-realisation',
+			label_override: 'Réalisation en cours',
+			workflow_nodes_catalog: { label: 'Réalisation' },
+		})
+		const etat = await lireEtape(client, 'etape-realisation')
+		expect(colonnes()).toContain('label_override')
+		expect(etat).toMatchObject({ statut: 'pret', donnees: { id: 'etape-realisation', label: 'Réalisation en cours' } })
+	})
+
+	it('rend le libellé du nœud quand l’étape ne surcharge rien', async () => {
+		const { client } = clientEtape({
+			id: 'etape-prospection',
+			label_override: null,
+			workflow_nodes_catalog: { label: 'Prospection' },
+		})
+		const etat = await lireEtape(client, 'etape-prospection')
+		expect(etat).toMatchObject({ statut: 'pret', donnees: { label: 'Prospection' } })
 	})
 })

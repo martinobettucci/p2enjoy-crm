@@ -4,7 +4,8 @@
 //       §4.3 (« renseigné »), §4.4 (champ exigé), §3.1 (défaut « visible »), §5 (archivage),
 //       §4 bis.2 (un champ, une écriture), §4 bis.4 (ce qui est écrit et sa normalisation),
 //       §4 bis.5 (vider), §4 bis.7 (dictionnaire fermé des refus), §4 bis.8 (mise à jour en place),
-//       §4 bis.10 (contrat d'API mesuré), §6.9 (autorisations)
+//       §4 bis.10 (contrat d'API mesuré), §6.9 (autorisations), §4 quinquies (l'étape nommée comme le board la
+//       nomme, décision 690)
 // @spec docs/SPEC-permissions-rls.md §4 (lecture par les membres du workspace)
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
 //
@@ -17,6 +18,7 @@
 // formulaire réellement consenti ; aucune branche d'autorisation ne vit ici.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { libelleEtape } from './affaires-figees'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import type { Database, Json } from './database.types'
 import type { ProfilAffiche } from './identites'
@@ -312,8 +314,13 @@ export async function lireCard(
 }
 
 /**
- * Lit l'étape courante d'une card, avec le libellé de son nœud — c'est ce libellé que la mention
- * « requis à l'étape <étape> » nomme (§4.4, décision 688), et non l'identifiant de l'étape.
+ * Lit l'étape courante d'une card et la nomme — c'est ce nom que la mention « requis à l'étape
+ * <étape> » porte (§4.4, décision 688), et non l'identifiant de l'étape.
+ *
+ * LE NOM EST CELUI QUE LE BOARD AFFICHE : la surcharge de l'étape si elle est posée, sinon le libellé
+ * de son nœud (décision 690). La fiche lisait le seul nœud, et nommait « Réalisation » l'étape que le
+ * board appelle « Réalisation en cours » — trouvé par `e2e/ui/formulaire-etapes.spec.ts`
+ * (docs/SPEC-form-composer.md §4 quinquies). La résolution est celle de `libelleEtape`, réemployée.
  */
 export async function lireEtape(
 	client: ClientCrm,
@@ -322,7 +329,7 @@ export async function lireEtape(
 	try {
 		const reponse = await client
 			.from('workflow_steps')
-			.select('id, workflow_nodes_catalog(label)')
+			.select('id, label_override, workflow_nodes_catalog(label)')
 			.eq('id', idEtape)
 			.limit(1)
 		if (reponse.error !== null) {
@@ -330,8 +337,7 @@ export async function lireEtape(
 		}
 		const ligne = reponse.data[0]
 		if (ligne === undefined) return pret(null)
-		const noeud = ligne.workflow_nodes_catalog
-		return pret({ id: ligne.id, label: noeud === null ? '' : noeud.label })
+		return pret({ id: ligne.id, label: libelleEtape(ligne) ?? '' })
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
