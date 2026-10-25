@@ -49,6 +49,12 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# @spec CRM-115 (docs/BACKLOG.md) tranche T4 — docs/SPEC-pile-par-session.md §3 : les fichiers de travail vivent dans le
+# `P2ENJOY_TMP` de l'emplacement de la pile, jamais dans un `/tmp` que deux sessions partageraient.
+# shellcheck source=scripts/lib/emplacement.sh
+source scripts/lib/emplacement.sh
+P2ENJOY_TMP=$(emplacement_tmp "${P2ENJOY_ENV_FILE:-.env}")
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
 
@@ -155,7 +161,7 @@ psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@
 # ne crée la moindre ligne, et la section 8 vérifie qu'il l'a rendu intact.
 FIXTURES_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.cards where id::text like '5eed0000-0000-4000-8000-0000000000c%';")
 
-CORPS=/tmp/p2enjoy-cards-body
+CORPS=$P2ENJOY_TMP/p2enjoy-cards-body
 http() {
 	local method=$1 url=$2
 	shift 2

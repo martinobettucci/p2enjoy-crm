@@ -49,6 +49,12 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# @spec CRM-115 (docs/BACKLOG.md) tranche T4 — docs/SPEC-pile-par-session.md §3 : les fichiers de travail vivent dans le
+# `P2ENJOY_TMP` de l'emplacement de la pile, jamais dans un `/tmp` que deux sessions partageraient.
+# shellcheck source=scripts/lib/emplacement.sh
+source scripts/lib/emplacement.sh
+P2ENJOY_TMP=$(emplacement_tmp "${P2ENJOY_ENV_FILE:-.env}")
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
 
@@ -105,9 +111,9 @@ psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@
 http() {
 	local method=$1 url=$2
 	shift 2
-	curl -s -o /tmp/p2enjoy-authz-body -w '%{http_code}' -X "$method" "$url" "$@"
+	curl -s -o $P2ENJOY_TMP/p2enjoy-authz-body -w '%{http_code}' -X "$method" "$url" "$@"
 }
-http_body() { cat /tmp/p2enjoy-authz-body; }
+http_body() { cat $P2ENJOY_TMP/p2enjoy-authz-body; }
 
 # `CRM-092` T4 : les comptes de preuve vivent dans le Keycloak de DÉVELOPPEMENT (scripts/lib/sso.sh),
 # et leur profil, né de la connexion, ne suit plus aucune cascade depuis 0075 : les deux sont retirés.
@@ -193,12 +199,12 @@ avant=$(empreinte_fonctions)
 
 if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres --no-psqlrc --quiet \
 	--set ON_ERROR_STOP=1 --single-transaction -f - < "$MIGRATION_FILE" \
-	>/tmp/p2enjoy-authz-replay.log 2>&1
+	>$P2ENJOY_TMP/p2enjoy-authz-replay.log 2>&1
 then
 	ok "la migration se réapplique sans erreur sur une base déjà migrée"
 else
-	fail "la migration échoue à la réapplication (voir /tmp/p2enjoy-authz-replay.log)"
-	tail -5 /tmp/p2enjoy-authz-replay.log | sed 's/^/        /'
+	fail "la migration échoue à la réapplication (voir $P2ENJOY_TMP/p2enjoy-authz-replay.log)"
+	tail -5 $P2ENJOY_TMP/p2enjoy-authz-replay.log | sed 's/^/        /'
 fi
 
 apres=$(empreinte_fonctions)
@@ -260,12 +266,12 @@ fi
 # restaure plus — c'est rouge depuis `0099`, et ce n'est plus un invariant (décision 675). La restauration
 # RECONSTRUIT la base de développement (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6) :
 # le vrai runner construit le répertoire dans l'ordre sur une base neuve, de façon synchrone, puis le seed.
-if reconstruire_base_dev >/tmp/p2enjoy-authz-reconstruction.log 2>&1
+if reconstruire_base_dev >$P2ENJOY_TMP/p2enjoy-authz-reconstruction.log 2>&1
 then
 	ok "la reconstruction rend une base neuve, construite dans l'ordre par le runner, et seedée"
 else
 	fail "la reconstruction de la base échoue"
-	tail -10 /tmp/p2enjoy-authz-reconstruction.log | sed 's/^/        /'
+	tail -10 $P2ENJOY_TMP/p2enjoy-authz-reconstruction.log | sed 's/^/        /'
 fi
 
 # Et la base est bien celle que le répertoire complet produit, pas un état intermédiaire : la
@@ -589,10 +595,10 @@ verifier_mutation() {
 	local libelle=$1 mutation=$2 sortie ko erreurs
 
 	if ! printf 'begin;\n%s\nrollback;\n' "$mutation" \
-		| psql_db -v ON_ERROR_STOP=1 -f - >/tmp/p2enjoy-authz-mutation.log 2>&1
+		| psql_db -v ON_ERROR_STOP=1 -f - >$P2ENJOY_TMP/p2enjoy-authz-mutation.log 2>&1
 	then
 		fail "$libelle : la mutation elle-même ne s'applique pas — contrôle non concluant"
-		tail -3 /tmp/p2enjoy-authz-mutation.log | sed 's/^/        /'
+		tail -3 $P2ENJOY_TMP/p2enjoy-authz-mutation.log | sed 's/^/        /'
 		return
 	fi
 

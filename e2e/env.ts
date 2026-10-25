@@ -1,6 +1,8 @@
 // @spec CRM-008 (docs/BACKLOG.md) — amorce d'environnement commune aux projets Playwright
 // @spec docs/SPEC-test-harness.md §4.1 (une seule configuration), §4.3 (projet api)
 // @spec README.md §9 (variables d'environnement)
+// @spec CRM-115 (docs/BACKLOG.md) tranche T4 — `portPrevisualisation` : le port de l'emplacement de la pile, lu dans
+//       `.env` (docs/SPEC-pile-par-session.md §5)
 //
 // Les preuves lisent le `.env` de la racine, c'est-à-dire **la même source que la pile** : une
 // preuve obtenue contre une configuration qui n'existe nulle part ne prouverait rien.
@@ -37,6 +39,20 @@ export function lireEnv(nom: string): string {
 		}
 	}
 	throw new Error(`Variable ${nom} absente de .env`)
+}
+
+/**
+ * Le port de la prévisualisation des preuves : l'environnement de l'appelant, puis `.env` — où l'emplacement de la pile
+ * l'écrit (`CRM-115` T4, docs/SPEC-pile-par-session.md §5) —, puis 4173, la valeur d'avant les emplacements.
+ */
+export function portPrevisualisation(): number {
+	const brut = process.env['WEBAPP_PREVIEW_PORT']
+	if (brut !== undefined && brut !== '') return Number(brut)
+	try {
+		return Number(lireEnv('WEBAPP_PREVIEW_PORT'))
+	} catch {
+		return 4173
+	}
 }
 
 /** URL de la passerelle Kong, surchargeable pour viser une autre pile. */

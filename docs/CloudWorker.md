@@ -618,13 +618,19 @@ APRÈS l'installation de Node 24 (§2.1 bis). De même, `pytest` n'est pas insta
 install --cert /root/.ccr/ca-bundle.crt -r mail-sync/requirements-dev.txt` le pose, et la suite
 rend alors **244 passés**.
 
-**2. Libère le port 4173.** La configuration pose `reuseExistingServer: false`. Un `vite preview`
-laissé par une exécution précédente — une série interrompue en laisse un — fait échouer l'étape
-entière sur `http://127.0.0.1:4173 is already used`, ce qui ne dit rien du produit non plus :
+**2. Libère le port de prévisualisation de TON emplacement** — 4173 à l'emplacement 0, `WEBAPP_PREVIEW_PORT` de
+`.env` ailleurs (`CRM-115` T4). La configuration pose `reuseExistingServer: false`. Un `vite preview` laissé par une
+exécution précédente — une série interrompue en laisse un — fait échouer l'étape entière sur
+`http://127.0.0.1:<port> is already used`, ce qui ne dit rien du produit non plus.
+
+**DEPUIS `CRM-115` T4, PLUSIEURS SESSIONS PEUVENT AVOIR LEUR PRÉVISUALISATION SUR LE MÊME POSTE** : un `pkill -f "[v]ite"`
+tuerait aussi celle des autres. Seuls les Vite lancés depuis **ton** checkout — leur répertoire courant — sont visés :
 
 ```
-pkill -f "[v]ite"
+for pid in $(pgrep -f "[v]ite"); do [ "$(readlink "/proc/$pid/cwd")" = "$PWD" ] && kill "$pid"; done
 ```
+
+*Forme d'avant la T4, à n'employer que seul sur le poste :* `pkill -f "[v]ite"`.
 
 **Le motif DOIT être protégé par la classe `[v]`, et c'est MESURÉ le 2026-08-18.** Écrit
 `pkill -f vite`, le motif se retrouve dans la ligne de commande du shell qui l'exécute — l'agent
@@ -726,6 +732,14 @@ Ensuite seulement :
 ```
 
 Le premier démarrage peut être long, notamment à cause de la construction et du téléchargement des images.
+
+**`./runDev.sh` prend l'EMPLACEMENT de ton checkout au registre des sessions** (`CRM-115` T4,
+`docs/SPEC-pile-par-session.md` §4) : l'emplacement 0 garde le nom de projet `p2enjoy-crm` et les ports d'avant ;
+un autre checkout sur le même poste reçoit l'emplacement suivant — projet `p2enjoy-crm-N`, ports + 100 × N, répertoire
+de travail `/tmp/p2enjoy-crm/N` —, que `runDev.sh` écrit dans son `.env`. `scripts/sessions.sh liste` montre les piles
+du poste ; `./runDev.sh --stop` rend l'emplacement. La reconstruction de la base (`reconstruire_base_dev`) refuse
+de travailler sur une pile sans entrée au registre, ou dont la VM a été recyclée : relance `./runDev.sh`. Une seconde
+session dans **le même** checkout est refusée — un checkout, une pile.
 
 Puis applique obligatoirement le seed :
 

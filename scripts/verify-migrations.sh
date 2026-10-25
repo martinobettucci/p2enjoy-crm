@@ -44,6 +44,12 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# @spec CRM-115 (docs/BACKLOG.md) tranche T4 — docs/SPEC-pile-par-session.md §3 : les fichiers de travail vivent dans le
+# `P2ENJOY_TMP` de l'emplacement de la pile, jamais dans un `/tmp` que deux sessions partageraient.
+# shellcheck source=scripts/lib/emplacement.sh
+source scripts/lib/emplacement.sh
+P2ENJOY_TMP=$(emplacement_tmp "${P2ENJOY_ENV_FILE:-.env}")
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
 
@@ -96,9 +102,9 @@ psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@
 http() {
 	local method=$1 url=$2
 	shift 2
-	curl -s -o /tmp/p2enjoy-http-body -w '%{http_code}' -X "$method" "$url" "$@"
+	curl -s -o $P2ENJOY_TMP/p2enjoy-http-body -w '%{http_code}' -X "$method" "$url" "$@"
 }
-http_body() { cat /tmp/p2enjoy-http-body; }
+http_body() { cat $P2ENJOY_TMP/p2enjoy-http-body; }
 
 decoder_jwt() {
 	local charge
@@ -210,13 +216,13 @@ done
 nombre_migrations=$(find supabase/migrations -maxdepth 1 -name '*.sql' | wc -l | tr -d ' ')
 
 # 2.1 Chaque fichier, rejoué aussitôt sur l'état qu'il vient de produire.
-if reconstruire_base_dev --migrations "$DOUBLE" >/tmp/p2enjoy-runner-double.log 2>&1 \
-	&& grep -q "$((2 * nombre_migrations)) fichier(s) appliqué(s) avec succès" /tmp/p2enjoy-runner-double.log
+if reconstruire_base_dev --migrations "$DOUBLE" >$P2ENJOY_TMP/p2enjoy-runner-double.log 2>&1 \
+	&& grep -q "$((2 * nombre_migrations)) fichier(s) appliqué(s) avec succès" $P2ENJOY_TMP/p2enjoy-runner-double.log
 then
 	ok "base neuve, répertoire doublé : le runner applique les $((2 * nombre_migrations)) fichiers en 0 — chaque migration se rejoue sur l'état qu'elle produit"
 else
-	fail "une migration ne se rejoue pas sur l'état qu'elle vient de produire (voir /tmp/p2enjoy-runner-double.log)"
-	grep -E 'application de|ERROR' /tmp/p2enjoy-runner-double.log | tail -3 | sed 's/^/        /'
+	fail "une migration ne se rejoue pas sur l'état qu'elle vient de produire (voir $P2ENJOY_TMP/p2enjoy-runner-double.log)"
+	grep -E 'application de|ERROR' $P2ENJOY_TMP/p2enjoy-runner-double.log | tail -3 | sed 's/^/        /'
 fi
 empreinte_doublee=$(empreinte_structure)
 
@@ -224,27 +230,27 @@ empreinte_doublee=$(empreinte_structure)
 printf -- '-- sentinelle de verify-migrations.sh : crée une table sans « if not exists »\ncreate table public.sentinelle_rejeu (id int);\n' \
 	> "$DOUBLE/9999_sentinelle_non_idempotente.sql"
 cp "$DOUBLE/9999_sentinelle_non_idempotente.sql" "$DOUBLE/9999_sentinelle_non_idempotente_rejeu.sql"
-if reconstruire_base_dev --migrations "$DOUBLE" >/tmp/p2enjoy-runner-sentinelle.log 2>&1; then
+if reconstruire_base_dev --migrations "$DOUBLE" >$P2ENJOY_TMP/p2enjoy-runner-sentinelle.log 2>&1; then
 	fail "une migration non idempotente passe le répertoire doublé : la preuve 2.1 ne prouve rien"
-elif grep -q "application de 9999_sentinelle_non_idempotente_rejeu.sql" /tmp/p2enjoy-runner-sentinelle.log \
-	&& grep -q 'already exists' /tmp/p2enjoy-runner-sentinelle.log
+elif grep -q "application de 9999_sentinelle_non_idempotente_rejeu.sql" $P2ENJOY_TMP/p2enjoy-runner-sentinelle.log \
+	&& grep -q 'already exists' $P2ENJOY_TMP/p2enjoy-runner-sentinelle.log
 then
 	ok "non-complaisance : une migration non idempotente arrête le runner sur sa copie (« already exists »)"
 else
 	fail "la sentinelle échoue ailleurs que sur sa copie — contrôle non concluant"
-	tail -3 /tmp/p2enjoy-runner-sentinelle.log | sed 's/^/        /'
+	tail -3 $P2ENJOY_TMP/p2enjoy-runner-sentinelle.log | sed 's/^/        /'
 fi
 rm -rf "$DOUBLE"
 
 # 2.3 Une base neuve, construite par le passage ordinaire du runner, puis seedée.
-if reconstruire_base_dev >/tmp/p2enjoy-reconstruction.log 2>&1 \
+if reconstruire_base_dev >$P2ENJOY_TMP/p2enjoy-reconstruction.log 2>&1 \
 	&& grep -q "adoption : rejeu complet de $nombre_migrations fichier(s)" <(docker logs "$(conteneur migrations-runner)" 2>&1) \
 	&& [ "$(psql_db -c "select count(*) from app.migrations_appliquees where mode = 'adoption'")" = "$nombre_migrations" ]
 then
 	ok "base neuve : le runner construit les $nombre_migrations fichiers dans l'ordre, se termine en 0 et les inscrit"
 else
 	fail "la construction d'une base neuve échoue, ou n'inscrit pas chaque fichier"
-	tail -5 /tmp/p2enjoy-reconstruction.log | sed 's/^/        /'
+	tail -5 $P2ENJOY_TMP/p2enjoy-reconstruction.log | sed 's/^/        /'
 fi
 
 # 2.4 Les copies n'ont rien changé : la base doublée a exactement la structure de la base ordinaire.
@@ -271,13 +277,13 @@ done
 
 # 2.5 Base à jour : un passage de plus n'applique rien.
 if docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml \
-	run --rm migrations-runner >/tmp/p2enjoy-runner-2.log 2>&1 \
-	&& grep -q "; 0 à appliquer" /tmp/p2enjoy-runner-2.log
+	run --rm migrations-runner >$P2ENJOY_TMP/p2enjoy-runner-2.log 2>&1 \
+	&& grep -q "; 0 à appliquer" $P2ENJOY_TMP/p2enjoy-runner-2.log
 then
 	ok "le passage suivant n'applique rien : le registre porte les $nombre_migrations fichiers"
 else
 	fail "le passage suivant applique encore quelque chose, ou échoue"
-	tail -10 /tmp/p2enjoy-runner-2.log | sed 's/^/        /'
+	tail -10 $P2ENJOY_TMP/p2enjoy-runner-2.log | sed 's/^/        /'
 fi
 
 # --- 3. Le profil par le véritable chemin applicatif — révisé par `CRM-092` T4 -------------------
@@ -463,10 +469,10 @@ verifier_mutation() {
 	# première erreur : une mutation qui ne s'applique pas ferait échouer la suite pour la
 	# mauvaise raison, et la non-complaisance serait constatée à tort.
 	if ! printf 'begin;\n%s\nrollback;\n' "$mutation" \
-		| psql_db -v ON_ERROR_STOP=1 -f - >/tmp/p2enjoy-mutation.log 2>&1
+		| psql_db -v ON_ERROR_STOP=1 -f - >$P2ENJOY_TMP/p2enjoy-mutation.log 2>&1
 	then
 		fail "$libelle : la mutation elle-même ne s'applique pas — contrôle non concluant"
-		tail -3 /tmp/p2enjoy-mutation.log | sed 's/^/        /'
+		tail -3 $P2ENJOY_TMP/p2enjoy-mutation.log | sed 's/^/        /'
 		return
 	fi
 

@@ -25,6 +25,8 @@ set -euo pipefail
 
 # shellcheck source=scripts/lib/env.sh
 source "$(dirname "${BASH_SOURCE[0]}")/scripts/lib/env.sh"
+# shellcheck source=scripts/lib/emplacement.sh
+source "$REPO_ROOT/scripts/lib/emplacement.sh"
 
 ASSUME_YES=false
 
@@ -71,6 +73,11 @@ if [ "$ASSUME_YES" != true ]; then
 fi
 
 require_docker
+# @spec CRM-115 (docs/BACKLOG.md) tranche T4 — docs/SPEC-pile-par-session.md §4.2 : la réinitialisation repart dans
+# l'emplacement de ce checkout, pris au registre comme au lancement ; elle ne détruit que la pile de ce projet.
+EMPLACEMENT=$(emplacement_attribuer "$REPO_ROOT" "$ENV_FILE") || die "aucun emplacement de pile libre sur ce poste (scripts/sessions.sh liste)."
+emplacement_ecrire_env "$EMPLACEMENT" "$ENV_FILE"
+info "Emplacement $EMPLACEMENT — projet $(env_get "$ENV_FILE" COMPOSE_PROJECT_NAME)."
 # Le contrôle des ports a lieu avant la destruction : rien ne serait plus fâcheux que d'effacer
 # les données locales pour buter ensuite sur un port tenu par un autre projet.
 require_free_ports compose_dev

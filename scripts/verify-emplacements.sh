@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 # @verifies CRM-115 (docs/BACKLOG.md) — tranche T3 : le registre des sessions et l'attribution d'un emplacement, hors pile
+# @verifies CRM-115 tranche T4 — décision 713 : la base des ports prise au `.env` du checkout, l'adoption d'une pile de ce
+#           checkout déjà en marche ou le refus — jamais une seconde pile —, l'écriture du `.env` d'un emplacement
+#           (docs/SPEC-pile-par-session.md §3, §4.2 point 1 bis, §5)
 # @verifies docs/SPEC-pile-par-session.md §3 (l'emplacement 0 reproduit l'existant, le pas de 100), §4.2 (attribution),
 #           §4.3 (vérification à l'usage), §4.4 (entrée périmée), §4.5 (libération), §5 (les variables), §9 (preuves
 #           attendues, hors la pile double qui revient à la T5) ; docs/JOURNAL.md décisions 705 et 710
@@ -61,6 +64,7 @@ lib() {
 	P2ENJOY_REGISTRE_SESSIONS="$dir/registre" P2ENJOY_BOOT_ID_FICHIER="$dir/boot_id" \
 		P2ENJOY_HORLOGE="${HORLOGE:-$MAINTENANT}" P2ENJOY_PORTS_BASE_FICHIER="$PORTS" \
 		P2ENJOY_ARRETER_PILE="${ARRETER:-true}" P2ENJOY_SESSION="${SESSION:-}" \
+		P2ENJOY_PROJETS_DU_CHECKOUT="${PROJETS:-true}" \
 		bash -c 'source "$1"; shift; "$@"' _ "$bibliotheque" "$@"
 }
 
@@ -243,13 +247,77 @@ section_liberation_et_env() {
 		|| fail "un .env divergent passe : code $code"
 }
 
+
+section_base_env() {
+	local lib=$1 m env vars
+	m=$(monde base-env)
+	env="$m/.env"
+	printf 'KONG_HTTP_PORT=8123\nWEBAPP_DEV_PORT=5273\nAPI_EXTERNAL_URL=http://localhost:8123\nSITE_URL=http://127.0.0.1:5273\nSECRET_GARDE=ne-change-pas\n' >"$env"
+	vars=$(bash -c 'source "$1"; emplacement_variables 0 "$2"' _ "$lib" "$env")
+	if grep -qx 'KONG_HTTP_PORT=8123' <<<"$vars" && grep -qx 'WEBAPP_DEV_PORT=5273' <<<"$vars" && grep -qx 'MINIO_API_PORT=9000' <<<"$vars"; then
+		ok "l'emplacement 0 d'un .env aux ports changés garde ses ports ; un port absent prend la valeur de .env.example (§3, décision 713)"
+	else
+		fail "base du .env : $(tr '\n' ' ' <<<"$vars")"
+	fi
+	bash -c 'source "$1"; emplacement_ecrire_env 2 "$2"' _ "$lib" "$env"
+	if grep -qx 'KONG_HTTP_PORT=8323' "$env" && grep -qx 'API_EXTERNAL_URL=http://localhost:8323' "$env" \
+		&& grep -qx 'SITE_URL=http://127.0.0.1:5473' "$env" && grep -qx 'P2ENJOY_EMPLACEMENT=2' "$env" \
+		&& grep -qx 'COMPOSE_PROJECT_NAME=p2enjoy-crm-2' "$env" && grep -qx 'SECRET_GARDE=ne-change-pas' "$env"; then
+		ok "écrire l'emplacement 2 décale ports et URL de 200, pose le projet, et ne touche pas aux autres variables (§5)"
+	else
+		fail "écriture du .env de l'emplacement 2"
+	fi
+	# Le .env déclare désormais l'emplacement 2 : sa base reste celle d'origine, et le retour à 0 rend les ports d'avant.
+	bash -c 'source "$1"; emplacement_ecrire_env 0 "$2"' _ "$lib" "$env"
+	grep -qx 'KONG_HTTP_PORT=8123' "$env" && grep -qx 'SITE_URL=http://127.0.0.1:5273' "$env" \
+		&& ok "revenir à l'emplacement 0 rend exactement les ports d'origine : la base se déduit de l'emplacement déclaré (décision 713)" \
+		|| fail "le retour à l'emplacement 0 ne rend pas les ports d'origine"
+}
+
+section_adoption() {
+	local lib=$1 m n code=0
+	m=$(monde adoption)
+	echo 'echo p2enjoy-crm' >"$m/projets"; chmod +x "$m/projets"
+	if ! ecouter 47000; then fail "adoption : l'écouteur de preuve n'a pas pu occuper 47000"; return; fi
+	n=$(PROJETS="bash $m/projets" lib "$m" "$lib" emplacement_attribuer /checkouts/vivant 2>"$m/erreurs") || true
+	kill "${ECOUTEURS[-1]}" 2>/dev/null || true; wait "${ECOUTEURS[-1]}" 2>/dev/null || true
+	if [ "$n" = 0 ] && [ -f "$m/registre/emplacement-0" ]; then
+		ok "une pile de ce checkout qui tourne sous p2enjoy-crm est ADOPTÉE à l'emplacement 0, ses propres ports ne comptant pas (§4.2 point 1 bis)"
+	else
+		fail "adoption : emplacement « $n », « $(cat "$m/erreurs") »"
+	fi
+	m=$(monde adoption-refus)
+	echo 'echo projet-inconnu' >"$m/projets"
+	PROJETS="bash $m/projets" lib "$m" "$lib" emplacement_attribuer /checkouts/x >/dev/null 2>"$m/erreurs" || code=$?
+	if [ "$code" -ne 0 ] && grep -q 'projet-inconnu' "$m/erreurs" && [ -z "$(ls "$m/registre" | grep '^emplacement-')" ]; then
+		ok "une pile de ce checkout sous un projet qui ne désigne aucun emplacement : refus, rien d'écrit — jamais une seconde pile (décision 713)"
+	else
+		fail "adoption d'un projet inconnu : code $code"
+	fi
+	m=$(monde adoption-deux)
+	printf 'echo p2enjoy-crm\necho p2enjoy-crm-2\n' >"$m/projets"
+	code=0
+	PROJETS="bash $m/projets" lib "$m" "$lib" emplacement_attribuer /checkouts/x >/dev/null 2>&1 || code=$?
+	[ "$code" -ne 0 ] && ok "deux piles du même checkout en marche : refus" || fail "deux piles du même checkout : acceptées"
+	m=$(monde adoption-prise)
+	lib "$m" "$lib" emplacement_attribuer /checkouts/autre >/dev/null || true
+	echo 'echo p2enjoy-crm' >"$m/projets"
+	code=0
+	PROJETS="bash $m/projets" lib "$m" "$lib" emplacement_attribuer /checkouts/x >/dev/null 2>"$m/erreurs" || code=$?
+	[ "$code" -ne 0 ] && grep -q '/checkouts/autre' "$m/erreurs" \
+		&& ok "le projet de la pile désigne un emplacement inscrit pour un autre checkout : refus, qui le nomme" \
+		|| fail "adoption d'un emplacement tenu par un autre checkout : code $code"
+}
+
 titre "1. Les variables d'un emplacement"
 section_variables "$BIBLIOTHEQUE"
+section_base_env "$BIBLIOTHEQUE"
 titre "2. Attribution, concurrence, ports"
 section_attribution "$BIBLIOTHEQUE"
 section_concurrence "$BIBLIOTHEQUE"
 section_port_pris "$BIBLIOTHEQUE"
 section_plein "$BIBLIOTHEQUE"
+section_adoption "$BIBLIOTHEQUE"
 titre "3. Vérification à l'usage, VM recyclée, péremption, libération"
 section_meme_checkout "$BIBLIOTHEQUE"
 section_vm_recyclee "$BIBLIOTHEQUE"
@@ -263,7 +331,26 @@ grep -qP '^0\tvivante\t.*\tp2enjoy-crm\t/checkouts/s$' <<<"$sortie" \
 	&& ok "sessions.sh liste rend l'emplacement, son état mesuré, son projet et son checkout (§4.5)" \
 	|| fail "sessions.sh liste : « $sortie »"
 
-titre "5. Dégradations réelles, puis restauration constatée"
+titre "5. La détection réelle, contre le démon Docker du poste"
+# Les sections précédentes simulent Docker. Celle-ci l'interroge : c'est le chemin que l'incident de la décision 713 a
+# emprunté sans qu'aucune preuve ne l'ait parcouru.
+if command -v docker >/dev/null 2>&1 && attendus=$(docker ps --filter "label=com.docker.compose.project.working_dir=$PWD" \
+	--format '{{.Label "com.docker.compose.project"}}' 2>/dev/null | sort -u) && [ -n "$attendus" ]; then
+	trouves=$(bash -c 'source "$1"; emplacement_projets_du_checkout "$PWD"' _ "$BIBLIOTHEQUE")
+	[ "$trouves" = "$attendus" ] \
+		&& ok "la pile de ce checkout est reconnue sous son projet réel ($(tr '\n' ' ' <<<"$trouves")) (§4.2 point 1 bis)" \
+		|| fail "la détection réelle rend « $trouves » au lieu de « $attendus »"
+	m=$(monde reel)
+	n=$(P2ENJOY_REGISTRE_SESSIONS="$m/registre" bash -c 'source "$1"; emplacement_attribuer "$PWD" "${P2ENJOY_ENV_FILE:-.env}"' _ "$BIBLIOTHEQUE" 2>"$m/erreurs") || true
+	attendu_n=$(bash -c 'source "$1"; emplacement_de_projet "$2"' _ "$BIBLIOTHEQUE" "$(head -n 1 <<<"$attendus")") || attendu_n=refus
+	[ "$n" = "$attendu_n" ] \
+		&& ok "attribution à blanc dans un registre jetable : la pile en marche est adoptée à l'emplacement $n, aucune seconde pile" \
+		|| fail "attribution à blanc : emplacement « $n » au lieu de « $attendu_n » — $(cat "$m/erreurs")"
+else
+	echo "  (aucune pile de ce checkout en marche : section sans objet sur ce poste)"
+fi
+
+titre "6. Dégradations réelles, puis restauration constatée"
 # degrader <nom> <avant> <après> <section> — une copie mutée de la bibliothèque doit faire rougir la section.
 degrader() {
 	local nom=$1 avant=$2 apres=$3 section=$4 copie="$TRAVAIL/mutant-$1.sh" sortie
@@ -288,6 +375,7 @@ degrader "boot_id ignoré" \
 	'if false; then
 		echo "refus : la VM' section_vm_recyclee
 degrader "péremption à 7 h" 'EMPLACEMENT_PEREMPTION_S=21600' 'EMPLACEMENT_PEREMPTION_S=25200' section_peremption
+degrader "adoption retirée" '	projets=$(emplacement_projets_du_checkout "$checkout" | sort -u)' '	projets=""' section_adoption
 degrader "ports non mesurés" 'if ! emplacement_port_libre "$port"; then' 'if false; then' section_port_pris
 # Restauration : la bibliothèque du dépôt est intacte, et les sections la trouvent conforme.
 [ "$(sha256sum "$BIBLIOTHEQUE" | cut -d' ' -f1)" = "$EMPREINTE" ] \

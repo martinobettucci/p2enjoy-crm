@@ -16532,8 +16532,22 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       garde `verify-noms-conteneurs.sh` 12/12. **Limite dite** : la concurrence est prouvée par six attributions
       simultanées distinctes, sans dégradation du verrou — une course sans `flock` n'est pas reproductible à coup sûr.
       Aucune pile n'appelle encore le registre : c'est la T4.
-- [@] **T4 — la pile par emplacement** : nom de projet et ports par emplacement, `.env`, realm Keycloak ;
+- [~] **T4 — la pile par emplacement** : nom de projet et ports par emplacement, `.env`, realm Keycloak ;
       `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev` ; `P2ENJOY_TMP` ; `docs/CloudWorker.md`.
-      *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 22:24 UTC — état avant : [ ]*
+      *Implémentée et vérifiée sur la pile de ce poste le 2026-10-25 (session interactive), après l'**incident** de la
+      décision 713* (une seconde pile lancée depuis le même checkout, sur le même répertoire de base — arrêtée, base
+      vérifiée par `pg_dump` complet et `pg_amcheck --heapallindexed`, sans anomalie). Livré :
+      `scripts/lib/emplacement.sh` — base des ports prise au `.env` du checkout, adoption d'une pile en marche ou refus,
+      écriture du `.env` (quinze ports, projet, `P2ENJOY_TMP`, URL), retrait à l'arrêt ; `runDev.sh` (attribution,
+      `--stop`), `resetMe.sh`, `scripts/lib/reconstruction.sh` (vérification à l'usage, verrou et journal par
+      emplacement) ; realm Keycloak ligne 45 par `SSO_DEV_PREVIEW_REDIRECT_URI` ; port de prévisualisation lu dans `.env`
+      (`e2e/env.ts`) ; **seize harnais** écrivent sous `P2ENJOY_TMP` ; `verify-reconstruction.sh` ne juge plus que les
+      conteneurs de son projet ; `docs/CloudWorker.md` (démarrage par emplacement, arrêt de SA prévisualisation).
+      Preuves : `verify-emplacements.sh` **29/29** dont la détection réelle contre Docker et quatre dégradations ;
+      `./runDev.sh` réel : emplacement 0 **adopté**, `.env` seulement complété de quatre variables, pile recréée sous les
+      noms du projet, données intactes (41 affaires, 104 migrations) ; `verify-stack.sh --rapide` **64/64** ;
+      `verify-reconstruction.sh` **28/28** ; garde des noms **12/12** ; typecheck ; `organisations` UI 7/7 et API 3/3.
+      **Reste `[~]`** : `resetMe.sh` et un emplacement autre que 0 ne sont pas encore exercés — ils le seront par T5,
+      dans le clone autorisé (décision 711).
 - [ ] **T5 — preuve** : deux piles debout en même temps sur le même démon, chacune sa preuve courte, sans interférence
       mesurée ; `README.md`, `docs/DAT.md`, `docs/CloudWorker.md` (démarrage par emplacement).

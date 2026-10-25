@@ -1,5 +1,8 @@
 # shellcheck shell=bash
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T1 bis : restaurer par reconstruction (INC-289)
+# @spec CRM-115 (docs/BACKLOG.md) — tranche T4 : la reconstruction vérifie l'emplacement de ce checkout au registre des
+#       sessions avant de rien arrêter, et garde son verrou et son journal dans le `P2ENJOY_TMP` de l'emplacement
+#       (docs/SPEC-pile-par-session.md §3, §4.3)
 # @spec docs/SPEC-test-harness.md §3.5 (reconstruire à neuf), §3.6 (le mode opératoire) ;
 #       docs/DAT.md §3.2 (invariant révisé), §3.2 bis ; docs/JOURNAL.md décisions 675 et 682
 #
@@ -26,16 +29,21 @@
 # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
 # shellcheck source=scripts/lib/conteneur.sh
 source "$(dirname "${BASH_SOURCE[0]}")/conteneur.sh"
+# shellcheck source=scripts/lib/emplacement.sh
+source "$(dirname "${BASH_SOURCE[0]}")/emplacement.sh"
 
 RECONSTRUCTION_SERVICES=(db migrations-runner storage realtime rest meta studio mail-sync stalwart stalwart-init roundcube)
 # Les volumes nommés qui ne sont qu'un dérivé de la base (docs/SPEC-test-harness.md §3.6).
 RECONSTRUCTION_VOLUMES=(mail-sync-state stalwart-data roundcube-data)
-RECONSTRUCTION_VERROU=${RECONSTRUCTION_VERROU:-/tmp/p2enjoy-crm-reconstruction.lock}
+# Le verrou et le journal vivent dans le répertoire de travail de l'EMPLACEMENT : deux piles de deux checkouts se
+# reconstruisent sans s'attendre, deux reconstructions d'une même pile s'excluent (CRM-115 T4).
+_RECONSTRUCTION_TMP=$(emplacement_tmp "${ENV_FILE:-${P2ENJOY_ENV_FILE:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/.env}}")
+RECONSTRUCTION_VERROU=${RECONSTRUCTION_VERROU:-$_RECONSTRUCTION_TMP/reconstruction.lock}
 # Attente maximale du verrou, en secondes : une reconstruction dure une minute, une série de harnais davantage.
 RECONSTRUCTION_ATTENTE=${RECONSTRUCTION_ATTENTE:-1800}
 # INC-298 : la sortie de la remontée et du seed est GARDÉE, et sa fin citée dans le motif d'un échec — un échec
 # intermittent dont l'étape fautive est jetée ne se diagnostique pas. Réécrit à chaque reconstruction.
-RECONSTRUCTION_JOURNAL=${RECONSTRUCTION_JOURNAL:-/tmp/p2enjoy-crm-reconstruction.log}
+RECONSTRUCTION_JOURNAL=${RECONSTRUCTION_JOURNAL:-$_RECONSTRUCTION_TMP/reconstruction.log}
 
 reconstruire_base_dev() {
 	local racine fichier profil seed=true repertoire=''
@@ -55,6 +63,10 @@ reconstruire_base_dev() {
 		echo "reconstruire_base_dev : profil « ${profil:-<vide>} » dans $fichier, « dev » exigé — refus, rien n'est arrêté." >&2
 		return 1
 	fi
+	# La pile mesurée est bien celle de CE checkout, à son emplacement, sur la VM où elle a été lancée (§4.3) : sinon
+	# refus, rien n'est arrêté.
+	emplacement_verifier "$racine" "$fichier" >/dev/null \
+		|| { echo "reconstruire_base_dev : l'emplacement de ce checkout n'est pas vérifié — refus, rien n'est arrêté." >&2; return 1; }
 	(
 		set -euo pipefail
 		exec 9>"$RECONSTRUCTION_VERROU"

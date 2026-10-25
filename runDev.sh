@@ -12,6 +12,9 @@
 #       docs/SPEC-mail-subsystem.md §12.1 (aucun port publié), §12.2 (configuration)
 # @spec README.md §5 (commandes), §6 (développement), §11 (limites connues)
 # @spec docs/INCONSISTENCY_REPORT.md INC-291, docs/JOURNAL.md décision 679 — la construction passe sous Compose 5
+# @spec CRM-115 (docs/BACKLOG.md) — tranche T4 : la pile prend l'emplacement de ce checkout au registre des sessions et en
+#       écrit les variables dans `.env` ; `--stop` retire l'entrée (docs/SPEC-pile-par-session.md §4.2, §4.5, §5 ;
+#       décisions 705, 710, 712)
 #
 # Démarre la pile de développement, en amorçant `.env` au premier lancement.
 #
@@ -34,6 +37,8 @@ set -euo pipefail
 
 # shellcheck source=scripts/lib/env.sh
 source "$(dirname "${BASH_SOURCE[0]}")/scripts/lib/env.sh"
+# shellcheck source=scripts/lib/emplacement.sh
+source "$REPO_ROOT/scripts/lib/emplacement.sh"
 
 MODE=start
 WITH_WEBAPP=true
@@ -86,11 +91,22 @@ require_docker
 if [ "$MODE" = stop ]; then
 	say "Arrêt de la pile de développement"
 	compose_dev down
+	# L'emplacement est rendu au registre : une autre session peut le prendre (§4.5).
+	emplacement_retirer_checkout "$REPO_ROOT"
 	info "Volumes conservés. Pour tout détruire et repartir à neuf : ./resetMe.sh"
 	exit 0
 fi
 
 # --- Démarrage ---------------------------------------------------------------------------------
+
+# L'EMPLACEMENT DE CE CHECKOUT, pris au registre des sessions avant tout le reste : il fixe le nom de projet et les
+# quinze ports, que le contrôle des ports et Compose liront ensuite dans `.env` (§4.2, §5). L'emplacement 0 reproduit
+# l'existant — les ports de ce `.env` ; une pile déjà debout de ce checkout est adoptée, jamais doublée (décision 713).
+EMPLACEMENT=$(emplacement_attribuer "$REPO_ROOT" "$ENV_FILE") || die "aucun emplacement de pile libre sur ce poste (scripts/sessions.sh liste)."
+emplacement_ecrire_env "$EMPLACEMENT" "$ENV_FILE"
+env_require_dev_sso_issuer
+emplacement_tmp "$ENV_FILE" >/dev/null
+info "Emplacement $EMPLACEMENT — projet $(env_get "$ENV_FILE" COMPOSE_PROJECT_NAME), répertoire de travail $(env_get "$ENV_FILE" P2ENJOY_TMP)."
 
 ensure_host_mountpoints
 

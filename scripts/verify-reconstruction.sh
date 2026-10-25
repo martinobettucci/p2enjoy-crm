@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 bis : restaurer par reconstruction (INC-289)
 # @verifies docs/SPEC-test-harness.md §3.6 (le mode opératoire et sa preuve) ; docs/DAT.md §3.2 (invariant
+# @verifies CRM-115 (docs/BACKLOG.md) tranche T4 — le contrôle des fichiers Compose ne juge que les conteneurs du projet de
+#           la pile (docs/SPEC-pile-par-session.md §3)
 #           révisé : une base neuve se construit dans l'ordre), §3.2 bis ; docs/JOURNAL.md décisions 675 et 682
 #
 # Éprouve `reconstruire_base_dev` (`scripts/lib/reconstruction.sh`) sur la pile de développement réelle :
@@ -175,7 +177,9 @@ else
 fi
 
 nus=''
-for c in $(docker ps --format '{{.Names}}'); do
+# Les conteneurs de CETTE pile seulement : un poste peut porter d'autres projets — une autre pile du CRM depuis la
+# T4 de `CRM-115`, ou un projet étranger —, que ce contrôle n'a pas à juger.
+for c in $(docker ps --filter "label=com.docker.compose.project=$projet" --format '{{.Names}}'); do
 	n=$(docker inspect "$c" --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}' | tr ',' '\n' | grep -c .)
 	[ "$n" = 2 ] || nus="$nus $c"
 done

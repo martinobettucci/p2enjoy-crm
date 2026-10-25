@@ -59,6 +59,12 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# @spec CRM-115 (docs/BACKLOG.md) tranche T4 — docs/SPEC-pile-par-session.md §3 : les fichiers de travail vivent dans le
+# `P2ENJOY_TMP` de l'emplacement de la pile, jamais dans un `/tmp` que deux sessions partageraient.
+# shellcheck source=scripts/lib/emplacement.sh
+source scripts/lib/emplacement.sh
+P2ENJOY_TMP=$(emplacement_tmp "${P2ENJOY_ENV_FILE:-.env}")
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
 
@@ -201,7 +207,7 @@ EMPREINTE_CARDS_A_L_OUVERTURE=$(psql_db -c "select md5(string_agg(c.id::text || 
 # la ligne l. Un invariant qui ne regarde que les cards ne voit pas ce résidu-là.
 COMMENTAIRES_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.card_comments;")
 
-CORPS=/tmp/p2enjoy-move-card-body
+CORPS=$P2ENJOY_TMP/p2enjoy-move-card-body
 http() {
 	local method=$1 url=$2
 	shift 2
@@ -698,23 +704,23 @@ titre '8. Les suites complètes'
 # d'état. Le contrôle du §7 ne relevait que l'étape. Le seed, convergent, est donc rejoué : c'est lui
 # qui pose l'ancienneté de démonstration (docs/SPEC-seed.md §9.12).
 restaurer_etat_courant || fail 'la reconstruction de la base échoue — motif ci-dessus'
-./supabase/seed/apply-seed.sh >/tmp/p2enjoy-move-card-seed.log 2>&1 \
-	|| fail 'le seed échoue à rétablir les données — voir /tmp/p2enjoy-move-card-seed.log'
-if npm run test:sql >/tmp/p2enjoy-move-card-sql.log 2>&1; then
-	ok "la suite pgTAP GLOBALE est verte après restauration : $(grep -oE '[0-9]+ fichiers?, [0-9]+ assertions' /tmp/p2enjoy-move-card-sql.log | tail -n 1)"
+./supabase/seed/apply-seed.sh >$P2ENJOY_TMP/p2enjoy-move-card-seed.log 2>&1 \
+	|| fail "le seed échoue à rétablir les données — voir $P2ENJOY_TMP/p2enjoy-move-card-seed.log"
+if npm run test:sql >$P2ENJOY_TMP/p2enjoy-move-card-sql.log 2>&1; then
+	ok "la suite pgTAP GLOBALE est verte après restauration : $(grep -oE '[0-9]+ fichiers?, [0-9]+ assertions' $P2ENJOY_TMP/p2enjoy-move-card-sql.log | tail -n 1)"
 else
-	fail 'la suite pgTAP globale est rouge après restauration — voir /tmp/p2enjoy-move-card-sql.log'
-	grep -E 'ECHEC|not ok' /tmp/p2enjoy-move-card-sql.log | head -10 | sed 's/^/        /'
+	fail "la suite pgTAP globale est rouge après restauration — voir $P2ENJOY_TMP/p2enjoy-move-card-sql.log"
+	grep -E 'ECHEC|not ok' $P2ENJOY_TMP/p2enjoy-move-card-sql.log | head -10 | sed 's/^/        /'
 fi
 
 if [ "$RAPIDE" = true ]; then
 	printf '  \033[33mIGNORÉ\033[0m Playwright (--rapide)\n'
 else
-	if npm run e2e:api --silent >/tmp/p2enjoy-move-card-e2e.log 2>&1; then
-		ok "npm run e2e:api — $(grep -oE '[0-9]+ passed' /tmp/p2enjoy-move-card-e2e.log | tail -1)"
+	if npm run e2e:api --silent >$P2ENJOY_TMP/p2enjoy-move-card-e2e.log 2>&1; then
+		ok "npm run e2e:api — $(grep -oE '[0-9]+ passed' $P2ENJOY_TMP/p2enjoy-move-card-e2e.log | tail -1)"
 	else
-		fail 'npm run e2e:api — voir /tmp/p2enjoy-move-card-e2e.log'
-		tail -20 /tmp/p2enjoy-move-card-e2e.log | sed 's/^/        /'
+		fail "npm run e2e:api — voir $P2ENJOY_TMP/p2enjoy-move-card-e2e.log"
+		tail -20 $P2ENJOY_TMP/p2enjoy-move-card-e2e.log | sed 's/^/        /'
 	fi
 fi
 

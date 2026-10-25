@@ -50,6 +50,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# @spec CRM-115 (docs/BACKLOG.md) tranche T4 — docs/SPEC-pile-par-session.md §3 : les fichiers de travail vivent dans le
+# `P2ENJOY_TMP` de l'emplacement de la pile, jamais dans un `/tmp` que deux sessions partageraient.
+# shellcheck source=scripts/lib/emplacement.sh
+source scripts/lib/emplacement.sh
+P2ENJOY_TMP=$(emplacement_tmp "${P2ENJOY_ENV_FILE:-.env}")
+
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
@@ -449,36 +455,36 @@ titre "7. Aucune régression — suites complètes et build"
 if [ "$RAPIDE" = true ]; then
 	printf '  \033[33mIGNORE\033[0m --rapide : suites complètes et build non exécutés\n'
 else
-	if npm run test:sql >/tmp/p2enjoy-crm014-sql.log 2>&1; then
-		total=$(grep -oE '[0-9]+ assertions' /tmp/p2enjoy-crm014-sql.log | tail -1)
+	if npm run test:sql >$P2ENJOY_TMP/p2enjoy-crm014-sql.log 2>&1; then
+		total=$(grep -oE '[0-9]+ assertions' $P2ENJOY_TMP/p2enjoy-crm014-sql.log | tail -1)
 		ok "npm run test:sql est vert — $total"
 	else
-		fail "npm run test:sql échoue (voir /tmp/p2enjoy-crm014-sql.log)"
+		fail "npm run test:sql échoue (voir $P2ENJOY_TMP/p2enjoy-crm014-sql.log)"
 	fi
 
-	if npm run e2e:api >/tmp/p2enjoy-crm014-api.log 2>&1; then
-		total=$(grep -oE '[0-9]+ passed' /tmp/p2enjoy-crm014-api.log | tail -1)
+	if npm run e2e:api >$P2ENJOY_TMP/p2enjoy-crm014-api.log 2>&1; then
+		total=$(grep -oE '[0-9]+ passed' $P2ENJOY_TMP/p2enjoy-crm014-api.log | tail -1)
 		ok "npm run e2e:api est vert — $total"
 	else
-		fail "npm run e2e:api échoue (voir /tmp/p2enjoy-crm014-api.log)"
+		fail "npm run e2e:api échoue (voir $P2ENJOY_TMP/p2enjoy-crm014-api.log)"
 	fi
 
-	if npm run test:unit >/tmp/p2enjoy-crm014-unit.log 2>&1; then
+	if npm run test:unit >$P2ENJOY_TMP/p2enjoy-crm014-unit.log 2>&1; then
 		ok "npm run test:unit est vert"
 	else
-		fail "npm run test:unit échoue (voir /tmp/p2enjoy-crm014-unit.log)"
+		fail "npm run test:unit échoue (voir $P2ENJOY_TMP/p2enjoy-crm014-unit.log)"
 	fi
 
-	if npm run typecheck >/tmp/p2enjoy-crm014-tsc.log 2>&1; then
+	if npm run typecheck >$P2ENJOY_TMP/p2enjoy-crm014-tsc.log 2>&1; then
 		ok "npm run typecheck est vert — le fichier consolidé est couvert par tsconfig.tools.json"
 	else
-		fail "npm run typecheck échoue (voir /tmp/p2enjoy-crm014-tsc.log)"
+		fail "npm run typecheck échoue (voir $P2ENJOY_TMP/p2enjoy-crm014-tsc.log)"
 	fi
 
-	if npm run build >/tmp/p2enjoy-crm014-build.log 2>&1; then
+	if npm run build >$P2ENJOY_TMP/p2enjoy-crm014-build.log 2>&1; then
 		ok "npm run build est vert"
 	else
-		fail "npm run build échoue (voir /tmp/p2enjoy-crm014-build.log)"
+		fail "npm run build échoue (voir $P2ENJOY_TMP/p2enjoy-crm014-build.log)"
 	fi
 fi
 

@@ -21,7 +21,7 @@
 
 import { defineConfig, devices } from '@playwright/test'
 import { join } from 'node:path'
-import { RACINE, cleAnonyme, lireEnv, urlApi } from './env'
+import { RACINE, cleAnonyme, lireEnv, portPrevisualisation, urlApi } from './env'
 
 // @spec CRM-008 (docs/BACKLOG.md) — INC-084, décision 282
 // Playwright force la couleur de ses sous-processus. L'environnement de l'appelant peut demander
@@ -29,7 +29,8 @@ import { RACINE, cleAnonyme, lireEnv, urlApi } from './env'
 // webServer et chaque worker. Cette suppression reste locale au processus du harnais.
 delete process.env['NO_COLOR']
 
-const PORT = Number(process.env['WEBAPP_PREVIEW_PORT'] ?? 4173)
+// `CRM-115` T4 : le port de l'emplacement de la pile, lu dans `.env` quand l'appelant ne le pose pas.
+const PORT = portPrevisualisation()
 const URL_BASE = `http://127.0.0.1:${PORT}`
 
 const URL_API = urlApi()

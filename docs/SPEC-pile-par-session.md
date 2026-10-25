@@ -126,11 +126,9 @@ Sous verrou, dans cet ordre :
 2. sinon, on prend le plus petit `N` sans entrée, ou dont l'entrée est **périmée** (§4.4), après avoir arrêté la pile
    périmée ;
 3. on vérifie que **chacun** des ports de `N` est libre sur l'interface de bouclage, par une tentative de liaison. Le
-   poste n'a ni `ss` ni `netstat` (INC-044). Un port pris fait passer à `N + 1`, et la cause est nommée. **Précision
-   de la décision 712** : un port que tient déjà un conteneur du projet de `N` **lancé depuis ce même checkout**
-   (étiquette `com.docker.compose.project.working_dir`) n'est pas pris — c'est la pile que le lancement recompose,
-   comme `require_free_ports` l'admet. Sans elle, le premier lancement d'après la T4 d'une pile déjà debout la ferait
-   passer à l'emplacement 1 ;
+   poste n'a ni `ss` ni `netstat` (INC-044). Un port pris fait passer à `N + 1`, et la cause est nommée. *La précision
+   de la décision 712 — les ports d'une pile de ce checkout ne comptent pas — est **remplacée** par le point 1 bis
+   (décision 713) : une pile de ce checkout en marche est adoptée avant toute mesure de port ;*
 4. on écrit l'entrée, puis les variables de `N` dans `.env` (§5).
 
 Si aucun emplacement n'est libre, le lancement **échoue** sans rien démarrer, et liste les sessions en cours.

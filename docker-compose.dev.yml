@@ -166,6 +166,9 @@ services:
       # Substituées à l'import dans keycloak/realm-lelabs.json : l'origine de la webapp varie d'un
       # poste à l'autre, et l'URL de retour doit lui être égale au caractère près.
       SSO_DEV_REDIRECT_URI: ${SITE_URL}/auth/retour
+      # @spec CRM-115 (docs/BACKLOG.md) tranche T4, docs/SPEC-pile-par-session.md §5 — le retour de la prévisualisation
+      # des preuves, sur le port de l'emplacement : la ligne 45 du realm ne l'écrit plus en clair.
+      SSO_DEV_PREVIEW_REDIRECT_URI: http://127.0.0.1:${WEBAPP_PREVIEW_PORT:-4173}/auth/retour
       # @spec CRM-102 (docs/BACKLOG.md), docs/SPEC-mcp.md §12 — le retour du mandataire MCP, sur le même client.
       SSO_DEV_MCP_REDIRECT_URI: http://localhost:${MCP_DEV_PORT}/auth/callback
       SSO_DEV_WEB_ORIGIN: ${SITE_URL}

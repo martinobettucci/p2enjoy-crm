@@ -37,6 +37,12 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# @spec CRM-115 (docs/BACKLOG.md) tranche T4 — docs/SPEC-pile-par-session.md §3 : les fichiers de travail vivent dans le
+# `P2ENJOY_TMP` de l'emplacement de la pile, jamais dans un `/tmp` que deux sessions partageraient.
+# shellcheck source=scripts/lib/emplacement.sh
+source scripts/lib/emplacement.sh
+P2ENJOY_TMP=$(emplacement_tmp "${P2ENJOY_ENV_FILE:-.env}")
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
 
@@ -131,7 +137,7 @@ fail() { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mE
 
 psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@"; }
 
-CORPS=/tmp/p2enjoy-tracks-body
+CORPS=$P2ENJOY_TMP/p2enjoy-tracks-body
 http() {
 	local method=$1 url=$2
 	shift 2
@@ -385,11 +391,11 @@ echo "5. Suites automatisées"
 lancer() {
 	local libelle=$1
 	shift
-	if "$@" >/tmp/p2enjoy-tracks-suite.log 2>&1; then
+	if "$@" >$P2ENJOY_TMP/p2enjoy-tracks-suite.log 2>&1; then
 		ok "$libelle"
 	else
 		fail "$libelle"
-		tail -n 12 /tmp/p2enjoy-tracks-suite.log | sed 's/^/        /'
+		tail -n 12 $P2ENJOY_TMP/p2enjoy-tracks-suite.log | sed 's/^/        /'
 	fi
 }
 

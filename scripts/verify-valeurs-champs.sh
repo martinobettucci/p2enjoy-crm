@@ -49,6 +49,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# @spec CRM-115 (docs/BACKLOG.md) tranche T4 — docs/SPEC-pile-par-session.md §3 : les fichiers de travail vivent dans le
+# `P2ENJOY_TMP` de l'emplacement de la pile, jamais dans un `/tmp` que deux sessions partageraient.
+# shellcheck source=scripts/lib/emplacement.sh
+source scripts/lib/emplacement.sh
+P2ENJOY_TMP=$(emplacement_tmp "${P2ENJOY_ENV_FILE:-.env}")
+
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 # shellcheck source=scripts/lib/sso.sh
@@ -167,7 +173,7 @@ rejouer_migrations() {
 	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || return 1
 }
 
-CORPS=/tmp/p2enjoy-valeurs-body
+CORPS=$P2ENJOY_TMP/p2enjoy-valeurs-body
 http() {
 	local method=$1 url=$2
 	shift 2

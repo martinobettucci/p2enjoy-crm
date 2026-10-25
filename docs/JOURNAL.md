@@ -34687,3 +34687,9 @@ d'une vraie sortie `docker ps`. (2) **La base d'un checkout est son `.env`** moi
 (§3). (3) **Une pile de ce checkout qui tourne déjà est adoptée, ou l'attribution refuse** (§4.2, point 1 bis) — elle
 remplace la règle des ports de la décision 712, qu'elle englobe. **Avant tout nouveau `./runDev.sh`** : ces trois
 corrections, leurs preuves hors pile, puis l'essai.
+*Complément du même soir, en codant.* La correction (1) est devenue **sans objet** : l'adoption (3) raisonne sur les
+**projets** en marche, non sur les ports ; le relevé des ports n'avait plus d'appelant et a été retiré plutôt que gardé
+mort. Une **quatrième** cause a été trouvée par une attribution à blanc contre le vrai démon, avant tout relancement :
+`docker ps --format '{{index .Labels "…"}}'` échoue — `.Labels` y est une chaîne — et l'erreur était tue ; la forme
+juste est `{{.Label "…"}}`. `scripts/verify-emplacements.sh` interroge désormais le vrai Docker quand une pile de ce
+checkout tourne (section 5).

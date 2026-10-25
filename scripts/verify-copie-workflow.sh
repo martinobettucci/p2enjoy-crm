@@ -47,6 +47,12 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# @spec CRM-115 (docs/BACKLOG.md) tranche T4 — docs/SPEC-pile-par-session.md §3 : les fichiers de travail vivent dans le
+# `P2ENJOY_TMP` de l'emplacement de la pile, jamais dans un `/tmp` que deux sessions partageraient.
+# shellcheck source=scripts/lib/emplacement.sh
+source scripts/lib/emplacement.sh
+P2ENJOY_TMP=$(emplacement_tmp "${P2ENJOY_ENV_FILE:-.env}")
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
 
@@ -140,7 +146,7 @@ titre() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 
 psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@"; }
 
-CORPS=/tmp/p2enjoy-copie-body
+CORPS=$P2ENJOY_TMP/p2enjoy-copie-body
 http() {
 	local method=$1 url=$2
 	shift 2
@@ -617,11 +623,11 @@ menage
 # qui a vu la restauration incomplète d'avant le runner. Elle court APRÈS le ménage ci-dessus — le
 # second alinéa du §3.5 —, et c'est MESURÉ : placée avant lui, `0012` choisissait une copie d'essai
 # d'un autre track et rendait `workflow_hors_track` au lieu de `23503`.
-if npm run test:sql >/tmp/p2enjoy-copie-workflow-sql.log 2>&1; then
-	ok "la suite pgTAP GLOBALE est verte après restauration : $(grep -oE '[0-9]+ fichiers?, [0-9]+ assertions' /tmp/p2enjoy-copie-workflow-sql.log | tail -n 1)"
+if npm run test:sql >$P2ENJOY_TMP/p2enjoy-copie-workflow-sql.log 2>&1; then
+	ok "la suite pgTAP GLOBALE est verte après restauration : $(grep -oE '[0-9]+ fichiers?, [0-9]+ assertions' $P2ENJOY_TMP/p2enjoy-copie-workflow-sql.log | tail -n 1)"
 else
-	fail "la suite pgTAP globale est rouge après restauration — voir /tmp/p2enjoy-copie-workflow-sql.log"
-	grep -E 'ECHEC|not ok' /tmp/p2enjoy-copie-workflow-sql.log | head -10 | sed 's/^/        /'
+	fail "la suite pgTAP globale est rouge après restauration — voir $P2ENJOY_TMP/p2enjoy-copie-workflow-sql.log"
+	grep -E 'ECHEC|not ok' $P2ENJOY_TMP/p2enjoy-copie-workflow-sql.log | head -10 | sed 's/^/        /'
 fi
 
 if [ "$RAPIDE" = true ]; then

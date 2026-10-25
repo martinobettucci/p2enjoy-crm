@@ -42,7 +42,7 @@
       "serviceAccountsEnabled": false,
       "redirectUris": [
         "${SSO_DEV_REDIRECT_URI}",
-        "http://127.0.0.1:4173/auth/retour",
+        "${SSO_DEV_PREVIEW_REDIRECT_URI}",
         "${SSO_DEV_MCP_REDIRECT_URI}"
       ],
       "webOrigins": [],

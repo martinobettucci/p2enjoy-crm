@@ -48,6 +48,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# @spec CRM-115 (docs/BACKLOG.md) tranche T4 — docs/SPEC-pile-par-session.md §3 : les fichiers de travail vivent dans le
+# `P2ENJOY_TMP` de l'emplacement de la pile, jamais dans un `/tmp` que deux sessions partageraient.
+# shellcheck source=scripts/lib/emplacement.sh
+source scripts/lib/emplacement.sh
+P2ENJOY_TMP=$(emplacement_tmp "${P2ENJOY_ENV_FILE:-.env}")
+
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
@@ -231,7 +237,7 @@ if npm run test:unit --silent > "$TRAVAIL/unit.log" 2>&1; then
 	ok "npm run test:unit vert (${total:-?} tests)"
 else
 	fail "npm run test:unit en échec — voir $TRAVAIL/unit.log"
-	cp "$TRAVAIL/unit.log" /tmp/p2enjoy-formulaire-unit.log 2>/dev/null || true
+	cp "$TRAVAIL/unit.log" $P2ENJOY_TMP/p2enjoy-formulaire-unit.log 2>/dev/null || true
 fi
 
 # --- 4. Preuve d'API : les deux lectures de « renseigné » ----------------------------------------
