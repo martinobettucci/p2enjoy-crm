@@ -300,13 +300,17 @@ if docker exec "$DB_CONTAINER" true >/dev/null 2>&1; then
 
 	# L'INDEX PARTIEL des lignes sans réel : c'est lui qui servira l'onglet « À saisir » du §4.8,
 	# et un index total ne dirait rien de la règle.
+	# RÉVISÉ LE 2026-10-25 (décision 704, INC-309), PARCE QUE LA RÈGLE A CHANGÉ : depuis `CRM-099`
+	# (`0088_reels_multiples.sql`, docs/SPEC-costs.md §2.3 bis), une ligne reçoit plusieurs réels jusqu'à ce qu'on la
+	# solde, et l'onglet « À saisir » liste les lignes NON SOLDÉES. Son appui est l'index partiel
+	# `where (settled_at is null)` ; l'ancien, sur `actual_cost is null`, n'existe plus.
 	partiel=$(psql_db -c "select count(*) from pg_indexes
 		where schemaname='public' and tablename='card_costs'
-		  and indexdef ilike '%where (actual_cost is null)%'")
+		  and indexdef ilike '%where (settled_at is null)%'")
 	if [ "$partiel" = '1' ]; then
-		ok "l'index des lignes sans réel est PARTIEL (§4.8)"
+		ok "l'index des lignes non soldées est PARTIEL (§4.8, §2.3 bis)"
 	else
-		fail "aucun index partiel « where actual_cost is null » : l'onglet à saisir n'aurait pas d'appui"
+		fail "aucun index partiel « where settled_at is null » : l'onglet à saisir n'aurait pas d'appui"
 	fi
 
 	politiques=$(psql_db -c "select count(*) from pg_policies
