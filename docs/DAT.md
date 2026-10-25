@@ -503,6 +503,50 @@ la base vieillit avec l'image : la production devra prévoir son rafraîchisseme
   quitté la pile, et sans cette règle le repli de l'application monopage rendrait `index.html` en
   `200`.
 
+#### 3.5 bis Connexions maintenues entre un relais et son amont (`CRM-001`, INC-299, décision 696)
+
+**La règle.** À chaque saut où un relais garde des connexions ouvertes vers un amont pour les réutiliser, **le relais
+ferme une connexion inactive avant que l'amont ne la ferme**. Sinon, le relais peut écrire une requête sur une
+connexion que l'amont ferme au même instant : il lit `upstream prematurely closed connection` ou `Connection reset by
+peer`, et rend `502` au client sans rejouer une requête non idempotente.
+
+**Mesuré le 2026-10-25** sur la pile de développement, par une connexion directe laissée inactive après une première
+réponse :
+
+| Amont | Ferme une connexion inactive après | Relais qui la réutilise | Délai du relais avant correction |
+|---|---|---|---|
+| `rest` (PostgREST 14, serveur Warp) | entre 30 et 60 s (un tick global toutes les 30 s ; mesuré 34,6 et 59,9 s) | Kong | 60 s (`upstream_keepalive_idle_timeout`, défaut de Kong 3.9) |
+| `realtime` (`/api`) | 5,0 s | Kong | 60 s |
+| `storage` | 62 s | Kong | 60 s |
+| `functions` | ne ferme pas en 130 s | Kong | 60 s |
+| `kong` (côté client) | 75 s | Caddy (production) | 2 min (défaut du transport `http` de Caddy 2.9) |
+| `mcp` (uvicorn) | 5,0 s | Caddy (production) | 2 min |
+
+PostgREST n'offre aucun réglage de ce délai (`postgrest --example` n'en porte aucun). **Reproduit** : des requêtes
+`POST /rest/v1/rpc/est_superadmin` envoyées à travers Kong à l'instant du tick de Warp, sur des connexions que Kong
+garde depuis 60 s, rendent **11 `502` sur 96**, avec la ligne de journal relevée en campagne par INC-299.
+
+**Le réglage : 3 secondes, partout.** Un seul délai, inférieur au plus court mesuré (5 s) :
+- Kong : `KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT: 3` dans `docker-compose.yml`, donc dans les deux assemblages ;
+- Caddy : `transport http { keepalive 3s }` dans les deux `reverse_proxy` de `caddy/routes.caddy`, et le label
+  `com.p2enjoy.caddy-routes-revision` passe à `crm-001`.
+
+Le pool reste utile : une connexion sert tant qu'il passe une requête toutes les trois secondes, ce qui est le cas d'un
+écran qui charge. Le coût d'une reconnexion sur le réseau interne est de l'ordre de la milliseconde. **Écarté** :
+relancer la requête sur `502` (Kong ne rejoue pas un `POST`, et le faire rejouerait une écriture) ; régler l'amont
+(PostgREST ne l'expose pas) ; un délai par amont (Kong n'en a qu'un, global, et le même délai partout est la règle la
+plus simple).
+
+**Preuves** (`scripts/verify-stack.sh`, section 6) :
+1. le délai effectif de Kong, lu dans sa configuration rendue (`/usr/local/kong/.kong_env`), est celui que déclare
+   `docker-compose.yml`, et il est **strictement inférieur** au plus court délai d'amont mesuré par le harnais ;
+2. chaque amont de Kong garde une connexion inactive **plus longtemps** que ce délai augmenté d'une seconde (mesure
+   directe, sonde jetable sur le réseau de la pile) ;
+3. des requêtes passées par Kong laissent des connexions vers `rest` ; **délai de Kong plus une seconde** plus tard,
+   aucune d'elles n'existe encore — avec le défaut de 60 s, les six de la mesure du 2026-10-25 étaient toutes là ;
+4. Caddy : `caddy validate` accepte les deux Caddyfile ; un Caddy jetable monté sur `caddy/routes.caddy`, sur le
+   réseau de la pile, relaie une requête vers Kong et a fermé sa connexion vers Kong délai plus une seconde plus tard.
+
 ### 3.6 Composants de développement uniquement
 
 | Composant | Rôle | Pourquoi il n'est pas en production |

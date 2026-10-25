@@ -7741,7 +7741,7 @@ réutilise ; une requête non idempotente n'est pas rejouée par Kong. C'étaien
 qu'INC-292 comptait avec ses `503` : la cause est distincte (aucune fonction edge en jeu). **Comportement laissé
 inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-001` mesure le délai de maintien des connexions
 de PostgREST et celui de Kong vers cet amont (`upstream_keepalive_idle_timeout`), puis aligne le second sous le premier —
-un réglage déclaré et prouvé par une boucle de requêtes, pas une relance. **Statut : ouverte.**
+un réglage déclaré et prouvé par une boucle de requêtes, pas une relance. **Issue retenue le 2026-10-25 (décision 696)** : la cause est mesurée et reproduite (`docs/DAT.md` §3.5 bis) — Kong garde 60 s une connexion que PostgREST ferme entre 30 et 60 s ; le délai des relais passe à 3 s, Kong et Caddy. **Statut : ouverte jusqu'à la preuve de la correction.**
 
 ### INC-300 — `connexion.spec.ts:345` lit le fondu des gestes de modération à mi-transition sous la charge d'une campagne
 

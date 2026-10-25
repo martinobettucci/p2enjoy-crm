@@ -34164,3 +34164,21 @@ l'outil pendant son étape d'interface, après avoir révélé INC-303 (compteur
 refuse tout commit en HEAD détaché : rebase annulé, entrée renumérotée INC-303 et réappliquée sur `main` synchronisé.
 
 **Où reprendre.** `CRM-084` est `[x]`, prise libérée. Rien d'autre ne change ; le choix de la session suivante suit §4.2.
+
+### décision 696 — `CRM-001`, INC-299 : un relais ferme une connexion inactive avant son amont — 3 secondes, Kong et Caddy
+
+*2026-10-25, session planifiée ouverte à 07:12:34 UTC (`docs/CloudWorker.md`). Tranché par la session (§4.1 bis) ; le
+responsable peut le contredire.*
+
+**Choix de l'unité.** `CRM-044`, `CRM-084` et `CRM-111` T1 bis portaient des prises vivantes ; les autres `[~]` du plan
+n'attendent que livraisons, constats ou arbitrages de produit (`CRM-066` §4). INC-299 proposait son issue sous
+`CRM-001`, première unité `[~]` du plan, et ses `502` retiennent les campagnes d'interface vertes de `CRM-037` et
+`CRM-113` : c'est un défaut du produit, mesurable et prouvable seul. **Connecteur MCP** : non concerné — aucun outil,
+aucune famille ; le connecteur bénéficie du même réglage au saut Caddy.
+
+**Mesuré** (`docs/DAT.md` §3.5 bis) : PostgREST ferme une connexion inactive entre 30 et 60 s, `realtime` à 5 s, `mcp`
+à 5 s, Kong côté client à 75 s ; Kong garde ses connexions amont 60 s, Caddy 2 min. **Reproduit** : 11 `502` sur 96
+requêtes envoyées au tick de Warp, journal identique à celui d'INC-299. **Retenu** : 3 s partout — Kong
+(`KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT`) et Caddy (`keepalive 3s`). **Écarté** : rejouer sur `502`, régler l'amont,
+un délai par amont. Le saut Caddy n'est pas observé en campagne (le développement n'a pas de Caddy) mais il est la même
+course mesurée, et le même délai partout est la règle la plus simple.
