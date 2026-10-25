@@ -7743,7 +7743,7 @@ réutilise ; une requête non idempotente n'est pas rejouée par Kong. C'étaien
 qu'INC-292 comptait avec ses `503` : la cause est distincte (aucune fonction edge en jeu). **Comportement laissé
 inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-001` mesure le délai de maintien des connexions
 de PostgREST et celui de Kong vers cet amont (`upstream_keepalive_idle_timeout`), puis aligne le second sous le premier —
-un réglage déclaré et prouvé par une boucle de requêtes, pas une relance. **Issue retenue le 2026-10-25 (décision 696)** : la cause est mesurée et reproduite (`docs/DAT.md` §3.5 bis) — Kong garde 60 s une connexion que PostgREST ferme entre 30 et 60 s ; le délai des relais passe à 3 s, Kong et Caddy. **Statut : ouverte jusqu'à la preuve de la correction.**
+un réglage déclaré et prouvé par une boucle de requêtes, pas une relance. **Issue retenue le 2026-10-25 (décision 696)** : la cause est mesurée et reproduite (`docs/DAT.md` §3.5 bis) — Kong garde 60 s une connexion que PostgREST ferme entre 30 et 60 s ; le délai des relais passe à 3 s, Kong et Caddy. **Seconde cause mesurée le même jour (décision 700)** : PostgREST ferme sans l'annoncer la connexion d'un `HEAD`, que nginx remet au pool — 15 erreurs sous une charge de `HEAD` seuls, 0 sous des `GET` seuls ; la webapp cesse de compter par `HEAD`. **Statut : ouverte jusqu'à la preuve de la correction.**
 **Mesuré après la correction, le 2026-10-25 (session de `CRM-111` T1 bis, décision 694)** : Kong recréé à 08:10 UTC par la
 commande Compose complète, `upstream_keepalive_idle_timeout = 3` relu dans `/usr/local/kong/.kong_env`. La campagne
 d'interface de 08:19 à 09:15 UTC rend encore deux échecs sur `502 (Bad Gateway)` en console (`contacts-affaire.spec.ts:215`,

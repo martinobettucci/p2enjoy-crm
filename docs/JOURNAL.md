@@ -34309,3 +34309,18 @@ du scénario est porté au triple, ce que Playwright prévoit pour un test long.
 assertions, et la série en rend 3974 depuis les 30 assertions de `0094` (`CRM-013`, décision 687). La valeur est mesurée
 (« 94 fichiers, 3974 assertions, aucune anomalie ») et portée en place avec son motif, comme les révisions précédentes.
 Aucune autre issue n'est raisonnable pour un compteur figé dépassé par le produit.
+
+### décision 700 — `CRM-001`, INC-299 : la webapp ne compte plus par `HEAD`, que PostgREST ferme sans l'annoncer
+
+*2026-10-25, même session que la décision 696. Tranché par la session (`docs/CloudWorker.md` §4.1 bis) ; le responsable
+peut le contredire.*
+
+**Constat.** Après le délai de 3 s (décision 696), la campagne d'interface rendait encore 26 erreurs amont chez Kong et
+un `502`, sans alignement sur l'inactivité. **Mesuré** (`docs/DAT.md` §3.5 bis) : PostgREST répond à un `HEAD` sans
+longueur et ferme ensuite la connexion ; nginx la remet au pool. Charge par Kong : `HEAD` seuls 15 erreurs par minute,
+`GET` seuls 0 (deux fois) ; le rechargement du cache de schéma, soupçonné d'abord, n'y est pour rien (7 erreurs sans
+lui, 9 avec, même mélange). **Retenu** : les dix comptes de la webapp passent de `head: true` à `GET … limit=0`, même
+compte, aucune ligne transmise ; une seule constante, `webapp/src/lib/compter.ts`. **Écarté** : un plugin de Kong qui
+pose `Connection: close` sur un `HEAD` — essayé et mesuré, 5 et 6 erreurs, car PostgREST n'annonce pas la fermeture ;
+transformer le `HEAD` en `GET` vers l'amont — nginx renverrait un corps au client ; monter PostgREST de version — aucune
+version corrigée n'est connue du dépôt. **Connecteur MCP** : non concerné, il n'émet aucun `HEAD`.

@@ -547,6 +547,24 @@ plus simple).
 4. Caddy : `caddy validate` accepte les deux Caddyfile ; un Caddy jetable monté sur `caddy/routes.caddy`, sur le
    réseau de la pile, relaie une requête vers Kong et a fermé sa connexion vers Kong délai plus une seconde plus tard.
 
+**Seconde cause, mesurée le 2026-10-25 après la correction ci-dessus (décision 700) : le `HEAD`.** La campagne
+d'interface suivante portait encore 26 erreurs amont et un `502` (`POST /rest/v1/rpc/temps_valorise`). **Mesuré** :
+PostgREST répond à un `HEAD` **sans `Content-Length` ni `Transfer-Encoding`, puis ferme la connexion sans l'annoncer**
+(aucun `Connection: close`, même quand la requête le demande) ; un `GET` sur la même connexion est servi deux fois. nginx,
+sous Kong, tient la réponse d'un `HEAD` pour complète et remet la connexion au pool : la requête suivante qui la reprend
+tombe sur la fermeture. Sous la même charge par Kong (30 clients, une minute) : **`HEAD` seuls, 15 erreurs ; `GET`
+seuls, 0, deux fois.** Kong active le maintien pour chaque requête sans point d'accroche par requête, et changer la
+méthode en `GET` vers l'amont renverrait un corps au client d'un `HEAD` : la passerelle ne peut pas le corriger.
+
+**La règle : la webapp ne compte jamais par `HEAD`.** Un compte s'écrit `select(colonne, OPTIONS_COMPTE)` puis
+`.limit(0)` : `GET`, `Prefer: count=exact`, réponse `206` au corps `[]` (2 octets, `Content-Length` présent) et compte
+dans `Content-Range` (`*/N`), mesuré sur la vraie route. Aucune ligne ne transite, comme avec `head: true`.
+`OPTIONS_COMPTE` vit dans `webapp/src/lib/compter.ts`, seul endroit où la forme se décide. **Preuves** : unitaires de
+chaque appelant (`.limit(0)`, options sans `head`) ; un test unitaire qui refuse toute occurrence de `head: true` dans
+`webapp/src` ; un E2E qui parcourt les écrans qui comptent (cloche, guide de démarrage, corbeille, état de la
+messagerie, budget d'une affaire) et n'observe **aucune** requête `HEAD` vers `/rest/v1/`. Le connecteur MCP n'émet
+aucun `HEAD` (mesuré par recherche dans `mcp/`).
+
 ### 3.6 Composants de développement uniquement
 
 | Composant | Rôle | Pourquoi il n'est pas en production |
