@@ -343,13 +343,13 @@ def sonde(cible):
             x = s.recv(65536)
             if not x: raise OSError("fermée avant la réponse")
             d += x
-        fin = time.monotonic() + attente
+        debut = time.monotonic(); fin = debut + attente
         while True:
             reste = fin - time.monotonic()
             if reste <= 0: res[cible] = "ouverte"; break
             s.settimeout(reste)
             try:
-                if not s.recv(65536): res[cible] = "fermée après %.1f s" % (attente - reste); break
+                if not s.recv(65536): res[cible] = "fermée après %.1f s" % (time.monotonic() - debut); break
             except socket.timeout: res[cible] = "ouverte"; break
     except Exception as e: res[cible] = "erreur " + type(e).__name__
 ts = [threading.Thread(target=sonde, args=(c,)) for c in sys.argv[2:]]
