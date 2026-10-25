@@ -16164,7 +16164,8 @@ peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi e
       capture `attentes-inscrite-1440` observée ; manuel 10.5 et 10 bis.5 ; DS §5.61 ; SCHEMA ; contrat, ligne 99.
 - [x] **T4** — livraison en production, sur instruction du responsable : T1 et T2 par la fenêtre `8026e90e` (migration 98), T3 par la seconde fenêtre `e9255249` (migration 99) le 2026-10-23 ; `verifier.sh` 26/27, registre à 99, `401` sans session ; constat visuel en production à faire par le responsable.
 
-### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[~]`
+### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[@]`
+*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 21:57 UTC — état avant : [~]*
 ***Reste réel au 2026-10-25 (décision 705), faisable par un agent** : renouveler et observer les captures des autres unités qui montrent encore l'ancien en-tête (T3) ; puis la livraison de la webapp (T4, T5) et le constat du responsable.*
 *Créée le 2026-10-23 — demande du responsable : « le navbar en haut ne montre pas l'arborescence quand on a une affaire
 ouverte, donc difficile de savoir où on est ». Arbitrages du responsable le même jour (`docs/JOURNAL.md` décision 636).
