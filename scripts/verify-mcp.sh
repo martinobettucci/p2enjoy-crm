@@ -163,7 +163,14 @@ grep -qi "resource_metadata=\"$ORIGINE/.well-known/oauth-protected-resource/mcp\
 titre '4. Les suites'
 scripts/run-sql-tests.sh supabase/tests/0085_connecteur_mcp.test.sql >/dev/null 2>&1 \
 	&& ok 'pgTAP : 0085_connecteur_mcp verte' || fail 'pgTAP : 0085_connecteur_mcp rouge'
-if docker build -q --target dev -t "$IMAGE" mcp >/dev/null 2>&1; then
+# RÉVISÉ LE 2026-10-25 (décision 704, INC-309) : derrière un proxy TLS interposé, l'étape `dev` ne pouvait pas
+# installer ses dépendances — mesuré « SSLCertVerificationError » sur `pip install`, puis « pull access denied for
+# crm-mcp » à chaque `docker run`. Le secret de construction `pip_ca` est transmis quand `PIP_CA_FILE` (environnement,
+# sinon `.env`) désigne un fichier, comme le documente `mcp/Dockerfile` et comme le fait Compose (décision 356).
+ca_pip=${PIP_CA_FILE:-$(sed -n 's/^PIP_CA_FILE=//p' .env 2>/dev/null | tail -n 1 | tr -d "\"'\r")}
+secret_ca=()
+[ -n "$ca_pip" ] && [ -s "$ca_pip" ] && secret_ca=(--secret "id=pip_ca,src=$ca_pip")
+if docker build -q "${secret_ca[@]}" --target dev -t "$IMAGE" mcp >/dev/null 2>&1; then
 	docker run --rm "$IMAGE" python -m pytest -q -p no:cacheprovider >"$TRAVAIL/unitaires.log" 2>&1 \
 		&& ok "pytest unitaires : $(tail -n 1 "$TRAVAIL/unitaires.log")" || fail "pytest unitaires rouges : $(tail -n 1 "$TRAVAIL/unitaires.log")"
 else
