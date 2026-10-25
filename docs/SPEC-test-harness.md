@@ -133,7 +133,8 @@ Trois conséquences, qui sont la raison d'être de l'exécuteur :
 
 - **Périmètre** : tous les fichiers `supabase/tests/*.test.sql`, dans l'ordre lexicographique de
   leur nom — qui est l'ordre des migrations qu'ils accompagnent.
-- **Cible** : le conteneur `p2enjoy-db` de la pile de développement. L'exécuteur **ne démarre ni
+- **Cible** : le conteneur du service `db` de la pile de développement, désigné par `conteneur db`
+  (`scripts/lib/conteneur.sh`, `CRM-115` T2). L'exécuteur **ne démarre ni
   n'arrête rien** ; il échoue explicitement si le conteneur est absent, comme le font déjà les
   neuf `scripts/verify-*.sh`.
 - **Verdict par fichier**, dans cet ordre :

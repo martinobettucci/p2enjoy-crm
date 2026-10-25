@@ -55,7 +55,7 @@ celui qu'emploie `supabase gen types typescript`.
 
 Le service `meta` **ne publie aucun port sur l'hôte** — il n'est joignable que depuis le réseau
 Docker (`docker-compose.dev.yml`, service `meta`). L'appel se fait donc par `docker exec` dans le
-conteneur `p2enjoy-meta`.
+conteneur du service `meta`, désigné par `conteneur meta` (`CRM-115` T2).
 
 Mesures du 2026-08-03, sur la pile démarrée par `./runDev.sh --dev` :
 

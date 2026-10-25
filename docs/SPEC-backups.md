@@ -531,7 +531,7 @@ secrets du seed, l'empreinte est identique sur la pile courante et sur la pile r
 distincts ».** Tout passe par `docker exec` et par le socket local du conteneur, comme la
 sauvegarde (M1). Rien n'est donc exposé, rien ne peut entrer en collision avec la pile courante, et
 la question du choix des ports ne se pose pas. Le conteneur ne rejoint par ailleurs aucun réseau de
-la pile : il reste sur le pont par défaut, sans aucun lien vers `p2enjoy-db`.
+la pile : il reste sur le pont par défaut, sans aucun lien vers le service `db` de la pile.
 
 **M15. Les objets se restaurent par `docker cp - <conteneur>:/data`, miroir exact de l'export.**
 L'image MinIO ne portant ni `tar` ni `find` (M5), c'est de nouveau le **démon** Docker qui extrait
@@ -584,8 +584,9 @@ conditionnelle. Elle ne l'est pas :
   posées au moment de leur création. Il ne construit **aucun** motif, n'énumère **aucune** liste et
   n'interroge **aucun** filtre pour décider quoi détruire ;
 - ces noms sont préfixés `p2enjoy-restauration-` et portent l'horodatage de l'exercice ; **aucun
-  conteneur de la pile ne peut porter un tel nom**, les noms de la pile étant fixés par
-  `docker-compose.yml` (`container_name: p2enjoy-db`, `p2enjoy-minio`, …) ;
+  conteneur de la pile ne peut porter un tel nom** : en développement, Compose les dérive du projet
+  (`<projet>-<service>-N`, `CRM-115` T2) ; en production, `docker-compose.prod.yml` fixe les siens, et aucun ne
+  porte ce préfixe ;
 - si l'un de ces noms est **déjà pris** au moment de la création, l'exercice **refuse de démarrer**
   (R24) plutôt que de réutiliser ou d'écraser un conteneur qu'il n'a pas créé ;
 - la destruction passe par un `trap … EXIT INT TERM` : elle a lieu quelle que soit l'issue, y
@@ -639,7 +640,8 @@ qui les perdrait rendrait toutes les données lisibles par n'importe quel porteu
 
 **La comparaison a deux modes, et l'exercice dit lequel il emploie :**
 
-- **pile de référence disponible** — le conteneur `p2enjoy-db` tourne : chaque invariant est lu des
+- **pile de référence disponible** — le conteneur du service `db` tourne (trouvé par `conteneur_en_marche` :
+  le service en développement, le nom de production ailleurs, décision 703) : chaque invariant est lu des
   DEUX côtés et comparé. C'est le mode probant, et le seul que le harnais emploie ;
 - **pile de référence absente** — cas d'une restauration sur un hôte de secours : les invariants
   sont lus sur la seule pile restaurée, et l'exercice vérifie ce qui se vérifie sans référence —

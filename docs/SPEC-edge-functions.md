@@ -26,7 +26,8 @@ dans `mail-sync` : cette unité ne déplace ni règle, ni donnée, ni responsabi
 
 ## 2. Runtime et assemblage
 
-Le service se nomme `functions` et son conteneur `p2enjoy-functions`. Il appartient à
+Le service se nomme `functions` ; son conteneur porte le nom que Compose dérive du projet en développement, et
+`p2enjoy-functions` en production (`CRM-115` T2, `docs/SPEC-pile-par-session.md` §6 bis). Il appartient à
 `docker-compose.yml`, donc aux assemblages de développement **et** de production. Il ne publie
 aucun port hôte : Kong est son unique entrée depuis l'extérieur du réseau Compose.
 

@@ -211,6 +211,7 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-scripts.sh` | Rejoue les preuves des scripts : contrat `.env.example`, amorçage, gardes de profil | **disponible** |
 | `scripts/verify-crochets-git.sh` | Rejoue les preuves des crochets Git : commit et push refusés hors de `main` et en `HEAD` détaché, référence distante contrôlée, identité du responsable toujours exigée | **disponible** |
 | `scripts/verify-migrations.sh` | Rejoue les preuves des migrations : suite pgTAP, base neuve construite dans l'ordre, idempotence de chaque fichier sur l'état qu'il produit, refus par défaut mesuré hors interface. **Reconstruit la base de développement** | **disponible** |
+| `scripts/verify-noms-conteneurs.sh` | Garde de `CRM-115` T2 : aucun nom de conteneur littéral dans le code de développement hors exceptions nommées, aucun `container_name` en développement, noms de production et de la cellule inchangés, deux mutations dénoncées |
 | `scripts/verify-reconstruction.sh` | Éprouve la reconstruction de la base de développement par laquelle les harnais restaurent : refus hors profil `dev` et sous verrou sans rien arrêter, base neuve construite dans l'ordre, seuls la base et ses dérivés recréés, seed convergent (`CRM-111` T1 bis) | **disponible** |
 | `IA_SERVEUR_REEL=1 npm run e2e:api -- e2e/api/ia-reel.spec.ts` | Contrôle **facultatif** du contrat du serveur Ollama réel (`CRM-097`, `docs/SPEC-ia.md` §8) : une génération par le vrai modèle, une demi-minute à une minute. Ignoré sans la variable ; aucune campagne ne l'exécute | **disponible** |
 | `scripts/verify-registre-migrations.sh` | Éprouve le registre des migrations du runner sur un PostgreSQL jetable : adoption, delta, refus d'un fichier modifié, absent ou inséré dans le passé, migration en échec ni appliquée ni inscrite, chaque garde vue rouge sous dégradation (`CRM-096`) | **disponible** |
@@ -307,6 +308,11 @@ développement, ni protection contre l'effacement d'un environnement qui n'est p
 scripts/verify-stack.sh
 scripts/verify-scripts.sh
 ```
+
+**Un conteneur se désigne par son service, jamais par un nom** (`CRM-115` T2) : la pile de développement n'en fixe
+aucun, et Compose les nomme d'après le projet (`p2enjoy-crm-db-1`…). Pour une commande à la main :
+`docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml exec db psql -U postgres`, ou
+`docker exec "$(source scripts/lib/conteneur.sh; conteneur db)" …`. La production garde ses noms (`p2enjoy-db`…).
 
 Le premier lancement amorce `.env` (voir §4) ; les suivants le conservent tel quel, et le
 complètent des variables introduites depuis — un `.env` créé avant une unité n'est pas un
@@ -560,6 +566,7 @@ scripts/verify-functions.sh    # fonctions edge : runtime, Kong, API et journaux
 scripts/verify-scheduler.sh    # pg_cron : passage, convergence et ACL               (CRM-017)
 scripts/verify-scripts.sh      # scripts de lancement et contrat d'environnement    (CRM-002)
 scripts/verify-migrations.sh   # migrations, suite pgTAP, refus par défaut          (CRM-003)
+scripts/verify-noms-conteneurs.sh # aucun nom de conteneur en développement        (CRM-115)
 scripts/verify-reconstruction.sh # reconstruction de la base de développement      (CRM-111)
 scripts/verify-vault.sh        # chiffrement des secrets de messagerie              (CRM-004)
 scripts/verify-authz.sh        # fonctions d'autorisation, jetons réels             (CRM-010)
@@ -738,6 +745,7 @@ Livré à ce jour :
 │   ├── verify-sequences-ecran.sh  Preuves de l'écran des séquences et de l'armement
 │   ├── verify-scripts.sh       Preuves rejouables des scripts et du contrat d'environnement
 │   ├── verify-migrations.sh    Preuves rejouables des migrations et du refus par défaut
+│   ├── verify-noms-conteneurs.sh Garde : aucun nom de conteneur en développement
 │   ├── verify-reconstruction.sh Preuves de la reconstruction de la base de développement
 │   ├── verify-vault.sh         Preuves rejouables du chiffrement des secrets de messagerie
 │   ├── verify-authz.sh         Preuves rejouables des fonctions d'autorisation

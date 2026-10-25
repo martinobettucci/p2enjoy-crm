@@ -772,8 +772,15 @@ Une session pressée y aurait lu une régression et aurait cherché sa cause dan
 Le diagnostic tient en une commande, et il est SANS AMBIGUÏTÉ :
 
 ```
-docker inspect <conteneur> --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'
+docker inspect "$(source scripts/lib/conteneur.sh; conteneur <service>)" \
+  --format '{{index .Config.Labels "com.docker.compose.project.config_files"}}'
 ```
+
+**Un conteneur se désigne par son service, jamais par un nom** (`CRM-115` T2, décisions 702 et 703). Depuis le
+2026-10-25, la pile de développement ne fixe aucun nom : Compose les dérive du projet (`p2enjoy-crm-db-1`…). Une
+commande à la main passe par `docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml exec
+<service> …` ou par `conteneur <service>` (`scripts/lib/conteneur.sh`). `p2enjoy-db` et ses voisins ne désignent plus
+que les conteneurs de **production**.
 
 Les vingt conteneurs doivent citer **les deux** fichiers. Celui qui n'en cite qu'un a été recréé nu.
 

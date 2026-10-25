@@ -6,7 +6,8 @@
 - Documents liés : `docs/SPEC-test-harness.md` §3.5 et §3.6 (reconstruction), `docs/DAT.md` §3.8 et §13 (commandes de
   lancement), `docs/CloudWorker.md` §2 (démarrage d'une session planifiée), `README.md` §6.
 - **Connecteur MCP : non** — outillage de développement, pas une fonctionnalité du produit (décision 701).
-- État : **§6 et §6 bis validés le 2026-10-25 (décision 702)** ; les quatre points du §11 restent à valider avant T3.
+- État : **§6 et §6 bis validés le 2026-10-25 (décision 702)**, précisés par la décision 703 ; les quatre points du §11
+  restent à valider avant T3.
 
 ---
 
@@ -166,22 +167,30 @@ convention que chaque appelant doit répéter ; le service Compose est déjà un
 - **Compose (développement)** : aucun `container_name` dans `docker-compose.yml` ni dans `docker-compose.dev.yml`.
   Compose nomme les conteneurs à partir du projet. Le nom de projet est retiré de `name:` et vient de
   `COMPOSE_PROJECT_NAME`, par défaut `p2enjoy-crm`.
-- **Shell** : un utilitaire unique de `scripts/lib/env.sh`, à côté de `compose_dev`, désigne un conteneur par son
-  service : `conteneur db` rend l'identifiant du conteneur du service `db` du projet courant, et échoue en le nommant
-  si le service n'est pas lancé. `docker exec p2enjoy-db …` devient `compose_dev exec -T db …`, ou
-  `docker exec "$(conteneur db)" …` lorsqu'il faut un identifiant (`docker inspect`, `docker logs`). Les 67
-  `DB_CONTAINER=p2enjoy-db` disparaissent avec leur variable.
+- **Shell** : un utilitaire unique, `conteneur <service>`, dans `scripts/lib/conteneur.sh`, que `scripts/lib/env.sh`
+  charge à côté de `compose_dev` et que les harnais chargent seul — ils ne chargent pas `env.sh`, dont plusieurs
+  redéfinissent les fonctions (décision 703). Il rend le **nom** du conteneur du service, arrêté compris, et échoue en
+  nommant le service si la pile ne le porte pas : le nom et non l'identifiant, qu'une reconstruction change. Les 67
+  `DB_CONTAINER=p2enjoy-db` deviennent `DB_CONTAINER=$(conteneur db)`.
+- **Scripts que la production exécute aussi** (`scripts/backup.sh`, `scripts/restore-drill.sh`) :
+  `conteneur_en_marche <service> <nom de production>` rend le service sous le profil `dev` et exécute ailleurs la
+  commande d'avant, à l'identique (décision 703, option B).
+- **Conteneurs jetables des preuves** (`…-preuve-prod`, `…-jetable`) : leur nom dérive de celui du conteneur du
+  service, donc du projet.
 - **TypeScript** (`e2e/`) : un module unique, à côté des fixtures, rend le conteneur d'un service par la même commande
   Compose. Les douze specs qui nomment un conteneur l'emploient.
 - **Réseau** : un service s'appelle par son nom de service sur le réseau Compose — le seed passe de
   `http://p2enjoy-mcp:8080` à `http://mcp:8080`. **Realtime** tire son tenant du premier segment de l'hôte : `kong.yml`
-  l'appelle par l'**alias réseau** `realtime-dev.realtime`, posé sur le service, sans nom de conteneur global.
+  l'appelle par l'**alias réseau** `realtime-dev.realtime`, posé sur le service, sans nom de conteneur global
+  (décision 703 : label de Kong à `crm-115`, contrat de déploiement §2.22).
 - **Commentaires et documentation** : les modes d'emploi des vingt fichiers pgTAP, `README.md`, `docs/DAT.md` et
   `docs/CloudWorker.md` donnent la commande par service.
-- **Garde** : un contrôle, inscrit dans `scripts/verify-harness.sh` ou dans un harnais dédié, fait échouer la série
-  dès qu'un nom `p2enjoy-<service>` littéral réapparaît dans le code de développement. Ses exceptions sont nommées : les
-  fichiers de production et de la cellule (§6 bis), et le chemin `/var/lib/p2enjoy-mail-sync`, qui n'est pas un nom de
-  conteneur. Il est éprouvé par une mutation.
+- **Garde** : `scripts/verify-noms-conteneurs.sh` fait échouer la série dès qu'un nom `p2enjoy-<service>` littéral
+  réapparaît dans un fichier suivi. Ses exceptions sont nommées : les fichiers que seule la production exécute ou
+  décrit (`docker-compose.prod.yml`, `docker-compose.spark.yml`, `runProd.sh`, `scripts/spark/*`,
+  `scripts/lib/connecteur-mcp.sh`), les états simulés de `verifier.sh` dans `scripts/verify-controles-connecteur.sh`,
+  les appels `conteneur_en_marche … p2enjoy-…`, le chemin `/var/lib/p2enjoy-mail-sync`, et les documents. Elle est
+  éprouvée par deux mutations et un témoin.
 - **Hors des noms** : `P2ENJOY_TMP` remplace les chemins `/tmp/p2enjoy-*` des harnais (T4). `pkill -f "[v]ite"`
   devient l'arrêt du **seul** processus qui écoute sur le `WEBAPP_PREVIEW_PORT` de l'emplacement.
 

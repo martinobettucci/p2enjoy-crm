@@ -1417,6 +1417,16 @@ désigne `P2ENJOY_ENV_FILE`.
 L'arrêt propre passe par `./runDev.sh --stop` et `./runProd.sh --stop`, qui conservent les
 volumes. Seul `resetMe.sh` détruit des données, et uniquement en profil `dev`.
 
+**Désigner un conteneur — par son service, jamais par un nom** (`CRM-115` T2, décisions 702 et 703,
+`docs/SPEC-pile-par-session.md` §6). En développement, aucun conteneur n'est nommé à la main : Compose les dérive du
+projet (`p2enjoy-crm-db-1`…), ce qui permettra à plusieurs piles de coexister sur un démon. Un script le désigne par
+`conteneur <service>` (`scripts/lib/conteneur.sh`, chargée par `scripts/lib/env.sh`), une preuve Playwright par
+`conteneur()` (`e2e/conteneur.ts`), un service par son nom sur le réseau de la pile (`http://mcp:8080`) ; Kong joint
+Realtime par l'alias réseau `realtime-dev.realtime`, qui porte son tenant. **La production et la cellule gardent leurs
+noms** (`p2enjoy-db`…, posés dans `docker-compose.prod.yml`) : une production n'a qu'une pile, et ses scripts comme ses
+gestes les emploient. `scripts/backup.sh` et `scripts/restore-drill.sh`, qui servent aux deux, passent par
+`conteneur_en_marche`. La garde `scripts/verify-noms-conteneurs.sh` rougit dès qu'un nom littéral revient.
+
 Les preuves de ce dispositif sont rejouables : `scripts/verify-scripts.sh`, et pour la cellule
 Spark `scripts/verify-spark.sh` — fusion, gardes, assemblage résolu, Caddyfile, propositions et
 livraison contre une cellule simulée, avec leurs dégradations.

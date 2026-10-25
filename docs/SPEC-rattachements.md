@@ -212,16 +212,17 @@ personne qui a perdu le droit, puis qui a quitté l'espace. D'où trois règles,
 ### 2 bis.5 Mode opératoire
 
 ```bash
-docker exec p2enjoy-db psql -U supabase_admin -d postgres -c 'create database crm111_mesure'
-docker exec p2enjoy-db bash -c 'pg_dump -U supabase_admin -d postgres -Fc --exclude-schema=cron > /tmp/m.dump \
+source scripts/lib/conteneur.sh; DB=$(conteneur db)   # le service, jamais un nom écrit (CRM-115 T2)
+docker exec "$DB" psql -U supabase_admin -d postgres -c 'create database crm111_mesure'
+docker exec "$DB" bash -c 'pg_dump -U supabase_admin -d postgres -Fc --exclude-schema=cron > /tmp/m.dump \
   && pg_restore -U supabase_admin -d crm111_mesure /tmp/m.dump; rm -f /tmp/m.dump'   # seules les erreurs cron sont attendues
-docker cp docs/mesures/CRM-111/. p2enjoy-db:/tmp/mesures/
-docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/01-cron-factice.sql
-docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/02-fonctions-cassees.sql
-docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -v vol=2000 -v reps=5 -f /tmp/mesures/03-cout-rls.sql
-docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/04-fraicheur-des-droits.sql
-docker exec p2enjoy-db psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/05-contre-preuve-immutable.sql
-docker exec p2enjoy-db psql -U supabase_admin -d postgres -c 'drop database crm111_mesure'
+docker cp docs/mesures/CRM-111/. "$DB":/tmp/mesures/
+docker exec "$DB" psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/01-cron-factice.sql
+docker exec "$DB" psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/02-fonctions-cassees.sql
+docker exec "$DB" psql -U supabase_admin -d crm111_mesure -v vol=2000 -v reps=5 -f /tmp/mesures/03-cout-rls.sql
+docker exec "$DB" psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/04-fraicheur-des-droits.sql
+docker exec "$DB" psql -U supabase_admin -d crm111_mesure -f /tmp/mesures/05-contre-preuve-immutable.sql
+docker exec "$DB" psql -U supabase_admin -d postgres -c 'drop database crm111_mesure'
 ```
 
 `supabase_admin` est nécessaire : `postgres` n'est pas superutilisateur dans l'image Supabase. Annoncer la copie aux
