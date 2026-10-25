@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### INC-292 — plus d'erreur de console intermittente à la restauration ou à la fermeture d'une session (décision 686)
+
+*Livré en développement ; la livraison en production attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md`
+§2.19).*
+
+- Le runtime des fonctions edge perdait parfois une réponse `204` (« aucun contenu ») et rendait `503` à la place :
+  une page ouverte sans session, ou une déconnexion, pouvait laisser une erreur dans la console du navigateur.
+  **Aucune fonction ne rend plus `204`** : la prolongation sans session répond `200` « absente », la fermeture `200`
+  « fermee », le préflight `200`. Mesuré : 0 échec sur 6000 appels, contre 12 sur 3000 avant.
+- La webapp lit le nouveau contrat et accepte encore l'ancien ; `verifier.sh` contrôle le nouveau. Aucune migration.
+
 ### `CRM-104` T7 — le connecteur MCP lit et envoie les emails d'une affaire (décisions 676 et 684)
 
 *Livré en développement ; la livraison en production attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md`

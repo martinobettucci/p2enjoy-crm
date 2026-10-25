@@ -544,6 +544,24 @@ le retour ne fonctionne que si la cellule les garde en cache — ne pas purger l
 Le serveur de 2025 relit un volume ouvert par celui de 2026 tant qu'aucune fonction nouvelle n'a été activée (aucune
 ne l'est par ce changement) ; en cas de doute, restaurer l'instantané du geste 1.
 
+### 2.19 INC-292 — aucune fonction edge ne rend `204` (EN ATTENTE de l'instruction du responsable)
+
+Le runtime des fonctions perdait par intermittence la réponse `204` d'un worker : le serveur de base rendait `503` à la
+place (12 fois sur 3000 mesuré en développement), ce qui laissait une erreur dans la console du navigateur lors d'une
+restauration de session anonyme ou d'une déconnexion (décision 686). `session/prolonger` sans session rend désormais
+`200` et `{"session":"absente"}`, `session/fermer` `200` et `{"session":"fermee"}`, `OPTIONS` `200` ; `main` journalise
+`edge_reponse_204` si un worker en rendait encore un. **Aucune migration, aucune variable, aucun secret.** La webapp
+accepte l'ancien et le nouveau contrat : l'ordre des deux gestes ci-dessous est donc indifférent.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Livrer `main` (sources des fonctions, webapp reconstruite), puis **redémarrer `functions`** : ses sources sont montées et sa définition ne change pas, si bien que `./runProd.sh` ne le recrée pas et que `main` garderait l'ancien code en mémoire | poste, par les IP, puis `spark-docker` dans la cellule | `scripts/spark/livrer.sh`, puis `./runProd.sh --spark`, puis `docker restart p2enjoy-functions` (un redémarrage garde la configuration ; jamais un `docker compose` nu, `docs/CloudWorker.md` §2.2 *bis*) |
+| 2 | Vérifier en lecture seule : la section 5 de `verifier.sh` attend désormais `200` et le corps `{"session":"absente"}` ; aucune ligne `edge_reponse_204` au journal de `functions` | poste, lecture seule | `scripts/spark/verifier.sh`, puis `docker logs p2enjoy-functions 2>&1 \| grep -c edge_reponse_204` (`0` attendu) |
+| 3 | Constater : se déconnecter, recharger une page sans session ; la console du navigateur reste vierge | le responsable | l'application |
+
+**Retour arrière** : relivrer la révision précédente ; la webapp nouvelle tolère l'ancien `204`. **Risque** : un
+`verifier.sh` ancien, joué contre la production nouvelle, rendrait « 204 attendu » — employer celui de la révision livrée.
+
 ## 3. Migrations en attente
 
 **Deux migrations en attente, à livrer ensemble et dans cet ordre : la 102 puis la 103** (`CRM-113` T1 — le générateur de workflow connaît les champs natifs de l'affaire et le catalogue ; `CRM-113` T5 — tout en anglais, la casse ignorée, décision 679 ; leurs lignes au §3.2). Elles ne touchent aucune table : elles n'exigent pas d'instantané au-delà de celui de la procédure nominale (§3.1), et elles se livrent avec la fonction `ia` et la webapp de `CRM-113` (T2, T3, T5). **Le responsable s'en charge** (décision 679). Avant elle, la **101** (`CRM-114` T1 — la famille `organizations` du connecteur ; sa ligne de retrait au §3.2) a été appliquée le 2026-10-24 après l'instantané confirmé par le responsable (§8). La troisième fenêtre du 2026-10-23 (§8) a appliqué la **100** (`CRM-067` T1 — les activités d'une affaire et leurs participants ; sa ligne de retrait au §3.2) ; la seconde, la **99** (`CRM-109` T3). Avant elles, les migrations **91 à 98** (`CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-108`, `CRM-070`, `CRM-109`), appliquées le 2026-10-23 par une même fenêtre après l'instantané confirmé par le responsable ; leurs lignes de retrait sont au §3.2. Avant elles, les migrations **89** (`CRM-101`) et **90**
