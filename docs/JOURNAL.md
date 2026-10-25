@@ -34098,3 +34098,39 @@ fiche et Affaires figées nomment « Réalisation en cours ». **Connecteur MCP*
 `crm_card_activity_list` est une autre surface (`CRM-067`), et cette tranche ne change aucun contrat stocké ou exposé.
 **Preuve** : `docs/SPEC-cards.md` §14.10, écrit avant le code ; aucune affaire du seed n'est déplacée (aucune arête ne
 ramène à *Réalisation*), l'E2E naît sa propre affaire d'essai et la supprime.
+
+### décision 694 — `CRM-111` T1 bis : `verify-workflows.sh` mesure la réparation avant de reconstruire, et reconstruit dès sa section 2
+
+*2026-10-25, session planifiée ouverte à 03:11:42 UTC (`docs/CloudWorker.md`). Tranché par la session (§4.1 bis) ; le
+responsable peut le contredire.*
+
+**Choix de l'unité.** Aucune unité `[~]` antérieure dans l'ordre du plan ne garde de comportement livrable sans
+dépendance ni arbitrage (`CRM-001` : un contrôle exige un hôte sans proxy TLS ; `CRM-013` et `CRM-014` attendent
+`CRM-072`/`CRM-073` ; les autres ne retiennent que des preuves, des livraisons ou le constat du responsable). Les `[ ]` du
+chunk 5 (`CRM-068` à `CRM-074`) n'ont ni spécification ni arbitrage, et leurs deux questions MCP reviennent au
+responsable (décision 647). `CRM-112` attend `CRM-111` T2. D'où `CRM-111` T1 bis, point de reprise de la décision 689,
+prise à 03:19 UTC (`e93d1da`).
+
+**Coordination — le même travail fait deux fois.** Les deux rejeux de cette session (`verify-tracks.sh --rapide` **42/42**,
+03:22–04:23 ; `verify-droits-fins.sh --rapide` **38/39**, 04:24–05:47, le seul échec étant `verify-copie-workflow.sh`)
+tournaient dans un conteneur que partage la session ouverte le 2026-10-24 à 21:12:06 UTC. Celle-ci a consigné les mêmes
+résultats (INC-302) puis corrigé `verify-workflows.sh` (décision 691) pendant que cette session reproduisait l'échec, sous
+la prise `[@]` de cette session qu'elle a laissée en place. Rien n'a été écrasé ; les deux corrections sont fusionnées
+sur place.
+
+**Ce que la décision 691 laisse, mesuré.** (1) Elle reconstruit à la section 8 e **avant** de mesurer la réparation de la
+clé composite par le rejeu : le contrôle passe alors quel que soit le rejeu, une reconstruction rendant toujours la clé du
+produit (enseignement 2 de la décision 689). (2) Les sections 3 à 8 tournent encore sur la base dégradée par la section 2 :
+le ménage de l'espace d'essai y échoue en silence, et rejoué deux fois de suite sans la reconstruction finale, le harnais
+rougissait sur lui-même (`workspaces_pkey`). **Retenu** : la section 2 mesure la propriété du rejeu isolé — les trois
+contraintes de `0085` et `0086` (deux clés, une unicité) reviennent non ajournables — puis reconstruit ; la section 8 e
+rejoue `0006`, mesure la réparation, **puis** reconstruit et constate les trois contraintes de nouveau ajournables.
+
+**Vérifié.** `verify-workflows.sh --rapide` **46/46** ; `pg_dump -s` de `public` et `app` identique à celui de la base
+reconstruite, aucun `tst-crm031-ws` restant. La même mesure sur `catalogue`, `coherence-workflow` et
+`champs-formulaire` ne trouve aucun résidu ; les douze autres harnais qui rejouent une migration sans reconstruire, et la
+sortie jetée des sous-harnais de `verify-droits-fins.sh`, sont consignés en INC-304.
+
+**Écart de conduite** : la première commande de la session (`git status`, `ls docs/CloudWorker.md`) a précédé la lecture
+de `docs/CloudWorker.md`, et l'annonce du §0 bis n'a pas été la première ligne — quatrième occurrence, après les
+décisions 678, 683 et 687.

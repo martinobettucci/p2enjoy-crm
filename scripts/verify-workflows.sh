@@ -4,7 +4,7 @@
 #           §3.5 (étape initiale), §3.6 (ordre), §3.7 (autorisations), §3.8 (contrat d'API),
 #           §3.9 (seed), §3.10 (preuves attendues)
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 bis : la restauration reconstruit la base (docs/SPEC-test-harness.md §3.6,
-#           INC-302)
+#           INC-302), et la base est aussi reconstruite derrière le rejeu isolé de `0006` (décision 694)
 # @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 2, n° 3, n° 11)
 # @verifies docs/SCHEMA.md §2 (channels.workflow_id), §3 (workflows) ; docs/PROD_MIGRATIONS.md §3
 # @verifies docs/INCONSISTENCY_REPORT.md INC-029 (clé étrangère posée, NOT NULL différée),
@@ -16,7 +16,9 @@
 #
 #   1. la suite pgTAP `supabase/tests/0007_workflows.test.sql` est verte ;
 #   2. la migration est **rejouable** : réappliquée sur une base déjà migrée, elle réussit sans
-#      modifier la structure des trois tables, leurs politiques ni leurs privilèges ;
+#      modifier les colonnes des trois tables, les noms de leurs contraintes, leurs politiques ni leurs
+#      privilèges — mais, rejouée ISOLÉMENT, elle ramène les trois contraintes que `0085` et `0086` ont
+#      rendues ajournables à leur forme d'origine : c'est mesuré, puis la base est reconstruite (décision 694) ;
 #   3. les contraintes sont **convergentes** : une contrainte retirée à la main est rétablie par un
 #      rejeu, et non laissée manquante (décision 57) ;
 #   4. les garanties structurelles sont mesurées en base : au plus une étape initiale, une
@@ -80,7 +82,7 @@ RAPIDE=false
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--rapide) RAPIDE=true ;;
-		--help|-h) sed -n '2,46p' "$0"; exit 0 ;;
+		--help|-h) sed -n '2,52p' "$0"; exit 0 ;;
 		*) echo "option inconnue « $1 »." >&2; exit 1 ;;
 	esac
 	shift
@@ -207,6 +209,43 @@ if [ "$(psql_db -c "select count(*) from pg_constraint
 	ok "une contrainte retirée à la main est **rétablie** par un rejeu : la migration répare"
 else
 	fail "la contrainte retirée n'est pas rétablie : la migration est idempotente sans réparer"
+fi
+
+# LE REJEU ISOLÉ DÉGRADE LA STRUCTURE, ET LE HARNAIS LA LAISSAIT DÉGRADÉE — INC-302, décision 694, mesuré le 2026-10-25.
+# `0085_suppression_espace.sql` (INC-268) et `0086_suggestions_ia_modification.sql` ont rendu ajournables trois
+# contraintes que `0006` pose : rejouée seule, `0006` les recrée dans leur forme d'origine — deux clés `on delete
+# restrict` (`0085`) et une unicité (`0086`), non ajournables. L'empreinte ci-dessus ne le voit pas : elle compare des
+# NOMS de contraintes. Le harnais ne restaurait jamais derrière ce rejeu, si bien que la suppression d'un espace
+# redevenait impossible (INC-039 rouverte), comme l'ajournement que pose la modification par l'assistant IA (`0086`) :
+# son propre ménage échouait en
+# silence, laissant l'espace d'essai, et `verify-copie-workflow.sh`, joué ensuite par `verify-droits-fins.sh`, rougissait
+# sur l'assertion 68 de sa suite pgTAP. Même cas que le rejeu isolé de `verify-tracks.sh` : la propriété du rejeu
+# isolé se MESURE, avant la restauration (décision 689, enseignement 2), puis la base est RECONSTRUITE
+# (docs/SPEC-test-harness.md §3.6 : un harnais qui a dégradé la structure reconstruit), pour que les sections
+# suivantes mesurent le vrai produit et non une base amputée.
+cles_ajournables() {
+	psql_db -c "
+		select string_agg(conname || ':' || condeferrable::text, ',' order by conname) from pg_constraint
+		 where conname in ('workflow_steps_node_id_workspace_id_fkey', 'channels_workflow_id_workspace_id_fkey',
+		                   'workflow_steps_workflow_id_node_id_key');"
+}
+CLES_REJEU_ISOLE='channels_workflow_id_workspace_id_fkey:false,workflow_steps_node_id_workspace_id_fkey:false,workflow_steps_workflow_id_node_id_key:false'
+CLES_PRODUIT='channels_workflow_id_workspace_id_fkey:true,workflow_steps_node_id_workspace_id_fkey:true,workflow_steps_workflow_id_node_id_key:true'
+cles=$(cles_ajournables)
+if [ "$cles" = "$CLES_REJEU_ISOLE" ]; then
+	ok "le rejeu ISOLÉ ramène les trois contraintes que \`0085\` et \`0086\` ont rendues ajournables à leur forme d'origine"
+else
+	fail "après le rejeu isolé, les trois contraintes valent « $cles », attendu « $CLES_REJEU_ISOLE »"
+fi
+if reconstruire_base_dev; then
+	cles=$(cles_ajournables)
+	if [ "$cles" = "$CLES_PRODUIT" ]; then
+		ok "la reconstruction rend les trois contraintes ajournables : les sections suivantes mesurent le vrai produit"
+	else
+		fail "après reconstruction, les trois contraintes valent « $cles », attendu « $CLES_PRODUIT »"
+	fi
+else
+	fail "la reconstruction de la base a échoué après le rejeu isolé — motif ci-dessus"
 fi
 
 titre "3. Ce que la base garantit, mesuré et non supposé"
@@ -606,19 +645,16 @@ psql_db -c "
 	delete from public.workflows where id = 'a3313000-0000-4000-8000-000000000002';
 " >/dev/null
 
-# e. Restauration **constatée**, et non supposée.
-# RÉVISÉ PAR `CRM-111` T1 bis (décision 691, INC-302). La restauration réappliquait `0006` SEULE, puis le seed.
-# Une migration ultérieure a rendu `workflow_steps_node_id_workspace_id_fkey` différable ; la réapplication isolée
-# la recréait non différable, et la suite `0008_copie_workflow` rougissait ensuite (« constraint … is not
-# deferrable », mesuré le 2026-10-25), l'espace d'essai `tst-crm031-ws` restant en base. La base de développement
-# est RECONSTRUITE (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), seed compris.
-reconstruire_base_dev >/dev/null || fail "la reconstruction de la base a échoué à la restauration"
-
-restaure=$(psql_db -c "
+# e. Restauration **constatée**, et non supposée. La réparation de la clé composite est une propriété du REJEU de la
+#    migration : elle se mesure juste derrière lui, avant la reconstruction qui l'effacerait (décision 689,
+#    enseignement 2). Le rejeu isolé dégradant la structure (section 2), la restauration RECONSTRUIT ensuite la base,
+#    seed compris, au lieu de rejouer le seed seul. RÉVISÉ par la décision 694 : la décision 691 reconstruisait AVANT
+#    de mesurer la réparation, si bien que le contrôle de la clé composite passait quel que soit le rejeu — une
+#    reconstruction rend toujours la clé du produit.
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+repare=$(psql_db -c "
 	select (select count(*) from pg_indexes
 	         where indexname = 'workflow_steps_workflow_initial_uk')::text
-	    || '/' ||
-	       (select count(*) from public.workflow_transitions where workflow_id = '$WF_SEED')::text
 	    || '/' ||
 	       (select coalesce(with_check, '') from pg_policies
 	         where tablename = 'workflows' and policyname = 'workflows_insertion_admin')
@@ -627,14 +663,21 @@ restaure=$(psql_db -c "
 	         where conname = 'workflow_transitions_to_step_fkey'
 	           and conrelid = 'public.workflow_transitions'::regclass);
 ")
-if [ "${restaure%%/*}" = "1" ] \
-	&& [ "$(printf '%s' "$restaure" | cut -d/ -f2)" = "11" ] \
-	&& printf '%s' "$restaure" | grep -q 'is_workspace_admin' \
-	&& printf '%s' "$restaure" | grep -q 'FOREIGN KEY (to_step_id, workflow_id)'; then
-	ok "restauration constatée : index revenu, onze transitions revenues, politique revenue à "\
-"\`is_workspace_admin\`, et **clé composite réparée** — c'est ce dernier point qui avait échoué"
+if [ "${repare%%/*}" = "1" ] \
+	&& printf '%s' "$repare" | grep -q 'is_workspace_admin' \
+	&& printf '%s' "$repare" | grep -q 'FOREIGN KEY (to_step_id, workflow_id)'; then
+	ok "le rejeu répare : index revenu, politique revenue à \`is_workspace_admin\`, et **clé composite "\
+"réparée** — c'est ce dernier point qui avait échoué"
 else
-	fail "restauration incomplète : « $restaure »"
+	fail "le rejeu ne répare pas : « $repare »"
+fi
+
+reconstruire_base_dev || fail "la reconstruction de la base a échoué à la restauration — motif ci-dessus"
+restaure="$(psql_db -c "select count(*) from public.workflow_transitions where workflow_id = '$WF_SEED';")/$(cles_ajournables)"
+if [ "$restaure" = "11/$CLES_PRODUIT" ]; then
+	ok "restauration constatée : onze transitions revenues, et les trois contraintes de \`0085\` et \`0086\` de nouveau ajournables"
+else
+	fail "restauration incomplète : « $restaure », attendu « 11/$CLES_PRODUIT »"
 fi
 
 code=$(http POST "$API/rest/v1/workflows" -H "apikey: $ANON_KEY" \

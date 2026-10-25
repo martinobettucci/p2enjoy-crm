@@ -7779,6 +7779,10 @@ d'origine — la « liste manuelle » que `docs/SPEC-test-harness.md` §3.5 inte
 `CRM-111` T1 bis, et retire son espace d'essai ; correction imputée à `CRM-031`. Comportement laissé inchangé ici ; une
 reconstruction a remis la base de développement d'aplomb. **Close le 2026-10-25** dans `CRM-111` T1 bis (son remède est celui de la
 tranche) : `verify-workflows.sh` restaure par reconstruction ; 43/43, puis `0008` 69/69.
+**Complété le même jour (décision 694)** : la dégradation naît dès la section 2, dont les deux réapplications de `0006`
+ramènent aussi l'unicité de `0086` ; le harnais reconstruit derrière elles, et mesure la réparation par le rejeu de la
+section 8 avant de reconstruire — reconstruite d'abord, la mesure passait quel que soit le rejeu. 46/46, schéma identique
+à la base reconstruite. Les autres harnais qui rejouent une migration : INC-304.
 
 ### INC-303 — `verify-harness.sh` attend 3944 assertions pgTAP, la série en rend 3974 depuis la migration `0104`
 
@@ -7789,3 +7793,20 @@ révisé `ASSERTIONS_ATTENDUES` (ligne 701). Compteur figé dépassé par le pro
 pgTAP elle-même est verte. Étranger à `CRM-084`, qui ne touche aucune suite SQL. **Comportement laissé inchangé.**
 **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-013` porte le compteur à 3974 avec son motif, en place, comme
 les révisions précédentes. **Statut : ouverte.**
+
+### INC-304 — Douze harnais rejouent une migration isolée sur une base à jour sans reconstruire, et nul ne mesure ce qu'ils laissent
+
+*Relevé le 2026-10-25 par la session planifiée de `CRM-111` T1 bis ouverte à 03:11:42 UTC (décision 694), en rejouant
+`verify-droits-fins.sh`.* **Constat** : INC-302 (`verify-workflows.sh`) n'est pas un cas isolé dans sa forme — un
+harnais qui rejoue un fichier ancien sur une base à jour réécrit ce qu'une migration postérieure a redéfini. Mesuré par
+`pg_dump -s` de `public` et `app` avant et après chaque harnais, sur une base reconstruite : `verify-workflows.sh` laissait
+trois contraintes ramenées à leur forme d'avant `0085` et `0086` (corrigé, décisions 691 et 694) ; `verify-catalogue.sh`,
+`verify-coherence-workflow.sh` et `verify-champs-formulaire.sh` ne laissent **aucun** résidu. **Non mesurés** : les douze
+autres harnais qui rejouent une migration sans reconstruire — `analytique`, `armement-sequences`, `mentions`,
+`modeles-emails`, `modeles-emails-ecran`, `notifications`, `rendu-modeles-emails`, `scheduler`, `sequences-ecran`,
+`sequences-relance`, `signature-identite`, `valeurs-champs`. **Second constat** : la section 8 de `verify-droits-fins.sh`
+jette la sortie de ses onze sous-harnais (`>/dev/null 2>&1`) ; son « ECHEC verify-copie-workflow.sh » ne disait rien de la
+cause, qu'il a fallu reproduire. **Comportement laissé inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) :
+chaque harnais qui rejoue un fichier de migration compare l'empreinte `pg_dump -s` avant et après lui et reconstruit si
+elle diffère (`docs/SPEC-test-harness.md` §3.6) ; `verify-droits-fins.sh` garde la sortie de chaque sous-harnais dans un
+fichier et en cite la fin sur un échec, comme `reconstruire_base_dev` depuis INC-298. **Statut : ouverte.**

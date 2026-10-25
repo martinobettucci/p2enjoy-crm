@@ -124,6 +124,10 @@ migration 104).*
   idempotente refusée, passage suivant vide. 36 contrôles, aucune anomalie.
 - Les quinze autres harnais qui restauraient par rejeu complet reconstruisent la base ; leurs contrôles de rejeu sur
   base peuplée sont retirés ou retournés, motif écrit en place ; `scripts/lib/registre.sh` est retiré (décision 689).
+- `scripts/verify-workflows.sh` restaure en reconstruisant la base (INC-302, décision 691), et reconstruit aussi dès sa
+  section 2, derrière son rejeu isolé de `0006`, qui ramenait trois contraintes à leur forme d'avant `0085` et `0086` et
+  rendait la suppression d'un espace impossible ; la réparation par le rejeu est mesurée avant la reconstruction, qui
+  la rendrait sinon toujours vraie (décision 694). Les douze autres harnais qui rejouent une migration : INC-304.
 
 ### `CRM-113` T5 — arbitrages du responsable (décision 679) : tout en anglais, la casse ignorée (migration 103)
 
