@@ -3768,7 +3768,8 @@ compensée par une preuve de substitution.
   certificat du proxy suivie d'un `npm ci` précédé d'un `npm config set cafile` (INC-032, INC-042),
   et l'arborescence de compatibilité des navigateurs Playwright (INC-036, **sixième** occurrence).
 
-### CRM-037 — Rendu du formulaire conditionnel `[~]`
+### CRM-037 — Rendu du formulaire conditionnel `[@]`
+*Prise en charge : CloudWorker 2026-10-25 02:12 UTC depuis 2026-10-25 02:31 UTC — état avant : [~] — tranche prise : INC-134, la mention « requis pour passer à » sur l'étape courante*
 Champs par étape, section repliée des valeurs d'autres étapes, mention « requis pour passer à ».
 **DoD** : E2E (transition bloquée, saisie, transition réussie) ; captures de chaque étape ;
 accessibilité des erreurs vérifiée.
