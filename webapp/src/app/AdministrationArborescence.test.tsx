@@ -149,7 +149,8 @@ function clientFactice(options: Options = {}): { client: ClientCrm; ecritures: E
 		const chaine: Record<string, unknown> = {}
 		// `in` a été ajouté par `CRM-077` : l'énumération d'un track compte les affaires de SES
 		// channels, et sans lui la chaîne rompait au lieu de rendre une réponse.
-		for (const methode of ['is', 'eq', 'or', 'in', 'not']) chaine[methode] = () => chaine
+		// `limit` : un compte est un `GET` borné à zéro ligne (`compter.ts`, INC-299, décision 700).
+		for (const methode of ['is', 'eq', 'or', 'in', 'not', 'limit']) chaine[methode] = () => chaine
 		chaine['order'] = () => chaine
 		chaine['then'] = (resoudre: (valeur: unknown) => unknown) => Promise.resolve(resultat).then(resoudre)
 		return chaine

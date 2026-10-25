@@ -8,6 +8,7 @@
 //       affaire), §4 ter.4 (le fil enregistre le geste), §4 ter.6 (l'horodatage du client)
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
+// @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Il lit `channels` sous la RLS de `CRM-021` et compte
 // `cards` sous celle de `CRM-040` : ce qu'il rend est donc ce que l'appelant peut déjà lire
@@ -16,6 +17,7 @@
 // seule interdiction qui compte : ce nombre n'est pas une garantie d'exhaustivité.
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
+import { LIMITE_COMPTE, OPTIONS_COMPTE } from './compter'
 import type { ClientCrm } from './supabase'
 
 /**
@@ -43,8 +45,8 @@ export type EnumerationEnfants = {
 /** Colonne réellement demandée. Exportée pour que les tests vérifient la requête émise. */
 export const COLONNE_ENFANT = 'id'
 
-/** Le compte vient du serveur, jamais des lignes rapportées (§3.5). */
-export const OPTIONS_COMPTE = { count: 'exact', head: true } as const
+/** Le compte vient du serveur, jamais des lignes rapportées (§3.5) ; sa forme vit dans `compter.ts`. */
+export { LIMITE_COMPTE, OPTIONS_COMPTE }
 
 /**
  * Une réponse aboutie sans `count` est un contrat rompu, pas une corbeille vide — même position que
@@ -88,6 +90,7 @@ export async function compterEnfantsInaccessibles(
 				.select(COLONNE_ENFANT, OPTIONS_COMPTE)
 				.eq('channel_id', cible.id)
 				.is('deleted_at', null)
+				.limit(LIMITE_COMPTE)
 			if (cards.error !== null) {
 				return enErreur(classerErreur(cards.status, cards.error.message))
 			}
@@ -114,6 +117,7 @@ export async function compterEnfantsInaccessibles(
 			.select(COLONNE_ENFANT, OPTIONS_COMPTE)
 			.in('channel_id', identifiants)
 			.is('deleted_at', null)
+			.limit(LIMITE_COMPTE)
 		if (cards.error !== null) {
 			return enErreur(classerErreur(cards.status, cards.error.message))
 		}

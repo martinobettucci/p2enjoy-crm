@@ -35,9 +35,10 @@ function client({
 			}
 			if (table === 'mail_outbox') {
 				return {
+					// `limit` : un compte est un `GET` borné à zéro ligne (`compter.ts`, INC-299, décision 700).
 					select: () => ({
-						in: () => Promise.resolve(enAttente),
-						eq: () => Promise.resolve(echecs),
+						in: () => ({ limit: () => Promise.resolve(enAttente) }),
+						eq: () => ({ limit: () => Promise.resolve(echecs) }),
 					}),
 				}
 			}

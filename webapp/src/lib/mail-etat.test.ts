@@ -5,6 +5,7 @@
 // Comme `administration-arborescence.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise,
 // pas seulement la valeur rendue : le filtre de la file sortante (`queued`/`sending` contre
 // `failed`) est une exigence de la spécification portée par la requête elle-même.
+// @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 
 import { describe, expect, it } from 'vitest'
 import {
@@ -54,6 +55,8 @@ type AppelCompteurs = {
 	options?: unknown
 	in?: [string, unknown]
 	eq?: [string, unknown]
+	/** Bornes `limit` posées, une par compte : `LIMITE_COMPTE` (`compter.ts`). */
+	limites: number[]
 }
 
 /** Route la réponse « en attente » sur `.in(...)`, la réponse « échecs » sur `.eq(...)`. */
@@ -61,7 +64,13 @@ function espionCompteurs(
 	enAttente: ReponseCompte,
 	echecs: ReponseCompte,
 ): { client: ClientCrm; appel: AppelCompteurs } {
-	const appel: AppelCompteurs = {}
+	const appel: AppelCompteurs = { limites: [] }
+	const borner = (reponse: ReponseCompte) => ({
+		limit: (nombre: number) => {
+			appel.limites.push(nombre)
+			return Promise.resolve(reponse)
+		},
+	})
 	const client = {
 		from: (table: string) => {
 			appel.table = table
@@ -72,11 +81,11 @@ function espionCompteurs(
 					return {
 						in: (colonne: string, valeur: unknown) => {
 							appel.in = [colonne, valeur]
-							return Promise.resolve(enAttente)
+							return borner(enAttente)
 						},
 						eq: (colonne: string, valeur: unknown) => {
 							appel.eq = [colonne, valeur]
-							return Promise.resolve(echecs)
+							return borner(echecs)
 						},
 					}
 				},
@@ -143,7 +152,9 @@ describe('lireCompteursFileSortante', () => {
 		)
 		const resultat = await lireCompteursFileSortante(client)
 		expect(appel.table).toBe('mail_outbox')
-		expect(appel.options).toEqual({ count: 'exact', head: true })
+		// Deux `GET` bornés à zéro ligne, jamais un `HEAD` (INC-299, décision 700, `compter.ts`).
+		expect(appel.options).toEqual({ count: 'exact' })
+		expect(appel.limites).toEqual([0, 0])
 		expect(appel.in).toEqual(['status', ['queued', 'sending']])
 		expect(appel.eq).toEqual(['status', 'failed'])
 		expect(resultat).toEqual({

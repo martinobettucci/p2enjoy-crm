@@ -90,8 +90,10 @@ function client(
 				}
 				const reponse = reponses[table]
 				if (reponse === undefined) throw new Error(`table non attendue : ${table}`)
+				// `limit` : un compte est un `GET` borné à zéro ligne (`compter.ts`, INC-299, décision 700).
 				const chaine = {
 					is: () => chaine,
+					limit: () => chaine,
 					then: (resoudre: (valeur: ReponseCompte) => unknown) =>
 						Promise.resolve(reponse).then(resoudre),
 				}
@@ -340,6 +342,7 @@ describe('aucune mesure sans session — docs/SPEC-onboarding.md §4.4', () => {
 					appels += 1
 					const chaine = {
 						is: () => chaine,
+						limit: () => chaine,
 						then: (resoudre: (valeur: ReponseCompte) => unknown) =>
 							Promise.resolve(ok(0)).then(resoudre),
 					}

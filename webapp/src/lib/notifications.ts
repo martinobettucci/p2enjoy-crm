@@ -8,6 +8,7 @@
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec docs/JOURNAL.md décisions 195 (le temps réel mesuré), 201 (le flux déclenche la lecture,
 //       il ne la remplace pas), 315 (le rang est pris par lecture)
+// @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 //
 // Ce module ne rend rien : il **lit, écrit et écoute**. La séparation est ce qui rend l'ordre de la
 // boîte, l'appariement des trois cas de ligne, la borne de lecture et la classification des issues
@@ -36,6 +37,7 @@ import {
 } from './colonnes-notifications'
 import type { ProfilAffiche } from './identites'
 import type { ClientCrm } from './supabase'
+import { LIMITE_COMPTE, OPTIONS_COMPTE } from './compter'
 
 export {
 	BORNE_COMPTEUR,
@@ -265,7 +267,8 @@ export async function lireBoite(client: ClientCrm): Promise<EtatAsync<BoiteLue>>
  * Compte les non-lues, sans ramener une seule ligne (§21, M4 ; §26.1).
  *
  * C'est la lecture que la cloche **fermée** fait le plus souvent, et la moins chère que la pile
- * sache rendre : `head: true` avec `count: 'exact'` porte le nombre dans l'en-tête `Content-Range`.
+ * sache rendre : `OPTIONS_COMPTE` et `.limit(LIMITE_COMPTE)` (`compter.ts`) portent le nombre dans
+ * l'en-tête `Content-Range`, sans une ligne — et sans `HEAD`, que PostgREST ferme sans l'annoncer.
  *
  * `null` EN CAS D'ÉCHEC, ET C'EST UNE DÉCISION. Un compteur qui retomberait à zéro sur une panne
  * affirmerait que tout est lu alors que rien n'a été mesuré — la valeur par défaut trompeuse que
@@ -275,8 +278,9 @@ export async function compterNonLues(client: ClientCrm): Promise<number | null> 
 	try {
 		const reponse = await client
 			.from('notifications')
-			.select('id', { count: 'exact', head: true })
+			.select('id', OPTIONS_COMPTE)
 			.is('read_at', null)
+			.limit(LIMITE_COMPTE)
 		if (reponse.error !== null) return null
 		return reponse.count ?? null
 	} catch {

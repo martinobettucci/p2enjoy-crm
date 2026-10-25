@@ -18,6 +18,7 @@
 // silencieuse que l'inspection de texte de `classerRefusCout` rend possible : un message reformulé
 // dans `0051` sans être reporté ici rangerait le refus du trigger sous « vérifiez la nature de la
 // dépense ».
+// @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 
 import { describe, expect, it } from 'vitest'
 import { readFileSync } from 'node:fs'
@@ -53,6 +54,8 @@ type AppelLecture = {
 	options?: unknown
 	filtres: [string, unknown][]
 	tris: [string, unknown?][]
+	/** Borne `limit` : `LIMITE_COMPTE` pour un compte (`compter.ts`). */
+	limite?: number
 }
 
 /** Client factice qui **enregistre** la requête de lecture construite, puis rend la réponse voulue. */
@@ -72,6 +75,10 @@ function espionLecture(reponse: Reponse): { client: ClientCrm; appels: AppelLect
 			chaine.in = enregistrer('in')
 			chaine.order = (colonne: string, options?: unknown) => {
 				appel.tris.push([colonne, options])
+				return chaine
+			}
+			chaine.limit = (nombre: number) => {
+				appel.limite = nombre
 				return chaine
 			}
 			chaine.maybeSingle = () => Promise.resolve(reponse)
@@ -108,6 +115,10 @@ function espionSequence(reponses: readonly Reponse[]): { client: ClientCrm; appe
 			chaine.in = enregistrer('in')
 			chaine.order = (colonne: string, options?: unknown) => {
 				appel.tris.push([colonne, options])
+				return chaine
+			}
+			chaine.limit = (nombre: number) => {
+				appel.limite = nombre
 				return chaine
 			}
 			chaine.maybeSingle = () => Promise.resolve(reponse)
@@ -701,7 +712,9 @@ describe('compterLignesSansReel', () => {
 		const { client, appels } = espionLecture({ data: null, error: null, status: 200, count: 3 })
 		const etat = await compterLignesSansReel(client, 'b1')
 		expect(appels[0]?.table).toBe('card_costs')
-		expect(appels[0]?.options).toEqual({ count: 'exact', head: true })
+		// Un `GET` borné à zéro ligne, jamais un `HEAD` (INC-299, décision 700, `compter.ts`).
+		expect(appels[0]?.options).toEqual({ count: 'exact' })
+		expect(appels[0]?.limite).toBe(0)
 		expect(appels[0]?.filtres).toEqual([
 			['eq:budget_id', 'b1'],
 			['is:actual_cost', null],

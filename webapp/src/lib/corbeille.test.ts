@@ -2,6 +2,7 @@
 // @verifies docs/SPEC-corbeille.md §3.3 (l'énumération remplace la descente), §3.5 (ce qu'elle
 //           compte, la forme des lectures, la composition), §5 (ligne « Unitaire »)
 // @verifies CLAUDE.md §23 (aucune phrase construite par concaténation)
+// @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 //
 // Comme `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise et pas seulement la
 // valeur rendue : les trois règles de comptage du §3.5 sont portées par les filtres eux-mêmes, si
@@ -16,6 +17,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	COLONNE_ENFANT,
 	NOM_REFUS_PARENT,
+	LIMITE_COMPTE,
 	OPTIONS_COMPTE,
 	classerRefusGeste,
 	classerRefusRestauration,
@@ -39,6 +41,8 @@ type Appel = {
 	colonnes: string
 	options: unknown
 	filtres: [string, string, unknown][]
+	/** Borne `limit` posée sur la lecture : `LIMITE_COMPTE` pour un compte, absente sinon. */
+	limite?: number
 }
 
 /**
@@ -71,6 +75,10 @@ function espion(reponses: readonly (ReponseLignes | ReponseCompte)[]): {
 					},
 					is: (colonne: string, valeur: unknown) => {
 						appel.filtres.push(['is', colonne, valeur])
+						return chaine
+					},
+					limit: (nombre: number) => {
+						appel.limite = nombre
 						return chaine
 					},
 					then: (resoudre: (valeur: unknown) => unknown) => Promise.resolve(reponse).then(resoudre),
@@ -119,7 +127,10 @@ describe('compterEnfantsInaccessibles, cible track', () => {
 				['in', 'channel_id', ['ch-1', 'ch-2']],
 				['is', 'deleted_at', null],
 			],
+			limite: LIMITE_COMPTE,
 		})
+		// La lecture des channels rapporte ses lignes : elle n'est pas un compte, et n'est pas bornée.
+		expect(appels[0]?.limite).toBeUndefined()
 		// Le nombre de channels est la LONGUEUR de la première lecture : aucune requête de plus.
 		expect(resultat).toEqual({ statut: 'pret', donnees: { channels: 2, cards: 7 } })
 	})
@@ -205,6 +216,7 @@ describe('compterEnfantsInaccessibles, cible channel', () => {
 				['eq', 'channel_id', CHANNEL],
 				['is', 'deleted_at', null],
 			],
+			limite: LIMITE_COMPTE,
 		})
 		// Un channel ne porte pas de channel : le champ vaut 0, il n'est pas absent.
 		expect(resultat).toEqual({ statut: 'pret', donnees: { channels: 0, cards: 3 } })

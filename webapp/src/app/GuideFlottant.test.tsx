@@ -48,8 +48,10 @@ function client(reponses: Readonly<Record<string, ReponseCompte>> | 'jamais'): C
 	return {
 		from: (table: string) => ({
 			select: () => {
+				// `limit` : un compte est un `GET` borné à zéro ligne (`compter.ts`, INC-299, décision 700).
 				const chaine = {
 					is: () => chaine,
+					limit: () => chaine,
 					then: (resoudre: (valeur: ReponseCompte) => unknown) => {
 						if (reponses === 'jamais') return new Promise(() => undefined)
 						const reponse = reponses[table]

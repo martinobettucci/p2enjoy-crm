@@ -12,6 +12,7 @@
 // valeur rendue : les filtres `archived_at`/`deleted_at` du §3 sont une exigence de la
 // spécification portée par la requête elle-même. Une étape qui compterait un objet en corbeille se
 // dirait accomplie par un objet que l'écran ne montre nulle part.
+// @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 
 import { renderHook } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
@@ -41,6 +42,8 @@ type Appel = {
 	readonly colonnes: string
 	readonly options: unknown
 	readonly nuls: [string, unknown][]
+	/** Borne `limit` du comptage : `LIMITE_COMPTE` (`compter.ts`). */
+	limite: number | null
 }
 
 /** La lecture de la destination de l'étape « affaire » (`CRM-095`), notée à part des comptages. */
@@ -100,10 +103,15 @@ function espion(
 				const nuls: [string, unknown][] = []
 				const reponse = reponses[table]
 				if (reponse === undefined) throw new Error(`table non attendue : ${table}`)
-				appels.push({ table, colonnes, options, nuls })
+				const appel: Appel = { table, colonnes, options, nuls, limite: null }
+				appels.push(appel)
 				const chaine = {
 					is: (colonne: string, valeur: unknown) => {
 						nuls.push([colonne, valeur])
+						return chaine
+					},
+					limit: (nombre: number) => {
+						appel.limite = nombre
 						return chaine
 					},
 					then: (resoudre: (valeur: ReponseCompte) => unknown) =>
@@ -146,11 +154,14 @@ describe('les six étapes et leurs filtres — docs/SPEC-onboarding.md §3 et §
 		])
 	})
 
-	it('compte sans rapporter les lignes : `head` et `count` exact', async () => {
+	// RÉVISÉ par `CRM-001`, INC-299 (décision 700) : un compte est un `GET` borné à zéro ligne, plus un
+	// `HEAD` — PostgREST ferme sans l'annoncer la connexion d'un `HEAD`, et Kong la réutilisait (`502`).
+	it('compte sans rapporter les lignes : `count` exact et `limit(0)`, jamais `head`', async () => {
 		const { client, appels } = espion(TOUTES_VIDES)
 		await mesurerDemarrage(client)
 		for (const appel of appels) {
-			expect(appel.options).toEqual({ count: 'exact', head: true })
+			expect(appel.options).toEqual({ count: 'exact' })
+			expect(appel.limite).toBe(0)
 		}
 	})
 

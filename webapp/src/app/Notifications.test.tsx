@@ -93,7 +93,8 @@ type Options = {
  * Client factice servant les deux tables du §24.1, plus le `PATCH` du §26.4.
  *
  * Le constructeur reproduit la forme réellement employée par `notifications.ts` :
- * `select().order().limit()`, `select(head).is()`, `select().in()` et `update().eq().select()`.
+ * `select().order().limit()`, `select(count).is().limit()`, `select().in()` et `update().eq().select()` —
+ * le compte borné à zéro ligne, jamais un `HEAD` (`compter.ts`, INC-299, décision 700).
  */
 function client(options: Options): ClientCrm {
 	const canal = {
@@ -118,14 +119,16 @@ function client(options: Options): ClientCrm {
 				}
 			}
 			return {
-				select: (_colonnes: string, extra?: { head?: boolean }) => {
-					if (extra?.head === true) {
+				select: (_colonnes: string, extra?: { count?: string }) => {
+					if (extra?.count !== undefined) {
 						return {
-							is: () =>
-								Promise.resolve({
-									count: options.compte === undefined ? 1 : options.compte,
-									error: null,
-								}),
+							is: () => ({
+								limit: () =>
+									Promise.resolve({
+										count: options.compte === undefined ? 1 : options.compte,
+										error: null,
+									}),
+							}),
 						}
 					}
 					return {

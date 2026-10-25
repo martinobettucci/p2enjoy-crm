@@ -11,6 +11,7 @@
 // Ces tests portent sur la LOGIQUE, sans navigateur : c'est ce que la séparation du module rend
 // possible. Le rendu est éprouvé par `webapp/src/app/Notifications.test.tsx`, et la pile réelle par
 // `e2e/api/notifications-surface.spec.ts`.
+// @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 
 import { describe, expect, it, vi } from 'vitest'
 import {
@@ -253,12 +254,18 @@ describe('la lecture (docs/SPEC-notifications.md §24.1, §26.2, §26.5)', () =>
 				}
 				return {
 					select: (colonnes: string, extra?: { count?: string; head?: boolean }) => {
-						if (extra?.head === true) {
+						if (extra?.count !== undefined) {
 							espion(`notifications.count:${extra.count}`)
+							if (extra.head !== undefined) espion(`notifications.head:${String(extra.head)}`)
 							return {
 								is: (colonne: string, valeur: unknown) => {
 									espion(`notifications.is:${colonne}:${String(valeur)}`)
-									return Promise.resolve({ count: options.compte ?? null, error: null })
+									return {
+										limit: (borne: number) => {
+											espion(`notifications.compte.limit:${borne}`)
+											return Promise.resolve({ count: options.compte ?? null, error: null })
+										},
+									}
 								},
 							}
 						}
@@ -295,8 +302,9 @@ describe('la lecture (docs/SPEC-notifications.md §24.1, §26.2, §26.5)', () =>
 		expect(traces).toContain(`notifications.limit:${BORNE_LISTE}`)
 	})
 
-	// LE COMPTEUR SE LIT SANS CORPS (§21, M4) : `head` avec `count: exact` porte le nombre dans
-	// l'en-tête, et aucune ligne ne traverse le réseau.
+	// LE COMPTEUR SE LIT SANS LIGNE (§21, M4) : `count: exact` et `limit(0)` portent le nombre dans
+	// l'en-tête, et aucune ligne ne traverse le réseau. RÉVISÉ par `CRM-001`, INC-299 (décision 700) :
+	// plus de `head`, dont PostgREST ferme la connexion sans l'annoncer (`502` derrière Kong).
 	it('compte les non-lues sans ramener une seule ligne', async () => {
 		const traces: string[] = []
 		const boite = await lireBoite(
@@ -308,6 +316,8 @@ describe('la lecture (docs/SPEC-notifications.md §24.1, §26.2, §26.5)', () =>
 		)
 		expect(traces).toContain('notifications.count:exact')
 		expect(traces).toContain('notifications.is:read_at:null')
+		expect(traces).toContain('notifications.compte.limit:0')
+		expect(traces.some((trace) => trace.startsWith('notifications.head:'))).toBe(false)
 		expect(boite.statut === 'pret' ? boite.donnees.nonLues : undefined).toBe(7)
 	})
 

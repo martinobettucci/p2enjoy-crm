@@ -1,6 +1,7 @@
 // @spec CRM-059 (docs/BACKLOG.md) — écran d'état de la messagerie
 // @spec docs/SPEC-mail-subsystem.md §20.7 (les faits montrés), §20.11 (l'écran, ce qu'il lit)
 // @spec docs/DESIGN_SYSTEM.md §5.14 (cette surface)
+// @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE (§20.11.2) : il lit `mail_inbound_accounts` sous la
 // RLS posée par `CRM-052` (migration 0022) et deux comptages sur `mail_outbox` sous la RLS posée
@@ -9,6 +10,7 @@
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
+import { LIMITE_COMPTE, OPTIONS_COMPTE } from './compter'
 import type { ClientCrm } from './supabase'
 
 // ---------------------------------------------------------------------------------------------
@@ -57,7 +59,7 @@ export type CompteursFileSortante = {
 
 /**
  * Compte la file sortante visible par l'appelant : « en attente » (`queued` ou `sending`),
- * « échec définitif » (`failed`). Deux requêtes `head: true`, jamais les lignes elles-mêmes —
+ * « échec définitif » (`failed`). Deux comptes (`compter.ts`), jamais les lignes elles-mêmes —
  * l'écran affiche un chiffre, pas un tableau des envois (§20.11.7).
  *
  * La RLS de `0030` filtre par `app.can_read_card` : un membre ordinaire ne compte donc que la
@@ -70,9 +72,10 @@ export async function lireCompteursFileSortante(
 		const [enAttente, echecs] = await Promise.all([
 			client
 				.from('mail_outbox')
-				.select('id', { count: 'exact', head: true })
-				.in('status', ['queued', 'sending']),
-			client.from('mail_outbox').select('id', { count: 'exact', head: true }).eq('status', 'failed'),
+				.select('id', OPTIONS_COMPTE)
+				.in('status', ['queued', 'sending'])
+				.limit(LIMITE_COMPTE),
+			client.from('mail_outbox').select('id', OPTIONS_COMPTE).eq('status', 'failed').limit(LIMITE_COMPTE),
 		])
 		if (enAttente.error !== null) {
 			return enErreur(classerErreur(enAttente.status, enAttente.error.message))

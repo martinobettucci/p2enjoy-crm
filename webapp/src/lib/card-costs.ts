@@ -5,6 +5,7 @@
 //       §4.6 (la section de la fiche), §4.7 (les états)
 // @spec docs/SCHEMA.md §9 bis.6 (card_costs), §9 bis.7 (politiques)
 // @spec docs/DESIGN_SYSTEM.md §5.3 (la colonne qui accueille la section)
+// @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 //
 // CE MODULE N'INVENTE AUCUNE RÈGLE, exactement comme `budgets.ts`. Chaque refus traduit ici est déjà
 // posé et mesuré par la migration `0051` et par `supabase/tests/0049_card_costs.test.sql`. Rien n'est
@@ -24,6 +25,7 @@
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
 import type { ClientCrm } from './supabase'
+import { LIMITE_COMPTE, OPTIONS_COMPTE } from './compter'
 
 // ---------------------------------------------------------------------------------------------
 // Ce que la section lit
@@ -559,7 +561,7 @@ export async function supprimerLigneCout(client: ClientCrm, id: string): Promise
  * lignes sans coût réel ; elles resteront saisissables après la clôture ». La confirmation disait
  * jusqu'ici que rien n'était à saisir, faute de table à interroger.
  *
- * `head: true` avec `count: 'exact'` : la réponse ne porte AUCUNE ligne, seulement leur nombre. Les
+ * `OPTIONS_COMPTE` et `.limit(LIMITE_COMPTE)` (`compter.ts`) : la réponse ne porte AUCUNE ligne, seulement leur nombre. Les
  * lignes elles-mêmes n'ont rien à faire dans une confirmation, et les faire transiter exposerait des
  * libellés et des montants pour afficher un entier.
  *
@@ -575,9 +577,10 @@ export async function compterLignesSansReel(
 	try {
 		const reponse = await client
 			.from('card_costs')
-			.select('id', { count: 'exact', head: true })
+			.select('id', OPTIONS_COMPTE)
 			.eq('budget_id', idBudget)
 			.is('actual_cost', null)
+			.limit(LIMITE_COMPTE)
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}

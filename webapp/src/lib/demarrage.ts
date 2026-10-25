@@ -9,6 +9,7 @@
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.17
 // @spec CRM-095 (docs/BACKLOG.md) tranche T3 — docs/SPEC-onboarding.md §10.7, docs/SPEC-cards.md §18.4 :
 //       l'étape « affaire » mène au board du premier channel lisible et vivant, lu avec chaque mesure
+// @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Chaque table est comptée sous la politique qui la
 // régit déjà — `tracks` (CRM-020), `channels` (CRM-021), `cards` (CRM-040), `workspaces` (CRM-022),
@@ -23,6 +24,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
 import type { ClientCrm } from './supabase'
+import { LIMITE_COMPTE, OPTIONS_COMPTE } from './compter'
 
 /**
  * Les tables interrogeables, telles que le SCHÉMA les déclare — jamais une chaîne libre. Une table
@@ -81,7 +83,7 @@ export const FILTRES_ETAPES_DEMARRAGE: Readonly<
 }
 
 /**
- * Compte une étape. `head: true` : l'écran affiche un état, pas une liste — rapporter les lignes
+ * Compte une étape, par `compter.ts` : l'écran affiche un état, pas une liste — rapporter les lignes
  * ferait transiter une charge utile que rien ne rend.
  *
  * Une réponse aboutie dont le `count` est absent est un **contrat rompu**, pas une absence : elle
@@ -95,11 +97,11 @@ export async function mesurerEtape(
 ): Promise<EtatAsync<EtapeDemarrage>> {
 	const filtre = FILTRES_ETAPES_DEMARRAGE[cle]
 	try {
-		let requete = client.from(filtre.table).select('id', { count: 'exact', head: true })
+		let requete = client.from(filtre.table).select('id', OPTIONS_COMPTE)
 		for (const colonne of filtre.nuls) {
 			requete = requete.is(colonne, null)
 		}
-		const reponse = await requete
+		const reponse = await requete.limit(LIMITE_COMPTE)
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}

@@ -91,6 +91,8 @@ function client({ lectures = {}, enumerations = [], ecriture = VIDE, surEcriture
 				function chaineEnumeration() {
 					const suite: Record<string, unknown> = {}
 					suite['is'] = () => suite
+					// `limit` : un compte est un `GET` borné à zéro ligne (`compter.ts`, INC-299, décision 700).
+					suite['limit'] = () => suite
 					suite['then'] = (resoudre: (valeur: unknown) => unknown) => {
 						const reponse = enumerations[rangEnumeration++] ?? VIDE
 						const compte =
