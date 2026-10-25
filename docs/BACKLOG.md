@@ -5390,7 +5390,7 @@ scénarios de `commentaires-gestes.spec.ts` écrivent puis relisent la base sans
   et les captures qui le montraient ne représentaient plus l'état exécuté. Les quatorze captures des
   autres unités, réécrites par le rejeu sans que leur contenu change, ont été **restaurées**.
 
-### CRM-044 — Timeline unifiée `[x]`
+### CRM-044 — Timeline unifiée `[@]`
 `card_events` alimentée par triggers ; fil chronologique filtrable.
 **DoD** : pgTAP (aucune écriture cliente possible) ; E2E ; captures.
 
@@ -5541,6 +5541,10 @@ scénarios de `commentaires-gestes.spec.ts` écrivent puis relisent la base sans
       mesure ; `scripts/verify-harness.sh` rend **25 contrôles, aucune anomalie**.
 - [x] **Le fil réel est atteint depuis `CRM-011`.** La connexion revient à la fiche demandée, le
       fil chargé est rendu et la publication nouvellement écrite y apparaît sans substitution.
+- [@] **Tranche INC-301 — le fil nomme une étape comme le board, surcharge comprise** (issue proposée au registre,
+      même règle que la décision 690 pour la fiche) : `lireEtapesWorkflow` lit `label_override` et le libellé se
+      résout par `libelleEtape` ; unitaire rouge d'abord, preuve du fil sur l'affaire `…0000cc`.
+      *Prise en charge : CloudWorker 2026-10-25 06:13:12 UTC depuis 2026-10-25 06:40 UTC — état avant : [ ]*
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pgTAP (aucune écriture cliente
 possible) ; E2E ; captures ». **Les trois sont livrés** — 87 assertions pgTAP dont le refus mesuré
