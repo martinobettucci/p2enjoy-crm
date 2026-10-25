@@ -256,14 +256,17 @@ done
 # CRM-022 ferme INC-014 : la liste demande l'identifiant de relation et le profil embarqué, sans
 # lecture supplémentaire par ligne. Le contrôle porte sur la déclaration réellement envoyée.
 colonnes_demandees=$(grep -A2 "^export const COLONNES_CARD_LISTE" "$COLONNES" | tr -d '\n')
-for presente in owner_id 'responsable:profiles!cards_owner_id_fkey'; do
+# RÉVISÉ LE 2026-10-25 (décision 704, INC-309), PARCE QUE LA RÈGLE A CHANGÉ : `description` est demandée et AFFICHÉE
+# depuis `CRM-105`, en infobulle sur le titre de la ligne (docs/DESIGN_SYSTEM.md §5.58, décision 629). Elle passe des
+# colonnes absentes aux colonnes présentes ; `position` et `health_score` restent absentes.
+for presente in owner_id 'responsable:profiles!cards_owner_id_fkey' description; do
 	if printf '%s' "$colonnes_demandees" | grep -qF "$presente"; then
 		ok "$presente est demandée pour nommer le responsable (§12.3, CRM-022)"
 	else
 		fail "$presente manque : la liste ne peut pas nommer le responsable"
 	fi
 done
-for absente in position description health_score; do
+for absente in position health_score; do
 	if ! printf '%s' "$colonnes_demandees" | grep -q "$absente"; then
 		ok "$absente n'est pas demandée par la page (§12.3)"
 	else
@@ -323,7 +326,10 @@ fi
 
 titre "5. Captures produites et observées"
 
-for capture in liste-anonyme-1440 liste-chargee-1440 liste-tri-montant-1440 \
+# RÉVISÉ LE 2026-10-25 (décision 704, INC-309) : `liste-anonyme-1440` est retirée. Depuis `CRM-092` T9
+# (docs/SPEC-session-sso.md §8.7, décision 601), aucune page n'est rendue sans session ; `e2e/ui/liste-cards.spec.ts`
+# connecte la lectrice, et l'état « anonyme » n'a plus de sujet à capturer.
+for capture in liste-chargee-1440 liste-tri-montant-1440 \
 	liste-filtre-sans-resultat-1440 liste-pagination-1440 liste-page-inexistante-1440 \
 	liste-donnees-longues-1440 liste-donnees-longues-390 \
 	liste-xl-1440 liste-lg-1152 liste-md-900 liste-sm-390; do
