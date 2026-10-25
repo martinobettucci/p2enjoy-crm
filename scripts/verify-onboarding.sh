@@ -64,7 +64,8 @@ CAPTURES=docs/captures/CRM-079
 # pas la disparition d'une suite entière (décision 279).
 VITEST_FICHIERS_ATTENDUS=2
 # 62 depuis `CRM-094` (2026-09-28) : la sixième étape, le geste et ses issues, le signal aux écrans.
-VITEST_TESTS_ATTENDUS=62
+# 69 depuis `1c42e16` (`CRM-001`, INC-299, décision 700), constaté le 2026-10-25 (décision 704).
+VITEST_TESTS_ATTENDUS=69
 API_SCENARIOS_ATTENDUS=6
 UI_SCENARIOS_ATTENDUS=11
 

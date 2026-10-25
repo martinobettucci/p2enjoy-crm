@@ -301,7 +301,7 @@ au même titre qu'un compte qui descend.
 
 | Grandeur | Valeur figée | Mesurée le |
 |---|---|---|
-| Vitest, filtre `demarrage` | **2 fichiers, 62 tests** — 43 jusqu'à `CRM-094` | 2026-09-28 |
+| Vitest, filtre `demarrage` | **2 fichiers, 69 tests** — 62 jusqu'à `1c42e16` (`CRM-001`, INC-299), 43 jusqu'à `CRM-094` | 2026-10-25 |
 | `e2e/api/demarrage.spec.ts` | **6 scénarios** | 2026-08-16 |
 | `e2e/ui/demarrage.spec.ts` | **11 scénarios** | 2026-08-16 |
 | Captures sous `docs/captures/CRM-079/` | **10** — quatre paliers, plus six états | 2026-08-16 |

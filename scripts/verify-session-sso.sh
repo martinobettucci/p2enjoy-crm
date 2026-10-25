@@ -132,7 +132,9 @@ appliquer_migrations_dev() {
 role_a_rendre=false
 fichier_mute=''
 # 126 jusqu'à `CRM-101` T2 (décision 627) : huit preuves de plus, la liste d'amorçage normalisée et transmise.
-UNITES_SESSION=134
+# 141 depuis `9f83599` (`CRM-114` T3), qui ajoute `supabase/functions/session/verification.test.ts` : constaté le
+# 2026-10-25 (INC-297, décision 704).
+UNITES_SESSION=141
 SCENARIOS_SESSION=24
 
 cleanup() {

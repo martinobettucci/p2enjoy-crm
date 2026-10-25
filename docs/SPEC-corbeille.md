@@ -648,8 +648,8 @@ celles qui existent et refuse de rendre vert quand l'une d'elles a cessé de mes
 | 1 | Traçabilité | les 6 fichiers de code et les 6 fichiers de preuve de l'unité | chacun porte `@spec` ou `@verifies CRM-077` dans son en-tête |
 | 2 | Captures (`CLAUDE.md` §16) | `docs/captures/CRM-077/` | les quatre paliers de l'écran, les quatre de la confirmation d'un track, les quatre de celle d'une affaire, l'**état vide**, et les deux états dédiés du geste d'une affaire |
 | 3 | pgTAP | `0035_corbeille.test.sql`, `0036_corbeille_restauration.test.sql` | **2 fichiers, 20 assertions** |
-| 4 | Vitest — modèle et écran | `corbeille.test.ts`, `Corbeille.test.tsx` | **2 fichiers, 39 tests** |
-| 5 | Vitest — le geste sur la route de détail | `RouteCard.test.tsx` | **1 fichier, 7 tests** |
+| 4 | Vitest — modèle et écran | `corbeille.test.ts`, `Corbeille.test.tsx` | **2 fichiers, 44 tests** — 39 jusqu'à `1c42e16` (`CRM-001`, INC-299, décision 700), constaté le 2026-10-25 (décision 704) |
+| 5 | Vitest — le geste sur la route de détail | `RouteCard.test.tsx` | **1 fichier, 8 tests** — 7 jusqu'à `9f83599` (`CRM-114` T3), constaté le 2026-10-25 (décision 704) |
 | 6 | API, jetons réels | `e2e/api/corbeille.spec.ts` | **22 scénarios** |
 | 7 | UI, clavier et souris, console stricte | `e2e/ui/corbeille.spec.ts` | **24 scénarios** |
 
