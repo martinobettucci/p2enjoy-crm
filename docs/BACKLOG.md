@@ -3880,10 +3880,11 @@ accessibilité des erreurs vérifiée.
       écrite puis l'étape de la card. Contrat au §4 quater de `docs/SPEC-form-composer.md`, écrit
       après mesure et committé avant le code. **Console stricte** : la seule erreur admise est le
       `400` du refus, consommée là où elle est provoquée.
-- [ ] **« Captures de chaque étape » n'est pas tenu à la lettre.** Les captures montrent **une**
+- [@] **« Captures de chaque étape » n'est pas tenu à la lettre.** Les captures montrent **une**
       étape — `Prospection` —, celle de la card que le seed place là et qui exerce les trois
       destinations du §4.2. Capturer les sept étapes exigerait sept cards, une par étape, que le
       seed ne pose pas et qu'inventer ici dépasserait l'unité. Le fait est nommé, pas contourné.
+      *Prise en charge : CloudWorker 2026-10-25 04:12:18 UTC depuis 2026-10-25 04:27 UTC — état avant : [ ]*
 - [x] **L'ÉCRITURE DEPUIS L'ÉCRAN EST LIVRÉE — INC-088, décision 334, tranche du 2026-08-16.** La
       limite « aucune écriture depuis l'écran » (§4.7) s'imputait à **INC-021**, close depuis
       `CRM-009` : le motif invoqué avait disparu sans que la limite soit réexaminée. L'unité n'a pas
