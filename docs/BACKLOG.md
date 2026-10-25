@@ -16478,7 +16478,7 @@ colonne et de filtre de la vue liste, de variable des modèles d'email, et sont 
 
 ## Demande du 2026-10-25 — une pile de développement par session (décision 701)
 
-### CRM-115 — Une pile de développement par session, des ports attribués à chaque lancement `[~]`
+### CRM-115 — Une pile de développement par session, des ports attribués à chaque lancement `[P]`
 *Créée le 2026-10-25 — arbitrage du responsable (décision 701, point 3).* Plusieurs sessions — tâches planifiées,
 sessions interactives — partagent parfois une VM, son démon Docker et son système de fichiers. Elles démarraient
 toutes la même pile, aux mêmes noms de conteneurs (`p2enjoy-db`…) et aux mêmes ports, et se mesuraient l'une l'autre
@@ -16487,13 +16487,14 @@ registre**, fichier du système de fichiers partagé, répertorie les sessions e
 car une VM peut être recyclée alors que le système de fichiers est conservé (constaté le 2026-10-25 à 10:04 UTC).
 **Connecteur MCP : non** (outillage de développement). Spécification : `docs/SPEC-pile-par-session.md`.
 
-- [~] **T1 — mesures et spécification** : inventaire des ports publiés, des noms de conteneurs figés, des chemins de
+- [x] **T1 — mesures et spécification** : inventaire des ports publiés, des noms de conteneurs figés, des chemins de
       l'hôte partagés (volumes liés du dépôt, verrou de reconstruction, fichiers de `/tmp`), et des appelants qui
       nomment un conteneur ou un port en dur ; forme du registre (emplacement, entrée par session, vérification de
       vie : identifiant de démarrage de la VM, conteneurs du projet présents) ; schéma d'attribution des ports.
       *Mesuré et spécifié le 2026-10-25* : `docs/SPEC-pile-par-session.md` §2 (nom de projet et vingt noms de conteneurs
       figés, quatorze ports déjà dans `.env` sauf une redirection du realm, 97 fichiers qui nomment un conteneur, la base
-      dans le dépôt, la pile revenue à moitié après un recyclage de VM). **Reste** : la validation du responsable sur
+      dans le dépôt, la pile revenue à moitié après un recyclage de VM). *Le §11 est validé par le responsable (décision
+      705) : la tranche est soldée.* **Reste (d'avant)** : la validation du responsable sur
       les quatre points du §11, avant tout code.
 - [P] **T2 — plus aucun nom de conteneur en développement** (décision 702, spécification §6 et §6 bis) : 243
       occurrences dans 125 fichiers remplacées par le service Compose (utilitaire shell unique, module TypeScript
@@ -16532,7 +16533,7 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       garde `verify-noms-conteneurs.sh` 12/12. **Limite dite** : la concurrence est prouvée par six attributions
       simultanées distinctes, sans dégradation du verrou — une course sans `flock` n'est pas reproductible à coup sûr.
       Aucune pile n'appelle encore le registre : c'est la T4.
-- [~] **T4 — la pile par emplacement** : nom de projet et ports par emplacement, `.env`, realm Keycloak ;
+- [x] **T4 — la pile par emplacement** : nom de projet et ports par emplacement, `.env`, realm Keycloak ;
       `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev` ; `P2ENJOY_TMP` ; `docs/CloudWorker.md`.
       *Implémentée et vérifiée sur la pile de ce poste le 2026-10-25 (session interactive), après l'**incident** de la
       décision 713* (une seconde pile lancée depuis le même checkout, sur le même répertoire de base — arrêtée, base
@@ -16547,8 +16548,20 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       `./runDev.sh` réel : emplacement 0 **adopté**, `.env` seulement complété de quatre variables, pile recréée sous les
       noms du projet, données intactes (41 affaires, 104 migrations) ; `verify-stack.sh --rapide` **64/64** ;
       `verify-reconstruction.sh` **28/28** ; garde des noms **12/12** ; typecheck ; `organisations` UI 7/7 et API 3/3.
-      **Reste `[~]`** : `resetMe.sh` et un emplacement autre que 0 ne sont pas encore exercés — ils le seront par T5,
-      dans le clone autorisé (décision 711).
-- [@] **T5 — preuve** : deux piles debout en même temps sur le même démon, chacune sa preuve courte, sans interférence
+      *Soldée par la T5* : `resetMe.sh` et l'emplacement 1 exercés dans le clone autorisé (décision 711).
+- [x] **T5 — preuve** : deux piles debout en même temps sur le même démon, chacune sa preuve courte, sans interférence
       mesurée ; `README.md`, `docs/DAT.md`, `docs/CloudWorker.md` (démarrage par emplacement).
-      *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 22:51 UTC — état avant : [ ]*
+      *Prouvée le 2026-10-25/26 (session interactive), dans un clone jetable du dépôt sous `/tmp` (décision 711).* Le
+      clone a reçu l'**emplacement 1** (projet `p2enjoy-crm-1`, ports du poste + 100) ; **les deux piles debout en même
+      temps** passent `verify-stack.sh --rapide` **64/64 chacune, lancées en parallèle** ; une table créée dans
+      `p2enjoy-crm-1-db-1` est **absente** de `p2enjoy-crm-db-1` ; une **VM recyclée simulée** (`boot_id` changé) fait
+      refuser la reconstruction sans rien arrêter, et `./runDev.sh` rafraîchit l'entrée ; `./resetMe.sh --yes` réinitialise
+      le seul clone, la base principale inchangée (41 affaires, même démarrage) ; `./runDev.sh --stop` rend l'emplacement.
+      **La preuve a débusqué trois interférences réelles, corrigées** : le réseau `p2enjoy-crm_default` écrit en dur dans
+      quatre harnais (`verify-stack`, `verify-mcp`, `verify-controles-connecteur`, `verify-mail-sync` — l'emplacement 1
+      mesurait le MinIO de l'emplacement 0), et des conteneurs jetables à nom fixe dans cinq (`verify-stack`, `verify-mcp`,
+      `verify-controles-connecteur`, `verify-session-sso`, `verify-vault` — deux mesures parallèles se volaient leur
+      sonde) ; `projet_pile` (`scripts/lib/conteneur.sh`) les dérive désormais du projet. **Limite dite** :
+      `verify-restauration.sh` garde le préfixe jetable de `restore-drill.sh`, script de production, et ne se lance pas
+      en même temps dans deux emplacements. Clone arrêté, ses volumes et images retirés ; son répertoire sous `/tmp`
+      reste à effacer à la main (le contrôle de sécurité de l'agent a refusé la suppression).

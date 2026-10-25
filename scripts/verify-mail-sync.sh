@@ -7,6 +7,8 @@
 #           (état de reprise minimal et prouvable), décision 311 (runtime épinglé),
 #           décision 312 (client de test), décision 313 (aucun lifespan applicatif)
 # @verifies docs/DAT.md §3.3 (service mail-sync) ; CLAUDE.md §10 (règle appliquée côté backend)
+# @verifies CRM-115 (docs/BACKLOG.md) tranche T5 — le réseau et les volumes de la pile dérivés de son projet (`projet_pile`),
+#           jamais ceux de l'emplacement 0 écrits en dur (docs/SPEC-pile-par-session.md §9)
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -238,7 +240,7 @@ fi
 
 volume=$(docker inspect "$CONTENEUR" --format '{{range .Mounts}}{{.Type}}:{{.Name}}:{{.Destination}} {{end}}')
 case "$volume" in
-	*volume:p2enjoy-crm_mail-sync-state:/var/lib/p2enjoy-mail-sync*)
+	*"volume:$(projet_pile)_mail-sync-state:/var/lib/p2enjoy-mail-sync"*)
 		ok "l'état repose sur un volume nommé" ;;
 	*) fail "montage inattendu : $volume" ;;
 esac

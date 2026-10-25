@@ -311,6 +311,13 @@ scripts/verify-stack.sh
 scripts/verify-scripts.sh
 ```
 
+**Une pile par checkout, à son emplacement** (`CRM-115` T3 à T5). `./runDev.sh` inscrit ce checkout au registre des
+sessions du poste et en écrit l'emplacement dans `.env` : l'emplacement 0 garde le projet `p2enjoy-crm` et les ports de
+votre `.env` ; un second checkout sur le même poste reçoit l'emplacement 1 — projet `p2enjoy-crm-1`, ports + 100 —,
+une pile entièrement séparée. `scripts/sessions.sh liste` montre les piles du poste, `./runDev.sh --stop` rend
+l'emplacement. Une pile déjà en marche de ce checkout est reprise telle quelle ; une seconde session dans **le même**
+checkout est refusée.
+
 **Un conteneur se désigne par son service, jamais par un nom** (`CRM-115` T2) : la pile de développement n'en fixe
 aucun, et Compose les nomme d'après le projet (`p2enjoy-crm-db-1`…). Pour une commande à la main :
 `docker compose --env-file .env -f docker-compose.yml -f docker-compose.dev.yml exec db psql -U postgres`, ou

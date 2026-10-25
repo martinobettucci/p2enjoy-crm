@@ -37,6 +37,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
+# @verifies CRM-115 (docs/BACKLOG.md) tranche T5 — le réseau et les volumes de la pile dérivés de son projet (`projet_pile`),
+#           jamais ceux de l'emplacement 0 écrits en dur (docs/SPEC-pile-par-session.md §9)
 # shellcheck source=scripts/lib/conteneur.sh
 source scripts/lib/conteneur.sh
 # shellcheck source=scripts/lib/node.sh
@@ -65,9 +67,9 @@ fail() { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mE
 titre() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 valeur() { sed -n "s/^$1=//p" .env | tail -n 1; }
 
-RESEAU=p2enjoy-crm_default
+RESEAU="$(projet_pile)_default"
 IMAGE=crm-mcp:dev
-CADDY=p2enjoy-verif-mcp-caddy
+CADDY="$(projet_pile)-verif-mcp-caddy"  # par emplacement (CRM-115 T5)
 HOTE_CADDY=crm.mcp.exemple.test
 SIGNATURE_ETAT='public.mcp_etat_compte(uuid, boolean)'
 TRAVAIL=$(mktemp -d)

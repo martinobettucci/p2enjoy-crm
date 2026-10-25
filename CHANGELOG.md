@@ -13,12 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-115` T3 — le registre des sessions de développement (outillage, développement seulement)
+### `CRM-115` T3 à T5 — une pile de développement par checkout (outillage, développement seulement)
 
 - **`scripts/sessions.sh`** liste les piles de développement en cours sur le poste et libère un emplacement périmé ;
   **`scripts/lib/emplacement.sh`** attribue à chaque checkout un emplacement — nom de projet et quinze ports décalés
   de 100 — sans jamais en donner deux fois le même. Rien ne change pour une pile unique : l'emplacement 0 reproduit
-  l'existant. Le lancement s'en servira avec la tranche T4.
+  l'existant.
+- **`./runDev.sh`** prend l'emplacement de son checkout et l'écrit dans `.env` (T4) : deux checkouts du même poste tiennent
+  deux piles indépendantes, prouvées debout en même temps (T5). Une pile déjà en marche est reprise, jamais doublée.
 
 ### `CRM-083` — le canevas d'objectifs a son chapitre au manuel
 

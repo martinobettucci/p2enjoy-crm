@@ -1394,6 +1394,15 @@ sont appliquées par le `migrations-runner` au démarrage, le seed par `supabase
 et l'arrêt par `./runDev.sh --stop`. Deux façades pour un même geste font diverger la documentation
 de l'une des deux ; le `package.json` reste borné à la chaîne Node — types, build, tests.
 
+**Une pile de développement par emplacement** (`CRM-115`, `docs/SPEC-pile-par-session.md`) : `./runDev.sh` prend au
+registre des sessions (`/var/tmp/p2enjoy-crm/sessions`, sous `flock`) l'emplacement de son checkout et écrit dans
+`.env` son nom de projet Compose et ses quinze ports — la base est le `.env` du poste, + 100 × N. Une pile de ce
+checkout déjà en marche est adoptée, jamais doublée : la base vit dans le dépôt (décision 713). La reconstruction de la
+base vérifie l'emplacement avant de rien arrêter ; les harnais dérivent réseau, volumes et sondes du projet
+(`projet_pile`) et écrivent sous `P2ENJOY_TMP`. Deux checkouts du même poste tiennent deux piles indépendantes
+(prouvé par T5). **Compromis** : un emplacement par checkout — deux sessions dans un même checkout sont refusées, non
+isolées ; la production et la cellule Spark gardent leurs noms et ne connaissent pas le registre.
+
 Les trois scripts partagent `scripts/lib/env.sh`, qui porte la lecture du fichier
 d'environnement, son amorçage et ses gardes. Le fichier visé est `.env` à la racine, ou celui que
 désigne `P2ENJOY_ENV_FILE`.

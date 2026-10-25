@@ -48,3 +48,15 @@ conteneur_en_marche() {
 	fi
 	docker ps --filter "name=^/${nom}$" --filter "status=running" --format '{{.Names}}'
 }
+
+# @spec CRM-115 (docs/BACKLOG.md) — tranche T5 : le projet Compose de la pile de CE checkout, lu dans son `.env`
+# (`COMPOSE_PROJECT_NAME`, écrit par `./runDev.sh`), `p2enjoy-crm` à défaut — l'emplacement 0. Le réseau et les volumes
+# de la pile en dérivent (`<projet>_default`, `<projet>_<volume>`) : un harnais qui les écrirait en dur mesurerait la
+# pile de l'emplacement 0 depuis n'importe quel autre (docs/SPEC-pile-par-session.md §3, §9).
+projet_pile() {
+	local racine fichier projet
+	racine=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+	fichier=${P2ENJOY_ENV_FILE:-$racine/.env}
+	projet=$(sed -n 's/^COMPOSE_PROJECT_NAME=//p' "$fichier" 2>/dev/null | tail -n 1 | tr -d "\"' \r")
+	printf '%s\n' "${projet:-p2enjoy-crm}"
+}

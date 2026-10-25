@@ -8,6 +8,8 @@
 #           gabarits et Inbucket sont absents des deux assemblages, et `/auth/v1/*` rend 404
 # @verifies CRM-001, docs/DAT.md §3.5 bis, INC-299 (décision 696) — section 6 : Kong et Caddy ferment une connexion amont
 #           inactive avant leur amont
+# @verifies CRM-115 (docs/BACKLOG.md) tranche T5 — le réseau et les volumes de la pile dérivés de son projet (`projet_pile`),
+#           jamais ceux de l'emplacement 0 écrits en dur (docs/SPEC-pile-par-session.md §9)
 #
 # Rejoue les quatre preuves exigées par la Definition of Done de `CRM-001` (1 à 4), et deux de plus (5, 6) :
 #
@@ -288,7 +290,7 @@ fi
 # ici et non dans le conteneur. L'image est celle du service `minio`, lue dans le fichier Compose et jamais recopiée
 # (décision 681) : elle porte `mc` et `/bin/sh`.
 image_minio=$(awk '/^  minio:/{d=1} d && /^    image:/{print $2; exit}' docker-compose.dev.yml)
-minio_listing=$(docker run --rm --network "${COMPOSE_NETWORK:-p2enjoy-crm_default}" \
+minio_listing=$(docker run --rm --network "${COMPOSE_NETWORK:-$(projet_pile)_default}" \
 	--entrypoint sh "$image_minio" -ec \
 	"mc alias set probe http://minio:9000 '$MINIO_ROOT_USER' '$MINIO_ROOT_PASSWORD' >/dev/null \
 	 && mc ls --recursive probe/$GLOBAL_S3_BUCKET/" 2>/dev/null || true)
@@ -308,7 +310,7 @@ curl -s -o /dev/null -X DELETE "$KONG_URL/storage/v1/bucket/$probe_bucket" "${au
 echo
 echo "6. Connexions maintenues : chaque relais ferme avant son amont"
 
-reseau="${COMPOSE_NETWORK:-p2enjoy-crm_default}"
+reseau="${COMPOSE_NETWORK:-$(projet_pile)_default}"
 image_sonde=$(awk '/^FROM /{print $2; exit}' mail-sync/Dockerfile)
 image_caddy=$(awk '/^  caddy:/{d=1} d && /^    image:/{print $2; exit}' docker-compose.prod.yml)
 delai_declare=$(sed -n 's/^[[:space:]]*KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT:[[:space:]]*"\{0,1\}\([0-9]*\)"\{0,1\}[[:space:]]*$/\1/p' \
@@ -404,7 +406,8 @@ for caddyfile in Caddyfile Caddyfile.spark; do
 		fail "caddy validate refuse caddy/$caddyfile"
 	fi
 done
-sonde_caddy=p2enjoy-sonde-caddy-verify-stack
+# Le nom porte le projet de la pile : deux emplacements mesurés en même temps ne se volent pas leur sonde (CRM-115 T5).
+sonde_caddy="$(projet_pile)-sonde-caddy-verify-stack"
 docker rm -f "$sonde_caddy" >/dev/null 2>&1 || true
 if docker run -d --name "$sonde_caddy" --network "$reseau" -v "$PWD/caddy:/etc/caddy:ro" "$image_caddy" \
 	caddy run --adapter caddyfile --config /etc/caddy/Caddyfile.spark >/dev/null 2>&1; then

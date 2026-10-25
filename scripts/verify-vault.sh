@@ -30,9 +30,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-CONTAINER=p2enjoy-vault-probe
-VOL_DATA=p2enjoy-vault-pgdata
-VOL_CONF=p2enjoy-vault-config
+# Par emplacement (CRM-115 T5) : deux piles éprouvées en même temps ne partagent ni la sonde ni ses volumes.
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
+CONTAINER="$(projet_pile)-vault-probe"
+VOL_DATA="$(projet_pile)-vault-pgdata"
+VOL_CONF="$(projet_pile)-vault-config"
 KEY_FILE=/etc/postgresql-custom/pgsodium_root.key
 CLAIR='mot-de-passe-imap-de-preuve-CRM-004'
 CLAIR2='mot-de-passe-imap-remplace'
