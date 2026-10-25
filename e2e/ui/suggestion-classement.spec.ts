@@ -110,6 +110,11 @@ test.describe('la suggestion de classement (docs/SPEC-contacts.md §8.8)', () =>
 
 			// AU CLAVIER, sans souris : le §8 ne connaît pas d'exception à la parité.
 			const accepter = page.getByTestId('inbox-suggestion-accepter')
+			// RÉVISÉ LE 2026-10-25 (décision 704, INC-309) : depuis `CRM-093` T4, le bouton est DÉSACTIVÉ pendant la
+			// lecture du droit d'écrire sur l'affaire (`proprietesCommande`, capacité `en-lecture`), et un bouton
+			// désactivé ne prend pas le focus. Le test appelait `focus()` trop tôt : mesuré, 2 échecs sur 5 rejeux
+			// (« Received: inactive »). On attend, comme l'utilisateur au clavier, que la commande soit offerte.
+			await expect(accepter).toBeEnabled()
 			await accepter.focus()
 			await expect(accepter).toBeFocused()
 			await page.keyboard.press('Enter')
