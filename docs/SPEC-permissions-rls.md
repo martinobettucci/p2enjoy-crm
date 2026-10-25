@@ -447,6 +447,7 @@ ligne est lisible :
 | `mail_inbound_accounts.secret_id`, `mail_outbound_identities.secret_id` | **`REVOKE SELECT` pour `authenticated`** ; lisible par `service_role` uniquement |
 | `api_tokens.token_hash` | Jamais exposé |
 | `card_events.*`, `audit_log.*` | Insertion par trigger ou `service_role` |
+| `card_costs.created_at`, `card_costs.updated_at`, `card_revenues.created_at`, `card_revenues.updated_at` | **Insertion et mise à jour refusées à `authenticated`** — LIVRÉE par `CRM-013`, `supabase/migrations/0104_dates_lignes_protegees.sql`, spécifiée au §4.4.7 (INC-238). Lecture ouverte ; `service_role` les pose (seed) |
 
 La révocation au niveau colonne est indispensable : une politique RLS autorise ou refuse une
 **ligne**, pas une colonne. Sans `REVOKE`, un membre légitime du workspace pourrait lire la
@@ -669,18 +670,19 @@ variante de danger démontrable, et c'est l'issue écrite d'INC-238.
 `modifierLigneCout`, `reels-ligne`, `card-revenues`) et le connecteur MCP (`crm_card_cost_add`, `_update`, `_settle`,
 les outils `recettes`) n'envoient que le rattachement, le libellé, le prévu et `settled_at`. Aucun écran ne change.
 
-**Contrat d'API**, mesuré sur la pile avec les jetons réels des profils du seed (les lignes *a* à *c* sont mesurées
-avant le code, l'état d'avant ; toutes le sont après) :
+**Contrat d'API**, mesuré sur la pile avec les jetons réels des profils du seed (`e2e/api/dates-lignes-protegees.spec.ts`).
+La colonne « avant » est mesurée le 2026-10-25 en rouvrant à la main le privilège de table de `0051` et `0095` : la
+preuve s'arrête à son premier écart, si bien que deux lignes n'y ont pas été mesurées séparément, et c'est dit :
 
 | # | Appelant | Requête | Avant (mesuré) | Après |
 |---|---|---|---|---|
 | a | `admin` | `POST card_costs` avec `created_at` choisi | `201`, date conservée | `403`, `42501`, **aucune ligne créée** |
-| b | `admin` | `PATCH card_costs` `{created_at}` | à mesurer | `403`, `42501`, ligne relue inchangée |
-| c | `admin` | `POST card_revenues` avec `created_at` choisi | à mesurer | `403`, `42501`, aucune ligne créée |
+| b | `admin` | `PATCH card_costs` `{created_at}` | `200`, date réécrite | `403`, `42501`, ligne relue inchangée |
+| c | `admin` | `POST card_revenues` avec `created_at` choisi | `201` | `403`, `42501`, aucune ligne créée |
 | d | `admin` | `POST card_costs` sans ces colonnes | `201` | `201`, `created_at` posée par la base |
 | e | `admin` | `PATCH card_costs` `{label}` | `200` | `200` — les colonnes ouvertes le restent |
-| f | `admin` | `PATCH card_costs` `{updated_at}` | à mesurer | `403`, `42501` |
-| g | `business_developer` | `POST card_revenues` avec `created_at` | à mesurer | `403`, `42501` |
+| f | `admin` | `POST` avec `updated_at`, puis `PATCH {updated_at}` | `201` ; le `PATCH` non mesuré séparément | `403`, `42501` |
+| g | `business_developer` | `POST card_revenues` avec `created_at` | non mesuré séparément (même privilège que *c*) | `403`, `42501` |
 | h | `service_role` | `POST card_costs` avec `created_at` choisi | `201`, date conservée | `201`, date conservée — le chemin du seed |
 | i | anonyme | `POST card_costs` avec `created_at` | `401` | `401` |
 

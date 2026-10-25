@@ -1796,9 +1796,10 @@ comme les deux clôtures du §12.2 choisissent la leur.
 vieillirait toute seule et finirait par franchir les seuils que le jeu veut voir NON franchis : le
 jeu de démonstration se dégraderait silencieusement avec le temps.
 
-**Que cette date soit posable par son auteur est en soi une garantie d'intégrité absente**,
-consignée en **INC-238** et due à `CRM-013` — mesuré `201` avec le jeton réel de l'administratrice,
-et non seulement avec la clé de service. Le comportement reste inchangé, et le seed s'en sert.
+**Depuis la migration `0104` (`CRM-013`, INC-238 close, décision 687), seule la clé de service pose cette date** :
+le jeton de l'administratrice reçoit `403` (`docs/SPEC-permissions-rls.md` §4.4.7). Le seed écrit les lignes de coût
+sous la clé de service (`api`), et son antidatage est donc inchangé — mesuré le 2026-10-25, « Prospection terrain »
+naît à J-120 sur la base migrée.
 
 **Il n'y a PAS de « Mars 2026 », et c'est le contrat.** `docs/SPEC-costs.md` §2.2 interdit toute
 génération automatique d'occurrences. Un mois sans occurrence est une information — il ne s'est

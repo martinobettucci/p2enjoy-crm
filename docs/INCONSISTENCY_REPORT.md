@@ -6067,6 +6067,13 @@ perdrait le seul chemin qui rend la variante démontrable.
 
 **Statut :** ouvert, issue retenue et écrite, mise en œuvre due — elle appartient à `CRM-013`.
 
+**CLOSE le 2026-10-25 — mise en œuvre par `CRM-013` (décision 687, `docs/SPEC-permissions-rls.md` §4.4.7), migration
+`0104`.** L'issue retenue est appliquée telle qu'écrite, et étendue à `card_revenues` dont l'onglet « À saisir » lit la même
+ancienneté (le même partout) ; `updated_at` suit. Mesuré sur la pile, avec le jeton réel de l'administratrice : avant,
+`POST card_costs` avec `created_at` rend `201` et la date est conservée, `PATCH {created_at}` rend `200` ; après, `403` /
+`42501` et aucune ligne créée ni modifiée. La clé de service antidate toujours : le seed est inchangé. Écarts nommés et
+non fermés : `created_at` des réels et `cards.created_at` à l'insertion, qu'aucun signal ne lit (§4.4.7).
+
 ### INC-239 — la série des 77 harnais, rejouée d'affilée, laisse la base dans un état que `./runDev.sh` NE RÉPARE PAS
 
 **Ouverte le 2026-08-29 par la session qui a rejoué la série entière** — décision 553. Comportement

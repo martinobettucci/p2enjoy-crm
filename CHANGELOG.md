@@ -13,6 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-013`, INC-238 — la date de création d'une ligne de coût ou de recette ne se choisit plus (décision 687)
+
+*Livré en développement ; la livraison en production attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md` §3,
+migration 104).*
+
+- L'ancienneté de l'onglet « À saisir » — et son seuil, qui allume une ligne de coût en retard — se lit sur la date de
+  création de la ligne. Cette date pouvait être **choisie** à la création par toute personne qui écrit l'affaire, et
+  le signal se falsifiait. Elle est désormais **posée par la base**, pour les lignes de coût comme pour les lignes de
+  recette : une requête qui la fournit, ou qui la réécrit, est refusée (`403`). La date de mise à jour suit la même règle.
+- Aucun écran ne change : ni la webapp ni le connecteur MCP n'envoient ces dates. Le jeu de démonstration antidate
+  toujours sa ligne en retard, par la clé de service.
+- Migration `0104` (privilèges seulement) ; suite pgTAP `0094`, preuve d'API `e2e/api/dates-lignes-protegees.spec.ts`,
+  harnais `scripts/verify-colonnes-protegees.sh` (section 7 *bis*).
+
 ### INC-292 — plus d'erreur de console intermittente à la restauration ou à la fermeture d'une session (décision 686)
 
 *Livré en développement ; la livraison en production attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md`

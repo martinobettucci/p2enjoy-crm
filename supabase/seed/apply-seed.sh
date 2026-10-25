@@ -3766,8 +3766,8 @@ done
 # vrai mécanisme, seule sa date de naissance est choisie, comme les deux clôtures plus bas
 # choisissent la leur.
 #
-# Que cette date soit posable par son auteur est en soi une garantie d'intégrité absente, consignée
-# en INC-238 et due à `CRM-013` ; le comportement reste inchangé ici.
+# Depuis la migration 0104 (`CRM-013`, INC-238, docs/SPEC-permissions-rls.md §4.4.7), seule la clé de service — celle
+# de `api` — pose cette date : un jeton ordinaire reçoit `403`. L'antidatage d'ici en dépend.
 ANTIDATAGE_JOURS=120
 COUT_ANTIDATE='5eed0000-0000-4000-8000-0000000000e4'
 

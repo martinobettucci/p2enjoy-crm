@@ -2017,6 +2017,22 @@ quatre fonctions de `0102` sont reprises à l'identique, aux seuls changements s
   rend `{key}` ; `native_field` rend `{key, native}`. Les trente-quatre codes existants gardent `cle` (INC-286).
 - **`public.proposition_du_workflow`** rend `label` et `probability` pour chaque étape.
 
+### Migration `0104` — la date de naissance d'une ligne de coût et de recette (`CRM-013`, INC-238, décision 687 ; livrée en développement le 2026-10-25)
+
+`docs/SPEC-permissions-rls.md` §4.4.7. Aucune table, aucune donnée ne change : seuls des **privilèges**.
+`authenticated` perd `INSERT` et `UPDATE` sur `created_at` et `updated_at` de **`card_costs`** et de **`card_revenues`** —
+privilège de table retiré, colonnes ouvertes énumérées (forme du §4.3 de la même spécification) :
+
+- `card_costs` : `id`, `card_id`, `budget_id`, `occurrence_id`, `label`, `estimated_cost`, `actual_cost`, `created_by`,
+  `settled_at`, `settled_by` ;
+- `card_revenues` : `id`, `card_id`, `label`, `estimated_amount`, `actual_amount`, `settled_at`, `settled_by`,
+  `position`, `created_by`.
+
+Une écriture qui nomme l'une des deux dates est refusée en bloc (`403`, `42501`). `SELECT` et `DELETE` restent de table ;
+`service_role` garde tout (le seed antidate par lui). **Une colonne ajoutée plus tard à l'une de ces tables naît fermée
+à l'écriture** : la migration qui l'ajoute doit l'ouvrir nommément. **Dépendance d'ordre** : `0051` et `0095` posent le
+privilège de table ; rejouées seules, elles rouvrent les deux dates, et la `0104` doit les suivre.
+
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)
