@@ -34630,3 +34630,13 @@ corriger la spécification ; tracer la rupture par une migration (une colonne po
 **Décision** : **garder le comportement livré** — « lien perdu » pour un channel mis à la corbeille, le seul état
 détectable ; après une destruction définitive, le bloc est rendu libre, sans mention. **Conséquences** :
 `docs/SPEC-goals.md` §5.4 réécrit, INC-169 fermée ; aucun code, aucune migration, aucun test ne change.
+
+
+### décision 710 — `CRM-115` T3 : le relevé des ports oubliait `POSTGRES_DIRECT_PORT`
+
+*2026-10-25, session interactive (prise de `CRM-115` T3), en relisant les fichiers Compose avant le code.* **Constat** :
+`docs/SPEC-pile-par-session.md` §2 liste treize ports publiés et la prévisualisation ; `docker-compose.dev.yml` en
+publie un quatorzième, `${POSTGRES_DIRECT_PORT}` (54322, l'accès direct à la base). **Décision** : c'est une erreur de
+relevé, non un choix — l'isolation du §3 l'exige —, corrigée sans arbitrage : `scripts/lib/emplacement.sh` décale
+**quinze** variables, et la spécification le dit (§2, §5). Le pas de 100 reste sûr (55222 au plus). **Aucun des quatre
+points validés du §11 ne change.**

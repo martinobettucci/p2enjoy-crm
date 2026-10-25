@@ -34,7 +34,9 @@ dérivent ; aucun ne porte de `name:` explicite. Ils suivront donc le nom de pro
 **Les ports publiés passent déjà par `.env`**, à une exception près. Les treize variables sont `KONG_HTTP_PORT`,
 `STUDIO_PORT`, `MINIO_API_PORT`, `MINIO_CONSOLE_PORT`, `WEBAPP_DEV_PORT`, `STALWART_SMTP_PORT`,
 `STALWART_SUBMISSION_PORT`, `STALWART_IMAP_PORT`, `STALWART_ADMIN_PORT`, `ROUNDCUBE_PORT`, `CLAMAV_PORT`, `SSO_DEV_PORT`
-et `MCP_DEV_PORT`, et la prévisualisation des preuves lit `WEBAPP_PREVIEW_PORT` (4173 par défaut). Les URL de `.env`
+et `MCP_DEV_PORT`, et la prévisualisation des preuves lit `WEBAPP_PREVIEW_PORT` (4173 par défaut). **Corrigé le
+2026-10-25 en écrivant la T3 (décision 710)** : le relevé en omettait une quatorzième, `POSTGRES_DIRECT_PORT` (54322),
+que `docker-compose.dev.yml` publie aussi — l'accès direct à la base. Sans elle, deux piles se disputeraient ce port. Les URL de `.env`
 répètent ces ports en clair (`API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `SITE_URL`, les variables `SSO_DEV_*`). Le realm
 de Keycloak lit ses redirections dans des variables (`${SSO_DEV_REDIRECT_URI}`…), **sauf une** :
 `keycloak/realm-lelabs.json` ligne 45, `http://127.0.0.1:4173/auth/retour`, en clair.
@@ -151,7 +153,9 @@ périmé à la main.
 ## 5. Les variables d'un emplacement
 
 `scripts/lib/emplacement.sh` est la **seule** source de la liste.
-- **Les ports** : les quatorze variables du §2, chacune à sa valeur de base + `100 × N`.
+- **Les ports** : les quinze variables du §2 — quatorze ports publiés et celui de la prévisualisation —, chacune à
+  sa valeur de base + `100 × N`. Avec `POSTGRES_DIRECT_PORT`, le pas de 100 reste sûr : 54322 + 900 = 55222, loin de
+  tout autre port de base.
 - **Les URL qui les répètent** : `API_EXTERNAL_URL`, `SUPABASE_PUBLIC_URL`, `SITE_URL` et les variables `SSO_DEV_*`.
   Elles sont réécrites à partir des ports, jamais à la main.
 - **`COMPOSE_PROJECT_NAME`, `P2ENJOY_TMP`** et **`P2ENJOY_EMPLACEMENT`**.
