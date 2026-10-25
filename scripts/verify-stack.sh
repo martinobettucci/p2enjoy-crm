@@ -6,13 +6,17 @@
 # @verifies docs/INCONSISTENCY_REPORT.md INC-290, docs/JOURNAL.md décision 681 — le client MinIO de la sonde est l'image du service `minio`, Chainguard épinglé par empreinte
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §13 — tranche T6 : GoTrue, ses
 #           gabarits et Inbucket sont absents des deux assemblages, et `/auth/v1/*` rend 404
+# @verifies CRM-001, docs/DAT.md §3.5 bis, INC-299 (décision 696) — section 6 : Kong et Caddy ferment une connexion amont
+#           inactive avant leur amont
 #
-# Rejoue les quatre preuves exigées par la Definition of Done de `CRM-001` :
+# Rejoue les quatre preuves exigées par la Definition of Done de `CRM-001` (1 à 4), et deux de plus (5, 6) :
 #
 #   1. tous les services de l'assemblage de développement sont sains ;
 #   2. Kong répond, et applique bien l'authentification par clé d'API ;
 #   3. Studio est accessible en développement ;
-#   4. aucun service de développement n'est présent dans l'assemblage de production.
+#   4. aucun service de développement n'est présent dans l'assemblage de production ;
+#   5. (au-delà de la DoD) Storage écrit réellement dans MinIO ;
+#   6. chaque relais — Kong, Caddy — ferme une connexion amont inactive avant son amont (INC-299, décision 696).
 #
 # Le script échoue au premier écart, avec un message nommant le service en cause. Il ne
 # démarre ni n'arrête rien : la pile doit déjà tourner (`docker compose ... up -d`).
@@ -292,6 +296,135 @@ fi
 
 curl -s -o /dev/null -X DELETE "$KONG_URL/storage/v1/object/$probe_bucket/sonde.txt" "${auth[@]}" || true
 curl -s -o /dev/null -X DELETE "$KONG_URL/storage/v1/bucket/$probe_bucket" "${auth[@]}" || true
+
+# --- 6. Un relais ferme une connexion amont inactive avant son amont ------------------------------
+# @verifies CRM-001 (docs/BACKLOG.md), docs/DAT.md §3.5 bis, INC-299 (décision 696) — Kong gardait 60 s une connexion
+# que PostgREST ferme entre 30 et 60 s : une requête écrite à l'instant de la fermeture rendait `502`. Les délais sont
+# lus dans les fichiers du dépôt et dans la configuration rendue de Kong, jamais recopiés ici.
+echo
+echo "6. Connexions maintenues : chaque relais ferme avant son amont"
+
+reseau="${COMPOSE_NETWORK:-p2enjoy-crm_default}"
+image_sonde=$(awk '/^FROM /{print $2; exit}' mail-sync/Dockerfile)
+image_caddy=$(awk '/^  caddy:/{d=1} d && /^    image:/{print $2; exit}' docker-compose.prod.yml)
+delai_declare=$(sed -n 's/^[[:space:]]*KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT:[[:space:]]*"\{0,1\}\([0-9]*\)"\{0,1\}[[:space:]]*$/\1/p' \
+	docker-compose.yml)
+delai_kong=$(docker exec p2enjoy-kong sed -n 's/^upstream_keepalive_idle_timeout = //p' /usr/local/kong/.kong_env \
+	2>/dev/null || true)
+delais_caddy=$(sed -n 's/^[[:space:]]*keepalive[[:space:]]*\([0-9]*\)s[[:space:]]*$/\1/p' caddy/routes.caddy | sort -u)
+nb_proxies_caddy=$(grep -c 'reverse_proxy ' caddy/routes.caddy)
+nb_keepalive_caddy=$(grep -c '^[[:space:]]*keepalive[[:space:]]' caddy/routes.caddy)
+
+if [ -n "$delai_declare" ] && [ "$delai_kong" = "$delai_declare" ]; then
+	ok "Kong applique le délai déclaré par docker-compose.yml : ${delai_kong} s"
+else
+	fail "délai de maintien de Kong : effectif '$delai_kong', déclaré '$delai_declare' (attendus égaux)"
+fi
+if [ "$nb_keepalive_caddy" = "$nb_proxies_caddy" ] && [ "$delais_caddy" = "$delai_declare" ]; then
+	ok "Caddy : les $nb_proxies_caddy reverse_proxy de routes.caddy déclarent le même délai, ${delais_caddy} s"
+else
+	fail "Caddy : $nb_keepalive_caddy délai(s) pour $nb_proxies_caddy reverse_proxy, valeur(s) '$delais_caddy' (attendu '$delai_declare' partout)"
+fi
+
+# Amonts de Kong (lus dans kong.yml) et de Caddy (lus dans routes.caddy) : chacun doit garder une connexion inactive
+# plus longtemps que le délai du relais augmenté d'une seconde.
+amonts=$( { sed -n 's#^[[:space:]]*url: http://\([^/:]*\):\([0-9]*\)/.*#\1:\2#p' supabase/docker/volumes/api/kong.yml;
+	sed -n 's/^[[:space:]]*reverse_proxy \([^ ]*\):\([0-9]*\) .*/\1:\2/p' caddy/routes.caddy; } | sort -u | tr '\n' ' ')
+attente=$(( ${delai_declare:-0} + 1 ))
+sonde_amonts=$(docker run --rm --network "$reseau" "$image_sonde" python -I -c '
+import socket, sys, time, threading
+attente = float(sys.argv[1]); res = {}
+def sonde(cible):
+    hote, port = cible.rsplit(":", 1)
+    try:
+        s = socket.create_connection((hote, int(port)), timeout=5)
+        s.sendall(f"GET / HTTP/1.1\r\nHost: {hote}\r\n\r\n".encode()); d = b""
+        while b"\r\n\r\n" not in d:
+            x = s.recv(65536)
+            if not x: raise OSError("fermée avant la réponse")
+            d += x
+        fin = time.monotonic() + attente
+        while True:
+            reste = fin - time.monotonic()
+            if reste <= 0: res[cible] = "ouverte"; break
+            s.settimeout(reste)
+            try:
+                if not s.recv(65536): res[cible] = "fermée après %.1f s" % (attente - reste); break
+            except socket.timeout: res[cible] = "ouverte"; break
+    except Exception as e: res[cible] = "erreur " + type(e).__name__
+ts = [threading.Thread(target=sonde, args=(c,)) for c in sys.argv[2:]]
+[t.start() for t in ts]; [t.join() for t in ts]
+for c in sys.argv[2:]: print(c, res[c])
+' "$attente" $amonts 2>&1 || true)
+for cible in $amonts; do
+	etat=$(printf '%s\n' "$sonde_amonts" | sed -n "s/^$cible //p")
+	if [ "$etat" = ouverte ]; then
+		ok "amont $cible : connexion inactive encore ouverte après ${attente} s"
+	else
+		fail "amont $cible : '${etat:-aucune mesure}' — le relais la garderait ${delai_declare} s, l'amont la ferme avant"
+	fi
+done
+
+# Connexions établies d'un conteneur vers un hôte:port, lues dans /proc/net/tcp (adresse locale, triée).
+connexions_vers() {
+	local conteneur=$1 ip=$2 port=$3 hex
+	hex=$(printf '%02X%02X%02X%02X:%04X' $(echo "$ip" | awk -F. '{print $4, $3, $2, $1}') "$port")
+	docker exec "$conteneur" cat /proc/net/tcp 2>/dev/null | awk -v r="$hex" '$3 == r && $4 == "01" {print $2}' | sort
+}
+
+# Kong : des requêtes passées par la passerelle laissent des connexions vers `rest` ; délai + 1 s plus tard, aucune
+# n'existe encore. Avec le défaut de 60 s, les six de la mesure du 2026-10-25 étaient toutes là.
+ip_rest=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' p2enjoy-rest)
+for _ in 1 2 3 4 5 6; do
+	curl -s -o /dev/null "${auth[@]}" "$KONG_URL/rest/v1/workspaces?select=id&limit=1" &
+done
+wait
+avant=$(connexions_vers p2enjoy-kong "$ip_rest" 3000)
+sleep "$attente"
+apres=$(connexions_vers p2enjoy-kong "$ip_rest" 3000)
+restees=$(comm -12 <(printf '%s\n' "$avant") <(printf '%s\n' "$apres") | grep -c . || true)
+if [ -n "$avant" ] && [ "$restees" -eq 0 ]; then
+	ok "Kong → rest : $(printf '%s\n' "$avant" | grep -c .) connexion(s) ouverte(s), aucune encore là ${attente} s plus tard"
+else
+	fail "Kong → rest : $(printf '%s\n' "$avant" | grep -c .) connexion(s) après les requêtes, $restees encore là ${attente} s plus tard"
+fi
+
+# Caddy : la configuration de production est acceptée, et un Caddy jetable monté sur la configuration de la cellule
+# (`caddy/Caddyfile.spark`, sans TLS) relaie vers Kong puis a fermé sa connexion délai + 1 s plus tard.
+for caddyfile in Caddyfile Caddyfile.spark; do
+	if docker run --rm -e APP_DOMAIN=crm.invalid -e MCP_SITE= -e CADDY_ACME_EMAIL=sonde@crm.invalid \
+		-v "$PWD/caddy:/etc/caddy:ro" "$image_caddy" caddy validate --adapter caddyfile \
+		--config "/etc/caddy/$caddyfile" >/dev/null 2>&1; then
+		ok "caddy validate accepte caddy/$caddyfile"
+	else
+		fail "caddy validate refuse caddy/$caddyfile"
+	fi
+done
+sonde_caddy=p2enjoy-sonde-caddy-verify-stack
+docker rm -f "$sonde_caddy" >/dev/null 2>&1 || true
+if docker run -d --name "$sonde_caddy" --network "$reseau" -v "$PWD/caddy:/etc/caddy:ro" "$image_caddy" \
+	caddy run --adapter caddyfile --config /etc/caddy/Caddyfile.spark >/dev/null 2>&1; then
+	code=000
+	for _ in $(seq 1 20); do
+		code=$(docker exec "$sonde_caddy" wget -q -S -O /dev/null --header "apikey: ${SERVICE_ROLE_KEY}" \
+			--header "Authorization: Bearer ${SERVICE_ROLE_KEY}" \
+			"http://127.0.0.1:8080/rest/v1/workspaces?select=id&limit=1" 2>&1 | awk '/HTTP\//{print $2; exit}')
+		[ "${code:-000}" = 200 ] && break
+		sleep 0.5
+	done
+	ip_kong=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}' p2enjoy-kong)
+	avant=$(connexions_vers "$sonde_caddy" "$ip_kong" 8000)
+	sleep "$attente"
+	apres=$(connexions_vers "$sonde_caddy" "$ip_kong" 8000)
+	if [ "$code" = 200 ] && [ -n "$avant" ] && [ -z "$apres" ]; then
+		ok "Caddy → Kong : relais 200, connexion fermée par Caddy ${attente} s plus tard"
+	else
+		fail "Caddy → Kong : relais '$code', $(printf '%s\n' "$avant" | grep -c .) connexion(s) puis $(printf '%s\n' "$apres" | grep -c .) ${attente} s plus tard (attendu 200, ≥ 1 puis 0)"
+	fi
+else
+	fail "Caddy jetable : démarrage impossible sur caddy/Caddyfile.spark"
+fi
+docker rm -f "$sonde_caddy" >/dev/null 2>&1 || true
 
 # --- Bilan -------------------------------------------------------------------------------------
 echo
