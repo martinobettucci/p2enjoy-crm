@@ -10902,7 +10902,8 @@ dégradations réelles.
       `docs/captures/CRM-083/tableau-doublon-archive-1440.jpg`,
       `tableau-doublon-archive-recours-1440.jpg`, `tableau-doublon-archive-sm-390.jpg`.
 
-### CRM-083 — Canevas d'objectifs `[~]`
+### CRM-083 — Canevas d'objectifs `[@]`
+*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 22:14 UTC — état avant : [~]*
 ***Reste réel au 2026-10-25 (décision 705), faisable par un agent** : le chapitre du canevas d'objectifs dans `docs/manual.md` (INC-214, ouverte, mesuré : aucun chapitre) ; les captures du palier `sm-390` prises sur une page décalée (INC-237) ; le « lien perdu » du §5.4 (INC-169). La série des `verify-*.sh` n'est la DoD d'aucune unité (décision 553) : ce motif ne retient plus l'unité.*
 
 Entrée de navigation « Objectifs », liste des tableaux, canevas pannable et zoomable, blocs
