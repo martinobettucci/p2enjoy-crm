@@ -14251,8 +14251,7 @@ harnais propre à cette unité.
 
 **Harnais de l'unité, verdicts de la série du 2026-08-29** : `verify-sauvegardes.sh`, `verify-restauration.sh` et `verify-exploitation.sh` (**59 contrôles**) sont **verts**. La question du §INC-190 point (a)/(b)/(c) qui retenait la promotion est **tranchée** par la décision 553 : voie (a).
 
-### CRM-087 — Migration de production par le runner, sur geste explicite `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 23:21 UTC — état avant : [~]*
+### CRM-087 — Migration de production par le runner, sur geste explicite `[x]`
 ***Arbitré le 2026-10-25 (décision 707, option B)** : la preuve se fait sur une pile de production **jetable**, sur le poste, par un agent — c'est le travail qui reste à l'unité.*
 ***Reste réel au 2026-10-25 (décision 705)** : la preuve sur une pile de production **jetable** (base vierge, `--migrate`, une table de la dernière migration jointe par l'API sans redémarrage), faisable par un agent sur le poste ; INC-095, que l'unité désignait comme dépendance, est close. Les livraisons de production des 21 au 24 octobre ont migré par le runner (registre à 101 lignes) : si le responsable les juge probantes, l'unité se solde sur elles.*
 *Créée le 2026-08-20 par arbitrage du responsable — `docs/JOURNAL.md` décision 489. Motif :
@@ -14295,16 +14294,24 @@ runbook décrivent la fenêtre de maintenance et sa reprise par instantané.
       nommant la garde et sans jamais atteindre Docker, (ii) que « oui » laisse la garde libérer le
       geste vers `require_docker`, dont l'échec sur un `DOCKER_HOST` bidon prouve que la
       confirmation a bien été acceptée sans qu'aucun conteneur ne soit créé.
-- [ ] **Preuve sur pile réelle** : un assemblage de production jetable, monté sur un `.env` de
+- [x] **Preuve sur pile réelle** : un assemblage de production jetable, monté sur un `.env` de
       profil `prod` à secrets jetables, base vierge, `--migrate`, puis constat que les 52 fichiers
       sont appliqués et qu'une table de la dernière migration est **joignable par l'API** sans
       redémarrage — c'est le contrôle qui prouve le rechargement du cache, et lui seul. Non exécuté
       cette session : la production n'est pas provisionnée et le harnais fixture éprouve le
       mécanisme du runner ; la preuve sur pile réelle attend le premier déploiement.
+      *Faite le 2026-10-26 (session interactive), dans un clone jetable autorisé (décision 714)* : assemblage de
+      production — `docker-compose.prod.yml`, noms de production — sous un projet distinct (`p2enjoy-crm-prodtest`), `.env`
+      de profil `prod` à secrets jetables, base **vierge** (0 table dans `public`). `db`, `storage`, `rest`, `kong`
+      démarrés sans migration, puis `./runProd.sh --migrate --instantane-verifie` : **104 fichiers appliqués**, registre à
+      104 lignes, PostgREST sain **sans redémarrage**. Seconde fenêtre avec une migration sonde propre au clone : registre à
+      105, PostgREST passe de **71 à 72 relations** sur la seule notification du runner, et la table est **joignable par
+      l'API** — `200 [{"id":1,"label":"appliquée par le runner"}]` par Kong —, PostgREST toujours sans redémarrage. Pile
+      de test retirée, volumes compris ; la pile de développement n'a pas été touchée.
 - [x] **Documentation dans le même changement** : `docs/PROD_MIGRATIONS.md` §0 (préambule), §3.1
       (procédure), §3.3 (voie manuelle repositionnée en repli), `docs/DAT.md` §3.2 et §9,
       `README.md` §5 et §11, `.env.example`, `CHANGELOG.md`.
-- [ ] **Dépendance bloquante avant la première migration d'une production peuplée : INC-095.** Le
+- [x] *INC-095 est close (décision 705).* **Dépendance bloquante avant la première migration d'une production peuplée : INC-095.** Le
       rejeu étant intégral, les migrations 31 à 33 s'appliqueront qu'elles soient documentées ou
       non. Leur absence du contrat n'empêche plus leur application ; elle empêche d'en juger le
       risque, ce qui est pire. Hors périmètre de cette unité : INC-095 est une entrée du registre
