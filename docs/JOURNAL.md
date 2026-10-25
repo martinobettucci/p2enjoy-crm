@@ -34348,3 +34348,9 @@ version corrigée n'est connue du dépôt. **Connecteur MCP** : non concerné, i
 
 **Non rendus, en attente** : le découpage de `CRM-111` T2 (bloc unique ou étapes intermédiaires vertes), la prochaine
 unité du chunk 5 avec ses deux questions MCP, le score de santé de `CRM-066` (`CRM-P02`).
+
+**Complément, même session (`CRM-044`, INC-301).** `verify-timeline.sh` rejoué seul jusqu'au bout : **79 contrôles, 1
+en échec**, sa suite d'interface complète, rouge par INC-236 seule (`administration-workflows.spec.ts:1114`, rouge
+isolé ; les 15 scénarios du fil verts au même passage). Dégradations tuées, fichiers rendus intacts, pgTAP verte après
+restauration. Il ne reste à la tranche que la livraison et le constat : `CRM-044` et la tranche passent `[P]`
+(décision 697).
