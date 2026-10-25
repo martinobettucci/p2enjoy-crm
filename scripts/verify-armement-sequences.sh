@@ -223,12 +223,18 @@ fi
 # LES DEUX CLÉS SONT `restrict`, ET LA TROISIÈME EST `cascade` : l'asymétrie est voulue (§12.3), et
 # une inversion la rendrait muette — supprimer une cadence armée effacerait l'inscription au lieu
 # de refuser.
-for couple in 'card_sequence_enrollments_sequence_fk:r' 'card_sequence_enrollments_identity_fk:r' 'card_sequence_enrollments_card_fk:c'; do
+#
+# RÉVISÉ LE 2026-10-25 (décision 704, INC-309), PARCE QUE LA RÈGLE A CHANGÉ. `0085_suppression_espace.sql` a remplacé
+# les deux `restrict` par `no action deferrable initially immediate` : supprimer une cadence armée est TOUJOURS refusé
+# (le contrôle reste immédiat), mais la seule transaction qui supprime un espace l'ajourne, pour que la cascade de
+# l'espace emporte tout avant la validation. L'asymétrie du §12.3 tient donc encore ; le contrôle exige désormais
+# `a` (no action), différable et immédiat par défaut — `r` serait la régression, et `n`/`c` effaceraient en silence.
+for couple in 'card_sequence_enrollments_sequence_fk:a:true:false' 'card_sequence_enrollments_identity_fk:a:true:false' 'card_sequence_enrollments_card_fk:c:false:false'; do
 	nom=${couple%%:*}
-	attendu=${couple##*:}
-	obtenu=$(psql_db -c "select confdeltype from pg_constraint where conrelid='public.card_sequence_enrollments'::regclass and conname='$nom';")
+	attendu=${couple#*:}
+	obtenu=$(psql_db -c "select confdeltype::text || ':' || condeferrable::text || ':' || condeferred::text from pg_constraint where conrelid='public.card_sequence_enrollments'::regclass and conname='$nom';")
 	if [ "$obtenu" = "$attendu" ]; then
-		ok "\`$nom\` porte bien \`$([ "$attendu" = r ] && echo 'on delete restrict' || echo 'on delete cascade')\`"
+		ok "\`$nom\` porte bien \`$([ "${attendu%%:*}" = a ] && echo 'on delete no action, différable, immédiate' || echo 'on delete cascade')\`"
 	else
 		fail "\`$nom\` porte \`$obtenu\` au lieu de \`$attendu\` — l'asymétrie du §12.3 est perdue"
 	fi
