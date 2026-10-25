@@ -207,6 +207,17 @@ for fichier in sorted(app.glob('*.ts')) + sorted(app.glob('*.tsx')):
         fichier.read_text(encoding='utf-8'),
     ):
         constantes[nom] = litteraux(valeur)
+# RÉVISÉ LE 2026-10-25 (décision 704, INC-309) : une route peut aussi employer un chemin exporté par `lib/` sans
+# `as const` — `CHEMIN_RETOUR_SSO` (`lib/sso.ts`, `CRM-092`) restait « non résolu ». Les littéraux simples de `lib/`
+# sont relevés ; une constante déjà connue de `app/` garde sa valeur.
+for fichier in sorted((racine / 'lib').glob('*.ts')):
+    if fichier.name.endswith('.test.ts'):
+        continue
+    for nom, valeur in re.findall(
+        r"export const ([A-Za-z0-9_]+)\s*=\s*('[^']*')(?:\s*as const)?\s*$",
+        fichier.read_text(encoding='utf-8'), re.M,
+    ):
+        constantes.setdefault(nom, litteraux(valeur))
 
 # --- 2. La table `ROUTES`, qui associe un chemin à son rendu -------------------------------------
 
@@ -232,10 +243,21 @@ if source_routes.exists():
 # --- 3. Les déclarations `<Route>` de `App.tsx` --------------------------------------------------
 
 source = (app / 'App.tsx').read_text(encoding='utf-8')
+# RÉVISÉ LE 2026-10-25 (décision 704, INC-309) : `VUES_PLATEFORME.map(({ chemin, vue }) => …)` (`CRM-101`) déstructure
+# son paramètre. Non reconnu, il laissait `path={chemin}` au tableau PRÉCÉDENT, `CHEMINS_TRACK`, et les routes
+# `:slugTrack` étaient attribuées à `Plateforme` (mesuré : « route sans le chargeur du chapitre : Plateforme »). Le
+# paramètre déstructuré est reconnu par son premier champ.
 tableaux = [
     (m.start(), m.group(1), m.group(2))
-    for m in re.finditer(r"\{([A-Za-z0-9_]+)\.map\(\(([A-Za-z0-9_]+)\)", source)
+    for m in re.finditer(r"\{([A-Za-z0-9_]+)\.map\(\(\{?\s*([A-Za-z0-9_]+)", source)
 ]
+# Un tableau local d'objets `{ chemin: CONSTANTE, … }` se résout par les constantes qu'il cite.
+for nom, corps in re.findall(r"\bconst ([A-Za-z0-9_]+)\b[^=\n]*=\s*\[(.*?)\n\]", source, re.S):
+    chemins = []
+    for valeur in re.findall(r"\bchemin:\s*([A-Za-z0-9_]+|'[^']*')", corps):
+        chemins.extend(litteraux(valeur) if valeur.startswith("'") else constantes.get(valeur, []))
+    if chemins and nom not in constantes:
+        constantes[nom] = chemins
 
 
 def balise(texte, depart):
