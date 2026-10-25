@@ -7730,6 +7730,14 @@ silencieuse de diagnostic, pas un réglage. **Statut : ouverte.**
 motif d'un échec ; `scripts/verify-reconstruction.sh` le constate (28/28). La même session avait vu l'échec une fois,
 dans `verify-authz.sh`, sans pouvoir le reproduire. **Reste ouverte** pour sa cause : la prochaine occurrence la
 nommera.
+**Occurrence du 2026-10-25, 16:13 UTC, et son motif enfin cité** (session de `CRM-115` T2, `scripts/verify-session-sso.sh`
+dans la série) : le seed de la reconstruction échoue sur « lecture de l'appartenance de admin@p2enjoy.test : code HTTP
+404, attendu 200 », et la réponse est une **page HTML de Next.js** (`<!DOCTYPE html>… fetchPriority`) — celle de Studio,
+non une réponse de Kong ou de PostgREST. **Lecture non vérifiée** : Kong, conservé par la reconstruction
+(`docs/SPEC-test-harness.md` §3.6), garde en cache l'adresse de `rest` ; les conteneurs recréés reçoivent de nouvelles
+adresses, et celle de l'ancien `rest` a pu échoir à `studio`. Les onze autres reconstructions du même passage ont réussi.
+**Issue proposée** : mesurer l'adresse que Kong résout pour `rest` juste après une reconstruction ; si elle est
+périmée, recréer Kong avec les services qu'elle recrée, ou réduire le cache DNS de Kong (`KONG_DNS_STALE_TTL`).
 
 ### INC-299 — PostgREST coupe parfois une connexion que Kong réutilise : `502` dans la console, sur des écrans sans rapport
 
@@ -7826,6 +7834,16 @@ chaque harnais qui rejoue un fichier de migration compare l'empreinte `pg_dump -
 elle diffère (`docs/SPEC-test-harness.md` §3.6) ; `verify-droits-fins.sh` garde la sortie de chaque sous-harnais dans un
 fichier et en cite la fin sur un échec, comme `reconstruire_base_dev` depuis INC-298. **Statut : ouverte.**
 **Arbitrée le 2026-10-25 (décision 701)** : l'issue proposée est retenue ; portée par `CRM-111` T1 ter.
+**Un treizième harnais, mesuré le même jour** (session de `CRM-115` T2) : `scripts/verify-plateforme.sh` §5 rejoue
+`0089_plateforme.sql` seule pour la dégrader. Ce rejeu **échoue** sur la base actuelle — « cannot change return type
+of existing function … plateforme_attentes(uuid) », une migration postérieure ayant changé ses paramètres —, et
+`appliquer` jette la sortie : le harnais meurt en code 3, sans bilan. **Et il dégrade la base** : `0089` ne tourne dans
+aucune transaction, si bien que les fonctions définies avant l'erreur sont ramenées à leur version d'origine. Mesuré :
+`verify-preferences-notifications.sh`, joué juste après dans la série, rendait 2 anomalies ; rejoué sur une base
+reconstruite, **62 contrôles, aucune anomalie**. **Même issue** que les douze autres, à laquelle s'ajoute le cas d'un
+fichier qui ne se rejoue plus du tout seul : le harnais dégrade alors une copie qui s'applique, ou reconstruit.
+*Corrigé depuis pour `verify-plateforme.sh` par la décision 704 (`25a28a7`) : le harnais dégrade et restaure le seul
+bloc de fonction visé.*
 
 ### INC-305 — `corbeille.spec.ts:609` (le geste au clavier seul) perd le focus une fois sur trois, en fichier complet seulement
 
