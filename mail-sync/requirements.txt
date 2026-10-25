@@ -8,4 +8,8 @@ fastapi==0.139.2
 IMAPClient==3.1.0
 pydantic-settings==2.14.2
 starlette==1.3.1
+# @spec docs/JOURNAL.md décision 704 (INC-309) — `anyio`, dépendance de `starlette`, épinglée comme elle : non figée, elle
+#       montait à 4.15.1, qui déprécie l'alias `anyio.abc.BlockingPortal` qu'emploie `starlette` 1.3.1 ; la suite rendait
+#       un avertissement que la preuve exige absent. 4.14.2 : 246 tests, aucun avertissement (mesuré le 2026-10-25).
+anyio==4.14.2
 uvicorn==0.51.0

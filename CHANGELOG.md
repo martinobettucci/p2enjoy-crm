@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### INC-309 — les harnais rouges de la série complète corrigés par famille (décision 704)
+
+- `scripts/lib/entete.sh` : les contrôles de traçabilité lisent le bloc d'en-tête entier ; sept harnais.
+- Compteurs constatés et mis à jour avec leur spécification (`corbeille`, `onboarding`, `session-sso`, `snooze`).
+- Harnais alignés sur une règle qui avait changé : `armement-sequences` (`0085`), `card-costs` et `couts-ecrans`
+  (`CRM-099`), `liste` (`CRM-105`, `CRM-092` T9), `board` (analyseur de routes), `rendu-modeles-emails`, `mail-infra`.
+- `verify-plateforme.sh` dégrade et restaure le seul bloc de fonction visé, au lieu de rejouer `0089` (INC-304).
+- `verify-scripts.sh` et `verify-mcp.sh` construisent derrière le proxy TLS (`BUILDX_BAKE_ENTITLEMENTS_FS`, `pip_ca`).
+- `.env.example` documente chaque variable du connecteur MCP selon le contrat.
+- `mail-sync` : `anyio==4.14.2` épinglé ; l'image se reconstruit à la prochaine livraison (`docs/PROD_MIGRATIONS.md` §2.23).
+
 ### `CRM-115` T2 — plus aucun nom de conteneur en développement (décision 702)
 
 *Outillage de développement : rien ne part en production.*

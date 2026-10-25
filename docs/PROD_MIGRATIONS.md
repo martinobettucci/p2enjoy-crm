@@ -620,6 +620,20 @@ variable.** Kong et Realtime sont recréés par le `up` ordinaire : leur défini
 **Retour arrière** : relivrer la révision précédente ; Kong reprend le nom de conteneur, que la production porte
 toujours. **Risque** : aucun connu — l'alias et le nom désignent le même conteneur sur le même réseau.
 
+### 2.23 INC-309, décision 704 — `anyio` épinglé dans l'image de `mail-sync` (EN ATTENTE de l'instruction du responsable)
+
+`mail-sync/requirements.txt` fige désormais `anyio==4.14.2`, dépendance de `starlette` qui n'était pas épinglée : une
+reconstruction de l'image tirait 4.15.1, qui déprécie un alias qu'emploie `starlette` 1.3.1. **Aucune migration, aucune
+variable, aucun secret** ; le comportement du service est inchangé.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Livrer `main` et reconstruire l'image `mail-sync` à la prochaine fenêtre | le responsable | `scripts/spark/livrer.sh` |
+| 2 | Vérifier en lecture seule : `mail-sync` `healthy`, et `pip show anyio` dans le conteneur rend 4.14.2 | le responsable | la cellule |
+
+**Retour arrière** : relivrer la révision précédente. **Risque** : aucun connu ; 4.14.2 est la version qui précède la
+dépréciation.
+
 ## 3. Migrations en attente
 
 **Trois migrations en attente : la 102 puis la 103, à livrer ensemble et dans cet ordre, et la 104** (`CRM-013`, INC-238 — la date de naissance d'une ligne de coût et de recette fermée à l'appelant ordinaire ; privilèges seulement, indépendante des deux autres, sa ligne au §3.2). Pour la 102 et la 103 : (`CRM-113` T1 — le générateur de workflow connaît les champs natifs de l'affaire et le catalogue ; `CRM-113` T5 — tout en anglais, la casse ignorée, décision 679 ; leurs lignes au §3.2). Elles ne touchent aucune table : elles n'exigent pas d'instantané au-delà de celui de la procédure nominale (§3.1), et elles se livrent avec la fonction `ia` et la webapp de `CRM-113` (T2, T3, T5). **Le responsable s'en charge** (décision 679). Avant elle, la **101** (`CRM-114` T1 — la famille `organizations` du connecteur ; sa ligne de retrait au §3.2) a été appliquée le 2026-10-24 après l'instantané confirmé par le responsable (§8). La troisième fenêtre du 2026-10-23 (§8) a appliqué la **100** (`CRM-067` T1 — les activités d'une affaire et leurs participants ; sa ligne de retrait au §3.2) ; la seconde, la **99** (`CRM-109` T3). Avant elles, les migrations **91 à 98** (`CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-108`, `CRM-070`, `CRM-109`), appliquées le 2026-10-23 par une même fenêtre après l'instantané confirmé par le responsable ; leurs lignes de retrait sont au §3.2. Avant elles, les migrations **89** (`CRM-101`) et **90**
