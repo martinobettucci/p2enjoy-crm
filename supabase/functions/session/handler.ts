@@ -5,6 +5,8 @@
 // @spec docs/JOURNAL.md décisions 584 (T3), 586 (arbitrage du responsable : client serveur), 587 (aucune
 //       session : `204`, pas une erreur), 593 (INC-249 : une attente en suspens se dit
 //       `attente_administrateur`, jamais `attente_espace`)
+// @spec docs/JOURNAL.md décision 686 (INC-292) — aucune réponse `204` : l'absence et la fermeture se disent par `200`
+//       et un corps qui les nomme ; docs/SPEC-edge-functions.md §2 bis
 // @spec CLAUDE.md §10 (la règle d'accès est appliquée côté serveur), §20 (journal sans secret)
 // @spec CRM-092 (docs/BACKLOG.md) — tranche T8 ; docs/SPEC-session-sso.md §5.4 (revendication
 //       `lelabs_admin`), §6.1 bis ; docs/JOURNAL.md décision 597 — règle du domaine sur `admin`
@@ -292,14 +294,20 @@ function adresseRetourAcceptable(valeur: unknown): valeur is string {
 	}
 }
 
+/** Les réponses d'absence rendues par `prolonger`, que le point d'entrée journalise `session_absente`. */
+const ABSENCES = new WeakSet<Response>()
+
 /**
  * Aucune session à prolonger — le cas normal d'un navigateur jamais connecté, et la restauration de
- * chaque page anonyme : `204`, sans corps, jamais une erreur (décision 587). Un navigateur journalise
- * toute réponse `4xx` en erreur de console ; en rendre une à chaque chargement anonyme ferait d'un
- * état normal une anomalie. Une poignée qui ne désigne plus rien voit son cookie effacé.
+ * chaque page anonyme : jamais une erreur (décision 587). Un navigateur journalise toute réponse `4xx`
+ * en erreur de console ; en rendre une à chaque chargement anonyme ferait d'un état normal une anomalie.
+ * `200` et `{ "session": "absente" }`, jamais `204`, que le runtime perd par intermittence (décision 686).
+ * Une poignée qui ne désigne plus rien voit son cookie effacé.
  */
 function aucuneSession(effacer: boolean, securise: boolean): Response {
-	return repondre(204, null, effacer ? cookieEfface(securise) : undefined)
+	const reponse = repondre(200, { session: 'absente' }, effacer ? cookieEfface(securise) : undefined)
+	ABSENCES.add(reponse)
+	return reponse
 }
 
 async function prolonger(requete: Request, d: DependancesSession, c: ConfigurationSession, echeance: number, securise: boolean): Promise<Response> {
@@ -388,7 +396,7 @@ async function fermer(requete: Request, d: DependancesSession, echeance: number,
 			throw new RefusSession(new Refus('service_indisponible'), true)
 		}
 	}
-	return repondre(204, null, cookieEfface(securise))
+	return repondre(200, { session: 'fermee' }, cookieEfface(securise))
 }
 
 // --- Point d'entrée ------------------------------------------------------------------------------
@@ -419,7 +427,7 @@ async function journaliserRefus(d: DependancesSession, refus: Refus, echeance: n
 }
 
 export async function traiterSession(requete: Request, d: DependancesSession): Promise<Response> {
-	if (requete.method === 'OPTIONS') return new Response(null, { status: 204, headers: { allow: ALLOW } })
+	if (requete.method === 'OPTIONS') return new Response(null, { status: 200, headers: { allow: ALLOW } })
 	const debut = d.maintenantMs()
 	const echeance = debut + ECHEANCE_GESTE_MS
 	const conclure = (evenement: string, code: string) =>
@@ -448,7 +456,7 @@ export async function traiterSession(requete: Request, d: DependancesSession): P
 				: geste === 'prolonger'
 					? await prolonger(requete, d, d.configuration, echeance, securise)
 					: await fermer(requete, d, echeance, securise)
-		if (geste === 'prolonger' && reponse.status === 204) conclure('session_absente', 'aucune')
+		if (ABSENCES.has(reponse)) conclure('session_absente', 'aucune')
 		else conclure(EVENEMENT_SUCCES[geste], 'ok')
 		return reponse
 	} catch (erreur) {

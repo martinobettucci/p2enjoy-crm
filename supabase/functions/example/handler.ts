@@ -1,13 +1,14 @@
 // @spec CRM-016 (docs/BACKLOG.md) — fonction edge d'exemple sans effet
-// @spec docs/SPEC-edge-functions.md §6 (contrat HTTP)
+// @spec docs/SPEC-edge-functions.md §6 (contrat HTTP), §2 bis (aucun `204`, décision 686)
 
 const ALLOW = 'POST, OPTIONS'
 const JSON_HEADERS = { 'content-type': 'application/json; charset=utf-8' }
 
 /** Réponse pure et déterministe ; aucune configuration ni donnée entrante n'est reflétée. */
 export async function handleExampleRequest(request: Request): Promise<Response> {
+	// `200` sans corps, jamais `204`, que le runtime perd par intermittence (décision 686, §2 bis).
 	if (request.method === 'OPTIONS') {
-		return new Response(null, { status: 204, headers: { allow: ALLOW } })
+		return new Response(null, { status: 200, headers: { allow: ALLOW } })
 	}
 	if (request.method !== 'POST') {
 		return new Response(JSON.stringify({ error: 'method_not_allowed' }), {

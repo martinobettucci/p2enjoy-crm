@@ -15,6 +15,7 @@
 // quatre fonctions de session de `0076_sessions_serveur.sql`. Chacun enregistre ce qu'il reçoit, ce qui
 // prouve CE QUE l'échangeur envoie — le secret au point de jeton, l'empreinte et jamais la poignée en
 // base, le jeton de rafraîchissement chiffré et jamais en clair.
+// @verifies docs/JOURNAL.md décision 686 (INC-292) — aucune réponse `204` ; docs/SPEC-edge-functions.md §2 bis
 
 import { beforeAll, describe, expect, it } from 'vitest'
 import { cleDeChiffrement, dechiffrer, empreinteDe } from './chiffrement.ts'
@@ -363,27 +364,29 @@ describe('ouvrir — refus (§5.2, §5.5)', () => {
 
 describe('prolonger (§5.3)', () => {
 	// Décision 587 : l'absence de session est le cas normal d'une page anonyme, pas un refus. Un `4xx`
-	// serait journalisé en erreur par le navigateur à chaque chargement.
-	it('rend 204 sans corps sans cookie — aucune session, et rien d’un refus —, sans rien demander ni effacer', async () => {
+	// serait journalisé en erreur par le navigateur à chaque chargement. Décision 686 (INC-292) : elle se
+	// dit par `200` et un corps qui la nomme, jamais par `204`, que le runtime perd par intermittence.
+	it('rend 200 « absente » sans cookie — aucune session, et rien d’un refus —, sans rien demander ni effacer', async () => {
 		const m = monde()
 		const reponse = await traiterSession(requete('prolonger'), m.d)
-		expect(reponse.status).toBe(204)
-		expect(await reponse.text()).toBe('')
+		expect(reponse.status).toBe(200)
+		expect(await json(reponse)).toEqual({ session: 'absente' })
 		expect(reponse.headers.get('set-cookie')).toBeNull()
 		expect(m.appelsJeton).toEqual([])
 		expect(m.appelsBase).toEqual([])
 		expect(m.journal).toEqual([{ event: 'session_absente', code: 'aucune', duree_ms: expect.any(Number) }])
 	})
 
-	it('rend 204 pour une poignée inconnue, et efface le cookie', async () => {
+	it('rend 200 « absente » pour une poignée inconnue, et efface le cookie', async () => {
 		const m = monde()
 		const reponse = await traiterSession(requete('prolonger', { cookie: COOKIE }), m.d)
-		expect(reponse.status).toBe(204)
+		expect(reponse.status).toBe(200)
+		expect(await json(reponse)).toEqual({ session: 'absente' })
 		expect(reponse.headers.get('set-cookie')).toMatch(/Max-Age=0/)
 		expect(m.appelsJeton).toEqual([])
 	})
 
-	it('rend 204 et efface le cookie quand la base a supprimé la session entre la lecture et le renouvellement', async () => {
+	it('rend 200 « absente » et efface le cookie quand la base a supprimé la session entre la lecture et le renouvellement', async () => {
 		const sessions = await sessionOuverte()
 		const m = monde({ sessions })
 		const lire = m.d.appelerBase
@@ -396,7 +399,8 @@ describe('prolonger (§5.3)', () => {
 			},
 		}
 		const reponse = await traiterSession(requete('prolonger', { cookie: COOKIE }), d)
-		expect(reponse.status).toBe(204)
+		expect(reponse.status).toBe(200)
+		expect(await json(reponse)).toEqual({ session: 'absente' })
 		expect(reponse.headers.get('set-cookie')).toMatch(/Max-Age=0/)
 	})
 
@@ -483,11 +487,12 @@ describe('prolonger (§5.3)', () => {
 		expect(sessions.size).toBe(0)
 	})
 
-	it('rend 204 pour un jeton gardé indéchiffrable, et ferme la session', async () => {
+	it('rend 200 « absente » pour un jeton gardé indéchiffrable, et ferme la session', async () => {
 		const sessions = new Map([[await empreinteDe(POIGNEE), { sub: SUB, rafraichissement: 'v1.pas-un.chiffre', expire_le: '' }]])
 		const m = monde({ sessions })
 		const reponse = await traiterSession(requete('prolonger', { cookie: COOKIE }), m.d)
-		expect(reponse.status).toBe(204)
+		expect(reponse.status).toBe(200)
+		expect(await json(reponse)).toEqual({ session: 'absente' })
 		expect(reponse.headers.get('set-cookie')).toMatch(/Max-Age=0/)
 		expect(sessions.size).toBe(0)
 		expect(m.appelsJeton).toEqual([])
@@ -508,16 +513,18 @@ describe('fermer (§5.3)', () => {
 		const sessions = await sessionOuverte()
 		const m = monde({ sessions })
 		const reponse = await traiterSession(requete('fermer', { cookie: COOKIE, origine: 'https://crm.lelabs.tech' }), m.d)
-		expect(reponse.status).toBe(204)
+		expect(reponse.status).toBe(200)
+		expect(await json(reponse)).toEqual({ session: 'fermee' })
 		expect(reponse.headers.get('set-cookie')).toBe('p2enjoy_crm_session=; Path=/functions/v1/session; HttpOnly; SameSite=Strict; Secure; Max-Age=0')
 		expect(sessions.size).toBe(0)
 		expect(m.appelsJeton).toEqual([])
 	})
 
-	it('rend 204 sans cookie : fermer ce qui n’existe pas n’est pas une erreur', async () => {
+	it('rend 200 « fermee » sans cookie : fermer ce qui n’existe pas n’est pas une erreur', async () => {
 		const m = monde()
 		const reponse = await traiterSession(requete('fermer'), m.d)
-		expect(reponse.status).toBe(204)
+		expect(reponse.status).toBe(200)
+		expect(await json(reponse)).toEqual({ session: 'fermee' })
 		expect(m.appelsBase).toEqual([])
 	})
 
@@ -541,7 +548,10 @@ describe('chemins, méthodes, configuration, journal (§5.1, §5.7)', () => {
 		const get = await traiterSession(requete('prolonger', { methode: 'GET' }), monde().d)
 		expect(get.status).toBe(405)
 		expect(get.headers.get('allow')).toBe('POST, OPTIONS')
-		expect((await traiterSession(requete('ouvrir', { methode: 'OPTIONS' }), monde().d)).status).toBe(204)
+		const preflight = await traiterSession(requete('ouvrir', { methode: 'OPTIONS' }), monde().d)
+		expect(preflight.status).toBe(200)
+		expect(preflight.headers.get('allow')).toBe('POST, OPTIONS')
+		expect(await preflight.text()).toBe('')
 	})
 
 	it('rend 502 service_indisponible sans configuration, sans rien tenter', async () => {

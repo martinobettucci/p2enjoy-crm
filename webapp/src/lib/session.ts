@@ -2,7 +2,8 @@
 // @spec docs/SPEC-session-sso.md §5.1 (gestes, chemin relatif, `apikey`), §5.4 (réponse de succès),
 //       §5.5 (refus, dictionnaire fermé), §8.2 (ce module), §8.3 (rien n'est stocké), §9.2
 // @spec docs/JOURNAL.md décisions 586 (client serveur : le cookie de la poignée est de même origine),
-//       587 (aucune session : la prolongation rend `204`, jamais une erreur)
+//       587 (aucune session : jamais une erreur), 686 (INC-292 : `200` et `{ "session": "absente" | "fermee" }`,
+//       l'ancien `204` encore accepté)
 // @spec CLAUDE.md §10 (aucune autorisation décidée dans le navigateur), §11 (aucun stockage)
 // @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5, §9.2 — INC-249, décision 593 :
 //       l'attente `attente_administrateur` (espace sans administrateur encore)
@@ -122,6 +123,14 @@ export function classerRefus(geste: 'ouvrir' | 'prolonger', statut: number, corp
 	}
 }
 
+/**
+ * L'issue sans session que nomme l'échangeur : `absente` (prolonger) ou `fermee` (fermer). Le `204` qui les disait est
+ * encore accepté par les appelants, le temps que fonctions et webapp soient livrées ensemble (décision 686).
+ */
+function issueDe(document: unknown): unknown {
+	return typeof document === 'object' && document !== null ? (document as { session?: unknown }).session : undefined
+}
+
 export function creerEchangeur({ cleAnonyme, requete = fetch }: { readonly cleAnonyme: string; readonly requete?: Fetch }): Echangeur {
 	const appeler = (geste: 'ouvrir' | 'prolonger' | 'fermer', corps?: Readonly<Record<string, string>>) =>
 		requete(`${CHEMIN_ECHANGEUR}/${geste}`, {
@@ -145,7 +154,9 @@ export function creerEchangeur({ cleAnonyme, requete = fetch }: { readonly cleAn
 		} catch {
 			document = null
 		}
-		if (nom === 'prolonger' && reponse.status === 204) return { ok: false, nature: 'session_absente' }
+		if (nom === 'prolonger' && (reponse.status === 204 || (reponse.status === 200 && issueDe(document) === 'absente'))) {
+			return { ok: false, nature: 'session_absente' }
+		}
 		if (reponse.status === 200) {
 			const session = lireSession(document)
 			return session === null ? { ok: false, nature: 'sso_echec' } : { ok: true, session }
@@ -159,8 +170,9 @@ export function creerEchangeur({ cleAnonyme, requete = fetch }: { readonly cleAn
 		async fermer() {
 			try {
 				const reponse = await appeler('fermer')
-				await reponse.arrayBuffer().catch(() => undefined)
-				return reponse.status === 204 ? { ok: true } : { ok: false, nature: 'reseau' }
+				const document: unknown = await reponse.json().catch(() => null)
+				const fermee = reponse.status === 204 || (reponse.status === 200 && issueDe(document) === 'fermee')
+				return fermee ? { ok: true } : { ok: false, nature: 'reseau' }
 			} catch {
 				return { ok: false, nature: 'reseau' }
 			}

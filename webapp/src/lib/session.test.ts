@@ -3,6 +3,7 @@
 //           succès), §5.5 (refus), §8.2 (ce module), §9.2 (dictionnaire de l'écran) ; décisions 586, 587
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5, §9.2 — INC-249, décision 593 :
 //           l'attente `attente_administrateur` (espace sans administrateur encore)
+// @verifies docs/JOURNAL.md décision 686 (INC-292) — aucune réponse `204` ; docs/SPEC-edge-functions.md §2 bis
 
 import { describe, expect, it, vi } from 'vitest'
 import { CHEMIN_ECHANGEUR, classerRefus, creerEchangeur, lireSession } from './session'
@@ -108,7 +109,12 @@ describe('creerEchangeur', () => {
 		expect(init?.credentials).toBe('same-origin')
 	})
 
-	it('lit un 204 à la prolongation comme l’absence de session, sans rien d’un refus (décision 587)', async () => {
+	it('lit « absente » à la prolongation comme l’absence de session, sans rien d’un refus (décisions 587, 686)', async () => {
+		const requete = repondre(200, { session: 'absente' })
+		expect(await creerEchangeur({ cleAnonyme: 'k', requete }).prolonger()).toEqual({ ok: false, nature: 'session_absente' })
+	})
+
+	it('lit encore l’ancien 204 comme l’absence de session, le temps que fonctions et webapp soient livrées ensemble (décision 686)', async () => {
 		const requete = repondre(204)
 		expect(await creerEchangeur({ cleAnonyme: 'k', requete }).prolonger()).toEqual({ ok: false, nature: 'session_absente' })
 	})
@@ -129,9 +135,11 @@ describe('creerEchangeur', () => {
 		expect(await creerEchangeur({ cleAnonyme: 'k', requete: illisible }).prolonger()).toEqual({ ok: false, nature: 'sso_echec' })
 	})
 
-	it('ferme sur 204, et dit l’échec autrement', async () => {
-		const ferme = repondre(204)
+	it('ferme sur « fermee », ou sur l’ancien 204, et dit l’échec autrement (décision 686)', async () => {
+		const ferme = repondre(200, { session: 'fermee' })
 		expect(await creerEchangeur({ cleAnonyme: 'k', requete: ferme }).fermer()).toEqual({ ok: true })
+		expect(await creerEchangeur({ cleAnonyme: 'k', requete: repondre(204) }).fermer()).toEqual({ ok: true })
+		expect(await creerEchangeur({ cleAnonyme: 'k', requete: repondre(200, SUCCES) }).fermer()).toEqual({ ok: false, nature: 'reseau' })
 		expect(ferme.mock.calls[0]?.[0]).toBe('/functions/v1/session/fermer')
 		expect(await creerEchangeur({ cleAnonyme: 'k', requete: repondre(502, { erreur: 'service_indisponible' }) }).fermer()).toEqual({
 			ok: false,

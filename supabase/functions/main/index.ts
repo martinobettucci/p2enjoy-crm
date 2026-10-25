@@ -1,6 +1,7 @@
 // @spec CRM-016 (docs/BACKLOG.md) — service principal des fonctions edge
 // @spec docs/SPEC-edge-functions.md §2 (bornes), §4 (dispatch), §4.1 (santé), §5 (sécurité)
 // @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5 — environnement par fonction
+// @spec docs/SPEC-edge-functions.md §2 bis, docs/JOURNAL.md décision 686 (INC-292) — un `204` de worker est signalé
 
 import { delaiDe, environnementDe } from './environnement.ts'
 import { resolveFunctionRoute, safeRequestId } from './router.ts'
@@ -89,6 +90,11 @@ Deno.serve(async (request: Request) => {
 			status: response.status,
 			duration_ms: Math.round(performance.now() - startedAt),
 		}))
+		// Le runtime perd par intermittence le `204` d'un worker (§2 bis) : aucune fonction n'en rend, et un
+		// manquement se dit dans le journal sans changer la réponse.
+		if (response.status === 204) {
+			console.warn(JSON.stringify({ level: 'warning', event: 'edge_reponse_204', request_id: requestId, function: route.functionName }))
+		}
 		return withRequestId(response, requestId)
 	} catch {
 		console.info(JSON.stringify({
