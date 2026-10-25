@@ -1047,6 +1047,49 @@ n'est tolérée, et le second déplacement n'en produit aucune.
 - **Un seul champ exigé**, celui que le seed pose. Le cas de plusieurs clés est éprouvé par le
   §4 ter contre des réponses substituées.
 
+### 4 quinquies. Le formulaire à chaque étape, sur session réelle — contrat de la preuve
+
+La Definition of Done de `CRM-037` exige des « captures de chaque étape ». Les captures existantes
+n'en montraient qu'**une**, `Prospection`, au motif que le seed ne posait pas d'affaire aux sept
+étapes. **Ce motif est caduc** : depuis `CRM-046`, `docs/SPEC-seed.md` §9.3, les sept étapes du
+workflow global portent chacune au moins une affaire active. Ce chapitre est écrit **après mesure**
+sur la pile seedée, le 2026-10-25, et avant la preuve qui le tient.
+
+**Le support, mesuré.** Une affaire du socle par étape, à identifiant stable :
+
+| Étape (position) | Affaire | Ce que la composition du §4.2 en tire, mesurée en base |
+|---|---|---|
+| `Prospection` (1) | `…0000c3` « Audit sécurité applicative » | quatre champs au formulaire, `source` exigé ; section repliée : `budget` (`hidden`, renseigné) et `budget-previsionnel` (archivé, renseigné) |
+| `Relance` (2) | `…0000c1` « Refonte du site vitrine » | sept champs, aucun exigé ; `motif-perte` caché et vide, rendu nulle part |
+| `Négociation` (3) | `…0000c4` « Refonte intranet Ville de Lyon » | sept champs, `budget` exigé |
+| `Signature` (4) | `…0000c7` « Formation Data & IA — promo 2026 » | sept champs, trois exigés : `budget`, `date-signature-prevue`, `decideur-identifie` |
+| `Réalisation en cours` (5) | `…0000cc` « Portail adhérents — MGEN Loire » | huit champs, aucune règle à cette étape : tous `visible` par défaut (§3.1), libellé surchargé |
+| `Livré` (6) | `…0000cd` « Socle analytique — Vertuo » | huit champs, aucune règle |
+| `Perdu` (7) | `…0000ce` « Cursus DevSecOps — Institut Berthier » | huit champs, `motif-perte` exigé |
+
+**Le contrat de la preuve** (`e2e/ui/formulaire-etapes.spec.ts`) :
+
+1. **aucune substitution réseau** : connexion par la vraie page du SSO, chaque requête part à la vraie
+   API — à la différence de `e2e/ui/formulaire.spec.ts`, qui éprouve une étape contre une réponse
+   substituée ;
+2. **la composition attendue n'est pas écrite à la main** : elle est recalculée hors interface, avec
+   le jeton réel de l'administratrice, à partir des champs, des règles et des valeurs relus par l'API,
+   en appliquant l'algorithme du §4.1 et les destinations du §4.2 — un écran faux et une attente
+   fausse ne peuvent donc pas s'accorder par une même erreur de recopie ;
+3. **l'écran est comparé à cette attente**, étape par étape : les champs du formulaire **dans
+   l'ordre** de `position`, la mention « Requis à l'étape <étape> » sur exactement les champs exigés
+   (§4.4), la section repliée portant exactement les champs attendus, ou absente si elle n'en a
+   aucun, et l'étape nommée en tête du formulaire ;
+4. **non-complaisance** : sur les sept étapes, au moins une montre un champ exigé, au moins une une
+   section repliée, et au moins une un champ rendu nulle part — sans quoi la preuve ne dirait rien
+   des destinations qu'elle prétend couvrir ;
+5. **lecture seule** : la preuve n'écrit rien, ne fabrique aucune affaire et ne restaure rien ;
+6. **une capture par étape**, `docs/captures/CRM-037/formulaire-etape-<clé du nœud>-1440.jpg`,
+   observée avant livraison (`CLAUDE.md` §16). Console stricte : aucune erreur admise.
+
+**Connecteur MCP** : sans objet. Ce chapitre ne crée ni ne modifie aucune fonctionnalité ; il
+prouve un rendu livré.
+
 ### 4.7 Ce que `CRM-037` ne livre pas, et qui est nommé
 
 - **~~Aucune écriture.~~ L'écriture appartient à `CRM-037`** — décision 334, INC-088. Le motif
