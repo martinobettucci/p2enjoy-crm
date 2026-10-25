@@ -34386,6 +34386,9 @@ désormais close.
 
 ### décision 703 — `CRM-115` T2 : Kong joint Realtime par un alias réseau ; `backup.sh` et `restore-drill.sh` gardent le nom de production
 
+**Confirmée par le responsable le 2026-10-25, en session interactive : « q1 A, q2 B confirmés ».** Les deux choix ci-dessous
+ne sont plus des choix de la session, mais des arbitrages du responsable.
+
 *2026-10-25, session interactive. Deux questions posées au responsable, qui touchent la production ; la session a
 poursuivi sans réponse, sur ces motifs, et le responsable peut les contredire.*
 
