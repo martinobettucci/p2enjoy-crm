@@ -33737,3 +33737,32 @@ rendent 3 passés sur 3 ; le code rétabli, 3 sur 3 aussi. Intermittents des deu
 (2) **Écart de conduite** : la toute première commande de la session (`git status`, `ls docs/CloudWorker.md`) a précédé
 la lecture de `docs/CloudWorker.md`, et l'annonce du §0 bis n'a pas été la première ligne de la première réponse — le même
 écart qu'à la décision 678. Il ne se rattrape pas ; il est consigné pour que la session suivante ouvre par la lecture.
+
+### décision 685 — `CRM-104` T7, fin de session : la famille `messagerie` livrée en développement, la campagne mesurée
+
+*2026-10-25, session planifiée ouverte le 2026-10-24 à 23:12:23 UTC (`docs/CloudWorker.md`).*
+
+**Fait.** Les trois outils de la famille `messagerie` (décision 684) : module, ancre `message`, consigne au modèle,
+unitaires (9, sept mutations tuées), intégration contre la vraie pile (4/4), E2E dans la webapp (1/1, capture observée),
+`verify-mcp.sh` 88/88, documentation (manuel 11.5 et 11.6, DAT, CHANGELOG, contrat §2.14). Toutes les tranches de
+`CRM-104` ont maintenant leur code : l'unité passe de `[ ]` à `[~]`.
+
+**Mesuré en écrivant.** L'identité de Driss (`contact@p2enjoy.test`) ne sert qu'aux preuves qui s'arrêtent à la file :
+Stalwart refuse cette adresse au principal `bizdev@` (INC-087). L'E2E passe donc par l'administratrice et l'identité de
+service. La lectrice ne lit pas `c1` (channel « Grands comptes » fermé) et ne voit aucun email dans ce qu'elle lit : ses
+preuves portent sur `c6`, et `c1` lui rend le refus uniforme.
+
+**Campagne de fin de session**, synchronisée avant (aucune migration ni seed arrivés) : typecheck, unitaires de la
+webapp, build, pgTAP (93 fichiers, 3944 assertions), API (1175), mail et pytest (246) verts ; interface **890 passés,
+34 échecs, 2 non joués**. Rejoués seuls par fichier : 349 passés, 17 échecs, différents des premiers ; les 17 rejoués
+seuls : 20 passés, 3 échecs. **Quinze des seize échecs du premier rejeu portent `503 (Service Unavailable)` en console**
+(INC-292, prise par une autre session à 00:12 UTC). Le dernier, `ma-journee.spec.ts` « trois sections » (2 au lieu de 3),
+tient au **changement de jour** : seed posé le 24 à 23:16, scénario joué après minuit ; seed réappliqué, il passe, avec
+les paliers de `tracks.spec.ts`. Aucun échec n'est imputable à T7, qui ne touche pas la webapp.
+
+**Captures.** La campagne a réécrit 796 captures d'autres unités. Écarts mesurés (jusqu'à 9 % des pixels) : dates et
+compteurs du seed du jour, et l'en-tête à 1152 px de `CRM-110` T5, aucun ne venant de T7. Comme pour `8cb5fbe`, elles
+sont rendues et non renouvelées ici ; leur renouvellement revient à une campagne verte de bout en bout (après INC-292).
+
+**Où reprendre.** `CRM-104` T7 attend sa livraison (`docs/PROD_MIGRATIONS.md` §2.14, sur instruction) et le constat du
+responsable, comme T1 à T6. La prochaine session suit le §4.2 : `CRM-111` et INC-292 portent des prises vivantes.

@@ -15450,7 +15450,7 @@ vise le profil). Vient après `CRM-101` T6, dont elle réemploie `plateforme_uti
       *2026-10-23, quatrième fenêtre* : **image `mcp` reconstruite** dans la cellule (révision `0242d845`, sur
       instruction du responsable). Reste le constat du responsable à l'écran.
 
-### CRM-104 — Outils MCP par famille `[ ]`
+### CRM-104 — Outils MCP par famille `[~]`
 *Créée le 2026-10-20 — décision 627 (A4, D6). Une tranche par famille ; chaque tranche fixe d'abord la liste exacte de
 ses outils dans `docs/SPEC-mcp.md` §9.2, par un commit de documentation, puis la livre. Les outils n'appellent que les
 tables et RPC de la webapp ; « supprimer » veut dire corbeille ou archive, jamais purge. Dépend de `CRM-102` et de
@@ -15575,11 +15575,29 @@ sous-tranches livrées séparément ; `structure` la suit.*
       - Manuel chapitre 11, SPEC-mcp catalogue, DAT, INSTRUCTIONS du serveur.
       - **Livrée en production le 2026-10-24** (révision `a95e15f7`, image `mcp` reconstruite, module présent, `/mcp`
         sans jeton `401`). **Reste `[~]`** : le constat du responsable.
-- [@] **T7** — `messagerie` : lire les messages d'une affaire et un message, envoyer un email depuis une affaire par la
+- [~] **T7** — `messagerie` : lire les messages d'une affaire et un message, envoyer un email depuis une affaire par la
       file de l'écran (`destructiveHint`, `aussi` `affaires:consulter`) — décision 676 ; ni pièces jointes, ni
       classement, ni modèles. Liste au `docs/SPEC-mcp.md` §9.2 *decies*, **validée par la session le 2026-10-24**
       (décision 684, `docs/CloudWorker.md` §4.1 bis ; le responsable peut la contredire), précisions mesurées avant le code.
-      *Prise en charge : CloudWorker 2026-10-24 23:12 UTC depuis 2026-10-24 23:16 UTC — état avant : [ ]*
+      **Implémentée et vérifiée en développement le 2026-10-24** (décision 685).
+      - `mcp/crm_mcp/outils/messagerie.py` : `crm_card_mail_list` (fil du plus ancien au plus récent, extrait, nombre de
+        pièces jointes), `crm_mail_get` (corps affichable de l'écran, HTML réduit et dit comme tel), `crm_mail_send`
+        (`queue_outbound_email` avec `p_cc`, identité désignée par son adresse — l'unique possible par défaut, jamais un
+        choix parmi plusieurs —, réponse limitée aux messages de l'affaire, refus nommés) ; genre d'ancre `message` ;
+        consigne au modèle.
+      - Unitaires `test_messagerie.py` **9** ; **sept mutations tuées sur sept**. Intégration
+        `test_integration_messagerie.py` **4/4** contre la vraie pile : fil et lecture, réponse constatée en file au nom
+        de Driss (`mail_outbox`), quota de l'identité refusé par le CRM (`refus_crm`), lectrice fermée par la matrice
+        et sans identité (`no_sending_identity`), channel caché en refus uniforme. `verify-mcp.sh` **88/88**.
+      - E2E `connecteur-messagerie.spec.ts` **1/1** : un email envoyé par le connecteur (identité de service, celle de
+        Driss étant refusée par Stalwart, INC-087), soumis par le vrai worker, paraît au fil de l'affaire ; boîtes rendues
+        dans l'état trouvé ; capture `docs/captures/CRM-104/connecteur-messagerie-fil-1440.jpg` observée ;
+        `SCENARIOS_UI=926`. **Compromis** : chaque passage laisse un événement `mail_sent` au fil de `c1`, que
+        `card_events` n'efface pas (`CRM-044`), comme `e2e/mail/envoi.spec.ts`.
+      - Manuel 11.5 et 11.6 (verify-manual 251/251), SPEC-mcp catalogue, DAT §3.7 ter, CHANGELOG, contrat §2.14. Aucune
+        migration, aucun seed : le fil de `c1` et l'identité de Driss existent déjà.
+      - **Reste `[~]`** : la livraison en production (reconstruction de l'image `mcp`, sur instruction) et le constat du
+        responsable — un assistant connecté qui lit un fil et envoie un email.
 
 Preuves exigées **par tranche et par outil** (`docs/SPEC-mcp.md` §13) : succès, refus par la matrice, refus par le
 CRM malgré la matrice ouverte, journal écrit, et effet constaté dans la webapp. Chaque tranche se livre en production et
