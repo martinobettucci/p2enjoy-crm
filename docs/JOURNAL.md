@@ -34439,3 +34439,10 @@ décisions 678, 683, 687 et 694.
 
 **Où reprendre.** La tranche INC-299 est `[P]` : livraison §2.21 et constat du responsable. `CRM-001` reste `[~]` pour
 ses autres points. Prise libérée.
+
+**Clôture de `CRM-111` T1 bis, 2026-10-25.** `verify-droits-fins.sh --rapide` **39/39** une fois INC-302 corrigée. Série
+complète des 84 `verify-*.sh` exécutée seule sur la pile : 62 verts ; les 22 rouges sont classés au registre (INC-309) —
+en-têtes lus trop court, compteurs figés, attentes qu'une migration ultérieure a changées, `verify-plateforme.sh` qui
+restaure en réappliquant `0089` (et laisse `preferences-notifications` rouge, **62/62** seul sur base reconstruite),
+environnement. Aucun n'est imputable à la tranche. Après `CRM-115` T2 (plus de `container_name`, bibliothèque adaptée
+par son auteur), `verify-reconstruction.sh` **28/28**. **T1 bis `[x]`. Où reprendre : `CRM-111` T2, la bascule.**

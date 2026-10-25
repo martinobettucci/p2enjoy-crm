@@ -7874,3 +7874,31 @@ mais son attente renonce avant que `storage`, puis `rest`, ne se rétablissent (
 … is unhealthy »). Une seconde exécution, puis le seed, rendent une pile saine. **Comportement laissé inchangé.**
 **Issue proposée** : `CRM-115` T5, qui traite le recyclage (`docs/SPEC-pile-par-session.md` §8) — reconnaître la pile
 revenue à moitié par l'identifiant de démarrage, et la recomposer avant d'attendre sa santé. **Statut : ouverte.**
+
+### INC-309 — série complète des `verify-*.sh` du 2026-10-25 : vingt anomalies étrangères à `CRM-111` T1 bis, classées
+
+*Relevé le 2026-10-25 par la session planifiée de `CRM-111` T1 bis, en exécutant la série complète des 84 harnais
+(`--rapide` quand ils l'acceptent), seuls sur la pile.* **Bilan** : 62 verts, 22 rouges. Aucun rouge n'est imputable
+à la tranche : aucun des harnais concernés n'appelle `reconstruire_base_dev`, sauf `commentaires` et `session-sso`,
+dont les anomalies sont INC-296 et INC-297. Classement, mesuré :
+- **En-têtes `@spec` lus sur trop peu de lignes** (famille d'INC-296) : `administration-arborescence`,
+  `board` (`RouteTrack.tsx`), `card-costs` (`0049`), `liste` (`RouteTrack.tsx`), `ma-journee`, `onboarding`
+  (`GuideDemarrage.tsx`).
+- **Compteurs ou libellés figés que le produit a dépassés** (famille d'INC-191) : `corbeille` (44 et 8 tests au lieu
+  de 39 et 7), `onboarding` (69 au lieu de 62), `harness` (3974 assertions au lieu de 3944, migration `0104`),
+  `snooze` (51 captures au lieu de 50), `rendu-modeles-emails` (format d'horodatage), `mail-infra` (« … limite
+  d'envoi et exemption de la pile — relus », le harnais cherche l'ancien libellé), `session-sso` (INC-297).
+- **Attentes structurelles qu'une migration ultérieure a changées** : `armement-sequences` (`on delete` `r`
+  attendu, `0085_suppression_espace.sql` pose `no action deferrable`), `card-costs` (index partiel absent),
+  `couts-ecrans` (forme de `enregistrerReel`), `board` et `liste` (routes `CHEMIN_RETOUR_SSO`, `Plateforme`,
+  `description`).
+- **Restauration par réapplication d'une migration non rejouable** (famille d'INC-289) : `plateforme` (code 3 —
+  dégrade et restaure en réappliquant `0089` entière, refusée depuis `0099`), qui laisse une base dans laquelle
+  `preferences-notifications` rougit ensuite. **Mesuré** : `preferences-notifications` seul, sur base reconstruite,
+  **62/62**. Remède : dégrader la fonction seule, et restaurer par `reconstruire_base_dev` (`CRM-101`).
+- **Environnement** : `mcp` (« pull access denied for crm-mcp » — image de développement non construite sous ce nom
+  depuis `CRM-115`), `mail-sync` (avertissements pytest), `mail-infra` (Stalwart journalise une ERROR en ne
+  joignant pas GitHub pour son filtre anti-spam ; vert au second passage), `scripts` (variables `CRM_MCP_*` du
+  gabarit, et la branche « sans CA » de `CRM-001`, déjà connue), `spark` (jetons proposés), `harness` et
+  `webapp` (scénarios E2E instables sous charge : les quatre de `verify-harness.sh` sont **verts rejoués seuls**).
+**Comportement laissé inchangé** ; chaque famille relève de l'unité nommée par son harnais. **Statut : ouverte.**
