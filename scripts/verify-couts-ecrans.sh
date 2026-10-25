@@ -296,10 +296,17 @@ else
 	fail "e2e/ui/couts-a-saisir.spec.ts ne porte plus S6 : la divergence n'est plus mesurée (§4.8.3)"
 fi
 
-# LA SAISIE N'ENVOIE QU'`actual_cost` (§4.8.1) : tout autre attribut ferait dépendre l'écriture
-# d'un rattachement que l'onglet n'a aucune raison de connaître.
-if grep -q "update({ actual_cost: reel })" "$MODULE_SAISIR"; then
-	ok "la saisie n'envoie QUE \`actual_cost\` (§4.8.1)"
+# LA SAISIE N'ENVOIE AUCUN RATTACHEMENT (§4.8.1) : tout autre attribut ferait dépendre l'écriture d'un rattachement
+# que l'onglet n'a aucune raison de connaître.
+# RÉVISÉ LE 2026-10-25 (décision 704, INC-309), PARCE QUE LA RÈGLE A CHANGÉ : depuis `CRM-099` (docs/SPEC-costs.md
+# §2.3 bis), un réel n'est plus un `update({ actual_cost })` de la ligne, mais une INSERTION dans
+# `card_cost_actuals` — la ligne, le montant, le libellé, la date — dont la base tient la somme. La frontière se lit
+# sur cette insertion : elle ne nomme ni budget, ni occurrence, ni affaire, et n'écrit pas `actual_cost` elle-même.
+insertion=$(awk '/export async function enregistrerReel\(/,/^}/' "$MODULE_SAISIR" | awk '/\.insert\(\{/,/\}\)/')
+if printf '%s' "$insertion" | grep -q "card_cost_id: id" \
+	&& awk '/export async function enregistrerReel\(/,/^}/' "$MODULE_SAISIR" | grep -q "from('card_cost_actuals')" \
+	&& ! printf '%s' "$insertion" | grep -qE "budget_id|occurrence_id|card_id|actual_cost"; then
+	ok "la saisie insère un réel dans \`card_cost_actuals\` sans aucun rattachement (§4.8.1, §2.3 bis)"
 else
 	fail "l'envoi de \`enregistrerReel\` a changé de forme : la frontière du §2.3 n'est plus tenue"
 fi
