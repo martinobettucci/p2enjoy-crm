@@ -595,7 +595,9 @@ PORT_RAPPORT=9323
 # 91 + 1 = 92, MESURÉ par `npm run test:sql` — « 92 fichiers ».
 # **93 depuis `CRM-113` T1, 2026-10-24** (décision 677) : `0093_generateur_ia_affaire.test.sql`, seul fichier ajouté.
 # 92 + 1 = 93, MESURÉ par `npm run test:sql` — « 93 fichiers ».
-FICHIERS_SQL_ATTENDUS=93
+# **94 depuis `CRM-013`, tranche INC-238, 2026-10-25** (décision 687) : `0094_dates_lignes_protegees.test.sql`, seul
+# fichier ajouté. 93 + 1 = 94, MESURÉ par `npm run test:sql` — « 94 fichiers ».
+FICHIERS_SQL_ATTENDUS=94
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -1071,7 +1073,11 @@ ASSERTIONS_ATTENDUES=3944
 # `CRM-113` T1 et T2, fichier NEUF, **3** scénarios — `native_field` écrit par la base et bloquant l'acceptation ; le nom
 # et la probabilité d'une étape posés en surcharge, égaux au nœud sans surcharge, la correction du commercial refusée ;
 # le scénario `catalogue` du simulateur et ses deux défauts. 1172 + 3 = 1175.
-SCENARIOS_API=1175
+# **1182 depuis `CRM-013`, tranche INC-238, 2026-10-25** : `e2e/api/dates-lignes-protegees.spec.ts`, fichier NEUF,
+# **7** scénarios — la naissance d'une ligne de coût ou de recette refusée à l'administratrice et au business developer,
+# à l'insertion et à la mise à jour ; une ligne ordinaire datée par la base ; la clé de service qui antidate encore ;
+# l'anonyme. 1175 + 7 = 1182, valeur COMPTÉE — « Total: 1182 tests in 86 files ».
+SCENARIOS_API=1182
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

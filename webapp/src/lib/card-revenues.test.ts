@@ -66,6 +66,20 @@ describe('les lignes de recette', () => {
 		expect(await modifierLigneRecette(m.client, 'r1', { libelle: 'Solde', prevu: 1 })).toEqual({ statut: 'sans-effet' })
 	})
 
+	// @verifies CRM-013 (docs/BACKLOG.md) — tranche INC-238 ; docs/SPEC-permissions-rls.md §4.4.7 : depuis la migration
+	// 0104, une charge qui porterait l'une de ces dates serait refusée en bloc (`403`, `42501`).
+	it('ni la création ni la modification n’envoient `created_at` ou `updated_at` : la base les tient (INC-238)', async () => {
+		const c = espion([OK([{ id: 'r1' }])])
+		await creerLigneRecette(c.client, 'c1', { libelle: 'Acompte', prevu: 6000 })
+		const m = espion([OK([{ id: 'r1' }])])
+		await modifierLigneRecette(m.client, 'r1', { libelle: 'Solde', prevu: 1 })
+		for (const appel of [c.appels[0], m.appels[0]]) {
+			expect(appel?.action).toMatch(/^(insert|update)$/)
+			expect(appel?.charge).not.toHaveProperty('created_at')
+			expect(appel?.charge).not.toHaveProperty('updated_at')
+		}
+	})
+
 	it('le pied compte le réel connu, et nomme les lignes sans réel — nul n’est pas zéro', () => {
 		const l = (estimated_amount: number, actual_amount: number | null): LigneRecette => ({
 			id: 'x', card_id: 'c', label: 'x', estimated_amount, actual_amount, settled_at: null, position: 1,

@@ -644,6 +644,32 @@ describe('modifierLigneCout', () => {
 	})
 })
 
+// @verifies CRM-013 (docs/BACKLOG.md) — tranche INC-238 : la naissance d'une ligne n'est jamais choisie par l'écran
+// @verifies docs/SPEC-permissions-rls.md §4.4.7 ; supabase/migrations/0104_dates_lignes_protegees.sql
+//
+// Depuis la migration 0104, `authenticated` n'a plus `INSERT` ni `UPDATE` sur ces deux colonnes : une charge qui les
+// porterait serait REFUSÉE en bloc (`403`, `42501`), et la ligne ne serait ni créée ni modifiée. Ces deux scénarios
+// gardent l'écran du côté du contrat.
+describe('INC-238 — les dates d’une ligne de coût sont tenues par la base', () => {
+	const saisie = { idBudget: 'b1', idOccurrence: null, libelle: 'Publicité', estime: 100 }
+
+	it('la création n’envoie ni `created_at` ni `updated_at`', async () => {
+		const { client, appel } = espionEcriture(applique)
+		await creerLigneCout(client, 'card-1', saisie)
+		expect(appel.verbe).toBe('insert')
+		expect(appel.charge).not.toHaveProperty('created_at')
+		expect(appel.charge).not.toHaveProperty('updated_at')
+	})
+
+	it('la modification non plus', async () => {
+		const { client, appel } = espionEcriture(applique)
+		await modifierLigneCout(client, 'l1', saisie)
+		expect(appel.verbe).toBe('update')
+		expect(appel.charge).not.toHaveProperty('created_at')
+		expect(appel.charge).not.toHaveProperty('updated_at')
+	})
+})
+
 describe('supprimerLigneCout', () => {
 	it('supprime par identifiant et demande `select`', async () => {
 		const { client, appel } = espionEcriture(applique)
