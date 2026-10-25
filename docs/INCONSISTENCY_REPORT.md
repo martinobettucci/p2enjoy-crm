@@ -7826,3 +7826,15 @@ chaque harnais qui rejoue un fichier de migration compare l'empreinte `pg_dump -
 elle diffère (`docs/SPEC-test-harness.md` §3.6) ; `verify-droits-fins.sh` garde la sortie de chaque sous-harnais dans un
 fichier et en cite la fin sur un échec, comme `reconstruire_base_dev` depuis INC-298. **Statut : ouverte.**
 **Arbitrée le 2026-10-25 (décision 701)** : l'issue proposée est retenue ; portée par `CRM-111` T1 ter.
+
+### INC-305 — `corbeille.spec.ts:609` (le geste au clavier seul) perd le focus une fois sur trois, en fichier complet seulement
+
+*Relevé le 2026-10-25 par la session planifiée de `CRM-001` tranche INC-299 (décision 700), étranger à elle.*
+**Mesuré** : `toBeFocused()` échoue sur le scénario « le geste se fait AU CLAVIER SEUL, de la commande au bloc de
+succès ». Fichier complet : rouge 2 fois sur 3 avec le changement de la tranche, **rouge 1 fois sur 3 sur sa ligne de
+base** (`417eea1`, avant la décision 700) ; scénario isolé (`--repeat-each=6`) : 6 sur 6 vert des deux côtés. Le défaut
+est donc préexistant, et tient à l'état que les scénarios précédents du fichier laissent. **Lecture non vérifiée** : le
+retour du focus après la confirmation dépend d'un rendu que la charge retarde, comme INC-300. **Comportement laissé
+inchangé**, aucune preuve assouplie. **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-077` mesure l'élément
+focalisé au moment de l'échec (trace Playwright) et fait attendre la preuve sur l'état qui précède le focus, jamais sur
+une temporisation. **Statut : ouverte.**
