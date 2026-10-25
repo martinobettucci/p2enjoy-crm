@@ -6,6 +6,8 @@
 # @verifies docs/DESIGN_SYSTEM.md §5.43 (la cloche et le panneau) ; docs/manual.md §8
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
 # @verifies CLAUDE.md §10 (une règle d'accès se prouve hors interface), §16 (vérification visuelle)
+# @verifies CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — le compteur est un
+#           `GET … limit=0`, jamais un `HEAD`
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée, et Node 24 sourcé (`nvm use`).
@@ -206,7 +208,13 @@ echo "3. Les règles que le rendu tient — §26, docs/DESIGN_SYSTEM.md §5.43"
 # =================================================================================================
 
 contient "l'ordre est le plus récent en haut (§26.2)" "$MODULE" "ascending: false"
-contient "le compteur se lit SANS CORPS (§26.1, M4)" "$MODULE" "head: true"
+# RÉVISÉ le 2026-10-25 (décision 700, `CRM-001` INC-299 ; docs/DAT.md §3.5 bis) : la règle a changé. Un compte est un
+# `GET … limit=0` qui porte `count=exact`, jamais un `HEAD`, que PostgREST ferme sans l'annoncer. « Sans corps » se lit
+# donc sur les deux constantes de `compter.ts`, et `head: true` devient un motif INTERDIT. L'ancien motif rougissait sur
+# du code conforme (constaté par la série du 2026-10-25, `CRM-044` INC-301).
+contient "le compteur se lit SANS CORPS (§26.1, M4) : count exact" "$MODULE" "OPTIONS_COMPTE"
+contient "le compteur se lit SANS CORPS (§26.1, M4) : aucune ligne rapportée" "$MODULE" ".limit(LIMITE_COMPTE)"
+absent "le compteur ne passe jamais par HEAD (décision 700)" "$MODULE" "head: true"
 contient "le marquage demande sa ligne en retour, pour distinguer « sans effet » (§26.4)" "$MODULE" \
 	".select('id')"
 contient "le panneau s'ancre à l'EN-TÊTE, jamais à la cloche (§5.43)" "$SURFACE" \
