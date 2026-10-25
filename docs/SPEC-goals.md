@@ -274,7 +274,7 @@ Le libellé, s'il existe, se pose au milieu sur un fond `--color-surface`.
 | Tableau vide | « Aucun objectif sur ce tableau », et l'action d'en poser un |
 | Aucun tableau | « Aucun tableau d'objectifs », et l'action d'en créer un |
 | Bloc lié à un channel **devenu illisible** | le bloc n'est pas rendu ; ses flèches sont rendues **en pointillés vers le vide**, sans libellé et sans infobulle — l'écran ne nomme jamais ce qu'il cache |
-| Bloc lié à un channel **supprimé** (`channel_id` devenu nul) | le bloc est rendu sans pilule, et une mention « lien perdu » invite à en reposer un |
+| Bloc lié à un channel **mis à la corbeille** (`deleted_at` posé, le channel restant lisible) | le bloc est rendu sans pilule, et une mention « lien perdu » invite à en reposer un. **RÉVISÉ le 2026-10-25 (décision 709, INC-169)** : la mention vaut pour la corbeille, le seul état détectable. Après une **destruction définitive** du channel, `on delete set null` (§2.2) rend le bloc identique à un bloc jamais lié : il est rendu **libre, sans mention** — c'est la règle, et non un défaut |
 | Lecture seule | tous les gestes d'écriture du canevas sont **indisponibles et lisibles**, et l'écran dit pourquoi — `docs/DESIGN_SYSTEM.md` §8. **RÉVISÉ le 2026-08-28, tranche 3** : l'état ne se déduit plus du RÔLE `viewer` mais de la **capacité que la base consent**, `public.ecriture_permise(goal_boards)`. Le §5.7 porte le contrat, ses quatre mesures et ce qu'il ne recouvre pas |
 | Tableau **archivé**, case « Afficher les archivés » cochée | la ligne porte la mention « Archivé » et **la seule** commande « Désarchiver » ; elle n'ouvre aucun canevas (§5.6.2, lignes c à e) |
 

@@ -34618,3 +34618,15 @@ reste ok pour toutes les recommandations ».*
 **Toujours en attente** : la validation de la spécification de `CRM-105` T1, et la relecture de `docs/SPEC-ia.md` §14
 (`CRM-113` T3). **Conséquence** : `CRM-057`, `CRM-058`, `CRM-066`, `CRM-072` et `CRM-077` ont désormais tous leurs
 arbitrages ; leur spécification peut s'écrire, puis le code.
+
+
+### décision 709 — INC-169 : « lien perdu » vaut pour un channel à la corbeille ; après destruction, le bloc redevient libre
+
+*2026-10-25, arbitrage du responsable (question posée par `AskUserQuestion`, session interactive `CRM-083`).*
+**Problème** : `docs/SPEC-goals.md` §5.4 demandait la mention « lien perdu » sur un bloc dont le channel est
+**supprimé**, mais la destruction définitive d'un channel remet `goal_blocks.channel_id` à `null` (§2.2, `on delete set
+null`) : le bloc devient indiscernable d'un bloc jamais lié (INC-169). **Options** : garder le comportement livré et
+corriger la spécification ; tracer la rupture par une migration (une colonne posée par déclencheur) ; reporter.
+**Décision** : **garder le comportement livré** — « lien perdu » pour un channel mis à la corbeille, le seul état
+détectable ; après une destruction définitive, le bloc est rendu libre, sans mention. **Conséquences** :
+`docs/SPEC-goals.md` §5.4 réécrit, INC-169 fermée ; aucun code, aucune migration, aucun test ne change.

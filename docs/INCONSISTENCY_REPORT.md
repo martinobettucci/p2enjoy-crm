@@ -2981,8 +2981,10 @@ définitive, elle, reste invisible.
 trace du lien rompu — une colonne `channel_lost_at`, ou un `channel_id` conservé sans clé étrangère
 —, ce qui est un changement de **modèle** et relève de `CRM-082`, close, et non de l'écran.
 
-**Statut :** ouvert, en attente d'arbitrage. Le comportement livré est celui décrit ci-dessus, écrit
-dans `webapp/src/lib/objectifs.ts` et éprouvé par `objectifs.test.ts`.
+**Statut :** **fermé le 2026-10-25 par l'arbitrage du responsable** (`docs/JOURNAL.md` décision 709) : le
+comportement livré devient la règle — « lien perdu » pour un channel mis à la corbeille ; après une destruction
+définitive, le bloc redevient libre, sans mention. `docs/SPEC-goals.md` §5.4 est réécrit en ce sens ; aucun code ni
+migration ne change. Le comportement reste écrit dans `webapp/src/lib/objectifs.ts` et éprouvé par `objectifs.test.ts`.
 
 ## Consigné le 2026-08-19 — une contradiction entre deux documents, relevée par `CRM-083` tranche 2a
 
