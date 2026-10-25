@@ -1295,6 +1295,12 @@ HEAD /rest/v1/notifications?select=id&read_at=is.null    Prefer: count=exact   (
 => 200, en-tête « Content-Range: 0-0/1 »
 ```
 
+*Révisé le 2026-10-25 (`CRM-001`, INC-299, décision 700, `docs/DAT.md` §3.5 bis)* : la webapp ne compte plus par
+`HEAD`, dont PostgREST ferme la connexion sans l'annoncer — Kong la réutilisait et rendait `502`. Le compteur s'émet en
+`GET /rest/v1/notifications?select=id&read_at=is.null&limit=0` avec `Prefer: count=exact` : `206`, corps `[]`, compte
+dans `Content-Range` (`*/N`). La mesure ci-dessus reste celle du 2026-08, faite en `HEAD` ; le contrat (une requête,
+aucune ligne, le compte dans l'en-tête) est inchangé.
+
 Le nombre est **dans l'en-tête**, et aucune ligne ne traverse le réseau. C'est la lecture qu'une
 cloche fait le plus souvent, et c'est la moins chère que la pile sache rendre.
 

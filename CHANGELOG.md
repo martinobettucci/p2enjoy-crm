@@ -15,8 +15,8 @@ d'exécuter le code attendu.
 
 ### `CRM-001`, INC-299 — Kong et Caddy ne rendent plus de `502` sur une connexion que l'amont ferme (décision 696)
 
-*Configuration seulement : aucune migration, aucune fonction, aucun secret. Kong et Caddy sont recréés par le `up`
-ordinaire (`docs/PROD_MIGRATIONS.md` §2.21).*
+*Aucune migration, aucune fonction, aucun secret. Kong et Caddy sont recréés par le `up` ordinaire, la webapp est
+reconstruite (`docs/PROD_MIGRATIONS.md` §2.21).*
 
 - Kong gardait 60 s une connexion vers PostgREST, qui la ferme entre 30 et 60 s : une requête écrite à l'instant de la
   fermeture rendait `502` (`upstream prematurely closed connection`), sur des écrans sans rapport. Reproduit : 11 `502`
@@ -25,6 +25,11 @@ ordinaire (`docs/PROD_MIGRATIONS.md` §2.21).*
   connexion amont inactive après 3 s, avant le plus court délai d'amont mesuré (5 s) — `docs/DAT.md` §3.5 bis.
 - `scripts/verify-stack.sh` section 6 : délais lus dans le dépôt et dans Kong, chaque amont sondé, connexions de Kong et
   d'un Caddy jetable relues — 64 vérifications.
+- **Seconde cause (décision 700)** : PostgREST répond à un `HEAD` sans longueur puis ferme la connexion sans
+  l'annoncer, et Kong la remettait au pool — 15 erreurs par minute sous des `HEAD`, aucune sous des `GET`. La webapp
+  compte désormais par `GET … limit=0` (`webapp/src/lib/compter.ts`, dix comptes : cloche, guide de démarrage,
+  corbeille, état de la messagerie, clôture d'un budget). Garde unitaire contre tout `head: true` ; E2E
+  `comptes-sans-head.spec.ts`. **La webapp est donc à reconstruire** avec cette livraison.
 
 ### `CRM-044`, INC-301 — le fil d'activité nomme l'étape franchie comme le board (décision 693)
 

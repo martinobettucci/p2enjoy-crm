@@ -469,7 +469,7 @@ administrateurs. Ce paragraphe l'emporte sur toute règle antérieure de ce docu
 |---|---|---|---|
 | 1 | `espace` | inchangée | — |
 | 2 | `track` | inchangée | `/reglages/arborescence` |
-| 3 | `workflow` | `workflows`, `archived_at is null`, `HEAD count=exact` sous la politique existante | lien `/reglages/workflows` ; **et**, tant que le compte est nul, le geste « Créer le workflow de départ » (§10.3) |
+| 3 | `workflow` | `workflows`, `archived_at is null`, compte `count=exact` sous la politique existante (`GET … limit=0` depuis la décision 700, `docs/DAT.md` §3.5 bis ; `HEAD` avant) | lien `/reglages/workflows` ; **et**, tant que le compte est nul, le geste « Créer le workflow de départ » (§10.3) |
 | 4 | `channel` | inchangée | `/reglages/arborescence` |
 | 5 | `affaire` | inchangée | `/reglages/arborescence` |
 | 6 | `messagerie` | inchangée | `/reglages/messagerie` |

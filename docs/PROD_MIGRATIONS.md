@@ -579,18 +579,19 @@ changement du service `mcp`.**
 **Retour arrière** : relivrer la révision précédente de la webapp. **Risque** : aucun connu — un texte d'interface, et
 une colonne de plus lue sur `workflow_steps` (`label_override`), déjà lue par le board.
 
-### 2.21 `CRM-001`, INC-299 et décision 696 — Kong et Caddy ferment une connexion amont inactive après 3 s (EN ATTENTE de l'instruction du responsable)
+### 2.21 `CRM-001`, INC-299, décisions 696 et 700 — Kong et Caddy ferment une connexion amont inactive après 3 s ; la webapp ne compte plus par `HEAD` (EN ATTENTE de l'instruction du responsable)
 
 Un `502` intermittent naissait d'une connexion que Kong (60 s) ou Caddy (2 min) gardait plus longtemps que son amont
 (PostgREST, 30 à 60 s ; `mcp`, 5 s ; Kong côté client, 75 s). Les deux relais ferment désormais une connexion inactive
 après 3 s (`docs/DAT.md` §3.5 bis). **Aucune migration, aucune fonction, aucun secret ; une variable d'environnement
 nouvelle, posée par `docker-compose.yml` et non par `.env`** (`KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT: 3`) ; le label
 `com.p2enjoy.caddy-routes-revision` passe à `crm-001`. Kong et Caddy sont recréés par le `up` ordinaire : leur
-définition change.
+définition change. **Et la webapp, reconstruite** (décision 700) : elle compte par `GET … limit=0` et n'émet plus de
+`HEAD`, dont PostgREST ferme la connexion sans l'annoncer.
 
 | # | Geste | Qui | Commande ou lieu |
 |---|---|---|---|
-| 1 | Livrer `main` | poste, par les IP, puis `spark-docker` dans la cellule | `scripts/spark/livrer.sh`, puis `./runProd.sh --spark` |
+| 1 | Livrer `main` (webapp reconstruite) | poste, par les IP, puis `spark-docker` dans la cellule | `scripts/spark/livrer.sh`, puis `./runProd.sh --spark` |
 | 2 | Vérifier en lecture seule : Kong recréé avec le délai, Caddy à la révision `crm-001` | poste, lecture seule | `scripts/spark/verifier.sh` ; `docker exec p2enjoy-kong grep upstream_keepalive_idle_timeout /usr/local/kong/.kong_env` (`= 3` attendu) ; `docker inspect p2enjoy-caddy --format '{{index .Config.Labels "com.p2enjoy.caddy-routes-revision"}}'` (`crm-001` attendu) |
 | 3 | Constater : aucune ligne `upstream prematurely closed` ni `reset by peer` au journal de Kong sur une journée d'usage | le responsable, lecture seule | `docker logs --since 24h p2enjoy-kong 2>&1 \| grep -c -E "prematurely closed\|reset by peer"` (`0` attendu) |
 
