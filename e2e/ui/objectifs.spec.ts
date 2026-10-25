@@ -13,6 +13,8 @@
 //           redimensionner), §4.1 (le bloc masqué n'est jamais nommé), §4.2 (l'écriture)
 // @verifies docs/DESIGN_SYSTEM.md §5.29 (bloc, jauge, flèche), §7 (paliers), §5.8 (états)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (navigation clavier)
+// @verifies CRM-083 (docs/BACKLOG.md), INC-237 (docs/INCONSISTENCY_REPORT.md) — chaque palier rejoint par un rechargement,
+//           et la barre latérale ne recouvre jamais le contenu des captures (`atteindrePalier`, `attendreContenuEnPlace`)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 //
@@ -73,6 +75,31 @@ async function connecter(page: Page, email: string): Promise<void> {
 }
 
 /** Ouvre le tableau du seed depuis la LISTE, comme un utilisateur — jamais par son adresse. */
+/**
+ * Rejoint un palier comme un appareil de cette largeur le charge : redimensionner PUIS recharger (INC-237). Un seul
+ * `setViewportSize` de 1440 à 390 laisse la barre latérale passer en tiroir PENDANT la capture, par-dessus le contenu :
+ * le titre paraissait amputé à gauche, ce que ni le débordement ni le défilement ne mesurent.
+ */
+async function atteindrePalier(page: Page, palier: { largeur: number; hauteur: number }): Promise<void> {
+	await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+	await page.reload()
+}
+
+/**
+ * La garde d'INC-237, MESURÉE : la barre latérale ne recouvre jamais la surface de contenu. Le défaut n'était pas un
+ * décalage du contenu — titre à 16 px, `main` à 0, aucun défilement — mais le TIROIR resté en transition après un
+ * redimensionnement : son bord droit à +7,8 px à 390 px, à +240 px à 900 px, par-dessus le titre de la capture.
+ */
+async function attendreContenuEnPlace(page: Page, palier: { nom: string }): Promise<void> {
+	await expect(page.locator('main h2').first()).toBeVisible()
+	const [barre, contenu] = await Promise.all([
+		page.getByTestId('barre-laterale').boundingBox(),
+		page.locator('main').boundingBox(),
+	])
+	const recouvrement = (barre === null ? 0 : barre.x + barre.width) - (contenu?.x ?? 0)
+	expect(recouvrement, `la barre latérale recouvre le contenu de ${recouvrement} px au palier ${palier.nom}`).toBeLessThanOrEqual(0.5)
+}
+
 async function ouvrirLeTableau(page: Page): Promise<void> {
 	await page.getByRole('link', { name: 'Objectifs', exact: true }).first().click()
 	await expect(page.getByTestId('tableau-objectifs').first()).toBeVisible()
@@ -260,8 +287,9 @@ test.describe('canevas d’objectifs — CRM-083', () => {
 		await ouvrirLeTableau(page)
 
 		for (const palier of PALIERS) {
-			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await atteindrePalier(page, palier)
 			await expect(page.getByTestId('canevas-objectifs')).toBeVisible()
+			await attendreContenuEnPlace(page, palier)
 			// LA PAGE NE DÉFILE JAMAIS HORIZONTALEMENT : le canevas défile dans SON conteneur.
 			const debordement = await page.evaluate(
 				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
@@ -1475,7 +1503,8 @@ test.describe('clavier des gestes d’administration — CRM-083 tranche 2g', ()
 		).toHaveCount(1)
 
 		for (const palier of PALIERS) {
-			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await atteindrePalier(page, palier)
+			await attendreContenuEnPlace(page, palier)
 			await page.getByRole('button', { name: `Archiver le tableau ${TABLEAU_JETABLE}` }).focus()
 			await page.keyboard.press('Enter')
 			await expect(page.getByTestId('confirmation-archivage-tableau')).toBeVisible()
@@ -1719,8 +1748,11 @@ test.describe('reprise d’un tableau archivé — CRM-083 tranche 2 h', () => {
 		await expect(page.getByTestId('tableau-objectifs-archive')).toBeVisible()
 
 		for (const palier of PALIERS) {
-			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
-			await expect(page.getByTestId('afficher-archives-tableaux')).toBeVisible()
+			await atteindrePalier(page, palier)
+			// La case relue après le rechargement : c'est elle qui montre les archivés.
+			await page.getByTestId('afficher-archives-tableaux').check()
+			await expect(page.getByTestId('tableau-objectifs-archive')).toBeVisible()
+			await attendreContenuEnPlace(page, palier)
 			const debordement = await page.evaluate(
 				() => document.documentElement.scrollWidth > document.documentElement.clientWidth,
 			)
@@ -1859,8 +1891,9 @@ test.describe('canevas d’objectifs — l’état de LECTURE SEULE, CRM-083 tra
 		await connecter(page, LECTRICE)
 		await ouvrirLeTableau(page)
 		for (const palier of PALIERS) {
-			await page.setViewportSize({ width: palier.largeur, height: palier.hauteur })
+			await atteindrePalier(page, palier)
 			await expect(page.getByTestId('canevas-lecture-seule')).toBeVisible()
+			await attendreContenuEnPlace(page, palier)
 			const mesures = await page.evaluate(() => ({
 				deborde: document.documentElement.scrollWidth > document.documentElement.clientWidth,
 				// LE DÉFILEMENT HORIZONTAL RÉSIDUEL EST MESURÉ, ET C'EST UNE LEÇON DE CAPTURE : la

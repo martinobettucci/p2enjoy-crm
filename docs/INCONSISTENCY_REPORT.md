@@ -6038,6 +6038,17 @@ celle-ci (`CLAUDE.md` §13, `docs/CloudWorker.md` §3.1).
 **Statut :** ouvert, issue RETENUE et écrite, mise en œuvre due — elle appartient à la prochaine
 session qui touche au harnais de captures.
 
+**Mise à jour du 2026-10-25 (session `CRM-083`) — la cause MESURÉE, et la correction appliquée à `CRM-083`.** Le contenu
+n'était **pas décalé** : à 390 px, le titre est à 16 px, `main` à 0, aucun défilement. C'est la **barre latérale**,
+passée en tiroir **pendant sa transition** de fermeture, qui recouvrait le bord gauche — son bord droit mesuré à
++7,8 px à 390 px, et à **+240 px à 900 px**, par-dessus le titre. D'où l'échec de la garde que l'issue prévoyait (la
+position du titre) : elle passait. La garde retenue mesure le **recouvrement** — bord droit de `barre-laterale` au plus
+au bord gauche de `main` — ; elle est **rouge sans le rechargement** (204 px de recouvrement à 900 px), verte avec.
+`e2e/ui/objectifs.spec.ts` rejoint désormais chaque palier par `setViewportSize` puis `reload` (`atteindrePalier`) et
+garde chaque capture par `attendreContenuEnPlace` ; ses captures `sm-390` et `md-900` sont renouvelées et observées.
+**Reste ouvert** pour les autres suites du dépôt, qui gardent la boucle par simple redimensionnement : la même
+correction s'y applique, unité par unité, ou dans `e2e/ui/captures.ts`.
+
 ## Consigné le 2026-08-29 — l'ancienneté d'une ligne de coût repose sur une colonne que tout écrivain peut poser
 
 ### INC-238 — `card_costs.created_at` est acceptée telle quelle par PostgREST, y compris pour un appelant ordinaire
