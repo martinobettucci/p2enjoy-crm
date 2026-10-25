@@ -11,6 +11,7 @@
 #      répertoire dans l'ordre (une ligne d'adoption par fichier), et rend une pile entièrement `healthy` ;
 #   3. elle recrée la base et ses seuls dérivés, et rien d'autre : les conteneurs et volumes conservés gardent
 #      leur identifiant, ceux du tableau du §3.6 en changent ;
+#   3 bis. la sortie de la remontée et du seed est gardée dans un journal (INC-298) ;
 #   4. le seed y est convergent (`scripts/verify-seed.sh` sans anomalie), et chaque conteneur cite les deux
 #      fichiers Compose (docs/CloudWorker.md §2.2 bis).
 #
@@ -115,6 +116,11 @@ if reconstruire_base_dev >"$TRAVAIL/reconstruction.log" 2>&1; then
 else
 	fail "reconstruire_base_dev échoue : $(cat "$TRAVAIL/reconstruction.log")"
 fi
+
+# INC-298 : la sortie de la remontée et du seed est gardée, pour qu'un échec intermittent reste diagnosticable.
+grep -q "Container p2enjoy-db" "$RECONSTRUCTION_JOURNAL" && grep -q "verify-seed.sh" "$RECONSTRUCTION_JOURNAL" \
+	&& ok "le journal $RECONSTRUCTION_JOURNAL garde la sortie de la remontée et du seed (INC-298)" \
+	|| fail "le journal de reconstruction ne garde pas la sortie de la remontée et du seed (INC-298)"
 
 [ "$(psql_db -c "select to_regclass('public.reconstruction_sentinelle') is null")" = t ] \
 	&& ok "la table sentinelle a disparu : la base est neuve, pas rejouée" \

@@ -29,6 +29,9 @@ RECONSTRUCTION_VOLUMES=(mail-sync-state stalwart-data roundcube-data)
 RECONSTRUCTION_VERROU=${RECONSTRUCTION_VERROU:-/tmp/p2enjoy-crm-reconstruction.lock}
 # Attente maximale du verrou, en secondes : une reconstruction dure une minute, une série de harnais davantage.
 RECONSTRUCTION_ATTENTE=${RECONSTRUCTION_ATTENTE:-1800}
+# INC-298 : la sortie de la remontée et du seed est GARDÉE, et sa fin citée dans le motif d'un échec — un échec
+# intermittent dont l'étape fautive est jetée ne se diagnostique pas. Réécrit à chaque reconstruction.
+RECONSTRUCTION_JOURNAL=${RECONSTRUCTION_JOURNAL:-/tmp/p2enjoy-crm-reconstruction.log}
 
 reconstruire_base_dev() {
 	local racine fichier profil seed=true repertoire=''
@@ -80,11 +83,12 @@ reconstruire_base_dev() {
 				migrations-runner 2>&1
 			exit $?
 		fi
-		compose up -d --wait >/dev/null 2>&1 \
-			|| { echo "reconstruire_base_dev : la pile ne remonte pas (docker compose up --wait)." >&2; exit 1; }
+		citer_journal() { tail -n 15 "$RECONSTRUCTION_JOURNAL" | sed 's/^/        /' >&2; }
+		compose up -d --wait >"$RECONSTRUCTION_JOURNAL" 2>&1 \
+			|| { echo "reconstruire_base_dev : la pile ne remonte pas (docker compose up --wait) — $RECONSTRUCTION_JOURNAL :" >&2; citer_journal; exit 1; }
 		if [ "$seed" = true ]; then
-			P2ENJOY_ENV_FILE="$fichier" supabase/seed/apply-seed.sh >/dev/null 2>&1 \
-				|| { echo "reconstruire_base_dev : le seed échoue sur la base reconstruite." >&2; exit 1; }
+			P2ENJOY_ENV_FILE="$fichier" supabase/seed/apply-seed.sh >>"$RECONSTRUCTION_JOURNAL" 2>&1 \
+				|| { echo "reconstruire_base_dev : le seed échoue sur la base reconstruite — $RECONSTRUCTION_JOURNAL :" >&2; citer_journal; exit 1; }
 		fi
 
 		# Constat : une base NEUVE construite dans l'ordre porte une ligne d'adoption par fichier du répertoire.

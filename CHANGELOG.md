@@ -81,6 +81,8 @@ migration 104).*
   constate le registre et la santé de la pile — en une minute environ. Refus hors profil `dev`, verrou entre sessions.
 - `scripts/verify-reconstruction.sh` : 27 contrôles (refus sans rien arrêter, sentinelle effacée, conteneurs et volumes
   conservés, seed convergent).
+- INC-298 : la sortie de la remontée et du seed d'une reconstruction est gardée dans un journal, et sa fin est citée
+  dans le motif d'un échec ; `verify-reconstruction.sh` le constate (28 contrôles).
 - `scripts/verify-migrations.sh` : la preuve d'adoption sur base peuplée, rouge depuis `0099` (INC-289), est remplacée
   par l'invariant révisé — base neuve construite dans l'ordre, chaque fichier rejoué sur l'état qu'il vient de produire
   (le vrai runner sur un répertoire doublé, structure identique à celle d'une base ordinaire), sentinelle non

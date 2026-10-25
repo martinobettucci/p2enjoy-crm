@@ -7710,3 +7710,8 @@ n'est pas connue. Le changement de la session (fonction `session`) n'y est pour 
 cette fonction. **Comportement laissé inchangé.** **Issue retenue** (`docs/CloudWorker.md` §4.1 bis) : `CRM-111` T1 bis,
 qui porte la bibliothèque, garde la sortie du seed dans un fichier et la cite dans son message d'échec — une perte
 silencieuse de diagnostic, pas un réglage. **Statut : ouverte.**
+**Diagnostic livré le 2026-10-25 (`CRM-111` T1 bis, décision 689)** : la sortie de la remontée et du seed est gardée dans
+`/tmp/p2enjoy-crm-reconstruction.log` (`RECONSTRUCTION_JOURNAL`), et ses quinze dernières lignes sont citées dans le
+motif d'un échec ; `scripts/verify-reconstruction.sh` le constate (28/28). La même session avait vu l'échec une fois,
+dans `verify-authz.sh`, sans pouvoir le reproduire. **Reste ouverte** pour sa cause : la prochaine occurrence la
+nommera.
