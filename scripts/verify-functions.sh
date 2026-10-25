@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # @verifies CRM-016 (docs/BACKLOG.md) — runtime, route et fonction edge d'exemple
-# @verifies docs/SPEC-edge-functions.md §2, §4.1, §5, §6, §7
+# @verifies docs/SPEC-edge-functions.md §2, §2 bis (aucun `204`, décision 686), §4.1, §5, §6, §7
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §5.5 — `JWT_SECRET` au conteneur,
 #           remis au SEUL worker `session` (contrôle RÉVISÉ, décision 584)
 #
@@ -124,11 +124,13 @@ fi
 # fonction (CRM-092) = 11 ; **14 depuis `CRM-097` T1** (décision 617), qui a ajouté à l'environnement par
 # fonction les trois preuves de la fonction `ia` — ses variables `OLLAMA_*`, sa clé confinée, sa borne de
 # 150 s — sans réviser ce compteur : dérive relevée le 2026-10-03 par T3.b, valeur COMPTÉE.
+# **17 depuis la décision 686** (INC-292) : `main/aucun-204.test.ts` ajoute trois preuves — les modules relus, aucun
+# statut `204` posé, les formes reconnues —, la règle « aucune fonction ne rend `204` » (SPEC-edge-functions §2 bis).
 if npm run --silent test:unit -- ../supabase/functions/main ../supabase/functions/example >"$WORK/unit.log" 2>&1 \
-	&& grep -qE 'Tests +14 passed' "$WORK/unit.log"; then
-	ok "14 tests unitaires du routeur, de l'environnement par fonction et du handler d'exemple"
+	&& grep -qE 'Tests +17 passed' "$WORK/unit.log"; then
+	ok "17 tests unitaires du routeur, de l'environnement par fonction, du handler d'exemple et de la règle sans 204"
 else
-	fail "tests unitaires edge en échec ou compte différent de 14"
+	fail "tests unitaires edge en échec ou compte différent de 17"
 	sed 's/^/        /' "$WORK/unit.log" | tail -n 20
 fi
 
