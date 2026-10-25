@@ -400,8 +400,11 @@ else
 	fail "le provisionnement n'a pas relu ce qu'il a écrit"
 fi
 
+# RÉVISÉ LE 2026-10-25 (décision 704, INC-309) : `stalwart/provision.sh` relit désormais aussi la limite d'envoi et
+# l'exemption de la pile, et sa ligne les énumère (« réglages IMAP/SMTP, ressource webadmin, limite d'envoi et
+# exemption de la pile — relus »). Le contrôle exige toujours que réglages ET ressource soient nommés relus.
 if docker logs "$(conteneur stalwart-init)" 2>&1 \
-	| grep -q 'réglages IMAP/SMTP et ressource webadmin — relus'; then
+	| grep -qE 'réglages IMAP/SMTP, ressource webadmin(,| et)[^—]*— relus'; then
 	ok "le provisionnement a écrit et relu les réglages et la ressource modifiables"
 else
 	fail "le provisionnement n'a pas relu les réglages IMAP/SMTP et la ressource webadmin"
