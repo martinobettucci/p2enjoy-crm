@@ -5047,6 +5047,11 @@ ligne au sommaire et son état réel, et la correction du renvoi du chapitre 29,
 chapitre 5 *decies*.3 renvoie les objectifs au « §3 *ter* », qui est le carnet de contacts. Le renvoi est à
 corriger avec le chapitre qui manque.
 
+**Fermée le 2026-10-25 (session `CRM-083`)** : `docs/manual.md` porte le chapitre **3 *sexies*** — la liste des tableaux et
+son administration, le canevas, les blocs, les flèches, la suppression, qui peut écrire, les états vides —, écrit à partir
+des libellés réels de `fr.ts`, des politiques de la base et des scénarios de `e2e/ui/objectifs.spec.ts` ; le sommaire
+gagne sa ligne, et la ligne 29 ne cite plus les objectifs. `scripts/verify-manual.sh` : **254** contrôles sans anomalie.
+
 ### INC-215 — `signature_html` est une colonne morte, et son nom annonce un type que le produit n'expédie pas
 
 **Ouverte le 2026-08-25 par `CRM-063` tranche 1, comportement inchangé** — constat **étranger à la

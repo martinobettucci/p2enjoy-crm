@@ -42,6 +42,7 @@
 | 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace **« Dossier changé »** dans l'historique, y compris quand personne ne passe par l'application. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement |
 | 4.7 bis | Mettre une affaire à la corbeille | `CRM-077` | **Livré et vérifié** — voir le chapitre 4.7 *bis*. Le bouton vit en bas de la fiche de l'affaire, demande une confirmation qui la nomme, et remplace ensuite l'écran par les deux chemins utiles : revenir au channel, ou ouvrir la corbeille. Le geste suppose le droit d'**écrire** sur l'onglet, et non un rôle d'administrateur |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
+| 3 sexies | Les objectifs : le tableau blanc de l'équipe | `CRM-082`, `CRM-083` | **Livré et vérifié** — voir le chapitre 3 *sexies*. L'entrée « Objectifs » de la barre latérale ouvre les tableaux d'objectifs de l'espace : des blocs posés sur un canevas qu'on déplace et qu'on zoome, reliés par des flèches, chacun avec son remplissage **saisi à la main** — jamais calculé — et, s'il vise un channel, une pilule qui l'ouvre. Les administrateurs et les business developers créent, renomment, réordonnent et archivent les tableaux, posent, déplacent, redimensionnent, modifient et suppriment les blocs et les flèches ; tout membre lit. Un bloc supprimé ne se restaure pas ; un tableau s'archive |
 | 9 bis | Les affaires figées et leurs relances | `CRM-062` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 3 *quinquies*. L'entrée « Affaires figées » de la barre latérale, sous *Ma journée*, liste les affaires restées dans leur étape au-delà du **seuil de relance** de cette étape, groupées par dossier et rangées du plus gros retard au plus petit. Chaque nuit, une ligne **« Relance automatique »** est inscrite dans l'historique de chaque affaire figée, avec son retard et son seuil — au plus une par séjour dans une étape, sans auteur. Les affaires archivées, à la corbeille et **en sommeil** en sont absentes, et une étape sans seuil ne fige jamais rien. Ce qui n'est **pas** livré, et l'absence est voulue : **aucun email**, **aucune notification**, aucune cadence réglable, et l'écran **lit** sans jamais écrire |
 | 9 | Prochaine action et vue « Ma journée » | `CRM-061` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 3 *quater*. L'entrée « Ma journée » de la barre latérale rassemble les affaires à échéance de tout l'espace de travail, en trois sections : **En retard**, **Aujourd'hui**, **À venir dans sept jours**. Deux portées — vos affaires, ou tout ce que vos droits vous laissent lire —, dont le choix vit dans l'adresse. Les affaires archivées, à la corbeille et **en sommeil** en sont absentes. Ce qui manque : l'écran **lit** et n'écrit pas — reporter une échéance ou la saisir reste le geste de l'en-tête de la fiche (chapitre 4.2 *bis*) —, et l'horizon de sept jours n'est pas réglable |
 
@@ -87,7 +88,7 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 28 | Analytique de conversion par channel et par track | `CRM-066` | À livrer |
-| 29 | Prévisionnel pondéré et objectifs | `CRM-066` | À livrer |
+| 29 | Prévisionnel pondéré | `CRM-066` | À livrer — *les objectifs, que cette ligne citait, ont leur chapitre, le 3 sexies* |
 | 30 | Cards figées et relances automatiques | `CRM-062` | À livrer |
 | 31 | Saisir son temps et piloter le coût du personnel | `CRM-098` | **Livré en développement** — voir le chapitre 5 undecies. Chacun saisit, semaine par semaine, le temps passé sur les tracks, les channels et les affaires, au quart de journée ou en heures ; chaque personne a un coût par quart, versionné ; le rapport mensuel et les écrans de coûts montrent ce que le personnel a coûté |
 
@@ -1165,6 +1166,108 @@ rien à faire d'une liste vide, et c'est une bonne nouvelle.
 
 Si la liste **n'a pas pu être lue**, l'écran le dit et propose *Réessayer*. Un écran vide et une
 panne ne se confondent jamais.
+
+## 3 sexies. Les objectifs : le tableau blanc de l'équipe
+
+*Livré par `CRM-082` (ce que le produit enregistre et qui peut l'écrire) et `CRM-083` (l'écran). Décrit l'application
+réellement exécutée ; captures dans `docs/captures/CRM-083/`. Spécification : `docs/SPEC-goals.md`.*
+
+L'entrée **Objectifs** de la barre latérale ouvre les **tableaux d'objectifs** de votre espace de travail. Un tableau est
+un **tableau blanc** : vous y posez des **blocs** — un objectif chacun —, vous les reliez par des **flèches** pour dire ce
+qui nourrit quoi, et vous indiquez sur chaque bloc où vous en êtes.
+
+**Le remplissage d'un bloc est saisi à la main, jamais calculé.** Un bloc peut viser un channel, mais le produit ne
+déduit rien des affaires de ce channel : c'est vous qui décidez de ce que le pourcentage signifie, et vous qui le
+tenez à jour. La fiche du bloc le rappelle sous son remplissage.
+
+### 3 sexies.1 La liste des tableaux
+
+L'écran **« Tableaux d'objectifs »** liste les tableaux de l'espace dans leur ordre, chacun avec sa description et son
+nombre de blocs. Cliquer sur le nom d'un tableau ouvre son canevas.
+
+Un **administrateur** ou un **business developer** de l'espace administre les tableaux depuis cette liste :
+
+- **« Créer un tableau »** ouvre un formulaire dans la page — un **Nom**, obligatoire et unique dans l'espace, et une
+  **Description** facultative ;
+- **« Renommer »** change le nom et la description d'un tableau ;
+- **« Monter »** et **« Descendre »** changent son rang, d'un cran à la fois ;
+- **« Archiver »** retire un tableau de la liste, après une confirmation qui le nomme. Rien n'est perdu : la case
+  **« Afficher les archivés »** le fait reparaître avec la mention **« Archivé »** et la seule commande
+  **« Désarchiver »**. Un tableau archivé garde son nom : un autre tableau ne peut pas le prendre tant qu'il existe.
+
+Pour un autre compte, la base refuse ces gestes, et l'écran le dit sous la commande : *« Vous ne pouvez pas
+administrer les tableaux de cet espace de travail. »*
+
+### 3 sexies.2 Le canevas
+
+Le canevas d'un tableau se **déplace** — faites-le glisser — et se **zoome** avec les boutons **« Réduire le canevas »**
+et **« Agrandir le canevas »**, la valeur courante affichée entre les deux. **« Retour aux tableaux »** ramène à la
+liste.
+
+Chaque **bloc** porte son **titre**, deux lignes de son **corps** s'il en a un, sa **jauge** — « Remplissage 40 % », par
+exemple — et, s'il vise un channel, une **pilule « Track › Channel »** : cliquer dessus **ouvre le channel**. Une
+**flèche** relie deux blocs ; elle a un sens — du départ vers l'arrivée, de l'arrivée vers le départ, ou dans les deux
+sens — et parfois un libellé, posé en son milieu.
+
+Sous le canevas, **« Liens du diagramme »** donne l'équivalent textuel de toutes les flèches, une par ligne — c'est ce
+que lit un lecteur d'écran, et c'est la façon la plus sûre de vérifier ce qui relie quoi.
+
+**Ce que vous ne voyez pas, et pourquoi.** Un bloc qui vise un channel que vous n'avez pas le droit de lire **n'est pas
+affiché du tout** ; ses flèches sont dessinées en pointillés vers le vide, et la liste textuelle les écrit vers une
+**« extrémité hors de portée »**. L'écran ne nomme jamais ce qu'il vous cache. Un bloc dont le channel a été **mis à la
+corbeille** reste affiché, sans pilule, avec la mention **« Lien perdu »** : reposez-lui un lien. Si le channel a été
+**détruit** définitivement, le bloc redevient un bloc libre, sans mention — rien ne permet plus de savoir qu'il visait
+un channel.
+
+### 3 sexies.3 Poser, déplacer et modifier un bloc
+
+**« Poser un bloc »** fait apparaître un repère : cliquez sur le canevas à l'endroit voulu, ou, au clavier, déplacez le
+repère avec les flèches, validez par Entrée et annulez par Échap. Le bloc naît avec un titre provisoire, et sa fiche
+s'ouvre pour que vous le nommiez.
+
+Un bloc se **déplace** et se **redimensionne** à la souris — en le faisant glisser, ou par sa poignée d'angle — ou au
+clavier, le bloc ayant le focus : les flèches le déplacent, **Maj** et les flèches l'ajustent au pixel, **Alt** et les
+flèches le redimensionnent. **Entrée** ouvre sa **fiche** :
+
+- **Titre** — obligatoire : un bloc sans titre ne se lit pas ;
+- **Corps** — facultatif ; deux lignes en sont rendues sur le bloc ;
+- **Couleur** — Bleu, Vert, Jaune, Rouge ou Gris ;
+- **Remplissage** — au curseur, ou en pourcentage, de 0 à 100 ;
+- **Channel visé** — facultatif. **« Retirer le lien »** l'enlève. Viser un channel demande le droit d'**écrire** sur
+  ce channel : le produit refuse un lien vers un channel où vous ne faites que lire.
+
+Chaque champ s'enregistre de lui-même et dit **« Enregistré »** ; **« Fermer la fiche »** ou Échap la referment.
+
+### 3 sexies.4 Tracer et supprimer une flèche
+
+**« Tracer une flèche »**, puis cliquez sur le bloc de départ et sur celui d'arrivée — ou, au clavier, **Espace** sur le
+bloc de départ, puis Entrée ou Espace sur le second. Le bloc de départ, Échap ou le bouton annulent le tracé. Une
+flèche relie deux blocs **du même tableau**, jamais un bloc à lui-même, et **une seule** flèche joint deux blocs donnés.
+Dans « Liens du diagramme », chaque flèche porte un sélecteur de **direction** et la commande **« Supprimer la
+flèche »**.
+
+### 3 sexies.5 Supprimer un bloc
+
+**« Supprimer le bloc »**, au bas de sa fiche, demande une confirmation qui nomme le bloc et compte les flèches qui
+partiront avec lui ; **« Supprimer définitivement »** l'efface. **Un bloc supprimé ne se restaure pas**, une flèche non
+plus — contrairement à un tableau, qui s'archive.
+
+### 3 sexies.6 Qui peut écrire
+
+**Tout membre de l'espace lit les tableaux.** Les **administrateurs** et les **business developers** de l'espace les
+administrent et les composent ; pour un autre compte, le canevas affiche : *« Vous consultez ce tableau. Vous n'avez
+pas le droit d'y écrire : les commandes de modification restent visibles mais sont inactives. »* — et la fiche d'un
+bloc s'ouvre en lecture. C'est la base qui décide : un refus de dernière minute est dit sous la commande, sans que
+rien ne soit écrit.
+
+### 3 sexies.7 Quand il n'y a rien
+
+**« Aucun tableau d'objectifs »** — l'espace n'en a pas encore ; « Créer un tableau » reste offert à qui peut écrire.
+**« Aucun objectif sur ce tableau »** — posez un premier bloc. **« Tableau introuvable »** — l'adresse ne mène à aucun
+tableau que vous puissiez lire, ou il est archivé. Si les tableaux **n'ont pas pu être chargés**, l'écran le dit et
+propose « Réessayer ».
+
+L'assistant connecté par le **connecteur MCP** lit et compose aussi les canevas, dans vos droits (chapitre 11).
 
 ## 4. L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître
 

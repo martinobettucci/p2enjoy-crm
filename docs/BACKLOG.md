@@ -10781,7 +10781,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 | Unité | Objet | État |
 |---|---|---|
 | CRM-082 | Objectifs : modèle, RLS et API | `[x]` |
-| CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[~]` |
+| CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[x]` |
 | CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[x]` |
 | CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[x]` |
 | CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[~]` |
@@ -10902,9 +10902,8 @@ dégradations réelles.
       `docs/captures/CRM-083/tableau-doublon-archive-1440.jpg`,
       `tableau-doublon-archive-recours-1440.jpg`, `tableau-doublon-archive-sm-390.jpg`.
 
-### CRM-083 — Canevas d'objectifs `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 22:14 UTC — état avant : [~]*
-***Reste réel au 2026-10-25 (décision 705), faisable par un agent** : le chapitre du canevas d'objectifs dans `docs/manual.md` (INC-214, ouverte, mesuré : aucun chapitre) ; les captures du palier `sm-390` prises sur une page décalée (INC-237) ; le « lien perdu » du §5.4 (INC-169). La série des `verify-*.sh` n'est la DoD d'aucune unité (décision 553) : ce motif ne retient plus l'unité.*
+### CRM-083 — Canevas d'objectifs `[x]`
+***Soldée le 2026-10-25 (session interactive)** : le chapitre 3 *sexies* du manuel (INC-214 fermée), les paliers rejoints par un rechargement et gardés par une mesure du recouvrement (INC-237, pour cette unité), et l'arbitrage d'INC-169 (décision 709, spécification corrigée). *Reste d'avant, au 2026-10-25 (décision 705)* : le chapitre du canevas d'objectifs dans `docs/manual.md` (INC-214, ouverte, mesuré : aucun chapitre) ; les captures du palier `sm-390` prises sur une page décalée (INC-237) ; le « lien perdu » du §5.4 (INC-169). La série des `verify-*.sh` n'est la DoD d'aucune unité (décision 553) : ce motif ne retient plus l'unité.*
 
 Entrée de navigation « Objectifs », liste des tableaux, canevas pannable et zoomable, blocs
 déplaçables et redimensionnables, flèches à trois directions, jauge de remplissage saisie à la main,
@@ -11190,7 +11189,7 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       `tableau-creation-1440.jpg`, `tableau-liste-1440.jpg`, `tableau-doublon-1440.jpg`,
       `tableau-renommage-1440.jpg`, `tableau-archivage-confirmation-1440.jpg`,
       `tableau-refus-lectrice-1440.jpg`.
-- [~] **~~DÉSARCHIVER un tableau n'est PAS livré, et c'est une limite nommée.~~ TRANCHÉ ET SPÉCIFIÉ
+- [x] **~~DÉSARCHIVER un tableau n'est PAS livré, et c'est une limite nommée.~~ TRANCHÉ ET SPÉCIFIÉ
       le 2026-08-28 — tranche 2 h** (`docs/JOURNAL.md`, décision 534 ; `docs/SPEC-goals.md` §5.6,
       quatre sous-chapitres écrits et committés **avant** la première ligne de code, sur **six
       mesures** prises le jour même par la vraie route REST avec les jetons réels des trois
@@ -11253,7 +11252,7 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       suffisait pas, le scénario de la ligne g désarchivant le tableau que celui de la ligne h
       attend. Et `new RegExp('Objectifs 2025 (clos)')` prenait les parenthèses pour un **groupe de
       capture**, faisant rougir un produit correct ; le nom est échappé.
-- [ ] **CE QUI RESTE SUR LA TRANCHE 2 h, ET CE N'EST PAS DU COMPORTEMENT** : la série des
+- [x] *Sans objet depuis la décision 553 — la série des `verify-*.sh` n'est la DoD d'aucune unité ; le chapitre du manuel est écrit (3 sexies).* **CE QUI RESTE SUR LA TRANCHE 2 h, ET CE N'EST PAS DU COMPORTEMENT** : la série des
       `scripts/verify-*.sh` n'a pas été rejouée en entier derrière ce changement, et
       `docs/manual.md` ne gagne aucun chapitre — mais pour une cause **antérieure et étrangère**,
       déjà consignée en **INC-214** : le manuel ne porte AUCUN chapitre sur les objectifs depuis la
@@ -11308,7 +11307,7 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       et la signature de la colonne calculée y est éprouvée comme celle de sa jumelle
       `reel_saisissable`. Les types générés sont régénérés dans le même commit, et leur diff ne
       porte QUE la fonction neuve — quatre lignes.
-- [ ] **INC-237 CONSIGNÉE, comportement inchangé** : les captures du palier `sm-390` sont prises sur
+- [x] *Corrigée pour cette unité le 2026-10-25 (`6d9b017b`) : cause mesurée — le tiroir en transition, non un décalage —, paliers rejoints par un rechargement, garde du recouvrement rouge sans lui ; l'INC reste ouverte pour les autres suites.* **INC-237 CONSIGNÉE, comportement inchangé** : les captures du palier `sm-390` sont prises sur
       une page **décalée** — le titre y est amputé de huit pixels —, parce que la boucle de paliers
       navigue à 1440 px puis redimensionne, laissant le tiroir dans l'état de la largeur précédente.
       **Défaut préexistant et étranger** : la même amputation est présente sur
@@ -11361,7 +11360,7 @@ la 2b-1 l'ont été : **2b-2a livre le LIEN**, 2b-2b livrera les **flèches** et
       `viewer` mesuré HORS interface, et c'est `e2e/api/objectifs.spec.ts` qui le tient. Sans cette
       citation, la trace de cette exigence ne menait plus à l'unité de l'écran — et le harnais la
       refuse.
-- [~] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
+- [x] **Le canevas doit être utilisable entièrement au clavier** (`CLAUDE.md` §22,
       `docs/SPEC-goals.md` §5.5). La tabulation, l'étiquetage, le défilement, **la pose, le
       déplacement, le redimensionnement**, et depuis la tranche 2b-1 **l'ouverture de la fiche par
       `Entrée`, sa saisie complète et sa fermeture par `Échap` avec retour du focus au bloc** sont
@@ -11425,7 +11424,7 @@ son clavier n'avait jamais été ni écrit ni éprouvé.
       précisément ce que la révision précédente reprochait à la livraison de `/affaires-figees`.
 - [x] **Documentation dans le même changement** : `docs/SPEC-goals.md` §5.5 bis,
       `docs/DESIGN_SYSTEM.md` §5.29, `CHANGELOG.md` sous `[Non publié]`.
-- [ ] **INC-214 consignée, comportement inchangé** : `docs/manual.md` ne porte **aucun** chapitre
+- [x] *Fermée le 2026-10-25 : chapitre 3 sexies écrit, `verify-manual.sh` 254/254.* **INC-214 consignée, comportement inchangé** : `docs/manual.md` ne porte **aucun** chapitre
       sur les objectifs, alors que `CRM-082` et `CRM-083` ont livré un écran complet. Écrire ce
       chapitre couvre deux unités et demande ses propres captures : le combler ici reviendrait à
       solder une autre unité sous couvert de celle-ci (`CLAUDE.md` §13).
@@ -11436,13 +11435,13 @@ son clavier n'avait jamais été ni écrit ni éprouvé.
       `scripts/verify-objectifs-canevas.sh` **44 contrôles, aucune anomalie** et
       `scripts/verify-harness.sh --rapide` **31 contrôles, aucune anomalie**, ce dernier certifiant
       le compteur révisé — « projet ui : 593 scénarios énumérés, conforme au compteur ».
-- [ ] **Le RESTE de la série des `scripts/verify-*.sh` n'a pas été rejoué derrière cette tranche**,
+- [x] *Sans objet depuis la décision 553.* **Le RESTE de la série des `scripts/verify-*.sh` n'a pas été rejoué derrière cette tranche**,
       et l'écart est nommé plutôt que tu (`docs/CloudWorker.md` §4.3, budget) : le dépôt en porte
       soixante-quatre, deux l'ont été. La série entière a été menée à son terme la **veille**
       (`docs/JOURNAL.md` décision 508), donc **avant** cet écran. Mesuré au passage :
       `verify-harness.sh --rapide` **dépasse le plafond de 1500 s** — tué à 25 min sans rendre une
       ligne — depuis que `e2e:ui` compte 593 scénarios ; il va à son terme à 3300 s.
-- [ ] **Écart nommé, consigné en INC-169 plutôt que tranché** : le §5.4 demande « lien perdu » pour
+- [x] *Tranché le 2026-10-25 par le responsable (décision 709) : la règle livrée est gardée, le §5.4 réécrit.* **Écart nommé, consigné en INC-169 plutôt que tranché** : le §5.4 demande « lien perdu » pour
       un channel **supprimé** (`channel_id` devenu nul), état qui ne se distingue en rien d'un bloc
       jamais lié. L'écran lève la mention pour le seul état détectable — une destination partie à
       la corbeille.

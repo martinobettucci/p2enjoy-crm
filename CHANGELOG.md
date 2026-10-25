@@ -13,6 +13,15 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-083` — le canevas d'objectifs a son chapitre au manuel
+
+*Documentation et preuves seulement : rien ne change en production.*
+
+- **Le manuel** décrit les tableaux d'objectifs et leur canevas (chapitre 3 *sexies*) : la liste et son administration,
+  les blocs et leur remplissage saisi à la main, les flèches, la suppression, qui peut écrire.
+- **« Lien perdu »** vaut pour un bloc dont le channel est à la corbeille ; après une destruction définitive, le bloc
+  redevient libre (décision 709).
+
 ### INC-309 — les harnais rouges de la série complète corrigés par famille (décision 704)
 
 - `scripts/lib/entete.sh` : les contrôles de traçabilité lisent le bloc d'en-tête entier ; sept harnais.
