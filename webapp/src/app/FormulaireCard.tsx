@@ -1,6 +1,8 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les champs inactifs, valeurs lisibles, et citant le motif de la fiche quand
 //       la base refuse l'écriture sur l'affaire (docs/SPEC-droits-interface.md §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-037 (docs/BACKLOG.md) — rendu du formulaire conditionnel d'une card, et sa saisie
+// @spec CRM-037 (docs/BACKLOG.md) tranche INC-134 — la mention d'un champ exigé à l'étape courante, « Requis à l'étape
+//       <étape> », par une clé paramétrée (docs/JOURNAL.md décision 688 ; docs/SPEC-form-composer.md §4.4)
 // @spec docs/SPEC-form-composer.md §4.2 (trois destinations), §4.4 (champ exigé),
 //       §4.5 (erreurs et accessibilité), §4 bis.1 (ce que le geste est), §4 bis.2 (un champ, une
 //       écriture), §4 bis.3 (le moment de l'écriture), §4 bis.4 (normalisation),
@@ -383,7 +385,7 @@ function ChampSaisie({
 
 			{visibilite === 'required' ? (
 				<p data-testid={`requis-${champ.key}`} className="text-sm text-text-3">
-					{t('form.required.reason')} {etape}
+					{t('form.required.reason', { etape })}
 				</p>
 			) : null}
 

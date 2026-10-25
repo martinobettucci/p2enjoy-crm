@@ -79,7 +79,7 @@ export const COLONNES_VALEUR = 'field_id, value'
 export const COLONNES_CARD_FORMULAIRE =
 	'id, title, workflow_id, workspace_id, current_step_id, email_local_part, amount, currency, next_action, next_action_at, archived_at, snoozed_until, profiles!cards_owner_id_fkey(id, full_name, avatar_url), workspaces(inbound_domain)'
 
-/** L'étape courante, telle que la mention « requis pour passer à <étape> » a besoin de la nommer. */
+/** L'étape courante, telle que la mention « requis à l'étape <étape> » a besoin de la nommer (décision 688). */
 export type EtapeCourante = {
 	readonly id: string
 	readonly label: string
@@ -313,7 +313,7 @@ export async function lireCard(
 
 /**
  * Lit l'étape courante d'une card, avec le libellé de son nœud — c'est ce libellé que la mention
- * « requis pour passer à <étape> » nomme (§4.4), et non l'identifiant de l'étape.
+ * « requis à l'étape <étape> » nomme (§4.4, décision 688), et non l'identifiant de l'étape.
  */
 export async function lireEtape(
 	client: ClientCrm,

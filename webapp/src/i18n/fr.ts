@@ -1012,7 +1012,9 @@ export const fr = {
 	'form.step.prefix': 'Étape courante :',
 	'form.empty': 'Aucun champ à afficher pour cette étape.',
 	'form.required.sr': '(champ requis)',
-	'form.required.reason': 'Requis pour passer à',
+	// Révisé par la décision 688 (INC-134) : l'étape nommée est toujours l'étape COURANTE — « pour passer à » demandait
+	// de rejoindre l'étape où l'affaire se trouve déjà (docs/SPEC-form-composer.md §4.4).
+	'form.required.reason': "Requis à l'étape {etape}",
 	'form.missing': "Ce champ est requis et n'est pas renseigné.",
 	'form.select.none': '— Aucun choix —',
 	'form.other.summary': "Informations d'autres étapes",

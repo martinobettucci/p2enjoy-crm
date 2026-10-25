@@ -1,4 +1,5 @@
 // @verifies CRM-037 (docs/BACKLOG.md) — rendu réel du formulaire conditionnel, et sa saisie
+// @verifies CRM-037 (docs/BACKLOG.md) tranche INC-134 — « Requis à l'étape <étape> » (docs/JOURNAL.md décision 688)
 // @verifies docs/SPEC-form-composer.md §4.2 (section repliée), §4.4 (astérisque et mention),
 //           §4.5 (erreurs, accessibilité), §4 bis.1 (la section repliée reste en lecture seule),
 //           §4 bis.3 (le moment de l'écriture), §4 bis.4 (normalisation par type),
@@ -186,11 +187,14 @@ describe('champ exigé (§4.4)', () => {
 		expect(within(etiquette as HTMLElement).getByText('*', { exact: false }).getAttribute('aria-hidden')).toBe('true')
 	})
 
-	it('affiche la mention « requis pour passer à <étape> », l’étape nommée', () => {
+	// RÉVISÉ par la décision 688 (INC-134) : ce test figeait « Requis pour passer à <étape> », alors que l'étape nommée est
+	// toujours l'étape COURANTE (docs/SPEC-form-composer.md §4.4) — la phrase demandait de rejoindre l'étape occupée. Il
+	// compare désormais le texte ENTIER, interpolé par la clé : une concaténation, ou l'ancienne formule, le font rougir.
+	it('affiche la mention « Requis à l’étape <étape> », l’étape courante nommée', () => {
 		monter()
 		const mention = screen.getByTestId('requis-source')
-		expect(mention.textContent).toContain('Requis pour passer à')
-		expect(mention.textContent).toContain('Prospection')
+		expect(mention.textContent).toBe("Requis à l'étape Prospection")
+		expect(mention.textContent).not.toContain('passer à')
 	})
 
 	it('vide, il porte une alerte role="alert" citée par aria-describedby et aria-invalid', () => {

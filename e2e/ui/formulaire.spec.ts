@@ -1,4 +1,5 @@
 // @verifies CRM-037 (docs/BACKLOG.md) — le formulaire conditionnel dans l'application réelle
+// @verifies CRM-037 (docs/BACKLOG.md) tranche INC-134 — « Requis à l'étape <étape> » (docs/JOURNAL.md décision 688)
 // @verifies docs/SPEC-form-composer.md §4.2 (section repliée), §4.4 (mention « requis pour
 //           passer à »), §4.5 (erreurs, accessibilité, états), §4.6 (l'écran hôte),
 //           §4.6 bis (la coquille autour du formulaire), §7.3 (preuves)
@@ -295,8 +296,8 @@ test.describe('formulaire chargé (réponse réseau substituée, docs/DESIGN_SYS
 		await servirFormulaire(page)
 		await page.goto(ADRESSE)
 
-		await expect(page.getByTestId('requis-source')).toContainText('Requis pour passer à')
-		await expect(page.getByTestId('requis-source')).toContainText('Prospection')
+		// Révisé par la décision 688 (INC-134) : la mention nomme l'étape courante sans demander d'y « passer ».
+		await expect(page.getByTestId('requis-source')).toHaveText("Requis à l'étape Prospection")
 
 		const alerte = page.getByTestId('alerte-source')
 		await expect(alerte).toBeVisible()

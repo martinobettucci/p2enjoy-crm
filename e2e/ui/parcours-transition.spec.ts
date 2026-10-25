@@ -1,4 +1,7 @@
 // @verifies CRM-037 (docs/BACKLOG.md) — « transition bloquée → saisie → transition réussie »
+// @verifies CRM-037 (docs/BACKLOG.md) tranche INC-134 — sur la session réelle, la mention d'un champ exigé à l'étape
+//           courante nomme cette étape sans demander d'y « passer » (docs/JOURNAL.md décision 688 ;
+//           docs/SPEC-form-composer.md §4.4 ; docs/DESIGN_SYSTEM.md §5.7)
 // @verifies docs/SPEC-form-composer.md §4 quater (contrat du parcours enchaîné, mesuré), §4 bis
 //           (la saisie depuis la fiche), §4 ter (la reprise d'un déplacement refusé), §7.3
 // @verifies docs/SPEC-workflow-engine.md §7.9, §7.10 (retour arrière et bandeau de refus)
@@ -163,6 +166,13 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 			const controle = page.locator(`#champ-${CLE_CHAMP}`)
 			await expect(controle).toBeFocused()
 			await expect(controle).toBeEditable()
+
+			// 6 bis. INC-134, décision 688 : l'affaire EST à « Signature », et les trois champs que la règle de cette étape
+			// exige le disent sans lui demander d'y « passer ». C'est sur la capture de ce parcours que le défaut avait été
+			// vu ; la mention est lue ici sur les vraies données, sans aucune substitution.
+			for (const cle of ['budget', 'date-signature-prevue', 'decideur-identifie']) {
+				await expect(page.getByTestId(`requis-${cle}`)).toHaveText("Requis à l'étape Signature")
+			}
 
 			// 7. La valeur est saisie AU CLAVIER, et l'écriture part à la perte du focus (§4 bis.3).
 			await page.keyboard.type(VALEUR)
