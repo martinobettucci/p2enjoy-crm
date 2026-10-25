@@ -33809,3 +33809,25 @@ pas) ; filtrer l'erreur de console des preuves (interdit, `docs/CloudWorker.md` 
 **Connecteur MCP** : sans objet, le connecteur n'appelle pas la fonction `session`. **Persisté avant le code** : ce
 journal ; `docs/SPEC-edge-functions.md` §2 *bis* et §6 ; `docs/SPEC-session-sso.md` §5.1, §5.3, §5.5 ;
 `docs/INCONSISTENCY_REPORT.md` (INC-292).
+
+### décision 687 — `CRM-013`, INC-238 : la date de naissance d'une ligne de coût et d'une ligne de recette se ferme à l'appelant ordinaire
+
+*2026-10-25, session planifiée ouverte à 01:12:13 UTC (`docs/CloudWorker.md`). Tranché par la session (§4.1 bis) ; le
+responsable peut le contredire.*
+
+**Choix de l'unité.** La dernière entrée (686) traite INC-292 sous la prise vivante de `CRM-113` T3 (00:17 UTC, commits
+jusqu'à 01:09) ; `CRM-111` T1 bis porte la sienne (21:16 UTC, dernier commit à 23:56). Les deux sont sautées (§1 *bis*).
+Les autres unités `[~]` attendent la production, un constat ou un arbitrage de produit. `CRM-013`, première `[~]` du
+plan, porte un reste qui est du **comportement** : INC-238, dont l'issue était retenue et écrite le 2026-08-29 et la
+mise en œuvre « due à `CRM-013` ». Aucune prise, aucun commit ne la cite depuis six heures.
+
+**Décision** (`docs/SPEC-permissions-rls.md` §4.4.7) : `created_at` et `updated_at` de `card_costs` **et** de
+`card_revenues` fermées à `authenticated`, à l'insertion comme à la mise à jour, par privilèges de colonne (mécanisme du
+§4.3) ; toutes les autres colonnes gardent leurs privilèges, `id` compris (l'upsert du seed des recettes le réécrit) ;
+`service_role` intact, le seed antidate par lui. **Pourquoi les recettes aussi** : leur onglet « À saisir » classe et
+affiche l'ancienneté sur la même colonne ; le comportement est le même partout. **Écartés** : un trigger qui reposerait
+`now()` (il ignorerait l'écriture au lieu de la refuser, `CLAUDE.md` §18) ; étendre aux réels et à `cards.created_at`,
+qu'aucun signal ne lit (nommés au §4.4.7). **Connecteur MCP** : sans objet, la règle est en base et les outils
+n'envoient pas ces colonnes. **Migration** : `0104`.
+
+**Persisté avant le code** : ce journal ; `docs/SPEC-permissions-rls.md` §4.4.7 ; `docs/BACKLOG.md` (`CRM-013`).

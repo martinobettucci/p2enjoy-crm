@@ -632,6 +632,75 @@ bloc `GRANT` du §5.5, et la contradiction disparaît d'elle-même.
 7. la dépendance d'ordre **12 → 14** mesurée dans les deux sens, comme la 12 → 13 l'a été par
    `CRM-036` : rejouer la migration 12 seule **rouvre** la colonne.
 
+#### 4.4.7 La date de naissance d'une ligne de coût et d'une ligne de recette — INC-238, décision 687
+
+*Spécifié le 2026-10-25, avant le code, par la session planifiée qui prend la tranche (`docs/CloudWorker.md` §4.1 bis :
+l'issue d'INC-238 était déjà retenue et écrite, sa mise en œuvre due à `CRM-013`).*
+
+**Le défaut.** `card_costs.created_at` est acceptée telle quelle à l'insertion par PostgREST, pour un appelant
+ordinaire (INC-238, mesure M6 du 2026-08-29, `201` avec le jeton réel de l'administratrice). Or l'onglet « À saisir »
+mesure l'**ancienneté** d'une ligne sur cette colonne et l'allume en danger au-delà du seuil de son budget
+(`docs/SPEC-costs.md` §2.1 bis) : une ligne peut naître avec l'âge qu'on veut, et le signal se falsifie. Ce n'est pas
+une brèche d'autorisation — il faut déjà le droit d'écrire la ligne —, c'est une garantie d'intégrité absente.
+
+**La portée retenue : deux tables, deux colonnes.**
+
+| Table | Colonnes fermées à `authenticated`, à l'insertion **et** à la mise à jour | Motif |
+|---|---|---|
+| `card_costs` | `created_at`, `updated_at` | `created_at` porte l'ancienneté et son seuil (INC-238) ; `updated_at` est tenue par la base à la mise à jour, et ne doit pas davantage naître d'une valeur cliente |
+| `card_revenues` | `created_at`, `updated_at` | Le même onglet « À saisir » des recettes classe et affiche l'ancienneté sur `created_at` (`docs/SPEC-recettes.md` §6.4) : le comportement est **le même partout** (§4.1 *bis* de `docs/CloudWorker.md`) |
+
+Toutes les autres colonnes de ces deux tables gardent **exactement** leurs privilèges d'aujourd'hui, `id` compris :
+l'upsert du seed des recettes (`resolution=merge-duplicates`, sous le jeton de l'administratrice) réécrit `id` dans
+son `ON CONFLICT DO UPDATE`, et le lui retirer casserait un chemin sans rien protéger. La lecture reste ouverte : une
+date de création n'est pas un secret.
+
+**La forme est celle du §4.3, et il n'y en a pas d'autre.** Le privilège de table `insert, update` est retiré à
+`authenticated`, puis rendu colonne par colonne en énumérant les colonnes ouvertes. Un trigger qui reposerait
+`now()` ignorerait l'écriture au lieu de la refuser (`CLAUDE.md` §18, même motif qu'au §4.4.3) ; un trigger qui lèverait
+ferait double emploi avec le privilège. Contrairement à `cards.email_local_part` (§4.4.2), l'insertion **est**
+concernée : aucun trigger n'écrase `created_at`, la valeur fournie serait conservée.
+
+**`service_role` conserve tout.** Le seed antidate « Prospection terrain » de 120 jours par ce chemin, sous la clé de
+service (`supabase/seed/apply-seed.sh` §8 *quindecies*, `docs/SPEC-seed.md`) : c'est le seul moyen de rendre la
+variante de danger démontrable, et c'est l'issue écrite d'INC-238.
+
+**Aucun appelant légitime n'envoie ces colonnes**, relu dans le code avant d'écrire : la webapp (`creerLigneCout`,
+`modifierLigneCout`, `reels-ligne`, `card-revenues`) et le connecteur MCP (`crm_card_cost_add`, `_update`, `_settle`,
+les outils `recettes`) n'envoient que le rattachement, le libellé, le prévu et `settled_at`. Aucun écran ne change.
+
+**Contrat d'API**, mesuré sur la pile avec les jetons réels des profils du seed (les lignes *a* à *c* sont mesurées
+avant le code, l'état d'avant ; toutes le sont après) :
+
+| # | Appelant | Requête | Avant (mesuré) | Après |
+|---|---|---|---|---|
+| a | `admin` | `POST card_costs` avec `created_at` choisi | `201`, date conservée | `403`, `42501`, **aucune ligne créée** |
+| b | `admin` | `PATCH card_costs` `{created_at}` | à mesurer | `403`, `42501`, ligne relue inchangée |
+| c | `admin` | `POST card_revenues` avec `created_at` choisi | à mesurer | `403`, `42501`, aucune ligne créée |
+| d | `admin` | `POST card_costs` sans ces colonnes | `201` | `201`, `created_at` posée par la base |
+| e | `admin` | `PATCH card_costs` `{label}` | `200` | `200` — les colonnes ouvertes le restent |
+| f | `admin` | `PATCH card_costs` `{updated_at}` | à mesurer | `403`, `42501` |
+| g | `business_developer` | `POST card_revenues` avec `created_at` | à mesurer | `403`, `42501` |
+| h | `service_role` | `POST card_costs` avec `created_at` choisi | `201`, date conservée | `201`, date conservée — le chemin du seed |
+| i | anonyme | `POST card_costs` avec `created_at` | `401` | `401` |
+
+**Hors de cette tranche, et nommé.** Les tables des réels (`card_cost_actuals`, `card_revenue_actuals`) portent aussi
+un `created_at` ouvert à l'insertion, mais aucun signal ne le lit : leur date métier est `spent_on` / `received_on`,
+saisie par la personne, à juste titre. `cards.created_at` est fermée à la mise à jour depuis `CRM-034` (§4.3) et reste
+ouverte à l'insertion ; aucune ancienneté ne s'y mesure (l'ancienneté à l'étape lit `entered_step_at`, fermée). Ces
+écarts ne falsifient aucun signal livré : ils ne sont pas fermés ici, et la question se reposera si un signal vient les
+lire.
+
+**Connecteur MCP** : sans objet. La règle vit en base et s'applique telle quelle aux outils des familles `budgets` et
+`recettes`, qui n'envoient pas ces colonnes ; aucun outil ni aucune case de la matrice ne change.
+
+**Preuves dues** : pgTAP (privilèges énumérés colonne par colonne sur les deux tables, refus `42501` sous le rôle
+`authenticated` à l'insertion et à la mise à jour, `service_role` intact, mutation qui rouvre la colonne et rend la
+suite rouge) ; API aux jetons réels (contrat ci-dessus) ; unitaire de la webapp (les écritures de lignes n'envoient
+jamais `created_at` ni `updated_at`) ; E2E d'interface existants rejoués sur la pile (une ligne de coût et une ligne de
+recette créées à l'écran, l'onglet « À saisir » avec la ligne antidatée du seed en danger) ; seed rejoué sans erreur ;
+`scripts/verify-colonnes-protegees.sh` étendu.
+
 ## 5. Storage
 
 Les pièces jointes et les fichiers de formulaire sont rangés sous un préfixe portant le

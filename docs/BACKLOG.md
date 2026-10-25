@@ -994,6 +994,11 @@ ligne** et non une erreur ambiguë.
       une révocation supposant un `UPDATE` accordé par ailleurs. Les témoins vérifient désormais ce
       FAIT au lieu de figer une absence, et la preuve de refus n° 6 est **acquise** depuis
       `CRM-052` (`docs/SPEC-permissions-rls.md` §7.2).
+- [@] **INC-238 — la date de naissance d'une ligne de coût et d'une ligne de recette** (décision 687,
+      `docs/SPEC-permissions-rls.md` §4.4.7) : `created_at` et `updated_at` de `card_costs` et `card_revenues` fermées
+      à `authenticated` à l'insertion et à la mise à jour, migration `0104` ; pgTAP, API aux jetons réels, unitaire de
+      la webapp, E2E existants rejoués, seed rejoué, `verify-colonnes-protegees.sh` étendu. *Spécifiée le 2026-10-25
+      avant le code.*
 - [ ] **DEUX CIBLES RESTENT DUES, ET LEURS TABLES N'EXISTENT TOUJOURS PAS** :
       `api_tokens.token_hash` (`CRM-073`) et `audit_log` (`CRM-072`). La preuve de refus n° 8 reste
       donc incomplète pour `audit_log`. Chaque absence est figée par une assertion pgTAP **et** par
