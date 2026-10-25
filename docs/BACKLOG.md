@@ -110,6 +110,9 @@ dev ; aucun service de développement présent en prod.
       `CRM-009` l'a rendu exhaustif ; `CRM-016` porte l'état courant à **17 services persistants**,
       **3 tâches one-shot** et **10 services réservés au développement**, dont `auth-templates` et
       le runtime `functions` réellement appelé à travers Kong.
+- [@] **Tranche INC-299 — Kong réutilise une connexion que PostgREST a fermée : `502`** : mesurer les délais de
+      maintien des deux côtés, aligner celui de Kong sous celui de l'amont, le prouver par une boucle de requêtes.
+      *Prise en charge : CloudWorker 2026-10-25 07:12:34 UTC depuis 2026-10-25 07:20 UTC — état avant : [ ]*
 
 *DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
 aucune logique métier ni parcours utilisateur, seulement l'assemblage d'exécution. Les preuves
