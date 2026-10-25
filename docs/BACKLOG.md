@@ -3275,7 +3275,8 @@ mesurait. **Vérification visuelle faite**, trois captures observées.
   celui attendu par l'image ; la pile a été démarrée sans lui, ce qui est sans effet sur les preuves,
   Playwright démarrant son propre serveur. **INC-042.**
 
-### CRM-034 — `move_card`, garde centrale `[~]`
+### CRM-034 — `move_card`, garde centrale `[x]`
+*Soldée `[x]` le 2026-10-25 (décision 705, remise du backlog à l'état réel) : la garde a sa surface et ses captures : le board de `CRM-041` (`[x]`) l'exerce — `e2e/ui/board.spec.ts` « motif exigé » et « champs manquants », captures `docs/captures/CRM-041/board-motif-exige-1440.jpg` et `board-champs-manquants-1440.jpg` ; INC-050, INC-051 et INC-052 sont closes.*
 Les six vérifications de `docs/SPEC-workflow-engine.md` §5.
 **DoD** : pgTAP pour chacune des six ; preuves de refus n° 1 et 5 ; message d'erreur listant les
 clés manquantes.
@@ -3463,7 +3464,8 @@ l'absence qui était nommée ici a été comblée par l'unité que le plan dési
   `select=*` ; il est révisé sur place, pas recopié. **26 scénarios verts**, et l'ancienneté relue
   en base après exécution est celle d'avant.
 
-### CRM-035 — Définition des champs `[~]`
+### CRM-035 — Définition des champs `[x]`
+*Soldée `[x]` le 2026-10-25 (décision 705, remise du backlog à l'état réel) : la copie des champs est prouvée sous `CRM-018` (`[x]`) — `supabase/tests/0008_copie_workflow.test.sql` « sa copie porte les neuf champs remappés par le produit », `scripts/verify-copie-workflow.sh` 30/30 le 2026-10-25 ; la grille a son écran, son E2E et ses captures par `CRM-076` (`[x]`, « la grille champ × étape sur la vraie base »).*
 `form_fields`, `form_field_rules`, grille champ × étape dans l'éditeur.
 **DoD** : unitaire, API (écriture réservée aux administrateurs), E2E, captures de la grille.
 
@@ -3574,7 +3576,7 @@ l'absence qui était nommée ici a été comblée par l'unité que le plan dési
       reste au premier rang des travaux de cette unité.*
       Les règles sont livrées et prouvées **en base et par l'API**, ce que `CLAUDE.md` §10 exige de
       toute façon.
-- [ ] **La copie du formulaire rouvre cette preuve sous `CRM-018`.** La décision 293 remplace la
+- [x] **La copie du formulaire rouvre cette preuve sous `CRM-018`.** La décision 293 remplace la
       frontière historique de la décision 93 : champs, règles et exigences doivent être remappés
       par le vrai geste de copie. Les assertions qui exigeaient zéro champ sont remplacées par des
       preuves d'équivalence métier et d'identifiants distincts.
@@ -3614,7 +3616,8 @@ suppression d'un champ laisse aujourd'hui des identifiants morts dans
 `workflow_transitions.require_fields`, sans que rien ne le signale. La table de liaison décidée
 rend le nettoyage automatique. **Mise en œuvre : `CRM-018`.**
 
-### CRM-036 — Valeurs et validation `[~]`
+### CRM-036 — Valeurs et validation `[x]`
+*Soldée `[x]` le 2026-10-25 (décision 705, remise du backlog à l'état réel) : l'écran, l'E2E et les captures du formulaire sont l'objet de `CRM-037`, que l'unité désignait elle-même (`e2e/ui/formulaire.spec.ts`, vert à la campagne du 2026-10-25) ; `user` et `contact` sont résolus depuis `CRM-060` tranche 3 (migration `0047`, INC-053 close).*
 `card_field_values`, validation par type, union étape + transition.
 **DoD** : pgTAP (type incorrect refusé, `hidden` non exigé, règle ajoutée après coup
 n'invalidant pas l'existant).
@@ -3726,7 +3729,7 @@ n'invalidant pas l'existant).
       §8, §9, `docs/SPEC-seed.md` §2.13, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` §3 (migration 13),
       `docs/manual.md` chapitres 4.3, 5, 6, 23 et 24, `README.md`, `CHANGELOG.md` mis à jour dans le
       même changement.
-- [ ] **Aucun écran, aucune capture, aucun test E2E d'interface.** Le rendu du formulaire, sa
+- [x] **Aucun écran, aucune capture, aucun test E2E d'interface.** Le rendu du formulaire, sa
       section repliée et la mention « requis pour passer à » sont `CRM-037` ; et la webapp reste un
       appelant **anonyme** faute d'écran de connexion. *~~INC-021, en attente d'arbitrage.~~ RÉVISÉ le 2026-08-18 : INC-021 est CLOSE depuis le
       2026-08-07, fermée par `CRM-009`, et la webapp n'est plus un appelant anonyme — elle porte
@@ -3737,7 +3740,7 @@ n'invalidant pas l'existant).
       Le raisonnement qui suivait — « une valeur de formulaire est par construction invisible à un
       anonyme, qui ne voit déjà aucune card, donc aucune vérification visuelle n'a de sens » —
       **tombe avec sa prémisse** : un utilisateur connecté voit les cards et leurs formulaires.
-- [ ] **`user` et `contact` ne sont pas résolus** : leur valeur est validée comme un `uuid`, et rien
+- [x] **`user` et `contact` ne sont pas résolus** : leur valeur est validée comme un `uuid`, et rien
       de plus. **Le motif a changé le 2026-08-18** : `contacts` **existe** depuis `CRM-060`
       tranche 1 (décision 445), et l'assertion figée par cette unité qui attendait l'absence de la
       table a été **retournée** en `has_table` dans le même changement
@@ -3796,7 +3799,8 @@ compensée par une preuve de substitution.
   certificat du proxy suivie d'un `npm ci` précédé d'un `npm config set cafile` (INC-032, INC-042),
   et l'arborescence de compatibilité des navigateurs Playwright (INC-036, **sixième** occurrence).
 
-### CRM-037 — Rendu du formulaire conditionnel `[~]`
+### CRM-037 — Rendu du formulaire conditionnel `[P]`
+*Reclassée `[P]` le 2026-10-25 (décision 705) : son seul point ouvert, la tranche INC-134, est implémenté et vérifié en développement ; il ne reste que la livraison (`docs/PROD_MIGRATIONS.md` §2.20) et le constat du responsable.*
 Champs par étape, section repliée des valeurs d'autres étapes, mention « requis pour passer à ».
 **DoD** : E2E (transition bloquée, saisie, transition réussie) ; captures de chaque étape ;
 accessibilité des erreurs vérifiée.
@@ -4160,7 +4164,7 @@ table, ni statut, ni flux.
   arbitrage sur ce que la mention doit dire.~~ **Tranchée le 2026-10-25** (décision 688) : la mention
   devient « Requis à l'étape <étape> », clé paramétrée `form.required.reason`. Mise en œuvre : voir
   la tranche INC-134 ci-dessous.
-- [~] **Tranche INC-134 — la mention d'un champ exigé à l'étape courante** (décision 688,
+- [P] **Tranche INC-134 — la mention d'un champ exigé à l'étape courante** (décision 688,
       `docs/SPEC-form-composer.md` §4.4, `docs/DESIGN_SYSTEM.md` §5.7). **Implémentée et vérifiée en
       développement le 2026-10-25.** Clé paramétrée `form.required.reason` = « Requis à l'étape {etape} »,
       `FormulaireCard` l'interpole. Unitaire : texte entier comparé, une mutation tuée (la concaténation
@@ -4205,7 +4209,8 @@ table, ni statut, ni flux.
 - **Sur l'hôte de vérification, la chaîne s'exécute sous Node 22.22.2**, alors que le dépôt exige
   Node 24. Limite héritée, inchangée.
 
-### CRM-040 — Cards `[~]`
+### CRM-040 — Cards `[x]`
+*Soldée `[x]` le 2026-10-25 (décision 705, remise du backlog à l'état réel) : le seed porte des affaires sur le workflow dérivé — mesuré le 2026-10-25 : 2 affaires sur 1 workflow dont `derived_from_workflow_id` est posé (`supabase/seed/apply-seed.sh`, `docs/SPEC-seed.md` §9.4) ; INC-046 est close.*
 CRUD, adresse email générée, responsable, montant, archivage, corbeille.
 **DoD** : pgTAP sur la génération et l'unicité de `email_local_part` ; E2E ; captures.
 
@@ -4430,7 +4435,7 @@ CRUD, adresse email générée, responsable, montant, archivage, corbeille.
       close (deux de ses six cibles closes ; il lui reste `audit_log` et `api_tokens.token_hash`,
       dus par `CRM-072` et `CRM-073`). L'écart signalé par cette ligne n'existe plus. Ligne
       corrigée sans autre changement, dans l'esprit de décision 486.
-- [ ] **Aucune card sur un workflow dérivé dans le seed** — INC-046 (voir ci-dessus). La divergence
+- [x] **Aucune card sur un workflow dérivé dans le seed** — INC-046 (voir ci-dessus). La divergence
       de `CRM-032` reste donc démontrée par ses étapes et ses transitions, jamais par une card qui
       les emprunterait.
 
@@ -6525,7 +6530,8 @@ annoncent `waiting_for_configuration`, et le harnais échoue si l'un d'eux prét
 comptes arrivent en `CRM-052`, l'ingestion en `CRM-054`. Aucun écran n'est dû : `mail-sync` est un
 service interne, sans interface — INC-021 ne s'y applique pas.
 
-### CRM-052 — Comptes entrants IMAP `[~]`
+### CRM-052 — Comptes entrants IMAP `[x]`
+*Soldée `[x]` le 2026-10-25 (décision 705, remise du backlog à l'état réel) : l'écran est livré par `CRM-088` (`[x]`, réglages des comptes entrants IMAP, `e2e/ui/reglages-comptes-mail.spec.ts`).*
 Configuration, secret chiffré, test de connexion réel, état de synchronisation.
 **DoD** : `CRM-004` tranché ; preuve de refus n° 6 (secret illisible) et n° 7 ; E2E de connexion
 d'une boîte ; message d'erreur assaini vérifié.
@@ -6624,7 +6630,7 @@ d'une boîte ; message d'erreur assaini vérifié.
       « une cinquième fonction la rendra rouge à son tour ». Elle l'a fait. Les trois fonctions y
       sont déclarées, et **deux d'entre elles restent inaccessibles au client** — le type les voit,
       la base les refuse, et c'est la différence entre ce qui est déclaré et ce qui est consenti.
-- [ ] **Aucun écran**, et l'écart est nommé au §13.1 : le §2.3 décrit des formulaires qu'aucune
+- [x] **Aucun écran**, et l'écart est nommé au §13.1 : le §2.3 décrit des formulaires qu'aucune
       unité du backlog ne porte. Le geste existe par l'API interne du service, comme l'exploitant
       l'exercera. **Seul écart restant de cette unité.**
 
@@ -6650,7 +6656,8 @@ jamais.
   Aucune purge n'est livrée : elle relève d'une unité RGPD, et la nommer ici vaut mieux que
   d'écrire un `DELETE` sur un schéma que le produit ne gouverne pas.
 
-### CRM-053 — Identités sortantes SMTP `[~]`
+### CRM-053 — Identités sortantes SMTP `[x]`
+*Soldée `[x]` le 2026-10-25 (décision 705, remise du backlog à l'état réel) : l'écran est livré par `CRM-089` (`[x]`, réglages des identités sortantes, `e2e/ui/reglages-identites-mail.spec.ts`) ; la preuve de refus n° 12 est mesurée depuis la décision 444.*
 Indépendantes des comptes entrants, adresse d'expédition, signature, quota.
 **DoD** : E2E de configuration ; preuve de refus n° 12 ; cas « entrant Yahoo / sortant interne »
 présent dans le seed.
@@ -6705,7 +6712,7 @@ présent dans le seed.
 - [x] **`docs/manual.md` chapitre 4.13** : recevoir et expédier sont deux choses distinctes,
       l'adresse par défaut se déplace, l'adresse d'expédition est vérifiée à l'enregistrement, et
       le quota n'est appliqué par rien.
-- [~] **~~La preuve de refus n° 12 reste hors d'atteinte.~~ RÉVISÉ le 2026-08-18 : elle est
+- [x] **~~La preuve de refus n° 12 reste hors d'atteinte.~~ RÉVISÉ le 2026-08-18 : elle est
       ATTEIGNABLE depuis `CRM-058`**, qui a livré `queue_outbound_email`. L'assertion qui figeait
       l'absence n'a pas rougi à cette naissance : elle appelle la fonction sans argument et lit le
       `PGRST202` d'une signature non correspondante comme une preuve d'absence — **INC-146**.
@@ -6713,7 +6720,7 @@ présent dans le seed.
       `identity_not_available` avec les jetons réels. C'est le registre des douze preuves qui ment
       sur son état, pas le produit qui manque à sa règle.
       *Reste dû* : retourner l'assertion, ce qui exige la pile — indisponible ce jour (INC-145).
-- [ ] **Aucun écran**, même écart qu'à `CRM-052` et pour la même raison.
+- [x] **Aucun écran**, même écart qu'à `CRM-052` et pour la même raison.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E de configuration ; preuve
 de refus n° 12 ; cas “entrant Yahoo / sortant interne” présent dans le seed ». **Le premier et le
@@ -6731,7 +6738,8 @@ preuve de substitution, et l'unité reste `[~]` pour cette raison.
 - **Aucun message n'est envoyé, pas même par le test** : le test s'authentifie et referme.
 - **Aucun écran de configuration.**
 
-### CRM-054 — Ingestion `[~]`
+### CRM-054 — Ingestion `[x]`
+*Soldée `[x]` le 2026-10-25 (décision 705, remise du backlog à l'état réel) : chacun de ses écarts est livré par l'unité qu'il nommait : le classement par `CRM-055` (soldée ce jour), la veille par `CRM-059` (`[x]`), les dossiers par `CRM-056` (`[x]`), l'écran par `CRM-057` (inbox livrée), l'envoi par `CRM-058` (envoi livré).*
 IDLE, analyse MIME, dédoublonnage par `Message-ID`, occurrences, pièces jointes, antivirus.
 **DoD** : pytest unitaire et intégration contre Stalwart ; E2E `mail` avec un email **réellement
 envoyé** ; pièce jointe `infected` non téléchargeable (preuve n° 9) ; empreinte de repli testée.
@@ -6798,12 +6806,12 @@ envoyé** ; pièce jointe `infected` non téléchargeable (preuve n° 9) ; empre
 - [x] **Compteurs de `scripts/verify-harness.sh` révisés** : 25 → **26** fichiers SQL,
       1797 → **1823** assertions, 463 → **466** scénarios d'API — dont **un de moins** dans
       `preuves-refus`, la table sortant de la liste des absences —, 32 → **34** scénarios `mail`.
-- [ ] **Aucun classement** : un message ingéré est `unclassified`, et les quatre règles du §4.4
+- [x] **Aucun classement** : un message ingéré est `unclassified`, et les quatre règles du §4.4
       appartiennent à `CRM-055`. Le harnais échoue si un message classé apparaissait.
-- [ ] **Aucune veille permanente** : la relève est déclenchée par l'API interne. IDLE est **mesuré
+- [x] **Aucune veille permanente** : la relève est déclenchée par l'API interne. IDLE est **mesuré
       disponible** — et seulement **après authentification**, ce qu'un client naïf ne verrait pas —
       mais la boucle durable, sa reprise et sa supervision appartiennent à `CRM-059`.
-- [ ] **Aucun dossier IMAP créé** (`CRM-056`), **aucun écran** (`CRM-057`), **aucun envoi**
+- [x] **Aucun dossier IMAP créé** (`CRM-056`), **aucun écran** (`CRM-057`), **aucun envoi**
       (`CRM-058`).
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « pytest unitaire et intégration
@@ -6820,7 +6828,8 @@ reste `[~]` pour les écarts ci-dessus, tous nommés et tous portés par une uni
   suivante devrait défaire serait pire que l'absence, et une assertion le fige.
 - **Aucune purge** : un message ingéré reste, et sa suppression relève d'une unité RGPD.
 
-### CRM-055 — Classement assisté `[~]`
+### CRM-055 — Classement assisté `[x]`
+*Soldée `[x]` le 2026-10-25 (décision 705, remise du backlog à l'état réel) : tous ses points sont cochés, tranche 2 (déclassement) comprise — fonction, pgTAP, API aux jetons réels, surface, E2E, captures, harnais, documentation ; les écarts que son texte invoquait sont livrés.*
 Les quatre règles, dont la suggestion non classante.
 **DoD** : pytest par règle ; E2E de classement manuel ; si `CRM-060` n'est pas livré, règle 3
 désactivée et documentée comme telle.
@@ -6880,7 +6889,7 @@ désactivée et documentée comme telle.
       active). La **preuve visible** de la suggestion attend l'écran de l'inbox (`CRM-057`).
 - [x] **~~Aucun écran~~** (`CRM-057`) — **livré le 2026-08-11**, et la suggestion de la règle 3 est
       montrée depuis le 2026-08-20 (`CRM-060` sous-tranche 2 bis).
-- [~] **TRANCHE 2 — LE DÉCLASSEMENT. ARBITRÉ ET SPÉCIFIÉ le 2026-08-28**
+- [x] **TRANCHE 2 — LE DÉCLASSEMENT. ARBITRÉ ET SPÉCIFIÉ le 2026-08-28**
       (`docs/JOURNAL.md` décision 536, `docs/SPEC-mail-subsystem.md` §16.5), après **trois mesures**
       sur la pile seedée. *~~Aucun déclassement : rien dans le §4.4 ne le décrit, et l'inventer
       obligerait à décider ce que devient l'événement déjà écrit — une question qui appartient à
@@ -7059,6 +7068,7 @@ dégradations comprises.
 - **Un rangement manqué n'est pas rejoué** (voir ci-dessus).
 
 ### CRM-057 — Inbox globale `[~]`
+***Reste réel au 2026-10-25 (décision 705)** : deux absences figées qu'aucune spécification ne porte — la notion de lu / non lu et un rôle de tri des messages non classés. Les livrer, ou les déclarer hors périmètre, est un **choix de produit du responsable** ; l'envoi depuis l'inbox relève de `CRM-058`.*
 Trois panneaux, arborescence Track → Channel → Card, « Non classés », pile sous 1024 px.
 **DoD** : E2E ; captures aux quatre paliers ; message classé visible **à la fois** dans la card
 et dans l'inbox.
@@ -7132,6 +7142,7 @@ Ce qui est **déjà tranché**, et ne le sera pas pendant l'implémentation :
   démontre rien, et une trace fabriquée est interdite (CLAUDE.md §8).
 
 ### CRM-058 — Composition et réponse `[~]`
+***Reste réel au 2026-10-25 (décision 705)** : la reprise et le recul sont livrés par `CRM-059` (`[x]`) et les signatures par `CRM-063` (`[x]`) ; restent les **pièces jointes à l'envoi** et la **copie cachée**, qu'aucune spécification ne porte — **choix de produit du responsable** (les livrer, ou les déclarer hors périmètre).*
 `queue_outbound_email`, `smtp_worker`, `Reply-To` de la card, fil respecté, envoi depuis la card
 ou depuis l'inbox par le même chemin.
 **DoD** : E2E `mail` d'aller-retour complet ; en-têtes de threading vérifiés sur le message reçu ;
@@ -10886,6 +10897,7 @@ dégradations réelles.
       `tableau-doublon-archive-recours-1440.jpg`, `tableau-doublon-archive-sm-390.jpg`.
 
 ### CRM-083 — Canevas d'objectifs `[~]`
+***Reste réel au 2026-10-25 (décision 705), faisable par un agent** : le chapitre du canevas d'objectifs dans `docs/manual.md` (INC-214, ouverte, mesuré : aucun chapitre) ; les captures du palier `sm-390` prises sur une page décalée (INC-237) ; le « lien perdu » du §5.4 (INC-169). La série des `verify-*.sh` n'est la DoD d'aucune unité (décision 553) : ce motif ne retient plus l'unité.*
 
 Entrée de navigation « Objectifs », liste des tableaux, canevas pannable et zoomable, blocs
 déplaçables et redimensionnables, flèches à trois directions, jauge de remplissage saisie à la main,
@@ -12706,6 +12718,7 @@ of Done : les deux sont explicitement hors périmètre depuis le §7 bis.11.7, e
 unité qui les portera.
 
 ### CRM-077 — Corbeille et restauration `[~]`
+***Reste réel au 2026-10-25 (décision 705)** : trois **arbitrages du responsable** — la durée de rétention, l'effacement définitif et son parcours RGPD, la visibilité de la corbeille pour un membre ordinaire. Aucune dette de construction.*
 
 Suppression logique et restauration de cards, tracks et channels avec dépendances visibles,
 durée de rétention et effacement définitif réservé au parcours RGPD. **DoD** : aucun objet enfant
@@ -14231,6 +14244,7 @@ harnais propre à cette unité.
 **Harnais de l'unité, verdicts de la série du 2026-08-29** : `verify-sauvegardes.sh`, `verify-restauration.sh` et `verify-exploitation.sh` (**59 contrôles**) sont **verts**. La question du §INC-190 point (a)/(b)/(c) qui retenait la promotion est **tranchée** par la décision 553 : voie (a).
 
 ### CRM-087 — Migration de production par le runner, sur geste explicite `[~]`
+***Reste réel au 2026-10-25 (décision 705)** : la preuve sur une pile de production **jetable** (base vierge, `--migrate`, une table de la dernière migration jointe par l'API sans redémarrage), faisable par un agent sur le poste ; INC-095, que l'unité désignait comme dépendance, est close. Les livraisons de production des 21 au 24 octobre ont migré par le runner (registre à 101 lignes) : si le responsable les juge probantes, l'unité se solde sur elles.*
 *Créée le 2026-08-20 par arbitrage du responsable — `docs/JOURNAL.md` décision 489. Motif :
 l'application manuelle, fichier par fichier, des 52 migrations du dépôt ne passe pas à l'échelle
 d'une livraison ordinaire. La production prend des instantanés de VM complets ; le retour arrière
@@ -15835,6 +15849,7 @@ chacune dans son propre commit, avant `CRM-097` T3 ; la livraison en production 
 ## Demande du 2026-10-21 — décision 629
 
 ### CRM-105 — La description d'un track, d'un channel et d'une affaire en infobulle sur l'élément qui la porte `[~]`
+***Reste réel au 2026-10-25 (décision 705)** : la **validation par le responsable** de la spécification de T1 (`docs/DESIGN_SYSTEM.md` §5.58 et les chapitres cités), puis la livraison de T3 en production et son constat.*
 *Créée le 2026-10-21 — demande du responsable : « les tracks, les channels et les affaires ont un champ description qui
 devrait afficher une tooltip au survol de la souris sur l'élément correspondant en UI ». Mesuré : les trois colonnes
 existent, aucune n'est lue par les écrans qui montrent ces objets. Choix de forme de l'agent, écrits pour relecture
@@ -16140,6 +16155,7 @@ peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi e
 - [x] **T4** — livraison en production, sur instruction du responsable : T1 et T2 par la fenêtre `8026e90e` (migration 98), T3 par la seconde fenêtre `e9255249` (migration 99) le 2026-10-23 ; `verifier.sh` 26/27, registre à 99, `401` sans session ; constat visuel en production à faire par le responsable.
 
 ### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[~]`
+***Reste réel au 2026-10-25 (décision 705), faisable par un agent** : renouveler et observer les captures des autres unités qui montrent encore l'ancien en-tête (T3) ; puis la livraison de la webapp (T4, T5) et le constat du responsable.*
 *Créée le 2026-10-23 — demande du responsable : « le navbar en haut ne montre pas l'arborescence quand on a une affaire
 ouverte, donc difficile de savoir où on est ». Arbitrages du responsable le même jour (`docs/JOURNAL.md` décision 636).
 Spécifiée avant le code : `docs/SPEC-webapp.md` §5.1 bis, `docs/DESIGN_SYSTEM.md` §5.62 et §12.2. Connecteur MCP :
@@ -16189,6 +16205,7 @@ non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
 ## Constat du 2026-10-23 — décision 646
 
 ### CRM-113 — Le générateur de workflow connaît les champs natifs de l'affaire et réutilise le catalogue sous un libellé surchargé `[~]`
+***Reste réel au 2026-10-25 (décision 705)** : la **relecture par le responsable** des choix de forme marqués au `docs/SPEC-ia.md` §14 (T3), puis la livraison de T4 sur son instruction ; la campagne d'interface du 2026-10-25 ne rougit sur aucune spec de l'unité.*
 *Créée le 2026-10-23 — décision 646, constat et arbitrages du responsable : le générateur proposait un champ
 « montant » que l'affaire porte déjà, et déclarait des nœuds nouveaux au lieu de viser le nœud du catalogue sous un
 libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'étape. Spécifiée avant le code :
