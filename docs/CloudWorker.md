@@ -1141,9 +1141,18 @@ est sautée**, sauf prise expirée (§1 *bis*, point 3). **Une unité ou une tra
 2. sinon, la première unité "[~]" du backlog dans l'ordre du plan dont il
    reste du COMPORTEMENT à livrer — du code, un écran, une migration, un
    parcours — et tu la fais avancer par du code ;
-3. sinon, la première unité "[ ]" dans l'ordre du plan.
+3. sinon, la première unité "[ ]" dans l'ordre du plan ;
+4. **sinon — aucune unité ne peut plus avancer, toutes étant `[x]`, `[P]` ou bloquées (§4.5.1, point 2) — la première
+   entrée OUVERTE de `docs/INCONSISTENCY_REPORT.md`, dans l'ordre du registre, qui porte une « issue proposée » ou une
+   « issue retenue » non encore livrée** (décision 705, option B du responsable). Une entrée dont l'issue demande
+   l'arbitrage du responsable (§4.1 *bis*, liste fermée) est sautée. **Une par session**, menée comme une unité : prise
+   en charge d'abord, spécification si l'issue en exige une, code, preuves, entrée close en nommant l'issue livrée — et
+   la même obligation de pousser au moins un commit de code (§4.2 *bis*). **La prise en charge** s'écrit dans l'entrée
+   même, sous son titre : « *Prise en charge : CloudWorker <horodatage> depuis <AAAA-MM-JJ HH:MM UTC>* », committée
+   seule et poussée aussitôt ; le push est le verrou, et les règles du §1 *bis* s'appliquent à l'identique (prise d'un
+   autre sautée, expirée après 6 heures sans commit citant l'INC).
 
-Une entrée du registre ne devient l'objet d'une session QUE dans deux cas :
+Tant qu'une unité du backlog peut avancer, une entrée du registre ne devient l'objet d'une session QUE dans deux cas :
 
 - elle bloque concrètement l'unité produit choisie — alors tu la traites
   comme un préalable, dans la même session, et tu reviens à l'unité ;
@@ -1284,9 +1293,10 @@ rien à faire.
 
 Tu arrêtes la tâche planifiée si, et seulement si, l'une des deux est vraie :
 
-1. **Le backlog est intégralement soldé.** Toutes les unités de `docs/BACKLOG.md` sont `[x]`, chacune
-   avec sa Definition of Done réellement vérifiée. Une unité `[~]` — même « presque finie », même
-   « il ne manque que des preuves » — **interdit** l'arrêt : il reste du travail, et c'est
+1. **Le backlog est intégralement soldé, ET la file des INC du §4.2 (point 4) est épuisée.** Toutes les unités de
+   `docs/BACKLOG.md` sont `[x]`, chacune avec sa Definition of Done réellement vérifiée, et aucune entrée ouverte du
+   registre ne porte d'issue proposée ou retenue que tu puisses livrer seul (décision 705). Une unité `[~]` — même
+   « presque finie », même « il ne manque que des preuves » — **interdit** l'arrêt : il reste du travail, et c'est
    exactement le travail de la session suivante.
 
 2. **Tu n'as plus aucune option pour avancer.** Toutes les unités restantes sont bloquées par une
@@ -1295,7 +1305,8 @@ Tu arrêtes la tâche planifiée si, et seulement si, l'une des deux est vraie :
    indisponible, un accès refusé, une pile qui ne monte pas et dont l'échec te prive de toute
    preuve. La cause doit être **nommée et mesurée**, pas supposée. **Une unité `[P]` compte parmi les unités
    bloquées** (décision 697) : ce qui lui reste n'appartient qu'au responsable. Toutes les unités restantes `[P]`, ou
-   `[P]` et bloquées, valent donc cette condition.
+   `[P]` et bloquées, valent donc cette condition — **à la condition, depuis la décision 705, que la file des INC du
+   §4.2 (point 4) soit elle aussi épuisée** : il ne reste aucune entrée ouverte dont tu puisses livrer seul l'issue.
 
 **Ce qui n'est PAS une condition d'arrêt**, et la liste est fermée :
 

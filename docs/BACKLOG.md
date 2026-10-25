@@ -16354,7 +16354,24 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       compare l'empreinte `pg_dump -s` de `public` et `app` avant et après lui, et reconstruit si elle diffère
       (`docs/SPEC-test-harness.md` §3.6) ; `verify-droits-fins.sh` garde la sortie de chaque sous-harnais et en cite la
       fin sur un échec. Les douze harnais d'INC-304 d'abord mesurés, puis corrigés là où ils laissent un résidu.
-- [ ] **T2 — bascule, en un seul changement** (§3, §4, §5, §10) : migration — `card_placements`, reprise d'un
+- [ ] **T2 — bascule, découpée en quatre étapes vertes (décision 705, option B)** ; chaque étape poussée laisse `main` vert, et
+      aucune fonction n'expose jamais deux contrats à la fois (décision 661, tenue fonction par fonction) :
+      - [ ] **T2.1 — la table et la reprise** : `card_placements` (§3.1), une ligne par affaire reprise de `cards`,
+        politiques sous la forme optimisée et ses trois gardes ; `cards` reste le chemin d'écriture, et un déclencheur
+        reporte chaque écriture de ses colonnes de rattachement dans le rattachement unique. Aucun appelant ne change.
+        Preuve : rattachements égaux aux colonnes de `cards` après la reprise et après chaque geste ; suite existante verte.
+      - [ ] **T2.2 — les lectures** : `placement_id` dans `card_field_values`, `card_events`,
+        `card_sequence_enrollments`, renseigné ; les fonctions qui LISENT une colonne de rattachement (droits, lectures
+        métier, ordonnanceur, messagerie, §2 bis.1) lisent `card_placements`, signatures inchangées. Preuve : suite verte.
+      - [ ] **T2.3 — les signatures, par groupe** (§5) : pour chaque geste, l'ancienne signature par affaire est retirée
+        dans le même changement que sa remplaçante par rattachement et que tous ses appelants (webapp, connecteur, seed,
+        scripts, pgTAP, API, E2E) ; le chemin d'écriture passe à `card_placements`, et le déclencheur s'inverse tant que
+        des lecteurs de `cards` subsistent. Preuve par groupe : aucune ancienne signature au catalogue, suite verte.
+      - [ ] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
+        politique de `cards` sous la forme optimisée ; types régénérés. Preuve : aucun changement visible, toute la suite
+        verte ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière possible tant que chaque affaire
+        n'a qu'un rattachement).
+      *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses
       trois gardes — volatilité `STABLE` vérifiée au catalogue, aucun cache, preuve de fraîcheur en requêtes préparées —,
@@ -16431,7 +16448,7 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       unique), `http://mcp:8080` dans le seed, alias réseau `realtime-dev.realtime` dans `kong.yml` ; garde contre tout
       nom `p2enjoy-<service>` littéral, éprouvée par une mutation ; les neuf `container_name` du fichier de base passent
       dans les assemblages de production et de la cellule, dont les noms sont prouvés inchangés par `config`.
-      *Implémentée et vérifiée en développement le 2026-10-25 (décisions 702 et 703).* Ligne de base relevée avant le
+      *Q1 A et Q2 B confirmés par le responsable (décision 703).* *Implémentée et vérifiée en développement le 2026-10-25 (décisions 702 et 703).* Ligne de base relevée avant le
       code : 243 occurrences dans 124 fichiers de code, 10 noms de production et 12 de la cellule rendus par `config`.
       - Livré : `scripts/lib/conteneur.sh` (`conteneur`, `conteneur_en_marche`), `e2e/conteneur.ts` ; 67 harnais,
         12 preuves Playwright, seed, bibliothèque de reconstruction, modes d'emploi pgTAP ; aucun `container_name` en
@@ -16452,7 +16469,7 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       - **Reste `[P]`** : la livraison de `docs/PROD_MIGRATIONS.md` §2.22 (Kong et Realtime recréés, noms inchangés),
         sur l'instruction du responsable, et son constat.
 - [ ] **T3 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un
-      recyclage de VM, deux attributions simultanées départagées). Après validation du §11 de la spécification.
+      recyclage de VM, deux attributions simultanées départagées). Le §11 de la spécification est validé (décision 705).
 - [ ] **T4 — la pile par emplacement** : nom de projet et ports par emplacement, `.env`, realm Keycloak ;
       `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev` ; `P2ENJOY_TMP` ; `docs/CloudWorker.md`.
 - [ ] **T5 — preuve** : deux piles debout en même temps sur le même démon, chacune sa preuve courte, sans interférence

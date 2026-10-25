@@ -34507,3 +34507,29 @@ hors interface (927 passés, 6 échecs), et les 19 scénarios d'interface rougis
 rejoués seuls, comme sur une pile recomposée avec les fichiers d'avant la tranche — ligne de base consignée en INC-310.
 **Où reprendre** : `CRM-115` T3 (registre et attribution) attend la validation des quatre points du §11 de
 `docs/SPEC-pile-par-session.md` ; T2 est `[P]`, sa livraison (§2.22) attend l'instruction du responsable.
+
+### décision 705 — Arbitrages du responsable du 2026-10-25 (soir) : la bascule de `CRM-111` découpée, la pile par session validée, les INC après le backlog, le backlog remis à l'état réel
+
+*2026-10-25, session interactive, réponses du responsable aux questions posées avec options (« 1b 3aaaa 4b 5a »).*
+
+1. **`CRM-111` T2 — option B : la bascule découpée en étapes, chacune laissant `main` vert.** Une session interrompue ne
+   perd plus tout, et plusieurs agents peuvent se relayer. La décision 661 est **assouplie pendant la transition
+   seulement** : les colonnes de `cards` sont conservées et synchronisées par déclencheur tant que des lecteurs les
+   emploient, puis retirées. Sa règle est tenue **fonction par fonction** : aucune fonction n'expose jamais deux contrats
+   à la fois — une signature par affaire est retirée dans le même changement que sa remplaçante par rattachement et que
+   tous ses appelants. Le plan, au backlog : T2.1 la table et la reprise, T2.2 les lectures, T2.3 les signatures par
+   groupe, T2.4 le retrait.
+2. **`CRM-115`, les quatre points du §11 — tous selon la recommandation (A, A, A, A).** Le registre vit dans
+   `/var/tmp/p2enjoy-crm/sessions/` ; une seconde session dans un checkout déjà employé est refusée ; une entrée expire
+   après 6 heures sans activité ; l'emplacement 0 garde exactement les ports actuels. La spécification est validée, et
+   T3 peut commencer.
+3. **Les INC après le backlog — option B.** Quand aucune unité ne peut plus avancer (toutes `[x]`, `[P]` ou bloquées),
+   le CloudWorker prend la première INC **ouverte** du registre qui porte une **« issue proposée »**, dans l'ordre du
+   registre, une par session, avec la même obligation de pousser du code (`docs/CloudWorker.md` §4.2, §4.5.1). Une INC
+   dont l'issue demande l'arbitrage du responsable est sautée. Il ne s'arrête qu'une fois aussi cette file épuisée.
+4. **Le backlog remis à son état réel — option A : une session dédiée, maintenant.** Les unités `[~]` qui n'attendent
+   plus que la production passent `[P]` (décision 697) ; celles qui ne retiennent que des preuves ou des constats
+   périmés sont soldées sur preuve ou ramenées à ce qui leur manque réellement ; chaque reclassement cite sa preuve.
+
+**Non rendue, en attente** : la prochaine unité du chunk 5 (`CRM-068` à `CRM-074`) avec ses deux questions MCP. Le score
+de santé de `CRM-066` (`CRM-P02`) reste lui aussi à arbitrer.

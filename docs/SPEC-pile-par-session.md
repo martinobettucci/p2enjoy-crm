@@ -6,8 +6,8 @@
 - Documents liés : `docs/SPEC-test-harness.md` §3.5 et §3.6 (reconstruction), `docs/DAT.md` §3.8 et §13 (commandes de
   lancement), `docs/CloudWorker.md` §2 (démarrage d'une session planifiée), `README.md` §6.
 - **Connecteur MCP : non** — outillage de développement, pas une fonctionnalité du produit (décision 701).
-- État : **§6 et §6 bis validés le 2026-10-25 (décision 702)**, précisés par la décision 703 ; les quatre points du §11
-  restent à valider avant T3.
+- État : **validée**. §6 et §6 bis le 2026-10-25 (décision 702), précisés par la décision 703 ; les quatre points du §11
+  le même jour, tous selon la recommandation (décision 705).
 
 ---
 
@@ -238,7 +238,7 @@ périmé au démarrage : ce sera vérifié en T5, pas supposé.
 | T4 | Compose par emplacement (nom de projet, ports), `.env` par emplacement, realm Keycloak ; `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev` ; `P2ENJOY_TMP` ; `docs/CloudWorker.md` |
 | T5 | Deux piles simultanées ; VM recyclée simulée ; `README.md`, `docs/DAT.md` |
 
-## 11. Points à valider par le responsable
+## 11. Points à valider par le responsable — VALIDÉS le 2026-10-25 (décision 705), les quatre selon la recommandation
 
 1. **Le registre dans `/var/tmp/p2enjoy-crm/sessions/`** : il doit se trouver sur le système de fichiers que les
    sessions partagent, et le responsable connaît mieux que l'agent le chemin effectivement commun.

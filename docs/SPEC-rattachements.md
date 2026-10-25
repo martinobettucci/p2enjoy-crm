@@ -486,6 +486,12 @@ Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`
 
 ## 14. Tranches proposées
 
+**Révisé par la décision 705 (option B du responsable).** La bascule se livre en **quatre étapes**, chacune laissant
+`main` vert : T2.1 la table `card_placements` et la reprise, `cards` restant le chemin d'écriture et synchronisée par
+déclencheur ; T2.2 les lectures ; T2.3 les signatures, par groupe ; T2.4 le retrait des colonnes. La règle de la décision
+661 est tenue **fonction par fonction** : aucune fonction n'expose jamais deux contrats à la fois. Le §3.2 ne conserve
+donc les colonnes en miroir que pendant la transition, jamais au terme de T2. Le texte d'origine suit.
+
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne
 change **rien de visible**, car chaque affaire garde son unique rattachement : c'est sa preuve, puisque toute la suite
