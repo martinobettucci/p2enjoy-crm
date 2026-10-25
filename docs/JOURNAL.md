@@ -34446,3 +34446,15 @@ en-têtes lus trop court, compteurs figés, attentes qu'une migration ultérieur
 restaure en réappliquant `0089` (et laisse `preferences-notifications` rouge, **62/62** seul sur base reconstruite),
 environnement. Aucun n'est imputable à la tranche. Après `CRM-115` T2 (plus de `container_name`, bibliothèque adaptée
 par son auteur), `verify-reconstruction.sh` **28/28**. **T1 bis `[x]`. Où reprendre : `CRM-111` T2, la bascule.**
+
+### décision 704 — INC-309 : la session corrige elle-même les harnais rouges de la série, une famille à la fois
+
+*2026-10-25, session planifiée ouverte le 2026-10-24 à 21:12:06 UTC. Tranché par la session (`docs/CloudWorker.md` §4.1
+bis) ; le responsable peut le contredire.* `CRM-111` T1 bis est close. La garde d'arrêt de la session exige une
+campagne sans rouge ; `docs/CloudWorker.md` §3.1 interdit de corriger un défaut étranger **au passage** d'une unité.
+**Retenu** : l'unité étant close, les anomalies d'INC-309 deviennent l'objet propre de la suite de la session (« la série
+entière reste due, mais comme objet d'une session dédiée », §2.1 *ter*). Elles se corrigent par famille, en commençant par
+les plus évidentes — un contrôle d'en-tête qui lit trois lignes lira le bloc de commentaires d'en-tête entier ; un
+compteur figé est retourné en invariant. Chaque preuve révisée garde son motif en place (§3.1) et est rejouée.
+**Écarté** : assouplir une assertion pour la verdir. Ce qui relève de l'environnement (réseau, image) est nommé, pas
+masqué.
