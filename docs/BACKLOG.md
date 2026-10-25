@@ -16406,13 +16406,16 @@ toutes la même pile, aux mêmes noms de conteneurs (`p2enjoy-db`…) et aux mê
 (décision 694). **Chaque session ne travaille que dans sa propre pile**, aux ports attribués à son lancement. **Un
 registre**, fichier du système de fichiers partagé, répertorie les sessions en cours ; il est **vérifié à l'usage**,
 car une VM peut être recyclée alors que le système de fichiers est conservé (constaté le 2026-10-25 à 10:04 UTC).
-**Connecteur MCP : non** (outillage de développement). Spécification à écrire avant le code.
+**Connecteur MCP : non** (outillage de développement). Spécification : `docs/SPEC-pile-par-session.md`.
 
-- [@] **T1 — mesures et spécification** : inventaire des ports publiés, des noms de conteneurs figés, des chemins de
+- [~] **T1 — mesures et spécification** : inventaire des ports publiés, des noms de conteneurs figés, des chemins de
       l'hôte partagés (volumes liés du dépôt, verrou de reconstruction, fichiers de `/tmp`), et des appelants qui
       nomment un conteneur ou un port en dur ; forme du registre (emplacement, entrée par session, vérification de
       vie : identifiant de démarrage de la VM, conteneurs du projet présents) ; schéma d'attribution des ports.
-      *Prise en charge : session interactive 2026-10-25 10:04 UTC depuis 2026-10-25 10:12 UTC — état avant : [ ]*
+      *Mesuré et spécifié le 2026-10-25* : `docs/SPEC-pile-par-session.md` §2 (nom de projet et vingt noms de conteneurs
+      figés, quatorze ports déjà dans `.env` sauf une redirection du realm, 97 fichiers qui nomment un conteneur, la base
+      dans le dépôt, la pile revenue à moitié après un recyclage de VM). **Reste** : la validation du responsable sur
+      les quatre points du §11, avant tout code.
 - [ ] **T2 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un
       recyclage de VM, deux attributions simultanées départagées).
 - [ ] **T3 — la pile paramétrée** : nom de projet Compose, noms de conteneurs, ports et volumes par emplacement ;
