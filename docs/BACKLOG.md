@@ -3880,11 +3880,19 @@ accessibilité des erreurs vérifiée.
       écrite puis l'étape de la card. Contrat au §4 quater de `docs/SPEC-form-composer.md`, écrit
       après mesure et committé avant le code. **Console stricte** : la seule erreur admise est le
       `400` du refus, consommée là où elle est provoquée.
-- [@] **« Captures de chaque étape » n'est pas tenu à la lettre.** Les captures montrent **une**
-      étape — `Prospection` —, celle de la card que le seed place là et qui exerce les trois
-      destinations du §4.2. Capturer les sept étapes exigerait sept cards, une par étape, que le
-      seed ne pose pas et qu'inventer ici dépasserait l'unité. Le fait est nommé, pas contourné.
-      *Prise en charge : CloudWorker 2026-10-25 04:12:18 UTC depuis 2026-10-25 04:27 UTC — état avant : [ ]*
+- [x] **« Captures de chaque étape » — TENU le 2026-10-25 (décision 690).** *~~Les captures montrent **une** étape —
+      `Prospection` — […] Capturer les sept étapes exigerait sept cards, une par étape, que le seed ne pose pas.~~* Le
+      motif était **caduc** : depuis `CRM-046` (`docs/SPEC-seed.md` §9.3), les sept étapes du workflow global portent
+      chacune une affaire active, mesuré en base. Contrat écrit avant le code (`docs/SPEC-form-composer.md` §4 *quinquies*).
+      `e2e/ui/formulaire-etapes.spec.ts` **1/1** : session réelle sans substitution, composition attendue recalculée depuis
+      les champs, règles et valeurs relus par l'API, comparée à l'écran à chacune des sept étapes ; sept captures
+      `docs/captures/CRM-037/formulaire-etape-*-1440.jpg` **observées**. **Défaut trouvé par la preuve et corrigé à sa
+      cause** : la fiche nommait l'étape par son nœud (« Réalisation ») là où le board dit « Réalisation en cours » —
+      `lireEtape` lit désormais `label_override` et résout par `libelleEtape` ; unitaire rouge avant la correction
+      (`formulaire.test.ts`, 66/66 après), E2E rouge puis vert. Le fil d'activité porte le même défaut : INC-301, non
+      corrigé ici. `verify-formulaire.sh --rapide` **27** contrôles, `verify-manual.sh` **251**, compteur
+      `SCENARIOS_UI` porté à **928** (compté). **Reste** : la livraison de la webapp avec la tranche INC-134
+      (`docs/PROD_MIGRATIONS.md` §2.20) et le constat du responsable.
 - [x] **L'ÉCRITURE DEPUIS L'ÉCRAN EST LIVRÉE — INC-088, décision 334, tranche du 2026-08-16.** La
       limite « aucune écriture depuis l'écran » (§4.7) s'imputait à **INC-021**, close depuis
       `CRM-009` : le motif invoqué avait disparu sans que la limite soit réexaminée. L'unité n'a pas

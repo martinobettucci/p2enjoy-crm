@@ -34016,3 +34016,27 @@ nœud — là où le board dit « Réalisation en cours », la surcharge de l'é
 `label_override`. **Retenu** : le même nom partout, par `libelleEtape` réemployée (la résolution du board). **Écarté** :
 garder le nœud sur la fiche — deux écrans nommant différemment la même étape apprennent une règle fausse. Test unitaire
 rouge d'abord, E2E rouge puis vert. Le fil d'activité porte le même défaut : consigné en INC-301, non corrigé (`CRM-044`).
+
+### `CRM-037`, décision 690 — fin de session : le formulaire prouvé à chacune des sept étapes, l'étape nommée comme le board
+
+*2026-10-25, session planifiée ouverte à 04:12:18 UTC.* **Livré** (décision 690) : contrat `docs/SPEC-form-composer.md`
+§4 *quinquies* ; preuve `e2e/ui/formulaire-etapes.spec.ts` (session réelle, composition recalculée depuis l'API) ; sept
+captures observées ; correction de `lireEtape` (la surcharge de l'étape, comme le board), unitaire et E2E rouges avant ;
+manuel, contrat de déploiement §2.20, changelog ; compteur `SCENARIOS_UI` à 928, en retard d'un depuis INC-292. INC-301
+consignée (le fil d'activité porte le même défaut, `CRM-044`).
+
+**Campagne de fin de session**, synchronisée avant (aucun commit arrivé) : typecheck, unitaires **4352**, build, pgTAP
+**94 fichiers / 3974 assertions**, API **1182**, courrier **44**, pytest **246** — verts ; interface **922 passés, 6
+échecs**. Rejoués seuls après seed : cinq verts (quatre portaient un `502` de Kong en console, INC-292/INC-299 ; un focus
+de la corbeille) ; le sixième, `administration-workflows.spec.ts:1114`, est INC-236, rouge seul comme en campagne et sur
+sa ligne de base. Aucun échec imputable. Son expiration laisse le champ `e2e-wf-grille-clavier` sur le workflow global, ce
+qui a fait lire 17 questions au lieu de 16 à `verify-manual.sh` ; champ purgé de la base de développement, le harnais
+rend **251** contrôles sans anomalie. `verify-formulaire.sh --rapide` **27**. **Non exécuté** : la série des
+`verify-*.sh` (deux l'ont été) et `verify-harness.sh`, qui rejoue toute l'interface et reste rouge par INC-236.
+
+**Écart de conduite** : un `git status` a précédé la lecture de `docs/CloudWorker.md` — quatrième occurrence du même
+écart (décisions 678, 683, 687). L'annonce du §0 bis a bien été la première ligne de la première réponse.
+
+**Où reprendre.** `CRM-037` reste `[~]` : rien n'y est plus à construire ; la webapp (INC-134 et décision 690) attend sa
+livraison (`docs/PROD_MIGRATIONS.md` §2.20) et le constat du responsable. INC-301 est prête à être tranchée sous
+`CRM-044`. Prise libérée.
