@@ -16532,7 +16532,8 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       garde `verify-noms-conteneurs.sh` 12/12. **Limite dite** : la concurrence est prouvée par six attributions
       simultanées distinctes, sans dégradation du verrou — une course sans `flock` n'est pas reproductible à coup sûr.
       Aucune pile n'appelle encore le registre : c'est la T4.
-- [ ] **T4 — la pile par emplacement** : nom de projet et ports par emplacement, `.env`, realm Keycloak ;
+- [@] **T4 — la pile par emplacement** : nom de projet et ports par emplacement, `.env`, realm Keycloak ;
       `runDev.sh`, `resetMe.sh`, `reconstruire_base_dev` ; `P2ENJOY_TMP` ; `docs/CloudWorker.md`.
+      *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 22:24 UTC — état avant : [ ]*
 - [ ] **T5 — preuve** : deux piles debout en même temps sur le même démon, chacune sa preuve courte, sans interférence
       mesurée ; `README.md`, `docs/DAT.md`, `docs/CloudWorker.md` (démarrage par emplacement).

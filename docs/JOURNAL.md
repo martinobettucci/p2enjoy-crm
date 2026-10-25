@@ -34640,3 +34640,15 @@ publie un quatorzième, `${POSTGRES_DIRECT_PORT}` (54322, l'accès direct à la 
 relevé, non un choix — l'isolation du §3 l'exige —, corrigée sans arbitrage : `scripts/lib/emplacement.sh` décale
 **quinze** variables, et la spécification le dit (§2, §5). Le pas de 100 reste sûr (55222 au plus). **Aucun des quatre
 points validés du §11 ne change.**
+
+
+### décision 711 — `CRM-115` T4 puis T5 ; un clone jetable du dépôt autorisé pour la preuve des deux piles
+
+*2026-10-25, instruction du responsable (question posée par `AskUserQuestion`, session interactive).* **Question** : T4
+modifie `runDev.sh`, `resetMe.sh` et la reconstruction de la base, et relance la pile de développement partagée ; la
+preuve de T5 — deux piles debout en même temps — exige un second checkout, que `CLAUDE.md` §13 interdit sans
+instruction. **Décision du responsable** : coder T4 puis prouver T5 avec **un clone jetable du dépôt sous `/tmp`**,
+supprimé à la fin. **Bornes** : l'autre session est prévenue avant toute relance de la pile ; l'emplacement 0 reste
+identique pour ce checkout ; le clone ne sert qu'à la preuve — aucun commit n'y est fait, aucune branche n'y est créée,
+il est effacé après la mesure.
+
