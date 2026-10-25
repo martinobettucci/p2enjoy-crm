@@ -7690,3 +7690,16 @@ de traçabilité, plutôt qu'un nombre fixe de lignes ; correction imputée à `
 **Issue retenue** (`docs/CloudWorker.md` §4.1 bis) : comme pour INC-191, l'assertion sera **retournée** — le compte
 attendu lu dans le répertoire des tests au lieu d'une constante —, par `CRM-114`, qui a fait bouger le compte.
 Comportement laissé inchangé ici.
+
+### INC-298 — `reconstruire_base_dev` : le seed échoue une fois sur douze reconstructions enchaînées, et son message est jeté
+
+*Relevé le 2026-10-25 par la session planifiée d'INC-292 (décision 686), en rejouant `scripts/verify-session-sso.sh`.*
+**Constat** : la section 4 du harnais restaure chaque dégradation par `reconstruire_base_dev` (`scripts/lib/reconstruction.sh`,
+`CRM-111` T1 bis). Onze reconstructions ont réussi, la douzième — après « un tiers jugé par la revendication de
+l'appelant » — a rendu « le seed échoue sur la base reconstruite », et le harnais s'est arrêté. Le seed rejoué aussitôt à
+la main est vert ; le harnais rejoué en entier ensuite a passé ses douze reconstructions. **Intermittent, et non
+diagnosticable** : la bibliothèque envoie la sortie du seed vers `/dev/null` (ligne 86), si bien que l'étape fautive
+n'est pas connue. Le changement de la session (fonction `session`) n'y est pour rien : `apply-seed.sh` n'appelle pas
+cette fonction. **Comportement laissé inchangé.** **Issue retenue** (`docs/CloudWorker.md` §4.1 bis) : `CRM-111` T1 bis,
+qui porte la bibliothèque, garde la sortie du seed dans un fichier et la cite dans son message d'échec — une perte
+silencieuse de diagnostic, pas un réglage. **Statut : ouverte.**
