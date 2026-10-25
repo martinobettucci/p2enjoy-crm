@@ -15683,7 +15683,8 @@ sous-tranches livrées séparément ; `structure` la suit.*
 - [P] **T7** — `messagerie` : lire les messages d'une affaire et un message, envoyer un email depuis une affaire par la
       file de l'écran (`destructiveHint`, `aussi` `affaires:consulter`) — décision 676 ; ni pièces jointes, ni
       classement, ni modèles. Liste au `docs/SPEC-mcp.md` §9.2 *decies*, **validée par la session le 2026-10-24**
-      (décision 684, `docs/CloudWorker.md` §4.1 bis ; le responsable peut la contredire), précisions mesurées avant le code.
+      (décision 684, `docs/CloudWorker.md` §4.1 bis), **confirmée par le responsable** (décision 706), précisions mesurées
+      avant le code.
       **Implémentée et vérifiée en développement le 2026-10-24** (décision 685).
       - `mcp/crm_mcp/outils/messagerie.py` : `crm_card_mail_list` (fil du plus ancien au plus récent, extrait, nombre de
         pièces jointes), `crm_mail_get` (corps affichable de l'écran, HTML réduit et dit comme tel), `crm_mail_send`

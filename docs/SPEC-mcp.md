@@ -837,7 +837,7 @@ manuel** (`fill_percent`, `docs/SPEC-goals.md` §1) : le connecteur l'écrit, il
 par le CRM malgré la matrice ouverte (la lectrice qui ajoute un bloc), journal écrit ; et **E2E** : un bloc ajouté par le
 connecteur paraît sur le canevas, avec son avancement.
 
-### 9.2 decies Famille `messagerie` — `CRM-104` T7 (liste fixée, **validée par la session le 2026-10-24**, décision 684 ; périmètre arbitré par la décision 676)
+### 9.2 decies Famille `messagerie` — `CRM-104` T7 (liste fixée, **validée par la session le 2026-10-24**, décision 684, **confirmée par le responsable**, décision 706 ; périmètre arbitré par la décision 676)
 
 **Trois outils** : lire les messages d'une affaire, en lire un, et **envoyer un email depuis une affaire** par la même
 file que l'écran (`envoi.ts`, `inbox.ts`) — `public.queue_outbound_email`, qui garde le droit d'écrire sur l'affaire,

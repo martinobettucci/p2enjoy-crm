@@ -34547,3 +34547,15 @@ jetable), `CRM-110` (captures), `CRM-111` (T1 ter puis T2.1), `CRM-115` (T3), et
 fois tout cela fait. **Pour le responsable** : les choix de produit de `CRM-057` et `CRM-058`, les trois arbitrages de
 `CRM-077`, la validation de `CRM-105` T1, la relecture de `CRM-113` T3, le score de `CRM-066`, la prochaine unité du
 chunk 5, et les livraisons des seize `[P]`.
+
+
+### décision 706 — `CRM-104` T7 : le responsable confirme la liste de la famille `messagerie`
+
+*2026-10-25, réponse du responsable à `AskUserQuestion` (session interactive `CRM-104`).* La liste proposée au
+`docs/SPEC-mcp.md` §9.2 *decies* (commit `f2a1dd8e`) — `crm_card_mail_list`, `crm_mail_get`, `crm_mail_send` par
+`queue_outbound_email`, `destructiveHint`, `aussi` `affaires:consulter`, identité désignée par son adresse, ancre
+`message` — est **validée par le responsable**. La question lui avait été posée avant que la session planifiée de 23:12
+UTC ne prenne la tranche et ne tranche elle-même (décision 684) ; les deux convergent, et la validation de la session est
+désormais celle du responsable. Le numéro 677 que la session interactive destinait à cette validation a été pris entre-temps
+par `CRM-113` T1. **Aucun code ne change** : la tranche reste `[P]`, sa livraison suit la fenêtre des migrations 102 à
+104, dont le responsable s'est réservé la conduite (décision 679).
