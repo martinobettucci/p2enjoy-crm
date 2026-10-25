@@ -1,0 +1,9 @@
+# @spec CRM-050 (docs/BACKLOG.md) — serveur de messagerie local ; docs/JOURNAL.md décision 704 (INC-309)
+# Filtre anti-spam VIDE du développement. Sans lui, Stalwart v0.13.4 télécharge à chaque démarrage
+# `spam-filter.toml` depuis GitHub, et journalise une ERROR quand le conteneur n'a pas d'accès sortant
+# (mesuré le 2026-10-25) — or le développement ne doit dépendre d'aucun service extérieur (CLAUDE.md §3).
+# Le classement des messages du CRM est l'affaire de `mail-sync` et de la base, pas du filtre de Stalwart :
+# ce fichier ne déclare que l'en-tête de version qu'exige le serveur, aucune règle, aucune ressource distante.
+[version]
+spam-filter = "2.0.5"
+server = "0.11.0"

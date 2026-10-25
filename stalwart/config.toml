@@ -28,7 +28,7 @@
 #
 # Stalwart avertit lorsqu'une clé modifiable en base est définie dans ce fichier. Déclarer une
 # liste personnalisée remplace ses valeurs par défaut : elles sont donc toutes reproduites ici,
-# puis `webadmin.resource` est ajouté parce que le chemin est propre au conteneur. Les réglages
+# puis `webadmin.resource` et `spam-filter.resource` sont ajoutés parce que leurs chemins sont propres au conteneur. Les réglages
 # IMAP/SMTP, eux, sont écrits par `stalwart-init` dans la base de configuration.
 config.local-keys.0 = "store.*"
 config.local-keys.1 = "directory.*"
@@ -46,6 +46,7 @@ config.local-keys.12 = "storage.fts"
 config.local-keys.13 = "storage.directory"
 config.local-keys.14 = "enterprise.license-key"
 config.local-keys.15 = "webadmin.resource"
+config.local-keys.16 = "spam-filter.resource"
 
 # Nom annoncé par le serveur dans ses bannières SMTP et IMAP. Sans lui, le serveur annonce
 # l'identifiant du conteneur, qui change à chaque recréation.
@@ -57,6 +58,13 @@ hostname = "mail.p2enjoy.test"
 # l'administration passe par l'API.
 [webadmin]
 resource = "file:///opt/stalwart/etc/webadmin-disabled.zip"
+
+# Même raison pour le filtre anti-spam (décision 704, INC-309) : Stalwart v0.13.4 télécharge sinon
+# `spam-filter.toml` depuis GitHub à chaque démarrage, et journalise une ERROR sans accès sortant —
+# mesuré, et `verify-mail-infra.sh` exige un journal sans WARN ni ERROR. `enable = false` n'empêche pas le
+# téléchargement (mesuré) ; une ressource locale, si. Le fichier ne déclare que l'en-tête de version.
+[spam-filter]
+resource = "file:///opt/stalwart/etc/spam-filter-dev.toml"
 
 # --- Listeners ----------------------------------------------------------------------------------
 # Quatre, et pas un de plus. Les variantes implicitement chiffrées de la configuration générée —

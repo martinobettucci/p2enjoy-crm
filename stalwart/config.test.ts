@@ -5,6 +5,8 @@
 //           relevée pour le seul développement, écrite par l'API puis relue
 // @verifies INC-273 (docs/INCONSISTENCY_REPORT.md ; docs/JOURNAL.md décision 626) — le sous-réseau de la pile exempté
 //           du bannissement, lu à l'exécution, écrit et relu par l'API ; aucune adresse dans le dépôt
+// @verifies INC-309 (docs/INCONSISTENCY_REPORT.md ; docs/JOURNAL.md décision 704) — le filtre anti-spam lu localement,
+//           jamais téléchargé : le développement ne dépend d'aucun service extérieur (CLAUDE.md §3)
 //
 // CE TEST N'EST PAS UN TEST DE FAÇADE, et son objet est nommé : deux de ses invariants ont été
 // payés par une panne réelle.
@@ -172,6 +174,24 @@ describe('configuration de Stalwart — le réseau de la pile n’est jamais ban
 		expect(PROVISION).not.toMatch(/\b\d{1,3}(\.\d{1,3}){3}\b/)
 		expect(CONFIG).not.toMatch(/\b\d{1,3}(\.\d{1,3}){3}\/\d+/)
 		expect(PROVISION).not.toContain('server.auto-ban')
+	})
+})
+
+describe('configuration de Stalwart — filtre anti-spam local, jamais téléchargé', () => {
+	const FILTRE = readFileSync(join(import.meta.dirname, 'spam-filter-dev.toml'), 'utf-8')
+
+	it('vise une ressource locale déclarée parmi les clés locales', () => {
+		expect(CONFIG).toContain('config.local-keys.16 = "spam-filter.resource"')
+		expect(CONFIG).toContain('resource = "file:///opt/stalwart/etc/spam-filter-dev.toml"')
+	})
+
+	it("porte l'en-tête de version qu'exige le serveur, et aucune ressource distante", () => {
+		// Mesuré le 2026-10-25 : sans `[version]`, « do not contain a valid server version » ; avec une version
+		// non numérique, « do not contain a version key ». Deux ERROR au démarrage, que la preuve interdit.
+		expect(FILTRE).toMatch(/^\[version\]$/m)
+		expect(FILTRE).toMatch(/^spam-filter = "\d+\.\d+\.\d+"$/m)
+		expect(FILTRE).toMatch(/^server = "\d+\.\d+\.\d+"$/m)
+		expect(FILTRE).not.toMatch(/https?:\/\//)
 	})
 })
 

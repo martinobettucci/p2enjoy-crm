@@ -282,6 +282,7 @@ services:
     volumes:
       - ./stalwart/config.toml:/opt/stalwart/etc/config.toml:ro
       - ./stalwart/webadmin-disabled.zip:/opt/stalwart/etc/webadmin-disabled.zip:ro
+      - ./stalwart/spam-filter-dev.toml:/opt/stalwart/etc/spam-filter-dev.toml:ro
       - stalwart-data:/opt/stalwart/data
     # Les quatre listeners sont éprouvés un par un, et non le seul port principal : c'est le
     # contrôle qui attrape à l'exécution la régression `[::]` décrite dans `stalwart/config.toml`,
