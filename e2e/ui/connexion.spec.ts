@@ -17,6 +17,7 @@
 // l'annulation substitue la redirection que Keycloak rend quand la personne refuse — ce realm n'a pas
 // d'écran de consentement où refuser — ; la capture du retour RETARDE l'ouverture, sans en changer la
 // réponse, le temps de photographier l'état de chargement.
+// @verifies docs/JOURNAL.md décision 686 (INC-292) — l'absence et la fermeture de session sans `204` ; docs/SPEC-edge-functions.md §2 bis
 
 import { autoriserErreursConsole, connecterAvecLeLabs, ERREUR_RESSOURCE_HTTP, expect, test, type Page } from './fixtures'
 import { PALIERS, capturer } from './captures'
@@ -156,6 +157,29 @@ test.describe('Parcours de connexion', () => {
 		await page.getByRole('button', { name: 'Se connecter avec LeLabs' }).click()
 		await expect(page.getByRole('button', { name: 'Se déconnecter' })).toBeVisible()
 		expect(formulaire, 'aucun formulaire LeLabs tant que la session LeLabs vit').toBe(false)
+	})
+
+	// Décision 686 (INC-292) : le runtime perdait par intermittence le `204` qui disait l'absence de session, et
+	// le `503` laissé à sa place rougissait la console. L'absence se dit par `200` « absente », la fermeture par
+	// `200` « fermee » ; la garde de console de la fixture fait le reste.
+	test('une page anonyme rechargée en série : chaque prolongation rend 200 « absente », puis la déconnexion 200 « fermee »', async ({ page }) => {
+		const gestes: { geste: string; statut: number; corps: unknown }[] = []
+		page.on('response', async (reponse) => {
+			const geste = /\/functions\/v1\/session\/(prolonger|fermer)$/.exec(reponse.url())?.[1]
+			if (geste !== undefined) gestes.push({ geste, statut: reponse.status(), corps: await reponse.json().catch(() => null) })
+		})
+		for (let i = 0; i < 40; i += 1) {
+			await page.goto('/connexion')
+			await expect(page.getByRole('button', { name: 'Se connecter avec LeLabs' })).toBeVisible()
+		}
+		await expect.poll(() => gestes.length).toBeGreaterThanOrEqual(40)
+		expect(gestes.filter((g) => !(g.geste === 'prolonger' && g.statut === 200 && (g.corps as { session?: string })?.session === 'absente'))).toEqual([])
+
+		gestes.length = 0
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.getByRole('button', { name: 'Se déconnecter' }).click()
+		await expect(page).toHaveURL(/\/connexion$/)
+		await expect.poll(() => gestes.find((g) => g.geste === 'fermer')).toEqual({ geste: 'fermer', statut: 200, corps: { session: 'fermee' } })
 	})
 
 	test('une session close chez LeLabs prend fin dans le CRM, et l’écran le dit', async ({ page }) => {
