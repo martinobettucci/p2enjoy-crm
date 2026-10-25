@@ -7067,7 +7067,8 @@ dégradations comprises.
   pile de développement, et la détection est éprouvée sur un serveur simulé.
 - **Un rangement manqué n'est pas rejoué** (voir ci-dessus).
 
-### CRM-057 — Inbox globale `[~]`
+### CRM-057 — Inbox globale `[@]`
+*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 23:30 UTC — état avant : [~]*
 ***Connecteur (décision 708, M1 B)** : oui, famille `messagerie` — l'état lu paraît dans les lectures, aucun outil pour marquer. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707, option C)** : la notion de **lu / non lu est à livrer**, en une tranche à spécifier — les deux questions du connecteur MCP d'abord ; le **rôle de tri** des messages non classés est **hors périmètre**, son absence figée reste juste.*
 ***Reste réel au 2026-10-25 (décision 705)** : deux absences figées qu'aucune spécification ne porte — la notion de lu / non lu et un rôle de tri des messages non classés. Les livrer, ou les déclarer hors périmètre, est un **choix de produit du responsable** ; l'envoi depuis l'inbox relève de `CRM-058`.*
