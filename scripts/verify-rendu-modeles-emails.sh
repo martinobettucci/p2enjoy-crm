@@ -312,7 +312,13 @@ horodatage=$(psql_db -c "select app.mail_template_substituer('{{card.next_action
 	jsonb_build_object('card.next_action_at',
 		to_char(next_action_at at time zone 'UTC', 'DD/MM/YYYY HH24:MI')))
 	from public.cards where id = '$AFFAIRE_COMPLETE';")
-if [ "$horodatage" = '24/08/2026 09:00' ]; then
+# RETOURNÉE LE 2026-10-25 (décision 704, INC-309) : elle figeait la DATE de l'affaire seedée, « 24/08/2026 09:00 »,
+# que le seed a depuis déplacée (mesuré : 24/10/2026 09:00). Ce que le §8.6 tient est le FORMAT : JJ/MM/AAAA HH:MM, en
+# UTC. L'assertion exige ce format, et la valeur relue indépendamment en base pour la même affaire.
+attendu_horodatage=$(psql_db -c "select to_char(next_action_at at time zone 'UTC', 'DD/MM/YYYY HH24:MI')
+	from public.cards where id = '$AFFAIRE_COMPLETE';")
+if [ -n "$attendu_horodatage" ] && [ "$horodatage" = "$attendu_horodatage" ] \
+	&& printf '%s' "$horodatage" | grep -qE '^[0-9]{2}/[0-9]{2}/[0-9]{4} [0-9]{2}:[0-9]{2}$'; then
 	ok "card.next_action_at rend JJ/MM/AAAA HH:MM en UTC — limite nommée, INC-216"
 else
 	fail "le formatage de l'horodatage a changé sans révision du §8.6 : $horodatage"
