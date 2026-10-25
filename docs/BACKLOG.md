@@ -854,7 +854,7 @@ politique de lecture des tracks, migration `0034` —, et INC-075 se ferme avec 
   le certificat du proxy (INC-032, INC-042), et `npm ci` précédé d'un `npm config set cafile`.
 
 ### CRM-013 — Colonnes protégées `[@]`
-*Prise en charge : CloudWorker 2026-10-25 01:12 UTC depuis 2026-10-25 01:31 UTC — état avant : [~] — tranche prise : INC-238, `card_costs.created_at` protégée*
+*Prise en charge : CloudWorker 2026-10-25 01:12 UTC depuis 2026-10-25 01:14 UTC — état avant : [~] — tranche prise : INC-238, `card_costs.created_at` protégée*
 `REVOKE` sur `secret_id`, `token_hash` ; `current_step_id` et `email_local_part` non modifiables
 directement ; `card_events` et `audit_log` en écriture par trigger uniquement.
 **DoD** : preuves de refus n° 5, 6 et 8 ; test explicite qu'une lecture refusée retourne **zéro
