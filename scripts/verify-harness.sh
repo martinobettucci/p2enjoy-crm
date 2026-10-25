@@ -1563,7 +1563,10 @@ SCENARIOS_API=1182
 # **931 depuis `CRM-084`, le 2026-10-25** : `budgets.spec.ts`, **3** scénarios — chaque libellé que le manuel §5.4 bis
 # cite est exigé à la fois dans le chapitre et à l'écran réel (tableau et formulaire, confirmation de clôture, deux
 # refus du serveur). 928 + 3 = 931, valeur COMPTÉE — « Total: 931 tests in 89 files ».
-SCENARIOS_UI=931
+# **932 depuis `CRM-044` tranche INC-301, le 2026-10-25** (décision 693) : `timeline-etape-surchargee.spec.ts`, **1**
+# scénario — le fil nomme l'étape franchie par sa surcharge, sur session réelle, avec une affaire d'essai née puis
+# supprimée. 931 + 1 = 932, valeur COMPTÉE — « Total: 932 tests in 90 files ».
+SCENARIOS_UI=932
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
