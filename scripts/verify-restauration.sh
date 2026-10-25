@@ -41,6 +41,10 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
+
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 bis : la base se désigne par son service.
+# shellcheck source=scripts/lib/conteneur.sh
+source scripts/lib/conteneur.sh
 REPO=$(pwd -P)
 
 SCRIPT=scripts/restore-drill.sh
@@ -79,11 +83,11 @@ command -v age >/dev/null 2>&1 \
 docker info >/dev/null 2>&1 \
 	|| { echo "ERREUR : le démon Docker ne répond pas. Démarrez-le, puis relancez." >&2; exit 1; }
 
-CONTENEUR_DB=$(docker ps --filter "name=^/p2enjoy-db$" --filter "status=running" --format '{{.Names}}')
+CONTENEUR_DB=$(conteneur_en_marche db p2enjoy-db)
 [ -n "$CONTENEUR_DB" ] \
-	|| { echo "ERREUR : la pile n'est pas debout (conteneur « p2enjoy-db » absent). Lancez ./runDev.sh." >&2; exit 1; }
+	|| { echo "ERREUR : la pile n'est pas debout (service « db » arrêté ou absent). Lancez ./runDev.sh." >&2; exit 1; }
 
-CONTENEUR_MINIO=$(docker ps --filter "name=^/p2enjoy-minio$" --filter "status=running" --format '{{.Names}}')
+CONTENEUR_MINIO=$(conteneur_en_marche minio p2enjoy-minio)
 BUCKET=$(sed -n 's/^GLOBAL_S3_BUCKET=//p' .env 2>/dev/null | tail -n 1)
 
 age-keygen -o "$BAC/id.txt" >/dev/null 2>&1
@@ -234,7 +238,7 @@ grep -q 'I5 politiques RLS' "$BAC/exercice.log" \
 	&& ok "cas p : I5 et I6 — les politiques RLS et leur activation ont été comparées (CLAUDE.md §10)" \
 	|| fail "cas p : les invariants d'autorisation n'ont pas été comparés"
 
-grep -q 'référence   p2enjoy-db' "$BAC/exercice.log" \
+grep -q "référence   $CONTENEUR_DB" "$BAC/exercice.log" \
 	&& ok "cas p : la comparaison a bien eu lieu des DEUX côtés" \
 	|| fail "cas p : le rapport n'annonce pas de comparaison avec la pile de référence"
 

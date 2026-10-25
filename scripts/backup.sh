@@ -135,7 +135,9 @@ mkdir -p "$SORTIE" 2>/dev/null \
 # version de `pg_dump` est alors celle du serveur, et aucun client n'est requis sur l'hôte.
 require_docker
 
-CONTENEUR_DB=$(docker ps --filter "name=^/p2enjoy-db$" --filter "status=running" --format '{{.Names}}')
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 bis : en développement par le service, en
+# production par son nom, inchangé (décision 703).
+CONTENEUR_DB=$(conteneur_en_marche db p2enjoy-db)
 [ -n "$CONTENEUR_DB" ] \
 	|| die "le service « db » n'est pas démarré : la sauvegarde lit la base par lui."
 
@@ -187,7 +189,7 @@ info "clé racine  $(stat -c%s "$RACINE/pgsodium_root.key") octets"
 #
 #    L'export passe par `docker cp <conteneur>:<chemin> -`, dont le flux `tar` est produit par le
 #    DÉMON Docker : l'image MinIO ne porte ni `tar` ni `find` (mesure M5).
-CONTENEUR_MINIO=$(docker ps --filter "name=^/p2enjoy-minio$" --filter "status=running" --format '{{.Names}}')
+CONTENEUR_MINIO=$(conteneur_en_marche minio p2enjoy-minio)
 BUCKET=$(env_has "$ENV_FILE" GLOBAL_S3_BUCKET 2>/dev/null && env_get "$ENV_FILE" GLOBAL_S3_BUCKET || true)
 
 if [ -n "$CONTENEUR_MINIO" ] && [ -n "$BUCKET" ]; then

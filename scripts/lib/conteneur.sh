@@ -31,3 +31,20 @@ conteneur() {
 	fi
 	printf '%s\n' "$nom"
 }
+
+# conteneur_en_marche <service> <nom de production> — pour les seuls scripts que la PRODUCTION exécute aussi
+# (`scripts/backup.sh`, `scripts/restore-drill.sh`). Sous le profil `dev`, le conteneur du service ; sous tout autre
+# profil, ou sans fichier d'environnement (hôte de secours, cellule), le NOM DE PRODUCTION, et la commande d'avant
+# `CRM-115` à l'identique : le chemin de production ne change pas (docs/JOURNAL.md décision 703, option B ;
+# docs/SPEC-pile-par-session.md §6 bis). Rend le nom s'il est EN MARCHE, une chaîne vide sinon — la forme que ces
+# scripts attendaient.
+conteneur_en_marche() {
+	local service=${1:?service attendu} nom=${2:?nom de production attendu} racine fichier profil
+	racine=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
+	fichier=${P2ENJOY_ENV_FILE:-$racine/.env}
+	profil=$(sed -n 's/^P2ENJOY_ENV_PROFILE=//p' "$fichier" 2>/dev/null | tail -n 1 | tr -d "\"'\r")
+	if [ "$profil" = dev ]; then
+		nom=$(conteneur "$service" 2>/dev/null) || return 0
+	fi
+	docker ps --filter "name=^/${nom}$" --filter "status=running" --format '{{.Names}}'
+}

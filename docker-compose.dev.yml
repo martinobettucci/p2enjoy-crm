@@ -54,7 +54,6 @@ services:
   # Inspection de la base. Joint directement sur son port, jamais au travers de Kong : la
   # passerelle ne connaît donc aucun service de développement.
   studio:
-    container_name: p2enjoy-studio
     image: supabase/studio:2026.07.07-sha-a6a04f2
     restart: unless-stopped
     depends_on:
@@ -98,7 +97,6 @@ services:
 
   # Passerelle d'introspection du schéma, consommée uniquement par Studio.
   meta:
-    container_name: p2enjoy-meta
     image: supabase/postgres-meta:v0.96.6
     restart: unless-stopped
     depends_on:
@@ -124,7 +122,6 @@ services:
   # version change les deux lignes et rejoue les preuves du stockage. En `root`, comme l'image de `quay.io` : le
   # volume `minio-data` existant lui appartient (l'image tourne sinon en `65532`).
   minio:
-    container_name: p2enjoy-minio
     image: cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c
     user: "0:0"
     restart: unless-stopped
@@ -156,7 +153,6 @@ services:
   # Mode `start-dev` : base interne éphémère, realm réimporté à chaque recréation du conteneur. Le
   # realm est une donnée de démonstration versionnée, pas un état à conserver.
   keycloak:
-    container_name: p2enjoy-keycloak
     image: quay.io/keycloak/keycloak:26.7.3
     restart: unless-stopped
     command: ["start-dev", "--import-realm"]
@@ -201,7 +197,6 @@ services:
 
   # Création idempotente du bucket des pièces jointes, par le vrai client S3 : `mc`, que porte l'image du serveur.
   minio-createbucket:
-    container_name: p2enjoy-minio-createbucket
     image: cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c
     user: "0:0"
     restart: "no"
@@ -223,7 +218,6 @@ services:
   # figées **au build** en production : c'est la même configuration, à deux moments
   # différents (docs/SPEC-webapp.md §12).
   webapp:
-    container_name: p2enjoy-webapp
     build:
       context: .
       dockerfile: webapp/Dockerfile
@@ -275,7 +269,6 @@ services:
   # l'entrée par défaut de l'image écrirait sinon une configuration dont le mot de passe
   # d'administration est tiré au hasard et imprimé dans les journaux.
   stalwart:
-    container_name: p2enjoy-stalwart
     image: stalwartlabs/stalwart:v0.13.4
     restart: unless-stopped
     ports:
@@ -311,7 +304,6 @@ services:
   # L'image ne porte qu'un client HTTP : celle de Stalwart n'embarque ni `curl` ni `wget`, et son
   # `stalwart-cli` v0.13.4 n'a aucune sous-commande de gestion de compte (mesuré).
   stalwart-init:
-    container_name: p2enjoy-stalwart-init
     image: curlimages/curl:8.16.0
     restart: "no"
     depends_on:
@@ -336,7 +328,6 @@ services:
   # l'inbox du produit n'existe pas (CRM-057). Sa base est un SQLite interne — aucun schéma
   # supplémentaire n'est ajouté à PostgreSQL pour un outil de développement.
   roundcube:
-    container_name: p2enjoy-roundcube
     image: roundcube/roundcubemail:1.6.11-apache
     restart: unless-stopped
     depends_on:
@@ -369,7 +360,6 @@ services:
   # téléchargement n'ait eu lieu. `freshclam` reste tenté et échoue sans conséquence sur un
   # réseau fermé.
   clamav:
-    container_name: p2enjoy-clamav
     image: clamav/clamav:1.4.3
     restart: unless-stopped
     ports:
@@ -387,7 +377,6 @@ services:
   # l'en-tête `x-ia-simulateur` ; le développement garde le vrai serveur (`OLLAMA_HOST`). Aucun port publié :
   # seul `functions` le joint, par le réseau de la pile. Image déjà employée par `mail-sync`.
   ollama-simule:
-    container_name: p2enjoy-ollama-simule
     image: python:3.13.13-slim-bookworm
     restart: unless-stopped
     command: ["python", "-u", "/simulateur/serveur.py"]

@@ -95,8 +95,9 @@ done
 # ne peut donc, par construction, atteindre un conteneur de la pile.
 #
 # Les noms portent le préfixe `p2enjoy-restauration-` et l'horodatage de l'exercice. AUCUN conteneur
-# de la pile ne peut porter un tel nom : `docker-compose.yml` les fixe (`container_name: p2enjoy-db`,
-# `p2enjoy-minio`, …). Et si l'un de ces noms était déjà pris, R24 arrête l'exercice AVANT toute
+# de la pile ne peut porter un tel nom : en développement, Compose les dérive du projet
+# (`<projet>-<service>-N`, CRM-115 T2) ; en production, `docker-compose.prod.yml` fixe les siens, et aucun
+# ne porte ce préfixe. Et si l'un de ces noms était déjà pris, R24 arrête l'exercice AVANT toute
 # création, plutôt que de réutiliser un environnement que ce script n'a pas fait.
 
 JETABLE_DB=""
@@ -356,7 +357,9 @@ fi
 # du seed deviendrait faux au premier seed modifié, et rougirait pour une raison étrangère à la
 # sauvegarde (M16).
 
-REFERENCE=$(docker ps --filter "name=^/p2enjoy-db$" --filter "status=running" --format '{{.Names}}')
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 bis : en développement par le service, en
+# production par son nom, inchangé (décision 703).
+REFERENCE=$(conteneur_en_marche db p2enjoy-db)
 
 # UNE REQUÊTE QUI ÉCHOUE EST UNE RÉPONSE, PAS UN ACCIDENT — corrigé après que le harnais l'eut
 # trouvé. `interroger` rendait le code de `psql`, et `VALEUR=$(interroger …)` propage ce code : sous
@@ -437,7 +440,7 @@ if [ -n "$REFERENCE" ]; then
 else
 	# PAS DE RÉFÉRENCE — cas d'une restauration sur un hôte de secours. L'exercice vérifie ce qui se
 	# vérifie sans elle, et le DIT, plutôt que de laisser croire à une égalité qu'il n'a pas mesurée.
-	warn "la pile de référence « p2enjoy-db » ne tourne pas : AUCUNE comparaison n'a eu lieu."
+	warn "la pile de référence (service « db ») ne tourne pas : AUCUNE comparaison n'a eu lieu."
 	warn "les invariants ci-dessous sont seulement vérifiés NON NULS."
 	for entree in "${REQUETES[@]}"; do
 		libelle=${entree%%|*}

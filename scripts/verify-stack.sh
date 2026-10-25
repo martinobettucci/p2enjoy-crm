@@ -176,10 +176,10 @@ fi
 
 revision=$(docker inspect -f '{{index .Config.Labels "com.p2enjoy.kong-config-revision"}}' \
 	"$(conteneur kong)" 2>/dev/null || true)
-if [ "$revision" = crm-092 ]; then
-	ok "Kong exécute la révision déclarative crm-092"
+if [ "$revision" = crm-115 ]; then
+	ok "Kong exécute la révision déclarative crm-115"
 else
-	fail "révision Kong active : '$revision' (attendu crm-092)"
+	fail "révision Kong active : '$revision' (attendu crm-115)"
 fi
 
 # --- 3. Studio accessible en développement -----------------------------------------------------

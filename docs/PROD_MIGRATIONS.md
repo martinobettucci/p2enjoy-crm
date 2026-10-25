@@ -598,6 +598,28 @@ définition change. **Et la webapp, reconstruite** (décision 700) : elle compte
 **Retour arrière** : relivrer la révision précédente ; Kong et Caddy reprennent leurs défauts. **Risque** : une
 reconnexion de plus par connexion restée inactive plus de 3 s, de l'ordre de la milliseconde sur le réseau interne.
 
+### 2.22 `CRM-115` T2, décisions 702 et 703 — la production garde ses noms ; Kong joint Realtime par un alias réseau (EN ATTENTE de l'instruction du responsable)
+
+Le développement ne nomme plus aucun conteneur, pour que plusieurs piles coexistent sur un démon
+(`docs/SPEC-pile-par-session.md` §6). **La production garde exactement ses noms** (`p2enjoy-db`, `p2enjoy-kong`…) : les
+neuf `container_name` du fichier commun passent dans `docker-compose.prod.yml`, dont la cellule hérite. Mesuré par
+`docker compose … config` avant et après : dix noms de production, douze de la cellule, identiques
+(`scripts/verify-noms-conteneurs.sh` §3). `scripts/spark/verifier.sh`, `scripts/backup.sh` en production et les gestes
+de ce document ne changent pas. **Ce qui change dans la définition de production** : Kong joint Realtime par l'alias
+réseau `realtime-dev.realtime`, posé sur le service `realtime` du fichier commun, au lieu du nom de conteneur
+`realtime-dev.p2enjoy-realtime` — le premier segment, qui porte le tenant, est le même. Le label
+`com.p2enjoy.kong-config-revision` passe à `crm-115`. **Aucune migration, aucune fonction, aucun secret, aucune
+variable.** Kong et Realtime sont recréés par le `up` ordinaire : leur définition change.
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Livrer `main` | poste, par les IP, puis `spark-docker` dans la cellule | `scripts/spark/livrer.sh`, puis `./runProd.sh --spark` |
+| 2 | Vérifier en lecture seule : noms inchangés, Kong à la révision `crm-115`, l'alias résolu | poste, lecture seule | `scripts/spark/verifier.sh` ; `docker inspect p2enjoy-kong --format '{{index .Config.Labels "com.p2enjoy.kong-config-revision"}}'` (`crm-115` attendu) ; `docker exec p2enjoy-kong getent hosts realtime-dev.realtime` (une adresse attendue) |
+| 3 | Constater : le temps réel répond à travers Kong (une notification reçue sans recharger la page) | le responsable | l'application, deux sessions ouvertes |
+
+**Retour arrière** : relivrer la révision précédente ; Kong reprend le nom de conteneur, que la production porte
+toujours. **Risque** : aucun connu — l'alias et le nom désignent le même conteneur sur le même réseau.
+
 ## 3. Migrations en attente
 
 **Trois migrations en attente : la 102 puis la 103, à livrer ensemble et dans cet ordre, et la 104** (`CRM-013`, INC-238 — la date de naissance d'une ligne de coût et de recette fermée à l'appelant ordinaire ; privilèges seulement, indépendante des deux autres, sa ligne au §3.2). Pour la 102 et la 103 : (`CRM-113` T1 — le générateur de workflow connaît les champs natifs de l'affaire et le catalogue ; `CRM-113` T5 — tout en anglais, la casse ignorée, décision 679 ; leurs lignes au §3.2). Elles ne touchent aucune table : elles n'exigent pas d'instantané au-delà de celui de la procédure nominale (§3.1), et elles se livrent avec la fonction `ia` et la webapp de `CRM-113` (T2, T3, T5). **Le responsable s'en charge** (décision 679). Avant elle, la **101** (`CRM-114` T1 — la famille `organizations` du connecteur ; sa ligne de retrait au §3.2) a été appliquée le 2026-10-24 après l'instantané confirmé par le responsable (§8). La troisième fenêtre du 2026-10-23 (§8) a appliqué la **100** (`CRM-067` T1 — les activités d'une affaire et leurs participants ; sa ligne de retrait au §3.2) ; la seconde, la **99** (`CRM-109` T3). Avant elles, les migrations **91 à 98** (`CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-108`, `CRM-070`, `CRM-109`), appliquées le 2026-10-23 par une même fenêtre après l'instantané confirmé par le responsable ; leurs lignes de retrait sont au §3.2. Avant elles, les migrations **89** (`CRM-101`) et **90**
@@ -1140,7 +1162,7 @@ attendue à ce stade : `select count(*) from pg_policies where schemaname = 'pub
 | `mail-sync` | À chaque changement du service de messagerie ou de ses dépendances |
 | Pile Supabase | À chaque changement de version épinglée d'un composant (tableau dans `docs/DAT.md` §3.7) |
 | `functions` | À chaque changement sous `supabase/functions/` ou de l'image Edge Runtime ; `CRM-016` impose un premier déploiement conjoint avec Kong. **`CRM-092` T3 et T3 bis (en attente de la reprise complète, §3)** : nouvelle fonction `session`, et le conteneur reçoit `JWT_SECRET`, `SSO_OIDC_ISSUER`, `SSO_OIDC_CLIENT_ID` et **`OIDC_CLIENT_SECRET`**, que le service principal ne remet qu'au worker `session` — la phrase « ne reçoit pas `JWT_SECRET` » plus bas est révisée par la décision 584. Recréer `functions` **après** la pose du secret par l'administrateur du realm et la correction de `SSO_OIDC_CLIENT_ID` (§2.3) |
-| `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml`, qui incrémente le label `com.p2enjoy.kong-config-revision` — **`crm-092`** depuis `CRM-092` T6 : routes `/auth/v1/*` et `/.well-known/oauth-authorization-server` retirées, Kong répond 404 ; **INC-299** (décision 696, §2.21) : `KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT: 3` dans `docker-compose.yml` — la définition change, le `up` ordinaire recrée Kong |
+| `kong` | À chaque changement de `supabase/docker/volumes/api/kong.yml`, qui incrémente le label `com.p2enjoy.kong-config-revision` — **`crm-115`** depuis `CRM-115` T2 (Realtime joint par son alias réseau, §2.22) ; `crm-092` depuis `CRM-092` T6 : routes `/auth/v1/*` et `/.well-known/oauth-authorization-server` retirées, Kong répond 404 ; **INC-299** (décision 696, §2.21) : `KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT: 3` dans `docker-compose.yml` — la définition change, le `up` ordinaire recrée Kong |
 | `caddy` | À chaque changement de `caddy/Caddyfile`, de `caddy/Caddyfile.spark` ou de `caddy/routes.caddy` — **`CRM-090` les modifie : routes extraites et `/functions/v1/*` relayé** ; **`CRM-092` T6** : `/auth/v1/*` répond 404, et le label `com.p2enjoy.caddy-routes-revision` (`crm-092`) fait recréer Caddy au `up` ordinaire ; **`CRM-102` T3** : l'hôte du connecteur MCP aiguillé vers `mcp` (`MCP_HOTE`, `mcp.invalid` tant qu'il est éteint), label `crm-102` ; **INC-299** (décision 696, §2.21) : `keepalive 3s` sur les deux `reverse_proxy`, label `crm-001` |
 | `mcp` | Sous le profil `mcp`, présent seulement si `CRM_MCP_HOTE` est posée (`CRM-102`, `docs/SPEC-mcp.md` §2.1). **Image construite dans la cellule** à sa première livraison (2026-10-21) ; comme pour `mail-sync`, `up -d` ne reconstruit jamais une image présente : **toute modification sous `mcp/` se livre par une reconstruction explicite** (`up -d --build --no-deps --wait mcp`, par `compose_prod`). Le volume `mcp-etat` (clients enregistrés, transactions, codes, chiffrés) survit aux recréations |
 | `minio`, `minio-createbucket` | Cellule Spark seulement (`CRM-090`) : stockage objet interne, sans port publié. **En attente (décision 681)** : nouvelle image Chainguard épinglée par empreinte, procédure au §2.18 |

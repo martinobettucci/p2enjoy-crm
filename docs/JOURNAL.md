@@ -34383,3 +34383,34 @@ précédente. Les neuf, rejoués directement sur le seed : **15/15 verts**. C'es
 
 Campagne directe de la session : toutes les suites vertes. Les échecs isolés ont été rejoués verts, et INC-174 est
 désormais close.
+
+### décision 703 — `CRM-115` T2 : Kong joint Realtime par un alias réseau ; `backup.sh` et `restore-drill.sh` gardent le nom de production
+
+*2026-10-25, session interactive. Deux questions posées au responsable, qui touchent la production ; la session a
+poursuivi sans réponse, sur ces motifs, et le responsable peut les contredire.*
+
+1. **`kong.yml`, commun à toutes les piles — option A, celle de la spécification validée** (décision 702). Kong joint
+   Realtime par l'alias réseau `realtime-dev.realtime`, posé sur le service `realtime` du fichier commun, au lieu du
+   nom de conteneur `realtime-dev.p2enjoy-realtime`. Le premier segment, qui porte le tenant, ne change pas.
+   L'alternative, un alias `realtime-dev.p2enjoy-realtime` en développement seulement, gardait un littéral dans le
+   code. **Effet sur la production** : Kong (label `crm-115`) et Realtime sont recréés par le `up` ordinaire, au même
+   comportement — `docs/PROD_MIGRATIONS.md` §2.22, en attente de l'instruction du responsable.
+2. **`scripts/backup.sh` et `scripts/restore-drill.sh`, qui servent en production comme en développement — option B,
+   la seule sans effet sur la production.** `conteneur_en_marche <service> <nom de production>`
+   (`scripts/lib/conteneur.sh`) rend le conteneur du service sous le profil `dev`, et exécute sous tout autre profil la
+   commande d'avant à l'identique, sur le nom de production. Le littéral reste dans ces deux appels, en exception
+   nommée de la garde. L'option A aurait changé le code que la production exécute.
+
+**Aussi tranché par la session**, comme choix techniques : l'utilitaire vit dans `scripts/lib/conteneur.sh`, que
+`scripts/lib/env.sh` charge — les harnais ne chargent pas `env.sh`, dont plusieurs redéfinissent les fonctions ; les
+harnais gardent leur variable `DB_CONTAINER`, calculée par le service et non plus écrite ; les conteneurs jetables des
+preuves dérivent leur nom de celui du projet ; les fichiers que seule la production exécute (`runProd.sh`,
+`scripts/spark/*`, `scripts/lib/connecteur-mcp.sh`) et les états simulés de `verifier.sh` dans
+`scripts/verify-controles-connecteur.sh` gardent les noms de production, en exceptions nommées.
+
+**Mesuré.** Ligne de base relevée avant le code : 243 occurrences dans 124 fichiers de code ; dix noms rendus par
+`config` pour la production, douze pour la cellule. Après : production et cellule identiques ; zéro `container_name` en
+développement sur vingt services ; `./runDev.sh` recrée la pile sous des noms dérivés du projet (`p2enjoy-crm-db-1`…),
+saine, seed rendu à 0 ; Kong résout `realtime-dev.realtime` (`/realtime/v1/api/ping` 200). La garde
+`scripts/verify-noms-conteneurs.sh` rend 12 contrôles, ses deux mutations dénoncées et son témoin propre ; elle a trouvé
+quatre littéraux en commentaire, réécrits.

@@ -20,6 +20,15 @@ d'exécuter le code attendu.
 - Les harnais, les preuves Playwright, le seed et les modes d'emploi des suites pgTAP désignent un conteneur par son
   service Compose : `conteneur <service>` (`scripts/lib/conteneur.sh`, chargée aussi par `scripts/lib/env.sh`) et
   `conteneur()` (`e2e/conteneur.ts`). Le seed joint le connecteur par `http://mcp:8080`.
+- `docker-compose.yml` et `docker-compose.dev.yml` ne nomment plus aucun conteneur : Compose les dérive du projet
+  (`p2enjoy-crm-db-1`…). La production et la cellule gardent leurs noms, posés dans `docker-compose.prod.yml`, et
+  prouvés identiques (décision 702, option A).
+- Kong joint Realtime par l'alias réseau `realtime-dev.realtime` ; label `com.p2enjoy.kong-config-revision` à `crm-115`
+  (décision 703 ; contrat de déploiement §2.22).
+- `scripts/backup.sh` et `scripts/restore-drill.sh` : le service en développement, le nom de production à l'identique
+  ailleurs (`conteneur_en_marche`, décision 703, option B).
+- `scripts/verify-noms-conteneurs.sh` : la garde — aucun nom littéral hors exceptions nommées, noms de production
+  inchangés, deux mutations dénoncées.
 
 ### `CRM-001`, INC-299 — Kong et Caddy ne rendent plus de `502` sur une connexion que l'amont ferme (décision 696)
 

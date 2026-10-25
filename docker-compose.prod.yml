@@ -18,26 +18,39 @@
 
 services:
 
+  # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 bis ; docs/JOURNAL.md décision 702 (option A) —
+  # LA PRODUCTION GARDE SES NOMS. Le développement ne nomme plus aucun conteneur : Compose les dérive du projet, pour
+  # que deux piles coexistent. Une production n'a qu'une pile, et `scripts/spark/verifier.sh` comme les gestes de
+  # `docs/PROD_MIGRATIONS.md` la désignent par ces noms : ils sont posés ici, et la cellule les hérite.
+  migrations-runner:
+    container_name: p2enjoy-migrations
+
   db:
+    container_name: p2enjoy-db
     restart: always
 
   rest:
+    container_name: p2enjoy-rest
     restart: always
 
   realtime:
+    container_name: realtime-dev.p2enjoy-realtime
     restart: always
 
   functions:
+    container_name: p2enjoy-functions
     restart: always
 
   # `mail-sync` est déclaré dans l'assemblage commun : la production exécute la même image, sans
   # port publié, et son profil rend `404` les routes de preuve (docs/SPEC-mail-subsystem.md §12.3).
   mail-sync:
+    container_name: p2enjoy-mail-sync
     restart: always
 
   # @spec CRM-102 (docs/BACKLOG.md), docs/SPEC-mcp.md §2.1, §10 — actif seulement sous le profil `mcp` (compose_prod) ;
   # son origine publique est dérivée de l'hôte posé, jamais saisie.
   mcp:
+    container_name: p2enjoy-mcp
     restart: always
     environment:
       CRM_MCP_ORIGINE_PUBLIQUE: https://${CRM_MCP_HOTE:-mcp.invalid}
@@ -45,10 +58,12 @@ services:
   # Le stockage vise le fournisseur S3 réel, décrit par les variables d'environnement de
   # production (docs/PROD_MIGRATIONS.md §2.3). Aucune valeur n'est codée en dur ici.
   storage:
+    container_name: p2enjoy-storage
     restart: always
 
   # La passerelle n'est plus publiée : Caddy la joint par le réseau interne et termine TLS.
   kong:
+    container_name: p2enjoy-kong
     restart: always
     ports: !reset []
 

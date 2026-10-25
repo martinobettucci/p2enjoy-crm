@@ -25,7 +25,6 @@ services:
   # Source de vérité du produit : schéma applicatif, RLS, fonctions SECURITY DEFINER et RPC
   # métier (docs/DAT.md §3.2, docs/SCHEMA.md).
   db:
-    container_name: p2enjoy-db
     image: supabase/postgres:17.6.1.136
     restart: unless-stopped
     volumes:
@@ -68,7 +67,6 @@ services:
   # l'image de la base (K10), et `0074` y pose les fonctions de lecture du jeton. Aucune migration n'est appliquée en production par
   # ce chemin : docs/PROD_MIGRATIONS.md fait foi (docs/DAT.md §9).
   migrations-runner:
-    container_name: p2enjoy-migrations
     image: postgres:17-alpine
     restart: "no"
     depends_on:
@@ -91,7 +89,6 @@ services:
   # --- API REST ------------------------------------------------------------------------------
   # PostgREST expose le schéma filtré par RLS (docs/DAT.md §6, docs/SPEC-permissions-rls.md).
   rest:
-    container_name: p2enjoy-rest
     image: postgrest/postgrest:v14.12
     restart: unless-stopped
     depends_on:
@@ -120,9 +117,14 @@ services:
 
   # --- Temps réel ----------------------------------------------------------------------------
   # Abonnements aux commentaires, déplacements de cards et notifications (docs/DAT.md §3.1).
-  # Le nom du conteneur porte le tenant : Realtime le déduit du sous-domaine.
+  # L'hôte par lequel Kong joint Realtime porte le tenant : Realtime le déduit du premier segment.
+  # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : ce n'est plus le nom du conteneur, qui était
+  # global au démon, mais un ALIAS RÉSEAU, propre au réseau du projet — deux piles ne se heurtent plus (décision 702).
   realtime:
-    container_name: realtime-dev.p2enjoy-realtime
+    networks:
+      default:
+        aliases:
+          - realtime-dev.realtime
     image: supabase/realtime:v2.102.3
     restart: unless-stopped
     depends_on:
@@ -171,7 +173,6 @@ services:
   # attend `migrations-runner`, qui attendait `storage`, qui attendait `rest`. Un volume neuf ne
   # convergeait donc JAMAIS sans intervention manuelle.
   storage:
-    container_name: p2enjoy-storage
     image: supabase/storage-api:v1.60.4
     restart: unless-stopped
     depends_on:
@@ -182,13 +183,13 @@ services:
       # annoncent 127.0.0.1:5000 et l'adresse du réseau Compose, jamais `::`. Or `/etc/hosts` du
       # conteneur résout aussi « localhost » en `::1`, et sur un hôte où la résolution rend cette
       # adresse en premier, le contrôle de santé reçoit un refus de connexion sans que le service
-      # n'ait rien : la pile entière échoue alors sur « container p2enjoy-storage is unhealthy ».
+      # n'ait rien : la pile entière échoue alors sur « container … storage is unhealthy ».
       #
       # LA FENÊTRE EST ÉLARGIE POUR LE DÉMARRAGE À FROID — mesuré le 2026-08-17 en rejouant
       # `./resetMe.sh`. Avec `start_period: 15s` et cinq tentatives, la tolérance était de quarante
       # secondes ; sur une pile reconstruite de zéro, `storage` met plus longtemps à répondre, et le
       # service qui en dépend renonçait avant lui. La pile entière s'arrêtait alors sur
-      # « dependency failed to start: container p2enjoy-storage is unhealthy » — alors que le
+      # « dependency failed to start: container … storage is unhealthy » — alors que le
       # service, lui, avait bel et bien démarré : ses journaux annonçaient « Started Successfully »,
       # et le contrôle de santé rendait `0` quelques secondes plus tard.
       #
@@ -228,7 +229,6 @@ services:
   # Runtime commun au développement et à la production. Aucun port hôte : toute requête
   # applicative traverse Kong, où la clé d'API est contrôlée avant le dispatch (§5).
   functions:
-    container_name: p2enjoy-functions
     image: public.ecr.aws/supabase/edge-runtime:v1.74.2
     restart: unless-stopped
     command:
@@ -281,12 +281,12 @@ services:
   # La configuration déclarative ne référence aucun service de développement : Studio est joint
   # directement sur son propre port en développement, jamais au travers de la passerelle.
   kong:
-    container_name: p2enjoy-kong
     image: kong/kong:3.9.1
     restart: unless-stopped
     labels:
       # `crm-092` : routes d'authentification retirées (docs/SPEC-edge-functions.md §2, décision 589).
-      com.p2enjoy.kong-config-revision: crm-092
+      # `crm-115` : Realtime joint par son alias réseau `realtime-dev.realtime` (CRM-115 T2, décision 702).
+      com.p2enjoy.kong-config-revision: crm-115
     depends_on:
       functions:
         condition: service_healthy
@@ -342,7 +342,6 @@ services:
   # à « la première unité qui consomme réellement une table mail ». Le principe de moindre
   # privilège se tient dans le temps, pas seulement dans l'espace.
   mail-sync:
-    container_name: p2enjoy-mail-sync
     # @spec CRM-015 (docs/BACKLOG.md), docs/JOURNAL.md décision 356 — INC-093
     # `mail-sync/Dockerfile` porte la branche facultative `pip_ca` depuis la décision 280, mais
     # aucun fichier Compose ne la câblait : elle testait un montage absent et restait donc inerte,
@@ -419,7 +418,6 @@ services:
   # l'active que si `CRM_MCP_HOTE` est posée (scripts/lib/env.sh). Éteint, il n'est ni construit ni démarré, et ne
   # reçoit aucun secret. Son origine publique n'est jamais posée à la main : chaque overlay la dérive.
   mcp:
-    container_name: p2enjoy-mcp
     profiles: ["mcp"]
     build:
       context: ./mcp

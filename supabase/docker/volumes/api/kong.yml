@@ -5,6 +5,8 @@
 # @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §14 (T6) — plus aucune route vers
 #       GoTrue : `/auth/v1/*` et `/.well-known/oauth-authorization-server` répondent 404 (révision
 #       `crm-092`, docs/JOURNAL.md décision 589)
+# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 — Realtime joint par son alias réseau
+#       `realtime-dev.realtime`, propre au projet, et non plus par un nom de conteneur (révision `crm-115`, décision 702)
 #
 # Adapté de la pile self-hosted officielle Supabase (docker/volumes/api/kong.yml). Écarts
 # assumés et documentés dans docs/JOURNAL.md (décision 11) :
@@ -169,7 +171,7 @@ services:
   ## Temps réel -------------------------------------------------------------------------------
   - name: realtime-v1-ws
     _comment: 'Realtime: /realtime/v1/* -> ws://realtime:4000/socket/*'
-    url: http://realtime-dev.p2enjoy-realtime:4000/socket
+    url: http://realtime-dev.realtime:4000/socket
     protocol: ws
     routes:
       - name: realtime-v1-ws
@@ -199,7 +201,7 @@ services:
   # L'API d'administration des tenants de Realtime n'est jamais exposée.
   - name: realtime-v1-rest-openapi
     _comment: 'Realtime: /realtime/v1/api/openapi/* -> bloqué'
-    url: http://realtime-dev.p2enjoy-realtime:4000/api/openapi
+    url: http://realtime-dev.realtime:4000/api/openapi
     protocol: http
     routes:
       - name: realtime-v1-rest-openapi
@@ -214,7 +216,7 @@ services:
 
   - name: realtime-v1-rest-tenants
     _comment: 'Realtime: /realtime/v1/api/tenants/* -> bloqué'
-    url: http://realtime-dev.p2enjoy-realtime:4000/api/tenants
+    url: http://realtime-dev.realtime:4000/api/tenants
     protocol: http
     routes:
       - name: realtime-v1-rest-tenants
@@ -229,7 +231,7 @@ services:
 
   - name: realtime-v1-rest
     _comment: 'Realtime: /realtime/v1/api/* -> http://realtime:4000/api/*'
-    url: http://realtime-dev.p2enjoy-realtime:4000/api
+    url: http://realtime-dev.realtime:4000/api
     protocol: http
     routes:
       - name: realtime-v1-rest

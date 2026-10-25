@@ -8,7 +8,7 @@
 # @verifies docs/JOURNAL.md décision 681, INC-290 — MinIO depuis Chainguard épinglé par empreinte, en root, pour les deux services
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §2, §12 — tranche T6 : ni GoTrue ni SMTP dans
 #           les propositions ; `--demandes-seules` pour une cellule en service (décisions 589 et 590) ;
-#           T7 (décision 591) : Kong et Caddy portent leur label de révision `crm-092` ; valeurs de la
+#           T7 (décision 591) : Kong et Caddy portent leur label de révision (`crm-115` pour Kong depuis CRM-115 T2) ; valeurs de la
 #           cellule entre guillemets, lues comme la cellule les écrit (décision 599)
 # @verifies CRM-102 (docs/BACKLOG.md) tranche T3 — docs/SPEC-mcp.md §2.1, §2.2, §10 : le connecteur n'est assemblé
 #           qu'avec CRM_MCP_HOTE (profil `mcp`), Caddy ne reçoit que l'hôte, révision de routes `crm-102`,
@@ -293,8 +293,8 @@ elif "mcp" in s:
 # Révisions de configuration (CRM-092 T6, décision 589) : ni Kong ni Caddy ne relisent leurs fichiers
 # montés, et la livraison les remplace sous les conteneurs en service. Un label changé dans le même
 # commit que la configuration les fait recréer par le up ordinaire.
-if s.get("kong", {}).get("labels", {}).get("com.p2enjoy.kong-config-revision") != "crm-092":
-    e.append("Kong sans la révision de configuration crm-092")
+if s.get("kong", {}).get("labels", {}).get("com.p2enjoy.kong-config-revision") != "crm-115":
+    e.append("Kong sans la révision de configuration crm-115")
 # `crm-001` depuis INC-299 (décision 696, docs/DAT.md §3.5 bis) : le délai de maintien des connexions amont de Caddy.
 if s.get("caddy", {}).get("labels", {}).get("com.p2enjoy.caddy-routes-revision") != "crm-001":
     e.append("Caddy sans la révision de routes crm-001")
@@ -335,7 +335,7 @@ if docker compose version >/dev/null 2>&1; then
 		ok "un seul port publié (caddy, SPARK_HTTP_PORT → 8080), aucun 80/443, MinIO sans port"
 		ok "aucune valeur de remplissage consommée ; Kong à un processus ; limite mémoire partout"
 		ok "Caddy monte Caddyfile.spark et routes.caddy, et ne reçoit que MCP_HOTE=mcp.invalid"
-		ok "Kong (crm-092) et Caddy (crm-102) portent leur révision : recréés par le up ordinaire quand leur configuration change"
+		ok "Kong (crm-115) et Caddy (crm-102) portent leur révision : recréés par le up ordinaire quand leur configuration change"
 		ok "chaque secret n'atteint que les services qui le consomment — Caddy n'en reçoit aucun"
 		ok "connecteur éteint (sans CRM_MCP_HOTE) : le service mcp n'est pas assemblé et ne reçoit aucun secret"
 	fi
