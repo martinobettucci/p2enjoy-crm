@@ -7742,3 +7742,14 @@ qu'INC-292 comptait avec ses `503` : la cause est distincte (aucune fonction edg
 inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-001` mesure le délai de maintien des connexions
 de PostgREST et celui de Kong vers cet amont (`upstream_keepalive_idle_timeout`), puis aligne le second sous le premier —
 un réglage déclaré et prouvé par une boucle de requêtes, pas une relance. **Statut : ouverte.**
+
+### INC-300 — `connexion.spec.ts:345` lit le fondu des gestes de modération à mi-transition sous la charge d'une campagne
+
+*Relevé le 2026-10-25 par la session planifiée de `CRM-013` (décision 687), dans sa campagne d'interface de fin de session.*
+**Constat** : « l'exploitante du realm entre sans attente… » attend `opacity: 1` sur `actions-moderation` d'un commentaire
+et lit `0.112361` puis `0` pendant 5 s (`toHaveCSS`, `connexion.spec.ts:360`). Rejoué seul : vert, puis **3/3** verts avec
+`--repeat-each=3` ; vert aussi sur la ligne de base (privilèges d'avant `0104` rendus à la base). Étranger à `CRM-013`, qui
+ne touche ni l'interface ni les commentaires. Même famille que les autres captures prises pendant un fondu (le défaut que
+le commentaire de la preuve cite pour `commentaires-gestes.spec.ts`). **Comportement laissé inchangé.** **Issue proposée**
+(`docs/CloudWorker.md` §4.1 bis) : la preuve survole la carte et attend la fin de la transition avant d'asserter l'opacité
+— ce que fait déjà `commentaires-gestes.spec.ts` —, sans temporisation ajoutée. **Statut : ouverte.**

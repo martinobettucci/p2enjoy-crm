@@ -33941,3 +33941,31 @@ appel qu'une commande contenant ce motif a tué son propre shell (piège du §2.
 
 **Où reprendre** : `CRM-113` T3 reste `[~]` (relecture du responsable, campagne verte attendue par le résidu d'INC-292 et
 INC-299). Livraison : `docs/PROD_MIGRATIONS.md` §2.19 (fonctions, redémarrage de `functions`, webapp). Prise libérée.
+
+### `CRM-013`, INC-238 — fin de session : la naissance d'une ligne de coût et de recette fermée à l'appelant ordinaire
+
+*2026-10-25, session planifiée ouverte à 01:12:13 UTC (décision 687).*
+
+**Fait.** Migration `0104` : `created_at` et `updated_at` de `card_costs` et `card_revenues` refusées à `authenticated`
+à l'insertion et à la mise à jour, les autres colonnes inchangées, `service_role` intact. Preuves : pgTAP `0094` **30**,
+deux mutations tuées (privilège de table rouvert : 18 rouges ; fermeture trop large : 6) ; API
+`dates-lignes-protegees.spec.ts` **7/7**, **rouge sans la migration** (`201` date conservée, `200` sur la réécriture) ;
+unitaires de la webapp (+3, trois mutations tuées) ; `verify-colonnes-protegees.sh` **52** contrôles (section 7 *bis* :
+non-complaisance, convergence, dépendance d'ordre `0051`/`0095` → `0104`) ; E2E des coûts et recettes rejoués **49/49** ;
+capture « À saisir » observée (la ligne du seed à 120 jours en danger, les autres à 0) ; seed rejoué sur la base migrée.
+Documentation : SPEC-permissions-rls §4.3 et §4.4.7, SCHEMA, PROD_MIGRATIONS (104 en attente), CHANGELOG, SPEC-seed,
+INC-238 close.
+
+**Mesuré en écrivant.** La mesure « avant » rouvre la porte, donc réécrit la ligne seedée « Publicité » : `budgets.spec.ts`
+l'a vue « en retard » au rejeu suivant. La preuve rend désormais la ligne à son état relu quand la règle tombe.
+
+**Campagne de fin de session** (`353b27d`…`38cb2de`) : typecheck, unitaires **4350**, build, pgTAP **94 fichiers / 3974
+assertions**, API **1182**, courrier **44**, pytest **246** — verts ; interface **910 passés, 14 échecs, 3 non joués**.
+Les 14 rejoués seuls : 12 verts ; les 2 restants (`administration-workflows.spec.ts:1114`, déjà consigné ;
+`connexion.spec.ts:345`, INC-300) passent 3/3 avec la migration, et le premier échouait aussi sur la ligne de base.
+Aucun échec imputable. Synchronisé ensuite (CRM-037, CRM-111 T1 bis, INC-292 ; ni migration ni seed) : typage, unitaires
+touchés et preuves d'API de la tranche rejoués verts. Les captures réécrites par la campagne, d'autres unités, sont rendues.
+**Non exécuté** : la série entière des `verify-*.sh` (seul `verify-colonnes-protegees.sh` l'a été).
+
+**Où reprendre.** La tranche est vérifiée en développement ; sa livraison (migration 104) attend l'instruction du
+responsable. `CRM-013` reste `[~]` : `api_tokens` et `audit_log` n'existent toujours pas. Prise libérée.

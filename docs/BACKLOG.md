@@ -853,8 +853,7 @@ politique de lecture des tracks, migration `0034` —, et INC-075 se ferme avec 
   prédisaient : démon Docker lancé à la main (`dockerd --host=…`), image `webapp` construite avec
   le certificat du proxy (INC-032, INC-042), et `npm ci` précédé d'un `npm config set cafile`.
 
-### CRM-013 — Colonnes protégées `[@]`
-*Prise en charge : CloudWorker 2026-10-25 01:12 UTC depuis 2026-10-25 01:14 UTC — état avant : [~] — tranche prise : INC-238, `card_costs.created_at` protégée*
+### CRM-013 — Colonnes protégées `[~]`
 `REVOKE` sur `secret_id`, `token_hash` ; `current_step_id` et `email_local_part` non modifiables
 directement ; `card_events` et `audit_log` en écriture par trigger uniquement.
 **DoD** : preuves de refus n° 5, 6 et 8 ; test explicite qu'une lecture refusée retourne **zéro
@@ -994,11 +993,17 @@ ligne** et non une erreur ambiguë.
       une révocation supposant un `UPDATE` accordé par ailleurs. Les témoins vérifient désormais ce
       FAIT au lieu de figer une absence, et la preuve de refus n° 6 est **acquise** depuis
       `CRM-052` (`docs/SPEC-permissions-rls.md` §7.2).
-- [@] **INC-238 — la date de naissance d'une ligne de coût et d'une ligne de recette** (décision 687,
+- [x] **INC-238 — la date de naissance d'une ligne de coût et d'une ligne de recette** (décision 687,
       `docs/SPEC-permissions-rls.md` §4.4.7) : `created_at` et `updated_at` de `card_costs` et `card_revenues` fermées
-      à `authenticated` à l'insertion et à la mise à jour, migration `0104` ; pgTAP, API aux jetons réels, unitaire de
-      la webapp, E2E existants rejoués, seed rejoué, `verify-colonnes-protegees.sh` étendu. *Spécifiée le 2026-10-25
-      avant le code.*
+      à `authenticated` à l'insertion et à la mise à jour, migration `0104`. *Spécifiée le 2026-10-25 avant le code.*
+      **Vérifiée en développement le 2026-10-25** : pgTAP `0094` **30**, deux mutations tuées ; API
+      `e2e/api/dates-lignes-protegees.spec.ts` **7/7**, rouge sans la migration ; unitaires `card-costs.test` et
+      `card-revenues.test` (+3, trois mutations tuées) ; `verify-colonnes-protegees.sh` **52** contrôles ; E2E des coûts et
+      recettes **49/49** ; capture `docs/captures/CRM-084/anciennete-seuil-1440.jpg` observée ; seed rejoué sur la base
+      migrée. Campagne : pgTAP 94 / 3974, API 1182, unitaires 4350, courrier 44, pytest 246, interface 910 passés et 14
+      échecs, tous rejoués et non imputables (INC-300, et un intermittent déjà consigné). INC-238 close.
+  - [ ] **Livraison de la migration 104**, sur instruction du responsable (`docs/PROD_MIGRATIONS.md` §3) ; aucun service à
+        redéployer.
 - [ ] **DEUX CIBLES RESTENT DUES, ET LEURS TABLES N'EXISTENT TOUJOURS PAS** :
       `api_tokens.token_hash` (`CRM-073`) et `audit_log` (`CRM-072`). La preuve de refus n° 8 reste
       donc incomplète pour `audit_log`. Chaque absence est figée par une assertion pgTAP **et** par
