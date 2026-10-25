@@ -135,8 +135,22 @@ for fichier in "$MODULE" "$PREDICAT" "$COMPOSANT" "$ROUTE" "$TEST_UNITAIRE" "$TE
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
 
+# `entete` rend l'en-tête COMPLET d'un fichier — ses lignes de commentaire et ses lignes vides, jusqu'à la première ligne
+# de code —, et non ses trois premières lignes : le remède d'INC-192 dans `verify-corbeille.sh`, repris ici le 2026-10-25
+# (décision 688). MESURÉ : `RouteCard.tsx` ouvre désormais sur le `@spec CRM-093` de trois lignes, et son `@spec CRM-037`,
+# cité ligne 4 comme il doit l'être, tombait hors de la fenêtre — contrôle ROUGE sur un fichier CONFORME. La règle reste
+# non complaisante : une citation posée après la première ligne de code n'est toujours pas vue.
+entete() {
+	awk '{
+		ligne = $0
+		sub(/^[ \t]+/, "", ligne)
+		if (ligne == "" || ligne ~ /^(\/\/|--|\*|\/\*)/) { print; next }
+		exit
+	}' "$1"
+}
+
 for fichier in "$MODULE" "$PREDICAT" "$COMPOSANT" "$ROUTE"; do
-	if head -3 "$fichier" | grep -q '@spec CRM-037'; then
+	if entete "$fichier" | grep -q '@spec CRM-037'; then
 		ok "$(basename "$fichier") porte son commentaire @spec"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog"
@@ -144,7 +158,7 @@ for fichier in "$MODULE" "$PREDICAT" "$COMPOSANT" "$ROUTE"; do
 done
 
 for fichier in "$TEST_UNITAIRE" "$TEST_COMPOSANT" "$SPEC_API" "$SPEC_UI"; do
-	if head -3 "$fichier" | grep -q '@verifies CRM-037'; then
+	if entete "$fichier" | grep -q '@verifies CRM-037'; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog"
