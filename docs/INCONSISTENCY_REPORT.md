@@ -7895,7 +7895,7 @@ dont les anomalies sont INC-296 et INC-297. Classement, mesuré :
 - **Restauration par réapplication d'une migration non rejouable** (famille d'INC-289) : `plateforme` (code 3 —
   dégrade et restaure en réappliquant `0089` entière, refusée depuis `0099`), qui laisse une base dans laquelle
   `preferences-notifications` rougit ensuite. **Mesuré** : `preferences-notifications` seul, sur base reconstruite,
-  **62/62**. Remède : dégrader la fonction seule, et restaurer par `reconstruire_base_dev` (`CRM-101`).
+  **62/62**. Remède : dégrader la fonction seule, et restaurer par `reconstruire_base_dev` (`CRM-101`). Même famille qu'**INC-304**, qui recense déjà les harnais qui rejouent une migration ; l'issue y est portée.
 - **Environnement** : `mcp` (« pull access denied for crm-mcp » — image de développement non construite sous ce nom
   depuis `CRM-115`), `mail-sync` (avertissements pytest), `mail-infra` (Stalwart journalise une ERROR en ne
   joignant pas GitHub pour son filtre anti-spam ; vert au second passage), `scripts` (variables `CRM_MCP_*` du
