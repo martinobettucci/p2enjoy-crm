@@ -16268,7 +16268,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       `scripts/verify-reconstruction.sh` ; (b) la preuve d'adoption de `verify-migrations.sh` (base neuve dans l'ordre,
       rien appliqué ensuite, répertoire doublé par le vrai runner, sentinelle non idempotente) ; (c) les quinze autres
       harnais, puis le retrait de `scripts/lib/registre.sh`.
-      *Livré et prouvé le 2026-10-24/25 (décision 689)* : (a) `verify-reconstruction.sh` 27/27 ; (b)
+      *Livré et prouvé le 2026-10-24/25 (décision 689)* : (a) `verify-reconstruction.sh` 28/28, journal de reconstruction gardé (INC-298) ; (b)
       `verify-migrations.sh` 36/36 (rouge avant correction : adoption sur base peuplée, `0089`) ; (c) les quinze harnais
       réécrits, `registre.sh` retiré — verts : `channels` 27, `cards` 42, `copie-workflow` 30, `move-card` 58,
       `colonnes-protegees` 44, `move-card-to-channel` 45, `change-channel-workflow` 23, `transition-required-fields` 25,
