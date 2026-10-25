@@ -310,9 +310,18 @@ Backlog
 - "[ ]" : non commencé ;
 - "[@]" : pris en charge, un agent y travaille en ce moment ;
 - "[~]" : commencé — implémenté en partie, ou implémenté mais insuffisamment vérifié — et personne n'y travaille ;
-- "[x]" : terminé et intégralement vérifié.
+- "[x]" : terminé et intégralement vérifié ;
+- "[P]" : à constater en production — implémenté et intégralement vérifié en développement ; il ne reste que ce qui
+  exige le responsable en production, la livraison sur son instruction et son constat.
 
 Une tâche ne passe à "[x]" qu'après validation de sa Definition of Done.
+
+Une tâche dont seuls la livraison et le constat en production manquent est "[P]", jamais "[~]" : une tâche planifiée
+reprendrait un "[~]" en boucle sans pouvoir rien y faire. Aucune tâche planifiée ne prend une tâche "[P]" ; elle se
+traite en session interactive avec le responsable, sur la machine de développement. Lorsque le responsable demande ce
+qu'il lui reste à valider en production, lui répondre par la liste des entrées "[P]" de "docs/BACKLOG.md", chacune avec
+son geste dans le contrat de déploiement. Son constat favorable la passe "[x]" ; un défaut constaté la ramène "[~]",
+avec le défaut nommé. (Décision 697.)
 
 Prise en charge : plusieurs agents en parallèle
 
@@ -328,7 +337,7 @@ sur le même dépôt et la même branche. Deux d'entre eux ne doivent jamais dé
   poussée et choisir une autre tâche. Ne jamais forcer un push pour garder une prise.
 - Ne pas prendre une tâche marquée "[@]" par un autre agent, sauf prise expirée : plus de 6 heures, et aucun commit
   citant l'identifiant de la tâche sur la branche distante depuis 6 heures. La reprise le dit dans la nouvelle prise.
-- Libérer la prise dans le commit de clôture : retirer la ligne, et poser l'état réel ("[~]", "[x]", ou l'état d'avant
+- Libérer la prise dans le commit de clôture : retirer la ligne, et poser l'état réel ("[~]", "[P]", "[x]", ou l'état d'avant
   si rien n'a avancé).
 - Les numéros partagés — décisions, incohérences, migrations — se prennent après synchronisation ; un conflit se
   résout par renumérotation de ce qui n'est pas encore poussé.

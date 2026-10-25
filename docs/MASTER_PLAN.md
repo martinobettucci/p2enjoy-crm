@@ -139,6 +139,10 @@ Une unité est `[x]` lorsque **toutes** les conditions applicables sont satisfai
 
 Si une seule preuve manque, l'unité reste `[~]` et la limite est nommée explicitement.
 
+Une unité dont toutes les preuves de développement sont faites, et dont il ne reste que la livraison et le constat en
+production, est **`[P]`** (décision 697) : aucune tâche planifiée ne la prend ; le constat favorable du responsable la
+passe `[x]`.
+
 ## 5. Journalisation des décisions
 
 Toute décision de conception, tout arbitrage et toute contradiction relevée sont consignés

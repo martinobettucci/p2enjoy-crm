@@ -421,7 +421,7 @@ git log origin/main --since="6 hours ago" --oneline --grep="CRM-xxx"   # vide �
 Une reprise le dit dans ta propre ligne : « reprise d'une prise expirée de <agent> ».
 
 **4. LIBÈRE TA PRISE EN FIN DE SESSION**, dans le commit de clôture (§4.3, point 4) : retire la ligne et pose l'état réel
-— `[~]`, `[x]`, ou l'état d'avant si rien n'a avancé. Une prise laissée derrière soi bloque l'unité six heures pour rien.
+— `[~]`, `[P]`, `[x]`, ou l'état d'avant si rien n'a avancé. Une prise laissée derrière soi bloque l'unité six heures pour rien.
 
 **5. LES NUMÉROS PARTAGÉS SE PRENNENT APRÈS SYNCHRONISATION** : numéro de décision du journal, d'INC du registre, de
 migration. Fais `git fetch origin main` et lis le dernier numéro sur `origin/main`, pas dans ta copie. Un conflit se
@@ -1050,8 +1050,13 @@ C'est l'état réel des unités :
 ```
 [ ]  non commencée
 [~]  en cours ou insuffisamment prouvée
+[P]  à constater en production : prouvée en développement, n'attend plus que la livraison et le constat du responsable
 [x]  close et intégralement prouvée
 ```
+
+**Une unité ou une tranche `[P]` ne se prend JAMAIS ici** (décision 697) : ce qui lui reste — la livraison sur
+instruction, le constat en production — n'appartient qu'au responsable, en session interactive sur la machine de
+développement. La reprendre, c'est tourner en boucle sur un travail qu'aucune session planifiée ne peut faire.
 
 Chaque unité porte sa Definition of Done.
 
@@ -1122,7 +1127,7 @@ telle, et le dépôt a reçu majoritairement des commits de documentation pendan
 que des écrans entiers du produit restaient non construits. C'est terminé.
 
 L'unité de la session se choisit AINSI, dans cet ordre. **Une unité, ou une tranche, marquée `[@]` par un autre agent
-est sautée**, sauf prise expirée (§1 *bis*, point 3) :
+est sautée**, sauf prise expirée (§1 *bis*, point 3). **Une unité ou une tranche `[P]` est toujours sautée** (§4.1) :
 
 1. si la dernière entrée du journal désigne une reprise d'unité PRODUIT en
    cours, tu la suis ;
@@ -1225,7 +1230,8 @@ exécuté**. Une campagne partielle annoncée comme telle vaut mieux qu'une sess
 
 **4. Mets "docs/BACKLOG.md" au véritable état de l'unité**, et nomme précisément les preuves qui
 restent à exécuter. **Libère ta prise en charge** dans ce même geste : retire la ligne « Prise en charge » et remplace
-`[@]` par l'état réel (§1 *bis*, point 4).
+`[@]` par l'état réel (§1 *bis*, point 4). **Une unité dont il ne reste que la livraison et le constat en production
+est posée `[P]`, jamais `[~]`** (décision 697).
 
 **4 bis. Avant de pousser, synchronise-toi encore une fois** (`git pull --rebase origin main`). Si des commits sont
 arrivés depuis la campagne, rejoue les preuves de ce qu'ils touchent, comme le demande `CLAUDE.md` §13.
@@ -1280,7 +1286,9 @@ Tu arrêtes la tâche planifiée si, et seulement si, l'une des deux est vraie :
    cause que tu ne peux pas lever seul : un arbitrage du responsable qui n'est pas rendu, une
    spécification absente que tu n'as pas le droit d'écrire à sa place, une dépendance externe
    indisponible, un accès refusé, une pile qui ne monte pas et dont l'échec te prive de toute
-   preuve. La cause doit être **nommée et mesurée**, pas supposée.
+   preuve. La cause doit être **nommée et mesurée**, pas supposée. **Une unité `[P]` compte parmi les unités
+   bloquées** (décision 697) : ce qui lui reste n'appartient qu'au responsable. Toutes les unités restantes `[P]`, ou
+   `[P]` et bloquées, valent donc cette condition.
 
 **Ce qui n'est PAS une condition d'arrêt**, et la liste est fermée :
 

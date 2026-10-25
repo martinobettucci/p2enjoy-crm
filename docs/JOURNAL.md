@@ -34182,3 +34182,35 @@ requêtes envoyées au tick de Warp, journal identique à celui d'INC-299. **Ret
 (`KONG_UPSTREAM_KEEPALIVE_IDLE_TIMEOUT`) et Caddy (`keepalive 3s`). **Écarté** : rejouer sur `502`, régler l'amont,
 un délai par amont. Le saut Caddy n'est pas observé en campagne (le développement n'a pas de Caddy) mais il est la même
 course mesurée, et le même délai partout est la règle la plus simple.
+
+### décision 697 — Un état `[P]`, « à constater en production », que les tâches planifiées ne prennent jamais
+
+*Consigne du responsable, 2026-10-25, en session interactive.* **Constat** : une unité dont il ne reste que la
+livraison et le constat en production restait `[~]`. Or le §4.2 de `docs/CloudWorker.md` fait choisir « la première
+unité `[~]` » : une tâche planifiée risque de la reprendre en boucle sans pouvoir rien y faire, puisque la livraison se
+fait sur instruction du responsable et que le constat est le sien. Les sessions 677 à 685 l'évitaient en relisant chaque
+fois les `[~]` du plan, sans règle écrite.
+
+**Décision du responsable** : un état nouveau, distinct de vide, de en cours et de pris en charge, consigné là où les
+autres le sont. Les unités à constater en production ne peuvent pas être prises par la tâche planifiée : elles se
+traitent en session interactive avec le responsable, sur la machine de développement, et le responsable peut demander
+ce qu'il lui reste à valider en production.
+
+**Ce que la session a tranché pour rendre la règle exécutable** (le responsable peut le corriger) :
+1. **La marque est `[P]`.** Elle couvre la livraison sur instruction **et** le constat : les deux n'appartiennent qu'au
+   responsable, et une tranche prouvée mais pas encore livrée boucle de la même façon.
+2. **`[P]` exige la vérification complète en développement** : c'est un `[x]` à qui ne manque que la production, jamais
+   un `[~]` déguisé. Le constat favorable passe à `[x]` ; un défaut constaté ramène à `[~]`, le défaut nommé.
+3. **Une unité est `[P]`** quand chacune de ses tranches est `[P]` ou `[x]`, et au moins une `[P]`.
+4. **« Qu'est-ce qu'il me reste à valider en production ? »** reçoit en réponse la liste des entrées `[P]`
+   (`grep -n '\[P\]' docs/BACKLOG.md`), chacune avec son geste au `docs/PROD_MIGRATIONS.md`.
+5. **Arrêt de la tâche planifiée** (§4.5.1) : une unité `[P]` compte parmi les unités bloquées.
+6. **Premier usage** : les tranches T1 à T7 de `CRM-104` et T2 à T4 de `CRM-114`, dont le backlog dit qu'il ne reste
+   que la livraison ou le constat, et donc les deux unités. Les autres `[~]` du backlog ne sont pas reclassés ici :
+   chacun demande de relire ce qui lui reste, travail à faire unité par unité.
+
+**Vérifié** : aucun harnais ne lit les marques du backlog ; l'ajout ne casse rien. **Connecteur MCP** : sans objet,
+c'est une règle de conduite du dépôt.
+
+**Persisté** : `docs/BACKLOG.md` (Marquage), `CLAUDE.md` §5 (Backlog, Prise en charge), `docs/CloudWorker.md` §1 *bis*,
+§4.1, §4.2, §4.3 et §4.5.1, `docs/MASTER_PLAN.md` §4.

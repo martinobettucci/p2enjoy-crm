@@ -8,7 +8,18 @@ Unités d'exécution du projet. L'ordre et les règles d'avancement sont dans
 - `[ ]` non commencé ;
 - `[@]` **pris en charge** : un agent y travaille en ce moment (décision 680) ;
 - `[~]` commencé — implémenté en partie, ou implémenté mais insuffisamment vérifié — et personne n'y travaille ;
-- `[x]` terminé **et intégralement vérifié**.
+- `[x]` terminé **et intégralement vérifié** ;
+- `[P]` **à constater en production** (décision 697) : implémenté et intégralement vérifié en développement ; il ne
+  reste que ce qui exige le responsable en production — la livraison, sur son instruction, et son constat. **Aucune
+  tâche planifiée ne la prend** : elle se traite en session interactive avec le responsable, sur la machine de
+  développement.
+
+**`[P]` n'est pas un `[~]`.** Une unité ou une tranche dont seuls la livraison et le constat en production manquent
+passe `[P]`, et non `[~]` : laissée `[~]`, une tâche planifiée la reprendrait en boucle sans pouvoir rien y faire. Le
+responsable demande en session interactive ce qu'il lui reste à valider en production : la réponse est la liste des
+entrées `[P]` (`grep -n '\[P\]' docs/BACKLOG.md`), chacune avec son geste au `docs/PROD_MIGRATIONS.md`. Son constat
+favorable la passe `[x]` ; un défaut constaté la ramène `[~]`, avec le défaut nommé. Une unité est `[P]` quand chacune de
+ses tranches est `[P]` ou `[x]`, et au moins une `[P]`.
 
 **Plusieurs agents travaillent en parallèle** sur cette branche : tâches planifiées et sessions interactives. Dès qu'un
 agent décide de prendre une unité ou une tranche, il la marque `[@]`, ajoute sous son titre — ou au bout de la tranche —
