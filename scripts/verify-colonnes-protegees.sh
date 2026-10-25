@@ -5,7 +5,8 @@
 #           §4.4.6 (preuves attendues), §7 (refus n° 4, n° 6, n° 8, n° 11)
 # @verifies docs/SPEC-cards.md §3.2 (forme), §3.3 (non-devinabilité), §3.4 (le trigger génère)
 # @verifies docs/SPEC-workflow-engine.md §5.5 (bloc `GRANT`)
-# @verifies docs/INCONSISTENCY_REPORT.md INC-026, INC-049, INC-050 (**close par exécution**)
+# @verifies docs/INCONSISTENCY_REPORT.md INC-026, INC-049, INC-050 (**close par exécution**), INC-238
+# @verifies docs/SPEC-permissions-rls.md §4.4.7 — tranche INC-238 de `CRM-013` (décision 687)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
 #
@@ -24,7 +25,9 @@
 #      dégradé en sortant ;
 #   6. le harnais est **non complaisant** : la colonne rendue à la main fait passer une écriture
 #      qui doit être refusée, et la restauration est CONSTATÉE, pas supposée ;
-#   7. ce qui reste dû à `CRM-013` est compté, table par table, plutôt que passé sous silence.
+#   7. ce qui reste dû à `CRM-013` est compté, table par table, plutôt que passé sous silence ;
+#   7 bis. INC-238 (décision 687, §4.4.7) : la naissance d'une ligne de coût et de recette refusée à l'appelant
+#      ordinaire, ouverte à la clé de service, la dégradation mesurée et la convergence de la 0104 constatée.
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais ne prouve pas, et le dit.
@@ -118,7 +121,7 @@ RAPIDE=false
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--rapide) RAPIDE=true ;;
-		--help|-h) sed -n '2,43p' "$0"; exit 0 ;;
+		--help|-h) sed -n '2,48p' "$0"; exit 0 ;;
 		*) echo "option inconnue « $1 »." >&2; exit 1 ;;
 	esac
 	shift
@@ -526,6 +529,79 @@ if [ "$ecritures_card_events" = "0" ]; then
 else
 	fail "card_events accorde encore $ecritures_card_events privilège(s) d'écriture aux rôles clients"
 fi
+
+titre "7 bis. INC-238 : la naissance d'une ligne de coût et de recette (décision 687, §4.4.7)"
+
+# `CRM-013`, tranche INC-238 : `created_at` et `updated_at` de `card_costs` et `card_revenues` fermées à
+# `authenticated`, à l'insertion et à la mise à jour (migration 0104). Le harnais rejoue la suite pgTAP dédiée, le
+# refus et le chemin du seed contre la pile, puis rouvre la porte à la main pour constater que l'écriture PASSE alors
+# (non-complaisance) et que le rejeu de la 0104 la REFERME (convergence). Les migrations 0051 et 0095 posent le
+# privilège de TABLE : les rejouer seules rouvre les deux dates, et la 0104 doit les suivre — mesuré ici dans les deux
+# sens, comme la 12 → 14 à la section 5.
+MIGRATION_DATES=supabase/migrations/0104_dates_lignes_protegees.sql
+MIGRATION_COUTS=supabase/migrations/0051_card_costs.sql
+MIGRATION_RECETTES=supabase/migrations/0095_recettes.sql
+CARD_C7=5eed0000-0000-4000-8000-0000000000c7
+BUDGET_C1=5eed0000-0000-4000-8000-0000000000c1
+
+prive_table() { psql_db -c "select has_column_privilege('$1', 'public.$2', '$3', '$4');"; }
+poster_cout() {  # jeton ou clé, libellé
+	http POST "$API/rest/v1/card_costs" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $1" \
+		-H 'Content-Type: application/json' -H 'Prefer: return=representation' \
+		-d "{\"card_id\":\"$CARD_C7\",\"budget_id\":\"$BUDGET_C1\",\"label\":\"$2\",\"estimated_cost\":1,\"created_at\":\"2026-05-01T09:00:00Z\"}"
+}
+sondes_inc238() { psql_db -c "select count(*) from public.card_costs where label like 'tst-inc238%';"; }
+nettoyer_inc238() { psql_db -c "delete from public.card_costs where label like 'tst-inc238%';" >/dev/null; }
+
+assertions=$(docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -At -v ON_ERROR_STOP=1 \
+	-f - < supabase/tests/0094_dates_lignes_protegees.test.sql 2>&1 | grep -cE '^ok ' || true)
+echec_pgtap=$(docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -At \
+	-f - < supabase/tests/0094_dates_lignes_protegees.test.sql 2>&1 | grep -cE '^not ok|ERROR' || true)
+[ "$echec_pgtap" = "0" ] && [ "$assertions" = "30" ] \
+	&& ok "suite pgTAP 0094 verte — $assertions assertions" \
+	|| fail "suite pgTAP 0094 : $assertions assertions vertes, $echec_pgtap anomalie(s)"
+
+T_ADMIN_INC238=$(jeton_de "$MAIL_ADMIN")
+[ -n "$T_ADMIN_INC238" ] || fail "jeton de l'administratrice introuvable : les contrôles d'API qui suivent ne prouvent rien"
+
+code=$(poster_cout "$T_ADMIN_INC238" 'tst-inc238 admin')
+[ "$code" = "403" ] && [ "$(jq -r '.code // ""' < "$CORPS")" = "42501" ] && [ "$(sondes_inc238)" = "0" ] \
+	&& ok "ligne a — l'administratrice ne choisit pas la naissance d'une ligne : 403, 42501, aucune ligne créée" \
+	|| fail "ligne a — l'administratrice obtient $code, $(sondes_inc238) ligne(s) créée(s)"
+
+code=$(poster_cout "$SERVICE_ROLE_KEY" 'tst-inc238 service')
+[ "$code" = "201" ] && [ "$(jq -r '.[0].created_at // ""' < "$CORPS")" = "2026-05-01T09:00:00+00:00" ] \
+	&& ok "ligne h — la clé de service antidate encore : le chemin du seed reste ouvert" \
+	|| fail "ligne h — la clé de service obtient $code : le seed ne pourrait plus antidater sa ligne en retard"
+nettoyer_inc238
+
+psql_db -c "grant insert, update on public.card_costs to authenticated;" >/dev/null
+code=$(poster_cout "$T_ADMIN_INC238" 'tst-inc238 degradee')
+[ "$code" = "201" ] \
+	&& ok "NON-COMPLAISANCE : privilège de table rendu à la main, la date choisie PASSE — le harnais mesure le produit" \
+	|| fail "sous dégradation, l'écriture rend $code : ce contrôle ne mesure pas ce qu'il croit"
+nettoyer_inc238
+
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_DATES" >/dev/null 2>&1 \
+	&& ok "la migration 0104 se rejoue sans erreur sur une base déjà migrée" \
+	|| fail "la migration 0104 échoue au rejeu"
+code=$(poster_cout "$T_ADMIN_INC238" 'tst-inc238 restauree')
+[ "$code" = "403" ] && [ "$(sondes_inc238)" = "0" ] \
+	&& ok "CONVERGENCE : le rejeu de la 0104 REFERME la porte rouverte, et le refus est CONSTATÉ" \
+	|| fail "après le rejeu de la 0104, l'écriture rend encore $code"
+nettoyer_inc238
+
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COUTS" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RECETTES" >/dev/null 2>&1 || true
+[ "$(prive_table authenticated card_costs created_at insert)" = "t" ] \
+	&& [ "$(prive_table authenticated card_revenues created_at insert)" = "t" ] \
+	&& ok "les migrations 0051 et 0095 rejouées SEULES rouvrent les deux dates : la dépendance d'ordre est RÉELLE" \
+	|| fail "0051 et 0095 ne rouvrent plus les dates : ce contrôle a perdu son sujet, à réviser"
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_DATES" >/dev/null 2>&1 || true
+[ "$(prive_table authenticated card_costs created_at insert)" = "f" ] \
+	&& [ "$(prive_table authenticated card_revenues updated_at update)" = "f" ] \
+	&& ok "…et la 0104 rejouée derrière elles les referme" \
+	|| fail "la 0104 ne referme pas ce que 0051 et 0095 ont rouvert"
 
 titre "8. Suites, tests unitaires et build"
 
