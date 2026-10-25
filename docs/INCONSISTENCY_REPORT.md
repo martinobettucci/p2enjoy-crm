@@ -7779,3 +7779,13 @@ d'origine — la « liste manuelle » que `docs/SPEC-test-harness.md` §3.5 inte
 `CRM-111` T1 bis, et retire son espace d'essai ; correction imputée à `CRM-031`. Comportement laissé inchangé ici ; une
 reconstruction a remis la base de développement d'aplomb. **Close le 2026-10-25** dans `CRM-111` T1 bis (son remède est celui de la
 tranche) : `verify-workflows.sh` restaure par reconstruction ; 43/43, puis `0008` 69/69.
+
+### INC-303 — `verify-harness.sh` attend 3944 assertions pgTAP, la série en rend 3974 depuis la migration `0104`
+
+*Relevé le 2026-10-25 par la session planifiée de `CRM-084` (décision 692), en rejouant `scripts/verify-harness.sh
+--rapide` après avoir révisé son compteur d'interface.* **Constat** : « npm run test:sql vert mais 94 fichiers / 3974
+assertions au lieu de 94 / 3944 ». Les trente assertions de `supabase/tests/0094` (`CRM-013`, décision 687) n'ont pas
+révisé `ASSERTIONS_ATTENDUES` (ligne 701). Compteur figé dépassé par le produit, famille d'INC-242 et d'INC-297 ; la série
+pgTAP elle-même est verte. Étranger à `CRM-084`, qui ne touche aucune suite SQL. **Comportement laissé inchangé.**
+**Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-013` porte le compteur à 3974 avec son motif, en place, comme
+les révisions précédentes. **Statut : ouverte.**
