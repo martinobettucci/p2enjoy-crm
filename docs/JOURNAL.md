@@ -34473,3 +34473,13 @@ chaque harnais). 24 rejoués avant l'arrêt demandé par le responsable : **19 v
 pgTAP 3974 vert), `verify-identites` 22/23, `verify-mail-sync`, `verify-notifications-surface` 42/43, `verify-scripts`
 113/114, `verify-session-sso`. Non rejoués : `verify-spark`, `verify-webapp` et `administration-workflows.spec.ts`
 (INC-236). Aucun n'a été examiné plus avant dans cette session.
+
+**Bilan de la décision 704, 2026-10-25.** Des 22 harnais rouges de la série, **19 sont verts** après correction dans le
+dépôt (INC-309, motifs écrits en place), et INC-295, INC-296 et INC-297 sont closes. **Trois restent rouges, mesurés** :
+- `verify-scripts.sh`, 113/114 : la branche **sans CA** bute sur `SELF_SIGNED_CERT_IN_CHAIN` — l'hôte intercepte TLS
+  (`CRM-001`) ; elle demande un hôte sans interception, autorité externe (`docs/CloudWorker.md` §4.1 bis, cas 4) ;
+- `verify-harness.sh` et `verify-webapp.sh`, une anomalie chacun : quelques scénarios d'interface rougissent au cœur d'une
+  heure d'interface continue, **jamais les mêmes** d'un passage à l'autre. Le seul reproductible seul
+  (`suggestion-classement.spec.ts:104`, 2 échecs sur 5) est corrigé — il donnait le focus à un bouton encore désactivé
+  pendant la lecture des droits (10/10 ensuite). Les onze autres relevés sur deux passages passent **70 fois sur 70**
+  rejoués seuls : aucun défaut reproductible à corriger.
