@@ -15,6 +15,9 @@
 // terme d'une vraie connexion PKCE, puis remis à l'échangeur par la vraie passerelle, comme la webapp
 // le fait : c'est l'échangeur, avec son secret, qui l'échange. Aucun jeton LeLabs n'est présenté à
 // l'échangeur. Les comptes jetables, rôles retirés et clés ajoutées sont rendus dans un `finally`.
+// @verifies docs/JOURNAL.md décision 686 (INC-292) — RÉVISÉE : l'absence et la fermeture se disent par `200` et
+//       `{ "session": "absente" | "fermee" }`, plus par `204`, que le runtime perd par intermittence
+//       (docs/SPEC-edge-functions.md §2 bis). Les assertions qui attendaient `204` suivent la règle changée.
 
 import { expect, test } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
@@ -128,7 +131,7 @@ test.describe('Ouvrir, prolonger, fermer : les comptes du seed, et la pile de do
 			})
 			expect(appartenances.status).toBe(200)
 			expect(await appartenances.json()).toEqual([{ user_id: sub, role: compte.role }])
-			expect((await fermer(poignee)).statut).toBe(204)
+			expect((await fermer(poignee)).statut).toBe(200)
 		})
 	}
 
@@ -160,20 +163,20 @@ test.describe('Ouvrir, prolonger, fermer : les comptes du seed, et la pile de do
 		expect(apres?.rafraichissement).not.toBe(ligne.rafraichissement)
 		expect((await prolonger(poignee)).statut, 'le jeton remplacé se prolonge encore').toBe(200)
 
-		// Fermer : 204, cookie effacé, la poignée ne désigne plus rien.
+		// Fermer : 200 « fermee », cookie effacé, la poignée ne désigne plus rien.
 		const fermee = await fermer(poignee)
-		expect(fermee.statut).toBe(204)
+		expect(fermee).toMatchObject({ statut: 200, corps: { session: 'fermee' } })
 		expect(fermee.setCookie).toBe(`${NOM_COOKIE}=; Path=/functions/v1/session; HttpOnly; SameSite=Strict; Max-Age=0`)
 		expect(await sessionsDePoignee(sub, poignee)).toEqual([])
-		expect(await prolonger(poignee), 'aucune session : 204, jamais une erreur (décision 587)').toMatchObject({ statut: 204, corps: null })
+		expect(await prolonger(poignee), 'aucune session : 200 « absente », jamais une erreur (décisions 587, 686)').toMatchObject({ statut: 200, corps: { session: 'absente' } })
 		// Fermer ce qui n'existe pas n'est pas une erreur.
-		expect((await fermer(poignee)).statut).toBe(204)
-		expect((await fermer(null)).statut).toBe(204)
+		expect((await fermer(poignee)).statut).toBe(200)
+		expect((await fermer(null)).statut).toBe(200)
 	})
 
 	test('le cookie porte Secure quand l’origine appelante est https, et seulement là', async () => {
 		const efface = await gesteBrut('fermer', { enTetes: { origin: 'https://crm.exemple.tld' } })
-		expect(efface.statut).toBe(204)
+		expect(efface).toMatchObject({ statut: 200, corps: { session: 'fermee' } })
 		expect(efface.setCookie).toBe(`${NOM_COOKIE}=; Path=/functions/v1/session; HttpOnly; SameSite=Strict; Secure; Max-Age=0`)
 	})
 
@@ -352,7 +355,7 @@ test.describe('Les attentes et les refus du dictionnaire fermé (§5.5)', () => 
 		for (const jeton of [accessToken, idToken, await jetonInterne(ADMIN)]) {
 			const enTetes = { authorization: `Bearer ${jeton}` }
 			expect(await gesteBrut('ouvrir', { enTetes })).toMatchObject({ statut: 400, corps: { erreur: 'requete_invalide' } })
-			expect(await gesteBrut('prolonger', { enTetes })).toMatchObject({ statut: 204, corps: null, setCookie: null })
+			expect(await gesteBrut('prolonger', { enTetes })).toMatchObject({ statut: 200, corps: { session: 'absente' }, setCookie: null })
 		}
 	})
 
@@ -372,10 +375,10 @@ test.describe('Les attentes et les refus du dictionnaire fermé (§5.5)', () => 
 
 	// Décision 587 : la restauration de chaque page anonyme passe par là. Un `4xx` serait journalisé en
 	// erreur par le navigateur à chaque chargement ; l'absence de session n'est pas un refus.
-	test('sans cookie, ou avec une poignée inconnue : 204 sans corps, et le cookie inconnu est effacé', async () => {
-		expect(await prolonger(null)).toMatchObject({ statut: 204, corps: null, setCookie: null })
+	test('sans cookie, ou avec une poignée inconnue : 200 « absente », et le cookie inconnu est effacé', async () => {
+		expect(await prolonger(null)).toMatchObject({ statut: 200, corps: { session: 'absente' }, setCookie: null })
 		const inconnue = await prolonger('A'.repeat(43))
-		expect(inconnue).toMatchObject({ statut: 204, corps: null })
+		expect(inconnue).toMatchObject({ statut: 200, corps: { session: 'absente' } })
 		expect(inconnue.setCookie).toContain('Max-Age=0')
 	})
 
@@ -418,7 +421,7 @@ test.describe('Une attente se consomme, et l’accès se ferme quand sa cause di
 			const expiree = await prolonger(premiere.poignee)
 			expect(expiree).toMatchObject({ statut: 401, corps: { erreur: 'session_expiree' } })
 			expect(expiree.setCookie).toContain('Max-Age=0')
-			expect(await prolonger(premiere.poignee)).toMatchObject({ statut: 204, corps: null })
+			expect(await prolonger(premiere.poignee)).toMatchObject({ statut: 200, corps: { session: 'absente' } })
 
 			// `verified` retiré chez LeLabs : la prolongation suivante refuse et ferme la session.
 			const avantRetrait = await ouvrirSession(compte.adresse)
@@ -428,7 +431,7 @@ test.describe('Une attente se consomme, et l’accès se ferme quand sa cause di
 				statut: 403,
 				corps: { erreur: 'attente_verification', adresse: compte.adresse },
 			})
-			expect(await prolonger(avantRetrait.poignee)).toMatchObject({ statut: 204, corps: null })
+			expect(await prolonger(avantRetrait.poignee)).toMatchObject({ statut: 200, corps: { session: 'absente' } })
 			expect(await ouvrirSession(compte.adresse)).toMatchObject({ statut: 403, corps: { erreur: 'attente_verification' } })
 			await attribuerRoles(compte.sub, ['verified'])
 
@@ -493,7 +496,7 @@ test.describe('L’admission patiente : un espace sans administrateur n’empêc
 			const admise = await ouvrirSession(administratrice.adresse)
 			expect(admise.statut).toBe(200)
 			expect(await lireService(`workspace_members?select=role&user_id=eq.${administratrice.sub}`)).toEqual([{ role: 'admin' }])
-			expect((await fermer(admise.poignee)).statut).toBe(204)
+			expect((await fermer(admise.poignee)).statut).toBe(200)
 
 			// La lectrice se reconnecte : son attente se consomme, au rôle choisi.
 			const ensuite = await ouvrirSession(lectrice.adresse)
@@ -502,7 +505,7 @@ test.describe('L’admission patiente : un espace sans administrateur n’empêc
 			expect(await lireService(`workspace_invitations?select=email&email=eq.${lectrice.adresse}`)).toEqual([])
 			// `CRM-109` : l'attente consommée emporte sa trace (cascade, décision 644).
 			expect(await lireService(`admission_refus?select=email&email=eq.${lectrice.adresse}`)).toEqual([])
-			expect((await fermer(ensuite.poignee)).statut).toBe(204)
+			expect((await fermer(ensuite.poignee)).statut).toBe(200)
 		} finally {
 			// L'espace d'abord — sa suppression emporte les appartenances, que la garde du dernier
 			// administrateur interdirait de retirer une à une —, puis les profils et les comptes.

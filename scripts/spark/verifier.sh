@@ -20,7 +20,7 @@
 #   3. seul SPARK_HTTP_PORT est publié ;
 #   4. depuis la cellule, par Caddy : webapp, `/auth/v1/health` en 404 (GoTrue retiré), PostgREST,
 #      fonction edge ;
-#   5. l'échangeur de session répond, et rend 204 sans session (décision 587) ;
+#   5. l'échangeur de session répond, et rend 200 « absente » sans session (décisions 587, 686) ;
 #   6. il reste au moins 2 Gio de disque ;
 #   7. la route active est en `tls` ; depuis Internet, si le domaine résout : webapp et API en
 #      https:// par la route publique ;
@@ -119,9 +119,13 @@ CHEMIN=/functions/v1/example; code=$(local_http -X POST -H "'apikey: $ANON'" -H 
 
 # --- 5. Échangeur de session ----------------------------------------------------------------------
 # RÉVISÉ par `CRM-092` T6 : GoTrue n'annonce plus rien, il est retiré. La session s'ouvre par la
-# fonction `session` ; sans poignée, prolonger rend 204 et aucun corps (décision 587).
-CHEMIN=/functions/v1/session/prolonger; code=$(local_http -X POST -H "'apikey: $ANON'"); [ "$code" = 204 ] \
-	&& ok "échangeur de session : 204 sans session" || echec "échangeur de session : HTTP $code, 204 attendu"
+# fonction `session` ; sans poignée, prolonger rend 200 et `{"session":"absente"}` — RÉVISÉ par la décision 686
+# (INC-292) : le runtime perdait par intermittence le `204` d'un worker, qui disait l'absence jusque-là (décision 587).
+CHEMIN=/functions/v1/session/prolonger
+corps=$(distant "curl -s -X POST -H 'apikey: $ANON' 'http://127.0.0.1:$PORT$CHEMIN'")
+code=$(local_http -X POST -H "'apikey: $ANON'")
+[ "$code" = 200 ] && [ "$corps" = '{"session":"absente"}' ] \
+	&& ok "échangeur de session : 200 « absente » sans session" || echec "échangeur de session : HTTP $code, corps « $corps », 200 « absente » attendu"
 
 # --- 6. Disque -------------------------------------------------------------------------------------
 libre=$(distant "df -BG --output=avail / | tail -n 1 | tr -dc 0-9")
