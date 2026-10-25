@@ -7744,6 +7744,13 @@ qu'INC-292 comptait avec ses `503` : la cause est distincte (aucune fonction edg
 inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-001` mesure le délai de maintien des connexions
 de PostgREST et celui de Kong vers cet amont (`upstream_keepalive_idle_timeout`), puis aligne le second sous le premier —
 un réglage déclaré et prouvé par une boucle de requêtes, pas une relance. **Issue retenue le 2026-10-25 (décision 696)** : la cause est mesurée et reproduite (`docs/DAT.md` §3.5 bis) — Kong garde 60 s une connexion que PostgREST ferme entre 30 et 60 s ; le délai des relais passe à 3 s, Kong et Caddy. **Statut : ouverte jusqu'à la preuve de la correction.**
+**Mesuré après la correction, le 2026-10-25 (session de `CRM-111` T1 bis, décision 694)** : Kong recréé à 08:10 UTC par la
+commande Compose complète, `upstream_keepalive_idle_timeout = 3` relu dans `/usr/local/kong/.kong_env`. La campagne
+d'interface de 08:19 à 09:15 UTC rend encore deux échecs sur `502 (Bad Gateway)` en console (`contacts-affaire.spec.ts:215`,
+`demarrage.spec.ts:423`, verts rejoués seuls), et Kong journalise encore « upstream prematurely closed connection » et
+« recv() failed (104: Connection reset by peer) » vers PostgREST à 09:25, 09:26 et 09:28 (`HEAD /rest/v1/cards`, `GET
+/rest/v1/workspaces`, `GET /rest/v1/channels`). Le délai de 3 s **réduit sans éteindre** le défaut ; la pile était partagée
+avec une autre session pendant la mesure. **Reste ouverte.**
 
 ### INC-300 — `connexion.spec.ts:345` lit le fondu des gestes de modération à mi-transition sous la charge d'une campagne
 

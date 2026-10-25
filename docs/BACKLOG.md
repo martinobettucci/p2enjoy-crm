@@ -16317,7 +16317,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       (§2 bis.3 bis) : mêmes comptes que la forme livrée à six changements de droits, en requête préparée ; contre-preuve
       `IMMUTABLE`. *Arbitré le 2026-10-24 (décision 667)* : forme optimisée pour `cards`, `card_placements` et
       `card_field_values` en T2 ; le coût par ligne des autres tables filles reste hors de l'unité (INC-288).
-- [@] **T1 bis — restaurer par reconstruction** (INC-289, décision 675) : mesurer puis spécifier le mode opératoire
+- [x] **T1 bis — restaurer par reconstruction** (INC-289, décision 675) : mesurer puis spécifier le mode opératoire
       d'une reconstruction de la base de développement compatible avec une pile partagée ; réécrire la restauration des
       seize harnais qui appelaient `rejeu_complet_au_prochain_passage`, et la preuve de `verify-migrations.sh` (base
       neuve dans l'ordre ; chaque fichier rejoué sur l'état qu'il produit ; base à jour : rien appliqué). Préalable de
@@ -16335,9 +16335,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       préexistantes et étrangères (INC-296, INC-297). **Rejoués jusqu'au bout le 2026-10-25** :
       `verify-tracks.sh --rapide` **42/42** (61 min) ; `verify-droits-fins.sh --rapide` 38/39, sa seule anomalie étant
       `verify-copie-workflow.sh` rougi par l'état que `verify-workflows.sh` laisse (INC-302, étrangère, `CRM-031`).
-      **Reste dû** pour passer `[x]` : la série complète des `verify-*.sh` n'a pas été rejouée, et INC-302 rend la
-      section 8 de `verify-droits-fins.sh` rouge tant qu'elle n'est pas corrigée.
-      *Prise en charge : CloudWorker 2026-10-25 03:11:42 UTC depuis 2026-10-25 03:19 UTC — état avant : [~]*
+      *Close le 2026-10-25 (décisions 691 et 694)* : INC-302 corrigée — `verify-workflows.sh` reconstruit derrière son
+      rejeu isolé de `0006` et mesure la réparation avant de reconstruire, **46/46**, schéma identique à la base
+      reconstruite, mutation tuée ; `verify-droits-fins.sh --rapide` rejoué jusqu'au bout **39/39, aucune anomalie**
+      (06:42–08:08 UTC). La série complète des `verify-*.sh` n'est la Definition of Done d'aucune unité
+      (`docs/CloudWorker.md` §2.1 *ter*, décision 553) ; les autres harnais qui rejouent une migration sont INC-304.
 - [ ] **T2 — bascule, en un seul changement** (§3, §4, §5, §10) : migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses

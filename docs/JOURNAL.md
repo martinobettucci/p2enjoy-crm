@@ -34135,6 +34135,22 @@ sortie jetée des sous-harnais de `verify-droits-fins.sh`, sont consignés en IN
 de `docs/CloudWorker.md`, et l'annonce du §0 bis n'a pas été la première ligne — quatrième occurrence, après les
 décisions 678, 683 et 687.
 
+**Complément, fin de session.** `verify-droits-fins.sh --rapide` rejoué après la correction : **39/39, aucune anomalie**.
+T1 bis passe à `[x]`, prise libérée. **Campagne** (`docs/CloudWorker.md` §4.3), après synchronisation (`CRM-001`/INC-299,
+`CRM-044`, `CRM-084` ; ni migration ni dépendance) et Kong recréé par la commande Compose complète pour porter le délai de
+la décision 696 : typage, unitaires **4355**, build, pgTAP **94 fichiers / 3974 assertions**, API **1182**, courrier **44**,
+pytest **246** — verts ; interface **913 passés, 9 échecs, 10 non joués**. Les neuf fichiers rejoués seuls : **149 passés**,
+deux échecs sur `502` de console (INC-299, mesure ajoutée au registre : le délai de 3 s ne l'éteint pas), verts rejoués
+une seconde fois (2/2). Aucun n'est imputable : le changement ne touche qu'un harnais. Captures réécrites par les rejeux,
+d'autres unités, rendues. **Non exécuté** : la série entière des `verify-*.sh` (exécutés : `verify-tracks`,
+`verify-droits-fins` et ses onze sous-harnais, `verify-workflows`, `verify-copie-workflow`, `verify-catalogue`,
+`verify-coherence-workflow`, `verify-champs-formulaire`).
+
+**Où reprendre.** `CRM-111` T2, la bascule « en un seul changement » (`docs/SPEC-rattachements.md` §5, §10, §14) : 31
+fonctions, 266 fichiers. Elle ne peut pas être poussée par morceaux sans casser `main` pour les autres agents : la
+session qui la prend doit la mener d'un bout à l'autre, ou proposer au responsable un découpage en étapes
+intermédiaires cohérentes.
+
 ### décision 695 — `CRM-084` close : le manuel décrit l'administration des budgets, et une preuve le lie à l'écran
 
 *2026-10-25, session planifiée ouverte à 05:12:42 UTC (`docs/CloudWorker.md`). Tranché par la session (§4.1 bis) ; le
