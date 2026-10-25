@@ -16120,7 +16120,7 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
         scénario clavier instable de `mentions-composeur.spec.ts`).
       - **Reste `[~]`** : les choix de forme marqués au `docs/SPEC-ia.md` §14 attendent la relecture du responsable ;
         une campagne d'interface verte d'un bout à l'autre attend la correction d'INC-292.
-      *Prise en charge : CloudWorker 2026-10-25 00:12 UTC depuis 2026-10-25 00:24 UTC — état avant : [~] — reste pris : la
+      *Prise en charge : CloudWorker 2026-10-25 00:12 UTC depuis 2026-10-25 00:17 UTC — état avant : [~] — reste pris : la
       correction d'INC-292, préalable de la campagne verte*
 - [ ] **T4** — livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp
       reconstruite ; constat. **Le responsable s'en charge** (décision 679) ; elle attend T5.
