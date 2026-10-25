@@ -40,6 +40,11 @@ set -uo pipefail
 
 REPO_ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$REPO_ROOT"
+# INC-291 (décision 679), révisé le 2026-10-25 (décision 704, INC-309) : la section 7 construit la webapp HORS de
+# `./runDev.sh`. Sous Compose 5, `bake` refuse alors de lire le paquet CA du secret de construction sans le droit
+# `fs.read` (mesuré : « additional privileges requested: pass --allow=fs.read=/dev/null »), et les deux branches,
+# inactive et active, tombaient avant le moindre `npm ci`. Même export que `./runDev.sh` ; une valeur posée est respectée.
+export BUILDX_BAKE_ENTITLEMENTS_FS="${BUILDX_BAKE_ENTITLEMENTS_FS:-0}"
 
 # @spec CRM-001, CRM-002 (docs/BACKLOG.md) — le verdict du harnais ne parle que du dépôt
 # @spec docs/JOURNAL.md, décision 442 ; docs/CloudWorker.md §2.1
