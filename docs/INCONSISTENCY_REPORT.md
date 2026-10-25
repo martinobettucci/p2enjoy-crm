@@ -7777,4 +7777,5 @@ seule ; une migration ultérieure a rendu la clé différable, et la réapplicat
 d'origine — la « liste manuelle » que `docs/SPEC-test-harness.md` §3.5 interdit. **Issue retenue**
 (`docs/CloudWorker.md` §4.1 bis) : le harnais restaure par `reconstruire_base_dev` (§3.6), comme les seize de
 `CRM-111` T1 bis, et retire son espace d'essai ; correction imputée à `CRM-031`. Comportement laissé inchangé ici ; une
-reconstruction a remis la base de développement d'aplomb.
+reconstruction a remis la base de développement d'aplomb. **Close le 2026-10-25** dans `CRM-111` T1 bis (son remède est celui de la
+tranche) : `verify-workflows.sh` restaure par reconstruction ; 43/43, puis `0008` 69/69.

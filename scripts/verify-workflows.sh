@@ -3,6 +3,8 @@
 # @verifies docs/SPEC-workflow-engine.md §3.2 (workflows), §3.3 (étapes), §3.4 (transitions),
 #           §3.5 (étape initiale), §3.6 (ordre), §3.7 (autorisations), §3.8 (contrat d'API),
 #           §3.9 (seed), §3.10 (preuves attendues)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T1 bis : la restauration reconstruit la base (docs/SPEC-test-harness.md §3.6,
+#           INC-302)
 # @verifies docs/SPEC-permissions-rls.md §4 (politiques), §7 (preuves de refus n° 2, n° 3, n° 11)
 # @verifies docs/SCHEMA.md §2 (channels.workflow_id), §3 (workflows) ; docs/PROD_MIGRATIONS.md §3
 # @verifies docs/INCONSISTENCY_REPORT.md INC-029 (clé étrangère posée, NOT NULL différée),
@@ -53,6 +55,8 @@ cd "$(dirname "$0")/.."
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 # shellcheck source=scripts/lib/sso.sh
 source scripts/lib/sso.sh
 sso_env_charger .env
@@ -603,9 +607,12 @@ psql_db -c "
 " >/dev/null
 
 # e. Restauration **constatée**, et non supposée.
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
-./supabase/seed/apply-seed.sh >/dev/null 2>&1 || fail "le seed a échoué à la restauration"
-sleep 1
+# RÉVISÉ PAR `CRM-111` T1 bis (décision 691, INC-302). La restauration réappliquait `0006` SEULE, puis le seed.
+# Une migration ultérieure a rendu `workflow_steps_node_id_workspace_id_fkey` différable ; la réapplication isolée
+# la recréait non différable, et la suite `0008_copie_workflow` rougissait ensuite (« constraint … is not
+# deferrable », mesuré le 2026-10-25), l'espace d'essai `tst-crm031-ws` restant en base. La base de développement
+# est RECONSTRUITE (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), seed compris.
+reconstruire_base_dev >/dev/null || fail "la reconstruction de la base a échoué à la restauration"
 
 restaure=$(psql_db -c "
 	select (select count(*) from pg_indexes

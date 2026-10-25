@@ -34051,3 +34051,13 @@ seule anomalie — `verify-copie-workflow.sh` rouge en section 8 — est **INC-3
 `workflow_steps_node_id_workspace_id_fkey` non différable en restaurant par sa seule migration, et la suite `0008` rougit
 ensuite. Étrangère à la tranche, consignée sans correction au passage. `CRM-111` T1 bis reste `[~]` : la série complète
 des `verify-*.sh` reste à rejouer, après correction d'INC-302 (`CRM-031`). Ensuite : T2.
+
+### décision 691 — INC-302 : `verify-workflows.sh` restaure par reconstruction, comme les seize harnais de `CRM-111` T1 bis
+
+*2026-10-25, session planifiée ouverte le 2026-10-24 à 21:12:06 UTC. Tranché par la session (`docs/CloudWorker.md` §4.1
+bis) ; le responsable peut le contredire.* INC-302 avait été imputée à `CRM-031`. **Retenu** : la corriger dans
+`CRM-111` T1 bis, puisque son remède est exactement celui de la tranche — la réapplication isolée de `0006` remplacée
+par `reconstruire_base_dev` — et qu'elle rougissait la section 8 de `verify-droits-fins.sh`, donc la preuve de la
+tranche. **Mesuré** : `verify-workflows.sh --rapide` **43/43**, puis `0008_copie_workflow` **69/69**, aucun
+`tst-crm031-ws` restant. Les réapplications de `0006` de sa section de rejouabilité restent : elles sont le sujet
+du contrôle, et la reconstruction finale efface leur effet. INC-302 close.
