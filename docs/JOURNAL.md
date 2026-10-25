@@ -34302,3 +34302,10 @@ alors que ce scénario existe pour dire qu'un clavier seul suffit.
 
 **Ce n'est pas une temporisation** au sens de `CLAUDE.md` §18 : aucune attente n'est ajoutée au parcours, seul le budget
 du scénario est porté au triple, ce que Playwright prévoit pour un test long. **INC-174 est close.**
+
+### décision 699 — INC-303 close : le compteur pgTAP de `verify-harness.sh` suit la série, 3974
+
+*2026-10-25, même session planifiée. Tranché par la session (`docs/CloudWorker.md` §4.1 bis).* Le compteur attendait 3944
+assertions, et la série en rend 3974 depuis les 30 assertions de `0094` (`CRM-013`, décision 687). La valeur est mesurée
+(« 94 fichiers, 3974 assertions, aucune anomalie ») et portée en place avec son motif, comme les révisions précédentes.
+Aucune autre issue n'est raisonnable pour un compteur figé dépassé par le produit.

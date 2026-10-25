@@ -7805,7 +7805,7 @@ assertions au lieu de 94 / 3944 ». Les trente assertions de `supabase/tests/009
 révisé `ASSERTIONS_ATTENDUES` (ligne 701). Compteur figé dépassé par le produit, famille d'INC-242 et d'INC-297 ; la série
 pgTAP elle-même est verte. Étranger à `CRM-084`, qui ne touche aucune suite SQL. **Comportement laissé inchangé.**
 **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : `CRM-013` porte le compteur à 3974 avec son motif, en place, comme
-les révisions précédentes. **Statut : ouverte.**
+les révisions précédentes. **Statut : CLOSE le 2026-10-25** (décision 699) : compteur porté à 3974, motif écrit en place.
 
 ### INC-304 — Douze harnais rejouent une migration isolée sur une base à jour sans reconstruire, et nul ne mesure ce qu'ils laissent
 

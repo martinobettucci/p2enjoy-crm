@@ -698,7 +698,10 @@ FICHIERS_SQL_ATTENDUS=94
 # la « casse ignorée » tuée par T1 est désormais la règle, et deux mutations nouvelles sont tuées (comparaison au nœud
 # casse comprise : quatre échecs ; surcharge vivante non gardée : deux échecs). 3941 + 3 = 3944, MESURÉ hors
 # `0020_pg_cron`, dont le battement horaire manquait au moment de la mesure (« 93 fichiers, 1 en échec »).
-ASSERTIONS_ATTENDUES=3944
+# **3974 depuis `CRM-013` (migration `0104`, décision 687)** : `0094_dates_lignes_protegees` ajoute **30** assertions que
+# le compteur n'avait pas suivies (INC-303, close par la décision 699). 3944 + 30 = 3974, MESURÉ le 2026-10-25 —
+# « 94 fichiers, 3974 assertions, aucune anomalie ».
+ASSERTIONS_ATTENDUES=3974
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
