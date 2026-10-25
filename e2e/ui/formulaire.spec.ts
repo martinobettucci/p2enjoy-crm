@@ -85,6 +85,18 @@ const CARD_SERVIE = [
 		workspace_id: '5eed0000-0000-4000-8000-000000000001',
 		current_step_id: ETAPE.id,
 		email_local_part: 'c-t2dtpcjd',
+		// Les colonnes que `COLONNES_CARD_FORMULAIRE` demande aussi, aux valeurs que la base porte pour `…0000c6`
+		// (mesurées le 2026-10-25). Absentes, l'en-tête lisait `undefined` là où PostgREST rend `null` : les captures
+		// montraient « Montant NaN » et la pilule « Archivé », deux états que le produit ne rend jamais pour cette affaire
+		// (CLAUDE.md §16 — une capture représente l'état réellement exécuté ; docs/DESIGN_SYSTEM.md §12.5).
+		amount: null,
+		currency: 'EUR',
+		next_action: null,
+		next_action_at: null,
+		archived_at: null,
+		snoozed_until: null,
+		profiles: null,
+		workspaces: { inbound_domain: 'crm.p2enjoy.test' },
 	},
 ]
 

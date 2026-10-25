@@ -13,6 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-037`, INC-134 — la mention d'une question obligatoire nomme l'étape sans demander d'y « passer » (décision 688)
+
+*Livré en développement ; la livraison en production (reconstruction de la webapp) attend l'instruction du responsable.*
+
+- Sur la fiche d'une affaire, une question obligatoire à l'étape courante portait « Requis pour passer à <étape> », alors
+  que l'étape nommée est toujours celle où l'affaire **se trouve** : la fiche demandait de rejoindre l'étape occupée. La
+  mention dit désormais **« Requis à l'étape <étape> »**. L'étoile, l'alerte de question non renseignée et la mention
+  « Exigé par le déplacement que vous avez demandé » sont inchangées.
+- Aucune migration, aucune fonction, aucun changement du connecteur MCP. Manuel, chapitre du formulaire, mis à jour.
+
 ### `CRM-013`, INC-238 — la date de création d'une ligne de coût ou de recette ne se choisit plus (décision 687)
 
 *Livré en développement ; la livraison en production attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md` §3,

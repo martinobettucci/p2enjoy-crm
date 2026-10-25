@@ -1352,7 +1352,8 @@ Ce que vous y voyez :
 - **les questions de l'étape courante**, dans l'ordre que l'administration leur a donné. Une
   question sans réglage particulier est **affichée** : c'est la valeur par défaut, et elle évite de
   devoir déclarer une règle par étape pour les questions courantes ;
-- **une étoile et la mention « Requis pour passer à <étape> »** sur les questions obligatoires.
+- **une étoile et la mention « Requis à l'étape <étape> »** sur les questions obligatoires : l'étape
+  nommée est celle où se trouve l'affaire, dont la règle exige la question.
   L'étoile ne porte jamais l'information seule : la mention l'écrit en toutes lettres, et les
   lecteurs d'écran l'annoncent ;
 - **un message d'alerte** sous chaque question obligatoire restée sans réponse. Il ne bloque pas la
@@ -1430,7 +1431,7 @@ champs »**. Il ouvre la fiche de l'affaire, et cette fiche :
 - **vous amène directement à la première**, qui reçoit le curseur : vous pouvez saisir sans chercher
   ni faire défiler, y compris au clavier.
 
-Une question déjà obligatoire à l'étape courante garde sa mention « Requis pour passer à … » **en
+Une question déjà obligatoire à l'étape courante garde sa mention « Requis à l'étape … » **en
 plus** : les deux phrases disent des choses différentes, et les deux sont vraies.
 
 *Ce que ce lien ne fait pas :* il **ne rejoue pas** le déplacement. Une fois les réponses saisies,

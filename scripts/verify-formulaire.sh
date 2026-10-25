@@ -393,7 +393,7 @@ else
 		'					role="alert"' \
 		'					data-role-retire="alert"' unit
 
-	# D6 — la mention « requis pour passer à » disparaît : l'astérisque resterait seul, et
+	# D6 — la mention « requis à l'étape » (décision 688) disparaît : l'astérisque resterait seul, et
 	# l'information reposerait sur un unique caractère (§4.4, docs/DESIGN_SYSTEM.md §8).
 	degradation "la mention d'exigence disparaît (§4.4 nié)" "$COMPOSANT" \
 		"			{visibilite === 'required' ? (

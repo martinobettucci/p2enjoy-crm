@@ -562,6 +562,20 @@ accepte l'ancien et le nouveau contrat : l'ordre des deux gestes ci-dessous est 
 **Retour arrière** : relivrer la révision précédente ; la webapp nouvelle tolère l'ancien `204`. **Risque** : un
 `verifier.sh` ancien, joué contre la production nouvelle, rendrait « 204 attendu » — employer celui de la révision livrée.
 
+### 2.20 `CRM-037`, INC-134 — la mention d'une question obligatoire (EN ATTENTE de l'instruction du responsable)
+
+Sur la fiche d'une affaire, la mention d'une question obligatoire à l'étape courante devient « Requis à l'étape
+<étape> » (décision 688). **Webapp seule : aucune migration, aucune fonction, aucune variable, aucun secret, aucun
+changement du service `mcp`.**
+
+| # | Geste | Qui | Commande ou lieu |
+|---|---|---|---|
+| 1 | Livrer `main` (webapp reconstruite) | poste, par les IP | `scripts/spark/livrer.sh`, puis `./runProd.sh --spark` dans la cellule |
+| 2 | Vérifier en lecture seule | poste, lecture seule | `scripts/spark/verifier.sh` |
+| 3 | Constater : ouvrir une affaire dont l'étape exige une question ; la mention se lit « Requis à l'étape <étape> » | le responsable | l'application |
+
+**Retour arrière** : relivrer la révision précédente de la webapp. **Risque** : aucun connu — un texte d'interface.
+
 ## 3. Migrations en attente
 
 **Trois migrations en attente : la 102 puis la 103, à livrer ensemble et dans cet ordre, et la 104** (`CRM-013`, INC-238 — la date de naissance d'une ligne de coût et de recette fermée à l'appelant ordinaire ; privilèges seulement, indépendante des deux autres, sa ligne au §3.2). Pour la 102 et la 103 : (`CRM-113` T1 — le générateur de workflow connaît les champs natifs de l'affaire et le catalogue ; `CRM-113` T5 — tout en anglais, la casse ignorée, décision 679 ; leurs lignes au §3.2). Elles ne touchent aucune table : elles n'exigent pas d'instantané au-delà de celui de la procédure nominale (§3.1), et elles se livrent avec la fonction `ia` et la webapp de `CRM-113` (T2, T3, T5). **Le responsable s'en charge** (décision 679). Avant elle, la **101** (`CRM-114` T1 — la famille `organizations` du connecteur ; sa ligne de retrait au §3.2) a été appliquée le 2026-10-24 après l'instantané confirmé par le responsable (§8). La troisième fenêtre du 2026-10-23 (§8) a appliqué la **100** (`CRM-067` T1 — les activités d'une affaire et leurs participants ; sa ligne de retrait au §3.2) ; la seconde, la **99** (`CRM-109` T3). Avant elles, les migrations **91 à 98** (`CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-108`, `CRM-070`, `CRM-109`), appliquées le 2026-10-23 par une même fenêtre après l'instantané confirmé par le responsable ; leurs lignes de retrait sont au §3.2. Avant elles, les migrations **89** (`CRM-101`) et **90**
