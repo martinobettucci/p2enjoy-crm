@@ -7902,3 +7902,20 @@ dont les anomalies sont INC-296 et INC-297. Classement, mesuré :
   gabarit, et la branche « sans CA » de `CRM-001`, déjà connue), `spark` (jetons proposés), `harness` et
   `webapp` (scénarios E2E instables sous charge : les quatre de `verify-harness.sh` sont **verts rejoués seuls**).
 **Comportement laissé inchangé** ; chaque famille relève de l'unité nommée par son harnais. **Statut : ouverte.**
+**Traitée le 2026-10-25 par la même session (décision 704)**, une famille à la fois, chaque preuve révisée gardant son
+motif en place et rejouée :
+- **en-têtes** : `scripts/lib/entete.sh`, le bloc d'en-tête entier, sept harnais (`administration-arborescence` 19,
+  `ma-journee` 65, `onboarding` 28, `commentaires` 54 — INC-296 close) ;
+- **compteurs** constatés et mis à jour avec leur spécification : `corbeille`, `onboarding`, `session-sso` (INC-297
+  close), `snooze` ;
+- **règles changées** : `armement-sequences` 48 (`0085`), `card-costs` 44 et `couts-ecrans` (`CRM-099`), `liste`
+  (`CRM-105`, `CRM-092` T9), `board` (analyseur de routes), `rendu-modeles-emails` (format, non date), `mail-infra`
+  (libellé) ;
+- **rejeu de migration** : `plateforme` 32, qui dégrade et restaure le seul bloc de fonction ; `preferences-notifications`
+  62 juste après ;
+- **environnement, corrigé dans le dépôt** : `verify-scripts` exporte `BUILDX_BAKE_ENTITLEMENTS_FS` (branche avec CA
+  verte), `verify-mcp` 88 transmet `pip_ca`, `verify-spark` 109 rétablit le remplissage base64url, `mail-sync` 61 épingle
+  `anyio` 4.14.2 (contrat §2.23), Stalwart lit un filtre anti-spam local (`mail-infra` 91, `e2e:mail` 44) ;
+- **reste, et ne se corrige pas ici** : la branche **sans CA** de `verify-scripts` (`SELF_SIGNED_CERT_IN_CHAIN` : l'hôte
+  intercepte TLS, `CRM-001`, autorité externe) ; les scénarios E2E instables sous la charge d'une campagne d'une heure,
+  verts rejoués seuls (quatre de `verify-harness`, sept de `verify-webapp`) et sans cause reproductible isolée.
