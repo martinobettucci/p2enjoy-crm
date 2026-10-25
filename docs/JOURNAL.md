@@ -34061,3 +34061,21 @@ par `reconstruire_base_dev` — et qu'elle rougissait la section 8 de `verify-dr
 tranche. **Mesuré** : `verify-workflows.sh --rapide` **43/43**, puis `0008_copie_workflow` **69/69**, aucun
 `tst-crm031-ws` restant. Les réapplications de `0006` de sa section de rejouabilité restent : elles sont le sujet
 du contrôle, et la reconstruction finale efface leur effet. INC-302 close.
+
+**Complément, même session — la série des `verify-*.sh`.** Elle a été lancée après la campagne, d'affilée sur une seule
+base (`--rapide` là où il existe). Elle a été arrêtée par la limite de temps de la session après **76 harnais sur 84** ;
+les huit derniers, dans l'ordre alphabétique, n'ont pas été joués. **51 rendent 0**. 25 rendent une anomalie ou n'aboutissent
+pas :
+- arrêtés à 15 minutes : `droits-fins`, `session-sso` ;
+- n'aboutissent pas : `mcp` (rc 125), `plateforme` (rc 3), `mail-sync` ;
+- anomalies : `administration-arborescence`, `armement-sequences`, `board`, `budgets`, `card-costs`, `commentaires`,
+  `corbeille`, `couts-ecrans`, `formulaire`, `harness`, `identites`, `liste`, `ma-journee`, `mail-infra`, `onboarding`,
+  `preferences-notifications`, `rendu-modeles-emails`, `scripts`, `snooze`, `spark`.
+
+Pour `verify-formulaire.sh`, le harnais de cette unité, les quatre échecs portaient sur l'état du seed (`…0000c6` sorti de
+Prospection, règles changées) : la base avait été modifiée par les harnais joués avant lui. Seed réappliqué et harnais
+rejoué seul : **27 contrôles, aucune anomalie**. C'est le mode d'INC-239. Les 24 autres n'ont **pas** été examinés un à
+un : ils appartiennent à d'autres unités, et une série jouée d'affilée sur une seule base se mesure elle-même
+(`docs/CloudWorker.md` §2.1 ter). Les journaux sont restés sur l'hôte ; leur examen, harnais par harnais et sur une base
+re-seedée, revient à une session dédiée. **Écart de méthode, rappelé** : la première commande de cette session a précédé
+la lecture de `docs/CloudWorker.md`.
