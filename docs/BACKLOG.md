@@ -16164,9 +16164,8 @@ peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi e
       capture `attentes-inscrite-1440` observée ; manuel 10.5 et 10 bis.5 ; DS §5.61 ; SCHEMA ; contrat, ligne 99.
 - [x] **T4** — livraison en production, sur instruction du responsable : T1 et T2 par la fenêtre `8026e90e` (migration 98), T3 par la seconde fenêtre `e9255249` (migration 99) le 2026-10-23 ; `verifier.sh` 26/27, registre à 99, `401` sans session ; constat visuel en production à faire par le responsable.
 
-### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 21:57 UTC — état avant : [~]*
-***Reste réel au 2026-10-25 (décision 705), faisable par un agent** : renouveler et observer les captures des autres unités qui montrent encore l'ancien en-tête (T3) ; puis la livraison de la webapp (T4, T5) et le constat du responsable.*
+### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[P]`
+***Reste réel au 2026-10-25, après la clôture de T3** : la livraison de la webapp de T5 avec la prochaine fenêtre, et le constat du responsable (T4, T5). *Avant (décision 705)* : renouveler et observer les captures des autres unités qui montrent encore l'ancien en-tête (T3) ; puis la livraison de la webapp (T4, T5) et le constat du responsable.*
 *Créée le 2026-10-23 — demande du responsable : « le navbar en haut ne montre pas l'arborescence quand on a une affaire
 ouverte, donc difficile de savoir où on est ». Arbitrages du responsable le même jour (`docs/JOURNAL.md` décision 636).
 Spécifiée avant le code : `docs/SPEC-webapp.md` §5.1 bis, `docs/DESIGN_SYSTEM.md` §5.62 et §12.2. Connecteur MCP :
@@ -16185,7 +16184,7 @@ non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
       *Vérifié le 2026-10-23* : `fil-ariane.test.ts` **9**, `FilAriane.test.tsx` **19**, cinq mutations tuées ; suite
       unitaire **4195/4195** ; trois `tsc` sans erreur ; build vert, aucune classe manquante. Plancher de `10ch` des
       ancêtres ajouté au §5.62 après la capture à 1152 px.
-- [~] **T3 — preuves sur la pile réelle** : `e2e/ui/fil-ariane.spec.ts` sur le seed (chemin complet d'une affaire et
+- [x] **T3 — preuves sur la pile réelle** : `e2e/ui/fil-ariane.spec.ts` sur le seed (chemin complet d'une affaire et
       navigation par ses liens, channel et liste, coûts et budget, repli au clavier à 900 et 390 px, aucun défilement
       horizontal aux quatre paliers, recherche ouverte sous `lg`) ; preuves de `CRM-007` révisées (`coquille.spec.ts`,
       `manuel.spec.ts`) ; captures `docs/captures/CRM-110/` observées aux quatre paliers ; `docs/manual.md` ;
@@ -16200,6 +16199,16 @@ non. Aucune migration, aucune règle d'accès, aucune requête nouvelle.*
       `CRM-109` T3, est corrigé et rejoué 10/10 (`2b048ba0`). Résultat rapporté par cette session, son journal non relu
       ici. **Reste avant `[x]`** : les captures des unités que ni ce passage ni `b9dcdf48` et `4ee9160a` n'ont refaites,
       qui montrent encore l'ancien en-tête — la campagne les a régénérées sans qu'elles soient committées.
+      *Soldé le 2026-10-25 (session interactive)* : les captures du dépôt dont le dernier commit précède l'en-tête
+      (`1b6ca177`, 2026-10-23 18:07) ont été relevées — **64** — et observées une à une là où elles peuvent montrer la
+      coquille. **Aucune capture produite par un scénario actuel ne montre plus l'ancien en-tête** : les autres sont
+      des écrans de connexion, de services tiers (Studio, Inbucket, Roundcube, MinIO), d'états de chargement, ou des
+      vues défilées sous l'en-tête ; les captures committées depuis (dont `77b17fa1`, `80c2bd17` et `CRM-114` T3)
+      portent le fil d'Ariane, vérifié par échantillon. **Trois orphelines** montrent encore l'ancien en-tête —
+      `CRM-011/session-chargee-1440.jpg` (le scénario écrit désormais sous `CRM-009`), `CRM-077/corbeille-adresse-directe-1440.jpg`
+      et `CRM-077/corbeille-barre-laterale-1440.jpg` (preuve scriptée du 2026-08-15, sans scénario actuel) : aucun
+      scénario ne les produit, aucun document ne les cite ; elles restent comme trace de leur unité à sa date, non
+      renouvelables sans écrire une preuve nouvelle hors du périmètre de `CRM-110`.
 - [~] **T4 — livraison** : reconstruction de la webapp en production, constat sur une affaire
       (`docs/PROD_MIGRATIONS.md`). Aucune migration, aucune fonction, aucune variable.
       *Livrée le 2026-10-23, seconde fenêtre* : révision **`e9255249`** en production, avec la migration 99 de `CRM-109`
