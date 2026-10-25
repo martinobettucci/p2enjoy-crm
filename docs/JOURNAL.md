@@ -33969,3 +33969,8 @@ touchés et preuves d'API de la tranche rejoués verts. Les captures réécrites
 
 **Où reprendre.** La tranche est vérifiée en développement ; sa livraison (migration 104) attend l'instruction du
 responsable. `CRM-013` reste `[~]` : `api_tokens` et `audit_log` n'existent toujours pas. Prise libérée.
+
+**Complément, même session — écart de conduite.** La toute première commande de la session (`git status`,
+`ls docs/CloudWorker.md`) a précédé la lecture de `docs/CloudWorker.md`, et l'annonce du §0 bis n'a pas été la première
+ligne de la première réponse : troisième occurrence du même écart, après les décisions 678 et 683. Il ne se rattrape pas ;
+il est consigné ici pour que la session suivante ouvre **par la lecture du fichier, et rien avant**.
