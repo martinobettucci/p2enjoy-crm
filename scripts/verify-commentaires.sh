@@ -58,6 +58,8 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/reconstruction.sh
+# shellcheck source=scripts/lib/entete.sh
+source scripts/lib/entete.sh
 source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/node.sh
@@ -164,7 +166,7 @@ for fichier in "$MIGRATION" "$TEST_SQL" "$SPEC_API" "$MODULE" "$COMPOSANT" "$TES
 done
 
 for fichier in "$MIGRATION" "$MODULE" "$COMPOSANT"; do
-	if head -3 "$fichier" | grep -q '@spec CRM-043'; then
+	if entete_fichier "$fichier" | grep -q '@spec CRM-043'; then
 		ok "$(basename "$fichier") porte son commentaire @spec"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog"
@@ -173,7 +175,7 @@ done
 
 for fichier in "$TEST_SQL" "$SPEC_API" "$TEST_UNITAIRE" "$TEST_COMPOSANT" "$SPEC_UI" \
 	"$SPEC_UI_GESTES"; do
-	if head -3 "$fichier" | grep -q '@verifies CRM-043'; then
+	if entete_fichier "$fichier" | grep -q '@verifies CRM-043'; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog"

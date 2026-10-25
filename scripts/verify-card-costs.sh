@@ -51,6 +51,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # shellcheck source=scripts/lib/node.sh
+# shellcheck source=scripts/lib/entete.sh
+source scripts/lib/entete.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
@@ -125,7 +127,7 @@ for fichier in "$MIGRATION" "$TEST_SQL" "$MODULE" "$TEST_MODULE" "$ECRAN" "$SPEC
 done
 
 for fichier in "$MIGRATION" "$MODULE" "$ECRAN"; do
-	if head -3 "$fichier" | grep -q 'CRM-085'; then
+	if entete_fichier "$fichier" | grep -q 'CRM-085'; then
 		ok "$(basename "$fichier") porte son commentaire @spec"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog en tête de fichier"
@@ -133,7 +135,7 @@ for fichier in "$MIGRATION" "$MODULE" "$ECRAN"; do
 done
 
 for fichier in "$TEST_SQL" "$TEST_MODULE" "$SPEC_API" "$SPEC_UI"; do
-	if head -3 "$fichier" | grep -q '@verifies CRM-085'; then
+	if entete_fichier "$fichier" | grep -q '@verifies CRM-085'; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog"

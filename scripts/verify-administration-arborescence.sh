@@ -34,6 +34,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/node.sh
+# shellcheck source=scripts/lib/entete.sh
+source scripts/lib/entete.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
@@ -94,14 +96,14 @@ for fichier in "$LIB" "$TEST_LIB" "$ECRAN" "$TEST_ECRAN" "$SPEC_API" "$SPEC_UI";
 done
 
 for fichier in "$LIB" "$ECRAN"; do
-	if head -3 "$fichier" | grep -q 'CRM-075'; then
+	if entete_fichier "$fichier" | grep -q 'CRM-075'; then
 		ok "$(basename "$fichier") porte son commentaire @spec"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité en tête de fichier"
 	fi
 done
 for fichier in "$TEST_LIB" "$TEST_ECRAN" "$SPEC_API" "$SPEC_UI"; do
-	if head -3 "$fichier" | grep -q '@verifies CRM-075'; then
+	if entete_fichier "$fichier" | grep -q '@verifies CRM-075'; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité"

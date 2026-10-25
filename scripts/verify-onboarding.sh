@@ -45,6 +45,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/node.sh
+# shellcheck source=scripts/lib/entete.sh
+source scripts/lib/entete.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
@@ -123,14 +125,14 @@ done
 # `e2e/ui/demarrage.spec.ts` le partagent, et deux lignes identiques ne diraient pas laquelle des
 # deux a été contrôlée.
 for fichier in "${FICHIERS_CODE[@]}"; do
-	if [ -f "$fichier" ] && head -3 "$fichier" | grep -q '@spec CRM-079'; then
+	if [ -f "$fichier" ] && entete_fichier "$fichier" | grep -q '@spec CRM-079'; then
 		ok "$fichier porte son commentaire @spec"
 	else
 		fail "$fichier ne cite pas CRM-079 en tête de fichier"
 	fi
 done
 for fichier in "${FICHIERS_PREUVE[@]}"; do
-	if [ -f "$fichier" ] && head -3 "$fichier" | grep -q '@verifies CRM-079'; then
+	if [ -f "$fichier" ] && entete_fichier "$fichier" | grep -q '@verifies CRM-079'; then
 		ok "$fichier porte son commentaire @verifies"
 	else
 		fail "$fichier ne cite pas CRM-079"

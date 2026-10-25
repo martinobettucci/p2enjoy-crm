@@ -62,6 +62,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 # shellcheck source=scripts/lib/node.sh
+# shellcheck source=scripts/lib/entete.sh
+source scripts/lib/entete.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 # shellcheck source=scripts/lib/fuseau.sh
@@ -148,7 +150,7 @@ for fichier in "$COLONNES" "$MODULE" "$COMPOSANT" "$TEST_UNITAIRE" "$TEST_COMPOS
 done
 
 for fichier in "$COLONNES" "$MODULE" "$COMPOSANT"; do
-	if head -2 "$fichier" | grep -q '@spec CRM-061'; then
+	if entete_fichier "$fichier" | grep -q '@spec CRM-061'; then
 		ok "$(basename "$fichier") porte son commentaire @spec"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog"
@@ -156,7 +158,7 @@ for fichier in "$COLONNES" "$MODULE" "$COMPOSANT"; do
 done
 
 for fichier in "$TEST_UNITAIRE" "$TEST_COMPOSANT" "$SPEC_API" "$SPEC_UI"; do
-	if head -2 "$fichier" | grep -q '@verifies CRM-061'; then
+	if entete_fichier "$fichier" | grep -q '@verifies CRM-061'; then
 		ok "$(basename "$fichier") porte son commentaire @verifies"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog"
