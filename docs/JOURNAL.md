@@ -34248,3 +34248,20 @@ en charge a été écrite « 06:40 » par estimation au lieu de l'heure machine 
 
 **Où reprendre.** `CRM-044` reste `[~]` : livraison de la webapp et constat du responsable (§2.20), puis
 `verify-timeline.sh` complet, lancé seul avec un délai suffisant. Prise libérée.
+
+**Complément, même session (`CRM-084`, décision 695) — preuves terminées.**
+- **Les 10 scénarios non joués** de la campagne (tous dans `connexion.spec.ts`) ont été exécutés : **17/17**.
+- **`administration-workflows.spec.ts:1114`, ligne de base établie** (§2.4) : la seule différence applicative depuis
+  l'ouverture de la session est `webapp/src/lib/timeline.ts` (`CRM-044`, autre session). Avec sa version d'avant,
+  restaurée temporairement, le scénario échoue de la même façon (`apiRequestContext.get: Target page, context or browser
+  has been closed`, délai de 30 s). Il est donc **préexistant** (INC-174) et étranger à l'unité.
+- **`verify-harness.sh --rapide`, rejoué jusqu'au bout** avec un délai de deux heures : 32 contrôles, 3 anomalies.
+  - pgTAP : une suite rend 2 versions de workflow au lieu d'1.
+  - API : 5 échecs.
+  - Interface : 9 échecs.
+
+  Tous portent sur l'état des workflows (copie, versions) laissé par la campagne interne du harnais, famille d'INC-246.
+  Rejoués directement : API 64/64 et 5 scénarios d'interface sur 8 verts d'emblée. Les trois de `versions-workflow`
+  restaient rouges sur une version de workflow résiduelle que le seed ne retire pas. Après `reconstruire_base_dev` :
+  `versions-workflow` vert, pgTAP 94 / 3974, `budgets.spec.ts` 19/19. Un `console.error` de WebSocket realtime est
+  survenu juste après la reconstruction ; il est vert au rejeu. Le compteur figé d'INC-303 reste à corriger par `CRM-013`.
