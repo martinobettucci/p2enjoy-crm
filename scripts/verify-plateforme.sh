@@ -122,21 +122,52 @@ fi
 titre '5. Dégradations réelles, puis restauration constatée'
 AVANT=$(empreinte)
 TRAVAIL=$(mktemp -d)
-trap 'appliquer "$MIGRATION"; rm -rf "$TRAVAIL"' EXIT
+# RÉVISÉ LE 2026-10-25 (décision 704, INC-309, famille d'INC-289). La dégradation appliquait une copie modifiée de `0089`
+# ENTIÈRE, et la restauration `0089` entière, par un `psql` sans arrêt à la première erreur. Depuis `0099`, qui recrée
+# `plateforme_attentes` avec un type de retour élargi, `0089` ne se rejoue plus (« cannot change return type ») : elle
+# s'appliquait EN PARTIE jusqu'à ce refus, et le harnais laissait derrière lui une base que `0089` seule ne produit pas
+# — mesuré : `verify-preferences-notifications.sh`, lancé juste après, rougissait dès sa suite pgTAP, et rend 62/62
+# seul sur une base reconstruite. Les trois fonctions dégradées ne sont définies QUE par `0089` : la dégradation
+# extrait le seul bloc `create or replace function` qui porte le motif, et la restauration réapplique ce même bloc,
+# chacune avec arrêt à la première erreur. Le `trap` restaure les trois blocs, jamais la migration entière.
+appliquer_strict() { psql_base -q -v ON_ERROR_STOP=1 --single-transaction <"$1" >/dev/null 2>&1; }
+bloc_de_fonction() {
+	# $1 : motif ; $2 : fichier où écrire le bloc d'origine qui le porte.
+	python3 - "$MIGRATION" "$1" "$2" <<'PY'
+import sys
+source, motif, cible = sys.argv[1:4]
+texte = open(source, encoding='utf-8').read()
+if texte.count(motif) != 1:
+    sys.exit(f"motif introuvable ou ambigu : {motif[:60]}")
+position = texte.index(motif)
+debut = texte.rfind('create or replace function', 0, position)
+fin = texte.index('\n$$;\n', position) + len('\n$$;\n')
+open(cible, 'w', encoding='utf-8').write(texte[debut:fin])
+PY
+}
+BLOCS_ORIGINE=()
+restaurer_blocs() { local bloc; for bloc in "${BLOCS_ORIGINE[@]}"; do appliquer_strict "$bloc"; done; }
+trap 'restaurer_blocs; rm -rf "$TRAVAIL"' EXIT
 
 degrader() {
-	local nom=$1 avant=$2 apres=$3
-	python3 - "$MIGRATION" "$TRAVAIL/degradee.sql" "$avant" "$apres" <<'PY'
+	local nom=$1 avant=$2 apres=$3 origine="$TRAVAIL/origine-$((${#BLOCS_ORIGINE[@]} + 1)).sql"
+	if ! bloc_de_fonction "$avant" "$origine"; then
+		fail "$nom : le motif ne désigne pas un seul bloc de fonction — contrôle non concluant"
+		return
+	fi
+	BLOCS_ORIGINE+=("$origine")
+	python3 - "$origine" "$TRAVAIL/degradee.sql" "$avant" "$apres" <<'PY'
 import sys
 source, cible, avant, apres = sys.argv[1:5]
 texte = open(source, encoding='utf-8').read()
-if texte.count(avant) != 1:
-    sys.exit(f"motif introuvable ou ambigu : {avant[:60]}")
 open(cible, 'w', encoding='utf-8').write(texte.replace(avant, apres))
 PY
-	appliquer "$TRAVAIL/degradee.sql"
+	if ! appliquer_strict "$TRAVAIL/degradee.sql"; then
+		fail "$nom : la dégradation ne s'applique pas — contrôle non concluant"
+		return
+	fi
 	if suite_verte; then fail "$nom : la suite reste verte — elle ne mord pas"; else ok "$nom : la suite rougit"; fi
-	appliquer "$MIGRATION"
+	appliquer_strict "$origine" || fail "$nom : le bloc d'origine ne se réapplique pas"
 }
 
 degrader 'garde levée sur plateforme_espaces' $'begin\n\tperform app.exiger_superadmin();\n\treturn query\n\tselect w.id, w.name' $'begin\n\treturn query\n\tselect w.id, w.name'
