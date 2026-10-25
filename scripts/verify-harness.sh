@@ -1560,7 +1560,10 @@ SCENARIOS_API=1182
 # rendu à chacune des sept étapes du workflow global, sur session réelle (docs/SPEC-form-composer.md §4 quinquies). Le
 # compteur était déjà en retard d'UN : le scénario des quarante rechargements anonymes de `connexion.spec.ts` (INC-292,
 # `3c80b3d`) ne l'avait pas révisé. 926 + 1 + 1 = 928, valeur COMPTÉE — « Total: 928 tests in 89 files ».
-SCENARIOS_UI=928
+# **931 depuis `CRM-084`, le 2026-10-25** : `budgets.spec.ts`, **3** scénarios — chaque libellé que le manuel §5.4 bis
+# cite est exigé à la fois dans le chapitre et à l'écran réel (tableau et formulaire, confirmation de clôture, deux
+# refus du serveur). 928 + 3 = 931, valeur COMPTÉE — « Total: 931 tests in 89 files ».
+SCENARIOS_UI=931
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

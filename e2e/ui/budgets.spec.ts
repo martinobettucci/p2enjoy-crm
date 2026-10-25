@@ -11,6 +11,9 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.9 (le patron de tableau), §5.13 (commandes toujours visibles,
 //           confirmation dans le flux du document), §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
+// @verifies docs/manual.md §5.4 bis — CRM-084, clôture de l'unité : chaque libellé que le chapitre cite est exigé
+//           À LA FOIS dans le chapitre et à l'écran réel (CLAUDE.md §7 ; même doctrine que `manuel.spec.ts`,
+//           docs/SPEC-manual.md §3.1)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies CRM-093 (docs/BACKLOG.md) — le scénario du non-administrateur ou de la lectrice révisé : la commande refusée est éteinte av
@@ -33,12 +36,17 @@
 // compte les budgets du seed, et un résidu clôturé reste une ligne.
 
 import {
+	ERREUR_RESSOURCE_HTTP,
+	autoriserErreursConsole,
 	connecterAvecLeLabs,
 	expect,
 	test,
 	type Page,
 } from './fixtures'
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
 import type { Locator } from '@playwright/test'
+import { RACINE } from '../env'
 import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
 
@@ -539,5 +547,139 @@ test.describe('paliers responsive', () => {
 		await expect(creation).toBeVisible()
 		await creation.scrollIntoViewIfNeeded()
 		await capturer(page, 'budgets-formulaire-creation', UNITE)
+	})
+})
+
+// -------------------------------------------------------------------------------------------
+// Le manuel dit ce que l'écran montre — docs/manual.md §5.4 bis, CLAUDE.md §7
+// -------------------------------------------------------------------------------------------
+
+/**
+ * Le chapitre 5.4 bis du manuel, lu dans le fichier lui-même : de son titre au titre suivant.
+ *
+ * LA PREUVE LIE LES DEUX SENS. `manuel.spec.ts` recopie les libellés à la main, si bien qu'un manuel réécrit sans
+ * que l'écran change reste vert. Ici chaque phrase est exigée dans le CHAPITRE et à l'ÉCRAN : modifier l'un sans
+ * l'autre rend la preuve rouge, et elle nomme le côté qui a dérivé.
+ */
+function chapitreBudgets(): string {
+	const manuel = readFileSync(join(RACINE, 'docs/manual.md'), 'utf8')
+	const debut = manuel.indexOf("### 5.4 bis Les budgets d'un track")
+	expect(debut, 'le chapitre 5.4 bis existe dans docs/manual.md').toBeGreaterThanOrEqual(0)
+	const fin = manuel.indexOf('\n### ', debut + 1)
+	return manuel.slice(debut, fin === -1 ? undefined : fin)
+}
+
+/**
+ * Ce qui ne change pas le sens d'une phrase : l'apostrophe typographique de l'interface contre la droite du manuel, la
+ * mise en gras et le code en ligne du Markdown, les retours à la ligne du paragraphe.
+ */
+function normaliser(texte: string): string {
+	return texte.replaceAll('’', "'").replaceAll('*', '').replaceAll('`', '').replace(/\s+/g, ' ').trim()
+}
+
+/** Exige `phrase` dans le chapitre ET dans le texte rendu par `element`. */
+async function citeeEtRendue(chapitre: string, element: Locator, phrase: string): Promise<void> {
+	expect(normaliser(chapitre), `le manuel §5.4 bis cite « ${phrase} »`).toContain(normaliser(phrase))
+	await expect(element).toBeVisible()
+	expect(normaliser((await element.textContent()) ?? ''), `l'écran rend « ${phrase} »`).toContain(
+		normaliser(phrase),
+	)
+}
+
+test.describe('le manuel §5.4 bis cite les libellés réels de l’écran', () => {
+	test('le tableau, l’interrupteur, le formulaire et ses aides', async ({ page }) => {
+		const chapitre = chapitreBudgets()
+		await connecter(page)
+		const bloc = await ouvrirBudgetsDuTrack(page)
+
+		await citeeEtRendue(chapitre, bloc.getByRole('heading', { name: 'Budgets', exact: true }), 'Budgets')
+		const entetes = bloc.getByTestId('tableau-budgets').locator('thead')
+		for (const colonne of ['Nom', 'Devise', 'Enveloppe', 'Récurrent', 'Occurrences ouvertes', 'État', 'Actions']) {
+			await citeeEtRendue(chapitre, entetes.getByRole('columnheader', { name: colonne, exact: true }), colonne)
+		}
+		await citeeEtRendue(
+			chapitre,
+			bloc.locator('label', { hasText: 'Afficher les budgets clôturés' }),
+			'Afficher les budgets clôturés',
+		)
+
+		await bloc.getByRole('button', { name: 'Nouveau budget' }).click()
+		const formulaire = bloc.getByTestId('formulaire-budget')
+		await citeeEtRendue(chapitre, formulaire.getByRole('heading'), 'Nouveau budget')
+		for (const champ of ['Enveloppe (facultative)', 'Seuil d’ancienneté (facultatif)']) {
+			await citeeEtRendue(chapitre, formulaire.getByText(champ, { exact: true }), champ)
+		}
+		await citeeEtRendue(
+			chapitre,
+			formulaire.locator('label', { hasText: 'Budget récurrent' }),
+			'Budget récurrent (porte des occurrences)',
+		)
+		// Le manuel promet ce que veut dire le VIDE, et c'est l'aide de l'écran qui le dit.
+		await citeeEtRendue(chapitre, formulaire.getByText(/Laissez vide pour ne rien signaler/), 'Laissez vide pour ne rien signaler')
+		await citeeEtRendue(chapitre, formulaire.getByText(/Un montant négatif est accepté/), 'montant négatif est accepté')
+		// La devise vaut `EUR` par défaut, comme le manuel l'écrit.
+		expect(normaliser(chapitre)).toContain('EUR par défaut')
+		await expect(formulaire.getByLabel('Devise')).toHaveValue('EUR')
+		await formulaire.getByRole('button', { name: 'Annuler' }).click()
+		await expect(formulaire).toBeHidden()
+	})
+
+	test('la confirmation de clôture et son décompte, sans rien écrire', async ({ page }) => {
+		const chapitre = chapitreBudgets()
+		await connecter(page)
+		const bloc = await ouvrirBudgetsDuTrack(page)
+		await bloc.getByRole('button', { name: `Clôturer le budget ${BUDGET_RECURRENT}` }).click()
+		const confirmation = bloc.getByTestId('confirmation-cloture-budget')
+
+		await citeeEtRendue(chapitre, confirmation, 'Clôturer le budget «')
+		// Le décompte est la phrase que le manuel cite avec « n » : le seed en porte UNE (« Publicité », sans réel).
+		const decompte = 'Ce budget porte n ligne(s) sans coût réel ; elles resteront saisissables après la clôture.'
+		expect(normaliser(chapitre)).toContain(decompte)
+		await expect(confirmation.getByTestId('cloture-sans-reel')).toHaveText(decompte.replace(' n ', ' 1 '))
+
+		await confirmation.getByRole('button', { name: 'Annuler' }).click()
+		await expect(confirmation).toBeHidden()
+		await expect(bloc.getByRole('row', { name: new RegExp(BUDGET_RECURRENT) })).toContainText('Ouvert')
+	})
+
+	test('les deux refus que le manuel nomme sont ceux que le serveur rend, et rien n’est écrit', async ({
+		page,
+		request,
+	}) => {
+		const chapitre = chapitreBudgets()
+		await connecter(page)
+		const bloc = await ouvrirBudgetsDuTrack(page)
+
+		// Un nom déjà porté par un budget OUVERT du track : `23505`, refusé par la base.
+		await bloc.getByRole('button', { name: 'Nouveau budget' }).click()
+		const creation = bloc.getByTestId('formulaire-budget')
+		await creation.getByLabel('Nom').fill(BUDGET_RECURRENT)
+		await creation.getByRole('button', { name: 'Créer' }).click()
+		await citeeEtRendue(chapitre, creation.getByTestId('budget-refus'), 'Un budget ouvert de ce track porte déjà ce nom')
+		// Le `409` du doublon est le sujet du scénario : il est consommé, et lui seul.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[409]])
+		await creation.getByRole('button', { name: 'Annuler' }).click()
+
+		// Rendre non récurrent un budget qui porte des occurrences : refusé par le trigger de `0050`.
+		await bloc.getByRole('button', { name: `Modifier le budget ${BUDGET_RECURRENT}` }).click()
+		const edition = bloc.getByTestId('formulaire-budget')
+		await edition.getByLabel('Budget récurrent (porte des occurrences)').uncheck()
+		await edition.getByRole('button', { name: 'Enregistrer' }).click()
+		await citeeEtRendue(
+			chapitre,
+			edition.getByTestId('budget-refus'),
+			'Ce budget porte des occurrences : supprimez-les avant de le rendre non récurrent.',
+		)
+		// Le trigger de `0050` lève `23514`, que PostgREST rend en `400` : consommé, lui seul.
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
+		await edition.getByRole('button', { name: 'Annuler' }).click()
+
+		// RIEN N'A ÉTÉ ÉCRIT : un seul budget de ce nom, toujours récurrent — relu en base, hors interface.
+		const relus = await request.get(
+			`${CHEMIN_BUDGETS}?name=eq.${encodeURIComponent(BUDGET_RECURRENT)}&select=is_recurrent`,
+			{ headers: enTetesService() },
+		)
+		expect(relus.status()).toBe(200)
+		expect(await relus.json()).toEqual([{ is_recurrent: true }])
 	})
 })
