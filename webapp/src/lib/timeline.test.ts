@@ -8,6 +8,8 @@
 // @verifies docs/JOURNAL.md décisions 204 (`clock_timestamp()`), 209 (fusion à la lecture)
 // @verifies CRM-067 (docs/BACKLOG.md) — tranche T2 : la troisième source, rangée à `occurred_at`, et la sixième famille
 //           « Activités » (docs/SPEC-activites.md §4 ; docs/DESIGN_SYSTEM.md §5.63 ; docs/JOURNAL.md décision 651)
+// @verifies CRM-044 (docs/BACKLOG.md) — tranche INC-301 : le nom d'une étape est celui du board, surcharge comprise
+//           (docs/SPEC-cards.md §14.10 ; docs/INCONSISTENCY_REPORT.md INC-301 ; docs/JOURNAL.md décision 693)
 //
 // Ces tests portent sur la LOGIQUE, sans navigateur : c'est ce que la séparation du module rend
 // possible. Le rendu est éprouvé par `webapp/src/app/PanneauTimeline.test.tsx`.
@@ -25,12 +27,14 @@ import {
 	familleDeLigne,
 	filtrer,
 	fusionnerFil,
+	lireEtapesWorkflow,
 	projeterEvenements,
 	resoudreDetail,
 	type EvenementLu,
 	type Famille,
 	type LigneEvenement,
 } from './timeline'
+import type { ClientCrm } from './supabase'
 
 function evenement(partiel: Partial<EvenementLu> & { id: string }): EvenementLu {
 	return {
@@ -294,6 +298,46 @@ describe('les comptes et les filtres (docs/DESIGN_SYSTEM.md §5.11)', () => {
 
 	it('rend un fil vide quand toutes les familles sont éteintes', () => {
 		expect(filtrer(fil, new Set())).toEqual([])
+	})
+})
+
+describe('les libellés d’étape lus pour le fil (§14.10, INC-301)', () => {
+	/** Un client qui rend les lignes voulues de `workflow_steps`, et retient les colonnes demandées. */
+	function clientEtapes(lignes: readonly Record<string, unknown>[]): {
+		client: ClientCrm
+		colonnes: () => string
+	} {
+		let colonnesDemandees = ''
+		const client = {
+			from: () => ({
+				select: (colonnes: string) => {
+					colonnesDemandees = colonnes
+					return { eq: async () => ({ data: [...lignes], error: null, status: 200 }) }
+				},
+			}),
+		} as unknown as ClientCrm
+		return { client, colonnes: () => colonnesDemandees }
+	}
+
+	it('rend le libellé SURCHARGÉ de l’étape quand il est posé — celui que le board affiche', async () => {
+		// MESURÉ sur le seed : l'étape `…065` surcharge « Réalisation » en « Réalisation en cours ».
+		const { client, colonnes } = clientEtapes([
+			{ id: 'etape-realisation', label_override: 'Réalisation en cours', workflow_nodes_catalog: { label: 'Réalisation' } },
+		])
+		const libelles = await lireEtapesWorkflow(client, 'workflow-1')
+		expect(colonnes()).toContain('label_override')
+		expect(libelles.get('etape-realisation')).toBe('Réalisation en cours')
+	})
+
+	it('rend le libellé du nœud quand l’étape ne surcharge rien, et omet une étape sans aucun libellé', async () => {
+		const { client } = clientEtapes([
+			{ id: 'etape-signature', label_override: null, workflow_nodes_catalog: { label: 'Signature' } },
+			{ id: 'etape-orpheline', label_override: null, workflow_nodes_catalog: null },
+		])
+		const libelles = await lireEtapesWorkflow(client, 'workflow-1')
+		expect(libelles.get('etape-signature')).toBe('Signature')
+		// Absente, et non une chaîne vide : le `moved` qui la vise se replie sur son libellé générique.
+		expect(libelles.has('etape-orpheline')).toBe(false)
 	})
 })
 

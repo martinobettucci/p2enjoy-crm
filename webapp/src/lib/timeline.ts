@@ -12,6 +12,8 @@
 // @spec CRM-067 (docs/BACKLOG.md) — tranche T2 : les activités, troisième source du fil et sixième famille
 //       « Activités », rangées à la date où elles ont eu lieu (docs/SPEC-activites.md §4 ; docs/DESIGN_SYSTEM.md §5.63 ;
 //       docs/JOURNAL.md décision 651)
+// @spec CRM-044 (docs/BACKLOG.md) — tranche INC-301 : le nom d'une étape est celui du board, surcharge comprise
+//       (docs/SPEC-cards.md §14.10 ; docs/INCONSISTENCY_REPORT.md INC-301 ; docs/JOURNAL.md décision 693)
 //
 // Ce module ne rend rien : il **lit et fusionne**. La séparation est ce qui rend l'ordre du fil,
 // les familles de filtres et la résolution des libellés vérifiables **sans navigateur**.
@@ -27,6 +29,7 @@ import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 // date courte du sommeil. Aucun texte visible n'est écrit en dur ici.
 import { t } from '../i18n'
 import type { ActiviteAffichee } from './activites'
+import { libelleEtape } from './affaires-figees'
 import type { CommentaireAffiche } from './commentaires'
 import type { Database } from './database.types'
 import type { ProfilAffiche } from './identites'
@@ -509,19 +512,18 @@ export async function lireEtapesWorkflow(
 	idWorkflow: string,
 ): Promise<ReadonlyMap<string, string>> {
 	try {
-		// Le libellé d'une étape est celui de son NŒUD, jamais une colonne de `workflow_steps` —
-		// le même chemin que `lireEtape` de `webapp/src/lib/formulaire.ts`, et pour la même raison.
-		// `label_override` n'est pas lue : aucune unité n'en fait usage, et la lire ici inventerait
-		// une règle de priorité que personne n'a écrite.
+		// LE NOM D'UNE ÉTAPE EST CELUI QUE LE BOARD AFFICHE (INC-301, décision 693) : sa surcharge si
+		// elle est posée, sinon le libellé de son nœud. La résolution est `libelleEtape`, réemployée —
+		// la même que le board, Affaires figées et `lireEtape` de la fiche (décision 690).
 		const reponse = await client
 			.from('workflow_steps')
-			.select('id, workflow_nodes_catalog(label)')
+			.select('id, label_override, workflow_nodes_catalog(label)')
 			.eq('workflow_id', idWorkflow)
 		if (reponse.error !== null) return new Map()
 		const libelles = new Map<string, string>()
 		for (const etape of reponse.data) {
-			const noeud = etape.workflow_nodes_catalog
-			if (noeud !== null) libelles.set(etape.id, noeud.label)
+			const libelle = libelleEtape(etape)
+			if (libelle !== null) libelles.set(etape.id, libelle)
 		}
 		return libelles
 	} catch {

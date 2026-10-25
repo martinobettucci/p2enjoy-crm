@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-044`, INC-301 — le fil d'activité nomme l'étape franchie comme le board (décision 693)
+
+*Webapp seulement : aucune migration, aucune fonction, aucune variable. À livrer par reconstruction de la webapp.*
+
+- *Étape franchie* nomme chaque étape par sa surcharge quand elle est posée, sinon par son nœud — la règle du board, de
+  la fiche et d'Affaires figées. Un franchissement vers l'étape « Réalisation en cours » du seed se lisait
+  « Signature → Réalisation ».
+- `lireEtapesWorkflow` lit `label_override` et résout par `libelleEtape`. Unitaires rouges avant la correction ;
+  preuve sur session réelle `e2e/ui/timeline-etape-surchargee.spec.ts`, qui fait naître puis supprime sa propre affaire
+  d'essai ; `docs/manual.md` §4.10.
+
 ### `CRM-084` — le manuel décrit l'administration des budgets d'un track, et une preuve le lie à l'écran
 
 *Documentation et preuves seulement : aucun changement de l'application, rien à livrer en production.*

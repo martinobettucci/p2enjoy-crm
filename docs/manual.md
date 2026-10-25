@@ -1844,7 +1844,7 @@ lieu :
 | Ce qui s'est passé | Ce que le fil montre |
 |---|---|
 | L'affaire a été créée | *Affaire créée* |
-| Elle a changé d'étape | *Étape franchie*, avec les deux étapes — par exemple « Prospection → Relance » |
+| Elle a changé d'étape | *Étape franchie*, avec les deux étapes — par exemple « Prospection → Relance ». Chaque étape y porte le nom que le board lui donne : si un administrateur a renommé l'étape dans ce workflow, c'est ce nom qui paraît — « Signature → Réalisation en cours » |
 | Son responsable a changé | *Responsable modifié* |
 | Elle a été archivée, ou remise en service | *Affaire archivée* / *Affaire désarchivée* |
 | Elle a été mise à la corbeille, ou restaurée | *Affaire mise à la corbeille* / *Affaire restaurée* |

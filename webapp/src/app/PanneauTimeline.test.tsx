@@ -13,6 +13,8 @@
 //           bloc de la fiche (docs/SPEC-activites.md §4 ; docs/DESIGN_SYSTEM.md §5.63 ; docs/JOURNAL.md décision 651)
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T5 : sous le refus de la fiche, la zone de saisie et « Mentionner »
 //           sont inactives et citent le motif, comme « Publier » (docs/SPEC-droits-interface.md §3 ; DESIGN_SYSTEM §5.59)
+// @verifies CRM-044 (docs/BACKLOG.md) — tranche INC-301 : l'étape franchie nommée par sa surcharge, comme le board
+//           (docs/SPEC-cards.md §14.10 ; docs/JOURNAL.md décision 693)
 //
 // Ces tests montent le **vrai** composant et isolent les formes du fil et ses refus par leurs rôles
 // accessibles. La publication connectée réelle et le refus du `viewer` sont prouvés en complément
@@ -134,7 +136,11 @@ function clientFactice({
 	lignes?: readonly CommentaireLu[]
 	evenements?: readonly EvenementLu[]
 	activites?: readonly ActiviteLue[]
-	etapes?: readonly { id: string; workflow_nodes_catalog: { label: string } | null }[]
+	etapes?: readonly {
+		id: string
+		label_override?: string | null
+		workflow_nodes_catalog: { label: string } | null
+	}[]
 	statutCanal?: string
 	insertion?: { error: { message: string; code?: string } | null; status: number }
 	lecture?: { error: { message: string; code?: string } | null; status: number }
@@ -657,6 +663,27 @@ describe('le fil unifié (docs/DESIGN_SYSTEM.md §5.11)', () => {
 
 		await waitFor(() => {
 			expect(screen.getByText(/Qualification → Relance/)).not.toBeNull()
+		})
+	})
+
+	// INC-301 (décision 693) : le fil nomme l'étape comme le board, sa surcharge l'emporte sur le nœud.
+	it('nomme l’étape franchie par sa surcharge quand elle est posée, comme le board', async () => {
+		monter({
+			evenements: [
+				evenement({
+					id: 'e1',
+					type: 'moved',
+					payload: { from_step_id: 's4', to_step_id: 's5' },
+				}),
+			],
+			etapes: [
+				{ id: 's4', label_override: null, workflow_nodes_catalog: { label: 'Signature' } },
+				{ id: 's5', label_override: 'Réalisation en cours', workflow_nodes_catalog: { label: 'Réalisation' } },
+			],
+		})
+
+		await waitFor(() => {
+			expect(screen.getByText(/Signature → Réalisation en cours/)).not.toBeNull()
 		})
 	})
 
