@@ -1112,6 +1112,11 @@ test.describe('la grille champ × étape sur la vraie base (§7 bis.11)', () => 
 	})
 
 	test('les deux gestes se mènent au clavier seul', async ({ page, request }) => {
+		// @spec docs/JOURNAL.md décision 698, docs/INCONSISTENCY_REPORT.md INC-174 — UN BUDGET NOMMÉ, PAS UNE ATTENTE.
+		// Atteindre une case de la grille par `Tab`, deux fois, coûte 29,8 à 36 s selon la charge (mesuré) : le
+		// scénario passe en 31,5 s, au bord de la borne de 30 s. `test.slow()` triple ce budget pour lui seul ;
+		// aucune attente n'est ajoutée au parcours, et la preuve exige exactement ce qu'elle exigeait.
+		test.slow()
 		await purgerChamps(request)
 		const idChamp = await creerChampDePreuve(request, 'e2e-wf-grille-clavier', 'E2E Grille Clavier')
 		try {
