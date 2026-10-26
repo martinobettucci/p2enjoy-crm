@@ -3,6 +3,8 @@
 // @verifies docs/SPEC-cards.md §14.4 et §14.6 — workflow_changed exclusif
 // @verifies docs/SPEC-permissions-rls.md §7 — vrais JWT et refus hors interface
 // @verifies CLAUDE.md §8 et §10 — aucune trace fabriquée, backend réellement opposable
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.7 : la RPC remappe les RATTACHEMENTS du channel et les rend
+//           (`SETOF card_placements`, docs/JOURNAL.md décision 738 ; docs/SPEC-rattachements.md §5)
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -35,13 +37,14 @@ const CARDS_ESSAI = [
 const COMMENTAIRE = 'f0190000-0000-4000-8000-0000000000c1'
 
 type Refus = { code?: string; message?: string; details?: string }
-type CardRendue = {
+/** Une ligne rendue : le RATTACHEMENT remappé depuis `CRM-111` T2.3.7 ; l'affaire se lit par `card_id`. */
+type RattachementRendu = {
 	id: string
+	card_id: string
 	workflow_id: string
 	current_step_id: string
 	position: number
 	archived_at: string | null
-	deleted_at: string | null
 	entered_step_at: string
 }
 
@@ -350,7 +353,7 @@ test.describe('CRM-019 — changement atomique du workflow d’un channel', () =
 			},
 		})
 		expect(reponse.status(), await reponse.text()).toBe(200)
-		const cards = (await reponse.json()) as CardRendue[]
+		const cards = (await reponse.json()) as RattachementRendu[]
 		expect(cards).toHaveLength(3)
 		for (const card of cards) {
 			expect(card.workflow_id).toBe(workflowDerive)
@@ -359,13 +362,19 @@ test.describe('CRM-019 — changement atomique du workflow d’un channel', () =
 				new Date('2020-01-01T00:00:00Z').getTime(),
 			)
 		}
-		expect(Object.fromEntries(cards.map((card) => [card.id, Number(card.position)]))).toEqual({
+		expect(Object.fromEntries(cards.map((card) => [card.card_id, Number(card.position)]))).toEqual({
 			[CARDS_ESSAI[0]]: 1,
 			[CARDS_ESSAI[1]]: 3,
 			[CARDS_ESSAI[2]]: 2,
 		})
-		expect(cards.find((card) => card.id === CARDS_ESSAI[1])?.archived_at).not.toBeNull()
-		expect(cards.find((card) => card.id === CARDS_ESSAI[2])?.deleted_at).not.toBeNull()
+		expect(cards.find((card) => card.card_id === CARDS_ESSAI[1])?.archived_at).not.toBeNull()
+		// L'affaire en corbeille est remappée elle aussi : son rattachement est rendu, et la corbeille se lit sur
+		// l'AFFAIRE, que le rattachement ne porte pas (`CRM-111` T2.3.7).
+		expect(cards.some((card) => card.card_id === CARDS_ESSAI[2])).toBe(true)
+		const enCorbeille = await request.get(`${URL_API}${CARDS}?id=eq.${CARDS_ESSAI[2]}&select=deleted_at`, {
+			headers: enTetesService(),
+		})
+		expect(((await enCorbeille.json()) as Array<{ deleted_at: string | null }>)[0]?.deleted_at).not.toBeNull()
 
 		const valeurs = await request.get(`${URL_API}${VALEURS}?card_id=eq.${CARDS_ESSAI[0]}&select=card_id`, {
 			headers: enTetesService(),

@@ -3820,15 +3820,11 @@ export type Database = {
         Returns: {
           amount: number | null
           archived_at: string | null
+          card_id: string
           channel_id: string
           created_at: string
           created_by: string | null
-          currency: string
           current_step_id: string
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          email_local_part: string
           entered_step_at: string
           health_score: number | null
           id: string
@@ -3837,16 +3833,14 @@ export type Database = {
           owner_id: string | null
           position: number
           probability_override: number | null
-          search_tsv: unknown
           snoozed_until: string | null
-          title: string
           updated_at: string
           workflow_id: string
           workspace_id: string
         }[]
         SetofOptions: {
           from: "*"
-          to: "cards"
+          to: "card_placements"
           isOneToOne: false
           isSetofReturn: true
         }

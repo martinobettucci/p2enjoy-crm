@@ -16679,10 +16679,14 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           la fiche et `crm_card_update` écrivent sur le bloc ; la lecture reste par affaire jusqu'à T5. pgTAP 104 fichiers
           sans anomalie, unitaires 4514/4514, API 1230/1231 (`ingestion.spec.ts:91`, étranger), interface 93/93,
           `verify-mcp.sh` 88/88, `verify-valeurs-champs.sh` 46/47 (le même rouge étranger, mesuré).
-        - [ ] **T2.3.7 — la création et les remappages** : `creer_affaire` écrit le rattachement elle-même (la création
-          passe à `card_placements`) ; `change_channel_workflow`, `plan_card_remapping`, `restore_workflow_version`,
-          `app.appliquer_composition` remappent les rattachements ; la clé channel/workflow redevient immédiate.
+        - [x] **T2.3.7 — les remappages** : `change_channel_workflow`, `plan_card_remapping`, `restore_workflow_version`,
+          `app.appliquer_composition` remappent les rattachements ; la clé channel/workflow redevient immédiate. *La
+          création par `creer_affaire` passe à T2.4 (décision 738).* *Livrée en développement le 2026-10-26* — migration
+          `0122` ; `change_channel_workflow` rend `SETOF card_placements`. pgTAP 104 fichiers sans anomalie,
+          unitaires 4514/4514, API 1230/1231 (`ingestion.spec.ts:91`, étranger), `verify-change-channel-workflow.sh`
+          24/24.
       - [ ] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
+        `creer_affaire` écrit le rattachement elle-même (venu de T2.3.7, décision 738),
         politique de `cards` sous la forme optimisée ; types régénérés. *Transporte aussi vers `card_placements` les deux
         colonnes calculées de santé de `CRM-066` tranche 4 (`health_momentum`, `health_commercial`, et leur appui
         `app.health_context`), qui lisent les colonnes de rattachement de `cards` — un score par rattachement

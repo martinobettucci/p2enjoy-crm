@@ -4,6 +4,7 @@
 -- @verifies docs/SPEC-rattachements.md §2 bis.3 et §2 bis.3 bis (forme optimisée, fraîcheur des droits), §3.1 (la table),
 --           §4 (lecture d'un rattachement), §10 (la reprise), §14 (le découpage) ; docs/SCHEMA.md « Migration `0108` » ;
 --           docs/JOURNAL.md décisions 642, 667, 705
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.7 : la clé channel/workflow redevient immédiate, différable
 --
 -- CE QUE CETTE SUITE PROUVE, sur le seed migré :
 --   1. la FORME de `card_placements`, et que `cards` n'a rien perdu ;
@@ -81,8 +82,9 @@ select is(
 select is(
 	(select condeferrable::text || '|' || condeferred::text from pg_constraint
 	  where conname = 'card_placements_channel_workflow_fk'),
-	'true|true',
-	'la clé channel/workflow est vérifiée en fin de transaction, pour `change_channel_workflow`');
+	'true|false',
+	'la clé channel/workflow est IMMÉDIATE depuis T2.3.7, et différable : `change_channel_workflow` la diffère pour son '
+	'seul geste, comme celle de `cards` (révisée, décision 51)');
 select is(
 	(select count(*)::int from information_schema.columns
 	  where table_schema = 'public' and table_name = 'cards'

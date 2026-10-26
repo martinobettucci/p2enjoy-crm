@@ -3,6 +3,9 @@
 # @verifies docs/SPEC-change-channel-workflow.md §1 à §9
 # @verifies docs/SCHEMA.md §5 (workflow_changed), §9 (RPC)
 # @verifies docs/JOURNAL.md décisions 263, 295 et 306
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.7 : la RPC remappe et rend les rattachements (décision 738) ; la 20,
+#           SUJET de la section 2, se rejoue privée de la fonction dont la migration 0122 est l'autorité ; les
+#           dégradations visent le déclencheur du rattachement et sa clé channel/workflow (docs/SPEC-test-harness.md §3.7)
 #
 # Ce harnais ne démarre ni n'arrête la pile. Il rejoue la migration sur la base seedée, mesure
 # l'absence de mutation métier et la conservation des OID conformes, exerce une vraie course entre
@@ -14,6 +17,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -54,8 +59,14 @@ psql_db() {
 # Rejeu de la SEULE migration de cette unité. Elle est le SUJET des deux contrôles d'idempotence
 # du §2 — « cette migration se réapplique-t-elle sans rien reconstruire ? » —, et c'est son unique
 # usage légitime. Elle n'est JAMAIS une restauration : voir `restaurer_etat_courant` ci-dessous.
+#
+# RÉVISÉ PAR `CRM-111` T2.3.7 (docs/SPEC-test-harness.md §3.7) : la 20 est rejouée PRIVÉE de `change_channel_workflow`,
+# dont la migration 0122 est la dernière autorité — elle rend les rattachements, et la 20 rejouée échouerait sur le
+# type de retour après en avoir appliqué une partie. Le sujet de la section 2, la clé et le vocabulaire, reste entier.
 appliquer_migration() {
-	psql_db -f - < "$MIGRATION"
+	[ -s "$WORK/0020-sans-fonction.sql" ] \
+		|| migration_sans_fonction "$MIGRATION" public.change_channel_workflow "$WORK/0020-sans-fonction.sql"
+	psql_db -f - < "$WORK/0020-sans-fonction.sql"
 }
 
 # RESTAURATION PAR LE RUNNER COMPLET — INC-198, corrigée le 2026-08-21 (décision 499).
@@ -359,7 +370,7 @@ fi
 nettoyer_fixture
 
 echo
-echo "4. Non-complaisance : six protections réellement nécessaires"
+echo "4. Non-complaisance : sept protections réellement nécessaires"
 
 degrader_et_verifier \
 	"EXECUTE rendu à anon — le geste d'administration deviendrait public" \
@@ -388,22 +399,30 @@ degrader_et_verifier \
 	 check (type = any (array['created','moved','assigned','channel_changed','archived',
 	 'unarchived','trashed','restored','field_changed'])) not valid"
 
+# RÉVISÉE PAR `CRM-111` T2.3.7 : `workflow_changed` naît sur la table du RATTACHEMENT depuis T2.3.0 ; retirer le
+# déclencheur de `cards`, qui ne l'écrit plus, ne dégradait rien.
 degrader_et_verifier \
-	"le trigger de cards retiré — le remappage deviendrait silencieux" \
-	"drop trigger card_events_apres_maj on public.cards"
+	"le trigger du rattachement retiré — le remappage deviendrait silencieux" \
+	"drop trigger card_placements_write_events on public.card_placements"
+
+degrader_et_verifier \
+	"la clé channel/workflow du rattachement rendue NOT DEFERRABLE — le lot ne peut plus rester atomique" \
+	"alter table public.card_placements drop constraint card_placements_channel_workflow_fk;
+	 alter table public.card_placements add constraint card_placements_channel_workflow_fk
+	 foreign key (channel_id, workflow_id) references public.channels(id, workflow_id)"
 
 degrader_et_verifier \
 	"le corps de mapping remplacé — aucun contrôle ne doit rester vert par sa seule signature" \
 	"create or replace function public.change_channel_workflow(
 		channel_id uuid, workflow_id uuid, step_mapping jsonb,
 		discard_field_values boolean default false)
-	 returns setof public.cards language plpgsql security definer set search_path = ''
+	 returns setof public.card_placements language plpgsql security definer set search_path = ''
 	 as \$\$ begin raise exception 'mapping_guard_removed'; return; end; \$\$"
 
 echo
 echo "5. Restauration constatée"
 if suite_verte; then
-	ok "pgTAP redevient vert après les six restaurations — 59 assertions"
+	ok "pgTAP redevient vert après les sept restaurations — 59 assertions"
 else
 	fail "pgTAP reste rouge après restauration"
 	tail -n 25 "$WORK/tap.log" | sed 's/^/        /'

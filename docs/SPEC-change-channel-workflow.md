@@ -15,6 +15,12 @@ dans une transaction.
 
 ## 1. Frontière et signature
 
+**Révisée par `CRM-111` T2.3.7** (migration `0122`, décision 738, docs/SPEC-rattachements.md §5) : la fonction remappe
+les **rattachements** du channel — étape, workflow, rang, ancienneté — et les rend, `returns setof
+public.card_placements` ; l'affaire se lit par `card_id`. Arguments, refus, ordre des vérifications et perte consentie
+des réponses (celles des rattachements, `card_field_values.placement_id`) sont inchangés. Ce qui suit vaut, « card » se
+lisant « rattachement ».
+
 ```sql
 public.change_channel_workflow(
   channel_id uuid,

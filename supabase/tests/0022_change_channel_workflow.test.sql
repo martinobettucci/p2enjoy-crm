@@ -3,6 +3,7 @@
 -- @verifies docs/SCHEMA.md §5 (workflow_changed), §9 (RPC)
 -- @verifies docs/JOURNAL.md décisions 263, 295 et 306
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-046 et INC-073
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.7 : la RPC remappe et rend les rattachements (décision 738)
 
 begin;
 
@@ -103,7 +104,9 @@ select has_function('public', 'change_channel_workflow',
 select is(
 	(select pg_get_function_result(p.oid) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 	  where n.nspname = 'public' and p.proname = 'change_channel_workflow'),
-	'SETOF cards', 'la RPC rend SETOF public.cards, donc un tableau PostgREST');
+	'SETOF card_placements',
+	'la RPC rend les RATTACHEMENTS remappés, `SETOF public.card_placements`, donc un tableau PostgREST — révisée par '
+	'`CRM-111` T2.3.7 (décision 738 ; décision 51)');
 
 select is(
 	(select pg_get_function_arguments(p.oid) from pg_proc p join pg_namespace n on n.oid = p.pronamespace

@@ -75,8 +75,12 @@ if texte.count(entree) != 1:
 debut = texte.index(entree)
 fin = texte.index('\n$$;\n', debut) + len('\n$$;\n')
 texte = texte[:debut] + f'-- [bloc de {nom} retiré par le harnais : sa dernière autorité est postérieure]\n' + texte[fin:]
-# Les instructions qui nomment la fonction, sur une ou plusieurs lignes, jusqu'au point-virgule.
-motif = re.compile(r'^(?:alter|comment on|revoke|grant)\b[^;]*?' + re.escape(nom) + r'\([^;]*;\n', re.M | re.S)
+# Les instructions qui nomment la fonction, sur une ou plusieurs lignes, jusqu'au point-virgule qui les CLÔT — les
+# chaînes SQL entre apostrophes sont sautées : un `comment on function … is '…; …'` porte souvent un point-virgule dans
+# son texte (mesuré sur la `0020`, `CRM-111` T2.3.7).
+chaine = r"'(?:[^']|'')*'"
+motif = re.compile(r"^(?:alter|comment on|revoke|grant)\b[^;']*?" + re.escape(nom) + r"\((?:" + chaine + r"|[^;'])*;\n",
+                   re.M | re.S)
 texte = motif.sub('', texte)
 open(cible, 'w', encoding='utf-8').write(texte)
 PY

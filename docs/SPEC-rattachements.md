@@ -566,6 +566,15 @@ du §4, l'écriture sur le channel du rattachement. La fiche et le connecteur é
 (`onConflict=placement_id,field_id`) ; **la lecture reste par affaire** jusqu'aux écrans de T5, ce qui est exact tant
 qu'une affaire n'a qu'un rattachement. La prévisualisation de l'exigence lit les valeurs du rattachement.
 
+**T2.3.7, livrée en développement le 2026-10-26** (migration `0122`) : `change_channel_workflow` verrouille, compte,
+efface et remappe les **rattachements** du channel et leurs valeurs, et rend les rattachements remappés (`SETOF
+card_placements`, décision 738) ; `app.appliquer_composition`, qu'appelle `restore_workflow_version`, remappe les
+rattachements ; `plan_card_remapping` les lisait depuis T2.2. La clé `card_placements_channel_workflow_fk` redevient
+**immédiate**, et différable : seul `change_channel_workflow` la diffère. **`creer_affaire` n'écrit pas encore le
+rattachement elle-même** (décision 738) : elle s'exécute sous les droits de l'appelant, que `card_placements` ne laisse
+pas écrire, et le miroir d'insertion en fait le premier rattachement tant que `cards` porte ses colonnes non nulles. Le
+point passe à T2.4, qui retire les colonnes et les miroirs.
+
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne
 change **rien de visible**, car chaque affaire garde son unique rattachement : c'est sa preuve, puisque toute la suite

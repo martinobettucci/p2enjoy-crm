@@ -101,6 +101,7 @@ d'exécuter le code attendu.
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T2.3.7 — changer le workflow d'un channel, ou restaurer une version, remappe les rattachements** (migration `0122`). Aucun changement visible ; le geste d'administration rend désormais les rattachements remappés.
 - **`CRM-111` T2.3.6 — les réponses du formulaire appartiennent au rattachement** (migration `0121`). La fiche et le connecteur MCP enregistrent les réponses sur le rattachement de l'affaire ; une affaire pourra porter des réponses différentes dans chacun de ses channels, et chacune se lit selon les droits sur son channel.
 - **`CRM-111` T2.3.5 — une cadence de relance s'arme sur un rattachement** (migration `0119`). Depuis la fiche, la relance s'arme sur le rattachement de l'affaire ; une affaire pourra porter une cadence par channel, et une cadence s'arrête quand son rattachement n'est plus figé.
 - **`CRM-111` T2.3.4 — changer de channel un rattachement** (migration `0117`). Le connecteur MCP déplace le rattachement de l'affaire vers un autre channel ; les réponses perdues, quand le workflow change, sont celles de ce rattachement. Un refus nouveau, « déjà rattachée à ce channel », est prêt pour le jour où une affaire pourra appartenir à plusieurs channels.

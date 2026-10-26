@@ -35498,3 +35498,40 @@ observée (« Enregistré ») ; connecteur unitaire 18/18. **Harnais** : `verify
 reconstruction du service `mcp` depuis l'arbre) ; `verify-valeurs-champs.sh` **46/47**, reconstruction comprise et
 restauration constatée à l'octet près — son seul rouge est sa relance de toute la suite d'API, et cette suite, rejouée
 sur la base qu'il a reconstruite, rend 1230/1231, le rouge étant `ingestion.spec.ts:91`, étranger à la tranche.
+
+### décision 738 — `CRM-111` T2.3.7 : `change_channel_workflow` rend les rattachements ; `creer_affaire` passe à T2.4
+
+*2026-10-26, session interactive, deux précisions d'exécution de `docs/SPEC-rattachements.md` §5 et du découpage de T2
+(décision 705).* **1. Le retour de `change_channel_workflow`.** Le §5 dit qu'elle « remappe les rattachements du
+channel » sans dire ce qu'elle rend. Elle rendait `SETOF public.cards` ; après T2.4, `cards` ne portera plus ni étape ni
+rang. **Décision** : elle rend `SETOF public.card_placements`, comme `move_card` et `move_card_to_channel` rendent le
+rattachement (décision 661). Aucun écran ni le connecteur ne l'appellent ; la spec d'API lit l'affaire par `card_id`.
+**2. `creer_affaire`.** T2.3.7 annonçait qu'elle écrirait le rattachement elle-même. Mesuré : elle s'exécute sous les
+droits de l'appelant, et `card_placements` ne se laisse écrire par personne — le miroir d'insertion, propriétaire, en
+est le seul écrivain ; `cards` porte encore ses colonnes de rattachement non nulles. L'écrire en plus exigerait
+d'éteindre le miroir pour ce seul geste et une fonction d'appui privilégiée, deux artifices que T2.4 rend inutiles en
+retirant colonnes et miroirs. **Décision** : le point passe à T2.4 ; T2.3.7 garde les remappages et la clé immédiate.
+
+### `CRM-111` T2.3.7 — les remappages portent sur les rattachements (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* **Fait** : migration `0122`.
+`change_channel_workflow` verrouille, compte, efface et remappe les rattachements du channel et leurs valeurs (par
+`placement_id`), diffère pour son seul geste la clé channel/workflow du rattachement à côté de celle de `cards`, et rend
+les rattachements (décision 738). `app.appliquer_composition`, qu'appelle `restore_workflow_version`, remappe les
+rattachements ; `plan_card_remapping` les lisait depuis T2.2. `card_placements_channel_workflow_fk` redevient
+`INITIALLY IMMEDIATE`. Les deux définitions sont reprises de la base, les seules lignes concernées changées.
+**Appelants et preuves** : `0022` (le type de retour, révisé), `0097` (la clé immédiate, révisée), la spec d'API (le
+retour lu comme rattachement ; la corbeille de l'affaire relue sur `cards`, que le rattachement ne porte pas).
+
+**`verify-change-channel-workflow.sh`** suit le §3.7 : sa section 2, dont la `0020` est le sujet, la rejoue privée de
+`change_channel_workflow` ; deux dégradations visaient un état périmé — le déclencheur de `cards`, qui n'écrit plus
+`workflow_changed` depuis T2.3.0, et un corps de remplacement rendant `SETOF cards` — et une septième rend la clé du
+rattachement non différable. **Un défaut de mon outillage, trouvé en l'écrivant** : `migration_sans_fonction` laissait le
+`comment on function … is '…; …'` de la `0020`, dont le texte porte un point-virgule ; le rejeu aurait remis l'ancien
+commentaire sur la nouvelle fonction. L'expression saute désormais les chaînes SQL ; la sortie pour la `0019` des
+harnais de T2.3.3 est inchangée à l'octet près.
+
+**Vérifications** : essai en transaction annulée (`0022`, `0019`, `0097`, `0040`, `0080`, `0081`) ; migration appliquée
+par le runner ; pgTAP **104 fichiers, 4299 assertions, aucune anomalie** ; unitaires **4514/4514** ; `typecheck`,
+`types:check` à l'octet ; API **1230/1231** (`ingestion.spec.ts:91`, étranger) ; `verify-change-channel-workflow.sh` **24 contrôles, aucune anomalie** — sept
+dégradations vues, sept reconstructions toutes abouties, la concurrence et la restauration constatées.
