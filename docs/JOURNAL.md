@@ -35852,3 +35852,23 @@ migrations `0116` (de `CRM-116`) et dix antérieures, `0034` à `0043`, portent 
 applique chaque fichier et son inscription au registre dans une seule transaction (`--single-transaction`) ; un
 `commit` dans le fichier ferme cette transaction avant l'inscription. Consigné en INC-318, sans modifier les
 fichiers déjà inscrits ; les migrations de `CRM-117` n'en portent pas.
+
+### décision 752 — le connecteur MCP gère les workflows, dans une famille propre `workflows`
+
+*2026-10-26, arbitrage du responsable, rendu sur les deux questions de la règle de la décision 659.* **Problème.** Le
+connecteur ne fait que lire les workflows : `crm_workflow_get`, famille `structure`, livré par `CRM-104` T1 (décision
+656). Aucun outil ne crée, ne modifie ni n'archive un workflow, ses étapes ou ses transitions. **Question 1** — le
+connecteur doit-il gérer les workflows ? **Oui, en gestion complète** : créer, modifier, archiver. **Question 2** — sous
+une permission distincte ? **Oui, une famille nouvelle `workflows`**, avec sa propre ligne de cases, et non des actions
+de plus sous `structure` : ouvrir `structure:modifier` pour les tracks et les channels ne donne pas le droit de
+réécrire un workflow. Nom anglais (décision 658). **Conséquences.** `CRM-104` étant livrée (`[P]`), la famille vient
+dans une unité dédiée, `CRM-118` ; elle exige une migration de la liste fermée (`docs/SPEC-mcp.md` §6.1, §7.1), au
+prochain numéro libre au moment du code, et sa phrase dans l'onglet « Connecteur MCP ». La base reste juge : les
+écritures de workflow sont réservées aux administrateurs d'espace (`docs/SPEC-workflow-engine.md` §3.7), le connecteur
+n'ouvre rien de plus. **Points ouverts, à arbitrer avant la spécification de la tranche** (`docs/BACKLOG.md`,
+`CRM-118`) : la place de `crm_workflow_get` (reste à `structure` ou passe à `workflows`) ; le périmètre exact de la
+« gestion complète » parmi ce que le CRM offre (étapes, transitions, exigences d'une transition, champs de formulaire et
+règles de visibilité, copie vers un track, versions et remappage, rattachement d'un channel à un workflow, catalogue de
+nœuds) ; l'action d'une suppression d'étape ou de transition, que le CRM détruit physiquement (§3.7) alors que
+`supprimer` veut dire corbeille ou archive. Aucun code. **Persisté** : `docs/SPEC-mcp.md` §6.1, `docs/BACKLOG.md`
+(`CRM-118`).

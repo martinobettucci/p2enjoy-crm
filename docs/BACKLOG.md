@@ -16997,3 +16997,25 @@ responsable** : traitée juste après `CRM-116`.*
 - [ ] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
       `CHANGELOG.md`, contrat de déploiement.
 - [ ] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.
+
+### CRM-118 — Connecteur MCP : la famille `workflows` `[ ]`
+*Créée le 2026-10-26 — décision 752, arbitrage du responsable sur les deux questions de la décision 659.* Le connecteur
+ne fait que lire un workflow (`crm_workflow_get`, `structure`, `CRM-104` T1). Le responsable veut qu'un assistant puisse
+**créer, modifier et archiver** les workflows, leurs étapes et leurs transitions, sous une **famille propre**,
+`workflows`, distincte de `structure`. `CRM-104` étant livrée, la famille vient ici. Les écritures restent réservées aux
+administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
+
+- [x] **Arbitrages, le 2026-10-26** (décision 752) : connecteur MCP **oui**, gestion complète ; permission **distincte**,
+      famille nouvelle `workflows` (`docs/SPEC-mcp.md` §6.1).
+- [ ] **Points ouverts, à arbitrer avant la spécification** : la place de `crm_workflow_get` (reste à `structure` ou
+      passe à `workflows`) ; le périmètre parmi ce que le CRM offre — workflow (créer, renommer, défaut, archiver),
+      étapes, transitions, exigences d'une transition (champs, points de checklist), champs de formulaire et règles de
+      visibilité, copie vers un track, versions et remappage, rattachement d'un channel, catalogue de nœuds ; l'action
+      d'une suppression d'étape ou de transition, physique dans le CRM (`docs/SPEC-workflow-engine.md` §3.7).
+- [ ] **T1 — spécification, écrite avant le code** : la liste exacte des outils dans `docs/SPEC-mcp.md` §9.2 (un
+      paragraphe dédié), leurs ancres, les RPC et tables appelées, les refus nommés ; la migration de la liste fermée
+      (`docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`) ; la phrase de l'onglet « Connecteur MCP ».
+- [ ] **T2 — la famille livrée** : migration et pgTAP, `mcp/crm_mcp/outils/workflows.py`, unitaires et mutations,
+      intégration contre la vraie pile (succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
+      journal), E2E (un workflow modifié par un vrai client MCP paraît dans l'éditeur), seed, manuel, DAT.
+- [ ] **T3 — livraison**, sur instruction du responsable.

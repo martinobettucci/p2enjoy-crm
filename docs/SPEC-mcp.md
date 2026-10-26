@@ -313,6 +313,7 @@ connecteur.
 | `temps` | saisies de temps ; le coût du personnel en lecture, dans ce que la RLS ouvre |
 | `objectifs` | tableaux d'objectifs, blocs, flèches |
 | `messagerie` | lecture des fils d'une affaire et des messages ; envoi d'un email |
+| `workflows` | workflows, leurs étapes et leurs transitions : les créer, les modifier, les archiver — **décidée le 2026-10-26, à livrer par `CRM-118`** (décision 752) ; migration de la liste fermée au prochain numéro libre ; périmètre exact et place de `crm_workflow_get`, aujourd'hui à `structure`, fixés par la spécification de la tranche ; nom anglais (décision 658) |
 
 | Action | Sens |
 |---|---|
