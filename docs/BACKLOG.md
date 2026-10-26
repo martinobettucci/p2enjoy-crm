@@ -17021,10 +17021,15 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
       points de checklist), champs de formulaire et règles de visibilité, copie vers un track, comparaison, versions et
       remappage ; retirer une étape ou une transition relève de `workflows:supprimer`, exception assumée à « `supprimer`
       = corbeille ou archive ». À poser par la spécification : le rattachement d'un channel, le catalogue de nœuds.
-- [ ] **T1 — spécification, écrite avant le code** : la liste exacte des outils dans `docs/SPEC-mcp.md` §9.2 (un
-      paragraphe dédié), leurs ancres, les RPC et tables appelées, les refus nommés ; la migration de la liste fermée
-      (`docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`) ; la phrase de l'onglet « Connecteur MCP ».
-- [ ] **T2 — la famille livrée** : migration et pgTAP, `mcp/crm_mcp/outils/workflows.py`, unitaires et mutations,
-      intégration contre la vraie pile (succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
-      journal), E2E (un workflow modifié par un vrai client MCP paraît dans l'éditeur), seed, manuel, DAT.
+- [~] **T1 — spécification, écrite avant le code** — *écrite le 2026-10-26, à valider* : `docs/SPEC-mcp.md` §9.2
+      undecies — trente et un outils en trois sous-tranches, six genres d'ancre, la migration de la liste fermée, la
+      phrase de l'onglet, les refus nommés, les preuves ; trois points ouverts soumis au responsable.
+- [ ] **T2.a — le workflow, ses étapes, ses transitions** : migration et pgTAP, genres d'ancre,
+      `mcp/crm_mcp/outils/workflows.py`, unitaires et mutations, intégration contre la vraie pile (succès, refus par la
+      matrice, refus par le CRM malgré la matrice ouverte, journal), E2E (une étape ajoutée par un vrai client MCP paraît
+      dans l'éditeur), onglet « Connecteur MCP », seed, manuel, DAT.
+- [ ] **T2.b — le formulaire, la visibilité, les exigences** : mêmes preuves ; E2E : un champ exigé par le connecteur
+      bloque un déplacement au board.
+- [ ] **T2.c — la copie, les versions, le remappage** : mêmes preuves ; E2E : une restauration par le connecteur remappe
+      une affaire visible au board.
 - [ ] **T3 — livraison**, sur instruction du responsable.
