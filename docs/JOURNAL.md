@@ -35644,3 +35644,14 @@ faite. Le moment (au geste de mise en corbeille, dans l'écran de corbeille, ou 
 connecteur MCP sont des questions de spécification, posées avant tout code (`CLAUDE.md`, « Spécificités du projet »).
 INC-316 passe « tranchée, à spécifier ».
 
+### décision 742 — `CRM-077` onzième tranche (INC-316) : la réaffectation se fait dans la corbeille, vers tout budget ouvert ; connecteur déjà couvert
+
+*2026-10-26, réponses du responsable (question posée par `AskUserQuestion`, session interactive), avant la spécification.*
+1. **Où** : **dans la corbeille**. La ligne d'un track dont l'effacement est bloqué le dit (« Effacement bloqué ») et
+   offre « Réaffecter les dépenses ». Le geste de mise en corbeille ne change pas : il reste réversible.
+2. **Vers quoi** : **tout budget ouvert de l'espace**, sauf ceux du track à effacer ; l'occurrence est demandée pour un
+   budget récurrent — les règles d'une ligne de coût d'aujourd'hui (`docs/SPEC-costs.md` §2.3, §3.2).
+3. **Connecteur MCP** (questions de la décision 627 et 659) : **déjà couvert**. Aucun outil nouveau :
+   `crm_card_cost_update` déplace une ligne vers un autre budget ouvert, sous la famille existante `budgets`, action
+   `modifier` (`docs/SPEC-mcp.md` §6.1). La spécification le dit.
+
