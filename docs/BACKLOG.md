@@ -12881,7 +12881,8 @@ of Done : les deux sont explicitement hors périmètre depuis le §7 bis.11.7, e
 unité qui les portera.
 
 ### CRM-077 — Corbeille et restauration `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 14:58 UTC — état avant : [~]*
+*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 13:42 UTC — état avant : [~]*
+*Dixième tranche proposée le 2026-10-26 (décision 734) : `docs/SPEC-corbeille.md` §8, en attente de validation, avec une question ouverte (Q1, les saisies de temps d'une affaire effacée). Aucune ligne de code avant la validation.*
 ***Connecteur (décision 708, M3 A)** : aucun outil nouveau ; la règle de visibilité s'applique d'elle-même à ce que lisent les outils existants. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707)** : rétention de **30 jours** ; à l'expiration, **effacement définitif automatique et journalisé** ; un membre ordinaire voit dans la corbeille **ce qu'il y a lui-même mis**. L'unité redevient du travail de construction, à spécifier — les deux questions du connecteur MCP d'abord.*
 ***Reste réel au 2026-10-25 (décision 705)** : trois **arbitrages du responsable** — la durée de rétention, l'effacement définitif et son parcours RGPD, la visibilité de la corbeille pour un membre ordinaire. Aucune dette de construction.*

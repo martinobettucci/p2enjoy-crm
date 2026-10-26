@@ -35347,3 +35347,18 @@ lue à l'entrée (`pg_get_indexdef`), à l'octet près, et c'est constaté.
 `CRM-072`.* Choix proposé : livrer les migrations 106 à 118 (avec un instantané Spark neuf), ou ne rien livrer. **Réponse :
 « Ne rien livrer encore ».** Les décisions 722, 726 et 730 restent en vigueur ; `CRM-072` reste `[P]`. La session enchaîne
 sur `CRM-077`.
+
+
+### décision 734 — `CRM-077`, dixième tranche : la rétention, l'effacement définitif et la corbeille personnelle, proposés
+
+*2026-10-26, session interactive (prise de `CRM-077`).* **Problème** : la décision 707 a tranché le §6 de
+`docs/SPEC-corbeille.md` — 30 jours, effacement automatique journalisé, corbeille personnelle d'un membre —, mais rien ne
+le construit. **Observations**, sur la pile : `deleted_at` est posée par le client (§7 point 3), si bien qu'un geste
+antidaté ferait effacer un objet à la nuit suivante ; aucun déclencheur d'une table enfant ne refuse la suppression en
+cascade ; les saisies de temps sont en `CASCADE` depuis les affaires, les channels et les tracks, et visent chacune
+**exactement une** cible. **Proposition** (`docs/SPEC-corbeille.md` §8) : date de corbeille posée par le serveur ; la
+rétention en un seul endroit (`app.trash_retention()`) ; une purge nocturne qui énumère, journalise (`purged`, famille
+`retention`) puis détruit, les tracks d'abord ; les politiques de lecture réservant une ligne en corbeille à
+l'administrateur et à l'auteur du retrait ; une colonne « Effacement » à l'écran. **Connecteur MCP** : aucun outil
+(décision 708). **Question ouverte Q1** : les saisies de temps d'une affaire effacée (A : effacées avec elle ; B,
+recommandée : reportées sur le channel, puis le track). **Aucun code avant la validation.**

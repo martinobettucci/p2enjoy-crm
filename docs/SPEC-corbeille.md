@@ -744,3 +744,109 @@ Le script **ne démarre ni n'arrête rien**, comme tous les autres harnais, et c
 5. **Aucun geste de masse.** Ni sélection multiple, ni « vider », ni retrait en lot — sur aucune des
    trois surfaces. Le volume que cela viserait est celui que la pagination du point 1 borne, et les
    deux appartiennent à la même décision de rétention (§6 point 1).
+
+## 8. La rétention, l'effacement définitif et la corbeille personnelle — dixième tranche (décision 707)
+
+*Proposé le 2026-10-26 (décision 734), en attente de validation. Écrit avant toute ligne de code (`CLAUDE.md` §5), après
+mesure de la pile. Il tranche le §6, sur les arbitrages du responsable du 2026-10-25.*
+
+**Les arbitrages (décision 707).** Rétention de **30 jours** ; à l'expiration, **effacement définitif automatique et
+journalisé** ; un **membre ordinaire** voit dans la corbeille **ce qu'il y a lui-même mis**. **Connecteur MCP** (décision
+708, M3 A) : aucun outil nouveau ; la règle de visibilité s'applique d'elle-même à ce que lisent les outils existants.
+
+### 8.1 La date de corbeille devient celle du serveur
+
+Le §7 point 3 laissait `deleted_at` au client, parce qu'aucune règle n'en dépendait. **La rétention en dépend
+désormais** : un client qui antidaterait son geste ferait effacer l'objet à la nuit suivante. Le déclencheur
+`app.corbeille_avant_ecriture()` pose donc `deleted_at := now()` à la mise en corbeille (de `NULL` à une valeur), et la
+**fige** tant que l'objet reste en corbeille, comme il fige déjà `deleted_by`. Le client continue d'envoyer une valeur
+non nulle : seule sa nullité compte. Les objets que le seed fait naître en corbeille prennent la date du seed (§8.6).
+
+### 8.2 La rétention est une valeur de configuration, en un seul endroit
+
+`app.trash_retention()` rend `interval '30 days'`. C'est l'**unique** endroit où la durée est écrite, et la base, l'écran
+et la documentation la lisent ou la citent. La fonction est exposée à la lecture (`public.trash_retention_days()`,
+`SECURITY INVOKER`, `authenticated`) pour que l'écran calcule la date d'effacement sans recopier le nombre (§8.5). Un
+réglage par espace n'est pas demandé par la décision 707 ; il resterait possible sans changer le contrat.
+
+### 8.3 L'effacement définitif : chaque nuit, énuméré, journalisé
+
+`app.purge_trash()`, `SECURITY DEFINER`, appelée chaque jour par la tâche pg_cron **`p2enjoy-purge-corbeille`**
+(`29 3 * * *`, une minute que nulle autre tâche ne prend). Elle prend les objets dont `deleted_at < now() -
+app.trash_retention()`, **les tracks d'abord, puis les channels, puis les affaires** — un channel emporté par la
+destruction de son track n'est plus là quand vient son tour. Pour chacun, dans la même transaction :
+
+1. **elle énumère avant d'agir** (§2.3) : ce que la destruction emporte, compté par table — channels, affaires,
+   commentaires, activités, valeurs de champ, lignes de coût et de recette, saisies de temps —, et les messages qui
+   seront **déliés** (`SET NULL`) ;
+2. **elle journalise** : une entrée `audit_log` de la famille `retention`, action `purged`, objet `card`, `channel` ou
+   `track`, avec son libellé et `details = {deleted_at, deleted_by, enumerated: {...}}` (`docs/SPEC-audit.md` §4.6) ;
+3. **elle détruit** l'objet. Les déclencheurs de `CRM-072` écrivent ensuite, pour lui et pour chaque track, channel ou
+   affaire emporté en cascade, son entrée `destroyed` (famille `deletion`), acteur « Système ».
+
+**Mesuré** : aucun déclencheur des tables enfants ne refuse la suppression en cascade (`card_events` ne refuse que la
+modification). Les réels de coûts et de recettes refusent un retrait sur une ligne soldée, mais leur ligne est déjà
+détruite quand la cascade les atteint ; la suite pgTAP le prouvera sur une ligne soldée.
+
+**Les saisies de temps** posent la seule question de produit restante : une saisie vise **exactement une** cible
+(`saisies_temps_cible_check`), et ses clés vers les affaires, les channels et les tracks sont en `CASCADE`. **Question
+Q1**, au §8.7.
+
+### 8.4 La corbeille personnelle d'un membre — une règle de la base
+
+« Visible » est une règle backend (`CLAUDE.md` §10). Les politiques de lecture de `cards`, `channels` et `tracks`
+gagnent une condition sur les seules lignes **en corbeille** : une ligne dont `deleted_at` est non nulle n'est lisible
+que par un **administrateur de l'espace**, ou par **celui qui l'y a mise** (`deleted_by = auth.uid()`). Une ligne
+vivante garde exactement sa règle d'aujourd'hui. Le §2.2 (« la corbeille est une vue ») est donc révisé : pour un membre
+ordinaire, elle devient aussi une frontière, celle que la décision 707 demande.
+
+- **Conséquences mesurées à prouver** : la lectrice du seed ne lit plus le track et le channel en corbeille qu'elle lisait
+  (§4.2), puisqu'elle ne les a pas retirés ; les listes, qui filtraient déjà `deleted_at=is.null`, ne changent pas ; une
+  affaire en corbeille dont on n'est pas l'auteur du retrait devient introuvable par son adresse, ce que l'écran rend
+  déjà (« Affaire introuvable »).
+- **Un objet restauré** retrouve la règle commune : `deleted_by` est effacé à la restauration (§3.2), et la condition
+  ne porte que sur les lignes en corbeille.
+- La coordination avec `CRM-111` (rattachements) : la corbeille reste portée par `cards` (`docs/SPEC-rattachements.md`),
+  et la condition ne touche aucune colonne de rattachement.
+
+### 8.5 Ce que l'écran de corbeille gagne
+
+- **Une colonne « Effacement »**, donnée technique alignée à droite : la date à laquelle l'objet sera effacé,
+  `deleted_at` plus la rétention lue en base, écrite « le 25/11/2026 ». Une phrase en tête de l'écran dit la règle :
+  « Un objet reste 30 jours dans la corbeille, puis il est effacé définitivement, avec ce qu'il contient. » Le nombre est
+  lu en base, jamais écrit dans l'écran.
+- **Pour un membre ordinaire**, une seconde phrase dit ce qu'il voit : « Vous voyez ce que vous avez mis à la
+  corbeille. »
+- **Toujours aucun effacement manuel**, aucun « vider » (§4.7) : la décision 707 ne demande que l'effacement automatique.
+- `docs/DESIGN_SYSTEM.md` §5.16 est complété avant le code, après sa relecture intégrale.
+
+### 8.6 Le seed, et la preuve de la purge
+
+Les trois objets en corbeille du seed prennent désormais la date du seed (§8.1) : rien n'y a trente jours, et **la
+purge ne se démontre pas par le seed**, faute de pouvoir fabriquer une date ancienne (`CLAUDE.md` §8). Sa preuve est la
+suite pgTAP, qui recule une date dans une transaction annulée, déclencheur désactivé le temps de le faire. Le seed vérifie
+en revanche la visibilité : Camille lit les trois objets en corbeille, la lectrice n'en lit aucun.
+
+### 8.7 Question au responsable
+
+- **Q1 — les saisies de temps d'une affaire effacée définitivement.**
+  - *Option A* : elles sont effacées avec l'affaire. L'énumération du journal dit combien, et le coût du personnel des
+    mois concernés baisse d'autant dans les rapports.
+  - *Option B, recommandée* : avant l'effacement, la purge **reporte** chaque saisie sur le channel de l'affaire (et
+    celles d'un channel effacé, sur son track) ; le temps et son coût restent dans les rapports, sous le dossier
+    parent, et le journal dit combien ont été reportées. Seules les saisies d'un **track** effacé disparaissent, faute de
+    parent ; le journal le dit.
+
+### 8.8 Production et preuves
+
+- **Une migration**, numérotée après synchronisation : le déclencheur révisé (§8.1), `app.trash_retention()` et sa
+  lecture publique, `app.purge_trash()` et sa tâche, les trois politiques de lecture révisées (§8.4), et, selon Q1, le
+  report des saisies de temps.
+- **pgTAP** : l'horodatage serveur et son gel ; la purge qui ne prend que plus de 30 jours, dans l'ordre, énumère,
+  journalise (`purged` puis `destroyed`), traverse une ligne de coût soldée, et traite les saisies selon Q1 ; la lecture
+  des lignes en corbeille par l'administratrice, par l'auteur du retrait, et son refus aux autres.
+- **API** avec les jetons réels : la lectrice ne lit plus la corbeille d'autrui (témoin d'abord), Driss lit ce qu'il a
+  retiré ; la date d'un geste est celle du serveur, quoi que le client envoie.
+- **Unitaires et E2E** : la colonne « Effacement », les deux phrases, aux quatre paliers ; captures observées.
+- `docs/PROD_MIGRATIONS.md`, `docs/SCHEMA.md`, `docs/SPEC-seed.md`, le manuel (chapitre 5 *ter*), le harnais
+  `verify-corbeille.sh` (ses comptes), et le §6 et le §7 de ce document, révisés.
