@@ -17071,5 +17071,8 @@ nouvelle (écart assumé, décision 757) ; question du connecteur sans objet.
 - [x] **T1 — spécification** : `docs/SPEC-permissions-rls.md` §7.5, ce backlog, `docs/JOURNAL.md` décision 757.
 - [ ] **T2 — la boucle de l'écran** : `e2e/ui/droits-fins-croises.spec.ts`, U1 à U3, deux contextes de navigateur,
       captures `docs/captures/CRM-119/`.
-- [ ] **T3 — le connecteur** : `mcp/tests/test_integration_droits_fins.py`, M1 à M5, joué par `scripts/verify-mcp.sh`.
+- [x] **T3 — le connecteur** : `mcp/tests/test_integration_droits_fins.py`, M1 à M5, joué par `scripts/verify-mcp.sh`.
+      **Fait le 2026-10-27** : **5/5** contre la vraie pile ; dégradation réelle dénoncée (le `member` de Farida sur
+      « Prospection » retiré : M1 échoue, droit restauré et relu) ; intégration complète du connecteur **56/56**, deux
+      fois, dans l'ordre du harnais. Dans l'ordre alphabétique, un échec **antérieur** à l'unité, consigné INC-319.
 - [ ] **T4 — clôture** : synchronisation, campagnes rejouées, `CHANGELOG.md`.

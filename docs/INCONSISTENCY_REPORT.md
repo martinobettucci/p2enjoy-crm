@@ -8138,3 +8138,19 @@ passage suivant la rejouerait. Aucun cas n'est observé : les onze sont inscrite
 serait une migration nouvelle sans objet. **Issue proposée** : que le runner refuse un fichier portant un `begin;` ou
 un `commit;` de premier niveau, avec une liste d'exceptions pour les onze déjà inscrits, et que
 `docs/DAT.md` §3.2 bis écrive la règle. À arbitrer par le responsable.
+
+### INC-319 — `test_integration_oauth.py` dépend de l'ordre : joué après la messagerie, il voit encore ses outils
+
+*Constaté le 2026-10-27 par `CRM-119` T3, en jouant l'intégration du connecteur dans l'ordre alphabétique des fichiers.*
+`tests/test_integration_messagerie.py` puis `tests/test_integration_oauth.py` : `test_un_droit_suffit_pour_entrer_dans_la_matrice_et_la_rls`
+échoue, la liste des outils de Farida portant en trop `crm_card_mail_list`, `crm_mail_get` et `crm_mail_send`. Reproduit
+sans `test_integration_droits_fins.py` ; la matrice relue par la clé de service est identique avant et après la
+messagerie.
+
+**Cause** : le service garde l'état du compte lu pour la visibilité **2 secondes** (`docs/SPEC-mcp.md` §6.2,
+`DUREE_VISIBILITE_S`). Le test exige la liste **exacte** dès sa connexion, sans attendre cette échéance comme le font
+les autres fichiers (`_attendre_outils`). Le produit se conduit comme spécifié.
+
+**Sans effet sur le harnais** : `scripts/verify-mcp.sh` joue `oauth` en premier (56/56, deux fois). **Non corrigé** :
+le fichier relève de `CRM-102`. **Issue proposée** : attendre la liste exacte par `_attendre_outils`, bornée par
+`DUREE_VISIBILITE_S`, au lieu de la lire une fois.
