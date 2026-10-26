@@ -35555,3 +35555,22 @@ en base vient en dernier (T2.4.5), quand plus personne ne lit les colonnes : mig
 (décision 738), transport des scores de santé, politiques de `cards` sous la forme optimisée. **Question ouverte, posée
 pour T2.4.3** : sans miroir d'insertion, le seed — qui crée ses affaires par la clé de service, à identifiants stables —
 doit écrire le rattachement lui-même ; privilège d'insertion de `service_role` sur `card_placements`, ou fonction dédiée.
+
+### décision 739 — Après la clôture de `CRM-077` : toujours rien en production ; INC-316 « interdire en base », et la contradiction que cette réponse révèle
+
+*2026-10-26, réponses du responsable (question posée par `AskUserQuestion`, session interactive).*
+1. **Livraison : « Ne rien livrer encore »**, quatrième réponse identique (décisions 726, 730, 733). Les migrations 106 à
+   122 restent en attente ; `CRM-077` reste `[P]`.
+2. **INC-316 : « Interdire le cas en base »** — une ligne de coût ne pourrait plus viser le budget d'un autre track que
+   celui de son affaire.
+
+**Ce que la réponse révèle, mesuré avant toute ligne de code.** `docs/SPEC-costs.md` §3.1 **prévoit** ce cas : la double
+condition de lecture de `card_costs` existe parce qu'« une card et un budget peuvent relever de deux tracks ». Le seed le
+**démontre** : la ligne « Prospection terrain » (`…e4`) de l'affaire « Formation Data & IA — promo 2026 » (track
+Formation) vise le budget « Prospection sortante » (track Conseil & IA), et c'est elle qui rend observable, à l'écran
+« Coûts à saisir » (`CRM-086`, §4.8), l'état « des lignes lisibles mais aucune écrivable » de la lectrice. Mesuré sur la
+base de développement : **1 ligne sur 5** est dans ce cas. Les rattachements de `CRM-111` (une affaire dans plusieurs
+channels, donc possiblement plusieurs tracks) et le changement de channel d'une affaire rendent en outre « le track de
+l'affaire » ambigu. **La réponse contredit donc une règle écrite** : selon `CLAUDE.md` §5, elle est consignée (INC-316
+mise à jour) et le comportement reste inchangé ; l'arbitrage est redemandé au responsable avec ces faits.
+

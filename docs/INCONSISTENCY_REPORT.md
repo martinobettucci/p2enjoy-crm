@@ -8094,4 +8094,8 @@ suivants (pgTAP `0114`, assertions 35 à 37). Il sera retenté chaque nuit. **Le
 comportement, et le dire à l'écran — l'objet resterait au-delà de sa date d'effacement sans explication visible ; (2)
 détacher la ligne de coût de l'autre affaire (budget à `null` impossible : colonne obligatoire) ; (3) interdire en base
 qu'une ligne de coût vise le budget d'un autre track, ce qui rendrait le cas impossible mais toucherait `CRM-085`. **Arbitrage
-demandé au responsable.** **Statut : ouverte.**
+demandé au responsable.** **Réponse du 2026-10-26 (décision 739) : lecture (3), « interdire en base ».** **Elle contredit une
+règle écrite** : `docs/SPEC-costs.md` §3.1 prévoit qu'une affaire et un budget relèvent de deux tracks, et le seed le
+démontre (ligne `…e4`, 1 sur 5 en développement), au service de l'écran « Coûts à saisir ». Les rattachements de
+`CRM-111` rendent aussi « le track de l'affaire » ambigu. Comportement laissé inchangé ; **arbitrage redemandé**.
+**Statut : ouverte.**
