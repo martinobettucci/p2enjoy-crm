@@ -35873,7 +35873,7 @@ nœuds) ; l'action d'une suppression d'étape ou de transition, que le CRM détr
 `supprimer` veut dire corbeille ou archive. Aucun code. **Persisté** : `docs/SPEC-mcp.md` §6.1, `docs/BACKLOG.md`
 (`CRM-118`).
 
-### décision 752 — `CRM-117` T2 interrompue sur consigne : ce qui est fait et prouvé, ce qui reste
+### décision 753 — `CRM-117` T2 interrompue sur consigne : ce qui est fait et prouvé, ce qui reste
 
 *2026-10-26, consigne du responsable relayée par une autre session : faire le point, persister, terminer.* **Fait et
 prouvé** : migrations `0126` (bucket privé `manual`) et `0127` (politique `manual_select`, lecture pour

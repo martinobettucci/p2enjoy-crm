@@ -16963,7 +16963,7 @@ décision 729) : une couleur propre au channel, des pastilles nommées, pas de c
       « `CRM-116` T2 à T4 »).
 - [ ] **T5 — livraison** : migration en fenêtre et reconstruction de la webapp, sur instruction du responsable.
 ### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[~]`
-***Reste réel au 2026-10-26, T2 interrompue sur consigne du responsable** (fin de session) : le panneau d'aide et les pages restent à éprouver (unitaires de `AideEntete` et `PageAide`, E2E, paliers, captures observées), puis T3 à T6. La base, la publication, la construction et la lecture sont faites et prouvées (décision 752).*
+***Reste réel au 2026-10-26, T2 interrompue sur consigne du responsable** (fin de session) : le panneau d'aide et les pages restent à éprouver (unitaires de `AideEntete` et `PageAide`, E2E, paliers, captures observées), puis T3 à T6. La base, la publication, la construction et la lecture sont faites et prouvées (décision 753).*
 *Créée le 2026-10-26 — constat du responsable : « on a un manuel mais il n'est joignable nulle part depuis la webapp ;
 est-ce dans le backlog ou c'est un loupé ? ». Mesuré le même jour : un loupé. La webapp ne porte aucun lien ni entrée
 « Aide » vers `docs/manual.md` ; aucune unité ne le prévoit — les mentions du manuel au backlog portent sur sa
@@ -16986,7 +16986,7 @@ responsable** : traitée juste après `CRM-116`.*
       vérification (`marked` après la mesure du `CLAUDE.md` §19) ; `/aide` et `/aide/:chapitre`, le rendu en blocs,
       l'icône « Aide » et son panneau, `aide-ecrans.ts` (unitaires, E2E, paliers, captures observées). Sur le manuel
       tel qu'il est : la réécriture suit.
-      *Fait le 2026-10-26 (décision 752)* : migrations `0126` et `0127`, pgTAP `0119` **10/10** (mutations tuées), `0029`
+      *Fait le 2026-10-26 (décision 753)* : migrations `0126` et `0127`, pgTAP `0119` **10/10** (mutations tuées), `0029`
       révisée ; `e2e/api/manuel.spec.ts` **9/9** (mutation tuée) ; `marked` 18.1.1 mesuré (`docs/DAT.md` §15) ;
       construction et vérification (22 unitaires), publication en miroir à la fin du seed ; lecture (`lib/manuel.ts`, 12
       unitaires), correspondance écran → chapitre (42 unitaires), rendu des blocs (9 unitaires), pages `/aide` et

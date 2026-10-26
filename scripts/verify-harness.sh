@@ -621,7 +621,7 @@ PORT_RAPPORT=9323
 # **+1 par `CRM-068` T1, 2026-10-26** : `0117_checklists.test.sql`, fichier NEUF. 106 + 1 = 107, MESURÉ.
 # **+1 par `CRM-068` T2, 2026-10-26** : `0118_transition_exige_checklist.test.sql`, fichier NEUF. 107 + 1 = 108, MESURÉ.
 # **+1 par `CRM-117` T2, 2026-10-26** : `0119_lecture_du_manuel.test.sql`, fichier NEUF. 108 + 1 = 109, CALCULÉ — la
-# campagne complète était suspendue (décision 752).
+# campagne complète était suspendue (décision 753).
 FICHIERS_SQL_ATTENDUS=109
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
@@ -770,7 +770,7 @@ FICHIERS_SQL_ATTENDUS=109
 # le point libre qui ne compte pas, le point archivé toujours exigé, l'ordre des vérifications). 4359 + 9 = 4368.
 # **+10 par `CRM-117` T2, 2026-10-26** : `0119_lecture_du_manuel` **10** assertions (le bucket privé, une seule politique de
 # lecture bornée au bucket, une session lit et n'écrit pas, `anon` ne lit rien) ; `0029` RÉVISÉE sans changer de plan.
-# 4368 + 10 = 4378, CALCULÉ (décision 752).
+# 4368 + 10 = 4378, CALCULÉ (décision 753).
 ASSERTIONS_ATTENDUES=4378
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
