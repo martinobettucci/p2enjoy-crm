@@ -1292,6 +1292,24 @@ que cet onglet suit, et c'est à elle que se rattacheront les commentaires, les 
 Deux valeurs sont posées pour vous et ne se saisissent pas : l'**étape courante**, qui vient de
 l'onglet où l'affaire naît, et l'**adresse email** ci-dessous.
 
+**Les deux scores de santé.** Une affaire ouverte porte deux notes sur 100, calculées par le produit à chaque lecture —
+vous n'avez rien à saisir, et elles sont toujours à jour. Elles s'affichent en pastilles sur la carte du board, et en
+détail sur la fiche, dans le bloc « Santé de l'affaire ». Chacune est **saine** à partir de 70 (vert), **à surveiller**
+de 40 à 69 (jaune) et **en danger** sous 40 (rouge) ; le palier est toujours écrit en toutes lettres, pas seulement
+colorié.
+
+- **La dynamique dit quoi faire.** Elle part de 100 et retire des points, chacun affiché avec sa raison : étape figée au
+  delà de son seuil de relance (−30), prochaine action en retard (−25) ou absente (−15), aucun contact depuis plus de 14
+  jours (−20) ou plus de 30 jours (−30). Un contact, c'est une activité consignée ou un email classé dans l'affaire ; une
+  affaire jamais contactée compte depuis sa création.
+- **La santé commerciale dit les chances de gagner.** C'est une moyenne de quatre signaux, chacun noté sur 100 et
+  affiché avec son poids : la probabilité de l'étape (40 %), la fraîcheur du dernier contact (25 % — pleine jusqu'à 7
+  jours, nulle à 30), la ponctualité de la prochaine action (20 % — datée dans le futur 100, sans date 60, absente 30, en
+  retard 0) et l'ancienneté dans l'étape rapportée à son seuil (15 %). Un signal qu'on ne peut pas mesurer — aucune
+  probabilité, aucun seuil — est écrit « inconnu », et son poids se répartit sur les autres au lieu de compter pour zéro.
+- **Une affaire gagnée, perdue, archivée ou à la corbeille n'a pas de score.** Une affaire en sommeil garde les siens.
+- Un assistant connecté par le connecteur lit les mêmes scores (chapitre 11).
+
 ### 4.2 L'adresse email de l'affaire
 
 Chaque affaire reçoit à sa création une **adresse email qui lui est propre**, de la forme
@@ -5008,7 +5026,8 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     prochaine action — filtrées au besoin par channel, par mots du titre, par étape ou par échéance (en retard,
     aujourd'hui, dans la semaine). Les affaires en sommeil n'y paraissent que si on le demande ;
   - **lire une affaire** : son en-tête, sa description, sa probabilité, ses contacts liés et leur rôle, ses réponses au
-    formulaire, et si vous pouvez la modifier ;
+    formulaire, si vous pouvez la modifier, et ses **deux scores de santé** avec leur détail (chapitre 4.1) — la liste
+    des affaires les rend aussi ;
   - **lire son historique**, comme le fil de la fiche (chapitre 4.10) : événements, commentaires et activités, du plus
     ancien au plus récent ;
   - **lire ses commentaires**, et **ses activités** (chapitre 4.7 *quater*) ;

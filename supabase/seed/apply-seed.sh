@@ -4690,6 +4690,13 @@ ACTIVITES_SEED=(
 	"5eed0000-0000-4000-8000-0000000a0c03|5eed0000-0000-4000-8000-0000000000c2|bizdev|call|2026-10-17T10:00:00Z|15|Relance tarifaire|Note interne sur la marge, notée ici par erreur.|"
 	"5eed0000-0000-4000-8000-0000000a0c04|5eed0000-0000-4000-8000-0000000000cb|viewer|visio|2026-10-20T15:00:00Z|45|Démonstration de l'assistant||"
 )
+# `…a0c05` — `CRM-066` tranche 4, docs/SPEC-seed.md §24 (@spec CRM-066, docs/SPEC-analytique.md §13.8) : le DERNIER
+# CONTACT de « Audit sécurité applicative », ancien de 40 jours à sa création. Toutes les affaires du seed naissent le jour
+# du seed, si bien qu'aucune n'est « sans contact depuis 30 jours » ; cette activité, consignée par la vraie écriture,
+# mène l'affaire au palier « en danger » de la dynamique (étape figée, action en retard, aucun contact depuis 30 jours).
+ACTIVITES_SEED+=(
+	"5eed0000-0000-4000-8000-0000000a0c05|5eed0000-0000-4000-8000-0000000000c3|admin|call|$(date -u -d '-40 days' +%Y-%m-%dT10:00:00Z)|20|Dernier échange avec le RSSI|Le client attend une proposition chiffrée avant de relancer.|"
+)
 # Le compte rendu de `…a0c01` après correction par son auteur : `edited_at` est posé par le trigger, jamais par le seed.
 ACTIVITE_A0C01_CORRIGEE='Besoin confirmé : migration des achats et de la paie avant juin. Budget validé par la DAF.'
 
@@ -4799,7 +4806,23 @@ info "Suggestion de modification du workflow par défaut : 1, en revue, avec son
 info "Temps et coût du personnel : trois versions de coût, dont une programmée ; quatre semaines de temps — CRM-098, docs/SPEC-seed.md §17"
 info "Plateforme : une superadministratrice, Sabine Plateforme, amorcée par sa connexion ; aucun espace de plus — CRM-101, docs/SPEC-seed.md §19"
 info "Connecteur MCP : trois comptes connectés par de vraies connexions OAuth, quatre lignes au journal — CRM-103, docs/SPEC-seed.md §22"
-info "Activités : quatre sur deux affaires, une de chaque type, une corrigée, une retirée par la modération — CRM-067, docs/SPEC-seed.md §23"
+info "Activités : cinq sur trois affaires, une de chaque type, une corrigée, une retirée par la modération — CRM-067, docs/SPEC-seed.md §23"
+
+# --- Les deux scores de santé couvrent leurs trois paliers — CRM-066 tranche 4, docs/SPEC-seed.md §24 -----------------
+# @spec CRM-066 (docs/BACKLOG.md) — tranche 4 ; docs/SPEC-analytique.md §13.8 ; docs/JOURNAL.md décisions 723 et 724
+# VÉRIFIÉ, PAS FORCÉ : les scores se calculent à la lecture, et le seed ne peut rien y écrire. Il lit les deux colonnes
+# calculées, sous la clé de service, et exige chaque palier — healthy, watch, danger — pour chacun des deux scores.
+paliers_sante=$(curl -s "$API/rest/v1/cards?select=health_momentum,health_commercial&archived_at=is.null&deleted_at=is.null" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r '[.[] | select(.health_momentum != null) | "m-" + .health_momentum.tier, "s-" + .health_commercial.tier] | unique | join(",")')
+for palier in m-healthy m-watch m-danger s-healthy s-watch s-danger; do
+	case ",$paliers_sante," in
+		*",$palier,"*) ;;
+		*) die "aucune affaire ouverte du seed n'atteint le palier $palier : la démonstration des scores de santé serait
+        incomplète (docs/SPEC-analytique.md §13.8). Paliers présents : $paliers_sante" ;;
+	esac
+done
+info "Scores de santé : les trois paliers présents pour la dynamique et pour la santé commerciale — CRM-066, docs/SPEC-seed.md §24"
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."

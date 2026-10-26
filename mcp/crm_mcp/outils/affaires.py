@@ -1,4 +1,6 @@
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : les sept outils de LECTURE de la famille `affaires` (décisions 652 à 654)
+# @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux scores de santé dans crm_card_list et crm_card_get —
+#       docs/SPEC-analytique.md §13.7 ; décision 708 (M4 B)
 # @spec CRM-067 (docs/BACKLOG.md) — tranche T4 : `crm_card_activity_list` (docs/SPEC-activites.md §6, décision 653)
 # @spec docs/SPEC-mcp.md §9.2 bis (la liste fixée, les ancres, l'ancre `channel` facultative), §9.1 (aucun chemin
 #       parallèle : les tables et fonctions de la webapp), §9.3 (JSON structuré, `limit` ≤ 100, refus traduits), §16
@@ -37,10 +39,14 @@ HORIZON_JOURS = 7
 CHANNEL = "channel:channels!cards_channel_id_workspace_id_fkey(id,name,slug,track:tracks(id,name,slug))"
 ETAPE = "etape:workflow_steps!cards_current_step_id_workflow_id_fkey(id,probability_override,noeud:workflow_nodes_catalog(label,default_probability))"
 RESPONSABLE = "responsable:profiles!cards_owner_id_fkey(id,full_name)"
-COLONNES_LISTE = f"id,title,amount,currency,next_action,next_action_at,snoozed_until,{RESPONSABLE},{CHANNEL},{ETAPE}"
+#: `health_momentum` et `health_commercial` — `CRM-066` tranche 4 : les deux scores de santé, colonnes calculées par la
+#: base (docs/SPEC-analytique.md §13.7), rendus tels quels par la liste et par la fiche (décision 708, M4 B).
+SANTE = "health_momentum,health_commercial"
+COLONNES_LISTE = f"id,title,amount,currency,next_action,next_action_at,snoozed_until,{SANTE},{RESPONSABLE},{CHANNEL},{ETAPE}"
 COLONNES_FICHE = (
     "id,title,description,amount,currency,probability_override,next_action,next_action_at,snoozed_until,archived_at,"
-    f"email_local_part,workflow_id,entered_step_at,created_at,updated_at,ecriture_permise,{RESPONSABLE},{CHANNEL},{ETAPE}"
+    f"email_local_part,workflow_id,entered_step_at,created_at,updated_at,ecriture_permise,{SANTE},{RESPONSABLE},{CHANNEL},"
+    f"{ETAPE}"
 )
 COLONNES_EVENEMENT = "id,type,payload,created_at,acteur:profiles!card_events_actor_id_fkey(full_name)"
 COLONNES_COMMENTAIRE = (
@@ -97,6 +103,10 @@ def resume_carte(ligne: dict[str, Any]) -> dict[str, Any]:
         "next_action": ligne.get("next_action"),
         "next_action_at": ligne.get("next_action_at"),
         "snoozed_until": ligne.get("snoozed_until"),
+        # LES DEUX SCORES DE SANTÉ, TELS QUE LA BASE LES REND (§13.7) : score, palier et composantes ; `None` pour une
+        # affaire décidée, archivée ou à la corbeille.
+        "health_momentum": ligne.get("health_momentum"),
+        "health_commercial": ligne.get("health_commercial"),
     }
 
 
@@ -324,7 +334,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         titre="List affaires (cards)",
         description=(
             "Lists the active affaires (FR: affaires, cards) of a workspace you can read, by title: track, channel, step, "
-            "owner, amount, next action and its due date. Filters: channel, words of the title, step name, next action "
+            "owner, amount, next action and its due date, and the two health scores (health_momentum: 100 minus listed "
+            "penalties; health_commercial: weighted signals; tiers healthy/watch/danger). Filters: channel, words of the title, step name, next action "
             "due (overdue, today, week). Sleeping affaires are left out unless include_snoozed. Paginated."
         ),
     )
@@ -413,8 +424,10 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         description=(
             "Reads one affaire (card): title, description, track, channel, workflow and step, owner, amount and currency, "
             "probability (the affaire's own, else its step's, else its node's), next action and due date, sleep, the "
-            "linked contacts with their role, the form answers by label, and can_write — whether the CRM lets you change "
-            "it."
+            "linked contacts with their role, the form answers by label, can_write — whether the CRM lets you change it — "
+            "and the two health scores: health_momentum (100 minus each listed penalty) and health_commercial (four "
+            "weighted signals; an unknown one has its weight shared). Tiers: healthy ≥ 70, watch 40–69, danger < 40; none "
+            "for a decided, archived or trashed affaire."
         ),
     )
 

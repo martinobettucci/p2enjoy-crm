@@ -1060,6 +1060,9 @@ type _vueDerivationColonnes = Expect<
 // veille de `mail-sync` efface par l'API de stockage (docs/SPEC-mail-subsystem.md §19 bis.2 point 8). Exécutable par
 // `service_role` SEUL : le type la montre à la webapp, qui ne peut pas l'appeler. `queue_outbound_email` gagne `p_bcc` et
 // `p_attachments` ; le type ne dit pas ses trois refus nouveaux. Quatre-vingt-quinze devient QUATRE-VINGT-SEIZE.
+// La migration des scores de santé de `CRM-066` TRANCHE 4 ajoute `health_momentum` et `health_commercial` — deux
+// colonnes CALCULÉES de `cards` à paramètre anonyme, rangées aussi dans la ligne (docs/SPEC-analytique.md §13.5) ; leur
+// signature RPC d'erreur n'est appelée par personne. Le compte s'accroît de deux.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1130,6 +1133,8 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'marquer_message_range'
     | 'mark_messages_read'
     | 'depots_envoi_abandonnes'
+    | 'health_momentum'
+    | 'health_commercial'
     | 'mark_message_unread'
     | 'is_read'
     | 'messages_a_ranger'

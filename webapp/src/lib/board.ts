@@ -105,6 +105,9 @@ export type CardBoard = Pick<
 	// Lue depuis la tranche 2 b de `CRM-081` : le board masque les affaires en sommeil et marque
 	// celles qu'il montre (docs/SPEC-cards.md §16.12).
 	| 'snoozed_until'
+	// Lues depuis `CRM-066` tranche 4 : les deux scores de santé, colonnes calculées (docs/SPEC-analytique.md §13.5).
+	| 'health_momentum'
+	| 'health_commercial'
 > & {
 	readonly responsable: ProfilAffiche | null
 } & RattachementsLus

@@ -1,4 +1,6 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les gestes d'écriture lisent le refus du channel (docs/DESIGN_SYSTEM.md
+// @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux pastilles de santé sur la carte — docs/DESIGN_SYSTEM.md §5.65,
+//       docs/SPEC-analytique.md §13.6
 //       §5.59)
 // @spec CRM-041 (docs/BACKLOG.md) — board kanban : colonnes, glisser-déposer, menu de transitions
 // @spec CRM-022 (docs/BACKLOG.md) — avatar du responsable embarqué sur la card
@@ -39,6 +41,8 @@ import { Badge, type TonBadge } from '../components/ui/Badge'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'
 import { Infobulle } from '../components/ui/Infobulle'
+import { PastilleSante } from '../components/ui/PastilleSante'
+import { lireCommerciale, lireDynamique } from '../lib/sante'
 import { LiveRegion } from '../components/ui/LiveRegion'
 import {
 	BasculeSommeil,
@@ -129,6 +133,27 @@ const CLASSES_REPRISE = [
  * chiffres tabulaires. Le formatage est délégué à `Intl`, jamais construit par concaténation —
  * la place du symbole et le séparateur des milliers sont des règles de langue, pas de composant.
  */
+/**
+ * Les deux pastilles de santé d'une carte — `CRM-066` tranche 4 (docs/DESIGN_SYSTEM.md §5.65, docs/SPEC-analytique.md
+ * §13.6). Rien n'est rendu quand la base n'en rend aucun : une affaire décidée n'a pas de score, et un conteneur vide
+ * ajouterait un écart visible.
+ */
+function ScoresCarte({ dynamique, commerciale }: { readonly dynamique: unknown; readonly commerciale: unknown }) {
+	const d = lireDynamique(dynamique)
+	const s = lireCommerciale(commerciale)
+	if (d === null && s === null) return null
+	return (
+		<div className="flex flex-wrap items-center gap-2" data-testid="scores-sante-carte">
+			{d === null ? null : (
+				<PastilleSante libelle={t('health.momentum.short')} score={d.score} palier={d.palier} testId="score-dynamique" />
+			)}
+			{s === null ? null : (
+				<PastilleSante libelle={t('health.commercial.short')} score={s.score} palier={s.palier} testId="score-commercial" />
+			)}
+		</div>
+	)
+}
+
 function formaterMontant(montant: number, devise: string): string {
 	try {
 		return new Intl.NumberFormat('fr-FR', {
@@ -602,6 +627,11 @@ function CarteDeCard({
 						{formaterMontant(card.amount, card.currency)}
 					</code>
 				)}
+
+				{/* LES DEUX SCORES DE SANTÉ — `CRM-066` tranche 4, docs/DESIGN_SYSTEM.md §5.65 : sous le montant, avant les
+				    échéances ; la ligne passe à la suivante plutôt que de déborder. Une affaire décidée n'en porte aucun —
+				    l'absence n'est pas « 0 ». */}
+				<ScoresCarte dynamique={card.health_momentum} commerciale={card.health_commercial} />
 
 				{card.next_action === null ? null : (
 					<p className="flex items-start gap-2 text-sm text-text-2 min-w-0">

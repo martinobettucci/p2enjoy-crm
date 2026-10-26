@@ -1,4 +1,5 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — la fiche lit la capacité d'écrire sur l'affaire et la FOURNIT à ses blocs ;
+// @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : le bloc « Santé de l'affaire » sous l'en-tête — docs/DESIGN_SYSTEM.md §5.65
 //       refusée par la base, le motif se pose en tête de la colonne de gauche (docs/SPEC-droits-interface.md §2.1, §3 ;
 //       docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-037 (docs/BACKLOG.md) — écran hôte du formulaire conditionnel
@@ -90,6 +91,7 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
 import { BlocActivitesCard } from './BlocActivitesCard'
+import { BlocSanteCard } from './BlocSanteCard'
 import { BlocContactsCard } from './BlocContactsCard'
 import { BlocCoutsCard } from './BlocCoutsCard'
 import { BlocRecettesCard } from './BlocRecettesCard'
@@ -285,6 +287,9 @@ function ContenuCard({
 				    est déjà pris par le geste de retrait. Placé en dessous, il aurait de plus été poussé
 				    hors de vue par le défilement de la reprise d'un déplacement refusé (§4 ter). */}
 				<EnTeteCard card={etat.donnees.card} />
+				{/* LES DEUX SCORES DE SANTÉ — `CRM-066` tranche 4, docs/DESIGN_SYSTEM.md §5.65 : sous l'en-tête, qui dit ce
+				    qu'est l'affaire ; les scores disent comment elle va. Aucun bloc pour une affaire décidée. */}
+				<BlocSanteCard idCard={etat.donnees.card.id} />
 				{/* LES TROIS IDENTIFIANTS VIENNENT DE LA CARD DÉJÀ CHARGÉE (§4 bis.4) : l'écriture
 				    d'une valeur les exige tous — clé primaire, charnière des clés composites et
 				    colonne dénormalisée pour la RLS —, et les relire serait une requête pour une

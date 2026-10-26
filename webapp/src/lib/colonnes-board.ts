@@ -1,4 +1,5 @@
 // @spec CRM-041 (docs/BACKLOG.md) — les colonnes demandées par les quatre lectures du board
+// @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux scores de santé lus avec la carte — docs/SPEC-analytique.md §13.5
 // @spec CRM-022 (docs/BACKLOG.md) — responsable embarqué, sans requête par card
 // @spec docs/SPEC-workflow-engine.md §7.2 (ce que le board lit, et en combien de requêtes)
 // @spec docs/SPEC-cards.md §2.6 (ordre dans une colonne) ; docs/SPEC-types.md §4
@@ -54,8 +55,10 @@ export const COLONNES_TRANSITION = 'id, from_step_id, to_step_id, label, require
  * Le rattachement de l'affaire est lu depuis `CRM-111` T2.3.1 : le sommeil le désigne (docs/SPEC-rattachements.md §5,
  * `rattachements.ts`).
  */
+// `health_momentum` et `health_commercial` — `CRM-066` tranche 4, docs/SPEC-analytique.md §13.5 : les deux scores de
+// santé, colonnes calculées par la base, rendus avec la ligne (`null` pour une affaire décidée).
 export const COLONNES_CARD_BOARD =
-	'id, title, description, position, amount, currency, next_action, current_step_id, entered_step_at, email_local_part, owner_id, snoozed_until, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url), card_placements!card_placements_card_fk(id, created_at)'
+	'id, title, description, position, amount, currency, next_action, current_step_id, entered_step_at, email_local_part, owner_id, snoozed_until, health_momentum, health_commercial, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url), card_placements!card_placements_card_fk(id, created_at)'
 
 /**
  * Champs du workflow, réduits à ce qui traduit un refus.

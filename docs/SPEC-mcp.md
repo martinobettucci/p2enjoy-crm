@@ -602,6 +602,10 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 
 ### 9.2 bis Tranche `affaires`, lecture — `CRM-104` T2.a (liste fixée, **validée le 2026-10-23**, décision 654)
 
+*Ajout de `CRM-066` tranche 4 (décision 708, M4 B ; `docs/SPEC-analytique.md` §13.7) : `crm_card_get` et `crm_card_list`
+rendent `health_momentum` et `health_commercial`, l'objet des colonnes calculées tel quel — score, palier, composantes ;
+`null` pour une affaire décidée, archivée ou à la corbeille. Même action `consulter`, aucune case nouvelle.*
+
 Décisions 652 et 653. Sept outils, tous `affaires:consulter`, `readOnlyHint`, sans case `aussi`. Ils lisent **les mêmes
 tables et fonctions que la webapp**, sous le jeton de la personne. La RLS décide de ce qui est rendu.
 

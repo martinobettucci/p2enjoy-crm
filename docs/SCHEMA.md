@@ -604,7 +604,7 @@ tableau d'origine ne portait pas :
 | `next_action` | `text` | prochaine action à mener |
 | `next_action_at` | `timestamptz` | échéance, alimente la vue « Ma journée » |
 | `entered_step_at` | `timestamptz` | date d'entrée dans l'étape courante, base des relances |
-| `health_score` | `integer` | recalculé par l'ordonnanceur |
+| `health_score` | `integer` | **inemployée** : les deux scores de santé se calculent à la lecture (`CRM-066` tranche 4, colonnes calculées `health_momentum` et `health_commercial`, migration `0113`) ; son retrait appartient à `CRM-111` T2.4 |
 | `email_local_part` | `text` | unique global, partie locale de l'adresse de la card |
 | `snoozed_until` | `timestamptz` | mise en sommeil : non nulle ET future ⇒ la card dort. **Fermée en écriture à `authenticated` depuis `CRM-081`** — elle s'écrit par `snooze_card` et `wake_card` |
 | `archived_at`, `deleted_at` | `timestamptz` | |
@@ -2178,6 +2178,25 @@ next_action_at, position, archived_at) on public.cards from authenticated` : ces
 `service_role` et le propriétaire gardent l'écriture de `cards` ; le miroir la reporte. **Retrait** : `grant update
 (owner_id, amount, probability_override, next_action, next_action_at, position, archived_at) on public.cards to
 authenticated;`, avec la webapp et l'image `mcp` d'avant.
+
+### Migration `0113` — les deux scores de santé d'une affaire (`CRM-066` tranche 4, décisions 723 et 724 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-analytique.md` §13. **Aucune table, aucune colonne écrite** : deux colonnes calculées de `cards`, à paramètre
+anonyme (le patron de `is_read`), `STABLE`, `SECURITY INVOKER` :
+
+- **`public.health_momentum(public.cards) returns jsonb`** — `{score, tier, penalties: [{code, points, days?,
+  threshold?}]}` : 100 moins `stale_step` (−30), `next_action_overdue` (−25) ou `next_action_missing` (−15),
+  `no_contact_30` (−30) ou `no_contact_14` (−20) ;
+- **`public.health_commercial(public.cards) returns jsonb`** — `{score, tier, signals: [{code, weight, value, status?}]}` :
+  `probability` 40, `contact_freshness` 25, `next_action_timeliness` 20, `step_age` 15 ; un signal inconnu porte
+  `value: null`, `status: "unknown"`, et son poids est réparti ;
+- appuis `app.health_tier(integer)` (`healthy` ≥ 70, `watch` 40 à 69, `danger` < 40), `app.health_last_contact(uuid)`
+  (activité non retirée ou courrier classé, sous la RLS de l'appelant) et `app.health_context(cards)` (vide pour une affaire
+  décidée, archivée ou à la corbeille : les deux scores rendent alors `null`).
+
+**`CRM-111` T2.4** les transporte vers `card_placements` en retirant les colonnes de rattachement de `cards`.
+**Retrait** : `drop function public.health_momentum(public.cards), public.health_commercial(public.cards),
+app.health_context(public.cards), app.health_last_contact(uuid), app.health_tier(integer)`.
 
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 

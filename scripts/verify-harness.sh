@@ -605,7 +605,10 @@ PORT_RAPPORT=9323
 # **97 depuis `CRM-058` tranche 2 et `CRM-111` T2.1, 2026-10-26** : `0096_envoi_cci_pieces_jointes.test.sql` (CRM-058,
 # décisions 719 et 720) et `0097_card_placements.test.sql` (CRM-111 T2.1, sans report de ce compteur à son commit).
 # 95 + 2 = 97, MESURÉ par `npm run test:sql` — « 97 fichiers ».
-FICHIERS_SQL_ATTENDUS=97
+# **100 depuis `CRM-111` T2.2 et T2.3.0 et `CRM-066` tranche 4, 2026-10-26** : `0098_card_placements_lectures.test.sql`,
+# `0099_card_placements_ecriture.test.sql` (CRM-111) et `0110_scores_sante.test.sql` (CRM-066). 97 + 3 = 100, MESURÉ —
+# « 100 fichiers ».
+FICHIERS_SQL_ATTENDUS=100
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -716,7 +719,11 @@ FICHIERS_SQL_ATTENDUS=97
 # `0097_card_placements` **43** ; `0016`, `0026`, `0029`, `0030`, `0058` et `0095` RÉVISÉES sans changer de plan (les
 # politiques de stockage bornées au bucket, les signatures nouvelles, l'envoi de démonstration du seed). 4007 + 26 + 43 =
 # 4076, MESURÉ — « 97 fichiers, 4076 assertions, aucune anomalie ».
-ASSERTIONS_ATTENDUES=4076
+# **4163 depuis `CRM-111` T2.2 à T2.3.2 et `CRM-066` tranche 4, 2026-10-26** : `0098_card_placements_lectures` **30**,
+# `0099_card_placements_ecriture` **27**, `0110_scores_sante` **30** ; les suites révisées par CRM-111 (`0012`, `0013`,
+# `0015`, `0016`, `0018`, `0019`, `0042`, `0097`) gardent leur plan. 4076 + 30 + 27 + 30 = 4163, MESURÉ base au repos —
+# « 100 fichiers, 4163 assertions, aucune anomalie ».
+ASSERTIONS_ATTENDUES=4163
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1103,7 +1110,11 @@ ASSERTIONS_ATTENDUES=4076
 # NEUF, **5** scénarios (dépôt borné à son dossier et clé accentuée refusée, Cci et pièce relue dans le stockage, retrait
 # avant la file, pièce d'autrui, plafonds) ; `e2e/api/rattachements-miroir.spec.ts` de CRM-111 T2.1, **6**.
 # 1191 + 5 + 6 = 1202, valeur COMPTÉE — « Total: 1202 tests in 89 files ».
-SCENARIOS_API=1202
+# **1213 depuis `CRM-111` T2.2 à T2.3.2 et `CRM-066` tranche 4, 2026-10-26** : `e2e/api/scores-sante.spec.ts`, fichier
+# NEUF, **5** scénarios (Camille lit les deux scores, le témoin puis le refus de Farida, l'affaire gagnée sans score, les
+# trois paliers du seed, l'anonyme) ; les specs de CRM-111 T2.2 à T2.3.2 en apportent **6**, dans deux fichiers neufs.
+# 1202 + 5 + 6 = 1213, valeur COMPTÉE — « Total: 1213 tests in 92 files ».
+SCENARIOS_API=1213
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1601,7 +1612,10 @@ SCENARIOS_API=1202
 # **940 depuis `CRM-058` tranche 2, 2026-10-26** : `envoi-pieces-jointes.spec.ts`, fichier NEUF, **3** scénarios —
 # joindre, retirer, Cci et mise en file ; le plafond au clavier et l'annulation ; les quatre paliers. 937 + 3 = 940,
 # valeur COMPTÉE — « Total: 940 tests in 93 files ».
-SCENARIOS_UI=940
+# **943 depuis `CRM-066` tranche 4, 2026-10-26** : `e2e/ui/scores-sante.spec.ts`, fichier NEUF, **3** scénarios — les
+# pastilles de la carte du board, le bloc de la fiche et son détail, les quatre paliers. 940 + 3 = 943, valeur COMPTÉE —
+# « Total: 943 tests in 94 files ».
+SCENARIOS_UI=943
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

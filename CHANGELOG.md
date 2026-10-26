@@ -13,6 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-066` tranche 4 — les deux scores de santé d'une affaire
+
+- **Deux notes sur 100**, calculées à chaque lecture : la **dynamique** (100 moins des pénalités affichées une à une —
+  étape figée, prochaine action en retard ou absente, contact trop ancien) dit quoi faire ; la **santé commerciale**
+  (moyenne pondérée de la probabilité, de la fraîcheur du contact, de la ponctualité de l'action et de l'ancienneté dans
+  l'étape) dit les chances de gagner. Paliers communs : sain dès 70, à surveiller de 40 à 69, en danger sous 40, écrits en
+  toutes lettres et teintés aux couleurs de la charte.
+- **Sur la carte du board**, deux pastilles ; **sur la fiche**, le bloc « Santé de l'affaire » et leur détail. Une affaire
+  gagnée, perdue, archivée ou à la corbeille n'a pas de score.
+- **Le connecteur MCP** rend les deux scores dans `crm_card_get` et `crm_card_list` (décision 708).
+- **Migration `0113`** : deux colonnes calculées `SECURITY INVOKER`, aucune donnée écrite. **Le seed** démontre les trois
+  paliers des deux scores et le vérifie.
+
 ### `CRM-058` tranche 2 — copie cachée et pièces jointes à l'envoi
 
 - **« Ajouter Cci »** dans le formulaire d'envoi, depuis l'affaire comme depuis l'inbox : la copie cachée est remise par

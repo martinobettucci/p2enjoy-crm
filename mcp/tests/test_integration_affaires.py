@@ -4,6 +4,8 @@
 #           §23)
 # @verifies docs/SPEC-mcp.md §13 (par outil : succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
 #           journal écrit), §9.2 bis (ancre `channel` facultative, filtres réels), §6.2 (refus uniforme)
+# @verifies CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux scores de santé rendus par la vraie base, `None` pour une
+#           affaire gagnée ; docs/SPEC-analytique.md §13.4, §13.7 ; décision 708 (M4 B)
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 Chaque preuve pose dans `mcp_droits`, par la clé de service, la case `affaires:consulter` dont elle a besoin, et la retire
@@ -131,3 +133,25 @@ async def test_refuses_par_le_crm_malgre_la_matrice_ouverte():
                 assert await _dernier_journal(FARIDA[1]) == (outil, "refus_crm"), outil
     finally:
         await _fermer(FARIDA)
+
+
+async def test_les_scores_de_sante_viennent_de_la_vraie_base():
+    """« Migration ERP Sogexia » est ouverte : ses deux scores sont rendus avec leur palier et leurs composantes, et ce sont
+    ceux que la base calcule pour la clé de service ; « Socle analytique — Vertuo » est gagnée : aucun score."""
+    await _ouvrir(DRISS)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_card_get")
+            fiche = (await client.call_tool("crm_card_get", {"card_id": SOGEXIA})).structured_content
+            attendu = (await _service("GET", "/cards", params={
+                "id": f"eq.{SOGEXIA}", "select": "health_momentum,health_commercial",
+            })).json()[0]
+            assert fiche["health_momentum"] == attendu["health_momentum"]
+            assert fiche["health_commercial"] == attendu["health_commercial"]
+            assert fiche["health_momentum"]["tier"] in {"healthy", "watch", "danger"}
+            assert {s["code"] for s in fiche["health_commercial"]["signals"]} == {
+                "probability", "contact_freshness", "next_action_timeliness", "step_age"}
+            gagnee = (await client.call_tool("crm_card_get", {"card_id": "5eed0000-0000-4000-8000-0000000000cd"})).structured_content
+            assert gagnee["health_momentum"] is None and gagnee["health_commercial"] is None
+    finally:
+        await _fermer(DRISS)

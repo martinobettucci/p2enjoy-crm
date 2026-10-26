@@ -2456,3 +2456,17 @@ que si `edited_at` est nulle, et le retrait que si `deleted_at` l'est.
   posent et y retirent leurs propres activités, et les comptent : `0091` relit « la » pierre tombale de `…0c4`.
 - **`e2e/ui/activites.spec.ts`** lit les quatre activités par leurs identifiants stables. La lectrice y constate
   `…0c4` vide, où ses commandes sont éteintes avec le motif de la fiche.
+
+## 24. Les deux scores de santé couvrent leurs trois paliers — `CRM-066` tranche 4 (décisions 723 et 724)
+
+Les deux scores se calculent à la lecture (`docs/SPEC-analytique.md` §13) : le seed ne peut rien y écrire. Il les **lit**,
+sous la clé de service, et **exige** qu'au moins une affaire ouverte se trouve dans chacun des trois paliers — sain, à
+surveiller, en danger — pour la dynamique comme pour la santé commerciale ; sinon il s'arrête en nommant le palier
+manquant.
+
+**Toutes les affaires du seed naissent le jour du seed** : aucune n'est donc « sans contact depuis 30 jours », et le
+palier « en danger » de la dynamique n'aurait aucun exemple. Le seed consigne, par la vraie écriture de l'écran et sous le
+jeton du compte administrateur, une activité **ancienne de 40 jours au moment de sa création** sur « Audit sécurité
+applicative » (`…a0c05`, §23) : avec son étape figée et son action en retard, l'affaire tombe à 15, en danger. Comme les
+autres activités, elle n'est jamais réécrite (convergence par présence) ; elle ne fait que vieillir.
+

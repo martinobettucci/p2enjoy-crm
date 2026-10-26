@@ -1,4 +1,6 @@
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T2.a : les sept outils de lecture de la famille `affaires`, devant un CRM
+# @verifies CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux scores de santé rendus tels quels par crm_card_list et
+#           crm_card_get, et demandés avec la ligne ; docs/SPEC-analytique.md §13.7 ; décision 708 (M4 B)
 #           simulé, et leurs rangements purs
 # @verifies CRM-067 (docs/BACKLOG.md) — tranche T4 : `crm_card_activity_list` (docs/SPEC-activites.md §6, décision 653)
 # @verifies docs/SPEC-mcp.md §9.2 bis (liste fixée, ancres, ancre `channel` facultative), §6.2 (visibilité par la matrice,
@@ -80,6 +82,10 @@ class CrmAffaires(CrmSimule):
                 "created_at": "2026-10-01T00:00:00+00:00", "updated_at": "2026-10-02T00:00:00+00:00",
                 "ecriture_permise": True, "responsable": {"id": "p", "full_name": "Driss Lemoine"}, "channel": canal,
                 "etape": etape,
+                "health_momentum": {"score": 85, "tier": "healthy", "penalties": [{"code": "next_action_missing", "points": 15}]},
+                "health_commercial": {"score": 62, "tier": "watch", "signals": [
+                    {"code": "probability", "weight": 40, "value": 20},
+                    {"code": "step_age", "weight": 15, "value": None, "status": "unknown"}]},
             },
             {"id": CARD_B, "title": "Autre espace", "workspace_id": ESPACE_B, "workflow_id": WORKFLOW},
         ]
@@ -390,3 +396,17 @@ def test_les_bornes_de_la_journee_suivent_le_fuseau() -> None:
     assert section_echeance("2026-10-24T12:00:00+00:00", bornes) == "today"
     assert section_echeance("2026-10-30T12:00:00+00:00", bornes) == "upcoming"
     assert section_echeance("2026-11-02T12:00:00+00:00", bornes) is None
+
+
+async def test_les_deux_scores_de_sante_sont_rendus_par_la_liste_et_la_fiche(monde: Monde) -> None:
+    monde.ouvrir(("affaires", "consulter"))
+    fiche = await monde.appel("crm_card_get", {"card_id": CARD_A})
+    assert fiche["health_momentum"] == {"score": 85, "tier": "healthy",
+                                        "penalties": [{"code": "next_action_missing", "points": 15}]}
+    assert fiche["health_commercial"]["signals"][1] == {"code": "step_age", "weight": 15, "value": None, "status": "unknown"}
+    liste = await monde.appel("crm_card_list", {"workspace": "atelier"})
+    assert liste["cards"][0]["health_commercial"]["score"] == 62
+    # LES DEUX COLONNES CALCULÉES SONT DEMANDÉES À LA BASE, avec la ligne : l'outil ne calcule rien.
+    # (La résolution de l'ancre lit aussi `cards`, sans le titre : elle n'est pas une lecture de l'affaire.)
+    demandes = [p["select"] for p in monde.requetes("cards") if "title" in p.get("select", "")]
+    assert len(demandes) == 2 and all("health_momentum" in s and "health_commercial" in s for s in demandes)

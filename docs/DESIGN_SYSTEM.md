@@ -6334,5 +6334,7 @@ les trois teintes de signification de la charte (§1) et leurs versions douces e
 - **SUR LA FICHE**, un bloc « Santé de l'affaire » sous l'en-tête : chaque score avec son palier écrit, puis son détail en
   liste — pour la dynamique, chaque pénalité avec ses points (« Aucune prochaine action — −15 ») ; pour la santé, chaque
   signal avec sa note et son poids (« Fraîcheur du dernier contact — 40/100, poids 25 % »), « inconnu » écrit pour un
-  signal manquant. Aucune pénalité : la phrase « Aucune pénalité » plutôt qu'une liste vide.
+  signal manquant. Aucune pénalité : la phrase « Aucune pénalité » plutôt qu'une liste vide. **La note et les points ne se coupent
+  pas** (`whitespace-nowrap`) : à 390 px, « poids 20 % » laissait le « % » seul à la ligne — défaut vu en capture ; le
+  libellé du signal, lui, se replie.
 - **Aucune icône d'alerte** : une pastille rouge n'est pas une erreur du produit, c'est un état de l'affaire.

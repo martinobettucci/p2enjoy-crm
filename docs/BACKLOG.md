@@ -10470,8 +10470,7 @@ harnais propre à cette unité.
 
 **Harnais de l'unité rejoué SEUL le 2026-08-29** : `verify-recherche.sh` **54 contrôles, aucune anomalie**, là où la série lui donnait 1 anomalie — troisième fois que ce harnais démontre la leçon de contention.
 
-### CRM-066 — Analytique de conversion et prévisionnel pondéré `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 05:16 UTC — état avant : [~]*
+### CRM-066 — Analytique de conversion et prévisionnel pondéré `[~]`
 ***Arbitré le 2026-10-25 (décision 708)** : la tranche 4 livre les **deux** scores — la dynamique (100 moins des pénalités affichées) et la santé commerciale (moyenne pondérée de quatre signaux) —, **affichés en couleurs** sur la carte du board et sur la fiche (sain ≥ 70, à surveiller 40 à 69, en danger < 40 ; palier écrit en toutes lettres), calculés à la lecture par une fonction en base ; connecteur MCP **oui**, famille `affaires`, dans `crm_card_get` et `crm_card_list`. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707, option B)** : la session propose deux compositions du score de santé, le responsable choisit ; la spécification suit, avec les deux questions du connecteur MCP.*
 
@@ -10699,7 +10698,7 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       à la croissance du fil et aux dates relatives pendant la campagne — une capture « après »
       inspectée était simplement **défilée plus bas**. Les huit captures de la portée, elles, ont été
       produites et **observées** dans le même changement que le code.
-- [ ] **4 — le score de santé (`CRM-P02`).** Il commence par son **arbitrage** : ce qu'un score
+- [P] **4 — le score de santé (`CRM-P02`).** Il commence par son **arbitrage** : ce qu'un score
       « transparent » agrège n'est écrit dans aucun document, et deux compositions raisonnables
       donnent deux produits différents (`docs/SPEC-analytique.md` §11.4).
       — *Arbitré (décision 708) ; spécification proposée le 2026-10-26 (décision 723), **validée telle quelle** le même jour (décision 724) :
@@ -10708,6 +10707,26 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       `health_momentum`, `health_commercial`, codes `stale_step`, `next_action_overdue`, `next_action_missing`,
       `no_contact_14`, `no_contact_30`, signaux `probability`, `contact_freshness`, `next_action_timeliness`, `step_age`,
       paliers `healthy`, `watch`, `danger` (décision 658). Numéro de migration pris après synchronisation avec `CRM-111` T2.3.*
+      - [x] **Migration `0113_scores_sante.sql`** (numéro pris après synchronisation : `CRM-111` T2.3 occupe 0108 à 0112) :
+            deux colonnes calculées `SECURITY INVOKER` et trois appuis ; appliquée par le runner (registre à 113). Un
+            défaut trouvé par la suite pgTAP : une fonction SQL à paramètres `OUT` rend une ligne de NULL quand rien ne
+            correspond, et notait les affaires décidées — `app.health_context` rend désormais un ensemble.
+      - [x] **pgTAP** `0110_scores_sante.test.sql`, **30** assertions (chaque pénalité, chaque signal, les paliers, le
+            signal inconnu, les exclusions).
+      - [x] **API** `e2e/api/scores-sante.spec.ts` **5/5** (deux appelants, affaire gagnée, trois paliers du seed, anonyme).
+      - [x] **Écran** : pastilles sur la carte du board, bloc « Santé de l'affaire » sur la fiche ; `sante.test.ts` **7/7**,
+            `BlocSanteCard.test.tsx` **4/4** ; E2E `e2e/ui/scores-sante.spec.ts` **3/3** ; captures observées — un défaut
+            vu à l'œil (« % » seul à la ligne à 390 px), corrigé.
+      - [x] **Connecteur** : les deux objets dans `crm_card_get` et `crm_card_list` ; `test_affaires.py`, intégration 4/4.
+      - [x] **Seed** (`docs/SPEC-seed.md` §24) : trois paliers vérifiés pour les deux scores.
+      - [x] **Manuel** §4.1 et chapitre 11, `docs/SCHEMA.md`, `docs/SPEC-mcp.md`, `docs/PROD_MIGRATIONS.md`, `CHANGELOG.md` ;
+            transport vers `card_placements` inscrit à `CRM-111` T2.4.
+      - [ ] **Livraison** en production, sur instruction du responsable (la 113 part avec ou après les 106 à 112).
+            *Vérifiée intégralement en développement le 2026-10-26, base au repos et après synchronisation avec `CRM-111`
+            T2.3.2 : pgTAP 100 fichiers et 4163 assertions sans anomalie, unitaires 4422/4422, typecheck et build verts, API
+            `scores-sante` 5/5, interface `scores-sante` 3/3, pytest du connecteur 206 réussis (49 sautés, intégration
+            jouée par `verify-mcp.sh` 88/88) ; compteurs de `scripts/verify-harness.sh` portés à 100, 4163, 1213 et 943.
+            Geste : `docs/PROD_MIGRATIONS.md` §3.2, ligne 113.*
 
 *Limites nommées dès l'ouverture, non masquées* — `docs/SPEC-analytique.md` §11 :
 
@@ -16561,7 +16580,10 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           passe à `card_placements`) ; `change_channel_workflow`, `plan_card_remapping`, `restore_workflow_version`,
           `app.appliquer_composition` remappent les rattachements ; la clé channel/workflow redevient immédiate.
       - [ ] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
-        politique de `cards` sous la forme optimisée ; types régénérés. Preuve : aucun changement visible, toute la suite
+        politique de `cards` sous la forme optimisée ; types régénérés. *Transporte aussi vers `card_placements` les deux
+        colonnes calculées de santé de `CRM-066` tranche 4 (`health_momentum`, `health_commercial`, et leur appui
+        `app.health_context`), qui lisent les colonnes de rattachement de `cards` — un score par rattachement
+        (`docs/SPEC-analytique.md` §13.5 ; accord des deux sessions, 2026-10-26).* Preuve : aucun changement visible, toute la suite
         verte ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière possible tant que chaque affaire
         n'a qu'un rattachement).
       *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un

@@ -1024,6 +1024,8 @@ export type Database = {
           updated_at: string
           workflow_id: string
           workspace_id: string
+          health_commercial: Json | null
+          health_momentum: Json | null
         }
         Insert: {
           amount?: number | null
@@ -3919,6 +3921,18 @@ export type Database = {
       fermer_session_serveur: {
         Args: { p_empreinte: string }
         Returns: undefined
+      }
+      health_commercial: {
+        Args: { "": Database["public"]["Tables"]["cards"]["Row"] }
+        Returns: {
+          error: true
+        } & "the function public.health_commercial with parameter or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache"
+      }
+      health_momentum: {
+        Args: { "": Database["public"]["Tables"]["cards"]["Row"] }
+        Returns: {
+          error: true
+        } & "the function public.health_momentum with parameter or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache"
       }
       inbox_arborescence: {
         Args: never

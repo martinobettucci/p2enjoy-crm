@@ -63,6 +63,9 @@ function card(partiel: Partial<CardBoard> & Pick<CardBoard, 'id' | 'current_step
 		title: partiel.id,
 		// `description` a rejoint les lectures avec `CRM-105` (infobulle, docs/DESIGN_SYSTEM.md §5.58).
 		description: null,
+		// Les deux scores de santé ont rejoint les lectures avec `CRM-066` tranche 4 (docs/SPEC-analytique.md §13.5).
+		health_momentum: null,
+		health_commercial: null,
 		position: 1,
 		amount: null,
 		currency: 'EUR',
