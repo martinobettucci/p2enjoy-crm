@@ -125,8 +125,10 @@ test.describe('CRM-111 T2.1 — les rattachements, lus et refusés par l’API',
 		})
 	}
 
-	test('une écriture de l’affaire par l’API est reportée dans son rattachement', async ({ request }) => {
-		const h = enTetesAuthentifies(await jetonDe(ADMIN))
+	// RÉVISÉ PAR `CRM-111` T2.3.2 : un client n'écrit plus ces colonnes sur `cards` ; la clé de service, si — le seed en
+	// dépend —, et c'est elle qui éprouve désormais le miroir de l'affaire vers son rattachement.
+	test('une écriture de l’affaire par la clé de service est reportée dans son rattachement', async ({ request }) => {
+		const h = enTetesService()
 		const initiale = await request.get(rest(`cards?id=eq.${CARD_C4}&select=next_action`), { headers: enTetesService() })
 		const [carte] = (await initiale.json()) as { next_action: string | null }[]
 		if (carte === undefined) throw new Error('CARD_C4 du seed : aucune ligne — le seed est-il appliqué ?')

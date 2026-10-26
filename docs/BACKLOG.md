@@ -16546,8 +16546,12 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           `rattachements.ts`), connecteur, `snooze.spec.ts`, `verify-snooze.sh`, `0042`, `0097`, `0099` ; pgTAP 99 fichiers
           sans anomalie, unitaires 4404/4404, API 1206/1207, interface du sommeil verte ; `verify-mcp.sh` 88/88 ;
           `verify-snooze.sh` 70/71 (le rouge : résidu d'INC-292, `503` de la fonction `session`, specs vertes rejouées).
-        - [ ] **T2.3.2 — les colonnes ouvertes et l'archivage** : la webapp et le connecteur écrivent `card_placements`
+        - [x] **T2.3.2 — les colonnes ouvertes et l'archivage** : la webapp et le connecteur écrivent `card_placements`
           (responsable, montant, probabilité, prochaine action, position, archivage) ; ces colonnes se ferment sur `cards`.
+          *Livrée en développement le 2026-10-26* — migration `0112` ; en-tête de la fiche, `crm_card_update`, seed ; six
+          suites pgTAP, sept specs d'API et deux harnais révisés ; pgTAP 100 fichiers sans anomalie, unitaires 4409/4409,
+          API 1207/1208 ; `verify-mcp.sh` 88/88, `verify-cards.sh` et `verify-colonnes-protegees.sh` rouges d'environnement
+          seulement (e2e complets : `ingestion.spec.ts:91`, INC-292, campagne concurrente) ; seed convergent au repos.
         - [ ] **T2.3.3 — faire avancer** : `move_card(p_placement, to_step_id, comment)`.
         - [ ] **T2.3.4 — changer de channel** : `move_card_to_channel(p_placement, …)`.
         - [ ] **T2.3.5 — les cadences** : `armer_sequence_relance(p_placement, …)`.

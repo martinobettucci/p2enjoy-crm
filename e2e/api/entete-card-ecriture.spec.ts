@@ -7,6 +7,8 @@
 // @verifies docs/SPEC-identite.md §3.3 (les appartenances sont lisibles par tout membre)
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : le responsable, le montant, la prochaine action et son échéance
+//           s'écrivent sur le rattachement de l'affaire (docs/SPEC-rattachements.md §3.2, §4)
 //
 // Ces scénarios rejouent une à une les quinze lignes du tableau de `docs/SPEC-cards.md` §15 bis.8,
 // écrit **avant** le code, avec les jetons réels des trois profils seedés.
@@ -54,14 +56,26 @@ test.beforeAll(async () => {
 	jetonViewer = await jetonDe('viewer@p2enjoy.test')
 })
 
-/** Un `PATCH` tel que le produit l'émet : une colonne, et la représentation demandée. */
+/**
+ * Les colonnes de l'en-tête qui appartiennent au RATTACHEMENT de l'affaire depuis `CRM-111` T2.3.2
+ * (docs/SPEC-rattachements.md §3.2) : le produit les écrit sur `card_placements`, et elles sont fermées sur `cards`.
+ */
+const COLONNES_DU_RATTACHEMENT = new Set(['owner_id', 'amount', 'next_action', 'next_action_at'])
+
+/**
+ * Un `PATCH` tel que le produit l'émet : une colonne, et la représentation demandée — sur la table de la colonne.
+ * Une colonne de rattachement vise le rattachement de l'affaire (`card_id`, l'unique pendant la bascule) ; toute autre,
+ * l'affaire. Les refus du §15 bis.8 se mesurent donc là où le produit écrit.
+ */
 async function ecrire(
 	requete: APIRequestContext,
 	jeton: string,
 	idCard: string,
 	charge: Record<string, unknown>,
 ) {
-	return requete.patch(`/rest/v1/cards?id=eq.${idCard}`, {
+	const rattache = Object.keys(charge).every((colonne) => COLONNES_DU_RATTACHEMENT.has(colonne))
+	const chemin = rattache ? `/rest/v1/card_placements?card_id=eq.${idCard}` : `/rest/v1/cards?id=eq.${idCard}`
+	return requete.patch(chemin, {
 		headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
 		data: charge,
 	})

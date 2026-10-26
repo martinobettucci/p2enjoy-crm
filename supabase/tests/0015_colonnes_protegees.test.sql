@@ -8,6 +8,8 @@
 -- @verifies docs/SCHEMA.md §5 (cards)
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-049 (chevauchement tranché du côté de `CRM-034`),
 --           INC-050 (**close par exécution**)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : sept colonnes de rattachement s'écrivent sur `card_placements`, plus
+--           sur `cards` (docs/SPEC-rattachements.md §3.2, §4, §5)
 --
 -- Suite pgTAP de l'unité `CRM-013`. Elle prouve cinq choses :
 --
@@ -95,20 +97,28 @@ select ok(has_column_privilege('authenticated', 'public.cards', 'title', 'update
 	'`title` reste ouverte');
 select ok(has_column_privilege('authenticated', 'public.cards', 'description', 'update'),
 	'`description` reste ouverte');
-select ok(has_column_privilege('authenticated', 'public.cards', 'position', 'update'),
-	'`position` reste ouverte');
-select ok(has_column_privilege('authenticated', 'public.cards', 'owner_id', 'update'),
-	'`owner_id` reste ouverte');
-select ok(has_column_privilege('authenticated', 'public.cards', 'amount', 'update'),
-	'`amount` reste ouverte');
+-- RÉVISÉES PAR `CRM-111` T2.3.2 (migration 112, décision 51) : les sept colonnes de rattachement ouvertes au client
+-- s'écrivent sur `card_placements` — le privilège y est ouvert, et fermé sur `cards`.
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'position', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'position', 'update'),
+	'`position` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'owner_id', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'owner_id', 'update'),
+	'`owner_id` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'amount', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'amount', 'update'),
+	'`amount` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
 select ok(has_column_privilege('authenticated', 'public.cards', 'currency', 'update'),
 	'`currency` reste ouverte');
-select ok(has_column_privilege('authenticated', 'public.cards', 'probability_override', 'update'),
-	'`probability_override` reste ouverte');
-select ok(has_column_privilege('authenticated', 'public.cards', 'next_action', 'update'),
-	'`next_action` reste ouverte');
-select ok(has_column_privilege('authenticated', 'public.cards', 'next_action_at', 'update'),
-	'`next_action_at` reste ouverte');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'probability_override', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'probability_override', 'update'),
+	'`probability_override` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'next_action', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'next_action', 'update'),
+	'`next_action` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'next_action_at', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'next_action_at', 'update'),
+	'`next_action_at` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
 -- ASSERTION RETOURNÉE (décision 51, mécanisme du `docs/CloudWorker.md` §3.1) : cette suite
 -- constatait « `snoozed_until` reste ouverte ». `CRM-081` la FERME — la valeur cesse d'être une
 -- saisie libre pour devenir le constat d'un geste gardé, `public.snooze_card` et
@@ -116,8 +126,9 @@ select ok(has_column_privilege('authenticated', 'public.cards', 'next_action_at'
 -- asserte désormais la règle nouvelle, motif écrit ici.
 select ok(not has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update'),
 	'`snoozed_until` est FERMÉE depuis `CRM-081` : elle s''écrit par `snooze_card` et `wake_card`');
-select ok(has_column_privilege('authenticated', 'public.cards', 'archived_at', 'update'),
-	'`archived_at` reste ouverte : l''archivage est une suppression douce, pas une transition');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'archived_at', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'archived_at', 'update'),
+	'`archived_at` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte : l''archivage est une suppression douce, pas une transition');
 select ok(has_column_privilege('authenticated', 'public.cards', 'deleted_at', 'update'),
 	'`deleted_at` reste ouverte : la corbeille non plus n''est pas une transition');
 
@@ -126,9 +137,10 @@ select is(
 	(select count(*)::int from information_schema.column_privileges
 	  where table_schema = 'public' and table_name = 'cards'
 	    and grantee = 'authenticated' and privilege_type = 'UPDATE'),
-	11,
-	'ONZE colonnes ouvertes depuis `CRM-081`, ni dix ni douze : le compte exact rend visible aussi '
-	'bien une fermeture de trop qu''une réouverture à la main. Il valait DOUZE jusqu''à la '
+	4,
+	'QUATRE colonnes ouvertes sur l''affaire depuis `CRM-111` T2.3.2 — `title`, `description`, `currency`, `deleted_at` : '
+	'le compte exact rend visible aussi bien une fermeture de trop qu''une réouverture à la main. Il valait ONZE de '
+	'`CRM-081` à T2.3.2, les sept colonnes de rattachement passant alors à `card_placements`, et DOUZE jusqu''à la '
 	'fermeture de `snoozed_until` (docs/SPEC-cards.md §16.7)');
 
 -- Les colonnes fermées par conséquence du mécanisme, reconduites de `CRM-034`.

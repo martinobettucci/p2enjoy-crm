@@ -521,6 +521,12 @@ au rattachement et retirent leur signature par affaire.
 `card_placements!card_placements_card_fk(id, created_at)`, module `rattachements.ts`) ; le connecteur garde `card_id`
 et résout le rattachement (§11).
 
+**T2.3.2, livrée en développement le 2026-10-26** (migration `0112`) : les sept colonnes ouvertes se ferment sur `cards`
+pour `authenticated`. L'en-tête de la fiche écrit chaque champ sur sa table — le titre et la devise sur l'affaire, les
+quatre autres sur le rattachement ; `crm_card_update` fait deux écritures, chacune jugée par sa règle, et l'assume :
+si la seconde est refusée, la première reste écrite, et le refus le dit. Le seed écrit le responsable et la surcharge
+de probabilité sur le rattachement.
+
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne
 change **rien de visible**, car chaque affaire garde son unique rattachement : c'est sa preuve, puisque toute la suite

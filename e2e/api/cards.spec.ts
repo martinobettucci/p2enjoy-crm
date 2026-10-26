@@ -7,6 +7,8 @@
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
 // @verifies docs/INCONSISTENCY_REPORT.md INC-021 (aucun écran), INC-046 (workflow d'un channel)
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement de
+//           l'affaire (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé — et
@@ -460,7 +462,8 @@ test.describe('C7 — cycle de vie : lignes t à v du §8.1', () => {
 			await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))
 		).json()) as Card[]
 
-		const archive = await request.patch(`${CARDS}?id=eq.${card!.id}`, {
+		// `CRM-111` T2.3.2 : archiver est un geste sur le RATTACHEMENT ; la corbeille reste à l'affaire.
+		const archive = await request.patch(`/rest/v1/card_placements?card_id=eq.${card!.id}`, {
 			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
 			data: { archived_at: '2026-05-01T10:00:00Z' },
 		})

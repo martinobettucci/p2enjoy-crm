@@ -9,6 +9,8 @@
 // @verifies docs/SPEC-permissions-rls.md §7 (le refus est ZÉRO LIGNE, jamais une erreur ;
 //           preuves n° 4 et n° 11)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement de
+//           l'affaire (docs/SPEC-rattachements.md §3.2, §5)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. `supabase/tests/0068_entonnoir_conversion.test.sql`
 // prouve la règle **en base**, sous des rôles endossés. Rien n'y garantit que la pile la rende par
@@ -404,7 +406,8 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 				headers: enTetesAuthentifies(jetonAdmin),
 				data: { probability_override: 25 },
 			})
-			const ecriture = await request.patch(`${CARDS}?id=eq.${CADRAGE_DATA}`, {
+			// `CRM-111` T2.3.2 : la surcharge de l'affaire s'écrit sur son RATTACHEMENT.
+			const ecriture = await request.patch(`/rest/v1/card_placements?card_id=eq.${CADRAGE_DATA}`, {
 				headers: enTetesAuthentifies(jetonAdmin),
 				data: { probability_override: 75 },
 			})
@@ -412,7 +415,7 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 			// 38 000,00 × 75 % — l'affaire l'emporte sur l'étape, qui l'emportait sur le catalogue.
 			expect((await lireLigne())?.montant_pondere).toBeCloseTo(28500, 2)
 		} finally {
-			await request.patch(`${CARDS}?id=eq.${CADRAGE_DATA}`, {
+			await request.patch(`/rest/v1/card_placements?card_id=eq.${CADRAGE_DATA}`, {
 				headers: enTetesAuthentifies(jetonAdmin),
 				data: { probability_override: null },
 			})

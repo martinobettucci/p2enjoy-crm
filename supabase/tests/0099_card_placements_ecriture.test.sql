@@ -91,8 +91,8 @@ select ok(not has_table_privilege('authenticated', 'public.card_placements', 'IN
 -- 2. Les deux chemins : un événement, un seul, et les deux côtés égaux
 -- =============================================================================================
 
--- 2.1 Le chemin des gestes actuels : `cards`. Le rattachement suit (T2.1), et c'est LUI qui écrit l'événement.
-select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+-- 2.1 Le chemin de `cards`, que gardent le propriétaire et la clé de service (le seed) depuis T2.3.2. Le rattachement
+--     suit (T2.1), et c'est LUI qui écrit l'événement. L'acteur est alors le service, et l'écriture se fait en propriétaire.
 update public.cards set owner_id = '5eed0000-0000-4000-8000-000000000011'
  where id = '5eed0000-0000-4000-8000-0000000000c4';
 select pg_temp.proprietaire();

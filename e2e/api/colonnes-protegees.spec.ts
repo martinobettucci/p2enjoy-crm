@@ -10,6 +10,8 @@
 // @verifies docs/INCONSISTENCY_REPORT.md INC-026 (le refus divulgue le `GRANT`), INC-049,
 //           INC-050 (**close par exécution**)
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement de
+//           l'affaire (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé — et
@@ -206,7 +208,8 @@ test.describe('CRM-013 — `cards.email_local_part` n’est plus modifiable', ()
 		try {
 			// Le bizdev écrit sur `grands-comptes` : le refus ne vient donc PAS d'un défaut de
 			// droit sur la card, mais bien du privilège de colonne. La contre-épreuve suit.
-			const permis = await contexte.patch(`${CARDS}?id=eq.${CARD_C1}`, {
+			// `CRM-111` T2.3.2 : la prochaine action s'écrit sur le RATTACHEMENT ; la contre-épreuve y passe.
+			const permis = await contexte.patch(`/rest/v1/card_placements?card_id=eq.${CARD_C1}`, {
 				data: { next_action: 'sonde colonnes-protegees' },
 			})
 			expect(permis.status(), 'le bizdev écrit bien sur cette card').toBe(204)

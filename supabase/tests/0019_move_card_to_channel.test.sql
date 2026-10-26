@@ -9,6 +9,8 @@
 -- @verifies docs/SPEC-seed.md §2.16 (aller-retour de channel)
 -- @verifies docs/JOURNAL.md décisions 213 à 218
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-073 (`step_mapping`), INC-046 (non levée)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : sept colonnes de rattachement s'écrivent sur `card_placements`, plus
+--           sur `cards` (docs/SPEC-rattachements.md §3.2, §4, §5)
 --
 -- Suite pgTAP de l'unité `CRM-045`. Elle prouve huit choses :
 --
@@ -740,9 +742,10 @@ select is(
 	(select count(*) from information_schema.column_privileges
 	  where table_schema = 'public' and table_name = 'cards'
 	    and grantee = 'authenticated' and privilege_type = 'UPDATE'),
-	11::bigint,
-	'ONZE colonnes ouvertes, et pas une de plus : l''énumération est celle de `CRM-013`, MOINS '
-	'`snoozed_until` que `CRM-081` a fermée (docs/SPEC-cards.md §16.7). Cette assertion '
+	4::bigint,
+	'QUATRE colonnes ouvertes, et pas une de plus : l''énumération est celle de `CRM-013`, MOINS '
+	'`snoozed_until` que `CRM-081` a fermée (docs/SPEC-cards.md §16.7), MOINS les sept colonnes de rattachement que '
+	'`CRM-111` T2.3.2 a passées à `card_placements` (révisée, décision 51). Cette assertion '
 	'échouerait si une migration future y faisait rentrer `channel_id` — le seul rempart d''un '
 	'privilège que plus aucune migration ne pose (décision 214)');
 

@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement
+#           (docs/SPEC-rattachements.md §3.2, §5)
 # @verifies CRM-013 (docs/BACKLOG.md) — Definition of Done des colonnes protégées
 # @verifies docs/SPEC-permissions-rls.md §4.3 (le mécanisme), §4.4 (ce que `CRM-013` ferme),
 #           §4.4.2 (le chemin d'insertion), §4.4.3 (la forme retenue), §4.4.4 (contrat d'API),
@@ -274,9 +276,12 @@ titre "2. L'état des privilèges de colonne"
 nb=$(psql_db -c "select count(*) from information_schema.column_privileges
                   where table_schema='public' and table_name='cards'
                     and grantee='authenticated' and privilege_type='UPDATE';")
-[ "$nb" = "11" ] \
-	&& ok "DOUZE colonnes ouvertes, ni onze ni treize — le compte exact, pas un ordre de grandeur" \
-	|| fail "colonnes ouvertes : $nb au lieu de 12"
+# RÉVISÉ PAR `CRM-111` T2.3.2 (migration 112) : les sept colonnes de rattachement se ferment sur `cards` et s'écrivent sur
+# `card_placements` ; il reste `title`, `description`, `currency` et `deleted_at`. Le message disait encore « douze »
+# quand le compte valait onze depuis `CRM-081` : il dit désormais ce qu'il compte.
+[ "$nb" = "4" ] \
+	&& ok "QUATRE colonnes ouvertes sur l'affaire, ni trois ni cinq — le compte exact, pas un ordre de grandeur" \
+	|| fail "colonnes ouvertes : $nb au lieu de 4"
 
 titre "3. Le contrat d'API du §4.4.4, avec les jetons réels"
 
@@ -332,7 +337,8 @@ code=$(patch_adresse "$T_ADMIN" "$ADRESSE_C1")
 	&& ok "ligne d — réécrire la valeur COURANTE est refusé : le privilège porte sur les colonnes" \
 	|| fail "ligne d — une réécriture à l'identique passe ($code) : ce serait une garde de valeur"
 
-code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_C1" \
+# `CRM-111` T2.3.2 : la prochaine action s'écrit sur le RATTACHEMENT ; la contre-épreuve y passe.
+code=$(http PATCH "$API/rest/v1/card_placements?card_id=eq.$CARD_C1" \
 	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_BIZDEV" \
 	-H 'Content-Type: application/json' -d '{"next_action":"sonde verify-colonnes"}')
 [ "$code" = "204" ] \

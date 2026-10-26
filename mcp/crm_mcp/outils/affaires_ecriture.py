@@ -312,19 +312,24 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
     ) -> dict[str, Any]:
         appel = appel_courant()
         fiche = await carte(appel.jeton, card_id)
+        # DEUX ÉCRITURES, UNE PAR TABLE (`CRM-111` T2.3.2, docs/SPEC-rattachements.md §3.2, §11) : le titre et la
+        # description appartiennent à l'affaire ; le montant, la probabilité, la prochaine action et le responsable, à son
+        # rattachement. Le compromis est assumé : si la seconde est refusée, la première reste écrite — chacune est jugée
+        # par sa propre règle (écrire un channel de l'affaire, écrire celui du rattachement), et le refus le dit.
         entete: dict[str, Any] = {}
+        rattache: dict[str, Any] = {}
         if title is not None:
             entete["title"] = title
         if description is not None:
             entete["description"] = description.strip() or None
         if amount is not None:
-            entete["amount"] = amount
+            rattache["amount"] = amount
         if probability is not None:
-            entete["probability_override"] = probability
+            rattache["probability_override"] = probability
         if next_action is not None:
-            entete["next_action"] = next_action.strip() or None
+            rattache["next_action"] = next_action.strip() or None
         if next_action_at is not None:
-            entete["next_action_at"] = instant(next_action_at, "next_action_at") if next_action_at.strip() else None
+            rattache["next_action_at"] = instant(next_action_at, "next_action_at") if next_action_at.strip() else None
         if owner is not None:
             membres = await lire(
                 appel.jeton,
@@ -333,14 +338,23 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                 "card",
                 card_id,
             )
-            entete["owner_id"] = choisir_par_nom(
+            rattache["owner_id"] = choisir_par_nom(
                 [{"id": m["user_id"], "nom": (m.get("profiles") or {}).get("full_name")} for m in membres], owner, "member"
             )
-        if not entete and not answers:
+        if not entete and not rattache and not answers:
             raise ToolError("Give at least one field to change.")
         if entete:
             reponse = await crm.ecrire(
                 appel.jeton, "PATCH", "cards", parametres={"id": f"eq.{card_id}", "select": "id"}, corps=entete
+            )
+            une_ligne(reponse, "card", card_id)
+        if rattache:
+            reponse = await crm.ecrire(
+                appel.jeton,
+                "PATCH",
+                "card_placements",
+                parametres={"id": f"eq.{await rattachement(appel.jeton, card_id)}", "select": "id"},
+                corps=rattache,
             )
             une_ligne(reponse, "card", card_id)
         if answers:

@@ -2324,7 +2324,8 @@ fi
 # --- Aller-retour de responsable : deux `assigned`, par un VRAI PATCH --------------------------
 if [ "$(evenements_de "$CARD_ATTRIBUTION" assigned)" = '0' ]; then
 	for proprietaire in "$OWNER_TRANSITOIRE" "$OWNER_DECLARE"; do
-		code=$(api_admin PATCH "/rest/v1/cards?id=eq.$CARD_ATTRIBUTION" \
+		# `CRM-111` T2.3.2 : le responsable appartient au RATTACHEMENT de l'affaire (docs/SPEC-rattachements.md §3.2).
+		code=$(api_admin PATCH "/rest/v1/card_placements?card_id=eq.$CARD_ATTRIBUTION" \
 			-H 'Prefer: return=representation' \
 			-d "$(jq -nc --arg o "$proprietaire" '{owner_id: $o}')")
 		attendu "$code" "attribution de ${CARD_ATTRIBUTION: -2} à ${proprietaire: -2}" 200
@@ -3407,7 +3408,8 @@ for ligne in "${SURCHARGES_PROBABILITE[@]}"; do
 	IFS='|' read -r id proba libelle <<< "$ligne"
 	declarees="${declarees:+$declarees,}$id"
 
-	code=$(api_admin PATCH "/rest/v1/cards?id=eq.$id" \
+	# `CRM-111` T2.3.2 : la surcharge de probabilité appartient au RATTACHEMENT de l'affaire.
+	code=$(api_admin PATCH "/rest/v1/card_placements?card_id=eq.$id" \
 		-H 'Prefer: return=representation' \
 		-d "$(jq -nc --argjson p "$proba" '{probability_override: $p}')")
 	attendu "$code" "surcharge de probabilité de $libelle" 200
@@ -3420,7 +3422,7 @@ for ligne in "${SURCHARGES_PROBABILITE[@]}"; do
 done
 
 # LA REMISE À L'ÉTAT DÉCLARÉ, et le compte de ce qu'elle a effacé est DIT plutôt que supposé.
-code=$(api_admin PATCH "/rest/v1/cards?probability_override=not.is.null&id=not.in.($declarees)" \
+code=$(api_admin PATCH "/rest/v1/card_placements?probability_override=not.is.null&card_id=not.in.($declarees)" \
 	-H 'Prefer: return=representation' \
 	-d '{"probability_override": null}')
 attendu "$code" 'remise à null des surcharges de probabilité non déclarées' 200

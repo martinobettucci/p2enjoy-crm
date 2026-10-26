@@ -7,6 +7,8 @@
 -- @verifies docs/SCHEMA.md §5 (cards), §9 (fonctions)
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-047 (**close par `CRM-036`**), INC-048, INC-049,
 --           INC-050, INC-051, INC-052
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : sept colonnes de rattachement s'écrivent sur `card_placements`, plus
+--           sur `cards` (docs/SPEC-rattachements.md §3.2, §4, §5)
 --
 -- Suite pgTAP de l'unité `CRM-034`. Elle prouve sept choses :
 --
@@ -166,28 +168,37 @@ select ok(has_column_privilege('authenticated', 'public.cards', 'title', 'update
 	'`title` reste modifiable');
 select ok(has_column_privilege('authenticated', 'public.cards', 'description', 'update'),
 	'`description` reste modifiable');
-select ok(has_column_privilege('authenticated', 'public.cards', 'position', 'update'),
-	'`position` reste modifiable : réordonner une colonne du board n''est pas un déplacement');
-select ok(has_column_privilege('authenticated', 'public.cards', 'owner_id', 'update'),
-	'`owner_id` reste modifiable');
-select ok(has_column_privilege('authenticated', 'public.cards', 'amount', 'update'),
-	'`amount` reste modifiable');
+-- RÉVISÉES PAR `CRM-111` T2.3.2 (migration 112, décision 51) : les sept colonnes de rattachement ouvertes au client
+-- s'écrivent sur `card_placements` — le privilège y est ouvert, et fermé sur `cards`.
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'position', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'position', 'update'),
+	'`position` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable : réordonner une colonne du board n''est pas un déplacement');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'owner_id', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'owner_id', 'update'),
+	'`owner_id` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'amount', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'amount', 'update'),
+	'`amount` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable');
 select ok(has_column_privilege('authenticated', 'public.cards', 'currency', 'update'),
 	'`currency` reste modifiable');
-select ok(has_column_privilege('authenticated', 'public.cards', 'probability_override', 'update'),
-	'`probability_override` reste modifiable');
-select ok(has_column_privilege('authenticated', 'public.cards', 'next_action', 'update'),
-	'`next_action` reste modifiable');
-select ok(has_column_privilege('authenticated', 'public.cards', 'next_action_at', 'update'),
-	'`next_action_at` reste modifiable');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'probability_override', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'probability_override', 'update'),
+	'`probability_override` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'next_action', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'next_action', 'update'),
+	'`next_action` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'next_action_at', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'next_action_at', 'update'),
+	'`next_action_at` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable');
 -- ASSERTION RETOURNÉE À `CRM-081` (décision 51) : elle constatait « `snoozed_until` reste
 -- modifiable ». La migration 44 la FERME — la valeur devient le constat d'un geste gardé,
 -- `public.snooze_card` et `public.wake_card` (docs/SPEC-cards.md §16.7). La preuve est révisée,
 -- jamais retirée, et le motif est écrit ici.
 select ok(not has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update'),
 	'`snoozed_until` est FERMÉE depuis `CRM-081` : `move_card` n''est pas la seule garde de colonne');
-select ok(has_column_privilege('authenticated', 'public.cards', 'archived_at', 'update'),
-	'`archived_at` reste modifiable : archiver reste un geste du client');
+select ok(has_column_privilege('authenticated', 'public.card_placements', 'archived_at', 'update')
+	      and not has_column_privilege('authenticated', 'public.cards', 'archived_at', 'update'),
+	'`archived_at` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable : archiver reste un geste du client');
 select ok(has_column_privilege('authenticated', 'public.cards', 'deleted_at', 'update'),
 	'`deleted_at` reste modifiable : la corbeille reste un geste du client');
 
@@ -612,10 +623,11 @@ select lives_ok($$
 	'Les colonnes OUVERTES le restent : le même rôle modifie `description` sans entrave. Sans '
 	'cette assertion, un `revoke` trop large serait vert au-dessus et aurait cassé toute écriture');
 
+-- RÉVISÉE PAR `CRM-111` T2.3.2 (décision 51) : archiver est un geste du client sur le RATTACHEMENT.
 select lives_ok($$
-	update public.cards set archived_at = now()
-	 where id = '5eed0000-0000-4000-8000-0000000000c3' $$,
-	'`archived_at` de même : archiver une card reste un geste du client, la garde ne ferme que le '
+	update public.card_placements set archived_at = now()
+	 where card_id = '5eed0000-0000-4000-8000-0000000000c3' $$,
+	'`archived_at` de même, sur le rattachement depuis T2.3.2 : archiver reste un geste du client, la garde ne ferme que le '
 	'chemin du déplacement');
 
 rollback to savepoint contournement;

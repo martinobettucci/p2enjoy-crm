@@ -120,18 +120,23 @@ export function EnTeteCard({
 	}, [edition, focusARendre])
 
 	const appliquer = useCallback((ligne: LigneEnteteEcrite, membres: readonly MembreAffectable[]) => {
+		// LA LIGNE RENDUE NE PORTE QUE LES COLONNES DE LA TABLE ÉCRITE depuis `CRM-111` T2.3.2 — l'affaire ou son
+		// rattachement — : seules celles-là remplacent les valeurs affichées.
 		setCard((precedente) => ({
 			...precedente,
-			title: ligne.title,
-			amount: ligne.amount,
-			currency: ligne.currency,
-			next_action: ligne.next_action,
-			next_action_at: ligne.next_action_at,
+			title: ligne.title ?? precedente.title,
+			amount: 'amount' in ligne ? (ligne.amount ?? null) : precedente.amount,
+			currency: ligne.currency ?? precedente.currency,
+			next_action: 'next_action' in ligne ? (ligne.next_action ?? null) : precedente.next_action,
+			next_action_at: 'next_action_at' in ligne ? (ligne.next_action_at ?? null) : precedente.next_action_at,
 			// LE NOM DU RESPONSABLE VIENT DE LA LISTE DÉJÀ CHARGÉE, jamais d'une relecture (§15 bis.6) :
 			// la représentation rendue par l'écriture ne porte pas la relation embarquée, et relire la
 			// card entière pour un nom en main serait un aller-retour gratuit. Un identifiant que la
 			// liste ne connaît pas détache le responsable plutôt que d'afficher un nom inventé.
-			profiles: profilDe(ligne.owner_id, membres, precedente.profiles ?? null),
+			profiles:
+				'owner_id' in ligne
+					? profilDe(ligne.owner_id ?? null, membres, precedente.profiles ?? null)
+					: precedente.profiles,
 		}))
 	}, [])
 
@@ -513,7 +518,7 @@ function EditionEntete({
 		async (champ: ChampEntete, saisie: string) => {
 			const valeur = normaliserSaisieEntete(champ, saisie)
 			setEtats((precedents) => ({ ...precedents, [champ]: { phase: 'envoi' } }))
-			const resultat = await ecrireChampEntete(client, card.id, champ, valeur)
+			const resultat = await ecrireChampEntete(client, card, champ, valeur)
 			if (resultat.issue === 'enregistree') {
 				onAppliquer(resultat.ligne, membres ?? [])
 				setEtats((precedents) => ({ ...precedents, [champ]: { phase: 'enregistre' } }))

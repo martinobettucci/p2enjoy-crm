@@ -122,8 +122,9 @@ select is(
 	'`creer_affaire` : l''affaire reçoit son rattachement dans la même transaction');
 select is(pg_temp.divergences(), 0::bigint, '…égal à l''affaire, position et ancienneté comprises');
 
--- 3.2 Les sept colonnes qu'un client écrit directement, par un `UPDATE` comme celui de PostgREST.
-select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+-- 3.2 Les sept colonnes de rattachement. RÉVISÉ PAR `CRM-111` T2.3.2 : un client ne les écrit plus sur `cards`, mais le
+--     propriétaire et la clé de service, eux, le peuvent encore — le seed en dépend —, et le miroir doit les suivre.
+--     L'écriture se fait donc en propriétaire.
 update public.cards
    set owner_id = '5eed0000-0000-4000-8000-000000000012', amount = 4200.50, probability_override = 35,
        next_action = 'Relancer le client', next_action_at = '2026-11-02 09:00+01', position = 9.5
@@ -132,13 +133,9 @@ select pg_temp.proprietaire();
 select is(pg_temp.divergences(), 0::bigint,
 	'`UPDATE` des colonnes ouvertes : responsable, montant, probabilité, prochaine action, position reportés');
 
-select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 update public.cards set archived_at = now() where id = (select card_id from t_nouvelle);
-select pg_temp.proprietaire();
 select is(pg_temp.divergences(), 0::bigint, 'archiver : `archived_at` reporté');
-select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 update public.cards set archived_at = null where id = (select card_id from t_nouvelle);
-select pg_temp.proprietaire();
 select is(pg_temp.divergences(), 0::bigint, 'désarchiver : reporté');
 
 -- 3.3 Un changement de la seule partie commune ne touche pas le rattachement.

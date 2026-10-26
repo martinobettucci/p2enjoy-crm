@@ -2393,6 +2393,11 @@ politique RLS, et le refus est **montré**, jamais anticipé.
 
 ### 15 bis.8 Contrat d'API, mesuré
 
+**Révisé par `CRM-111` T2.3.2** (migration `0112`, docs/SPEC-rattachements.md §3.2) : le responsable, le montant, la
+prochaine action et son échéance appartiennent au **rattachement** de l'affaire, et s'écrivent par
+`PATCH /rest/v1/card_placements?id=eq.…` ; ils sont fermés sur `cards`. Le titre et la devise restent à l'affaire. Les
+lignes ci-dessous valent donc chacune sur la table de sa colonne, avec les mêmes refus.
+
 Quinze lignes, mesurées le 2026-08-16 sur la pile réelle avant d'être écrites. L'état du seed a été
 restauré après la série.
 

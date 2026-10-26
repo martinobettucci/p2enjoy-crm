@@ -9,6 +9,8 @@
 //           transition, toujours perdu)
 // @verifies CLAUDE.md §8 (aucune trace fabriquée), §10 (toute règle d'accès se prouve hors
 //           interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement de
+//           l'affaire (docs/SPEC-rattachements.md §3.2, §5)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. La suite pgTAP prouve les mêmes règles **dans la
 // base**, avec `set local role` : elle ne traverse ni PostgREST, ni Kong, ni GoTrue. Or la
@@ -247,7 +249,8 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 	})
 
 	test('j — un changement de responsable laisse un `assigned`', async ({ request }) => {
-		const reponse = await request.patch(`${URL_API}${CARDS}?id=eq.${CARD_ESSAI}`, {
+		// `CRM-111` T2.3.2 : le responsable appartient au RATTACHEMENT de l'affaire.
+		const reponse = await request.patch(`${URL_API}/rest/v1/card_placements?card_id=eq.${CARD_ESSAI}`, {
 			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
 			data: { owner_id: BIZDEV },
 		})
@@ -269,12 +272,18 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 		const avant = await request.get(filDe(CARD_ESSAI), { headers: enTetesService() })
 		const nombre = (await avant.json()).length
 
-		// Le même responsable, réécrit. C'est ce qui rend le seed convergent (§14.5).
-		const reponse = await request.patch(`${URL_API}${CARDS}?id=eq.${CARD_ESSAI}`, {
+		// Le même responsable, réécrit. C'est ce qui rend le seed convergent (§14.5). Depuis `CRM-111` T2.3.2, le
+		// responsable s'écrit sur le rattachement et le titre sur l'affaire : deux écritures, et aucune ne trace rien.
+		const reponse = await request.patch(`${URL_API}/rest/v1/card_placements?card_id=eq.${CARD_ESSAI}`, {
 			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
-			data: { owner_id: BIZDEV, title: 'Sonde de timeline' },
+			data: { owner_id: BIZDEV },
 		})
 		expect(reponse.status()).toBe(200)
+		const titre = await request.patch(`${URL_API}${CARDS}?id=eq.${CARD_ESSAI}`, {
+			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
+			data: { title: 'Sonde de timeline' },
+		})
+		expect(titre.status()).toBe(200)
 
 		const apres = await request.get(filDe(CARD_ESSAI), { headers: enTetesService() })
 		expect((await apres.json()).length).toBe(nombre)

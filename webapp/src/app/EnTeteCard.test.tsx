@@ -1,5 +1,5 @@
-// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.1 : le sommeil désigne le rattachement de l'affaire
-//           (docs/SPEC-rattachements.md §5)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranches T2.3.1 et T2.3.2 : le sommeil, le responsable, le montant et la prochaine
+//           action désignent le rattachement de l'affaire ; le titre et la devise restent à elle (docs/SPEC-rattachements.md §3.2, §5)
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — la commande sous le refus de la fiche (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-040 (docs/BACKLOG.md) — le rendu réel de l'en-tête de la fiche d'affaire
 // @verifies docs/SPEC-cards.md §15.4 (les six données), §15.5 (l'action de copie et son échec),
@@ -208,7 +208,7 @@ describe('une réponse qui ne porte pas les relations embarquées', () => {
 // @verifies docs/DESIGN_SYSTEM.md §5.3 ter (bascule, focus, commande jamais éteinte)
 // ---------------------------------------------------------------------------------------------
 
-type EcritureEntete = { readonly charge: Record<string, unknown> }
+type EcritureEntete = { readonly charge: Record<string, unknown>; readonly table: string }
 
 /**
  * Client factice : il enregistre les écritures reçues et rend la réponse voulue.
@@ -240,7 +240,7 @@ function clientEntete(
 	const client = {
 		from: (table: string) => ({
 			update: (charge: Record<string, unknown>) => {
-				ecritures.push({ charge })
+				ecritures.push({ charge, table })
 				const chaine: Record<string, unknown> = {}
 				chaine['eq'] = () => chaine
 				chaine['select'] = () => chaine
@@ -341,6 +341,8 @@ describe("l'écriture d'un champ d'en-tête", () => {
 		fireEvent.blur(controle)
 		await waitFor(() => expect(factice.ecritures).toHaveLength(1))
 		expect(factice.ecritures[0]!.charge).toEqual({ currency: 'CHF' })
+		// `CRM-111` T2.3.2 : la devise appartient à l'AFFAIRE.
+		expect(factice.ecritures[0]!.table).toBe('cards')
 	})
 
 	it("écrit le responsable au CHANGEMENT, sans attendre la perte du focus", async () => {
@@ -348,6 +350,8 @@ describe("l'écriture d'un champ d'en-tête", () => {
 		fireEvent.change(screen.getByTestId('entete-owner_id'), { target: { value: 'p-2' } })
 		await waitFor(() => expect(factice.ecritures).toHaveLength(1))
 		expect(factice.ecritures[0]!.charge).toEqual({ owner_id: 'p-2' })
+		// `CRM-111` T2.3.2 : le responsable appartient au RATTACHEMENT de l'affaire.
+		expect(factice.ecritures[0]!.table).toBe('card_placements')
 	})
 
 	it('confirme par une région annoncée, liée au contrôle', async () => {

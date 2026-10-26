@@ -2,8 +2,8 @@
 #           simulé qui enregistre chaque écriture
 # @verifies CRM-067 (docs/BACKLOG.md) — tranche T4 : `crm_card_activity_add` et `crm_card_activity_update`
 #           (docs/SPEC-activites.md §6, décision 653 ; aucun outil de retrait, décision 648)
-# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3 : le sommeil désigne le rattachement de l'affaire, résolu depuis
-#           `card_id` (docs/SPEC-rattachements.md §5, §11)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3 : le sommeil et les colonnes de rattachement désignent le rattachement de
+#           l'affaire, résolu depuis `card_id` (docs/SPEC-rattachements.md §3.2, §5, §11)
 # @verifies docs/SPEC-mcp.md §9.2 ter (liste, ancres, `aussi`, identifiants jugés dans l'affaire), §9.1 (déclarations
 #           vérifiées, `destructiveHint`), §9.3 (refus nommés traduits, zéro ligne = refus)
 """Le CRM simulé rend ce que PostgREST rendrait pour chaque écriture, et la note : les tests prouvent la requête émise et
@@ -243,9 +243,13 @@ async def test_modifier_n_ecrit_que_les_champs_donnes_nomme_le_responsable_et_fu
         "crm_card_update",
         {"card_id": CARD_A, "description": "", "probability": 60, "owner": "camille aubert", "answers": {"budget": 45000}},
     )
+    # `CRM-111` T2.3.2 : la description va à l'affaire, la probabilité et le responsable à son RATTACHEMENT.
     patch = monde.ecritures("cards")[0]
     assert patch["methode"] == "PATCH" and patch["parametres"]["id"] == f"eq.{CARD_A}"
-    assert patch["corps"] == {"description": None, "probability_override": 60, "owner_id": "p-camille"}
+    assert patch["corps"] == {"description": None}
+    rattache = monde.ecritures("card_placements")[0]
+    assert rattache["methode"] == "PATCH" and rattache["parametres"]["id"] == f"eq.{RATTACHEMENT_A}"
+    assert rattache["corps"] == {"probability_override": 60, "owner_id": "p-camille"}
     valeur = monde.ecritures("card_field_values")[0]
     assert valeur["corps"] == {"card_id": CARD_A, "field_id": "f1", "workflow_id": WORKFLOW, "workspace_id": ESPACE_A, "value": 45000}
     assert valeur["parametres"]["on_conflict"] == "card_id,field_id"

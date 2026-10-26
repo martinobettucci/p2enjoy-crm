@@ -34987,3 +34987,41 @@ comptée depuis sa création ; notes de la santé commerciale (fraîcheur 7 → 
 corbeille ; pastilles sur la carte, détail sur la fiche, rien dans la vue liste ; les deux objets dans `crm_card_get` et
 `crm_card_list`. La question avait été coupée une première fois par la fin d'une session ; elle a été reposée à
 l'identique. Le numéro de migration se prend après synchronisation avec `CRM-111` T2.3, qui occupe 0110 et suivantes.
+
+### `CRM-111` T2.3.2 — les colonnes ouvertes s'écrivent sur le rattachement (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* **Fait** : migration `0112` — les sept colonnes de
+rattachement qu'un client écrivait sur l'affaire (responsable, montant, probabilité, prochaine action et échéance,
+position, archivage) se ferment sur `cards` pour `authenticated` ; elles s'écrivent sur `card_placements` depuis T2.3.0.
+L'en-tête de la fiche écrit chaque champ sur sa table (`entete-card.ts` : deux listes de colonnes rendues, une ligne
+rendue partielle que l'écran fond dans l'affaire affichée) ; `crm_card_update` fait deux écritures, l'affaire puis le
+rattachement, et assume qu'une seconde refusée laisse la première écrite (docs/SPEC-mcp.md §9.2 ter).
+
+**Défaut trouvé par une autre session, corrigé ici.** Le seed écrivait encore, au jeton de l'administratrice, le
+responsable (section 8 sexies) et la surcharge de probabilité (8 duodecies ter) sur `cards`. La session de `CRM-066` l'a vu
+échouer (`403`, `42501`) dès l'application de `0112` en développement. Ces trois écritures visent désormais
+`card_placements`, et le seed repasse (`rc=0`). Leçon : une fermeture de colonne se cherche aussi dans le seed, qui écrit
+par l'API comme un client.
+
+**Révisées, non retirées** (décision 51) : `0013` (n° 15 à 19 et n° 69), `0015` (les colonnes ouvertes, le compte passe de
+onze à quatre), `0018` (archivage et responsable par le rattachement), `0019` (le compte), `0097` et `0099` (le chemin de
+`cards` n'est plus éprouvé qu'en propriétaire, celui du seed) ; sept specs d'API et deux harnais (`verify-cards.sh`
+ligne t, `verify-colonnes-protegees.sh` ligne e). La fermeture elle-même est prouvée hors interface :
+`rattachements-ecriture.spec.ts` envoie les sept colonnes à `cards` avec le jeton de l'administratrice, et reçoit sept
+`403`/`42501`, la ligne relue intacte.
+
+**Vérifications** : sur copie, migration passée deux fois et suite complète verte hors pg_cron ; en développement, pgTAP
+**100 fichiers, 4163 assertions, aucune anomalie** (la suite `0110` de `CRM-066` comprise) ; unitaires **4409/4409** ;
+API **1207/1208** (`ingestion.spec.ts:91`, `CRM-058`) ; interface de l'en-tête et du sommeil verte, un `503` d'INC-292
+rejoué ; capture de l'édition de l'en-tête observée ; le contenu du commit, extrait seul, passe le `typecheck`.
+`scripts/verify-mcp.sh` **88/88**. `verify-cards.sh` **46/49** et `verify-colonnes-protegees.sh` **56/58** (son compte
+de colonnes ouvertes, périmé, est révisé à quatre). Leurs rouges sont tous d'environnement : les projets `e2e:api` et
+`e2e:ui` complets, rejoués par chacun, portent `ingestion.spec.ts:91` (`CRM-058`), le `503` d'INC-292, et une campagne
+d'interface de `CRM-066` qui tournait en même temps ; « le seed échoue au rejeu » s'est produit pendant cette concurrence.
+Rejoué au repos, le seed **converge** (`rc=0`). **Incident** : ces deux harnais RECONSTRUISENT la base de développement
+(décision 682). Lancés sur la pile partagée, ils ont effacé les fonctions de santé que `CRM-066` avait posées en psql, hors
+migration. La session concernée les a reposées par sa migration `0113`. Je préviens désormais avant tout harnais qui
+reconstruit, et la reconstruction partagée est un risque à porter au registre des incohérences avec T1 ter.
+
+**Partage de l'arbre.** La session de `CRM-066` (scores de santé) travaille dans le même checkout : `apply-seed.sh` porte
+ses deux changements et les miens ; le commit n'inscrit que HEAD plus les miens, par un index temporaire.

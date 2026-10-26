@@ -1,4 +1,6 @@
 // @spec CRM-040 (docs/BACKLOG.md) — les champs d'en-tête de la fiche d'affaire, et leur écriture
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : le responsable, le montant, la prochaine action et son échéance
+//       s'écrivent sur le rattachement de l'affaire (docs/SPEC-rattachements.md §3.2, §4)
 // @spec docs/SPEC-cards.md §15.3 (ce que l'en-tête lit, et en combien de requêtes),
 //       §15.4 (les six données et comment chacune se rend), §3.5 (l'adresse complète est une
 //       dérivation, jamais une colonne), §2.1 (les colonnes et leurs types),
@@ -20,8 +22,9 @@
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
 import type { ProfilAffiche } from './identites'
-import type { ClientCrm } from './supabase'
 import type { CardOuverte } from './formulaire'
+import { idRattachement } from './rattachements'
+import type { ClientCrm } from './supabase'
 
 /**
  * L'adresse complète de l'affaire, ou `null` lorsqu'elle n'est pas composable.
@@ -198,14 +201,27 @@ export function classerEcritureEntete(
 	return 'inconnu'
 }
 
-/** Colonnes relues par l'écriture : celles que l'écran met à jour EN PLACE, et rien de plus. */
-export const COLONNES_RETOUR_ENTETE =
-	'id, title, owner_id, amount, currency, next_action, next_action_at'
+/**
+ * Colonnes relues par l'écriture : celles que l'écran met à jour EN PLACE, et rien de plus. DEUX LISTES depuis `CRM-111`
+ * T2.3.2 : le titre et la devise appartiennent à l'affaire ; le responsable, le montant, la prochaine action et son
+ * échéance, à son RATTACHEMENT (docs/SPEC-rattachements.md §3.2). Aucune ne relit `id` : la ligne rendue se fond dans
+ * l'affaire affichée, et l'identifiant d'un rattachement n'est pas celui de l'affaire.
+ */
+export const COLONNES_RETOUR_ENTETE = 'title, currency'
+export const COLONNES_RETOUR_RATTACHEMENT = 'owner_id, amount, next_action, next_action_at'
 
-/** Ce que l'écriture rend à l'écran lorsqu'elle a abouti — la ligne telle que la BASE la porte. */
-export type LigneEnteteEcrite = Pick<
-	Database['public']['Tables']['cards']['Row'],
-	'id' | 'title' | 'owner_id' | 'amount' | 'currency' | 'next_action' | 'next_action_at'
+/** Les champs d'en-tête qui s'écrivent sur le rattachement de l'affaire (`CRM-111` T2.3.2). */
+export const CHAMPS_DU_RATTACHEMENT: ReadonlySet<ChampEntete> = new Set(['owner_id', 'amount', 'next_action', 'next_action_at'])
+
+/**
+ * Ce que l'écriture rend à l'écran lorsqu'elle a abouti — la ligne telle que la BASE la porte, réduite aux colonnes de
+ * la table écrite : celles de l'affaire, ou celles du rattachement.
+ */
+export type LigneEnteteEcrite = Partial<
+	Pick<
+		Database['public']['Tables']['cards']['Row'],
+		'title' | 'owner_id' | 'amount' | 'currency' | 'next_action' | 'next_action_at'
+	>
 >
 
 export type ResultatEcritureEntete =
@@ -213,23 +229,23 @@ export type ResultatEcritureEntete =
 	| { readonly issue: Exclude<IssueEcritureEntete, 'enregistree'> }
 
 /**
- * Le corps du `PATCH`, construit colonne par colonne plutôt que par une clé calculée.
+ * Le corps du `PATCH`, construit colonne par colonne plutôt que par une clé calculée — un par table.
  *
  * UNE CLÉ CALCULÉE NE COMPILE PAS, et c'est une contrainte utile plutôt qu'une gêne : le type
  * généré déclare `title` et `currency` NON nullables — `docs/SPEC-types.md` —, et
  * `{ [champ]: valeur }` réduit l'objet entier à un index `never` sur lequel `supabase-js` refuse
- * toute écriture. Le `switch` ci-dessous fait donc porter au compilateur ce que la base porte déjà :
+ * toute écriture. Les `switch` ci-dessous font donc porter au compilateur ce que la base porte déjà :
  * vider le titre ou la devise est refusé AVANT la requête, non parce que l'écran double une
  * contrainte (§15 bis.5 l'interdit) mais parce que ces deux colonnes n'ont pas de valeur vide à
  * envoyer — une saisie vide leur arrive comme la chaîne vide, que la base refuse en `23514`.
  */
-function composerPatchEntete(champ: ChampEntete, valeur: ValeurEntete) {
+function composerPatchAffaire(champ: 'title' | 'currency', valeur: ValeurEntete) {
 	const texte = typeof valeur === 'string' ? valeur : ''
+	return champ === 'title' ? { title: texte } : { currency: texte }
+}
+
+function composerPatchRattachement(champ: 'owner_id' | 'amount' | 'next_action' | 'next_action_at', valeur: ValeurEntete) {
 	switch (champ) {
-		case 'title':
-			return { title: texte }
-		case 'currency':
-			return { currency: texte }
 		case 'owner_id':
 			return { owner_id: typeof valeur === 'string' ? valeur : null }
 		case 'amount':
@@ -255,6 +271,10 @@ function composerPatchEntete(champ: ChampEntete, valeur: ValeurEntete) {
  * design system exige l'erreur au niveau du champ. Le lot fonctionne — MESURÉ, `200` — ; ce n'est
  * pas une impossibilité technique, c'est une perte d'attribution que le produit refuse.
  *
+ * LA TABLE DÉPEND DU CHAMP depuis `CRM-111` T2.3.2 : le titre et la devise s'écrivent sur `cards`, les quatre autres sur
+ * le rattachement de l'affaire (`card_placements`), sous la règle de son channel. Une affaire dont aucun rattachement
+ * n'est lisible ne reçoit pas l'écriture : l'issue est celle d'une politique qui filtre, `sans-effet`.
+ *
  * `updated_at` n'est PAS écrite : MESURÉ, le trigger l'avance de lui-même. L'écrire depuis le
  * client créerait une seconde version de la même information, qui pourrait la contredire.
  *
@@ -263,7 +283,7 @@ function composerPatchEntete(champ: ChampEntete, valeur: ValeurEntete) {
  */
 export async function ecrireChampEntete(
 	client: ClientCrm,
-	idCard: string,
+	card: Pick<CardOuverte, 'id' | 'card_placements'>,
 	champ: ChampEntete,
 	valeur: ValeurEntete,
 ): Promise<ResultatEcritureEntete> {
@@ -273,11 +293,26 @@ export async function ecrireChampEntete(
 	// vider un montant que l'utilisateur croyait corriger. L'issue est celle que la base rendrait.
 	if (champ === 'amount' && typeof valeur === 'string') return { issue: 'invalide' }
 	try {
-		const reponse = await client
-			.from('cards')
-			.update(composerPatchEntete(champ, valeur))
-			.eq('id', idCard)
-			.select(COLONNES_RETOUR_ENTETE)
+		let reponse: {
+			readonly status: number
+			readonly error: { readonly code: string } | null
+			readonly data: readonly LigneEnteteEcrite[] | null
+		}
+		if (champ === 'title' || champ === 'currency') {
+			reponse = await client
+				.from('cards')
+				.update(composerPatchAffaire(champ, valeur))
+				.eq('id', card.id)
+				.select(COLONNES_RETOUR_ENTETE)
+		} else {
+			const rattachement = idRattachement(card)
+			if (rattachement === null) return { issue: 'sans-effet' }
+			reponse = await client
+				.from('card_placements')
+				.update(composerPatchRattachement(champ, valeur))
+				.eq('id', rattachement)
+				.select(COLONNES_RETOUR_RATTACHEMENT)
+		}
 		const code = reponse.error === null ? null : reponse.error.code
 		const issue = classerEcritureEntete(reponse.status, code ?? null, reponse.data?.length ?? 0)
 		if (issue === 'enregistree' && reponse.data !== null && reponse.data[0] !== undefined) {

@@ -1,3 +1,5 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : l'archivage et le responsable s'écrivent sur le rattachement
+--           (docs/SPEC-rattachements.md §5)
 -- @verifies CRM-044 (docs/BACKLOG.md) — timeline unifiée, `card_events` alimentée par triggers
 -- @verifies docs/SPEC-cards.md §14.2 (modèle), §14.3 (`clock_timestamp()`), §14.4 (les huit
 --           types), §14.5 (triggers `SECURITY DEFINER`), §14.6 (payloads), §14.7 (autorisations —
@@ -345,12 +347,14 @@ select is(
 	'DEFINER — MESURÉ, la revendication JWT survit au changement de rôle');
 
 -- --- 6.2 Cycle de vie, et les quatre gardes ---------------------------------------------------
-update public.cards set archived_at = now() where title = 'Sonde timeline';
-update public.cards set archived_at = null  where title = 'Sonde timeline';
+-- RÉVISÉ PAR `CRM-111` T2.3.2 (décision 51) : l'archivage et le responsable s'écrivent sur le RATTACHEMENT ; la
+-- corbeille reste à l'affaire. Les six événements et leur ordre sont inchangés.
+update public.card_placements set archived_at = now() where card_id = (select id from public.cards where title = 'Sonde timeline');
+update public.card_placements set archived_at = null  where card_id = (select id from public.cards where title = 'Sonde timeline');
 update public.cards set deleted_at  = now() where title = 'Sonde timeline';
 update public.cards set deleted_at  = null  where title = 'Sonde timeline';
-update public.cards set owner_id = '5eed0000-0000-4000-8000-000000000012'
- where title = 'Sonde timeline';
+update public.card_placements set owner_id = '5eed0000-0000-4000-8000-000000000012'
+ where card_id = (select id from public.cards where title = 'Sonde timeline');
 
 select is(
 	(select array_agg(e.type order by e.created_at)::text
@@ -362,8 +366,8 @@ select is(
 
 -- --- 6.3 Une écriture qui ne change rien n'écrit rien -----------------------------------------
 update public.cards set title = title where title = 'Sonde timeline';
-update public.cards set owner_id = '5eed0000-0000-4000-8000-000000000012'
- where title = 'Sonde timeline';
+update public.card_placements set owner_id = '5eed0000-0000-4000-8000-000000000012'
+ where card_id = (select id from public.cards where title = 'Sonde timeline');
 
 select is(
 	(select count(*)::int from public.card_events e

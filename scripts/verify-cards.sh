@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement
+#           (docs/SPEC-rattachements.md §3.2, §5)
 # @verifies CRM-040 (docs/BACKLOG.md) — Definition of Done des cards
 # @verifies docs/SPEC-cards.md §2 (modèle et clés composites), §3 (adresse générée),
 #           §4 (archivage et corbeille), §5 (« active »), §6 (autorisations), §7 (garde
@@ -459,7 +461,8 @@ titre "7. Cycle de vie et absence de suppression — §4"
 
 code=$(poster "$T_ADMIN" "$(carte_json 'tst-crm040-cycle')")
 carte_cycle=$(jq -r '.[0].id // empty' "$CORPS")
-code=$(http PATCH "$API/rest/v1/cards?id=eq.$carte_cycle" \
+# `CRM-111` T2.3.2 : archiver est un geste sur le RATTACHEMENT de l'affaire (docs/SPEC-rattachements.md §5).
+code=$(http PATCH "$API/rest/v1/card_placements?card_id=eq.$carte_cycle" \
         -H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_ADMIN" \
         -H 'Content-Type: application/json' -d '{"archived_at":"2026-05-01T10:00:00Z"}')
 [ "$code" = "204" ] && ok "ligne t — l'archivage d'une card est accepté" \

@@ -1,5 +1,5 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.0 : un rattachement s'écrit par l'API si son channel s'écrit, et
-//           l'affaire suit ; la timeline n'écrit qu'un événement
+//           l'affaire suit ; la timeline n'écrit qu'un événement ; tranche T2.3.2 : ces colonnes sont fermées sur `cards`
 // @verifies docs/SPEC-rattachements.md §4 (écrire un rattachement, c'est écrire son channel), §5 (timeline), §14 ;
 //           docs/JOURNAL.md décision 705
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`) ; CLAUDE.md §10 (règle d'accès prouvée hors interface)
@@ -72,6 +72,27 @@ test.describe('CRM-111 T2.3.0 — écrire un rattachement par l’API', () => {
 		expect(reponse.status(), 'refus de POLITIQUE : un filtrage, non une erreur').toBe(200)
 		expect(await reponse.json(), 'aucune ligne écrite').toEqual([])
 		expect(await prochaineAction(request, CARD_C5), 'ni le rattachement ni l’affaire n’ont changé').toEqual(origine)
+	})
+
+	test('T2.3.2 — les sept colonnes de rattachement sont FERMÉES sur l’affaire : un refus de privilège, la ligne intacte', async ({
+		request,
+	}) => {
+		const h = enTetesAuthentifies(await jetonDe(ADMIN))
+		const origine = await prochaineAction(request, CARD_C4)
+		for (const charge of [
+			{ next_action: 'interdit' },
+			{ owner_id: null },
+			{ amount: 1 },
+			{ probability_override: 10 },
+			{ next_action_at: null },
+			{ position: 1 },
+			{ archived_at: new Date().toISOString() },
+		]) {
+			const reponse = await request.patch(rest(`cards?id=eq.${CARD_C4}`), { headers: h, data: charge })
+			expect(reponse.status(), `${Object.keys(charge)[0]} : refus de PRIVILÈGE, non un filtrage`).toBe(403)
+			expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+		}
+		expect(await prochaineAction(request, CARD_C4), 'rien n’a changé').toEqual(origine)
 	})
 
 	test('archiver un rattachement écrit UN événement `archived`, qui le désigne', async ({ request }) => {

@@ -2170,6 +2170,15 @@ rendent `public.card_placements` ; mêmes gardes, même ordre, mêmes messages, 
 exécutables par `authenticated` et `service_role`. **Retrait** : supprimer les deux fonctions et réappliquer celles de la
 migration `0044`, avec les appelants d'avant.
 
+### Migration `0112` — les colonnes ouvertes s'écrivent sur le rattachement (`CRM-111` T2.3.2, décision 705 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-rattachements.md` §3.2, §4, §5. `revoke update (owner_id, amount, probability_override, next_action,
+next_action_at, position, archived_at) on public.cards from authenticated` : ces sept colonnes s'écrivent sur
+`card_placements` (T2.3.0) et plus sur l'affaire, qui garde `title`, `description`, `currency` et `deleted_at`.
+`service_role` et le propriétaire gardent l'écriture de `cards` ; le miroir la reporte. **Retrait** : `grant update
+(owner_id, amount, probability_override, next_action, next_action_at, position, archived_at) on public.cards to
+authenticated;`, avec la webapp et l'image `mcp` d'avant.
+
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)
