@@ -35535,3 +35535,23 @@ harnais de T2.3.3 est inchangée à l'octet près.
 par le runner ; pgTAP **104 fichiers, 4299 assertions, aucune anomalie** ; unitaires **4514/4514** ; `typecheck`,
 `types:check` à l'octet ; API **1230/1231** (`ingestion.spec.ts:91`, étranger) ; `verify-change-channel-workflow.sh` **24 contrôles, aucune anomalie** — sept
 dégradations vues, sept reconstructions toutes abouties, la concurrence et la restauration constatées.
+
+### `CRM-111` T2.4 — le découpage (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* **Mesuré avant de découper**, sur une base
+jetable copiée de la base de développement (méthode du `docs/SPEC-rattachements.md` §2 bis.5) : retirer les treize
+colonnes de `cards` casse encore **dix fonctions**, contre trente et une en T1 — les deux miroirs de la bascule, le
+déclencheur de naissance de la timeline, `app.cards_attribuer_position`, `app.cards_restauration_verifier_parent`,
+`creer_affaire`, les trois appuis des scores de santé de `CRM-066` (`health_momentum`, `health_commercial`,
+`app.health_context`) et `app.purge_trash`, livrée entre-temps par `CRM-077` — plus le faux positif connu de
+`reserver_envois` ; `cascade` emporte les trois politiques de `cards` et le miroir de mise à jour. Côté appelants, un
+relevé par motif compte environ 165 fichiers qui lisent ou filtrent l'une des colonnes sur `cards` (webapp 41, specs 50,
+pgTAP 44, scripts 22, connecteur 6, `mail-sync` 1, seed 1).
+
+**Décision de découpage** (même principe que T2.3 : chaque étape poussée laisse `main` vert). Tant que les miroirs tiennent
+`cards` égale à `card_placements`, chaque lecteur peut passer au rattachement seul, sans rien changer à ce qu'il rend : la
+webapp (T2.4.1), le connecteur et `mail-sync` (T2.4.2), le seed et les scripts (T2.4.3), les preuves (T2.4.4). Le retrait
+en base vient en dernier (T2.4.5), quand plus personne ne lit les colonnes : migration, dix fonctions, `creer_affaire`
+(décision 738), transport des scores de santé, politiques de `cards` sous la forme optimisée. **Question ouverte, posée
+pour T2.4.3** : sans miroir d'insertion, le seed — qui crée ses affaires par la clé de service, à identifiants stables —
+doit écrire le rattachement lui-même ; privilège d'insertion de `service_role` sur `card_placements`, ou fonction dédiée.

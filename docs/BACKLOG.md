@@ -16694,6 +16694,23 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         verte ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière possible tant que chaque affaire
         n'a qu'un rattachement).
         *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-26 17:02 UTC — état avant : [ ]*
+        **Découpage, arrêté le 2026-10-26 (journal, entrée « `CRM-111` T2.4 — le découpage »)** — une étape poussée chacune,
+        `main` vert à chaque fois. Mesuré avant (base jetable, `docs/mesures/CRM-111/02-fonctions-cassees.sql`) : le
+        retrait casse encore **dix fonctions** — les deux miroirs, `app.card_events_apres_insertion_card`,
+        `app.cards_attribuer_position`, `app.cards_restauration_verifier_parent`, `creer_affaire`, `health_momentum`,
+        `health_commercial`, `app.health_context`, `app.purge_trash` (`CRM-077`) — et emporte les trois politiques de
+        `cards` ; environ 165 fichiers lisent ou filtrent l'une des treize colonnes sur `cards`.
+        - [ ] **T2.4.1 — la webapp lit le rattachement** : chaque lecture des treize colonnes sur `cards` les lit sur
+          `card_placements` (plongement), les formes rendues aux écrans inchangées ; aucun changement visible.
+        - [ ] **T2.4.2 — le connecteur et `mail-sync`** lisent le rattachement.
+        - [ ] **T2.4.3 — le seed et les scripts** : lectures et écritures par le rattachement. *Question ouverte, à
+          trancher avant le code de l'étape* : le seed crée ses affaires par la clé de service, à identifiants stables ;
+          sans miroir, il lui faut écrire le rattachement — privilège d'insertion de `service_role` sur
+          `card_placements`, comme sur `cards`, ou fonction dédiée.
+        - [ ] **T2.4.4 — les preuves** : pgTAP et specs lisent le rattachement là où elles lisaient `cards`.
+        - [ ] **T2.4.5 — le retrait en base** : colonnes, miroirs et index de `cards` retirés ; les dix fonctions
+          réécrites ; `creer_affaire` écrit le rattachement ; scores de santé transportés ; politiques de `cards` sous
+          la forme optimisée ; types régénérés ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
       *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses
