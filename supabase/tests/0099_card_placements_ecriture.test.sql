@@ -1,3 +1,4 @@
+-- @verifies CRM-068 (docs/BACKLOG.md) tranche T1 — révision d'un garde-fou de compte (docs/SPEC-checklists.md §3), décision 51
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3, étape 0 : la fondation des écritures par rattachement. La timeline
 --           d'un rattachement est écrite par `card_placements`, un miroir inverse tient l'affaire égale, et un client
 --           écrit les sept colonnes ouvertes du rattachement s'il écrit son channel
@@ -69,8 +70,10 @@ $$;
 select is(
 	(select array_agg(tgname::text order by tgname) from pg_trigger
 	  where tgrelid = 'public.card_placements'::regclass and not tgisinternal),
-	array['card_placements_mirror_to_card', 'card_placements_set_updated_at', 'card_placements_write_events'],
-	'trois déclencheurs sur le rattachement : la timeline, le miroir inverse, l''horodatage');
+	array['card_placements_add_step_items', 'card_placements_mirror_to_card', 'card_placements_set_updated_at',
+	      'card_placements_write_events'],
+	'quatre déclencheurs sur le rattachement : la timeline, le miroir inverse, l''horodatage, et depuis `CRM-068` T1 '
+	'l''ajout des points de checklist de l''étape (docs/SPEC-checklists.md §3.3)');
 select hasnt_trigger('public', 'cards', 'card_events_apres_maj_sommeil',
 	'le déclencheur de sommeil de `cards` est retiré : le rattachement écrit `snoozed` et `woken`');
 select has_trigger('public', 'cards', 'card_events_apres_maj',

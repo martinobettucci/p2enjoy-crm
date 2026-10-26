@@ -131,6 +131,11 @@ type _tables = Expect<
     // pour cause une migration livrée sans que `scripts/generate-types.sh` soit rejoué, au motif
     // que la tranche ne touchait aucun écran. `CRM-064` tranche 1 n'en touche aucun non plus, et
     // régénère quand même — la règle formulée plus bas, appliquée.
+    // `0125` de `CRM-068` TRANCHE T1 ajoute `card_checklist_items`, `workflow_step_checklist_items` et
+    // `workflow_transition_required_checklist_items` (docs/SPEC-checklists.md §3). CE QUI ÉCHAPPE AU GÉNÉRATEUR : le
+    // client n'écrit ni `checked_at`, ni `checked_by`, ni `placement_id` (privilèges de colonne) ; un point d'étape ne se
+    // renomme ni ne se retire (`step_item_locked`) ; une exigence ne vise que l'étape de départ de sa transition.
+    | 'card_checklist_items'
     | 'card_comment_mentions'
     | 'card_comments'
     // `0088` de `CRM-099` TRANCHE T1 ajoute `card_cost_actuals` — les réels d'une ligne de coût, dont la base tient la
@@ -267,6 +272,8 @@ type _tables = Expect<
     | 'tracks'
     | 'workflow_nodes_catalog'
     | 'workflow_steps'
+    | 'workflow_step_checklist_items'
+    | 'workflow_transition_required_checklist_items'
     | 'workflow_transition_required_fields'
     | 'workflow_transitions'
     | 'workflow_versions'

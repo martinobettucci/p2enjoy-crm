@@ -148,10 +148,11 @@ libres ; deux modèles d'affaires, dont un créé par « Enregistrer comme modè
 ## 7. Tranches
 
 - **T1 — le modèle des checklists** : les trois tables de checklists, RLS, privilèges de colonne, déclencheurs (ajout à
-  l'entrée dans l'étape, cochage), pgTAP, seed des points.
+  l'entrée dans l'étape, cochage), pgTAP. *Le seed des points est passé en T3, avec les écrans qui le montrent (livraison
+  de T1, 2026-10-26).*
 - **T2 — l'exigence de transition** : `move_card` et son refus, le bandeau du board ; pgTAP, API, E2E.
 - **T3 — l'écran de la fiche et du board** : blocs, cases, compte, mention d'exigence ; l'éditeur de workflows pour les
-  points d'étape et les exigences.
+  points d'étape et les exigences ; le seed des points.
 - **T4 — les modèles de cards** : table, `creer_affaire` étendue, `save_card_as_template`, Réglages, « Nouvelle
   affaire », « Enregistrer comme modèle ».
 - **T5 — le connecteur** : les deux outils, leurs tests unitaires et d'intégration.

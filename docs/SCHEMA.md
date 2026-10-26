@@ -2361,6 +2361,33 @@ seed pose par upsert (`id`, `workspace_id`, `card_id`, `channel_id`, `workflow_i
 `archived_at`, `created_by`) — ni `DELETE`, ni `health_score`, `created_at`, `updated_at`. Les privilèges d'`anon` et
 d'`authenticated` ne changent pas. **Retrait** : `revoke insert, update on public.card_placements from service_role`.
 
+
+### Migration `0125` — les checklists (`CRM-068` T1, décisions 747 à 749 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-checklists.md` §3.
+
+- **`public.workflow_step_checklist_items`** (`id`, `workspace_id`, `workflow_id`, `step_id`, `label`, `position`,
+  `archived_at`, auteur et dates) : les points d'une étape, `(step_id, workflow_id) → workflow_steps` en cascade ; lus par
+  les membres, écrits par l'administrateur.
+- **`public.card_checklist_items`** (`id`, `workspace_id`, `card_id`, `placement_id`, `step_item_id`, `label`, `position`,
+  `checked`, `checked_at`, `checked_by`, auteur et dates) : un point **libre** (`placement_id` nul, suit l'affaire) ou
+  **d'étape** (suit son rattachement, comme une valeur de champ) ; `UNIQUE (placement_id, step_item_id)`. Le client
+  n'écrit que `label`, `position` et `checked` (privilèges de colonne) ; `checked_at` et `checked_by` sont posés par
+  `app.card_checklist_items_before` ; un point d'étape ne se renomme ni ne se retire (`P0001 step_item_locked`, et la
+  politique de suppression ne voit que les points libres).
+- **`public.workflow_transition_required_checklist_items`** (`transition_id`, `step_item_id`) : les points exigés par une
+  transition, de son étape de départ seulement (`22023 checklist_item_not_from_source_step`) ; lus par les membres, écrits
+  par l'administrateur.
+- **Déclencheurs** : `card_placements_add_step_items` (après insertion ou changement d'étape d'un rattachement, ajoute les
+  points actifs de l'étape, sans doublon) ; `card_checklist_items_event` (un cochage écrit `checklist_checked` ou
+  `checklist_unchecked` dans `card_events`, au niveau de l'affaire) ; `card_events_type_check` gagne ces deux types.
+
+**Retrait** : `drop table public.workflow_transition_required_checklist_items, public.card_checklist_items,
+public.workflow_step_checklist_items` ; `drop trigger card_placements_add_step_items on public.card_placements` ; les
+fonctions `app.checklist_requirement_guard`, `app.card_checklist_items_before`, `app.card_checklist_items_refuse_delete`,
+`app.card_checklist_items_event`, `app.card_placements_add_step_items` ; `card_events_type_check` sans les deux types,
+après avoir supprimé leurs événements (`delete from public.card_events where type like 'checklist%'` sous suspension de
+`card_events_refuser_maj`, qui ne refuse que la modification). Les points cochés sont perdus.
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)

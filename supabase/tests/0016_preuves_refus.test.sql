@@ -1,3 +1,4 @@
+-- @verifies CRM-068 (docs/BACKLOG.md) tranche T1 — révision d'un garde-fou de compte (docs/SPEC-checklists.md §3), décision 51
 -- @verifies CRM-014 (docs/BACKLOG.md) — harnais des douze preuves de refus d'autorisation
 -- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : assertion révisée par les migrations 106 et 107 (docs/SPEC-mail-subsystem.md §19 bis.3)
 -- @verifies CRM-022 (docs/BACKLOG.md) — preuve n° 10 et sept politiques d'identité
@@ -229,8 +230,12 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	161,
-	'CENT SOIXANTE ET UNE politiques dans `public`, et pas une de plus — 160 avant `CRM-072` tranche T1, plus l''UNIQUE '
+	169,
+	'CENT SOIXANTE-NEUF politiques dans `public`, et pas une de plus — 161 avant `CRM-068` tranche T1, plus les HUIT des '
+	'checklists (docs/SPEC-checklists.md §3) : lecture et écriture des points d''une étape, lecture et écriture des '
+	'exigences d''une transition — toutes deux réservées à l''administrateur —, puis lecture, insertion, mise à jour et '
+	'suppression des points d''une affaire, l''insertion et la suppression bornées aux points LIBRES. Avant elles : 161, '
+	'soit 160 avant `CRM-072` tranche T1, plus l''UNIQUE '
 	'politique de LECTURE de `audit_log` (docs/SPEC-audit.md §3.2) : l''administrateur de l''espace lit son journal. '
 	'AUCUNE ÉCRITURE, et c''est un refus double : ni politique ni privilège — la base seule écrit, par ses déclencheurs. '
 	'Avant elle : 160, soit 159 avant `CRM-111` tranche T2.3.0, plus la politique de '

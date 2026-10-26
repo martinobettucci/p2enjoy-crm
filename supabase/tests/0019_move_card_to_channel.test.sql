@@ -1,3 +1,4 @@
+-- @verifies CRM-068 (docs/BACKLOG.md) tranche T1 — révision d'un garde-fou de compte (docs/SPEC-checklists.md §3), décision 51
 -- @verifies CRM-045 (docs/BACKLOG.md) — déplacement d'une card entre channels
 -- @verifies docs/SPEC-workflow-engine.md §6.2 (signature), §6.3 (ce que la base interdit déjà),
 --           §6.4 (les huit vérifications), §6.5 (effets), §6.6 (réponses de formulaire),
@@ -233,6 +234,10 @@ select ok(
 -- L'ORDRE FAIT PARTIE DE CE QUE CETTE ASSERTION FIGE, `pg_get_constraintdef` le rendant tel quel :
 -- une valeur glissée ailleurs la ferait rougir, et c'est voulu — le vocabulaire se lit par familles.
 -- Aucune valeur retirée, la huitième fois comme les sept précédentes.
+--
+-- RÉVISÉE LE 2026-10-26 PAR `CRM-068` TRANCHE T1 — NEUVIÈME ÉVOLUTION. `checklist_checked` et `checklist_unchecked`
+-- portent l'énumération à VINGT ET UNE (docs/SPEC-checklists.md §3.6), dans la migration qui les écrit, en queue : ils
+-- ouvrent une famille nouvelle. Aucune valeur retirée.
 
 select is(
 	(select pg_get_constraintdef(c.oid) from pg_constraint c
@@ -243,10 +248,10 @@ select is(
 	'''mail_received''::text, ''mail_sent''::text, ''mail_unclassified''::text, '
 	'''snoozed''::text, ''woken''::text, '
 	'''stalled''::text, ''contact_linked''::text, ''contact_unlinked''::text, '
-	'''contact_role_changed''::text])))',
-	'Le `CHECK` compte DIX-NEUF valeurs : `CRM-055` tranche 2 ajoute le DÉPART d''un message sans '
-	'retirer aucune des dix-huit précédentes. Le garde-fou historique ÉVOLUE avec '
-	'le vocabulaire au lieu de figer un état périmé — et c''est la HUITIÈME fois qu''il le fait');
+	'''contact_role_changed''::text, ''checklist_checked''::text, ''checklist_unchecked''::text])))',
+	'Le `CHECK` compte VINGT ET UNE valeurs : `CRM-068` tranche T1 ajoute le cochage et le décochage d''un point sans '
+	'retirer aucune des dix-neuf précédentes. Le garde-fou historique ÉVOLUE avec '
+	'le vocabulaire au lieu de figer un état périmé — et c''est la NEUVIÈME fois qu''il le fait');
 
 -- LE MÉCANISME A JOUÉ UNE FOIS DE PLUS. `CRM-058` a étendu l'énumération dans la même migration
 -- que son écriture, exactement comme l'assertion le lui demandait. Elle est donc RETOURNÉE : le

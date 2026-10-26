@@ -618,7 +618,8 @@ PORT_RAPPORT=9323
 # 105, MESURÉ.
 # **+1 par `CRM-111` T2.4.3, 2026-10-26** : `0116_seed_ecrit_les_rattachements.test.sql`, fichier NEUF. 105 + 1 = 106,
 # MESURÉ.
-FICHIERS_SQL_ATTENDUS=106
+# **+1 par `CRM-068` T1, 2026-10-26** : `0117_checklists.test.sql`, fichier NEUF. 106 + 1 = 107, MESURÉ.
+FICHIERS_SQL_ATTENDUS=107
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -760,7 +761,9 @@ FICHIERS_SQL_ATTENDUS=106
 # **+10 par `CRM-111` T2.4.3, 2026-10-26** : `0116_seed_ecrit_les_rattachements` **10** assertions (les privilèges de
 # `service_role` pour le seed, ceux des utilisateurs inchangés, le geste réel) ; `0097` RÉVISÉE à compte égal. 4321 + 10 =
 # 4331, MESURÉ — « 106 fichiers, 4331 assertions ».
-ASSERTIONS_ATTENDUES=4331
+# **+28 par `CRM-068` T1, 2026-10-26** : `0117_checklists` **28** assertions (les droits, l'ajout à l'entrée dans l'étape,
+# le cochage posé et tracé par la base, les points d'étape verrouillés, l'exigence de l'étape de départ). 4331 + 28 = 4359.
+ASSERTIONS_ATTENDUES=4359
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1166,7 +1169,9 @@ ASSERTIONS_ATTENDUES=4331
 # ce qu'il a retiré) ; `channels`, `tracks` et `droits-interface` RÉVISÉES à compte égal. 1227 + 4 = 1231, valeur COMPTÉE.
 # **+1 par `CRM-077` onzième tranche, 2026-10-26** : `E8` de `e2e/api/corbeille.spec.ts` (les refus de la lectrice et du
 # business developer, la devise, la réaffectation relue en base). 1231 + 1 = 1232, valeur COMPTÉE.
-SCENARIOS_API=1232
+# **+4 par `CRM-068` T1, 2026-10-26** : `e2e/api/checklists.spec.ts`, fichier NEUF (le cochage daté et signé par la base,
+# l'heure fermée au client, le point d'étape qui ne se retire pas, la lectrice et l'anonyme). 1232 + 4 = 1236, COMPTÉE.
+SCENARIOS_API=1236
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

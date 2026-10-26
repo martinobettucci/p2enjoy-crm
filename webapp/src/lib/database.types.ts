@@ -323,6 +323,90 @@ export type Database = {
           },
         ]
       }
+      card_checklist_items: {
+        Row: {
+          card_id: string
+          checked: boolean
+          checked_at: string | null
+          checked_by: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          placement_id: string | null
+          position: number
+          step_item_id: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          card_id: string
+          checked?: boolean
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          placement_id?: string | null
+          position?: number
+          step_item_id?: string | null
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          card_id?: string
+          checked?: boolean
+          checked_at?: string | null
+          checked_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          placement_id?: string | null
+          position?: number
+          step_item_id?: string | null
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_checklist_items_card_fkey"
+            columns: ["card_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_checklist_items_checked_by_fkey"
+            columns: ["checked_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_checklist_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_checklist_items_placement_id_fkey"
+            columns: ["placement_id"]
+            isOneToOne: false
+            referencedRelation: "card_placements"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_checklist_items_step_item_id_fkey"
+            columns: ["step_item_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_step_checklist_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       card_comment_mentions: {
         Row: {
           comment_id: string
@@ -3295,6 +3379,67 @@ export type Database = {
           },
         ]
       }
+      workflow_step_checklist_items: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          created_by: string | null
+          id: string
+          label: string
+          position: number
+          step_id: string
+          updated_at: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label: string
+          position?: number
+          step_id: string
+          updated_at?: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          label?: string
+          position?: number
+          step_id?: string
+          updated_at?: string
+          workflow_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_step_checklist_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_step_checklist_items_step_fkey"
+            columns: ["step_id", "workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id", "workflow_id"]
+          },
+          {
+            foreignKeyName: "workflow_step_checklist_items_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workflow_steps: {
         Row: {
           created_at: string
@@ -3363,6 +3508,39 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "workflows"
             referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
+      workflow_transition_required_checklist_items: {
+        Row: {
+          created_at: string
+          step_item_id: string
+          transition_id: string
+        }
+        Insert: {
+          created_at?: string
+          step_item_id: string
+          transition_id: string
+        }
+        Update: {
+          created_at?: string
+          step_item_id?: string
+          transition_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workflow_transition_required_checklist_items_step_item_id_fkey"
+            columns: ["step_item_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_step_checklist_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workflow_transition_required_checklist_items_transition_id_fkey"
+            columns: ["transition_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_transitions"
+            referencedColumns: ["id"]
           },
         ]
       }

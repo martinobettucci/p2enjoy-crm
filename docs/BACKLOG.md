@@ -12352,7 +12352,7 @@ Checklists d'une affaire et modèles de cards (`docs/SPEC-modeles-emails.md` §1
 modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklists seules, famille `affaires`.
 *Spécification validée le 2026-10-26* : `docs/SPEC-checklists.md` (décisions 748 et 749). Tranches :
 
-- [ ] **T1 — le modèle des checklists** : `workflow_step_checklist_items`, `card_checklist_items`,
+- [x] **T1 — le modèle des checklists** : `workflow_step_checklist_items`, `card_checklist_items`,
       `workflow_transition_required_checklist_items` ; RLS, privilèges de colonne, ajout à l'entrée dans l'étape, cochage
       posé par la base, événements du fil ; pgTAP, API, seed.
 - [ ] **T2 — l'exigence de transition** : `move_card` refuse `checklist_incomplete` ; pgTAP, API, bandeau du board.
