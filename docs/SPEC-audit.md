@@ -10,7 +10,8 @@ Contrat exécutable de `CRM-072` (`docs/BACKLOG.md`).
 - Contacts : `docs/SPEC-contacts.md`. Corbeille : `docs/SPEC-corbeille.md`.
 - Droits : `docs/SPEC-permissions-rls.md` §4 (ligne `audit_log`), preuve de refus n° 8.
 - Schéma : `docs/SCHEMA.md` §8 (ligne `audit_log`). Déploiement : `docs/PROD_MIGRATIONS.md`.
-- État : **proposée le 2026-10-26 (décision 725), en attente de validation.** Aucune ligne de code avant la validation.
+- État : **proposée le 2026-10-26 (décision 725), validée telle quelle le même jour (décision 726)**, avec la réponse à
+  R1 : option A, les messages restent intacts (§7.2, §12).
 
 ---
 
@@ -267,7 +268,8 @@ Il rend un objet versionné :
   `role_title` deviennent `null`, et la colonne nouvelle **`anonymized_at`** est posée. L'organisation (une entreprise,
   pas une personne), la source et les rattachements aux affaires restent : les statistiques et l'historique des
   affaires ne perdent rien, mais ne désignent plus personne.
-- **Effets sur les messages** : *à arbitrer par le responsable, voir §12, question R1.*
+- **Effets sur les messages : aucun** (décision 726, R1 option A). Les messages sont la correspondance de l'entreprise :
+  ils restent intacts, et l'adresse du contact y reste lisible. La limite est écrite au §13.
 - **Après** : un contact anonymisé ne se modifie plus. Le déclencheur `contacts_refuse_after_anonymization` refuse
   toute mise à jour (`P0001 contact_anonymized`), pour qu'aucune saisie ne le ré-identifie par mégarde. Il reste
   supprimable. Une seconde anonymisation est refusée (`P0001 contact_anonymized`).
@@ -331,9 +333,9 @@ démonstration. Il ajoute :
 | Unitaires | la phrase de chaque paire `entity_type` / `action` ; la lecture des filtres depuis l'adresse ; le nom du fichier d'export ; l'état des boutons RGPD |
 | E2E | le journal aux quatre paliers, ses filtres et sa pagination ; un geste fait à l'écran (retirer un accès) qui paraît dans le journal ; l'export téléchargé et relu ; l'anonymisation de bout en bout ; le refus pour un non-administrateur ; captures observées |
 
-## 12. Questions au responsable
+## 12. Questions au responsable — tranchées
 
-- **R1 — les messages d'un contact anonymisé.**
+- **R1 — les messages d'un contact anonymisé. Tranchée le 2026-10-26 (décision 726) : option A.**
   - *Option A* : les messages restent intacts. Ils sont la correspondance de l'entreprise, et l'adresse du contact y
     reste lisible. La limite est écrite.
   - *Option B, recommandée* : l'adresse du contact est remplacée par `anonymized@invalid` dans `from_address`,
@@ -347,7 +349,8 @@ démonstration. Il ajoute :
 - La déconnexion n'est pas journalisée (§4.4).
 - Une entrée qui nomme un collaborateur (acteur, membre retiré) garde son nom un an : c'est un journal de sécurité, et
   l'intérêt légitime de l'entreprise le justifie. Seuls les contacts en sont exclus (§7.3).
-- Selon R1, le corps des messages peut encore nommer un contact anonymisé.
+- Les messages d'un contact anonymisé restent intacts (R1, option A) : son adresse, son nom d'expéditeur et sa
+  signature y restent lisibles. L'export (§7.1) les rend, et l'anonymisation ne les touche pas.
 - Le journal n'est pas exportable : on le consulte à l'écran.
 
 ## 14. Production
@@ -365,4 +368,4 @@ démonstration. Il ajoute :
 |---|---|
 | **T1 — le journal en base** | `audit_log`, l'écrivain, l'immutabilité des trois journaux, les déclencheurs des §4.1 à §4.4, la purge et sa tâche, seed (familles hors export), pgTAP, API, compteurs |
 | **T2 — l'écran** | `docs/DESIGN_SYSTEM.md` d'abord, puis `/reglages/journal`, phrases, filtres, pagination, unitaires, E2E, captures, manuel |
-| **T3 — le volet RGPD** | `anonymized_at`, `export_contact`, `anonymize_contact` (avec la réponse à R1), le déclencheur de lecture seule, les deux gestes de la fiche, seed (« Régis Anonyme »), pgTAP, API, E2E, captures, manuel |
+| **T3 — le volet RGPD** | `anonymized_at`, `export_contact`, `anonymize_contact` (messages intacts, R1), le déclencheur de lecture seule, les deux gestes de la fiche, seed (« Régis Anonyme »), pgTAP, API, E2E, captures, manuel |

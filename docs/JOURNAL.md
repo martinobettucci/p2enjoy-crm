@@ -35043,3 +35043,14 @@ d'un contact sont réservés aux administrateurs, et le journal ne garde jamais 
 des messages d'un contact anonymisé (A : intacts ; B, recommandée : adresses remplacées, corps gardés ; C : B et les
 corps effacés). **Aucun code avant la validation.** Le numéro de migration se prend après synchronisation : `CRM-111`
 T2.3.3 réserve la `0114`.
+
+
+### décision 726 — `CRM-072` : la spécification validée telle quelle ; R1 option A ; pas de livraison
+
+*2026-10-26, réponses du responsable (question posée par `AskUserQuestion`, session interactive).*
+1. **`docs/SPEC-audit.md` est validée telle quelle** : « Validée, code-la ». L'ordre est T1 (le journal en base), puis
+   T2 (l'écran), puis T3 (le volet RGPD).
+2. **R1, option A** : l'anonymisation d'un contact **ne touche pas les messages**. Ils restent intacts, avec son
+   adresse et sa signature lisibles. La limite est écrite (`docs/SPEC-audit.md` §7.2, §13).
+3. **Livraison des migrations 106 à 113 : « Ne rien livrer encore »**. La décision 722 reste en vigueur, et aucune
+   fenêtre n'est ouverte.

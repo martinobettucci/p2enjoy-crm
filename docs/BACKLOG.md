@@ -12344,8 +12344,8 @@ un motif explicite.
 *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 09:38 UTC — état avant : [ ]*
 
 Arbitrée par la décision 708 (point 5) ; connecteur MCP : non (décision 707). **Spécification proposée le 2026-10-26
-(décision 725)** : `docs/SPEC-audit.md`, en attente de validation, avec une question ouverte (R1, les messages d'un
-contact anonymisé). Aucune ligne de code avant la validation.
+(décision 725), validée telle quelle le même jour (décision 726)** : `docs/SPEC-audit.md` ; R1 tranchée, option A (les
+messages d'un contact anonymisé restent intacts).
 
 - [ ] **T1 — le journal en base** (`docs/SPEC-audit.md` §3 à §6, §15) : `audit_log`, l'écrivain, l'ajout seul des trois
       journaux, les déclencheurs, la purge d'un an et sa tâche, seed, pgTAP, API.
