@@ -534,7 +534,7 @@ comme partout, à la reprise de session de la coquille (`docs/SPEC-session-sso.m
 **Non** (décision 736). Le manuel ne s'expose pas au connecteur ; la seconde question — la famille de la matrice — ne
 se pose donc pas.
 
-## 18. Choix de l'agent, à relire par le responsable
+## 18. Choix de l'agent — validés tels quels le 2026-10-26 (décision 750)
 
 1. L'identifiant d'un chapitre et d'une section se déduit de son titre (§10, point 7).
 2. Le chapitre est servi en blocs structurés, rendus par des composants, et non en HTML (§13.3).

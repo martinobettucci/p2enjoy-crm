@@ -35820,3 +35820,13 @@ de la décision 748. Le découpage est celui du §7 : **T1** le modèle des chec
 **T3** les écrans de la fiche, du board et de l'éditeur ; **T4** les modèles d'affaires ; **T5** le connecteur. Chaque
 tranche est prouvée, committée et poussée avant la suivante.
 
+
+### décision 750 — `CRM-117` : les six choix de la spécification sont validés tels quels
+
+*2026-10-26, réponse du responsable à la relecture de `docs/SPEC-manual.md` §18 : « go de ma part ».* Sont validés :
+l'identifiant d'un chapitre déduit de son titre ; le chapitre servi en blocs structurés et non en HTML ; le manuel
+construit versionné et vérifié contre sa source ; `marked` en dépendance de construction, sous réserve de la mesure
+du `CLAUDE.md` §19 ; la session jugée par `public.can_read_manual()` sans secret nouveau pour la fonction `manual` ;
+l'icône `BookOpen`. **Ordre d'exécution** : T2 commence par ce qui n'écrit pas dans la base de développement, que la
+session de `CRM-111` reconstruit pendant sa série de harnais ; la migration et les preuves sur la pile attendent son
+signal.
