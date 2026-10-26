@@ -731,7 +731,7 @@ ligne non lue des notifications (§5.43).*
 
 ### 5.4 sexies Copie cachée et pièces jointes dans le formulaire d'envoi — `CRM-058` tranche 2
 
-*Proposé le 2026-10-26 avec `docs/SPEC-mail-subsystem.md` §19 bis, soumis à validation (décision 719). Aucun jeton
+*Proposé le 2026-10-26 avec `docs/SPEC-mail-subsystem.md` §19 bis, validé le même jour (décision 720). Aucun jeton
 n'est ajouté.*
 
 - **« Ajouter Cci » est un lien discret sous le champ « Copie »**, qui révèle le champ « Cci » et prend le focus ; le

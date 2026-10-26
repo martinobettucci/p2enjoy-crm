@@ -1840,7 +1840,7 @@ et l'écran le dit plutôt que d'offrir une action qui échouerait.
 
 ## 19 bis. Copie cachée et pièces jointes à l'envoi — `CRM-058` tranche 2
 
-*Spécification proposée le 2026-10-26, avant tout code. Arbitrages déjà rendus : les **pièces jointes à l'envoi** et la
+*Spécification proposée le 2026-10-26, avant tout code, **validée telle quelle le même jour** (décision 720). Arbitrages déjà rendus : les **pièces jointes à l'envoi** et la
 **copie cachée** sont à livrer (décision 707, option B) ; **connecteur MCP** : la copie cachée seule, dans
 `crm_mail_send` (famille `messagerie`, action `ajouter`), **aucune pièce jointe** par le connecteur (décision 708, M2 B) —
 aucune case nouvelle dans la matrice. Les points marqués **[proposition]** sont soumis à la validation du responsable

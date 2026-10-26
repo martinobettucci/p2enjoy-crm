@@ -34786,3 +34786,11 @@ bloquant l'envoi ; l'archive dans `mail_attachments` avec le statut de l'analyse
 24 heures. Connecteur : `bcc` seul (décision 708). **Aucun code avant la validation.** Le numéro de migration est
 coordonné avec la session de `CRM-111` T2, dont la `0106` ne doit pas arriver en production après une migration plus
 récente (§3.1 : le runner refuse un fichier inséré dans le passé).
+
+### décision 720 — `CRM-058` tranche 2 : la spécification validée telle quelle
+
+*2026-10-26, réponse du responsable à la question posée par `AskUserQuestion` : « Validée, code-la ».* Toutes les
+propositions de la décision 719 sont retenues : la copie cachée dans l'enveloppe seule et lisible dans l'affaire ; les
+pièces prises sur l'ordinateur, 10 fichiers et 10 Mo ; le bucket privé vérifié en base ; l'antivirus du worker quand il
+est configuré ; l'archive dans `mail_attachments` ; la purge à 24 heures ; `bcc` seul dans le connecteur. Le code peut
+commencer.

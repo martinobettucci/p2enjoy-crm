@@ -7237,12 +7237,12 @@ quota et refus testés.
 #### Tranche 2 — copie cachée et pièces jointes à l'envoi `[ ]`
 
 *Spécification : `docs/SPEC-mail-subsystem.md` §19 bis, `docs/DESIGN_SYSTEM.md` §5.4 sexies — proposées le 2026-10-26,
-**en attente de validation** (décision 719). Connecteur MCP : la copie cachée seule, `bcc` dans `crm_mail_send`, famille
+**validées telles quelles par le responsable** le même jour (décision 720). Connecteur MCP : la copie cachée seule, `bcc` dans `crm_mail_send`, famille
 `messagerie`, action `ajouter` ; aucune pièce jointe ; aucune case nouvelle (décision 708, M2 B). Noms : `bcc_addrs`,
 `bcc_addresses`, `mail-outbound-attachments`, `attachment_not_available`, `too_many_attachments`,
 `attachments_too_large`, `attachment_infected`, `attachment_missing` (décision 658).*
 
-- [ ] **Spécification validée** par le responsable.
+- [x] **Spécification validée** par le responsable (décision 720).
 - [ ] **Migration** (numéro coordonné avec `CRM-111` T2), pgTAP, contrat de types, `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`.
 - [ ] **Worker** : pièces attachées, enveloppe avec la copie cachée, antivirus ; pytest.
 - [ ] **Écran** : Cci, pièces jointes, plafonds, refus ; Vitest, E2E `ui` et `mail`, captures observées.
