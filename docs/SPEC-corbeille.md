@@ -747,7 +747,8 @@ Le script **ne démarre ni n'arrête rien**, comme tous les autres harnais, et c
 
 ## 8. La rétention, l'effacement définitif et la corbeille personnelle — dixième tranche (décision 707)
 
-*Proposé le 2026-10-26 (décision 734), en attente de validation. Écrit avant toute ligne de code (`CLAUDE.md` §5), après
+*Proposé le 2026-10-26 (décision 734), **validé tel quel le même jour (décision 735)**, avec la réponse à Q1 : option B,
+les saisies de temps sont reportées (§8.3, §8.7). Écrit avant toute ligne de code (`CLAUDE.md` §5), après
 mesure de la pile. Il tranche le §6, sur les arbitrages du responsable du 2026-10-25.*
 
 **Les arbitrages (décision 707).** Rétention de **30 jours** ; à l'expiration, **effacement définitif automatique et
@@ -788,9 +789,12 @@ destruction de son track n'est plus là quand vient son tour. Pour chacun, dans 
 modification). Les réels de coûts et de recettes refusent un retrait sur une ligne soldée, mais leur ligne est déjà
 détruite quand la cascade les atteint ; la suite pgTAP le prouvera sur une ligne soldée.
 
-**Les saisies de temps** posent la seule question de produit restante : une saisie vise **exactement une** cible
-(`saisies_temps_cible_check`), et ses clés vers les affaires, les channels et les tracks sont en `CASCADE`. **Question
-Q1**, au §8.7.
+**Les saisies de temps sont reportées, jamais perdues avec leur cible** (Q1, option B, décision 735). Une saisie vise
+**exactement une** cible (`saisies_temps_cible_check`), et ses clés sont en `CASCADE`. Avant de détruire une **affaire**,
+la purge reporte ses saisies sur le **channel** de l'affaire ; avant de détruire un **channel**, sur son **track** — la
+saisie change de cible, garde son jour, ses minutes et sa personne, et son coût reste dans les rapports, sous le dossier
+parent. Seules les saisies d'un **track** détruit disparaissent, faute de parent. L'énumération du journal dit combien
+de saisies ont été reportées, et combien effacées.
 
 ### 8.4 La corbeille personnelle d'un membre — une règle de la base
 
@@ -829,7 +833,7 @@ en revanche la visibilité : Camille lit les trois objets en corbeille, la lectr
 
 ### 8.7 Question au responsable
 
-- **Q1 — les saisies de temps d'une affaire effacée définitivement.**
+- **Q1 — les saisies de temps d'une affaire effacée définitivement. Tranchée le 2026-10-26 (décision 735) : option B.**
   - *Option A* : elles sont effacées avec l'affaire. L'énumération du journal dit combien, et le coût du personnel des
     mois concernés baisse d'autant dans les rapports.
   - *Option B, recommandée* : avant l'effacement, la purge **reporte** chaque saisie sur le channel de l'affaire (et

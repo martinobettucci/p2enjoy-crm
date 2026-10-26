@@ -35362,3 +35362,12 @@ rétention en un seul endroit (`app.trash_retention()`) ; une purge nocturne qui
 l'administrateur et à l'auteur du retrait ; une colonne « Effacement » à l'écran. **Connecteur MCP** : aucun outil
 (décision 708). **Question ouverte Q1** : les saisies de temps d'une affaire effacée (A : effacées avec elle ; B,
 recommandée : reportées sur le channel, puis le track). **Aucun code avant la validation.**
+
+
+### décision 735 — `CRM-077` : la dixième tranche validée telle quelle ; Q1 option B
+
+*2026-10-26, réponses du responsable (question posée par `AskUserQuestion`, session interactive).*
+1. **`docs/SPEC-corbeille.md` §8 est validé tel quel** : « Validée, code-la ».
+2. **Q1, option B** : avant l'effacement définitif d'une affaire, la purge **reporte** ses saisies de temps sur le
+   channel de l'affaire ; celles d'un channel effacé, sur son track. Le temps et son coût restent dans les rapports.
+   Seules les saisies d'un track effacé disparaissent, faute de parent, et le journal le dit (§8.3).
