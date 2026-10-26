@@ -10470,7 +10470,8 @@ harnais propre à cette unité.
 
 **Harnais de l'unité rejoué SEUL le 2026-08-29** : `verify-recherche.sh` **54 contrôles, aucune anomalie**, là où la série lui donnait 1 anomalie — troisième fois que ce harnais démontre la leçon de contention.
 
-### CRM-066 — Analytique de conversion et prévisionnel pondéré `[~]`
+### CRM-066 — Analytique de conversion et prévisionnel pondéré `[@]`
+*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 05:16 UTC — état avant : [~]*
 ***Arbitré le 2026-10-25 (décision 708)** : la tranche 4 livre les **deux** scores — la dynamique (100 moins des pénalités affichées) et la santé commerciale (moyenne pondérée de quatre signaux) —, **affichés en couleurs** sur la carte du board et sur la fiche (sain ≥ 70, à surveiller 40 à 69, en danger < 40 ; palier écrit en toutes lettres), calculés à la lecture par une fonction en base ; connecteur MCP **oui**, famille `affaires`, dans `crm_card_get` et `crm_card_list`. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707, option B)** : la session propose deux compositions du score de santé, le responsable choisit ; la spécification suit, avec les deux questions du connecteur MCP.*
 
