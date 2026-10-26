@@ -4419,6 +4419,10 @@ export type Database = {
         }
         Returns: string
       }
+      reassign_trashed_track_cost: {
+        Args: { p_budget: string; p_cost: string; p_occurrence?: string }
+        Returns: undefined
+      }
       recette_saisissable: {
         Args: { ligne: Database["public"]["Tables"]["card_revenues"]["Row"] }
         Returns: boolean
@@ -4594,6 +4598,25 @@ export type Database = {
           montant: number
           profile_id: string
           track_id: string
+        }[]
+      }
+      trash_blocking_costs: {
+        Args: { p_track: string }
+        Returns: {
+          actual_cost: number
+          budget_closed: boolean
+          budget_id: string
+          budget_name: string
+          card_id: string
+          card_title: string
+          cost_id: string
+          currency: string
+          estimated_cost: number
+          label: string
+          occurrence_closed: boolean
+          occurrence_id: string
+          occurrence_label: string
+          settled: boolean
         }[]
       }
       trash_retention_days: { Args: never; Returns: number }

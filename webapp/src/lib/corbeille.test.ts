@@ -5,6 +5,9 @@
 // @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
 // @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.2 (la rétention lue en base, un
 //           contrat rompu rendu en erreur), §8.5 (la date d'effacement) ; décisions 734 et 735
+// @verifies CRM-077 (docs/BACKLOG.md), onzième tranche (INC-316) — docs/SPEC-corbeille.md §9.1 (les dépenses bloquantes
+//           lues par la base), §9.2 (la réaffectation et ses refus nommés), §9.3 (les budgets offerts : même devise, hors
+//           des tracks en corbeille) ; décisions 741 à 743
 //
 // Comme `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise et pas seulement la
 // valeur rendue : les trois règles de comptage du §3.5 sont portées par les filtres eux-mêmes, si
@@ -24,8 +27,14 @@ import {
 	classerRefusGeste,
 	classerRefusRestauration,
 	compterEnfantsInaccessibles,
+	COLONNES_BUDGET_CIBLE,
+	classerRefusReaffectation,
 	composerEnumeration,
 	dateEffacement,
+	filtrerBudgetsCibles,
+	lireBudgetsCibles,
+	lireDepensesBloquantes,
+	reaffecterDepense,
 	lireCorbeille,
 	lireRetentionCorbeille,
 	mettreCardALaCorbeille,
@@ -596,3 +605,130 @@ describe('dateEffacement (§8.5)', () => {
 		expect(dateEffacement('pas une date', 30)).toBeNull()
 	})
 })
+
+describe('les dépenses qui bloquent l’effacement d’un track (§9, INC-316)', () => {
+	const ligneBase = {
+		cost_id: 'l-1',
+		label: 'Salon',
+		estimated_cost: 300,
+		actual_cost: null,
+		settled: false,
+		card_id: 'k-1',
+		card_title: 'Formation Data & IA',
+		budget_id: 'b-1',
+		budget_name: 'Prospection sortante',
+		budget_closed: false,
+		currency: 'EUR',
+		occurrence_id: null,
+		occurrence_label: null,
+		occurrence_closed: null,
+	}
+	const rpc = (reponse: { data: unknown; error: { code?: string; message?: string } | null; status: number }) => {
+		const appels: { fonction: string; args: unknown }[] = []
+		const fake = {
+			rpc(fonction: string, args: unknown) {
+				appels.push({ fonction, args })
+				return Promise.resolve(reponse)
+			},
+		} as unknown as ClientCrm
+		return { fake, appels }
+	}
+
+	it('lit `trash_blocking_costs` du track et rend chaque dépense, une occurrence nulle restant nulle', async () => {
+		const { fake, appels } = rpc({ data: [ligneBase], error: null, status: 200 })
+		const lues = await lireDepensesBloquantes(fake, 't-1')
+		expect(appels).toEqual([{ fonction: 'trash_blocking_costs', args: { p_track: 't-1' } }])
+		expect(lues).toEqual({
+			statut: 'pret',
+			donnees: [
+				{
+					id: 'l-1',
+					libelle: 'Salon',
+					estime: 300,
+					idAffaire: 'k-1',
+					titreAffaire: 'Formation Data & IA',
+					idBudget: 'b-1',
+					nomBudget: 'Prospection sortante',
+					devise: 'EUR',
+					budgetClos: false,
+					idOccurrence: null,
+					libelleOccurrence: null,
+					occurrenceClose: false,
+				},
+			],
+		})
+	})
+
+	it('un refus de la base rend une erreur, jamais une liste vide qui ferait dire « rien ne bloque »', async () => {
+		const { fake } = rpc({ data: null, error: { code: '42501', message: 'reserved_to_admins' }, status: 403 })
+		expect((await lireDepensesBloquantes(fake, 't-1')).statut).toBe('erreur')
+	})
+
+	it('les budgets cibles : ouverts, avec leur track ; un budget sans track rendu n’est pas offert', async () => {
+		const appels: unknown[][] = []
+		const chaine: Record<string, unknown> = {}
+		for (const methode of ['select', 'is', 'order']) {
+			chaine[methode] = (...args: unknown[]) => {
+				appels.push([methode, ...args])
+				return chaine
+			}
+		}
+		chaine['then'] = (resoudre: (valeur: unknown) => unknown) =>
+			Promise.resolve({
+				data: [
+					{ id: 'b-1', name: 'Salons', currency: 'EUR', is_recurrent: false, track: { id: 't-2', name: 'Studio web' } },
+					{ id: 'b-2', name: 'Orphelin', currency: 'EUR', is_recurrent: false, track: null },
+				],
+				error: null,
+				status: 200,
+			}).then(resoudre)
+		const fake = { from: () => chaine } as unknown as ClientCrm
+		const lus = await lireBudgetsCibles(fake)
+		expect(appels[0]).toEqual(['select', COLONNES_BUDGET_CIBLE])
+		expect(appels).toContainEqual(['is', 'closed_at', null])
+		expect(lus).toEqual({
+			statut: 'pret',
+			donnees: [{ id: 'b-1', nom: 'Salons', devise: 'EUR', recurrent: false, idTrack: 't-2', nomTrack: 'Studio web' }],
+		})
+	})
+
+	it('n’offre que la même devise, hors des tracks en corbeille', () => {
+		const budgets = [
+			{ id: 'eur', nom: 'A', devise: 'EUR', recurrent: false, idTrack: 'vivant', nomTrack: 'V' },
+			{ id: 'chf', nom: 'B', devise: 'CHF', recurrent: false, idTrack: 'vivant', nomTrack: 'V' },
+			{ id: 'mort', nom: 'C', devise: 'EUR', recurrent: false, idTrack: 'corbeille', nomTrack: 'C' },
+		]
+		expect(filtrerBudgetsCibles(budgets, { devise: 'EUR' }, new Set(['corbeille'])).map((b) => b.id)).toEqual(['eur'])
+	})
+
+	it('nomme chaque refus par son exception, puis par son code, puis par son statut', () => {
+		const cas: [number | undefined, { code?: string; message?: string } | null, string][] = [
+			[403, { code: '42501', message: 'reserved_to_admins' }, 'reserve'],
+			[404, { code: 'P0002', message: 'cost_not_found' }, 'introuvable'],
+			[404, { code: 'P0002', message: 'budget_not_found' }, 'introuvable'],
+			[400, { code: 'P0001', message: 'cost_not_blocking' }, 'non-bloquante'],
+			[400, { code: '22023', message: 'same_track' }, 'meme-track'],
+			[400, { code: '22023', message: 'target_in_trash' }, 'track-en-corbeille'],
+			[400, { code: '22023', message: 'currency_mismatch' }, 'devise'],
+			[400, { code: '23514', message: 'ce budget est clôturé' }, 'regle'],
+			[409, { code: '23503', message: 'x' }, 'introuvable'],
+			[0, null, 'reseau'],
+			[500, { code: 'XX000', message: 'autre' }, 'inconnu'],
+		]
+		for (const [statut, erreur, attendu] of cas) {
+			expect(classerRefusReaffectation(statut, erreur), String(erreur?.message)).toBe(attendu)
+		}
+	})
+
+	it('réaffecte : l’occurrence n’est envoyée que si elle est choisie', async () => {
+		const sans = rpc({ data: null, error: null, status: 204 })
+		expect(await reaffecterDepense(sans.fake, 'l-1', 'b-2', null)).toEqual({ statut: 'appliquee' })
+		expect(sans.appels).toEqual([{ fonction: 'reassign_trashed_track_cost', args: { p_cost: 'l-1', p_budget: 'b-2' } }])
+		const avec = rpc({ data: null, error: null, status: 204 })
+		await reaffecterDepense(avec.fake, 'l-1', 'b-3', 'o-1')
+		expect(avec.appels[0]?.args).toEqual({ p_cost: 'l-1', p_budget: 'b-3', p_occurrence: 'o-1' })
+		const refus = rpc({ data: null, error: { code: '22023', message: 'currency_mismatch' }, status: 400 })
+		expect(await reaffecterDepense(refus.fake, 'l-1', 'b-4', null)).toEqual({ statut: 'refus', nature: 'devise' })
+	})
+})
+

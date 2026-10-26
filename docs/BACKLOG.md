@@ -13292,10 +13292,13 @@ personnelle** (`docs/SPEC-corbeille.md` §8 ; décisions 707, 734, 735 et 737). 
 - [ ] **INC-316**, arbitrage du responsable : un track dont un budget porte la dépense d'une affaire d'un autre track
       reste en corbeille au-delà de sa date.
 
-- [@] **Onzième tranche — INC-316 : réaffecter les dépenses avant l'effacement d'un track** (décision 741). Le croisement
-      d'une ligne de coût et du budget d'un autre track reste permis ; un écran propose de choisir où réaffecter ces
-      dépenses avant l'effacement. À spécifier.
-      *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 17:46 UTC — état avant : [ ]*
+- [x] **Onzième tranche — INC-316 : réaffecter les dépenses avant l'effacement d'un track** (décisions 741 à 743, 744 ;
+      `docs/SPEC-corbeille.md` §9). Le croisement d'une ligne de coût et du budget d'un autre track reste permis. La
+      corbeille dit « Bloqué » sur un tel track et propose à l'administrateur « Réaffecter les dépenses » : un panneau
+      en ligne de tableau, une cible par dépense (budget ouvert de la même devise, hors des tracks en corbeille), et
+      « Rouvrir le budget » pour une dépense sur un budget clôturé — le point (d) reste entier. Migration `0123` (deux
+      fonctions), pgTAP `0115` (**22**), API `E8`, UI (2 scénarios, captures à 1440 et 390 px observées), unitaires
+      (+11) ; `scripts/verify-corbeille.sh` **50/50**. Connecteur : déjà couvert par `crm_card_cost_update`.
 
 **L'unité passe `[P]`** : tout est implémenté et vérifié en développement ; il reste la livraison de la `0120` sur
 instruction du responsable — après le compte, validé par lui, de ce que la première nuit effacera — et son constat en

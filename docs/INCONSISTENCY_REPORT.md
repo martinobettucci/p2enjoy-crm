@@ -8099,4 +8099,6 @@ règle écrite** : `docs/SPEC-costs.md` §3.1 prévoit qu'une affaire et un budg
 démontre (ligne `…e4`, 1 sur 5 en développement), au service de l'écran « Coûts à saisir ». Les rattachements de
 `CRM-111` rendent aussi « le track de l'affaire » ambigu. Comportement laissé inchangé ; **arbitrage redemandé**.
 **Tranchée le 2026-10-26 (décision 741)** : le croisement reste permis ; un écran propose de choisir où réaffecter les
-dépenses concernées avant l'effacement. **Statut : tranchée, à spécifier** (tranche de `CRM-077`).
+dépenses concernées avant l'effacement. **Résolue le 2026-10-26** par la onzième tranche de `CRM-077`
+(`docs/SPEC-corbeille.md` §9, décisions 742 et 743, migration `0123`) : la corbeille dit « Bloqué » et propose de
+réaffecter chaque dépense à un budget ouvert de la même devise ; le point (d) des coûts reste entier. **Statut : résolue.**

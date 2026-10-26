@@ -1726,6 +1726,11 @@ le 2026-10-26 avant le code, après relecture intégrale de ce document ; décis
   (§5.7 ter). **Quand plus rien ne bloque**, le panneau se referme, la phrase « Plus aucune dépense ne bloque
   l'effacement de « … » : il sera effacé à sa date. » paraît dans la mention de succès de l'écran, et le focus revient à
   « Restaurer » de la ligne, la commande de réaffectation ayant disparu (§5.13).
+- **LE TEXTE MASQUÉ DE LA PILULE EST ANCRÉ À SA CELLULE (`relative`) — défaut trouvé par la preuve de palier à 390 px.**
+  Un `sr-only` est positionné en absolu : sans ancêtre positionné dans le conteneur qui défile, il s'en échappait et
+  faisait défiler la PAGE de 245 px, alors que le tableau, lui, défilait bien dans son conteneur (§7, §12.6). La règle
+  vaut pour tout texte masqué posé dans une cellule d'un tableau défilant.
+- **« Fermer »**, bouton secondaire compact en pied du panneau, double `Échap` à la souris.
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `Wallet`.**
 
 ### 5.17 Guide de démarrage — `CRM-079`

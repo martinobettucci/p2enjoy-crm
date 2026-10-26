@@ -3354,6 +3354,15 @@ d'abord, puis les channels, puis les affaires. **Ce qui est effacé ne se restau
   effacé disparaît, faute de parent.
 - **Chaque effacement est inscrit au journal d'audit** (chapitre 10 *ter*), avec ce qu'il a emporté
   et ce qu'il a reporté, sans auteur : c'est le produit qui efface, pas une personne.
+- **Un track peut rester bloqué.** Une affaire d'un autre track peut avoir imputé une dépense à l'un
+  de ses budgets : effacer le track détruirait ce budget, et la dépense avec. Le produit ne le fait
+  pas. La ligne du track porte alors la mention **« Bloqué »** dans la colonne « Effacement », et un
+  administrateur dispose du bouton **« Réaffecter les dépenses »**. Il ouvre, sous la ligne, la liste
+  de ces dépenses : pour chacune, choisissez le **budget cible** — un budget ouvert d'un autre track,
+  de la même devise — et, pour un budget récurrent, son **occurrence**, puis **« Réaffecter »**. Une
+  dépense rattachée à un budget clôturé se réaffecte après sa réouverture : le bouton **« Rouvrir le
+  budget »** est proposé à sa place. Quand plus rien ne bloque, l'écran le dit, et le track sera
+  effacé à sa date.
 
 ### 5 ter.4 Ce qui n'est pas encore là
 

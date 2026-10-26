@@ -9,6 +9,9 @@
 // @spec CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.1 (la date posée par le
 //       serveur), §8.2 (la rétention lue en base, jamais recopiée), §8.5 (la date d'effacement) ;
 //       décisions 734 et 735
+// @spec CRM-077 (docs/BACKLOG.md), onzième tranche (INC-316) — docs/SPEC-corbeille.md §9.1 (les dépenses
+//       bloquantes, lues par la base), §9.2 (la réaffectation et ses refus nommés), §9.3 (les budgets cibles) ;
+//       décisions 741 à 743
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
@@ -571,3 +574,201 @@ export async function mettreCardALaCorbeille(
 		}
 	}
 }
+
+// ---------------------------------------------------------------------------------------------
+// Les dépenses qui bloquent l'effacement d'un track — §9 (INC-316)
+// ---------------------------------------------------------------------------------------------
+//
+// LA DÉFINITION D'UNE DÉPENSE BLOQUANTE VIT EN BASE, une seule fois (`public.trash_blocking_costs`) : elle suit
+// exactement ce que la purge détruit, et la recopier ici en ferait une seconde, qui divergerait au premier changement.
+
+/** Une ligne de coût d'une autre affaire, imputée à un budget du track en corbeille (§9.1). */
+export type DepenseBloquante = {
+	readonly id: string
+	readonly libelle: string
+	readonly estime: number
+	readonly idAffaire: string
+	readonly titreAffaire: string
+	readonly idBudget: string
+	readonly nomBudget: string
+	readonly devise: string
+	readonly budgetClos: boolean
+	readonly idOccurrence: string | null
+	readonly libelleOccurrence: string | null
+	readonly occurrenceClose: boolean
+}
+
+/**
+ * Les dépenses qui bloquent l'effacement d'un track en corbeille, dans l'ordre du serveur.
+ *
+ * Réservée à l'administrateur par la base (`42501`) : un refus rend une ERREUR, et l'écran retire alors la seule
+ * mention « Bloqué » — il ne devine jamais un état qu'il n'a pas lu (`docs/DESIGN_SYSTEM.md` §5.16).
+ */
+export async function lireDepensesBloquantes(
+	client: ClientCrm,
+	idTrack: string,
+): Promise<EtatAsync<readonly DepenseBloquante[]>> {
+	try {
+		const reponse = await client.rpc('trash_blocking_costs', { p_track: idTrack })
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		return pret(
+			(reponse.data ?? []).map((ligne) => ({
+				id: ligne.cost_id,
+				libelle: ligne.label,
+				estime: ligne.estimated_cost,
+				idAffaire: ligne.card_id,
+				titreAffaire: ligne.card_title,
+				idBudget: ligne.budget_id,
+				nomBudget: ligne.budget_name,
+				devise: ligne.currency,
+				budgetClos: ligne.budget_closed,
+				idOccurrence: ligne.occurrence_id ?? null,
+				libelleOccurrence: ligne.occurrence_label ?? null,
+				occurrenceClose: ligne.occurrence_closed ?? false,
+			})),
+		)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Un budget ouvert vers lequel une dépense peut être réaffectée (§9.3). */
+export type BudgetCible = {
+	readonly id: string
+	readonly nom: string
+	readonly devise: string
+	readonly recurrent: boolean
+	readonly idTrack: string
+	readonly nomTrack: string
+}
+
+/** Colonnes réellement demandées. Exportées pour que les tests vérifient la requête émise. */
+export const COLONNES_BUDGET_CIBLE = 'id, name, currency, is_recurrent, track:tracks(id, name)'
+
+/**
+ * Les budgets OUVERTS de l'espace, lisibles par l'appelant, avec leur track.
+ *
+ * La lecture ne filtre ni la devise ni les tracks en corbeille : le choix dépend de la dépense, et l'écran le fait avec
+ * ce qu'il a déjà lu (`filtrerBudgetsCibles`). La base refuse de toute façon une cible interdite (§9.2).
+ */
+export async function lireBudgetsCibles(client: ClientCrm): Promise<EtatAsync<readonly BudgetCible[]>> {
+	try {
+		const reponse = await client
+			.from('budgets')
+			.select(COLONNES_BUDGET_CIBLE)
+			.is('closed_at', null)
+			.order('position')
+			.order('name')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const budgets: BudgetCible[] = []
+		for (const ligne of reponse.data as unknown as readonly {
+			id: string
+			name: string
+			currency: string
+			is_recurrent: boolean
+			track: { id: string; name: string } | null
+		}[]) {
+			// Un budget dont le track n'est pas rendu n'a pas de groupe où se ranger : il n'est pas offert.
+			if (ligne.track === null) continue
+			budgets.push({
+				id: ligne.id,
+				nom: ligne.name,
+				devise: ligne.currency,
+				recurrent: ligne.is_recurrent,
+				idTrack: ligne.track.id,
+				nomTrack: ligne.track.name,
+			})
+		}
+		return pret(budgets)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/**
+ * Les budgets offerts pour une dépense : même devise, hors du track à effacer et de tout track en corbeille (§9.3).
+ * Ce n'est pas un droit calculé : c'est le refus d'une cible que la base refuserait (`docs/DESIGN_SYSTEM.md` §5.21).
+ */
+export function filtrerBudgetsCibles(
+	budgets: readonly BudgetCible[],
+	depense: Pick<DepenseBloquante, 'devise'>,
+	tracksEnCorbeille: ReadonlySet<string>,
+): readonly BudgetCible[] {
+	return budgets.filter((budget) => budget.devise === depense.devise && !tracksEnCorbeille.has(budget.idTrack))
+}
+
+/**
+ * Les refus d'une réaffectation, un par cause que la base nomme (§9.2), dans son ordre.
+ *
+ * `regle` porte le `23514` des règles des coûts : un budget ou une occurrence clôturés — le point (d), intact
+ * (décision 743) —, ou une occurrence manquante ou étrangère. L'écran le traduit par la règle, jamais par le message.
+ */
+export type NatureRefusReaffectation =
+	| 'reserve'
+	| 'introuvable'
+	| 'non-bloquante'
+	| 'meme-track'
+	| 'track-en-corbeille'
+	| 'devise'
+	| 'regle'
+	| 'reseau'
+	| 'inconnu'
+
+/** Les noms d'exception de `0123`, tels qu'ils sont écrits dans la migration et vérifiés par pgTAP `0115`. */
+const EXCEPTIONS_REAFFECTATION: Readonly<Record<string, NatureRefusReaffectation>> = {
+	reserved_to_admins: 'reserve',
+	cost_not_found: 'introuvable',
+	budget_not_found: 'introuvable',
+	cost_not_blocking: 'non-bloquante',
+	same_track: 'meme-track',
+	target_in_trash: 'track-en-corbeille',
+	currency_mismatch: 'devise',
+}
+
+/** Classe un refus sur le NOM de l'exception d'abord, le code PostgreSQL ensuite, le statut HTTP enfin. */
+export function classerRefusReaffectation(
+	statutHttp: number | undefined,
+	erreur: { readonly code?: string; readonly message?: string } | null,
+): NatureRefusReaffectation {
+	const nommee = erreur?.message === undefined ? undefined : EXCEPTIONS_REAFFECTATION[erreur.message]
+	if (nommee !== undefined) return nommee
+	if (erreur?.code === '23514') return 'regle'
+	if (erreur?.code === '23503') return 'introuvable'
+	if (statutHttp === 401 || statutHttp === 403) return 'reserve'
+	if (statutHttp === undefined || statutHttp === 0) return 'reseau'
+	return 'inconnu'
+}
+
+export type ResultatReaffectation =
+	| { readonly statut: 'appliquee' }
+	| { readonly statut: 'refus'; readonly nature: NatureRefusReaffectation }
+
+/**
+ * Réaffecte une dépense bloquante à un budget ouvert (§9.2). La fonction rend `204` sans corps : l'issue se constate
+ * en RELISANT les dépenses bloquantes, ce que l'écran fait après chaque geste.
+ */
+export async function reaffecterDepense(
+	client: ClientCrm,
+	idLigne: string,
+	idBudget: string,
+	idOccurrence: string | null,
+): Promise<ResultatReaffectation> {
+	try {
+		const reponse = await client.rpc('reassign_trashed_track_cost', {
+			p_cost: idLigne,
+			p_budget: idBudget,
+			...(idOccurrence === null ? {} : { p_occurrence: idOccurrence }),
+		})
+		if (reponse.error !== null) {
+			return { statut: 'refus', nature: classerRefusReaffectation(reponse.status, reponse.error) }
+		}
+		return { statut: 'appliquee' }
+	} catch {
+		return { statut: 'refus', nature: 'reseau' }
+	}
+}
+

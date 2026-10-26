@@ -35667,3 +35667,17 @@ des budgets, qui ne liste pas ce track : le panneau de réaffectation offre donc
 l'occurrence) sur une dépense dont le rattachement est clôturé — le geste existant de `CRM-084` (`PATCH closed_at = null`,
 administrateur), sans règle nouvelle. Le déclencheur n'est pas révisé ; la migration ne porte que les deux fonctions.
 
+### décision 744 — `CRM-077` onzième tranche livrée en développement : INC-316 résolue
+
+*2026-10-26, session interactive.* `docs/SPEC-corbeille.md` §9 est livré : migration `0123` (deux fonctions,
+`trash_blocking_costs` et `reassign_trashed_track_cost`), la pilule « Bloqué » et le panneau « Réaffecter les dépenses »
+de la corbeille, le chapitre 5 *ter* du manuel. **Précision écrite avant le code** : la cible garde la devise du budget
+quitté (`currency_mismatch`) — une ligne de coût n'a pas de devise propre. **Défaut trouvé par la preuve de palier** : à
+390 px, le texte masqué de la pilule s'échappait du tableau défilant et faisait défiler la page ; il est ancré à sa
+cellule (`docs/DESIGN_SYSTEM.md` §5.16). **Preuves** : pgTAP **105 fichiers, 4321 assertions** ; API **1231/1232** (le rouge
+est `ingestion.spec.ts:91`, `CRM-058`, antérieur) ; interface **820/835** sur 82 fichiers — les quinze rouges sont le fil
+et les commentaires de la fiche d'affaire (`commentaires`, `manuel:229`, `connexion:345`), en cours de conversion aux
+rattachements par la session de `CRM-111` T2.4.1, qui a demandé d'exclure ces écrans et en est prévenue ; la corbeille
+**27/27** ; unitaires de la corbeille **65/65** ; `verify-corbeille.sh` **50/50**. **Livraison** : aucune (décision 739).
+INC-316 passe « résolue ». `CRM-077` reste `[P]`.
+

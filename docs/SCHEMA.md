@@ -2316,6 +2316,24 @@ public.trash_retention_days(), app.trash_retention()` ; réappliquer `app.corbei
 `channels_lecture_membre` de la `0010`, `tracks_lecture_membre` de la `0034`), avec la webapp d'avant. **Ce qui a été purgé ne se
 restaure pas.**
 
+### Migration `0123` — réaffecter les dépenses qui bloquent l'effacement d'un track (`CRM-077` onzième tranche, INC-316, décisions 741 à 743 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-corbeille.md` §9.
+
+- **`public.trash_blocking_costs(p_track uuid)`** rend les lignes de `card_costs` dont le budget appartient au track en
+  corbeille et dont l'affaire n'est pas détruite avec lui (`cards.channel_id` hors des channels du track) : ligne,
+  affaire, budget et occurrence avec leur état de clôture, devise. Zéro ligne pour un track vivant.
+- **`public.reassign_trashed_track_cost(p_cost uuid, p_budget uuid, p_occurrence uuid default null)`** : refus dans
+  l'ordre `P0002 cost_not_found`, `42501 reserved_to_admins`, `P0001 cost_not_blocking`, `P0002 budget_not_found`,
+  `22023 same_track`, `22023 target_in_trash`, `22023 currency_mismatch`, puis les règles des coûts inchangées (`23514`,
+  point (d) intact, décision 743).
+- Les deux `SECURITY DEFINER`, `EXECUTE` à `authenticated` seul ; appui fermé `app.trash_track_guard(uuid)`. **Aucune
+  table, aucun déclencheur, aucune politique touchés.**
+
+**Retrait** : `drop function public.reassign_trashed_track_cost(uuid, uuid, uuid), public.trash_blocking_costs(uuid),
+app.trash_track_guard(uuid)`, avec la webapp d'avant. Aucune donnée n'est à reprendre : une ligne réaffectée garde son
+nouveau budget.
+
 ### Migration `0121` — les valeurs de bloc appartiennent au rattachement (`CRM-111` T2.3.6, décision 705 ; livrée en développement le 2026-10-26)
 
 `docs/SPEC-rattachements.md` §3.3, §4. `card_field_values.placement_id` `NOT NULL` (la contrainte d'attente

@@ -1085,6 +1085,10 @@ type _vueDerivationColonnes = Expect<
 // `0120` de `CRM-077` DIXIÈME TRANCHE ajoute `trash_retention_days` — la rétention de la corbeille en jours, lue par
 // l'écran pour dater l'effacement (docs/SPEC-corbeille.md §8.2). CE QUI ÉCHAPPE AU GÉNÉRATEUR : le nombre vient de
 // `app.trash_retention()`, unique endroit où la durée est écrite ; l'anonyme ne peut pas l'appeler.
+// `0123` de `CRM-077` ONZIÈME TRANCHE ajoute `trash_blocking_costs` et `reassign_trashed_track_cost` — les dépenses qui
+// bloquent l'effacement d'un track en corbeille, et leur réaffectation (docs/SPEC-corbeille.md §9). CE QUI ÉCHAPPE AU
+// GÉNÉRATEUR : les deux sont réservées à l'administrateur (`42501`), un track ou une ligne hors de l'espace rend `P0002`,
+// et la réaffectation porte six refus nommés avant les règles des coûts (`23514`).
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1160,6 +1164,8 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'export_contact'
     | 'anonymize_contact'
     | 'trash_retention_days'
+    | 'trash_blocking_costs'
+    | 'reassign_trashed_track_cost'
     | 'mark_message_unread'
     | 'is_read'
     | 'messages_a_ranger'

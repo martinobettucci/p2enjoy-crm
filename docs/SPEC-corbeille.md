@@ -648,13 +648,13 @@ celles qui existent et refuse de rendre vert quand l'une d'elles a cessé de mes
 
 | # | Preuve | Fichiers | Attendu MESURÉ, figé |
 |---|---|---|---|
-| 1 | Traçabilité | les 6 fichiers de code et les 8 fichiers de preuve de l'unité (la migration `0120` et la suite `0114` depuis la dixième tranche) | chacun porte `@spec` ou `@verifies CRM-077` dans son en-tête |
-| 2 | Captures (`CLAUDE.md` §16) | `docs/captures/CRM-077/` | les quatre paliers de l'écran, les quatre de la confirmation d'un track, les quatre de celle d'une affaire, l'**état vide**, les deux états dédiés du geste d'une affaire, et les trois captures de la rétention — administratrice, lectrice, business developer (dixième tranche) |
-| 3 | pgTAP | `0035_corbeille.test.sql`, `0036_corbeille_restauration.test.sql`, `0114_corbeille_retention.test.sql` | **3 fichiers, 57 assertions** — 2 et 20 jusqu'à la dixième tranche (2026-10-26) |
-| 4 | Vitest — modèle et écran | `corbeille.test.ts`, `Corbeille.test.tsx` | **2 fichiers, 54 tests** — 44 jusqu'à la dixième tranche (2026-10-26) ; 39 jusqu'à `1c42e16` (`CRM-001`, INC-299, décision 700), constaté le 2026-10-25 (décision 704) |
+| 1 | Traçabilité | les 8 fichiers de code et les 9 fichiers de preuve de l'unité (la migration `0120` et la suite `0114` depuis la dixième tranche ; la migration `0123`, le panneau et la suite `0115` depuis la onzième) | chacun porte `@spec` ou `@verifies CRM-077` dans son en-tête |
+| 2 | Captures (`CLAUDE.md` §16) | `docs/captures/CRM-077/` | les quatre paliers de l'écran, les quatre de la confirmation d'un track, les quatre de celle d'une affaire, l'**état vide**, les deux états dédiés du geste d'une affaire, et les trois captures de la rétention — administratrice, lectrice, business developer (dixième tranche) —, et les trois de la réaffectation (onzième tranche) |
+| 3 | pgTAP | `0035_corbeille.test.sql`, `0036_corbeille_restauration.test.sql`, `0114_corbeille_retention.test.sql` | **4 fichiers, 79 assertions** — `0115_reaffecter_depenses_corbeille.test.sql` depuis la onzième tranche ; 3 et 57 jusqu'à elle, 2 et 20 jusqu'à la dixième (2026-10-26) |
+| 4 | Vitest — modèle et écran | `corbeille.test.ts`, `Corbeille.test.tsx` | **2 fichiers, 65 tests** — 54 jusqu'à la onzième tranche, 44 jusqu'à la dixième (2026-10-26) ; 39 jusqu'à `1c42e16` (`CRM-001`, INC-299, décision 700), constaté le 2026-10-25 (décision 704) |
 | 5 | Vitest — le geste sur la route de détail | `RouteCard.test.tsx` | **1 fichier, 8 tests** — 7 jusqu'à `9f83599` (`CRM-114` T3), constaté le 2026-10-25 (décision 704) |
-| 6 | API, jetons réels | `e2e/api/corbeille.spec.ts` | **26 scénarios** — 22 jusqu'à la dixième tranche |
-| 7 | UI, clavier et souris, console stricte | `e2e/ui/corbeille.spec.ts` | **25 scénarios** — 24 jusqu'à la dixième tranche |
+| 6 | API, jetons réels | `e2e/api/corbeille.spec.ts` | **27 scénarios** — 26 jusqu'à la onzième tranche, 22 jusqu'à la dixième |
+| 7 | UI, clavier et souris, console stricte | `e2e/ui/corbeille.spec.ts` | **27 scénarios** — 25 jusqu'à la onzième tranche, 24 jusqu'à la dixième |
 
 **Les deux compteurs sont figés, pas seulement l'un des deux** — fichiers ET assertions pour pgTAP,
 fichiers ET tests pour Vitest. C'est la décision 279 : vérifier les seules assertions ne détecte pas

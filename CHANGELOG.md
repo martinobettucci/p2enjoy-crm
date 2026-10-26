@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-077` onzième tranche — débloquer l'effacement d'un track
+
+- **Un track dont un budget porte la dépense d'une affaire d'un autre track n'est pas effacé** : le produit ne détruit
+  pas cette dépense. La corbeille le dit (« Bloqué ») et propose aux administrateurs **« Réaffecter les dépenses »** :
+  pour chaque dépense, un budget ouvert d'un autre track, de la même devise. Une dépense sur un budget clôturé se
+  réaffecte après sa réouverture, proposée sur place.
+- **Migration `0123`** ; aucune donnée existante ne change.
+
 ### `CRM-077` dixième tranche — la corbeille se vide seule au bout de 30 jours
 
 - **Un objet reste 30 jours dans la corbeille, puis il est effacé définitivement**, chaque nuit, avec ce qu'il contient.

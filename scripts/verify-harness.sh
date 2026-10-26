@@ -614,7 +614,9 @@ PORT_RAPPORT=9323
 # **+1 par `CRM-072` T3, 2026-10-26** : `0113_rgpd_contact.test.sql`, fichier NEUF. 102 + 1 = 103, MESURÉ.
 # **+1 par `CRM-077` dixième tranche, 2026-10-26** : `0114_corbeille_retention.test.sql`, fichier NEUF. 103 + 1 = 104,
 # MESURÉ — « 104 fichiers ».
-FICHIERS_SQL_ATTENDUS=104
+# **+1 par `CRM-077` onzième tranche, 2026-10-26** : `0115_reaffecter_depenses_corbeille.test.sql`, fichier NEUF. 104 + 1 =
+# 105, MESURÉ.
+FICHIERS_SQL_ATTENDUS=105
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -751,7 +753,9 @@ FICHIERS_SQL_ATTENDUS=104
 # **+37 par `CRM-077` dixième tranche, 2026-10-26** : `0114_corbeille_retention` **37** assertions (horodatage serveur,
 # rétention, corbeille personnelle, purge ordonnée, énumérée et journalisée, saisies reportées, INC-316) ; `0035` et
 # `0086` RÉVISÉES sans changer de plan (décision 51). 4262 + 37 = 4299, MESURÉ — « 104 fichiers, 4299 assertions ».
-ASSERTIONS_ATTENDUES=4299
+# **+22 par `CRM-077` onzième tranche, 2026-10-26** : `0115_reaffecter_depenses_corbeille` **22** assertions (les dépenses
+# bloquantes, les six refus nommés, le point (d) intact, la purge débloquée). 4299 + 22 = 4321, MESURÉ.
+ASSERTIONS_ATTENDUES=4321
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1155,7 +1159,9 @@ ASSERTIONS_ATTENDUES=4299
 # **+4 par `CRM-077` dixième tranche, 2026-10-26** : `e2e/api/corbeille.spec.ts` gagne `E7` (la date du serveur, la
 # rétention lue et refusée à l'anonyme, la lectrice qui ne lit plus la corbeille d'autrui, le business developer qui lit
 # ce qu'il a retiré) ; `channels`, `tracks` et `droits-interface` RÉVISÉES à compte égal. 1227 + 4 = 1231, valeur COMPTÉE.
-SCENARIOS_API=1231
+# **+1 par `CRM-077` onzième tranche, 2026-10-26** : `E8` de `e2e/api/corbeille.spec.ts` (les refus de la lectrice et du
+# business developer, la devise, la réaffectation relue en base). 1231 + 1 = 1232, valeur COMPTÉE.
+SCENARIOS_API=1232
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1667,7 +1673,9 @@ SCENARIOS_API=1231
 # **+1 par `CRM-077` dixième tranche, 2026-10-26** : `e2e/ui/corbeille.spec.ts` gagne le business developer qui voit
 # l'affaire qu'il a retirée ; la lectrice RÉVISÉE à compte égal (l'état vide et les deux phrases). 961 + 1 = 962, valeur
 # COMPTÉE — « 962 passed ».
-SCENARIOS_UI=962
+# **+2 par `CRM-077` onzième tranche, 2026-10-26** : la réaffectation au clavier constatée en base, et le cadre du panneau à
+# 390 px avec Échap. 962 + 2 = 964, valeur COMPTÉE.
+SCENARIOS_UI=964
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

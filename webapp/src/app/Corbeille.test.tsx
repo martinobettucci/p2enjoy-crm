@@ -14,6 +14,10 @@
 // @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.5 (la phrase de la règle, le
 //           nombre lu en base ; la seconde phrase pour qui n'administre pas ; la colonne « Effacement », « Inconnue »
 //           sans rétention lue), §8.2 ; docs/DESIGN_SYSTEM.md §5.16 ; décisions 734 et 735
+// @verifies CRM-077 (docs/BACKLOG.md), onzième tranche (INC-316) — docs/SPEC-corbeille.md §9.3 (la pilule « Bloqué »
+//           et son nom accessible, « Réaffecter les dépenses », le panneau : cibles de même devise hors des tracks en
+//           corbeille, « Réaffecter » éteint tant que rien n'est choisi, la relecture, « Rouvrir le budget », Échap et le
+//           focus rendu) ; docs/DESIGN_SYSTEM.md §5.16, §5.27, §5.59 ; décisions 741 à 743
 //
 // Ces preuves montent le VRAI écran avec un client factice, comme `EtatMessagerie.test.tsx`. Le
 // parcours connecté sur la vraie base relève de `e2e/ui/corbeille.spec.ts`.
@@ -522,3 +526,145 @@ describe('Corbeille — la rétention et la corbeille personnelle (CRM-077, dixi
 		expect(screen.queryByTestId('corbeille-personnelle')).toBeNull()
 	})
 })
+
+describe('Corbeille — les dépenses qui bloquent l’effacement d’un track (§9, INC-316)', () => {
+	const depense = (id: string, budgetClos = false) => ({
+		cost_id: id,
+		label: `Ligne ${id}`,
+		estimated_cost: 300,
+		actual_cost: null,
+		settled: false,
+		card_id: 'k-1',
+		card_title: 'Formation Data & IA',
+		budget_id: budgetClos ? 'b-clos' : 'b-1',
+		budget_name: budgetClos ? 'Budget clos' : 'Prospection sortante',
+		budget_closed: budgetClos,
+		currency: 'EUR',
+		occurrence_id: null,
+		occurrence_label: null,
+		occurrence_closed: null,
+	})
+	const BUDGETS = [
+		{ id: 'b-eur', name: 'Salons', currency: 'EUR', is_recurrent: false, track: { id: 't-vivant', name: 'Studio web' } },
+		{ id: 'b-chf', name: 'Salons CH', currency: 'CHF', is_recurrent: false, track: { id: 't-vivant', name: 'Studio web' } },
+		{ id: 'b-mort', name: 'Ancien', currency: 'EUR', is_recurrent: false, track: { id: 't-25', name: 'Legacy 2023' } },
+	]
+
+	function clientReaffectation(lectures: Readonly<Record<string, unknown[]>>, sequence: readonly unknown[][]) {
+		const base = client({
+			lectures: {
+				tracks: { data: [TRACK], error: null, status: 200 },
+				...Object.fromEntries(Object.entries(lectures).map(([table, data]) => [table, { data, error: null, status: 200 }])),
+			} as Readonly<Record<string, Reponse>>,
+			enumerations: [VIDE, VIDE, VIDE],
+		}) as unknown as { from: (table: string) => unknown }
+		let rang = 0
+		const rpc: [string, unknown][] = []
+		const ecritures: [string, unknown][] = []
+		const chaineBudgets = () => {
+			const chaine: Record<string, unknown> = {}
+			for (const methode of ['select', 'is', 'order', 'eq']) chaine[methode] = () => chaine
+			chaine['update'] = (valeurs: unknown) => {
+				ecritures.push(['budgets', valeurs])
+				const ecriture: Record<string, unknown> = {}
+				ecriture['eq'] = () => ecriture
+				ecriture['select'] = () => ecriture
+				ecriture['then'] = (resoudre: (v: unknown) => unknown) =>
+					Promise.resolve({ data: [{ id: 'b-clos' }], error: null, status: 200 }).then(resoudre)
+				return ecriture
+			}
+			chaine['then'] = (resoudre: (v: unknown) => unknown) =>
+				Promise.resolve({ data: BUDGETS, error: null, status: 200 }).then(resoudre)
+			return chaine
+		}
+		const fake = {
+			from: (table: string) => (table === 'budgets' ? chaineBudgets() : base.from(table)),
+			rpc: (fonction: string, args: unknown) => {
+				rpc.push([fonction, args])
+				if (fonction === 'trash_retention_days') return Promise.resolve({ data: 30, error: null, status: 200 })
+				if (fonction === 'trash_blocking_costs') {
+					const data = sequence[Math.min(rang, sequence.length - 1)]
+					rang += 1
+					return Promise.resolve({ data, error: null, status: 200 })
+				}
+				return Promise.resolve({ data: null, error: null, status: 204 })
+			},
+		} as unknown as ClientCrm
+		return { fake, rpc, ecritures }
+	}
+
+	it('un track bloqué porte la pilule « Bloqué », dite en toutes lettres, et la commande ; un track libre, aucune', async () => {
+		const { fake } = clientReaffectation({}, [[depense('l-1'), depense('l-2')]])
+		render(<Corbeille client={fake} />)
+		const pilule = await screen.findByTestId('pilule-bloque')
+		expect(pilule.textContent).toContain('Bloqué')
+		expect(pilule.textContent).toContain("Effacement bloqué : 2 dépenses d'autres affaires sont imputées à ses budgets")
+		expect(screen.getByRole('button', { name: 'Réaffecter les dépenses de Legacy 2023' })).toBeTruthy()
+		cleanup()
+		render(<Corbeille client={clientReaffectation({}, [[]]).fake} />)
+		await screen.findByText('Legacy 2023')
+		await waitFor(() => expect(screen.queryByTestId('pilule-bloque')).toBeNull())
+		expect(screen.queryByTestId('bouton-reaffecter')).toBeNull()
+	})
+
+	it('le panneau n’offre que la même devise hors des tracks en corbeille, puis réaffecte et se referme débloqué', async () => {
+		const { fake, rpc } = clientReaffectation({}, [[depense('l-1')], [depense('l-1')], []])
+		render(<Corbeille client={fake} />)
+		await userEvent.click(await screen.findByTestId('bouton-reaffecter'))
+		const panneau = await screen.findByTestId('panneau-reaffectation')
+		const cible = (await screen.findByLabelText('Budget cible')) as HTMLSelectElement
+		await waitFor(() => expect(cible.disabled).toBe(false))
+		const options = [...cible.options].map((option) => option.value)
+		// L'option vide d'abord ; ni le budget en francs, ni celui d'un track en corbeille (le track lui-même).
+		expect(options).toEqual(['', 'b-eur'])
+		const reaffecter = screen.getByRole('button', { name: 'Réaffecter' }) as HTMLButtonElement
+		expect(reaffecter.disabled).toBe(true)
+		await userEvent.selectOptions(cible, 'b-eur')
+		expect(reaffecter.disabled).toBe(false)
+		await userEvent.click(reaffecter)
+		await waitFor(() => expect(screen.queryByTestId('panneau-reaffectation')).toBeNull())
+		expect(rpc).toContainEqual(['reassign_trashed_track_cost', { p_cost: 'l-1', p_budget: 'b-eur' }])
+		expect((await screen.findByTestId('corbeille-succes')).textContent).toBe(
+			"Plus aucune dépense ne bloque l'effacement de «\u00a0Legacy 2023\u00a0» : il sera effacé à sa date.",
+		)
+		await waitFor(() => expect(document.activeElement).toBe(screen.getByTestId('bouton-restaurer')))
+		expect(panneau.isConnected).toBe(false)
+	})
+
+	it('une dépense sur un budget clôturé propose « Rouvrir le budget », sans formulaire de cible', async () => {
+		const { fake, ecritures } = clientReaffectation({}, [[depense('l-9', true)]])
+		render(<Corbeille client={fake} />)
+		await userEvent.click(await screen.findByTestId('bouton-reaffecter'))
+		expect(await screen.findByText('Ce budget est clôturé : rouvrez-le pour réaffecter cette dépense.')).toBeTruthy()
+		expect(screen.queryByLabelText('Budget cible')).toBeNull()
+		await userEvent.click(screen.getByRole('button', { name: 'Rouvrir le budget' }))
+		await waitFor(() => expect(ecritures).toEqual([['budgets', { closed_at: null }]]))
+		expect((await screen.findByTestId('reaffectation-annonce')).textContent).toBe(
+			'Rouvert : vous pouvez réaffecter cette dépense.',
+		)
+	})
+
+	it('Échap referme le panneau et rend le focus à la commande', async () => {
+		const { fake } = clientReaffectation({}, [[depense('l-1')]])
+		render(<Corbeille client={fake} />)
+		const commande = await screen.findByTestId('bouton-reaffecter')
+		await userEvent.click(commande)
+		await screen.findByTestId('panneau-reaffectation')
+		await userEvent.keyboard('{Escape}')
+		await waitFor(() => expect(screen.queryByTestId('panneau-reaffectation')).toBeNull())
+		await waitFor(() => expect(document.activeElement).toBe(commande))
+	})
+
+	it('l’administration refusée éteint la commande, lisible, et cite le motif de la structure (§5.59)', async () => {
+		const { fake } = clientReaffectation({}, [[depense('l-1')]])
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration: 'refusee', edition: 'permise' } }}>
+				<Corbeille client={fake} />
+			</FournisseurEspace>,
+		)
+		const commande = (await screen.findByTestId('bouton-reaffecter')) as HTMLButtonElement
+		expect(commande.disabled).toBe(true)
+		expect(commande.getAttribute('aria-describedby')).toBe(screen.getByTestId('motif-corbeille-structure').id)
+	})
+})
+

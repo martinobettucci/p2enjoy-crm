@@ -9,6 +9,8 @@
 # @verifies CLAUDE.md §16 (vérification visuelle), §17 (Definition of Done)
 # @verifies CRM-077 dixième tranche — docs/SPEC-corbeille.md §8.8 : la suite pgTAP de la rétention et de la purge, la
 #           corbeille personnelle prouvée par l'API et l'interface, les captures de la rétention ; décisions 734 et 735
+# @verifies CRM-077 onzième tranche (INC-316) — docs/SPEC-corbeille.md §9.4 : la suite pgTAP de la réaffectation, le
+#           panneau prouvé par l'API et l'interface, ses captures ; décisions 741 à 743
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -50,12 +52,15 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 MIGRATION_MODELE=supabase/migrations/0037_corbeille.sql
 MIGRATION_GARDE=supabase/migrations/0038_corbeille_restauration.sql
 MIGRATION_RETENTION=supabase/migrations/0120_corbeille_retention.sql
+MIGRATION_REAFFECTATION=supabase/migrations/0123_reaffecter_depenses_corbeille.sql
 LIB=webapp/src/lib/corbeille.ts
 ECRAN=webapp/src/app/Corbeille.tsx
+PANNEAU=webapp/src/app/PanneauReaffectation.tsx
 ROUTE_CARD=webapp/src/app/RouteCard.tsx
 TEST_SQL_MODELE=supabase/tests/0035_corbeille.test.sql
 TEST_SQL_GARDE=supabase/tests/0036_corbeille_restauration.test.sql
 TEST_SQL_RETENTION=supabase/tests/0114_corbeille_retention.test.sql
+TEST_SQL_REAFFECTATION=supabase/tests/0115_reaffecter_depenses_corbeille.test.sql
 TEST_LIB=webapp/src/lib/corbeille.test.ts
 TEST_ECRAN=webapp/src/app/Corbeille.test.tsx
 TEST_ROUTE_CARD=webapp/src/app/RouteCard.test.tsx
@@ -65,18 +70,20 @@ CAPTURES=docs/captures/CRM-077
 
 # Les comptes figés du §5 bis.1. Ils se mettent à jour DANS LE MÊME CHANGEMENT que la preuve
 # ajoutée : un compte qui monte est un écart au même titre qu'un compte qui descend.
-# 3 et 57 depuis la dixième tranche (`0114`, 37 assertions), constatés le 2026-10-26.
-SQL_FICHIERS_ATTENDUS=3
-SQL_ASSERTIONS_ATTENDUES=57
+# 3 et 57 depuis la dixième tranche (`0114`, 37 assertions) ; 4 et 79 depuis la onzième (`0115`, 22), constatés le
+# 2026-10-26.
+SQL_FICHIERS_ATTENDUS=4
+SQL_ASSERTIONS_ATTENDUES=79
 VITEST_CORBEILLE_FICHIERS=2
 # 44 depuis `1c42e16` (`CRM-001`, INC-299) et 8 depuis `9f83599` (`CRM-114` T3) : constatés le 2026-10-25, décision 704 ;
 # le tableau du docs/SPEC-corbeille.md §5 bis.1 suit dans le même changement.
 # 54 depuis la dixième tranche (la rétention lue, la date d'effacement, les deux phrases), constaté le 2026-10-26.
-VITEST_CORBEILLE_TESTS=54
+# 65 depuis la onzième tranche (la réaffectation : bibliothèque et panneau), constaté le 2026-10-26.
+VITEST_CORBEILLE_TESTS=65
 VITEST_ROUTE_CARD_FICHIERS=1
 VITEST_ROUTE_CARD_TESTS=8
-API_SCENARIOS_ATTENDUS=26
-UI_SCENARIOS_ATTENDUS=25
+API_SCENARIOS_ATTENDUS=27
+UI_SCENARIOS_ATTENDUS=27
 
 RAPIDE=false
 while [ $# -gt 0 ]; do
@@ -124,8 +131,10 @@ printf '\033[1mPreuves de CRM-077 — corbeille et restauration\033[0m\n'
 
 titre "1. Fichiers livrés et traçabilité"
 
-FICHIERS_CODE=("$MIGRATION_MODELE" "$MIGRATION_GARDE" "$MIGRATION_RETENTION" "$LIB" "$ECRAN" "$ROUTE_CARD")
-FICHIERS_PREUVE=("$TEST_SQL_MODELE" "$TEST_SQL_GARDE" "$TEST_SQL_RETENTION" "$TEST_LIB" "$TEST_ECRAN" "$TEST_ROUTE_CARD" \
+FICHIERS_CODE=("$MIGRATION_MODELE" "$MIGRATION_GARDE" "$MIGRATION_RETENTION" "$MIGRATION_REAFFECTATION" "$LIB" "$ECRAN" \
+	"$PANNEAU" "$ROUTE_CARD")
+FICHIERS_PREUVE=("$TEST_SQL_MODELE" "$TEST_SQL_GARDE" "$TEST_SQL_RETENTION" "$TEST_SQL_REAFFECTATION" "$TEST_LIB" "$TEST_ECRAN" \
+	"$TEST_ROUTE_CARD" \
 	"$SPEC_API" "$SPEC_UI")
 
 for fichier in "${FICHIERS_CODE[@]}" "${FICHIERS_PREUVE[@]}"; do
@@ -186,7 +195,8 @@ for palier in xl-1440 lg-1152 md-900 sm-390; do
 	done
 done
 for capture in corbeille-etat-vide card-affaire-retiree card-geste-sans-effet \
-	corbeille-retention-administratrice-1440 corbeille-retention-lectrice-1440 corbeille-retention-bizdev-1440; do
+	corbeille-retention-administratrice-1440 corbeille-retention-lectrice-1440 corbeille-retention-bizdev-1440 \
+	corbeille-reaffectation-1440 corbeille-reaffectation-debloque-1440 corbeille-reaffectation-sm-390; do
 	if [ -f "$CAPTURES/$capture.jpg" ]; then
 		ok "capture $capture livrée"
 	else
@@ -196,7 +206,8 @@ done
 
 titre "3. pgTAP — le modèle, la garde de restauration, la rétention et la purge"
 
-if npm run test:sql -- "$TEST_SQL_MODELE" "$TEST_SQL_GARDE" "$TEST_SQL_RETENTION" >"$TRAVAIL/sql.log" 2>&1; then
+if npm run test:sql -- "$TEST_SQL_MODELE" "$TEST_SQL_GARDE" "$TEST_SQL_RETENTION" "$TEST_SQL_REAFFECTATION" \
+	>"$TRAVAIL/sql.log" 2>&1; then
 	resume=$(grep -oE '[0-9]+ fichiers?, [0-9]+ assertions' "$TRAVAIL/sql.log" | tail -1)
 	fichiers=$(printf '%s' "$resume" | grep -oE '^[0-9]+')
 	assertions=$(printf '%s' "$resume" | grep -oE '[0-9]+ assertions' | grep -oE '^[0-9]+')

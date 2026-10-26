@@ -16,6 +16,9 @@
 //           vraie base : la lectrice ne voit plus rien, le business developer voit ce qu'il a retiré), §8.5 (la phrase de
 //           la règle, la seconde phrase, la colonne « Effacement », aux quatre paliers) ; docs/DESIGN_SYSTEM.md §5.16 ;
 //           décisions 734 et 735
+// @verifies CRM-077 (docs/BACKLOG.md), onzième tranche (INC-316) — docs/SPEC-corbeille.md §9.3 sur la vraie base : la
+//           pilule « Bloqué », le panneau, la réaffectation au clavier constatée en base, Échap, le cadre du panneau à
+//           390 px ; docs/DESIGN_SYSTEM.md §5.16, §5.27 ; décisions 741 à 743
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, sur la VRAIE base : aucune fonction interne n'est
 // appelée, et chaque effet est CONSTATÉ EN BASE par une relecture, jamais déduit de l'écran. Un
@@ -757,3 +760,109 @@ test.describe('paliers responsive de la confirmation d’une affaire (docs/DESIG
 		})
 	}
 })
+
+// --- Réaffecter les dépenses qui bloquent l'effacement d'un track — §9 (INC-316) ---------------------------------------
+//
+// LA FIXTURE EST PROPRE ET RETIRÉE DANS LE `finally` : deux tracks, trois budgets, une affaire d'un channel lu du seed et
+// sa ligne de coût. L'affaire part d'abord, avec sa ligne ; les tracks ensuite, avec leurs budgets.
+
+test.describe('les dépenses qui bloquent l’effacement d’un track (docs/SPEC-corbeille.md §9)', () => {
+	async function poser(page: Page, suffixe: string) {
+		const service = { ...enTetesService(), Prefer: 'return=representation' }
+		const creer = async (table: string, data: Record<string, unknown>) => {
+			const reponse = await page.request.post(`${URL_API}/rest/v1/${table}`, { headers: service, data })
+			expect(reponse.status(), await reponse.text()).toBe(201)
+			return ((await reponse.json()) as { id: string }[])[0]!.id
+		}
+		const aEffacer = await creerTrackJetable(page, `e2e-geste-inc316-efface-${suffixe}`, `ZZ track bloqué ${suffixe}`)
+		const vivant = await creerTrackJetable(page, `e2e-geste-inc316-vivant-${suffixe}`, `ZZ track cible ${suffixe}`)
+		const bloquant = await creer('budgets', { track_id: aEffacer, name: 'ZZ budget bloquant', currency: 'EUR', position: 1 })
+		await creer('budgets', { track_id: vivant, name: 'ZZ budget cible', currency: 'EUR', position: 1 })
+		const card = await creer('cards', {
+			workspace_id: WORKSPACE_SEED,
+			channel_id: '5eed0000-0000-4000-8000-000000000036',
+			workflow_id: WORKFLOW_GLOBAL,
+			current_step_id: '5eed0000-0000-4000-8000-000000000061',
+			title: `ZZ affaire inc316 ${suffixe}`,
+		})
+		const ligne = await creer('card_costs', { card_id: card, budget_id: bloquant, label: 'ZZ salon', estimated_cost: 300 })
+		const retrait = await page.request.patch(`${URL_API}/rest/v1/tracks?id=eq.${aEffacer}&select=id`, {
+			headers: { ...enTetesAuthentifies(await jetonDe(ADMIN)), Prefer: 'return=representation' },
+			data: { deleted_at: '2026-01-01T00:00:00+00:00' },
+		})
+		expect(await retrait.json()).toHaveLength(1)
+		return {
+			ligne,
+			nettoyer: async () => {
+				await page.request.delete(`${URL_API}/rest/v1/cards?id=eq.${card}`, { headers: enTetesService() })
+				await supprimerParSlug(page, CHEMIN_TRACKS, `e2e-geste-inc316-efface-${suffixe}`)
+				await supprimerParSlug(page, CHEMIN_TRACKS, `e2e-geste-inc316-vivant-${suffixe}`)
+			},
+		}
+	}
+
+	test('l’administratrice réaffecte au clavier, la base le constate, et le track n’est plus bloqué', async ({ page }) => {
+		const fixture = await poser(page, 'xl')
+		try {
+			await page.setViewportSize({ width: 1440, height: 900 })
+			await connecter(page, ADMIN)
+			await page.goto('/reglages/corbeille')
+			const ligne = page.getByTestId('ligne-corbeille').filter({ hasText: 'ZZ track bloqué xl' })
+			await expect(ligne.getByTestId('pilule-bloque')).toContainText('Bloqué')
+			await ligne.getByTestId('bouton-reaffecter').click()
+			const panneau = page.getByTestId('panneau-reaffectation')
+			await expect(panneau.getByTestId('depense-bloquante')).toHaveCount(1)
+			await expect(panneau).toContainText('ZZ affaire inc316 xl')
+			const cible = panneau.getByLabel('Budget cible')
+			await expect(cible).toBeEnabled()
+			await cible.focus()
+			await cible.selectOption({ label: 'ZZ track cible xl — ZZ budget cible' })
+			await capturer(page, 'corbeille-reaffectation-1440', UNITE)
+			await page.keyboard.press('Tab')
+			await expect(panneau.getByRole('button', { name: 'Réaffecter' })).toBeFocused()
+			await page.keyboard.press('Enter')
+
+			await expect(page.getByTestId('panneau-reaffectation')).toHaveCount(0)
+			await expect(page.getByTestId('corbeille-succes')).toContainText('Plus aucune dépense ne bloque')
+			await expect(ligne.getByTestId('pilule-bloque')).toHaveCount(0)
+			await expect(ligne.getByTestId('bouton-restaurer')).toBeFocused()
+			const relue = await page.request.get(
+				`${URL_API}/rest/v1/card_costs?id=eq.${fixture.ligne}&select=budget:budgets(name)`,
+				{ headers: enTetesService() },
+			)
+			expect(await relue.json()).toEqual([{ budget: { name: 'ZZ budget cible' } }])
+			await capturer(page, 'corbeille-reaffectation-debloque-1440', UNITE)
+		} finally {
+			await fixture.nettoyer()
+		}
+	})
+
+	test('à 390 px, le panneau tient dans la fenêtre, et Échap le referme en rendant le focus', async ({ page }) => {
+		const fixture = await poser(page, 'sm')
+		try {
+			await page.setViewportSize({ width: 390, height: 844 })
+			await connecter(page, ADMIN)
+			await page.goto('/reglages/corbeille')
+			const ligne = page.getByTestId('ligne-corbeille').filter({ hasText: 'ZZ track bloqué sm' })
+			const commande = ligne.getByTestId('bouton-reaffecter')
+			await commande.click()
+			const panneau = page.getByTestId('panneau-reaffectation')
+			await expect(panneau.getByTestId('depense-bloquante')).toHaveCount(1)
+			await panneau.scrollIntoViewIfNeeded()
+			// Le CADRE du panneau, et non le seul défilement de la page (§5.43, §5.47).
+			const cadre = await panneau.boundingBox()
+			expect(cadre?.x ?? -1, 'bord gauche du panneau').toBeGreaterThanOrEqual(0)
+			expect((cadre?.x ?? 0) + (cadre?.width ?? 0), 'bord droit du panneau').toBeLessThanOrEqual(390)
+			const deborde = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth)
+			expect(deborde, 'la page ne défile pas horizontalement').toBe(false)
+			await capturer(page, 'corbeille-reaffectation-sm-390', UNITE)
+			await panneau.getByLabel('Budget cible').focus()
+			await page.keyboard.press('Escape')
+			await expect(panneau).toHaveCount(0)
+			await expect(commande).toBeFocused()
+		} finally {
+			await fixture.nettoyer()
+		}
+	})
+})
+

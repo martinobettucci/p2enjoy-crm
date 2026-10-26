@@ -13,6 +13,8 @@
 // @spec CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.4 (la corbeille personnelle, tenue
 //       par la base), §8.5 (la phrase de la règle, la seconde phrase, la colonne « Effacement ») ;
 //       docs/DESIGN_SYSTEM.md §5.16 ; décisions 734 et 735
+// @spec CRM-077 (docs/BACKLOG.md), onzième tranche (INC-316) — docs/SPEC-corbeille.md §9.3 (la mention « Bloqué », la
+//       commande « Réaffecter les dépenses » et son panneau) ; docs/DESIGN_SYSTEM.md §5.16, §5.27 ; décisions 741 à 743
 //
 // L'ÉCRAN N'ANTICIPE PAS LA GARDE DE LA DONNÉE. Restaurer une entrée dont le parent est en corbeille
 // est refusé par `0038`, et l'écran ne le calcule pas d'avance : il se tromperait dès qu'un autre
@@ -20,8 +22,9 @@
 // capacité que la base rend sur la ligne (CRM-093) : la structure lit l'administration de l'espace,
 // une affaire sa propre écriture — et c'est elle seule qui éteint une commande.
 
-import { useCallback, useEffect, useRef, useState } from 'react'
-import { RotateCcw } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { RotateCcw, Wallet } from 'lucide-react'
+import { Badge } from '../components/ui/Badge'
 import { EtatErreur, EtatVide } from '../components/ui/States'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { SkeletonListe } from '../components/ui/Skeleton'
@@ -41,6 +44,7 @@ import {
 	composerEnumeration,
 	dateEffacement,
 	lireCorbeille,
+	lireDepensesBloquantes,
 	lireRetentionCorbeille,
 	restaurer,
 	type EntreeCorbeille,
@@ -48,6 +52,7 @@ import {
 	type TypeObjetCorbeille,
 } from '../lib/corbeille'
 import { texteLigneEnumeration, type EtatEnumeration } from './presentation-corbeille'
+import { PanneauReaffectation } from './PanneauReaffectation'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { signalerTracksModifies } from '../lib/tracks'
 import { useContexteEspace } from './ContexteEspace'
@@ -114,6 +119,13 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 	const [succes, setSucces] = useState<string | null>(null)
 	const [ecrituresCards, setEcrituresCards] = useState<EtatAsync<Readonly<Record<string, boolean>>>>(enChargement)
 	const [retention, setRetention] = useState<EtatAsync<number>>(enChargement)
+	// Le nombre de dépenses qui bloquent l'effacement de chaque track (§9.1) ; absent tant qu'il n'est pas lu, et sur un
+	// échec : la mention « Bloqué » n'est jamais devinée (docs/DESIGN_SYSTEM.md §5.16).
+	const [blocages, setBlocages] = useState<Readonly<Record<string, number>>>({})
+	const [panneau, setPanneau] = useState<string | null>(null)
+	const [focusApres, setFocusApres] = useState<{ readonly cle: string; readonly cible: 'commande' | 'restaurer' } | null>(null)
+	const commandes = useRef(new Map<string, HTMLButtonElement>())
+	const restaurers = useRef(new Map<string, HTMLButtonElement>())
 	const { capacites } = useContexteEspace()
 	// Une réponse arrivée après le démontage, ou périmée par un rechargement, ne doit pas écraser un
 	// état plus récent — même garde que `AdministrationArborescence` et `EtatMessagerie`.
@@ -125,6 +137,8 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 		setEtat(enChargement())
 		setEnumerations({})
 		setRestaurations({})
+		setBlocages({})
+		setPanneau(null)
 		// La rétention est lue À PART de la liste : son échec ne retire que la phrase et la date (§5.16).
 		setRetention(enChargement())
 		void lireRetentionCorbeille(client).then((lue) => {
@@ -155,6 +169,14 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 			// échec n'invalide pas la liste (§4.4) : l'entrée reste affichée, et seule sa colonne
 			// dit qu'elle n'a pas pu être lue. Une affaire n'en demande aucune — elle n'a pas
 			// d'enfant au sens du §3.5.
+			// Les dépenses bloquantes, lues à part pour chaque track : leur échec ne retire que la mention (§9.3).
+			for (const entree of lecture.donnees.filter((ligne) => ligne.type === 'track')) {
+				void lireDepensesBloquantes(client, entree.id).then((lues) => {
+					if (rang !== courant.current || lues.statut !== 'pret') return
+					setBlocages((avant) => ({ ...avant, [cleEntree(entree)]: lues.donnees.length }))
+				})
+			}
+
 			const parents = lecture.donnees.filter((entree) => entree.type !== 'card')
 			if (parents.length === 0) return
 			setEnumerations(
@@ -182,6 +204,28 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 	}, [client, tentative])
 
 	const recharger = useCallback(() => setTentative((precedente) => precedente + 1), [])
+
+	// Le focus revient à une commande qui survit au geste, une fois le rendu fait (§5.13, §5.25) : à « Réaffecter les
+	// dépenses » quand on ferme, à « Restaurer » quand plus rien ne bloque — la commande de réaffectation a alors disparu.
+	useEffect(() => {
+		if (focusApres === null) return
+		const cible = (focusApres.cible === 'commande' ? commandes : restaurers).current.get(focusApres.cle)
+		cible?.focus()
+		setFocusApres(null)
+	}, [focusApres, panneau, blocages])
+
+	const fermerPanneau = useCallback(() => {
+		if (panneau !== null) setFocusApres({ cle: panneau, cible: 'commande' })
+		setPanneau(null)
+	}, [panneau])
+
+	const debloquer = useCallback((entree: EntreeCorbeille) => {
+		const cle = cleEntree(entree)
+		setPanneau(null)
+		setBlocages((avant) => ({ ...avant, [cle]: 0 }))
+		setSucces(t('admin.trash.reassign.unblocked', { nom: entree.nom }))
+		setFocusApres({ cle, cible: 'restaurer' })
+	}, [])
 
 	const lancerRestauration = useCallback(
 		async (entree: EntreeCorbeille) => {
@@ -233,6 +277,7 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 	}
 
 	const entrees = etat.donnees
+	const tracksEnCorbeille = new Set(entrees.filter((entree) => entree.type === 'track').map((entree) => entree.id))
 	const joursRetention = retention.statut === 'pret' ? retention.donnees : null
 	// Les phrases tiennent au-dessus du tableau ET de l'état vide (§5.16) : la règle vaut avant le premier retrait.
 	// La seconde est décidée par la capacité que la base rend, jamais par un rôle lu (§5.59) ; la frontière, elle,
@@ -331,6 +376,33 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 									entree={entree}
 									enumeration={enumerations[cle]}
 									joursRetention={joursRetention}
+									blocage={blocages[cle]}
+									panneauOuvert={panneau === cle}
+									commandeReaffectation={proprietesCommande(capacites.administration, ID_MOTIF_STRUCTURE, panneau === cle)}
+									onOuvrirPanneau={() => {
+										setSucces(null)
+										setPanneau(cle)
+									}}
+									refCommande={(bouton) => {
+										if (bouton === null) commandes.current.delete(cle)
+										else commandes.current.set(cle, bouton)
+									}}
+									refRestaurer={(bouton) => {
+										if (bouton === null) restaurers.current.delete(cle)
+										else restaurers.current.set(cle, bouton)
+									}}
+									panneau={
+										panneau === cle && client !== null ? (
+											<PanneauReaffectation
+												client={client}
+												idTrack={entree.id}
+												nomTrack={entree.nom}
+												tracksEnCorbeille={tracksEnCorbeille}
+												onFermer={fermerPanneau}
+												onDebloque={() => debloquer(entree)}
+											/>
+										) : null
+									}
 									restauration={restauration}
 									commande={proprietesCommande(
 										capaciteDeRestauration(entree),
@@ -363,6 +435,13 @@ function LigneCorbeille({
 	entree,
 	enumeration,
 	joursRetention,
+	blocage,
+	panneauOuvert,
+	commandeReaffectation,
+	onOuvrirPanneau,
+	refCommande,
+	refRestaurer,
+	panneau,
 	restauration,
 	commande,
 	onRestaurer,
@@ -371,6 +450,15 @@ function LigneCorbeille({
 	readonly enumeration: EtatEnumeration | undefined
 	/** `null` tant que la rétention n'est pas lue, ou si sa lecture a échoué : la cellule le nomme. */
 	readonly joursRetention: number | null
+	/** Le nombre de dépenses bloquantes d'un track ; absent tant qu'il n'est pas lu (§9.3). */
+	readonly blocage: number | undefined
+	readonly panneauOuvert: boolean
+	readonly commandeReaffectation: ProprietesCommande
+	readonly onOuvrirPanneau: () => void
+	readonly refCommande: (bouton: HTMLButtonElement | null) => void
+	readonly refRestaurer: (bouton: HTMLButtonElement | null) => void
+	/** Le panneau de réaffectation, rendu sur une ligne à lui sous celle du track (§5.27). */
+	readonly panneau: ReactNode
 	readonly restauration: EtatRestauration | undefined
 	/** Désactivée pendant l'envoi, ou par une capacité refusée — et citant alors son motif. */
 	readonly commande: ProprietesCommande
@@ -378,6 +466,7 @@ function LigneCorbeille({
 }) {
 	const enCours = restauration?.statut === 'en-cours'
 	const effacement = joursRetention === null ? null : dateEffacement(entree.retireLe, joursRetention)
+	const bloque = entree.type === 'track' && blocage !== undefined && blocage > 0
 	return (
 		<>
 			<tr
@@ -405,14 +494,27 @@ function LigneCorbeille({
 					) : (
 						<code className="text-text-2 tabular-nums">{formaterEffacement(effacement)}</code>
 					)}
+					{bloque && (
+						<span data-testid="pilule-bloque" className="relative flex justify-end">
+							<span aria-hidden="true">
+								<Badge ton="accent">{t('admin.trash.blocked')}</Badge>
+							</span>
+							<span className="sr-only">
+								{blocage === 1
+									? t('admin.trash.blocked.one')
+									: t('admin.trash.blocked.many', { compte: String(blocage) })}
+							</span>
+						</span>
+					)}
 				</td>
 				<td className={CLASSES_CELLULE} data-testid="cellule-enumeration">
 					<CelluleEnumeration entree={entree} enumeration={enumeration} />
 				</td>
-				<td className="h-[var(--size-target)] px-3">
+				<td className="h-[var(--size-target)] px-3 whitespace-nowrap">
 					<button
 						type="button"
 						data-testid="bouton-restaurer"
+						ref={refRestaurer}
 						onClick={onRestaurer}
 						{...commande}
 						aria-label={t('admin.trash.restore.aria', { nom: entree.nom })}
@@ -427,8 +529,36 @@ function LigneCorbeille({
 						<RotateCcw aria-hidden="true" className="size-4" />
 						{enCours ? t('admin.trash.restore.running') : t('admin.trash.restore')}
 					</button>
+					{bloque && (
+						<button
+							type="button"
+							data-testid="bouton-reaffecter"
+							ref={refCommande}
+							onClick={onOuvrirPanneau}
+							{...commandeReaffectation}
+							aria-expanded={panneauOuvert}
+							aria-label={t('admin.trash.reassign.command.aria', { nom: entree.nom })}
+							className={[
+								'ml-2 inline-flex items-center gap-2',
+								'min-h-[var(--size-target)] px-3 rounded-sm',
+								'border border-border bg-surface text-ink text-sm font-medium',
+								'transition-colors duration-[var(--transition-duration-fast)]',
+								'hover:bg-hover disabled:opacity-70 disabled:cursor-not-allowed',
+							].join(' ')}
+						>
+							<Wallet aria-hidden="true" className="size-4" />
+							{t('admin.trash.reassign.command')}
+						</button>
+					)}
 				</td>
 			</tr>
+			{panneauOuvert && panneau !== null && (
+				<tr className="border-b border-border">
+					<td colSpan={7} className="px-3 pb-3">
+						{panneau}
+					</td>
+				</tr>
+			)}
 			{restauration?.statut === 'echec' && (
 				<tr className="border-b border-border">
 					<td colSpan={7} className="px-3 pb-2">

@@ -14,6 +14,9 @@
 //           serveur, quoi que le client envoie), §8.2 (la rétention lue par un membre, refusée à l'anonyme), §8.4 (la
 //           lectrice ne lit plus la corbeille d'autrui, témoin d'abord ; le business developer lit ce qu'il a retiré) ;
 //           docs/SPEC-seed.md §10.6 ; décisions 734 et 735
+// @verifies CRM-077 (docs/BACKLOG.md), onzième tranche (INC-316) — docs/SPEC-corbeille.md §9.1 et §9.2 avec les jetons
+//           réels : les dépenses bloquantes réservées à l'administratrice, la réaffectation refusée aux autres et vers une
+//           autre devise, puis acceptée, relue en base ; décisions 741 à 743
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec les jetons réels)
 //
 // Ces scénarios émettent LES REQUÊTES DE `webapp/src/lib/corbeille.ts`, avec les mêmes chemins et
@@ -649,3 +652,68 @@ test.describe('E7 — la rétention et la corbeille personnelle (§8, dixième t
 		expect((await parCamille.json()) as unknown[]).toHaveLength(1)
 	})
 })
+
+test.describe('E8 — réaffecter les dépenses qui bloquent l’effacement d’un track (§9, INC-316)', () => {
+	/** Un budget jetable sur un track jetable, par la clé de service ; il part avec son track au ménage. */
+	async function budgetJetable(requete: APIRequestContext, track: string, nom: string, devise = 'EUR'): Promise<string> {
+		const reponse = await requete.post('/rest/v1/budgets', {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: { track_id: track, name: nom, currency: devise, position: 1 },
+		})
+		expect(reponse.status(), await reponse.text()).toBe(201)
+		return ((await reponse.json()) as { id: string }[])[0]!.id
+	}
+
+	test('la lectrice et le business developer sont refusés ; l’administratrice réaffecte, la base le constate', async ({
+		request,
+	}) => {
+		const aEffacer = await trackJetable(request, 'inc316-efface')
+		const vivant = await trackJetable(request, 'inc316-vivant')
+		const budgetBloquant = await budgetJetable(request, aEffacer, 'ZZ budget bloquant')
+		const cibleEur = await budgetJetable(request, vivant, 'ZZ budget cible')
+		const cibleChf = await budgetJetable(request, vivant, 'ZZ budget francs', 'CHF')
+		const card = await cardJetable(request, 'inc316')
+		const ligne = await request.post('/rest/v1/card_costs', {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: { card_id: card, budget_id: budgetBloquant, label: 'ZZ salon', estimated_cost: 300 },
+		})
+		expect(ligne.status(), await ligne.text()).toBe(201)
+		const idLigne = ((await ligne.json()) as { id: string }[])[0]!.id
+		expect((await mettreALaCorbeille(request, jetonAdmin, TRACKS, aEffacer)).status()).toBe(200)
+
+		const lire = (jeton: string) =>
+			request.post('/rest/v1/rpc/trash_blocking_costs', {
+				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+				data: { p_track: aEffacer },
+			})
+		const reaffecter = (jeton: string, budget: string) =>
+			request.post('/rest/v1/rpc/reassign_trashed_track_cost', {
+				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+				data: { p_cost: idLigne, p_budget: budget },
+			})
+
+		// TÉMOIN D'ABORD : l'administratrice lit la dépense bloquante.
+		const parCamille = await lire(jetonAdmin)
+		expect(parCamille.status(), await parCamille.text()).toBe(200)
+		expect(((await parCamille.json()) as { cost_id: string }[]).map((l) => l.cost_id)).toEqual([idLigne])
+		for (const jeton of [jetonBizdev, jetonViewer]) {
+			const refus = await lire(jeton)
+			expect([403, 404]).toContain(refus.status())
+			const geste = await reaffecter(jeton, cibleEur)
+			expect([403, 404]).toContain(geste.status())
+		}
+
+		const devise = await reaffecter(jetonAdmin, cibleChf)
+		expect(devise.status()).toBe(400)
+		expect(((await devise.json()) as { message: string }).message).toBe('currency_mismatch')
+
+		const accord = await reaffecter(jetonAdmin, cibleEur)
+		expect(accord.status(), await accord.text()).toBe(204)
+		const relue = await request.get(`/rest/v1/card_costs?id=eq.${idLigne}&select=budget_id,estimated_cost`, {
+			headers: enTetesService(),
+		})
+		expect(await relue.json()).toEqual([{ budget_id: cibleEur, estimated_cost: 300 }])
+		expect(await (await lire(jetonAdmin)).json()).toEqual([])
+	})
+})
+
