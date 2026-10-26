@@ -1691,6 +1691,43 @@ disent que de quoi il a l'air.
 - **Toujours aucun effacement manuel, aucun « vider »** (§4.7 de la spécification) : seule la purge nocturne efface.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
 
+**Les dépenses qui bloquent l'effacement d'un track — `CRM-077`, onzième tranche, `docs/SPEC-corbeille.md` §9.3** (écrit
+le 2026-10-26 avant le code, après relecture intégrale de ce document ; décisions 741 à 743).
+
+- **LA CELLULE « Effacement » D'UN TRACK BLOQUÉ PORTE, SOUS SA DATE, LA PILULE `accent` « Bloqué »** (`Badge` du §5.6,
+  son point de tête) : un travail à faire, pas une panne — la règle du §5.56 pour « Aucun administrateur ». Son nom
+  accessible dit pourquoi, par clé : « Effacement bloqué : 2 dépenses d'autres affaires sont imputées à ses budgets ». Le
+  compte est lu à part de la liste ; pendant sa lecture et sur son échec, la pilule est absente, jamais devinée.
+- **UNE SECONDE COMMANDE SUR LA LIGNE, APRÈS « Restaurer » : « Réaffecter les dépenses »**, bouton secondaire discret,
+  icône Lucide **`Wallet`** — qui ne sert aucun autre objet (§9) : elle dit la dépense, et `ArrowRightLeft` porte déjà
+  les étapes (§5.11). Le geste qui répare l'objet précède celui qui débloque son effacement. Elle suit la capacité
+  d'administrer l'espace (§5.59), comme « Restaurer » sur la structure, et cite le même motif.
+- **ELLE OUVRE UN PANNEAU SUR UNE LIGNE À LUI, EN `colSpan`, SOUS LA LIGNE DU TRACK** — la règle du §5.27 pour un bloc
+  posé dans une ligne de tableau : dans le flux, adjacent, épinglé au bord visible du conteneur et borné à la fenêtre. La
+  commande reste montée et devient désactivée tant qu'il est ouvert ; **un seul panneau à la fois** (§5.28) ; `Échap` le
+  referme et rend le focus à la commande.
+- **LE PANNEAU DIT POURQUOI, PUIS LISTE LES DÉPENSES** : une phrase en 13 px `--color-text-2`, puis la liste plate du
+  §5.18, une ligne par dépense — le titre de l'affaire, le libellé de la ligne, l'estimé en donnée technique avec sa
+  devise dans son propre élément (§5.11), le budget actuel. Puis, sur la même ligne qui se replie sous `md` :
+  - **« Budget cible »**, un `select` du §5.22 à libellé visible, option vide en tête, options groupées par track en
+    `optgroup` (§5.29), chaque option nommant aussi son track (§5.48 bis). Il n'offre que les budgets **ouverts**, de la
+    **même devise**, hors du track à effacer et de tout track en corbeille : ce n'est pas un droit calculé, c'est le refus
+    d'une cible vouée au refus (§5.21) — la base refuse de toute façon ;
+  - **« Occurrence »**, le même `select`, rendu seulement quand le budget choisi est récurrent (§5.15 : une valeur sans
+    objet ne se rend pas) ;
+  - **« Réaffecter »**, primaire compact, désactivé tant qu'aucun budget n'est choisi, ou qu'une occurrence manque —
+    l'état de la saisie, jamais un droit (§5.50) —, « Réaffectation… » pendant l'envoi.
+- **UNE DÉPENSE DONT LE BUDGET OU L'OCCURRENCE EST CLÔTURÉ** ne porte pas ce formulaire : la phrase « Ce budget est
+  clôturé : rouvrez-le pour réaffecter cette dépense. » et le bouton secondaire compact **« Rouvrir le budget »** (ou
+  « Rouvrir l'occurrence »), icône `LockOpen` — celle de la réouverture au §5.47, le même geste. Sans confirmation : il
+  se défait d'un clic (§5.47).
+- **CHAQUE GESTE EST ANNONCÉ ET RELIT LE PANNEAU** : le succès en `role="status"` dans le panneau — « Dépense
+  réaffectée au budget « … ». » —, le refus traduit en `role="alert"` sur la ligne de la dépense, la saisie conservée
+  (§5.7 ter). **Quand plus rien ne bloque**, le panneau se referme, la phrase « Plus aucune dépense ne bloque
+  l'effacement de « … » : il sera effacé à sa date. » paraît dans la mention de succès de l'écran, et le focus revient à
+  « Restaurer » de la ligne, la commande de réaffectation ayant disparu (§5.13).
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `Wallet`.**
+
 ### 5.17 Guide de démarrage — `CRM-079`
 
 Première surface d'**accueil** du produit, et la seule dont le contenu est une liste de renvois vers

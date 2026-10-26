@@ -912,6 +912,10 @@ exécutable par `authenticated` seul, dans l'ordre :
 3. la ligne est **bloquante** au sens du §9.1 — sinon `P0001 cost_not_blocking` : ce geste ne sert qu'à débloquer un
    effacement, les autres déplacements restant ceux de `CRM-085` ;
 4. le budget cible n'appartient pas au track en corbeille — sinon `22023 same_track` ;
+4 bis. le budget cible a **la devise du budget quitté** — sinon `22023 currency_mismatch`. *Précisé avant le code, à la
+   relecture du modèle des coûts* : une ligne de coût n'a pas de devise propre, elle prend celle de son budget
+   (`supabase/migrations/0051_card_costs.sql`, point 2). Changer de devise réinterpréterait ses montants sans les
+   convertir ;
 5. puis les règles d'aujourd'hui pour **la cible** : budget de l'espace, ouvert, occurrence exigée si et seulement s'il
    est récurrent, appartenant au budget et ouverte (`docs/SPEC-costs.md` §2.3, refus `23503` et `23514` du déclencheur
    existant).
@@ -930,8 +934,8 @@ La ligne garde son affaire, son libellé, ses montants et ses réels ; seuls `bu
   l'espace (§5.59). Le nombre de dépenses bloquantes est lu à part de la liste : son échec ne retire que la mention.
 - La commande ouvre, **dans le flux**, sous la ligne, un panneau : une phrase dit pourquoi (« Ces dépenses d'autres
   affaires sont imputées à un budget de ce track. Réaffectez-les pour qu'il puisse être effacé. »), puis une ligne par
-  dépense — affaire, libellé, estimé, budget actuel — avec le choix du **budget cible** (tout budget ouvert de l'espace,
-  hors du track, groupé par track), de l'**occurrence** quand le budget est récurrent, et « Réaffecter ». Chaque
+  dépense — affaire, libellé, estimé, budget actuel — avec le choix du **budget cible** (tout budget ouvert de l'espace
+  de la même devise, hors du track et de tout track en corbeille, groupé par track), de l'**occurrence** quand le budget est récurrent, et « Réaffecter ». Chaque
   réaffectation est un geste séparé, annoncé ; le panneau se relit après chacune, et se referme vide en disant que le
   track sera effacé à sa date.
 - **Une dépense dont le budget ou l'occurrence est clôturé** ne propose pas « Réaffecter » mais **« Rouvrir le budget »**
