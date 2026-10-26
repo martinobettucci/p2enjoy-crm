@@ -12348,7 +12348,9 @@ un motif explicite.
 *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 19:25 UTC — état avant : [ ]*
 
 Checklists d'une affaire et modèles de cards (`docs/SPEC-modeles-emails.md` §1 : objets distincts des modèles d'emails).
-À spécifier, après les arbitrages du responsable et les deux questions du connecteur MCP.
+*Arbitrée le 2026-10-26 (décision 747)* : checklists libres, ajoutées par l'étape, exigibles par une transition ;
+modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklists seules, famille `affaires`.
+*Spécification proposée le 2026-10-26* : `docs/SPEC-checklists.md`, trois questions au §9, en attente de validation.
 
 ### CRM-072 — Journal d'audit consultable et conformité RGPD `[P]`
 
