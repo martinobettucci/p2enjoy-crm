@@ -17061,3 +17061,15 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
 
 ### CRM-119 — Preuves croisées des droits fins : de l'écran « Membres » à l'écran du membre, et à travers le connecteur MCP `[@]`
 *Prise en charge : session du 2026-10-23 10:17 UTC depuis 2026-10-26 23:35 UTC — état avant : [ ]*
+Demandée par le responsable le 2026-10-26 (décision 757). Spécification : `docs/SPEC-permissions-rls.md` §7.5. Aucun code
+de production : l'unité ajoute des preuves, sur deux chemins qui n'en avaient pas — la boucle de l'écran « Membres »
+jusqu'à l'écran du membre, et le connecteur MCP face aux droits fins.
+**DoD** : les preuves U1 à U3 et M1 à M5 du §7.5 vertes contre la vraie pile, chacune rendant l'état du seed ; captures
+observées ; campagnes rejouées après synchronisation ; commit poussé. Pas de test unitaire nouveau, faute de logique
+nouvelle (écart assumé, décision 757) ; question du connecteur sans objet.
+
+- [x] **T1 — spécification** : `docs/SPEC-permissions-rls.md` §7.5, ce backlog, `docs/JOURNAL.md` décision 757.
+- [ ] **T2 — la boucle de l'écran** : `e2e/ui/droits-fins-croises.spec.ts`, U1 à U3, deux contextes de navigateur,
+      captures `docs/captures/CRM-119/`.
+- [ ] **T3 — le connecteur** : `mcp/tests/test_integration_droits_fins.py`, M1 à M5, joué par `scripts/verify-mcp.sh`.
+- [ ] **T4 — clôture** : synchronisation, campagnes rejouées, `CHANGELOG.md`.

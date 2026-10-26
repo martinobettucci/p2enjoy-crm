@@ -35977,3 +35977,21 @@ fois (le fichier était revenu à son état committé), a été refait et pouss�
 **Persisté** : `docs/SPEC-mcp.md` §9.2 undecies, `docs/BACKLOG.md` (`CRM-118`). Aucun code. *Numéro : poussée d'abord
 sous 755, déjà prise par `CRM-068` T3a (`ec6cd5ca`, poussé avant) ; renumérotée 756 (`CLAUDE.md` §5, « Prise en
 charge »).*
+
+
+### décision 757 — `CRM-119` : prouver les droits fins de l'écran « Membres » jusqu'au membre, et à travers le connecteur
+
+*2026-10-26, demande du responsable : « ajoute des tests sur les droits fins et les droits fins plus MCP ».*
+**Problème.** Le responsable demandait si les droits fins s'appliquent aussi au connecteur MCP. Par construction, oui : le
+connecteur agit sous le jeton de la personne, et la RLS a le dernier mot (`docs/SPEC-mcp.md` §6.2). La réponse donnée
+d'abord, « aucun test ne le prouve », était inexacte : `test_integration_affaires.py` éprouve déjà le `none` de track de la
+lectrice, sans le nommer.
+**Observations** (inventaire des preuves existantes, `docs/SPEC-permissions-rls.md` §7.5) : la base, l'API, la matrice de
+l'écran et la barre latérale sont prouvées. Deux chemins ne le sont pas : la boucle « posé dans Réglages ▸ Membres → vu
+par le membre, sans reconnexion → rendu par Hérité », et le connecteur face à un droit qui rouvre, un droit qui restreint
+en lecture, un droit posé pendant une session ouverte, et l'administrateur jamais restreint.
+**Décision.** Une unité de preuves, `CRM-119` : huit preuves (U1 à U3 à l'écran, M1 à M5 par le connecteur), sur les
+quatre droits fins du seed et un droit temporaire, chacune rendant l'état du seed.
+**Conséquences.** Aucun code de production, donc aucun test unitaire nouveau : écart assumé à `CLAUDE.md` §15, la logique
+éprouvée ayant déjà ses unitaires. La question du connecteur est sans objet, aucune fonctionnalité ne change.
+**Persisté** : `docs/SPEC-permissions-rls.md` §7.5, `docs/BACKLOG.md` (`CRM-119`). Les tests suivent.

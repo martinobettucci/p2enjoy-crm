@@ -1,6 +1,6 @@
 # Spécification — Rôles, autorisations et RLS
 
-Unités de backlog : `CRM-010` à `CRM-014` (voir `docs/BACKLOG.md`).
+Unités de backlog : `CRM-010` à `CRM-014`, et `CRM-119` pour le §7.5 (voir `docs/BACKLOG.md`).
 Documents liés : `docs/SCHEMA.md` §1, `docs/DAT.md` §7, `docs/SPEC-workflow-engine.md` §5,
 `docs/SPEC-mail-subsystem.md` §2.3.
 
@@ -874,6 +874,73 @@ donc bien lorsqu'une politique est retirée — par sa suite pgTAP —, et le fi
 lui, garde la détection du **sur-accès**, qui est la régression dont un utilisateur souffre. Les
 deux moitiés sont nécessaires ; aucune ne remplace l'autre. La prédiction fausse est corrigée ici
 plutôt que le contrôle relâché.
+
+### 7.5 Preuves croisées des droits fins — `CRM-119` (décision 757)
+
+*Demandé par le responsable le 2026-10-26 : « ajoute des tests sur les droits fins et les droits fins plus MCP ».*
+
+**Ce qui était déjà prouvé**, et que cette unité ne refait pas :
+- la résolution (« le plus spécifique gagne », §3.3 et §3.3 bis) : pgTAP `0011_droits_fins` et `0002`, matrice
+  énumérée exhaustivement ;
+- les lignes de droits fins, leurs politiques, et leur effet sur les tracks et les channels : `e2e/api/droits-fins.spec.ts`
+  (lignes *a* à *l* du §4.2) ;
+- leur effet sur les affaires : `e2e/api/cards.spec.ts` (« Prospection » rouvert en écriture à la lectrice,
+  « Maintenance » en lecture seule pour le business developer), pgTAP `0012_cards` et `0097_card_placements` ;
+- la matrice de l'écran « Membres » : `e2e/ui/membres.spec.ts` (accès effectif relu après chaque écriture) ;
+- la barre latérale de la lectrice : `e2e/ui/droits-fins.spec.ts` ;
+- à travers le connecteur, **le seul `none` de track de la lectrice**, sans le nommer : `mcp/tests/test_integration_affaires.py`
+  et `test_integration_affaires_ecriture.py` (« Grands comptes » lui est fermé par son droit fin sur « Conseil & IA »).
+
+**Deux chemins restaient sans preuve.**
+1. **La boucle complète de l'écran** : la preuve de `membres.spec.ts` s'arrête à la colonne « Accès effectif ». Aucune ne
+   montre qu'un droit posé par l'administratrice dans « Réglages ▸ Membres » change **ce que le membre voit**, sans
+   reconnexion, ni que « Hérité » le lui rend.
+2. **Le connecteur face aux trois autres situations** : un droit qui **rouvre** (`member` sur un channel d'un track fermé),
+   un droit qui **restreint en lecture** (`viewer` d'un business developer), la **fraîcheur** d'un droit posé pendant une
+   session MCP ouverte, et l'**administrateur jamais restreint**. Le connecteur agit sous le jeton de la personne (§6.2 de
+   `docs/SPEC-mcp.md`) : ces preuves vérifient que cette construction tient, elles ne changent rien au produit.
+
+**Les données.** Les quatre droits fins du seed (`docs/SPEC-seed.md` §2.11) : Farida, lectrice, `none` sur le track
+« Conseil & IA » et `member` sur son channel « Prospection » ; Driss, business developer, `viewer` sur « Maintenance » ;
+Camille, administratrice, `none` sur « Conseil & IA », sans effet. Les droits que les preuves posent en plus (un droit de
+Driss sur « Grands comptes ») et les cases de matrice qu'elles ouvrent sont posés et **retirés par chaque preuve**, la clé
+de service constatant à la fin que l'état du seed est rendu. Le seed n'est pas modifié.
+
+**T2 — la boucle de l'écran, `e2e/ui/droits-fins-croises.spec.ts`**, deux contextes de navigateur ouverts en même temps,
+Camille et Driss, chacun connecté par la vraie page du SSO :
+- **U1** — Driss ouvre « Migration ERP Sogexia » (« Grands comptes », où il écrit) : la fiche porte ses commandes
+  d'écriture. Camille pose « Aucun accès » à Driss sur « Grands comptes », au clavier, dans « Réglages ▸ Membres ». La ligne
+  `channel_members` est relue par la clé de service. Driss recharge la même adresse, sans se reconnecter : « Card
+  introuvable » ; le channel a quitté la barre d'onglets du track.
+- **U2** — Camille passe le droit à « Lecture » : Driss rouvre la fiche, lisible et sans commande d'écriture ; une
+  écriture directe par l'API avec le jeton de Driss est refusée, et la ligne relue est inchangée.
+- **U3** — Camille rend « Hérité » : la ligne est supprimée en base, et Driss retrouve ses commandes d'écriture.
+- Captures JPEG de chacun des trois états, côté Driss, observées (`CLAUDE.md` §16).
+
+**T3 — le connecteur, `mcp/tests/test_integration_droits_fins.py`**, contre le vrai Keycloak, la vraie base et le vrai
+service `mcp`, par le parcours OAuth réel ; chaque appel vérifie la ligne de `mcp_journal` (`ok` ou `refus_crm`) :
+- **M1, un droit qui rouvre** — Farida, `affaires` ouverte en `consulter`, `ajouter`, `modifier` : elle lit les affaires
+  de « Prospection » (`crm_card_list`, ancre `channel_id`) et y crée une affaire (`crm_card_create`, relue en base,
+  `created_by` Farida) alors que son rôle est lecteur ; la même création dans « Grands comptes », même track sans droit de
+  channel, est refusée et n'écrit rien.
+- **M2, un droit qui restreint** — Driss, mêmes cases : il lit « Support niveau 2 — Atelier Meunier » (« Maintenance »),
+  `can_write` faux ; `crm_card_update` sur elle et `crm_card_create` dans « Maintenance » sont refusés, et l'affaire relue
+  est inchangée.
+- **M3, la fraîcheur** — Driss, une seule session MCP ouverte : il lit Sogexia ; la clé de service pose `none` pour lui
+  sur « Grands comptes » ; **dans la même session**, `crm_card_get` rend le refus uniforme et `crm_card_list` ne porte plus
+  l'affaire ; la ligne retirée, `crm_card_get` la rend de nouveau. Aucun cache du connecteur ne retient un droit fin.
+- **M4, l'administratrice jamais restreinte** — Camille, `affaires:consulter` ouverte, porte `none` sur « Conseil & IA » :
+  elle lit Sogexia par le connecteur.
+- **M5, la recherche** — Farida, `affaires:consulter` ouverte : `crm_search` « Sogexia » ne rend aucune affaire de
+  « Grands comptes ».
+
+**Ce que l'unité ne comporte pas, et pourquoi.**
+- **Aucun code de production**, donc **aucun test unitaire nouveau** : `CLAUDE.md` §15 demande un test unitaire
+  spécifique par unité, pour la logique qu'elle ajoute ; celle-ci n'en ajoute aucune. La logique qu'elle éprouve a ses
+  unitaires (`DroitsFins.test.tsx`, `membres-espace.test.ts`, `mcp/tests/test_politique.py`). Écart assumé, décision 757.
+- **La question du connecteur MCP** (`CLAUDE.md`, « Spécificités du projet ») est **sans objet** : l'unité n'ajoute ni
+  ne modifie aucune fonctionnalité, elle prouve que les outils existants respectent les droits fins.
+- Aucune migration, aucun changement de seed, de manuel ni de design system.
 
 ## 8. Points ouverts
 
