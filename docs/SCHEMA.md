@@ -562,6 +562,7 @@ Détail des contraintes, de leurs mesures et de leurs motifs : `docs/SPEC-form-c
 | `workspace_id` | `uuid` | non nul ; FK composite `(workflow_id, workspace_id) → workflows (id, workspace_id)` |
 | `value` | `jsonb` | **nullable** ; SQL `NULL` **et** `'null'::jsonb` signifient explicitement vide. La **forme** est validée par trigger selon `form_fields.type` — un `CHECK` ne peut pas porter de sous-requête, mesuré. **Depuis la migration 47** (`CRM-060` tranche 3), les types `contact` et `user` sont en outre **résolus** : leur cible doit exister dans le **workspace de la valeur** — `public.contacts` pour l'un, `public.workspace_members` pour l'autre. La vérification a lieu **à l'écriture** ; un `jsonb` ne portant pas de clé étrangère, une valeur survit à la suppression de sa cible (`docs/SPEC-contacts.md` §9.4) |
 | `updated_by` | `uuid` | nullable, FK `profiles`, `ON DELETE SET NULL` |
+| `placement_id` | `uuid` | **le rattachement de la valeur** (`CRM-111` T2.2, migration `0109`, `docs/SPEC-rattachements.md` §3.3) ; FK composite `(placement_id, card_id) → card_placements (id, card_id)` `ON DELETE CASCADE` ; toujours présent, par la contrainte `card_field_values_placement_present` — le `NOT NULL` et la clé `(placement_id, field_id)` attendent T2.3, qui passe l'`upsert` de la webapp au rattachement ; posé par le déclencheur `card_field_values_fill_placement` quand l'écriture l'omet |
 | `created_at`, `updated_at` | `timestamptz` | non nuls, `now()` ; `updated_at` par trigger |
 
 Index GIN sur `value` pour les filtres des vues sauvegardées.
@@ -735,6 +736,7 @@ Timeline **append-only**, alimentée par triggers. Aucune écriture directe par 
 | `actor_id` | `uuid` | nul si l'auteur est un service — FK `profiles(id)` `ON DELETE SET NULL` |
 | `payload` | `jsonb` | non nul, défaut `'{}'` ; avant/après, **sans aucun libellé** (`docs/SPEC-cards.md` §14.6) |
 | `created_at` | `timestamptz` | non nul, défaut **`clock_timestamp()`** et non `now()` |
+| `placement_id` | `uuid` | **le rattachement d'un événement de rattachement** (`CRM-111` T2.2, migration `0109`, décision 670) : renseigné pour `moved`, `assigned`, `channel_changed`, `workflow_changed`, `archived`, `unarchived`, `snoozed`, `woken`, `stalled` et `field_changed`, nul pour les événements de l'affaire — contrainte `card_events_placement_by_type` ; posé par le déclencheur `card_events_fill_placement`. **Aucune clé étrangère** : un événement survit à son rattachement |
 
 **`clock_timestamp()` et non `now()`, et c'est mesuré.** `now()` rend l'heure de début de
 transaction : trois événements écrits par un même `UPDATE` porteraient le même horodatage, et
@@ -2097,7 +2099,24 @@ toujours tout) : `drop trigger card_placements_mirror_insert on public.cards; dr
 on public.cards; drop function app.card_placements_mirror_insert(), app.card_placements_mirror_update(); drop table
 public.card_placements;` — `app.readable_channel_ids()` peut rester.
 
-## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
+### Migration `0109` — les lectures passent aux rattachements (`CRM-111` T2.2, décision 705 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-rattachements.md` §2 bis.1, §3.3, §5, §14. `placement_id` dans **`card_field_values`** (présence par contrainte,
+§4 ci-dessus), **`card_sequence_enrollments`** (`NOT NULL`, FK `(placement_id, card_id)`) et **`card_events`** (événements
+de rattachement seuls, sans clé), repris pour l'existant et posé par déclencheur (`app.fill_placement_from_card`,
+`app.card_events_fill_placement`) ; la reprise de `card_events` est l'exception unique de la décision 670, gardée par
+une empreinte. Deux auxiliaires, `app.card_first_placement(card)` et `app.card_has_active_placement(card)`, `STABLE`,
+`SECURITY DEFINER`. **Vingt fonctions de lecture** lisent `card_placements`, signatures inchangées : les droits
+(`app.can_read_card_pour`, `app.can_write_card`, `public.ecriture_permise`), les lectures métier (`cards_figees`,
+`entonnoir_conversion`, `recherche_globale`, `rentabilite_affaires`, `temps_valorise`, `occupation_du_workflow`,
+`previsualiser_exigence`, `plan_card_remapping`, `app.defauts_proposition_ia`, le déclencheur
+`app.catalogue_refuser_archivage_noeud_occupe`) et la messagerie (`classify_message`, `classer_message_automatiquement`,
+`app.card_par_adresse`, `chemin_dossier_card`, `inbox_arborescence`, `rendre_modele_email`, `queue_outbound_email`).
+Mesuré avant et après sur copie jetable (`docs/mesures/CRM-111/06-lectures-equivalentes.sql`) : 45 empreintes, sous les
+trois rôles du seed, identiques. **Retrait, sans perte** : réappliquer les définitions des vingt fonctions depuis leurs
+migrations d'origine, retirer les trois déclencheurs et leurs fonctions, puis les colonnes `placement_id`.
+
+ — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)
 

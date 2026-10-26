@@ -34876,3 +34876,39 @@ décidée, archivée ou à la corbeille ; deux colonnes calculées `SECURITY INV
   `contacts:336`, `couts-a-saisir:390`, `formulaire:378`, `objectifs:1872`) sont **verts rejoués seuls** (8/8 avec leurs
   paliers) : des instabilités sous la charge d'une suite d'1 h 15, famille d'INC-305, sans défaut de produit nommable.
   Unitaires **4362**, pgTAP et API verts dans les deux harnais.
+
+
+### `CRM-111` T2.2 — les lectures passent aux rattachements (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` » posé par le responsable, selon le découpage de la
+décision 705.* **Problème** : faire lire `card_placements` par toute fonction qui lit une colonne de rattachement, sans
+changer aucune signature ni aucun résultat, et faire désigner le rattachement par les trois tables filles.
+
+**Observations.** Le relevé du T1 (§2 bis.1), rejoué sur la base du jour, compte **33** fonctions qui cassent au retrait
+des colonnes (31 au T1, plus le déclencheur du miroir de T2.1 et `queue_outbound_email`, réécrite depuis par `CRM-058`).
+Vingt sont des lectures ; les gestes et les déclencheurs de `cards` restent à T2.3 et T2.4. La webapp écrit
+`card_field_values` par un `upsert` sur `(card_id, field_id)` sans rattachement, et lit `card_sequence_enrollments` sans
+l'écrire.
+
+**Choix.** (1) `placement_id` est posé par déclencheur quand l'écriture l'omet, depuis le rattachement de l'affaire ;
+une affaire sans rattachement lève `card_placement_missing` plutôt que de laisser une ligne orpheline. (2) Sur
+`card_field_values`, la présence est tenue par une **contrainte** et non par `NOT NULL` : un `NOT NULL` rendrait la colonne
+obligatoire dans les types générés et casserait l'`upsert` de la webapp, ce que T2.2 exclut ; T2.3 posera le `NOT NULL`
+avec ses appelants. (3) Les droits suivent la règle finale (un rattachement lisible, un channel écrit) ; les lectures
+« par channel » d'une affaire prennent son **premier** rattachement, le seul pendant la transition. (4) Une affaire est
+active pour le courrier si l'un de ses rattachements n'est pas archivé. (5) La reprise de `card_events` est l'exception
+de la décision 670, gardée par une empreinte, et une contrainte fixe désormais quels types désignent un rattachement.
+
+**Vérifications.** Migration passée deux fois sur copie jetable. **Équivalence mesurée** :
+`docs/mesures/CRM-111/06-lectures-equivalentes.sql`, joué avant puis après la migration, rend **45 empreintes
+identiques**, chaque lecture étant appelée sous l'administratrice, le business developer et la lectrice. Les refus
+restants sont ceux que la fonction oppose à ce rôle, identiques des deux côtés. **Contre-épreuve** : `cards_figees`
+faussée, la mesure voit trois empreintes changer. Les deux premières versions de la mesure appelaient
+`chemin_dossier_card` sous des rôles qui ne l'exécutent pas, et `plan_card_remapping` avec des surcharges mal formées :
+six « refus » qui ne prouvaient rien. Corrigé avant de conclure. Sur copie, sous la sentinelle de T2.1 : toute la suite
+sans écart, seules les quatre suites qui exigent le vrai `pg_cron` restent rouges, comme avant migration. **Sur la base
+de développement**, après application par le runner : pgTAP **98 fichiers, 4106 assertions, aucune anomalie** ;
+`0098` 30/30 ; projet `api` 1203/1204, le rouge, `e2e/api/ingestion.spec.ts:91`, tenant au seed de `CRM-058` (une pièce
+jointe saine que l'administratrice peut lister, par `app.peut_voir_message`, que cette tranche ne touche pas), signalé à
+sa session ; interface complète 940/940 ; `scripts/verify-mcp.sh` 88/88 (un premier passage, coupé par la limite de
+durée de l'outil à l'étape 5, n'avait encore rien dégradé) ; types régénérés, `typecheck` vert.

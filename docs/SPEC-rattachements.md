@@ -501,6 +501,15 @@ workflow du channel avant celui des affaires en ne différant que la clé de `ca
 toute la suite pgTAP reste sans écart, et la même sentinelle, miroir désactivé, fait échouer 25 suites ; PostgREST ne voit
 dans la table aucune relation plusieurs-à-plusieurs, et les plongements existants sont inchangés.
 
+**T2.2, livrée en développement le 2026-10-26** (migration `0109`). Les vingt fonctions de lecture du §2 bis.1 — les
+gestes et les déclencheurs de `cards` exceptés, qui sont T2.3 et T2.4 — lisent `card_placements`. Les droits suivent
+la règle finale : lire une affaire, c'est lire **un** de ses rattachements ; écrire sa partie commune, c'est écrire **un**
+de ses channels. Les lectures « par channel » d'une affaire — dossier IMAP, inbox, modèles, recherche, rentabilité, temps
+— prennent son **premier** rattachement, le seul pendant la transition ; T4 à T6 fixent leur forme à plusieurs. Deux
+choix : la présence de `card_field_values.placement_id` est tenue par une **contrainte**, non par `NOT NULL`, pour que
+l'`upsert` de la webapp, qui l'omet, garde son type jusqu'à T2.3 ; un rattachement est **actif** s'il n'est pas archivé,
+et une affaire reçoit du courrier si l'un des siens l'est (`app.card_has_active_placement`).
+
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne
 change **rien de visible**, car chaque affaire garde son unique rattachement : c'est sa preuve, puisque toute la suite

@@ -552,6 +552,7 @@ export type Database = {
           created_at: string
           id: string
           payload: Json
+          placement_id: string | null
           type: string
           workspace_id: string
         }
@@ -561,6 +562,7 @@ export type Database = {
           created_at?: string
           id?: string
           payload?: Json
+          placement_id?: string | null
           type: string
           workspace_id: string
         }
@@ -570,6 +572,7 @@ export type Database = {
           created_at?: string
           id?: string
           payload?: Json
+          placement_id?: string | null
           type?: string
           workspace_id?: string
         }
@@ -595,6 +598,7 @@ export type Database = {
           card_id: string
           created_at: string
           field_id: string
+          placement_id: string | null
           updated_at: string
           updated_by: string | null
           value: Json | null
@@ -605,6 +609,7 @@ export type Database = {
           card_id: string
           created_at?: string
           field_id: string
+          placement_id?: string | null
           updated_at?: string
           updated_by?: string | null
           value?: Json | null
@@ -615,6 +620,7 @@ export type Database = {
           card_id?: string
           created_at?: string
           field_id?: string
+          placement_id?: string | null
           updated_at?: string
           updated_by?: string | null
           value?: Json | null
@@ -635,6 +641,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "form_fields"
             referencedColumns: ["id", "workflow_id"]
+          },
+          {
+            foreignKeyName: "card_field_values_placement_card_fk"
+            columns: ["placement_id", "card_id"]
+            isOneToOne: false
+            referencedRelation: "card_placements"
+            referencedColumns: ["id", "card_id"]
           },
           {
             foreignKeyName: "card_field_values_updated_by_fkey"
@@ -899,6 +912,7 @@ export type Database = {
           identity_id: string
           last_position: number | null
           last_sent_at: string | null
+          placement_id: string
           sequence_id: string
           status: string
           updated_at: string
@@ -915,6 +929,7 @@ export type Database = {
           identity_id: string
           last_position?: number | null
           last_sent_at?: string | null
+          placement_id: string
           sequence_id: string
           status?: string
           updated_at?: string
@@ -931,6 +946,7 @@ export type Database = {
           identity_id?: string
           last_position?: number | null
           last_sent_at?: string | null
+          placement_id?: string
           sequence_id?: string
           status?: string
           updated_at?: string
@@ -957,6 +973,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "mail_outbound_identities"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_sequence_enrollments_placement_fk"
+            columns: ["placement_id", "card_id"]
+            isOneToOne: false
+            referencedRelation: "card_placements"
+            referencedColumns: ["id", "card_id"]
           },
           {
             foreignKeyName: "card_sequence_enrollments_sequence_fk"

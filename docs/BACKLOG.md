@@ -16518,10 +16518,15 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         les quatorze specs des affaires (board, liste, fiche, corbeille, sommeil, Ma journée, figées, recherche, nouvelle
         affaire, channels) **189/189** ; types régénérés, `typecheck` et `build` verts. Aucun écran ne change : pas de
         capture nouvelle.
-      - [@] **T2.2 — les lectures** : `placement_id` dans `card_field_values`, `card_events`,
+      - [x] **T2.2 — les lectures** : `placement_id` dans `card_field_values`, `card_events`,
         `card_sequence_enrollments`, renseigné ; les fonctions qui LISENT une colonne de rattachement (droits, lectures
         métier, ordonnanceur, messagerie, §2 bis.1) lisent `card_placements`, signatures inchangées. Preuve : suite verte.
-        *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-26 05:14 UTC — état avant : [ ]*
+        *Livrée en développement le 2026-10-26* — migration `0109`, idempotente, appliquée par le runner seule ; vingt
+        fonctions de lecture réécrites ; **équivalence mesurée** (`docs/mesures/CRM-111/06-lectures-equivalentes.sql`) :
+        45 empreintes identiques avant et après sous les trois rôles du seed, contre-épreuve vue ; `0098` **30/30** ;
+        pgTAP complet en développement **98 fichiers, 4106 assertions, aucune anomalie** ; API
+        `e2e/api/rattachements-lectures.spec.ts` et projet `api` 1203/1204 (le rouge, `ingestion.spec.ts:91`, tient au seed
+        de `CRM-058`, sans lien) ; interface complète **940/940** ; `scripts/verify-mcp.sh` **88/88** ; types régénérés, `typecheck` vert. Aucun écran ne change.
       - [ ] **T2.3 — les signatures, par groupe** (§5) : pour chaque geste, l'ancienne signature par affaire est retirée
         dans le même changement que sa remplaçante par rattachement et que tous ses appelants (webapp, connecteur, seed,
         scripts, pgTAP, API, E2E) ; le chemin d'écriture passe à `card_placements`, et le déclencheur s'inverse tant que

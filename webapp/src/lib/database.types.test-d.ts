@@ -574,6 +574,11 @@ type _valeursColonnes = Expect<
     | 'card_id'
     | 'created_at'
     | 'field_id'
+    // `0109` de `CRM-111` TRANCHE T2.2 ajoute `placement_id` — le rattachement de la valeur (docs/SPEC-rattachements.md
+    // §3.3). Le type le dit NULLABLE et facultatif à l'écriture, et ce n'est pas la base : une contrainte
+    // `card_field_values_placement_present` le rend toujours présent, posé par déclencheur quand l'appelant l'omet. Le
+    // `NOT NULL` attend T2.3, qui passe les écritures de la webapp au rattachement.
+    | 'placement_id'
     | 'updated_at'
     | 'updated_by'
     | 'value'
