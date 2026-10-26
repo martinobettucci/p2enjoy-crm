@@ -636,6 +636,8 @@ dépréciation.
 
 ## 3. Migrations en attente
 
+**La 108 est en attente** (`CRM-111` T2.1 — la table des rattachements et la reprise, sans rien de visible ; sa ligne au §3.2). **Elle ne part jamais avant la 106 et la 107 de `CRM-058`**, réservées avant elle : le runner refuse un fichier absent du registre qui précède le dernier inscrit (§3.1), si bien qu'une 108 livrée seule rendrait la 106 et la 107 inapplicables. La livrer avec elles, ou après elles.
+
 **Aucune migration en attente depuis le 2026-10-26** : la fenêtre décrite au §8 (« 2026-10-26 — migrations 102 à 105 ») a
 appliqué les quatre migrations ci-dessous, le registre de production compte **105** lignes. *Historique de l'attente* —
 **quatre migrations en attente, de la 102 à la 105, à livrer par une même fenêtre** (décision 718 : le responsable lève
@@ -1115,6 +1117,7 @@ fenêtre, une migration qui échouerait au second passage arrêterait la migrati
 répertoire. Le mode d'échec exact a déjà été mesuré une fois, sur la contrainte de vocabulaire de
 `public.card_events` — voir §7, INC-144, levé le 2026-08-18.
 
+| 108 — `CRM-111` T2.1 | `supabase/migrations/0108_card_placements.sql` | **La table des rattachements et la reprise** (`docs/SPEC-rattachements.md` §3.1, §10, §14 ; `docs/SCHEMA.md` « Migration `0108` » ; décision 705). `card_placements`, un rattachement par affaire repris de `cards`, le miroir par déclencheur, `app.readable_channel_ids()` et la politique de lecture. **Rien de visible ne change** : aucun appelant ne lit encore la table. | Aucune : se livre seule, avec n'importe quelle webapp de `main` postérieure à la 105. | Une insertion par affaire, sous verrou de la table neuve ; `cards` n'est que lue. **Vérification après application** : `select count(*) from public.cards c left join public.card_placements p on p.card_id = c.id where p.id is null or (c.channel_id, c.current_step_id, c.position, c.owner_id, c.amount, c.next_action_at, c.archived_at) is distinct from (p.channel_id, p.current_step_id, p.position, p.owner_id, p.amount, p.next_action_at, p.archived_at)` rend **0**. **Retour arrière, sans perte** : `drop trigger card_placements_mirror_insert on public.cards; drop trigger card_placements_mirror_update on public.cards; drop function app.card_placements_mirror_insert(), app.card_placements_mirror_update(); drop table public.card_placements;`. |
 ### 3.3 Voie manuelle — fichier par fichier
 
 **Voie de repli**, désormais que `CRM-087` est livrée : la procédure nominale du §3.1 ouvre la

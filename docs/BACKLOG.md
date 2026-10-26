@@ -16425,7 +16425,7 @@ prête — politiques `organizations_insertion_bizdev_admin` et `organizations_m
 
 ## Demande du 2026-10-23 — rattachements multiples (décisions 637 à 662)
 
-### CRM-111 — Rattachements multiples d'une affaire `[ ]`
+### CRM-111 — Rattachements multiples d'une affaire `[~]`
 *Créée le 2026-10-24 — exploration demandée par le responsable le 2026-10-23, arbitrée en sept séries (décisions 638,
 639, 642, 643, 645, 657, 661) et validée le 2026-10-24 (décision 662). Spécification : `docs/SPEC-rattachements.md`.*
 Une affaire peut être rattachée à plusieurs channels, y compris de tracks différents. Chaque rattachement a son étape,
@@ -16476,12 +16476,22 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       fin sur un échec. Les douze harnais d'INC-304 d'abord mesurés, puis corrigés là où ils laissent un résidu.
 - [ ] **T2 — bascule, découpée en quatre étapes vertes (décision 705, option B)** ; chaque étape poussée laisse `main` vert, et
       aucune fonction n'expose jamais deux contrats à la fois (décision 661, tenue fonction par fonction) :
-      - [@] **T2.1 — la table et la reprise** : `card_placements` (§3.1), une ligne par affaire reprise de `cards`,
-        *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-26 04:27 UTC — état avant : [ ]* ;
-        migration `0108`, suite pgTAP `0097` (numéros convenus avec la session de `CRM-058`, qui prend `0106` et `0107`).
+      - [x] **T2.1 — la table et la reprise** : `card_placements` (§3.1), une ligne par affaire reprise de `cards`,
         politiques sous la forme optimisée et ses trois gardes ; `cards` reste le chemin d'écriture, et un déclencheur
         reporte chaque écriture de ses colonnes de rattachement dans le rattachement unique. Aucun appelant ne change.
         Preuve : rattachements égaux aux colonnes de `cards` après la reprise et après chaque geste ; suite existante verte.
+        *Livrée en développement le 2026-10-26* — migration `0108` (passée deux fois sur copie jetable : idempotente),
+        appliquée par le runner seule ; `supabase/tests/0097_card_placements.test.sql` **43/43** (forme, reprise, miroir
+        après `creer_affaire`, `UPDATE` des colonnes ouvertes, archivage, `move_card`, `move_card_to_channel`,
+        `snooze_card`, `wake_card`, `change_channel_workflow` et suppression ; trois gardes ; RLS et privilèges sous les
+        rôles du seed) ; `0016` n° 23 révisée (159 politiques). **Suite pgTAP complète sur la base de développement :
+        96/97**, le seul rouge — `0016` n° 63, politiques de `storage.objects` — tenant aux migrations `0106` et `0107` de
+        `CRM-058` appliquées en développement et non encore committées, sans lien avec cette tranche. **Sentinelle** (base
+        jetable, `docs/JOURNAL.md` 2026-10-26) : toute la suite sans aucun écart ; miroir désactivé, 25 suites rouges.
+        API aux jetons réels `e2e/api/rattachements-miroir.spec.ts` **6/6**, projet `api` complet **1202/1202** ; interface,
+        les quatorze specs des affaires (board, liste, fiche, corbeille, sommeil, Ma journée, figées, recherche, nouvelle
+        affaire, channels) **189/189** ; types régénérés, `typecheck` et `build` verts. Aucun écran ne change : pas de
+        capture nouvelle.
       - [ ] **T2.2 — les lectures** : `placement_id` dans `card_field_values`, `card_events`,
         `card_sequence_enrollments`, renseigné ; les fonctions qui LISENT une colonne de rattachement (droits, lectures
         métier, ordonnanceur, messagerie, §2 bis.1) lisent `card_placements`, signatures inchangées. Preuve : suite verte.

@@ -492,6 +492,15 @@ déclencheur ; T2.2 les lectures ; T2.3 les signatures, par groupe ; T2.4 le ret
 661 est tenue **fonction par fonction** : aucune fonction n'expose jamais deux contrats à la fois. Le §3.2 ne conserve
 donc les colonnes en miroir que pendant la transition, jamais au terme de T2. Le texte d'origine suit.
 
+**T2.1, livrée en développement le 2026-10-26** (migration `0108`). Trois choix de transition, que T2.3 et T3 lèvent :
+la clé `(channel_id, workflow_id)` du rattachement est **`initially deferred`**, car `change_channel_workflow` change le
+workflow du channel avant celui des affaires en ne différant que la clé de `cards` ; un index unique sur `card_id` garde
+**un rattachement par affaire**, ce qui permet au miroir de désigner « le » rattachement sans choisir — T3 le retire avec
+`attach_card` ; et **personne n'écrit la table**, `service_role` compris, le déclencheur de `cards` étant son seul
+écrivain. Mesuré avant la livraison : sous une sentinelle qui vérifie l'égalité après chaque instruction écrivant `cards`,
+toute la suite pgTAP reste sans écart, et la même sentinelle, miroir désactivé, fait échouer 25 suites ; PostgREST ne voit
+dans la table aucune relation plusieurs-à-plusieurs, et les plongements existants sont inchangés.
+
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne
 change **rien de visible**, car chaque affaire garde son unique rattachement : c'est sa preuve, puisque toute la suite

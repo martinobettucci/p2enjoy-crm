@@ -34794,3 +34794,40 @@ propositions de la décision 719 sont retenues : la copie cachée dans l'envelop
 pièces prises sur l'ordinateur, 10 fichiers et 10 Mo ; le bucket privé vérifié en base ; l'antivirus du worker quand il
 est configuré ; l'archive dans `mail_attachments` ; la purge à 24 heures ; `bcc` seul dans le connecteur. Le code peut
 commencer.
+
+### `CRM-111` T2.1 — la table des rattachements, un miroir à sens unique (2026-10-26)
+
+*2026-10-26, session interactive, sur instruction du responsable (« Prendre T2.1 »), selon le découpage de la décision
+705.* **Problème** : poser `card_placements` et y reprendre un rattachement par affaire sans changer aucun appelant,
+alors que `cards` reste le chemin d'écriture jusqu'à T2.3. **Choix d'implémentation**, dans le cadre de la décision 705 :
+
+1. **Le miroir est à sens unique.** Deux déclencheurs de `cards`, `card_placements_mirror_insert` et
+   `card_placements_mirror_update` (`SECURITY DEFINER`), sont les seuls écrivains de la table ; `anon`, `authenticated`
+   **et `service_role`** n'ont que `SELECT`. Un rattachement ne peut donc pas diverger de son affaire. La mise à jour ne
+   se lance que si l'une des treize colonnes change, et lève `card_placement_missing` plutôt que de rattraper en silence
+   une affaire sans rattachement.
+2. **La clé `(channel_id, workflow_id)` est `initially deferred`.** Observé : `change_channel_workflow` (migration 20)
+   change le workflow du channel avant celui des affaires, et ne diffère que `cards_channel_id_workflow_id_fkey`, qu'il
+   nomme. Une clé immédiate sur le rattachement refuserait ce geste. Elle est vérifiée en fin de transaction ; T2.3 la
+   rendra immédiate quand la fonction écrira les rattachements elle-même.
+3. **Un rattachement par affaire, tenu par un index unique sur `card_id`**, pour que le miroir désigne « le »
+   rattachement sans choisir. `CRM-111` T3 le retire avec `attach_card`.
+
+**Vérifications** : migration passée deux fois sur une copie jetable (`crm111_mesure`, recopiée de la base de
+développement), puis appliquée en développement par le runner, seule (« 1 fichier(s) appliqué(s) avec succès ») ;
+suite `0097` 43/43. **La sentinelle**, instrument de mesure posé sur la seule copie jetable et jamais migré : un
+déclencheur d'instruction sur `cards` qui vérifie après chaque écriture que tout rattachement est égal à son affaire. La
+suite pgTAP entière, rejouée sous elle, ne rencontre **aucun écart**, ce qui prouve le miroir sur chacun des gestes que la
+suite exerce, pas seulement sur ceux de `0097`. **Contre-épreuve** : miroir de mise à jour désactivé, la même sentinelle
+fait échouer **25 suites**, l'instrument voit donc ce qu'il prétend voir. **PostgREST** : un PostgREST jetable sur la
+copie migrée rend, pour les trente plongements entre `cards`, `channels`, `workflow_steps`, `profiles`, `workspaces` et
+`workflows`, les mêmes codes et les mêmes relations candidates qu'avant. La table n'est pas prise pour une table de
+jonction, et aucun plongement de la webapp ne devient ambigu. Sur la base de développement, pgTAP 96/97 (le rouge,
+`0016` n° 63 sur `storage.objects`, tient aux migrations `0106` et `0107` de `CRM-058`, appliquées en développement et non
+encore committées), API 1202/1202, interface 189/189 sur les specs des affaires.
+
+**Partage de l'arbre** : la session de `CRM-058` travaille dans le même checkout. `database.types.ts`,
+`database.types.test-d.ts`, `docs/SCHEMA.md`, `docs/DAT.md` et `docs/PROD_MIGRATIONS.md` portent ses modifications en
+cours. Le commit de cette tranche y inscrit la version de `HEAD` augmentée de ses seuls ajouts, et l'arbre garde les deux.
+Une copie de `0016` antérieure à sa révision du n° 63 a écrasé cette révision ; elle l'a constaté et la refera après le
+push.

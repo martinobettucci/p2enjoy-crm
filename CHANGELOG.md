@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-_Rien à publier pour le moment._
+- **`CRM-111` T2.1 — la table des rattachements** (migration `0108`, décision 705). Chaque affaire reçoit un rattachement, `card_placements`, qui reprend son channel, son étape, son responsable, son montant, sa prochaine action, son sommeil et son archivage ; un déclencheur le tient égal à l'affaire à chaque écriture. Rien de visible ne change : c'est la première des quatre étapes de la bascule vers plusieurs rattachements par affaire. La table se lit selon les droits du channel, et personne ne l'écrit directement.
 
 ## [Publié]
 

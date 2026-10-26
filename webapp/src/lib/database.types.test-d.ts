@@ -153,6 +153,10 @@ type _tables = Expect<
     // du fait qu'une sous-tranche touche ou non l'interface : une migration qui ajoute un objet au
     // schéma exposé régénère les types DANS LE MÊME CHANGEMENT, écran ou pas.
     | 'card_sequence_enrollments'
+    // `0108` de `CRM-111` TRANCHE T2.1 ajoute `card_placements` — le rattachement d'une affaire à un channel
+    // (docs/SPEC-rattachements.md §3.1). Le type montre un `Insert` et un `Update` que la base refuse à TOUS les rôles,
+    // `service_role` compris : pendant la transition, le miroir de `cards` est le seul écrivain (décision 705).
+    | 'card_placements'
     | 'cards'
     | 'channel_members'
     | 'channels'

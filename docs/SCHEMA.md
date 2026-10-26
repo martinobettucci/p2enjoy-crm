@@ -2064,6 +2064,17 @@ fabriquée** : les messages déjà reçus naissent non lus pour tous. **Retrait*
 public.mark_message_unread(uuid), public.mark_messages_read(uuid[])`, `drop table public.mail_message_reads`, puis
 `drop function public.inbox_arborescence()` et sa définition de la migration `0028` réappliquée.
 
+### Migration `0108` — la table des rattachements et la reprise (`CRM-111` T2.1, décision 705 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-rattachements.md` §3.1, §10, §14. Crée **`card_placements`** (§5 ci-dessus), y reprend **un rattachement par
+affaire**, corbeille comprise, aux valeurs exactes de ses treize colonnes de rattachement, pose le miroir
+`card_placements_mirror_insert` / `card_placements_mirror_update` sur `cards`, la fonction `app.readable_channel_ids()` et
+la politique de lecture. **Aucune colonne ne quitte `cards`, aucune politique de `cards` ne change, aucun appelant ne
+change.** Idempotente : la reprise n'insère que les affaires sans rattachement. **Retrait, sans perte** (`cards` porte
+toujours tout) : `drop trigger card_placements_mirror_insert on public.cards; drop trigger card_placements_mirror_update
+on public.cards; drop function app.card_placements_mirror_insert(), app.card_placements_mirror_update(); drop table
+public.card_placements;` — `app.readable_channel_ids()` peut rester.
+
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)

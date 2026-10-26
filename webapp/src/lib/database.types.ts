@@ -666,6 +666,115 @@ export type Database = {
           },
         ]
       }
+      card_placements: {
+        Row: {
+          amount: number | null
+          archived_at: string | null
+          card_id: string
+          channel_id: string
+          created_at: string
+          created_by: string | null
+          current_step_id: string
+          entered_step_at: string
+          health_score: number | null
+          id: string
+          next_action: string | null
+          next_action_at: string | null
+          owner_id: string | null
+          position: number
+          probability_override: number | null
+          snoozed_until: string | null
+          updated_at: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Insert: {
+          amount?: number | null
+          archived_at?: string | null
+          card_id: string
+          channel_id: string
+          created_at?: string
+          created_by?: string | null
+          current_step_id: string
+          entered_step_at?: string
+          health_score?: number | null
+          id?: string
+          next_action?: string | null
+          next_action_at?: string | null
+          owner_id?: string | null
+          position: number
+          probability_override?: number | null
+          snoozed_until?: string | null
+          updated_at?: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Update: {
+          amount?: number | null
+          archived_at?: string | null
+          card_id?: string
+          channel_id?: string
+          created_at?: string
+          created_by?: string | null
+          current_step_id?: string
+          entered_step_at?: string
+          health_score?: number | null
+          id?: string
+          next_action?: string | null
+          next_action_at?: string | null
+          owner_id?: string | null
+          position?: number
+          probability_override?: number | null
+          snoozed_until?: string | null
+          updated_at?: string
+          workflow_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_placements_card_fk"
+            columns: ["card_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_placements_channel_fk"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_placements_channel_workflow_fk"
+            columns: ["channel_id", "workflow_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workflow_id"]
+          },
+          {
+            foreignKeyName: "card_placements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_placements_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_placements_step_fk"
+            columns: ["current_step_id", "workflow_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_steps"
+            referencedColumns: ["id", "workflow_id"]
+          },
+        ]
+      }
       card_revenue_actuals: {
         Row: {
           amount: number
