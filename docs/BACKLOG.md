@@ -12361,9 +12361,12 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       **Livrée en développement le 2026-10-26** : migration `0128` (numérotée après les 0126 et 0127 de `CRM-117`), pgTAP
       `0118` **9/9**, API 5/5, bandeau du board (`docs/DESIGN_SYSTEM.md` §5.7 quinquies) et ses unitaires, E2E
       `e2e/ui/checklists.spec.ts` sur un workflow jetable, capture observée ; `docs/SPEC-workflow-engine.md` §5.3.
-- [ ] **T3 — les écrans** : la checklist de la fiche (libre et par rattachement), le compte sur la carte, l'éditeur de
-      workflows (points d'étape et exigences) ; le seed des points (`docs/SPEC-checklists.md` §6) ; unitaires, E2E,
-      captures.
+- [ ] **T3 — les écrans**, découpée le 2026-10-26 en deux livraisons :
+  - [ ] **T3a — la fiche, le board et le seed** : le bloc « Checklist » de la fiche (points de l'étape du rattachement,
+        points libres, cocher, ajouter, retirer, mention d'exigence), le compte « n/m » sur la carte du board, le seed
+        des points (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel.
+  - [ ] **T3b — l'éditeur de workflows** : les points de chaque étape et les points exigés par une transition ; le lien
+        « Cocher ces points » du bandeau du board vers la fiche.
 - [ ] **T4 — les modèles d'affaires** : `card_templates`, `creer_affaire` étendue, `save_card_as_template`, Réglages,
       « Nouvelle affaire », « Enregistrer comme modèle ».
 - [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`.

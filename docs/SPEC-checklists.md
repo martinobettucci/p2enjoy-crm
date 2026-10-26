@@ -152,7 +152,8 @@ libres ; deux modèles d'affaires, dont un créé par « Enregistrer comme modè
   de T1, 2026-10-26).*
 - **T2 — l'exigence de transition** : `move_card` et son refus, le bandeau du board ; pgTAP, API, E2E.
 - **T3 — l'écran de la fiche et du board** : blocs, cases, compte, mention d'exigence ; l'éditeur de workflows pour les
-  points d'étape et les exigences ; le seed des points.
+  points d'étape et les exigences ; le seed des points. *Découpée en T3a (fiche, board, seed) et T3b (éditeur de
+  workflows), le 2026-10-26.*
 - **T4 — les modèles de cards** : table, `creer_affaire` étendue, `save_card_as_template`, Réglages, « Nouvelle
   affaire », « Enregistrer comme modèle ».
 - **T5 — le connecteur** : les deux outils, leurs tests unitaires et d'intégration.
