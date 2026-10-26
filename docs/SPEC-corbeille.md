@@ -873,3 +873,81 @@ en revanche la visibilité : Camille lit les trois objets en corbeille, la lectr
 - **Unitaires et E2E** : la colonne « Effacement », les deux phrases, aux quatre paliers ; captures observées.
 - `docs/PROD_MIGRATIONS.md`, `docs/SCHEMA.md`, `docs/SPEC-seed.md`, le manuel (chapitre 5 *ter*), le harnais
   `verify-corbeille.sh` (ses comptes), et le §6 et le §7 de ce document, révisés.
+
+## 9. Réaffecter les dépenses qui bloquent l'effacement d'un track — onzième tranche (INC-316)
+
+*Proposé le 2026-10-26, écrit avant toute ligne de code (`CLAUDE.md` §5), sur les arbitrages des décisions 741 et 742.
+En attente de validation du responsable.*
+
+**Le problème (INC-316, mesuré par pgTAP `0114`).** Un budget appartient à un track ; une ligne de coût peut viser le
+budget d'un **autre** track que celui de son affaire (`docs/SPEC-costs.md` §3.1, démontré par le seed : « Prospection
+terrain »). Un budget qui porte une dépense ne se détruit pas (`card_costs_budget_id_fkey`, `restrict`). La purge du §8.3
+détruit avec un track ses affaires et leurs lignes, puis ses budgets ; une ligne d'une affaire **d'un autre track** sur
+l'un de ces budgets fait refuser la destruction, et le track reste en corbeille (§8.3, bloc atomique).
+
+**Les arbitrages.** Le croisement reste permis (décision 741). Le produit propose, **dans la corbeille**, de **choisir où
+réaffecter** chacune de ces dépenses ; la cible est **tout budget ouvert de l'espace**, hors du track à effacer
+(décision 742). **Connecteur MCP** : déjà couvert — `crm_card_cost_update` déplace une ligne vers un autre budget ouvert,
+famille `budgets`, action `modifier` (`docs/SPEC-mcp.md` §6.1) ; aucun outil nouveau.
+
+### 9.1 Ce qui bloque, défini par ce que la purge détruit
+
+Une **dépense bloquante** d'un track en corbeille est une ligne de `card_costs` dont le budget appartient à ce track et
+dont l'affaire **n'est pas** détruite avec lui — c'est-à-dire dont `cards.channel_id` n'est pas un channel du track. La
+définition suit exactement la purge (§8.3), qui détruit les affaires des channels du track : un rattachement de
+`CRM-111` dans un autre channel ne change rien à cette règle.
+
+`public.trash_blocking_costs(p_track uuid)` les rend : identifiant de la ligne, libellé, estimé, réel, soldée ou non,
+l'affaire (identifiant, titre), le budget et l'occurrence actuels (identifiant, nom, clôturé ou non). `SECURITY
+DEFINER`, réservée à l'**administrateur de l'espace** du track (`42501 reserved_to_admins`), `P0002 track_not_found` hors
+de son espace, et rend zéro ligne pour un track qui n'est pas en corbeille. Exécutable par `authenticated` seul.
+
+### 9.2 Réaffecter une dépense
+
+`public.reassign_trashed_track_cost(p_cost uuid, p_budget uuid, p_occurrence uuid default null)`, `SECURITY DEFINER`,
+exécutable par `authenticated` seul, dans l'ordre :
+
+1. la ligne existe et relève de l'espace de l'appelant — sinon `P0002 cost_not_found` ;
+2. l'appelant administre cet espace — sinon `42501 reserved_to_admins` ;
+3. la ligne est **bloquante** au sens du §9.1 — sinon `P0001 cost_not_blocking` : ce geste ne sert qu'à débloquer un
+   effacement, les autres déplacements restant ceux de `CRM-085` ;
+4. le budget cible n'appartient pas au track en corbeille — sinon `22023 same_track` ;
+5. puis les règles d'aujourd'hui pour **la cible** : budget de l'espace, ouvert, occurrence exigée si et seulement s'il
+   est récurrent, appartenant au budget et ouverte (`docs/SPEC-costs.md` §2.3, refus `23503` et `23514` du déclencheur
+   existant).
+
+**Une seule exception, et elle est nommée.** Le déclencheur `app.card_costs_verifier_rattachement` refuse qu'une ligne
+**quitte** un budget ou une occurrence clôturés (`docs/SPEC-costs.md` §2.3, point (d)) : sans exception, un track en
+corbeille dont le budget est clôturé ne pourrait **jamais** être effacé. La fonction pose `app.trash_reassign = on` pour
+sa transaction, et le déclencheur lève **ce seul côté** du point (d) quand la ligne quitte un budget **dont le track est
+en corbeille**. Le côté de la cible reste entier : on ne rejoint jamais un budget clôturé. Le total arrêté qui diminue
+est celui d'un budget voué à l'effacement.
+
+La ligne garde son affaire, son libellé, ses montants et ses réels ; seuls `budget_id` et `occurrence_id` changent.
+
+### 9.3 Ce que l'écran de corbeille gagne
+
+- Sur la ligne d'un **track** qui porte au moins une dépense bloquante, la colonne « Effacement » écrit **« Bloqué »**
+  sous la date, et la ligne offre une seconde commande, **« Réaffecter les dépenses »**, réservée à qui administre
+  l'espace (§5.59). Le nombre de dépenses bloquantes est lu à part de la liste : son échec ne retire que la mention.
+- La commande ouvre, **dans le flux**, sous la ligne, un panneau : une phrase dit pourquoi (« Ces dépenses d'autres
+  affaires sont imputées à un budget de ce track. Réaffectez-les pour qu'il puisse être effacé. »), puis une ligne par
+  dépense — affaire, libellé, estimé, budget actuel — avec le choix du **budget cible** (tout budget ouvert de l'espace,
+  hors du track, groupé par track), de l'**occurrence** quand le budget est récurrent, et « Réaffecter ». Chaque
+  réaffectation est un geste séparé, annoncé ; le panneau se relit après chacune, et se referme vide en disant que le
+  track sera effacé à sa date.
+- Les refus sont traduits par leur code, sans jamais rendre le message du serveur.
+- `docs/DESIGN_SYSTEM.md` §5.16 est complété avant le code, après sa relecture intégrale.
+
+### 9.4 Seed, preuves, production
+
+- **Seed** : inchangé. Le croisement « Prospection terrain » existe déjà, mais son track n'est pas en corbeille ; le
+  seed ne fabrique pas de corbeille artificielle. La démonstration est faite par l'E2E, qui retire un track de preuve
+  portant un budget utilisé par une affaire d'un autre track, puis restaure tout.
+- **pgTAP** : les deux fonctions, leurs refus dans l'ordre, l'exception du point (d) limitée au budget d'un track en
+  corbeille, puis une purge qui, après réaffectation, efface le track que le §8.3 laissait en corbeille.
+- **API** avec les jetons réels : la lectrice et le business developer refusés, l'administratrice qui réaffecte.
+- **Unitaires et E2E** : la mention « Bloqué », le panneau, la réaffectation au clavier, aux quatre paliers ; captures
+  observées.
+- **Une migration**, numérotée après synchronisation : les deux fonctions et la révision du déclencheur. `docs/SCHEMA.md`,
+  `docs/PROD_MIGRATIONS.md`, `docs/SPEC-costs.md` §2.3 (l'exception nommée), le manuel (chapitre 5 *ter*), le harnais.
