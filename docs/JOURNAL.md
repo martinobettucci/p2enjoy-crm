@@ -35575,7 +35575,7 @@ l'affaire » ambigu. **La réponse contredit donc une règle écrite** : selon `
 mise à jour) et le comportement reste inchangé ; l'arbitrage est redemandé au responsable avec ces faits.
 
 
-### décision 739 — `CRM-117` : l'aide de l'en-tête est une icône qui ouvre un panneau, et ce panneau porte le lien de l'écran
+### décision 740 — `CRM-117` : l'aide de l'en-tête est une icône qui ouvre un panneau, et ce panneau porte le lien de l'écran
 
 *2026-10-26, arbitrage du responsable, posé avant la spécification.* **Question.** La décision 736 veut une entrée
 « Aide » dans l'en-tête qui ouvre le sommaire, **et** un lien par écran principal vers le chapitre qui le décrit. La
