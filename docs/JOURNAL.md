@@ -34743,3 +34743,23 @@ production — ici `CRM-057` tranche 2 — est livrée en production **par une f
 (§3) et la 105 de la tranche —, puis le service `mcp` est reconstruit dans la cellule et `scripts/spark/verifier.sh`
 déroulé. **Bornes** : une seule fenêtre ; aucune autre écriture en production ; si la vérification échoue, rien n'est
 réparé en place, l'état est rapporté au responsable avec la reprise par l'instantané (§6).
+
+**Complément du 2026-10-26 — rejeu et correction des harnais encore rouges** (demande du responsable : « rejoue,
+corrige et repush »).
+- `verify-notifications-surface.sh` : son contrôle « compteur sans corps » cherchait `head: true`, forme que la décision 700
+  a interdite ; révisé avec son motif (`OPTIONS_COMPTE`, `.limit(LIMITE_COMPTE)`, `head: true` interdit), **45/45**,
+  mutation « HEAD » tuée (`ef90917`).
+- Verts seuls, sans correction du dépôt : `verify-mail-sync` **61** (l'hôte portait `anyio` 4.15.1 ; dépendances
+  épinglées réinstallées), `verify-session-sso` **56** (le 404 du seed pendant la reconstruction est INC-298, suivi par
+  `CRM-115`), `verify-identites` **23** et `verify-spark` **109**, `verify-session-sso` et `verify-identites` avaient
+  buté sur le port 4173 d'un serveur orphelin.
+- `verify-scripts` : 113/114, la reconstruction sans CA échoue derrière le proxy TLS de l'hôte, contrôle juste et laissé
+  inchangé (déjà mesuré et décidé).
+- **État laissé par des rejeux interrompus**, nettoyé : une affaire `tst-crm011 déplacement…` (un `verify-webapp` coupé
+  par la limite de temps avant son nettoyage) faussait les comptes de pgTAP, de l'API et de la prévisualisation ; et
+  l'étape d'essai `e2e-wf-clavier`, laissée un temps par un scénario clavier interrompu, a fait republier deux fois la
+  version du seed — `versions-workflow.spec.ts` lisait 3 versions au lieu d'une. Base reconstruite par
+  `reconstruire_base_dev` : 1 version, 41 affaires.
+- Après reconstruction : `versions-workflow.spec.ts` et `administration-workflows.spec.ts` **81/81** — INC-236 ne
+  reproduit plus depuis la décision 698 ; unitaires **4362/4362** ; suite d'interface complète **927/933**, les six
+  échecs étant les trois versions ci-dessus (état) et trois scénarios verts rejoués seuls (charge).
