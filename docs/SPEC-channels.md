@@ -61,6 +61,7 @@ liste, et celui auquel les droits fins de `channel_members` se rattachent.
 | `slug` | `text` | non nul, `CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$')`, **unique par track** | `docs/SCHEMA.md` §2 : « unique par track ». Deux tracks peuvent porter un channel `prospection` sans se gêner |
 | `description` | `text` | | Facultative |
 | `workflow_id` | `uuid` | **nullable, sans clé étrangère** — écart assumé, §2.5 | `docs/SCHEMA.md` §2 l'exige `non nul` avec FK. La table `workflows` n'existe pas encore : INC-029 |
+| `color` | `text` | non nul, défaut `'neutral'`, `CHECK` des cinq jetons (`channels_color_check`) | **Ajoutée par `CRM-116`** (décision 729) : la pastille de l'onglet et de l'arborescence. Voir la révision ci-dessous |
 | `position` | `numeric` | non nul, attribuée par trigger si omise, **portée du track** | §3 |
 | `archived_at` | `timestamptz` | | §4 |
 | `deleted_at` | `timestamptz` | | **Corbeille** — `CRM-077`, `docs/SPEC-corbeille.md` §3.1. INDÉPENDANTE d'`archived_at` : archiver n'est pas supprimer |
@@ -73,6 +74,13 @@ liste, et celui auquel les droits fins de `channel_members` se rattachent.
 son état actif, pas par une couleur. `docs/DESIGN_SYSTEM.md` §1 réserve d'ailleurs la couleur de
 donnée « aux tracks et aux nœuds de workflow » — les nommer tous les deux, et pas les channels,
 n'est pas une omission mais une position.
+
+**RÉVISÉ LE 2026-10-26 — `CRM-116`, décision 729 du responsable : `color` rejoint la table.** La position ci-dessus
+est renversée par l'arbitrage du responsable — « créer un channel ou un track en couleur » : un channel porte désormais
+une couleur, prise parmi les cinq mêmes jetons que `tracks.color` (`'neutral'` par défaut, contrainte `CHECK` du même
+nom de forme, `channels_color_check`), choisie à la création et en modification, et affichée en pastille sur son
+onglet et dans l'arborescence (`docs/DESIGN_SYSTEM.md` §5.68). La couleur n'y porte **jamais seule** une information :
+elle accompagne le nom (§1). `icon`, elle, reste absente : rien ne l'a demandée.
 
 ### 2.2 `created_at` et `updated_at` : la seconde moitié d'INC-025
 
@@ -258,6 +266,11 @@ workflow_id,description`. Elle est affichée en infobulle sur l'onglet du channe
 motif qui l'écartait — « une requête ne rapporte que ce qui est affiché » — tombe avec l'affichage. Comme `workflow_id`,
 elle est lue dans la lecture déjà émise par la coquille, et non par une seconde. Une description nulle, vide ou
 blanche ne rend aucune infobulle.
+
+**`color` a rejoint la sélection avec `CRM-116`** (décision 729, 2026-10-26) — `select=id,name,slug,position,
+workflow_id,description,color`. Elle colore la pastille de l'onglet (`docs/DESIGN_SYSTEM.md` §5.68), lue dans la même
+lecture que les autres colonnes. Une valeur hors des cinq jetons — impossible sous la contrainte, mais venue du réseau
+— est traitée comme `neutral`, par le repli déjà employé pour les tracks (`classesPilule`, `COULEUR_PAR_DEFAUT`).
 
 La requête est **filtrée côté serveur** sur `track_id` : rapporter les channels de tous les tracks
 pour n'en afficher qu'une barre ferait transiter des lignes que l'écran ne montrera jamais.

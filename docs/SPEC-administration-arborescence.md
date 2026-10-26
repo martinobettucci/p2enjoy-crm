@@ -593,3 +593,66 @@ de `webapp/src/lib/nouveau-channel.ts`, prouvée par ses tests unitaires — don
 Le scénario E2E rend le seed à son état : ses channels et workflows portent un préfixe propre, et sont retirés après chaque
 scénario par la clé de service — le patron de `e2e/ui/nouvelle-affaire.spec.ts` —, retrait CONSTATÉ par une relecture.
 Chaque effet d'écran est confirmé en base par une lecture de service.
+
+## 14. La couleur d'un track et d'un channel — `CRM-116`, décision 729
+
+*Écrit le 2026-10-26, avant le code, sur les arbitrages du responsable.* L'apparence du sélecteur et de la pastille est
+réglée par `docs/DESIGN_SYSTEM.md` §5.68 ; ce chapitre fixe ce que la base porte, ce que les formulaires envoient et
+ce que les écrans lisent.
+
+### 14.1 Objet
+
+Le responsable : « je vois en dev des tracks et des channels en couleur et aucune façon de le faire en UI ». Mesuré :
+`tracks.color` existe et le formulaire du §5.1 la propose, mais par une liste de noms de jetons (`brand`, `success`…),
+illisible ; `channels` n'a aucune couleur (`docs/SPEC-channels.md` §2.1, position révisée par ce chapitre). Arbitrages :
+une couleur propre au channel, des pastilles nommées pour les deux formulaires, **pas de connecteur MCP** — la couleur
+se choisit dans la webapp seulement, et les outils de structure du connecteur n'écrivent pas la colonne : un channel
+créé par eux prend le défaut `neutral`.
+
+### 14.2 La donnée
+
+`channels.color` : `text`, non nul, défaut `'neutral'`, `CHECK (color IN ('brand','success','accent','danger',
+'neutral'))`, contrainte `channels_color_check` — la forme exacte de `tracks.color` (`docs/SCHEMA.md`). Migration au
+prochain numéro libre au moment du code ; les channels existants prennent le défaut. **Aucune politique nouvelle** :
+la colonne entre dans les privilèges `INSERT` et `UPDATE` déjà accordés à `authenticated` sur `channels`, s'ils le
+sont colonne par colonne, et les politiques existantes — insertion et mise à jour par `app.is_workspace_admin` —
+décident de qui l'écrit. Retour arrière : supprimer la colonne ; aucune autre donnée n'en dépend.
+
+### 14.3 Les formulaires
+
+- **Track** (§5.1, §5.2) : le champ « Couleur » devient le sélecteur ; il reste à sa place, après le slug et avant
+  l'icône. La valeur envoyée est inchangée — un des cinq jetons.
+- **Channel** (§7, `FormulaireChannel` partagé avec la barre d'onglets, §13.2) : un champ « Couleur » nouveau, après le
+  slug et avant le workflow ; `neutral` à la création, la valeur lue en modification. `creerChannel` et la
+  modification d'un channel envoient `color`. Le formulaire étant partagé, la création depuis l'arborescence et depuis
+  « Nouveau channel » de la barre d'onglets reçoivent le champ ensemble.
+- **Refus** : la valeur ne peut sortir des cinq jetons depuis l'écran ; un `23514` sur `channels_color_check`, que seul
+  un appel direct atteint, rejoint le refus générique du §9. Les refus de droit sont ceux du §9 et du §10, inchangés.
+
+### 14.4 Les lectures
+
+- **Barre d'onglets** : `color` rejoint la sélection des channels (`docs/SPEC-channels.md` §5) — la même lecture, aucune
+  requête de plus.
+- **Arborescence** : `color` rejoint `COLONNES_CHANNEL_ADMIN` (`webapp/src/lib/administration-arborescence.ts`), pour la
+  pilule et pour la valeur initiale du formulaire de modification.
+
+### 14.5 Ce que voit un non-administrateur
+
+Rien de nouveau : les formulaires ne lui sont pas offerts (§10), et la pastille de l'onglet est une lecture, ouverte à
+qui lit le channel.
+
+### 14.6 Limites connues
+
+- **L'icône d'un track reste une liste de noms techniques** (`folder`, `briefcase`…). Le même défaut de lisibilité,
+  non demandé : hors de ce chapitre, à arbitrer.
+- La couleur d'un channel n'est pas reportée sur ses cartes ni sur son board : seuls l'onglet et l'arborescence la
+  montrent, comme arbitré.
+
+### 14.7 Preuves attendues
+
+pgTAP de la contrainte et du défaut ; preuve d'API aux jetons réels — l'administrateur écrit la couleur d'un channel,
+un `business_developer` et une lectrice sont refusés, une valeur hors jetons est refusée par `23514` ; unitaires du
+sélecteur (rendu, valeur initiale, flèches, repli d'une valeur inconnue), des formulaires (valeur envoyée) et de la
+pastille ; E2E à la souris et au clavier sur les deux formulaires de channel et sur celui de track, la pastille relue
+sur l'onglet, la lectrice sans formulaire, quatre paliers ; captures observées ; seed ; manuel, chapitre 5 et section
+3.2 ter.

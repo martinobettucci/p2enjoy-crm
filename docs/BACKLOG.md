@@ -16751,10 +16751,15 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
 le faire en UI, créer un channel ou un track en couleur ». Arbitrages du responsable le même jour (`docs/JOURNAL.md`
 décision 729) : une couleur propre au channel, des pastilles nommées, pas de connecteur MCP.*
 
-- [ ] **T1 — spécification, écrite avant le code** : la colonne `channels.color` (`docs/SCHEMA.md`), le sélecteur de
+- [x] **T1 — spécification, écrite avant le code** : la colonne `channels.color` (`docs/SCHEMA.md`), le sélecteur de
       couleur et la pastille de l'onglet (`docs/DESIGN_SYSTEM.md`), les formulaires de track et de channel
       (`docs/SPEC-administration-arborescence.md`), la barre d'onglets (`docs/SPEC-channels.md`), le seed
       (`docs/SPEC-seed.md`). Connecteur MCP : non (décision 729).
+      *Écrite le 2026-10-26* : `docs/SPEC-administration-arborescence.md` §14, `docs/DESIGN_SYSTEM.md` §5.68 et §1,
+      `docs/SPEC-channels.md` §2.1 (position révisée) et §5, `docs/SCHEMA.md` (`channels`), `docs/SPEC-seed.md` §2.6.
+      Choix de forme de l'agent, marqués pour relecture : l'ordre des pastilles (celui de la palette, Gris en dernier),
+      la pastille de 8 px sur l'onglet en couleur pleine, la pilule de donnée du channel dans l'arborescence, le champ
+      après le slug et avant le workflow ; limite dite : l'icône d'un track reste une liste de noms techniques.
 - [ ] **T2 — base** : migration au prochain numéro libre (`color`, cinq jetons, `neutral` par défaut), pgTAP, types
       régénérés, preuve d'API aux jetons réels (écriture par l'administrateur, refus aux autres), seed, contrat de
       déploiement.

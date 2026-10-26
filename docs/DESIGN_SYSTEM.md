@@ -61,6 +61,8 @@ Les tracks et les nœuds de workflow portent une couleur, choisie **parmi les je
 et stockée sous forme de nom de jeton (`brand`, `success`, `accent`, `danger`, `neutral`), jamais
 d'hexadécimal libre. Une couleur ne porte jamais seule une information : elle accompagne toujours
 un libellé ou une icône.
+*Les channels aussi, depuis `CRM-116` (décision 729, 2026-10-26) : mêmes jetons, choisis par le sélecteur du §5.68 et
+rendus en pastille sur l'onglet et dans l'arborescence.*
 
 ## 2. Typographie
 
@@ -6338,3 +6340,38 @@ les trois teintes de signification de la charte (§1) et leurs versions douces e
   pas** (`whitespace-nowrap`) : à 390 px, « poids 20 % » laissait le « % » seul à la ligne — défaut vu en capture ; le
   libellé du signal, lui, se replie.
 - **Aucune icône d'alerte** : une pastille rouge n'est pas une erreur du produit, c'est un état de l'affaire.
+
+### 5.68 Sélecteur de couleur, et pastille de channel — `CRM-116`
+
+*Écrit le 2026-10-26, avant le code, sur les arbitrages du responsable (`docs/JOURNAL.md` décision 729).* Ce que la
+base porte et ce que chaque formulaire envoie : `docs/SPEC-administration-arborescence.md` §14 ; ces règles disent de
+quoi ils ont l'air.
+
+- **LE SÉLECTEUR DE COULEUR REMPLACE LA LISTE DE NOMS TECHNIQUES.** Le formulaire de track proposait `brand`, `success`,
+  `accent`, `danger`, `neutral` dans une liste déroulante : des noms de jetons, sans couleur ni traduction. Un même
+  composant, `SelecteurCouleur`, sert désormais le formulaire de track et celui de channel.
+- **CINQ PASTILLES NOMMÉES, DANS L'ORDRE DE LA PALETTE** (§1) : **Bleu** (`brand`), **Vert** (`success`), **Jaune**
+  (`accent`), **Rouge** (`danger`), **Gris** (`neutral`). Chacune est une étiquette `rounded-full` de 40 px de haut (§8)
+  : un disque de 12 px à la couleur **pleine** du jeton — `--color-text-3` pour `neutral` —, puis le nom en 13 px. Les
+  noms sont des clés de traduction (§10), jamais le nom du jeton.
+- **LE CHOIX NE REPOSE PAS SUR LA COULEUR SEULE** (§1) : l'option choisie prend le fond doux de sa couleur, une bordure
+  de 2 px `--color-brand`, le nom en `font-medium` et une coche Lucide `Check` de 14 px ; les autres, une bordure
+  `--color-border` et le nom en `--color-text-2`, au survol `--color-hover`.
+- **UN GROUPE DE BOUTONS RADIO, SÉMANTIQUE NATIVE** : un `fieldset` dont la `legend` est le libellé du champ
+  (« Couleur », 13 px `--color-text-2`, §5.7), et cinq `input type="radio"` visuellement masqués, chacun porté par son
+  étiquette. `Tab` entre dans le groupe sur l'option choisie et en sort ; les flèches changent l'option — le comportement
+  du navigateur, sans code clavier propre. Le focus visible (§8) est porté par l'étiquette (`:focus-visible` du radio,
+  anneau `--color-brand`).
+- **VALEUR INITIALE** : `neutral` — Gris — à la création, la valeur lue en modification. Une valeur venue du réseau
+  hors des cinq jetons s'affiche comme Gris, par le repli déjà employé pour les pilules de track.
+- **RESPONSIVE** : les cinq étiquettes passent à la ligne (`flex-wrap`, écart 8 px) ; aucune ne se réduit sous sa cible
+  de 40 px, et le groupe ne fait jamais défiler la page (§7).
+- **LA PASTILLE DE CHANNEL.** Sur l'onglet du channel (§4), un disque de 8 px à la couleur pleine du jeton précède le
+  nom, à 6 px de lui ; l'état actif de l'onglet (bordure basse, texte `--color-brand`) est inchangé, et la pastille
+  garde sa couleur dans les deux états. Elle est `aria-hidden` : le nom porte l'information, la couleur l'accompagne
+  (§1). C'est pourquoi le jaune, à 1,6:1 sur la surface, n'enfreint pas le contraste des objets graphiques : il ne porte
+  aucune information que le nom ne porte pas.
+- **DANS L'ARBORESCENCE**, le nom d'un channel est rendu en pilule de donnée (§5.6, §12.5) — fond doux, texte
+  `*-on-soft` — précédée de la même pastille, comme le track l'est avec son icône. Un channel `neutral` est rendu en
+  pilule neutre (`--color-hover`, `--color-text-2`), comme un track neutre.
+- **Aucun jeton nouveau** ; une icône Lucide de plus dans ce contexte, `Check`.

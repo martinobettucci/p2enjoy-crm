@@ -262,6 +262,7 @@ Livrée par `CRM-021`. Spécification complète : `docs/SPEC-channels.md`.
 | `name` | `text` | non nul, `CHECK (btrim(name) <> '')` |
 | `slug` | `text` | non nul, `CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$')`, unique **par track** |
 | `description` | `text` | |
+| `color` | `text` | non nul, défaut `'neutral'`, `CHECK (color IN ('brand','success','accent','danger','neutral'))` — jeton du design system, comme `tracks.color` ; **ajoutée par `CRM-116`** (décision 729), migration au prochain numéro libre |
 | `workflow_id` | `uuid` | **non nul depuis `CRM-033`** ; FK **composite** `(workflow_id, workspace_id) → workflows (id, workspace_id)` depuis `CRM-031` ; portée vérifiée par trigger, voir ci-dessous |
 | `position` | `numeric` | non nul, ordre des onglets **dans son track** ; attribuée par trigger si omise |
 | `archived_at` | `timestamptz` | non nul = archivé : masqué, réversible |

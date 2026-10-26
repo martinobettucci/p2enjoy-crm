@@ -334,6 +334,11 @@ motifs : `docs/SPEC-channels.md` §8.
 | `…035` | `studio-web` | `maintenance` | Maintenance | 2 | actif |
 | `…036` | `formation` | `inter-entreprises` | Inter-entreprises | 1 | actif |
 
+**Couleur — ajoutée par `CRM-116`** (décision 729). Chaque channel porte une couleur, et les cinq jetons sont
+démontrés, dont le défaut : `prospection` **brand**, `grands-comptes` **success**, `appels-offres` (archivé)
+**danger**, `refonte` **accent**, `maintenance` **neutral** — le défaut, laissé tel quel —, `inter-entreprises`
+**success**. Écrite par le même upsert que les autres colonnes du channel.
+
 Trois répartitions sont démontrées, et non une seule : deux channels actifs plus un archivé, deux
 channels actifs, et **un seul** channel — une barre à un onglet est un cas d'affichage réel,
 distinct de la barre vide. Le track archivé `pipeline-2024` n'en porte aucun : un track masqué n'a
