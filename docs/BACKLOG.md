@@ -7185,7 +7185,8 @@ Ce qui est **déjà tranché**, et ne le sera pas pendant l'implémentation :
 - **Le seed enverra deux vrais messages** puis déclenchera une vraie relève : un écran vide ne
   démontre rien, et une trace fabriquée est interdite (CLAUDE.md §8).
 
-### CRM-058 — Composition et réponse `[~]`
+### CRM-058 — Composition et réponse `[@]`
+*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 03:24 UTC — état avant : [~]*
 ***Connecteur (décision 708, M2 B)** : la copie cachée seule, dans `crm_mail_send` (famille `messagerie`) ; aucune pièce jointe par le connecteur. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707, option B)** : les **pièces jointes à l'envoi** et la **copie cachée** sont à livrer, en une tranche à spécifier — les deux questions du connecteur MCP d'abord.*
 ***Reste réel au 2026-10-25 (décision 705)** : la reprise et le recul sont livrés par `CRM-059` (`[x]`) et les signatures par `CRM-063` (`[x]`) ; restent les **pièces jointes à l'envoi** et la **copie cachée**, qu'aucune spécification ne porte — **choix de produit du responsable** (les livrer, ou les déclarer hors périmètre).*
