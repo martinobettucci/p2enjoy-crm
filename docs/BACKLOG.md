@@ -7503,7 +7503,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
-| CRM-077 | Corbeille et restauration des objets métier | `[~]` |
+| CRM-077 | Corbeille et restauration des objets métier | `[@]` |
 | CRM-078 | Versionnement des workflows et plans de remappage | `[x]` |
 | CRM-079 | Onboarding guidé au premier lancement | `[x]` |
 | CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[x]` |
@@ -12880,7 +12880,8 @@ plus haut comme « reste dû » — réglage en lot, liste nominative — n'appa
 of Done : les deux sont explicitement hors périmètre depuis le §7 bis.11.7, et relèveront d'une
 unité qui les portera.
 
-### CRM-077 — Corbeille et restauration `[~]`
+### CRM-077 — Corbeille et restauration `[@]`
+*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 14:58 UTC — état avant : [~]*
 ***Connecteur (décision 708, M3 A)** : aucun outil nouveau ; la règle de visibilité s'applique d'elle-même à ce que lisent les outils existants. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707)** : rétention de **30 jours** ; à l'expiration, **effacement définitif automatique et journalisé** ; un membre ordinaire voit dans la corbeille **ce qu'il y a lui-même mis**. L'unité redevient du travail de construction, à spécifier — les deux questions du connecteur MCP d'abord.*
 ***Reste réel au 2026-10-25 (décision 705)** : trois **arbitrages du responsable** — la durée de rétention, l'effacement définitif et son parcours RGPD, la visibilité de la corbeille pour un membre ordinaire. Aucune dette de construction.*
@@ -16638,7 +16639,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           `verify-move-card-to-channel.sh` et `verify-timeline.sh` ne rejouent plus de migration ancienne. pgTAP 102 fichiers sans
           anomalie, API 72/72, connecteur (unitaires, intégration réelle, interface 8/8). **Reste** : faire tourner ces
           deux harnais, qui reconstruisent la base (session de `CRM-072` en campagne).
-        - [ ] **T2.3.5 — les cadences** : `armer_sequence_relance(p_placement, …)`.
+        - [~] **T2.3.5 — les cadences** : `armer_sequence_relance(p_placement, …)`. *Livrée en développement le
+          2026-10-26* — migration `0119` ; une cadence active par rattachement (index sur `placement_id`) ; l'exécuteur
+          juge l'inéligibilité par rattachement ; fiche, specs d'API et d'interface, pgTAP `0058` (49) et `0098`, types ;
+          `verify-armement-sequences.sh` ne rejoue plus la `0060`. L'expéditeur par défaut du §7 : INC-315, non livré.
+          PREUVES
         - [ ] **T2.3.6 — les valeurs de bloc** : clé `(placement_id, field_id)`, `NOT NULL`, écriture de la webapp par
           rattachement.
         - [ ] **T2.3.7 — la création et les remappages** : `creer_affaire` écrit le rattachement elle-même (la création
