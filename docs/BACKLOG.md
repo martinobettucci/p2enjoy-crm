@@ -16511,9 +16511,10 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         les quatorze specs des affaires (board, liste, fiche, corbeille, sommeil, Ma journée, figées, recherche, nouvelle
         affaire, channels) **189/189** ; types régénérés, `typecheck` et `build` verts. Aucun écran ne change : pas de
         capture nouvelle.
-      - [ ] **T2.2 — les lectures** : `placement_id` dans `card_field_values`, `card_events`,
+      - [@] **T2.2 — les lectures** : `placement_id` dans `card_field_values`, `card_events`,
         `card_sequence_enrollments`, renseigné ; les fonctions qui LISENT une colonne de rattachement (droits, lectures
         métier, ordonnanceur, messagerie, §2 bis.1) lisent `card_placements`, signatures inchangées. Preuve : suite verte.
+        *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-26 05:14 UTC — état avant : [ ]*
       - [ ] **T2.3 — les signatures, par groupe** (§5) : pour chaque geste, l'ancienne signature par affaire est retirée
         dans le même changement que sa remplaçante par rattachement et que tous ses appelants (webapp, connecteur, seed,
         scripts, pgTAP, API, E2E) ; le chemin d'écriture passe à `card_placements`, et le déclencheur s'inverse tant que
