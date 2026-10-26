@@ -10,6 +10,8 @@
 #       (docs/SPEC-mcp.md §9.2 sexies)
 # @spec CRM-104 (docs/BACKLOG.md) tranches T2.a, T2.b, T1 et T3 — les affaires, la structure, la recherche et les contacts
 #       enregistrés et nommés au modèle (docs/SPEC-mcp.md §9.2 bis à quinquies)
+# @spec CRM-118 (docs/BACKLOG.md) tranche T2.a — la famille `workflows` enregistrée, sa ligne dans les consignes au modèle
+#       (docs/SPEC-mcp.md §9.2 undecies)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
 # @spec Modèle : `evoliz_mcp/application.py` (p2enjoy-evoliz, révision 80a3e27). Écarts : aucune administration
@@ -45,6 +47,7 @@ from crm_mcp.outils import (
     reference,
     structure,
     temps,
+    workflows,
 )
 from crm_mcp.politique import MoteurPolitique, PolitiqueOutils
 from crm_mcp.registre import Registre
@@ -56,13 +59,15 @@ journal = logging.getLogger("crm_mcp.application")
 INSTRUCTIONS = """\
 P2Enjoy CRM, operated by verified lelabs SSO users. Every action runs under YOUR identity in the CRM:
 you see and change exactly what you could in the CRM web app, never more.
-- A superadmin grants this connector rights per workspace (FR: espace), by family (structure, affaires,
-  contacts, organizations, budgets, recettes, temps, objectifs, messagerie) and action (consulter, ajouter, modifier, supprimer).
+- A superadmin grants this connector rights per workspace (FR: espace), by family (structure, workflows,
+  affaires, contacts, organizations, budgets, recettes, temps, objectifs, messagerie) and action (consulter, ajouter, modifier, supprimer).
   The tools offered depend on those rights; a right changed during the conversation reaches the tool list
   at the next connection.
 - Start with crm_workspace_list: it returns the workspaces open to you and the slug to pass as `workspace`.
 - Affaires (cards): start with crm_card_list or crm_card_mine; crm_card_get gives the header, contacts and form
   answers; crm_card_timeline the history. Read crm_workflow_get before crm_card_move.
+- Workflows: read one with crm_workflow_get before changing it and tell the person what will change. Only declared
+  moves let an affaire change step.
 - crm_search finds affaires, contacts, organisations, comments and messages by words.
 - Costs: crm_card_cost_list for an affaire, crm_budget_list then crm_budget_get for a budget; a cost line needs a
   budget (and an occurrence when the budget is recurrent). Amounts are never added across currencies.
@@ -73,7 +78,8 @@ you see and change exactly what you could in the CRM web app, never more.
 - Outside your rights or the CRM's, a call is refused with "Introuvable ou hors de votre périmètre"
   (FR: not found or outside your perimeter), whether the object exists or not.
 - Lists are paginated: use limit (max 100) and offset.
-- Nothing is ever purged through this connector: "supprimer" moves to the trash or archives.
+- "supprimer" moves to the trash or archives, with one exception: removing a workflow step or move (family
+  workflows) deletes it for good, as the workflow editor does. Confirm such a removal with the person first.
 """
 
 
@@ -152,6 +158,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     affaires_ecriture.ajouter(serveur, moteur, crm)
     # `CRM-104` T1 : la structure et la recherche globale (docs/SPEC-mcp.md §9.2 quater).
     structure.ajouter(serveur, moteur, crm)
+    # `CRM-118` T2.a : la famille `workflows`, le workflow, ses étapes et ses transitions (docs/SPEC-mcp.md §9.2 undecies).
+    workflows.ajouter(serveur, moteur, crm)
     # `CRM-104` T3 : les contacts (docs/SPEC-mcp.md §9.2 quinquies).
     contacts.ajouter(serveur, moteur, crm)
     # `CRM-114` T4 : les organisations (docs/SPEC-mcp.md §9.2 sexies).

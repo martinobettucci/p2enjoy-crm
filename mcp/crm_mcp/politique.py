@@ -5,6 +5,8 @@
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T6 : le genre d'ancre `block` (docs/SPEC-mcp.md §9.2 nonies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T4 : les genres d'ancre `cost`, `cost_actual` et `occurrence` (docs/SPEC-mcp.md §9.2 septies)
 # @spec CRM-114 (docs/BACKLOG.md) tranche T4 — la famille `organizations` dans la liste fermée (docs/SPEC-organisations.md §5)
+# @spec CRM-118 (docs/BACKLOG.md) — tranche T2.a : la famille `workflows` après `structure`, les genres d'ancre `step`,
+#       `transition` et `node` (docs/SPEC-mcp.md §9.2 undecies, décisions 752, 754 et 756)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T1 : le genre d'ancre `workflow` (docs/SPEC-mcp.md §9.2 quater, décision 656)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `activity` (docs/SPEC-mcp.md §9.2 ter, décision 655)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : l'ancre `autres` FACULTATIVE, permise si son argument vaut `None` par
@@ -53,9 +55,11 @@ journal = logging.getLogger("crm_mcp.politique")
 
 #: Les familles de la matrice (docs/SPEC-mcp.md §6.1) — la même liste fermée que le `check` de `mcp_droits` ;
 #: `recettes` depuis `CRM-108` (docs/SPEC-recettes.md §7, migration 0095) ; `organizations` depuis `CRM-114`, après
-#: `contacts` (docs/SPEC-organisations.md §5, migration 0101).
+#: `contacts` (docs/SPEC-organisations.md §5, migration 0101) ; `workflows` depuis `CRM-118`, après `structure`
+#: (docs/SPEC-mcp.md §9.2 undecies, migration 0129).
 FAMILLES = (
-    "structure", "affaires", "contacts", "organizations", "budgets", "recettes", "temps", "objectifs", "messagerie"
+    "structure", "workflows", "affaires", "contacts", "organizations", "budgets", "recettes", "temps", "objectifs",
+    "messagerie",
 )
 ACTIONS = ("consulter", "ajouter", "modifier", "supprimer")
 #: Un outil de référence : pas d'espace unique, visible dès qu'un droit existe, résultats filtrés par la matrice.
@@ -81,6 +85,10 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "activity": ("card_activities", "workspace_id", ("workspace_id",)),
     # `CRM-104` T1 : un workflow porte son espace.
     "workflow": ("workflows", "workspace_id", ("workspace_id",)),
+    # `CRM-118` T2.a : une étape, une transition et un nœud du catalogue portent leur espace (§9.2 undecies).
+    "step": ("workflow_steps", "workspace_id", ("workspace_id",)),
+    "transition": ("workflow_transitions", "workspace_id", ("workspace_id",)),
+    "node": ("workflow_nodes_catalog", "workspace_id", ("workspace_id",)),
     # `CRM-104` T4 : une ligne de coût, et un coût réel, résolus jusqu'à l'espace par leur affaire (décision 669).
     "cost": ("card_costs", "card:cards(workspace_id)", ("card", "workspace_id")),
     "cost_actual": ("card_cost_actuals", "ligne:card_costs(card:cards(workspace_id))", ("ligne", "card", "workspace_id")),
@@ -109,6 +117,9 @@ LIBELLES = {
     "revenue_actual": "recette réelle",
     "activity": "activité",
     "workflow": "workflow",
+    "step": "étape",
+    "transition": "transition",
+    "node": "nœud du catalogue",
     "cost": "ligne de coût",
     "cost_actual": "coût réel",
     "occurrence": "occurrence de budget",

@@ -5082,9 +5082,11 @@ Deux règles se cumulent :
 L'assistant ne peut faire que ce que **les deux** permettent. Un droit du connecteur dans un espace dont vous n'êtes pas
 membre reste sans effet.
 
-Les neuf familles, et ce que chacune couvre :
+Les dix familles, et ce que chacune couvre :
 
 - **Structure** : tracks, channels, lecture des workflows ;
+- **Workflows** : créer et modifier les workflows, leurs étapes et leurs transitions ; la lecture d'un workflow reste à
+  « Structure » ;
 - **Affaires** : affaires, champs, étapes, commentaires, contacts liés, activités (appels, réunions, visios) ;
 - **Contacts** : les contacts du carnet ;
 - **Organisations** : les organisations du carnet, et leurs contacts en lecture ;
@@ -5096,7 +5098,9 @@ Les neuf familles, et ce que chacune couvre :
 - **Messagerie** : lecture des fils ; l'envoi compte comme « ajouter ».
 
 Les quatre actions sont **Consulter**, **Ajouter**, **Modifier** et **Supprimer**. « Supprimer » place en corbeille ou
-archive ; le connecteur ne détruit jamais rien définitivement.
+archive, avec une seule exception : **retirer une étape ou une transition d'un workflow** (« Workflows ▸ Supprimer »)
+la détruit définitivement, comme le fait l'éditeur de workflows, car le CRM ne garde pas d'étape ni de transition en
+corbeille.
 
 **Un superadministrateur franchit les droits du connecteur** : l'assistant lui ouvre tout ce que le CRM lui permet.
 
@@ -5213,6 +5217,25 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - *Supprimer* : mettre un track ou un channel à la corbeille.
 
   Le CRM réserve ces écritures aux administrateurs de l'espace : pour un autre membre, l'assistant reçoit un refus.
+
+- **Workflows** — *livrés en développement par `CRM-118`, tranche T2.a ; la suite vient avec les tranches suivantes* :
+  - *Consulter* : la liste des workflows d'un espace, le workflow par défaut en tête, avec leur portée (tout l'espace ou
+    un seul track) et le workflow d'origine d'une copie. Lire un workflow, étape par étape, demande « Structure ▸
+    Consulter » ;
+  - *Ajouter* : créer un workflow vide, pour tout l'espace ou pour un track — il reste un brouillon tant qu'il n'a pas
+    d'étape initiale ; créer le **workflow de départ** dans un espace qui n'en a aucun, comme le panneau « Bien
+    démarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité ou un seuil de
+    relance qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif
+    exigé ;
+  - *Modifier* : changer les valeurs propres d'une étape, ou les retirer pour reprendre celles du catalogue ; désigner
+    l'**étape initiale** ; changer l'ordre des étapes ; changer le libellé d'un déplacement, ou s'il exige un motif ;
+  - *Supprimer* : **retirer une étape** — avec les déplacements qui y mènent ou en partent — ou **retirer un
+    déplacement**. Ces retraits sont **définitifs**. Le CRM refuse de retirer une étape sur laquelle se trouvent des
+    affaires.
+
+  Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace. Renommer, archiver ou désigner
+  par défaut un workflow, le copier vers un track et changer le workflow d'un channel arriveront dans le connecteur
+  après leur écran.
 
 - **Contacts** — *livrés en développement par `CRM-104`, tranche T3* :
   - *Consulter* : lister les contacts du carnet, par mots du nom, de l'adresse ou de la fonction, ou par

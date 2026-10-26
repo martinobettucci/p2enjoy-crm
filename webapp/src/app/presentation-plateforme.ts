@@ -197,6 +197,8 @@ export const CLES_CASES = {
 
 const CLES_FAMILLE: Readonly<Record<FamilleMcp, { readonly libelle: CleTraduction; readonly portee: CleTraduction }>> = {
 	structure: { libelle: 'platform.mcp.famille.structure', portee: 'platform.mcp.famille.structure.portee' },
+	// `CRM-118` T2.a (docs/SPEC-mcp.md §9.2 undecies).
+	workflows: { libelle: 'platform.mcp.famille.workflows', portee: 'platform.mcp.famille.workflows.portee' },
 	affaires: { libelle: 'platform.mcp.famille.affaires', portee: 'platform.mcp.famille.affaires.portee' },
 	contacts: { libelle: 'platform.mcp.famille.contacts', portee: 'platform.mcp.famille.contacts.portee' },
 	// `CRM-114` T4 (docs/SPEC-mcp.md §9.2 sexies).

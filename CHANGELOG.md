@@ -18,7 +18,12 @@ d'exécuter le code attendu.
 *En développement seulement. La migration `0129` attend la prochaine fenêtre de production.*
 
 - **Migration `0129`** : la matrice du connecteur MCP accepte une dixième famille, « Workflows », juste après
-  « Structure ». Rien d'autre ne change en base ; les outils et la ligne de l'onglet viennent avec la suite de la tranche.
+  « Structure ». Rien d'autre ne change en base.
+- **Connecteur MCP, famille « Workflows »** : un assistant peut lister les workflows d'un espace, créer un workflow ou
+  le workflow de départ, ajouter une étape, régler ses valeurs propres, la désigner initiale, changer l'ordre des
+  étapes, déclarer un déplacement et le régler, retirer une étape ou un déplacement — comme l'éditeur de workflows, et
+  pour les seuls administrateurs de l'espace. Ces retraits sont définitifs, comme dans l'éditeur.
+- **Plateforme ▸ Connecteur MCP** : la matrice des droits gagne la ligne « Workflows », après « Structure ».
 
 ### `CRM-117` — le manuel joignable depuis la webapp (en cours)
 

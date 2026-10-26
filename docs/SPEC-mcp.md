@@ -1004,9 +1004,11 @@ partout (§9.3).
 
 **Le reste de la famille.** Les consignes au modèle (`INSTRUCTIONS`) gagnent une ligne : lire le workflow
 (`crm_workflow_get`) avant de le modifier, dire à la personne ce qui va changer, montrer le plan avant une
-restauration. **L'onglet « Connecteur MCP »** gagne la ligne `workflows` et sa phrase de portée : « Créer, modifier et
-archiver les workflows, leurs étapes, transitions et formulaire, le catalogue de nœuds ; versions, copie, workflow d'un
-channel. La lecture d'un workflow reste à Structure. »
+restauration. **L'onglet « Connecteur MCP »** gagne la ligne `workflows` et sa phrase de portée, **qui grandit avec les
+sous-tranches** pour ne jamais promettre un outil absent. Avec T2.a : « Créer et modifier les workflows, leurs étapes et
+transitions ; la lecture reste à Structure ». Cible, toutes sous-tranches livrées : « Créer, modifier et archiver les
+workflows, leurs étapes, transitions et formulaire, le catalogue de nœuds ; versions, copie, workflow d'un channel. La
+lecture d'un workflow reste à Structure. »
 
 **La migration** (T2.a, au prochain numéro libre) : `workflows` après `structure` dans les quatre listes fermées
 (`mcp_droits_famille`, `mcp_autorise`, `mcp_compte`, `mcp_poser_droits`), sur le modèle de `0101` ; retour arrière :

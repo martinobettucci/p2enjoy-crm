@@ -8,6 +8,8 @@
 // @spec CRM-108 tranche T3 — docs/SPEC-recettes.md §7 (la huitième famille, `recettes`) ; docs/SPEC-mcp.md §6.1
 // @spec CRM-114 tranche T4 — docs/SPEC-organisations.md §5 (la neuvième famille, `organizations`, après `contacts`) ;
 //       docs/SPEC-mcp.md §6.1, §9.2 sexies
+// @spec CRM-118 tranche T2.a — docs/SPEC-mcp.md §9.2 undecies, §6.1 (la dixième famille, `workflows`, après `structure`) ;
+//       décisions 752, 754 et 756
 // @spec CRM-109 tranche T3 — docs/SPEC-refus-admission.md §3, §5 : `plateforme_attentes` rend la trace du dernier refus
 //
 // Toutes les lectures et écritures passent par les fonctions `public.plateforme_*`, gardées en base par
@@ -402,11 +404,13 @@ export function curseurSuivant(page: readonly EntreeJournal[]): number | null {
 
 // --- Le connecteur MCP (`CRM-103`, docs/SPEC-mcp.md §8) ---------------------------------------------------------
 
-/** Les neuf familles de la matrice, dans l'ordre du §6.1 : l'ordre des lignes, et celui que la base rend. */
+/** Les dix familles de la matrice, dans l'ordre du §6.1 : l'ordre des lignes, et celui que la base rend. */
 // `recettes` depuis `CRM-108` (docs/SPEC-recettes.md §7, migration 0095) : après `budgets`, l'ordre de la base.
 // `organizations` depuis `CRM-114` T4 (docs/SPEC-organisations.md §5, migration 0101) : après `contacts`.
+// `workflows` depuis `CRM-118` T2.a (docs/SPEC-mcp.md §9.2 undecies, migration 0129) : après `structure`.
 export const FAMILLES_MCP = [
 	'structure',
+	'workflows',
 	'affaires',
 	'contacts',
 	'organizations',

@@ -195,7 +195,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Les neuf familles, et ce que chacune couvre :"
+					"text": "Les dix familles, et ce que chacune couvre :"
 				}
 			]
 		},
@@ -220,6 +220,26 @@
 							{
 								"type": "text",
 								"text": " : tracks, channels, lecture des workflows ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Workflows"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : créer et modifier les workflows, leurs étapes et leurs transitions ; la lecture d'un workflow reste à\n« Structure » ;"
 							}
 						]
 					}
@@ -443,7 +463,20 @@
 				},
 				{
 					"type": "text",
-					"text": ". « Supprimer » place en corbeille ou\narchive ; le connecteur ne détruit jamais rien définitivement."
+					"text": ". « Supprimer » place en corbeille ou\narchive, avec une seule exception : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "retirer une étape ou une transition d'un workflow"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (« Workflows ▸ Supprimer »)\nla détruit définitivement, comme le fait l'éditeur de workflows, car le CRM ne garde pas d'étape ni de transition en\ncorbeille."
 				}
 			]
 		},
@@ -1883,6 +1916,208 @@
 							{
 								"type": "text",
 								"text": "Le CRM réserve ces écritures aux administrateurs de l'espace : pour un autre membre, l'assistant reçoit un refus."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Workflows"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrés en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-118"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T2.a ; la suite vient avec les tranches suivantes"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : la liste des workflows d'un espace, le workflow par défaut en tête, avec leur portée (tout l'espace ou\nun seul track) et le workflow d'origine d'une copie. Lire un workflow, étape par étape, demande « Structure ▸\nConsulter » ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Ajouter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : créer un workflow vide, pour tout l'espace ou pour un track — il reste un brouillon tant qu'il n'a pas\nd'étape initiale ; créer le "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "workflow de départ"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " dans un espace qui n'en a aucun, comme le panneau « Bien\ndémarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité ou un seuil de\nrelance qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif\nexigé ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : changer les valeurs propres d'une étape, ou les retirer pour reprendre celles du catalogue ; désigner\nl'"
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "étape initiale"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ; changer l'ordre des étapes ; changer le libellé d'un déplacement, ou s'il exige un motif ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Supprimer"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "retirer une étape"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " — avec les déplacements qui y mènent ou en partent — ou "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "retirer un\ndéplacement"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ". Ces retraits sont "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "définitifs"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ". Le CRM refuse de retirer une étape sur laquelle se trouvent des\naffaires."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace. Renommer, archiver ou désigner\npar défaut un workflow, le copier vers un track et changer le workflow d'un channel arriveront dans le connecteur\naprès leur écran."
 							}
 						]
 					}

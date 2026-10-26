@@ -4207,6 +4207,9 @@ export const fr = {
 	'platform.mcp.matrice.famille': 'Famille',
 	'platform.mcp.famille.structure': 'Structure',
 	'platform.mcp.famille.structure.portee': 'Tracks, channels, lecture des workflows',
+	// `CRM-118` : la phrase grandit avec les tranches de la famille (docs/SPEC-mcp.md §9.2 undecies).
+	'platform.mcp.famille.workflows': 'Workflows',
+	'platform.mcp.famille.workflows.portee': 'Créer et modifier les workflows, leurs étapes et transitions ; la lecture reste à Structure',
 	'platform.mcp.famille.affaires': 'Affaires',
 	'platform.mcp.famille.affaires.portee': 'Affaires, champs, étapes, commentaires, contacts liés, activités',
 	'platform.mcp.famille.contacts': 'Contacts',

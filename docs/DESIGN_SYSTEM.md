@@ -5762,7 +5762,9 @@ focus entrant dans le premier champ et rendu à la commande qui l'a ouvert (diff
       d'accorder : l'appartenance peut venir ensuite.
     - **LA MATRICE EST UN TABLEAU DU §5.9** : les familles en lignes — sept, **huit depuis `CRM-108`**, qui ajoute
       « Recettes » après « Budgets » (§5.60), **neuf depuis `CRM-114`**, qui ajoute « Organisations » après
-      « Contacts » (§5.64) — (`th scope="row"`, leur libellé et, dessous en
+      « Contacts » (§5.64), **dix depuis `CRM-118`**, qui ajoute « Workflows » après « Structure », avec sa phrase de
+      portée « Créer et modifier les workflows, leurs étapes et transitions ; la lecture reste à Structure »
+      (`docs/SPEC-mcp.md` §9.2 *undecies* ; aucune autre forme ne change) — (`th scope="row"`, leur libellé et, dessous en
       13 px `--color-text-2`, ce qu'elles couvrent), les quatre actions en colonnes (`th scope="col"`). Chaque cellule
       porte une case native de 24 px (§5.7 bis), sa ligne à la hauteur de cible, et un **nom accessible qui nomme la
       famille ET l'action** — « Affaires : modifier » (§5.15, grille champ × étape). Une case n'écrit rien seule.

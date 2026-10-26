@@ -17037,6 +17037,20 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
       - **Fait le 2026-10-26** : migration `0129` (la famille après `structure` dans les quatre listes fermées),
         appliquée en développement ; pgTAP `0120_famille_workflows` **16/16**, quatre mutations tuées ; suite SQL
         complète **110 fichiers, 4394 assertions**, aucune anomalie.
+      - **Fait le 2026-10-26** : `mcp/crm_mcp/outils/workflows.py`, **dix outils** (les deux qui attendent T1.b ne sont pas
+        déclarés) ; genres d'ancre `step`, `transition`, `node` ; consignes au modèle (la règle « jamais purger » dit son
+        exception) ; ligne « Workflows » de l'onglet « Connecteur MCP » (`plateforme.ts`, `fr.ts`).
+      - Unitaires `tests/test_workflows.py` **12** ; **douze mutations tuées sur douze** (la onzième après l'ajout d'une
+        preuve : l'étape déplacée n'est pas sa propre voisine) ; suite unitaire du connecteur **220 réussis**.
+      - Intégration `tests/test_integration_workflows.py` contre la vraie pile : un workflow composé outil par outil par
+        l'administratrice, journal `ok` par outil, effets relus en base ; refus nommés `workflow_exists`,
+        `node_already_in_workflow`, `transition_already_declared`, `step_outside_workflow`, `step_occupied` ; le business
+        developer refusé par le CRM malgré la matrice ouverte (`refus_crm`) ; le retrait fermé par la matrice ;
+        `crm_workflow_get` absent sans `structure`. Intégration complète **51 réussis**.
+      - Webapp : `plateforme.test.ts` révisé, mutation tuée ; `typecheck` vert ; `test:unit` **4693** ; DAT, design system
+        §5.56, manuel 11.1 et 11.5, CHANGELOG, contrat de déploiement.
+      - **Reste** : l'E2E `connecteur-workflows.spec.ts` (écrit, pas encore joué : le port de prévisualisation est tenu
+        par une campagne d'une autre session) et sa capture ; `verify-mcp.sh` complet.
 - [ ] **T2.b — le formulaire, la visibilité, les exigences** : mêmes preuves ; E2E : un champ exigé par le connecteur
       bloque un déplacement au board. Les cinq outils de checklist **après `CRM-068` T3b**.
 - [ ] **T2.c — la copie, les versions, le remappage** : mêmes preuves ; E2E : une restauration par le connecteur remappe
