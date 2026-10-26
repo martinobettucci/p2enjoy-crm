@@ -12341,10 +12341,16 @@ un motif explicite.
 | CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
 ### CRM-072 — Journal d'audit consultable et conformité RGPD `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 09:55 UTC — état avant : [ ]*
+*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 09:38 UTC — état avant : [ ]*
 
-Arbitrée par la décision 708 (point 5) ; connecteur MCP : non (décision 707). La spécification s'écrit et se valide
-avant la première ligne de code.
+Arbitrée par la décision 708 (point 5) ; connecteur MCP : non (décision 707). **Spécification proposée le 2026-10-26
+(décision 725)** : `docs/SPEC-audit.md`, en attente de validation, avec une question ouverte (R1, les messages d'un
+contact anonymisé). Aucune ligne de code avant la validation.
+
+- [ ] **T1 — le journal en base** (`docs/SPEC-audit.md` §3 à §6, §15) : `audit_log`, l'écrivain, l'ajout seul des trois
+      journaux, les déclencheurs, la purge d'un an et sa tâche, seed, pgTAP, API.
+- [ ] **T2 — l'écran `/reglages/journal`** (§8) : `docs/DESIGN_SYSTEM.md` d'abord, unitaires, E2E, captures, manuel.
+- [ ] **T3 — le volet RGPD d'un contact** (§7, §9) : export JSON, anonymisation, seed, pgTAP, API, E2E, captures, manuel.
 
 ### CRM-075 — Administration des tracks et des channels `[x]`
 *Créée le 2026-08-11 par arbitrage du responsable — INC-086, option 2, `docs/JOURNAL.md` décision

@@ -35025,3 +35025,21 @@ reconstruit, et la reconstruction partagée est un risque à porter au registre 
 
 **Partage de l'arbre.** La session de `CRM-066` (scores de santé) travaille dans le même checkout : `apply-seed.sh` porte
 ses deux changements et les miens ; le commit n'inscrit que HEAD plus les miens, par un index temporaire.
+
+
+### décision 725 — `CRM-072`, journal d'audit et RGPD : spécification proposée, en attente de validation
+
+*2026-10-26, session interactive (prise de `CRM-072`).* **Problème** : la décision 708 (point 5) fixe le produit, mais
+aucun document ne dit encore comment le tenir en base. **Observations**, mesurées sur la pile de développement : aucune
+table `audit_log` ; `plateforme_journal` et `mcp_journal` se disent « ajout seul » sans déclencheur pour le garantir, et
+rien ne les purge ; `card_events` tient l'ajout seul par un déclencheur (le modèle) ; `sessions_sso` reçoit une ligne à
+chaque connexion admise ; aucun export n'existe ; `contacts` n'a pas de marque d'anonymisation, et les messages portent
+ses adresses en texte. **Proposition** : `docs/SPEC-audit.md`. Une table `audit_log`, lue par les administrateurs de
+l'espace, que seule la base écrit (déclencheurs sur les tables sensibles, un écrivain `SECURITY DEFINER`). L'ajout seul
+est tenu par déclencheur sur les trois journaux, avec deux exceptions : la mise à `null` de l'acteur supprimé, et la
+purge d'un an. La purge est quotidienne et se journalise. Un écran `/reglages/journal`. L'export JSON et l'anonymisation
+d'un contact sont réservés aux administrateurs, et le journal ne garde jamais le nom d'un contact. Trois tranches.
+**Connecteur MCP : non** (décision 707), et la deuxième question ne se pose donc pas. **Question ouverte R1** : le sort
+des messages d'un contact anonymisé (A : intacts ; B, recommandée : adresses remplacées, corps gardés ; C : B et les
+corps effacés). **Aucun code avant la validation.** Le numéro de migration se prend après synchronisation : `CRM-111`
+T2.3.3 réserve la `0114`.
