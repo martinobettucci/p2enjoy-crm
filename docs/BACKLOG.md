@@ -16763,3 +16763,18 @@ décision 729) : une couleur propre au channel, des pastilles nommées, pas de c
 - [ ] **T4 — preuves sur la pile réelle** : E2E souris et clavier, refus, quatre paliers ; captures observées ;
       `docs/manual.md` ; `CHANGELOG.md` ; campagnes.
 - [ ] **T5 — livraison** : migration en fenêtre et reconstruction de la webapp, sur instruction du responsable.
+
+### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[ ]`
+*Créée le 2026-10-26 — constat du responsable : « on a un manuel mais il n'est joignable nulle part depuis la webapp ;
+est-ce dans le backlog ou c'est un loupé ? ». Mesuré le même jour : un loupé. La webapp ne porte aucun lien ni entrée
+« Aide » vers `docs/manual.md` ; aucune unité ne le prévoit — les mentions du manuel au backlog portent sur sa
+vérification (`scripts/verify-manual.sh`, `e2e/ui/manuel.spec.ts`) ; `docs/SPEC-manual.md` fixe son contenu et ses
+preuves, jamais sa diffusion ; aucune décision du journal ni aucune incohérence n'en traite. **Ordre décidé par le
+responsable** : traitée juste après `CRM-116`.*
+
+- [ ] **Arbitrages à demander avant la spécification** : où le manuel vit dans l'application (entrée de navigation,
+      lien depuis l'en-tête, aide contextuelle par écran) ; sa forme (rendu dans la webapp ou page statique servie) ; ce
+      qu'on retire au rendu — le manuel cite des identifiants d'unités (`CRM-…`) et des chemins du dépôt
+      (`docs/captures/…`), utiles au développement et sans objet pour un utilisateur ; ses captures ; et les deux
+      questions du connecteur MCP (`CLAUDE.md`, « Spécificités du projet »).
+- [ ] Spécification, puis tranches, à découper après ces arbitrages.
