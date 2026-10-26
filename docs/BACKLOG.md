@@ -17014,11 +17014,11 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
 
 - [x] **Arbitrages, le 2026-10-26** (décision 752) : connecteur MCP **oui**, gestion complète ; permission **distincte**,
       famille nouvelle `workflows` (`docs/SPEC-mcp.md` §6.1).
-- [ ] **Points ouverts, à arbitrer avant la spécification** : la place de `crm_workflow_get` (reste à `structure` ou
-      passe à `workflows`) ; le périmètre parmi ce que le CRM offre — workflow (créer, renommer, défaut, archiver),
-      étapes, transitions, exigences d'une transition (champs, points de checklist), champs de formulaire et règles de
-      visibilité, copie vers un track, versions et remappage, rattachement d'un channel, catalogue de nœuds ; l'action
-      d'une suppression d'étape ou de transition, physique dans le CRM (`docs/SPEC-workflow-engine.md` §3.7).
+- [x] **Points ouverts, arbitrés le 2026-10-26** (décision 754) : `crm_workflow_get` reste à `structure` ; périmètre
+      complet — workflow (créer, renommer, défaut, archiver), étapes, transitions, exigences d'une transition (champs,
+      points de checklist), champs de formulaire et règles de visibilité, copie vers un track, comparaison, versions et
+      remappage ; retirer une étape ou une transition relève de `workflows:supprimer`, exception assumée à « `supprimer`
+      = corbeille ou archive ». À poser par la spécification : le rattachement d'un channel, le catalogue de nœuds.
 - [ ] **T1 — spécification, écrite avant le code** : la liste exacte des outils dans `docs/SPEC-mcp.md` §9.2 (un
       paragraphe dédié), leurs ancres, les RPC et tables appelées, les refus nommés ; la migration de la liste fermée
       (`docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`) ; la phrase de l'onglet « Connecteur MCP ».

@@ -35898,3 +35898,23 @@ série de harnais.
 **Reste** : unitaires de `AideEntete` et `PageAide` ; E2E de l'aide, paliers, captures observées ; campagnes complètes ;
 puis T3 (réécriture), T4 (images), T5, T6. **Le panneau d'aide est déjà visible en développement**, sur le manuel tel
 qu'il est, références internes comprises : il ne se livre qu'avec l'unité terminée.
+
+### décision 754 — `CRM-118` : les trois points ouverts de la décision 752, arbitrés
+
+*2026-10-26, arbitrages du responsable.*
+1. **`crm_workflow_get` reste à `structure`** (`structure:consulter`). La lecture de la composition d'un workflow
+   (étapes, transitions, champs exigés) suit les tracks et les channels ; la famille `workflows` gouverne ce qui
+   l'écrit. Les lectures propres au nouveau périmètre (versions, comparaison, plan de remappage) sont rangées par la
+   spécification de la tranche.
+2. **Le périmètre est complet**, les quatre blocs : le workflow (créer, renommer, défaut, archiver), ses étapes et ses
+   transitions ; les exigences d'une transition (champs exigés, points de checklist) ; les champs de formulaire et la
+   grille champ × étape des règles de visibilité ; la copie vers un track, la comparaison à la source, la publication
+   d'une version, le plan de remappage des affaires et son application. Restent hors décision, à poser par la
+   spécification : le rattachement d'un channel à un workflow et le catalogue de nœuds.
+3. **Retirer une étape ou une transition relève de `workflows:supprimer`**, sa propre case, pour qu'un assistant puisse
+   éditer un workflow sans pouvoir en retirer d'étape. C'est une **exception assumée** à la règle « `supprimer` = corbeille
+   ou archive, un objet que le CRM ne sait que détruire n'a pas d'outil de suppression » (`docs/SPEC-mcp.md` §6.1) : le
+   CRM détruit physiquement une étape ou une transition, qui sont la composition d'un workflow
+   (`docs/SPEC-workflow-engine.md` §3.7) ; la base refuse déjà la suppression d'une étape occupée. Archiver un workflow
+   relève aussi de `workflows:supprimer`.
+**Persisté** : `docs/SPEC-mcp.md` §6.1, `docs/BACKLOG.md` (`CRM-118`). Aucun code.
