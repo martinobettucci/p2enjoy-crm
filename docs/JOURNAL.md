@@ -34763,3 +34763,13 @@ corrige et repush »).
 - Après reconstruction : `versions-workflow.spec.ts` et `administration-workflows.spec.ts` **81/81** — INC-236 ne
   reproduit plus depuis la décision 698 ; unitaires **4362/4362** ; suite d'interface complète **927/933**, les six
   échecs étant les trois versions ci-dessus (état) et trois scénarios verts rejoués seuls (charge).
+
+### décision 718 — La fenêtre de livraison passe les migrations 102 à 105, CRM-113 compris
+
+*2026-10-26, réponse du responsable à la question posée par `AskUserQuestion` : « Tout livrer, 102 à 105 ».*
+**Problème** : la décision 717 fait livrer `CRM-057` tranche 2 ; or le runner applique dans l'ordre toutes les migrations
+absentes du registre, si bien que la `0105` emporte la `0102` et la `0103` de `CRM-113`, dont la décision 679 (point 2)
+réservait la livraison au responsable, et la `0104`. **Décision du responsable** : une seule fenêtre `--migrate` avec la
+webapp de `main`, migrations 102 à 105. **Conséquences** : la réserve de la décision 679 est levée pour cette fenêtre ; la
+relecture de `docs/SPEC-ia.md` §14 (`CRM-113` T3) reste due et `CRM-113` garde son état tant qu'elle n'est pas faite ;
+après la fenêtre, le service `mcp` est reconstruit dans la cellule et `scripts/spark/verifier.sh` déroulé.

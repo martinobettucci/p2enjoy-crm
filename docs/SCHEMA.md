@@ -927,6 +927,28 @@ Un même message peut exister dans plusieurs boîtes (boîte système et boîte 
 | `uid` | `bigint` | UID IMAP dans ce dossier |
 | `flags` | `text[]` | |
 
+### `mail_message_reads` — livrée par `CRM-057` tranche 2 (migration `0105`)
+Les messages REÇUS qu'une personne a lus dans l'inbox (`docs/SPEC-mail-subsystem.md` §18 bis.3). L'état est
+**personnel** : une ligne par message et par personne. Un message envoyé est toujours lu, sans ligne.
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `message_id` | `uuid` | PK composite, FK `mail_messages` `on delete cascade` |
+| `user_id` | `uuid` | PK composite, FK `profiles` `on delete cascade` |
+| `read_at` | `timestamptz` | non nul, `now()` |
+
+Index `(user_id, message_id)`. RLS : **lecture de ses lignes seules** (`mail_message_reads_lecture`) ; **aucune écriture
+directe** — ni politique ni privilège pour `authenticated`. Les seules portes :
+
+- **`public.mark_messages_read(p_message_ids uuid[]) returns integer`** — `SECURITY DEFINER` : marque lus, pour
+  l'appelant, les messages **reçus** qu'il voit (`app.peut_voir_message`) ; un message invisible, inconnu ou envoyé est
+  ignoré sans erreur ; idempotente. Refus : `42501 not_authenticated`, `22023 too_many_messages` (plus de 200).
+- **`public.mark_message_unread(p_message_id uuid) returns boolean`** — `SECURITY DEFINER` : retire la lecture de
+  l'appelant ; faux pour un message invisible ou déjà non lu.
+- **`public.is_read(public.mail_messages) returns boolean`** — colonne calculée, `SECURITY INVOKER` : vrai pour un
+  message `outbound` ou lu par l'appelant.
+- **`public.inbox_arborescence()`** gagne **`unread_count`**, à côté de `nombre` qui reste (décision 716).
+
 ### `mail_attachments`
 
 | Colonne | Type | Contraintes |
@@ -2032,6 +2054,15 @@ Une écriture qui nomme l'une des deux dates est refusée en bloc (`403`, `42501
 `service_role` garde tout (le seed antidate par lui). **Une colonne ajoutée plus tard à l'une de ces tables naît fermée
 à l'écriture** : la migration qui l'ajoute doit l'ouvrir nommément. **Dépendance d'ordre** : `0051` et `0095` posent le
 privilège de table ; rejouées seules, elles rouvrent les deux dates, et la `0104` doit les suivre.
+
+### Migration `0105` — lu / non lu dans l'inbox (`CRM-057` tranche 2, décisions 715 et 716 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-mail-subsystem.md` §18 bis.3. La table **`mail_message_reads`**, sa politique de lecture, les deux fonctions
+de marquage, la colonne calculée `is_read`, et `inbox_arborescence()` **retirée puis recréée** avec `unread_count`
+(son type rendu change ; ses privilèges sont reposés). Aucune donnée existante ne change, et **aucune lecture n'est
+fabriquée** : les messages déjà reçus naissent non lus pour tous. **Retrait** : `drop function public.is_read(public.mail_messages),
+public.mark_message_unread(uuid), public.mark_messages_read(uuid[])`, `drop table public.mail_message_reads`, puis
+`drop function public.inbox_arborescence()` et sa définition de la migration `0028` réappliquée.
 
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 

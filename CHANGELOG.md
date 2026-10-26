@@ -13,6 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-057` tranche 2 — lu / non lu dans l'inbox
+
+- **Chaque personne a son propre état de lecture** du courrier reçu. Une conversation non lue porte un trait bleu et un
+  objet en gras ; l'ouvrir la marque lue tout entière. « Marquer comme non lu » dans l'en-tête du message et « Tout
+  marquer comme lu » en tête de la liste complètent le geste. Le courrier envoyé n'est jamais non lu.
+- **Les dossiers gardent leur total** et y ajoutent une pastille du nombre de non lus (décision 716).
+- **Le connecteur MCP** rend l'état lu de la personne dans `crm_card_mail_list` et `crm_mail_get` ; le lire ne le marque
+  pas, et aucun outil ne le change (décision 708).
+- **Migration `0105`** : la table `mail_message_reads`, fermée à l'écriture directe ; `mark_messages_read` et
+  `mark_message_unread` en sont les seules portes ; `inbox_arborescence` gagne `unread_count`. Les messages déjà reçus
+  naissent non lus : aucune lecture n'est fabriquée.
+- **Le seed** ouvre le fil « Demande de devis — refonte » pour le compte administrateur, par la vraie fonction, et rétablit
+  cet état à chaque passage.
+
 ### `CRM-115` T3 à T5 — une pile de développement par checkout (outillage, développement seulement)
 
 - **`scripts/sessions.sh`** liste les piles de développement en cours sur le poste et libère un emplacement périmé ;

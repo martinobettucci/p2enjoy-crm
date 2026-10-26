@@ -7067,8 +7067,7 @@ dégradations comprises.
   pile de développement, et la détection est éprouvée sur un serveur simulé.
 - **Un rangement manqué n'est pas rejoué** (voir ci-dessus).
 
-### CRM-057 — Inbox globale `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-25 23:30 UTC — état avant : [~]*
+### CRM-057 — Inbox globale `[~]`
 ***Connecteur (décision 708, M1 B)** : oui, famille `messagerie` — l'état lu paraît dans les lectures, aucun outil pour marquer. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707, option C)** : la notion de **lu / non lu est à livrer**, en une tranche à spécifier — les deux questions du connecteur MCP d'abord ; le **rôle de tri** des messages non classés est **hors périmètre**, son absence figée reste juste.*
 ***Reste réel au 2026-10-25 (décision 705)** : deux absences figées qu'aucune spécification ne porte — la notion de lu / non lu et un rôle de tri des messages non classés. Les livrer, ou les déclarer hors périmètre, est un **choix de produit du responsable** ; l'envoi depuis l'inbox relève de `CRM-058`.*
@@ -7123,7 +7122,7 @@ et dans l'inbox.
       rôle existera. — ***Hors périmètre** par arbitrage du responsable (décision 707, option C) : l'absence figée est
       juste, et reste.*
 
-#### Tranche 2 — lu / non lu `[ ]`
+#### Tranche 2 — lu / non lu `[~]`
 
 *Spécification : `docs/SPEC-mail-subsystem.md` §18 bis, `docs/DESIGN_SYSTEM.md` §5.4 quinquies — proposées le
 2026-10-26 (décision 715), **validées par le responsable** le même jour avec une variante : l'arborescence garde le
@@ -7133,14 +7132,28 @@ aucune case nouvelle. Noms : `mail_message_reads`, `mark_messages_read`, `mark_m
 `unread_count` (décision 658).*
 
 - [x] **Spécification validée** par le responsable (décision 716).
-- [ ] **Migration `0105_mail_message_reads.sql`** : la table, sa RLS, les deux fonctions, `is_read`, `unread_count` dans
-      `inbox_arborescence` ; `docs/SCHEMA.md`, contrat de types régénéré, `docs/PROD_MIGRATIONS.md`.
-- [ ] **pgTAP** dédié, **API** aux jetons réels (`e2e/api/inbox-lecture.spec.ts`), **Vitest**, **MCP** (unitaire et
-      intégration).
-- [ ] **Écran** : ligne non lue, compte de l'arborescence, marquage manuel, « Tout marquer comme lu », refus affiché ;
-      E2E au clavier et à la souris, captures aux quatre paliers observées.
-- [ ] **Seed** : le fil « Demande de devis — refonte » ouvert par le profil administrateur, par la vraie fonction.
-- [ ] **Manuel** (chapitre de l'inbox), `docs/SPEC-mcp.md` §9.2 decies, `README.md` si besoin, `CHANGELOG.md`.
+- [x] **Migration `0105_mail_message_reads.sql`** : la table, sa RLS, les deux fonctions, `is_read`, `unread_count` dans
+      `inbox_arborescence` ; appliquée par le runner sur la pile de développement (« 1 fichier(s) appliqué(s) ») ;
+      `docs/SCHEMA.md`, contrat de types régénéré (`database.types.test-d.ts` : 92 → 95 fonctions), `docs/PROD_MIGRATIONS.md`.
+- [x] **pgTAP** : `0095_mail_message_reads.test.sql`, **32** assertions, et `0016_preuves_refus` révisée (158 politiques) ;
+      `npm run test:sql` — « 95 fichiers, 4007 assertions, aucune anomalie ».
+- [x] **API** aux jetons réels : `e2e/api/inbox-lecture.spec.ts`, **9/9** (état personnel, discrétion, insertion directe
+      refusée `42501`, plafond `22023`, anonyme) ; `inbox.spec.ts` et `preuves-refus.spec.ts` rejoués, 58/58.
+- [x] **Vitest** : `inbox.test.ts` (projection, fil non lu, pastille « 99+ », marquage et ses échecs) et
+      `RouteInbox.test.tsx` (six scénarios de rendu) ; `npm run test:unit` 4373/4373 avant ces ajouts, 491/491 sur les
+      fichiers touchés après ; quatre mutations de l'écran tuées.
+- [x] **MCP** : `read` dans les deux lectures ; `test_messagerie.py` 10/10, deux mutations tuées ;
+      `test_integration_messagerie.py` 5/5 contre la vraie base (lire ne marque pas) ; `scripts/verify-mcp.sh` 88/88.
+- [x] **Écran** : ligne non lue, pastille à côté du total, marquage manuel, « Tout marquer comme lu », refus affiché ;
+      `e2e/ui/inbox-lecture.spec.ts` **4/4** (souris, clavier, échec, quatre paliers) ; onze specs voisines rejouées,
+      97/97. Captures observées : un défaut vu à l'œil — l'en-tête de la liste trop serré à 360 px — corrigé en posant
+      « Tout marquer comme lu » dans une rangée d'action (`docs/DESIGN_SYSTEM.md` §5.4 quinquies) ; un second, « 1
+      messages non lus », vu en E2E et corrigé, avec son test.
+- [x] **Seed** : le fil ouvert par le compte administrateur, par la vraie fonction, et l'état rétabli à chaque passage
+      (`docs/SPEC-seed.md` §2.19 bis).
+- [x] **Manuel** §4.15 et chapitre 11, `docs/SPEC-mcp.md` §9.2 decies, `docs/DAT.md`, `CHANGELOG.md`.
+- [x] **Compteurs du harnais** révisés et mesurés (`--list`, `test:sql`) : 95 fichiers, 4007 assertions, 1191 scénarios
+      d'API, 937 d'interface. *La campagne complète de `scripts/verify-harness.sh` n'a pas été rejouée.*
 - [ ] **Livraison** en production, sur instruction du responsable.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E ; captures aux quatre

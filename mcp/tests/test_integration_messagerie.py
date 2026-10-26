@@ -3,6 +3,8 @@
 # @verifies docs/SPEC-mcp.md §13 (par outil : succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
 #           journal écrit), §9.2 decies (le fil dans l'ordre, la réponse par la file de l'écran, l'envoi constaté dans
 #           `mail_outbox` sans relève réelle) ; docs/SPEC-mail-subsystem.md §19.4 (le quota de l'identité)
+# @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : `read` est l'état DE LA PERSONNE, lu dans la vraie base, et lire par le
+#           connecteur n'écrit aucune lecture ; docs/SPEC-mail-subsystem.md §18 bis.5 ; décision 708 (M1 B)
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 LE SEED : l'affaire « Refonte du site vitrine » (`c1`) porte deux messages reçus, « Demande de devis — refonte » puis sa
@@ -140,3 +142,34 @@ async def test_la_lectrice_qui_envoie_est_refusee_par_le_crm_malgre_la_matrice_o
             "card_id": f"eq.{CARD_LUE}", "body_text": f"like.{CORPS}*", "select": "id"})).json() == []
     finally:
         await _retirer(FARIDA, posees)
+
+
+async def test_l_etat_lu_est_celui_de_la_personne_et_lire_ne_marque_pas():
+    """Les lectures de Driss sur les deux messages de `c1` sont relevées, remplacées par une seule — la première —, puis
+    rendues telles quelles. La ligne est posée par la clé de service : c'est la DONNÉE de départ du test, pas le geste
+    éprouvé ; le geste de marquage est éprouvé par pgTAP 0095 et `e2e/api/inbox-lecture.spec.ts`."""
+    messages = (await _service("GET", "/mail_messages", params={
+        "card_id": f"eq.{CARD}", "select": "id", "order": "received_at.asc,id.asc",
+    })).json()
+    ids = [m["id"] for m in messages][:2]
+    filtre = {"user_id": f"eq.{DRISS[1]}", "message_id": f"in.({','.join(ids)})"}
+    avant = (await _service("GET", "/mail_message_reads", params={**filtre, "select": "message_id,user_id,read_at"})).json()
+    await _service("DELETE", "/mail_message_reads", params=filtre)
+    await _service("POST", "/mail_message_reads", json={"message_id": ids[0], "user_id": DRISS[1]})
+    posees = await _manquantes(DRISS, [("messagerie", "consulter")])
+    await _poser(DRISS, posees)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_mail_get")
+            fil = (await client.call_tool("crm_card_mail_list", {"card_id": CARD})).structured_content["messages"]
+            assert [(m["id"], m["read"]) for m in fil[:2]] == [(ids[0], True), (ids[1], False)]
+            lu = (await client.call_tool("crm_mail_get", {"message_id": ids[1]})).structured_content
+            assert lu["read"] is False
+            # LIRE PAR LE CONNECTEUR N'ÉCRIT RIEN : la seule lecture de Driss reste celle du départ.
+            apres = (await _service("GET", "/mail_message_reads", params={**filtre, "select": "message_id"})).json()
+            assert apres == [{"message_id": ids[0]}]
+    finally:
+        await _retirer(DRISS, posees)
+        await _service("DELETE", "/mail_message_reads", params=filtre)
+        if avant:
+            await _service("POST", "/mail_message_reads", json=avant)

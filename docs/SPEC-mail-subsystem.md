@@ -1610,7 +1610,7 @@ responsable (décision 715) ; tous sont validés (décision 716).*
 4. **[proposition] « Marquer comme non lu » porte sur le message affiché**, depuis le panneau de lecture ; le fil
    redevient non lu, puisqu'un fil est non lu dès qu'un de ses messages l'est. Le panneau reste ouvert et **ne remarque
    pas lu** le message tant qu'on ne l'a pas rouvert — sinon le geste s'annulerait de lui-même.
-5. **[proposition] « Tout marquer comme lu »** dans l'en-tête de la liste : marque lus les fils de la page affichée
+5. **[proposition] « Tout marquer comme lu »** en tête de la liste : marque lus les fils de la page affichée
    (cinquante messages au plus, `MESSAGES_PAR_PAGE`). C'est aussi la réponse au démarrage : les messages déjà reçus
    naissent **non lus** pour tous, la migration ne pouvant pas juger qui les a déjà vus — elle ne fabrique aucune
    lecture (`CLAUDE.md` §8).
@@ -1661,7 +1661,8 @@ La forme est au §5.4 quinquies de `docs/DESIGN_SYSTEM.md` ; le contenu ici.
 - **Panneau de lecture** : à l'ouverture d'un fil, `mark_messages_read` avec les identifiants du fil présents dans la
   page ; puis la liste et l'arborescence sont relues. Le bouton « Marquer comme non lu » (`Mail`) / « Marquer comme lu »
   (`MailOpen`) se pose dans l'en-tête du message, celui des notifications réemployé.
-- **En-tête de la liste** : « Tout marquer comme lu » (`CheckCheck`), présent seulement si la page porte un non lu.
+- **En tête de la liste**, dans une rangée d'action sous l'en-tête du panneau : « Tout marquer comme lu » (`CheckCheck`),
+  présent seulement si la page affichée porte un non lu (§5.4 quinquies).
 - **Un refus ou une panne du marquage** s'affiche dans le panneau en `role="alert"`, et l'état affiché **n'est pas
   changé** : l'écran ne montre jamais lu ce que la base n'a pas enregistré.
 

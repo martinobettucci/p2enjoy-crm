@@ -28,6 +28,9 @@
 // @spec docs/JOURNAL.md décision 327, décision 536, décision 551
 // @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : le retrait et l'acceptation d'une suggestion s'éteignent avec leur
 //       motif quand la base refuse l'écriture de l'affaire visée ; docs/SPEC-droits-interface.md §4, §5 (« Inbox ») ;
+// @spec CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu — docs/SPEC-mail-subsystem.md §18 bis.2 (le fil marqué lu
+//       à l'ouverture, le marquage manuel qui ne se défait pas de lui-même, « Tout marquer comme lu », le total gardé),
+//       §18 bis.4 (l'écran, l'échec qui ne change rien) ; docs/DESIGN_SYSTEM.md §5.4 quinquies ; décisions 715 et 716 ;
 //       docs/DESIGN_SYSTEM.md §5.59
 //
 // TROIS PANNEAUX SUR GRAND ÉCRAN, UNE PILE EN DESSOUS DE 1024 PX — et la pile est une vraie pile,
@@ -38,7 +41,7 @@
 // passer (§18.1) ; l'écran ne filtre rien et ne devine rien.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, ChevronRight, Inbox, MailX, Moon, Paperclip, Download, Sparkles, Sun } from 'lucide-react'
+import { CheckCheck, ChevronDown, ChevronRight, Inbox, Mail, MailOpen, MailX, Moon, Paperclip, Download, Sparkles, Sun } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -46,15 +49,20 @@ import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
-import type { EtatAsync } from '../lib/async'
+import type { ErreurDonnees, EtatAsync } from '../lib/async'
 import { motifVisible, proprietesCommande, useEcriturePermise } from '../lib/capacites'
 import {
 	MEME_SELECTION,
 	classerMessage,
 	declasserMessage,
+	filEstNonLu,
+	idsNonLus,
 	lireCardsClassables,
 	lireCheminCard,
 	lireDossierDuMessage,
+	marquerLus,
+	marquerNonLu,
+	textePastille,
 	urlPieceJointe,
 	useArborescence,
 	useFilsEndormis,
@@ -175,6 +183,16 @@ function EchecChargement({
 	)
 }
 
+/**
+ * Le texte d'un marquage refusé ou perdu (§18 bis.4). Il dit que l'état N'A PAS changé : l'écran ne l'a pas modifié, et
+ * l'utilisateur ne doit pas croire qu'il l'a été.
+ */
+function texteErreurLecture(erreur: ErreurDonnees): string {
+	if (erreur.nature === 'network') return t('inbox.read.error.network')
+	if (erreur.nature === 'forbidden') return t('inbox.read.error.forbidden')
+	return t('inbox.read.error.unknown')
+}
+
 // =================================================================================================
 // Panneau 1 — les dossiers
 // =================================================================================================
@@ -182,6 +200,7 @@ function EchecChargement({
 function BoutonDossier({
 	libelle,
 	nombre,
+	nonLus,
 	profondeur,
 	choisi,
 	onChoisir,
@@ -189,6 +208,8 @@ function BoutonDossier({
 }: {
 	readonly libelle: string
 	readonly nombre: number
+	/** Les non lus de l'appelant, À CÔTÉ du total (§5.4 quinquies, décision 716). */
+	readonly nonLus: number
 	readonly profondeur: 0 | 1 | 2
 	readonly choisi: boolean
 	readonly onChoisir?: () => void
@@ -198,6 +219,7 @@ function BoutonDossier({
 	// et rien entre. `pl-7` ou `pl-11` n'existent tout simplement pas — mesuré, ils ne sont pas
 	// engendrés et le retrait disparaît en silence. Trois niveaux, trois pas de l'échelle.
 	const indentation = ['pl-3', 'pl-6', 'pl-12'][profondeur]
+	const pastille = textePastille(nonLus)
 	return (
 		<div className="flex items-stretch">
 			{depliage !== undefined ? (
@@ -233,6 +255,9 @@ function BoutonDossier({
 					depliage === undefined ? indentation : 'pl-1',
 					'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand',
 					choisi ? 'bg-brand-soft text-brand font-medium' : 'text-ink hover:bg-hover',
+					// LE NŒUD QUI PORTE UN NON LU PASSE EN GRAISSE MOYENNE (§5.4 quinquies) : la forme, et pas la seule
+					// pastille, dit où aller.
+					pastille !== null ? 'font-medium' : '',
 					onChoisir === undefined ? 'cursor-default' : '',
 				].join(' ')}
 			>
@@ -241,7 +266,28 @@ function BoutonDossier({
 				    de son texte. Sans lui, « Refonte intranet Ville de Lyon » débordait du panneau
 				    et POUSSAIT son compteur hors de l'écran — `truncate` restait sans effet. */}
 				<span className="truncate min-w-0">{libelle}</span>
-				<span className="shrink-0 text-sm text-text-3 tabular-nums">{nombre}</span>
+				<span className="shrink-0 flex items-center gap-2">
+					{/* LA PASTILLE DE LA CLOCHE (§5.43), RÉEMPLOYÉE : `aria-hidden`, parce que la phrase qui suit porte le
+					    compte EXACT — « 99+ » annoncé tel quel dirait un nombre faux. Absente à zéro. */}
+					{pastille === null ? null : (
+						<>
+							<span
+								aria-hidden="true"
+								data-testid="inbox-dossier-non-lus"
+								className="min-w-4 px-1 rounded-full bg-brand text-white text-xs tabular-nums leading-tight text-center font-normal"
+							>
+								{pastille}
+							</span>
+							<span className="sr-only">
+								{nonLus === 1
+									? t('inbox.folders.unread.one')
+									: t('inbox.folders.unread.many', { n: String(nonLus) })}
+							</span>
+						</>
+					)}
+					{/* LE TOTAL RESTE (décision 716) : un chiffre gris contre un aplat de marque, deux formes. */}
+					<span className="text-sm text-text-3 tabular-nums font-normal">{nombre}</span>
+				</span>
 			</button>
 		</div>
 	)
@@ -290,6 +336,7 @@ function PanneauDossiers({
 							<BoutonDossier
 								libelle={t('inbox.folders.unclassified')}
 								nombre={etat.donnees.nonClasses}
+								nonLus={etat.donnees.nonClassesNonLus}
 								profondeur={0}
 								choisi={selection?.genre === 'non-classes'}
 								onChoisir={() => onChoisir({ genre: 'non-classes' })}
@@ -305,6 +352,7 @@ function PanneauDossiers({
 									<BoutonDossier
 										libelle={track.nom}
 										nombre={track.nombre}
+										nonLus={track.nonLus}
 										profondeur={0}
 										choisi={false}
 										depliage={{
@@ -319,6 +367,7 @@ function PanneauDossiers({
 													<BoutonDossier
 														libelle={channel.nom}
 														nombre={channel.nombre}
+														nonLus={channel.nonLus}
 														profondeur={1}
 														choisi={false}
 														depliage={{
@@ -333,6 +382,7 @@ function PanneauDossiers({
 																	<BoutonDossier
 																		libelle={card.titre}
 																		nombre={card.nombre}
+																		nonLus={card.nonLus}
 																		profondeur={2}
 																		choisi={
 																			selection?.genre === 'card' &&
@@ -376,6 +426,8 @@ function PanneauListe({
 	mode,
 	onMode,
 	maintenant,
+	onToutMarquer,
+	erreurMarquage,
 }: {
 	readonly etat: EtatAsync<PageMessages>
 	readonly selection: Selection | null
@@ -389,6 +441,10 @@ function PanneauListe({
 	readonly onMode: (mode: ModeFils) => void
 	/** L'instant du filtre, calculé UNE FOIS par rendu et partagé par toutes les lignes (§16.15.4). */
 	readonly maintenant: Date
+	/** « Tout marquer comme lu » : les identifiants non lus des fils affichés (§18 bis.2 point 5). */
+	readonly onToutMarquer: (ids: readonly string[]) => void
+	/** L'échec du dernier « Tout marquer comme lu », lu dans la liste ; `null` sinon. */
+	readonly erreurMarquage: ErreurDonnees | null
 }) {
 	// LA COMPOSITION SE FAIT ICI, ET LA MESURE G L'IMPOSE : aucune requête ne peut demander « les
 	// messages dont le fil n'est pas endormi », `app.cle_fil` vivant dans le schéma `app` que
@@ -411,6 +467,9 @@ function PanneauListe({
 	// chose.
 	const videParSommeil =
 		etat.statut === 'pret' && selection !== null && compose.visibles.length === 0 && compose.masques > 0
+	// « TOUT MARQUER COMME LU » PORTE SUR LES FILS AFFICHÉS, et il est absent quand aucun n'est non lu (§5.4
+	// quinquies) : un geste sans effet possible ne s'offre pas.
+	const nonLusAffiches = idsNonLus(compose.visibles.flatMap((fil) => fil.messages))
 	return (
 		<Panneau
 			id="liste"
@@ -436,6 +495,11 @@ function PanneauListe({
 				</div>
 			}
 		>
+			{erreurMarquage !== null ? (
+				<p role="alert" data-testid="inbox-lecture-refus" className="px-3 py-2 text-sm text-danger">
+					{texteErreurLecture(erreurMarquage)}
+				</p>
+			) : null}
 			{selection === null ? (
 				<EtatVide titre={t('inbox.list.unselected.title')} corps={t('inbox.list.unselected.body')} />
 			) : null}
@@ -468,6 +532,22 @@ function PanneauListe({
 					)
 				) : (
 					<>
+						{/* « TOUT MARQUER COMME LU » VIT DANS UNE RANGÉE D'ACTION EN TÊTE DE LA LISTE, ET NON DANS L'EN-TÊTE
+						    (§5.4 quinquies) — défaut vu en capture : à 360 px, le titre, ce bouton et la bascule de sommeil
+						    ne tenaient pas sur une ligne, et les deux libellés passaient sur deux et trois lignes. */}
+						{nonLusAffiches.length > 0 ? (
+							<div className="flex justify-end px-3 py-1 border-b border-border">
+								<Button
+									variante="discret"
+									taille="compacte"
+									data-testid="inbox-tout-marquer-lu"
+									onClick={() => onToutMarquer(nonLusAffiches)}
+								>
+									<CheckCheck aria-hidden="true" size={16} />
+									{t('inbox.read.markAll')}
+								</Button>
+							</div>
+						) : null}
 						{/* LA LISTE ÉNUMÈRE DES FILS (§16.16.3), et son nom accessible le dit : le
 						    laisser annoncer « Messages du dossier » ferait parcourir des messages à
 						    un lecteur d'écran là où l'écran présente des fils. */}
@@ -483,11 +563,15 @@ function PanneauListe({
 								// choisir un message plus ancien dans le sélecteur effacerait le repère
 								// de sélection de la liste (§5.4).
 								const choisi = fil.messages.some((message) => message.id === idOuvert)
+								// UN FIL EST NON LU DÈS QU'UN DE SES MESSAGES L'EST (§18 bis.2 point 4) : le liseré et la
+								// graisse de la ligne non lue des notifications (§5.4 quinquies), et un MOT pour le §1.
+								const nonLu = filEstNonLu(fil.messages)
 								return (
 									<li key={fil.cle}>
 										<button
 											type="button"
 											data-testid="inbox-message"
+											data-non-lu={nonLu ? 'true' : undefined}
 											aria-current={choisi ? 'true' : undefined}
 											// OUVRIR UN FIL OUVRE SON MESSAGE LE PLUS RÉCENT (§16.16.4) :
 											// c'est celui dont la ligne vient d'afficher l'objet et la
@@ -499,13 +583,17 @@ function PanneauListe({
 												'min-h-[var(--size-target)]',
 												'focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand',
 												choisi ? 'bg-brand-soft' : 'hover:bg-hover',
+												nonLu ? 'border-l-[3px] border-l-brand' : '',
 											].join(' ')}
 										>
+											{nonLu ? <span className="sr-only">{t('inbox.read.unreadPrefix')}</span> : null}
 											<span className="block truncate text-sm text-text-2">
 												{fil.dernier.expediteur}
 											</span>
 											<span className="flex items-center gap-2 min-w-0">
-												<span className="truncate font-medium text-ink">
+												<span
+													className={['truncate text-ink', nonLu ? 'font-semibold' : 'font-medium'].join(' ')}
+												>
 													{fil.dernier.objet}
 												</span>
 												{/* LE BADGE N'APPARAÎT QU'AU-DELÀ DE UN (§5.4 bis) : un
@@ -1350,6 +1438,9 @@ function PanneauMessage({
 	onSommeil,
 	messagesDuFil,
 	onOuvrir,
+	lu,
+	onBasculerLecture,
+	erreurMarquage,
 }: {
 	readonly etat: EtatAsync<MessageComplet | null>
 	readonly onRetour: () => void
@@ -1363,11 +1454,17 @@ function PanneauMessage({
 	/** Les messages du fil ouvert, dans l'ordre de la liste. Vide tant que rien n'est ouvert. */
 	readonly messagesDuFil: readonly MessageListe[]
 	readonly onOuvrir: (message: MessageListe) => void
+	/** L'état de lecture du message affiché, lu dans la page ; `null` tant qu'il n'y est pas connu. */
+	readonly lu: boolean | null
+	readonly onBasculerLecture: (id: string, lu: boolean) => void
+	/** L'échec du dernier marquage de ce panneau ; `null` sinon. */
+	readonly erreurMarquage: ErreurDonnees | null
 }) {
 	const echeance =
 		etat.statut === 'pret' && etat.donnees !== null
 			? echeanceFil(fils, etat.donnees.workspaceId, etat.donnees.cleFil, maintenant)
 			: null
+	const idAffiche = etat.statut === 'pret' && etat.donnees !== null ? etat.donnees.id : null
 	return (
 		<Panneau
 			id="message"
@@ -1393,7 +1490,29 @@ function PanneauMessage({
 			{etat.statut === 'pret' && etat.donnees !== null ? (
 				<article className="flex flex-col gap-4 p-4" data-testid="inbox-message-ouvert">
 					<header className="flex flex-col gap-1">
-						<h3 className="text-h3 break-words">{etat.donnees.objet}</h3>
+						<div className="flex items-start gap-2">
+							<h3 className="text-h3 break-words flex-1 min-w-0">{etat.donnees.objet}</h3>
+							{/* LE BOUTON DES NOTIFICATIONS (§5.43), RÉEMPLOYÉ : icône seule, libellé en `aria-label` et en
+							    `title`. Absent tant que l'état n'est pas connu — un bouton qui ne sait pas ce qu'il
+							    bascule ne s'offre pas. */}
+							{lu === null || idAffiche === null ? null : (
+								<button
+									type="button"
+									data-testid="inbox-basculer-lecture"
+									onClick={() => onBasculerLecture(idAffiche, lu)}
+									title={lu ? t('inbox.read.markUnread') : t('inbox.read.markRead')}
+									aria-label={lu ? t('inbox.read.markUnread') : t('inbox.read.markRead')}
+									className="shrink-0 inline-flex items-center justify-center size-[var(--size-target)] rounded-sm text-text-2 hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+								>
+									{lu ? <Mail aria-hidden="true" size={16} /> : <MailOpen aria-hidden="true" size={16} />}
+								</button>
+							)}
+						</div>
+						{erreurMarquage !== null ? (
+							<p role="alert" data-testid="inbox-lecture-refus" className="text-sm text-danger">
+								{texteErreurLecture(erreurMarquage)}
+							</p>
+						) : null}
 						<p className="text-sm text-text-2 break-words">
 							{t('inbox.message.from')} : {etat.donnees.expediteur}
 						</p>
@@ -1504,6 +1623,14 @@ export function RouteInbox() {
 	const [idOuvert, setIdOuvert] = useState<string | null>(null)
 	const [etage, setEtage] = useState<Etage>('dossiers')
 	const [annonce, setAnnonce] = useState('')
+	// LES DEUX ÉCHECS DE MARQUAGE SONT LUS LÀ OÙ LE GESTE A ÉTÉ FAIT (§18 bis.4) : la liste pour « Tout marquer comme
+	// lu », le panneau de lecture pour l'ouverture et la bascule.
+	const [erreurLectureListe, setErreurLectureListe] = useState<ErreurDonnees | null>(null)
+	const [erreurLectureMessage, setErreurLectureMessage] = useState<ErreurDonnees | null>(null)
+	// LE FIL À MARQUER LU, POSÉ PAR UNE OUVERTURE ET CONSOMMÉ UNE SEULE FOIS (§18 bis.2 points 3 et 4) : une fois le
+	// marquage parti, relire la liste ne le relance pas — sinon « Marquer comme non lu » serait défait par la relecture
+	// même qu'il provoque.
+	const filAMarquer = useRef<string | null>(null)
 
 	// =============================================================================================
 	// LES PARAMÈTRES D'ADRESSE DE L'INBOX — ils sont DEUX, et de deux natures différentes
@@ -1594,6 +1721,7 @@ export function RouteInbox() {
 			// aucun bandeau ne signale l'échec — un refus ne se distingue pas d'une absence.
 			if (dossier === null) return
 			setSelection(dossier)
+			filAMarquer.current = demandeInitiale
 			setIdOuvert(demandeInitiale)
 			// SOUS 1024 PX, ON ARRIVE SUR LE MESSAGE, pas sur les dossiers : l'utilisateur a demandé
 			// un message précis, et lui rendre la pile au premier étage lui ferait refaire à la main
@@ -1647,14 +1775,76 @@ export function RouteInbox() {
 			setSelection((precedent) => (MEME_SELECTION(precedent, choix) ? precedent : choix))
 			setIdOuvert(null)
 			setEtage('liste')
+			setErreurLectureListe(null)
+			setErreurLectureMessage(null)
 		},
 		[],
 	)
 
 	const ouvrirMessage = useCallback((lu: MessageListe) => {
+		filAMarquer.current = lu.id
+		setErreurLectureMessage(null)
 		setIdOuvert(lu.id)
 		setEtage('message')
 	}, [])
+
+	// OUVRIR UN FIL LE MARQUE LU TOUT ENTIER (§18 bis.2 point 3) : ses messages non lus de la page, et eux seuls. Le
+	// marquage attend que la page du dossier soit lue — à l'arrivée par l'adresse, le dossier et le message sont posés
+	// ensemble, et la page vide du dossier précédent ne dit encore rien du fil. Un message ouvert que la page ne porte
+	// pas (liste tronquée) est marqué seul.
+	useEffect(() => {
+		const cible = filAMarquer.current
+		if (cible === null || cible !== idOuvert || liste.etat.statut !== 'pret') return
+		if (messagesDuFil.length === 0 && liste.etat.donnees.messages.length === 0) return
+		filAMarquer.current = null
+		const ids = messagesDuFil.length > 0 ? idsNonLus(messagesDuFil) : [cible]
+		if (ids.length === 0) return
+		void marquerLus(clientCrm, ids).then((erreur) => {
+			if (erreur !== null) {
+				setErreurLectureMessage(erreur)
+				return
+			}
+			arbre.recharger()
+			liste.recharger()
+		})
+	}, [idOuvert, liste, messagesDuFil, arbre])
+
+	const basculerLecture = useCallback(
+		(id: string, lu: boolean) => {
+			setErreurLectureMessage(null)
+			void (lu ? marquerNonLu(clientCrm, id) : marquerLus(clientCrm, [id])).then((erreur) => {
+				if (erreur !== null) {
+					setErreurLectureMessage(erreur)
+					return
+				}
+				setAnnonce(lu ? t('inbox.read.announce.unread') : t('inbox.read.announce.read'))
+				arbre.recharger()
+				liste.recharger()
+			})
+		},
+		[arbre, liste],
+	)
+
+	const toutMarquerLu = useCallback(
+		(ids: readonly string[]) => {
+			setErreurLectureListe(null)
+			void marquerLus(clientCrm, ids).then((erreur) => {
+				if (erreur !== null) {
+					setErreurLectureListe(erreur)
+					return
+				}
+				setAnnonce(t('inbox.read.announce.all'))
+				arbre.recharger()
+				liste.recharger()
+			})
+		},
+		[arbre, liste],
+	)
+
+	const luAffiche = useMemo(
+		() => messagesDuFil.find((candidat) => candidat.id === idOuvert)?.lu ?? null,
+		[messagesDuFil, idOuvert],
+	)
 
 	// APRÈS UN CLASSEMENT, TOUT CE QUI A CHANGÉ EST RELU : les compteurs de l'arbre, la liste des
 	// non classés d'où le message sort, et le message lui-même, qui porte désormais une affaire.
@@ -1699,6 +1889,8 @@ export function RouteInbox() {
 					mode={mode}
 					onMode={changerMode}
 					maintenant={maintenant}
+					onToutMarquer={toutMarquerLu}
+					erreurMarquage={erreurLectureListe}
 				/>
 				<PanneauMessage
 					etat={message.etat}
@@ -1712,6 +1904,9 @@ export function RouteInbox() {
 					onSommeil={apresSommeil}
 					messagesDuFil={messagesDuFil}
 					onOuvrir={ouvrirMessage}
+					lu={luAffiche}
+					onBasculerLecture={basculerLecture}
+					erreurMarquage={erreurLectureMessage}
 				/>
 			</div>
 			<LiveRegion libelle={t('route.inbox.title')} message={annonce} />

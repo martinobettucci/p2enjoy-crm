@@ -2309,7 +2309,9 @@ d'un panneau au suivant, et un bouton « Retour » remonte d'un cran.
 l'entrée du travail de tri. Viennent ensuite les affaires qui portent du courrier, rangées sous
 leur track et leur channel. **Une affaire sans courrier n'apparaît pas** : l'inbox est une vue du
 courrier reçu, pas une seconde copie du board. Chaque ligne affiche le nombre de messages **que
-vous pouvez voir**, ce qui explique que deux personnes n'y lisent pas les mêmes nombres.
+vous pouvez voir**, ce qui explique que deux personnes n'y lisent pas les mêmes nombres. Quand un
+dossier contient des messages que vous n'avez pas encore lus, une **pastille bleue** en donne le
+nombre, juste avant ce total, et le nom du dossier passe en gras.
 
 **Qui voit quoi.** Un message déjà rangé dans une affaire se lit comme l'affaire : si vous pouvez
 la lire, vous lisez son courrier. Un message **non classé**, lui, n'appartient encore à aucune
@@ -2332,6 +2334,27 @@ conversation en compte plusieurs, un encadré « Messages de ce fil » apparaît
 un bouton par message — le plus récent d'abord. Choisissez-en un autre et le panneau de lecture
 change, **sans que la ligne perde sa sélection** : vous naviguez à l'intérieur de ce que vous avez
 choisi, pas ailleurs.
+
+**Lu et non lu.** Chaque personne a **son propre** état de lecture : ce que vous avez lu reste non
+lu pour vos collègues, et inversement. Une conversation non lue se reconnaît à un **trait bleu** sur
+son bord gauche et à son objet en gras ; un lecteur d'écran l'annonce par « Non lu ». **Ouvrir une
+conversation la marque lue tout entière**, tous ses messages compris, et la pastille du dossier
+baisse d'autant. Trois gestes complètent cela :
+
+- dans l'en-tête du message ouvert, le bouton à l'enveloppe fermée, « **Marquer comme non lu** »,
+  rend la conversation non lue — le message reste affiché, et il ne se remarque pas lu tant que vous
+  ne l'avez pas rouvert. Le même bouton propose ensuite « **Marquer comme lu** » ;
+- en tête de la liste, « **Tout marquer comme lu** » marque lues les conversations affichées. Il
+  n'apparaît que lorsqu'il en reste au moins une non lue ;
+- le courrier que vous **envoyez** n'est jamais « non lu » : seul le courrier reçu en porte l'état.
+
+Seul l'écran de l'inbox marque un message comme lu. Le lire dans l'historique d'une affaire, le
+retrouver par la recherche, ou le faire lire par un assistant à travers le connecteur (chapitre 11)
+**ne change pas** son état. Les messages arrivés avant l'apparition de cette fonction sont non lus
+pour tout le monde au départ : « Tout marquer comme lu » les solde d'un geste. Si l'enregistrement
+échoue, un message rouge le dit et **l'état affiché ne change pas** : l'écran ne montre jamais lu ce
+qui n'a pas été enregistré. L'état de lecture n'est pas partagé avec votre logiciel de messagerie :
+lire un message dans le CRM ne le marque pas lu dans votre boîte, et inversement.
 
 **Lire un message.** L'expéditeur, les destinataires et la date d'arrivée sont affichés en tête,
 puis le corps du message. **Le corps est toujours affiché en texte**, jamais avec la mise en forme
@@ -5066,7 +5089,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 - **Messagerie** — *livrée en développement par `CRM-104`, tranche T7* :
   - *Consulter* : les emails classés dans une affaire, du plus ancien au plus récent — sens, date, expéditeur,
     destinataires, objet, un extrait, et le **nombre** de pièces jointes ; un email en entier, avec son texte. Quand
-    l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait ;
+    l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit
+    aussi s'il est **lu ou non lu pour vous** (chapitre 4.15) ; le lire par l'assistant ne le marque pas lu, et aucun outil
+    ne change cet état ;
   - *Ajouter* : **envoyer un email depuis une affaire**, par la même file que le bouton « Envoyer » de la fiche : la
     signature de l'identité est ajoutée, le message part, puis paraît dans le fil de l'affaire. L'assistant peut
     répondre à un email **de cette affaire** ; l'objet est alors repris, précédé de « Re: ».

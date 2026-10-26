@@ -716,8 +716,10 @@ ligne non lue des notifications (§5.43).*
   `aria-label` et en `title`. Mêmes icônes, même sens qu'au §5.43 ; le §9 n'est pas enfreint, c'est le même geste sur le
   même état.
 
-- **« TOUT MARQUER COMME LU » EST UN BOUTON DISCRET ET COMPACT DE L'EN-TÊTE DE LA LISTE**, icône `CheckCheck` et
-  libellé visible, à gauche de la bascule de sommeil. Il est **absent** quand la page ne porte aucun non lu — un geste
+- **« TOUT MARQUER COMME LU » EST UN BOUTON DISCRET ET COMPACT, DANS UNE RANGÉE D'ACTION EN TÊTE DE LA LISTE**, sous
+  l'en-tête du panneau, aligné à droite et séparé des fils par une bordure basse `--color-border` ; icône `CheckCheck`
+  et libellé visible. *Écart à la proposition, vu en capture le 2026-10-26* : posé dans l'en-tête, à gauche de la
+  bascule de sommeil, il ne tenait pas à 360 px — les deux libellés passaient sur deux et trois lignes. Il est **absent** quand la page ne porte aucun non lu — un geste
   sans effet possible ne s'offre pas — et ne demande pas de confirmation : il se défait ligne à ligne.
 
 - **UN MARQUAGE QUI ÉCHOUE NE CHANGE RIEN À L'ÉCRAN** : le message d'erreur s'affiche dans le panneau de lecture en

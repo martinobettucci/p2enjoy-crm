@@ -10,6 +10,8 @@
 --           docs/SPEC-activites.md §3
 -- @verifies CRM-109 (docs/BACKLOG.md) — tranche T1 : l'unique politique de lecture des refus d'admission (150) ;
 --           docs/SPEC-refus-admission.md §3
+-- @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : l'unique politique de lecture des lectures de l'inbox (158) ;
+--           docs/SPEC-mail-subsystem.md §18 bis.3
 -- @verifies docs/SPEC-permissions-rls.md §7 (les douze preuves), §7.2 (contrat mesuré),
 --           §7.3 (ce qui n'est pas satisfaisable, et comment l'absence est figée),
 --           §7.4 (non-complaisance)
@@ -50,7 +52,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(66);
+select plan(67);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -221,8 +223,11 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	157,
-	'CENT CINQUANTE-SEPT politiques dans `public`, et pas une de plus — 150 avant `CRM-067` tranche 1, plus les SEPT des '
+	158,
+	'CENT CINQUANTE-HUIT politiques dans `public`, et pas une de plus — 157 avant `CRM-057` tranche 2, plus l''UNIQUE '
+	'politique de LECTURE de `mail_message_reads` (docs/SPEC-mail-subsystem.md §18 bis.3) : chacun lit SES lectures, et '
+	'nul ne les écrit directement — `mark_messages_read` et `mark_message_unread` sont les seuls chemins, et la fermeture '
+	'est tenue par le PRIVILÈGE, non par une politique. Avant elle : 157, soit 150 avant `CRM-067` tranche 1, plus les SEPT des '
 	'activités (docs/SPEC-activites.md §3) : lecture, insertion, correction par l''auteur et modération de '
 	'`card_activities` — celles d''un commentaire, la modération bornée au retrait par trigger —, puis lecture, ajout '
 	'et retrait de ses participants, réservés à l''auteur. AUCUNE SUPPRESSION D''ACTIVITÉ, et c''est un refus double : ni '
@@ -433,6 +438,10 @@ select is(pg_temp.politiques('card_activity_participants'),
 
 select is(pg_temp.politiques('admission_refus'), array['admission_refus_lecture_admin']::text[],
 	'`admission_refus` porte sa seule politique de lecture administrateur, aucune écriture');
+
+-- Ajoutée par `CRM-057` tranche 2 (docs/SPEC-mail-subsystem.md §18 bis.3) : chacun lit ses lectures, nul ne les écrit.
+select is(pg_temp.politiques('mail_message_reads'), array['mail_message_reads_lecture']::text[],
+	'`mail_message_reads` porte sa seule politique de lecture, aucune écriture');
 
 select is(pg_temp.politiques('workspaces'), array['workspaces_lecture_membre']::text[],
 	'`workspaces` porte exactement sa politique de lecture membre');

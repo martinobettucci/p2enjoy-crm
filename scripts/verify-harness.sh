@@ -600,7 +600,9 @@ PORT_RAPPORT=9323
 # 92 + 1 = 93, MESURÉ par `npm run test:sql` — « 93 fichiers ».
 # **94 depuis `CRM-013`, tranche INC-238, 2026-10-25** (décision 687) : `0094_dates_lignes_protegees.test.sql`, seul
 # fichier ajouté. 93 + 1 = 94, MESURÉ par `npm run test:sql` — « 94 fichiers ».
-FICHIERS_SQL_ATTENDUS=94
+# **95 depuis `CRM-057` tranche 2, 2026-10-26** (décisions 715 et 716) : `0095_mail_message_reads.test.sql`, seul fichier
+# ajouté. 94 + 1 = 95, MESURÉ par `npm run test:sql` — « 95 fichiers ».
+FICHIERS_SQL_ATTENDUS=95
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -704,7 +706,10 @@ FICHIERS_SQL_ATTENDUS=94
 # **3974 depuis `CRM-013` (migration `0104`, décision 687)** : `0094_dates_lignes_protegees` ajoute **30** assertions que
 # le compteur n'avait pas suivies (INC-303, close par la décision 699). 3944 + 30 = 3974, MESURÉ le 2026-10-25 —
 # « 94 fichiers, 3974 assertions, aucune anomalie ».
-ASSERTIONS_ATTENDUES=3974
+# **4007 depuis `CRM-057` tranche 2, 2026-10-26** : la suite neuve `0095_mail_message_reads`, **32** assertions, et
+# `0016_preuves_refus` révisée d'**une** — la politique de lecture de `mail_message_reads` nommée, le compte porté de 157 à
+# 158. 3974 + 32 + 1 = 4007, MESURÉ — « 95 fichiers, 4007 assertions, aucune anomalie ».
+ASSERTIONS_ATTENDUES=4007
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1083,7 +1088,11 @@ ASSERTIONS_ATTENDUES=3974
 # **7** scénarios — la naissance d'une ligne de coût ou de recette refusée à l'administratrice et au business developer,
 # à l'insertion et à la mise à jour ; une ligne ordinaire datée par la base ; la clé de service qui antidate encore ;
 # l'anonyme. 1175 + 7 = 1182, valeur COMPTÉE — « Total: 1182 tests in 86 files ».
-SCENARIOS_API=1182
+# **1191 depuis `CRM-057` tranche 2, 2026-10-26** : `e2e/api/inbox-lecture.spec.ts`, fichier NEUF, **9** scénarios — le
+# témoin, l'état personnel, le compte des non lus à côté du total, la discrétion envers un message invisible, l'insertion
+# directe refusée, la remise à non lu, le plafond de 200 et l'anonyme. 1182 + 9 = 1191, valeur COMPTÉE — « Total: 1191
+# tests in 87 files ».
+SCENARIOS_API=1191
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1575,7 +1584,10 @@ SCENARIOS_API=1182
 # **933 depuis `CRM-001` tranche INC-299, le 2026-10-25** (décision 700) : `comptes-sans-head.spec.ts`, fichier NEUF,
 # **1** scénario — cinq écrans qui comptent émettent leur compte en `GET … limit=0`, aucun `HEAD` vers `/rest/v1/`.
 # 932 + 1 = 933, valeur COMPTÉE — « Total: 933 tests in 91 files ».
-SCENARIOS_UI=933
+# **937 depuis `CRM-057` tranche 2, 2026-10-26** : `inbox-lecture.spec.ts`, fichier NEUF, **4** scénarios — ouvrir un fil
+# le marque lu et « Marquer comme non lu » le rétablit, « Tout marquer comme lu » au clavier, l'échec dit sans rien
+# changer, les quatre paliers. 933 + 4 = 937, valeur COMPTÉE — « Total: 937 tests in 92 files ».
+SCENARIOS_UI=937
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

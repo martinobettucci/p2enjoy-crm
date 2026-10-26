@@ -897,6 +897,18 @@ deux messages étaient remis dans un ordre que le serveur ne garantit pas — me
 **vérifié à chaque passage** ; une base en désordre arrête le seed, qui ne la répare pas en place — la boîte garde son
 ordre de remise — et désigne `./resetMe.sh`.
 
+### 2.19 bis Le fil lu par le compte administrateur — ajouté par `CRM-057` tranche 2
+
+L'état lu / non lu (`docs/SPEC-mail-subsystem.md` §18 bis) ne se démontre que si l'écran en porte les deux faces. Le
+compte administrateur (Camille Aubert) **ouvre** le fil « Demande de devis — refonte » par la vraie fonction,
+`mark_messages_read`, avec **son propre jeton** : ses deux messages sont lus pour ce compte. « Candidature spontanée » et
+« Point d'avancement — migration ERP » restent **non lus** ; les autres profils voient tous leurs messages non lus.
+
+**L'état est RÉTABLI à chaque passage, pas seulement complété** : ouvrir un fil le marque lu, et les parcours d'interface
+qui ouvrent les deux non classés laissent des lectures du compte administrateur. Le seed les remet non lues par
+`mark_message_unread`, la vraie fonction, avec le même jeton, puis **vérifie** que deux non classés restent non lus pour ce
+compte. Rien n'est écrit en table à la main : `authenticated` n'a aucun privilège d'écriture sur `mail_message_reads`.
+
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 
 - **Aucun second workspace, aucun compte extérieur.** `CRM-005` dit « un workspace ». Les preuves

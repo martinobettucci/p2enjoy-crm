@@ -166,6 +166,10 @@ type _tables = Expect<
     | 'mail_folder_map'
     | 'mail_inbound_accounts'
     | 'mail_message_occurrences'
+    // `0105` de `CRM-057` TRANCHE 2 ajoute `mail_message_reads` — les lectures PERSONNELLES de l'inbox
+    // (docs/SPEC-mail-subsystem.md §18 bis.3). Le type montre un `Insert` que la base refuse à `authenticated` : la table
+    // n'est écrite que par `mark_messages_read` et `mark_message_unread`.
+    | 'mail_message_reads'
     | 'mail_messages'
     | 'mail_outbound_identities'
     | 'mail_outbox'
@@ -1038,6 +1042,11 @@ type _vueDerivationColonnes = Expect<
 // `0098` de `CRM-109` TRANCHE T1 ajoute `journaliser_refus_admission` (docs/SPEC-refus-admission.md §3). Exécutable par
 // `service_role` SEUL : le type la montre à la webapp, qui ne peut pas l'appeler (`42501`) ; seul l'échangeur de
 // session l'appelle, sous la clé de service. Quatre-vingt-onze devient QUATRE-VINGT-DOUZE.
+// `0105` de `CRM-057` TRANCHE 2 ajoute `mark_messages_read`, `mark_message_unread` et `is_read` (docs/SPEC-mail-subsystem.md
+// §18 bis.3). `is_read` est une colonne CALCULÉE de `mail_messages` à paramètre anonyme : le générateur la range aussi
+// dans la ligne (`is_read: boolean | null`), ce qui type la liste sans conversion, et lui prête une signature RPC
+// d'erreur que personne n'appelle. Le type ne dit ni `too_many_messages` (`22023`) ni que les messages invisibles sont
+// ignorés sans erreur. Quatre-vingt-douze devient QUATRE-VINGT-QUINZE.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1106,6 +1115,9 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'mail_inbound_account_credentials'
     | 'mail_inbound_account_record_check'
     | 'marquer_message_range'
+    | 'mark_messages_read'
+    | 'mark_message_unread'
+    | 'is_read'
     | 'messages_a_ranger'
     | 'mail_outbound_identity_credentials'
     | 'mail_outbound_identity_record_check'

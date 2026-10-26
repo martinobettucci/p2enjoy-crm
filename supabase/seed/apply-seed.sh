@@ -2947,6 +2947,40 @@ info "          et réunis en UN SEUL fil, un non classé pour le panneau de tri
 info "          et un non classé MAIS SUGGÉRÉ vers ${CARD_SUGGEREE: -2} par la règle 3 (CRM-060)."
 info "          Rien n a été forgé en base (§2.19)"
 
+# --- La lecture du fil par le compte administrateur — CRM-057 tranche 2, docs/SPEC-seed.md §2.19 bis ------
+# @spec CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu ; docs/SPEC-mail-subsystem.md §18 bis.6 ;
+#       docs/SPEC-seed.md §2.19 bis ; docs/JOURNAL.md décisions 715 et 716
+#
+# L ÉCRAN NE DÉMONTRE L ÉTAT LU QUE S IL EN PORTE LES DEUX FACES. Le compte administrateur OUVRE le fil
+# « Demande de devis — refonte » par la VRAIE fonction et avec SON jeton : ses deux messages sont lus
+# pour lui, les deux non classés restent non lus. Rien n est écrit en table : `mark_messages_read` est
+# la seule porte, et `authenticated` n a aucun privilège d écriture sur `mail_message_reads`.
+# Idempotent : la fonction ignore une lecture déjà posée (`on conflict do nothing`).
+ids_fil_lu=$(psql_seed -c "select string_agg('\"' || id || '\"', ',' order by received_at)
+                           from public.mail_messages where card_id = '$CARD_COURRIER';" | tr -d ' ')
+code=$(api_admin POST /rest/v1/rpc/mark_messages_read -d "{\"p_message_ids\":[$ids_fil_lu]}")
+attendu "$code" "lecture du fil de ${CARD_COURRIER: -2} par le compte administrateur" 200
+[ "$(cat "$CORPS")" = 2 ] || die "l ouverture du fil de ${CARD_COURRIER: -2} a rendu « $(cat "$CORPS") »
+        message(s) lu(s) au lieu de 2 : le fil ne porte plus ses deux messages, ou le compte
+        administrateur ne les voit plus (docs/SPEC-mail-subsystem.md §18 bis.6)."
+# L ÉTAT EST RÉTABLI, PAS SEULEMENT COMPLÉTÉ : ouvrir un fil le marque lu, et les parcours d interface
+# qui ouvrent les deux non classés laissent donc des lectures du compte administrateur. Rejouer le seed
+# les remet non lues — par `mark_message_unread`, la vraie fonction, avec le même jeton —, sans quoi
+# l état de démonstration dépendrait des preuves lancées depuis le dernier seed.
+for msgid in "$MSGID_NON_CLASSE" "$MSGID_SUGGERE"; do
+	id_non_lu=$(psql_seed -c "select id from public.mail_messages where rfc822_message_id = '<$msgid>';" | tr -d ' ')
+	[ -n "$id_non_lu" ] || die "le message <$msgid> du seed est introuvable : il ne peut pas être remis non lu."
+	code=$(api_admin POST /rest/v1/rpc/mark_message_unread -d "{\"p_message_id\":\"$id_non_lu\"}")
+	attendu "$code" "remise à non lu de <$msgid> pour le compte administrateur" 200
+done
+non_lus_admin=$(psql_seed -c "select count(*) from public.mail_messages m
+                               where m.card_id is null and m.direction = 'inbound'
+                                 and not exists (select 1 from public.mail_message_reads r
+                                                  where r.message_id = m.id
+                                                    and r.user_id = '5eed0000-0000-4000-8000-000000000011');" | tr -d ' ')
+[ "$non_lus_admin" = 2 ] || die "le compte administrateur a $non_lus_admin non classé(s) non lu(s) au lieu de 2."
+info "Lecture : le fil de ${CARD_COURRIER: -2} est lu par le compte administrateur, les deux non classés restent non lus"
+
 total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 info "Événements : $total_evenements, tous écrits par les triggers — le seed ne peut PAS en forger un"

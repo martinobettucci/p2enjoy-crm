@@ -9,6 +9,9 @@
 // @spec CRM-060 (docs/BACKLOG.md) — sous-tranche 2 bis : la SURFACE de la suggestion,
 //       docs/SPEC-contacts.md §8.8.3 (ce que l'écran lit), §8.8.4 (les quatre états)
 // @spec docs/JOURNAL.md décision 327, décision 481
+// @spec CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu — docs/SPEC-mail-subsystem.md §18 bis.2 (état personnel,
+//       fil marqué lu à l'ouverture, total gardé), §18 bis.3 (`is_read`, `unread_count`, les deux fonctions), §18 bis.4 ;
+//       docs/DESIGN_SYSTEM.md §5.4 quinquies ; docs/JOURNAL.md décisions 715 et 716
 //
 // Ce module ne rend rien : il **lit, réduit et classe**. La séparation est ce qui rend la
 // réduction du HTML, la construction de l'arbre et la classification des refus vérifiables
@@ -18,7 +21,7 @@
 // requête qui ne rapporte rien est un refus déjà appliqué, non une erreur.
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
+import { classerErreur, enChargement, enErreur, pret, type ErreurDonnees, type EtatAsync } from './async'
 import type { Database } from './database.types'
 import { cleFil, lireFilsEndormis, type FilsEndormis } from './sommeil-fil'
 import type { ClientCrm } from './supabase'
@@ -43,8 +46,11 @@ const CONFIGURATION_ABSENTE = { nature: 'unknown', detail: 'configuration_absent
 // UNE SEULE CHAÎNE LITTÉRALE, JAMAIS UNE CONCATÉNATION : `supabase-js` infère le type des lignes
 // rendues à partir du littéral lui-même, et un `+` le réduit à `string` — la réponse devient alors
 // `GenericStringError` et tout appelant cesse de compiler. Mesuré en ajoutant les trois colonnes.
+//
+// `is_read` est la colonne calculée de la tranche 2 (§18 bis.3) : l'état de lecture DE L'APPELANT, rendu par la base
+// avec la ligne, sans jointure ni seconde requête.
 export const COLONNES_LISTE =
-	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id'
+	'id, workspace_id, card_id, classification, subject, from_address, from_name, received_at, references_ids, rfc822_message_id, is_read'
 
 /**
  * Colonnes du panneau de lecture. Le corps y est demandé, puisqu'il y est montré.
@@ -74,6 +80,8 @@ export type MessageListe = {
 	/** L'adresse SEULE — le libellé porte « Nom <adresse> », qu'un champ « À » ne saurait pas lire. */
 	readonly expediteurAdresse: string
 	readonly recuLe: string
+	/** Lu PAR L'APPELANT (§18 bis.2) ; un message envoyé l'est toujours. */
+	readonly lu: boolean
 }
 
 export type PieceJointe = {
@@ -120,6 +128,7 @@ export function projeterMessage(ligne: Pick<
 	| 'received_at'
 	| 'references_ids'
 	| 'rfc822_message_id'
+	| 'is_read'
 >): MessageListe {
 	return {
 		id: ligne.id,
@@ -133,6 +142,9 @@ export function projeterMessage(ligne: Pick<
 		expediteur: nomAffiche(ligne.from_address, ligne.from_name),
 		expediteurAdresse: ligne.from_address,
 		recuLe: ligne.received_at,
+		// `null` N'EST PAS « lu » : la colonne calculée rend toujours un booléen, et une valeur absente ne doit pas
+		// effacer un non lu. L'écran montre alors l'état qui invite à ouvrir, jamais celui qui le cache.
+		lu: ligne.is_read === true,
 	}
 }
 
@@ -211,16 +223,20 @@ export function corpsAffichable(
 // L'arborescence — §18.3
 // =================================================================================================
 
+// `nonLus` (tranche 2, §18 bis.2 point 6) S'AJOUTE à `nombre` et ne le remplace pas : le total reste (décision 716).
+
 export type NoeudCard = {
 	readonly id: string
 	readonly titre: string
 	readonly nombre: number
+	readonly nonLus: number
 }
 
 export type NoeudChannel = {
 	readonly id: string
 	readonly nom: string
 	readonly nombre: number
+	readonly nonLus: number
 	readonly cards: readonly NoeudCard[]
 }
 
@@ -228,11 +244,13 @@ export type NoeudTrack = {
 	readonly id: string
 	readonly nom: string
 	readonly nombre: number
+	readonly nonLus: number
 	readonly channels: readonly NoeudChannel[]
 }
 
 export type ArbreInbox = {
 	readonly nonClasses: number
+	readonly nonClassesNonLus: number
 	readonly tracks: readonly NoeudTrack[]
 }
 
@@ -251,32 +269,37 @@ type LigneArbre = Database['public']['Functions']['inbox_arborescence']['Returns
  */
 export function construireArbre(lignes: readonly LigneArbre[]): ArbreInbox {
 	let nonClasses = 0
-	const tracks: Array<{ id: string; nom: string; nombre: number; channels: NoeudChannel[] }> = []
+	let nonClassesNonLus = 0
+	const tracks: Array<{ id: string; nom: string; nombre: number; nonLus: number; channels: NoeudChannel[] }> = []
 
 	for (const ligne of lignes) {
 		if (ligne.card_id === null || ligne.channel_id === null || ligne.track_id === null) {
 			nonClasses = Number(ligne.nombre)
+			nonClassesNonLus = Number(ligne.unread_count)
 			continue
 		}
 		const nombre = Number(ligne.nombre)
+		const nonLus = Number(ligne.unread_count)
 		let track = tracks.find((candidat) => candidat.id === ligne.track_id)
 		if (track === undefined) {
-			track = { id: ligne.track_id, nom: ligne.track_name ?? '', nombre: 0, channels: [] }
+			track = { id: ligne.track_id, nom: ligne.track_name ?? '', nombre: 0, nonLus: 0, channels: [] }
 			tracks.push(track)
 		}
 		track.nombre += nombre
+		track.nonLus += nonLus
 		let channel = track.channels.find((candidat) => candidat.id === ligne.channel_id) as
-			| { id: string; nom: string; nombre: number; cards: NoeudCard[] }
+			| { id: string; nom: string; nombre: number; nonLus: number; cards: NoeudCard[] }
 			| undefined
 		if (channel === undefined) {
-			channel = { id: ligne.channel_id, nom: ligne.channel_name ?? '', nombre: 0, cards: [] }
+			channel = { id: ligne.channel_id, nom: ligne.channel_name ?? '', nombre: 0, nonLus: 0, cards: [] }
 			track.channels.push(channel as NoeudChannel)
 		}
 		channel.nombre += nombre
-		channel.cards.push({ id: ligne.card_id, titre: ligne.card_title ?? '', nombre })
+		channel.nonLus += nonLus
+		channel.cards.push({ id: ligne.card_id, titre: ligne.card_title ?? '', nombre, nonLus })
 	}
 
-	return { nonClasses, tracks }
+	return { nonClasses, nonClassesNonLus, tracks }
 }
 
 /** Ce que le premier panneau désigne. `null` : rien n'est encore choisi, et c'est un état normal. */
@@ -551,6 +574,67 @@ export async function declasserMessage(
 			),
 			cardQuittee: null,
 		}
+	}
+}
+
+// =================================================================================================
+// Lu / non lu — tranche 2, §18 bis.3
+// =================================================================================================
+
+/**
+ * Le plafond d'un marquage, celui de `mark_messages_read` : au-delà, la base refuse (`too_many_messages`). Une page de
+ * la liste en porte au plus `MESSAGES_PAR_PAGE`, très en deçà.
+ */
+export const MARQUAGE_MAX = 200
+
+/** Un fil est non lu dès qu'un de ses messages l'est (§18 bis.2 point 4). */
+export const filEstNonLu = (messages: readonly Pick<MessageListe, 'lu'>[]): boolean =>
+	messages.some((message) => !message.lu)
+
+/**
+ * Les identifiants à marquer en ouvrant un fil, ou en marquant tout : les seuls NON LUS. Un fil déjà lu n'appelle
+ * donc rien, et l'ouverture d'une ligne lue ne coûte aucune écriture.
+ */
+export const idsNonLus = (messages: readonly Pick<MessageListe, 'id' | 'lu'>[]): string[] =>
+	messages.filter((message) => !message.lu).map((message) => message.id)
+
+/** Le seuil de la pastille : au-delà, elle écrit « 99+ » et le nom accessible garde le compte (§5.4 quinquies). */
+export const PASTILLE_MAX = 99
+
+/** Le texte de la pastille des non lus, ou `null` à zéro — elle est alors absente (§5.4 quinquies). */
+export function textePastille(nonLus: number): string | null {
+	if (!(nonLus > 0)) return null
+	return nonLus > PASTILLE_MAX ? `${PASTILLE_MAX}+` : String(nonLus)
+}
+
+/** `null` : le marquage est enregistré. Sinon l'erreur, et l'écran NE CHANGE PAS l'état affiché (§18 bis.4). */
+export type ResultatMarquage = ErreurDonnees | null
+
+/**
+ * Marque lus, pour l'appelant, les messages donnés — ouvrir un fil, ou « Tout marquer comme lu ».
+ *
+ * UN MESSAGE INVISIBLE OU ENVOYÉ EST IGNORÉ PAR LA BASE SANS ERREUR (discrétion, §18 bis.3) : le nombre rendu n'est donc
+ * pas un contrôle, et l'écran relit la liste plutôt que de le comparer. Une liste vide n'appelle rien.
+ */
+export async function marquerLus(client: ClientCrm | null, ids: readonly string[]): Promise<ResultatMarquage> {
+	if (ids.length === 0) return null
+	if (client === null) return CONFIGURATION_ABSENTE
+	try {
+		const reponse = await client.rpc('mark_messages_read', { p_message_ids: [...ids].slice(0, MARQUAGE_MAX) })
+		return reponse.error === null ? null : classerErreur(reponse.status, reponse.error.message)
+	} catch (cause) {
+		return classerErreur(undefined, cause instanceof Error ? cause.message : String(cause))
+	}
+}
+
+/** Remet non lu, pour l'appelant, le message affiché (§18 bis.2 point 4). */
+export async function marquerNonLu(client: ClientCrm | null, id: string): Promise<ResultatMarquage> {
+	if (client === null) return CONFIGURATION_ABSENTE
+	try {
+		const reponse = await client.rpc('mark_message_unread', { p_message_id: id })
+		return reponse.error === null ? null : classerErreur(reponse.status, reponse.error.message)
+	} catch (cause) {
+		return classerErreur(undefined, cause instanceof Error ? cause.message : String(cause))
 	}
 }
 

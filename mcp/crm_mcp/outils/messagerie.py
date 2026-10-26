@@ -4,6 +4,9 @@
 #       `queue_outbound_email`, `destructiveHint` sur l'envoi), §9.3 ; docs/SPEC-cards.md §18 (le fil d'une affaire) ;
 #       webapp/src/lib/inbox.ts (`corpsAffichable`, `reduireHtmlEnTexte`) et envoi.ts (`lireIdentitesDisponibles`,
 #       `objetDeReponse`), dont les règles sont reprises à l'identique
+# @spec CRM-057 (docs/BACKLOG.md) — tranche 2 : l'état lu dans les deux lectures, `read` (décision 708, M1 B) ;
+#       docs/SPEC-mail-subsystem.md §18 bis.5 (l'état de la personne, aucun outil pour marquer, lire ne marque pas) ;
+#       docs/SPEC-mcp.md §9.2 decies
 """La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, envoyer un email.
 
 Les mêmes tables et la même fonction que l'écran : `mail_messages`, `mail_outbound_identities`, et
@@ -29,7 +32,7 @@ LONGUEUR_EXTRAIT = 280
 DESTINATAIRES_MAX = 50
 COLONNES_FIL = (
     "id,direction,sent_at,received_at,from_address,from_name,to_addresses,cc_addresses,subject,body_text,body_html,"
-    "mail_attachments(count)"
+    "mail_attachments(count),is_read"
 )
 COLONNES_MESSAGE = f"{COLONNES_FIL},card_id,classification"
 
@@ -107,6 +110,9 @@ def message_lu(m: dict[str, Any]) -> dict[str, Any]:
         "subject": m.get("subject"),
         "excerpt": extrait(corps),
         "attachment_count": nombre_de_pieces(m),
+        # L'état lu DE LA PERSONNE que le connecteur représente (`is_read`, §18 bis.5). Le lire n'écrit rien : seul l'écran
+        # de l'inbox marque. Une valeur absente n'est pas « lu ».
+        "read": m.get("is_read") is True,
     }
 
 
@@ -194,7 +200,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         titre="List the emails of an affaire",
         description=(
             "Lists the emails filed in an affaire (card), oldest first: direction, dates, sender, recipients, subject, a "
-            "short excerpt and the number of attachments (never their content). Read one in full with crm_mail_get."
+            "short excerpt, the number of attachments (never their content) and whether the person has read it in the "
+            "inbox (read; reading here does not mark it). Read one in full with crm_mail_get."
         ),
     )
 
@@ -220,7 +227,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         titre="Read an email",
         description=(
             "Reads one email: headers, the affaire it is filed in, and its text. When the sender wrote only HTML, the "
-            "text is reduced from it as the web app does (body_from_html). Attachments are counted, never returned."
+            "text is reduced from it as the web app does (body_from_html). Attachments are counted, never returned. "
+            "read tells whether the person has read it in the inbox; reading it here does not mark it read."
         ),
     )
 

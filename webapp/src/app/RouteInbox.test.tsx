@@ -10,6 +10,9 @@
 // @verifies docs/SPEC-recherche.md §15 (le paramètre est lu au montage et une seule fois, le
 //           `card_id` décide du dossier, l'identifiant inconnu ne rend AUCUNE erreur), §15.1 (le
 //           paramètre est retiré même quand il n'est pas honoré), M16 (les deux cas de classement)
+// @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu — docs/SPEC-mail-subsystem.md §18 bis.2 (ouvrir un fil le
+//           marque lu tout entier, « Marquer comme non lu » ne se défait pas de lui-même, « Tout marquer comme lu »,
+//           le total gardé), §18 bis.4 (l'échec ne change rien) ; docs/DESIGN_SYSTEM.md §5.4 quinquies ; décision 716
 //
 // Ces preuves montent le VRAI écran avec un client factice, comme `EtatMessagerie.test.tsx`. Le
 // parcours connecté complet relève de `e2e/ui/groupement-fils.spec.ts`, qui ne peut pas être
@@ -20,7 +23,7 @@
 // sélecteur sur un fil unique, ou perdre son repère de sélection — trois défauts que seule
 // l'inspection du DOM rend visibles.
 
-import { cleanup, render, screen, waitFor } from '@testing-library/react'
+import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, useLocation } from 'react-router'
@@ -90,8 +93,26 @@ const NON_CLASSE = {
  */
 function clientFactice(lireMessages: () => readonly unknown[]) {
 	const reponse = (data: unknown) => Promise.resolve({ data, error: null, status: 200 })
+	const avecLecture = (): Array<{ id: string; is_read: boolean }> =>
+		lireMessages().map((m) => {
+			const ligne = m as { id: string }
+			return { ...ligne, is_read: lectures.has(ligne.id) }
+		})
 	return {
-		rpc: (nom: string) => {
+		rpc: (nom: string, args?: Record<string, unknown>) => {
+			// `CRM-057` tranche 2 §18 bis.3 — le double tient les lectures comme la base : un ensemble d'identifiants, que
+			// les deux fonctions modifient et que `is_read` et `unread_count` relisent.
+			if (nom === 'mark_messages_read' || nom === 'mark_message_unread') {
+				appelsMarquage.push([nom, args])
+				if (refusMarquage !== null) {
+					return Promise.resolve({ data: null, error: { message: 'refus' }, status: refusMarquage })
+				}
+				if (nom === 'mark_messages_read') {
+					for (const id of (args?.p_message_ids as string[]) ?? []) lectures.add(id)
+					return reponse(((args?.p_message_ids as string[]) ?? []).length)
+				}
+				return reponse(lectures.delete(args?.p_message_id as string))
+			}
 			// `CRM-055` tranche 2 §16.5.5 — le RETRAIT. Le double rend ce que PostgREST rendrait :
 			// `data` porte la card quittée en cas de succès, et `error` porte le code de refus.
 			// C'est la seule voie par laquelle ces preuves peuvent éprouver la TRADUCTION du refus,
@@ -111,6 +132,7 @@ function clientFactice(lireMessages: () => readonly unknown[]) {
 							card_id: CARD,
 							card_title: 'Refonte du site vitrine',
 							nombre: lireMessages().length,
+							unread_count: lireMessages().filter((m) => !lectures.has((m as { id: string }).id)).length,
 						},
 					])
 				: reponse(null)
@@ -123,11 +145,11 @@ function clientFactice(lireMessages: () => readonly unknown[]) {
 						colonne === 'id'
 							? {
 									limit: () =>
-										reponse(lireMessages().filter((m) => (m as { id: string }).id === valeur)),
+										reponse(avecLecture().filter((m) => m.id === valeur)),
 								}
 							: chaine,
 					order: () => chaine,
-					limit: () => reponse(lireMessages()),
+					limit: () => reponse(avecLecture()),
 					then: undefined,
 				}
 				return { select: () => chaine }
@@ -153,6 +175,12 @@ let messagesRendus: readonly unknown[] = [REPONSE, RACINE]
 
 /** `null` = le retrait réussit ; un nombre = le statut HTTP que le serveur oppose. */
 let refusRetrait: number | null = null
+
+/** Les messages lus par l'appelant, et les appels de marquage reçus — `CRM-057` tranche 2. */
+let lectures = new Set<string>()
+let appelsMarquage: Array<[string, unknown]> = []
+/** `null` = le marquage réussit ; un nombre = le statut HTTP que le serveur oppose. */
+let refusMarquage: number | null = null
 
 // LE CLIENT EST UN SINGLETON, ET C'EST UNE CONTRAINTE DU PRODUIT, NON UNE COMMODITÉ DE TEST.
 // `useLecture` prend `client` dans ses dépendances d'effet (`webapp/src/lib/inbox.ts`) : un double
@@ -530,5 +558,103 @@ describe('RouteInbox — retirer un message de son affaire (§16.5.5)', () => {
 		expect(alerte.textContent).not.toContain('classer')
 		// ET LA CONFIRMATION RESTE OUVERTE : un refus n'est pas un succès, l'écran ne referme pas.
 		expect(screen.queryByTestId('inbox-retrait-confirmation')).not.toBeNull()
+	})
+})
+
+describe('RouteInbox — lu / non lu (§18 bis)', () => {
+	const preparer = (lus: readonly string[] = []) => {
+		messagesRendus = [REPONSE, RACINE]
+		lectures = new Set(lus)
+		appelsMarquage = []
+		refusMarquage = null
+	}
+
+	it('MARQUE la ligne non lue par le liseré ET par un mot, et le dossier porte ses non lus À CÔTÉ du total', async () => {
+		preparer()
+		render(
+			<MemoryRouter>
+				<RouteInbox />
+			</MemoryRouter>,
+		)
+		// LE NOM DU DOSSIER PORTE LE COMPTE EXACT (§5.4 quinquies), la pastille visible étant `aria-hidden`.
+		const dossier = await screen.findByRole('button', { name: /Refonte du site vitrine.*2 messages non lus/ })
+		// Le track et le channel portent aussi leur pastille, cumulée : celle de l'affaire est lue DANS son bouton.
+		expect(within(dossier).getByTestId('inbox-dossier-non-lus').textContent).toBe('2')
+		// LE TOTAL RESTE (décision 716).
+		expect(dossier.textContent).toMatch(/2$/)
+		await userEvent.click(dossier)
+
+		const [ligneFil] = await screen.findAllByTestId('inbox-message')
+		expect(ligneFil?.getAttribute('data-non-lu')).toBe('true')
+		expect(ligneFil?.className).toContain('border-l-brand')
+		expect(ligneFil?.textContent ?? '').toMatch(/^Non lu, /)
+	})
+
+	it('OUVRIR UN FIL LE MARQUE LU TOUT ENTIER : ses deux messages, en un appel', async () => {
+		preparer()
+		await ouvrirLeDossier()
+		await userEvent.click((await screen.findAllByTestId('inbox-message'))[0] as HTMLElement)
+
+		await waitFor(() => expect(appelsMarquage).toHaveLength(1))
+		expect(appelsMarquage[0]).toEqual(['mark_messages_read', { p_message_ids: ['msg-reponse', 'msg-racine'] }])
+		await waitFor(() =>
+			expect(screen.getAllByTestId('inbox-message')[0]?.getAttribute('data-non-lu')).toBeNull(),
+		)
+		await waitFor(() => expect(screen.queryAllByTestId('inbox-dossier-non-lus')).toHaveLength(0))
+	})
+
+	it('UN FIL DÉJÀ LU N’APPELLE RIEN à l’ouverture', async () => {
+		preparer(['msg-reponse', 'msg-racine'])
+		await ouvrirLeDossier()
+		await userEvent.click((await screen.findAllByTestId('inbox-message'))[0] as HTMLElement)
+		await waitFor(() => expect(screen.getByTestId('inbox-basculer-lecture')).not.toBeNull())
+		expect(appelsMarquage).toEqual([])
+	})
+
+	it('« MARQUER COMME NON LU » REND LE FIL NON LU, ET LA RELECTURE NE LE REMARQUE PAS', async () => {
+		preparer(['msg-reponse', 'msg-racine'])
+		await ouvrirLeDossier()
+		await userEvent.click((await screen.findAllByTestId('inbox-message'))[0] as HTMLElement)
+
+		const bascule = await screen.findByRole('button', { name: 'Marquer comme non lu' })
+		await userEvent.click(bascule)
+		await waitFor(() =>
+			expect(appelsMarquage).toEqual([['mark_message_unread', { p_message_id: 'msg-reponse' }]]),
+		)
+		await waitFor(() =>
+			expect(screen.getAllByTestId('inbox-message')[0]?.getAttribute('data-non-lu')).toBe('true'),
+		)
+		// LE SINGULIER EST ÉCRIT : un seul non lu ne se dit pas « 1 messages non lus » (défaut vu en E2E).
+		expect(
+			await screen.findByRole('button', { name: /Refonte du site vitrine.*1 message non lu(?!s)/ }),
+		).not.toBeNull()
+		// LE PANNEAU RESTE OUVERT, et son bouton propose désormais l'inverse.
+		expect(await screen.findByRole('button', { name: 'Marquer comme lu' })).not.toBeNull()
+		expect(appelsMarquage).toHaveLength(1)
+	})
+
+	it('« TOUT MARQUER COMME LU » marque les fils affichés, puis disparaît', async () => {
+		preparer()
+		await ouvrirLeDossier()
+		const tout = await screen.findByRole('button', { name: /Tout marquer comme lu/ })
+		await userEvent.click(tout)
+
+		await waitFor(() =>
+			expect(appelsMarquage).toEqual([['mark_messages_read', { p_message_ids: ['msg-reponse', 'msg-racine'] }]]),
+		)
+		await waitFor(() => expect(screen.queryByTestId('inbox-tout-marquer-lu')).toBeNull())
+	})
+
+	it('UN MARQUAGE REFUSÉ EST DIT, ET L’ÉCRAN NE MONTRE PAS LU ce que la base n’a pas enregistré', async () => {
+		preparer()
+		refusMarquage = 503
+		await ouvrirLeDossier()
+		await userEvent.click(await screen.findByRole('button', { name: /Tout marquer comme lu/ }))
+
+		expect((await screen.findByRole('alert')).textContent).toBe(
+			"La lecture n'a pas pu être enregistrée : l'état n'a pas changé.",
+		)
+		expect(screen.getAllByTestId('inbox-message')[0]?.getAttribute('data-non-lu')).toBe('true')
+		expect(screen.getByTestId('inbox-tout-marquer-lu')).not.toBeNull()
 	})
 })

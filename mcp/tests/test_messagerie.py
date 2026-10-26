@@ -2,6 +2,8 @@
 # @verifies docs/SPEC-mcp.md §9.2 decies (liste, ancre `message`, corps affichable et HTML réduit, nombre de pièces
 #           jointes, identité désignée par son adresse sans choix implicite, réponse limitée à l'affaire, refus nommés,
 #           `destructiveHint` et case `aussi` de l'envoi), §9.3 ; webapp/src/lib/inbox.ts (`reduireHtmlEnTexte`)
+# @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : `read` dans les deux lectures, demandé avec la ligne, sans marquer ;
+#           docs/SPEC-mail-subsystem.md §18 bis.5 ; décision 708 (M1 B)
 """Le CRM simulé rend le fil d'une affaire (un message texte, un message HTML seul, une pièce jointe), un message d'une
 autre affaire, et trois identités dont celle d'une collègue ; la vraie base est éprouvée par
 `tests/test_integration_messagerie.py`."""
@@ -56,13 +58,13 @@ class CrmMessagerie(CrmSimule):
              "direction": "inbound", "sent_at": None, "received_at": "2026-10-01T09:00:00Z",
              "from_address": "client@exemple.test", "from_name": "Client", "to_addresses": ["c1@atelier.test"],
              "cc_addresses": [], "subject": "Devis", "body_text": "  Bonjour,\n\n  voici   le devis.  " + "x" * 400,
-             "body_html": None, "mail_attachments": [{"count": 2}]},
+             "body_html": None, "mail_attachments": [{"count": 2}], "is_read": False},
             {"id": MESSAGE_HTML, "workspace_id": ESPACE_A, "card_id": CARD, "classification": "outbound",
              "direction": "outbound", "sent_at": "2026-10-02T10:00:00Z", "received_at": "2026-10-02T10:00:01Z",
              "from_address": "thomas@atelier.test", "from_name": None, "to_addresses": ["client@exemple.test"],
              "cc_addresses": ["chef@exemple.test"], "subject": "Re: Devis", "body_text": " ",
              "body_html": "<style>p{}</style><p>Merci&nbsp;&amp; à bientôt</p><br>Thomas",
-             "mail_attachments": [{"count": 0}]},
+             "mail_attachments": [{"count": 0}], "is_read": True},
             {"id": MESSAGE_AILLEURS, "workspace_id": ESPACE_A, "card_id": AUTRE_CARD, "classification": "manual",
              "direction": "inbound", "sent_at": None, "received_at": "2026-10-03T10:00:00Z",
              "from_address": "x@exemple.test", "from_name": None, "to_addresses": [], "cc_addresses": [],
@@ -248,3 +250,15 @@ async def test_les_refus_de_la_file_sont_nommes(monde: Monde) -> None:
 async def test_un_message_illisible_est_le_refus_uniforme(monde: Monde) -> None:
     with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : message"):
         await monde.appel("crm_mail_get", {"message_id": "a0000000-0000-4000-8000-0000000000ff"})
+
+
+async def test_l_etat_lu_est_rendu_par_les_deux_lectures_sans_marquer(monde: Monde) -> None:
+    fil = await monde.appel("crm_card_mail_list", {"card_id": CARD, "limit": 2})
+    assert [(m["id"], m["read"]) for m in fil["messages"]] == [(MESSAGE_TEXTE, False), (MESSAGE_HTML, True)]
+    lecture = next(p for n, p in monde.simule.lectures if n == "mail_messages" and "order" in p)
+    assert lecture["select"].endswith(",is_read")
+    assert (await monde.appel("crm_mail_get", {"message_id": MESSAGE_TEXTE}))["read"] is False
+    # UNE VALEUR ABSENTE N'EST PAS « LU » : le message d'une autre affaire ne porte pas `is_read` dans le simulé.
+    assert (await monde.appel("crm_mail_get", {"message_id": MESSAGE_AILLEURS}))["read"] is False
+    # LIRE NE MARQUE PAS : aucune des deux fonctions de marquage n'est appelée (§18 bis.5).
+    assert not any("mark_message" in str(n) or "mark_message" in str(p) for n, p in monde.simule.lectures)

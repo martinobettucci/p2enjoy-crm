@@ -1771,6 +1771,39 @@ export type Database = {
           },
         ]
       }
+      mail_message_reads: {
+        Row: {
+          message_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          message_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          message_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "mail_message_reads_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "mail_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "mail_message_reads_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       mail_messages: {
         Row: {
           body_html: string | null
@@ -1795,6 +1828,7 @@ export type Database = {
           suggested_card_id: string | null
           to_addresses: string[]
           workspace_id: string
+          is_read: boolean | null
         }
         Insert: {
           body_html?: string | null
@@ -3748,6 +3782,7 @@ export type Database = {
           nombre: number
           track_id: string
           track_name: string
+          unread_count: number
         }[]
       }
       inscrire_attente: {
@@ -3757,6 +3792,12 @@ export type Database = {
       interrompre_sequence_relance: {
         Args: { p_enrollment_id: string }
         Returns: undefined
+      }
+      is_read: {
+        Args: { "": Database["public"]["Tables"]["mail_messages"]["Row"] }
+        Returns: {
+          error: true
+        } & "the function public.is_read with parameter or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache"
       }
       journaliser_refus_admission: {
         Args: { p_email: string; p_motif: string }
@@ -3811,6 +3852,8 @@ export type Database = {
         Returns: string
       }
       mail_template_variables: { Args: never; Returns: string[] }
+      mark_message_unread: { Args: { p_message_id: string }; Returns: boolean }
+      mark_messages_read: { Args: { p_message_ids: string[] }; Returns: number }
       marquer_envoi_echoue: {
         Args: { p_code: string; p_outbox_id: string }
         Returns: undefined

@@ -3,6 +3,9 @@
 //           courrier, et « Non classés » reste), §18.4 (le HTML n'est jamais affiché), §18.8
 // @verifies docs/DESIGN_SYSTEM.md §5.4 (inbox) ; docs/SPEC-webapp.md §6.4
 // @verifies docs/JOURNAL.md décision 327
+// @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu — docs/SPEC-mail-subsystem.md §18 bis.2 (fil non lu dès
+//           qu'un message l'est, total gardé), §18 bis.3 (les deux fonctions), §18 bis.4 (un échec ne change rien) ;
+//           docs/DESIGN_SYSTEM.md §5.4 quinquies (la pastille, « 99+ ») ; docs/JOURNAL.md décisions 715 et 716
 //
 // Ce fichier éprouve **la requête réellement émise** autant que la valeur rendue — même motif que
 // `commentaires.test.ts` : la borne, le filtre et l'ordre total sont portés par la requête, et un
@@ -16,15 +19,21 @@ import {
 	COLONNES_LISTE,
 	COLONNES_MESSAGE,
 	MEME_SELECTION,
+	MARQUAGE_MAX,
 	MESSAGES_PAR_PAGE,
 	OBJET_ABSENT,
 	classerRefusClassement,
 	construireArbre,
 	corpsAffichable,
+	filEstNonLu,
+	idsNonLus,
 	lireArborescence,
 	lireMessages,
+	marquerLus,
+	marquerNonLu,
 	projeterMessage,
 	reduireHtmlEnTexte,
+	textePastille,
 } from './inbox'
 import type { ClientCrm } from './supabase'
 
@@ -43,6 +52,7 @@ const ligne = (partiel: Partial<Parameters<typeof projeterMessage>[0]> = {}) => 
 	from_address: 'bizdev@p2enjoy.test',
 	from_name: null,
 	received_at: '2026-08-11T09:00:00.000Z',
+	is_read: false as boolean | null,
 	...partiel,
 })
 
@@ -140,12 +150,13 @@ const ligneArbre = (partiel: Record<string, unknown>) => ({
 	card_id: null,
 	card_title: null,
 	nombre: 0,
+	unread_count: 0,
 	...partiel,
 }) as never
 
 describe('la construction de l’arbre (§18.3)', () => {
 	it('porte le compte des non classés, et le garde MÊME À ZÉRO', () => {
-		expect(construireArbre([ligneArbre({ nombre: 0 })])).toEqual({ nonClasses: 0, tracks: [] })
+		expect(construireArbre([ligneArbre({ nombre: 0 })])).toEqual({ nonClasses: 0, nonClassesNonLus: 0, tracks: [] })
 		expect(construireArbre([ligneArbre({ nombre: 3 })]).nonClasses).toBe(3)
 	})
 
@@ -212,6 +223,7 @@ type Appel = {
 	tris: [string, boolean | undefined][]
 	limite?: number
 	rpc?: string
+	arguments?: unknown
 }
 
 type Reponse = { data: unknown[] | null; error: { message: string; code?: string } | null; status: number }
@@ -247,8 +259,9 @@ function clientEspion(reponse: Reponse): { client: ClientCrm; appel: Appel } {
 				},
 			}
 		},
-		rpc: (nom: string) => {
+		rpc: (nom: string, args?: unknown) => {
 			appel.rpc = nom
+			appel.arguments = args
 			return chaine
 		},
 	} as unknown as ClientCrm
@@ -338,5 +351,99 @@ describe('la classification d’un refus de classement (§18.2)', () => {
 	it('distingue une requête qui n’a jamais abouti du reste', () => {
 		expect(classerRefusClassement(undefined, undefined, 'offline').nature).toBe('network')
 		expect(classerRefusClassement(500, undefined, 'boom').nature).toBe('unknown')
+	})
+})
+
+// --- Lu / non lu — tranche 2 ----------------------------------------------------------------------
+
+describe('l’état de lecture (§18 bis)', () => {
+	it('projette `is_read`, et ne prend jamais une valeur absente pour « lu »', () => {
+		expect(projeterMessage(ligne({ is_read: true })).lu).toBe(true)
+		expect(projeterMessage(ligne({ is_read: false })).lu).toBe(false)
+		expect(projeterMessage(ligne({ is_read: null })).lu).toBe(false)
+	})
+
+	it('demande `is_read` avec la liste, sans seconde requête', () => {
+		expect(COLONNES_LISTE).toContain('is_read')
+	})
+
+	it('tient un fil pour non lu dès qu’UN de ses messages l’est', () => {
+		expect(filEstNonLu([{ lu: true }, { lu: true }])).toBe(false)
+		expect(filEstNonLu([{ lu: true }, { lu: false }])).toBe(true)
+		expect(filEstNonLu([])).toBe(false)
+	})
+
+	it('ne marque que les non lus : un fil déjà lu n’appelle rien', () => {
+		expect(idsNonLus([{ id: 'a', lu: true }, { id: 'b', lu: false }, { id: 'c', lu: false }])).toEqual(['b', 'c'])
+		expect(idsNonLus([{ id: 'a', lu: true }])).toEqual([])
+	})
+
+	it('cumule les non lus À CÔTÉ du total, qui reste (décision 716)', () => {
+		const arbre = construireArbre([
+			ligneArbre({ nombre: 2, unread_count: 1 }),
+			ligneArbre({
+				track_id: 't1', track_name: 'Studio web', channel_id: 'h1', channel_name: 'Prospection',
+				card_id: 'c1', card_title: 'Refonte', nombre: 3, unread_count: 2,
+			}),
+			ligneArbre({
+				track_id: 't1', track_name: 'Studio web', channel_id: 'h2', channel_name: 'Maintenance',
+				card_id: 'c2', card_title: 'Support', nombre: 4, unread_count: 0,
+			}),
+		])
+		expect([arbre.nonClasses, arbre.nonClassesNonLus]).toEqual([2, 1])
+		expect([arbre.tracks[0]?.nombre, arbre.tracks[0]?.nonLus]).toEqual([7, 2])
+		expect(arbre.tracks[0]?.channels.map((channel) => [channel.nombre, channel.nonLus])).toEqual([
+			[3, 2],
+			[4, 0],
+		])
+		expect(arbre.tracks[0]?.channels[0]?.cards[0]?.nonLus).toBe(2)
+	})
+
+	it('écrit la pastille : absente à zéro, exacte jusqu’à 99, « 99+ » au-delà', () => {
+		expect(textePastille(0)).toBeNull()
+		expect(textePastille(-1)).toBeNull()
+		expect(textePastille(Number.NaN)).toBeNull()
+		expect(textePastille(1)).toBe('1')
+		expect(textePastille(99)).toBe('99')
+		expect(textePastille(100)).toBe('99+')
+	})
+})
+
+describe('le marquage (§18 bis.3)', () => {
+	it('marque lus par la FONCTION, avec les identifiants donnés', async () => {
+		const { client, appel } = clientEspion({ data: [2] as unknown[], error: null, status: 200 })
+		expect(await marquerLus(client, ['a', 'b'])).toBeNull()
+		expect(appel.rpc).toBe('mark_messages_read')
+		expect(appel.arguments).toEqual({ p_message_ids: ['a', 'b'] })
+	})
+
+	it('n’appelle rien pour une liste vide', async () => {
+		const { client, appel } = clientEspion({ data: [], error: null, status: 200 })
+		expect(await marquerLus(client, [])).toBeNull()
+		expect(appel.rpc).toBeUndefined()
+	})
+
+	it('borne l’envoi au plafond de la base', async () => {
+		const { client, appel } = clientEspion({ data: [], error: null, status: 200 })
+		await marquerLus(client, Array.from({ length: MARQUAGE_MAX + 5 }, (_, rang) => `m${rang}`))
+		expect((appel.arguments as { p_message_ids: string[] }).p_message_ids).toHaveLength(MARQUAGE_MAX)
+	})
+
+	it('remet non lu par la FONCTION, avec l’identifiant du message affiché', async () => {
+		const { client, appel } = clientEspion({ data: [true] as unknown[], error: null, status: 200 })
+		expect(await marquerNonLu(client, 'm1')).toBeNull()
+		expect(appel.rpc).toBe('mark_message_unread')
+		expect(appel.arguments).toEqual({ p_message_id: 'm1' })
+	})
+
+	// UN ÉCHEC EST RENDU, JAMAIS AVALÉ : l'écran ne doit pas montrer lu ce que la base n'a pas enregistré.
+	it('rend l’erreur classée d’un refus et d’une panne de transport', async () => {
+		const { client } = clientEspion({ data: null, error: { message: 'refusé' }, status: 401 })
+		expect((await marquerLus(client, ['a']))?.nature).toBe('forbidden')
+		expect((await marquerNonLu(client, 'a'))?.nature).toBe('forbidden')
+
+		const enPanne = { rpc: () => { throw new Error('réseau coupé') } } as unknown as ClientCrm
+		expect((await marquerLus(enPanne, ['a']))?.nature).toBe('network')
+		expect((await marquerNonLu(null, 'a'))?.detail).toBe('configuration_absente')
 	})
 })
