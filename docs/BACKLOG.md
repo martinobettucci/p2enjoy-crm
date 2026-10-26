@@ -7265,6 +7265,9 @@ quota et refus testés.
 - [x] **Seed** (`docs/SPEC-seed.md` §2.19 ter, idempotent, deux passages), **manuel** §4.16 et chapitre 11,
       `docs/SPEC-mcp.md`, `CHANGELOG.md` ; compteurs du harnais mesurés (97, 4076, 1202, 940, 45) — *la campagne complète de
       `scripts/verify-harness.sh` n'a pas été rejouée*.
+- [@] **Tranche INC-317 — la preuve du listage du bucket des pièces jointes**, rendue fausse par `CRM-057` §18.5 : la
+      réviser (l'anonyme ne liste rien, une pièce non `clean` jamais, la pièce saine lisible est le témoin).
+      *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 19:22 UTC — état avant : [ ]*
 - [ ] **Livraison** en production, sur instruction du responsable, avec la 108 de `CRM-111` T2.1 (elle ne part jamais
       avant la 106 et la 107). — *Pas maintenant (décision 722) : aucune fenêtre décidée.*
 
@@ -16708,11 +16711,13 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         `app.cards_attribuer_position`, `app.cards_restauration_verifier_parent`, `creer_affaire`, `health_momentum`,
         `health_commercial`, `app.health_context`, `app.purge_trash` (`CRM-077`) — et emporte les trois politiques de
         `cards` ; environ 165 fichiers lisent ou filtrent l'une des treize colonnes sur `cards`.
-        - [~] **T2.4.1 — la webapp lit le rattachement** : chaque lecture des treize colonnes sur `cards` les lit sur
+        - [x] **T2.4.1 — la webapp lit le rattachement** : chaque lecture des treize colonnes sur `cards` les lit sur
           `card_placements` (plongement), les formes rendues aux écrans inchangées ; aucun changement visible.
-          *En cours* : le board et la vue liste lisent les rattachements (2026-10-26) ; restent l'inbox, la saisie de temps,
-          les contacts, la corbeille, les affaires figées, la santé, les coûts, Ma journée, la fiche, la rentabilité, la
-          recherche, les modèles d'emails et les plongements des modules `colonnes-*`.
+          *Livrée en développement le 2026-10-26*, en deux étapes : le board et la vue liste ; puis Ma journée, l'inbox,
+          la saisie de temps, les contacts, les notifications, la recherche, la fiche, les coûts, les recettes, la
+          rentabilité, les affaires figées (appariées par rattachement) et les comptes de la corbeille. Les scores de santé
+          restent sur `cards` jusqu'à leur transport (T2.4.5) ; les lectures du seul titre ou de l'espace n'ont rien à
+          convertir. PREUVES_T241
         - [ ] **T2.4.2 — le connecteur et `mail-sync`** lisent le rattachement.
         - [ ] **T2.4.3 — le seed et les scripts** : lectures et écritures par le rattachement. *Question ouverte, à
           trancher avant le code de l'étape* : le seed crée ses affaires par la clé de service, à identifiants stables ;

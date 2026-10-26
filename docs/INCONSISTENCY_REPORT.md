@@ -8102,3 +8102,17 @@ démontre (ligne `…e4`, 1 sur 5 en développement), au service de l'écran « 
 dépenses concernées avant l'effacement. **Résolue le 2026-10-26** par la onzième tranche de `CRM-077`
 (`docs/SPEC-corbeille.md` §9, décisions 742 et 743, migration `0123`) : la corbeille dit « Bloqué » et propose de
 réaffecter chaque dépense à un budget ouvert de la même devise ; le point (d) des coûts reste entier. **Statut : résolue.**
+
+### INC-317 — « Le bucket des pièces jointes n'est pas listable » : une preuve que `CRM-057` a rendue fausse
+
+*Relevé le 2026-10-26 par la session de `CRM-077`, après des campagnes où `e2e/api/ingestion.spec.ts:91` restait rouge et
+était chaque fois noté « antérieur ».* **Règle écrite** : `docs/SPEC-mail-subsystem.md` §15.5 (`CRM-054`) — « Le bucket
+est PRIVÉ, et aucune politique ne l'ouvre à `authenticated` », et la preuve qui l'affirme : ni l'anonyme ni
+l'administratrice ne listent un objet du bucket. **Constat** : `CRM-057` (§18.5, migration `0029`) a ouvert la lecture
+d'une pièce `clean` à qui voit son message (`mail_attachments_objets_lecture`) ; depuis que le seed de `CRM-058` tranche 2
+archive une pièce saine réelle, l'administratrice, qui peut la télécharger, la voit aussi en listant le bucket. Le
+produit est conforme au §18.5 ; c'est la preuve, et la phrase du §15.5, qui n'ont pas suivi. **Comportement inchangé.**
+**Correction, dans le cadre de `CRM-058`** : réviser la preuve sans la supprimer (décision 51) — l'anonyme ne liste
+rien ; un membre ne liste jamais une pièce `infected` ou `pending`, ni celle d'un message qu'il ne voit pas ; la pièce
+`clean` qu'il peut télécharger est le témoin. Le §15.5 porte un renvoi au §18.5. **Statut : ouverte, en cours.**
+
