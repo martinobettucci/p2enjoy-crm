@@ -7492,7 +7492,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-063 | Templates d'emails, signatures, séquences de relance | `[x]` |
 | CRM-064 | @mentions, notifications temps réel et préférences | `[x]` |
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
-| CRM-066 | Analytique de conversion et prévisionnel pondéré | `[~]` |
+| CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
 | CRM-068 | Checklists et modèles de cards | `[ ]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
@@ -10470,7 +10470,7 @@ harnais propre à cette unité.
 
 **Harnais de l'unité rejoué SEUL le 2026-08-29** : `verify-recherche.sh` **54 contrôles, aucune anomalie**, là où la série lui donnait 1 anomalie — troisième fois que ce harnais démontre la leçon de contention.
 
-### CRM-066 — Analytique de conversion et prévisionnel pondéré `[~]`
+### CRM-066 — Analytique de conversion et prévisionnel pondéré `[P]`
 ***Arbitré le 2026-10-25 (décision 708)** : la tranche 4 livre les **deux** scores — la dynamique (100 moins des pénalités affichées) et la santé commerciale (moyenne pondérée de quatre signaux) —, **affichés en couleurs** sur la carte du board et sur la fiche (sain ≥ 70, à surveiller 40 à 69, en danger < 40 ; palier écrit en toutes lettres), calculés à la lecture par une fonction en base ; connecteur MCP **oui**, famille `affaires`, dans `crm_card_get` et `crm_card_list`. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707, option B)** : la session propose deux compositions du score de santé, le responsable choisit ; la spécification suit, avec les deux questions du connecteur MCP.*
 
@@ -10554,7 +10554,11 @@ session (`CLAUDE.md` §5) :
       mention « 1 ligne(s) sans coût réel saisi » est le patron que reprend le §7.3 de la
       spécification.
 
-*Ce qui retient `CRM-066` en `[~]`, et c'est du COMPORTEMENT, pas une preuve manquante* — RÉVISÉ le
+*`CRM-066` est `[P]` depuis le 2026-10-26* : toutes ses tranches sont livrées et prouvées en développement ; il ne
+reste que la livraison de la tranche 4 (migration `0113`, `docs/PROD_MIGRATIONS.md` §3.2) sur instruction du
+responsable, et son constat en production. La note qui suit est l'état historique.
+
+*Ce qui retenait `CRM-066` en `[~]`, et c'est du COMPORTEMENT, pas une preuve manquante* — RÉVISÉ le
 2026-08-30 par la livraison de la tranche 3 a : restent dues la tranche **3 b** (le sélecteur de
 portée et la complétion par le catalogue, `docs/SPEC-analytique.md` §8) et la tranche **4** (le score
 de santé de `CRM-P02`, subordonné à son arbitrage). La série entière des `verify-*.sh` n'a pas été
