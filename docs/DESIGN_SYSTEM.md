@@ -6669,4 +6669,7 @@ spécifié par `docs/SPEC-checklists.md` §2 à §4 ; ces règles ne disent que 
   `--color-success-on-soft` sur `--color-success-soft`, pastille moulée sur la valeur (§5.31). Aucun point : rien.
 - **ÉTATS** (§5.8) : squelette de deux lignes, erreur avec « Réessayer », et le vide — « Aucun point pour cette affaire. »
   —, le champ d'ajout restant offert.
-- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `SquareCheck`.**
+- **DANS LE FIL**, famille « Champs » : « Point de checklist coché » porte `SquareCheck` sur `--color-success-soft` — le
+  même objet que le compte de la carte —, « Point de checklist décoché » porte `SquareDashed` en teinte neutre, rien n'étant
+  perdu ; le détail est le libellé du point. *Précisé à l'écriture du code, le 2026-10-26.*
+- **Aucune couleur, aucun jeton nouveau ; deux icônes Lucide nouvelles, `SquareCheck` et `SquareDashed`.**

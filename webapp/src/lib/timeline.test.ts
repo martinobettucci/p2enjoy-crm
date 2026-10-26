@@ -94,11 +94,13 @@ describe('les familles (docs/DESIGN_SYSTEM.md §5.11)', () => {
 	// ici : la migration `0061`, la table de familles, les libellés et la présentation sont du même
 	// changement, et c'est l'assertion ci-dessous qui a exigé qu'ils le soient. Septième évolution
 	// du vocabulaire, aucune valeur jamais retirée, et les cinq familles restent cinq.
-	it('range les dix-neuf types livrés dans exactement cinq familles d’événements', () => {
+	// RÉVISÉE PAR `CRM-068` T3a (décision 51) : `checklist_checked` et `checklist_unchecked`, écrits par la migration
+	// `0125`, portent le vocabulaire à VINGT-ET-UN, rangés dans « Champs » (décision 748, Q2) ; aucune famille nouvelle.
+	it('range les vingt-et-un types livrés dans exactement cinq familles d’événements', () => {
 		// RÉVISÉE, NON RETIRÉE (mécanisme de la décision 51) — DIX-NEUVIÈME type, `mail_unclassified`,
 		// livré par `CRM-055` tranche 2 (§16.5.3). Le compte est le garde-fou : il rougit à chaque
 		// extension et force à ranger le type neuf plutôt qu'à le laisser tomber sur le repli.
-		expect(TYPES_EVENEMENT).toHaveLength(19)
+		expect(TYPES_EVENEMENT).toHaveLength(21)
 		const familles = new Set(TYPES_EVENEMENT.map((type) => familleDe(type)))
 		expect([...familles].sort()).toEqual(['champs', 'cycle', 'discussion', 'etapes', 'organisation'])
 		expect(TYPES_EVENEMENT).toContain('channel_changed')

@@ -7498,7 +7498,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
-| CRM-068 | Checklists et modèles de cards | `[@]` |
+| CRM-068 | Checklists et modèles de cards | `[~]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
@@ -12344,8 +12344,7 @@ un motif explicite.
 | CRM-P11 sauvegarde/restauration | `CRM-080` | retenue |
 | CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
-### CRM-068 — Checklists et modèles de cards `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 19:25 UTC — état avant : [ ]*
+### CRM-068 — Checklists et modèles de cards `[~]`
 
 Checklists d'une affaire et modèles de cards (`docs/SPEC-modeles-emails.md` §1 : objets distincts des modèles d'emails).
 *Arbitrée le 2026-10-26 (décision 747)* : checklists libres, ajoutées par l'étape, exigibles par une transition ;
@@ -12362,9 +12361,16 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       `0118` **9/9**, API 5/5, bandeau du board (`docs/DESIGN_SYSTEM.md` §5.7 quinquies) et ses unitaires, E2E
       `e2e/ui/checklists.spec.ts` sur un workflow jetable, capture observée ; `docs/SPEC-workflow-engine.md` §5.3.
 - [ ] **T3 — les écrans**, découpée le 2026-10-26 en deux livraisons :
-  - [ ] **T3a — la fiche, le board et le seed** : le bloc « Checklist » de la fiche (points de l'étape du rattachement,
+  - [~] **T3a — la fiche, le board et le seed** : le bloc « Checklist » de la fiche (points de l'étape du rattachement,
         points libres, cocher, ajouter, retirer, mention d'exigence), le compte « n/m » sur la carte du board, le seed
         des points (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel.
+        *Arrêtée le 2026-10-26 sur consigne du responsable (fin de conversation), état réel :* faits — `docs/DESIGN_SYSTEM.md`
+        §5.70 ; `webapp/src/lib/checklists.ts` (lecture en une requête, éprouvée sur la pile, cocher, ajouter, retirer, refus
+        classés) ; `webapp/src/app/BlocChecklistCard.tsx` ; le fil nomme `checklist_checked` et `checklist_unchecked`
+        (famille « Champs », garde des types révisée à 21, décision 51) et `PanneauTimeline` accepte `relectureEvenements` ;
+        typecheck vert, unitaires du fil et des traductions 613/613. **Restent** : brancher le bloc dans
+        `RouteCard.tsx` après `FormulaireCard` (`idRattachement(card)`, `card.current_step_id`, `relectureEvenements`) ;
+        unitaires propres de `checklists.ts` et du bloc ; le compte « n/m » du board ; le seed ; E2E, captures, manuel.
   - [ ] **T3b — l'éditeur de workflows** : les points de chaque étape et les points exigés par une transition ; le lien
         « Cocher ces points » du bandeau du board vers la fiche.
 - [ ] **T4 — les modèles d'affaires** : `card_templates`, `creer_affaire` étendue, `save_card_as_template`, Réglages,

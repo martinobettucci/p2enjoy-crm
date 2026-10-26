@@ -101,6 +101,10 @@ export const TYPES_EVENEMENT = [
 	'contact_linked',
 	'contact_unlinked',
 	'contact_role_changed',
+	// `CRM-068` T3a, docs/SPEC-checklists.md §3.6 — le cochage d'un point, écrit par le déclencheur de la migration
+	// `0125`. Inscrit avec l'écran qui le montre : depuis T1, le fil le rendait « Événement » (le défaut d'INC-207).
+	'checklist_checked',
+	'checklist_unchecked',
 ] as const
 
 export type TypeEvenement = (typeof TYPES_EVENEMENT)[number]
@@ -174,6 +178,9 @@ export const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	// valeur écrite ne se distinguent pas à l'œil, mais seule la seconde survit à un changement du
 	// repli — et seule la seconde dit qu'on y a pensé (§10.3.1).
 	stalled: 'cycle',
+	// COCHER UN POINT EST UNE RÉPONSE SUR L'AFFAIRE, comme renseigner un champ : « Champs » (décision 748, Q2).
+	checklist_checked: 'champs',
+	checklist_unchecked: 'champs',
 }
 
 /**
@@ -393,6 +400,10 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 		if (nom === undefined) return { detail: null }
 		return { detail: detailContact(ligne.type, nom, ligne.payload) }
 	}
+	// LE LIBELLÉ DU POINT EST LU DANS LE `payload`, et le cas est motivé comme celui de `mail_unclassified` (§14.6) : un
+	// point libre retiré n'est plus lisible nulle part, et le libellé qu'il portait au moment du geste est la valeur même
+	// du fait — le point coché, tel qu'il était écrit.
+	if (ligne.type === 'checklist_checked' || ligne.type === 'checklist_unchecked') return { detail: texte(ligne.payload['label']) }
 	return { detail: null }
 }
 

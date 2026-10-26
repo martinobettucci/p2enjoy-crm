@@ -58,6 +58,8 @@ import {
 	Moon,
 	Send,
 	Sparkles,
+	SquareCheck,
+	SquareDashed,
 	Sun,
 	Trash2,
 	UserRoundCog,
@@ -179,6 +181,10 @@ const PRESENTATION: Readonly<
 	contact_linked: { cle: 'timeline.event.contact_linked', icone: UserRoundPlus, pastille: 'bg-accent-soft text-ink' },
 	contact_unlinked: { cle: 'timeline.event.contact_unlinked', icone: UserRoundMinus, pastille: 'bg-hover text-text-3' },
 	contact_role_changed: { cle: 'timeline.event.contact_role_changed', icone: UserRoundPen, pastille: 'bg-accent-soft text-ink' },
+	// `CRM-068` T3a, docs/DESIGN_SYSTEM.md §5.70 — `SquareCheck` est l'icône de la checklist, celle du compte de la carte
+	// du board ; le décochage prend `SquareDashed`, en teinte neutre : rien n'est perdu, un point redevient à faire.
+	checklist_checked: { cle: 'timeline.event.checklist_checked', icone: SquareCheck, pastille: 'bg-success-soft text-success-on-soft' },
+	checklist_unchecked: { cle: 'timeline.event.checklist_unchecked', icone: SquareDashed, pastille: 'bg-hover text-text-3' },
 }
 
 /**
@@ -292,6 +298,11 @@ export type ProprietesPanneauTimeline = {
 	 * qu'une activité vient d'être consignée.
 	 */
 	readonly relectureActivites?: number
+	/**
+	 * Compteur de relecture des événements — `CRM-068` T3a (§5.70). Le bloc « Checklist » l'incrémente après chaque geste
+	 * appliqué : un cochage écrit une ligne de `card_events`, qui n'est pas publiée au temps réel (§14.1).
+	 */
+	readonly relectureEvenements?: number
 }
 
 export function PanneauTimeline({
@@ -303,6 +314,7 @@ export function PanneauTimeline({
 	idUtilisateur,
 	estAdminWorkspace,
 	relectureActivites = 0,
+	relectureEvenements = 0,
 }: ProprietesPanneauTimeline) {
 	const droit = useRefus()
 	const { etat, recharger, reprendre } = useFilCommentaires(client, idCard)
@@ -368,7 +380,7 @@ export function PanneauTimeline({
 		return () => {
 			vivant = false
 		}
-	}, [client, idCard, etat])
+	}, [client, idCard, etat, relectureEvenements])
 
 	useEffect(() => {
 		if (client === null) return
