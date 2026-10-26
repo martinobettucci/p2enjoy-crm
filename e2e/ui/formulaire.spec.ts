@@ -10,6 +10,7 @@
 //           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
 // @verifies INC-261, décision 613 — « track non consenti » attend la fiche et la barre vide, que produit
 //           une base neuve (docs/INCONSISTENCY_REPORT.md INC-261)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la clé des valeurs est `(placement_id, field_id)` (docs/SPEC-rattachements.md §3.3)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -74,6 +75,9 @@ const SLUG_TRACK_INEXISTANT = 'ce-track-nexiste-pas'
  */
 const ETAPE = { id: 'etape-1', label: 'Prospection' }
 
+/** Le rattachement de l'affaire servie (`CRM-111` T2.3.6 : la valeur s'écrit sur son bloc). */
+const RATTACHEMENT = '7a770000-0000-4000-8000-0000000000c6'
+
 const CARD_SERVIE = [
 	{
 		id: CARD,
@@ -97,6 +101,9 @@ const CARD_SERVIE = [
 		snoozed_until: null,
 		profiles: null,
 		workspaces: { inbound_domain: 'crm.p2enjoy.test' },
+		// `CRM-111` : `COLONNES_CARD_FORMULAIRE` embarque les rattachements depuis T2.3.1 ; la saisie écrit sur le
+		// plus ancien depuis T2.3.6. Absent, l'écriture n'aurait pas de bloc où se poser.
+		card_placements: [{ id: RATTACHEMENT, created_at: '2026-01-01T00:00:00+00:00' }],
 	},
 ]
 
@@ -392,11 +399,12 @@ test.describe('la saisie depuis la fiche (§4 bis)', () => {
 
 		expect(
 			requete.url(),
-			'l’unicité est celle de la clé primaire du §6.2, écrite plutôt que déduite',
-		).toContain('on_conflict=card_id%2Cfield_id')
+			'l’unicité est celle de la clé primaire, écrite plutôt que déduite — celle du RATTACHEMENT depuis `CRM-111` T2.3.6',
+		).toContain('on_conflict=placement_id%2Cfield_id')
 		expect(requete.headers()['prefer'] ?? '').toContain('resolution=merge-duplicates')
 		expect(JSON.parse(requete.postData() ?? '{}')).toMatchObject({
 			card_id: CARD,
+			placement_id: RATTACHEMENT,
 			field_id: 'f-source',
 			workflow_id: 'wf-1',
 			workspace_id: '5eed0000-0000-4000-8000-000000000001',

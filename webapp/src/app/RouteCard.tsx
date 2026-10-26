@@ -297,6 +297,7 @@ function ContenuCard({
 				<FormulaireCard
 					modele={etat.donnees.modele}
 					idCard={etat.donnees.card.id}
+					rattachements={etat.donnees.card}
 					idWorkflow={etat.donnees.card.workflow_id}
 					idWorkspace={etat.donnees.card.workspace_id}
 				/>

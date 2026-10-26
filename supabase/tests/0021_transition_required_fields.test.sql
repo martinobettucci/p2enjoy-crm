@@ -4,6 +4,7 @@
 -- @verifies docs/SPEC-form-composer.md §3.5 et §6.7
 -- @verifies docs/SPEC-permissions-rls.md §4 et §7
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-037 (copie complète) et INC-038 (suppression visible)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la clé des valeurs est `(placement_id, field_id)` (docs/SPEC-rattachements.md §3.3)
 
 begin;
 
@@ -416,7 +417,7 @@ insert into public.card_field_values (card_id, field_id, workflow_id, workspace_
 values ('5eed0000-0000-4000-8000-0000000000c7',
 	'5eed0000-0000-4000-8000-000000000086', '5eed0000-0000-4000-8000-000000000051',
 	'5eed0000-0000-4000-8000-000000000001', '"https://p2enjoy.test/crm-018"'::jsonb)
-on conflict (card_id, field_id) do update set value = excluded.value;
+on conflict (placement_id, field_id) do update set value = excluded.value;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 select lives_ok($$
 	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c7'),

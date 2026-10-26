@@ -11,6 +11,8 @@
 // @spec docs/DESIGN_SYSTEM.md §5.7 (champs de formulaire), §5.7 bis (case à cocher et valeurs en
 //       lecture seule), §5.7 ter (champ qui s'enregistre pour lui-même), §5.8 (états),
 //       §8 (accessibilité), §9 (icônes Lucide), §10 (aucun texte en dur)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la valeur s'écrit sur le rattachement de l'affaire, calculé au geste
+//       (docs/SPEC-rattachements.md §3.3)
 //
 // Ce composant **ne compose rien** : il rend un `ModeleFormulaire` déjà résolu par
 // `webapp/src/lib/formulaire.ts`. La séparation est ce qui rend la règle du §4.1 vérifiable sans
@@ -48,6 +50,7 @@ import {
 	type NatureRefusValeur,
 } from '../lib/formulaire'
 import type { Json } from '../lib/database.types'
+import { idRattachement, type RattachementsLus } from '../lib/rattachements'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useRefus } from '../components/ui/RefusCommandes'
 
@@ -125,6 +128,11 @@ const CLASSES_ETAT_CONFIRME = 'flex items-center gap-1 text-sm text-success'
 export type ProprietesFormulaireCard = {
 	readonly modele: ModeleFormulaire
 	readonly idCard: string
+	/**
+	 * Les rattachements de l'affaire (`CRM-111` T2.3.6) : la valeur s'écrit sur le plus ancien, calculé AU GESTE — le
+	 * rendu n'en a pas besoin, comme l'en-tête et le bloc d'armement.
+	 */
+	readonly rattachements: RattachementsLus
 	readonly idWorkflow: string
 	readonly idWorkspace: string
 	/** Injectable pour les preuves ; en production, le client réel du module `supabase`. */
@@ -134,6 +142,7 @@ export type ProprietesFormulaireCard = {
 export function FormulaireCard({
 	modele: modeleCharge,
 	idCard,
+	rattachements,
 	idWorkflow,
 	idWorkspace,
 	client = clientCrm,
@@ -242,9 +251,16 @@ export function FormulaireCard({
 		async (resolu: ChampResolu, valeur: Json) => {
 			if (client === null) return
 			const id = resolu.champ.id
+			// Sans rattachement lisible, la base refuserait l'écriture : c'est ce refus qui est dit.
+			const rattachement = idRattachement(rattachements)
+			if (rattachement === null) {
+				setEtats((precedents) => ({ ...precedents, [id]: { phase: 'refus', nature: 'forbidden' } }))
+				return
+			}
 			setEtats((precedents) => ({ ...precedents, [id]: { phase: 'envoi' } }))
 			const resultat = await ecrireValeur(client, {
 				idCard,
+				idRattachement: rattachement,
 				idChamp: id,
 				idWorkflow,
 				idWorkspace,
@@ -260,7 +276,7 @@ export function FormulaireCard({
 				[id]: { phase: 'refus', nature: resultat.refus.nature },
 			}))
 		},
-		[client, idCard, idWorkflow, idWorkspace],
+		[client, idCard, rattachements, idWorkflow, idWorkspace],
 	)
 
 	return (

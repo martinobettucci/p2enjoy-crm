@@ -739,7 +739,7 @@ Sept lignes, mesurées le 2026-08-16 sur la pile réelle avant d'être écrites.
 | f | `admin` | `updated_by` fourni par le client | accepté, mais la colonne reste `NULL` — le client ne la renseigne pas (§4 bis.4) |
 | g | — | `DELETE` | hors du produit : aucun privilège, aucune politique (§6.9) |
 
-L'`upsert` porte `onConflict=(card_id, field_id)`, la clé primaire du §6.2. C'est le même motif
+L'`upsert` porte `onConflict=(placement_id, field_id)` depuis `CRM-111` T2.3.6 — la clé primaire du §6.2, révisée — et la charge nomme le rattachement. C'est le même motif
 qu'au §7 bis.11.3 de `docs/SPEC-workflow-engine.md` : un écran qui choisirait entre insertion et
 modification d'après ce qu'il a lu prendrait un `409` dès qu'une autre écriture a eu lieu entre la
 lecture et la saisie — un refus que l'utilisateur n'a pas provoqué.
@@ -1170,6 +1170,11 @@ Ce qu'elle **n'est pas**, et que `CRM-036` ne livre donc pas :
   de `card_events` (`CRM-044`), qui n'existe pas.
 
 ### 6.2 Modèle — `card_field_values`
+
+**Révisé par `CRM-111` T2.3.6** (migration `0121`, docs/SPEC-rattachements.md §3.3) : la clé primaire est
+`(placement_id, field_id)` — un **rattachement** porte au plus une valeur par champ —, et la charnière du workflow est
+`(placement_id, workflow_id) → card_placements (id, workflow_id)`. `card_id` reste, dénormalisé. Ce qui suit vaut,
+« card » se lisant « rattachement » pour la clé et la charnière.
 
 | Colonne | Type | Contraintes |
 |---|---|---|

@@ -645,7 +645,7 @@ export type Database = {
           card_id: string
           created_at: string
           field_id: string
-          placement_id: string | null
+          placement_id: string
           updated_at: string
           updated_by: string | null
           value: Json | null
@@ -656,7 +656,7 @@ export type Database = {
           card_id: string
           created_at?: string
           field_id: string
-          placement_id?: string | null
+          placement_id: string
           updated_at?: string
           updated_by?: string | null
           value?: Json | null
@@ -667,7 +667,7 @@ export type Database = {
           card_id?: string
           created_at?: string
           field_id?: string
-          placement_id?: string | null
+          placement_id?: string
           updated_at?: string
           updated_by?: string | null
           value?: Json | null
@@ -675,13 +675,6 @@ export type Database = {
           workspace_id?: string
         }
         Relationships: [
-          {
-            foreignKeyName: "card_field_values_card_id_workflow_id_fkey"
-            columns: ["card_id", "workflow_id"]
-            isOneToOne: false
-            referencedRelation: "cards"
-            referencedColumns: ["id", "workflow_id"]
-          },
           {
             foreignKeyName: "card_field_values_field_id_workflow_id_fkey"
             columns: ["field_id", "workflow_id"]
@@ -695,6 +688,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "card_placements"
             referencedColumns: ["id", "card_id"]
+          },
+          {
+            foreignKeyName: "card_field_values_placement_workflow_fk"
+            columns: ["placement_id", "workflow_id"]
+            isOneToOne: false
+            referencedRelation: "card_placements"
+            referencedColumns: ["id", "workflow_id"]
           },
           {
             foreignKeyName: "card_field_values_updated_by_fkey"

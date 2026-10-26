@@ -9,6 +9,7 @@
 // @verifies CLAUDE.md §15 (E2E depuis un état déterministe), §16 (capture observée)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la clé des valeurs est `(placement_id, field_id)` (docs/SPEC-rattachements.md §3.3)
 //
 // LA PREUVE QUE LES AUTRES NE POUVAIENT PAS FAIRE. `e2e/ui/board.spec.ts` et
 // `e2e/ui/formulaire.spec.ts` éprouvent chacun leur geste contre des réponses réseau
@@ -246,7 +247,7 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 			// exprimable — la validation de `CRM-036` la refuse AVANT la garde. « Vide » s'écrit
 			// donc `null`. Le constat est figé ici plutôt que redécouvert.
 			const chaineVide = await request.post(
-				urlRest('card_field_values', { on_conflict: 'card_id,field_id' }),
+				urlRest('card_field_values', { on_conflict: 'placement_id,field_id' }),
 				{
 					headers: {
 						...enTetesAuthentifies(jetonAdmin),
@@ -269,7 +270,7 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 
 			// Lignes *e* et *f* : la ligne EXISTE, sa valeur est vide, et la garde refuse quand même.
 			const ecriture = await request.post(
-				urlRest('card_field_values', { on_conflict: 'card_id,field_id' }),
+				urlRest('card_field_values', { on_conflict: 'placement_id,field_id' }),
 				{
 					headers: {
 						...enTetesAuthentifies(jetonAdmin),

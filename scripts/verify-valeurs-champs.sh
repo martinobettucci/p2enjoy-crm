@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement ; dégradations par définition en base,
 #           réparation par reconstruction (INC-304, docs/SPEC-test-harness.md §3.6)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la politique d'insertion juge le rattachement ; son constat de
+#           restauration compare l'expression à celle lue à l'entrée (docs/SPEC-rattachements.md §4)
 # @verifies CRM-036 (docs/BACKLOG.md) — Definition of Done des valeurs de formulaire
 # @verifies docs/SPEC-form-composer.md §6.2 (modèle), §6.3 (clés composites), §6.4 (la validation
 #           est un trigger), §6.5 (types), §6.6 (« renseigné »), §6.7 (la sixième vérification),
@@ -619,11 +621,13 @@ titre "8. Restauration, constatée et non supposée"
 
 # RÉVISÉE PAR `CRM-111` T2.3.3 : les fonctions dégradées sont réappliquées depuis leur définition d'origine, relue en
 # base, et la politique depuis son expression d'origine — aucun fichier de migration n'est rejoué.
+# RÉVISÉE PAR `CRM-111` T2.3.6 : le constat compare l'expression restaurée à celle lue à l'entrée, à l'octet près — la
+# politique juge le channel du RATTACHEMENT depuis T2.3.6, et un motif écrit en dur (`can_write_card`) aurait rougi.
 degradations_restaurer
 restaurer_politique
 
 restaure=$(psql_db -c "
-	select (select pg_get_expr(polwithcheck, polrelid) like '%can_write_card%'
+	select (select pg_get_expr(polwithcheck, polrelid) = \$politique\$$POLITIQUE_INSERTION\$politique\$
 	          from pg_policy where polname = 'card_field_values_insertion')::text
 	    || '/' ||
 	       (select tgenabled = 'O' from pg_trigger
@@ -634,7 +638,7 @@ restaure=$(psql_db -c "
 	          like '%missing_required_fields%')::text;
 ")
 [ "$restaure" = "true/true/true" ] \
-	&& ok "restauration constatée : la politique d'insertion est revenue à l'ÉCRITURE, le trigger de "\
+	&& ok "restauration constatée : la politique d'insertion est revenue à son expression d'origine, le trigger de "\
 "validation est actif, et \`move_card\` porte de nouveau sa sixième vérification" \
 	|| fail "restauration incomplète : « $restaure », attendu « true/true/true »"
 

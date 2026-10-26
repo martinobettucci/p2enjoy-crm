@@ -5,7 +5,7 @@
 #       parallèle : `creer_affaire`, `move_card`, `move_card_to_channel`, `snooze_card`, `wake_card` et les tables de la
 #       webapp ; `destructiveHint` sur le déplacement et la corbeille), §9.3 (refus nommés traduits, zéro ligne = refus)
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3 : les gestes désignent le rattachement, résolu depuis `card_id`
-#       (docs/SPEC-rattachements.md §5, §11)
+#       (docs/SPEC-rattachements.md §5, §11) ; T2.3.6 : les réponses s'écrivent sur son bloc (§3.3)
 """Écrire sur les affaires, sous l'identité de la personne.
 
 Chaque outil appelle la fonction ou la table que la webapp appelle pour le même geste ; la base garde ses règles —
@@ -363,14 +363,17 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             inconnues = sorted(set(answers) - set(champs))
             if inconnues:
                 raise ToolError(f"Unknown field key(s): {', '.join(inconnues)}. Known: {', '.join(sorted(champs))}.")
+            # `CRM-111` T2.3.6 : la réponse s'écrit sur le bloc du RATTACHEMENT, clé `(placement_id, field_id)`.
+            bloc = await rattachement(appel.jeton, card_id)
             for cle, valeur in answers.items():
                 reponse = await crm.ecrire(
                     appel.jeton,
                     "POST",
                     "card_field_values",
-                    parametres={"on_conflict": "card_id,field_id", "select": "field_id"},
+                    parametres={"on_conflict": "placement_id,field_id", "select": "field_id"},
                     corps={
                         "card_id": card_id,
+                        "placement_id": bloc,
                         "field_id": champs[cle]["id"],
                         "workflow_id": fiche["workflow_id"],
                         "workspace_id": appel.espace,

@@ -3,8 +3,9 @@
 // @verifies docs/SPEC-rattachements.md §3.3 (valeurs par rattachement), §4 (lire une affaire, c'est lire un de ses
 //           rattachements), §5 (timeline, décision 670) ; docs/JOURNAL.md décision 705
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`) ; CLAUDE.md §10 (règle d'accès prouvée hors interface)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la clé des valeurs est `(placement_id, field_id)` (docs/SPEC-rattachements.md §3.3)
 //
-// Une valeur écrite par le chemin de la webapp — `upsert` sur `(card_id, field_id)`, sans rattachement — en reçoit un,
+// Une valeur écrite SANS rattachement — `upsert` sur la clé `(placement_id, field_id)` depuis T2.3.6 — en reçoit un,
 // celui de son affaire ; l'événement `field_changed` qu'elle produit le désigne aussi ; la création, événement de
 // l'affaire, n'en désigne aucun. L'affaire est jetable, créée par `creer_affaire` et retirée par la clé de service. La
 // lectrice, enfin, ne lit ni l'affaire du seed ni la timeline d'un channel qui lui est fermé.
@@ -60,7 +61,7 @@ test.describe('CRM-111 T2.2 — les tables filles désignent le rattachement', (
 			if (champ === undefined) throw new Error('aucun champ « textarea » dans le workflow de `grands-comptes`')
 			const attendu = await rattachementDe(request, idCard)
 
-			const ecriture = await request.post(rest('card_field_values?on_conflict=card_id,field_id'), {
+			const ecriture = await request.post(rest('card_field_values?on_conflict=placement_id,field_id'), {
 				headers: { ...h, Prefer: 'resolution=merge-duplicates,return=representation' },
 				data: {
 					card_id: idCard,

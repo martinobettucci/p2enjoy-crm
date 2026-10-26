@@ -89,6 +89,7 @@ const REGLES = [
 
 const CARD = {
 	idCard: 'card-c6',
+	rattachements: { card_placements: [{ id: 'rattachement-c6', created_at: '2026-01-01T00:00:00Z' }] },
 	idWorkflow: 'wf-1',
 	idWorkspace: 'ws-1',
 } as const
@@ -265,6 +266,7 @@ describe('la saisie (§4 bis) — garde-fou du §4.7 retourné, motif en tête d
 		expect(ecriture?.table).toBe('card_field_values')
 		expect(ecriture?.charge).toEqual({
 			card_id: 'card-c6',
+			placement_id: 'rattachement-c6',
 			field_id: 'f-budget',
 			workflow_id: 'wf-1',
 			workspace_id: 'ws-1',
@@ -272,8 +274,8 @@ describe('la saisie (§4 bis) — garde-fou du §4.7 retourné, motif en tête d
 		})
 		// `updated_by` n'est PAS écrit (§4 bis.4) : la trace faisant foi vient du serveur.
 		expect(Object.keys(ecriture?.charge ?? {})).not.toContain('updated_by')
-		// L'unicité portée par la clé primaire du §6.2, écrite plutôt que déduite.
-		expect(ecriture?.options).toEqual({ onConflict: 'card_id,field_id' })
+		// L'unicité portée par la clé primaire, écrite plutôt que déduite — celle du RATTACHEMENT depuis `CRM-111` T2.3.6.
+		expect(ecriture?.options).toEqual({ onConflict: 'placement_id,field_id' })
 	})
 
 	it('une case à cocher écrit au CHANGEMENT, et un booléen (§4 bis.3, §4 bis.4)', async () => {

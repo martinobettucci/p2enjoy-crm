@@ -6,6 +6,7 @@
 -- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.5 — tranche T6 : les profils de
 --           fixture sont posés directement, plus aucun trigger ne les tire d'`auth.users`
 --           (docs/JOURNAL.md décision 589)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la clé des valeurs est `(placement_id, field_id)` (docs/SPEC-rattachements.md §3.3)
 --
 -- CE QUE CETTE SUITE PROUVE.
 --
@@ -59,7 +60,7 @@ language sql as $$
 	insert into public.card_field_values (card_id, field_id, workflow_id, workspace_id, value)
 	values ('5eed0000-0000-4000-8000-0000000000c1', champ,
 	        '5eed0000-0000-4000-8000-000000000051', '5eed0000-0000-4000-8000-000000000001', v)
-	on conflict (card_id, field_id) do update set value = excluded.value;
+	on conflict (placement_id, field_id) do update set value = excluded.value;
 $$;
 
 -- =============================================================================================
@@ -114,7 +115,7 @@ select lives_ok(
 	   values ('5eed0000-0000-4000-8000-0000000000c3', 'a5000000-0000-4000-8000-000000000001',
 	           '5eed0000-0000-4000-8000-000000000051', '5eed0000-0000-4000-8000-000000000001',
 	           null)
-	   on conflict (card_id, field_id) do update set value = excluded.value $$,
+	   on conflict (placement_id, field_id) do update set value = excluded.value $$,
 	'8 — le SQL NULL, seule forme de vide que PostgREST sache produire, est accepté lui aussi');
 
 -- =============================================================================================

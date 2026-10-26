@@ -45,10 +45,9 @@ $$;
 select has_column('public', 'card_field_values', 'placement_id', '`card_field_values.placement_id` existe');
 select has_column('public', 'card_events', 'placement_id', '`card_events.placement_id` existe');
 select has_column('public', 'card_sequence_enrollments', 'placement_id', '`card_sequence_enrollments.placement_id` existe');
-select is(
-	(select pg_get_constraintdef(oid) from pg_constraint where conname = 'card_field_values_placement_present'),
-	'CHECK ((placement_id IS NOT NULL))',
-	'une valeur a TOUJOURS un rattachement — tenu par une contrainte, le `NOT NULL` attendant T2.3 et ses appelants');
+select col_not_null('public', 'card_field_values', 'placement_id',
+	'une valeur a TOUJOURS un rattachement — `NOT NULL` depuis T2.3.6, qui retire la contrainte d''attente de la T2.2 '
+	'(révisée, décision 51)');
 select col_not_null('public', 'card_sequence_enrollments', 'placement_id',
 	'une inscription a toujours un rattachement : aucun client n''écrit la table');
 select is(
@@ -131,7 +130,7 @@ select isnt((select count(*)::int from t_champ), 0, '(témoin) une affaire du se
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 insert into public.card_field_values (card_id, field_id, workflow_id, workspace_id, value)
 select card_id, field_id, workflow_id, workspace_id, to_jsonb('Sonde T2.2'::text) from t_champ
-on conflict (card_id, field_id) do update set value = excluded.value;
+on conflict (placement_id, field_id) do update set value = excluded.value;
 select pg_temp.proprietaire();
 select is(
 	(select v.placement_id from public.card_field_values v join t_champ t using (card_id, field_id)),

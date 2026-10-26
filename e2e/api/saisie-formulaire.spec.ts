@@ -8,9 +8,10 @@
 //           §7 (preuve de refus n° 4 : le droit d'écriture manque)
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la clé des valeurs est `(placement_id, field_id)` (docs/SPEC-rattachements.md §3.3)
 //
 // La saisie du §4 bis passe par une seule route, et ces scénarios l'exercent **exactement comme
-// l'écran l'appelle** : un `upsert` sur `(card_id, field_id)`, la charge à cinq colonnes, la
+// l'écran l'appelle** : un `upsert` sur `(placement_id, field_id)` (`CRM-111` T2.3.6), la charge à six colonnes, la
 // résolution `merge-duplicates`. Ce que le test unitaire du composant établit — que l'écran émet
 // bien cette charge — n'a de valeur que si le serveur l'accepte : c'est ce que ce fichier mesure,
 // avec les jetons réels des profils seedés.
@@ -31,6 +32,7 @@
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { rattachementDe } from './rattachements'
 
 const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
@@ -69,13 +71,14 @@ test.beforeAll(async () => {
 })
 
 /**
- * L'appel **exact** que l'écran émet : `upsert` sur la clé primaire, charge à cinq colonnes.
+ * L'appel **exact** que l'écran émet : `upsert` sur la clé primaire — celle du rattachement depuis `CRM-111` T2.3.6 —,
+ * charge à six colonnes, le rattachement compris.
  *
  * `updated_by` en est délibérément absente (§4 bis.4) : la trace faisant foi de l'auteur est
  * l'`actor_id` de `card_events`, posé par le serveur à partir de la session réelle.
  */
-function saisir(requete: APIRequestContext, jeton: string, champ: string, valeur: unknown) {
-	return requete.post(VALEURS, {
+async function saisir(requete: APIRequestContext, jeton: string, champ: string, valeur: unknown) {
+	return requete.post(`${VALEURS}?on_conflict=placement_id,field_id`, {
 		headers: {
 			...enTetesAuthentifies(jeton),
 			'Content-Type': 'application/json',
@@ -83,6 +86,7 @@ function saisir(requete: APIRequestContext, jeton: string, champ: string, valeur
 		},
 		data: {
 			card_id: CARD_C6,
+			placement_id: await rattachementDe(requete, CARD_C6),
 			field_id: champ,
 			workflow_id: WORKFLOW_GLOBAL,
 			workspace_id: WORKSPACE_SEED,

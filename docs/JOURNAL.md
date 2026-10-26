@@ -35464,3 +35464,37 @@ c'est ce que dit le dernier cas, et la coordination par messages l'a résolu.
    **44/44** (quatre dégradations vues) ; seed rejoué ; captures observées. Une réponse `502` de realtime, au
    redémarrage de son conteneur pendant la campagne, a fait rougir quatre scénarios de la corbeille ; rejoués, verts.
 7. **Livraison** : aucune, faute d'instruction du responsable (décisions 726, 730, 733). `CRM-077` passe `[P]`.
+
+### `CRM-111` T2.3.6 — les valeurs de bloc appartiennent au rattachement (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* **Fait** : migration `0121`, selon
+`docs/SPEC-rattachements.md` §3.3 et §4. `card_field_values.placement_id` devient `NOT NULL` (la contrainte d'attente de
+la T2.2 est retirée) ; la clé primaire passe à `(placement_id, field_id)` ; la charnière du workflow à `(placement_id,
+workflow_id) → card_placements` ; `card_id` reste, dénormalisé, avec un index pour les lectures par affaire. Les trois
+politiques jugent le rattachement : la lecture sous la forme optimisée de la décision 667, l'écriture sur le channel du
+rattachement. La prévisualisation de l'exigence lit les valeurs du rattachement. **Écrivains** : la fiche (le
+rattachement calculé au geste, comme l'armement en T2.3.5) et `crm_card_update` écrivent `placement_id` avec
+`onConflict=placement_id,field_id` ; les specs qui nommaient la clé passent à la nouvelle (`formulaire`,
+`parcours-transition`, `rattachements-lectures`, `saisie-formulaire`, cette dernière reproduisant l'appel exact de
+l'écran) ; la fixture de l'affaire servie par `formulaire.spec.ts` porte enfin `card_placements`, comme la vraie réponse
+depuis T2.3.1. Les suites pgTAP qui écrivaient `on conflict (card_id, field_id)` (`0014`, `0021`, `0045`, `0098`)
+nomment la nouvelle clé ; les assertions de forme (`0012`, `0014`, `0098`) sont révisées, non retirées (décision 51).
+
+**Ce qui reste par affaire, et pourquoi** : la LECTURE des valeurs par la fiche, le connecteur et la recherche. Le backlog
+borne T2.3.6 à l'écriture ; tant qu'une affaire n'a qu'un rattachement, lire par affaire rend exactement les valeurs de
+son bloc, et le passage au bloc est l'objet des écrans de T5. Le seed et les écrivains qui ne nomment pas de clé passent
+par la clé primaire : le déclencheur de remplissage de la T2.2 pose le rattachement AVANT le contrôle de conflit.
+
+**Deux preuves révisées au passage, et elles étaient fragiles** : le témoin de types `_relationsValeurs` figeait la
+PREMIÈRE relation de la table, au rang que l'ordre alphabétique lui donnait ; il retrouve désormais chaque relation par
+son nom. Et le constat de restauration de `verify-valeurs-champs.sh` exigeait `can_write_card` dans la politique
+restaurée ; il compare désormais l'expression à celle lue à l'entrée, à l'octet près.
+
+**Vérifications** : essai en transaction annulée, treize suites sans un rouge ; migration appliquée par le runner ;
+pgTAP **104 fichiers, 4299 assertions, aucune anomalie** (aucune suite ne change de plan) ; unitaires **4514/4514** ;
+`typecheck`, `types:check` à l'octet ; API **1230/1231** (le rouge : `ingestion.spec.ts:91`, `CRM-058`) ; interface des
+formulaires, des parcours de transition, des sélecteurs et des contacts **93/93**, capture d'une saisie en session réelle
+observée (« Enregistré ») ; connecteur unitaire 18/18. **Harnais** : `verify-mcp.sh` **88 contrôles, aucune anomalie** (intégration réelle, après
+reconstruction du service `mcp` depuis l'arbre) ; `verify-valeurs-champs.sh` **46/47**, reconstruction comprise et
+restauration constatée à l'octet près — son seul rouge est sa relance de toute la suite d'API, et cette suite, rejouée
+sur la base qu'il a reconstruite, rend 1230/1231, le rouge étant `ingestion.spec.ts:91`, étranger à la tranche.

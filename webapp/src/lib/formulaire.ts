@@ -8,6 +8,8 @@
 //       nomme, décision 690)
 // @spec docs/SPEC-permissions-rls.md §4 (lecture par les membres du workspace)
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : une valeur s'écrit sur le RATTACHEMENT, clé `(placement_id, field_id)`
+//       (docs/SPEC-rattachements.md §3.3) ; la lecture reste par affaire jusqu'aux écrans de T5
 //
 // Ce module ne rend rien : il **compose**. La séparation n'est pas un goût d'architecture — elle
 // est ce qui rend la règle du §4.1 vérifiable sans navigateur, et ce qui permet au tableau de cas
@@ -618,13 +620,15 @@ export type ResultatEcriture =
 /** Ce qu'une écriture de valeur a besoin de connaître, et rien de plus. */
 export type EcritureValeur = {
 	readonly idCard: string
+	/** Le rattachement dont le bloc reçoit la valeur (`CRM-111` T2.3.6). */
+	readonly idRattachement: string
 	readonly idChamp: string
 	readonly idWorkflow: string
 	readonly idWorkspace: string
 	readonly valeur: Json
 }
 
-export const COLONNES_ECRITURE_VALEUR = 'card_id, field_id, workflow_id, workspace_id, value'
+export const COLONNES_ECRITURE_VALEUR = 'card_id, placement_id, field_id, workflow_id, workspace_id, value'
 
 /**
  * Écrit la valeur d'un champ sur une card — le geste du §4 bis.
@@ -657,12 +661,14 @@ export async function ecrireValeur(
 			.upsert(
 				{
 					card_id: ecriture.idCard,
+					placement_id: ecriture.idRattachement,
 					field_id: ecriture.idChamp,
 					workflow_id: ecriture.idWorkflow,
 					workspace_id: ecriture.idWorkspace,
 					value: ecriture.valeur,
 				},
-				{ onConflict: 'card_id,field_id' },
+				// `CRM-111` T2.3.6 : la clé primaire est celle du rattachement (docs/SPEC-rattachements.md §3.3).
+				{ onConflict: 'placement_id,field_id' },
 			)
 			.select('field_id')
 		if (reponse.error !== null) {

@@ -5,6 +5,7 @@
 -- @verifies docs/SCHEMA.md §5 (cards), §9 (fonctions), §10 (index)
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.0 : la timeline du rattachement est écrite par sa table
 --           (docs/SPEC-rattachements.md §5)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la lecture des valeurs juge le rattachement (docs/SPEC-rattachements.md §4)
 -- @verifies docs/SPEC-permissions-rls.md §3 (fonctions), §4 (politiques), §7 (preuves n° 3, 4, 11)
 -- @verifies docs/SPEC-workflow-engine.md §2.6 (archivage d'un nœud occupé), §5 (`move_card`)
 -- @verifies docs/JOURNAL.md décisions 109, 110, 111, 112 ; INC-013, INC-025, INC-031, INC-046
@@ -646,13 +647,17 @@ select has_table('public', 'card_field_values',
 	'`card_field_values` est livrée par `CRM-036` : l''assertion d''absence posée ici a été '
 	'RÉVISÉE, non retirée');
 
+-- RÉVISÉE PAR `CRM-111` T2.3.6 (décision 51) : la lecture des valeurs juge le RATTACHEMENT, sous la forme optimisée
+-- de la décision 667 (docs/SPEC-rattachements.md §4). `app.can_read_card` garde ses autres appelants (timeline,
+-- inscriptions, tables filles de l'affaire).
 select is(
 	(select count(*)::int from pg_policy p
 	  where p.polrelid = 'public.card_field_values'::regclass
-	    and pg_get_expr(p.polqual, p.polrelid) like '%can_read_card%'),
+	    and pg_get_expr(p.polqual, p.polrelid) like '%readable_channel_ids%'
+	    and pg_get_expr(p.polqual, p.polrelid) like '%card_placements%'),
 	1,
-	'`app.can_read_card`, livrée SANS USAGE par `CRM-040` (décision 110), a son PREMIER appelant '
-	'réel : la politique de lecture des valeurs de formulaire');
+	'la politique de lecture des valeurs de formulaire juge le RATTACHEMENT, par `app.readable_channel_ids()` '
+	'(`CRM-111` T2.3.6)');
 
 -- CRM-013 : la protection de colonne. ASSERTION RETOURNÉE PAR `CRM-013` (décision 51) : elle
 -- constatait cette mise à jour POSSIBLE et annonçait qu'elle deviendrait rouge le jour où l'unité

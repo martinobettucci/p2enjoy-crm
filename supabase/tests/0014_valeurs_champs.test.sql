@@ -12,6 +12,7 @@
 --           (liaison CRM-018), INC-047 (**close**), INC-053 (**close** par CRM-060 tranche 3 :
 --           `user` et `contact` résolus, migration 0047 — assertions retournées au §4.9),
 --           INC-054 (`value` nullable, mesuré)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la clé des valeurs est `(placement_id, field_id)` (docs/SPEC-rattachements.md §3.3)
 --
 -- Suite pgTAP de l'unité `CRM-036`. Elle prouve huit choses :
 --
@@ -90,9 +91,10 @@ select has_column('public', 'card_field_values', 'created_at',
 select has_column('public', 'card_field_values', 'updated_at',
 	'`updated_at` de même');
 
-select col_is_pk('public', 'card_field_values', array['card_id', 'field_id'],
-	'la clé primaire est `(card_id, field_id)` : une card porte **au plus une** valeur par champ, '
-	'deux réponses contradictoires sont structurellement impossibles');
+select col_is_pk('public', 'card_field_values', array['placement_id', 'field_id'],
+	'la clé primaire est `(placement_id, field_id)` depuis `CRM-111` T2.3.6 (révisée, décision 51) : un RATTACHEMENT porte '
+	'**au plus une** valeur par champ, deux réponses contradictoires sont structurellement impossibles ; une affaire '
+	'rattachée à deux channels a une valeur par bloc (docs/SPEC-rattachements.md §3.3)');
 
 -- INC-054 : la nullabilité est une MESURE, pas une préférence. PostgREST convertit un `null` JSON
 -- en SQL NULL et ne sait produire `'null'::jsonb` par aucune écriture : avec `NOT NULL`, vider un
@@ -268,7 +270,7 @@ begin
 	insert into public.card_field_values (card_id, field_id, workflow_id, workspace_id, value)
 	values ('5eed0000-0000-4000-8000-0000000000c5', champ,
 	        '5eed0000-0000-4000-8000-000000000051', '5eed0000-0000-4000-8000-000000000001', valeur)
-	on conflict (card_id, field_id) do update set value = excluded.value;
+	on conflict (placement_id, field_id) do update set value = excluded.value;
 end;
 $$;
 
@@ -557,7 +559,7 @@ insert into public.card_field_values (card_id, field_id, workflow_id, workspace_
 values ('5eed0000-0000-4000-8000-0000000000c7', '5eed0000-0000-4000-8000-000000000086',
         '5eed0000-0000-4000-8000-000000000051', '5eed0000-0000-4000-8000-000000000001',
         '"https://p2enjoy.fr/p/formation"'::jsonb)
-on conflict (card_id, field_id) do update set value = excluded.value;
+on conflict (placement_id, field_id) do update set value = excluded.value;
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 

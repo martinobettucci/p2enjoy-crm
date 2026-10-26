@@ -557,13 +557,13 @@ Détail des contraintes, de leurs mesures et de leurs motifs : `docs/SPEC-form-c
 
 | Colonne | Type | Contraintes |
 |---|---|---|
-| `card_id` | `uuid` | PK composite ; FK **composite** `(card_id, workflow_id) → cards (id, workflow_id)`, `ON DELETE CASCADE` |
-| `field_id` | `uuid` | PK composite ; FK **composite** `(field_id, workflow_id) → form_fields (id, workflow_id)`, `ON DELETE CASCADE` |
+| `card_id` | `uuid` | non nul, **dénormalisé** depuis `CRM-111` T2.3.6 (migration `0121`) : hors de la clé primaire, sa vérité tenue par `(placement_id, card_id) → card_placements` ; index `card_field_values_card_idx` pour les lectures par affaire |
+| `field_id` | `uuid` | PK composite `(placement_id, field_id)` ; FK **composite** `(field_id, workflow_id) → form_fields (id, workflow_id)`, `ON DELETE CASCADE` |
 | `workflow_id` | `uuid` | non nul ; **charnière** des deux clés composites — c'est lui qui rend impossible une valeur répondant à la question d'un autre workflow |
 | `workspace_id` | `uuid` | non nul ; FK composite `(workflow_id, workspace_id) → workflows (id, workspace_id)` |
 | `value` | `jsonb` | **nullable** ; SQL `NULL` **et** `'null'::jsonb` signifient explicitement vide. La **forme** est validée par trigger selon `form_fields.type` — un `CHECK` ne peut pas porter de sous-requête, mesuré. **Depuis la migration 47** (`CRM-060` tranche 3), les types `contact` et `user` sont en outre **résolus** : leur cible doit exister dans le **workspace de la valeur** — `public.contacts` pour l'un, `public.workspace_members` pour l'autre. La vérification a lieu **à l'écriture** ; un `jsonb` ne portant pas de clé étrangère, une valeur survit à la suppression de sa cible (`docs/SPEC-contacts.md` §9.4) |
 | `updated_by` | `uuid` | nullable, FK `profiles`, `ON DELETE SET NULL` |
-| `placement_id` | `uuid` | **le rattachement de la valeur** (`CRM-111` T2.2, migration `0109`, `docs/SPEC-rattachements.md` §3.3) ; FK composite `(placement_id, card_id) → card_placements (id, card_id)` `ON DELETE CASCADE` ; toujours présent, par la contrainte `card_field_values_placement_present` — le `NOT NULL` et la clé `(placement_id, field_id)` attendent T2.3, qui passe l'`upsert` de la webapp au rattachement ; posé par le déclencheur `card_field_values_fill_placement` quand l'écriture l'omet |
+| `placement_id` | `uuid` | **le rattachement de la valeur** (`CRM-111` T2.2, migration `0109`, `docs/SPEC-rattachements.md` §3.3) ; **non nul et dans la clé primaire `(placement_id, field_id)`** depuis T2.3.6 (migration `0121`) ; FK composites `(placement_id, card_id) → card_placements (id, card_id)` et `(placement_id, workflow_id) → card_placements (id, workflow_id)` — la **charnière** du workflow —, toutes deux `ON DELETE CASCADE` ; posé par le déclencheur `card_field_values_fill_placement` quand l'écriture l'omet |
 | `created_at`, `updated_at` | `timestamptz` | non nuls, `now()` ; `updated_at` par trigger |
 
 Index GIN sur `value` pour les filtres des vues sauvegardées.
@@ -2315,6 +2315,17 @@ public.trash_retention_days(), app.trash_retention()` ; réappliquer `app.corbei
 `app.saisies_temps_auteur()` de la `0087` et les trois politiques de lecture d'avant (`cards_lecture` de la `0011`,
 `channels_lecture_membre` de la `0010`, `tracks_lecture_membre` de la `0034`), avec la webapp d'avant. **Ce qui a été purgé ne se
 restaure pas.**
+
+### Migration `0121` — les valeurs de bloc appartiennent au rattachement (`CRM-111` T2.3.6, décision 705 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-rattachements.md` §3.3, §4. `card_field_values.placement_id` `NOT NULL` (la contrainte d'attente
+`card_field_values_placement_present` est retirée) ; clé primaire `(placement_id, field_id)` ; la charnière
+`(card_id, workflow_id) → cards` remplacée par `card_field_values_placement_workflow_fk` `(placement_id, workflow_id) →
+card_placements (id, workflow_id)` ; index `card_field_values_card_idx` ; les trois politiques jugent le rattachement
+(lecture par `app.readable_channel_ids()`, écriture par `app.can_write_channel` de son channel) ;
+`previsualiser_exigence` lit les valeurs du rattachement. **Retrait** : rendre la clé et la charnière par affaire, les
+politiques par `app.can_read_card` / `app.can_write_card`, la contrainte d'attente et la prévisualisation de la `0109`,
+avec la webapp et l'image `mcp` d'avant.
 
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 

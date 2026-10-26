@@ -581,9 +581,8 @@ type _valeursColonnes = Expect<
     | 'created_at'
     | 'field_id'
     // `0109` de `CRM-111` TRANCHE T2.2 ajoute `placement_id` — le rattachement de la valeur (docs/SPEC-rattachements.md
-    // §3.3). Le type le dit NULLABLE et facultatif à l'écriture, et ce n'est pas la base : une contrainte
-    // `card_field_values_placement_present` le rend toujours présent, posé par déclencheur quand l'appelant l'omet. Le
-    // `NOT NULL` attend T2.3, qui passe les écritures de la webapp au rattachement.
+    // §3.3). `NOT NULL` depuis T2.3.6, qui en fait la clé avec `field_id` et passe les écritures de la webapp au
+    // rattachement ; le déclencheur de la T2.2 le pose encore pour un écrivain qui l'omet.
     | 'placement_id'
     | 'updated_at'
     | 'updated_by'
@@ -599,13 +598,23 @@ type _valeursColonnes = Expect<
 // donc exactement ce que la base tient, et un client qui écrit `null` vide bien le champ.
 type _valeurNullable = Expect<Equal<Tables<'card_field_values'>['value'], Json | null>>
 
+// `CRM-111` T2.3.6 : une valeur appartient TOUJOURS à un rattachement (docs/SPEC-rattachements.md §3.3).
+type _valeurDuRattachement = Expect<Equal<Tables<'card_field_values'>['placement_id'], string>>
+
 // Les deux clés étrangères COMPOSITES sont visibles dans les types : c'est ce qui rend structurelle
 // la garantie « une valeur ne répond pas à la question d'un autre workflow » (§6.3, décision 124).
+// RÉVISÉ PAR `CRM-111` T2.3.6 (décision 51) : la charnière passe par le RATTACHEMENT, `(placement_id, workflow_id) →
+// card_placements` (docs/SPEC-rattachements.md §3.3). Les relations sont retrouvées par leur NOM, non par leur rang : le
+// générateur les range par ordre alphabétique, et un rang figé dépendrait du nom des autres.
+type _relationValeur<Nom extends string> = Extract<
+  Database['public']['Tables']['card_field_values']['Relationships'][number],
+  { foreignKeyName: Nom }
+>
 type _relationsValeurs = Expect<
-  Equal<
-    Database['public']['Tables']['card_field_values']['Relationships'][0]['columns'],
-    ['card_id', 'workflow_id']
-  >
+  Equal<_relationValeur<'card_field_values_placement_workflow_fk'>['columns'], ['placement_id', 'workflow_id']>
+>
+type _relationsValeursChamp = Expect<
+  Equal<_relationValeur<'card_field_values_field_id_workflow_id_fkey'>['columns'], ['field_id', 'workflow_id']>
 >
 
 // `type` et `visibility` sont des `text` avec contrainte `CHECK`, non des types énumérés : le
@@ -1403,6 +1412,7 @@ export type AssertionsDuContratDeTypes = [
   _valeursColonnes,
   _valeurNullable,
   _relationsValeurs,
+  _relationsValeursChamp,
   _optionsEstDuJson,
   _relationsRegles,
   _champsInsertRequis,
@@ -1445,6 +1455,7 @@ export type AssertionsDuContratDeTypes = [
   _retourChangementPorteLeWorkflow,
   _retourChangementPorteLAffaire,
   _signatureArmement,
+  _valeurDuRattachement,
   _signatureChangementWorkflowChannel,
   _retourChangementWorkflowEstUnLot,
   _retourChangementWorkflowPorteLEtape,

@@ -16673,8 +16673,12 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           `verify-armement-sequences.sh` ne rejoue plus la `0060`. L'expéditeur par défaut du §7 : INC-315, non livré.
           pgTAP 103 fichiers sans anomalie, unitaires 4504/4504, API 73/73, interface verte (53 scénarios rouges d'un
           défaut de la fiche, corrigé et rejoués), `verify-armement-sequences.sh` 53/53. **Reste** : l'arbitrage d'INC-315.
-        - [ ] **T2.3.6 — les valeurs de bloc** : clé `(placement_id, field_id)`, `NOT NULL`, écriture de la webapp par
-          rattachement.
+        - [x] **T2.3.6 — les valeurs de bloc** : clé `(placement_id, field_id)`, `NOT NULL`, écriture de la webapp par
+          rattachement. *Livrée en développement le 2026-10-26* — migration `0121` : charnière du workflow par le
+          rattachement, politiques par le rattachement (lecture sous la forme optimisée), prévisualisation de l'exigence ;
+          la fiche et `crm_card_update` écrivent sur le bloc ; la lecture reste par affaire jusqu'à T5. pgTAP 104 fichiers
+          sans anomalie, unitaires 4514/4514, API 1230/1231 (`ingestion.spec.ts:91`, étranger), interface 93/93,
+          `verify-mcp.sh` 88/88, `verify-valeurs-champs.sh` 46/47 (le même rouge étranger, mesuré).
         - [ ] **T2.3.7 — la création et les remappages** : `creer_affaire` écrit le rattachement elle-même (la création
           passe à `card_placements`) ; `change_channel_workflow`, `plan_card_remapping`, `restore_workflow_version`,
           `app.appliquer_composition` remappent les rattachements ; la clé channel/workflow redevient immédiate.

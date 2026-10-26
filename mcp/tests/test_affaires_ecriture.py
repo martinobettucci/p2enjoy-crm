@@ -252,8 +252,12 @@ async def test_modifier_n_ecrit_que_les_champs_donnes_nomme_le_responsable_et_fu
     assert rattache["methode"] == "PATCH" and rattache["parametres"]["id"] == f"eq.{RATTACHEMENT_A}"
     assert rattache["corps"] == {"probability_override": 60, "owner_id": "p-camille"}
     valeur = monde.ecritures("card_field_values")[0]
-    assert valeur["corps"] == {"card_id": CARD_A, "field_id": "f1", "workflow_id": WORKFLOW, "workspace_id": ESPACE_A, "value": 45000}
-    assert valeur["parametres"]["on_conflict"] == "card_id,field_id"
+    # `CRM-111` T2.3.6 : la réponse va au bloc du rattachement, clé `(placement_id, field_id)`.
+    assert valeur["corps"] == {
+        "card_id": CARD_A, "placement_id": RATTACHEMENT_A, "field_id": "f1", "workflow_id": WORKFLOW,
+        "workspace_id": ESPACE_A, "value": 45000,
+    }
+    assert valeur["parametres"]["on_conflict"] == "placement_id,field_id"
     assert "resolution=merge-duplicates" in valeur["prefer"]
 
 

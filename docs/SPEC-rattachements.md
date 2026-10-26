@@ -558,6 +558,14 @@ de la bascule recopie l'ancienneté de l'affaire sur tous ses rattachements. La 
 d'armement ; l'inscription en cours se lit toujours par l'affaire, jusqu'aux écrans de T5. **L'expéditeur par défaut** que
 le §7 annonce n'a pas de forme arrêtée et n'est pas livré : INC-315, arbitrage demandé.
 
+**T2.3.6, livrée en développement le 2026-10-26** (migration `0121`) : les valeurs de bloc appartiennent au
+rattachement (§3.3). `placement_id` est `NOT NULL` ; la clé primaire est `(placement_id, field_id)` ; la charnière du
+workflow passe à `(placement_id, workflow_id) → card_placements (id, workflow_id)` ; `card_id` reste, dénormalisé,
+garanti par `(placement_id, card_id)`. Les trois politiques jugent le rattachement — la lecture sous la forme optimisée
+du §4, l'écriture sur le channel du rattachement. La fiche et le connecteur écrivent sur le rattachement
+(`onConflict=placement_id,field_id`) ; **la lecture reste par affaire** jusqu'aux écrans de T5, ce qui est exact tant
+qu'une affaire n'a qu'un rattachement. La prévisualisation de l'exigence lit les valeurs du rattachement.
+
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne
 change **rien de visible**, car chaque affaire garde son unique rattachement : c'est sa preuve, puisque toute la suite
