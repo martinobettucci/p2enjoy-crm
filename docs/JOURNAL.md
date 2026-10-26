@@ -35681,3 +35681,8 @@ rattachements par la session de `CRM-111` T2.4.1, qui a demandé d'exclure ces �
 **27/27** ; unitaires de la corbeille **65/65** ; `verify-corbeille.sh` **50/50**. **Livraison** : aucune (décision 739).
 INC-316 passe « résolue ». `CRM-077` reste `[P]`.
 
+### décision 745 — Livraison : toujours rien, après la onzième tranche de `CRM-077`
+
+*2026-10-26, réponse du responsable (question posée par `AskUserQuestion`) : « Ne rien livrer encore ».* Cinquième réponse
+identique (décisions 726, 730, 733, 739). Les migrations 106 à 123 restent en attente ; le backlog continue.
+
