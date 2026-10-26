@@ -35959,7 +35959,7 @@ sans exigence ; l'exigence, les trois affaires et les points libres vivent dans 
 fois (le fichier était revenu à son état committé), a été refait et poussé avec le compte du board (`83fd3ea0`).
 
 
-### décision 755 — `CRM-118` T1 : la liste des outils validée ; les gestes sans écran reçoivent d'abord leur écran
+### décision 756 — `CRM-118` T1 : la liste des outils validée ; les gestes sans écran reçoivent d'abord leur écran
 
 *2026-10-26, arbitrages du responsable sur `docs/SPEC-mcp.md` §9.2 undecies.*
 1. **Les gestes que la base permet et qu'aucun écran n'offre reçoivent d'abord leur écran, et le connecteur suit
@@ -35974,4 +35974,6 @@ fois (le fichier était revenu à son état committé), a été refait et pouss�
 3. **Exiger ou ne plus exiger** un champ ou un point de checklist d'une transition relève de `modifier`, un réglage de la
    transition.
 4. **La liste est validée** avec ces changements, en sous-tranches livrées séparément.
-**Persisté** : `docs/SPEC-mcp.md` §9.2 undecies, `docs/BACKLOG.md` (`CRM-118`). Aucun code.
+**Persisté** : `docs/SPEC-mcp.md` §9.2 undecies, `docs/BACKLOG.md` (`CRM-118`). Aucun code. *Numéro : poussée d'abord
+sous 755, déjà prise par `CRM-068` T3a (`ec6cd5ca`, poussé avant) ; renumérotée 756 (`CLAUDE.md` §5, « Prise en
+charge »).*

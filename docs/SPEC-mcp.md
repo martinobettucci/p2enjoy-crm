@@ -926,7 +926,7 @@ ci-dessus est inchangée :
   elle décrit déjà la famille.
 - **Aucune migration** : la famille est dans la liste fermée depuis `0090`.
 
-### 9.2 undecies Famille `workflows` — `CRM-118` T1 (liste fixée, **validée le 2026-10-26**, décision 755 ; décisions 752 et 754)
+### 9.2 undecies Famille `workflows` — `CRM-118` T1 (liste fixée, **validée le 2026-10-26**, décision 756 ; décisions 752 et 754)
 
 **La famille.** Dixième famille, rangée **après `structure`** dans les listes fermées et dans la matrice de l'onglet
 « Connecteur MCP ». Elle gouverne **ce qui écrit** un workflow, ainsi que les lectures propres à la gestion (liste,
@@ -935,7 +935,7 @@ formulaire complet, versions, comparaisons, plans). **La lecture de la compositi
 (`docs/SPEC-workflow-engine.md` §3.7) ; le connecteur n'ouvre rien de plus.
 
 **Sous-tranches livrées séparément**, sur le modèle de `CRM-104` T2.a et T2.b. La migration et les genres d'ancre
-viennent avec la première. **Le connecteur suit strictement l'écran** (décision 755) : un outil dont le geste n'a pas
+viennent avec la première. **Le connecteur suit strictement l'écran** (décision 756) : un outil dont le geste n'a pas
 encore d'écran attend la tranche d'écran de `CRM-118` (T1.b, `docs/SPEC-workflow-engine.md`) ou l'éditeur de checklists
 de `CRM-068` T3b ; il est marqué *après T1.b* ou *après `CRM-068` T3b* ci-dessous.
 
@@ -977,7 +977,7 @@ de `CRM-068` T3b ; il est marqué *après T1.b* ou *après `CRM-068` T3b* ci-des
 | `crm_form_field_update` | `modifier` | `field:field_id` | `PATCH form_fields` | `modifierChamp` : libellé, aide, options ; **jamais la clé ni le type** |
 | `crm_form_field_move` | `modifier` | `field:field_id` ; `autres` : `field:after_field_id`, facultative | `PATCH form_fields set position` | comme `crm_workflow_step_move` |
 | `crm_form_field_visibility_set` | `modifier` | `field:field_id` ; `autres` : `step:step_id` | `upsert form_field_rules`, ou `DELETE` pour `default` | `reglerVisibilite`, `rendreAuDefaut` : rendre une case au défaut est un réglage |
-| `crm_transition_required_field_set` | `modifier` | `transition:transition_id` ; `autres` : `field:field_id` | `POST` ou `DELETE workflow_transition_required_fields` | `exigerChamp`, `retirerExigence` ; `required` vrai ou faux ; `modifier`, un réglage de la transition (décision 755) |
+| `crm_transition_required_field_set` | `modifier` | `transition:transition_id` ; `autres` : `field:field_id` | `POST` ou `DELETE workflow_transition_required_fields` | `exigerChamp`, `retirerExigence` ; `required` vrai ou faux ; `modifier`, un réglage de la transition (décision 756) |
 | `crm_step_checklist_item_add` | `ajouter` | `step:step_id` | `POST workflow_step_checklist_items` | **après `CRM-068` T3b** |
 | `crm_step_checklist_item_update` | `modifier` | `checklist_item:item_id` | `PATCH workflow_step_checklist_items` | libellé, position ; **après `CRM-068` T3b** |
 | `crm_transition_required_checklist_item_set` | `modifier` | `transition:transition_id` ; `autres` : `checklist_item:item_id` | `POST` ou `DELETE workflow_transition_required_checklist_items` | **après `CRM-068` T3b** |
@@ -1023,7 +1023,7 @@ retirer les droits de la famille, puis réappliquer `0101`.
 | `crm_workflow_node_archive` | `supprimer`, `destructiveHint` | `node:node_id` | `PATCH workflow_nodes_catalog set archived_at` | `archiverNoeud` ; la garde d'un nœud occupé (`docs/SPEC-workflow-engine.md` §2.6) est rendue nommée |
 | `crm_channel_workflow_change` | `modifier`, `destructiveHint` | `channel:channel_id` ; `autres` : `workflow:workflow_id` | `change_channel_workflow(channel_id, workflow_id, step_mapping, discard_field_values)` | **après T1.b** ; remappe toutes les affaires du channel, la correspondance des étapes explicite et exhaustive (`docs/SPEC-change-channel-workflow.md`) ; la perte des réponses de formulaire exigée explicitement, comme `crm_card_move_to_channel`. `crm_channel_update` (`structure`) ne change toujours pas le workflow |
 
-**Les points ouverts du 2026-10-26 sont tranchés** (décision 755) : les gestes sans écran reçoivent d'abord leur écran
+**Les points ouverts du 2026-10-26 sont tranchés** (décision 756) : les gestes sans écran reçoivent d'abord leur écran
 (T1.b) ; le catalogue et le workflow d'un channel entrent dans la famille (T2.d) ; exiger ou ne plus exiger relève de
 `modifier`.
 

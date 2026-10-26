@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-118` T2.a — la famille `workflows` du connecteur (décisions 752, 754 et 756)
+
+*En développement seulement. La migration `0129` attend la prochaine fenêtre de production.*
+
+- **Migration `0129`** : la matrice du connecteur MCP accepte une dixième famille, « Workflows », juste après
+  « Structure ». Rien d'autre ne change en base ; les outils et la ligne de l'onglet viennent avec la suite de la tranche.
+
 ### `CRM-117` — le manuel joignable depuis la webapp (en cours)
 
 - **Une icône « Aide » dans l'en-tête**, à côté de la cloche : un panneau mène au chapitre qui décrit l'écran courant, et au

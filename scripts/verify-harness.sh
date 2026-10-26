@@ -622,7 +622,9 @@ PORT_RAPPORT=9323
 # **+1 par `CRM-068` T2, 2026-10-26** : `0118_transition_exige_checklist.test.sql`, fichier NEUF. 107 + 1 = 108, MESURÉ.
 # **+1 par `CRM-117` T2, 2026-10-26** : `0119_lecture_du_manuel.test.sql`, fichier NEUF. 108 + 1 = 109, CALCULÉ — la
 # campagne complète était suspendue (décision 753).
-FICHIERS_SQL_ATTENDUS=109
+# **+1 par `CRM-118` T2.a, 2026-10-26** : `0120_famille_workflows.test.sql`, fichier NEUF. 109 + 1 = 110, MESURÉ —
+# « 110 fichiers, 4394 assertions, aucune anomalie ».
+FICHIERS_SQL_ATTENDUS=110
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -771,7 +773,10 @@ FICHIERS_SQL_ATTENDUS=109
 # **+10 par `CRM-117` T2, 2026-10-26** : `0119_lecture_du_manuel` **10** assertions (le bucket privé, une seule politique de
 # lecture bornée au bucket, une session lit et n'écrit pas, `anon` ne lit rien) ; `0029` RÉVISÉE sans changer de plan.
 # 4368 + 10 = 4378, CALCULÉ (décision 753).
-ASSERTIONS_ATTENDUES=4378
+# **+16 par `CRM-118` T2.a, 2026-10-26** : `0120_famille_workflows` **16** assertions (la famille dans les quatre listes,
+# son rang après `structure`, les politiques des workflows par profil, l'étape occupée refusée) ; quatre mutations tuées
+# (chaque liste fermée privée de la famille). 4378 + 16 = 4394, MESURÉ.
+ASSERTIONS_ATTENDUES=4394
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
