@@ -32,7 +32,18 @@ const REFUS: Readonly<Record<MotifRefusRgpd, CleTraduction>> = {
 	inconnu: 'contact.rgpd.refused.unknown',
 }
 
-type Message = { readonly ton: 'succes' | 'refus'; readonly texte: string } | null
+type Ton = 'succes' | 'refus'
+type Message = { readonly ton: Ton; readonly texte: string } | null
+
+/**
+ * Les classes d'un message, par ton. Une table `CLASSES_*` plutôt qu'une comparaison dans `className` : le contrôle des
+ * classes engendrées (`scripts/lib/classes-css.mjs`) lit chaque littéral d'un `className`, et y aurait pris `'succes'`
+ * pour une classe.
+ */
+const CLASSES_MESSAGE: Readonly<Record<Ton, string>> = {
+	succes: 'text-sm text-success-on-soft',
+	refus: 'rounded-sm bg-danger-soft px-3 py-2 text-sm text-danger-on-soft',
+}
 
 /** Une date courte, au format des autres écrans du produit. */
 export function formaterJour(horodatage: string): string {
@@ -217,11 +228,7 @@ export function BlocRgpdContact({
 				<p
 					role={message.ton === 'succes' ? 'status' : 'alert'}
 					data-testid="message-rgpd-contact"
-					className={
-						message.ton === 'succes'
-							? 'text-sm text-success-on-soft'
-							: 'rounded-sm bg-danger-soft px-3 py-2 text-sm text-danger-on-soft'
-					}
+					className={CLASSES_MESSAGE[message.ton]}
 				>
 					{message.texte}
 				</p>
