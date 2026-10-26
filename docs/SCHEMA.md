@@ -2464,20 +2464,21 @@ formes de `0088` (réel dérivé, ligne soldée figée, lecture et écriture par
 
 ---
 
-## 9 septies. Le manuel — `CRM-117` (spécifié le 2026-10-26, avant le code)
+## 9 septies. Le manuel — `CRM-117` (spécifié le 2026-10-26, avant le code ; révisé à l'écriture du code, décision 751)
 
-`docs/SPEC-manual.md` §14 ; décisions 736 et 740. **Aucune table.** Une fonction, au prochain numéro de migration
-libre :
+`docs/SPEC-manual.md` §14 ; décisions 736, 740, 750 et 751. **Aucune table, aucune fonction.** Deux migrations, au
+patron exact des pièces à envoyer (`0106` et `0107`) :
 
-- **`public.can_read_manual()`** → `boolean`, `language sql`, `stable`, `security invoker`, rend `true`. Elle ne sert
-  qu'à une chose : la fonction edge `manual` la fait exécuter avec le jeton de l'appelant, et c'est le **privilège**
-  qui décide. `revoke all on function public.can_read_manual() from public, anon;` puis
-  `grant execute on function public.can_read_manual() to authenticated;`. Un appel anonyme, expiré ou forgé est
-  refusé par PostgREST avant d'atteindre la fonction.
-- **Pourquoi une fonction et non la vérification du jeton dans la fonction edge** : seule `session`, parmi les
-  fonctions edge, reçoit `JWT_SECRET` (`docs/SPEC-edge-functions.md` §2), et cette règle n'est pas assouplie pour lire
-  un manuel.
-- **Retrait** : `drop function public.can_read_manual();`, avec la webapp et la fonction edge d'avant.
+- **sous `postgres`** — le bucket **`manual`**, privé : `insert into storage.buckets (id, name, public) values
+  ('manual', 'manual', false) on conflict (id) do update set public = false` ;
+- **sous `supabase_admin`** (`storage.objects` appartient à `supabase_storage_admin`, patron de la migration 29) — une
+  seule politique, **`manual_select`**, `for select to authenticated using (bucket_id = 'manual')`. Aucune politique
+  d'insertion, de mise à jour ni de suppression : seule la clé de service écrit, par la publication
+  (`docs/SPEC-manual.md` §15).
+- **Pourquoi pas une fonction edge** : un worker des fonctions edge ne lit aucun fichier du disque (mesuré, décision
+  751) ; et parmi elles, seule `session` reçoit `JWT_SECRET` (`docs/SPEC-edge-functions.md` §2).
+- **Retrait** : `drop policy manual_select on storage.objects;` (sous `supabase_admin`), puis vider le bucket par
+  l'API de stockage et `delete from storage.buckets where id = 'manual';`, avec la webapp d'avant.
 
 ## 10. Index principaux
 

@@ -438,84 +438,71 @@ la construction refuse un manuel sans chapitre (§15).
 d'accès ; elle s'applique côté serveur (`CLAUDE.md` §10). Un manuel compilé dans le paquet de la webapp, ou servi en
 fichier statique par le relais, serait lisible sans session : le contenu n'y est donc **pas**.
 
-### 14.1 La fonction edge `manual`
+> **RÉVISÉ le 2026-10-26 à l'écriture du code, sur une mesure (décision 751).** La première rédaction de ce paragraphe
+> servait le manuel par une fonction edge `manual` lisant un répertoire monté, et faisait juger la session par une
+> fonction SQL `public.can_read_manual()`. **Mesuré** sur la pile de développement, par une fonction sonde : un worker
+> du runtime des fonctions edge **ne lit aucun fichier du disque**, ni dans son propre répertoire, ni ailleurs — le code
+> est compilé, et le système de fichiers du worker ne porte rien d'autre (`NotFound` sur les quatre chemins essayés).
+> Le contenu ne peut donc pas être lu par une fonction. Le manuel est servi par le **stockage**, sous une politique de
+> lecture — le mécanisme qui protège déjà les pièces jointes.
 
-Le manuel construit (§15) est servi par une fonction edge nouvelle, `manual`, qui lit le contenu en lecture seule et
-**n'en rend rien sans session valide**.
+### 14.1 Le bucket `manual`
 
-| Requête | Réponse |
-|---|---|
-| `GET /functions/v1/manual/contents` | le sommaire : `{ "chapters": [{ "slug", "title", "sections": [{ "anchor", "title" }] }] }` |
-| `GET /functions/v1/manual/chapters/<slug>` | un chapitre : `{ "slug", "title", "blocks": [...] }` |
-| `GET /functions/v1/manual/images/<chapitre>/<nom>.jpg` | l'image, `image/jpeg` |
-
-- **Sans en-tête `Authorization`, ou avec un jeton refusé** : `401`, `{ "error": "session_required" }`, et rien
-  d'autre — ni titre, ni nombre de chapitres.
-- **Un chapitre ou une image inconnus** : `404`, `{ "error": "not_found" }`. Un segment hors de la forme
-  `[a-z0-9-]+` (et `[a-z0-9-]+\.jpg` pour une image) est un `404` sans lecture du disque : aucune traversée de
-  chemin n'est possible.
-- **Une autre méthode que `GET`** : `405`.
-- **En-têtes** : `Cache-Control: private, max-age=300` — un relais partagé ne garde rien —, et l'identifiant de
-  requête du routeur des fonctions.
-
-### 14.2 Comment la fonction reconnaît une session
-
-Parmi les fonctions edge, `JWT_SECRET` n'atteint que `session`, et c'est voulu (`docs/SPEC-edge-functions.md` §2,
-« l'environnement est remis par fonction », décisions 584 et 586) : `manual` ne reçoit **aucun secret nouveau**,
-seulement l'environnement commun des fonctions. Elle présente le jeton reçu à la base, comme la fonction `ia` le fait pour ses
-lectures : un appel à une fonction SQL nouvelle, **`public.can_read_manual()`**, avec la clé anonyme et le jeton de
-l'appelant.
-
-- `public.can_read_manual()` rend `true` pour un jeton accepté par PostgREST ; elle n'est exécutable que par le rôle
-  `authenticated` (`revoke all … from public, anon`). Un appel anonyme, un jeton expiré ou un jeton forgé reçoivent
-  un refus de PostgREST, que la fonction traduit en `401`.
+- **Un bucket privé, `manual`**, créé par migration, comme ceux des pièces jointes (`docs/SCHEMA.md` §9 septies). Il
+  porte le manuel construit (§15) : `contents.json`, un `chapters/<slug>.json` par chapitre, et les images sous
+  `images/<chapitre>/<nom>.jpg`.
+- **Une seule politique, de lecture**, `manual_select`, sur `storage.objects`, `for select to authenticated using
+  (bucket_id = 'manual')`. Aucune politique d'écriture : seul le service écrit, par la publication (§15). Le rôle `anon`
+  n'a aucune politique, et la mesure de la migration 29 vaut ici : seule l'absence de politique le refuse, la politique
+  porte donc elle-même la restriction au bucket.
 - **Une session suffit** : un jeton interne n'est émis qu'à une personne admise (`docs/DAT.md` §4.1), donc membre d'un
-  espace ou administratrice LeLabs. La lecture du manuel ne dépend d'aucun espace ni d'aucun rôle.
-- **La migration** porte cette fonction au prochain numéro libre (`docs/SCHEMA.md`), et le contrat de déploiement son
-  application.
+  espace ou administratrice LeLabs. Ni l'espace, ni le rôle n'interviennent. Le stockage accepte le jeton interne
+  comme PostgREST (`docs/SPEC-session-sso.md` §1).
 
-### 14.3 Ce que la webapp en fait
+### 14.2 Ce que la webapp en fait
 
-La webapp appelle la fonction avec la session courante — le client de la base joint le jeton, comme pour toute
-lecture. Une image ne peut pas porter d'en-tête dans un `<img src>` : elle est donc lue par la même voie, puis rendue
-depuis une adresse locale au navigateur (`URL.createObjectURL`), libérée quand l'image quitte l'écran. Un `401` mène,
-comme partout, à la reprise de session de la coquille (`docs/SPEC-session-sso.md`).
+La webapp lit le sommaire, puis un chapitre, puis ses images, par le client de stockage et avec la session courante
+(`download`). Une image ne peut pas porter d'en-tête dans un `<img src>` : elle est donc lue en `Blob`, puis rendue
+depuis une adresse locale au navigateur (`URL.createObjectURL`), libérée quand l'image quitte l'écran. Un `400` ou un
+`404` du stockage sur un chapitre est l'état « introuvable » ; une erreur de réseau, l'état d'erreur avec reprise ; un
+refus de session mène, comme partout, à la reprise de session de la coquille.
 
-## 15. La construction
+## 15. La construction et la publication
 
 - **Source unique** : `docs/manual.md` et `docs/manuel/images/`. Rien d'autre n'est rédigé.
 - **Un script de construction**, `scripts/manuel/construire.mjs` (`npm run manuel:construire`), lit la source, la
   découpe en chapitres (titres de niveau 2) et en sections (niveau 3), calcule les identifiants (§10, point 7), et
-  écrit le **manuel construit** dans `docs/manuel/construit/` : `contents.json` et un `chapters/<slug>.json` par
-  chapitre, au format du §14.1. Un bloc d'image porte sa largeur et sa hauteur, lues dans le manifeste, pour que la
-  page réserve sa place avant de la charger. Les images ne sont pas copiées : la fonction les lit dans
-  `docs/manuel/images/`.
+  écrit le **manuel construit** dans `docs/manuel/construit/` : `contents.json` — `{ "chapters": [{ "slug", "title",
+  "sections": [{ "anchor", "title" }] }] }` — et un `chapters/<slug>.json` par chapitre — `{ "slug", "title",
+  "blocks": [...] }`. Un bloc d'image porte sa largeur et sa hauteur, lues dans le manifeste, pour que la page réserve
+  sa place avant de la charger. Les clés de ce contrat sont en anglais (`docs/DAT.md` §12 bis).
 - **Le manuel construit est versionné**, et `npm run manuel:verifier` échoue s'il diffère de ce que la source
-  produirait : la même discipline que la vérification des types engendrés (`npm run types:check`). *Choix de
-  l'agent* : versionner le construit évite une étape de construction sur l'hôte de production, où les fonctions sont
-  montées depuis le dépôt.
+  produirait : la même discipline que la vérification des types engendrés (`npm run types:check`).
 - **La construction refuse**, avec un message qui nomme la ligne : du HTML brut dans la source ; une image référencée
-  absente du disque ou du manifeste ; deux identifiants identiques ; un lien interne vers un identifiant qui n'existe pas ; un manuel sans
-  chapitre.
-- **La conversion du Markdown en blocs** emploie une bibliothèque d'analyse plutôt qu'un analyseur écrit ici. *Choix de
-  l'agent, à confirmer par la mesure à l'installation* (`CLAUDE.md` §19) : `marked`, en dépendance de développement
-  seulement — elle ne sert qu'à la construction et n'entre ni dans le paquet de la webapp, ni dans la fonction. Licence,
-  maintenance, vulnérabilités et version épinglée sont mesurées et consignées dans `docs/DAT.md` §15 avant son ajout.
-- **Le montage** : le conteneur des fonctions reçoit `docs/manuel/` en lecture seule, à côté de `supabase/functions/`,
-  dans les deux assemblages de développement et de production. C'est une opération de déploiement
-  (`docs/PROD_MIGRATIONS.md`).
+  absente du disque ou du manifeste ; deux identifiants identiques ; un lien interne vers un identifiant qui n'existe
+  pas ; un manuel sans chapitre.
+- **La conversion du Markdown en blocs** emploie `marked`, en dépendance de développement seulement — elle ne sert qu'à
+  la construction et n'entre pas dans le paquet de la webapp (décision 750, sous réserve de la mesure du `CLAUDE.md`
+  §19, consignée dans `docs/DAT.md` §15 à son ajout).
+- **La publication**, `scripts/manuel/publier.sh`, recopie le manuel construit et les images dans le bucket `manual`,
+  avec la clé de service : chaque fichier déposé en remplacement, et tout objet du bucket absent de la source retiré —
+  le bucket est un **miroir**. Elle est rejouable et sans effet sur un bucket déjà à jour. Elle s'exécute en
+  développement à la fin du seed, et en production à chaque livraison qui change le manuel (`docs/PROD_MIGRATIONS.md`).
+  Elle n'a besoin que de `curl` et `jq`, comme le seed.
 
 ## 16. Les preuves
 
-- **Base (pgTAP)** : `public.can_read_manual()` existe, rend `true` au rôle `authenticated`, est refusée à `anon` et à
-  `public` par le privilège.
-- **Fonction (unitaires)** : routage des trois requêtes, refus sans en-tête, traduction d'un refus de PostgREST en
-  `401`, `404` sur un segment hors de forme sans lecture du disque, `405`, en-têtes de cache.
-- **API, par requête directe** (`CLAUDE.md` §10) : sans jeton, `401` sur le sommaire, un chapitre et une image ; avec un
-  jeton forgé, `401` ; avec la session réelle d'une lectrice, d'un business developer et d'une administratrice, `200` ;
-  un segment de traversée (`..`, encodé ou non), `404`.
+- **Base (pgTAP)** : le bucket `manual` existe et est privé ; la politique `manual_select` existe, en lecture, pour
+  `authenticated`, restreinte au bucket ; aucune autre politique ne nomme ce bucket ; sous le rôle `authenticated`, un
+  objet du bucket se lit ; sous `anon`, aucun ; sous `authenticated`, l'écriture est refusée.
+- **API, par requête directe** (`CLAUDE.md` §10) : sans jeton, ni le sommaire, ni un chapitre, ni une image ne se
+  lisent ; avec un jeton forgé, non plus ; avec la session réelle d'une lectrice, d'un business developer et d'une
+  administratrice, les trois se lisent ; aucune de ces sessions ne peut déposer, remplacer ni retirer un objet ; la
+  liste des objets du bucket est refusée sans session.
 - **Construction** : `manuel:verifier` vert sur le dépôt ; des sources dégradées sur une copie font échouer chacun des
   cinq refus du §15.
+- **Publication** : après publication, chaque fichier du manuel construit et chaque image est dans le bucket, à
+  l'octet près, et aucun autre objet ; un second passage ne change rien.
 - **Manuel** (`scripts/verify-manual.sh`, révisé) : aucune référence interne (§10, point 2), recherchée par motifs ;
   chaque libellé cité existe dans `webapp/src/i18n/fr.ts` ou est une donnée déclarée ; chaque élément cité est visible
   dans une image de sa section, d'après le manifeste, hors exceptions du §11.3 ; aucune image orpheline, aucune image
@@ -541,7 +528,8 @@ se pose donc pas.
 3. Le manuel construit est versionné, et vérifié contre sa source (§15).
 4. `marked` pour analyser le Markdown, en dépendance de développement, sous réserve de la mesure du `CLAUDE.md` §19
    (§15).
-5. La session est reconnue par une fonction SQL `public.can_read_manual()`, sans donner de secret à la fonction
-   `manual` (§14.2).
+5. ~~La session est reconnue par une fonction SQL `public.can_read_manual()`, sans donner de secret à la fonction
+   `manual` (§14.2).~~ **Révisé par la décision 751, sur une mesure** : le manuel est servi par un bucket de stockage
+   privé, sous une politique de lecture pour `authenticated` (§14) ; aucune fonction edge, aucune fonction SQL.
 6. L'icône de l'aide est `BookOpen` (`docs/DESIGN_SYSTEM.md` §5.69) : `CircleHelp` désigne déjà une étape non vérifiable
    du guide de démarrage, et le §9 du design system interdit qu'une icône serve deux objets.

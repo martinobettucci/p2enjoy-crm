@@ -35830,3 +35830,25 @@ du `CLAUDE.md` §19 ; la session jugée par `public.can_read_manual()` sans secr
 l'icône `BookOpen`. **Ordre d'exécution** : T2 commence par ce qui n'écrit pas dans la base de développement, que la
 session de `CRM-111` reconstruit pendant sa série de harnais ; la migration et les preuves sur la pile attendent son
 signal.
+
+### décision 751 — `CRM-117` : le manuel est servi par un bucket de stockage, et non par une fonction edge — une mesure l'impose
+
+*2026-10-26, à l'écriture du code de T2.* **Problème.** La spécification (§14 et §15, choix 5 validé par la décision
+750) servait le manuel par une fonction edge `manual` lisant `docs/manuel/` monté dans son conteneur, et faisait juger
+la session par `public.can_read_manual()`. **Mesuré** sur la pile de développement, par une fonction sonde jetable
+déposée puis retirée : un worker du runtime des fonctions edge **ne lit aucun fichier du disque** — ni dans son propre
+répertoire (`/home/deno/functions/<fonction>/`), ni par un chemin relatif à son module, ni dans le répertoire d'une
+autre fonction, ni `/etc/hostname` : `NotFound` sur les quatre. Le runtime compile le code et n'expose rien d'autre.
+Inclure le contenu dans la compilation l'aurait recompilé, images comprises, à chaque requête (`oneshot`,
+`noModuleCache`). **Décision** : le manuel est servi par le **stockage** — un bucket privé `manual`, une seule
+politique de lecture pour `authenticated`, aucune écriture hors de la clé de service —, le mécanisme qui protège déjà
+les pièces jointes (migrations 106 et 107). La publication recopie le manuel construit dans le bucket, en miroir, à la
+fin du seed et à chaque livraison. **Conséquences** : ni fonction edge, ni fonction SQL ; la migration
+`can_read_manual`, appliquée un instant en développement et jamais poussée, est retirée de la base (fonction et
+inscription au registre) ; le résultat voulu par la décision 736 — le manuel lu par les seuls membres connectés, règle
+tenue côté serveur — est inchangé. Révisés : `docs/SPEC-manual.md` §14 à §16 et §18, `docs/DAT.md` §3.7 quater,
+`docs/SCHEMA.md` §9 septies, `docs/BACKLOG.md` `CRM-117` T2 et T6. **Écart de méthode relevé au passage** : les
+migrations `0116` (de `CRM-116`) et dix antérieures, `0034` à `0043`, portent leur propre `begin` / `commit`, alors que le runner
+applique chaque fichier et son inscription au registre dans une seule transaction (`--single-transaction`) ; un
+`commit` dans le fichier ferme cette transaction avant l'inscription. Consigné en INC-318, sans modifier les
+fichiers déjà inscrits ; les migrations de `CRM-117` n'en portent pas.

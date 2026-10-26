@@ -16966,8 +16966,8 @@ responsable** : traitée juste après `CRM-116`.*
       §18 ; les §3 points 2 et 4 et le §4 de la partie I tombent), `docs/DESIGN_SYSTEM.md` §5.69, `docs/SPEC-webapp.md`
       §5.1 bis et §5.2, `docs/DAT.md` §3.7 quater, `docs/SCHEMA.md` §9 septies. Six choix de l'agent marqués pour
       relecture (`docs/SPEC-manual.md` §18) ; connecteur MCP : non.
-- [ ] **T2 — le socle** : `public.can_read_manual()` (migration au prochain numéro libre, pgTAP) ; la fonction edge
-      `manual` et le montage de `docs/manuel/` (unitaires, preuves d'API par requête directe) ; la construction et sa
+- [ ] **T2 — le socle** : le bucket `manual` et sa politique de lecture (deux migrations aux prochains numéros
+      libres, pgTAP, preuves d'API par requête directe ; décision 751) ; la publication `scripts/manuel/publier.sh` ; la construction et sa
       vérification (`marked` après la mesure du `CLAUDE.md` §19) ; `/aide` et `/aide/:chapitre`, le rendu en blocs,
       l'icône « Aide » et son panneau, `aide-ecrans.ts` (unitaires, E2E, paliers, captures observées). Sur le manuel
       tel qu'il est : la réécriture suit.
@@ -16981,4 +16981,4 @@ responsable** : traitée juste après `CRM-116`.*
       au responsable.
 - [ ] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
       `CHANGELOG.md`, contrat de déploiement.
-- [ ] **T6 — livraison**, sur instruction du responsable : migration, montage et fonction `manual`, webapp.
+- [ ] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.

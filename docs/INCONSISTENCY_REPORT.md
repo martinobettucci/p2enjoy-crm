@@ -8119,3 +8119,22 @@ rien ; un membre ne liste jamais une pièce `infected` ou `pending`, ni celle d'
 infectée listée par personne, rien pour l'anonyme ni pour la lectrice), vert ; le §15.5 renvoie au §18.5. **Statut :
 résolue.**
 
+
+### INC-318 — Onze migrations portent leur propre `commit`, qui ferme la transaction du runner avant l'inscription au registre
+
+*Relevé le 2026-10-26 par `CRM-117` (décision 751), en appliquant une migration en développement.* **Constat** : le
+runner applique chaque fichier **et** son inscription au registre dans une seule transaction (`psql
+--single-transaction --file <migration> --file <inscription>`, `supabase/docker/migrations-runner/apply-migrations.sh`).
+Un fichier qui porte son propre `begin;` … `commit;` **ferme cette transaction** avant que l'inscription ne passe : psql
+le signale par « there is already a transaction in progress » puis « there is no transaction in progress ».
+L'inscription se fait alors dans une transaction à elle. **Onze fichiers sont concernés** : `0034` à `0043`, et `0116`, écrite par
+`CRM-116` le même jour. Les plus récentes (`0119` à `0125`) n'en portent pas.
+
+**Conséquence** : la garantie « une migration appliquée est une migration inscrite » ne tient plus pour ces fichiers.
+Si l'inscription échouait après le `commit` du fichier, la migration serait appliquée sans être inscrite, et le
+passage suivant la rejouerait. Aucun cas n'est observé : les onze sont inscrites en développement ; la production n'a pas été lue.
+
+**Non corrigé** : un fichier inscrit ne se modifie plus (le runner refuse une empreinte changée), et la correction
+serait une migration nouvelle sans objet. **Issue proposée** : que le runner refuse un fichier portant un `begin;` ou
+un `commit;` de premier niveau, avec une liste d'exceptions pour les onze déjà inscrits, et que
+`docs/DAT.md` §3.2 bis écrive la règle. À arbitrer par le responsable.
