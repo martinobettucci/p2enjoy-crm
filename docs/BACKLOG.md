@@ -16740,9 +16740,14 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           pose le rattachement, tant que `cards` porte ses colonnes non nulles : la poste du rattachement passe à T2.4.5.
           Aucun autre script que les harnais de preuve (T2.4.4) ne lit une colonne de rattachement. Preuves au journal.
         - [ ] **T2.4.4 — les preuves** : pgTAP et specs lisent le rattachement là où elles lisaient `cards`.
+          *Découpage (2026-10-26, mesuré)* : les **lectures** et les **mises à jour** de colonnes de rattachement passent à
+          `card_placements` dans cette étape — pgTAP (dont 13 fichiers qui mettent à jour ces colonnes), specs API et
+          d'interface, harnais `verify-*` (24 scripts). Les **créations** d'affaires des preuves (12 fichiers pgTAP, 4
+          specs API) restent celles de l'affaire, dont le miroir pose le rattachement, et passent à T2.4.5 avec le seed :
+          `cards` porte ses colonnes non nulles jusque-là.
         - [ ] **T2.4.5 — le retrait en base** : colonnes, miroirs et index de `cards` retirés ; les dix fonctions
-          réécrites ; `creer_affaire` écrit le rattachement ; le seed poste l'affaire puis son rattachement (venu de
-          T2.4.3, décision 746) ; scores de santé transportés ; politiques de `cards` sous
+          réécrites ; `creer_affaire` écrit le rattachement ; le seed et les preuves (pgTAP, API) postent l'affaire
+          puis son rattachement (venu de T2.4.3 et T2.4.4, décision 746) ; scores de santé transportés ; politiques de `cards` sous
           la forme optimisée ; types régénérés ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
       *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
