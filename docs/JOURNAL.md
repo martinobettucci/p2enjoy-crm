@@ -35749,3 +35749,19 @@ Les services `mcp` et `mail-sync` de la pile de développement ont été reconst
 (dont l'intégration contre la vraie base), interface du connecteur 16/16 ; pytest de `mail-sync` 258 passés (conteneur
 jetable `python:3.13.13-slim-bookworm`, faute d'environnement local), preuve mail 45/45. **Déploiement** : les deux
 services sont à reconstruire avec la tranche ; aucune migration.
+
+### décision 746 — `CRM-111` T2.4.3 : le seed écrit les rattachements par un privilège de `service_role`
+
+*2026-10-26, réponse du responsable (question posée par `AskUserQuestion`, session interactive), avant le code de l'étape.*
+**Question.** Le seed crée ses affaires par la clé de service (`POST /rest/v1/cards`, identifiants stables dont dépendent
+tests et captures) ; le miroir d'insertion en fait le premier rattachement. Après le retrait des miroirs (T2.4.5), il doit
+écrire le rattachement lui-même, et `service_role` ne fait que lire `card_placements`. Trois voies : un privilège de
+service, une fonction dédiée au seed, ou les vraies fonctions métier (`creer_affaire`, `attach_card`), qui ne prennent pas
+d'identifiant.
+
+**Décision : le privilège de service.** Une migration de T2.4.3 accorde à `service_role` l'insertion sur
+`card_placements` et la mise à jour des colonnes que le seed pose, comme il les a déjà sur `cards`. Le seed poste l'affaire
+puis son rattachement, à identifiants stables. La RLS des utilisateurs ne change pas : `authenticated` n'écrit toujours un
+rattachement que par les fonctions et les colonnes ouvertes. **Conséquence** : `docs/SPEC-rattachements.md` §12 le dit ;
+la démonstration des règles à plusieurs rattachements (deux channels, un archivé, un en sommeil) reste celle du §12, posée
+par la tranche qui livre `attach_card`.

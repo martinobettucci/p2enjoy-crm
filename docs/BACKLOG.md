@@ -16732,10 +16732,9 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           `mail-sync` situe le dossier d'une affaire par son plus ancien rattachement. Contrats inchangés. Preuves au
           journal : pytest du connecteur 209, `verify-mcp.sh` 88/88, interface du connecteur 16/16 ; pytest de `mail-sync`
           258, preuve mail 45/45.
-        - [ ] **T2.4.3 — le seed et les scripts** : lectures et écritures par le rattachement. *Question ouverte, à
-          trancher avant le code de l'étape* : le seed crée ses affaires par la clé de service, à identifiants stables ;
-          sans miroir, il lui faut écrire le rattachement — privilège d'insertion de `service_role` sur
-          `card_placements`, comme sur `cards`, ou fonction dédiée.
+        - [ ] **T2.4.3 — le seed et les scripts** : lectures et écritures par le rattachement. *Tranché (décision 746)* :
+          une migration accorde à `service_role` l'insertion sur `card_placements` et la mise à jour des colonnes que le
+          seed pose, comme sur `cards` ; le seed poste l'affaire puis son rattachement, à identifiants stables.
         - [ ] **T2.4.4 — les preuves** : pgTAP et specs lisent le rattachement là où elles lisaient `cards`.
         - [ ] **T2.4.5 — le retrait en base** : colonnes, miroirs et index de `cards` retirés ; les dix fonctions
           réécrites ; `creer_affaire` écrit le rattachement ; scores de santé transportés ; politiques de `cards` sous

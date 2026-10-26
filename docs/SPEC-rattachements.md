@@ -463,6 +463,10 @@ matrice ; d'ici là, c'est `affaires`.
 
 ## 12. Seed
 
+**Écriture par le seed (décision 746, `CRM-111` T2.4.3).** Le seed garde ses identifiants stables : il poste l'affaire
+(`cards`) puis son rattachement (`card_placements`) par la clé de service, à qui une migration accorde l'insertion et la
+mise à jour des colonnes qu'il pose, comme sur `cards`. Les droits de `authenticated` ne changent pas.
+
 Le seed doit démontrer chaque règle, par les vraies fonctions (`creer_affaire`, `attach_card`) :
 
 - une affaire rattachée à **deux channels de deux tracks** — une vente et une production —, avec deux responsables,
