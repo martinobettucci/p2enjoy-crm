@@ -4,6 +4,8 @@
 // @spec docs/SPEC-types.md §4
 // @spec CRM-105 (docs/BACKLOG.md) — `description` lue pour l'infobulle du titre de la ligne
 //       (docs/SPEC-cards.md §12.3, docs/DESIGN_SYSTEM.md §5.58, décision 629)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la liste lit les RATTACHEMENTS du channel, l'affaire en plongement
+//       (docs/SPEC-rattachements.md §8, §14)
 //
 // CE MODULE N'IMPORTE RIEN, ET C'EST TOUT SON OBJET.
 //
@@ -33,8 +35,14 @@
  * bascule (docs/SPEC-cards.md §16.12.7). Le filtre, lui, s'applique au serveur et n'a pas besoin
  * que la colonne soit rapportée — c'est la marque qui l'exige.
  */
-export const COLONNES_CARD_LISTE =
-	'id, title, description, amount, currency, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url)'
+//
+// `CRM-111` T2.4.1 : la requête part des RATTACHEMENTS du channel — montant, prochaine action, étape, responsable, sommeil
+// sont les leurs — et plonge l'affaire (`affaire:cards!inner`) pour le titre, la description, la devise, la date de
+// création et la recherche. La ligne rendue à l'écran est inchangée (`ligneDepuisRattachement`, `liste-cards.ts`).
+// PostgREST ne trie sur `affaire(…)` qu'une colonne que le plongement SÉLECTIONNE (mesuré, `42703`) : `id`, `title` et
+// `created_at` y sont donc, même ceux que la ligne n'affiche pas.
+export const COLONNES_RATTACHEMENT_LISTE =
+	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at)'
 
 /**
  * Nombre de lignes d'une page.

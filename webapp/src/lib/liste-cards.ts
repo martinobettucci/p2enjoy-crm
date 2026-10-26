@@ -10,6 +10,8 @@
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.9 (tableau)
 // @spec CRM-105 (docs/BACKLOG.md) — `description` portée par chaque ligne, pour l'infobulle du titre
 //       (docs/SPEC-cards.md §12.3, docs/DESIGN_SYSTEM.md §5.58)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la page lit les rattachements du channel, le tri et la recherche
+//       traduits vers l'affaire plongée là où ils la visent (docs/SPEC-rattachements.md §8)
 //
 // Ce module ne rend rien : il **compose**, et il lit. La séparation est ce qui rend les règles du
 // §12 vérifiables sans navigateur — la clôture des tris, l'ordre total, le repli des paramètres
@@ -23,7 +25,7 @@ import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './a
 // La lecture des étapes n'est **pas** réécrite ici : elle vit dans le module du board et la liste
 // l'importe (décision 188). La même donnée lue deux fois finit par être lue de deux façons.
 import { lireEtapes, resoudreEtape, type EtapeBoard } from './board'
-import { CODE_PAGE_INEXISTANTE, COLONNES_CARD_LISTE, LIGNES_PAR_PAGE } from './colonnes-liste'
+import { CODE_PAGE_INEXISTANTE, COLONNES_RATTACHEMENT_LISTE, LIGNES_PAR_PAGE } from './colonnes-liste'
 import type { Database } from './database.types'
 import {
 	CLE_URL_SOMMEIL,
@@ -36,7 +38,7 @@ import {
 import type { ProfilAffiche } from './identites'
 import type { ClientCrm } from './supabase'
 
-export { CODE_PAGE_INEXISTANTE, COLONNES_CARD_LISTE, LIGNES_PAR_PAGE } from './colonnes-liste'
+export { CODE_PAGE_INEXISTANTE, COLONNES_RATTACHEMENT_LISTE, LIGNES_PAR_PAGE } from './colonnes-liste'
 export {
 	CLE_URL_SOMMEIL,
 	MODE_SOMMEIL_PAR_DEFAUT,
@@ -100,6 +102,41 @@ export function ordreDe(tri: CleTri, sens: SensTri): readonly OrdreColonne[] {
 					{ colonne: 'id', ascendant: true, nullsFirst: false },
 				]
 	return [principal, ...departage]
+}
+
+/**
+ * La colonne que PostgREST trie, depuis le nom abstrait que `ordreDe` rend (`CRM-111` T2.4.1). La page part des
+ * rattachements : le titre, la date de création et l'identifiant de départage sont ceux de l'AFFAIRE plongée — le
+ * comportement d'avant, à l'identique —, le montant et l'échéance ceux du rattachement.
+ */
+export function colonneTriee(colonne: string): string {
+	return colonne === 'title' || colonne === 'created_at' || colonne === 'id' ? `affaire(${colonne})` : colonne
+}
+
+/** Une ligne lue par `lirePageCards` : le rattachement, l'affaire en plongement. */
+export type RattachementListe = Pick<
+	Database['public']['Tables']['card_placements']['Row'],
+	'id' | 'amount' | 'next_action' | 'next_action_at' | 'current_step_id' | 'owner_id' | 'snoozed_until'
+> & {
+	readonly responsable: ProfilAffiche | null
+	readonly affaire: Pick<Database['public']['Tables']['cards']['Row'], 'id' | 'title' | 'description' | 'currency'>
+}
+
+/** La ligne d'avant, depuis le rattachement lu (`CRM-111` T2.4.1) : l'affaire désignée par son identifiant. */
+export function ligneDepuisRattachement(ligne: RattachementListe): CardListe {
+	return {
+		id: ligne.affaire.id,
+		title: ligne.affaire.title,
+		description: ligne.affaire.description,
+		currency: ligne.affaire.currency,
+		amount: ligne.amount,
+		next_action: ligne.next_action,
+		next_action_at: ligne.next_action_at,
+		current_step_id: ligne.current_step_id,
+		owner_id: ligne.owner_id,
+		snoozed_until: ligne.snoozed_until,
+		responsable: ligne.responsable ?? null,
+	}
 }
 
 // --- Les paramètres d'adresse (§12.2) --------------------------------------------------------
@@ -322,12 +359,14 @@ export async function lirePageCards(
 	},
 ): Promise<EtatAsync<ContenuListe>> {
 	try {
+		// `CRM-111` T2.4.1 : les RATTACHEMENTS du channel, l'affaire plongée ; le rattachement archivé et l'affaire en
+		// corbeille sont exclus côté serveur, comme avant.
 		let requete = client
-			.from('cards')
-			.select(COLONNES_CARD_LISTE, { count: 'exact' })
+			.from('card_placements')
+			.select(COLONNES_RATTACHEMENT_LISTE, { count: 'exact' })
 			.eq('channel_id', channelId)
 			.is('archived_at', null)
-			.is('deleted_at', null)
+			.is('affaire.deleted_at', null)
 		// LE FILTRE DU SOMMEIL EST AU SERVEUR, comme les deux autres et pour la même raison (§12.5,
 		// §16.12.3) : la vue liste pagine et compte. Appliqué après la pagination, il ne verrait que
 		// les 25 lignes rapportées, et le total annoncerait des pages qui n'existent pas.
@@ -359,13 +398,13 @@ export async function lirePageCards(
 			// queue** (`PGRST_DB_EXTRA_SEARCH_PATH`, gabarit `.env.example`). En queue parce que
 			// `mail_template_variables` existe dans `app` ET dans `public` : `app` en tête aurait
 			// changé la fonction résolue par un appel non qualifié.
-			requete = requete.textSearch('search_tsv', parametres.recherche, {
+			requete = requete.textSearch('affaire.search_tsv', parametres.recherche, {
 				config: 'francais_sans_accent',
 				type: 'plain',
 			})
 		}
 		for (const critere of ordreDe(parametres.tri, parametres.sens)) {
-			requete = requete.order(critere.colonne, {
+			requete = requete.order(colonneTriee(critere.colonne), {
 				ascending: critere.ascendant,
 				nullsFirst: critere.nullsFirst,
 			})
@@ -379,7 +418,7 @@ export async function lirePageCards(
 					? null
 					: { code: reponse.error.code, message: reponse.error.message },
 			donnees:
-				reponse.data?.map((card) => ({ ...card, responsable: card.responsable ?? null })) ?? null,
+				reponse.data?.map(ligneDepuisRattachement) ?? null,
 			total: reponse.count,
 		})
 	} catch (cause) {

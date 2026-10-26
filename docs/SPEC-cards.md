@@ -718,6 +718,13 @@ avant d'entrer dans une requête.
 
 ### 12.3 Ce que la liste lit, et en combien de requêtes
 
+**Révisé par `CRM-111` T2.4.1** (docs/SPEC-rattachements.md §8) : la page part des **rattachements** du channel et plonge
+l'affaire. Le montant, l'échéance, l'étape, le responsable et le sommeil sont ceux du rattachement ; le titre, la
+description, la devise, la date de création et la recherche plein texte (`affaire.search_tsv`), ceux de l'affaire. Le
+tri par titre ou par création, et le départage, portent sur l'affaire (`affaire(title)`, `affaire(created_at)`,
+`affaire(id)`) — et le plongement doit SÉLECTIONNER chacune de ces colonnes, PostgREST refusant (`42703`) de trier sur
+une colonne qu'il ne rapporte pas. La ligne rendue à l'écran est inchangée (`ligneDepuisRattachement`).
+
 | # | Source | Filtre | Ordre | Motif |
 |---|---|---|---|---|
 | 0 | le channel courant | résolu **dans la liste déjà chargée** par la coquille | — | aucune requête, comme au §7.2 de `docs/SPEC-workflow-engine.md` |

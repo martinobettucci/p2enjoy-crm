@@ -35613,3 +35613,19 @@ tenue en un seul endroit, et la spécification de `CRM-117` T1 la nomme.
 **Le découpage est révisé** : le socle technique (T2) vient avant la réécriture (T3) et les images (T4), pour que la
 réécriture se relise dans la surface même où le lecteur la lira, et que les images se placent dans un rendu réel. Les
 six choix de l'agent sont listés au §18 de la spécification, pour la relecture du responsable.
+
+### `CRM-111` T2.4.1, étape 1 — le board et la vue liste lisent les rattachements (2026-10-26)
+
+*2026-10-26, session interactive.* Le board (lecture n° 3) et la page de la vue liste partent des rattachements du
+channel (`card_placements`, archivés exclus) et plongent l'affaire (`affaire:cards!inner(…)`, dont la corbeille filtre
+les rattachements) ; les écrans reçoivent la même carte et la même ligne qu'avant (`carteDepuisRattachement`,
+`ligneDepuisRattachement`). La liste trie le titre, la création et le départage sur l'affaire (`affaire(title)`,
+`affaire(created_at)`, `affaire(id)`), le montant et l'échéance sur le rattachement ; la recherche porte sur
+`affaire.search_tsv`. **Mesuré en l'écrivant, et c'est un piège** : PostgREST refuse (`42703`, « column …_affaire_1.id
+does not exist ») de trier sur une colonne d'un plongement qu'il ne SÉLECTIONNE pas. La première constante de la liste
+ne rapportait pas `created_at` : le tri par date de création aurait rompu la page. La spec d'API l'a trouvé ; un test
+unitaire impose désormais que chaque colonne triée de l'affaire soit sélectionnée. Preuves : unitaires 4518/4518 ;
+API 1230/1231 (`ingestion.spec.ts:91`, étranger) ; interface du board 24/24 et de la liste 31/31, capture du board
+observée ; `verify-liste.sh` 70/71 — son rouge, « une classe citée n'existe pas : `succes` », est un faux positif du
+contrôle de classes sur une valeur de ton de message (`PlateformeEspace.tsx`, `BlocRgpdContact.tsx`), étranger à la
+tranche.

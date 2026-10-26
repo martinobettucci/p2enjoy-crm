@@ -10,6 +10,8 @@
 //       le compteur et le cumul deviennent), §16.13.3 (ce que la carte devient après le geste)
 // @spec docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne de board)
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : le board lit les rattachements du channel, l'affaire en plongement,
+//       et rend aux écrans la même carte (docs/SPEC-rattachements.md §8, §14)
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape INITIALE résolue avec chaque colonne
 //       (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
 // @spec CRM-105 (docs/BACKLOG.md) — `description` portée par chaque card, pour l'infobulle du titre
@@ -29,8 +31,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import { ancienneteDepassee, joursDansEtape, seuilEffectif } from './carte-figee'
 import {
-	COLONNES_CARD_BOARD,
 	COLONNES_CHAMP_LIBELLE,
+	COLONNES_RATTACHEMENT_BOARD,
 	COLONNES_ETAPE,
 	COLONNES_TRANSITION,
 } from './colonnes-board'
@@ -124,8 +126,8 @@ export type ChampLibelle = Pick<Database['public']['Tables']['form_fields']['Row
 // autre projet TypeScript et ne peut pas importer un module du navigateur — mesuré, elle échoue
 // sur `webapp/src/lib/supabase.ts` (docs/SPEC-workflow-engine.md §7.2).
 export {
-	COLONNES_CARD_BOARD,
 	COLONNES_CHAMP_LIBELLE,
+	COLONNES_RATTACHEMENT_BOARD,
 	COLONNES_ETAPE,
 	COLONNES_TRANSITION,
 } from './colonnes-board'
@@ -572,20 +574,67 @@ export async function lireCards(
 	channelId: string,
 ): Promise<EtatAsync<readonly CardBoard[]>> {
 	try {
+		// `CRM-111` T2.4.1 : les RATTACHEMENTS du channel, l'affaire en plongement (docs/SPEC-rattachements.md §8). Le
+		// rattachement archivé et l'affaire en corbeille sont exclus côté serveur, comme avant.
 		const reponse = await client
-			.from('cards')
-			.select(COLONNES_CARD_BOARD)
+			.from('card_placements')
+			.select(COLONNES_RATTACHEMENT_BOARD)
 			.eq('channel_id', channelId)
 			.is('archived_at', null)
-			.is('deleted_at', null)
+			.is('affaire.deleted_at', null)
 			.order('position')
-			.order('title')
+			.order('affaire(title)')
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
-		return pret(reponse.data.map((card) => ({ ...card, responsable: card.responsable ?? null })))
+		return pret(reponse.data.map(carteDepuisRattachement))
 	} catch (cause) {
 		return enErreur(surException(cause))
+	}
+}
+
+/** Une ligne lue par `lireCards` : le rattachement, et l'affaire en plongement. */
+export type RattachementBoard = Pick<
+	Database['public']['Tables']['card_placements']['Row'],
+	| 'id'
+	| 'created_at'
+	| 'position'
+	| 'amount'
+	| 'next_action'
+	| 'current_step_id'
+	| 'entered_step_at'
+	| 'owner_id'
+	| 'snoozed_until'
+> & {
+	readonly responsable: ProfilAffiche | null
+	readonly affaire: Pick<
+		Database['public']['Tables']['cards']['Row'],
+		'id' | 'title' | 'description' | 'currency' | 'email_local_part' | 'health_momentum' | 'health_commercial'
+	>
+}
+
+/**
+ * La carte du board, depuis le rattachement lu (`CRM-111` T2.4.1) : la forme rendue à l'écran est celle d'avant — l'affaire
+ * désignée par son identifiant, son rattachement dans `card_placements`, comme `RattachementsLus` le veut.
+ */
+export function carteDepuisRattachement(ligne: RattachementBoard): CardBoard {
+	return {
+		id: ligne.affaire.id,
+		title: ligne.affaire.title,
+		description: ligne.affaire.description,
+		currency: ligne.affaire.currency,
+		email_local_part: ligne.affaire.email_local_part,
+		health_momentum: ligne.affaire.health_momentum,
+		health_commercial: ligne.affaire.health_commercial,
+		position: ligne.position,
+		amount: ligne.amount,
+		next_action: ligne.next_action,
+		current_step_id: ligne.current_step_id,
+		entered_step_at: ligne.entered_step_at,
+		owner_id: ligne.owner_id,
+		snoozed_until: ligne.snoozed_until,
+		responsable: ligne.responsable ?? null,
+		card_placements: [{ id: ligne.id, created_at: ligne.created_at }],
 	}
 }
 

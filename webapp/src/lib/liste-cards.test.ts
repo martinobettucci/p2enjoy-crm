@@ -12,12 +12,13 @@
 //
 // La composition, elle, est éprouvée **sans navigateur** : c'est tout l'objet de la séparation
 // entre `liste-cards.ts` et `ListeCards.tsx`.
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la page lit les rattachements du channel (docs/SPEC-rattachements.md §8)
 
 import { describe, expect, it } from 'vitest'
 import {
 	CLES_URL,
 	CODE_PAGE_INEXISTANTE,
-	COLONNES_CARD_LISTE,
+	COLONNES_RATTACHEMENT_LISTE,
 	LIGNES_PAR_PAGE,
 	PARAMETRES_PAR_DEFAUT,
 	TRIS,
@@ -28,6 +29,8 @@ import {
 	lireParametres,
 	lirePageCards,
 	nombreDePages,
+	colonneTriee,
+	ligneDepuisRattachement,
 	ordreDe,
 	plageDe,
 	type CardListe,
@@ -60,6 +63,12 @@ function card(partiel: Partial<CardListe> & Pick<CardListe, 'id'>): CardListe {
 		responsable: null,
 		...partiel,
 	}
+}
+
+/** La ligne d'essai, à la forme que la page lit depuis `CRM-111` T2.4.1 : le rattachement, l'affaire plongée. */
+function enRattachement(ligne: CardListe) {
+	const { id, title, description, currency, ...rattachement } = ligne
+	return { ...rattachement, id: `rattachement-${id}`, affaire: { id, title, description, currency } }
 }
 
 // --- Le tri (§12.4) --------------------------------------------------------------------------
@@ -395,22 +404,24 @@ describe('la lecture d’une page (§12.3)', () => {
 	it('demande les colonnes du §12.7, et pas une de plus', async () => {
 		const { client, appel } = clientEspion(OK)
 		await lirePageCards(client, { channelId: CHANNEL, parametres: parametres() })
-		expect(appel.table).toBe('cards')
-		expect(appel.colonnes).toBe(COLONNES_CARD_LISTE)
+		// `CRM-111` T2.4.1 : la page part des rattachements du channel.
+		expect(appel.table).toBe('card_placements')
+		expect(appel.colonnes).toBe(COLONNES_RATTACHEMENT_LISTE)
 	})
 
 	it('embarque le responsable et ne demande aucune colonne non affichée', () => {
-		expect(COLONNES_CARD_LISTE).toContain('owner_id')
-		expect(COLONNES_CARD_LISTE).toContain('responsable:profiles!cards_owner_id_fkey')
+		expect(COLONNES_RATTACHEMENT_LISTE).toContain('owner_id')
+		expect(COLONNES_RATTACHEMENT_LISTE).toContain('responsable:profiles!card_placements_owner_id_fkey')
+		expect(COLONNES_RATTACHEMENT_LISTE).toContain('affaire:cards!inner(')
 		for (const absente of ['position', 'health_score']) {
-			expect(COLONNES_CARD_LISTE).not.toContain(absente)
+			expect(COLONNES_RATTACHEMENT_LISTE).not.toContain(absente)
 		}
 	})
 
 	// @verifies CRM-105 — docs/SPEC-cards.md §12.3, docs/DESIGN_SYSTEM.md §5.58 : la description est
 	// affichée en infobulle sur le titre de la ligne, donc demandée dans la requête de la page.
 	it('demande `description`, affichée en infobulle', () => {
-		expect(COLONNES_CARD_LISTE).toContain('description')
+		expect(COLONNES_RATTACHEMENT_LISTE).toContain('description')
 	})
 
 	// MESURÉ : `count=planned` rend 1 là où la table en porte 3 (décision 187).
@@ -425,7 +436,7 @@ describe('la lecture d’une page (§12.3)', () => {
 		const { client, appel } = clientEspion(OK)
 		await lirePageCards(client, { channelId: CHANNEL, parametres: parametres() })
 		expect(appel.egalites).toContainEqual(['channel_id', CHANNEL])
-		expect(appel.nuls).toEqual(['archived_at', 'deleted_at'])
+		expect(appel.nuls).toEqual(['archived_at', 'affaire.deleted_at'])
 	})
 
 	it('envoie l’ordre TOTAL du §12.4, dans l’ordre', async () => {
@@ -434,10 +445,11 @@ describe('la lecture d’une page (§12.3)', () => {
 			channelId: CHANNEL,
 			parametres: parametres({ tri: 'amount', sens: 'desc' }),
 		})
+		// `CRM-111` T2.4.1 : le montant est celui du rattachement ; le titre et l'identifiant de départage, ceux de l'affaire.
 		expect(appel.tris).toEqual([
 			['amount', { ascending: false, nullsFirst: false }],
-			['title', { ascending: true, nullsFirst: false }],
-			['id', { ascending: true, nullsFirst: false }],
+			['affaire(title)', { ascending: true, nullsFirst: false }],
+			['affaire(id)', { ascending: true, nullsFirst: false }],
 		])
 	})
 
@@ -474,7 +486,7 @@ describe('la lecture d’une page (§12.3)', () => {
 			parametres: parametres({ recherche: 'refonte' }),
 		})
 		expect(appel.recherches).toEqual([
-			['search_tsv', 'refonte', { config: 'francais_sans_accent', type: 'plain' }],
+			['affaire.search_tsv', 'refonte', { config: 'francais_sans_accent', type: 'plain' }],
 		])
 	})
 
@@ -492,7 +504,7 @@ describe('la lecture d’une page (§12.3)', () => {
 
 	it('rend la page et son total lorsque la pile répond', async () => {
 		const { client } = clientEspion({
-			data: [card({ id: 'c1' }), card({ id: 'c2' })],
+			data: [enRattachement(card({ id: 'c1' })), enRattachement(card({ id: 'c2' }))],
 			error: null,
 			status: 206,
 			count: 42,
@@ -537,6 +549,34 @@ describe('la lecture d’une page (§12.3)', () => {
 		expect(plageDe(2).de).toBe(LIGNES_PAR_PAGE)
 	})
 
+	it('recompose la ligne d’avant depuis le rattachement : l’affaire désignée par son identifiant', () => {
+		const ligne = card({ id: 'c1', title: 'Refonte', amount: 12000, owner_id: 'p-1' })
+		expect(ligneDepuisRattachement(enRattachement(ligne))).toEqual(ligne)
+	})
+
+	it('trie le titre, la création et le départage sur l’affaire, le montant et l’échéance sur le rattachement', () => {
+		expect(['title', 'created_at', 'id', 'amount', 'next_action_at'].map(colonneTriee)).toEqual([
+			'affaire(title)',
+			'affaire(created_at)',
+			'affaire(id)',
+			'amount',
+			'next_action_at',
+		])
+	})
+
+	// MESURÉ (`CRM-111` T2.4.1) : PostgREST rend `42703` sur un tri `affaire(colonne)` dont le plongement ne sélectionne
+	// pas la colonne. Sans ce test, le tri par date de création aurait rompu la page en silence.
+	it('sélectionne dans le plongement chaque colonne de l’affaire que le tri ou le départage emploient', () => {
+		const plongement = /affaire:cards!inner\(([^)]*)\)/.exec(COLONNES_RATTACHEMENT_LISTE)?.[1] ?? ''
+		const selectionnees = plongement.split(',').map((colonne) => colonne.trim())
+		for (const tri of TRIS) {
+			for (const critere of ordreDe(tri.cle, tri.sensParDefaut)) {
+				const colonne = colonneTriee(critere.colonne)
+				if (colonne.startsWith('affaire(')) expect(selectionnees).toContain(colonne.slice(8, -1))
+			}
+		}
+	})
+
 	it('accepte chacune des quatre clés de tri sans en refuser aucune', async () => {
 		for (const tri of TRIS) {
 			const { client, appel } = clientEspion(OK)
@@ -544,7 +584,7 @@ describe('la lecture d’une page (§12.3)', () => {
 				channelId: CHANNEL,
 				parametres: parametres({ tri: tri.cle as CleTri, sens: tri.sensParDefaut }),
 			})
-			expect(appel.tris[0]?.[0]).toBe(tri.cle)
+			expect(appel.tris[0]?.[0]).toBe(colonneTriee(tri.cle))
 		}
 	})
 })
@@ -662,6 +702,6 @@ describe('le filtre du sommeil dans la requête de page (§16.12.1, §16.12.3)',
 	// La colonne doit être RAPPORTÉE, non pour le filtre — il est au serveur — mais pour la marque
 	// des lignes rendues visibles (§16.12.7).
 	it('demande `snoozed_until`, dont la pastille compacte a besoin', () => {
-		expect(COLONNES_CARD_LISTE).toContain('snoozed_until')
+		expect(COLONNES_RATTACHEMENT_LISTE).toContain('snoozed_until')
 	})
 })

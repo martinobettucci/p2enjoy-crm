@@ -8,6 +8,7 @@
 #           §11 (classes réellement engendrées), §12.6 (débordement signalé)
 # @verifies docs/INCONSISTENCY_REPORT.md INC-021 (webapp anonyme), INC-067 (représentation de
 #           `cards.amount`) ; CRM-022 ferme INC-014 par une identité embarquée
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la page lit les rattachements du channel (docs/SPEC-rattachements.md §8)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-042` :
 #
@@ -255,11 +256,12 @@ done
 
 # CRM-022 ferme INC-014 : la liste demande l'identifiant de relation et le profil embarqué, sans
 # lecture supplémentaire par ligne. Le contrôle porte sur la déclaration réellement envoyée.
-colonnes_demandees=$(grep -A2 "^export const COLONNES_CARD_LISTE" "$COLONNES" | tr -d '\n')
+# RÉVISÉ PAR `CRM-111` T2.4.1 : la page lit les RATTACHEMENTS du channel ; le responsable est celui du rattachement.
+colonnes_demandees=$(grep -A2 "^export const COLONNES_RATTACHEMENT_LISTE" "$COLONNES" | tr -d '\n')
 # RÉVISÉ LE 2026-10-25 (décision 704, INC-309), PARCE QUE LA RÈGLE A CHANGÉ : `description` est demandée et AFFICHÉE
 # depuis `CRM-105`, en infobulle sur le titre de la ligne (docs/DESIGN_SYSTEM.md §5.58, décision 629). Elle passe des
 # colonnes absentes aux colonnes présentes ; `position` et `health_score` restent absentes.
-for presente in owner_id 'responsable:profiles!cards_owner_id_fkey' description; do
+for presente in owner_id 'responsable:profiles!card_placements_owner_id_fkey' description; do
 	if printf '%s' "$colonnes_demandees" | grep -qF "$presente"; then
 		ok "$presente est demandée pour nommer le responsable (§12.3, CRM-022)"
 	else
@@ -410,8 +412,8 @@ else
 
 	# D5 — le total redevient estimé. MESURÉ : `count=planned` rend 1 là où la table en porte 3.
 	degradation "le total redevient estimé (§12.3 nié)" "$MODULE" \
-		"			.select(COLONNES_CARD_LISTE, { count: 'exact' })" \
-		"			.select(COLONNES_CARD_LISTE, { count: 'planned' })" unit
+		"			.select(COLONNES_RATTACHEMENT_LISTE, { count: 'exact' })" \
+		"			.select(COLONNES_RATTACHEMENT_LISTE, { count: 'planned' })" unit
 
 	# D6 — le `416` est absorbé comme une erreur ordinaire : l'écran afficherait « Chargement
 	# impossible » à qui a seulement gardé son onglet ouvert (§12.6, règle 2).
@@ -437,10 +439,11 @@ else
 		"			.is('archived_at', null)" \
 		"			.is('workspace_id', null) // dégradation" unit
 
-	# D10 — la recherche repasse en `ilike`, qui ne peut pas employer l'index GIN de `search_tsv`.
+	# D10 — la recherche repasse en `ilike`, qui ne peut pas employer l'index GIN de `search_tsv` (celle de l'affaire plongée
+	# depuis `CRM-111` T2.4.1).
 	degradation "la recherche quitte search_tsv (§12.5 nié)" "$MODULE" \
-		"			requete = requete.textSearch('search_tsv', parametres.recherche, {" \
-		"			requete = requete.ilike('title', \`%\${parametres.recherche}%\`); void ((x: unknown) => x)({" unit
+		"			requete = requete.textSearch('affaire.search_tsv', parametres.recherche, {" \
+		"			requete = requete.ilike('affaire.title', \`%\${parametres.recherche}%\`); void ((x: unknown) => x)({" unit
 
 	# D11 — l'état vide cesse de remplacer le tableau : la carcasse d'en-têtes revient, et c'est
 	# exactement ce que la capture a dénoncé (§12.7 bis, décision 190).

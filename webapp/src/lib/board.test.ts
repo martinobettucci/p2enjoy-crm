@@ -6,6 +6,7 @@
 //           colonnes), §7.4 (ancienneté), §7.5 (transitions atteignables), §7.9 (optimisme et
 //           retour arrière), §7.10 (les sept refus), §5.2 (valeur de retour de `move_card`)
 // @verifies docs/SPEC-cards.md §2.6 (ordre dans une colonne), §5 (« active »)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : le board lit les rattachements du channel (docs/SPEC-rattachements.md §8)
 // @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape initiale lue avec les colonnes, jamais
 //           déduite de la position (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
 //
@@ -19,7 +20,7 @@
 
 import { describe, expect, it } from 'vitest'
 import {
-	COLONNES_CARD_BOARD,
+	COLONNES_RATTACHEMENT_BOARD,
 	COLONNES_CHAMP_LIBELLE,
 	COLONNES_ETAPE,
 	COLONNES_TRANSITION,
@@ -33,6 +34,7 @@ import {
 	deplacerCard,
 	evaluerAnciennete,
 	indexerTransitions,
+	carteDepuisRattachement,
 	lireCards,
 	lireEtapes,
 	lireLibellesChamps,
@@ -482,15 +484,60 @@ describe('les quatre lectures du board (§7.2)', () => {
 
 	// Les deux exclusions sont CÔTÉ SERVEUR : c'est la définition d'« active » de
 	// docs/SPEC-cards.md §5, la même qu'emploie la première vérification de `move_card`.
-	it('demande les cards actives du channel, archivées et corbeille exclues côté serveur', async () => {
+	// `CRM-111` T2.4.1 : la lecture part des RATTACHEMENTS du channel ; l'affaire est plongée, et sa corbeille filtre les
+	// rattachements (`!inner`). L'ordre reste celui d'avant : le rang, puis le titre de l'affaire.
+	it('demande les rattachements actifs du channel, archivés et affaires en corbeille exclus côté serveur', async () => {
 		const { client, appel } = clientEspion(OK)
 		await lireCards(client, 'ch-1')
-		expect(appel.table).toBe('cards')
-		expect(appel.colonnes).toBe(COLONNES_CARD_BOARD)
-		expect(appel.colonnes).toContain('responsable:profiles!cards_owner_id_fkey')
+		expect(appel.table).toBe('card_placements')
+		expect(appel.colonnes).toBe(COLONNES_RATTACHEMENT_BOARD)
+		expect(appel.colonnes).toContain('responsable:profiles!card_placements_owner_id_fkey')
+		expect(appel.colonnes).toContain('affaire:cards!inner(')
 		expect(appel.egalites).toEqual([['channel_id', 'ch-1']])
-		expect(appel.nuls).toEqual(['archived_at', 'deleted_at'])
-		expect(appel.tris).toEqual(['position', 'title'])
+		expect(appel.nuls).toEqual(['archived_at', 'affaire.deleted_at'])
+		expect(appel.tris).toEqual(['position', 'affaire(title)'])
+	})
+
+	it('rend la carte d’avant depuis le rattachement : l’affaire par son identifiant, son rattachement à côté', () => {
+		const carte = carteDepuisRattachement({
+			id: 'rattachement-1',
+			created_at: '2026-01-01T00:00:00Z',
+			position: 2,
+			amount: 1200,
+			next_action: 'Relancer',
+			current_step_id: 'etape-1',
+			entered_step_at: '2026-02-01T00:00:00Z',
+			owner_id: 'p-1',
+			snoozed_until: null,
+			responsable: null,
+			affaire: {
+				id: 'card-1',
+				title: 'Refonte',
+				description: null,
+				currency: 'EUR',
+				email_local_part: 'c-abcdefgh',
+				health_momentum: null,
+				health_commercial: null,
+			},
+		})
+		expect(carte).toEqual({
+			id: 'card-1',
+			title: 'Refonte',
+			description: null,
+			currency: 'EUR',
+			email_local_part: 'c-abcdefgh',
+			health_momentum: null,
+			health_commercial: null,
+			position: 2,
+			amount: 1200,
+			next_action: 'Relancer',
+			current_step_id: 'etape-1',
+			entered_step_at: '2026-02-01T00:00:00Z',
+			owner_id: 'p-1',
+			snoozed_until: null,
+			responsable: null,
+			card_placements: [{ id: 'rattachement-1', created_at: '2026-01-01T00:00:00Z' }],
+		})
 	})
 
 	it('demande les libellés des champs du workflow, et rien de plus', async () => {
@@ -727,13 +774,13 @@ describe('le compte des masquées et les compteurs (§16.12.6, §16.12.8)', () =
 	// La colonne doit être RAPPORTÉE par la requête, sans quoi ni le filtre ni la marque ne seraient
 	// possibles : le board lit toutes ses cards en une fois (§7.2).
 	it('demande `snoozed_until` dans les colonnes lues', () => {
-		expect(COLONNES_CARD_BOARD).toContain('snoozed_until')
+		expect(COLONNES_RATTACHEMENT_BOARD).toContain('snoozed_until')
 	})
 
 	// @verifies CRM-105 — docs/SPEC-workflow-engine.md §7.2, docs/DESIGN_SYSTEM.md §5.58 : l'infobulle du
 	// titre de la carte lit la description dans la lecture des cards, sans requête de plus.
 	it('demande `description`, affichée en infobulle sur le titre', () => {
-		expect(COLONNES_CARD_BOARD).toContain('description')
+		expect(COLONNES_RATTACHEMENT_BOARD).toContain('description')
 	})
 })
 

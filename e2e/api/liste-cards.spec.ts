@@ -20,6 +20,8 @@
 //
 // AUCUNE ÉCRITURE. Ce fichier ne pose ni ne retire aucune ligne : le seed sort intact. C'est ce
 // qui distingue cette preuve de celle de `CRM-040`, dont INC-061 dit le coût.
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la page lit les rattachements du channel, l'affaire plongée ; tri,
+//           recherche et corbeille rejoués sur elle (docs/SPEC-rattachements.md §8)
 
 import { expect, test } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, jetonDe } from './jetons'
@@ -32,7 +34,7 @@ import { enTetesAnonymes, enTetesAuthentifies, jetonDe } from './jetons'
  */
 import {
 	CODE_PAGE_INEXISTANTE,
-	COLONNES_CARD_LISTE,
+	COLONNES_RATTACHEMENT_LISTE,
 	LIGNES_PAR_PAGE,
 } from '../../webapp/src/lib/colonnes-liste'
 
@@ -56,7 +58,24 @@ const ETAPE_RELANCE = '5eed0000-0000-4000-8000-000000000062'
 const CARD_ARCHIVEE = '5eed0000-0000-4000-8000-0000000000c8'
 const CARD_CORBEILLE = '5eed0000-0000-4000-8000-0000000000c9'
 
-const CARDS = '/rest/v1/cards'
+// `CRM-111` T2.4.1 : la page lit les RATTACHEMENTS du channel, l'affaire en plongement (`affaire:cards!inner`).
+const RATTACHEMENTS = '/rest/v1/card_placements'
+
+/** La colonne triée, comme `colonneTriee` (`liste-cards.ts`, module du navigateur qu'une preuve d'API n'importe pas). */
+function colonneTriee(cle: string): string {
+	return cle === 'title' || cle === 'created_at' || cle === 'id' ? `affaire(${cle})` : cle
+}
+
+/**
+ * Aplatit une ligne lue — le rattachement, l'affaire plongée — pour les assertions, écrites sur la ligne de l'écran.
+ * Le plongement porte toujours les colonnes triables de l'affaire : PostgREST ne trie sur `affaire(…)` qu'une colonne
+ * qu'il sélectionne.
+ */
+async function aplatir<T>(reponse: { json(): Promise<unknown> }): Promise<T[]> {
+	return ((await reponse.json()) as { affaire?: Record<string, unknown> }[]).map(
+		({ affaire, ...rattachement }) => ({ ...rattachement, ...(affaire ?? {}) }) as T,
+	)
+}
 const ETAPES = '/rest/v1/workflow_steps'
 
 type CardLue = {
@@ -85,7 +104,8 @@ type CardLue = {
 const ACTIVES_GRANDS_COMPTES = 4
 
 /** Les filtres d'activité, écrits une fois : ils sont la définition d'« active » du §5. */
-const FILTRES_ACTIVES = 'archived_at=is.null&deleted_at=is.null'
+// `CRM-111` T2.4.1 : le rattachement archivé, et l'affaire en corbeille — celle-ci par le plongement `!inner`.
+const FILTRES_ACTIVES = 'archived_at=is.null&affaire.deleted_at=is.null'
 
 /**
  * L'ordre TOTAL du §12.4, **tel que la webapp l'émet réellement** pour un tri par titre.
@@ -94,7 +114,7 @@ const FILTRES_ACTIVES = 'archived_at=is.null&deleted_at=is.null'
  * qu'une exception pour les colonnes `NOT NULL`, où la clause est sans effet. Cette preuve emploie
  * la chaîne du produit, et non une variante équivalente qui ne prouverait rien de lui.
  */
-const ORDRE_TITRE = 'order=title.asc.nullslast,id.asc.nullslast'
+const ORDRE_TITRE = 'order=affaire(title).asc.nullslast,affaire(id).asc.nullslast'
 
 let jetonAdmin: string
 
@@ -107,12 +127,12 @@ test.beforeAll(async () => {
 test.describe('les deux lectures de la vue liste (§12.3)', () => {
 	test('la page rapporte les colonnes du produit, et la pile les rend toutes', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=${encodeURIComponent(COLONNES_CARD_LISTE)}` +
+			`${RATTACHEMENTS}?select=${encodeURIComponent(COLONNES_RATTACHEMENT_LISTE)}` +
 				`&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect(reponse.status()).toBe(200)
-		const lignes = (await reponse.json()) as CardLue[]
+		const lignes = await aplatir<CardLue>(reponse)
 		expect(lignes).toHaveLength(ACTIVES_GRANDS_COMPTES)
 		for (const ligne of lignes) {
 			// Chacune des colonnes scalaires demandées est présente, y compris celles qui valent `null` :
@@ -156,10 +176,10 @@ test.describe('les deux lectures de la vue liste (§12.3)', () => {
 	// sont jamais affichées restent absentes. `description` en est sortie avec `CRM-105` : elle est
 	// affichée en infobulle (docs/DESIGN_SYSTEM.md §5.58), et `e2e/api/descriptions.spec.ts` la lit.
 	test('la lecture embarque le responsable, sans colonne technique non affichée', () => {
-		expect(COLONNES_CARD_LISTE).toContain('owner_id')
-		expect(COLONNES_CARD_LISTE).toContain('responsable:profiles!cards_owner_id_fkey')
+		expect(COLONNES_RATTACHEMENT_LISTE).toContain('owner_id')
+		expect(COLONNES_RATTACHEMENT_LISTE).toContain('responsable:profiles!card_placements_owner_id_fkey')
 		for (const absente of ['position', 'health_score', 'search_tsv']) {
-			expect(COLONNES_CARD_LISTE).not.toContain(absente)
+			expect(COLONNES_RATTACHEMENT_LISTE).not.toContain(absente)
 		}
 	})
 })
@@ -169,10 +189,10 @@ test.describe('les deux lectures de la vue liste (§12.3)', () => {
 test.describe('l’exclusion des cards rangées (§5)', () => {
 	test('les deux filtres d’activité sont appliqués côté serveur', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}`,
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const ids = ((await reponse.json()) as { id: string }[]).map((ligne) => ligne.id)
+		const ids = (await aplatir<{ id: string }>(reponse)).map((ligne) => ligne.id)
 		expect(ids).toHaveLength(ACTIVES_GRANDS_COMPTES)
 		expect(ids).not.toContain(CARD_ARCHIVEE)
 		expect(ids).not.toContain(CARD_CORBEILLE)
@@ -182,10 +202,10 @@ test.describe('l’exclusion des cards rangées (§5)', () => {
 	// un filtre retiré passerait inaperçu — l'écran afficherait simplement deux affaires de plus.
 	test('sans ces filtres, la même requête rend deux lignes de plus', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}`,
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const ids = ((await reponse.json()) as { id: string }[]).map((ligne) => ligne.id)
+		const ids = (await aplatir<{ id: string }>(reponse)).map((ligne) => ligne.id)
 		expect(ids).toHaveLength(ACTIVES_GRANDS_COMPTES + 2)
 		expect(ids).toContain(CARD_ARCHIVEE)
 		expect(ids).toContain(CARD_CORBEILLE)
@@ -199,8 +219,8 @@ test.describe('le tri (§12.4)', () => {
 		for (const cle of ['title', 'amount', 'next_action_at', 'created_at']) {
 			for (const sens of ['asc', 'desc']) {
 				const reponse = await request.get(
-					`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
-						`&order=${cle}.${sens}.nullslast,title.asc,id.asc`,
+					`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
+						`&order=${colonneTriee(cle)}.${sens}.nullslast,affaire(title).asc,affaire(id).asc`,
 					{ headers: enTetesAuthentifies(jetonAdmin) },
 				)
 				expect(reponse.status(), `${cle}.${sens}`).toBe(200)
@@ -214,7 +234,7 @@ test.describe('le tri (§12.4)', () => {
 		request,
 	}) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&order=couleur_preferee.asc`,
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&order=couleur_preferee.asc`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect(reponse.status()).toBe(400)
@@ -223,11 +243,11 @@ test.describe('le tri (§12.4)', () => {
 	// MESURÉ : sans `nullslast`, une affaire SANS montant remonterait en tête d'un tri descendant.
 	test('`nullslast` range l’affaire sans montant en dernier, tri descendant', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=title,amount&channel_id=eq.${CHANNEL_INTER_ENTREPRISES}&${FILTRES_ACTIVES}` +
-				`&order=amount.desc.nullslast,title.asc,id.asc`,
+			`${RATTACHEMENTS}?select=amount,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_INTER_ENTREPRISES}&${FILTRES_ACTIVES}` +
+				`&order=amount.desc.nullslast,affaire(title).asc,affaire(id).asc`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const lignes = (await reponse.json()) as CardLue[]
+		const lignes = await aplatir<CardLue>(reponse)
 		expect(lignes.length).toBeGreaterThanOrEqual(2)
 		expect(lignes[0]?.amount).not.toBeNull()
 		expect(lignes[lignes.length - 1]?.amount).toBeNull()
@@ -239,19 +259,19 @@ test.describe('le tri (§12.4)', () => {
 		request,
 	}) => {
 		const reponse = await request.get(
-			`${CARDS}?select=title,amount&channel_id=eq.${CHANNEL_INTER_ENTREPRISES}&${FILTRES_ACTIVES}` +
+			`${RATTACHEMENTS}?select=amount,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_INTER_ENTREPRISES}&${FILTRES_ACTIVES}` +
 				`&order=amount.desc`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const lignes = (await reponse.json()) as CardLue[]
+		const lignes = await aplatir<CardLue>(reponse)
 		expect(lignes[0]?.amount).toBeNull()
 	})
 
 	// L'ordre TOTAL du §12.4 : la même page demandée deux fois rend exactement la même chose.
 	test('l’ordre total rend deux fois de suite la même page, à l’identique', async ({ request }) => {
 		const adresse =
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
-			`&order=currency.asc.nullslast,title.asc,id.asc`
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
+			`&order=affaire(currency).asc.nullslast,affaire(title).asc,affaire(id).asc`
 		const premiere = (await (
 			await request.get(adresse, { headers: enTetesAuthentifies(jetonAdmin) })
 		).json()) as { id: string }[]
@@ -267,11 +287,11 @@ test.describe('le tri (§12.4)', () => {
 		const vus: string[] = []
 		for (let rang = 0; rang < ACTIVES_GRANDS_COMPTES; rang += 1) {
 			const reponse = await request.get(
-				`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
-					`&order=currency.asc.nullslast,title.asc,id.asc`,
+				`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
+					`&order=affaire(currency).asc.nullslast,affaire(title).asc,affaire(id).asc`,
 				{ headers: { ...enTetesAuthentifies(jetonAdmin), Range: `${rang}-${rang}` } },
 			)
-			const lignes = (await reponse.json()) as { id: string }[]
+			const lignes = await aplatir<{ id: string }>(reponse)
 			expect(lignes).toHaveLength(1)
 			vus.push(lignes[0]?.id ?? '')
 		}
@@ -284,18 +304,18 @@ test.describe('le tri (§12.4)', () => {
 test.describe('les filtres (§12.5)', () => {
 	test('le filtre par étape est appliqué côté serveur', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id,current_step_id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}` +
+			`${RATTACHEMENTS}?select=id:card_id,current_step_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}` +
 				`&${FILTRES_ACTIVES}&current_step_id=eq.${ETAPE_RELANCE}&${ORDRE_TITRE}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const lignes = (await reponse.json()) as CardLue[]
+		const lignes = await aplatir<CardLue>(reponse)
 		expect(lignes).toHaveLength(2)
 		expect(lignes.every((ligne) => ligne.current_step_id === ETAPE_RELANCE)).toBe(true)
 	})
 
 	test('une étape sans card rend zéro ligne, et non une erreur', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_INTER_ENTREPRISES}&${FILTRES_ACTIVES}` +
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_INTER_ENTREPRISES}&${FILTRES_ACTIVES}` +
 				`&current_step_id=eq.${ETAPE_RELANCE}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
@@ -306,12 +326,12 @@ test.describe('les filtres (§12.5)', () => {
 	// `plfts` et non `ilike` : la colonne générée du §2.7 et son index GIN.
 	test('la recherche plein texte trouve une affaire par un mot de son titre', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=title&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
-				`&search_tsv=plfts(francais_sans_accent).refonte`,
+			`${RATTACHEMENTS}?select=affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
+				`&affaire.search_tsv=plfts(francais_sans_accent).refonte`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect(reponse.status()).toBe(200)
-		const lignes = (await reponse.json()) as CardLue[]
+		const lignes = await aplatir<CardLue>(reponse)
 		expect(lignes.map((ligne) => ligne.title)).toEqual(['Refonte du site vitrine'])
 	})
 
@@ -320,8 +340,8 @@ test.describe('les filtres (§12.5)', () => {
 	// QUALIFIÉ parce que PostgREST refuse un schéma dans `plfts` — mesuré, `PGRST100`.
 	test('la recherche ne rend rien pour un terme absent', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=title&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
-				`&search_tsv=plfts(francais_sans_accent).zzzintrouvable`,
+			`${RATTACHEMENTS}?select=affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
+				`&affaire.search_tsv=plfts(francais_sans_accent).zzzintrouvable`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect(reponse.status()).toBe(200)
@@ -345,12 +365,12 @@ test.describe('les filtres (§12.5)', () => {
 	}) => {
 		for (const terme of ['securite', 'sécurité']) {
 			const reponse = await request.get(
-				`${CARDS}?select=title&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
-					`&search_tsv=plfts(francais_sans_accent).${encodeURIComponent(terme)}`,
+				`${RATTACHEMENTS}?select=affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
+					`&affaire.search_tsv=plfts(francais_sans_accent).${encodeURIComponent(terme)}`,
 				{ headers: enTetesAuthentifies(jetonAdmin) },
 			)
 			expect(reponse.status(), `terme « ${terme} »`).toBe(200)
-			const lignes = (await reponse.json()) as CardLue[]
+			const lignes = await aplatir<CardLue>(reponse)
 			expect(lignes.map((ligne) => ligne.title), `terme « ${terme} »`).toEqual([
 				'Audit sécurité applicative',
 			])
@@ -361,8 +381,8 @@ test.describe('les filtres (§12.5)', () => {
 		request,
 	}) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
-				`&current_step_id=eq.${ETAPE_PROSPECTION}&search_tsv=plfts(francais_sans_accent).audit&${ORDRE_TITRE}`,
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
+				`&current_step_id=eq.${ETAPE_PROSPECTION}&affaire.search_tsv=plfts(francais_sans_accent).audit&${ORDRE_TITRE}`,
 			{ headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'count=exact', Range: '0-24' } },
 		)
 		expect(reponse.status()).toBe(200)
@@ -374,7 +394,7 @@ test.describe('les filtres (§12.5)', () => {
 
 test.describe('la pagination et son `416` (§12.6)', () => {
 	const adresse =
-		`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`
+		`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`
 
 	test('une page partielle rend `206` et son `Content-Range`', async ({ request }) => {
 		const reponse = await request.get(adresse, {
@@ -453,7 +473,7 @@ test.describe('la pagination et son `416` (§12.6)', () => {
 		request,
 	}) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_APPELS_OFFRES}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_APPELS_OFFRES}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
 			{ headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'count=exact', Range: '0-24' } },
 		)
 		expect(reponse.status()).toBe(200)
@@ -471,7 +491,7 @@ test.describe('ce que la liste consent à un anonyme', () => {
 		request,
 	}) => {
 		const lectures = [
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
 			`${ETAPES}?select=id&workflow_id=eq.${WORKFLOW_GLOBAL}&order=position`,
 		]
 		for (const adresse of lectures) {
@@ -489,7 +509,7 @@ test.describe('ce que la liste consent à un anonyme', () => {
 	// l'état vide de l'écran et non son état d'erreur (§12.9).
 	test('le total rendu à l’anonyme est zéro, pas une erreur', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
 			{ headers: { ...enTetesAnonymes(), Prefer: 'count=exact', Range: '0-24' } },
 		)
 		expect(reponse.status()).toBe(200)
@@ -503,10 +523,10 @@ test.describe('ce que la liste consent à un anonyme', () => {
 	}) => {
 		for (const supplement of [
 			`&current_step_id=eq.${ETAPE_RELANCE}`,
-			'&search_tsv=plfts(francais_sans_accent).refonte',
+			'&affaire.search_tsv=plfts(francais_sans_accent).refonte',
 		]) {
 			const reponse = await request.get(
-				`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}${supplement}`,
+				`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}${supplement}`,
 				{ headers: enTetesAnonymes() },
 			)
 			expect(reponse.status()).toBe(200)
@@ -524,11 +544,11 @@ test.describe('la représentation de `cards.amount` — INC-067', () => {
 		request,
 	}) => {
 		const reponse = await request.get(
-			`${CARDS}?select=amount&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
+			`${RATTACHEMENTS}?select=amount,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}` +
 				`&amount=not.is.null&${ORDRE_TITRE}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const lignes = (await reponse.json()) as { amount: unknown }[]
+		const lignes = await aplatir<{ amount: unknown }>(reponse)
 		expect(lignes.length).toBeGreaterThan(0)
 		for (const ligne of lignes) {
 			expect(typeof ligne.amount).toBe('number')
@@ -548,7 +568,7 @@ test.describe('la représentation de `cards.amount` — INC-067', () => {
 
 test.describe('la seconde page, contre la base réelle (docs/SPEC-seed.md §9.11)', () => {
 	const adresse =
-		`${CARDS}?select=id,title,next_action&channel_id=eq.${CHANNEL_MAINTENANCE}` +
+		`${RATTACHEMENTS}?select=id:card_id,next_action,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_MAINTENANCE}` +
 		`&${FILTRES_ACTIVES}&${ORDRE_TITRE}`
 
 	/** Mesuré en base après application du seed (§9.11.2). */
@@ -572,7 +592,7 @@ test.describe('la seconde page, contre la base réelle (docs/SPEC-seed.md §9.11
 			},
 		})
 		expect(reponse.status()).toBe(206)
-		expect(((await reponse.json()) as { id: string }[]).length).toBe(LIGNES_PAR_PAGE)
+		expect((await aplatir<{ id: string }>(reponse)).length).toBe(LIGNES_PAR_PAGE)
 	})
 
 	// LA PREUVE QUE LA SUBSTITUTION NE POUVAIT PAS RENDRE : une seconde page réellement servie.
@@ -594,8 +614,8 @@ test.describe('la seconde page, contre la base réelle (docs/SPEC-seed.md §9.11
 			`${LIGNES_PAR_PAGE}-${ACTIVES_MAINTENANCE - 1}/${ACTIVES_MAINTENANCE}`,
 		)
 
-		const lignes1 = ((await premiere.json()) as { id: string }[]).map((c) => c.id)
-		const lignes2 = ((await seconde.json()) as { id: string }[]).map((c) => c.id)
+		const lignes1 = (await aplatir<{ id: string }>(premiere)).map((c) => c.id)
+		const lignes2 = (await aplatir<{ id: string }>(seconde)).map((c) => c.id)
 		expect(lignes2.length).toBe(ACTIVES_MAINTENANCE - LIGNES_PAR_PAGE)
 		// L'ordre TOTAL du §12.4 : aucune affaire n'est servie deux fois, donc aucune n'est omise.
 		expect(new Set([...lignes1, ...lignes2]).size).toBe(ACTIVES_MAINTENANCE)
@@ -619,11 +639,11 @@ test.describe('la seconde page, contre la base réelle (docs/SPEC-seed.md §9.11
 test.describe('les données longues, contre la base réelle (docs/SPEC-seed.md §9.11.4)', () => {
 	test('le seed porte un titre de 128 caractères et une action de 134', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=title,next_action&id=eq.${CARD_DONNEES_LONGUES}`,
+			`${RATTACHEMENTS}?select=next_action,affaire:cards!inner(id,title,currency,created_at)&card_id=eq.${CARD_DONNEES_LONGUES}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect(reponse.status()).toBe(200)
-		const [card] = (await reponse.json()) as { title: string; next_action: string }[]
+		const [card] = await aplatir<{ title: string; next_action: string }>(reponse)
 		expect(card!.title.length).toBe(128)
 		expect(card!.next_action.length).toBe(134)
 	})
@@ -632,10 +652,10 @@ test.describe('les données longues, contre la base réelle (docs/SPEC-seed.md �
 	// longues ne serait pas atteignable sans un geste de pagination (§9.11.4).
 	test('elle tombe en PREMIÈRE page du tri par défaut', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_MAINTENANCE}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id,title,currency,created_at)&channel_id=eq.${CHANNEL_MAINTENANCE}&${FILTRES_ACTIVES}&${ORDRE_TITRE}`,
 			{ headers: { ...enTetesAuthentifies(jetonAdmin), Range: `0-${LIGNES_PAR_PAGE - 1}` } },
 		)
-		const ids = ((await reponse.json()) as { id: string }[]).map((c) => c.id)
+		const ids = (await aplatir<{ id: string }>(reponse)).map((c) => c.id)
 		expect(ids).toContain(CARD_DONNEES_LONGUES)
 	})
 })

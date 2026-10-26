@@ -3,6 +3,8 @@
 //           docs/SPEC-cards.md §12.3 (la colonne rejoint la lecture déjà émise) ; docs/SPEC-seed.md §20
 //           (ce que le seed décrit, et ce qu'il laisse sans description) ; docs/DESIGN_SYSTEM.md §5.58
 // @verifies CLAUDE.md §10 (la lecture se prouve hors interface, avec le jeton réel du profil)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : D3 et D4 lisent les requêtes du board et de la liste, parties des
+//           rattachements
 //
 // Les cards sont lues avec les colonnes EXACTES du produit (`colonnes-board.ts`, `colonnes-liste.ts`, que
 // ce projet peut importer). Les tracks et les channels ne le peuvent pas : leurs constantes vivent dans des
@@ -13,15 +15,14 @@
 
 import { expect, test } from '@playwright/test'
 import { enTetesAuthentifies, jetonDe } from './jetons'
-import { COLONNES_CARD_BOARD } from '../../webapp/src/lib/colonnes-board'
-import { COLONNES_CARD_LISTE } from '../../webapp/src/lib/colonnes-liste'
+import { COLONNES_RATTACHEMENT_BOARD } from '../../webapp/src/lib/colonnes-board'
+import { COLONNES_RATTACHEMENT_LISTE } from '../../webapp/src/lib/colonnes-liste'
 
 const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
 const CHANNEL_MAINTENANCE = '5eed0000-0000-4000-8000-000000000035'
 const CARD_DECRITE = '5eed0000-0000-4000-8000-0000000000c2'
 const CARD_NUE = '5eed0000-0000-4000-8000-0000000000c1'
 const CARD_LONGUE = '5eed0000-0000-4000-8000-00000000d002'
-const FILTRES_ACTIVES = 'archived_at=is.null&deleted_at=is.null'
 
 type Decrit = { id: string; slug?: string; description: string | null }
 
@@ -62,11 +63,14 @@ test('D3 — le board lit la description par ses propres colonnes, retour à la 
 	request,
 }) => {
 	const reponse = await request.get(
-		`/rest/v1/cards?select=${encodeURIComponent(COLONNES_CARD_BOARD)}&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&${FILTRES_ACTIVES}`,
+		// `CRM-111` T2.4.1 : le board lit les rattachements du channel ; la description vient de l'affaire plongée.
+		`/rest/v1/card_placements?select=${encodeURIComponent(COLONNES_RATTACHEMENT_BOARD)}&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&archived_at=is.null&affaire.deleted_at=is.null`,
 		{ headers: enTetesAuthentifies(jetonAdmin) },
 	)
 	expect(reponse.status()).toBe(200)
-	const parId = new Map(((await reponse.json()) as Decrit[]).map((ligne) => [ligne.id, ligne.description]))
+	const parId = new Map(
+		((await reponse.json()) as { affaire: Decrit }[]).map(({ affaire }) => [affaire.id, affaire.description]),
+	)
 	const decrite = parId.get(CARD_DECRITE)
 	expect(decrite).toContain('\n')
 	expect(decrite?.split('\n')).toHaveLength(2)
@@ -79,11 +83,12 @@ test('D4 — la vue liste lit la description par ses propres colonnes, donnée l
 	request,
 }) => {
 	const reponse = await request.get(
-		`/rest/v1/cards?select=${encodeURIComponent(COLONNES_CARD_LISTE)}&channel_id=eq.${CHANNEL_MAINTENANCE}&${FILTRES_ACTIVES}&id=eq.${CARD_LONGUE}`,
+		// `CRM-111` T2.4.1 : la page lit les rattachements du channel ; la description vient de l'affaire plongée.
+		`/rest/v1/card_placements?select=${encodeURIComponent(COLONNES_RATTACHEMENT_LISTE)}&channel_id=eq.${CHANNEL_MAINTENANCE}&archived_at=is.null&affaire.deleted_at=is.null&card_id=eq.${CARD_LONGUE}`,
 		{ headers: enTetesAuthentifies(jetonViewer) },
 	)
 	expect(reponse.status()).toBe(200)
-	const [ligne] = (await reponse.json()) as Decrit[]
+	const [ligne] = ((await reponse.json()) as { affaire: Decrit }[]).map(({ affaire }) => affaire)
 	expect(ligne?.description?.length ?? 0).toBeGreaterThan(500)
 	expect(ligne?.description?.split('\n\n')).toHaveLength(3)
 })

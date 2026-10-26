@@ -25,6 +25,7 @@
 // AUCUNE ÉCRITURE. Ce fichier ne pose ni ne retire aucune ligne, et n'appelle ni `snooze_card` ni
 // `wake_card` : le seed sort intact, et les empreintes de convergence ne bougent pas. C'est ce qui
 // lui permet de tourner à côté des autres preuves sans les déplacer.
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la page et son filtre de sommeil portent sur les rattachements
 
 import { expect, test } from '@playwright/test'
 import { enTetesAuthentifies, jetonDe } from './jetons'
@@ -34,10 +35,11 @@ import { enTetesAuthentifies, jetonDe } from './jetons'
  * emploie. Un test qui réécrirait son propre `or=` prouverait qu'un filtre quelconque fonctionne,
  * pas que **celui du produit** fonctionne (décision 177).
  */
-import { COLONNES_CARD_LISTE } from '../../webapp/src/lib/colonnes-liste'
+import { COLONNES_RATTACHEMENT_LISTE } from '../../webapp/src/lib/colonnes-liste'
 import { filtreExclusionSommeil } from '../../webapp/src/lib/filtre-sommeil'
 
-const CARDS = '/rest/v1/cards'
+// `CRM-111` T2.4.1 : la page lit les RATTACHEMENTS du channel, l'affaire en plongement ; le sommeil est celui du rattachement.
+const RATTACHEMENTS = '/rest/v1/card_placements'
 
 /** Identifiants du seed, mesurés en base le 2026-08-17 (docs/SPEC-seed.md, docs/SPEC-cards.md §9). */
 const CHANNEL_PROSPECTION = '5eed0000-0000-4000-8000-000000000031'
@@ -50,7 +52,7 @@ const CARD_ECHUE = '5eed0000-0000-4000-8000-0000000000c1'
 const TITRE_ECHUE = 'Refonte du site vitrine'
 
 /** Les filtres d'activité, écrits une fois : ils sont la définition d'« active » du §5. */
-const FILTRES_ACTIVES = 'archived_at=is.null&deleted_at=is.null'
+const FILTRES_ACTIVES = 'archived_at=is.null&affaire.deleted_at=is.null'
 
 /**
  * Les volumes du seed, MESURÉS le 2026-08-17 avec la clé de service, et identiques à ceux que le
@@ -78,8 +80,8 @@ test.beforeAll(async () => {
 /** L'adresse d'une page de liste, avec ou sans le filtre d'exclusion du produit. */
 function adresse(channelId: string, maintenant: Date | null): string {
 	const base =
-		`${CARDS}?select=${encodeURIComponent(COLONNES_CARD_LISTE)}` +
-		`&channel_id=eq.${channelId}&${FILTRES_ACTIVES}&order=title.asc.nullslast,id.asc.nullslast`
+		`${RATTACHEMENTS}?select=${encodeURIComponent(COLONNES_RATTACHEMENT_LISTE)}` +
+		`&channel_id=eq.${channelId}&${FILTRES_ACTIVES}&order=affaire(title).asc.nullslast,affaire(id).asc.nullslast`
 	if (maintenant === null) return base
 	return `${base}&or=(${encodeURIComponent(filtreExclusionSommeil(maintenant))})`
 }
@@ -101,7 +103,13 @@ async function lire(
 	})
 	return {
 		statut: reponse.status(),
-		lignes: reponse.status() === 200 ? ((await reponse.json()) as LigneLue[]) : [],
+		// La ligne de l'écran : l'affaire par son identifiant et son titre, le sommeil du rattachement.
+		lignes:
+			reponse.status() === 200
+				? ((await reponse.json()) as (Omit<LigneLue, 'id' | 'title'> & { affaire: Pick<LigneLue, 'id' | 'title'> })[]).map(
+						({ affaire, ...rattachement }) => ({ ...rattachement, ...affaire }),
+					)
+				: [],
 		total: totalDe(reponse.headers()['content-range']),
 	}
 }
@@ -231,7 +239,7 @@ test.describe('les deux côtés de l’échéance, avec un instant choisi (§16.
 		request,
 	}) => {
 		const parNow = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_PROSPECTION}&${FILTRES_ACTIVES}` +
+			`${RATTACHEMENTS}?select=id:card_id,affaire:cards!inner(id)&channel_id=eq.${CHANNEL_PROSPECTION}&${FILTRES_ACTIVES}` +
 				`&or=${encodeURIComponent('(snoozed_until.is.null,snoozed_until.lte.now())')}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
@@ -272,7 +280,7 @@ test.describe('le sommeil range, il n’autorise pas (§16.12.2, CLAUDE.md §10)
 	// La colonne doit être RAPPORTÉE : le filtre est au serveur, mais la marque de la ligne rendue
 	// visible a besoin de la valeur (§16.12.7).
 	test('la chaîne de colonnes du produit rapporte `snoozed_until`', async ({ request }) => {
-		expect(COLONNES_CARD_LISTE).toContain('snoozed_until')
+		expect(COLONNES_RATTACHEMENT_LISTE).toContain('snoozed_until')
 		const { lignes } = await lire(request, jetonAdmin, adresse(CHANNEL_PROSPECTION, null))
 		for (const ligne of lignes) {
 			expect(Object.hasOwn(ligne, 'snoozed_until')).toBe(true)

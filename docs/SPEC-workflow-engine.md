@@ -2834,6 +2834,11 @@ Il **n'est pas** :
 
 ### 7.2 Ce que le board lit, et en combien de requêtes
 
+**Révisé par `CRM-111` T2.4.1** (docs/SPEC-rattachements.md §8) : la lecture n° 3 part des **rattachements** du channel
+— `card_placements`, archivés exclus — et plonge l'affaire (`affaire:cards!inner(…)`), dont la corbeille filtre les
+rattachements ; le tri est le rang du rattachement puis le titre de l'affaire. La carte rendue à l'écran est inchangée
+(`carteDepuisRattachement`). Ce qui suit vaut, « cards » se lisant « rattachements du channel ».
+
 Le board s'ouvre sur la route `/tracks/:slugTrack/:slugChannel`, celle que `CRM-021` a livrée et qui
 affichait jusqu'ici l'état vide de sa zone principale.
 

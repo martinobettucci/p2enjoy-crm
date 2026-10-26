@@ -23,6 +23,7 @@
 // le menu, le dépôt autorisé, le dépôt refusé sans appel, le retour arrière, la saisie du motif.
 // Le déplacement de bout en bout par une administratrice connectée est désormais prouvé, sans
 // substitution, dans `e2e/ui/authentification.spec.ts` ; ce fichier conserve les variantes fines.
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : le board lit les rattachements du channel (docs/SPEC-rattachements.md §8)
 
 import {
 	autoriserErreursConsole,
@@ -47,6 +48,8 @@ test.beforeEach(async ({ page }) => {
 })
 
 const ROUTE_CARDS = '**/rest/v1/cards*'
+// `CRM-111` T2.4.1 : le board lit les RATTACHEMENTS du channel, l'affaire en plongement.
+const ROUTE_RATTACHEMENTS = '**/rest/v1/card_placements*'
 const ROUTE_ETAPES = '**/rest/v1/workflow_steps*'
 const ROUTE_TRANSITIONS = '**/rest/v1/workflow_transitions*'
 const ROUTE_CHAMPS = '**/rest/v1/form_fields*'
@@ -197,6 +200,19 @@ const CARDS_SERVIES = [
 	},
 ]
 
+/**
+ * Les mêmes affaires, à la forme que le board lit depuis `CRM-111` T2.4.1 : le rattachement, l'affaire plongée
+ * (`COLONNES_RATTACHEMENT_BOARD`). L'écran les recompose en cartes (`carteDepuisRattachement`).
+ */
+const RATTACHEMENTS_SERVIS = CARDS_SERVIES.map(
+	({ id, title, currency, email_local_part, card_placements: [rattachement], ...reste }) => ({
+		...reste,
+		id: rattachement?.id,
+		created_at: rattachement?.created_at,
+		affaire: { id, title, description: null, currency, email_local_part, health_momentum: null, health_commercial: null },
+	}),
+)
+
 const CHAMPS_SERVIS = [
 	{ key: 'lien-proposition', label: 'Lien vers la proposition' },
 	{ key: 'budget', label: 'Budget estimé' },
@@ -240,6 +256,7 @@ async function servirBoard(page: Page): Promise<void> {
 	await page.route(ROUTE_ETAPES, servir(ETAPES_SERVIES))
 	await page.route(ROUTE_CHAMPS, servir(CHAMPS_SERVIS))
 	await page.route(ROUTE_CARDS, servir(CARDS_SERVIES))
+	await page.route(ROUTE_RATTACHEMENTS, servir(RATTACHEMENTS_SERVIS))
 	await page.route(ROUTE_CHANNELS, servir(CHANNELS_SERVIS))
 	await page.route(ROUTE_TRACKS, servir(TRACK_SERVI))
 	await page.route(ROUTE_WORKSPACES, servir(WORKSPACES_SERVIS))
@@ -328,14 +345,15 @@ test.describe('board chargé (réponse réseau substituée, docs/DESIGN_SYSTEM.m
 		await page.goto(ADRESSE)
 		await expect(page.getByTestId('board')).toBeVisible()
 
-		const cards = urls.find((url) => url.includes('/rest/v1/cards?'))
-		expect(cards, 'les cards sont demandées').toBeDefined()
+		// `CRM-111` T2.4.1 : les rattachements du channel, l'affaire en plongement.
+		const cards = urls.find((url) => url.includes('/rest/v1/card_placements?'))
+		expect(cards, 'les rattachements sont demandés').toBeDefined()
 		const parametres = new URL(cards ?? '').searchParams
 		expect(parametres.get('channel_id')).toBe(`eq.${CHANNEL.id}`)
-		expect(parametres.get('archived_at'), 'une card archivée n’est pas une colonne du board').toBe(
+		expect(parametres.get('archived_at'), 'un rattachement archivé n’est pas une colonne du board').toBe(
 			'is.null',
 		)
-		expect(parametres.get('deleted_at'), 'une card en corbeille non plus').toBe('is.null')
+		expect(parametres.get('affaire.deleted_at'), 'une affaire en corbeille non plus').toBe('is.null')
 
 		const etapes = urls.find((url) => url.includes('/rest/v1/workflow_steps?'))
 		expect(new URL(etapes ?? '').searchParams.get('workflow_id')).toBe(`eq.${WORKFLOW}`)

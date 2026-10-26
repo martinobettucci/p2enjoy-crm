@@ -16700,8 +16700,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         `app.cards_attribuer_position`, `app.cards_restauration_verifier_parent`, `creer_affaire`, `health_momentum`,
         `health_commercial`, `app.health_context`, `app.purge_trash` (`CRM-077`) — et emporte les trois politiques de
         `cards` ; environ 165 fichiers lisent ou filtrent l'une des treize colonnes sur `cards`.
-        - [ ] **T2.4.1 — la webapp lit le rattachement** : chaque lecture des treize colonnes sur `cards` les lit sur
+        - [~] **T2.4.1 — la webapp lit le rattachement** : chaque lecture des treize colonnes sur `cards` les lit sur
           `card_placements` (plongement), les formes rendues aux écrans inchangées ; aucun changement visible.
+          *En cours* : le board et la vue liste lisent les rattachements (2026-10-26) ; restent l'inbox, la saisie de temps,
+          les contacts, la corbeille, les affaires figées, la santé, les coûts, Ma journée, la fiche, la rentabilité, la
+          recherche, les modèles d'emails et les plongements des modules `colonnes-*`.
         - [ ] **T2.4.2 — le connecteur et `mail-sync`** lisent le rattachement.
         - [ ] **T2.4.3 — le seed et les scripts** : lectures et écritures par le rattachement. *Question ouverte, à
           trancher avant le code de l'étape* : le seed crée ses affaires par la clé de service, à identifiants stables ;

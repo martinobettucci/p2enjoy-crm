@@ -8,6 +8,8 @@
 // @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape initiale lue par `COLONNES_ETAPE`
 //           (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la lecture n° 3 part des rattachements du channel
+//           (docs/SPEC-rattachements.md §8)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. Le board compose ses colonnes à partir de quatre
 // lectures (§7.2). La composition elle-même est éprouvée par `webapp/src/lib/board.test.ts`,
@@ -45,7 +47,7 @@ const CARD_EN_RETARD = '5eed0000-0000-4000-8000-0000000000c3'
  * quelconque fonctionne, pas que celle du produit fonctionne.
  */
 import {
-	COLONNES_CARD_BOARD,
+	COLONNES_RATTACHEMENT_BOARD,
 	COLONNES_CHAMP_LIBELLE,
 	COLONNES_ETAPE,
 	COLONNES_TRANSITION,
@@ -54,6 +56,8 @@ import {
 const ETAPES = '/rest/v1/workflow_steps'
 const TRANSITIONS = '/rest/v1/workflow_transitions'
 const CARDS = '/rest/v1/cards'
+// `CRM-111` T2.4.1 : le board lit les rattachements du channel, l'affaire en plongement.
+const RATTACHEMENTS = '/rest/v1/card_placements'
 const CHAMPS = '/rest/v1/form_fields'
 const PROFILS = '/rest/v1/profiles'
 
@@ -88,6 +92,19 @@ type CardLue = {
 		full_name: string
 		avatar_url: string | null
 	} | null
+}
+
+/** Une ligne lue par le board depuis `CRM-111` T2.4.1 : le rattachement, l'affaire en plongement. */
+type RattachementLu = Omit<CardLue, 'id' | 'title' | 'currency' | 'email_local_part'> & {
+	affaire: Pick<CardLue, 'id' | 'title' | 'currency' | 'email_local_part'>
+}
+
+/** La carte que l'écran compose : l'affaire par son identifiant, le reste du rattachement (`carteDepuisRattachement`). */
+async function cartes(reponse: { json(): Promise<unknown> }): Promise<CardLue[]> {
+	return ((await reponse.json()) as RattachementLu[]).map(({ affaire, ...rattachement }) => ({
+		...rattachement,
+		...affaire,
+	}))
 }
 
 let jetonAdmin: string
@@ -234,7 +251,7 @@ test.describe('B2 — la lecture des transitions rend les gestes atteignables (�
 })
 
 test.describe('B3 — la lecture des cards rend le contenu des colonnes (§7.2, lecture n° 3)', () => {
-	const requeteCards = `${CARDS}?select=${encodeURIComponent(COLONNES_CARD_BOARD)}&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&archived_at=is.null&deleted_at=is.null&order=position,title`
+	const requeteCards = `${RATTACHEMENTS}?select=${encodeURIComponent(COLONNES_RATTACHEMENT_BOARD)}&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&archived_at=is.null&affaire.deleted_at=is.null&order=position,affaire(title)`
 
 	// RÉVISÉ PAR `CRM-046` (décision 51) : `grands-comptes` portait TROIS cards actives, il en porte
 	// QUATRE — `…0cd` y occupe l'étape « Livré », dont la seule card était archivée, donc invisible
@@ -242,7 +259,7 @@ test.describe('B3 — la lecture des cards rend le contenu des colonnes (§7.2, 
 	test('les quatre cards actives de `grands-comptes`, et elles seules', async ({ request }) => {
 		const reponse = await request.get(requeteCards, { headers: enTetesAuthentifies(jetonAdmin) })
 		expect(reponse.status()).toBe(200)
-		const cards = (await reponse.json()) as CardLue[]
+		const cards = await cartes(reponse)
 		expect(cards).toHaveLength(4)
 	})
 
@@ -252,7 +269,7 @@ test.describe('B3 — la lecture des cards rend le contenu des colonnes (§7.2, 
 	// cards de plus.
 	test('la card archivée et celle en corbeille sont exclues par le serveur', async ({ request }) => {
 		const reponse = await request.get(requeteCards, { headers: enTetesAuthentifies(jetonAdmin) })
-		const ids = ((await reponse.json()) as CardLue[]).map((card) => card.id)
+		const ids = (await cartes(reponse)).map((card) => card.id)
 		expect(ids).not.toContain(CARD_ARCHIVEE)
 		expect(ids).not.toContain(CARD_CORBEILLE)
 
@@ -260,7 +277,7 @@ test.describe('B3 — la lecture des cards rend le contenu des colonnes (§7.2, 
 		// l'archivée et celle en corbeille. L'exclusion est donc bien l'effet des filtres, et non
 		// celui d'une politique qui masquerait ces deux lignes.
 		const sansFiltres = await request.get(
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}`,
+			`${RATTACHEMENTS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect((await sansFiltres.json()) as { id: string }[]).toHaveLength(6)
@@ -272,14 +289,14 @@ test.describe('B3 — la lecture des cards rend le contenu des colonnes (§7.2, 
 	// c'est ce que la composition partant des étapes doit produire.
 	test('les cards n’occupent que trois des sept étapes du workflow', async ({ request }) => {
 		const reponse = await request.get(requeteCards, { headers: enTetesAuthentifies(jetonAdmin) })
-		const cards = (await reponse.json()) as CardLue[]
+		const cards = await cartes(reponse)
 		const etapes = new Set(cards.map((card) => card.current_step_id))
 		expect([...etapes].sort()).toEqual([ETAPE_PROSPECTION, ETAPE_RELANCE, ETAPE_LIVRE].sort())
 	})
 
 	test('l’ordre est celui des colonnes : position, puis titre', async ({ request }) => {
 		const reponse = await request.get(requeteCards, { headers: enTetesAuthentifies(jetonAdmin) })
-		const cards = (await reponse.json()) as CardLue[]
+		const cards = await cartes(reponse)
 		const relance = cards.filter((card) => card.current_step_id === ETAPE_RELANCE)
 		expect(relance.map((card) => card.position)).toEqual([...relance.map((c) => c.position)].sort())
 	})
@@ -341,11 +358,11 @@ test.describe('B5 — les identités consenties au board sont mesurées (§7.4)'
 		])
 
 		const cards = await request.get(
-			`${CARDS}?select=${encodeURIComponent(COLONNES_CARD_BOARD)}` +
+			`${RATTACHEMENTS}?select=${encodeURIComponent(COLONNES_RATTACHEMENT_BOARD)}` +
 				`&channel_id=eq.${CHANNEL_GRANDS_COMPTES}&owner_id=not.is.null`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const lignes = (await cards.json()) as CardLue[]
+		const lignes = await cartes(cards)
 		expect(lignes.length).toBeGreaterThan(0)
 		for (const card of lignes) {
 			expect(card.responsable?.id).toBe(card.owner_id)
@@ -479,7 +496,7 @@ test.describe('B6 — l’anonyme n’obtient aucune colonne, et c’est la caus
 	for (const [nom, chemin] of [
 		['étapes', `${ETAPES}?select=id&workflow_id=eq.${WORKFLOW_GLOBAL}`],
 		['transitions', `${TRANSITIONS}?select=id&workflow_id=eq.${WORKFLOW_GLOBAL}`],
-		['cards', `${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}`],
+		['cards', `${RATTACHEMENTS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}`],
 		['champs', `${CHAMPS}?select=key&workflow_id=eq.${WORKFLOW_GLOBAL}`],
 	] as const) {
 		test(`l’anonyme obtient 200 et zéro ligne sur les ${nom}`, async ({ request }) => {
@@ -495,7 +512,7 @@ test.describe('B6 — l’anonyme n’obtient aucune colonne, et c’est la caus
 		for (const chemin of [
 			`${ETAPES}?select=id&workflow_id=eq.${WORKFLOW_GLOBAL}`,
 			`${TRANSITIONS}?select=id&workflow_id=eq.${WORKFLOW_GLOBAL}`,
-			`${CARDS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}`,
+			`${RATTACHEMENTS}?select=id&channel_id=eq.${CHANNEL_GRANDS_COMPTES}`,
 			`${CHAMPS}?select=key&workflow_id=eq.${WORKFLOW_GLOBAL}`,
 		]) {
 			const reponse = await request.get(chemin, { headers: enTetesAuthentifies(jetonAdmin) })

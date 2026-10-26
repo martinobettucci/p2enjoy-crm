@@ -30,6 +30,7 @@
 // LE DERNIER BLOC N'EN SUBSTITUE AUCUNE. Depuis que `CRM-046` a posé le volume et les données
 // longues dans le seed (`docs/SPEC-seed.md` §9.11), les données longues et la seconde page se
 // prouvent contre la BASE : connexion réelle au clavier, adresse réelle, aucune route posée.
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la page lit les rattachements du channel (docs/SPEC-rattachements.md §8)
 
 import {
 	autoriserErreursConsole,
@@ -43,7 +44,18 @@ import {
 import { PALIERS, capturer } from './captures'
 /** Le mot de passe commun des comptes du seed : la connexion des scénarios réels est la vraie. */
 
-const ROUTE_CARDS = '**/rest/v1/cards*'
+// `CRM-111` T2.4.1 : la page lit les RATTACHEMENTS du channel, l'affaire en plongement.
+const ROUTE_CARDS = '**/rest/v1/card_placements*'
+
+/** Une ligne d'essai, à la forme que la page lit : le rattachement, l'affaire plongée (`COLONNES_RATTACHEMENT_LISTE`). */
+function enRattachement(ligne: unknown): unknown {
+	const { id, title, description, currency, ...rattachement } = ligne as Record<string, unknown>
+	return {
+		...rattachement,
+		id: `r-${String(id)}`,
+		affaire: { id, title, description: description ?? null, currency, created_at: '2026-01-01T00:00:00Z' },
+	}
+}
 const ROUTE_ETAPES = '**/rest/v1/workflow_steps*'
 const ROUTE_TRACKS = '**/rest/v1/tracks*'
 const ROUTE_CHANNELS = '**/rest/v1/channels*'
@@ -63,7 +75,7 @@ const ADRESSE = `${BASE}/liste`
  * qu'une exception pour les colonnes `NOT NULL`, où la clause est sans effet. La chaîne est
  * recopiée depuis ce que la requête porte, non depuis ce qu'on croit qu'elle porte.
  */
-const ORDRE_TITRE = 'title.asc.nullslast,id.asc.nullslast'
+const ORDRE_TITRE = 'affaire(title).asc.nullslast,affaire(id).asc.nullslast'
 
 const PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
 const RELANCE = '5eed0000-0000-4000-8000-000000000062'
@@ -239,7 +251,7 @@ function servirPage(
 			plage: `${url.searchParams.get('offset') ?? ''}+${url.searchParams.get('limit') ?? ''}`,
 			prefer: route.request().headers()['prefer'] ?? null,
 			etape: url.searchParams.get('current_step_id'),
-			recherche: url.searchParams.get('search_tsv'),
+			recherche: url.searchParams.get('affaire.search_tsv'),
 		})
 		if (statut === 416) {
 			void route.fulfill({
@@ -260,7 +272,7 @@ function servirPage(
 			status: statut,
 			contentType: 'application/json',
 			headers: { ...ENTETES_PAGE, 'content-range': `${de}/${total}` },
-			body: JSON.stringify(lignes),
+			body: JSON.stringify(lignes.map(enRattachement)),
 		})
 	})
 }
@@ -404,7 +416,7 @@ test.describe('le tri (§12.4)', () => {
 		).toHaveAttribute('aria-sort', 'descending')
 		await expect
 			.poll(() => journal[journal.length - 1]?.ordre)
-			.toBe('amount.desc.nullslast,title.asc.nullslast,id.asc.nullslast')
+			.toBe('amount.desc.nullslast,affaire(title).asc.nullslast,affaire(id).asc.nullslast')
 		await capturer(page, 'liste-tri-montant-1440', 'CRM-042')
 	})
 
@@ -420,7 +432,7 @@ test.describe('le tri (§12.4)', () => {
 		await expect(page).toHaveURL(/sens=asc/)
 		await expect
 			.poll(() => journal[journal.length - 1]?.ordre)
-			.toBe('amount.asc.nullslast,title.asc.nullslast,id.asc.nullslast')
+			.toBe('amount.asc.nullslast,affaire(title).asc.nullslast,affaire(id).asc.nullslast')
 	})
 
 	// Le tri est atteignable sans souris : c'est un bouton d'en-tête, pas un geste de pointeur.

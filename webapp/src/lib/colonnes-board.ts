@@ -7,6 +7,8 @@
 //       (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
 // @spec CRM-105 (docs/BACKLOG.md) — `description` lue pour l'infobulle du titre de la carte
 //       (docs/SPEC-workflow-engine.md §7.2, docs/DESIGN_SYSTEM.md §5.58, décision 629)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : le board lit les RATTACHEMENTS du channel, l'affaire en plongement
+//       (docs/SPEC-rattachements.md §8, §14)
 //
 // CE MODULE N'IMPORTE RIEN, ET C'EST TOUT SON OBJET.
 //
@@ -57,8 +59,13 @@ export const COLONNES_TRANSITION = 'id, from_step_id, to_step_id, label, require
  */
 // `health_momentum` et `health_commercial` — `CRM-066` tranche 4, docs/SPEC-analytique.md §13.5 : les deux scores de
 // santé, colonnes calculées par la base, rendus avec la ligne (`null` pour une affaire décidée).
-export const COLONNES_CARD_BOARD =
-	'id, title, description, position, amount, currency, next_action, current_step_id, entered_step_at, email_local_part, owner_id, snoozed_until, health_momentum, health_commercial, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url), card_placements!card_placements_card_fk(id, created_at)'
+//
+// `CRM-111` T2.4.1 : la requête part des RATTACHEMENTS du channel (`card_placements`) — étape, rang, montant, prochaine
+// action, responsable, sommeil sont les siens — et plonge l'affaire (`affaire:cards!inner`) pour ce qui est commun :
+// titre, description, devise, adresse, scores de santé. `!inner` fait du filtre sur la corbeille de l'affaire un filtre
+// des rattachements. La forme rendue à l'écran est inchangée (`carteDepuisRattachement`, `board.ts`).
+export const COLONNES_RATTACHEMENT_BOARD =
+	'id, created_at, position, amount, next_action, current_step_id, entered_step_at, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, email_local_part, health_momentum, health_commercial)'
 
 /**
  * Champs du workflow, réduits à ce qui traduit un refus.
