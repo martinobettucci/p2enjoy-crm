@@ -16751,6 +16751,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           réécrites ; `creer_affaire` écrit le rattachement ; le seed et les preuves (pgTAP, API) postent l'affaire
           puis son rattachement (venu de T2.4.3 et T2.4.4, décision 746) ; scores de santé transportés ; politiques de `cards` sous
           la forme optimisée ; types régénérés ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
+          *À reprendre de `CRM-077` (accord de sa session, 2026-10-26)* : `app.purge_trash`, `public.trash_blocking_costs`
+          et `public.reassign_trashed_track_cost` (migration `0123`) lisent `cards.channel_id` ; ils sont réécrits ici,
+          contrat inchangé, et **le prédicat « dépense bloquante » reste exactement celui par lequel la purge détruit une
+          affaire** (`docs/SPEC-corbeille.md` §9.1, « défini par ce que la purge détruit »), de préférence une seule
+          fonction `app.*` partagée ; preuves : pgTAP `0115`, specs corbeille.
       *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses
@@ -16764,6 +16769,10 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       l'administrateur et refusé sur le dernier rattachement ; événements `attached` et `detached` ; pgTAP ; API aux
       jetons réels (la lectrice ne voit pas un rattachement illisible ; un membre qui écrit un seul channel modifie la
       partie commune mais pas le bloc de l'autre ; un non-administrateur ne retire pas).
+      *Question à poser au responsable avant le code de T3* : la purge d'un track qui porte l'un des rattachements d'une
+      affaire rattachée aussi ailleurs détruit-elle l'affaire, ou ne retire-t-elle que ses rattachements du track ? La
+      réponse fixe aussi le prédicat « dépense bloquante » de `CRM-077` (`docs/SPEC-corbeille.md` §9.1, pgTAP `0115`),
+      qui doit rester celui de la purge.
 - [ ] **T4 — lectures à plusieurs rattachements** (§6, §9) : entonnoir, affaires figées et relances, Ma journée,
       recherche, temps valorisé ; pgTAP et API.
 - [ ] **T5 — rentabilité ventilée** (§6) : une ligne par rattachement × devise, colonne `shared`, total compté une fois ;
