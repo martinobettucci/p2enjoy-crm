@@ -841,6 +841,7 @@ depuis `contacts`, sans changer aucun comportement.
 | `email` | `text` | unique **partielle** par workspace sur `lower(email)` |
 | `phone`, `role_title` | `text` | |
 | `source` | `text` | `manual`, `email`, `import` — défaut `manual` |
+| `anonymized_at` | `timestamptz` | **`CRM-072` T3** (migration `0118`) : posée par `anonymize_contact` ; non nulle, le contact ne se modifie plus (déclencheur `contacts_refuse_after_anonymization`, sauf `organization_id` mis à `null` par sa clé) |
 | `created_at`, `updated_at` | `timestamptz` | conventions générales |
 
 Contrainte composite ajoutée : `UNIQUE (id, workspace_id)` — rend exprimable la FK composite
@@ -2206,6 +2207,24 @@ uuid, comment text)` remplace la forme par affaire, **supprimée** (décision 66
 six vérifications, même ordre, mêmes messages, portées par le rattachement ; les champs exigés se lisent sur
 `card_field_values.placement_id` ; le motif reste un commentaire de l'affaire. **Retrait** : supprimer la fonction et
 réappliquer celle de la migration `0035`, avec les appelants d'avant.
+
+### Migration `0118` — le volet RGPD d'un contact (`CRM-072` T3, décisions 725, 726 et 732 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-audit.md` §7.
+
+- **`contacts.anonymized_at timestamptz`**, et le déclencheur `BEFORE UPDATE` `contacts_refuse_after_anonymization` :
+  `P0001 contact_anonymized` sur toute modification d'un contact anonymisé, propriétaire compris, sauf la seule mise à
+  `null` d'`organization_id` par l'action de sa clé étrangère.
+- **`public.export_contact(p_contact uuid) returns jsonb`** et **`public.anonymize_contact(p_contact uuid, p_confirmation
+  text) returns void`** : `SECURITY DEFINER`, garde `app.contact_rgpd_guard` (`P0002 contact_not_found` hors de l'espace
+  de l'appelant, `42501 reserved_to_admins` pour qui ne l'administre pas), `EXECUTE` à `authenticated` seul. L'export
+  rend l'objet `p2enjoy-crm/contact-export/1` ; l'anonymisation exige le nom exact (`22023 confirmation_mismatch`) et
+  laisse les messages intacts (R1, option A). Les deux s'inscrivent au journal d'audit, sans nom (`entity_label` nul).
+- Appuis : `app.contact_rgpd_guard(uuid)`, `app.address_matches(text, text)`.
+
+**Retrait** : `drop function public.export_contact(uuid), public.anonymize_contact(uuid, text),
+app.contact_rgpd_guard(uuid), app.address_matches(text, text)` ; supprimer le déclencheur et
+`app.contacts_refuse_after_anonymization()`. La colonne `anonymized_at` reste : une anonymisation ne se défait pas.
 
 ### Migration `0115` — le journal d'audit en base (`CRM-072` T1, décisions 725 à 727 ; livrée en développement le 2026-10-26)
 

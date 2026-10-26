@@ -13,6 +13,17 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-072` T3 — exporter et anonymiser un contact (RGPD)
+
+- **Sur la fiche d'un contact, une zone « Données personnelles (RGPD) »**, réservée aux administrateurs de l'espace :
+  **exporter** toutes les données de la personne dans un fichier JSON téléchargé (fiche, organisation, affaires et
+  rôles, activités, messages où son adresse paraît, champs qui la désignent), et l'**anonymiser** après avoir retapé
+  son nom. Le nom, l'email, le téléphone et la fonction sont effacés ; les affaires gardent le contact, anonyme ; les
+  messages ne sont pas modifiés.
+- **Un contact anonymisé ne se modifie plus**, et la fiche le dit (« Anonymisé le … ») ; il reste supprimable. Les deux
+  gestes sont inscrits au journal d'audit, **sans le nom de la personne**.
+- **Migration `0118`** ; le seed démontre un contact exporté puis anonymisé, « Régis Anonyme ».
+
 ### `CRM-116` — une couleur pour les channels, et un sélecteur de couleur lisible
 
 - **La couleur d'un track ou d'un channel se choisit parmi cinq options nommées**, chacune avec sa pastille — Bleu, Vert,

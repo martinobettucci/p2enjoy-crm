@@ -1312,6 +1312,7 @@ export type Database = {
       }
       contacts: {
         Row: {
+          anonymized_at: string | null
           created_at: string
           email: string | null
           full_name: string
@@ -1324,6 +1325,7 @@ export type Database = {
           workspace_id: string
         }
         Insert: {
+          anonymized_at?: string | null
           created_at?: string
           email?: string | null
           full_name: string
@@ -1336,6 +1338,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          anonymized_at?: string | null
           created_at?: string
           email?: string | null
           full_name?: string
@@ -3780,6 +3783,10 @@ export type Database = {
         Args: { w: Database["public"]["Tables"]["workspaces"]["Row"] }
         Returns: boolean
       }
+      anonymize_contact: {
+        Args: { p_confirmation: string; p_contact: string }
+        Returns: undefined
+      }
       armer_sequence_relance: {
         Args: {
           p_card_id: string
@@ -3968,6 +3975,7 @@ export type Database = {
           status: string
         }[]
       }
+      export_contact: { Args: { p_contact: string }; Returns: Json }
       fermer_session_serveur: {
         Args: { p_empreinte: string }
         Returns: undefined

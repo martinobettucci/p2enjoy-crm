@@ -739,7 +739,7 @@ export type AffaireDuContact = {
 /** Un contact tel que sa fiche le rend : ce qui le caractérise, et ses affaires. */
 export type FicheContactLue = Pick<
 	Database['public']['Tables']['contacts']['Row'],
-	'id' | 'full_name' | 'email' | 'phone' | 'role_title' | 'organization_id' | 'workspace_id'
+	'id' | 'full_name' | 'email' | 'phone' | 'role_title' | 'organization_id' | 'workspace_id' | 'anonymized_at'
 > & {
 	readonly organisation: OrganisationDeLaFiche | null
 	readonly affaires: readonly AffaireDuContact[]
@@ -767,7 +767,8 @@ export type FicheContactLue = Pick<
  * la fiche pour personne.
  */
 export const COLONNES_FICHE_CONTACT =
-	'id, full_name, email, phone, role_title, organization_id, workspace_id, ' +
+	// `anonymized_at` — `CRM-072` T3 (docs/SPEC-audit.md §7.2, docs/DESIGN_SYSTEM.md §5.67) : la fiche dit l'anonymisation.
+	'id, full_name, email, phone, role_title, organization_id, workspace_id, anonymized_at, ' +
 	'organizations(id, name, domain), ' +
 	'card_contacts(role, cards!inner(id, title, archived_at, ' +
 	'channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug))))'
@@ -890,6 +891,7 @@ export async function lireFicheContact(
 			// Porté depuis la sous-tranche 4h (§17.5) : la clé composite de `card_contacts` l'exige
 			// au rattachement, et le §12.5 a posé qu'elle est TRANSMISE et non devinée.
 			workspace_id: premiere.workspace_id,
+			anonymized_at: premiere.anonymized_at ?? null,
 			// `organizations` absente et `organizations` nulle valent toutes deux « aucune
 			// organisation » : un contact sans organisation est un état LÉGITIME (§15.9, cas b).
 			organisation: premiere.organizations ?? null,

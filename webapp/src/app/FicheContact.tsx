@@ -1,3 +1,6 @@
+// @spec CRM-072 (docs/BACKLOG.md) tranche T3 — la zone « Données personnelles (RGPD) » en bas de fiche, la mention
+//       « Anonymisé le … » en tête, « Modifier » éteint sur un contact anonymisé (docs/SPEC-audit.md §7.2, §9 ;
+//       docs/DESIGN_SYSTEM.md §5.67 ; docs/JOURNAL.md décision 732)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T3 — « Modifier » et « Supprimer » désactivés avec leur motif quand la base
 //       refuse l'édition de l'espace (docs/SPEC-droits-interface.md §2.2, §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4f :
@@ -109,11 +112,15 @@ import {
 	ConfirmationSuppressionContact,
 } from './SuppressionContact'
 import { useContexteEspace } from './ContexteEspace'
+import { Badge } from '../components/ui/Badge'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
+import { BlocRgpdContact, formaterJour } from './BlocRgpdContact'
 
 /** Le motif de la zone de commandes, cité par « Modifier » et « Supprimer » quand la base refuse l'édition (CRM-093). */
 const ID_MOTIF_FICHE_CONTACT = 'fiche-contact-lecture-seule'
+/** Le motif de « Modifier » sur un contact anonymisé (`CRM-072` T3, §5.67) : une règle de la base, non un droit. */
+const ID_MOTIF_CONTACT_ANONYMISE = 'fiche-contact-anonymise'
 
 /** Cellule ordinaire du tableau des affaires — mêmes règles qu'au carnet (§5.9). */
 const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
@@ -605,7 +612,11 @@ export function ContenuFicheContact({
 						ref={commandeOuverture}
 						data-testid="ouvrir-modification-contact"
 						className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface disabled:cursor-not-allowed disabled:opacity-70"
-						{...proprietesCommande(capacites.edition, ID_MOTIF_FICHE_CONTACT)}
+						{...(contact.anonymized_at === null
+							? proprietesCommande(capacites.edition, ID_MOTIF_FICHE_CONTACT)
+							: // Un contact anonymisé ne se modifie plus (`contact_anonymized`, §5.67) : la commande reste
+								// montée, désactivée, lisible, et cite la phrase propre posée en tête de la zone.
+								{ disabled: true, 'aria-describedby': ID_MOTIF_CONTACT_ANONYMISE })}
 						// RÉCIPROQUE DU CAS l DU §20.7 : ouvrir la modification referme la
 						// confirmation de suppression. Une question destructrice laissée ouverte
 						// derrière un formulaire que l'on vient d'ouvrir attendrait une réponse que
@@ -641,8 +652,29 @@ export function ContenuFicheContact({
 				)
 			}
 			motifCommandes={
-				client === null || contact === null || !motifVisible(capacites.edition) ? null : (
-					<MotifLectureSeule id={ID_MOTIF_FICHE_CONTACT}>{t('rights.readonly.edition')}</MotifLectureSeule>
+				client === null || contact === null ? null : (
+					<>
+						{contact.anonymized_at === null ? null : (
+							<MotifLectureSeule id={ID_MOTIF_CONTACT_ANONYMISE} data-testid="motif-contact-anonymise">
+								{t('contact.rgpd.anonymized.readonly')}
+							</MotifLectureSeule>
+						)}
+						{!motifVisible(capacites.edition) ? null : (
+							<MotifLectureSeule id={ID_MOTIF_FICHE_CONTACT}>{t('rights.readonly.edition')}</MotifLectureSeule>
+						)}
+					</>
+				)
+			}
+			zoneRgpd={
+				client === null || contact === null ? null : (
+					<BlocRgpdContact
+						client={client}
+						idContact={contact.id}
+						nom={contact.full_name}
+						anonymiseLe={contact.anonymized_at}
+						administration={capacites.administration}
+						onAnonymise={reprendre}
+					/>
 				)
 			}
 			confirmationSuppression={
@@ -696,6 +728,8 @@ type ProprietesContenu = {
 	readonly messageSuppression?: string | null
 	/** L'état des DEUX gestes de ligne, tenu par la fiche pour l'exclusivité (§18.4, §19.4). */
 	readonly gestesLigne?: EtatGestesLigne
+	/** La zone « Données personnelles (RGPD) », en bas de fiche (`CRM-072` T3, §5.67). */
+	readonly zoneRgpd?: React.ReactNode
 }
 
 /**
@@ -729,6 +763,7 @@ function ContenuFiche({
 	confirmationSuppression = null,
 	messageSuppression = null,
 	gestesLigne,
+	zoneRgpd = null,
 }: ProprietesContenu) {
 	if (client === null) {
 		return (
@@ -781,6 +816,12 @@ function ContenuFiche({
 			  ouvrir l'une referme l'autre.
 			*/}
 			<div className="flex flex-col items-start gap-3">
+				{/* LA MENTION D'ANONYMISATION OUVRE LA FICHE (§5.67) : un état, pas une faute — la pilule neutre du §5.6. */}
+				{contact.anonymized_at === null ? null : (
+					<span data-testid="pilule-contact-anonymise">
+						<Badge>{t('contact.rgpd.anonymized.pill', { date: formaterJour(contact.anonymized_at) })}</Badge>
+					</span>
+				)}
 				{motifCommandes}
 				{/*
 				  LES DEUX COMMANDES SUR UNE MÊME LIGNE, la destructive en second. Quand le
@@ -933,6 +974,7 @@ function ContenuFiche({
 					</p>
 				)}
 			</section>
+			{zoneRgpd}
 		</section>
 	)
 }

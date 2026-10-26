@@ -1069,6 +1069,10 @@ type _vueDerivationColonnes = Expect<
 // La migration des scores de santé de `CRM-066` TRANCHE 4 ajoute `health_momentum` et `health_commercial` — deux
 // colonnes CALCULÉES de `cards` à paramètre anonyme, rangées aussi dans la ligne (docs/SPEC-analytique.md §13.5) ; leur
 // signature RPC d'erreur n'est appelée par personne. Le compte s'accroît de deux.
+// `0118` de `CRM-072` TRANCHE T3 ajoute `export_contact` et `anonymize_contact` — le volet RGPD d'un contact
+// (docs/SPEC-audit.md §7). CE QUI ÉCHAPPE AU GÉNÉRATEUR : les deux sont réservées aux administrateurs de l'espace
+// (`42501 reserved_to_admins`), un contact invisible rend `P0002`, le nom retapé différent `22023`, un contact déjà
+// anonymisé `contact_anonymized` ; l'objet exporté est un `Json` dont la forme est versionnée par son champ `format`.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1141,6 +1145,8 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'depots_envoi_abandonnes'
     | 'health_momentum'
     | 'health_commercial'
+    | 'export_contact'
+    | 'anonymize_contact'
     | 'mark_message_unread'
     | 'is_read'
     | 'messages_a_ranger'

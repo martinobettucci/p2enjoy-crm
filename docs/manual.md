@@ -63,7 +63,7 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | **Livré en développement** — voir le chapitre 10 *bis*. Un administrateur d'espace y change un rôle, retire un membre, inscrit, remplace et retire une attente, et pose les droits fins de chacun par track et par channel ; chaque membre consulte la liste des membres. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses membres et ses attentes est livré par `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
-| 17 quater | Le journal d'audit de l'espace | `CRM-072` | **Livré en développement** — voir le chapitre 10 *ter*. « Réglages ▸ Journal d'audit » montre aux administrateurs de l'espace les gestes sensibles : droits et appartenances, configuration, connexions, effacements et corbeille. Personne ne modifie le journal, et il est conservé un an. |
+| 17 quater | Le journal d'audit de l'espace | `CRM-072` | **Livré en développement** — voir le chapitre 10 *ter*. « Réglages ▸ Journal d'audit » montre aux administrateurs de l'espace les gestes sensibles : droits et appartenances, configuration, connexions, effacements et corbeille. Personne ne modifie le journal, et il est conservé un an. Sur la fiche d'un contact, la zone « Données personnelles (RGPD) » exporte ses données ou l'anonymise (chapitre 3 *ter*). |
 | 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
 | 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103`, `CRM-108` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Ses outils : la liste des espaces et, **en développement**, les huit outils de la famille « Recettes » (`CRM-108`) et les outils des affaires, de la structure, de la recherche et des contacts (`CRM-104` T2.a, T2.b, T1 et T3) ; les autres familles arrivent avec la suite de `CRM-104` |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
@@ -627,6 +627,31 @@ vous répondez.
 
 **Ce que la fiche ne fait pas encore.** Elle ne montre pas les emails échangés avec la personne : la
 messagerie d'une affaire reste dans l'affaire.
+
+#### Les données personnelles d'un contact : les exporter, les anonymiser
+
+*Livré en développement par `CRM-072` T3.*
+
+En bas de la fiche, la zone **« Données personnelles (RGPD) »** porte deux gestes, réservés aux **administrateurs de
+l'espace**. Pour un autre membre, les deux boutons restent visibles mais grisés, et une phrase dit pourquoi. Chaque geste
+est inscrit au **journal d'audit** (chapitre 10 *ter*), sans le nom de la personne.
+
+**« Exporter les données »** télécharge un fichier JSON nommé `contact-…-AAAA-MM-JJ.json`. Il réunit tout ce que le CRM
+garde sur cette personne : sa fiche, son organisation, les affaires où elle est rattachée et son rôle, les activités dont
+elle est participante, les messages où son adresse paraît, et les champs de formulaire qui la désignent. Le fichier
+n'est enregistré nulle part dans le CRM : il n'existe que sur votre poste.
+
+**« Anonymiser ce contact »** efface la personne sans effacer l'historique des affaires :
+
+1. Le bouton ouvre une confirmation dans la page, qui dit ce qui va se passer : le nom, l'email, le téléphone et la
+   fonction sont effacés ; les affaires gardent ce contact, anonyme ; les messages ne sont pas modifiés.
+2. **Retapez le nom exact du contact** : le bouton **« Anonymiser définitivement »** ne s'active qu'à l'égalité.
+3. La fiche se relit. Elle porte la mention **« Anonymisé le … »**, son nom devient « Contact anonymisé », et
+   **« Modifier » est grisé** : un contact anonymisé ne se modifie plus, pour qu'aucune saisie ne le ré-identifie par
+   mégarde. **« Supprimer » reste possible.**
+
+L'anonymisation est **définitive**. **Les messages ne sont pas touchés** : ils sont la correspondance de l'entreprise, et
+l'adresse ou la signature de la personne peuvent encore y paraître.
 
 #### Rattacher une personne à une affaire
 

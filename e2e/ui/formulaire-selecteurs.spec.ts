@@ -95,7 +95,9 @@ test.describe('sélecteurs de contact et de membre (docs/SPEC-contacts.md §13)'
 
 		const contact = await selecteurPret(page, 'contact-principal')
 		// Trois contacts seedés, plus l'option vide du §4 bis.5 : elle est le moyen de VIDER.
-		await expect(contact.locator('option')).toHaveCount(4)
+		// Cinq depuis `CRM-072` T3 (décision 51) : l'option vide, et le contact anonymisé du seed parmi les quatre
+		// contacts (docs/SPEC-seed.md §26).
+		await expect(contact.locator('option')).toHaveCount(5)
 		await expect(contact.locator('option', { hasText: '— Aucun choix —' })).toHaveCount(1)
 		await expect(contact.locator('option', { hasText: 'Sophie Dupont' })).toHaveCount(1)
 

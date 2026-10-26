@@ -7498,7 +7498,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
-| CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[@]` |
+| CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |
 | CRM-073 | Webhooks sortants signés et jetons d'API | `[ ]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
@@ -12340,8 +12340,15 @@ un motif explicite.
 | CRM-P11 sauvegarde/restauration | `CRM-080` | retenue |
 | CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
-### CRM-072 — Journal d'audit consultable et conformité RGPD `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 09:38 UTC — état avant : [ ]*
+### CRM-072 — Journal d'audit consultable et conformité RGPD `[P]`
+
+*`[P]` depuis le 2026-10-26* : les trois tranches sont livrées et prouvées en développement. **Campagne de clôture**,
+après synchronisation avec `CRM-111` T2.3.4 et `CRM-116` : pgTAP 103 fichiers et 4260 assertions sans anomalie ;
+unitaires 4504/4504, typecheck et build verts ; API 1226/1227 (seul `ingestion.spec.ts:91`, tenu par le seed de
+`CRM-058`) ; interface 952 passés au premier tour, puis les quatre gardes de contacts révisées pour le contact anonymisé
+du seed (décision 51) et les deux scénarios instables sous charge (`connexion.spec.ts:345`, `saisie-temps.spec.ts:70`,
+famille d'INC-310) **rejoués verts, 87/87**. Il ne reste que la **livraison** des migrations `0115` et `0118` avec la
+webapp de `main` (`docs/PROD_MIGRATIONS.md` §3.2), sur instruction du responsable (décision 730), et son constat.
 
 Arbitrée par la décision 708 (point 5) ; connecteur MCP : non (décision 707). **Spécification proposée le 2026-10-26
 (décision 725), validée telle quelle le même jour (décision 726)** : `docs/SPEC-audit.md` ; R1 tranchée, option A (les
@@ -12371,7 +12378,17 @@ messages d'un contact anonymisé restent intacts).
       - [x] E2E `e2e/ui/journal-audit.spec.ts` **5/5**, et les six specs d'interface qui touchent les réglages et la
             plateforme : **66/66** ; captures `docs/captures/CRM-072/journal-*` observées (tableau, filtres, paliers,
             refus). La campagne d'interface complète sera rejouée à la clôture de l'unité, après T3.
-- [ ] **T3 — le volet RGPD d'un contact** (§7, §9) : export JSON, anonymisation, seed, pgTAP, API, E2E, captures, manuel.
+- [x] **T3 — le volet RGPD d'un contact** (§7, §9) : export JSON, anonymisation, seed, pgTAP, API, E2E, captures, manuel.
+      - [x] Migration `0118_rgpd_contact.sql` (la `0116` est à `CRM-116`, la `0117` à `CRM-111` T2.3.4), appliquée par le
+            runner ; pgTAP `0113_rgpd_contact` **26/26**, mutation tuée (déclencheur de lecture seule retiré : l'assertion 24
+            rougit).
+      - [x] Webapp : `lib/rgpd.ts`, `app/BlocRgpdContact.tsx`, fiche du contact (pilule, « Modifier » éteint, zone en bas) ;
+            unitaires `rgpd.test.ts` 6/6, `BlocRgpdContact.test.tsx` 6/6 ; `docs/DESIGN_SYSTEM.md` §5.67 (décision 732,
+            et la pilule en tête de fiche, précisée à l'écriture du code).
+      - [x] API `e2e/api/rgpd-contact.spec.ts` **3/3** ; E2E `e2e/ui/rgpd-contact.spec.ts` **4/4**, captures observées.
+      - [x] Seed §26 (« Régis Anonyme » exporté puis anonymisé par les vraies fonctions), rejoué au repos rc=0 ; la
+            vérification §25 lit une famille à la fois (une lecture unique rendait mille entrées et manquait l'export).
+      - [x] Manuel (chapitre 3 *ter*), `SCHEMA.md`, `PROD_MIGRATIONS.md`, `SPEC-seed.md` §26, CHANGELOG.
 
 ### CRM-075 — Administration des tracks et des channels `[x]`
 *Créée le 2026-08-11 par arbitrage du responsable — INC-086, option 2, `docs/JOURNAL.md` décision

@@ -11,8 +11,9 @@ Contrat exécutable de `CRM-072` (`docs/BACKLOG.md`).
 - Droits : `docs/SPEC-permissions-rls.md` §4 (ligne `audit_log`), preuve de refus n° 8.
 - Schéma : `docs/SCHEMA.md` §8 (ligne `audit_log`). Déploiement : `docs/PROD_MIGRATIONS.md`.
 - État : **proposée le 2026-10-26 (décision 725), validée telle quelle le même jour (décision 726)**, avec la réponse à
-  R1 : option A, les messages restent intacts (§7.2, §12). **T1 livrée en développement le 2026-10-26** (migration
-  `0115_journal_audit.sql`, décision 727) ; T2 et T3 à faire.
+  R1 : option A, les messages restent intacts (§7.2, §12). **T1 et T2 livrées en développement le 2026-10-26**
+  (migration `0115_journal_audit.sql`, décisions 727 et 728) ; **T3 livrée en développement le même jour** (migration
+  `0118_rgpd_contact.sql`, décision 732).
 
 ---
 

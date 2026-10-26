@@ -7999,7 +7999,11 @@ l'ouverture (mais elle rendrait un `500`, pas un `503`, et le seed passe en enti
 `rpc/ouvrir_session_serveur` à `200` dans Kong — et l'environnement des fonctions journalise aussitôt
 « connection aborted (uri: "/session/ouvrir") ». Ces deux échecs sont donc **un défaut de transport entre Kong et
 l'environnement des fonctions, en aval de la base** : ni PostgREST ni la `0115` n'y prennent part. Le cas de 10:31:54
-(un `503` de PostgREST lui-même) reste à expliquer, et peut relever d'une autre cause.
+(un `503` de PostgREST lui-même) reste à expliquer, et peut relever d'une autre cause. **Troisième occurrence, 12:33:47**, au rejeu
+du seed (§22, connexion de Sabine Plateforme) : `rpc/ouvrir_session_serveur` à `200`, puis `503` côté client et
+« connection aborted » côté runtime, exactement comme à 12:13. **Hypothèse, non prouvée** : une connexion de la réserve
+de Kong vers l'environnement des fonctions, réutilisée après que celui-ci l'a fermée. Le seed la subit à n'importe
+quelle connexion de démonstration.
 
 **Comportement laissé inchangé.** **Issue proposée** : faire journaliser par la fonction `session` le statut et le code
 PostgREST (`code`, jamais `message` ni `details`, qui peuvent porter des données) de toute réponse en erreur, puis

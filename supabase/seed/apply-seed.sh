@@ -1954,7 +1954,9 @@ done
 
 organizations_count=$(curl -s "$API/rest/v1/organizations?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
-contacts_count=$(curl -s "$API/rest/v1/contacts?select=id" \
+# `…a9`, « Régis Anonyme », est le contact du volet RGPD (`CRM-072` T3, §26) : semé plus loin, il n'appartient pas au
+# carnet que ce compte vérifie, et le rejeu le trouverait déjà là.
+contacts_count=$(curl -s "$API/rest/v1/contacts?select=id&id=neq.5eed0000-0000-4000-8000-0000000000a9" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 card_contacts_count=$(curl -s "$API/rest/v1/card_contacts?select=card_id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
@@ -4851,24 +4853,49 @@ for palier in m-healthy m-watch m-danger s-healthy s-watch s-danger; do
 done
 info "Scores de santé : les trois paliers présents pour la dynamique et pour la santé commerciale — CRM-066, docs/SPEC-seed.md §24"
 
+# --- Le volet RGPD d'un contact — CRM-072 T3, docs/SPEC-seed.md §26 -----------------------------------------------------
+# @spec CRM-072 (docs/BACKLOG.md) — tranche T3 ; docs/SPEC-audit.md §7, §10 ; docs/JOURNAL.md décisions 725, 726 et 732
+# « Régis Anonyme » est créé, exporté puis anonymisé par les VRAIES fonctions, sous le jeton de Camille, administratrice :
+# c'est ce qui inscrit au journal un export et une anonymisation, et ce qui donne à la fiche un contact anonymisé à montrer.
+# Convergence par présence : un contact déjà anonymisé n'est ni recréé ni réexporté — l'anonymisation est définitive.
+CONTACT_RGPD='5eed0000-0000-4000-8000-0000000000a9'
+code=$(api GET "/rest/v1/contacts?select=anonymized_at&id=eq.$CONTACT_RGPD")
+attendu "$code" "lecture du contact « Régis Anonyme »" 200
+if [ "$(jq -r 'length' "$CORPS")" = "0" ]; then
+	code=$(api_jeton "$JETON_ADMIN_ACTIVITES" POST /rest/v1/contacts -H 'Prefer: return=representation' \
+		-d "$(jq -nc --arg id "$CONTACT_RGPD" --arg ws "$WS_ID" \
+			'{id: $id, workspace_id: $ws, full_name: "Régis Anonyme", email: "regis.anonyme@exemple.test",
+			  phone: "+33 6 12 34 56 78", role_title: "Directeur des achats"}')")
+	attendu "$code" "création du contact « Régis Anonyme »" 201
+fi
+code=$(api GET "/rest/v1/contacts?select=anonymized_at&id=eq.$CONTACT_RGPD")
+if [ "$(jq -r '.[0].anonymized_at // "null"' "$CORPS")" = 'null' ]; then
+	code=$(api_jeton "$JETON_ADMIN_ACTIVITES" POST /rest/v1/rpc/export_contact -d "$(jq -nc --arg c "$CONTACT_RGPD" '{p_contact: $c}')")
+	attendu "$code" "export des données de « Régis Anonyme »" 200
+	[ "$(jq -r '.contact.email' "$CORPS")" = 'regis.anonyme@exemple.test' ] || die "l'export de « Régis Anonyme » ne porte pas
+        son adresse (docs/SPEC-audit.md §7.1)."
+	code=$(api_jeton "$JETON_ADMIN_ACTIVITES" POST /rest/v1/rpc/anonymize_contact \
+		-d "$(jq -nc --arg c "$CONTACT_RGPD" '{p_contact: $c, p_confirmation: "Régis Anonyme"}')")
+	attendu "$code" "anonymisation de « Régis Anonyme »" 200 204
+fi
+info "RGPD : « Régis Anonyme » exporté puis anonymisé par les vraies fonctions — CRM-072, docs/SPEC-seed.md §26"
+
 # --- Le journal d'audit couvre ses familles — CRM-072 T1, docs/SPEC-seed.md §25 ------------------------------------------
 # @spec CRM-072 (docs/BACKLOG.md) — tranche T1 ; docs/SPEC-audit.md §4, §10 ; docs/JOURNAL.md décisions 725 et 726
 # VÉRIFIÉ, JAMAIS FABRIQUÉ : `audit_log` n'a aucun chemin d'écriture cliente, et le seed n'y écrit rien. Il se remplit
 # PARCE QUE le seed joue les vrais gestes après la migration 115 : les connexions LeLabs (`sign_in`), les appartenances
 # qu'elles créent (`access`), les tracks, channels et workflows (`configuration`), l'activité retirée par la modération
-# (`deletion`). Le seed lit le journal sous la clé de service et exige chacune de ces familles dans l'espace. La famille
-# `export` vient avec la tranche T3 ; `retention` ne se démontre pas sans entrée d'un an, que rien ne doit fabriquer.
-familles_journal=$(curl -s "$API/rest/v1/audit_log?select=family&workspace_id=eq.$WS_ID" \
-	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
-	| jq -r '[.[].family] | unique | join(",")')
-for famille in access configuration sign_in deletion; do
-	case ",$familles_journal," in
-		*",$famille,"*) ;;
-		*) die "le journal d'audit de l'espace n'a aucune entrée de la famille $famille (docs/SPEC-audit.md §10). Une
-        base antérieure à la migration 115 doit être reconstruite. Familles présentes : ${familles_journal:-aucune}" ;;
-	esac
+# (`deletion`), et l'export de « Régis Anonyme » (`export`, §26). Le seed lit le journal sous la clé de service et exige
+# chacune de ces familles dans l'espace. `retention` ne se démontre pas sans entrée d'un an, que rien ne doit fabriquer.
+# UNE LECTURE PAR FAMILLE, `limit=1` : le journal d'un espace compte vite des milliers d'entrées, et PostgREST n'en
+# rend que mille par lecture. Lire tout le journal pour en extraire les familles manquait l'unique export (mesuré).
+for famille in access configuration sign_in deletion export; do
+	presente=$(curl -s "$API/rest/v1/audit_log?select=id&workspace_id=eq.$WS_ID&family=eq.$famille&limit=1" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+	[ "$presente" = "1" ] || die "le journal d'audit de l'espace n'a aucune entrée de la famille $famille
+        (docs/SPEC-audit.md §10). Une base antérieure à la migration 115 doit être reconstruite."
 done
-info "Journal d'audit : familles access, configuration, sign_in et deletion présentes, écrites par les vrais gestes — CRM-072, docs/SPEC-seed.md §25"
+info "Journal d'audit : familles access, configuration, sign_in, deletion et export présentes, écrites par les vrais gestes — CRM-072, docs/SPEC-seed.md §25"
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."

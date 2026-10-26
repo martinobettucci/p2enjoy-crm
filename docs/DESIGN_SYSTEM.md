@@ -6439,8 +6439,10 @@ qui reste montée et devient désactivée pendant sa confirmation, refus dit dan
     Le texte d'aide cite le nom à saisir, entouré d'espaces insécables (§5.51).
   - **Le succès relit la fiche**, et la zone dit « Contact anonymisé » en `role="status"`.
 
-- **UN CONTACT ANONYMISÉ PORTE LA PILULE NEUTRE « Anonymisé le {date} »** à côté du titre de la route (§5.6), précédée du
-  point neutre : c'est un état, pas une faute. Sur sa fiche :
+- **UN CONTACT ANONYMISÉ PORTE LA PILULE NEUTRE « Anonymisé le {date} »** (`Badge` du §5.6, son point neutre) : c'est un
+  état, pas une faute. *Précisé à l'écriture du code* : elle ouvre la fiche, en tête de la zone de commandes, et non à
+  côté du titre de la route — le titre est porté par la coquille, qui ne connaît pas l'état du contact, et l'y loger
+  aurait fait de l'en-tête un lecteur de données. Sur sa fiche :
   - **« Modifier » est désactivé, lisible**, et cite une phrase propre posée en tête de la zone de commandes : « Un contact
     anonymisé ne se modifie plus. » Ce n'est pas un droit, c'est une règle de la base (`contact_anonymized`), rendue avec
     la forme du §5.59 ;

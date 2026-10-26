@@ -665,7 +665,7 @@ test.describe('CRM-060 4e — les onze mesures de la création d’un contact (�
 		expect(await relecture.json()).toEqual([])
 	})
 
-	test('le SEED est rendu INTACT : ses trois contacts, et aucune sonde survivante', async ({
+	test('le SEED est rendu INTACT : ses quatre contacts, et aucune sonde survivante', async ({
 		request,
 	}) => {
 		// Ce scénario est la garde du §14.8 : les onze mesures écrivent, et une sonde oubliée
@@ -677,7 +677,9 @@ test.describe('CRM-060 4e — les onze mesures de la création d’un contact (�
 		// L'ORDRE EST CELUI DE LA COLLATION DE LA BASE, mesuré et non supposé : « Élise » précède
 		// « Léo ». C'est le même ordre que `Carnet.test.tsx` fige depuis la sous-tranche 4a, et
 		// c'est bien le serveur qui trie (`order=full_name`), jamais ce fichier.
-		expect(noms).toEqual(['Élise Fabre', 'Léo Marchand', 'Sophie Dupont'])
+		// RÉVISÉ PAR `CRM-072` T3 (décision 51) : le seed porte un quatrième contact, « Régis Anonyme » (`…a9`), exporté puis
+		// anonymisé par les vraies fonctions (docs/SPEC-seed.md §26) — il se lit donc « Contact anonymisé », en tête.
+		expect(noms).toEqual(['Contact anonymisé', 'Élise Fabre', 'Léo Marchand', 'Sophie Dupont'])
 	})
 })
 
@@ -889,7 +891,7 @@ test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-co
 		}
 	})
 
-	test('le SEED est rendu INTACT après 4f : trois contacts, deux rattachements', async ({
+	test('le SEED est rendu INTACT après 4f : quatre contacts, deux rattachements', async ({
 		request,
 	}) => {
 		const contacts = (await (
@@ -897,7 +899,9 @@ test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-co
 				headers: enTetesService(),
 			})
 		).json()) as Array<{ full_name: string }>
+		// Révisé par `CRM-072` T3 : le contact anonymisé du seed (docs/SPEC-seed.md §26), en tête de la collation.
 		expect(contacts.map((c) => c.full_name)).toEqual([
+			'Contact anonymisé',
 			'Élise Fabre',
 			'Léo Marchand',
 			'Sophie Dupont',
@@ -2547,7 +2551,7 @@ test.describe('CRM-060 tranche 6 — la suppression d’un contact (§20.2)', ()
 		}
 	})
 
-	test('le seed est rendu INTACT : trois contacts, deux rattachements, trois organisations', async ({
+	test('le seed est rendu INTACT : quatre contacts, deux rattachements, trois organisations', async ({
 		request,
 	}) => {
 		// GARDE DE CLÔTURE. Ces mesures créent et suppriment beaucoup ; une sonde oubliée ferait
@@ -2556,7 +2560,8 @@ test.describe('CRM-060 tranche 6 — la suppression d’un contact (§20.2)', ()
 		const contacts = await request.get('/rest/v1/contacts?select=id', {
 			headers: enTetesAuthentifies(jeton),
 		})
-		expect((await contacts.json()) as unknown[]).toHaveLength(3)
+		// Quatre depuis `CRM-072` T3 : le contact anonymisé du seed (docs/SPEC-seed.md §26) — décision 51.
+		expect((await contacts.json()) as unknown[]).toHaveLength(4)
 		const organisations = await request.get('/rest/v1/organizations?select=id', {
 			headers: enTetesAuthentifies(jeton),
 		})

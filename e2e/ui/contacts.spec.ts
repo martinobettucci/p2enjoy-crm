@@ -45,7 +45,7 @@ async function connecter(page: Page, email: string): Promise<void> {
 }
 
 test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
-	test('la barre latérale mène au carnet, qui rend les trois contacts du seed', async ({ page }) => {
+	test('la barre latérale mène au carnet, qui rend les quatre contacts du seed', async ({ page }) => {
 		await connecter(page, ADMIN)
 
 		// Cas g du §10.6 : l'entrée existe dans la navigation transverse, et le geste est un CLIC
@@ -56,7 +56,8 @@ test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
 
 		const tableau = page.getByTestId('tableau-contacts')
 		await expect(tableau).toBeVisible()
-		await expect(page.getByTestId('ligne-contact')).toHaveCount(3)
+		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26).
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(4)
 
 		// Les cinq colonnes du §10.5, dans leur ordre.
 		await expect(tableau.getByRole('columnheader')).toHaveText([
@@ -139,7 +140,8 @@ test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
 		// geste à lui refuser, et l'écran est le même que celui de l'administratrice.
 		await connecter(page, VIEWER)
 		await page.goto('/contacts')
-		await expect(page.getByTestId('ligne-contact')).toHaveCount(3)
+		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26).
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(4)
 		// RÉVISÉE PAR LA SOUS-TRANCHE 4e, NON RETIRÉE (mécanisme de la décision 51). Cette assertion
 		// exigeait qu'AUCUN geste d'écriture ne soit offert, « à personne » : c'était vrai tant que
 		// le §10.7 nommait cette absence comme une limite de 4a. La limite est levée — le carnet
@@ -1620,14 +1622,15 @@ test.describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () =>
 		await expect(page.getByRole('heading', { name: 'Élise Fabre' })).toBeVisible()
 	})
 
-	test('le seed est rendu INTACT : le carnet porte exactement les trois contacts d’origine', async ({
+	test('le seed est rendu INTACT : le carnet porte exactement les quatre contacts d’origine', async ({
 		page,
 	}) => {
 		// GARDE DE CLÔTURE. Une sonde oubliée ferait dériver les compteurs d'autres harnais, et le
 		// défaut se lirait chez eux plutôt qu'ici.
 		await connecter(page, ADMIN)
 		await page.goto('/contacts')
-		await expect(page.getByTestId('ligne-contact')).toHaveCount(3)
+		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26).
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(4)
 		await expect(page.getByTestId('ligne-contact').filter({ hasText: 'Sonde tranche 6' })).toHaveCount(
 			0,
 		)

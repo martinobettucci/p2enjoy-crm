@@ -2491,3 +2491,17 @@ ces entrées : elle doit être reconstruite, et le message le dit.
   preuve est la suite pgTAP `0111_journal_audit`.
 - Une affaire semée **directement en corbeille** n'écrit pas `trashed` : elle naît ainsi, aucun changement n'a lieu
   (`docs/SPEC-audit.md` §4.3).
+
+## 26. Le volet RGPD d'un contact — `CRM-072` T3 (décisions 725, 726 et 732)
+
+Le seed crée **« Régis Anonyme »** (`5eed0000-0000-4000-8000-0000000000a9`, sans organisation), puis l'**exporte** et
+l'**anonymise** par les vraies fonctions, `export_contact` et `anonymize_contact`, sous le **jeton de Camille**,
+administratrice. C'est ce qui inscrit au journal un export (famille `export`, exigée désormais par la vérification du
+§25) et une anonymisation, et ce qui donne à la fiche un contact anonymisé à montrer.
+
+- **Convergence par présence** : un contact déjà anonymisé n'est ni recréé ni réexporté — l'anonymisation est
+  définitive. Le rejeu n'écrit rien.
+- **Le compte des contacts du carnet** (§5) **exclut `…a9`** : semé plus loin dans le script, il n'appartient pas au
+  carnet que ce compte vérifie, et le rejeu le trouverait déjà là.
+- **La vérification du §25 lit une famille à la fois** (`limit=1`) : le journal d'un espace dépasse vite mille entrées,
+  et une lecture unique en rendait mille et manquait l'unique export (mesuré).
