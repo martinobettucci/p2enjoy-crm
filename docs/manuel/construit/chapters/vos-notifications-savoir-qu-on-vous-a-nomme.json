@@ -1,0 +1,1135 @@
+{
+	"slug": "vos-notifications-savoir-qu-on-vous-a-nomme",
+	"title": "8. Vos notifications : savoir qu'on vous a nommé",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-064"
+						},
+						{
+							"type": "text",
+							"text": ", sous-tranche 3a. Les règles d'accès sont celles des tranches 1 et 2 : cet\nécran n'en invente aucune. Captures : "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-064/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " En haut à droite de chaque écran, la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "cloche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", entre le nom de votre espace de travail et\nvotre identité. Elle est visible partout, parce qu'une notification n'est pas une destination : on\ny jette un œil et l'on retourne à ce qu'on faisait."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Chacun voit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ses"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " notifications, et elles seules. Personne d'autre — ni un collègue, ni\nun administrateur de l'espace de travail. La boîte de quelqu'un n'est pas une donnée\nd'exploitation. Sans session ouverte, aucune page ne s'affiche, cloche comprise."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-la-cloche-annonce",
+			"content": [
+				{
+					"type": "text",
+					"text": "8.1 Ce que la cloche annonce"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le chiffre posé sur la cloche compte vos notifications "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "non lues"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", jamais le total : une cloche\nqui afficherait « 12 » sur douze messages tous lus ne dirait rien d'utile."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun chiffre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " signifie l'une de deux choses, et jamais « zéro par défaut » : soit vous n'avez\nrien de non lu, soit le compte n'a pas encore été mesuré. Dans le second cas, la cloche\ns'annonce simplement « Notifications », sans prétendre que tout est lu."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Au-delà de quatre-vingt-dix-neuf"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", la cloche écrit « 99+ » — un badge à quatre chiffres la\ndéformerait. Le compte "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "exact"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " reste annoncé aux lecteurs d'écran."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-le-panneau-montre",
+			"content": [
+				{
+					"type": "text",
+					"text": "8.2 Ce que le panneau montre"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un clic — ou "
+				},
+				{
+					"type": "code",
+					"text": "Entrée"
+				},
+				{
+					"type": "text",
+					"text": " au clavier — ouvre le panneau "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sous la cloche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sans quitter l'écran où\nvous êtes. "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": ", un clic à l'extérieur, ou « Fermer les notifications » le referment ; le focus\nrevient alors à la cloche."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque ligne porte :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "qui vous a nommé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", avec son avatar — « Camille Aubert vous a mentionné » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ce qui a été écrit"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", en extrait ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "l'affaire concernée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", dont le titre est un lien vers sa fiche ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "le dossier"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", en pastille « Track › Channel », qui mène au channel ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "la date et l'heure"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", absolues."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ligne non lue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " porte un liseré bleu à gauche et son libellé en gras. L'ordre est celui de\nl'arrivée : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "le plus récent en haut"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". C'est l'inverse du fil de discussion d'une affaire, où la\nconversation se lit dans le sens où elle s'est tenue ; une boîte de réception, elle, se lit en\ncommençant par ce qui vient d'arriver. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les non-lues ne remontent pas en tête"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une ligne qui\nsauterait au moment où vous la marquez vous la ferait perdre de vue."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une ligne dont le propos n'est plus lisible garde sa place"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", avec son affaire, sa date et son\nlien, mais sans auteur ni extrait. Le produit ne dit alors ni que le message a été supprimé, ni que\nvous n'y avez plus accès : les deux causes sont indistinguables, et les nommer divulguerait la\nseconde."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "marquer-lu-et-marquer-non-lu",
+			"content": [
+				{
+					"type": "text",
+					"text": "8.3 Marquer lu, et marquer non lu"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton en bout de ligne bascule l'état, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans les deux sens"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : on ouvre une notification par\nmégarde, et une boîte dont on ne peut pas remettre un message de côté n'est pas une boîte."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Suivre le lien d'une affaire ne marque rien."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ce sont deux gestes distincts : fondre les deux\nferait disparaître du compteur une notification que vous avez seulement effleurée en visant autre\nchose."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La ligne ne change qu'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "après"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " la réponse du serveur. Si vos droits ont changé depuis l'ouverture\ndu panneau, le produit écrit « Aucune notification n'a été modifiée » et invite à recharger la\npage — il n'annonce jamais une modification qui n'a pas eu lieu."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-mise-a-jour-est-immediate",
+			"content": [
+				{
+					"type": "text",
+					"text": "8.4 La mise à jour est immédiate"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le panneau et le compteur s'actualisent "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sans rechargement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dès qu'une notification vous est\nadressée : ils écoutent la base en temps réel. Le produit ne vous envoie "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "aucun email"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ne fait\nsonner "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "aucun son"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et ne modifie "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le titre de l'onglet."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "mentionner-quelqu-un-dans-un-commentaire",
+			"content": [
+				{
+					"type": "text",
+					"text": "8.5 Mentionner quelqu’un dans un commentaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-064"
+						},
+						{
+							"type": "text",
+							"text": ", sous-tranche 3b. Captures : "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-064/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sous la zone de saisie du fil d'une affaire, la commande "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Mentionner »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ouvre la liste des\npersonnes que ce commentaire peut prévenir. Cochez-en une ou plusieurs, écrivez votre message, et\npubliez : chacune reçoit sa notification."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Il n'y a pas de syntaxe à connaître."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Taper « @ » dans le texte ne fait rien : le produit ne lit\npas votre commentaire pour y deviner des noms. Vous choisissez explicitement qui vous prévenez, et\nvous le voyez avant d'envoyer — la commande porte le nombre de personnes cochées, même repliée."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La liste ne contient que les personnes qui peuvent lire cette affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et elle "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "change d'une\naffaire à l'autre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : un collègue proposé sur un dossier peut être absent d'un autre, parce que ses\ndroits ne sont pas les mêmes partout. Ce n'est pas l'écran qui décide — c'est la même règle\nd'autorisation que partout ailleurs dans le produit."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Vous n'y figurez jamais vous-même."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Se mentionner n'enverrait rien : vous savez déjà ce que vous\nvenez d'écrire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si personne d'autre ne peut lire l'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la liste le dit en toutes lettres. Ce n'est pas une\npanne : c'est un dossier dont vous êtes le seul lecteur."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Quand une mention échoue, votre commentaire reste publié."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le cas est rare — il faut qu'un droit\nchange entre le moment où vous ouvrez la liste et celui où vous publiez —, et le produit ne le\ncache pas : un message sous le composeur "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nomme la personne"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " qui n'a pas été prévenue et dit\npourquoi. Votre texte, lui, est bien en ligne : le retirer effacerait un propos que vous avez\nréellement tenu. Les personnes qui n'ont pas pu être prévenues restent cochées, pour que vous\nsachiez ce qu'il reste à faire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Mentionner est facultatif."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un commentaire sans mention se publie exactement comme avant."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "choisir-ce-que-vous-recevez",
+			"content": [
+				{
+					"type": "text",
+					"text": "8.6 Choisir ce que vous recevez"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages → Notifications, ou directement "
+						},
+						{
+							"type": "code",
+							"text": "/reglages/notifications"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "C'est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "votre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " réglage : personne d'autre ne le voit, pas même l'administratrice de l'espace de\ntravail. C'est aussi la seule section des réglages qui règle votre compte plutôt que l'instance, et\nc'est pourquoi elle vient en dernier dans la liste."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une case par type de notification"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", cochée par défaut. Aujourd'hui il n'y en a qu'une :\n« Recevoir les mentions ». Décochez-la, et les mentions cessent d'arriver dans votre cloche — le\ncompteur tombe, le panneau se vide, et rien ne s'affiche plus en direct."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rien n'est supprimé."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les notifications continuent d'être produites et conservées : elles sont\nsimplement "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "masquées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " tant que la case est décochée. Recochez-la, et tout revient — non lu, dans\nl'ordre, exactement comme avant. C'est la différence entre couper le son et jeter le courrier."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Il n'y a pas de bouton « Enregistrer »."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " La case écrit dès que vous la basculez, et affiche\n« Enregistré » sous elle. Elle ne se coche qu'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "après"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " la confirmation du serveur : ce que vous\nvoyez est ce que le produit a réellement retenu, jamais ce qu'il a cru envoyer."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une chose à savoir"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", parce qu'elle surprend : tant qu'un type est décoché, vous ne pouvez pas\nmarquer lues les notifications de ce type. Vous ne les voyez pas, donc vous ne les marquez pas ;\nelles vous attendront, non lues, si vous recochez."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Il n'y a qu'un seul canal, et l'écran n'en promet pas d'autre."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le produit n'envoie aucune\nnotification par email, ni de résumé quotidien. Vous ne trouverez donc aucune case pour cela :\nune case qui ne commande rien serait une promesse que le produit ne tiendrait pas."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-encore-la",
+			"content": [
+				{
+					"type": "text",
+					"text": "8.7 Ce qui n'est pas encore là"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Les mentions d'un commentaire déjà publié ne se corrigent pas."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " On choisit avant de publier,\npas après ; ni la liste des personnes nommées, ni leur retrait ne sont offerts par l'écran."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le fil ne montre pas qui un commentaire mentionne."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " La personne prévenue le voit dans sa\ncloche ; le commentaire, lui, ne l'affiche pas."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La liste des personnes n'a ni recherche ni pagination."
+									}
+								]
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun canal en dehors de l'application"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : ni email, ni résumé quotidien. Le §8.6 dit ce que\nvous pouvez régler, et ce qui n'existe pas."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La préférence vaut pour tous vos espaces de travail"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : elle porte sur vous, pas sur un\ncontexte. Vous ne pouvez pas couper les mentions d'un espace en les gardant dans un autre."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune suppression, et aucune expiration."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Une notification ne s'efface pas. Le panneau montre\nles "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vingt plus récentes"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et le dit en toutes lettres quand il en manque ; le compteur, lui,\nles compte toutes."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun regroupement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : dix mentions sur la même affaire font dix lignes."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun « tout marquer comme lu »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un geste de masse ne saurait pas dire "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "lesquelles"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " n'ont pas\nbougé si vos droits ont changé, et le produit ne montre jamais une issue qu'il n'a pas mesurée."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

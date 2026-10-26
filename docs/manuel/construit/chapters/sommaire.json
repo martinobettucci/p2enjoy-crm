@@ -1,0 +1,3932 @@
+{
+	"slug": "sommaire",
+	"title": "Sommaire",
+	"blocks": [
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "prise-en-main",
+			"content": [
+				{
+					"type": "text",
+					"text": "Prise en main"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null,
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Chapitre"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Contenu"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Unité"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "État"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "1"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Se connecter avec LeLabs, se déconnecter"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-011"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-092"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré et vérifié"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 1. La connexion passe par le seul SSO LeLabs : aucun mot de passe n'existe dans le CRM, donc aucune récupération à y faire. Les attentes — adresse ou compte à vérifier chez LeLabs, inscription à demander — sont nommées à l'écran. La session vit dans le navigateur et se prolonge d'elle-même"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "1 bis"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le guide de démarrage : par où commencer"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-079"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-094"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré et vérifié"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 1 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "bis"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Six"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise ; le workflow y précède le channel. L'état est "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "mesuré"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Depuis "
+						},
+						{
+							"type": "code",
+							"text": "CRM-094"
+						},
+						{
+							"type": "text",
+							"text": ", un administrateur y "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "crée le workflow de départ en un geste"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", et le guide le "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "suit sur toutes les pages"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " sous forme de pastille (§1 bis.4 et §1 bis.5). Pour le reste, il "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "lit et renvoie"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : il ne crée ni track, ni channel, ni affaire"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "2"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Comprendre l'organisation : espace, tracks, channels, cards"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-020"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-021"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "À livrer"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "3"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Naviguer : barre latérale, onglets, recherche"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-007"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-065"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Partiellement livré"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir ci-dessous ; la recherche relève de "
+						},
+						{
+							"type": "code",
+							"text": "CRM-065"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "3.6"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les commandes grisées : ce que votre rôle vous laisse faire"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-093"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en développement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir la section 3.6. Une commande que le serveur vous refuserait reste à sa place, grisée, et un bandeau dit pourquoi : administrer l'espace, éditer le carnet et les modèles, travailler une affaire sur un onglet où vous écrivez. Vos préférences, vos propres boîtes et la saisie de votre temps ne sont jamais grisées. Le serveur reste la seule règle"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "3 ter"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le carnet de contacts"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-060"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en LECTURE"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir la section 3 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "ter"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "fiche"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "rattache et détache"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "ter"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "). Un contact "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "se crée"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "se modifie"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Il "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "se rattache à une affaire"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " depuis sa fiche (sous-tranche 4h) : le bouton « Rattacher à une affaire » vit dans le bloc des affaires, et il "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "s'en détache"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " depuis la même page (sous-tranche 4i), chaque ligne du tableau portant sa commande. Le "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "rôle"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " d'un rattachement "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "se corrige"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " depuis la même page (sous-tranche 4j) : un bouton « Modifier le rôle » par ligne, et vider le champ efface le rôle sans défaire le lien. Ce qui manque est dit : aucune suppression d'un contact, aucune création d'organisation, aucune recherche"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "3 quater"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Ma journée : ce qui est en retard, ce qui est dû aujourd'hui"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-061"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en LECTURE, vérifié visuellement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir la section 3 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "quater"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". L'entrée « Ma journée » rassemble les affaires à échéance de tout l'espace, en trois sections : "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "En retard"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " (sans limite d'ancienneté), "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Aujourd'hui"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " (dans le fuseau de votre appareil) et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "À venir"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " (sept jours, horizon non réglable). Deux portées, dont le choix vit dans l'adresse : vos affaires, ou tout ce que vos droits vous laissent lire. Les affaires archivées, à la corbeille et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "en sommeil"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " en sont absentes. Ce qui manque est dit : l'écran "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "lit"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " et n'écrit pas — reporter une échéance reste le geste de l'en-tête de la fiche —, il n'est ni un agenda, ni la liste des relances"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "suivi-quotidien",
+			"content": [
+				{
+					"type": "text",
+					"text": "Suivi quotidien"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null,
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Chapitre"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Contenu"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Unité"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "État"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "4"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Créer une card et renseigner sa fiche"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-040"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-037"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-095"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré, avec ses écrans"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir les chapitres 4, 4.7 et 4.8. Une affaire "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "se crée"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " depuis le tableau ou la vue liste de son channel, avec son seul titre : le bouton "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Nouvelle affaire"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " l'y fait naître à l'étape initiale, et sa fiche s'ouvre ("
+						},
+						{
+							"type": "code",
+							"text": "CRM-095"
+						},
+						{
+							"type": "text",
+							"text": "). Sa fiche en "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "modifie les champs d'en-tête"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — titre, responsable, montant, prochaine action — et en saisit "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "les réponses au formulaire"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " ("
+						},
+						{
+							"type": "code",
+							"text": "CRM-036"
+						},
+						{
+							"type": "text",
+							"text": ", chapitre 24) ; les questions de type "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "contact"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "membre"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " se répondent dans une liste de NOMS depuis la sous-tranche 4d de "
+						},
+						{
+							"type": "code",
+							"text": "CRM-060"
+						},
+						{
+							"type": "text",
+							"text": ". Combien l'espace de démonstration en porte : "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "annexe A"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "Cette ligne disait que l'écran de création et l'édition de l'en-tête manquaient : les deux sont livrés."
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "5"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Faire avancer une card dans son workflow"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-034"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-041"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré, avec son écran"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir les chapitres 4.3 et 4.8. Une affaire ne change d'étape que par un déplacement "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "déclaré"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " dans son workflow, et le produit refuse toute écriture directe de l'étape, y compris par une administratrice. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Les six vérifications sont en place"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : une affaire ne peut pas entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Le tableau kanban, son glisser-déposer et son menu de déplacements sont utilisables après connexion"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "6"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Comprendre pourquoi une transition est refusée"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-034"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-037"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-041"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : les "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "six"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "affichés"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "7"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Commenter et suivre l'historique d'une card"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-043"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-044"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré, avec son écran"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — la "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "discussion"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " et l'"
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "historique"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "corriger est réservé à l'auteur"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "supprimer lui est ouvert ainsi qu'aux administrateurs du workspace"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "le retrait par un administrateur a son bouton depuis le 2026-08-14"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", unique — "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "Supprimer"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", jamais "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "Modifier"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " —, et le fil distingue un retrait par la modération d'une suppression par l'auteur. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "4.7 quater"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les activités d’une affaire : appels, réunions, visios"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-067"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en développement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 4.7 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "quater"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Le bloc « Activités » de la fiche consigne ce qui a eu lieu : type, date (jamais dans le futur), durée, sujet, compte rendu et participants choisis parmi les contacts de l'affaire et les membres de l'espace. L'auteur corrige et retire ; un administrateur retire l'activité d'une autre personne. Chaque activité paraît dans l'historique à la date où elle a eu lieu, sous un sixième filtre « Activités ». La durée ne compte pas dans le temps passé"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "7 bis"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Ranger une affaire dans un autre dossier"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-045"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré côté serveur, sans écran"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "choisie explicitement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Les réponses au formulaire de l'affaire sont perdues"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "« Dossier changé »"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " dans l'historique, y compris quand personne ne passe par l'application. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "4.7 bis"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Mettre une affaire à la corbeille"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-077"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré et vérifié"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 4.7 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "bis"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Le bouton vit en bas de la fiche de l'affaire, demande une confirmation qui la nomme, et remplace ensuite l'écran par les deux chemins utiles : revenir au channel, ou ouvrir la corbeille. Le geste suppose le droit d'"
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "écrire"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " sur l'onglet, et non un rôle d'administrateur"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "8"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Vue liste, filtres et vues sauvegardées"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-042"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-071"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Partiellement livré"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "vues sauvegardées"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " relèvent de "
+						},
+						{
+							"type": "code",
+							"text": "CRM-071"
+						},
+						{
+							"type": "text",
+							"text": " et ne sont pas livrées"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "3 sexies"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les objectifs : le tableau blanc de l'équipe"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-082"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-083"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré et vérifié"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 3 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "sexies"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". L'entrée « Objectifs » de la barre latérale ouvre les tableaux d'objectifs de l'espace : des blocs posés sur un canevas qu'on déplace et qu'on zoome, reliés par des flèches, chacun avec son remplissage "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "saisi à la main"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — jamais calculé — et, s'il vise un channel, une pilule qui l'ouvre. Les administrateurs et les business developers créent, renomment, réordonnent et archivent les tableaux, posent, déplacent, redimensionnent, modifient et suppriment les blocs et les flèches ; tout membre lit. Un bloc supprimé ne se restaure pas ; un tableau s'archive"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "9 bis"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les affaires figées et leurs relances"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-062"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré avec son écran, vérifié visuellement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 3 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "quinquies"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". L'entrée « Affaires figées » de la barre latérale, sous "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "Ma journée"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", liste les affaires restées dans leur étape au-delà du "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "seuil de relance"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " de cette étape, groupées par dossier et rangées du plus gros retard au plus petit. Chaque nuit, une ligne "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "« Relance automatique »"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " est inscrite dans l'historique de chaque affaire figée, avec son retard et son seuil — au plus une par séjour dans une étape, sans auteur. Les affaires archivées, à la corbeille et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "en sommeil"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " en sont absentes, et une étape sans seuil ne fige jamais rien. Ce qui n'est "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "pas"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " livré, et l'absence est voulue : "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "aucun email"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "aucune notification"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", aucune cadence réglable, et l'écran "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "lit"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " sans jamais écrire"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "9"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Prochaine action et vue « Ma journée »"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-061"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré avec son écran, vérifié visuellement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 3 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "quater"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". L'entrée « Ma journée » de la barre latérale rassemble les affaires à échéance de tout l'espace de travail, en trois sections : "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "En retard"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Aujourd'hui"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "À venir dans sept jours"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Deux portées — vos affaires, ou tout ce que vos droits vous laissent lire —, dont le choix vit dans l'adresse. Les affaires archivées, à la corbeille et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "en sommeil"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " en sont absentes. Ce qui manque : l'écran "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "lit"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " et n'écrit pas — reporter une échéance ou la saisir reste le geste de l'en-tête de la fiche (chapitre 4.2 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "bis"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ") —, et l'horizon de sept jours n'est pas réglable"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "messagerie",
+			"content": [
+				{
+					"type": "text",
+					"text": "Messagerie"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null,
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Chapitre"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Contenu"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Unité"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "État"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "10"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Connecter sa boîte de réception (IMAP)"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-052"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-088"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré avec son écran, vérifié visuellement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 4.12. « Réglages ▸ Comptes de messagerie entrante » déclare la boîte système de l'espace de travail et la boîte personnelle de chacun : serveur, port, sécurité, identifiant et mot de passe. Le mot de passe n'est "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "jamais"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " affiché, et un champ laissé vide conserve celui qui est enregistré. Ce qui manque : "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "aucun bouton « Tester la connexion »"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " depuis l'écran, et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "aucune suppression"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " de boîte"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "11"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Configurer son adresse d'expédition (SMTP)"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-053"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-089"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré avec son écran, vérifié visuellement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 4.13. « Réglages ▸ Identités d'expédition » déclare l'identité de service de l'espace de travail et celles de chacun : adresse d'expédition, nom affiché, serveur SMTP, identifiant et mot de passe. Le mot de passe n'est "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "jamais"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " affiché, et un champ laissé vide conserve celui qui est enregistré. Ce qui manque : "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "aucun bouton « Tester la connexion »"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " depuis l'écran, "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "aucune suppression"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", et ni le quota ni la signature ne sont modifiables"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "12"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'adresse email d'une card : à quoi elle sert"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-040"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-013"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-054"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Partiellement livré"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : l'adresse est "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "générée"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " à la création de chaque affaire, non devinable, et depuis "
+						},
+						{
+							"type": "code",
+							"text": "CRM-013"
+						},
+						{
+							"type": "text",
+							"text": " "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "non modifiable"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — le refus est appliqué par le serveur et tient hors de l'écran (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de "
+						},
+						{
+							"type": "code",
+							"text": "CRM-054"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "13"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'inbox : dossiers, messages non classés, classement, "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "suggestion"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-055"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-057"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-060"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "À livrer"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "14"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Répondre depuis une card ou depuis l'inbox"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-058"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "À livrer"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "15"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Modèles d'emails, signature et séquences de relance"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-063"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré et vérifié visuellement, les TROIS objets."
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " Voir les chapitres 7, "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "7 bis"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "7 ter"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". « Réglages ▸ Modèles d'emails » écrit les textes réutilisables de l'espace de travail, à trous, et les prévisualise sur une affaire réelle ; « Réglages ▸ Identités d'expédition » porte la "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "signature"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " ajoutée à la fin de chaque message expédié ; « Réglages ▸ Séquences de relance » enchaîne des modèles à des délais choisis, et le bloc « Relance automatique » de la fiche d'affaire "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "arme"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " la cadence sur une affaire figée puis l'"
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "interrompt"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Une relance s'arrête d'elle-même dès qu'une réponse arrive, ou dès que l'affaire cesse d'être figée. Ce qui manque, et l'absence est voulue : "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "aucun envoi depuis l'écran des modèles"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — composer un message à partir d'un modèle n'est pas encore offert —, "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "aucune date de prochain envoi"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — la cadence glisse sur les envois réels —, et aucune trace de l'armement dans l'historique de l'affaire"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "16"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Que faire quand un compte mail est en erreur"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-059"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré avec son écran, vérifié visuellement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 6. « Réglages ▸ État de la messagerie » montre la dernière relève réussie et le dernier incident de chaque boîte visible, ainsi que la file sortante en attente et en échec définitif. Ce qui manque : aucune alerte n'est envoyée, l'écran reste le seul endroit où le constater"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "administration",
+			"content": [
+				{
+					"type": "text",
+					"text": "Administration"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null,
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Chapitre"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Contenu"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Unité"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "État"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "17"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Attendre et gérer les membres"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-070"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-092"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en développement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 10 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "bis"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Un administrateur d'espace y change un rôle, retire un membre, inscrit, remplace et retire une attente, et pose les droits fins de chacun par track et par channel ; chaque membre consulte la liste des membres. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Depuis "
+								},
+								{
+									"type": "code",
+									"text": "CRM-092"
+								},
+								{
+									"type": "text",
+									"text": ", on n'invite plus un compte : on attend une personne."
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "attente"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", une adresse et un rôle ; la personne devient membre à sa "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "première connexion LeLabs"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle "
+						},
+						{
+							"type": "code",
+							"text": "verified"
+						},
+						{
+							"type": "text",
+							"text": "). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Depuis "
+								},
+								{
+									"type": "code",
+									"text": "CRM-101"
+								},
+								{
+									"type": "text",
+									"text": ", un superadministrateur inscrit les attentes et gère les membres depuis la plateforme"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " (chapitre 10). L'écran d'un administrateur d'espace sur ses membres et ses attentes est livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-070"
+						},
+						{
+							"type": "text",
+							"text": " ("
+						},
+						{
+							"type": "text",
+							"text": "docs/JOURNAL.md"
+						},
+						{
+							"type": "text",
+							"text": ", décisions 256 et 579, INC-015)"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "17 quater"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le journal d'audit de l'espace"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-072"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en développement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 10 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "ter"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". « Réglages ▸ Journal d'audit » montre aux administrateurs de l'espace les gestes sensibles : droits et appartenances, configuration, connexions, effacements et corbeille. Personne ne modifie le journal, et il est conservé un an. Sur la fiche d'un contact, la zone « Données personnelles (RGPD) » exporte ses données ou l'anonymise (chapitre 3 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "ter"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ")."
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "17 bis"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La plateforme : espaces, membres, attentes et superadministrateurs"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-101"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en développement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 10. Un superadministrateur — porteur du rôle "
+						},
+						{
+							"type": "code",
+							"text": "admin"
+						},
+						{
+							"type": "text",
+							"text": " LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "17 ter"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le connecteur MCP : piloter le CRM depuis votre assistant"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-102"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-103"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-108"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Le connecteur est livré ; son administration est livrée en développement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Ses outils : la liste des espaces et, "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "en développement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", les huit outils de la famille « Recettes » ("
+						},
+						{
+							"type": "code",
+							"text": "CRM-108"
+						},
+						{
+							"type": "text",
+							"text": ") et les outils des affaires, de la structure, de la recherche et des contacts ("
+						},
+						{
+							"type": "code",
+							"text": "CRM-104"
+						},
+						{
+							"type": "text",
+							"text": " T2.a, T2.b, T1 et T3) ; les autres familles arrivent avec la suite de "
+						},
+						{
+							"type": "code",
+							"text": "CRM-104"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "18"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Créer des tracks et des channels"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-020"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-021"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-075"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-077"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré et vérifié"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "met à la corbeille"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Aucune suppression manuelle n'existe"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : archiver masque, la corbeille retire, et les deux restent réversibles — jusqu'à l'effacement automatique d'un objet resté 30 jours dans la corbeille (chapitre 5 ter)"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "18 bis"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Retrouver et restaurer ce qui a été retiré"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-077"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré et vérifié"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Un objet reste 30 jours dans la corbeille"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", puis il est effacé définitivement, chaque nuit, et l'effacement est inscrit au journal d'audit ; la colonne « Effacement » dit quand. Un membre qui n'administre pas l'espace n'y voit que "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ce qu'il y a lui-même mis"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Aucun effacement manuel n'est offert"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "19"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le catalogue de nœuds"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-030"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré et vérifié"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 5 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "quater"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "clé ne se modifie pas"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ne s'archive pas"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : le produit dit combien il en porte. Deux flèches par ligne "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "réordonnent"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " le catalogue, d'un cran à la fois"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "20"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Construire un workflow et ses transitions"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-031"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Partiellement livré, sans écran."
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. L'"
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "éditeur"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " est livré : un administrateur "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "crée"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " un workflow depuis « Réglages ▸ Workflows » — nom, portée globale ou propre à un track —, puis en compose les étapes et les transitions (chapitres 5 bis.0 à 5 bis.3). Un espace "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "neuf"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", lui, n'a aucun workflow : depuis "
+						},
+						{
+							"type": "code",
+							"text": "CRM-094"
+						},
+						{
+							"type": "text",
+							"text": ", le guide de démarrage y pose le workflow de départ en un geste (chapitre 1 bis.4). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Ce qui reste hors interface est la "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "copie"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " vers un track et la désignation du workflow "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "par défaut"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "20 bis"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Garder une photographie d'un workflow, la comparer et y revenir"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-078"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré."
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " Un workflow change : ses étapes, ses déplacements, ses questions et leurs règles sont modifiables à tout moment, et rien ne disait jusqu'ici sous quelle forme une affaire avait circulé. Un administrateur peut désormais "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "publier une version"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : le produit fige une photographie datée, numérotée et signée de la composition entière du workflow, que plus personne ne peut réécrire — pas même le produit lui-même. Publier une version "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ne change rien"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " au fonctionnement : les affaires continuent de circuler sur le workflow vivant, une version est un témoin et non une cible. Republier sans avoir rien modifié est refusé, pour que deux versions ne soient jamais indiscernables. Le produit sait aussi "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "comparer deux versions"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — quelles étapes, quels déplacements, quelles questions et quelles règles ont été ajoutés, retirés ou modifiés, et pour chaque modification ce qui a changé et de quoi vers quoi. Et, avant de revenir à une version, il sait dire "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "affaire par affaire où elle atterrit"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : celles dont l'étape existe toujours ne bougent pas, et celles dont l'étape a été créée depuis restent "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "sans destination"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " tant qu'un administrateur n'a pas dit où les envoyer. Le produit ne devine jamais à sa place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne la choisit pas. Les affaires archivées et celles en corbeille sont comptées comme les autres. Le produit sait désormais "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "appliquer"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " ce plan en une seule transaction, et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "revenir en arrière"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : la composition d'avant est publiée comme point de retour avant toute écriture. Et les quatre gestes ont leur "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "écran"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", au bas de l'éditeur de workflows : voir le chapitre 5 bis.6"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "20 ter"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Créer un workflow avec l'assistant IA"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-097"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en développement, en production avec la tranche T4"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 5 bis.0 bis. Un administrateur décrit le workflow voulu ; l'IA rend une "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "suggestion"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", qu'il relit, corrige à la main ou fait revoir avec une consigne, puis accepte — le workflow est alors créé en une fois — ou abandonne sans que rien n'ait été écrit. Les suggestions en revue sont conservées et partagées entre administrateurs"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "20 quater"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Faire évoluer un workflow existant avec l'assistant IA"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-097"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en développement, en production avec la tranche T4"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 5 bis.0 ter. « Suggérer », en tête des étapes, des transitions et des champs d'un workflow : l'IA propose le workflow tel qu'il deviendrait ; vous relisez ce qui serait ajouté, modifié ou retiré, choisissez où vont les affaires des étapes retirées, puis acceptez. Une version du workflow d'avant est gardée, qu'on restaure en un geste"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "21"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Copier un workflow dans un track et le modifier"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-032"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-018"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Partiellement livré, sans écran."
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "22"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Choisir le workflow d'un channel"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-033"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-019"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré côté serveur, sans écran."
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " Un channel suit désormais "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "obligatoirement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute affectation directe incohérente est refusée. Même lorsque le channel contient des affaires, une administratrice peut changer son workflow par l'API en donnant le mapping exhaustif de toutes les étapes occupées ; aucune affaire n'est laissée à moitié remappée et toute perte de réponse doit être acceptée explicitement. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore ce geste"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "23"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Composer le formulaire d'un workflow"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-035"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-018"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-076"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Partiellement livré dans l'écran"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 5 bis.4. Un workflow porte son propre formulaire : budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié et lien vers la proposition, ainsi qu'un champ retiré dont les réponses restent consultables (volumes en annexe A). Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Lorsqu'un workflow est copié vers un track, son formulaire, ses règles et ses exigences sont remappés avec lui ; il est utilisable immédiatement sans partager les identifiants de la source. L'obligation est appliquée : voir le chapitre 24. Depuis "
+						},
+						{
+							"type": "code",
+							"text": "CRM-076"
+						},
+						{
+							"type": "text",
+							"text": ", un administrateur "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "déclare, modifie, réordonne, archive et restaure"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " les questions depuis « Réglages ▸ Workflows ». Ce qui manque est la "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "grille champ × étape"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : régler la visibilité d'une question sur une étape reste un geste d'API"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "24"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Répondre aux questions d'une affaire"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-036"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-037"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Partiellement livré dans l'écran."
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " Une affaire porte ses réponses, et le produit les "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "vérifie"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : une réponse doit correspondre au type de la question — un montant est un nombre, une case est cochée ou non, une date est une date, et une liste de choix n'accepte que les choix déclarés. Les réponses et les exigences sont consultables sur la fiche, et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "s'y enregistrent"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : chaque question s'écrit pour elle-même, dit ce qu'elle a fait, et montre son refus sous elle"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "24 bis"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Restreindre l'accès à un track ou à un channel"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-070"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en développement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 10 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "bis"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ".6. Un administrateur pose, pour chaque membre, un droit sur un track ou un channel — membre, lecture ou aucun accès — et lit l'accès qui en résulte"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "12 bis"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Ce que le produit fait d'un message reçu"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-054"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CRM-055"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré côté serveur, sans écran"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 4.14. Les messages sont relevés, rangés dans l'affaire à qui ils s'adressent, et une trace en apparaît dans son historique. Un message qu'on ne sait pas rattacher est conservé et reste « non classé » ; le ranger exige le droit d'"
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "écrire"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " sur l'affaire. Une affaire archivée ne reçoit plus. Les pièces jointes sont "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "analysées"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : une pièce n'est téléchargeable qu'une fois déclarée saine, et une pièce non analysée ne l'est pas davantage"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "25 bis"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Écrire depuis une autre adresse que celle où l'on reçoit"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-053"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré côté serveur, sans écran"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 4.13. Recevoir et expédier sont deux choses distinctes : une personne peut relever "
+						},
+						{
+							"type": "code",
+							"text": "bizdev@"
+						},
+						{
+							"type": "text",
+							"text": " et écrire depuis "
+						},
+						{
+							"type": "code",
+							"text": "contact@"
+						},
+						{
+							"type": "text",
+							"text": ", et l'espace de démonstration le montre. Une adresse par défaut existe toujours, et en déclarer une nouvelle "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "déplace"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " la marque au lieu d'exiger qu'on retire l'ancienne. L'adresse d'expédition est vérifiée à l'enregistrement, puisque c'est la seule donnée que vos destinataires verront. Le quota quotidien peut être déclaré mais "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "n'est appliqué par rien"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " tant que l'envoi n'est pas livré"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "25"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Boîte mail système de l'espace"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-052"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré côté serveur, sans écran"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 4.12. L'espace de travail et chaque personne peuvent avoir une boîte de réception déclarée, avec son serveur, son identifiant et son mot de passe "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "chiffré"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Le mot de passe n'est jamais réaffiché, ni même sa référence : personne ne peut le relire, pas même un administrateur. Le produit sait "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "essayer réellement la connexion"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " et dire ce qui a échoué. Ce qui manque est l'écran : aucun formulaire ne permet encore de déclarer une boîte depuis l'application"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "26"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Jetons d'API et webhooks"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-073"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "À livrer"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "27"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Journal d'audit, export et suppression de données"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-072"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "À livrer"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "pilotage",
+			"content": [
+				{
+					"type": "text",
+					"text": "Pilotage"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null,
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Chapitre"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Contenu"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Unité"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "État"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "28"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Analytique de conversion par channel et par track"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-066"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "À livrer"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "29"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Prévisionnel pondéré"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-066"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "À livrer — "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "les objectifs, que cette ligne citait, ont leur chapitre, le 3 sexies"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "30"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Cards figées et relances automatiques"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-062"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "À livrer"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "31"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Saisir son temps et piloter le coût du personnel"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-098"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en développement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 5 undecies. Chacun saisit, semaine par semaine, le temps passé sur les tracks, les channels et les affaires, au quart de journée ou en heures ; chaque personne a un coût par quart, versionné ; le rapport mensuel et les écrans de coûts montrent ce que le personnel a coûté"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "rule"
+		}
+	]
+}

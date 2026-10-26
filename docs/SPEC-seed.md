@@ -2518,3 +2518,13 @@ administratrice. C'est ce qui inscrit au journal un export (famille `export`, ex
   carnet que ce compte vérifie, et le rejeu le trouverait déjà là.
 - **La vérification du §25 lit une famille à la fois** (`limit=1`) : le journal d'un espace dépasse vite mille entrées,
   et une lecture unique en rendait mille et manquait l'unique export (mesuré).
+
+## 27. Le manuel publié — `CRM-117` T2 (décision 751)
+
+*Écrit le 2026-10-26.* Le manuel n'est lu que par une session, dans le bucket privé `manual` (`docs/SPEC-manual.md`
+§14). Le seed le **publie** par le script même d'une livraison, `scripts/manuel/publier.sh` — jamais par un dépôt
+fabriqué ici : le manuel construit (`docs/manuel/construit/`) et ses images, en miroir. Un bucket à jour reçoit les
+mêmes octets ; un objet que la source ne porte plus en est retiré. Un manuel construit qui ne correspond plus à
+`docs/manual.md` est publié tel quel, avec un avertissement, pour que le seed ne dépende pas de chaque réécriture du
+manuel ; la preuve du manuel tient la règle. La preuve d'API `e2e/api/manuel.spec.ts` (M1) lit chaque fichier publié et
+le compare, octet par octet, à sa source.

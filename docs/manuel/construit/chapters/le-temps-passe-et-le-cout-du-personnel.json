@@ -1,0 +1,751 @@
+{
+	"slug": "le-temps-passe-et-le-cout-du-personnel",
+	"title": "5 undecies. Le temps passé et le coût du personnel",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-098"
+						},
+						{
+							"type": "text",
+							"text": " ; captures : "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-098/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'écran "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Temps »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", dans la barre latérale, a deux onglets : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Saisie »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", où chacun note le temps qu'il a passé,\net "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Rapport mensuel »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", où ce temps est valorisé par le coût du personnel."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "saisir-sa-semaine",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 undecies.1 Saisir sa semaine"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La matrice montre une semaine, du lundi au dimanche. Ses lignes sont les tracks que vous lisez, chacun suivi de ses\nchannels, et sous eux les affaires qui portent déjà du temps — celles de la semaine affichée et de la précédente sont\nreprises d'office. Pour une autre affaire, tapez son titre dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ajouter une affaire »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et choisissez-la : sa ligne\nparaît sous son channel."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque cellule se saisit au "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "quart de journée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une journée compte "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "7 heures"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", un quart vaut donc 1 h 45, et une\ncellule va de 0 à 4. La valeur "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "s'enregistre seule"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " quand vous quittez la cellule ou appuyez sur "
+				},
+				{
+					"type": "code",
+					"text": "Entrée"
+				},
+				{
+					"type": "text",
+					"text": " — qui\ndescend à la ligne suivante ; les flèches vont de cellule en cellule, "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": " rétablit la valeur enregistrée. Une\ncellule vide vaut zéro, et vider une cellule retire ce temps."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le pied de la matrice dit, jour par jour, où vous en êtes — « 3 / 4 quarts » ; une journée pleine est surlignée. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une\njournée ne dépasse jamais 7 heures"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une valeur qui la dépasserait est refusée, avec le message « Cette valeur\ndépasserait la journée de 7 heures. »"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Semaine précédente », « Semaine suivante » et « Cette semaine » changent de semaine ; l'adresse de l'écran garde la\nsemaine affichée."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "saisir-une-journee-en-heures",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 undecies.2 Saisir une journée en heures"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Plus de quatre affaires dans la journée : cochez "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« En heures »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " sous le jour. Ses cellules se saisissent alors en\nheures, au quart d'heure — « 1,5 » pour une heure et demie, « 0,25 » pour un quart d'heure —, toujours dans la limite de\n7 heures. Tant qu'une valeur de ce jour ne tombe pas sur un quart, la case reste cochée, et l'écran le dit."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "saisir-pour-quelqu-un-d-autre",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 undecies.3 Saisir pour quelqu'un d'autre"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un administrateur dispose de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Saisir pour »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il choisit une personne, et un bandeau rappelle « Vous saisissez le\ntemps de… ». Le produit garde la trace de qui a saisi. Un membre ne saisit que son propre temps, et seulement sur ce\nqu'il peut lire."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-rapport-mensuel",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 undecies.4 Le rapport mensuel"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Choisissez un mois : le rapport liste chaque track, channel et affaire où du temps a été passé, avec ce temps et son\ncoût. Le coût est celui de la personne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "le jour où le temps a été passé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une augmentation ne change pas le coût des\nsemaines d'avant. Les montants restent séparés par devise. Le temps d'une personne qui n'a pas encore de coût est\ncompté, et dit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« non valorisé »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — jamais zéro."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un membre ne voit que "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "son"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " temps et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "son"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " coût. Un administrateur choisit une personne, ou "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Toute l’équipe »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\nqui rend une section par personne."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "regler-le-cout-du-personnel",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 undecies.5 Régler le coût du personnel"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages ▸ « Coût du personnel »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", réservé aux administrateurs — pour les autres, l'entrée des\nréglages est un texte grisé (section 3.6) —, chaque personne a sa carte : son coût en\nvigueur, sa prochaine version s'il y en a une. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nouvelle version »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " fixe un coût par quart, une devise et une date\nd'effet : augmenter quelqu'un, c'est créer une version, qui vaut à partir de sa date. Une version ne se modifie jamais ;\nune date d'effet n'est jamais passée, sauf pour la toute première version d'une personne, qui peut valoriser du temps\ndéjà saisi. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Historique »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste les versions ; une version "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "programmée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " peut encore être retirée, une version\nen vigueur jamais."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Calculer le coût par quart."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Dans le formulaire « Nouvelle version », "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Calculer depuis le coût mensuel »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ouvre un\npetit calcul ("
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-107"
+						},
+						{
+							"type": "text",
+							"text": " ; captures : "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-107/"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Saisissez le salaire brut mensuel, les charges sociales en pourcentage du brut,\nles frais de gestion et les avantages par mois, et le nombre de jours travaillés par an — 218 par défaut, le forfait\njours ; un salarié qui n’est pas au forfait en travaille plutôt 228 environ (365 jours, moins les week-ends, 25 jours de congés et les\nfériés). Le calcul affiche, à mesure que vous tapez, le coût mensuel complet et le coût par quart :"
+				}
+			]
+		},
+		{
+			"type": "note",
+			"blocks": [
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "text",
+							"text": "coût mensuel complet = brut × (1 + charges) + frais + avantages ;\ncoût par quart = coût mensuel complet × 12 ÷ (jours × 4)."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Par exemple, 3 000 € de brut, 42 % de charges, 150 € de frais et 100 € d'avantages font 4 510 € par mois, soit\n62,06 € par quart sur 218 jours. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Utiliser ce coût »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " recopie le résultat dans « Coût par quart » ; rien n'est\nenregistré tant que vous n'avez pas cliqué "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Enregistrer la version »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et seul le coût par quart l'est — le salaire\net les charges ne sont conservés nulle part."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-cout-du-personnel-a-cote-des-couts",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 undecies.6 Le coût du personnel à côté des coûts"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sur l'écran de coûts d'un track (chapitre 5 quinquies), sous l'histogramme, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Coût du personnel »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " donne le temps et\nson coût du mois choisi, channel par channel. Dans la fiche d'une affaire, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Temps passé »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " donne le temps passé\ndepuis le premier jour et son coût. Ces chiffres ne se mêlent ni aux budgets ni aux lignes de coût. Ils disent leur\nportée : « Votre temps » pour un membre, « Le temps de toute l’équipe » pour un administrateur."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "saisir-son-temps-depuis-la-fiche-d-une-affaire",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 undecies.6 bis Saisir son temps depuis la fiche d'une affaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-106"
+						},
+						{
+							"type": "text",
+							"text": " ; captures : "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-106/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sous le résumé « Temps passé », "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Votre semaine »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " montre la ligne de l'affaire, du lundi au\ndimanche : les mêmes cases que l'écran « Temps », au quart de journée ou, en cochant la case sous un jour, au quart\nd'heure. Une case s'enregistre seule ; "
+				},
+				{
+					"type": "code",
+					"text": "Entrée"
+				},
+				{
+					"type": "text",
+					"text": " passe au jour suivant. Taper une nouvelle valeur "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "remplace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " celle du jour ; vider\nla case retire ce temps. Sous la bande, le total de la semaine sur l'affaire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le total sous chaque jour compte "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tout"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " votre temps de la journée, sur toutes les cibles : c'est lui qui ne dépasse\npas 7 heures. « Semaine précédente », « Semaine suivante » et « Cette semaine » changent de semaine ;\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ouvrir dans Temps »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ouvre la matrice sur la même semaine, pour le reste de votre journée."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chacun n'y saisit que "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "son"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " temps — un administrateur aussi : pour saisir le temps de quelqu'un d'autre, passez par\n« Saisir pour », sur l'écran « Temps ». Une lectrice saisit son temps sur une affaire qu'elle lit, même si elle ne peut\npas modifier l'affaire."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-offert",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 undecies.7 Ce qui n'est pas offert"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Aucune validation ni clôture d'un mois, aucun calendrier de congés ou de jours fériés, aucune facturation au temps\npassé, aucune conversion de devise, aucun export."
+				}
+			]
+		}
+	]
+}

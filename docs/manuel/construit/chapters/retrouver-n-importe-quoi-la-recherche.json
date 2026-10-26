@@ -1,0 +1,1102 @@
+{
+	"slug": "retrouver-n-importe-quoi-la-recherche",
+	"title": "9. Retrouver n'importe quoi : la recherche",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livrée par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-065"
+						},
+						{
+							"type": "text",
+							"text": ". Le contrat est écrit dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/SPEC-recherche.md"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le produit compte plus de trente écrans et une arborescence à trois niveaux. Jusqu'ici, retrouver\nun objet dont on ne savait plus où il vivait demandait de le chercher écran par écran : chaque\nliste portait au mieux un filtre local, aveugle à tout ce qui n'était pas elle."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La recherche cherche partout à la fois"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", depuis n'importe quel écran, sans le quitter."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "l-ouvrir",
+			"content": [
+				{
+					"type": "text",
+					"text": "9.1 L'ouvrir"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Trois chemins, et ils mènent au même endroit :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "le raccourci "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "code",
+										"text": "Cmd + K"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " sur Mac, "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "code",
+										"text": "Ctrl + K"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ailleurs. Il fonctionne "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "partout"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", y compris\npendant que vous écrivez un commentaire ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "un clic dans le champ "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Rechercher… »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", en haut de l'écran ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sur un écran étroit, le bouton en forme de loupe, à la même place."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le raccourci est rappelé "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans le champ lui-même"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il n'y a rien à apprendre par cœur."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Appuyer une seconde fois ne referme pas la recherche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le texte déjà tapé est simplement\nsélectionné, prêt à être remplacé. Pour refermer, appuyez sur "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "code",
+							"text": "Échap"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou cliquez ailleurs."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qu-elle-cherche",
+			"content": [
+				{
+					"type": "text",
+					"text": "9.2 Ce qu'elle cherche"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cinq familles d'objets, dans la même frappe :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Famille"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qui est cherché"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Affaire"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "son titre"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Contact"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "son nom, sa fonction, son adresse email"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Organisation"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "son nom, son domaine"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Commentaire"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "le texte du propos"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Message"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "l'objet, le corps, l'expéditeur"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque résultat porte "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "le nom de sa famille en toutes lettres"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", puis ce qui l'identifie et le\ncontexte où il vit — le channel d'une affaire, l'organisation d'un contact, l'auteur d'un\ncommentaire. Pour un commentaire et un message, un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "extrait du passage trouvé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est affiché."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qu-elle-comprend-et-ce-qu-elle-ne-comprend-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "9.3 Ce qu'elle comprend, et ce qu'elle ne comprend pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Il suffit de commencer un mot"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : « audi » trouve déjà « Audit sécurité applicative »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Les accents ne comptent pas, dans les deux sens"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : « creance » trouve « créance », et\n« créance » trouve « creance »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Deux mots saisis doivent être présents tous les deux."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " « audit sécurité » ne rend pas tout ce\nqui contient « audit »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune tolérance à la faute de frappe."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " « audti » ne trouve rien. La recherche cherche des\nmots, elle ne les devine pas."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ce qui est à la corbeille ne se cherche pas"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", y compris les commentaires d'une affaire mise à\nla corbeille."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-parcourir-au-clavier-et-y-aller",
+			"content": [
+				{
+					"type": "text",
+					"text": "9.4 La parcourir au clavier, et y aller"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La main ne quitte pas le clavier :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Touche"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Effet"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "code",
+									"text": "↓"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "descend d'un résultat ; du dernier, revient au premier"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "code",
+									"text": "↑"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "monte d'un résultat ; du premier, va au dernier"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "code",
+									"text": "Entrée"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "ouvre le résultat en surbrillance"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "code",
+									"text": "Échap"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "referme la recherche"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "code",
+									"text": "Tab"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "code",
+									"text": "Maj+Tab"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "quittent la recherche, qui se referme ; le curseur va où la touche l'envoie"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un clic sur une ligne fait la même chose que "
+				},
+				{
+					"type": "code",
+					"text": "Entrée"
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où chaque famille vous mène"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Famille"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Destination"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Affaire"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "sa fiche"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Commentaire"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "la fiche de l'affaire commentée"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", où le propos se lit dans le fil"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Contact"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "sa fiche"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Organisation"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "sa fiche"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Message"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "votre boîte, le message ouvert"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", dans le dossier où il est classé"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un message vous mène au message, pas seulement à votre boîte."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le dossier est celui de son\naffaire quand il est classé, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Non classés »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " quand il ne l'est pas — vous arrivez donc là où\nle message se trouve réellement, sans avoir à le retrouver dans la liste."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'adresse qui vous y a mené "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne reste pas dans la barre du navigateur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : recharger la page vous\nlaisse dans votre boîte, sans rouvrir un message que vous aviez peut-être quitté depuis longtemps.\nEt si le message n'existe plus, ou s'il ne vous est pas lisible, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "votre boîte s'ouvre simplement\nsans sélection"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — aucune erreur ne s'affiche."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "vous-ne-trouvez-que-ce-que-vous-avez-le-droit-de-lire",
+			"content": [
+				{
+					"type": "text",
+					"text": "9.5 Vous ne trouvez que ce que vous avez le droit de lire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La recherche n'ouvre rien."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une affaire d'un track qui ne vous est pas ouvert, son commentaire,\nun message que vous ne pouvez pas lire : rien de tout cela n'apparaît, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rien ne signale que\nquelque chose vous est caché"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Deux personnes cherchant le même mot ne voient donc pas\nnécessairement la même liste, et c'est voulu."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-la-recherche-affiche-et-ce-qu-elle-ne-fait-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "9.6 Ce que la recherche affiche, et ce qu'elle ne fait pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Au plus vingt résultats"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et quand la liste est pleine elle l'écrit : « 20 résultats\naffichés ». Précisez votre terme pour en voir d'autres."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "L'ordre est celui de la pertinence"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", familles mêlées : un message peut passer devant une\naffaire s'il correspond mieux."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Rien n'est enregistré"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : ni ce que vous cherchez, ni quand, ni combien de résultats. Il n'y a\npas d'historique de recherche, et il n'y en aura pas sans qu'on vous le demande."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun filtre par famille"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", aucune suggestion, aucune correction de frappe."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune action sur un résultat"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la recherche mène, elle n'agit pas."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Les tracks et les channels ne sont pas cherchés."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " On les trouve par la navigation, qui les\nliste tous à l'écran."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un résultat dont l'écran n'est pas atteignable reste affiché"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", marqué « Objet non\natteignable » et non cliquable — plutôt que de disparaître ou de mener à un écran cassé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Sans être connecté, la recherche n'existe pas"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : aucune page ne s'affiche sans session\n(chapitre 1)."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

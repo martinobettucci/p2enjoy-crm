@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-117` — le manuel joignable depuis la webapp (en cours)
+
+- **Une icône « Aide » dans l'en-tête**, à côté de la cloche : un panneau mène au chapitre qui décrit l'écran courant, et au
+  sommaire du manuel. Les pages `/aide` et `/aide/<chapitre>` lisent le manuel, réservé aux personnes connectées.
+- **Migrations `0126` et `0127`** : le bucket privé `manual` et sa politique de lecture. Le seed publie le manuel.
+- **En cours** : le manuel n'est pas encore réécrit pour ses lecteurs, ni illustré ; l'unité ne se livre pas en l'état.
+
 ### `CRM-077` onzième tranche — débloquer l'effacement d'un track
 
 - **Un track dont un budget porte la dépense d'une affaire d'un autre track n'est pas effacé** : le produit ne détruit

@@ -1,0 +1,513 @@
+{
+	"slug": "le-previsionnel-pondere-et-le-taux-de-conversion",
+	"title": "5 decies. Le prévisionnel pondéré et le taux de conversion",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-066"
+						},
+						{
+							"type": "text",
+							"text": " tranche 3 a. C'est le "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "chapitre 29"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " que "
+						},
+						{
+							"type": "code",
+							"text": "docs/SPEC-analytique.md"
+						},
+						{
+							"type": "text",
+							"text": " nomme.\nCaptures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-066/pilotage-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " En "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tête"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'écran « Pilotage » (§5 nonies), au-dessus des tableaux : deux nombres, et\nc'est la lecture que la plupart des visites viennent chercher."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-previsionnel-pondere",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 decies.1 Le prévisionnel pondéré"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "C'est la somme des montants de vos affaires "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ouvertes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", chacune multipliée par sa probabilité\n(§5 nonies.3), "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "par devise"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les étapes terminales en sont exclues"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et les deux motifs sont distincts : une affaire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "gagnée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nn'est plus une prévision, et une affaire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "perdue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " vaut zéro — l'inclure ne changerait aucun total\ntout en laissant croire qu'elle compte. C'est pourquoi la colonne « Genre » de l'entonnoir n'est pas\ndécorative : elle vous dit quelles lignes du tableau alimentent ce nombre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une devise dont toutes les affaires sont closes n'apparaît pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « CHF : 0,00 » se lirait comme\nune prévision nulle au lieu d'une absence de prévision."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "S'il n'y a aucune affaire ouverte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'écran écrit « Aucune affaire ouverte à ce jour. » plutôt\nqu'un zéro."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-taux-de-conversion-des-affaires-decidees",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 decies.2 Le taux de conversion des affaires décidées"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Son nom entier compte, et l'écran ne l'abrège jamais."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ce nombre est la part "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "gagnée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " parmi les\naffaires qui se tiennent "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "actuellement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " à une étape terminale :"
+				}
+			]
+		},
+		{
+			"type": "note",
+			"blocks": [
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "text",
+							"text": "gagnées ÷ (gagnées + perdues)"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Il est accompagné de son numérateur et de son dénominateur en toutes lettres — « 7 gagnées sur\n8 décidées » —, parce qu'un pourcentage seul ne dit pas sur combien il porte."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce n'est pas « la part gagnée parmi les affaires ouvertes en janvier »."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les deux lectures\ndiffèrent dès qu'une affaire décidée est archivée : une affaire gagnée puis archivée ne compte dans\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ni l'une ni l'autre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de ce que cet écran montre. L'analyse par période — dite par cohortes — n'est\npas livrée, et appeler ce nombre du nom de l'autre serait un compteur complaisant."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Zéro affaire décidée rend « Aucune affaire décidée à ce jour. », jamais « 0 % »."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un taux de 0 %\ndit « tout a été perdu » ; l'absence de toute décision ne dit rien."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "aucun-objectif-chiffre-n-est-confronte-a-ce-previsionnel",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 decies.3 Aucun objectif chiffré n'est confronté à ce prévisionnel"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "objectifs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " existent dans le produit (§3 ter) sous forme de tableaux de blocs et de flèches,\navec un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "remplissage"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " que vous saisissez à la main. Rien n'y décrit un objectif "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "chiffré"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " qu'un\nprévisionnel viendrait remplir automatiquement."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cet écran livre donc le prévisionnel "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "seul"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". La confrontation n'est pas oubliée : elle n'a pas\nencore été arbitrée, et l'inventer ici produirait une comparaison que personne n'a demandée."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-ces-deux-nombres-ne-sont-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 decies.4 Ce que ces deux nombres ne sont pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ils ne sont pas un chiffre d'affaires."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Le prévisionnel est une espérance : il vaut ce que\nvalent les probabilités saisies."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ils ne sont pas comparables d'un collègue à l'autre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " sans précaution : chacun lit les siens sur\nson propre portefeuille (§5 nonies.4)."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le taux ne traverse pas les devises par accident"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : il compte des "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "affaires"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", pas de l'argent,\net c'est la seule grandeur de cet écran qui le fasse légitimement."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

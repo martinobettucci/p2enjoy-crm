@@ -1,0 +1,1582 @@
+{
+	"slug": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires",
+	"title": "5 nonies. L'entonnoir de conversion : où se tiennent vos affaires",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-066"
+						},
+						{
+							"type": "text",
+							"text": " tranche 3 a, complété par les tranches 3 b (le sélecteur de portée,\n§5 nonies.0) et 3 c (les étapes vides, nommées au §5 nonies.1).\nC'est le "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "chapitre 28"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " que "
+						},
+						{
+							"type": "code",
+							"text": "docs/SPEC-analytique.md"
+						},
+						{
+							"type": "text",
+							"text": " nomme. Captures dans\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-066/pilotage-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": " et "
+						},
+						{
+							"type": "code",
+							"text": "pilotage-portee-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Pilotage »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", entre « Coûts » et « Ma journée ». L'adresse est\n"
+				},
+				{
+					"type": "code",
+					"text": "/pilotage"
+				},
+				{
+					"type": "text",
+					"text": " ; elle est partageable et rechargeable."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le\ndroit de lire — voir le §5 nonies.4, qui est la partie la plus importante de cette page."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "choisir-la-portee-tout-l-espace-un-track-un-channel",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 nonies.0 Choisir la portée : tout l'espace, un track, un channel"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par la tranche 3 b."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "En "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tête"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'écran, au-dessus des deux nombres, un champ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Portée »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " choisit ce que tout le\nreste de la page mesure : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tout l'espace de travail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — le défaut —, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "un track entier"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "un\nchannel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Les options sont groupées par track, et chacune nomme son track : « Studio web — tout le\ntrack », « Studio web — Refonte de site ». Vous ne voyez que les tracks et les channels que vous\navez le droit de lire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Changer de portée ne recharge rien."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les nombres se replient instantanément : l'écran a lu une\nseule fois, et la portée ne fait que choisir ce qu'il additionne. Les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "deux nombres du §5 decies"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\net les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "mentions"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " suivent la portée, comme les tableaux — un prévisionnel de tout l'espace\nau-dessus d'un entonnoir d'un seul channel dirait le contraire de ce qu'il montre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'adresse porte votre choix, et se partage."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "code",
+					"text": "/pilotage?track=studio-web"
+				},
+				{
+					"type": "text",
+					"text": " ouvre le track ;\n"
+				},
+				{
+					"type": "code",
+					"text": "/pilotage?track=studio-web&channel=refonte"
+				},
+				{
+					"type": "text",
+					"text": " ouvre le channel. Les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "deux"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " clés sont nécessaires\npour un channel : un nom court de channel n'est unique qu'à l'intérieur de son track, si bien que\n"
+				},
+				{
+					"type": "code",
+					"text": "?channel=refonte"
+				},
+				{
+					"type": "text",
+					"text": " seul ne désignerait rien de sûr. "
+				},
+				{
+					"type": "code",
+					"text": "/pilotage"
+				},
+				{
+					"type": "text",
+					"text": " sans rien est tout l'espace de\ntravail."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une adresse que l'écran ne sait pas résoudre ne provoque aucune erreur."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un track que vous ne\nlisez pas, un nom mal recopié, un channel nommé sous un track qui ne le porte pas : l'écran retombe\nsur la portée la plus large qu'il a comprise — le track, ou tout l'espace de travail — et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "le champ\n« Portée » affiche alors la portée réellement appliquée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Rien ne vous dit si le nom que vous aviez\ntapé existe ailleurs : ce serait vous renseigner sur ce que vos droits ferment."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une portée sans affaire garde son champ."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Si le track ou le channel choisi ne porte aucune\naffaire active lisible, l'écran l'écrit — « Aucune affaire active dans cette portée » — "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sans"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nretirer le champ, pour que vous puissiez en choisir une autre sans repasser par l'adresse."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un track sans channel n'est pas proposé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et un channel "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "archivé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ou "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "à la corbeille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " non\nplus : il n'y a rien d'actif à y mesurer."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-l-ecran-montre",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 nonies.1 Ce que l'écran montre"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tableau par devise"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ligne par étape"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de vos workflows, dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "l'ordre du catalogue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " —\ncelui-là même que suivent les colonnes de vos boards. Chaque ligne porte :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Colonne"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'elle dit"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Étape"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le nom du nœud, tel que le catalogue le porte — jamais le nom qu'un workflow lui a donné localement. C'est ce qui permet de comparer deux workflows sur la même ligne"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Genre"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "« Ouvert », « Gagné » ou « Perdu ». C'est lui, et lui seul, qui dit pourquoi une étape entre ou n'entre pas dans le prévisionnel du §5 decies"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Affaires"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Combien d'affaires actives se tiennent à cette étape"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Montant (…)"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La somme de leurs montants, dans la devise que l'en-tête nomme"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Pondéré (…)"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La même somme, chaque affaire multipliée par sa "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "probabilité"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " (§5 nonies.3)"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'ordre ne se change pas, et aucune colonne ne se trie."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un entonnoir est un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "chemin"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le\nreclasser par montant en ferait un palmarès, où « Perdu » remonterait au-dessus de « Prospection »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une étape où aucune affaire ne se tient n'a pas de ligne — elle est NOMMÉE sous les tableaux."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nElle n'est jamais rendue « à zéro » : un zéro affirmerait une mesure que l'écran n'a pas faite, et il\nfaudrait de surcroît le poser dans une devise qu'aucune affaire n'y porte. L'écran écrit donc, sous\nles tableaux et dans l'ordre du catalogue : « Aucune affaire active aux étapes Signature et Perdu. »"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "C'est la lecture la plus utile de cet écran sous une portée restreinte : elle dit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "de quelles\nétapes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " un track ou un channel est absent — où est le trou du chemin. Une étape "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "archivée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " n'y\nfigure pas : elle n'est plus une étape du chemin, et la nommer « sans affaire » inviterait à y en\nmettre une."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "quelles-affaires-y-entrent-et-lesquelles-n-y-entrent-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 nonies.2 Quelles affaires y entrent, et lesquelles n'y entrent pas"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Y entrent"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " toutes vos affaires "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "actives"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — celles qui ne sont ni archivées, ni à la corbeille.\nCela comprend :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "les affaires "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "gagnées"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "perdues"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", qui ont leur propre ligne, marquée par la colonne\n« Genre » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "les affaires "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "en sommeil"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Mettre une affaire en sommeil dit « ne me réveille pas à son sujet »,\njamais « cette affaire n'est plus au portefeuille » : la retirer ferait "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "disparaître un montant"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "\nd'un total du seul fait qu'on a demandé le silence."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "N'y entrent pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les affaires "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "archivées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et celles qui sont "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "à la corbeille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Une affaire\ngagnée puis archivée ne compte donc ni dans l'entonnoir, ni dans le taux de conversion du\n§5 decies.2."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-probabilite-d-une-affaire-trois-niveaux-et-le-plus-precis-gagne",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 nonies.3 La probabilité d'une affaire : trois niveaux, et le plus précis gagne"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le montant "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pondéré"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est le montant de l'affaire multiplié par sa probabilité. Cette probabilité\nse résout à trois niveaux, du plus précis au plus général :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "la probabilité de l'affaire elle-même"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", saisie sur sa fiche ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sinon, "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "la probabilité de l'étape"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " du workflow, saisie dans l'éditeur de workflows (§5 bis) ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sinon, "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "la probabilité par défaut du nœud"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", saisie au catalogue (§5 quater)."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une probabilité absente n'est jamais remplacée par un défaut."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Si aucun des trois niveaux n'est\nrenseigné, la probabilité est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "inconnue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : l'affaire est comptée dans la colonne « Affaires »,\nelle est comptée dans la mention « n affaire(s) sans probabilité renseignée », et elle ne contribue\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " au montant pondéré. Écrire zéro à sa place transformerait « personne n'a dit ce que vaut\ncette affaire » en « cette affaire ne vaut rien »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un montant absent suit la même règle"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : l'affaire est comptée, elle est signalée par la mention\n« n affaire(s) sans montant renseigné », et elle ne contribue ni au montant ni au pondéré."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ces deux mentions sont rendues "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sous les tableaux"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et seulement lorsqu'elles ont un objet. Sans\nelles, un prévisionnel bas se lirait comme un portefeuille "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pauvre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " au lieu d'un portefeuille\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "mal renseigné"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "vos-nombres-sont-les-votres-et-ils-peuvent-differer-de-ceux-d-un-collegue",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 nonies.4 Vos nombres sont les vôtres, et ils peuvent différer de ceux d'un collègue"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "C'est la règle la plus importante de cet écran"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et c'est exactement celle du cumul des coûts\n(§5 septies.3). L'entonnoir est calculé "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "à partir de ce que vos droits vous laissent lire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", jamais\nà partir de tout ce qui existe. Une affaire d'un channel qui vous est fermé :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "n'apparaît dans aucune ligne ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "n'entre dans "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucun"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " total ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "n'est signalée par rien"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux collègues aux droits différents lisent donc deux nombres différents sur le même écran, au même\ninstant. Ce n'est pas une erreur de calcul : afficher un total « complet » vous apprendrait, par\nsimple soustraction, l'existence et le montant d'une affaire que vous n'avez pas le droit de voir."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'écran l'écrit sous les tableaux, pour que personne n'ait à le deviner — et la phrase "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nomme la\nportée courante"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "note",
+			"blocks": [
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ces nombres portent sur toutes les affaires actives que vous pouvez lire, tous tracks et tous\nchannels confondus. Un collègue dont les droits diffèrent des vôtres lit d'autres totaux sur les\nmêmes données. »"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "note",
+			"blocks": [
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ces nombres portent sur les affaires actives du track « Studio web » que vous pouvez lire. […] »"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le sélecteur de portée n'ouvre aucun droit."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Choisir un channel, ou l'écrire dans l'adresse, ne\nmontre rien de plus que ce que vos droits consentent déjà : la restriction s'applique "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "après"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " vos\ndroits, jamais à leur place."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-devises-ne-se-melangent-jamais",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 nonies.5 Les devises ne se mélangent jamais"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si vos affaires sont libellées dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "plusieurs devises"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'écran rend "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "un tableau par devise"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\nchacun avec son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "titre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — « Entonnoir en EUR », « Entonnoir en CHF ». Si tout est libellé dans une\nseule devise — le cas courant —, vous ne voyez pas ce titre ; les en-têtes des deux colonnes de\nmontant nomment la devise dans tous les cas."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Aucun total « toutes devises confondues » n'est affiché : additionner des francs et des euros\ndemanderait un taux de change que le produit ne connaît pas, et le nombre obtenu se lirait pourtant\ncomme un chiffre d'affaires."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-l-ecran-ecrit-quand-il-n-y-a-rien-a-montrer",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 nonies.6 Ce que l'écran écrit quand il n'y a rien à montrer"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Ce que vous lisez"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce que cela veut dire"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucune affaire active »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Aucune affaire active ne vous est lisible — "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ou"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " il n'en existe aucune. Les deux cas se ressemblent volontairement : les distinguer vous apprendrait l'existence de ce que l'écran cache"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Lecture refusée »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Votre session ne permet pas de lire l'entonnoir. Reconnectez-vous, puis revenez sur cet écran"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« L'entonnoir n'a pas pu être lu »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La lecture a échoué. Le bouton « Réessayer » relance réellement la requête"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucun espace de travail »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Votre session a expiré, ou votre compte n'appartient à aucun espace de travail"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-cet-ecran-ne-fait-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 nonies.7 Ce que cet écran ne fait pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "On n'y saisit rien"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et aucune ligne n'est cliquable. Les probabilités se saisissent au\ncatalogue (§5 quater), dans l'éditeur de workflows (§5 bis) et sur la fiche d'une affaire (§4)."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun score de santé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " aujourd'hui : la colonne existe et rien ne l'alimente. Ce qu'un score\n« transparent » devrait agréger n'est arbitré nulle part, et il n'est donc pas inventé ici."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune lecture d'historique."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " L'entonnoir est un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "instantané"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de l'état courant, jamais une\nanalyse par période : il dit où vos affaires se tiennent "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aujourd'hui"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", pas ce qu'elles sont\ndevenues depuis janvier."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun export, aucune période, aucune conversion de devise."
+									}
+								]
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

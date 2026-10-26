@@ -2502,8 +2502,9 @@ formes de `0088` (réel dérivé, ligne soldée figée, lecture et écriture par
 
 ## 9 septies. Le manuel — `CRM-117` (spécifié le 2026-10-26, avant le code ; révisé à l'écriture du code, décision 751)
 
-`docs/SPEC-manual.md` §14 ; décisions 736, 740, 750 et 751. **Aucune table, aucune fonction.** Deux migrations, au
-patron exact des pièces à envoyer (`0106` et `0107`) :
+`docs/SPEC-manual.md` §14 ; décisions 736, 740, 750 et 751. **Aucune table, aucune fonction.** Deux migrations, **`0126`** et
+**`0127`**, au patron exact des pièces à envoyer (`0106` et `0107`) — appliquées en développement le 2026-10-26 et
+prouvées par la suite pgTAP `0119` :
 
 - **sous `postgres`** — le bucket **`manual`**, privé : `insert into storage.buckets (id, name, public) values
   ('manual', 'manual', false) on conflict (id) do update set public = false` ;

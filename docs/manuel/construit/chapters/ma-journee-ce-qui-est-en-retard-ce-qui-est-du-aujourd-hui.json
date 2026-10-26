@@ -1,0 +1,997 @@
+{
+	"slug": "ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui",
+	"title": "3 quater. Ma journée : ce qui est en retard, ce qui est dû aujourd'hui",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-061"
+						},
+						{
+							"type": "text",
+							"text": ", tranche 1. Décrit l'application réellement exécutée ; captures dans\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-061/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'entrée "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ma journée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la barre latérale répond à une seule question : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "que dois-je faire\naujourd'hui ?"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Elle rassemble les affaires qui portent une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "échéance"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — la date de leur prochaine\naction —, à travers tout votre espace de travail, sans avoir à ouvrir un dossier après l'autre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "C'est la troisième façon de lire vos affaires, et elle range par le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "temps"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "tableau"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " d'un channel les range par étape du processus — « où en est chaque affaire ? » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vue liste"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " les range par leurs colonnes, dans un channel — « laquelle dois-je ouvrir ? » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ma journée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " les range par échéance, partout — « qu'est-ce qui est en retard ? »."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-trois-sections",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quater.1 Les trois sections"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'écran se lit de haut en bas, en trois sections, et chacune écrit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "combien"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'affaires elle\nporte :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Section"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'elle contient"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "En retard"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les échéances passées, "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "sans aucune limite d'ancienneté"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — une échéance oubliée depuis trois mois est précisément celle qu'il faut voir"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Aujourd'hui"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les échéances du jour, de minuit à minuit, dans le fuseau horaire de "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "votre"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " appareil"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "À venir"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les échéances des "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "sept prochains jours"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", pas au-delà"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une section sans affaire n'est pas affichée."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Trois titres surmontant trois vides diraient trois\nfois « rien » ; leur absence le dit une fois."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'horizon est de sept jours, et il n'est pas réglable."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Au-delà, ce ne serait plus une journée :\nc'est la vue liste d'un channel, triée par échéance, qui répond à cette question-là."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qu-une-ligne-montre",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quater.2 Ce qu'une ligne montre"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque ligne porte, dans cet ordre : l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "échéance"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " avec son heure, le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "titre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'affaire — qui\nest un lien vers sa fiche —, la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prochaine action"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " à mener, et la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "situation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'affaire sous\nla forme « Track › Channel », elle-même un lien qui ouvre le dossier."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'échéance vient en tête parce que c'est elle qui range l'écran : une colonne de dates alignées se\nlit d'un seul regard. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'heure est toujours affichée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — une échéance du jour sans heure ne dirait\npas si la matinée est déjà passée."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans la section "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "En retard"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et là seulement, l'échéance est teintée de rouge. La teinte porte sur\nla "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "date"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", jamais sur la ligne entière : une affaire en retard est un travail à faire, pas une\nerreur."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une affaire peut porter une échéance sans prochaine action écrite."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " La colonne reste alors vide —\nni tiret, ni « non renseigné ». L'échéance seule est déjà une information."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "mes-affaires-ou-tout-l-espace-de-travail",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quater.3 « Mes affaires » ou tout l'espace de travail"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux onglets en haut de l'écran choisissent la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "portée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Mes affaires"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", la vue par défaut : les affaires dont "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vous"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " êtes responsable ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Tout l'espace de travail"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : toutes celles que vos droits vous laissent lire."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le choix vit dans l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "adresse"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : "
+				},
+				{
+					"type": "code",
+					"text": "/ma-journee"
+				},
+				{
+					"type": "text",
+					"text": " d'un côté, "
+				},
+				{
+					"type": "code",
+					"text": "/ma-journee?qui=tous"
+				},
+				{
+					"type": "text",
+					"text": " de l'autre. Une\nadresse copiée à un collègue lui montre donc ce que vous voyez — sous réserve de ses propres droits,\nqui restent seuls juges de ce qu'il peut lire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Élargir la portée n'ouvre rien."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ce que vous voyez reste ce que le serveur vous consent : une\naffaire d'un track qui vous est fermé n'apparaît dans aucune des deux portées, et l'écran ne la\nnomme jamais."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-apparait-pas-et-pourquoi",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quater.4 Ce qui n'apparaît pas, et pourquoi"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Absent de l'écran"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Motif"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Les affaires "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "archivées"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " et celles "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "à la corbeille"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Elles ne sont plus en cours (chapitre 4.5)"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Les affaires "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "en sommeil"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les endormir est précisément le geste qui dit « pas aujourd'hui » (chapitre 4.6). Elles restent visibles dans leur tableau et leur vue liste, où une case à cocher les ramène"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Les affaires "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "sans échéance"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Il n'y a rien à ranger dans une journée"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Les échéances au-delà de "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "sept jours"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Voir l'horizon ci-dessus"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-l-ecran-ne-fait-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quater.5 Ce que l'écran ne fait pas"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Il lit, il n'écrit pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Aucun bouton n'y reporte une échéance, ne coche « fait » ni ne saisit une\nprochaine action. Ces deux valeurs se modifient à un seul endroit — l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "en-tête de la fiche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de\nl'affaire (chapitre 4.2 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "bis"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") —, et le rester est ce qui évite deux façons de faire la même chose."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce n'est pas un agenda"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : ni créneau, ni durée, ni rendez-vous, ni récurrence. Une affaire porte\nun instant, pas une plage."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce n'est pas la liste des relances."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une affaire peut stagner dans son étape au-delà de son seuil\nde relance sans porter aucune échéance, et l'inverse. La "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pastille d'ancienneté"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du tableau\n(chapitre 4.8) répond à cette autre question."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "quand-il-n-y-a-rien",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quater.6 Quand il n'y a rien"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux messages, et ils ne disent pas la même chose :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Aucune échéance dans votre journée »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — vous n'êtes responsable d'aucune affaire à échéance.\nL'écran offre alors le geste qui élargit la portée : "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "Voir tout l'espace de travail"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Aucune échéance dans les 7 prochains jours »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — personne n'en a, parmi ce que vous pouvez\nlire. Il n'y a rien à élargir, et l'écran n'offre donc aucun bouton."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sans session, la page ne s'affiche pas : son adresse mène à l'écran de connexion (chapitre 1)."
+				}
+			]
+		}
+	]
+}

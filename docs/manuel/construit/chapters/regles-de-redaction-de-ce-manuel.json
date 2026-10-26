@@ -1,0 +1,242 @@
+{
+	"slug": "regles-de-redaction-de-ce-manuel",
+	"title": "Règles de rédaction de ce manuel",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Rappelées ici pour que chaque contribution s'y conforme :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le manuel décrit "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "le comportement réel"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", constaté dans l'application exécutée, jamais un\ncomportement supposé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Il est compréhensible "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "sans lire le code"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Il ne contient "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucun secret"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", aucune clé, aucune adresse interne, aucun détail exploitable\nsur l'infrastructure. Les noms de variables d'environnement peuvent être cités, jamais leurs\nvaleurs."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Toute évolution du comportement met à jour le chapitre concerné "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "dans le même changement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :\nnouveau champ, nouvelle validation, nouveau bouton, nouvelle modale, nouvel onglet, nouvel\nétat, nouveau filtre, nouveau message, parcours modifié."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Les captures sont "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "renouvelées"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dès que l'apparence ou le parcours change, et chaque chapitre\nnomme le dossier "
+							},
+							{
+								"type": "code",
+								"text": "docs/captures/<unité>/"
+							},
+							{
+								"type": "text",
+								"text": " où les siennes se trouvent."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "libellé cité entre guillemets"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " est le libellé réel de l'application, au caractère près : le\nmanuel ne paraphrase jamais un message d'erreur, il le cite."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun volume du jeu de démonstration n'est écrit dans un chapitre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : ils vivent tous dans\nl'annexe A, où ils sont vérifiés contre la base. Les nombres qui sont des "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "règles du produit"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " —\nvingt-cinq lignes par page, dix mille caractères — restent dans leur chapitre."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Ces règles sont opposables : "
+							},
+							{
+								"type": "code",
+								"text": "scripts/verify-manual.sh"
+							},
+							{
+								"type": "text",
+								"text": " en vérifie quatre, et\n"
+							},
+							{
+								"type": "code",
+								"text": "e2e/ui/manuel.spec.ts"
+							},
+							{
+								"type": "text",
+								"text": " exerce les huit adresses citées par le manuel avec la session réelle de\nla lectrice du jeu de démonstration ("
+							},
+							{
+								"type": "code",
+								"text": "CRM-092"
+							},
+							{
+								"type": "text",
+								"text": " T9 : un visiteur sans session n'en atteint plus\naucune)."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

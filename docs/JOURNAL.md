@@ -35872,3 +35872,29 @@ règles de visibilité, copie vers un track, versions et remappage, rattachement
 nœuds) ; l'action d'une suppression d'étape ou de transition, que le CRM détruit physiquement (§3.7) alors que
 `supprimer` veut dire corbeille ou archive. Aucun code. **Persisté** : `docs/SPEC-mcp.md` §6.1, `docs/BACKLOG.md`
 (`CRM-118`).
+
+### décision 752 — `CRM-117` T2 interrompue sur consigne : ce qui est fait et prouvé, ce qui reste
+
+*2026-10-26, consigne du responsable relayée par une autre session : faire le point, persister, terminer.* **Fait et
+prouvé** : migrations `0126` (bucket privé `manual`) et `0127` (politique `manual_select`, lecture pour
+`authenticated`), appliquées en développement par le runner documenté ; pgTAP `0119` **10/10**, et deux mutations — une
+lecture ouverte à `anon`, un bucket rendu public — font rougir la suite ; `0029` révisée (son assertion 20 bornait les
+politiques du stockage aux seuls buckets de courrier). Preuve d'API `e2e/api/manuel.spec.ts` **9/9** — sans session, ni
+le sommaire, ni un chapitre, ni la liste ; jeton forgé refusé ; les trois sessions du seed lisent ; aucune n'écrit —, et
+la mutation `anon` la fait rougir. `marked` 18.1.1 mesuré et épinglé (`docs/DAT.md` §15). Construction
+`scripts/manuel/construire.mjs` (22 unitaires) : le manuel actuel se construit, 32 chapitres, deux avertissements (ses
+deux liens vers des fichiers du dépôt). Publication `scripts/manuel/publier.sh` en miroir, rejouable, appelée en fin de
+seed ; une première écriture de la liste du bucket manquait les dossiers (une tabulation est un blanc pour `read`),
+trouvée en posant un objet de trop et corrigée. Webapp : lecture, correspondance écran → chapitre (42 unitaires, chaque
+identifiant vérifié contre le manuel construit), rendu en blocs sans HTML injecté (9 unitaires), pages, icône
+`BookOpen` et son panneau, un seul panneau de l'en-tête ouvert à la fois.
+
+**Numéros** : la suite pgTAP prend `0119`, la `0118` ayant été prise entre-temps par `CRM-068` T2 ; les migrations
+`0126` et `0127` restent les miennes, `CRM-068` ayant pris `0128` après les avoir vues — l'ordre de livraison est donc
+125, 126, 127, 128 (`docs/PROD_MIGRATIONS.md`). Les compteurs du harnais sont **calculés** (+1 fichier, +10 assertions,
++9 scénarios d'API) : la campagne pgTAP complète était suspendue, à la demande de la session de `CRM-111`, pendant sa
+série de harnais.
+
+**Reste** : unitaires de `AideEntete` et `PageAide` ; E2E de l'aide, paliers, captures observées ; campagnes complètes ;
+puis T3 (réécriture), T4 (images), T5, T6. **Le panneau d'aide est déjà visible en développement**, sur le manuel tel
+qu'il est, références internes comprises : il ne se livre qu'avec l'unité terminée.

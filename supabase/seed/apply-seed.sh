@@ -4944,6 +4944,13 @@ for famille in access configuration sign_in deletion export; do
         (docs/SPEC-audit.md §10). Une base antérieure à la migration 115 doit être reconstruite."
 done
 info "Journal d'audit : familles access, configuration, sign_in, deletion et export présentes, écrites par les vrais gestes — CRM-072, docs/SPEC-seed.md §25"
+# --- Le manuel publié dans le bucket `manual` — CRM-117 T2, docs/SPEC-seed.md §27 ---------------------------------------
+# @spec CRM-117 (docs/BACKLOG.md) — tranche T2 ; docs/SPEC-manual.md §15 (la publication, en miroir) ; décision 751
+# Le manuel n'est lu que par une session, depuis le bucket privé `manual` : le seed le publie par le MÊME script qu'une
+# livraison, jamais par un dépôt fabriqué ici. Un bucket déjà à jour reçoit les mêmes octets ; un objet que la source ne
+# porte plus en est retiré.
+"$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)/scripts/manuel/publier.sh" \
+	|| die "la publication du manuel a échoué (scripts/manuel/publier.sh, docs/SPEC-manual.md §15)."
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."

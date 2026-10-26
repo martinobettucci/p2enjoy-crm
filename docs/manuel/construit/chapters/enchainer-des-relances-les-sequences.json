@@ -1,0 +1,966 @@
+{
+	"slug": "enchainer-des-relances-les-sequences",
+	"title": "7 ter. Enchaîner des relances : les séquences",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-063"
+						},
+						{
+							"type": "text",
+							"text": ", tranche 4. L'écran n'invente aucune règle d'accès : ce sont celles des\nsous-tranches 4a et 4b."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Deux endroits, et le partage est délibéré : la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "cadence"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " s'écrit dans Barre latérale ▸\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « Séquences de relance » ; elle "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "s'arme"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " depuis la fiche de l'affaire qu'elle doit\nrelancer, dans le bloc « Relance automatique », sous les coûts."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "À quoi cela sert."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une séquence enchaîne plusieurs "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "modèles d'emails"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (chapitre 7) à des délais\nchoisis. Armée sur une affaire qui n'avance plus, elle expédie le premier modèle après son délai, le\ndeuxième après le sien, et ainsi de suite — "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "et elle s'arrête dès qu'une réponse arrive"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Tout membre de l'espace de travail "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "lit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les séquences. Les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "écrire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — créer, modifier,\nréordonner, supprimer — est réservé aux rôles "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "développement commercial"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ".\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Armer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " une relance sur une affaire suppose le droit d'y "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "écrire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Aucun bouton n'est masqué\nselon votre rôle : le produit vous dit en toutes lettres qu'il refuse, au moment où vous agissez."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ecrire-une-cadence",
+			"content": [
+				{
+					"type": "text",
+					"text": "7 ter.1 Écrire une cadence"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Nouvelle séquence » ouvre la fiche, sous la liste. Un seul champ pour commencer : le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nom"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\nunique dans l'espace de travail."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les paliers n'apparaissent qu'une fois la séquence enregistrée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et ce n'est pas une contrainte\nd'écran : un palier appartient à une séquence, et il ne peut pas être posé avant qu'elle existe. La\nfiche vous le dit — « Enregistrez la séquence pour lui ajouter des paliers »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un palier, c'est un modèle et un délai."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Choisissez le modèle dans la liste, tapez le délai en\njours, « Ajouter le palier ». Le palier prend le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rang suivant"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : vous n'avez jamais à saisir une\nposition."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "LE DÉLAI SE COMPTE DEPUIS LE PALIER PRÉCÉDENT"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et le tout premier depuis l'armement. C'est ce\nque « J+3 », « J+7 », « J+14 » veulent dire dans la liste : trois jours après l'armement, puis sept\njours après le premier envoi, puis quatorze après le deuxième. Un palier glissé au milieu d'une\ncadence ne vous oblige donc à rien renuméroter."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le délai va de 1 à 365 jours."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Zéro est refusé : un palier de délai nul partirait en même temps\nque celui qui le précède, ce qui n'est pas une cadence mais un doublon."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un même modèle peut servir plusieurs paliers."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " La séquence de démonstration le fait : ses paliers\n1 et 3 emploient tous deux « Relance sans réponse »."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "changer-l-ordre-des-paliers",
+			"content": [
+				{
+					"type": "text",
+					"text": "7 ter.2 Changer l'ordre des paliers"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux flèches par ligne, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Monter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Descendre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". La flèche qui n'a pas de sens — monter le\npremier, descendre le dernier — reste "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "visible mais inactive"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : elle ne disparaît pas, sans quoi\nles boutons sauteraient d'une ligne à l'autre sous votre curseur."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'ordre est enregistré immédiatement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et la liste est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "relue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : ce que vous voyez après un\ndéplacement est ce que le produit a réellement retenu, jamais un affichage optimiste. Si vos droits\nne permettent pas l'écriture, le produit écrit « Aucun palier n'a été réordonné » — jamais un succès\nqui n'a pas eu lieu."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Retirer » ne demande aucune confirmation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et c'est voulu : retirer un palier ne détruit aucun\ntexte. Le modèle reste, la séquence reste, et reposer le palier est un formulaire de deux champs."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "supprimer-une-sequence",
+			"content": [
+				{
+					"type": "text",
+					"text": "7 ter.3 Supprimer une séquence"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton vit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans la fiche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", jamais sur la ligne de la liste : un geste destructeur ne se\ndéclenche pas depuis une liste qu'on parcourt. La confirmation "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nomme la séquence"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et dit combien\nde paliers partiront avec elle."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une séquence qui relance actuellement une affaire ne peut pas être supprimée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et la confirmation\nvous en avertit avant que vous ne cliquiez. Interrompez la relance depuis l'affaire concernée, puis\nréessayez."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un modèle employé par une séquence ne peut pas être supprimé non plus"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (chapitre 7) : retirez-le\nd'abord des paliers qui l'emploient."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "armer-une-relance-sur-une-affaire",
+			"content": [
+				{
+					"type": "text",
+					"text": "7 ter.4 Armer une relance sur une affaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ouvrez la fiche de l'affaire, descendez jusqu'au bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Relance automatique »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Deux choix : la\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "séquence"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "adresse d'expédition"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " depuis laquelle les messages partiront. Aucun des deux\nn'est présélectionné — le produit ne choisit pas à votre place l'adresse qui signera vos relances."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'affaire doit être « figée »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", c'est-à-dire immobile dans son étape depuis plus longtemps que le\nseuil de relance de cette étape (chapitre 3 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "quinquies"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Si elle ne l'est pas, le produit vous le\ndit : « Cette affaire n'a pas dépassé le seuil d'inactivité de son étape ». Faites avancer l'affaire,\nou attendez — une relance automatique n'a de sens que sur une conversation qui s'est arrêtée."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une seule relance à la fois par affaire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Si une autre personne en a armé une entre-temps, le\nproduit refuse la seconde plutôt que d'envoyer deux fois."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le bloc montre ensuite"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le nom de la séquence, l'adresse qui expédie, et où en est la\ncadence — « Aucun palier envoyé pour l'instant », puis « Palier 2 envoyé le 12/09/2026 »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Interrompre la relance »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ferme la cadence. Le bloc revient alors à son geste, et il ne\nl'annonce qu'après avoir "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vérifié"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " que la relance est bien close."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-arrete-une-relance-sans-que-vous-ayez-rien-a-faire",
+			"content": [
+				{
+					"type": "text",
+					"text": "7 ter.5 Ce qui arrête une relance, sans que vous ayez rien à faire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "une réponse du destinataire arrive sur l'affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — c'est la raison d'être de la cadence, et\nrelancer quelqu'un qui vient de répondre est le seul défaut qu'un système de relance ne doit\njamais avoir ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "l'affaire cesse d'être figée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : vous la faites avancer d'une étape, vous la mettez en sommeil,\nvous l'archivez ou vous la mettez à la corbeille ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "le dernier palier est parti"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la cadence est épuisée ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vous l'interrompez"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " depuis le bloc."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-offert",
+			"content": [
+				{
+					"type": "text",
+					"text": "7 ter.6 Ce qui n'est pas offert"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune date de prochain envoi n'est affichée."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " La cadence "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "glisse"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " sur les envois réels : un\npalier parti avec un jour de retard décale tous les suivants d'autant. Une date annoncée serait\nfausse au premier décalage, et le produit préfère ne rien dire plutôt que dire faux."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune prévisualisation d'une séquence entière."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Prévisualisez ses modèles un par un depuis\nl'écran des modèles (chapitre 7.2)."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune trace dans l'historique de l'affaire."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " L'armement et l'interruption n'y écrivent rien."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Les relances passées ne sont pas listées."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Le bloc porte un geste, pas une histoire."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun réordonnancement à la souris par glisser-déposer."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Les deux flèches font le même travail,\net elles restent utilisables au clavier."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune duplication de séquence"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", aucun archivage, aucune corbeille : une séquence se supprime\nou se garde."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

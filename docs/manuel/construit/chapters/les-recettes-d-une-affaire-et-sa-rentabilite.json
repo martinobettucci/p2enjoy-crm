@@ -1,0 +1,498 @@
+{
+	"slug": "les-recettes-d-une-affaire-et-sa-rentabilite",
+	"title": "5 duodecies. Les recettes d'une affaire et sa rentabilité",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-108"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une affaire porte ce qu'elle doit rapporter et ce qu'elle a rapporté, comme elle porte ce qu'elle\ncoûte. Le rapport de rentabilité rapproche les trois : recettes, coûts et coût du personnel. Captures :\n"
+				},
+				{
+					"type": "code",
+					"text": "docs/captures/CRM-108/"
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "saisir-les-recettes-dans-la-fiche",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 duodecies.1 Saisir les recettes dans la fiche"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans la fiche d'une affaire, le bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Recettes »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " vient avant « Coûts ». "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nouvelle ligne de recette »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ajoute une\nligne : sa nature — « Acompte », « Solde », « Lot 1 » — et sa recette prévue. Les montants sont dans la devise de\nl'affaire, rappelée dans l'en-tête des colonnes."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque ligne se déplie : on y ajoute une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "recette réelle"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " par facture ou par encaissement — un montant, une date\n(celle du jour par défaut) et un libellé facultatif. La colonne « Réel » est leur somme ; tant qu'aucune n'est saisie,\nelle montre un tiret : la recette réelle est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "inconnue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", pas nulle. Quand tout est encaissé, cochez "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Soldé »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :\nla ligne ne reçoit plus de recette réelle, et une ligne soldée sans recette réelle vaut zéro. Décocher la rouvre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Il faut pouvoir modifier l'affaire pour saisir ses recettes. Tant qu'une affaire porte des lignes de recette, sa devise\nne change plus."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-rentabilite-d-une-affaire",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 duodecies.2 La rentabilité d'une affaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Pour un administrateur de l'espace, le bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Rentabilité »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " suit « Temps passé » : recettes, coûts, coût du\npersonnel et marge, en "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prévu"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et en "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "réel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et le taux de marge réelle. La marge est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "recettes − coûts −\npersonnel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Une marge négative est écrite avec son signe, sur fond rouge. La mention "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« partielle »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dit qu'il manque\nencore quelque chose — une recette ou un coût sans réel, du temps sans coût défini ; survolez-la pour savoir quoi."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La marge prévue soustrait le temps "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "déjà passé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le CRM ne prévoit pas le temps. Une affaire dont les montants sont\ndans plusieurs devises a une marge "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Non calculable — plusieurs devises »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le CRM ne convertit pas les devises."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "l-ecran-rentabilite",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 duodecies.3 L'écran « Rentabilité »"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Rentabilité »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", après « Pilotage ». L'onglet "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Vue d'ensemble »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " rend un tableau par devise :\nchaque track, ses channels et leurs affaires, avec un sous-total à chaque niveau et le total. Les filtres :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Du »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Au »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " retiennent les recettes réelles, les coûts réels et le temps par leur date ; les montants\nprévus portent toujours sur toute l'affaire ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« État »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : toutes les affaires, les gagnées, les en cours ou les perdues ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Réel »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Prévu »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " changent de vue."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Seuls les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace lisent ce rapport : il soustrait le coût du temps de toute l'équipe, que\nseuls eux peuvent lire. Un autre membre lit « Réservé aux administrateurs » et un lien vers l'onglet « À saisir »."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "l-onglet-a-saisir",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 duodecies.4 L'onglet « À saisir »"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Il liste les lignes de recette "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "non soldées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", de la plus ancienne à la plus récente, pour tout membre. Tapez un montant\ndans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Une recette de plus »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : "
+				},
+				{
+					"type": "code",
+					"text": "Entrée"
+				},
+				{
+					"type": "text",
+					"text": " l'enregistre, à la date du jour, et passe à la ligne suivante. Saisir 0\nenregistre une recette nulle ; laisser le champ vide ne change rien. Cochez « Soldé » quand la ligne est encaissée. Une\nligne que vous ne pouvez pas modifier reste visible, son champ éteint, avec le motif."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-offert",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 duodecies.5 Ce qui n'est pas offert"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Aucune facturation ni relance d'impayé, aucune conversion de devise, aucune prévision du temps, aucune répartition d'une\nrecette entre plusieurs affaires, aucun export."
+				}
+			]
+		}
+	]
+}

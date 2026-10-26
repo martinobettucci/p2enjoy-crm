@@ -16962,8 +16962,8 @@ décision 729) : une couleur propre au channel, des pastilles nommées, pas de c
       corrigé ; manuel 3.2 ter, 5.1, 5.2 ; campagnes pgTAP, API et interface des écrans touchés (`docs/JOURNAL.md`
       « `CRM-116` T2 à T4 »).
 - [ ] **T5 — livraison** : migration en fenêtre et reconstruction de la webapp, sur instruction du responsable.
-### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[@]`
-*Prise en charge : session interactive 2026-10-23 (fil d'Ariane `CRM-110`, Claude Code, poste du responsable) depuis 2026-10-26 12:34 UTC — état avant : [ ]*
+### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[~]`
+***Reste réel au 2026-10-26, T2 interrompue sur consigne du responsable** (fin de session) : le panneau d'aide et les pages restent à éprouver (unitaires de `AideEntete` et `PageAide`, E2E, paliers, captures observées), puis T3 à T6. La base, la publication, la construction et la lecture sont faites et prouvées (décision 752).*
 *Créée le 2026-10-26 — constat du responsable : « on a un manuel mais il n'est joignable nulle part depuis la webapp ;
 est-ce dans le backlog ou c'est un loupé ? ». Mesuré le même jour : un loupé. La webapp ne porte aucun lien ni entrée
 « Aide » vers `docs/manual.md` ; aucune unité ne le prévoit — les mentions du manuel au backlog portent sur sa
@@ -16981,11 +16981,17 @@ responsable** : traitée juste après `CRM-116`.*
       §18 ; les §3 points 2 et 4 et le §4 de la partie I tombent), `docs/DESIGN_SYSTEM.md` §5.69, `docs/SPEC-webapp.md`
       §5.1 bis et §5.2, `docs/DAT.md` §3.7 quater, `docs/SCHEMA.md` §9 septies. Six choix de l'agent marqués pour
       relecture (`docs/SPEC-manual.md` §18) ; connecteur MCP : non.
-- [ ] **T2 — le socle** : le bucket `manual` et sa politique de lecture (deux migrations aux prochains numéros
+- [~] **T2 — le socle** : le bucket `manual` et sa politique de lecture (deux migrations aux prochains numéros
       libres, pgTAP, preuves d'API par requête directe ; décision 751) ; la publication `scripts/manuel/publier.sh` ; la construction et sa
       vérification (`marked` après la mesure du `CLAUDE.md` §19) ; `/aide` et `/aide/:chapitre`, le rendu en blocs,
       l'icône « Aide » et son panneau, `aide-ecrans.ts` (unitaires, E2E, paliers, captures observées). Sur le manuel
       tel qu'il est : la réécriture suit.
+      *Fait le 2026-10-26 (décision 752)* : migrations `0126` et `0127`, pgTAP `0119` **10/10** (mutations tuées), `0029`
+      révisée ; `e2e/api/manuel.spec.ts` **9/9** (mutation tuée) ; `marked` 18.1.1 mesuré (`docs/DAT.md` §15) ;
+      construction et vérification (22 unitaires), publication en miroir à la fin du seed ; lecture (`lib/manuel.ts`, 12
+      unitaires), correspondance écran → chapitre (42 unitaires), rendu des blocs (9 unitaires), pages `/aide` et
+      `/aide/:chapitre`, icône et panneau de l'en-tête. **Reste** : unitaires de `AideEntete` et `PageAide`, E2E,
+      paliers, captures observées, campagnes.
 - [ ] **T3 — la réécriture**, par groupes de chapitres : retrait de toute référence interne et de ce qui parle du
       développement ou du jeu de démonstration, numérotation simple, phrases réécrites pour le lecteur ; table du
       §12 et de `aide-ecrans.ts` tenues à mesure. T3.1 prise en main et navigation ; T3.2 l'affaire ; T3.3

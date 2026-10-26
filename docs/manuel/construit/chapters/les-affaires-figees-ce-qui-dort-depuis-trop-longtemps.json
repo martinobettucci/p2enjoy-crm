@@ -1,0 +1,999 @@
+{
+	"slug": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps",
+	"title": "3 quinquies. Les affaires figées : ce qui dort depuis trop longtemps",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-062"
+						},
+						{
+							"type": "text",
+							"text": ", tranche 3. Captures : "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-062/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Ma journée » vous dit ce qui est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dû"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Cet écran-ci vous dit ce qui "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dort"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Les deux\nquestions se ressemblent et ne sont pas la même : une affaire peut porter une prochaine action à\ndemain et n'avoir pas bougé d'étape depuis six semaines. C'est pourquoi les deux entrées sont\nvoisines dans la barre latérale, dans cet ordre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Vous y arrivez par "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Affaires figées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", immédiatement sous "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ma journée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qu-etre-figee-veut-dire",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quinquies.1 Ce qu'être « figée » veut dire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une affaire est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "figée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " lorsqu'elle est restée dans son étape "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "au-delà du seuil de relance de\ncette étape"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Ce n'est ni un jugement ni un score : c'est une durée comparée à un seuil."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le seuil vient du "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "processus"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et il se lit en deux temps :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "l'étape elle-même peut porter un seuil, réglé dans l'éditeur de workflows (chapitre 5 "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "bis"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sinon, c'est celui du "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "nœud"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " du catalogue dont l'étape est une occurrence (chapitre 5\n"
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "quater"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une étape sans seuil ne fige jamais ses affaires."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Personne n'a dit au bout de combien de temps\nelle est en retard, et le produit n'invente pas ce chiffre. C'est le cas des étapes terminales de\nl'espace de démonstration — "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Perdu"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " —, dont les affaires n'apparaissent donc jamais ici."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le compte se fait en "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "jours révolus"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et la borne est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "large"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une affaire qui atteint\nexactement son seuil est figée, et son retard vaut alors zéro."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Trois affaires ne sont jamais figées, quel que soit leur âge"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "une affaire "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "archivée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — elle n'est pas en retard, elle est rangée ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "une affaire "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "à la corbeille"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — elle est sortie du produit (chapitre 5 "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "ter"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "une affaire "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "en sommeil"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — mettre en sommeil est précisément le geste qui dit « pas\nmaintenant » (chapitre 4.9 "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "bis"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), et la relancer annulerait le seul geste posé contre les\nrelances. Une échéance de sommeil "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "échue"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ne protège plus : l'affaire est réveillée de fait."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-l-ecran-montre",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quinquies.2 Ce que l'écran montre"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les affaires sont "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "groupées par dossier"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et les groupes sont rangés du "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "plus gros retard au\nplus petit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Chaque titre de groupe porte son compte entre parenthèses."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une ligne se lit de gauche à droite :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Élément"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'il dit"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "35 j"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "le retard, en jours, sur fond rouge pâle"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "le titre"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "un lien vers la fiche de l'affaire"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Négociation"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "l'étape où l'affaire est restée"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "seuil 5 j"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "le seuil de cette étape, sans lequel le retard n'a pas d'échelle"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Studio web › Refonte"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "le dossier où elle vit ; un clic l'ouvre"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le rouge porte sur le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "retard seul"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", jamais sur la ligne entière : une affaire figée est un\ntravail à faire, pas une erreur."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "deux-personnes-n-y-lisent-pas-la-meme-chose",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quinquies.3 Deux personnes n'y lisent pas la même chose"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'écran ne montre que les affaires que "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vos droits vous laissent lire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Deux collègues ouvrant la\nmême page au même instant peuvent donc y voir des listes différentes, et c'est voulu : les droits\npar track et par onglet (chapitre 3.2 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "quater"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") s'appliquent ici comme partout."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'écran ne dit jamais qu'il vous cache quelque chose."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Aucune mention « une affaire vous est\nmasquée » n'apparaît : ce serait divulguer par la bande l'existence de ce que vos droits ferment."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans l'espace de démonstration, l'administratrice et le business developer lisent "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "quatre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\naffaires figées ; la lectrice en lit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "trois"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — la quatrième vit dans un track qui lui est fermé."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-relance-inscrite-dans-l-affaire",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quinquies.4 La relance inscrite dans l'affaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque nuit, le produit parcourt les affaires figées et inscrit dans l'historique de chacune une\nligne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Relance automatique »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", avec son retard et son seuil au moment du passage. Vous la\ntrouvez dans le fil de la fiche (chapitre 4.10), dans la famille "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Cycle de vie"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Au plus une par séjour dans une étape"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une affaire figée depuis six semaines ne reçoit pas\nquarante-deux lignes. Si vous la déplacez puis qu'elle s'y rendort, une nouvelle relance est écrite\n— elle y dort une seconde fois."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cette ligne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "n'a pas d'auteur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : personne ne l'a écrite, c'est l'horloge."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-le-produit-ne-fait-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quinquies.5 Ce que le produit ne fait PAS"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun email n'est envoyé."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Une relance est un fait inscrit dans le produit, que vous rencontrez\nen l'ouvrant. Les modèles d'emails et les séquences de relance relèvent d'une autre unité, non\nlivrée ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucune notification"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ne vous prévient ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucune cadence n'est réglable"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le passage a lieu une fois par jour, et l'heure n'est pas un\nréglage du produit ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "l'écran n'écrit rien."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Ni « traité », ni report, ni mise en sommeil depuis cette liste : ces\ngestes vivent sur la fiche de l'affaire, et les dédoubler ici en ferait deux définitions du même\ngeste."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "quand-il-n-y-a-rien",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 quinquies.6 Quand il n'y a rien"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Aucune affaire figée »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — aucune affaire, parmi celles que vous pouvez lire, ne dort dans son\nétape au-delà de son seuil. Le message ne propose aucun bouton, et ce n'est pas un oubli : il n'y a\nrien à faire d'une liste vide, et c'est une bonne nouvelle."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si la liste "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "n'a pas pu être lue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'écran le dit et propose "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réessayer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Un écran vide et une\npanne ne se confondent jamais."
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,2830 @@
+{
+	"slug": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant",
+	"title": "11. Le connecteur MCP : piloter le CRM depuis votre assistant",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-102"
+						},
+						{
+							"type": "text",
+							"text": " (le connecteur) et "
+						},
+						{
+							"type": "code",
+							"text": "CRM-103"
+						},
+						{
+							"type": "text",
+							"text": " (son administration, en développement) ; les outils de la famille\n« Recettes » par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-108"
+						},
+						{
+							"type": "text",
+							"text": " (en développement)."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "connecteur MCP"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " relie votre assistant — Claude, ChatGPT, ou tout client MCP — au CRM. L'assistant agit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "en votre\nnom"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il voit et modifie exactement ce que vous pourriez voir et modifier dans le CRM, jamais davantage."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-l-assistant-a-le-droit-de-faire",
+			"content": [
+				{
+					"type": "text",
+					"text": "11.1 Ce que l'assistant a le droit de faire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux règles se cumulent :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vos droits dans le CRM"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", ceux de votre rôle dans chaque espace ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "les droits du connecteur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", qu'un superadministrateur vous accorde espace par espace, par "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "famille"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et par\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "action"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'assistant ne peut faire que ce que "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "les deux"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " permettent. Un droit du connecteur dans un espace dont vous n'êtes pas\nmembre reste sans effet."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les neuf familles, et ce que chacune couvre :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Structure"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : tracks, channels, lecture des workflows ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Affaires"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : affaires, champs, étapes, commentaires, contacts liés, activités (appels, réunions, visios) ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Contacts"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : les contacts du carnet ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Organisations"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : les organisations du carnet, et leurs contacts en lecture ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Budgets"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : budgets, occurrences, lignes de coût, réels ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Recettes"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : lignes de recette d'une affaire et leurs réels ; le rapport de rentabilité, réservé aux\nadministrateurs de l'espace ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Temps"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : saisies de temps, et le coût du personnel en lecture ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Objectifs"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : tableaux d'objectifs ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Messagerie"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : lecture des fils ; l'envoi compte comme « ajouter »."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les quatre actions sont "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Consulter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ajouter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Modifier"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Supprimer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". « Supprimer » place en corbeille ou\narchive ; le connecteur ne détruit jamais rien définitivement."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un superadministrateur franchit les droits du connecteur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : l'assistant lui ouvre tout ce que le CRM lui permet."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ajouter-le-connecteur-a-votre-assistant",
+			"content": [
+				{
+					"type": "text",
+					"text": "11.2 Ajouter le connecteur à votre assistant"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Ouvrez la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "page d'accueil du connecteur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et cliquez sur "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Copier l'adresse du connecteur »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Dans votre assistant, ajoutez un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "connecteur personnalisé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " avec cette adresse."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Sur la page de consentement, autorisez l'accès. Cochez "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Stay signed in »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " pour rester connecté entre deux pauses."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Connectez-vous avec votre compte LeLabs."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si aucun droit ne vous est encore accordé, une page "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Droits en attente »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le dit : demandez à un superadministrateur\nde vous en accorder, puis relancez la connexion."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La page d'accueil porte aussi "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ouvrir la plateforme du CRM »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui mène à l'administration décrite ci-dessous."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "accorder-des-droits-du-connecteur",
+			"content": [
+				{
+					"type": "text",
+					"text": "11.3 Accorder des droits du connecteur"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans la plateforme (chapitre 10), l'onglet "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Connecteur MCP »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " réunit trois blocs."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Les comptes venus au connecteur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : leur dernière activité et le nombre d'espaces où ils ont des droits. Un compte\nmarqué "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Sans profil dans le CRM »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " s'est connecté au connecteur sans avoir jamais été admis dans le CRM : il faut\nd'abord inscrire une attente à son adresse dans un espace (§10.5)."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Accorder des droits à un utilisateur »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : cherchez une personne par son nom, parmi "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "tous"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " les utilisateurs du\nCRM, même ceux qui ne se sont jamais connectés au connecteur. Leurs droits vaudront dès leur première connexion.\nL'onglet « Utilisateurs » mène au même endroit, par "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Droits du connecteur »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " sur chaque ligne."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le journal des appels"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (§11.4)."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La fiche d'un utilisateur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " montre :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "en haut, son nom et sa dernière activité au connecteur, ou « Jamais connecté » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "espace"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " à choisir, et son rôle dans cet espace. S'il n'en est pas membre, un avertissement rappelle que les\ndroits resteront sans effet ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "la grille des droits"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : les familles en lignes, les actions en colonnes, une case par droit. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Toute la\nfamille »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Toute l’action »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " cochent une ligne ou une colonne entière, ou la décochent quand elle est déjà\npleine."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Rien ne s'écrit case par case : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Enregistrer les droits »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " enregistre la grille de l'espace en une fois, et\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Annuler les modifications »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " revient à l'état enregistré. Tant qu'une modification n'est pas enregistrée, le choix\nde l'espace est verrouillé, pour qu'aucune saisie ne se perde. Une fois l'enregistrement fait, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Droits\nenregistrés. »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le confirme, et le geste est inscrit au journal de la plateforme."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Pour un superadministrateur, la grille reste visible mais ne se modifie pas, puisqu'il la franchit."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-journal-des-appels",
+			"content": [
+				{
+					"type": "text",
+					"text": "11.4 Le journal des appels"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque appel de l'assistant est inscrit, sans son contenu : la date, le compte, l'outil appelé, l'espace et l'issue —\n« Réussi », « Refusé par la matrice », « Refusé par le CRM », « Erreur » ou « Réponse trop volumineuse ». Un filtre\nretient une seule issue, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Entrées plus anciennes »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " remonte le temps. La fiche d'un utilisateur montre ses\npropres appels."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-l-assistant-sait-faire",
+			"content": [
+				{
+					"type": "text",
+					"text": "11.5 Ce que l'assistant sait faire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'apparaît pas dans sa liste."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La liste des espaces"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " qui vous sont ouverts, dès qu'un droit du connecteur vous est accordé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Recettes"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrés en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-108"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : les lignes de recette d'une affaire ; les recettes réelles restant à saisir dans un espace ; le\n"
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "rapport de rentabilité"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " d'un espace, qui demande aussi « Budgets ▸ Consulter » et « Temps ▸ Consulter »,\npuisqu'il montre les coûts et le coût du personnel. Le CRM le réserve aux administrateurs de l'espace : pour un\nautre membre, l'assistant reçoit un refus ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Ajouter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : une ligne de recette, avec sa nature et son montant prévu, ou une recette réelle datée ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : corriger une ligne ou une recette réelle, solder une ligne ou la rouvrir."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Aucun outil ne supprime une ligne de recette. Les règles sont celles de la fiche (chapitre 5 "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "duodecies"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") : une ligne\nsoldée n'accepte plus de recette réelle, la recette réelle d'une ligne est la somme de ses réels, et la marge du\nrapport se calcule comme sur l'écran « Rentabilité ». Ce que l'assistant écrit apparaît aussitôt dans la fiche."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Affaires, en lecture"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrés en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-104"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T2.a"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (« Affaires ▸ Consulter ») :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "lister les affaires"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " d'un espace, par titre, avec leur track, leur channel, leur étape, leur responsable et leur\nprochaine action — filtrées au besoin par channel, par mots du titre, par étape ou par échéance (en retard,\naujourd'hui, dans la semaine). Les affaires en sommeil n'y paraissent que si on le demande ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "lire une affaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : son en-tête, sa description, sa probabilité, ses contacts liés et leur rôle, ses réponses au\nformulaire, si vous pouvez la modifier, et ses "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "deux scores de santé"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " avec leur détail (chapitre 4.1) — la liste\ndes affaires les rend aussi ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "lire son historique"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", comme le fil de la fiche (chapitre 4.10) : événements, commentaires et activités, du plus\nancien au plus récent ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "lire ses commentaires"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", et "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "ses activités"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (chapitre 4.7 "
+										},
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "quater"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "les affaires figées"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " de l'espace (chapitre 3 "
+										},
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "quinquies"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "votre journée"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (chapitre 3 "
+										},
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "quater"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") : ce qui est en retard, dû aujourd'hui ou à venir dans les sept jours, pour\nvos affaires ou pour tout ce que vous lisez."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "L'assistant lit ce que vous liriez dans la webapp, et rien de plus : une affaire d'un track qui vous est fermé est\n« introuvable » pour lui aussi."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Affaires, en écriture"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrés en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-104"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T2.b"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Ajouter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (« Affaires ▸ Ajouter ») : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "créer une affaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " dans un channel, avec son titre — elle naît à l'étape\ninitiale, comme par le bouton « Nouvelle affaire » ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "la commenter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ; y "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "consigner une activité"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " réalisée,\navec ses participants ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (« Affaires ▸ Modifier ») : changer son "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "en-tête"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " — titre, description, montant, probabilité,\nprochaine action et échéance, responsable désigné par son nom — et ses "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "réponses au formulaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ; la\n"
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "déplacer"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " vers une étape désignée par son nom, dans les seuls déplacements que le workflow déclare ; la "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "changer\nde channel"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ; la "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "mettre en sommeil"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ou la "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "réveiller"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "lier ou délier un contact"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (ce geste demande aussi\n« Contacts ▸ Consulter ») ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "corriger une activité"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " dont vous êtes l'auteur ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Supprimer"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (« Affaires ▸ Supprimer ») : la "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "mettre à la corbeille"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", d'où un administrateur la restaure."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Les règles sont celles de l'écran. Un déplacement non déclaré, un motif manquant, une question obligatoire sans\nréponse ou une date d'activité future sont refusés, et l'assistant reçoit le motif. Changer de channel vers un autre\nprocessus détruit les réponses au formulaire de l'ancien : l'assistant doit le dire et l'accepter explicitement. Ce que\nl'assistant écrit est signé de votre nom dans l'historique de l'affaire."
+							}
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ce que l'assistant ne fait pas"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : corriger ou retirer un commentaire, retirer une activité, restaurer une affaire\nde la corbeille, l'archiver, mentionner quelqu'un. Ces gestes restent ceux de l'écran."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La recherche"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrée en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-104"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T1"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : retrouver des affaires, des contacts, des\norganisations, des commentaires et des messages par des mots, comme la barre de recherche de l'en-tête. Un résultat\nn'est rendu que si le connecteur peut consulter sa famille dans son espace — « Affaires », « Contacts »,\n« Organisations » ou « Messagerie ». "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Une organisation demande « Organisations ▸ Consulter »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : « Contacts » ne\nl'ouvre pas."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Structure"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrés en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-104"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T1"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : les tracks d'un espace, un track et ses channels, un channel et son nombre d'affaires actives, et un\n"
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "workflow"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " — ses étapes, les déplacements qu'il déclare, le motif ou les questions qu'ils exigent ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Ajouter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : créer un track, ou un channel avec son workflow ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : renommer un track ou un channel, changer sa description, la couleur ou l'icône d'un track. Le slug\n— l'adresse — ne change jamais, et changer le workflow d'un channel reste un geste de l'écran, comme choisir la\ncouleur d'un channel ("
+										},
+										{
+											"type": "code",
+											"text": "CRM-116"
+										},
+										{
+											"type": "text",
+											"text": ") ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Supprimer"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : mettre un track ou un channel à la corbeille."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le CRM réserve ces écritures aux administrateurs de l'espace : pour un autre membre, l'assistant reçoit un refus."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Contacts"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrés en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-104"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T3"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : lister les contacts du carnet, par mots du nom, de l'adresse ou de la fonction, ou par\norganisation ; lire la fiche d'un contact, avec les affaires auxquelles il est lié et son rôle dans chacune ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Ajouter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : créer un contact, avec une organisation qui existe déjà ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : changer son nom, sa fonction, son adresse, son téléphone ou son organisation."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun outil ne supprime un contact"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le CRM ne sait que le détruire, et l'assistant ne détruit rien. Le nom de\nl'organisation d'un contact fait partie du contact ; les organisations elles-mêmes sont la famille suivante."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Organisations"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrées en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-114"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T4"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : lister les organisations du carnet, par mots du nom ou du domaine, avec le nombre de contacts de\nchacune — y compris celles qui n'en ont aucun ; lire la fiche d'une organisation, avec ses contacts ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Ajouter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : créer une organisation — un nom, et un domaine et un site web facultatifs. Le domaine est enregistré en\nminuscules, et il est unique dans l'espace : un domaine déjà pris est refusé ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : changer son nom, son domaine ou son site web ; une valeur vide efface le domaine ou le site."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Comme à l'écran, le CRM réserve la création et la modification aux administrateurs et aux business developers de\nl'espace. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun outil ne supprime une organisation"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : ses contacts la perdraient sans laisser de trace. Pour\nrattacher un contact à une organisation, l'assistant modifie le contact (famille « Contacts »)."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Budgets"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrés en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-104"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T4"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : les budgets des tracks, avec ce qui est prévu et ce qui est déjà connu de leurs dépenses ; le détail\nd'un budget, occurrence par occurrence, avec ses lignes et leur affaire ; les lignes de coût d'une affaire et leurs\ndépenses réelles ; les lignes « à saisir », comme l'onglet du même nom ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Ajouter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : une ligne de coût sur une affaire, rattachée à un budget ouvert — et à l'une de ses occurrences quand\nle budget est récurrent ; une dépense réelle sur une ligne ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : le libellé, le montant prévu, le budget ou l'occurrence d'une ligne ; corriger une dépense réelle ;\nsolder une ligne, ou la rouvrir."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Comme à l'écran, le coût réel d'une ligne est la somme de ses dépenses, et une ligne soldée n'en accepte plus : il\nfaut la rouvrir d'abord. Deux devises ne s'additionnent jamais. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun outil ne supprime une ligne ni une dépense"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " —\nle CRM ne saurait que les détruire —, et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "créer, modifier ou clôturer un budget"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " reste un geste de l'écran."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Temps"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livré en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-104"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T5"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : vos saisies de temps sur une période de trois mois au plus — ou celles d'une personne nommée, ou de\ntout l'espace, que seul un administrateur peut lire —, chacune avec son jour et sa cible ; le rapport valorisé,\nminutes et coût par personne et cible, comme le rapport mensuel de l'écran « Temps » ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : poser les minutes d'un jour sur une cible — un track, un channel ou une affaire —, comme une case de\nla grille : la case est créée ou remplacée, et "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "0 la vide"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ". Par quarts d'heure, sept heures au plus par jour."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Vous saisissez votre propre temps ; un administrateur peut saisir celui d'un membre, "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "désigné par son nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Le coût\ndu personnel — les taux — reste un geste de l'écran. Deux devises ne s'additionnent jamais, et une minute sans taux\nest comptée à part, jamais à zéro."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Objectifs"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrés en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-104"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T6"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : les tableaux d'objectifs de l'espace ; un tableau lu comme un texte — ses blocs dans l'ordre de\nlecture, avec leur avancement et leur channel lié, et les flèches qui les relient ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Ajouter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : un bloc — titre, texte, avancement, channel lié facultatif —, posé à droite des blocs existants ; une\nflèche entre deux blocs du même tableau ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Modifier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : le titre, le texte, l'avancement ou le channel lié d'un bloc ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Supprimer"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : archiver un tableau, ou le désarchiver."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "L'avancement d'un bloc est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "saisi"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", jamais calculé : l'assistant l'écrit quand vous le lui demandez. Déplacer,\nredimensionner ou colorer un bloc, créer ou renommer un tableau restent des gestes de l'écran. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun outil ne\nsupprime un bloc ni une flèche."
+									}
+								]
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Messagerie"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livrée en développement par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-104"
+									},
+									{
+										"type": "text",
+										"text": ", tranche T7"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Consulter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : les emails classés dans une affaire, du plus ancien au plus récent — sens, date, expéditeur,\ndestinataires, objet, un extrait, et le "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "nombre"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " de pièces jointes ; un email en entier, avec son texte. Quand\nl'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit\naussi s'il est "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "lu ou non lu pour vous"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (chapitre 4.15) ; le lire par l'assistant ne le marque pas lu, et aucun outil\nne change cet état ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "emphasis",
+											"content": [
+												{
+													"type": "text",
+													"text": "Ajouter"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "envoyer un email depuis une affaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", par la même file que le bouton « Envoyer » de la fiche : la\nsignature de l'identité est ajoutée, le message part, puis paraît dans le fil de l'affaire. L'assistant peut\nrépondre à un email "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "de cette affaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ; l'objet est alors repris, précédé de « Re: ». Il peut ajouter une\n"
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "copie cachée"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ; il ne joint "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "aucun fichier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": "."
+										}
+									]
+								}
+							]
+						]
+					},
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un envoi est irréversible"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : l'outil l'annonce, et l'assistant vous demande de confirmer les destinataires,\nl'objet et le texte avant d'envoyer. Il envoie avec "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "votre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " identité d'expédition, ou avec celle du service si vous\nadministrez l'espace ; si vous en avez plusieurs, il vous demande laquelle — il ne choisit jamais à votre place.\nL'envoi exige aussi la case « Affaires — Consulter », et le droit d'écrire sur l'affaire. Le quota journalier de\nl'identité s'applique comme à l'écran."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-le-connecteur-n-offre-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "11.6 Ce que le connecteur n'offre pas"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Toutes les familles ont désormais leurs outils. Restent des gestes de l'écran : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "les pièces jointes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ni lues ni\nenvoyées par le connecteur ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "classer, déclasser ou mettre en sommeil"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " un fil de la boîte de réception ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "les modèles\net les séquences"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de relance."
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,1073 @@
+{
+	"slug": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role",
+	"title": "10 bis. Les membres de votre espace : qui y travaille, avec quel rôle",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré en développement par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-070"
+						},
+						{
+							"type": "text",
+							"text": " : la liste des membres, leurs rôles, les attentes et les droits fins par track et\npar channel."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque espace de travail a ses "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "membres"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et chacun y tient un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rôle"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Administrateur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Business developer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nou "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Lecteur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Cet écran les montre à tous les membres ; seuls les administrateurs de l'espace y changent quelque chose."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ouvrir-l-ecran",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 bis.1 Ouvrir l'écran"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Membres : personnes et rôles »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", juste après « Arborescence : tracks et channels »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La liste montre une ligne par membre : son nom, son rôle et la date depuis laquelle il est membre. Les\nadministrateurs viennent en tête, puis les autres membres par ordre alphabétique. Une personne dont le profil n'a pas\nde nom apparaît comme "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Compte sans nom »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "si-vous-n-administrez-pas-l-espace",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 bis.2 Si vous n'administrez pas l'espace"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Vous consultez la liste, mais vous ne la modifiez pas. Un bandeau le dit en tête de l'écran : les modifications sont\nréservées aux administrateurs de l'espace. Les sélecteurs de rôle et les boutons "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Retirer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " restent visibles,\nmais ils sont inactifs."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "changer-le-role-d-un-membre",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 bis.3 Changer le rôle d'un membre"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Choisissez le nouveau rôle dans le sélecteur de sa ligne : le changement est enregistré "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dès le choix"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sans bouton\nà presser. Un message sous la liste le confirme — « Rôle de Driss Lemoine modifié. » —, puis la liste est relue."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un espace garde toujours au moins un administrateur."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Retirer le rôle d'administrateur au dernier d'entre eux est\nrefusé, et le message le dit : nommez d'abord un autre administrateur. Le sélecteur revient alors au rôle enregistré."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Vous pouvez changer votre propre rôle. Si vous cessez d'être administrateur, vous ne pourrez plus rien modifier sur\ncet écran."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "retirer-un-membre-de-l-espace",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 bis.4 Retirer un membre de l'espace"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Retirer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au bout de sa ligne, ouvre une confirmation sous la ligne. Elle nomme la personne et l'espace, et dit\nce que le retrait emporte : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ses droits fins sur les tracks et les channels de l'espace partent avec elle"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Le reste\nde son compte n'est pas touché. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Retirer de l'espace »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " confirme ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Annuler »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou la touche Échap, referme\nla confirmation sans rien changer."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Vous retirer vous-même"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est possible, et la confirmation vous prévient : vous ne serez plus membre de l'espace, et\nvous perdrez l'accès à ses affaires comme à son administration. Le dernier administrateur ne peut pas se retirer."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-attentes-les-personnes-qu-on-attend",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 bis.5 Les attentes : les personnes qu'on attend"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le CRM ne crée aucun compte : on y entre avec son identité LeLabs. Pour faire entrer quelqu'un dans l'espace, un\nadministrateur inscrit une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "attente"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — une adresse et un rôle. La personne devient membre, avec ce rôle, à sa\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "première connexion LeLabs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " avec cette adresse vérifiée (chapitre 1)."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La section "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Attentes »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " vient sous la liste des membres. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Seuls les administrateurs de l'espace la voient"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : pour\nles autres membres, elle n'apparaît pas."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Inscrire une attente"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ouvre un petit formulaire : "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Adresse »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Rôle »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", puis "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Inscrire »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". La liste\nmontre l'adresse, le rôle, qui l'a inscrite et depuis quand."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Changer le rôle d'une attente"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : inscrivez de nouveau la même adresse avec le nouveau rôle. L'attente est\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "remplacée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et le message le dit — « Attente de … remplacée : Lecteur devient Administrateur. »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Retirer »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", au bout de la ligne, retire l'attente aussitôt, sans confirmation : il suffit de la réinscrire pour\nrevenir en arrière."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Une attente "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« En suspens »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ne se consommera qu'à l'arrivée d'un administrateur : c'est le cas d'une attente qui\nn'est pas administratrice, dans un espace qui n'a encore aucun administrateur membre. Vous ne la verrez que rarement\nici, puisqu'un administrateur membre suffit à lever le suspens ; la plateforme la montre (chapitre 10)."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Dernière tentative »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dit si la personne attendue a déjà essayé de se connecter, et pourquoi elle a été refusée :\n« Refusée le 21/10 : compte LeLabs pas encore vérifié », avec le nombre de refus quand il y en a eu plusieurs. Trois\nmotifs existent : "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "adresse non vérifiée chez LeLabs"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (la personne doit confirmer son adresse dans son compte\nLeLabs), "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "compte LeLabs pas encore vérifié"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (LeLabs doit vérifier son compte), "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "l'espace n'a pas encore\nd'administrateur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (nommez-en un). « Aucune tentative refusée » veut dire que la personne n'a pas essayé — ou que son\ndernier essai date de plus de 90 jours : le CRM n'en garde pas la trace au-delà. Une adresse que personne n'attend ne\nlaisse jamais de trace, et réinscrire une attente efface la sienne."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une adresse mal formée est refusée, et le formulaire reste ouvert pour la corriger."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-droits-fins-restreindre-ou-rouvrir-un-track-ou-un-channel",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 bis.6 Les droits fins : restreindre ou rouvrir un track ou un channel"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le rôle d'un membre vaut pour tout l'espace. Les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "droits fins"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le précisent, track par track et channel par channel.\nLa section "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Droits fins »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " vient en dernier ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "seuls les administrateurs de l'espace la voient"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Choisissez la personne dans "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Membre »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". L'écran propose d'abord le premier membre qui n'est pas administrateur."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le tableau liste chaque track, suivi de ses channels, par ordre alphabétique. Pour chacun :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "« Droit posé »"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Hérité"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (rien n'est posé : le droit vient du track, ou du rôle), "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Membre"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " (lecture et\nécriture), "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Lecture"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", ou "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Aucun accès"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "« Accès effectif »"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : ce que la personne peut réellement faire — "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Écriture"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Lecture"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ou "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Aucun accès"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ".\nC'est le CRM qui le calcule, avec la même règle que partout ailleurs."
+										}
+									]
+								}
+							]
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Choisissez un autre droit dans la liste : il est enregistré "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "dès le choix"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", un message le confirme, et l'accès\neffectif est relu. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Hérité »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " retire le droit posé."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le droit le plus précis l'emporte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : celui d'un channel sur celui de son track, celui d'un track sur le rôle. On\npeut donc fermer un track à quelqu'un et lui rouvrir un seul de ses channels. Le track apparaît alors « Aucun accès »,\navec la mention "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Lisible par l'un de ses channels »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : la personne voit son nom, pour atteindre le channel ouvert."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un administrateur n'est jamais restreint."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sa matrice s'affiche, une phrase le rappelle, et ses droits ne se\nmodifient pas ici."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "quand-un-geste-n-aboutit-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 bis.7 Quand un geste n'aboutit pas"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le message sous la liste dit pourquoi :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "le dernier administrateur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : nommez-en un autre d'abord ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "rien n'a changé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la personne n'était peut-être plus membre, ou vos droits ont changé entre-temps. La liste a été\nrelue ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ce geste est réservé aux administrateurs de l'espace"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "le serveur n'a pas répondu"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : vérifiez votre connexion et réessayez."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

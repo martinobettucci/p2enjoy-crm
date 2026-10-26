@@ -1,0 +1,773 @@
+{
+	"slug": "se-connecter-et-se-deconnecter",
+	"title": "1. Se connecter et se déconnecter",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Connexion par le seul SSO LeLabs, livrée par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-092"
+						},
+						{
+							"type": "text",
+							"text": " (tranche T5) ; elle remplace le formulaire par\nmot de passe de "
+						},
+						{
+							"type": "code",
+							"text": "CRM-011"
+						},
+						{
+							"type": "text",
+							"text": " et la seconde voie de "
+						},
+						{
+							"type": "code",
+							"text": "CRM-091"
+						},
+						{
+							"type": "text",
+							"text": ". Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-092/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le CRM n'a "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pas de mot de passe à lui"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : vous vous connectez avec votre compte LeLabs. Ouvrez\n"
+				},
+				{
+					"type": "code",
+					"text": "/connexion"
+				},
+				{
+					"type": "text",
+					"text": " et choisissez "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Se connecter avec LeLabs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — c'est la seule action de l'écran. Le\nproduit vous envoie sur la page de connexion de LeLabs ; une fois connecté là-bas, vous revenez au\nCRM, à l'adresse d'où vous étiez parti si vous aviez commencé depuis une fiche ou un board. Pendant\nl'aller, le bouton affiche « Redirection vers LeLabs… » ; au retour, une carte grisée annonce\n« Connexion LeLabs en cours » le temps que le CRM vérifie votre connexion."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ouvrir une adresse du CRM sans être connecté"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — un lien reçu, un favori — affiche l'écran de\nconnexion, et rien d'autre : ni menu, ni page vide. Une fois connecté avec LeLabs, vous arrivez sur\nla page demandée."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "qui-peut-entrer",
+			"content": [
+				{
+					"type": "text",
+					"text": "1.1 Qui peut entrer"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un compte LeLabs n'ouvre le CRM que si "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "trois"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " conditions sont réunies :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "votre adresse est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vérifiée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " auprès de LeLabs ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "votre compte LeLabs est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vérifié"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " par un administrateur de LeLabs — un geste humain, qui peut\nprendre du temps ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "un administrateur d'un espace du CRM vous a "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "inscrit à cette adresse"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", ou vous en êtes déjà\nmembre — "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ou vous êtes administrateur de LeLabs"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "À votre première connexion, votre inscription devient votre place dans l'espace, avec le rôle que\nl'administrateur a choisi pour vous."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les administrateurs de LeLabs administrent le CRM."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " C'est une règle de tout le domaine\n"
+				},
+				{
+					"type": "code",
+					"text": "lelabs.tech"
+				},
+				{
+					"type": "text",
+					"text": " : qui porte le rôle d'administration de LeLabs est administrateur de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "chaque"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " espace\ndu CRM, sans avoir à y être inscrit, et cesse de l'être dans les cinq minutes qui suivent le retrait\nde ce rôle chez LeLabs. Tout autre rôle LeLabs ne change rien à vos droits dans le CRM : ils restent\nceux de votre espace."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-messages-de-l-ecran-de-connexion",
+			"content": [
+				{
+					"type": "text",
+					"text": "1.2 Les messages de l'écran de connexion"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux sortes de messages existent, et ils ne se ressemblent pas."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Accès en attente »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — sur fond jaune pâle, avec une icône de cercle en pointillés. Vous n'avez\nrien fait de faux : un geste manque, qui n'est pas le vôtre ou que vous faites ailleurs. Le message\nnomme votre adresse."
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Message"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'il faut faire"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Votre adresse … n'est pas encore vérifiée auprès de LeLabs."
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Vérifiez votre adresse depuis votre compte LeLabs, puis reconnectez-vous."
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Votre compte LeLabs … n'est pas encore vérifié."
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Un administrateur de LeLabs doit confirmer votre identité. Rien à faire de votre côté, sinon patienter et vous reconnecter plus tard."
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Aucun espace du CRM ne vous attend à l'adresse …"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Demandez à un administrateur de votre espace de vous inscrire "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "avec cette adresse exacte"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", puis reconnectez-vous."
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Un espace du CRM vous attend à l'adresse …, mais son administrateur ne s'y est pas encore connecté."
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'espace est tout neuf : son administrateur doit s'y connecter une première fois avant que d'autres puissent entrer. Rien à faire de votre côté ; reconnectez-vous une fois qu'il l'aura fait. Si vous êtes aussi attendu dans un autre espace, vous y entrez déjà."
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un refus"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — sur fond rouge pâle, avec un triangle d'alerte. Une tentative a échoué ; il suffit en\ngénéral de recommencer."
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Message"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'il veut dire"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "La connexion LeLabs a été annulée."
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Vous avez refusé ou interrompu la connexion chez LeLabs. Rien n'a changé."
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "La connexion LeLabs n'a pas abouti. Recommencez depuis cet écran."
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le retour de LeLabs n'a pas pu être vérifié — par exemple si vous avez mis plus de dix minutes, ou ouvert le retour dans un autre onglet."
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Le serveur n'a pas répondu…"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "LeLabs ou le CRM est momentanément injoignable. Réessayez."
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Votre session a pris fin. Reconnectez-vous avec LeLabs."
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Votre session LeLabs a été fermée, ou un droit vous a été retiré."
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "La connexion n'est pas configurée sur ce déploiement."
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Ce déploiement du CRM ne connaît pas LeLabs : prévenez son exploitant. Aucun bouton n'est alors proposé."
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans les deux cas, le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Se connecter avec LeLabs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " reste disponible."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-session",
+			"content": [
+				{
+					"type": "text",
+					"text": "1.3 La session"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Votre session vit dans ce navigateur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", pas seulement dans l'onglet : recharger la page ou ouvrir\nun nouvel onglet vous retrouve connecté. Elle se prolonge d'elle-même tant que votre session LeLabs\nvit. Elle prend fin quand vous fermez le navigateur, quand vous vous déconnectez, ou quand LeLabs ou\nvotre espace vous retire l'accès — au plus tard cinq minutes après ce retrait : l'écran de connexion\nvous dit alors pourquoi, et vous ramène à l'adresse que vous quittiez une fois reconnecté."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rien d'identifiant n'est écrit sur votre appareil."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Aucun jeton LeLabs n'y est jamais conservé ;\nle CRM garde votre session de son côté et ne laisse au navigateur qu'un cookie technique, illisible\npar les pages, strictement nécessaire à la session et effacé à la fermeture du navigateur."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "se-deconnecter",
+			"content": [
+				{
+					"type": "text",
+					"text": "1.4 Se déconnecter"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'en-tête affiche votre nom et votre avatar — votre adresse en infobulle — et l'action "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Se\ndéconnecter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui ferme votre session du CRM et revient à l'écran de connexion. Elle "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne ferme\npas votre session LeLabs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : c'est le principe même d'une connexion unique. Tant que celle-ci reste\nouverte dans ce navigateur, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Se connecter avec LeLabs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " vous reconnecte sans vous redemander votre\nmot de passe. Sur un ordinateur partagé, fermez aussi votre session LeLabs, depuis votre espace de\ncompte LeLabs."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "en-developpement",
+			"content": [
+				{
+					"type": "text",
+					"text": "1.5 En développement"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un LeLabs local reproduit le SSO réel. Ses comptes portent les adresses de la démonstration et un\nmot de passe commun, "
+				},
+				{
+					"type": "code",
+					"text": "SeedDev2026Local"
+				},
+				{
+					"type": "text",
+					"text": " : "
+				},
+				{
+					"type": "code",
+					"text": "admin@p2enjoy.test"
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "code",
+					"text": "bizdev@p2enjoy.test"
+				},
+				{
+					"type": "text",
+					"text": " et\n"
+				},
+				{
+					"type": "code",
+					"text": "viewer@p2enjoy.test"
+				},
+				{
+					"type": "text",
+					"text": " entrent dans le CRM ; "
+				},
+				{
+					"type": "code",
+					"text": "exploitante@p2enjoy.test"
+				},
+				{
+					"type": "text",
+					"text": ", administratrice du LeLabs\nlocal, y entre sans être inscrite et administre chaque espace ; "
+				},
+				{
+					"type": "code",
+					"text": "inconnu@p2enjoy.test"
+				},
+				{
+					"type": "text",
+					"text": ",\n"
+				},
+				{
+					"type": "code",
+					"text": "attendu@p2enjoy.test"
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "code",
+					"text": "adresse-non-verifiee@p2enjoy.test"
+				},
+				{
+					"type": "text",
+					"text": " montrent chacun l'un des trois messages\nd'attente. Ces\nidentifiants "
+				},
+				{
+					"type": "code",
+					"text": ".test"
+				},
+				{
+					"type": "text",
+					"text": " ne sont jamais des comptes de production."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui reste hors interface."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Inscrire une personne dans un espace est encore une opération\nd'exploitation : aucun écran du CRM ne la porte avant "
+				},
+				{
+					"type": "code",
+					"text": "CRM-070"
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		}
+	]
+}

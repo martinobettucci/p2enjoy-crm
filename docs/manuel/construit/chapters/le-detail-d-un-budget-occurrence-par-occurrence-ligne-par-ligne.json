@@ -1,0 +1,539 @@
+{
+	"slug": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne",
+	"title": "5 sexies. Le détail d'un budget : occurrence par occurrence, ligne par ligne",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-086"
+						},
+						{
+							"type": "text",
+							"text": " tranche 4. Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-086/couts-budget-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Depuis l'écran de coûts d'un track (§5 quinquies), "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "cliquez sur le nom d'un budget"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dans\nle tableau sous le graphique. L'adresse est partageable et rechargeable ; elle désigne le budget par\nson identifiant, et non par son nom — deux budgets peuvent porter le même nom dès que l'un est clos."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que l'écran montre, de haut en bas :"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La devise du budget et son enveloppe"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", quand une enveloppe a été décidée. Si aucune ne l'a été,\nla ligne n'apparaît pas du tout : le produit ne confond jamais « rien n'a été décidé » et\n« l'enveloppe vaut zéro »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un graphique à deux barres par occurrence"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — le prévisionnel et le réel —, dans l'ordre des\npériodes. C'est ce que l'écran du track agrège en une seule paire. Un budget "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "non récurrent"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "\nn'en rend qu'une, nommée « Sans occurrence »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La liste de ses lignes de coût"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : l'affaire, la nature de la dépense, le coût estimé, le coût\nréel et l'auteur de la saisie. Le titre de l'affaire est un lien vers sa fiche."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une occurrence qui n'a rien coûté garde ses deux barres, à zéro."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Qu'il ne se soit rien passé en\nfévrier est une information ; la faire disparaître ferait lire le budget comme s'il n'avait jamais\nporté ce mois-là."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Sous le libellé d'une occurrence, sa période."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le libellé est libre — rien n'oblige\n« Janvier 2026 » à couvrir janvier —, et la période dit ce que le libellé ne garantit pas. Elle est\npurement descriptive : elle ne refuse aucune ligne de coût."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "filtrer-par-occurrence",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 sexies.1 Filtrer par occurrence"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dès que le budget porte des occurrences, un sélecteur "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Filtrer par occurrence »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " apparaît\nau-dessus de la liste. Il ne retient que "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "la liste"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le graphique reste celui du budget entier,\nsans quoi vous perdriez la comparaison entre occurrences, qui est ce que cet écran sert à voir."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'option "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Toutes les occurrences »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " lève le filtre. Un budget non récurrent, ou un budget\nrécurrent qui ne porte encore aucune occurrence, n'affiche aucun sélecteur : il n'y aurait rien à\nfiltrer."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-colonne-reel-laissee-vide",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 sexies.2 La colonne « Réel » laissée vide"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une ligne dont le coût réel n'a pas encore été saisi laisse sa cellule "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vide"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — pas un tiret, pas\n« non renseigné », et surtout pas "
+				},
+				{
+					"type": "code",
+					"text": "0 €"
+				},
+				{
+					"type": "text",
+					"text": ". Le produit ne confond jamais « pas encore su » et « rien\ndépensé » : un zéro affiché ferait passer une saisie en retard pour une économie. Le compte de ces\nlignes est donné une seule fois, par la phrase sous le graphique."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-etats-que-vous-pouvez-rencontrer",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 sexies.3 Les états que vous pouvez rencontrer"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Ce que vous voyez"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce que cela veut dire"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Budget clôturé — ses lignes restent lisibles et leur coût réel saisissable. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le budget a été clos. Il ne figure plus sur l'écran du track, mais son histoire reste entière et les factures qui arrivent après coup restent saisissables"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucune occurrence ouverte. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le budget est récurrent mais n'en porte aucune. Tant que c'est le cas, aucune dépense ne peut lui être rattachée"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Deux barres à zéro et « Aucune dépense rattachée. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le budget existe, aucune affaire n'y a encore rattaché de ligne"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucune dépense sur cette occurrence. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le filtre est posé sur une occurrence qui ne porte aucune ligne — ce n'est pas la même chose qu'un budget vide"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Budget introuvable »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Ce budget n'existe pas, "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ou"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " il ne vous est pas accessible, "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ou"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " l'adresse est mal formée. Les trois se ressemblent "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "volontairement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : distinguer les cas vous apprendrait l'existence d'un budget que vous n'avez pas le droit de voir"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Auteur inconnu » dans la colonne « Auteur »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le compte qui a saisi la ligne a été supprimé depuis. La ligne, elle, est intacte"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le bouton « Revenir aux coûts du track »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'écran « Budget introuvable » vous ramène là d'où\nvous venez, et là où les autres budgets sont listés."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-cet-ecran-ne-fait-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 sexies.4 Ce que cet écran ne fait pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "On n'y saisit rien."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Les lignes de coût se créent et se modifient depuis la fiche de l'affaire,\nsection « Coûts » ; les budgets et leurs occurrences s'administrent depuis\n« Réglages ▸ Arborescence »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun tri, aucune période, aucun export."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " La liste rend les lignes de la plus ancienne à la\nplus récente."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

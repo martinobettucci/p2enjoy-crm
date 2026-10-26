@@ -1484,6 +1484,7 @@ livraison contre une cellule simulée, avec leurs dégradations.
 | PostgreSQL 17 | Données et règles métier | Extensions **constatées** dans `supabase/postgres:17.6.1.136` (`CRM-004`) : `pgcrypto` 1.3 et `supabase_vault` 0.3.1 installées ; `pg_net` 0.20.3, `pgtap` 1.3.3 et `pg_cron` 1.6.4 disponibles. `supabase_vault` et `pg_cron` sont préchargés par le serveur |
 | React 19 / Vite 8 | Interface | Aligné sur les conventions maison ; version courante mesurée à `CRM-007` |
 | Tailwind 4 | Jetons et utilitaires | Un seul bloc `@theme` satisfait `docs/DESIGN_SYSTEM.md` §11, sans fichier de configuration JavaScript |
+| `marked` 18.1.1 | Analyse du Markdown du manuel, **à la construction seulement** (`scripts/manuel/construire.mjs`, `CRM-117`) | Mesuré le 2026-10-26 (`CLAUDE.md` §19) : licence MIT, aucune dépendance, aucune vulnérabilité connue (`npm audit`), maintenu (versions mensuelles), version publiée depuis deux semaines et épinglée exactement ; dépendance de développement, absente du paquet de la webapp ; seul son analyseur lexical est employé, jamais sa sortie HTML (décision 750) |
 | React Router 8 | Routage | Nommé par ce document dès l'origine |
 | `@supabase/supabase-js` | Accès aux données | Typé par le schéma généré ; réessaie **trois fois** une lecture en échec (1 s, 2 s, 4 s) — mesuré |
 | IMAPClient 3.1.0 | Connexions UID/IDLE et manipulation future des dossiers (`CRM-052`/`CRM-054`) | BSD-3-Clause, maintenu, Python 3.13 ; choisi par `CRM-051` mais installé seulement avec son premier consommateur ; contexte TLS vérificateur explicite |

@@ -1,0 +1,6347 @@
+{
+	"slug": "naviguer-barre-laterale-onglets-etats",
+	"title": "3. Naviguer : barre latérale, onglets, états",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-007"
+						},
+						{
+							"type": "text",
+							"text": ". Décrit l'application réellement exécutée ; captures dans\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-007/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-disposition-de-l-ecran",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.1 La disposition de l'écran"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'écran se lit en trois zones :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "à gauche, la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "barre latérale"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le nom du produit, les cinq entrées de navigation — Board,\nInbox, "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Contacts"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", Ma journée, Réglages — puis la section "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Tracks"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "en haut, l'"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "en-tête"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "fil d'Ariane"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", qui dit où vous êtes, de votre espace de travail à la page\nouverte (section 3.1 bis), puis la recherche, les notifications et votre profil ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sous l'en-tête, la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "barre d'onglets"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", qui listera les channels du track courant ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "au centre, le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "contenu"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de la page."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-fil-d-ariane-savoir-ou-vous-etes",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.1 bis Le fil d'Ariane : savoir où vous êtes"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-110"
+						},
+						{
+							"type": "text",
+							"text": ". Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-110/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "En haut de l'écran, le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "fil d'Ariane"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " nomme le chemin qui mène à la page ouverte, du plus général au plus précis.\nSur une affaire, il se lit par exemple :"
+				}
+			]
+		},
+		{
+			"type": "note",
+			"blocks": [
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "text",
+							"text": "P2Enjoy SAS / Conseil & IA / Grands comptes / "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Migration ERP Sogexia"
+								}
+							]
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "premier niveau"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " est votre "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "espace de travail"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Il mène au Board."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Viennent ensuite le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", puis le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "channel"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Chacun est un lien : cliquez le channel pour revenir à son\ntableau, ou le track pour revenir à ses onglets."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "dernier niveau"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", en gras, est le titre de la page : l'affaire, le channel, ou l'écran ouvert. Ce n'est pas un\nlien, puisque vous y êtes."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le fil suit la page :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Page ouverte"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce que dit le fil"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "une affaire"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "espace / track / channel / "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "affaire"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "le tableau ou la liste d'un channel"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "espace / track / "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "channel"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "un track, sans channel ouvert"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "espace / "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "track"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "les coûts d'un track"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "espace / track / "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Coûts"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "le détail d'un budget"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "espace / track / Coûts / "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "budget"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "toute autre page (Inbox, Contacts, Réglages…)"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "espace / "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "nom de la page"
+								}
+							]
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un nom trop long"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est raccourci par « … » ; survolez-le pour lire le nom complet."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Sur un écran plus étroit qu'un ordinateur portable"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (moins de 1 024 pixels), le fil passe sur sa propre ligne, sous\nla recherche, les notifications et votre profil. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Sur un téléphone"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (moins de 768 pixels), il ne montre que le\nniveau précédent et le titre : « … / Grands comptes / "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Migration ERP Sogexia"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ». Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« … »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ouvre la liste\ndes niveaux masqués — votre espace et le track —, chacun cliquable. Au clavier, atteignez-le avec "
+				},
+				{
+					"type": "code",
+					"text": "Tab"
+				},
+				{
+					"type": "text",
+					"text": ", ouvrez-le avec\n"
+				},
+				{
+					"type": "code",
+					"text": "Entrée"
+				},
+				{
+					"type": "text",
+					"text": ", refermez-le avec "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le fil ne nomme que ce que vous pouvez lire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un channel auquel vous n'avez pas accès n'y apparaît jamais, pas plus\nqu'un nom tapé dans l'adresse qui ne correspond à rien : le fil s'arrête au dernier niveau que vos droits vous laissent\nvoir."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-vous-voyez-aujourd-hui-et-pourquoi",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.2 Ce que vous voyez aujourd'hui, et pourquoi"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sans session, aucune page de l'application ne s'affiche : toute adresse mène à l'écran de\nconnexion (chapitre 1). Après connexion, la barre latérale montre les tracks consentis à votre compte ;\nleurs onglets ouvrent les channels, le tableau et les fiches réels. Une administratrice du jeu de\ndémonstration voit par exemple « Conseil & IA », « Studio web » et « Formation »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Après connexion, l'en-tête nomme votre workspace et votre profil. Les cards nomment leur\nresponsable, les commentaires leur auteur et les événements leur acteur lorsque cette identité est\nconnue. Une identité supprimée ne transforme jamais son UUID en libellé : un commentaire conserve\nsa place avec « Compte supprimé », tandis qu'un événement de service reste sans acteur affiché."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui a un écran, et ce qui n'en a pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'affaire a sa fiche, le tableau kanban de son channel\net la vue liste ; la discussion et l'historique vivent dans la fiche. Le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "carnet de contacts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " a\nle sien (section 3 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "ter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), en lecture. L'arborescence a son écran\nd'administration (chapitre 5), et la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "composition d'un workflow"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — ses étapes, ses transitions et\nles "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "questions de son formulaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — le sien (chapitre 5 bis). En revanche, le catalogue de nœuds,\nla "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "visibilité question par étape"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et les droits d'accès n'ont toujours aucun écran\nd'administration. La connexion rend\naccessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs encore absents."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-carnet-de-contacts",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 ter. Le carnet de contacts"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-060"
+						},
+						{
+							"type": "text",
+							"text": ", sous-tranches 4a, 4b, 4e, 4f, 4g et 4h, et par la tranche 6 ; l'onglet\n« Organisations », la création et la modification d'une organisation par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-114"
+						},
+						{
+							"type": "text",
+							"text": ". Décrit\nl'application réellement exécutée ; captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-060/"
+						},
+						{
+							"type": "text",
+							"text": " et\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-114/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'entrée "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Contacts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la barre latérale ouvre le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "carnet"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de votre espace de travail : les\npersonnes avec qui vos affaires se traitent, et l'organisation à laquelle chacune appartient."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le carnet a "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "deux onglets"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", en tête de page : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Contacts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la liste des personnes, et\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Organisations"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la liste des organisations (voir plus bas). Chaque onglet a sa propre adresse :\nvous pouvez l'ajouter à vos favoris ou la partager."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le carnet se présente en tableau, une ligne par contact, rangé par nom :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Colonne"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'elle porte"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Nom"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le nom complet de la personne. Il est toujours renseigné. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "C'est un lien"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : il ouvre la fiche de ce contact"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Organisation"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'organisation à laquelle la personne appartient, lorsqu'elle en a une. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "C'est un lien"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : il ouvre la fiche de cette organisation"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Fonction"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Sa fonction, par exemple « Directeur achats »"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Email"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Son adresse, lorsqu'elle est connue"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Téléphone"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Son numéro, lorsqu'il est connu"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une cellule vide veut dire « pas renseigné », et rien d'autre."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le carnet n'écrit ni tiret ni\n« non renseigné » : un contact peut n'être qu'un nom et un téléphone, et c'est un cas ordinaire, pas\nune donnée manquante à corriger. Dans l'espace de démonstration, Sophie Dupont n'a pas\nd'organisation et Élise Fabre n'a pas d'email."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui voit quoi."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Tout membre de l'espace de travail lit le carnet, y compris un compte en lecture\nseule. Une ligne que votre compte n'a pas le droit de lire n'apparaît simplement pas, et c'est la\nrègle générale du produit — un refus se manifeste par l'absence de donnée,\njamais par un message d'erreur technique."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le carnet ne fait pas encore, et c'est dit plutôt que laissé à deviner."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Il permet de\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "créer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " un contact, mais ni de le modifier ni de le supprimer : ces deux gestes vivent sur la\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "fiche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du contact, et non sur une ligne du carnet — on ne pose pas un geste irréversible au bout\nde chaque ligne d'une liste que l'on parcourt. Cliquer sur un email n'ouvre pas votre logiciel de\nmessagerie. Il n'y a pas non plus de recherche ni de filtre : le carnet affiche l'ensemble des\ncontacts de l'espace."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le rattachement d'un contact à une affaire existe déjà "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "en base"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — c'est lui qui alimente la\nsuggestion de classement d'un message dont l'expéditeur est un contact connu —, mais il ne se\nrègle pas encore depuis un écran."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "La fiche d'une organisation"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cliquer sur le nom d'une organisation, dans la colonne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Organisation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du carnet ou dans l'onglet\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Organisations"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ouvre sa "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "fiche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La fiche porte le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nom de l'organisation en titre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", puis deux blocs :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ce qui la caractérise"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — son "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "domaine"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (par exemple "
+							},
+							{
+								"type": "code",
+								"text": "sogexia.example"
+							},
+							{
+								"type": "text",
+								"text": ", celui qui sert à\nreconnaître ses adresses email) et son "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "site web"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Le site est un lien : il s'ouvre dans un\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "nouvel onglet"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et vous quittez alors l'application. Le domaine, lui, n'est pas un lien : ce\nn'est pas une adresse à visiter. Comme dans le carnet, une valeur absente laisse la place "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vide"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "\nplutôt qu'un tiret ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ses contacts"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — un tableau à quatre colonnes : nom, fonction, email et téléphone. La colonne\n« Organisation » du carnet n'y figure pas, puisqu'elle répéterait le titre de la page. Lorsque\nl'organisation n'a "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucun contact rattaché"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", la fiche le dit explicitement au lieu d'afficher un\ntableau vide."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une adresse inconnue, une organisation supprimée ou une organisation que vous n'avez pas le droit\nde lire donnent toutes le même écran"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : « Organisation introuvable », avec un bouton de retour au\ncarnet. C'est délibéré — distinguer ces cas révélerait à quelqu'un sans droit qu'une organisation\nexiste."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que la fiche ne fait pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Elle ne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "supprime"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " pas une organisation — c'est délibéré : ses\ncontacts perdraient leur organisation sans laisser de trace —, et elle ne montre pas les affaires de\nl'organisation. Le nom d'un contact, lui, est un lien vers sa fiche. Pour "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "modifier"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nl'organisation, voir « Modifier une organisation » ci-dessous."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "L'onglet « Organisations »"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'onglet "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Organisations"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste toutes les organisations de l'espace de travail, rangées par nom,\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "y compris celles qui n'ont encore aucun contact"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : c'est le seul chemin qui mène à elles. Dans\nl'espace de démonstration, Comptoir Vasseur est dans ce cas."
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Colonne"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'elle porte"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Nom"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le nom de l'organisation. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "C'est un lien"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : il ouvre sa fiche"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Domaine"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Son domaine, par exemple "
+						},
+						{
+							"type": "code",
+							"text": "sogexia.example"
+						},
+						{
+							"type": "text",
+							"text": ", lorsqu'il est renseigné"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Site web"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'adresse de son site, lorsqu'elle est renseignée. Ici ce n'est pas un lien : la fiche le porte"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Contacts"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le nombre de contacts du carnet rattachés à l'organisation"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Comme partout dans le carnet, une valeur absente laisse la cellule "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vide"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Sur un écran étroit, le\ntableau défile de côté dans son cadre ; la page, elle, ne défile jamais de côté. Lorsque l'espace ne\ncompte aucune organisation, l'onglet le dit, et le bouton « Nouvelle organisation » reste offert."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui voit quoi."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Tout membre de l'espace lit l'onglet. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Créer et modifier"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " une organisation sont\nréservés aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "business developers"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace : pour un compte en\nlecture seule, « Nouvelle organisation » et « Modifier » restent visibles mais grisés, avec le motif\nécrit au-dessus (section 3.6). Le serveur applique la même règle."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "Créer une organisation"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nouvelle organisation »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au-dessus du tableau, ouvre un formulaire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans la page"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ".\nTrois champs, et un seul est obligatoire :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — obligatoire."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Domaine"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — facultatif. Minuscules, chiffres, tirets et points, par exemple "
+							},
+							{
+								"type": "code",
+								"text": "sogexia.fr"
+							},
+							{
+								"type": "text",
+								"text": ". Si\nvous tapez des majuscules, le domaine est enregistré "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "en minuscules"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la casse d'un domaine ne\nchange rien."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Site web"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — facultatif. Une adresse commençant par "
+							},
+							{
+								"type": "code",
+								"text": "http://"
+							},
+							{
+								"type": "text",
+								"text": " ou "
+							},
+							{
+								"type": "code",
+								"text": "https://"
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Après la création, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "la fiche de la nouvelle organisation s'ouvre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Vous pouvez ensuite lui\nrattacher des contacts depuis le carnet : en créant un contact, ou depuis la fiche d'un contact\nexistant, avec « Modifier »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si la création est refusée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le message le dit en clair, dans le formulaire, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "votre saisie\nest conservée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Ce domaine est déjà celui d'une autre organisation de l'espace. »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — un domaine est unique\ndans l'espace de travail ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Le domaine n'a pas la bonne forme… »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ou "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Le site web doit commencer par http:// ou\nhttps://. »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — corrigez le champ et renvoyez ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Le nom est requis. »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Vous ne pouvez pas modifier les organisations de cet espace. »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — d'ordinaire, la commande est\ndéjà grisée ; ce message ne paraît que si vos droits ont changé entre-temps."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "Modifier une organisation"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sur la fiche d'une organisation, le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Modifier »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " remplace les caractéristiques par le\nmême formulaire, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prérempli"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Vider"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le domaine ou le site web l'efface. « Enregistrer » relit\nla fiche à jour, et l'annonce « Organisation enregistrée » le confirme ; « Annuler » rend la fiche\nsans rien écrire. Les refus sont ceux de la création."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "La fiche d'un contact"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cliquer sur le nom d'une personne — dans le carnet, ou dans la liste des contacts d'une\norganisation — ouvre sa "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "fiche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Elle porte son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nom en titre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", puis deux blocs :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ce qui la caractérise"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — sa "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "fonction"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", son "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "organisation"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", son "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "email"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et son\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "téléphone"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". L'organisation est un lien vers sa propre fiche ; comme partout dans le carnet, une\nvaleur absente laisse la place "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vide"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " plutôt qu'un tiret ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ses affaires"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — un tableau à trois colonnes : l'affaire, le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "rôle"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " que la personne y tient\n(par exemple « decideur »), et son "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "état"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Le titre de chaque affaire est un lien qui l'ouvre."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "C'est la seule page qui répond à la question « sur quoi travaillons-nous avec cette personne ? »,\net depuis la sous-tranche 4h c'est aussi d'ici que l'on "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ajoute"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " une affaire à cette liste\n(« Rattacher une personne à une affaire », plus bas)."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le rôle dans l'affaire n'est pas la fonction."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " La fonction qualifie la personne dans son\norganisation ; le rôle dit ce qu'elle est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans cette affaire-là"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Les deux portent le même mot\ndans la langue courante, c'est pourquoi ils vivent dans deux blocs séparés."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Quelles affaires sont listées."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Uniquement celles que "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vous"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " avez le droit de lire : si une\naffaire appartient à un univers qui vous est fermé, elle n'apparaît pas, et la page ne le signale\npas — elle ne peut pas vous parler de ce que vous ne pouvez pas voir. Une affaire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "archivée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " reste\nlistée, avec la mention "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Archivée »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", parce que l'historique d'une personne compte. Une affaire\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "mise à la corbeille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " n'est pas listée : c'est la corbeille qui en répond."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une adresse inconnue, un contact supprimé ou un contact que vous n'avez pas le droit de lire\ndonnent tous le même écran"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : « Contact introuvable », avec un bouton de retour au carnet — même\nrègle que pour l'organisation, et pour la même raison."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "Modifier un contact"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Modifier »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", en haut de la fiche, ouvre un formulaire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans la page"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — pas une\nfenêtre par-dessus : les deux blocs restent visibles en dessous, et vous corrigez en voyant ce que\nvous corrigez."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les cinq champs sont ceux de la création, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "déjà remplis"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " avec les valeurs actuelles. Le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nom"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nreste obligatoire ; les autres peuvent être vidés, et ils redeviennent alors vides sur la fiche.\nVider le champ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Organisation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " détache la personne de son organisation, sans la supprimer."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une fois enregistrée, la modification apparaît "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "immédiatement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dans le bloc du haut, et le titre\nde la page suit le nouveau nom. Le tableau des affaires, lui, ne bouge pas : modifier une personne\nne change rien à ce sur quoi elle travaille."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si la modification est refusée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le message le dit en clair et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "votre saisie est conservée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Un autre contact porte déjà cette adresse email »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — l'adresse est unique dans l'espace de\ntravail, quelle que soit la casse. Vous pouvez en revanche réenregistrer la personne avec sa\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "propre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " adresse sans rien changer : elle ne se heurte pas à elle-même ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Cette organisation n'existe plus »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — la liste que vous aviez sous les yeux a vieilli ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Une des valeurs saisies n'a pas la forme attendue »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — un email mal formé, par exemple ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Rien n'a été modifié »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — et ce message-là mérite une explication."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Pourquoi « Rien n'a été modifié » ne dit pas pourquoi."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Deux situations donnent exactement la\nmême réponse du serveur, et le produit ne peut pas les distinguer : soit votre rôle ne vous permet\npas de modifier ce contact — d'ordinaire, « Modifier » est alors grisé (section 3.6) ; ce message ne paraît\nque si vos droits ont changé entre-temps ou n'ont pas pu être lus —, soit le contact a été supprimé entre le moment où vous\navez ouvert sa fiche et celui où vous avez enregistré. Le message ne tranche donc pas, et vous\ninvite à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "recharger la fiche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : son état actuel répondra à la question. Le formulaire reste\nouvert et votre saisie est intacte, pour que vous ne perdiez rien."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "Supprimer un contact"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par la tranche 6."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Supprimer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " se trouve à côté de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Modifier »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", en haut de la fiche. Il vient en\nsecond, et c'est délibéré : on lit d'abord le geste que l'on peut défaire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Il ouvre une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "confirmation dans la page"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nomme la personne"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et vous dit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "deux choses que\nl'écran ne montre pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "combien d'affaires perdent ce contact"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et que "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "chacune gardera dans son historique la trace\nde ce détachement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Supprimer un contact retire tous ses rattachements d'un seul coup, et chaque\naffaire concernée reçoit une ligne « Contact détaché » dans son fil. Cette trace est\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "définitive"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : l'historique d'une affaire ne s'efface pas, c'est ce qui en fait une mémoire ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "que les formulaires d'affaires qui désignent ce contact conservent leur valeur."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Ils\nn'affichent pas un champ vidé, mais une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« référence inconnue »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " avec l'identifiant. C'est\nvolontaire : effacer la valeur détruirait une donnée historique juste — cette affaire a bien été\nsuivie par cette personne —, et un champ vidé donnerait à croire que rien n'y avait été saisi."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Quand la personne n'est rattachée à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "aucune"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " affaire, la première phrase n'apparaît pas : il n'y\na rien à annoncer."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une suppression réussie vous ramène au carnet"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui ne porte plus la ligne. C'est là que vous\nvérifiez que le geste a abouti."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si rien n'a été supprimé, l'écran le dit."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Vous restez sur la fiche, elle est relue, et un\nmessage vous annonce qu'« aucun contact n'a été supprimé ». Deux causes mènent là et le produit ne\npeut pas les distinguer : soit vous n'avez pas le droit de supprimer ce contact — d'ordinaire, le\nbouton est alors grisé (section 3.6) ; ce message ne paraît que si vos droits ont changé entre-temps\nou n'ont pas pu être lus —, soit le contact avait déjà été supprimé. La fiche relue répond à la question."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La suppression est définitive : il n'y a pas de corbeille pour les contacts."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les affaires en\nont une (chapitre 5 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "ter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), les contacts n'en ont pas. Recréer un contact supprimé est possible,\nmais ses rattachements aux affaires devront être refaits un par un, et leurs rôles ressaisis."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un seul geste ouvert à la fois."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ouvrir la confirmation referme le formulaire de modification, et\ninversement : deux questions posées en même temps sur la même personne ne diraient pas à laquelle\nvous répondez."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que la fiche ne fait pas encore."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Elle ne montre pas les emails échangés avec la personne : la\nmessagerie d'une affaire reste dans l'affaire."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "Les données personnelles d'un contact : les exporter, les anonymiser"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré en développement par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-072"
+						},
+						{
+							"type": "text",
+							"text": " T3."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "En bas de la fiche, la zone "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Données personnelles (RGPD) »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " porte deux gestes, réservés aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs de\nl'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Pour un autre membre, les deux boutons restent visibles mais grisés, et une phrase dit pourquoi. Chaque geste\nest inscrit au "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "journal d'audit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (chapitre 10 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "ter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), sans le nom de la personne."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Exporter les données »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " télécharge un fichier JSON nommé "
+				},
+				{
+					"type": "code",
+					"text": "contact-…-AAAA-MM-JJ.json"
+				},
+				{
+					"type": "text",
+					"text": ". Il réunit tout ce que le CRM\ngarde sur cette personne : sa fiche, son organisation, les affaires où elle est rattachée et son rôle, les activités dont\nelle est participante, les messages où son adresse paraît, et les champs de formulaire qui la désignent. Le fichier\nn'est enregistré nulle part dans le CRM : il n'existe que sur votre poste."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Anonymiser ce contact »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " efface la personne sans effacer l'historique des affaires :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le bouton ouvre une confirmation dans la page, qui dit ce qui va se passer : le nom, l'email, le téléphone et la\nfonction sont effacés ; les affaires gardent ce contact, anonyme ; les messages ne sont pas modifiés."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Retapez le nom exact du contact"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le bouton "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Anonymiser définitivement »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ne s'active qu'à l'égalité."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "La fiche se relit. Elle porte la mention "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Anonymisé le … »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", son nom devient « Contact anonymisé », et\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Modifier » est grisé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un contact anonymisé ne se modifie plus, pour qu'aucune saisie ne le ré-identifie par\nmégarde. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Supprimer » reste possible."
+									}
+								]
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'anonymisation est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "définitive"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les messages ne sont pas touchés"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : ils sont la correspondance de l'entreprise, et\nl'adresse ou la signature de la personne peuvent encore y paraître."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "Rattacher une personne à une affaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par la sous-tranche 4h."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Rattacher à une affaire »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " se trouve dans le bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Affaires"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", juste sous son titre.\nIl ouvre un formulaire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans la page"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — le tableau reste visible en dessous, et c'est voulu :\nc'est lui qui vous dit à quelles affaires la personne est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "déjà"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " rattachée."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux champs :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — la liste des affaires de l'espace de travail que vous avez le droit de lire,\nrangées par titre. Les affaires auxquelles cette personne est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "déjà"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " rattachée n'y figurent\npas : les proposer serait proposer un geste qui échouerait ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Rôle dans l'affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — facultatif, et libre : « décideur », « prescripteur », « contact\ntechnique »… Laissé vide, il reste vide."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une affaire archivée peut être rattachée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et la liste le dit : son titre est suivi de\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« (archivée) »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Rattacher quelqu'un à une affaire close est un geste ordinaire de mise à jour\nd'un historique. Une affaire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "mise à la corbeille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", en revanche, n'est pas proposée : elle\nn'apparaîtrait pas dans le tableau, et vous auriez agi sans rien voir changer."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une fois enregistré, le formulaire se referme et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "le tableau se relit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : la nouvelle affaire\napparaît avec son rôle, son état et son lien."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si le rattachement est refusé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le message le dit en clair et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "votre saisie est conservée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Ce contact est déjà rattaché à cette affaire »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — quelqu'un d'autre a agi entre-temps ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Le rattachement a été refusé »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — vous n'avez pas le droit d'écrire sur cette affaire, ou elle\nn'est plus accessible. Le message ne tranche pas entre les deux, parce que le serveur répond la\nmême chose dans les deux cas, et il vous invite à recharger la liste."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Pouvoir lire une affaire ne veut pas dire pouvoir y rattacher quelqu'un."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les droits se règlent\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "affaire par affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le même compte peut réussir sur l'une et être refusé sur l'autre, et c'est\nmesuré. Le bouton n'est donc jamais grisé d'avance — le produit ne devine pas ce que le serveur\ndécidera, il envoie et vous rapporte la réponse."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "Détacher une personne d'une affaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par la sous-tranche 4i."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ce geste se faisait auparavant "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "depuis l'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " seulement ; il\nexiste désormais "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "des deux côtés"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et celui de l'affaire n'a pas changé (chapitre 4.7 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "ter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque ligne du tableau "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Affaires"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " porte un bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Détacher »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", dans une dernière colonne\n« Commandes ». Toutes les lignes le portent, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "y compris celle d'une affaire archivée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : détacher\nune personne d'une affaire close est un geste ordinaire de correction d'historique."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton ouvre une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "confirmation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sur une ligne à elle, juste sous celle qu'elle concerne. Elle\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nomme l'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et rappelle ce qui part avec le rattachement : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "le rôle de la personne dans\ncette affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Vous pourrez la rattacher de nouveau, mais le rôle devra être ressaisi. Une seule\nconfirmation reste ouverte à la fois : en ouvrir une autre referme la précédente."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une fois confirmé, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "le tableau se relit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et la ligne disparaît. Si c'était la dernière affaire, le\nbloc revient à son état vide, qui garde le bouton « Rattacher à une affaire »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un détachement peut n'avoir aucun effet, et le produit vous le dit."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sous le tableau apparaît\nalors : "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Aucun rattachement n'a été retiré. Vous n'avez peut-être pas le droit de modifier cette\naffaire, ou le rattachement avait déjà été supprimé. »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le message "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne tranche pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " entre les deux\ncauses, parce que le serveur répond exactement la même chose dans les deux cas — et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "la ligne\nreste affichée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", parce qu'elle est toujours là. C'est délibéré : faire disparaître la ligne vous\naurait annoncé un détachement qui n'a pas eu lieu."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Comme pour le rattachement, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "le bouton n'est jamais grisé d'avance"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Les droits se règlent affaire\npar affaire : le même compte peut détacher sur l'une et se voir opposer ce message sur l'autre."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "Corriger le rôle d'une personne dans une affaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par la sous-tranche 4j."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Jusqu'ici, corriger un rôle mal saisi obligeait à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "détacher puis\nrattacher"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — c'est-à-dire à défaire le lien pour le refaire. Ce n'est plus nécessaire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque ligne du tableau "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Affaires"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " porte un second bouton, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Modifier le rôle »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", placé\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "avant"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « Détacher » dans la colonne « Commandes » : le geste qui corrige vient avant celui qui\nretire. Toutes les lignes le portent, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "y compris celle d'une affaire archivée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton ouvre un formulaire sur une ligne à lui, juste sous celle qu'il concerne. Il "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nomme\nl'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et son champ est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prérempli"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du rôle actuel — c'est exactement ce que vous venez\ncorriger. Un rattachement sans rôle donne un champ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vide"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un seul bloc reste ouvert à la fois dans le tableau"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", quel que soit le geste : ouvrir ce\nformulaire referme une confirmation de détachement en cours, et inversement. Deux questions\nouvertes en même temps ne diraient pas à laquelle vous répondez."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Vider le champ efface le rôle"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et le rattachement à l'affaire est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "conservé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : c'est la façon\nde retirer un rôle saisi par erreur sans défaire le lien. Le texte sous le champ le rappelle."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une fois enregistré, le formulaire se referme et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "la cellule « Rôle dans l'affaire » porte la\nnouvelle valeur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Aucun message de succès n'est affiché : la cellule est la confirmation."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une modification peut n'avoir aucun effet, et le produit vous le dit."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le formulaire affiche\nalors : "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Aucun rôle n'a été modifié. Vous n'avez peut-être pas le droit de modifier cette affaire,\nou le rattachement n'existe plus. »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Comme pour le détachement, le message "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne tranche pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " entre\nles deux causes — le serveur répond la même chose dans les deux cas. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le formulaire reste ouvert,\nvotre saisie est conservée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et la cellule garde son ancienne valeur : rien n'a changé, et l'écran\nne prétend pas le contraire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le rôle est un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "texte libre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : aucune liste imposée, aucune longueur maximale. Les exemples du\ntexte d'aide — décideur, prescripteur, contact technique — ne sont que des exemples."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La suppression n'est pas un oubli."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un contact peut être désigné par des champs de formulaire\nd'affaires déjà remplis ; le supprimer laisserait ces valeurs pointer vers quelqu'un qui n'existe\nplus. Ce que le produit doit faire de ces traces reste à décider, et la commande n'existera pas\navant."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 4,
+			"anchor": null,
+			"content": [
+				{
+					"type": "text",
+					"text": "Créer un contact"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nouveau contact »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au-dessus du tableau, ouvre un formulaire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans la page"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — pas\nune fenêtre par-dessus : la liste reste visible, et c'est elle qui vous dit si la personne y figure\ndéjà."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cinq champs, et un seul est obligatoire :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — obligatoire. Un nom vide est refusé avant même l'envoi."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Organisation"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — au choix parmi celles de l'espace de travail, ou aucune. Le formulaire ne crée\npas d'organisation : créez-la d'abord dans l'onglet "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Organisations"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Fonction"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Email"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Téléphone"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — facultatifs. Laissés vides, ils restent vides : le carnet\nn'écrit ni tiret ni « non renseigné »."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le contact créé "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rejoint aussitôt le tableau"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", à sa place dans l'ordre alphabétique, sans que la\npage ne se recharge."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si la création est refusée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le message le dit en clair et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "votre saisie est conservée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Un contact porte déjà cette adresse email »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — l'adresse est unique dans l'espace de travail,\nquelle que soit la casse ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Cette organisation n'existe plus »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — la liste que vous aviez sous les yeux a vieilli ;\nrelisez-la et choisissez-en une autre ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Votre rôle ne permet pas de créer un contact »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — d'ordinaire, « Nouveau contact » est grisé\npour un compte qui ne peut pas créer (section 3.6) ; ce message ne paraît que si vos droits ont\nchangé entre-temps ou n'ont pas pu être lus. Le serveur reste la règle."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que ce formulaire ne fait pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et c'est dit plutôt que caché : il ne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "supprime"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " pas un\ncontact existant et il ne crée pas d'organisation ; il n'existe que sur le carnet — ni depuis la\nfiche d'une affaire, ni depuis un champ de formulaire. Pour "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "modifier"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " une personne déjà créée,\nouvrez sa fiche : le bouton « Modifier » y attend."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-section-tracks",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.2 bis La section Tracks"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livrée par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-020"
+						},
+						{
+							"type": "text",
+							"text": ". Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-020/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sous les quatre entrées de navigation, la section "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Tracks"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste les activités de votre espace de\ntravail — par exemple « Conseil & IA », « Studio web », « Formation ». Chaque track s'affiche en\npilule colorée, précédée de son icône."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "L'"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ordre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " est celui défini par l'administration de l'espace, pas l'ordre de création."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un track "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "archivé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " n'apparaît pas dans cette liste. L'archivage masque sans détruire : il est\nréversible à tout moment par une personne administratrice."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "La "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "couleur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et l'"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "icône"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " sont choisies parmi un jeu fixe : elles aident à repérer un track\nd'un coup d'œil, et ne portent jamais seules une information — le libellé et l'icône\nl'accompagnent toujours."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Les pilules sont "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "cliquables depuis "
+									},
+									{
+										"type": "code",
+										"text": "CRM-021"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un clic ouvre le track sur ses channels. Le\ntrack ouvert se signale par un anneau bleu, qui s'ajoute à sa couleur sans la remplacer."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui peut faire quoi."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Créer, renommer, réordonner ou archiver un track est réservé aux personnes\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administratrices"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace de travail. Les autres profils les consultent. Cette règle est\nappliquée par le serveur, et non par l'affichage : elle tient même si l'on s'adresse directement à\nl'API. La suppression définitive d'un track n'est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "jamais"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " proposée — l'archivage en tient lieu."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ils se gèrent dans Réglages ▸ Arborescence"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (chapitre 5) : créer, renommer, réordonner, archiver\nun track ou un channel. "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Cette phrase disait que les tracks ne se géraient que par l'API ; l'écran\nd'administration de l'arborescence le fait depuis "
+						},
+						{
+							"type": "code",
+							"text": "CRM-075"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-acces-par-track-et-par-channel",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.2 quater Les accès par track et par channel"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livrée par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-012"
+						},
+						{
+							"type": "text",
+							"text": ". Aucune capture : cette règle n'a pas encore d'écran, voir plus bas."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Par défaut, votre accès à un track ou à un channel découle de votre "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rôle dans l'espace de\ntravail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une personne administratrice administre, une business developer travaille, une\nobservatrice consulte. Rien à configurer."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une personne administratrice peut cependant poser une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "exception"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " sur un track ou sur un channel\nprécis, pour une personne précise. Trois exceptions existent :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Exception"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Effet sur ce track ou ce channel"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Accès complet"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "vous y lisez et y écrivez, même si votre rôle est « observatrice »"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Lecture seule"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "vous y lisez sans y écrire, même si votre rôle vous autorise à écrire ailleurs"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Aucun accès"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "ce track ou ce channel disparaît de votre affichage"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Trois choses méritent d'être sues, parce qu'elles surprennent :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "L'exception la plus précise l'emporte."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Une exception posée sur un channel prime sur celle de\nson track. On peut donc vous fermer tout un track "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "et"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " vous rouvrir un seul de ses channels : ce\nchannel restera visible alors que le track qui le contient ne le sera plus."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Une exception ne s'applique jamais à une personne administratrice."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Elle peut être enregistrée\nsur son compte, elle restera sans effet tant que cette personne administre l'espace — sans quoi\nune exception malheureuse pourrait rendre un espace impossible à administrer. Elle reprendrait\neffet si ce compte cessait d'être administrateur."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un track ou un channel qui vous est fermé n'apparaît pas comme « interdit » : il n'apparaît\npas du tout."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " C'est voulu. Un libellé « accès refusé » révélerait l'existence et le nom d'une\nactivité que vous n'avez pas à connaître."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que vous pouvez voir de vos propres exceptions."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Vous pouvez consulter celles qui vous\nconcernent — une restriction invisible à celle qui la subit serait une mauvaise règle — mais pas\ncelles de vos collègues, et vous ne pouvez pas lever la vôtre. Seule une personne administratrice\npose et retire une exception. Retirer une exception ne « redonne » pas un accès particulier : elle\nrend l'accès à ce qu'il aurait été sans elle, c'est-à-dire celui de votre rôle."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Aucun écran ne permet encore de les gérer."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " La règle est en revanche appliquée par le serveur,\net non par l'affichage : elle tient même si l'on s'adresse directement à l'API."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-onglets-d-un-track",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.2 ter Les onglets d'un track"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livrée par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-021"
+						},
+						{
+							"type": "text",
+							"text": ". Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-021/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ouvrir un track — en cliquant sa pilule, ou en saisissant son adresse "
+				},
+				{
+					"type": "code",
+					"text": "/tracks/<identifiant>"
+				},
+				{
+					"type": "text",
+					"text": " —\naffiche ses "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "channels"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " en onglets, juste sous l'en-tête. Le nom du track devient le titre de la\npage ; ouvrir un channel en fait le titre à son tour, et le fil d'Ariane nomme alors le track avant lui (section\n3.1 bis)."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "L'"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ordre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " des onglets est celui défini par l'administration, pas l'ordre de création."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un channel "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "archivé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " n'apparaît pas. Comme pour les tracks, l'archivage masque sans détruire,\net reste réversible."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "L'onglet "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ouvert"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " se signale par un libellé bleu et un soulignement : jamais par la couleur\nseule."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Chaque onglet porte, devant son nom, une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "pastille de la couleur de son channel"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ("
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livré par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-116"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Elle se\nchoisit dans le formulaire du channel (chapitre 5.2) ; elle accompagne le nom et ne change pas quand l'onglet est\nouvert."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Sur un écran étroit, la barre "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "défile horizontalement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " plutôt que de tronquer les libellés. Une\nombre au bord indique qu'il reste des onglets à voir de ce côté."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Nouveau channel"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", après les onglets et avant « Coûts », crée un channel "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "sans quitter le\ntrack"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ("
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "livré par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-100"
+									},
+									{
+										"type": "text",
+										"text": " ; captures dans "
+									},
+									{
+										"type": "code",
+										"text": "docs/captures/CRM-100/"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Le formulaire s'ouvre en\nhaut de la page — nom, identifiant d'adresse proposé depuis le nom, workflow, description —, le\ntableau restant visible dessous. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Créer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ouvre aussitôt le tableau du nouveau channel, dont\nl'onglet paraît dans la barre ; "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Annuler"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ou la touche "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Échap"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " referment le formulaire sans rien\ncréer. Le formulaire ouvert fait partie de l'adresse de la page : un rechargement le conserve. La\ncommande est offerte à tous ; seul un administrateur de l'espace de travail peut créer un channel,\net le serveur refuse aux autres comptes avec un message écrit dans le formulaire, votre saisie\nconservée."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un track "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "sans channel"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " affiche « Aucun channel dans ce track », et dit que le channel se crée\navec « Nouveau channel », dans la barre d'onglets juste au-dessus."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un channel dont le workflow "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "n'a aucune étape"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " n'a pas de tableau : l'écran le dit (« Ce workflow\nne déclare aucune étape ») et propose le lien "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ouvrir l'éditeur de workflows"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", où les étapes\ns'ajoutent (chapitre 5 bis)."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ouvrir un onglet change l'adresse de la page : elle se partage et se met en favori. Le contenu d'un\nchannel se lit désormais de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "deux façons"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et une bascule en haut de la zone principale passe de\nl'une à l'autre : le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tableau kanban"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (chapitre 4.8), qui est la vue par défaut, et la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vue\nliste"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (chapitre 4.9). Chacune a sa propre adresse."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si l'adresse ne correspond à aucun track"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou si votre compte n'y a pas accès, l'écran affiche\n« Track introuvable » et propose un retour à l'accueil. Les deux situations produisent le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "même"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nmessage : cela évite de renseigner qui que ce soit sur l'existence d'un track qu'il n'a pas le\ndroit de voir."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui peut faire quoi."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Créer, renommer, réordonner ou archiver un channel est réservé aux\npersonnes "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administratrices"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace de travail, exactement comme pour les tracks, et la\nrègle est appliquée par le serveur. La suppression définitive n'est jamais proposée. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Aucun écran\nne permet encore de les gérer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.2 quinquies La description d'un track, d'un channel ou d'une affaire, au survol"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livrée par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-105"
+						},
+						{
+							"type": "text",
+							"text": ". Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-105/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un track, un channel et une affaire peuvent porter une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "description"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : un texte libre qui dit à quoi\nsert l'activité, ce que regroupe le channel, ou ce que recouvre l'affaire. Celle d'un track et d'un\nchannel se saisit dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages ▸ Arborescence"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (chapitre 5), dans le champ « Description » du\nformulaire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Quand une description existe, elle paraît dans une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "infobulle"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "au survol de la souris"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", après un court instant, sur la pilule du track dans la barre\nlatérale (la bulle s'ouvre à sa droite), sur l'onglet du channel, et sur le titre de l'affaire —\ndans sa carte du tableau comme dans sa ligne de la vue liste (la bulle s'ouvre dessous) ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "au clavier"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", dès que l'élément reçoit le focus par la touche "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Tab"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La bulle écrit d'abord le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nom"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'objet, puis sa description, avec ses retours à la ligne. Une\ndescription très longue défile à l'intérieur de la bulle. Vous pouvez y amener la souris pour la\nlire : elle reste ouverte tant que le pointeur est sur l'élément ou sur elle. La touche "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Échap"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " la\nferme ; un clic sur l'élément ouvre l'objet, comme avant, sans laisser de bulle."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Sans description, rien ne change"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : aucune bulle, et le nom complet reste lisible au survol comme\nauparavant. Un lecteur d'écran annonce la description avec le nom de l'élément, que la bulle soit\nouverte ou non."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui n'est pas proposé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : sur un écran tactile, il n'y a pas de survol, et toucher l'élément\nl'ouvre ; la description ne paraît donc pas en bulle. La description d'une affaire ne se saisit pas\nencore depuis l'interface."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "replier-la-barre-laterale",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.3 Replier la barre latérale"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton en haut de la barre latérale la replie en colonne d'icônes, et la déplie à nouveau. Ce\nchoix vaut "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pour la session en cours"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il est oublié à la fermeture de l'onglet, et rien n'est\nconservé sur votre appareil au-delà."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sur un écran étroit, la barre latérale devient un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tiroir"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le bouton en haut à gauche de\nl'en-tête l'ouvre, la croix ou la touche "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": " la referme."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "naviguer-au-clavier",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.4 Naviguer au clavier"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'application s'utilise entièrement au clavier :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "la première tabulation fait apparaître le lien "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Aller au contenu »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", qui saute la\nnavigation ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "les tabulations suivantes parcourent le bouton de repli, puis les quatre entrées de navigation ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "code",
+								"text": "Entrée"
+							},
+							{
+								"type": "text",
+								"text": " active l'entrée sélectionnée ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "l'élément qui a le focus est toujours entouré d'un liseré bleu visible."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "quand-quelque-chose-ne-va-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.5 Quand quelque chose ne va pas"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Ce qui s'affiche"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce que cela signifie"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce que vous pouvez faire"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Barres grises animées"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les données sont en cours de chargement"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Patienter"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucun … »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le serveur n'a rien à afficher pour vous"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Rien : ce n'est pas une erreur"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Chargement impossible »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le serveur n'a pas répondu"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Réessayer"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " ; le bouton relance la requête sans recharger la page"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Accès refusé »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le serveur a refusé la lecture"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Demander l'accès à un administrateur de l'espace"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Configuration incomplète »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'application a été construite sans l'adresse du serveur"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Prévenir la personne qui a déployé l'application"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "En cas de panne du serveur, l'application "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "réessaie trois fois"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " avant d'afficher l'erreur : le\nmessage peut donc mettre quelques secondes à apparaître."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.6 Les commandes grisées : ce que votre rôle vous laisse faire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le produit ne vous propose pas un geste que le serveur vous refuserait. Une commande que vous ne pouvez\npas utiliser "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "reste à sa place, grisée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "bandeau"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — une icône en forme d'œil sur fond gris\nclair — dit en tête du bloc pourquoi : « Vous consultez … : les commandes restent visibles mais sont\ninactives. » Un seul bandeau par bloc ; chaque commande grisée y renvoie, et un lecteur d'écran le lit\nquand elle a le focus."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Trois choses décident de ce que vous pouvez faire, et le serveur les mesure pour vous :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Ce que vous voulez faire"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Il faut"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Exemples"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Administrer l'espace"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "être "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "administrateur"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " de l'espace"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "l'arborescence, les workflows, le catalogue, les budgets, le coût du personnel, la boîte système"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Éditer le carnet et les modèles"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "être administrateur ou "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "business developer"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "créer ou modifier un contact, un modèle d'email, une séquence de relance"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Travailler une affaire"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "pouvoir "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "écrire sur son onglet"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "créer, modifier, déplacer, endormir une affaire ; ses contacts, ses coûts, ses commentaires, ses envois"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le troisième dépend des "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "accès par track et par channel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (chapitre 3.2 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "quater"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : un business\ndeveloper peut être limité à la lecture sur un onglet, et une personne en lecture seule peut être\nrouverte en écriture sur un autre. Le produit suit exactement ces accès, onglet par onglet."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui n'est jamais grisé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : ce qui ne regarde que vous — vos préférences de notifications, votre\npropre boîte de réception et vos propres identités d'expédition, la saisie de votre temps."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Juste après l'ouverture d'un écran"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le temps que vos droits soient lus, les commandes peuvent être\ngrisées un instant "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sans bandeau"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : rien n'est encore dit, rien n'est refusé. Si vos droits ne peuvent\npas être lus — une coupure réseau —, les commandes restent offertes, et c'est la réponse du serveur\nqui s'affiche si vous tentez un geste."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le serveur reste la seule règle."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Griser une commande aide à ne pas tenter un geste voué au refus ;\ncela ne protège rien à soi seul. Si vos droits changent pendant que vous travaillez, le serveur refuse,\net l'écran affiche son refus."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'entrée « Coût du personnel » devient un texte grisé si vous n'administrez pas\nl'espace : son écran vous serait refusé. Les autres écrans d'administration restent ouverts "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "en\nlecture"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : vous y voyez la configuration, commandes grisées."
+				}
+			]
+		},
+		{
+			"type": "rule"
+		}
+	]
+}

@@ -1,0 +1,485 @@
+{
+	"slug": "signer-les-messages-expedies-depuis-une-identite",
+	"title": "7 bis. Signer les messages expédiés depuis une identité",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-063"
+						},
+						{
+							"type": "text",
+							"text": ", tranche 3. L'écran est celui des identités d'expédition ("
+						},
+						{
+							"type": "code",
+							"text": "CRM-089"
+						},
+						{
+							"type": "text",
+							"text": ") ; cette\ntranche y ajoute un champ, et rien d'autre."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « Identités d'expédition », puis « Configurer » sur\nl'identité concernée."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "À quoi cela sert."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une signature est le pied de message que vos destinataires liront sous chaque\ncourriel parti depuis cette adresse : votre nom, votre fonction, votre société, un téléphone. Vous\nl'écrivez "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "une fois"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et le produit l'ajoute ensuite à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tous"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les messages expédiés depuis cette\nidentité — ceux que vous composez à la main comme ceux que le produit enverra pour vous."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La signature appartient à l'ADRESSE, pas à vous."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Si vous expédiez depuis deux adresses —\n"
+				},
+				{
+					"type": "code",
+					"text": "contact@"
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "code",
+					"text": "recrutement@"
+				},
+				{
+					"type": "text",
+					"text": ", par exemple —, chacune porte la sienne, et vous les remplissez\nséparément. C'est voulu : on ne signe pas de la même façon selon l'adresse sous laquelle on écrit.\nL'identité de service de l'espace de travail, qui n'appartient à personne en particulier, a elle\naussi la sienne."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ecrire-modifier-supprimer-une-signature",
+			"content": [
+				{
+					"type": "text",
+					"text": "7 bis.1 Écrire, modifier, supprimer une signature"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le champ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Signature"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " se trouve dans le formulaire, juste après le nom d'expéditeur. Il accepte\nplusieurs lignes, et les conserve telles que vous les écrivez : les retours à la ligne et les\nalignements que vous posez sont ceux que votre destinataire verra."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Écrire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : remplissez le champ, puis « Enregistrer ». C'est immédiat, et cela vaut pour le\nprochain message."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Modifier"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : rouvrez « Configurer ». Le champ est prérempli avec la signature enregistrée — le\nproduit ne vous demande jamais de la réécrire de mémoire."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Supprimer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "videz le champ"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", puis « Enregistrer ». La signature disparaît, et les messages\nsuivants partent sans elle."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une signature est limitée à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "2 000 caractères"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Au-delà, l'enregistrement est refusé et le produit\nvous le dit : rien n'est écrit à moitié."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ou-la-signature-apparait-dans-le-message",
+			"content": [
+				{
+					"type": "text",
+					"text": "7 bis.2 Où la signature apparaît dans le message"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Elle est ajoutée "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "à la fin"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du corps, après une ligne vide et une ligne de séparation composée de\ndeux tirets. C'est la convention que les logiciels de messagerie reconnaissent pour replier ou\ngriser une signature :"
+				}
+			]
+		},
+		{
+			"type": "codeblock",
+			"text": "Bonjour,\n\nvoici le devis dont nous avons parlé.\n\n-- \nDriss Lemoine — Business developer\nP2Enjoy SAS"
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que vous voyez dans le CRM est exactement ce qui est parti."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le message conservé par le\nproduit porte sa signature : il n'y a pas d'un côté ce que vous avez écrit et de l'autre ce que\nvotre destinataire a reçu."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Dans la liste des identités"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", une pastille « Signature » marque les identités qui en portent une.\nLa signature elle-même n'y est pas montrée — elle serait trop longue pour une ligne de liste ; c'est\nsa "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "présence"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " qui vous intéresse d'un coup d'œil."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-offert",
+			"content": [
+				{
+					"type": "text",
+					"text": "7 bis.3 Ce qui n'est pas offert"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Une signature est du texte, jamais de la mise en forme riche."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Pas de gras, pas de logo, pas de\nlien cliquable : toute la messagerie du produit expédie du texte, et une signature en HTML\narriverait chez votre destinataire avec ses balises en toutes lettres."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun trou dans une signature."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " "
+							},
+							{
+								"type": "code",
+								"text": "{{contact.full_name}}"
+							},
+							{
+								"type": "text",
+								"text": " écrit dans une signature part\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "littéralement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Les trous sont une propriété des modèles d'emails (chapitre 7), pas des\nsignatures."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un message vide ne part pas, même signé."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Si vous laissez le corps vide, le produit refuse\nl'envoi : une signature seule n'est pas un message."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune signature commune à tout l'espace de travail."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Chaque identité porte la sienne, ou n'en\nporte pas."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

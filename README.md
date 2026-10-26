@@ -245,6 +245,9 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `scripts/verify-seed.sh` | Rejoue les preuves du seed : contrat, identifiants stables, connexion réelle, convergence | **disponible** |
 | `npm run types:generate` | Régénère les types TypeScript depuis le schéma de la base migrée | **disponible** |
 | `npm run types:check` | Vérifie que les types versionnés n'ont pas dérivé du schéma, sans rien réécrire | **disponible** |
+| `npm run manuel:construire` | Construit le manuel (`docs/manuel/construit/`) depuis `docs/manual.md` — à relancer après toute modification du manuel (`CRM-117`) | **disponible** |
+| `npm run manuel:verifier` | Échoue si le manuel construit ne correspond plus à `docs/manual.md` | **disponible** |
+| `scripts/manuel/publier.sh [--spark]` | Publie le manuel construit dans le bucket privé `manual`, en miroir ; le seed l'appelle | **disponible** |
 | `npm run typecheck` | `tsc --noEmit` sur les quatre projets : types générés, application, tests, outillage | **disponible** |
 | `scripts/verify-types.sh` | Rejoue les preuves des types générés : déterminisme, garde anti-dérive éprouvée par le fichier **et par le schéma**, assertions | **disponible** |
 | `npm run dev` | Vite en développement, hors conteneur | **disponible** |

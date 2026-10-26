@@ -1,0 +1,672 @@
+{
+	"slug": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense",
+	"title": "5 quinquies. Les coûts d'un track : ce qui était prévu, ce qui a été dépensé",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-086"
+						},
+						{
+							"type": "text",
+							"text": " tranche 3. Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-086/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ouvrez un track, puis l'entrée "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Coûts »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la barre d'onglets, à droite des channels et\nséparée d'eux par un filet. L'adresse est partageable et rechargeable."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'entrée est là même si le track n'a aucun channel."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un track porte ses budgets indépendamment de\nses channels ; ne pas encore avoir ouvert de channel n'empêche pas d'avoir engagé des dépenses."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que l'écran montre."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Pour chaque budget "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ouvert"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du track, deux barres côte à côte : le\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prévisionnel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — la somme des coûts estimés des lignes rattachées à ce budget — et le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "réel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — la\nsomme des coûts réellement saisis. La barre du réel passe au rouge lorsqu'elle "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dépasse"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le\nprévisionnel, et le tableau sous le graphique l'écrit aussi en toutes lettres : une couleur ne porte\njamais seule une information dans ce produit."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le tableau sous le graphique n'est pas un doublon."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " C'est la version que lit un lecteur d'écran,\net celle qui reste juste si les couleurs ne passent pas — à l'impression, sur un projecteur, ou pour\nqui les distingue mal. Il porte les mêmes chiffres, plus une colonne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Sans réel »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " qui compte les\nlignes dont le coût réel n'a pas encore été saisi, budget par budget."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un budget récurrent apparaît ici en UNE seule paire de barres"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", toutes ses occurrences confondues.\nLe détail occurrence par occurrence appartient à l'écran du budget, désormais livré : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "le nom d'un\nbudget est un lien"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " vers sa fiche (§5 sexies)."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un budget clôturé n'apparaît pas sur cet écran."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Il n'a pas disparu : ses lignes existent\ntoujours, et leur coût réel reste saisissable — clôturer une campagne n'empêche pas les factures\nd'arriver ensuite. Il sort simplement de la comparaison des budgets en cours."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-phrase-sous-le-graphique-et-pourquoi-elle-compte",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quinquies.1 La phrase sous le graphique, et pourquoi elle compte"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Quand des coûts réels manquent, l'écran écrit sous le graphique :"
+				}
+			]
+		},
+		{
+			"type": "note",
+			"blocks": [
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "text",
+							"text": "« 1 ligne(s) sans coût réel saisi, pour 100 € de prévisionnel. »"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Sans elle, un réel bas se lirait comme une économie alors qu'il n'est qu'une saisie en retard"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\net c'est la principale façon dont un tel écran pourrait mentir. Une ligne sans coût réel "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne compte\npas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dans la barre du réel : le produit ne confond jamais « pas encore su » et « rien dépensé »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Elle disparaît quand tous les réels sont saisis"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au lieu d'afficher « 0 ligne ». Un\navertissement affiché en permanence cesse d'être lu, et c'est quand il apparaît qu'il doit se\nremarquer."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "plusieurs-devises",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quinquies.2 Plusieurs devises"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si le track porte des budgets dans plusieurs devises, l'écran rend "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "un graphique par devise"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\nchacun avec son propre total. Il n'additionne jamais deux devises : aucune conversion et aucun taux\nde change n'existent dans le produit, et un total unique n'aurait donc aucun sens. Si tout est dans\nla même devise — le cas courant — vous ne voyez rien de cette mécanique."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-etats-que-vous-pouvez-rencontrer",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quinquies.3 Les états que vous pouvez rencontrer"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Ce que vous voyez"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce que cela veut dire"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucun budget sur ce track »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Aucun budget "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ouvert"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " que vous ayez le droit de lire. Un administrateur en crée depuis « Réglages ▸ Arborescence »"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Deux barres à zéro et « Aucune dépense rattachée. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le budget existe, aucune affaire n'y a encore rattaché de ligne de coût"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Accès refusé »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Votre compte n'a pas le droit de lire ces budgets"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Track introuvable »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'adresse ne désigne aucun track que vous puissiez lire"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que vous voyez est ce que vos droits vous consentent."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un budget que vous n'avez pas le droit\nde lire n'entre pas dans le total, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "l'écran ne vous signale aucun manque"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le signaler\nreviendrait à vous apprendre l'existence de ce qu'il cache. Votre total peut donc être plus petit\nque celui d'un collègue, et c'est le comportement voulu."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-cet-ecran-ne-fait-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quinquies.4 Ce que cet écran ne fait pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "On n'y saisit rien."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Les lignes de coût d'une affaire se créent et se modifient depuis la fiche\nde l'affaire, section « Coûts ». Les budgets s'administrent depuis « Réglages ▸ Arborescence »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun filtre, aucun tri, aucune période."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " L'écran rend les budgets ouverts du track dans l'ordre\nde leur administration."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "deux-onglets-et-le-second-est-celui-ou-l-on-saisit",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quinquies.5 Deux onglets, et le second est celui où l'on saisit"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cet écran porte "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "deux onglets"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : « Vue d'ensemble » — le graphique décrit ci-dessus — et\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« À saisir »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui liste les lignes de ce track en attente de leur coût réel et permet de les\nsaisir à la suite. L'onglet « À saisir » porte un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "compteur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le nombre de lignes qu'il liste."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le second onglet vit dans l'adresse ("
+				},
+				{
+					"type": "code",
+					"text": "?onglet=saisir"
+				},
+				{
+					"type": "text",
+					"text": ") : il est donc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "partageable et\nrechargeable"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", comme le reste du produit. Tout est décrit au "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "§5 octies"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "cumul de l'espace de travail"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " est livré : voir le §5 septies."
+						}
+					]
+				}
+			]
+		}
+	]
+}

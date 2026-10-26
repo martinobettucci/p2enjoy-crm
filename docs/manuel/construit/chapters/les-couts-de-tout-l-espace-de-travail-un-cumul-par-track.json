@@ -1,0 +1,764 @@
+{
+	"slug": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track",
+	"title": "5 septies. Les coûts de tout l'espace de travail : un cumul par track",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-086"
+						},
+						{
+							"type": "text",
+							"text": " tranche 5. Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-086/couts-workspace-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Coûts »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", entre « Objectifs » et « Ma journée ». L'adresse est\n"
+				},
+				{
+					"type": "code",
+					"text": "/couts"
+				},
+				{
+					"type": "text",
+					"text": " ; elle est partageable et rechargeable."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le\ndroit de lire — voir le §5 septies.3, qui est la partie la plus importante de cette page."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-l-ecran-montre",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 septies.1 Ce que l'écran montre"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un groupe de deux barres par track"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", cumulant "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tous ses budgets ouverts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prévisionnel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\n— la somme des coûts estimés — et le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "réel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — la somme des coûts réellement saisis. La barre du\nréel passe au rouge lorsqu'elle dépasse le prévisionnel, et la légende nomme les trois séries."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "C'est la différence exacte avec l'écran de coûts d'un track (§5 quinquies) : là-bas, une paire de\nbarres désigne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "un budget"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; ici, elle désigne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "un track entier"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Un track qui porte trois\nbudgets ouverts en euros rend donc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "une"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " seule paire de barres, dont les montants sont la somme\ndes trois."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Sous le graphique, le même tableau que partout ailleurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une ligne par track, le prévisionnel,\nle réel, le nombre de lignes en attente de leur coût réel, et un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "total"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Ce tableau est la\nversion lisible du graphique : il reste juste si la couleur ne passe pas, et c'est lui que lit un\nlecteur d'écran."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le nom d'un track est un lien"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " vers ses propres coûts, budget par budget (§5 quinquies). C'est le\nchemin normal : on lit d'abord quels tracks dépensent, puis on ouvre celui qu'on veut détailler."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un budget clôturé n'entre dans aucun cumul."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Il ne disparaît pas pour autant : ses lignes restent\nlisibles depuis sa propre fiche (§5 sexies)."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un track archivé ou mis à la corbeille ne figure pas sur cet écran"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — comme il ne figure pas dans\nla barre latérale. Si un budget y est resté ouvert, il se lit depuis l'écran de coûts de ce track,\ndont l'adresse continue de répondre."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-devises-ne-se-melangent-jamais",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 septies.2 Les devises ne se mélangent jamais"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si les budgets que vous lisez sont libellés dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "plusieurs devises"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'écran rend "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "un graphique\npar devise"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", chacun avec son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "titre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — « Coûts en EUR », « Coûts en CHF » — et son propre total.\nAdditionner des francs et des euros ne voudrait rien dire, et les poser sur un même axe rendrait la\ncomparaison fausse à l'œil."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si tout est libellé dans une seule devise — le cas courant —, vous ne voyez rien de cette mécanique :\nun seul graphique, sans titre de devise."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 septies.3 Votre total est le vôtre, et il peut différer de celui d'un collègue"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "C'est la règle la plus importante de cet écran."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le cumul est calculé "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "à partir de ce que vos\ndroits vous laissent lire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", jamais à partir de tout ce qui existe. Un budget qui appartient à un\ntrack qui vous est fermé :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "n'apparaît nulle part ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "n'entre dans "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucun"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " total ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "n'est signalé par rien"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux collègues aux droits différents lisent donc deux nombres différents sur le même écran, au même\ninstant. Ce n'est pas une erreur de calcul : afficher un total « complet » vous apprendrait, par\nsimple soustraction, l'existence et le montant d'un budget que vous n'avez pas le droit de voir."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'écran l'écrit sous les graphiques, pour que personne n'ait à le deviner :"
+				}
+			]
+		},
+		{
+			"type": "note",
+			"blocks": [
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ce cumul ne porte que sur les budgets ouverts des tracks que vous pouvez lire. Un track archivé\nou mis à la corbeille n'y figure pas ; ses budgets restent lisibles depuis son propre écran de\ncoûts. »"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si un montant vous paraît manquer, la question à poser n'est donc pas « l'écran s'est-il trompé ? »\nmais « ai-je le droit de lire ce track ? »."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-l-ecran-ecrit-quand-il-n-y-a-rien-a-montrer",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 septies.4 Ce que l'écran écrit quand il n'y a rien à montrer"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Ce que vous lisez"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce que cela veut dire"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "« n ligne(s) sans coût réel saisi, pour m € de prévisionnel. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Des dépenses ont été engagées sans que leur coût réel ait encore été saisi. La barre du réel est donc plus basse que la réalité"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucune dépense rattachée. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les tracks de cette devise ont bien un budget ouvert, mais aucune affaire n'y a encore rattaché la moindre ligne de coût"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucun budget ouvert »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Aucun des tracks que vous pouvez lire ne porte de budget ouvert — "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ou"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " vous n'en lisez aucun. Les deux cas se ressemblent volontairement : les distinguer vous apprendrait l'existence de ce que l'écran cache"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucun espace de travail »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Votre session a expiré, ou votre compte n'appartient à aucun espace de travail. Reconnectez-vous"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-cet-ecran-ne-fait-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 septies.5 Ce que cet écran ne fait pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "On n'y saisit rien."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Les lignes de coût se créent depuis la fiche d'une affaire, section\n« Coûts » ; les budgets s'administrent depuis « Réglages ▸ Arborescence »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun filtre, aucune période, aucun export, aucune conversion de devise."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " L'écran rend les\ntracks dans l'ordre de la barre latérale."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun total toutes devises confondues"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — voir le §5 septies.2."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "deux-onglets-ici-aussi",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 septies.6 Deux onglets, ici aussi"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cet écran porte les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "mêmes deux onglets"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " que celui d'un track (§5 quinquies.5) : « Vue\nd'ensemble » et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« À saisir »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". La différence est la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "portée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : ici, l'onglet liste les lignes\nen attente de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tous les tracks que vous lisez"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et non celles d'un seul. Tout est décrit au\n§5 octies."
+				}
+			]
+		}
+	]
+}

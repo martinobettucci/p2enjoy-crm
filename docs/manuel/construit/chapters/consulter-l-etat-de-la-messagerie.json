@@ -1,0 +1,321 @@
+{
+	"slug": "consulter-l-etat-de-la-messagerie",
+	"title": "6. Consulter l'état de la messagerie",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-059"
+						},
+						{
+							"type": "text",
+							"text": " ; les règles d'accès sont celles de "
+						},
+						{
+							"type": "code",
+							"text": "CRM-052"
+						},
+						{
+							"type": "text",
+							"text": " (comptes entrants) et de\n"
+						},
+						{
+							"type": "code",
+							"text": "CRM-058"
+						},
+						{
+							"type": "text",
+							"text": " (file sortante) — cet écran n'en invente aucune."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « État de la messagerie »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un administrateur de l'espace de travail voit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tous"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les comptes de messagerie entrante\ndu workspace, la boîte système comprise. Un membre ordinaire ne voit que "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sa propre boîte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", s'il en\npossède une ; sans boîte propre et sans droit d'administration, l'écran affiche « Aucune boîte à\nsuperviser » plutôt qu'un tableau vide qui prétendrait avoir cherché sans rien trouver."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le tableau montre, par boîte :"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Dernière relève réussie"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — la date et l'heure du dernier relevé qui a abouti. Une boîte jamais\nrelevée l'annonce en toutes lettres : « Jamais relevée », et non une case vide."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Dernier incident"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — si la boîte est en échec, un texte compréhensible : « Authentification\nrefusée », « Hôte injoignable », « Connexion refusée », « Échec TLS », « Délai dépassé » ou\n« Erreur de protocole ». Le produit ne montre jamais le message technique brut renvoyé par votre\nserveur mail, qui peut contenir des détails de connexion."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que les deux chiffres montrent :"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le nombre de messages "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "en attente d'envoi"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (mis en file ou\nen cours d'envoi) et le nombre d'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "échecs définitifs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — un envoi qui a épuisé ses tentatives de\nreprise. Un membre ordinaire ne compte que la file des affaires qu'il a le droit de lire ; un\nadministrateur compte celle de tout l'espace de travail."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que cet écran ne fait pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Il "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "lit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", il n'agit pas : aucun bouton ne relance une relève,\nn'acquitte un incident ni ne modifie un réglage depuis cette page. La donnée est lue à l'ouverture ;\nrafraîchissez la page pour la mettre à jour."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-encore-la",
+			"content": [
+				{
+					"type": "text",
+					"text": "6.1 Ce qui n'est pas encore là"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune alerte n'est envoyée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " lorsqu'un compte tombe en erreur : cet écran est le seul endroit où\nle constater. Une notification proactive relèverait d'une unité dédiée aux notifications."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucune veille par IDLE"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la relève reste une scrutation régulière, dont l'intervalle se règle\npar la variable d'environnement "
+							},
+							{
+								"type": "code",
+								"text": "MAIL_SYNC_POLL_INTERVAL"
+							},
+							{
+								"type": "text",
+								"text": " (opération d'exploitation, hors de cet\nécran)."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

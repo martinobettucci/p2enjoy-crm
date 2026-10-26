@@ -1,0 +1,535 @@
+{
+	"slug": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows",
+	"title": "5 quater. Le catalogue de nœuds : le vocabulaire de vos workflows",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-030"
+						},
+						{
+							"type": "text",
+							"text": " ; l'écran est spécifié au §2 bis de\n"
+						},
+						{
+							"type": "text",
+							"text": "docs/SPEC-workflow-engine.md"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nœud"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est un état par lequel une affaire peut passer : « Prospection », « Négociation »,\n« Perdu ». Le catalogue est la liste de ceux qui ont un nom dans votre espace de travail, et les\nworkflows y puisent leurs étapes. Deux workflows différents qui emploient le même nœud parlent du\nmême état — c'est ce qui rend comparable le temps passé en « Relance » d'un channel à l'autre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "On y arrive par "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Réglages ▸ Catalogue de nœuds »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-chaque-ligne-montre",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quater.1 Ce que chaque ligne montre"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "libellé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", dans la couleur du nœud — la même que celle que le tableau kanban lui donnera ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sa "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "clé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", en petits caractères techniques : c'est l'identifiant durable sur lequel les\nstatistiques s'appuient ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "son "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "type"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — « Ouvert », « Gagné » ou « Perdu » —, écrit en toutes lettres. C'est lui qui permet\nde calculer un taux de conversion sans deviner d'après le libellé ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sa "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "probabilité par défaut"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et son "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "seuil de relance"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", quand ils sont renseignés. Une case\nvide veut dire que le nœud ne se prononce pas, ce qui n'est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "pas"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " la même chose que zéro :\n« Perdu » vaut réellement 0 %, alors qu'un autre nœud peut n'avoir aucune signification\nprévisionnelle ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "la mention "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Archivé »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", le cas échéant."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "creer-un-noeud",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quater.2 Créer un nœud"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Nouveau nœud » ouvre un formulaire sous l'en-tête. Le libellé propose une clé, que vous pouvez\ncorriger : elle doit être en minuscules, chiffres et tirets, et rester unique dans l'espace de\ntravail. La proposition est une commodité et rien de plus — pour « Nœud de suivi », elle rend\n"
+				},
+				{
+					"type": "code",
+					"text": "n-ud-de-suivi"
+				},
+				{
+					"type": "text",
+					"text": ", la ligature « œ » n'étant pas convertible automatiquement ; corrigez-la avant\nd'enregistrer."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Probabilité et seuil de relance sont facultatifs. Laissés vides, ils restent vides."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "modifier-un-noeud",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quater.3 Modifier un nœud"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Modifier » ouvre le même formulaire à la place de la ligne, sans la clé : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "la clé ne se modifie\npas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Elle est ce sur quoi vos statistiques s'appuient, et la renommer réécrirait l'histoire de\ntoutes les affaires passées par ce nœud. Si un nœud ne convient plus, archivez-le et créez-en un\nautre."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "archiver-un-noeud-et-le-retablir",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quater.4 Archiver un nœud, et le rétablir"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Archiver retire le nœud des workflows à composer, sans rien effacer. Le nœud reste dans la liste,\nmarqué « Archivé », et « Rétablir » le remet en service — ce geste-là ne demande aucune\nconfirmation, puisqu'il ne détruit rien."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un nœud sur lequel des affaires se trouvent encore ne s'archive pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le produit refuse, dit\ncombien d'affaires en cours l'occupent, et vous demande de les déplacer d'abord. Ce refus vient du\nserveur : la commande reste offerte, et c'est en la déclenchant que vous obtenez le compte exact.\nLes affaires archivées ou mises à la corbeille ne comptent pas."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "reordonner-le-catalogue",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quater.5 Réordonner le catalogue"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les deux flèches en tête des commandes d'une ligne la font monter ou descendre d'un cran. Chaque\nclic écrit l'ordre immédiatement : il n'y a rien à valider."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "La flèche est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "éteinte"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " quand le geste n'a nulle part où aller — sur la première ligne pour\n« monter », sur la dernière pour « descendre ». Survolez-la : elle dit pourquoi."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un nœud "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "archivé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ne se déplace pas, et ne porte donc aucune flèche. Il "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "garde sa place"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans\nla liste, et les nœuds actifs le franchissent normalement."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Cet ordre est celui de l'écran et celui des listes où l'on choisit un nœud. Il ne change "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "rien"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "\naux affaires en cours, ni aux workflows déjà composés : réordonner le vocabulaire ne réordonne\naucun parcours."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le geste reste possible sur un nœud que des affaires occupent — contrairement à l'archivage.\nDéplacer un état dans la liste ne déplace aucune affaire."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-encore-la",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 quater.6 Ce qui n'est pas encore là"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Supprimer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " un nœud n'existe pas, et n'est pas prévu : l'archivage tient lieu de retrait."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le nombre d'affaires posées sur un nœud n'est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "pas affiché à l'avance"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ; il apparaît dans le\nrefus d'archivage."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

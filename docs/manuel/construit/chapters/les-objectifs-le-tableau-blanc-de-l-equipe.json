@@ -1,0 +1,1276 @@
+{
+	"slug": "les-objectifs-le-tableau-blanc-de-l-equipe",
+	"title": "3 sexies. Les objectifs : le tableau blanc de l'équipe",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-082"
+						},
+						{
+							"type": "text",
+							"text": " (ce que le produit enregistre et qui peut l'écrire) et "
+						},
+						{
+							"type": "code",
+							"text": "CRM-083"
+						},
+						{
+							"type": "text",
+							"text": " (l'écran). Décrit l'application\nréellement exécutée ; captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-083/"
+						},
+						{
+							"type": "text",
+							"text": ". Spécification : "
+						},
+						{
+							"type": "code",
+							"text": "docs/SPEC-goals.md"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'entrée "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Objectifs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la barre latérale ouvre les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tableaux d'objectifs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de votre espace de travail. Un tableau est\nun "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "tableau blanc"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : vous y posez des "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "blocs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — un objectif chacun —, vous les reliez par des "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "flèches"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " pour dire ce\nqui nourrit quoi, et vous indiquez sur chaque bloc où vous en êtes."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le remplissage d'un bloc est saisi à la main, jamais calculé."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un bloc peut viser un channel, mais le produit ne\ndéduit rien des affaires de ce channel : c'est vous qui décidez de ce que le pourcentage signifie, et vous qui le\ntenez à jour. La fiche du bloc le rappelle sous son remplissage."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-liste-des-tableaux",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 sexies.1 La liste des tableaux"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'écran "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Tableaux d'objectifs »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste les tableaux de l'espace dans leur ordre, chacun avec sa description et son\nnombre de blocs. Cliquer sur le nom d'un tableau ouvre son canevas."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ou un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "business developer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace administre les tableaux depuis cette liste :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Créer un tableau »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ouvre un formulaire dans la page — un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", obligatoire et unique dans l'espace, et une\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Description"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " facultative ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Renommer »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " change le nom et la description d'un tableau ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Monter »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Descendre »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " changent son rang, d'un cran à la fois ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Archiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " retire un tableau de la liste, après une confirmation qui le nomme. Rien n'est perdu : la case\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Afficher les archivés »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " le fait reparaître avec la mention "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Archivé »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et la seule commande\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Désarchiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Un tableau archivé garde son nom : un autre tableau ne peut pas le prendre tant qu'il existe."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Pour un autre compte, la base refuse ces gestes, et l'écran le dit sous la commande : "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Vous ne pouvez pas\nadministrer les tableaux de cet espace de travail. »"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-canevas",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 sexies.2 Le canevas"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le canevas d'un tableau se "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "déplace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — faites-le glisser — et se "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "zoome"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " avec les boutons "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Réduire le canevas »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\net "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Agrandir le canevas »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la valeur courante affichée entre les deux. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Retour aux tableaux »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ramène à la\nliste."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "bloc"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " porte son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "titre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", deux lignes de son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "corps"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " s'il en a un, sa "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "jauge"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — « Remplissage 40 % », par\nexemple — et, s'il vise un channel, une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pilule « Track › Channel »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : cliquer dessus "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ouvre le channel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Une\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "flèche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " relie deux blocs ; elle a un sens — du départ vers l'arrivée, de l'arrivée vers le départ, ou dans les deux\nsens — et parfois un libellé, posé en son milieu."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sous le canevas, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Liens du diagramme »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " donne l'équivalent textuel de toutes les flèches, une par ligne — c'est ce\nque lit un lecteur d'écran, et c'est la façon la plus sûre de vérifier ce qui relie quoi."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que vous ne voyez pas, et pourquoi."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un bloc qui vise un channel que vous n'avez pas le droit de lire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "n'est pas\naffiché du tout"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; ses flèches sont dessinées en pointillés vers le vide, et la liste textuelle les écrit vers une\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« extrémité hors de portée »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". L'écran ne nomme jamais ce qu'il vous cache. Un bloc dont le channel a été "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "mis à la\ncorbeille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " reste affiché, sans pilule, avec la mention "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Lien perdu »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : reposez-lui un lien. Si le channel a été\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "détruit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " définitivement, le bloc redevient un bloc libre, sans mention — rien ne permet plus de savoir qu'il visait\nun channel."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "poser-deplacer-et-modifier-un-bloc",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 sexies.3 Poser, déplacer et modifier un bloc"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Poser un bloc »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " fait apparaître un repère : cliquez sur le canevas à l'endroit voulu, ou, au clavier, déplacez le\nrepère avec les flèches, validez par Entrée et annulez par Échap. Le bloc naît avec un titre provisoire, et sa fiche\ns'ouvre pour que vous le nommiez."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un bloc se "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "déplace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et se "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "redimensionne"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " à la souris — en le faisant glisser, ou par sa poignée d'angle — ou au\nclavier, le bloc ayant le focus : les flèches le déplacent, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Maj"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et les flèches l'ajustent au pixel, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Alt"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et les\nflèches le redimensionnent. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Entrée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ouvre sa "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "fiche"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Titre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — obligatoire : un bloc sans titre ne se lit pas ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Corps"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — facultatif ; deux lignes en sont rendues sur le bloc ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Couleur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — Bleu, Vert, Jaune, Rouge ou Gris ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Remplissage"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — au curseur, ou en pourcentage, de 0 à 100 ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Channel visé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — facultatif. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Retirer le lien »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " l'enlève. Viser un channel demande le droit d'"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "écrire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " sur\nce channel : le produit refuse un lien vers un channel où vous ne faites que lire."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque champ s'enregistre de lui-même et dit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Enregistré »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Fermer la fiche »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ou Échap la referment."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "tracer-et-supprimer-une-fleche",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 sexies.4 Tracer et supprimer une flèche"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Tracer une flèche »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", puis cliquez sur le bloc de départ et sur celui d'arrivée — ou, au clavier, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " sur le\nbloc de départ, puis Entrée ou Espace sur le second. Le bloc de départ, Échap ou le bouton annulent le tracé. Une\nflèche relie deux blocs "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "du même tableau"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", jamais un bloc à lui-même, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "une seule"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " flèche joint deux blocs donnés.\nDans « Liens du diagramme », chaque flèche porte un sélecteur de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "direction"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et la commande "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Supprimer la\nflèche »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "supprimer-un-bloc",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 sexies.5 Supprimer un bloc"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Supprimer le bloc »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au bas de sa fiche, demande une confirmation qui nomme le bloc et compte les flèches qui\npartiront avec lui ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Supprimer définitivement »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " l'efface. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un bloc supprimé ne se restaure pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", une flèche non\nplus — contrairement à un tableau, qui s'archive."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "qui-peut-ecrire",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 sexies.6 Qui peut écrire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Tout membre de l'espace lit les tableaux."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "business developers"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace les\nadministrent et les composent ; pour un autre compte, le canevas affiche : "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Vous consultez ce tableau. Vous n'avez\npas le droit d'y écrire : les commandes de modification restent visibles mais sont inactives. »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — et la fiche d'un\nbloc s'ouvre en lecture. C'est la base qui décide : un refus de dernière minute est dit sous la commande, sans que\nrien ne soit écrit."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "quand-il-n-y-a-rien",
+			"content": [
+				{
+					"type": "text",
+					"text": "3 sexies.7 Quand il n'y a rien"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Aucun tableau d'objectifs »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — l'espace n'en a pas encore ; « Créer un tableau » reste offert à qui peut écrire.\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Aucun objectif sur ce tableau »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — posez un premier bloc. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Tableau introuvable »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — l'adresse ne mène à aucun\ntableau que vous puissiez lire, ou il est archivé. Si les tableaux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "n'ont pas pu être chargés"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'écran le dit et\npropose « Réessayer »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'assistant connecté par le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "connecteur MCP"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " lit et compose aussi les canevas, dans vos droits (chapitre 11)."
+				}
+			]
+		}
+	]
+}

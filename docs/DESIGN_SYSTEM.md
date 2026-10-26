@@ -6624,6 +6624,9 @@ partie II ; ces règles disent de quoi l'aide a l'air.
   `.indique-debordement-x` (§12.6) ; une citation est une **note** — fond `--color-hover`, `--radius-sm`, rembourrage
   12 px, liseré gauche de 3 px `--color-border`, sans icône ; un lien est souligné en `--color-brand`, un lien externe
   annonce sa sortie du produit (§5.20).
+- **LES CELLULES D'UN TABLEAU DU MANUEL SE REPLIENT** — *précisé à l'écriture du code, écart borné au §5.9* : un tableau
+  du manuel porte de la prose, qu'une ligne unique en ellipse amputerait ; le reste du §5.9 vaut (en-têtes `th scope="col"`,
+  séparateurs, conteneur qui défile).
 - **UNE IMAGE** est un bloc pleine largeur de la colonne, au plus sa taille naturelle, bordure `--color-border`,
   `--radius-sm`, sur `--color-surface`, son texte alternatif obligatoire. Pendant son chargement, un squelette à sa
   taille (le manifeste la connaît) ; indisponible, son texte alternatif dans le même cadre — jamais l'icône d'image

@@ -1,0 +1,824 @@
+{
+	"slug": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre",
+	"title": "5 ter. La corbeille : ce qui a été retiré, et comment le rendre",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-077"
+						},
+						{
+							"type": "text",
+							"text": ". Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-077/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « Corbeille »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que l'écran montre."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un tableau des objets retirés — tracks, channels et affaires mêlés —, du\nplus récemment retiré au plus ancien. Chaque ligne dit son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "type"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nom"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "qui"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " l'a\nretiré, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "quand"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "quand il sera effacé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ce qu'il retient avec lui"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un objet reste 30 jours dans la corbeille, puis il est effacé définitivement, avec ce qu'il\ncontient."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une phrase en tête de l'écran le rappelle. La colonne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Effacement »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " donne, pour\nchaque ligne, la date à partir de laquelle l'objet sera effacé ; l'effacement a lieu "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dans la nuit\nqui suit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". La date de mise à la corbeille est celle du serveur, au moment du geste. Si la durée de\nconservation n'a pas pu être lue, la phrase n'est pas affichée et la colonne écrit « Inconnue »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que vous y voyez dépend de votre rôle."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateur de l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " voit tout ce qui est\ndans la corbeille. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un autre membre n'y voit que ce qu'il y a lui-même mis"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — une phrase le lui\nrappelle en tête de l'écran : « Vous voyez ce que vous avez mis à la corbeille. ». C'est une règle\ndu serveur : une affaire qu'un autre a mise à la corbeille vous est introuvable, même par son\nadresse. Dans tous les cas, vous n'y voyez que ce que vous avez par ailleurs le droit de lire, et le\nnombre affiché dans « Retient avec lui » suit la même règle — c'est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "votre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " décompte, pas un\ninventaire complet."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Auteur inconnu » n'est pas une anomalie."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un objet peut avoir été retiré par un traitement\ntechnique plutôt que par une personne, ou par un compte supprimé depuis. Le produit le dit au lieu\nde laisser la case vide."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "restaurer",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 ter.1 Restaurer"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Restaurer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la ligne. Aucune confirmation n'est demandée : restaurer ne détruit rien,\net le geste inverse est précisément celui qui a rempli cet écran."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Trois réponses sont possibles, et l'écran les distingue :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Ce que vous voyez"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qui s'est passé"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "La ligne disparaît, un message confirme"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'objet est rendu, exactement dans l'état où il était"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Son parent est lui-même en corbeille : restaurez-le d'abord. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le rendre seul l'aurait rendu "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "à un endroit invisible"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — un channel dans un track retiré, une affaire dans un channel retiré"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Rien n'a été restauré : cet objet n'est plus modifiable avec votre compte. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Votre compte n'a pas le droit d'écrire sur cet objet. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Rien n'a changé"
+								}
+							]
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Restaurer » est grisé quand vous ne pouvez pas le faire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (section 3.6) : un track ou un channel se restaure\npar un administrateur de l'espace, une affaire par qui peut écrire sur son onglet. Un bandeau en tête du\ntableau dit lequel des deux cas vous concerne. Le message « Rien n'a été restauré » ne paraît plus que si\nvos droits ont changé entre-temps ou n'ont pas pu être lus."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La deuxième réponse est une règle du serveur, pas une précaution de l'écran"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : elle vaut aussi\npour un script ou une intégration qui tenterait la même chose."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-cet-ecran-ne-fait-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 ter.2 Ce que cet écran ne fait pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "On n'y retire rien, on y rend."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Le geste de mise à la corbeille vit là où vivent les objets —\nchapitre 5 pour un track et un channel, chapitre 4.7 "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "bis"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " pour une affaire."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun effacement manuel, et aucun « vider la corbeille »."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Seul l'effacement automatique, au\nbout de 30 jours, détruit un objet (section 5 ter.3)."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun filtre, aucun tri, aucune pagination"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la corbeille est rendue en entier, la plus\nrécemment retirée d'abord."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "l-effacement-definitif",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 ter.3 L'effacement définitif"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque nuit, le produit efface ce qui est dans la corbeille depuis plus de 30 jours : les tracks\nd'abord, puis les channels, puis les affaires. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui est effacé ne se restaure plus."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un objet emporte ce qu'il contient"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un track ses channels et leurs affaires, une affaire ses\ncommentaires, ses activités, ses valeurs de champs, ses coûts et ses recettes. Les messages liés à\nune affaire effacée ne sont pas effacés : ils perdent seulement ce lien."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le temps saisi n'est pas perdu avec son affaire."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Avant d'effacer une affaire, le produit\nreporte ses saisies de temps sur son channel ; avant d'effacer un channel, sur son track. Le temps\net son coût restent dans les rapports, sous le dossier parent. Seul le temps saisi sur un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "\neffacé disparaît, faute de parent."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Chaque effacement est inscrit au journal d'audit"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (chapitre 10 "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "ter"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), avec ce qu'il a emporté\net ce qu'il a reporté, sans auteur : c'est le produit qui efface, pas une personne."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un track peut rester bloqué."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Une affaire d'un autre track peut avoir imputé une dépense à l'un\nde ses budgets : effacer le track détruirait ce budget, et la dépense avec. Le produit ne le fait\npas. La ligne du track porte alors la mention "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Bloqué »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans la colonne « Effacement », et un\nadministrateur dispose du bouton "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Réaffecter les dépenses »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Il ouvre, sous la ligne, la liste\nde ces dépenses : pour chacune, choisissez le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "budget cible"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — un budget ouvert d'un autre track,\nde la même devise — et, pour un budget récurrent, son "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "occurrence"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", puis "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Réaffecter »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Une\ndépense rattachée à un budget clôturé se réaffecte après sa réouverture : le bouton "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Rouvrir le\nbudget »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " est proposé à sa place. Quand plus rien ne bloque, l'écran le dit, et le track sera\neffacé à sa date."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-encore-la",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 ter.4 Ce qui n'est pas encore là"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le retrait d'une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " se fait depuis sa fiche (chapitre 4.7 "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "bis"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), et non depuis le\ntableau kanban ni la vue liste."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "La durée de conservation est la même pour tout l'espace ; elle ne se règle pas."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

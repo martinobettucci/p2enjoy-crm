@@ -620,7 +620,9 @@ PORT_RAPPORT=9323
 # MESURÉ.
 # **+1 par `CRM-068` T1, 2026-10-26** : `0117_checklists.test.sql`, fichier NEUF. 106 + 1 = 107, MESURÉ.
 # **+1 par `CRM-068` T2, 2026-10-26** : `0118_transition_exige_checklist.test.sql`, fichier NEUF. 107 + 1 = 108, MESURÉ.
-FICHIERS_SQL_ATTENDUS=108
+# **+1 par `CRM-117` T2, 2026-10-26** : `0119_lecture_du_manuel.test.sql`, fichier NEUF. 108 + 1 = 109, CALCULÉ — la
+# campagne complète était suspendue (décision 752).
+FICHIERS_SQL_ATTENDUS=109
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -766,7 +768,10 @@ FICHIERS_SQL_ATTENDUS=108
 # le cochage posé et tracé par la base, les points d'étape verrouillés, l'exigence de l'étape de départ). 4331 + 28 = 4359.
 # **+9 par `CRM-068` T2, 2026-10-26** : `0118_transition_exige_checklist` **9** assertions (le refus et son détail JSON,
 # le point libre qui ne compte pas, le point archivé toujours exigé, l'ordre des vérifications). 4359 + 9 = 4368.
-ASSERTIONS_ATTENDUES=4368
+# **+10 par `CRM-117` T2, 2026-10-26** : `0119_lecture_du_manuel` **10** assertions (le bucket privé, une seule politique de
+# lecture bornée au bucket, une session lit et n'écrit pas, `anon` ne lit rien) ; `0029` RÉVISÉE sans changer de plan.
+# 4368 + 10 = 4378, CALCULÉ (décision 752).
+ASSERTIONS_ATTENDUES=4378
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1176,7 +1181,9 @@ ASSERTIONS_ATTENDUES=4368
 # l'heure fermée au client, le point d'étape qui ne se retire pas, la lectrice et l'anonyme). 1232 + 4 = 1236, COMPTÉE.
 # **+1 par `CRM-068` T2, 2026-10-26** : `e2e/api/checklists.spec.ts` gagne le refus de `move_card` et son déblocage.
 # 1236 + 1 = 1237, COMPTÉE.
-SCENARIOS_API=1237
+# **+9 par `CRM-117` T2, 2026-10-26** : `e2e/api/manuel.spec.ts`, fichier NEUF, **9** scénarios (le miroir publié, quatre
+# refus sans session, les trois sessions du seed qui lisent, aucune écriture). 1237 + 9 = 1246, COMPTÉE.
+SCENARIOS_API=1246
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

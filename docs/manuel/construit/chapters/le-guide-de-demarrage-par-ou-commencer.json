@@ -1,0 +1,1341 @@
+{
+	"slug": "le-guide-de-demarrage-par-ou-commencer",
+	"title": "1 bis. Le guide de démarrage : par où commencer",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-079"
+						},
+						{
+							"type": "text",
+							"text": ", révisé par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-094"
+						},
+						{
+							"type": "text",
+							"text": " (six étapes, le workflow de départ, le guide flottant) et\npar "
+						},
+						{
+							"type": "code",
+							"text": "CRM-095"
+						},
+						{
+							"type": "text",
+							"text": " (l'étape « affaire » mène au board du premier channel). Décrit l'application réellement\nexécutée ; captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-079/"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-094/"
+						},
+						{
+							"type": "text",
+							"text": " et "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-095/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "À la première connexion, l'accueil ne montre aucun board — il n'y en a pas encore. Il montre à la\nplace le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Guide de démarrage"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", une liste de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "six étapes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " qui mènent chacune vers l'écran qui\nla réalise."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les six étapes, dans l'ordre :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Étape"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'elle établit"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Où elle se fait"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Rejoindre un espace de travail"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Votre compte appartient à un espace"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Aucun écran : elle est accomplie par votre connexion"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Créer un premier track"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Un dossier de premier niveau existe"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Réglages ▸ Arborescence"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Préparer un premier workflow"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Les affaires ont des étapes à suivre"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Réglages ▸ Workflows — ou, pour un administrateur, le bouton "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Créer le workflow de départ"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " du guide (§1 bis.4)"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Ouvrir un channel dans ce track"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Un onglet de travail existe sous ce track"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Nouveau channel"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", dans la barre d'onglets du track (chapitre 3.2 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "ter"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "), ou Réglages ▸ Arborescence"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Créer une première affaire"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Un board a quelque chose à montrer"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le board du premier channel : dès qu'un channel existe, le lien "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Ouvrir le board et créer l'affaire"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " y mène, et le bouton "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Nouvelle affaire"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " crée l'affaire (chapitre 4.8). Sans channel, le lien mène à l'arborescence"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Raccorder une boîte de réception"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le courrier entrant se classe dans les affaires"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Réglages ▸ État de la messagerie"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le workflow vient avant le channel, et ce n'est pas un détail d'ordre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : un channel suit\ntoujours un workflow, et un espace neuf n'en a "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "aucun"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Tant qu'il n'y en a pas, le formulaire\n« Nouveau channel » le dit — « Aucun workflow n'est affectable à ce track » — et propose le lien\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Nouveau workflow"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui ouvre l'éditeur et vous ramène ensuite au channel en cours (chapitre 5.2)."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "l-etat-d-une-etape-est-mesure-jamais-memorise",
+			"content": [
+				{
+					"type": "text",
+					"text": "1 bis.1 L'état d'une étape est mesuré, jamais mémorisé"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une étape n'est pas « cochée » : à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "chaque affichage"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le produit compte ce que votre compte voit\nréellement, et en déduit l'état. Trois conséquences directes, et elles sont voulues :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "supprimer votre dernier track "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "décoche"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " l'étape correspondante ; rien ne prétend qu'elle est\nfaite parce qu'elle l'a été un jour ; un workflow "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "archivé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ne compte pas non plus ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "une étape marquée "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Fait"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " garde son lien : accompli ne veut pas dire terminé, et rien n'empêche\nd'ajouter un second track ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "rien n'est enregistré sur votre appareil, et aucune progression n'est stockée sur le serveur."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque état est écrit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "en toutes lettres"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Fait"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "À faire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — à côté de son icône, et la\nprogression est une phrase, « 3 étape(s) sur 6 », jamais une barre seule."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-le-guide-dit-exactement-et-ce-qu-il-ne-dit-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "1 bis.2 Ce que le guide dit exactement, et ce qu'il ne dit pas"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une étape non accomplie écrit « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Vous n'en voyez aucun pour le moment"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », et le mot est choisi :\nle guide rapporte ce que "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "votre compte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " voit, jamais ce qui existe dans l'espace. Deux personnes\nn'ont donc pas nécessairement le même guide — un compte en lecture seule peut ne voir aucune boîte\nde réception là où l'espace en porte trois, et sa dernière étape restera « à faire ». Ce n'est pas\nun défaut d'affichage : ce sont ses droits, et le guide ne prétend jamais les contourner."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si vous n'administrez pas l'espace, les liens du guide vers un geste d'administration deviennent un texte\ngrisé, et un bandeau en tête de la liste dit pourquoi (section 3.6). Les écrans vers lesquels le guide renvoie\nportent eux-mêmes leurs refus, et c'est là que vous les rencontrerez, expliqués."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Lorsqu'une étape "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "n'a pas pu être mesurée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — une coupure réseau, une session expirée —, sa ligne\nle dit (« Cette étape n'a pas pu être vérifiée ») et propose de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "réessayer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ce qui relance\nréellement les six mesures. Les cinq autres étapes restent lisibles : une mesure manquante n'en\nefface aucune."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-masquer-et-le-retrouver",
+			"content": [
+				{
+					"type": "text",
+					"text": "1 bis.3 Le masquer, et le retrouver"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Masquer le guide"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le retire de l'accueil "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pour cette session"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et rend la place au\nboard. Un lien discret, "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rouvrir le guide de démarrage"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", reste sur l'accueil. Pour un\nadministrateur, il masque aussi la pastille du guide flottant (§1 bis.5)."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le guide vit aussi à son adresse propre, "
+				},
+				{
+					"type": "code",
+					"text": "/demarrage"
+				},
+				{
+					"type": "text",
+					"text": ", et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages ▸ Guide de démarrage"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le\nplace en tête de l'index. Là, il est toujours rendu : même masqué, même intégralement accompli.\nC'est ce qui le rend relançable."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le masquage survit au "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rechargement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'onglet, et disparaît quand l'onglet se ferme. C'est\ndélibéré : cette préférence d'affichage ne justifie aucun stockage durable sur votre appareil, et\nle produit n'en écrit aucun."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-workflow-de-depart-en-un-geste",
+			"content": [
+				{
+					"type": "text",
+					"text": "1 bis.4 Le workflow de départ, en un geste"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans un espace neuf, l'étape "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Préparer un premier workflow"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " porte, pour un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de\nl'espace, un bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Créer le workflow de départ"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Il pose en une fois le cycle commercial type :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "un workflow "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Cycle commercial"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", le workflow "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "par défaut"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de l'espace ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sept étapes — Prospection (l'étape initiale), Relance, Négociation, Signature, Réalisation,\nLivré, Perdu — et les nœuds correspondants dans le catalogue ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "onze transitions, dont « Marquer perdu » depuis chaque étape ouverte, qui "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "exige un motif"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Tout se modifie ensuite dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages ▸ Workflows"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", comme n'importe quel workflow :\nle renommer, retirer ou ajouter des étapes, changer ses transitions."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ce que l'écran montre pendant et après :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "pendant la création, le bouton est désactivé et dit « Création… » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "une fois le workflow posé, l'étape passe à "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Fait"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", le bouton disparaît, et le curseur du\nclavier se place sur le lien "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ouvrir l'éditeur de workflows"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de la même ligne ; un lecteur\nd'écran annonce « Workflow de départ créé » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "si un workflow existe déjà — créé entre-temps dans un autre onglet, ou par un collègue —, l'étape\npasse aussi à "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Fait"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et l'annonce dit « Cet espace a déjà un workflow : ouvrez l'éditeur pour\nle composer. » Ce n'est pas une erreur ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "si un nœud du cycle type a été "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "archivé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans le catalogue, la création est refusée et le\nmessage nomme ce nœud : restaurez-le depuis "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Réglages ▸ Catalogue de nœuds"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", ou composez votre\nworkflow à la main ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sur une coupure réseau, le message invite à réessayer, et le bouton reste disponible."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton n'est montré qu'aux administrateurs, et le serveur refuse ce geste à tout autre rôle.\nUn compte qui n'est pas administrateur voit l'étape et son lien, pas le bouton."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'écran ouvert se met à jour."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Si vous créez le workflow depuis le guide flottant alors que\nl'éditeur de workflows, le catalogue de nœuds ou un formulaire « Nouveau channel » est ouvert, cet\nécran se relit aussitôt : le formulaire de channel propose alors le nouveau workflow, sans perdre\nle nom déjà saisi."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-guide-flottant-des-administrateurs",
+			"content": [
+				{
+					"type": "text",
+					"text": "1 bis.5 Le guide flottant des administrateurs"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Pour un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le guide ne reste pas sur l'accueil : il le suit sur toutes les pages,\nsous la forme d'une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pastille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " en bas à droite de l'écran — « Démarrage · 2 sur 6 », ou « 2/6 »\nsur un téléphone. Les autres rôles gardent le guide sur l'accueil et à son adresse "
+				},
+				{
+					"type": "code",
+					"text": "/demarrage"
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "L'ouvrir"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un clic sur la pastille (ou "
+							},
+							{
+								"type": "code",
+								"text": "Entrée"
+							},
+							{
+								"type": "text",
+								"text": " quand elle a le focus) déploie au-dessus\nd'elle un panneau avec les six étapes, leurs liens et le bouton du workflow de départ."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Suivre un lien ne le referme pas."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Vous pouvez aller créer votre track, revenir, ouvrir\nl'éditeur : le panneau reste ouvert, et la progression est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "re-mesurée à chaque changement de\npage"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", sans recharger."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le refermer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le bouton "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Réduire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", la touche "
+							},
+							{
+								"type": "code",
+								"text": "Échap"
+							},
+							{
+								"type": "text",
+								"text": ", ou un nouveau clic sur la pastille.\nLe focus revient sur la pastille. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Masquer pour la session"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " la retire jusqu'à la fermeture de\nl'onglet — c'est la même préférence que "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "Masquer le guide"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ce qu'il retient"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : ouvert ou réduit, pour la durée de l'onglet seulement ; rien d'autre, et\nrien de durable sur votre appareil."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Quand il disparaît"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : une fois les six étapes accomplies. Il n'apparaît pas non plus sur\nl'accueil ni sur "
+							},
+							{
+								"type": "code",
+								"text": "/demarrage"
+							},
+							{
+								"type": "text",
+								"text": ", qui montrent déjà le guide dans la page."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le panneau n'est pas une fenêtre modale : le reste de la page reste utilisable, panneau ouvert. Il\ncouvre en revanche la partie droite de l'écran ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réduire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " la libère d'un geste."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui reste hors du guide."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Il "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "lit et renvoie"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", à une exception près : le workflow de départ,\nqu'il pose en un geste parce qu'aucun écran ne l'accomplissait en une fois. Il ne crée ni track, ni\nchannel, ni affaire : ces écrans existent, et le guide y mène."
+				}
+			]
+		}
+	]
+}

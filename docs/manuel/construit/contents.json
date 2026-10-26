@@ -1,0 +1,1074 @@
+{
+	"introduction": [
+		{
+			"type": "note",
+			"blocks": [
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Ce manuel est en cours de constitution."
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "\nChaque chapitre est rédigé "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "au moment où l'unité correspondante est livrée"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", à partir de\nl'application réellement exécutée, avec des captures produites lors de la vérification\nvisuelle. Aucun chapitre n'est écrit d'avance : décrire un écran qui n'existe pas encore\nproduirait une documentation fausse."
+						}
+					]
+				},
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les chapitres marqués « à livrer » n'ont pas encore d'implémentation. Leur intitulé indique\nl'unité de backlog qui les produira ("
+						},
+						{
+							"type": "code",
+							"text": "docs/BACKLOG.md"
+						},
+						{
+							"type": "text",
+							"text": ")."
+						}
+					]
+				},
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Relu et corrigé de bout en bout par "
+								},
+								{
+									"type": "code",
+									"text": "CRM-047"
+								},
+								{
+									"type": "text",
+									"text": ", le 2026-08-06"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", contre la pile réellement\nexécutée : treize écarts ont été relevés et douze refermés. Le treizième, INC-077, a été refermé\npar "
+						},
+						{
+							"type": "code",
+							"text": "CRM-019"
+						},
+						{
+							"type": "text",
+							"text": " le 2026-08-09. Ce que le manuel doit contenir et comment on le prouve sont spécifiés\ndans "
+						},
+						{
+							"type": "code",
+							"text": "docs/SPEC-manual.md"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "rule"
+		}
+	],
+	"chapters": [
+		{
+			"slug": "sommaire",
+			"title": "Sommaire",
+			"sections": [
+				{
+					"anchor": "prise-en-main",
+					"title": "Prise en main"
+				},
+				{
+					"anchor": "suivi-quotidien",
+					"title": "Suivi quotidien"
+				},
+				{
+					"anchor": "messagerie",
+					"title": "Messagerie"
+				},
+				{
+					"anchor": "administration",
+					"title": "Administration"
+				},
+				{
+					"anchor": "pilotage",
+					"title": "Pilotage"
+				}
+			]
+		},
+		{
+			"slug": "se-connecter-et-se-deconnecter",
+			"title": "1. Se connecter et se déconnecter",
+			"sections": [
+				{
+					"anchor": "qui-peut-entrer",
+					"title": "1.1 Qui peut entrer"
+				},
+				{
+					"anchor": "les-messages-de-l-ecran-de-connexion",
+					"title": "1.2 Les messages de l'écran de connexion"
+				},
+				{
+					"anchor": "la-session",
+					"title": "1.3 La session"
+				},
+				{
+					"anchor": "se-deconnecter",
+					"title": "1.4 Se déconnecter"
+				},
+				{
+					"anchor": "en-developpement",
+					"title": "1.5 En développement"
+				}
+			]
+		},
+		{
+			"slug": "le-guide-de-demarrage-par-ou-commencer",
+			"title": "1 bis. Le guide de démarrage : par où commencer",
+			"sections": [
+				{
+					"anchor": "l-etat-d-une-etape-est-mesure-jamais-memorise",
+					"title": "1 bis.1 L'état d'une étape est mesuré, jamais mémorisé"
+				},
+				{
+					"anchor": "ce-que-le-guide-dit-exactement-et-ce-qu-il-ne-dit-pas",
+					"title": "1 bis.2 Ce que le guide dit exactement, et ce qu'il ne dit pas"
+				},
+				{
+					"anchor": "le-masquer-et-le-retrouver",
+					"title": "1 bis.3 Le masquer, et le retrouver"
+				},
+				{
+					"anchor": "le-workflow-de-depart-en-un-geste",
+					"title": "1 bis.4 Le workflow de départ, en un geste"
+				},
+				{
+					"anchor": "le-guide-flottant-des-administrateurs",
+					"title": "1 bis.5 Le guide flottant des administrateurs"
+				}
+			]
+		},
+		{
+			"slug": "naviguer-barre-laterale-onglets-etats",
+			"title": "3. Naviguer : barre latérale, onglets, états",
+			"sections": [
+				{
+					"anchor": "la-disposition-de-l-ecran",
+					"title": "3.1 La disposition de l'écran"
+				},
+				{
+					"anchor": "le-fil-d-ariane-savoir-ou-vous-etes",
+					"title": "3.1 bis Le fil d'Ariane : savoir où vous êtes"
+				},
+				{
+					"anchor": "ce-que-vous-voyez-aujourd-hui-et-pourquoi",
+					"title": "3.2 Ce que vous voyez aujourd'hui, et pourquoi"
+				},
+				{
+					"anchor": "le-carnet-de-contacts",
+					"title": "3 ter. Le carnet de contacts"
+				},
+				{
+					"anchor": "la-section-tracks",
+					"title": "3.2 bis La section Tracks"
+				},
+				{
+					"anchor": "les-acces-par-track-et-par-channel",
+					"title": "3.2 quater Les accès par track et par channel"
+				},
+				{
+					"anchor": "les-onglets-d-un-track",
+					"title": "3.2 ter Les onglets d'un track"
+				},
+				{
+					"anchor": "la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol",
+					"title": "3.2 quinquies La description d'un track, d'un channel ou d'une affaire, au survol"
+				},
+				{
+					"anchor": "replier-la-barre-laterale",
+					"title": "3.3 Replier la barre latérale"
+				},
+				{
+					"anchor": "naviguer-au-clavier",
+					"title": "3.4 Naviguer au clavier"
+				},
+				{
+					"anchor": "quand-quelque-chose-ne-va-pas",
+					"title": "3.5 Quand quelque chose ne va pas"
+				},
+				{
+					"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire",
+					"title": "3.6 Les commandes grisées : ce que votre rôle vous laisse faire"
+				}
+			]
+		},
+		{
+			"slug": "ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui",
+			"title": "3 quater. Ma journée : ce qui est en retard, ce qui est dû aujourd'hui",
+			"sections": [
+				{
+					"anchor": "les-trois-sections",
+					"title": "3 quater.1 Les trois sections"
+				},
+				{
+					"anchor": "ce-qu-une-ligne-montre",
+					"title": "3 quater.2 Ce qu'une ligne montre"
+				},
+				{
+					"anchor": "mes-affaires-ou-tout-l-espace-de-travail",
+					"title": "3 quater.3 « Mes affaires » ou tout l'espace de travail"
+				},
+				{
+					"anchor": "ce-qui-n-apparait-pas-et-pourquoi",
+					"title": "3 quater.4 Ce qui n'apparaît pas, et pourquoi"
+				},
+				{
+					"anchor": "ce-que-l-ecran-ne-fait-pas",
+					"title": "3 quater.5 Ce que l'écran ne fait pas"
+				},
+				{
+					"anchor": "quand-il-n-y-a-rien",
+					"title": "3 quater.6 Quand il n'y a rien"
+				}
+			]
+		},
+		{
+			"slug": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps",
+			"title": "3 quinquies. Les affaires figées : ce qui dort depuis trop longtemps",
+			"sections": [
+				{
+					"anchor": "ce-qu-etre-figee-veut-dire",
+					"title": "3 quinquies.1 Ce qu'être « figée » veut dire"
+				},
+				{
+					"anchor": "ce-que-l-ecran-montre",
+					"title": "3 quinquies.2 Ce que l'écran montre"
+				},
+				{
+					"anchor": "deux-personnes-n-y-lisent-pas-la-meme-chose",
+					"title": "3 quinquies.3 Deux personnes n'y lisent pas la même chose"
+				},
+				{
+					"anchor": "la-relance-inscrite-dans-l-affaire",
+					"title": "3 quinquies.4 La relance inscrite dans l'affaire"
+				},
+				{
+					"anchor": "ce-que-le-produit-ne-fait-pas",
+					"title": "3 quinquies.5 Ce que le produit ne fait PAS"
+				},
+				{
+					"anchor": "quand-il-n-y-a-rien",
+					"title": "3 quinquies.6 Quand il n'y a rien"
+				}
+			]
+		},
+		{
+			"slug": "les-objectifs-le-tableau-blanc-de-l-equipe",
+			"title": "3 sexies. Les objectifs : le tableau blanc de l'équipe",
+			"sections": [
+				{
+					"anchor": "la-liste-des-tableaux",
+					"title": "3 sexies.1 La liste des tableaux"
+				},
+				{
+					"anchor": "le-canevas",
+					"title": "3 sexies.2 Le canevas"
+				},
+				{
+					"anchor": "poser-deplacer-et-modifier-un-bloc",
+					"title": "3 sexies.3 Poser, déplacer et modifier un bloc"
+				},
+				{
+					"anchor": "tracer-et-supprimer-une-fleche",
+					"title": "3 sexies.4 Tracer et supprimer une flèche"
+				},
+				{
+					"anchor": "supprimer-un-bloc",
+					"title": "3 sexies.5 Supprimer un bloc"
+				},
+				{
+					"anchor": "qui-peut-ecrire",
+					"title": "3 sexies.6 Qui peut écrire"
+				},
+				{
+					"anchor": "quand-il-n-y-a-rien",
+					"title": "3 sexies.7 Quand il n'y a rien"
+				}
+			]
+		},
+		{
+			"slug": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"title": "4. L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître",
+			"sections": [
+				{
+					"anchor": "ce-qu-une-affaire-porte",
+					"title": "4.1 Ce qu'une affaire porte"
+				},
+				{
+					"anchor": "l-adresse-email-de-l-affaire",
+					"title": "4.2 L'adresse email de l'affaire"
+				},
+				{
+					"anchor": "faire-avancer-une-affaire-ce-que-le-produit-autorise-et-ce-qu-il-refuse",
+					"title": "4.3 Faire avancer une affaire : ce que le produit autorise, et ce qu'il refuse"
+				},
+				{
+					"anchor": "archiver-n-est-pas-supprimer",
+					"title": "4.4 Archiver n'est pas supprimer"
+				},
+				{
+					"anchor": "qui-peut-faire-quoi",
+					"title": "4.5 Qui peut faire quoi"
+				},
+				{
+					"anchor": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
+					"title": "4.7 La fiche d'une affaire : son en-tête, son formulaire, et ce qu'ils montrent"
+				},
+				{
+					"anchor": "les-contacts-d-une-affaire-les-rattacher-les-detacher",
+					"title": "4.7 ter Les contacts d'une affaire : les rattacher, les détacher"
+				},
+				{
+					"anchor": "les-activites-d-une-affaire-appels-reunions-visios",
+					"title": "4.7 quater Les activités d'une affaire : appels, réunions, visios"
+				},
+				{
+					"anchor": "mettre-une-affaire-a-la-corbeille",
+					"title": "4.7 bis Mettre une affaire à la corbeille"
+				},
+				{
+					"anchor": "le-tableau-kanban-d-un-channel",
+					"title": "4.8 Le tableau kanban d'un channel"
+				},
+				{
+					"anchor": "la-vue-liste-d-un-channel",
+					"title": "4.9 La vue liste d'un channel"
+				},
+				{
+					"anchor": "mettre-une-affaire-en-sommeil-et-la-retrouver",
+					"title": "4.9 bis Mettre une affaire en sommeil, et la retrouver"
+				},
+				{
+					"anchor": "l-historique-et-la-discussion-d-une-affaire",
+					"title": "4.10 L'historique et la discussion d'une affaire"
+				},
+				{
+					"anchor": "ranger-une-affaire-dans-un-autre-dossier",
+					"title": "4.11 Ranger une affaire dans un autre dossier"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-encore-livre",
+					"title": "4.6 Ce qui n'est pas encore livré"
+				},
+				{
+					"anchor": "les-boites-de-reception-declarees",
+					"title": "4.12 Les boîtes de réception déclarées"
+				},
+				{
+					"anchor": "les-adresses-d-expedition",
+					"title": "4.13 Les adresses d'expédition"
+				},
+				{
+					"anchor": "ce-que-le-produit-fait-d-un-message-recu",
+					"title": "4.14 Ce que le produit fait d'un message reçu"
+				},
+				{
+					"anchor": "l-inbox-lire-et-trier-le-courrier-recu",
+					"title": "4.15 L'inbox : lire et trier le courrier reçu"
+				},
+				{
+					"anchor": "ecrire-et-repondre",
+					"title": "4.16 Écrire et répondre"
+				}
+			]
+		},
+		{
+			"slug": "administrer-l-arborescence-tracks-et-channels",
+			"title": "5. Administrer l'arborescence : tracks et channels",
+			"sections": [
+				{
+					"anchor": "un-track",
+					"title": "5.1 Un track"
+				},
+				{
+					"anchor": "un-channel",
+					"title": "5.2 Un channel"
+				},
+				{
+					"anchor": "quand-un-deplacement-est-indisponible-sans-etre-en-bout-de-liste",
+					"title": "5.3 Quand un déplacement est indisponible sans être en bout de liste"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-encore-la",
+					"title": "5.4 Ce qui n'est pas encore là"
+				},
+				{
+					"anchor": "les-budgets-d-un-track",
+					"title": "5.4 bis Les budgets d'un track"
+				},
+				{
+					"anchor": "les-occurrences-d-un-budget-recurrent",
+					"title": "5.5 Les occurrences d'un budget récurrent"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-la-cote-budgets",
+					"title": "5.6 Ce qui n'est pas là, côté budgets"
+				}
+			]
+		},
+		{
+			"slug": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+			"title": "5 bis. Composer un workflow : ses étapes, ses transitions et son formulaire",
+			"sections": [
+				{
+					"anchor": "creer-un-workflow",
+					"title": "5 bis.0 Créer un workflow"
+				},
+				{
+					"anchor": "creer-un-workflow-avec-l-ia",
+					"title": "5 bis.0 bis Créer un workflow avec l'IA"
+				},
+				{
+					"anchor": "faire-evoluer-un-workflow-avec-l-ia",
+					"title": "5 bis.0 ter Faire évoluer un workflow avec l'IA"
+				},
+				{
+					"anchor": "choisir-un-workflow",
+					"title": "5 bis.1 Choisir un workflow"
+				},
+				{
+					"anchor": "les-etapes",
+					"title": "5 bis.2 Les étapes"
+				},
+				{
+					"anchor": "les-transitions",
+					"title": "5 bis.3 Les transitions"
+				},
+				{
+					"anchor": "les-questions-du-formulaire",
+					"title": "5 bis.4 Les questions du formulaire"
+				},
+				{
+					"anchor": "la-visibilite-des-questions-etape-par-etape",
+					"title": "5 bis.4 bis La visibilité des questions, étape par étape"
+				},
+				{
+					"anchor": "ce-qu-il-faut-avoir-rempli-pour-emprunter-un-chemin",
+					"title": "5 bis.4 ter Ce qu'il faut avoir rempli pour emprunter un chemin"
+				},
+				{
+					"anchor": "ce-qu-une-exigence-fera-aux-affaires-en-cours",
+					"title": "5 bis.4 quater Ce qu'une exigence fera aux affaires en cours"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-encore-la",
+					"title": "5 bis.5 Ce qui n'est pas encore là"
+				},
+				{
+					"anchor": "garder-une-photographie-d-un-workflow-et-y-revenir",
+					"title": "5 bis.6 Garder une photographie d'un workflow, et y revenir"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-encore-la-cote-versions",
+					"title": "5 bis.7 Ce qui n'est pas encore là, côté versions"
+				}
+			]
+		},
+		{
+			"slug": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre",
+			"title": "5 ter. La corbeille : ce qui a été retiré, et comment le rendre",
+			"sections": [
+				{
+					"anchor": "restaurer",
+					"title": "5 ter.1 Restaurer"
+				},
+				{
+					"anchor": "ce-que-cet-ecran-ne-fait-pas",
+					"title": "5 ter.2 Ce que cet écran ne fait pas"
+				},
+				{
+					"anchor": "l-effacement-definitif",
+					"title": "5 ter.3 L'effacement définitif"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-encore-la",
+					"title": "5 ter.4 Ce qui n'est pas encore là"
+				}
+			]
+		},
+		{
+			"slug": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows",
+			"title": "5 quater. Le catalogue de nœuds : le vocabulaire de vos workflows",
+			"sections": [
+				{
+					"anchor": "ce-que-chaque-ligne-montre",
+					"title": "5 quater.1 Ce que chaque ligne montre"
+				},
+				{
+					"anchor": "creer-un-noeud",
+					"title": "5 quater.2 Créer un nœud"
+				},
+				{
+					"anchor": "modifier-un-noeud",
+					"title": "5 quater.3 Modifier un nœud"
+				},
+				{
+					"anchor": "archiver-un-noeud-et-le-retablir",
+					"title": "5 quater.4 Archiver un nœud, et le rétablir"
+				},
+				{
+					"anchor": "reordonner-le-catalogue",
+					"title": "5 quater.5 Réordonner le catalogue"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-encore-la",
+					"title": "5 quater.6 Ce qui n'est pas encore là"
+				}
+			]
+		},
+		{
+			"slug": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense",
+			"title": "5 quinquies. Les coûts d'un track : ce qui était prévu, ce qui a été dépensé",
+			"sections": [
+				{
+					"anchor": "la-phrase-sous-le-graphique-et-pourquoi-elle-compte",
+					"title": "5 quinquies.1 La phrase sous le graphique, et pourquoi elle compte"
+				},
+				{
+					"anchor": "plusieurs-devises",
+					"title": "5 quinquies.2 Plusieurs devises"
+				},
+				{
+					"anchor": "les-etats-que-vous-pouvez-rencontrer",
+					"title": "5 quinquies.3 Les états que vous pouvez rencontrer"
+				},
+				{
+					"anchor": "ce-que-cet-ecran-ne-fait-pas",
+					"title": "5 quinquies.4 Ce que cet écran ne fait pas"
+				},
+				{
+					"anchor": "deux-onglets-et-le-second-est-celui-ou-l-on-saisit",
+					"title": "5 quinquies.5 Deux onglets, et le second est celui où l'on saisit"
+				}
+			]
+		},
+		{
+			"slug": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne",
+			"title": "5 sexies. Le détail d'un budget : occurrence par occurrence, ligne par ligne",
+			"sections": [
+				{
+					"anchor": "filtrer-par-occurrence",
+					"title": "5 sexies.1 Filtrer par occurrence"
+				},
+				{
+					"anchor": "la-colonne-reel-laissee-vide",
+					"title": "5 sexies.2 La colonne « Réel » laissée vide"
+				},
+				{
+					"anchor": "les-etats-que-vous-pouvez-rencontrer",
+					"title": "5 sexies.3 Les états que vous pouvez rencontrer"
+				},
+				{
+					"anchor": "ce-que-cet-ecran-ne-fait-pas",
+					"title": "5 sexies.4 Ce que cet écran ne fait pas"
+				}
+			]
+		},
+		{
+			"slug": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track",
+			"title": "5 septies. Les coûts de tout l'espace de travail : un cumul par track",
+			"sections": [
+				{
+					"anchor": "ce-que-l-ecran-montre",
+					"title": "5 septies.1 Ce que l'écran montre"
+				},
+				{
+					"anchor": "les-devises-ne-se-melangent-jamais",
+					"title": "5 septies.2 Les devises ne se mélangent jamais"
+				},
+				{
+					"anchor": "votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue",
+					"title": "5 septies.3 Votre total est le vôtre, et il peut différer de celui d'un collègue"
+				},
+				{
+					"anchor": "ce-que-l-ecran-ecrit-quand-il-n-y-a-rien-a-montrer",
+					"title": "5 septies.4 Ce que l'écran écrit quand il n'y a rien à montrer"
+				},
+				{
+					"anchor": "ce-que-cet-ecran-ne-fait-pas",
+					"title": "5 septies.5 Ce que cet écran ne fait pas"
+				},
+				{
+					"anchor": "deux-onglets-ici-aussi",
+					"title": "5 septies.6 Deux onglets, ici aussi"
+				}
+			]
+		},
+		{
+			"slug": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite",
+			"title": "5 octies. L'onglet « À saisir » : renseigner les coûts réels à la suite",
+			"sections": [
+				{
+					"anchor": "saisir-au-clavier",
+					"title": "5 octies.1 Saisir, au clavier"
+				},
+				{
+					"anchor": "ce-que-vous-ne-pouvez-pas-modifier-reste-visible",
+					"title": "5 octies.2 Ce que vous ne pouvez pas modifier reste visible"
+				},
+				{
+					"anchor": "ce-que-l-ecran-ecrit-quand-quelque-chose-ne-va-pas",
+					"title": "5 octies.3 Ce que l'écran écrit quand quelque chose ne va pas"
+				},
+				{
+					"anchor": "le-compteur-de-l-onglet",
+					"title": "5 octies.4 Le compteur de l'onglet"
+				},
+				{
+					"anchor": "ce-que-cet-onglet-ne-fait-pas",
+					"title": "5 octies.5 Ce que cet onglet ne fait pas"
+				},
+				{
+					"anchor": "les-reels-d-une-ligne-dans-la-fiche-d-une-affaire",
+					"title": "5 octies.6 Les réels d'une ligne, dans la fiche d'une affaire"
+				}
+			]
+		},
+		{
+			"slug": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires",
+			"title": "5 nonies. L'entonnoir de conversion : où se tiennent vos affaires",
+			"sections": [
+				{
+					"anchor": "choisir-la-portee-tout-l-espace-un-track-un-channel",
+					"title": "5 nonies.0 Choisir la portée : tout l'espace, un track, un channel"
+				},
+				{
+					"anchor": "ce-que-l-ecran-montre",
+					"title": "5 nonies.1 Ce que l'écran montre"
+				},
+				{
+					"anchor": "quelles-affaires-y-entrent-et-lesquelles-n-y-entrent-pas",
+					"title": "5 nonies.2 Quelles affaires y entrent, et lesquelles n'y entrent pas"
+				},
+				{
+					"anchor": "la-probabilite-d-une-affaire-trois-niveaux-et-le-plus-precis-gagne",
+					"title": "5 nonies.3 La probabilité d'une affaire : trois niveaux, et le plus précis gagne"
+				},
+				{
+					"anchor": "vos-nombres-sont-les-votres-et-ils-peuvent-differer-de-ceux-d-un-collegue",
+					"title": "5 nonies.4 Vos nombres sont les vôtres, et ils peuvent différer de ceux d'un collègue"
+				},
+				{
+					"anchor": "les-devises-ne-se-melangent-jamais",
+					"title": "5 nonies.5 Les devises ne se mélangent jamais"
+				},
+				{
+					"anchor": "ce-que-l-ecran-ecrit-quand-il-n-y-a-rien-a-montrer",
+					"title": "5 nonies.6 Ce que l'écran écrit quand il n'y a rien à montrer"
+				},
+				{
+					"anchor": "ce-que-cet-ecran-ne-fait-pas",
+					"title": "5 nonies.7 Ce que cet écran ne fait pas"
+				}
+			]
+		},
+		{
+			"slug": "le-previsionnel-pondere-et-le-taux-de-conversion",
+			"title": "5 decies. Le prévisionnel pondéré et le taux de conversion",
+			"sections": [
+				{
+					"anchor": "le-previsionnel-pondere",
+					"title": "5 decies.1 Le prévisionnel pondéré"
+				},
+				{
+					"anchor": "le-taux-de-conversion-des-affaires-decidees",
+					"title": "5 decies.2 Le taux de conversion des affaires décidées"
+				},
+				{
+					"anchor": "aucun-objectif-chiffre-n-est-confronte-a-ce-previsionnel",
+					"title": "5 decies.3 Aucun objectif chiffré n'est confronté à ce prévisionnel"
+				},
+				{
+					"anchor": "ce-que-ces-deux-nombres-ne-sont-pas",
+					"title": "5 decies.4 Ce que ces deux nombres ne sont pas"
+				}
+			]
+		},
+		{
+			"slug": "le-temps-passe-et-le-cout-du-personnel",
+			"title": "5 undecies. Le temps passé et le coût du personnel",
+			"sections": [
+				{
+					"anchor": "saisir-sa-semaine",
+					"title": "5 undecies.1 Saisir sa semaine"
+				},
+				{
+					"anchor": "saisir-une-journee-en-heures",
+					"title": "5 undecies.2 Saisir une journée en heures"
+				},
+				{
+					"anchor": "saisir-pour-quelqu-un-d-autre",
+					"title": "5 undecies.3 Saisir pour quelqu'un d'autre"
+				},
+				{
+					"anchor": "le-rapport-mensuel",
+					"title": "5 undecies.4 Le rapport mensuel"
+				},
+				{
+					"anchor": "regler-le-cout-du-personnel",
+					"title": "5 undecies.5 Régler le coût du personnel"
+				},
+				{
+					"anchor": "le-cout-du-personnel-a-cote-des-couts",
+					"title": "5 undecies.6 Le coût du personnel à côté des coûts"
+				},
+				{
+					"anchor": "saisir-son-temps-depuis-la-fiche-d-une-affaire",
+					"title": "5 undecies.6 bis Saisir son temps depuis la fiche d'une affaire"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-offert",
+					"title": "5 undecies.7 Ce qui n'est pas offert"
+				}
+			]
+		},
+		{
+			"slug": "les-recettes-d-une-affaire-et-sa-rentabilite",
+			"title": "5 duodecies. Les recettes d'une affaire et sa rentabilité",
+			"sections": [
+				{
+					"anchor": "saisir-les-recettes-dans-la-fiche",
+					"title": "5 duodecies.1 Saisir les recettes dans la fiche"
+				},
+				{
+					"anchor": "la-rentabilite-d-une-affaire",
+					"title": "5 duodecies.2 La rentabilité d'une affaire"
+				},
+				{
+					"anchor": "l-ecran-rentabilite",
+					"title": "5 duodecies.3 L'écran « Rentabilité »"
+				},
+				{
+					"anchor": "l-onglet-a-saisir",
+					"title": "5 duodecies.4 L'onglet « À saisir »"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-offert",
+					"title": "5 duodecies.5 Ce qui n'est pas offert"
+				}
+			]
+		},
+		{
+			"slug": "consulter-l-etat-de-la-messagerie",
+			"title": "6. Consulter l'état de la messagerie",
+			"sections": [
+				{
+					"anchor": "ce-qui-n-est-pas-encore-la",
+					"title": "6.1 Ce qui n'est pas encore là"
+				}
+			]
+		},
+		{
+			"slug": "ecrire-des-modeles-d-emails-et-les-previsualiser",
+			"title": "7. Écrire des modèles d'emails et les prévisualiser",
+			"sections": [
+				{
+					"anchor": "ecrire-un-modele",
+					"title": "7.1 Écrire un modèle"
+				},
+				{
+					"anchor": "previsualiser-un-modele-sur-une-affaire-reelle",
+					"title": "7.2 Prévisualiser un modèle sur une affaire réelle"
+				},
+				{
+					"anchor": "supprimer-un-modele",
+					"title": "7.3 Supprimer un modèle"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-encore-offert",
+					"title": "7.4 Ce qui n'est pas encore offert"
+				}
+			]
+		},
+		{
+			"slug": "signer-les-messages-expedies-depuis-une-identite",
+			"title": "7 bis. Signer les messages expédiés depuis une identité",
+			"sections": [
+				{
+					"anchor": "ecrire-modifier-supprimer-une-signature",
+					"title": "7 bis.1 Écrire, modifier, supprimer une signature"
+				},
+				{
+					"anchor": "ou-la-signature-apparait-dans-le-message",
+					"title": "7 bis.2 Où la signature apparaît dans le message"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-offert",
+					"title": "7 bis.3 Ce qui n'est pas offert"
+				}
+			]
+		},
+		{
+			"slug": "enchainer-des-relances-les-sequences",
+			"title": "7 ter. Enchaîner des relances : les séquences",
+			"sections": [
+				{
+					"anchor": "ecrire-une-cadence",
+					"title": "7 ter.1 Écrire une cadence"
+				},
+				{
+					"anchor": "changer-l-ordre-des-paliers",
+					"title": "7 ter.2 Changer l'ordre des paliers"
+				},
+				{
+					"anchor": "supprimer-une-sequence",
+					"title": "7 ter.3 Supprimer une séquence"
+				},
+				{
+					"anchor": "armer-une-relance-sur-une-affaire",
+					"title": "7 ter.4 Armer une relance sur une affaire"
+				},
+				{
+					"anchor": "ce-qui-arrete-une-relance-sans-que-vous-ayez-rien-a-faire",
+					"title": "7 ter.5 Ce qui arrête une relance, sans que vous ayez rien à faire"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-offert",
+					"title": "7 ter.6 Ce qui n'est pas offert"
+				}
+			]
+		},
+		{
+			"slug": "vos-notifications-savoir-qu-on-vous-a-nomme",
+			"title": "8. Vos notifications : savoir qu'on vous a nommé",
+			"sections": [
+				{
+					"anchor": "ce-que-la-cloche-annonce",
+					"title": "8.1 Ce que la cloche annonce"
+				},
+				{
+					"anchor": "ce-que-le-panneau-montre",
+					"title": "8.2 Ce que le panneau montre"
+				},
+				{
+					"anchor": "marquer-lu-et-marquer-non-lu",
+					"title": "8.3 Marquer lu, et marquer non lu"
+				},
+				{
+					"anchor": "la-mise-a-jour-est-immediate",
+					"title": "8.4 La mise à jour est immédiate"
+				},
+				{
+					"anchor": "mentionner-quelqu-un-dans-un-commentaire",
+					"title": "8.5 Mentionner quelqu’un dans un commentaire"
+				},
+				{
+					"anchor": "choisir-ce-que-vous-recevez",
+					"title": "8.6 Choisir ce que vous recevez"
+				},
+				{
+					"anchor": "ce-qui-n-est-pas-encore-la",
+					"title": "8.7 Ce qui n'est pas encore là"
+				}
+			]
+		},
+		{
+			"slug": "retrouver-n-importe-quoi-la-recherche",
+			"title": "9. Retrouver n'importe quoi : la recherche",
+			"sections": [
+				{
+					"anchor": "l-ouvrir",
+					"title": "9.1 L'ouvrir"
+				},
+				{
+					"anchor": "ce-qu-elle-cherche",
+					"title": "9.2 Ce qu'elle cherche"
+				},
+				{
+					"anchor": "ce-qu-elle-comprend-et-ce-qu-elle-ne-comprend-pas",
+					"title": "9.3 Ce qu'elle comprend, et ce qu'elle ne comprend pas"
+				},
+				{
+					"anchor": "la-parcourir-au-clavier-et-y-aller",
+					"title": "9.4 La parcourir au clavier, et y aller"
+				},
+				{
+					"anchor": "vous-ne-trouvez-que-ce-que-vous-avez-le-droit-de-lire",
+					"title": "9.5 Vous ne trouvez que ce que vous avez le droit de lire"
+				},
+				{
+					"anchor": "ce-que-la-recherche-affiche-et-ce-qu-elle-ne-fait-pas",
+					"title": "9.6 Ce que la recherche affiche, et ce qu'elle ne fait pas"
+				}
+			]
+		},
+		{
+			"slug": "la-plateforme-espaces-membres-et-superadministrateurs",
+			"title": "10. La plateforme : espaces, membres et superadministrateurs",
+			"sections": [
+				{
+					"anchor": "qui-est-superadministrateur",
+					"title": "10.1 Qui est superadministrateur"
+				},
+				{
+					"anchor": "ouvrir-la-plateforme",
+					"title": "10.2 Ouvrir la plateforme"
+				},
+				{
+					"anchor": "creer-un-espace",
+					"title": "10.3 Créer un espace"
+				},
+				{
+					"anchor": "les-membres-d-un-espace",
+					"title": "10.4 Les membres d'un espace"
+				},
+				{
+					"anchor": "les-attentes",
+					"title": "10.5 Les attentes"
+				},
+				{
+					"anchor": "modifier-ou-supprimer-un-espace",
+					"title": "10.6 Modifier ou supprimer un espace"
+				},
+				{
+					"anchor": "les-utilisateurs",
+					"title": "10.6 bis Les utilisateurs"
+				},
+				{
+					"anchor": "les-superadministrateurs-et-le-journal",
+					"title": "10.7 Les superadministrateurs et le journal"
+				},
+				{
+					"anchor": "ce-que-la-plateforme-n-offre-pas",
+					"title": "10.8 Ce que la plateforme n'offre pas"
+				}
+			]
+		},
+		{
+			"slug": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role",
+			"title": "10 bis. Les membres de votre espace : qui y travaille, avec quel rôle",
+			"sections": [
+				{
+					"anchor": "ouvrir-l-ecran",
+					"title": "10 bis.1 Ouvrir l'écran"
+				},
+				{
+					"anchor": "si-vous-n-administrez-pas-l-espace",
+					"title": "10 bis.2 Si vous n'administrez pas l'espace"
+				},
+				{
+					"anchor": "changer-le-role-d-un-membre",
+					"title": "10 bis.3 Changer le rôle d'un membre"
+				},
+				{
+					"anchor": "retirer-un-membre-de-l-espace",
+					"title": "10 bis.4 Retirer un membre de l'espace"
+				},
+				{
+					"anchor": "les-attentes-les-personnes-qu-on-attend",
+					"title": "10 bis.5 Les attentes : les personnes qu'on attend"
+				},
+				{
+					"anchor": "les-droits-fins-restreindre-ou-rouvrir-un-track-ou-un-channel",
+					"title": "10 bis.6 Les droits fins : restreindre ou rouvrir un track ou un channel"
+				},
+				{
+					"anchor": "quand-un-geste-n-aboutit-pas",
+					"title": "10 bis.7 Quand un geste n'aboutit pas"
+				}
+			]
+		},
+		{
+			"slug": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace",
+			"title": "10 ter. Le journal d'audit : ce qui s'est fait dans votre espace",
+			"sections": [
+				{
+					"anchor": "ouvrir-le-journal",
+					"title": "10 ter.1 Ouvrir le journal"
+				},
+				{
+					"anchor": "lire-une-entree",
+					"title": "10 ter.2 Lire une entrée"
+				},
+				{
+					"anchor": "filtrer",
+					"title": "10 ter.3 Filtrer"
+				},
+				{
+					"anchor": "ce-que-le-journal-ne-fait-pas",
+					"title": "10 ter.4 Ce que le journal ne fait pas"
+				}
+			]
+		},
+		{
+			"slug": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant",
+			"title": "11. Le connecteur MCP : piloter le CRM depuis votre assistant",
+			"sections": [
+				{
+					"anchor": "ce-que-l-assistant-a-le-droit-de-faire",
+					"title": "11.1 Ce que l'assistant a le droit de faire"
+				},
+				{
+					"anchor": "ajouter-le-connecteur-a-votre-assistant",
+					"title": "11.2 Ajouter le connecteur à votre assistant"
+				},
+				{
+					"anchor": "accorder-des-droits-du-connecteur",
+					"title": "11.3 Accorder des droits du connecteur"
+				},
+				{
+					"anchor": "le-journal-des-appels",
+					"title": "11.4 Le journal des appels"
+				},
+				{
+					"anchor": "ce-que-l-assistant-sait-faire",
+					"title": "11.5 Ce que l'assistant sait faire"
+				},
+				{
+					"anchor": "ce-que-le-connecteur-n-offre-pas",
+					"title": "11.6 Ce que le connecteur n'offre pas"
+				}
+			]
+		},
+		{
+			"slug": "annexe-a-ce-que-contient-l-espace-de-demonstration",
+			"title": "Annexe A — Ce que contient l'espace de démonstration",
+			"sections": []
+		},
+		{
+			"slug": "regles-de-redaction-de-ce-manuel",
+			"title": "Règles de rédaction de ce manuel",
+			"sections": []
+		}
+	]
+}

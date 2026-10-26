@@ -1,0 +1,1353 @@
+{
+	"slug": "la-plateforme-espaces-membres-et-superadministrateurs",
+	"title": "10. La plateforme : espaces, membres et superadministrateurs",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-101"
+						},
+						{
+							"type": "text",
+							"text": " ; captures : "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-101/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "plateforme"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est l'étage au-dessus des espaces de travail. On y crée un espace, on y désigne qui en est membre et\navec quel rôle, et on y inscrit les personnes attendues. Elle est réservée aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "superadministrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "qui-est-superadministrateur",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.1 Qui est superadministrateur"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux sortes de personnes le sont :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "celles qui portent le rôle "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "code",
+										"text": "admin"
+									},
+									{
+										"type": "text",
+										"text": " chez LeLabs"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : elles exploitent le SSO, et la règle du domaine fait d'elles les\nadministratrices de toute application qui s'y branche ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "celles qui ont reçu le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "drapeau"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans le CRM."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le tout premier drapeau"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est posé une seule fois, à la première connexion d'une adresse que l'exploitant a désignée\nà l'installation. La connexion doit être vérifiée chez LeLabs. Dès qu'un superadministrateur existe, plus aucun ne\ns'amorce de cette façon : les suivants reçoivent le drapeau de la main d'un superadministrateur."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Être superadministrateur ne donne accès à aucune donnée commerciale."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " On ne lit ni les tracks, ni les affaires, ni\nles coûts d'un espace dont on n'est pas membre. Pour y travailler, un superadministrateur s'ajoute lui-même comme\nmembre de cet espace, et ce geste est inscrit au journal."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ouvrir-la-plateforme",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.2 Ouvrir la plateforme"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un superadministrateur voit l'entrée "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Plateforme »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " en bas de la barre latérale, après « Réglages ». Personne\nd'autre ne la voit. Une adresse de la plateforme ouverte sans le drapeau affiche "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Accès réservé »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La plateforme a quatre onglets : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Espaces »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Utilisateurs »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Superadministrateurs »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Journal »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "creer-un-espace",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.3 Créer un espace"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans l'onglet « Espaces », "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nouvel espace »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ouvre un formulaire à trois champs :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Nom »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Identifiant court »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : en minuscules, chiffres et tirets. Il nomme les dossiers de la messagerie et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ne se\nmodifie plus ensuite"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Domaine entrant (facultatif) »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le domaine des adresses de ses affaires."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Créer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ouvre la fiche du nouvel espace. Un espace naît "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sans membre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : sa fiche le dit, et la liste porte\n« Aucun administrateur ». Donnez-lui son premier administrateur, comme décrit ci-dessous. À sa première connexion, cet\nadministrateur trouvera le guide de démarrage, qui pose le workflow de départ (chapitre 1 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "bis"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-membres-d-un-espace",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.4 Les membres d'un espace"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La fiche d'un espace liste ses "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Membres »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Le rôle d'un membre se change dans sa ligne, et s'enregistre dès qu'on\nle choisit."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Ajouter un membre »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " cherche une personne "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "par son nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", deux caractères au moins, puis lui donne un rôle. Seules\nles personnes qui se sont déjà connectées au CRM y figurent."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Retirer »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " demande confirmation. Les droits fins de la personne sur les tracks et les channels de cet espace\npartent avec son appartenance."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un espace garde toujours au moins un administrateur."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le premier membre d'un espace doit être administrateur, et le\ndernier administrateur ne se retire ni ne se rétrograde. Le refus le dit, et indique quoi faire."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-attentes",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.5 Les attentes"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une personne qui ne s'est jamais connectée n'a pas encore de nom dans le CRM. On l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "attend"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " à son adresse :\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Inscrire une attente »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", avec l'adresse et le rôle. Elle devient membre à sa première connexion LeLabs, si son\nadresse et son compte sont vérifiés (chapitre 1). Réinscrire une adresse remplace son rôle, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Retirer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " efface\nl'attente, sans confirmation."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans un espace qui n'a encore aucun administrateur, une attente qui n'est pas administratrice porte "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« En\nsuspens »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : elle ne se consommera qu'après l'arrivée d'un administrateur. Inscrivez donc d'abord l'administrateur."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Dernière tentative »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dit si la personne attendue a déjà essayé de se connecter, et pourquoi elle a été refusée :\n« Refusée le 21/10 : compte LeLabs pas encore vérifié », avec le nombre de refus quand il y en a eu plusieurs. Trois\nmotifs existent : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "adresse non vérifiée chez LeLabs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (la personne doit confirmer son adresse dans son compte\nLeLabs), "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "compte LeLabs pas encore vérifié"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (LeLabs doit vérifier son compte), "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "l'espace n'a pas encore\nd'administrateur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (nommez-en un). « Aucune tentative refusée » veut dire que la personne n'a pas essayé — ou que son\ndernier essai date de plus de 90 jours : le CRM n'en garde pas la trace au-delà. Une adresse que personne n'attend ne\nlaisse jamais de trace, et réinscrire une attente efface la sienne."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "modifier-ou-supprimer-un-espace",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.6 Modifier ou supprimer un espace"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Modifier »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " change le nom et le domaine entrant d'un espace. Son identifiant court ne change pas."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Supprimer l’espace »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", en bas de la fiche, ouvre une confirmation."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ce qu'elle dit :"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ce que l'espace emporte avec lui — ses appartenances, ses attentes, et tout son contenu."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ce qu'elle demande :"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "saisir l'identifiant court"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de l'espace. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Supprimer définitivement »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " reste\ninactif tant que la saisie diffère."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ce qui ne se rattrape pas :"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " la suppression est définitive. Seule la restauration d'une sauvegarde la défait."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-utilisateurs",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.6 bis Les utilisateurs"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'onglet "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Utilisateurs »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste toutes les personnes admises au moins une fois dans le CRM. Pour chacune, il\naffiche :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "ses "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "espaces"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", chacun suivi de son rôle ; un clic sur un espace ouvre sa fiche. « Aucun espace » dit qu'elle n'en a\nplus ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "la pilule "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Superadministrateur »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", si elle porte le drapeau ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sa "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "dernière activité au connecteur MCP"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", ou « Jamais connecté » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "la date de sa première admission."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Rechercher un utilisateur »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " filtre la liste par nom pendant que vous tapez, sans tenir compte des accents ni des\nmajuscules. La liste montre au plus 200 personnes ; au-delà, elle le dit, et la recherche affine."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'onglet ne modifie rien. Pour ajouter une personne à un espace, ouvrez la fiche de l'espace (§10.4). Pour lui donner\nle drapeau, passez par l'onglet « Superadministrateurs » (§10.7). "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Droits du connecteur »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sur chaque ligne, mène\nà ses droits du connecteur MCP (chapitre 11). Le rôle "
+				},
+				{
+					"type": "code",
+					"text": "admin"
+				},
+				{
+					"type": "text",
+					"text": " LeLabs n'y est pas affiché : le CRM\nne le connaît que par la connexion."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-superadministrateurs-et-le-journal",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.7 Les superadministrateurs et le journal"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'onglet "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Superadministrateurs »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste les drapeaux posés dans le CRM."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Amorçage »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " désigne le premier drapeau, posé à l'installation."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Accorder le drapeau »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " le donne à une personne déjà connectée ; "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Retirer »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " le lui reprend, après\nconfirmation. Le dernier drapeau ne se retire pas : accordez-en un autre d'abord."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Les porteurs du rôle "
+									},
+									{
+										"type": "code",
+										"text": "admin"
+									},
+									{
+										"type": "text",
+										"text": " LeLabs"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " sont aussi superadministrateurs, mais n'y figurent pas."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'onglet "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Journal »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " retrace chaque geste de la plateforme, du plus récent au plus ancien :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "la date ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "qui a agi ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "le geste, en mots ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "son détail."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Entrées plus anciennes »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " remonte le temps, une page après l'autre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le journal de la plateforme et celui des appels du connecteur sont "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "conservés un an"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Chaque nuit, le CRM efface les\nentrées plus anciennes, et inscrit le geste "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Journaux purgés »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " avec le nombre d'entrées effacées de chacun. Personne\nne peut modifier ni supprimer une entrée de ces journaux (chapitre 10 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "ter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-la-plateforme-n-offre-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "10.8 Ce que la plateforme n'offre pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Gérer ses propres membres en tant qu'administrateur d'espace"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", sans être superadministrateur : c'est l'écran\n« Réglages ▸ Membres » (chapitre 10 "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "bis"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), avec les attentes et les droits fins par track et par channel."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Changer l'identifiant court d'un espace."
+									}
+								]
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Annuler une suppression."
+									}
+								]
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

@@ -1,0 +1,2735 @@
+{
+	"slug": "administrer-l-arborescence-tracks-et-channels",
+	"title": "5. Administrer l'arborescence : tracks et channels",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-075"
+						},
+						{
+							"type": "text",
+							"text": " ; les règles d'accès sont celles de "
+						},
+						{
+							"type": "code",
+							"text": "CRM-020"
+						},
+						{
+							"type": "text",
+							"text": " et "
+						},
+						{
+							"type": "code",
+							"text": "CRM-021"
+						},
+						{
+							"type": "text",
+							"text": ", inchangées."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « Arborescence : tracks et channels »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'index."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ouvrir « Réglages » affiche d'abord un INDEX des sections de réglages, sous le titre\n« Sections de réglages » — « Arborescence : tracks et channels » en est la première entrée. Ce\nn'est plus, depuis "
+				},
+				{
+					"type": "code",
+					"text": "CRM-075"
+				},
+				{
+					"type": "text",
+					"text": ", la page sans contenu qu'elle a été : chaque nouvelle section de\nréglages (permissions, workflows) y ajoutera sa propre entrée plutôt que de déplacer une adresse\ndéjà partagée."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'écriture est réservée aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace de travail. Les autres membres\nvoient l'arborescence — ils ont le droit de la lire — et leurs modifications sont refusées par le\nserveur avec le message « Seul un administrateur de cet espace de travail peut modifier\nl'arborescence. »"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les boutons ne sont pas masqués pour autant"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et c'est délibéré : votre rôle peut changer pendant\nque la page est ouverte, et cacher un bouton sur la foi d'un rôle lu à l'arrivée reviendrait à vous\ninterdire un geste qui vous est peut-être permis. Le produit préfère vous montrer le refus réel."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "un-track",
+			"content": [
+				{
+					"type": "text",
+					"text": "5.1 Un track"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Créer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : bouton « Nouveau track ». Le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "slug"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — l'identifiant qui apparaît dans l'adresse — est\nproposé à partir du nom et reste modifiable tant que vous n'avez pas validé. Il n'accepte que des\nminuscules, des chiffres et des tirets simples ; le formulaire le dit avant l'envoi, et le serveur\nrefuse un slug déjà pris dans l'espace de travail avec « Ce slug est déjà utilisé. »"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Renommer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le crayon. Vous modifiez le nom, la couleur, l'icône et la description."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Choisir la couleur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le champ « Couleur » propose cinq couleurs, chacune avec sa pastille et son nom — Bleu,\nVert, Jaune, Rouge, Gris. Cliquez sur celle que vous voulez, ou, au clavier, atteignez le groupe avec "
+							},
+							{
+								"type": "code",
+								"text": "Tab"
+							},
+							{
+								"type": "text",
+								"text": " et\nchangez de couleur avec les flèches. Un nouveau track est Gris tant que vous n'en choisissez pas d'autre. La couleur\ncolore sa pilule dans la barre latérale et dans cet écran. "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "Livré par "
+									},
+									{
+										"type": "code",
+										"text": "CRM-116"
+									},
+									{
+										"type": "text",
+										"text": " ; captures dans\n"
+									},
+									{
+										"type": "code",
+										"text": "docs/captures/CRM-116/"
+									},
+									{
+										"type": "text",
+										"text": "."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le slug ne se modifie pas depuis cet écran"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : c'est l'adresse que vous partagez, et la changer\nromprait les liens déjà transmis sans que rien ne les rattrape."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Réordonner"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : les flèches. Elles sont "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "désactivées"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " en tête et en fin de liste, et disent\npourquoi plutôt que de disparaître."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Archiver"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la boîte. L'action demande une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "confirmation"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " qui nomme le track. Un track archivé\ndisparaît de la barre latérale et de son adresse, "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "sans être supprimé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Désarchiver"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : cochez « Afficher les archivés » pour les faire réapparaître, puis utilisez la\nflèche de restauration. Aucune confirmation n'est demandée : ce geste ne retire rien."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Mettre à la corbeille"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la corbeille. L'action demande une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "confirmation"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " qui nomme le track\net "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "dit ce qui devient inaccessible avec lui"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le nombre de ses channels, puis celui de leurs\naffaires. Le track quitte\nalors l'arborescence et se retrouve dans "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Réglages ▸ Corbeille"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", d'où il se restaure\n(chapitre 5 ter)."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La barre latérale suit vos gestes, sans rechargement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : un track créé y paraît aussitôt, un track\nrenommé ou recoloré y change, un track archivé ou mis à la corbeille la quitte — et il y revient\ndès que vous le désarchivez ou le restaurez depuis la corbeille. L'ancienne liste reste affichée le\ntemps de la mise à jour : la barre ne clignote pas."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La suppression définitive n'existe pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et ce n'est pas un oubli : le produit ne l'expose nulle\npart, et la base la refuse. Archiver masque ; mettre à la corbeille retire. Les deux sont\nréversibles, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rien n'efface"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Archiver et mettre à la corbeille sont deux états distincts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et ils ne se remplacent pas :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null,
+				null
+			],
+			"header": [
+				[],
+				[
+					{
+						"type": "text",
+						"text": "Archiver"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Mettre à la corbeille"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Ce que cela veut dire"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "dossier clos, que l'on conserve"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "erreur que l'on retire"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Où l'objet se retrouve"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "dans la même liste, en cochant « Afficher les archivés »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "dans "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Réglages ▸ Corbeille"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Comment on revient en arrière"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "« Désarchiver »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "« Restaurer », depuis la corbeille"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Confirmation demandée"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "oui"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "oui, "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "avec le décompte de ce qui devient inaccessible"
+								}
+							]
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un track archivé peut être mis à la corbeille, et il "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "reste archivé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le restaurer le rend\narchivé, tel qu'il était."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Archiver un track n'archive pas ses channels."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ils restent dans l'état où ils étaient, et\nréapparaissent exactement tels quels si vous désarchivez le track."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Mettre un track à la corbeille n'y met pas ses channels"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " non plus — et c'est la raison d'être du\ndécompte de la confirmation. Ses channels et leurs affaires ne sont pas retirés : ils deviennent\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "inaccessibles"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " tant que le track reste dans la corbeille, et redeviennent joignables dès qu'il est\nrestauré, exactement tels qu'ils étaient. C'est aussi pourquoi un channel dont le track est dans la\ncorbeille "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne se restaure pas seul"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le produit vous demande de restaurer le track d'abord."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "un-channel",
+			"content": [
+				{
+					"type": "text",
+					"text": "5.2 Un channel"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dépliez un track avec le chevron : ses channels sont chargés à ce moment-là, et pas avant."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les mêmes six gestes s'appliquent, avec deux différences :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "L'ordre d'un channel se compte dans son track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", pas dans l'espace de travail entier ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "choisir un workflow est obligatoire."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " La liste ne propose que les workflows réellement\naffectables : ceux de l'espace de travail entier, et ceux propres à ce track. Le workflow par\ndéfaut est présenté en tête et signalé comme tel, "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "mais il n'est pas coché"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — le produit ne\nchoisit pas à votre place. Tant qu'aucun workflow n'est choisi, « Créer » reste indisponible."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un channel a sa propre couleur"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-116"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Elle se choisit comme celle d'un track, avec les mêmes cinq\ncouleurs, à la création comme en modification, et un nouveau channel est Gris tant que vous n'en choisissez pas\nd'autre. Elle s'affiche en "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pastille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " devant le nom de son onglet (section 3.2 ter) et en "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pilule"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dans\nl'arborescence. Elle aide à repérer un channel d'un coup d'œil ; elle ne remplace jamais son nom."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si aucun workflow n'est affectable à ce track, l'écran vous le dit au lieu d'afficher un formulaire\nque le serveur refuserait. C'est le cas d'un espace neuf : le guide de démarrage pose alors le\nworkflow de départ en un geste (§1 bis.4), et un formulaire resté ouvert le propose aussitôt."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le channel a besoin d'un workflow qui n'existe pas encore ?"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le lien "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Nouveau workflow"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous la\nliste des workflows, ouvre l'éditeur de workflows avec son formulaire de création déjà ouvert, la\nportée réglée sur ce track — vous pouvez choisir « Global ». Créez le workflow, ajoutez-lui ses\nétapes, puis cliquez "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Revenir au nouveau channel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", dans le bandeau en haut de l'éditeur : le\nformulaire du channel se rouvre là où vous l'aviez laissé — dans la vue du track ou dans\nl'arborescence —, avec le nom, l'identifiant, la couleur et la description déjà saisis, et le workflow créé déjà\nchoisi. "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-100"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le lien n'existe que dans le formulaire de "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "création"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ; changer le workflow d'un channel existant\nreste un geste de modification."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un workflow créé "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "propre à un autre track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ne peut pas être choisi pour ce channel : le formulaire\nle dit sous la liste, et attend votre choix."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Rien n'est créé tant que vous n'avez pas cliqué "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Créer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans le formulaire du channel : quitter\nl'éditeur par un autre chemin laisse le workflow créé, mais aucun channel."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "quand-un-deplacement-est-indisponible-sans-etre-en-bout-de-liste",
+			"content": [
+				{
+					"type": "text",
+					"text": "5.3 Quand un déplacement est indisponible sans être en bout de liste"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Il arrive qu'une flèche soit désactivée alors que la ligne n'est ni en tête ni en fin. L'infobulle\nl'explique : deux positions voisines sont "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "indistinctes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et le déplacement ne changerait rien à\nl'ordre affiché. Le produit préfère le dire plutôt que d'écrire une valeur sans effet. Remettre une\ntelle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-encore-la",
+			"content": [
+				{
+					"type": "text",
+					"text": "5.4 Ce qui n'est pas encore là"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le geste de mise à la corbeille existe pour un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "channel"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", pas pour une\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "affaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : une affaire ne se retire depuis aucun écran pour l'instant."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un objet retiré "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "disparaît de cette liste immédiatement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", mais la barre latérale garde le track\njusqu'au prochain chargement de la page. Le même décalage existe depuis toujours pour l'archivage."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Aucune "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "capture"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de cet écran n'a encore été produite, et son parcours de bout en bout n'a pas\nété rejoué : les deux exigent la pile de développement complète."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "déplacement d'un channel vers un autre track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " n'est pas proposé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "L'édition des "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "workflows"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " eux-mêmes relève du "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 5 bis"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " pour leurs étapes, leurs\ntransitions et les "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "questions"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de leur formulaire ; la visibilité d'une question étape par\nétape n'a, elle, toujours pas d'écran."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Les "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "droits fins"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " par track et par channel relèvent du chapitre 24 bis."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-budgets-d-un-track",
+			"content": [
+				{
+					"type": "text",
+					"text": "5.4 bis Les budgets d'un track"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-084"
+						},
+						{
+							"type": "text",
+							"text": " tranche 2 ; le seuil d'ancienneté par sa tranche 4. Captures dans\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-084/budgets-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "À quoi sert un budget."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un budget est une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "enveloppe de dépenses"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'un track — « Publicité\n2026 », « Salon du web 2025 ». Les lignes de coût d'une affaire s'y rattachent, depuis la section\n« Coûts » de sa fiche, et les écrans de coûts comparent, budget par budget, ce qui était prévu à ce qui\na été dépensé (chapitre 5 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "quinquies"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « Arborescence : tracks et channels ». Dépliez un track avec\nle chevron : sous ses channels paraît le bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Budgets »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le tableau montre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", une ligne par budget :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Colonne"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Contenu"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Nom"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "le nom du budget"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Devise"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "trois lettres — "
+						},
+						{
+							"type": "code",
+							"text": "EUR"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CHF"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Enveloppe"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "le montant prévu ; "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "cellule vide"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " si l'enveloppe n'est pas décidée — ce n'est pas zéro"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Récurrent"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "« Oui » ou « Non »"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Occurrences ouvertes"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "pour un budget récurrent, le nombre de ses occurrences "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "non clôturées"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " ; c'est aussi le lien qui les déplie (chapitre 5.5). "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Cellule vide"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " pour un budget non récurrent, qui n'en porte jamais"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "État"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "« Ouvert » ou « Clôturé », écrit en toutes lettres"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Actions"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "monter, descendre, modifier, clôturer — ou rouvrir"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les budgets clôturés sont masqués par défaut."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Cochez "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Afficher les budgets clôturés »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " pour\nles faire reparaître : ils ne sont pas supprimés, ils sortent seulement du chemin."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Créer un budget."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nouveau budget »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous le tableau, ouvre le formulaire dans la\npage, le curseur dans le premier champ :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Champ"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Règle"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Nom"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "obligatoire. Deux budgets "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ouverts"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " d'un même track ne portent pas le même nom ; un budget clôturé peut, lui, garder un nom qu'un nouveau budget reprend — « Salon 2025 » l'année suivante"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Devise"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "trois lettres majuscules, "
+						},
+						{
+							"type": "code",
+							"text": "EUR"
+						},
+						{
+							"type": "text",
+							"text": " par défaut. Une autre écriture est signalée sur le champ, et « Créer » reste indisponible"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Enveloppe (facultative)"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "un nombre. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Laissez vide"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " si l'enveloppe n'est pas décidée ; un montant "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "négatif"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " est accepté — un avoir, un remboursement. Une saisie qui n'est pas un nombre est signalée sur le champ"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Seuil d'ancienneté (facultatif)"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "un nombre de "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "jours entiers, à partir de 1"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Au delà, une dépense de ce budget qui attend son coût réel est signalée "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "en retard"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " dans l'onglet « À saisir » (chapitre 5 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "octies"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "). "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Laissez vide pour ne rien signaler"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : aucun seuil n'est alors appliqué, pas même un seuil « par défaut ». « 0 » ou « 2,5 » sont signalés sur le champ"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Budget récurrent (porte des occurrences)"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "à cocher pour un budget qui se décline en périodes — « Janvier 2026 », « Février 2026 ». Un budget récurrent ne reçoit aucune ligne de coût tant qu'il ne porte pas au moins une occurrence ouverte (chapitre 5.5)"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Modifier un budget."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le crayon rouvre le même formulaire, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prérempli"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " avec les valeurs\nactuelles. Vider l'enveloppe ou le seuil les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "efface"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " réellement. Un budget qui porte des\noccurrences ne redevient pas non récurrent : retirez d'abord ses occurrences."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réordonner."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les flèches montent ou descendent un budget d'un cran ; elles sont désactivées en tête\net en fin de liste, et le disent."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Clôturer un budget."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le cadenas demande une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "confirmation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", dans la page : « Clôturer le budget\n« … » ? ». Elle dit ce que la clôture fait — le budget sort du tableau sans être supprimé, et peut\nêtre rouvert — et elle "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "compte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les dépenses du budget qui attendent encore leur coût réel : « Ce\nbudget porte n ligne(s) sans coût réel ; elles resteront saisissables après la clôture. » La clôture\nn'est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pas empêchée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " par ce décompte : c'est une décision de gestion, elle est seulement éclairée.\nUn budget clôturé "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne reçoit plus de nouvelle ligne de coût"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; celles qu'il porte restent, et leur\ncoût réel se saisit encore — les factures arrivent souvent après la clôture."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rouvrir un budget."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Affichez les budgets clôturés, puis utilisez le cadenas ouvert. Aucune\nconfirmation n'est demandée. Si un budget ouvert du track a repris son nom entre-temps, la\nréouverture est refusée : renommez l'un des deux."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un budget ne se supprime pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : des dépenses le référencent, et le supprimer effacerait la\ndépense constatée. On le clôture."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Créer, modifier, réordonner, clôturer et rouvrir un budget sont réservés aux\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs de l'espace de travail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — le serveur l'applique. Un autre membre voit le tableau\ndes budgets des tracks qu'il lit ; ses commandes restent à leur place, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "grisées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et le bandeau de\nl'écran dit pourquoi (chapitre 3.6). Afficher les budgets clôturés et déplier les occurrences lui\nrestent ouverts."
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Message"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'il signifie"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Un budget ouvert de ce track porte déjà ce nom… »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Choisissez un autre nom, ou clôturez l'autre budget"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Ce budget porte des occurrences : supprimez-les avant de le rendre non récurrent. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Retirez ses occurrences d'abord (chapitre 5.5)"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Cette valeur a été refusée : vérifiez le nom et la devise. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le serveur a refusé la forme d'une valeur"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Seul un administrateur de cet espace de travail peut gérer les budgets. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le geste demande un droit que votre compte n'a pas"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Rien n'a été modifié… »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Vos droits sur ce budget ont changé depuis l'ouverture de l'écran, ou il a disparu"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-occurrences-d-un-budget-recurrent",
+			"content": [
+				{
+					"type": "text",
+					"text": "5.5 Les occurrences d'un budget récurrent"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-084"
+						},
+						{
+							"type": "text",
+							"text": " tranche 3. Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-084/occurrences-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sous un track déplié, dans le tableau « Budgets ». Un budget déclaré "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "récurrent"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " affiche\ndans la colonne « Occurrences ouvertes » un nombre "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "cliquable"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il déplie la liste de ses\noccurrences sous le tableau. Un budget non récurrent affiche une cellule vide, et n'offre pas ce\ngeste — il ne peut porter aucune occurrence."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Pourquoi c'est nécessaire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un budget récurrent ne peut recevoir aucune ligne de coût tant qu'il\nne porte pas au moins une occurrence : le sélecteur de la fiche d'affaire ne le propose pas. Avant\ncet écran, cocher « récurrent » produisait donc un budget inutilisable."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que la liste montre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", de la plus récente à la plus ancienne : le libellé, la période si elle\nest renseignée, l'enveloppe si elle est décidée, et l'état — « Ouverte » ou « Clôturée »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les occurrences clôturées ne sont pas masquées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", contrairement aux budgets. C'est voulu : les\nfactures arrivent souvent après la clôture, et l'onglet « À saisir » des écrans de coûts liste\nprécisément leurs lignes."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les cinq gestes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", tous réservés à un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateur de l'espace de travail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Geste"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'il fait"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Ouvrir une occurrence"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Déclare une instance — « Janvier 2026 ». Le libellé est obligatoire ; la période et l'enveloppe ne le sont pas"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Modifier"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Change le libellé, la période et l'enveloppe. Reste offert sur une occurrence "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "clôturée"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Clôturer"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La retire des choix proposés à une nouvelle ligne de coût. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Sans confirmation"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : elle se rouvre d'un clic"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Rouvrir"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'inverse, également sans confirmation"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Retirer"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La supprime. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Avec confirmation"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", et refusé si des lignes de coût y sont rattachées"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Aucune occurrence n'est engendrée automatiquement."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " On crée « janvier », puis « février », à la\nmain. Un mois sans occurrence est une information — il ne s'est rien passé — qu'une génération\nautomatique détruirait en fabriquant une occurrence vide."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Vider un champ facultatif l'efface réellement."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une enveloppe posée par erreur se retire en\nlaissant le champ vide, de même que les deux bornes de période."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les périodes ne contraignent rien."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Elles servent à ordonner et à libeller : aucune ligne de coût\nn'est refusée parce que sa date sortirait de la période, et rien n'exige que la fin suive le début."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Deux libellés qui ne diffèrent que par la casse coexistent."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « Janvier 2026 » et « janvier 2026 »\nsont deux occurrences distinctes ; seuls les espaces de début et de fin sont ignorés. C'est la même\nrègle que pour le nom d'un budget."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que vous pouvez lire sans pouvoir l'écrire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " La liste est visible à qui lit le budget. Si vous\nn'êtes pas administrateur, vos gestes sont refusés par le serveur et l'écran vous le dit — il ne les\nmasque pas, parce que vos droits peuvent avoir changé depuis l'ouverture de la page."
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Message"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'il signifie"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Ce budget porte déjà une occurrence de ce libellé »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Choisissez un autre libellé"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Ce budget n'est pas récurrent »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Rendez-le récurrent avant d'y ouvrir une occurrence"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Cette occurrence porte des lignes de coût »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Clôturez-la plutôt que de la retirer : la dépense constatée n'est pas effacée"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Seul un administrateur… »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le geste demande un droit que votre compte n'a pas"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Rien n'a été modifié »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Vos droits sur ce budget ont changé depuis l'ouverture de l'écran"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-la-cote-budgets",
+			"content": [
+				{
+					"type": "text",
+					"text": "5.6 Ce qui n'est pas là, côté budgets"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ces absences sont voulues, et non des oublis :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucune conversion de devise"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : chaque budget compte dans sa propre devise, et les écrans de coûts\nrendent un histogramme par devise plutôt qu'un total qui mélangerait des euros et des francs ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucune occurrence engendrée automatiquement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", aucun calendrier (chapitre 5.5) ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucune alerte de dépassement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ni aucun envoi d'email : un dépassement se lit sur l'histogramme ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucun export comptable"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", aucun import de factures."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

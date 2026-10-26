@@ -1,0 +1,654 @@
+{
+	"slug": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace",
+	"title": "10 ter. Le journal d'audit : ce qui s'est fait dans votre espace",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré en développement par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-072"
+						},
+						{
+							"type": "text",
+							"text": " T1 et T2."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le CRM tient un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "journal des gestes sensibles"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de chaque espace. Ce sont les gestes qui changent qui peut faire quoi,\ncomment l'espace est configuré, et ce qui disparaît :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "les droits et les appartenances"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un membre ajouté ou retiré, un rôle changé, une attente inscrite ou retirée, un\naccès à un track ou à un channel posé ou retiré ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "la configuration"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : l'espace lui-même, les tracks, les channels, les workflows et leurs publications, les étapes,\nles transitions, le catalogue de nœuds, les champs de formulaire, les boîtes de réception et les identités\nd'expédition ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "les connexions"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : chaque connexion réussie d'un membre ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "les effacements et la corbeille"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : une affaire, un track ou un channel mis à la corbeille, restauré ou détruit, un\ncommentaire ou une activité retirés, un contact ou une organisation supprimés ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "la rétention"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : l'effacement des entrées de plus d'un an."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le journal est tenu "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "par le CRM lui-même"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Un geste fait à l'écran, par l'API ou par l'assistant du connecteur MCP y\nest inscrit de la même façon, avec la personne qui l'a fait. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Personne ne peut modifier ni supprimer une entrée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", pas\nmême un administrateur. Les entrées sont conservées "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "un an"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", puis effacées chaque nuit, et cet effacement est\nlui-même inscrit."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le journal ne garde "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "jamais le nom d'un contact"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il ne garde que son identifiant, et l'écran lit le nom dans le\ncarnet au moment de l'affichage. Il ne garde pas non plus de contenu : ni le texte d'un commentaire, ni celui d'un\nmessage, ni un mot de passe, ni la valeur d'un réglage."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ouvrir-le-journal",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 ter.1 Ouvrir le journal"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Ouvrez "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Réglages »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans la barre latérale."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Choisissez "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Journal d'audit »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", juste après « Membres »."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le journal est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "réservé aux administrateurs de l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Pour un autre membre, l'entrée de l'index est grisée, et\nl'adresse ouverte directement affiche "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Réservé aux administrateurs »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "lire-une-entree",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 ter.2 Lire une entrée"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le tableau montre les entrées les plus récentes en tête, sur quatre colonnes :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Date »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le jour et l'heure du geste ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Acteur »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la personne qui l'a fait. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Système ou compte supprimé »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " désigne une entrée sans acteur : un geste\ndu CRM lui-même (une tâche de nuit, par exemple), ou une personne dont le compte a été supprimé depuis ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Geste »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : une phrase qui dit ce qui s'est passé et sur quoi — « Membre ajouté : Jeanne Martin », « Workflow\npublié : Cycle commercial » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Détail »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : ce qui a changé — « Rôle : Lecteur → Business developer », « Accès : Lecture », « Nom : A → B »,\n« Version 4 ». Un texte trop long est coupé à l'écran ; survolez-le pour le lire en entier."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cinquante entrées s'affichent d'abord. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Entrées plus anciennes »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous le tableau, ajoute les cinquante suivantes."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "filtrer",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 ter.3 Filtrer"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Au-dessus du tableau, quatre filtres se combinent :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Famille »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : droits et appartenances, configuration, connexions, exports, effacements et corbeille, rétention ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Acteur »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un membre de l'espace, ou « Système ou compte supprimé » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Du »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Au »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : une période, les deux jours compris."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les filtres sont inscrits dans l'adresse de la page : vous pouvez la partager avec un autre administrateur.\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Aucun geste sur cette période »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dit qu'aucune entrée ne correspond aux filtres. Les filtres restent au-dessus pour\nles élargir."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-le-journal-ne-fait-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "10 ter.4 Ce que le journal ne fait pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Il ne s'exporte pas : on le consulte à l'écran."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Il n'inscrit pas les gestes ordinaires de la vie d'une affaire, comme un déplacement, un champ rempli ou un\ncommentaire. L'historique de l'affaire les montre déjà."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Il n'inscrit pas la déconnexion. Le CRM ne distingue pas une déconnexion d'une session expirée."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Le superadministrateur garde son propre journal, celui de la plateforme (chapitre 10)."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

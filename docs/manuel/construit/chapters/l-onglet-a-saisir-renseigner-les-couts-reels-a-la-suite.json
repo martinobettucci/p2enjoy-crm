@@ -1,0 +1,1144 @@
+{
+	"slug": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite",
+	"title": "5 octies. L'onglet « À saisir » : renseigner les coûts réels à la suite",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-086"
+						},
+						{
+							"type": "text",
+							"text": " tranche 6 ; plusieurs réels par ligne et la case « Soldé » par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-099"
+						},
+						{
+							"type": "text",
+							"text": ". Captures dans\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-086/couts-a-saisir-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": " et "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-099/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sur l'écran de coûts d'un track (§5 quinquies) ou sur celui de l'espace de travail\n(§5 septies), l'onglet "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« À saisir »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", à droite de « Vue d'ensemble ». L'adresse gagne\n"
+				},
+				{
+					"type": "code",
+					"text": "?onglet=saisir"
+				},
+				{
+					"type": "text",
+					"text": " : elle se partage et se recharge, et le bouton « précédent » du navigateur revient\nà l'onglet d'avant."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "À quoi il sert."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le graphique dit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "combien"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de coûts réels manquent ; il ne permettait pas de\nles saisir. Il fallait ouvrir une affaire après l'autre. Cet onglet est la surface de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "saisie en\nsérie"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une ligne par coût en attente, un champ par ligne, et le clavier pour aller de l'une à\nl'autre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que la table liste."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Toutes les lignes de coût "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "non soldées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " que vous avez le droit de\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "lire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", dans la portée de l'écran, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "de la plus ancienne à la plus récente"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — celle qui attend\ndepuis le plus longtemps est celle qu'on oublie. Une ligne reçoit autant de coûts réels qu'il en\nfaut — une facture, puis une autre — et reste dans la table tant qu'on ne l'a pas "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "soldée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Chaque\nligne porte son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ancienneté"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "budget"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "occurrence"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le cas échéant, son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (le\ntitre est un lien vers la fiche), la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nature"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la dépense, son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "coût estimé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et ce qui est\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Déjà saisi »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — la somme de ses réels."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les budgets clôturés y figurent, et c'est voulu :"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " c'est précisément après la clôture que les\nfactures arrivent. La ligne d'un budget clos porte une pastille "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« clôturé »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — une indication\nneutre, jamais une alerte : la clôture n'empêche pas de saisir le coût réel, elle empêche seulement\nde "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "changer le rattachement"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'une ligne."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "saisir-au-clavier",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 octies.1 Saisir, au clavier"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Tapez le montant dans le champ « Un réel de plus », puis "
+									},
+									{
+										"type": "code",
+										"text": "Entrée"
+									},
+									{
+										"type": "text",
+										"text": "."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Le réel s'ajoute à la\nligne immédiatement — il n'y a "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucun bouton d'enregistrement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " —, « Déjà saisi » montre la\nnouvelle somme, le champ se vide pour le réel suivant, et le curseur passe au champ de la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ligne\nsuivante"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". C'est cela, saisir à la suite."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La date et le libellé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (« Facture n° 42 ») se règlent à la demande, par le crayon à côté du\nchamp ; sans eux, le réel est daté du jour et sans libellé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Cochez « Soldé »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " quand toutes les factures d'une ligne sont arrivées : elle quitte la table au\nprochain chargement. Soldée sans aucun réel, elle vaut "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "zéro"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — « finalement rien dépensé »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "code",
+										"text": "Échap"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " annule la saisie en cours et laisse la ligne intacte : rien n'est envoyé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La ligne enregistrée ne disparaît pas sous vos doigts."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Elle reste à sa place, sur un fond\nvert, marquée « Enregistré », "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "jusqu'au prochain chargement de l'onglet"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". La retirer aussitôt\nferait remonter les lignes suivantes pendant que vous tapez, et vous feriez écrire une valeur dans\nla mauvaise ligne."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un champ laissé vide n'envoie rien."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Un "
+							},
+							{
+								"type": "code",
+								"text": "0"
+							},
+							{
+								"type": "text",
+								"text": " saisi est un réel comme un autre ; c'est « Soldé »\nqui fait sortir une ligne de l'attente. La règle est écrite sous la table, avec la consigne\nclavier."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-vous-ne-pouvez-pas-modifier-reste-visible",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 octies.2 Ce que vous ne pouvez pas modifier reste visible"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une ligne que vous pouvez "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "lire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " mais pas "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "écrire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est rendue comme les autres, avec son champ\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "désactivé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et la phrase « Vous ne pouvez pas modifier cette affaire. » sous lui. Elle n'est\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "jamais masquée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une table qui cacherait des lignes se lirait comme complète alors qu'elle ne\nl'est pas."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "aucune"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " des lignes que vous lisez n'est modifiable — le cas d'un compte en lecture seule —, la\ntable est rendue entière et le dit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "en tête"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : « Aucune de ces lignes ne peut être modifiée avec\nvos droits : ce tableau est en lecture seule. »"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ce droit est demandé à la base, ligne par ligne, et jamais déduit de votre rôle : les droits fins\nouvrent l'écriture channel par channel, et un rôle ne dirait pas la vérité."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-l-ecran-ecrit-quand-quelque-chose-ne-va-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 octies.3 Ce que l'écran écrit quand quelque chose ne va pas"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Ce que vous lisez sous le champ"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce que cela veut dire"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Enregistrement… »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'envoi est en cours"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Enregistré »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La base a retenu le réel — « Déjà saisi » montre "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "la somme qu'elle tient"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Ce montant n'est pas un nombre. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La saisie n'a pas été envoyée, et elle reste à l'écran pour être corrigée"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucune ligne n'a été enregistrée. […] rechargez l'onglet. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Ni un succès ni une erreur : vos droits ont pu changer depuis l'ouverture de l'écran. Rien n'a été écrit"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Vous ne pouvez pas modifier cette affaire. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La base a refusé l'écriture"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Tous les coûts réels sont saisis »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Il n'y a rien à saisir dans cette portée. C'est une bonne nouvelle, pas un écran en panne"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-compteur-de-l-onglet",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 octies.4 Le compteur de l'onglet"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le badge porte le nombre de lignes "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "que la table liste"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — les lignes non soldées que vous lisez,\nbudgets clôturés compris, y compris celles que vous ne pouvez pas modifier."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Il peut différer du nombre écrit sous le graphique"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la vue d'ensemble (« n ligne(s) sans coût\nréel saisi »), et ce n'est pas une erreur : le graphique "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "exclut les budgets clôturés"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et compte\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "par devise"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", là où le badge est un nombre unique. Les deux chiffres ne comptent pas la même\nchose."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'écran le dit lui-même, et vous n'avez donc rien à deviner."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Dès que le badge paraît, l'onglet\n« Vue d'ensemble » écrit sous la barre d'onglets :"
+				}
+			]
+		},
+		{
+			"type": "note",
+			"blocks": [
+				{
+					"type": "paragraph",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Le compteur de l'onglet \"À saisir\" porte sur tout cet écran, budgets clôturés compris et toutes\ndevises confondues ; les mentions sous les histogrammes ne comptent que les budgets qu'ils\nmontrent. »"
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un exemple, sur le jeu de démonstration : le track « Studio web » porte des lignes non soldées sur\nun budget ouvert et sur le budget clôturé « Salon du web 2025 », dont une qui a déjà reçu un réel ; le\nbadge les compte toutes, quand la mention sous le graphique ne compte que la ligne sans réel du\nbudget ouvert. Les valeurs exactes du jeu sont dans l'annexe A."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "C'est la même règle que celle du cumul du workspace (§5 septies.3) : quand deux nombres d'un même\nécran ne comptent pas la même chose, l'écran écrit lequel compte quoi."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-cet-onglet-ne-fait-pas",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 octies.5 Ce que cet onglet ne fait pas"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Il ne crée aucune ligne de coût"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : une dépense se crée depuis la fiche de son affaire, section\n« Coûts »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Il ajoute des réels et solde des lignes"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — il ne modifie ni la nature, ni le budget, ni\nl'occurrence, ni le coût estimé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Il ne corrige ni ne retire un réel déjà saisi"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : cela se fait depuis la fiche de son affaire\n(§5 octies.6)."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Aucun import de fichier, aucun rapprochement automatique avec une facture."
+									}
+								]
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-reels-d-une-ligne-dans-la-fiche-d-une-affaire",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 octies.6 Les réels d'une ligne, dans la fiche d'une affaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Dans la section « Coûts » d'une fiche, la colonne « Réel » d'une ligne est la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "somme de ses réels"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\net le formulaire d'une ligne ne porte plus de réel : il en règle la nature, le budget, l'occurrence\net le coût estimé. La flèche au début des actions de la ligne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "déplie ses réels"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous la table :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "la liste des réels — date, libellé ou « Sans libellé », montant —, chacun "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "modifiable"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (crayon)\net "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "retirable"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (corbeille, après confirmation) ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "la saisie d'un réel de plus : montant, date (celle du jour par défaut), libellé facultatif, puis\n« Ajouter le réel » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "la case "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Soldé »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Une ligne soldée porte la pastille « Soldé » ; ses réels ne se modifient\nplus, et l'écran le dit : « Ligne soldée — décochez « Soldé » pour la modifier. » Décocher la\nrouvre."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un budget clôturé n'empêche rien de tout cela : on clôt une campagne, puis les factures arrivent."
+				}
+			]
+		}
+	]
+}

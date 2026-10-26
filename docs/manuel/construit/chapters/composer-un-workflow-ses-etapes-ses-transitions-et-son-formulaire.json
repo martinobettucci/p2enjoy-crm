@@ -1,0 +1,3776 @@
+{
+	"slug": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+	"title": "5 bis. Composer un workflow : ses étapes, ses transitions et son formulaire",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-076"
+						},
+						{
+							"type": "text",
+							"text": " ; les règles d'accès sont celles de "
+						},
+						{
+							"type": "code",
+							"text": "CRM-031"
+						},
+						{
+							"type": "text",
+							"text": ", inchangées. Captures dans\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-076/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « Workflows : étapes et composition »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que cet écran fait, et ce qu'il ne fait pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Il "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "compose"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les workflows qui existent\ndéjà : il choisit leurs étapes dans le catalogue de nœuds, les ordonne, les surcharge, désigne\ncelle par laquelle les affaires entrent, déclare les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "transitions"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " qui relient les étapes, et\ndéfinit les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "questions du formulaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " posées sur chaque affaire. Depuis "
+				},
+				{
+					"type": "code",
+					"text": "CRM-031"
+				},
+				{
+					"type": "text",
+					"text": ", il "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "crée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\naussi un workflow (chapitre 5 bis.0). Il ne le copie pas vers un track et ne le rend pas par\ndéfaut : ces deux gestes restent hors interface."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'écriture est réservée aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace de travail. Comme au\nchapitre 5, les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du\nserveur, « Seul un administrateur de cet espace de travail peut composer un workflow. »"
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "creer-un-workflow",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.0 Créer un workflow"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-031"
+						},
+						{
+							"type": "text",
+							"text": ". Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-031/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nouveau workflow »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au-dessus de la liste de gauche, ouvre un formulaire à deux ou\ntrois champs :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", obligatoire — deux workflows peuvent porter le même, rien ne l'interdit ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "portée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : « Global », disponible pour tous les tracks, ou « Propre à un track », proposé\naux seuls channels de ce track ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", qui n'apparaît que sous la seconde portée. Sous « Global », il n'existe pas : ce\nn'est pas un champ grisé, c'est un champ sans objet."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le workflow naît vide."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Il n'a aucune étape, et il n'est utilisable par aucun channel tant que\nvous ne lui en avez pas donné au moins une, désignée comme initiale (chapitre 5 bis.2). L'écran le\ndit dès la création : « Ce workflow n'a aucune étape. » Un workflow sans étape initiale est un\nbrouillon parfaitement licite, pas une erreur. Un channel qui le suit n'a pas de tableau : son onglet\nle dit, et propose le lien "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ouvrir l'éditeur de workflows"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (chapitre 3.2 "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "ter"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le workflow créé devient aussitôt le workflow "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "choisi"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", prêt à être composé."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le formulaire ne propose pas, et pourquoi."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Aucune case « par défaut » : un espace de\ntravail n'a qu'un seul workflow par défaut, et le proposer à chaque création reviendrait à offrir\nun réglage refusé neuf fois sur dix. Rendre un workflow par défaut reste un geste d'API."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Arrivé depuis le formulaire d'un channel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (lien "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Nouveau workflow"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", chapitre 5.2), l'éditeur\ns'ouvre formulaire de création ouvert, portée réglée sur le track du channel, et un bandeau rappelle\n« Vous créez un channel ». Une fois le workflow créé — par ce formulaire ou par "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Créer avec l'IA"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " —,\nle bandeau le nomme : c'est lui qui sera choisi au retour. Composez-le, puis "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Revenir au nouveau\nchannel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si l'espace de travail est vide"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'écran affiche « Aucun workflow dans cet espace de travail »\net porte le même bouton. Un workflow composé ainsi part d'un catalogue de nœuds "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vide"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dans un\nespace neuf : le plus court est souvent le workflow de départ du guide (§1 bis.4), que vous\nrecomposez ensuite ici."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "creer-un-workflow-avec-l-ia",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.0 bis Créer un workflow avec l'IA"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré en développement par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-097"
+						},
+						{
+							"type": "text",
+							"text": " (tranche T2) ; en production avec la tranche T4. Captures dans\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-097/"
+						},
+						{
+							"type": "text",
+							"text": ". Le nom et la probabilité de chaque étape, et les champs que l'affaire porte déjà : "
+						},
+						{
+							"type": "code",
+							"text": "CRM-113"
+						},
+						{
+							"type": "text",
+							"text": ",\nlivré en développement, captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-113/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'assistant IA "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "propose"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " un workflow à partir d'une description écrite en français ; "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "il ne crée\nrien"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Ce qu'il rend est une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "suggestion"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : vous la relisez, la corrigez, la faites revoir autant de\nfois que nécessaire, puis vous l'acceptez — et c'est seulement alors que le workflow existe — ou vous\nl'abandonnez, sans que rien n'ait été écrit. Le panneau le rappelle en permanence : « Suggestion — rien\nn'est créé avant « Accepter » »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Créer avec l’IA »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", juste après « Nouveau workflow », au-dessus de la liste de\ngauche — et dans l'écran vide d'un espace qui n'a encore aucun workflow."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'assistant est réservé aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'espace de travail. Le bouton est montré à\ntout le monde ; un autre membre qui l'utilise reçoit le refus du serveur : « L’assistant est réservé aux\nadministrateurs de l’espace de travail. »"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "1. Demander."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Écrivez dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Décrivez le workflow »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ce dont vous avez besoin : les étapes, les\nissues — gagné, perdu —, les informations à saisir sur une affaire. Le texte part vers le serveur d'IA\nde LeLabs : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "n'y collez aucune donnée personnelle"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — ni nom de client, ni adresse, ni contenu de\nmessage. Puis "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Générer la suggestion »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". La réponse prend environ une demi-minute ; le panneau le\ndit, avec le temps écoulé. Si l'assistant est indisponible, le panneau le dit et vous pouvez toujours\ncréer le workflow à la main."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "2. Relire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " La suggestion s'affiche à la place du workflow choisi, dans l'ordre de l'éditeur : le\nnom, les étapes — chacune dit si son nœud est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nouveau"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ou vient "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "du catalogue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " —, les transitions\nau départ de chaque étape, les champs, leur visibilité par étape et les champs exigés pour franchir une\ntransition. Si la proposition a des "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "défauts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — deux étapes initiales, une transition vers une étape\nqui n'existe pas, une liste sans choix… —, ils sont listés en tête, et la suggestion "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne peut pas être\nacceptée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " tant qu'ils demeurent."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "3. Corriger à la main."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Dans l'aperçu, vous pouvez renommer le workflow ; donner à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "chaque étape"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nson propre nom ("
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nom de l’étape »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") et sa propre probabilité ("
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Probabilité de l’étape »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") — laissés\nvides, l'étape garde le nom et la probabilité de son nœud, que le champ montre en gris (un nom qui ne\ndiffère de celui du nœud que par les majuscules n'est pas un nouveau nom : l'étape garde celui de son nœud, et\nun nom déjà donné à l'étape ne change pas si seules ses majuscules changent) ; changer le\nlibellé, la nature et la probabilité d'un nœud nouveau ; choisir l'étape initiale ; retirer une étape, une\ntransition, un champ, une règle ou une exigence ; ajouter une transition ; changer le type, les choix,\nla devise ou l'aide d'un champ. Un retrait emporte ce qui en dépend — retirer une étape retire aussi\nses transitions et les règles qui la visent — et l'écran annonce ce qui a été emporté. Vos modifications\nrestent locales jusqu'à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Enregistrer la correction »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; « Rétablir » les annule. Ajouter une étape\nou un champ se demande à l'IA, ou se fait ici même une fois le workflow créé."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "4. Faire revoir."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Écrivez une consigne — « ajoute une étape de relance », « rends perdu possible\ndepuis chaque étape » — puis "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Revoir avec l’IA »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". L'IA reprend la proposition "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "telle qu'elle est\naffichée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", vos corrections comprises, avec les défauts relevés, et rend une nouvelle version.\nL'historique, en bas du panneau, garde chaque version : proposée par l'IA ou corrigée à la main, avec\nsa consigne."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "5. Accepter ou abandonner."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Accepter et créer le workflow »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " crée en une seule fois le workflow,\nses nouveaux nœuds de catalogue, ses étapes, transitions, champs, règles et exigences. Le serveur\nrevérifie tout à ce moment : si le catalogue a changé entre-temps, il refuse et dit combien de défauts\nla proposition porte. Le workflow créé devient le workflow choisi, prêt à être affecté à un channel ;\nil n'est pas le workflow par défaut si l'espace en a déjà un. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Abandonner la suggestion »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", après\nconfirmation, la retire de la liste ; rien n'a été créé."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réutiliser le catalogue."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une étape peut viser un nœud qui existe déjà au catalogue de l'espace tout en\nportant un autre nom : l'IA y est invitée — par exemple l'étape « Premier contact » sur le nœud\n« Prospection ». Quand elle redéclare malgré tout un nœud du catalogue, le défaut le dit, et\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Utiliser le nœud du catalogue »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " fait viser le nœud existant "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "en gardant le nom"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " que la suggestion\ndonnait à l'étape — et sa probabilité, si elle diffère ; un nom qui ne diffère de celui du catalogue que par\nles majuscules n'est pas gardé. Le curseur passe dans le nom de l'étape ; l'écran\nannonce le nom gardé. Une fois le workflow créé, l'éditeur montre l'étape sous ce nom, avec la mention\n« Libellé surchargé »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les informations que l'affaire porte déjà."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Toute affaire a déjà son titre, sa description, son\nresponsable, son montant et sa devise, sa probabilité, sa prochaine action et son échéance, ses contacts et\nson organisation, ses coûts, ses recettes, son temps, ses commentaires et ses e-mails. L'IA ne doit pas\nproposer de champ pour elles ; si un champ nouveau en reprend une — un champ « Montant », par exemple —, le\ndéfaut le dit : « Le champ « montant » reprend le montant, déjà porté par l'affaire : retirez-le ou\nrenommez-le. » Un champ qui existe déjà dans un workflow n'est jamais signalé."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les suggestions en revue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " sont listées sous les workflows, dans « Suggestions de l’IA en revue » :\nelles survivent au rechargement de la page, et les autres administrateurs les voient et peuvent les\nreprendre. Une suggestion dont la génération a échoué le dit, avec la raison, et « Réessayer » relance\nla même demande."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que l'assistant ne fait pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Il ne touche ni aux affaires, ni aux contacts, ni aux messages. Pour\nfaire évoluer un workflow déjà en usage, voir le chapitre suivant."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "faire-evoluer-un-workflow-avec-l-ia",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.0 ter Faire évoluer un workflow avec l'IA"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré en développement par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-097"
+						},
+						{
+							"type": "text",
+							"text": " (tranche T3) ; en production avec la tranche T4. Captures dans\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-097/"
+						},
+						{
+							"type": "text",
+							"text": " ("
+						},
+						{
+							"type": "code",
+							"text": "ia-modification-*"
+						},
+						{
+							"type": "text",
+							"text": ")."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le même assistant fait évoluer un workflow "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "existant"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — y compris un workflow qui porte des affaires.\nComme pour une création, il ne change rien lui-même : il "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "suggère"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " le workflow tel qu'il deviendrait, et\nrien ne change avant « Accepter ». Le panneau le rappelle : « Suggestion — rien ne change avant\n« Accepter » »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ouvrez le workflow dans « Réglages ▸ Workflows ». Un bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Suggérer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est posé en tête de\nchacun des trois blocs — "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Étapes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Transitions déclarées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Champs du formulaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Il ouvre la\ndemande "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "au-dessus des étapes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sans cacher le workflow : vous voyez ce que vous faites évoluer pendant\nque vous le décrivez. Le titre du panneau dit ce qui est visé — « Faire évoluer les étapes de « Cycle\ncommercial standard » ». Le bloc d'où vous partez "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "oriente"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " l'IA ; vous pouvez tout corriger ensuite."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les administrateurs de l'espace, comme pour une création ; un autre membre reçoit le refus du\nserveur."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "1. Demander."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Écrivez dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Décrivez ce qui doit changer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — « remplace la relance par une\nqualification des besoins », « ajoute un champ pour le canal d'acquisition ». L'IA reçoit le workflow tel\nqu'il est et le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nombre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'affaires de chaque étape — rien d'autre des affaires : ni leur titre, ni\nleurs contacts. N'écrivez aucune donnée personnelle. Puis "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Générer la suggestion »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "2. Relire ce qui change."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " En tête de la suggestion, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ce qui change »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste, collection par\ncollection, ce qui serait "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ajouté"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "modifié"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — avec la valeur d'avant et celle d'après — ou\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "retiré"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Un champ retiré est dit « Retiré — archivé » : il n'est jamais supprimé, ses réponses restent\nconsultables. Si rien ne change, la phrase le dit. Le reste de l'aperçu se corrige comme pour une\ncréation ; le type d'un champ existant, lui, ne se change pas."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "3. Choisir où vont les affaires."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Quand la suggestion retire une étape qui porte des affaires, le bloc\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Où vont les affaires des étapes retirées »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " donne leur nombre et une liste "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Destination »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ouverte\nsur « Aucune destination » : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rien n'est deviné"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Tant qu'une étape n'a pas de destination, un défaut le\ndit en tête et la suggestion ne peut pas être acceptée. Vous pouvez choisir une étape que la suggestion\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ajoute"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Votre choix s'enregistre avec la correction, ou au moment d'accepter."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "4. Accepter."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Accepter et faire évoluer le workflow »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " applique tout en une fois : étapes,\ntransitions, champs, règles et exigences, et déplace les affaires vers leur destination. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Juste avant"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\nle produit garde une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "version"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du workflow tel qu'il était — le "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "point de retour"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — et l'annonce la\nnomme : « Point de retour : version 4 ». Pour revenir en arrière, restaurez cette version depuis le bloc\n« Versions » du même écran (chapitre 5 bis.6)."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si le workflow a changé entre-temps"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — un collègue a ajouté une étape, renommé une transition —,\nl'acceptation est refusée : « Le workflow a changé depuis cette suggestion : elle ne peut plus être\nacceptée. » Abandonnez-la, puis demandez une nouvelle suggestion, qui partira du workflow tel qu'il est."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les suggestions d'un workflow"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " sont listées au-dessus de ses étapes, dans « Suggestions de l’IA pour ce\nworkflow » ; celles qui créent un workflow restent sous la liste des workflows."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "choisir-un-workflow",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.1 Choisir un workflow"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La colonne de gauche liste les workflows de l'espace de travail, celui "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "par défaut"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " en tête, et\nle premier est ouvert d'office. Chaque entrée dit sa portée — globale, ou propre à un track."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-etapes",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.2 Les étapes"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les étapes s'affichent dans l'ordre du graphe, avec pour chacune sa probabilité et son seuil de\nrelance — ceux du catalogue, ou ceux que vous avez surchargés."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ajouter"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : « Ajouter une étape » ouvre le catalogue des nœuds encore disponibles. Un nœud déjà\nemployé par ce workflow n'y figure pas, un nœud archivé non plus. Lorsque tout le catalogue actif\nest employé, l'écran le dit plutôt que d'afficher une liste vide. Lorsque le catalogue est\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "vide"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — le cas d'un espace neuf —, l'écran le dit aussi, autrement, et propose le lien "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ouvrir\nle catalogue de nœuds"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ordonner"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : les flèches montent et descendent une étape. Une flèche désactivée sans être en\nbout de liste s'explique comme au §5.3."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Surcharger"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le crayon ouvre un formulaire à trois champs — libellé, probabilité, seuil de\nrelance. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un champ laissé vide veut dire « prendre la valeur du catalogue »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et ce n'est pas\nla même chose que zéro : une probabilité surchargée à "
+							},
+							{
+								"type": "code",
+								"text": "0"
+							},
+							{
+								"type": "text",
+								"text": " est une probabilité nulle voulue, que\nl'écran affiche comme telle. Vider un champ déjà surchargé retire la surcharge."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Désigner l'étape initiale"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le fanion. C'est par elle que les nouvelles affaires entrent. Un\nworkflow qui n'en a aucune l'annonce en tête de liste — aucune affaire ne peut y entrer tant\nqu'elle n'est pas désignée."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Retirer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la corbeille, après confirmation. Une étape "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "occupée par des affaires"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " n'est pas\nretirable : le serveur refuse, et l'écran nomme le refus. Retirer une étape ne supprime pas son\nnœud du catalogue."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-transitions",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.3 Les transitions"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sous les étapes, le bloc « Transitions déclarées » montre le graphe : chaque étape y figure avec\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ses sorties"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", dans l'ordre du graphe. Une affaire ne peut aller que là où une transition la\nmène ; une étape sans sortie est un point d'arrivée, et l'écran l'écrit — « Aucune sortie : les\ncards s'y arrêtent » — plutôt que de la faire disparaître."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque sortie affiche l'étape d'arrivée, le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "libellé du bouton"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " qui la déclenche depuis une\naffaire, et la mention "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Motif exigé »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " lorsqu'un commentaire est obligatoire pour l'emprunter."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Déclarer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : « Déclarer une transition » ouvre un formulaire à deux listes. La liste d'arrivée\nne propose ni l'étape de départ elle-même — une étape ne va pas vers elle-même — ni les arrivées\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "déjà déclarées"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " depuis ce départ. Lorsqu'il ne reste aucune arrivée possible, le formulaire le\ndit. Un workflow d'une seule étape ne peut porter aucune transition, et l'écran l'annonce."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le libellé du bouton est facultatif."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Laissé vide, le menu d'une affaire affiche le libellé de\nl'étape d'arrivée. Une valeur composée uniquement d'espaces est refusée."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Exiger un motif"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la case rend le commentaire obligatoire. Le déplacement d'une affaire par\ncette transition sera refusé sans lui — c'est la règle décrite au §4.3, vue depuis son réglage."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Modifier"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le crayon change le libellé et le motif exigé, jamais les deux extrémités. Changer\nune extrémité, c'est une autre transition : déclarez-la, puis retirez l'ancienne."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Retirer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la corbeille, après confirmation. Rien ne retient une transition — contrairement à\nune étape, aucune affaire ne la « porte » —, donc le retrait aboutit toujours si vous êtes\nadministrateur. Les deux étapes, elles, restent dans le workflow ; seule la porte entre elles se\nferme."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si un autre administrateur déclare la même transition pendant que votre formulaire est ouvert, le\nserveur refuse la vôtre et l'écran affiche « Cette transition est déjà déclarée. » Rien n'est écrit\ndeux fois."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-questions-du-formulaire",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.4 Les questions du formulaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sous les transitions, le bloc « Champs du formulaire » liste les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "questions posées sur chaque\naffaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de ce workflow, dans l'ordre où elles apparaissent sur la fiche (§4.7). Chaque ligne\nmontre le libellé de la question, sa "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "clé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " entre parenthèses techniques, son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "type"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et son\ntexte d'aide s'il en porte un."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Déclarer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : « Déclarer un champ » ouvre le formulaire. Vous y saisissez une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "clé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", un\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "libellé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "type"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". La clé n'accepte que des minuscules, des chiffres et des tirets\nsimples : c'est elle qui nomme la question dans les exports et dans les messages d'erreur. Une\nclé déjà employée dans ce workflow est refusée — l'écran affiche « Cette clé est déjà prise dans\nce workflow. »"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Les types à choix"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — « Choix unique » et « Choix multiple » — font apparaître la liste des\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "choix proposés"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Chacun porte une clé et un libellé, et deux choix ne peuvent pas partager la\nmême clé : les réponses seraient impossibles à distinguer. Un champ à choix a besoin d'au moins\nun choix pour être enregistré."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le type « Montant »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " demande une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "devise"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", en trois lettres majuscules, par exemple "
+							},
+							{
+								"type": "code",
+								"text": "EUR"
+							},
+							{
+								"type": "text",
+								"text": "."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Modifier"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : le crayon change le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "libellé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "texte d'aide"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et, pour les types\nconcernés, les "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "choix"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ou la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "devise"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". La clé et le type, eux, ne se modifient plus : la clé\nest citée par les exports, et changer le type laisserait les réponses déjà saisies dans l'ancien\nformat. Pour en changer, archivez la question et déclarez-en une nouvelle."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Réordonner"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : les flèches déplacent la question dans le formulaire. L'ordre à l'écran est\ncelui que voient les équipes sur chaque affaire."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Archiver"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : la question disparaît des formulaires, "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "et les réponses déjà saisies sont\nconservées"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". C'est le seul retrait que le produit connaisse : aucune question n'est jamais\nsupprimée. Une question archivée reste dans la liste, marquée « Archivé », et le bouton de\nrestauration la remet en place."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si vous n'êtes pas administrateur de l'espace de travail, les commandes de l'éditeur sont grisées et\nun bandeau dit pourquoi (section 3.6) ; le serveur refuse de toute façon l'enregistrement."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "la-visibilite-des-questions-etape-par-etape",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.4 bis La visibilité des questions, étape par étape"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sous les questions, le bloc « Visibilité des champs, étape par étape » est une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "grille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une\nligne par question, une colonne par étape, et sur chaque case ce que la question devient à cette\nétape-là."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Quatre états par case :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Par défaut"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — aucune règle n'est enregistrée pour ce couple, et la question est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "affichée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Masqué"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — la question n'apparaît pas sur les affaires de cette étape, et n'y est pas demandée ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Affiché"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — la question apparaît, facultative ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Exigé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — la question apparaît, et elle doit être renseignée "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "pour qu'une affaire entre dans\ncette étape"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Une affaire déjà arrivée n'en est jamais chassée : le manque est signalé sur sa\nfiche sans bloquer sa lecture."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Par défaut » et « Affiché » produisent le même formulaire. Le premier n'enregistre rien, le\nsecond enregistre une règle explicite ; la grille les distingue pour ne pas effacer une règle que\nvous n'avez pas désignée. Le choix part "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "dès que vous le faites"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il n'y a pas de bouton\nd'enregistrement, chaque case étant une règle à elle seule."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux précisions que l'écran écrit lui-même sous le tableau :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "une "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "question archivée n'apparaît pas"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans la grille — elle ne figure dans aucun formulaire.\nSes règles sont conservées et redeviennent effectives si vous la restaurez ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "sur un écran étroit, "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "le tableau défile de lui-même"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " vers la droite ; la page, elle, ne défile\njamais horizontalement."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La grille se parcourt entièrement au clavier, chaque case annonçant la question "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "et"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " l'étape\nqu'elle règle."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qu-il-faut-avoir-rempli-pour-emprunter-un-chemin",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.4 ter Ce qu'il faut avoir rempli pour emprunter un chemin"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sous la grille, le bloc « Champs exigés pour franchir une transition » reprend les chemins dans\nl'ordre du graphe et écrit, sous chacun, ce qu'une affaire doit avoir renseigné pour l'emprunter."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une exigence a "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "deux origines possibles"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et chaque ligne dit la sienne :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "exigé par la règle de l'étape d'arrivée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — la question est réglée sur « Exigé » dans la grille\nci-dessus, pour l'étape où ce chemin arrive. Elle vaut alors pour "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "tous"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " les chemins qui mènent\nà cette étape ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "exigé par cette transition"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — la question n'est obligatoire que pour ce chemin-là, quels que\nsoient les réglages de l'étape d'arrivée ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "une même question peut porter "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "les deux"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ; elle est alors écrite comme telle."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Cette distinction commande ce que vous pouvez faire depuis ce bloc. Une exigence venue d'une règle\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "n'y porte aucune commande de retrait"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : elle se modifie dans la grille, à la case correspondante.\nRetirer ici ce qui a été réglé là-haut vous aurait laissé croire à un effet que le formulaire\nn'aurait pas eu."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux gestes seulement, tous deux confirmés en base :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Exiger un champ"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ouvre un court formulaire sous le chemin concerné. La liste ne propose que\ndes questions qu'il est utile d'exiger : celles déjà liées à ce chemin en sont retirées, et les\nquestions archivées n'y figurent jamais. Une question déjà exigée par la règle de l'étape\nd'arrivée reste proposée, avec un avertissement qui dit ce qu'elle changera — rien, tant que\ncette règle ne change pas."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ne plus exiger"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " demande une confirmation nommant la question et le chemin. Elle rappelle que la\nquestion "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "reste dans le formulaire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : elle cesse seulement d'être obligatoire pour ce chemin."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux précisions que l'écran écrit lui-même :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "un chemin sans aucune exigence l'annonce en toutes lettres — « Aucun champ exigé » —, jamais par\nune liste vide ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "une question "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "archivée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " encore liée à un chemin est nommée "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "sans effet"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : elle ne figure dans\naucun formulaire, donc elle n'est demandée nulle part. La liaison est conservée et redevient\neffective si vous restaurez la question."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Si un autre administrateur déclare la même exigence pendant que vous remplissez le formulaire,\nl'écran vous le dit — « Ce champ est déjà exigé par cette transition » — au lieu d'afficher une\nerreur technique."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qu-une-exigence-fera-aux-affaires-en-cours",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.4 quater Ce qu'une exigence fera aux affaires en cours"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Rendre une question obligatoire est le seul réglage de cet écran qui puisse "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "empêcher"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " une affaire\nexistante d'avancer. L'éditeur vous dit donc, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "avant"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'enregistrer, ce que le réglage ferait."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Quand vous passez une case de la grille à "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Exigé »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", rien n'est enregistré tout de suite : une\nconfirmation s'ouvre sous le tableau et annonce "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "deux"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " nombres, qui ne se déduisent pas l'un de\nl'autre :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "combien d'affaires sont "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "déjà"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " à cette étape — leur fiche signalera le manque, mais elles ne\nsont "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "jamais"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " déplacées ni bloquées en lecture ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "combien d'affaires "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ne pourront plus entrer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans cette étape tant que la question sera vide."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Les deux peuvent être très différents. Sur l'étape initiale, aucun chemin n'arrive : le second\nnombre est nul alors que le premier ne l'est pas. Sur une étape de fin, c'est souvent l'inverse."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Tant que vous n'avez pas confirmé, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rien n'est écrit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : « Annuler » rend la case à son état\nenregistré. Les trois autres états — « Par défaut », « Masqué », « Affiché » — s'appliquent\nimmédiatement comme avant : aucun d'eux ne bloque une affaire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le formulaire "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Exiger un champ »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'une transition affiche le même genre de nombre dès que vous\nchoisissez une question, sous la liste : combien d'affaires ne pourront plus emprunter "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ce\nchemin-là"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Une exigence de chemin ne concerne que lui, à la différence d'une case de la grille qui\nvaut pour toutes les entrées dans l'étape."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Deux précisions honnêtes :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "ces nombres comptent les affaires "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "que vous avez le droit de voir"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "si la mesure échoue, l'écran le dit — « n'ont pas pu être mesurés » — et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "laisse le geste\npossible"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : c'est une aide à la décision, pas une autorisation. Le contrôle réel reste appliqué\nau moment où une affaire tente de changer d'étape."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-encore-la",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.5 Ce qui n'est pas encore là"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "La prévisualisation ne montre "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucune liste nominative"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " des affaires concernées, seulement leur\nnombre."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Retirer une exigence n'est pas prévisualisé : cela ne bloque rien, cela lève une contrainte."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Exiger une même question sur "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "plusieurs chemins d'un coup"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " n'est pas possible : le geste se\nrépète chemin par chemin."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Copier"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " vers un track et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "rendre par défaut"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " un workflow restent hors interface. Créer, en\nrevanche, est livré depuis "
+							},
+							{
+								"type": "code",
+								"text": "CRM-031"
+							},
+							{
+								"type": "text",
+								"text": " — chapitre 5 bis.0."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "garder-une-photographie-d-un-workflow-et-y-revenir",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.6 Garder une photographie d'un workflow, et y revenir"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-078"
+						},
+						{
+							"type": "text",
+							"text": ", cinquième tranche. Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-078/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Versions"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", tout en bas de l'éditeur de workflows, sous les exigences de chemin."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un workflow change : ses étapes, ses transitions, ses questions et leurs règles se modifient à tout\nmoment. Une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "version"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est une photographie datée, numérotée et signée de sa composition entière.\nElle ne se modifie pas et ne se supprime pas — c'est tout son intérêt."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le tableau des versions"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste, de la plus récente à la plus ancienne : son numéro, la date de\npublication, la personne qui l'a publiée, sa note éventuelle et le début de son empreinte — le\ncondensé qui identifie la composition. Un workflow qui n'a jamais été publié le dit en toutes\nlettres ; c'est le cas de la copie « Cycle commercial — Conseil IA » de l'espace de démonstration."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Publier une version"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " fige la composition actuelle. Une note facultative aide à la retrouver plus\ntard ; elle ne change rien à ce qui est conservé. Publier "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne change rien"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " au fonctionnement : les\naffaires continuent de circuler sur le workflow vivant, une version est un témoin, pas une cible.\nPublier deux fois de suite sans avoir rien modifié entre-temps est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "refusé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et l'écran l'écrit :\ndeux versions identiques ne seraient distinguables par personne."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Comparer deux versions"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " dit ce que la version "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "cible"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ajoute, retire ou modifie par rapport à\nla version de "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "base"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — le sens est celui que vous choisissez dans les deux listes. Le résultat est\nrangé en six familles : le workflow lui-même, les étapes, les transitions, les questions, les règles\nde visibilité et les questions exigées par un chemin. Chaque élément est marqué "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ajouté"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Retiré"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nou "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Modifié"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et une modification dit l'attribut concerné, sa valeur avant et sa valeur après.\nComparer une version à elle-même est permis, et l'écran répond simplement que rien ne les distingue."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Prévoir une restauration"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " demande au produit, avant tout geste, où chaque affaire atterrirait si\ncette version était rétablie. Le plan dit combien d'affaires sont concernées, combien ne bougeraient\npas, combien seraient déplacées et combien "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "attendent une instruction"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Les affaires "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "archivées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\net celles "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "en corbeille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " y figurent comme les autres : elles occupent une étape, elles aussi."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Lorsque la restauration ferait disparaître une étape, celle-ci apparaît avec le nombre d'affaires\nqu'elle porte, et une liste déroulante vous demande "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "où les envoyer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Le produit ne choisit jamais\nà votre place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne\nla choisit pas. Chaque choix relance le calcul du plan, et le verdict est mis à jour."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Restaurer"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " rétablit la composition photographiée, en une seule fois ou pas du tout. Avant toute\nécriture, le produit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "publie la composition actuelle comme point de retour"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : revenir en arrière\nest alors la même manœuvre, appliquée à cette nouvelle version. Le résultat reste affiché — le point\nde retour, le nombre d'affaires déplacées, les étapes et les questions créées, supprimées ou\nmodifiées. Tant qu'une affaire attend une instruction, la restauration est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "refusée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et le dit."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui n'est pas restauré, et le produit l'écrit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nom"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du workflow, sa portée, son track\net son caractère par défaut. Ce sont son identité et son placement, pas sa composition. Une question\ndevenue surnuméraire est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "archivée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", jamais supprimée : les réponses déjà saisies sont conservées."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui peut le faire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Publier, prévoir et restaurer sont réservés aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de\nl'espace de travail. Les commandes restent visibles pour tout le monde, grisées pour qui n'administre\npas l'espace, avec un bandeau qui dit pourquoi (section 3.6) ; le serveur refuse de toute façon."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-encore-la-cote-versions",
+			"content": [
+				{
+					"type": "text",
+					"text": "5 bis.7 Ce qui n'est pas encore là, côté versions"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "La "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "liste des affaires"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " du plan est bornée à deux cents entrées, et l'écran écrit combien il en\nmontre sur combien. Cette borne n'est pas réglable depuis l'interface."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Aucune "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "purge"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ni rétention : le nombre de versions ne fait que croître."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Une version ne porte "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucune commande de ligne"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : elle ne se renomme pas, ne se supprime pas, et\nsa note ne se modifie plus après coup."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}
