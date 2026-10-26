@@ -16962,7 +16962,8 @@ décision 729) : une couleur propre au channel, des pastilles nommées, pas de c
       corrigé ; manuel 3.2 ter, 5.1, 5.2 ; campagnes pgTAP, API et interface des écrans touchés (`docs/JOURNAL.md`
       « `CRM-116` T2 à T4 »).
 - [ ] **T5 — livraison** : migration en fenêtre et reconstruction de la webapp, sur instruction du responsable.
-### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[~]`
+### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[@]`
+*Prise en charge : session interactive 2026-10-23 (fil d'Ariane `CRM-110`, Claude Code, poste du responsable) depuis 2026-10-26 21:33 UTC — état avant : [~]*
 ***Reste réel au 2026-10-26, T2 interrompue sur consigne du responsable** (fin de session) : le panneau d'aide et les pages restent à éprouver (unitaires de `AideEntete` et `PageAide`, E2E, paliers, captures observées), puis T3 à T6. La base, la publication, la construction et la lecture sont faites et prouvées (décision 753).*
 *Créée le 2026-10-26 — constat du responsable : « on a un manuel mais il n'est joignable nulle part depuis la webapp ;
 est-ce dans le backlog ou c'est un loupé ? ». Mesuré le même jour : un loupé. La webapp ne porte aucun lien ni entrée
