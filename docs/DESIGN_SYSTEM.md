@@ -6319,7 +6319,7 @@ posent vaut ici sans être répété :
 
 ### 5.65 Les deux scores de santé d'une affaire — `CRM-066` tranche 4
 
-*Proposé le 2026-10-26 avec `docs/SPEC-analytique.md` §13, soumis à validation (décision 723). Aucun jeton n'est ajouté :
+*Proposé le 2026-10-26 avec `docs/SPEC-analytique.md` §13, validé le même jour (décision 724). Aucun jeton n'est ajouté :
 les trois teintes de signification de la charte (§1) et leurs versions douces existent.*
 
 - **UNE PASTILLE PAR SCORE, COMPACTE** : `rounded-full`, `--text-xs` `tabular-nums`, le libellé court suivi du nombre —

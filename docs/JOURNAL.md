@@ -34977,3 +34977,13 @@ de la pile) ; capture du sommeil depuis le board observée, identique à la pré
 aurait fallu réviser alors (le harnais n'avait pas été rejoué), vise désormais `card_placements_write_events`. Le rouge
 restant, « les parcours d'interface », est le **résidu connu d'INC-292** : un `503` de la fonction `session`, relevé dans les
 journaux de Kong sur `/functions/v1/session/prolonger`. Les deux specs touchées sont **vertes rejouées seules** (23/23).
+
+### décision 724 — `CRM-066` tranche 4 : la spécification des deux scores validée telle quelle
+
+*2026-10-26, réponse du responsable à la question posée par `AskUserQuestion` : « Validée, code-la ».* Toutes les
+propositions de la décision 723 sont retenues : pénalités et conditions de la dynamique, une affaire jamais contactée
+comptée depuis sa création ; notes de la santé commerciale (fraîcheur 7 → 30 jours, ponctualité 100/60/30/0, ancienneté
+0,5 → 1,5 fois le seuil) ; poids d'un signal inconnu réparti ; aucun score pour une affaire décidée, archivée ou à la
+corbeille ; pastilles sur la carte, détail sur la fiche, rien dans la vue liste ; les deux objets dans `crm_card_get` et
+`crm_card_list`. La question avait été coupée une première fois par la fin d'une session ; elle a été reposée à
+l'identique. Le numéro de migration se prend après synchronisation avec `CRM-111` T2.3, qui occupe 0110 et suivantes.

@@ -693,7 +693,7 @@ par une assertion, et non laissé à la prose.
 
 ## 13. Tranche 4 — les deux scores de santé (`CRM-P02`)
 
-*Spécification proposée le 2026-10-26, avant tout code. Arbitrages déjà rendus (décision 708) : **les deux** compositions,
+*Spécification proposée le 2026-10-26, avant tout code, **validée telle quelle le même jour** (décision 724). Arbitrages déjà rendus (décision 708) : **les deux** compositions,
 toutes deux affichées **sur la carte du board et sur la fiche**, **en couleurs**, avec le palier **écrit en toutes
 lettres** ; paliers communs — sain à 70 et plus, à surveiller de 40 à 69, en danger sous 40 ; **calcul à la lecture par
 une fonction en base** ; **connecteur MCP : oui, famille `affaires`** — les deux scores et leurs composantes dans
@@ -754,7 +754,7 @@ la mesure qui l'a déclenchée, pour être **affichée une à une** :
 **Une affaire décidée** (`won`, `lost`), **archivée ou à la corbeille** n'a aucun score : la fonction rend `null`, et
 l'écran n'affiche rien. **Une affaire en sommeil** garde ses scores — le sommeil masque, il ne soigne pas.
 
-### 13.5 Le modèle — migration `0110_scores_sante.sql`
+### 13.5 Le modèle — migration `scores_sante` (numéro pris après synchronisation : la série de `CRM-111` T2.3 occupe 0110 et suivantes)
 
 - **`public.health_momentum(public.cards) returns jsonb`** et **`public.health_commercial(public.cards) returns jsonb`** :
   colonnes calculées à paramètre anonyme (le patron de `is_read`, migration 105, que le générateur de types range dans la
