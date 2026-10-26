@@ -5,6 +5,8 @@
 //           modification) ; docs/SPEC-workflow-engine.md §7 ter.13 (le point de retour se restaure) ; décision 620
 // @verifies CLAUDE.md §10 (le commercial et la lectrice refusés par la base, avec leurs jetons réels), §15 (effets
 //           en base relus)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Toutes les générations passent par le simulateur (scénario `modification` : la deuxième étape retirée, l'étape
 // « qualification-ia » ajoutée, aucun remappage). JAMAIS sur le workflow du seed : chaque scénario compose un workflow
@@ -114,7 +116,10 @@ test.describe('L’assistant IA — faire évoluer un workflow existant (docs/SP
 
 	test.afterEach(async ({ request }) => {
 		for (const workflow of jetables.splice(0)) {
-			await request.delete(rest(`cards?workflow_id=eq.${workflow}`), { headers: enTetesService() })
+			// `CRM-111` T2.4.4 : le workflow d'une affaire est celui de son rattachement ; les affaires se retirent par identifiant.
+			const affaires = await request.get(rest(`card_placements?workflow_id=eq.${workflow}&select=card_id`), { headers: enTetesService() })
+			const ids = ((await affaires.json()) as { card_id: string }[]).map((a) => a.card_id)
+			if (ids.length > 0) await request.delete(rest(`cards?id=in.(${ids.join(',')})`), { headers: enTetesService() })
 			await request.delete(rest(`channels?workflow_id=eq.${workflow}`), { headers: enTetesService() })
 			const retrait = await request.delete(rest(`workflows?id=eq.${workflow}`), { headers: enTetesService() })
 			expect(retrait.status()).toBe(204)
@@ -159,7 +164,7 @@ test.describe('L’assistant IA — faire évoluer un workflow existant (docs/SP
 		const apres = await etapesVivantes(request, w.workflow)
 		expect(apres.map((e) => e.cle)).toEqual(['prospection', QUALIFICATION, 'signature'])
 		const qualification = apres.find((e) => e.cle === QUALIFICATION)?.id
-		const [affaire] = await lireService<{ current_step_id: string }>(request, `cards?id=eq.${w.affaire}&select=current_step_id`)
+		const [affaire] = await lireService<{ current_step_id: string }>(request, `card_placements?card_id=eq.${w.affaire}&select=current_step_id`)
 		expect(affaire?.current_step_id, 'l’affaire est sur l’étape NOUVELLE').toBe(qualification)
 		const [decidee] = await lireService<Suggestion>(request, `suggestions_ia?id=eq.${id}&select=id,workflow_id,portee,statut,empreinte_initiale,version_retour_id`)
 		expect(decidee?.statut).toBe('acceptee')
@@ -172,7 +177,7 @@ test.describe('L’assistant IA — faire évoluer un workflow existant (docs/SP
 		})
 		expect(restauration.status(), await restauration.text()).toBe(200)
 		expect((await etapesVivantes(request, w.workflow)).map((e) => e.cle)).toEqual(['prospection', 'negociation', 'signature'])
-		const [revenue] = await lireService<{ current_step_id: string }>(request, `cards?id=eq.${w.affaire}&select=current_step_id`)
+		const [revenue] = await lireService<{ current_step_id: string }>(request, `card_placements?card_id=eq.${w.affaire}&select=current_step_id`)
 		expect(revenue?.current_step_id).toBe(w.negociation)
 	})
 

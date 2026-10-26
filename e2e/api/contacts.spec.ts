@@ -3,6 +3,8 @@
 // @verifies docs/SPEC-permissions-rls.md §4 (ligne contacts/organizations), §7 (preuves de refus)
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Ces scénarios exercent le backend AVEC LES JETONS RÉELS des trois profils seedés obtenus par
 // la véritable route de connexion. Aucun navigateur n'est lancé : la tranche 1 ne livre aucun
@@ -1251,19 +1253,28 @@ test.describe('CRM-060 4h — le rattachement d’une affaire depuis la fiche (�
 	test('15, 16 et 17 — ce que le sélecteur LIT : 40 pour l’admin, 35 pour la lectrice, 0 pour l’anonyme', async ({
 		request,
 	}) => {
-		const chemin = '/rest/v1/cards?select=id,title,archived_at&deleted_at=is.null&order=title&limit=200'
+		// `CRM-111` T2.4.4 : l'archivage se lit sur les rattachements, comme le sélecteur le lit
+		// (`COLONNES_AFFAIRE_RATTACHABLE`) ; une affaire est archivée quand tous le sont.
+		const chemin =
+			'/rest/v1/cards?select=id,title,card_placements!card_placements_card_fk(archived_at)&deleted_at=is.null&order=title&limit=200'
+		const archivee = (card: { card_placements: { archived_at: string | null }[] }) =>
+			card.card_placements.length > 0 && card.card_placements.every((r) => r.archived_at !== null)
 
 		const jetonAdmin = await jetonDe('admin@p2enjoy.test')
 		const admin = await request.get(chemin, { headers: enTetesAuthentifies(jetonAdmin) })
 		expect(admin.status()).toBe(200)
-		const vuesAdmin = (await admin.json()) as Array<{ id: string; title: string; archived_at: string | null }>
+		const vuesAdmin = (await admin.json()) as Array<{
+			id: string
+			title: string
+			card_placements: { archived_at: string | null }[]
+		}>
 		// LA CORBEILLE EST ÉCARTÉE PAR LE FILTRE, et c'est ce que le sélecteur exige : la fiche ne
 		// liste jamais une affaire supprimée (§15.3), et un rattachement posé sur l'une d'elles
 		// serait invisible dès sa création (§17.3).
 		expect(vuesAdmin.map((card) => card.id)).not.toContain(CARD_CORBEILLE)
 		// UNE AFFAIRE ARCHIVÉE EST BIEN RENDUE : la base accepte son rattachement (mesure 6), et
 		// l'exclure poserait une règle de produit que personne n'a prise.
-		expect(vuesAdmin.filter((card) => card.archived_at !== null).map((card) => card.title)).toEqual([
+		expect(vuesAdmin.filter(archivee).map((card) => card.title)).toEqual([
 			'Contrat cadre 2025',
 		])
 
@@ -1273,9 +1284,9 @@ test.describe('CRM-060 4h — le rattachement d’une affaire depuis la fiche (�
 		const jetonLectrice = await jetonDe('viewer@p2enjoy.test')
 		const lectrice = await request.get(chemin, { headers: enTetesAuthentifies(jetonLectrice) })
 		expect(lectrice.status()).toBe(200)
-		const vuesLectrice = (await lectrice.json()) as Array<{ id: string; archived_at: string | null }>
+		const vuesLectrice = (await lectrice.json()) as Array<{ id: string; card_placements: { archived_at: string | null }[] }>
 		expect(vuesLectrice.length).toBeLessThan(vuesAdmin.length)
-		expect(vuesLectrice.filter((card) => card.archived_at !== null)).toEqual([])
+		expect(vuesLectrice.filter(archivee)).toEqual([])
 
 		// Mesure 17 : l'anonyme reçoit `200` et `[]` — zéro ligne, JAMAIS une erreur de privilège.
 		const anonyme = await request.get(chemin, { headers: enTetesAnonymes() })
@@ -2507,7 +2518,7 @@ test.describe('CRM-060 tranche 6 — la suppression d’un contact (§20.2)', ()
 		const id = await sonderUnContact(request, 'Sonde T6 mesure 9')
 
 		const affaire = await request.get(
-			`/rest/v1/cards?id=eq.${CARD_SEEDEE_1}&select=workflow_id`,
+			`/rest/v1/card_placements?card_id=eq.${CARD_SEEDEE_1}&select=workflow_id`,
 			{ headers: enTetesAuthentifies(jeton) },
 		)
 		const [{ workflow_id: idWorkflow }] = (await affaire.json()) as [{ workflow_id: string }]

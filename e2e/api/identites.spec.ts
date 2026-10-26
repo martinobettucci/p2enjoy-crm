@@ -3,6 +3,8 @@
 // @verifies CLAUDE.md §10 — les refus passent par de vrais jetons, obtenus par la vraie connexion
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §6, §13 — tranche T4 : le compte de preuve
 //           naît dans le Keycloak de développement, son appartenance d'une attente consommée
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -214,7 +216,8 @@ test('les relations PostgREST embarquent responsable, auteur et acteur sans lect
 		responsable: Profil | null
 	}>(
 		request,
-		'/rest/v1/cards?select=owner_id,responsable:profiles!cards_owner_id_fkey(id,full_name,avatar_url)&owner_id=not.is.null&limit=1',
+		// `CRM-111` T2.4.4 : le responsable est celui du rattachement.
+		'/rest/v1/card_placements?select=owner_id,responsable:profiles!card_placements_owner_id_fkey(id,full_name,avatar_url)&owner_id=not.is.null&limit=1',
 		jetonAdmin,
 	)
 	expect(cartes[0]?.responsable?.id).toBe(cartes[0]?.owner_id)

@@ -3,6 +3,8 @@
 //           les deux droits), §18.3 (les compteurs sont ceux de l'appelant), §18.5 (la pièce saine)
 // @verifies docs/SPEC-permissions-rls.md §7, preuve de refus n° 9 RÉVISÉE ; CLAUDE.md §10
 // @verifies docs/JOURNAL.md décision 327
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // TOUT SE MESURE HORS INTERFACE, avec de vrais jetons obtenus par la route de connexion. Une règle
 // d'accès vérifiée depuis l'écran ne prouve que l'écran.
@@ -128,7 +130,7 @@ test.describe('inbox globale — classer exige les DEUX droits (§18.2)', () => 
 
 		const entetes = enTetesAuthentifies(await jetonDe('bizdev@p2enjoy.test'))
 		const cards = await request.get(
-			`${URL_API}/rest/v1/cards?select=id&archived_at=is.null&deleted_at=is.null&limit=1`,
+			`${URL_API}/rest/v1/cards?select=id,card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null&limit=1`,
 			{ headers: entetes },
 		)
 		expect(cards.status()).toBe(200)

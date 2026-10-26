@@ -9,6 +9,8 @@
 //           base), §16 (captures observées)
 // @verifies CRM-093 (docs/BACKLOG.md) — le scénario du commercial révisé : la commande refusée est éteinte avec le motif de l'administr
 //           ation (docs/SPEC-droits-interface.md §3, §5)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // LE SERVEUR LLM N'EST JAMAIS APPELÉ (docs/SPEC-ia.md §8) : l'en-tête `x-ia-simulateur: modification` choisit le
 // scénario qui retire la DEUXIÈME étape et ajoute « qualification-ia ». JAMAIS SUR LE WORKFLOW DU SEED, que toutes les
@@ -88,7 +90,10 @@ async function workflowJetable(requete: APIRequestContext): Promise<Jetable> {
 
 test.afterEach(async ({ request }) => {
 	for (const workflow of jetables.splice(0)) {
-		await request.delete(rest(`cards?workflow_id=eq.${workflow}`), { headers: enTetesService() })
+		// `CRM-111` T2.4.4 : le workflow d'une affaire est celui de son rattachement ; les affaires se retirent par identifiant.
+		const affaires = await request.get(rest(`card_placements?workflow_id=eq.${workflow}&select=card_id`), { headers: enTetesService() })
+		const ids = ((await affaires.json()) as { card_id: string }[]).map((a) => a.card_id)
+		if (ids.length > 0) await request.delete(rest(`cards?id=in.(${ids.join(',')})`), { headers: enTetesService() })
 		await request.delete(rest(`channels?workflow_id=eq.${workflow}`), { headers: enTetesService() })
 		expect((await request.delete(rest(`workflows?id=eq.${workflow}`), { headers: enTetesService() })).status()).toBe(204)
 	}
@@ -183,7 +188,7 @@ test.describe('Faire évoluer un workflow avec l’IA (docs/SPEC-ia.md §13)', (
 		expect(suggestion?.statut).toBe('acceptee')
 		const [version] = await lireService<{ note: string | null }>(request, `workflow_versions?id=eq.${suggestion?.version_retour_id}&select=note`)
 		expect(version?.note).toBe("Point de retour avant une suggestion de l'IA")
-		const [affaire] = await lireService<{ current_step_id: string }>(request, `cards?id=eq.${w.affaire}&select=current_step_id`)
+		const [affaire] = await lireService<{ current_step_id: string }>(request, `card_placements?card_id=eq.${w.affaire}&select=current_step_id`)
 		const [etape] = await lireService<{ node: { key: string } }>(request, `workflow_steps?id=eq.${affaire?.current_step_id}&select=node:workflow_nodes_catalog(key)`)
 		expect(etape?.node.key).toBe(QUALIFICATION)
 	})

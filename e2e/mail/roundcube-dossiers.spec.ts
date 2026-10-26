@@ -4,6 +4,8 @@
 // @verifies docs/SPEC-mail-subsystem.md §4.5 (dossiers imbriqués), §11.5 (Roundcube est le seul
 //           moyen de vérification visuelle de la messagerie tant que CRM-057 n'existe pas)
 // @verifies CLAUDE.md §16 (vérification visuelle) ; docs/JOURNAL.md décision 323
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // LA DEFINITION OF DONE EXIGE UNE OBSERVATION VISUELLE, et c'est le seul endroit du produit où
 // l'arborescence se voit : aucun écran ne la montre avant `CRM-057`. Le parcours est celui d'un
@@ -92,7 +94,7 @@ test.describe('M6 — l’arborescence des cards se voit dans Roundcube', () => 
 		const identifiant = `roundcube-${Date.now()}`
 
 		const cartes = await request.get(
-			`${URL_API}/rest/v1/cards?archived_at=is.null&deleted_at=is.null&select=id,email_local_part&limit=1`,
+			`${URL_API}/rest/v1/cards?select=id,email_local_part,card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null&limit=1`,
 			{ headers: enTetesService() },
 		)
 		const [carte] = (await cartes.json()) as { id: string; email_local_part: string }[]

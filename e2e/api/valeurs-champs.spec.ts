@@ -14,6 +14,8 @@
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
 //           (docs/SPEC-rattachements.md §5) ; les scénarios nomment l'affaire, `e2e/api/rattachements.ts` donne le rattachement
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé — et
@@ -465,7 +467,7 @@ test.describe('V4 — la sixième vérification', () => {
 			'la LISTE DES CLÉS MANQUANTES, que docs/SPEC-form-composer.md §6 exige depuis `CRM-000`',
 		).toBe('budget')
 
-		const card = await request.get(`/rest/v1/cards?id=eq.${CARD_C1}&select=current_step_id`, {
+		const card = await request.get(`/rest/v1/card_placements?card_id=eq.${CARD_C1}&select=current_step_id`, {
 			headers: enTetesService(),
 		})
 		expect(
@@ -533,7 +535,8 @@ test.describe('V4 — la sixième vérification', () => {
 			).toBe(ETAPE_REALISATION)
 		} finally {
 			// Le seed est un contrat maintenu : la card et la valeur sont remises en l’état.
-			await request.patch(`/rest/v1/cards?id=eq.${CARD_C7}`, {
+			// `CRM-111` T2.4.4 : l'étape et le rang sont ceux du rattachement.
+			await request.patch(`/rest/v1/card_placements?card_id=eq.${CARD_C7}`, {
 				headers: { ...enTetesService(), 'Content-Type': 'application/json' },
 				data: { current_step_id: ETAPE_SIGNATURE, position: 2 },
 			})
@@ -563,7 +566,7 @@ test.describe('V4 — la sixième vérification', () => {
 				'`hidden` n’est pas `required` : le champ n’entre pas dans l’ensemble exigé',
 			).toBe(200)
 		} finally {
-			await request.patch(`/rest/v1/cards?id=eq.${CARD_C2}`, {
+			await request.patch(`/rest/v1/card_placements?card_id=eq.${CARD_C2}`, {
 				headers: { ...enTetesService(), 'Content-Type': 'application/json' },
 				data: { current_step_id: '5eed0000-0000-4000-8000-000000000062', position: 2 },
 			})

@@ -8,6 +8,8 @@
 //           effets en base vérifiés), §16 (captures observées)
 // @verifies CRM-093 (docs/BACKLOG.md) — le scénario du refus révisé : la commande refusée est éteinte avec son motif (docs/SPEC-droits-
 //           interface.md §3, §5 ; docs/DESIGN_SYSTEM.md §5.59)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Tout part du SEED et de ses comptes réels, connectés par la vraie page du SSO. `studio-web / refonte`
 // est retenu parce que sa colonne initiale est VIDE — mesuré le 2026-09-29 : deux affaires, aucune à
@@ -51,14 +53,19 @@ type AffaireLue = {
 
 /** L'affaire telle que la base la porte, lue par la clé de service : l'effet réel du geste. */
 async function lireAffaire(requete: APIRequestContext, idCard: string): Promise<AffaireLue | undefined> {
+	// `CRM-111` T2.4.4 : l'étape et le channel sont ceux du rattachement que la création pose ; l'affaire est plongée
+	// pour son titre, et la ligne relue garde la forme d'avant.
 	const reponse = await requete.get(
 		rest(
-			`cards?id=eq.${idCard}&select=title,current_step_id,channels!cards_channel_id_workspace_id_fkey(slug),workflow_steps!cards_current_step_id_workflow_id_fkey(is_initial)`,
+			`card_placements?card_id=eq.${idCard}&select=current_step_id,channels!card_placements_channel_fk(slug),workflow_steps!card_placements_step_fk(is_initial),affaire:cards!inner(title)`,
 		),
 		{ headers: enTetesService() },
 	)
 	expect(reponse.status()).toBe(200)
-	return ((await reponse.json()) as AffaireLue[])[0]
+	const [ligne] = (await reponse.json()) as (Omit<AffaireLue, 'title'> & { affaire: { title: string } })[]
+	if (ligne === undefined) return undefined
+	const { affaire, ...rattachement } = ligne
+	return { title: affaire.title, ...rattachement }
 }
 
 /** L'identifiant de la fiche ouverte, lu dans l'adresse atteinte — jamais supposé. */

@@ -3,6 +3,8 @@
 //           docs/SPEC-permissions-rls.md §4 ; docs/JOURNAL.md décision 609
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`) ; CLAUDE.md §10 (règle d'accès prouvée hors
 //           interface, avec le jeton réel)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Tout part du SEED et de ses comptes réels : le commercial crée dans un channel qu'il peut écrire et
 // relit l'affaire à l'étape initiale ; la lectrice est refusée sur un channel qu'elle LIT — c'est
@@ -63,12 +65,13 @@ test.describe('Créer une affaire (docs/SPEC-cards.md §18.2)', () => {
 
 		// Relue sous les politiques, avec le même jeton : ce que le commercial voit est ce qui est posé.
 		const lue = await request.get(
-			rest(`cards?id=eq.${idCarte}&select=title,channel_id,workflow_steps!cards_current_step_id_workflow_id_fkey(is_initial)`),
+			// `CRM-111` T2.4.4 : le channel et l'étape sont ceux du rattachement que la création pose.
+			rest(`cards?id=eq.${idCarte}&select=title,card_placements!card_placements_card_fk(channel_id,workflow_steps!card_placements_step_fk(is_initial))`),
 			{ headers: enTetesAuthentifies(jeton) },
 		)
 		expect(lue.status(), await lue.text()).toBe(200)
 		expect(await lue.json()).toEqual([
-			{ title: TITRE, channel_id: idChannel, workflow_steps: { is_initial: true } },
+			{ title: TITRE, card_placements: [{ channel_id: idChannel, workflow_steps: { is_initial: true } }] },
 		])
 	})
 

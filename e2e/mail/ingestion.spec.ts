@@ -4,6 +4,8 @@
 // @verifies docs/SPEC-mail-subsystem.md §4.2 (dédoublonnage et occurrences), §4.3 (les statuts
 //           antivirus), §15.4 (le chemin authentifié), §15.5 (dépôt puis analyse, nom assaini)
 // @verifies docs/JOURNAL.md décision 320 ; CLAUDE.md §8 (aucune trace fabriquée)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // RIEN N'EST SIMULÉ : un message est réellement soumis en SMTP authentifié — le chemin d'un
 // message légitime remis par un serveur (§15.4) —, relevé par le service depuis le vrai IMAP,
@@ -243,7 +245,7 @@ test.describe('ingestion — un email réellement envoyé, relevé et analysé',
 		const dossiersAvant = await instantaneDesBoites([BOITE_SYSTEME])
 
 		const cartes = await request.get(
-			`${URL_API}/rest/v1/cards?archived_at=is.null&deleted_at=is.null&select=id,title,email_local_part&limit=1`,
+			`${URL_API}/rest/v1/cards?select=id,title,email_local_part,card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null&limit=1`,
 			{ headers: enTetesService() },
 		)
 		const [carte] = (await cartes.json()) as {

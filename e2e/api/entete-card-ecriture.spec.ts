@@ -9,6 +9,8 @@
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : le responsable, le montant, la prochaine action et son échéance
 //           s'écrivent sur le rattachement de l'affaire (docs/SPEC-rattachements.md §3.2, §4)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Ces scénarios rejouent une à une les quinze lignes du tableau de `docs/SPEC-cards.md` §15 bis.8,
 // écrit **avant** le code, avec les jetons réels des trois profils seedés.
@@ -84,18 +86,32 @@ async function ecrire(
 /** Relit une affaire AVEC LA CLÉ DE SERVICE : constater « inchangée » exige de voir la vraie ligne. */
 async function relire(requete: APIRequestContext, idCard: string) {
 	const reponse = await requete.get(
-		`/rest/v1/cards?id=eq.${idCard}&select=title,owner_id,amount,currency,next_action,next_action_at`,
+		// `CRM-111` T2.4.4 : le responsable, le montant et la prochaine action sont ceux du rattachement, plongé ; la
+		// ligne relue garde la forme d'avant.
+		`/rest/v1/cards?id=eq.${idCard}&select=title,currency,card_placements!card_placements_card_fk(owner_id,amount,next_action,next_action_at)`,
 		{ headers: enTetesService() },
 	)
 	expect(reponse.status()).toBe(200)
-	return (await reponse.json())[0]
+	const [ligne] = (await reponse.json()) as { card_placements: Record<string, unknown>[] }[]
+	if (ligne === undefined) return undefined
+	const { card_placements, ...affaire } = ligne
+	return { ...affaire, ...card_placements[0] }
 }
 
-/** Restaure l'état seedé de `…0c6`, par identifiant et avec la clé de service. */
+/**
+ * Restaure l'état seedé de `…0c6`, par identifiant et avec la clé de service. `CRM-111` T2.4.4 : le titre et la devise
+ * sur l'affaire, le reste sur son rattachement (décision 746 : la clé de service met à jour ces colonnes).
+ */
 async function restaurer(requete: APIRequestContext) {
-	const reponse = await requete.patch(`/rest/v1/cards?id=eq.${CARD_NUE}`, {
+	const { title, currency, ...rattachement } = ETAT_SEEDE
+	const affaire = await requete.patch(`/rest/v1/cards?id=eq.${CARD_NUE}`, {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
-		data: ETAT_SEEDE,
+		data: { title, currency },
+	})
+	expect(affaire.status()).toBe(200)
+	const reponse = await requete.patch(`/rest/v1/card_placements?card_id=eq.${CARD_NUE}`, {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: rattachement,
 	})
 	expect(reponse.status()).toBe(200)
 }
@@ -271,7 +287,7 @@ test.describe("le contrat d'écriture des champs d'en-tête", () => {
 		expect(reponse.status()).toBe(200)
 		expect((await reponse.json())).toHaveLength(1)
 		// Restauration par identifiant, l'`afterEach` ne portant que sur `…0c6`.
-		const remise = await request.patch(`/rest/v1/cards?id=eq.${CARD_ARCHIVEE}`, {
+		const remise = await request.patch(`/rest/v1/card_placements?card_id=eq.${CARD_ARCHIVEE}`, {
 			headers: enTetesService(),
 			data: { next_action: null },
 		})

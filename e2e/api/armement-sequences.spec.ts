@@ -7,6 +7,8 @@
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement désigne le rattachement de l'affaire ; les scénarios
 //           nomment l'affaire, `corpsParRattachement` transmet son rattachement (docs/SPEC-rattachements.md §5, §7)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. `supabase/tests/0058_armement_sequences.test.sql`
 // prouve la règle EN BASE, sous des rôles endossés. Rien n'y garantit que la pile la rende par la
@@ -305,7 +307,7 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 		})
 		const ids = ((await figees.json()) as { card_id: string }[]).map((f) => f.card_id)
 		const toutes = await request.get(
-			'/rest/v1/cards?select=id&archived_at=is.null&deleted_at=is.null',
+			'/rest/v1/cards?select=id,card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null',
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		const nonFigee = ((await toutes.json()) as { id: string }[]).find((c) => !ids.includes(c.id))

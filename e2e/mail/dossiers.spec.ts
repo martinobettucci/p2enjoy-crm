@@ -4,6 +4,8 @@
 // @verifies docs/SPEC-mail-subsystem.md §4.5 (dossiers imbriqués, renommage, copie et non
 //           déplacement), §17.1 (le RENAME emporte les enfants), §17.2
 // @verifies docs/JOURNAL.md décisions 323, 324 et 325
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // L'ARBORESCENCE EST LUE PAR UN CLIENT IMAP TIERS, et c'est ce que la Definition of Done exige.
 // Le client vit dans un conteneur jetable — il n'est ni le service, ni sa connexion : si le
@@ -283,7 +285,7 @@ test.describe('dossiers IMAP — l’arborescence vue par un client', () => {
 		const identifiant = `dossiers-${Date.now()}`
 
 		const cartes = await request.get(
-			`${URL_API}/rest/v1/cards?archived_at=is.null&deleted_at=is.null&select=id,email_local_part&limit=1`,
+			`${URL_API}/rest/v1/cards?select=id,email_local_part,card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null&limit=1`,
 			{ headers: enTetesService() },
 		)
 		const [carte] = (await cartes.json()) as { id: string; email_local_part: string }[]
@@ -345,16 +347,17 @@ test.describe('dossiers IMAP — l’arborescence vue par un client', () => {
 		const [compte] = (await comptes.json()) as { id: string }[]
 
 		const cartes = await request.get(
-			`${URL_API}/rest/v1/cards?archived_at=is.null&deleted_at=is.null&select=id,email_local_part,channel_id&limit=1`,
+			`${URL_API}/rest/v1/cards?select=id,email_local_part,card_placements!card_placements_card_fk!inner(channel_id,archived_at)&card_placements.archived_at=is.null&deleted_at=is.null&limit=1`,
 			{ headers: enTetesService() },
 		)
 		const [carte] = (await cartes.json()) as {
 			id: string
 			email_local_part: string
-			channel_id: string
+			// `CRM-111` T2.4.4 : le channel est celui du rattachement, plongé.
+			card_placements: { channel_id: string }[]
 		}[]
 		const canaux = await request.get(
-			`${URL_API}/rest/v1/channels?id=eq.${carte!.channel_id}&select=track_id`,
+			`${URL_API}/rest/v1/channels?id=eq.${carte!.card_placements[0]!.channel_id}&select=track_id`,
 			{ headers: enTetesService() },
 		)
 		const [canal] = (await canaux.json()) as { track_id: string }[]

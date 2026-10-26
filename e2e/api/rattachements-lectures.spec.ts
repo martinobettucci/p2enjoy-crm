@@ -4,6 +4,8 @@
 //           rattachements), §5 (timeline, décision 670) ; docs/JOURNAL.md décision 705
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`) ; CLAUDE.md §10 (règle d'accès prouvée hors interface)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la clé des valeurs est `(placement_id, field_id)` (docs/SPEC-rattachements.md §3.3)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Une valeur écrite SANS rattachement — `upsert` sur la clé `(placement_id, field_id)` depuis T2.3.6 — en reçoit un,
 // celui de son affaire ; l'événement `field_changed` qu'elle produit le désigne aussi ; la création, événement de
@@ -51,7 +53,7 @@ test.describe('CRM-111 T2.2 — les tables filles désignent le rattachement', (
 		expect(creation.status(), await creation.text()).toBe(200)
 		const idCard = (await creation.json()) as string
 		try {
-			const [carte] = await lignes(request, `cards?id=eq.${idCard}&select=workflow_id,workspace_id`, h)
+			const [carte] = await lignes(request, `card_placements?card_id=eq.${idCard}&select=workflow_id,workspace_id`, h)
 			if (carte === undefined) throw new Error('l’affaire créée ne se relit pas')
 			const [champ] = await lignes(
 				request,

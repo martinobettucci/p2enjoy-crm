@@ -15,6 +15,8 @@
 // @verifies CLAUDE.md §15 (un parcours E2E part d'un état déterministe et vérifie les résultats
 //           visibles et les effets en base), §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md) — connexion par la vraie page du SSO (`connecterAvecLeLabs`)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // POURQUOI CE FICHIER. Le responsable a relevé en production, le 2026-09-28, deux défauts que chaque
 // preuve partielle laissait passer : aucune affaire ne se crée depuis l'interface, et le lien d'un bloc
@@ -229,11 +231,12 @@ test.describe('le premier lancement complet, à la souris et au clavier', () => 
 		await expect(page.getByTestId('entete-card').getByRole('heading', { name: AFFAIRE })).toBeVisible()
 
 		// En base : l'affaire est dans l'espace neuf, à l'étape INITIALE du workflow de départ.
-		const affaires = await lireService<{ title: string; workflow_steps: { is_initial: boolean } | null }[]>(
+		const affaires = await lireService<{ title: string; card_placements: { workflow_steps: { is_initial: boolean } | null }[] }[]>(
 			request,
-			`cards?workspace_id=eq.${ESPACE.id}&select=title,workflow_steps!cards_current_step_id_workflow_id_fkey(is_initial)`,
+			// `CRM-111` T2.4.4 : l'étape est celle du rattachement que la création pose.
+			`cards?workspace_id=eq.${ESPACE.id}&select=title,card_placements!card_placements_card_fk(workflow_steps!card_placements_step_fk(is_initial))`,
 		)
-		expect(affaires).toEqual([{ title: AFFAIRE, workflow_steps: { is_initial: true } }])
+		expect(affaires).toEqual([{ title: AFFAIRE, card_placements: [{ workflow_steps: { is_initial: true } }] }])
 
 		// Le guide la compte : cinq étapes sur six, seule la messagerie reste.
 		await expect(page.getByTestId('pastille-guide-flottant')).toContainText('5 sur 6')

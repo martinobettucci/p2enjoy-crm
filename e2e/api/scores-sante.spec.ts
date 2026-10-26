@@ -2,6 +2,8 @@
 // @verifies docs/SPEC-analytique.md §13.4 (aucun score pour une affaire décidée), §13.5 (colonnes calculées
 //           `SECURITY INVOKER`, objet rendu), §13.8 (le seed couvre les trois paliers) ; CLAUDE.md §10 ;
 //           docs/JOURNAL.md décisions 723 et 724
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // AVEC LES VRAIS JETONS : Camille (admin) lit toutes les affaires ; Farida (viewer) ne lit pas « Grands comptes », dont le
 // track lui est fermé (CRM-040). Le score d'une affaire suit sa ligne : qui ne lit pas l'affaire n'en lit pas le score.
@@ -56,7 +58,8 @@ test.describe('les scores de santé — hors interface (§13)', () => {
 
 	test('le seed couvre les trois paliers des deux scores (§13.8)', async ({ request }) => {
 		const reponse = await request.get(
-			`${URL_API}/rest/v1/cards?select=${COLONNES}&archived_at=is.null&deleted_at=is.null`,
+			// `CRM-111` T2.4.4 : une affaire ouverte a un rattachement non archivé.
+			`${URL_API}/rest/v1/cards?select=${COLONNES},card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null`,
 			{ headers: enTetesAuthentifies(await jetonDe('admin@p2enjoy.test')) },
 		)
 		const lignes = ((await reponse.json()) as Ligne[]).filter((l) => l.health_momentum !== null)

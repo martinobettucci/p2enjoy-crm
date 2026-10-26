@@ -11,6 +11,8 @@
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
 //           (docs/SPEC-rattachements.md §5) ; les scénarios nomment l'affaire, `e2e/api/rattachements.ts` donne le rattachement
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Les douze scénarios de `docs/SPEC-permissions-rls.md` §7, dans leur ordre, exercés **sans passer
 // par l'interface**, avec les jetons réels obtenus par la véritable route de connexion. Aucun
@@ -221,7 +223,7 @@ test.describe('PREUVE N° 1 — un `viewer` ne déplace aucune card', () => {
 	}) => {
 		const avant = await lignes(
 			request,
-			`/rest/v1/cards?id=eq.${CARD_VUE_DU_VIEWER}&select=current_step_id`,
+			`/rest/v1/card_placements?card_id=eq.${CARD_VUE_DU_VIEWER}&select=current_step_id`,
 			enTetesService(),
 		)
 
@@ -239,7 +241,7 @@ test.describe('PREUVE N° 1 — un `viewer` ne déplace aucune card', () => {
 		// deux mondes. La ligne est relue avec la clé de service, qui ne prouve jamais un refus.
 		const apres = await lignes(
 			request,
-			`/rest/v1/cards?id=eq.${CARD_VUE_DU_VIEWER}&select=current_step_id`,
+			`/rest/v1/card_placements?card_id=eq.${CARD_VUE_DU_VIEWER}&select=current_step_id`,
 			enTetesService(),
 		)
 		expect(apres).toEqual(avant)
@@ -411,14 +413,14 @@ test.describe('PREUVE N° 4 — un droit fin `none` ferme la card ET son formula
 	}) => {
 		const vuesParLeService = await lignes(
 			request,
-			`/rest/v1/cards?select=id&channel_id=eq.${CH_FERME_AU_VIEWER}`,
+			`/rest/v1/card_placements?select=id:card_id&channel_id=eq.${CH_FERME_AU_VIEWER}`,
 			enTetesService(),
 		)
 		expect(vuesParLeService.length).toBeGreaterThan(0)
 
 		const vuesParLeViewer = await lignes(
 			request,
-			`/rest/v1/cards?select=id&channel_id=eq.${CH_FERME_AU_VIEWER}`,
+			`/rest/v1/card_placements?select=id:card_id&channel_id=eq.${CH_FERME_AU_VIEWER}`,
 			enTetesAuthentifies(jetonViewer),
 		)
 		expect(vuesParLeViewer).toEqual([])
@@ -457,11 +459,12 @@ test.describe('PREUVE N° 5 — même une administratrice ne déplace pas une ca
 	}) => {
 		const avant = await lignes(
 			request,
-			`/rest/v1/cards?id=eq.${CARD_CACHEE_AU_VIEWER}&select=current_step_id`,
+			`/rest/v1/card_placements?card_id=eq.${CARD_CACHEE_AU_VIEWER}&select=current_step_id`,
 			enTetesService(),
 		)
 
-		const reponse = await request.patch(`/rest/v1/cards?id=eq.${CARD_CACHEE_AU_VIEWER}`, {
+		// `CRM-111` T2.4.4 : l'étape est celle du rattachement.
+		const reponse = await request.patch(`/rest/v1/card_placements?card_id=eq.${CARD_CACHEE_AU_VIEWER}`, {
 			headers: { ...enTetesAuthentifies(jetonAdmin), 'Content-Type': 'application/json' },
 			data: { current_step_id: ETAPE_QUALIFICATION },
 		})
@@ -469,11 +472,11 @@ test.describe('PREUVE N° 5 — même une administratrice ne déplace pas une ca
 		expect(reponse.status()).toBe(403)
 		const corps = (await reponse.json()) as Erreur
 		expect(corps.code).toBe('42501')
-		expect(corps.message).toContain('permission denied for table cards')
+		expect(corps.message).toContain('permission denied for table card_placements')
 
 		const apres = await lignes(
 			request,
-			`/rest/v1/cards?id=eq.${CARD_CACHEE_AU_VIEWER}&select=current_step_id`,
+			`/rest/v1/card_placements?card_id=eq.${CARD_CACHEE_AU_VIEWER}&select=current_step_id`,
 			enTetesService(),
 		)
 		expect(apres).toEqual(avant)

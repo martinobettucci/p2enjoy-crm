@@ -6,6 +6,8 @@
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
 // @verifies docs/INCONSISTENCY_REPORT.md INC-029 (soldée), INC-040 (les deux portes oubliées)
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé — et pour
@@ -426,7 +428,7 @@ test.describe('K4 — le trigger se tait là où la base parle mieux (ligne i)',
 		const [channel] = (await vides.json()) as Channel[]
 
 		// Constaté, non supposé : ce channel doit être vide de cards pour que la preuve porte.
-		const cards = await request.get(`/rest/v1/cards?select=id&channel_id=eq.${channel!.id}`, {
+		const cards = await request.get(`/rest/v1/card_placements?select=id:card_id&channel_id=eq.${channel!.id}`, {
 			headers: enTetesService(),
 		})
 		expect(await cards.json()).toHaveLength(0)

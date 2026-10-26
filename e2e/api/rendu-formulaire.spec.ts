@@ -5,6 +5,8 @@
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
 //           (docs/SPEC-rattachements.md §5) ; les scénarios nomment l'affaire, `e2e/api/rattachements.ts` donne le rattachement
+// @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
+//           (docs/SPEC-rattachements.md §3.2, §5)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. Le §6.6 confie « renseigné » à
 // `app.valeur_de_champ_est_vide(jsonb)` et exige que le rendu de `CRM-037` en donne la **même**
@@ -139,7 +141,7 @@ test.describe('R0 — état de départ', () => {
 		)
 		expect(((await valeur.json()) as { value: unknown }[])[0]?.value).toBeNull()
 
-		const card = await request.get(`/rest/v1/cards?id=eq.${CARD_C1}&select=current_step_id`, {
+		const card = await request.get(`/rest/v1/card_placements?card_id=eq.${CARD_C1}&select=current_step_id`, {
 			headers: enTetesService(),
 		})
 		expect(((await card.json()) as { current_step_id: string }[])[0]?.current_step_id).not.toBe(
