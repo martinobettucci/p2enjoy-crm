@@ -12357,7 +12357,8 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       posé par la base, événements du fil ; pgTAP, API, seed.
 - [ ] **T2 — l'exigence de transition** : `move_card` refuse `checklist_incomplete` ; pgTAP, API, bandeau du board.
 - [ ] **T3 — les écrans** : la checklist de la fiche (libre et par rattachement), le compte sur la carte, l'éditeur de
-      workflows (points d'étape et exigences) ; unitaires, E2E, captures.
+      workflows (points d'étape et exigences) ; le seed des points (`docs/SPEC-checklists.md` §6) ; unitaires, E2E,
+      captures.
 - [ ] **T4 — les modèles d'affaires** : `card_templates`, `creer_affaire` étendue, `save_card_as_template`, Réglages,
       « Nouvelle affaire », « Enregistrer comme modèle ».
 - [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`.
