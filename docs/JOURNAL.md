@@ -35629,3 +35629,18 @@ API 1230/1231 (`ingestion.spec.ts:91`, étranger) ; interface du board 24/24 et 
 observée ; `verify-liste.sh` 70/71 — son rouge, « une classe citée n'existe pas : `succes` », est un faux positif du
 contrôle de classes sur une valeur de ton de message (`PlateformeEspace.tsx`, `BlocRgpdContact.tsx`), étranger à la
 tranche.
+
+### décision 741 — INC-316 tranchée : un écran propose de réaffecter les dépenses avant l'effacement
+
+*2026-10-26, réponse du responsable à la question redemandée (décision 739), saisie libre :* « un écran propose de
+choisir où réaffecter avant de supprimer ».
+
+**Lecture retenue, à confirmer dans la spécification.** Le croisement d'une ligne de coût et du budget d'un autre track
+reste permis (`docs/SPEC-costs.md` §3.1 inchangé). Lorsqu'un track ne peut pas être effacé parce qu'un de ses budgets
+porte la dépense d'une affaire d'un autre track, le produit **ne détruit pas ces lignes et ne s'arrête pas en
+silence** : un écran les montre et propose de **choisir le budget où réaffecter** chacune d'elles, avant l'effacement.
+La purge garde son comportement atomique (un objet refusé reste en corbeille) jusqu'à ce que la réaffectation soit
+faite. Le moment (au geste de mise en corbeille, dans l'écran de corbeille, ou les deux), le droit du geste, et le
+connecteur MCP sont des questions de spécification, posées avant tout code (`CLAUDE.md`, « Spécificités du projet »).
+INC-316 passe « tranchée, à spécifier ».
+

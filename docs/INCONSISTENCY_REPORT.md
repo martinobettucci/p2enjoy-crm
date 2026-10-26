@@ -8098,4 +8098,5 @@ demandé au responsable.** **Réponse du 2026-10-26 (décision 739) : lecture (3
 règle écrite** : `docs/SPEC-costs.md` §3.1 prévoit qu'une affaire et un budget relèvent de deux tracks, et le seed le
 démontre (ligne `…e4`, 1 sur 5 en développement), au service de l'écran « Coûts à saisir ». Les rattachements de
 `CRM-111` rendent aussi « le track de l'affaire » ambigu. Comportement laissé inchangé ; **arbitrage redemandé**.
-**Statut : ouverte.**
+**Tranchée le 2026-10-26 (décision 741)** : le croisement reste permis ; un écran propose de choisir où réaffecter les
+dépenses concernées avant l'effacement. **Statut : tranchée, à spécifier** (tranche de `CRM-077`).
