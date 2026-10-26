@@ -1168,6 +1168,8 @@ export const fr = {
 	'board.refusal.comment_required': 'Ce déplacement exige un motif.',
 	'board.refusal.missing_required_fields':
 		"Ces questions doivent avoir une réponse avant d'entrer dans cette étape :",
+	// CRM-068 T2 — docs/SPEC-checklists.md §3.4, docs/DESIGN_SYSTEM.md §5.7 quinquies.
+	'board.refusal.checklist_incomplete': 'Ces points de la checklist doivent être cochés avant ce déplacement :',
 	'board.refusal.anonyme':
 		'Déplacer une affaire exige une session. Connectez-vous, puis réessayez.',
 	'board.refusal.unknown': 'Le serveur a refusé ce déplacement sans motif connu de cet écran :',

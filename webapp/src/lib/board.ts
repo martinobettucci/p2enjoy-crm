@@ -377,6 +377,9 @@ export const MESSAGES_REFUS = [
 	'transition_not_allowed',
 	'comment_required',
 	'missing_required_fields',
+	// CRM-068 T2 (docs/SPEC-checklists.md §3.4) : des points de checklist exigés par la transition ne sont pas cochés ;
+	// le `DETAIL` est un tableau JSON de leurs libellés.
+	'checklist_incomplete',
 ] as const
 
 export type MessageRefus = (typeof MESSAGES_REFUS)[number]
@@ -399,6 +402,21 @@ export type RefusDeplacement = {
 	readonly clesManquantes: readonly string[]
 	/** Message brut du backend, affiché **en plus** lorsque `cle` est `null` (§7.10). */
 	readonly brut: string
+	/**
+	 * Les libellés des points de checklist non cochés, pour `checklist_incomplete` (`CRM-068` T2). Vide sinon, et vide
+	 * aussi quand le `DETAIL` n'est pas le tableau attendu : le bandeau garde alors sa phrase, sans liste devinée.
+	 */
+	readonly pointsManquants: readonly string[]
+}
+
+/** Lit le `DETAIL` de `checklist_incomplete` : un tableau JSON de libellés, ou rien. */
+function lirePointsManquants(details: string | null | undefined): readonly string[] {
+	try {
+		const valeur: unknown = JSON.parse(details ?? '')
+		return Array.isArray(valeur) && valeur.every((point) => typeof point === 'string') ? valeur : []
+	} catch {
+		return []
+	}
 }
 
 /**
@@ -427,16 +445,20 @@ export function classerRefus(
 			champsManquants: cles.map((cle) => libelles.get(cle) ?? cle),
 			clesManquantes: cles,
 			brut: message,
+			pointsManquants: [],
 		}
 	}
+	if (connu === 'checklist_incomplete') {
+		return { cle: connu, champsManquants: [], clesManquantes: [], brut: message, pointsManquants: lirePointsManquants(details) }
+	}
 	if (connu !== undefined)
-		return { cle: connu, champsManquants: [], clesManquantes: [], brut: message }
+		return { cle: connu, champsManquants: [], clesManquantes: [], brut: message, pointsManquants: [] }
 	// Le privilège d'exécution refusé n'est pas un message de la garde : c'est PostgreSQL qui
 	// répond avant elle. Il est reconnu par son `SQLSTATE`, jamais par le texte du message, qui
 	// dépend de la version du serveur (docs/SPEC-workflow-engine.md §7.10).
 	if (code === '42501')
-		return { cle: REFUS_ANONYME, champsManquants: [], clesManquantes: [], brut: message }
-	return { cle: null, champsManquants: [], clesManquantes: [], brut: message }
+		return { cle: REFUS_ANONYME, champsManquants: [], clesManquantes: [], brut: message, pointsManquants: [] }
+	return { cle: null, champsManquants: [], clesManquantes: [], brut: message, pointsManquants: [] }
 }
 
 // --- Optimisme et retour arrière (§7.9) ----------------------------------------------------

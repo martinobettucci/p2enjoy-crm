@@ -1,3 +1,5 @@
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T2 : le refus `checklist_incomplete` classé et rendu dans le bandeau
+//           (docs/SPEC-checklists.md §3.4, docs/DESIGN_SYSTEM.md §5.7 quinquies)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
 //           (docs/SPEC-rattachements.md §5)
 // @verifies CRM-041 (docs/BACKLOG.md) — composition du board et classification des refus
@@ -337,7 +339,20 @@ describe('résolution d’une étape lue (§7.2)', () => {
 describe('classification des refus de `move_card` (§7.10)', () => {
 	const LIBELLES = new Map([['lien-proposition', 'Lien vers la proposition']])
 
-	it('reconnaît les six jetons de la garde', () => {
+	it('lit les points manquants de `checklist_incomplete` dans le tableau JSON du `DETAIL` (CRM-068 T2)', () => {
+		const refus = classerRefus('checklist_incomplete', '["Besoin, confirmé", "Budget connu"]', LIBELLES)
+		expect(refus.cle).toBe('checklist_incomplete')
+		expect(refus.pointsManquants).toEqual(['Besoin, confirmé', 'Budget connu'])
+		expect(refus.champsManquants).toEqual([])
+	})
+
+	it('un `DETAIL` qui n’est pas un tableau de libellés ne fait deviner aucune liste', () => {
+		for (const details of [null, 'Besoin, Budget', '{"a": 1}', '[1, 2]']) {
+			expect(classerRefus('checklist_incomplete', details, LIBELLES).pointsManquants, String(details)).toEqual([])
+		}
+	})
+
+	it('reconnaît les sept jetons de la garde', () => {
 		for (const message of MESSAGES_REFUS) {
 			expect(classerRefus(message, null, LIBELLES).cle).toBe(message)
 		}
@@ -619,13 +634,15 @@ describe('appel de la garde `move_card` (§5.2, §7.9)', () => {
 		// Elle n'est pas relâchée en `toMatchObject` — c'est précisément son exhaustivité qui la
 		// rend utile —, elle est mise à jour. Le refus vérifié ici n'étant pas
 		// `missing_required_fields`, les deux listes sont vides, et cela dit quelque chose : aucun
-		// autre refus ne transporte de champs.
+		// autre refus ne transporte de champs. RÉVISÉ DE NOUVEAU PAR `CRM-068` T2 : la forme gagne `pointsManquants`, les
+		// points de checklist d'un `checklist_incomplete` — vide ici, aucun autre refus n'en transportant.
 		expect(resultat).toEqual({
 			statut: 'refus',
 			refus: {
 				cle: 'transition_not_allowed',
 				champsManquants: [],
 				clesManquantes: [],
+				pointsManquants: [],
 				brut: 'transition_not_allowed',
 			},
 		})

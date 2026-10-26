@@ -2084,6 +2084,7 @@ Les codes HTTP sont **mesurés** contre PostgREST `v14.12` selon la table du §4
 | 5 | Le commentaire est fourni si la transition l'exige | `comment_required` | `P0001` | `400` |
 | 5 bis | Le commentaire fourni tient dans les bornes d'un commentaire — 10 000 caractères | `comment_too_long` | `P0001` | `400` |
 | 6 | Les champs requis de l'étape cible sont renseignés | `missing_required_fields`, `DETAIL` portant les clés manquantes | `P0001` | `400` |
+| 6 bis | Les points de checklist que la transition exige sont cochés sur le rattachement — *ajoutée par `CRM-068` T2, migration `0128`, `docs/SPEC-checklists.md` §3.4* | `checklist_incomplete`, `DETAIL` portant un tableau JSON des libellés manquants | `P0001` | `400` |
 
 **L'ordre des deux premières est une règle de discrétion, reprise du §4.3 et non réinventée.**
 « Visible » signifie `app.can_read_channel` sur le channel de la card. Une card d'un autre
@@ -3055,6 +3056,7 @@ l'administratrice :
 | `transition_not_allowed` | `400` | `P0001` | `null` | ce déplacement n'est pas déclaré dans le workflow |
 | `comment_required` | `400` | `P0001` | `null` | un motif est exigé (ne devrait pas survenir, §7.8) |
 | `missing_required_fields` | `400` | `P0001` | `"lien-proposition"` — les **clés**, séparées par `, ` | les **libellés** des champs manquants, résolus par la requête n° 4 |
+| `checklist_incomplete` | `400` | `P0001` | `["Décideur identifié"]` — un tableau **JSON** des libellés (`CRM-068` T2) | la liste des points à cocher, dans le bandeau (`docs/DESIGN_SYSTEM.md` §5.7 quinquies) |
 | `permission denied for function move_card` | `401` | `42501` | `null` | appelant anonyme — le cas de tout visiteur aujourd'hui (INC-021) |
 
 - **Le message est un jeton stable comparé par égalité**, jamais un texte affiché tel quel. C'est le

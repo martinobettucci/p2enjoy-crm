@@ -2390,6 +2390,15 @@ après avoir supprimé leurs événements (`delete from public.card_events where
 `card_events_refuser_maj`, qui ne refuse que la modification). Les points cochés sont perdus.
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
+
+### Migration `0128` — une transition exige des points de checklist cochés (`CRM-068` T2, décisions 747 à 749 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-checklists.md` §3.4 ; `docs/SPEC-workflow-engine.md` §5.3. `public.move_card(p_placement, to_step_id, comment)`
+reprise **à l'identique** de sa définition en base, plus l'étape 6 bis : après les champs exigés, les points que
+`workflow_transition_required_checklist_items` attache à la transition doivent être cochés sur le rattachement, sinon
+`P0001 checklist_incomplete`, `DETAIL` = tableau JSON des libellés manquants. Droits inchangés. *Numérotée 0128 et non 0126 :
+la 0126 et la 0127 avaient été prises entre-temps par `CRM-117`.* **Retrait** : réappliquer `move_card` de la migration
+`0114`, avec la webapp d'avant (qui ignore ce refus et le rendrait « refus inconnu »).
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)
 
 `docs/SPEC-temps.md` §3 à §6.

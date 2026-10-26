@@ -1,7 +1,8 @@
-// @verifies CRM-068 (docs/BACKLOG.md) — tranche T1 : le modèle des checklists, contrat d'API hors interface
+// @verifies CRM-068 (docs/BACKLOG.md) — tranches T1 et T2 : le modèle des checklists et l'exigence de transition, hors interface
 // @verifies docs/SPEC-checklists.md §3.1 (les points d'une étape, réservés à l'administrateur), §3.2 (cocher : la base pose
 //           l'heure et l'auteur, fermés au client ; un point d'étape ne se retire pas), §3.3 (l'ajout à l'entrée dans
-//           l'étape), §3.6 (le fil trace le cochage) ; CLAUDE.md §10 ; docs/JOURNAL.md décisions 747 à 749
+//           l'étape), §3.6 (le fil trace le cochage), §3.4 (`move_card` refuse `checklist_incomplete` avec les points
+//           manquants, puis passe une fois cochés) ; CLAUDE.md §10 ; docs/JOURNAL.md décisions 747 à 749
 //
 // AVEC LES VRAIS JETONS. Le point d'étape est posé par l'administratrice, l'affaire créée par la vraie fonction
 // `creer_affaire` ; les deux sont retirés à la fin, par la clé de service.
@@ -117,5 +118,44 @@ test.describe('les checklists — hors interface (docs/SPEC-checklists.md §3)',
 		})
 		expect([200, 401]).toContain(anonyme.status())
 		if (anonyme.status() === 200) expect(await anonyme.json()).toEqual([])
+	})
+
+	test('T2 — une transition qui exige le point refuse le déplacement, puis le laisse passer une fois coché', async ({
+		request,
+	}) => {
+		const service = { ...enTetesService(), 'Content-Type': 'application/json' }
+		const exigence = await request.post(`${URL_API}/rest/v1/workflow_transition_required_checklist_items`, {
+			headers: representation(await jetonDe('admin@p2enjoy.test')),
+			data: { transition_id: '5eed0000-0000-4000-8000-000000000071', step_item_id: POINT_ETAPE },
+		})
+		expect(exigence.status(), await exigence.text()).toBe(201)
+		try {
+			const rattachement = await request.get(`${URL_API}/rest/v1/card_placements?card_id=eq.${carte}&select=id`, {
+				headers: service,
+			})
+			const [{ id }] = (await rattachement.json()) as { id: string }[]
+			const driss = await jetonDe('bizdev@p2enjoy.test')
+			// Le point peut avoir été coché par un scénario précédent : il est décoché d'abord, par Driss.
+			await request.patch(pointDeLaCarte(driss), { headers: representation(driss), data: { checked: false } })
+			const deplacer = () =>
+				request.post(`${URL_API}/rest/v1/rpc/move_card`, {
+					headers: json(driss),
+					data: { p_placement: id, to_step_id: '5eed0000-0000-4000-8000-000000000062', comment: null },
+				})
+			const refus = await deplacer()
+			expect(refus.status()).toBe(400)
+			const corps = (await refus.json()) as { message: string; details: string }
+			expect(corps.message).toBe('checklist_incomplete')
+			expect(JSON.parse(corps.details)).toEqual([LIBELLE])
+
+			await request.patch(pointDeLaCarte(driss), { headers: representation(driss), data: { checked: true } })
+			const accord = await deplacer()
+			expect(accord.status(), await accord.text()).toBe(200)
+		} finally {
+			await request.delete(
+				`${URL_API}/rest/v1/workflow_transition_required_checklist_items?step_item_id=eq.${POINT_ETAPE}`,
+				{ headers: enTetesService() },
+			)
+		}
 	})
 })

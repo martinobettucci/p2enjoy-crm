@@ -980,6 +980,13 @@ function BandeauRefus({
 						))}
 					</ul>
 				)}
+				{refus.pointsManquants.length === 0 ? null : (
+					<ul data-testid="points-manquants" className="list-disc pl-6">
+						{refus.pointsManquants.map((point) => (
+							<li key={point}>{point}</li>
+						))}
+					</ul>
+				)}
 				{refus.cle !== null ? null : (
 					<code data-testid="refus-brut" className="text-text-2">
 						{refus.brut}
@@ -1016,6 +1023,8 @@ function libelleRefus(refus: RefusDeplacement): string {
 			return t('board.refusal.comment_required')
 		case 'missing_required_fields':
 			return t('board.refusal.missing_required_fields')
+		case 'checklist_incomplete':
+			return t('board.refusal.checklist_incomplete')
 		case 'anonyme':
 			return t('board.refusal.anonyme')
 		default:

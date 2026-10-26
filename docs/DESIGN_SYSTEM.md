@@ -905,6 +905,15 @@ spécifié là-bas ; les règles ci-dessous ne disent que de quoi il a l'air.
   retirerait le clic du milieu, le nouvel onglet et la copie de l'adresse, que le §12.1 a déjà
   retenus comme le motif de préférer un lien à un contrôle.
 
+### 5.7 quinquies Points de checklist exigés par un déplacement refusé — `CRM-068` T2
+
+*Écrit le 2026-10-26 avant le code, `docs/SPEC-checklists.md` §3.4 et §4.* Le refus `checklist_incomplete` vit dans le
+**bandeau de refus du board**, exactement comme celui des champs exigés (§5.7 quater) : même alerte `role="alert"`, même
+place. Sa phrase dit la règle — « Ces points de la checklist doivent être cochés avant ce déplacement : » —, puis la
+liste des points manquants, leurs libellés tels que la base les rend, dans l'ordre de l'étape. **Aucun lien vers la
+fiche tant qu'elle ne montre pas la checklist** (T3) : un lien vers un écran où le geste n'existe pas serait la commande
+morte du §5.10. Aucune couleur, aucun jeton, aucune icône nouvelle.
+
 ### 5.8 États systématiques
 
 Toute vue traite explicitement : chargement (squelettes, pas de spinner plein écran), vide

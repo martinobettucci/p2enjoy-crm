@@ -1,3 +1,5 @@
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T2 : le refus `checklist_incomplete` classé et rendu dans le bandeau
+//           (docs/SPEC-checklists.md §3.4, docs/DESIGN_SYSTEM.md §5.7 quinquies)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranches T2.3.1 et T2.3.3 : le sommeil et `move_card` désignent le rattachement de l'affaire
 //           (docs/SPEC-rattachements.md §5)
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — le board sous le refus du channel (docs/DESIGN_SYSTEM.md §5.59)
@@ -459,6 +461,18 @@ describe('les sept refus, affichés (§7.10)', () => {
 		expect(within(bandeau).getByTestId('champs-manquants').textContent).toContain(
 			'Lien vers la proposition',
 		)
+	})
+
+	it('nomme les points de checklist à cocher, et n’offre aucun lien vers une fiche qui ne les montre pas (CRM-068 T2)', async () => {
+		const bandeau = await provoquer({
+			message: 'checklist_incomplete',
+			details: '["Besoin confirmé"]',
+			code: 'P0001',
+		})
+		expect(bandeau.getAttribute('data-cle')).toBe('checklist_incomplete')
+		expect(within(bandeau).getByText('Ces points de la checklist doivent être cochés avant ce déplacement :')).toBeTruthy()
+		expect(within(bandeau).getByTestId('points-manquants').textContent).toBe('Besoin confirmé')
+		expect(within(bandeau).queryByTestId('reprendre-saisie')).toBeNull()
 	})
 
 	it('reconnaît l’appelant sans session par son SQLSTATE', async () => {

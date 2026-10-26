@@ -12354,8 +12354,13 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
 
 - [x] **T1 — le modèle des checklists** : `workflow_step_checklist_items`, `card_checklist_items`,
       `workflow_transition_required_checklist_items` ; RLS, privilèges de colonne, ajout à l'entrée dans l'étape, cochage
-      posé par la base, événements du fil ; pgTAP, API, seed.
-- [ ] **T2 — l'exigence de transition** : `move_card` refuse `checklist_incomplete` ; pgTAP, API, bandeau du board.
+      posé par la base, événements du fil. **Livrée en développement le 2026-10-26** : migration `0125`, pgTAP `0117`
+      **28/28**, API `e2e/api/checklists.spec.ts` **4/4**, types régénérés. **Le seed passe en T3**, avec les écrans qui le
+      montrent : écrit maintenant, il aurait couru pendant les rejeux du seed de `CRM-111` T2.4, sans écran pour le lire.
+- [x] **T2 — l'exigence de transition** : `move_card` refuse `checklist_incomplete` ; pgTAP, API, bandeau du board.
+      **Livrée en développement le 2026-10-26** : migration `0128` (numérotée après les 0126 et 0127 de `CRM-117`), pgTAP
+      `0118` **9/9**, API 5/5, bandeau du board (`docs/DESIGN_SYSTEM.md` §5.7 quinquies) et ses unitaires, E2E
+      `e2e/ui/checklists.spec.ts` sur un workflow jetable, capture observée ; `docs/SPEC-workflow-engine.md` §5.3.
 - [ ] **T3 — les écrans** : la checklist de la fiche (libre et par rattachement), le compte sur la carte, l'éditeur de
       workflows (points d'étape et exigences) ; le seed des points (`docs/SPEC-checklists.md` §6) ; unitaires, E2E,
       captures.
