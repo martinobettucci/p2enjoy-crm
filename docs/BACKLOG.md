@@ -7265,9 +7265,10 @@ quota et refus testés.
 - [x] **Seed** (`docs/SPEC-seed.md` §2.19 ter, idempotent, deux passages), **manuel** §4.16 et chapitre 11,
       `docs/SPEC-mcp.md`, `CHANGELOG.md` ; compteurs du harnais mesurés (97, 4076, 1202, 940, 45) — *la campagne complète de
       `scripts/verify-harness.sh` n'a pas été rejouée*.
-- [@] **Tranche INC-317 — la preuve du listage du bucket des pièces jointes**, rendue fausse par `CRM-057` §18.5 : la
-      réviser (l'anonyme ne liste rien, une pièce non `clean` jamais, la pièce saine lisible est le témoin).
-      *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 19:22 UTC — état avant : [ ]*
+- [x] **Tranche INC-317 — la preuve du listage du bucket des pièces jointes**, rendue fausse par `CRM-057` §18.5 :
+      révisée le 2026-10-26 (`e2e/api/ingestion.spec.ts`, deux objets déposés, le témoin sain listé par l'administratrice,
+      la pièce infectée par personne, rien pour l'anonyme ni la lectrice) ; spec 4/4, le seul rouge des campagnes API
+      levé ; `docs/SPEC-mail-subsystem.md` §15.5 renvoie au §18.5. Produit inchangé.
 - [ ] **Livraison** en production, sur instruction du responsable, avec la 108 de `CRM-111` T2.1 (elle ne part jamais
       avant la 106 et la 107). — *Pas maintenant (décision 722) : aucune fenêtre décidée.*
 

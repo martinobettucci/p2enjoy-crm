@@ -8114,5 +8114,8 @@ archive une pièce saine réelle, l'administratrice, qui peut la télécharger, 
 produit est conforme au §18.5 ; c'est la preuve, et la phrase du §15.5, qui n'ont pas suivi. **Comportement inchangé.**
 **Correction, dans le cadre de `CRM-058`** : réviser la preuve sans la supprimer (décision 51) — l'anonyme ne liste
 rien ; un membre ne liste jamais une pièce `infected` ou `pending`, ni celle d'un message qu'il ne voit pas ; la pièce
-`clean` qu'il peut télécharger est le témoin. Le §15.5 porte un renvoi au §18.5. **Statut : ouverte, en cours.**
+`clean` qu'il peut télécharger est le témoin. Le §15.5 porte un renvoi au §18.5. **Résolue le 2026-10-26** :
+`e2e/api/ingestion.spec.ts` révisé (deux objets réellement déposés, le témoin sain listé par l'administratrice, la pièce
+infectée listée par personne, rien pour l'anonyme ni pour la lectrice), vert ; le §15.5 renvoie au §18.5. **Statut :
+résolue.**
 

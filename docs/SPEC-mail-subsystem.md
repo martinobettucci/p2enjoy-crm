@@ -1126,6 +1126,11 @@ pièce jointe appartient à `CRM-057`, qui devra le faire passer par une URL sig
 statut `clean`. Livrer ici une politique de lecture ouvrirait le téléchargement d'une pièce
 `infected` — exactement ce que la preuve de refus n° 9 interdit.
 
+> **Révisé par `CRM-057` (§18.5), et la preuve suit depuis INC-317 (2026-10-26).** Une politique ouvre désormais la
+> lecture d'une pièce `clean` à qui voit son message (`mail_attachments_objets_lecture`) ; le listage du bucket suit la
+> même politique. L'anonyme ne lit ni ne liste rien, et une pièce `pending`, `skipped` ou `infected` ne se lit ni ne se
+> liste par personne (`e2e/api/ingestion.spec.ts`, `e2e/api/inbox.spec.ts`).
+
 **Le nom est assaini** : chemin retiré, caractères de contrôle retirés, longueur bornée à
 255 octets, nom vide remplacé par `piece-jointe`. Le nom d'origine est **conservé** à côté du nom
 assaini : le perdre priverait l'utilisateur de l'information que l'expéditeur a voulu transmettre.

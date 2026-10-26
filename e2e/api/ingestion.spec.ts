@@ -3,6 +3,8 @@
 //           §15.5 (le bucket est privé et sans politique)
 // @verifies docs/SPEC-permissions-rls.md §7, preuve de refus n° 9 et n° 11
 // @verifies docs/JOURNAL.md décision 320 ; CLAUDE.md §10
+// @verifies CRM-058 (docs/BACKLOG.md) tranche INC-317 — docs/SPEC-mail-subsystem.md §18.5 (le listage suit la lecture d'une
+//           pièce saine ; jamais l'anonyme, jamais une pièce non saine)
 //
 // PREUVE DE REFUS N° 9, ENFIN SATISFAISABLE. Elle exigeait des pièces jointes et un bucket : les
 // deux existent depuis `CRM-054`. Le scénario CRÉE ses propres lignes avec la clé de service —
@@ -88,18 +90,82 @@ test.describe('ingestion — ce que la pile refuse', () => {
 		}
 	})
 
-	test('le bucket des pièces jointes n’est pas listable par un appelant', async ({ request }) => {
-		for (const entetes of [enTetesAnonymes(), enTetesAuthentifies(await jetonDe('admin@p2enjoy.test'))]) {
-			const liste = await request.post(
-				`${URL_API}/storage/v1/object/list/mail-attachments`,
-				{ headers: { ...entetes, 'Content-Type': 'application/json' }, data: { prefix: '' } },
-			)
-			if (liste.ok()) {
-				// Un `200` est acceptable tant qu'il ne révèle AUCUN objet : c'est le refus par
-				// défaut de la RLS, qui filtre au lieu de lever une erreur.
-				expect((await liste.json()) as unknown[]).toHaveLength(0)
-			} else {
+	// RÉVISÉ PAR INC-317 (`CRM-058`), NON SUPPRIMÉ (décision 51). Ce scénario affirmait qu'aucun appelant ne liste le
+	// moindre objet du bucket : c'était la règle du §15.5, « aucune politique ne l'ouvre à `authenticated` ». `CRM-057`
+	// (§18.5, migration `0029`) a depuis ouvert la lecture d'une pièce `clean` à qui voit son message, et le listage suit la
+	// même politique : il est devenu rouge dès que le seed a porté une pièce saine réelle (`CRM-058` tranche 2). Ce qui
+	// reste vrai, et qu'il prouve désormais sur deux objets RÉELLEMENT déposés : l'anonyme ne liste rien ; un membre ne
+	// liste jamais une pièce `infected` ; celui qui ne voit pas le message ne liste pas même sa pièce saine. La pièce
+	// saine listée par l'administratrice est le TÉMOIN : sans elle, « rien n'est listé » serait vrai d'un bucket vide.
+	test('le bucket ne se liste que dans les limites de la lecture : jamais à l’anonyme, jamais une pièce non saine', async ({
+		request,
+	}) => {
+		const recherche = await request.get(
+			`${URL_API}/rest/v1/mail_messages?select=id,card_id&rfc822_message_id=eq.${encodeURIComponent('<seed-inbox-classe@p2enjoy.test>')}`,
+			{ headers: enTetesService() },
+		)
+		const [porteur] = (await recherche.json()) as { id: string; card_id: string | null }[]
+		expect(porteur, 'le message classé du seed').toBeDefined()
+		const prefixe = `${WORKSPACE}/${porteur!.id}/`
+		const pieces = [
+			{ statut: 'clean', empreinte: '1'.repeat(64) },
+			{ statut: 'infected', empreinte: '2'.repeat(64) },
+		] as const
+		const identifiants: string[] = []
+		const lister = async (entetes: Record<string, string>) => {
+			const liste = await request.post(`${URL_API}/storage/v1/object/list/mail-attachments`, {
+				headers: { ...entetes, 'Content-Type': 'application/json' },
+				data: { prefix: prefixe },
+			})
+			if (!liste.ok()) {
 				expect([400, 401, 403, 404]).toContain(liste.status())
+				return []
+			}
+			return ((await liste.json()) as { name: string }[]).map((objet) => objet.name)
+		}
+
+		try {
+			for (const piece of pieces) {
+				const depot = await request.post(`${URL_API}/storage/v1/object/mail-attachments/${prefixe}${piece.empreinte}`, {
+					headers: { ...enTetesService(), 'Content-Type': 'application/octet-stream' },
+					data: Buffer.from(`contenu ${piece.statut}`),
+				})
+				expect([200, 201], await depot.text()).toContain(depot.status())
+				const ligne = await request.post(`${URL_API}/rest/v1/mail_attachments`, {
+					headers: { ...enTetesService(), Prefer: 'return=representation' },
+					data: {
+						message_id: porteur!.id,
+						card_id: porteur!.card_id,
+						filename: `${piece.statut}.bin`,
+						mime_type: 'application/octet-stream',
+						size_bytes: 12,
+						storage_path: `${prefixe}${piece.empreinte}`,
+						sha256: piece.empreinte,
+						av_status: piece.statut,
+					},
+				})
+				expect(ligne.status(), await ligne.text()).toBe(201)
+				identifiants.push(((await ligne.json()) as { id: string }[])[0]!.id)
+			}
+
+			// LE TÉMOIN : l'administratrice, qui voit le message, liste sa pièce saine — et elle seule.
+			const parAdmin = await lister(enTetesAuthentifies(await jetonDe('admin@p2enjoy.test')))
+			expect(parAdmin).toContain(pieces[0].empreinte)
+			expect(parAdmin).not.toContain(pieces[1].empreinte)
+			// L'anonyme ne liste rien, ni sous ce préfixe ni à la racine.
+			expect(await lister(enTetesAnonymes())).toEqual([])
+			// La lectrice ne voit pas ce message (il est classé dans une affaire qu'elle ne lit pas) : rien n'est listé.
+			const parLectrice = await lister(enTetesAuthentifies(await jetonDe('viewer@p2enjoy.test')))
+			expect(parLectrice).not.toContain(pieces[0].empreinte)
+			expect(parLectrice).not.toContain(pieces[1].empreinte)
+		} finally {
+			for (const identifiant of identifiants) {
+				await request.delete(`${URL_API}/rest/v1/mail_attachments?id=eq.${identifiant}`, { headers: enTetesService() })
+			}
+			for (const piece of pieces) {
+				await request.delete(`${URL_API}/storage/v1/object/mail-attachments/${prefixe}${piece.empreinte}`, {
+					headers: enTetesService(),
+				})
 			}
 		}
 	})
