@@ -6316,3 +6316,23 @@ posent vaut ici sans être répété :
 - **LA MATRICE DU CONNECTEUR GAGNE UNE LIGNE, « Organisations », APRÈS « Contacts »** (§5.56, tranche T4), avec sa phrase
   de portée : « Organisations du carnet, et leurs contacts en lecture ». Celle de « Contacts » devient « Contacts du
   carnet ». Aucune autre forme ne change (`docs/SPEC-mcp.md` §9.2 *sexies*).
+
+### 5.65 Les deux scores de santé d'une affaire — `CRM-066` tranche 4
+
+*Proposé le 2026-10-26 avec `docs/SPEC-analytique.md` §13, soumis à validation (décision 723). Aucun jeton n'est ajouté :
+les trois teintes de signification de la charte (§1) et leurs versions douces existent.*
+
+- **UNE PASTILLE PAR SCORE, COMPACTE** : `rounded-full`, `--text-xs` `tabular-nums`, le libellé court suivi du nombre —
+  « Dynamique 55 », « Santé 62 ». Fond doux et texte sombre de la teinte du palier : sain `--color-success-soft` /
+  `--color-success-on-soft`, à surveiller `--color-accent-soft` / `--color-accent-on-soft`, en danger
+  `--color-danger-soft` / `--color-danger-on-soft` — le couple « doux / sur-doux » déjà employé, dont le contraste est
+  tenu.
+- **LE PALIER EST UN MOT, PAS SEULEMENT UNE COULEUR** (§1, `CLAUDE.md` §22) : il est dans le nom accessible et
+  l'infobulle de la pastille — « Dynamique 55 sur 100, à surveiller » — et écrit en toutes lettres sur la fiche.
+- **SUR LA CARTE DU BOARD**, les deux pastilles se posent sur une ligne sous le montant, avant les échéances ; elles se
+  replient sous 1024 px sans déborder de la carte. Une affaire décidée n'en porte aucune — l'absence n'est pas « 0 ».
+- **SUR LA FICHE**, un bloc « Santé de l'affaire » sous l'en-tête : chaque score avec son palier écrit, puis son détail en
+  liste — pour la dynamique, chaque pénalité avec ses points (« Aucune prochaine action — −15 ») ; pour la santé, chaque
+  signal avec sa note et son poids (« Fraîcheur du dernier contact — 40/100, poids 25 % »), « inconnu » écrit pour un
+  signal manquant. Aucune pénalité : la phrase « Aucune pénalité » plutôt qu'une liste vide.
+- **Aucune icône d'alerte** : une pastille rouge n'est pas une erreur du produit, c'est un état de l'affaire.

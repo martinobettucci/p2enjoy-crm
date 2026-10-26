@@ -652,7 +652,7 @@ confronter exigerait d'inventer cette forme. `CRM-066` livre donc le prévisionn
 3 de la liste fermée de `docs/CloudWorker.md` §4.1 bis : deux réponses raisonnables mènent à deux
 produits différents.
 
-### 11.4 Le score de santé n'est pas arbitré
+### 11.4 Le score de santé n'est pas arbitré — *levé par la décision 708 ; spécification au §13*
 
 `CRM-P02` demande un « score de santé **transparent** ». La colonne existe (M5) et rien ne l'écrit.
 Ce qu'un tel score agrège — ancienneté dans l'étape, dernier contact, montant, probabilité, retard
@@ -690,3 +690,115 @@ par une assertion, et non laissé à la prose.
    **donnée** et non le code : la surcharge d'affaire retirée en base, la suite pgTAP doit rougir.
    Il **restaure** ensuite tout ce qu'il a altéré et le constate en sortant.
 5. **E2E d'interface et captures** — tranche 3, avec sa console vierge et ses quatre paliers.
+
+## 13. Tranche 4 — les deux scores de santé (`CRM-P02`)
+
+*Spécification proposée le 2026-10-26, avant tout code. Arbitrages déjà rendus (décision 708) : **les deux** compositions,
+toutes deux affichées **sur la carte du board et sur la fiche**, **en couleurs**, avec le palier **écrit en toutes
+lettres** ; paliers communs — sain à 70 et plus, à surveiller de 40 à 69, en danger sous 40 ; **calcul à la lecture par
+une fonction en base** ; **connecteur MCP : oui, famille `affaires`** — les deux scores et leurs composantes dans
+`crm_card_get` et `crm_card_list`, action `consulter`, aucune case nouvelle. Les points marqués **[proposition]** sont les
+choix de cette spécification, soumis à la validation du responsable (décision 723). Le §11.4 est levé par cette section.*
+
+### 13.1 Ce que la mesure établit, le 2026-10-26, sur la pile de développement
+
+- **`cards.health_score integer`** existe depuis la migration 11 et **rien ne l'écrit** (M5) ; elle est recopiée telle
+  quelle dans `card_placements` par la migration 108 de `CRM-111` T2.1.
+- **Le genre d'un nœud** — `workflow_nodes_catalog.kind` — vaut `open`, `won` ou `lost` ; le seed porte 31 affaires
+  ouvertes, 7 gagnées, 1 perdue.
+- **Le seuil d'une étape** est `coalesce(workflow_steps.stale_after_days, workflow_nodes_catalog.default_stale_after_days)` —
+  la définition de `cards_figees` (`CRM-062`) ; un nœud terminal n'en porte aucun.
+- **La probabilité effective** se résout à trois niveaux, `coalesce(cards.probability_override,
+  workflow_steps.probability_override, workflow_nodes_catalog.default_probability)` (§7.2), et peut être nulle.
+- **Un contact** laisse deux traces : une activité (`card_activities.occurred_at`, non retirée) et un courrier classé dans
+  l'affaire, reçu ou envoyé (`mail_messages.received_at`). Index présents : `card_activities (card_id, occurred_at desc)` et
+  `mail_messages (card_id)`.
+- **La prochaine action** : `cards.next_action` (texte) et `cards.next_action_at` (échéance) ; le seed en a 13 sans
+  prochaine action et 4 en retard sur 39 affaires actives.
+
+### 13.2 Le score de dynamique — « quoi faire »
+
+**100, moins des pénalités, borné entre 0 et 100** (décision 708). Chaque pénalité est rendue avec son code, ses points et
+la mesure qui l'a déclenchée, pour être **affichée une à une** :
+
+| Code | Points | Condition |
+|---|---|---|
+| `stale_step` | −30 | l'affaire est dans son étape depuis au moins le seuil de l'étape ; aucune pénalité sans seuil |
+| `next_action_overdue` | −25 | `next_action_at` est passée |
+| `next_action_missing` | −15 | ni `next_action` ni `next_action_at` |
+| `no_contact_30` | −30 | aucun contact depuis plus de 30 jours |
+| `no_contact_14` | −20 | aucun contact depuis plus de 14 jours (et pas plus de 30) |
+
+- **[proposition] Une affaire jamais contactée** compte depuis sa création : `coalesce(dernier contact, cards.created_at)`.
+  Une affaire créée hier n'est pas « sans contact depuis 30 jours ».
+- **[proposition] `next_action_overdue` et `next_action_missing` s'excluent** : une action en retard existe.
+
+### 13.3 La santé commerciale — « les chances de gagner »
+
+**Moyenne pondérée de quatre signaux notés sur 100** (décision 708) :
+
+| Code | Poids | Note sur 100 — **[proposition]** |
+|---|---|---|
+| `probability` | 40 % | la probabilité effective elle-même |
+| `contact_freshness` | 25 % | 100 jusqu'à 7 jours sans contact, puis linéaire jusqu'à 0 à 30 jours |
+| `next_action_timeliness` | 20 % | 100 si une échéance future est posée, 60 si une action est écrite sans échéance, 30 si aucune action, 0 si l'échéance est passée |
+| `step_age` | 15 % | 100 jusqu'à la moitié du seuil de l'étape, puis linéaire jusqu'à 0 à une fois et demie le seuil |
+
+- **[proposition] Un signal inconnu ne compte pas pour zéro** : sans probabilité effective, ou sans seuil d'étape, le
+  signal est rendu `unknown` et **son poids est réparti** sur les signaux connus. Écrire 0 transformerait « personne n'a
+  estimé cette affaire » en « cette affaire est perdue » — la valeur par défaut trompeuse que le §7.2 refuse déjà.
+- Le score est arrondi à l'entier.
+
+### 13.4 Ce que les deux scores ne notent pas
+
+**Une affaire décidée** (`won`, `lost`), **archivée ou à la corbeille** n'a aucun score : la fonction rend `null`, et
+l'écran n'affiche rien. **Une affaire en sommeil** garde ses scores — le sommeil masque, il ne soigne pas.
+
+### 13.5 Le modèle — migration `0110_scores_sante.sql`
+
+- **`public.health_momentum(public.cards) returns jsonb`** et **`public.health_commercial(public.cards) returns jsonb`** :
+  colonnes calculées à paramètre anonyme (le patron de `is_read`, migration 105, que le générateur de types range dans la
+  ligne), `STABLE`, **`SECURITY INVOKER`** — elles lisent les activités et le courrier sous la RLS de l'appelant, qui lit
+  déjà l'affaire.
+  - dynamique : `{"score": 55, "tier": "watch", "penalties": [{"code": "next_action_missing", "points": 15}, {"code":
+    "no_contact_14", "points": 20, "days": 18}]}` ;
+  - santé commerciale : `{"score": 62, "tier": "watch", "signals": [{"code": "probability", "weight": 40, "value": 50},
+    …, {"code": "step_age", "weight": 15, "value": null, "status": "unknown"}]}` ;
+  - `tier` : `healthy` (≥ 70), `watch` (40 à 69), `danger` (< 40).
+- **`cards.health_score` reste inemployée**, et elle est nommée telle dans `docs/SCHEMA.md` : un score calculé à la lecture
+  n'a pas de colonne à tenir à jour. Sa suppression appartient à la tranche T2.4 de `CRM-111`, qui retire les colonnes de
+  `cards`.
+- **`CRM-111`** : tant que `cards` reste le seul écrivain (décision 705), les fonctions lisent `cards`. La tranche T2.4,
+  qui retire de `cards` les colonnes d'un rattachement, transporte les deux fonctions vers `card_placements` — un score
+  par rattachement, chaque rattachement ayant son étape, sa prochaine action et son sommeil (décision 661). Ce
+  transport est écrit au backlog de `CRM-111`.
+
+### 13.6 L'écran
+
+`docs/DESIGN_SYSTEM.md` §5.65. **Sur la carte du board** : deux pastilles compactes, « Dynamique 55 » et « Santé 62 »,
+teintées selon leur palier, le palier en toutes lettres dans leur nom accessible et leur infobulle. **Sur la fiche** : les
+deux scores avec leur palier écrit, et le détail — chaque pénalité de la dynamique avec ses points, chaque signal de la
+santé avec sa note et son poids, « inconnu » écrit pour un signal manquant. **[proposition] La vue liste** n'en reçoit pas
+dans cette tranche.
+
+### 13.7 Le connecteur
+
+`crm_card_get` et `crm_card_list` rendent `health_momentum` et `health_commercial`, l'objet de la fonction tel quel —
+scores, paliers et composantes (décision 708, M4 B). Famille `affaires`, action `consulter` (`docs/SPEC-mcp.md` §9.2 bis).
+
+### 13.8 Seed
+
+Le seed est vérifié, pas forcé : il doit porter au moins une affaire ouverte **dans chaque palier** pour chacun des deux
+scores. Si la mesure en manque un, une affaire de démonstration reçoit les données qui l'y mènent — prochaine action,
+activité datée — **par les mêmes écritures que l'écran**, jamais par une note écrite en base.
+
+### 13.9 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | chaque pénalité et chaque signal sur une affaire construite dans la transaction ; les bornes 0 et 100 ; les paliers à 39, 40, 69, 70 ; le signal inconnu et la répartition de son poids ; `null` pour une affaire décidée, archivée, à la corbeille ; `SECURITY INVOKER` |
+| Vitest | la pastille et ses trois paliers, le détail de la fiche, « inconnu » |
+| API | deux appelants : le score d'une affaire que l'un ne lit pas n'est pas rendu à l'autre ; `anon` refusé |
+| E2E `ui` | les pastilles sur le board et le détail sur la fiche, aux quatre paliers d'écran, au clavier |
+| MCP | les deux objets dans `crm_card_get` et `crm_card_list` |
+| Mesure | `EXPLAIN ANALYZE` du board avec les deux colonnes, comparé sans elles |

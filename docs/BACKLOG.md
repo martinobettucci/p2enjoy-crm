@@ -10702,6 +10702,12 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
 - [ ] **4 — le score de santé (`CRM-P02`).** Il commence par son **arbitrage** : ce qu'un score
       « transparent » agrège n'est écrit dans aucun document, et deux compositions raisonnables
       donnent deux produits différents (`docs/SPEC-analytique.md` §11.4).
+      — *Arbitré (décision 708) ; spécification proposée le 2026-10-26, **en attente de validation** (décision 723) :
+      `docs/SPEC-analytique.md` §13, `docs/DESIGN_SYSTEM.md` §5.65. Connecteur MCP : oui, famille `affaires`, action
+      `consulter` — les deux scores dans `crm_card_get` et `crm_card_list` ; aucune case nouvelle. Noms :
+      `health_momentum`, `health_commercial`, codes `stale_step`, `next_action_overdue`, `next_action_missing`,
+      `no_contact_14`, `no_contact_30`, signaux `probability`, `contact_freshness`, `next_action_timeliness`, `step_age`,
+      paliers `healthy`, `watch`, `danger` (décision 658). Migration `0110` (coordonnée avec `CRM-111` T2.2).*
 
 *Limites nommées dès l'ouverture, non masquées* — `docs/SPEC-analytique.md` §11 :
 

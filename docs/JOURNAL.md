@@ -34859,3 +34859,14 @@ confirmé. Les deux voies — retirer la 108 de `main` le temps de la fenêtre, 
 l'exigence d'un instantané. **Réponse : « Ne rien livrer pour l'instant ».** `CRM-058` tranche 2 reste `[~]` jusqu'à une
 fenêtre décidée par le responsable ; `docs/PROD_MIGRATIONS.md` §3 garde les 106, 107 et 108 en attente, la 108 jamais
 avant les deux autres.
+
+### décision 723 — `CRM-066` tranche 4, les deux scores de santé : spécification proposée, en attente de validation
+
+*2026-10-26, session interactive, sous la boucle du backlog.* **Mesures** (`docs/SPEC-analytique.md` §13.1) : le genre du
+nœud (`open`, `won`, `lost`), le seuil d'étape de `cards_figees`, la probabilité effective à trois niveaux et parfois
+nulle, deux traces de contact (activités, courrier de l'affaire), `cards.health_score` jamais écrite. **Propositions**
+(§13.2 à §13.6) : les pénalités et leurs conditions ; une affaire jamais contactée compte depuis sa création ; les notes
+de la santé commerciale (fraîcheur linéaire de 7 à 30 jours, ponctualité 100/60/30/0, ancienneté linéaire de 0,5 à 1,5
+fois le seuil) ; un signal inconnu voit son poids réparti plutôt que compté pour zéro ; aucun score pour une affaire
+décidée, archivée ou à la corbeille ; deux colonnes calculées `SECURITY INVOKER` ; aucune pastille dans la vue liste.
+**Coordination** : `CRM-111` T2.4 transportera les deux fonctions vers `card_placements`. **Aucun code avant la validation.**
