@@ -2307,10 +2307,15 @@ OWNER_TRANSITOIRE=5eed0000-0000-4000-8000-000000000011 # Camille Aubert, le temp
 # workflow global. `entered_step_at` et `position` sont réécrits par `move_card` — seul effet que
 # l'aller-retour ne rend pas à l'identique, et il est nommé (docs/SPEC-cards.md §14.11).
 if [ "$(evenements_de "$CARD_MOUVEMENT" moved)" = '0' ]; then
+	# `CRM-111` T2.3.3 : `move_card` désigne le RATTACHEMENT de l'affaire (docs/SPEC-rattachements.md §5), lu par la clé de
+	# service comme toute référence du seed.
+	rattachement_mouvement=$(curl -s "$API/rest/v1/card_placements?card_id=eq.$CARD_MOUVEMENT&select=id&order=created_at.asc,id.asc&limit=1" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].id // empty')
+	[ -n "$rattachement_mouvement" ] || die "${CARD_MOUVEMENT: -2} n'a pas de rattachement : la migration 0108 est-elle appliquée ?"
 	for etape in "$ETAPE_RELANCE" "$ETAPE_NEGOCIATION"; do
 		code=$(api_admin POST /rest/v1/rpc/move_card \
-			-d "$(jq -nc --arg c "$CARD_MOUVEMENT" --arg e "$etape" \
-			      '{card_id: $c, to_step_id: $e}')")
+			-d "$(jq -nc --arg p "$rattachement_mouvement" --arg e "$etape" \
+			      '{p_placement: $p, to_step_id: $e}')")
 		attendu "$code" "déplacement de ${CARD_MOUVEMENT: -2} vers ${etape: -2}" 200
 	done
 	etape_finale=$(jq -r '.current_step_id' "$CORPS")

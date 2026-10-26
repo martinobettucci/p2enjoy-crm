@@ -723,7 +723,14 @@ FICHIERS_SQL_ATTENDUS=100
 # `0099_card_placements_ecriture` **27**, `0110_scores_sante` **30** ; les suites révisées par CRM-111 (`0012`, `0013`,
 # `0015`, `0016`, `0018`, `0019`, `0042`, `0097`) gardent leur plan. 4076 + 30 + 27 + 30 = 4163, MESURÉ base au repos —
 # « 100 fichiers, 4163 assertions, aucune anomalie ».
-ASSERTIONS_ATTENDUES=4163
+# **4164 depuis `CRM-111` T2.3.3, 2026-10-26** : `0013_move_card` gagne **une** assertion — la signature par rattachement,
+# `move_card(p_placement, to_step_id, comment)`, seule au catalogue (décision 661) ; les autres suites révisées par la
+# tranche (`0014`, `0019`, `0021`, `0034`, `0097`, `0098`, `0099`) gardent leur plan. 4163 + 1 = 4164, MESURÉ — « 100
+# fichiers, 4164 assertions, aucune anomalie ».
+# **+47 par `CRM-072` T1, 2026-10-26** : `0111_journal_audit` **46** assertions (le journal en base, ses droits, son
+# ajout seul, sa purge) et `0016_preuves_refus` **une** de plus (la politique de lecture de `audit_log` nommée, plan 68) ;
+# `0006`, `0007`, `0015` et `0018` RÉVISÉES sans changer de plan (décision 51). 4164 + 47 = 4211, MESURÉ.
+ASSERTIONS_ATTENDUES=4211
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

@@ -35055,6 +35055,91 @@ T2.3.3 réserve la `0114`.
 3. **Livraison des migrations 106 à 113 : « Ne rien livrer encore »**. La décision 722 reste en vigueur, et aucune
    fenêtre n'est ouverte.
 
+### `CRM-111` T2.3.3 — faire avancer un rattachement (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* **Fait** : migration `0114` —
+`move_card(p_placement, to_step_id, comment)`, la forme par affaire supprimée (décision 661). Les six vérifications de
+`CRM-034` et `CRM-036`, leur ordre et leurs messages sont repris au mot près, mais portent sur le rattachement ; les champs
+exigés se lisent sur `card_field_values.placement_id` (T2.2). **Appelants passés dans le même changement** : le board
+(`deplacerCard` désigne le rattachement et fond la ligne rendue — étape, position, ancienneté — dans l'affaire affichée) ;
+le connecteur (`crm_card_move`) ; le seed (l'aller-retour d'étape de `…0c4`) ; les specs d'API, qui continuent de nommer
+l'affaire et reçoivent son rattachement par `e2e/api/rattachements.ts` ; les suites pgTAP (`app.card_first_placement`) ;
+le témoin des types.
+
+**Ce que la tranche a révélé : les harnais qui rejouent des migrations anciennes.** Cinq harnais dégradaient `move_card`, ou
+restauraient l'état, en rejouant `0012`, `0013`, `0019`, `0035` ou `0047`. Avec un paramètre renommé, ces fichiers
+échouent en cours de route, après en avoir appliqué une partie, derrière un `|| true`. Pire : la `0013` rejouée ramène
+`app.can_write_card` à sa forme d'origine, qui lit `cards`, et annulerait en silence la réécriture de T2.2. C'est INC-304,
+et c'est T1 ter. Pour ces cinq-là, la tranche applique la règle désormais écrite au `docs/SPEC-test-harness.md` §3.7 :
+- une fonction se dégrade et se restaure depuis sa définition en base (`scripts/lib/degradation.sh`) ;
+- une structure se répare par reconstruction ;
+- la `0019` se rejoue privée de son bloc `move_card` quand elle est le sujet du harnais.
+
+La section 5 de `verify-colonnes-protegees.sh` (l'ordre 12 → 14) et la section 2 de `verify-valeurs-champs.sh`
+(convergence de la 13) prouvent désormais la même propriété par la reconstruction : le répertoire, non un fichier
+rejoué, fait l'état.
+
+**Vérifications** : migration passée deux fois sur copie, suite complète verte hors pg_cron ; en développement, pgTAP
+**100 fichiers, 4164 assertions, aucune anomalie** ; unitaires **4423/4423** ; `typecheck` ; API **1211/1213**. Les deux
+rouges ne sont pas de cette tranche : `ingestion.spec.ts:91` (`CRM-058`), et la preuve n° 8 de `preuves-refus.spec.ts`
+(`audit_log` absente), qui rougit depuis la `0115` de `CRM-072`, à réviser par sa session. Interface du board, des
+transitions, de la timeline et du formulaire **66/68**, le board **24/24** rejoué seul (le `503` d'INC-292) ; capture du
+board après dépôt observée. **Harnais** : les sections propres à la tranche sont vertes — `verify-move-card.sh` et
+`verify-valeurs-champs.sh` (dégradations depuis la définition en base, restaurations, reconstruction, empreinte
+identique, convergence de la `0114`), `verify-colonnes-protegees.sh` sections 1 à 7 (55/59 ; sa section 8 rejoue les
+suites globales sur l'arbre partagé, où le travail en cours de l'autre session rougit `typecheck`, `types:check`,
+`test:sql` et `e2e:api` — le contenu commité, extrait seul, passe le `typecheck`), `verify-transition-required-fields.sh`
+sections 1 à 3. **Celui-ci n'a pas pu aller au bout** : trois reconstructions de suite sont mortes dans le seed, sur
+l'envoi de démonstration de `CRM-058` — le worker trouvait le stockage injoignable quarante secondes après son démarrage
+et reprogrammait l'envoi, que le seed exige soumis du premier coup ; au repos, le même seed passe. Consigné par
+**INC-312**, comportement inchangé ; la tranche reste donc `[~]` jusqu'à ce rejeu complet. Les rouges de
+`verify-copie-workflow.sh` sont du même ordre (suites globales de l'arbre partagé, seed). **Incident d'environnement** : juste après la `0115` de l'autre session (09:53:03 UTC),
+PostgREST rendait `PGRST202` sur `rpc/ouvrir_session_serveur`, présente en base. Toute connexion échouait (`502`
+`service_indisponible`) jusqu'à un `notify pgrst, 'reload schema'` (09:55). La cause reste ouverte ; la session de `CRM-072`
+ajoute au contrat de livraison un rechargement et un contrôle de connexion après la fenêtre.
+
+
+### décision 727 — `CRM-072` T1 : le journal d'audit en base, trois précisions d'exécution
+
+*2026-10-26, session interactive, en écrivant et en prouvant la migration `0115_journal_audit.sql`. Précisions
+techniques, sans arbitrage du produit.*
+1. **`service_role` garde la lecture de `audit_log`.** Le §3.3 de `docs/SPEC-audit.md` n'accordait `SELECT` qu'à
+   `authenticated`. Le seed (§25) et les preuves d'API ont besoin d'un témoin qui lise hors RLS (décision 50 : la clé de
+   service établit que les lignes existent avant qu'on affirme que personne ne les voit). La lecture lui est donc
+   accordée, l'écriture jamais. Le §3.3 est corrigé.
+2. **Une affaire, un track ou un channel qui naît en corbeille n'écrit pas `trashed`.** Le déclencheur juge un
+   changement de `deleted_at`, et une insertion n'en est pas un. Seul le seed fait naître des objets en corbeille. C'est
+   écrit au §4.3 de la spécification et au §25 du contrat du seed.
+3. **Une panne de connexion a suivi l'application de la `0115` en développement, sans cause établie.** La session de
+   `CRM-111` a constaté des `PGRST202` sur `rpc/ouvrir_session_serveur` de 09:53 à 09:55 UTC. Un `notify pgrst, 'reload
+   schema'` les a fait cesser. La `0115` ne crée ni ne remplace aucune fonction de `public`, et les journaux de PostgREST
+   montrent à 09:53:03 un cache rechargé avec 110 RPC, autant qu'à 09:55:06. **Conséquence** : le contrat de livraison
+   de la 115 exige, après la fenêtre, un rechargement explicite du cache et une connexion réelle constatée
+   (`docs/PROD_MIGRATIONS.md` §3.2, `docs/SPEC-audit.md` §14).
+
+**Vérifications** : pgTAP `0111_journal_audit` 46/46. Une mutation (déclencheur d'ajout seul retiré) fait échouer quatre
+assertions (31, 32, 34, 36), et la suite repasse à 46/46 une fois le déclencheur rétabli. Gardes révisées et non
+retirées (décision 51) : `0006`, `0007` (quatre déclencheurs sur le catalogue), `0015`, `0016` (161 politiques, plan 68,
+preuve n° 8 entière), `0018`, `e2e/api/preuves-refus.spec.ts` (liste des absences vide) et
+`scripts/verify-colonnes-protegees.sh`. Spec d'API `journal-audit` 5/5.
+
+
+### décision 728 — `CRM-072` T2 : deux précisions de l'écran du journal, prises au design system
+
+*2026-10-26, session interactive, en écrivant `docs/DESIGN_SYSTEM.md` §5.66 après sa relecture intégrale. Précisions
+d'interface, sans arbitrage du produit.*
+1. **L'entrée d'index n'est jamais masquée.** Le §8 de `docs/SPEC-audit.md` écrivait « affichée aux seuls
+   administrateurs ». La règle du produit, plus récente que cette phrase, est celle du §5.59 du design system : une
+   entrée d'écran réservé devient un texte qui cite le motif quand la base refuse l'administration. « Coût du
+   personnel » l'applique déjà. Le journal suit la même règle.
+2. **Le détail tient une ligne, en ellipse, sa valeur entière en `title`.** Le §8 promettait « un détail repliable ». Un
+   `details` dans une cellule casserait la ligne unique du tableau (§5.9), et le journal de la plateforme a déjà tranché
+   pour l'ellipse (§5.56).
+
+**Également** : un acteur nul s'écrit « Système ou compte supprimé ». La donnée ne distingue pas un geste du système d'un
+profil supprimé depuis (`ON DELETE SET NULL`), et l'écran ne devine pas la cause (§5.10). `docs/SPEC-audit.md` §8 est
+corrigé dans le même changement.
+
 ### décision 729 — `CRM-116` : une couleur pour les channels, et un sélecteur de couleur lisible pour les tracks et les channels
 
 *2026-10-26, demande et arbitrages du responsable.* **Problème.** « Je vois en dev des tracks et des channels en couleur

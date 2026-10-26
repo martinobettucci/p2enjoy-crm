@@ -11,6 +11,8 @@
 //           interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement de
 //           l'affaire (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
+//           (docs/SPEC-rattachements.md §5) ; les scénarios nomment l'affaire, `e2e/api/rattachements.ts` donne le rattachement
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. La suite pgTAP prouve les mêmes règles **dans la
 // base**, avec `set local role` : elle ne traverse ni PostgREST, ni Kong, ni GoTrue. Or la
@@ -34,6 +36,7 @@ import {
 	enTetesService,
 	jetonDe,
 } from './jetons'
+import { corpsParRattachement } from './rattachements'
 
 const EVENEMENTS = '/rest/v1/card_events'
 const CARDS = '/rest/v1/cards'
@@ -226,7 +229,7 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 
 		const deplacement = await request.post(`${URL_API}/rest/v1/rpc/move_card`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_ESSAI, to_step_id: ETAPE_RELANCE },
+			data: await corpsParRattachement(request, { card_id: CARD_ESSAI, to_step_id: ETAPE_RELANCE }),
 		})
 		expect(deplacement.status()).toBe(200)
 

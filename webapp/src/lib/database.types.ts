@@ -1172,6 +1172,7 @@ export type Database = {
       channels: {
         Row: {
           archived_at: string | null
+          color: string
           created_at: string
           deleted_at: string | null
           deleted_by: string | null
@@ -1187,6 +1188,7 @@ export type Database = {
         }
         Insert: {
           archived_at?: string | null
+          color?: string
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -1202,6 +1204,7 @@ export type Database = {
         }
         Update: {
           archived_at?: string | null
+          color?: string
           created_at?: string
           deleted_at?: string | null
           deleted_by?: string | null
@@ -4117,19 +4120,15 @@ export type Database = {
       }
       mon_role_espace: { Args: { ws: string }; Returns: string }
       move_card: {
-        Args: { card_id: string; comment?: string; to_step_id: string }
+        Args: { comment?: string; p_placement: string; to_step_id: string }
         Returns: {
           amount: number | null
           archived_at: string | null
+          card_id: string
           channel_id: string
           created_at: string
           created_by: string | null
-          currency: string
           current_step_id: string
-          deleted_at: string | null
-          deleted_by: string | null
-          description: string | null
-          email_local_part: string
           entered_step_at: string
           health_score: number | null
           id: string

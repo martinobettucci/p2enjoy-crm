@@ -400,7 +400,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         appel = appel_courant()
         fiche = await carte(appel.jeton, card_id)
         cible = choisir_par_nom(await etapes(appel.jeton, fiche["workflow_id"], "card", card_id), to_step, "step")
-        arguments: dict[str, Any] = {"card_id": card_id, "to_step_id": cible}
+        # `CRM-111` T2.3.3 : le geste désigne le rattachement de l'affaire, résolu depuis `card_id` (§11).
+        arguments: dict[str, Any] = {"p_placement": await rattachement(appel.jeton, card_id), "to_step_id": cible}
         if comment and comment.strip():
             arguments["comment"] = comment.strip()
         reponse = await crm.rpc(appel.jeton, "move_card", arguments)

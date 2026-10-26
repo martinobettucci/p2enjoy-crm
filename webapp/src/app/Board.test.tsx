@@ -1,4 +1,4 @@
-// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.1 : le sommeil désigne le rattachement de l'affaire
+// @verifies CRM-111 (docs/BACKLOG.md) — tranches T2.3.1 et T2.3.3 : le sommeil et `move_card` désignent le rattachement de l'affaire
 //           (docs/SPEC-rattachements.md §5)
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — le board sous le refus du channel (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-041 (docs/BACKLOG.md) — rendu réel du board, de son menu et de ses refus
@@ -342,7 +342,8 @@ describe('menu des transitions (§7.5, §7.7)', () => {
 		geste.focus()
 		await utilisateur.keyboard('{Enter}')
 		await waitFor(() => expect(appels).toHaveLength(1))
-		expect(appels[0]).toEqual({ nom: 'move_card', arguments: { card_id: 'c1', to_step_id: 's2' } })
+		// `CRM-111` T2.3.3 : le geste désigne le RATTACHEMENT de l'affaire.
+		expect(appels[0]).toEqual({ nom: 'move_card', arguments: { p_placement: 'r-c1', to_step_id: 's2' } })
 	})
 })
 

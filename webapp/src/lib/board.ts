@@ -37,7 +37,7 @@ import {
 import type { Database } from './database.types'
 import { MODE_SOMMEIL_PAR_DEFAUT, type ModeSommeil } from './filtre-sommeil'
 import type { ProfilAffiche } from './identites'
-import type { RattachementsLus } from './rattachements'
+import { idRattachement, type RattachementsLus } from './rattachements'
 import { estEnSommeil } from './sommeil-card'
 import type { ClientCrm } from './supabase'
 
@@ -693,14 +693,20 @@ export type ResultatDeplacement =
  */
 export async function deplacerCard(
 	client: ClientCrm,
-	idCard: string,
+	card: CardBoard,
 	versEtapeId: string,
 	commentaire: string | null,
 	libelles: ReadonlyMap<string, string>,
 ): Promise<ResultatDeplacement> {
+	// Le geste désigne le RATTACHEMENT de l'affaire depuis `CRM-111` T2.3.3 (docs/SPEC-rattachements.md §5). Une affaire
+	// dont aucun rattachement n'est lisible est absente pour ce geste, comme le serveur le dirait.
+	const rattachement = idRattachement(card)
+	if (rattachement === null) {
+		return { statut: 'refus', refus: classerRefus('card_not_found', null, libelles, null) }
+	}
 	try {
 		const reponse = await client.rpc('move_card', {
-			card_id: idCard,
+			p_placement: rattachement,
 			to_step_id: versEtapeId,
 			...(commentaire === null ? {} : { comment: commentaire }),
 		})
@@ -715,9 +721,17 @@ export async function deplacerCard(
 				),
 			}
 		}
+		// La ligne rendue est le RATTACHEMENT : son étape, sa position et son ancienneté se fondent dans l'affaire affichée,
+		// qui garde son identifiant, son titre et le reste de ce qu'elle porte.
+		const ligne = reponse.data as unknown as Pick<CardBoard, 'current_step_id' | 'position' | 'entered_step_at'>
 		return {
 			statut: 'ok',
-			card: { ...(reponse.data as unknown as Omit<CardBoard, 'responsable'>), responsable: null },
+			card: {
+				...card,
+				current_step_id: ligne.current_step_id,
+				position: ligne.position,
+				entered_step_at: ligne.entered_step_at,
+			},
 		}
 	} catch (cause) {
 		return {

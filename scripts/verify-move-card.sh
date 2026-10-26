@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement ; la 114 est sa dernière autorité
+#           (docs/SPEC-rattachements.md §5)
 # @verifies CRM-034 (docs/BACKLOG.md) — Definition of Done de `move_card`
 # @verifies docs/SPEC-workflow-engine.md §5.2 (signature), §5.3 (les six vérifications),
 #           §5.4 (effets), §5.5 (protection de colonne), §5.6 (privilèges),
@@ -76,7 +78,11 @@ sso_env_charger .env
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0013_move_card.test.sql
-MIGRATION_FILE=supabase/migrations/0012_move_card.sql
+# RÉVISÉ PAR `CRM-111` T2.3.3 (migration 114) : la DERNIÈRE AUTORITÉ sur `move_card` est la `0114`, qui la redéfinit par
+# rattachement. La `0012` ne se rejoue plus sur une base à jour — « cannot change name of input parameter », le paramètre
+# s'appelant désormais `p_placement` —, et un rejeu partiel la laisserait à moitié appliquée (INC-304). C'est donc la 114
+# qui se rejoue et doit converger.
+MIGRATION_FILE=supabase/migrations/0114_faire_avancer_un_rattachement.sql
 # LA RESTAURATION PASSE PAR LE RUNNER COMPLET, PLUS PAR UNE CHAÎNE ÉCRITE À LA MAIN — INC-252,
 # arbitrée le 2026-09-24 (docs/JOURNAL.md décision 596), docs/SPEC-test-harness.md §3.5.
 #
@@ -95,8 +101,8 @@ restaurer_etat_courant() {
 }
 
 rejouer_migration() {
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
-	restaurer_etat_courant
+	# Une transaction, comme le runner : un échec ne laisse rien à moitié appliqué.
+	psql_db -v ON_ERROR_STOP=1 --single-transaction -f - < "$MIGRATION_FILE" >/dev/null 2>&1
 }
 # shellcheck source=scripts/lib/conteneur.sh
 source scripts/lib/conteneur.sh
@@ -131,9 +137,9 @@ MAIL_VIEWER=viewer@p2enjoy.test
 # `email_local_part` EN A ÉTÉ RETIRÉE PAR `CRM-013` : la migration 0014 la ferme (INC-050, close).
 # La laisser ici ferait de la restauration de ce harnais une réouverture silencieuse — la faute
 # exacte des décisions 108 et 135.
-COLONNES_OUVERTES="title, description, position, owner_id, amount, currency,
-	probability_override, next_action, next_action_at, snoozed_until,
-	archived_at, deleted_at"
+# RÉVISÉ PAR `CRM-111` T2.3.2 (migration 112) : les colonnes de rattachement s'écrivent sur `card_placements` ; l'affaire
+# garde les quatre siennes. `snoozed_until` était fermée depuis `CRM-081`, et la liste l'avait gardée à tort.
+COLONNES_OUVERTES="title, description, currency, deleted_at"
 
 RAPIDE=false
 while [ $# -gt 0 ]; do
@@ -224,12 +230,15 @@ jeton_de() {
 # Appelle `move_card`. Un jeton vide signifie « appelant anonyme ».
 deplacer() {
 	local jeton=$1 card=$2 etape=$3 commentaire=${4:-}
-	local charge
+	local charge rattachement
+	# `CRM-111` T2.3.3 : le geste désigne le RATTACHEMENT de l'affaire (docs/SPEC-rattachements.md §5). Une affaire sans
+	# rattachement — l'identifiant inconnu de la ligne e — transmet son identifiant tel quel : le refus reste celui de la base.
+	rattachement=$(psql_db -c "select coalesce(app.card_first_placement('$card')::text, '$card');")
 	if [ -n "$commentaire" ]; then
-		charge=$(jq -nc --arg c "$card" --arg s "$etape" --arg m "$commentaire" \
-			'{card_id: $c, to_step_id: $s, comment: $m}')
+		charge=$(jq -nc --arg p "$rattachement" --arg s "$etape" --arg m "$commentaire" \
+			'{p_placement: $p, to_step_id: $s, comment: $m}')
 	else
-		charge=$(jq -nc --arg c "$card" --arg s "$etape" '{card_id: $c, to_step_id: $s}')
+		charge=$(jq -nc --arg p "$rattachement" --arg s "$etape" '{p_placement: $p, to_step_id: $s}')
 	fi
 	if [ -z "$jeton" ]; then
 		http POST "$API/rest/v1/rpc/move_card" \
@@ -559,17 +568,18 @@ fi
 	&& ok 'le rejeu laisse current_step_id fermée' \
 	|| fail 'le rejeu a rouvert current_step_id'
 
-# CONVERGENCE — le contrôle qui compte. La porte que cette unité ferme est précisément celle qu'un
-# `grant update on public.cards to authenticated` rouvre d'un seul geste. Une migration seulement
-# idempotente la laisserait ouverte ; celle-ci doit la REFERMER.
-psql_db -c "grant update on public.cards to authenticated;" >/dev/null
-[ "$(psql_db -c "select has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update');")" = "t" ] \
-	&& ok 'dégradation posée : le privilège de table est rendu, la garde redevient contournable' \
+# CONVERGENCE — le contrôle qui compte. RÉVISÉ PAR `CRM-111` T2.3.3 : la 114, dernière autorité sur `move_card`, pose ses
+# privilèges ; une porte rouverte à la main — l'exécution rendue à `anon` — doit être REFERMÉE par son rejeu. Une migration
+# seulement idempotente la laisserait ouverte (décision 57). La fermeture de `current_step_id` sur `cards`, constatée
+# plus haut, appartient à la 12 et à la 14 ; elle n'est plus éprouvée par rejeu, ces fichiers ne se rejouant plus seuls.
+psql_db -c "grant execute on function public.move_card(uuid, uuid, text) to anon;" >/dev/null
+[ "$(psql_db -c "select has_function_privilege('anon', 'public.move_card(uuid, uuid, text)', 'execute');")" = "t" ] \
+	&& ok 'dégradation posée : `anon` exécute de nouveau `move_card`' \
 	|| fail 'la dégradation n’a pas pris effet — le contrôle qui suit ne prouverait rien'
 
 rejouer_migration || true
-if [ "$(psql_db -c "select has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update');")" = "f" ]; then
-	ok 'CONVERGENCE : le rejeu REFERME la porte rouverte à la main (décision 57)'
+if [ "$(psql_db -c "select has_function_privilege('anon', 'public.move_card(uuid, uuid, text)', 'execute');")" = "f" ]; then
+	ok 'CONVERGENCE : le rejeu de la 114 REFERME la porte rouverte à la main (décision 57)'
 else
 	fail 'CONVERGENCE : le rejeu laisse la porte ouverte — la migration n’est qu’idempotente'
 fi
@@ -611,25 +621,27 @@ restaurer_privileges
 # --- dégradation c : la vérification n° 4 est retirée -------------------------------------------
 # La plus importante des trois : c'est l'objet même de l'unité. Sans elle, une card franchit une
 # arête que personne n'a déclarée, et la garde n'oppose plus le graphe.
+# RÉVISÉE PAR `CRM-111` T2.3.3 : la fonction dégradée a la signature de la 114 — par rattachement —, faute de quoi
+# `create or replace` la refuserait (nom de paramètre changé) et la dégradation serait sans effet.
 psql_db -v ON_ERROR_STOP=1 >/dev/null 2>&1 <<'SQL'
-create or replace function public.move_card(card_id uuid, to_step_id uuid, comment text default null)
-returns public.cards language plpgsql security definer set search_path = '' as $degrade$
-declare v_card_id uuid := card_id; v_cible uuid := to_step_id; v_card public.cards%rowtype;
+create or replace function public.move_card(p_placement uuid, to_step_id uuid, comment text default null)
+returns public.card_placements language plpgsql security definer set search_path = '' as $degrade$
+declare v_cible uuid := to_step_id; v_p public.card_placements%rowtype;
 begin
-	select c.* into v_card from public.cards c
-	 where c.id = v_card_id and c.archived_at is null and c.deleted_at is null
-	   and app.can_read_channel(c.channel_id);
+	select p.* into v_p from public.card_placements p join public.cards c on c.id = p.card_id
+	 where p.id = p_placement and p.archived_at is null and c.deleted_at is null
+	   and app.can_read_channel(p.channel_id);
 	if not found then raise exception 'card_not_found'; end if;
-	if not app.can_write_channel(v_card.channel_id) then
+	if not app.can_write_channel(v_p.channel_id) then
 		raise exception 'forbidden' using errcode = '42501'; end if;
 	if not exists (select 1 from public.workflow_steps s
-	                where s.id = v_cible and s.workflow_id = v_card.workflow_id) then
+	                where s.id = v_cible and s.workflow_id = v_p.workflow_id) then
 		raise exception 'step_not_in_workflow'; end if;
-	update public.cards c set current_step_id = v_cible, entered_step_at = now(),
-	       position = (select coalesce(max(a.position), 0) + 1 from public.cards a
-	                    where a.channel_id = v_card.channel_id and a.current_step_id = v_cible)
-	 where c.id = v_card_id returning c.* into v_card;
-	return v_card;
+	update public.card_placements p set current_step_id = v_cible, entered_step_at = now(),
+	       position = (select coalesce(max(a.position), 0) + 1 from public.card_placements a
+	                    where a.channel_id = v_p.channel_id and a.current_step_id = v_cible)
+	 where p.id = p_placement returning p.* into v_p;
+	return v_p;
 end; $degrade$;
 SQL
 echecs=$(rejouer_tap)

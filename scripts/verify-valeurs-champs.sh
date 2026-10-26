@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement ; dégradations par définition en base,
+#           réparation par reconstruction (INC-304, docs/SPEC-test-harness.md §3.6)
 # @verifies CRM-036 (docs/BACKLOG.md) — Definition of Done des valeurs de formulaire
 # @verifies docs/SPEC-form-composer.md §6.2 (modèle), §6.3 (clés composites), §6.4 (la validation
 #           est un trigger), §6.5 (types), §6.6 (« renseigné »), §6.7 (la sixième vérification),
@@ -63,39 +65,21 @@ sso_env_charger .env
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0014_valeurs_champs.test.sql
-MIGRATION_FILE=supabase/migrations/0013_valeurs_champs.sql
-# LA 14 SUIT TOUJOURS UN REJEU DE LA 12, et c'est une dépendance MESURÉE, ajoutée par `CRM-013`.
-# Ce harnais rejoue la migration 12 en TROIS endroits, pour éprouver l'ordre 12 → 13 et pour poser
-# deux dégradations. Or la section 2 de la 12 réapplique les privilèges de colonne de `cards` avec
-# `email_local_part` DANS la liste — état d'avant `CRM-013`. Sans la 14 derrière chaque rejeu, ce
-# harnais sortait sur une base où l'adresse d'une card redevenait réécrivable, en annonçant
-# « 33 contrôles, aucune anomalie ». MESURÉ le 2026-08-05 : `has_column_privilege(…)` passait de
-# `false` à `true` après son passage. Quatrième occurrence des décisions 108, 135, 143 et 145.
-MIGRATION_COLONNES=supabase/migrations/0014_colonnes_protegees.sql
-# CRM-018 est la dernière autorité sur `move_card`. Tout chemin de restauration doit la rejouer
-# après CRM-036 et CRM-013 pour rendre exactement l'état produit par le runner complet.
-# ET LA 47 SUIT LA 13, QUATRIÈME OCCURRENCE DE LA MÊME CLASSE (décisions 108, 135, 143, 145,
-# INC-153). MESURÉ le 2026-08-18 : la migration 13 définit `app.card_field_values_valider()` dans sa
-# version qui valide la seule FORME d'un uuid ; la 47 la redéfinit avec la RÉSOLUTION des types
-# `contact` et `user` (`CRM-060` tranche 3). Rejouer la 13 sans la 47 derrière retire donc la
-# résolution EN SILENCE, et les harnais exécutés ensuite mesurent un produit amputé — exactement ce
-# qu'INC-153 a coûté à la tranche 2. Mesure de la dégradation, puis de sa réparation :
-#   après rejeu de la 13 seule : la fonction ne contient plus « ne désigne aucun contact » ;
-#   après rejeu de la 47       : elle la contient de nouveau.
-MIGRATION_RESOLUTION=supabase/migrations/0047_resolution_champs_contact_user.sql
-MIGRATION_FINALE=supabase/migrations/0019_transition_required_fields.sql
-# ET LA 35 SUIT LA 19, CINQUIÈME OCCURRENCE DE LA MÊME CLASSE — DÉFAUT ANTÉRIEUR, MESURÉ LE
-# 2026-08-18 SUR LA LIGNE DE BASE. `MIGRATION_FINALE` nommait la 19 « dernière autorité sur
-# `move_card` » ; elle ne l'est plus depuis le lot G (décision 374), qui redéfinit la fonction avec
-# `app.btrim_blancs` et la conservation du commentaire de transition (INC-048, INC-052). Toute
-# chaîne de restauration s'arrêtant à la 19 laissait donc `move_card` AMPUTÉE en sortant, et la
-# suite pgTAP `0014` rendait `not ok 99` et `not ok 100` à l'exécution SUIVANTE de ce harnais.
-# MESURÉ des deux côtés d'un `git stash` : rouge avant comme après mes changements, donc antérieur
-# — consigné INC-154, et corrigé ici parce que le défaut vit dans les fichiers mêmes de cette
-# session (même geste que la décision 447 pour INC-153).
-MIGRATION_LOT_G=supabase/migrations/0035_commentaires_lot_g.sql
+# RÉVISÉ PAR `CRM-111` T2.3.3 (INC-304, décisions 682, 701, 704). Ce harnais rejouait la 12, la 13, la 14, la 47, la 19
+# et la 35 — pour dégrader `move_card` et le validateur, puis pour les restaurer —, chaque maillon ajouté après qu'un
+# rejeu incomplet eut laissé le produit amputé (décisions 108, 135, 143, 145, 447, INC-153, INC-154). Depuis que `move_card`
+# désigne le rattachement (migration 114), ces fichiers ne se rejouent plus sur une base à jour : « cannot change name of
+# input parameter » en cours de fichier, APRÈS en avoir appliqué une partie — et la 13 redéfinit au passage
+# `app.can_write_card` dans sa forme d'origine, qui lit `cards`. Désormais : une fonction se dégrade et se restaure
+# depuis sa définition EN BASE (`scripts/lib/degradation.sh`) ; une STRUCTURE dégradée — contrainte, clé, privilège — se
+# répare par la reconstruction de la base depuis le répertoire (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md
+# §3.6). Plus aucun fichier de migration n'est rejoué ici.
 # shellcheck source=scripts/lib/conteneur.sh
 source scripts/lib/conteneur.sh
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
 # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
 DB_CONTAINER=$(conteneur db)
 
@@ -165,13 +149,6 @@ psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@
 VALEURS_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.card_field_values;")
 CARDS_VALUEES_A_L_OUVERTURE=$(psql_db -c "select count(distinct card_id) from public.card_field_values;")
 
-rejouer_migrations() {
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || return 1
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || return 1
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || return 1
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || return 1
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || return 1
-}
 
 CORPS=$P2ENJOY_TMP/p2enjoy-valeurs-body
 http() {
@@ -195,12 +172,20 @@ menage() {
 		>/dev/null 2>&1 || true
 	psql_db -c "update public.cards set current_step_id = '$ETAPE_RELANCE', position = 2
 	             where id = '$CARD_C2' and current_step_id <> '$ETAPE_RELANCE';" >/dev/null 2>&1 || true
-	# Une INTERRUPTION entre un rejeu de la 12 et sa 14 laisserait `email_local_part` ouverte. Le
-	# ménage la referme donc, dans l'ordre 13 puis 14 puis 19 — la 19 rétablit la sixième garde
-	# canonique adossée à la table de liaison.
-	rejouer_migrations || true
 }
-trap 'menage; rm -f "$CORPS"' EXIT
+
+# LA POLITIQUE D'INSERTION D'ORIGINE, relue en base avant toute dégradation : la dégradation 3 la remplace, et le
+# `trap` la rétablit telle qu'elle était, sans rejouer de migration.
+POLITIQUE_INSERTION=$(psql_db -c "select pg_get_expr(polwithcheck, polrelid) from pg_policy
+                                   where polname = 'card_field_values_insertion'
+                                     and polrelid = 'public.card_field_values'::regclass;")
+restaurer_politique() {
+	[ -n "$POLITIQUE_INSERTION" ] || return 0
+	psql_db -c "drop policy if exists card_field_values_insertion on public.card_field_values;
+	            create policy card_field_values_insertion on public.card_field_values
+	              for insert to authenticated with check ($POLITIQUE_INSERTION);" >/dev/null 2>&1
+}
+trap 'menage; degradations_restaurer; restaurer_politique; rm -f "$CORPS"; rm -rf "$DEGRADATIONS_DOSSIER"' EXIT
 menage
 
 titre "1. Suite pgTAP"
@@ -214,10 +199,18 @@ else
 	ok "suite pgTAP verte — $assertions assertions"
 fi
 
-titre "2. La migration est rejouable, et convergente"
+titre "2. La structure se reconstruit depuis le répertoire, et la reconstruction RÉPARE"
 
-# L'empreinte inclut la définition de `move_card` : cette migration la REDÉFINIT (section 9), et un
-# rejeu qui la laisserait dans son état de la migration 12 rendrait la sixième vérification muette.
+# RÉVISÉ PAR `CRM-111` T2.3.3 (INC-304, décision 682). Cette section rejouait la 13 et sa chaîne pour prouver qu'elle se
+# réapplique et qu'elle CONVERGE — qu'une structure dégradée à la main est réparée. La 13 ne se rejoue plus sur une base à
+# jour (le paramètre de `move_card` a changé de nom), et la propriété qui compte en production est celle du RÉPERTOIRE :
+# le runner n'y rejoue jamais un fichier, il construit la base dans l'ordre. Elle se prouve donc par la reconstruction :
+# la base reconstruite porte la MÊME empreinte que la base d'ouverture, et trois dégradations de structure posées à la
+# main — l'unicité retirée (décision 57), la clé composite réduite à une clé simple sous le même nom (décision 78), un
+# privilège relâché (décision 134) — sont réparées. L'ordre 12 → 13 que la section mesurait n'existe plus : la sixième
+# vérification appartient à la définition en vigueur de `move_card`, et la section 7 la dégrade là où elle vit.
+#
+# L'empreinte inclut la définition de `move_card` : une reconstruction qui la rendrait différente le dirait.
 empreinte() {
 	psql_db -c "
 		select string_agg(x, '|' order by x) from (
@@ -244,81 +237,52 @@ empreinte() {
 }
 
 avant=$(empreinte)
-if rejouer_migrations; then
-	ok "la séquence 13 → 14 → 19 se réapplique sans erreur sur une base déjà migrée"
-else
-	fail "la migration échoue au rejeu — l'idempotence n'est pas acquise"
-fi
-apres=$(empreinte)
-[ "$avant" = "$apres" ] \
-	&& ok "le rejeu ne modifie ni les contraintes, ni les politiques, ni les triggers, ni "\
-"\`move_card\` elle-même" \
-	|| fail "le rejeu a modifié quelque chose : l'empreinte diffère"
-
-# L'ORDRE DES MIGRATIONS EST UNE DÉPENDANCE, ET IL EST VÉRIFIÉ. La migration 12 pose `move_card` à
-# CINQ vérifications ; la 13 la remplace par celle à six. Un `migrations-runner` qui les rejouerait
-# dans l'autre sens laisserait le produit sans sa sixième vérification, sans aucun signal.
-psql_db -v ON_ERROR_STOP=1 -f - < supabase/migrations/0012_move_card.sql >/dev/null 2>&1 || true
-# La 14 referme aussitôt `email_local_part`, que le rejeu de la 12 vient de rendre. La
-# dégradation visée porte sur `move_card`, pas sur cette colonne : la refermer ne l'affaiblit
-# en rien, et sans elle le harnais laisserait le produit dégradé en sortant (CRM-013).
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
-sans_n6=$(psql_db -c "select pg_get_functiondef('public.move_card(uuid,uuid,text)'::regprocedure)
-                        like '%missing_required_fields%';")
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
-avec_n6=$(psql_db -c "select pg_get_functiondef('public.move_card(uuid,uuid,text)'::regprocedure)
-                        like '%missing_required_fields%';")
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
-# La 47 derrière la 13, ici aussi : ce bloc rejoue la 13 seule pour MESURER l'ordre 12 → 13, et
-# repartirait sinon sur une base dont la résolution a disparu.
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || true
-[ "$sans_n6" = "f" ] && [ "$avec_n6" = "t" ] \
-	&& ok "l'ORDRE 12 → 13 est ce qui livre la sixième vérification : rejouer la 12 seule la retire, "\
-"rejouer la 13 la remet — mesuré dans les deux sens" \
-	|| fail "dépendance d'ordre non vérifiée : après 12 « $sans_n6 », après 13 « $avec_n6 »"
-
-# Convergence, et non simple idempotence : une contrainte **retirée** est rétablie (décision 57).
 psql_db -c "alter table public.cards drop constraint cards_id_workflow_id_key cascade;" >/dev/null
-rejouer_migrations || true
-[ "$(psql_db -c "select count(*) from pg_constraint
-                  where conrelid = 'public.cards'::regclass
-                    and conname = 'cards_id_workflow_id_key';")" = "1" ] \
-	&& ok "l'unicité retirée à la main sur \`cards\` est **rétablie** par un rejeu : la migration "\
-"répare, elle ne constate pas" \
-	|| fail "l'unicité retirée n'est pas rétablie"
-
-# Convergence de la forme la plus difficile (décision 78) : une clé composite dégradée en clé
-# **simple** portant le même nom. Tester la présence du nom la laisserait passer.
 psql_db -c "
 	alter table public.card_field_values
-		drop constraint card_field_values_field_id_workflow_id_fkey;
+		drop constraint if exists card_field_values_field_id_workflow_id_fkey;
 	alter table public.card_field_values
 		add constraint card_field_values_field_id_workflow_id_fkey
 		foreign key (field_id) references public.form_fields (id) on delete cascade;
 " >/dev/null
-rejouer_migrations || true
+psql_db -c "grant delete on public.card_field_values to authenticated, anon;" >/dev/null
+[ "$(psql_db -c "select count(*) from pg_constraint where conname = 'cards_id_workflow_id_key';")" = "0" ] \
+	&& [ "$(psql_db -c "select has_table_privilege('authenticated','public.card_field_values','DELETE');")" = "t" ] \
+	&& ok "trois dégradations de structure posées : unicité retirée, clé composite réduite, privilège relâché" \
+	|| fail "les dégradations de structure n'ont pas pris : le contrôle qui suit ne prouverait rien"
+
+if reconstruire_base_dev > "$P2ENJOY_TMP/p2enjoy-valeurs-reconstruction.log" 2>&1; then
+	ok "la base se reconstruit depuis le répertoire, seed compris"
+else
+	fail "la reconstruction a échoué — voir $P2ENJOY_TMP/p2enjoy-valeurs-reconstruction.log"
+	tail -5 "$P2ENJOY_TMP/p2enjoy-valeurs-reconstruction.log"
+fi
+
+[ "$(psql_db -c "select count(*) from pg_constraint
+                  where conrelid = 'public.cards'::regclass
+                    and conname = 'cards_id_workflow_id_key';")" = "1" ] \
+	&& ok "l'unicité retirée à la main sur \`cards\` est **rétablie** : le répertoire répare, il ne constate pas" \
+	|| fail "l'unicité retirée n'est pas rétablie"
 definition=$(psql_db -c "select pg_get_constraintdef(oid) from pg_constraint
                           where conname = 'card_field_values_field_id_workflow_id_fkey';")
 case "$definition" in
 	*'(field_id, workflow_id)'*)
-		ok "une clé composite **dégradée en clé simple** sous le même nom est réparée par un rejeu "\
-"(décision 78) : la définition réelle est comparée, pas le nom" ;;
+		ok "une clé composite **dégradée en clé simple** sous le même nom est réparée (décision 78) : la définition "\
+"réelle est comparée, pas le nom" ;;
 	*) fail "la clé dégradée n'a pas été réparée : « $definition »" ;;
 esac
-
-# LE DÉFAUT RÉEL DE LA DÉCISION 134, ÉPROUVÉ. L'image Supabase accorde TOUT à `anon` et
-# `authenticated` sur toute table neuve : sans le `revoke all` de la section 8.5, le « refus double »
-# annoncé au §6.9 n'existerait pas.
-psql_db -c "grant delete on public.card_field_values to authenticated, anon;" >/dev/null
-rejouer_migrations || true
 [ "$(psql_db -c "select has_table_privilege('authenticated','public.card_field_values','DELETE')::text
                      || '/' ||
                         has_table_privilege('anon','public.card_field_values','INSERT')::text;")" \
 	= "false/false" ] \
-	&& ok "un privilège relâché à la main est **retiré** par un rejeu — décision 134, le défaut que "\
-"la suite pgTAP de cette unité a trouvé" \
+	&& ok "un privilège relâché à la main est **retiré** — décision 134, le défaut que la suite pgTAP de cette unité a trouvé" \
 	|| fail "les privilèges relâchés n'ont pas été retirés"
+
+apres=$(empreinte)
+[ "$avant" = "$apres" ] \
+	&& ok "la base reconstruite porte la MÊME empreinte que la base d'ouverture : contraintes, politiques, triggers, "\
+"validateur, \`can_write_card\` et \`move_card\`" \
+	|| fail "la base reconstruite diffère de la base d'ouverture : l'empreinte a changé"
 
 titre "3. La validation par type, mesurée contre l'API avec le jeton réel"
 
@@ -447,24 +411,25 @@ vide=$(psql_db -c "select (value is null)::text from public.card_field_values
 "champ facultatif (INC-054, décision 133)" \
 	|| fail "vidage d'un champ contact : code $code, valeur vide « $vide »"
 
-# LA DÉGRADATION EST ICI, au plus près de ce qu'elle éprouve : la migration 13 seule ramène le
-# validateur d'AVANT la résolution. C'est la quatrième occurrence de la classe des décisions 108,
-# 135, 143, 145 et d'INC-153 — et c'est aussi ce que ce harnais aurait fait sans le correctif du
-# `rejouer_migrations` ci-dessus.
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
-code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_CONTACT" "\"$UUID_MORT\"")
-[ "$code" != "400" ] \
-	&& ok "dégradation constatée : la migration 13 rejouée SEULE retire la résolution, et l'uuid "\
-"mort repasse (code $code) — les quatre contrôles ci-dessus mesurent bien la migration 47" \
-	|| fail "dégradation sans effet : le refus tient alors que la 13 seule a été rejouée"
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
+# LA DÉGRADATION EST ICI, au plus près de ce qu'elle éprouve. RÉVISÉE PAR `CRM-111` T2.3.3 : la migration 13 rejouée seule
+# ramenait le validateur d'AVANT la résolution, mais elle ne se rejoue plus sur une base à jour. Le validateur est
+# dégradé dans sa définition EN BASE : la résolution des types `contact` et `user` est court-circuitée, et rien d'autre.
+if degradation_fonction 'app.card_field_values_valider()' \
+	$'\n\t\t\tif v_champ.type = \'contact\' then\n' \
+	$'\n\t\t\tif true then null; elsif v_champ.type = \'contact\' then\n'; then
+	code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_CONTACT" "\"$UUID_MORT\"")
+	[ "$code" != "400" ] \
+		&& ok "dégradation constatée : la résolution court-circuitée, l'uuid mort repasse (code $code) — les "\
+"quatre contrôles ci-dessus mesurent bien la résolution de la migration 47" \
+		|| fail "dégradation sans effet : le refus tient alors que la résolution est court-circuitée"
+else
+	fail "la résolution du validateur n'a pas pu être dégradée : contrôle non concluant"
+fi
+degradations_restaurer
 
 code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_CONTACT" "\"$UUID_MORT\"")
 [ "$code" = "400" ] \
-	&& ok "restauration constatée, non supposée : la 47 rejouée, l'uuid mort est de nouveau refusé" \
+	&& ok "restauration constatée, non supposée : la définition d'origine réappliquée, l'uuid mort est de nouveau refusé" \
 	|| fail "après restauration, l'uuid mort rend encore $code"
 
 # Ménage : les valeurs partent avec les champs (cascade composite), le `delete` est néanmoins
@@ -514,9 +479,12 @@ lignes=$(jq -r 'length' < "$CORPS")
 titre "5. La sixième vérification de move_card — INC-047 close"
 
 deplacer() {
+	# `CRM-111` T2.3.3 : `move_card` désigne le RATTACHEMENT de l'affaire (docs/SPEC-rattachements.md §5).
+	local rattachement
+	rattachement=$(psql_db -c "select coalesce(app.card_first_placement('$2')::text, '$2');")
 	http POST "$API/rest/v1/rpc/move_card" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $1" \
 		-H 'Content-Type: application/json' \
-		-d "$(jq -nc --arg c "$2" --arg s "$3" '{card_id: $c, to_step_id: $s}')"
+		-d "$(jq -nc --arg p "$rattachement" --arg s "$3" '{p_placement: $p, to_step_id: $s}')"
 }
 
 code=$(deplacer "$T_ADMIN" "$CARD_C1" "$ETAPE_NEGOCIATION")
@@ -615,18 +583,20 @@ psql_db -c "delete from public.card_field_values
 psql_db -c "alter table public.card_field_values enable trigger card_field_values_valider;" >/dev/null
 
 # --- Dégradation 2 : la sixième vérification est retirée ------------------------------------------
-# `move_card` est ramenée à sa version de la migration 12. Le produit redevient celui d'avant
-# `CRM-036`, et le contrôle du §5 doit le voir.
-psql_db -v ON_ERROR_STOP=1 -f - < supabase/migrations/0012_move_card.sql >/dev/null 2>&1 || true
-# La 14 referme aussitôt `email_local_part`, que le rejeu de la 12 vient de rendre. La
-# dégradation visée porte sur `move_card`, pas sur cette colonne : la refermer ne l'affaiblit
-# en rien, et sans elle le harnais laisserait le produit dégradé en sortant (CRM-013).
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
-code=$(deplacer "$T_ADMIN" "$CARD_C1" "$ETAPE_NEGOCIATION")
-[ "$code" = "200" ] \
-	&& ok "dégradation 2 constatée : \`move_card\` ramenée à sa version de la migration 12, le "\
-"déplacement vers une étape \`required\` PASSE de nouveau — c'est l'état exact d'avant \`CRM-036\`" \
-	|| fail "dégradation 2 sans effet : code $code"
+# RÉVISÉE PAR `CRM-111` T2.3.3 : `move_card` était ramenée à sa version de la migration 12 par un rejeu, qui ne passe plus
+# (paramètre renommé par la 114). La sixième vérification est retirée de la définition EN BASE, et d'elle seule : le
+# produit redevient celui d'avant `CRM-036`, et le contrôle du §5 doit le voir.
+if degradation_fonction 'public.move_card(uuid,uuid,text)' \
+	'if v_manquants is not null and array_length(v_manquants, 1) > 0 then' 'if false then'; then
+	code=$(deplacer "$T_ADMIN" "$CARD_C1" "$ETAPE_NEGOCIATION")
+	[ "$code" = "200" ] \
+		&& ok "dégradation 2 constatée : la sixième vérification retirée de \`move_card\`, le déplacement vers une "\
+"étape \`required\` PASSE de nouveau — c'est l'état exact d'avant \`CRM-036\`" \
+		|| fail "dégradation 2 sans effet : code $code"
+else
+	fail "dégradation 2 : la sixième vérification n'a pas pu être retirée — contrôle non concluant"
+fi
+degradations_restaurer
 psql_db -c "update public.cards set current_step_id = '$ETAPE_RELANCE', position = 1
              where id = '$CARD_C1';" >/dev/null
 
@@ -637,11 +607,6 @@ psql_db -c "
 	create policy card_field_values_insertion on public.card_field_values
 		for insert to authenticated with check (app.can_read_card(card_id));
 " >/dev/null
-psql_db -v ON_ERROR_STOP=1 -f - < supabase/migrations/0012_move_card.sql >/dev/null 2>&1 || true
-# La 14 referme aussitôt `email_local_part`, que le rejeu de la 12 vient de rendre. La
-# dégradation visée porte sur `move_card`, pas sur cette colonne : la refermer ne l'affaiblit
-# en rien, et sans elle le harnais laisserait le produit dégradé en sortant (CRM-013).
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
 code=$(poster_valeur "$T_VIEWER" "$CARD_C6" "$CHAMP_LIEN" '"https://viewer.test/x"')
 [ "$code" = "201" ] \
 	&& ok "dégradation 3 constatée : politique d'insertion adossée à la LECTURE, le \`viewer\` écrit "\
@@ -652,7 +617,10 @@ psql_db -c "delete from public.card_field_values
 
 titre "8. Restauration, constatée et non supposée"
 
-rejouer_migrations || true
+# RÉVISÉE PAR `CRM-111` T2.3.3 : les fonctions dégradées sont réappliquées depuis leur définition d'origine, relue en
+# base, et la politique depuis son expression d'origine — aucun fichier de migration n'est rejoué.
+degradations_restaurer
+restaurer_politique
 
 restaure=$(psql_db -c "
 	select (select pg_get_expr(polwithcheck, polrelid) like '%can_write_card%'
@@ -670,12 +638,11 @@ restaure=$(psql_db -c "
 "validation est actif, et \`move_card\` porte de nouveau sa sixième vérification" \
 	|| fail "restauration incomplète : « $restaure », attendu « true/true/true »"
 
-# ET LA COLONNE DE `CRM-013` EST REFERMÉE : sans ce contrôle, ce harnais sortirait de nouveau sur
-# une base où l'adresse d'une card est réécrivable, en annonçant « aucune anomalie ».
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_COLONNES" >/dev/null 2>&1 || true
+# ET LA COLONNE DE `CRM-013` EST RESTÉE FERMÉE : ce harnais ne rejoue plus la 12, qui la rouvrait, et le constat tient
+# pour qu'aucun retour en arrière ne passe inaperçu.
 [ "$(psql_db -c "select has_column_privilege('authenticated', 'public.cards', 'email_local_part', 'update');")" = "f" ] \
 	&& ok "…et \`cards.email_local_part\` est refermée : le harnais ne laisse pas le produit dégradé" \
-	|| fail "\`email_local_part\` est restée OUVERTE : un rejeu de la migration 12 n'a pas été suivi de la 14"
+	|| fail "\`email_local_part\` est OUVERTE : le produit sort dégradé"
 
 code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_BUDGET" '"45000"')
 [ "$code" = "400" ] && ok "et le refus est de nouveau opposé au \`money\` recevant une chaîne" \

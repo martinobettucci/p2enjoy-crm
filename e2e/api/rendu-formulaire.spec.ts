@@ -3,6 +3,8 @@
 //           §6.6 (définition de « renseigné »), §6.7 (la sixième vérification de `move_card`)
 // @verifies docs/SPEC-permissions-rls.md §7 (preuves hors interface, jetons réels)
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
+//           (docs/SPEC-rattachements.md §5) ; les scénarios nomment l'affaire, `e2e/api/rattachements.ts` donne le rattachement
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. Le §6.6 confie « renseigné » à
 // `app.valeur_de_champ_est_vide(jsonb)` et exige que le rendu de `CRM-037` en donne la **même**
@@ -26,6 +28,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { CAS_RENSEIGNE, estRenseigne } from '../../webapp/src/lib/valeur-renseignee'
 import { enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { corpsParRattachement } from './rattachements'
 
 const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
@@ -106,10 +109,11 @@ async function poserChampExige(
 	return champ
 }
 
-function deplacer(requete: APIRequestContext, jeton: string, corps: Record<string, unknown>) {
+async function deplacer(requete: APIRequestContext, jeton: string, corps: Record<string, unknown>) {
 	return requete.post('/rest/v1/rpc/move_card', {
 		headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
-		data: corps,
+		// `CRM-111` T2.3.3 : le scénario nomme l'affaire, le geste reçoit son rattachement.
+		data: await corpsParRattachement(requete, corps),
 	})
 }
 

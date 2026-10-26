@@ -12,6 +12,8 @@
 // @verifies docs/INCONSISTENCY_REPORT.md INC-047 (**close**), INC-053 (**close** par CRM-060
 //           tranche 3 : `user` et `contact` résolus — bloc V5), INC-054 (`value` nullable, mesuré)
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
+//           (docs/SPEC-rattachements.md §5) ; les scénarios nomment l'affaire, `e2e/api/rattachements.ts` donne le rattachement
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé — et
@@ -33,6 +35,7 @@
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { corpsParRattachement } from './rattachements'
 
 const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
@@ -107,14 +110,15 @@ async function relire(
 	return ((await reponse.json()) as Valeur[])[0]
 }
 
-function deplacer(
+async function deplacer(
 	requete: APIRequestContext,
 	jeton: string,
 	corps: Record<string, unknown>,
 ) {
 	return requete.post('/rest/v1/rpc/move_card', {
 		headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
-		data: corps,
+		// `CRM-111` T2.3.3 : le scénario nomme l'affaire, le geste reçoit son rattachement.
+		data: await corpsParRattachement(requete, corps),
 	})
 }
 

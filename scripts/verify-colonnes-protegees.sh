@@ -70,6 +70,8 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0015_colonnes_protegees.test.sql
 MIGRATION_FILE=supabase/migrations/0014_colonnes_protegees.sql
+# `CRM-111` T2.3.2 : la dernière autorité sur les privilèges de colonne de `cards`.
+MIGRATION_RATTACHEMENT=supabase/migrations/0112_colonnes_ouvertes_par_rattachement.sql
 # LA MIGRATION 12 REND CE QUE LA 14 RETIRE, et ce n'est pas une hypothèse : sa section 2 réapplique
 # les privilèges de colonne avec `email_local_part` DANS la liste (INC-050, à l'époque non résolue).
 # La section 5 s'en sert pour mesurer la dépendance d'ordre dans les deux sens.
@@ -415,8 +417,15 @@ code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_C1" \
 
 titre "4. La migration est rejouable, et CONVERGENTE"
 
-if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1; then
-	ok "la migration se rejoue sans erreur sur une base déjà migrée"
+# RÉVISÉ PAR `CRM-111` T2.3.2 : la 14 accorde la mise à jour de `cards` sur une liste où figurent encore les sept colonnes
+# de rattachement, que la 112 a fermées. Chaque rejeu de la 14 est donc suivi de la 112, dernière autorité sur ces
+# privilèges — sans quoi ce harnais sortirait avec les colonnes de rattachement rouvertes sur l'affaire.
+rejouer_14() {
+	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 \
+		&& psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RATTACHEMENT" >/dev/null 2>&1
+}
+if rejouer_14; then
+	ok "la migration se rejoue sans erreur sur une base déjà migrée, la 112 derrière elle"
 else
 	fail "la migration échoue au rejeu"
 fi
@@ -437,7 +446,7 @@ code=$(patch_adresse "$T_ADMIN" 'c-00000000')
 	|| fail "sous dégradation, l'écriture rend $code : ce harnais ne mesure pas ce qu'il croit"
 psql_db -c "update public.cards set email_local_part = '$ADRESSE_C1' where id = '$CARD_C1';" >/dev/null
 
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+rejouer_14 || true
 [ "$(prive authenticated email_local_part update)" = "f" ] \
 	&& ok "CONVERGENCE : le rejeu REFERME la porte rouverte à la main (décision 57)" \
 	|| fail "CONVERGENCE : le rejeu laisse la porte ouverte"
@@ -447,39 +456,30 @@ code=$(patch_adresse "$T_ADMIN" 'c-00000000')
 	&& ok "…et l'écriture est de nouveau REFUSÉE : la restauration est CONSTATÉE, pas supposée" \
 	|| fail "après restauration, l'écriture rend encore $code"
 
-titre "5. La dépendance d'ordre 12 → 14, mesurée dans les DEUX sens"
+titre "5. Le RÉPERTOIRE fait l'état : la reconstruction referme ce qu'une écriture à la main a rouvert"
 
-# TROISIÈME OCCURRENCE DE LA DÉCISION 108. La migration 12 rend `email_local_part` (INC-050, à
-# l'époque non résolue) : la rejouer seule ROUVRE ce que la 14 ferme. Un harnais qui l'ignorerait
-# laisserait le produit dégradé en sortant — c'est exactement ce que `verify-move-card.sh` a fait
-# jusqu'à `CRM-036` avec le couple 12 → 13 (décision 135).
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_PRECEDENTE" >/dev/null 2>&1 || true
+# RÉVISÉ PAR `CRM-111` T2.3.3 (INC-304, décision 682). Cette section rejouait la 12 seule — qui rouvrait la colonne —,
+# puis la chaîne 13 → 47 → 14 → 19 → 35 pour la refermer et rendre à `move_card` sa garde canonique. Depuis que la 114
+# redéfinit `move_card` par rattachement, ces fichiers ne se rejouent plus sur une base à jour : ils échouent en cours de
+# fichier, APRÈS en avoir appliqué une partie (la 13 ramène même `app.can_write_card` à sa forme d'origine). La propriété
+# qui compte — l'ordre du répertoire produit la fermeture, et la garde complète — se prouve par la reconstruction : la
+# colonne rouverte à la main, la base reconstruite dans l'ordre l'a refermée, sans rien rouvrir d'autre.
+psql_db -c "grant update (email_local_part, current_step_id) on public.cards to authenticated;" >/dev/null
 [ "$(prive authenticated email_local_part update)" = "t" ] \
-	&& ok "la migration 12 rejouée SEULE rouvre la colonne : la dépendance est RÉELLE, pas théorique" \
-	|| fail "la migration 12 ne rouvre pas la colonne : ce contrôle a perdu son sujet, à réviser"
-
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_INTERMEDIAIRE" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RESOLUTION" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FINALE" >/dev/null 2>&1 || true
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_LOT_G" >/dev/null 2>&1 || true
+	&& ok "dégradation posée : \`email_local_part\` et \`current_step_id\` rouvertes à la main" \
+	|| fail "la dégradation n'a pas pris effet — le contrôle qui suit ne prouverait rien"
+reconstruire_base_dev > "$P2ENJOY_TMP/p2enjoy-colonnes-reconstruction.log" 2>&1 \
+	&& ok "la base se reconstruit depuis le répertoire, seed compris" \
+	|| fail "la reconstruction a échoué — voir $P2ENJOY_TMP/p2enjoy-colonnes-reconstruction.log"
 [ "$(prive authenticated email_local_part update)" = "f" ] \
-	&& ok "…et la suite 13 → 14 → 19 la referme puis restaure la garde canonique" \
-	|| fail "la 14 ne referme pas ce que la 12 a rouvert"
-
-# Le contrôle symétrique : la migration 14 ne doit PAS défaire ce que la 12 protège.
+	&& ok "…et \`email_local_part\` est REFERMÉE : l'ordre du répertoire produit la fermeture" \
+	|| fail "la reconstruction laisse \`email_local_part\` ouverte"
 [ "$(prive authenticated current_step_id update)" = "f" ] \
-	&& ok "la 14 ne défait rien de la 12 : current_step_id reste fermée" \
-	|| fail "la 14 a rouvert current_step_id : les deux migrations se contredisent"
-
-# ET LA 13 NON PLUS N'EST PAS OUBLIÉE : la 12 rejouée a ramené `move_card` à CINQ vérifications, et
-# c'est la 13 qui lui rend la sixième. Sans ce contrôle, ce harnais sortirait sur un produit amputé
-# — faute réellement commise par sa première version, et dénoncée par `npm run test:sql`.
-[ "$(psql_db -c "select pg_get_functiondef(p.oid) like '%missing_required_fields%'
-                   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
-                  where n.nspname = 'public' and p.proname = 'move_card';")" = "t" ] \
-	&& ok "…et move_card a retrouvé sa SIXIÈME vérification : le produit ne sort pas dégradé" \
-	|| fail "move_card est restée à cinq vérifications : la 13 n'a pas été rejouée (décision 135)"
+	&& ok "…\`current_step_id\` aussi : la garde de \`move_card\` n'est pas contournable" \
+	|| fail "la reconstruction laisse \`current_step_id\` ouverte"
+[ "$(psql_db -c "select pg_get_functiondef('public.move_card(uuid,uuid,text)'::regprocedure) like '%missing_required_fields%';")" = "t" ] \
+	&& ok "…et \`move_card\` porte sa SIXIÈME vérification : le produit ne sort pas dégradé" \
+	|| fail "move_card est sans sa sixième vérification après reconstruction"
 
 titre "6. Le seed, inchangé"
 

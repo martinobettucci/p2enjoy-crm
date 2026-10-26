@@ -2,7 +2,7 @@
 #           simulé qui enregistre chaque écriture
 # @verifies CRM-067 (docs/BACKLOG.md) — tranche T4 : `crm_card_activity_add` et `crm_card_activity_update`
 #           (docs/SPEC-activites.md §6, décision 653 ; aucun outil de retrait, décision 648)
-# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3 : le sommeil et les colonnes de rattachement désignent le rattachement de
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3 : le sommeil, `move_card` et les colonnes de rattachement désignent le rattachement de
 #           l'affaire, résolu depuis `card_id` (docs/SPEC-rattachements.md §3.2, §5, §11)
 # @verifies docs/SPEC-mcp.md §9.2 ter (liste, ancres, `aussi`, identifiants jugés dans l'affaire), §9.1 (déclarations
 #           vérifiées, `destructiveHint`), §9.3 (refus nommés traduits, zéro ligne = refus)
@@ -268,7 +268,7 @@ async def test_modifier_refuse_un_responsable_inconnu_ou_une_cle_inconnue_avant_
 async def test_deplacer_resout_l_etape_par_son_nom_et_nomme_les_champs_manquants(monde: Monde) -> None:
     monde.ouvrir(*TOUT)
     await monde.appel("crm_card_move", {"card_id": CARD_A, "to_step": "négociation", "comment": " Accord "})
-    assert monde.simule.rpcs[-1] == ("move_card", {"card_id": CARD_A, "to_step_id": "s2", "comment": "Accord"})
+    assert monde.simule.rpcs[-1] == ("move_card", {"p_placement": RATTACHEMENT_A, "to_step_id": "s2", "comment": "Accord"})
     monde.simule.forcees["move_card"] = (400, {"code": "P0001", "message": "missing_required_fields", "details": "budget, origine"})
     with pytest.raises(ToolError, match="Budget estimé, Origine du contact"):
         await monde.appel("crm_card_move", {"card_id": CARD_A, "to_step": "Négociation"})

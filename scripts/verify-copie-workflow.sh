@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : la 19 se rejoue privée de son bloc `move_card` (INC-304)
 # @verifies CRM-032 (docs/BACKLOG.md) — Definition of Done de la copie d'un workflow vers un track
 # @verifies docs/SPEC-workflow-engine.md §4.2 (signature), §4.3 (refus), §4.4 (codes HTTP mesurés),
 #           §4.5 (ce qui est copié), §4.6 (divergence), §4.7 (privilèges), §4.9 (contrat d'API),
@@ -91,6 +92,15 @@ restaurer_etat_courant() {
 }
 # shellcheck source=scripts/lib/conteneur.sh
 source scripts/lib/conteneur.sh
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
+# RÉVISÉ PAR `CRM-111` T2.3.3 (migration 114, INC-304) : la 19 définit aussi `public.move_card` dans sa forme d'origine,
+# par affaire, que la 114 a redéfinie par rattachement. Ce bloc ne se rejoue plus (« cannot change name of input
+# parameter ») et ramènerait la fonction en arrière s'il passait : les rejeux portent sur la 19 PRIVÉE de son bloc
+# `move_card` (`migration_sans_fonction`). Le sujet de ce harnais — `copy_workflow_to_track` et sa vue — y est entier.
+MIGRATION_REJOUABLE=$(mktemp "${TMPDIR:-/tmp}/p2enjoy-0019-sans-move-card.XXXXXX.sql")
+migration_sans_fonction "$MIGRATION_FILE" public.move_card "$MIGRATION_REJOUABLE" \
+	|| { echo "ERREUR : le bloc de move_card n'a pas été isolé dans $MIGRATION_FILE." >&2; exit 1; }
 # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
 DB_CONTAINER=$(conteneur db)
 
@@ -168,7 +178,7 @@ menage() {
 		delete from public.workflows where name like 'tst-crm032-%';
 	" >/dev/null 2>&1 || true
 }
-trap 'menage; rm -f "$CORPS"' EXIT
+trap 'menage; rm -f "$CORPS" "$MIGRATION_REJOUABLE"' EXIT
 menage
 
 titre "1. Suite pgTAP"
@@ -222,7 +232,7 @@ empreinte() {
 }
 
 avant=$(empreinte)
-if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 \
+if psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_REJOUABLE" >/dev/null 2>&1 \
    && restaurer_etat_courant; then
 	ok "la migration se réapplique sans erreur sur une base déjà migrée, le runner derrière elle (INC-154, INC-252)"
 else
@@ -240,7 +250,7 @@ fi
 # où quelqu'un l'aurait rendu resterait durablement ouverte.
 psql_db -c "grant execute on function public.copy_workflow_to_track(uuid, uuid, text) to anon;" \
 	>/dev/null
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_REJOUABLE" >/dev/null 2>&1 || true
 restaurer_etat_courant || true
 if [ "$(psql_db -c "select has_function_privilege('anon',
                      'public.copy_workflow_to_track(uuid, uuid, text)', 'EXECUTE');")" = "f" ]; then
@@ -550,7 +560,7 @@ else
 fi
 
 # b. Le privilège rendu à `anon` : le refus 401 doit disparaître.
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_REJOUABLE" >/dev/null 2>&1 || true
 restaurer_etat_courant || true
 psql_db -c "grant execute on function public.copy_workflow_to_track(uuid, uuid, text) to anon;
             notify pgrst, 'reload schema';" >/dev/null
@@ -579,7 +589,7 @@ else
 fi
 
 # d. Restauration **constatée**, et non supposée.
-psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 || true
+psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_REJOUABLE" >/dev/null 2>&1 || true
 restaurer_etat_courant || true
 ./supabase/seed/apply-seed.sh >/dev/null 2>&1 || fail "le seed a échoué à la restauration"
 sleep 1

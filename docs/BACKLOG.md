@@ -16587,7 +16587,13 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           suites pgTAP, sept specs d'API et deux harnais révisés ; pgTAP 100 fichiers sans anomalie, unitaires 4409/4409,
           API 1207/1208 ; `verify-mcp.sh` 88/88, `verify-cards.sh` et `verify-colonnes-protegees.sh` rouges d'environnement
           seulement (e2e complets : `ingestion.spec.ts:91`, INC-292, campagne concurrente) ; seed convergent au repos.
-        - [ ] **T2.3.3 — faire avancer** : `move_card(p_placement, to_step_id, comment)`.
+        - [~] **T2.3.3 — faire avancer** : `move_card(p_placement, to_step_id, comment)`. *Livrée en développement le
+          2026-10-26* — migration `0114` ; board, connecteur, seed, specs d'API (`e2e/api/rattachements.ts`), pgTAP, types ;
+          cinq harnais dégradent `move_card` depuis sa définition en base (`docs/SPEC-test-harness.md` §3.7,
+          `scripts/lib/degradation.sh`) ; pgTAP 100 fichiers et 4164 assertions sans anomalie, unitaires 4423/4423, API
+          1211/1213 (deux rouges étrangers), interface verte rejouée ; sections propres des harnais vertes.
+          **Reste** : rejouer `verify-transition-required-fields.sh` en entier — ses sections 1 à 3 sont vertes, la suite
+          meurt dans le seed de reconstruction (INC-312, étrangère à la tranche).
         - [ ] **T2.3.4 — changer de channel** : `move_card_to_channel(p_placement, …)`.
         - [ ] **T2.3.5 — les cadences** : `armer_sequence_relance(p_placement, …)`.
         - [ ] **T2.3.6 — les valeurs de bloc** : clé `(placement_id, field_id)`, `NOT NULL`, écriture de la webapp par

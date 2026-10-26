@@ -7975,3 +7975,28 @@ instabilités sous la charge d'une campagne de près d'une heure, préexistantes
 **Comportement laissé inchangé.** **Issue proposée** (`docs/CloudWorker.md` §4.1 bis) : chaque scénario qui rougit deux
 fois sous charge est traité par son unité comme INC-295 et INC-305 l'ont été — attendre l'état que le scénario
 asserte (focus, transition, réponse), jamais par une temporisation. **Statut : ouverte.**
+
+### INC-312 — Juste après une reconstruction, le seed meurt sur l'envoi de démonstration : le worker trouve le stockage injoignable
+
+*Relevé le 2026-10-26 par la session de `CRM-111` (T2.3.3), en rejouant les harnais qui reconstruisent la base.*
+**Constat** : `reconstruire_base_dev` a échoué **trois fois de suite** sur la même ligne de `supabase/seed/apply-seed.sh`
+(section de l'envoi de démonstration, `CRM-058`) — « le worker n'a pas soumis l'envoi de démonstration :
+`{"reserved":1,"sent":0,"failed":0,"rescheduled":1,"orphans":0}` ». Les journaux de `mail-sync` nomment la cause :
+`envoi_stockage_injoignable` à 12:04:15 UTC, quarante et une secondes après le démarrage du service (`service_started`,
+12:03:34). Le worker a pris l'erreur PostgREST de la lecture de la pièce jointe pour une panne, et **reprogrammé**
+l'envoi (`storage_unavailable`) — c'est le comportement spécifié, et il est correct. Le seed, lui, appelle
+`/internal/v1/outbox/flush` **une seule fois** et exige `sent ≥ 1`. **Au repos, le même seed passe** (`rc=0`, envoi
+soumis, 12:05:18).
+
+**Conséquence** : tout harnais qui reconstruit la base peut mourir dans le seed, sans rapport avec son sujet —
+`verify-transition-required-fields.sh` s'est arrêté ainsi après ses sections 1 à 3, vertes, et
+`verify-colonnes-protegees.sh` a rendu sa base sans seed complet (rejoué au repos à la main).
+
+**Ce qu'on ne sait pas** : quelle lecture a échoué exactement — le worker ne journalise que l'événement, sans le code
+PostgREST. Le rapprochement avec INC-311 (`PGRST202` puis `503` de PostgREST juste après un démarrage ou une migration)
+est une hypothèse, non un fait.
+
+**Comportement laissé inchangé.** **Issues proposées**, à arbitrer par le responsable de `CRM-058` : faire attendre au
+seed la disponibilité du stockage avant la mise en file, ou rejouer le `flush` après le délai rendu par la
+reprogrammation, borné ; dans les deux cas, journaliser le code PostgREST dans `envoi_stockage_injoignable`.
+**Statut : ouverte.**

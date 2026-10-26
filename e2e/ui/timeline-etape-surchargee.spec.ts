@@ -6,6 +6,8 @@
 // @verifies docs/SPEC-seed.md §9.3 (`…0cc` dans `refonte`, à l'étape *Réalisation*) — l'étape `…065` surcharge
 //           « Réalisation » en « Réalisation en cours »
 // @verifies CLAUDE.md §8 (aucune trace fabriquée : le `moved` vient du vrai trigger), §15 (E2E), §16 (capture observée)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
+//           (docs/SPEC-rattachements.md §5) ; les scénarios nomment l'affaire, `e2e/api/rattachements.ts` donne le rattachement
 //
 // AUCUNE AFFAIRE DU SEED N'EST DÉPLACÉE. `…0cc` est à *Réalisation*, et aucune arête du workflow global n'y ramène :
 // un aller-retour y est impossible. Le scénario fait donc naître sa propre affaire d'essai — préfixe `f00d`, jamais
@@ -15,6 +17,7 @@
 
 import { connecterAvecLeLabs, expect, test } from './fixtures'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import { corpsParRattachement } from '../api/rattachements'
 import { capturer } from './captures'
 
 const ADMIN = 'admin@p2enjoy.test'
@@ -111,7 +114,7 @@ test.describe('le fil nomme l’étape franchie comme le board (INC-301, sans su
 		// Le franchissement, par la vraie RPC : c'est le trigger qui écrit le `moved` (§14.5).
 		const deplacement = await request.post(`${URL_API}/rest/v1/rpc/move_card`, {
 			headers: enTetesAuthentifies(jeton),
-			data: { card_id: CARD_ESSAI, to_step_id: ETAPE_REALISATION },
+			data: await corpsParRattachement(request, { card_id: CARD_ESSAI, to_step_id: ETAPE_REALISATION }),
 		})
 		expect(deplacement.status(), await deplacement.text()).toBe(200)
 

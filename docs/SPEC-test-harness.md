@@ -300,6 +300,25 @@ après).
 
 **Connecteur MCP : sans objet** — c'est de l'outillage de développement, pas une fonctionnalité du produit.
 
+### 3.7 Dégrader le seul bloc visé, depuis sa définition en base (`CRM-111` T2.3.3, INC-304, décision 704)
+
+*Mesuré le 2026-10-26.* Un harnais qui dégradait une fonction en **rejouant une migration ancienne** la ramenait à une
+version qu'une migration postérieure a redéfinie. Quand un paramètre ou un type de retour change — `move_card` passant de
+`card_id` à `p_placement` par la `0114` —, le rejeu échoue en cours de fichier (« cannot change name of input
+parameter »), **après en avoir appliqué une partie**, et la base sort à moitié ramenée en arrière, en silence derrière un
+`|| true` : la `0013` rejouée redéfinit au passage `app.can_write_card` dans sa forme d'origine, qui lit `cards`.
+
+**La règle.** Une **fonction** se dégrade et se restaure depuis sa définition **en base** (`pg_get_functiondef`), par
+`scripts/lib/degradation.sh` : `degradation_fonction <signature> <fragment> <remplacement>` remplace un fragment qui doit
+apparaître exactement une fois — sinon le contrôle est déclaré non concluant —, dans une transaction ;
+`degradations_restaurer`, posé dans le `trap`, réapplique les définitions d'origine. Une **structure** dégradée —
+contrainte, clé, privilège — se répare par la **reconstruction** (§3.6). Un harnais dont le **sujet** est une partie
+d'une migration ancienne — la table de liaison de la `0019` — la rejoue **privée** de la fonction dont une migration
+postérieure est l'autorité (`migration_sans_fonction`). Aucun harnais ne rejoue plus une migration ancienne pour
+dégrader ou pour restaurer. Appliqué par T2.3.3 à `verify-move-card.sh`, `verify-valeurs-champs.sh`,
+`verify-transition-required-fields.sh`, `verify-colonnes-protegees.sh` et `verify-copie-workflow.sh` ; les autres
+harnais d'INC-304 sont l'objet de `CRM-111` T1 ter.
+
 ## 4. Projets Playwright
 
 ### 4.1 Une seule configuration

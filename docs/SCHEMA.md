@@ -2199,6 +2199,43 @@ anonyme (le patron de `is_read`), `STABLE`, `SECURITY INVOKER` :
 **Retrait** : `drop function public.health_momentum(public.cards), public.health_commercial(public.cards),
 app.health_context(public.cards), app.health_last_contact(uuid), app.health_tier(integer)`.
 
+### Migration `0114` — faire avancer un rattachement (`CRM-111` T2.3.3, décision 705 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-rattachements.md` §5 ; `docs/SPEC-workflow-engine.md` §5.2, §5.3. `move_card(p_placement uuid, to_step_id
+uuid, comment text)` remplace la forme par affaire, **supprimée** (décision 661), et rend `public.card_placements`. Mêmes
+six vérifications, même ordre, mêmes messages, portées par le rattachement ; les champs exigés se lisent sur
+`card_field_values.placement_id` ; le motif reste un commentaire de l'affaire. **Retrait** : supprimer la fonction et
+réappliquer celle de la migration `0035`, avec les appelants d'avant.
+
+### Migration `0115` — le journal d'audit en base (`CRM-072` T1, décisions 725 à 727 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-audit.md` §3 à §6.
+
+- **`public.audit_log`** : `id bigint` identité, `workspace_id uuid` non nul **sans clé étrangère** (l'entrée survit à
+  l'espace et la purge l'efface), `actor_id uuid` FK `profiles` `on delete set null`, `family`, `action`, `entity_type`
+  (trois listes fermées), `entity_id uuid`, `entity_label text` (toujours nul pour un contact, contrainte
+  `audit_log_contact_sans_libelle`), `details jsonb`, `occurred_at timestamptz`. Index `(workspace_id, id desc)` et
+  `(occurred_at)`.
+- **Droits** : RLS, politique unique `audit_log_select_admin` (`app.is_workspace_admin`) ; `SELECT` à `authenticated`
+  et `service_role`, aucune écriture pour aucun rôle applicatif.
+- **Ajout seul** : `app.journal_refuse_change(date, acteur)`, déclencheurs `BEFORE UPDATE OR DELETE` et `BEFORE
+  TRUNCATE` sur `audit_log`, `plateforme_journal` et `mcp_journal` — `P0001 audit_log_immutable`, propriétaire compris,
+  sauf l'acteur seul passé à `null` et la suppression d'une entrée de plus d'un an sous `app.audit_purge = on`.
+- **Écrivain** : `app.audit_record(...)`, `SECURITY DEFINER`, fermé à tous ; la famille est déduite par
+  `app.audit_family`. Déclencheurs `AFTER` : `workspace_members`, `workspace_invitations`, `track_members`,
+  `channel_members` (droits) ; `workspaces`, `tracks`, `channels`, `workflows`, `workflow_versions`, `workflow_steps`,
+  `workflow_transitions`, `workflow_transition_required_fields`, `workflow_nodes_catalog`, `form_fields`,
+  `form_field_rules`, `mail_inbound_accounts`, `mail_outbound_identities` (configuration) ; `cards`, `tracks`,
+  `channels`, `card_comments`, `card_activities`, `contacts`, `organizations` (effacements) ; `sessions_sso`
+  (connexions).
+- **Rétention** : `app.purge_audit_logs()`, tâche `p2enjoy-purge-journaux` (`17 3 * * *`) ; geste `logs_purged` ajouté à
+  `plateforme_journal_geste_check`.
+
+**Retrait** : `select cron.unschedule('p2enjoy-purge-journaux')` ; supprimer les déclencheurs `*_audit*` et
+`*_refuse_change` / `*_refuse_truncate`, puis `drop table public.audit_log` et les fonctions `app.audit_*`,
+`app.journal_refuse_change`, `app.purge_audit_logs` ; remettre la liste fermée de `plateforme_journal` sans
+`logs_purged`.
+
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)

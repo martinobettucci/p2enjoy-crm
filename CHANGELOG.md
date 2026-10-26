@@ -40,6 +40,7 @@ d'exécuter le code attendu.
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T2.3.3 — faire avancer un rattachement** (migration `0114`). Le board et le connecteur MCP font avancer le rattachement de l'affaire, dont les champs exigés se lisent sur ses propres valeurs. Rien de visible ne change.
 - **`CRM-111` T2.3.2 — le responsable, le montant, la prochaine action et l'archivage appartiennent au rattachement** (migration `0112`). La fiche et le connecteur MCP les écrivent sur le rattachement de l'affaire ; le titre et la devise restent à elle. Rien de visible ne change.
 - **`CRM-111` T2.3.1 — le sommeil appartient au rattachement** (migration `0111`). Mettre en sommeil et réveiller désignent le rattachement de l'affaire ; la fiche, le board et le connecteur MCP passent par lui. Rien de visible ne change.
 - **`CRM-111` T2.3.0 — un rattachement s'écrit** (migration `0110`, décision 705). Le responsable, le montant, la probabilité, la prochaine action, la position et l'archivage s'écrivent désormais aussi sur le rattachement, par qui écrit son channel, et l'affaire suit ; la timeline d'un rattachement est tenue par sa propre table. Rien de visible ne change : c'est la fondation sur laquelle chaque geste passera au rattachement.

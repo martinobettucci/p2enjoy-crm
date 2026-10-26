@@ -471,7 +471,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 -- --- 6.1 Un champ `required` non renseigné REFUSE la transition -------------------------------
 -- La card `…0c1` porte `budget` à `null` — une LIGNE PRÉSENTE, et pourtant non renseignée (§6.6).
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c1',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                        '5eed0000-0000-4000-8000-000000000063') $$,
 	'P0001', 'missing_required_fields',
 	'INC-047 CLOSE : un déplacement vers une étape dont un champ `required` est vide est REFUSÉ. '
@@ -480,7 +480,7 @@ select throws_ok($$
 -- --- 6.2 Le cas symétrique : la même transition, la valeur renseignée, PASSE -------------------
 -- Sans lui, l'assertion précédente serait verte sur une garde qui refuserait TOUT.
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c2',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c2'),
 	                        '5eed0000-0000-4000-8000-000000000063') $$,
 	'la MÊME transition, sur la card `…0c2` dont `budget` est renseigné, RÉUSSIT : la règle '
 	'discrimine, elle ne refuse pas tout');
@@ -488,7 +488,7 @@ select lives_ok($$
 -- --- 6.3 Le `DETAIL` porte la liste des clés manquantes, ORDONNÉE — décision 126 --------------
 -- `…0c4` est en négociation et manque deux des trois exigences de la signature.
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c4',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	                        '5eed0000-0000-4000-8000-000000000064') $$,
 	'P0001', 'missing_required_fields',
 	'deux clés manquantes : le message reste un jeton stable');
@@ -499,7 +499,7 @@ returns text language plpgsql as $$
 declare
 	v_detail text;
 begin
-	perform public.move_card(card, etape);
+	perform public.move_card(app.card_first_placement(card), etape);
 	return '(aucun refus)';
 exception when others then
 	get stacked diagnostics v_detail = pg_exception_detail;
@@ -519,7 +519,7 @@ select is(
 -- La Definition of Done le nomme. `motif-perte` est `hidden` en négociation et vide sur `…0c2`,
 -- qui vient d'y entrer : la transition vers `relance` ne le réclame pas.
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c2',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c2'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'un champ `hidden` à l''étape cible n''est PAS exigé, même vide : `hidden` n''est pas '
 	'`required`, et une absence de règle vaut `visible` (§3.1)');
@@ -562,7 +562,7 @@ on conflict (card_id, field_id) do update set value = excluded.value;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c7',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c7'),
 	                        '5eed0000-0000-4000-8000-000000000065') $$,
 	'un champ ARCHIVÉ portant une règle `required` n''exige RIEN (décision 129) : exiger un champ '
 	'qu''aucun formulaire n''affiche rendrait la transition impossible à satisfaire depuis le '

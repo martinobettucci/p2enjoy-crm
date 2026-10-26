@@ -147,7 +147,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011'::uuid);
 
 select throws_ok(
 	$$select public.move_card(
-		'5eed0000-0000-4000-8000-0000000000c3',
+		app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 		'5eed0000-0000-4000-8000-000000000067',
 		'Motif de la preuve 0034')$$,
 	'missing_required_fields',

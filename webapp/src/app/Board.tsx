@@ -241,9 +241,11 @@ export function Board({
 			// L'optimisme n'a pas lieu quand un motif était exigé : la card a déjà attendu la
 			// saisie, la déplacer maintenant puis la remettre en place serait un clignotement.
 			if (commentaire === null) onCards(appliquerDeplacement(cards, idCard, transition.versEtape.id))
+			const carte = cardsParId.get(idCard)
+			if (carte === undefined) return
 			const resultat = await deplacerCard(
 				client,
-				idCard,
+				carte,
 				transition.versEtape.id,
 				commentaire,
 				libellesChamps,
@@ -260,7 +262,7 @@ export function Board({
 			setRefus({ idCard, refus: resultat.refus })
 			setAnnonce(t('live.board.refused'))
 		},
-		[cards, client, libellesChamps, onCards],
+		[cards, cardsParId, client, libellesChamps, onCards],
 	)
 
 	const demander = useCallback(
@@ -326,7 +328,7 @@ export function Board({
 			)
 			return resultat.issue
 		},
-		[cards, client, onCards],
+		[cards, cardsParId, client, onCards],
 	)
 
 	const deposer = useCallback(

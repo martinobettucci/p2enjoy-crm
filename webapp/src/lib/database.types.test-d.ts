@@ -1246,16 +1246,17 @@ type _retourCopie = Expect<
 >
 
 // La signature de `move_card` exposée au client TypeScript est celle du contrat du §5.2 :
-// `comment` facultatif, les deux identifiants exigés.
+// `comment` facultatif, les deux identifiants exigés. RÉVISÉE PAR `CRM-111` T2.3.3 (migration 114) : la fonction désigne
+// le RATTACHEMENT (`p_placement`), et la forme par affaire n'existe plus (docs/SPEC-rattachements.md §5, décision 661).
 type _signatureDeplacement = Expect<
   Equal<
     Database['public']['Functions']['move_card']['Args'],
-    { card_id: string; comment?: string; to_step_id: string }
+    { comment?: string; p_placement: string; to_step_id: string }
   >
 >
 
 // LE RETOUR EST LA LIGNE, ET LE TYPE GÉNÉRÉ LE CONFIRME : `move_card` rend un objet portant les
-// colonnes de `cards`, non un `void` ni un tableau. C'est ce qui permet au client d'obtenir
+// colonnes du rattachement (`card_placements`, depuis `CRM-111` T2.3.3), non un `void` ni un tableau. C'est ce qui permet au client d'obtenir
 // l'étape, `entered_step_at` et `position` recalculés SANS relecture — relecture qu'une politique
 // pourrait, entre-temps, refuser (docs/SPEC-workflow-engine.md §5.2).
 type _retourDeplacementEstUnObjet = Expect<

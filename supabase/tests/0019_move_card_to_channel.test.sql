@@ -676,7 +676,7 @@ select is(
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok(
-	$$select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	$$select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                          '5eed0000-0000-4000-8000-000000000062')$$,
 	'`move_card` fonctionne toujours : cette unité ne rouvre pas `CRM-034`');
 

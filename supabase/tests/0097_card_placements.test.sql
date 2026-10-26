@@ -158,7 +158,7 @@ select is(
 -- 3.4 Faire avancer une affaire. `…0c2` renseigne `budget` : la garde de transition la laisse passer (cf. 0013).
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 select lives_ok(
-	$$select public.move_card('5eed0000-0000-4000-8000-0000000000c2', '5eed0000-0000-4000-8000-000000000063')$$,
+	$$select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c2'), '5eed0000-0000-4000-8000-000000000063')$$,
 	'`move_card` passe, comme avant');
 select pg_temp.proprietaire();
 select is(pg_temp.divergences(), 0::bigint, '`move_card` : étape, position et ancienneté reportées');

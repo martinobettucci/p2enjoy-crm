@@ -7,6 +7,8 @@
 // @verifies CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
 //           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : le board désigne le rattachement de l'affaire dans `move_card`
+//           (docs/SPEC-rattachements.md §5)
 //
 // Ces scénarios s'exécutent contre le **build de production** servi par `vite preview`, et contre
 // la vraie API. Rien n'est simulé, sauf là où c'est explicitement dit — et alors c'est le
@@ -150,6 +152,9 @@ const TRANSITIONS_SERVIES = [
  * permanente racontent donc la même histoire, au lieu de se contredire, et la bascule est prouvée
  * **sans aucune substitution** par `e2e/ui/anciennete-board.spec.ts`.
  */
+/** Le rattachement des affaires servies : le board le lit avec elles et le désigne dans ses gestes (`CRM-111` T2.3). */
+const RATTACHEMENT_SERVI = 'e0000000-0000-4000-8000-0000000000e1'
+
 const CARDS_SERVIES = [
 	{
 		id: CARD_C3,
@@ -161,6 +166,8 @@ const CARDS_SERVIES = [
 		current_step_id: PROSPECTION,
 		entered_step_at: new Date(Date.now() - 30 * 86400000).toISOString(),
 		email_local_part: 'c-gbw6mh97',
+		// `CRM-111` T2.3 : le rattachement unique de l'affaire, que les gestes désignent.
+		card_placements: [{ id: RATTACHEMENT_SERVI, created_at: '2026-01-01T00:00:00Z' }],
 	},
 	{
 		id: CARD_C1,
@@ -172,6 +179,8 @@ const CARDS_SERVIES = [
 		current_step_id: RELANCE,
 		entered_step_at: new Date().toISOString(),
 		email_local_part: 'c-0tkf9avr',
+		// `CRM-111` T2.3 : le rattachement unique de l'affaire, que les gestes désignent.
+		card_placements: [{ id: RATTACHEMENT_SERVI, created_at: '2026-01-01T00:00:00Z' }],
 	},
 	{
 		id: '5eed0000-0000-4000-8000-0000000000c2',
@@ -183,6 +192,8 @@ const CARDS_SERVIES = [
 		current_step_id: RELANCE,
 		entered_step_at: new Date().toISOString(),
 		email_local_part: 'c-ffw3mhw3',
+		// `CRM-111` T2.3 : le rattachement unique de l'affaire, que les gestes désignent.
+		card_placements: [{ id: RATTACHEMENT_SERVI, created_at: '2026-01-01T00:00:00Z' }],
 	},
 ]
 
@@ -668,8 +679,9 @@ test.describe('motif exigé (§7.8)', () => {
 		await page.getByTestId('valider-motif').click()
 
 		await expect(colonne(page, PERDU).locator('[data-testid="carte-card"]')).toHaveCount(1)
+		// `CRM-111` T2.3.3 : le geste désigne le RATTACHEMENT de l'affaire, non l'affaire.
 		expect(corps).toMatchObject({
-			card_id: CARD_C3,
+			p_placement: RATTACHEMENT_SERVI,
 			to_step_id: PERDU,
 			comment: 'Budget gelé jusqu’au prochain exercice.',
 		})

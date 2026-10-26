@@ -1,3 +1,5 @@
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement, ses champs exigés se lisent sur
+--           ses valeurs (docs/SPEC-rattachements.md §5)
 -- @verifies CRM-034 (docs/BACKLOG.md) — `move_card`, garde centrale de transition
 -- @verifies docs/SPEC-workflow-engine.md §5.2 (signature), §5.3 (les six vérifications),
 --           §5.4 (effets), §5.5 (protection de colonne), §5.6 (privilèges),
@@ -43,7 +45,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(82);
+select plan(83);
 
 -- Raccourcis vers les objets du seed, seule source de données de cette suite. Les identifiants
 -- sont stables par contrat (docs/SPEC-seed.md, docs/SPEC-cards.md §9).
@@ -88,9 +90,14 @@ select has_function('public', 'move_card', array['uuid', 'uuid', 'text'],
 	'`public.move_card(uuid, uuid, text)` est livrée — l''assertion `hasnt_function` de '
 	'`0012_cards.test.sql` est retournée par cette unité (décision 51)');
 
-select function_returns('public', 'move_card', array['uuid', 'uuid', 'text'], 'cards',
-	'Elle rend `public.cards`, non `void` : PostgREST en fait un objet JSON unique, et le client '
-	'obtient l''étape, `entered_step_at` et `position` sans relecture (§5.2)');
+-- RÉVISÉE PAR `CRM-111` T2.3.3 (migration 114, décision 661) : la fonction désigne le RATTACHEMENT et le rend ; la forme par
+-- affaire est supprimée (docs/SPEC-rattachements.md §5).
+select function_returns('public', 'move_card', array['uuid', 'uuid', 'text'], 'card_placements',
+	'Elle rend `public.card_placements`, non `void` : PostgREST en fait un objet JSON unique, et le client '
+	'obtient l''étape, `entered_step_at` et `position` du rattachement sans relecture (§5.2)');
+select is(pg_get_function_identity_arguments('public.move_card(uuid, uuid, text)'::regprocedure),
+	'p_placement uuid, to_step_id uuid, comment text',
+	'une seule forme, par rattachement : `move_card(p_placement, to_step_id, comment)` (décision 661)');
 
 select is(
 	(select p.prosecdef from pg_proc p
@@ -226,28 +233,28 @@ savepoint v1;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000ff',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000ff'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'P0001', 'card_not_found',
 	'N° 1, sens du REFUS : une card inconnue rend `card_not_found`. `P0001` et non `P0002` — ce '
 	'dernier est rendu `500` par PostgREST et serait lu comme une panne du produit (§4.4)');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c8',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c8'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'P0001', 'card_not_found',
 	'N° 1 : une card ARCHIVÉE est traitée comme ABSENTE. « Active » a la définition de '
 	'docs/SPEC-cards.md §5 — on restaure d''abord, on déplace ensuite');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c9',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c9'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'P0001', 'card_not_found',
 	'N° 1 : une card en CORBEILLE de même. Les deux suppressions douces sont distinctes, leur '
 	'effet sur la garde est le même');
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c3',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'N° 1, sens du SUCCÈS : une card active et visible passe. Sans cette assertion, les trois '
 	'précédentes seraient vertes sur une fonction qui refuse TOUT');
@@ -264,7 +271,7 @@ savepoint v2;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c1',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                        '5eed0000-0000-4000-8000-000000000063') $$,
 	'P0001', 'card_not_found',
 	'DISCRÉTION : le viewer, à qui le track 21 est fermé, ne se voit PAS répondre « interdit » sur '
@@ -272,7 +279,7 @@ select throws_ok($$
 	'connaître (§5.3, décision 82)');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'42501', 'forbidden',
 	'PREUVE DE REFUS N° 1, et REVERS de la discrétion : LE MÊME viewer, sur une card qu''il VOIT, '
@@ -286,14 +293,14 @@ savepoint v2b;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c5',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c5'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'42501', 'forbidden',
 	'N° 2 par un droit fin de CHANNEL : le bizdev écrit partout, sauf sur le channel 35 où il est '
 	'rétrogradé en lecture. La garde consulte le droit EFFECTIF, pas le rôle de workspace');
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c3',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'N° 2, sens du SUCCÈS : LE MÊME bizdev passe sur un channel où il écrit. La rétrogradation '
 	'est bien locale au channel, et non un refus général');
@@ -312,7 +319,7 @@ savepoint v2c;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c2',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c2'),
 	                        '5eed0000-0000-4000-8000-000000000063') $$,
 	'L''administratrice passe sur `grands-comptes` MALGRÉ le `none` seedé sur son track : « un '
 	'administrateur n''est jamais restreint » (docs/SPEC-permissions-rls.md §2.2), et la garde ne '
@@ -326,7 +333,7 @@ savepoint v3;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c2',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c2'),
 	    (select s.id from public.workflow_steps s
 	      where s.workflow_id <> '5eed0000-0000-4000-8000-000000000051' limit 1)) $$,
 	'P0001', 'step_not_in_workflow',
@@ -335,7 +342,7 @@ select throws_ok($$
 	'PLACE DANS L''ORDRE, avant la n° 4 (§5.3)');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c2',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c2'),
 	                        '5eed0000-0000-4000-8000-0000000000ee') $$,
 	'P0001', 'step_not_in_workflow',
 	'N° 3 : une étape INEXISTANTE rend le même message. « N''appartient pas au workflow » couvre '
@@ -345,7 +352,7 @@ select throws_ok($$
 -- la card, et AUCUNE transition ne mène de 62 vers elle. Si la n° 3 était évaluée après la n° 4, ce
 -- cas rendrait `step_not_in_workflow` ; il rend `transition_not_allowed`, donc l'ordre est le bon.
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c2',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c2'),
 	                        '5eed0000-0000-4000-8000-000000000065') $$,
 	'P0001', 'transition_not_allowed',
 	'L''ORDRE des n° 3 et n° 4 est PROUVÉ : une étape DU BON workflow mais non reliée rend '
@@ -360,14 +367,14 @@ savepoint v4;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000063') $$,
 	'P0001', 'transition_not_allowed',
 	'N° 4, sens du REFUS : 61 → 63 n''est pas déclarée. C''EST L''OBJET MÊME DE L''UNITÉ — le '
 	'graphe du workflow devient opposable ici, et nulle part ailleurs');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000061') $$,
 	'P0001', 'transition_not_allowed',
 	'N° 4 : un déplacement SUR PLACE est refusé. `workflow_transitions_distinct_check` interdit '
@@ -375,14 +382,14 @@ select throws_ok($$
 	'n''est pas un déplacement');
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'N° 4, sens du SUCCÈS : 61 → 62 « Relancer » EST déclarée et passe. Sans cette assertion, les '
 	'deux précédentes seraient vertes sur une fonction qui refuse toute transition');
 
 -- Le sens de l'arête compte : 63 → 62 « Revenir en relance » est déclarée, 62 → 61 ne l'est pas.
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c1',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                        '5eed0000-0000-4000-8000-000000000061') $$,
 	'P0001', 'transition_not_allowed',
 	'N° 4 : le graphe est ORIENTÉ. 61 → 62 passe, 62 → 61 est refusée. Une garde qui ignorerait le '
@@ -396,14 +403,14 @@ savepoint v5;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000067') $$,
 	'P0001', 'comment_required',
 	'N° 5, sens du REFUS : « Marquer perdu » (61 → 67) porte `require_comment`, et l''appel sans '
 	'commentaire est refusé. C''est la donnée du seed de `CRM-031` qui l''exerce (§5.9)');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000067', '   ') $$,
 	'P0001', 'comment_required',
 	'N° 5 : UN COMMENTAIRE VIDE N''EST PAS UN COMMENTAIRE. `nullif(btrim(…), '''')` refuse une '
@@ -422,7 +429,7 @@ select throws_ok($$
 -- L'assertion est RETOURNÉE plutôt que supprimée parce qu'elle est le détecteur : c'est elle qui
 -- rougirait si la classe de blancs rétrécissait un jour.
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000067', E'\t\n ') $$,
 	'P0001', 'comment_required',
 	'INC-052, ÉCART REFERMÉ : une tabulation et un saut de ligne ne PASSENT plus pour un motif. '
@@ -436,7 +443,7 @@ select throws_ok($$
 -- Cette assertion mesure donc que l'arbitrage a bien porté sur l'ensemble UNICODE, et non sur les
 -- seuls blancs ASCII.
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000067', E'  ') $$,
 	'P0001', 'comment_required',
 	'INC-052 : un motif fait d''un espace insécable et d''un cadratin est refusé lui aussi. '
@@ -448,7 +455,7 @@ select throws_ok($$
 -- `card_comments_body_check` sur un appel à `move_card` — exact, opaque, et impossible à rattacher
 -- au paramètre fautif.
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000067', repeat('m', 10001)) $$,
 	'P0001', 'comment_too_long',
 	'N° 5 bis : un motif de plus de 10 000 caractères est refusé PAR SON NOM, et non par la '
@@ -456,7 +463,7 @@ select throws_ok($$
 
 -- Et la borne est bien à 10 000, non à 9 999 : le cas limite passe.
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000067', repeat('m', 10000)) $$,
 	'N° 5 bis : un motif de 10 000 caractères EXACTEMENT est accepté — la borne est celle du '
 	'`CHECK` de la migration 15, ni plus étroite, ni plus large');
@@ -467,7 +474,7 @@ savepoint v5b;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000067', 'Budget reporté en 2027') $$,
 	'N° 5, sens du SUCCÈS : la MÊME transition passe avec un commentaire réel. Sans cette '
 	'assertion, les précédentes seraient vertes sur une garde qui refuserait tout `perdu`');
@@ -479,7 +486,7 @@ savepoint v5c;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'N° 5 : une transition SANS `require_comment` passe sans commentaire. L''exigence vient de '
 	'l''ARÊTE, non de la fonction — une garde qui exigerait toujours serait verte sur la moitié '
@@ -517,7 +524,7 @@ create temporary table t_avant on commit drop as
 	         where c.id = '5eed0000-0000-4000-8000-0000000000c3') as position_depart;
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c3',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 	                        '5eed0000-0000-4000-8000-000000000062') $$,
 	'Le déplacement 61 → 62 de `c3` réussit');
 
@@ -591,7 +598,7 @@ select is(
 
 -- La valeur de retour EST la ligne mise à jour, et non l'ancienne.
 select is(
-	(select (public.move_card('5eed0000-0000-4000-8000-0000000000c3',
+	(select (public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 	                          '5eed0000-0000-4000-8000-000000000063')).current_step_id),
 	'5eed0000-0000-4000-8000-000000000063'::uuid,
 	'La valeur de RETOUR porte l''étape d''ARRIVÉE, non celle de départ : le `returning` de la '
@@ -661,7 +668,7 @@ savepoint inc047;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c1',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                        '5eed0000-0000-4000-8000-000000000063') $$,
 	'P0001', 'missing_required_fields',
 	'INC-047, ÉCART REFERMÉ : le déplacement de `…0c1` vers une étape `required` est désormais '
@@ -696,7 +703,7 @@ savepoint inc048_ecriture;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c6',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                        '5eed0000-0000-4000-8000-000000000067',
 	                        'Budget arbitré chez le concurrent.') $$,
 	'INC-048 : la transition qui EXIGE un motif est acceptée');
@@ -725,7 +732,7 @@ savepoint inc048_facultatif;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c3',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 	                        '5eed0000-0000-4000-8000-000000000062',
 	                        'Relance acceptée par téléphone.') $$,
 	'INC-048 : une transition qui n''exige AUCUN motif accepte celui qu''on lui donne');

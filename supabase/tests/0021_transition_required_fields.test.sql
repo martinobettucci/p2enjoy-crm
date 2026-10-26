@@ -41,7 +41,7 @@ returns text language plpgsql as $$
 declare
 	detail text;
 begin
-	perform public.move_card(card, etape);
+	perform public.move_card(app.card_first_placement(card), etape);
 	return '(aucun refus)';
 exception when others then
 	get stacked diagnostics detail = pg_exception_detail;
@@ -419,7 +419,7 @@ values ('5eed0000-0000-4000-8000-0000000000c7',
 on conflict (card_id, field_id) do update set value = excluded.value;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 select lives_ok($$
-	select public.move_card('5eed0000-0000-4000-8000-0000000000c7',
+	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c7'),
 	                        '5eed0000-0000-4000-8000-000000000065') $$,
 	'la même transition passe lorsque la valeur liée est renseignée');
 

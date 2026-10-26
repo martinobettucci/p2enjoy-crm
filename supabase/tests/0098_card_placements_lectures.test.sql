@@ -145,7 +145,7 @@ select is(
 
 -- 3.2 Un déplacement : l'événement `moved` écrit par `move_card` désigne le rattachement.
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
-select public.move_card('5eed0000-0000-4000-8000-0000000000c2', '5eed0000-0000-4000-8000-000000000063');
+select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c2'), '5eed0000-0000-4000-8000-000000000063');
 select pg_temp.proprietaire();
 select is(
 	(select e.placement_id from public.card_events e

@@ -2046,6 +2046,13 @@ Elle **n'est pas** :
 
 ### 5.2 Signature et valeur de retour
 
+**Révisée par `CRM-111` T2.3.3** (migration `0114`, décision 661, docs/SPEC-rattachements.md §5) : la signature est
+`public.move_card(p_placement uuid, to_step_id uuid, comment text default null) returns public.card_placements` — elle
+désigne le **rattachement** et le rend ; la forme par affaire est supprimée. Les six vérifications, leur ordre et leurs
+messages sont inchangés, mais portent sur le rattachement : son channel, son workflow, son étape, et ses valeurs
+(`card_field_values.placement_id`). Le motif reste un commentaire de l'affaire. Ce qui suit vaut, « card » se lisant
+« rattachement ».
+
 ```
 public.move_card(card_id uuid, to_step_id uuid, comment text default null) returns public.cards
 ```

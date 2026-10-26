@@ -1,3 +1,5 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
+//           (docs/SPEC-rattachements.md §5)
 // @verifies CRM-041 (docs/BACKLOG.md) — composition du board et classification des refus
 // @verifies CRM-022 (docs/BACKLOG.md) — relation responsable embarquée
 // @verifies docs/SPEC-workflow-engine.md §7.2 (les quatre lectures), §7.3 (composition des
@@ -528,17 +530,31 @@ describe('appel de la garde `move_card` (§5.2, §7.9)', () => {
 		return { client, appels }
 	}
 
-	it('appelle `move_card`, et n’écrit jamais `current_step_id` directement', async () => {
-		const ligne = card({ id: 'c1', current_step_id: 's2' })
-		const { client, appels } = clientRpc({ data: ligne, error: null })
-		const resultat = await deplacerCard(client, 'c1', 's2', null, new Map())
-		expect(appels).toEqual([{ nom: 'move_card', arguments: { card_id: 'c1', to_step_id: 's2' } }])
-		expect(resultat).toEqual({ statut: 'ok', card: ligne })
+	it('appelle `move_card` sur le RATTACHEMENT, et n’écrit jamais `current_step_id` directement', async () => {
+		// `CRM-111` T2.3.3 : la ligne rendue est le rattachement ; son étape, sa position et son ancienneté se fondent
+		// dans l'affaire affichée, qui garde son identifiant et son titre.
+		const affichee = card({ id: 'c1', current_step_id: 's1', title: 'Affaire affichée' })
+		const rendue = { id: 'r-c1', card_id: 'c1', current_step_id: 's2', position: 7, entered_step_at: '2026-08-06T09:00:00Z' }
+		const { client, appels } = clientRpc({ data: rendue, error: null })
+		const resultat = await deplacerCard(client, affichee, 's2', null, new Map())
+		expect(appels).toEqual([{ nom: 'move_card', arguments: { p_placement: 'r-c1', to_step_id: 's2' } }])
+		expect(resultat).toEqual({
+			statut: 'ok',
+			card: { ...affichee, current_step_id: 's2', position: 7, entered_step_at: '2026-08-06T09:00:00Z' },
+		})
+	})
+
+	it('ne part pas sans rattachement lisible : le refus est celui du serveur, `card_not_found`', async () => {
+		const { client, appels } = clientRpc({ data: null, error: null })
+		const resultat = await deplacerCard(client, card({ id: 'c1', current_step_id: 's1', card_placements: [] }), 's2', null, new Map())
+		expect(appels).toEqual([])
+		expect(resultat.statut).toBe('refus')
+		if (resultat.statut === 'refus') expect(resultat.refus.cle).toBe('card_not_found')
 	})
 
 	it('transmet le commentaire lorsqu’il est fourni, et l’omet sinon', async () => {
 		const { client, appels } = clientRpc({ data: card({ id: 'c1', current_step_id: 's7' }), error: null })
-		await deplacerCard(client, 'c1', 's7', 'Budget insuffisant', new Map())
+		await deplacerCard(client, card({ id: 'c1', current_step_id: 's1' }), 's7', 'Budget insuffisant', new Map())
 		expect(appels[0]?.arguments['comment']).toBe('Budget insuffisant')
 	})
 
@@ -547,7 +563,7 @@ describe('appel de la garde `move_card` (§5.2, §7.9)', () => {
 			data: null,
 			error: { message: 'transition_not_allowed', details: null, code: 'P0001' },
 		})
-		const resultat = await deplacerCard(client, 'c1', 's3', null, new Map())
+		const resultat = await deplacerCard(client, card({ id: 'c1', current_step_id: 's1' }), 's3', null, new Map())
 		// GARDE-FOU RÉVISÉ, et le motif est écrit ici plutôt que dans un message de commit.
 		// `RefusDeplacement` porte depuis la reprise d'un déplacement refusé une seconde liste,
 		// `clesManquantes` — les clés que le `DETAIL` transporte réellement, dont l'adresse de la

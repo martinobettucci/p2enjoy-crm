@@ -9,6 +9,8 @@
 //           INC-047 (vérification n° 6, **close par `CRM-036`**), INC-048 (commentaire non
 //           conservé), INC-050, INC-051
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
+//           (docs/SPEC-rattachements.md §5) ; les scénarios nomment l'affaire, `e2e/api/rattachements.ts` donne le rattachement
 //
 // Ces scénarios exercent la garde **sans passer par l'interface**, avec les jetons réels des trois
 // profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé — et
@@ -30,6 +32,7 @@
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { corpsParRattachement } from './rattachements'
 
 /** Le workflow global du seed et ses étapes (`docs/SPEC-seed.md` §2). */
 const ETAPE_PROSPECT = '5eed0000-0000-4000-8000-000000000061'
@@ -139,7 +142,8 @@ async function deplacer(
 			...(jeton === null ? enTetesAnonymes() : enTetesAuthentifies(jeton)),
 			'Content-Type': 'application/json',
 		},
-		data: corps,
+		// `CRM-111` T2.3.3 : le scénario nomme l'affaire, le geste reçoit son rattachement.
+		data: await corpsParRattachement(requete, corps),
 	})
 }
 
@@ -256,9 +260,10 @@ test.describe('M2 — lignes b à d : le succès et ses effets', () => {
 			expect(Array.isArray(corps), 'un type composite est rendu comme un OBJET, pas un tableau').toBe(
 				false,
 			)
-			const card = corps as Card
-			expect(card.id).toBe(CARD_C3)
-			expect(card.current_step_id).toBe(ETAPE_RELANCE)
+			// `CRM-111` T2.3.3 : la ligne rendue est le RATTACHEMENT ; il désigne l'affaire par `card_id`.
+			const rattachement = corps as Card & { card_id: string }
+			expect(rattachement.card_id).toBe(CARD_C3)
+			expect(rattachement.current_step_id).toBe(ETAPE_RELANCE)
 
 			// La valeur rendue est bien celle de la base, et non un écho de la requête.
 			expect((await lire(request, CARD_C3)).current_step_id).toBe(ETAPE_RELANCE)

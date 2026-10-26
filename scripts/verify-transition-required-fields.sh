@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : la 19 se rejoue privée de son bloc `move_card`, dont la 114 est la
+#           dernière autorité (INC-304, docs/SPEC-rattachements.md §5)
 # @verifies CRM-018 (docs/BACKLOG.md) — table de liaison des champs exigés par une transition
 # @verifies docs/SPEC-transition-required-fields.md §2 à §6
 # @verifies docs/PROD_MIGRATIONS.md §3 — mise à niveau et rejeu convergent
@@ -15,6 +17,8 @@ source scripts/lib/reconstruction.sh
 
 # shellcheck source=scripts/lib/conteneur.sh
 source scripts/lib/conteneur.sh
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
 # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
 DB_CONTAINER=$(conteneur db)
 MIGRATION=supabase/migrations/0019_transition_required_fields.sql
@@ -47,8 +51,16 @@ psql_db() {
 # Rejeu de la SEULE migration de cette unité. C'est le SUJET des contrôles d'idempotence du §1 et
 # des trois scénarios de mise à niveau des §2 à §4 — « cette migration converge-t-elle depuis
 # l'ancien tableau ? » —, et c'est son unique usage légitime. Elle n'est JAMAIS une restauration.
+# RÉVISÉ PAR `CRM-111` T2.3.3 (migration 114, INC-304) : la 19 définit aussi `public.move_card` dans sa forme d'origine,
+# par affaire. Depuis que la 114 la redéfinit par rattachement, ce bloc ne se rejoue plus (« cannot change name of input
+# parameter »), et il ramènerait la fonction en arrière s'il passait. Le rejeu porte donc sur la 19 PRIVÉE de son bloc
+# `move_card` (`scripts/lib/degradation.sh`, `migration_sans_fonction`) : le sujet de ce harnais — la table de liaison et
+# sa convergence depuis l'ancien tableau — reste rejoué en entier.
+MIGRATION_REJOUABLE="$WORK/0019-sans-move-card.sql"
+migration_sans_fonction "$MIGRATION" public.move_card "$MIGRATION_REJOUABLE" \
+	|| { echo "ERREUR : le bloc de move_card n'a pas été isolé dans $MIGRATION." >&2; exit 1; }
 appliquer_migration() {
-	psql_db --single-transaction -f - < "$MIGRATION"
+	psql_db --single-transaction -f - < "$MIGRATION_REJOUABLE"
 }
 
 # RESTAURATION PAR LE RUNNER COMPLET — INC-199, corrigée le 2026-08-21 (décision 499).
@@ -492,19 +504,20 @@ psql_db -c "drop policy workflow_transition_required_fields_lecture_membre
 if suite_rouge; then ok "ouvrir la lecture anonyme rend pgTAP rouge"; else fail "la politique permissive passe pgTAP"; fi
 restaurer_etat_courant >/dev/null
 
+# RÉVISÉE PAR `CRM-111` T2.3.3 : la fonction dégradée a la signature de la 114, par rattachement — sinon `create or
+# replace` la refuserait et la dégradation serait sans effet.
 psql_db -c "create or replace function public.move_card(
-	card_id uuid, to_step_id uuid, comment text default null
-) returns public.cards
+	p_placement uuid, to_step_id uuid, comment text default null
+) returns public.card_placements
 language plpgsql
 security definer
 set search_path = ''
 as \$\$
 declare
-	v_card_id uuid := card_id;
-	v_card    public.cards%rowtype;
+	v_p public.card_placements%rowtype;
 begin
-	select c.* into v_card from public.cards c where c.id = v_card_id;
-	return v_card;
+	select p.* into v_p from public.card_placements p where p.id = p_placement;
+	return v_p;
 end;
 \$\$;" >/dev/null
 if suite_rouge; then

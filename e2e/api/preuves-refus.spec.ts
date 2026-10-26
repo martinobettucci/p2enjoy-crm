@@ -9,6 +9,8 @@
 // @verifies docs/INCONSISTENCY_REPORT.md INC-014 (politiques d'identité livrées par CRM-022),
 //           INC-021 (écran livré), INC-057 (la preuve n° 3 sur les cards n'était pas écrite)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
+//           (docs/SPEC-rattachements.md §5) ; les scénarios nomment l'affaire, `e2e/api/rattachements.ts` donne le rattachement
 //
 // Les douze scénarios de `docs/SPEC-permissions-rls.md` §7, dans leur ordre, exercés **sans passer
 // par l'interface**, avec les jetons réels obtenus par la véritable route de connexion. Aucun
@@ -32,6 +34,7 @@
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { corpsParRattachement } from './rattachements'
 
 /** Le workspace, le workflow global et ses étapes (`docs/SPEC-seed.md` §2). */
 const WS_SEED = '5eed0000-0000-4000-8000-000000000001'
@@ -224,7 +227,7 @@ test.describe('PREUVE N° 1 — un `viewer` ne déplace aucune card', () => {
 
 		const reponse = await request.post('/rest/v1/rpc/move_card', {
 			headers: { ...enTetesAuthentifies(jetonViewer), 'Content-Type': 'application/json' },
-			data: { card_id: CARD_VUE_DU_VIEWER, to_step_id: ETAPE_DEPUIS_C4 },
+			data: await corpsParRattachement(request, { card_id: CARD_VUE_DU_VIEWER, to_step_id: ETAPE_DEPUIS_C4 }),
 		})
 
 		expect(reponse.status()).toBe(403)
@@ -249,7 +252,7 @@ test.describe('PREUVE N° 1 — un `viewer` ne déplace aucune card', () => {
 		// au `viewer` qu'une card existe hors de sa vue. Le même jeton distingue donc les deux cas.
 		const reponse = await request.post('/rest/v1/rpc/move_card', {
 			headers: { ...enTetesAuthentifies(jetonViewer), 'Content-Type': 'application/json' },
-			data: { card_id: CARD_CACHEE_AU_VIEWER, to_step_id: ETAPE_QUALIFICATION },
+			data: await corpsParRattachement(request, { card_id: CARD_CACHEE_AU_VIEWER, to_step_id: ETAPE_QUALIFICATION }),
 		})
 
 		expect(reponse.status()).toBe(400)

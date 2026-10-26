@@ -527,6 +527,12 @@ quatre autres sur le rattachement ; `crm_card_update` fait deux écritures, chac
 si la seconde est refusée, la première reste écrite, et le refus le dit. Le seed écrit le responsable et la surcharge
 de probabilité sur le rattachement.
 
+**T2.3.3, livrée en développement le 2026-10-26** (migration `0114`) : `move_card(p_placement, to_step_id, comment)`. Le
+board désigne le rattachement de l'affaire et fond la ligne rendue dans l'affaire affichée ; le connecteur résout le
+rattachement depuis `card_id` ; les preuves hors interface nomment l'affaire et reçoivent son rattachement
+(`e2e/api/rattachements.ts`). Cinq harnais ne rejouent plus de migration ancienne pour dégrader `move_card` : ils la
+dégradent depuis sa définition en base (`docs/SPEC-test-harness.md` §3.7).
+
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne
 change **rien de visible**, car chaque affaire garde son unique rattachement : c'est sa preuve, puisque toute la suite
