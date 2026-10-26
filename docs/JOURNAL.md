@@ -35166,3 +35166,18 @@ consigne « deploy every finished fonctionnality ».* La question a reposé le c
 maintenant (avec un instantané Spark neuf), les livrer après `CRM-072`, ou ne rien livrer. **Réponse : « Ne rien livrer
 encore ».** Les décisions 722 et 726 restent en vigueur. Aucune fenêtre n'est ouverte, et la consigne générale de
 déployer ne vaut pas instruction de fenêtre tant que le responsable ne l'a pas confirmée.
+
+
+### décision 732 — `CRM-072` T3 : deux précisions des gestes RGPD, prises au design system ; la migration est la `0118`
+
+*2026-10-26, session interactive, en écrivant `docs/DESIGN_SYSTEM.md` §5.67 après sa relecture intégrale. Précisions
+d'interface, sans arbitrage du produit.*
+1. **La confirmation d'anonymisation vit dans le flux, jamais en modale.** Le §9 de `docs/SPEC-audit.md` écrivait « une
+   modale de confirmation ». Le produit n'en déclare aucune (§5.13 du design system), et la confirmation la plus
+   proche, la suppression d'un espace, exige déjà de retaper un identifiant dans le flux (§5.56).
+2. **La zone RGPD est rendue à tous ; ses commandes s'éteignent avec leur motif.** Le §9 écrivait « visibles aux seuls
+   administrateurs ». La règle du produit (§5.59) ne masque jamais une commande que la base refuse : elle la désactive,
+   lisible, en citant le motif générique de l'administration.
+
+**Numérotation** : la `0116` est prise par `CRM-116` et la `0117` par `CRM-111` T2.3.4, après synchronisation. La T3
+prend la **`0118`**. La décision 731 est réservée à `CRM-111`.

@@ -308,10 +308,13 @@ contact supprimé « contact supprimé ».
 
 ## 9. Les gestes RGPD sur la fiche du contact
 
-- Deux boutons dans une zone « Données personnelles (RGPD) » de la fiche, **visibles aux seuls administrateurs** :
-  « Exporter les données » et « Anonymiser ce contact ».
+- Deux boutons dans une zone « Données personnelles (RGPD) » de la fiche : « Exporter les données » et « Anonymiser ce
+  contact ». *Précisé par la décision 732* : la zone est rendue à tous, et les deux commandes sont désactivées avec leur
+  motif quand la base refuse l'administration (`docs/DESIGN_SYSTEM.md` §5.59, §5.67) — le produit ne masque jamais une
+  commande refusée.
 - **Exporter** télécharge le fichier JSON (§7.1) ; une erreur est dite, le refus aussi.
-- **Anonymiser** ouvre une modale de confirmation qui dit l'effet (« Le nom, l'email, le téléphone et la fonction seront
+- **Anonymiser** ouvre une confirmation **dans le flux**, jamais une modale (décision 732, `docs/DESIGN_SYSTEM.md` §5.67),
+  qui dit l'effet (« Le nom, l'email, le téléphone et la fonction seront
   effacés. Les affaires gardent ce contact, anonyme. Ce geste est définitif. »), demande de retaper le nom, et ne
   s'active qu'à l'égalité. Après le geste, la fiche affiche « Contact anonymisé le … » et ses champs sont en lecture
   seule.
@@ -364,7 +367,8 @@ démonstration. Il ajoute :
 
 - **T1 : la migration `0115_journal_audit.sql`** (la `0114` est celle de `CRM-111` T2.3.3). Elle crée `audit_log`,
   l'écrivain, les déclencheurs, l'immutabilité des trois journaux, la purge et sa tâche pg_cron. **T3** ajoutera sa
-  propre migration : la colonne `contacts.anonymized_at` et les deux fonctions RGPD.
+  propre migration, la **`0118`** (la `0116` est à `CRM-116`, la `0117` à `CRM-111` T2.3.4) : la colonne
+  `contacts.anonymized_at` et les deux fonctions RGPD.
 - **Après la fenêtre**, recharger le cache de PostgREST (`notify pgrst, 'reload schema'`) et constater une connexion :
   le 2026-10-26 en développement, les connexions ont échoué deux minutes après l'application de la `0115`
   (`PGRST202` sur `ouvrir_session_serveur`), sans cause établie, et un rechargement les a rétablies (décision 727).
