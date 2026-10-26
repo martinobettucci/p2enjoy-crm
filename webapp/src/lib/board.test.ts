@@ -1,3 +1,5 @@
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T3a : le compte « n/m » des points de l'étape sur la carte, relu après un
+//           déplacement (docs/SPEC-checklists.md §3.3, §4 ; docs/DESIGN_SYSTEM.md §5.70)
 // @verifies CRM-068 (docs/BACKLOG.md) — tranche T2 : le refus `checklist_incomplete` classé et rendu dans le bandeau
 //           (docs/SPEC-checklists.md §3.4, docs/DESIGN_SYSTEM.md §5.7 quinquies)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
@@ -37,6 +39,8 @@ import {
 	evaluerAnciennete,
 	indexerTransitions,
 	carteDepuisRattachement,
+	compterChecklistEtape,
+	COLONNES_POINT_CARTE,
 	lireCards,
 	lireEtapes,
 	lireLibellesChamps,
@@ -847,5 +851,73 @@ describe('report du sommeil après le geste (§16.13.3)', () => {
 		const copie = [...CARDS]
 		appliquerSommeil(CARDS, 'c1', '2026-09-15T09:00:00.000Z')
 		expect(CARDS).toEqual(copie)
+	})
+})
+
+describe('le compte de checklist de la carte (CRM-068 T3a, docs/DESIGN_SYSTEM.md §5.70)', () => {
+	const points = [
+		{ checked: true, origine: { step_id: 's2' } },
+		{ checked: false, origine: { step_id: 's2' } },
+		{ checked: true, origine: { step_id: 's1' } },
+		{ checked: true, origine: null },
+	]
+
+	it('ne compte que les points de l’étape demandée, et rien quand elle n’en porte aucun', () => {
+		expect(compterChecklistEtape(points, 's2')).toEqual({ coches: 1, total: 2 })
+		expect(compterChecklistEtape(points, 's3')).toBeNull()
+		expect(compterChecklistEtape(null, 's2')).toBeNull()
+	})
+
+	it('la lecture du board plonge les points du rattachement, et la carte compte ceux de son étape', () => {
+		expect(COLONNES_RATTACHEMENT_BOARD).toContain(`points:card_checklist_items!card_checklist_items_placement_id_fkey(${COLONNES_POINT_CARTE})`)
+		const ligne = {
+			id: 'r-c1',
+			created_at: '2026-08-01T00:00:00Z',
+			position: 1,
+			amount: null,
+			next_action: null,
+			current_step_id: 's2',
+			entered_step_at: '2026-08-01T00:00:00Z',
+			owner_id: null,
+			snoozed_until: null,
+			responsable: null,
+			points,
+			affaire: { id: 'c1', title: 'A', description: null, currency: 'EUR', email_local_part: 'a', health_momentum: null, health_commercial: null },
+		}
+		expect(carteDepuisRattachement(ligne).checklist).toEqual({ coches: 1, total: 2 })
+		expect(carteDepuisRattachement({ ...ligne, points: [] })).not.toHaveProperty('checklist')
+	})
+
+	it('l’état optimiste retire le compte de l’étape quittée', () => {
+		const [deplacee] = appliquerDeplacement([card({ id: 'c1', current_step_id: 's1', checklist: { coches: 1, total: 1 } })], 'c1', 's2')
+		expect(deplacee).not.toHaveProperty('checklist')
+	})
+
+	it('après `move_card`, relit les points du rattachement et compte ceux de l’étape d’arrivée', async () => {
+		const lectures: string[] = []
+		const client = {
+			rpc: () => Promise.resolve({ data: { current_step_id: 's2', position: 3, entered_step_at: '2026-08-06T09:00:00Z' }, error: null }),
+			from: (table: string) => ({
+				select: (colonnes: string) => ({
+					eq: (colonne: string, valeur: string) => {
+						lectures.push(`${table}?${colonne}=${valeur}&select=${colonnes}`)
+						return Promise.resolve({ data: points, error: null })
+					},
+				}),
+			}),
+		} as unknown as ClientCrm
+		const resultat = await deplacerCard(client, card({ id: 'c1', current_step_id: 's1', checklist: { coches: 1, total: 1 } }), 's2', null, new Map())
+		expect(lectures).toEqual([`card_checklist_items?placement_id=r-c1&select=${COLONNES_POINT_CARTE}`])
+		expect(resultat.statut === 'ok' && resultat.card.checklist).toEqual({ coches: 1, total: 2 })
+	})
+
+	it('un compte illisible après le geste ne fait pas échouer le déplacement : la carte se tait', async () => {
+		const client = {
+			rpc: () => Promise.resolve({ data: { current_step_id: 's2', position: 3, entered_step_at: '2026-08-06T09:00:00Z' }, error: null }),
+			from: () => ({ select: () => ({ eq: () => Promise.resolve({ data: null, error: { message: 'boom' } }) }) }),
+		} as unknown as ClientCrm
+		const resultat = await deplacerCard(client, card({ id: 'c1', current_step_id: 's1', checklist: { coches: 1, total: 1 } }), 's2', null, new Map())
+		expect(resultat.statut).toBe('ok')
+		if (resultat.statut === 'ok') expect(resultat.card).not.toHaveProperty('checklist')
 	})
 })

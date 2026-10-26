@@ -305,7 +305,7 @@ function LignePoint({
 				) : null}
 			</div>
 			{details.some((d) => d !== null) ? (
-				<div id={idDetail} className="flex flex-col pl-9">
+				<div id={idDetail} className="flex flex-col pl-[36px]">
 					{details.map((detail, rang) =>
 						detail === null ? null : (
 							<span

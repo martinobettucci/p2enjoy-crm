@@ -10,6 +10,7 @@
 //       le compteur et le cumul deviennent), §16.13.3 (ce que la carte devient après le geste)
 // @spec docs/DESIGN_SYSTEM.md §5.1 (carte de card), §5.2 (colonne de board)
 // @spec docs/SPEC-webapp.md §6.3 (ce que la coquille lit), §6.4 (contrat asynchrone)
+// @spec CRM-068 (docs/BACKLOG.md) — tranche T3a : le compte de checklist de la carte (docs/DESIGN_SYSTEM.md §5.70)
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : le board lit les rattachements du channel, l'affaire en plongement,
 //       et rend aux écrans la même carte (docs/SPEC-rattachements.md §8, §14)
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape INITIALE résolue avec chaque colonne
@@ -32,6 +33,7 @@ import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './a
 import { ancienneteDepassee, joursDansEtape, seuilEffectif } from './carte-figee'
 import {
 	COLONNES_CHAMP_LIBELLE,
+	COLONNES_POINT_CARTE,
 	COLONNES_RATTACHEMENT_BOARD,
 	COLONNES_ETAPE,
 	COLONNES_TRANSITION,
@@ -112,7 +114,27 @@ export type CardBoard = Pick<
 	| 'health_commercial'
 > & {
 	readonly responsable: ProfilAffiche | null
+	/**
+	 * `CRM-068` T3a (docs/DESIGN_SYSTEM.md §5.70) : les points de l'étape courante, cochés et en tout ; absent quand
+	 * l'étape n'en porte aucun — la carte ne dit alors rien.
+	 */
+	readonly checklist?: CompteChecklist
 } & RattachementsLus
+
+/** Le compte « 3/5 » d'une carte : les points de checklist de l'étape où se trouve son rattachement. */
+export type CompteChecklist = { readonly coches: number; readonly total: number }
+
+/** Un point de checklist tel que la lecture du board le plonge : son état, et l'étape de son origine. */
+export type PointCarte = { readonly checked: boolean; readonly origine: { readonly step_id: string } | null }
+
+/**
+ * Compte les points d'une étape parmi ceux d'un rattachement ; `null` quand elle n'en porte aucun. Un point dont l'étape
+ * a été supprimée (`origine` nulle) et un point libre — jamais plongé ici, il n'a pas de rattachement — ne comptent pas.
+ */
+export function compterChecklistEtape(points: readonly PointCarte[] | null | undefined, idEtape: string): CompteChecklist | null {
+	const etape = (points ?? []).filter((p) => p.origine?.step_id === idEtape)
+	return etape.length === 0 ? null : { coches: etape.filter((p) => p.checked).length, total: etape.length }
+}
 
 export type TransitionLue = Pick<
 	Database['public']['Tables']['workflow_transitions']['Row'],
@@ -126,6 +148,7 @@ export type ChampLibelle = Pick<Database['public']['Tables']['form_fields']['Row
 // autre projet TypeScript et ne peut pas importer un module du navigateur — mesuré, elle échoue
 // sur `webapp/src/lib/supabase.ts` (docs/SPEC-workflow-engine.md §7.2).
 export {
+	COLONNES_POINT_CARTE,
 	COLONNES_CHAMP_LIBELLE,
 	COLONNES_RATTACHEMENT_BOARD,
 	COLONNES_ETAPE,
@@ -480,8 +503,28 @@ export function appliquerDeplacement(
 		.map((card) => card.position)
 	const dernier = rangs.length === 0 ? 0 : Math.max(...rangs)
 	return cards.map((card) =>
-		card.id === idCard ? { ...card, current_step_id: versEtapeId, position: dernier + 1 } : card,
+		card.id === idCard ? { ...sansChecklist(card), current_step_id: versEtapeId, position: dernier + 1 } : card,
 	)
+}
+
+/**
+ * La carte sans son compte de checklist : celui de l'étape quittée ne dit rien de l'étape d'arrivée, dont les points sont
+ * ajoutés par la base au déplacement (docs/SPEC-checklists.md §3.3). Le compte revient avec la relecture qui suit le geste.
+ */
+const sansChecklist = (card: CardBoard): CardBoard => {
+	const { checklist: _quittee, ...reste } = card
+	return reste
+}
+
+/** Relit les points d'un rattachement après un déplacement, et compte ceux de son étape ; `null` si la lecture échoue. */
+async function relireCompteChecklist(client: ClientCrm, rattachement: string, idEtape: string): Promise<CompteChecklist | null> {
+	try {
+		const reponse = await client.from('card_checklist_items').select(COLONNES_POINT_CARTE).eq('placement_id', rattachement)
+		return reponse.error === null ? compterChecklistEtape(reponse.data as unknown as readonly PointCarte[], idEtape) : null
+	} catch {
+		// Un compte illisible n'est pas un déplacement raté : la carte, déplacée, ne dit simplement rien de sa checklist.
+		return null
+	}
 }
 
 /** Remplace une card par la ligne que `move_card` a rendue. */
@@ -629,6 +672,7 @@ export type RattachementBoard = Pick<
 	| 'snoozed_until'
 > & {
 	readonly responsable: ProfilAffiche | null
+	readonly points?: readonly PointCarte[] | null
 	readonly affaire: Pick<
 		Database['public']['Tables']['cards']['Row'],
 		'id' | 'title' | 'description' | 'currency' | 'email_local_part' | 'health_momentum' | 'health_commercial'
@@ -640,7 +684,9 @@ export type RattachementBoard = Pick<
  * désignée par son identifiant, son rattachement dans `card_placements`, comme `RattachementsLus` le veut.
  */
 export function carteDepuisRattachement(ligne: RattachementBoard): CardBoard {
+	const checklist = compterChecklistEtape(ligne.points, ligne.current_step_id)
 	return {
+		...(checklist === null ? {} : { checklist }),
 		id: ligne.affaire.id,
 		title: ligne.affaire.title,
 		description: ligne.affaire.description,
@@ -795,10 +841,13 @@ export async function deplacerCard(
 		// La ligne rendue est le RATTACHEMENT : son étape, sa position et son ancienneté se fondent dans l'affaire affichée,
 		// qui garde son identifiant, son titre et le reste de ce qu'elle porte.
 		const ligne = reponse.data as unknown as Pick<CardBoard, 'current_step_id' | 'position' | 'entered_step_at'>
+		// `CRM-068` T3a : l'étape d'arrivée a ajouté ses points au rattachement ; la carte compte les siens (§5.70).
+		const checklist = await relireCompteChecklist(client, rattachement, ligne.current_step_id)
 		return {
 			statut: 'ok',
 			card: {
-				...card,
+				...sansChecklist(card),
+				...(checklist === null ? {} : { checklist }),
 				current_step_id: ligne.current_step_id,
 				position: ligne.position,
 				entered_step_at: ligne.entered_step_at,

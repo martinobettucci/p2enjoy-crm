@@ -3,6 +3,7 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranches T2.3.1 et T2.3.3 : le sommeil et `move_card` désignent le rattachement de l'affaire
 //           (docs/SPEC-rattachements.md §5)
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — le board sous le refus du channel (docs/DESIGN_SYSTEM.md §5.59)
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T3a : le compte « 3/5 » de la checklist sur la carte (docs/DESIGN_SYSTEM.md §5.70)
 // @verifies CRM-041 (docs/BACKLOG.md) — rendu réel du board, de son menu et de ses refus
 // @verifies CRM-022 (docs/BACKLOG.md) — avatar du responsable sans UUID
 // @verifies CRM-105 (docs/BACKLOG.md) — la description d'une affaire en infobulle sur le titre de sa carte :
@@ -933,5 +934,28 @@ describe('le board sous le refus du channel (CRM-093)', () => {
 		expect(screen.getByTestId('carte-card').getAttribute('draggable')).toBe('true')
 		await utilisateur.click(screen.getByTestId('menu-transitions'))
 		expect((screen.getAllByTestId('transition')[0] as HTMLButtonElement).disabled).toBe(false)
+	})
+})
+
+describe('le compte de checklist sur la carte (CRM-068 T3a, docs/DESIGN_SYSTEM.md §5.70)', () => {
+	it('montre « n/m » avec sa phrase pour nom accessible, en succès quand tout est coché, et rien sans point', () => {
+		monter({
+			cards: [
+				card({ id: 'c1', current_step_id: 's1', checklist: { coches: 3, total: 5 } }),
+				card({ id: 'c2', current_step_id: 's1', position: 2, checklist: { coches: 2, total: 2 } }),
+				card({ id: 'c3', current_step_id: 's1', position: 3, checklist: { coches: 1, total: 4 } }),
+				card({ id: 'c4', current_step_id: 's1', position: 4 }),
+			],
+			client: clientRpc().client,
+		})
+		const comptes = screen.getAllByTestId('compte-checklist')
+		expect(comptes.map((p) => p.textContent)).toEqual([
+			'3/53 points cochés sur 5 dans cette étape',
+			'2/22 points cochés sur 2 dans cette étape',
+			'1/41 point coché sur 4 dans cette étape',
+		])
+		expect(comptes.map((p) => p.getAttribute('data-complet'))).toEqual(['non', 'oui', 'non'])
+		expect(comptes[1]?.className).toContain('bg-success-soft')
+		expect(within(comptes[0] as HTMLElement).getByText('3/5').getAttribute('aria-hidden')).toBe('true')
 	})
 })

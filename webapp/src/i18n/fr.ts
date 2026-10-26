@@ -4457,6 +4457,10 @@ export const fr = {
 	'checklist.refus.sans-effet': 'Ce point a changé entre-temps : rien n’a été modifié, la checklist a été relue.',
 	'checklist.refus.network': 'La connexion a échoué : rien n’a été enregistré.',
 	'checklist.refus.unknown': 'L’enregistrement a échoué : rien n’a été modifié.',
+	// Le compte de la carte du board, et sa phrase accessible ; « 0 point coché » prend le singulier, comme « 1 ».
+	'board.checklist.count': '{coches}/{total}',
+	'board.checklist.aria.one': '{coches} point coché sur {total} dans cette étape',
+	'board.checklist.aria.many': '{coches} points cochés sur {total} dans cette étape',
 	// --- Activités d'une affaire — CRM-067 T2 (docs/SPEC-activites.md §4, §5 ; docs/DESIGN_SYSTEM.md §5.63) -----
 	'activities.title': 'Activités',
 	'activities.list.aria': 'Activités de l’affaire, la plus récente en tête',

@@ -2,6 +2,7 @@
 // @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux pastilles de santé sur la carte — docs/DESIGN_SYSTEM.md §5.65,
 //       docs/SPEC-analytique.md §13.6
 //       §5.59)
+// @spec CRM-068 (docs/BACKLOG.md) — tranche T3a : le compte « 3/5 » de la checklist sur la carte (docs/DESIGN_SYSTEM.md §5.70)
 // @spec CRM-041 (docs/BACKLOG.md) — board kanban : colonnes, glisser-déposer, menu de transitions
 // @spec CRM-022 (docs/BACKLOG.md) — avatar du responsable embarqué sur la card
 // @spec docs/SPEC-workflow-engine.md §7.3 (composition des colonnes), §7.4 (carte de card),
@@ -34,7 +35,7 @@
 // Aucune règle d'accès n'est portée ici : ce que le board montre est ce que la RLS a consenti à
 // rendre, et ce qu'il n'offre pas, `move_card` le refuse de son côté (CLAUDE.md §10).
 
-import { CalendarClock, Clock, GripVertical, Moon, Sun, TriangleAlert } from 'lucide-react'
+import { CalendarClock, Clock, GripVertical, Moon, SquareCheck, Sun, TriangleAlert } from 'lucide-react'
 import { useCallback, useId, useMemo, useState } from 'react'
 import { Link } from 'react-router'
 import { Badge, type TonBadge } from '../components/ui/Badge'
@@ -69,6 +70,7 @@ import {
 	type CardBoard,
 	type CarteBoard,
 	type ColonneBoard,
+	type CompteChecklist,
 	type CouleurNoeud,
 	type ModeleBoard,
 	type RefusDeplacement,
@@ -658,7 +660,7 @@ function CarteDeCard({
 				    suivante plutôt que de déborder : une carte fait 288 px, et « 12 jours » suivi
 				    d'une date ne tient pas toujours. Le conteneur n'existe que si l'une des deux a
 				    quelque chose à dire — un `div` vide ajouterait un `gap` visible sous l'avatar. */}
-				{carte.seuilJours === null && !carte.enSommeil ? null : (
+				{carte.seuilJours === null && !carte.enSommeil && card.checklist === undefined ? null : (
 					<div className="flex flex-wrap items-center gap-2">
 						{carte.seuilJours === null ? null : (
 							<p
@@ -680,6 +682,9 @@ function CarteDeCard({
 						{/* Le prédicat vient de la COMPOSITION, avec l'instant du filtre (§16.12.3) : le
 						    rendu ne le rejuge pas. */}
 						<PastilleSommeil enSommeil={carte.enSommeil} echeance={card.snoozed_until} />
+						{/* LA CHECKLIST DE L'ÉTAPE — `CRM-068` T3a, §5.70 : à côté de l'ancienneté, sa phrase pour nom accessible ;
+						    tous cochés, la pastille passe en succès. */}
+						{card.checklist === undefined ? null : <CompteChecklistCarte compte={card.checklist} />}
 					</div>
 				)}
 
@@ -694,6 +699,26 @@ function CarteDeCard({
 				/>
 			</div>
 		</li>
+	)
+}
+
+/** Le compte « 3/5 » des points de l'étape (docs/DESIGN_SYSTEM.md §5.70) ; le texte visible est caché aux lecteurs d'écran. */
+function CompteChecklistCarte({ compte }: { readonly compte: CompteChecklist }) {
+	const complet = compte.coches === compte.total
+	const valeurs = { coches: String(compte.coches), total: String(compte.total) }
+	return (
+		<p
+			data-testid="compte-checklist"
+			data-complet={complet ? 'oui' : 'non'}
+			className={[
+				'relative inline-flex items-center gap-1 text-sm w-fit',
+				complet ? 'rounded-full bg-success-soft px-2 text-success-on-soft' : 'text-text-2',
+			].join(' ')}
+		>
+			<SquareCheck aria-hidden="true" size={14} strokeWidth={2} className="shrink-0" />
+			<span aria-hidden="true">{t('board.checklist.count', valeurs)}</span>
+			<span className="sr-only">{t(compte.coches <= 1 ? 'board.checklist.aria.one' : 'board.checklist.aria.many', valeurs)}</span>
+		</p>
 	)
 }
 

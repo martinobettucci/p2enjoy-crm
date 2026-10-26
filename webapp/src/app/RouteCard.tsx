@@ -73,6 +73,8 @@
 //       (docs/SPEC-temps.md §7.6, docs/DESIGN_SYSTEM.md §5.54 bis)
 // @spec CRM-108 (docs/BACKLOG.md) tranche T3 — blocs « Recettes » et « Rentabilité » de la fiche (docs/SPEC-recettes.md §6.1,
 //       §6.2 ; docs/DESIGN_SYSTEM.md §5.60)
+// @spec CRM-068 (docs/BACKLOG.md) tranche T3a — le bloc « Checklist », juste après le formulaire, et la relecture du fil
+//       après chacun de ses gestes (docs/SPEC-checklists.md §4 ; docs/DESIGN_SYSTEM.md §5.70)
 // @spec CRM-067 (docs/BACKLOG.md) tranche T2 — le bloc « Activités », juste après les contacts, et la relecture du fil
 //       après chacun de ses gestes (docs/SPEC-activites.md §4 ; docs/DESIGN_SYSTEM.md §5.63)
 
@@ -87,10 +89,12 @@ import { ancetresAffaire } from '../lib/fil-ariane'
 import { mettreCardALaCorbeille, type NatureRefusGeste } from '../lib/corbeille'
 import { lireClesExigees, useContenuCard, type ModeleFormulaire } from '../lib/formulaire'
 import { estAdministrateur, useRoleWorkspace } from '../lib/roles'
+import { idRattachement } from '../lib/rattachements'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { AppShell } from './AppShell'
 import { BlocActivitesCard } from './BlocActivitesCard'
+import { BlocChecklistCard } from './BlocChecklistCard'
 import { BlocSanteCard } from './BlocSanteCard'
 import { BlocContactsCard } from './BlocContactsCard'
 import { BlocCoutsCard } from './BlocCoutsCard'
@@ -227,6 +231,9 @@ function ContenuCard({
 	// `CRM-067` : un geste du bloc « Activités » fait relire la troisième source du fil (docs/DESIGN_SYSTEM.md §5.63).
 	const [relectureActivites, setRelectureActivites] = useState(0)
 	const relireActivites = useCallback(() => setRelectureActivites((n) => n + 1), [])
+	// `CRM-068` T3a : un cochage écrit une ligne de `card_events`, que le fil relit (docs/DESIGN_SYSTEM.md §5.70).
+	const [relectureEvenements, setRelectureEvenements] = useState(0)
+	const relireEvenements = useCallback(() => setRelectureEvenements((n) => n + 1), [])
 	const marquerRetiree = useCallback(() => setRetiree(true), [])
 
 	// Placé AVANT toute lecture de l'état de chargement : l'écran ne relit rien après le geste, et
@@ -300,6 +307,16 @@ function ContenuCard({
 					rattachements={etat.donnees.card}
 					idWorkflow={etat.donnees.card.workflow_id}
 					idWorkspace={etat.donnees.card.workspace_id}
+				/>
+				{/* LA CHECKLIST — `CRM-068` T3a, docs/SPEC-checklists.md §4 : juste après le formulaire — les points disent ce qu'il
+				    reste à faire dans l'étape, à côté des questions qui disent ce qu'on en sait (docs/DESIGN_SYSTEM.md §5.70). Le
+				    rattachement et son étape viennent de l'affaire déjà chargée. */}
+				<BlocChecklistCard
+					idCard={etat.donnees.card.id}
+					idWorkspace={etat.donnees.card.workspace_id}
+					idRattachement={idRattachement(etat.donnees.card)}
+					idEtapeCourante={etat.donnees.card.current_step_id}
+					onChange={relireEvenements}
 				/>
 				{/* LES CONTACTS DE L'AFFAIRE — CRM-060 sous-tranche 4c, docs/SPEC-contacts.md §12.2.
 				    Ils vivent ENTRE le formulaire et le bloc de corbeille, et les deux bornes sont déjà
@@ -399,6 +416,7 @@ function ContenuCard({
 				idUtilisateur={idUtilisateur}
 				estAdminWorkspace={estAdministrateur(role.etat)}
 				relectureActivites={relectureActivites}
+				relectureEvenements={relectureEvenements}
 				/>
 			</div>
 		</div>
