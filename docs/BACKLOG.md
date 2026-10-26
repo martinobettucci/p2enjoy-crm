@@ -17021,15 +17021,23 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
       points de checklist), champs de formulaire et règles de visibilité, copie vers un track, comparaison, versions et
       remappage ; retirer une étape ou une transition relève de `workflows:supprimer`, exception assumée à « `supprimer`
       = corbeille ou archive ». À poser par la spécification : le rattachement d'un channel, le catalogue de nœuds.
-- [~] **T1 — spécification, écrite avant le code** — *écrite le 2026-10-26, à valider* : `docs/SPEC-mcp.md` §9.2
-      undecies — trente et un outils en trois sous-tranches, six genres d'ancre, la migration de la liste fermée, la
-      phrase de l'onglet, les refus nommés, les preuves ; trois points ouverts soumis au responsable.
+- [x] **T1 — spécification, écrite avant le code** — *validée le 2026-10-26* (décision 755) : `docs/SPEC-mcp.md` §9.2
+      undecies — trente-sept outils en quatre sous-tranches, six genres d'ancre, la migration de la liste fermée, la
+      phrase de l'onglet, les refus nommés, les preuves. Le connecteur suit strictement l'écran.
+- [ ] **T1.b — les gestes d'écran qui manquent** (décision 755), spécifiés dans `docs/SPEC-workflow-engine.md` avant leur
+      code, et validés : renommer un workflow, le désigner par défaut, l'archiver (avec une garde côté serveur pour un
+      workflow qu'emploient des channels), le copier vers un track (`copy_workflow_to_track`), changer le workflow d'un
+      channel (`change_channel_workflow`). Unitaires, API, E2E, captures, manuel, design system. Connecteur MCP : oui,
+      famille `workflows` (décisions 752 et 755).
 - [ ] **T2.a — le workflow, ses étapes, ses transitions** : migration et pgTAP, genres d'ancre,
       `mcp/crm_mcp/outils/workflows.py`, unitaires et mutations, intégration contre la vraie pile (succès, refus par la
       matrice, refus par le CRM malgré la matrice ouverte, journal), E2E (une étape ajoutée par un vrai client MCP paraît
-      dans l'éditeur), onglet « Connecteur MCP », seed, manuel, DAT.
+      dans l'éditeur), onglet « Connecteur MCP », seed, manuel, DAT. `crm_workflow_update` et `crm_workflow_archive`
+      **après T1.b**.
 - [ ] **T2.b — le formulaire, la visibilité, les exigences** : mêmes preuves ; E2E : un champ exigé par le connecteur
-      bloque un déplacement au board.
+      bloque un déplacement au board. Les cinq outils de checklist **après `CRM-068` T3b**.
 - [ ] **T2.c — la copie, les versions, le remappage** : mêmes preuves ; E2E : une restauration par le connecteur remappe
-      une affaire visible au board.
+      une affaire visible au board. `crm_workflow_copy_to_track` **après T1.b**.
+- [ ] **T2.d — le catalogue de nœuds, le workflow d'un channel** : mêmes preuves ; E2E : un nœud créé par le connecteur
+      paraît dans le catalogue. `crm_channel_workflow_change` **après T1.b**.
 - [ ] **T3 — livraison**, sur instruction du responsable.

@@ -35958,3 +35958,20 @@ sans exigence ; l'exigence, les trois affaires et les points libres vivent dans 
 (`56245ff9`) ; le responsable a demandé de la reprendre. Le branchement du bloc dans `RouteCard.tsx`, perdu une première
 fois (le fichier était revenu à son état committé), a été refait et poussé avec le compte du board (`83fd3ea0`).
 
+
+### décision 755 — `CRM-118` T1 : la liste des outils validée ; les gestes sans écran reçoivent d'abord leur écran
+
+*2026-10-26, arbitrages du responsable sur `docs/SPEC-mcp.md` §9.2 undecies.*
+1. **Les gestes que la base permet et qu'aucun écran n'offre reçoivent d'abord leur écran, et le connecteur suit
+   strictement l'écran** (§9.1, « pas de chemin parallèle »). Mesuré après l'arbitrage : la webapp n'appelle jamais
+   `copy_workflow_to_track` ni `change_channel_workflow` ; elle n'offre ni de renommer, ni de désigner par défaut, ni
+   d'archiver un workflow. Ces cinq gestes forment une tranche d'écran de `CRM-118`, spécifiée dans
+   `docs/SPEC-workflow-engine.md` avant son code ; leurs outils viennent après elle. Les points de checklist d'une étape
+   et leurs exigences attendent l'éditeur de `CRM-068` T3b : leurs outils en dépendent. L'archivage d'un workflow
+   qu'emploient des channels n'a aucune garde en base : la tranche d'écran la propose, côté serveur (`CLAUDE.md` §10).
+2. **Le changement de workflow d'un channel et le catalogue de nœuds entrent dans la famille `workflows`.** Le catalogue
+   a son écran (`administration-catalogue.ts`) ; le changement de workflow d'un channel suit le point 1.
+3. **Exiger ou ne plus exiger** un champ ou un point de checklist d'une transition relève de `modifier`, un réglage de la
+   transition.
+4. **La liste est validée** avec ces changements, en sous-tranches livrées séparément.
+**Persisté** : `docs/SPEC-mcp.md` §9.2 undecies, `docs/BACKLOG.md` (`CRM-118`). Aucun code.

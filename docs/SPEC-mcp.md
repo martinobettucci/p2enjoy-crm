@@ -926,7 +926,7 @@ ci-dessus est inchangée :
   elle décrit déjà la famille.
 - **Aucune migration** : la famille est dans la liste fermée depuis `0090`.
 
-### 9.2 undecies Famille `workflows` — `CRM-118` T1 (liste *proposée le 2026-10-26, à valider* ; décisions 752 et 754)
+### 9.2 undecies Famille `workflows` — `CRM-118` T1 (liste fixée, **validée le 2026-10-26**, décision 755 ; décisions 752 et 754)
 
 **La famille.** Dixième famille, rangée **après `structure`** dans les listes fermées et dans la matrice de l'onglet
 « Connecteur MCP ». Elle gouverne **ce qui écrit** un workflow, ainsi que les lectures propres à la gestion (liste,
@@ -934,8 +934,10 @@ formulaire complet, versions, comparaisons, plans). **La lecture de la compositi
 (`crm_workflow_get`, décision 754). Les écritures sont réservées par la base aux administrateurs d'espace
 (`docs/SPEC-workflow-engine.md` §3.7) ; le connecteur n'ouvre rien de plus.
 
-**Trois sous-tranches livrées séparément**, sur le modèle de `CRM-104` T2.a et T2.b. La migration et les genres d'ancre
-viennent avec la première.
+**Sous-tranches livrées séparément**, sur le modèle de `CRM-104` T2.a et T2.b. La migration et les genres d'ancre
+viennent avec la première. **Le connecteur suit strictement l'écran** (décision 755) : un outil dont le geste n'a pas
+encore d'écran attend la tranche d'écran de `CRM-118` (T1.b, `docs/SPEC-workflow-engine.md`) ou l'éditeur de checklists
+de `CRM-068` T3b ; il est marqué *après T1.b* ou *après `CRM-068` T3b* ci-dessous.
 
 **Genres d'ancre nouveaux** (§9.1), chacun lu sous le jeton jusqu'à son `workspace_id` :
 
@@ -948,7 +950,7 @@ viennent avec la première.
 | `version` | `workflow_versions` |
 | `node` | `workflow_nodes_catalog` |
 
-#### T2.a — le workflow, ses étapes, ses transitions (douze outils, et la migration)
+#### T2.a — le workflow, ses étapes, ses transitions (douze outils, dont deux après T1.b, et la migration)
 
 | Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
 |---|---|---|---|---|
@@ -957,13 +959,13 @@ viennent avec la première.
 | `crm_workflow_starter_create` | `ajouter` | `workspace:workspace` | `creer_workflow_de_depart(p_workspace)` | le geste « workflow de départ » (`CRM-094`) |
 | `crm_workflow_step_add` | `ajouter` | `workflow:workflow_id` ; `autres` : `node:node_id` | `POST workflow_steps` | `ajouterEtape` : position en fin (trigger) ; surcharges facultatives (libellé, probabilité, seuil de relance) |
 | `crm_workflow_transition_add` | `ajouter` | `workflow:workflow_id` ; `autres` : `step:from_step_id`, `step:to_step_id` | `POST workflow_transitions` | `declarerTransition` : libellé, motif exigé |
-| `crm_workflow_update` | `modifier` | `workflow:workflow_id` | `PATCH workflows` | **le nom** ; voir le point ouvert 1 |
+| `crm_workflow_update` | `modifier` | `workflow:workflow_id` | `PATCH workflows` | **après T1.b** : le nom, et la désignation par défaut, comme l'écran les offrira |
 | `crm_workflow_step_update` | `modifier` | `step:step_id` | `PATCH workflow_steps` | `surchargerEtape` : libellé, probabilité, seuil ; `null` rend la valeur du catalogue (§2.5 : `0` n'est pas `null`). `is_initial: true` suit `designerEtapeInitiale` : l'ancienne initiale retirée, puis la nouvelle posée |
 | `crm_workflow_step_move` | `modifier` | `step:step_id` ; `autres` : `step:after_step_id`, facultative | `PATCH workflow_steps set position` | une écriture, la position entre les deux voisines (`calculerDeplacement`) ; sans `after_step_id`, en tête |
 | `crm_workflow_transition_update` | `modifier` | `transition:transition_id` | `PATCH workflow_transitions` | `modifierTransition` : libellé, motif exigé ; ni le départ ni l'arrivée |
 | `crm_workflow_step_remove` | `supprimer`, `destructiveHint` | `step:step_id` | `DELETE workflow_steps` | `retirerEtape` ; emporte ses arêtes (§3.4) ; **une étape occupée par une affaire est refusée par la base** ; exception assumée à « `supprimer` = corbeille ou archive » (décision 754) |
 | `crm_workflow_transition_remove` | `supprimer`, `destructiveHint` | `transition:transition_id` | `DELETE workflow_transitions` | `retirerTransition` ; même exception |
-| `crm_workflow_archive` | `supprimer`, `destructiveHint` | `workflow:workflow_id` | `PATCH workflows set archived_at` | voir le point ouvert 1 |
+| `crm_workflow_archive` | `supprimer`, `destructiveHint` | `workflow:workflow_id` | `PATCH workflows set archived_at` | **après T1.b**, avec la garde côté serveur qu'elle pose |
 
 #### T2.b — le formulaire, la visibilité, les exigences (douze outils)
 
@@ -975,12 +977,12 @@ viennent avec la première.
 | `crm_form_field_update` | `modifier` | `field:field_id` | `PATCH form_fields` | `modifierChamp` : libellé, aide, options ; **jamais la clé ni le type** |
 | `crm_form_field_move` | `modifier` | `field:field_id` ; `autres` : `field:after_field_id`, facultative | `PATCH form_fields set position` | comme `crm_workflow_step_move` |
 | `crm_form_field_visibility_set` | `modifier` | `field:field_id` ; `autres` : `step:step_id` | `upsert form_field_rules`, ou `DELETE` pour `default` | `reglerVisibilite`, `rendreAuDefaut` : rendre une case au défaut est un réglage |
-| `crm_transition_required_field_set` | `modifier` | `transition:transition_id` ; `autres` : `field:field_id` | `POST` ou `DELETE workflow_transition_required_fields` | `exigerChamp`, `retirerExigence` ; `required` vrai ou faux ; voir le point ouvert 3 |
-| `crm_step_checklist_item_add` | `ajouter` | `step:step_id` | `POST workflow_step_checklist_items` | voir le point ouvert 1 |
-| `crm_step_checklist_item_update` | `modifier` | `checklist_item:item_id` | `PATCH workflow_step_checklist_items` | libellé, position ; voir le point ouvert 1 |
-| `crm_transition_required_checklist_item_set` | `modifier` | `transition:transition_id` ; `autres` : `checklist_item:item_id` | `POST` ou `DELETE workflow_transition_required_checklist_items` | voir les points ouverts 1 et 3 |
+| `crm_transition_required_field_set` | `modifier` | `transition:transition_id` ; `autres` : `field:field_id` | `POST` ou `DELETE workflow_transition_required_fields` | `exigerChamp`, `retirerExigence` ; `required` vrai ou faux ; `modifier`, un réglage de la transition (décision 755) |
+| `crm_step_checklist_item_add` | `ajouter` | `step:step_id` | `POST workflow_step_checklist_items` | **après `CRM-068` T3b** |
+| `crm_step_checklist_item_update` | `modifier` | `checklist_item:item_id` | `PATCH workflow_step_checklist_items` | libellé, position ; **après `CRM-068` T3b** |
+| `crm_transition_required_checklist_item_set` | `modifier` | `transition:transition_id` ; `autres` : `checklist_item:item_id` | `POST` ou `DELETE workflow_transition_required_checklist_items` | **après `CRM-068` T3b** |
 | `crm_form_field_archive` | `supprimer`, `destructiveHint` | `field:field_id` | `PATCH form_fields set archived_at` | `archiverChamp` : un champ ne se supprime pas |
-| `crm_step_checklist_item_archive` | `supprimer`, `destructiveHint` | `checklist_item:item_id` | `PATCH workflow_step_checklist_items set archived_at` | voir le point ouvert 1 |
+| `crm_step_checklist_item_archive` | `supprimer`, `destructiveHint` | `checklist_item:item_id` | `PATCH workflow_step_checklist_items set archived_at` | **après `CRM-068` T3b** ; le geste exact (archive ou retrait) suit l'éditeur |
 
 #### T2.c — la copie, les versions, le remappage (sept outils)
 
@@ -990,7 +992,7 @@ viennent avec la première.
 | `crm_workflow_version_compare` | `consulter` | `version:base_version_id` ; `autres` : `version:target_version_id` | `compare_workflow_versions` | ajouts, retraits, modifications, par libellé |
 | `crm_workflow_source_compare` | `consulter` | `workflow:workflow_id` | `workflow_derivations`, `compare_workflow_with_source` | la divergence d'une copie avec sa source (§4 ter) |
 | `crm_workflow_remap_plan` | `consulter` | `version:version_id` | `plan_card_remapping(target_version_id, step_overrides, card_limit)` | où chaque affaire atterrirait ; n'écrit rien ; rend l'empreinte vivante à repasser à la restauration |
-| `crm_workflow_copy_to_track` | `ajouter` | `workflow:workflow_id` ; `autres` : `track:track_id` | `copy_workflow_to_track(workflow_id, track_id, new_name)` | un geste d'API par conception (§7 bis.1) |
+| `crm_workflow_copy_to_track` | `ajouter` | `workflow:workflow_id` ; `autres` : `track:track_id` | `copy_workflow_to_track(workflow_id, track_id, new_name)` | **après T1.b** : aucun écran n'appelle la fonction aujourd'hui |
 | `crm_workflow_version_publish` | `ajouter` | `workflow:workflow_id` | `publish_workflow_version(target_workflow_id, note)` | une photographie immuable (§7 ter.5) |
 | `crm_workflow_version_restore` | `modifier`, `destructiveHint` | `version:version_id` | `restore_workflow_version(target_version_id, step_overrides, expected_live_fingerprint)` | réécrit la composition vivante **et remappe les affaires**, en une transaction ; le plan est rejoué, l'empreinte vérifiée (§7 ter.13). La description demande de montrer le plan à la personne avant |
 
@@ -1003,23 +1005,27 @@ partout (§9.3).
 **Le reste de la famille.** Les consignes au modèle (`INSTRUCTIONS`) gagnent une ligne : lire le workflow
 (`crm_workflow_get`) avant de le modifier, dire à la personne ce qui va changer, montrer le plan avant une
 restauration. **L'onglet « Connecteur MCP »** gagne la ligne `workflows` et sa phrase de portée : « Créer, modifier et
-archiver les workflows, leurs étapes, transitions et formulaire ; versions et copie. La lecture d'un workflow reste à
-Structure. »
+archiver les workflows, leurs étapes, transitions et formulaire, le catalogue de nœuds ; versions, copie, workflow d'un
+channel. La lecture d'un workflow reste à Structure. »
 
 **La migration** (T2.a, au prochain numéro libre) : `workflows` après `structure` dans les quatre listes fermées
 (`mcp_droits_famille`, `mcp_autorise`, `mcp_compte`, `mcp_poser_droits`), sur le modèle de `0101` ; retour arrière :
 retirer les droits de la famille, puis réappliquer `0101`.
 
-**Points ouverts, soumis au responsable avec cette liste :**
-1. **Les gestes que la base permet et qu'aucun écran n'offre** : renommer et archiver un workflow (aucune garde
-   n'empêche d'archiver un workflow que des channels emploient — mesuré : seuls `workflows_verifier_portee_occupee`,
-   l'audit et `updated_at` portent sur `workflows`), le désigner par défaut ; les points de checklist d'une étape et
-   leurs exigences, tables et politiques livrées par `CRM-068` (`0125`, `0128`) mais dont l'éditeur est `CRM-068` T3b,
-   pas encore écrit. La règle « pas de chemin parallèle » (§9.1) veut le même appel que l'écran.
-2. **Le rattachement d'un channel à un workflow** (`change_channel_workflow`, qui remappe les affaires) et **le
-   catalogue de nœuds** (créer, modifier, réordonner, archiver un nœud) : dans la famille, ou hors du connecteur.
-3. **Exiger ou ne plus exiger** un champ ou un point de checklist d'une transition : `modifier` (un réglage de la
-   transition, comme rendre une case au défaut) ou `supprimer` pour le retrait.
+#### T2.d — le catalogue de nœuds, le workflow d'un channel (six outils)
+
+| Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |
+|---|---|---|---|---|
+| `crm_workflow_node_list` | `consulter` | `workspace:workspace` | `workflow_nodes_catalog` | clé, libellé, type, couleur, probabilité et seuil par défaut, rang ; les archivés sur demande |
+| `crm_workflow_node_create` | `ajouter` | `workspace:workspace` | `POST workflow_nodes_catalog` | `creerNoeud` |
+| `crm_workflow_node_update` | `modifier` | `node:node_id` | `PATCH workflow_nodes_catalog` | `modifierNoeud` : libellé, couleur, probabilité et seuil ; **jamais la clé** (§2.3) |
+| `crm_workflow_node_move` | `modifier` | `node:node_id` ; `autres` : `node:after_node_id`, facultative | `PATCH workflow_nodes_catalog set position` | `deplacerNoeud`, comme `crm_workflow_step_move` |
+| `crm_workflow_node_archive` | `supprimer`, `destructiveHint` | `node:node_id` | `PATCH workflow_nodes_catalog set archived_at` | `archiverNoeud` ; la garde d'un nœud occupé (`docs/SPEC-workflow-engine.md` §2.6) est rendue nommée |
+| `crm_channel_workflow_change` | `modifier`, `destructiveHint` | `channel:channel_id` ; `autres` : `workflow:workflow_id` | `change_channel_workflow(channel_id, workflow_id, step_mapping, discard_field_values)` | **après T1.b** ; remappe toutes les affaires du channel, la correspondance des étapes explicite et exhaustive (`docs/SPEC-change-channel-workflow.md`) ; la perte des réponses de formulaire exigée explicitement, comme `crm_card_move_to_channel`. `crm_channel_update` (`structure`) ne change toujours pas le workflow |
+
+**Les points ouverts du 2026-10-26 sont tranchés** (décision 755) : les gestes sans écran reçoivent d'abord leur écran
+(T1.b) ; le catalogue et le workflow d'un channel entrent dans la famille (T2.d) ; exiger ou ne plus exiger relève de
+`modifier`.
 
 **Preuves** (§13), par sous-tranche et par outil : succès ; refus par la matrice (case décochée) ; **refus par le CRM
 malgré la matrice ouverte** (un business developer qui ajoute une étape : la base le réserve à l'administrateur) ;
