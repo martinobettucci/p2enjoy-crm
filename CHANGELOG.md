@@ -13,7 +13,22 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-057` tranche 2 — lu / non lu dans l'inbox
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-10-26 — migrations 102 à 105, la webapp de `main` et l'image `mcp`
+
+Cellule Spark `crm`, révision `8934079d` : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` après l'instantané
+confirmé par le responsable (décisions 717 et 718), les migrations **102 à 105** appliquées par le runner (« 4 fichier(s)
+appliqué(s) avec succès »), puis la reconstruction explicite de l'image `mcp`, saine. **Vérifié, en lecture seule** :
+registre à 105 lignes ; `mail_message_reads` présente et vide ; `inbox_arborescence` rend `unread_count` ; la 104 ferme
+`created_at` ; `verifier.sh` 33/34 — le compteur de redémarrage antérieur de `kong` et `rest`. **Non constaté** : l'écran
+de l'inbox sur un vrai courrier, et un appel réel d'un assistant connecté. *Les entrées marquées « développement
+seulement » ou « documentation » ne changent rien en production ; elles sont déplacées avec le reste, comme le veut la
+règle du changelog.*
+
+#### `CRM-057` tranche 2 — lu / non lu dans l'inbox
 
 - **Chaque personne a son propre état de lecture** du courrier reçu. Une conversation non lue porte un trait bleu et un
   objet en gras ; l'ouvrir la marque lue tout entière. « Marquer comme non lu » dans l'en-tête du message et « Tout
@@ -27,7 +42,7 @@ d'exécuter le code attendu.
 - **Le seed** ouvre le fil « Demande de devis — refonte » pour le compte administrateur, par la vraie fonction, et rétablit
   cet état à chaque passage.
 
-### `CRM-115` T3 à T5 — une pile de développement par checkout (outillage, développement seulement)
+#### `CRM-115` T3 à T5 — une pile de développement par checkout (outillage, développement seulement)
 
 - **`scripts/sessions.sh`** liste les piles de développement en cours sur le poste et libère un emplacement périmé ;
   **`scripts/lib/emplacement.sh`** attribue à chaque checkout un emplacement — nom de projet et quinze ports décalés
@@ -36,7 +51,7 @@ d'exécuter le code attendu.
 - **`./runDev.sh`** prend l'emplacement de son checkout et l'écrit dans `.env` (T4) : deux checkouts du même poste tiennent
   deux piles indépendantes, prouvées debout en même temps (T5). Une pile déjà en marche est reprise, jamais doublée.
 
-### `CRM-083` — le canevas d'objectifs a son chapitre au manuel
+#### `CRM-083` — le canevas d'objectifs a son chapitre au manuel
 
 *Documentation et preuves seulement : rien ne change en production.*
 
@@ -45,7 +60,7 @@ d'exécuter le code attendu.
 - **« Lien perdu »** vaut pour un bloc dont le channel est à la corbeille ; après une destruction définitive, le bloc
   redevient libre (décision 709).
 
-### INC-309 — les harnais rouges de la série complète corrigés par famille (décision 704)
+#### INC-309 — les harnais rouges de la série complète corrigés par famille (décision 704)
 
 - `scripts/lib/entete.sh` : les contrôles de traçabilité lisent le bloc d'en-tête entier ; sept harnais.
 - Compteurs constatés et mis à jour avec leur spécification (`corbeille`, `onboarding`, `session-sso`, `snooze`).
@@ -56,7 +71,7 @@ d'exécuter le code attendu.
 - `.env.example` documente chaque variable du connecteur MCP selon le contrat.
 - `mail-sync` : `anyio==4.14.2` épinglé ; l'image se reconstruit à la prochaine livraison (`docs/PROD_MIGRATIONS.md` §2.23).
 
-### `CRM-115` T2 — plus aucun nom de conteneur en développement (décision 702)
+#### `CRM-115` T2 — plus aucun nom de conteneur en développement (décision 702)
 
 *Outillage de développement : rien ne part en production.*
 
@@ -73,7 +88,7 @@ d'exécuter le code attendu.
 - `scripts/verify-noms-conteneurs.sh` : la garde — aucun nom littéral hors exceptions nommées, noms de production
   inchangés, deux mutations dénoncées.
 
-### `CRM-001`, INC-299 — Kong et Caddy ne rendent plus de `502` sur une connexion que l'amont ferme (décision 696)
+#### `CRM-001`, INC-299 — Kong et Caddy ne rendent plus de `502` sur une connexion que l'amont ferme (décision 696)
 
 *Aucune migration, aucune fonction, aucun secret. Kong et Caddy sont recréés par le `up` ordinaire, la webapp est
 reconstruite (`docs/PROD_MIGRATIONS.md` §2.21).*
@@ -91,7 +106,7 @@ reconstruite (`docs/PROD_MIGRATIONS.md` §2.21).*
   corbeille, état de la messagerie, clôture d'un budget). Garde unitaire contre tout `head: true` ; E2E
   `comptes-sans-head.spec.ts`. **La webapp est donc à reconstruire** avec cette livraison.
 
-### `CRM-044`, INC-301 — le fil d'activité nomme l'étape franchie comme le board (décision 693)
+#### `CRM-044`, INC-301 — le fil d'activité nomme l'étape franchie comme le board (décision 693)
 
 *Webapp seulement : aucune migration, aucune fonction, aucune variable. À livrer par reconstruction de la webapp.*
 
@@ -102,7 +117,7 @@ reconstruite (`docs/PROD_MIGRATIONS.md` §2.21).*
   preuve sur session réelle `e2e/ui/timeline-etape-surchargee.spec.ts`, qui fait naître puis supprime sa propre affaire
   d'essai ; `docs/manual.md` §4.10.
 
-### `CRM-084` — le manuel décrit l'administration des budgets d'un track, et une preuve le lie à l'écran
+#### `CRM-084` — le manuel décrit l'administration des budgets d'un track, et une preuve le lie à l'écran
 
 *Documentation et preuves seulement : aucun changement de l'application, rien à livrer en production.*
 
@@ -115,7 +130,7 @@ reconstruite (`docs/PROD_MIGRATIONS.md` §2.21).*
   à l'écran réel ; une phrase changée d'un seul côté rend la preuve rouge (deux mutations tuées).
 - `scripts/verify-budgets.sh` : le contrôle du bouton de clôture suit la forme posée par `CRM-093`.
 
-### `CRM-037` — la fiche nomme l'étape comme le board, et le formulaire est prouvé à chacune des sept étapes (décision 690)
+#### `CRM-037` — la fiche nomme l'étape comme le board, et le formulaire est prouvé à chacune des sept étapes (décision 690)
 
 *Livré en développement ; la livraison en production (reconstruction de la webapp) attend l'instruction du responsable.*
 
@@ -126,7 +141,7 @@ reconstruite (`docs/PROD_MIGRATIONS.md` §2.21).*
   `docs/captures/CRM-037/formulaire-etape-*-1440.jpg`.
 - Aucune migration, aucune fonction, aucune variable.
 
-### `CRM-037`, INC-134 — la mention d'une question obligatoire nomme l'étape sans demander d'y « passer » (décision 688)
+#### `CRM-037`, INC-134 — la mention d'une question obligatoire nomme l'étape sans demander d'y « passer » (décision 688)
 
 *Livré en développement ; la livraison en production (reconstruction de la webapp) attend l'instruction du responsable.*
 
@@ -136,7 +151,7 @@ reconstruite (`docs/PROD_MIGRATIONS.md` §2.21).*
   « Exigé par le déplacement que vous avez demandé » sont inchangées.
 - Aucune migration, aucune fonction, aucun changement du connecteur MCP. Manuel, chapitre du formulaire, mis à jour.
 
-### `CRM-013`, INC-238 — la date de création d'une ligne de coût ou de recette ne se choisit plus (décision 687)
+#### `CRM-013`, INC-238 — la date de création d'une ligne de coût ou de recette ne se choisit plus (décision 687)
 
 *Livré en développement ; la livraison en production attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md` §3,
 migration 104).*
@@ -150,7 +165,7 @@ migration 104).*
 - Migration `0104` (privilèges seulement) ; suite pgTAP `0094`, preuve d'API `e2e/api/dates-lignes-protegees.spec.ts`,
   harnais `scripts/verify-colonnes-protegees.sh` (section 7 *bis*).
 
-### INC-292 — plus d'erreur de console intermittente à la restauration ou à la fermeture d'une session (décision 686)
+#### INC-292 — plus d'erreur de console intermittente à la restauration ou à la fermeture d'une session (décision 686)
 
 *Livré en développement ; la livraison en production attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md`
 §2.19).*
@@ -161,7 +176,7 @@ migration 104).*
   « fermee », le préflight `200`. Mesuré : 0 échec sur 6000 appels, contre 12 sur 3000 avant.
 - La webapp lit le nouveau contrat et accepte encore l'ancien ; `verifier.sh` contrôle le nouveau. Aucune migration.
 
-### `CRM-104` T7 — le connecteur MCP lit et envoie les emails d'une affaire (décisions 676 et 684)
+#### `CRM-104` T7 — le connecteur MCP lit et envoie les emails d'une affaire (décisions 676 et 684)
 
 *Livré en développement ; la livraison en production attend l'instruction du responsable (`docs/PROD_MIGRATIONS.md`
 §2.14).*
@@ -174,7 +189,7 @@ migration 104).*
   d'écriture, identité, quota, affaire indisponible).
 - **Ni les pièces jointes, ni le classement, ni les modèles** : ils restent des gestes de l'écran. Aucune migration.
 
-### `CRM-102` T5 — `verifier.sh` contrôle le connecteur MCP (décision 683)
+#### `CRM-102` T5 — `verifier.sh` contrôle le connecteur MCP (décision 683)
 
 *Outillage d'exploitation, exécuté depuis le poste en lecture seule : rien ne part en production.*
 
@@ -185,7 +200,7 @@ migration 104).*
 - `scripts/verify-controles-connecteur.sh` : 22 contrôles contre le vrai service et une cellule simulée devant un vrai
   Caddy, avec contre-épreuves ; dix mutations de la bibliothèque tuées.
 
-### `CRM-111` T1 bis — les harnais restaurent en reconstruisant la base de développement (décision 682)
+#### `CRM-111` T1 bis — les harnais restaurent en reconstruisant la base de développement (décision 682)
 
 *Outillage de développement : rien ne part en production.*
 
@@ -207,7 +222,7 @@ migration 104).*
   rendait la suppression d'un espace impossible ; la réparation par le rejeu est mesurée avant la reconstruction, qui
   la rendrait sinon toujours vraie (décision 694). Les douze autres harnais qui rejouent une migration : INC-304.
 
-### `CRM-113` T5 — arbitrages du responsable (décision 679) : tout en anglais, la casse ignorée (migration 103)
+#### `CRM-113` T5 — arbitrages du responsable (décision 679) : tout en anglais, la casse ignorée (migration 103)
 
 *Livrée en développement le 2026-10-24 ; part en production avec T1 à T3, migrations 102 puis 103 (le responsable s'en
 charge).*
@@ -219,12 +234,12 @@ charge).*
   `native_field` et `step_probability_invalid` écrivent `key`. La migration 103 reprend quatre fonctions de la 102,
   qui n'est pas modifiée (registre des migrations, `docs/DAT.md` §3.2 bis).
 
-### INC-293 — à 1152 px, le titre long d'une affaire redevient lisible (`CRM-110` T5)
+#### INC-293 — à 1152 px, le titre long d'une affaire redevient lisible (`CRM-110` T5)
 
 - Entre 1024 et 1279 px, le nom de la personne connectée laisse sa place au titre de la page : l'avatar reste, le nom
   reste annoncé aux lecteurs d'écran, et l'adresse reste en infobulle sur l'identité. Webapp seule.
 
-### INC-290 et INC-291 — la pile de développement monte sur un poste neuf ; MinIO depuis Chainguard
+#### INC-290 et INC-291 — la pile de développement monte sur un poste neuf ; MinIO depuis Chainguard
 
 - **MinIO vient de `cgr.dev/chainguard/minio`, épinglé par empreinte, en développement et dans la cellule Spark**
   (décision 681) : `quay.io` ne sert plus MinIO, que son éditeur ne distribue plus en binaires. Une seule image pour
@@ -235,7 +250,7 @@ charge).*
 - **`./runDev.sh` construit sous Compose 5** : il exporte `BUILDX_BAKE_ENTITLEMENTS_FS=0`, sans quoi `bake` refuse de
   lire le paquet CA monté en secret de construction.
 
-### `CRM-113` T1 à T3 — le générateur de workflow connaît l'affaire et le catalogue : base (migration 102), fonction `ia`, écran
+#### `CRM-113` T1 à T3 — le générateur de workflow connaît l'affaire et le catalogue : base (migration 102), fonction `ia`, écran
 
 *Livrées en développement le 2026-10-24 ; la migration, la fonction `ia` et la webapp partent en production ensemble (T4),
 sur instruction du responsable.*
@@ -259,15 +274,13 @@ sur instruction du responsable.*
 - **La composition vivante d'un workflow**, envoyée au modèle et lue par l'écran, nomme chaque étape comme l'écran la
   montre.
 
-### `CRM-103` T3 — le seed du connecteur (développement seulement)
+#### `CRM-103` T3 — le seed du connecteur (développement seulement)
 
 *Les données de démonstration ne partent jamais en production ; le correctif de l'onglet a été livré le 2026-10-23.*
 
 - **Données de démonstration du connecteur** : Farida en attente de droits, Camille en lecture sur les recettes, Driss
   refusé par le CRM sur le rapport de rentabilité ; les comptes et le journal naissent de vraies connexions au
   connecteur (`docs/SPEC-seed.md` §22).
-
-## [Publié]
 
 ### Déployé en production, 2026-10-24 — l'image `mcp`, objectifs
 

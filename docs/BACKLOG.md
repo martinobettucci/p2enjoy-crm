@@ -1025,8 +1025,9 @@ ligne** et non une erreur ambiguë.
       recettes **49/49** ; capture `docs/captures/CRM-084/anciennete-seuil-1440.jpg` observée ; seed rejoué sur la base
       migrée. Campagne : pgTAP 94 / 3974, API 1182, unitaires 4350, courrier 44, pytest 246, interface 910 passés et 14
       échecs, tous rejoués et non imputables (INC-300, et un intermittent déjà consigné). INC-238 close.
-  - [ ] **Livraison de la migration 104**, sur instruction du responsable (`docs/PROD_MIGRATIONS.md` §3) ; aucun service à
-        redéployer.
+  - [x] **Livraison de la migration 104**, sur instruction du responsable (`docs/PROD_MIGRATIONS.md` §3) ; aucun service à
+        redéployer. — *Livrée le 2026-10-26 par la fenêtre des migrations 102 à 105 (décisions 717 et 718, révision
+        `8934079d`) ; constaté en lecture seule : `created_at` fermé à l'insertion, `label` ouvert.*
 - [ ] **DEUX CIBLES RESTENT DUES, ET LEURS TABLES N'EXISTENT TOUJOURS PAS** :
       `api_tokens.token_hash` (`CRM-073`) et `audit_log` (`CRM-072`). La preuve de refus n° 8 reste
       donc incomplète pour `audit_log`. Chaque absence est figée par une assertion pgTAP **et** par
@@ -7067,7 +7068,7 @@ dégradations comprises.
   pile de développement, et la détection est éprouvée sur un serveur simulé.
 - **Un rangement manqué n'est pas rejoué** (voir ci-dessus).
 
-### CRM-057 — Inbox globale `[~]`
+### CRM-057 — Inbox globale `[P]`
 ***Connecteur (décision 708, M1 B)** : oui, famille `messagerie` — l'état lu paraît dans les lectures, aucun outil pour marquer. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707, option C)** : la notion de **lu / non lu est à livrer**, en une tranche à spécifier — les deux questions du connecteur MCP d'abord ; le **rôle de tri** des messages non classés est **hors périmètre**, son absence figée reste juste.*
 ***Reste réel au 2026-10-25 (décision 705)** : deux absences figées qu'aucune spécification ne porte — la notion de lu / non lu et un rôle de tri des messages non classés. Les livrer, ou les déclarer hors périmètre, est un **choix de produit du responsable** ; l'envoi depuis l'inbox relève de `CRM-058`.*
@@ -7115,14 +7116,15 @@ et dans l'inbox.
       1861 → **1884** assertions, 469 → **478** scénarios d'API, 157 → **163** scénarios d'interface.
 - [x] **Aucun envoi depuis l'inbox** : répondre appartient à `CRM-058` — *livré depuis par `CRM-058` : le panneau de
       lecture porte le formulaire de réponse (`FormulaireEnvoi`, `RouteInbox.tsx`).*
-- [ ] **Aucune notion de lu / non lu** : rien ne la porte en base, et l'inventer côté client
-      donnerait un état faux dès la seconde session. — *Portée par la **tranche 2** ci-dessous (décision 707).*
+- [x] **Aucune notion de lu / non lu** : rien ne la porte en base, et l'inventer côté client
+      donnerait un état faux dès la seconde session. — *Portée par la **tranche 2** ci-dessous (décision 707), livrée le
+      2026-10-26.*
 - [x] **Aucun rôle de tri** : un membre ordinaire ne voit **aucun** message non classé. L'absence
       est **figée** par une assertion pgTAP et par un scénario d'API, à réviser le jour où un tel
       rôle existera. — ***Hors périmètre** par arbitrage du responsable (décision 707, option C) : l'absence figée est
       juste, et reste.*
 
-#### Tranche 2 — lu / non lu `[~]`
+#### Tranche 2 — lu / non lu `[P]`
 
 *Spécification : `docs/SPEC-mail-subsystem.md` §18 bis, `docs/DESIGN_SYSTEM.md` §5.4 quinquies — proposées le
 2026-10-26 (décision 715), **validées par le responsable** le même jour avec une variante : l'arborescence garde le
@@ -7154,7 +7156,11 @@ aucune case nouvelle. Noms : `mail_message_reads`, `mark_messages_read`, `mark_m
 - [x] **Manuel** §4.15 et chapitre 11, `docs/SPEC-mcp.md` §9.2 decies, `docs/DAT.md`, `CHANGELOG.md`.
 - [x] **Compteurs du harnais** révisés et mesurés (`--list`, `test:sql`) : 95 fichiers, 4007 assertions, 1191 scénarios
       d'API, 937 d'interface. *La campagne complète de `scripts/verify-harness.sh` n'a pas été rejouée.*
-- [ ] **Livraison** en production, sur instruction du responsable.
+- [x] **Livraison** en production, sur instruction du responsable (décisions 717 et 718) : livrée le 2026-10-26 par la
+      fenêtre des migrations 102 à 105, révision `8934079d`, image `mcp` reconstruite ; constaté en lecture seule
+      (`mail_message_reads` présente et vide, `unread_count` rendu, `verifier.sh` 33/34 — le compteur antérieur).
+- [P] **Constat du responsable** : l'inbox lue et non lue sur un vrai courrier ; un assistant connecté qui lit un email
+      et son état `read`.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E ; captures aux quatre
 paliers ; message classé visible à la fois dans la card et dans l'inbox ». **Les trois sont
@@ -16209,6 +16215,7 @@ peuvent savoir qu'une personne attendue a essayé de se connecter, ni pourquoi e
 - [x] **T4** — livraison en production, sur instruction du responsable : T1 et T2 par la fenêtre `8026e90e` (migration 98), T3 par la seconde fenêtre `e9255249` (migration 99) le 2026-10-23 ; `verifier.sh` 26/27, registre à 99, `401` sans session ; constat visuel en production à faire par le responsable.
 
 ### CRM-110 — Le fil d'Ariane de l'en-tête nomme l'arborescence, du workspace à l'objet ouvert `[P]`
+***Livrée le 2026-10-26** par la fenêtre des migrations 102 à 105 (révision `8934079d`, décision 718) : il ne reste que le constat du responsable (T4, T5).*
 ***Reste réel au 2026-10-25, après la clôture de T3** : la livraison de la webapp de T5 avec la prochaine fenêtre, et le constat du responsable (T4, T5). *Avant (décision 705)* : renouveler et observer les captures des autres unités qui montrent encore l'ancien en-tête (T3) ; puis la livraison de la webapp (T4, T5) et le constat du responsable.*
 *Créée le 2026-10-23 — demande du responsable : « le navbar en haut ne montre pas l'arborescence quand on a une affaire
 ouverte, donc difficile de savoir où on est ». Arbitrages du responsable le même jour (`docs/JOURNAL.md` décision 636).
@@ -16318,7 +16325,8 @@ libellé surchargé ; « Utiliser le nœud du catalogue » perdait le nom de l'�
         **921 passés, 6 échecs** (contre 41), aucun dans les specs de l'unité. **Reste** pour une campagne verte : le
         résidu d'INC-292 (une réponse `200` de `session` perdue par le runtime, 1 sur 3000) et INC-299 (`502` de
         PostgREST) — tous deux hors de l'unité, issues proposées au registre.
-- [ ] **T4** — livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp
+- [~] **T4** — *migrations 102 et 103 appliquées et webapp de `main` livrée le 2026-10-26, par la fenêtre des migrations
+      102 à 105 (décision 718, révision `8934079d`) ; restent la relecture de T3 et le constat.* Livraison, sur instruction du responsable : migration en fenêtre, fonction `ia` redéployée, webapp
       reconstruite ; constat. **Le responsable s'en charge** (décision 679) ; elle attend T5.
 - [x] **T5** — révision de la décision 679 (arbitrages du responsable du 2026-10-24), avant toute livraison : les clés
       de l'étape deviennent `label` et `probability`, l'enveloppe des deux codes nouveaux `{key}` et `{key, native}` ;
