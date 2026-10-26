@@ -35425,3 +35425,16 @@ et références internes. » L'objectif était écrit ; il a été manqué, et `
 `e2e/ui/manuel.spec.ts` perdent leurs preuves par citation d'unité et gagnent les preuves inverses (aucune référence
 interne, une image par élément cité) ; le manuel entier est réécrit ; un corpus de captures découpées est créé et
 maintenu. Découpage en tranches : `docs/BACKLOG.md` `CRM-117`. **Persisté avant la spécification.**
+
+### `CRM-111` T2.3.3 — close : le dernier harnais aboutit (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* `scripts/verify-transition-required-fields.sh`
+passe en entier — **25 vérifications, aucune anomalie** —, dont la dégradation de la sixième garde de `move_card` depuis
+sa définition en base et la reconstruction qui répare les structures. C'était la seule preuve qui manquait à T2.3.3, qui
+passe `[x]`. **Il a fallu quatre passages, et aucun échec ne tenait à la tranche** : le premier et le troisième sont
+morts dans le seed de reconstruction sur l'envoi de démonstration, le worker trouvant le stockage injoignable juste
+après le démarrage (INC-312) ; le deuxième sur une connexion SSO du seed refusée au même moment (famille d'INC-311) ; un
+autre sur la vérification de corbeille que le seed de `CRM-077` exigeait avant que sa migration `0120` ne soit dans le
+répertoire. Une reconstruction qui dépend d'un arbre partagé par plusieurs sessions hérite de leur travail en cours :
+c'est ce que dit le dernier cas, et la coordination par messages l'a résolu.
+
