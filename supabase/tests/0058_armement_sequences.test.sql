@@ -321,8 +321,7 @@ select throws_ok(
 	'25. REFUS (f) — une affaire NON figée est refusée (§12.2)');
 
 select pg_temp.redevenir_proprietaire();
-update public.cards set entered_step_at = now() - interval '90 days'
- where id = '5eed0000-0000-4000-8000-00000000d010';
+update public.card_placements set entered_step_at = now() - interval '90 days' where card_id = '5eed0000-0000-4000-8000-00000000d010';
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok(
@@ -459,8 +458,7 @@ values ('5eed0000-0000-4000-8000-000000000001', 'suite-0058-reponse@exemple.test
 
 -- UNE INÉLIGIBILITÉ, réellement produite : l'affaire est déplacée d'étape, donc `entered_step_at`
 -- retombe à `now()` et elle sort de `cards_figees()`. Aucun prédicat n'est réécrit ici (§12.7).
-update public.cards set entered_step_at = now()
- where id = '5eed0000-0000-4000-8000-00000000d010';
+update public.card_placements set entered_step_at = now() where card_id = '5eed0000-0000-4000-8000-00000000d010';
 
 select ok(
 	not exists (select 1 from public.cards_figees() f

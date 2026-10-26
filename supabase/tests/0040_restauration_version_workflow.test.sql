@@ -292,8 +292,7 @@ select etape, wf, ws, node_id, 99 from t_fixture;
 insert into public.workflow_transitions (id, workflow_id, workspace_id, from_step_id, to_step_id)
 select arete, wf, ws, initiale, etape from t_fixture;
 
-update public.cards c set current_step_id = (select etape from t_fixture)
- where c.id = (select carte from t_fixture);
+update public.card_placements c set current_step_id = (select etape from t_fixture) where c.card_id = (select carte from t_fixture);
 
 select pg_temp.endosser((select admin_id from t_ctx));
 

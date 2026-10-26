@@ -705,9 +705,7 @@ select is(
 -- `UPDATE` direct sous le propriétaire — qui contourne entièrement la fonction, ses huit
 -- vérifications et le privilège de colonne — produit l'événement lui aussi. Une garde protège les
 -- clients ; une trace doit couvrir tout le monde.
-update public.cards
-   set channel_id = '5eed0000-0000-4000-8000-000000000036'
- where id = '5eed0000-0000-4000-8000-0000000000c3';
+update public.card_placements set channel_id = '5eed0000-0000-4000-8000-000000000036' where card_id = '5eed0000-0000-4000-8000-0000000000c3';
 
 select is(
 	(select e.type from public.card_events e

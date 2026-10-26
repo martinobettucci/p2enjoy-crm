@@ -221,24 +221,20 @@ select pg_temp.redevenir_proprietaire();
 -- (« Contrat cadre 2025 ») est à l'étape « Livré », donc SANS SEUIL. L'employer écarterait la card
 -- par l'absence de seuil et non par l'archivage, et l'assertion ne dirait rien.
 
-update public.cards
+update public.card_placements
    set entered_step_at = now() - interval '90 days'
- where id in (
+ where card_id in (
 	'5eed0000-0000-4000-8000-0000000000c6',  -- prospection, seuil 14 — archivée juste après
 	'5eed0000-0000-4000-8000-0000000000c9',  -- prospection, seuil 14 — déjà en corbeille
 	'5eed0000-0000-4000-8000-0000000000ca',  -- prospection, seuil 14 — sommeil FUTUR
 	'5eed0000-0000-4000-8000-0000000000c1',  -- relance, seuil 7 — sommeil ÉCHU
 	'5eed0000-0000-4000-8000-0000000000cd'); -- « Livré », AUCUN seuil
 
-update public.cards
-   set archived_at = now()
- where id = '5eed0000-0000-4000-8000-0000000000c6';
+update public.card_placements set archived_at = now() where card_id = '5eed0000-0000-4000-8000-0000000000c6';
 
 -- La surcharge d'étape : « Négociation » porte 5 jours là où son nœud en porte 10. Vieillie de
 -- SIX jours, la card n'est figée QUE si la surcharge l'emporte — à 10 jours elle ne le serait pas.
-update public.cards
-   set entered_step_at = now() - interval '6 days'
- where id = '5eed0000-0000-4000-8000-0000000000cf';
+update public.card_placements set entered_step_at = now() - interval '6 days' where card_id = '5eed0000-0000-4000-8000-0000000000cf';
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
@@ -282,9 +278,7 @@ select pg_temp.redevenir_proprietaire();
 -- ---------------------------------------------------------------------------------------------
 -- docs/SPEC-relances.md §2.5. « Contrat TMA 2026 — Mairie de Vaulx » est à « Relance », seuil 7.
 
-update public.cards
-   set entered_step_at = now() - interval '7 days'
- where id = '5eed0000-0000-4000-8000-00000000d007';
+update public.card_placements set entered_step_at = now() - interval '7 days' where card_id = '5eed0000-0000-4000-8000-00000000d007';
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
@@ -294,9 +288,7 @@ select is(pg_temp.figees_pour('5eed0000-0000-4000-8000-00000000d007'), 1::bigint
 
 select pg_temp.redevenir_proprietaire();
 
-update public.cards
-   set entered_step_at = now() - interval '7 days' + interval '1 hour'
- where id = '5eed0000-0000-4000-8000-00000000d007';
+update public.card_placements set entered_step_at = now() - interval '7 days' + interval '1 hour' where card_id = '5eed0000-0000-4000-8000-00000000d007';
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
@@ -347,14 +339,14 @@ update public.workflow_nodes_catalog
 -- que l'ordre alphabétique soit PRÉDIT et non constaté : deux retards égaux ne se départagent
 -- autrement par rien de lisible.
 
-update public.cards set entered_step_at = now(), snoozed_until = null;
+update public.card_placements set entered_step_at = now(), snoozed_until = null;
 
-update public.cards set title = 'zzz-figee-b', entered_step_at = now() - interval '24 days'
- where id = '5eed0000-0000-4000-8000-00000000d003';  -- prospection, seuil 14 → retard 10
-update public.cards set title = 'zzz-figee-a', entered_step_at = now() - interval '24 days'
- where id = '5eed0000-0000-4000-8000-00000000d005';  -- prospection, seuil 14 → retard 10
-update public.cards set title = 'zzz-figee-c', entered_step_at = now() - interval '34 days'
- where id = '5eed0000-0000-4000-8000-00000000d006';  -- prospection, seuil 14 → retard 20
+update public.cards set title = 'zzz-figee-b' where id = '5eed0000-0000-4000-8000-00000000d003';
+update public.card_placements set entered_step_at = now() - interval '24 days' where card_id = '5eed0000-0000-4000-8000-00000000d003';  -- prospection, seuil 14 → retard 10
+update public.cards set title = 'zzz-figee-a' where id = '5eed0000-0000-4000-8000-00000000d005';
+update public.card_placements set entered_step_at = now() - interval '24 days' where card_id = '5eed0000-0000-4000-8000-00000000d005';  -- prospection, seuil 14 → retard 10
+update public.cards set title = 'zzz-figee-c' where id = '5eed0000-0000-4000-8000-00000000d006';
+update public.card_placements set entered_step_at = now() - interval '34 days' where card_id = '5eed0000-0000-4000-8000-00000000d006';  -- prospection, seuil 14 → retard 20
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 

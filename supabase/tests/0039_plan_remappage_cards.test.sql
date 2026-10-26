@@ -255,8 +255,8 @@ values ('d0000000-0000-4000-8000-000000000013', 'd0000000-0000-4000-8000-0000000
         '5eed0000-0000-4000-8000-000000000001', '5eed0000-0000-4000-8000-000000000044', 3, false,
         'Étape née après la version');
 
-update public.cards set current_step_id = 'd0000000-0000-4000-8000-000000000013'
- where id in ('d0000000-0000-4000-8000-0000000000a1', 'd0000000-0000-4000-8000-0000000000a4');
+update public.card_placements set current_step_id = 'd0000000-0000-4000-8000-000000000013'
+ where card_id in ('d0000000-0000-4000-8000-0000000000a1', 'd0000000-0000-4000-8000-0000000000a4');
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
@@ -323,8 +323,7 @@ select is(
 
 select pg_temp.redevenir_proprietaire();
 
-update public.cards set current_step_id = 'd0000000-0000-4000-8000-000000000011'
- where id = 'd0000000-0000-4000-8000-0000000000a2';
+update public.card_placements set current_step_id = 'd0000000-0000-4000-8000-000000000011' where card_id = 'd0000000-0000-4000-8000-0000000000a2';
 delete from public.workflow_steps where id = 'd0000000-0000-4000-8000-000000000012';
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');

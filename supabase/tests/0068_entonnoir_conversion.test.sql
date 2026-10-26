@@ -286,7 +286,7 @@ select is(
 
 select pg_temp.redevenir_proprietaire();
 
-update public.cards set probability_override = 75 where id = pg_temp.cadrage_data();
+update public.card_placements set probability_override = 75 where card_id = pg_temp.cadrage_data();
 
 select pg_temp.endosser(pg_temp.camille());
 
@@ -300,7 +300,7 @@ select is(
 select pg_temp.redevenir_proprietaire();
 
 -- Les trois niveaux retirés : la probabilité devient INCONNUE. Elle ne doit pas devenir zéro.
-update public.cards set probability_override = null where id = pg_temp.cadrage_data();
+update public.card_placements set probability_override = null where card_id = pg_temp.cadrage_data();
 update public.workflow_steps set probability_override = null where id = pg_temp.etape_cadrage();
 update public.workflow_nodes_catalog set default_probability = null
  where id = (select node_id from public.workflow_steps where id = pg_temp.etape_cadrage());

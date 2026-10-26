@@ -97,7 +97,7 @@ reset role;
 -- Le vivant s'écarte de V1 : C ajoutée, l'affaire y passe, B retirée.
 insert into public.workflow_steps (id, workflow_id, workspace_id, node_id, position, is_initial)
 values (pg_temp.id('W1_C'), pg_temp.id('W1'), pg_temp.id('W'), pg_temp.id('N_SIGNATURE'), 3, false);
-update public.cards set current_step_id = pg_temp.id('W1_C') where id = pg_temp.id('W1_CARD');
+update public.card_placements set current_step_id = pg_temp.id('W1_C') where card_id = pg_temp.id('W1_CARD');
 delete from public.workflow_steps where id = pg_temp.id('W1_B');
 
 select pg_temp.endosser(pg_temp.id('ADM'));
@@ -124,11 +124,11 @@ select is((select is_initial::text from public.workflow_steps where id = pg_temp
 -- Le vivant : B retirée puis B2 posée sur le MÊME nœud, avec un autre identifiant ; l'affaire y est.
 insert into public.workflow_steps (id, workflow_id, workspace_id, node_id, position, is_initial)
 values (pg_temp.id('W2_C'), pg_temp.id('W2'), pg_temp.id('W'), pg_temp.id('N_SIGNATURE'), 3, false);
-update public.cards set current_step_id = pg_temp.id('W2_C') where id = pg_temp.id('W2_CARD');
+update public.card_placements set current_step_id = pg_temp.id('W2_C') where card_id = pg_temp.id('W2_CARD');
 delete from public.workflow_steps where id = pg_temp.id('W2_B');
 insert into public.workflow_steps (id, workflow_id, workspace_id, node_id, position, is_initial)
 values (pg_temp.id('W2_B2'), pg_temp.id('W2'), pg_temp.id('W'), pg_temp.id('N_NEGOCIATION'), 2, false);
-update public.cards set current_step_id = pg_temp.id('W2_B2') where id = pg_temp.id('W2_CARD');
+update public.card_placements set current_step_id = pg_temp.id('W2_B2') where card_id = pg_temp.id('W2_CARD');
 delete from public.workflow_steps where id = pg_temp.id('W2_C');
 
 select pg_temp.endosser(pg_temp.id('ADM'));

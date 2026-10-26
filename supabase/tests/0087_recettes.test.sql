@@ -206,7 +206,7 @@ select pg_temp.redevenir_proprietaire();
 -- =============================================================================================
 update public.cards set deleted_at = now() where id = '5eed0000-0000-4000-8000-0000000000cc';
 -- …0cd est l'affaire gagnée ACTIVE du seed : la suite l'archive elle-même, dans sa transaction.
-update public.cards set archived_at = now() where id = '5eed0000-0000-4000-8000-0000000000cd';
+update public.card_placements set archived_at = now() where card_id = '5eed0000-0000-4000-8000-0000000000cd';
 
 create temporary table rentab_tout (
 	workspace_id uuid, track_id uuid, channel_id uuid, card_id uuid, node_kind text, archivee boolean, currency text,

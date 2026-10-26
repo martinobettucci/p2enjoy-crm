@@ -503,9 +503,9 @@ select lives_ok($$
 -- toujours ZÉRO card active, et c'est elle qui rend `lives_ok` concluant.
 savepoint archivage_livre;
 
-update public.cards set archived_at = now()
+update public.card_placements set archived_at = now()
  where archived_at is null
-   and deleted_at is null
+   and card_id in (select id from public.cards where deleted_at is null)
    and current_step_id in (
        select s.id from public.workflow_steps s
          join public.workflow_nodes_catalog n on n.id = s.node_id

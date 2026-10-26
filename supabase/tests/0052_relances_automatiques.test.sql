@@ -269,8 +269,7 @@ select id, workspace_id, 'stalled', null,
        jsonb_build_object('seuil_jours', 7, 'retard_jours', 1), now() - interval '60 days'
   from public.cards where id = pg_temp.card_rearmement();
 
-update public.cards set entered_step_at = now() - interval '30 days'
- where id = pg_temp.card_rearmement();
+update public.card_placements set entered_step_at = now() - interval '30 days' where card_id = pg_temp.card_rearmement();
 
 select is(
 	app.relancer_cards_figees(),
@@ -315,8 +314,7 @@ select results_eq(
 -- assertions le prouvent par le comportement plutôt que par la lecture du corps — une garde
 -- recopiée ici, et qui divergerait un jour, ne serait pas vue autrement.
 
-update public.cards set entered_step_at = now() - interval '30 days', archived_at = now()
- where id = pg_temp.card_archivage();
+update public.card_placements set entered_step_at = now() - interval '30 days', archived_at = now() where card_id = pg_temp.card_archivage();
 
 select is(
 	app.relancer_cards_figees(),
@@ -324,7 +322,7 @@ select is(
 	'une card ARCHIVÉE, même largement au-delà de son seuil, ne reçoit aucune relance : '
 	'l''exclusion est héritée de public.cards_figees(), pas recopiée ici');
 
-update public.cards set archived_at = null where id = pg_temp.card_archivage();
+update public.card_placements set archived_at = null where card_id = pg_temp.card_archivage();
 
 select is(
 	app.relancer_cards_figees(),
@@ -332,8 +330,8 @@ select is(
 	'DÉSARCHIVÉE, la même card est relancée — l''exclusion mord dans les deux sens, et l''absence '
 	'de relance ne venait pas d''un défaut de la fonction');
 
-update public.cards set entered_step_at = now() - interval '30 days', deleted_at = now()
- where id = pg_temp.card_corbeille();
+update public.cards set deleted_at = now() where id = pg_temp.card_corbeille();
+update public.card_placements set entered_step_at = now() - interval '30 days' where card_id = pg_temp.card_corbeille();
 
 select is(
 	app.relancer_cards_figees(),

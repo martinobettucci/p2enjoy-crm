@@ -193,7 +193,7 @@ select pg_temp.proprietaire();
 -- Un rattachement archivé ferme l'affaire au courrier : c'est désormais le rattachement qui porte l'archivage.
 select is(app.card_has_active_placement('5eed0000-0000-4000-8000-0000000000c4'), true,
 	'(témoin) `…0c4` a un rattachement actif');
-update public.cards set archived_at = now() where id = '5eed0000-0000-4000-8000-0000000000c4';
+update public.card_placements set archived_at = now() where card_id = '5eed0000-0000-4000-8000-0000000000c4';
 select is(app.card_has_active_placement('5eed0000-0000-4000-8000-0000000000c4'), false,
 	'archivée par `cards`, le miroir archive le rattachement : l''affaire n''a plus de rattachement actif');
 select is(

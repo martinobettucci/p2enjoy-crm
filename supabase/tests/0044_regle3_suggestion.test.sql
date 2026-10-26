@@ -106,7 +106,7 @@ select ok(
 -- =============================================================================================
 
 savepoint cas_d;
-update public.cards set archived_at = now() where id = '5eed0000-0000-4000-8000-0000000000c2';
+update public.card_placements set archived_at = now() where card_id = '5eed0000-0000-4000-8000-0000000000c2';
 insert into public.mail_messages (id, workspace_id, rfc822_message_id, from_address)
 values ('aaaa0000-0000-4000-8000-0000000000d1', '5eed0000-0000-4000-8000-000000000001',
         '<regle3-d>', 'leo.marchand@sogexia.example');

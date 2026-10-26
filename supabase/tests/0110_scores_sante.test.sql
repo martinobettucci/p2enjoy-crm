@@ -39,11 +39,8 @@ update public.mail_messages set card_id = null, classification = 'unclassified',
  where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 update public.workflow_steps set stale_after_days = 14, probability_override = null
  where id = (select valeur from pg_temp_ref where nom = 'etape');
-update public.cards
-   set entered_step_at = now() - interval '3 days', next_action = 'Envoyer la proposition',
-       next_action_at = now() + interval '2 days', created_at = now(), probability_override = 50,
-       archived_at = null, deleted_at = null
- where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.cards set created_at = now(), deleted_at = null where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set entered_step_at = now() - interval '3 days', next_action = 'Envoyer la proposition', next_action_at = now() + interval '2 days', probability_override = 50, archived_at = null where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 
 -- =============================================================================================
 -- 1. Les objets
@@ -66,8 +63,7 @@ select is(array[app.health_tier(39), app.health_tier(40), app.health_tier(69), a
 select is(pg_temp.m(), '{"score": 100, "tier": "healthy", "penalties": []}'::jsonb,
 	'6 — une affaire à jour : 100, sain, aucune pénalité');
 
-update public.cards set entered_step_at = now() - interval '14 days'
- where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set entered_step_at = now() - interval '14 days' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is(pg_temp.m() -> 'penalties' -> 0, '{"code": "stale_step", "points": 30, "days": 14, "threshold": 14}'::jsonb,
 	'7 — au seuil de l''étape, `stale_step` −30, avec les jours et le seuil');
 
@@ -77,27 +73,25 @@ update public.workflow_nodes_catalog set default_stale_after_days = null
 select is(pg_temp.codes(), '{}'::text[], '8 — sans seuil, aucune pénalité d''étape');
 update public.workflow_steps set stale_after_days = 14 where id = (select valeur from pg_temp_ref where nom = 'etape');
 
-update public.cards set entered_step_at = now() - interval '3 days', next_action_at = now() - interval '4 days'
- where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set entered_step_at = now() - interval '3 days', next_action_at = now() - interval '4 days' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is(pg_temp.m() -> 'penalties', '[{"code": "next_action_overdue", "points": 25, "days": 4}]'::jsonb,
 	'9 — une échéance passée : `next_action_overdue` −25, jours de retard compris');
 
-update public.cards set next_action = null, next_action_at = null
- where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set next_action = null, next_action_at = null where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is((pg_temp.m() ->> 'score')::int, 85, '10 — ni action ni échéance : `next_action_missing` −15');
 
-update public.cards set next_action = '   ' where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set next_action = '   ' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is(pg_temp.codes(), '{next_action_missing}'::text[], '11 — une action faite d''espaces est absente');
 
-update public.cards set next_action = 'Rappeler' where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set next_action = 'Rappeler' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is(pg_temp.codes(), '{}'::text[], '12 — une action écrite sans échéance n''est pas pénalisée');
 
-update public.cards set next_action_at = now() - interval '1 day' where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set next_action_at = now() - interval '1 day' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is(pg_temp.codes(), '{next_action_overdue}'::text[],
 	'13 — en retard, l''action n''est pas aussi « absente » : les deux pénalités s''excluent');
 
-update public.cards set next_action_at = now() + interval '2 days', created_at = now() - interval '20 days'
- where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.cards set created_at = now() - interval '20 days' where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set next_action_at = now() + interval '2 days' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is(pg_temp.m() -> 'penalties', '[{"code": "no_contact_14", "points": 20, "days": 20}]'::jsonb,
 	'14 — jamais contactée, créée il y a 20 jours : `no_contact_14` −20 — compté depuis la création');
 
@@ -121,8 +115,7 @@ select is(pg_temp.codes(), '{no_contact_14}'::text[], '18 — un courrier class�
 update public.mail_messages set card_id = null, classification = 'unclassified', classified_by = null
  where rfc822_message_id = '<seed-inbox-non-classe@p2enjoy.test>';
 
-update public.cards set entered_step_at = now() - interval '30 days', next_action_at = now() - interval '5 days'
- where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set entered_step_at = now() - interval '30 days', next_action_at = now() - interval '5 days' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is(pg_temp.m() - 'penalties', '{"score": 15, "tier": "danger"}'::jsonb,
 	'19 — figée, en retard, sans contact depuis 30 jours : 15, en danger');
 
@@ -130,8 +123,8 @@ select is(pg_temp.m() - 'penalties', '{"score": 15, "tier": "danger"}'::jsonb,
 -- 3. La santé commerciale — §13.3
 -- =============================================================================================
 
-update public.cards set entered_step_at = now() - interval '3 days', next_action_at = now() + interval '2 days', created_at = now()
- where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.cards set created_at = now() where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set entered_step_at = now() - interval '3 days', next_action_at = now() + interval '2 days' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is(pg_temp.s() - 'signals', '{"score": 80, "tier": "healthy"}'::jsonb,
 	'20 — probabilité 50, contact du jour, échéance future, étape jeune : (40×50 + 25×100 + 20×100 + 15×100) / 100 = 80');
 
@@ -139,21 +132,20 @@ update public.cards set created_at = now() - interval '18 days' where id = (sele
 select is((pg_temp.signal('contact_freshness') ->> 'value')::int, 52, '21 — 18 jours sans contact : 100 × 12 / 23 = 52');
 update public.cards set created_at = now() where id = (select valeur from pg_temp_ref where nom = 'carte');
 
-update public.cards set next_action_at = null where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set next_action_at = null where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is((pg_temp.signal('next_action_timeliness') ->> 'value')::int, 60, '22 — une action sans échéance : 60');
-update public.cards set next_action = null where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set next_action = null where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is((pg_temp.signal('next_action_timeliness') ->> 'value')::int, 30, '23 — aucune action : 30');
-update public.cards set next_action = 'Rappeler', next_action_at = now() - interval '1 day'
- where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set next_action = 'Rappeler', next_action_at = now() - interval '1 day' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is((pg_temp.signal('next_action_timeliness') ->> 'value')::int, 0, '24 — une échéance passée : 0');
-update public.cards set next_action_at = now() + interval '2 days' where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set next_action_at = now() + interval '2 days' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 
-update public.cards set entered_step_at = now() - interval '14 days' where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set entered_step_at = now() - interval '14 days' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is((pg_temp.signal('step_age') ->> 'value')::int, 50, '25 — au seuil : 100 × (21 − 14) / 14 = 50');
-update public.cards set entered_step_at = now() - interval '3 days' where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set entered_step_at = now() - interval '3 days' where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 
 -- UN SIGNAL INCONNU NE COMPTE PAS POUR ZÉRO : sans aucune probabilité, son poids de 40 est réparti sur les trois autres.
-update public.cards set probability_override = null where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set probability_override = null where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 update public.workflow_nodes_catalog set default_probability = null where id = (select valeur from pg_temp_ref where nom = 'noeud');
 select is(pg_temp.signal('probability'), '{"code": "probability", "weight": 40, "value": null, "status": "unknown"}'::jsonb,
 	'26 — sans probabilité effective, le signal est `unknown`');
@@ -163,9 +155,10 @@ select is((pg_temp.s() ->> 'score')::int, 100, '27 — et son poids est réparti
 -- 4. Ce qui n'est pas noté — §13.4
 -- =============================================================================================
 
-update public.cards set archived_at = now() where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set archived_at = now() where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is(array[pg_temp.m(), pg_temp.s()], array[null, null]::jsonb[], '28 — une affaire archivée n''a aucun score');
-update public.cards set archived_at = null, deleted_at = now() where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.cards set deleted_at = now() where id = (select valeur from pg_temp_ref where nom = 'carte');
+update public.card_placements set archived_at = null where card_id = (select valeur from pg_temp_ref where nom = 'carte');
 select is(pg_temp.m(), null, '29 — une affaire à la corbeille non plus');
 update public.cards set deleted_at = null where id = (select valeur from pg_temp_ref where nom = 'carte');
 update public.workflow_nodes_catalog set kind = 'won' where id = (select valeur from pg_temp_ref where nom = 'noeud');
