@@ -35813,3 +35813,10 @@ tout membre s'en sert à la création d'une affaire. **Q2, option A** : cocher o
 « Point coché » / « Point décoché » dans le fil de l'affaire, famille « Champs », avec son auteur, connecteur compris.
 **Q3, option A** : une transition n'exige que des points de son **étape de départ**.
 
+### décision 749 — `CRM-068` : `docs/SPEC-checklists.md` validé, cinq tranches
+
+*2026-10-26, réponse du responsable : « Validée, code-la ».* La spécification est validée telle quelle, avec les réponses
+de la décision 748. Le découpage est celui du §7 : **T1** le modèle des checklists ; **T2** l'exigence de transition ;
+**T3** les écrans de la fiche, du board et de l'éditeur ; **T4** les modèles d'affaires ; **T5** le connecteur. Chaque
+tranche est prouvée, committée et poussée avant la suivante.
+
