@@ -4,7 +4,8 @@
 --           `mail_message_reads` ; docs/SPEC-permissions-rls.md §7 (la discrétion) ; docs/JOURNAL.md décisions 715, 716
 --
 -- LA SUITE S'APPUIE SUR LE COURRIER DU SEED (§2.19), sans en fabriquer : Camille (admin) voit les quatre messages,
--- Driss (business_developer) les deux classés seulement. Les lectures sont REMISES À ZÉRO dans la transaction, pour
+-- Driss (business_developer) les deux classés seulement. LES COMPTES DE DOSSIER SONT BORNÉS À L'AFFAIRE DU FIL
+-- (« Refonte du site vitrine ») : le seed archive aussi un envoi sur une autre affaire (docs/SPEC-seed.md §2.19 ter). Les lectures sont REMISES À ZÉRO dans la transaction, pour
 -- que la suite ne dépende pas de ce que le seed ou une session a déjà lu ; le `rollback` final rend la base intacte.
 
 begin;
@@ -90,9 +91,9 @@ select is((select count(*) from public.mail_message_reads), 2::bigint,
 select ok((select public.is_read(m) from public.mail_messages m
             where m.id = (select valeur from pg_temp_ref where nom = 'classe')),
 	'17 — `is_read` rend vrai pour un message lu');
-select is((select sum(unread_count) from public.inbox_arborescence() where card_id is not null), 0::numeric,
+select is((select sum(unread_count) from public.inbox_arborescence() where card_id = '5eed0000-0000-4000-8000-0000000000c1'), 0::numeric,
 	'18 — le dossier de l''affaire n''a plus de non lu pour Camille');
-select is((select sum(nombre) from public.inbox_arborescence() where card_id is not null), 2::numeric,
+select is((select sum(nombre) from public.inbox_arborescence() where card_id = '5eed0000-0000-4000-8000-0000000000c1'), 2::numeric,
 	'19 — son total reste à deux');
 
 select throws_ok(
@@ -140,7 +141,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select is(public.mark_message_unread((select valeur from pg_temp_ref where nom = 'reponse')), true,
 	'28 — Camille remet la réponse non lue');
-select is((select sum(unread_count) from public.inbox_arborescence() where card_id is not null), 1::numeric,
+select is((select sum(unread_count) from public.inbox_arborescence() where card_id = '5eed0000-0000-4000-8000-0000000000c1'), 1::numeric,
 	'29 — le dossier de l''affaire porte de nouveau un non lu');
 select is(public.mark_message_unread((select valeur from pg_temp_ref where nom = 'reponse')), false,
 	'30 — la remettre non lue une seconde fois ne retire rien');

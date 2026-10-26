@@ -7,6 +7,8 @@
 # @spec CRM-057 (docs/BACKLOG.md) — tranche 2 : l'état lu dans les deux lectures, `read` (décision 708, M1 B) ;
 #       docs/SPEC-mail-subsystem.md §18 bis.5 (l'état de la personne, aucun outil pour marquer, lire ne marque pas) ;
 #       docs/SPEC-mcp.md §9.2 decies
+# @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : `bcc` dans `crm_mail_send`, la copie cachée seule, aucune pièce jointe
+#       (décision 708, M2 B) ; docs/SPEC-mail-subsystem.md §19 bis.2 point 9
 """La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, envoyer un email.
 
 Les mêmes tables et la même fonction que l'écran : `mail_messages`, `mail_outbound_identities`, et
@@ -238,6 +240,10 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         body: Annotated[str, Field(min_length=1, max_length=100_000, description="Plain text; the signature is added")],
         subject: Annotated[str | None, Field(max_length=998, description="Required unless replying")] = None,
         cc: Annotated[list[str] | None, Field(max_length=DESTINATAIRES_MAX, description="Copy addresses")] = None,
+        bcc: Annotated[
+            list[str] | None,
+            Field(max_length=DESTINATAIRES_MAX, description="Blind copy addresses: delivered, never shown to recipients"),
+        ] = None,
         from_address: Annotated[
             str | None, Field(description="Sending address; optional when only one identity is available to you")
         ] = None,
@@ -248,6 +254,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         appel = appel_courant()
         destinataires = [a.strip() for a in to if a.strip()]
         copies = [a.strip() for a in (cc or []) if a.strip()]
+        copies_cachees = [a.strip() for a in (bcc or []) if a.strip()]
         if in_reply_to_message_id is not None:
             # La fonction ne vérifie pas que le message appartient à l'affaire, et l'écran ne propose de répondre qu'à
             # un message du fil : l'outil tient la même règle (décision 684).
@@ -283,6 +290,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "p_subject": subject.strip(),
             "p_body_text": body,
             "p_cc": copies,
+            "p_bcc": copies_cachees,
         }
         if in_reply_to_message_id is not None:
             arguments["p_in_reply_to_message_id"] = in_reply_to_message_id
@@ -295,6 +303,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "from_address": identite["from_address"],
             "to": destinataires,
             "cc": copies,
+            "bcc": copies_cachees,
             "subject": subject.strip(),
             "note": "The email leaves through the CRM's queue and then appears in the affaire's thread.",
         }
@@ -315,7 +324,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "then appears in the affaire's thread. IRREVERSIBLE: the email leaves the CRM — confirm recipients, subject "
             "and text with the person before calling. from_address picks the sending identity (yours, or the "
             "workspace's service identity if you administer it); in_reply_to_message_id replies to an email of this "
-            "affaire. No attachments."
+            "affaire; bcc adds blind copies, delivered but never shown to the other recipients. No attachments."
         ),
         destructif=True,
     )

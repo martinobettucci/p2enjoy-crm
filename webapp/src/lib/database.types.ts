@@ -1915,6 +1915,7 @@ export type Database = {
       }
       mail_messages: {
         Row: {
+          bcc_addresses: string[]
           body_html: string | null
           body_text: string | null
           card_id: string | null
@@ -1940,6 +1941,7 @@ export type Database = {
           is_read: boolean | null
         }
         Insert: {
+          bcc_addresses?: string[]
           body_html?: string | null
           body_text?: string | null
           card_id?: string | null
@@ -1964,6 +1966,7 @@ export type Database = {
           workspace_id: string
         }
         Update: {
+          bcc_addresses?: string[]
           body_html?: string | null
           body_text?: string | null
           card_id?: string | null
@@ -2103,6 +2106,7 @@ export type Database = {
         Row: {
           attachments: Json
           attempts: number
+          bcc_addrs: string[]
           body_text: string
           card_id: string
           cc_addrs: string[]
@@ -2126,6 +2130,7 @@ export type Database = {
         Insert: {
           attachments?: Json
           attempts?: number
+          bcc_addrs?: string[]
           body_text: string
           card_id: string
           cc_addrs?: string[]
@@ -2149,6 +2154,7 @@ export type Database = {
         Update: {
           attachments?: Json
           attempts?: number
+          bcc_addrs?: string[]
           body_text?: string
           card_id?: string
           cc_addrs?: string[]
@@ -3815,6 +3821,12 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      depots_envoi_abandonnes: {
+        Args: { p_age?: string }
+        Returns: {
+          name: string
+        }[]
+      }
       dossiers_a_renommer: {
         Args: { p_account_id: string }
         Returns: {
@@ -3970,6 +3982,7 @@ export type Database = {
       marquer_envoi_reussi: {
         Args: {
           p_outbox_id: string
+          p_pieces?: Json
           p_references?: string[]
           p_rfc822_message_id: string
         }
@@ -4313,6 +4326,8 @@ export type Database = {
       }
       queue_outbound_email: {
         Args: {
+          p_attachments?: Json
+          p_bcc?: string[]
           p_body_text?: string
           p_card_id: string
           p_cc?: string[]
@@ -4407,7 +4422,9 @@ export type Database = {
       reserver_envois: {
         Args: { p_limite?: number }
         Returns: {
+          attachments: Json
           attempts: number
+          bcc_addrs: string[]
           body_text: string
           card_id: string
           cc_addrs: string[]

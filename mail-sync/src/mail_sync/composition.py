@@ -2,6 +2,8 @@
 # @spec docs/SPEC-mail-subsystem.md §5 (envoi), §19.1 (ce que le serveur ne fait pas), §19.5 (ce
 #       que le worker compose)
 # @spec docs/JOURNAL.md décision 330
+# @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : les pièces jointes composées, la copie cachée dans l'enveloppe seule —
+#       docs/SPEC-mail-subsystem.md §19 bis.2 points 1 et 7, §19 bis.4 ; décisions 719 et 720
 #
 # CE MODULE NE PARLE À PERSONNE : ni SMTP, ni HTTP, ni SQL. Il compose un message et rend ses
 # en-têtes, ce qui rend la règle du fil éprouvable **sans serveur** — comme l'analyse MIME de
@@ -23,6 +25,15 @@ from email.message import EmailMessage
 
 
 @dataclass(frozen=True)
+class PieceEnvoi:
+    """Une pièce à joindre : son nom, son type relu en base à la mise en file, son contenu lu dans le stockage."""
+
+    filename: str
+    mime_type: str
+    contenu: bytes
+
+
+@dataclass(frozen=True)
 class Envoi:
     """Ce que la base rend pour composer un message — `public.reserver_envois`."""
 
@@ -35,6 +46,9 @@ class Envoi:
     body_text: str = ""
     in_reply_to: str | None = None
     references_ids: tuple[str, ...] = field(default_factory=tuple)
+    #: La copie cachée — dans l'ENVELOPPE seulement (§19 bis.2 point 1).
+    bcc_addrs: tuple[str, ...] = ()
+    pieces: tuple[PieceEnvoi, ...] = ()
 
 
 #: Objet de repli. Un message sans objet arrive chez le destinataire sous une ligne vide, que la
@@ -97,14 +111,30 @@ def composer(envoi: Envoi, identifiant: str) -> EmailMessage:
         message["References"] = " ".join(references)
 
     message.set_content(envoi.body_text)
+    # LES PIÈCES APRÈS LE CORPS : `add_attachment` fait du message un `multipart/mixed` dont le texte reste la première
+    # partie, celle que tout client affiche. AUCUN EN-TÊTE `Bcc` n'est écrit, nulle part : c'est la définition même
+    # d'une copie cachée, et un en-tête la révélerait à chaque destinataire.
+    for piece in envoi.pieces:
+        principal, _, secondaire = (piece.mime_type or "application/octet-stream").partition("/")
+        message.add_attachment(
+            piece.contenu,
+            maintype=principal or "application",
+            subtype=secondaire or "octet-stream",
+            filename=piece.filename,
+        )
     return message
 
 
 def destinataires(envoi: Envoi) -> tuple[str, ...]:
-    """Les adresses de l'enveloppe : `To` et `Cc`.
+    """Les adresses de l'enveloppe : `To`, `Cc` et la copie cachée.
 
-    LE `Bcc` N'EST PAS LIVRÉ, et son absence est nommée plutôt que silencieuse : la file ne porte
-    pas de colonne pour lui, et un champ d'interface sans destination serait un mensonge.
+    LA COPIE CACHÉE N'EXISTE QU'ICI (§19 bis.2 point 1) : `composer` n'en écrit aucun en-tête, et c'est l'enveloppe qui
+    la fait remettre. Une adresse répétée n'est donnée qu'une fois — un serveur qui la recevrait deux fois livrerait deux
+    copies.
     """
 
-    return (*envoi.to_addrs, *envoi.cc_addrs)
+    vues: list[str] = []
+    for adresse in (*envoi.to_addrs, *envoi.cc_addrs, *envoi.bcc_addrs):
+        if adresse and adresse not in vues:
+            vues.append(adresse)
+    return tuple(vues)

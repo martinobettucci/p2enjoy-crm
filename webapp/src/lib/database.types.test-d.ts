@@ -1051,6 +1051,10 @@ type _vueDerivationColonnes = Expect<
 // dans la ligne (`is_read: boolean | null`), ce qui type la liste sans conversion, et lui prête une signature RPC
 // d'erreur que personne n'appelle. Le type ne dit ni `too_many_messages` (`22023`) ni que les messages invisibles sont
 // ignorés sans erreur. Quatre-vingt-douze devient QUATRE-VINGT-QUINZE.
+// `0106` de `CRM-058` TRANCHE 2 ajoute `depots_envoi_abandonnes` — les pièces à envoyer jamais mises en file, que la
+// veille de `mail-sync` efface par l'API de stockage (docs/SPEC-mail-subsystem.md §19 bis.2 point 8). Exécutable par
+// `service_role` SEUL : le type la montre à la webapp, qui ne peut pas l'appeler. `queue_outbound_email` gagne `p_bcc` et
+// `p_attachments` ; le type ne dit pas ses trois refus nouveaux. Quatre-vingt-quinze devient QUATRE-VINGT-SEIZE.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1120,6 +1124,7 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'mail_inbound_account_record_check'
     | 'marquer_message_range'
     | 'mark_messages_read'
+    | 'depots_envoi_abandonnes'
     | 'mark_message_unread'
     | 'is_read'
     | 'messages_a_ranger'

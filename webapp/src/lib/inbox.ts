@@ -63,7 +63,8 @@ export const COLONNES_LISTE =
  * `suggested_at` N'EST PAS DEMANDÉE, et c'est une règle, pas un oubli : l'écran ne l'affiche nulle
  * part (§8.8.5), et demander une colonne qu'aucune surface ne rend laisserait croire qu'elle sert.
  */
-export const COLONNES_MESSAGE = `${COLONNES_LISTE}, to_addresses, cc_addresses, body_text, body_html, sent_at, suggested_card_id`
+// `bcc_addresses` — `CRM-058` tranche 2 §19 bis.2 point 2 : la copie cachée d'un message ENVOYÉ, lisible dans l'affaire.
+export const COLONNES_MESSAGE = `${COLONNES_LISTE}, to_addresses, cc_addresses, bcc_addresses, body_text, body_html, sent_at, suggested_card_id`
 
 type LigneMessage = Database['public']['Tables']['mail_messages']['Row']
 
@@ -96,6 +97,8 @@ export type PieceJointe = {
 export type MessageComplet = MessageListe & {
 	readonly destinataires: readonly string[]
 	readonly copies: readonly string[]
+	/** La copie cachée d'un message envoyé — toujours vide pour un message reçu (§19 bis.2 point 2). */
+	readonly copiesCachees: readonly string[]
 	readonly corps: string
 	/** Vrai lorsque le corps affiché a été RÉDUIT depuis du HTML (§18.4) : l'écran le dit. */
 	readonly corpsReduitDepuisHtml: boolean
@@ -431,6 +434,7 @@ export async function lireMessage(client: ClientCrm | null, id: string): Promise
 			...projeterMessage(ligne),
 			destinataires: ligne.to_addresses,
 			copies: ligne.cc_addresses,
+			copiesCachees: ligne.bcc_addresses ?? [],
 			corps,
 			corpsReduitDepuisHtml: reduitDepuisHtml,
 			suggestionCardId: ligne.suggested_card_id,

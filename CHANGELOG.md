@@ -13,6 +13,20 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-058` tranche 2 — copie cachée et pièces jointes à l'envoi
+
+- **« Ajouter Cci »** dans le formulaire d'envoi, depuis l'affaire comme depuis l'inbox : la copie cachée est remise par
+  l'enveloppe, aucun en-tête ne la révèle aux destinataires ; elle reste lisible dans l'affaire (« Cci : … »).
+- **« Joindre des fichiers »** : chaque fichier est déposé aussitôt dans un espace privé, avec sa taille et un bouton pour
+  le retirer ; **10 fichiers et 10 Mo** au plus, le bouton d'envoi s'éteint avec son motif au-delà ; un nom accentué est
+  simplifié. Les fichiers envoyés restent dans l'affaire comme ceux d'un message reçu ; quand l'antivirus est en place,
+  un fichier infecté empêche le message de partir.
+- **Le connecteur MCP** gagne `bcc` dans `crm_mail_send` ; aucune pièce jointe par le connecteur (décision 708).
+- **Migrations `0106` et `0107`** : la copie cachée en file et en archive, le bucket privé `mail-outbound-attachments` et ses
+  trois politiques, `queue_outbound_email` avec `p_bcc` et `p_attachments` (taille et type relus dans le stockage, trois
+  refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
+- **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
+
 - **`CRM-111` T2.1 — la table des rattachements** (migration `0108`, décision 705). Chaque affaire reçoit un rattachement, `card_placements`, qui reprend son channel, son étape, son responsable, son montant, sa prochaine action, son sommeil et son archivage ; un déclencheur le tient égal à l'affaire à chaque écriture. Rien de visible ne change : c'est la première des quatre étapes de la bascule vers plusieurs rattachements par affaire. La table se lit selon les droits du channel, et personne ne l'écrit directement.
 
 ## [Publié]

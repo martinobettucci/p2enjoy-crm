@@ -3,6 +3,8 @@
 # @spec docs/SPEC-mail-subsystem.md §13.5 et §14.4 (la seule voie de sortie d'un secret)
 # @spec docs/DAT.md §3.3 (le chemin d'accès aux secrets, en toutes lettres)
 # @spec docs/JOURNAL.md décision 316
+# @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : la lecture et l'effacement des pièces à envoyer, l'archive des pièces
+#       envoyées — docs/SPEC-mail-subsystem.md §19 bis.2 points 7 et 8, §19 bis.4
 #
 # POURQUOI `urllib` ET NON UN CLIENT HTTP DE PLUS.
 #
@@ -548,9 +550,13 @@ class PostgrestClient:
         return list(self._rpc("reserver_envois", {"p_limite": limite}) or [])
 
     def marquer_envoi_reussi(
-        self, outbox_id: str, rfc822_message_id: str, references: list[str]
+        self,
+        outbox_id: str,
+        rfc822_message_id: str,
+        references: list[str],
+        pieces: list[dict[str, Any]] | None = None,
     ) -> str:
-        """Marque l'envoi, archive le message et écrit la timeline — en une seule transaction."""
+        """Marque l'envoi, archive le message et ses pièces, écrit la timeline — en une seule transaction."""
 
         return self._rpc(
             "marquer_envoi_reussi",
@@ -558,8 +564,60 @@ class PostgrestClient:
                 "p_outbox_id": outbox_id,
                 "p_rfc822_message_id": rfc822_message_id,
                 "p_references": references,
+                "p_pieces": pieces or [],
             },
         )
+
+    def lire_objet_envoi(self, chemin: str) -> bytes | None:
+        """Lit une pièce à envoyer dans `mail-outbound-attachments` (`CRM-058` tranche 2 §19 bis.4).
+
+        `None` pour un objet absent — `400` ou `404` selon la version de l'API de stockage —, que l'envoi refuse en
+        `attachment_missing`. Toute autre erreur est une panne (`PostgrestError`), qui se rejoue.
+        """
+
+        requete = urllib.request.Request(
+            f"{self._base_url}/storage/v1/object/mail-outbound-attachments/{urllib.parse.quote(chemin)}",
+            method="GET",
+            headers={"apikey": self._key, "Authorization": f"Bearer {self._key}"},
+        )
+        try:
+            with urllib.request.urlopen(requete, timeout=self._timeout) as reponse:
+                return reponse.read()
+        except urllib.error.HTTPError as erreur:
+            if erreur.code in (400, 404):
+                return None
+            raise PostgrestError(erreur.code) from None
+        except urllib.error.URLError:
+            raise PostgrestError(0) from None
+
+    def depots_envoi_abandonnes(self) -> list[str]:
+        """Les dépôts à effacer (§19 bis.2 point 8) — la base dit lesquels, l'API de stockage les efface."""
+
+        return [ligne["name"] for ligne in (self._rpc("depots_envoi_abandonnes", {}) or [])]
+
+    def effacer_objets_envoi(self, chemins: list[str]) -> None:
+        """Efface des dépôts de `mail-outbound-attachments` par l'API de stockage, jamais par un `delete` SQL — qui
+        laisserait le fichier dans MinIO ou S3."""
+
+        if not chemins:
+            return
+        requete = urllib.request.Request(
+            f"{self._base_url}/storage/v1/object/mail-outbound-attachments",
+            data=json.dumps({"prefixes": chemins}).encode("utf-8"),
+            method="DELETE",
+            headers={
+                "apikey": self._key,
+                "Authorization": f"Bearer {self._key}",
+                "Content-Type": "application/json",
+            },
+        )
+        try:
+            with urllib.request.urlopen(requete, timeout=self._timeout):
+                return
+        except urllib.error.HTTPError as erreur:
+            raise PostgrestError(erreur.code) from None
+        except urllib.error.URLError:
+            raise PostgrestError(0) from None
 
     def reprogrammer_envoi(self, outbox_id: str, code: str, delai_secondes: int) -> int:
         """Remet un envoi en file après une PANNE, avec son délai (`CRM-059` §20.3)."""

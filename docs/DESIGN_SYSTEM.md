@@ -734,7 +734,7 @@ ligne non lue des notifications (§5.43).*
 *Proposé le 2026-10-26 avec `docs/SPEC-mail-subsystem.md` §19 bis, validé le même jour (décision 720). Aucun jeton
 n'est ajouté.*
 
-- **« Ajouter Cci » est un lien discret sous le champ « Copie »**, qui révèle le champ « Cci » et prend le focus ; le
+- **« Ajouter Cci » est un lien discret sous le champ « Destinataires »** — le formulaire n'a pas de champ « Copie » —, qui révèle le champ « Cci » et prend le focus ; le
   champ ne se replie pas une fois rempli. Une copie cachée est un geste rare : l'afficher d'office alourdirait chaque
   envoi.
 - **« Joindre des fichiers » est un bouton secondaire compact, icône `Paperclip`** — celle des pièces jointes à la

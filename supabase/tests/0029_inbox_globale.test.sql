@@ -1,4 +1,5 @@
 -- @verifies CRM-057 (docs/BACKLOG.md) — inbox globale : qui voit un message non classé
+-- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : assertion révisée par les migrations 106 et 107 (docs/SPEC-mail-subsystem.md §19 bis.3)
 -- @verifies docs/SPEC-mail-subsystem.md §18.1 (la visibilité suit la boîte), §18.2 (classer exige
 --           les deux droits), §18.3 (l'arborescence), §18.5 (la pièce saine, et elle seule)
 -- @verifies docs/SPEC-permissions-rls.md §5 (Storage), §7.2 preuve de refus n° 9
@@ -202,9 +203,12 @@ select pg_temp.redevenir_proprietaire();
 -- =============================================================================================
 
 select is(
-	(select count(*) from pg_policies where schemaname = 'storage' and tablename = 'objects'),
-	1::bigint,
-	'20 — `storage.objects` porte EXACTEMENT une politique : ouvrir large ouvrirait tout le stockage');
+	(select count(*) from pg_policies
+	  where schemaname = 'storage' and tablename = 'objects'
+	    and (coalesce(qual, '') || coalesce(with_check, '')) not like '%bucket_id = ''mail-%'),
+	0::bigint,
+	'20 — AUCUNE politique de `storage.objects` qui ne soit bornée à un bucket de courrier nommé : ouvrir large ouvrirait '
+	'tout le stockage (révisée par `CRM-058` tranche 2, qui en ajoute trois sur `mail-outbound-attachments`)');
 
 select ok(
 	(select qual from pg_policies

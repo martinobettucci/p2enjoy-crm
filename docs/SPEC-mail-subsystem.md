@@ -1884,15 +1884,22 @@ aucune case nouvelle dans la matrice. Les points marqués **[proposition]** sont
    dans `mail-attachments` ; son statut est celui de l'analyse — `clean` après ClamAV, `skipped` sans antivirus, la règle
    de la réception (§4.3). Elle se télécharge donc depuis l'affaire **dans les mêmes conditions qu'une pièce reçue**.
 8. **[proposition] Les dépôts abandonnés** : le formulaire retire ses objets quand on l'annule ou qu'on retire un fichier ;
-   un objet jamais mis en file est effacé par un job quotidien après **24 heures**.
+   un objet jamais mis en file est effacé après **24 heures**. *Précisé en codant (mesure)* : un `delete` SQL sur
+   `storage.objects` laisserait le fichier dans MinIO ou S3 ; la base **liste** donc les dépôts à effacer
+   (`depots_envoi_abandonnes`) et `mail-sync` les efface **par l'API de stockage**, à la fin de chaque vidage de la file —
+   la veille de `mail-sync` ne s'occupe que du courrier entrant, et aucun `pg_cron` n'atteint l'API de stockage.
 9. **Le connecteur** : `crm_mail_send` gagne `bcc` (cinquante adresses au plus) ; aucune pièce jointe (décision 708).
 
 ### 19 bis.3 Le modèle — migration `0106_envoi_cci_pieces_jointes.sql`
 
 - `mail_outbox.bcc_addrs text[] not null default '{}'` ; `mail_messages.bcc_addresses text[] not null default '{}'`.
-- Bucket **`mail-outbound-attachments`**, privé, plafond **10 Mo** par objet ; politiques d'insertion et de suppression
-  bornées au dossier `<espace dont l'appelant est membre>/<auth.uid()>/` ; la suppression refusée si l'objet est cité par
-  une ligne de `mail_outbox`.
+- Bucket **`mail-outbound-attachments`**, privé, plafond **10 Mo** par objet ; politiques d'insertion, de **lecture de ses
+  propres dépôts** et de suppression bornées au dossier `<espace dont l'appelant est membre>/<auth.uid()>/` ; la
+  suppression refusée si l'objet est cité par une ligne de `mail_outbox`. *Mesuré en codant* : les politiques de
+  `storage.objects` ne se créent que sous `supabase_admin` (patron de la migration 29) — elles vivent dans une seconde
+  migration, **`0107`**, qui n'appelle que les prédicats `app.piece_envoi_deposable` et `app.piece_envoi_retirable` créés
+  sous `postgres` par la `0106` ; la lecture de ses propres dépôts est nécessaire, l'API de stockage relisant l'objet
+  avant de le retirer.
 - `queue_outbound_email(… , p_bcc text[] default '{}', p_attachments jsonb default '[]')` — **retirée puis recréée** (sa
   signature change) avec ses sept refus intacts, plus trois : `attachment_not_available` (`23514` : objet absent, d'un
   autre bucket, d'un autre propriétaire ou d'un autre espace), `too_many_attachments` et `attachments_too_large`
@@ -1900,20 +1907,29 @@ aucune case nouvelle dans la matrice. Les points marqués **[proposition]** sont
   `storage.objects`**, jamais crus du client.
 - `reserver_envois` rend `bcc_addrs` et `attachments` ; `marquer_envoi_reussi` archive `bcc_addresses` et écrit les lignes
   de `mail_attachments` avec le statut que le worker lui passe.
-- Job `pg_cron` quotidien : effacer les objets de `mail-outbound-attachments` de plus de 24 heures qu'aucune ligne de
-  `mail_outbox` ne cite.
+- `public.depots_envoi_abandonnes(p_age interval default '24 hours')`, réservée à `service_role` : les objets de
+  `mail-outbound-attachments` plus vieux que `p_age` qu'aucun envoi **en cours** ne cite ; `mail-sync` les efface par
+  l'API de stockage (point 8).
+- **L'archive d'une pièce envoyée** se dépose dans `mail-attachments` sous **`<affaire>/<envoi>/<empreinte>`** : la
+  contrainte `mail_attachments_chemin_sans_nom` exige deux UUID puis une empreinte (mesuré : un premier chemin
+  `outbound/…` a été refusé à l'archive).
 
 ### 19 bis.4 Le worker
 
-`composer` ajoute chaque pièce (`add_attachment`, type MIME lu en base) ; `destinataires` rend `To`, `Cc` **et** `Bcc` ; aucun
-en-tête `Bcc` n'est écrit. Les fichiers sont lus par la clé de service. ClamAV, s'il est configuré, juge chaque pièce
-avant l'ouverture SMTP (§19 bis.2 point 6). Une pièce introuvable au moment de l'envoi fait échouer l'envoi
-(`attachment_missing`), sans reprise.
+`composer` ajoute chaque pièce (`add_attachment`, type MIME lu en base) ; `destinataires` rend `To`, `Cc` **et** `Bcc`,
+dédoublonnés ; aucun en-tête `Bcc` n'est écrit. Les fichiers sont lus par la clé de service. ClamAV, s'il est configuré,
+juge chaque pièce avant l'ouverture SMTP (§19 bis.2 point 6). **L'archive est déposée AVANT l'envoi** : un dépôt qui
+échouerait après la remise laisserait un message parti que la file ne pourrait pas marquer, et que la reprise
+renverrait. Une pièce introuvable fait échouer l'envoi (`attachment_missing`), une pièce infectée aussi
+(`attachment_infected`), sans reprise ; un stockage injoignable est une panne (`storage_unavailable`) qui se rejoue avec le
+délai d'un serveur injoignable.
 
 ### 19 bis.5 L'écran
 
 `docs/DESIGN_SYSTEM.md` §5.4 sexies. Dans `FormulaireEnvoi`, depuis l'affaire comme depuis l'inbox (§19.6) : un lien
-« Ajouter Cci » qui révèle le champ, et « Joindre des fichiers » (`Paperclip`) qui ouvre le sélecteur ; la liste des
+« Ajouter Cci », sous le champ « Destinataires » — le formulaire n'a pas de champ « Copie » —, qui révèle le champ ;
+**le nom du fichier est translittéré** dans le chemin de dépôt, l'API de stockage refusant une clé accentuée
+(« Proposition révisée.pdf » part sous « Proposition revisee.pdf »), et « Joindre des fichiers » (`Paperclip`) qui ouvre le sélecteur ; la liste des
 fichiers avec nom, taille et un bouton de retrait ; le total et le plafond écrits ; chaque refus nommé. Le message
 archivé affiche « Cci » et ses pièces comme un message reçu.
 

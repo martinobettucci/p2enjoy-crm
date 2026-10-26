@@ -4,6 +4,8 @@
 #           `destructiveHint` et case `aussi` de l'envoi), §9.3 ; webapp/src/lib/inbox.ts (`reduireHtmlEnTexte`)
 # @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : `read` dans les deux lectures, demandé avec la ligne, sans marquer ;
 #           docs/SPEC-mail-subsystem.md §18 bis.5 ; décision 708 (M1 B)
+# @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : `bcc` transmis à la file, rendu, jamais une pièce jointe ;
+#           docs/SPEC-mail-subsystem.md §19 bis.2 point 9 ; décision 708 (M2 B)
 """Le CRM simulé rend le fil d'une affaire (un message texte, un message HTML seul, une pièce jointe), un message d'une
 autre affaire, et trois identités dont celle d'une collègue ; la vraie base est éprouvée par
 `tests/test_integration_messagerie.py`."""
@@ -195,7 +197,8 @@ async def test_l_envoi_passe_par_la_file_avec_l_identite_designee(monde: Monde) 
                                                "body": "Bonjour", "cc": ["chef@exemple.test"]})
     # L'identité de Sabine, lisible par la RLS (supervision), n'est pas empruntable : l'unique possible est prise.
     assert monde.simule.envois[-1] == {"p_card_id": CARD, "p_identity_id": "id-thomas", "p_to": ["client@exemple.test"],
-                                       "p_subject": "Suite", "p_body_text": "Bonjour", "p_cc": ["chef@exemple.test"]}
+                                       "p_subject": "Suite", "p_body_text": "Bonjour", "p_cc": ["chef@exemple.test"],
+                                       "p_bcc": []}
     assert (rendu["outbox_id"], rendu["status"], rendu["from_address"]) == ("outbox-1", "queued", "Thomas@Atelier.test")
     lecture = next(p for n, p in monde.simule.lectures if n == "mail_outbound_identities")
     assert lecture["workspace_id"] == f"eq.{ESPACE_A}"
@@ -262,3 +265,16 @@ async def test_l_etat_lu_est_rendu_par_les_deux_lectures_sans_marquer(monde: Mon
     assert (await monde.appel("crm_mail_get", {"message_id": MESSAGE_AILLEURS}))["read"] is False
     # LIRE NE MARQUE PAS : aucune des deux fonctions de marquage n'est appelée (§18 bis.5).
     assert not any("mark_message" in str(n) or "mark_message" in str(p) for n, p in monde.simule.lectures)
+
+
+async def test_la_copie_cachee_est_transmise_a_la_file_et_rendue(monde: Monde) -> None:
+    rendu = await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["client@exemple.test"], "subject": "s",
+                                               "body": "b", "bcc": [" direction@exemple.test ", ""]})
+    assert monde.simule.envois[-1]["p_bcc"] == ["direction@exemple.test"]
+    assert rendu["bcc"] == ["direction@exemple.test"]
+    # AUCUNE PIÈCE JOINTE PAR LE CONNECTEUR (décision 708) : l'outil n'a pas de paramètre pour elles, et la file n'en reçoit
+    # aucune.
+    assert "p_attachments" not in monde.simule.envois[-1]
+    with pytest.raises(ToolError):
+        await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
+                                            "attachments": ["x"]})

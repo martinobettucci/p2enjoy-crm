@@ -127,7 +127,8 @@ done
 
 # LES TROIS FONCTIONS DU WORKER SONT LE FAIT DU SERVICE : les offrir au client laisserait déclarer
 # qu'un message est parti alors qu'il ne l'est pas.
-for signature in "reserver_envois(integer)" "marquer_envoi_reussi(uuid, text, text[])" \
+# Signatures de `CRM-058` tranche 2 (migration 106) : `marquer_envoi_reussi` prend les pièces archivées.
+for signature in "reserver_envois(integer)" "marquer_envoi_reussi(uuid, text, text[], jsonb)" \
 	"marquer_envoi_echoue(uuid, text)"; do
 	if [ "$(psql_db -c "select has_function_privilege('authenticated','public.$signature','execute')")" = f ]; then
 		ok "${signature%%(*} : refusée au client"
@@ -137,7 +138,7 @@ for signature in "reserver_envois(integer)" "marquer_envoi_reussi(uuid, text, te
 done
 
 if [ "$(psql_db -c "select has_function_privilege('authenticated',
-	'public.queue_outbound_email(uuid, uuid, text[], text, text, text[], uuid)','execute')")" = t ]; then
+	'public.queue_outbound_email(uuid, uuid, text[], text, text, text[], uuid, text[], jsonb)','execute')")" = t ]; then
 	ok "la garde, elle, est ouverte au client : c'est la seule porte"
 else
 	fail "la garde est fermée au client : personne ne pourrait plus écrire"

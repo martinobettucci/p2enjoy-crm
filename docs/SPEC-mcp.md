@@ -865,8 +865,12 @@ adresses possibles.
 `crm_card_mail_list` et `crm_mail_get` rendent `read`, l'état de la personne que le connecteur représente. Aucun outil ne
 marque, et lire par le connecteur ne marque pas. Même action `consulter`, aucune case nouvelle.
 
+**La copie cachée, ajoutée par `CRM-058` tranche 2** (décision 708, M2 B ; `docs/SPEC-mail-subsystem.md` §19 bis.2
+point 9) : `crm_mail_send` prend `bcc` (cinquante adresses au plus), transmis en `p_bcc` ; remise par l'enveloppe, jamais
+montrée aux destinataires. Même action `ajouter`, aucune case nouvelle.
+
 **Ce que la tranche ne fait pas, et pourquoi.**
-- **Les pièces jointes** : ni lues ni envoyées.
+- **Les pièces jointes** : ni lues ni envoyées — y compris depuis `CRM-058` tranche 2 (décision 708).
 - **Classer, déclasser ou mettre en sommeil un fil** de la boîte de réception : gestes de l'écran.
 - **Les modèles et les séquences** : gestes de l'écran.
 

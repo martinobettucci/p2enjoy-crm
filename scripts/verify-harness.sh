@@ -602,7 +602,10 @@ PORT_RAPPORT=9323
 # fichier ajouté. 93 + 1 = 94, MESURÉ par `npm run test:sql` — « 94 fichiers ».
 # **95 depuis `CRM-057` tranche 2, 2026-10-26** (décisions 715 et 716) : `0095_mail_message_reads.test.sql`, seul fichier
 # ajouté. 94 + 1 = 95, MESURÉ par `npm run test:sql` — « 95 fichiers ».
-FICHIERS_SQL_ATTENDUS=95
+# **97 depuis `CRM-058` tranche 2 et `CRM-111` T2.1, 2026-10-26** : `0096_envoi_cci_pieces_jointes.test.sql` (CRM-058,
+# décisions 719 et 720) et `0097_card_placements.test.sql` (CRM-111 T2.1, sans report de ce compteur à son commit).
+# 95 + 2 = 97, MESURÉ par `npm run test:sql` — « 97 fichiers ».
+FICHIERS_SQL_ATTENDUS=97
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -709,7 +712,11 @@ FICHIERS_SQL_ATTENDUS=95
 # **4007 depuis `CRM-057` tranche 2, 2026-10-26** : la suite neuve `0095_mail_message_reads`, **32** assertions, et
 # `0016_preuves_refus` révisée d'**une** — la politique de lecture de `mail_message_reads` nommée, le compte porté de 157 à
 # 158. 3974 + 32 + 1 = 4007, MESURÉ — « 95 fichiers, 4007 assertions, aucune anomalie ».
-ASSERTIONS_ATTENDUES=4007
+# **4076 depuis `CRM-058` tranche 2 et `CRM-111` T2.1, 2026-10-26** : `0096_envoi_cci_pieces_jointes` **26** assertions,
+# `0097_card_placements` **43** ; `0016`, `0026`, `0029`, `0030`, `0058` et `0095` RÉVISÉES sans changer de plan (les
+# politiques de stockage bornées au bucket, les signatures nouvelles, l'envoi de démonstration du seed). 4007 + 26 + 43 =
+# 4076, MESURÉ — « 97 fichiers, 4076 assertions, aucune anomalie ».
+ASSERTIONS_ATTENDUES=4076
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1092,7 +1099,11 @@ ASSERTIONS_ATTENDUES=4007
 # témoin, l'état personnel, le compte des non lus à côté du total, la discrétion envers un message invisible, l'insertion
 # directe refusée, la remise à non lu, le plafond de 200 et l'anonyme. 1182 + 9 = 1191, valeur COMPTÉE — « Total: 1191
 # tests in 87 files ».
-SCENARIOS_API=1191
+# **1202 depuis `CRM-058` tranche 2 et `CRM-111` T2.1, 2026-10-26** : `e2e/api/envoi-pieces-jointes.spec.ts`, fichier
+# NEUF, **5** scénarios (dépôt borné à son dossier et clé accentuée refusée, Cci et pièce relue dans le stockage, retrait
+# avant la file, pièce d'autrui, plafonds) ; `e2e/api/rattachements-miroir.spec.ts` de CRM-111 T2.1, **6**.
+# 1191 + 5 + 6 = 1202, valeur COMPTÉE — « Total: 1202 tests in 89 files ».
+SCENARIOS_API=1202
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1587,7 +1598,10 @@ SCENARIOS_API=1191
 # **937 depuis `CRM-057` tranche 2, 2026-10-26** : `inbox-lecture.spec.ts`, fichier NEUF, **4** scénarios — ouvrir un fil
 # le marque lu et « Marquer comme non lu » le rétablit, « Tout marquer comme lu » au clavier, l'échec dit sans rien
 # changer, les quatre paliers. 933 + 4 = 937, valeur COMPTÉE — « Total: 937 tests in 92 files ».
-SCENARIOS_UI=937
+# **940 depuis `CRM-058` tranche 2, 2026-10-26** : `envoi-pieces-jointes.spec.ts`, fichier NEUF, **3** scénarios —
+# joindre, retirer, Cci et mise en file ; le plafond au clavier et l'annulation ; les quatre paliers. 937 + 3 = 940,
+# valeur COMPTÉE — « Total: 940 tests in 93 files ».
+SCENARIOS_UI=940
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
@@ -1625,7 +1639,10 @@ SCENARIOS_UI=937
 # COMPTÉ par `--list` (43 tests dans 11 fichiers), puis confronté au nombre de verts.
 # **44 depuis INC-273, 2026-10-12** (décision 626) : `e2e/mail/infrastructure.spec.ts` gagne **1** scénario — M1 bis, le
 # réseau de la pile reste joignable au-delà du seuil de bannissement. 43 + 1 = **44**, vert sur deux campagnes consécutives.
-SCENARIOS_MAIL=44
+# **45 depuis `CRM-058` tranche 2, 2026-10-26** : `e2e/mail/envoi-pieces-jointes.spec.ts`, fichier NEUF, **1** scénario —
+# la copie cachée remise sans en-tête qui la révèle, les pièces intactes, l'archive `clean`. 44 + 1 = 45, valeur COMPTÉE
+# — « Total: 45 tests in 12 files ».
+SCENARIOS_MAIL=45
 
 failures=0
 checks=0

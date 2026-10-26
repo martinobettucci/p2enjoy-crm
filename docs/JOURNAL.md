@@ -34831,3 +34831,21 @@ encore committées), API 1202/1202, interface 189/189 sur les specs des affaires
 cours. Le commit de cette tranche y inscrit la version de `HEAD` augmentée de ses seuls ajouts, et l'arbre garde les deux.
 Une copie de `0016` antérieure à sa révision du n° 63 a écrasé cette révision ; elle l'a constaté et la refera après le
 push.
+
+### décision 721 — `CRM-058` tranche 2 : ce que le code a mesuré, et la spécification ajustée en conséquence
+
+*2026-10-26, en codant la tranche validée par la décision 720.* Quatre mesures ont précisé la spécification, sans en
+changer le contrat ; elles sont écrites dans `docs/SPEC-mail-subsystem.md` §19 bis.2 à §19 bis.5 dans le même changement.
+1. **Deux migrations, pas une** : les politiques de `storage.objects` ne se créent que sous `supabase_admin` (patron de la
+   migration 29) ; la `0107` porte les trois politiques et n'appelle que les prédicats créés sous `postgres` par la `0106`.
+   La lecture de ses propres dépôts est nécessaire : l'API de stockage relit l'objet avant de le retirer. Numéros
+   coordonnés avec la session de `CRM-111` T2.1, qui a pris la 108 (elle ne part jamais avant la 106 et la 107).
+2. **La purge passe par l'API de stockage**, pas par `pg_cron` : un `delete` SQL laisserait le fichier dans MinIO ou S3. La
+   base liste (`depots_envoi_abandonnes`), `mail-sync` efface à la fin de chaque vidage de la file.
+3. **Le chemin d'archive est `<affaire>/<envoi>/<empreinte>`** : la contrainte `mail_attachments_chemin_sans_nom` a refusé
+   `outbound/…` à l'archive, après la remise — l'E2E `mail` l'a montré. L'archive est déposée AVANT l'envoi.
+4. **Un nom accentué est translittéré** dans le chemin de dépôt : l'API de stockage refuse une clé accentuée (`400`,
+   « Invalid key », mesuré par `e2e/api/envoi-pieces-jointes.spec.ts`).
+**Écarts de forme** : le formulaire n'a pas de champ « Copie », « Ajouter Cci » vit sous « Destinataires »
+(`docs/DESIGN_SYSTEM.md` §5.4 sexies) ; le stockage injoignable avant l'envoi est rejoué sous le code `storage_unavailable`
+avec le délai d'un serveur injoignable, sans entrer dans le vocabulaire de `backoff`, qui est celui de la sonde SMTP.

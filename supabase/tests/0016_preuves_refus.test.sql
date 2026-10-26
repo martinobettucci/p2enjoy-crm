@@ -1,4 +1,5 @@
 -- @verifies CRM-014 (docs/BACKLOG.md) — harnais des douze preuves de refus d'autorisation
+-- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : assertion révisée par les migrations 106 et 107 (docs/SPEC-mail-subsystem.md §19 bis.3)
 -- @verifies CRM-022 (docs/BACKLOG.md) — preuve n° 10 et sept politiques d'identité
 -- @verifies CRM-097 (docs/BACKLOG.md) — tranche T1 : les cinq politiques de l'assistant IA comptées (130)
 -- @verifies CRM-098 (docs/BACKLOG.md) — tranche T1 : les sept politiques de la saisie de temps comptées (137) ;
@@ -596,10 +597,13 @@ select is(
 -- du message porteur. Une seconde politique, si large soit-elle en apparence, ouvrirait le reste du
 -- stockage : c'est pourquoi l'assertion porte sur le NOMBRE autant que sur le contenu.
 select is(
-	(select count(*)::int from pg_policies where schemaname = 'storage' and tablename = 'objects'),
+	(select count(*)::int from pg_policies
+	  where schemaname = 'storage' and tablename = 'objects'
+	    and (coalesce(qual, '') || coalesce(with_check, '')) like '%''mail-attachments''%'),
 	1,
-	'PREUVE N° 9, 2/2 : EXACTEMENT une politique d''objet, celle des pièces jointes saines — le '
-	'reste du stockage reste refusé par l''absence de politique');
+	'PREUVE N° 9, 2/2 : EXACTEMENT une politique d''objet sur le bucket des pièces reçues, celle des pièces saines — '
+	'RÉVISÉE par `CRM-058` tranche 2, non retirée : le stockage porte désormais quatre politiques, les trois autres '
+	'bornées au bucket `mail-outbound-attachments` (0096), et le reste du stockage reste refusé par l''absence de politique');
 
 select ok(
 	(select qual from pg_policies

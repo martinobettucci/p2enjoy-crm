@@ -3,6 +3,8 @@
 # @spec docs/SPEC-mail-subsystem.md §5 (envoi), §19.5 (ce que le worker compose), §20.3 (le
 #       backoff et sa borne), §20.4 (l'envoi orphelin)
 # @spec docs/JOURNAL.md décisions 330 et 331
+# @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : les pièces lues dans le stockage, l'antivirus, la copie d'archive déposée
+#       AVANT l'envoi, la copie cachée — docs/SPEC-mail-subsystem.md §19 bis.2 points 6 et 7, §19 bis.4 ; décisions 719, 720
 #
 # CE MODULE ORCHESTRE, IL NE DÉCIDE PAS. La garde est en base (`queue_outbound_email`), la
 # composition est dans `composition.py`, la traduction des pannes est dans `smtp_probe.py` : ici,
@@ -15,12 +17,15 @@
 
 from __future__ import annotations
 
+import hashlib
 import smtplib
 from dataclasses import dataclass
 from typing import Any, Callable
 
+from . import antivirus
 from .backoff import decider
-from .composition import Envoi, chaine_references, composer, destinataires, identifiant_message
+from .composition import Envoi, PieceEnvoi, chaine_references, composer, destinataires, identifiant_message
+from .postgrest import PostgrestError
 from .smtp_probe import classer_panne_smtp
 
 Journal = Callable[[str, dict[str, Any]], None]
@@ -59,12 +64,79 @@ def _ouvrir(hote: str, port: int, securite: str, delai: float) -> smtplib.SMTP:
     return session
 
 
+def chemin_archive(card_id: str, outbox_id: str, sha256: str) -> str:
+    """Le chemin de la copie d'archive dans `mail-attachments` : `<affaire>/<envoi>/<empreinte>`, jamais le nom du fichier.
+
+    LA FORME EST IMPOSÉE PAR LA BASE : `mail_attachments_chemin_sans_nom` exige deux UUID puis une empreinte (§15.5).
+    MESURÉ : un premier chemin `outbound/<envoi>/…` a été refusé par cette contrainte à l'archive, après la remise — d'où
+    l'affaire et l'envoi, deux identifiants que `reserver_envois` rend déjà.
+    """
+
+    return f"{card_id}/{outbox_id}/{sha256}"
+
+
+class PieceRefusee(Exception):
+    """Une pièce qui empêche l'envoi : son code est celui que la file retiendra."""
+
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code
+
+
+def preparer_pieces(
+    client: Any,
+    ligne: dict[str, Any],
+    *,
+    clamav_hote: str | None,
+    clamav_port: int,
+    delai: float,
+) -> tuple[tuple[PieceEnvoi, ...], list[dict[str, Any]]]:
+    """Lit, analyse et archive les pièces d'un envoi, AVANT toute ouverture SMTP (§19 bis.4).
+
+    L'ARCHIVE EST DÉPOSÉE AVANT L'ENVOI, ET C'EST L'ORDRE QUI COMPTE : un dépôt qui échouerait après la remise laisserait un
+    message parti que la file ne pourrait pas marquer, et que la reprise renverrait. Une pièce introuvable lève
+    `attachment_missing`, une pièce infectée `attachment_infected` — deux refus, jamais rejoués. Sans antivirus, la pièce
+    part et son archive est `skipped`, la règle de la réception (§4.3).
+    """
+
+    pieces: list[PieceEnvoi] = []
+    archive: list[dict[str, Any]] = []
+    for declaree in ligne.get("attachments") or []:
+        contenu = client.lire_objet_envoi(declaree["path"])
+        if contenu is None:
+            raise PieceRefusee("attachment_missing")
+        statut = antivirus.SKIPPED
+        if clamav_hote:
+            verdict = antivirus.analyser_contenu(contenu, hote=clamav_hote, port=clamav_port, timeout=delai)
+            if verdict.statut == antivirus.INFECTED:
+                raise PieceRefusee("attachment_infected")
+            statut = verdict.statut
+        empreinte = hashlib.sha256(contenu).hexdigest()
+        mime = declaree.get("mime_type") or "application/octet-stream"
+        chemin = chemin_archive(ligne["card_id"], ligne["outbox_id"], empreinte)
+        client.deposer_objet(chemin, contenu, mime)
+        pieces.append(PieceEnvoi(filename=declaree["filename"], mime_type=mime, contenu=contenu))
+        archive.append(
+            {
+                "filename": declaree["filename"],
+                "mime_type": mime,
+                "size_bytes": len(contenu),
+                "storage_path": chemin,
+                "sha256": empreinte,
+                "av_status": statut,
+            }
+        )
+    return tuple(pieces), archive
+
+
 def vider_la_file(
     client: Any,
     *,
     limite: int = 10,
     delai: float = 30.0,
     journal: Journal | None = None,
+    clamav_hote: str | None = None,
+    clamav_port: int = 3310,
 ) -> ResultatEnvoi:
     """Réserve les envois dus, les soumet, et rapporte ce qui s'est passé.
 
@@ -96,6 +168,29 @@ def vider_la_file(
             dire("envoi_refuse", {"outbox_id": outbox_id, "code": "credentials_missing"})
             continue
 
+        try:
+            pieces, archive = preparer_pieces(
+                client, ligne, clamav_hote=clamav_hote, clamav_port=clamav_port, delai=delai
+            )
+        except PieceRefusee as refus:
+            client.marquer_envoi_echoue(outbox_id, refus.code)
+            echoues += 1
+            dire("envoi_refuse", {"outbox_id": outbox_id, "code": refus.code})
+            continue
+        except PostgrestError:
+            # LE STOCKAGE INJOIGNABLE EST UNE PANNE, PAS UN REFUS : rien n'est parti, l'envoi se rejoue. Il emprunte le
+            # délai et la borne d'un serveur injoignable (`timeout`), sous son propre code : le vocabulaire de `backoff`
+            # reste celui de la sonde SMTP (§13.7), et l'exploitant lit pourtant la vraie cause.
+            decision = decider("timeout", int(ligne.get("attempts") or 0) + 1)
+            if decision.rejouer:
+                client.reprogrammer_envoi(outbox_id, "storage_unavailable", decision.delai_secondes)
+                reprogrammes += 1
+            else:
+                client.marquer_envoi_echoue(outbox_id, "storage_unavailable")
+                echoues += 1
+            dire("envoi_stockage_injoignable", {"outbox_id": outbox_id})
+            continue
+
         envoi = Envoi(
             outbox_id=outbox_id,
             from_address=ligne["from_address"],
@@ -106,6 +201,8 @@ def vider_la_file(
             body_text=ligne.get("body_text") or "",
             in_reply_to=ligne.get("in_reply_to"),
             references_ids=tuple(ligne.get("references_ids") or ()),
+            bcc_addrs=tuple(ligne.get("bcc_addrs") or ()),
+            pieces=pieces,
         )
         identifiant = identifiant_message(_domaine(envoi.from_address))
         message = composer(envoi, identifiant)
@@ -146,7 +243,7 @@ def vider_la_file(
             dire("envoi_echoue", {"outbox_id": outbox_id, "code": code})
             continue
 
-        client.marquer_envoi_reussi(outbox_id, identifiant, list(chaine_references(envoi)))
+        client.marquer_envoi_reussi(outbox_id, identifiant, list(chaine_references(envoi)), archive)
         envoyes += 1
         # NI CORPS, NI DESTINATAIRE DANS LE JOURNAL (§8) : l'identifiant interne et le
         # `Message-ID` suffisent à retrouver un envoi.

@@ -1,4 +1,5 @@
 -- @verifies CRM-058 (docs/BACKLOG.md) — la garde de la file d'envoi et son quota
+-- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : assertion révisée par les migrations 106 et 107 (docs/SPEC-mail-subsystem.md §19 bis.3)
 -- @verifies docs/SPEC-mail-subsystem.md §19.4 (les six refus, le quota), §19.5 (les trois effets),
 --           §19.8 (limites figées)
 -- @verifies docs/SPEC-permissions-rls.md §4 ; docs/JOURNAL.md décision 330
@@ -54,8 +55,8 @@ select is(
 select has_table('public', 'mail_outbox', '2 — la file d''envoi existe');
 
 select has_function('public', 'queue_outbound_email',
-	array['uuid', 'uuid', 'text[]', 'text', 'text', 'text[]', 'uuid'],
-	'3 — la garde existe, et c''est la seule porte');
+	array['uuid', 'uuid', 'text[]', 'text', 'text', 'text[]', 'uuid', 'text[]', 'jsonb'],
+	'3 — la garde existe, et c''est la seule porte (signature de `CRM-058` tranche 2 : `p_bcc`, `p_attachments`)');
 
 select ok(
 	(select pg_get_constraintdef(oid) from pg_constraint
@@ -82,18 +83,21 @@ select ok(
 	'7 — `reserver_envois` est refusée au client');
 select ok(
 	not has_function_privilege('authenticated',
-		'public.marquer_envoi_reussi(uuid, text, text[])', 'execute'),
+		'public.marquer_envoi_reussi(uuid, text, text[], jsonb)', 'execute'),
 	'8 — `marquer_envoi_reussi` aussi');
 select ok(
 	not has_function_privilege('authenticated', 'public.marquer_envoi_echoue(uuid, text)', 'execute'),
 	'9 — `marquer_envoi_echoue` aussi');
 
--- ABSENCE FIGÉE (§19.8) : les pièces jointes à l'envoi ne sont pas livrées. Le jour où elles le
--- seront, cette assertion deviendra rouge et désignera la preuve à écrire — décision 51.
+-- L'ABSENCE FIGÉE EST RETOURNÉE, ET NON RETIRÉE (décision 51) : `CRM-058` tranche 2 livre les pièces jointes à l'envoi,
+-- et le seed en fait partir une (docs/SPEC-seed.md §2.19 ter). La règle qui la remplace porte sur leur FORME : toute
+-- pièce en file a été relue dans le stockage par la garde — chemin, nom, type et taille —, jamais crue du client.
 select is(
-	(select count(*)::int from public.mail_outbox where attachments <> '[]'::jsonb),
+	(select count(*)::int
+	   from public.mail_outbox o, jsonb_array_elements(o.attachments) p
+	  where not (p ? 'path' and p ? 'filename' and p ? 'mime_type' and p ? 'size_bytes')),
 	0,
-	'10 — ABSENCE FIGÉE : aucune pièce jointe à l''envoi, la colonne existe et rien ne l''alimente');
+	'10 — RETOURNÉE par `CRM-058` tranche 2 : toute pièce en file porte chemin, nom, type et taille relus par la garde');
 
 -- =============================================================================================
 -- 2. Les six refus, dans l'ordre où la garde les oppose
@@ -191,6 +195,10 @@ select throws_ok(
 select pg_temp.redevenir_proprietaire();
 update public.mail_outbound_identities set daily_quota = null
  where id = (select valeur::uuid from pg_temp_ref where nom = 'identite_service');
+-- LE RELEVÉ D'AVANT LA SONDE : le seed fait partir un envoi le jour où il est rejoué (docs/SPEC-seed.md §2.19 ter), et
+-- un compte absolu dépendrait de l'heure du dernier seed.
+insert into pg_temp_ref
+select 'envois_avant', app.envois_du_jour((select valeur::uuid from pg_temp_ref where nom = 'identite_service'))::text;
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
@@ -210,7 +218,7 @@ select pg_temp.redevenir_proprietaire();
 -- mettre en file mille messages qui partiraient tous.
 select is(
 	app.envois_du_jour((select valeur::uuid from pg_temp_ref where nom = 'identite_service')),
-	1,
+	(select valeur::int + 1 from pg_temp_ref where nom = 'envois_avant'),
 	'19 — une ligne `queued` compte déjà dans le quota du jour');
 
 update public.mail_outbox set status = 'failed'

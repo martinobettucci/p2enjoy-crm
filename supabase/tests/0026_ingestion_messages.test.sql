@@ -1,4 +1,5 @@
 -- @verifies CRM-054 (docs/BACKLOG.md) — ingestion des messages
+-- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : assertion révisée par les migrations 106 et 107 (docs/SPEC-mail-subsystem.md §19 bis.3)
 -- @verifies docs/SPEC-mail-subsystem.md §4.2 (dédoublonnage et occurrences), §4.3 (les quatre
 --           statuts), §15.5 (chemin sans nom de fichier, bucket privé)
 -- @verifies docs/SCHEMA.md §12 ; docs/SPEC-permissions-rls.md §7 (preuve de refus n° 9)
@@ -127,9 +128,11 @@ select is(
 -- ouvrirait une autre part du stockage sans que rien ne le dise.
 select is(
 	(select count(*)::int from pg_policies
-	  where schemaname = 'storage' and tablename = 'objects'),
+	  where schemaname = 'storage' and tablename = 'objects'
+	    and (coalesce(qual, '') || coalesce(with_check, '')) like '%''mail-attachments''%'),
 	1,
-	'18 — REFUS N° 9 RÉVISÉ : EXACTEMENT une politique d''objet, celle des pièces jointes saines');
+	'18 — REFUS N° 9 RÉVISÉ : EXACTEMENT une politique d''objet sur le bucket des pièces reçues, celle des pièces saines '
+	'(révisée par `CRM-058` tranche 2 : les trois politiques de `mail-outbound-attachments` sont prouvées par 0096)');
 
 -- CE QUE LA MESURE A MONTRÉ, ET QUI VAUT D'ÊTRE ÉCRIT : `storage.objects` accorde **tous** les
 -- privilèges à `anon` et `authenticated` — c'est le défaut de Supabase. La protection ne vient

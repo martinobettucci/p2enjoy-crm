@@ -909,6 +909,18 @@ qui ouvrent les deux non classés laissent des lectures du compte administrateur
 `mark_message_unread`, la vraie fonction, avec le même jeton, puis **vérifie** que deux non classés restent non lus pour ce
 compte. Rien n'est écrit en table à la main : `authenticated` n'a aucun privilège d'écriture sur `mail_message_reads`.
 
+### 2.19 ter Un envoi avec copie cachée et pièce jointe — ajouté par `CRM-058` tranche 2
+
+Le formulaire d'envoi ne démontre la copie cachée et les pièces jointes que si une affaire en porte un exemple. Le seed
+fait **partir réellement** un message depuis « Refonte du monitoring — Vertuo » (Studio web) : le fichier
+`proposition-monitoring.txt` est déposé par l'API de stockage avec le jeton du compte administrateur, le message mis en
+file par la vraie garde vers `bizdev@p2enjoy.test` avec la boîte du correspondant en **copie cachée**, puis soumis par le
+vrai worker de `mail-sync`. Le seed **vérifie** que le message archivé porte sa copie cachée et sa pièce.
+
+**L'affaire n'est pas celle du courrier reçu** : « Refonte du site vitrine » a ses comptes figés par les preuves de
+l'inbox, et une affaire de Studio web ne portait aucun message. **Idempotent** : un envoi déjà archivé sous l'objet
+« Proposition de refonte du monitoring (pièce jointe) » n'est pas refait — rejouer le seed n'envoie aucun courrier.
+
 ## 8. Ce que ce seed ne livre pas, et pourquoi
 
 - **Aucun second workspace, aucun compte extérieur.** `CRM-005` dit « un workspace ». Les preuves

@@ -2462,6 +2462,27 @@ rétroactivement.
 d'expédition, un ou plusieurs destinataires — séparés par une virgule ou un point-virgule —, un
 objet et un message, puis « Mettre en file ».
 
+**Une copie cachée.** Sous les destinataires, le lien « **Ajouter Cci** » ouvre le champ « Copie cachée (Cci) ». Ces
+adresses reçoivent le message **sans qu'aucun autre destinataire ne le sache** : rien, dans le message reçu, ne les
+nomme. Elles restent en revanche **visibles dans l'affaire** — l'inbox affiche « Cci : … » sur le message envoyé —, parce
+que la copie cachée est cachée aux destinataires, pas à votre équipe.
+
+**Des pièces jointes.** « **Joindre des fichiers** » (le trombone) ouvre le sélecteur de votre ordinateur ; vous pouvez
+aussi déposer des fichiers sur le formulaire. Chaque fichier part aussitôt vers le produit — la ligne dit « Envoi du
+fichier… » — puis s'affiche avec sa taille et un bouton pour le retirer. Sous la liste, le total est écrit : « 2 fichiers,
+3,4 Mo sur 10 Mo ».
+
+- **Dix fichiers et 10 Mo au total**, au plus, par message. Au-delà, le bouton « Mettre en file » s'éteint et le
+  formulaire dit lequel des deux plafonds est dépassé ; retirez des fichiers pour continuer. Le bouton reste aussi éteint
+  tant qu'un fichier est en cours d'envoi.
+- **Un nom accentué est simplifié** : « Proposition révisée.pdf » part sous le nom « Proposition revisee.pdf ».
+- **Retirer un fichier, ou annuler le formulaire, le supprime** du produit. Un fichier abandonné autrement — un onglet
+  fermé — est effacé de lui-même au bout de 24 heures.
+- **Les fichiers envoyés restent dans l'affaire** : le message envoyé les montre comme ceux d'un message reçu. Quand
+  l'analyse antivirus est en place, un fichier sain se télécharge, et **un fichier infecté empêche le message de
+  partir** : il est marqué en échec, et le dit. Sans antivirus, le message part et ses fichiers sont « non analysés »,
+  donc non téléchargeables, comme les pièces reçues.
+
 **Répondre depuis l'inbox.** Un message rangé dans une affaire porte un bouton « Répondre » : le
 destinataire et l'objet sont déjà remplis, et votre réponse reste rattachée à la conversation. Un
 message **non classé** n'offre pas de réponse : tant qu'il n'appartient à aucune affaire, il n'y a
@@ -2483,13 +2504,14 @@ le produit ne prétend pas que votre message est arrivé.
 | Cette adresse d'expédition ne vous est pas attribuée | En choisir une autre dans la liste |
 | Cette affaire ne peut pas recevoir de réponse | Elle est archivée ou en corbeille : la restaurer d'abord |
 | Cette adresse a atteint son plafond du jour | Attendre le lendemain, ou demander un plafond plus haut |
+| Une pièce jointe n'est plus disponible | La retirer, puis la joindre de nouveau |
+| Les pièces jointes dépassent le plafond | Retirer des fichiers : 10 au plus, 10 Mo au total |
 
 **Votre texte n'est jamais perdu** : un refus laisse le formulaire ouvert, avec ce que vous aviez
 écrit.
 
-**Ce qui n'est pas encore là.** Aucune pièce jointe à l'envoi, aucune signature automatique, aucune
-copie cachée. Un message qui échoue à partir est marqué en échec et le dit ; il n'est pas réessayé
-tout seul.
+**Ce qui n'est pas encore là.** Joindre une pièce **déjà reçue** dans l'affaire : un fichier se prend sur votre
+ordinateur. Un message qui échoue à partir est marqué en échec et le dit.
 
 
 ## 5. Administrer l'arborescence : tracks et channels
@@ -5094,7 +5116,8 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     ne change cet état ;
   - *Ajouter* : **envoyer un email depuis une affaire**, par la même file que le bouton « Envoyer » de la fiche : la
     signature de l'identité est ajoutée, le message part, puis paraît dans le fil de l'affaire. L'assistant peut
-    répondre à un email **de cette affaire** ; l'objet est alors repris, précédé de « Re: ».
+    répondre à un email **de cette affaire** ; l'objet est alors repris, précédé de « Re: ». Il peut ajouter une
+    **copie cachée** ; il ne joint **aucun fichier**.
 
   **Un envoi est irréversible** : l'outil l'annonce, et l'assistant vous demande de confirmer les destinataires,
   l'objet et le texte avant d'envoyer. Il envoie avec **votre** identité d'expédition, ou avec celle du service si vous

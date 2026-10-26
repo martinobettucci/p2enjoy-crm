@@ -1,4 +1,6 @@
 # @spec CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.3 et §12.5 — santé, API
+# @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : antivirus des pièces envoyées et purge des dépôts abandonnés —
+#       docs/SPEC-mail-subsystem.md §19 bis.2 points 6 et 8
 # interne, autorisation backend, corrélation et bornes ; la portée couvre toutes les routes.
 
 from __future__ import annotations
@@ -521,6 +523,10 @@ def create_app(
                 journal=lambda evenement, details: log_event(
                     app_logger, logging.INFO, evenement, **details
                 ),
+                # `CRM-058` tranche 2 §19 bis.2 point 6 : l'antivirus des pièces envoyées, le même que celui de la
+                # relève. Injoignable — la production aujourd'hui —, il rend `skipped` et l'envoi part.
+                clamav_hote=settings_courants.CLAMAV_HOST,
+                clamav_port=settings_courants.CLAMAV_PORT,
             )
         except PostgrestError as erreur:
             log_event(
@@ -530,6 +536,22 @@ def create_app(
                 postgrest_status=erreur.status_code,
             )
             raise HTTPException(status_code=502, detail="Base indisponible") from None
+
+        # LES DÉPÔTS ABANDONNÉS — `CRM-058` tranche 2 §19 bis.2 point 8 —, effacés à chaque vidage par l'API de
+        # stockage. Une purge qui échoue n'empêche pas l'envoi d'avoir eu lieu : elle est journalisée et se refera au
+        # vidage suivant.
+        try:
+            abandonnes = client.depots_envoi_abandonnes()
+            client.effacer_objets_envoi(abandonnes)
+            if abandonnes:
+                log_event(app_logger, logging.INFO, "outbound_attachments_purged", count=len(abandonnes))
+        except PostgrestError as erreur:
+            log_event(
+                app_logger,
+                logging.WARNING,
+                "outbound_attachments_purge_failed",
+                postgrest_status=erreur.status_code,
+            )
 
         log_event(
             app_logger,

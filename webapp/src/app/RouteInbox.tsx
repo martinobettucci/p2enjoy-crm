@@ -1526,6 +1526,13 @@ function PanneauMessage({
 								{t('inbox.message.cc')} : {etat.donnees.copies.join(', ')}
 							</p>
 						) : null}
+						{/* LA COPIE CACHÉE D'UN MESSAGE ENVOYÉ, LISIBLE DANS L'AFFAIRE (§19 bis.2 point 2, §5.4 sexies) : cachée
+						    aux destinataires, pas à l'équipe. Absente d'un message reçu. */}
+						{etat.donnees.copiesCachees.length > 0 ? (
+							<p className="text-sm text-text-2 break-words" data-testid="inbox-message-cci">
+								{t('inbox.message.bcc')} : {etat.donnees.copiesCachees.join(', ')}
+							</p>
+						) : null}
 						<p className="flex items-center gap-2 text-sm text-text-3">
 							<span>
 								{t('inbox.message.received')} {dateLisible(etat.donnees.recuLe)}

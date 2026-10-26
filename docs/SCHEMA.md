@@ -2064,6 +2064,28 @@ fabriquée** : les messages déjà reçus naissent non lus pour tous. **Retrait*
 public.mark_message_unread(uuid), public.mark_messages_read(uuid[])`, `drop table public.mail_message_reads`, puis
 `drop function public.inbox_arborescence()` et sa définition de la migration `0028` réappliquée.
 
+### Migrations `0106` et `0107` — copie cachée et pièces jointes à l'envoi (`CRM-058` tranche 2, décisions 719 et 720 ; livrées en développement le 2026-10-26)
+
+`docs/SPEC-mail-subsystem.md` §19 bis.3. **`0106`, sous `postgres`** :
+- `mail_outbox.bcc_addrs text[] not null default '{}'` — la copie cachée, écrite dans l'enveloppe SMTP seulement ;
+  `mail_messages.bcc_addresses text[] not null default '{}'` — celle d'un message **envoyé**, lisible dans l'affaire ;
+- le bucket privé **`mail-outbound-attachments`**, plafonné à 10 Mo par objet ; chemins `<espace>/<personne>/<uuid>/<nom>` ;
+- `app.piece_envoi_deposable(text)` et `app.piece_envoi_retirable(text)` — `SECURITY DEFINER`, appelés par les politiques ;
+- `public.queue_outbound_email(… , p_bcc text[], p_attachments jsonb)` **retirée puis recréée** : dix refus, dont
+  `attachment_not_available`, `too_many_attachments` et `attachments_too_large` (`23514`) ; `mail_outbox.attachments`
+  reçoit `[{path, filename, mime_type, size_bytes}]`, relus dans `storage.objects` ;
+- `public.reserver_envois` rend `bcc_addrs` et `attachments` ; `public.marquer_envoi_reussi(… , p_pieces jsonb)` archive
+  `bcc_addresses` et écrit les lignes de `mail_attachments` (chemin `<affaire>/<envoi>/<empreinte>` dans
+  `mail-attachments`, statut de l'analyse) ;
+- `public.depots_envoi_abandonnes(interval)` — réservée à `service_role`, la liste des dépôts à effacer par l'API de stockage.
+
+**`0107`, sous `supabase_admin`** (patron de la migration 29) : trois politiques sur `storage.objects`, toutes bornées au
+bucket `mail-outbound-attachments` — dépôt dans son dossier, lecture et retrait de ses propres dépôts (le retrait refusé
+une fois l'objet cité par la file). **Retrait** : supprimer les trois politiques ; puis `drop function
+public.depots_envoi_abandonnes(interval), app.piece_envoi_retirable(text), app.piece_envoi_deposable(text)`, recréer
+`queue_outbound_email`, `reserver_envois` et `marquer_envoi_reussi` sous leur définition des migrations 60 et 30, retirer
+les deux colonnes, puis vider et supprimer le bucket par l'API de stockage.
+
 ### Migration `0108` — la table des rattachements et la reprise (`CRM-111` T2.1, décision 705 ; livrée en développement le 2026-10-26)
 
 `docs/SPEC-rattachements.md` §3.1, §10, §14. Crée **`card_placements`** (§5 ci-dessus), y reprend **un rattachement par

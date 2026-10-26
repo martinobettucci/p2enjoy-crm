@@ -5,6 +5,8 @@
 #           `mail_outbox` sans relève réelle) ; docs/SPEC-mail-subsystem.md §19.4 (le quota de l'identité)
 # @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : `read` est l'état DE LA PERSONNE, lu dans la vraie base, et lire par le
 #           connecteur n'écrit aucune lecture ; docs/SPEC-mail-subsystem.md §18 bis.5 ; décision 708 (M1 B)
+# @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : la copie cachée du connecteur arrive dans la vraie file ;
+#           docs/SPEC-mail-subsystem.md §19 bis.2 point 9 ; décision 708 (M2 B)
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 LE SEED : l'affaire « Refonte du site vitrine » (`c1`) porte deux messages reçus, « Demande de devis — refonte » puis sa
@@ -64,17 +66,18 @@ async def test_lire_le_fil_et_repondre_par_la_file_de_l_ecran():
 
             envoi = await appeler("crm_mail_send", {
                 "card_id": CARD, "to": ["client@exterieur.test"], "body": CORPS,
-                "in_reply_to_message_id": premier["id"],
+                "in_reply_to_message_id": premier["id"], "bcc": ["direction@exterieur.test"],
             })
             assert (envoi["status"], envoi["from_address"], envoi["subject"]) == (
                 "queued", identite["from_address"], f"Re: {OBJET}"
             )
             # L'ENVOI EST CONSTATÉ EN FILE, SANS RELÈVE RÉELLE : la ligne que l'écran aurait écrite, au nom de Driss.
             ligne = (await _service("GET", "/mail_outbox", params={
-                "id": f"eq.{envoi['outbox_id']}", "select": "status,created_by,card_id,identity_id,in_reply_to_message_id,to_addrs",
+                "id": f"eq.{envoi['outbox_id']}", "select": "status,created_by,card_id,identity_id,in_reply_to_message_id,to_addrs,bcc_addrs",
             })).json()
             assert ligne == [{"status": "queued", "created_by": DRISS[1], "card_id": CARD, "identity_id": identite["id"],
-                              "in_reply_to_message_id": premier["id"], "to_addrs": ["client@exterieur.test"]}]
+                              "in_reply_to_message_id": premier["id"], "to_addrs": ["client@exterieur.test"],
+                              "bcc_addrs": ["direction@exterieur.test"]}]
     finally:
         await _retirer(DRISS, posees)
         await _nettoyer()

@@ -2981,6 +2981,53 @@ non_lus_admin=$(psql_seed -c "select count(*) from public.mail_messages m
 [ "$non_lus_admin" = 2 ] || die "le compte administrateur a $non_lus_admin non classé(s) non lu(s) au lieu de 2."
 info "Lecture : le fil de ${CARD_COURRIER: -2} est lu par le compte administrateur, les deux non classés restent non lus"
 
+# --- Un envoi avec copie cachée et pièce jointe — CRM-058 tranche 2, docs/SPEC-seed.md §2.19 ter --------------------
+# @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : copie cachée et pièces jointes à l'envoi ; docs/SPEC-mail-subsystem.md
+#       §19 bis.6 ; docs/SPEC-seed.md §2.19 ter ; docs/JOURNAL.md décisions 719 et 720
+#
+# LE VRAI CHEMIN, DE BOUT EN BOUT : le fichier est déposé par l'API de stockage avec le jeton du compte administrateur,
+# le message mis en file par la vraie garde, puis SOUMIS par le vrai worker. Rien n'est écrit en table à la main.
+# L'AFFAIRE N'EST PAS CELLE DU COURRIER REÇU : « Refonte du monitoring — Vertuo » (Studio web) ne portait aucun message,
+# et les comptes de « Refonte du site vitrine » sont figés par les preuves de l'inbox.
+# IDEMPOTENT : un envoi déjà archivé sous cet objet n'est pas refait — rejouer le seed ne renvoie aucun courrier.
+CARD_ENVOI_SEED=5eed0000-0000-4000-8000-00000000d012
+OBJET_ENVOI_SEED='Proposition de refonte du monitoring (pièce jointe)'
+deja_envoye=$(curl -s "$API/rest/v1/mail_messages?select=id&direction=eq.outbound&card_id=eq.$CARD_ENVOI_SEED&subject=eq.$(jq -rn --arg s "$OBJET_ENVOI_SEED" '$s|@uri')" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+if [ "$deja_envoye" = 0 ]; then
+	chemin_piece="5eed0000-0000-4000-8000-000000000001/5eed0000-0000-4000-8000-000000000011/$(cat /proc/sys/kernel/random/uuid)/proposition-monitoring.txt"
+	code=$(printf 'Proposition de refonte du monitoring\nVersion 1, chiffrage joint au message.\n' \
+		| curl -s -o "$CORPS" -w '%{http_code}' -X POST "$API/storage/v1/object/mail-outbound-attachments/$chemin_piece" \
+			-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN" -H 'Content-Type: text/plain' --data-binary @-)
+	attendu "$code" "dépôt de la pièce jointe de démonstration" 200
+	identite_service=$(curl -s "$API/rest/v1/mail_outbound_identities?select=id&owner_id=is.null&limit=1" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].id // empty')
+	[ -n "$identite_service" ] || die "l'identité de service est introuvable : l'envoi de démonstration ne peut pas partir."
+	code=$(api_admin POST /rest/v1/rpc/queue_outbound_email -d "$(jq -n \
+		--arg card "$CARD_ENVOI_SEED" --arg id "$identite_service" --arg objet "$OBJET_ENVOI_SEED" \
+		--arg cci "$CORRESPONDANT" --arg piece "$chemin_piece" \
+		'{p_card_id: $card, p_identity_id: $id, p_to: ["bizdev@p2enjoy.test"], p_subject: $objet,
+		  p_body_text: "Bonjour,\n\nVous trouverez notre proposition jointe.", p_bcc: [$cci], p_attachments: [$piece]}')")
+	attendu "$code" "mise en file de l'envoi de démonstration" 200
+	passe=$(docker compose exec -T -e JETON="$MAIL_SYNC_TOKEN" mail-sync python -c '
+import os, urllib.error, urllib.request
+r = urllib.request.Request("http://localhost:8080/internal/v1/outbox/flush", data=b"", method="POST")
+r.add_header("Authorization", "Bearer " + os.environ["JETON"])
+try:
+    with urllib.request.urlopen(r, timeout=300) as s:
+        print(s.read().decode(), end="")
+except urllib.error.HTTPError as e:
+    print(e.read().decode(), end="")
+' 2>/dev/null)
+	[ "$(echo "$passe" | jq -r '.sent // 0')" -ge 1 ] || die "le worker n'a pas soumis l'envoi de démonstration : $passe"
+fi
+archive_envoi=$(curl -s "$API/rest/v1/mail_messages?select=bcc_addresses,mail_attachments(filename)&direction=eq.outbound&card_id=eq.$CARD_ENVOI_SEED&subject=eq.$(jq -rn --arg s "$OBJET_ENVOI_SEED" '$s|@uri')" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY")
+[ "$(echo "$archive_envoi" | jq -r '.[0].bcc_addresses[0] // empty')" = "$CORRESPONDANT" ] \
+	&& [ "$(echo "$archive_envoi" | jq -r '.[0].mail_attachments | length')" = 1 ] \
+	|| die "l'envoi de démonstration n'est pas archivé avec sa copie cachée et sa pièce : $archive_envoi"
+info "Envoi : « $OBJET_ENVOI_SEED » soumis par le worker, copie cachée et pièce jointe archivées sur ${CARD_ENVOI_SEED: -4}"
+
 total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 info "Événements : $total_evenements, tous écrits par les triggers — le seed ne peut PAS en forger un"

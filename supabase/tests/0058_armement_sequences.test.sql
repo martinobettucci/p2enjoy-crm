@@ -1,4 +1,5 @@
 -- @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
+-- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : l'assertion n° 45 bornée aux affaires inscrites (docs/SPEC-seed.md §2.19 ter)
 --           TRANCHE 4, SOUS-TRANCHE 4b : l'armement et l'exécution
 -- @verifies docs/SPEC-modeles-emails.md §12.2 (qui arme, et l'unicité de l'inscription active),
 --           §12.3 (`card_sequence_enrollments` — colonnes, contraintes, clés étrangères),
@@ -521,7 +522,10 @@ select is(
 -- plus, sans que la règle ait bougé d'un iota.
 select is(
 	(select count(*)::integer from public.mail_outbox
-	  where created_by is not null and created_at >= (select min(armed_at) from public.card_sequence_enrollments)),
+	  where created_by is not null and created_at >= (select min(armed_at) from public.card_sequence_enrollments)
+	    -- LES AFFAIRES INSCRITES À UNE SÉQUENCE, et elles seules : le seed met aussi en file un envoi HUMAIN, signé de son
+	    -- auteur, depuis une autre affaire (`CRM-058` tranche 2, docs/SPEC-seed.md §2.19 ter).
+	    and card_id in (select card_id from public.card_sequence_enrollments)),
 	0,
 	'45. AUCUN message mis en file par le job ne porte d''auteur — l''acteur est obtenu (§9.5)');
 

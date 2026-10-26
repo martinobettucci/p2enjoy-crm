@@ -7185,8 +7185,7 @@ Ce qui est **déjà tranché**, et ne le sera pas pendant l'implémentation :
 - **Le seed enverra deux vrais messages** puis déclenchera une vraie relève : un écran vide ne
   démontre rien, et une trace fabriquée est interdite (CLAUDE.md §8).
 
-### CRM-058 — Composition et réponse `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 03:24 UTC — état avant : [~]*
+### CRM-058 — Composition et réponse `[~]`
 ***Connecteur (décision 708, M2 B)** : la copie cachée seule, dans `crm_mail_send` (famille `messagerie`) ; aucune pièce jointe par le connecteur. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707, option B)** : les **pièces jointes à l'envoi** et la **copie cachée** sont à livrer, en une tranche à spécifier — les deux questions du connecteur MCP d'abord.*
 ***Reste réel au 2026-10-25 (décision 705)** : la reprise et le recul sont livrés par `CRM-059` (`[x]`) et les signatures par `CRM-063` (`[x]`) ; restent les **pièces jointes à l'envoi** et la **copie cachée**, qu'aucune spécification ne porte — **choix de produit du responsable** (les livrer, ou les déclarer hors périmètre).*
@@ -7234,7 +7233,7 @@ quota et refus testés.
       Ce qui retient encore `CRM-058` en `[~]` est donc uniquement les deux absences figées
       ci-dessus, portées par `CRM-059` et par des choix nommés.
 
-#### Tranche 2 — copie cachée et pièces jointes à l'envoi `[ ]`
+#### Tranche 2 — copie cachée et pièces jointes à l'envoi `[~]`
 
 *Spécification : `docs/SPEC-mail-subsystem.md` §19 bis, `docs/DESIGN_SYSTEM.md` §5.4 sexies — proposées le 2026-10-26,
 **validées telles quelles par le responsable** le même jour (décision 720). Connecteur MCP : la copie cachée seule, `bcc` dans `crm_mail_send`, famille
@@ -7243,11 +7242,31 @@ quota et refus testés.
 `attachments_too_large`, `attachment_infected`, `attachment_missing` (décision 658).*
 
 - [x] **Spécification validée** par le responsable (décision 720).
-- [ ] **Migration** (numéro coordonné avec `CRM-111` T2), pgTAP, contrat de types, `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`.
-- [ ] **Worker** : pièces attachées, enveloppe avec la copie cachée, antivirus ; pytest.
-- [ ] **Écran** : Cci, pièces jointes, plafonds, refus ; Vitest, E2E `ui` et `mail`, captures observées.
-- [ ] **Connecteur** : `bcc` ; unitaires et intégration.
-- [ ] **Seed**, manuel, CHANGELOG ; livraison sur instruction du responsable.
+- [x] **Migrations `0106` (sous `postgres`) et `0107` (sous `supabase_admin`, les politiques de stockage)** — numéros
+      coordonnés avec `CRM-111` T2.1, qui prend la 108 —, appliquées par le runner sur la pile de développement ; pgTAP
+      `0096` **26/26**, et six suites révisées sans changer de plan (`0016`, `0026`, `0029`, `0030`, `0058`, `0095`) ;
+      `npm run test:sql` — « 97 fichiers, 4076 assertions, aucune anomalie » ; contrat de types régénéré ;
+      `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`, `docs/DAT.md`.
+- [x] **Worker** : pièces attachées après le corps, copie cachée dans l'enveloppe seule, archive déposée AVANT l'envoi,
+      antivirus, purge des dépôts abandonnés par l'API de stockage ; pytest `test_envoi.py` et `test_composition.py`,
+      **256/256** sur la suite. Deux défauts trouvés et corrigés : le chemin d'archive refusé par
+      `mail_attachments_chemin_sans_nom` (vu en E2E `mail`), et un code de reprise qui enfreignait le vocabulaire de
+      `backoff` (vu par `test_backoff.py`).
+- [x] **Écran** : « Ajouter Cci », « Joindre des fichiers », retrait, plafonds écrits, refus nommés, Cci affichée sur le
+      message envoyé ; `envoi.test.ts` **12/12** (`envoi.ts` n'avait aucun test unitaire), `FormulaireEnvoi.test.tsx`
+      **5/5** ; E2E `e2e/ui/envoi-pieces-jointes.spec.ts` **3/3** (souris, clavier, quatre paliers), onze specs voisines
+      **99/99** ; captures observées — deux prises sous le pli, corrigées.
+- [x] **API** : `e2e/api/envoi-pieces-jointes.spec.ts` **5/5** (dossier, clé accentuée refusée — la mesure de la
+      translittération —, Cci et pièce relue en base, retrait, pièce d'autrui, plafonds) ; specs voisines 71/71.
+- [x] **E2E `mail`** : `e2e/mail/envoi-pieces-jointes.spec.ts` — la copie cachée **reçoit** sans en-tête `Bcc`, pièces
+      intactes (empreinte), archive `clean` ; projet `mail` complet **45/45**.
+- [x] **Connecteur** : `bcc` dans `crm_mail_send` ; `test_messagerie.py` **11/11**, `test_integration_messagerie.py`
+      **5/5** contre la vraie base (la Cci dans la vraie file).
+- [x] **Seed** (`docs/SPEC-seed.md` §2.19 ter, idempotent, deux passages), **manuel** §4.16 et chapitre 11,
+      `docs/SPEC-mcp.md`, `CHANGELOG.md` ; compteurs du harnais mesurés (97, 4076, 1202, 940, 45) — *la campagne complète de
+      `scripts/verify-harness.sh` n'a pas été rejouée*.
+- [ ] **Livraison** en production, sur instruction du responsable, avec la 108 de `CRM-111` T2.1 (elle ne part jamais
+      avant la 106 et la 107).
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E `mail` d'aller-retour
 complet ; en-têtes de threading vérifiés sur le message reçu ; quota et refus testés ». **Les trois
