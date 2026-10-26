@@ -145,6 +145,12 @@ Le workflow par défaut reçoit des points sur deux étapes (par exemple « Qual
 « Négociation » ; trois affaires portent des points cochés et non cochés, dont une bloquée par l'exigence ; deux points
 libres ; deux modèles d'affaires, dont un créé par « Enregistrer comme modèle ». Le tout par les vraies fonctions.
 
+**Précisé le 2026-10-26 (décision 755)** : l'exigence n'est **pas** posée sur le workflow par défaut. Une quinzaine de
+preuves (pgTAP, API, interface) y déplacent des affaires de Relance vers Négociation, et une exigence bloquerait tout
+rattachement qui n'a pas coché le point. Le workflow par défaut reçoit les points d'étape **sans exigence** ; l'exigence,
+les trois affaires et les deux points libres vivent dans un **channel de démonstration** dont le workflow est dédié
+(`docs/SPEC-seed.md` §28).
+
 ## 7. Tranches
 
 - **T1 — le modèle des checklists** : les trois tables de checklists, RLS, privilèges de colonne, déclencheurs (ajout à

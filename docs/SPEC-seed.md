@@ -2528,3 +2528,49 @@ mêmes octets ; un objet que la source ne porte plus en est retiré. Un manuel c
 `docs/manual.md` est publié tel quel, avec un avertissement, pour que le seed ne dépende pas de chaque réécriture du
 manuel ; la preuve du manuel tient la règle. La preuve d'API `e2e/api/manuel.spec.ts` (M1) lit chaque fichier publié et
 le compare, octet par octet, à sa source.
+
+## 28. Les checklists d'une affaire — `CRM-068` T3a (décisions 747 à 749, 755)
+
+*Écrit le 2026-10-26, avant la section du script. Contrat : `docs/SPEC-checklists.md` §6, précisé par la décision 755.*
+
+### 28.1 Ce que le jeu porte
+
+**Le workflow par défaut** (`…051`) reçoit trois points d'étape, **sans exigence** : Prospection — « Besoin confirmé »
+(`…c6861`), « Décideur identifié » (`…c6862`) ; Relance — « Proposition envoyée » (`…c6863`). Aucune affaire du jeu n'y
+entre dans une étape après leur pose : ils se lisent sur les affaires que l'on crée ensuite, et dans l'éditeur (T3b).
+
+**Le workflow de démonstration** « Cycle commercial — checklists » (`…c6801`, portée globale, non par défaut) : trois
+étapes — Prospection (`…c6811`, initiale), Relance (`…c6812`), Négociation (`…c6813`) —, deux transitions — Prospection →
+Relance (`…c6821`), Relance → Négociation (`…c6822`) —, les mêmes trois points (`…c6831`, `…c6832` sur Prospection,
+`…c6833` sur Relance), et **une exigence** : Relance → Négociation exige « Proposition envoyée ». Il sert le channel
+« Checklists » (`…c6841`, slug `checklists`) du track `formation`.
+
+| Affaire (titre stable) | Étape | Ce qu'elle démontre |
+|---|---|---|
+| « Formation IA — Cerfrance » | Prospection | un point coché par Driss, un non coché, un point libre « Envoyer le programme détaillé » non coché |
+| « Atelier prompt — Lycée Vauban » | Relance | les deux points de Prospection cochés, sous leur étape quittée ; « Proposition envoyée » non coché : **bloquée**, le passage en Négociation est refusé `checklist_incomplete` |
+| « Parcours data — Mairie de Rennes » | Négociation | tout coché, l'exigence franchie ; un point libre « Relancer la DAF » coché |
+
+### 28.2 Le vrai chemin
+
+Le workflow, ses étapes, ses transitions, ses points et l'exigence sont écrits par l'API **sous le jeton de
+l'administratrice**, comme l'éditeur de workflows les écrit ; le channel aussi. Les affaires naissent par
+`public.creer_affaire` et avancent par `public.move_card` **sous le jeton de Driss** : les points d'étape sont ajoutés par
+le déclencheur de la base à l'entrée dans l'étape, jamais insérés par le seed. Les cochages sont des `PATCH` de Driss,
+qui posent l'heure, l'auteur et la ligne du fil ; les points libres, des `POST` de Driss. Le script **constate le refus**
+de « Atelier prompt — Lycée Vauban » (`move_card` vers Négociation rend `checklist_incomplete`) et s'arrête s'il passe.
+
+### 28.3 Convergence
+
+**Par présence.** Une affaire est retrouvée par son titre dans le channel ; présente, elle n'est ni recréée ni
+redéplacée. Un point se coche s'il ne l'est pas ; un point libre s'ajoute s'il n'existe pas sous ce libellé. Le
+workflow, ses étapes, ses transitions et ses points sont posés par identifiant stable, avec `on_conflict` (fusion).
+
+### 28.4 Ce que les preuves en attendent
+
+- **Rien sur les transitions du workflow par défaut** : la pgTAP `0118` vérifie que Relance → Négociation n'y exige rien.
+- `e2e/ui/checklists.spec.ts` lit les trois affaires par leur titre dans le channel `checklists` : le bloc de la fiche,
+  le compte « n/m » des cartes, le refus au board.
+- Le channel « Checklists » et son workflow comptent parmi les channels et les workflows du jeu : les preuves qui les
+  dénombrent sont révisées dans le même changement (décision 51).
+

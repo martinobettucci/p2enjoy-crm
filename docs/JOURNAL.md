@@ -35918,3 +35918,43 @@ qu'il est, références internes comprises : il ne se livre qu'avec l'unité ter
    (`docs/SPEC-workflow-engine.md` §3.7) ; la base refuse déjà la suppression d'une étape occupée. Archiver un workflow
    relève aussi de `workflows:supprimer`.
 **Persisté** : `docs/SPEC-mcp.md` §6.1, `docs/BACKLOG.md` (`CRM-118`). Aucun code.
+
+### `CRM-111` T2.4.4 — les preuves lisent le rattachement ; arrêt de session (2026-10-26)
+
+*2026-10-26, session interactive.* **Étapes 1 à 3, poussées** (`86e5e606`, `6ae757d8`, `920518c3`) : les fixtures et
+lectures pgTAP, les specs API, mail et d'interface lisent et écrivent les colonnes de rattachement sur
+`card_placements` ; suite pgTAP « 106 fichiers, 4331 assertions », API 1232/1232. Les preuves **du miroir lui-même**
+(`rattachements-miroir`, `rattachements-ecriture`, `0097`, `0099`) sont laissées : elles tombent avec lui au retrait.
+**Un défaut de ma part, trouvé par la vérification de types complète** : `entete-card-ecriture.spec.ts`, poussée à l'étape
+3, ne compilait plus (la ligne relue avait un type trop étroit) ; je n'avais lancé qu'une des quatre configurations de
+`npm run typecheck`. Corrigé (17/17).
+
+**Étape 4, les harnais `verify-*`** : seize convertis par les trois convertisseurs de l'étape (mises à jour, lectures,
+jointures du rattachement `cp`), puis à la main là où la forme ne s'y prêtait pas (comptes filtrés sur la corbeille de
+l'affaire, dégradation N1 de `verify-seed-demo` par identifiants de rattachement). Vérifiés : analytique 29/29, liste
+71/71, seed-demo 69/69. **Session arrêtée sur la consigne du responsable relayée par p2enjoy-crm-64** : la série a été
+stoppée entre deux harnais, celui en cours (timeline) laissé terminer pour qu'il restaure ce qu'il dégrade. L'état exact
+est au backlog (T2.4.4 `[~]`) ; la prise de T2.4 est libérée (`[~]`).
+
+**Pour la reprise de T2.4.5**, au backlog : fonctions de `CRM-077` à réécrire avec le prédicat de purge partagé ; ce que
+`CRM-068` (migrations `0125`, `0128`) demande de garder ; la question de purge à poser avant T3.
+
+### Décision 755 — `CRM-068` T3a : l'exigence de démonstration vit dans un workflow dédié (2026-10-26)
+
+*2026-10-26, session interactive.* **Problème** : `docs/SPEC-checklists.md` §6 demande au seed une transition du
+workflow par défaut qui exige un point, « vers Négociation ». Mesuré : une quinzaine de preuves (pgTAP `0013`, `0014`,
+`0018`, `0022`, `0097` à `0099` ; API `move-card`, `valeurs-champs`, `rendu-formulaire`, `timeline`,
+`change-channel-workflow` ; interface `board`, `administration-workflows`) déplacent des affaires de Relance vers
+Négociation. Une exigence y bloquerait tout rattachement qui n'a pas coché le point — y compris un rattachement entré dans
+l'étape avant la pose du point, qui ne le porte pas.
+**Options** présentées au responsable : un workflow de démonstration dédié ; l'exigence sur le workflow par défaut et la
+révision des preuves ; aucune exigence au seed.
+**Décision du responsable : le workflow de démonstration dédié.** Les points d'étape vont sur le workflow par défaut,
+sans exigence ; l'exigence, les trois affaires et les points libres vivent dans un channel « Checklists » du track
+`formation`, servi par un workflow dédié.
+**Persisté** : `docs/SPEC-checklists.md` §6 (précision), `docs/SPEC-seed.md` §28. Le code suit.
+
+*Même session, reprise de `CRM-068` T3a.* Une consigne de fin relayée par p2enjoy-crm-64 avait arrêté la tranche
+(`56245ff9`) ; le responsable a demandé de la reprendre. Le branchement du bloc dans `RouteCard.tsx`, perdu une première
+fois (le fichier était revenu à son état committé), a été refait et poussé avec le compte du board (`83fd3ea0`).
+
