@@ -16744,3 +16744,22 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       `verify-restauration.sh` garde le préfixe jetable de `restore-drill.sh`, script de production, et ne se lance pas
       en même temps dans deux emplacements. Clone arrêté, ses volumes et images retirés ; son répertoire sous `/tmp`
       reste à effacer à la main (le contrôle de sécurité de l'agent a refusé la suppression).
+
+### CRM-116 — Une couleur pour les channels, et un sélecteur de couleur lisible pour les tracks et les channels `[@]`
+*Prise en charge : session interactive 2026-10-23 (fil d'Ariane `CRM-110`, Claude Code, poste du responsable) depuis 2026-10-26 10:24 UTC — état avant : [ ]*
+*Créée le 2026-10-26 — demande du responsable : « je vois en dev des tracks et des channels en couleur et aucune façon de
+le faire en UI, créer un channel ou un track en couleur ». Arbitrages du responsable le même jour (`docs/JOURNAL.md`
+décision 729) : une couleur propre au channel, des pastilles nommées, pas de connecteur MCP.*
+
+- [ ] **T1 — spécification, écrite avant le code** : la colonne `channels.color` (`docs/SCHEMA.md`), le sélecteur de
+      couleur et la pastille de l'onglet (`docs/DESIGN_SYSTEM.md`), les formulaires de track et de channel
+      (`docs/SPEC-administration-arborescence.md`), la barre d'onglets (`docs/SPEC-channels.md`), le seed
+      (`docs/SPEC-seed.md`). Connecteur MCP : non (décision 729).
+- [ ] **T2 — base** : migration au prochain numéro libre (`color`, cinq jetons, `neutral` par défaut), pgTAP, types
+      régénérés, preuve d'API aux jetons réels (écriture par l'administrateur, refus aux autres), seed, contrat de
+      déploiement.
+- [ ] **T3 — écrans** : sélecteur de couleur partagé ; formulaires de track et de channel (arborescence, « Nouveau
+      channel » de la barre d'onglets) ; pastille de l'onglet et de l'arborescence ; unitaires et mutations.
+- [ ] **T4 — preuves sur la pile réelle** : E2E souris et clavier, refus, quatre paliers ; captures observées ;
+      `docs/manual.md` ; `CHANGELOG.md` ; campagnes.
+- [ ] **T5 — livraison** : migration en fenêtre et reconstruction de la webapp, sur instruction du responsable.

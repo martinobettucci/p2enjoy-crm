@@ -35054,3 +35054,21 @@ T2.3.3 réserve la `0114`.
    adresse et sa signature lisibles. La limite est écrite (`docs/SPEC-audit.md` §7.2, §13).
 3. **Livraison des migrations 106 à 113 : « Ne rien livrer encore »**. La décision 722 reste en vigueur, et aucune
    fenêtre n'est ouverte.
+
+### décision 729 — `CRM-116` : une couleur pour les channels, et un sélecteur de couleur lisible pour les tracks et les channels
+
+*2026-10-26, demande et arbitrages du responsable.* **Problème.** « Je vois en dev des tracks et des channels en couleur
+et aucune façon de le faire en UI : créer un channel ou un track en couleur. » **Observations**, dans le code et les
+migrations : `tracks.color` existe (`0003_tracks.sql`, cinq jetons de la charte, `neutral` par défaut), et le formulaire
+de track de Réglages ▸ Arborescence la propose déjà, mais en liste déroulante de noms techniques bruts — `brand`,
+`success`, `accent`, `danger`, `neutral` —, sans pastille ni traduction ; l'icône l'est de même. `channels` n'a **aucune**
+colonne de couleur, et aucun channel n'est coloré à l'écran. **Arbitrages.**
+1. **Les channels reçoivent une couleur propre** : une colonne nouvelle, les cinq mêmes jetons, `neutral` par défaut ;
+   choisie à la création et en modification ; affichée sur l'onglet du channel et dans l'arborescence.
+2. **Le choix se fait par des pastilles nommées** — Bleu, Vert, Jaune, Rouge, Gris —, au clavier par flèches, un même
+   composant pour les tracks et les channels, à la place de la liste de noms techniques.
+3. **Connecteur MCP : non.** La couleur se choisit dans la webapp seulement ; la seconde question (famille) ne se pose
+   donc pas.
+**Conséquences.** Une migration (`channels.color`, contrainte des cinq jetons) ; les écritures restent sous les
+politiques existantes de `channels` ; seed, preuves d'API, unitaires, E2E, captures, manuel. **Persisté avant toute
+spécification détaillée** : `docs/BACKLOG.md` `CRM-116`.
