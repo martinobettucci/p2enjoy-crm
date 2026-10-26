@@ -3871,6 +3871,10 @@ export type Database = {
             Returns: boolean
           }
         | {
+            Args: { p: Database["public"]["Tables"]["card_placements"]["Row"] }
+            Returns: boolean
+          }
+        | {
             Args: {
               tableau: Database["public"]["Tables"]["goal_boards"]["Row"]
             }

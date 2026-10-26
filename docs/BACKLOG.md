@@ -16534,10 +16534,13 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-26 06:50 UTC — état avant : [ ]*
         **Découpage, arrêté le 2026-10-26 (journal, entrée « `CRM-111` T2.3 — le découpage »)** — une étape poussée chacune,
         `main` vert à chaque fois :
-        - [ ] **T2.3.0 — la fondation** : la timeline d'un rattachement écrite par `card_placements` (`cards` ne garde que
+        - [x] **T2.3.0 — la fondation** : la timeline d'un rattachement écrite par `card_placements` (`cards` ne garde que
           la corbeille et la création) ; un miroir inverse rattachement → affaire, sans boucle ; `authenticated` écrit les
           sept colonnes ouvertes du rattachement sous `card_placements_update` ; `ecriture_permise(card_placements)`.
-          Aucun appelant ne change.
+          Aucun appelant ne change. *Livrée en développement le 2026-10-26* — migration `0110` ; `0099` **27/27**, quatre
+          suites révisées (`0012`, `0016`, `0042`, `0097`) ; pgTAP **99 fichiers, 4133 assertions** ; sentinelle sans
+          écart ; API `rattachements-ecriture.spec.ts` et projet 1206/1207 (`ingestion.spec.ts:91`, `CRM-058`) ; specs
+          d'interface de la timeline et du sommeil vertes ; `scripts/verify-mcp.sh` **88/88**.
         - [ ] **T2.3.1 — le sommeil** : `snooze_card(p_placement, until)`, `wake_card(p_placement)` ; les signatures par
           affaire retirées.
         - [ ] **T2.3.2 — les colonnes ouvertes et l'archivage** : la webapp et le connecteur écrivent `card_placements`

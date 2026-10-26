@@ -9,6 +9,8 @@
 --           le serveur), §7 (preuve de refus n° 1)
 -- @verifies docs/SCHEMA.md §5 (card_events), §9 (fonctions et RPC)
 -- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.0 : la trace du sommeil est écrite par la table du rattachement
+--           (docs/SPEC-rattachements.md §5)
 --
 -- CE QUE CETTE SUITE PROUVE, ET DANS QUEL ORDRE.
 --
@@ -136,9 +138,11 @@ select ok(
 	'`card_events_type_check` porte `snoozed` ET `woken` : le vocabulaire passe de douze à '
 	'quatorze valeurs, et cette migration en devient la dernière autorité');
 
-select has_trigger('public', 'cards', 'card_events_apres_maj_sommeil',
-	'Le trigger de trace est sur la TABLE, non dans les fonctions : `card_events` n''accorde aucun '
-	'privilège d''écriture, `service_role` compris (§14)');
+-- RÉVISÉE PAR `CRM-111` T2.3.0 : le sommeil appartient au RATTACHEMENT, et c'est sa table qui écrit la trace
+-- (docs/SPEC-rattachements.md §5). La règle de cette assertion tient, seule la table change.
+select has_trigger('public', 'card_placements', 'card_placements_write_events',
+	'Le trigger de trace est sur la TABLE — celle du rattachement depuis `CRM-111` T2.3.0 —, non dans les fonctions : '
+	'`card_events` n''accorde aucun privilège d''écriture, `service_role` compris (§14)');
 
 -- =============================================================================================
 -- 4. Les quatre refus de `snooze_card`, dans l'ordre — docs/SPEC-cards.md §16.3

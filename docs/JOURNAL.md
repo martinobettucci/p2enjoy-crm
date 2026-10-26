@@ -34924,3 +34924,35 @@ découpage** : une étape **T2.3.0** de fondation, sans appelant changé, qui d�
 `card_placements` et pose un miroir inverse rattachement → affaire, non bouclant (chaque miroir ne s'écrit que si l'autre
 côté diffère) ; puis un groupe par geste, du plus petit au plus large : sommeil, colonnes ouvertes et archivage, faire
 avancer, changer de channel, cadences, valeurs de bloc, création et remappages. Le découpage est au backlog, sous T2.3.
+
+### `CRM-111` T2.3.0 — la fondation des écritures par rattachement (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* **Problème** : rendre `card_placements` écrivable
+sans changer aucun appelant, pour que chaque geste puisse ensuite y passer seul. **Choix** : (1) la timeline d'un
+rattachement est écrite par `card_placements_write_events`, avec le vocabulaire, les charges utiles et l'ordre des deux
+déclencheurs de `cards` qu'il remplace, et `placement_id` posé explicitement ; `cards` ne garde que la création et la
+corbeille. (2) Le miroir inverse `card_placements_mirror_to_card` ne réécrit `cards` que si elle diffère. Le miroir de
+T2.1, lui, ne se lance que si une colonne de l'affaire change : une écriture d'un côté rend l'autre égal, et le second
+passage n'écrit rien. Prouvé : par l'un ou l'autre chemin, **un seul** événement. (3) `authenticated` reçoit la mise à
+jour des sept colonnes qu'il écrivait sur l'affaire, sous `card_placements_update`, qui exige d'écrire le channel.
+
+**Vérifications.** Sur copie jetable : migration passée deux fois ; `0099` **27/27** ; toute la suite sous la
+sentinelle, étendue aux écritures directes du rattachement. **La sentinelle étendue a d'abord crié à tort** : posée aussi
+sur `card_placements`, elle jugeait au milieu d'une instruction de `cards` à plusieurs lignes, quand les lignes suivantes
+n'étaient pas encore reportées. Elle ne juge plus qu'au niveau le plus extérieur (`pg_trigger_depth() = 1`), et plus
+aucun écart n'apparaît. Quatre assertions existantes décrivaient l'état que la fondation change, et sont **révisées, non
+retirées** (décision 51) : `0012` n° 85 (les déclencheurs de timeline sont sur les tables `cards` et `card_placements`),
+`0042` n° 13 (la trace du sommeil, sur la table du rattachement), `0097` n° 37 et n° 42 (la politique de mise à jour
+existe ; la lectrice est filtrée là où elle lit sans écrire — le seed lui ouvre l'écriture de Prospection, où elle
+modifiait déjà l'affaire), `0016` n° 23 (160 politiques). En développement : pgTAP **99 fichiers, 4133 assertions, aucune
+anomalie** ; API 1206/1207 (le rouge, `ingestion.spec.ts:91`, tient au seed de `CRM-058`, déjà signalé) ; les quatorze
+specs d'interface de la timeline, du sommeil, de l'archivage et du board 164/166 au premier passage, deux échecs sur un
+`503` transitoire puis un troisième sur la connexion SSO, tous **verts rejoués seuls** (instabilité sous charge, famille
+d'INC-305) ; types régénérés, `typecheck` vert ; `scripts/verify-mcp.sh` **88/88**.
+
+**Deux défauts de mes propres écritures documentaires, trouvés ici et corrigés dans ce changement.** (1) Au commit de
+T2.1, la section `card_placements` du §5 de `docs/SCHEMA.md` n'a jamais été écrite : le script d'ajouts relisait le
+fichier d'origine à chaque insertion, et la seconde a écrasé la première. Elle est rétablie, à jour de T2.1 à T2.3.0.
+(2) Au commit de T2.2, l'insertion de la section « Migration `0109` » a **remplacé** le titre « 9 quater » au lieu de
+s'insérer avant lui. Il est rétabli. Les autres ajouts des trois tranches ont été recherchés un à un, et chacun est
+présent une fois.

@@ -510,6 +510,12 @@ choix : la présence de `card_field_values.placement_id` est tenue par une **con
 l'`upsert` de la webapp, qui l'omet, garde son type jusqu'à T2.3 ; un rattachement est **actif** s'il n'est pas archivé,
 et une affaire reçoit du courrier si l'un des siens l'est (`app.card_has_active_placement`).
 
+**T2.3.0, livrée en développement le 2026-10-26** (migration `0110`). La timeline d'un rattachement est écrite par
+`card_placements` ; un miroir inverse tient `cards` égale tant que des lecteurs l'y lisent ; un client écrit les sept
+colonnes ouvertes du rattachement s'il écrit son channel. Les groupes suivants (sommeil, colonnes ouvertes et
+archivage, faire avancer, changer de channel, cadences, valeurs, création et remappages) passent chacun leurs appelants
+au rattachement et retirent leur signature par affaire.
+
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne
 change **rien de visible**, car chaque affaire garde son unique rattachement : c'est sa preuve, puisque toute la suite

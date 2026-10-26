@@ -633,6 +633,41 @@ porte pas, et qui sont opposables :
 - l'alphabet base32 retenu est celui de **Crockford en minuscules**, `0123456789abcdefghjkmnpqrstvwxyz`,
   et la forme est tenue par un `CHECK`, non seulement par le trigger qui la produit.
 
+### `card_placements` — le rattachement d'une affaire à un channel (`CRM-111`, migrations `0108` à `0110`)
+
+`docs/SPEC-rattachements.md` §3.1. Les treize colonnes de rattachement de `cards` — `channel_id`, `workflow_id`,
+`current_step_id`, `position`, `owner_id`, `amount`, `probability_override`, `next_action`, `next_action_at`,
+`entered_step_at`, `health_score`, `snoozed_until`, `archived_at` — aux mêmes types, plus `id`, `workspace_id`,
+`card_id`, `created_by`, `created_at`, `updated_at`.
+
+| Contrainte | Règle |
+|---|---|
+| `card_placements_card_fk` | `(card_id, workspace_id) → cards (id, workspace_id)`, `on delete cascade` |
+| `card_placements_channel_fk` | `(channel_id, workspace_id) → channels (id, workspace_id)`, `on delete cascade` |
+| `card_placements_channel_workflow_fk` | `(channel_id, workflow_id) → channels (id, workflow_id)`, **`deferrable initially deferred`** pendant la transition : `change_channel_workflow` change le workflow du channel avant celui des affaires et ne diffère que la clé de `cards`, qu'il nomme |
+| `card_placements_step_fk` | `(current_step_id, workflow_id) → workflow_steps (id, workflow_id)` |
+| uniques | `(card_id, channel_id)`, `(id, workflow_id)`, `(id, card_id)` ; **`card_placements_one_per_card_idx` sur `card_id`** tant que dure la transition — `CRM-111` T3 le retire |
+| index | `(channel_id, current_step_id, position)`, `(workspace_id, next_action_at)`, `(owner_id)` |
+
+**Lecture** (T2.1, migration `0108`) : `card_placements_select`, sous la forme optimisée de la décision 667 —
+`channel_id in (select unnest(app.readable_channel_ids()))`, la fonction étant `STABLE`, `SECURITY DEFINER`, sans cache, et
+sa fraîcheur prouvée en requête préparée (`supabase/tests/0097`).
+
+**Deux miroirs pendant la transition (décision 705).** `card_placements_mirror_insert` et `card_placements_mirror_update`,
+sur `cards` (T2.1), reportent dans le rattachement toute écriture de l'affaire ; `card_placements_mirror_to_card`, sur
+`card_placements` (T2.3.0, migration `0110`), reporte sur `cards` toute écriture du rattachement, tant que des lecteurs y
+lisent encore ces colonnes. Ils ne bouclent pas : chacun n'écrit que si l'autre côté diffère. T2.4 les retire avec les
+colonnes de `cards`.
+
+**Écriture** (T2.3.0) : `authenticated` écrit les sept colonnes ouvertes — `position`, `owner_id`, `amount`,
+`probability_override`, `next_action`, `next_action_at`, `archived_at` — sous `card_placements_update`, qui exige d'écrire
+le channel du rattachement ; `public.ecriture_permise(card_placements)` le dit à l'interface. L'étape, le channel, le
+workflow et le sommeil restent aux fonctions ; ni insertion ni suppression ; `service_role` ne fait que lire.
+
+**Timeline** (T2.3.0) : `channel_changed`, `workflow_changed`, `moved`, `assigned`, `archived`, `unarchived`, `snoozed`
+et `woken` sont écrits par le déclencheur `card_placements_write_events`, avec le vocabulaire et les charges utiles d'avant
+et le rattachement dans `card_events.placement_id` ; `cards` ne garde que la création et la corbeille.
+
 ### `card_comments`
 
 | Colonne | Type | Contraintes |
@@ -2116,7 +2151,18 @@ Mesuré avant et après sur copie jetable (`docs/mesures/CRM-111/06-lectures-equ
 trois rôles du seed, identiques. **Retrait, sans perte** : réappliquer les définitions des vingt fonctions depuis leurs
 migrations d'origine, retirer les trois déclencheurs et leurs fonctions, puis les colonnes `placement_id`.
 
- — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
+### Migration `0110` — la fondation des écritures par rattachement (`CRM-111` T2.3.0, décision 705 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-rattachements.md` §4, §5, §14. La timeline d'un rattachement passe à `card_placements`
+(`app.card_placements_write_events`) ; `app.card_events_apres_maj_card` ne garde que la corbeille, et
+`card_events_apres_maj_sommeil` est retiré avec sa fonction. Le miroir inverse `app.card_placements_mirror_to_card`.
+Le privilège de mise à jour des sept colonnes ouvertes et la politique `card_placements_update` ; la colonne calculée
+`ecriture_permise(card_placements)`. **Aucun appelant ne change.** **Retrait** : réappliquer
+`app.card_events_apres_maj_card` et `app.card_events_apres_maj_sommeil` de la migration 0042 avec leurs déclencheurs,
+retirer les deux déclencheurs et fonctions de cette migration, la politique, le privilège et la colonne calculée. Aucune
+donnée n'est touchée.
+
+## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)
 

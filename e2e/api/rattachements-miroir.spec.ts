@@ -3,6 +3,7 @@
 // @verifies docs/SPEC-rattachements.md §3.1 (la table), §4 (un rattachement se lit si son channel se lit), §14 (T2.1 :
 //           `cards` reste le chemin d'écriture, son rattachement suit) ; docs/JOURNAL.md décision 705
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`) ; CLAUDE.md §10 (règle d'accès prouvée hors interface)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.0 : les colonnes fermées du rattachement le restent
 //
 // Tout part du SEED : chaque appelant voit exactement un rattachement par affaire qu'il lit, égal à elle ; la lectrice ne
 // voit aucun rattachement d'un channel qui lui est fermé ; l'anonyme lit zéro ligne. PERSONNE n'écrit la table : ni le
@@ -92,11 +93,14 @@ test.describe('CRM-111 T2.1 — les rattachements, lus et refusés par l’API',
 		expect(await reponse.json()).toEqual([])
 	})
 
-	for (const [appelant, enTetes] of [
-		['l’administratrice', async () => enTetesAuthentifies(await jetonDe(ADMIN))],
-		['la clé de service', async () => enTetesService()],
+	// RÉVISÉ PAR `CRM-111` T2.3.0 : l'administratrice écrit désormais les sept colonnes ouvertes du rattachement
+	// (`e2e/api/rattachements-ecriture.spec.ts`) ; elle n'en écrit toujours pas l'ÉTAPE, qui passe par `move_card`. La clé
+	// de service, elle, ne l'écrit toujours pas du tout.
+	for (const [appelant, enTetes, modification] of [
+		['l’administratrice', async () => enTetesAuthentifies(await jetonDe(ADMIN)), { current_step_id: CARD_C4 }],
+		['la clé de service', async () => enTetesService(), { next_action: 'interdit' }],
 	] as const) {
-		test(`${appelant} n’écrit pas la table : ni création, ni modification, ni retrait`, async ({ request }) => {
+		test(`${appelant} ne crée ni ne retire un rattachement, et n’en écrit pas une colonne fermée`, async ({ request }) => {
 			const h = await enTetes()
 			const avant = await request.get(rest(`card_placements?card_id=eq.${CARD_C4}&select=id,next_action`), {
 				headers: enTetesService(),
@@ -105,7 +109,7 @@ test.describe('CRM-111 T2.1 — les rattachements, lus et refusés par l’API',
 			expect(ligne, 'CARD_C4 a son rattachement').toBeDefined()
 
 			const essais = [
-				request.patch(rest(`card_placements?card_id=eq.${CARD_C4}`), { headers: h, data: { next_action: 'interdit' } }),
+				request.patch(rest(`card_placements?card_id=eq.${CARD_C4}`), { headers: h, data: modification }),
 				request.delete(rest(`card_placements?card_id=eq.${CARD_C4}`), { headers: h }),
 				request.post(rest('card_placements'), { headers: h, data: { card_id: CARD_C4 } }),
 			]

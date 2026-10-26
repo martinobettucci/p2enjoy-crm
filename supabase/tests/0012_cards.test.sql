@@ -3,6 +3,8 @@
 -- @verifies docs/SPEC-cards.md §2 (modèle), §3 (adresse), §4 (cycle de vie), §5 (« active »),
 --           §6 (autorisations), §7 (garde d'archivage), §9 (seed), §10 (points ouverts)
 -- @verifies docs/SCHEMA.md §5 (cards), §9 (fonctions), §10 (index)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.0 : la timeline du rattachement est écrite par sa table
+--           (docs/SPEC-rattachements.md §5)
 -- @verifies docs/SPEC-permissions-rls.md §3 (fonctions), §4 (politiques), §7 (preuves n° 3, 4, 11)
 -- @verifies docs/SPEC-workflow-engine.md §2.6 (archivage d'un nœud occupé), §5 (`move_card`)
 -- @verifies docs/JOURNAL.md décisions 109, 110, 111, 112 ; INC-013, INC-025, INC-031, INC-046
@@ -612,19 +614,21 @@ select has_function('public', 'move_card', array['uuid', 'uuid', 'text'],
 	'porte SIX vérifications sur six depuis `CRM-036`, qui a apporté `card_field_values` et '
 	'refermé INC-047');
 
--- RÉVISÉE À `CRM-044`, PUIS À `CRM-081`, NON RETIRÉE — mécanisme de la décision 51. Elle
--- constatait que `cards` ne portait aucun trigger d'événement ; elle en constatait ensuite DEUX ;
--- elle en constate désormais TROIS, `CRM-081` ajoutant `card_events_apres_maj_sommeil` par la
--- migration 44. Aucun n'appartient à `CRM-040`, et tous sont posés sur la TABLE et non dans une
--- RPC (décision 203, docs/SPEC-cards.md §16.5).
+-- RÉVISÉE À `CRM-044`, PUIS À `CRM-081`, PUIS À `CRM-111` T2.3.0, NON RETIRÉE — mécanisme de la décision 51.
+-- Elle constatait que `cards` ne portait aucun trigger d'événement ; elle en constatait ensuite DEUX, puis TROIS,
+-- `CRM-081` ajoutant `card_events_apres_maj_sommeil` par la migration 44. Depuis `CRM-111` T2.3.0 (migration 110), la
+-- timeline d'un RATTACHEMENT — étape, responsable, archivage, sommeil — est écrite par la table `card_placements`, et
+-- `cards` ne garde que la création et la corbeille. La règle tient : tous sont posés sur une TABLE et non dans une RPC
+-- (décision 203, docs/SPEC-cards.md §16.5, docs/SPEC-rattachements.md §5).
 select is(
-	(select array_agg(tgname order by tgname)::text from pg_trigger
-	  where tgrelid = 'public.cards'::regclass and not tgisinternal
-	    and tgname like 'card_events%'),
-	'{card_events_apres_insertion,card_events_apres_maj,card_events_apres_maj_sommeil}',
-	'`cards` porte les TROIS triggers de timeline de `CRM-044` et `CRM-081` — sur la TABLE, non dans une RPC : '
-	'`owner_id`, `archived_at` et `deleted_at` s''écrivent par un PATCH qu''aucune fonction ne '
-	'médie (décision 203)');
+	(select array_agg(tgrelid::regclass::text || '.' || tgname order by tgrelid::regclass::text, tgname)::text
+	   from pg_trigger
+	  where tgrelid in ('public.cards'::regclass, 'public.card_placements'::regclass) and not tgisinternal
+	    and (tgname like 'card_events%' or tgname = 'card_placements_write_events')),
+	'{card_placements.card_placements_write_events,cards.card_events_apres_insertion,cards.card_events_apres_maj}',
+	'les triggers de timeline sont sur les TABLES, non dans une RPC : `cards` écrit la création et la corbeille, '
+	'`card_placements` tout ce qui appartient au rattachement — `owner_id` et `archived_at` s''écrivent par un PATCH '
+	'qu''aucune fonction ne médie (décision 203)');
 -- RÉVISÉE À `CRM-043`, NON RETIRÉE — mécanisme de la décision 51, dixième occurrence. Elle
 -- constatait une absence ; elle constate désormais la présence, et la conséquence qui compte pour
 -- `cards` : l'unicité `(id, workspace_id)` que `CRM-043` a dû ajouter pour que la clé étrangère

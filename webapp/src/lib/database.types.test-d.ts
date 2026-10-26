@@ -1192,9 +1192,13 @@ type _retourReelSaisissable = Expect<
 // Le repli, lui, diffère de celui du canevas : `docs/SPEC-droits-interface.md` §4 laisse les commandes ACTIVES
 // quand la capacité est inconnue — le serveur refuse, et un défaut de lecture ne doit pas priver un
 // administrateur de ses gestes.
+//
+// QUATRE SURCHARGES DEPUIS `CRM-111` T2.3.0 (migration 110, docs/SPEC-rattachements.md §4) : la même colonne sur
+// `card_placements`, qui dit si l'appelant écrit le channel du rattachement.
 type _ecriturePermisePrendUneLigne = Expect<
   Equal<
     Database['public']['Functions']['ecriture_permise']['Args'],
+    | { p: Database['public']['Tables']['card_placements']['Row'] }
     | { c: Database['public']['Tables']['cards']['Row'] }
     | { ch: Database['public']['Tables']['channels']['Row'] }
     | { tableau: Database['public']['Tables']['goal_boards']['Row'] }

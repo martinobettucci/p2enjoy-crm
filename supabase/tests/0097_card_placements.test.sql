@@ -264,8 +264,10 @@ set local plan_cache_mode = auto;
 -- 5. La RLS et les privilèges, sous les rôles réels
 -- =============================================================================================
 
-select policies_are('public', 'card_placements', array['card_placements_select'],
-	'une seule politique, de lecture : en T2.1, aucun client n''écrit la table');
+-- RÉVISÉE PAR `CRM-111` T2.3.0 (migration 110) : la mise à jour du rattachement s'ouvre aux sept colonnes qu'un client
+-- écrivait sur l'affaire, sous `card_placements_update` (docs/SPEC-rattachements.md §4). Ni insertion ni suppression.
+select policies_are('public', 'card_placements', array['card_placements_select', 'card_placements_update'],
+	'deux politiques, lecture et mise à jour depuis T2.3.0 : aucun client n''insère ni ne retire un rattachement');
 select is(
 	(select array_agg(privilege_type::text order by privilege_type::text) from information_schema.role_table_grants
 	  where table_schema = 'public' and table_name = 'card_placements'
@@ -284,11 +286,13 @@ select is(
 	(select count(*)::int from public.card_placements),
 	(select count(*)::int from public.cards),
 	'elle voit exactement un rattachement par affaire qu''elle lit : la règle est celle de `cards`');
-select throws_ok(
-	$$update public.card_placements set next_action = 'interdit'$$,
-	'42501', null,
-	'un `UPDATE` direct est une erreur de privilège, pas une écriture');
+-- RÉVISÉE PAR `CRM-111` T2.3.0 : le privilège de la colonne existe désormais ; c'est la POLITIQUE qui refuse la lectrice
+-- là où elle lit sans écrire — Maintenance (…035) —, en filtrant : aucune ligne touchée, aucune erreur. Le seed lui
+-- ouvre l'écriture de Prospection (…031), où elle modifie, comme elle le faisait déjà sur l'affaire.
+update public.card_placements set next_action = 'interdit' where channel_id = '5eed0000-0000-4000-8000-000000000035';
 select pg_temp.proprietaire();
+select is((select count(*)::int from public.card_placements where next_action = 'interdit'), 0,
+	'un `UPDATE` direct de la lectrice sur Maintenance, qu''elle lit sans l''écrire, ne touche aucun rattachement');
 
 set local role anon;
 select is((select count(*)::int from public.card_placements), 0, '`anon` lit zéro ligne, sans erreur de privilège');

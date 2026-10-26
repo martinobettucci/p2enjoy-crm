@@ -13,7 +13,8 @@
 --           docs/SPEC-refus-admission.md §3
 -- @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : l'unique politique de lecture des lectures de l'inbox (158) ;
 --           docs/SPEC-mail-subsystem.md §18 bis.3
--- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.1 : l'unique politique de lecture des rattachements (159) ;
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.1 : l'unique politique de lecture des rattachements (159) ; tranche
+--           T2.3.0 : leur politique de mise à jour (160) ;
 --           docs/SPEC-rattachements.md §4, §2 bis.3 (forme optimisée)
 -- @verifies docs/SPEC-permissions-rls.md §7 (les douze preuves), §7.2 (contrat mesuré),
 --           §7.3 (ce qui n'est pas satisfaisable, et comment l'absence est figée),
@@ -226,8 +227,12 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	159,
-	'CENT CINQUANTE-NEUF politiques dans `public`, et pas une de plus — 158 avant `CRM-111` tranche T2.1, plus l''UNIQUE '
+	160,
+	'CENT SOIXANTE politiques dans `public`, et pas une de plus — 159 avant `CRM-111` tranche T2.3.0, plus la politique de '
+	'MISE À JOUR de `card_placements` (docs/SPEC-rattachements.md §4) : un rattachement s''écrit si son channel s''écrit, '
+	'et seulement sur les sept colonnes ouvertes par le privilège. Ni insertion ni suppression : rattacher et retirer '
+	'sont des fonctions (T3). Avant elle : '
+	'159, soit 158 avant `CRM-111` tranche T2.1, plus l''UNIQUE '
 	'politique de LECTURE de `card_placements` (docs/SPEC-rattachements.md §4), sous la forme optimisée de la décision 667 : '
 	'un rattachement se lit si son channel se lit. AUCUNE ÉCRITURE, et c''est un refus double : ni politique ni privilège '
 	'— pendant la transition, le miroir de `cards` est le seul écrivain (décision 705). Avant elle : '
