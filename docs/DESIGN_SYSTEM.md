@@ -6635,3 +6635,38 @@ partie II ; ces règles disent de quoi l'aide a l'air.
   de pied passent l'un sous l'autre ; `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7), et la
   preuve mesure le cadre du panneau et des images, pas seulement la page (§5.43, §5.47).
 - **Aucune couleur, aucun jeton nouveau.** Une icône Lucide nouvelle, `BookOpen`, qui ne sert aucun autre objet (§9).
+
+### 5.70 La checklist d'une affaire, et son compte sur le board — `CRM-068` T3a
+
+*Écrit le 2026-10-26, avant le code, après relecture intégrale de ce document.* Ce que le bloc lit, écrit et refuse est
+spécifié par `docs/SPEC-checklists.md` §2 à §4 ; ces règles ne disent que de quoi il a l'air.
+
+- **LE BLOC « Checklist » VIENT JUSTE APRÈS LE FORMULAIRE**, dans la colonne gauche (§5.3) : les points disent ce qu'il
+  reste à faire dans l'étape, à côté des questions qui disent ce qu'on en sait. Forme des blocs voisins : `section`, filet
+  haut `--color-border`, titre `h2`. Le titre porte le compte « 3 sur 5 » **dans son propre élément** (§5.11), en 13 px
+  `--color-text-2`, et n'est pas rendu quand l'affaire n'a aucun point.
+- **DEUX GROUPES, TITRÉS `h3`** : « Étape {étape} » pour les points du rattachement — ceux de l'étape courante d'abord,
+  puis, sous leur propre titre, ceux des étapes déjà traversées —, puis « Points libres ». Un groupe vide n'est pas rendu
+  (§5.36), sauf « Points libres », qui porte le geste d'ajout.
+- **UN POINT EST UNE LIGNE DE `--size-target`** avec sa case native de 24 px, accent `--color-brand` (§5.7 bis), son
+  libellé en cible étendue. Coché, une ligne de 13 px `--color-text-2` dit « Coché par {nom}, le {date} » ; l'auteur
+  inconnu s'écrit « Coché le {date} ». **Un point exigé** par une transition sortante de l'étape porte « Exigé pour passer
+  à {étape} » en 13 px `--color-text-3`, la forme de la mention d'un champ exigé (§5.7).
+- **LA CASE BASCULE AU CLIC ET REVIENT SI LA BASE REFUSE** — la règle de la case « Soldé » (§5.31 bis) : une case qui ne
+  bouge pas sous le doigt se lit comme cassée. Le refus s'écrit sous la ligne, `role="alert"`, et la ligne relue montre ce
+  que la base porte.
+- **UN POINT LIBRE PORTE « Retirer »**, bouton discret compact, icône `X`, nom accessible « Retirer le point {libellé} »,
+  **sans confirmation** : il se repose en un champ (§5.41). Un point d'étape n'en porte aucun — sa forme appartient à
+  l'étape, et une commande grisée enseignerait un geste qui n'existe pas (§5.15).
+- **« Ajouter un point » est un champ et son bouton**, sous les points libres, dans le flux : libellé visible « Nouveau
+  point », bouton secondaire « Ajouter », désactivé tant que le champ est blanc (§5.50). `Entrée` ajoute ; le champ se
+  vide et garde le focus.
+- **LES COMMANDES SUIVENT LA CAPACITÉ D'ÉCRIRE L'AFFAIRE** (§5.59) : refusée par la base, les cases, « Retirer » et
+  « Ajouter » sont désactivés, lisibles, et citent le motif de la fiche.
+- **SUR LA CARTE DU BOARD**, l'affaire dont l'étape porte des points montre « 3/5 », précédé de l'icône Lucide
+  **`SquareCheck`** — qui ne sert aucun autre objet (§9) — en 13 px `--color-text-2`, à côté de la pastille d'ancienneté ;
+  son nom accessible est la phrase « 3 points cochés sur 5 dans cette étape ». Tous cochés, le texte passe en
+  `--color-success-on-soft` sur `--color-success-soft`, pastille moulée sur la valeur (§5.31). Aucun point : rien.
+- **ÉTATS** (§5.8) : squelette de deux lignes, erreur avec « Réessayer », et le vide — « Aucun point pour cette affaire. »
+  —, le champ d'ajout restant offert.
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `SquareCheck`.**
