@@ -7126,12 +7126,13 @@ et dans l'inbox.
 #### Tranche 2 — lu / non lu `[ ]`
 
 *Spécification : `docs/SPEC-mail-subsystem.md` §18 bis, `docs/DESIGN_SYSTEM.md` §5.4 quinquies — proposées le
-2026-10-26, **en attente de la validation du responsable** (décision 715). Connecteur MCP : oui, famille `messagerie`,
+2026-10-26 (décision 715), **validées par le responsable** le même jour avec une variante : l'arborescence garde le
+total et y ajoute la pastille des non lus (décision 716). Connecteur MCP : oui, famille `messagerie`,
 action `consulter` — `read` dans `crm_card_mail_list` et `crm_mail_get`, aucun outil pour marquer (décision 708, M1 B) ;
 aucune case nouvelle. Noms : `mail_message_reads`, `mark_messages_read`, `mark_message_unread`, `is_read`,
 `unread_count` (décision 658).*
 
-- [ ] **Spécification validée** par le responsable.
+- [x] **Spécification validée** par le responsable (décision 716).
 - [ ] **Migration `0105_mail_message_reads.sql`** : la table, sa RLS, les deux fonctions, `is_read`, `unread_count` dans
       `inbox_arborescence` ; `docs/SCHEMA.md`, contrat de types régénéré, `docs/PROD_MIGRATIONS.md`.
 - [ ] **pgTAP** dédié, **API** aux jetons réels (`e2e/api/inbox-lecture.spec.ts`), **Vitest**, **MCP** (unitaire et

@@ -34724,3 +34724,11 @@ sur la page, qui répond aussi au démarrage — les messages existants naissent
 lecture ; l'arborescence compte les **non lus** au lieu du total ; **seul l'écran de l'inbox marque** (ni le fil de
 l'affaire, ni la recherche, ni le connecteur). Connecteur : `read` dans les deux lectures (décision 708). Migration
 `0105`. **Conséquence** : aucun code avant la validation (`CLAUDE.md` §5).
+
+### décision 716 — `CRM-057` tranche 2 : la spécification validée, l'arborescence garde son total
+
+*2026-10-26, réponse du responsable à la question posée par `AskUserQuestion` : « Garder le total ».* Toutes les
+propositions de la décision 715 sont validées, **sauf le point 6**, remplacé : l'arborescence **garde** le nombre de
+messages visibles de chaque dossier et y **ajoute** la pastille des non lus de l'appelant (absente à zéro, « 99+ »,
+nom accessible exact). `docs/SPEC-mail-subsystem.md` §18 bis.2 point 6 et §18 bis.4, `docs/DESIGN_SYSTEM.md` §5.4 et
+§5.4 quinquies sont corrigés en conséquence, avant tout code. Le code peut commencer.

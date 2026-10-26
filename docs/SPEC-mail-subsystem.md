@@ -1574,11 +1574,12 @@ double visibilité exigée par la Definition of Done.
 
 ## 18 bis. Lu / non lu — `CRM-057` tranche 2
 
-*Spécification proposée le 2026-10-26, avant tout code. Arbitrages déjà rendus : la notion est **à livrer** et le rôle
+*Spécification proposée le 2026-10-26, avant tout code, **validée le même jour par le responsable avec une variante au
+point 6** (décision 716) : l'arborescence garde le total et y ajoute les non lus. Arbitrages déjà rendus : la notion est **à livrer** et le rôle
 de tri des non classés est **hors périmètre** (décision 707, option C) ; **connecteur MCP : oui, famille `messagerie`**,
 l'état lu paraît dans les lectures et **aucun outil ne marque** (décision 708, M1 B) — aucune case nouvelle dans la
 matrice. Les points marqués **[proposition]** sont les choix de cette spécification, soumis à la validation du
-responsable (décision 715).*
+responsable (décision 715) ; tous sont validés (décision 716).*
 
 ### 18 bis.1 Ce que la mesure établit, le 2026-10-26, sur la pile de développement
 
@@ -1613,11 +1614,11 @@ responsable (décision 715).*
    (cinquante messages au plus, `MESSAGES_PAR_PAGE`). C'est aussi la réponse au démarrage : les messages déjà reçus
    naissent **non lus** pour tous, la migration ne pouvant pas juger qui les a déjà vus — elle ne fabrique aucune
    lecture (`CLAUDE.md` §8).
-6. **[proposition] Le compte de l'arborescence devient celui des NON LUS.** Chaque dossier affiche ses messages non lus
-   de l'appelant — absent à zéro, « 99+ » au-delà de 99, nom accessible exact (« 3 messages non lus ») — et sa ligne
-   passe en graisse moyenne. Le total des messages, que l'arborescence montrait depuis le §18.3, n'est plus affiché : deux
-   nombres par dossier se liraient mal, et c'est le non lu qui dit où aller. « Non classés » reste affiché à zéro
-   (§18.3), sans nombre.
+6. **L'arborescence GARDE LE TOTAL ET Y AJOUTE LES NON LUS** — *variante du responsable (décision 716), qui remplace la
+   proposition d'afficher les seuls non lus.* Chaque dossier garde son nombre de messages visibles (§18.3) et porte, à
+   côté, une pastille de ses messages non lus par l'appelant — absente à zéro, « 99+ » au-delà de 99, nom accessible
+   exact (« 3 messages non lus ») ; sa ligne passe en graisse moyenne quand il en porte. « Non classés » reste affiché à
+   zéro (§18.3).
 7. **[proposition] Seul l'écran de l'inbox marque.** Lire un message dans le fil de l'affaire, par la recherche ou par le
    connecteur **ne change pas** son état : une lecture ne doit pas écrire, et le fil d'une affaire affiche des
    événements, pas une boîte de réception. C'est une limite nommée (§18 bis.8).
@@ -1656,7 +1657,7 @@ La forme est au §5.4 quinquies de `docs/DESIGN_SYSTEM.md` ; le contenu ici.
 
 - **Ligne de fil non lue** : liseré gauche 3 px `--color-brand` et objet en graisse forte ; le nom accessible du bouton
   commence par « Non lu, ».
-- **Arborescence** : le compte des non lus (§18 bis.2 point 6).
+- **Arborescence** : le total, et la pastille des non lus à côté (§18 bis.2 point 6).
 - **Panneau de lecture** : à l'ouverture d'un fil, `mark_messages_read` avec les identifiants du fil présents dans la
   page ; puis la liste et l'arborescence sont relues. Le bouton « Marquer comme non lu » (`Mail`) / « Marquer comme lu »
   (`MailOpen`) se pose dans l'en-tête du message, celui des notifications réemployé.
@@ -1685,7 +1686,7 @@ messages visibles non lus.
 | Vitest | le fil non lu dès qu'un de ses messages l'est ; le compte « 99+ » et son nom exact ; le marquage qui échoue ne change pas l'état |
 | API | hors interface, avec les vrais jetons : l'état d'une personne n'est pas celui d'une autre ; le membre ne marque pas un message qu'il ne voit pas (zéro ligne, aucune ligne en base) ; l'insertion directe dans la table est refusée |
 | MCP | `read` dans les deux lectures, et lire ne marque pas |
-| E2E `ui` | ouvrir un fil le marque lu et fait baisser le compte ; « Marquer comme non lu » le rétablit ; « Tout marquer comme lu » ; au clavier et à la souris |
+| E2E `ui` | ouvrir un fil le marque lu et fait baisser le compte des non lus, le total restant ; « Marquer comme non lu » le rétablit ; « Tout marquer comme lu » ; au clavier et à la souris |
 | Captures | les quatre paliers, une ligne lue et une non lue, l'état d'erreur du marquage |
 
 ### 18 bis.8 Limites nommées

@@ -546,8 +546,8 @@ proposée par le classement assisté, toujours présentée **comme une suggestio
 - **Le dossier retenu et le message retenu portent `aria-current`**, non une simple couleur : une
   sélection qui ne s'annonce qu'en teinte n'existe pas pour un lecteur d'écran, et le §10 l'exige.
 - **L'arborescence est une liste de boutons, dépliable au clavier**, dans l'ordre du board. Chaque
-  nœud porte son nombre de messages **visibles par celui qui regarde** — *depuis `CRM-057` tranche 2, son nombre de
-  messages **non lus** par celui qui regarde (§5.4 quinquies)*.
+  nœud porte son nombre de messages **visibles par celui qui regarde** — *et, depuis `CRM-057` tranche 2, la pastille
+  de ses messages **non lus** par celui qui regarde (§5.4 quinquies)*.
 - **Le corps du message est du texte**, jamais le HTML de l'expéditeur (§18.4). Il conserve ses
   retours à la ligne et se replie sur les mots longs plutôt que de déborder.
 - **Une pièce jointe non saine n'a pas de lien** : elle affiche son statut d'analyse en toutes
@@ -692,7 +692,7 @@ uniquement quand ce message est CLASSÉ : un message non classé n'a aucune affa
 
 ### 5.4 quinquies L'état LU / NON LU dans l'inbox — `CRM-057` tranche 2
 
-*Proposé le 2026-10-26 avec la spécification, `docs/SPEC-mail-subsystem.md` §18 bis, qui dit ce qui est lu, par qui et
+*Proposé le 2026-10-26 avec la spécification et validé le même jour (décision 716, variante : le total reste), `docs/SPEC-mail-subsystem.md` §18 bis, qui dit ce qui est lu, par qui et
 quand ; les règles ci-dessous ne disent que de quoi il a l'air. **Aucun jeton n'est ajouté** : tout est emprunté à la
 ligne non lue des notifications (§5.43).*
 
@@ -704,10 +704,12 @@ ligne non lue des notifications (§5.43).*
 - **LE §1 EST TENU PAR UN MOT.** Le nom accessible du bouton de la ligne commence par « Non lu, » ; l'état ne repose
   jamais sur le seul liseré ni sur la seule graisse.
 
-- **L'ARBORESCENCE COMPTE LES NON LUS, AVEC LA PASTILLE DE LA CLOCHE.** Pastille `--color-brand` à texte
-  `--color-white`, `--text-xs` `tabular-nums`, `rounded-full` — celle du §5.43 —, **absente à zéro** et pendant la
-  lecture, « 99+ » au-delà de 99, le nom accessible gardant le compte exact (« 3 messages non lus »). Le nœud qui en
-  porte passe en graisse moyenne. Le total des messages n'est plus affiché : deux nombres par dossier se liraient mal.
+- **L'ARBORESCENCE GARDE SON TOTAL ET Y AJOUTE LA PASTILLE DES NON LUS** (décision 716). Le total reste le nombre
+  `--color-text-3` `tabular-nums` du §5.4, à droite ; la pastille se pose **avant** lui — celle de la cloche du §5.43 :
+  `--color-brand` à texte `--color-white`, `--text-xs` `tabular-nums`, `rounded-full`, **absente à zéro** et pendant la
+  lecture, « 99+ » au-delà de 99, le nom accessible gardant le compte exact (« 3 messages non lus »). Les deux nombres
+  se distinguent par la forme — un aplat de marque contre un chiffre gris — et non par la seule couleur. Le nœud qui
+  porte un non lu passe en graisse moyenne.
 
 - **LE MARQUAGE MANUEL EST LE BOUTON DES NOTIFICATIONS**, posé dans l'en-tête du message ouvert : icône seule dans une
   cible `--size-target`, `Mail` pour « Marquer comme non lu », `MailOpen` pour « Marquer comme lu », le libellé en
