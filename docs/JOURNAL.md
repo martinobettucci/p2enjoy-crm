@@ -35574,3 +35574,16 @@ channels, donc possiblement plusieurs tracks) et le changement de channel d'une 
 l'affaire » ambigu. **La réponse contredit donc une règle écrite** : selon `CLAUDE.md` §5, elle est consignée (INC-316
 mise à jour) et le comportement reste inchangé ; l'arbitrage est redemandé au responsable avec ces faits.
 
+
+### décision 739 — `CRM-117` : l'aide de l'en-tête est une icône qui ouvre un panneau, et ce panneau porte le lien de l'écran
+
+*2026-10-26, arbitrage du responsable, posé avant la spécification.* **Question.** La décision 736 veut une entrée
+« Aide » dans l'en-tête qui ouvre le sommaire, **et** un lien par écran principal vers le chapitre qui le décrit. La
+ligne de l'en-tête est déjà serrée : entre `lg` et `xl`, le titre d'une affaire n'y recevait plus que 105 px avant
+INC-293. Trois formes ont été proposées : une icône qui ouvre un panneau ; une icône plus un lien après le titre, dans
+le fil d'Ariane ; une icône plus un lien en tête du contenu de chaque écran. **Arbitrage : une icône, un panneau.** Une
+seule icône « Aide » dans l'en-tête, à côté de la cloche, ouvre un panneau ancré, de la forme de celui des
+notifications (`docs/DESIGN_SYSTEM.md` §5.43). En tête du panneau, « Aide sur cet écran » mène au chapitre qui décrit
+l'écran courant, quand il en existe un. Dessous, « Sommaire du manuel ». **Conséquences** : l'en-tête ne gagne qu'une
+place ; le lien par écran vit dans le panneau, et non dans la page ; la correspondance entre écran et chapitre est
+tenue en un seul endroit, et la spécification de `CRM-117` T1 la nomme.
