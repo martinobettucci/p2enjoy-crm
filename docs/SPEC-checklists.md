@@ -1,7 +1,7 @@
 # Checklists et modèles de cards — `CRM-068`
 
-*Proposé le 2026-10-26, écrit avant toute ligne de code (`CLAUDE.md` §5), sur les arbitrages de la décision 747. En
-attente de validation du responsable : trois questions au §9.*
+*Proposé le 2026-10-26, écrit avant toute ligne de code (`CLAUDE.md` §5), sur les arbitrages de la décision 747 ; les trois
+questions du §9 tranchées le même jour (décision 748, options A).*
 
 Documents liés : `docs/SPEC-rattachements.md` (une affaire, plusieurs rattachements ; les valeurs de champ appartiennent
 au rattachement), `docs/SPEC-workflow-engine.md` (étapes, transitions, champs exigés, éditeur), `docs/SPEC-cards.md`
@@ -75,8 +75,9 @@ rattachement, en lecture, sous leur étape d'origine.
 ### 3.4 Les points exigés par une transition
 
 `public.workflow_transition_required_checklist_items` (`transition_id`, `step_item_id`, PK composite) : une transition
-exige que ces points soient **cochés sur le rattachement** pour être franchie. **[Q3]** Les points exigés sont ceux de
-l'**étape de départ** de la transition — un point d'une autre étape pourrait n'avoir jamais été ajouté.
+exige que ces points soient **cochés sur le rattachement** pour être franchie. Les points exigés sont ceux de
+l'**étape de départ** de la transition (Q3) — un point d'une autre étape pourrait n'avoir jamais été ajouté ; la base le
+garantit (un déclencheur refuse une exigence d'une autre étape, `22023 checklist_item_not_from_source_step`).
 
 `move_card` refuse alors en `P0001 checklist_incomplete`, avec la liste des points manquants dans le détail, **après**
 les champs exigés : les deux refus se lisent ensemble au board et sur la fiche, comme aujourd'hui pour les champs
@@ -96,7 +97,7 @@ de l'éditeur le dit (comme une exigence sur une question archivée, `docs/DESIG
 | `archived_at` | un modèle archivé n'est plus proposé |
 | `created_by`, `created_at`, `updated_at` | posés par la base |
 
-**[Q1]** Écriture : administrateur de l'espace. Lecture : tout membre.
+Écriture : **administrateur de l'espace** (Q1). Lecture : tout membre.
 
 ### 3.6 Les gestes en base
 
@@ -107,6 +108,9 @@ de l'éditeur le dit (comme une exigence sur une question archivée, `docs/DESIG
   le titre, la description, le montant, les valeurs de champ du rattachement et les **libellés de tous ses points**
   (libres et d'étape, devenus libres dans le modèle). Les cochages ne sont pas repris.
 - Les points se cochent par `update` sous RLS (`checked_at` posé par la base) ; aucune fonction n'est nécessaire.
+- **Le fil** (Q2) : un déclencheur écrit `checklist_checked` ou `checklist_unchecked` dans `card_events` — famille
+  « Champs » du fil, avec l'acteur et le libellé du point —, sur le rattachement pour un point d'étape, sur l'affaire pour
+  un point libre. Les deux types entrent dans la liste fermée de `card_events.type`.
 
 ## 4. Écrans
 
@@ -131,8 +135,8 @@ chapitre « Checklists » et une section « Modèles d'affaires ».
 
 Deux outils au catalogue (`docs/SPEC-mcp.md` §9.2) : `crm_card_checklist_list` (`consulter`) rend les points d'une
 affaire, libres et par rattachement, avec leur état et les exigences de transition ; `crm_card_checklist_set`
-(`modifier`) coche ou décoche un point. Aucun ajout, renommage ni retrait par le connecteur. **[Q2 implique peut-être une
-trace]**
+(`modifier`) coche ou décoche un point ; le fil en garde la trace, comme pour un geste d'écran (Q2). Aucun ajout,
+renommage ni retrait par le connecteur.
 
 ## 6. Seed
 
@@ -158,16 +162,8 @@ pgTAP par tranche (RLS, privilèges de colonne, déclencheurs, refus `checklist_
 API avec les jetons réels (la lectrice ne coche pas, le business developer coche ; un point d'étape ne se retire pas) ;
 unitaires ; E2E au clavier et aux quatre paliers, captures observées ; `scripts/verify-checklists.sh`.
 
-## 9. Questions au responsable
+## 9. Questions au responsable — tranchées (décision 748)
 
-- **Q1 — qui gère les modèles d'affaires ?**
-  - *Option A, recommandée* : l'**administrateur de l'espace**, comme les workflows et les modèles d'emails ;
-    « Enregistrer comme modèle » est donc réservé à l'administrateur.
-  - *Option B* : tout membre qui écrit l'affaire peut enregistrer un modèle ; seul l'administrateur modifie ou archive.
-- **Q2 — cocher un point laisse-t-il une trace dans le fil de l'affaire ?**
-  - *Option A, recommandée* : oui, un événement « Point coché » / « Point décoché », famille « Champs » du fil, avec son
-    auteur — y compris par le connecteur ;
-  - *Option B* : non, la case dit seulement qui l'a cochée et quand.
-- **Q3 — quels points une transition peut-elle exiger ?**
-  - *Option A, recommandée* : ceux de son **étape de départ** seulement ;
-  - *Option B* : n'importe quel point d'étape du workflow ; un point jamais ajouté compte comme non coché.
+- **Q1** : les modèles d'affaires sont gérés par l'**administrateur de l'espace** (option A).
+- **Q2** : cocher ou décocher un point **laisse une trace dans le fil** (option A).
+- **Q3** : une transition n'exige que des points de son **étape de départ** (option A).

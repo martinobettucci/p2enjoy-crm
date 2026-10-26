@@ -35805,3 +35805,11 @@ compteur d'interface attend 39 scénarios, il en compte 40 — l'écart est **é
 
 La spécification est écrite ensuite, avant tout code, et soumise au responsable.
 
+### décision 748 — `CRM-068` : les trois questions de `docs/SPEC-checklists.md` §9 tranchées
+
+*2026-10-26, réponses du responsable (question posée par `AskUserQuestion`).* **Q1, option A** : les modèles d'affaires
+— création, « Enregistrer comme modèle », modification, archivage — sont réservés à l'**administrateur de l'espace** ;
+tout membre s'en sert à la création d'une affaire. **Q2, option A** : cocher ou décocher un point écrit un événement
+« Point coché » / « Point décoché » dans le fil de l'affaire, famille « Champs », avec son auteur, connecteur compris.
+**Q3, option A** : une transition n'exige que des points de son **étape de départ**.
+
