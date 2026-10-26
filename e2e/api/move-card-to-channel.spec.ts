@@ -10,6 +10,9 @@
 // @verifies docs/JOURNAL.md décisions 213 à 218
 // @verifies CLAUDE.md §8 (aucune trace fabriquée), §10 (toute règle d'accès se prouve hors
 //           interface, avec le jeton réel du profil concerné)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.4 : `move_card_to_channel` désigne le rattachement de l'affaire et le
+//           rend (docs/SPEC-rattachements.md §5, §14) ; les scénarios nomment l'affaire, `corpsParRattachement` transmet
+//           son rattachement
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. La suite pgTAP prouve les mêmes règles **dans la
 // base**, avec `set local role` : elle ne traverse ni PostgREST, ni Kong, ni GoTrue. Or les huit
@@ -26,6 +29,7 @@
 
 import { expect, test } from '@playwright/test'
 import { URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { corpsParRattachement } from './rattachements'
 
 const RPC = '/rest/v1/rpc/move_card_to_channel'
 const CARDS = '/rest/v1/cards'
@@ -190,7 +194,10 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		// puis vérification 3.1, et le premier suffit.
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAnonymes(),
-			data: { card_id: CARD_GRANDS_COMPTES, to_channel_id: CHANNEL_APPELS_OFFRES },
+			data: await corpsParRattachement(request, {
+				card_id: CARD_GRANDS_COMPTES,
+				to_channel_id: CHANNEL_APPELS_OFFRES,
+			}),
 		})
 		expect(reponse.status()).toBe(401)
 		expect(((await reponse.json()) as Refus).code).toBe('42501')
@@ -209,7 +216,10 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonViewer),
-			data: { card_id: CARD_GRANDS_COMPTES, to_channel_id: CHANNEL_APPELS_OFFRES },
+			data: await corpsParRattachement(request, {
+				card_id: CARD_GRANDS_COMPTES,
+				to_channel_id: CHANNEL_APPELS_OFFRES,
+			}),
 		})
 		expect(reponse.status()).toBe(400)
 		expect(((await reponse.json()) as Refus).message).toBe('card_not_found')
@@ -224,7 +234,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		// `forbidden` vient de la RÈGLE, non du profil.
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonViewer),
-			data: { card_id: CARD_INTER, to_channel_id: CHANNEL_APPELS_OFFRES },
+			data: await corpsParRattachement(request, { card_id: CARD_INTER, to_channel_id: CHANNEL_APPELS_OFFRES }),
 		})
 		expect(reponse.status()).toBe(403)
 		const corps = (await reponse.json()) as Refus
@@ -237,7 +247,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 	test('d — card inexistante : card_not_found, 400', async ({ request }) => {
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_FANTOME, to_channel_id: CHANNEL_APPELS_OFFRES },
+			data: await corpsParRattachement(request, { card_id: CARD_FANTOME, to_channel_id: CHANNEL_APPELS_OFFRES }),
 		})
 		expect(reponse.status()).toBe(400)
 		expect(((await reponse.json()) as Refus).message).toBe('card_not_found')
@@ -249,7 +259,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		for (const card of [CARD_ARCHIVEE, CARD_CORBEILLE]) {
 			const reponse = await request.post(`${URL_API}${RPC}`, {
 				headers: enTetesAuthentifies(jetonAdmin),
-				data: { card_id: card, to_channel_id: CHANNEL_APPELS_OFFRES },
+				data: await corpsParRattachement(request, { card_id: card, to_channel_id: CHANNEL_APPELS_OFFRES }),
 			})
 			expect(reponse.status(), `card ${card.slice(-2)}`).toBe(400)
 			expect(((await reponse.json()) as Refus).message).toBe('card_not_found')
@@ -265,7 +275,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		// identifiant par identifiant par quiconque possède une card à déplacer (§6.4).
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_GRANDS_COMPTES, to_channel_id: CHANNEL_FANTOME },
+			data: await corpsParRattachement(request, { card_id: CARD_GRANDS_COMPTES, to_channel_id: CHANNEL_FANTOME }),
 		})
 		expect(reponse.status()).toBe(400)
 		expect(((await reponse.json()) as Refus).message).toBe('channel_not_found')
@@ -277,7 +287,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		// la poser dans 35 : rien d'autre que la vérification n° 4 ne produit ce refus.
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonBizdev),
-			data: { card_id: CARD_INTER, to_channel_id: CHANNEL_MAINTENANCE },
+			data: await corpsParRattachement(request, { card_id: CARD_INTER, to_channel_id: CHANNEL_MAINTENANCE }),
 		})
 		expect(reponse.status()).toBe(403)
 		expect(((await reponse.json()) as Refus).message).toBe('forbidden')
@@ -288,7 +298,10 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 	test('h — channel cible = channel courant : same_channel', async ({ request }) => {
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_GRANDS_COMPTES, to_channel_id: CHANNEL_GRANDS_COMPTES },
+			data: await corpsParRattachement(request, {
+				card_id: CARD_GRANDS_COMPTES,
+				to_channel_id: CHANNEL_GRANDS_COMPTES,
+			}),
 		})
 		expect(reponse.status()).toBe(400)
 		expect(((await reponse.json()) as Refus).message).toBe('same_channel')
@@ -299,7 +312,10 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		// par défaut, bien que les deux workflows du seed portent les sept mêmes nœuds.
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_MAINTENANCE, to_channel_id: CHANNEL_PROSPECTION },
+			data: await corpsParRattachement(request, {
+				card_id: CARD_MAINTENANCE,
+				to_channel_id: CHANNEL_PROSPECTION,
+			}),
 		})
 		expect(reponse.status()).toBe(400)
 		expect(((await reponse.json()) as Refus).message).toBe('step_mapping_required')
@@ -308,11 +324,11 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 	test('j — étape d’un AUTRE workflow : step_not_in_workflow', async ({ request }) => {
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: {
+			data: await corpsParRattachement(request, {
 				card_id: CARD_MAINTENANCE,
 				to_channel_id: CHANNEL_PROSPECTION,
 				to_step_id: ETAPE_QUALIFICATION,
-			},
+			}),
 		})
 		expect(reponse.status()).toBe(400)
 		expect(((await reponse.json()) as Refus).message).toBe('step_not_in_workflow')
@@ -333,11 +349,11 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: {
+			data: await corpsParRattachement(request, {
 				card_id: CARD_GRANDS_COMPTES,
 				to_channel_id: CHANNEL_PROSPECTION,
 				to_step_id: etapeDerivee,
-			},
+			}),
 		})
 		expect(reponse.status()).toBe(400)
 		const corps = (await reponse.json()) as Refus
@@ -383,7 +399,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_ESSAI_L, to_channel_id: CHANNEL_APPELS_OFFRES },
+			data: await corpsParRattachement(request, { card_id: CARD_ESSAI_L, to_channel_id: CHANNEL_APPELS_OFFRES }),
 		})
 		expect(reponse.status(), await reponse.text()).toBe(200)
 		const card = (await reponse.json()) as {
@@ -426,12 +442,12 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 
 		const deplacement = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: {
+			data: await corpsParRattachement(request, {
 				card_id: CARD_ESSAI,
 				to_channel_id: CHANNEL_PROSPECTION,
 				to_step_id: etapeDerivee,
 				discard_field_values: true,
-			},
+			}),
 		})
 		expect(deplacement.status(), await deplacement.text()).toBe(200)
 
@@ -466,11 +482,11 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 
 		const aller = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: {
+			data: await corpsParRattachement(request, {
 				card_id: CARD_ESSAI_N,
 				to_channel_id: CHANNEL_PROSPECTION,
 				to_step_id: etapeDerivee,
-			},
+			}),
 		})
 		expect(aller.status(), await aller.text()).toBe(200)
 
@@ -486,11 +502,11 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 
 		const retour = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: {
+			data: await corpsParRattachement(request, {
 				card_id: CARD_ESSAI_N,
 				to_channel_id: CHANNEL_MAINTENANCE,
 				to_step_id: ETAPE_QUALIFICATION,
-			},
+			}),
 		})
 		expect(retour.status()).toBe(200)
 		const rendue = (await retour.json()) as { channel_id: string; workflow_id: string }
@@ -522,11 +538,11 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 
 		const reponse = await request.post(`${URL_API}${RPC}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: {
+			data: await corpsParRattachement(request, {
 				card_id: CARD_ESSAI_P,
 				to_channel_id: CHANNEL_APPELS_OFFRES,
 				to_step_id: ETAPE_RELANCE,
-			},
+			}),
 		})
 		expect(reponse.status(), await reponse.text()).toBe(200)
 

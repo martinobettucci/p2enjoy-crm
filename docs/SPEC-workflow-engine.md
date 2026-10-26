@@ -2405,6 +2405,13 @@ Elle **n'est pas** :
 
 ### 6.2 Signature et valeur de retour
 
+**Révisée par `CRM-111` T2.3.4** (migration `0117`, décision 661, docs/SPEC-rattachements.md §5) : la signature est
+`public.move_card_to_channel(p_placement uuid, to_channel_id uuid, to_step_id uuid default null, discard_field_values
+boolean default false) returns public.card_placements` — elle désigne le **rattachement** et le rend ; la forme par
+affaire est supprimée. Les vérifications du §6.4, leur ordre et leurs messages sont inchangés, et portent sur le
+rattachement ; une neuvième, `already_attached`, suit la n° 5 (décision 731). L'événement `channel_changed` est écrit par
+la table du rattachement (T2.3.0). Ce qui suit vaut, « card » se lisant « rattachement ».
+
 ```
 public.move_card_to_channel(
     card_id              uuid,
@@ -2487,6 +2494,7 @@ Les codes HTTP sont ceux du §4.4, **mesurés** contre PostgREST `v14.12`, non d
 | 3 | Le channel cible existe et est **visible de l'appelant** | `channel_not_found` | `P0001` | `400` |
 | 4 | L'appelant a le droit d'**écriture** sur le channel **cible** | `forbidden` | `42501` | `403` |
 | 5 | Le channel cible n'est pas le channel courant | `same_channel` | `P0001` | `400` |
+| 5 bis | L'affaire n'a pas **déjà** un autre rattachement sur le channel cible — `CRM-111` T2.3.4, décision 731 | `already_attached` | `P0001` | `400` |
 | 6 | L'étape de destination est fournie si le workflow change | `step_mapping_required` | `P0001` | `400` |
 | 7 | L'étape fournie appartient au workflow du channel cible | `step_not_in_workflow` | `P0001` | `400` |
 | 8 | Les réponses de formulaire sont assumées perdues si le workflow change | `field_values_would_be_lost`, `DETAIL` portant leur nombre | `P0001` | `400` |
@@ -2690,6 +2698,8 @@ Toutes les lignes sont à **mesurer** contre PostgREST, non à déduire.
 | n | Succès : objet JSON unique, `channel_id`, `workflow_id`, `current_step_id` et `position` à jour | `200` |
 | o | `PATCH` direct de `cards.channel_id` par `authenticated` | `403`, `42501` — la garde n'est pas contournable |
 | p | Après succès : un `channel_changed` de plus, **et aucun `moved`** | lecture de `card_events` |
+
+**`already_attached` n'a pas de ligne d'API** tant qu'une affaire n'a qu'un rattachement (`CRM-111` T3) : la base ne peut pas porter l'état qui la déclenche. Elle est prouvée par `supabase/tests/0019_move_card_to_channel.test.sql` §10, l'index de la bascule retiré dans la transaction de la suite.
 
 ### 6.10 Ce que `CRM-045` ne livre pas, et pourquoi
 

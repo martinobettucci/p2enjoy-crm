@@ -345,7 +345,7 @@ d'**écriture** restent jugées ligne à ligne : elles ne portent que sur la lig
 | Créer une affaire | `creer_affaire(p_channel, p_titre)` — signature inchangée | crée l'affaire **et** son premier rattachement, à l'étape initiale |
 | Rattacher | `attach_card(p_card, p_channel)` — nouvelle | **étape initiale** du workflow du channel, bloc vide (décision 643, arbitrage 2) ; si un rattachement archivé existe déjà, il est désarchivé tel quel |
 | Faire avancer | `move_card(p_placement, to_step_id, comment)` — signature **remplacée** | fait avancer un rattachement ; les champs exigés se lisent sur ses valeurs |
-| Déplacer vers un autre channel | `move_card_to_channel(p_placement, to_channel_id, to_step_id, discard_field_values)` — signature **remplacée** | déplace **un rattachement** ; refusé si l'affaire est déjà rattachée au channel cible |
+| Déplacer vers un autre channel | `move_card_to_channel(p_placement, to_channel_id, to_step_id, discard_field_values)` — signature **remplacée** | déplace **un rattachement** ; refusé si l'affaire est déjà rattachée au channel cible — `already_attached`, vérifié juste après `same_channel` (décision 731) |
 | Sommeil, réveil | `snooze_card(p_placement, until)`, `wake_card(p_placement)` — signatures **remplacées** | par rattachement |
 | Armer une cadence | `armer_sequence_relance(p_placement, p_sequence_id, p_identity_id)` — signature **remplacée** | l'inscription désigne le rattachement (décision 657, arbitrage 2) |
 | Archiver, désarchiver | mise à jour de `archived_at` du rattachement | droit d'écriture sur son channel |
@@ -532,6 +532,20 @@ board désigne le rattachement de l'affaire et fond la ligne rendue dans l'affai
 rattachement depuis `card_id` ; les preuves hors interface nomment l'affaire et reçoivent son rattachement
 (`e2e/api/rattachements.ts`). Cinq harnais ne rejouent plus de migration ancienne pour dégrader `move_card` : ils la
 dégradent depuis sa définition en base (`docs/SPEC-test-harness.md` §3.7).
+
+**T2.3.4, livrée en développement le 2026-10-26** (migration `0117`) : `move_card_to_channel(p_placement, to_channel_id,
+to_step_id, discard_field_values)`, qui rend le rattachement. Les huit vérifications de `CRM-045` portent sur le
+rattachement — son channel d'origine, son workflow, son étape, ses réponses (`card_field_values.placement_id`) — et une
+neuvième s'y ajoute, **`already_attached`**, juste après `same_channel` : un autre rattachement de la même affaire est déjà
+sur le channel cible (décision 731). Elle ne peut pas se déclencher tant qu'une affaire n'a qu'un rattachement — l'index
+`card_placements_one_per_card_idx` de la `0108` le tient jusqu'à T3 — et elle est donc prouvée en pgTAP seulement, l'index
+retiré dans la transaction de la suite. **Mesuré au passage** : avec deux rattachements, le miroir `cards` →
+`card_placements` de la bascule recopie l'affaire sur tous ses rattachements, et un déplacement casse sur
+`card_placements_card_channel_key`. C'est la frontière déjà écrite de la bascule — T2.4 retire les miroirs avant que T3
+ne rende un second rattachement licite. La webapp n'appelle pas ce geste ; le connecteur (`crm_card_move_to_channel`), le
+seed (l'aller-retour de `…0c5`) et les preuves hors interface passent dans le même changement.
+`verify-move-card-to-channel.sh` et `verify-timeline.sh` ne rejouent plus les migrations 16, 17 et 20, dont le rejeu
+supprimait la fonction par rattachement (`docs/SPEC-test-harness.md` §3.7).
 
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne

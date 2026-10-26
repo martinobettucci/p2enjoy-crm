@@ -737,7 +737,10 @@ FICHIERS_SQL_ATTENDUS=102
 # son privilège de mise à jour, l'écriture de l'administratrice, le refus des trois autres profils) ; `0005_channels`
 # RÉVISÉE sans changer de plan (`color` dans la liste exacte des colonnes). 4211 + 19 = 4230, MESURÉ — somme des
 # assertions rendues par `npm run test:sql`, « 102 fichiers ».
-ASSERTIONS_ATTENDUES=4230
+# **+4 par `CRM-111` T2.3.4, 2026-10-26** : `0019_move_card_to_channel` passe de 67 à **71** — le rattachement rendu est
+# celui reçu, puis `already_attached` dans les deux sens, l'index de la bascule retiré dans la transaction (décision 731) ;
+# `0097` révisée sans changer de plan. 4230 + 4 = 4234.
+ASSERTIONS_ATTENDUES=4234
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

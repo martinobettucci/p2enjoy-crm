@@ -40,6 +40,7 @@ REFUS_NOMMES = {
     "step_mapping_required": "step_mapping_required — the target channel uses another workflow: name the arrival step "
     "(`to_step`).",
     "same_channel": "same_channel — the affaire is already in that channel.",
+    "already_attached": "already_attached — the affaire is already attached to that channel by another placement.",
     "snooze_date_in_past": "snooze_date_in_past — the wake-up date must be in the future.",
     "snooze_date_required": "snooze_date_required — give the wake-up date `until`.",
     "aucune etape initiale": "aucune_etape_initiale — the channel's workflow has no initial step; an administrator "
@@ -429,8 +430,11 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         discard_field_values: Annotated[bool, Field(description="Accept losing the form answers if the workflow changes")] = False,
     ) -> dict[str, Any]:
         appel = appel_courant()
+        # `CRM-111` T2.3.4 : le geste désigne le rattachement de l'affaire, résolu depuis `card_id` (§11).
         arguments: dict[str, Any] = {
-            "card_id": card_id, "to_channel_id": to_channel_id, "discard_field_values": discard_field_values,
+            "p_placement": await rattachement(appel.jeton, card_id),
+            "to_channel_id": to_channel_id,
+            "discard_field_values": discard_field_values,
         }
         if to_step is not None:
             canal = await lire(

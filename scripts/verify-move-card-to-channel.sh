@@ -8,6 +8,10 @@
 # @verifies docs/SPEC-seed.md §2.16 (aller-retour de channel, convergence)
 # @verifies docs/JOURNAL.md décisions 213 à 218
 # @verifies CLAUDE.md §8 (aucune trace fabriquée), §10 (règles prouvées hors interface)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.4 : `move_card_to_channel(p_placement, …)` désigne le rattachement et le
+#           rend, la garde `already_attached` (docs/SPEC-rattachements.md §5, §14 ; docs/JOURNAL.md décision 731) ;
+#           les événements naissent sur `card_placements` (T2.3.0), les colonnes ouvertes sont quatre (T2.3.2) ; aucune
+#           migration ancienne n'est plus rejouée (docs/SPEC-test-harness.md §3.7, INC-304)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-045` :
 #
@@ -48,12 +52,16 @@ cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
 
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
+
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 MIGRATION=supabase/migrations/0017_move_card_to_channel.sql
-MIGRATION_ACTUELLE=supabase/migrations/0020_change_channel_workflow.sql
+# `CRM-111` T2.3.4 : la dernière autorité sur la fonction. Le harnais ne rejoue ni l'une ni l'autre (§3.7) : il les lit.
+MIGRATION_RATTACHEMENT=supabase/migrations/0117_changer_de_channel_un_rattachement.sql
 TEST_SQL=supabase/tests/0019_move_card_to_channel.test.sql
 SPEC_API=e2e/api/move-card-to-channel.spec.ts
 SEED=supabase/seed/apply-seed.sh
@@ -87,7 +95,8 @@ psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@
 
 TRAVAIL=$(mktemp -d)
 DEPART=$(mktemp -d)
-nettoyer() { rm -rf "$TRAVAIL" "$DEPART"; }
+# Les définitions dégradées sont réappliquées depuis la base même si le harnais s'interrompt (§3.7).
+nettoyer() { degradations_restaurer; rm -rf "$TRAVAIL" "$DEPART" "$DEGRADATIONS_DOSSIER"; }
 trap nettoyer EXIT
 
 # État des fichiers à l'entrée du harnais, et non l'état de `HEAD` : un contrôle qui comparerait au
@@ -95,7 +104,7 @@ trap nettoyer EXIT
 empreinte_depart() { cp "$1" "$DEPART/$(printf '%s' "$1" | tr '/' '@')"; }
 est_rendu_intact() { diff -q "$1" "$DEPART/$(printf '%s' "$1" | tr '/' '@')" >/dev/null 2>&1; }
 
-for fichier in "$MIGRATION" "$TEST_SQL"; do
+for fichier in "$MIGRATION" "$MIGRATION_RATTACHEMENT" "$TEST_SQL"; do
 	[ -f "$fichier" ] && empreinte_depart "$fichier"
 done
 
@@ -103,7 +112,7 @@ done
 
 titre "1. Fichiers livrés et traçabilité"
 
-for fichier in "$MIGRATION" "$TEST_SQL" "$SPEC_API"; do
+for fichier in "$MIGRATION" "$MIGRATION_RATTACHEMENT" "$TEST_SQL" "$SPEC_API"; do
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
 
@@ -111,6 +120,12 @@ if head -3 "$MIGRATION" | grep -q '@spec CRM-045'; then
 	ok "$(basename "$MIGRATION") porte son commentaire @spec"
 else
 	fail "$(basename "$MIGRATION") ne cite pas son unité de backlog"
+fi
+
+if head -1 "$MIGRATION_RATTACHEMENT" | grep -q '@spec CRM-111'; then
+	ok "$(basename "$MIGRATION_RATTACHEMENT") porte son commentaire @spec — tranche T2.3.4"
+else
+	fail "$(basename "$MIGRATION_RATTACHEMENT") ne cite pas son unité de backlog"
 fi
 
 for fichier in "$TEST_SQL" "$SPEC_API"; do
@@ -142,11 +157,19 @@ else
 fi
 
 arguments=$(psql_db -c "select pg_get_function_arguments(to_regprocedure('$SIGNATURE'))")
-attendu='card_id uuid, to_channel_id uuid, to_step_id uuid DEFAULT NULL::uuid, discard_field_values boolean DEFAULT false'
+# `CRM-111` T2.3.4 : le premier paramètre désigne le RATTACHEMENT ; la forme par affaire est supprimée (décision 661).
+attendu='p_placement uuid, to_channel_id uuid, to_step_id uuid DEFAULT NULL::uuid, discard_field_values boolean DEFAULT false'
 if [ "$arguments" = "$attendu" ]; then
-	ok "les paramètres sont ceux du §6.2 — to_step_id, PAS step_mapping (INC-073, décision 213)"
+	ok "les paramètres sont ceux du §6.2 — to_step_id, PAS step_mapping (INC-073) — et désignent le rattachement"
 else
 	fail "signature inattendue : « $arguments »"
+fi
+
+retour=$(psql_db -c "select prorettype::regtype from pg_proc where oid=to_regprocedure('$SIGNATURE')")
+if [ "$retour" = card_placements ]; then
+	ok "elle rend le RATTACHEMENT (card_placements), non l'affaire — docs/SPEC-rattachements.md §5"
+else
+	fail "type de retour inattendu : « $retour »"
 fi
 
 if [ "$(psql_db -c "select prosecdef from pg_proc where oid=to_regprocedure('$SIGNATURE')")" = t ]; then
@@ -220,12 +243,16 @@ fi
 # La garde `moved` doit être CONDITIONNÉE au channel — décision 215. Depuis CRM-019, cette
 # condition est structurelle : `moved` vit dans le dernier `elsif`, après `channel_changed` puis
 # `workflow_changed`. Le contrôle lit le corps en base, non le fichier.
+#
+# RÉVISÉ PAR `CRM-111` T2.3.4 : depuis T2.3.0 (migration 0110), ces événements naissent sur la table du RATTACHEMENT,
+# `app.card_placements_write_events` ; le déclencheur de `cards` n'écrit plus que la corbeille. Le contrôle lit le corps
+# qui fait autorité.
 corps=$(psql_db -c "select prosrc from pg_proc p join pg_namespace n on n.oid=p.pronamespace
-	where n.nspname='app' and p.proname='card_events_apres_maj_card'")
+	where n.nspname='app' and p.proname='card_placements_write_events'")
 if printf '%s' "$corps" | grep -q "channel_changed"; then
-	ok "le trigger de cards écrit channel_changed : le changement de dossier n'est plus silencieux"
+	ok "le déclencheur du rattachement écrit channel_changed : le changement de dossier n'est plus silencieux"
 else
-	fail "le trigger n'écrit AUCUN channel_changed : le fait n° 2 du §6.3 subsisterait"
+	fail "le déclencheur n'écrit AUCUN channel_changed : le fait n° 2 du §6.3 subsisterait"
 fi
 
 if printf '%s' "$corps" | grep -q "elsif new.current_step_id is distinct from old.current_step_id"; then
@@ -241,12 +268,14 @@ fi
 
 titre "4. Les colonnes fermées d'avance (décision 214)"
 
-for colonne in channel_id workflow_id current_step_id; do
-	if [ "$(psql_db -c "select has_column_privilege('authenticated','public.cards','$colonne','update')")" = f ]; then
-		ok "cards.$colonne est FERMÉE à authenticated — la garde était close avant d'exister"
-	else
-		fail "cards.$colonne est OUVERTE : la RPC deviendrait une commodité facultative"
-	fi
+for table in cards card_placements; do
+	for colonne in channel_id workflow_id current_step_id; do
+		if [ "$(psql_db -c "select has_column_privilege('authenticated','public.$table','$colonne','update')")" = f ]; then
+			ok "$table.$colonne est FERMÉE à authenticated — la garde était close avant d'exister"
+		else
+			fail "$table.$colonne est OUVERTE : la RPC deviendrait une commodité facultative"
+		fi
+	done
 done
 
 ouvertes=$(psql_db -c "select count(*) from information_schema.column_privileges
@@ -256,10 +285,13 @@ ouvertes=$(psql_db -c "select count(*) from information_schema.column_privileges
 # ayant livré `endormir_card` / `reveiller_card` comme seul chemin d'écriture du sommeil. Ce
 # contrôle a dénoncé la fermeture dès qu'elle a eu lieu — c'est ce qu'on lui demande —, et il est
 # révisé dans le même changement que la preuve qu'il compte.
-if [ "$ouvertes" = 11 ]; then
-	ok "ONZE colonnes ouvertes, et pas une de plus : l'énumération de CRM-013 est intacte"
+#
+# QUATRE DEPUIS `CRM-111` T2.3.2 (migration 0112) : les sept colonnes de rattachement s'écrivent sur `card_placements`.
+# Révisé par T2.3.4, comme `0019` n° 52 et `verify-colonnes-protegees.sh` l'ont été par T2.3.2 (décision 51).
+if [ "$ouvertes" = 4 ]; then
+	ok "QUATRE colonnes ouvertes sur l'affaire, et pas une de plus : CRM-013, moins le sommeil et le rattachement"
 else
-	fail "$ouvertes colonnes ouvertes au lieu de 11 : une migration a élargi ou rétréci le privilège"
+	fail "$ouvertes colonnes ouvertes au lieu de 4 : une migration a élargi ou rétréci le privilège"
 fi
 
 if [ "$(psql_db -c "select has_column_privilege('service_role','public.cards','channel_id','update')")" = t ]; then
@@ -429,61 +461,60 @@ degrader_et_verifier \
 # LA DÉGRADATION LA PLUS FINE DU HARNAIS : la garde `moved` désinhibée. Le produit continue de
 # fonctionner, l'événement continue de naître — et un `moved` parasite affirme qu'une arête a été
 # franchie. Seule l'assertion « AUCUN moved » de la suite le voit.
-degrader_et_verifier \
-	"la garde moved désinhibée — un moved parasite affirmerait une arête inexistante" \
-	"create or replace function app.card_events_apres_maj_card() returns trigger
-	 language plpgsql security definer set search_path = '' as \$degrade\$
-	 begin
-	   if new.current_step_id is distinct from old.current_step_id then
-	     perform app.card_event_ecrire(new.id, new.workspace_id, 'moved',
-	       jsonb_build_object('from_step_id', old.current_step_id,
-	                          'to_step_id', new.current_step_id));
-	   end if;
-	   if new.channel_id is distinct from old.channel_id then
-	     perform app.card_event_ecrire(new.id, new.workspace_id, 'channel_changed',
-	       jsonb_build_object('from_channel_id', old.channel_id,
-	                          'to_channel_id', new.channel_id,
-	                          'from_workflow_id', old.workflow_id,
-	                          'to_workflow_id', new.workflow_id,
-	                          'from_step_id', old.current_step_id,
-	                          'to_step_id', new.current_step_id));
-	   end if;
-	   return null;
-	 end;
-	 \$degrade\$" \
-	"select 1"
+#
+# RÉÉCRITE PAR `CRM-111` T2.3.4 (docs/SPEC-test-harness.md §3.7) : elle remplaçait le déclencheur de `cards`, qui
+# n'écrit plus ces événements depuis T2.3.0 — la dégradation ne dégradait plus rien. Elle porte désormais sur le
+# déclencheur du rattachement, depuis sa définition EN BASE : le dernier `elsif` devient un `if` indépendant.
+degrader_fonction_et_verifier() {
+	local libelle=$1 signature=$2 avant=$3 apres=$4
+	if ! degradation_fonction "$signature" "$avant" "$apres"; then
+		fail "dégradation NON CONCLUANTE (fragment introuvable ou définition refusée) : $libelle"
+		return
+	fi
+	if npm run test:sql -- "$TEST_SQL" >"$TRAVAIL/degradation.log" 2>&1; then
+		fail "DÉGRADATION NON VUE : $libelle"
+	else
+		ok "dégradation vue : $libelle"
+	fi
+	degradations_restaurer
+}
 
-# LA VÉRIFICATION N° 8 RETIRÉE : les réponses seraient détruites SANS que l'appelant l'ait dit.
-degrader_et_verifier \
+degrader_fonction_et_verifier \
+	"la garde moved désinhibée — un moved parasite affirmerait une arête inexistante" \
+	'app.card_placements_write_events()' \
+	'elsif new.current_step_id is distinct from old.current_step_id then' \
+	'end if; if new.current_step_id is distinct from old.current_step_id then'
+
+# LA VÉRIFICATION N° 8 RETIRÉE : les réponses seraient détruites SANS que l'appelant l'ait dit. Réécrite par T2.3.4 :
+# elle renommait la fonction, ce qui ne prouvait que son absence ; elle retire désormais le refus lui-même.
+degrader_fonction_et_verifier \
 	"discard_field_values ignoré — les réponses seraient détruites en silence (décision 216)" \
-	"alter function public.move_card_to_channel(uuid, uuid, uuid, boolean)
-	   rename to move_card_to_channel_degradee" \
-	"select 1"
+	"$SIGNATURE" \
+	'if v_valeurs > 0 and not coalesce(discard_field_values, false) then' \
+	'if false then'
+
+# `CRM-111` T2.3.4 : la garde nouvelle retirée — la contrainte `card_placements_card_channel_key` parlerait seule, en
+# 23505, au lieu du refus nommé (décision 731).
+degrader_fonction_et_verifier \
+	"already_attached retirée — le 23505 d'une contrainte au lieu du refus nommé" \
+	"$SIGNATURE" \
+	"raise exception 'already_attached';" \
+	'null;'
 
 # --- 8. Restauration ----------------------------------------------------------------------------
-# La restauration est CONSTATÉE, pas supposée : la migration est rejouée, puis les fichiers relus.
+# La restauration est CONSTATÉE, pas supposée : la fonction est relue en base, la base reconstruite, les fichiers relus.
 
 titre "8. Restauration"
 
-# La fonction renommée par la dernière dégradation est retirée avant le rejeu : la migration
-# recréerait la bonne sans effacer l'usurpatrice.
-psql_db -c "drop function if exists public.move_card_to_channel_degradee(uuid, uuid, uuid, boolean)" \
-	>/dev/null 2>&1 || true
-
-if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-	-f - <"$MIGRATION" >"$TRAVAIL/rejeu.log" 2>&1; then
-	ok "la migration se rejoue sans erreur — idempotence et convergence (INC-035)"
+# `CRM-111` T2.3.4 (docs/SPEC-test-harness.md §3.7) : la restauration NE REJOUE PLUS les migrations 17 et 20. La 17
+# rejouée supprimerait la fonction par rattachement — même types d'arguments — pour remettre la forme par affaire ; la
+# 20 redéfinirait des fonctions que des migrations postérieures ont remplacées. Les définitions dégradées sont
+# réappliquées depuis la base (`degradations_restaurer`, déjà fait après chaque dégradation), et le vocabulaire réduit —
+# une structure — se répare par la reconstruction qui suit.
+if [ "$(psql_db -c "select pg_get_function_arguments(to_regprocedure('$SIGNATURE'))")" = "$attendu" ]; then
+	ok "les dégradations de fonction sont restaurées depuis la base : la forme par rattachement est en place"
 else
-	fail "le rejeu de la migration ÉCHOUE : voir $TRAVAIL/rejeu.log"
-fi
-
-# La migration 20 possède le trigger partagé et `workflow_changed` ; rejouer la 17 seule
-# retirerait silencieusement ce dernier.
-if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-	-f - <"$MIGRATION_ACTUELLE" >"$TRAVAIL/rejeu20.log" 2>&1; then
-	ok "la migration 20 est rejouée après la 17 : la restauration conserve CRM-019"
-else
-	fail "le rejeu de la migration 20 ÉCHOUE : voir $TRAVAIL/rejeu20.log"
+	fail "la fonction n'est pas revenue à sa définition par rattachement"
 fi
 
 # INC-144 — assertion RÉVISÉE, et non retirée. Elle affirmait que rejouer 17 puis 20 suffisait à
@@ -530,7 +561,7 @@ else
 	fail "le vocabulaire restauré est amputé de :$manquants"
 fi
 
-for fichier in "$MIGRATION" "$TEST_SQL"; do
+for fichier in "$MIGRATION" "$MIGRATION_RATTACHEMENT" "$TEST_SQL"; do
 	if est_rendu_intact "$fichier"; then
 		ok "$(basename "$fichier") est rendu INTACT"
 	else

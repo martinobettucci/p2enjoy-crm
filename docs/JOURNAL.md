@@ -35245,3 +35245,63 @@ d'interface créait ses objets ; rejoué au repos**. Le contenu commité, extrai
 
 **Reste** : T5, la livraison — la `0116` après la `0115`, avec la webapp de `main` —, sur instruction du responsable, puis
 son constat ; les arbitrages d'INC-313 et d'INC-314 ; la relecture des choix de forme marqués à T1.
+
+
+### décision 731 — `CRM-111` T2.3.4 : le refus « déjà rattachée au channel cible » se nomme `already_attached`
+
+*2026-10-26, session interactive, précision d'exécution de `docs/SPEC-rattachements.md` §5, qui dit « refusé si
+l'affaire est déjà rattachée au channel cible » sans nommer le refus.* **Problème** : sans refus nommé, la base
+répondrait par la contrainte `card_placements_card_channel_key` (`23505`, rendu `409` par PostgREST), dont le message
+n'est pas un message de produit. **Décision** : `already_attached` (`P0001`, donc `400`), en anglais comme tout code
+d'erreur (décision 658), vérifié **juste après `same_channel`** — les deux disent « l'affaire est déjà là », l'un par ce
+rattachement, l'autre par un autre — et **avant `step_mapping_required`**, puisqu'aucun remappage n'a de sens vers un
+channel où l'affaire est déjà. Le channel cible est lisible à ce point (vérification n° 3) : le refus ne révèle rien.
+**Conséquence** : tant qu'une affaire n'a qu'un rattachement (index `card_placements_one_per_card_idx`, jusqu'à T3), le
+refus ne peut pas se produire ; il est prouvé en pgTAP, l'index retiré dans la transaction de la suite. Le connecteur
+le traduit (`REFUS_NOMMES`).
+
+### `CRM-111` T2.3.4 — changer de channel un rattachement (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* **Fait** : migration `0117` —
+`move_card_to_channel(p_placement, to_channel_id, to_step_id, discard_field_values)`, la forme par affaire supprimée
+(décision 661), qui rend le rattachement. Les huit vérifications de `CRM-045` portent sur le rattachement ; la neuvième,
+`already_attached`, est la décision 731. Les réponses supprimées quand le workflow change sont celles du rattachement,
+**avant** l'écriture : la clé `card_field_values (card_id, workflow_id) → cards` refuserait sinon le miroir. Channel,
+workflow, étape et position s'écrivent sur `card_placements` **en une instruction** (la clé d'étape n'est pas
+différable) ; l'événement naît sur le rattachement, le miroir reporte sur `cards`. **Appelants** : le connecteur
+(`crm_card_move_to_channel`, et la traduction du refus nouveau), le seed (l'aller-retour de `…0c5`), la spec d'API
+(par `corpsParRattachement`), les suites `0019` (71 assertions) et `0097`, le témoin des types. La webapp n'appelle pas
+ce geste.
+
+**Mesuré en écrivant la preuve de `already_attached`** : l'index de la bascule interdit un second rattachement, et la
+suite le retire dans sa transaction. Le refus tient alors ; mais la contre-épreuve naïve — déplacer le même rattachement
+**ailleurs**, le second toujours en place — rend `23505` sur `card_placements_card_channel_key`. Le miroir `cards` →
+`card_placements` recopie l'affaire sur **tous** ses rattachements : il ne vaut que pour un rattachement par affaire,
+ce que l'index garantit. Ce n'est pas un défaut à corriger ici, c'est la frontière de la bascule, déjà écrite : T2.4
+retire les miroirs avant que T3 ne rende un second rattachement licite. La contre-épreuve retire donc le second
+rattachement, et le même appel passe. Non-complaisance : la garde retirée, l'assertion rougit sur le `23505`.
+
+**Deux harnais restauraient en rejouant les migrations 16, 17 et 20** (`verify-move-card-to-channel.sh`,
+`verify-timeline.sh`). Avec la `0117`, la 17 rejouée **supprime** la fonction par rattachement — même types d'arguments —
+pour remettre la forme par affaire ; la 16 rendrait au déclencheur de `cards` l'écriture des événements, en doublon de
+celle du rattachement. Ils suivent désormais le `docs/SPEC-test-harness.md` §3.7 : dégradations depuis la définition en
+base, restauration par `degradations_restaurer` et par la reconstruction. Au passage, trois de leurs contrôles visaient
+un état que T2.3.0 et T2.3.2 avaient changé sans les réviser — le déclencheur de `cards` comme source de
+`channel_changed`, « ONZE colonnes ouvertes », la garde `moved` dégradée sur `cards` — ; ils lisent l'autorité actuelle.
+Et la ligne de `move_card` au `docs/SCHEMA.md` §9 portait encore `card_id` : oubli de T2.3.3, corrigé.
+
+**Un défaut de ma méthode de commit, signalé par la session de `CRM-072`** : le commit de T2.3.3 (`6b8b424c`) a emporté
+ses décisions 727 et 728 et sa section « Migration `0115` » de `docs/SCHEMA.md`, contiguës à mes blocs dans le même hunk.
+Mon contrôle ne cherchait que mes propres mots-clés dans le reste. Sans dommage (son commit `c5d064fe` les complète), mais
+la règle est désormais : relire le contenu **entier** de chaque hunk d'un fichier partagé avant de le committer.
+
+**Vérifications** : pgTAP `0019` 71/71, `0097` 43/43, suite complète **102 fichiers, 4234 assertions, aucune anomalie**
+(dont les 19 de la suite non committée de `CRM-116`) ; API `move-card-to-channel`, `move-card`, `rattachements-*`,
+`timeline` **72/72** ; connecteur, unitaires 206 passés, intégration réelle verte après reconstruction du service `mcp`
+depuis l'arbre ; `types:check` à l'octet ; `typecheck` vert sur le contenu commité, extrait seul ; interface du
+connecteur (`e2e/ui/connecteur-mcp.spec.ts`) **8/8**, rejouée seule une fois libéré le port 4173, que tenait une
+`vite preview` orpheline d'une autre session. **Pas encore tournés** : `verify-move-card-to-channel.sh` et
+`verify-timeline.sh`, réécrits ici, reconstruisent la base, et la session de `CRM-072` y mène une campagne d'une heure.
+La tranche reste `[~]` jusqu'à leur passage. Les non-complaisances qu'ils portent — la garde `moved` désinhibée sur le
+rattachement, le déclencheur du rattachement retiré, `already_attached` retirée — ont été mesurées une à une sur la suite
+qu'ils rejouent, en transaction annulée : chacune la fait rougir.

@@ -11,6 +11,8 @@
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-073 (`step_mapping`), INC-046 (non levée)
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : sept colonnes de rattachement s'écrivent sur `card_placements`, plus
 --           sur `cards` (docs/SPEC-rattachements.md §3.2, §4, §5)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.4 : `move_card_to_channel` désigne le RATTACHEMENT et le rend ; la garde
+--           `already_attached` (docs/SPEC-rattachements.md §5, §14 ; docs/JOURNAL.md décision 731)
 --
 -- Suite pgTAP de l'unité `CRM-045`. Elle prouve huit choses :
 --
@@ -41,7 +43,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(67);
+select plan(71);
 
 -- Raccourcis vers les objets du seed, seule source de données de cette suite. Les identifiants
 -- sont stables par contrat (docs/SPEC-seed.md, docs/SPEC-cards.md §9).
@@ -142,9 +144,10 @@ select has_function('public', 'move_card_to_channel',
 	'`public.move_card_to_channel(uuid, uuid, uuid, boolean)` est livrée');
 
 select function_returns('public', 'move_card_to_channel',
-	array['uuid', 'uuid', 'uuid', 'boolean'], 'cards',
-	'Elle rend `public.cards`, non `void` : PostgREST en fait un objet JSON unique, et le client '
-	'obtient le channel, le workflow, l''étape et `position` sans relecture (§6.2)');
+	array['uuid', 'uuid', 'uuid', 'boolean'], 'card_placements',
+	'Elle rend `public.card_placements` depuis `CRM-111` T2.3.4 (révisée, décision 51), non `void` : PostgREST en fait '
+	'un objet JSON unique, et le client obtient le channel, le workflow, l''étape et `position` du RATTACHEMENT sans '
+	'relecture (§6.2, docs/SPEC-rattachements.md §5)');
 
 select is(
 	(select p.prosecdef from pg_proc p
@@ -179,10 +182,11 @@ select is(
 	(select pg_get_function_arguments(p.oid) from pg_proc p
 	   join pg_namespace n on n.oid = p.pronamespace
 	  where n.nspname = 'public' and p.proname = 'move_card_to_channel'),
-	'card_id uuid, to_channel_id uuid, to_step_id uuid DEFAULT NULL::uuid, '
+	'p_placement uuid, to_channel_id uuid, to_step_id uuid DEFAULT NULL::uuid, '
 	'discard_field_values boolean DEFAULT false',
 	'Les paramètres portent les noms du §6.2 : `to_channel_id` et `to_step_id`, PAS `step_mapping` '
-	'(INC-073, décision 213). `to_step_id` et `discard_field_values` ont un défaut');
+	'(INC-073, décision 213). `to_step_id` et `discard_field_values` ont un défaut. Le premier désigne le '
+	'RATTACHEMENT depuis `CRM-111` T2.3.4 : `p_placement`, la forme par affaire est SUPPRIMÉE (décision 661)');
 
 -- --- 1.2 Privilèges : `anon` nommément exclu, et ce n'est pas une précaution -------------------
 -- MESURÉ (décision 80) : l'image Supabase pose des `ALTER DEFAULT PRIVILEGES` qui accordent
@@ -276,14 +280,14 @@ select throws_ok(
 	'PostgREST (§4.4)');
 
 select throws_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c8',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c8'),
 	                                     '5eed0000-0000-4000-8000-000000000033')$$,
 	'P0001', 'card_not_found',
 	'Card ARCHIVÉE traitée comme ABSENTE : « active » a la même définition qu''ailleurs '
 	'(docs/SPEC-cards.md §5). Une card qu''on a rangée ne se déplace pas ; on la restaure d''abord');
 
 select throws_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c9',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c9'),
 	                                     '5eed0000-0000-4000-8000-000000000033')$$,
 	'P0001', 'card_not_found',
 	'Card en CORBEILLE traitée comme absente, pour le même motif — et non par un refus qui lui '
@@ -297,14 +301,14 @@ select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
 
 select throws_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c1',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                                     '5eed0000-0000-4000-8000-000000000033')$$,
 	'P0001', 'card_not_found',
 	'Card INVISIBLE du viewer : `card_not_found`, JAMAIS `forbidden`. Répondre « interdit » '
 	'confirmerait son existence à qui n''a pas le droit de la connaître (§6.4)');
 
 select throws_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c6',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                                     '5eed0000-0000-4000-8000-000000000033')$$,
 	'42501', 'forbidden',
 	'Card VISIBLE mais lecteur seulement : `forbidden`, `42501` donc `403`. **Preuve de refus n° 1** '
@@ -318,7 +322,7 @@ select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
 
 select throws_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c6',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                                     '5eed0000-0000-4000-8000-000000000035')$$,
 	'42501', 'forbidden',
 	'Droit d''écriture sur le channel CIBLE exigé : le bizdev sort la card de `inter-entreprises` '
@@ -326,7 +330,7 @@ select throws_ok(
 	'channel fermé (§6.4)');
 
 select lives_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c6',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'),
 	                                     '5eed0000-0000-4000-8000-000000000034')$$,
 	'LE SENS INVERSE, avec le MÊME profil : vers `refonte`, où il écrit, le déplacement PASSE. Sans '
 	'cette assertion, la précédente serait verte sur une fonction qui refuse tout');
@@ -336,7 +340,7 @@ select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c1',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                                     '00000000-0000-4000-8000-00000000beef')$$,
 	'P0001', 'channel_not_found',
 	'Channel cible inexistant : `channel_not_found`. Sans cette règle la fonction deviendrait un '
@@ -344,7 +348,7 @@ select throws_ok(
 
 -- --- 3.5 Le déplacement sur place est refusé ---------------------------------------------------
 select throws_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c1',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                                     '5eed0000-0000-4000-8000-000000000032')$$,
 	'P0001', 'same_channel',
 	'Channel cible = channel courant : `same_channel`. Un « déplacement » qui ne déplace rien '
@@ -353,14 +357,14 @@ select throws_ok(
 
 -- --- 3.6 Le remappage est OBLIGATOIRE quand le workflow change ---------------------------------
 select throws_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c5',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c5'),
 	                                     '5eed0000-0000-4000-8000-000000000031')$$,
 	'P0001', 'step_mapping_required',
 	'Workflow différent et `to_step_id` nul : `step_mapping_required`. La fonction ne choisit AUCUNE '
 	'étape par défaut — ni la première du graphe, ni celle du même nœud (§6.4)');
 
 select lives_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c5',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c5'),
 	                                     '5eed0000-0000-4000-8000-000000000033')$$,
 	'LE SENS INVERSE : workflow IDENTIQUE et `to_step_id` nul, l''étape est CONSERVÉE et le '
 	'déplacement passe — « si le workflow cible est identique, l''étape est conservée par défaut », '
@@ -383,7 +387,7 @@ select is(
 
 -- --- 3.7 L'étape fournie doit appartenir au workflow du channel CIBLE --------------------------
 select throws_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c5',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c5'),
 	                                     '5eed0000-0000-4000-8000-000000000031',
 	                                     '5eed0000-0000-4000-8000-000000000061')$$,
 	'P0001', 'step_not_in_workflow',
@@ -392,7 +396,7 @@ select throws_ok(
 	'L''ORDRE, avant que la n° 8 ne parle de destruction (§6.4)');
 
 select lives_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c5',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c5'),
 	                                     '5eed0000-0000-4000-8000-000000000034',
 	                                     '5eed0000-0000-4000-8000-000000000062')$$,
 	'LE SENS INVERSE : la même card vers un channel dont le workflow PORTE l''étape fournie, et le '
@@ -415,7 +419,7 @@ select is(
 	'de sens que si elle en porte');
 
 select throws_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c1',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                                     '5eed0000-0000-4000-8000-000000000031',
 	                                     pg_temp.etape_derivee())$$,
 	'P0001', 'field_values_would_be_lost',
@@ -424,7 +428,7 @@ select throws_ok(
 	'serait la valeur par défaut trompeuse que CLAUDE.md §18 proscrit (décision 216)');
 
 select lives_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c1',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                                     '5eed0000-0000-4000-8000-000000000031',
 	                                     pg_temp.etape_derivee(), true)$$,
 	'LE SENS INVERSE : `discard_field_values` à VRAI, l''appelant a dit ce qu''il détruisait, et le '
@@ -453,7 +457,7 @@ select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok(
-	$$select public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c2',
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c2'),
 	                                     '5eed0000-0000-4000-8000-000000000033')$$,
 	'Workflow identique : la vérification n° 8 ne s''applique pas, et le déplacement passe SANS '
 	'`discard_field_values` bien que la card porte des réponses');
@@ -515,9 +519,15 @@ create temporary table pg_temp_rang_avant as
 	   and current_step_id = pg_temp.etape_derivee();
 
 create temporary table pg_temp_apres as
-	select * from public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c7',
+	select * from public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c7'),
 	                                          '5eed0000-0000-4000-8000-000000000031',
 	                                          pg_temp.etape_derivee(), true);
+
+select is(
+	(select id from pg_temp_apres),
+	app.card_first_placement('5eed0000-0000-4000-8000-0000000000c7'),
+	'La fonction rend le RATTACHEMENT déplacé, celui qu''elle a reçu : un déplacement ne crée ni ne remplace de '
+	'rattachement (`CRM-111` T2.3.4, docs/SPEC-rattachements.md §5)');
 
 select is(
 	(select channel_id from pg_temp_apres),
@@ -576,7 +586,7 @@ create temporary table pg_temp_avant2 as
 	select entered_step_at from public.cards where id = '5eed0000-0000-4000-8000-0000000000c3';
 
 create temporary table pg_temp_apres2 as
-	select * from public.move_card_to_channel('5eed0000-0000-4000-8000-0000000000c3',
+	select * from public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 	                                          '5eed0000-0000-4000-8000-000000000034');
 
 select is(
@@ -789,6 +799,51 @@ select hasnt_function('public', 'move_cards_to_channel', array['uuid[]', 'uuid',
 select has_function('public', 'change_channel_workflow', array['uuid', 'uuid', 'jsonb', 'boolean'],
 	'CRM-019 livre désormais le geste pluriel sous un AUTRE nom et une autre signature : '
 	'`move_card_to_channel` reste strictement unitaire (§6.13)');
+
+-- =============================================================================================
+-- 10. L'affaire déjà rattachée au channel cible — `CRM-111` T2.3.4, décision 731
+-- =============================================================================================
+-- docs/SPEC-rattachements.md §5 : « refusé si l'affaire est déjà rattachée au channel cible ». Tant que `attach_card`
+-- n'existe pas (T3), une affaire n'a qu'un rattachement, et l'index `card_placements_one_per_card_idx` de la migration 0108
+-- le tient. La suite le retire DANS SA TRANSACTION ANNULÉE — l'état que T3 rendra licite — et pose le second rattachement
+-- sous le propriétaire, EN DERNIER, parce qu'il change la lecture d'`app.card_first_placement` pour ce qui suivrait.
+drop index public.card_placements_one_per_card_idx;
+
+select lives_ok(
+	$$insert into public.card_placements (workspace_id, card_id, channel_id, workflow_id, current_step_id, position)
+	  select c.workspace_id, c.id, ch.id, ch.workflow_id, c.current_step_id, 1
+	    from public.cards c, public.channels ch
+	   where c.id = '5eed0000-0000-4000-8000-0000000000c5' and ch.id = '5eed0000-0000-4000-8000-000000000033'$$,
+	'Un second rattachement de `…0c5`, sur `appels-offres` (33), même workflow que son channel');
+
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+
+select throws_ok(
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c5'),
+	                                     '5eed0000-0000-4000-8000-000000000033')$$,
+	'P0001', 'already_attached',
+	'Le rattachement de `…0c5` — en `refonte` depuis la section 3.7 — ne se déplace pas vers `appels-offres`, où l''affaire est DÉJÀ rattachée : '
+	'`already_attached`, avant que la contrainte `card_placements_card_channel_key` ne parle en 23505');
+
+-- LE SENS INVERSE, ET SA FORME EST UNE MESURE. Déplacer ce rattachement ailleurs AVEC le second en place rendrait 23505 :
+-- le miroir `cards` → `card_placements` de la bascule (migration 0108) recopie l'affaire sur TOUS ses rattachements, ce
+-- que l'index retiré plus haut rendait sans objet. C'est la frontière de la bascule — T2.4 retire les miroirs avant que
+-- T3 ne rende licite un second rattachement. La contre-épreuve retire donc le second rattachement, et le MÊME appel passe :
+-- le refus venait de lui, et de rien d'autre.
+select pg_temp.redevenir_proprietaire();
+
+delete from public.card_placements
+ where card_id = '5eed0000-0000-4000-8000-0000000000c5' and channel_id = '5eed0000-0000-4000-8000-000000000033';
+
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
+
+select lives_ok(
+	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c5'),
+	                                     '5eed0000-0000-4000-8000-000000000033')$$,
+	'LE SENS INVERSE, même rattachement, même appelant, même cible : le second rattachement retiré, le déplacement '
+	'vers `appels-offres` passe');
+
+select pg_temp.redevenir_proprietaire();
 
 select * from finish();
 rollback;

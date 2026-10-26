@@ -16615,7 +16615,12 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           1211/1213 (deux rouges étrangers), interface verte rejouée ; sections propres des harnais vertes.
           **Reste** : rejouer `verify-transition-required-fields.sh` en entier — ses sections 1 à 3 sont vertes, la suite
           meurt dans le seed de reconstruction (INC-312, étrangère à la tranche).
-        - [ ] **T2.3.4 — changer de channel** : `move_card_to_channel(p_placement, …)`.
+        - [~] **T2.3.4 — changer de channel** : `move_card_to_channel(p_placement, …)`. *Livrée en développement le
+          2026-10-26* — migration `0117` ; garde nouvelle `already_attached` (décision 731), prouvée en pgTAP l'index de
+          la bascule retiré ; connecteur, seed, `move-card-to-channel.spec.ts`, pgTAP `0019` (71) et `0097`, types ;
+          `verify-move-card-to-channel.sh` et `verify-timeline.sh` ne rejouent plus de migration ancienne. pgTAP 102 fichiers sans
+          anomalie, API 72/72, connecteur (unitaires, intégration réelle, interface 8/8). **Reste** : faire tourner ces
+          deux harnais, qui reconstruisent la base (session de `CRM-072` en campagne).
         - [ ] **T2.3.5 — les cadences** : `armer_sequence_relance(p_placement, …)`.
         - [ ] **T2.3.6 — les valeurs de bloc** : clé `(placement_id, field_id)`, `NOT NULL`, écriture de la webapp par
           rattachement.

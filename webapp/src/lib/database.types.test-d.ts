@@ -1278,16 +1278,17 @@ type _retourDeplacementPorteLInstant = Expect<
 // La signature de `move_card_to_channel` est celle du contrat du §6.2 : `to_step_id` et
 // `discard_field_values` FACULTATIFS, les deux identifiants exigés. Le caractère facultatif du
 // troisième paramètre est une propriété du produit et non un détail de génération — « si le
-// workflow cible est identique, l'étape est conservée par défaut » (§6.4).
+// workflow cible est identique, l'étape est conservée par défaut » (§6.4). Le premier identifiant désigne le
+// RATTACHEMENT depuis `CRM-111` T2.3.4 (docs/SPEC-rattachements.md §5) : la forme par affaire est supprimée.
 type _signatureChangementDeChannel = Expect<
   Equal<
     Database['public']['Functions']['move_card_to_channel']['Args'],
-    { card_id: string; discard_field_values?: boolean; to_channel_id: string; to_step_id?: string }
+    { discard_field_values?: boolean; p_placement: string; to_channel_id: string; to_step_id?: string }
   >
 >
 
-// LE RETOUR EST LA LIGNE, comme pour `move_card` et pour le même motif mesuré : le client obtient
-// le channel, le workflow, l'étape et `position` recalculés SANS relecture (§6.2).
+// LE RETOUR EST LA LIGNE — celle du rattachement depuis `CRM-111` T2.3.4 —, comme pour `move_card` et pour le même motif
+// mesuré : le client obtient le channel, le workflow, l'étape et `position` recalculés SANS relecture (§6.2).
 type _retourChangementEstUnObjet = Expect<
   Equal<
     Database['public']['Functions']['move_card_to_channel']['Returns'] extends unknown[]
@@ -1301,6 +1302,9 @@ type _retourChangementPorteLeChannel = Expect<
 >
 type _retourChangementPorteLeWorkflow = Expect<
   Equal<Database['public']['Functions']['move_card_to_channel']['Returns']['workflow_id'], string>
+>
+type _retourChangementPorteLAffaire = Expect<
+  Equal<Database['public']['Functions']['move_card_to_channel']['Returns']['card_id'], string>
 >
 
 // `CRM-019` rend le lot entier : trois arguments exigés, l'opt-in destructif facultatif, JSON
@@ -1420,6 +1424,7 @@ export type AssertionsDuContratDeTypes = [
   _retourChangementEstUnObjet,
   _retourChangementPorteLeChannel,
   _retourChangementPorteLeWorkflow,
+  _retourChangementPorteLAffaire,
   _signatureChangementWorkflowChannel,
   _retourChangementWorkflowEstUnLot,
   _retourChangementWorkflowPorteLEtape,

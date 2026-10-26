@@ -316,8 +316,10 @@ contrainte, clé, privilège — se répare par la **reconstruction** (§3.6). U
 d'une migration ancienne — la table de liaison de la `0019` — la rejoue **privée** de la fonction dont une migration
 postérieure est l'autorité (`migration_sans_fonction`). Aucun harnais ne rejoue plus une migration ancienne pour
 dégrader ou pour restaurer. Appliqué par T2.3.3 à `verify-move-card.sh`, `verify-valeurs-champs.sh`,
-`verify-transition-required-fields.sh`, `verify-colonnes-protegees.sh` et `verify-copie-workflow.sh` ; les autres
-harnais d'INC-304 sont l'objet de `CRM-111` T1 ter.
+`verify-transition-required-fields.sh`, `verify-colonnes-protegees.sh` et `verify-copie-workflow.sh` ; par T2.3.4 à
+`verify-move-card-to-channel.sh` et `verify-timeline.sh`, qui restauraient en rejouant les migrations 16, 17 et 20 — la 17
+rejouée supprimait `move_card_to_channel` par rattachement, de mêmes types d'arguments, pour remettre la forme par
+affaire. Les autres harnais d'INC-304 sont l'objet de `CRM-111` T1 ter.
 
 ## 4. Projets Playwright
 

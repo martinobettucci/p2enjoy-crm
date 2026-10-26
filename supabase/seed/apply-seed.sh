@@ -2395,10 +2395,15 @@ if [ "$(evenements_de "$CARD_CHANNEL" channel_changed)" = '0' ]; then
 	[ -n "$etape_derivee" ] && [ "$etape_derivee" != null ] \
 		|| die "l'étape initiale du workflow dérivé de prospection est introuvable."
 
+	# `CRM-111` T2.3.4 : `move_card_to_channel` désigne le RATTACHEMENT de l'affaire (docs/SPEC-rattachements.md §5), lu
+	# par la clé de service comme toute référence du seed. Le même rattachement fait l'aller et le retour.
+	rattachement_channel=$(curl -s "$API/rest/v1/card_placements?card_id=eq.$CARD_CHANNEL&select=id&order=created_at.asc,id.asc&limit=1" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].id // empty')
+	[ -n "$rattachement_channel" ] || die "${CARD_CHANNEL: -2} n'a pas de rattachement : la migration 0108 est-elle appliquée ?"
 	for cible in "$CHANNEL_PROSPECTION:$etape_derivee" "$CHANNEL_MAINTENANCE:$ETAPE_PROSPECT_GLOBAL"; do
 		code=$(api_admin POST /rest/v1/rpc/move_card_to_channel \
-			-d "$(jq -nc --arg c "$CARD_CHANNEL" --arg ch "${cible%%:*}" --arg e "${cible##*:}" \
-			      '{card_id: $c, to_channel_id: $ch, to_step_id: $e}')")
+			-d "$(jq -nc --arg p "$rattachement_channel" --arg ch "${cible%%:*}" --arg e "${cible##*:}" \
+			      '{p_placement: $p, to_channel_id: $ch, to_step_id: $e}')")
 		attendu "$code" "déplacement de ${CARD_CHANNEL: -2} vers le channel ${cible%%:*}" 200
 	done
 	channel_final=$(jq -r '.channel_id' "$CORPS")

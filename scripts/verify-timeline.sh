@@ -7,6 +7,8 @@
 # @verifies docs/SPEC-seed.md §2.15 (événements du seed, convergence)
 # @verifies docs/JOURNAL.md décisions 203 à 210
 # @verifies CLAUDE.md §8 (aucune trace fabriquée), §10 (règles prouvées hors interface)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.4 : les déplacements écrivent sur `card_placements` (T2.3.0), et la
+#           restauration ne rejoue plus aucune migration ancienne (docs/SPEC-test-harness.md §3.6, §3.7, INC-304)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-044`, POUR CE QUI EST LIVRÉ :
 #
@@ -39,6 +41,9 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# shellcheck source=scripts/lib/reconstruction.sh
+source scripts/lib/reconstruction.sh
+
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
 node_toolchain_prepare "$PWD/.nvmrc" || exit 1
@@ -52,8 +57,11 @@ MIGRATION=supabase/migrations/0016_timeline.sql
 # `supabase/tests/0019_move_card_to_channel.test.sql` en devenaient rouges, longtemps après que ce
 # harnais eut rendu la main. C'est la parente d'INC-074 : un fichier qui n'est plus la dernière
 # autorité sur un objet ne peut pas, seul, le restaurer.
-MIGRATION_SUIVANTE=supabase/migrations/0017_move_card_to_channel.sql
-MIGRATION_ACTUELLE=supabase/migrations/0020_change_channel_workflow.sql
+#
+# RÉVISÉ PAR `CRM-111` T2.3.4 : la restauration ne rejoue plus NI la 16, NI la 17, NI la 20 (docs/SPEC-test-harness.md
+# §3.7). Rejouées après la bascule, la 16 rendrait au déclencheur de `cards` l'écriture des événements, en doublon de
+# celle du rattachement (migration 0110), et la 17 supprimerait `move_card_to_channel` par rattachement — mêmes types
+# d'arguments — pour remettre la forme par affaire. Les structures dégradées ici se réparent par la reconstruction.
 TEST_SQL=supabase/tests/0018_timeline.test.sql
 SPEC_API=e2e/api/timeline.spec.ts
 MODULE=webapp/src/lib/timeline.ts
@@ -188,6 +196,14 @@ for trigger in card_events_apres_insertion card_events_apres_maj; do
 		fail "le trigger $trigger est ABSENT de cards"
 	fi
 done
+
+# `CRM-111` T2.3.0 (migration 0110) : les déplacements, l'attribution, l'archivage et le sommeil écrivent leur événement
+# depuis la table du RATTACHEMENT ; le déclencheur de `cards` garde la naissance et la corbeille.
+if [ "$(psql_db -c "select count(*) from pg_trigger where tgrelid='public.card_placements'::regclass and tgname='card_placements_write_events'")" = 1 ]; then
+	ok "le trigger card_placements_write_events est posé sur card_placements"
+else
+	fail "le trigger card_placements_write_events est ABSENT : un déplacement ne laisserait plus de trace"
+fi
 
 if [ "$(psql_db -c "select count(*) from pg_trigger where tgrelid='public.card_field_values'::regclass and tgname='card_events_apres_ecriture_valeur'")" = 1 ]; then
 	ok "le trigger de valeurs de formulaire est posé"
@@ -501,47 +517,44 @@ degrader_et_verifier \
 	 create policy card_events_lecture on public.card_events for select to anon, authenticated
 	   using (app.can_read_card(card_id))"
 
+# RÉÉCRITE PAR `CRM-111` T2.3.4 : elle retirait le déclencheur de mise à jour de `cards`, qui n'écrit plus les
+# déplacements depuis T2.3.0. Elle retire celui du rattachement, et le restaure par sa définition LUE EN BASE.
+DECLENCHEUR_RATTACHEMENT=$(psql_db -c "select pg_get_triggerdef(oid) from pg_trigger
+	where tgrelid='public.card_placements'::regclass and tgname='card_placements_write_events'")
 degrader_et_verifier \
-	"le trigger de mise à jour de cards retiré — un déplacement ne laisserait plus de trace" \
-	"drop trigger card_events_apres_maj on public.cards" \
-	"create trigger card_events_apres_maj after update on public.cards
-	   for each row execute function app.card_events_apres_maj_card()"
+	"le trigger de mise à jour du rattachement retiré — un déplacement ne laisserait plus de trace" \
+	"drop trigger card_placements_write_events on public.card_placements" \
+	"$DECLENCHEUR_RATTACHEMENT"
 
 # --- 7. Restauration -----------------------------------------------------------------------------
-# La restauration est CONSTATÉE, pas supposée : la migration est rejouée, puis les fichiers relus.
+# La restauration est CONSTATÉE, pas supposée : la base est reconstruite, les déclencheurs relus, les fichiers relus.
 
 titre "7. Restauration"
 
-if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-	-f - <"$MIGRATION" >"$TRAVAIL/rejeu.log" 2>&1; then
-	ok "la migration se rejoue sans erreur — idempotence et convergence (INC-035)"
+# `CRM-111` T2.3.4 (docs/SPEC-test-harness.md §3.6, §3.7) : la reconstruction remplace le rejeu des migrations 16, 17
+# et 20. Chaque dégradation de la section 6 a déjà sa restauration, à la définition lue en base ; la reconstruction
+# garantit en plus qu'aucune ne laisse de résidu — une contrainte, une politique et deux déclencheurs ont été touchés.
+if reconstruire_base_dev >"$TRAVAIL/reconstruction.log" 2>&1; then
+	ok "la base est reconstruite depuis le répertoire, dans l'ordre, et seedée"
 else
-	fail "le rejeu de la migration ÉCHOUE : voir $TRAVAIL/rejeu.log"
-fi
-
-# Puis la 17, propriétaire historique de `channel_changed`, avant la 20 qui est désormais la
-# dernière autorité sur le trigger et le vocabulaire (INC-074, décisions 219 et 306).
-if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-	-f - <"$MIGRATION_SUIVANTE" >"$TRAVAIL/rejeu17.log" 2>&1; then
-	ok "la migration 17 est rejouée avec elle : la restauration ne régresse pas (INC-074)"
-else
-	fail "le rejeu de la migration 17 ÉCHOUE : voir $TRAVAIL/rejeu17.log"
-fi
-
-if docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
-	-f - <"$MIGRATION_ACTUELLE" >"$TRAVAIL/rejeu20.log" 2>&1; then
-	ok "la migration 20 est rejouée en dernier : workflow_changed et l'exclusivité survivent"
-else
-	fail "le rejeu de la migration 20 ÉCHOUE : voir $TRAVAIL/rejeu20.log"
+	fail "la reconstruction de la base ÉCHOUE : $(tail -n 1 "$TRAVAIL/reconstruction.log")"
 fi
 
 if [ "$(psql_db -c "select prosrc like '%channel_changed%'
 	and prosrc like '%workflow_changed%' from pg_proc p
 	join pg_namespace n on n.oid = p.pronamespace
-	where n.nspname='app' and p.proname='card_events_apres_maj_card'")" = t ]; then
-	ok "les gardes channel_changed et workflow_changed sont rendues — constatées, non supposées"
+	where n.nspname='app' and p.proname='card_placements_write_events'")" = t ]; then
+	ok "les gardes channel_changed et workflow_changed sont rendues au rattachement — constatées, non supposées"
 else
-	fail "le trigger est resté dans une forme historique : la restauration a régressé"
+	fail "le déclencheur du rattachement est resté dans une forme historique : la restauration a régressé"
+fi
+
+if [ "$(psql_db -c "select prosrc not like '%channel_changed%' from pg_proc p
+	join pg_namespace n on n.oid = p.pronamespace
+	where n.nspname='app' and p.proname='card_events_apres_maj_card'")" = t ]; then
+	ok "le déclencheur de cards n'écrit pas de channel_changed : aucun événement n'est écrit deux fois"
+else
+	fail "le déclencheur de cards écrit channel_changed : une forme d'avant la bascule a été rétablie"
 fi
 
 for fichier in "$MIGRATION" "$TEST_SQL"; do

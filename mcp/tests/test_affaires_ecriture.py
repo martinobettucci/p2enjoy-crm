@@ -2,8 +2,9 @@
 #           simulé qui enregistre chaque écriture
 # @verifies CRM-067 (docs/BACKLOG.md) — tranche T4 : `crm_card_activity_add` et `crm_card_activity_update`
 #           (docs/SPEC-activites.md §6, décision 653 ; aucun outil de retrait, décision 648)
-# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3 : le sommeil, `move_card` et les colonnes de rattachement désignent le rattachement de
-#           l'affaire, résolu depuis `card_id` (docs/SPEC-rattachements.md §3.2, §5, §11)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3 : le sommeil, `move_card`, `move_card_to_channel` et les colonnes de
+#           rattachement désignent le rattachement de l'affaire, résolu depuis `card_id` ; `already_attached` est traduit
+#           (docs/SPEC-rattachements.md §3.2, §5, §11)
 # @verifies docs/SPEC-mcp.md §9.2 ter (liste, ancres, `aussi`, identifiants jugés dans l'affaire), §9.1 (déclarations
 #           vérifiées, `destructiveHint`), §9.3 (refus nommés traduits, zéro ligne = refus)
 """Le CRM simulé rend ce que PostgREST rendrait pour chaque écriture, et la note : les tests prouvent la requête émise et
@@ -282,8 +283,9 @@ async def test_changer_de_channel_cherche_l_etape_dans_le_workflow_d_arrivee(mon
         "crm_card_move_to_channel",
         {"card_id": CARD_A, "to_channel_id": CHANNEL_A2, "to_step": "Accueil", "discard_field_values": True},
     )
+    # `CRM-111` T2.3.4 : l'outil garde `card_id`, et le geste désigne le rattachement de l'affaire.
     assert monde.simule.rpcs[-1] == ("move_card_to_channel", {
-        "card_id": CARD_A, "to_channel_id": CHANNEL_A2, "discard_field_values": True, "to_step_id": "s9"
+        "p_placement": RATTACHEMENT_A, "to_channel_id": CHANNEL_A2, "discard_field_values": True, "to_step_id": "s9"
     })
     monde.simule.forcees["move_card_to_channel"] = (
         400, {"code": "P0001", "message": "field_values_would_be_lost", "details": "3 réponse(s) de formulaire seraient perdues."}
@@ -292,6 +294,9 @@ async def test_changer_de_channel_cherche_l_etape_dans_le_workflow_d_arrivee(mon
         await monde.appel("crm_card_move_to_channel", {"card_id": CARD_A, "to_channel_id": CHANNEL_A2, "to_step": "Accueil"})
     with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : channel"):
         await monde.appel("crm_card_move_to_channel", {"card_id": CARD_A, "to_channel_id": CHANNEL_B})
+    monde.simule.forcees["move_card_to_channel"] = (400, {"code": "P0001", "message": "already_attached"})
+    with pytest.raises(ToolError, match="already attached to that channel"):
+        await monde.appel("crm_card_move_to_channel", {"card_id": CARD_A, "to_channel_id": CHANNEL_A2})
 
 
 async def test_sommeil_et_reveil(monde: Monde) -> None:
