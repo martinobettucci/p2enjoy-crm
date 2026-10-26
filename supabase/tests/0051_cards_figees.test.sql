@@ -12,6 +12,8 @@
 -- @verifies docs/PROD_MIGRATIONS.md §3 (migration 53 : `prosecdef` doit être FAUX, `anon` sans
 --           `execute`)
 -- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE PROUVE, ET CE QU'ELLE NE REPROUVE PAS.
 --

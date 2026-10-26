@@ -11,6 +11,8 @@
 --           INC-050, INC-051, INC-052
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : sept colonnes de rattachement s'écrivent sur `card_placements`, plus
 --           sur `cards` (docs/SPEC-rattachements.md §3.2, §4, §5)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- Suite pgTAP de l'unité `CRM-034`. Elle prouve sept choses :
 --
@@ -504,15 +506,15 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 -- L'état de départ est CONSTATÉ, et non supposé : une assertion sur un état d'arrivée n'a de valeur
 -- que si l'état de départ en diffère.
 select is(
-	(select c.current_step_id from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c3'),
+	(select c.current_step_id from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c3'),
 	'5eed0000-0000-4000-8000-000000000061'::uuid,
 	'ÉTAT DE DÉPART CONSTATÉ : `c3` est à l''étape 61 avant l''appel');
 
 select is(
-	(select count(*)::int from public.cards c
-	  where c.channel_id = '5eed0000-0000-4000-8000-000000000032'
-	    and c.current_step_id = '5eed0000-0000-4000-8000-000000000062'),
+	(select count(*)::int from public.cards c join public.card_placements cp on cp.card_id = c.id
+	  where cp.channel_id = '5eed0000-0000-4000-8000-000000000032'
+	    and cp.current_step_id = '5eed0000-0000-4000-8000-000000000062'),
 	2,
 	'ÉTAT DE DÉPART CONSTATÉ : la colonne d''arrivée contient DÉJÀ DEUX cards, aux positions 1 et '
 	'2. Sur une colonne vide, « en fin » et « au début » donneraient tous deux 1, et l''assertion '
@@ -520,8 +522,8 @@ select is(
 
 create temporary table t_avant on commit drop as
 	select now() as instant,
-	       (select c.position from public.cards c
-	         where c.id = '5eed0000-0000-4000-8000-0000000000c3') as position_depart;
+	       (select c.position from public.card_placements c
+	         where c.card_id = '5eed0000-0000-4000-8000-0000000000c3') as position_depart;
 
 select lives_ok($$
 	select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
@@ -529,29 +531,29 @@ select lives_ok($$
 	'Le déplacement 61 → 62 de `c3` réussit');
 
 select is(
-	(select c.current_step_id from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c3'),
+	(select c.current_step_id from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c3'),
 	'5eed0000-0000-4000-8000-000000000062'::uuid,
 	'`current_step_id` ← l''étape cible : l''objet même de la fonction');
 
 select is(
-	(select c.position from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c3'),
+	(select c.position from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c3'),
 	3::numeric,
 	'`position` ← FIN de la colonne d''arrivée, soit 3 après les deux cards constatées. Le trigger '
 	'd''attribution de `CRM-040` est un `BEFORE INSERT` : il ne voit pas les déplacements, et sans '
 	'ce recalcul deux cards porteraient le même rang (§5.4, docs/SPEC-cards.md §2.6)');
 
 select ok(
-	(select c.position from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c3')
+	(select c.position from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c3')
 	<> (select position_depart from t_avant),
 	'`position` a bien CHANGÉ : sa valeur de départ était 1 dans la colonne 61, et 1 aurait pu '
 	'être verte par hasard dans la colonne d''arrivée si celle-ci avait été vide');
 
 select ok(
-	(select c.entered_step_at from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c3')
+	(select c.entered_step_at from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c3')
 	>= (select instant from t_avant),
 	'`entered_step_at` ← l''instant du déplacement. docs/SPEC-cards.md §2.9 la réserve NOMMÉMENT à '
 	'`move_card`, et c''est ici qu''elle prend son sens');
@@ -571,27 +573,27 @@ select is(
 	'Audit sécurité applicative',
 	'Le déplacement ne touche NI le titre…');
 select is(
-	(select c.amount from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c3'),
+	(select c.amount from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c3'),
 	15500.00::numeric,
 	'…NI le montant…');
 select is(
-	(select c.owner_id from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c3'),
+	(select c.owner_id from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c3'),
 	'5eed0000-0000-4000-8000-000000000011'::uuid,
 	'…NI le responsable. La fonction écrit trois colonnes, et trois seulement');
 
 -- Les autres cards de la colonne d'arrivée ne bougent pas : l'insertion en fin ne renumérote rien.
 select is(
-	(select c.position from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c1'),
+	(select c.position from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c1'),
 	1::numeric,
 	'`c1`, déjà dans la colonne d''arrivée, garde sa position : arriver en fin ne renumérote pas '
 	'la colonne, et l''ordre que l''utilisateur y avait mis est préservé');
 
 select is(
-	(select c.channel_id from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c3'),
+	(select c.channel_id from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c3'),
 	'5eed0000-0000-4000-8000-000000000032'::uuid,
 	'`channel_id` est INCHANGÉ : changer de channel est `CRM-045`, une autre fonction et une autre '
 	'unité');

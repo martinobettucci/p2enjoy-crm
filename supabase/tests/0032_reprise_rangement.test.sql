@@ -1,6 +1,8 @@
 -- @verifies CRM-059 (docs/BACKLOG.md) — la reprise d'un rangement manqué, dette de `CRM-056`
 -- @verifies docs/SPEC-mail-subsystem.md §20.5 (la dette), §4.5 (dossiers IMAP)
 -- @verifies docs/JOURNAL.md décision 342
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE MESURE. La sélection — un message classé, jamais rangé, avec de quoi le
 -- copier — et la fermeture du fait par `marquer_message_range`. La DÉCISION de copier appartient
@@ -17,9 +19,9 @@ create temporary table pg_temp_ref (nom text primary key, valeur text);
 insert into pg_temp_ref
 select 'compte', id::text from public.mail_inbound_accounts where owner_id is null;
 insert into pg_temp_ref
-select 'card', id::text from public.cards
- where archived_at is null and deleted_at is null and channel_id is not null
- order by title limit 1;
+select 'card', c.id::text from public.cards c join public.card_placements cp on cp.card_id = c.id
+ where cp.archived_at is null and c.deleted_at is null
+ order by c.title limit 1;
 
 -- =============================================================================================
 -- 1. Le vocabulaire

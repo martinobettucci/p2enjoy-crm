@@ -26,6 +26,8 @@
 -- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
 -- @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §7.2 — trois politiques des
 --           attentes d'espace, nommées ; total RÉVISÉ de 122 à 125
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- Suite pgTAP de l'unité `CRM-014`. Le fichier de scénarios `e2e/api/preuves-refus.spec.ts` prouve
 -- que le produit **refuse** ; cette suite prouve que le produit **est en état d'être interrogé**,
@@ -531,7 +533,7 @@ select is(
 	'droit, son « zéro ligne » ne distinguerait pas un refus d''une absence de données');
 
 select isnt_empty(
-	'select 1 from public.cards where channel_id = ''5eed0000-0000-4000-8000-000000000032''',
+	'select 1 from public.card_placements where channel_id = ''5eed0000-0000-4000-8000-000000000032''',
 	'PREUVE N° 4, sa condition de validité : le channel fermé au `viewer` porte RÉELLEMENT des '
 	'cards, constaté sans RLS');
 

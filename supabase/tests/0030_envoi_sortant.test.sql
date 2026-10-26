@@ -3,6 +3,8 @@
 -- @verifies docs/SPEC-mail-subsystem.md §19.4 (les six refus, le quota), §19.5 (les trois effets),
 --           §19.8 (limites figées)
 -- @verifies docs/SPEC-permissions-rls.md §4 ; docs/JOURNAL.md décision 330
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- LA GARDE EST ÉPROUVÉE PAR SES REFUS, un par un et dans l'ordre où elle les oppose : un refus qui
 -- surviendrait pour la mauvaise raison — la card avant l'identité, par exemple — renseignerait
@@ -40,7 +42,7 @@ select 'identite_driss', id::text from public.mail_outbound_identities
  where owner_id = '5eed0000-0000-4000-8000-000000000012';
 insert into pg_temp_ref values ('card', '5eed0000-0000-4000-8000-0000000000c1');
 insert into pg_temp_ref
-select 'card_archivee', id::text from public.cards where archived_at is not null limit 1;
+select 'card_archivee', card_id::text from public.card_placements where archived_at is not null limit 1;
 
 -- TÉMOIN : sans lui, « la garde refuse » serait vrai aussi si les objets manquaient.
 select is(

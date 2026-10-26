@@ -3,6 +3,8 @@
 -- @verifies docs/SPEC-rattachements.md §2 bis.1 (les fonctions), §3.3 (valeurs par rattachement), §4 (lire, écrire la
 --           partie commune), §5 (timeline, décision 670), §7 (messagerie), §10 (reprise) ; docs/SCHEMA.md « Migration
 --           `0109` » ; docs/JOURNAL.md décisions 639, 642, 657, 670, 705
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE PROUVE, sur le seed migré :
 --   1. la FORME : les trois colonnes `placement_id`, leurs contraintes, les déclencheurs, les deux auxiliaires ;
@@ -119,8 +121,8 @@ select throws_ok(
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 create temp table t_champ on commit drop as
 	select f.id as field_id, f.workflow_id, c.id as card_id, c.workspace_id
-	  from public.cards c
-	  join public.form_fields f on f.workflow_id = c.workflow_id and f.archived_at is null and f.type = 'textarea'
+	  from public.cards c join public.card_placements cp on cp.card_id = c.id
+	  join public.form_fields f on f.workflow_id = cp.workflow_id and f.archived_at is null and f.type = 'textarea'
 	 where c.deleted_at is null
 	   and not exists (select 1 from public.card_field_values v where v.card_id = c.id and v.field_id = f.id)
 	 order by c.id, f.id

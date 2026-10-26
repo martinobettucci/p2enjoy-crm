@@ -11,6 +11,8 @@
 --           §12.10 (autorisations)
 -- @verifies docs/SPEC-relances.md §2.4 (les trois exclusions de `cards_figees`), §9.5 (l'acteur nul)
 -- @verifies docs/SCHEMA.md §7 (`card_sequence_enrollments`)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE PROUVE, ET DANS QUEL ORDRE.
 --

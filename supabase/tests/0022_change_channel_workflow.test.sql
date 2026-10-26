@@ -4,6 +4,8 @@
 -- @verifies docs/JOURNAL.md décisions 263, 295 et 306
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-046 et INC-073
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.7 : la RPC remappe et rend les rattachements (décision 738)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 
 begin;
 
@@ -299,7 +301,7 @@ select is((select workflow_id from public.channels
 	where id = '01900000-0000-4000-8000-000000000010'),
 	'5eed0000-0000-4000-8000-000000000051'::uuid,
 	'le channel est inchangé après tous les refus');
-select is((select count(*) from public.cards where channel_id =
+select is((select count(*) from public.card_placements where channel_id =
 	'01900000-0000-4000-8000-000000000010' and workflow_id =
 	'5eed0000-0000-4000-8000-000000000051'), 3::bigint,
 	'les trois cards sont inchangées après les refus');
@@ -307,7 +309,7 @@ select is((select count(*) from public.card_field_values where card_id =
 	'01900000-0000-4000-8000-0000000000a1'), 1::bigint,
 	'la réponse est conservée après les refus');
 select is((select count(*) from public.card_events where card_id in (
-	select id from public.cards where channel_id = '01900000-0000-4000-8000-000000000010')
+	select card_id from public.card_placements where channel_id = '01900000-0000-4000-8000-000000000010')
 	and type = 'workflow_changed'), 0::bigint,
 	'aucun événement de faux succès n''est écrit');
 
@@ -321,21 +323,22 @@ select is(pg_temp.appliquer('01900000-0000-4000-8000-000000000010',
 select is((select workflow_id from public.channels
 	where id = '01900000-0000-4000-8000-000000000010'),
 	pg_temp.workflow_derive(), 'le channel porte le workflow cible');
-select is((select count(*) from public.cards where channel_id =
+select is((select count(*) from public.card_placements where channel_id =
 	'01900000-0000-4000-8000-000000000010' and workflow_id = pg_temp.workflow_derive()),
 	3::bigint, 'toutes les cards, pas seulement les actives, suivent le nouveau workflow');
-select is((select count(*) from public.cards where channel_id =
+select is((select count(*) from public.card_placements where channel_id =
 	'01900000-0000-4000-8000-000000000010' and current_step_id =
 	pg_temp.etape_derivee_premiere()), 3::bigint,
 	'les deux sources convergent réellement vers une cible unique');
 select is((select string_agg(
-	case when archived_at is not null then 'archivee'
-	     when deleted_at is not null then 'corbeille'
-	     else 'active' end, ',' order by id)
-	from public.cards where channel_id = '01900000-0000-4000-8000-000000000010'),
+	case when p.archived_at is not null then 'archivee'
+	     when c.deleted_at is not null then 'corbeille'
+	     else 'active' end, ',' order by c.id)
+	from public.card_placements p join public.cards c on c.id = p.card_id
+	where p.channel_id = '01900000-0000-4000-8000-000000000010'),
 	'active,archivee,corbeille', 'les trois états de cycle de vie sont conservés');
 select is((select count(*) from public.card_field_values where card_id in (
-	select id from public.cards where channel_id = '01900000-0000-4000-8000-000000000010')),
+	select card_id from public.card_placements where channel_id = '01900000-0000-4000-8000-000000000010')),
 	0::bigint, 'la réponse est détruite après opt-in explicite');
 select is((select count(*) from public.card_comments where id =
 	'01900000-0000-4000-8000-0000000000c1'), 1::bigint,
@@ -344,33 +347,33 @@ select is((select count(*) from public.card_events where card_id =
 	'01900000-0000-4000-8000-0000000000a1' and type = 'field_changed'), 1::bigint,
 	'la mémoire de la réponse détruite survit');
 select is((select count(*) from public.card_events where card_id in (
-	select id from public.cards where channel_id = '01900000-0000-4000-8000-000000000010')
+	select card_id from public.card_placements where channel_id = '01900000-0000-4000-8000-000000000010')
 	and type = 'workflow_changed'), 3::bigint,
 	'un workflow_changed exact est écrit par card');
 select is((select count(*) from public.card_events where card_id in (
-	select id from public.cards where channel_id = '01900000-0000-4000-8000-000000000010')
+	select card_id from public.card_placements where channel_id = '01900000-0000-4000-8000-000000000010')
 	and type = 'moved'), 0::bigint,
 	'aucun moved ne prétend qu''une arête a été franchie');
 select is((select count(*) from public.card_events where card_id in (
-	select id from public.cards where channel_id = '01900000-0000-4000-8000-000000000010')
+	select card_id from public.card_placements where channel_id = '01900000-0000-4000-8000-000000000010')
 	and type = 'workflow_changed'
 	and payload ->> 'channel_id' = '01900000-0000-4000-8000-000000000010'
 	and payload ->> 'from_workflow_id' = '5eed0000-0000-4000-8000-000000000051'
 	and payload ->> 'to_workflow_id' = pg_temp.workflow_derive()::text
 	and payload ? 'from_step_id' and payload ? 'to_step_id'), 3::bigint,
 	'chaque payload porte l''ancien et le nouveau contexte complet');
-select is((select string_agg(id::text || ':' || position::text, ',' order by id)
-	from public.cards where channel_id = '01900000-0000-4000-8000-000000000010'),
+select is((select string_agg(card_id::text || ':' || position::text, ',' order by card_id)
+	from public.card_placements where channel_id = '01900000-0000-4000-8000-000000000010'),
 	'01900000-0000-4000-8000-0000000000a1:1,'
 	'01900000-0000-4000-8000-0000000000a2:3,'
 	'01900000-0000-4000-8000-0000000000a3:2',
 	'l''ordre source-step, ancienne position, id devient un rang dense déterministe');
-select is((select count(*) from public.cards where channel_id =
+select is((select count(*) from public.card_placements where channel_id =
 	'01900000-0000-4000-8000-000000000010' and entered_step_at >
 	'2020-01-01T00:00:00Z'), 3::bigint,
 	'entered_step_at est remise à zéro pour chaque entrée dans le nouveau graphe');
 select is((select count(*) from public.card_events where card_id in (
-	select id from public.cards where channel_id = '01900000-0000-4000-8000-000000000010')
+	select card_id from public.card_placements where channel_id = '01900000-0000-4000-8000-000000000010')
 	and type = 'workflow_changed' and actor_id =
 	'5eed0000-0000-4000-8000-000000000011'), 3::bigint,
 	'le trigger SECURITY DEFINER conserve l''actrice authentifiée réelle');

@@ -8,6 +8,8 @@
 -- @verifies docs/SPEC-permissions-rls.md §7 (preuve de refus n° 3 : une version d'un autre
 --            workspace est indiscernable d'une version inexistante)
 -- @verifies docs/SPEC-form-composer.md §5 (les valeurs saisies survivent à l'archivage)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE ÉPROUVE, ET POURQUOI DANS CET ORDRE.
 --
@@ -274,8 +276,8 @@ select (select wf from t_ctx)                                             as wf,
        'dddd0000-0000-4000-8000-0000000000d3'::uuid                       as arete,
        (select s.id from public.workflow_steps s
          where s.workflow_id = (select wf from t_ctx) and s.is_initial)    as initiale,
-       (select c.id from public.cards c
-         where c.workflow_id = (select wf from t_ctx) order by c.id limit 1) as carte,
+       (select c.id from public.cards c join public.card_placements cp on cp.card_id = c.id
+         where cp.workflow_id = (select wf from t_ctx) order by c.id limit 1) as carte,
        (select v.id from public.workflow_versions v
          where v.workflow_id = (select wf from t_ctx)
          order by v.version_number limit 1)                                as version_seed;
@@ -305,7 +307,7 @@ select throws_ok(
 select pg_temp.redevenir_proprietaire();
 
 select is(
-	(select current_step_id from public.cards where id = (select carte from t_fixture)),
+	(select current_step_id from public.card_placements where card_id = (select carte from t_fixture)),
 	(select etape from t_fixture),
 	'20. et le refus n''a RIEN écrit : l''affaire est toujours sur l''étape retirée');
 
@@ -329,7 +331,7 @@ select is(
 	'21. une affaire remappée');
 
 select is(
-	(select current_step_id from public.cards where id = (select carte from t_fixture)),
+	(select current_step_id from public.card_placements where card_id = (select carte from t_fixture)),
 	(select initiale from t_fixture),
 	'22. ET LA BASE LE CONFIRME : l''affaire est sur l''étape nommée par l''instruction');
 

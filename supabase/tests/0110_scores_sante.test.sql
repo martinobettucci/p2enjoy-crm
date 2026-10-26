@@ -3,6 +3,8 @@
 --           pénalités d'action exclusives), §13.3 (les quatre notes, le signal inconnu et la répartition de son poids),
 --           §13.4 (aucun score pour une affaire décidée, archivée, à la corbeille), §13.5 (colonnes calculées
 --           `SECURITY INVOKER`, paliers) ; docs/JOURNAL.md décisions 708, 723 et 724
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- L'AFFAIRE ÉPROUVÉE EST « Audit sécurité applicative » (`…c3`), ouverte, à l'étape Prospection (seuil de 14 jours). Ses
 -- colonnes, ses activités et son courrier sont réécrits DANS LA TRANSACTION par le propriétaire de la base, puis le
@@ -16,7 +18,7 @@ select plan(30);
 
 create temporary table pg_temp_ref (nom text primary key, valeur uuid);
 insert into pg_temp_ref values ('carte', '5eed0000-0000-4000-8000-0000000000c3');
-insert into pg_temp_ref select 'etape', current_step_id from public.cards where id = '5eed0000-0000-4000-8000-0000000000c3';
+insert into pg_temp_ref select 'etape', current_step_id from public.card_placements where card_id = '5eed0000-0000-4000-8000-0000000000c3';
 insert into pg_temp_ref
 select 'noeud', ws.node_id from public.workflow_steps ws where ws.id = (select valeur from pg_temp_ref where nom = 'etape');
 

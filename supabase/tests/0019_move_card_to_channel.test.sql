@@ -13,6 +13,8 @@
 --           sur `cards` (docs/SPEC-rattachements.md §3.2, §4, §5)
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.4 : `move_card_to_channel` désigne le RATTACHEMENT et le rend ; la garde
 --           `already_attached` (docs/SPEC-rattachements.md §5, §14 ; docs/JOURNAL.md décision 731)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- Suite pgTAP de l'unité `CRM-045`. Elle prouve huit choses :
 --
@@ -107,30 +109,30 @@ $$;
 -- workflow du channel, et INC-046 tient toujours — le geste qu'elle interdit est éprouvé dans les
 -- deux sens en section 5.
 select is(
-	(select count(*) from public.cards c
-	  where c.channel_id = '5eed0000-0000-4000-8000-000000000031'),
+	(select count(*) from public.cards c join public.card_placements cp on cp.card_id = c.id
+	  where cp.channel_id = '5eed0000-0000-4000-8000-000000000031'),
 	2::bigint,
 	'`prospection` porte DEUX cards au repos depuis CRM-046 — docs/SPEC-seed.md §9.2, §9.3');
 
 select is(
-	(select count(*) from public.cards c
-	   join public.channels ch on ch.id = c.channel_id
-	  where c.channel_id = '5eed0000-0000-4000-8000-000000000031'
-	    and c.workflow_id <> ch.workflow_id),
+	(select count(*) from public.cards c join public.card_placements cp on cp.card_id = c.id
+	   join public.channels ch on ch.id = cp.channel_id
+	  where cp.channel_id = '5eed0000-0000-4000-8000-000000000031'
+	    and cp.workflow_id <> ch.workflow_id),
 	0::bigint,
 	'…et TOUTES suivent le workflow de leur channel : la lecture n° 1 d''INC-046 tient, une card ne '
 	'porte jamais un workflow étranger à son dossier (§6.5)');
 
 select is(
-	(select c.channel_id from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c5'),
+	(select c.channel_id from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c5'),
 	'5eed0000-0000-4000-8000-000000000035'::uuid,
 	'`…0c5` est rendue à `maintenance` : l''aller-retour du seed est CONVERGENT, et le rejeu ne '
 	'déplace la card qu''une fois (docs/SPEC-seed.md §2.16)');
 
 select is(
-	(select c.workflow_id from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c5'),
+	(select c.workflow_id from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c5'),
 	'5eed0000-0000-4000-8000-000000000051'::uuid,
 	'Et à son workflow GLOBAL : le retour rend les trois colonnes de rattachement, pas seulement '
 	'le channel');
@@ -583,7 +585,7 @@ select is(
 -- Le sens inverse, sur une card dont l'étape ne change pas. Sans cette assertion, la précédente
 -- serait verte sur une fonction qui écrase l'horodatage à chaque appel.
 create temporary table pg_temp_avant2 as
-	select entered_step_at from public.cards where id = '5eed0000-0000-4000-8000-0000000000c3';
+	select entered_step_at from public.card_placements where card_id = '5eed0000-0000-4000-8000-0000000000c3';
 
 create temporary table pg_temp_apres2 as
 	select * from public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
@@ -809,8 +811,8 @@ drop index public.card_placements_one_per_card_idx;
 
 select lives_ok(
 	$$insert into public.card_placements (workspace_id, card_id, channel_id, workflow_id, current_step_id, position)
-	  select c.workspace_id, c.id, ch.id, ch.workflow_id, c.current_step_id, 1
-	    from public.cards c, public.channels ch
+	  select c.workspace_id, c.id, ch.id, ch.workflow_id, cp.current_step_id, 1
+	    from public.cards c join public.card_placements cp on cp.card_id = c.id, public.channels ch
 	   where c.id = '5eed0000-0000-4000-8000-0000000000c5' and ch.id = '5eed0000-0000-4000-8000-000000000033'$$,
 	'Un second rattachement de `…0c5`, sur `appels-offres` (33), même workflow que son channel');
 

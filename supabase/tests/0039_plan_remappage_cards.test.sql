@@ -10,6 +10,8 @@
 -- @verifies docs/SPEC-cards.md §4 (archivage et corbeille sont deux suppressions DOUCES)
 -- @verifies docs/SCHEMA.md §9 (fonctions et RPC)
 -- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE PROUVE, ET DANS QUEL ORDRE.
 --
@@ -74,7 +76,7 @@ begin
 		json_build_object('sub', utilisateur::text, 'role', 'authenticated')::text, true);
 	execute 'set local role authenticated';
 	select pg_catalog.count(*) into nombre
-	  from public.cards
+	  from public.card_placements
 	 where workflow_id = '5eed0000-0000-4000-8000-000000000051';
 	execute 'reset role';
 	perform set_config('request.jwt.claims', '', true);
@@ -145,14 +147,14 @@ select isnt_empty(
 
 select is(
 	(select pg_temp.compter_sous('5eed0000-0000-4000-8000-000000000011')),
-	(select pg_catalog.count(*)::bigint from public.cards
+	(select pg_catalog.count(*)::bigint from public.card_placements
 	  where workflow_id = '5eed0000-0000-4000-8000-000000000051'),
 	'8 — l''administratrice lit AUTANT d''affaires que le propriétaire : le plan est EXHAUSTIF sous `security invoker`');
 
 select cmp_ok(
 	(select pg_temp.compter_sous('5eed0000-0000-4000-8000-000000000013')),
 	'<',
-	(select pg_catalog.count(*)::bigint from public.cards
+	(select pg_catalog.count(*)::bigint from public.card_placements
 	  where workflow_id = '5eed0000-0000-4000-8000-000000000051'),
 	'9 — la lectrice en lit STRICTEMENT MOINS : un plan calculé pour elle serait PARTIEL, d''où la vérification 3');
 

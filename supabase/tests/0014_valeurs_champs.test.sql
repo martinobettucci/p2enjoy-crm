@@ -13,6 +13,8 @@
 --           `user` et `contact` résolus, migration 0047 — assertions retournées au §4.9),
 --           INC-054 (`value` nullable, mesuré)
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.6 : la clé des valeurs est `(placement_id, field_id)` (docs/SPEC-rattachements.md §3.3)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- Suite pgTAP de l'unité `CRM-036`. Elle prouve huit choses :
 --
@@ -622,8 +624,8 @@ on conflict (field_id, step_id) do update set visibility = 'required';
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select is(
-	(select c.current_step_id from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c4'),
+	(select c.current_step_id from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c4'),
 	'5eed0000-0000-4000-8000-000000000063'::uuid,
 	'§3.4 : une règle `required` ajoutée APRÈS COUP ne déplace pas la card déjà en place et ne la '
 	'rend pas illisible. Rien n''est invalidé rétroactivement');
@@ -702,8 +704,8 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');   -- viewer
 
 select is(
 	(select count(*)::int from public.card_field_values v
-	   join public.cards c   on c.id = v.card_id
-	   join public.channels ch on ch.id = c.channel_id
+	   join public.cards c join public.card_placements cp on cp.card_id = c.id   on c.id = v.card_id
+	   join public.channels ch on ch.id = cp.channel_id
 	  where ch.slug = 'grands-comptes'),
 	0,
 	'PREUVE N° 4 sur les valeurs : le `viewer`, fermé sur le track par un droit fin, ne voit '

@@ -3,6 +3,8 @@
 -- @verifies docs/SPEC-workflow-engine.md §7 ter.12.2 (une étape rétablie est nommée dans le plan, pour qu'un humain
 --           puisse la choisir), §7 ter.13.7 (l'ordre des écritures, révisé) ; docs/SPEC-ia.md §13.4 (le point de
 --           retour d'une acceptation se restaure) ; migration `0086` ; décision 620
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- LE DÉFAUT, MESURÉ LE 2026-10-03 : l'écriture 2 (déplacer les affaires) précédait l'écriture 5 (créer les étapes
 -- rétablies) — une affaire ne pouvait viser qu'une étape déjà vivante, et la restauration échouait en 23503.
@@ -106,7 +108,7 @@ select lives_ok(
 	       pg_temp.m('V1') #>> '{}', jsonb_build_array(jsonb_build_object('from_step_id', pg_temp.id('W1_C'), 'to_step_id', pg_temp.id('W1_B'))))
 	, '3 — restaurer V1 en renvoyant l''affaire vers B, que la restauration RÉTABLIT');
 reset role;
-select is((select current_step_id from public.cards where id = pg_temp.id('W1_CARD')), pg_temp.id('W1_B'),
+select is((select current_step_id from public.card_placements where card_id = pg_temp.id('W1_CARD')), pg_temp.id('W1_B'),
 	'4 — l''affaire est sur B, rétablie avec son identifiant d''origine');
 select is((select count(*)::int from public.workflow_steps where id = pg_temp.id('W1_C')), 0, '5 — C, retirée, a disparu');
 select is((select string_agg(id::text, ',' order by position) from public.workflow_steps where workflow_id = pg_temp.id('W1')),
@@ -137,7 +139,7 @@ select lives_ok(
 	       pg_temp.m('V2') #>> '{}', jsonb_build_array(jsonb_build_object('from_step_id', pg_temp.id('W2_B2'), 'to_step_id', pg_temp.id('W2_B'))))
 	, '9 — restaurer V2 : B rétablie réclame le nœud de B2, retirée, qui porte l''affaire');
 reset role;
-select is((select current_step_id from public.cards where id = pg_temp.id('W2_CARD')), pg_temp.id('W2_B'), '10 — l''affaire est sur B');
+select is((select current_step_id from public.card_placements where card_id = pg_temp.id('W2_CARD')), pg_temp.id('W2_B'), '10 — l''affaire est sur B');
 select is((select count(*)::int from public.workflow_steps where workflow_id = pg_temp.id('W2') and node_id = pg_temp.id('N_NEGOCIATION')), 1,
 	'11 — un seul nœud « négociation » dans le workflow : B2 a disparu');
 

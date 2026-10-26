@@ -10,6 +10,8 @@
 --           pour un service), §14.6 (aucun libellé dans un payload)
 -- @verifies docs/SCHEMA.md §9 bis.10 ; docs/PROD_MIGRATIONS.md §3 (migration 54)
 -- @verifies CLAUDE.md §10 (une règle de produit se prouve hors interface)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE PROUVE, ET CE QU'ELLE NE REPROUVE PAS.
 --

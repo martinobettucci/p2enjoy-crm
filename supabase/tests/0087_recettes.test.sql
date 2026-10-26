@@ -4,6 +4,8 @@
 --           (la période filtre les réels), §4.6 (corbeille exclue, archivée présente), §5 (`rentabilite_affaires`),
 --           §6.4 (`recette_saisissable`), §7 (famille `recettes`) ; docs/SCHEMA.md §9 sexies ; docs/SPEC-mcp.md §6.3,
 --           §8.2 ; CLAUDE.md §10
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE PROUVE, ET DANS QUEL ORDRE.
 --

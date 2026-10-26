@@ -9,6 +9,8 @@
 --            rouvert sous un track fermé), §7 (le refus est zéro ligne)
 -- @verifies docs/SPEC-costs.md §2.3 (« nul n'est pas zéro »), §4.5 (un cumul se calcule APRÈS la RLS)
 -- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec les identités réelles)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE PROUVE, ET POURQUOI CHAQUE GROUPE EXISTE.
 --
@@ -99,7 +101,7 @@ create or replace function pg_temp.cadrage_data() returns uuid language sql immu
 -- identifiants d'étape sont engendrés, jamais seedés. La résoudre depuis la card est donc la seule
 -- écriture stable — coder l'identifiant en dur rendrait cette suite fausse au prochain seed.
 create or replace function pg_temp.etape_cadrage() returns uuid language sql stable as
-	$$ select current_step_id from public.cards where id = pg_temp.cadrage_data() $$;
+	$$ select current_step_id from public.card_placements where card_id = pg_temp.cadrage_data() $$;
 
 -- « Reprise du dossier Marchand » : 22 000,00 EUR, SEULE affaire active de `dossiers-2023` au nœud
 -- `negociation`, et la seule affaire du seed qui porte une `probability_override` (tranche 2 c).
@@ -328,7 +330,7 @@ select is(
 		(select n.default_probability from public.workflow_nodes_catalog n where n.key = 'negociation'),
 		(select s.probability_override from public.workflow_steps s
 		  where s.id = '5eed0000-0000-4000-8000-000000000063'::uuid),
-		(select c.probability_override from public.cards c where c.id = pg_temp.reprise_marchand())
+		(select c.probability_override from public.card_placements c where c.card_id = pg_temp.reprise_marchand())
 	]),
 	array[50.00::numeric, 65.00::numeric, 30.00::numeric],
 	'CRM-066 : le seed pose les TROIS niveaux, et il pose trois nombres DISTINCTS — catalogue 50 %, '

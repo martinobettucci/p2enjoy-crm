@@ -3,6 +3,8 @@
 --           §13.4 (accepter : point de retour, cible traduite, cœur de la restauration, `PT409`) ;
 --           docs/SPEC-workflow-engine.md §7 ter.13 (la restauration, dont le cœur est partagé) ; décision 620
 -- @verifies CLAUDE.md §10 (le commercial refusé par la base)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- Sur le workflow par défaut du SEED, dans une transaction annulée : il porte des affaires sur ses étapes, des champs,
 -- des règles, une exigence et une version publiée — tout ce qu'une modification doit traverser.
@@ -72,7 +74,7 @@ select is(
 	'2 — format version 1, aucun nœud à créer, les seuls champs actifs');
 select is(
 	(select sum(v::int)::int from jsonb_each_text(public.occupation_du_workflow(pg_temp.id('WF'))) as t(k, v)),
-	(select count(*)::int from public.cards where workflow_id = pg_temp.id('WF')),
+	(select count(*)::int from public.card_placements where workflow_id = pg_temp.id('WF')),
 	'3 — l''occupation compte toutes les affaires du workflow, archivées et en corbeille comprises');
 select is(pg_temp.codes(pg_temp.vivante(), pg_temp.id('WF')), '',
 	'4 — la composition vivante, relue comme une cible, ne porte aucun défaut');
@@ -91,7 +93,7 @@ select is(
 	(select d -> 'valeurs' from jsonb_array_elements(app.defauts_proposition_ia(pg_temp.id('W'),
 		pg_temp.sans_etape(pg_temp.vivante(), 'relance'), pg_temp.id('WF'))) d where d ->> 'code' = 'remappage_requis'),
 	jsonb_build_object('cle', 'relance', 'affaires',
-		(select count(*) from public.cards c join public.workflow_steps s on s.id = c.current_step_id
+		(select count(*) from public.cards c join public.card_placements cp on cp.card_id = c.id join public.workflow_steps s on s.id = cp.current_step_id
 		   join public.workflow_nodes_catalog n on n.id = s.node_id where s.workflow_id = pg_temp.id('WF') and n.key = 'relance')),
 	'5 — remappage_requis : une étape retirée qui porte des affaires, sans destination, avec leur nombre');
 select is(
@@ -117,7 +119,7 @@ select ok(
 
 insert into mesures select 'empreinte_avant', app.workflow_composition_fingerprint(pg_temp.id('WF'));
 insert into mesures select 'versions_avant', count(*)::text from public.workflow_versions where workflow_id = pg_temp.id('WF');
-insert into mesures select 'sur_relance', count(*)::text from public.cards c join public.workflow_steps s on s.id = c.current_step_id
+insert into mesures select 'sur_relance', count(*)::text from public.cards c join public.card_placements cp on cp.card_id = c.id join public.workflow_steps s on s.id = cp.current_step_id
   join public.workflow_nodes_catalog n on n.id = s.node_id where s.workflow_id = pg_temp.id('WF') and n.key = 'relance';
 
 -- La cible : « relance » retirée, ses affaires vers une étape NOUVELLE « qualification-ia » ; un champ ajouté, un
@@ -173,7 +175,7 @@ select is(
 	'["prospection", "qualification-ia", "negociation", "signature", "realisation", "livre", "perdu"]'::jsonb,
 	'15 — la relance a disparu ; la qualification est la deuxième étape');
 select is(
-	(select count(*)::text from public.cards c join public.workflow_steps s on s.id = c.current_step_id
+	(select count(*)::text from public.cards c join public.card_placements cp on cp.card_id = c.id join public.workflow_steps s on s.id = cp.current_step_id
 	   join public.workflow_nodes_catalog n on n.id = s.node_id where s.workflow_id = pg_temp.id('WF') and n.key = 'qualification-ia'),
 	pg_temp.m('sur_relance'), '16 — les affaires de la relance sont sur l''étape NOUVELLE, toutes');
 select is(

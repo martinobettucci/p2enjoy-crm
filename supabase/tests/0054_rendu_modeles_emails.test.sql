@@ -5,6 +5,8 @@
 -- @verifies docs/SPEC-modeles-emails.md §2.4 (la liste fermée des douze variables et leur source)
 -- @verifies docs/SPEC-permissions-rls.md §7 (le refus est zéro ligne, jamais une erreur)
 -- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE PROUVE, ET DANS QUEL ORDRE.
 --
@@ -213,8 +215,8 @@ select is(
 select is(
 	substring(pg_temp.corps('c0000000-0000-4000-8000-0000000000a1',
 	                        '5eed0000-0000-4000-8000-0000000000c2') from '5=([^ ]* [^ ]*) 6='),
-	(select to_char(c.next_action_at, 'DD/MM/YYYY HH24:MI')
-	   from public.cards c where c.id = '5eed0000-0000-4000-8000-0000000000c2'),
+	(select to_char(cp.next_action_at, 'DD/MM/YYYY HH24:MI')
+	   from public.cards c join public.card_placements cp on cp.card_id = c.id where c.id = '5eed0000-0000-4000-8000-0000000000c2'),
 	'CRM-063 §8.6 — card.next_action_at rend JJ/MM/AAAA HH:MM en UTC, limite nommée');
 
 select is(

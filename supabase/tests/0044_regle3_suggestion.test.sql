@@ -3,6 +3,8 @@
 --           cas a à h du §8.5)
 -- @verifies docs/SPEC-mail-subsystem.md §4.4 (les quatre règles), §16.2 (la chaîne, la règle 3)
 -- @verifies CLAUDE.md §10 (une règle se prouve hors interface), §15 (preuves propres)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- CE QUE CETTE SUITE PROUVE.
 --

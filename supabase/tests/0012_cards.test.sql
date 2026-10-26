@@ -9,6 +9,8 @@
 -- @verifies docs/SPEC-permissions-rls.md §3 (fonctions), §4 (politiques), §7 (preuves n° 3, 4, 11)
 -- @verifies docs/SPEC-workflow-engine.md §2.6 (archivage d'un nœud occupé), §5 (`move_card`)
 -- @verifies docs/JOURNAL.md décisions 109, 110, 111, 112 ; INC-013, INC-025, INC-031, INC-046
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- Suite pgTAP de l'unité `CRM-040`. Elle prouve huit choses :
 --
@@ -238,15 +240,15 @@ select throws_ok($$
 -- =============================================================================================
 
 select is(
-	(select position from public.cards where title = 'Adresse imposée'),
-	(select position from public.cards where title = 'Cohérente') + 1,
+	(select p.position from public.card_placements p join public.cards c on c.id = p.card_id where c.title = 'Adresse imposée'),
+	(select p.position from public.card_placements p join public.cards c on c.id = p.card_id where c.title = 'Cohérente') + 1,
 	'`position` est attribuée en fin de COLONNE — portée (channel, étape), non le channel entier');
 
 insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title, position)
 select workspace_id, channel_id, workflow_id, step_id, 'Position fournie', 42 from t_ctx;
 
 select is(
-	(select position from public.cards where title = 'Position fournie'), 42::numeric,
+	(select p.position from public.card_placements p join public.cards c on c.id = p.card_id where c.title = 'Position fournie'), 42::numeric,
 	'une `position` fournie n''est pas écrasée : le trigger ne se déclenche que si elle est omise');
 
 -- Une autre étape du même channel repart de 1 : c'est ce qui distingue « colonne » de « channel ».
@@ -259,7 +261,7 @@ select t.workspace_id, t.channel_id, t.workflow_id,
   from t_ctx t;
 
 select is(
-	(select position from public.cards where title = 'Autre colonne'), 1::numeric,
+	(select p.position from public.card_placements p join public.cards c on c.id = p.card_id where c.title = 'Autre colonne'), 1::numeric,
 	'une autre étape du MÊME channel repart de 1 : la portée est bien la colonne du board');
 
 -- =============================================================================================
@@ -353,16 +355,16 @@ savepoint p_roles;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
 
 select is(
-	(select count(*)::int from public.cards c
-	   join public.channels ch on ch.id = c.channel_id
+	(select count(*)::int from public.cards c join public.card_placements cp on cp.card_id = c.id
+	   join public.channels ch on ch.id = cp.channel_id
 	  where ch.slug = 'grands-comptes'),
 	0,
 	'PREUVE N° 4 sur les cards : le `viewer`, fermé sur le track par un droit fin, ne voit AUCUNE '
 	'card de `grands-comptes` — zéro ligne, jamais une erreur');
 
 select isnt(
-	(select count(*)::int from public.cards c
-	   join public.channels ch on ch.id = c.channel_id
+	(select count(*)::int from public.cards c join public.card_placements cp on cp.card_id = c.id
+	   join public.channels ch on ch.id = cp.channel_id
 	  where ch.slug = 'refonte'),
 	0,
 	'et il voit celles des channels que rien ne lui ferme : la politique cloisonne, elle ne ferme '
@@ -384,8 +386,8 @@ savepoint p_bizdev;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
 
 select isnt(
-	(select count(*)::int from public.cards c
-	   join public.channels ch on ch.id = c.channel_id
+	(select count(*)::int from public.cards c join public.card_placements cp on cp.card_id = c.id
+	   join public.channels ch on ch.id = cp.channel_id
 	  where ch.slug = 'maintenance'),
 	0,
 	'le `business_developer`, restreint en LECTURE SEULE sur `maintenance` par un droit fin, y voit '
@@ -512,10 +514,10 @@ update public.card_placements set archived_at = now()
         where n.key = 'livre');
 
 select is(
-	(select count(*)::int from public.cards c
-	   join public.workflow_steps s on s.id = c.current_step_id
+	(select count(*)::int from public.cards c join public.card_placements cp on cp.card_id = c.id
+	   join public.workflow_steps s on s.id = cp.current_step_id
 	   join public.workflow_nodes_catalog n on n.id = s.node_id
-	  where n.key = 'livre' and c.archived_at is null and c.deleted_at is null),
+	  where n.key = 'livre' and cp.archived_at is null and c.deleted_at is null),
 	0,
 	'préalable posé : plus aucune card ACTIVE sur `livre`, toutes celles qui y vivent sont archivées');
 
@@ -557,8 +559,8 @@ select is(
 	'§9.3 et §10.4 bis');
 
 select is(
-	(select count(*)::int from public.cards
-	  where archived_at is not null and id::text like '5eed%'),
+	(select count(*)::int from public.card_placements
+	  where archived_at is not null and card_id::text like '5eed%'),
 	1,
 	'dont exactement UNE archivée : sans elle, l''archivage serait documenté sans être démontrable');
 
@@ -569,8 +571,8 @@ select is(
 	'et exactement UNE en corbeille : les deux suppressions douces sont DISTINCTES (§4)');
 
 select is(
-	(select count(*)::int from public.cards c
-	  where c.owner_id is null and c.amount is null and c.id::text like '5eed%'),
+	(select count(*)::int from public.cards c join public.card_placements cp on cp.card_id = c.id
+	  where cp.owner_id is null and cp.amount is null and c.id::text like '5eed%'),
 	1,
 	'une card SANS responsable et SANS montant : le caractère nullable des deux est démontré, non '
 	'seulement écrit');
@@ -711,16 +713,16 @@ select lives_ok($$
 -- qu'INC-046 interdit — déplacer le workflow d'un channel peuplé — reste refusé, et il est éprouvé
 -- dans les deux sens quelques assertions plus haut.
 select is(
-	(select count(*)::int from public.cards c
-	   join public.channels ch on ch.id = c.channel_id
+	(select count(*)::int from public.cards c join public.card_placements cp on cp.card_id = c.id
+	   join public.channels ch on ch.id = cp.channel_id
 	  where ch.slug = 'prospection' and c.id::text like '5eed%'),
 	2,
 	'`prospection` porte DEUX cards seedées depuis CRM-046 — docs/SPEC-seed.md §9.2 et §9.3');
 
 select is(
-	(select count(*)::int from public.cards c
-	   join public.channels ch on ch.id = c.channel_id
-	   join public.workflows w on w.id = c.workflow_id
+	(select count(*)::int from public.cards c join public.card_placements cp on cp.card_id = c.id
+	   join public.channels ch on ch.id = cp.channel_id
+	   join public.workflows w on w.id = cp.workflow_id
 	  where ch.slug = 'prospection' and c.id::text like '5eed%'
 	    and w.scope = 'track' and w.derived_from_workflow_id is not null),
 	2,

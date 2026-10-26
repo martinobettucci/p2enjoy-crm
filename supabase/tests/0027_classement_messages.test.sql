@@ -2,6 +2,8 @@
 -- @verifies docs/SPEC-mail-subsystem.md §4.4 (les quatre règles), §16.1 (la règle 3 désactivée),
 --           §16.2 (forme ET domaine, card fermée), §16.3 (classement manuel, idempotence)
 -- @verifies docs/SPEC-cards.md §14 (timeline) ; docs/JOURNAL.md décision 322
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 
 begin;
 
@@ -31,15 +33,15 @@ create temporary table pg_temp_ref (nom text primary key, valeur text);
 grant all on pg_temp_ref to authenticated, service_role;
 
 insert into pg_temp_ref
-select 'card', id::text from public.cards
- where archived_at is null and deleted_at is null and channel_id is not null
- order by title limit 1;
+select 'card', c.id::text from public.cards c join public.card_placements cp on cp.card_id = c.id
+ where cp.archived_at is null and c.deleted_at is null
+ order by c.title limit 1;
 insert into pg_temp_ref
 select 'adresse', c.email_local_part || '@' || w.inbound_domain
   from public.cards c join public.workspaces w on w.id = c.workspace_id
  where c.id = (select valeur::uuid from pg_temp_ref where nom = 'card');
 insert into pg_temp_ref
-select 'card_archivee', id::text from public.cards where archived_at is not null limit 1;
+select 'card_archivee', card_id::text from public.card_placements where archived_at is not null limit 1;
 insert into pg_temp_ref
 select 'adresse_archivee', c.email_local_part || '@' || w.inbound_domain
   from public.cards c join public.workspaces w on w.id = c.workspace_id

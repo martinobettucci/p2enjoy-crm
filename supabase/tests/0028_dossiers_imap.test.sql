@@ -1,6 +1,8 @@
 -- @verifies CRM-056 (docs/BACKLOG.md) — dossiers IMAP imbriqués
 -- @verifies docs/SPEC-mail-subsystem.md §4.5 (dossiers, renommage), §17.1 (mesures), §17.2
 -- @verifies docs/JOURNAL.md décisions 323, 324, 325
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 
 begin;
 
@@ -112,7 +114,7 @@ select is(
 insert into public.mail_folder_map (account_id, entity_type, entity_id, requested_path, actual_path)
 select (select valeur::uuid from pg_temp_ref where nom = 'compte'),
        'card',
-       (select id from public.cards where archived_at is null and deleted_at is null limit 1),
+       (select c.id from public.cards c join public.card_placements p on p.card_id = c.id where p.archived_at is null and c.deleted_at is null limit 1),
        'CRM/Nom périmé/Channel/Card',
        'CRM/Nom périmé/Channel/Card';
 

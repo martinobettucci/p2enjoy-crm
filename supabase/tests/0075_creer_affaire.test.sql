@@ -1,6 +1,8 @@
 -- @verifies CRM-095 (docs/BACKLOG.md) — tranche T1 : créer une affaire depuis le board
 -- @verifies docs/SPEC-cards.md §18.2 (le geste, l'étape initiale, ses refus), §18.5 (ligne pgTAP) ;
 --           docs/SPEC-permissions-rls.md §4 (`cards_insertion`) ; docs/JOURNAL.md décision 609
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- La règle que ce fichier tient le plus fort : une affaire créée par le geste entre par l'étape
 -- INITIALE du workflow de son channel — la règle du manuel (§5 bis.2) que rien ne tenait. Le workflow
@@ -106,11 +108,11 @@ select is(
 	'Première affaire',
 	'3 — le titre est ramené par `trim`');
 select ok(
-	(select s.is_initial from public.cards c join public.workflow_steps s on s.id = c.current_step_id
+	(select s.is_initial from public.cards c join public.card_placements cp on cp.card_id = c.id join public.workflow_steps s on s.id = cp.current_step_id
 	  where c.id = (select valeur::uuid from mesures where cle = 'carte')),
 	'4 — l''affaire entre par l''étape INITIALE du workflow de son channel');
 select is(
-	(select c.workflow_id from public.cards c where c.id = (select valeur::uuid from mesures where cle = 'carte')),
+	(select c.workflow_id from public.card_placements c where c.card_id = (select valeur::uuid from mesures where cle = 'carte')),
 	(select valeur::uuid from mesures where cle = 'workflow'),
 	'5 — son workflow est celui du channel');
 select is(
@@ -118,7 +120,7 @@ select is(
 	pg_temp.id('ADM'),
 	'6 — `created_by` est l''appelante');
 select is(
-	(select c.position from public.cards c where c.id = (select valeur::uuid from mesures where cle = 'carte')),
+	(select c.position from public.card_placements c where c.card_id = (select valeur::uuid from mesures where cle = 'carte')),
 	1::numeric,
 	'7 — la position vient du trigger existant : première de sa colonne');
 select ok(
@@ -139,7 +141,7 @@ select pg_temp.endosser(pg_temp.id('BIZ'));
 insert into mesures values ('carte-biz', public.creer_affaire(pg_temp.id('C'), 'Affaire du commercial')::text);
 reset role;
 select is(
-	(select c.position from public.cards c where c.id = (select valeur::uuid from mesures where cle = 'carte-biz')),
+	(select c.position from public.card_placements c where c.card_id = (select valeur::uuid from mesures where cle = 'carte-biz')),
 	2::numeric,
 	'10 — le commercial crée, et sa carte vient après la première');
 
@@ -185,11 +187,11 @@ select throws_ok(
 reset role;
 
 select is(
-	(select count(*)::int from public.cards where channel_id in (pg_temp.id('CA'), pg_temp.id('CT'), pg_temp.id('CN'))),
+	(select count(*)::int from public.card_placements where channel_id in (pg_temp.id('CA'), pg_temp.id('CT'), pg_temp.id('CN'))),
 	0,
 	'18 — aucun refus n''a laissé d''affaire derrière lui');
 select is(
-	(select count(*)::int from public.cards where channel_id = pg_temp.id('C')),
+	(select count(*)::int from public.card_placements where channel_id = pg_temp.id('C')),
 	2,
 	'19 — le channel vivant porte les deux seules affaires créées');
 
@@ -213,7 +215,7 @@ select throws_ok(
 reset role;
 
 select is(
-	(select count(*)::int from public.cards where channel_id = pg_temp.id('C')),
+	(select count(*)::int from public.card_placements where channel_id = pg_temp.id('C')),
 	2,
 	'22 — ni l''anonyme ni l''appel sans identité n''ont écrit');
 

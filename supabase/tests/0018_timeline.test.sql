@@ -10,6 +10,8 @@
 -- @verifies docs/SPEC-seed.md §2.15 (événements du seed, convergence)
 -- @verifies docs/INCONSISTENCY_REPORT.md INC-025 (colonnes communes), INC-048 (le motif d'une
 --           transition, toujours perdu), INC-014 (fermée depuis par CRM-022)
+-- @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et se mettent à jour sur
+--           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- Suite pgTAP de l'unité `CRM-044`. Elle prouve huit choses :
 --
@@ -530,12 +532,12 @@ select is(
 -- L'ÉTAT DU SEED EST INCHANGÉ PAR LES ALLERS-RETOURS. Sans cette assertion, la démonstration de la
 -- timeline se paierait d'une dérive silencieuse des autres unités.
 select is(
-	(select current_step_id from public.cards where id = '5eed0000-0000-4000-8000-0000000000c4'),
+	(select current_step_id from public.card_placements where card_id = '5eed0000-0000-4000-8000-0000000000c4'),
 	'5eed0000-0000-4000-8000-000000000063'::uuid,
 	'`…0c4` est RENDUE à son étape de négociation : l''aller-retour ne laisse aucune trace d''état');
 
 select is(
-	(select owner_id from public.cards where id = '5eed0000-0000-4000-8000-0000000000c1'),
+	(select owner_id from public.card_placements where card_id = '5eed0000-0000-4000-8000-0000000000c1'),
 	'5eed0000-0000-4000-8000-000000000012'::uuid,
 	'`…0c1` est RENDUE à son responsable déclaré');
 
