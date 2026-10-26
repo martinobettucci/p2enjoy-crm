@@ -1,3 +1,5 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.1 : le sommeil désigne le rattachement de l'affaire
+//           (docs/SPEC-rattachements.md §5)
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — la commande sous le refus de la fiche (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-040 (docs/BACKLOG.md) — le rendu réel de l'en-tête de la fiche d'affaire
 // @verifies docs/SPEC-cards.md §15.4 (les six données), §15.5 (l'action de copie et son échec),
@@ -37,6 +39,8 @@ function card(surcharge: Partial<CardOuverte> = {}): CardOuverte {
 		snoozed_until: null,
 		profiles: { id: 'p-1', full_name: 'Driss Lemoine', avatar_url: null },
 		workspaces: { inbound_domain: 'crm.p2enjoy.test' },
+		// `CRM-111` T2.3.1 : le rattachement unique de l'affaire, que le sommeil désigne.
+		card_placements: [{ id: 'rattachement-1', created_at: '2026-08-01T09:00:00+00:00' }],
 		...surcharge,
 	}
 }
@@ -576,6 +580,8 @@ describe("la mise en sommeil (CRM-081, docs/SPEC-cards.md §16.11)", () => {
 		screen.getByTestId('entete-card-sommeil-troisjours').click()
 		await waitFor(() => expect(appels).toHaveLength(1))
 		expect(appels[0]?.nom).toBe('snooze_card')
+		// `CRM-111` T2.3.1 : le geste désigne le RATTACHEMENT de l'affaire.
+		expect(appels[0]?.arguments['p_placement']).toBe('rattachement-1')
 		expect(String(appels[0]?.arguments['until'])).toBe('2026-08-19T12:00:00.000Z')
 		// LA LIGNE RENDUE EST LA SOURCE, jamais la saisie : la pastille porte le 15/09, ce que le
 		// serveur a répondu, et non le 19/08 que l'écran a envoyé.
@@ -638,6 +644,7 @@ describe("la mise en sommeil (CRM-081, docs/SPEC-cards.md §16.11)", () => {
 		screen.getByTestId('entete-card-reveiller').click()
 		await waitFor(() => expect(appels).toHaveLength(1))
 		expect(appels[0]?.nom).toBe('wake_card')
+		expect(appels[0]?.arguments['p_placement']).toBe('rattachement-1')
 		await waitFor(() => expect(screen.queryByTestId('entete-card-sommeil')).toBeNull())
 		expect(screen.getByTestId('entete-card-endormir')).toBeTruthy()
 	})

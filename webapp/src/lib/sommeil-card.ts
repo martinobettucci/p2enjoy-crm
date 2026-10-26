@@ -4,6 +4,7 @@
 //       §16.11.1 (le prédicat se calcule à la lecture), §16.11.3 (les quatre échéances usuelles),
 //       §16.11.4 (dictionnaire fermé des issues)
 // @spec docs/DESIGN_SYSTEM.md §5.3 quater (de quoi le geste a l'air), §5.7 (mention d'erreur)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.1 : le sommeil désigne le rattachement (docs/SPEC-rattachements.md §5)
 //
 // Ce module ne rend rien : il **décide**. La séparation est ce qui rend le prédicat, les quatre
 // échéances usuelles et le classement des huit issues vérifiables **sans navigateur** — un
@@ -164,7 +165,7 @@ export type ResultatSommeil =
  * Réduit la réponse d'un RPC à son issue et, en cas de succès, à la ligne rendue.
  *
  * LA LIGNE RENDUE EST LA SOURCE DE LA MISE À JOUR, jamais la saisie (§16.11.4) : les deux fonctions
- * rendent le type composite `public.cards`, et c'est l'échéance que la BASE a écrite qui doit
+ * rendent le type composite `public.card_placements` depuis `CRM-111` T2.3.1, et c'est l'échéance que la BASE a écrite qui doit
  * atteindre la pastille. Un succès sans ligne exploitable retombe sur `inconnu` plutôt que sur un
  * succès inventé — l'écran n'annonce jamais un sommeil que le serveur n'a pas confirmé.
  */
@@ -189,7 +190,8 @@ function reduire(
 }
 
 /**
- * Met une affaire en sommeil jusqu'à `until` — le geste du §16.3.
+ * Met une affaire en sommeil jusqu'à `until` — le geste du §16.3. Depuis `CRM-111` T2.3.1, le geste désigne le
+ * RATTACHEMENT de l'affaire (`rattachements.ts`, docs/SPEC-rattachements.md §5).
  *
  * `until` PEUT ÊTRE `null`, et cette signature est délibérée : la saisie vide doit atteindre la
  * base pour que `snooze_date_required` la refuse (§16.11.3). Le type généré déclare l'argument non
@@ -199,12 +201,12 @@ function reduire(
  */
 export async function mettreEnSommeil(
 	client: ClientCrm,
-	idCard: string,
+	idRattachement: string,
 	until: string | null,
 ): Promise<ResultatSommeil> {
 	try {
 		const reponse = await client.rpc('snooze_card', {
-			card_id: idCard,
+			p_placement: idRattachement,
 			until: until as string,
 		})
 		return reduire(
@@ -227,9 +229,9 @@ export async function mettreEnSommeil(
  * l'issue est donc `reveillee`, et c'est exact. Un réveil sans sommeil n'est pas une erreur du
  * demandeur, c'est un état déjà atteint.
  */
-export async function reveiller(client: ClientCrm, idCard: string): Promise<ResultatSommeil> {
+export async function reveiller(client: ClientCrm, idRattachement: string): Promise<ResultatSommeil> {
 	try {
-		const reponse = await client.rpc('wake_card', { card_id: idCard })
+		const reponse = await client.rpc('wake_card', { p_placement: idRattachement })
 		return reduire(
 			reponse.status,
 			reponse.error === null ? null : reponse.error.message,

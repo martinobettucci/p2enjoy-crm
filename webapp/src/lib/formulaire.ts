@@ -22,6 +22,7 @@ import { libelleEtape } from './affaires-figees'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import type { Database, Json } from './database.types'
 import type { ProfilAffiche } from './identites'
+import type { RattachementsLus } from './rattachements'
 import type { ClientCrm } from './supabase'
 import { estRenseigne } from './valeur-renseignee'
 
@@ -79,7 +80,7 @@ export const COLONNES_VALEUR = 'field_id, value'
 // `'a' + 'b'` rend le type `string`, et `supabase-js` cesse alors d'inférer la forme de la réponse
 // — MESURÉ, `lireCard` retombait sur `GenericStringError`. Le littéral doit rester entier.
 export const COLONNES_CARD_FORMULAIRE =
-	'id, title, workflow_id, workspace_id, current_step_id, email_local_part, amount, currency, next_action, next_action_at, archived_at, snoozed_until, profiles!cards_owner_id_fkey(id, full_name, avatar_url), workspaces(inbound_domain)'
+	'id, title, workflow_id, workspace_id, current_step_id, email_local_part, amount, currency, next_action, next_action_at, archived_at, snoozed_until, profiles!cards_owner_id_fkey(id, full_name, avatar_url), workspaces(inbound_domain), card_placements!card_placements_card_fk(id, created_at)'
 
 /** L'étape courante, telle que la mention « requis à l'étape <étape> » a besoin de la nommer (décision 688). */
 export type EtapeCourante = {
@@ -119,7 +120,7 @@ export type CardOuverte = Pick<
 > & {
 	readonly profiles: ProfilAffiche | null
 	readonly workspaces: { readonly inbound_domain: string | null } | null
-}
+} & RattachementsLus
 
 /**
  * Un champ **résolu** pour l'étape courante : ce que le composant rend, sans avoir à recroiser

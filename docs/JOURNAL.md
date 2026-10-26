@@ -34956,3 +34956,24 @@ fichier d'origine à chaque insertion, et la seconde a écrasé la première. El
 (2) Au commit de T2.2, l'insertion de la section « Migration `0109` » a **remplacé** le titre « 9 quater » au lieu de
 s'insérer avant lui. Il est rétabli. Les autres ajouts des trois tranches ont été recherchés un à un, et chacun est
 présent une fois.
+
+### `CRM-111` T2.3.1 — le sommeil d'un rattachement (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* **Fait** : migration `0111` —
+`snooze_card(p_placement, until)` et `wake_card(p_placement)`, les formes par affaire **supprimées** dans le même
+changement (décision 661 ; mêmes types d'arguments, une surcharge était de toute façon impossible). Mêmes gardes, même
+ordre, mêmes messages ; la trace est écrite par la table du rattachement (T2.3.0). **Appelants passés dans le même
+changement** : la webapp lit le rattachement avec l'affaire (plongement nommé `card_placements!card_placements_card_fk(id,
+created_at)` dans `COLONNES_CARD_BOARD` et `COLONNES_CARD_FORMULAIRE`, écrit en clair car une concaténation ferait perdre
+l'inférence de `supabase-js`) et le désigne par `idRattachement` (`webapp/src/lib/rattachements.ts`, le plus ancien,
+comme en base) ; le board et l'en-tête de la fiche s'en servent ; le connecteur garde `card_id` et résout le rattachement
+(`rattachement()` dans `affaires_ecriture.py`, docs/SPEC-rattachements.md §11) ; `e2e/api/snooze.spec.ts`,
+`scripts/verify-snooze.sh`, les suites `0042`, `0097` et `0099`. **Vérifications** : migration passée deux fois sur copie ;
+pgTAP en développement **99 fichiers, 4133 assertions, aucune anomalie** ; unitaires **4404/4404** (dont
+`rattachements.test.ts`) ; `typecheck` ; API 1206/1207 (`ingestion.spec.ts:91`, `CRM-058`) ; interface du sommeil et du
+board **64/65** puis `sommeil-fil` **7/7** rejouée seule (un `503` transitoire, pendant la reconstruction du service `mcp`
+de la pile) ; capture du sommeil depuis le board observée, identique à la précédente ; `scripts/verify-mcp.sh` **88/88** ;
+`scripts/verify-snooze.sh` **70/71**. Son contrôle « le trigger de trace du sommeil », **périmé depuis T2.3.0** et qu'il
+aurait fallu réviser alors (le harnais n'avait pas été rejoué), vise désormais `card_placements_write_events`. Le rouge
+restant, « les parcours d'interface », est le **résidu connu d'INC-292** : un `503` de la fonction `session`, relevé dans les
+journaux de Kong sur `/functions/v1/session/prolonger`. Les deux specs touchées sont **vertes rejouées seules** (23/23).

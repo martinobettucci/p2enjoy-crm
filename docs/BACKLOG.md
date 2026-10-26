@@ -16541,8 +16541,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           suites révisées (`0012`, `0016`, `0042`, `0097`) ; pgTAP **99 fichiers, 4133 assertions** ; sentinelle sans
           écart ; API `rattachements-ecriture.spec.ts` et projet 1206/1207 (`ingestion.spec.ts:91`, `CRM-058`) ; specs
           d'interface de la timeline et du sommeil vertes ; `scripts/verify-mcp.sh` **88/88**.
-        - [ ] **T2.3.1 — le sommeil** : `snooze_card(p_placement, until)`, `wake_card(p_placement)` ; les signatures par
-          affaire retirées.
+        - [x] **T2.3.1 — le sommeil** : `snooze_card(p_placement, until)`, `wake_card(p_placement)` ; les signatures par
+          affaire retirées. *Livrée en développement le 2026-10-26* — migration `0111` ; webapp (board, en-tête,
+          `rattachements.ts`), connecteur, `snooze.spec.ts`, `verify-snooze.sh`, `0042`, `0097`, `0099` ; pgTAP 99 fichiers
+          sans anomalie, unitaires 4404/4404, API 1206/1207, interface du sommeil verte ; `verify-mcp.sh` 88/88 ;
+          `verify-snooze.sh` 70/71 (le rouge : résidu d'INC-292, `503` de la fonction `session`, specs vertes rejouées).
         - [ ] **T2.3.2 — les colonnes ouvertes et l'archivage** : la webapp et le connecteur écrivent `card_placements`
           (responsable, montant, probabilité, prochaine action, position, archivage) ; ces colonnes se ferment sur `cards`.
         - [ ] **T2.3.3 — faire avancer** : `move_card(p_placement, to_step_id, comment)`.

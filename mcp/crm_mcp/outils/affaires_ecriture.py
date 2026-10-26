@@ -4,6 +4,8 @@
 # @spec docs/SPEC-mcp.md §9.2 ter (la liste, les ancres, les identifiants jugés dans l'affaire), §9.1 (aucun chemin
 #       parallèle : `creer_affaire`, `move_card`, `move_card_to_channel`, `snooze_card`, `wake_card` et les tables de la
 #       webapp ; `destructiveHint` sur le déplacement et la corbeille), §9.3 (refus nommés traduits, zéro ligne = refus)
+# @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3 : les gestes désignent le rattachement, résolu depuis `card_id`
+#       (docs/SPEC-rattachements.md §5, §11)
 """Écrire sur les affaires, sous l'identité de la personne.
 
 Chaque outil appelle la fonction ou la table que la webapp appelle pour le même geste ; la base garde ses règles —
@@ -137,6 +139,24 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if len(lignes) != 1:
             raise RefusCrm(introuvable("card", card_id))
         return lignes[0]
+
+    async def rattachement(jeton: str, card_id: str) -> str:
+        """Le rattachement de l'affaire que le geste désigne (`CRM-111` T2.3, docs/SPEC-mcp.md §9.2 ter).
+
+        Le contrat de l'outil garde `card_id` pendant la bascule (docs/SPEC-rattachements.md §11) : il prend le plus
+        ancien rattachement que l'appelant lit, comme `app.card_first_placement` en base. Aucun : l'affaire est absente
+        pour lui, et le refus le dit sans en révéler davantage.
+        """
+        lignes = await lire(
+            jeton,
+            "card_placements",
+            {"card_id": f"eq.{card_id}", "select": "id", "order": "created_at.asc,id.asc", "limit": "1"},
+            "card",
+            card_id,
+        )
+        if len(lignes) != 1:
+            raise RefusCrm(introuvable("card", card_id))
+        return str(lignes[0]["id"])
 
     async def etapes(jeton: str, workflow_id: str, genre: str, valeur: Any) -> list[dict[str, Any]]:
         lignes = await lire(
@@ -431,7 +451,11 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         until: Annotated[str, Field(description="Wake-up date YYYY-MM-DD or ISO 8601 instant with offset")],
     ) -> dict[str, Any]:
         appel = appel_courant()
-        reponse = await crm.rpc(appel.jeton, "snooze_card", {"card_id": card_id, "until": instant(until, "until")})
+        reponse = await crm.rpc(
+            appel.jeton,
+            "snooze_card",
+            {"p_placement": await rattachement(appel.jeton, card_id), "until": instant(until, "until")},
+        )
         if not reponse.reussie:
             raise refus(reponse, "card", card_id)
         return {"card": await resume(appel.jeton, card_id)}
@@ -448,7 +472,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         card_id: Annotated[str, Field(description="The affaire (card) id")],
     ) -> dict[str, Any]:
         appel = appel_courant()
-        reponse = await crm.rpc(appel.jeton, "wake_card", {"card_id": card_id})
+        reponse = await crm.rpc(appel.jeton, "wake_card", {"p_placement": await rattachement(appel.jeton, card_id)})
         if not reponse.reussie:
             raise refus(reponse, "card", card_id)
         return {"card": await resume(appel.jeton, card_id)}

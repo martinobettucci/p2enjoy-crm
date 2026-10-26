@@ -2613,6 +2613,12 @@ Les onze autres colonnes ouvertes restent ouvertes, et la suite continue de les 
 
 ### 16.8 Contrat d'API, mesuré
 
+**Révisé par `CRM-111` T2.3.1** (migration `0111`, décision 661, docs/SPEC-rattachements.md §5) : les deux gestes
+désignent le **rattachement** — `snooze_card(p_placement, until)`, `wake_card(p_placement)` — et le rendent
+(`public.card_placements`). La forme par affaire est supprimée. Les refus, leur ordre et leurs messages sont
+inchangés ; « affaire » se lit ci-dessous « rattachement de l'affaire ». La ligne 6 vise toujours `cards`, dont la
+colonne reste fermée, et `card_placements.snoozed_until` l'est aussi.
+
 | # | Appel | Profil | Attendu |
 |---|---|---|---|
 | 1 | `POST /rest/v1/rpc/snooze_card` sur une affaire active de son channel, échéance future | administratrice | `200`, objet JSON unique, `snoozed_until` égale à l'échéance |

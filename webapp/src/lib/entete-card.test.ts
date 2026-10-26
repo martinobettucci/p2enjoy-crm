@@ -36,6 +36,8 @@ function card(surcharge: Partial<CardOuverte> = {}): CardOuverte {
 		snoozed_until: null,
 		profiles: null,
 		workspaces: { inbound_domain: 'crm.p2enjoy.test' },
+		// `CRM-111` T2.3.1 : le rattachement unique de l'affaire.
+		card_placements: [{ id: 'rattachement-1', created_at: '2026-08-01T09:00:00+00:00' }],
 		...surcharge,
 	}
 }

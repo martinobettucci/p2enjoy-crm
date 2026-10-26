@@ -50,9 +50,12 @@ export const COLONNES_TRANSITION = 'id, from_step_id, to_step_id, label, require
  * `snoozed_until` a rejoint la liste avec la tranche 2 b de `CRM-081` : le board masque par défaut
  * les affaires en sommeil et les marque lorsqu'il les montre (docs/SPEC-cards.md §16.12), ce qu'il
  * ne peut faire sans lire la colonne. Elle est lue une fois pour les deux usages.
+ *
+ * Le rattachement de l'affaire est lu depuis `CRM-111` T2.3.1 : le sommeil le désigne (docs/SPEC-rattachements.md §5,
+ * `rattachements.ts`).
  */
 export const COLONNES_CARD_BOARD =
-	'id, title, description, position, amount, currency, next_action, current_step_id, entered_step_at, email_local_part, owner_id, snoozed_until, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url)'
+	'id, title, description, position, amount, currency, next_action, current_step_id, entered_step_at, email_local_part, owner_id, snoozed_until, responsable:profiles!cards_owner_id_fkey(id, full_name, avatar_url), card_placements!card_placements_card_fk(id, created_at)'
 
 /**
  * Champs du workflow, réduits à ce qui traduit un refus.

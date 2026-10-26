@@ -48,6 +48,7 @@ import {
 } from '../components/ui/Sommeil'
 import { t } from '../i18n'
 import type { ModeSommeil } from '../lib/filtre-sommeil'
+import { idRattachement } from '../lib/rattachements'
 import {
 	ECHEANCES_USUELLES,
 	echeanceUsuelle,
@@ -267,10 +268,18 @@ export function Board({
 			// toujours des dates —, et c'est ce qui distingue les deux gestes ici : réveiller, c'est
 			// demander « plus d'échéance ».
 			if (client === null) return 'reseau'
+			// Le geste désigne le RATTACHEMENT de l'affaire (`CRM-111` T2.3.1). Une affaire dont aucun rattachement n'est
+			// lisible est absente pour ce geste, comme le serveur le dirait (`card_not_found`).
+			const carte = cardsParId.get(idCard)
+			const rattachement = carte === undefined ? null : idRattachement(carte)
+			if (rattachement === null) {
+				setAnnonce(t(mentionSommeil('introuvable') ?? 'board.refusal.unknown'))
+				return 'introuvable'
+			}
 			const resultat =
 				until === null
-					? await reveiller(client, idCard)
-					: await mettreEnSommeil(client, idCard, until)
+					? await reveiller(client, rattachement)
+					: await mettreEnSommeil(client, rattachement, until)
 			if (resultat.issue !== 'endormie' && resultat.issue !== 'reveillee') {
 				setAnnonce(t(mentionSommeil(resultat.issue) ?? 'board.refusal.unknown'))
 				return resultat.issue

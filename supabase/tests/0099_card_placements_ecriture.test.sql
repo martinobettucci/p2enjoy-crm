@@ -128,7 +128,7 @@ select results_eq(
 -- 2.3 Les gestes par fonction, inchangés : `snooze_card` écrit `cards`, le rattachement écrit `snoozed`.
 truncate t_debut; insert into t_debut values (clock_timestamp());
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
-select public.snooze_card('5eed0000-0000-4000-8000-0000000000c4', now() + interval '2 days');
+select public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'), now() + interval '2 days');
 select pg_temp.proprietaire();
 select results_eq(
 	$$select type from pg_temp.evenements('5eed0000-0000-4000-8000-0000000000c4')$$,
@@ -136,7 +136,7 @@ select results_eq(
 	'`snooze_card` : UN événement `snoozed`, comme avant');
 truncate t_debut; insert into t_debut values (clock_timestamp());
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
-select public.wake_card('5eed0000-0000-4000-8000-0000000000c4');
+select public.wake_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'));
 select pg_temp.proprietaire();
 select results_eq(
 	$$select type from pg_temp.evenements('5eed0000-0000-4000-8000-0000000000c4')$$,

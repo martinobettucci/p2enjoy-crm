@@ -1,3 +1,5 @@
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.1 : le sommeil désigne le rattachement de l'affaire
+//           (docs/SPEC-rattachements.md §5)
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — le board sous le refus du channel (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-041 (docs/BACKLOG.md) — rendu réel du board, de son menu et de ses refus
 // @verifies CRM-022 (docs/BACKLOG.md) — avatar du responsable sans UUID
@@ -58,6 +60,8 @@ function card(partiel: Partial<CardBoard> & Pick<CardBoard, 'id' | 'current_step
 		email_local_part: 'c-00000000',
 		owner_id: null,
 		responsable: null,
+		// `CRM-111` T2.3.1 : le rattachement unique de l'affaire, que les gestes désignent.
+		card_placements: [{ id: `r-${partiel.id}`, created_at: MAINTENANT.toISOString() }],
 		...partiel,
 	}
 }
@@ -710,7 +714,9 @@ describe('sommeil depuis le menu de la carte (docs/SPEC-cards.md §16.13)', () =
 			await utilisateur.click(screen.getByTestId('carte-sommeil-semaine'))
 			await waitFor(() => expect(appels).toHaveLength(1))
 			expect(appels[0]?.nom).toBe('snooze_card')
-			expect(appels[0]?.arguments.card_id).toBe('c1')
+			// `CRM-111` T2.3.1 : le geste désigne le RATTACHEMENT de l'affaire, non l'affaire.
+			expect(appels[0]?.arguments.p_placement).toBe('r-c1')
+			expect(appels[0]?.arguments).not.toHaveProperty('card_id')
 			const envoyee = new Date(String(appels[0]?.arguments.until)).getTime()
 			const attendue = instantDuGeste.getTime() + 7 * 24 * 60 * 60 * 1000
 			expect(envoyee).toBeGreaterThanOrEqual(attendue)
@@ -733,7 +739,7 @@ describe('sommeil depuis le menu de la carte (docs/SPEC-cards.md §16.13)', () =
 		await utilisateur.click(screen.getByTestId('menu-transitions'))
 		await utilisateur.click(screen.getByTestId('carte-reveiller'))
 		await waitFor(() => expect(appels).toHaveLength(1))
-		expect(appels[0]).toEqual({ nom: 'wake_card', arguments: { card_id: 'c1' } })
+		expect(appels[0]).toEqual({ nom: 'wake_card', arguments: { p_placement: 'r-c1' } })
 	})
 
 	// LA LIGNE RENDUE EST LA SOURCE, JAMAIS LA SAISIE (§16.13.3) : le serveur peut arrondir, et

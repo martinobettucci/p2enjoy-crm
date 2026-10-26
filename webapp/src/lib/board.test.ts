@@ -73,6 +73,8 @@ function card(partiel: Partial<CardBoard> & Pick<CardBoard, 'id' | 'current_step
 		email_local_part: 'c-00000000',
 		owner_id: null,
 		responsable: null,
+		// `CRM-111` T2.3.1 : le rattachement unique de l'affaire, que les gestes désignent.
+		card_placements: [{ id: `r-${partiel.id}`, created_at: MAINTENANT.toISOString() }],
 		...partiel,
 	}
 }

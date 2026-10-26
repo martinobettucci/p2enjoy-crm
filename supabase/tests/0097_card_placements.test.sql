@@ -176,12 +176,12 @@ select is(pg_temp.divergences(), 0::bigint, '`move_card_to_channel` : channel, w
 
 -- 3.6 Endormir puis réveiller.
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
-select lives_ok($$select public.snooze_card('5eed0000-0000-4000-8000-0000000000c3', now() + interval '3 days')$$,
+select lives_ok($$select public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'), now() + interval '3 days')$$,
 	'`snooze_card` passe');
 select pg_temp.proprietaire();
 select is(pg_temp.divergences(), 0::bigint, '`snooze_card` : `snoozed_until` reporté');
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
-select lives_ok($$select public.wake_card('5eed0000-0000-4000-8000-0000000000c3')$$, '`wake_card` passe');
+select lives_ok($$select public.wake_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'))$$, '`wake_card` passe');
 select pg_temp.proprietaire();
 select is(pg_temp.divergences(), 0::bigint, '`wake_card` : reporté');
 

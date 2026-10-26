@@ -11,6 +11,8 @@
 -- @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface)
 -- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.0 : la trace du sommeil est écrite par la table du rattachement
 --           (docs/SPEC-rattachements.md §5)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.1 : le sommeil désigne le rattachement, signatures remplacées
+--           (docs/SPEC-rattachements.md §5, décision 661)
 --
 -- CE QUE CETTE SUITE PROUVE, ET DANS QUEL ORDRE.
 --
@@ -70,17 +72,25 @@ $$;
 -- 1. La forme des deux fonctions — docs/SPEC-cards.md §16.3, §16.4, §16.6
 -- =============================================================================================
 
-select has_function('public', 'snooze_card', array['uuid', 'timestamptz'],
-	'`public.snooze_card(uuid, timestamptz)` est livrée');
+-- RÉVISÉES PAR `CRM-111` T2.3.1 (migration 111, décision 661) : les deux fonctions désignent le RATTACHEMENT et le
+-- rendent ; la forme par affaire est supprimée, non surchargée (docs/SPEC-rattachements.md §5).
+select is(
+	(select array_agg(p.oid::regprocedure::text || ' ' || pg_get_function_identity_arguments(p.oid) order by p.proname)
+	   from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+	  where n.nspname = 'public' and p.proname in ('snooze_card', 'wake_card')),
+	array['snooze_card(uuid,timestamp with time zone) p_placement uuid, until timestamp with time zone',
+	      'wake_card(uuid) p_placement uuid'],
+	'UNE forme de chacune, par rattachement : `snooze_card(p_placement, until)` et `wake_card(p_placement)` — '
+	'aucune forme par affaire au catalogue (décision 661)');
 
 select has_function('public', 'wake_card', array['uuid'],
 	'`public.wake_card(uuid)` est livrée');
 
-select function_returns('public', 'snooze_card', array['uuid', 'timestamptz'], 'cards',
-	'`snooze_card` rend `public.cards` : le client obtient l''échéance enregistrée sans relecture');
+select function_returns('public', 'snooze_card', array['uuid', 'timestamptz'], 'card_placements',
+	'`snooze_card` rend `public.card_placements` : le client obtient l''échéance enregistrée sans relecture');
 
-select function_returns('public', 'wake_card', array['uuid'], 'cards',
-	'`wake_card` rend `public.cards`, même contrat que sa jumelle');
+select function_returns('public', 'wake_card', array['uuid'], 'card_placements',
+	'`wake_card` rend `public.card_placements`, même contrat que sa jumelle');
 
 select is(
 	(select array_agg(p.prosecdef order by p.proname) from pg_proc p
@@ -170,32 +180,32 @@ grant select on sommeil_avant to public;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok($$
-	select public.snooze_card('5eed0000-0000-4000-8000-0000000000ff',
+	select public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000ff'),
 	                          now() + interval '3 days') $$,
 	'P0001', 'card_not_found',
 	'Refus n° 1 — une card qui n''existe pas est ABSENTE, et le code est `P0001` : `P0002` serait '
 	'rendu `500` par PostgREST et lu comme une panne du produit');
 
 select throws_ok($$
-	select public.snooze_card('5eed0000-0000-4000-8000-0000000000c8',
+	select public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c8'),
 	                          now() + interval '3 days') $$,
 	'P0001', 'card_not_found',
 	'Refus n° 1 — une card ARCHIVÉE est traitée comme absente : « active » a la même définition '
 	'qu''ailleurs (§5)');
 
 select throws_ok($$
-	select public.snooze_card('5eed0000-0000-4000-8000-0000000000c9',
+	select public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c9'),
 	                          now() + interval '3 days') $$,
 	'P0001', 'card_not_found',
 	'Refus n° 1 — une card à la CORBEILLE de même : on la restaure avant de l''endormir');
 
 select throws_ok($$
-	select public.snooze_card('5eed0000-0000-4000-8000-0000000000c1', null) $$,
+	select public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'), null) $$,
 	'P0001', 'snooze_date_required',
 	'Refus n° 3 — une mise en sommeil sans échéance serait un archivage, geste qui existe déjà');
 
 select throws_ok($$
-	select public.snooze_card('5eed0000-0000-4000-8000-0000000000c1',
+	select public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                          now() - interval '1 minute') $$,
 	'P0001', 'snooze_date_in_past',
 	'Refus n° 4 — une échéance passée rendrait la card immédiatement hors sommeil : l''écriture '
@@ -204,7 +214,7 @@ select throws_ok($$
 -- Le succès correspondant, sans quoi les refus ci-dessus seraient verts sur une fonction qui
 -- refuse tout.
 select is(
-	(select (public.snooze_card('5eed0000-0000-4000-8000-0000000000c1',
+	(select (public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                            '2099-01-01T00:00:00Z'::timestamptz)).snoozed_until),
 	'2099-01-01T00:00:00Z'::timestamptz,
 	'Succès — l''échéance future est enregistrée, et la fonction rend la ligne mise à jour');
@@ -237,7 +247,7 @@ select is(
 
 -- Reporter une échéance est un geste ordinaire (§16.3) : accepté, et tracé une seconde fois.
 select is(
-	(select (public.snooze_card('5eed0000-0000-4000-8000-0000000000c1',
+	(select (public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                            '2099-06-01T00:00:00Z'::timestamptz)).snoozed_until),
 	'2099-06-01T00:00:00Z'::timestamptz,
 	'Une card DÉJÀ en sommeil est acceptée : la nouvelle échéance remplace l''ancienne');
@@ -254,7 +264,7 @@ select is(
 -- =============================================================================================
 
 select is(
-	(select (public.wake_card('5eed0000-0000-4000-8000-0000000000c1')).snoozed_until),
+	(select (public.wake_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'))).snoozed_until),
 	null::timestamptz,
 	'Le réveil remet l''échéance à `NULL` — le temps, lui, ne l''efface pas (§16.2)');
 
@@ -266,7 +276,7 @@ select is(
 	'Le fil porte UN `woken` DE PLUS, `payload` nommant l''échéance abandonnée');
 
 select lives_ok($$
-	select public.wake_card('5eed0000-0000-4000-8000-0000000000c1') $$,
+	select public.wake_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1')) $$,
 	'Réveiller une card qui ne dort pas ne REFUSE pas : c''est un état déjà atteint');
 
 select is(
@@ -285,14 +295,14 @@ select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
 
 select throws_ok($$
-	select public.snooze_card('5eed0000-0000-4000-8000-0000000000c1',
+	select public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c1'),
 	                          '2099-01-01T00:00:00Z'::timestamptz) $$,
 	'P0001', 'card_not_found',
 	'La lectrice ne voit pas les cards de `grands-comptes` : la card lui est ABSENTE, et le refus '
 	'ne lui apprend pas qu''elle existe');
 
 select throws_ok($$
-	select public.snooze_card('5eed0000-0000-4000-8000-0000000000c5',
+	select public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c5'),
 	                          '2099-01-01T00:00:00Z'::timestamptz) $$,
 	'42501', 'forbidden',
 	'Sur une card qu''elle LIT sans y écrire, le refus devient `forbidden` — `42501` → `403`. '

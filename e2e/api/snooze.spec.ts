@@ -6,6 +6,8 @@
 // @verifies docs/SPEC-permissions-rls.md §4.3 (règle de discrétion), §4.4 (colonne constatée par
 //           le serveur), §7 (preuve de refus n° 1)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.1 : les deux gestes désignent le RATTACHEMENT et le rendent
+//           (docs/SPEC-rattachements.md §5, décision 661)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. La suite pgTAP prouve les mêmes règles DANS la base,
 // avec `set local role` : elle ne traverse ni Kong, ni PostgREST, ni GoTrue. Or le §16.8 est un
@@ -48,6 +50,13 @@ type Evenement = { type: string; payload: Record<string, unknown> }
 test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 	let jetonAdmin = ''
 	let jetonViewer = ''
+	/** Le rattachement de chaque card d'essai, lu après sa création. */
+	const rattachementDe = new Map<string, string>()
+	const r = (card: string): string => {
+		const id = rattachementDe.get(card)
+		if (id === undefined) throw new Error(`${card} : rattachement non relevé`)
+		return id
+	}
 
 	test.beforeAll(async ({ request }) => {
 		jetonAdmin = await jetonDe('admin@p2enjoy.test')
@@ -69,6 +78,13 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 				},
 			})
 			expect(creation.status(), 'la card d’essai est créée par le vrai chemin').toBe(201)
+			// `CRM-111` T2.3.1 : les gestes désignent le rattachement, que la création a posé (miroir de T2.1).
+			const rattachements = await request.get(`${URL_API}/rest/v1/card_placements?card_id=eq.${id}&select=id`, {
+				headers: enTetesService(),
+			})
+			const [rattachement] = (await rattachements.json()) as { id: string }[]
+			if (rattachement === undefined) throw new Error(`${id} : aucun rattachement — la migration 0108 est-elle appliquée ?`)
+			rattachementDe.set(id, rattachement.id)
 		}
 	})
 
@@ -89,13 +105,14 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 	}) => {
 		const reponse = await request.post(`${URL_API}${RPC}/snooze_card`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_FERMEE, until: ECHEANCE },
+			data: { p_placement: r(CARD_FERMEE), until: ECHEANCE },
 		})
 		expect(reponse.status()).toBe(200)
 
 		// Objet JSON unique, non tableau : c'est ce que PostgREST fait d'un type composite.
-		const card = (await reponse.json()) as { id: string; snoozed_until: string }
-		expect(card.id).toBe(CARD_FERMEE)
+		const card = (await reponse.json()) as { id: string; card_id: string; snoozed_until: string }
+		expect(card.id, 'la ligne rendue est le rattachement').toBe(r(CARD_FERMEE))
+		expect(card.card_id).toBe(CARD_FERMEE)
 		expect(new Date(card.snoozed_until).toISOString()).toBe(new Date(ECHEANCE).toISOString())
 	})
 
@@ -109,7 +126,7 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 
 		const reponse = await request.post(`${URL_API}${RPC}/snooze_card`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_LUE, until: '2020-01-01T00:00:00+00:00' },
+			data: { p_placement: r(CARD_LUE), until: '2020-01-01T00:00:00+00:00' },
 		})
 		expect(reponse.status()).toBe(400)
 		expect((await reponse.json()).message).toBe('snooze_date_in_past')
@@ -123,7 +140,7 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 	test('3 — une échéance absente est refusée', async ({ request }) => {
 		const reponse = await request.post(`${URL_API}${RPC}/snooze_card`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_LUE, until: null },
+			data: { p_placement: r(CARD_LUE), until: null },
 		})
 		expect(reponse.status()).toBe(400)
 		expect((await reponse.json()).message).toBe('snooze_date_required')
@@ -134,7 +151,7 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 	test('4 — une card qu’elle ne lit pas est ABSENTE pour la lectrice', async ({ request }) => {
 		const reponse = await request.post(`${URL_API}${RPC}/snooze_card`, {
 			headers: enTetesAuthentifies(jetonViewer),
-			data: { card_id: CARD_FERMEE, until: ECHEANCE },
+			data: { p_placement: r(CARD_FERMEE), until: ECHEANCE },
 		})
 		expect(reponse.status()).toBe(400)
 		expect(
@@ -146,7 +163,7 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 	test('5 — une card qu’elle LIT sans y écrire rend `forbidden`', async ({ request }) => {
 		const reponse = await request.post(`${URL_API}${RPC}/snooze_card`, {
 			headers: enTetesAuthentifies(jetonViewer),
-			data: { card_id: CARD_LUE, until: ECHEANCE },
+			data: { p_placement: r(CARD_LUE), until: ECHEANCE },
 		})
 		expect(reponse.status(), 'preuve de refus n° 1, `42501` → `403`').toBe(403)
 		expect((await reponse.json()).message).toBe('forbidden')
@@ -177,13 +194,13 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 	test('7 — reporter puis réveiller, et le fil porte les trois gestes', async ({ request }) => {
 		const report = await request.post(`${URL_API}${RPC}/snooze_card`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_FERMEE, until: ECHEANCE_REPORTEE },
+			data: { p_placement: r(CARD_FERMEE), until: ECHEANCE_REPORTEE },
 		})
 		expect(report.status(), 'reporter une échéance est un geste ordinaire').toBe(200)
 
 		const reveil = await request.post(`${URL_API}${RPC}/wake_card`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_FERMEE },
+			data: { p_placement: r(CARD_FERMEE) },
 		})
 		expect(reveil.status()).toBe(200)
 		expect((await reveil.json()).snoozed_until).toBeNull()
@@ -207,7 +224,7 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 
 		const reponse = await request.post(`${URL_API}${RPC}/wake_card`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_FERMEE },
+			data: { p_placement: r(CARD_FERMEE) },
 		})
 		expect(reponse.status(), 'un état déjà atteint n’est pas une erreur (§16.4)').toBe(200)
 
@@ -228,7 +245,7 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 
 		const reponse = await request.post(`${URL_API}${RPC}/snooze_card`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: { card_id: CARD_LUE, until: ECHEANCE },
+			data: { p_placement: r(CARD_LUE), until: ECHEANCE },
 		})
 		expect(reponse.status()).toBe(400)
 		expect(

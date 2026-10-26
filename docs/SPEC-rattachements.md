@@ -516,6 +516,11 @@ colonnes ouvertes du rattachement s'il écrit son channel. Les groupes suivants 
 archivage, faire avancer, changer de channel, cadences, valeurs, création et remappages) passent chacun leurs appelants
 au rattachement et retirent leur signature par affaire.
 
+**T2.3.1, livrée en développement le 2026-10-26** (migration `0111`) : `snooze_card(p_placement, until)` et
+`wake_card(p_placement)`. La webapp lit le rattachement de l'affaire avec elle (plongement
+`card_placements!card_placements_card_fk(id, created_at)`, module `rattachements.ts`) ; le connecteur garde `card_id`
+et résout le rattachement (§11).
+
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne
 change **rien de visible**, car chaque affaire garde son unique rattachement : c'est sa preuve, puisque toute la suite

@@ -2,6 +2,8 @@
 #           simulé qui enregistre chaque écriture
 # @verifies CRM-067 (docs/BACKLOG.md) — tranche T4 : `crm_card_activity_add` et `crm_card_activity_update`
 #           (docs/SPEC-activites.md §6, décision 653 ; aucun outil de retrait, décision 648)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3 : le sommeil désigne le rattachement de l'affaire, résolu depuis
+#           `card_id` (docs/SPEC-rattachements.md §5, §11)
 # @verifies docs/SPEC-mcp.md §9.2 ter (liste, ancres, `aussi`, identifiants jugés dans l'affaire), §9.1 (déclarations
 #           vérifiées, `destructiveHint`), §9.3 (refus nommés traduits, zéro ligne = refus)
 """Le CRM simulé rend ce que PostgREST rendrait pour chaque écriture, et la note : les tests prouvent la requête émise et
@@ -32,6 +34,8 @@ from .conftest import CLE_ANONYME, CLE_SERVICE, ESPACE_A, ESPACE_B, SECRET, CrmS
 
 CARD_A = "c0000000-0000-4000-8000-0000000000c1"
 CARD_B = "c0000000-0000-4000-8000-0000000000c2"
+RATTACHEMENT_A = "e0000000-0000-4000-8000-0000000000e1"
+RATTACHEMENT_B = "e0000000-0000-4000-8000-0000000000e2"
 CHANNEL_A = "d0000000-0000-4000-8000-0000000000d1"
 CHANNEL_A2 = "d0000000-0000-4000-8000-0000000000d3"
 CHANNEL_B = "d0000000-0000-4000-8000-0000000000d2"
@@ -63,6 +67,11 @@ class CrmEcriture(CrmSimule):
         ]
         tables = {
             "cards": [c for c in cartes if c["workspace_id"] in lisibles],
+            # `CRM-111` T2.3 : le rattachement unique de chaque affaire, lisible comme elle.
+            "card_placements": [r for r in [
+                {"id": RATTACHEMENT_A, "card_id": CARD_A, "workspace_id": ESPACE_A},
+                {"id": RATTACHEMENT_B, "card_id": CARD_B, "workspace_id": ESPACE_B},
+            ] if r["workspace_id"] in lisibles],
             "channels": [c for c in [
                 {"id": CHANNEL_A, "workspace_id": ESPACE_A, "workflow_id": WORKFLOW},
                 {"id": CHANNEL_A2, "workspace_id": ESPACE_A, "workflow_id": WORKFLOW_2},
@@ -284,9 +293,10 @@ async def test_changer_de_channel_cherche_l_etape_dans_le_workflow_d_arrivee(mon
 async def test_sommeil_et_reveil(monde: Monde) -> None:
     monde.ouvrir(*TOUT)
     await monde.appel("crm_card_snooze", {"card_id": CARD_A, "until": "2026-12-01"})
-    assert monde.simule.rpcs[-1] == ("snooze_card", {"card_id": CARD_A, "until": "2026-12-01"})
+    # `CRM-111` T2.3.1 : l'outil garde `card_id`, et le geste désigne le rattachement de l'affaire.
+    assert monde.simule.rpcs[-1] == ("snooze_card", {"p_placement": RATTACHEMENT_A, "until": "2026-12-01"})
     await monde.appel("crm_card_wake", {"card_id": CARD_A})
-    assert monde.simule.rpcs[-1] == ("wake_card", {"card_id": CARD_A})
+    assert monde.simule.rpcs[-1] == ("wake_card", {"p_placement": RATTACHEMENT_A})
     with pytest.raises(ToolError, match="time zone offset"):
         await monde.appel("crm_card_snooze", {"card_id": CARD_A, "until": "2026-12-01T09:00:00"})
 

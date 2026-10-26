@@ -2162,6 +2162,14 @@ Le privilège de mise à jour des sept colonnes ouvertes et la politique `card_p
 retirer les deux déclencheurs et fonctions de cette migration, la politique, le privilège et la colonne calculée. Aucune
 donnée n'est touchée.
 
+### Migration `0111` — le sommeil d'un rattachement (`CRM-111` T2.3.1, décision 705 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-rattachements.md` §5 ; `docs/SPEC-cards.md` §16.3, §16.4, §16.8. `snooze_card(p_placement uuid, until
+timestamptz)` et `wake_card(p_placement uuid)` remplacent les formes par affaire, **supprimées** (décision 661), et
+rendent `public.card_placements` ; mêmes gardes, même ordre, mêmes messages, `SECURITY DEFINER`, `search_path` vide,
+exécutables par `authenticated` et `service_role`. **Retrait** : supprimer les deux fonctions et réappliquer celles de la
+migration `0044`, avec les appelants d'avant.
+
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)

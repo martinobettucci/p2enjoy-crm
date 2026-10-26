@@ -38,6 +38,7 @@ import {
 	type MembreAffectable,
 } from '../lib/entete-card'
 import type { CardOuverte } from '../lib/formulaire'
+import { idRattachement } from '../lib/rattachements'
 import {
 	ECHEANCES_USUELLES,
 	echeanceSaisie,
@@ -841,7 +842,11 @@ function BlocSommeil({
 		async (until: string | null) => {
 			setEnCours(true)
 			setIssue(null)
-			const resultat = await mettreEnSommeil(client, card.id, until)
+			const rattachement = idRattachement(card)
+			const resultat =
+				rattachement === null
+					? ({ issue: 'introuvable' } as const)
+					: await mettreEnSommeil(client, rattachement, until)
 			setEnCours(false)
 			setIssue(resultat.issue)
 			if (resultat.issue !== 'endormie') return
@@ -851,18 +856,20 @@ function BlocSommeil({
 			// pas la saisie »).
 			fermer()
 		},
-		[card.id, client, fermer, onAppliquer],
+		[card, client, fermer, onAppliquer],
 	)
 
 	const eveiller = useCallback(async () => {
 		setEnCours(true)
 		setIssue(null)
-		const resultat = await reveiller(client, card.id)
+		const rattachement = idRattachement(card)
+		const resultat =
+			rattachement === null ? ({ issue: 'introuvable' } as const) : await reveiller(client, rattachement)
 		setEnCours(false)
 		setIssue(resultat.issue)
 		if (resultat.issue !== 'reveillee') return
 		onAppliquer(resultat.ligne.snoozed_until)
-	}, [card.id, client, onAppliquer])
+	}, [card, client, onAppliquer])
 
 	const mention = mentionSommeil(issue)
 

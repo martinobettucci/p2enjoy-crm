@@ -8,6 +8,7 @@
 # @verifies docs/SPEC-test-harness.md §1 (un harnais qui rend vert sans rien exercer est pire
 #           qu'une commande absente), §7.1 (chaîne Node Linux), §7.2 point 9 (restauration
 #           constatée octet à octet, jamais comparée à HEAD)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.1 : le sommeil désigne le rattachement (docs/SPEC-rattachements.md §5)
 # @verifies CLAUDE.md §16 (vérification visuelle), §17 (Definition of Done), §25 (ne jamais
 #           annoncer une preuve non exécutée)
 #
@@ -189,8 +190,9 @@ verifier_signature() {
 		fail "$attendue est ABSENTE ou sa signature a changé"
 	fi
 }
-verifier_signature 'snooze_card(card_id uuid, until timestamp with time zone)'
-verifier_signature 'wake_card(card_id uuid)'
+# `CRM-111` T2.3.1 (décision 661) : les deux gestes désignent le RATTACHEMENT, et la forme par affaire est supprimée.
+verifier_signature 'snooze_card(p_placement uuid, until timestamp with time zone)'
+verifier_signature 'wake_card(p_placement uuid)'
 verifier_signature 'snooze_thread(workspace uuid, thread_key text, until timestamp with time zone)'
 verifier_signature 'wake_thread(workspace uuid, thread_key text)'
 
@@ -219,8 +221,10 @@ for evenement in snoozed woken; do
 	fi
 done
 
+# RÉVISÉ PAR `CRM-111` T2.3.0 (migration 110) : le sommeil appartient au RATTACHEMENT, et c'est la table
+# `card_placements` qui écrit sa trace (docs/SPEC-rattachements.md §5). La règle tient : un trigger de TABLE.
 if [ "$(psql_db "select count(*) from pg_trigger
-	where tgrelid='public.cards'::regclass and tgname='card_events_apres_maj_sommeil'
+	where tgrelid='public.card_placements'::regclass and tgname='card_placements_write_events'
 	  and not tgisinternal")" = 1 ]; then
 	ok "la trace est écrite par un trigger de TABLE : une écriture par la clé de service la laisse aussi"
 else

@@ -37,6 +37,7 @@ import {
 import type { Database } from './database.types'
 import { MODE_SOMMEIL_PAR_DEFAUT, type ModeSommeil } from './filtre-sommeil'
 import type { ProfilAffiche } from './identites'
+import type { RattachementsLus } from './rattachements'
 import { estEnSommeil } from './sommeil-card'
 import type { ClientCrm } from './supabase'
 
@@ -106,7 +107,7 @@ export type CardBoard = Pick<
 	| 'snoozed_until'
 > & {
 	readonly responsable: ProfilAffiche | null
-}
+} & RattachementsLus
 
 export type TransitionLue = Pick<
 	Database['public']['Tables']['workflow_transitions']['Row'],
