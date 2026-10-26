@@ -35181,3 +35181,67 @@ d'interface, sans arbitrage du produit.*
 
 **Numérotation** : la `0116` est prise par `CRM-116` et la `0117` par `CRM-111` T2.3.4, après synchronisation. La T3
 prend la **`0118`**. La décision 731 est réservée à `CRM-111`.
+
+### `CRM-116` T2 à T4 — la couleur des channels, le sélecteur partagé, les preuves (2026-10-26)
+
+*2026-10-26, session interactive, sur la spécification de T1 (décision 729).* **Fait.** Migration `0116` :
+`channels.color`, cinq jetons, `neutral` par défaut, et `grant update (color)` — le privilège de mise à jour de
+`channels` est accordé colonne par colonne depuis la `0037`, et sans cette ligne l'administratrice elle-même aurait été
+refusée (`42501`) ; une mutation qui retire le privilège rougit la pgTAP. Le seed colore cinq channels et laisse les
+autres au défaut. Côté écran, un composant `SelecteurCouleur` sert le formulaire de track (à la place de la liste de noms
+techniques) et celui de channel, dans l'arborescence comme dans « Nouveau channel » de la barre d'onglets ; l'onglet
+porte une pastille, l'arborescence une pilule.
+
+**Ce que l'écriture du code a corrigé dans la spécification.**
+- **Le patron existait déjà.** À la relecture intégrale de `docs/DESIGN_SYSTEM.md` avant le code d'interface, le §5.29
+  choisit déjà une couleur — celle d'un bloc d'objectif — par un groupe de boutons radio nommés. La première rédaction du
+  §5.68 en dessinait un autre (étiquettes `rounded-full`, radio masqué, coche). Le sélecteur reprend donc le patron du
+  §5.29 et ses clés de traduction `goals.edit.color.*`, et le §5.68 est révisé en le disant. Seul écart : le disque
+  « Gris » emploie `--color-text-3`, le §5.2 bis ayant mesuré `--color-border` invisible sur une surface blanche ; le
+  canevas d'objectifs garde le sien, et l'écart est consigné (**INC-313**), non corrigé.
+- **Le brouillon de l'aller-retour porte la couleur** (`docs/SPEC-administration-arborescence.md` §14.3) : partir créer
+  un workflow depuis le formulaire, puis revenir, perdait la couleur choisie. Elle voyage dans l'adresse sous
+  `nc-couleur`, comme le nom ; une valeur forgée hors des cinq jetons est ramenée à `neutral` à la lecture.
+
+**Défauts trouvés en regardant, et non par les tests** (`CLAUDE.md` §16).
+- **La pastille de l'onglet se collait au nom** : `mr-1.5` n'existe pas dans l'échelle d'espacement close, la classe
+  n'était pas engendrée, et le contrôle des classes ne l'a pas vu — il ignore les gabarits interpolés (**INC-314**,
+  consignée, script non modifié). Corrigé en `mr-[6px]` ; les autres classes des gabarits de l'unité vérifiées une à une
+  dans le CSS produit.
+- **À 390 px, « Rouge » et « Gris » sortaient du champ** : dans l'arborescence, le formulaire vit dans une liste
+  `min-w-max` qui défile et prend la largeur du contenu ; la rangée ne passait jamais à la ligne, et la page, elle, ne
+  défilait pas — l'assertion de §7 était verte. Rangée bornée à la fenêtre (`max-w-[calc(100vw-6rem)]`, la borne du
+  §5.27), §5.68 précisé, et la preuve E2E mesure désormais le bord droit de **chaque option**. Capture refaite et
+  observée : les cinq options tiennent sur trois lignes.
+
+**Défaut trouvé par la campagne, et non par les preuves ciblées.** `0005_channels` vérifie la liste **exacte** des
+colonnes de `channels` : la `0116` l'a rougie, ce que la seule pgTAP de l'unité ne pouvait pas voir. Révisée selon le
+précédent de `CRM-077` (la colonne ajoutée, l'assertion inchangée). La session de `CRM-072` l'avait relevé dans son
+propre commit.
+
+**Incident d'environnement, de mon fait.** Pour appliquer la `0116`, j'ai lancé `docker compose run --rm
+migrations-runner` **sans** `--env-file .env -f docker-compose.yml -f docker-compose.dev.yml`. Compose a recréé le
+conteneur `db` pendant que `verify-copie-workflow.sh` d'une autre session tournait, et la dépendance `storage` de
+celle-ci a échoué. Les données n'ont pas été perdues par cette commande (le répertoire de données était réinitialisé par
+les `resetMe.sh` de ce harnais). **Leçon** : sur la pile partagée, seule la commande documentée applique une migration,
+et un SQL ponctuel passe par `docker exec -i p2enjoy-crm-db-1 psql`.
+
+**Numéros pris après synchronisation** : migration `0116` (la `0115` est celle de `CRM-072`, poussée depuis ; la 116 ne
+part jamais avant elle en production, le runner refusant un fichier non inscrit qui précède le dernier inscrit),
+pgTAP `0112`, INC-313 et INC-314 (INC-311 et INC-312 pris par d'autres sessions entre-temps).
+
+**Vérifications.** pgTAP `0112` **19/19** ; suite complète **102 fichiers, 4230 assertions** : deux rouges au premier
+passage, `0005` (corrigée, 68/68 rejouée) et `0097` n° 22 (`card_not_found` sur `move_card_to_channel`, verte rejouée
+seule, 43/43 : la session de `CRM-111` T2.3.4 réécrivait `move_card_to_channel` sur la pile partagée à ce moment).
+Preuve d'API `couleur-channels.spec.ts` **6/6** ; campagne API complète **1223/1224**, le rouge étant
+`ingestion.spec.ts:91` (`CRM-058`, antérieur). Unitaires **4487/4487** ; trois `tsc` ; build. Mutations tuées : couleur
+non envoyée en modification, pastille sans repli, brouillon sans repli, valeur lue ignorée en modification, ordre absent,
+privilège retiré. E2E `couleurs.spec.ts` **9/9** (clavier, souris, refus de la lectrice, quatre paliers) ; campagne
+d'interface sur les écrans touchés — arborescence, barre d'onglets, « Nouveau channel », droits, corbeille et onze
+autres specs — ****197/199** au premier passage : les deux rouges sont un `503` transitoire dans la console (`formulaire.spec.ts:615` à 1440 px,
+`infobulle-description.spec.ts:95`, la famille d'INC-310), verts rejoués seuls (5/5)**. Dix captures `docs/captures/CRM-116/` observées. Manuel 3.2 ter, 5.1, 5.2 et connecteur ;
+`verify-manual.sh` ****256 contrôles, aucune anomalie** — au premier passage, quatre écarts de l'annexe A, comptés pendant que la campagne
+d'interface créait ses objets ; rejoué au repos**. Le contenu commité, extrait seul hors de l'arbre partagé, passe **le `typecheck` et les unitaires (**4487/4487**)**.
+
+**Reste** : T5, la livraison — la `0116` après la `0115`, avec la webapp de `main` —, sur instruction du responsable, puis
+son constat ; les arbitrages d'INC-313 et d'INC-314 ; la relecture des choix de forme marqués à T1.

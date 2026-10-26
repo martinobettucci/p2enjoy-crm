@@ -49,10 +49,13 @@ select has_table('public', 'channels', 'la table `public.channels` existe');
 -- l'archivage. `deleted_at` et `deleted_by` s'ajoutent donc à la table, et `docs/SPEC-channels.md`
 -- §2.1 les porte dans le MÊME changement. Ce que l'assertion prouve est inchangé : la table porte
 -- EXACTEMENT les colonnes de sa spécification, ni plus ni moins.
+-- RÉVISÉE DE MÊME PAR `CRM-116` (décision 729) : `color` s'ajoute, et `docs/SPEC-channels.md` §2.1 la
+-- porte depuis la spécification de l'unité ; la colonne elle-même est prouvée par `0112_couleur_channels`.
 select columns_are(
 	'public', 'channels',
 	array['id', 'workspace_id', 'track_id', 'name', 'slug', 'description', 'workflow_id',
-	      'position', 'archived_at', 'created_at', 'updated_at', 'deleted_at', 'deleted_by'],
+	      'position', 'archived_at', 'created_at', 'updated_at', 'deleted_at', 'deleted_by',
+	      'color'],
 	'`channels` porte exactement les colonnes de docs/SPEC-channels.md §2.1'
 );
 

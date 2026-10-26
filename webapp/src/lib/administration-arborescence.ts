@@ -11,6 +11,8 @@
 // @spec docs/SPEC-channels.md §3 (ordre par track), §4 (archivage), §7 (contrat d'API mesuré)
 // @spec docs/SPEC-workflow-engine.md §4.12 (contrainte d'affectation d'un workflow)
 // @spec docs/SPEC-permissions-rls.md §4 (écriture réservée à l'administrateur)
+// @spec CRM-116 (docs/BACKLOG.md) tranche T3 — la couleur d'un channel, lue et écrite comme celle d'un track
+//       (docs/SPEC-administration-arborescence.md §14.3, §14.4 ; décision 729)
 //
 // CE MODULE N'INVENTE AUCUNE RÈGLE. C'est la contrainte la plus forte de `CRM-075`, et elle est
 // vérifiable ligne à ligne : chaque refus traduit ici est déjà posé et mesuré par `CRM-020`,
@@ -44,7 +46,16 @@ export type TrackAdministrable = Pick<
 /** Un channel tel que l'administration a besoin de le connaître. */
 export type ChannelAdministrable = Pick<
 	Database['public']['Tables']['channels']['Row'],
-	'id' | 'workspace_id' | 'track_id' | 'name' | 'slug' | 'description' | 'workflow_id' | 'position' | 'archived_at'
+	| 'id'
+	| 'workspace_id'
+	| 'track_id'
+	| 'name'
+	| 'slug'
+	| 'description'
+	| 'workflow_id'
+	| 'position'
+	| 'archived_at'
+	| 'color'
 >
 
 /** Un workflow affectable à un channel, tel que le sélecteur de `§7.2` le présente. */
@@ -57,7 +68,7 @@ export type WorkflowAffectable = Pick<
 export const COLONNES_TRACK_ADMIN =
 	'id, workspace_id, name, slug, description, color, icon, position, archived_at'
 export const COLONNES_CHANNEL_ADMIN =
-	'id, workspace_id, track_id, name, slug, description, workflow_id, position, archived_at'
+	'id, workspace_id, track_id, name, slug, description, workflow_id, position, archived_at, color'
 export const COLONNES_WORKFLOW_AFFECTABLE = 'id, name, scope, is_default'
 
 /**
@@ -556,6 +567,8 @@ export type CreationChannel = {
 	readonly nom: string
 	readonly slug: string
 	readonly description: string
+	/** Un des cinq jetons du design system (§14.3) ; la contrainte `channels_color_check` refuse le reste. */
+	readonly couleur: string
 }
 
 /**
@@ -586,6 +599,7 @@ export async function creerChannel(
 				name: creation.nom,
 				slug: creation.slug,
 				description: creation.description.trim() === '' ? null : creation.description,
+				color: creation.couleur,
 				position: null,
 			} as unknown as Database['public']['Tables']['channels']['Insert'])
 			.select('id'),
@@ -596,6 +610,7 @@ export type ModificationChannel = {
 	readonly nom: string
 	readonly description: string
 	readonly idWorkflow: string
+	readonly couleur: string
 }
 
 /**
@@ -617,6 +632,7 @@ export async function modifierChannel(
 				name: modification.nom,
 				description: modification.description.trim() === '' ? null : modification.description,
 				workflow_id: modification.idWorkflow,
+				color: modification.couleur,
 			})
 			.eq('id', id)
 			.select('id'),

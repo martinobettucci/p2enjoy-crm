@@ -1,3 +1,5 @@
+// @verifies CRM-116 (docs/BACKLOG.md) tranche T3 — la couleur voyage dans le brouillon (docs/SPEC-administration-arborescence.md
+//           §14.3)
 // @verifies CRM-100 (docs/BACKLOG.md) — tranche T1 : les adresses de « Nouveau channel » et de l'aller-retour
 // @verifies docs/SPEC-administration-arborescence.md §13.3 (l'ouverture par l'adresse, la vue liste conservée, la
 //           racine du track hors d'une vue de track), §13.4 (l'adresse de départ, le brouillon, une valeur vide non
@@ -86,18 +88,29 @@ describe('lireBrouillon et sansNouveauChannel', () => {
 			slug: '',
 			description: '',
 			idWorkflow: ID_WORKFLOW,
+			couleur: 'neutral',
 		})
 		expect(lireBrouillon(new URLSearchParams('nc-workflow='))).toEqual({
 			nom: '',
 			slug: '',
 			description: '',
 			idWorkflow: null,
+			couleur: 'neutral',
 		})
+	})
+
+	// @verifies CRM-116 — §14.3 : la couleur voyage dans le brouillon ; une valeur forgée n'est jamais rendue telle quelle.
+	it('lit la couleur du brouillon, et ramène une valeur hors des cinq jetons à `neutral`', () => {
+		expect(lireBrouillon(new URLSearchParams('nc-couleur=success')).couleur).toBe('success')
+		expect(lireBrouillon(new URLSearchParams('nc-couleur=%2323468C')).couleur).toBe('neutral')
+		expect(lireBrouillon(new URLSearchParams('nc-couleur=constructor')).couleur).toBe('neutral')
 	})
 
 	it('retire le formulaire et son brouillon, et rien d’autre', () => {
 		const reste = sansNouveauChannel(
-			new URLSearchParams('page=3&nouveau-channel=1&nc-nom=A&nc-slug=a&nc-description=d&nc-workflow=w&sommeil=visibles'),
+			new URLSearchParams(
+				'page=3&nouveau-channel=1&nc-nom=A&nc-slug=a&nc-description=d&nc-workflow=w&nc-couleur=danger&sommeil=visibles',
+			),
 		)
 		expect(Object.fromEntries(reste)).toEqual({ page: '3', sommeil: 'visibles' })
 	})
@@ -109,6 +122,7 @@ describe('les adresses d’origine (§13.4)', () => {
 			nom: 'Partenariats & co',
 			slug: 'partenariats',
 			description: 'Les accords « cadre »',
+			couleur: 'accent',
 		})
 		expect(origine.startsWith('/tracks/commercial/prospection/liste?')).toBe(true)
 		expect(parametresDe(origine)).toEqual({
@@ -117,16 +131,18 @@ describe('les adresses d’origine (§13.4)', () => {
 			'nc-nom': 'Partenariats & co',
 			'nc-slug': 'partenariats',
 			'nc-description': 'Les accords « cadre »',
+			'nc-couleur': 'accent',
 		})
 	})
 
-	it('une valeur vide ou blanche n’est pas écrite', () => {
-		const origine = origineDepuisTrack('/tracks/commercial', '', { nom: 'X', slug: '', description: '   ' })
+	// Le défaut `neutral` non plus (§14.3) : l'adresse la plus courte reste celle du formulaire tel qu'il s'ouvre.
+	it('une valeur vide ou blanche n’est pas écrite, ni la couleur par défaut', () => {
+		const origine = origineDepuisTrack('/tracks/commercial', '', { nom: 'X', slug: '', description: '   ', couleur: 'neutral' })
 		expect(parametresDe(origine)).toEqual({ 'nouveau-channel': '1', 'nc-nom': 'X' })
 	})
 
 	it('depuis l’arborescence : le track nommé par son id', () => {
-		const origine = origineDepuisArborescence(ID_TRACK, { nom: 'Partenariats', slug: '', description: '' })
+		const origine = origineDepuisArborescence(ID_TRACK, { nom: 'Partenariats', slug: '', description: '', couleur: 'neutral' })
 		expect(origine.startsWith('/reglages/arborescence?')).toBe(true)
 		expect(parametresDe(origine)).toEqual({ 'nouveau-channel': ID_TRACK, 'nc-nom': 'Partenariats' })
 	})
@@ -134,7 +150,7 @@ describe('les adresses d’origine (§13.4)', () => {
 
 describe('l’éditeur de workflows (§13.5)', () => {
 	it('« Nouveau workflow » ouvre la création sur le track, et porte le retour encodé', () => {
-		const origine = origineDepuisTrack('/tracks/commercial', '', { nom: 'A & B', slug: '', description: '' })
+		const origine = origineDepuisTrack('/tracks/commercial', '', { nom: 'A & B', slug: '', description: '', couleur: 'neutral' })
 		const adresse = cheminEditeurNouveauWorkflow(ID_TRACK, origine)
 		expect(adresse.startsWith('/reglages/workflows?')).toBe(true)
 		const parametres = new URLSearchParams(adresse.slice(adresse.indexOf('?') + 1))
@@ -184,6 +200,7 @@ describe('cheminRetour — le lien « Revenir au nouveau channel »', () => {
 			slug: '',
 			description: '',
 			idWorkflow: ID_WORKFLOW,
+			couleur: 'neutral',
 		})
 	})
 
@@ -193,7 +210,8 @@ describe('cheminRetour — le lien « Revenir au nouveau channel »', () => {
 	})
 
 	it('l’aller-retour entier rend la saisie confiée au départ', () => {
-		const saisie = { nom: 'Équipe « nord » & sud', slug: 'nord-sud', description: 'ligne 1\nligne 2' }
+		// La couleur aussi traverse l'aller-retour (`CRM-116`, §14.3).
+		const saisie = { nom: 'Équipe « nord » & sud', slug: 'nord-sud', description: 'ligne 1\nligne 2', couleur: 'danger' }
 		const origine = origineDepuisArborescence(ID_TRACK, saisie)
 		const editeur = cheminEditeurNouveauWorkflow(ID_TRACK, origine)
 		const retenu = lireRetour(new URLSearchParams(editeur.slice(editeur.indexOf('?') + 1)).get('retour'))

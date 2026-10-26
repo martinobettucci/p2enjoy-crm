@@ -1,4 +1,5 @@
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — « Nouveau channel » en texte citant son motif quand la base refuse
+// @verifies CRM-116 (docs/BACKLOG.md) tranche T3 — la pastille de couleur de l'onglet (docs/DESIGN_SYSTEM.md §5.68)
 //           l'administration (docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-021 (docs/BACKLOG.md) — barre d'onglets : rendu réel des channels
 // @verifies CRM-086 (docs/BACKLOG.md) — l'entrée « Coûts » du track, docs/SPEC-costs.md §4.0
@@ -30,8 +31,16 @@ import type { Channel } from '../lib/channels'
 // `description` l'a rejointe avec `CRM-105` (docs/DESIGN_SYSTEM.md §5.58) : nulle ici, l'onglet est rendu
 // comme avant ; l'infobulle est éprouvée plus bas.
 const CHANNELS: readonly Channel[] = [
-	{ id: 'c-1', name: 'Prospection', slug: 'prospection', position: 1, workflow_id: 'wf-1', description: null },
-	{ id: 'c-2', name: 'Grands comptes', slug: 'grands-comptes', position: 2, workflow_id: 'wf-1', description: null },
+	{ id: 'c-1', name: 'Prospection', slug: 'prospection', position: 1, workflow_id: 'wf-1', description: null, color: 'brand' },
+	{
+		id: 'c-2',
+		name: 'Grands comptes',
+		slug: 'grands-comptes',
+		position: 2,
+		workflow_id: 'wf-1',
+		description: null,
+		color: 'neutral',
+	},
 ]
 
 function monter(
@@ -281,5 +290,31 @@ describe('« Nouveau channel » selon la capacité d’administrer (CRM-093)', (
 			expect(screen.getByTestId('commande-nouveau-channel').tagName, administration).toBe('A')
 			cleanup()
 		}
+	})
+})
+
+// @verifies CRM-116 — docs/DESIGN_SYSTEM.md §5.68 : la pastille de l'onglet porte la couleur du channel, elle est
+// décorative pour les technologies d'assistance — le nom porte l'information —, et une valeur inconnue s'affiche en Gris.
+describe('barre d’onglets — la pastille de couleur (CRM-116)', () => {
+	it('chaque onglet porte, avant son nom, la pastille de la couleur de son channel', () => {
+		monter(pret(CHANNELS))
+		const onglets = screen.getAllByTestId('onglet-channel')
+		const pastilles = onglets.map((onglet) => onglet.querySelector('[data-testid="pastille-channel"]'))
+		expect(pastilles.map((pastille) => pastille?.getAttribute('data-couleur'))).toEqual(['brand', 'neutral'])
+		expect(pastilles[0]?.className).toContain('bg-brand')
+		expect(pastilles[1]?.className).toContain('bg-text-3')
+		for (const pastille of pastilles) expect(pastille?.getAttribute('aria-hidden')).toBe('true')
+	})
+
+	it('le nom accessible de l’onglet reste le nom du channel, sans mention de couleur', () => {
+		monter(pret(CHANNELS))
+		expect(screen.getByRole('link', { name: 'Prospection' })).toBeTruthy()
+	})
+
+	it('une couleur hors des cinq jetons s’affiche en Gris', () => {
+		monter(pret([{ ...CHANNELS[0]!, color: 'turquoise' }]))
+		const pastille = screen.getByTestId('pastille-channel')
+		expect(pastille.getAttribute('data-couleur')).toBe('neutral')
+		expect(pastille.className).toContain('bg-text-3')
 	})
 })

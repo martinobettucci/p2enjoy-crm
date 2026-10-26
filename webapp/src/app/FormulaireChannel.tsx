@@ -9,6 +9,8 @@
 //       PARTAGÉ entre l'arborescence et la vue d'un track ; « Nouveau workflow » et le workflow attendu, réservés à
 //       la création), §13.4 (le slug confié à l'aller-retour seulement s'il a été saisi) ; docs/DESIGN_SYSTEM.md
 //       §5.13, §5.55
+// @spec CRM-116 (docs/BACKLOG.md) tranche T3 — la couleur du channel, par le sélecteur partagé, confiée aussi au
+//       brouillon de l'aller-retour (docs/SPEC-administration-arborescence.md §14.3 ; docs/DESIGN_SYSTEM.md §5.68)
 //
 // LE FORMULAIRE N'EST PAS RECOPIÉ dans la vue d'un track : il quitte `AdministrationArborescence.tsx` pour ce
 // module, que les deux écrans importent. Ce qu'il demande, sa validation et ses refus sont ceux du §7, inchangés.
@@ -29,12 +31,15 @@ import {
 import type { SaisiePortee } from '../lib/nouveau-channel'
 import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { AlerteRefus, ChampTexte } from './ElementsFormulaireAdmin'
+import { SelecteurCouleur } from './SelecteurCouleur'
 
 export type SaisieChannel = {
 	readonly nom: string
 	readonly slug: string
 	readonly description: string
 	readonly idWorkflow: string
+	/** `CRM-116` (§14.3) : `neutral` à la création, la valeur lue en modification. */
+	readonly couleur: string
 }
 
 export type ProprietesFormulaireChannel = {
@@ -113,6 +118,7 @@ export function FormulaireChannel({
 					nom: saisie.nom,
 					slug: slugTouche ? saisie.slug : '',
 					description: saisie.description,
+					couleur: saisie.couleur,
 				})
 
 	return (
@@ -150,6 +156,11 @@ export function FormulaireChannel({
 					setSlugTouche(true)
 					setSaisie((precedente) => ({ ...precedente, slug }))
 				}}
+			/>
+			{/* `CRM-116` (§14.3, docs/DESIGN_SYSTEM.md §5.68) : après le slug, avant le workflow. */}
+			<SelecteurCouleur
+				valeur={saisie.couleur}
+				onChange={(couleur) => setSaisie((precedente) => ({ ...precedente, couleur }))}
 			/>
 			<div className="flex flex-col gap-1">
 				<label htmlFor={`${prefixe}-workflow`} className="text-sm text-text-2">

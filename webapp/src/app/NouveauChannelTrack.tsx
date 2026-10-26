@@ -4,6 +4,8 @@
 //       retour : le brouillon et le workflow attendu), §7.2 et §7.3 (la liste des workflows, le `workspace_id` du track)
 // @spec docs/DESIGN_SYSTEM.md §5.55 (le formulaire en tête de la zone principale), §5.13, §5.50 (`Échap` referme)
 // @spec docs/JOURNAL.md décision 623
+// @spec CRM-116 (docs/BACKLOG.md) tranche T3 — la couleur envoyée à la création, reprise du brouillon au retour
+//       (docs/SPEC-administration-arborescence.md §14.3)
 //
 // LE FORMULAIRE EST UN ÉTAT DE L'ADRESSE : `nouveau-channel=1`. Ce composant n'est monté que lorsque la vue du track
 // le lit, et le referme en retirant ses paramètres — jamais par un état local, qu'un retour de l'éditeur de workflows
@@ -86,6 +88,7 @@ export function ZoneNouveauChannel({ client, track, onCree, onFerme }: Propriete
 					nom: saisie.nom,
 					slug: saisie.slug,
 					description: saisie.description,
+					couleur: saisie.couleur,
 				})
 				if (resultat.statut === 'refus') {
 					setRefus(texteRefus(resultat.refus))
@@ -121,6 +124,7 @@ export function ZoneNouveauChannel({ client, track, onCree, onFerme }: Propriete
 					slug: brouillon.slug === '' ? proposerSlug(brouillon.nom) : brouillon.slug,
 					description: brouillon.description,
 					idWorkflow: '',
+					couleur: brouillon.couleur,
 				}}
 				slugModifiable
 				workflows={workflows}

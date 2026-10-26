@@ -37,6 +37,8 @@
 //
 // @spec CRM-100 (docs/BACKLOG.md) tranche T1 — la commande « Nouveau channel » (docs/SPEC-administration-arborescence.md
 //       §13.3 ; docs/DESIGN_SYSTEM.md §5.55 ; docs/JOURNAL.md décision 623)
+// @spec CRM-116 (docs/BACKLOG.md) tranche T3 — la pastille de couleur de l'onglet d'un channel (docs/DESIGN_SYSTEM.md
+//       §5.68 ; docs/SPEC-channels.md §5)
 //
 // LA BARRE PORTE UNE COMMANDE, ET CE N'EST PAS UN ONGLET. Elle vient après les channels, dont elle est la fin, et
 // avant le filet des entrées transverses, qui portent sur le track entier. C'est un LIEN — elle ouvre le formulaire en
@@ -60,6 +62,7 @@ import {
 	estVueTrack,
 } from '../lib/nouveau-channel'
 import { cheminCoutsTrack } from './chemins'
+import { classesPastille, jetonCouleur } from './presentation-tracks'
 import { useContexteEspace } from './ContexteEspace'
 
 /** Le motif de « Nouveau channel » refusé, porté par le texte lui-même (CRM-093). */
@@ -175,6 +178,14 @@ function Contenu({ etat, slugTrack }: ProprietesTabBar) {
 								].join(' ')
 							}
 						>
+							{/* `CRM-116` (§5.68) : la pastille de la couleur du channel, `aria-hidden` — le nom porte l'information. Sa
+							    couleur ne change pas avec l'état actif, que la bordure basse et le texte portent seuls. */}
+							<span
+								aria-hidden="true"
+								data-testid="pastille-channel"
+								data-couleur={jetonCouleur(channel.color)}
+								className={`mr-[6px] size-2 shrink-0 rounded-full ${classesPastille(channel.color)}`}
+							/>
 							{channel.name}
 						</NavLink>
 						)}

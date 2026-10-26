@@ -23,6 +23,8 @@
 //       workflow » ramène ici), §13.6 (la réouverture préremplie par l'adresse, et ses paramètres retirés à la fermeture)
 // @spec INC-254, décision 608 — docs/SPEC-webapp.md §6.3 bis : toute écriture de track aboutie émet
 //       `p2enjoy:tracks-modifies`, que la coquille écoute pour relire sa barre latérale
+// @spec CRM-116 (docs/BACKLOG.md) tranche T3 — le sélecteur de couleur du formulaire de track, la pilule colorée d'un
+//       channel, sa couleur lue et écrite (docs/SPEC-administration-arborescence.md §14 ; docs/DESIGN_SYSTEM.md §5.68)
 //
 // AUCUN DROIT N'EST CALCULÉ ICI, et c'est la règle qui gouverne tout le fichier. Les commandes sont
 // rendues pour tout le monde ; l'écriture part, et le refus du backend est traduit (§10). Une
@@ -88,7 +90,8 @@ import {
 import { BlocBudgetsTrack } from './BlocBudgetsTrack'
 import { AlerteRefus, ChampTexte, texteRefus } from './ElementsFormulaireAdmin'
 import { FormulaireChannel, type SaisieChannel } from './FormulaireChannel'
-import { classesPilule, iconeTrack, NOMS_ICONES } from './presentation-tracks'
+import { classesPastille, classesPilule, iconeTrack, NOMS_ICONES } from './presentation-tracks'
+import { SelecteurCouleur } from './SelecteurCouleur'
 import { texteLigneEnumeration, type EtatEnumeration } from './presentation-corbeille'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { lireWorkspaces } from '../lib/workspaces'
@@ -107,8 +110,6 @@ import { motifVisible, proprietesCommande } from '../lib/capacites'
 
 /** Le motif de l'écran, cité par ses commandes d'écriture quand la base refuse l'administration (CRM-093). */
 const ID_MOTIF_ARBORESCENCE = 'arborescence-lecture-seule'
-
-const COULEURS: readonly string[] = ['brand', 'success', 'accent', 'danger', 'neutral']
 
 /**
  * Ce qui est ouvert, et il n'y en a qu'un à la fois.
@@ -229,25 +230,11 @@ function FormulaireTrack({
 					setSaisie((precedente) => ({ ...precedente, slug }))
 				}}
 			/>
-			<div className="flex flex-col gap-1">
-				<label htmlFor={`${prefixe}-couleur`} className="text-sm text-text-2">
-					{t('admin.form.color')}
-				</label>
-				<select
-					id={`${prefixe}-couleur`}
-					value={saisie.couleur}
-					onChange={(evenement) =>
-						setSaisie((precedente) => ({ ...precedente, couleur: evenement.target.value }))
-					}
-					className="min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3"
-				>
-					{COULEURS.map((couleur) => (
-						<option key={couleur} value={couleur}>
-							{couleur}
-						</option>
-					))}
-				</select>
-			</div>
+			{/* `CRM-116` (§14.3, docs/DESIGN_SYSTEM.md §5.68) : des pastilles nommées, et non plus les noms des jetons. */}
+			<SelecteurCouleur
+				valeur={saisie.couleur}
+				onChange={(couleur) => setSaisie((precedente) => ({ ...precedente, couleur }))}
+			/>
 			<div className="flex flex-col gap-1">
 				<label htmlFor={`${prefixe}-icone`} className="text-sm text-text-2">
 					{t('admin.form.icon')}
@@ -1120,6 +1107,7 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 														nom: saisie.nom,
 														slug: saisie.slug,
 														description: saisie.description,
+														couleur: saisie.couleur,
 													}),
 												t('live.admin.created'),
 												track.id,
@@ -1132,6 +1120,7 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 														nom: saisie.nom,
 														description: saisie.description,
 														idWorkflow: saisie.idWorkflow,
+														couleur: saisie.couleur,
 													}),
 												t('live.admin.updated'),
 												track.id,
@@ -1297,7 +1286,18 @@ function ListeChannels({
 					return (
 						<li key={channel.id} className="flex flex-col">
 							<div className="flex items-center gap-2 min-h-[var(--size-target)] hover:bg-hover rounded-sm px-2">
-								<span>{channel.name}</span>
+								{/* `CRM-116` (docs/DESIGN_SYSTEM.md §5.68) : la pilule de donnée du channel, sa pastille en tête. */}
+								<span
+									data-testid="pilule-channel"
+									data-couleur={channel.color}
+									className={[
+										'inline-flex items-center gap-2 rounded-full px-3 min-h-8',
+										classesPilule(channel.color),
+									].join(' ')}
+								>
+									<span aria-hidden="true" className={`size-2 shrink-0 rounded-full ${classesPastille(channel.color)}`} />
+									{channel.name}
+								</span>
 								<code className="text-sm text-text-3">{channel.slug}</code>
 								{archive ? <MentionArchive /> : null}
 								<span className="ml-auto flex items-center gap-1">
@@ -1321,6 +1321,7 @@ function ListeChannels({
 										slug: channel.slug,
 										description: channel.description ?? '',
 										idWorkflow: channel.workflow_id,
+										couleur: channel.color,
 									}}
 									slugModifiable={false}
 									workflows={workflows}
@@ -1364,6 +1365,7 @@ function ListeChannels({
 						slug: brouillon === null ? '' : brouillon.slug === '' ? proposerSlug(brouillon.nom) : brouillon.slug,
 						description: brouillon?.description ?? '',
 						idWorkflow: '',
+						couleur: brouillon?.couleur ?? 'neutral',
 					}}
 					slugModifiable
 					workflows={workflows}

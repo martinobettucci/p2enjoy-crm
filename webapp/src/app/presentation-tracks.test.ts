@@ -1,4 +1,6 @@
 // @verifies CRM-020 (docs/BACKLOG.md) — présentation d'un track : couleur et icône
+// @verifies CRM-116 (docs/BACKLOG.md) tranche T3 — les couleurs nommées et les pastilles, pour les tracks et les
+//           channels (docs/DESIGN_SYSTEM.md §5.68)
 // @verifies docs/SPEC-tracks.md §2.2 (color est un nom de jeton), §2.4 (icon), §7.1 (pilule)
 // @verifies docs/DESIGN_SYSTEM.md §1 (couleurs de données), §5.6 (pilules), §11 (aucun hexadécimal)
 //
@@ -7,11 +9,16 @@
 // avant ce module. Un repli qu'aucun test n'exerce est un repli qu'on croit avoir.
 
 import { describe, expect, it } from 'vitest'
+import { t } from '../i18n'
 import {
 	COULEUR_PAR_DEFAUT,
 	ICONE_PAR_DEFAUT,
 	NOMS_ICONES,
+	classesPastille,
 	classesPilule,
+	cleNomCouleur,
+	JETONS_COULEUR,
+	jetonCouleur,
 	iconeTrack,
 } from './presentation-tracks'
 
@@ -110,5 +117,31 @@ describe('icônes (docs/SPEC-tracks.md §2.4)', () => {
 		// faisait sans précaution. Le repli doit s'appliquer.
 		expect(iconeTrack('constructor')).toBe(ICONE_PAR_DEFAUT)
 		expect(iconeTrack('toString')).toBe(ICONE_PAR_DEFAUT)
+	})
+})
+
+// @verifies CRM-116 — docs/DESIGN_SYSTEM.md §5.68 : l'ordre de la palette, des NOMS traduits et jamais le jeton, la
+// pastille à la couleur pleine, et le repli d'une valeur inconnue sur Gris.
+describe('les couleurs choisies et montrées (CRM-116)', () => {
+	it('propose les cinq jetons dans l’ordre de la palette, Gris en dernier', () => {
+		expect(JETONS_COULEUR).toEqual(['brand', 'success', 'accent', 'danger', 'neutral'])
+	})
+
+	it('nomme chaque couleur par une clé de traduction, jamais par le nom du jeton', () => {
+		expect(JETONS_COULEUR.map((jeton) => t(cleNomCouleur(jeton)))).toEqual(['Bleu', 'Vert', 'Jaune', 'Rouge', 'Gris'])
+	})
+
+	it('donne à la pastille la couleur pleine du jeton, et le texte tertiaire au neutre', () => {
+		expect(classesPastille('brand')).toBe('bg-brand')
+		expect(classesPastille('accent')).toBe('bg-accent')
+		expect(classesPastille('neutral')).toBe('bg-text-3')
+	})
+
+	it('ramène une valeur inconnue, ou une propriété héritée d’Object, à Gris', () => {
+		for (const inconnue of ['turquoise', '', HEXA_INTERDIT, 'constructor', 'toString']) {
+			expect(jetonCouleur(inconnue), inconnue).toBe('neutral')
+			expect(classesPastille(inconnue), inconnue).toBe('bg-text-3')
+			expect(t(cleNomCouleur(inconnue)), inconnue).toBe('Gris')
+		}
 	})
 })

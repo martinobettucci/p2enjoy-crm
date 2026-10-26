@@ -18,6 +18,7 @@
 // catalogue est aussi ce qui rend le repli **testable**.
 
 import type { LucideIcon } from 'lucide-react'
+import type { CleTraduction } from '../i18n'
 import {
 	Archive,
 	Briefcase,
@@ -112,3 +113,52 @@ export function iconeTrack(nom: string): LucideIcon {
 
 /** Noms d'icônes réellement admis. Exporté pour que les tests énumèrent le catalogue réel. */
 export const NOMS_ICONES: readonly string[] = Object.keys(CATALOGUE_ICONES)
+
+// ---------------------------------------------------------------------------------------------
+// @spec CRM-116 (docs/BACKLOG.md) tranche T3 — les couleurs choisies et montrées, pour les tracks ET les channels
+// @spec docs/DESIGN_SYSTEM.md §5.68 (le sélecteur, ses noms, l'ordre de la palette, la pastille), §1 (couleurs de
+//       données) ; docs/SPEC-administration-arborescence.md §14 ; docs/JOURNAL.md décision 729
+// ---------------------------------------------------------------------------------------------
+
+/** Les cinq jetons, dans l'ordre de la palette (§1) — celui du sélecteur de couleur (§5.68), Gris en dernier. */
+export const JETONS_COULEUR: readonly JetonCouleur[] = ['brand', 'success', 'accent', 'danger', 'neutral']
+
+/**
+ * Le nom d'une couleur tel que la personne le lit : une CLÉ de traduction, jamais le nom du jeton (§5.68, §10).
+ *
+ * LES CLÉS SONT CELLES DU CANEVAS D'OBJECTIFS, RÉEMPLOYÉES ET NON DUPLIQUÉES (§5.29, §5.61) : la même couleur porte le
+ * même nom partout où on la choisit. Écrites en toutes lettres pour que le contrôle des clés mortes les retrouve.
+ */
+const CLES_NOM_COULEUR: Readonly<Record<JetonCouleur, CleTraduction>> = {
+	brand: 'goals.edit.color.brand',
+	success: 'goals.edit.color.success',
+	accent: 'goals.edit.color.accent',
+	danger: 'goals.edit.color.danger',
+	neutral: 'goals.edit.color.neutral',
+}
+
+/**
+ * Le disque d'une couleur — pastille d'onglet, disque du sélecteur —, à la couleur PLEINE du jeton (§5.68), et
+ * `--color-text-3` pour `neutral` : le neutre discret mais LISIBLE du §5.2 bis, `--color-border` étant invisible sur une
+ * surface blanche. Écrites en toutes lettres, comme les classes de pilule (§11).
+ */
+const CLASSES_PASTILLE: Readonly<Record<JetonCouleur, string>> = {
+	brand: 'bg-brand',
+	success: 'bg-success',
+	accent: 'bg-accent',
+	danger: 'bg-danger',
+	neutral: 'bg-text-3',
+}
+
+/** Ramène une valeur venue de la base aux cinq jetons, par le repli de `classesPilule`. */
+export function jetonCouleur(couleur: string): JetonCouleur {
+	return Object.hasOwn(CLASSES_PASTILLE, couleur) ? (couleur as JetonCouleur) : COULEUR_PAR_DEFAUT
+}
+
+export function cleNomCouleur(couleur: string): CleTraduction {
+	return CLES_NOM_COULEUR[jetonCouleur(couleur)]
+}
+
+export function classesPastille(couleur: string): string {
+	return CLASSES_PASTILLE[jetonCouleur(couleur)]
+}

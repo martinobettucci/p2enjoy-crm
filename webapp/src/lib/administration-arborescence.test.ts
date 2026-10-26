@@ -1,4 +1,6 @@
 // @verifies CRM-075 (docs/BACKLOG.md) — administration des tracks et des channels
+// @verifies CRM-116 (docs/BACKLOG.md) tranche T3 — la couleur d'un channel lue et écrite
+//           (docs/SPEC-administration-arborescence.md §14.3, §14.4)
 // @verifies CRM-077 (docs/BACKLOG.md) — corbeille, septième tranche : le geste de mise à la
 //           corbeille d'un track et d'un channel, et le filtre que l'administration n'avait pas
 // @verifies docs/SPEC-corbeille.md §3.1 (les deux états sont indépendants), §4 bis.2 (le filtre
@@ -425,6 +427,11 @@ describe('lireTracksAdministrables (§6.4)', () => {
 })
 
 describe('lireChannelsAdministrables (§3.2, §7.1)', () => {
+	// @verifies CRM-116 — §14.4 : la pilule et la valeur initiale du formulaire lisent la couleur.
+	it('demande `color`, la pilule du channel et la valeur initiale de son formulaire', () => {
+		expect(COLONNES_CHANNEL_ADMIN.split(', ')).toContain('color')
+	})
+
 	// Mêmes révisions, même motif : cette lecture rendait `Annexes 2023`, en corbeille (§4 bis.2).
 	it('filtre sur le track ET la corbeille CÔTÉ SERVEUR : rien d’autre ne transite', async () => {
 		const { client, appel } = espionLecture({ data: [], error: null, status: 200 })
@@ -624,6 +631,7 @@ describe('creerChannel et modifierChannel (§7)', () => {
 			nom: 'Prospection',
 			slug: 'prospection',
 			description: '',
+			couleur: 'success',
 		})
 		expect(appel.table).toBe('channels')
 		expect(appel.charge).toEqual({
@@ -633,6 +641,8 @@ describe('creerChannel et modifierChannel (§7)', () => {
 			name: 'Prospection',
 			slug: 'prospection',
 			description: null,
+			// @verifies CRM-116 — docs/SPEC-administration-arborescence.md §14.3 : la couleur choisie est envoyée.
+			color: 'success',
 			position: null,
 		})
 	})
@@ -650,6 +660,7 @@ describe('creerChannel et modifierChannel (§7)', () => {
 			nom: 'X',
 			slug: 'x',
 			description: '',
+			couleur: 'neutral',
 		})
 		expect(resultat.statut).toBe('refus')
 		if (resultat.statut !== 'refus') return
@@ -669,6 +680,7 @@ describe('creerChannel et modifierChannel (§7)', () => {
 			nom: 'X',
 			slug: 'x',
 			description: '',
+			couleur: 'neutral',
 		})
 		expect(resultat.statut).toBe('refus')
 		if (resultat.statut !== 'refus') return
@@ -677,8 +689,9 @@ describe('creerChannel et modifierChannel (§7)', () => {
 
 	it('change le workflow d’un channel existant, ce que l’énoncé de CRM-075 demande', async () => {
 		const { client, appel } = espionEcriture(OK)
-		await modifierChannel(client, 'c-1', { nom: 'X', description: '', idWorkflow: 'wf-2' })
-		expect(appel.charge).toEqual({ name: 'X', description: null, workflow_id: 'wf-2' })
+		await modifierChannel(client, 'c-1', { nom: 'X', description: '', idWorkflow: 'wf-2', couleur: 'accent' })
+		// @verifies CRM-116 — §14.3 : la couleur est écrite en modification, comme le nom et le workflow.
+		expect(appel.charge).toEqual({ name: 'X', description: null, workflow_id: 'wf-2', color: 'accent' })
 	})
 
 	it('archive un channel comme un track', async () => {

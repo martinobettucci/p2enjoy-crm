@@ -102,6 +102,8 @@ describe('la zone « Nouveau channel » de la vue d’un track (§13.3)', () => 
 		const { insertions, onCree } = monter('/tracks/conseil-ia?nouveau-channel=1')
 		await utilisateur.selectOptions(await screen.findByLabelText('Workflow'), 'wf-2')
 		await utilisateur.type(screen.getByLabelText('Nom'), '  Partenariats ')
+		// @verifies CRM-116 — §14.3 : la couleur choisie dans le sélecteur part avec la création.
+		await utilisateur.click(screen.getByRole('radio', { name: 'Vert' }))
 		await utilisateur.click(screen.getByRole('button', { name: 'Créer' }))
 		await waitFor(() => expect(onCree).toHaveBeenCalledWith('partenariats', 'Partenariats'))
 		expect(insertions).toEqual([
@@ -114,6 +116,7 @@ describe('la zone « Nouveau channel » de la vue d’un track (§13.3)', () => 
 					name: '  Partenariats ',
 					slug: 'partenariats',
 					description: null,
+					color: 'success',
 					position: null,
 				},
 			},

@@ -1,4 +1,5 @@
 // @verifies CRM-021 (docs/BACKLOG.md) — lecture des channels et résolution d'un track par slug
+// @verifies CRM-116 (docs/BACKLOG.md) tranche T3 — `color` rejoint la lecture partagée (docs/SPEC-channels.md §5)
 // @verifies docs/SPEC-channels.md §5 (requête émise), §5.1 (route d'un track), §4 (archivage)
 // @verifies docs/SPEC-webapp.md §6.4 (contrat asynchrone), §7 (états systématiques)
 // @verifies CRM-100 (docs/BACKLOG.md) tranche T1 — docs/SPEC-administration-arborescence.md §13.3 (le track ouvert
@@ -77,6 +78,7 @@ const CHANNEL: Channel = {
 	position: 1,
 	workflow_id: 'wf-1',
 	description: null,
+	color: 'neutral',
 }
 
 describe('lireTrackParSlug', () => {
@@ -157,6 +159,12 @@ describe('lireChannels', () => {
 	// lit la description dans la lecture déjà émise, jamais par une requête de survol.
 	it('demande `description`, affichée en infobulle sur l’onglet', () => {
 		expect(COLONNES_CHANNEL).toContain('description')
+	})
+
+	// @verifies CRM-116 — docs/SPEC-channels.md §5, docs/DESIGN_SYSTEM.md §5.68 : la pastille de l'onglet lit la couleur
+	// dans la lecture déjà émise, et non par une seconde.
+	it('demande `color`, la pastille de l’onglet', () => {
+		expect(COLONNES_CHANNEL.split(', ')).toContain('color')
 	})
 
 	it('rend les channels consentis par le backend', async () => {

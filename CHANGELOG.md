@@ -13,6 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-116` — une couleur pour les channels, et un sélecteur de couleur lisible
+
+- **La couleur d'un track ou d'un channel se choisit parmi cinq options nommées**, chacune avec sa pastille — Bleu, Vert,
+  Jaune, Rouge, Gris —, à la place d'une liste de noms techniques (`brand`, `success`…). Un même groupe de boutons radio
+  sert le formulaire de track et celui de channel, au clavier par `Tab` et les flèches ; il reprend le choix de couleur
+  du canevas d'objectifs.
+- **Les channels ont désormais leur propre couleur**, Gris par défaut, choisie à la création — depuis Réglages ▸
+  Arborescence comme depuis « Nouveau channel » de la barre d'onglets, aller-retour vers l'éditeur de workflows compris —
+  et en modification. Elle s'affiche en **pastille** devant le nom de l'onglet et en **pilule** dans l'arborescence.
+- **Migration `0116`** : la colonne `channels.color` et son privilège de mise à jour ; les channels existants prennent
+  Gris. **Le seed** colore cinq channels et en laisse au défaut. Pas de connecteur MCP (décision 729).
+
 ### `CRM-072` T2 — l'écran « Journal d'audit »
 
 - **« Réglages ▸ Journal d'audit »**, après « Membres » : les gestes sensibles de l'espace, les plus récents en tête, en

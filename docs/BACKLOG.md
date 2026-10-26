@@ -16772,8 +16772,8 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
       en même temps dans deux emplacements. Clone arrêté, ses volumes et images retirés ; son répertoire sous `/tmp`
       reste à effacer à la main (le contrôle de sécurité de l'agent a refusé la suppression).
 
-### CRM-116 — Une couleur pour les channels, et un sélecteur de couleur lisible pour les tracks et les channels `[@]`
-*Prise en charge : session interactive 2026-10-23 (fil d'Ariane `CRM-110`, Claude Code, poste du responsable) depuis 2026-10-26 10:24 UTC — état avant : [ ]*
+### CRM-116 — Une couleur pour les channels, et un sélecteur de couleur lisible pour les tracks et les channels `[P]`
+***Reste réel au 2026-10-26, après T4** : la livraison de T5 — la migration `0116` après la `0115`, avec la webapp de `main` — sur instruction du responsable, puis son constat ; les arbitrages d'INC-313 et d'INC-314 ; la relecture des choix de forme marqués à T1.*
 *Créée le 2026-10-26 — demande du responsable : « je vois en dev des tracks et des channels en couleur et aucune façon de
 le faire en UI, créer un channel ou un track en couleur ». Arbitrages du responsable le même jour (`docs/JOURNAL.md`
 décision 729) : une couleur propre au channel, des pastilles nommées, pas de connecteur MCP.*
@@ -16787,15 +16787,25 @@ décision 729) : une couleur propre au channel, des pastilles nommées, pas de c
       Choix de forme de l'agent, marqués pour relecture : l'ordre des pastilles (celui de la palette, Gris en dernier),
       la pastille de 8 px sur l'onglet en couleur pleine, la pilule de donnée du channel dans l'arborescence, le champ
       après le slug et avant le workflow ; limite dite : l'icône d'un track reste une liste de noms techniques.
-- [ ] **T2 — base** : migration au prochain numéro libre (`color`, cinq jetons, `neutral` par défaut), pgTAP, types
+- [x] **T2 — base** : migration au prochain numéro libre (`color`, cinq jetons, `neutral` par défaut), pgTAP, types
       régénérés, preuve d'API aux jetons réels (écriture par l'administrateur, refus aux autres), seed, contrat de
       déploiement.
-- [ ] **T3 — écrans** : sélecteur de couleur partagé ; formulaires de track et de channel (arborescence, « Nouveau
+      *Fait le 2026-10-26* : migration `0116` (avec `grant update (color)`, le privilège étant accordé colonne par
+      colonne) ; pgTAP `0112` **19/19**, `0005` révisée ; types : les trois lignes `color`, déjà commitées par la
+      régénération de `CRM-072` sur la base partagée ; `e2e/api/couleur-channels.spec.ts`
+      **6/6** ; seed (cinq channels colorés, `docs/SPEC-seed.md` §2.6) ; `docs/SCHEMA.md` « Migration `0116` »,
+      `docs/PROD_MIGRATIONS.md` §3 et §3.2.
+- [x] **T3 — écrans** : sélecteur de couleur partagé ; formulaires de track et de channel (arborescence, « Nouveau
       channel » de la barre d'onglets) ; pastille de l'onglet et de l'arborescence ; unitaires et mutations.
-- [ ] **T4 — preuves sur la pile réelle** : E2E souris et clavier, refus, quatre paliers ; captures observées ;
+      *Fait le 2026-10-26* : `SelecteurCouleur` sur le patron du §5.29 (`docs/DESIGN_SYSTEM.md` §5.68 révisé) ; la
+      couleur dans le brouillon de l'aller-retour (`nc-couleur`, §14.3 précisé) ; unitaires **4487/4487**, six mutations
+      tuées ; INC-313 et INC-314 consignées.
+- [x] **T4 — preuves sur la pile réelle** : E2E souris et clavier, refus, quatre paliers ; captures observées ;
       `docs/manual.md` ; `CHANGELOG.md` ; campagnes.
+      *Fait le 2026-10-26* : `e2e/ui/couleurs.spec.ts` **9/9** ; dix captures observées, dont le défaut de 390 px
+      corrigé ; manuel 3.2 ter, 5.1, 5.2 ; campagnes pgTAP, API et interface des écrans touchés (`docs/JOURNAL.md`
+      « `CRM-116` T2 à T4 »).
 - [ ] **T5 — livraison** : migration en fenêtre et reconstruction de la webapp, sur instruction du responsable.
-
 ### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[ ]`
 *Créée le 2026-10-26 — constat du responsable : « on a un manuel mais il n'est joignable nulle part depuis la webapp ;
 est-ce dans le backlog ou c'est un loupé ? ». Mesuré le même jour : un loupé. La webapp ne porte aucun lien ni entrée

@@ -8029,3 +8029,33 @@ est une hypothèse, non un fait.
 seed la disponibilité du stockage avant la mise en file, ou rejouer le `flush` après le délai rendu par la
 reprogrammation, borné ; dans les deux cas, journaliser le code PostgREST dans `envoi_stockage_injoignable`.
 **Statut : ouverte.**
+
+
+### INC-313 — le disque « Gris » du choix de couleur des objectifs emploie `--color-border`, invisible sur une surface blanche
+
+*Relevé le 2026-10-26 par `CRM-116`, à la relecture intégrale de `docs/DESIGN_SYSTEM.md`.* Le choix de couleur de la fiche
+d'un bloc d'objectif (§5.29, `webapp/src/app/Objectifs.tsx`, table `LISERES`) dessine le disque de `neutral` en
+`bg-border`. Le §5.2 bis a mesuré ce jeton **invisible** sur la surface blanche d'une carte, et a fixé pour un liseré
+neutre `--color-text-3`, « un neutre discret, mais lisible ». Le sélecteur de couleur des tracks et des channels
+(§5.68), qui réemploie le patron du §5.29, emploie donc `--color-text-3` : la même option « Gris » a désormais deux
+disques dans le produit.
+
+**Non corrigé, et le motif est le périmètre** : la table `LISERES` colore aussi le **liseré** du bloc sur le canevas, et
+la changer modifierait le rendu des blocs neutres, ce que `CRM-116` n'a pas à décider. **Issue proposée** : séparer le
+disque du choix (`--color-text-3`) du liseré du bloc, ou passer les deux à `--color-text-3` comme le liseré d'une carte
+de board. À arbitrer par le responsable.
+
+
+### INC-314 — le contrôle des classes ignore les gabarits interpolés : une classe absente du CSS y passe inaperçue
+
+*Mesuré le 2026-10-26 par `CRM-116`.* La pastille de l'onglet d'un channel portait `mr-1.5` dans un gabarit interpolé
+(`` `mr-1.5 size-2 … ${classesPastille(…)}` ``). L'échelle d'espacement est close (`docs/DESIGN_SYSTEM.md` §3, §5.29,
+INC-158) : la classe n'était **pas engendrée**, et la pastille se collait au nom. `node scripts/lib/classes-css.mjs`
+rendait pourtant « aucune classe manquante ». **Cause, lue dans le script** : il ne retient que les gabarits sans
+interpolation (`` `([^`$]*)` ``, ligne 101) ; toute classe écrite dans un gabarit qui contient `${…}` échappe au
+contrôle. Corrigé pour ce cas en `mr-[6px]`, forme que le §5.29 prescrit, et les autres classes des gabarits de
+`CRM-116` ont été vérifiées une à une dans le CSS produit.
+
+**Non corrigé dans le script**, hors du périmètre de `CRM-116`. **Issue proposée** : lire les morceaux littéraux d'un
+gabarit interpolé — le texte entre deux `${…}` —, ce que les autres formes du script font déjà. À arbitrer par le
+responsable.

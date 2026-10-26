@@ -626,6 +626,10 @@ décident de qui l'écrit. Retour arrière : supprimer la colonne ; aucune autre
   slug et avant le workflow ; `neutral` à la création, la valeur lue en modification. `creerChannel` et la
   modification d'un channel envoient `color`. Le formulaire étant partagé, la création depuis l'arborescence et depuis
   « Nouveau channel » de la barre d'onglets reçoivent le champ ensemble.
+- **Le brouillon de l'aller-retour porte la couleur** (§13.4) — *précisé à l'écriture du code* : partir créer un
+  workflow depuis le formulaire, puis revenir, rouvrait le formulaire sans la couleur choisie. Elle voyage donc dans
+  l'adresse comme le nom, sous `nc-couleur`, et le défaut `neutral` n'y est pas écrit. Une valeur hors des cinq jetons,
+  forgée dans l'adresse, est ramenée à `neutral` à la lecture, jamais envoyée telle quelle.
 - **Refus** : la valeur ne peut sortir des cinq jetons depuis l'écran ; un `23514` sur `channels_color_check`, que seul
   un appel direct atteint, rejoint le refus générique du §9. Les refus de droit sont ceux du §9 et du §10, inchangés.
 

@@ -6472,22 +6472,35 @@ quoi ils ont l'air.
 - **LE SÉLECTEUR DE COULEUR REMPLACE LA LISTE DE NOMS TECHNIQUES.** Le formulaire de track proposait `brand`, `success`,
   `accent`, `danger`, `neutral` dans une liste déroulante : des noms de jetons, sans couleur ni traduction. Un même
   composant, `SelecteurCouleur`, sert désormais le formulaire de track et celui de channel.
-- **CINQ PASTILLES NOMMÉES, DANS L'ORDRE DE LA PALETTE** (§1) : **Bleu** (`brand`), **Vert** (`success`), **Jaune**
-  (`accent`), **Rouge** (`danger`), **Gris** (`neutral`). Chacune est une étiquette `rounded-full` de 40 px de haut (§8)
-  : un disque de 12 px à la couleur **pleine** du jeton — `--color-text-3` pour `neutral` —, puis le nom en 13 px. Les
-  noms sont des clés de traduction (§10), jamais le nom du jeton.
-- **LE CHOIX NE REPOSE PAS SUR LA COULEUR SEULE** (§1) : l'option choisie prend le fond doux de sa couleur, une bordure
-  de 2 px `--color-brand`, le nom en `font-medium` et une coche Lucide `Check` de 14 px ; les autres, une bordure
-  `--color-border` et le nom en `--color-text-2`, au survol `--color-hover`.
+- **LE PATRON EST CELUI DU CHOIX DE COULEUR DU CANEVAS D'OBJECTIFS (§5.29), RÉEMPLOYÉ.** *Révisé le 2026-10-26 à
+  l'écriture du code, après relecture intégrale de ce document* : la première rédaction de ce paragraphe dessinait des
+  étiquettes `rounded-full` à radio masqué et coche, sans savoir que le §5.29 choisit déjà une couleur ainsi — « un
+  groupe de boutons radio, jamais une liste déroulante, et chaque option porte son nom en clair à côté de sa
+  pastille ». Deux écrans qui choisissent la même chose le font de la même façon (§5.29 bis).
+- **CINQ OPTIONS NOMMÉES, DANS L'ORDRE DE LA PALETTE** (§1) : **Bleu** (`brand`), **Vert** (`success`), **Jaune**
+  (`accent`), **Rouge** (`danger`), **Gris** (`neutral`). Chacune est une étiquette `--radius-sm` bordée, de 40 px de
+  haut (§8), qui porte le **bouton radio natif visible** (16 px, accent `--color-brand`), un disque de 12 px à la couleur
+  **pleine** du jeton, puis le nom en 13 px. Les noms sont les clés du §5.29, `goals.edit.color.*`, **réemployées et non
+  dupliquées** (§5.61) : la même couleur porte le même nom partout où on la choisit.
+- **LE DISQUE « Gris » EST `--color-text-3`**, le neutre discret mais lisible que le §5.2 bis a mesuré : `--color-border`
+  y est invisible sur une surface blanche. Le canevas d'objectifs emploie `--color-border` pour ce même disque ; l'écart
+  est consigné (INC-313), et le canevas n'est pas modifié ici.
+- **LE CHOIX NE REPOSE PAS SUR LA COULEUR SEULE** (§1) : le radio coché le dit, et l'option choisie porte en plus la
+  bordure `--color-brand` sur fond `--color-brand-soft` du §5.29 ; les autres, la bordure `--color-border`, au survol
+  `--color-hover`.
 - **UN GROUPE DE BOUTONS RADIO, SÉMANTIQUE NATIVE** : un `fieldset` dont la `legend` est le libellé du champ
-  (« Couleur », 13 px `--color-text-2`, §5.7), et cinq `input type="radio"` visuellement masqués, chacun porté par son
-  étiquette. `Tab` entre dans le groupe sur l'option choisie et en sort ; les flèches changent l'option — le comportement
-  du navigateur, sans code clavier propre. Le focus visible (§8) est porté par l'étiquette (`:focus-visible` du radio,
-  anneau `--color-brand`).
+  (« Couleur », 13 px `--color-text-2`, §5.7). `Tab` entre dans le groupe sur l'option choisie et en sort ; les flèches
+  changent l'option — le comportement du navigateur, sans code clavier propre. Le focus visible (§8) est celui du radio
+  lui-même, par la règle `:focus-visible` du produit.
 - **VALEUR INITIALE** : `neutral` — Gris — à la création, la valeur lue en modification. Une valeur venue du réseau
   hors des cinq jetons s'affiche comme Gris, par le repli déjà employé pour les pilules de track.
 - **RESPONSIVE** : les cinq étiquettes passent à la ligne (`flex-wrap`, écart 8 px) ; aucune ne se réduit sous sa cible
-  de 40 px, et le groupe ne fait jamais défiler la page (§7).
+  de 40 px, et le groupe ne fait jamais défiler la page (§7). **La rangée est bornée à la fenêtre**,
+  `max-w-[calc(100vw-6rem)]` — *précisé à l'observation de la capture à 390 px* : dans l'arborescence, le formulaire
+  vit dans une liste `min-w-max` qui défile (§12.6) et prend la largeur du contenu ; « Rouge » et « Gris » sortaient du
+  champ sans passer à la ligne, alors que la page, elle, ne défilait pas. La borne est celle du §5.27 pour un bloc posé
+  dans un conteneur qui défile ; là où le formulaire est plus étroit, elle ne joue pas. La preuve E2E mesure le bord droit
+  de **chaque option**, pas seulement le défilement de la page.
 - **LA PASTILLE DE CHANNEL.** Sur l'onglet du channel (§4), un disque de 8 px à la couleur pleine du jeton précède le
   nom, à 6 px de lui ; l'état actif de l'onglet (bordure basse, texte `--color-brand`) est inchangé, et la pastille
   garde sa couleur dans les deux états. Elle est `aria-hidden` : le nom porte l'information, la couleur l'accompagne
@@ -6496,4 +6509,5 @@ quoi ils ont l'air.
 - **DANS L'ARBORESCENCE**, le nom d'un channel est rendu en pilule de donnée (§5.6, §12.5) — fond doux, texte
   `*-on-soft` — précédée de la même pastille, comme le track l'est avec son icône. Un channel `neutral` est rendu en
   pilule neutre (`--color-hover`, `--color-text-2`), comme un track neutre.
-- **Aucun jeton nouveau** ; une icône Lucide de plus dans ce contexte, `Check`.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : le sélecteur emprunte au §5.29 sa forme et ses noms, la
+  pastille au §1 ses couleurs pleines, la pilule au §5.6 et au §12.5.

@@ -1,4 +1,6 @@
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T3 — l'administration refusée par la base : commandes éteintes avec leur
+// @verifies CRM-116 (docs/BACKLOG.md) tranche T3 — le sélecteur de couleur des formulaires, la pilule colorée d'un
+//           channel (docs/SPEC-administration-arborescence.md §14 ; docs/DESIGN_SYSTEM.md §5.68)
 //           motif, dépliage offert (docs/SPEC-droits-interface.md §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-075 (docs/BACKLOG.md) — écran d'administration des tracks et des channels
 // @verifies CRM-077 (docs/BACKLOG.md) — corbeille, septième tranche : le GESTE de mise à la
@@ -92,6 +94,7 @@ const CHANNELS = [
 		workflow_id: 'wf-1',
 		position: 1,
 		archived_at: null,
+		color: 'accent',
 	},
 	{
 		id: 'c-2',
@@ -103,6 +106,7 @@ const CHANNELS = [
 		workflow_id: 'wf-1',
 		position: 2,
 		archived_at: null,
+		color: 'neutral',
 	},
 ]
 
@@ -744,8 +748,13 @@ describe('les channels (§3.2, §7)', () => {
 
 	it('la création aboutie retire aussi les paramètres, et envoie le brouillon complété (§13.6)', async () => {
 		const utilisateur = userEvent.setup()
-		const { ecritures } = monter({}, '/reglages/arborescence?nouveau-channel=t-1&nc-nom=Partenariats&nc-workflow=wf-1')
+		// @verifies CRM-116 — §14.3 : la couleur confiée au brouillon revient cochée, et part avec la création.
+		const { ecritures } = monter(
+			{},
+			'/reglages/arborescence?nouveau-channel=t-1&nc-nom=Partenariats&nc-workflow=wf-1&nc-couleur=danger',
+		)
 		const formulaire = await screen.findByTestId('formulaire-channel')
+		expect(within(formulaire).getByRole('radio', { name: 'Rouge' })).toHaveProperty('checked', true)
 		await waitFor(() => expect((within(formulaire).getByLabelText('Workflow') as HTMLSelectElement).value).toBe('wf-1'))
 		await utilisateur.click(within(formulaire).getByRole('button', { name: 'Créer' }))
 		await waitFor(() => expect(screen.getByTestId('sonde-adresse').textContent).toBe('/reglages/arborescence'))
@@ -759,6 +768,7 @@ describe('les channels (§3.2, §7)', () => {
 				name: 'Partenariats',
 				slug: 'partenariats',
 				description: null,
+				color: 'danger',
 				position: null,
 			},
 		})
@@ -1102,5 +1112,73 @@ describe('arborescence — l’administration refusée par la base (CRM-093)', (
 		expect(deplier.disabled).toBe(false)
 		await userEvent.click(deplier)
 		expect(deplier.getAttribute('aria-expanded')).toBe('true')
+	})
+})
+
+// @verifies CRM-116 — docs/SPEC-administration-arborescence.md §14.3 (le sélecteur dans les deux formulaires, la couleur
+// envoyée à la création et en modification, la valeur lue en modification), docs/DESIGN_SYSTEM.md §5.68 (la pilule de
+// donnée du channel, sa pastille en tête).
+describe('la couleur d’un track et d’un channel (CRM-116)', () => {
+	it('le formulaire de track propose des pastilles nommées, Gris par défaut, et envoie la couleur choisie', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Nouveau track' }))
+		const formulaire = await screen.findByTestId('formulaire-track')
+		const groupe = within(formulaire).getByRole('group', { name: 'Couleur' })
+		expect(within(groupe).getAllByRole('radio')).toHaveLength(5)
+		expect(within(groupe).getByRole('radio', { name: 'Gris' })).toHaveProperty('checked', true)
+		// Plus aucune liste de noms techniques.
+		expect(within(formulaire).queryByRole('option', { name: 'brand' })).toBeNull()
+		await utilisateur.type(within(formulaire).getByLabelText('Nom'), 'Nouveau')
+		await utilisateur.click(within(groupe).getByRole('radio', { name: 'Vert' }))
+		await utilisateur.click(within(formulaire).getByRole('button', { name: 'Créer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.charge).toMatchObject({ name: 'Nouveau', color: 'success' })
+	})
+
+	it('en modification, le track rouvre sur sa couleur et envoie la nouvelle', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Modifier Conseil & IA' }))
+		const formulaire = await screen.findByTestId('formulaire-track')
+		expect(within(formulaire).getByRole('radio', { name: 'Bleu' })).toHaveProperty('checked', true)
+		await utilisateur.click(within(formulaire).getByRole('radio', { name: 'Rouge' }))
+		await utilisateur.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.table).toBe('tracks')
+		expect(ecritures[0]?.charge).toMatchObject({ color: 'danger' })
+	})
+
+	it('un channel est rendu en pilule de sa couleur, pastille en tête', async () => {
+		const utilisateur = userEvent.setup()
+		monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		const pilules = screen.getAllByTestId('pilule-channel')
+		expect(pilules.map((pilule) => [pilule.textContent, pilule.getAttribute('data-couleur')])).toEqual([
+			['Prospection', 'accent'],
+			['Grands comptes', 'neutral'],
+		])
+		expect(pilules[0]?.className).toContain('bg-accent-soft')
+		expect(pilules[0]?.querySelector('[aria-hidden="true"]')?.className).toContain('bg-accent')
+	})
+
+	it('le formulaire de channel rouvre sur la couleur lue, et la modification l’envoie', async () => {
+		const utilisateur = userEvent.setup()
+		const { ecritures } = monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		await utilisateur.click(screen.getByRole('button', { name: 'Modifier Prospection' }))
+		const formulaire = await screen.findByTestId('formulaire-channel')
+		expect(within(formulaire).getByRole('radio', { name: 'Jaune' })).toHaveProperty('checked', true)
+		await utilisateur.click(within(formulaire).getByRole('radio', { name: 'Vert' }))
+		await utilisateur.click(within(formulaire).getByRole('button', { name: 'Enregistrer' }))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect(ecritures[0]?.table).toBe('channels')
+		expect(ecritures[0]?.charge).toMatchObject({ color: 'success' })
 	})
 })

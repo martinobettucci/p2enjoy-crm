@@ -840,6 +840,9 @@ page ; ouvrir un channel en fait le titre à son tour, et le fil d'Ariane nomme 
   et reste réversible.
 - L'onglet **ouvert** se signale par un libellé bleu et un soulignement : jamais par la couleur
   seule.
+- Chaque onglet porte, devant son nom, une **pastille de la couleur de son channel** (*livré par `CRM-116`*). Elle se
+  choisit dans le formulaire du channel (chapitre 5.2) ; elle accompagne le nom et ne change pas quand l'onglet est
+  ouvert.
 - Sur un écran étroit, la barre **défile horizontalement** plutôt que de tronquer les libellés. Une
   ombre au bord indique qu'il reste des onglets à voir de ce côté.
 - **Nouveau channel**, après les onglets et avant « Coûts », crée un channel **sans quitter le
@@ -2561,6 +2564,11 @@ interdire un geste qui vous est peut-être permis. Le produit préfère vous mon
   minuscules, des chiffres et des tirets simples ; le formulaire le dit avant l'envoi, et le serveur
   refuse un slug déjà pris dans l'espace de travail avec « Ce slug est déjà utilisé. »
 - **Renommer** : le crayon. Vous modifiez le nom, la couleur, l'icône et la description.
+- **Choisir la couleur** : le champ « Couleur » propose cinq couleurs, chacune avec sa pastille et son nom — Bleu,
+  Vert, Jaune, Rouge, Gris. Cliquez sur celle que vous voulez, ou, au clavier, atteignez le groupe avec `Tab` et
+  changez de couleur avec les flèches. Un nouveau track est Gris tant que vous n'en choisissez pas d'autre. La couleur
+  colore sa pilule dans la barre latérale et dans cet écran. *Livré par `CRM-116` ; captures dans
+  `docs/captures/CRM-116/`.*
   **Le slug ne se modifie pas depuis cet écran** : c'est l'adresse que vous partagez, et la changer
   romprait les liens déjà transmis sans que rien ne les rattrape.
 - **Réordonner** : les flèches. Elles sont **désactivées** en tête et en fin de liste, et disent
@@ -2617,6 +2625,11 @@ Les mêmes six gestes s'appliquent, avec deux différences :
   défaut est présenté en tête et signalé comme tel, **mais il n'est pas coché** — le produit ne
   choisit pas à votre place. Tant qu'aucun workflow n'est choisi, « Créer » reste indisponible.
 
+**Un channel a sa propre couleur** (*livré par `CRM-116`*). Elle se choisit comme celle d'un track, avec les mêmes cinq
+couleurs, à la création comme en modification, et un nouveau channel est Gris tant que vous n'en choisissez pas
+d'autre. Elle s'affiche en **pastille** devant le nom de son onglet (section 3.2 ter) et en **pilule** dans
+l'arborescence. Elle aide à repérer un channel d'un coup d'œil ; elle ne remplace jamais son nom.
+
 Si aucun workflow n'est affectable à ce track, l'écran vous le dit au lieu d'afficher un formulaire
 que le serveur refuserait. C'est le cas d'un espace neuf : le guide de démarrage pose alors le
 workflow de départ en un geste (§1 bis.4), et un formulaire resté ouvert le propose aussitôt.
@@ -2626,7 +2639,7 @@ liste des workflows, ouvre l'éditeur de workflows avec son formulaire de créat
 portée réglée sur ce track — vous pouvez choisir « Global ». Créez le workflow, ajoutez-lui ses
 étapes, puis cliquez **Revenir au nouveau channel**, dans le bandeau en haut de l'éditeur : le
 formulaire du channel se rouvre là où vous l'aviez laissé — dans la vue du track ou dans
-l'arborescence —, avec le nom, l'identifiant et la description déjà saisis, et le workflow créé déjà
+l'arborescence —, avec le nom, l'identifiant, la couleur et la description déjà saisis, et le workflow créé déjà
 choisi. *Livré par `CRM-100`.*
 
 - Le lien n'existe que dans le formulaire de **création** ; changer le workflow d'un channel existant
@@ -5139,7 +5152,8 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     **workflow** — ses étapes, les déplacements qu'il déclare, le motif ou les questions qu'ils exigent ;
   - *Ajouter* : créer un track, ou un channel avec son workflow ;
   - *Modifier* : renommer un track ou un channel, changer sa description, la couleur ou l'icône d'un track. Le slug
-    — l'adresse — ne change jamais, et changer le workflow d'un channel reste un geste de l'écran ;
+    — l'adresse — ne change jamais, et changer le workflow d'un channel reste un geste de l'écran, comme choisir la
+    couleur d'un channel (`CRM-116`) ;
   - *Supprimer* : mettre un track ou un channel à la corbeille.
 
   Le CRM réserve ces écritures aux administrateurs de l'espace : pour un autre membre, l'assistant reçoit un refus.

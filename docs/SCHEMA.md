@@ -262,7 +262,7 @@ Livrée par `CRM-021`. Spécification complète : `docs/SPEC-channels.md`.
 | `name` | `text` | non nul, `CHECK (btrim(name) <> '')` |
 | `slug` | `text` | non nul, `CHECK (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$')`, unique **par track** |
 | `description` | `text` | |
-| `color` | `text` | non nul, défaut `'neutral'`, `CHECK (color IN ('brand','success','accent','danger','neutral'))` — jeton du design system, comme `tracks.color` ; **ajoutée par `CRM-116`** (décision 729), migration au prochain numéro libre |
+| `color` | `text` | non nul, défaut `'neutral'`, `CHECK (color IN ('brand','success','accent','danger','neutral'))` — jeton du design system, comme `tracks.color` ; **ajoutée par `CRM-116`** (décision 729), migration `0116` |
 | `workflow_id` | `uuid` | **non nul depuis `CRM-033`** ; FK **composite** `(workflow_id, workspace_id) → workflows (id, workspace_id)` depuis `CRM-031` ; portée vérifiée par trigger, voir ci-dessous |
 | `position` | `numeric` | non nul, ordre des onglets **dans son track** ; attribuée par trigger si omise |
 | `archived_at` | `timestamptz` | non nul = archivé : masqué, réversible |
@@ -2235,6 +2235,18 @@ réappliquer celle de la migration `0035`, avec les appelants d'avant.
 `*_refuse_change` / `*_refuse_truncate`, puis `drop table public.audit_log` et les fonctions `app.audit_*`,
 `app.journal_refuse_change`, `app.purge_audit_logs` ; remettre la liste fermée de `plateforme_journal` sans
 `logs_purged`.
+
+### Migration `0116` — la couleur d'un channel (`CRM-116` T2, décision 729 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-administration-arborescence.md` §14 ; `docs/SPEC-channels.md` §2.1. `channels.color`, `text` non nul, défaut
+`'neutral'`, contrainte `channels_color_check` aux cinq jetons de `tracks.color`. Les lignes existantes prennent le défaut :
+aucune donnée n'est réécrite. **Le privilège de mise à jour est accordé colonne par colonne** depuis la migration `0037` :
+la migration ajoute donc `grant update (color) on public.channels to authenticated`, sans quoi même l'administrateur
+serait refusé (`42501`). Aucune politique n'est touchée : l'écriture reste réservée à l'administrateur de l'espace par les
+politiques existantes de `channels` (pgTAP `0112`, preuve d'API C1 à C5). **Retrait** :
+`revoke update (color) on public.channels from authenticated;` puis `alter table public.channels drop column color;` (la
+contrainte part avec la colonne), avec la webapp d'avant — une webapp postérieure lit `color` et verrait sa lecture des
+channels refusée (`42703`).
 
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 

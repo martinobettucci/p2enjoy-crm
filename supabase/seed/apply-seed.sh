@@ -191,6 +191,19 @@ CHANNELS=(
 	'5eed0000-0000-4000-8000-000000000038|5eed0000-0000-4000-8000-000000000025|annexes-2023|Annexes 2023|2|-'
 )
 
+# Couleur des channels — `CRM-116`, docs/SPEC-seed.md §2.6, docs/DESIGN_SYSTEM.md §5.68 (décision 729).
+#
+# Les cinq jetons sont démontrés, dont le défaut : `maintenance` reste `neutral`, et les deux channels sous le track en
+# corbeille aussi, faute de rien à démontrer. La couleur est TOUJOURS envoyée — déclarée ou `neutral` — pour que le
+# rejeu converge, comme la description.
+declare -A COULEURS_CHANNELS=(
+	[5eed0000-0000-4000-8000-000000000031]=brand
+	[5eed0000-0000-4000-8000-000000000032]=success
+	[5eed0000-0000-4000-8000-000000000033]=danger
+	[5eed0000-0000-4000-8000-000000000034]=accent
+	[5eed0000-0000-4000-8000-000000000036]=success
+)
+
 # Droits fins par track et par channel — docs/SPEC-seed.md §2.11, docs/SPEC-permissions-rls.md §2.2.
 #
 # Quatre lignes, choisies pour que **chacune des quatre situations** de la matrice du §2.2 soit
@@ -1128,18 +1141,22 @@ for ligne in "${CHANNELS[@]}"; do
 
 	# `description` est TOUJOURS envoyée, déclarée ou nulle : le rejeu converge (docs/SPEC-seed.md §20.3).
 	description=$(description_json "$id")
+	# `color` aussi, déclarée ou `neutral` (`CRM-116`, docs/SPEC-seed.md §2.6).
+	couleur=${COULEURS_CHANNELS[$id]:-neutral}
 	if [ "$archive" = '-' ]; then
 		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg track "$track" --arg nom "$nom" \
 		               --arg slug "$slug" --argjson position "$position" --arg wf "$wf_envoye" \
-		               --argjson description "$description" \
+		               --argjson description "$description" --arg couleur "$couleur" \
 		     '{id: $id, workspace_id: $ws, track_id: $track, name: $nom, slug: $slug,
-		       workflow_id: $wf, position: $position, description: $description, archived_at: null}')
+		       workflow_id: $wf, position: $position, description: $description, color: $couleur,
+		       archived_at: null}')
 	else
 		charge=$(jq -nc --arg id "$id" --arg ws "$WS_ID" --arg track "$track" --arg nom "$nom" \
 		               --arg slug "$slug" --argjson position "$position" --arg archive "$archive" \
-		               --arg wf "$wf_envoye" --argjson description "$description" \
+		               --arg wf "$wf_envoye" --argjson description "$description" --arg couleur "$couleur" \
 		     '{id: $id, workspace_id: $ws, track_id: $track, name: $nom, slug: $slug,
-		       workflow_id: $wf, position: $position, description: $description, archived_at: $archive}')
+		       workflow_id: $wf, position: $position, description: $description, color: $couleur,
+		       archived_at: $archive}')
 	fi
 
 	code=$(api POST /rest/v1/channels \

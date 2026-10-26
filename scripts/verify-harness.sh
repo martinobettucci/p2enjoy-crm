@@ -609,7 +609,9 @@ PORT_RAPPORT=9323
 # `0099_card_placements_ecriture.test.sql` (CRM-111) et `0110_scores_sante.test.sql` (CRM-066). 97 + 3 = 100, MESURÉ —
 # « 100 fichiers ».
 # **101 depuis `CRM-072` T1, 2026-10-26** : `0111_journal_audit.test.sql`, fichier NEUF. 100 + 1 = 101, MESURÉ.
-FICHIERS_SQL_ATTENDUS=101
+# **102 depuis `CRM-116`, 2026-10-26** : `0112_couleur_channels.test.sql`, fichier NEUF. 101 + 1 = 102, MESURÉ — « 102
+# fichiers ».
+FICHIERS_SQL_ATTENDUS=102
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -731,7 +733,11 @@ FICHIERS_SQL_ATTENDUS=101
 # **+47 par `CRM-072` T1, 2026-10-26** : `0111_journal_audit` **46** assertions (le journal en base, ses droits, son
 # ajout seul, sa purge) et `0016_preuves_refus` **une** de plus (la politique de lecture de `audit_log` nommée, plan 68) ;
 # `0006`, `0007`, `0015` et `0018` RÉVISÉES sans changer de plan (décision 51). 4164 + 47 = 4211, MESURÉ.
-ASSERTIONS_ATTENDUES=4211
+# **4230 depuis `CRM-116`, 2026-10-26** : `0112_couleur_channels` **19** assertions (la colonne, son défaut, sa contrainte,
+# son privilège de mise à jour, l'écriture de l'administratrice, le refus des trois autres profils) ; `0005_channels`
+# RÉVISÉE sans changer de plan (`color` dans la liste exacte des colonnes). 4211 + 19 = 4230, MESURÉ — somme des
+# assertions rendues par `npm run test:sql`, « 102 fichiers ».
+ASSERTIONS_ATTENDUES=4230
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1126,7 +1132,11 @@ ASSERTIONS_ATTENDUES=4211
 # journalisé avec son actrice, deux refus de lecture avec témoin, aucune écriture même à la clé de service, l'anonyme) ;
 # `preuves-refus.spec.ts` échange son figeage d'absence de `audit_log` contre la mesure de son refus, à compte égal.
 # 1213 + 5 = 1218, valeur COMPTÉE.
-SCENARIOS_API=1218
+# **1224 depuis `CRM-116`, 2026-10-26** : `e2e/api/couleur-channels.spec.ts`, fichier NEUF, **6** scénarios (les cinq jetons
+# du seed lus, la lectrice sous la RLS, l'administratrice qui change la couleur, le business developer et la lectrice
+# refusés sans ligne rendue, l'hexadécimal refusé par la contrainte). 1218 + 6 = 1224, valeur COMPTÉE — « Total: 1224
+# tests in 94 files ».
+SCENARIOS_API=1224
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1630,7 +1640,10 @@ SCENARIOS_API=1218
 # **948 depuis `CRM-072` T2, 2026-10-26** : `e2e/ui/journal-audit.spec.ts`, fichier NEUF, **5** scénarios — l'index mène
 # au journal, un droit posé à l'écran des membres y paraît avec son actrice, le filtre de famille dans l'adresse, les
 # quatre paliers, la lectrice refusée. 943 + 5 = 948, valeur COMPTÉE.
-SCENARIOS_UI=948
+# **957 depuis `CRM-116`, 2026-10-26** : `e2e/ui/couleurs.spec.ts`, fichier NEUF, **9** scénarios — le formulaire de
+# track au clavier, le channel recoloré (pilule puis pastille d'onglet), « Nouveau channel » en couleur, le brouillon de
+# l'aller-retour, la lectrice, les quatre paliers. 948 + 9 = 957, valeur COMPTÉE — « Total: 957 tests in 96 files ».
+SCENARIOS_UI=957
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

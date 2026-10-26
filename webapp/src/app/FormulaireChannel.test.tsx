@@ -1,4 +1,6 @@
 // @verifies CRM-100 (docs/BACKLOG.md) tranche T1 — le formulaire de channel PARTAGÉ
+// @verifies CRM-116 (docs/BACKLOG.md) tranche T3 — la couleur du channel, envoyée et confiée au brouillon
+//           (docs/SPEC-administration-arborescence.md §14.3 ; docs/DESIGN_SYSTEM.md §5.68)
 // @verifies docs/SPEC-administration-arborescence.md §13.2 (« Nouveau workflow » rendu dans les quatre états de la
 //           liste quand l'hôte fournit l'adresse, absent sinon ; le workflow attendu présélectionné une seule fois, ou
 //           dit non affectable), §13.4 (le slug confié seulement s'il a été saisi), §7.2 (aucun défaut présélectionné)
@@ -9,7 +11,7 @@
 
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
 import { FormulaireChannel, type ProprietesFormulaireChannel } from './FormulaireChannel'
 import { enChargement, enErreur, pret, type EtatAsync } from '../lib/async'
@@ -33,7 +35,7 @@ function monter(
 ) {
 	const proprietes: ProprietesFormulaireChannel = {
 		titre: 'Nouveau channel',
-		initial: { nom: '', slug: '', description: '', idWorkflow: '' },
+		initial: { nom: '', slug: '', description: '', idWorkflow: '', couleur: 'neutral' },
 		slugModifiable: true,
 		workflows,
 		refus: null,
@@ -140,5 +142,32 @@ describe('le workflow attendu (§13.2)', () => {
 	it('sans workflow attendu, aucun défaut n’est présélectionné (§7.2)', () => {
 		monter(pret(WORKFLOWS))
 		expect((screen.getByLabelText('Workflow') as HTMLSelectElement).value).toBe('')
+	})
+})
+
+describe('la couleur du channel (CRM-116)', () => {
+	it('s’ouvre sur Gris, et la couleur choisie part avec la saisie validée', async () => {
+		const utilisateur = userEvent.setup()
+		const onValider = vi.fn()
+		monter(pret(WORKFLOWS), { onValider })
+		expect(screen.getByRole('radio', { name: 'Gris' })).toHaveProperty('checked', true)
+		await utilisateur.type(screen.getByLabelText('Nom'), 'Partenariats')
+		await utilisateur.selectOptions(screen.getByLabelText('Workflow'), 'wf-1')
+		await utilisateur.click(screen.getByRole('radio', { name: 'Rouge' }))
+		await utilisateur.click(screen.getByRole('button', { name: 'Créer' }))
+		expect(onValider).toHaveBeenCalledWith(expect.objectContaining({ nom: 'Partenariats', couleur: 'danger' }))
+	})
+
+	it('est confiée à l’aller-retour vers l’éditeur, comme le nom (§14.3)', async () => {
+		const utilisateur = userEvent.setup()
+		const confiees: SaisiePortee[] = []
+		monter(pret(WORKFLOWS), {
+			cheminNouveauWorkflow: (saisie) => {
+				confiees.push(saisie)
+				return '/reglages/workflows'
+			},
+		})
+		await utilisateur.click(screen.getByRole('radio', { name: 'Vert' }))
+		expect(confiees.at(-1)?.couleur).toBe('success')
 	})
 })

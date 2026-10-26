@@ -4,12 +4,15 @@
 //       (l'adresse de départ et le brouillon), §13.5 (`creer`, `track`, `workflow-cree`), §13.6 (au retour), §13.7
 //       (validation de l'adresse de retour)
 // @spec docs/JOURNAL.md décision 623 (le brouillon voyage dans l'adresse, jamais dans un stockage du navigateur)
+// @spec CRM-116 (docs/BACKLOG.md) tranche T3 — la couleur voyage dans le brouillon comme le nom : sans elle, l'aller-retour
+//       vers l'éditeur de workflows la perdrait (docs/SPEC-administration-arborescence.md §14.3 ; décision 729)
 //
 // UN MODULE SANS RENDU, ET C'EST VOULU. Trois écrans lisent et écrivent ces paramètres — la vue d'un track,
 // l'arborescence et l'éditeur de workflows — et la barre d'onglets compose l'adresse d'ouverture : chacun
 // réécrivant ses clés, le premier renommage les ferait diverger. Tout est ici, en fonctions pures, et prouvé par
 // `nouveau-channel.test.ts`.
 
+import { jetonCouleur } from '../app/presentation-tracks'
 import { MOTIF_SLUG } from './administration-arborescence'
 
 /** Le formulaire de création d'un channel ouvert : `1` dans la vue d'un track, l'id du track dans l'arborescence. */
@@ -27,6 +30,7 @@ export const PARAMS_BROUILLON = {
 	slug: 'nc-slug',
 	description: 'nc-description',
 	workflow: 'nc-workflow',
+	couleur: 'nc-couleur',
 } as const
 
 /** Les paramètres de l'éditeur de workflows (§13.5). */
@@ -44,6 +48,8 @@ export type BrouillonChannel = {
 	readonly slug: string
 	readonly description: string
 	readonly idWorkflow: string | null
+	/** `neutral` si absente ; une valeur hors des cinq jetons est ramenée à `neutral`, jamais envoyée telle quelle. */
+	readonly couleur: string
 }
 
 /** Ce que le formulaire confie à l'aller-retour : la saisie courante, le slug seulement s'il a été SAISI. */
@@ -51,6 +57,7 @@ export type SaisiePortee = {
 	readonly nom: string
 	readonly slug: string
 	readonly description: string
+	readonly couleur: string
 }
 
 export function lireBrouillon(parametres: URLSearchParams): BrouillonChannel {
@@ -60,6 +67,7 @@ export function lireBrouillon(parametres: URLSearchParams): BrouillonChannel {
 		slug: parametres.get(PARAMS_BROUILLON.slug) ?? '',
 		description: parametres.get(PARAMS_BROUILLON.description) ?? '',
 		idWorkflow: workflow === null || workflow === '' ? null : workflow,
+		couleur: jetonCouleur(parametres.get(PARAMS_BROUILLON.couleur) ?? ''),
 	}
 }
 
@@ -77,6 +85,8 @@ function ecrireBrouillon(parametres: URLSearchParams, saisie: SaisiePortee): voi
 		[PARAMS_BROUILLON.nom, saisie.nom],
 		[PARAMS_BROUILLON.slug, saisie.slug],
 		[PARAMS_BROUILLON.description, saisie.description],
+		// Le défaut n'est pas écrit : l'adresse la plus courte reste celle du formulaire tel qu'il s'ouvre.
+		[PARAMS_BROUILLON.couleur, saisie.couleur === 'neutral' ? '' : saisie.couleur],
 	]
 	for (const [cle, valeur] of valeurs) {
 		if (valeur.trim() !== '') parametres.set(cle, valeur)

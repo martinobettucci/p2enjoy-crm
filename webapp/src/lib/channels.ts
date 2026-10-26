@@ -41,7 +41,7 @@ import type { ClientCrm } from './supabase'
  */
 export type Channel = Pick<
 	Database['public']['Tables']['channels']['Row'],
-	'id' | 'name' | 'slug' | 'position' | 'workflow_id' | 'description'
+	'id' | 'name' | 'slug' | 'position' | 'workflow_id' | 'description' | 'color'
 >
 
 /**
@@ -57,7 +57,9 @@ export type TrackOuvert = Pick<
 >
 
 /** Colonnes réellement demandées. Exportées pour que les tests unitaires vérifient la requête. */
-export const COLONNES_CHANNEL = 'id, name, slug, position, workflow_id, description'
+// @spec CRM-116 (docs/BACKLOG.md) — `color` rejoint la lecture : la pastille de l'onglet (docs/SPEC-channels.md §5,
+//       docs/DESIGN_SYSTEM.md §5.68 ; décision 729).
+export const COLONNES_CHANNEL = 'id, name, slug, position, workflow_id, description, color'
 export const COLONNES_TRACK_OUVERT = 'id, name, slug, workspace_id'
 
 /**
