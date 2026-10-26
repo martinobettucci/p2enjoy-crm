@@ -2,6 +2,8 @@
 // @spec CRM-075 (docs/BACKLOG.md) — index des réglages et route de l'administration
 // @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : l'entrée « Coût du personnel » devient un texte citant son motif quand
 //       la base refuse l'administration ; docs/SPEC-droits-interface.md §3 (précision T4) ; docs/DESIGN_SYSTEM.md §5.59
+// @spec CRM-072 (docs/BACKLOG.md) — tranche T2 : l'entrée « Journal d'audit » de l'index des réglages, après « Membres »,
+//       texte citant son motif quand la base refuse l'administration (docs/SPEC-audit.md §8, docs/DESIGN_SYSTEM.md §5.66)
 // @spec CRM-076 (docs/BACKLOG.md) — adresse de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec CRM-062 (docs/BACKLOG.md) — route de l'écran des affaires figées (docs/SPEC-relances.md §10.4)
@@ -70,6 +72,7 @@ import {
 	CHEMIN_RENTABILITE,
 	CHEMIN_ADMIN_COUT_PERSONNEL,
 	CHEMIN_ADMIN_MEMBRES,
+	CHEMIN_ADMIN_JOURNAL,
 } from './chemins'
 
 export {
@@ -106,6 +109,7 @@ export {
 	CHEMIN_RENTABILITE,
 	CHEMIN_ADMIN_COUT_PERSONNEL,
 	CHEMIN_ADMIN_MEMBRES,
+	CHEMIN_ADMIN_JOURNAL,
 }
 
 /**
@@ -227,6 +231,9 @@ export const CLE_TITRE_COUT_PERSONNEL: CleTraduction = 'staffCost.title'
 
 /** Titre de Réglages ▸ Membres — `CRM-070`, docs/SPEC-membres.md §3. */
 export const CLE_TITRE_MEMBRES: CleTraduction = 'members.title'
+
+/** Titre de Réglages ▸ Journal d'audit — `CRM-072` T2, docs/SPEC-audit.md §8. */
+export const CLE_TITRE_JOURNAL: CleTraduction = 'audit.title'
 
 /** Titre de la plateforme — `CRM-101`, docs/SPEC-plateforme.md §7 (hors de `ROUTES`, comme les réglages). */
 export const CLE_TITRE_PLATEFORME: CleTraduction = 'platform.title'
@@ -409,6 +416,31 @@ export function IndexReglages() {
 						<span className="font-medium">{t('admin.settings.index.members')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.members.body')}</span>
 					</Link>
+				</li>
+				{/* Le journal d'audit vient APRÈS les membres — `CRM-072` T2, docs/DESIGN_SYSTEM.md §5.66 : on place les
+				    personnes, puis on lit ce qui s'est fait. Réservé aux administrateurs : l'entrée suit la règle de « Coût du
+				    personnel » (§5.59), un texte citant le motif quand la base refuse l'administration, jamais masquée. */}
+				<li>
+					{coutRefuse ? (
+						<div
+							data-testid="entree-journal"
+							aria-disabled="true"
+							{...(capacites.administration === 'refusee' ? { 'aria-describedby': ID_MOTIF_REGLAGES } : {})}
+							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] rounded-lg text-text-2"
+						>
+							<span className="font-medium">{t('admin.settings.index.audit')}</span>
+							<span className="text-sm">{t('admin.settings.index.audit.body')}</span>
+						</div>
+					) : (
+						<Link
+							to={CHEMIN_ADMIN_JOURNAL}
+							data-testid="entree-journal"
+							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+						>
+							<span className="font-medium">{t('admin.settings.index.audit')}</span>
+							<span className="text-sm text-text-2">{t('admin.settings.index.audit.body')}</span>
+						</Link>
+					)}
 				</li>
 				<li>
 					<Link

@@ -2475,3 +2475,19 @@ jeton du compte administrateur, une activité **ancienne de 40 jours au moment d
 applicative » (`…a0c05`, §23) : avec son étape figée et son action en retard, l'affaire tombe à 15, en danger. Comme les
 autres activités, elle n'est jamais réécrite (convergence par présence) ; elle ne fait que vieillir.
 
+## 25. Le journal d'audit couvre ses familles — `CRM-072` T1 (décisions 725 à 727)
+
+`audit_log` n'a aucun chemin d'écriture cliente (`docs/SPEC-audit.md` §3.3) : le seed **n'y écrit rien et n'y fabrique
+rien**. Le journal se remplit **parce que** le seed joue ses vrais gestes après la migration `0115` : les connexions
+LeLabs des comptes de démonstration (`sign_in`), les appartenances que l'admission crée (`access`), les tracks, channels et
+workflows (`configuration`), l'activité retirée par la modération (`deletion`, §23).
+
+À la fin, le seed **lit** le journal de l'espace sous la clé de service et **exige** au moins une entrée de chacune de ces
+quatre familles ; sinon il s'arrête en nommant la famille manquante. Une base seedée **avant** la migration `0115` n'a pas
+ces entrées : elle doit être reconstruite, et le message le dit.
+
+- La famille `export` viendra avec la tranche T3 (l'export d'un contact dédié, « Régis Anonyme »).
+- La famille `retention` ne se démontre pas par le seed : elle exige des entrées d'un an, que rien ne doit fabriquer. Sa
+  preuve est la suite pgTAP `0111_journal_audit`.
+- Une affaire semée **directement en corbeille** n'écrit pas `trashed` : elle naît ainsi, aucun changement n'a lieu
+  (`docs/SPEC-audit.md` §4.3).

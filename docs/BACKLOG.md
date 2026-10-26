@@ -12347,9 +12347,30 @@ Arbitrée par la décision 708 (point 5) ; connecteur MCP : non (décision 707).
 (décision 725), validée telle quelle le même jour (décision 726)** : `docs/SPEC-audit.md` ; R1 tranchée, option A (les
 messages d'un contact anonymisé restent intacts).
 
-- [ ] **T1 — le journal en base** (`docs/SPEC-audit.md` §3 à §6, §15) : `audit_log`, l'écrivain, l'ajout seul des trois
+- [x] **T1 — le journal en base** (`docs/SPEC-audit.md` §3 à §6, §15) : `audit_log`, l'écrivain, l'ajout seul des trois
       journaux, les déclencheurs, la purge d'un an et sa tâche, seed, pgTAP, API.
-- [ ] **T2 — l'écran `/reglages/journal`** (§8) : `docs/DESIGN_SYSTEM.md` d'abord, unitaires, E2E, captures, manuel.
+      - [x] Migration `0115_journal_audit.sql` (la `0114` est celle de `CRM-111` T2.3.3), appliquée par le runner.
+      - [x] pgTAP `0111_journal_audit.test.sql` **46/46** ; mutation tuée (ajout seul retiré : quatre assertions rouges).
+      - [x] API `e2e/api/journal-audit.spec.ts` **5/5** ; preuve de refus n° 8 entière (`preuves-refus.spec.ts`).
+      - [x] Gardes révisées (décision 51) : pgTAP `0006`, `0007`, `0015`, `0016`, `0018`, `verify-colonnes-protegees.sh`.
+      - [x] Seed §25 prouvé sur une base reconstruite (campagne de `CRM-111` T2.3.3). Après synchronisation : pgTAP
+            102 fichiers, 4230 assertions, un seul échec, `0005_channels` (la colonne `color` de `CRM-116`, en cours,
+            hors de cette unité) ; la `0111` corrigée (étape et workflow choisis dans l'espace, jamais par un identifiant
+            que la reconstruction renouvelle) 46/46 ; API 1217/1218 (`ingestion.spec.ts:91`, `CRM-058`), `session.spec`
+            et `signature-identite.spec` rejoués verts (INC-311 : deux `503` de transport Kong / fonctions).
+      - [x] `docs/SPEC-audit.md`, `SCHEMA.md`, `SPEC-permissions-rls.md`, `SPEC-seed.md` §25, `DAT.md`,
+            `PROD_MIGRATIONS.md`, `CHANGELOG.md`, journal (décision 727).
+      - *Conséquence pour `CRM-014`* : la preuve n° 8 est entière ; reste la n° 12 au compte des non satisfaisables de
+        `preuves-refus.spec.ts`, non touché ici.
+- [x] **T2 — l'écran `/reglages/journal`** (§8) : `docs/DESIGN_SYSTEM.md` d'abord, unitaires, E2E, captures, manuel.
+      - [x] `docs/DESIGN_SYSTEM.md` §5.66, écrit avant le code après relecture intégrale ; deux précisions (décision 728).
+      - [x] `webapp/src/lib/audit.ts`, `app/presentation-audit.ts`, `app/ReglagesJournal.tsx`, entrée d'index et route ;
+            le journal de la plateforme apprend `logs_purged`. Unitaires `audit.test.ts` 12/12,
+            `presentation-audit.test.ts` 12/12, `ReglagesJournal.test.tsx` 8/8 ; suite unitaire 4462/4462, typecheck vert.
+      - [x] Manuel : chapitre 10 *ter* et note au chapitre 10 ; CHANGELOG.
+      - [x] E2E `e2e/ui/journal-audit.spec.ts` **5/5**, et les six specs d'interface qui touchent les réglages et la
+            plateforme : **66/66** ; captures `docs/captures/CRM-072/journal-*` observées (tableau, filtres, paliers,
+            refus). La campagne d'interface complète sera rejouée à la clôture de l'unité, après T3.
 - [ ] **T3 — le volet RGPD d'un contact** (§7, §9) : export JSON, anonymisation, seed, pgTAP, API, E2E, captures, manuel.
 
 ### CRM-075 — Administration des tracks et des channels `[x]`

@@ -11,7 +11,8 @@ Contrat exécutable de `CRM-072` (`docs/BACKLOG.md`).
 - Droits : `docs/SPEC-permissions-rls.md` §4 (ligne `audit_log`), preuve de refus n° 8.
 - Schéma : `docs/SCHEMA.md` §8 (ligne `audit_log`). Déploiement : `docs/PROD_MIGRATIONS.md`.
 - État : **proposée le 2026-10-26 (décision 725), validée telle quelle le même jour (décision 726)**, avec la réponse à
-  R1 : option A, les messages restent intacts (§7.2, §12).
+  R1 : option A, les messages restent intacts (§7.2, §12). **T1 livrée en développement le 2026-10-26** (migration
+  `0115_journal_audit.sql`, décision 727) ; T2 et T3 à faire.
 
 ---
 
@@ -87,7 +88,8 @@ Index : `(workspace_id, id desc)` pour la lecture paginée, `(occurred_at)` pour
 
 ### 3.3 Qui écrit — personne, sauf la base
 
-- `SELECT` seul est accordé à `authenticated`. `INSERT`, `UPDATE`, `DELETE` et `TRUNCATE` sont retirés **nommément** à
+- `SELECT` seul est accordé à `authenticated` et à `service_role` (qui lit hors RLS : le seed et les preuves s'en
+  servent comme témoin, décision 727). `INSERT`, `UPDATE`, `DELETE` et `TRUNCATE` sont retirés **nommément** à
   `anon`, `authenticated` et `service_role` (`docs/SCHEMA.md` §9 : un `revoke … from public` ne suffit pas).
 - L'unique écrivain est **`app.audit_record(p_workspace uuid, p_action text, p_entity_type text, p_entity_id uuid,
   p_entity_label text, p_details jsonb)`** : `SECURITY DEFINER`, `search_path` vide, `EXECUTE` révoqué à tous les
@@ -164,6 +166,9 @@ configuration sensible au sens de la décision 708 : ils ne sont pas journalisé
 | `card_comments`, `card_activities` : `deleted_at` posé (modération ou retrait par l'auteur) | `comment`, `activity` | `deleted` |
 | `contacts`, `organizations` : suppression | `contact`, `organization` | `deleted` |
 | `contacts` : anonymisation (§7.2) | `contact` | `anonymized` |
+
+Une affaire, un track ou un channel **qui naît en corbeille** (`deleted_at` posé à l'insertion, ce que seul le seed
+fait) n'écrit pas `trashed` : le déclencheur juge un changement de `deleted_at`, et une naissance n'en est pas un.
 
 Une destruction en cascade écrit **une entrée par objet détruit** : détruire un channel qui porte cinq affaires écrit
 six entrées. Le journal dit ce qui a disparu, sans rien résumer.
@@ -284,12 +289,14 @@ contact supprimé « contact supprimé ».
 
 ## 8. L'écran « Journal d'audit » — `/reglages/journal`
 
-- **Une section de réglages** de plus, après « Membres » ; l'entrée n'est affichée qu'aux administrateurs (aide
-  d'interface), la règle réelle étant la RLS du §3.2. Un non-administrateur qui saisit l'adresse voit l'état de refus
-  des réglages.
-- **Liste** chronologique, la plus récente en tête : date et heure, acteur (« Système » quand l'acteur est nul,
-  « personne supprimée » quand le profil l'est), une **phrase** qui dit le geste (« a retiré Jeanne Martin de l'espace »,
-  « a publié la version 4 du workflow Conseil »), et un détail repliable des `before` / `after`.
+- **Une section de réglages** de plus, après « Membres ». *Précisé par la décision 728* : son entrée d'index suit la
+  règle du design system (§5.59) — un lien pour qui administre, un texte citant le motif sinon, jamais masquée —, la
+  règle réelle étant la RLS du §3.2. Un non-administrateur qui saisit l'adresse voit l'état « Réservé aux
+  administrateurs ».
+- **Liste** chronologique, la plus récente en tête : date et heure, acteur (« Système ou compte supprimé » quand
+  l'acteur est nul, la donnée ne distinguant pas les deux causes), une **phrase** qui dit le geste (« Membre retiré :
+  Jeanne Martin », « Workflow publié : Conseil »), et le détail des `before` / `after` sur une ligne, en ellipse, sa
+  valeur entière en infobulle (décision 728 ; `docs/DESIGN_SYSTEM.md` §5.66).
 - **Filtres** : famille (les six, en toutes lettres), acteur (les membres de l'espace), période (du… au…). Les filtres
   sont dans l'adresse, comme ceux du pilotage.
 - **Pagination** par curseur (`id < dernier vu`), 50 entrées, bouton « Afficher plus ».
@@ -355,9 +362,12 @@ démonstration. Il ajoute :
 
 ## 14. Production
 
-- **Une migration**, au numéro pris après synchronisation : `CRM-111` T2.3.3 réserve la `0114`. Elle crée `audit_log`,
-  l'écrivain, les déclencheurs, l'immutabilité des trois journaux, la purge et sa tâche pg_cron, la colonne
-  `contacts.anonymized_at` et les deux fonctions RGPD.
+- **T1 : la migration `0115_journal_audit.sql`** (la `0114` est celle de `CRM-111` T2.3.3). Elle crée `audit_log`,
+  l'écrivain, les déclencheurs, l'immutabilité des trois journaux, la purge et sa tâche pg_cron. **T3** ajoutera sa
+  propre migration : la colonne `contacts.anonymized_at` et les deux fonctions RGPD.
+- **Après la fenêtre**, recharger le cache de PostgREST (`notify pgrst, 'reload schema'`) et constater une connexion :
+  le 2026-10-26 en développement, les connexions ont échoué deux minutes après l'application de la `0115`
+  (`PGRST202` sur `ouvrir_session_serveur`), sans cause établie, et un rechargement les a rétablies (décision 727).
 - `docs/PROD_MIGRATIONS.md` reçoit sa ligne. Elle part avec la webapp de `main`. Aucune variable d'environnement.
 - Retour arrière : supprimer la tâche pg_cron, les déclencheurs et les fonctions, puis la table. La colonne
   `anonymized_at` reste : une anonymisation ne se défait pas.

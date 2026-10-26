@@ -151,9 +151,10 @@ select has_table('public', 'cards',
 select is(
 	(select count(*)::int from pg_trigger
 	  where tgrelid = 'public.workflow_nodes_catalog'::regclass and not tgisinternal),
-	3,
-	'INC-031 : trois triggers sur le catalogue — `updated_at`, `position`, et la garde d''archivage '
-	'que `CRM-040` a écrite en même temps que sa cible (décision 111)');
+	4,
+	'INC-031 : quatre triggers sur le catalogue — `updated_at`, `position`, la garde d''archivage que `CRM-040` a '
+	'écrite en même temps que sa cible (décision 111), et le journal d''audit de `CRM-072` T1 (docs/SPEC-audit.md '
+	'§4.2) ; révisée, jamais retirée (décision 51)');
 
 -- INC-029 : la clé étrangère est livrée, la contrainte `NOT NULL` ne l'est pas — elle change le
 -- contrat de création d'un channel et revient à `CRM-033`.

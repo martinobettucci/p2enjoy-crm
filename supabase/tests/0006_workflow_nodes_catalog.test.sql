@@ -141,9 +141,10 @@ select has_table('public', 'cards',
 select is(
 	(select count(*)::int from pg_trigger
 	  where tgrelid = 'public.workflow_nodes_catalog'::regclass and not tgisinternal),
-	3,
-	'exactement trois triggers — `updated_at`, `position`, et la garde d''archivage livrée par '
-	'`CRM-040` (INC-031, décision 111)');
+	4,
+	'exactement quatre triggers — `updated_at`, `position`, la garde d''archivage livrée par `CRM-040` (INC-031, '
+	'décision 111), et le journal d''audit de `CRM-072` T1 (`workflow_nodes_catalog_audit`, docs/SPEC-audit.md §4.2) ; '
+	'révisée par `CRM-072`, jamais retirée (décision 51)');
 select has_trigger('public', 'workflow_nodes_catalog',
 	'workflow_nodes_catalog_refuser_archivage_occupe',
 	'et le troisième est bien la garde attendue depuis `CRM-030`, nommée et non déduite. Son '

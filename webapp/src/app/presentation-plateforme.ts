@@ -4,6 +4,8 @@
 // @spec CRM-108 tranche T3 — docs/DESIGN_SYSTEM.md §5.60 (la ligne « Recettes » de la matrice, après « Budgets »)
 // @spec CRM-114 tranche T4 — docs/DESIGN_SYSTEM.md §5.64 (la ligne « Organisations » de la matrice, après « Contacts » ;
 //       la portée de « Contacts » devient « Contacts du carnet »)
+// @spec CRM-072 tranche T2 — docs/DESIGN_SYSTEM.md §5.66 (le geste `logs_purged`, « Journaux purgés », et son détail
+//       accordé par clé) ; docs/SPEC-audit.md §6.1
 // @spec docs/DESIGN_SYSTEM.md §5.56 (dictionnaire fermé des refus, geste du journal en MOT, détail composé par clé),
 //       §10 (aucune phrase par concaténation) ; docs/SPEC-plateforme.md §5.2 (gestes), §6.1 (refus)
 //
@@ -69,6 +71,7 @@ const CLES_GESTE: Readonly<Record<GesteJournal, CleTraduction>> = {
 	attente_inscrite: 'platform.journal.geste.attente_inscrite',
 	attente_retiree: 'platform.journal.geste.attente_retiree',
 	mcp_droits_poses: 'platform.journal.geste.mcp_droits_poses',
+	logs_purged: 'platform.journal.geste.logs_purged',
 }
 
 /** Le geste en MOT ; un geste inconnu laisse la cellule vide (§5.56). */
@@ -139,10 +142,22 @@ export function detailJournal(entree: EntreeJournal): string {
 				avant: compter(Array.isArray(c['avant']) ? c['avant'].length : 0, CLES_CASES),
 				apres: compter(Array.isArray(c['apres']) ? c['apres'].length : 0, CLES_CASES),
 			})
+		case 'logs_purged':
+			return t('platform.journal.detail.logsPurged', {
+				plateforme: compter(typeof c['platform'] === 'number' ? c['platform'] : 0, CLES_ENTREES),
+				connecteur: compter(typeof c['connector'] === 'number' ? c['connector'] : 0, CLES_ENTREES),
+			})
 		case null:
 			return ''
 	}
 }
+
+/** Un compte d'entrées de journal, accordé par clé (`CRM-072`, §5.66). */
+export const CLES_ENTREES = {
+	zero: 'platform.compte.entrees.zero',
+	un: 'platform.compte.entrees.un',
+	plusieurs: 'platform.compte.entrees.plusieurs',
+} as const satisfies Record<'zero' | 'un' | 'plusieurs', CleTraduction>
 
 /**
  * Un compte en toutes lettres, accordé PAR CLÉ — jamais « 1 appartenance(s) » ni « les 1 flèches » (§10, §5.29).

@@ -608,7 +608,8 @@ PORT_RAPPORT=9323
 # **100 depuis `CRM-111` T2.2 et T2.3.0 et `CRM-066` tranche 4, 2026-10-26** : `0098_card_placements_lectures.test.sql`,
 # `0099_card_placements_ecriture.test.sql` (CRM-111) et `0110_scores_sante.test.sql` (CRM-066). 97 + 3 = 100, MESURÉ —
 # « 100 fichiers ».
-FICHIERS_SQL_ATTENDUS=100
+# **101 depuis `CRM-072` T1, 2026-10-26** : `0111_journal_audit.test.sql`, fichier NEUF. 100 + 1 = 101, MESURÉ.
+FICHIERS_SQL_ATTENDUS=101
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -1121,7 +1122,11 @@ ASSERTIONS_ATTENDUES=4211
 # NEUF, **5** scénarios (Camille lit les deux scores, le témoin puis le refus de Farida, l'affaire gagnée sans score, les
 # trois paliers du seed, l'anonyme) ; les specs de CRM-111 T2.2 à T2.3.2 en apportent **6**, dans deux fichiers neufs.
 # 1202 + 5 + 6 = 1213, valeur COMPTÉE — « Total: 1213 tests in 92 files ».
-SCENARIOS_API=1213
+# **1218 depuis `CRM-072` T1, 2026-10-26** : `e2e/api/journal-audit.spec.ts`, fichier NEUF, **5** scénarios (un geste
+# journalisé avec son actrice, deux refus de lecture avec témoin, aucune écriture même à la clé de service, l'anonyme) ;
+# `preuves-refus.spec.ts` échange son figeage d'absence de `audit_log` contre la mesure de son refus, à compte égal.
+# 1213 + 5 = 1218, valeur COMPTÉE.
+SCENARIOS_API=1218
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1622,7 +1627,10 @@ SCENARIOS_API=1213
 # **943 depuis `CRM-066` tranche 4, 2026-10-26** : `e2e/ui/scores-sante.spec.ts`, fichier NEUF, **3** scénarios — les
 # pastilles de la carte du board, le bloc de la fiche et son détail, les quatre paliers. 940 + 3 = 943, valeur COMPTÉE —
 # « Total: 943 tests in 94 files ».
-SCENARIOS_UI=943
+# **948 depuis `CRM-072` T2, 2026-10-26** : `e2e/ui/journal-audit.spec.ts`, fichier NEUF, **5** scénarios — l'index mène
+# au journal, un droit posé à l'écran des membres y paraît avec son actrice, le filtre de famille dans l'adresse, les
+# quatre paliers, la lectrice refusée. 943 + 5 = 948, valeur COMPTÉE.
+SCENARIOS_UI=948
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

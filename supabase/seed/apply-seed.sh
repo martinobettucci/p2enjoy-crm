@@ -4828,6 +4828,25 @@ for palier in m-healthy m-watch m-danger s-healthy s-watch s-danger; do
 	esac
 done
 info "Scores de santé : les trois paliers présents pour la dynamique et pour la santé commerciale — CRM-066, docs/SPEC-seed.md §24"
+
+# --- Le journal d'audit couvre ses familles — CRM-072 T1, docs/SPEC-seed.md §25 ------------------------------------------
+# @spec CRM-072 (docs/BACKLOG.md) — tranche T1 ; docs/SPEC-audit.md §4, §10 ; docs/JOURNAL.md décisions 725 et 726
+# VÉRIFIÉ, JAMAIS FABRIQUÉ : `audit_log` n'a aucun chemin d'écriture cliente, et le seed n'y écrit rien. Il se remplit
+# PARCE QUE le seed joue les vrais gestes après la migration 115 : les connexions LeLabs (`sign_in`), les appartenances
+# qu'elles créent (`access`), les tracks, channels et workflows (`configuration`), l'activité retirée par la modération
+# (`deletion`). Le seed lit le journal sous la clé de service et exige chacune de ces familles dans l'espace. La famille
+# `export` vient avec la tranche T3 ; `retention` ne se démontre pas sans entrée d'un an, que rien ne doit fabriquer.
+familles_journal=$(curl -s "$API/rest/v1/audit_log?select=family&workspace_id=eq.$WS_ID" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r '[.[].family] | unique | join(",")')
+for famille in access configuration sign_in deletion; do
+	case ",$familles_journal," in
+		*",$famille,"*) ;;
+		*) die "le journal d'audit de l'espace n'a aucune entrée de la famille $famille (docs/SPEC-audit.md §10). Une
+        base antérieure à la migration 115 doit être reconstruite. Familles présentes : ${familles_journal:-aucune}" ;;
+	esac
+done
+info "Journal d'audit : familles access, configuration, sign_in et deletion présentes, écrites par les vrais gestes — CRM-072, docs/SPEC-seed.md §25"
 echo
 info "profiles, workspaces et workspace_members sont lisibles par les trois membres du seed :"
 info "le profil propre est modifiable, et seul l'admin gère les memberships (CRM-022)."

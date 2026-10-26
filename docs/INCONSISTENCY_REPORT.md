@@ -7976,6 +7976,35 @@ instabilités sous la charge d'une campagne de près d'une heure, préexistantes
 fois sous charge est traité par son unité comme INC-295 et INC-305 l'ont été — attendre l'état que le scénario
 asserte (focus, transition, réponse), jamais par une temporisation. **Statut : ouverte.**
 
+### INC-311 — L'ouverture d'une session échoue par intermittence (`service_indisponible`), et la cause n'est pas journalisée
+
+*Relevé le 2026-10-26 par la session de `CRM-072`, sur le signalement de la session de `CRM-111`.* **Constat**, dans les
+journaux de Kong et de la fonction `session` :
+- de 09:53:06 à 09:54:37, une série de `service_indisponible` juste après l'application de la migration `0115` par le
+  runner (la session de `CRM-111` a relevé des `PGRST202` sur `rpc/ouvrir_session_serveur`, et un `notify pgrst` les a
+  fait cesser) ;
+- à 10:31:54, pendant le seed d'une reconstruction, **trois `503` de PostgREST sur `rpc/ouvrir_session_serveur` en une
+  seconde**, alors que les requêtes voisines (`mcp_autorise`, `mcp_journal`, `rentabilite_affaires`) passaient. Le seed
+  est mort à « 8 quatervicies » ;
+- des `503` de `functions/v1/session` **existaient avant la `0115`** : 08:51:30, 09:06:24, 09:10:19.
+
+**Ce qu'on ne sait pas** : le code exact de PostgREST. La fonction `session` journalise `service_indisponible` sans le
+corps de la réponse, et les journaux de PostgREST et de Postgres de ces instants sont perdus (conteneurs recréés par les
+reconstructions). La `0115` ne crée ni ne remplace aucune fonction de `public` ; elle ajoute un déclencheur `AFTER INSERT`
+sur `sessions_sso`, qui écrit `audit_log`. Ce déclencheur n'est **pas** exclu : une erreur levée par lui ferait échouer
+l'ouverture (mais elle rendrait un `500`, pas un `503`, et le seed passe en entier au repos).
+
+**Mesure du 2026-10-26 à 12:13, base au repos (campagne d'API de `CRM-072`)** : deux `503` côté client sur
+`functions/v1/session/ouvrir`, à 12:13:17 et 12:13:19. **La fonction avait répondu** — `401 jeton_refuse` puis `200`, et
+`rpc/ouvrir_session_serveur` à `200` dans Kong — et l'environnement des fonctions journalise aussitôt
+« connection aborted (uri: "/session/ouvrir") ». Ces deux échecs sont donc **un défaut de transport entre Kong et
+l'environnement des fonctions, en aval de la base** : ni PostgREST ni la `0115` n'y prennent part. Le cas de 10:31:54
+(un `503` de PostgREST lui-même) reste à expliquer, et peut relever d'une autre cause.
+
+**Comportement laissé inchangé.** **Issue proposée** : faire journaliser par la fonction `session` le statut et le code
+PostgREST (`code`, jamais `message` ni `details`, qui peuvent porter des données) de toute réponse en erreur, puis
+reproduire. Sans ce code, toute correction serait une conjecture (`CLAUDE.md` §18). **Statut : ouverte.**
+
 ### INC-312 — Juste après une reconstruction, le seed meurt sur l'envoi de démonstration : le worker trouve le stockage injoignable
 
 *Relevé le 2026-10-26 par la session de `CRM-111` (T2.3.3), en rejouant les harnais qui reconstruisent la base.*

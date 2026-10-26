@@ -55,6 +55,53 @@ export type Database = {
           },
         ]
       }
+      audit_log: {
+        Row: {
+          action: string
+          actor_id: string | null
+          details: Json
+          entity_id: string | null
+          entity_label: string | null
+          entity_type: string
+          family: string
+          id: number
+          occurred_at: string
+          workspace_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          details?: Json
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type: string
+          family: string
+          id?: never
+          occurred_at?: string
+          workspace_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          details?: Json
+          entity_id?: string | null
+          entity_label?: string | null
+          entity_type?: string
+          family?: string
+          id?: never
+          occurred_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_log_actor_id_fkey"
+            columns: ["actor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_occurrences: {
         Row: {
           budget_id: string

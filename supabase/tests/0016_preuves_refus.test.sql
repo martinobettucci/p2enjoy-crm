@@ -56,7 +56,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(67);
+select plan(68);
 
 -- =============================================================================================
 -- 1. Inventaire des politiques — ce qui rend le harnais capable d'échouer (§7.4)
@@ -227,8 +227,11 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	160,
-	'CENT SOIXANTE politiques dans `public`, et pas une de plus — 159 avant `CRM-111` tranche T2.3.0, plus la politique de '
+	161,
+	'CENT SOIXANTE ET UNE politiques dans `public`, et pas une de plus — 160 avant `CRM-072` tranche T1, plus l''UNIQUE '
+	'politique de LECTURE de `audit_log` (docs/SPEC-audit.md §3.2) : l''administrateur de l''espace lit son journal. '
+	'AUCUNE ÉCRITURE, et c''est un refus double : ni politique ni privilège — la base seule écrit, par ses déclencheurs. '
+	'Avant elle : 160, soit 159 avant `CRM-111` tranche T2.3.0, plus la politique de '
 	'MISE À JOUR de `card_placements` (docs/SPEC-rattachements.md §4) : un rattachement s''écrit si son channel s''écrit, '
 	'et seulement sur les sept colonnes ouvertes par le privilège. Ni insertion ni suppression : rattacher et retirer '
 	'sont des fonctions (T3). Avant elle : '
@@ -452,6 +455,10 @@ select is(pg_temp.politiques('admission_refus'), array['admission_refus_lecture_
 	'`admission_refus` porte sa seule politique de lecture administrateur, aucune écriture');
 
 -- Ajoutée par `CRM-057` tranche 2 (docs/SPEC-mail-subsystem.md §18 bis.3) : chacun lit ses lectures, nul ne les écrit.
+-- Ajoutée par `CRM-072` tranche T1 (docs/SPEC-audit.md §3.2) : l'administrateur lit le journal, nul ne l'écrit.
+select is(pg_temp.politiques('audit_log'), array['audit_log_select_admin']::text[],
+	'`audit_log` porte sa seule politique de lecture administrateur, aucune écriture');
+
 select is(pg_temp.politiques('mail_message_reads'), array['mail_message_reads_lecture']::text[],
 	'`mail_message_reads` porte sa seule politique de lecture, aucune écriture');
 
@@ -581,8 +588,16 @@ select is(
 	'PREUVE N° 8 SATISFAISABLE POUR MOITIÉ, 1/2 : `card_events` est livrée par `CRM-044` et '
 	'n''accorde AUCUN privilège d''écriture, `service_role` compris');
 
-select hasnt_table('public', 'audit_log',
-	'PREUVE N° 8 NON SATISFAISABLE, 2/2 : `audit_log` attend `CRM-072`');
+-- ASSERTION RETOURNÉE PAR `CRM-072` T1 (décision 51) : la seconde moitié de la preuve n° 8 est SATISFAITE.
+-- `e2e/api/journal-audit.spec.ts` et `e2e/api/preuves-refus.spec.ts` l'exercent avec les jetons réels.
+select is(
+	(select count(*)::int from information_schema.role_table_grants
+	  where table_schema = 'public' and table_name = 'audit_log'
+	    and grantee in ('anon','authenticated','service_role')
+	    and privilege_type <> 'SELECT'),
+	0,
+	'PREUVE N° 8 SATISFAITE, 2/2 : `audit_log` est livrée par `CRM-072` et n''accorde AUCUN privilège '
+	'd''écriture, `service_role` compris');
 
 -- ASSERTIONS RETOURNÉES PAR `CRM-054` (décision 51, neuvième occurrence). Le bucket existe, les
 -- pièces jointes aussi, et la preuve n° 9 est ACQUISE : le refus est mesuré par
@@ -635,12 +650,15 @@ select ok(
 -- preuves de `docs/SPEC-permissions-rls.md` §7, **cinq** portent sur des objets absents. `CRM-014`
 -- ne les compense par aucune preuve de substitution, et reste `[~]` pour cette raison — bloquée
 -- par une dépendance, non par un défaut de l'unité.
+-- RÉVISÉE PAR `CRM-072` T1 (décision 51) : la dernière table absente est née. Le compte s'inverse — il exige que
+-- chacun des objets autrefois absents EXISTE, et cesserait de valoir zéro si l'un disparaissait.
 select is(
 	(select count(*)::int from (values
 		('public.audit_log')
-	) as cibles(nom) where to_regclass(nom) is not null),
+	) as cibles(nom) where to_regclass(nom) is null),
 	0,
-	'UNE SEULE PREUVE SUR DOUZE RESTE HORS D''ATTEINTE — elles étaient CINQ jusqu''à `CRM-044`, '
+	'AUCUNE PREUVE SUR DOUZE NE RESTE HORS D''ATTEINTE DEPUIS `CRM-072`, qui livre `audit_log`. Elles étaient '
+	'UNE SEULE AVANT LUI ; elles étaient CINQ jusqu''à `CRM-044`, '
 	'puis QUATRE, puis TROIS avec `CRM-052`, DEUX avec `CRM-053`, et `CRM-054` referme la n° 9 en '
 	'livrant les pièces jointes et leur bucket. Ce qui '
 	'a livré `card_events` et rendu la moitié de la n° 8 satisfaisable. Le compte est asséré plutôt '

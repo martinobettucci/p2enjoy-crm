@@ -40,7 +40,7 @@
 #
 # La preuve de refus n° 6 reste bloquée par les tables mail et `api_tokens` absentes. La n° 8 est
 # désormais satisfaite pour `card_events`, livrée par CRM-044 sans aucun privilège d'écriture ;
-# `audit_log` reste absente. La section 7 mesure chacun de ces états au lieu de les supposer.
+# `audit_log`, livrée par CRM-072 T1, la complète. La section 7 mesure chacun de ces états au lieu de les supposer.
 #
 # Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
 # (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).
@@ -525,8 +525,21 @@ for table in mail_inbound_accounts mail_outbound_identities; do
 	fi
 done
 
-# Les deux tables qui n'existent toujours pas gardent leur témoin d'absence, inchangé.
-for table in api_tokens audit_log; do
+# `audit_log` est née avec CRM-072 T1 (migration 115) : son témoin d'absence est RETOURNÉ (décision 51). Aucune
+# colonne n'y est à protéger, puisque la table entière est fermée à l'écriture des trois rôles (docs/SPEC-audit.md §3.3).
+ecritures_audit_log=$(psql_db -c "select count(*)
+	from information_schema.role_table_grants
+	where table_schema = 'public' and table_name = 'audit_log'
+	  and grantee in ('anon','authenticated','service_role')
+	  and privilege_type <> 'SELECT';")
+if [ "$ecritures_audit_log" = "0" ]; then
+	ok "audit_log : aucun privilège d'écriture pour anon, authenticated ni service_role — la table entière est fermée"
+else
+	fail "audit_log : $ecritures_audit_log privilège(s) d'écriture accordé(s) à un rôle applicatif"
+fi
+
+# La table qui n'existe toujours pas garde son témoin d'absence, inchangé.
+for table in api_tokens; do
 	if [ "$(psql_db -c "select to_regclass('public.$table') is null;")" = "t" ]; then
 		ok "$table absente : sa protection reste due — CETTE LIGNE DOIT DEVENIR ROUGE quand la table naîtra"
 	else

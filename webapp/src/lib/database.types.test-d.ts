@@ -287,6 +287,12 @@ type _tables = Expect<
     // `profile_id`, que le type laisse tous deux facultatifs.
     | 'card_activities'
     | 'card_activity_participants'
+    // `0115` de `CRM-072` TRANCHE T1 ajoute `audit_log`, le journal d'audit d'un espace (docs/SPEC-audit.md §3, décisions
+    // 725 et 726). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `Insert` et `Update` décrivent des gestes qu'AUCUN rôle ne peut faire
+    // — ni privilège ni politique, et un déclencheur refuse même au propriétaire de modifier une entrée ; la lecture est
+    // réservée aux administrateurs de l'espace ; `family`, `action` et `entity_type` sont des textes libres pour le type,
+    // des listes fermées pour la base ; `entity_label` est toujours nul pour un contact.
+    | 'audit_log'
     | 'workspace_members'
     | 'workspaces'
   >

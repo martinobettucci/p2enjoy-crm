@@ -343,8 +343,16 @@ select is(
 	'rôles — `service_role` compris. La preuve de refus n° 8 est satisfaisable pour moitié '
 	'(`audit_log` reste due par `CRM-072`)');
 
-select hasnt_table('public', 'audit_log',
-	'CIBLE 5/6 NON LIVRÉE : `audit_log` attend `CRM-072`, même refus n° 8');
+-- CIBLE 5/6 LIVRÉE PAR `CRM-072` T1 (migration 115), ET L'ASSERTION EST RETOURNÉE (décision 51) : comme
+-- `card_events`, la table entière est fermée à l'écriture, pour les TROIS rôles (docs/SPEC-audit.md §3.3).
+select is(
+	(select count(*)::int from information_schema.role_table_grants
+	  where table_schema = 'public' and table_name = 'audit_log'
+	    and grantee in ('anon','authenticated','service_role')
+	    and privilege_type <> 'SELECT'),
+	0,
+	'CIBLE 5/6 LIVRÉE : `audit_log` n''accorde AUCUN privilège d''écriture, à AUCUN des trois rôles — '
+	'`service_role` compris. La preuve de refus n° 8 est entière (`CRM-072`)');
 
 -- La sixième cible, elle, est livrée — mais par `CRM-034`, et le rappeler tient INC-049 sous les
 -- yeux plutôt que dans un rapport.

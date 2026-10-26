@@ -487,18 +487,20 @@ test.describe('PREUVE N° 5 — même une administratrice ne déplace pas une ca
 // Chacun deviendra ROUGE le jour où la table ou la fonction naîtra, et désignera alors la preuve à
 // écrire — au lieu de laisser une limite survivre à sa cause (mécanisme de la décision 51).
 
-const ABSENCES = [
+const ABSENCES: ReadonlyArray<{ preuve: number; table: string; unite: string }> = [
 	// `mail_inbound_accounts` EST SORTIE DE CETTE LISTE, livrée par `CRM-052`. Les preuves n° 6 et
 	// n° 7 y sont désormais mesurées — voir le `describe` qui suit —, exactement comme `CRM-044`
 	// avait sorti `card_events` de la même liste. Septième occurrence du mécanisme de la
 	// décision 51 : l'assertion qui figeait l'absence est retournée, jamais retirée.
 	// `mail_outbound_identities` EST SORTIE DE CETTE LISTE à son tour, livrée par `CRM-053` : la
 	// preuve n° 7 est désormais ENTIÈRE. Huitième occurrence du mécanisme de la décision 51.
-	{ preuve: 8, table: 'audit_log', unite: 'CRM-072' },
+	// `audit_log` EST SORTIE DE CETTE LISTE, livrée par `CRM-072` T1 (migration 115) : la preuve n° 8 est désormais
+	// ENTIÈRE, et son second refus est mesuré par le `describe` dédié qui suit celui de `card_events`. Dixième
+	// occurrence du mécanisme de la décision 51. La liste est vide : aucune table d'une preuve ne manque plus.
 	// `attachments` EST SORTIE DE CETTE LISTE : `CRM-054` livre `mail_attachments` et son bucket,
 	// et le refus n° 9 est mesuré par `e2e/api/ingestion.spec.ts` sur une pièce `infected` ET une
 	// pièce `pending`. Neuvième occurrence du mécanisme de la décision 51.
-] as const
+]
 
 test.describe('PREUVES N° 6, 7, 8, 9 — leurs tables n’existent pas, et c’est asséré', () => {
 	for (const { preuve, table, unite } of ABSENCES) {
@@ -742,12 +744,32 @@ test.describe('PREUVE N° 11 — l’anonyme, sur les quinze tables métier peup
 	}
 })
 
+// PREUVE N° 8, SECONDE MOITIÉ, ACQUISE PAR `CRM-072` T1 (docs/SPEC-audit.md §3.3). `audit_log` existe, et aucun rôle
+// ne l'écrit : l'unique écrivain est la base. Le contrat complet — lecture réservée aux administrateurs, ajout seul tenu
+// par déclencheur, gestes journalisés — est exercé par `e2e/api/journal-audit.spec.ts` et par la suite pgTAP 0111.
+test.describe('PREUVE N° 8 — insertion directe dans `audit_log`, refusée', () => {
+	test('403 et 42501 : aucun rôle ne peut forger une entrée de journal, `service_role` compris', async ({ request }) => {
+		const reponse = await request.post('/rest/v1/audit_log', {
+			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
+			data: {
+				workspace_id: '5eed0000-0000-4000-8000-000000000001',
+				family: 'access',
+				action: 'added',
+				entity_type: 'member',
+				entity_label: 'Entrée forgée',
+			},
+		})
+		expect(reponse.status(), await reponse.text()).toBe(403)
+		expect((await reponse.json()) as Erreur).toMatchObject({ code: '42501' })
+	})
+})
+
 // =================================================================================================
 // Inventaire — ce que ce fichier couvre, et ce qu'il ne couvre pas
 // =================================================================================================
 
 test.describe('Inventaire des douze preuves', () => {
-	test('dix acquises, une à moitié, une non satisfaisable, et le compte est asséré', () => {
+	test('onze acquises, une non satisfaisable, et le compte est asséré', () => {
 		// Ce scénario ne mesure pas le produit : il mesure la COUVERTURE, et c'est la question que
 		// la Definition of Done de `CRM-014` pose. Le jour où une des tables absentes naîtra, les
 		// scénarios de figeage ci-dessus deviendront rouges et ce compte devra être révisé.
@@ -762,12 +784,15 @@ test.describe('Inventaire des douze preuves', () => {
 		//
 		// RÉVISÉ DE NOUVEAU PAR `CRM-054`, qui livre les pièces jointes et leur bucket : la n° 9
 		// passe d'absente à acquise. Dix preuves sur douze le sont désormais.
-		const acquises = [1, 2, 3, 4, 5, 6, 7, 9, 10, 11]
-		const aMoitieAcquises = [8]
+		//
+		// RÉVISÉ DE NOUVEAU PAR `CRM-072` T1, qui livre `audit_log` : la n° 8 passe de « à moitié » à acquise. Onze
+		// preuves sur douze le sont désormais, et plus aucune n'est à moitié.
+		const acquises = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]
+		const aMoitieAcquises: number[] = []
 		const nonSatisfaisables = [12]
 
 		expect(acquises.length + aMoitieAcquises.length + nonSatisfaisables.length).toBe(12)
-		expect(acquises).toHaveLength(10)
+		expect(acquises).toHaveLength(11)
 
 		// CRM-022 ferme la n° 10 dans sa règle : politique admin et invariant différable du dernier
 		// administrateur. Les scénarios exacts du refus 23514 vivent dans ce fichier et dans la
@@ -783,11 +808,12 @@ test.describe('Inventaire des douze preuves', () => {
 		expect(ABSENCES.map(({ table }) => table)).not.toContain('attachments')
 
 		// La n° 7 portait DEUX tables : `CRM-052` a livré la première, `CRM-053` la seconde. Elle
-		// est donc entière. La n° 8 en porte deux également, et `audit_log` reste due par
-		// `CRM-072` : la compter parmi les acquises masquerait une preuve réellement due.
-		expect(aMoitieAcquises).toEqual([8])
+		// est donc entière. La n° 8 en porte deux également : `card_events` (`CRM-044`) puis `audit_log` (`CRM-072`),
+		// et elle est entière à son tour.
+		expect(aMoitieAcquises).toEqual([])
 		expect(ABSENCES.map(({ preuve }) => preuve)).not.toContain(7)
-		expect(ABSENCES.map(({ preuve }) => preuve)).toContain(8)
+		expect(ABSENCES).toHaveLength(0)
+		expect(acquises).toContain(8)
 		expect(nonSatisfaisables).not.toContain(7)
 		expect(nonSatisfaisables).not.toContain(8)
 	})

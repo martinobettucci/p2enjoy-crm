@@ -6,6 +6,7 @@
 // @spec CRM-092 (docs/BACKLOG.md) tranche T9 — aucune page sans session (docs/SPEC-session-sso.md §8.7,
 //       docs/DESIGN_SYSTEM.md §5.12, docs/manual.md chapitre 1, docs/JOURNAL.md décision 601)
 // @spec CRM-075 (docs/BACKLOG.md) — route de l'administration de l'arborescence
+// @spec CRM-072 (docs/BACKLOG.md) — tranche T2 : route du journal d'audit (docs/SPEC-audit.md §8, docs/DESIGN_SYSTEM.md §5.66)
 // @spec CRM-076 (docs/BACKLOG.md) — route de l'éditeur de workflows
 // @spec CRM-059 (docs/BACKLOG.md) — route de l'écran d'état de la messagerie
 // @spec CRM-077 (docs/BACKLOG.md) — route de la corbeille (docs/SPEC-corbeille.md §4.1)
@@ -49,6 +50,7 @@ import {
 	CHEMIN_CORBEILLE,
 	CHEMIN_ADMIN_COUT_PERSONNEL,
 	CHEMIN_ADMIN_MEMBRES,
+	CHEMIN_ADMIN_JOURNAL,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_COUTS_BUDGET,
 	CHEMIN_COUTS_TRACK,
@@ -70,6 +72,7 @@ import {
 	CLE_TITRE_CORBEILLE,
 	CLE_TITRE_COUT_PERSONNEL,
 	CLE_TITRE_MEMBRES,
+	CLE_TITRE_JOURNAL,
 	CLE_TITRE_REGLAGES_NOTIFICATIONS,
 	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_COMPTES_MAIL,
@@ -155,6 +158,10 @@ const ReglagesCoutPersonnel = lazy(async () => ({
 // `CRM-070` — Réglages ▸ Membres, chargé à la demande comme les autres écrans de réglages.
 const ReglagesMembres = lazy(async () => ({
 	default: (await import('./ReglagesMembres')).ReglagesMembres,
+}))
+// `CRM-072` T2 — Réglages ▸ Journal d'audit, chargé à la demande comme les autres écrans de réglages.
+const ReglagesJournal = lazy(async () => ({
+	default: (await import('./ReglagesJournal')).ReglagesJournal,
 }))
 const ReglagesNotifications = lazy(async () => ({
 	default: (await import('./ReglagesNotifications')).ReglagesNotifications,
@@ -394,6 +401,16 @@ function RoutesPages() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_MEMBRES}>
 							<ReglagesMembres />
+						</AppShell>
+					}
+				/>
+				{/* Réglages ▸ Journal d'audit — `CRM-072` T2. Déclarée APRÈS les membres, comme dans l'index des réglages
+				    (docs/DESIGN_SYSTEM.md §5.66). */}
+				<Route
+					path={CHEMIN_ADMIN_JOURNAL}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_JOURNAL}>
+							<ReglagesJournal />
 						</AppShell>
 					}
 				/>

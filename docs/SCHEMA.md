@@ -1265,7 +1265,7 @@ prédicat que les deux gardes**, pour que la ligne visible et le fil visible ne 
 |---|---|
 | `notifications` | **Livrée** par `CRM-064` tranche 2 (migration `0064`, `docs/SPEC-notifications.md` §13) — voir ci-dessous |
 | `notification_preferences` | **Livrée** par `CRM-064` tranche 4 (migration `0067`, `docs/SPEC-notifications.md` §43 à §46) — voir ci-dessous. **Il n'y a qu'un canal**, et le §42.1 le mesure : ni email, ni digest n'existent (§13.1, « aucun canal sortant »). La ligne précédente en promettait trois ; elle est révisée plutôt que laissée à dériver |
-| `audit_log` | Acteur, action, entité, charge utile, date — append-only |
+| `audit_log` | **Livrée** par `CRM-072` T1 (migration `0115`, `docs/SPEC-audit.md` §3) — voir « Migration `0115` » |
 | `api_tokens` | Jetons à portée limitée : empreinte stockée, jamais le jeton en clair |
 | `webhook_endpoints`, `webhook_deliveries` | Points de sortie signés et historique des remises |
 | `saved_views` | Filtres nommés, personnels ou partagés |

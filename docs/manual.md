@@ -63,6 +63,7 @@
 | Chapitre | Contenu | Unité | État |
 |---|---|---|---|
 | 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | **Livré en développement** — voir le chapitre 10 *bis*. Un administrateur d'espace y change un rôle, retire un membre, inscrit, remplace et retire une attente, et pose les droits fins de chacun par track et par channel ; chaque membre consulte la liste des membres. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses membres et ses attentes est livré par `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
+| 17 quater | Le journal d'audit de l'espace | `CRM-072` | **Livré en développement** — voir le chapitre 10 *ter*. « Réglages ▸ Journal d'audit » montre aux administrateurs de l'espace les gestes sensibles : droits et appartenances, configuration, connexions, effacements et corbeille. Personne ne modifie le journal, et il est conservé un an. |
 | 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
 | 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103`, `CRM-108` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Ses outils : la liste des espaces et, **en développement**, les huit outils de la famille « Recettes » (`CRM-108`) et les outils des affaires, de la structure, de la recherche et des contacts (`CRM-104` T2.a, T2.b, T1 et T3) ; les autres familles arrivent avec la suite de `CRM-104` |
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
@@ -4812,6 +4813,10 @@ L'onglet **« Journal »** retrace chaque geste de la plateforme, du plus récen
 
 **« Entrées plus anciennes »** remonte le temps, une page après l'autre.
 
+Le journal de la plateforme et celui des appels du connecteur sont **conservés un an**. Chaque nuit, le CRM efface les
+entrées plus anciennes, et inscrit le geste **« Journaux purgés »** avec le nombre d'entrées effacées de chacun. Personne
+ne peut modifier ni supprimer une entrée de ces journaux (chapitre 10 *ter*).
+
 ### 10.8 Ce que la plateforme n'offre pas
 
 - **Gérer ses propres membres en tant qu'administrateur d'espace**, sans être superadministrateur : c'est l'écran
@@ -4920,6 +4925,74 @@ Le message sous la liste dit pourquoi :
   relue ;
 - **ce geste est réservé aux administrateurs de l'espace** ;
 - **le serveur n'a pas répondu** : vérifiez votre connexion et réessayez.
+
+## 10 ter. Le journal d'audit : ce qui s'est fait dans votre espace
+
+*Livré en développement par `CRM-072` T1 et T2.*
+
+Le CRM tient un **journal des gestes sensibles** de chaque espace. Ce sont les gestes qui changent qui peut faire quoi,
+comment l'espace est configuré, et ce qui disparaît :
+
+- **les droits et les appartenances** : un membre ajouté ou retiré, un rôle changé, une attente inscrite ou retirée, un
+  accès à un track ou à un channel posé ou retiré ;
+- **la configuration** : l'espace lui-même, les tracks, les channels, les workflows et leurs publications, les étapes,
+  les transitions, le catalogue de nœuds, les champs de formulaire, les boîtes de réception et les identités
+  d'expédition ;
+- **les connexions** : chaque connexion réussie d'un membre ;
+- **les effacements et la corbeille** : une affaire, un track ou un channel mis à la corbeille, restauré ou détruit, un
+  commentaire ou une activité retirés, un contact ou une organisation supprimés ;
+- **la rétention** : l'effacement des entrées de plus d'un an.
+
+Le journal est tenu **par le CRM lui-même**. Un geste fait à l'écran, par l'API ou par l'assistant du connecteur MCP y
+est inscrit de la même façon, avec la personne qui l'a fait. **Personne ne peut modifier ni supprimer une entrée**, pas
+même un administrateur. Les entrées sont conservées **un an**, puis effacées chaque nuit, et cet effacement est
+lui-même inscrit.
+
+Le journal ne garde **jamais le nom d'un contact** : il ne garde que son identifiant, et l'écran lit le nom dans le
+carnet au moment de l'affichage. Il ne garde pas non plus de contenu : ni le texte d'un commentaire, ni celui d'un
+message, ni un mot de passe, ni la valeur d'un réglage.
+
+### 10 ter.1 Ouvrir le journal
+
+1. Ouvrez **« Réglages »** dans la barre latérale.
+2. Choisissez **« Journal d'audit »**, juste après « Membres ».
+
+Le journal est **réservé aux administrateurs de l'espace**. Pour un autre membre, l'entrée de l'index est grisée, et
+l'adresse ouverte directement affiche **« Réservé aux administrateurs »**.
+
+### 10 ter.2 Lire une entrée
+
+Le tableau montre les entrées les plus récentes en tête, sur quatre colonnes :
+
+- **« Date »** : le jour et l'heure du geste ;
+- **« Acteur »** : la personne qui l'a fait. **« Système ou compte supprimé »** désigne une entrée sans acteur : un geste
+  du CRM lui-même (une tâche de nuit, par exemple), ou une personne dont le compte a été supprimé depuis ;
+- **« Geste »** : une phrase qui dit ce qui s'est passé et sur quoi — « Membre ajouté : Jeanne Martin », « Workflow
+  publié : Cycle commercial » ;
+- **« Détail »** : ce qui a changé — « Rôle : Lecteur → Business developer », « Accès : Lecture », « Nom : A → B »,
+  « Version 4 ». Un texte trop long est coupé à l'écran ; survolez-le pour le lire en entier.
+
+Cinquante entrées s'affichent d'abord. **« Entrées plus anciennes »**, sous le tableau, ajoute les cinquante suivantes.
+
+### 10 ter.3 Filtrer
+
+Au-dessus du tableau, quatre filtres se combinent :
+
+- **« Famille »** : droits et appartenances, configuration, connexions, exports, effacements et corbeille, rétention ;
+- **« Acteur »** : un membre de l'espace, ou « Système ou compte supprimé » ;
+- **« Du »** et **« Au »** : une période, les deux jours compris.
+
+Les filtres sont inscrits dans l'adresse de la page : vous pouvez la partager avec un autre administrateur.
+**« Aucun geste sur cette période »** dit qu'aucune entrée ne correspond aux filtres. Les filtres restent au-dessus pour
+les élargir.
+
+### 10 ter.4 Ce que le journal ne fait pas
+
+- Il ne s'exporte pas : on le consulte à l'écran.
+- Il n'inscrit pas les gestes ordinaires de la vie d'une affaire, comme un déplacement, un champ rempli ou un
+  commentaire. L'historique de l'affaire les montre déjà.
+- Il n'inscrit pas la déconnexion. Le CRM ne distingue pas une déconnexion d'une session expirée.
+- Le superadministrateur garde son propre journal, celui de la plateforme (chapitre 10).
 
 ## 11. Le connecteur MCP : piloter le CRM depuis votre assistant
 

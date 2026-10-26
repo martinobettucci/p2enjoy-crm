@@ -35157,3 +35157,12 @@ colonne de couleur, et aucun channel n'est coloré à l'écran. **Arbitrages.**
 **Conséquences.** Une migration (`channels.color`, contrainte des cinq jetons) ; les écritures restent sous les
 politiques existantes de `channels` ; seed, preuves d'API, unitaires, E2E, captures, manuel. **Persisté avant toute
 spécification détaillée** : `docs/BACKLOG.md` `CRM-116`.
+
+
+### décision 730 — Livraison : toujours rien, confirmé
+
+*2026-10-26, réponse du responsable (question posée par `AskUserQuestion`, session interactive), après une nouvelle
+consigne « deploy every finished fonctionnality ».* La question a reposé le choix : livrer les migrations 106 à 113
+maintenant (avec un instantané Spark neuf), les livrer après `CRM-072`, ou ne rien livrer. **Réponse : « Ne rien livrer
+encore ».** Les décisions 722 et 726 restent en vigueur. Aucune fenêtre n'est ouverte, et la consigne générale de
+déployer ne vaut pas instruction de fenêtre tant que le responsable ne l'a pas confirmée.

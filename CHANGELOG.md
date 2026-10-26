@@ -13,6 +13,31 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-072` T2 — l'écran « Journal d'audit »
+
+- **« Réglages ▸ Journal d'audit »**, après « Membres » : les gestes sensibles de l'espace, les plus récents en tête, en
+  tableau — date, acteur, geste en phrase, détail de ce qui a changé. Un contact y est nommé par le carnet, au moment de
+  l'affichage ; le journal ne garde jamais son nom.
+- **Filtres** par famille, par acteur et par période, inscrits dans l'adresse ; **« Entrées plus anciennes »** pour
+  remonter le temps, cinquante entrées à la fois.
+- **Réservé aux administrateurs** : pour un autre membre, l'entrée de l'index est grisée avec son motif, et l'adresse
+  rend « Réservé aux administrateurs ». Le journal de la plateforme apprend le geste « Journaux purgés ».
+- Aucune migration : l'écran lit la table de la migration `0115`.
+
+### `CRM-072` T1 — le journal d'audit en base
+
+- **Les gestes sensibles d'un espace sont journalisés par la base elle-même** : appartenances, invitations et accès aux
+  tracks et channels ; configuration (espace, tracks, channels, workflows et leurs publications, étapes, transitions,
+  catalogue, champs, comptes et identités de messagerie) ; corbeille, restaurations, destructions et suppressions ;
+  connexions. Un geste fait à l'écran, par l'API ou par le connecteur MCP est journalisé de la même façon, avec son
+  auteur.
+- **Lecture réservée aux administrateurs de l'espace** ; personne n'écrit le journal, clé de service comprise, et
+  **personne ne le modifie ni ne le supprime**, propriétaire de la base compris. Le journal de la plateforme et celui du
+  connecteur suivent la même règle.
+- **Conservé un an**, puis effacé chaque nuit ; l'effacement est lui-même journalisé.
+- **Migration `0115`** ; la preuve de refus n° 8 est désormais entière. L'écran du journal et le volet RGPD des contacts
+  suivent (T2, T3).
+
 ### `CRM-066` tranche 4 — les deux scores de santé d'une affaire
 
 - **Deux notes sur 100**, calculées à chaque lecture : la **dynamique** (100 moins des pénalités affichées une à une —

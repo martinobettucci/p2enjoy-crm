@@ -1,4 +1,5 @@
 // @spec CRM-079 (docs/BACKLOG.md) — adresses des surfaces atteintes hors de `ROUTES`
+// @spec CRM-072 (docs/BACKLOG.md) — tranche T2 : l'adresse du journal d'audit (docs/SPEC-audit.md §8)
 // @spec CRM-086 (docs/BACKLOG.md) — adresse de l'écran de coûts d'un track (docs/SPEC-costs.md §4.0)
 // @spec CRM-062 (docs/BACKLOG.md) — adresse de l'écran des affaires figées (docs/SPEC-relances.md §10.4)
 // @spec docs/SPEC-onboarding.md §4.1 (une adresse propre), §4.3 (entrée dans l'index des réglages)
@@ -96,6 +97,12 @@ export const CHEMIN_ADMIN_ARBORESCENCE = '/reglages/arborescence' as const
 
 /** Réglages ▸ Membres — `CRM-070`, `docs/SPEC-membres.md` §3. Consultable par tout membre. */
 export const CHEMIN_ADMIN_MEMBRES = '/reglages/membres' as const
+
+/**
+ * Réglages ▸ Journal d'audit — `CRM-072` T2, `docs/SPEC-audit.md` §8, `docs/DESIGN_SYSTEM.md` §5.66. Réservé aux
+ * administrateurs : son entrée d'index suit la règle de « Coût du personnel » (§5.59).
+ */
+export const CHEMIN_ADMIN_JOURNAL = '/reglages/journal' as const
 
 /** Éditeur de workflows — `CRM-076`. */
 export const CHEMIN_ADMIN_WORKFLOWS = '/reglages/workflows' as const

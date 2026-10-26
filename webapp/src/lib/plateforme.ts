@@ -366,6 +366,8 @@ export const GESTES_JOURNAL = [
 	'attente_inscrite',
 	'attente_retiree',
 	'mcp_droits_poses',
+	// `CRM-072` T1 (migration 115) : la purge d'un an des journaux de la plateforme et du connecteur (docs/SPEC-audit.md §6).
+	'logs_purged',
 ] as const
 export type GesteJournal = (typeof GESTES_JOURNAL)[number]
 

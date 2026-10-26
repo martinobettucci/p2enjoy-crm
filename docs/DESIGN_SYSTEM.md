@@ -6341,6 +6341,128 @@ les trois teintes de signification de la charte (§1) et leurs versions douces e
   libellé du signal, lui, se replie.
 - **Aucune icône d'alerte** : une pastille rouge n'est pas une erreur du produit, c'est un état de l'affaire.
 
+### 5.66 Le journal d'audit de l'espace — `CRM-072` T2
+
+*Écrit le 2026-10-26, avant le code de la tranche T2, après relecture intégrale de ce document.* Ce que l'écran lit est
+spécifié par `docs/SPEC-audit.md` §3, §4 et §8. Ces règles ne disent que de quoi il a l'air. **Il reprend la forme du
+journal de la plateforme (§5.56)** : deux journaux du même produit se lisent de la même façon.
+
+- **UNE SECTION DE RÉGLAGES, `/reglages/journal`, « Journal d'audit »**, dont l'entrée vient **après « Membres »** dans
+  l'index : on place les personnes, puis on lit ce qui s'est fait. L'écran est réservé aux administrateurs. Son entrée
+  suit donc la règle du §5.59 pour « Coût du personnel » : c'est un lien quand la base consent l'administration, et
+  sinon un texte au même endroit, qui cite le motif de l'index. Elle n'est jamais masquée. *Précision de la
+  spécification* : le §8 de `docs/SPEC-audit.md` écrivait « affichée aux seuls administrateurs ». La règle du produit,
+  plus récente que cette phrase, ne masque jamais une entrée.
+  - **L'adresse ouverte sans la capacité** rend l'état « Réservé aux administrateurs » du §5.8 (`EtatRefus`). Aucune
+    lecture du journal ne part. La base ne rendrait de toute façon aucune ligne.
+
+- **LES FILTRES VIVENT EN TÊTE, SUR UNE LIGNE QUI SE REPLIE**, au-dessus du tableau qu'ils qualifient (§5.48 bis, §5.60).
+  - **« Famille »** est un `select` du §5.7, avec une option vide en tête qui le lève (§5.22). Ses six options
+    s'écrivent en toutes lettres : « Droits et appartenances », « Configuration », « Connexions », « Exports »,
+    « Effacements et corbeille », « Rétention ».
+  - **« Acteur »** est un `select` des membres de l'espace, avec une option vide en tête, puis « Système ou compte
+    supprimé » (les entrées sans acteur, voir la colonne « Acteur »).
+  - **« Du » et « Au »** sont deux champs `date` libellés (§5.60). « Au » inclut le jour qu'il nomme.
+  - Les filtres sont **dans l'adresse** (`famille`, `acteur`, `du`, `au`), et chacun **remplace l'entrée d'historique**
+    au lieu d'en empiler (§5.48 bis). Ils **restent rendus sur l'état vide**, dont ils sont la cause possible
+    (§5.3 quinquies).
+  - Un changement de filtre relit la première page. La liste précédente reste affichée sous `aria-busy` pendant la
+    relecture : le squelette est réservé au premier chargement (§5.29 tranche 2 c, §5.46).
+
+- **LE JOURNAL EST UN TABLEAU DU §5.9 À QUATRE COLONNES** : date, acteur, geste, détail. Une ligne par entrée, la plus
+  récente en haut (§5.43).
+  - **La date** est une donnée technique alignée à droite, à la minute (§2).
+  - **L'acteur** est le nom de la personne. Un acteur nul vient soit d'un geste du système (seed, tâche planifiée, clé
+    de service), soit d'un profil supprimé depuis (`ON DELETE SET NULL`). La donnée ne distingue pas ces deux cas.
+    L'écran écrit donc **une seule mention, « Système ou compte supprimé »**, plutôt qu'une affirmation fausse sur
+    l'un des deux (§5.10, « le fil n'invente jamais la cause »).
+  - **Le geste est une phrase traduite par une clé par paire objet / action** — « Membre ajouté : Jeanne Martin »,
+    « Workflow publié : Cycle commercial » —, l'objet nommé par une interpolation, jamais par concaténation (§10). Une
+    paire inconnue laisse la cellule **vide** et n'affiche jamais le code brut (§5.56).
+  - **Un contact est nommé à l'affichage**, lu dans le carnet sur la page en cours. Il devient « Contact anonymisé »
+    une fois anonymisé, et « contact supprimé » s'il n'existe plus. Le journal ne garde jamais ce nom
+    (`docs/SPEC-audit.md` §7.3).
+  - **Le détail se compose par clé** : « Rôle : Lecteur → Business developer », « Accès : Membre → Lecture »,
+    « Modifié : nom, identifiant court », « Réglages modifiés : … », « Version 4 », « 12 entrées de plus d'un an
+    effacées ». Les noms de colonne passent par un dictionnaire fermé ; une colonne inconnue y paraît sous sa clé,
+    en `code`. La cellule tient **une ligne**, en ellipse, sa valeur entière dans `title` (§5.9). *Précision de la
+    spécification* : le §8 promettait « un détail repliable ». Un `details` dans une cellule casserait la ligne unique
+    du §5.9. Le journal de la plateforme a déjà tranché pour une cellule en ellipse.
+
+- **LA PAGINATION EST LA COMMANDE « Entrées plus anciennes »**, secondaire, sous le tableau, rendue tant que la page lue
+  est pleine (50 entrées). Le tableau relu **garde les lignes déjà lues** (§5.56). Son échec se dit sous elle, en
+  `role="alert"`.
+
+- **LES ÉTATS DU §5.8** : un squelette au premier chargement ; une erreur avec « Réessayer » ; un vide, « Aucun geste
+  sur cette période. », **sans action**. C'est l'écart que prennent déjà la corbeille (§5.16) et le panneau de
+  notifications (§5.43) : il n'y a rien à faire d'un journal vide. Les filtres restent au-dessus.
+
+- **AUCUNE COMMANDE D'ÉCRITURE, ET L'ABSENCE EST ASSUMÉE** : le journal ne se modifie pas, ne se supprime pas et ne
+  s'exporte pas (`docs/SPEC-audit.md` §13). Une commande grisée enseignerait un geste qui n'existe pas (§5.15,
+  versions).
+
+- **LE JOURNAL DE LA PLATEFORME (§5.56) APPREND UN GESTE**, `logs_purged` : « Journaux purgés », et son détail par clé,
+  « 3 entrées de la plateforme et 12 du connecteur, de plus d'un an ».
+
+- **SOUS LES PALIERS ÉTROITS, LE TABLEAU DÉFILE DANS SON CONTENEUR** `.indique-debordement-x` (§12.6), et les filtres
+  passent à la ligne, chaque champ prenant toute la largeur sous `md`. `md` et jamais `sm` (§11). La page ne défile
+  jamais horizontalement (§7).
+
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
+### 5.67 Les données personnelles d'un contact : exporter, anonymiser — `CRM-072` T3
+
+*Écrit le 2026-10-26, avant le code de la tranche T3, après relecture intégrale de ce document.* Ce que les deux gestes
+envoient et refusent est spécifié par `docs/SPEC-audit.md` §7 et §9. Ces règles ne disent que de quoi ils ont l'air. Tout
+ce que les §5.13 et §5.40 posent vaut ici sans être répété : confirmation **dans le flux, jamais en modale**, commande
+qui reste montée et devient désactivée pendant sa confirmation, refus dit dans le bloc, focus rendu à la commande.
+
+- **UNE ZONE « Données personnelles (RGPD) » EN BAS DE LA FICHE DU CONTACT**, après la zone des affaires, séparée par une
+  bordure haute `--color-border` : c'est la place que le §5.3 donne à un retrait et le §5.56 à la zone de danger d'un
+  espace. On ne vient pas sur une fiche pour exporter ou effacer une personne. Titre `h2`, puis une phrase en 13 px
+  `--color-text-2` qui dit les deux gestes et qu'ils sont journalisés.
+
+- **« Exporter les données » EST UN BOUTON SECONDAIRE, ICÔNE `FileDown`.** Il télécharge un fichier JSON nommé
+  `contact-<8 premiers caractères de l'identifiant>-<AAAA-MM-JJ>.json`, construit dans le navigateur à partir de la réponse :
+  rien n'est stocké. Pendant la lecture, il dit « Préparation… » et il est désactivé. L'issue s'annonce dans la zone :
+  « Fichier téléchargé : … » en `role="status"`, ou le refus traduit en `role="alert"`. `FileDown` ne sert aucun autre
+  objet (§9) : `Download`, dans l'inbox, télécharge une pièce jointe, un autre objet.
+
+- **« Anonymiser ce contact » EST UN BOUTON SECONDAIRE, ICÔNE `UserRoundX`**, qui ouvre une confirmation sous la zone.
+  C'est le **bouton de la confirmation** qui est destructif (§5.3, §5.40). *Précision de la spécification* : le §9 de
+  `docs/SPEC-audit.md` écrivait « une modale de confirmation ». Le produit n'en déclare aucune (§5.13), et la confirmation
+  la plus proche, la suppression d'un espace (§5.56), vit dans le flux.
+  - **La confirmation nomme le contact et dit l'effet** : le nom, l'email, le téléphone et la fonction sont effacés ;
+    les affaires gardent ce contact, anonyme ; les messages ne sont pas modifiés ; le geste est définitif.
+  - **Elle exige de RETAPER le nom du contact**, comme la suppression d'un espace exige son identifiant (§5.56). Le
+    bouton destructif reste désactivé tant que la saisie diffère : c'est l'état de la confirmation, pas un droit (§5.50).
+    Le texte d'aide cite le nom à saisir, entouré d'espaces insécables (§5.51).
+  - **Le succès relit la fiche**, et la zone dit « Contact anonymisé » en `role="status"`.
+
+- **UN CONTACT ANONYMISÉ PORTE LA PILULE NEUTRE « Anonymisé le {date} »** à côté du titre de la route (§5.6), précédée du
+  point neutre : c'est un état, pas une faute. Sur sa fiche :
+  - **« Modifier » est désactivé, lisible**, et cite une phrase propre posée en tête de la zone de commandes : « Un contact
+    anonymisé ne se modifie plus. » Ce n'est pas un droit, c'est une règle de la base (`contact_anonymized`), rendue avec
+    la forme du §5.59 ;
+  - **« Supprimer » reste offert** : la base l'accepte ;
+  - **dans la zone RGPD, « Anonymiser ce contact » est absent**, remplacé par la phrase « Ce contact a été anonymisé le
+    {date}. » Un geste qui ne peut plus avoir d'objet ne se rend pas grisé (§5.15). « Exporter les données » reste.
+
+- **LES COMMANDES SUIVENT LA CAPACITÉ D'ADMINISTRER L'ESPACE** (§5.59). Refusée par la base, les deux sont montées,
+  désactivées, lisibles, et citent le motif générique `rights.readonly.administration`, posé en tête de la zone. Pendant la
+  lecture de la capacité, elles sont désactivées sans motif ; sur un défaut de lecture, offertes. *Précision de la
+  spécification* : le §9 écrivait « visibles aux seuls administrateurs ». La règle du produit ne masque jamais une
+  commande refusée.
+
+- **LES REFUS SONT TRADUITS PAR UN DICTIONNAIRE FERMÉ** : réservé aux administrateurs, contact introuvable, nom retapé
+  différent, déjà anonymisé, réseau, inconnu. Le message du serveur n'atteint jamais l'écran.
+
+- **SOUS `md`**, les deux commandes passent l'une sous l'autre, cibles conservées, et le champ de confirmation prend toute
+  la largeur. `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+
+- **Aucune couleur, aucun jeton nouveau.** Deux icônes Lucide nouvelles, `FileDown` et `UserRoundX`, qui ne servent aucun
+  autre objet (§9).
+
 ### 5.68 Sélecteur de couleur, et pastille de channel — `CRM-116`
 
 *Écrit le 2026-10-26, avant le code, sur les arbitrages du responsable (`docs/JOURNAL.md` décision 729).* Ce que la
