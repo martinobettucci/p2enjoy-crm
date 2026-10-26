@@ -16476,7 +16476,9 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
       fin sur un échec. Les douze harnais d'INC-304 d'abord mesurés, puis corrigés là où ils laissent un résidu.
 - [ ] **T2 — bascule, découpée en quatre étapes vertes (décision 705, option B)** ; chaque étape poussée laisse `main` vert, et
       aucune fonction n'expose jamais deux contrats à la fois (décision 661, tenue fonction par fonction) :
-      - [ ] **T2.1 — la table et la reprise** : `card_placements` (§3.1), une ligne par affaire reprise de `cards`,
+      - [@] **T2.1 — la table et la reprise** : `card_placements` (§3.1), une ligne par affaire reprise de `cards`,
+        *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-26 04:27 UTC — état avant : [ ]* ;
+        migration `0108`, suite pgTAP `0097` (numéros convenus avec la session de `CRM-058`, qui prend `0106` et `0107`).
         politiques sous la forme optimisée et ses trois gardes ; `cards` reste le chemin d'écriture, et un déclencheur
         reporte chaque écriture de ses colonnes de rattachement dans le rattachement unique. Aucun appelant ne change.
         Preuve : rattachements égaux aux colonnes de `cards` après la reprise et après chaque geste ; suite existante verte.
