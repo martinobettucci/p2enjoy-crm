@@ -1838,6 +1838,110 @@ et l'écran le dit plutôt que d'offrir une action qui échouerait.
 
 ---
 
+## 19 bis. Copie cachée et pièces jointes à l'envoi — `CRM-058` tranche 2
+
+*Spécification proposée le 2026-10-26, avant tout code. Arbitrages déjà rendus : les **pièces jointes à l'envoi** et la
+**copie cachée** sont à livrer (décision 707, option B) ; **connecteur MCP** : la copie cachée seule, dans
+`crm_mail_send` (famille `messagerie`, action `ajouter`), **aucune pièce jointe** par le connecteur (décision 708, M2 B) —
+aucune case nouvelle dans la matrice. Les points marqués **[proposition]** sont soumis à la validation du responsable
+(décision 719).*
+
+### 19 bis.1 Ce que la mesure établit, le 2026-10-26, sur la pile de développement
+
+- **`mail_outbox.attachments jsonb` existe depuis la migration 30, et rien ne l'alimente** (§19.8) ; aucune colonne ne
+  porte une copie cachée, et `composition.destinataires` le dit : l'enveloppe est `To` puis `Cc`.
+- **`queue_outbound_email`** a sept paramètres et sept refus (migrations 58 et 60) ; l'insertion passe par
+  `app.mail_outbox_inserer`, que les séquences de relance emploient aussi. Trois appelants : `webapp/src/lib/envoi.ts`,
+  `crm_mail_send` du connecteur, et les jobs de séquence par la porte extraite.
+- **Un seul bucket de courrier**, `mail-attachments`, privé, sans plafond de taille ni de type ; sa seule politique ouvre
+  la **lecture** d'une pièce reçue `clean` (§18.5). Aucune écriture n'y est ouverte à `authenticated`.
+- **L'antivirus** (`clamav`) n'existe qu'en développement : en production, une pièce reçue est enregistrée `skipped`, donc
+  non téléchargeable (§4.3). Le worker d'envoi ne parle à aucun antivirus.
+- **`mail_messages`** archive l'envoi en `outbound` avec `to_addresses` et `cc_addresses` ; aucune colonne de copie
+  cachée.
+
+### 19 bis.2 Les choix
+
+1. **La copie cachée** : une colonne `bcc_addrs text[]` dans `mail_outbox`, un paramètre `p_bcc` dans
+   `queue_outbound_email`. Les adresses entrent **dans l'enveloppe SMTP seulement**, jamais dans un en-tête : c'est la
+   définition même d'une copie cachée. Même borne que `To` et `Cc` : cinquante adresses.
+2. **[proposition] La copie cachée reste lisible dans l'affaire** : le message archivé porte `bcc_addresses`, que
+   l'écran affiche « Cci » à qui lit l'affaire. Cachée aux destinataires, pas à l'équipe qui suit l'affaire.
+3. **[proposition] Une pièce jointe se prend sur l'ordinateur** (sélection ou glisser-déposer). Réemployer une pièce
+   reçue de l'affaire est hors de cette tranche.
+4. **[proposition] Plafonds** : **10 fichiers** et **10 Mo au total** par message. Au-delà, le formulaire refuse avant
+   tout envoi et la base refuse à nouveau (`attachments_too_large`, `too_many_attachments`) — la règle est en base.
+5. **Le chemin du fichier** : le navigateur dépose d'abord chaque fichier dans un bucket privé nouveau,
+   **`mail-outbound-attachments`**, sous `<espace>/<personne>/<uuid>/<nom>` ; puis `queue_outbound_email` reçoit leurs
+   chemins (`p_attachments`) et **vérifie** que chaque objet existe dans ce bucket, appartient à l'appelant
+   (`storage.objects.owner`) et à l'espace de l'affaire, et que les plafonds tiennent. Une politique de stockage n'ouvre
+   que l'**insertion** dans son propre dossier et la **suppression** de ses propres objets non encore mis en file ; aucune
+   lecture par un client.
+6. **[proposition] L'antivirus à l'envoi** : quand `CLAMAV_HOST` est posé, le worker soumet chaque pièce à l'antivirus
+   avant l'envoi ; une pièce **infectée** fait échouer l'envoi sans reprise (`attachment_infected`) et le dit. Sans
+   antivirus — la production aujourd'hui —, l'envoi part.
+7. **L'archive** : au succès, chaque pièce devient une ligne de `mail_attachments` du message archivé, son objet copié
+   dans `mail-attachments` ; son statut est celui de l'analyse — `clean` après ClamAV, `skipped` sans antivirus, la règle
+   de la réception (§4.3). Elle se télécharge donc depuis l'affaire **dans les mêmes conditions qu'une pièce reçue**.
+8. **[proposition] Les dépôts abandonnés** : le formulaire retire ses objets quand on l'annule ou qu'on retire un fichier ;
+   un objet jamais mis en file est effacé par un job quotidien après **24 heures**.
+9. **Le connecteur** : `crm_mail_send` gagne `bcc` (cinquante adresses au plus) ; aucune pièce jointe (décision 708).
+
+### 19 bis.3 Le modèle — migration `0106_envoi_cci_pieces_jointes.sql`
+
+- `mail_outbox.bcc_addrs text[] not null default '{}'` ; `mail_messages.bcc_addresses text[] not null default '{}'`.
+- Bucket **`mail-outbound-attachments`**, privé, plafond **10 Mo** par objet ; politiques d'insertion et de suppression
+  bornées au dossier `<espace dont l'appelant est membre>/<auth.uid()>/` ; la suppression refusée si l'objet est cité par
+  une ligne de `mail_outbox`.
+- `queue_outbound_email(… , p_bcc text[] default '{}', p_attachments jsonb default '[]')` — **retirée puis recréée** (sa
+  signature change) avec ses sept refus intacts, plus trois : `attachment_not_available` (`23514` : objet absent, d'un
+  autre bucket, d'un autre propriétaire ou d'un autre espace), `too_many_attachments` et `attachments_too_large`
+  (`23514`). `attachments` reçoit `[{path, filename, mime_type, size_bytes}]`, la taille et le type **lus dans
+  `storage.objects`**, jamais crus du client.
+- `reserver_envois` rend `bcc_addrs` et `attachments` ; `marquer_envoi_reussi` archive `bcc_addresses` et écrit les lignes
+  de `mail_attachments` avec le statut que le worker lui passe.
+- Job `pg_cron` quotidien : effacer les objets de `mail-outbound-attachments` de plus de 24 heures qu'aucune ligne de
+  `mail_outbox` ne cite.
+
+### 19 bis.4 Le worker
+
+`composer` ajoute chaque pièce (`add_attachment`, type MIME lu en base) ; `destinataires` rend `To`, `Cc` **et** `Bcc` ; aucun
+en-tête `Bcc` n'est écrit. Les fichiers sont lus par la clé de service. ClamAV, s'il est configuré, juge chaque pièce
+avant l'ouverture SMTP (§19 bis.2 point 6). Une pièce introuvable au moment de l'envoi fait échouer l'envoi
+(`attachment_missing`), sans reprise.
+
+### 19 bis.5 L'écran
+
+`docs/DESIGN_SYSTEM.md` §5.4 sexies. Dans `FormulaireEnvoi`, depuis l'affaire comme depuis l'inbox (§19.6) : un lien
+« Ajouter Cci » qui révèle le champ, et « Joindre des fichiers » (`Paperclip`) qui ouvre le sélecteur ; la liste des
+fichiers avec nom, taille et un bouton de retrait ; le total et le plafond écrits ; chaque refus nommé. Le message
+archivé affiche « Cci » et ses pièces comme un message reçu.
+
+### 19 bis.6 Seed
+
+Un envoi de démonstration **réellement soumis** par le worker depuis l'affaire « Refonte du site vitrine », avec une copie
+cachée vers une boîte locale et une pièce jointe texte : le message archivé montre « Cci » et sa pièce, et la boîte de la
+copie cachée le reçoit **sans** en-tête `Bcc`.
+
+### 19 bis.7 Preuves exigées
+
+| Niveau | Preuve |
+|---|---|
+| pgTAP | colonnes et bucket ; les trois refus nouveaux ; taille et type lus en base ; politiques de stockage ; le job de purge |
+| pytest | la composition : pièces attachées, aucun en-tête `Bcc`, l'enveloppe `To` + `Cc` + `Bcc` ; le verdict antivirus |
+| API | le dépôt hors de son dossier refusé ; la pièce d'autrui refusée à la mise en file ; les plafonds |
+| E2E `mail` | l'aller complet : la copie cachée **reçoit** le message, sans en-tête `Bcc` ; la pièce arrive intacte (empreinte) |
+| E2E `ui` | joindre, retirer, dépasser le plafond, ajouter une Cci, au clavier et à la souris ; captures aux quatre paliers |
+| MCP | `bcc` transmis ; aucune pièce jointe |
+
+### 19 bis.8 Limites nommées
+
+- **Aucune pièce jointe par le connecteur** (décision 708).
+- **Aucun réemploi d'une pièce reçue** (point 3, si validé).
+- **Sans antivirus, aucune analyse** des pièces envoyées, comme pour la réception (§4.3).
+
+---
+
 ## 20. Backfill, résilience et supervision — `CRM-059`
 
 ### 20.1 Ce que la mesure a établi

@@ -729,6 +729,24 @@ ligne non lue des notifications (§5.43).*
 - **LES NON-LUS NE REMONTENT PAS** : l'ordre reste le plus récent en haut (§5.43). Un second critère de tri ferait sauter
   une ligne au moment où on vient de la lire.
 
+### 5.4 sexies Copie cachée et pièces jointes dans le formulaire d'envoi — `CRM-058` tranche 2
+
+*Proposé le 2026-10-26 avec `docs/SPEC-mail-subsystem.md` §19 bis, soumis à validation (décision 719). Aucun jeton
+n'est ajouté.*
+
+- **« Ajouter Cci » est un lien discret sous le champ « Copie »**, qui révèle le champ « Cci » et prend le focus ; le
+  champ ne se replie pas une fois rempli. Une copie cachée est un geste rare : l'afficher d'office alourdirait chaque
+  envoi.
+- **« Joindre des fichiers » est un bouton secondaire compact, icône `Paperclip`** — celle des pièces jointes à la
+  réception, même objet —, qui ouvre le sélecteur du système ; la zone du formulaire accepte aussi le glisser-déposer,
+  signalée par une bordure `--color-brand` pendant le survol d'un fichier.
+- **Chaque fichier est une ligne** : nom tronqué au milieu de la ligne, taille en `--text-sm` `tabular-nums`, un bouton
+  icône `X` « Retirer {nom} » en cible `--size-target`. Pendant le dépôt, la ligne dit « Envoi du fichier… » ; un dépôt
+  refusé reste dans la liste avec son motif en `--color-danger` et `role="alert"`, jusqu'à son retrait.
+- **Le total et le plafond sont écrits sous la liste** — « 2 fichiers, 3,4 Mo sur 10 Mo » — et le bouton d'envoi s'éteint
+  avec son motif quand un plafond est dépassé ou qu'un dépôt est en cours ; la base refuse de toute façon.
+- **Le message archivé** affiche « Cci : … » sous « Copie », et ses pièces comme celles d'un message reçu (§5.4).
+
 ### 5.5 Boutons
 
 | Variante | Style |

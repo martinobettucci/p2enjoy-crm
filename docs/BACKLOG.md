@@ -7227,12 +7227,27 @@ quota et refus testés.
 - [x] **Quatre témoins figés retournés** : trois annonçaient « `mail_sent` reste refusé », le
       quatrième exigeait que l'énumération soit étendue dans la même migration que son écriture.
 - [ ] **Aucun backoff, aucune reprise** : un échec est `failed` et le dit. `CRM-059`.
-- [ ] **Aucune pièce jointe à l'envoi**, aucune signature, aucune copie cachée — absences figées.
+- [ ] **Aucune pièce jointe à l'envoi**, aucune signature, aucune copie cachée — absences figées. — *Les signatures sont livrées par `CRM-063` ; pièces jointes et copie cachée portées par la **tranche 2** ci-dessous (décision 707).*
 - [x] **~~Harnais dédié `scripts/verify-mail-envoi.sh` : dû avant le passage à `[x]`.~~ LIVRÉ**,
       et cette ligne était **PÉRIMÉE** — constaté par mesure le 2026-08-20 : le fichier existe,
       porte ses `@verifies CRM-058` et rejoue les cinq preuves de l'unité avec quatre dégradations.
       Ce qui retient encore `CRM-058` en `[~]` est donc uniquement les deux absences figées
       ci-dessus, portées par `CRM-059` et par des choix nommés.
+
+#### Tranche 2 — copie cachée et pièces jointes à l'envoi `[ ]`
+
+*Spécification : `docs/SPEC-mail-subsystem.md` §19 bis, `docs/DESIGN_SYSTEM.md` §5.4 sexies — proposées le 2026-10-26,
+**en attente de validation** (décision 719). Connecteur MCP : la copie cachée seule, `bcc` dans `crm_mail_send`, famille
+`messagerie`, action `ajouter` ; aucune pièce jointe ; aucune case nouvelle (décision 708, M2 B). Noms : `bcc_addrs`,
+`bcc_addresses`, `mail-outbound-attachments`, `attachment_not_available`, `too_many_attachments`,
+`attachments_too_large`, `attachment_infected`, `attachment_missing` (décision 658).*
+
+- [ ] **Spécification validée** par le responsable.
+- [ ] **Migration** (numéro coordonné avec `CRM-111` T2), pgTAP, contrat de types, `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`.
+- [ ] **Worker** : pièces attachées, enveloppe avec la copie cachée, antivirus ; pytest.
+- [ ] **Écran** : Cci, pièces jointes, plafonds, refus ; Vitest, E2E `ui` et `mail`, captures observées.
+- [ ] **Connecteur** : `bcc` ; unitaires et intégration.
+- [ ] **Seed**, manuel, CHANGELOG ; livraison sur instruction du responsable.
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E `mail` d'aller-retour
 complet ; en-têtes de threading vérifiés sur le message reçu ; quota et refus testés ». **Les trois

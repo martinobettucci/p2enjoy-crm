@@ -34773,3 +34773,16 @@ réservait la livraison au responsable, et la `0104`. **Décision du responsable
 webapp de `main`, migrations 102 à 105. **Conséquences** : la réserve de la décision 679 est levée pour cette fenêtre ; la
 relecture de `docs/SPEC-ia.md` §14 (`CRM-113` T3) reste due et `CRM-113` garde son état tant qu'elle n'est pas faite ;
 après la fenêtre, le service `mcp` est reconstruit dans la cellule et `scripts/spark/verifier.sh` déroulé.
+
+### décision 719 — `CRM-058` tranche 2, copie cachée et pièces jointes : spécification proposée, en attente de validation
+
+*2026-10-26, session interactive, sous la boucle du backlog.* **Mesures** (`docs/SPEC-mail-subsystem.md` §19 bis.1) :
+`mail_outbox.attachments` existe sans alimentation ; aucune colonne de copie cachée ; un seul bucket de courrier, privé,
+fermé à l'écriture ; l'antivirus n'existe qu'en développement ; trois appelants de la file. **Propositions soumises**
+(§19 bis.2) : la copie cachée dans l'enveloppe seule et lisible dans l'affaire ; les pièces prises sur l'ordinateur, 10
+fichiers et 10 Mo au plus, déposées dans un bucket privé nouveau puis vérifiées en base à la mise en file (propriétaire,
+espace, taille et type lus dans `storage.objects`) ; l'antivirus du worker quand il est configuré, une pièce infectée
+bloquant l'envoi ; l'archive dans `mail_attachments` avec le statut de l'analyse ; la purge des dépôts abandonnés après
+24 heures. Connecteur : `bcc` seul (décision 708). **Aucun code avant la validation.** Le numéro de migration est
+coordonné avec la session de `CRM-111` T2, dont la `0106` ne doit pas arriver en production après une migration plus
+récente (§3.1 : le runner refuse un fichier inséré dans le passé).
