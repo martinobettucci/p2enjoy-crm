@@ -34912,3 +34912,15 @@ de développement**, après application par le runner : pgTAP **98 fichiers, 410
 jointe saine que l'administratrice peut lister, par `app.peut_voir_message`, que cette tranche ne touche pas), signalé à
 sa session ; interface complète 940/940 ; `scripts/verify-mcp.sh` 88/88 (un premier passage, coupé par la limite de
 durée de l'outil à l'étape 5, n'avait encore rien dégradé) ; types régénérés, `typecheck` vert.
+
+### `CRM-111` T2.3 — le découpage (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* **Problème** : la décision 705 demande que chaque
+geste passe au rattachement « dans le même changement que sa remplaçante et tous ses appelants », et que `main` reste vert
+à chaque étape poussée. **Observation** : les événements de rattachement sont écrits par deux déclencheurs de `cards`
+(`card_events_apres_maj`, `card_events_apres_maj_sommeil`) qui lisent les colonnes de `cards` ; un geste passé au
+rattachement n'écrirait donc plus d'événement, sauf par un miroir qui remonterait vers `cards`. **Décision de
+découpage** : une étape **T2.3.0** de fondation, sans appelant changé, qui déplace l'écriture de la timeline vers
+`card_placements` et pose un miroir inverse rattachement → affaire, non bouclant (chaque miroir ne s'écrit que si l'autre
+côté diffère) ; puis un groupe par geste, du plus petit au plus large : sommeil, colonnes ouvertes et archivage, faire
+avancer, changer de channel, cadences, valeurs de bloc, création et remappages. Le découpage est au backlog, sous T2.3.

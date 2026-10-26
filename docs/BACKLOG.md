@@ -16527,10 +16527,29 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         pgTAP complet en développement **98 fichiers, 4106 assertions, aucune anomalie** ; API
         `e2e/api/rattachements-lectures.spec.ts` et projet `api` 1203/1204 (le rouge, `ingestion.spec.ts:91`, tient au seed
         de `CRM-058`, sans lien) ; interface complète **940/940** ; `scripts/verify-mcp.sh` **88/88** ; types régénérés, `typecheck` vert. Aucun écran ne change.
-      - [ ] **T2.3 — les signatures, par groupe** (§5) : pour chaque geste, l'ancienne signature par affaire est retirée
+      - [@] **T2.3 — les signatures, par groupe** (§5) : pour chaque geste, l'ancienne signature par affaire est retirée
         dans le même changement que sa remplaçante par rattachement et que tous ses appelants (webapp, connecteur, seed,
         scripts, pgTAP, API, E2E) ; le chemin d'écriture passe à `card_placements`, et le déclencheur s'inverse tant que
         des lecteurs de `cards` subsistent. Preuve par groupe : aucune ancienne signature au catalogue, suite verte.
+        *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-26 06:50 UTC — état avant : [ ]*
+        **Découpage, arrêté le 2026-10-26 (journal, entrée « `CRM-111` T2.3 — le découpage »)** — une étape poussée chacune,
+        `main` vert à chaque fois :
+        - [ ] **T2.3.0 — la fondation** : la timeline d'un rattachement écrite par `card_placements` (`cards` ne garde que
+          la corbeille et la création) ; un miroir inverse rattachement → affaire, sans boucle ; `authenticated` écrit les
+          sept colonnes ouvertes du rattachement sous `card_placements_update` ; `ecriture_permise(card_placements)`.
+          Aucun appelant ne change.
+        - [ ] **T2.3.1 — le sommeil** : `snooze_card(p_placement, until)`, `wake_card(p_placement)` ; les signatures par
+          affaire retirées.
+        - [ ] **T2.3.2 — les colonnes ouvertes et l'archivage** : la webapp et le connecteur écrivent `card_placements`
+          (responsable, montant, probabilité, prochaine action, position, archivage) ; ces colonnes se ferment sur `cards`.
+        - [ ] **T2.3.3 — faire avancer** : `move_card(p_placement, to_step_id, comment)`.
+        - [ ] **T2.3.4 — changer de channel** : `move_card_to_channel(p_placement, …)`.
+        - [ ] **T2.3.5 — les cadences** : `armer_sequence_relance(p_placement, …)`.
+        - [ ] **T2.3.6 — les valeurs de bloc** : clé `(placement_id, field_id)`, `NOT NULL`, écriture de la webapp par
+          rattachement.
+        - [ ] **T2.3.7 — la création et les remappages** : `creer_affaire` écrit le rattachement elle-même (la création
+          passe à `card_placements`) ; `change_channel_workflow`, `plan_card_remapping`, `restore_workflow_version`,
+          `app.appliquer_composition` remappent les rattachements ; la clé channel/workflow redevient immédiate.
       - [ ] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
         politique de `cards` sous la forme optimisée ; types régénérés. Preuve : aucun changement visible, toute la suite
         verte ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière possible tant que chaque affaire
