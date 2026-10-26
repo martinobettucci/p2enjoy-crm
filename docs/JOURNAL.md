@@ -35790,3 +35790,18 @@ Seed rejoué sans erreur, son PATCH de sommeil exercé à part (200). API 1232/1
 `verify-seed-demo.sh` 69/69, `verify-relances.sh` 92/92, `verify-ma-journee.sh` 85/85. `verify-snooze.sh` 70/71 : son
 compteur d'interface attend 39 scénarios, il en compte 40 — l'écart est **étranger** à la tranche, porté par e81d01a4
 (INC-253, la case « Afficher les affaires en sommeil » à 24 px), qui a ajouté une preuve sans réviser le compteur.
+
+### décision 747 — `CRM-068` : les arbitrages des checklists et des modèles de cards, et le connecteur
+
+*2026-10-26, réponses du responsable (question posée par `AskUserQuestion`), avant la spécification.*
+1. **Checklists : les trois formes.** Saisie du responsable : « bah..les trois e' fait: libre si on le veut, certains
+   ajoutés avec des étapes et une transition peut exiger des checkbox cochées. » Donc : une affaire peut porter des points
+   ajoutés à la main ; une étape du workflow peut définir des points, ajoutés à l'affaire quand elle y entre ; une
+   **transition** peut exiger que des points soient cochés pour être franchie, comme elle exige des champs.
+2. **Modèles de cards : les deux.** Des modèles stockés, qui préremplissent une affaire neuve au geste « Nouvelle
+   affaire » ; et le geste « Enregistrer comme modèle » depuis une affaire existante.
+3. **Connecteur MCP** (décisions 627 et 659) : **les checklists seules, famille existante `affaires`** — lire les points
+   d'une affaire (`consulter`) et les cocher (`modifier`). Les modèles restent un geste d'écran. Aucune famille nouvelle.
+
+La spécification est écrite ensuite, avant tout code, et soumise au responsable.
+
