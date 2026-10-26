@@ -35655,3 +35655,15 @@ INC-316 passe « tranchée, à spécifier ».
    `crm_card_cost_update` déplace une ligne vers un autre budget ouvert, sous la famille existante `budgets`, action
    `modifier` (`docs/SPEC-mcp.md` §6.1). La spécification le dit.
 
+### décision 743 — `CRM-077` onzième tranche : §9 validé, **sans exception** au point (d)
+
+*2026-10-26, réponse du responsable (question posée par `AskUserQuestion`, session interactive) : « Validée, sans
+exception ».* `docs/SPEC-corbeille.md` §9 est validé, à un point près : **aucune exception** à la règle qui interdit à une
+ligne de quitter un budget ou une occurrence clôturés (`docs/SPEC-costs.md` §2.3, point (d)). Une dépense bloquante sur
+un budget clôturé le reste tant que le budget n'est pas rouvert.
+
+**Conséquence, écrite dans la spécification.** Les budgets d'un track en corbeille ne sont plus joignables depuis l'écran
+des budgets, qui ne liste pas ce track : le panneau de réaffectation offre donc lui-même **« Rouvrir le budget »** (ou
+l'occurrence) sur une dépense dont le rattachement est clôturé — le geste existant de `CRM-084` (`PATCH closed_at = null`,
+administrateur), sans règle nouvelle. Le déclencheur n'est pas révisé ; la migration ne porte que les deux fonctions.
+
