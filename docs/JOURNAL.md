@@ -35765,3 +35765,28 @@ puis son rattachement, à identifiants stables. La RLS des utilisateurs ne chang
 rattachement que par les fonctions et les colonnes ouvertes. **Conséquence** : `docs/SPEC-rattachements.md` §12 le dit ;
 la démonstration des règles à plusieurs rattachements (deux channels, un archivé, un en sommeil) reste celle du §12, posée
 par la tranche qui livre `attach_card`.
+
+### `CRM-111` T2.4.3 — le seed lit et met à jour les rattachements (2026-10-26)
+
+*2026-10-26, session interactive, après la décision 746.* **Migration `0124`** : `service_role` reçoit `INSERT` sur
+`card_placements` et `UPDATE` sur les colonnes que le seed pose. **Révisée avant d'être commitée** : la première écriture
+n'accordait que `snoozed_until`, mais le seed converge par upsert (`resolution=merge-duplicates`), que PostgREST écrit
+`on conflict (id) do update set` sur chaque colonne envoyée — l'upsert d'un rattachement, après le retrait, les exigera
+toutes. La migration, appliquée en développement seulement et non poussée, a été retirée du registre puis réappliquée
+(le runner refuse une empreinte changée). Ni `DELETE`, ni `health_score`, `created_at`, `updated_at`.
+
+**Le seed** lit et réarme sur `card_placements` le sommeil (`snoozed_until`, par la clé de service), l'ancienneté
+(`entered_step_at`) et les échéances (`next_action_at`, en propriétaire), et lit le workflow et le channel de la copie
+seedée sur les rattachements ; ses contrôles d'ancienneté et de « Ma journée » joignent l'affaire pour sa corbeille.
+**Sa création reste celle de l'affaire** : `cards` porte ses colonnes non nulles jusqu'au retrait, et le miroir
+d'insertion pose le rattachement — l'index `card_placements_one_per_card_idx` refuserait un second. Poster le
+rattachement à identifiant stable passe donc à T2.4.5. **Les scripts** : hors des harnais de preuve (T2.4.4), seul
+`restore-drill.sh` lit `cards`, pour un compte qui ne touche aucune colonne de rattachement.
+
+**Preuves.** pgTAP `0116` 10/10, rouge avant la migration (5 échecs) ; `0097` révisée (les privilèges de `service_role`),
+suite complète « 106 fichiers, 4331 assertions, aucune anomalie » ; `verify-harness.sh` compteurs portés à 106 et 4331.
+Seed rejoué sans erreur, son PATCH de sommeil exercé à part (200). API 1232/1232 après révision de
+`rattachements-miroir.spec.ts` (la clé de service insère désormais ; elle ne retire rien et n'écrit pas `created_at`).
+`verify-seed-demo.sh` 69/69, `verify-relances.sh` 92/92, `verify-ma-journee.sh` 85/85. `verify-snooze.sh` 70/71 : son
+compteur d'interface attend 39 scénarios, il en compte 40 — l'écart est **étranger** à la tranche, porté par e81d01a4
+(INC-253, la case « Afficher les affaires en sommeil » à 24 px), qui a ajouté une preuve sans réviser le compteur.

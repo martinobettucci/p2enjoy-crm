@@ -267,12 +267,16 @@ set local plan_cache_mode = auto;
 -- écrivait sur l'affaire, sous `card_placements_update` (docs/SPEC-rattachements.md §4). Ni insertion ni suppression.
 select policies_are('public', 'card_placements', array['card_placements_select', 'card_placements_update'],
 	'deux politiques, lecture et mise à jour depuis T2.3.0 : aucun client n''insère ni ne retire un rattachement');
+-- RÉVISÉE PAR `CRM-111` T2.4.3 (migration 124, décision 746) : `service_role` INSÈRE aussi — le seed pose ses
+-- rattachements à identifiants stables ; ses mises à jour sont accordées colonne par colonne (`0116`). Les privilèges de
+-- table des utilisateurs ne changent pas.
 select is(
-	(select array_agg(privilege_type::text order by privilege_type::text) from information_schema.role_table_grants
+	(select array_agg(grantee || ':' || privilege_type::text order by grantee, privilege_type::text)
+	   from information_schema.role_table_grants
 	  where table_schema = 'public' and table_name = 'card_placements'
 	    and grantee in ('anon', 'authenticated', 'service_role')),
-	array['SELECT', 'SELECT', 'SELECT'],
-	'`anon`, `authenticated` et `service_role` LISENT seulement : le miroir est le seul écrivain');
+	array['anon:SELECT', 'authenticated:SELECT', 'service_role:INSERT', 'service_role:SELECT'],
+	'`anon` et `authenticated` LISENT seulement ; `service_role` lit et insère, pour le seed (décision 746)');
 select ok(not has_function_privilege('authenticated', 'app.card_placements_mirror_update()', 'execute'),
 	'les fonctions du miroir ne s''appellent pas');
 

@@ -2353,6 +2353,14 @@ efface et remappe les rattachements du channel, et rend `SETOF public.card_place
 INITIALLY IMMEDIATE`. **Retrait** : réappliquer `change_channel_workflow` de la `0020`, `app.appliquer_composition` de la
 `0086`, et rendre la clé `INITIALLY DEFERRED`.
 
+### Migration `0124` — le seed écrit les rattachements par la clé de service (`CRM-111` T2.4.3, décision 746 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-rattachements.md` §12. `service_role` reçoit `INSERT` sur `card_placements` et `UPDATE` sur les colonnes que le
+seed pose par upsert (`id`, `workspace_id`, `card_id`, `channel_id`, `workflow_id`, `current_step_id`, `position`,
+`owner_id`, `amount`, `probability_override`, `next_action`, `next_action_at`, `entered_step_at`, `snoozed_until`,
+`archived_at`, `created_by`) — ni `DELETE`, ni `health_score`, `created_at`, `updated_at`. Les privilèges d'`anon` et
+d'`authenticated` ne changent pas. **Retrait** : `revoke insert, update on public.card_placements from service_role`.
+
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)

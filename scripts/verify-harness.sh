@@ -616,7 +616,9 @@ PORT_RAPPORT=9323
 # MESURÉ — « 104 fichiers ».
 # **+1 par `CRM-077` onzième tranche, 2026-10-26** : `0115_reaffecter_depenses_corbeille.test.sql`, fichier NEUF. 104 + 1 =
 # 105, MESURÉ.
-FICHIERS_SQL_ATTENDUS=105
+# **+1 par `CRM-111` T2.4.3, 2026-10-26** : `0116_seed_ecrit_les_rattachements.test.sql`, fichier NEUF. 105 + 1 = 106,
+# MESURÉ.
+FICHIERS_SQL_ATTENDUS=106
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -755,7 +757,10 @@ FICHIERS_SQL_ATTENDUS=105
 # `0086` RÉVISÉES sans changer de plan (décision 51). 4262 + 37 = 4299, MESURÉ — « 104 fichiers, 4299 assertions ».
 # **+22 par `CRM-077` onzième tranche, 2026-10-26** : `0115_reaffecter_depenses_corbeille` **22** assertions (les dépenses
 # bloquantes, les six refus nommés, le point (d) intact, la purge débloquée). 4299 + 22 = 4321, MESURÉ.
-ASSERTIONS_ATTENDUES=4321
+# **+10 par `CRM-111` T2.4.3, 2026-10-26** : `0116_seed_ecrit_les_rattachements` **10** assertions (les privilèges de
+# `service_role` pour le seed, ceux des utilisateurs inchangés, le geste réel) ; `0097` RÉVISÉE à compte égal. 4321 + 10 =
+# 4331, MESURÉ — « 106 fichiers, 4331 assertions ».
+ASSERTIONS_ATTENDUES=4331
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

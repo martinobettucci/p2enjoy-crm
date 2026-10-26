@@ -39,6 +39,8 @@
 #       connexions OAuth (docs/SPEC-seed.md §22, docs/SPEC-mcp.md §12)
 # @spec CRM-105 (docs/BACKLOG.md) — descriptions des tracks, channels et affaires : docs/SPEC-seed.md §20,
 #       docs/DESIGN_SYSTEM.md §5.58 (décision 629)
+# @spec CRM-111 T2.4.3 (docs/BACKLOG.md) — les lectures et mises à jour de rattachement passent par card_placements,
+#       sous la clé de service (décision 746, migration 124) ; docs/SPEC-rattachements.md §12
 #
 # Applique le seed socle sur la pile de développement en cours d'exécution.
 #
@@ -1502,7 +1504,9 @@ if [ -n "$copie_id" ] && [ "$composition_conforme" != 'oui' ]; then
 	[ "$(jq -r 'length' "$CORPS")" -eq 0 ] || die "la copie legacy $copie_id porte déjà un
         formulaire : elle n'est pas reconstruite automatiquement pour ne perdre aucune adaptation."
 
-	code=$(api GET "/rest/v1/cards?workflow_id=eq.$copie_id&select=id")
+	# `CRM-111` T2.4.3 : le workflow d'une affaire est celui de ses RATTACHEMENTS (docs/SPEC-rattachements.md §5) ;
+	# l'inventaire les lit, et désigne l'affaire par `card_id`.
+	code=$(api GET "/rest/v1/card_placements?workflow_id=eq.$copie_id&select=id:card_id")
 	attendu "$code" "inventaire des cards avant recréation de la copie seedée" 200
 	cards_copie=$(cat "$CORPS")
 	if jq -e '[.[] | select(.id != "5eed0000-0000-4000-8000-0000000000ca" and
@@ -1512,7 +1516,7 @@ if [ -n "$copie_id" ] && [ "$composition_conforme" != 'oui' ]; then
 	        recréée automatiquement : sauvegarder ou déplacer cette card, puis relancer le seed."
 	fi
 
-	code=$(api GET "/rest/v1/cards?id=in.(5eed0000-0000-4000-8000-0000000000ca,5eed0000-0000-4000-8000-0000000000cb)&select=id,workflow_id")
+	code=$(api GET "/rest/v1/card_placements?card_id=in.(5eed0000-0000-4000-8000-0000000000ca,5eed0000-0000-4000-8000-0000000000cb)&select=id:card_id,workflow_id")
 	attendu "$code" "propriété des identifiants de cards avant recréation de la copie seedée" 200
 	if jq -e --arg copie "$copie_id" 'any(.[]; .workflow_id != $copie)' "$CORPS" >/dev/null; then
 		die "au moins une card seedée de la copie existe dans un autre workflow. Sa propriété est
@@ -1535,7 +1539,9 @@ if [ -n "$copie_id" ] && [ "$composition_conforme" != 'oui' ]; then
 		fi
 	done
 
-	code=$(api DELETE "/rest/v1/cards?workflow_id=eq.$copie_id")
+	# Les affaires sont désignées par leurs identifiants, inventoriés plus haut sur leurs rattachements : un filtre sur
+	# le workflow ne porte plus sur `cards` (`CRM-111` T2.4.3).
+	code=$(api DELETE "/rest/v1/cards?id=in.(5eed0000-0000-4000-8000-0000000000ca,5eed0000-0000-4000-8000-0000000000cb)")
 	attendu "$code" "retrait des seules cards seedées avant vraie recopie" 200 204
 	warn "Copie historique sans formulaire : ses seules fixtures sont retirées avant vraie recopie"
 fi
@@ -1557,7 +1563,7 @@ else
 	# Quelque chose diverge. La réparation exige de déplacer le workflow de `prospection`, ce que
 	# la clé composite refuse si des cards l'occupent. Le cas est NOMMÉ plutôt que laissé à un
 	# `23503` brut — INC-046, docs/SPEC-seed.md §9.2.
-	code=$(api GET "/rest/v1/cards?channel_id=eq.$WF_COPIE_CHANNEL&select=id&limit=1")
+	code=$(api GET "/rest/v1/card_placements?channel_id=eq.$WF_COPIE_CHANNEL&select=id&limit=1")
 	attendu "$code" "recherche de cards dans prospection avant réparation" 200
 	if [ "$(jq -r 'length' "$CORPS")" -gt 0 ]; then
 		die "la copie de portée track est MAL PLACÉE — portée ou track divergents — et des cards
@@ -1750,6 +1756,8 @@ poser_card_globale() {
 	       created_by: "5eed0000-0000-4000-8000-000000000011",
 	       archived_at: $archive, deleted_at: $corbeille}')
 
+	# `CRM-111` T2.4.3 : tant que `cards` porte ses colonnes de rattachement (non nulles jusqu'au retrait T2.4.5), le
+	# miroir d'insertion pose le rattachement ; T2.4.5 fera poster l'affaire puis son rattachement (décision 746).
 	code=$(api POST /rest/v1/cards \
 		-H 'Prefer: return=representation,resolution=merge-duplicates' \
 		-d "$charge")
@@ -1838,6 +1846,8 @@ for ligne in "${CARDS_DERIVE[@]}"; do
 	       created_by: "5eed0000-0000-4000-8000-000000000011",
 	       archived_at: null, deleted_at: null}')
 
+	# `CRM-111` T2.4.3 : tant que `cards` porte ses colonnes de rattachement (non nulles jusqu'au retrait T2.4.5), le
+	# miroir d'insertion pose le rattachement ; T2.4.5 fera poster l'affaire puis son rattachement (décision 746).
 	code=$(api POST /rest/v1/cards \
 		-H 'Prefer: return=representation,resolution=merge-duplicates' \
 		-d "$charge")
@@ -2552,8 +2562,10 @@ info "Signatures : une identité signe (Driss, deux lignes), l'identité de serv
 # ancienneté.
 # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
 psql_seed() { docker exec -i "$(conteneur db)" psql -U postgres -d postgres -qtA "$@"; }
-psql_seed -c "update public.cards set entered_step_at = now()
-              where id::text like '5eed%' and archived_at is null and deleted_at is null;" >/dev/null
+# `CRM-111` T2.4.3 : l'ancienneté est celle du RATTACHEMENT (docs/SPEC-rattachements.md §6) ; la corbeille, celle de
+# l'affaire. Les mises à jour portent sur `card_placements`, l'affaire jointe.
+psql_seed -c "update public.card_placements p set entered_step_at = now() from public.cards c
+              where c.id = p.card_id and c.id::text like '5eed%' and p.archived_at is null and c.deleted_at is null;" >/dev/null
 info "Ancienneté : les cards seedées repartent à zéro dans leur étape — le pipeline reste sain"
 
 # --- 8 octies ter. UNE card, et une seule, est VOULUE EN RETARD — docs/SPEC-seed.md §9.12 -----
@@ -2577,8 +2589,8 @@ info "Ancienneté : les cards seedées repartent à zéro dans leur étape — l
 # voulue en retard recule. Le recul part de `now()` et non de la valeur courante : un rejeu ne
 # cumule donc rien, et les trente-neuf autres cards restent à zéro (§9.12.2).
 CARD_EN_RETARD='5eed0000-0000-4000-8000-0000000000c3'
-psql_seed -c "update public.cards set entered_step_at = now() - interval '30 days'
-              where id = '$CARD_EN_RETARD' and archived_at is null and deleted_at is null;" >/dev/null
+psql_seed -c "update public.card_placements p set entered_step_at = now() - interval '30 days' from public.cards c
+              where c.id = p.card_id and c.id = '$CARD_EN_RETARD' and p.archived_at is null and c.deleted_at is null;" >/dev/null
 
 # --- 8 octies quater. TROIS AUTRES affaires figées — CRM-062 tranche 3a ------------------------
 # @spec CRM-062 (docs/BACKLOG.md) — tranche 3a : le jeu de démonstration de l'écran des affaires
@@ -2615,18 +2627,19 @@ psql_seed -c "update public.cards set entered_step_at = now() - interval '30 day
 CARD_FIGEE_REFONTE='5eed0000-0000-4000-8000-0000000000c4'   # refonte / studio-web,      seuil 5
 CARD_FIGEE_TMA='5eed0000-0000-4000-8000-00000000d007'       # maintenance / studio-web,  seuil 7
 CARD_FIGEE_LEGACY='5eed0000-0000-4000-8000-0000000000cf'    # dossiers-2023 / legacy-2023, seuil 5
-psql_seed -c "update public.cards set entered_step_at = now() - interval '40 days'
-              where id = '$CARD_FIGEE_REFONTE' and archived_at is null and deleted_at is null;" >/dev/null
-psql_seed -c "update public.cards set entered_step_at = now() - interval '25 days'
-              where id = '$CARD_FIGEE_TMA' and archived_at is null and deleted_at is null;" >/dev/null
-psql_seed -c "update public.cards set entered_step_at = now() - interval '12 days'
-              where id = '$CARD_FIGEE_LEGACY' and archived_at is null and deleted_at is null;" >/dev/null
+psql_seed -c "update public.card_placements p set entered_step_at = now() - interval '40 days' from public.cards c
+              where c.id = p.card_id and c.id = '$CARD_FIGEE_REFONTE' and p.archived_at is null and c.deleted_at is null;" >/dev/null
+psql_seed -c "update public.card_placements p set entered_step_at = now() - interval '25 days' from public.cards c
+              where c.id = p.card_id and c.id = '$CARD_FIGEE_TMA' and p.archived_at is null and c.deleted_at is null;" >/dev/null
+psql_seed -c "update public.card_placements p set entered_step_at = now() - interval '12 days' from public.cards c
+              where c.id = p.card_id and c.id = '$CARD_FIGEE_LEGACY' and p.archived_at is null and c.deleted_at is null;" >/dev/null
 
 au_dela=$(psql_seed -c "
-	select count(*) from public.cards c
+	select count(*) from public.card_placements c
+	join public.cards a on a.id = c.card_id
 	join public.workflow_steps s on s.id = c.current_step_id
 	join public.workflow_nodes_catalog n on n.id = s.node_id
-	where c.archived_at is null and c.deleted_at is null
+	where c.archived_at is null and a.deleted_at is null
 	  and coalesce(s.stale_after_days, n.default_stale_after_days) is not null
 	  and now() - c.entered_step_at >=
 	      make_interval(days => coalesce(s.stale_after_days, n.default_stale_after_days));")
@@ -2644,10 +2657,11 @@ suite=$(psql_seed -c "select string_agg(retard_jours::text, ',' order by retard_
 # Ligne e du §9.12.6 : sans une card EN DEÇÀ, « au-delà » ne serait pas un contraste mais un état
 # général. Le contrôle est CONSERVÉ tel quel — la tranche 3a en change le complément, pas le sens.
 en_deca=$(psql_seed -c "
-	select count(*) from public.cards c
+	select count(*) from public.card_placements c
+	join public.cards a on a.id = c.card_id
 	join public.workflow_steps s on s.id = c.current_step_id
 	join public.workflow_nodes_catalog n on n.id = s.node_id
-	where c.archived_at is null and c.deleted_at is null
+	where c.archived_at is null and a.deleted_at is null
 	  and coalesce(s.stale_after_days, n.default_stale_after_days) is not null
 	  and now() - c.entered_step_at <
 	      make_interval(days => coalesce(s.stale_after_days, n.default_stale_after_days));")
@@ -3269,7 +3283,9 @@ say "8 duodecies. Sommeil de démonstration"
 for ligne in "${SOMMEILS[@]}"; do
 	IFS='|' read -r id etat jours libelle <<< "$ligne"
 
-	actuel=$(curl -s "$API/rest/v1/cards?id=eq.$id&select=snoozed_until" 		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" 		| jq -r '.[0].snoozed_until // "null"')
+	# `CRM-111` T2.4.3 : le sommeil est celui du rattachement (docs/SPEC-rattachements.md §5) ; la clé de service le lit
+	# et le réarme sur `card_placements` (décision 746, migration 124).
+	actuel=$(curl -s "$API/rest/v1/card_placements?card_id=eq.$id&select=snoozed_until" 		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" 		| jq -r '.[0].snoozed_until // "null"')
 
 	# Le prédicat est celui du §16.2, appliqué ici plutôt que déduit : « en sommeil » vaut
 	# « non nulle ET future ». Une ligne déjà dans l'état voulu n'est pas réécrite.
@@ -3287,7 +3303,7 @@ for ligne in "${SOMMEILS[@]}"; do
 	fi
 
 	echeance=$(date -u -d "$jours days" +%Y-%m-%dT%H:%M:%SZ)
-	code=$(api PATCH "/rest/v1/cards?id=eq.$id" 		-H 'Prefer: return=representation' 		-d "$(jq -nc --arg d "$echeance" '{snoozed_until: $d}')")
+	code=$(api PATCH "/rest/v1/card_placements?card_id=eq.$id" 		-H 'Prefer: return=representation' 		-d "$(jq -nc --arg d "$echeance" '{snoozed_until: $d}')")
 	attendu "$code" "sommeil de $libelle" 200
 	info "$libelle jusqu'au $echeance"
 done
@@ -3361,9 +3377,10 @@ DEBUT_LENDEMAIN="(($JOUR_LOCAL + interval '1 day') at time zone '$FUSEAU_SEED')"
 HORIZON_JOURNEE="(($JOUR_LOCAL + interval '8 days') at time zone '$FUSEAU_SEED')"
 
 ANCRE_ECHEANCES='2026-08-21 00:00:00+00'
-psql_seed -c "update public.cards
+# `CRM-111` T2.4.3 : la prochaine action est celle du RATTACHEMENT (docs/SPEC-rattachements.md §3.2).
+psql_seed -c "update public.card_placements
               set next_action_at = $DEBUT_JOUR + (next_action_at - timestamptz '$ANCRE_ECHEANCES')
-              where id::text like '5eed%' and next_action_at is not null;" >/dev/null
+              where card_id::text like '5eed%' and next_action_at is not null;" >/dev/null
 
 # LE CONTRAT DU §13.5 EST VÉRIFIÉ, ET NON SUPPOSÉ. Un jeu de démonstration qui ne démontre plus est
 # un contrat rompu, pas un détail cosmétique (CLAUDE.md §8). Les prédicats sont EXACTEMENT ceux de
@@ -3377,8 +3394,9 @@ lire_sections() { # $1 = clause de responsable, vide pour tout l'espace de trava
 		                                 and c.next_action_at <  $DEBUT_LENDEMAIN)
 		    || '|' || count(*) filter (where c.next_action_at >= $DEBUT_LENDEMAIN
 		                                 and c.next_action_at <  $HORIZON_JOURNEE)
-		from public.cards c
-		where c.archived_at is null and c.deleted_at is null
+		from public.card_placements c
+		join public.cards a on a.id = c.card_id
+		where c.archived_at is null and a.deleted_at is null
 		  and c.next_action_at is not null
 		  and (c.snoozed_until is null or c.snoozed_until <= now())
 		  and c.next_action_at < $HORIZON_JOURNEE
@@ -3405,8 +3423,9 @@ tous=$(( r_tous + a_tous + v_tous ))
 # LIGNE e : une affaire endormie porte une échéance DANS l'horizon, et c'est ce qui prouve que le
 # filtre d'exclusion du §17.4 mord — sans elle, son absence de l'écran ne dirait rien.
 endormies=$(psql_seed -c "
-	select count(*) from public.cards c
-	where c.archived_at is null and c.deleted_at is null
+	select count(*) from public.card_placements c
+	join public.cards a on a.id = c.card_id
+	where c.archived_at is null and a.deleted_at is null
 	  and c.next_action_at is not null
 	  and c.next_action_at < $HORIZON_JOURNEE
 	  and c.snoozed_until is not null and c.snoozed_until > now();")
@@ -4869,7 +4888,8 @@ info "Activités : cinq sur trois affaires, une de chaque type, une corrigée, u
 # @spec CRM-066 (docs/BACKLOG.md) — tranche 4 ; docs/SPEC-analytique.md §13.8 ; docs/JOURNAL.md décisions 723 et 724
 # VÉRIFIÉ, PAS FORCÉ : les scores se calculent à la lecture, et le seed ne peut rien y écrire. Il lit les deux colonnes
 # calculées, sous la clé de service, et exige chaque palier — healthy, watch, danger — pour chacun des deux scores.
-paliers_sante=$(curl -s "$API/rest/v1/cards?select=health_momentum,health_commercial&archived_at=is.null&deleted_at=is.null" \
+# `CRM-111` T2.4.3 : « ouverte » se lit sur le rattachement — l'affaire en a un non archivé.
+paliers_sante=$(curl -s "$API/rest/v1/cards?select=health_momentum,health_commercial,card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
 	| jq -r '[.[] | select(.health_momentum != null) | "m-" + .health_momentum.tier, "s-" + .health_commercial.tier] | unique | join(",")')
 for palier in m-healthy m-watch m-danger s-healthy s-watch s-danger; do

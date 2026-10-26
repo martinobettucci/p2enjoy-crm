@@ -16732,12 +16732,17 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           `mail-sync` situe le dossier d'une affaire par son plus ancien rattachement. Contrats inchangés. Preuves au
           journal : pytest du connecteur 209, `verify-mcp.sh` 88/88, interface du connecteur 16/16 ; pytest de `mail-sync`
           258, preuve mail 45/45.
-        - [ ] **T2.4.3 — le seed et les scripts** : lectures et écritures par le rattachement. *Tranché (décision 746)* :
+        - [x] **T2.4.3 — le seed et les scripts** : lectures et écritures par le rattachement. *Tranché (décision 746)* :
           une migration accorde à `service_role` l'insertion sur `card_placements` et la mise à jour des colonnes que le
           seed pose, comme sur `cards` ; le seed poste l'affaire puis son rattachement, à identifiants stables.
+          *Livrée en développement le 2026-10-26* — migration `0124` ; le seed lit et met à jour sommeil, ancienneté,
+          échéances, workflow et channel sur `card_placements`. **Sa création reste celle de l'affaire**, dont le miroir
+          pose le rattachement, tant que `cards` porte ses colonnes non nulles : la poste du rattachement passe à T2.4.5.
+          Aucun autre script que les harnais de preuve (T2.4.4) ne lit une colonne de rattachement. Preuves au journal.
         - [ ] **T2.4.4 — les preuves** : pgTAP et specs lisent le rattachement là où elles lisaient `cards`.
         - [ ] **T2.4.5 — le retrait en base** : colonnes, miroirs et index de `cards` retirés ; les dix fonctions
-          réécrites ; `creer_affaire` écrit le rattachement ; scores de santé transportés ; politiques de `cards` sous
+          réécrites ; `creer_affaire` écrit le rattachement ; le seed poste l'affaire puis son rattachement (venu de
+          T2.4.3, décision 746) ; scores de santé transportés ; politiques de `cards` sous
           la forme optimisée ; types régénérés ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
       *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
