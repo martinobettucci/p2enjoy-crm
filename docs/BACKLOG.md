@@ -16628,11 +16628,11 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         pgTAP complet en développement **98 fichiers, 4106 assertions, aucune anomalie** ; API
         `e2e/api/rattachements-lectures.spec.ts` et projet `api` 1203/1204 (le rouge, `ingestion.spec.ts:91`, tient au seed
         de `CRM-058`, sans lien) ; interface complète **940/940** ; `scripts/verify-mcp.sh` **88/88** ; types régénérés, `typecheck` vert. Aucun écran ne change.
-      - [@] **T2.3 — les signatures, par groupe** (§5) : pour chaque geste, l'ancienne signature par affaire est retirée
+      - [~] **T2.3 — les signatures, par groupe** (§5) : pour chaque geste, l'ancienne signature par affaire est retirée
         dans le même changement que sa remplaçante par rattachement et que tous ses appelants (webapp, connecteur, seed,
         scripts, pgTAP, API, E2E) ; le chemin d'écriture passe à `card_placements`, et le déclencheur s'inverse tant que
         des lecteurs de `cards` subsistent. Preuve par groupe : aucune ancienne signature au catalogue, suite verte.
-        *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-26 06:50 UTC — état avant : [ ]*
+        *État : T2.3.0 à T2.3.7 livrées en développement ; T2.3.5 reste `[~]` sur l'arbitrage d'INC-315.*
         **Découpage, arrêté le 2026-10-26 (journal, entrée « `CRM-111` T2.3 — le découpage »)** — une étape poussée chacune,
         `main` vert à chaque fois :
         - [x] **T2.3.0 — la fondation** : la timeline d'un rattachement écrite par `card_placements` (`cards` ne garde que
@@ -16685,7 +16685,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           `0122` ; `change_channel_workflow` rend `SETOF card_placements`. pgTAP 104 fichiers sans anomalie,
           unitaires 4514/4514, API 1230/1231 (`ingestion.spec.ts:91`, étranger), `verify-change-channel-workflow.sh`
           24/24.
-      - [ ] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
+      - [@] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
         `creer_affaire` écrit le rattachement elle-même (venu de T2.3.7, décision 738),
         politique de `cards` sous la forme optimisée ; types régénérés. *Transporte aussi vers `card_placements` les deux
         colonnes calculées de santé de `CRM-066` tranche 4 (`health_momentum`, `health_commercial`, et leur appui
@@ -16693,6 +16693,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         (`docs/SPEC-analytique.md` §13.5 ; accord des deux sessions, 2026-10-26).* Preuve : aucun changement visible, toute la suite
         verte ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière possible tant que chaque affaire
         n'a qu'un rattachement).
+        *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-26 17:02 UTC — état avant : [ ]*
       *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses
