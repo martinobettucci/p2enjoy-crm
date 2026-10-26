@@ -16903,15 +16903,23 @@ responsable** : traitée juste après `CRM-116`.*
       et un lien par écran principal vers son chapitre ; une page de la webapp, Markdown converti au build ; **réservé
       aux membres connectés**, règle appliquée côté serveur ; une image pour chaque champ, bouton ou fenêtre cité,
       découpée au strict minimum, pleine page permise en tête de chapitre, toutes maintenues ; connecteur MCP : non.
-- [ ] **T1 — spécification, écrite avant le code** : `docs/SPEC-manual.md` révisée (le contrat d'un chapitre sans
-      référence interne ; la traçabilité unité → chapitre portée par la spécification ; le contrat des captures
-      découpées ; les preuves inverses) ; la route, l'entrée « Aide », les liens par écran et le mécanisme d'accès côté
-      serveur (`docs/SPEC-webapp.md`, `docs/DAT.md`) ; l'écran du manuel (`docs/DESIGN_SYSTEM.md`) ; la dépendance de
-      conversion, si elle est retenue (`CLAUDE.md` §19).
-- [ ] **T2 — le manuel réécrit** : retrait de toute référence interne, phrases réécrites pour un utilisateur ;
-      `scripts/verify-manual.sh` et `e2e/ui/manuel.spec.ts` révisés (preuve qu'aucune référence interne ne subsiste).
-- [ ] **T3 — les captures découpées** : un générateur sur l'application réellement exécutée, une image par élément
-      cité, pleine page en tête de chapitre ; preuve qu'aucun élément cité n'est sans image.
-- [ ] **T4 — la page « Aide »** : route, sommaire, chapitres par adresse, entrée de l'en-tête, liens par écran ; accès
-      refusé sans session, prouvé par requête directe ; unitaires, E2E, captures observées, paliers.
-- [ ] **T5 — livraison**, sur instruction du responsable.
+- [x] **T1 — spécification, écrite avant le code** — *écrite le 2026-10-26* : `docs/SPEC-manual.md` partie II (§9 à
+      §18 ; les §3 points 2 et 4 et le §4 de la partie I tombent), `docs/DESIGN_SYSTEM.md` §5.69, `docs/SPEC-webapp.md`
+      §5.1 bis et §5.2, `docs/DAT.md` §3.7 quater, `docs/SCHEMA.md` §9 septies. Six choix de l'agent marqués pour
+      relecture (`docs/SPEC-manual.md` §18) ; connecteur MCP : non.
+- [ ] **T2 — le socle** : `public.can_read_manual()` (migration au prochain numéro libre, pgTAP) ; la fonction edge
+      `manual` et le montage de `docs/manuel/` (unitaires, preuves d'API par requête directe) ; la construction et sa
+      vérification (`marked` après la mesure du `CLAUDE.md` §19) ; `/aide` et `/aide/:chapitre`, le rendu en blocs,
+      l'icône « Aide » et son panneau, `aide-ecrans.ts` (unitaires, E2E, paliers, captures observées). Sur le manuel
+      tel qu'il est : la réécriture suit.
+- [ ] **T3 — la réécriture**, par groupes de chapitres : retrait de toute référence interne et de ce qui parle du
+      développement ou du jeu de démonstration, numérotation simple, phrases réécrites pour le lecteur ; table du
+      §12 et de `aide-ecrans.ts` tenues à mesure. T3.1 prise en main et navigation ; T3.2 l'affaire ; T3.3
+      l'administration ; T3.4 la messagerie ; T3.5 le pilotage, la plateforme et le connecteur. `scripts/verify-manual.sh`
+      révisé à la fin de T3.5 : aucune référence interne, nulle part.
+- [ ] **T4 — les images**, par les mêmes groupes : l'aide `illustrer`, les scénarios `e2e/manuel/`, le manifeste, les
+      images placées et observées ; la preuve « un élément cité, une image » et la table des exceptions (§11.3) soumise
+      au responsable.
+- [ ] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
+      `CHANGELOG.md`, contrat de déploiement.
+- [ ] **T6 — livraison**, sur instruction du responsable : migration, montage et fonction `manual`, webapp.

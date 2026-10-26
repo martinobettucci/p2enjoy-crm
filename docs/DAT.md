@@ -729,6 +729,30 @@ déjà obligatoire, pour y mener : un lien sur son accueil, et une redirection `
 ensuite le message, comme pour un envoi depuis la fiche. Le connecteur ne détient donc aucun secret SMTP, et la
 dépendance nouvelle est indirecte : un envoi par le connecteur part si et seulement si `mail-sync` tourne.
 
+### 3.7 quater Le manuel — fonction `manual` (`CRM-117` ; spécifiée le 2026-10-26, avant le code)
+
+*Décisions 736 et 740 ; `docs/SPEC-manual.md` partie II.* Le manuel utilisateur est lu dans la webapp, et **seul un
+membre connecté** le lit. Il n'est donc ni dans le paquet de la webapp, ni servi en fichier statique par Caddy.
+
+- **Source** : `docs/manual.md` et ses images, `docs/manuel/images/`, produites par les scénarios `e2e/manuel/` et
+  inventoriées dans `docs/manuel/images/manifeste.json`.
+- **Construction** : `scripts/manuel/construire.mjs` écrit le manuel construit, versionné, dans `docs/manuel/construit/`
+  (un sommaire et un fichier par chapitre, en blocs structurés). `npm run manuel:verifier` échoue s'il ne correspond
+  plus à sa source.
+- **Service** : la fonction edge `manual`, dans le conteneur `functions`, qui reçoit **`docs/manuel/` en lecture seule**
+  à côté de `supabase/functions/`, dans les deux assemblages. Trois lectures, `GET` seulement : le sommaire, un
+  chapitre, une image. Elle ne reçoit que l'environnement commun des fonctions, aucun secret propre.
+- **Autorisation** : la fonction présente le jeton de l'appelant à `public.can_read_manual()`, exécutable par le seul
+  rôle `authenticated`. Sans jeton accepté, `401` et rien d'autre. Aucun espace ni aucun rôle n'intervient : une
+  session suffit (§4.1).
+- **Flux** : la webapp lit le sommaire puis un chapitre par la fonction, avec le jeton de session ; chaque image est lue
+  de même puis rendue depuis une adresse locale au navigateur, un `<img>` ne pouvant pas porter d'en-tête.
+- **Déploiement** : le montage de `docs/manuel/` dans `functions`, la migration de `public.can_read_manual()`, puis la
+  webapp (`docs/PROD_MIGRATIONS.md`, à la livraison). Le contenu suit le dépôt : une nouvelle version du manuel est
+  servie dès que le dépôt de l'hôte est à jour, sans reconstruction d'image.
+- **Dépendance** : l'analyse du Markdown, à la construction seulement, est inscrite au §15 quand elle est ajoutée, après
+  la mesure du `CLAUDE.md` §19.
+
 ### 3.8 Contraintes d'exécution de l'hôte
 
 Realtime élève son nombre de descripteurs de fichiers au démarrage. Le besoin est

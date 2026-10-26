@@ -2438,6 +2438,21 @@ formes de `0088` (réel dérivé, ligne soldée figée, lecture et écriture par
 
 ---
 
+## 9 septies. Le manuel — `CRM-117` (spécifié le 2026-10-26, avant le code)
+
+`docs/SPEC-manual.md` §14 ; décisions 736 et 740. **Aucune table.** Une fonction, au prochain numéro de migration
+libre :
+
+- **`public.can_read_manual()`** → `boolean`, `language sql`, `stable`, `security invoker`, rend `true`. Elle ne sert
+  qu'à une chose : la fonction edge `manual` la fait exécuter avec le jeton de l'appelant, et c'est le **privilège**
+  qui décide. `revoke all on function public.can_read_manual() from public, anon;` puis
+  `grant execute on function public.can_read_manual() to authenticated;`. Un appel anonyme, expiré ou forgé est
+  refusé par PostgREST avant d'atteindre la fonction.
+- **Pourquoi une fonction et non la vérification du jeton dans la fonction edge** : seule `session`, parmi les
+  fonctions edge, reçoit `JWT_SECRET` (`docs/SPEC-edge-functions.md` §2), et cette règle n'est pas assouplie pour lire
+  un manuel.
+- **Retrait** : `drop function public.can_read_manual();`, avec la webapp et la fonction edge d'avant.
+
 ## 10. Index principaux
 
 | Table | Index |

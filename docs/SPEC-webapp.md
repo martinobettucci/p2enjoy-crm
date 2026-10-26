@@ -242,6 +242,8 @@ chaque route y place.
 | `/tracks/:slugTrack/:slugChannel/cards/:idCard` | track ; channel → son board | titre de l'affaire |
 | `/tracks/:slugTrack/couts` | track | « Coûts » |
 | `/tracks/:slugTrack/couts/:idBudget` | track ; « Coûts » → `/tracks/:slugTrack/couts` | nom du budget |
+| `/aide` | — | « Aide » |
+| `/aide/:chapitre` | « Aide » → `/aide` | titre du chapitre (`CRM-117`, `docs/SPEC-manual.md` §13.1) |
 
 **Règles.**
 
@@ -282,6 +284,8 @@ chaque route y place.
 | `/reglages/identites-mail` | **Configuration des identités sortantes SMTP** — `CRM-089`, `docs/SPEC-mail-subsystem.md` §22.2. Une SEPTIÈME section de réglages, jumelle de la précédente et montée de la même façon : l'une configure ce qu'on reçoit, l'autre ce qu'on expédie. Elle vient **après** `/reglages/comptes-mail` et **avant** `/reglages/messagerie` dans l'index |
 | `/tracks/:slugTrack[/:slugChannel]` | Route d'un track et de ses onglets — `CRM-021`. Avec un channel ouvert, elle rend son **board kanban** — `CRM-041`, `docs/SPEC-workflow-engine.md` §7 |
 | `/tracks/:slugTrack/:slugChannel/cards/:idCard` | Détail d'une card : son **formulaire conditionnel** — `CRM-037`. La card est désignée par son identifiant, `docs/SPEC-cards.md` ne lui donnant aucun slug |
+| `/aide` | **Sommaire du manuel** — `CRM-117`, `docs/SPEC-manual.md` §13. La liste des chapitres et de leurs sections, lue à la fonction `manual` avec la session (§14 de la même spécification). Atteinte par l'icône « Aide » de l'en-tête (`docs/DESIGN_SYSTEM.md` §5.69), jamais par la barre latérale : l'aide accompagne un écran, elle n'est pas une destination de travail. Dans `ROUTES` : son titre est une clé de traduction |
+| `/aide/:chapitre` | **Un chapitre du manuel** — `CRM-117`, `docs/SPEC-manual.md` §13.3. Une section s'atteint par le fragment de l'adresse. Hors de `ROUTES` : son titre est le titre du chapitre, une donnée du manuel |
 | toute autre | Route inconnue, avec retour explicite vers `/` |
 
 Chaque route rend l'un des composants d'état du §7 : aucune n'est une page blanche.

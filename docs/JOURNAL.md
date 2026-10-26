@@ -35587,3 +35587,29 @@ notifications (`docs/DESIGN_SYSTEM.md` §5.43). En tête du panneau, « Aide sur
 l'écran courant, quand il en existe un. Dessous, « Sommaire du manuel ». **Conséquences** : l'en-tête ne gagne qu'une
 place ; le lien par écran vit dans le panneau, et non dans la page ; la correspondance entre écran et chapitre est
 tenue en un seul endroit, et la spécification de `CRM-117` T1 la nomme.
+
+### `CRM-117` T1 — la spécification du manuel public (2026-10-26)
+
+*2026-10-26, session interactive, sur les décisions 736 et 740, après relecture intégrale de `docs/DESIGN_SYSTEM.md`.*
+**Écrit** : `docs/SPEC-manual.md` partie II (§9 à §18) et le bandeau qui fait tomber trois règles de la partie I
+(nommer l'unité, renvoyer au dossier de captures, annexe A) ; `docs/DESIGN_SYSTEM.md` §5.69 ; `docs/SPEC-webapp.md`
+§5.1 bis et §5.2 ; `docs/DAT.md` §3.7 quater ; `docs/SCHEMA.md` §9 septies.
+
+**Ce que la spécification tranche, et pourquoi.**
+- **Le contenu ne peut pas être public côté serveur.** La session vit en mémoire de la webapp, et son seul cookie est
+  `httpOnly`, limité à `/functions/v1/session` (`docs/DAT.md` §4.1) : un fichier servi par Caddy, une image en
+  `<img src>`, ne portent aucune preuve de session. Le manuel est donc servi par une fonction edge, `manual`, qui exige
+  le jeton, et la webapp lit les images par la même voie.
+- **Aucun secret de plus.** Parmi les fonctions edge, `JWT_SECRET` n'atteint que `session` (décisions 584 et 586) :
+  `manual` fait juger le jeton par la base, par une fonction `public.can_read_manual()` réservée au rôle
+  `authenticated`.
+- **Le manuel construit est versionné**, parce que les fonctions sont montées depuis le dépôt sur l'hôte de production,
+  sans étape de construction ; il est vérifié contre sa source comme les types engendrés.
+- **Des blocs, jamais du HTML**, pour que les styles viennent du design system et qu'aucune balise d'un fichier ne
+  s'exécute.
+- **L'icône est `BookOpen`** : `CircleHelp` désigne déjà une étape non vérifiable du guide de démarrage (§9 du design
+  system).
+
+**Le découpage est révisé** : le socle technique (T2) vient avant la réécriture (T3) et les images (T4), pour que la
+réécriture se relise dans la surface même où le lecteur la lira, et que les images se placent dans un rendu réel. Les
+six choix de l'agent sont listés au §18 de la spécification, pour la relecture du responsable.

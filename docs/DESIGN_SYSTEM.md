@@ -6528,3 +6528,59 @@ quoi ils ont l'air.
   pilule neutre (`--color-hover`, `--color-text-2`), comme un track neutre.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : le sélecteur emprunte au §5.29 sa forme et ses noms, la
   pastille au §1 ses couleurs pleines, la pilule au §5.6 et au §12.5.
+
+### 5.69 L'aide : l'icône de l'en-tête, son panneau, et les pages du manuel — `CRM-117`
+
+*Écrit le 2026-10-26, avant le code, sur les arbitrages du responsable (`docs/JOURNAL.md` décisions 736 et 740), après
+relecture intégrale de ce document.* Ce que le manuel contient, d'où il vient et qui le lit : `docs/SPEC-manual.md`
+partie II ; ces règles disent de quoi l'aide a l'air.
+
+**L'icône et son panneau.**
+
+- **UNE COMMANDE À ICÔNE DANS LA FIN DE L'EN-TÊTE, AVANT LA CLOCHE** : l'ordre de la ligne devient fil, recherche,
+  **aide**, cloche, identité. L'aide porte sur le produit, comme la recherche, et non sur l'utilisateur ; elle vient donc
+  avant ce que le produit a à me dire (§5.43). Icône Lucide **`BookOpen`**, qui ne sert aucun autre objet (§9) —
+  `CircleHelp` désigne déjà une étape non vérifiable du guide (§5.17). Cible `--size-target`, nom accessible « Aide »,
+  `aria-expanded`, `aria-controls` vers le panneau.
+- **LE PANNEAU EST CELUI DES NOTIFICATIONS (§5.43), RÉEMPLOYÉ** : ancré à l'en-tête et non à l'icône, dans le flux —
+  aucune modale —, `--color-surface`, bordure `--color-border`, `--radius-lg`, `--shadow-card-hover`, colonne de `40ch`
+  alignée à droite à partir de `md`, la largeur de la fenêtre moins 16 px de chaque côté en dessous. Une barre de titre
+  « Aide » (`h2`) avec la commande textuelle « Fermer », pour la raison que le §5.46 écrit : une commande à icône ne dit
+  pas comment refermer ce qu'elle ouvre.
+- **DEUX LIENS, DANS CET ORDRE.** D'abord, sous un intitulé « Aide sur cet écran » en 13 px `--color-text-2`, le lien
+  vers le chapitre de l'écran courant, **nommé par le titre du chapitre** (ou de sa section) — jamais « cliquez ici ».
+  Puis, sous un filet `--color-border`, « Sommaire du manuel ». Chaque lien a la hauteur `--size-target`, le texte
+  `--color-brand`, le survol `--color-hover`. **Un écran sans chapitre ne rend pas la première ligne** : le panneau
+  n'offre que le sommaire, sans phrase pour dire qu'il manque quelque chose.
+- **COMPORTEMENT DU §5.43** : l'ouverture place le focus sur le premier lien ; `Échap` referme et rend le focus à
+  l'icône ; un clic hors du panneau le referme sans déplacer le focus ; suivre un lien le referme. Ouvrir l'aide referme
+  le panneau des notifications, et inversement : un seul panneau de l'en-tête ouvert à la fois.
+- **LE TITRE DE ROUTE NE CÈDE TOUJOURS PAS** (§12.2). L'icône ajoute 40 px à la ligne : entre `lg` et `xl`, la preuve
+  du §12.2 — le titre le plus long garde au moins 120 px — est rejouée avec elle. Si elle échoue, l'écart est consigné
+  et soumis au responsable avant toute autre correction ; aucun occupant n'est retiré de la ligne en silence.
+
+**Les pages du manuel.**
+
+- **LE SOMMAIRE, `/aide`** : la liste ordonnée des chapitres (`ol`), chaque titre en lien `font-medium`, et dessous la
+  liste de ses sections en liens 13 px `--color-text-2`. Deux colonnes à partir de `xl`, une en dessous. *Choix de
+  l'agent* : les sections sont visibles d'emblée, sans dépli, parce que c'est par elles qu'on cherche un geste.
+- **UN CHAPITRE, `/aide/:chapitre`** : le titre du chapitre est le `h1` du fil d'Ariane (§5.62) ; le contenu, une colonne
+  de prose bornée à `72ch`. En tête, une `nav` « Dans ce chapitre » liste ses sections en liens. En pied, deux liens
+  « Chapitre précédent » et « Chapitre suivant », chacun suivi du titre visé, absents aux extrémités.
+- **LES BLOCS SUIVENT LE DESIGN SYSTEM, PAS LE NAVIGATEUR** : sections en `h2` (`--text-h2`), sous-sections en `h3` ;
+  corps en 15 px à l'interligne de 1,55 (§2) ; listes à puces et numérotées avec leur retrait natif ; code en ligne en
+  `code` sur `--color-hover` (§5.15) ; un tableau du manuel est un tableau du §5.9, dans un conteneur
+  `.indique-debordement-x` (§12.6) ; une citation est une **note** — fond `--color-hover`, `--radius-sm`, rembourrage
+  12 px, liseré gauche de 3 px `--color-border`, sans icône ; un lien est souligné en `--color-brand`, un lien externe
+  annonce sa sortie du produit (§5.20).
+- **UNE IMAGE** est un bloc pleine largeur de la colonne, au plus sa taille naturelle, bordure `--color-border`,
+  `--radius-sm`, sur `--color-surface`, son texte alternatif obligatoire. Pendant son chargement, un squelette à sa
+  taille (le manifeste la connaît) ; indisponible, son texte alternatif dans le même cadre — jamais l'icône d'image
+  cassée du navigateur. Une image de page entière se réduit à la colonne ; un lien « Voir en taille réelle », annoncé
+  comme ouvrant un nouvel onglet, l'y ouvre depuis l'adresse locale déjà chargée — jamais par une seconde lecture.
+- **ÉTATS (§5.8)** : squelette du chapitre au premier chargement ; erreur avec « Réessayer » ; chapitre inconnu, l'état
+  « introuvable » avec le lien « Sommaire du manuel ».
+- **SOUS `md`**, la colonne prend toute la largeur moins la marge, les tableaux défilent dans leur conteneur, les liens
+  de pied passent l'un sous l'autre ; `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7), et la
+  preuve mesure le cadre du panneau et des images, pas seulement la page (§5.43, §5.47).
+- **Aucune couleur, aucun jeton nouveau.** Une icône Lucide nouvelle, `BookOpen`, qui ne sert aucun autre objet (§9).

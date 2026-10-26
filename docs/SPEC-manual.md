@@ -10,6 +10,14 @@ consigne, écart par écart, ce que le manuel affirmait et ce que le produit fai
 
 ---
 
+> **RÉVISÉE PAR `CRM-117`, le 2026-10-26 (`docs/JOURNAL.md` décisions 736 et 740).** Le manuel devient **le manuel
+> public du produit**, lu par les membres depuis la webapp. Les §1 à §8 ci-dessous restent l'histoire de `CRM-047` et
+> la source des commentaires `@spec` qui les citent, mais **trois de leurs règles tombent** et ne s'appliquent plus :
+> nommer l'unité qui portera un écran manquant (§3, point 2) ; renvoyer à un dossier `docs/captures/<unité>/` (§3,
+> point 4) ; l'annexe A et ses volumes du jeu de démonstration (§4). Le §2 cesse d'être un contrat de couverture **par
+> citation dans le manuel** : la correspondance entre unités et chapitres vit désormais dans cette spécification
+> (§12). Ce qui fait foi pour le manuel public est la **partie II** (§9 et suivants).
+
 ## 1. Objet
 
 `CRM-047` tient en une ligne dans le backlog — « `docs/manual.md` décrit le produit réellement
@@ -263,3 +271,277 @@ l'écart est écrit dans `docs/BACKLOG.md` plutôt que comblé par un test de fa
   chapitres pour les reformater sans rien apprendre au lecteur serait un remaniement gratuit, et
   chaque cellule satisfait déjà le contrat du §3.
 - **Aucune capture d'un écran connecté n'existe, ni ne peut exister.**
+
+---
+
+# Partie II — Le manuel public, joignable depuis la webapp (`CRM-117`)
+
+*Écrite le 2026-10-26, avant le code, sur les arbitrages du responsable (`docs/JOURNAL.md` décisions 736 et 740), après
+relecture intégrale de `docs/DESIGN_SYSTEM.md`. Les choix de forme qui reviennent à l'agent sont marqués « choix de
+l'agent » et repris au §18 pour relecture.*
+
+## 9. Objet et lecteur
+
+**Le constat.** Le manuel n'était joignable nulle part depuis la webapp, et il n'avait jamais été écrit pour un
+utilisateur : il cite des identifiants d'unité et des chemins du dépôt, décrit le jeu de démonstration et
+l'environnement de développement, et ne montre aucune image. `CLAUDE.md` §7 demandait l'inverse — une documentation
+« compréhensible sans lire le code », « dépourvue d'adresses internes ». C'est la partie I de ce document qui l'a
+détourné, en exigeant de citer unités et dossiers de captures (§3, points 2 et 4).
+
+**Le lecteur** est une personne membre d'un espace, connectée, qui veut savoir comment faire quelque chose dans le CRM.
+Elle ne connaît ni le dépôt, ni le backlog, ni l'architecture, ni le jeu de démonstration. Elle lit en français.
+
+**Ce que `CRM-117` livre** : un manuel unique, `docs/manual.md`, réécrit pour ce lecteur (§10) et illustré (§11) ; sa
+lecture dans la webapp, depuis l'en-tête (§13) ; une lecture réservée aux membres connectés, appliquée côté serveur
+(§14) ; une construction et des preuves rejouables (§15, §16).
+
+**Ce qu'il ne livre pas** : aucun second manuel, aucune traduction, aucune recherche dans le manuel, aucun accès par le
+connecteur MCP (§17), aucun manuel lisible sans session.
+
+## 10. Le contrat d'un chapitre public
+
+Un chapitre n'est conforme que s'il tient **les huit** points suivants. Ils remplacent le §3 de la partie I.
+
+1. **Il décrit ce que le produit fait**, vérifiable en ouvrant l'application. Les libellés cités entre guillemets
+   français sont les libellés **réels** de l'interface (`webapp/src/i18n/fr.ts`), au caractère près.
+2. **Il ne porte aucune référence interne.** Sont interdits dans `docs/manual.md`, et la preuve du §16 les cherche
+   mécaniquement :
+   - un identifiant d'unité, d'incohérence ou de décision (`CRM-…`, `INC-…`, « décision N », « tranche », `T1`…) ;
+   - un chemin ou un nom de fichier du dépôt (`docs/`, `scripts/`, `webapp/`, `supabase/`, `e2e/`, `mcp/`, `*.md`,
+     `*.ts`, `*.sql`…) ;
+   - un nom de table, de colonne, de fonction ou de code d'erreur de la base, un nom de variable d'environnement, une
+     commande de terminal ;
+   - toute mention du développement, du seed, du jeu de démonstration ou d'un environnement autre que celui du lecteur.
+3. **Il dit ce qui n'existe pas encore sans renvoyer au backlog** : « cet écran ne permet pas encore de … » suffit. Il
+   ne promet aucune date.
+4. **Il ne recopie aucun volume** : ni nombre d'affaires, ni nombre de membres d'un espace. Les nombres qui sont des
+   règles du produit — 25 lignes par page, 10 000 caractères, 30 jours de corbeille — restent, avec la même exigence
+   d'exactitude que les libellés.
+5. **Il illustre chaque élément d'interface qu'il cite** : §11.
+6. **Il est compréhensible sans lire le code, et ne porte aucun secret** — ni clé, ni valeur de variable, ni adresse
+   d'infrastructure (`CLAUDE.md` §7). Une adresse de la webapp se décrit par l'écran qu'elle ouvre, pas par son chemin.
+7. **Il a une adresse stable.** Un chapitre est un titre de niveau 2 ; ses sections, des titres de niveau 3. Leur
+   **identifiant** se déduit du titre : minuscules, accents retirés, tout ce qui n'est ni lettre ni chiffre devient un
+   tiret, et la numérotation de tête (« 5 bis. ») est retirée. Deux chapitres, ou deux sections d'un même chapitre, ne
+   portent jamais le même identifiant ; la construction le refuse (§15). *Choix de l'agent* : l'identifiant suit le
+   titre plutôt qu'une ancre écrite à la main, qui serait une syntaxe hors du Markdown standard ; renommer un titre
+   change son adresse, et la preuve du §16 le signale partout où l'ancien identifiant est employé.
+8. **Il se lit sans numérotation latine.** La numérotation « bis, ter, quater… » héritée des livraisons successives est
+   remplacée par une numérotation simple, chapitre par chapitre, à la réécriture.
+
+## 11. Les images
+
+**La règle du responsable** (décision 736) : « Si on réfère un champ, un bouton, une fenêtre, il faut l'image, et il
+faut toutes les maintenir. On découpe l'écran au strict minimum pour expliquer le passage du manuel. La pleine page
+est autorisée en début de chapitre. »
+
+### 11.1 Ce qu'une image montre
+
+- **Une image illustre une section** (titre de niveau 3), et se place dans cette section, au plus près du passage
+  qu'elle explique.
+- **Chaque élément d'interface cité par une section est visible dans au moins une image de cette section.** Un
+  « élément d'interface cité » est un libellé entre guillemets français qui est aussi une valeur de
+  `webapp/src/i18n/fr.ts` : un champ, un bouton, un onglet, un titre de fenêtre ou de bloc, un message. Une même image
+  montre souvent plusieurs éléments cités : c'est le cas normal d'un formulaire.
+- **La découpe est le strict minimum** : le rectangle qui englobe les éléments que le passage explique, avec une marge
+  de 16 px, jamais l'écran entier — sauf la **première image d'un chapitre**, qui peut montrer la page entière dans la
+  fenêtre de 1440 × 900 pour situer le lecteur.
+- **Le texte alternatif est obligatoire** et dit ce que l'image montre, pas son nom de fichier (« Le formulaire de
+  création d'un channel, avec le champ « Nom » et le choix de la couleur »).
+- **Format** : JPEG, qualité 85, à la densité 1 de la fenêtre de 1440 px, comme les captures de vérification
+  (`CLAUDE.md` §16). Rangement : `docs/manuel/images/<identifiant du chapitre>/<nom>.jpg`, référencé dans le Markdown
+  par un chemin relatif (`manuel/images/…`), si bien que le manuel se lit aussi avec ses images dans le dépôt.
+
+### 11.2 Comment elles sont produites et maintenues
+
+- **Un générateur, jamais une capture à la main.** Les images sont produites par des scénarios Playwright dédiés,
+  `e2e/manuel/*.spec.ts`, joués sur la pile de développement et le seed, connectés avec le profil qui convient au
+  passage. Une aide, `illustrer(page, { chapitre, section, nom, cibles, pleinePage })`, attend que chaque cible soit
+  visible, découpe le rectangle qui les englobe, écrit l'image, et inscrit dans un **manifeste**
+  (`docs/manuel/images/manifeste.json`) : l'image, sa largeur et sa hauteur, son chapitre, sa section, et les libellés
+  visibles qu'elle contient, relevés dans la page et non déclarés.
+- **Elles se renouvellent ensemble.** Toute unité qui change un écran décrit par le manuel rejoue les scénarios du
+  chapitre concerné et met à jour ses images dans le même changement (`CLAUDE.md` §7). La preuve du §16 rend visible
+  une image orpheline, une image citée qui n'existe pas, et un élément cité sans image.
+- **Les images sont observées** avant chaque commit qui les change (`CLAUDE.md` §16), comme toute capture.
+- **Une exception se déclare, elle ne se tait pas.** Un élément qu'aucun scénario ne peut faire paraître de façon
+  reproductible — une panne du réseau, par exemple — figure dans la table des exceptions du §11.3 avec son motif.
+  Le manuel le décrit alors en mots seulement. La table est relue par le responsable.
+
+### 11.3 Exceptions à la règle d'illustration
+
+| Élément cité | Chapitre | Motif |
+|---|---|---|
+| *(aucune à ce jour ; la table se remplit à la réécriture des chapitres, une ligne par exception, et chaque ligne est soumise au responsable)* | | |
+
+## 12. Correspondance entre unités et chapitres
+
+La partie I faisait porter au manuel la trace des unités. Elle vit ici, et seulement ici. **Une ligne par unité livrée
+qui a un effet visible pour le lecteur**, avec l'identifiant du chapitre et, le cas échéant, de la section. La table est
+établie à la réécriture (tranche T3 de `CRM-117`) et tenue ensuite par chaque unité, dans le même changement que son
+chapitre. La preuve du §16 vérifie que chaque identifiant de cette table existe dans le manuel.
+
+| Unité | Chapitre | Section |
+|---|---|---|
+| *(établie chapitre par chapitre à la réécriture)* | | |
+
+## 13. Le manuel dans la webapp
+
+### 13.1 Les adresses
+
+- **`/aide`** rend le **sommaire** : la liste des chapitres, chacun avec ses sections. **`/aide/:chapitre`** rend un
+  chapitre ; une section s'atteint par le fragment de l'adresse (`/aide/board#deplacer-une-affaire`). Les deux
+  adresses vivent dans la coquille ordinaire — barre latérale, en-tête, fil d'Ariane — et suivent sa règle : sans
+  session, elles mènent à l'écran de connexion, qui ramène à l'adresse demandée (`docs/DESIGN_SYSTEM.md` §5.12).
+  C'est une aide d'interface ; la règle d'accès, elle, est appliquée par le serveur (§14).
+- **Le fil d'Ariane** porte `Workspace / Aide` sur le sommaire, et `Workspace / Aide / <titre du chapitre>` sur un
+  chapitre (`docs/SPEC-webapp.md` §5.1 bis).
+- **L'adresse est en français** comme toutes les adresses de la webapp ; le contrat exposé par le serveur (§14) est en
+  anglais (`docs/DAT.md` §12 bis).
+- **Un chapitre inconnu** rend l'état « introuvable » de la coquille, avec un lien vers le sommaire.
+
+### 13.2 L'entrée « Aide » de l'en-tête (décision 740)
+
+- **Une icône dans l'en-tête, à côté de la cloche, qui ouvre un panneau.** Le panneau porte, dans cet ordre :
+  « Aide sur cet écran », lien vers le chapitre — ou la section — qui décrit l'écran courant, nommé par son titre ; puis
+  « Sommaire du manuel », lien vers `/aide`. Quand l'écran courant n'a pas de chapitre, la première ligne n'est pas
+  rendue : le panneau n'offre que le sommaire. Forme et comportement : `docs/DESIGN_SYSTEM.md` §5.69.
+- **La correspondance entre écran et chapitre vit en un seul endroit**, un module pur de la webapp
+  (`webapp/src/app/aide-ecrans.ts`) : à chaque motif d'adresse, l'identifiant du chapitre et, s'il y a lieu, de la
+  section. Le motif le plus précis l'emporte : la fiche d'une affaire avant le board de son channel. La preuve du §16
+  vérifie que chaque identifiant de ce module existe dans le manuel construit.
+
+### 13.3 Le rendu d'un chapitre
+
+- **Le chapitre arrive du serveur sous forme de blocs structurés**, jamais de HTML : titres, paragraphes, listes,
+  tableaux, citations, code en ligne, liens, images. La webapp rend chaque genre de bloc par un composant aux styles du
+  design system, et **n'injecte jamais de HTML** (`dangerouslySetInnerHTML` est proscrit sur cette surface). *Choix de
+  l'agent* : des blocs plutôt que du HTML assaini, pour que les styles du produit s'appliquent par composant et
+  qu'aucune balise venue d'un fichier ne puisse s'exécuter.
+- **Un lien vers un autre chapitre ou une section** est un lien de la webapp (`/aide/<chapitre>#<section>`), qui
+  navigue sans recharger. Un lien externe s'ouvre dans un nouvel onglet et l'annonce (`docs/DESIGN_SYSTEM.md` §5.20).
+- **Une image** est demandée au serveur avec la session du lecteur (§14), puis rendue avec son texte alternatif. Elle
+  est chargée à l'approche de l'écran, pas toutes à l'ouverture du chapitre.
+- **Le sommaire** est lu une fois par session de lecture et garde la page entière : il n'est pas relu à chaque
+  chapitre.
+
+### 13.4 Les états (`docs/DESIGN_SYSTEM.md` §5.8)
+
+Chargement : un squelette à la forme d'un chapitre. Erreur de lecture : le message et « Réessayer ». Chapitre inconnu :
+l'état « introuvable » et le lien vers le sommaire. Image indisponible : son texte alternatif à sa place, dans un cadre,
+et jamais une icône d'image cassée. Le sommaire n'a pas d'état vide : un manuel construit a toujours des chapitres, et
+la construction refuse un manuel sans chapitre (§15).
+
+## 14. L'accès réservé aux membres connectés
+
+**La règle** (décision 736) : seul un membre connecté lit le manuel — son texte et ses images. C'est une règle
+d'accès ; elle s'applique côté serveur (`CLAUDE.md` §10). Un manuel compilé dans le paquet de la webapp, ou servi en
+fichier statique par le relais, serait lisible sans session : le contenu n'y est donc **pas**.
+
+### 14.1 La fonction edge `manual`
+
+Le manuel construit (§15) est servi par une fonction edge nouvelle, `manual`, qui lit le contenu en lecture seule et
+**n'en rend rien sans session valide**.
+
+| Requête | Réponse |
+|---|---|
+| `GET /functions/v1/manual/contents` | le sommaire : `{ "chapters": [{ "slug", "title", "sections": [{ "anchor", "title" }] }] }` |
+| `GET /functions/v1/manual/chapters/<slug>` | un chapitre : `{ "slug", "title", "blocks": [...] }` |
+| `GET /functions/v1/manual/images/<chapitre>/<nom>.jpg` | l'image, `image/jpeg` |
+
+- **Sans en-tête `Authorization`, ou avec un jeton refusé** : `401`, `{ "error": "session_required" }`, et rien
+  d'autre — ni titre, ni nombre de chapitres.
+- **Un chapitre ou une image inconnus** : `404`, `{ "error": "not_found" }`. Un segment hors de la forme
+  `[a-z0-9-]+` (et `[a-z0-9-]+\.jpg` pour une image) est un `404` sans lecture du disque : aucune traversée de
+  chemin n'est possible.
+- **Une autre méthode que `GET`** : `405`.
+- **En-têtes** : `Cache-Control: private, max-age=300` — un relais partagé ne garde rien —, et l'identifiant de
+  requête du routeur des fonctions.
+
+### 14.2 Comment la fonction reconnaît une session
+
+Parmi les fonctions edge, `JWT_SECRET` n'atteint que `session`, et c'est voulu (`docs/SPEC-edge-functions.md` §2,
+« l'environnement est remis par fonction », décisions 584 et 586) : `manual` ne reçoit **aucun secret nouveau**,
+seulement l'environnement commun des fonctions. Elle présente le jeton reçu à la base, comme la fonction `ia` le fait pour ses
+lectures : un appel à une fonction SQL nouvelle, **`public.can_read_manual()`**, avec la clé anonyme et le jeton de
+l'appelant.
+
+- `public.can_read_manual()` rend `true` pour un jeton accepté par PostgREST ; elle n'est exécutable que par le rôle
+  `authenticated` (`revoke all … from public, anon`). Un appel anonyme, un jeton expiré ou un jeton forgé reçoivent
+  un refus de PostgREST, que la fonction traduit en `401`.
+- **Une session suffit** : un jeton interne n'est émis qu'à une personne admise (`docs/DAT.md` §4.1), donc membre d'un
+  espace ou administratrice LeLabs. La lecture du manuel ne dépend d'aucun espace ni d'aucun rôle.
+- **La migration** porte cette fonction au prochain numéro libre (`docs/SCHEMA.md`), et le contrat de déploiement son
+  application.
+
+### 14.3 Ce que la webapp en fait
+
+La webapp appelle la fonction avec la session courante — le client de la base joint le jeton, comme pour toute
+lecture. Une image ne peut pas porter d'en-tête dans un `<img src>` : elle est donc lue par la même voie, puis rendue
+depuis une adresse locale au navigateur (`URL.createObjectURL`), libérée quand l'image quitte l'écran. Un `401` mène,
+comme partout, à la reprise de session de la coquille (`docs/SPEC-session-sso.md`).
+
+## 15. La construction
+
+- **Source unique** : `docs/manual.md` et `docs/manuel/images/`. Rien d'autre n'est rédigé.
+- **Un script de construction**, `scripts/manuel/construire.mjs` (`npm run manuel:construire`), lit la source, la
+  découpe en chapitres (titres de niveau 2) et en sections (niveau 3), calcule les identifiants (§10, point 7), et
+  écrit le **manuel construit** dans `docs/manuel/construit/` : `contents.json` et un `chapters/<slug>.json` par
+  chapitre, au format du §14.1. Un bloc d'image porte sa largeur et sa hauteur, lues dans le manifeste, pour que la
+  page réserve sa place avant de la charger. Les images ne sont pas copiées : la fonction les lit dans
+  `docs/manuel/images/`.
+- **Le manuel construit est versionné**, et `npm run manuel:verifier` échoue s'il diffère de ce que la source
+  produirait : la même discipline que la vérification des types engendrés (`npm run types:check`). *Choix de
+  l'agent* : versionner le construit évite une étape de construction sur l'hôte de production, où les fonctions sont
+  montées depuis le dépôt.
+- **La construction refuse**, avec un message qui nomme la ligne : du HTML brut dans la source ; une image référencée
+  absente du disque ou du manifeste ; deux identifiants identiques ; un lien interne vers un identifiant qui n'existe pas ; un manuel sans
+  chapitre.
+- **La conversion du Markdown en blocs** emploie une bibliothèque d'analyse plutôt qu'un analyseur écrit ici. *Choix de
+  l'agent, à confirmer par la mesure à l'installation* (`CLAUDE.md` §19) : `marked`, en dépendance de développement
+  seulement — elle ne sert qu'à la construction et n'entre ni dans le paquet de la webapp, ni dans la fonction. Licence,
+  maintenance, vulnérabilités et version épinglée sont mesurées et consignées dans `docs/DAT.md` §15 avant son ajout.
+- **Le montage** : le conteneur des fonctions reçoit `docs/manuel/` en lecture seule, à côté de `supabase/functions/`,
+  dans les deux assemblages de développement et de production. C'est une opération de déploiement
+  (`docs/PROD_MIGRATIONS.md`).
+
+## 16. Les preuves
+
+- **Base (pgTAP)** : `public.can_read_manual()` existe, rend `true` au rôle `authenticated`, est refusée à `anon` et à
+  `public` par le privilège.
+- **Fonction (unitaires)** : routage des trois requêtes, refus sans en-tête, traduction d'un refus de PostgREST en
+  `401`, `404` sur un segment hors de forme sans lecture du disque, `405`, en-têtes de cache.
+- **API, par requête directe** (`CLAUDE.md` §10) : sans jeton, `401` sur le sommaire, un chapitre et une image ; avec un
+  jeton forgé, `401` ; avec la session réelle d'une lectrice, d'un business developer et d'une administratrice, `200` ;
+  un segment de traversée (`..`, encodé ou non), `404`.
+- **Construction** : `manuel:verifier` vert sur le dépôt ; des sources dégradées sur une copie font échouer chacun des
+  cinq refus du §15.
+- **Manuel** (`scripts/verify-manual.sh`, révisé) : aucune référence interne (§10, point 2), recherchée par motifs ;
+  chaque libellé cité existe dans `webapp/src/i18n/fr.ts` ou est une donnée déclarée ; chaque élément cité est visible
+  dans une image de sa section, d'après le manifeste, hors exceptions du §11.3 ; aucune image orpheline, aucune image
+  absente, aucune image sans texte alternatif ; une image pleine page n'est que la première de son chapitre ; chaque
+  identifiant du §12 et de `aide-ecrans.ts` existe ; aucun secret. Sa contre-épreuve dégrade une copie, une famille à
+  la fois, et exige au moins une anomalie par famille.
+- **Webapp (unitaires)** : rendu de chaque genre de bloc, liens internes et externes, image chargée et libérée,
+  correspondance écran → chapitre, panneau d'aide.
+- **E2E** : depuis un écran, le panneau d'aide mène au bon chapitre, au clavier et à la souris ; le sommaire mène à
+  chaque chapitre ; une image s'affiche ; un chapitre inconnu ; les quatre paliers, cadre du panneau mesuré ; sans
+  session, `/aide` mène à la connexion puis revient.
+- **Vérification visuelle** des écrans de l'aide et des images du manuel (`CLAUDE.md` §16).
+
+## 17. Connecteur MCP
+
+**Non** (décision 736). Le manuel ne s'expose pas au connecteur ; la seconde question — la famille de la matrice — ne
+se pose donc pas.
+
+## 18. Choix de l'agent, à relire par le responsable
+
+1. L'identifiant d'un chapitre et d'une section se déduit de son titre (§10, point 7).
+2. Le chapitre est servi en blocs structurés, rendus par des composants, et non en HTML (§13.3).
+3. Le manuel construit est versionné, et vérifié contre sa source (§15).
+4. `marked` pour analyser le Markdown, en dépendance de développement, sous réserve de la mesure du `CLAUDE.md` §19
+   (§15).
+5. La session est reconnue par une fonction SQL `public.can_read_manual()`, sans donner de secret à la fonction
+   `manual` (§14.2).
+6. L'icône de l'aide est `BookOpen` (`docs/DESIGN_SYSTEM.md` §5.69) : `CircleHelp` désigne déjà une étape non vérifiable
+   du guide de démarrage, et le §9 du design system interdit qu'une icône serve deux objets.
