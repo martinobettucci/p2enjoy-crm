@@ -1065,7 +1065,7 @@ voie.
 
 **Écriture fermée à TOUT LE MONDE**, comme `mail_outbox` et pour la même raison. Une seule politique,
 de **lecture** — `app.can_read_card(card_id)`. Les trois portes sont
-`public.armer_sequence_relance(uuid, uuid, uuid)` (huit refus), `public.interrompre_sequence_relance(uuid)`
+`public.armer_sequence_relance(uuid, uuid, uuid)` (huit refus ; par rattachement — `p_placement` — depuis `CRM-111` T2.3.5, migration `0119`), `public.interrompre_sequence_relance(uuid)`
 (idempotente) et `app.executer_sequences_relance()`, le job quotidien `p2enjoy-sequences-relance`.
 
 **`app.mail_outbox_inserer`** est, depuis cette migration, la **seule ligne d'insertion** dans
@@ -2276,6 +2276,15 @@ rattachement, plus `already_attached` après `same_channel` ; les réponses supp
 (`card_field_values.placement_id`), avant l'écriture ; channel, workflow, étape et position s'écrivent sur
 `card_placements` en une instruction, et le miroir les reporte sur `cards`. **Retrait** : supprimer la fonction et
 réappliquer celle de la migration `0017`, avec les appelants d'avant.
+
+### Migration `0119` — armer une cadence sur un rattachement (`CRM-111` T2.3.5, décision 705 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-rattachements.md` §5, §7 ; `docs/SPEC-modeles-emails.md` §12.4, §12.9. `armer_sequence_relance(p_placement
+uuid, p_sequence_id uuid, p_identity_id uuid)` remplace la forme par affaire, **supprimée** (décision 661) ; mêmes huit
+refus, l'écriture, le figement et l'unicité jugés sur le rattachement ; l'inscription porte `placement_id`. L'index
+`card_sequence_enrollments_active_unique` passe de `card_id` à `placement_id` (une cadence active par rattachement).
+`app.executer_sequences_relance` juge l'inéligibilité par le rattachement inscrit. **Retrait** : supprimer la fonction,
+réappliquer celle de la migration `0060`, l'index sur `card_id` et l'exécuteur de la `0060`, avec la webapp d'avant.
 
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 

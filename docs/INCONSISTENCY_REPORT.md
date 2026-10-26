@@ -8063,3 +8063,18 @@ contrôle. Corrigé pour ce cas en `mr-[6px]`, forme que le §5.29 prescrit, et 
 **Non corrigé dans le script**, hors du périmètre de `CRM-116`. **Issue proposée** : lire les morceaux littéraux d'un
 gabarit interpolé — le texte entre deux `${…}` —, ce que les autres formes du script font déjà. À arbitrer par le
 responsable.
+
+### INC-315 — « Le rattachement donne son responsable comme expéditeur par défaut » : aucune forme n'est arrêtée
+
+*Relevé le 2026-10-26 par la session de `CRM-111` (T2.3.5), en remplaçant la signature d'`armer_sequence_relance`.*
+**Règle écrite** : `docs/SPEC-rattachements.md` §7 et la décision 657 (arbitrage 2) — une cadence s'inscrit à un
+rattachement, « qui donne son responsable (expéditeur par défaut) ». **Constat** : le §5 de la même spécification garde
+`p_identity_id` **exigé** ; aucun mécanisme d'expéditeur par défaut n'existe aujourd'hui (l'écran propose une liste qui
+commence vide) ; et une identité ne s'emprunte que par son propriétaire, ou, pour l'identité de service, par un
+administrateur (`docs/SPEC-modeles-emails.md` §12.4 refus e). Le responsable du rattachement n'est pas toujours
+l'appelant : « son responsable comme expéditeur » n'est donc pas toujours empruntable. **Lectures possibles** : (1) à
+l'écran, présélectionner l'identité du responsable quand l'appelant l'est, sinon rien ; (2) en base, `p_identity_id`
+facultatif, l'identité du responsable par défaut, refusée par (e) si l'appelant ne peut pas l'emprunter ; (3) l'identité
+du responsable reste celle des envois, l'armement ne choisissant plus d'identité — ce qui contredit le refus (e).
+**Comportement laissé inchangé** : T2.3.5 livre la signature par rattachement, l'identité reste exigée. **Arbitrage
+demandé au responsable.** **Statut : ouverte.**

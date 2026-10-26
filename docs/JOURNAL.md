@@ -35338,7 +35338,24 @@ nouvelle signature, un rejeu qui échoue en cours de fichier, ou qui ramène la 
 §3.7 : les fonctions se dégradent depuis leur définition en base, l'index se retire puis se restaure depuis sa définition
 lue à l'entrée (`pg_get_indexdef`), à l'octet près, et c'est constaté.
 
-**Vérifications** : PREUVES
+**Un défaut de la tranche, trouvé par la campagne d'interface et corrigé à sa cause.** La fiche calculait le rattachement
+au RENDU (`idRattachement(card)`) pour le passer au bloc d'armement. Plusieurs specs d'interface servent une affaire
+factice sans `card_placements` ; la fiche entière tombait (`pageerror: e.card_placements is not iterable`) — 53 scénarios
+rouges sur 961 (`timeline`, `formulaire`, `commentaires`, `activites`, `manuel`, `administration-workflows`). Le rendu
+n'a pas besoin du rattachement : le bloc reçoit les rattachements de l'affaire et le calcule AU GESTE, comme l'en-tête
+pour le sommeil depuis T2.3.1. Les 53 scénarios, rejoués, passent.
+
+**Vérifications** : migration appliquée par le runner ; pgTAP **103 fichiers, 4262 assertions, aucune anomalie** ;
+unitaires **4504/4504** ; `typecheck`, `types:check` à l'octet ; API `armement-sequences`, `move-card*`, `rattachements-*`
+**73/73** ; interface `armement-sequence` **6/6**, capture du bloc armé observée, puis la campagne complète : 908/961, et
+les 53 rouges du défaut ci-dessus rejoués verts après correction ; `verify-armement-sequences.sh` **53 contrôles, aucune
+anomalie** (dégradations depuis la base, index restauré à l'octet près). **Les harnais de T2.3.4** :
+`verify-move-card-to-channel.sh` **56 contrôles, aucune anomalie**, reconstruction comprise ; `verify-timeline.sh` 79
+contrôles dont 3 rouges, aucun de la tranche — `ingestion.spec.ts:91` (`CRM-058`), la campagne d'interface (le défaut de
+T2.3.5 ci-dessus, corrigé) et le seed de la reconstruction (INC-312) ; ses dégradations et sa restauration, constatées,
+sont vertes. **`verify-transition-required-fields.sh` n'aboutit toujours pas** (T2.3.3) : une reconstruction est morte sur
+une connexion du seed (famille d'INC-311), la suivante sur la vérification de corbeille que le seed de `CRM-077`, en
+cours dans l'arbre partagé, exige avant sa migration ; ses sections 1 à 6 parcourues sont vertes.
 
 
 ### décision 733 — Livraison : toujours rien, après la clôture de `CRM-072`

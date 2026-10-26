@@ -7,6 +7,8 @@
 // @verifies CLAUDE.md §16 (vérification visuelle)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'écran arme le rattachement de l'affaire, et le refus d'une
+//           cadence déjà armée reste traduit (docs/SPEC-rattachements.md §5, §7)
 //
 // TOUTE INSCRIPTION ARMÉE EST REFERMÉE, ET C'EST UNE EXIGENCE DE SÛRETÉ, pas de style. Le §12.12
 // l'écrit : une inscription active est exécutée par le job DIX SECONDES après le démarrage de la
@@ -25,6 +27,7 @@ import {
 	type Page,
 } from './fixtures'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
+import { corpsParRattachement } from '../api/rattachements'
 import { PALIERS, capturer } from './captures'
 
 const UNITE = 'CRM-063'
@@ -255,11 +258,12 @@ test.describe('armer une relance depuis l’affaire (docs/SPEC-modeles-emails.md
 		expect(cadence, 'la séquence du seed').toBeDefined()
 		await page.request.post(`${URL_API}/rest/v1/rpc/armer_sequence_relance`, {
 			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
-			data: {
-				p_card_id: AFFAIRE_FIGEE.id,
-				p_sequence_id: cadence!.id,
-				p_identity_id: service!.id,
-			},
+			// `CRM-111` T2.3.5 : l'armement désigne le rattachement de l'affaire.
+			data: await corpsParRattachement(
+				page.request,
+				{ p_card_id: AFFAIRE_FIGEE.id, p_sequence_id: cadence!.id, p_identity_id: service!.id },
+				'p_card_id',
+			),
 		})
 
 		await bloc.getByTestId('champ-sequence').selectOption({ label: SEQUENCE_SEED })

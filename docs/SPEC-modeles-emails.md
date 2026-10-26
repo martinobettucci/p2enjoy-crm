@@ -1589,6 +1589,12 @@ modifié.
 
 ### 12.4 `public.armer_sequence_relance` — le geste, et ses huit refus
 
+**Révisée par `CRM-111` T2.3.5** (migration `0119`, décision 661, docs/SPEC-rattachements.md §5, §7) : la signature est
+`armer_sequence_relance(p_placement uuid, p_sequence_id uuid, p_identity_id uuid)` — elle désigne le **rattachement** ;
+la forme par affaire est supprimée. Les huit refus, leur ordre et leurs messages sont inchangés ; (b), (f) et (h) portent
+sur le rattachement, (g) sur l'adresse de l'affaire. L'inscription porte `placement_id`, et l'unicité de l'inscription
+active est **par rattachement**. Ce qui suit vaut, « affaire » se lisant « rattachement » pour ces trois refus.
+
 ```
 public.armer_sequence_relance(p_card_id uuid, p_sequence_id uuid, p_identity_id uuid) returns uuid
 ```
@@ -1778,6 +1784,9 @@ les clés déclarées en ligne, transposée : **ce qui est écrit deux fois dive
 automatique n'a pas d'auteur humain. C'est le §9.5 de `docs/SPEC-relances.md`, mot pour mot.
 
 ### 12.9 `app.executer_sequences_relance()` — le job
+
+**Révisée par `CRM-111` T2.3.5** : la fermeture `card_ineligible` juge le rattachement inscrit — sa ligne de
+`cards_figees()` —, et non plus l'affaire (docs/SPEC-rattachements.md §6, §7).
 
 | Propriété | Valeur | Motif |
 |---|---|---|

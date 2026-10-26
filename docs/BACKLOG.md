@@ -16634,17 +16634,19 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           1211/1213 (deux rouges étrangers), interface verte rejouée ; sections propres des harnais vertes.
           **Reste** : rejouer `verify-transition-required-fields.sh` en entier — ses sections 1 à 3 sont vertes, la suite
           meurt dans le seed de reconstruction (INC-312, étrangère à la tranche).
-        - [~] **T2.3.4 — changer de channel** : `move_card_to_channel(p_placement, …)`. *Livrée en développement le
+        - [x] **T2.3.4 — changer de channel** : `move_card_to_channel(p_placement, …)`. *Livrée en développement le
           2026-10-26* — migration `0117` ; garde nouvelle `already_attached` (décision 731), prouvée en pgTAP l'index de
           la bascule retiré ; connecteur, seed, `move-card-to-channel.spec.ts`, pgTAP `0019` (71) et `0097`, types ;
           `verify-move-card-to-channel.sh` et `verify-timeline.sh` ne rejouent plus de migration ancienne. pgTAP 102 fichiers sans
-          anomalie, API 72/72, connecteur (unitaires, intégration réelle, interface 8/8). **Reste** : faire tourner ces
-          deux harnais, qui reconstruisent la base (session de `CRM-072` en campagne).
+          anomalie, API 72/72, connecteur (unitaires, intégration réelle, interface 8/8) ; `verify-move-card-to-channel.sh`
+          56/56 ; `verify-timeline.sh` 76/79, ses trois rouges étrangers à la tranche (`ingestion.spec.ts:91`, un défaut
+          de T2.3.5 corrigé, le seed de reconstruction d'INC-312).
         - [~] **T2.3.5 — les cadences** : `armer_sequence_relance(p_placement, …)`. *Livrée en développement le
           2026-10-26* — migration `0119` ; une cadence active par rattachement (index sur `placement_id`) ; l'exécuteur
           juge l'inéligibilité par rattachement ; fiche, specs d'API et d'interface, pgTAP `0058` (49) et `0098`, types ;
           `verify-armement-sequences.sh` ne rejoue plus la `0060`. L'expéditeur par défaut du §7 : INC-315, non livré.
-          PREUVES
+          pgTAP 103 fichiers sans anomalie, unitaires 4504/4504, API 73/73, interface verte (53 scénarios rouges d'un
+          défaut de la fiche, corrigé et rejoués), `verify-armement-sequences.sh` 53/53. **Reste** : l'arbitrage d'INC-315.
         - [ ] **T2.3.6 — les valeurs de bloc** : clé `(placement_id, field_id)`, `NOT NULL`, écriture de la webapp par
           rattachement.
         - [ ] **T2.3.7 — la création et les remappages** : `creer_affaire` écrit le rattachement elle-même (la création

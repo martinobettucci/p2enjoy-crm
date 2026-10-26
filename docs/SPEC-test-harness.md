@@ -319,7 +319,7 @@ dégrader ou pour restaurer. Appliqué par T2.3.3 à `verify-move-card.sh`, `ver
 `verify-transition-required-fields.sh`, `verify-colonnes-protegees.sh` et `verify-copie-workflow.sh` ; par T2.3.4 à
 `verify-move-card-to-channel.sh` et `verify-timeline.sh`, qui restauraient en rejouant les migrations 16, 17 et 20 — la 17
 rejouée supprimait `move_card_to_channel` par rattachement, de mêmes types d'arguments, pour remettre la forme par
-affaire. Les autres harnais d'INC-304 sont l'objet de `CRM-111` T1 ter.
+affaire ; par T2.3.5 à `verify-armement-sequences.sh`, qui dégradait en rejouant la `0060` entière. Un objet **isolé** — un index, un déclencheur — peut aussi se restaurer depuis sa définition lue en base (`pg_get_indexdef`, `pg_get_triggerdef`), à l'octet près et constaté, quand rien d'autre n'a été touché. Les autres harnais d'INC-304 sont l'objet de `CRM-111` T1 ter.
 
 ## 4. Projets Playwright
 

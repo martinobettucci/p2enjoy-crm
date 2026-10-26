@@ -5,6 +5,8 @@
 //           §12.7 (les quatre fins), §12.10 (autorisations), §12.12 (le seed n'arme rien)
 // @verifies docs/SPEC-permissions-rls.md §7 (le refus est ZÉRO LIGNE, jamais une erreur)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement désigne le rattachement de l'affaire ; les scénarios
+//           nomment l'affaire, `corpsParRattachement` transmet son rattachement (docs/SPEC-rattachements.md §5, §7)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. `supabase/tests/0058_armement_sequences.test.sql`
 // prouve la règle EN BASE, sous des rôles endossés. Rien n'y garantit que la pile la rende par la
@@ -32,6 +34,7 @@
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { corpsParRattachement } from './rattachements'
 
 const INSCRIPTIONS = '/rest/v1/card_sequence_enrollments'
 const SEQUENCES = '/rest/v1/mail_sequences'
@@ -157,7 +160,11 @@ async function avecInscription(
 ): Promise<void> {
 	const armement = await requete.post(RPC_ARMER, {
 		headers: enTetesAuthentifies(jetonAdmin),
-		data: { p_card_id: cardId, p_sequence_id: SEQUENCE_SEED, p_identity_id: identiteService },
+		data: await corpsParRattachement(
+			requete,
+			{ p_card_id: cardId, p_sequence_id: SEQUENCE_SEED, p_identity_id: identiteService },
+			'p_card_id',
+		),
 	})
 	expect(armement.status(), `armement de ${cardId}`).toBe(200)
 	const inscriptionId = (await armement.json()) as string
@@ -264,11 +271,11 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 			// classe en `409` : c'est ce code que l'écran de 4c devra reconnaître.
 			const second = await request.post(RPC_ARMER, {
 				headers: enTetesAuthentifies(jetonAdmin),
-				data: {
+				data: await corpsParRattachement(request, {
 					p_card_id: CARD_FIGEE,
 					p_sequence_id: SEQUENCE_SEED,
 					p_identity_id: identiteService,
-				},
+				}, 'p_card_id'),
 			})
 			expect(second.status(), 'un SECOND armement sur la même affaire').toBe(409)
 			expect((await second.json()).message).toBe('enrollment_exists')
@@ -306,11 +313,11 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 
 		const reponse = await request.post(RPC_ARMER, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: {
+			data: await corpsParRattachement(request, {
 				p_card_id: nonFigee!.id,
 				p_sequence_id: SEQUENCE_SEED,
 				p_identity_id: identiteService,
-			},
+			}, 'p_card_id'),
 		})
 		expect(reponse.status()).toBe(400)
 		expect((await reponse.json()).message).toBe('card_not_stalled')
@@ -324,11 +331,11 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 		// administratrice — jamais celle d'un tiers.
 		const reponse = await request.post(RPC_ARMER, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: {
+			data: await corpsParRattachement(request, {
 				p_card_id: CARD_FIGEE,
 				p_sequence_id: SEQUENCE_SEED,
 				p_identity_id: identiteDriss,
-			},
+			}, 'p_card_id'),
 		})
 		expect(reponse.status()).toBe(403)
 		expect((await reponse.json()).message).toBe('identity_not_available')
@@ -337,11 +344,11 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 	test('11 — le `viewer` n’arme pas une affaire qu’il ne peut pas écrire', async ({ request }) => {
 		const reponse = await request.post(RPC_ARMER, {
 			headers: enTetesAuthentifies(jetonViewer),
-			data: {
+			data: await corpsParRattachement(request, {
 				p_card_id: CARD_FERMEE_AU_VIEWER,
 				p_sequence_id: SEQUENCE_SEED,
 				p_identity_id: identiteService,
-			},
+			}, 'p_card_id'),
 		})
 		expect(reponse.status()).toBe(403)
 		// `forbidden` OU `identity_not_available` selon lequel des deux refus tombe le premier : le
@@ -355,11 +362,11 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 	test('12 — l’anonyme n’arme rien, et c’est le PRIVILÈGE qui refuse', async ({ request }) => {
 		const reponse = await request.post(RPC_ARMER, {
 			headers: enTetesAnonymes(),
-			data: {
+			data: await corpsParRattachement(request, {
 				p_card_id: CARD_FIGEE,
 				p_sequence_id: SEQUENCE_SEED,
 				p_identity_id: identiteService,
-			},
+			}, 'p_card_id'),
 		})
 		// MESURÉ, et le §12.4 de la spécification le dit : le refus `not_authenticated` NE protège
 		// PAS ce chemin — la fonction est révoquée de `public` et d'`anon`, si bien que le privilège
@@ -376,11 +383,11 @@ test.describe("l'armement des séquences, par la vraie route (docs/SPEC-modeles-
 	test('13, 14 — l’interruption ferme, et elle est IDEMPOTENTE', async ({ request }) => {
 		const armement = await request.post(RPC_ARMER, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			data: {
+			data: await corpsParRattachement(request, {
 				p_card_id: CARD_FIGEE_AUTRE,
 				p_sequence_id: SEQUENCE_SEED,
 				p_identity_id: identiteService,
-			},
+			}, 'p_card_id'),
 		})
 		expect(armement.status()).toBe(200)
 		const inscriptionId = (await armement.json()) as string

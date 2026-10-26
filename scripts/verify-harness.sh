@@ -743,7 +743,10 @@ FICHIERS_SQL_ATTENDUS=103
 # `0097` révisée sans changer de plan. 4230 + 4 = 4234.
 # **+26 par `CRM-072` T3, 2026-10-26** : `0113_rgpd_contact` **26** assertions (les gardes, l'export, l'anonymisation,
 # le contact figé mais supprimable, le journal sans nom). 4234 + 26 = 4260, MESURÉ.
-ASSERTIONS_ATTENDUES=4260
+# **+2 par `CRM-111` T2.3.5, 2026-10-26** : `0058_armement_sequences` passe de 47 à **49** — l'index d'inscription active
+# porte `placement_id`, et l'inscription armée porte le rattachement désigné ; `0098` révisée sans changer de plan.
+# 4260 + 2 = 4262.
+ASSERTIONS_ATTENDUES=4262
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

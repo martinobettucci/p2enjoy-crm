@@ -367,11 +367,14 @@ function ContenuCard({
 				    Le bloc vit ENTRE les coûts et le bloc de corbeille, pour la raison qui a déjà placé
 				    les contacts et les coûts là : la colonne DROITE raconte et n'accueille aucun geste,
 				    et le retrait reste EN BAS. Armer une cadence est un geste SUR l'affaire, non un
-				    réglage — `armer_sequence_relance` prend `p_card_id` et exige que l'affaire soit
-				    figée (§13.1 question 3).
+				    réglage — `armer_sequence_relance` prend le RATTACHEMENT de l'affaire (`CRM-111` T2.3.5)
+				    et exige qu'il soit figé (§13.1 question 3).
 				    L'ÉCRAN NE CALCULE PAS SI L'AFFAIRE EST FIGÉE : `public.cards_figees()` porte cette
 				    définition une seule fois, et le refus `card_not_stalled` est TRADUIT. */}
-				<BlocSequenceCard idCard={etat.donnees.card.id} />
+				<BlocSequenceCard
+					idCard={etat.donnees.card.id}
+					rattachements={etat.donnees.card}
+				/>
 				{/* LE GESTE EST EN BAS DE LA COLONNE GAUCHE (docs/DESIGN_SYSTEM.md §5.3) : la colonne
 				    droite RACONTE ce qui est arrivé à l'affaire, et un geste qui agit n'appartient pas
 				    au récit. En bas, parce qu'un retrait n'est pas ce qu'on vient faire sur une fiche. */}

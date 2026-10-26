@@ -159,8 +159,8 @@ select is(
 	null::uuid,
 	'la création de l''affaire n''en désigne aucun');
 
--- 3.3 Une inscription à une cadence, écrite SANS rattachement comme l'écrit encore `armer_sequence_relance` (sa
---     signature change en T2.3) : le rattachement est posé. Le seed n'arme aucune cadence ; la ligne est écrite en
+-- 3.3 Une inscription à une cadence, écrite SANS rattachement — comme l'écrivait `armer_sequence_relance` avant
+--     `CRM-111` T2.3.5, qui le nomme désormais : le déclencheur de remplissage reste le filet, et le rattachement est posé. Le seed n'arme aucune cadence ; la ligne est écrite en
 --     propriétaire, la table étant fermée à tout client.
 insert into public.card_sequence_enrollments (card_id, workspace_id, sequence_id, identity_id)
 select '5eed0000-0000-4000-8000-0000000000c2', s.workspace_id, s.id, i.id

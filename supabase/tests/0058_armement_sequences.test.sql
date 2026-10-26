@@ -1,5 +1,7 @@
 -- @verifies CRM-063 (docs/BACKLOG.md) — modèles d'emails, signatures, séquences de relance,
 -- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : l'assertion n° 45 bornée aux affaires inscrites (docs/SPEC-seed.md §2.19 ter)
+-- @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement désigne le RATTACHEMENT, l'inscription le porte, et
+--           l'unicité de l'inscription active est par rattachement (docs/SPEC-rattachements.md §5, §7)
 --           TRANCHE 4, SOUS-TRANCHE 4b : l'armement et l'exécution
 -- @verifies docs/SPEC-modeles-emails.md §12.2 (qui arme, et l'unicité de l'inscription active),
 --           §12.3 (`card_sequence_enrollments` — colonnes, contraintes, clés étrangères),
@@ -42,7 +44,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(47);
+select plan(49);
 
 create or replace function pg_temp.endosser(utilisateur uuid)
 returns void language plpgsql as $$
@@ -129,6 +131,15 @@ select is(
 	  where indexrelid = 'public.card_sequence_enrollments_active_unique'::regclass),
 	true,
 	'7. Il est bien PARTIEL — l''histoire d''une affaire peut compter plusieurs inscriptions fermées');
+
+-- `CRM-111` T2.3.5 : UNE inscription active par RATTACHEMENT (docs/SPEC-rattachements.md §7) — l'index garde son nom et
+-- porte `placement_id`. Une affaire rattachée à deux channels pourra avoir une cadence dans chacun.
+select is(
+	(select a.attname::text from pg_index x
+	   join pg_attribute a on a.attrelid = x.indrelid and a.attnum = x.indkey[0]
+	  where x.indexrelid = 'public.card_sequence_enrollments_active_unique'::regclass),
+	'placement_id',
+	'7 bis. L''unicité porte sur le RATTACHEMENT, plus sur l''affaire (`CRM-111` T2.3.5)');
 
 -- =============================================================================================
 -- 2. Les privilèges — l'écriture directe est fermée à TOUT LE MONDE — §12.10
@@ -227,7 +238,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 -- (e) `identity_not_available` — l'identité doit être empruntable
 select throws_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-0000000000c4'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     '00000000-0000-4000-8000-000000000000'::uuid) $$,
 	'42501',
@@ -237,7 +248,7 @@ select throws_ok(
 -- (c) `sequence_not_available` — la séquence doit exister dans le workspace de l'identité
 select throws_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-0000000000c4'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     '00000000-0000-4000-8000-000000000000'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'23514',
@@ -247,7 +258,7 @@ select throws_ok(
 -- (d) `sequence_empty` — une cadence sans palier n'enverrait jamais rien
 select throws_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-0000000000c4'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     'd0000000-0000-4000-8000-0000000000b2'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'23514',
@@ -258,15 +269,21 @@ select throws_ok(
 -- C'est ce témoin qui établit que le refus 19 tient à la cadence et non à autre chose.
 select lives_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-0000000000c4'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'21. TÉMOIN de (d) — la MÊME affaire, avec une cadence GARNIE : l''armement passe');
 
--- (h) `enrollment_exists` — UNE seule inscription active par affaire
+select is(
+	(select e.placement_id from public.card_sequence_enrollments e
+	  where e.card_id = '5eed0000-0000-4000-8000-0000000000c4' and e.status = 'active'),
+	app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
+	'21 bis. L''inscription porte le rattachement DÉSIGNÉ par l''armement (`CRM-111` T2.3.5)');
+
+-- (h) `enrollment_exists` — UNE seule inscription active par rattachement (par affaire tant qu'elle n'en a qu'un)
 select throws_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-0000000000c4'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'23505',
@@ -277,7 +294,7 @@ select throws_ok(
 -- jamais globale.
 select lives_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-0000000000cf'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000cf'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'23. TÉMOIN de (h) — une AUTRE affaire figée s''arme : l''unicité est par affaire');
@@ -296,7 +313,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-00000000d010'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-00000000d010'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'23514',
@@ -310,7 +327,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-00000000d010'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-00000000d010'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'26. TÉMOIN de (f) — la MÊME affaire, vieillie de 90 jours, s''arme : le refus tenait au gel');
@@ -325,7 +342,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-0000000000c3'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'23514',
@@ -339,7 +356,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select lives_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-0000000000c3'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'28. TÉMOIN de (g) — le domaine rétabli, la MÊME affaire s''arme');
@@ -350,7 +367,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
 
 select throws_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-0000000000c4'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'42501',
@@ -405,7 +422,7 @@ select is(
 -- UNE INSCRIPTION FERMÉE N'EST JAMAIS ROUVERTE : réarmer, c'est armer DE NOUVEAU (§12.7).
 select lives_ok(
 	$$ select public.armer_sequence_relance(
-	     '5eed0000-0000-4000-8000-0000000000cf'::uuid,
+	     app.card_first_placement('5eed0000-0000-4000-8000-0000000000cf'),
 	     'd0000000-0000-4000-8000-0000000000b1'::uuid,
 	     (select id from public.mail_outbound_identities where owner_id is null)) $$,
 	'34. Après fermeture, la MÊME affaire se réarme — une NOUVELLE inscription, jamais la même');

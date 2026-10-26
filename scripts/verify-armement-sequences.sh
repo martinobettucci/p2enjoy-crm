@@ -9,11 +9,17 @@
 # @verifies docs/SPEC-relances.md §9.2 (le job APPELLE la règle, il ne la recopie pas)
 # @verifies docs/SCHEMA.md §7 ; docs/PROD_MIGRATIONS.md migration 60
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement désigne le rattachement, l'unicité est par rattachement,
+#           l'exécuteur juge l'inéligibilité par le rattachement inscrit ; aucune migration ancienne n'est plus rejouée —
+#           les fonctions se dégradent depuis leur définition en base, l'index se restaure depuis la sienne
+#           (docs/SPEC-rattachements.md §5, §7 ; docs/SPEC-test-harness.md §3.7, INC-304)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
-# seedée. Il rejoue les preuves de la sous-tranche, puis DÉGRADE RÉELLEMENT la migration — une
-# dégradation par règle qu'elle porte — et exige que la suite pgTAP rougisse. Aucun état dégradé ne
-# subsiste, même en cas d'échec : la migration est rejouée par un `trap`.
+# seedée. Il rejoue les preuves de la sous-tranche, puis DÉGRADE RÉELLEMENT chaque règle — une
+# dégradation par règle — et exige que la suite pgTAP rougisse. Aucun état dégradé ne subsiste, même
+# en cas d'échec : le `trap` réapplique les définitions lues en base avant la première dégradation.
+# RÉVISÉ PAR `CRM-111` T2.3.5 : il rejouait la migration 60, dont la fonction d'armement a changé de signature par la
+# migration 0119 ; le rejeu échouait en cours de fichier ou la ramenait en arrière (§3.7).
 #
 # CE QUE CE HARNAIS SURVEILLE EN PROPRE, ET QU'AUCUN AUTRE NE PEUT VOIR.
 #
@@ -46,6 +52,11 @@ source scripts/lib/conteneur.sh
 # @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
 DB_CONTAINER=$(conteneur db)
 MIGRATION=supabase/migrations/0060_armement_sequences.sql
+# `CRM-111` T2.3.5 : la dernière autorité sur l'armement, l'index d'inscription active et l'exécuteur. Lue, jamais rejouée.
+MIGRATION_RATTACHEMENT=supabase/migrations/0119_armer_une_cadence_par_rattachement.sql
+SIGNATURE_ARMER='public.armer_sequence_relance(uuid,uuid,uuid)'
+SIGNATURE_EXECUTEUR='app.executer_sequences_relance()'
+INDEX_ACTIF=public.card_sequence_enrollments_active_unique
 SUITE_SQL=supabase/tests/0058_armement_sequences.test.sql
 SUITE_API=e2e/api/armement-sequences.spec.ts
 SPEC=docs/SPEC-modeles-emails.md
@@ -64,19 +75,23 @@ RAPIDE=false
 controles=0
 anomalies=0
 TRAVAIL=$(mktemp -d)
-restauration_due=false
+index_a_restaurer=false
+
+# shellcheck source=scripts/lib/degradation.sh
+source scripts/lib/degradation.sh
 
 nettoyer() {
 	local statut=$?
 	trap - EXIT
 	set +e
-	if [ "$restauration_due" = true ]; then
-		if ! psql_db -f - < "$MIGRATION" >/dev/null 2>&1; then
-			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$MIGRATION" >&2
+	degradations_restaurer
+	if [ "$index_a_restaurer" = true ]; then
+		if ! restaurer_index; then
+			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$INDEX_ACTIF" >&2
 			statut=1
 		fi
 	fi
-	rm -rf -- "$TRAVAIL"
+	rm -rf -- "$TRAVAIL" "$DEGRADATIONS_DOSSIER"
 	exit "$statut"
 }
 trap nettoyer EXIT
@@ -93,53 +108,32 @@ suite_sql_verte() {
 		&& grep -q 'aucune anomalie' "$TRAVAIL/tap.log"
 }
 
-# Substitue dans une COPIE de la migration, puis l'applique. L'échec du substituteur ET celui de
-# l'application sont TESTÉS : ce sont les deux défauts que les harnais jumeaux ont trouvés dans leur
-# propre code (§2.11 et §8.9 bis) — une substitution qui ne substitue rien, ou un SQL dégradé qui ne
-# compile pas, laissent la base INCHANGÉE et le harnais conclut « COMPLAISANT » sans rien avoir
-# dégradé. Le remède est repris ici tel quel plutôt que redécouvert.
-degrader() {
-	local avant=$1 apres=$2 nom=$3
-	rm -f -- "$TRAVAIL/degrade.sql"
-	if ! python3 - "$MIGRATION" "$TRAVAIL/degrade.sql" "$avant" "$apres" <<-'PY'
-		import io, sys
-		source, cible, avant, apres = sys.argv[1:5]
-		texte = io.open(source, encoding='utf-8').read()
-		if texte.count(avant) != 1:
-		    sys.exit(f"motif absent ou ambigu ({texte.count(avant)} occurrence(s))")
-		io.open(cible, 'w', encoding='utf-8').write(texte.replace(avant, apres))
-	PY
-	then
-		fail "dégradation « $nom » IMPOSSIBLE : motif absent ou ambigu dans $MIGRATION"
-		return 1
-	fi
-	if cmp -s "$MIGRATION" "$TRAVAIL/degrade.sql"; then
-		fail "dégradation « $nom » IMPOSSIBLE : la substitution n'a rien changé"
-		return 1
-	fi
-	restauration_due=true
-	if ! psql_db -f - < "$TRAVAIL/degrade.sql" >"$TRAVAIL/degrade.log" 2>&1; then
-		fail "dégradation « $nom » IMPOSSIBLE : le SQL dégradé ne s'applique pas — $(tail -n 1 "$TRAVAIL/degrade.log")"
-		restaurer
-		return 1
-	fi
-	return 0
-}
-
-restaurer() {
-	psql_db -f - < "$MIGRATION" >/dev/null 2>&1
-	restauration_due=false
-}
-
+# RÉÉCRIT PAR `CRM-111` T2.3.5 (docs/SPEC-test-harness.md §3.7). La dégradation se fait sur la définition EN BASE de la
+# fonction visée (`degradation_fonction`), qui exige un fragment présent exactement une fois — la leçon des harnais
+# jumeaux (§2.11, §8.9 bis) tient toujours : une substitution qui ne substitue rien, ou un SQL dégradé qui ne compile
+# pas, sont déclarés NON CONCLUANTS au lieu de passer pour une preuve. La restauration réapplique la définition lue.
 eprouver_degradation() {
-	local nom=$1 avant=$2 apres=$3
-	degrader "$avant" "$apres" "$nom" || return 0
+	local nom=$1 signature=$2 avant=$3 apres=$4
+	if ! degradation_fonction "$signature" "$avant" "$apres"; then
+		fail "dégradation « $nom » IMPOSSIBLE : fragment absent ou ambigu, ou SQL dégradé refusé"
+		return 0
+	fi
 	if suite_sql_verte; then
 		fail "COMPLAISANT — « $nom » retirée, la suite pgTAP reste VERTE"
 	else
 		ok "dégradation « $nom » : la suite pgTAP rougit, comme elle doit"
 	fi
-	restaurer
+	degradations_restaurer
+}
+
+# L'INDEX D'INSCRIPTION ACTIVE se restaure depuis SA définition lue en base (`pg_get_indexdef`) et son commentaire :
+# un objet isolé, rendu à l'octet près, et constaté en section 9.
+DEFINITION_INDEX=''
+COMMENTAIRE_INDEX=''
+restaurer_index() {
+	psql_db -c "$DEFINITION_INDEX" >/dev/null 2>&1 \
+		&& psql_db -c "comment on index $INDEX_ACTIF is \$c\$$COMMENTAIRE_INDEX\$c\$" >/dev/null 2>&1 \
+		&& index_a_restaurer=false
 }
 
 echo
@@ -156,12 +150,14 @@ if [ "$(docker inspect -f '{{.State.Status}}' "$DB_CONTAINER" 2>/dev/null || tru
 fi
 
 cp "$MIGRATION" "$TRAVAIL/migration.origine"
+DEFINITION_INDEX=$(psql_db -c "select pg_get_indexdef('$INDEX_ACTIF'::regclass);")
+COMMENTAIRE_INDEX=$(psql_db -c "select obj_description('$INDEX_ACTIF'::regclass, 'pg_class');")
 
 # =================================================================================================
 echo "1. Les fichiers de la sous-tranche, et leurs commentaires de traçabilité"
 # =================================================================================================
 
-for fichier in "$MIGRATION" "$SUITE_SQL" "$SUITE_API" "$SPEC" scripts/verify-armement-sequences.sh; do
+for fichier in "$MIGRATION" "$MIGRATION_RATTACHEMENT" "$SUITE_SQL" "$SUITE_API" "$SPEC" scripts/verify-armement-sequences.sh; do
 	if [ -f "$fichier" ]; then
 		ok "$fichier existe"
 	else
@@ -177,6 +173,12 @@ for fichier in "$MIGRATION" "$SUITE_SQL" "$SUITE_API"; do
 		fail "$(basename "$fichier") n'a pas ses commentaires @spec/@verifies vers CRM-063 §12"
 	fi
 done
+
+if head -n 1 "$MIGRATION_RATTACHEMENT" | grep -q '@spec CRM-111'; then
+	ok "$(basename "$MIGRATION_RATTACHEMENT") cite CRM-111 — tranche T2.3.5"
+else
+	fail "$(basename "$MIGRATION_RATTACHEMENT") n'a pas son commentaire @spec vers CRM-111"
+fi
 
 # =================================================================================================
 echo
@@ -218,6 +220,19 @@ if [ "$(psql_db -c "select (indpred is not null)::text from pg_index where index
 	ok "l'index unique d'inscription active est bien PARTIEL (§12.2)"
 else
 	fail "l'index unique n'est PAS partiel — une affaire ne porterait qu'une inscription à vie"
+fi
+
+# `CRM-111` T2.3.5 : l'unicité porte sur le RATTACHEMENT (docs/SPEC-rattachements.md §7).
+if [ "$(psql_db -c "select a.attname from pg_index x join pg_attribute a on a.attrelid = x.indrelid and a.attnum = x.indkey[0] where x.indexrelid='$INDEX_ACTIF'::regclass;")" = placement_id ]; then
+	ok "l'index unique porte sur \`placement_id\` — une cadence active par rattachement (CRM-111 T2.3.5)"
+else
+	fail "l'index unique ne porte pas sur \`placement_id\` — l'unicité serait restée par affaire"
+fi
+
+if [ "$(psql_db -c "select pg_get_function_arguments('$SIGNATURE_ARMER'::regprocedure);")" = 'p_placement uuid, p_sequence_id uuid, p_identity_id uuid' ]; then
+	ok "l'armement désigne le rattachement : \`armer_sequence_relance(p_placement, …)\`"
+else
+	fail "la signature de l'armement n'est pas celle du rattachement"
 fi
 
 # LES DEUX CLÉS SONT `restrict`, ET LA TROISIÈME EST `cascade` : l'asymétrie est voulue (§12.3), et
@@ -417,53 +432,57 @@ if [ "$RAPIDE" = false ]; then
 	# LE `comment on index` QUI SUIT EST EMPORTÉ AVEC LUI, et c'est MESURÉ : laissé seul, il rend
 	# « relation … does not exist » et la dégradation est refusée à l'application. Une dégradation
 	# doit retirer une règle ENTIÈRE, pas la moitié qui laisse l'autre orpheline.
-	eprouver_degradation "index unique d'inscription active RETIRÉ" \
-		"create unique index card_sequence_enrollments_active_unique
-	on public.card_sequence_enrollments (card_id)
-	where status = 'active';
-
-comment on index public.card_sequence_enrollments_active_unique is" \
-		"do \$degrade\$ begin end \$degrade\$;
-
-select "
+	# RÉÉCRITE PAR `CRM-111` T2.3.5 : l'index est retiré en base, et restauré depuis sa définition lue avant.
+	index_a_restaurer=true
+	if psql_db -c "drop index $INDEX_ACTIF;" >/dev/null 2>&1; then
+		if suite_sql_verte; then
+			fail "COMPLAISANT — « index unique d'inscription active RETIRÉ », la suite pgTAP reste VERTE"
+		else
+			ok "dégradation « index unique d'inscription active RETIRÉ » : la suite pgTAP rougit, comme elle doit"
+		fi
+	else
+		fail "dégradation « index unique d'inscription active RETIRÉ » IMPOSSIBLE : le retrait est refusé"
+	fi
+	restaurer_index || fail "l'index unique n'a pas pu être restauré depuis sa définition"
 
 	# 2. Le refus (h) est retiré. L'index le rattraperait — en `23505` aussi —, mais avec un message
-	#    de catalogue au lieu d'un nom. C'est l'assertion 21, qui exige le NOM.
-	eprouver_degradation "refus (h) enrollment_exists retiré" \
-		"		raise exception 'enrollment_exists' using errcode = '23505';" \
-		"		null;"
+	#    de catalogue au lieu d'un nom. C'est l'assertion 22, qui exige le NOM.
+	eprouver_degradation "refus (h) enrollment_exists retiré" "$SIGNATURE_ARMER" \
+		"raise exception 'enrollment_exists' using errcode = '23505';" \
+		"null;"
 
-	# 3. Le refus (f) est retiré : n'importe quelle affaire s'armerait, figée ou non. C'est le cœur
-	#    du §12.2, et l'assertion 24 doit le voir.
-	eprouver_degradation "refus (f) card_not_stalled retiré" \
-		"		raise exception 'card_not_stalled' using errcode = '23514';" \
-		"		null;"
+	# 3. Le refus (f) est retiré : n'importe quel rattachement s'armerait, figé ou non. C'est le cœur
+	#    du §12.2, et l'assertion 25 doit le voir.
+	eprouver_degradation "refus (f) card_not_stalled retiré" "$SIGNATURE_ARMER" \
+		"raise exception 'card_not_stalled' using errcode = '23514';" \
+		"null;"
 
 	# 4. La détection de réponse est ancrée sur `sent_at` au lieu de `created_at`. C'EST LA
 	#    DÉGRADATION QUI COMPTE LE PLUS : `sent_at` est NULLE sur les messages du seed (§12.1), si
 	#    bien qu'aucune réponse ne serait jamais détectée et que le produit relancerait quelqu'un
 	#    qui vient de répondre — le seul défaut qu'un système de relance ne doit jamais avoir.
-	eprouver_degradation "ancre de la réponse ramenée à sent_at" \
-		"	          and m.created_at > e.armed_at" \
-		"	          and m.sent_at > e.armed_at"
+	eprouver_degradation "ancre de la réponse ramenée à sent_at" "$SIGNATURE_EXECUTEUR" \
+		"and m.created_at > e.armed_at" \
+		"and m.sent_at > e.armed_at"
 
 	# 5. La borne de détection est `last_sent_at` au lieu d'`armed_at` : un premier palier partirait
 	#    chez quelqu'un qui a déjà répondu, `last_sent_at` étant nulle avant le premier envoi.
-	eprouver_degradation "borne de la réponse ramenée à last_sent_at" \
-		"	          and m.created_at > e.armed_at" \
-		"	          and m.created_at > e.last_sent_at"
+	eprouver_degradation "borne de la réponse ramenée à last_sent_at" "$SIGNATURE_EXECUTEUR" \
+		"and m.created_at > e.armed_at" \
+		"and m.created_at > e.last_sent_at"
 
 	# 6. Le délai est compté depuis l'ARMEMENT et non depuis le palier précédent : la cadence
 	#    entière partirait le même jour. C'est le §11.4, et les assertions 41 et 42 doivent le voir.
-	eprouver_degradation "délai compté depuis l'armement au lieu du palier précédent" \
-		"		   and now() >= coalesce(v_inscription.last_sent_at, v_inscription.armed_at)" \
-		"		   and now() >= v_inscription.armed_at"
+	eprouver_degradation "délai compté depuis l'armement au lieu du palier précédent" "$SIGNATURE_EXECUTEUR" \
+		"and now() >= coalesce(v_inscription.last_sent_at, v_inscription.armed_at)" \
+		"and now() >= v_inscription.armed_at"
 
-	# 7. La fermeture pour inéligibilité est retirée : une affaire déplacée, endormie ou archivée
-	#    continuerait de recevoir des relances. Quatre interruptions tombent d'un coup (§12.7).
-	eprouver_degradation "fermeture card_ineligible retirée" \
-		"	   and not exists (select 1 from public.cards_figees() f where f.card_id = e.card_id);" \
-		"	   and false;"
+	# 7. La fermeture pour inéligibilité est retirée : un rattachement déplacé, endormi ou archivé
+	#    continuerait de recevoir des relances. Quatre interruptions tombent d'un coup (§12.7). Depuis
+	#    `CRM-111` T2.3.5, le prédicat porte sur le rattachement inscrit.
+	eprouver_degradation "fermeture card_ineligible retirée" "$SIGNATURE_EXECUTEUR" \
+		"where f.card_id = pl.card_id and f.channel_id = pl.channel_id);" \
+		"where true);"
 else
 	echo "  (--rapide : les dégradations ne sont pas jouées)"
 fi
@@ -473,7 +492,9 @@ echo
 echo "9. Restauration — aucun état dégradé ne survit à ce harnais"
 # =================================================================================================
 
-restaurer
+# Chaque dégradation a été restaurée depuis sa définition lue en base ; le `trap` le refait au besoin. Aucune
+# migration n'est rejouée (`CRM-111` T2.3.5, docs/SPEC-test-harness.md §3.7).
+degradations_restaurer
 
 if cmp -s "$MIGRATION" "$TRAVAIL/migration.origine"; then
 	ok "le fichier de migration est restauré à l'octet près"
@@ -483,6 +504,11 @@ fi
 
 if [ "$(psql_db -c "select (indpred is not null)::text from pg_index where indexrelid='public.card_sequence_enrollments_active_unique'::regclass;")" = true ]; then
 	ok "la base est restaurée : l'index unique est de nouveau PARTIEL"
+	if [ "$(psql_db -c "select pg_get_indexdef('$INDEX_ACTIF'::regclass);")" = "$DEFINITION_INDEX" ]; then
+		ok "…et sa définition est celle lue à l'entrée, à l'octet près"
+	else
+		fail "la définition de l'index diffère de celle lue à l'entrée"
+	fi
 else
 	fail "la base est restée DÉGRADÉE — un état dégradé ne doit jamais survivre au harnais"
 fi

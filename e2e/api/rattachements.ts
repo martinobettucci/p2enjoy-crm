@@ -1,6 +1,8 @@
 // @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3 : les gestes désignent le rattachement d'une affaire, et les preuves hors
 //       interface doivent donc le connaître
 // @spec docs/SPEC-rattachements.md §5 (les signatures par rattachement), §14 ; docs/SPEC-test-harness.md §4.3 (projet `api`)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : la clé qui nomme l'affaire varie d'un geste à l'autre (`card_id`,
+//       `p_card_id`) ; elle se donne en paramètre
 //
 // Pendant la bascule, une affaire n'a qu'un rattachement : les scénarios continuent de nommer l'AFFAIRE, ce qui les garde
 // lisibles, et ce module donne le rattachement que le geste désigne. Il le lit avec la clé de service, qui voit tout : la
@@ -21,16 +23,18 @@ export async function rattachementDe(requete: APIRequestContext, idCard: string)
 }
 
 /**
- * Le corps d'un geste par rattachement, depuis un corps qui nomme l'affaire : `card_id` devient `p_placement`. Une
- * affaire sans rattachement — un identifiant inconnu, par exemple — transmet son identifiant tel quel, que la base
- * ne trouve pas : le refus mesuré (`card_not_found`) reste celui du produit, et n'est pas fabriqué ici.
+ * Le corps d'un geste par rattachement, depuis un corps qui nomme l'affaire : la clé `cle` (`card_id` par défaut)
+ * devient `p_placement`. Une affaire sans rattachement — un identifiant inconnu, par exemple — transmet son identifiant
+ * tel quel, que la base ne trouve pas : le refus mesuré (`card_not_found`, `forbidden`) reste celui du produit, et
+ * n'est pas fabriqué ici.
  */
 export async function corpsParRattachement(
 	requete: APIRequestContext,
 	corps: Record<string, unknown>,
+	cle = 'card_id',
 ): Promise<Record<string, unknown>> {
-	if (!('card_id' in corps)) return corps
-	const { card_id: idCard, ...reste } = corps
+	if (!(cle in corps)) return corps
+	const { [cle]: idCard, ...reste } = corps
 	const rattachement = typeof idCard === 'string' ? await rattachementDe(requete, idCard) : null
 	return { p_placement: rattachement ?? idCard, ...reste }
 }

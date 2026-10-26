@@ -9,6 +9,8 @@
 //       §13.10 (son contrat d'API)
 // @spec docs/DESIGN_SYSTEM.md §5.41 (l'écran des séquences), §5.42 (le bloc d'armement)
 // @spec docs/SPEC-permissions-rls.md §7 (le refus est ZÉRO LIGNE, jamais une erreur)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement désigne le RATTACHEMENT de l'affaire
+//       (docs/SPEC-rattachements.md §5, §7)
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE ET N'AJOUTE AUCUNE RÈGLE. Il lit et écrit `mail_sequences` et
 // `mail_sequence_steps` sous la RLS de la migration `0059`, lit `mail_templates` sous celle de la
@@ -677,13 +679,14 @@ export function classerArmement(
  */
 export async function armerSequence(
 	client: ClientCrm,
-	idCard: string,
+	idRattachement: string,
 	idSequence: string,
 	idIdentite: string,
 ): Promise<IssueArmement> {
 	try {
+		// `CRM-111` T2.3.5 : la cadence s'inscrit au rattachement (docs/SPEC-rattachements.md §7).
 		const reponse = await client.rpc('armer_sequence_relance', {
-			p_card_id: idCard,
+			p_placement: idRattachement,
 			p_sequence_id: idSequence,
 			p_identity_id: idIdentite,
 		})

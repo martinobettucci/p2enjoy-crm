@@ -399,7 +399,7 @@ déclencheur n'est jamais suspendu.
   `inbox_arborescence` ne range plus les affaires sous leurs channels ; deux affaires de même titre restent
   distinguées par la règle de nommage en vigueur, à relire en T6.
 - **Une cadence de relance s'inscrit à un rattachement** (décision 657, arbitrage 2). `card_sequence_enrollments` reçoit
-  le rattachement ; `armer_sequence_relance` prend son responsable comme expéditeur par défaut, et
+  le rattachement ; `armer_sequence_relance` prend son responsable comme expéditeur par défaut (forme non arrêtée : INC-315), et
   `app.executer_sequences_relance` lit son `entered_step_at`. Une affaire peut avoir une cadence par rattachement.
 - **Les variables des modèles d'email viennent du rattachement d'où l'on écrit** (décision 657, arbitrage 3).
   `app.mail_template_variables` et `rendre_modele_email` reçoivent le rattachement : le bloc depuis lequel l'email est
@@ -546,6 +546,17 @@ ne rende un second rattachement licite. La webapp n'appelle pas ce geste ; le co
 seed (l'aller-retour de `…0c5`) et les preuves hors interface passent dans le même changement.
 `verify-move-card-to-channel.sh` et `verify-timeline.sh` ne rejouent plus les migrations 16, 17 et 20, dont le rejeu
 supprimait la fonction par rattachement (`docs/SPEC-test-harness.md` §3.7).
+
+**T2.3.5, livrée en développement le 2026-10-26** (migration `0119`) : `armer_sequence_relance(p_placement,
+p_sequence_id, p_identity_id)`. Les huit refus de `CRM-063` gardent leur ordre et leurs messages ; l'écriture (b), le
+figement (f) — la ligne de **ce** rattachement dans `cards_figees()` — et l'unicité (h) portent sur le rattachement ;
+l'adresse (g) reste celle de l'affaire. L'inscription porte le rattachement en clair. **Une cadence active par
+rattachement** : l'index `card_sequence_enrollments_active_unique` garde son nom et passe à `placement_id`. **L'exécuteur**
+(`app.executer_sequences_relance`) ferme la cadence d'un rattachement qui n'est plus figé, jugé par le rattachement inscrit
+et non plus par l'affaire. Ces deux distinctions ne s'éprouvent qu'à deux rattachements, donc après T2.4 et T3 : le miroir
+de la bascule recopie l'ancienneté de l'affaire sur tous ses rattachements. La fiche passe le rattachement au bloc
+d'armement ; l'inscription en cours se lit toujours par l'affaire, jusqu'aux écrans de T5. **L'expéditeur par défaut** que
+le §7 annonce n'a pas de forme arrêtée et n'est pas livré : INC-315, arbitrage demandé.
 
 **Le remplacement d'un coup impose une tranche de bascule** (décision 661). Dès que les colonnes quittent `cards`, tout
 ce qui les lit casse : la migration, les fonctions et leurs appelants ne peuvent pas se livrer séparément. La bascule ne

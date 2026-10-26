@@ -7,6 +7,8 @@
 //       §12.4 (les huit refus de l'armement), §12.7 (les quatre fins), §12.11 (contrat d'API)
 // @spec docs/DESIGN_SYSTEM.md §5.42 (ce bloc), §5.21 (sa place dans la colonne gauche), §5.5
 //       (variantes), §5.8 (états systématiques), §9 (icônes Lucide)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement désigne le rattachement de l'affaire, que la fiche lui
+//       passe (docs/SPEC-rattachements.md §5, §7) ; l'inscription en cours se lit toujours par l'affaire
 //
 // LE BLOC EST TOUJOURS RENDU, ET SA COMMANDE N'EST JAMAIS ÉTEINTE — ni selon le rôle, ni selon
 // l'état de l'affaire (§5.3, §5.13, §5.21, §5.27, sans exception).
@@ -37,6 +39,7 @@ import {
 	type IssueArmement,
 	type SequenceRelance,
 } from '../lib/sequences-relance'
+import { idRattachement, type RattachementsLus } from '../lib/rattachements'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
 import { useRefus } from '../components/ui/RefusCommandes'
@@ -70,10 +73,15 @@ const CLASSES_ETIQUETTE = 'flex flex-col gap-1 text-sm text-text-2 min-w-0'
 
 export type ProprietesBlocSequenceCard = {
 	readonly idCard: string
+	/**
+	 * Les rattachements de l'affaire (`CRM-111` T2.3.5) : l'armement désigne le plus ancien, calculé AU GESTE et non au
+	 * rendu — comme l'en-tête pour le sommeil. Le bloc s'affiche sans en avoir besoin.
+	 */
+	readonly rattachements: RattachementsLus
 	readonly client?: ClientCrm | null
 }
 
-export function BlocSequenceCard({ idCard, client = clientCrm }: ProprietesBlocSequenceCard) {
+export function BlocSequenceCard({ idCard, rattachements, client = clientCrm }: ProprietesBlocSequenceCard) {
 	const droit = useRefus()
 	const [inscription, setInscription] = useState<EtatAsync<InscriptionSequence | null>>(enChargement)
 	const [sequences, setSequences] = useState<readonly SequenceRelance[]>([])
@@ -149,7 +157,10 @@ export function BlocSequenceCard({ idCard, client = clientCrm }: ProprietesBlocS
 		if (client === null || enCours) return
 		setEnCours(true)
 		setRefus(null)
-		const issue = await armerSequence(client, idCard, idSequence, idIdentite)
+		// Sans rattachement lisible, la base n'aurait rien à armer : c'est le refus qu'elle rendrait (`forbidden`).
+		const rattachement = idRattachement(rattachements)
+		const issue =
+			rattachement === null ? 'refus' : await armerSequence(client, rattachement, idSequence, idIdentite)
 		setEnCours(false)
 		if (issue !== 'arme') {
 			// Un refus n'efface pas les sélections : le rédacteur doit pouvoir corriger l'une des deux
@@ -159,7 +170,7 @@ export function BlocSequenceCard({ idCard, client = clientCrm }: ProprietesBlocS
 		}
 		setAnnonce(t('card.sequence.armed'))
 		recharger()
-	}, [client, enCours, idCard, idIdentite, idSequence, recharger])
+	}, [client, enCours, rattachements, idIdentite, idSequence, recharger])
 
 	const interrompre = useCallback(async () => {
 		if (client === null || enCours) return

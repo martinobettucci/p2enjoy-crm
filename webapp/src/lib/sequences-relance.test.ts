@@ -7,6 +7,7 @@
 // @verifies docs/SPEC-modeles-emails.md §11.5 (ce que la base refuse), §11.8 et §12.11 et §13.10
 //           (les contrats d'API mesurés dont ce fichier reprend les messages)
 // @verifies docs/SPEC-permissions-rls.md §7 (le refus est zéro ligne, jamais une erreur)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.5 : l'armement envoie le rattachement (docs/SPEC-rattachements.md §5)
 //
 // CE FICHIER ÉPROUVE LA REQUÊTE RÉELLEMENT ÉMISE, et pas seulement la valeur rendue. Quatre
 // exigences sont portées par l'appel lui-même et qu'aucune assertion sur le résultat
@@ -598,10 +599,10 @@ describe('le dictionnaire fermé de l’armement — §13.8', () => {
 describe('armement et interruption — §13.8', () => {
 	it('appelle la RPC d’armement sous les noms d’arguments de la migration', async () => {
 		const { client, appel } = espionRpc({ data: 'inscription-1', error: null, status: 200 })
-		expect(await armerSequence(client, 'card-1', SEQUENCE, 'identite-1')).toBe('arme')
+		expect(await armerSequence(client, 'rattachement-1', SEQUENCE, 'identite-1')).toBe('arme')
 		expect(appel.fonction).toBe('armer_sequence_relance')
 		expect(appel.arguments).toEqual({
-			p_card_id: 'card-1',
+			p_placement: 'rattachement-1',
 			p_sequence_id: SEQUENCE,
 			p_identity_id: 'identite-1',
 		})
@@ -613,7 +614,7 @@ describe('armement et interruption — §13.8', () => {
 			error: { message: 'card_not_stalled' },
 			status: 400,
 		})
-		expect(await armerSequence(client, 'card-1', SEQUENCE, 'identite-1')).toBe('non-figee')
+		expect(await armerSequence(client, 'rattachement-1', SEQUENCE, 'identite-1')).toBe('non-figee')
 	})
 
 	it('appelle la RPC d’interruption sous le nom d’argument de la migration', async () => {

@@ -1313,6 +1313,15 @@ type _retourChangementPorteLAffaire = Expect<
   Equal<Database['public']['Functions']['move_card_to_channel']['Returns']['card_id'], string>
 >
 
+// `CRM-111` T2.3.5 : l'armement d'une cadence désigne le RATTACHEMENT (docs/SPEC-rattachements.md §5) ; la forme par
+// affaire est supprimée. Il rend toujours l'identifiant de l'inscription.
+type _signatureArmement = Expect<
+  Equal<
+    Database['public']['Functions']['armer_sequence_relance']['Args'],
+    { p_identity_id: string; p_placement: string; p_sequence_id: string }
+  >
+>
+
 // `CRM-019` rend le lot entier : trois arguments exigés, l'opt-in destructif facultatif, JSON
 // non inventé par le client et tableau de cards en retour (docs/SPEC-change-channel-workflow.md).
 type _signatureChangementWorkflowChannel = Expect<
@@ -1431,6 +1440,7 @@ export type AssertionsDuContratDeTypes = [
   _retourChangementPorteLeChannel,
   _retourChangementPorteLeWorkflow,
   _retourChangementPorteLAffaire,
+  _signatureArmement,
   _signatureChangementWorkflowChannel,
   _retourChangementWorkflowEstUnLot,
   _retourChangementWorkflowPorteLEtape,

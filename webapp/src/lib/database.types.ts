@@ -3789,8 +3789,8 @@ export type Database = {
       }
       armer_sequence_relance: {
         Args: {
-          p_card_id: string
           p_identity_id: string
+          p_placement: string
           p_sequence_id: string
         }
         Returns: string
