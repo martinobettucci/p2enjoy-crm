@@ -34849,3 +34849,13 @@ changer le contrat ; elles sont écrites dans `docs/SPEC-mail-subsystem.md` §19
 **Écarts de forme** : le formulaire n'a pas de champ « Copie », « Ajouter Cci » vit sous « Destinataires »
 (`docs/DESIGN_SYSTEM.md` §5.4 sexies) ; le stockage injoignable avant l'envoi est rejoué sous le code `storage_unavailable`
 avec le délai d'un serveur injoignable, sans entrer dans le vocabulaire de `backoff`, qui est celui de la sonde SMTP.
+
+### décision 722 — `CRM-058` tranche 2 : pas de livraison pour l'instant
+
+*2026-10-26, réponses du responsable aux questions posées par `AskUserQuestion`.* La première réponse, « Livre 106 et 107
+seulement », n'était pas applicable telle quelle : le runner n'a aucune borne et applique tout fichier absent du
+registre, si bien que la `0108` de `CRM-111` T2.1, déjà dans `main`, partirait aussi ; et aucun instantané neuf n'était
+confirmé. Les deux voies — retirer la 108 de `main` le temps de la fenêtre, ou livrer 106 à 108 — ont été reposées avec
+l'exigence d'un instantané. **Réponse : « Ne rien livrer pour l'instant ».** `CRM-058` tranche 2 reste `[~]` jusqu'à une
+fenêtre décidée par le responsable ; `docs/PROD_MIGRATIONS.md` §3 garde les 106, 107 et 108 en attente, la 108 jamais
+avant les deux autres.

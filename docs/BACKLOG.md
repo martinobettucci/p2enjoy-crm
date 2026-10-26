@@ -7266,7 +7266,7 @@ quota et refus testés.
       `docs/SPEC-mcp.md`, `CHANGELOG.md` ; compteurs du harnais mesurés (97, 4076, 1202, 940, 45) — *la campagne complète de
       `scripts/verify-harness.sh` n'a pas été rejouée*.
 - [ ] **Livraison** en production, sur instruction du responsable, avec la 108 de `CRM-111` T2.1 (elle ne part jamais
-      avant la 106 et la 107).
+      avant la 106 et la 107). — *Pas maintenant (décision 722) : aucune fenêtre décidée.*
 
 *DoD adaptée, écarts explicites.* La Definition of Done demandait « E2E `mail` d'aller-retour
 complet ; en-têtes de threading vérifiés sur le message reçu ; quota et refus testés ». **Les trois
