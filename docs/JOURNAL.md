@@ -35305,3 +35305,45 @@ connecteur (`e2e/ui/connecteur-mcp.spec.ts`) **8/8**, rejouée seule une fois li
 La tranche reste `[~]` jusqu'à leur passage. Les non-complaisances qu'ils portent — la garde `moved` désinhibée sur le
 rattachement, le déclencheur du rattachement retiré, `already_attached` retirée — ont été mesurées une à une sur la suite
 qu'ils rejouent, en transaction annulée : chacune la fait rougir.
+
+### `CRM-111` T2.3.5 — armer une cadence sur un rattachement (2026-10-26)
+
+*2026-10-26, session interactive, sous l'objectif « finir `CRM-111` ».* **Fait** : migration `0119` —
+`armer_sequence_relance(p_placement, p_sequence_id, p_identity_id)`, la forme par affaire supprimée (décision 661). Les
+huit refus de `CRM-063` gardent leur ordre et leurs messages ; l'écriture (b), le figement (f) et l'unicité (h) portent
+sur le rattachement, l'adresse (g) reste celle de l'affaire. L'inscription porte `placement_id` en clair. Deux règles du
+§7 suivent dans la même migration, parce qu'elles sont la même phrase — « une affaire peut avoir une cadence par
+rattachement » : l'index d'inscription active passe de `card_id` à `placement_id` (son nom, que des preuves citent, est
+gardé), et l'exécuteur ferme la cadence d'un rattachement qui n'est plus figé, jugé par **ce** rattachement — il jugeait
+par l'affaire, et une cadence serait restée active parce qu'un **autre** rattachement était figé. Sa définition est
+reprise de la base, ce seul prédicat changé. **Appelants** : la fiche passe le rattachement au bloc d'armement (sans
+rattachement lisible, le refus est celui que la base rendrait) ; les specs d'API et d'interface, par
+`corpsParRattachement`, qui reçoit désormais le nom de la clé d'affaire (`card_id` ou `p_card_id`) ; pgTAP `0058` (49 :
+l'index par rattachement, l'inscription qui porte le rattachement désigné) et `0098` ; un témoin de types de plus.
+
+**Ce qui ne s'éprouve pas encore, et le dit** : les deux distinctions par rattachement — l'index, l'exécuteur — exigent
+deux rattachements d'une même affaire dans des états différents. Le miroir de la bascule recopie l'ancienneté de
+l'affaire sur tous ses rattachements, si bien que la base ne peut pas les porter avant T2.4 (retrait des miroirs) et T3
+(`attach_card`). Les suites prouvent la forme (colonne de l'index, rattachement de l'inscription) et l'absence de
+régression ; la distinction elle-même sera la preuve de T3.
+
+**Non livré, et consigné : l'expéditeur par défaut** (INC-315). Le §7 dit qu'`armer_sequence_relance` « prend son
+responsable comme expéditeur par défaut ». Aucune forme n'en est arrêtée : l'identité est un paramètre exigé (§5), une
+identité ne s'emprunte que par son propriétaire ou, pour l'identité de service, par un administrateur, et le responsable
+du rattachement n'est pas toujours l'appelant. Le choix — présélection à l'écran, identité facultative en base, ou rien —
+est au responsable.
+
+**`verify-armement-sequences.sh` rejouait la `0060` entière** pour chaque dégradation et pour se restaurer — avec la
+nouvelle signature, un rejeu qui échoue en cours de fichier, ou qui ramène la fonction par affaire. Il suit désormais le
+§3.7 : les fonctions se dégradent depuis leur définition en base, l'index se retire puis se restaure depuis sa définition
+lue à l'entrée (`pg_get_indexdef`), à l'octet près, et c'est constaté.
+
+**Vérifications** : PREUVES
+
+
+### décision 733 — Livraison : toujours rien, après la clôture de `CRM-072`
+
+*2026-10-26, réponse du responsable (question posée par `AskUserQuestion`, session interactive), à la clôture de
+`CRM-072`.* Choix proposé : livrer les migrations 106 à 118 (avec un instantané Spark neuf), ou ne rien livrer. **Réponse :
+« Ne rien livrer encore ».** Les décisions 722, 726 et 730 restent en vigueur ; `CRM-072` reste `[P]`. La session enchaîne
+sur `CRM-077`.
