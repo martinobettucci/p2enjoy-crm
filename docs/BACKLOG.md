@@ -16726,7 +16726,12 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           restent sur `cards` jusqu'à leur transport (T2.4.5) ; les lectures du seul titre ou de l'espace n'ont rien à
           convertir. Preuves au journal (« T2.4.1, étape 2 ») : unitaires 4543/4543, API 1231/1232 (`ingestion:91`,
           étranger), interface des écrans convertis toute verte.
-        - [ ] **T2.4.2 — le connecteur et `mail-sync`** lisent le rattachement.
+        - [x] **T2.4.2 — le connecteur et `mail-sync`** lisent le rattachement. *Livrée en développement le 2026-10-26* :
+          `crm_card_list` et `crm_card_mine` partent des rattachements ; la fiche, le fil et les outils d'écriture lisent le
+          plus ancien ; `crm_channel_get` et `crm_contact_get` comptent et disent l'archivage par rattachement ;
+          `mail-sync` situe le dossier d'une affaire par son plus ancien rattachement. Contrats inchangés. Preuves au
+          journal : pytest du connecteur 209, `verify-mcp.sh` 88/88, interface du connecteur 16/16 ; pytest de `mail-sync`
+          258, preuve mail 45/45.
         - [ ] **T2.4.3 — le seed et les scripts** : lectures et écritures par le rattachement. *Question ouverte, à
           trancher avant le code de l'étape* : le seed crée ses affaires par la clé de service, à identifiants stables ;
           sans miroir, il lui faut écrire le rattachement — privilège d'insertion de `service_role` sur

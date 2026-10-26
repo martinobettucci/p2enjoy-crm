@@ -5,6 +5,7 @@
 # @verifies docs/SPEC-mcp.md §9.2 quater (liste, ancres, genre `workflow`, ancre `track` facultative, ni slug ni workflow
 #           modifiés), §6.1 (recherche filtrée par la matrice de chaque famille), §9.1 (`destructiveHint` de la corbeille),
 #           §9.3 (refus traduits)
+# @verifies CRM-111 T2.4.2 (docs/BACKLOG.md) — le compte d'un channel porte sur ses rattachements actifs (docs/SPEC-rattachements.md §5, §11)
 """Le CRM simulé rend l'arborescence d'un espace et une recherche qui mêle trois familles ; la RLS y est réduite à
 « l'espace est lisible ». La vraie base est éprouvée par `tests/test_integration_structure.py`."""
 
@@ -90,7 +91,7 @@ class CrmStructure(CrmSimule):
             "form_fields": [{"id": "f1", "key": "budget", "label": "Budget estimé", "type": "amount", "position": 1}],
             "workflow_transitions": [{"id": "t1", "from_step_id": "s1", "to_step_id": "s2", "label": None, "require_comment": True}],
             "workflow_transition_required_fields": [{"transition_id": "t1", "field_id": "f1"}],
-            "cards": [{"id": "c1"}, {"id": "c2"}],
+            "card_placements": [{"id": "r1"}, {"id": "r2"}],  # `CRM-111` T2.4.2 : les rattachements actifs du channel
         }
         if nom not in tables:
             return await self.table(requete)

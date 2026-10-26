@@ -7,6 +7,8 @@
 #       (inventaire : description, probabilité, capacité d'écrire, activités) ; docs/SPEC-cards.md §14.10 (le fil unifié
 #       à la lecture, décision 209), §15 (l'en-tête) ; docs/SPEC-relances.md §9 (`cards_figees`) ; docs/SPEC-cards.md §17
 #       (« Ma journée », `CRM-061`)
+# @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — la liste et « Ma journée » partent des RATTACHEMENTS ; la fiche lit l'affaire et
+#       les colonnes de son plus ancien rattachement ; contrats inchangés (docs/SPEC-rattachements.md §5, §11)
 """Lecture des affaires, sous l'identité de la personne.
 
 Les mêmes lectures que la webapp — la vue liste, la fiche, le fil unifié, « Ma journée », les affaires figées —, sous
@@ -34,19 +36,30 @@ ECHEANCES = ("overdue", "today", "week")
 PORTEES = ("mine", "all")
 HORIZON_JOURS = 7
 
-#: Les trois relations embarquées d'une affaire, par leur clé NOMMÉE : `cards` porte deux clés composites vers
-#: `channels` et vers `workflow_steps`, et un embarquement nu serait ambigu (`PGRST201`, `card-costs.ts`).
-CHANNEL = "channel:channels!cards_channel_id_workspace_id_fkey(id,name,slug,track:tracks(id,name,slug))"
-ETAPE = "etape:workflow_steps!cards_current_step_id_workflow_id_fkey(id,probability_override,noeud:workflow_nodes_catalog(label,default_probability))"
-RESPONSABLE = "responsable:profiles!cards_owner_id_fkey(id,full_name)"
+#: Les trois relations embarquées d'un RATTACHEMENT (`CRM-111` T2.4.2), par leur clé NOMMÉE : `card_placements` porte
+#: deux clés vers `channels`, et un embarquement nu serait ambigu (`PGRST201`, `card-costs.ts`).
+CHANNEL = "channel:channels!card_placements_channel_fk(id,name,slug,track:tracks(id,name,slug))"
+ETAPE = "etape:workflow_steps!card_placements_step_fk(id,probability_override,noeud:workflow_nodes_catalog(label,default_probability))"
+RESPONSABLE = "responsable:profiles!card_placements_owner_id_fkey(id,full_name)"
 #: `health_momentum` et `health_commercial` — `CRM-066` tranche 4 : les deux scores de santé, colonnes calculées par la
-#: base (docs/SPEC-analytique.md §13.7), rendus tels quels par la liste et par la fiche (décision 708, M4 B).
+#: base (docs/SPEC-analytique.md §13.7), rendus tels quels par la liste et par la fiche (décision 708, M4 B). Ils restent
+#: sur l'affaire jusqu'à leur transport (`CRM-111` T2.4.5).
 SANTE = "health_momentum,health_commercial"
-COLONNES_LISTE = f"id,title,amount,currency,next_action,next_action_at,snoozed_until,{SANTE},{RESPONSABLE},{CHANNEL},{ETAPE}"
+#: La liste part des rattachements (`CRM-111` T2.4.2) et plonge l'affaire ; `ligne_depuis_rattachement` rend la ligne
+#: d'avant à `resume_carte`.
+COLONNES_LISTE = (
+    f"id,created_at,amount,next_action,next_action_at,snoozed_until,{RESPONSABLE},{CHANNEL},{ETAPE},"
+    f"affaire:cards!inner(id,title,currency,{SANTE})"
+)
+#: Les colonnes d'un rattachement que la fiche lit, plongées dans l'affaire ; `fiche_depuis_rattachements` prend celles du
+#: plus ancien, comme `app.card_first_placement` en base.
+COLONNES_RATTACHEMENT_FICHE = (
+    "id,created_at,amount,probability_override,next_action,next_action_at,snoozed_until,archived_at,workflow_id,"
+    f"entered_step_at,{RESPONSABLE},{CHANNEL},{ETAPE}"
+)
 COLONNES_FICHE = (
-    "id,title,description,amount,currency,probability_override,next_action,next_action_at,snoozed_until,archived_at,"
-    f"email_local_part,workflow_id,entered_step_at,created_at,updated_at,ecriture_permise,{SANTE},{RESPONSABLE},{CHANNEL},"
-    f"{ETAPE}"
+    "id,title,description,currency,email_local_part,created_at,updated_at,ecriture_permise,"
+    f"{SANTE},card_placements!card_placements_card_fk({COLONNES_RATTACHEMENT_FICHE})"
 )
 COLONNES_EVENEMENT = "id,type,payload,created_at,acteur:profiles!card_events_actor_id_fkey(full_name)"
 COLONNES_COMMENTAIRE = (
@@ -83,6 +96,34 @@ def probabilite(fiche: dict[str, Any]) -> dict[str, Any]:
         if valeur is not None:
             return {"value": valeur, "source": source}
     return {"value": None, "source": None}
+
+
+def premier_rattachement(rattachements: list[dict[str, Any]]) -> dict[str, Any] | None:
+    """Le plus ancien rattachement, l'identifiant départageant deux créations simultanées (`app.card_first_placement`) ;
+    `None` quand l'affaire n'en rend aucun à l'appelant."""
+    if not rattachements:
+        return None
+    return min(rattachements, key=lambda r: (str(r.get("created_at")), str(r.get("id"))))
+
+
+def ligne_depuis_rattachement(rattachement: dict[str, Any]) -> dict[str, Any]:
+    """La ligne d'avant `CRM-111` T2.4.2, depuis un rattachement lu avec son affaire : l'affaire désignée par son
+    identifiant, les colonnes du rattachement à côté de celles de l'affaire."""
+    affaire = rattachement.get("affaire") or {}
+    return {
+        **{k: v for k, v in rattachement.items() if k not in ("id", "created_at", "affaire")},
+        **affaire,
+    }
+
+
+def fiche_depuis_rattachements(fiche: dict[str, Any]) -> dict[str, Any] | None:
+    """La fiche d'avant, depuis l'affaire lue avec ses rattachements : les colonnes du plus ancien. Une affaire sans
+    rattachement lisible se lit comme absente — sa lecture passe par celle de ses rattachements."""
+    premier = premier_rattachement(fiche.get("card_placements") or [])
+    if premier is None:
+        return None
+    colonnes = {k: v for k, v in premier.items() if k not in ("id", "created_at")}
+    return {**{k: v for k, v in fiche.items() if k != "card_placements"}, **colonnes}
 
 
 def resume_carte(ligne: dict[str, Any]) -> dict[str, Any]:
@@ -255,10 +296,17 @@ def _lignes(reponse: Reponse, genre: str, valeur: Any) -> list[dict[str, Any]]:
 
 
 async def _fiche(crm: ClientCrm, jeton: str, card_id: str, colonnes: str) -> dict[str, Any]:
+    """L'affaire et les colonnes de son plus ancien rattachement (`CRM-111` T2.4.2) ; `colonnes` porte le plongement
+    `card_placements!card_placements_card_fk(…)` dès qu'une colonne de rattachement est demandée."""
     lignes = _lignes(await crm.lire(jeton, "cards", {"id": f"eq.{card_id}", "select": colonnes}), "card", card_id)
     if len(lignes) != 1:
         raise RefusCrm(introuvable("card", card_id))
-    return lignes[0]
+    if "card_placements" not in lignes[0]:
+        return lignes[0]
+    fiche = fiche_depuis_rattachements(lignes[0])
+    if fiche is None:
+        raise RefusCrm(introuvable("card", card_id))
+    return fiche
 
 
 def _liste_ids(ids: set[str]) -> str:
@@ -292,8 +340,8 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         parametres: dict[str, str] = {
             "workspace_id": f"eq.{appel.espace}",
             "archived_at": "is.null",
-            "deleted_at": "is.null",
-            "order": "title.asc,id.asc",
+            "affaire.deleted_at": "is.null",
+            "order": "affaire(title).asc,affaire(id).asc",
             # Une ligne de plus que demandé : elle dit s'il en reste, sans `count=exact` à chaque appel.
             "limit": str(limit + 1),
             "offset": str(offset),
@@ -301,14 +349,14 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if channel_id is not None:
             parametres["channel_id"] = f"eq.{channel_id}"
         if query is not None and nettoyer_texte(query):
-            parametres["title"] = f"ilike.*{nettoyer_texte(query)}*"
+            parametres["affaire.title"] = f"ilike.*{nettoyer_texte(query)}*"
         if step is not None:
             # Le libellé est celui du NŒUD, comme partout dans le produit : le filtre porte sur la relation embarquée,
             # qui devient obligatoire (`!inner`) pour que la ligne sans cette étape soit écartée par la base.
             colonnes = colonnes.replace(
                 "noeud:workflow_nodes_catalog(label,default_probability))",
                 "noeud:workflow_nodes_catalog!inner(label,default_probability))",
-            ).replace("cards_current_step_id_workflow_id_fkey(", "cards_current_step_id_workflow_id_fkey!inner(")
+            ).replace("card_placements_step_fk(", "card_placements_step_fk!inner(")
             parametres["etape.noeud.label"] = f"eq.{step}"
         if due is not None:
             debut, demain, _ = bornes_journee(maintenant, _fuseau(timezone))
@@ -320,7 +368,10 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             # La règle de la webapp (`filtreExclusionSommeil`) : une affaire endormie sort des vues par défaut.
             parametres["or"] = f"(snoozed_until.is.null,snoozed_until.lte.{maintenant.isoformat()})"
         parametres["select"] = colonnes
-        lignes = _lignes(await crm.lire(appel.jeton, "cards", parametres), "workspace", workspace)
+        lignes = [
+            ligne_depuis_rattachement(l)
+            for l in _lignes(await crm.lire(appel.jeton, "card_placements", parametres), "workspace", workspace)
+        ]
         return {
             "offset": offset,
             "has_more": len(lignes) > limit,
@@ -437,7 +488,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         offset: Annotated[int, Field(ge=0)] = 0,
     ) -> dict[str, Any]:
         appel = appel_courant()
-        fiche = await _fiche(crm, appel.jeton, card_id, "id,workflow_id")
+        fiche = await _fiche(crm, appel.jeton, card_id, "id,card_placements!card_placements_card_fk(id,created_at,workflow_id)")
         parametres = {"card_id": f"eq.{card_id}", "order": "created_at.asc,id.asc"}
         evenements = _lignes(
             await crm.lire(appel.jeton, "card_events", {**parametres, "select": COLONNES_EVENEMENT}), "card", card_id
@@ -657,14 +708,17 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "workspace_id": f"eq.{appel.espace}",
             "next_action_at": f"lt.{bornes[2].isoformat()}",
             "archived_at": "is.null",
-            "deleted_at": "is.null",
+            "affaire.deleted_at": "is.null",
             "or": f"(snoozed_until.is.null,snoozed_until.lte.{maintenant.isoformat()})",
-            "order": "next_action_at.asc,title.asc,id.asc",
+            "order": "next_action_at.asc,affaire(title).asc,affaire(id).asc",
             "select": COLONNES_LISTE,
         }
         if scope == "mine":
             parametres["owner_id"] = f"eq.{appel.sujet}"
-        lignes = _lignes(await crm.lire(appel.jeton, "cards", parametres), "workspace", workspace)
+        lignes = [
+            ligne_depuis_rattachement(l)
+            for l in _lignes(await crm.lire(appel.jeton, "card_placements", parametres), "workspace", workspace)
+        ]
         sections: dict[str, list[dict[str, Any]]] = {"overdue": [], "today": [], "upcoming": []}
         for ligne in lignes:
             section = section_echeance(str(ligne["next_action_at"]), bornes)

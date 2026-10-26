@@ -1,6 +1,7 @@
 # @verifies CRM-059 (docs/BACKLOG.md) — boucle de veille, source réelle des comptes à relever
 # @verifies docs/SPEC-mail-subsystem.md §20.10.6 (quels comptes, dans quel ordre)
 # @verifies docs/JOURNAL.md décision 348 bis (nom réel de la colonne, mesuré contre la vraie base)
+# @verifies CRM-111 T2.4.2 (docs/BACKLOG.md) — le channel d'une card se lit sur son plus ancien rattachement (docs/SPEC-rattachements.md §7)
 #
 # CE FICHIER N'EXISTAIT PAS : `test_veille.py` alimente `executer_un_tour` par un double de
 # `SourceComptes` qui n'appelle jamais `PostgrestClient` — la DÉCISION de la veille est éprouvée,
@@ -168,3 +169,38 @@ def test_enregistrer_message_envoie_un_tableau_VIDE_et_jamais_null(
 
     assert charge["references_ids"] == []
     assert charge["references_ids"] is not None
+
+
+def test_parents_de_card_lit_le_channel_du_plus_ancien_rattachement(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`CRM-111` T2.4.2 : le channel d'une card n'est plus une colonne de `cards` ; il se lit sur son plus ancien
+    rattachement, ordonné par création puis identifiant, comme `app.card_first_placement`."""
+
+    requetes: list[Request] = []
+
+    def faux_urlopen(requete: Request, timeout: float) -> FausseReponse:  # noqa: ARG001
+        requetes.append(requete)
+        url = requete.full_url
+        if "/rest/v1/card_placements" in url:
+            return FausseReponse(json.dumps([{"channel_id": "ch-1"}]).encode())
+        if "/rest/v1/channels" in url:
+            return FausseReponse(json.dumps([{"track_id": "tr-1"}]).encode())
+        return FausseReponse(json.dumps("CRM/Conseil").encode())
+
+    monkeypatch.setattr("mail_sync.postgrest.urllib.request.urlopen", faux_urlopen)
+
+    parents = _client().parents_de_card("card-1")
+
+    url = requetes[0].full_url
+    assert "/rest/v1/card_placements?card_id=eq.card-1" in url
+    assert "select=channel_id" in url and "order=created_at.asc,id.asc" in url and "limit=1" in url
+    assert not any("/rest/v1/cards" in r.full_url for r in requetes)
+    assert [(p["entity_type"], p["entity_id"]) for p in parents] == [("track", "tr-1"), ("channel", "ch-1")]
+
+
+def test_parents_de_card_sans_rattachement_lisible_ne_rend_rien(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "mail_sync.postgrest.urllib.request.urlopen", lambda requete, timeout: FausseReponse(b"[]")  # noqa: ARG005
+    )
+    assert _client().parents_de_card("card-1") == []

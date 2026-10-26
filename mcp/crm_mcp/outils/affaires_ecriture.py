@@ -5,7 +5,8 @@
 #       parallèle : `creer_affaire`, `move_card`, `move_card_to_channel`, `snooze_card`, `wake_card` et les tables de la
 #       webapp ; `destructiveHint` sur le déplacement et la corbeille), §9.3 (refus nommés traduits, zéro ligne = refus)
 # @spec CRM-111 (docs/BACKLOG.md) — tranche T2.3 : les gestes désignent le rattachement, résolu depuis `card_id`
-#       (docs/SPEC-rattachements.md §5, §11) ; T2.3.6 : les réponses s'écrivent sur son bloc (§3.3)
+#       (docs/SPEC-rattachements.md §5, §11) ; T2.3.6 : les réponses s'écrivent sur son bloc (§3.3) ; T2.4.2 : le
+#       workflow et le résumé rendu se lisent sur le plus ancien rattachement
 """Écrire sur les affaires, sous l'identité de la personne.
 
 Chaque outil appelle la fonction ou la table que la webapp appelle pour le même geste ; la base garde ses règles —
@@ -25,7 +26,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
-from crm_mcp.outils.affaires import COLONNES_LISTE, resume_carte
+from crm_mcp.outils.affaires import COLONNES_LISTE, fiche_depuis_rattachements, ligne_depuis_rattachement, resume_carte
 from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
 
 TYPES_ACTIVITE = ("call", "meeting", "visio")
@@ -135,11 +136,19 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             raise refus(reponse, genre, valeur)
         return reponse.corps
 
-    async def carte(jeton: str, card_id: str, colonnes: str = "id,workflow_id,workspace_id") -> dict[str, Any]:
-        lignes = await lire(jeton, "cards", {"id": f"eq.{card_id}", "select": colonnes}, "card", card_id)
-        if len(lignes) != 1:
+    async def carte(jeton: str, card_id: str) -> dict[str, Any]:
+        """L'affaire, son espace et le workflow de son plus ancien rattachement (`CRM-111` T2.4.2)."""
+        lignes = await lire(
+            jeton,
+            "cards",
+            {"id": f"eq.{card_id}", "select": "id,workspace_id,card_placements!card_placements_card_fk(id,created_at,workflow_id)"},
+            "card",
+            card_id,
+        )
+        fiche = fiche_depuis_rattachements(lignes[0]) if len(lignes) == 1 else None
+        if fiche is None:
             raise RefusCrm(introuvable("card", card_id))
-        return lignes[0]
+        return fiche
 
     async def rattachement(jeton: str, card_id: str) -> str:
         """Le rattachement de l'affaire que le geste désigne (`CRM-111` T2.3, docs/SPEC-mcp.md §9.2 ter).
@@ -179,7 +188,17 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         )
 
     async def resume(jeton: str, card_id: str) -> dict[str, Any]:
-        return resume_carte(await carte(jeton, card_id, COLONNES_LISTE))
+        """L'affaire résumée par son plus ancien rattachement, la forme de `crm_card_list` (`CRM-111` T2.4.2)."""
+        lignes = await lire(
+            jeton,
+            "card_placements",
+            {"card_id": f"eq.{card_id}", "select": COLONNES_LISTE, "order": "created_at.asc,id.asc", "limit": "1"},
+            "card",
+            card_id,
+        )
+        if len(lignes) != 1:
+            raise RefusCrm(introuvable("card", card_id))
+        return resume_carte(ligne_depuis_rattachement(lignes[0]))
 
     # --- ajouter ---------------------------------------------------------------------------------------------------
 

@@ -35727,3 +35727,25 @@ créée ») avant de survoler.
 
 **Vérifications.** Les huit chaînes `select` nouvelles rendent `200` sur la pile locale (PostgREST réel) avant toute spec.
 Preuves : unitaires 4543/4543 ; typage complet propre ; API 1231/1232 (`ingestion.spec.ts:91`, étranger) ; interface des écrans convertis 128/128, de la fiche, des coûts, de la rentabilité, des affaires figées, des contacts et des commentaires 251/251, `commentaires`, `manuel` et `connexion` 53/53, corbeille et arborescence 35/35 ; API de la corbeille 27/27 ; `verify-relances.sh` 92/92, `verify-card-costs.sh` 52/52, `verify-ma-journee.sh` 85/85 (son motif de dégradation de l'ordre total suit `affaire(id)`). Captures observées : la fiche archivée et les affaires figées, inchangées.
+
+### `CRM-111` T2.4.2 — le connecteur MCP et `mail-sync` lisent les rattachements (2026-10-26)
+
+*2026-10-26, session interactive.* Le connecteur suit le procédé de la webapp (T2.4.1) :
+- `crm_card_list` et `crm_card_mine` partent de `card_placements` ; l'affaire est plongée (`affaire:cards!inner(…)`), la
+  corbeille filtrée sur elle (`affaire.deleted_at`), le titre cherché et trié sur elle (`affaire.title`,
+  `affaire(title)`) ; l'étape, le channel et le responsable sont ceux du rattachement (`card_placements_step_fk`,
+  `card_placements_channel_fk`, `card_placements_owner_id_fkey`). `ligne_depuis_rattachement` rend la ligne d'avant à
+  `resume_carte` : le contrat ne change pas.
+- `crm_card_get`, `crm_card_timeline` et les outils d'écriture lisent l'affaire et les colonnes de son **plus ancien**
+  rattachement (`fiche_depuis_rattachements`) ; une affaire sans rattachement lisible est « introuvable ». Le résumé que
+  rend une écriture se lit sur ce rattachement.
+- `crm_channel_get` compte les rattachements actifs du channel ; `crm_contact_get` dit une affaire archivée quand tous ses
+  rattachements le sont, la règle de la fiche contact de la webapp.
+- `mail-sync` situe le dossier IMAP d'une affaire par le channel de son plus ancien rattachement
+  (`card_placements?card_id=…&order=created_at.asc,id.asc&limit=1`).
+
+Les services `mcp` et `mail-sync` de la pile de développement ont été reconstruits pour la preuve (annoncé à la session de
+`CRM-077`). **Preuves** : pytest du connecteur 209 passés (49 d'intégration sautés hors harnais), `verify-mcp.sh` 88/88
+(dont l'intégration contre la vraie base), interface du connecteur 16/16 ; pytest de `mail-sync` 258 passés (conteneur
+jetable `python:3.13.13-slim-bookworm`, faute d'environnement local), preuve mail 45/45. **Déploiement** : les deux
+services sont à reconstruire avec la tranche ; aucune migration.

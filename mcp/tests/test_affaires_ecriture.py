@@ -7,6 +7,7 @@
 #           (docs/SPEC-rattachements.md §3.2, §5, §11)
 # @verifies docs/SPEC-mcp.md §9.2 ter (liste, ancres, `aussi`, identifiants jugés dans l'affaire), §9.1 (déclarations
 #           vérifiées, `destructiveHint`), §9.3 (refus nommés traduits, zéro ligne = refus)
+# @verifies CRM-111 T2.4.2 (docs/BACKLOG.md) — le workflow et le résumé se lisent sur le plus ancien rattachement (docs/SPEC-rattachements.md §5, §11)
 """Le CRM simulé rend ce que PostgREST rendrait pour chaque écriture, et la note : les tests prouvent la requête émise et
 l'issue rendue. Les règles elles-mêmes — transitions, participants, politiques — sont prouvées contre la vraie base par
 `tests/test_integration_affaires_ecriture.py`."""
@@ -62,17 +63,28 @@ class CrmEcriture(CrmSimule):
         self.forcees: dict[str, tuple[int, Any]] = {}
 
     def lignes(self, nom: str, parametres: dict[str, str], lisibles: set[str]) -> list[dict[str, Any]] | None:
+        # `CRM-111` T2.3 : le rattachement unique de chaque affaire, lisible comme elle ; T2.4.2 : il porte le workflow,
+        # que l'affaire plonge, et le résumé le lit avec l'affaire plongée.
+        rattachements = [
+            {"id": RATTACHEMENT_A, "card_id": CARD_A, "workspace_id": ESPACE_A, "created_at": "2026-01-01T00:00:00+00:00",
+             "workflow_id": WORKFLOW, "affaire": {"id": CARD_A, "title": "Migration ERP"}},
+            {"id": RATTACHEMENT_B, "card_id": CARD_B, "workspace_id": ESPACE_B, "created_at": "2026-01-01T00:00:00+00:00",
+             "workflow_id": WORKFLOW, "affaire": {"id": CARD_B, "title": "Ailleurs"}},
+        ]
         cartes = [
-            {"id": CARD_A, "workspace_id": ESPACE_A, "workflow_id": WORKFLOW, "title": "Migration ERP"},
-            {"id": CARD_B, "workspace_id": ESPACE_B, "workflow_id": WORKFLOW, "title": "Ailleurs"},
+            {"id": CARD_A, "workspace_id": ESPACE_A, "title": "Migration ERP"},
+            {"id": CARD_B, "workspace_id": ESPACE_B, "title": "Ailleurs"},
+        ]
+        cartes = [
+            {**c, "card_placements": [
+                {"id": r["id"], "created_at": r["created_at"], "workflow_id": r["workflow_id"]}
+                for r in rattachements if r["card_id"] == c["id"]
+            ]}
+            for c in cartes
         ]
         tables = {
             "cards": [c for c in cartes if c["workspace_id"] in lisibles],
-            # `CRM-111` T2.3 : le rattachement unique de chaque affaire, lisible comme elle.
-            "card_placements": [r for r in [
-                {"id": RATTACHEMENT_A, "card_id": CARD_A, "workspace_id": ESPACE_A},
-                {"id": RATTACHEMENT_B, "card_id": CARD_B, "workspace_id": ESPACE_B},
-            ] if r["workspace_id"] in lisibles],
+            "card_placements": [r for r in rattachements if r["workspace_id"] in lisibles],
             "channels": [c for c in [
                 {"id": CHANNEL_A, "workspace_id": ESPACE_A, "workflow_id": WORKFLOW},
                 {"id": CHANNEL_A2, "workspace_id": ESPACE_A, "workflow_id": WORKFLOW_2},

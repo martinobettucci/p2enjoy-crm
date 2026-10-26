@@ -1,6 +1,7 @@
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T3 : les quatre outils de contact, devant un CRM simulé
 # @verifies docs/SPEC-mcp.md §9.2 quinquies (liste, ancre `organisation` facultative, aucune suppression), §9.3 (refus
 #           traduits, zéro ligne = refus) ; docs/SPEC-contacts.md §14 à §16 (ce que le carnet lit et écrit)
+# @verifies CRM-111 T2.4.2 (docs/BACKLOG.md) — une affaire liée est archivée quand tous ses rattachements le sont (docs/SPEC-rattachements.md §5, §11)
 """Le CRM simulé rend un carnet et deux organisations, l'une d'un autre espace ; la vraie base est éprouvée par
 `tests/test_integration_contacts.py`."""
 
@@ -59,8 +60,8 @@ class CrmContacts(CrmSimule):
                 {"id": CONTACT_A, "workspace_id": ESPACE_A, "full_name": "Léo Marchand", "email": None, "phone": None,
                  "role_title": "DSI", "organization_id": ORG_A, "organizations": {"id": ORG_A, "name": "Sogexia"},
                  "card_contacts": [
-                     {"role": "prescripteur", "cards": {"id": "c2", "title": "Zèbre", "archived_at": None}},
-                     {"role": "decideur", "cards": {"id": "c9", "title": "Audit", "archived_at": "2026-01-01"}},
+                     {"role": "prescripteur", "cards": {"id": "c2", "title": "Zèbre", "card_placements": [{"archived_at": None}]}},
+                     {"role": "decideur", "cards": {"id": "c9", "title": "Audit", "card_placements": [{"archived_at": "2026-01-01"}]}},
                  ]},
                 {"id": CONTACT_B, "workspace_id": ESPACE_B, "full_name": "Ailleurs", "organizations": None},
             ],

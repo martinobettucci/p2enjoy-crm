@@ -135,6 +135,10 @@ Le classement manuel (`classify_message`) est journalisé (`classified_by`) et �
 
 ### 4.5 Dossiers IMAP
 
+**Révisé par `CRM-111` T2.4.2** (docs/SPEC-rattachements.md §7) : le track et le channel parents du dossier d'une affaire
+sont ceux de son **plus ancien** rattachement, lu par `mail-sync` sur `card_placements`. Le dossier de l'affaire sortira
+de l'arborescence avec la tranche T6 de `CRM-111` (`CRM/Affaires/<affaire>`, décision 657).
+
 Après classement, le worker s'assure de l'existence du chemin `CRM/<Track>/<Channel>/<Card>` sur
 le compte concerné et y dépose une copie du message.
 

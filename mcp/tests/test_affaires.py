@@ -6,6 +6,8 @@
 # @verifies docs/SPEC-mcp.md §9.2 bis (liste fixée, ancres, ancre `channel` facultative), §6.2 (visibilité par la matrice,
 #           refus uniforme), §9.1 (déclarations vérifiées au démarrage), §9.3 (identifiants ET libellés) ;
 #           docs/SPEC-cards.md §14.10 (fusion du fil, ordre total), §14.6 (libellés résolus, jamais lus dans le payload)
+# @verifies CRM-111 T2.4.2 (docs/BACKLOG.md) — la liste et « Ma journée » lisent les rattachements, la fiche le plus ancien
+#           (docs/SPEC-rattachements.md §5, §11)
 """Le CRM simulé étend celui de `conftest.py` avec les tables d'une affaire ; la RLS y est réduite à « l'espace est
 lisible ». Les lectures réelles — embarquements nommés, filtres imbriqués, RLS — sont prouvées contre la vraie base par
 `tests/test_integration_affaires.py`."""
@@ -31,7 +33,9 @@ from crm_mcp.outils import affaires, reference
 from crm_mcp.outils.affaires import (
     bornes_journee,
     detail_evenement,
+    fiche_depuis_rattachements,
     fusionner_fil,
+    ligne_depuis_rattachement,
     ligne_activite,
     ligne_commentaire,
     nettoyer_texte,
@@ -90,6 +94,39 @@ class CrmAffaires(CrmSimule):
             {"id": CARD_B, "title": "Autre espace", "workspace_id": ESPACE_B, "workflow_id": WORKFLOW},
         ]
 
+    #: Les colonnes d'un rattachement (`CRM-111` T2.4.2) : celles que `cards` portait, déplacées.
+    COLONNES_RATTACHEMENT = (
+        "workflow_id", "amount", "probability_override", "next_action", "next_action_at", "snoozed_until", "archived_at",
+        "entered_step_at", "responsable", "channel", "etape",
+    )
+
+    def _rattachements(self) -> list[dict[str, Any]]:
+        """Un rattachement par affaire, l'affaire plongée — la forme que rend `card_placements?select=…,affaire:cards(…)`."""
+        return [
+            {
+                "id": f"r-{c['id']}", "card_id": c["id"], "workspace_id": c["workspace_id"], "channel_id": CHANNEL_A,
+                "created_at": "2026-10-01T00:00:00+00:00",
+                **{k: c.get(k) for k in self.COLONNES_RATTACHEMENT},
+                "affaire": {k: c.get(k) for k in ("id", "title", "currency", "health_momentum", "health_commercial")},
+            }
+            for c in self._cards()
+        ]
+
+    def _cards_avec_rattachements(self) -> list[dict[str, Any]]:
+        """L'affaire et ses rattachements plongés : les colonnes de rattachement ne sont plus sur l'affaire."""
+        rattachements = self._rattachements()
+        return [
+            {
+                **{k: v for k, v in c.items() if k not in self.COLONNES_RATTACHEMENT},
+                "card_placements": [
+                    {k: v for k, v in r.items() if k not in ("affaire", "card_id", "workspace_id", "channel_id")}
+                    for r in rattachements
+                    if r["card_id"] == c["id"]
+                ],
+            }
+            for c in self._cards()
+        ]
+
     async def table_affaires(self, requete: Request) -> Response:
         personne = self._personne(requete)
         if personne is None:
@@ -100,7 +137,9 @@ class CrmAffaires(CrmSimule):
         self.requetes.append((nom, parametres))
         filtres = {k: v.removeprefix("eq.") for k, v in parametres.items() if v.startswith("eq.") and "." not in k}
         if nom == "cards":
-            lignes = [c for c in self._cards() if c["workspace_id"] in lisibles]
+            lignes = [c for c in self._cards_avec_rattachements() if c["workspace_id"] in lisibles]
+        elif nom == "card_placements":
+            lignes = [r for r in self._rattachements() if r["workspace_id"] in lisibles]
         elif nom == "channels":
             lignes = [{"id": CHANNEL_A, "name": "Grands comptes", "workspace_id": ESPACE_A},
                       {"id": CHANNEL_B, "name": "Ailleurs", "workspace_id": ESPACE_B}]
@@ -254,9 +293,11 @@ async def test_la_liste_sans_channel_ne_resout_aucune_ancre_et_filtre_par_l_espa
     assert [c["title"] for c in resultat["cards"]] == ["Migration ERP"]
     assert resultat["cards"][0]["step"] == {"id": ETAPE_1, "name": "Prospection"}
     assert monde.requetes("channels") == []
-    envoye = monde.requetes("cards")[-1]
+    # `CRM-111` T2.4.2 : la liste part des rattachements ; la corbeille se lit sur l'affaire plongée.
+    envoye = monde.requetes("card_placements")[-1]
     assert envoye["workspace_id"] == f"eq.{ESPACE_A}"
-    assert envoye["archived_at"] == "is.null" and envoye["deleted_at"] == "is.null"
+    assert envoye["archived_at"] == "is.null" and envoye["affaire.deleted_at"] == "is.null"
+    assert envoye["order"] == "affaire(title).asc,affaire(id).asc"
     assert envoye["or"].startswith("(snoozed_until.is.null,snoozed_until.lte.")
 
 
@@ -265,7 +306,7 @@ async def test_un_channel_d_un_autre_espace_est_lu_et_refuse(monde: Monde) -> No
     with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : channel"):
         await monde.appel("crm_card_list", {"workspace": "atelier", "channel_id": CHANNEL_B})
     resultat = await monde.appel("crm_card_list", {"workspace": "atelier", "channel_id": CHANNEL_A})
-    assert monde.requetes("cards")[-1]["channel_id"] == f"eq.{CHANNEL_A}"
+    assert monde.requetes("card_placements")[-1]["channel_id"] == f"eq.{CHANNEL_A}"
     assert resultat["has_more"] is False
 
 
@@ -275,10 +316,10 @@ async def test_la_liste_traduit_ses_filtres_pour_postgrest(monde: Monde) -> None
         "crm_card_list",
         {"workspace": "atelier", "query": "ERP*,(x)", "step": "Négociation", "due": "today", "include_snoozed": True},
     )
-    envoye = monde.requetes("cards")[-1]
-    assert envoye["title"] == "ilike.*ERP   x*"
+    envoye = monde.requetes("card_placements")[-1]
+    assert envoye["affaire.title"] == "ilike.*ERP   x*"
     assert envoye["etape.noeud.label"] == "eq.Négociation"
-    assert "cards_current_step_id_workflow_id_fkey!inner(" in envoye["select"]
+    assert "card_placements_step_fk!inner(" in envoye["select"]
     assert "workflow_nodes_catalog!inner(" in envoye["select"]
     assert envoye["next_action_at"].startswith("lt.") and envoye["and"].startswith("(next_action_at.gte.")
     assert "or" not in envoye
@@ -322,10 +363,10 @@ async def test_les_affaires_figees_restent_dans_l_espace_et_se_rangent_par_retar
 async def test_ma_journee_filtre_par_la_personne_sous_la_portee_mine(monde: Monde) -> None:
     monde.ouvrir(("affaires", "consulter"))
     journee = await monde.appel("crm_card_mine", {"workspace": "atelier"})
-    assert monde.requetes("cards")[-1]["owner_id"] == "eq.sujet-thomas"
+    assert monde.requetes("card_placements")[-1]["owner_id"] == "eq.sujet-thomas"
     assert [c["title"] for c in journee["overdue"]] == ["Migration ERP"]
     await monde.appel("crm_card_mine", {"workspace": "atelier", "scope": "all"})
-    assert "owner_id" not in monde.requetes("cards")[-1]
+    assert "owner_id" not in monde.requetes("card_placements")[-1]
     with pytest.raises(ToolError, match="timezone"):
         await monde.appel("crm_card_mine", {"workspace": "atelier", "timezone": "Mars/Olympus"})
 
@@ -408,5 +449,32 @@ async def test_les_deux_scores_de_sante_sont_rendus_par_la_liste_et_la_fiche(mon
     assert liste["cards"][0]["health_commercial"]["score"] == 62
     # LES DEUX COLONNES CALCULÉES SONT DEMANDÉES À LA BASE, avec la ligne : l'outil ne calcule rien.
     # (La résolution de l'ancre lit aussi `cards`, sans le titre : elle n'est pas une lecture de l'affaire.)
-    demandes = [p["select"] for p in monde.requetes("cards") if "title" in p.get("select", "")]
+    demandes = [
+        p["select"] for p in monde.requetes("cards") + monde.requetes("card_placements") if "title" in p.get("select", "")
+    ]
     assert len(demandes) == 2 and all("health_momentum" in s and "health_commercial" in s for s in demandes)
+
+
+# --- `CRM-111` T2.4.2 : les rattachements, ramenés à la forme d'avant ---------------------------------------------------
+
+
+def test_la_fiche_prend_le_plus_ancien_rattachement_quel_que_soit_l_ordre_rendu() -> None:
+    fiche = fiche_depuis_rattachements({
+        "id": "a", "title": "T",
+        "card_placements": [
+            {"id": "r2", "created_at": "2026-05-01T00:00:00+00:00", "amount": 1, "workflow_id": "w2"},
+            {"id": "r1", "created_at": "2026-01-01T00:00:00+00:00", "amount": 9, "workflow_id": "w1"},
+        ],
+    })
+    assert fiche == {"id": "a", "title": "T", "amount": 9, "workflow_id": "w1"}
+
+
+def test_une_affaire_sans_rattachement_lisible_se_lit_comme_absente() -> None:
+    assert fiche_depuis_rattachements({"id": "a", "card_placements": []}) is None
+
+
+def test_la_ligne_d_un_rattachement_porte_l_identifiant_de_l_affaire() -> None:
+    ligne = ligne_depuis_rattachement(
+        {"id": "r1", "created_at": "t", "amount": 5, "affaire": {"id": "a", "title": "T", "currency": "EUR"}}
+    )
+    assert ligne == {"id": "a", "title": "T", "currency": "EUR", "amount": 5}

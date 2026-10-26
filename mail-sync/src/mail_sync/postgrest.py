@@ -5,6 +5,7 @@
 # @spec docs/JOURNAL.md décision 316
 # @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : la lecture et l'effacement des pièces à envoyer, l'archive des pièces
 #       envoyées — docs/SPEC-mail-subsystem.md §19 bis.2 points 7 et 8, §19 bis.4
+# @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — le channel d'une card se lit sur son plus ancien rattachement (docs/SPEC-rattachements.md §7)
 #
 # POURQUOI `urllib` ET NON UN CLIENT HTTP DE PLUS.
 #
@@ -389,17 +390,23 @@ class PostgrestClient:
         renommage de track n'aurait rien à renommer et déplacerait les cards une à une en laissant
         un dossier vide derrière (§4.5).
 
-        DEUX LECTURES PLATES PLUTÔT QU'UNE RELATION EMBARQUÉE, et c'est mesuré : `cards` porte DEUX
+        DEUX LECTURES PLATES PLUTÔT QU'UNE RELATION EMBARQUÉE, et c'est mesuré : `cards` portait DEUX
         clés étrangères vers `channels` — une par workflow, une par workspace —, et PostgREST refuse
         l'ambiguïté par un `PGRST201`. Nommer l'une des deux contraintes marcherait, mais lierait ce
         service à un nom d'index ; deux requêtes sans jointure ne dépendent de rien.
         """
 
-        _, corps = self._rest("GET", f"/rest/v1/cards?id=eq.{card_id}&select=channel_id")
-        cartes = json.loads(corps) if corps else []
-        if not cartes or not cartes[0].get("channel_id"):
+        # `CRM-111` T2.4.2 : le channel est celui du PLUS ANCIEN rattachement de la card
+        # (docs/SPEC-rattachements.md §7), comme `app.card_first_placement` en base.
+        _, corps = self._rest(
+            "GET",
+            f"/rest/v1/card_placements?card_id=eq.{card_id}&select=channel_id"
+            "&order=created_at.asc,id.asc&limit=1",
+        )
+        rattachements = json.loads(corps) if corps else []
+        if not rattachements or not rattachements[0].get("channel_id"):
             return []
-        channel_id = cartes[0]["channel_id"]
+        channel_id = rattachements[0]["channel_id"]
 
         _, corps = self._rest("GET", f"/rest/v1/channels?id=eq.{channel_id}&select=track_id")
         channels = json.loads(corps) if corps else []

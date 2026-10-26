@@ -3,6 +3,7 @@
 # @spec docs/SPEC-mcp.md §9.2 quater (la liste fixée, les ancres, le genre `workflow`, ce que la tranche ne fait pas), §6.1
 #       (`crm_search`, outil de référence filtré par la matrice), §9.1 (les tables et fonctions de la webapp :
 #       `administration-arborescence.ts`, `recherche.ts`), §9.3 ; docs/SPEC-recherche.md §6 (`recherche_globale`)
+# @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — les affaires actives d'un channel sont ses rattachements actifs (docs/SPEC-rattachements.md §5, §11)
 """Tracks, channels et workflows, et la recherche globale, sous l'identité de la personne.
 
 Les écritures sont celles de l'arborescence de la webapp ; la base les réserve à qui administre l'espace. La recherche
@@ -215,8 +216,15 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             raise RefusCrm(introuvable("channel", channel_id))
         actives = await lire(
             appel.jeton,
-            "cards",
-            {"channel_id": f"eq.{channel_id}", "archived_at": "is.null", "deleted_at": "is.null", "select": "id", "limit": "1000"},
+            # `CRM-111` T2.4.2 : les affaires actives du channel sont ses rattachements actifs, l'affaire hors corbeille.
+            "card_placements",
+            {
+                "channel_id": f"eq.{channel_id}",
+                "archived_at": "is.null",
+                "affaire.deleted_at": "is.null",
+                "select": "id,affaire:cards!inner(id)",
+                "limit": "1000",
+            },
             "channel",
             channel_id,
         )

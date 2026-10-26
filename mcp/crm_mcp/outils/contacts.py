@@ -2,6 +2,7 @@
 # @spec docs/SPEC-mcp.md §9.2 quinquies (la liste fixée, l'ancre `organisation` facultative, aucune suppression : le CRM
 #       ne sait que détruire, A4 ; les organisations à `CRM-114`), §9.1 (les lectures et écritures du carnet de la webapp,
 #       `contacts.ts`), §9.3 ; docs/SPEC-contacts.md §14 (création), §15 (fiche), §16 (modification)
+# @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — une affaire liée est archivée quand tous ses rattachements le sont (docs/SPEC-rattachements.md §5, §11)
 """Le carnet de contacts, sous l'identité de la personne : lire, créer, modifier un contact.
 
 Les mêmes lectures que le carnet et la fiche d'un contact, les mêmes écritures que leurs formulaires. La base réserve
@@ -25,7 +26,7 @@ from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_cour
 LIMITE_MAX = 100
 COLONNES_CONTACT = "id,full_name,email,phone,role_title,organization_id,organizations(id,name,domain)"
 COLONNES_FICHE = (
-    f"{COLONNES_CONTACT},card_contacts(role,cards!inner(id,title,archived_at))"
+    f"{COLONNES_CONTACT},card_contacts(role,cards!inner(id,title,card_placements!card_placements_card_fk(archived_at)))"
 )
 
 
@@ -132,7 +133,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                 {
                     "id": (lien.get("cards") or {}).get("id"),
                     "title": (lien.get("cards") or {}).get("title"),
-                    "archived": (lien.get("cards") or {}).get("archived_at") is not None,
+                    # `CRM-111` T2.4.2 : archivée quand TOUS ses rattachements le sont, la règle de la fiche contact.
+                    "archived": bool((lien.get("cards") or {}).get("card_placements"))
+                    and all(r.get("archived_at") is not None for r in (lien.get("cards") or {}).get("card_placements") or []),
                     "role": lien.get("role"),
                 }
                 for lien in fiche.get("card_contacts") or []

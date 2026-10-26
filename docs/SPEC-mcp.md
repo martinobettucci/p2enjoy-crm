@@ -602,6 +602,13 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 
 ### 9.2 bis Tranche `affaires`, lecture — `CRM-104` T2.a (liste fixée, **validée le 2026-10-23**, décision 654)
 
+**Révisé par `CRM-111` T2.4.2** (docs/SPEC-rattachements.md §5, §11) : `crm_card_list` et `crm_card_mine` lisent les
+**rattachements** (`card_placements`, l'affaire plongée, la corbeille filtrée sur elle, le tri par son titre) ;
+`crm_card_get`, `crm_card_timeline` et les outils d'écriture lisent l'affaire et les colonnes de son **plus ancien**
+rattachement. `crm_channel_get` compte les rattachements actifs du channel ; `crm_contact_get` dit une affaire archivée
+quand tous ses rattachements le sont. Contrats, arguments et réponses inchangés ; la forme à plusieurs rattachements vient
+avec les outils du §11 de cette spécification-là.
+
 *Ajout de `CRM-066` tranche 4 (décision 708, M4 B ; `docs/SPEC-analytique.md` §13.7) : `crm_card_get` et `crm_card_list`
 rendent `health_momentum` et `health_commercial`, l'objet des colonnes calculées tel quel — score, palier, composantes ;
 `null` pour une affaire décidée, archivée ou à la corbeille. Même action `consulter`, aucune case nouvelle.*
