@@ -34732,3 +34732,14 @@ propositions de la décision 715 sont validées, **sauf le point 6**, remplacé 
 messages visibles de chaque dossier et y **ajoute** la pastille des non lus de l'appelant (absente à zéro, « 99+ »,
 nom accessible exact). `docs/SPEC-mail-subsystem.md` §18 bis.2 point 6 et §18 bis.4, `docs/DESIGN_SYSTEM.md` §5.4 et
 §5.4 quinquies sont corrigés en conséquence, avant tout code. Le code peut commencer.
+
+### décision 717 — Instruction du responsable : livrer à la prochaine unité terminée, l'instantané de Spark est pris
+
+*2026-10-26, message du responsable pendant la session : « pense à déployer à la prochaine unit terminée, l'instantané de
+Spark est déjà pris ».* **Lecture retenue** : la prochaine unité (ou tranche) qui atteint sa Definition of Done hors
+production — ici `CRM-057` tranche 2 — est livrée en production **par une fenêtre de migration**, `scripts/spark/livrer.sh
+-- --migrate --instantane-verifie`, l'instantané de la VM étant confirmé par ce message (`docs/PROD_MIGRATIONS.md` §3.1,
+étape 3). La fenêtre applique **toutes** les migrations absentes du registre de production — les 102, 103, 104 en attente
+(§3) et la 105 de la tranche —, puis le service `mcp` est reconstruit dans la cellule et `scripts/spark/verifier.sh`
+déroulé. **Bornes** : une seule fenêtre ; aucune autre écriture en production ; si la vérification échoue, rien n'est
+réparé en place, l'état est rapporté au responsable avec la reprise par l'instantané (§6).
