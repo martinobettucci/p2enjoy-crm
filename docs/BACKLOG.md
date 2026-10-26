@@ -16843,9 +16843,21 @@ vérification (`scripts/verify-manual.sh`, `e2e/ui/manuel.spec.ts`) ; `docs/SPEC
 preuves, jamais sa diffusion ; aucune décision du journal ni aucune incohérence n'en traite. **Ordre décidé par le
 responsable** : traitée juste après `CRM-116`.*
 
-- [ ] **Arbitrages à demander avant la spécification** : où le manuel vit dans l'application (entrée de navigation,
-      lien depuis l'en-tête, aide contextuelle par écran) ; sa forme (rendu dans la webapp ou page statique servie) ; ce
-      qu'on retire au rendu — le manuel cite des identifiants d'unités (`CRM-…`) et des chemins du dépôt
-      (`docs/captures/…`), utiles au développement et sans objet pour un utilisateur ; ses captures ; et les deux
-      questions du connecteur MCP (`CLAUDE.md`, « Spécificités du projet »).
-- [ ] Spécification, puis tranches, à découper après ces arbitrages.
+- [x] **Arbitrages, le 2026-10-26** (`docs/JOURNAL.md` décision 736) : un seul manuel, `docs/manual.md`, réécrit
+      comme manuel public, **sans aucune référence interne** (identifiants d'unité, chemins du dépôt, annexe du jeu de
+      démonstration, règles de rédaction, avertissement de constitution) ni secret ; une entrée « Aide » dans l'en-tête
+      et un lien par écran principal vers son chapitre ; une page de la webapp, Markdown converti au build ; **réservé
+      aux membres connectés**, règle appliquée côté serveur ; une image pour chaque champ, bouton ou fenêtre cité,
+      découpée au strict minimum, pleine page permise en tête de chapitre, toutes maintenues ; connecteur MCP : non.
+- [ ] **T1 — spécification, écrite avant le code** : `docs/SPEC-manual.md` révisée (le contrat d'un chapitre sans
+      référence interne ; la traçabilité unité → chapitre portée par la spécification ; le contrat des captures
+      découpées ; les preuves inverses) ; la route, l'entrée « Aide », les liens par écran et le mécanisme d'accès côté
+      serveur (`docs/SPEC-webapp.md`, `docs/DAT.md`) ; l'écran du manuel (`docs/DESIGN_SYSTEM.md`) ; la dépendance de
+      conversion, si elle est retenue (`CLAUDE.md` §19).
+- [ ] **T2 — le manuel réécrit** : retrait de toute référence interne, phrases réécrites pour un utilisateur ;
+      `scripts/verify-manual.sh` et `e2e/ui/manuel.spec.ts` révisés (preuve qu'aucune référence interne ne subsiste).
+- [ ] **T3 — les captures découpées** : un générateur sur l'application réellement exécutée, une image par élément
+      cité, pleine page en tête de chapitre ; preuve qu'aucun élément cité n'est sans image.
+- [ ] **T4 — la page « Aide »** : route, sommaire, chapitres par adresse, entrée de l'en-tête, liens par écran ; accès
+      refusé sans session, prouvé par requête directe ; unitaires, E2E, captures observées, paliers.
+- [ ] **T5 — livraison**, sur instruction du responsable.

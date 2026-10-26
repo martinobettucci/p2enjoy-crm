@@ -35371,3 +35371,40 @@ recommandée : reportées sur le channel, puis le track). **Aucun code avant la 
 2. **Q1, option B** : avant l'effacement définitif d'une affaire, la purge **reporte** ses saisies de temps sur le
    channel de l'affaire ; celles d'un channel effacé, sur son track. Le temps et son coût restent dans les rapports.
    Seules les saisies d'un track effacé disparaissent, faute de parent, et le journal le dit (§8.3).
+
+### décision 736 — `CRM-117` : un seul manuel, public pour les membres, sans référence interne, illustré à chaque élément cité
+
+*2026-10-26, arbitrages du responsable, posés avant la spécification.* **Problème.** Le manuel (`docs/manual.md`) n'est
+joignable nulle part depuis la webapp (constat du responsable, consigné à l'ouverture de `CRM-117`). **Ce que la question
+a révélé, et c'est plus grave** : le manuel n'a jamais été écrit pour un utilisateur. Il cite 251 fois un identifiant
+d'unité (`CRM-…`) et 50 fois un chemin du dépôt (`docs/captures/…`) ; il porte un avertissement de constitution, une
+annexe des volumes du jeu de démonstration et les règles de sa propre rédaction ; il ne montre **aucune** image. La cause
+est écrite : `docs/SPEC-manual.md` §3 (points 2 et 4) **exigeait** de nommer l'unité et de renvoyer au dossier
+`docs/captures/<unité>/`, et `scripts/verify-manual.sh` en faisait des preuves (unités citées, couverture du chunk 3 par
+citation). C'est contraire à `CLAUDE.md` §7 — une documentation « compréhensible sans lire le code », « dépourvue
+d'adresses internes ». **Le responsable** : « Le manuel actuel ne convient pas, il a toujours été censé être visible et à
+mettre à disposition des visiteurs […] Un seul manuel unique, et c'est le manuel utilisateur public unique, sans secrets
+et références internes. » L'objectif était écrit ; il a été manqué, et `CRM-117` le répare.
+
+**Arbitrages.**
+1. **Un seul manuel**, `docs/manual.md`, réécrit pour son lecteur : **aucune référence interne** — ni identifiant
+   d'unité, ni chemin du dépôt, ni annexe du jeu de démonstration, ni règle de rédaction, ni avertissement de
+   constitution — et aucun secret. Pas de second document, pas de filtre au rendu : la source *est* le manuel public. La
+   traçabilité qu'il portait (quelle unité vit dans quel chapitre) quitte le manuel pour la spécification.
+2. **Emplacement** : une entrée « Aide » dans l'en-tête, qui ouvre le sommaire, **et** sur les écrans principaux un lien
+   vers le chapitre qui les décrit.
+3. **Forme** : une page de la webapp (une route, un sommaire, un chapitre par adresse, des liens profonds), le Markdown
+   converti au build.
+4. **Accès : réservé aux membres connectés.** C'est une règle d'accès : elle s'applique côté serveur (`CLAUDE.md` §10),
+   pas seulement par la route — un manuel compilé dans le paquet JavaScript public serait lisible sans session. La
+   spécification nomme le mécanisme et sa preuve par requête directe.
+5. **Captures** : « Si on réfère un champ, un bouton, une fenêtre, il faut l'image, et il faut toutes les maintenir. On
+   découpe l'écran au strict minimum pour expliquer le passage du manuel. La pleine page est autorisée en début de
+   chapitre. » Chaque élément d'interface cité a donc son image, découpée à l'élément, produite par l'application
+   réellement exécutée et renouvelée avec elle.
+6. **Connecteur MCP : non.** La seconde question (famille) ne se pose donc pas.
+
+**Conséquences.** `docs/SPEC-manual.md` est révisée (son §3 contredit l'arbitrage 1) ; `scripts/verify-manual.sh` et
+`e2e/ui/manuel.spec.ts` perdent leurs preuves par citation d'unité et gagnent les preuves inverses (aucune référence
+interne, une image par élément cité) ; le manuel entier est réécrit ; un corpus de captures découpées est créé et
+maintenu. Découpage en tranches : `docs/BACKLOG.md` `CRM-117`. **Persisté avant la spécification.**
