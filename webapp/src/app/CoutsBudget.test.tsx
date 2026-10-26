@@ -9,6 +9,7 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.8 (les quatre états systématiques), §5.9 (cellule sans valeur
 //           VIDE, en-têtes de colonne), §5.16 (« auteur inconnu » est un texte), §5.30 (le tableau
 //           équivalent est la version accessible du graphique)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la réponse plonge les rattachements de l'affaire (docs/SPEC-rattachements.md §5)
 //
 // CE FICHIER ÉPROUVE L'ÉCRAN, PAS L'AGRÉGATION NI LA LECTURE. `couts-ecrans.test.ts` couvre déjà le
 // groupement par occurrence, le filtre, la forme des trois requêtes et l'adresse d'une affaire ; les
@@ -302,12 +303,23 @@ describe('ContenuCoutsBudget — le contenu du §4.3', () => {
 						cards: {
 							id: 'card-1',
 							title: 'ERP Groupe Vitalis',
-							archived_at: null,
-							channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+							// `CRM-111` T2.4.1 : la réponse plonge les rattachements de l'affaire.
+							card_placements: [
+								{
+									id: 'r-1',
+									created_at: '2026-01-01T00:00:00Z',
+									archived_at: null,
+									channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+								},
+							],
 						},
 					}),
 					ligne('l2', {
-						cards: { id: 'card-2', title: 'Affaire sans slug', archived_at: null, channels: null },
+						cards: {
+							id: 'card-2',
+							title: 'Affaire sans slug',
+							card_placements: [{ id: 'r-2', created_at: '2026-01-01T00:00:00Z', archived_at: null, channels: null }],
+						},
 					}),
 				]),
 			]),
@@ -331,8 +343,14 @@ describe('ContenuCoutsBudget — le contenu du §4.3', () => {
 						cards: {
 							id: 'card-1',
 							title: 'ERP Groupe Vitalis',
-							archived_at: '2026-06-01T00:00:00Z',
-							channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+							card_placements: [
+								{
+									id: 'r-1',
+									created_at: '2026-01-01T00:00:00Z',
+									archived_at: '2026-06-01T00:00:00Z',
+									channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+								},
+							],
 						},
 					}),
 				]),

@@ -12,6 +12,7 @@
 // @spec CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu — docs/SPEC-mail-subsystem.md §18 bis.2 (état personnel,
 //       fil marqué lu à l'ouverture, total gardé), §18 bis.3 (`is_read`, `unread_count`, les deux fonctions), §18 bis.4 ;
 //       docs/DESIGN_SYSTEM.md §5.4 quinquies ; docs/JOURNAL.md décisions 715 et 716
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — le classement situe l'affaire par son plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // Ce module ne rend rien : il **lit, réduit et classe**. La séparation est ce qui rend la
 // réduction du HTML, la construction de l'arbre et la classification des refus vérifiables
@@ -23,6 +24,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type ErreurDonnees, type EtatAsync } from './async'
 import type { Database } from './database.types'
+import { premierRattachement } from './rattachements'
 import { cleFil, lireFilsEndormis, type FilsEndormis } from './sommeil-fil'
 import type { ClientCrm } from './supabase'
 
@@ -782,11 +784,14 @@ export async function lireCardsClassables(client: ClientCrm | null): Promise<rea
 		// (`cards_channel_id_workspace_id_fkey`), et l'imbrication PostgREST ne les résout pas par
 		// le seul nom de colonne. Trois lectures de tables déjà cloisonnées par la RLS coûtent
 		// moins qu'une jointure qui échouerait à l'exécution.
+		//
+		// `CRM-111` T2.4.1 : le channel est celui du RATTACHEMENT. L'affaire est proposée si l'un de ses rattachements est
+		// actif (`!inner` sur les seuls non archivés), et son chemin est celui du plus ancien d'entre eux.
 		const [cards, channels, tracks] = await Promise.all([
 			client
 				.from('cards')
-				.select('id, title, channel_id')
-				.is('archived_at', null)
+				.select('id, title, card_placements!card_placements_card_fk!inner(id, channel_id, created_at)')
+				.is('card_placements.archived_at', null)
 				.is('deleted_at', null)
 				.order('title')
 				.limit(CARDS_CLASSABLES_MAX),
@@ -798,7 +803,8 @@ export async function lireCardsClassables(client: ClientCrm | null): Promise<rea
 		const nomChannel = new Map(channels.data.map((ligne) => [ligne.id, ligne]))
 		const nomTrack = new Map(tracks.data.map((ligne) => [ligne.id, ligne.name]))
 		return cards.data.map((ligne) => {
-			const channel = nomChannel.get(ligne.channel_id)
+			const rattachement = premierRattachement(ligne.card_placements)
+			const channel = rattachement === null ? undefined : nomChannel.get(rattachement.channel_id)
 			const track = channel === undefined ? undefined : nomTrack.get(channel.track_id)
 			return {
 				id: ligne.id,
@@ -836,13 +842,20 @@ export async function lireCheminCard(
 ): Promise<{ readonly titre: string; readonly adresse: string } | null> {
 	if (client === null) return null
 	try {
-		const card = await client.from('cards').select('id, title, channel_id').eq('id', idCard).limit(1)
+		// `CRM-111` T2.4.1 : l'adresse est celle du plus ancien rattachement de l'affaire.
+		const card = await client
+			.from('cards')
+			.select('id, title, card_placements!card_placements_card_fk(id, channel_id, created_at)')
+			.eq('id', idCard)
+			.limit(1)
 		const ligneCard = card.error === null ? card.data[0] : undefined
 		if (ligneCard === undefined) return null
+		const rattachement = premierRattachement(ligneCard.card_placements)
+		if (rattachement === null) return null
 		const channel = await client
 			.from('channels')
 			.select('slug, track_id')
-			.eq('id', ligneCard.channel_id)
+			.eq('id', rattachement.channel_id)
 			.limit(1)
 		const ligneChannel = channel.error === null ? channel.data[0] : undefined
 		if (ligneChannel === undefined) return null

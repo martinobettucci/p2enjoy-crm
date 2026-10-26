@@ -4,6 +4,7 @@
 //       PAS demandé), §25.3 (le canal, son nom et son filtre), §26.1 (le compteur et sa borne
 //       d'affichage), §26.5 (la borne de lecture, et le point ouvert n° 1 qu'elle traite)
 // @spec docs/SPEC-types.md §4
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — la notification situe son affaire par son plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // CE MODULE N'IMPORTE RIEN, ET C'EST TOUT SON OBJET.
 //
@@ -40,9 +41,12 @@
  * laisserait croire qu'on pourrait lire celui d'un autre. Une requête ne rapporte que ce que
  * l'écran montre, règle que `COLONNES_COMMENTAIRE` tient depuis `CRM-043`.
  */
+//
+// `CRM-111` T2.4.1 : le channel de l'affaire est celui de son PLUS ANCIEN rattachement, plongé par la clé du rattachement
+// (`card_placements_channel_fk`) ; `lireBoite` ramène la ligne à sa forme d'avant (`channelDuPremierRattachement`).
 export const COLONNES_NOTIFICATION =
 	'id, type, read_at, created_at, subject_card_id, payload, ' +
-	'cards(id, title, channels!cards_channel_id_workspace_id_fkey(slug, name, tracks(slug, name)))'
+	'cards(id, title, card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(slug, name, tracks(slug, name))))'
 
 /**
  * Colonnes d'un commentaire cité par une notification — la requête 2 du §24.1.

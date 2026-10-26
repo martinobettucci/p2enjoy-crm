@@ -11,6 +11,7 @@
 //           l'en-tête, pour que les captures représentent un état que le produit rend (docs/JOURNAL.md décision 693)
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : ces scénarios se
 //           connectent, aucune page n'étant rendue sans session (docs/JOURNAL.md décision 601)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la fiche lit les colonnes du plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // CE QUE CE FICHIER PROUVE SANS AUCUNE SUBSTITUTION : qu'un appelant anonyme n'obtient aucune
 // card, et qu'aucune requête d'événements ne part alors — l'écran ne devine rien.
@@ -65,23 +66,30 @@ const CARD_SERVIE = [
 	{
 		id: CARD,
 		title: 'Piste entrante à qualifier',
-		workflow_id: 'wf-1',
+		// `workspace_id` est demandée depuis `CRM-043` : le panneau de commentaires l'envoie à
+		// l'insertion (docs/JOURNAL.md décision 200).
 		workspace_id: WORKSPACE,
-		current_step_id: ETAPE_PROSPECTION.id,
 		email_local_part: 'c-t2dtpcjd',
-		// Les colonnes que l'en-tête de la fiche demande aussi, aux valeurs que la base porte pour `…0000c6` — les mêmes
-		// que la réponse de `e2e/ui/formulaire.spec.ts` (mesurées le 2026-10-25, décision 690). Absentes, l'en-tête lisait
-		// `undefined` là où PostgREST rend `null` : les captures du fil montraient « Montant NaN », « Archivé » et
-		// « Adresse indisponible », états que le produit ne rend jamais pour cette affaire (relevé le 2026-10-25 par la
-		// tranche INC-301 ; CLAUDE.md §16 ; docs/DESIGN_SYSTEM.md §12.5).
-		amount: null,
 		currency: 'EUR',
-		next_action: null,
-		next_action_at: null,
-		archived_at: null,
-		snoozed_until: null,
-		profiles: null,
 		workspaces: { inbound_domain: 'crm.p2enjoy.test' },
+		// `CRM-111` T2.4.1 : la fiche lit les colonnes du rattachement le plus ancien, plongé — aux valeurs que la base
+		// porte pour `…0000c6` (mesurées le 2026-10-25). Absentes, l'en-tête lisait `undefined` là où PostgREST rend
+		// `null` : les captures montraient « Montant NaN » et la pilule « Archivé », états que le produit ne rend jamais
+		// pour cette affaire — relevé le 2026-10-25 par la tranche INC-301 (CLAUDE.md §16 ; docs/DESIGN_SYSTEM.md §12.5).
+		card_placements: [
+			{
+				id: '7a770000-0000-4000-8000-0000000000c6',
+				created_at: '2026-01-01T00:00:00+00:00',
+				workflow_id: 'wf-1',
+				current_step_id: ETAPE_PROSPECTION.id,
+				amount: null,
+				next_action: null,
+				next_action_at: null,
+				archived_at: null,
+				snoozed_until: null,
+				profiles: null,
+			},
+		],
 	},
 ]
 

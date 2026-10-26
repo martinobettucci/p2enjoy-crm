@@ -5,6 +5,7 @@
 // @spec docs/SPEC-relances.md §2.1 (la règle a UNE déclaration, et elle est en base),
 //       §3.1 (les dix colonnes rendues), §3.4 (l'ordre)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.37 (l'écran)
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — la seconde lecture porte sur les rattachements, appariés par affaire et channel (docs/SPEC-rattachements.md §5)
 //
 // Ce module ne rend rien : il **compose**, et il lit. La séparation est ce qui rend les règles du
 // §10 vérifiables sans navigateur — le regroupement par dossier, l'ordre des groupes, la
@@ -22,10 +23,10 @@
 // sur un rôle (`CLAUDE.md` §10).
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
-import { COLONNES_CARD_FIGEE } from './colonnes-affaires-figees'
+import { COLONNES_RATTACHEMENT_FIGE } from './colonnes-affaires-figees'
 import type { ClientCrm } from './supabase'
 
-export { COLONNES_CARD_FIGEE } from './colonnes-affaires-figees'
+export { COLONNES_RATTACHEMENT_FIGE } from './colonnes-affaires-figees'
 
 /**
  * Une ligne telle que `public.cards_figees()` la rend — les dix colonnes du §3.1.
@@ -44,9 +45,10 @@ export type LigneFigeeLue = {
 	readonly retard_jours: number
 }
 
-/** Une ligne de la seconde lecture, telle que PostgREST la rend. */
+/** Une ligne de la seconde lecture — un rattachement (`CRM-111` T2.4.1) —, telle que PostgREST la rend. */
 type LigneCardLue = {
-	readonly id: string
+	readonly card_id: string
+	readonly channel_id: string
 	readonly channels: {
 		readonly slug: string
 		readonly name: string
@@ -111,6 +113,18 @@ export function adresseChannel(card: LigneCardLue | undefined): string | null {
 	return `/tracks/${slugTrack}/${slugChannel}`
 }
 
+/** La clé d'appariement : une affaire DANS un channel, que la règle rend une fois par rattachement (`CRM-111` T2.4.1). */
+export function cleRattachement(idCard: string, idChannel: string): string {
+	return `${idCard}:${idChannel}`
+}
+
+/** Indexe la seconde lecture par rattachement, pour `apparier`. */
+export function indexerRattachements(
+	lignes: readonly LigneCardLue[],
+): ReadonlyMap<string, LigneCardLue> {
+	return new Map(lignes.map((ligne) => [cleRattachement(ligne.card_id, ligne.channel_id), ligne]))
+}
+
 /**
  * Apparie une ligne de la règle avec ce que la seconde lecture en a rapporté.
  *
@@ -127,7 +141,7 @@ export function apparier(
 	figee: LigneFigeeLue,
 	cards: ReadonlyMap<string, LigneCardLue>,
 ): AffaireFigee {
-	const card = cards.get(figee.card_id)
+	const card = cards.get(cleRattachement(figee.card_id, figee.channel_id))
 	const base = adresseChannel(card)
 	return {
 		id: figee.card_id,
@@ -216,22 +230,19 @@ export async function lireAffairesFigees(
 		if (figees.length === 0) return pret([])
 
 		const libelles = await client
-			.from('cards')
-			.select(COLONNES_CARD_FIGEE)
+			.from('card_placements')
+			.select(COLONNES_RATTACHEMENT_FIGE)
 			.in(
-				'id',
+				'card_id',
 				figees.map((ligne) => ligne.card_id),
 			)
 		// LA SECONDE LECTURE N'EST PAS BLOQUANTE, et c'est une décision. Son échec ne doit pas
 		// effacer une liste d'affaires en retard que la règle a déjà rendue : l'écran vaut mieux
 		// dégradé — titres, retards et seuils, sans lien ni pilule — que remplacé par une erreur.
 		// C'est exactement le sort d'une affaire absente de cette lecture, généralisé à toutes.
-		const cards = new Map<string, LigneCardLue>()
-		if (libelles.error === null) {
-			for (const card of (libelles.data ?? []) as unknown as readonly LigneCardLue[]) {
-				cards.set(card.id, card)
-			}
-		}
+		const cards = indexerRattachements(
+			libelles.error === null ? ((libelles.data ?? []) as unknown as readonly LigneCardLue[]) : [],
+		)
 		return pret(figees.map((ligne) => apparier(ligne, cards)))
 	} catch (cause) {
 		return enErreur(

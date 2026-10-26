@@ -177,8 +177,9 @@ function clientFactice(options: Options = {}): { client: ClientCrm; ecritures: E
 				if (table === 'tracks') return lecture(options.tracks ?? TRACKS, options.erreurTracks)
 				if (table === 'channels') return lecture(options.channels ?? CHANNELS)
 				// L'énumération de `CRM-077` compte les affaires par `count=exact`, jamais par les
-				// lignes : le corps reste vide et c'est le compte qui porte l'information (§3.5).
-				if (table === 'cards') {
+				// lignes : le corps reste vide et c'est le compte qui porte l'information (§3.5). Depuis
+				// `CRM-111` T2.4.1, elle compte les rattachements du channel.
+				if (table === 'card_placements') {
 					return lecture([], undefined, options.compteCards === undefined ? 7 : options.compteCards)
 				}
 				return lecture(options.workflows ?? WORKFLOWS)

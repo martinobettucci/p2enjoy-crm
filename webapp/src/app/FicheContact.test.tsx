@@ -12,6 +12,7 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.24 (cette surface), §5.9 (cellule sans valeur VIDE),
 //           §5.8 (états explicites), §5.6 (pilule), §2 (données techniques)
 // @verifies docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne, jamais une erreur)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la réponse plonge les rattachements de l'affaire (docs/SPEC-rattachements.md §5)
 //
 // Les données injectées sont celles du SEED, à l'identique — Léo Marchand avec son organisation et
 // son affaire, Sophie Dupont sans organisation, Élise Fabre sans aucune affaire. Ce n'est pas une
@@ -83,8 +84,7 @@ const LEO = {
 			cards: {
 				id: ID_CARD_ERP,
 				title: 'Migration ERP Sogexia',
-				archived_at: null,
-				channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+				card_placements: [{ id: 'r-1', created_at: '2026-01-01T00:00:00+00:00', archived_at: null, channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } } }],
 			},
 		},
 	],
@@ -106,8 +106,7 @@ const SOPHIE = {
 			cards: {
 				id: '5eed0000-0000-4000-8000-0000000000c4',
 				title: 'Refonte intranet Ville de Lyon',
-				archived_at: null,
-				channels: { slug: 'refonte', tracks: { slug: 'studio-web' } },
+				card_placements: [{ id: 'r-1', created_at: '2026-01-01T00:00:00+00:00', archived_at: null, channels: { slug: 'refonte', tracks: { slug: 'studio-web' } } }],
 			},
 		},
 	],
@@ -214,8 +213,7 @@ describe('fiche de contact (docs/SPEC-contacts.md §15.9)', () => {
 					cards: {
 						id: '5eed0000-0000-4000-8000-0000000000c8',
 						title: 'Contrat cadre 2025',
-						archived_at: '2026-03-31T16:00:00+00:00',
-						channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+						card_placements: [{ id: 'r-1', created_at: '2026-01-01T00:00:00+00:00', archived_at: '2026-03-31T16:00:00+00:00', channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } } }],
 					},
 				},
 			],
@@ -631,13 +629,19 @@ function clientQuiRattache(options: {
 	}
 }
 
-const ERP = { id: ID_CARD_ERP, title: 'Migration ERP Sogexia', archived_at: null }
-const VITRINE = { id: '5eed0000-0000-4000-8000-0000000000c1', title: 'Refonte du site vitrine', archived_at: null }
+// `CRM-111` T2.4.1 : le sélecteur lit l'archivage sur les rattachements de l'affaire.
+const ERP = { id: ID_CARD_ERP, title: 'Migration ERP Sogexia', card_placements: [{ archived_at: null }] }
+const VITRINE = {
+	id: '5eed0000-0000-4000-8000-0000000000c1',
+	title: 'Refonte du site vitrine',
+	card_placements: [{ archived_at: null }],
+}
 /** « Contrat cadre 2025 » du seed : la seule affaire ARCHIVÉE lisible (§17.3, mesure 15). */
+const ARCHIVAGE_CONTRAT = '2026-03-31T16:00:00+00:00'
 const CONTRAT_ARCHIVE = {
 	id: '5eed0000-0000-4000-8000-0000000000c8',
 	title: 'Contrat cadre 2025',
-	archived_at: '2026-03-31T16:00:00+00:00',
+	card_placements: [{ archived_at: ARCHIVAGE_CONTRAT }],
 }
 
 const AFFAIRES = (...lignes: unknown[]) => ({ data: lignes, error: null, status: 200 })
@@ -948,8 +952,7 @@ const LEO_DEUX_AFFAIRES = {
 			cards: {
 				id: CONTRAT_ARCHIVE.id,
 				title: CONTRAT_ARCHIVE.title,
-				archived_at: CONTRAT_ARCHIVE.archived_at,
-				channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+				card_placements: [{ id: 'r-1', created_at: '2026-01-01T00:00:00+00:00', archived_at: ARCHIVAGE_CONTRAT, channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } } }],
 			},
 		},
 	],

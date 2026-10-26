@@ -6,6 +6,7 @@
 // @spec docs/SCHEMA.md §9 bis.6 (card_costs), §9 bis.7 (politiques)
 // @spec docs/DESIGN_SYSTEM.md §5.3 (la colonne qui accueille la section)
 // @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — le track d'une affaire se lit sur son plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // CE MODULE N'INVENTE AUCUNE RÈGLE, exactement comme `budgets.ts`. Chaque refus traduit ici est déjà
 // posé et mesuré par la migration `0051` et par `supabase/tests/0049_card_costs.test.sql`. Rien n'est
@@ -26,6 +27,7 @@ import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
 import type { ClientCrm } from './supabase'
 import { LIMITE_COMPTE, OPTIONS_COMPTE } from './compter'
+import { channelDuPremierRattachement } from './rattachements'
 
 // ---------------------------------------------------------------------------------------------
 // Ce que la section lit
@@ -119,12 +121,11 @@ export async function lireCoutsCard(
  * `maybeSingle` et non `single` : une card refusée par la RLS rend zéro ligne, ce qui n'est pas une
  * erreur mais une absence — et `single` en ferait un `PGRST116` classé « inconnu ».
  *
- * LA RELATION EST NOMMÉE PAR SA CLÉ ÉTRANGÈRE, ET C'EST OBLIGATOIRE — MESURÉ. `cards` porte DEUX
- * clés composites vers `channels` : `cards_channel_id_workflow_id_fkey` et
- * `cards_channel_id_workspace_id_fkey`. Un `channels(track_id)` nu est donc AMBIGU, et PostgREST
- * refuse la requête entière avec `PGRST201` plutôt que d'en choisir une. La clé retenue est celle
- * qui passe par le workspace : c'est la colonne dénormalisée dont dépend la RLS, et la seule des
- * deux dont la présence est structurellement garantie sur toute card.
+ * LA RELATION EST NOMMÉE PAR SA CLÉ ÉTRANGÈRE, ET C'EST OBLIGATOIRE — MESURÉ. Le channel se lit,
+ * depuis `CRM-111` T2.4.1, sur le rattachement le plus ancien (docs/SPEC-rattachements.md §5) ;
+ * `card_placements` porte DEUX clés vers `channels`, et un `channels(track_id)` nu y rend `PGRST201`
+ * comme il le rendait sur `cards`. La clé retenue est `card_placements_channel_fk`, celle du channel
+ * seul.
  */
 export async function lireTrackDeLaCard(
 	client: ClientCrm,
@@ -133,17 +134,30 @@ export async function lireTrackDeLaCard(
 	try {
 		const reponse = await client
 			.from('cards')
-			.select('id, channels!cards_channel_id_workspace_id_fkey(track_id)')
+			.select(
+				'id, card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(track_id))',
+			)
 			.eq('id', idCard)
 			.maybeSingle()
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
-		const channel = (reponse.data as { channels: { track_id: string } | null } | null)?.channels
+		const lue = reponse.data as AffaireAvecTrack | null
+		const channel = lue?.card_placements === undefined ? null : channelDuPremierRattachement(lue).channels
 		return pret(channel?.track_id ?? null)
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}
+}
+
+/** L'affaire telle que `lireTrackDeLaCard` la lit : ses rattachements et leur channel (`CRM-111` T2.4.1). */
+type AffaireAvecTrack = {
+	readonly id: string
+	readonly card_placements: readonly {
+		readonly id: string
+		readonly created_at: string
+		readonly channels: { readonly track_id: string } | null
+	}[]
 }
 
 /** Un budget proposable par le sélecteur du §4.6, et les occurrences ouvertes qui vont avec. */

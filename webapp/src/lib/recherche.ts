@@ -8,6 +8,7 @@
 // @spec docs/DESIGN_SYSTEM.md §5.46 (la surface qui l'appelle), §5.8 (états systématiques)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec docs/SPEC-types.md §4 (un type ne garantit jamais une valeur)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : l'adresse d'une affaire, par son plus ancien rattachement
 //
 // CE MODULE NE REND RIEN : IL LIT. La séparation est ce qui rend la garde d'ordre, le délai de
 // frappe, la résolution d'adresse et les cinq destinations vérifiables **sans navigateur** — c'est
@@ -36,6 +37,7 @@ import {
 	COLONNES_ADRESSE_COMMENTAIRE,
 	PARAMETRE_MESSAGE,
 } from './colonnes-recherche'
+import { channelDuPremierRattachement } from './rattachements'
 import type { ClientCrm } from './supabase'
 
 export { BORNE_PALETTE, PARAMETRE_MESSAGE } from './colonnes-recherche'
@@ -128,11 +130,21 @@ type LigneAdresseAffaire = {
 	} | null
 }
 
-/** La forme que la résolution d'un commentaire rend (M15). */
-type LigneAdresseCommentaire = {
+/** L'affaire telle que PostgREST la rend depuis `CRM-111` T2.4.1 : ses rattachements portent le channel. */
+type AffaireAvecRattachements = {
+	readonly id: string
+	readonly card_placements: readonly {
+		readonly id: string
+		readonly created_at: string
+		readonly channels: LigneAdresseAffaire['channels']
+	}[]
+}
+
+/** La forme que la résolution d'un commentaire rend (M15), l'affaire avec ses rattachements. */
+type LigneAdresseCommentaireBrute = {
 	readonly id: string
 	readonly card_id: string | null
-	readonly cards: LigneAdresseAffaire | null
+	readonly cards: AffaireAvecRattachements | null
 }
 
 /**
@@ -211,7 +223,9 @@ async function resoudreAffaires(
 	try {
 		const reponse = await client.from('cards').select(COLONNES_ADRESSE_AFFAIRE).in('id', [...ids])
 		if (reponse.error !== null) return adresses
-		for (const ligne of (reponse.data ?? []) as unknown as readonly LigneAdresseAffaire[]) {
+		// `CRM-111` T2.4.1 : l'affaire, rendue avec ses rattachements, est ramenée à son channel le plus ancien.
+		for (const brute of (reponse.data ?? []) as unknown as readonly AffaireAvecRattachements[]) {
+			const ligne = channelDuPremierRattachement(brute)
 			const adresse = adresseDepuisLigne(ligne)
 			if (adresse !== null) adresses.set(ligne.id, adresse)
 		}
@@ -239,8 +253,8 @@ async function resoudreCommentaires(
 			.select(COLONNES_ADRESSE_COMMENTAIRE)
 			.in('id', [...ids])
 		if (reponse.error !== null) return adresses
-		for (const ligne of (reponse.data ?? []) as unknown as readonly LigneAdresseCommentaire[]) {
-			const adresse = adresseDepuisLigne(ligne.cards)
+		for (const ligne of (reponse.data ?? []) as unknown as readonly LigneAdresseCommentaireBrute[]) {
+			const adresse = adresseDepuisLigne(ligne.cards === null ? null : channelDuPremierRattachement(ligne.cards))
 			if (adresse !== null) adresses.set(ligne.id, adresse)
 		}
 		return adresses

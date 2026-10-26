@@ -2056,6 +2056,12 @@ L'ordre de la colonne gauche est donc, de haut en bas : **en-tête**, formulaire
 
 ### 15.3 Ce que l'en-tête lit, et en combien de requêtes
 
+**Révisé par `CRM-111` T2.4.1** (docs/SPEC-rattachements.md §5) : la fiche lit l'affaire (titre, devise, adresse, espace)
+et plonge ses **rattachements** avec leurs colonnes — workflow, étape, montant, prochaine action, archivage, sommeil,
+responsable (`profiles!card_placements_owner_id_fkey`). L'en-tête et le formulaire prennent celles du **plus ancien**
+(`cardDepuisRattachements`), dans la même requête ; une affaire sans rattachement lisible se lit comme absente. Les
+blocs par rattachement viennent avec T7.
+
 **Aucune requête supplémentaire.** La fiche lit déjà sa card par `lireCard`
 (`webapp/src/lib/formulaire.ts`) ; la tranche **élargit ce `select`** au lieu d'en émettre un
 second. Les colonnes ajoutées sont `amount`, `currency`, `next_action`, `next_action_at`,

@@ -9,6 +9,7 @@
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T4 : accepter la suggestion et retirer un message classé s'éteignent
 //           avec leur motif quand la base refuse l'écriture de l'affaire visée ; docs/SPEC-droits-interface.md §4, §5
 //           (« Inbox ») ; docs/DESIGN_SYSTEM.md §5.59
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — l'affaire suggérée se lit avec ses rattachements (docs/SPEC-rattachements.md §5)
 //
 // CES PREUVES MONTENT LE VRAI ÉCRAN avec un client factice, comme `RouteInbox.test.tsx`. Le
 // parcours connecté complet relève de `e2e/ui/inbox.spec.ts`, qui exige la pile.
@@ -144,7 +145,15 @@ function clientFactice() {
 							limit: () =>
 								reponse(
 									affairesLisibles
-										? [{ id: CARD_SUGGEREE, title: 'Migration ERP Sogexia', channel_id: 'channel-1' }]
+										? [
+												{
+													id: CARD_SUGGEREE,
+													title: 'Migration ERP Sogexia',
+													card_placements: [
+														{ id: 'rattachement-1', channel_id: 'channel-1', created_at: '2026-01-01T00:00:00Z' },
+													],
+												},
+											]
 										: [],
 								),
 						}),

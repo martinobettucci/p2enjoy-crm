@@ -6,6 +6,7 @@
 //           il est classé, et rien sinon), M19 (l'asymétrie du seed, par son COMPTE)
 // @verifies docs/SPEC-permissions-rls.md §4.3 (le refus est une absence)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la palette situe l'affaire par son rattachement (docs/SPEC-rattachements.md §5)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND, ET QU'UN TEST UNITAIRE NE PEUT PAS POSER.
 // `webapp/src/lib/recherche.test.ts` vérifie que le module DEMANDE les bonnes colonnes ; il ne peut
@@ -17,6 +18,7 @@
 // CE FICHIER N'ÉCRIT RIEN. Les résolutions sont des lectures, comme la recherche elle-même : le
 // seed sort intact par construction, sans nettoyage à écrire — donc sans nettoyage qui puisse
 // échouer. C'est la discipline de `recherche-globale.spec.ts`, reprise sans changement.
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : M15 par le rattachement de l'affaire
 
 import { expect, test } from '@playwright/test'
 import {
@@ -41,6 +43,12 @@ type Ligne = {
 type LigneAdresseAffaire = {
 	id: string
 	channels: { slug: string; tracks: { slug: string } | null } | null
+}
+
+/** L'affaire telle que la résolution la rend depuis `CRM-111` T2.4.1 : son rattachement porte le channel. */
+type AffaireAvecRattachement = {
+	id: string
+	card_placements: { channels: LigneAdresseAffaire['channels'] }[]
 }
 
 /**
@@ -119,7 +127,11 @@ test.describe('CRM-065 sous-tranche 2a — les résolutions d’adresse, hors in
 	test('M15 — l’embarquement NU de `channels` est refusé par PGRST201', async ({ request }) => {
 		const reponse = await request.get(`${URL_API}/rest/v1/cards`, {
 			headers: enTetesAuthentifies(jetonAdmin),
-			params: { id: `in.(${CARD_VITRINE})`, select: 'id, channels(slug, tracks(slug))' },
+			// `CRM-111` T2.4.1 : le channel passe par le rattachement, qui porte lui aussi deux clés vers `channels`.
+			params: {
+				id: `in.(${CARD_VITRINE})`,
+				select: 'id, card_placements!card_placements_card_fk(channels(slug, tracks(slug)))',
+			},
 		})
 		expect(reponse.ok()).toBe(false)
 		const corps = await reponse.json()
@@ -141,11 +153,13 @@ test.describe('CRM-065 sous-tranche 2a — les résolutions d’adresse, hors in
 			params: { id: `in.(${CARD_VITRINE})`, select: COLONNES_ADRESSE_AFFAIRE },
 		})
 		expect(reponse.status()).toBe(200)
-		const lignes = (await reponse.json()) as LigneAdresseAffaire[]
+		const lignes = (await reponse.json()) as AffaireAvecRattachement[]
 		expect(lignes).toHaveLength(1)
-		// LES DEUX SLUGS SONT EXIGÉS PAR L'ADRESSE, et aucun ne se déduit de l'autre.
-		expect(lignes[0]?.channels?.slug).toBe('grands-comptes')
-		expect(lignes[0]?.channels?.tracks?.slug).toBe('conseil-ia')
+		// LES DEUX SLUGS SONT EXIGÉS PAR L'ADRESSE, et aucun ne se déduit de l'autre — ceux du rattachement de l'affaire,
+		// l'unique pendant la bascule (`CRM-111` T2.4.1).
+		expect(lignes[0]?.card_placements).toHaveLength(1)
+		expect(lignes[0]?.card_placements[0]?.channels?.slug).toBe('grands-comptes')
+		expect(lignes[0]?.card_placements[0]?.channels?.tracks?.slug).toBe('conseil-ia')
 	})
 
 	test('M15 — la résolution d’un COMMENTAIRE rend l’adresse de son affaire', async ({
@@ -159,12 +173,12 @@ test.describe('CRM-065 sous-tranche 2a — les résolutions d’adresse, hors in
 		const lignes = (await reponse.json()) as {
 			id: string
 			card_id: string | null
-			cards: LigneAdresseAffaire | null
+			cards: AffaireAvecRattachement | null
 		}[]
 		expect(lignes).toHaveLength(1)
 		expect(lignes[0]?.card_id).toBe(CARD_VITRINE)
-		expect(lignes[0]?.cards?.channels?.slug).toBe('grands-comptes')
-		expect(lignes[0]?.cards?.channels?.tracks?.slug).toBe('conseil-ia')
+		expect(lignes[0]?.cards?.card_placements[0]?.channels?.slug).toBe('grands-comptes')
+		expect(lignes[0]?.cards?.card_placements[0]?.channels?.tracks?.slug).toBe('conseil-ia')
 	})
 
 	/**
@@ -186,11 +200,11 @@ test.describe('CRM-065 sous-tranche 2a — les résolutions d’adresse, hors in
 			params: { id: `in.(${ids.join(',')})`, select: COLONNES_ADRESSE_AFFAIRE },
 		})
 		expect(reponse.status()).toBe(200)
-		const adresses = (await reponse.json()) as LigneAdresseAffaire[]
+		const adresses = (await reponse.json()) as AffaireAvecRattachement[]
 		expect(adresses).toHaveLength(ids.length)
 		for (const adresse of adresses) {
-			expect(adresse.channels?.slug).toBeTruthy()
-			expect(adresse.channels?.tracks?.slug).toBeTruthy()
+			expect(adresse.card_placements[0]?.channels?.slug).toBeTruthy()
+			expect(adresse.card_placements[0]?.channels?.tracks?.slug).toBeTruthy()
 		}
 	})
 
@@ -228,7 +242,7 @@ test.describe('CRM-065 sous-tranche 2a — les résolutions d’adresse, hors in
 			},
 		})
 		expect(reponse.status()).toBe(200)
-		const adresses = (await reponse.json()) as LigneAdresseAffaire[]
+		const adresses = (await reponse.json()) as AffaireAvecRattachement[]
 		expect(adresses).toHaveLength(cotéViewer.filter((l) => l.objet === 'affaire').length)
 	})
 

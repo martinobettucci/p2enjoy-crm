@@ -8,6 +8,7 @@
 #           §9.9 (le seed écrit par le VRAI mécanisme), §9.10 (les preuves de la tranche 2)
 # @verifies docs/SCHEMA.md §9 bis.9 et §9 bis.10 ; docs/PROD_MIGRATIONS.md §3 (migrations 53 et 54)
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
+# @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la dégradation de l'appariement suit la clé du rattachement (docs/SPEC-rattachements.md §5)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves de l'unité, puis DÉGRADE RÉELLEMENT la fonction — une dégradation
@@ -968,7 +969,7 @@ degrader_unitaire "ordre des groupes par nom au lieu du retard" "$MODULE_FIGEES"
 
 # D-C — une affaire absente de la seconde lecture est ÉCARTÉE au lieu d'être listée. Elle
 # disparaîtrait alors de la liste qui existe pour montrer les affaires en retard (§10.5).
-degrader_unitaire "une affaire sans libellés est écartée au lieu d'être listée" "$MODULE_FIGEES" 	'		return pret(figees.map((ligne) => apparier(ligne, cards)))' 	'		return pret(figees.filter((l) => cards.has(l.card_id)).map((ligne) => apparier(ligne, cards)))' 	src/lib/affaires-figees.test.ts
+degrader_unitaire "une affaire sans libellés est écartée au lieu d'être listée" "$MODULE_FIGEES" 	'		return pret(figees.map((ligne) => apparier(ligne, cards)))' 	'		return pret(figees.filter((l) => cards.has(cleRattachement(l.card_id, l.channel_id))).map((ligne) => apparier(ligne, cards)))' 	src/lib/affaires-figees.test.ts
 
 # D-D — le détail d'une relance est construit par CONCATÉNATION au lieu d'une clé de traduction.
 # « 1 jours de retard » est faux, et c'est la faute que le §10 du design system nomme.

@@ -7,6 +7,7 @@
 // @spec docs/SPEC-costs.md §2.3 (« nul n'est pas zéro »), §3.1 (double condition de lecture)
 // @spec docs/SCHEMA.md §9 bis.6 (card_costs), §9 bis.7 (politiques)
 // @spec docs/DESIGN_SYSTEM.md §5.30 (histogramme prévisionnel / réel)
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — les lignes d'un budget situent leur affaire par son plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // CE MODULE N'AGRÈGE QUE CE QUE LA RLS A DÉJÀ CONSENTI, et c'est sa règle de conception centrale.
 // Le §4.5 l'écrit sans ambiguïté : « le cumul est calculé APRÈS application de la RLS, jamais
@@ -25,6 +26,7 @@
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
+import { situerLigne, type AffaireParRattachements } from './rattachements'
 import type { ClientCrm } from './supabase'
 
 // ---------------------------------------------------------------------------------------------
@@ -375,16 +377,19 @@ export type DetailBudget = {
  * réponse — la limite déjà mesurée sur `COLONNES_LIGNE_COUT` et `COLONNES_CARD_FORMULAIRE`.
  *
  * LES DEUX RELATIONS SONT NOMMÉES PAR LEUR CLÉ ÉTRANGÈRE, ET C'EST OBLIGATOIRE POUR L'UNE D'ELLES.
- * `cards` porte DEUX clés composites vers `channels` — `cards_channel_id_workflow_id_fkey` et
- * `cards_channel_id_workspace_id_fkey` — et un `channels(...)` nu est donc AMBIGU : PostgREST
- * refuse la requête entière en `PGRST201` plutôt que d'en choisir une (mesuré par `card-costs.ts`
- * et par `contacts.ts`, qui nomment la même). La clé retenue est celle qui passe par le workspace,
- * seule dont la présence est structurellement garantie sur toute card. `profiles` n'a qu'une seule
+ * Depuis `CRM-111` T2.4.1, l'archivage et le channel de l'affaire se lisent sur ses RATTACHEMENTS
+ * (docs/SPEC-rattachements.md §5), le plus ancien les donnant (`situerLigne`). `card_placements`
+ * porte DEUX clés vers `channels`, comme `cards` avant elle, et un `channels(...)` nu y rend
+ * `PGRST201` (mesuré par `card-costs.ts`) : la clé retenue est `card_placements_channel_fk`, celle
+ * du channel seul. `profiles` n'a qu'une seule
  * clé depuis `card_costs` et n'exigerait pas d'être nommée ; elle l'est quand même, pour que
  * l'ajout d'une seconde clé demain ne casse pas cette lecture en silence.
  */
 export const COLONNES_LIGNE_BUDGET =
-	'id, occurrence_id, label, estimated_cost, actual_cost, created_at, settled_at, cards(id, title, archived_at, channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug))), profiles!card_costs_created_by_fkey(id, full_name)'
+	'id, occurrence_id, label, estimated_cost, actual_cost, created_at, settled_at, cards(id, title, card_placements!card_placements_card_fk(id, created_at, archived_at, channels!card_placements_channel_fk(slug, tracks(slug)))), profiles!card_costs_created_by_fkey(id, full_name)'
+
+/** Une ligne telle que `COLONNES_LIGNE_BUDGET` la rend, avant `situerLigne`. */
+type LigneBudgetLue = Omit<LigneBudget, 'cards'> & { readonly cards: AffaireParRattachements<AffaireDeLaLigne> | null }
 
 /**
  * Le budget désigné par `idBudget`, ses occurrences et ses lignes — ou `null` s'il n'est pas
@@ -457,7 +462,9 @@ export async function lireDetailBudget(
 		return pret({
 			budget: budget.data,
 			occurrences: occurrences.data,
-			lignes: lignes.data as unknown as readonly LigneBudget[],
+			lignes: (lignes.data as unknown as readonly LigneBudgetLue[]).map((ligne) =>
+				situerLigne<AffaireDeLaLigne, LigneBudgetLue>(ligne),
+			),
 		})
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))

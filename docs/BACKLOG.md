@@ -16724,7 +16724,8 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           la saisie de temps, les contacts, les notifications, la recherche, la fiche, les coûts, les recettes, la
           rentabilité, les affaires figées (appariées par rattachement) et les comptes de la corbeille. Les scores de santé
           restent sur `cards` jusqu'à leur transport (T2.4.5) ; les lectures du seul titre ou de l'espace n'ont rien à
-          convertir. PREUVES_T241
+          convertir. Preuves au journal (« T2.4.1, étape 2 ») : unitaires 4543/4543, API 1231/1232 (`ingestion:91`,
+          étranger), interface des écrans convertis toute verte.
         - [ ] **T2.4.2 — le connecteur et `mail-sync`** lisent le rattachement.
         - [ ] **T2.4.3 — le seed et les scripts** : lectures et écritures par le rattachement. *Question ouverte, à
           trancher avant le code de l'étape* : le seed crée ses affaires par la clé de service, à identifiants stables ;

@@ -11,11 +11,12 @@
 // sommeil, la présence ou l'absence du filtre par responsable et l'ordre total sont des exigences
 // du §17 portées par la requête elle-même. Une lecture qui rendrait les bonnes données en trichant
 // sur la requête violerait le §17.4 sans qu'aucune assertion de valeur ne s'en aperçoive.
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la journée lit les rattachements (docs/SPEC-rattachements.md §6)
 
 import { describe, expect, it } from 'vitest'
 import {
 	CLE_URL_PORTEE,
-	COLONNES_CARD_JOURNEE,
+	COLONNES_RATTACHEMENT_JOURNEE,
 	HORIZON_JOURS,
 	PORTEE_PAR_DEFAUT,
 	SECTIONS_JOURNEE,
@@ -88,6 +89,12 @@ const AUDIT = {
 		name: 'Grands comptes',
 		tracks: { slug: 'conseil-ia', name: 'Conseil & IA' },
 	},
+}
+
+/** La ligne d'essai, à la forme que la journée lit depuis `CRM-111` T2.4.1 : le rattachement, l'affaire plongée. */
+function enRattachement<T extends { id: string; title: string }>(ligne: T) {
+	const { id, title, ...rattachement } = ligne
+	return { ...rattachement, id: `rattachement-${id}`, affaire: { id, title } }
 }
 
 describe('lirePortee — la liste est CLOSE (§17.2)', () => {
@@ -256,17 +263,18 @@ describe('decouperEnSections — le découpage se fait à la COMPOSITION (§17.5
 })
 
 describe('lireJournee — la requête réellement émise (§17.4)', () => {
-	it('interroge `cards` et demande EXACTEMENT les colonnes du §17.4', async () => {
-		const { client, appel } = espion({ data: [AUDIT], error: null, status: 200 })
+	it('interroge les RATTACHEMENTS et demande EXACTEMENT les colonnes du §17.4', async () => {
+		const { client, appel } = espion({ data: [enRattachement(AUDIT)], error: null, status: 200 })
 		await lireJournee(client, { portee: 'tous', idUtilisateur: CAMILLE, maintenant: MIDI })
-		expect(appel.table).toBe('cards')
-		expect(appel.colonnes).toBe(COLONNES_CARD_JOURNEE)
+		// `CRM-111` T2.4.1 : les rattachements, l'affaire plongée.
+		expect(appel.table).toBe('card_placements')
+		expect(appel.colonnes).toBe(COLONNES_RATTACHEMENT_JOURNEE)
 		// Les deux slugs sont EXIGÉS par l'adresse d'une affaire, et les deux noms par la pilule.
-		expect(COLONNES_CARD_JOURNEE).toContain('channels!cards_channel_id_workspace_id_fkey')
-		expect(COLONNES_CARD_JOURNEE).toContain('tracks(slug, name)')
+		expect(COLONNES_RATTACHEMENT_JOURNEE).toContain('channels!card_placements_channel_fk')
+		expect(COLONNES_RATTACHEMENT_JOURNEE).toContain('tracks(slug, name)')
 		// Ce qui n'est PAS demandé est aussi une décision : cette vue range par le temps.
-		expect(COLONNES_CARD_JOURNEE).not.toContain('amount')
-		expect(COLONNES_CARD_JOURNEE).not.toContain('current_step_id')
+		expect(COLONNES_RATTACHEMENT_JOURNEE).not.toContain('amount')
+		expect(COLONNES_RATTACHEMENT_JOURNEE).not.toContain('current_step_id')
 	})
 
 	it('applique les quatre filtres de la lecture, dont la borne d’horizon', async () => {
@@ -274,7 +282,7 @@ describe('lireJournee — la requête réellement émise (§17.4)', () => {
 		await lireJournee(client, { portee: 'tous', idUtilisateur: null, maintenant: MIDI })
 		expect(appel.filtres).toContain('not(next_action_at,is,null)')
 		expect(appel.filtres).toContain('is(archived_at,null)')
-		expect(appel.filtres).toContain('is(deleted_at,null)')
+		expect(appel.filtres).toContain('is(affaire.deleted_at,null)')
 		expect(appel.filtres).toContain(`lt(next_action_at,${bornesJournee(MIDI).horizon.toISOString()})`)
 	})
 
@@ -287,7 +295,7 @@ describe('lireJournee — la requête réellement émise (§17.4)', () => {
 	it('ordonne de façon TOTALE : échéance, puis titre, puis identifiant (§17.4)', async () => {
 		const { client, appel } = espion({ data: [], error: null, status: 200 })
 		await lireJournee(client, { portee: 'tous', idUtilisateur: null, maintenant: MIDI })
-		expect(appel.tris).toEqual(['next_action_at.asc', 'title.asc', 'id.asc'])
+		expect(appel.tris).toEqual(['next_action_at.asc', 'affaire(title).asc', 'affaire(id).asc'])
 	})
 
 	it('n’envoie AUCUN filtre par responsable sous la portée « tous »', async () => {
@@ -305,7 +313,7 @@ describe('lireJournee — la requête réellement émise (§17.4)', () => {
 	it('n’émet AUCUNE requête sous « moi » sans session, et rend une liste vide (§17.3)', async () => {
 		// Envoyer `owner_id=eq.null` demanderait les affaires SANS responsable, ce que l'écran ne
 		// promet pas ; ne rien envoyer ouvrirait une portée que l'utilisateur n'a pas demandée.
-		const { client, appel } = espion({ data: [AUDIT], error: null, status: 200 })
+		const { client, appel } = espion({ data: [enRattachement(AUDIT)], error: null, status: 200 })
 		const lu = await lireJournee(client, { portee: 'moi', idUtilisateur: null, maintenant: MIDI })
 		expect(appel.table).toBeUndefined()
 		expect(lu).toEqual({ statut: 'pret', donnees: [] })
@@ -337,7 +345,7 @@ describe('lireJournee — la requête réellement émise (§17.4)', () => {
 
 	it('écarte silencieusement une ligne sans échéance rendue par le serveur', async () => {
 		const { client } = espion({
-			data: [AUDIT, { ...AUDIT, id: 'sans-echeance', next_action_at: null }],
+			data: [enRattachement(AUDIT), enRattachement({ ...AUDIT, id: 'sans-echeance', next_action_at: null })],
 			error: null,
 			status: 200,
 		})

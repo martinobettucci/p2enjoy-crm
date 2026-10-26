@@ -8,6 +8,7 @@
 //           pas proposé)
 // @verifies supabase/migrations/0051_card_costs.sql §2 (les messages du trigger, sur lesquels les
 //           refus sont classés)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — le track se lit sur le plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // CE FICHIER ÉPROUVE LA REQUÊTE RÉELLEMENT ÉMISE autant que la valeur rendue, comme
 // `budgets.test.ts` : trois exigences de la spécification sont portées par la requête elle-même —
@@ -42,7 +43,8 @@ import {
 import type { ClientCrm } from './supabase'
 
 type Reponse = {
-	data: unknown[] | null
+	// Un objet seul : ce que `maybeSingle` rend (`lireTrackDeLaCard`).
+	data: unknown[] | Record<string, unknown> | null
 	error: { message: string; code?: string } | null
 	status: number
 	count?: number
@@ -276,11 +278,27 @@ describe('lireTrackDeLaCard', () => {
 		// est ici un tableau vide — ce qui n'est pas un objet portant `channels`, donc `null`.
 		const etat = await lireTrackDeLaCard(client, 'card-1')
 		expect(appels[0]?.table).toBe('cards')
-		// La relation est NOMMÉE par sa clé étrangère : `cards` en porte deux vers `channels`, et un
-		// `channels(…)` nu rend `PGRST201`. Ce contrôle empêche la régression de revenir en silence.
-		expect(appels[0]?.colonnes).toContain('channels!cards_channel_id_workspace_id_fkey(track_id)')
+		// La relation est NOMMÉE par sa clé étrangère : `card_placements` en porte deux vers `channels`, et un
+		// `channels(…)` nu rend `PGRST201`. Ce contrôle empêche la régression de revenir en silence (`CRM-111` T2.4.1).
+		expect(appels[0]?.colonnes).toContain('card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(track_id))')
 		expect(appels[0]?.filtres).toEqual([['eq:id', 'card-1']])
 		expect(etat).toMatchObject({ statut: 'pret' })
+	})
+
+	it('lit le track du rattachement LE PLUS ANCIEN (CRM-111 T2.4.1)', async () => {
+		const { client } = espionLecture({
+			data: {
+				id: 'card-1',
+				card_placements: [
+					{ id: 'r-2', created_at: '2026-05-01T00:00:00Z', channels: { track_id: 'track-recent' } },
+					{ id: 'r-1', created_at: '2026-01-01T00:00:00Z', channels: { track_id: 'track-ancien' } },
+				],
+			},
+			error: null,
+			status: 200,
+		})
+		const etat = await lireTrackDeLaCard(client, 'card-1')
+		expect(etat).toEqual({ statut: 'pret', donnees: 'track-ancien' })
 	})
 
 	it('rend `null` quand la card est refusée par la RLS, et non une erreur', async () => {

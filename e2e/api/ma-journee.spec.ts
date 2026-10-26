@@ -5,6 +5,7 @@
 // @verifies docs/SPEC-permissions-rls.md §7 (preuves hors interface, jetons réels)
 // @verifies docs/SPEC-cards.md §5 (« active »), §16.2 (« en sommeil » = non nulle ET future)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — Ma journée lit les rattachements (docs/SPEC-rattachements.md §5)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. L'écran construit une requête filtrée, bornée et
 // ordonnée (§17.4). Cette construction est éprouvée par `webapp/src/lib/ma-journee.test.ts`
@@ -19,6 +20,7 @@
 // AUCUNE ÉCRITURE. Ce fichier ne pose ni ne retire aucune ligne — sauf la ligne *h*, qui déplace
 // UNE échéance et la **restaure**, en relisant sa valeur d'origine avant de la toucher. Le seed
 // sort intact, et une dernière lecture le constate plutôt que de le supposer.
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la journée lit les rattachements ; l'échéance s'écrit sur eux
 
 import { expect, test } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -30,13 +32,21 @@ import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from '.
  * (décision 177, reprise ici).
  */
 import {
-	COLONNES_CARD_JOURNEE,
+	COLONNES_RATTACHEMENT_JOURNEE,
 	bornesJournee,
 	classerEcheance,
 } from '../../webapp/src/lib/colonnes-ma-journee'
 import { filtreExclusionSommeil } from '../../webapp/src/lib/filtre-sommeil'
 
-const CARDS = '/rest/v1/cards'
+// `CRM-111` T2.4.1 : la journée lit les RATTACHEMENTS, l'affaire en plongement ; l'échéance est celle du rattachement.
+const RATTACHEMENTS = '/rest/v1/card_placements'
+
+/** Les lignes de l'écran, depuis la réponse : l'affaire par son identifiant et son titre, le reste du rattachement. */
+async function lignesJournee(reponse: { json(): Promise<unknown> }): Promise<LigneJournee[]> {
+	return ((await reponse.json()) as (Omit<LigneJournee, 'id' | 'title'> & { affaire: Pick<LigneJournee, 'id' | 'title'> })[]).map(
+		({ affaire, ...rattachement }) => ({ ...rattachement, ...affaire }) as LigneJournee,
+	)
+}
 
 /** Identifiants du seed — `docs/SPEC-seed.md` §2.3 et `docs/SPEC-cards.md` §9. */
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
@@ -77,16 +87,16 @@ function adresseJournee(options: { responsable?: string; maintenant?: Date } = {
 	const maintenant = options.maintenant ?? new Date()
 	const bornes = bornesJournee(maintenant)
 	const filtres = [
-		`select=${encodeURIComponent(COLONNES_CARD_JOURNEE)}`,
+		`select=${encodeURIComponent(COLONNES_RATTACHEMENT_JOURNEE)}`,
 		'next_action_at=not.is.null',
 		`next_action_at=lt.${encodeURIComponent(bornes.horizon.toISOString())}`,
 		'archived_at=is.null',
-		'deleted_at=is.null',
+		'affaire.deleted_at=is.null',
 		`or=(${encodeURIComponent(filtreExclusionSommeil(maintenant))})`,
-		'order=next_action_at.asc,title.asc,id.asc',
+		'order=next_action_at.asc,affaire(title).asc,affaire(id).asc',
 	]
 	if (options.responsable !== undefined) filtres.push(`owner_id=eq.${options.responsable}`)
-	return `${CARDS}?${filtres.join('&')}`
+	return `${RATTACHEMENTS}?${filtres.join('&')}`
 }
 
 // --- Les neuf lignes du contrat (§17.7) -------------------------------------------------------
@@ -99,7 +109,7 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
 		expect(reponse.status()).toBe(200)
-		const lignes = (await reponse.json()) as LigneJournee[]
+		const lignes = await lignesJournee(reponse)
 		expect(lignes.length).toBeGreaterThan(0)
 		for (const ligne of lignes) {
 			for (const colonne of ['id', 'title', 'next_action', 'next_action_at']) {
@@ -123,8 +133,8 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 		])
 		expect(duAdmin.status()).toBe(200)
 		expect(deLaLectrice.status()).toBe(200)
-		const admin = (await duAdmin.json()) as LigneJournee[]
-		const lectrice = (await deLaLectrice.json()) as LigneJournee[]
+		const admin = await lignesJournee(duAdmin)
+		const lectrice = await lignesJournee(deLaLectrice)
 		// Le track `conseil-ia` lui est fermé : les affaires qu'il porte disparaissent, et rien ne
 		// les nomme — c'est un état vide ordinaire, jamais un refus mis en scène (§17.1).
 		expect(lectrice.length).toBeLessThan(admin.length)
@@ -145,8 +155,8 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 				headers: enTetesAuthentifies(jetonAdmin),
 			}),
 		])
-		const lignesTous = (await tous.json()) as LigneJournee[]
-		const lignesMien = (await mien.json()) as LigneJournee[]
+		const lignesTous = await lignesJournee(tous)
+		const lignesMien = await lignesJournee(mien)
 		expect(lignesMien.length).toBeLessThan(lignesTous.length)
 		const idsTous = new Set(lignesTous.map((ligne) => ligne.id))
 		for (const ligne of lignesMien) expect(idsTous.has(ligne.id)).toBe(true)
@@ -161,8 +171,8 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 				headers: enTetesAuthentifies(jetonBizdev),
 			}),
 		])
-		const camille = ((await deCamille.json()) as LigneJournee[]).map((ligne) => ligne.id)
-		const driss = ((await deDriss.json()) as LigneJournee[]).map((ligne) => ligne.id)
+		const camille = (await lignesJournee(deCamille)).map((ligne) => ligne.id)
+		const driss = (await lignesJournee(deDriss)).map((ligne) => ligne.id)
 		expect(camille.length).toBeGreaterThan(0)
 		expect(driss.length).toBeGreaterThan(0)
 		// Aucune affaire n'a deux responsables : les deux journées sont disjointes.
@@ -177,7 +187,7 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 		// La contre-épreuve d'abord : sans l'exclusion du sommeil, la même affaire EST rendue. Sans
 		// elle, son absence ne prouverait rien — elle pourrait n'être qu'une échéance hors horizon.
 		const sansExclusion = await request.get(
-			`${CARDS}?select=id,next_action_at,snoozed_until&id=eq.${CARD_ENDORMIE}` +
+			`${RATTACHEMENTS}?select=id:card_id,next_action_at,snoozed_until&card_id=eq.${CARD_ENDORMIE}` +
 				`&next_action_at=lt.${encodeURIComponent(bornes.horizon.toISOString())}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
@@ -189,7 +199,7 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 		const reponse = await request.get(adresseJournee({ maintenant }), {
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
-		const lignes = (await reponse.json()) as LigneJournee[]
+		const lignes = await lignesJournee(reponse)
 		expect(lignes.map((ligne) => ligne.id)).not.toContain(CARD_ENDORMIE)
 	})
 
@@ -208,7 +218,7 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 		// d'être touchée et rendue dans un `finally`, comme à la ligne *h* (décision 501).
 		const origines = new Map<string, string | null>()
 		for (const identifiant of [CARD_ARCHIVEE, CARD_CORBEILLE]) {
-			const avant = await request.get(`${CARDS}?select=next_action_at&id=eq.${identifiant}`, {
+			const avant = await request.get(`${RATTACHEMENTS}?select=next_action_at&card_id=eq.${identifiant}`, {
 				headers: enTetesService(),
 			})
 			const lignes = (await avant.json()) as { next_action_at: string | null }[]
@@ -222,8 +232,10 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 
 		try {
 			for (const identifiant of [CARD_ARCHIVEE, CARD_CORBEILLE]) {
-				const posee = await request.patch(`${CARDS}?id=eq.${identifiant}`, {
-					headers: { ...enTetesService(), Prefer: 'return=representation' },
+				// `CRM-111` T2.4.1 : l'échéance est celle du RATTACHEMENT, que la clé de service ne peut pas écrire ;
+				// l'administratrice écrit le channel de ces deux rattachements.
+				const posee = await request.patch(`${RATTACHEMENTS}?card_id=eq.${identifiant}`, {
+					headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
 					data: { next_action_at: echeance.toISOString() },
 				})
 				expect(posee.status()).toBe(200)
@@ -232,7 +244,7 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 			const reponse = await request.get(adresseJournee(), {
 				headers: enTetesAuthentifies(jetonAdmin),
 			})
-			const ids = ((await reponse.json()) as LigneJournee[]).map((ligne) => ligne.id)
+			const ids = (await lignesJournee(reponse)).map((ligne) => ligne.id)
 			expect(ids).not.toContain(CARD_ARCHIVEE)
 			expect(ids).not.toContain(CARD_CORBEILLE)
 
@@ -242,8 +254,8 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 			expect(ids.length).toBeGreaterThan(0)
 		} finally {
 			for (const identifiant of [CARD_ARCHIVEE, CARD_CORBEILLE]) {
-				await request.patch(`${CARDS}?id=eq.${identifiant}`, {
-					headers: { ...enTetesService(), Prefer: 'return=representation' },
+				await request.patch(`${RATTACHEMENTS}?card_id=eq.${identifiant}`, {
+					headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
 					data: { next_action_at: origines.get(identifiant) ?? null },
 				})
 			}
@@ -252,7 +264,7 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 		// LA RESTAURATION EST CONSTATÉE, PAS SUPPOSÉE (décision 501) : le §13.5 du seed rougirait au
 		// passage suivant sans que rien ne dise pourquoi.
 		for (const identifiant of [CARD_ARCHIVEE, CARD_CORBEILLE]) {
-			const apres = await request.get(`${CARDS}?select=next_action_at&id=eq.${identifiant}`, {
+			const apres = await request.get(`${RATTACHEMENTS}?select=next_action_at&card_id=eq.${identifiant}`, {
 				headers: enTetesService(),
 			})
 			const lignes = (await apres.json()) as { next_action_at: string | null }[]
@@ -267,7 +279,7 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 		// décision 501, où une preuve remettait une card « à peu près » et effaçait un contrat du
 		// seed. `select=*` la projette entière, et la restauration la rend à la microseconde.
 		const avant = await request.get(
-			`${CARDS}?select=next_action_at&id=eq.${CARD_EN_RETARD}`,
+			`${RATTACHEMENTS}?select=next_action_at&card_id=eq.${CARD_EN_RETARD}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		const origine = ((await avant.json()) as { next_action_at: string }[])[0]?.next_action_at
@@ -278,8 +290,10 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 			const bornes = bornesJournee(new Date())
 			const loin = new Date(bornes.horizon.getTime())
 			loin.setDate(loin.getDate() + 30)
-			const deplacee = await request.patch(`${CARDS}?id=eq.${CARD_EN_RETARD}`, {
-				headers: { ...enTetesService(), Prefer: 'return=representation' },
+			const deplacee = await request.patch(`${RATTACHEMENTS}?card_id=eq.${CARD_EN_RETARD}`, {
+				// `CRM-111` T2.4.1 : l'échéance est celle du RATTACHEMENT, que la clé de service ne peut pas écrire
+				// (`card_placements` lui est ouverte en lecture seule) ; l'administratrice l'écrit, comme l'écran.
+				headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
 				data: { next_action_at: loin.toISOString() },
 			})
 			expect(deplacee.status()).toBe(200)
@@ -287,34 +301,38 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 			const hors = await request.get(adresseJournee(), {
 				headers: enTetesAuthentifies(jetonAdmin),
 			})
-			expect(((await hors.json()) as LigneJournee[]).map((ligne) => ligne.id)).not.toContain(
+			expect((await lignesJournee(hors)).map((ligne) => ligne.id)).not.toContain(
 				CARD_EN_RETARD,
 			)
 
 			// Ramenée dans l'horizon : demain.
 			const proche = new Date(bornes.debutLendemain.getTime())
 			proche.setHours(10, 0, 0, 0)
-			await request.patch(`${CARDS}?id=eq.${CARD_EN_RETARD}`, {
-				headers: { ...enTetesService(), Prefer: 'return=representation' },
+			await request.patch(`${RATTACHEMENTS}?card_id=eq.${CARD_EN_RETARD}`, {
+				// `CRM-111` T2.4.1 : l'échéance est celle du RATTACHEMENT, que la clé de service ne peut pas écrire
+				// (`card_placements` lui est ouverte en lecture seule) ; l'administratrice l'écrit, comme l'écran.
+				headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
 				data: { next_action_at: proche.toISOString() },
 			})
 			const dedans = await request.get(adresseJournee(), {
 				headers: enTetesAuthentifies(jetonAdmin),
 			})
-			expect(((await dedans.json()) as LigneJournee[]).map((ligne) => ligne.id)).toContain(
+			expect((await lignesJournee(dedans)).map((ligne) => ligne.id)).toContain(
 				CARD_EN_RETARD,
 			)
 		} finally {
 			// LA RESTAURATION EST DANS UN `finally` : une exécution interrompue entre les deux
 			// assertions laisserait sinon le seed hors de son contrat, et le §13.5 rougirait au
 			// passage suivant sans que rien ne dise pourquoi.
-			await request.patch(`${CARDS}?id=eq.${CARD_EN_RETARD}`, {
-				headers: { ...enTetesService(), Prefer: 'return=representation' },
+			await request.patch(`${RATTACHEMENTS}?card_id=eq.${CARD_EN_RETARD}`, {
+				// `CRM-111` T2.4.1 : l'échéance est celle du RATTACHEMENT, que la clé de service ne peut pas écrire
+				// (`card_placements` lui est ouverte en lecture seule) ; l'administratrice l'écrit, comme l'écran.
+				headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
 				data: { next_action_at: origine },
 			})
 		}
 
-		const apres = await request.get(`${CARDS}?select=next_action_at&id=eq.${CARD_EN_RETARD}`, {
+		const apres = await request.get(`${RATTACHEMENTS}?select=next_action_at&card_id=eq.${CARD_EN_RETARD}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
 		expect(((await apres.json()) as { next_action_at: string }[])[0]?.next_action_at).toBe(origine)
@@ -327,8 +345,8 @@ test.describe('la lecture de « Ma journée » (§17.4, §17.7)', () => {
 			request.get(adresseJournee(), { headers: enTetesAuthentifies(jetonAdmin) }),
 			request.get(adresseJournee(), { headers: enTetesAuthentifies(jetonAdmin) }),
 		])
-		const premier = ((await un.json()) as LigneJournee[]).map((ligne) => ligne.id)
-		const second = ((await deux.json()) as LigneJournee[]).map((ligne) => ligne.id)
+		const premier = (await lignesJournee(un)).map((ligne) => ligne.id)
+		const second = (await lignesJournee(deux)).map((ligne) => ligne.id)
 		expect(second).toEqual(premier)
 		const echeances = ((await (
 			await request.get(adresseJournee(), { headers: enTetesAuthentifies(jetonAdmin) })
@@ -351,7 +369,7 @@ test.describe('le contrat du seed, mesuré par la vraie route (§13.5)', () => {
 			adresseJournee({ responsable: CAMILLE, maintenant }),
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const lignes = (await reponse.json()) as LigneJournee[]
+		const lignes = await lignesJournee(reponse)
 		const parSection = new Map<string, number>()
 		for (const ligne of lignes) {
 			const section = classerEcheance(new Date(ligne.next_action_at ?? 0), bornes)
@@ -373,8 +391,8 @@ test.describe('le contrat du seed, mesuré par la vraie route (§13.5)', () => {
 				headers: enTetesAuthentifies(jetonAdmin),
 			}),
 		])
-		expect(((await tous.json()) as LigneJournee[]).length).toBeGreaterThan(
-			((await mien.json()) as LigneJournee[]).length,
+		expect((await lignesJournee(tous)).length).toBeGreaterThan(
+			(await lignesJournee(mien)).length,
 		)
 	})
 })

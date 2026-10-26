@@ -5,6 +5,7 @@
 //           « Réservé aux administrateurs » et lien vers « À saisir » ; tableaux par devise ; vue « Prévu »), §6.4
 //           (Entrée enregistre et passe à la ligne suivante ; ligne non saisissable désactivée avec motif ; vide sain) ;
 //           docs/DESIGN_SYSTEM.md §5.60 (devise dans les en-têtes ; marge négative en pastille ; pilule « partielle »)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — les noms de la rentabilité se lisent sur les rattachements (docs/SPEC-rattachements.md §5)
 
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import { userEvent } from '@testing-library/user-event'
@@ -246,8 +247,8 @@ describe('l’écran « Rentabilité »', () => {
 			rpc: { data: [LIGNE_RENTAB, { ...LIGNE_RENTAB, card_id: 'c2', currency: 'CHF' }], error: null, status: 200 },
 			lectures: {
 				cards: [
-					{ id: 'c1', title: 'Refonte', amount: 72000, currency: 'EUR', channels: { id: 'h', name: 'Refonte', slug: 'refonte', position: 1, tracks: { id: 't', name: 'Studio web', slug: 'studio-web', position: 1 } } },
-					{ id: 'c2', title: 'Formation', amount: 28000, currency: 'CHF', channels: { id: 'h', name: 'Refonte', slug: 'refonte', position: 1, tracks: { id: 't', name: 'Studio web', slug: 'studio-web', position: 1 } } },
+					{ id: 'c1', title: 'Refonte', currency: 'EUR', card_placements: [{ id: 'r1', created_at: '2026-01-01T00:00:00Z', amount: 72000, channels: { id: 'h', name: 'Refonte', slug: 'refonte', position: 1, tracks: { id: 't', name: 'Studio web', slug: 'studio-web', position: 1 } } }] },
+					{ id: 'c2', title: 'Formation', currency: 'CHF', card_placements: [{ id: 'r2', created_at: '2026-01-01T00:00:00Z', amount: 28000, channels: { id: 'h', name: 'Refonte', slug: 'refonte', position: 1, tracks: { id: 't', name: 'Studio web', slug: 'studio-web', position: 1 } } }] },
 				],
 			},
 		})

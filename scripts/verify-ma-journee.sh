@@ -13,6 +13,7 @@
 # @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-248 ; docs/SPEC-seed.md §13.2 bis ;
 #           docs/JOURNAL.md décisions 592 et 595 — le jour du seed est celui du lecteur, éprouvé sous
 #           un fuseau dont la date diffère de la date UTC au moment de l'exécution
+# @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — le contrôle lit la constante des rattachements (docs/SPEC-rattachements.md §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-061` :
 #
@@ -392,8 +393,9 @@ fi
 # du module ÉNUMÈRE ce qu'il ne demande pas — « ni `amount`, ni `owner_id`, … ni `current_step_id` »
 # —, et un `grep` du fichier prendrait cette prose pour la déclaration. Un contrôle qui mord sur un
 # commentaire est un faux positif, et un faux positif apprend à ne plus lire le harnais.
-colonnes_demandees=$(grep -A2 "^export const COLONNES_CARD_JOURNEE" "$COLONNES" | tr -d '\n')
-for presente in id title next_action next_action_at 'channels!cards_channel_id_workspace_id_fkey' \
+# RÉVISÉ PAR `CRM-111` T2.4.1 : la journée lit les RATTACHEMENTS ; le channel est embarqué par la clé du rattachement.
+colonnes_demandees=$(grep -A3 "^export const COLONNES_RATTACHEMENT_JOURNEE" "$COLONNES" | tr -d '\n')
+for presente in id title next_action next_action_at 'channels!card_placements_channel_fk' \
 	'tracks(slug, name)'; do
 	if printf '%s' "$colonnes_demandees" | grep -qF "$presente"; then
 		ok "$presente est demandée : l'écran la rend (§17.4, §17.6)"
@@ -590,7 +592,7 @@ else
 	# mesurée du §12.4, tenue au §17.4 — deux ouvertures de l'écran n'afficheraient plus la même
 	# liste entre deux affaires de même échéance et de même titre.
 	degradation "l'ordre n'est plus total (§17.4 nié)" "$MODULE" \
-		"			.order('id', { ascending: true })
+		"			.order('affaire(id)', { ascending: true })
 " "" unit
 
 	# D2 — la borne d'horizon tombe : la vue cesse d'être une JOURNÉE et devient la vue liste triée

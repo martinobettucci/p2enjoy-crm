@@ -2059,6 +2059,11 @@ Conséquences, identiques à celles du §11.2 et tenues dans le même changement
 
 ### 15.3 Ce que la fiche lit — mesuré sur la pile réelle
 
+**Révisé par `CRM-111` T2.4.1** (docs/SPEC-rattachements.md §5) : l'archivage et le channel de l'affaire se lisent sur ses
+**rattachements** (`card_placements!card_placements_card_fk(…, archived_at, channels!card_placements_channel_fk(…))`).
+Le lien suit le plus ancien ; la pilule « Archivée » paraît quand **tous** sont archivés, la règle du sélecteur de
+rattachement (§17.3). Ce qui suit vaut pour le reste.
+
 MESURÉ le 2026-08-19 avec le jeton réel de l'administratrice, la requête **unique** que l'écran
 émettra :
 

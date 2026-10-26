@@ -3,6 +3,8 @@
 //           §10.7 (le regroupement par dossier, l'ordre des groupes, l'ordre serveur conservé),
 //           §10.8 (ce que chaque ligne rend), §10.12 (preuves unitaires attendues)
 // @verifies docs/DESIGN_SYSTEM.md §5.32 (aucun lien vers une adresse incomplète)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la seconde lecture porte sur les rattachements
+//           (docs/SPEC-rattachements.md §5 et §6)
 //
 // Ces tests portent sur la LOGIQUE, sans navigateur : c'est ce que la séparation du module rend
 // possible. Le rendu est éprouvé par `webapp/src/app/AffairesFigees.test.tsx`, et la pile réelle
@@ -10,9 +12,10 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import {
-	COLONNES_CARD_FIGEE,
+	COLONNES_RATTACHEMENT_FIGE,
 	adresseChannel,
 	apparier,
+	indexerRattachements,
 	libelleEtape,
 	lireAffairesFigees,
 	regrouperParDossier,
@@ -32,10 +35,11 @@ const figee = (partiel: Partial<LigneFigeeLue> & { card_id: string }): LigneFige
 	...partiel,
 })
 
-/** Une ligne de la SECONDE lecture, avec ses relations embarquées. */
+/** Une ligne de la SECONDE lecture — un rattachement depuis `CRM-111` T2.4.1 —, avec ses relations embarquées. */
 const carte = (
 	id: string,
 	options: {
+		channel?: string
 		slugChannel?: string
 		nomChannel?: string
 		slugTrack?: string
@@ -44,7 +48,8 @@ const carte = (
 		noeud?: string | null
 	} = {},
 ) => ({
-	id,
+	card_id: id,
+	channel_id: options.channel ?? 'ch1',
 	channels:
 		options.slugChannel === undefined
 			? null
@@ -114,7 +119,7 @@ describe('l’appariement des deux lectures (docs/SPEC-relances.md §10.5)', () 
 	it('porte le retard, le seuil et le titre de la RÈGLE, jamais de la seconde lecture', () => {
 		const affaire = apparier(
 			figee({ card_id: 'c1', title: 'Audit sécurité applicative', retard_jours: 16, seuil_jours: 14 }),
-			new Map([['c1', complete('c1')]]),
+			indexerRattachements([complete('c1')]),
 		)
 		expect(affaire.titre).toBe('Audit sécurité applicative')
 		expect(affaire.retardJours).toBe(16)
@@ -122,6 +127,22 @@ describe('l’appariement des deux lectures (docs/SPEC-relances.md §10.5)', () 
 		expect(affaire.adresse).toBe('/tracks/track-1/channel-1/cards/c1')
 		expect(affaire.adresseChannel).toBe('/tracks/track-1/channel-1')
 		expect(affaire.etape).toBe('Prospection')
+	})
+
+	// `CRM-111` T2.4.1 : une affaire rattachée à deux channels figure DEUX fois dans la règle, une par
+	// rattachement ; chaque ligne prend le dossier et l'étape de SON rattachement.
+	it('apparie chaque ligne à SON rattachement, une affaire figée dans deux channels', () => {
+		const lectures = indexerRattachements([
+			complete('c1'),
+			{ ...complete('c1', '2'), channel_id: 'ch2', workflow_steps: { label_override: 'Relance', workflow_nodes_catalog: null } },
+		])
+		const premiere = apparier(figee({ card_id: 'c1', channel_id: 'ch1' }), lectures)
+		const seconde = apparier(figee({ card_id: 'c1', channel_id: 'ch2' }), lectures)
+		expect(premiere.adresse).toBe('/tracks/track-1/channel-1/cards/c1')
+		expect(premiere.etape).toBe('Prospection')
+		expect(seconde.adresse).toBe('/tracks/track-2/channel-2/cards/c1')
+		expect(seconde.etape).toBe('Relance')
+		expect(seconde.idChannel).toBe('ch2')
 	})
 
 	// LE CAS N'EST PAS THÉORIQUE : les deux lectures ne sont pas atomiques, et une affaire mise à la
@@ -252,7 +273,7 @@ describe('la lecture (docs/SPEC-relances.md §10.5)', () => {
 		let colonnes = ''
 		const client = clientDouble({
 			regle: { data: [figee({ card_id: 'c1' }), figee({ card_id: 'c2', channel_id: 'ch2' })] },
-			cards: { data: [complete('c1'), complete('c2', '2')] },
+			cards: { data: [complete('c1'), { ...complete('c2', '2'), channel_id: 'ch2' }] },
 			espionSelect: (lues) => {
 				colonnes = lues
 			},
@@ -264,7 +285,7 @@ describe('la lecture (docs/SPEC-relances.md §10.5)', () => {
 		// exigeait — ne pas « télécharger toutes les cards pour en écarter la quasi-totalité ».
 		expect(identifiants).toEqual(['c1', 'c2'])
 		// La chaîne `select` est CELLE DU PRODUIT, et non une chaîne recopiée dans la preuve.
-		expect(colonnes).toBe(COLONNES_CARD_FIGEE)
+		expect(colonnes).toBe(COLONNES_RATTACHEMENT_FIGE)
 	})
 
 	// AUCUN SECOND APPEL QUAND LA RÈGLE NE REND RIEN : `id=in.()` serait une requête dont on connaît

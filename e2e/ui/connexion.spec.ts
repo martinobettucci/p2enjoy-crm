@@ -354,6 +354,11 @@ test.describe('La règle du domaine sur `admin` (§6.1 bis, décision 597)', () 
 			// L'OFFRE VIENT DE `mon_role_espace` : lue dans `workspace_members`, où elle n'a aucune ligne,
 			// l'écran ne lui aurait rien offert alors que la base le lui accorde.
 			await expect(carte.getByTestId('actions-moderation')).toHaveCount(1)
+			// LE FIL DOIT ÊTRE COMPLET AVANT LE SURVOL. Les commentaires paraissent avant les événements, qui
+			// s'insèrent ensuite AU-DESSUS d'eux quand ils sont plus récents : la carte survolée descend alors
+			// sous le pointeur, qui se retrouve sur sa voisine (vu le 2026-10-26 sur la vidéo, seed rejoué le
+			// jour même). La création de l'affaire, premier événement du seed, signale le fil chargé.
+			await expect(page.getByText('Affaire créée')).toBeVisible()
 			await carte.hover()
 			// Le fondu d'apparition est attendu : capturé pendant la transition, le geste se lirait à
 			// peine — le défaut déjà payé par la preuve de modération de `commentaires-gestes.spec.ts`.

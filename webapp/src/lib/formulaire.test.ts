@@ -4,6 +4,8 @@
 // @verifies docs/SPEC-form-composer.md §6.6 (définition de « renseigné », côté SQL)
 // @verifies CRM-037 (docs/BACKLOG.md) — l'étape courante est nommée comme le board la nomme, surcharge comprise
 //           (docs/SPEC-form-composer.md §4.4, §4 quinquies ; docs/JOURNAL.md décision 690)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la fiche lit les colonnes du rattachement le plus ancien
+//           (docs/SPEC-rattachements.md §4 et §5)
 //
 // Le jeu d'essai reprend **le seed réellement appliqué**, relu en base le 2026-08-05 : sept
 // champs dont un archivé, l'étape `Prospection` et ses cinq règles pour six champs actifs. Ce
@@ -13,6 +15,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	appliquerEcriture,
+	cardDepuisRattachements,
 	CAS_RENSEIGNE,
 	classerRefusValeur,
 	composerFormulaire,
@@ -23,6 +26,7 @@ import {
 	MESSAGE_VALEUR_INVALIDE,
 	normaliserSaisie,
 	VISIBILITE_PAR_DEFAUT,
+	type CardFormulaireLue,
 	type ChampFormulaire,
 	type RegleVisibilite,
 	type ValeurChamp,
@@ -537,5 +541,52 @@ describe('le nom de l’étape courante (§4.4, §4 quinquies)', () => {
 		})
 		const etat = await lireEtape(client, 'etape-prospection')
 		expect(etat).toMatchObject({ statut: 'pret', donnees: { label: 'Prospection' } })
+	})
+})
+
+describe('la fiche lit le rattachement (CRM-111 T2.4.1)', () => {
+	const rattachement = (id: string, created_at: string, etape: string) => ({
+		id,
+		created_at,
+		workflow_id: 'wf-1',
+		current_step_id: etape,
+		amount: 1200,
+		next_action: 'Relancer',
+		next_action_at: '2026-11-02T09:00:00+00:00',
+		archived_at: null,
+		snoozed_until: null,
+		profiles: { id: 'p-1', full_name: 'Alice Martin', avatar_url: null },
+	})
+	const lue = (card_placements: CardFormulaireLue['card_placements']): CardFormulaireLue => ({
+		id: 'card-1',
+		title: 'Refonte',
+		workspace_id: 'ws-1',
+		email_local_part: 'c-1',
+		currency: 'EUR',
+		workspaces: { inbound_domain: 'crm.test' },
+		card_placements,
+	})
+
+	it('rend la forme d’avant avec les colonnes du rattachement LE PLUS ANCIEN, quel que soit l’ordre rendu', () => {
+		const card = cardDepuisRattachements(
+			lue([
+				rattachement('r-recent', '2026-05-01T00:00:00+00:00', 'etape-b'),
+				rattachement('r-ancien', '2026-01-01T00:00:00+00:00', 'etape-a'),
+			]),
+		)
+		expect(card).toMatchObject({
+			id: 'card-1',
+			workflow_id: 'wf-1',
+			current_step_id: 'etape-a',
+			amount: 1200,
+			next_action: 'Relancer',
+			profiles: { full_name: 'Alice Martin' },
+			workspaces: { inbound_domain: 'crm.test' },
+		})
+		expect(card?.card_placements).toHaveLength(2)
+	})
+
+	it('une affaire sans rattachement lisible se lit comme une affaire absente', () => {
+		expect(cardDepuisRattachements(lue([]))).toBeNull()
 	})
 })

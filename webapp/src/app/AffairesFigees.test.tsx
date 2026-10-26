@@ -3,6 +3,7 @@
 //           rend), §10.9 (les états, et l'UNIQUE vide), §10.10 (accessibilité)
 // @verifies docs/DESIGN_SYSTEM.md §5.37 (cette surface), §5.8 (états), §5.9 (cellule sans valeur
 //           VIDE), §5.32 (aucun lien vers une adresse incomplète), §5.29 (pilule de channel)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la seconde lecture rend des rattachements (docs/SPEC-rattachements.md §5)
 //
 // LES DONNÉES INJECTÉES SONT CELLES DU SEED, À L'IDENTIQUE — les quatre affaires du §10.2.1, avec
 // leurs retards 35, 18, 16 et 7, leurs quatre dossiers et leurs trois tracks. Ce n'est pas une
@@ -77,7 +78,9 @@ const carte = (
 	nomTrack: string,
 	etape: string,
 ) => ({
-	id,
+	// `CRM-111` T2.4.1 : la seconde lecture rend des rattachements, appariés sur l'affaire ET le channel de la règle.
+	card_id: id,
+	channel_id: `ch-${slugChannel === 'dossiers-2023' ? 'dossiers' : slugChannel}`,
 	channels: { slug: slugChannel, name: nomChannel, tracks: { slug: slugTrack, name: nomTrack } },
 	workflow_steps: { label_override: null, workflow_nodes_catalog: { label: etape } },
 })

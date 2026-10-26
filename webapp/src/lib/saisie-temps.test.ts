@@ -1,10 +1,12 @@
 // @verifies CRM-098 (docs/BACKLOG.md) — tranche T2 : lire et écrire le temps de la semaine
 // @verifies docs/SPEC-temps.md §3.2 (zéro supprime la ligne, seules les minutes changent), §5 (refus de la base :
 //           plafond, droit), §6.1 (la semaine et la précédente ; recherche d'affaire) ; docs/DESIGN_SYSTEM.md §5.7 ter
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : l'affaire située par son plus ancien rattachement
 
 import { describe, expect, it } from 'vitest'
 import {
 	BORNE_RECHERCHE_AFFAIRE,
+	affairesSituees,
 	COLONNES_SAISIE,
 	chercherAffaires,
 	classerRefusTemps,
@@ -94,11 +96,26 @@ describe('les lectures', () => {
 		expect(appels[0]?.filtres).toEqual(
 			expect.arrayContaining([
 				['ilike:title', '%100\\%\\_%'],
-				['is:archived_at', null],
+				['is:card_placements.archived_at', null],
 				['is:deleted_at', null],
 				[`limit:${BORNE_RECHERCHE_AFFAIRE}`, undefined],
 			]),
 		)
+	})
+	it('situe chaque affaire par le channel de son plus ancien rattachement, et écarte celle qui n’en a aucun', () => {
+		expect(
+			affairesSituees([
+				{
+					id: 'c1',
+					title: 'Refonte',
+					card_placements: [
+						{ id: 'r2', channel_id: 'ch-recent', created_at: '2026-10-02T09:00:00+00:00' },
+						{ id: 'r1', channel_id: 'ch-ancien', created_at: '2026-10-01T09:00:00+00:00' },
+					],
+				},
+				{ id: 'c2', title: 'Sans rattachement lisible', card_placements: [] },
+			]),
+		).toEqual([{ id: 'c1', title: 'Refonte', channel_id: 'ch-ancien' }])
 	})
 	it('un terme vide ne cherche rien', async () => {
 		const { client, appels } = espion([])

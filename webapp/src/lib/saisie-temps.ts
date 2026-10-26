@@ -3,17 +3,21 @@
 //       changent), §5 (les refus viennent de la base : plafond, droit), §6.1 (la semaine et la précédente ; tracks et
 //       channels non archivés ; recherche d'affaire par titre), §7.2 (« Saisir pour ») ; docs/SCHEMA.md §9 quater
 //       « Migration `0087` » ; docs/DESIGN_SYSTEM.md §5.7 ter (le champ qui s'enregistre seul), §5.54
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : le channel d'une affaire est celui de son plus ancien rattachement ;
+//       la recherche ne propose que les affaires dont un rattachement est actif (docs/SPEC-rattachements.md §6)
 //
 // Aucune règle n'est rejouée ici : la base tient le plafond, la cible lisible et qui écrit pour qui. Ce module envoie,
 // et traduit la réponse en une issue que l'écran sait dire.
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
+import { premierRattachement } from './rattachements'
 import type { ClientCrm } from './supabase'
 import type { Affaire, ArbreTrack, Cible, Saisie } from './temps'
 
 export const COLONNES_SAISIE = 'id, jour, minutes, track_id, channel_id, card_id'
 export const COLONNES_ARBRE = 'id, name, position, channels(id, name, position)'
-export const COLONNES_AFFAIRE = 'id, title, channel_id'
+// `CRM-111` T2.4.1 : le channel est celui du rattachement ; la recherche emploie `!inner` pour filtrer sur lui.
+export const COLONNES_AFFAIRE = 'id, title, card_placements!card_placements_card_fk!inner(id, channel_id, created_at)'
 /** La recherche d'affaire rend au plus ce nombre de propositions : une liste plus longue ne se parcourt pas. */
 export const BORNE_RECHERCHE_AFFAIRE = 10
 
@@ -71,13 +75,33 @@ export async function lireSaisies(
 	}
 }
 
+/**
+ * Les affaires lues, situées par le channel de leur plus ancien rattachement (`CRM-111` T2.4.1). Une affaire dont
+ * aucun rattachement n'est lisible n'a pas de place dans l'arbre : elle est écartée — ce qui n'arrive pas tant qu'une
+ * affaire n'a qu'un rattachement, la règle de lecture de l'affaire étant celle de son rattachement.
+ */
+export function affairesSituees(
+	lignes: readonly {
+		readonly id: string
+		readonly title: string
+		readonly card_placements: readonly { readonly id: string; readonly channel_id: string; readonly created_at: string }[]
+	}[],
+): readonly Affaire[] {
+	const situees: Affaire[] = []
+	for (const ligne of lignes) {
+		const rattachement = premierRattachement(ligne.card_placements)
+		if (rattachement !== null) situees.push({ id: ligne.id, title: ligne.title, channel_id: rattachement.channel_id })
+	}
+	return situees
+}
+
 /** Les affaires nommées par leurs identifiants — celles que portent les saisies. Aucune requête pour une liste vide. */
 export async function lireAffaires(client: ClientCrm, ids: readonly string[]): Promise<EtatAsync<readonly Affaire[]>> {
 	if (ids.length === 0) return pret([])
 	try {
 		const reponse = await client.from('cards').select(COLONNES_AFFAIRE).in('id', [...ids])
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
-		return pret(reponse.data)
+		return pret(affairesSituees(reponse.data))
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, message(cause)))
 	}
@@ -96,12 +120,13 @@ export async function chercherAffaires(client: ClientCrm, terme: string): Promis
 			.from('cards')
 			.select(COLONNES_AFFAIRE)
 			.ilike('title', motif)
-			.is('archived_at', null)
+			// `CRM-111` T2.4.1 : une affaire active, c'est un rattachement actif (`!inner` sur les seuls non archivés).
+			.is('card_placements.archived_at', null)
 			.is('deleted_at', null)
 			.order('title')
 			.limit(BORNE_RECHERCHE_AFFAIRE)
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
-		return pret(reponse.data)
+		return pret(affairesSituees(reponse.data))
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, message(cause)))
 	}

@@ -12,6 +12,7 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.31 (table de saisie en série : onglets, badge, clavier,
 //           pilule « clôturé », lecture seule), §5.7 ter (les trois mentions), §5.8 (les états),
 //           §12.1 (navigation par liens, `aria-current`)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la réponse plonge les rattachements de l'affaire (docs/SPEC-rattachements.md §5)
 //
 // CE FICHIER ÉPROUVE LA SURFACE, PAS LA LECTURE. `couts-a-saisir.test.ts` couvre déjà la forme de
 // la requête, le repli du droit vers le refus, l'ancienneté et le classement des refus ; les
@@ -147,8 +148,15 @@ const ligneEnAttente = (
 			: {
 					id: `c-${id}`,
 					title: `Affaire ${id}`,
-					archived_at: null,
-					channels: { slug: 'nouvelles', tracks: { id: 't1', slug: 'conseil-ia', name: 'Conseil' } },
+					// `CRM-111` T2.4.1 : l'archivage et le channel se lisent sur le rattachement, comme PostgREST les rend.
+					card_placements: [
+						{
+							id: `r-${id}`,
+							created_at: '2026-01-01T00:00:00Z',
+							archived_at: null,
+							channels: { slug: 'nouvelles', tracks: { id: 't1', slug: 'conseil-ia', name: 'Conseil' } },
+						},
+					],
 				},
 })
 

@@ -5,6 +5,7 @@
 //       §17.7 (contrat d'API), §17.8 (états)
 // @spec docs/SPEC-cards.md §5 (« active »), §16.12.1 (le prédicat d'exclusion du sommeil)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone) ; docs/DESIGN_SYSTEM.md §5.36 (l'écran)
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la journée lit les rattachements (docs/SPEC-rattachements.md §6)
 //
 // Ce module ne rend rien : il **compose**, et il lit. La séparation est ce qui rend les règles du
 // §17 vérifiables sans navigateur — la clôture de la portée, le calcul des bornes dans le fuseau du
@@ -17,7 +18,7 @@
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import {
-	COLONNES_CARD_JOURNEE,
+	COLONNES_RATTACHEMENT_JOURNEE,
 	SECTIONS_JOURNEE,
 	bornesJournee,
 	classerEcheance,
@@ -33,7 +34,7 @@ import type { ClientCrm } from './supabase'
 
 export {
 	CLE_URL_PORTEE,
-	COLONNES_CARD_JOURNEE,
+	COLONNES_RATTACHEMENT_JOURNEE,
 	HORIZON_JOURS,
 	PORTEE_PAR_DEFAUT,
 	SECTIONS_JOURNEE,
@@ -57,6 +58,23 @@ type LigneJournee = {
 		readonly name: string
 		readonly tracks: { readonly slug: string; readonly name: string } | null
 	} | null
+}
+
+/** Une ligne lue par `lireJournee` depuis `CRM-111` T2.4.1 : le rattachement, l'affaire en plongement. */
+export type RattachementJournee = Omit<LigneJournee, 'id' | 'title'> & {
+	readonly id: string
+	readonly affaire: { readonly id: string; readonly title: string }
+}
+
+/** La ligne d'avant, depuis le rattachement lu : l'affaire désignée par son identifiant et son titre. */
+export function ligneDepuisRattachement(ligne: RattachementJournee): LigneJournee {
+	return {
+		id: ligne.affaire.id,
+		title: ligne.affaire.title,
+		next_action: ligne.next_action,
+		next_action_at: ligne.next_action_at,
+		channels: ligne.channels,
+	}
 }
 
 /** Une affaire de la journée, telle que l'écran la rend (§17.6). */
@@ -193,13 +211,15 @@ export async function lireJournee(
 	if (portee === 'moi' && responsable === null) return pret([])
 	try {
 		const bornes = bornesJournee(maintenant)
+		// `CRM-111` T2.4.1 : les RATTACHEMENTS dont l'échéance tombe dans l'horizon, l'affaire plongée ; le rattachement
+		// archivé et l'affaire en corbeille sont exclus côté serveur, comme avant.
 		let requete = client
-			.from('cards')
-			.select(COLONNES_CARD_JOURNEE)
+			.from('card_placements')
+			.select(COLONNES_RATTACHEMENT_JOURNEE)
 			.not('next_action_at', 'is', null)
 			.lt('next_action_at', bornes.horizon.toISOString())
 			.is('archived_at', null)
-			.is('deleted_at', null)
+			.is('affaire.deleted_at', null)
 			// Une affaire endormie **sort des vues par défaut** (§16.12.4), et une journée de travail
 			// est une vue par défaut. Aucune bascule n'est offerte ici : endormir une affaire est
 			// précisément le geste qui dit « pas aujourd'hui » (§17.4).
@@ -211,12 +231,12 @@ export async function lireJournee(
 		// non nulle par le filtre ci-dessus, et l'écrire donnerait à croire qu'un cas nul existe.
 		const reponse = await requete
 			.order('next_action_at', { ascending: true })
-			.order('title', { ascending: true })
-			.order('id', { ascending: true })
+			.order('affaire(title)', { ascending: true })
+			.order('affaire(id)', { ascending: true })
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
-		const lignes = (reponse.data ?? []) as readonly LigneJournee[]
+		const lignes = (reponse.data ?? []).map(ligneDepuisRattachement)
 		const affaires: AffaireDuJour[] = []
 		for (const ligne of lignes) {
 			const projetee = projeterAffaire(ligne)

@@ -67,10 +67,23 @@ const CARD_SERVIE = [
 	{
 		id: CARD,
 		title: 'Piste entrante à qualifier',
-		workflow_id: 'wf-1',
 		workspace_id: WORKSPACE,
-		current_step_id: ETAPE.id,
 		email_local_part: 'c-t2dtpcjd',
+		// `CRM-111` T2.4.1 : la fiche lit le workflow et l'étape sur le rattachement le plus ancien, plongé.
+		card_placements: [
+			{
+				id: '7a770000-0000-4000-8000-0000000000aa',
+				created_at: '2026-01-01T00:00:00+00:00',
+				workflow_id: 'wf-1',
+				current_step_id: ETAPE.id,
+				amount: null,
+				next_action: null,
+				next_action_at: null,
+				archived_at: null,
+				snoozed_until: null,
+				profiles: null,
+			},
+		],
 	},
 ]
 

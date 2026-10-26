@@ -12,6 +12,7 @@
 // Les composants sont réellement montés et interrogés par leur **rôle accessible** quand il existe :
 // un test qui n'interrogerait que des classes CSS validerait une apparence sans rien dire de
 // l'utilisabilité.
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la notification situe l'affaire par son rattachement
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -60,14 +61,21 @@ const N1 = {
 		comment_id: '5eed0000-0000-4000-8000-0000000000d1',
 		author_id: CAMILLE.id,
 	},
+	// `CRM-111` T2.4.1 : l'affaire est rendue avec son rattachement, qui porte le channel.
 	cards: {
 		id: '5eed0000-0000-4000-8000-0000000000c1',
 		title: 'Refonte du site vitrine',
-		channels: {
-			slug: 'grands-comptes',
-			name: 'Grands comptes',
-			tracks: { slug: 'conseil-ia', name: 'Conseil & IA' },
-		},
+		card_placements: [
+			{
+				id: 'ede111f0-39ee-45ab-a352-a63577442789',
+				created_at: '2026-01-01T00:00:00Z',
+				channels: {
+					slug: 'grands-comptes',
+					name: 'Grands comptes',
+					tracks: { slug: 'conseil-ia', name: 'Conseil & IA' },
+				},
+			},
+		],
 	},
 }
 

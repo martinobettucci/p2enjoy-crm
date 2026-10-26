@@ -9,6 +9,7 @@
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne, jamais une erreur)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec docs/DESIGN_SYSTEM.md §5.19 (le carnet), §5.20 (la fiche d'organisation)
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — la fiche contact et le sélecteur lisent l'archivage et le channel sur les rattachements (docs/SPEC-rattachements.md §5)
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Il lit `contacts` sous la RLS posée par la tranche 1
 // (migration 0045, docs/SPEC-contacts.md §3) : la lecture est ouverte à tout membre du workspace,
@@ -21,6 +22,7 @@
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
+import { situationDuPremierRattachement, type AffaireParRattachements } from './rattachements'
 import type { ClientCrm } from './supabase'
 
 /**
@@ -754,6 +756,8 @@ export type FicheContactLue = Pick<
  * La clé retenue est celle du CLOISONNEMENT, `(channel_id, workspace_id)` : c'est elle qui dit à
  * quel channel une affaire appartient, le workflow n'étant qu'une propriété partagée. La chaîne à
  * quatre niveaux `contacts → card_contacts → cards → channels → tracks` tient alors en UNE requête.
+ * Depuis `CRM-111` T2.4.1, le channel se lit sur le rattachement, qui porte lui aussi deux clés vers
+ * `channels` : la clé retenue est `card_placements_channel_fk`, celle du cloisonnement.
  *
  * **`cards!inner` n'est pas décoratif** : combiné au filtre `deleted_at=is.null` du §15.3, il
  * RETIRE la ligne de rattachement entière. Sans `!inner`, PostgREST rendrait `cards: null` et
@@ -770,8 +774,11 @@ export const COLONNES_FICHE_CONTACT =
 	// `anonymized_at` — `CRM-072` T3 (docs/SPEC-audit.md §7.2, docs/DESIGN_SYSTEM.md §5.67) : la fiche dit l'anonymisation.
 	'id, full_name, email, phone, role_title, organization_id, workspace_id, anonymized_at, ' +
 	'organizations(id, name, domain), ' +
-	'card_contacts(role, cards!inner(id, title, archived_at, ' +
-	'channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug))))'
+	// `CRM-111` T2.4.1 : l'archivage et le channel de l'affaire se lisent sur ses rattachements
+	// (docs/SPEC-rattachements.md §5) ; la fiche la situe par le plus ancien.
+	'card_contacts(role, cards!inner(id, title, ' +
+	'card_placements!card_placements_card_fk(id, created_at, archived_at, ' +
+	'channels!card_placements_channel_fk(slug, tracks(slug)))))'
 
 /**
  * Filtre qui écarte les affaires de la CORBEILLE, exporté pour que le test vérifie qu'il est posé.
@@ -803,10 +810,15 @@ type RattachementBrut = {
 	} | null
 }
 
+/** Un rattachement tel que PostgREST le rend depuis `CRM-111` T2.4.1 : l'affaire porte ses rattachements. */
+type RattachementLu = Omit<RattachementBrut, 'cards'> & {
+	readonly cards: AffaireParRattachements<NonNullable<RattachementBrut['cards']>> | null
+}
+
 /** Forme brute de la fiche : les deux relations embarquées peuvent manquer ou être nulles. */
 type LigneFicheContactBrute = Omit<FicheContactLue, 'organisation' | 'affaires'> & {
 	readonly organizations?: OrganisationDeLaFiche | null
-	readonly card_contacts?: readonly RattachementBrut[] | null
+	readonly card_contacts?: readonly RattachementLu[] | null
 }
 
 /**
@@ -865,7 +877,12 @@ export async function lireFicheContact(
 		const premiere = lignes[0]
 		if (premiere === undefined) return pret(null)
 		const affaires: AffaireDuContact[] = []
-		for (const rattachement of premiere.card_contacts ?? []) {
+		for (const lu of premiere.card_contacts ?? []) {
+			// La forme d'avant : l'affaire située par son plus ancien rattachement (`CRM-111` T2.4.1).
+			const rattachement: RattachementBrut = {
+				role: lu.role,
+				cards: lu.cards === null || lu.cards === undefined ? null : situationDuPremierRattachement(lu.cards),
+			}
 			const adresse = adresseAffaire(rattachement)
 			const card = rattachement.cards
 			// Une affaire dont les slugs manquent n'est pas listée : elle ne serait ni adressable
@@ -877,7 +894,8 @@ export async function lireFicheContact(
 				idCard: card.id,
 				titre: card.title,
 				role: rattachement.role,
-				archivee: card.archived_at !== null,
+				// Archivée quand TOUS ses rattachements le sont, la règle du sélecteur (`lireAffairesRattachables`).
+				archivee: (lu.cards?.card_placements ?? []).every((r) => r.archived_at !== null),
 				adresse,
 			})
 		}
@@ -1033,7 +1051,10 @@ export type AffaireRattachable = {
  * §15.3 pour une donnée que rien n'afficherait — et le §10.3 a déjà posé qu'une requête ne rapporte
  * que ce qui est affiché.
  */
-export const COLONNES_AFFAIRE_RATTACHABLE = 'id, title, archived_at'
+//
+// `CRM-111` T2.4.1 : l'archivage appartient au RATTACHEMENT. Une affaire est marquée archivée quand TOUS ses rattachements
+// lisibles le sont — le seul cas tant qu'elle n'en a qu'un ; le plongement ne demande que l'état d'archivage.
+export const COLONNES_AFFAIRE_RATTACHABLE = 'id, title, card_placements!card_placements_card_fk(archived_at)'
 
 /**
  * Filtre qui écarte les affaires de la CORBEILLE, exporté pour que le test vérifie qu'il est posé.
@@ -1062,7 +1083,7 @@ export const AFFAIRES_RATTACHABLES_MAX = 200
 type LigneAffaireRattachableBrute = {
 	readonly id: string
 	readonly title: string
-	readonly archived_at: string | null
+	readonly card_placements: readonly { readonly archived_at: string | null }[]
 }
 
 /**
@@ -1095,7 +1116,9 @@ export async function lireAffairesRattachables(
 			lignes.map((ligne) => ({
 				id: ligne.id,
 				titre: ligne.title,
-				archivee: ligne.archived_at !== null,
+				archivee:
+					ligne.card_placements.length > 0 &&
+					ligne.card_placements.every((rattachement) => rattachement.archived_at !== null),
 			})),
 		)
 	} catch (cause) {

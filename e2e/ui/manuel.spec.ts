@@ -249,10 +249,23 @@ test.describe('INC-077 — ce que le fil montre d’un changement de dossier', (
 				{
 					id: CARD,
 					title: 'Audit sécurité applicative',
-					workflow_id: 'wf-1',
 					workspace_id: '5eed0000-0000-4000-8000-000000000001',
-					current_step_id: 'etape-1',
 					email_local_part: 'c-t2dtpcjd',
+					// `CRM-111` T2.4.1 : la fiche lit le workflow et l'étape sur le rattachement le plus ancien, plongé.
+					card_placements: [
+						{
+							id: '7a770000-0000-4000-8000-0000000000aa',
+							created_at: '2026-01-01T00:00:00+00:00',
+							workflow_id: 'wf-1',
+							current_step_id: 'etape-1',
+							amount: null,
+							next_action: null,
+							next_action_at: null,
+							archived_at: null,
+							snoozed_until: null,
+							profiles: null,
+						},
+					],
 				},
 			]),
 		)

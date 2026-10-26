@@ -2,6 +2,7 @@
 // @spec docs/SPEC-recherche.md §13.1 (une lecture, puis au plus deux résolutions),
 //       §11 M15 (l'embarquement est ambigu, la relation est NOMMÉE), §14.2 (la borne d'affichage)
 // @spec docs/SPEC-types.md §4
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : l'adresse d'une affaire passe par son plus ancien rattachement
 //
 // CE MODULE N'IMPORTE RIEN, ET C'EST TOUT SON OBJET.
 //
@@ -61,8 +62,12 @@ export const PARAMETRE_MESSAGE = 'message'
  * les redemander ferait deux sources pour la même donnée, qui divergeraient le jour où l'une des
  * deux changerait. Une requête ne rapporte que ce qui manque.
  */
+//
+// `CRM-111` T2.4.1 : le channel est celui du PLUS ANCIEN rattachement de l'affaire, plongé par la clé du rattachement ;
+// `card_placements` porte lui aussi deux clés vers `channels`, et la relation reste donc NOMMÉE
+// (`card_placements_channel_fk`). La résolution ramène la ligne à sa forme d'avant (`channelDuPremierRattachement`).
 export const COLONNES_ADRESSE_AFFAIRE =
-	'id, channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug))'
+	'id, card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(slug, tracks(slug)))'
 
 /**
  * Colonnes de la résolution d'adresse d'un COMMENTAIRE — l'étape 3 du §13.1.
@@ -74,4 +79,4 @@ export const COLONNES_ADRESSE_AFFAIRE =
  * même façon mais qu'on ne confond pas dans la donnée.
  */
 export const COLONNES_ADRESSE_COMMENTAIRE =
-	'id, card_id, cards(id, channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug)))'
+	'id, card_id, cards(id, card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(slug, tracks(slug))))'

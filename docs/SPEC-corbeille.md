@@ -157,6 +157,11 @@ C'est une garde **backend**, pas une aide d'interface (`CLAUDE.md` §10).
 
 ### 3.5 L'énumération, et ce qu'elle compte exactement
 
+**Révisé par `CRM-111` T2.4.1** (docs/SPEC-rattachements.md §5) : les affaires d'un channel se comptent par leurs
+**rattachements** (`card_placements`, `affaire.deleted_at=is.null` sur l'affaire plongée). Une affaire rattachée à deux
+channels du même track compte deux fois : le compte dit les rattachements que le geste rend inaccessibles. Ce qui suit
+vaut, « affaire du channel » se lisant « rattachement au channel ».
+
 Le §3.3 pose le principe : l'énumération **remplace** la descente de l'horodatage. Ce chapitre dit ce
 qu'elle compte, ce qu'elle ne compte pas, et comment elle se lit. Chaque règle a une mesure ou un
 motif ; aucune n'est une convention arbitraire.

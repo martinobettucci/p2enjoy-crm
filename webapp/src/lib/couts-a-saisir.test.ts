@@ -11,6 +11,7 @@
 //           lecture), §3.2 (écriture)
 // @verifies docs/SCHEMA.md §9 bis.8 (`public.reel_saisissable`, colonne calculée)
 // @verifies docs/DESIGN_SYSTEM.md §5.31 (table de saisie en série des coûts réels)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — l'affaire d'une ligne est située par son plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // CE FICHIER ÉPROUVE LA REQUÊTE RÉELLEMENT ÉMISE autant que la valeur rendue, comme
 // `couts-ecrans.test.ts` et `card-costs.test.ts`. Quatre exigences du §4.8 sont portées par la
@@ -182,9 +183,12 @@ describe('lireLignesASaisir — la requête émise', () => {
 		// `budgets!inner` : PostgREST n'applique un filtre sur une ressource embarquée que si la
 		// jointure est déclarée `inner`. En jointure externe, la portée « track » ne filtrerait rien.
 		expect(COLONNES_LIGNE_A_SAISIR).toContain('budgets!inner(')
-		// La clé étrangère est NOMMÉE : `cards` porte deux clés composites vers `channels`, et un
-		// `channels(...)` nu rend `PGRST201` sur la requête entière.
-		expect(COLONNES_LIGNE_A_SAISIR).toContain('channels!cards_channel_id_workspace_id_fkey')
+		// La clé étrangère est NOMMÉE : `card_placements` porte deux clés vers `channels`, et un
+		// `channels(...)` nu rend `PGRST201` sur la requête entière (`CRM-111` T2.4.1 : le channel
+		// se lit sur le rattachement).
+		expect(COLONNES_LIGNE_A_SAISIR).toContain(
+			'card_placements!card_placements_card_fk(id, created_at, archived_at, channels!card_placements_channel_fk(',
+		)
 	})
 
 	it('borne la portée « track » sur la ressource embarquée, et rien d’autre', async () => {
@@ -215,7 +219,20 @@ describe('lireLignesASaisir — la requête émise', () => {
 describe('lireLignesASaisir — ce qu’elle rend', () => {
 	it('rend les lignes telles que la réponse les porte, sans rien recalculer', async () => {
 		const attendue = ligne()
-		const { client } = espion([{ data: [attendue], error: null, status: 200 }])
+		// `CRM-111` T2.4.1 : la réponse plonge les rattachements ; la ligne rendue porte l'archivage
+		// et le channel du plus ancien, la forme d'avant.
+		const { archived_at, channels, ...affaire } = attendue.cards!
+		const lue = {
+			...attendue,
+			cards: {
+				...affaire,
+				card_placements: [
+					{ id: 'r-recent', created_at: '2026-05-01T00:00:00Z', archived_at: '2026-06-01T00:00:00Z', channels: null },
+					{ id: 'r-ancien', created_at: '2026-01-01T00:00:00Z', archived_at, channels },
+				],
+			},
+		}
+		const { client } = espion([{ data: [lue], error: null, status: 200 }])
 
 		const etat = await lireLignesASaisir(client, { genre: 'workspace' })
 

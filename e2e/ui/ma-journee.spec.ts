@@ -13,6 +13,7 @@
 //           compte est celui que la région live annonce, jamais une lecture instantanée
 // @verifies CRM-092 (docs/BACKLOG.md) tranche T9 — docs/SPEC-session-sso.md §8.7 : les scénarios anonymes
 //           se connectent ou sont convertis, aucune page n'étant rendue sans session (décision 601)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — Ma journée lit les rattachements (docs/SPEC-rattachements.md §5)
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, comme un utilisateur réel : aucune fonction
 // interne n'est appelée, aucune réponse n'est substituée, et la navigation passe par la BARRE
@@ -316,7 +317,8 @@ test.describe('« Ma journée » (docs/SPEC-cards.md §17)', () => {
 		// (`docs/DESIGN_SYSTEM.md` §12.5) : l'état vide de cette adresse en visiteur anonyme est
 		// d'ailleurs déjà ce que `docs/SPEC-manual.md` §7 capture, et cette tranche ne le change pas.
 		await connecter(page, VIEWER)
-		await page.route('**/rest/v1/cards*', (route) =>
+		// `CRM-111` T2.4.1 : la journée lit les rattachements.
+		await page.route('**/rest/v1/card_placements*', (route) =>
 			route.fulfill({
 				status: 200,
 				contentType: 'application/json',

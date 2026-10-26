@@ -831,6 +831,12 @@ autres (`CLAUDE.md` §21).
 
 ### 10.5 Ce que l'écran lit, et pourquoi en DEUX requêtes — MESURÉ
 
+**Révisé par `CRM-111` T2.4.1** (docs/SPEC-rattachements.md §6) : `cards_figees()` rend une ligne par **rattachement**
+actif. La seconde lecture porte donc sur `card_placements` (`card_id=in.(…)`), avec le channel
+(`channels!card_placements_channel_fk`) et l'étape (`workflow_steps!card_placements_step_fk`) de chacun, et
+l'appariement se fait sur l'affaire **et** le channel : une affaire figée dans deux channels y paraît deux fois, chacune
+dans son dossier, à son étape. Ce qui suit vaut, « card » se lisant « rattachement ».
+
 L'écran fait **deux lectures successives**, et ce n'est pas un défaut de conception : c'est ce que
 la pile permet, mesuré.
 

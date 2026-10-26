@@ -15,6 +15,7 @@
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — les affaires d'un channel se comptent par leurs rattachements (docs/SPEC-rattachements.md §5)
 //
 // CE MODULE N'OUVRE AUCUNE POLITIQUE NOUVELLE. Il lit `channels` sous la RLS de `CRM-021` et compte
 // `cards` sous celle de `CRM-040` : ce qu'il rend est donc ce que l'appelant peut déjà lire
@@ -51,6 +52,14 @@ export type EnumerationEnfants = {
 /** Colonne réellement demandée. Exportée pour que les tests vérifient la requête émise. */
 export const COLONNE_ENFANT = 'id'
 
+/**
+ * Ce que le compte des affaires d'un channel demande (`CRM-111` T2.4.1) : les RATTACHEMENTS du channel, l'affaire plongée
+ * pour que la corbeille de l'affaire les écarte (`affaire.deleted_at`). Une affaire rattachée à deux channels du même
+ * track compterait deux fois — le compte dit alors les rattachements qu'efface le geste (docs/SPEC-rattachements.md §5) ;
+ * tant qu'une affaire n'en a qu'un, les deux comptes coïncident.
+ */
+export const COLONNES_RATTACHEMENT_ENFANT = 'id, affaire:cards!inner(id)'
+
 /** Le compte vient du serveur, jamais des lignes rapportées (§3.5) ; sa forme vit dans `compter.ts`. */
 export { LIMITE_COMPTE, OPTIONS_COMPTE }
 
@@ -78,6 +87,9 @@ const COMPTE_ABSENT = 'count absent alors que la réponse a abouti'
  *     celles d'un channel lui-même en corbeille : elles sont retenues un cran plus bas, et
  *     restaurer le track ne les rendrait pas.
  *
+ * Depuis `CRM-111` T2.4.1, les affaires d'un channel se comptent par leurs RATTACHEMENTS
+ * (`COLONNES_RATTACHEMENT_ENFANT`).
+ *
  * DEUX LECTURES PLUTÔT QU'UNE JOINTURE EMBARQUÉE, ET C'EST MESURÉ : `cards` porte deux clés
  * étrangères composites vers `channels` (`cards_channel_id_workflow_id_fkey` et
  * `cards_channel_id_workspace_id_fkey`), et `select=id,channels!inner(id)` rend `300` / `PGRST201`.
@@ -92,10 +104,10 @@ export async function compterEnfantsInaccessibles(
 	try {
 		if (cible.type === 'channel') {
 			const cards = await client
-				.from('cards')
-				.select(COLONNE_ENFANT, OPTIONS_COMPTE)
+				.from('card_placements')
+				.select(COLONNES_RATTACHEMENT_ENFANT, OPTIONS_COMPTE)
 				.eq('channel_id', cible.id)
-				.is('deleted_at', null)
+				.is('affaire.deleted_at', null)
 				.limit(LIMITE_COMPTE)
 			if (cards.error !== null) {
 				return enErreur(classerErreur(cards.status, cards.error.message))
@@ -119,10 +131,10 @@ export async function compterEnfantsInaccessibles(
 		if (identifiants.length === 0) return pret({ channels: 0, cards: 0 })
 
 		const cards = await client
-			.from('cards')
-			.select(COLONNE_ENFANT, OPTIONS_COMPTE)
+			.from('card_placements')
+			.select(COLONNES_RATTACHEMENT_ENFANT, OPTIONS_COMPTE)
 			.in('channel_id', identifiants)
-			.is('deleted_at', null)
+			.is('affaire.deleted_at', null)
 			.limit(LIMITE_COMPTE)
 		if (cards.error !== null) {
 			return enErreur(classerErreur(cards.status, cards.error.message))

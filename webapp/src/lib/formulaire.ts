@@ -24,7 +24,7 @@ import { libelleEtape } from './affaires-figees'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import type { Database, Json } from './database.types'
 import type { ProfilAffiche } from './identites'
-import type { RattachementsLus } from './rattachements'
+import { premierRattachement, type RattachementsLus } from './rattachements'
 import type { ClientCrm } from './supabase'
 import { estRenseigne } from './valeur-renseignee'
 
@@ -81,8 +81,12 @@ export const COLONNES_VALEUR = 'field_id, value'
 // ELLE EST ÉCRITE D'UN SEUL TENANT, et ce n'est pas un choix de mise en forme : une concaténation
 // `'a' + 'b'` rend le type `string`, et `supabase-js` cesse alors d'inférer la forme de la réponse
 // — MESURÉ, `lireCard` retombait sur `GenericStringError`. Le littéral doit rester entier.
+//
+// `CRM-111` T2.4.1 : les colonnes du rattachement — workflow, étape, montant, action, archivage, sommeil, responsable —
+// se lisent sur `card_placements`, plongé ; `cardDepuisRattachements` les rend à la forme d'avant, celles du plus
+// ancien (docs/SPEC-rattachements.md §5). Le responsable se nomme par la contrainte du rattachement.
 export const COLONNES_CARD_FORMULAIRE =
-	'id, title, workflow_id, workspace_id, current_step_id, email_local_part, amount, currency, next_action, next_action_at, archived_at, snoozed_until, profiles!cards_owner_id_fkey(id, full_name, avatar_url), workspaces(inbound_domain), card_placements!card_placements_card_fk(id, created_at)'
+	'id, title, workspace_id, email_local_part, currency, workspaces(inbound_domain), card_placements!card_placements_card_fk(id, created_at, workflow_id, current_step_id, amount, next_action, next_action_at, archived_at, snoozed_until, profiles!card_placements_owner_id_fkey(id, full_name, avatar_url))'
 
 /** L'étape courante, telle que la mention « requis à l'étape <étape> » a besoin de la nommer (décision 688). */
 export type EtapeCourante = {
@@ -123,6 +127,56 @@ export type CardOuverte = Pick<
 	readonly profiles: ProfilAffiche | null
 	readonly workspaces: { readonly inbound_domain: string | null } | null
 } & RattachementsLus
+
+/** Le rattachement tel que `COLONNES_CARD_FORMULAIRE` le plonge (`CRM-111` T2.4.1). */
+type RattachementFormulaire = Pick<
+	Database['public']['Tables']['card_placements']['Row'],
+	| 'id'
+	| 'created_at'
+	| 'workflow_id'
+	| 'current_step_id'
+	| 'amount'
+	| 'next_action'
+	| 'next_action_at'
+	| 'archived_at'
+	| 'snoozed_until'
+> & { readonly profiles: ProfilAffiche | null }
+
+/** L'affaire telle que `COLONNES_CARD_FORMULAIRE` la rend, avant sa mise à la forme de l'écran. */
+export type CardFormulaireLue = Pick<
+	Database['public']['Tables']['cards']['Row'],
+	'id' | 'title' | 'workspace_id' | 'email_local_part' | 'currency'
+> & {
+	readonly workspaces: { readonly inbound_domain: string | null } | null
+	readonly card_placements: readonly RattachementFormulaire[]
+}
+
+/**
+ * La forme d'avant, depuis l'affaire lue (`CRM-111` T2.4.1) : les colonnes du rattachement le plus ancien. Une affaire
+ * sans rattachement lisible rend `null`, comme une affaire illisible : la lecture de `cards` passe par celle de ses
+ * rattachements (docs/SPEC-rattachements.md §4), et l'écran n'aurait ni workflow ni étape à montrer.
+ */
+export function cardDepuisRattachements(lue: CardFormulaireLue): CardOuverte | null {
+	const rattachement = premierRattachement(lue.card_placements)
+	if (rattachement === null) return null
+	return {
+		id: lue.id,
+		title: lue.title,
+		workspace_id: lue.workspace_id,
+		email_local_part: lue.email_local_part,
+		currency: lue.currency,
+		workspaces: lue.workspaces,
+		workflow_id: rattachement.workflow_id,
+		current_step_id: rattachement.current_step_id,
+		amount: rattachement.amount,
+		next_action: rattachement.next_action,
+		next_action_at: rattachement.next_action_at,
+		archived_at: rattachement.archived_at,
+		snoozed_until: rattachement.snoozed_until,
+		profiles: rattachement.profiles,
+		card_placements: lue.card_placements,
+	}
+}
 
 /**
  * Un champ **résolu** pour l'étape courante : ce que le composant rend, sans avoir à recroiser
@@ -310,7 +364,8 @@ export async function lireCard(
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
-		return pret(reponse.data[0] ?? null)
+		const lue = reponse.data[0]
+		return pret(lue === undefined ? null : cardDepuisRattachements(lue))
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}

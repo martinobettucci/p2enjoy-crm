@@ -13,6 +13,7 @@
 //           de `channels`, le filtre qui écarte la corbeille, le tri des rattachements),
 //           §15.4 (trois absences rendent le même `null`), §15.9 cas a, b, e, f, g
 // @verifies docs/SPEC-webapp.md §6.4 (contrat asynchrone : l'erreur est classée sur le code HTTP)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la fiche contact lit l'archivage et le channel sur les rattachements (docs/SPEC-rattachements.md §5)
 //
 // Comme `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise et pas seulement la
 // valeur rendue : les colonnes demandées, l'organisation embarquée et le tri côté serveur sont
@@ -1073,8 +1074,7 @@ const LEO_FICHE = {
 			cards: {
 				id: ID_CARD_ERP,
 				title: 'Migration ERP Sogexia',
-				archived_at: null,
-				channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+				card_placements: [{ id: 'r-1', created_at: '2026-01-01T00:00:00+00:00', archived_at: null, channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } } }],
 			},
 		},
 	],
@@ -1096,20 +1096,23 @@ describe('lireFicheContact (§15.3)', () => {
 
 	it("DÉSIGNE la relation ambiguë `cards → channels` au lieu de la contourner — §15.3", () => {
 		// MESURÉ : la forme naïve `cards(channels(...))` est refusée par `PGRST201`, deux clés
-		// étrangères existant entre `cards` et `channels`. La clé retenue est celle du
-		// CLOISONNEMENT, et cette assertion la fige : l'écrire au hasard rendrait la requête
-		// rouge sur la pile, mais seule cette preuve dit POURQUOI cette clé-là.
-		expect(COLONNES_FICHE_CONTACT).toContain('channels!cards_channel_id_workspace_id_fkey')
-		expect(COLONNES_FICHE_CONTACT).not.toContain('cards_channel_id_workflow_id_fkey')
+		// étrangères existant entre `cards` et `channels`. Depuis `CRM-111` T2.4.1 le channel se lit
+		// sur le rattachement, qui en porte deux aussi : la clé retenue est celle du channel seul, et
+		// cette assertion la fige.
+		expect(COLONNES_FICHE_CONTACT).toContain('channels!card_placements_channel_fk')
+		expect(COLONNES_FICHE_CONTACT).not.toContain('card_placements_channel_workflow_fk')
 		// `!inner` n'est pas décoratif : sans lui, le filtre rendrait `cards: null` au lieu de
 		// retirer la ligne (mesuré).
 		expect(COLONNES_FICHE_CONTACT).toContain('cards!inner')
 		// `archived_at` est la SEULE colonne de cycle de vie demandée : une affaire archivée reste
 		// rendue, son état étant dit (§15.3).
 		expect(COLONNES_FICHE_CONTACT).toContain('archived_at')
-		// `source` et `created_at` ne sont pas demandés, pour le motif du §10.3.
+		// `source` et `created_at` ne sont pas demandés, pour le motif du §10.3 — hormis l'ancienneté du
+		// rattachement, qui désigne le plus ancien (`CRM-111` T2.4.1).
 		expect(COLONNES_FICHE_CONTACT).not.toContain('source')
-		expect(COLONNES_FICHE_CONTACT).not.toContain('created_at')
+		expect(
+			COLONNES_FICHE_CONTACT.replace('card_placements!card_placements_card_fk(id, created_at,', ''),
+		).not.toContain('created_at')
 	})
 
 	it('rend le contact, son organisation et ses affaires, adresses comprises — cas a', async () => {
@@ -1165,8 +1168,7 @@ describe('lireFicheContact (§15.3)', () => {
 					cards: {
 						id: '5eed0000-0000-4000-8000-0000000000c8',
 						title: 'Contrat cadre 2025',
-						archived_at: '2026-03-31T16:00:00+00:00',
-						channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } },
+						card_placements: [{ id: 'r-1', created_at: '2026-01-01T00:00:00+00:00', archived_at: '2026-03-31T16:00:00+00:00', channels: { slug: 'grands-comptes', tracks: { slug: 'conseil-ia' } } }],
 					},
 				},
 			],
@@ -1182,7 +1184,10 @@ describe('lireFicheContact (§15.3)', () => {
 		const sansSlug = {
 			...LEO_FICHE,
 			card_contacts: [
-				{ role: 'x', cards: { id: 'c', title: 'T', archived_at: null, channels: null } },
+				{
+					role: 'x',
+					cards: { id: 'c', title: 'T', card_placements: [{ id: 'r-1', created_at: '2026-01-01T00:00:00+00:00', archived_at: null, channels: null }] },
+				},
 			],
 		}
 		const { client } = espionFicheContact({ data: [sansSlug], error: null, status: 200 })
@@ -1409,12 +1414,18 @@ describe('modifierContact (§16.3)', () => {
 //           écarte la CORBEILLE, le tri demandé au serveur, la borne), §17.4 (un refus de lecture
 //           est zéro ligne), §17.5 (`workspace_id` porté par la fiche), §17.7 cas d, h, l
 // @verifies docs/DESIGN_SYSTEM.md §5.26 (une affaire archivée est offerte, la corbeille non)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : l'archivage d'une affaire, lu sur ses rattachements
 describe('lireAffairesRattachables (§17.3)', () => {
-	const AFFAIRE = { id: '5eed0000-0000-4000-8000-0000000000c2', title: 'Migration ERP Sogexia', archived_at: null }
+	// `CRM-111` T2.4.1 : l'archivage est lu sur les rattachements de l'affaire.
+	const AFFAIRE = {
+		id: '5eed0000-0000-4000-8000-0000000000c2',
+		title: 'Migration ERP Sogexia',
+		card_placements: [{ archived_at: null }],
+	}
 	const ARCHIVEE = {
 		id: '5eed0000-0000-4000-8000-0000000000c8',
 		title: 'Contrat cadre 2025',
-		archived_at: '2026-03-31T16:00:00+00:00',
+		card_placements: [{ archived_at: '2026-03-31T16:00:00+00:00' }],
 	}
 
 	it('demande les trois colonnes du §17.3, et NI le track NI le channel', async () => {
@@ -1458,6 +1469,17 @@ describe('lireAffairesRattachables (§17.3)', () => {
 			{ id: AFFAIRE.id, titre: 'Migration ERP Sogexia', archivee: false },
 			{ id: ARCHIVEE.id, titre: 'Contrat cadre 2025', archivee: true },
 		])
+	})
+
+	it('une affaire dont UN rattachement reste actif n’est pas archivée (`CRM-111` T2.4.1)', async () => {
+		const mixte = {
+			id: 'c-mixte',
+			title: 'Deux channels',
+			card_placements: [{ archived_at: '2026-03-31T16:00:00+00:00' }, { archived_at: null }],
+		}
+		const { client } = espion({ data: [mixte], error: null, status: 200 })
+		const lues = await lireAffairesRattachables(client)
+		expect(lues).toEqual({ statut: 'pret', donnees: [{ id: 'c-mixte', titre: 'Deux channels', archivee: false }] })
 	})
 
 	it('rend une liste VIDE sans erreur quand la RLS ne consent aucune ligne', async () => {

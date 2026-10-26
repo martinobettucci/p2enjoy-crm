@@ -3,6 +3,8 @@
 // @spec docs/SPEC-cards.md §17.2 (l'adresse porte la portée), §17.3 (la portée par défaut),
 //       §17.4 (ce que la vue lit), §17.5 (les trois sections et les deux bornes)
 // @spec docs/SPEC-types.md §4
+// @spec CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la journée lit les RATTACHEMENTS, l'affaire en plongement
+//       (docs/SPEC-rattachements.md §6, « Ma journée : les prochaines actions des rattachements »)
 //
 // CE MODULE N'IMPORTE QUE `filtre-sommeil`, ET C'EST TOUT SON OBJET.
 //
@@ -31,8 +33,12 @@
  * embarqué, ni `current_step_id`. Cette vue range par le **temps** et non par le graphe (§17.1), et
  * une requête ne rapporte que ce qui est affiché (§17.4).
  */
-export const COLONNES_CARD_JOURNEE =
-	'id, title, next_action, next_action_at, channels!cards_channel_id_workspace_id_fkey(slug, name, tracks(slug, name))'
+//
+// `CRM-111` T2.4.1 : la lecture part des RATTACHEMENTS — prochaine action, échéance, channel sont les leurs — et plonge
+// l'affaire pour son titre et son identifiant. Le channel est embarqué par `card_placements_channel_fk` : une seconde
+// clé (`card_placements_channel_workflow_fk`) mène aussi à `channels`, et PostgREST exige alors de nommer la bonne.
+export const COLONNES_RATTACHEMENT_JOURNEE =
+	'id, next_action, next_action_at, channels!card_placements_channel_fk(slug, name, tracks(slug, name)), affaire:cards!inner(id, title)'
 
 /**
  * L'horizon de la section « À venir », en jours.

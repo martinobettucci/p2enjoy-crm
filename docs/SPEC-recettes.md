@@ -268,6 +268,10 @@ le motif de bloc vaut pour ce qui se **consulte**). Toute autre erreur rend l'é
 
 ### 6.3 « Rentabilité » — l'onglet « Vue d'ensemble »
 
+**Révisé par `CRM-111` T2.4.1** (docs/SPEC-rattachements.md §6) : la seconde lecture nomme les channels et tracks de
+**tous** les rattachements de chaque affaire ; le montant comparé est celui du plus ancien, la forme d'avant. La ligne par
+rattachement vient avec le contrat de `rentabilite_affaires` (une tranche ultérieure de `CRM-111`).
+
 **Pour un administrateur** :
 
 - **Les filtres**, en tête : la période (deux champs `date`, « Du » et « Au », facultatifs), l'état (« Toutes »,

@@ -4,6 +4,7 @@
 //       §2.3 (« nul n'est pas zéro »), §3 (lecture et écriture : celles de l'affaire), §6.1 (le bloc de la fiche, son
 //       pied et sa mention), §6.4 (l'onglet « À saisir » : lignes non soldées, `recette_saisissable`, saisie en série)
 // @spec docs/SCHEMA.md §9 sexies (migration `0095`)
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — l'onglet « À saisir » situe l'affaire par son plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // CE MODULE N'INVENTE AUCUNE RÈGLE, comme `card-costs.ts` : la base tient le réel dérivé, la ligne soldée figée, la
 // devise verrouillée et le droit d'écrire. Rien n'est anticipé pour décider si une requête part ; le refus reçu est
@@ -11,6 +12,7 @@
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
+import { situerLigne, type AffaireParRattachements } from './rattachements'
 import type { ClientCrm } from './supabase'
 
 // ---------------------------------------------------------------------------------------------
@@ -186,9 +188,16 @@ export type RecetteASaisir = Pick<
 	readonly cards: AffaireDeLaRecette | null
 }
 
-// La relation vers `channels` est nommée par sa clé, `cards` portant deux clés composites vers elle (`card-costs.ts`).
+// La relation vers `channels` est nommée par sa clé, `card_placements` portant deux clés vers elle (`card-costs.ts`).
+// `CRM-111` T2.4.1 : l'archivage et le channel de l'affaire se lisent sur son plus ancien rattachement
+// (docs/SPEC-rattachements.md §5), ramenés à la forme d'avant par `situerLigne`.
 export const COLONNES_RECETTE_A_SAISIR =
-	'id, label, estimated_amount, actual_amount, created_at, recette_saisissable, cards!inner(id, title, currency, archived_at, channels!cards_channel_id_workspace_id_fkey(slug, tracks(slug, name)))'
+	'id, label, estimated_amount, actual_amount, created_at, recette_saisissable, cards!inner(id, title, currency, card_placements!card_placements_card_fk(id, created_at, archived_at, channels!card_placements_channel_fk(slug, tracks(slug, name))))'
+
+/** Une ligne telle que `COLONNES_RECETTE_A_SAISIR` la rend, avant `situerLigne`. */
+type RecetteASaisirLue = Omit<RecetteASaisir, 'cards'> & {
+	readonly cards: AffaireParRattachements<AffaireDeLaRecette> | null
+}
 
 /** Toutes les lignes non soldées que l'appelant lit, la plus ancienne d'abord ; une affaire à la corbeille est exclue. */
 export async function lireRecettesASaisir(client: ClientCrm): Promise<EtatAsync<readonly RecetteASaisir[]>> {
@@ -201,7 +210,11 @@ export async function lireRecettesASaisir(client: ClientCrm): Promise<EtatAsync<
 			.order('created_at')
 			.order('label')
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
-		return pret(reponse.data as unknown as readonly RecetteASaisir[])
+		return pret(
+			(reponse.data as unknown as readonly RecetteASaisirLue[]).map((ligne) =>
+				situerLigne<AffaireDeLaRecette, RecetteASaisirLue>(ligne),
+			),
+		)
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}

@@ -109,6 +109,7 @@ d'exécuter le code attendu.
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T2.4.1 — la webapp lit les rattachements** : le board, la vue liste, la fiche, Ma journée, l'inbox, la saisie de temps, les contacts, les notifications, la recherche, les coûts, les recettes, la rentabilité, les affaires figées et la corbeille lisent `card_placements` au lieu des colonnes de rattachement de `cards`. Aucun changement visible ; les affaires figées s'apparient désormais par rattachement (affaire et channel).
 - **`CRM-111` T2.3.7 — changer le workflow d'un channel, ou restaurer une version, remappe les rattachements** (migration `0122`). Aucun changement visible ; le geste d'administration rend désormais les rattachements remappés.
 - **`CRM-111` T2.3.6 — les réponses du formulaire appartiennent au rattachement** (migration `0121`). La fiche et le connecteur MCP enregistrent les réponses sur le rattachement de l'affaire ; une affaire pourra porter des réponses différentes dans chacun de ses channels, et chacune se lit selon les droits sur son channel.
 - **`CRM-111` T2.3.5 — une cadence de relance s'arme sur un rattachement** (migration `0119`). Depuis la fiche, la relance s'arme sur le rattachement de l'affaire ; une affaire pourra porter une cadence par channel, et une cadence s'arrête quand son rattachement n'est plus figé.

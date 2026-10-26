@@ -9,6 +9,7 @@
 // @spec docs/JOURNAL.md décisions 195 (le temps réel mesuré), 201 (le flux déclenche la lecture,
 //       il ne la remplace pas), 315 (le rang est pris par lecture)
 // @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — la boîte ramène l'affaire plongée à la forme d'avant (docs/SPEC-rattachements.md §5)
 //
 // Ce module ne rend rien : il **lit, écrit et écoute**. La séparation est ce qui rend l'ordre de la
 // boîte, l'appariement des trois cas de ligne, la borne de lecture et la classification des issues
@@ -36,6 +37,7 @@ import {
 	nomCanalNotifications,
 } from './colonnes-notifications'
 import type { ProfilAffiche } from './identites'
+import { channelDuPremierRattachement } from './rattachements'
 import type { ClientCrm } from './supabase'
 import { LIMITE_COMPTE, OPTIONS_COMPTE } from './compter'
 
@@ -50,6 +52,19 @@ export {
 } from './colonnes-notifications'
 
 /** Une notification telle que la requête 1 la rend, avant appariement. */
+/** La ligne telle que PostgREST la rend depuis `CRM-111` T2.4.1 : l'affaire porte ses rattachements et leur channel. */
+type LigneNotificationBrute = Omit<LigneNotificationLue, 'cards'> & {
+	readonly cards: {
+		readonly id: string
+		readonly title: string
+		readonly card_placements: readonly {
+			readonly id: string
+			readonly created_at: string
+			readonly channels: NonNullable<LigneNotificationLue['cards']>['channels']
+		}[]
+	} | null
+}
+
 export type LigneNotificationLue = {
 	readonly id: string
 	readonly type: string
@@ -229,7 +244,12 @@ export async function lireBoite(client: ClientCrm): Promise<EtatAsync<BoiteLue>>
 		// Le type généré décrit ce que la base PEUT rendre, jamais ce que cette lecture-ci demande
 		// (`docs/SPEC-types.md` §4) : le passage par `unknown` est celui que le dépôt emploie pour
 		// toute réponse PostgREST projetée.
-		const lignes = (reponse.data ?? []) as unknown as readonly LigneNotificationLue[]
+		// `CRM-111` T2.4.1 : l'affaire lue avec ses rattachements est ramenée à la forme d'avant — le channel de son plus
+		// ancien rattachement —, que la projection et ses preuves emploient.
+		const lignes = ((reponse.data ?? []) as unknown as readonly LigneNotificationBrute[]).map((ligne) => ({
+			...ligne,
+			cards: ligne.cards === null ? null : channelDuPremierRattachement(ligne.cards),
+		})) as readonly LigneNotificationLue[]
 
 		const idsCites = [
 			...new Set(

@@ -82,28 +82,30 @@ const CARD_SERVIE = [
 	{
 		id: CARD,
 		title: 'Piste entrante à qualifier',
-		workflow_id: 'wf-1',
 		// `workspace_id` est demandée depuis `CRM-043` : le panneau de commentaires l'envoie à
-		// l'insertion (docs/JOURNAL.md décision 200). Sans elle, la réponse substituée ne
-		// ressemblerait plus à ce que PostgREST rend.
+		// l'insertion (docs/JOURNAL.md décision 200).
 		workspace_id: '5eed0000-0000-4000-8000-000000000001',
-		current_step_id: ETAPE.id,
 		email_local_part: 'c-t2dtpcjd',
-		// Les colonnes que `COLONNES_CARD_FORMULAIRE` demande aussi, aux valeurs que la base porte pour `…0000c6`
-		// (mesurées le 2026-10-25). Absentes, l'en-tête lisait `undefined` là où PostgREST rend `null` : les captures
-		// montraient « Montant NaN » et la pilule « Archivé », deux états que le produit ne rend jamais pour cette affaire
-		// (CLAUDE.md §16 — une capture représente l'état réellement exécuté ; docs/DESIGN_SYSTEM.md §12.5).
-		amount: null,
 		currency: 'EUR',
-		next_action: null,
-		next_action_at: null,
-		archived_at: null,
-		snoozed_until: null,
-		profiles: null,
 		workspaces: { inbound_domain: 'crm.p2enjoy.test' },
-		// `CRM-111` : `COLONNES_CARD_FORMULAIRE` embarque les rattachements depuis T2.3.1 ; la saisie écrit sur le
-		// plus ancien depuis T2.3.6. Absent, l'écriture n'aurait pas de bloc où se poser.
-		card_placements: [{ id: RATTACHEMENT, created_at: '2026-01-01T00:00:00+00:00' }],
+		// `CRM-111` T2.4.1 : la fiche lit les colonnes du rattachement le plus ancien, plongé — aux valeurs que la base
+		// porte pour `…0000c6` (mesurées le 2026-10-25). Absentes, l'en-tête lisait `undefined` là où PostgREST rend
+		// `null` : les captures montraient « Montant NaN » et la pilule « Archivé », états que le produit ne rend jamais
+		// pour cette affaire (CLAUDE.md §16 ; docs/DESIGN_SYSTEM.md §12.5). La saisie écrit sur ce bloc (T2.3.6).
+		card_placements: [
+			{
+				id: RATTACHEMENT,
+				created_at: '2026-01-01T00:00:00+00:00',
+				workflow_id: 'wf-1',
+				current_step_id: ETAPE.id,
+				amount: null,
+				next_action: null,
+				next_action_at: null,
+				archived_at: null,
+				snoozed_until: null,
+				profiles: null,
+			},
+		],
 	},
 ]
 

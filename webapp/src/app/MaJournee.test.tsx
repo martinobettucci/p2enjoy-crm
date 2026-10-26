@@ -7,6 +7,7 @@
 //           §5.8 (états systématiques), §5.9 (cellule sans valeur VIDE)
 // @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-189 a ; docs/JOURNAL.md décision 594 —
 //           aucune image ne rend la portée nouvelle avec les données de l'ancienne (§17.9)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : l'écran rend la même journée, lue sur les rattachements
 //
 // Les données injectées sont celles du SEED, à l'identique — « Audit sécurité applicative » en
 // retard, « Formation Data & IA » aujourd'hui, « Hébergement infogéré » à venir. Ce n'est pas une
@@ -34,8 +35,18 @@ type Reponse = { data: unknown[] | null; error: { message: string } | null; stat
  * `ma-journee.test.ts`, où c'est en revanche la requête émise qui est mesurée.
  */
 function clientQuiRend(reponse: Reponse): ClientCrm {
+	// `CRM-111` T2.4.1 : la journée lit les RATTACHEMENTS, l'affaire plongée ; les lignes du seed sont servies sous
+	// cette forme, et l'écran doit rendre exactement ce qu'il rendait.
+	const servie: Reponse = {
+		...reponse,
+		data:
+			reponse.data?.map((ligne) => {
+				const { id, title, ...rattachement } = ligne as { id: string; title: string }
+				return { ...rattachement, id: `rattachement-${id}`, affaire: { id, title } }
+			}) ?? null,
+	}
 	const chaine: Record<string, unknown> = {
-		then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(reponse).then(resoudre),
+		then: (resoudre: (valeur: Reponse) => unknown) => Promise.resolve(servie).then(resoudre),
 	}
 	for (const nom of ['is', 'eq', 'lt', 'not', 'or', 'order']) {
 		chaine[nom] = () => chaine

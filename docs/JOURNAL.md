@@ -35686,3 +35686,44 @@ INC-316 passe « résolue ». `CRM-077` reste `[P]`.
 *2026-10-26, réponse du responsable (question posée par `AskUserQuestion`) : « Ne rien livrer encore ».* Cinquième réponse
 identique (décisions 726, 730, 733, 739). Les migrations 106 à 123 restent en attente ; le backlog continue.
 
+
+### `CRM-111` T2.4.1, étape 2 — les autres écrans lisent les rattachements (2026-10-26)
+
+*2026-10-26, session interactive.* Les lectures de la webapp qui restaient sur les colonnes de rattachement de `cards`
+lisent désormais `card_placements`, sans changement visible :
+- **Ma journée** part des rattachements de l'appelant (`affaire:cards!inner(…)`, corbeille filtrée sur l'affaire) ;
+- **l'inbox** (affaires classables, chemin d'une affaire), **la saisie de temps** (affaires situées), **les
+  notifications** et **la recherche** (adresse d'une affaire, d'un commentaire) situent l'affaire par son **plus ancien**
+  rattachement, plongé par `card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(…))`
+  et ramené à la forme d'avant (`channelDuPremierRattachement`) ;
+- **la fiche** (`lireCard`) plonge les rattachements avec leurs colonnes et prend celles du plus ancien
+  (`cardDepuisRattachements`) ; une affaire sans rattachement lisible se lit comme absente ;
+- **les coûts** (le track d'une affaire, les lignes d'un budget, l'onglet « À saisir »), **les recettes à saisir** et
+  **la rentabilité** (noms des channels de tous les rattachements, montant du plus ancien) ;
+- **les contacts** : le sélecteur et la fiche disent une affaire archivée quand **tous** ses rattachements le sont ;
+- **les affaires figées** : `cards_figees()` rend une ligne par rattachement ; la seconde lecture porte sur
+  `card_placements` et l'appariement se fait sur l'affaire **et** le channel. C'est le seul module où la forme à
+  plusieurs rattachements se joue déjà : une affaire figée dans deux channels aurait pris, appariée sur la seule affaire,
+  le dossier et l'étape de l'autre ligne.
+
+**Choix d'une règle, et son écart nommé.** La forme d'avant est celle du plus ancien rattachement : `cards` en portait le
+miroir. Les contacts seuls disent « archivée » quand tous le sont, la règle déjà posée pour le sélecteur au début de
+l'étape ; tant qu'une affaire n'a qu'un rattachement (index `card_placements_one_per_card_idx`), les deux règles
+coïncident. T4 à T7 fixeront la forme à plusieurs.
+
+**La corbeille** compte les affaires d'un channel par ses rattachements (`card_placements`, la corbeille lue sur l'affaire
+plongée), converti une fois la onzième tranche de `CRM-077` commitée par sa session ; une affaire rattachée à deux
+channels d'un même track y compterait deux fois, le compte disant les rattachements qu'efface le geste. **Restent sur
+`cards`** : les scores de santé (transportés par T2.4.5) et les lectures du seul titre ou de l'espace (modèles d'emails,
+rapport de temps, envoi d'un formulaire), qui ne touchent aucune colonne de rattachement.
+
+**Trouvé par la campagne d'interface de la session de `CRM-077`**, qui tournait sur l'arbre partagé : trois specs
+servaient ou lisaient la fiche à l'ancienne forme. `commentaires.spec.ts` et `manuel.spec.ts` substituaient une affaire
+sans `card_placements` — la fiche, qui la lit désormais comme absente, ne rendait plus son fil ; leurs réponses portent
+le rattachement. `connexion.spec.ts:345` échouait sur une **course de mise en page**, vue sur la vidéo : le fil rend les
+commentaires puis insère au-dessus d'eux les événements plus récents (seed rejoué le jour même), et la carte survolée
+descendait sous le pointeur, qui se retrouvait sur sa voisine. La spec attend désormais le fil complet (« Affaire
+créée ») avant de survoler.
+
+**Vérifications.** Les huit chaînes `select` nouvelles rendent `200` sur la pile locale (PostgREST réel) avant toute spec.
+Preuves : unitaires 4543/4543 ; typage complet propre ; API 1231/1232 (`ingestion.spec.ts:91`, étranger) ; interface des écrans convertis 128/128, de la fiche, des coûts, de la rentabilité, des affaires figées, des contacts et des commentaires 251/251, `commentaires`, `manuel` et `connexion` 53/53, corbeille et arborescence 35/35 ; API de la corbeille 27/27 ; `verify-relances.sh` 92/92, `verify-card-costs.sh` 52/52, `verify-ma-journee.sh` 85/85 (son motif de dégradation de l'ordre total suit `affaire(id)`). Captures observées : la fiche archivée et les affaires figées, inchangées.

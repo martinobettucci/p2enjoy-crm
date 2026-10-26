@@ -6,6 +6,8 @@
 // @verifies CRM-057 (docs/BACKLOG.md) — tranche 2 : lu / non lu — docs/SPEC-mail-subsystem.md §18 bis.2 (fil non lu dès
 //           qu'un message l'est, total gardé), §18 bis.3 (les deux fonctions), §18 bis.4 (un échec ne change rien) ;
 //           docs/DESIGN_SYSTEM.md §5.4 quinquies (la pastille, « 99+ ») ; docs/JOURNAL.md décisions 715 et 716
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : le chemin et l'adresse d'une affaire sont ceux de son plus ancien
+//           rattachement ; l'affaire est classable si l'un de ses rattachements est actif (docs/SPEC-rattachements.md §7)
 //
 // Ce fichier éprouve **la requête réellement émise** autant que la valeur rendue — même motif que
 // `commentaires.test.ts` : la borne, le filtre et l'ordre total sont portés par la requête, et un
@@ -27,6 +29,8 @@ import {
 	corpsAffichable,
 	filEstNonLu,
 	idsNonLus,
+	lireCardsClassables,
+	lireCheminCard,
 	lireArborescence,
 	lireMessages,
 	marquerLus,
@@ -445,5 +449,74 @@ describe('le marquage (§18 bis.3)', () => {
 		const enPanne = { rpc: () => { throw new Error('réseau coupé') } } as unknown as ClientCrm
 		expect((await marquerLus(enPanne, ['a']))?.nature).toBe('network')
 		expect((await marquerNonLu(null, 'a'))?.detail).toBe('configuration_absente')
+	})
+})
+
+// --- `CRM-111` T2.4.1 : les affaires classables et le chemin d'une affaire passent par ses rattachements ---------------
+
+/** Un client qui rend, table par table, des réponses fixées, et note ce que la lecture de `cards` a demandé. */
+function clientParTable(reponses: Record<string, unknown[]>) {
+	const demandes: { colonnes?: string; nuls: string[] } = { nuls: [] }
+	const client = {
+		from: (table: string) => {
+			const reponse = { data: reponses[table] ?? [], error: null, status: 200 }
+			const chaine: Record<string, unknown> = {
+				then: (resoudre: (valeur: unknown) => unknown) => Promise.resolve(reponse).then(resoudre),
+			}
+			for (const nom of ['eq', 'order', 'limit']) chaine[nom] = () => chaine
+			chaine['is'] = (colonne: string) => {
+				if (table === 'cards') demandes.nuls.push(colonne)
+				return chaine
+			}
+			return {
+				select: (colonnes: string) => {
+					if (table === 'cards') demandes.colonnes = colonnes
+					return chaine
+				},
+			}
+		},
+	} as unknown as ClientCrm
+	return { client, demandes }
+}
+
+const RATTACHEMENTS_C1 = [
+	{ id: 'r2', channel_id: 'ch-recent', created_at: '2026-10-02T09:00:00+00:00' },
+	{ id: 'r1', channel_id: 'ch-ancien', created_at: '2026-10-01T09:00:00+00:00' },
+]
+
+describe('les affaires classables (`CRM-111` T2.4.1)', () => {
+	it('ne propose que les affaires dont un rattachement est actif, et situe chacune par le plus ancien', async () => {
+		const { client, demandes } = clientParTable({
+			cards: [{ id: 'c1', title: 'Refonte', card_placements: RATTACHEMENTS_C1 }],
+			channels: [
+				{ id: 'ch-ancien', name: 'Grands comptes', track_id: 't1' },
+				{ id: 'ch-recent', name: 'Maintenance', track_id: 't1' },
+			],
+			tracks: [{ id: 't1', name: 'Conseil IA' }],
+		})
+		expect(await lireCardsClassables(client)).toEqual([
+			{ id: 'c1', titre: 'Refonte', chemin: 'Conseil IA \u203a Grands comptes' },
+		])
+		expect(demandes.colonnes).toContain('card_placements!card_placements_card_fk!inner(')
+		expect(demandes.nuls).toEqual(['card_placements.archived_at', 'deleted_at'])
+	})
+})
+
+describe('le chemin d’une affaire (`CRM-111` T2.4.1)', () => {
+	it('adresse l’affaire par le channel de son plus ancien rattachement', async () => {
+		const { client } = clientParTable({
+			cards: [{ id: 'c1', title: 'Refonte', card_placements: RATTACHEMENTS_C1 }],
+			channels: [{ slug: 'grands-comptes', track_id: 't1' }],
+			tracks: [{ slug: 'conseil-ia' }],
+		})
+		expect(await lireCheminCard(client, 'c1')).toEqual({
+			titre: 'Refonte',
+			adresse: '/tracks/conseil-ia/grands-comptes/cards/c1',
+		})
+	})
+
+	it('rend `null` quand aucun rattachement n’est lisible : la pilule disparaît', async () => {
+		const { client } = clientParTable({ cards: [{ id: 'c1', title: 'Refonte', card_placements: [] }] })
+		expect(await lireCheminCard(client, 'c1')).toBeNull()
 	})
 })

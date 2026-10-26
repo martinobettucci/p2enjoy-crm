@@ -7,6 +7,7 @@
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §8.4 (K18), §13 — tranche T4 : le
 //           temps réel s'ouvre avec le jeton interne de la vraie connexion LeLabs, plus avec GoTrue
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la notification situe son affaire par son rattachement (docs/SPEC-rattachements.md §5)
 //
 // LES SEIZE LIGNES DU §17 NE SONT PAS REJOUÉES ICI : `notifications.spec.ts` les tient, et la
 // tranche 3a ne change AUCUNE règle de la table. Ce fichier éprouve ce que la tranche AJOUTE — la
@@ -19,6 +20,7 @@
 //
 // LE PRODUIT EST RENDU DANS L'ÉTAT OÙ IL A ÉTÉ TROUVÉ : chaque ligne posée est retirée, chaque
 // marquage est défait, et une dernière lecture le CONSTATE (décision 501).
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la ligne r rejoue la lecture de l'écran, par le rattachement
 
 import { expect, test } from '@playwright/test'
 import { createClient } from '@supabase/supabase-js'
@@ -53,9 +55,10 @@ const COMMENTAIRE_D2 = '5eed0000-0000-4000-8000-0000000000d2'
 const essai = (suffixe: string) => `e2e00064-0000-4000-8000-0000000003${suffixe}`
 
 /** Les colonnes que l'écran demande — `webapp/src/lib/colonnes-notifications.ts`, §24.1. */
+// `CRM-111` T2.4.1 : le channel est celui du rattachement de l'affaire, plongé par sa clé.
 const COLONNES_NOTIFICATION =
 	'id, type, read_at, created_at, subject_card_id, payload, ' +
-	'cards(id, title, channels!cards_channel_id_workspace_id_fkey(slug, name, tracks(slug, name)))'
+	'cards(id, title, card_placements!card_placements_card_fk(id, created_at, channels!card_placements_channel_fk(slug, name, tracks(slug, name))))'
 
 const COLONNES_COMMENTAIRE_MENTION =
 	'id, body, deleted_at, author_id, ' +
@@ -85,13 +88,18 @@ test.describe('Ce que la surface lit — §24.1', () => {
 		const lignes = (await reponse.json()) as {
 			id: string
 			payload: Record<string, unknown>
-			cards: { title: string; channels: { slug: string; tracks: { slug: string } } } | null
+			cards: {
+				title: string
+				card_placements: { channels: { slug: string; tracks: { slug: string } } }[]
+			} | null
 		}[]
 		expect(lignes).toHaveLength(1)
 		const ligne = lignes[0]
 		expect(ligne?.cards?.title).toBe('Refonte du site vitrine')
-		expect(ligne?.cards?.channels?.slug).toBe('grands-comptes')
-		expect(ligne?.cards?.channels?.tracks?.slug).toBe('conseil-ia')
+		// L'affaire n'a qu'un rattachement pendant la bascule : son channel est celui que l'écran retient.
+		expect(ligne?.cards?.card_placements).toHaveLength(1)
+		expect(ligne?.cards?.card_placements[0]?.channels?.slug).toBe('grands-comptes')
+		expect(ligne?.cards?.card_placements[0]?.channels?.tracks?.slug).toBe('conseil-ia')
 		// LA CHARGE UTILE NE PORTE AUCUN CONTENU (§13.4) : de quoi désigner, jamais de quoi lire.
 		expect(ligne?.payload?.['comment_id']).toBe(COMMENTAIRE_D1)
 		expect(ligne?.payload).not.toHaveProperty('body')

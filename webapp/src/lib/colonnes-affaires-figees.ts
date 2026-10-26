@@ -1,6 +1,7 @@
 // @spec CRM-062 (docs/BACKLOG.md) — tranche 3c : la chaîne `select` de la SECONDE lecture
 // @spec docs/SPEC-relances.md §10.5 (les deux lectures, et les deux désambiguïsations mesurées)
 // @spec docs/SPEC-types.md §4 (un type ne garantit jamais une valeur)
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — les colonnes de la seconde lecture, sur `card_placements` (docs/SPEC-rattachements.md §5)
 //
 // CE MODULE N'IMPORTE RIEN, ET C'EST TOUT SON OBJET.
 //
@@ -21,16 +22,16 @@
  * Ce que la seconde lecture demande, et **les deux désambiguïsations sont OBLIGATOIRES** — toutes
  * deux trouvées par l'erreur sur la pile réelle le 2026-08-24, jamais par la lecture du schéma.
  *
- * `channels!cards_channel_id_workspace_id_fkey` — `cards` porte **deux** clés étrangères vers
- * `channels`, `cards_channel_id_workflow_id_fkey` et celle-ci. Un `channels(…)` nu rend :
+ `CRM-111` T2.4.1 : la seconde lecture porte sur les RATTACHEMENTS — `cards_figees()` en rend un par
+ * ligne, une affaire rattachée à deux channels pouvant y figurer deux fois (docs/SPEC-rattachements.md
+ * §6) —, et l'appariement se fait sur `card_id` et `channel_id`.
  *
- * ```
- * PGRST201 — Could not embed because more than one relationship was found for 'cards' and 'channels'
- * ```
+ * `channels!card_placements_channel_fk` — `card_placements` porte **deux** clés étrangères vers
+ * `channels`, `card_placements_channel_workflow_fk` et celle-ci. Un `channels(…)` nu rend `PGRST201`,
+ * comme sur `cards` avant elle. La forme retenue est celle que `colonnes-ma-journee.ts` et
+ * `card-costs.ts` emploient : une seule dans tout le produit.
  *
- * La forme retenue est celle que `colonnes-ma-journee.ts` et `card-costs.ts` emploient déjà : une
- * seule dans tout le produit, sans quoi deux écrans embarqueraient la même relation par deux
- * chemins différents.
+ * `workflow_steps!card_placements_step_fk` — l'étape courante du rattachement, nommée par sa clé.
  *
  * `workflow_steps(label_override, …)` — l'étape **n'a pas de colonne `label`**. Un
  * `workflow_steps(label)` rend :
@@ -43,9 +44,9 @@
  * résolution de `resoudreEtape` dans `board.ts`. Le nœud est donc embarqué avec elle : le rapporter
  * séparément obligerait à une troisième requête et à un appariement que la base fait mieux.
  *
- * `id` est demandée bien qu'elle soit déjà connue : c'est la clé d'appariement de la lecture, et
- * une réponse sans elle serait inutilisable.
+ * `card_id` et `channel_id` sont demandées bien qu'elles soient déjà connues : c'est la clé
+ * d'appariement de la lecture, et une réponse sans elles serait inutilisable.
  */
-export const COLONNES_CARD_FIGEE =
-	'id, channels!cards_channel_id_workspace_id_fkey(slug, name, tracks(slug, name)), ' +
-	'workflow_steps!cards_current_step_id_workflow_id_fkey(label_override, workflow_nodes_catalog(label))'
+export const COLONNES_RATTACHEMENT_FIGE =
+	'card_id, channel_id, channels!card_placements_channel_fk(slug, name, tracks(slug, name)), ' +
+	'workflow_steps!card_placements_step_fk(label_override, workflow_nodes_catalog(label))'

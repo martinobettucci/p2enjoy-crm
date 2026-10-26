@@ -8,6 +8,7 @@
 // @verifies CRM-077 (docs/BACKLOG.md), onzième tranche (INC-316) — docs/SPEC-corbeille.md §9.1 (les dépenses bloquantes
 //           lues par la base), §9.2 (la réaffectation et ses refus nommés), §9.3 (les budgets offerts : même devise, hors
 //           des tracks en corbeille) ; décisions 741 à 743
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — les affaires d'un channel se comptent par leurs rattachements (docs/SPEC-rattachements.md §5)
 //
 // Comme `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise et pas seulement la
 // valeur rendue : les trois règles de comptage du §3.5 sont portées par les filtres eux-mêmes, si
@@ -21,6 +22,7 @@
 import { describe, expect, it } from 'vitest'
 import {
 	COLONNE_ENFANT,
+	COLONNES_RATTACHEMENT_ENFANT,
 	NOM_REFUS_PARENT,
 	LIMITE_COMPTE,
 	OPTIONS_COMPTE,
@@ -132,13 +134,14 @@ describe('compterEnfantsInaccessibles, cible track', () => {
 				['is', 'deleted_at', null],
 			],
 		})
+		// `CRM-111` T2.4.1 : les affaires se comptent par leurs rattachements, la corbeille lue sur l'affaire plongée.
 		expect(appels[1]).toMatchObject({
-			table: 'cards',
-			colonnes: COLONNE_ENFANT,
+			table: 'card_placements',
+			colonnes: COLONNES_RATTACHEMENT_ENFANT,
 			options: OPTIONS_COMPTE,
 			filtres: [
 				['in', 'channel_id', ['ch-1', 'ch-2']],
-				['is', 'deleted_at', null],
+				['is', 'affaire.deleted_at', null],
 			],
 			limite: LIMITE_COMPTE,
 		})
@@ -222,12 +225,12 @@ describe('compterEnfantsInaccessibles, cible channel', () => {
 		const resultat = await compterEnfantsInaccessibles(client, { type: 'channel', id: CHANNEL })
 		expect(appels).toHaveLength(1)
 		expect(appels[0]).toMatchObject({
-			table: 'cards',
-			colonnes: COLONNE_ENFANT,
+			table: 'card_placements',
+			colonnes: COLONNES_RATTACHEMENT_ENFANT,
 			options: OPTIONS_COMPTE,
 			filtres: [
 				['eq', 'channel_id', CHANNEL],
-				['is', 'deleted_at', null],
+				['is', 'affaire.deleted_at', null],
 			],
 			limite: LIMITE_COMPTE,
 		})

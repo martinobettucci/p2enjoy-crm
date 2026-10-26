@@ -13,6 +13,7 @@
 //       d'INC-183, décision 549) — d'où `ancienneteEnRetard` plus bas
 // @spec docs/SPEC-permissions-rls.md §3.7 (`app.can_write_card`), §7 (formes du refus)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
+// @spec CRM-111 T2.4.1 (docs/BACKLOG.md) — les lignes à saisir situent leur affaire par son plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // CE MODULE NE JUGE AUCUN DROIT, IL EN LIT UN. Le §4.8 exige qu'« une ligne lisible mais non
 // écrivable soit rendue en lecture seule, avec le motif, jamais masquée » — c'est le seul endroit du
@@ -37,6 +38,7 @@
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
+import { situerLigne, type AffaireParRattachements } from './rattachements'
 import type { ClientCrm } from './supabase'
 
 // ---------------------------------------------------------------------------------------------
@@ -128,14 +130,16 @@ export type LigneASaisir = Pick<
  * ligne sans budget lisible n'est de toute façon jamais rendue — `inner` ne retranche donc rien, et
  * une chaîne unique évite deux formes de réponse à typer.
  *
- * `cards` PORTE DEUX CLÉS COMPOSITES VERS `channels` — `cards_channel_id_workflow_id_fkey` et
- * `cards_channel_id_workspace_id_fkey` — et un `channels(...)` nu est donc AMBIGU : PostgREST refuse
- * la requête entière en `PGRST201` plutôt que d'en choisir une (mesuré par `card-costs.ts`,
- * `contacts.ts` et `couts-ecrans.ts`, qui nomment tous la même). La clé retenue est celle qui passe
- * par le workspace, seule dont la présence est structurellement garantie sur toute card.
+ * L'ARCHIVAGE ET LE CHANNEL DE L'AFFAIRE SE LISENT SUR SES RATTACHEMENTS depuis `CRM-111` T2.4.1
+ * (docs/SPEC-rattachements.md §5), le plus ancien les donnant (`situerLigne`). `card_placements` PORTE
+ * DEUX CLÉS VERS `channels`, comme `cards` avant elle, et un `channels(...)` nu y rend `PGRST201`
+ * (mesuré par `card-costs.ts`) : la clé retenue est `card_placements_channel_fk`, celle du channel seul.
  */
 export const COLONNES_LIGNE_A_SAISIR =
-	'id, label, estimated_cost, created_at, actual_cost, reel_saisissable, budgets!inner(id, name, currency, is_recurrent, closed_at, stale_after_days), budget_occurrences(id, label, closed_at), cards!inner(id, title, archived_at, channels!cards_channel_id_workspace_id_fkey(slug, tracks(id, slug, name)))'
+	'id, label, estimated_cost, created_at, actual_cost, reel_saisissable, budgets!inner(id, name, currency, is_recurrent, closed_at, stale_after_days), budget_occurrences(id, label, closed_at), cards!inner(id, title, card_placements!card_placements_card_fk(id, created_at, archived_at, channels!card_placements_channel_fk(slug, tracks(id, slug, name)))))'
+
+/** Une ligne telle que `COLONNES_LIGNE_A_SAISIR` la rend, avant `situerLigne`. */
+type LigneASaisirLue = Omit<LigneASaisir, 'cards'> & { readonly cards: AffaireParRattachements<AffaireDeLaLigne> | null }
 
 /**
  * La portée d'un onglet « À saisir ».
@@ -198,7 +202,11 @@ export async function lireLignesASaisir(
 		if (reponse.error !== null) {
 			return enErreur(classerErreur(reponse.status, reponse.error.message))
 		}
-		return pret(reponse.data as unknown as readonly LigneASaisir[])
+		return pret(
+			(reponse.data as unknown as readonly LigneASaisirLue[]).map((ligne) =>
+				situerLigne<AffaireDeLaLigne, LigneASaisirLue>(ligne),
+			),
+		)
 	} catch (cause) {
 		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
 	}

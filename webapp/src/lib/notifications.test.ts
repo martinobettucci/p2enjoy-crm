@@ -12,6 +12,7 @@
 // possible. Le rendu est éprouvé par `webapp/src/app/Notifications.test.tsx`, et la pile réelle par
 // `e2e/api/notifications-surface.spec.ts`.
 // @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : l'affaire d'une notification, située par son plus ancien rattachement
 
 import { describe, expect, it, vi } from 'vitest'
 import {
@@ -53,6 +54,17 @@ const ligne = (
 	...partiel,
 })
 
+/** La ligne telle que PostgREST la rend depuis `CRM-111` T2.4.1 : l'affaire porte son rattachement et son channel. */
+const brute = (lue: unknown) => {
+	const { cards, ...reste } = lue as LigneNotificationLue
+	if (cards === null) return { ...reste, cards: null }
+	const { channels, ...affaire } = cards
+	return {
+		...reste,
+		cards: { ...affaire, card_placements: [{ id: `r-${affaire.id}`, created_at: '2026-01-01T00:00:00Z', channels }] },
+	}
+}
+
 /** Un commentaire cité, tel que la requête 2 le rend. */
 const cite = (partiel: Partial<LigneCommentaireCite> & { id: string }): LigneCommentaireCite => ({
 	body: 'La DSI a confirmé le périmètre.',
@@ -68,7 +80,9 @@ describe('ce que la boîte demande (docs/SPEC-notifications.md §24.1, §24.2)',
 	// adresse incomplète.
 	it('embarque le titre de l’affaire ET les deux slugs', () => {
 		expect(COLONNES_NOTIFICATION).toContain('cards(')
-		expect(COLONNES_NOTIFICATION).toContain('channels!cards_channel_id_workspace_id_fkey')
+		// `CRM-111` T2.4.1 : le channel est celui du rattachement, plongé par sa clé.
+		expect(COLONNES_NOTIFICATION).toContain('card_placements!card_placements_card_fk(')
+		expect(COLONNES_NOTIFICATION).toContain('channels!card_placements_channel_fk')
 		expect(COLONNES_NOTIFICATION).toContain('tracks(slug, name)')
 	})
 
@@ -276,8 +290,10 @@ describe('la lecture (docs/SPEC-notifications.md §24.1, §26.2, §26.5)', () =>
 								return {
 									limit: (borne: number) => {
 										espion(`notifications.limit:${borne}`)
+										// `CRM-111` T2.4.1 : PostgREST rend l'affaire avec ses rattachements et leur channel ;
+										// les lignes d'essai, écrites à la forme projetée, sont servies sous cette forme brute.
 										return Promise.resolve({
-											data: options.notifications?.data ?? [],
+											data: ((options.notifications?.data ?? []) as unknown[]).map(brute),
 											error: options.notifications?.error ?? null,
 											status: options.notifications?.status,
 										})

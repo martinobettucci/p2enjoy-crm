@@ -7,6 +7,7 @@
 // @verifies docs/SPEC-recherche.md §11 M14 (la RPC ne rend aucune adresse), M15 (l'embarquement
 //           est NOMMÉ), M18 (le générateur déclare non nul ce qui est nullable), §14.2 (la borne)
 // @verifies docs/DESIGN_SYSTEM.md §5.46 (la ligne sans destination reste rendue)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — l'adresse d'une affaire se lit sur son plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // Ces tests portent sur la LOGIQUE, sans navigateur : c'est ce que la séparation du module rend
 // possible (§10.2). La pile réelle est éprouvée par `e2e/api/recherche-palette.spec.ts`, et la
@@ -143,7 +144,8 @@ describe('les résolutions d’adresse (§13.1, M15)', () => {
 		// LA RELATION EST NOMMÉE, et c'est mesuré (M15) : `cards` porte deux clés étrangères vers
 		// `channels`, et l'embarquement nu rend `PGRST201`.
 		expect(cards[0]?.colonnes).toBe(COLONNES_ADRESSE_AFFAIRE)
-		expect(cards[0]?.colonnes).toContain('channels!cards_channel_id_workspace_id_fkey')
+		// `CRM-111` T2.4.1 : par le rattachement, dont la relation vers `channels` est nommée elle aussi.
+		expect(cards[0]?.colonnes).toContain('channels!card_placements_channel_fk')
 		expect(commentaires[0]?.colonnes).toBe(COLONNES_ADRESSE_COMMENTAIRE)
 	})
 

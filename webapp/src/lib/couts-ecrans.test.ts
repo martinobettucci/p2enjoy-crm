@@ -6,6 +6,7 @@
 //           prévisionnel »), §4.5 (les devises ne se mélangent pas, et le cumul est calculé APRÈS
 //           la RLS), §4.7 (un budget sans ligne rend un agrégat NUL et non une absence)
 // @verifies docs/DESIGN_SYSTEM.md §5.30 (la barre du réel dépasse, ou non, celle du prévisionnel)
+// @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — l'affaire d'une ligne est située par son plus ancien rattachement (docs/SPEC-rattachements.md §5)
 //
 // CE FICHIER ÉPROUVE LA REQUÊTE RÉELLEMENT ÉMISE autant que la valeur rendue, comme
 // `card-costs.test.ts` : deux exigences de la spécification sont portées par la requête elle-même —
@@ -594,10 +595,10 @@ describe('lireDetailBudget — §4.3', () => {
 		expect(appels[2]?.table).toBe('card_costs')
 		expect(appels[2]?.filtres).toEqual([['eq:budget_id', ID_BUDGET]])
 		expect(appels[2]?.tris).toEqual(['created_at', 'label'])
-		// LA CLÉ ÉTRANGÈRE EST NOMMÉE, et c'est obligatoire : `cards` porte DEUX clés composites vers
+		// LA CLÉ ÉTRANGÈRE EST NOMMÉE, et c'est obligatoire : `card_placements` porte DEUX clés vers
 		// `channels`, et un embed nu rend `PGRST201` — la requête entière est refusée. Cette assertion
-		// est la seule qui le dise avant l'exécution.
-		expect(COLONNES_LIGNE_BUDGET).toContain('channels!cards_channel_id_workspace_id_fkey')
+		// est la seule qui le dise avant l'exécution (`CRM-111` T2.4.1 : le channel se lit sur le rattachement).
+		expect(COLONNES_LIGNE_BUDGET).toContain('channels!card_placements_channel_fk')
 		expect(COLONNES_LIGNE_BUDGET).toContain('profiles!card_costs_created_by_fkey')
 		// Aucune somme n'est demandée au serveur : le §4.5 exige que le cumul se fasse APRÈS la RLS.
 		expect(COLONNES_LIGNE_BUDGET).not.toContain('sum(')
