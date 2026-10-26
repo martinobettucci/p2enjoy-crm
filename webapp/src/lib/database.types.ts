@@ -4602,6 +4602,7 @@ export type Database = {
           track_id: string
         }[]
       }
+      trash_retention_days: { Args: never; Returns: number }
       unclassify_message: { Args: { p_message_id: string }; Returns: string }
       upsert_mail_inbound_account: {
         Args: {

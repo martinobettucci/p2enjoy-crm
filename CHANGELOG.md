@@ -13,6 +13,19 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-077` dixième tranche — la corbeille se vide seule au bout de 30 jours
+
+- **Un objet reste 30 jours dans la corbeille, puis il est effacé définitivement**, chaque nuit, avec ce qu'il contient.
+  Chaque effacement est inscrit au journal d'audit, avec ce qu'il a emporté. **Le temps saisi n'est pas perdu** : avant
+  d'effacer une affaire, ses saisies de temps passent sur son channel ; celles d'un channel, sur son track.
+- **L'écran « Corbeille » le dit** : une phrase en tête rappelle la règle, et une colonne **« Effacement »** donne la date
+  à partir de laquelle chaque objet sera effacé. Aucun effacement manuel n'est offert.
+- **Un membre qui n'administre pas l'espace ne voit dans la corbeille que ce qu'il y a lui-même mis**, et l'écran le lui
+  dit. C'est une règle du serveur : une affaire qu'un autre a retirée lui est introuvable.
+- **La date de mise à la corbeille est celle du serveur**, au moment du geste.
+- **Migration `0120`** ; la première nuit qui suit sa livraison, ce qui est en corbeille depuis plus de 30 jours est
+  effacé (`docs/PROD_MIGRATIONS.md`).
+
 ### `CRM-072` T3 — exporter et anonymiser un contact (RGPD)
 
 - **Sur la fiche d'un contact, une zone « Données personnelles (RGPD) »**, réservée aux administrateurs de l'espace :

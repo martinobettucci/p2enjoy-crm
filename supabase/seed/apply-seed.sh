@@ -3102,8 +3102,10 @@ info "Événements : $total_evenements, tous écrits par les triggers — le see
 echo
 say "8 decies. La corbeille"
 
-# La date est la même pour les deux objets : ils sont retirés par le même geste, et deux dates
-# distinctes suggéreraient deux décisions distinctes.
+# LA DATE ENVOYÉE N'EST PLUS CELLE QUI EST GARDÉE (docs/SPEC-corbeille.md §8.1, CRM-077 dixième tranche) : le
+# déclencheur pose `now()` à la mise en corbeille, la rétention en dépendant. Les objets prennent donc la date du
+# seed, et rien n'y a trente jours — la purge se prouve par pgTAP, jamais par le seed (§8.6). La valeur reste
+# envoyée parce que seule sa nullité compte.
 CORBEILLE_LE='2026-07-20T14:30:00Z'
 ADMINISTRATRICE='5eed0000-0000-4000-8000-000000000011'
 
@@ -3159,6 +3161,32 @@ enfant_vivant=$(curl -s "$API/rest/v1/channels?id=eq.5eed0000-0000-4000-8000-000
 info "Dossiers 2023 reste ACTIF sous un parent en corbeille : aucun deleted_at, injoignable"
 info "          du seul fait que son track ne se résout plus — docs/SPEC-corbeille.md §3.3"
 info "Corbeille : 1 track, 1 channel, 1 card — et 1 enfant vivant sous parent en corbeille (§10)"
+
+# LA CORBEILLE PERSONNELLE EST VÉRIFIÉE AVEC LES JETONS RÉELS (docs/SPEC-corbeille.md §8.4, §8.6 ; CRM-077 dixième
+# tranche). Une ligne en corbeille n'est lisible que par un administrateur de l'espace ou par l'auteur du retrait :
+# Camille lit les trois objets, Farida — qui n'en a retiré aucun — n'en lit aucun. La clé de service traversant la
+# RLS, elle ne prouverait rien ici.
+JETON_ADMIN_CORBEILLE=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+JETON_VIEWER_CORBEILLE=$(sso_jeton_interne "$API" "$ANON_KEY" 'viewer@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_CORBEILLE" ] && [ -n "$JETON_VIEWER_CORBEILLE" ] || die "connexion d'un compte seedé impossible :
+        la corbeille personnelle ne peut pas être vérifiée avec un jeton réel (docs/SPEC-corbeille.md §8.6)."
+compter_corbeille() { # $1 = jeton ; rend le nombre de tracks, channels et affaires en corbeille lisibles
+	local jeton=$1 total=0 table n
+	for table in tracks channels cards; do
+		n=$(curl -s "$API/rest/v1/$table?deleted_at=not.is.null&select=id" \
+			-H "apikey: $ANON_KEY" -H "Authorization: Bearer $jeton" | jq -r 'length')
+		total=$((total + ${n:-0}))
+	done
+	echo "$total"
+}
+vus_admin=$(compter_corbeille "$JETON_ADMIN_CORBEILLE")
+vus_viewer=$(compter_corbeille "$JETON_VIEWER_CORBEILLE")
+[ "$vus_admin" -eq 3 ] || die "l'administratrice doit lire les TROIS objets en corbeille du seed, mais elle en lit
+        « $vus_admin » (docs/SPEC-corbeille.md §8.4)."
+[ "$vus_viewer" -eq 0 ] || die "la lectrice ne doit lire AUCUN objet en corbeille — elle n'en a retiré aucun —, mais
+        elle en lit « $vus_viewer ». La politique de lecture de la corbeille personnelle ne s'applique pas
+        (docs/SPEC-corbeille.md §8.4)."
+info "Corbeille personnelle : Camille lit 3 objets en corbeille, Farida aucun (§8.4)"
 
 # --- 8 nonies. Une version publiée du workflow par défaut ---------------------------------------
 # @spec CRM-078 (docs/BACKLOG.md) — versionnement des workflows, première tranche

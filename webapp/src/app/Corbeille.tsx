@@ -10,6 +10,9 @@
 // @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : « Restaurer » s'éteint avec son motif quand la base refuse
 //       l'écriture ; docs/SPEC-droits-interface.md §5 (« La corbeille, précisée »), §4 ; docs/SPEC-corbeille.md §4.5 ;
 //       docs/DESIGN_SYSTEM.md §5.59
+// @spec CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.4 (la corbeille personnelle, tenue
+//       par la base), §8.5 (la phrase de la règle, la seconde phrase, la colonne « Effacement ») ;
+//       docs/DESIGN_SYSTEM.md §5.16 ; décisions 734 et 735
 //
 // L'ÉCRAN N'ANTICIPE PAS LA GARDE DE LA DONNÉE. Restaurer une entrée dont le parent est en corbeille
 // est refusé par `0038`, et l'écran ne le calcule pas d'avance : il se tromperait dès qu'un autre
@@ -36,7 +39,9 @@ import {
 import {
 	compterEnfantsInaccessibles,
 	composerEnumeration,
+	dateEffacement,
 	lireCorbeille,
+	lireRetentionCorbeille,
 	restaurer,
 	type EntreeCorbeille,
 	type NatureRefusRestauration,
@@ -80,6 +85,11 @@ function formaterRetrait(horodatage: string): string {
 	return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short', timeStyle: 'short' }).format(date)
 }
 
+/** La date d'effacement s'écrit en date courte : l'heure de la purge nocturne n'est pas celle du retrait (§8.5). */
+function formaterEffacement(date: Date): string {
+	return new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' }).format(date)
+}
+
 /** Clé d'identification d'une entrée : le type ET l'identifiant, deux tables pouvant les partager. */
 const cleEntree = (entree: EntreeCorbeille): string => `${entree.type}:${entree.id}`
 
@@ -103,6 +113,7 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 	const [restaurations, setRestaurations] = useState<Readonly<Record<string, EtatRestauration>>>({})
 	const [succes, setSucces] = useState<string | null>(null)
 	const [ecrituresCards, setEcrituresCards] = useState<EtatAsync<Readonly<Record<string, boolean>>>>(enChargement)
+	const [retention, setRetention] = useState<EtatAsync<number>>(enChargement)
 	const { capacites } = useContexteEspace()
 	// Une réponse arrivée après le démontage, ou périmée par un rechargement, ne doit pas écraser un
 	// état plus récent — même garde que `AdministrationArborescence` et `EtatMessagerie`.
@@ -114,6 +125,11 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 		setEtat(enChargement())
 		setEnumerations({})
 		setRestaurations({})
+		// La rétention est lue À PART de la liste : son échec ne retire que la phrase et la date (§5.16).
+		setRetention(enChargement())
+		void lireRetentionCorbeille(client).then((lue) => {
+			if (rang === courant.current) setRetention(lue)
+		})
 		void (async () => {
 			const lecture = await lireCorbeille(client)
 			if (rang !== courant.current) return
@@ -217,6 +233,24 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 	}
 
 	const entrees = etat.donnees
+	const joursRetention = retention.statut === 'pret' ? retention.donnees : null
+	// Les phrases tiennent au-dessus du tableau ET de l'état vide (§5.16) : la règle vaut avant le premier retrait.
+	// La seconde est décidée par la capacité que la base rend, jamais par un rôle lu (§5.59) ; la frontière, elle,
+	// est la politique de lecture (§8.4).
+	const regles = (
+		<>
+			{joursRetention !== null && (
+				<p data-testid="corbeille-regle" className="text-[13px] text-text-2">
+					{t('admin.trash.rule', { jours: String(joursRetention) })}
+				</p>
+			)}
+			{capacites.administration === 'refusee' && (
+				<p data-testid="corbeille-personnelle" className="text-[13px] text-text-2">
+					{t('admin.trash.personal')}
+				</p>
+			)}
+		</>
+	)
 	// La structure se restaure sous l'administration de l'espace, une affaire sous l'écriture de son channel.
 	const capaciteDeRestauration = (entree: EntreeCorbeille): Capacite =>
 		entree.type === 'card' ? capaciteDansLEtat(ecrituresCards, entree.id) : capacites.administration
@@ -227,11 +261,17 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 	// faire d'une corbeille vide, et un bouton y serait un chemin vers nulle part. C'est l'écart
 	// assumé avec le §5.8, qui prévoit « message et action ».
 	if (entrees.length === 0) {
-		return <EtatVide titre={t('admin.trash.empty.title')} corps={t('admin.trash.empty.body')} />
+		return (
+			<section aria-label={t('admin.trash.aria')} className="flex flex-col gap-4">
+				{regles}
+				<EtatVide titre={t('admin.trash.empty.title')} corps={t('admin.trash.empty.body')} />
+			</section>
+		)
 	}
 
 	return (
 		<section aria-label={t('admin.trash.aria')} className="flex flex-col gap-4">
+			{regles}
 			{succes !== null && (
 				<p
 					role="status"
@@ -270,6 +310,9 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 							<th scope="col" className={`${CLASSES_ENTETE} text-right`}>
 								{t('admin.trash.table.at')}
 							</th>
+							<th scope="col" className={`${CLASSES_ENTETE} text-right`}>
+								{t('admin.trash.table.purge')}
+							</th>
 							<th scope="col" className={CLASSES_ENTETE}>
 								{t('admin.trash.table.holds')}
 							</th>
@@ -287,6 +330,7 @@ export function Corbeille({ client = clientCrm }: ProprietesCorbeille = {}) {
 									key={cle}
 									entree={entree}
 									enumeration={enumerations[cle]}
+									joursRetention={joursRetention}
 									restauration={restauration}
 									commande={proprietesCommande(
 										capaciteDeRestauration(entree),
@@ -318,18 +362,22 @@ const CLASSES_CELLULE = 'h-[var(--size-target)] px-3 truncate max-w-[32ch]'
 function LigneCorbeille({
 	entree,
 	enumeration,
+	joursRetention,
 	restauration,
 	commande,
 	onRestaurer,
 }: {
 	readonly entree: EntreeCorbeille
 	readonly enumeration: EtatEnumeration | undefined
+	/** `null` tant que la rétention n'est pas lue, ou si sa lecture a échoué : la cellule le nomme. */
+	readonly joursRetention: number | null
 	readonly restauration: EtatRestauration | undefined
 	/** Désactivée pendant l'envoi, ou par une capacité refusée — et citant alors son motif. */
 	readonly commande: ProprietesCommande
 	readonly onRestaurer: () => void
 }) {
 	const enCours = restauration?.statut === 'en-cours'
+	const effacement = joursRetention === null ? null : dateEffacement(entree.retireLe, joursRetention)
 	return (
 		<>
 			<tr
@@ -350,6 +398,13 @@ function LigneCorbeille({
 				</td>
 				<td className="h-[var(--size-target)] px-3 text-right whitespace-nowrap">
 					<code className="text-text-2 tabular-nums">{formaterRetrait(entree.retireLe)}</code>
+				</td>
+				<td className="h-[var(--size-target)] px-3 text-right whitespace-nowrap" data-testid="cellule-effacement">
+					{effacement === null ? (
+						<span className="text-text-2">{t('admin.trash.purge.unknown')}</span>
+					) : (
+						<code className="text-text-2 tabular-nums">{formaterEffacement(effacement)}</code>
+					)}
 				</td>
 				<td className={CLASSES_CELLULE} data-testid="cellule-enumeration">
 					<CelluleEnumeration entree={entree} enumeration={enumeration} />
@@ -376,7 +431,7 @@ function LigneCorbeille({
 			</tr>
 			{restauration?.statut === 'echec' && (
 				<tr className="border-b border-border">
-					<td colSpan={6} className="px-3 pb-2">
+					<td colSpan={7} className="px-3 pb-2">
 						<p
 							role="alert"
 							data-testid="refus-restauration"

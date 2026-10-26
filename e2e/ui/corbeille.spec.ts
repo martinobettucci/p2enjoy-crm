@@ -12,6 +12,10 @@
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies CRM-093 (docs/BACKLOG.md) — le scénario de la lectrice révisé : la commande refusée est éteinte avec le motif de l'affaire 
 //           (docs/SPEC-droits-interface.md §3, §5)
+// @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.4 (la corbeille personnelle sur la
+//           vraie base : la lectrice ne voit plus rien, le business developer voit ce qu'il a retiré), §8.5 (la phrase de
+//           la règle, la seconde phrase, la colonne « Effacement », aux quatre paliers) ; docs/DESIGN_SYSTEM.md §5.16 ;
+//           décisions 734 et 735
 //
 // LE PARCOURS EST FAIT AU CLAVIER ET À LA SOURIS, sur la VRAIE base : aucune fonction interne n'est
 // appelée, et chaque effet est CONSTATÉ EN BASE par une relecture, jamais déduit de l'écran. Un
@@ -110,8 +114,21 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 		await expect(ligneCard).toContainText('Affaire')
 		await expect(ligneCard.getByText('Auteur inconnu')).toBeVisible()
 
-		// AUCUNE COMMANDE D'EFFACEMENT DÉFINITIF (§4.7) : le §6 n'est pas arbitré.
+		// AUCUNE COMMANDE D'EFFACEMENT MANUEL (§4.7, §8.5) : seule la purge nocturne efface.
 		await expect(page.getByRole('button', { name: /supprim|effac|vider|définitif/i })).toHaveCount(0)
+
+		// LA RÈGLE, LE NOMBRE LU EN BASE, ET LA DATE D'EFFACEMENT DÉRIVÉE DE LA DATE RELUE EN BASE (§8.5).
+		await expect(page.getByTestId('corbeille-regle')).toHaveText(
+			"Un objet reste 30 jours dans la corbeille, puis il est effacé définitivement, avec ce qu'il contient.",
+		)
+		await expect(page.getByTestId('corbeille-personnelle')).toHaveCount(0)
+		await expect(page.getByRole('columnheader', { name: 'Effacement' })).toBeVisible()
+		const retireLe = await deletedAt(page, 'tracks', TRACK_CORBEILLE)
+		const attendue = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' }).format(
+			new Date(new Date(retireLe!).getTime() + 30 * 24 * 60 * 60 * 1000),
+		)
+		await expect(ligneTrack.getByTestId('cellule-effacement')).toHaveText(attendue)
+		await capturer(page, 'corbeille-retention-administratrice-1440', UNITE)
 	})
 
 	test('restaurer un enfant sous parent en corbeille est REFUSÉ, et la base ne bouge pas', async ({
@@ -198,14 +215,61 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
 	})
 
-	test('la lectrice voit ce qu’elle peut lire, et pas davantage (§4.2)', async ({ page }) => {
+	test('la lectrice ne voit que ce qu’elle a mis à la corbeille : rien, et l’écran le dit (§8.4, §8.5)', async ({
+		page,
+	}) => {
 		await connecter(page, VIEWER)
 		await page.goto('/reglages/corbeille')
 
-		// MESURÉ : la lectrice lit le track et le channel, mais PAS l'affaire — les droits fins lui
-		// ferment son channel. Le compte est celui de l'appelant, jamais un inventaire d'autorité.
-		await expect(page.getByTestId('ligne-corbeille')).toHaveCount(2)
-		await expect(page.getByTestId('ligne-corbeille').filter({ hasText: NOM_CARD })).toHaveCount(0)
+		// RÉVISÉ PAR LA DIXIÈME TRANCHE. Elle lisait le track et le channel du seed (§4.2) ; la corbeille personnelle
+		// les lui ferme, puisque c'est l'administratrice qui les a retirés. La frontière est la politique de lecture
+		// (§8.4), prouvée hors interface par `e2e/api/corbeille.spec.ts` ; l'écran rend l'état vide et les deux phrases.
+		await expect(page.getByTestId('etat-vide')).toBeVisible()
+		await expect(page.getByTestId('ligne-corbeille')).toHaveCount(0)
+		await expect(page.getByTestId('corbeille-regle')).toBeVisible()
+		await expect(page.getByTestId('corbeille-personnelle')).toHaveText('Vous voyez ce que vous avez mis à la corbeille.')
+		await capturer(page, 'corbeille-retention-lectrice-1440', UNITE)
+	})
+
+	test('le business developer voit l’affaire qu’il a retirée, et elle seule (§8.4)', async ({ page }) => {
+		const jeton = await jetonDe('bizdev@p2enjoy.test')
+		const creation = await page.request.post(`${URL_API}/rest/v1/cards`, {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: {
+				workspace_id: '5eed0000-0000-4000-8000-000000000001',
+				channel_id: '5eed0000-0000-4000-8000-000000000036',
+				workflow_id: '5eed0000-0000-4000-8000-000000000051',
+				current_step_id: '5eed0000-0000-4000-8000-000000000061',
+				title: 'ZZ corbeille personnelle',
+			},
+		})
+		expect(creation.status(), await creation.text()).toBe(201)
+		const card = ((await creation.json()) as { id: string }[])[0]!.id
+		try {
+			const retrait = await page.request.patch(`${URL_API}/rest/v1/cards?id=eq.${card}&select=id`, {
+				headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+				data: { deleted_at: '2026-01-01T00:00:00+00:00' },
+			})
+			expect(await retrait.json(), 'le business developer retire l’affaire').toHaveLength(1)
+
+			await page.setViewportSize({ width: 1440, height: 900 })
+			await connecter(page, 'bizdev@p2enjoy.test')
+			await page.goto('/reglages/corbeille')
+			await expect(page.getByTestId('ligne-corbeille')).toHaveCount(1)
+			const ligne = page.getByTestId('ligne-corbeille')
+			await expect(ligne).toContainText('ZZ corbeille personnelle')
+			await expect(ligne).toContainText('Driss')
+			await expect(page.getByTestId('corbeille-personnelle')).toBeVisible()
+			// La date envoyée est ignorée : la ligne est retirée aujourd'hui, effacée dans 30 jours (§8.1).
+			const attendue = new Intl.DateTimeFormat('fr-FR', { dateStyle: 'short' }).format(
+				new Date(new Date(((await deletedAt(page, 'cards', card)) ?? '')).getTime() + 30 * 24 * 60 * 60 * 1000),
+			)
+			await expect(ligne.getByTestId('cellule-effacement')).toHaveText(attendue)
+			await expect(ligne.getByTestId('bouton-restaurer')).toBeEnabled()
+			await capturer(page, 'corbeille-retention-bizdev-1440', UNITE)
+		} finally {
+			await page.request.delete(`${URL_API}/rest/v1/cards?id=eq.${card}`, { headers: enTetesService() })
+		}
 	})
 })
 

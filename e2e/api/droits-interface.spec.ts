@@ -1,3 +1,5 @@
+// @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.4 : une ligne en corbeille n'est lisible que par
+//           l'administratrice et l'auteur du retrait (révision des comptes ci-dessous)
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T1 : la capacité d'écriture, lue par la route REST avec les jetons réels
 // @verifies docs/SPEC-droits-interface.md §2.1 (deux colonnes calculées : la capacité du rôle ET des droits fins ;
 //           aucune ligne de plus que la RLS), §2.2 (les deux capacités de l'espace) ; docs/SPEC-permissions-rls.md §3.3 bis,
@@ -43,7 +45,9 @@ test.describe('la capacité d’écriture lue par l’interface (docs/SPEC-droit
 		request,
 	}) => {
 		expect(await ecrits(request, await jetonDe(ADMIN.adresse))).toEqual(['031', '032', '033', '034', '035', '036', '037', '038'])
-		expect(await ecrits(request, await jetonDe(BIZDEV.adresse))).toEqual(['031', '032', '033', '034', '036', '037', '038'])
+		// RÉVISÉ PAR `CRM-077` DIXIÈME TRANCHE (§8.4) : …038 est en corbeille, retiré par l'administratrice, et le business
+		// developer ne le lit plus — il n'en reçoit donc aucune capacité.
+		expect(await ecrits(request, await jetonDe(BIZDEV.adresse))).toEqual(['031', '032', '033', '034', '036', '037'])
 		expect(await ecrits(request, await jetonDe(VIEWER.adresse))).toEqual(['031'])
 	})
 

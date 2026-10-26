@@ -8078,3 +8078,20 @@ facultatif, l'identité du responsable par défaut, refusée par (e) si l'appela
 du responsable reste celle des envois, l'armement ne choisissant plus d'identité — ce qui contredit le refus (e).
 **Comportement laissé inchangé** : T2.3.5 livre la signature par rattachement, l'identité reste exigée. **Arbitrage
 demandé au responsable.** **Statut : ouverte.**
+
+### INC-316 — La purge de la corbeille rencontre un budget « indestructible » partagé avec un autre track
+
+*Relevé le 2026-10-26 par la session de `CRM-077` (dixième tranche), en prouvant `app.purge_trash()` sur une base réelle.*
+**Règle écrite** : `docs/SPEC-corbeille.md` §8.3 — un track resté plus de 30 jours en corbeille est effacé avec ce qu'il
+contient ; `supabase/migrations/0051_card_costs.sql` — « un budget qui PORTE des dépenses devient indestructible par la
+base elle-même » (`card_costs_budget_id_fkey` en `restrict`). **Constat, mesuré par pgTAP** : un budget appartient à un
+track, mais rien n'oblige une ligne de coût à viser un budget du track de son affaire ; une affaire vivante d'un autre
+track peut donc porter sa dépense sur le budget d'un track en corbeille, et la destruction de ce track est refusée
+(`23503`). Les affaires du track lui-même ne posent pas ce problème : la purge les détruit avant le track. **Comportement
+retenu, le plus prudent** : chaque objet est purgé dans un bloc atomique ; un objet refusé **reste en corbeille**, rien de
+lui n'est journalisé ni effacé, un avertissement est écrit au journal de PostgreSQL, et la purge continue avec les
+suivants (pgTAP `0114`, assertions 35 à 37). Il sera retenté chaque nuit. **Lectures possibles** : (1) garder ce
+comportement, et le dire à l'écran — l'objet resterait au-delà de sa date d'effacement sans explication visible ; (2)
+détacher la ligne de coût de l'autre affaire (budget à `null` impossible : colonne obligatoire) ; (3) interdire en base
+qu'une ligne de coût vise le budget d'un autre track, ce qui rendrait le cas impossible mais toucherait `CRM-085`. **Arbitrage
+demandé au responsable.** **Statut : ouverte.**

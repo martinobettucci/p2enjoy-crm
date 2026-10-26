@@ -10,6 +10,10 @@
 //           business developer qui RÉUSSIT), §4 ter.4 (le fil enregistre le geste), §4 ter.5 (la
 //           route de détail ne rend plus l'affaire)
 // @verifies docs/SPEC-seed.md §10.1 (les trois objets), §10.4 bis (l'affaire `…0cf`)
+// @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.1 (la date d'un geste est celle du
+//           serveur, quoi que le client envoie), §8.2 (la rétention lue par un membre, refusée à l'anonyme), §8.4 (la
+//           lectrice ne lit plus la corbeille d'autrui, témoin d'abord ; le business developer lit ce qu'il a retiré) ;
+//           docs/SPEC-seed.md §10.6 ; décisions 734 et 735
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec les jetons réels)
 //
 // Ces scénarios émettent LES REQUÊTES DE `webapp/src/lib/corbeille.ts`, avec les mêmes chemins et
@@ -21,7 +25,7 @@
 // ici qu'à CONSTATER l'état de la base et à poser la fixture du scénario 5.
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
-import { enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 
 const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
@@ -439,29 +443,29 @@ test.describe('E5 — les lectures de l’administration excluent la corbeille (
 	})
 })
 
-test.describe('E6 — le GESTE de mise à la corbeille d’une AFFAIRE (§4 ter.3)', () => {
-	/**
-	 * Crée une affaire jetable dans le channel `inter-entreprises`, par la clé de service.
-	 *
-	 * CE CHANNEL EST CHOISI, PAS PRIS AU HASARD : la lectrice le LIT — MESURÉ, elle y voit trois
-	 * affaires du seed. Sans cela, son `200` et `[]` serait vrai parce qu'elle ne voit pas la ligne,
-	 * et la preuve ne dirait rien du refus d'ÉCRITURE qu'elle prétend mesurer.
-	 */
-	async function cardJetable(requete: APIRequestContext, suffixe: string): Promise<string> {
-		const reponse = await requete.post(CARDS, {
-			headers: { ...enTetesService(), Prefer: 'return=representation' },
-			data: {
-				workspace_id: WORKSPACE_SEED,
-				channel_id: CHANNEL_LU_PAR_LA_LECTRICE,
-				workflow_id: WORKFLOW_GLOBAL,
-				current_step_id: ETAPE_PROSPECTION,
-				title: `${PREFIXE_GESTE} ${suffixe}`,
-			},
-		})
-		expect(reponse.status(), await reponse.text()).toBe(201)
-		return ((await reponse.json()) as { id: string }[])[0]!.id
-	}
+/**
+ * Crée une affaire jetable dans le channel `inter-entreprises`, par la clé de service.
+ *
+ * CE CHANNEL EST CHOISI, PAS PRIS AU HASARD : la lectrice le LIT — MESURÉ, elle y voit trois
+ * affaires du seed. Sans cela, son `200` et `[]` serait vrai parce qu'elle ne voit pas la ligne,
+ * et la preuve ne dirait rien du refus d'ÉCRITURE qu'elle prétend mesurer.
+ */
+async function cardJetable(requete: APIRequestContext, suffixe: string): Promise<string> {
+	const reponse = await requete.post(CARDS, {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: {
+			workspace_id: WORKSPACE_SEED,
+			channel_id: CHANNEL_LU_PAR_LA_LECTRICE,
+			workflow_id: WORKFLOW_GLOBAL,
+			current_step_id: ETAPE_PROSPECTION,
+			title: `${PREFIXE_GESTE} ${suffixe}`,
+		},
+	})
+	expect(reponse.status(), await reponse.text()).toBe(201)
+	return ((await reponse.json()) as { id: string }[])[0]!.id
+}
 
+test.describe('E6 — le GESTE de mise à la corbeille d’une AFFAIRE (§4 ter.3)', () => {
 	test('l’administratrice retire l’affaire, et `deleted_by` est posée PAR LE TRIGGER', async ({
 		request,
 	}) => {
@@ -577,11 +581,71 @@ test.describe('E6 — le GESTE de mise à la corbeille d’une AFFAIRE (§4 ter.
 		expect(detail.status()).toBe(200)
 		expect((await detail.json()) as unknown[]).toHaveLength(0)
 
-		// …et elle reste lisible SANS ce filtre : la corbeille est une vue, pas une frontière de
-		// confidentialité (§2.2). C'est la condition pour que l'écran de corbeille l'affiche.
+		// …et elle reste lisible SANS ce filtre par l'administratrice : la corbeille personnelle (§8.4)
+		// ne ferme une ligne en corbeille qu'à qui n'administre pas l'espace et ne l'a pas retirée.
 		const corbeille = await request.get(`${CARDS}?id=eq.${card}&select=id&deleted_at=not.is.null`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
 		expect((await corbeille.json()) as unknown[]).toHaveLength(1)
+	})
+})
+
+test.describe('E7 — la rétention et la corbeille personnelle (§8, dixième tranche)', () => {
+	test('la date d’un geste est celle du SERVEUR, quoi que le client envoie (§8.1)', async ({ request }) => {
+		const card = await cardJetable(request, 'date serveur')
+		const avant = Date.now()
+		const reponse = await mettreALaCorbeille(request, jetonAdmin, CARDS, card, { deleted_at: '2020-01-01T00:00:00+00:00' })
+		expect(reponse.status()).toBe(200)
+		const relecture = await request.get(`${CARDS}?id=eq.${card}&select=deleted_at`, { headers: enTetesService() })
+		const [ligne] = (await relecture.json()) as { deleted_at: string }[]
+		// L'horloge de la base et celle du test sont la même machine : une minute de marge suffit.
+		expect(new Date(ligne!.deleted_at).getTime()).toBeGreaterThan(avant - 60_000)
+	})
+
+	test('la rétention se lit par un membre, jamais par l’anonyme (§8.2)', async ({ request }) => {
+		const lue = await request.post('/rest/v1/rpc/trash_retention_days', {
+			headers: { ...enTetesAuthentifies(jetonViewer), 'Content-Type': 'application/json' },
+			data: {},
+		})
+		expect(lue.status(), await lue.text()).toBe(200)
+		expect(await lue.json()).toBe(30)
+		const anonyme = await request.post('/rest/v1/rpc/trash_retention_days', {
+			headers: { ...enTetesAnonymes(), 'Content-Type': 'application/json' },
+			data: {},
+		})
+		expect([401, 403]).toContain(anonyme.status())
+	})
+
+	test('la lectrice ne lit plus le track en corbeille du seed ; l’administratrice, si (§8.4)', async ({ request }) => {
+		// TÉMOIN D'ABORD : l'administratrice le lit. Sans lui, le `[]` de la lectrice pourrait être celui d'une ligne absente.
+		const admin = await request.get(`${TRACKS}?id=eq.${TRACK_CORBEILLE}&select=id`, {
+			headers: enTetesAuthentifies(jetonAdmin),
+		})
+		expect((await admin.json()) as unknown[]).toHaveLength(1)
+		for (const objet of [`${TRACKS}?id=eq.${TRACK_CORBEILLE}`, `${CHANNELS}?id=eq.${CHANNEL_CORBEILLE}`]) {
+			const lectrice = await request.get(`${objet}&select=id`, { headers: enTetesAuthentifies(jetonViewer) })
+			expect(lectrice.status()).toBe(200)
+			expect((await lectrice.json()) as unknown[], objet).toHaveLength(0)
+		}
+	})
+
+	test('le business developer lit ce qu’il a retiré ; la lectrice, qui lisait l’affaire, ne la lit plus', async ({
+		request,
+	}) => {
+		const card = await cardJetable(request, 'personnelle')
+		// Témoin : la lectrice lit l'affaire VIVANTE.
+		const vivante = await request.get(`${CARDS}?id=eq.${card}&select=id`, { headers: enTetesAuthentifies(jetonViewer) })
+		expect((await vivante.json()) as unknown[]).toHaveLength(1)
+
+		expect((await mettreALaCorbeille(request, jetonBizdev, CARDS, card)).status()).toBe(200)
+
+		const parDriss = await request.get(`${CARDS}?id=eq.${card}&select=id,deleted_by`, {
+			headers: enTetesAuthentifies(jetonBizdev),
+		})
+		expect((await parDriss.json()) as unknown[]).toEqual([{ id: card, deleted_by: PROFIL_BIZDEV }])
+		const parFarida = await request.get(`${CARDS}?id=eq.${card}&select=id`, { headers: enTetesAuthentifies(jetonViewer) })
+		expect((await parFarida.json()) as unknown[]).toHaveLength(0)
+		const parCamille = await request.get(`${CARDS}?id=eq.${card}&select=id`, { headers: enTetesAuthentifies(jetonAdmin) })
+		expect((await parCamille.json()) as unknown[]).toHaveLength(1)
 	})
 })

@@ -11,6 +11,9 @@
 //           par la base — l'administration pour la structure, l'écriture de l'affaire pour une affaire — et reste
 //           offerte sur une capacité inconnue ; docs/SPEC-droits-interface.md §4, §5 (« La corbeille, précisée ») ;
 //           docs/DESIGN_SYSTEM.md §5.59
+// @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.5 (la phrase de la règle, le
+//           nombre lu en base ; la seconde phrase pour qui n'administre pas ; la colonne « Effacement », « Inconnue »
+//           sans rétention lue), §8.2 ; docs/DESIGN_SYSTEM.md §5.16 ; décisions 734 et 735
 //
 // Ces preuves montent le VRAI écran avec un client factice, comme `EtatMessagerie.test.tsx`. Le
 // parcours connecté sur la vraie base relève de `e2e/ui/corbeille.spec.ts`.
@@ -62,15 +65,25 @@ type Options = {
 	readonly surEcriture?: () => void
 	/** La lecture groupée de la capacité des affaires (`id, ecriture_permise` puis `in`) — CRM-093. */
 	readonly ecritures?: Reponse
+	/** La rétention lue en base (`trash_retention_days()`, §8.2) ; 30 jours par défaut, comme la base. */
+	readonly retention?: { data: unknown; error: { message: string } | null; status: number }
 }
 
 /**
  * Client factice distinguant les trois usages : la lecture de la corbeille (`select` puis `not`),
  * l'énumération (`select` puis `eq`/`in`), et la restauration (`update`).
  */
-function client({ lectures = {}, enumerations = [], ecriture = VIDE, surEcriture, ecritures = VIDE }: Options): ClientCrm {
+function client({
+	lectures = {},
+	enumerations = [],
+	ecriture = VIDE,
+	surEcriture,
+	ecritures = VIDE,
+	retention = { data: 30, error: null, status: 200 },
+}: Options): ClientCrm {
 	let rangEnumeration = 0
 	return {
+		rpc: () => Promise.resolve(retention),
 		from: (table: string) => ({
 			select: (colonnes: string, options?: unknown) => {
 				const chaine: Record<string, unknown> = {}
@@ -302,8 +315,8 @@ describe("Corbeille — ce que l'écran ne fait PAS (§4.7)", () => {
 			/>,
 		)
 		await screen.findByText('Legacy 2023')
-		// Le §6 n'est pas arbitré : livrer une destruction irréversible sans règle de conservation
-		// serait le contraire d'une mesure de conformité. Cette assertion garde la porte fermée.
+		// Seule la purge nocturne efface (§8.5, décision 707) : aucun geste manuel ni « vider ». Cette
+		// assertion garde la porte fermée.
 		const commandes = screen.getAllByRole('button').map((bouton) => bouton.textContent ?? '')
 		for (const libelle of commandes) {
 			expect(libelle).not.toMatch(/supprim|effac|vider|définitif/i)
@@ -433,5 +446,79 @@ describe('Corbeille — la capacité de restaurer, rendue par la base (CRM-093 T
 		for (const nom of ['Legacy 2023', 'Annexes 2023']) expect(commandeDe(nom).disabled).toBe(false)
 		expect(screen.queryByTestId('motif-corbeille-affaires')).toBeNull()
 		expect(screen.queryByTestId('motif-corbeille-structure')).toBeNull()
+	})
+})
+
+describe('Corbeille — la rétention et la corbeille personnelle (CRM-077, dixième tranche, §8.5)', () => {
+	it('la règle cite le nombre LU EN BASE, et la colonne « Effacement » en dérive la date', async () => {
+		render(
+			<Corbeille
+				client={client({
+					lectures: { tracks: { data: [TRACK], error: null, status: 200 } },
+					enumerations: [VIDE],
+					// 45 et non 30 : un nombre recopié dans l'écran ne passerait pas.
+					retention: { data: 45, error: null, status: 200 },
+				})}
+			/>,
+		)
+		expect((await screen.findByTestId('corbeille-regle')).textContent).toBe(
+			"Un objet reste 45 jours dans la corbeille, puis il est effacé définitivement, avec ce qu'il contient.",
+		)
+		expect(screen.getByRole('columnheader', { name: 'Effacement' })).toBeTruthy()
+		// Retiré le 20/07/2026 : effacé à partir du 03/09/2026.
+		expect(screen.getByTestId('cellule-effacement').textContent).toBe('03/09/2026')
+	})
+
+	it('une rétention illisible retire la phrase et écrit « Inconnue », sans perdre la liste', async () => {
+		render(
+			<Corbeille
+				client={client({
+					lectures: { cards: { data: [CARD], error: null, status: 200 } },
+					retention: { data: null, error: { message: 'panne' }, status: 500 },
+				})}
+			/>,
+		)
+		await screen.findByText('Saisie erronée')
+		await waitFor(() => expect(screen.getByTestId('cellule-effacement').textContent).toBe('Inconnue'))
+		expect(screen.queryByTestId('corbeille-regle')).toBeNull()
+	})
+
+	it('une valeur qui n’est pas un nombre de jours ne fait deviner aucune date', async () => {
+		render(
+			<Corbeille
+				client={client({
+					lectures: { cards: { data: [CARD], error: null, status: 200 } },
+					retention: { data: '30 days', error: null, status: 200 },
+				})}
+			/>,
+		)
+		await screen.findByText('Saisie erronée')
+		await waitFor(() => expect(screen.getByTestId('cellule-effacement').textContent).toBe('Inconnue'))
+	})
+
+	it('la règle tient aussi au-dessus de l’état vide, qui reste sans action', async () => {
+		render(<Corbeille client={client({})} />)
+		expect(await screen.findByText('La corbeille est vide')).toBeTruthy()
+		expect(await screen.findByTestId('corbeille-regle')).toBeTruthy()
+		expect(screen.queryByRole('button')).toBeNull()
+	})
+
+	it('qui n’administre pas lit la seconde phrase ; l’administratrice ne la lit pas', async () => {
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: false, capacites: { administration: 'refusee', edition: 'permise' } }}>
+				<Corbeille client={client({})} />
+			</FournisseurEspace>,
+		)
+		expect((await screen.findByTestId('corbeille-personnelle')).textContent).toBe(
+			'Vous voyez ce que vous avez mis à la corbeille.',
+		)
+		cleanup()
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'w', estAdmin: true, capacites: { administration: 'permise', edition: 'permise' } }}>
+				<Corbeille client={client({})} />
+			</FournisseurEspace>,
+		)
+		await screen.findByTestId('corbeille-regle')
+		expect(screen.queryByTestId('corbeille-personnelle')).toBeNull()
 	})
 })

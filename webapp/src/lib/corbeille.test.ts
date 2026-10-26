@@ -3,6 +3,8 @@
 //           compte, la forme des lectures, la composition), §5 (ligne « Unitaire »)
 // @verifies CLAUDE.md §23 (aucune phrase construite par concaténation)
 // @verifies CRM-001 tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
+// @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.2 (la rétention lue en base, un
+//           contrat rompu rendu en erreur), §8.5 (la date d'effacement) ; décisions 734 et 735
 //
 // Comme `mail-etat.test.ts`, ce fichier éprouve la requête RÉELLEMENT émise et pas seulement la
 // valeur rendue : les trois règles de comptage du §3.5 sont portées par les filtres eux-mêmes, si
@@ -23,7 +25,9 @@ import {
 	classerRefusRestauration,
 	compterEnfantsInaccessibles,
 	composerEnumeration,
+	dateEffacement,
 	lireCorbeille,
+	lireRetentionCorbeille,
 	mettreCardALaCorbeille,
 	restaurer,
 	trierParRetraitDecroissant,
@@ -495,8 +499,8 @@ describe('classerRefusRestauration', () => {
 // ---------------------------------------------------------------------------------------------
 //
 // @verifies docs/SPEC-corbeille.md §4 ter.3 (les trois issues, mesurées avec les jetons réels),
-//           §4 ter.4 (le fil est écrit par le trigger, jamais par le client), §4 ter.6 (horodatage
-//           du client)
+//           §4 ter.4 (le fil est écrit par le trigger, jamais par le client), §8.1 (la date envoyée
+//           n'est qu'une valeur non nulle : le serveur pose la sienne, prouvé par pgTAP et par l'API)
 
 describe('mettreCardALaCorbeille', () => {
 	it("n'écrit QUE `deleted_at`, sur la seule affaire visée, et demande la ligne (§4 ter.3)", async () => {
@@ -547,5 +551,48 @@ describe('classerRefusGeste', () => {
 		expect(classerRefusGeste(undefined, 'coupure').nature).toBe('network')
 		expect(classerRefusGeste(0, 'coupure').nature).toBe('network')
 		expect(classerRefusGeste(500, 'panne').nature).toBe('unknown')
+	})
+})
+
+describe('lireRetentionCorbeille (§8.2)', () => {
+	const avec = (reponse: { data: unknown; error: { message: string } | null; status: number }) => {
+		const appels: string[] = []
+		const fake = {
+			rpc(fonction: string) {
+				appels.push(fonction)
+				return Promise.resolve(reponse)
+			},
+		} as unknown as ClientCrm
+		return { fake, appels }
+	}
+
+	it('lit `trash_retention_days` et rend le nombre de jours', async () => {
+		const { fake, appels } = avec({ data: 30, error: null, status: 200 })
+		expect(await lireRetentionCorbeille(fake)).toEqual({ statut: 'pret', donnees: 30 })
+		expect(appels).toEqual(['trash_retention_days'])
+	})
+
+	it('un refus, ou une valeur qui n’est pas un entier positif, rend une erreur et jamais une durée devinée', async () => {
+		expect((await lireRetentionCorbeille(avec({ data: null, error: { message: 'x' }, status: 500 }).fake)).statut).toBe('erreur')
+		for (const valeur of [null, '30', 0, -1, 2.5]) {
+			expect((await lireRetentionCorbeille(avec({ data: valeur, error: null, status: 200 }).fake)).statut, String(valeur)).toBe('erreur')
+		}
+	})
+
+	it('une panne de transport relancée par le client rend une erreur', async () => {
+		const fake = { rpc: () => Promise.reject(new Error('réseau')) } as unknown as ClientCrm
+		expect((await lireRetentionCorbeille(fake)).statut).toBe('erreur')
+	})
+})
+
+describe('dateEffacement (§8.5)', () => {
+	it('ajoute la rétention, en jours de 24 heures, à la date de corbeille', () => {
+		expect(dateEffacement('2026-10-26T10:00:00Z', 30)?.toISOString()).toBe('2026-11-25T10:00:00.000Z')
+		// Le passage à l'heure d'hiver ne décale rien : le calcul est en UTC, comme celui de la base.
+		expect(dateEffacement('2026-10-20T23:30:00Z', 30)?.toISOString()).toBe('2026-11-19T23:30:00.000Z')
+	})
+
+	it('une date de corbeille illisible rend `null`', () => {
+		expect(dateEffacement('pas une date', 30)).toBeNull()
 	})
 })

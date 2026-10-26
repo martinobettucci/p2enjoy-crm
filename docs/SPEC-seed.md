@@ -1676,6 +1676,19 @@ corbeille » — rendent la corbeille visible dans l'inventaire au lieu de la fo
 | 6 | Une dérive est rattrapée : `…025` restauré à la main, seed rejoué | `…025` de nouveau en corbeille, `deleted_by` = `…011` |
 | 7 | L'affaire `…0cf` existe sous `…037`, active, à l'étape `negociation` | `deleted_at` et `archived_at` nuls |
 | 8 | L'énumération du track `…025` avec le jeton de l'administratrice | **1 channel et 1 affaire** — l'enfant en corbeille n'est pas compté |
+| 9 | Les objets en corbeille lus avec le jeton réel de l'administratrice, puis de la lectrice | **3** pour Camille, **0** pour Farida (§10.6) |
+
+### 10.6 La rétention et la corbeille personnelle — dixième tranche
+
+*`docs/SPEC-corbeille.md` §8.1, §8.4, §8.6 ; décisions 734 et 735.*
+
+- **La date de corbeille est celle du serveur.** Le seed envoie toujours une valeur non nulle, dont seule la nullité
+  compte : les trois objets prennent la date du passage du seed, et la card `Saisie erronée`, née en corbeille, celle
+  de sa création. Un rejeu ne la déplace pas, le déclencheur la figeant tant que l'objet reste en corbeille.
+- **La purge ne se démontre pas par le seed** : rien n'y a trente jours, et fabriquer une date ancienne serait la trace
+  artificielle que `CLAUDE.md` §8 interdit. Sa preuve est pgTAP.
+- **La visibilité, elle, est vérifiée** avec les jetons réels : Camille, administratrice, lit les trois objets en
+  corbeille ; Farida, lectrice, qui n'en a retiré aucun, n'en lit aucun. Le seed échoue en le disant sinon.
 
 ## 11. Contacts et organisations — `CRM-060` tranches 1 et 4b
 

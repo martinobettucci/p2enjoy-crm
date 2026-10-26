@@ -1676,6 +1676,21 @@ disent que de quoi il a l'air.
   action » : ici il n'y a rien à faire d'une corbeille vide, et un bouton y serait un chemin vers
   nulle part. Le message dit que l'état est sain, pas qu'il manque quelque chose.
 
+**La rétention et la corbeille personnelle — `CRM-077`, dixième tranche, `docs/SPEC-corbeille.md` §8.5** (écrit le
+2026-10-26 avant le code, après relecture intégrale de ce document ; décisions 734 et 735).
+
+- **UNE PHRASE EN TÊTE DIT LA RÈGLE**, en 13 px `--color-text-2`, au-dessus du tableau ET de l'état vide : « Un objet
+  reste {n} jours dans la corbeille, puis il est effacé définitivement, avec ce qu'il contient. » Le nombre est **lu en
+  base** (`trash_retention_days()`), jamais écrit dans l'écran (§10, `CLAUDE.md` §3). Sa lecture en échec retire la
+  phrase sans rien inventer.
+- **Pour qui n'administre pas l'espace, une seconde phrase** dit ce qu'il voit : « Vous voyez ce que vous avez mis à la
+  corbeille. » C'est la capacité d'administrer, rendue par la base, qui la décide (§5.59), jamais un rôle lu.
+- **UNE COLONNE « Effacement », APRÈS « Retiré le »** : la date à laquelle l'objet sera effacé, donnée technique alignée
+  à droite, en date courte (« 25/11/2026 »). Sans rétention lue, la cellule écrit « Inconnue », jamais une date devinée
+  (§5.9 : une donnée qui existe mais n'a pas pu être lue est un fait à nommer, comme « Auteur inconnu »).
+- **Toujours aucun effacement manuel, aucun « vider »** (§4.7 de la spécification) : seule la purge nocturne efface.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
 ### 5.17 Guide de démarrage — `CRM-079`
 
 Première surface d'**accueil** du produit, et la seule dont le contenu est une liste de renvois vers

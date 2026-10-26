@@ -1,3 +1,5 @@
+// @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.4 : une ligne en corbeille n'est lisible que par
+//           l'administratrice et l'auteur du retrait (révision des comptes ci-dessous)
 // @verifies CRM-020 (docs/BACKLOG.md) — tracks : CRUD, ordre, archivage, écriture réservée
 // @verifies docs/SPEC-tracks.md §6 (contrat d'API mesuré, lignes b à m), §3 (ordre), §4 (archivage)
 // @verifies docs/SPEC-permissions-rls.md §7 (preuves de refus n° 3 et n° 11)
@@ -148,12 +150,16 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 			// RÉVISÉ PAR `CRM-077` : cinq, le track en corbeille compris. Il est rendu pour la même
 			// raison que l'archivé — c'est le filtre de la barre latérale qui masque, pas la
 			// politique —, et un administrateur doit pouvoir le restaurer.
-			expect(lignes).toHaveLength(5)
-			// Lire n'exige pas d'écrire : le `business_developer` voit ce que voit l'administrateur.
+			// RÉVISÉ PAR `CRM-077` DIXIÈME TRANCHE (`docs/SPEC-corbeille.md` §8.4, décision 707) : le track en
+			// corbeille n'est plus lisible que par l'administratrice et l'auteur du retrait — elle-même. Le
+			// `business_developer` en lit donc quatre.
+			const enCorbeilleLu = compte.role === 'admin'
+			expect(lignes).toHaveLength(enCorbeilleLu ? 5 : 4)
+			// Lire n'exige pas d'écrire : hors de la corbeille, le `business_developer` voit ce que voit l'administrateur.
 			expect(lignes.map((t) => t.slug)).toEqual([
 				...TRACKS_ACTIFS,
 				TRACK_ARCHIVE,
-				TRACK_CORBEILLE,
+				...(enCorbeilleLu ? [TRACK_CORBEILLE] : []),
 			])
 		})
 	}
@@ -188,7 +194,10 @@ test.describe('T1 — lecture (docs/SPEC-tracks.md §6, lignes b, c, d)', () => 
 		// le §6 de cette spécification laisse au responsable la question de savoir qui voit la
 		// corbeille. En l'absence d'arbitrage, la règle existante est conservée telle quelle, et ce
 		// scénario la fige : le jour où elle changera, il deviendra rouge ici d'abord.
-		expect(lignes.map((t) => t.slug)).toEqual([...TRACKS_ACTIFS, TRACK_ARCHIVE, TRACK_CORBEILLE])
+		//
+		// ET IL L'EST DEVENU, comme annoncé : `CRM-077` dixième tranche (§8.4, décision 707) réserve une ligne en
+		// corbeille à l'administratrice et à l'auteur du retrait. Le `viewer` lit les quatre autres.
+		expect(lignes.map((t) => t.slug)).toEqual([...TRACKS_ACTIFS, TRACK_ARCHIVE])
 
 		// LE DROIT FIN MORD TOUJOURS, et c'est là qu'il se mesure désormais : le track est rendu,
 		// mais il n'expose que le channel consenti. Le refus reste **zéro ligne**, jamais une

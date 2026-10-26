@@ -1,3 +1,5 @@
+// @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.4 : une ligne en corbeille n'est lisible que par
+//           l'administratrice et l'auteur du retrait (révision des comptes ci-dessous)
 // @verifies CRM-021 (docs/BACKLOG.md) — channels : CRUD, ordre, archivage, cloisonnement
 // @verifies docs/SPEC-channels.md §7 (contrat d'API mesuré, lignes b à o), §3 (ordre), §4, §2.4
 // @verifies docs/SPEC-permissions-rls.md §7 (preuves de refus n° 3 et n° 11)
@@ -175,17 +177,21 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 
 			expect(reponse.status()).toBe(200)
 			const lignes = (await reponse.json()) as Channel[]
-			// Les huit, archivé ET mis en corbeille compris : c'est le **filtre de la barre
-			// d'onglets** qui masque, pas la politique de lecture. Un administrateur doit pouvoir
-			// désarchiver — et, depuis `CRM-077`, restaurer. La corbeille est une VUE, non une
-			// frontière de confidentialité (`docs/SPEC-corbeille.md` §2.2).
-			expect(lignes).toHaveLength(8)
+			// Les huit pour l'administratrice, archivé ET mis en corbeille compris : c'est le **filtre de
+			// la barre d'onglets** qui masque l'archivé, pas la politique de lecture.
+			// RÉVISÉ PAR `CRM-077` DIXIÈME TRANCHE (`docs/SPEC-corbeille.md` §8.4, décision 707) : une
+			// ligne en corbeille n'est plus lisible que par l'administratrice et l'auteur du retrait. Le
+			// `business_developer` ne lit donc plus `annexes-2023`, retiré par l'administratrice : sept.
+			const enCorbeilleLu = compte.role === 'admin'
+			expect(lignes).toHaveLength(enCorbeilleLu ? 8 : 7)
+			if (enCorbeilleLu) expect(lignes.map((c) => c.slug)).toContain('annexes-2023')
+			else expect(lignes.map((c) => c.slug)).not.toContain('annexes-2023')
 			// Lire n'exige pas d'écrire : le `business_developer` voit ce que voit l'admin.
 			expect(lignes.map((c) => c.slug)).toContain(CHANNEL_ARCHIVE)
 		})
 	}
 
-	test('le `viewer` seedé ne voit que six channels, dont un rouvert sous un track fermé', async ({
+	test('le `viewer` seedé ne voit que cinq channels, dont un rouvert sous un track fermé', async ({
 		request,
 	}) => {
 		// LE SCÉNARIO LE PLUS INSTRUCTIF DE CE FICHIER, et il porte sur les données du seed.
@@ -207,8 +213,10 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 		// vise leur track `legacy-2023`, et la corbeille ne restreint PAS la lecture (§2.2) : le
 		// `viewer` les lit donc, comme il lit l'archivé des tracks qu'aucun droit fin ne ferme. Ce
 		// que ce scénario mesure — « le plus spécifique gagne, dans les deux sens » — est intact.
+		//
+		// RÉVISÉ PAR `CRM-077` DIXIÈME TRANCHE (§8.4, décision 707) : `annexes-2023` en sort. Il est en
+		// corbeille, retiré par l'administratrice, et la corbeille personnelle le ferme au `viewer`.
 		expect(slugs).toEqual([
-			'annexes-2023',
 			'dossiers-2023',
 			'inter-entreprises',
 			'maintenance',

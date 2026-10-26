@@ -1073,6 +1073,9 @@ type _vueDerivationColonnes = Expect<
 // (docs/SPEC-audit.md §7). CE QUI ÉCHAPPE AU GÉNÉRATEUR : les deux sont réservées aux administrateurs de l'espace
 // (`42501 reserved_to_admins`), un contact invisible rend `P0002`, le nom retapé différent `22023`, un contact déjà
 // anonymisé `contact_anonymized` ; l'objet exporté est un `Json` dont la forme est versionnée par son champ `format`.
+// `0120` de `CRM-077` DIXIÈME TRANCHE ajoute `trash_retention_days` — la rétention de la corbeille en jours, lue par
+// l'écran pour dater l'effacement (docs/SPEC-corbeille.md §8.2). CE QUI ÉCHAPPE AU GÉNÉRATEUR : le nombre vient de
+// `app.trash_retention()`, unique endroit où la durée est écrite ; l'anonyme ne peut pas l'appeler.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1147,6 +1150,7 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'health_commercial'
     | 'export_contact'
     | 'anonymize_contact'
+    | 'trash_retention_days'
     | 'mark_message_unread'
     | 'is_read'
     | 'messages_a_ranger'

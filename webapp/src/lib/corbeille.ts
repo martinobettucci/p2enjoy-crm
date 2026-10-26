@@ -6,6 +6,9 @@
 //       lectures, la composition), §4.2 (les trois lectures de l'écran), §4.3 (l'auteur inconnu),
 //       §4.5 (les trois issues de la restauration), §4 ter.3 (les trois issues du geste d'une
 //       affaire), §4 ter.4 (le fil enregistre le geste), §4 ter.6 (l'horodatage du client)
+// @spec CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.1 (la date posée par le
+//       serveur), §8.2 (la rétention lue en base, jamais recopiée), §8.5 (la date d'effacement) ;
+//       décisions 734 et 735
 // @spec docs/SPEC-permissions-rls.md §7 (un refus de lecture est zéro ligne)
 // @spec docs/SPEC-webapp.md §6.4 (contrat asynchrone)
 // @spec CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — un compte est un `GET … limit=0`, jamais un `HEAD`
@@ -314,6 +317,50 @@ export function trierParRetraitDecroissant(
 }
 
 // ---------------------------------------------------------------------------------------------
+// La rétention — §8.2, §8.5
+// ---------------------------------------------------------------------------------------------
+
+/**
+ * La durée de rétention, en jours, LUE EN BASE (`trash_retention_days()`, §8.2).
+ *
+ * Le nombre n'est écrit nulle part dans la webapp : `app.trash_retention()` est l'unique endroit où
+ * il vit, et la purge comme l'écran le lisent là. Une réponse qui n'est pas un entier positif est un
+ * contrat rompu, et rend une erreur plutôt qu'une durée devinée — l'écran retire alors sa phrase et
+ * écrit « inconnue » dans la colonne (`docs/DESIGN_SYSTEM.md` §5.16).
+ */
+export async function lireRetentionCorbeille(client: ClientCrm): Promise<EtatAsync<number>> {
+	try {
+		const reponse = await client.rpc('trash_retention_days')
+		if (reponse.error !== null) {
+			return enErreur(classerErreur(reponse.status, reponse.error.message))
+		}
+		const jours: unknown = reponse.data
+		if (typeof jours !== 'number' || !Number.isInteger(jours) || jours <= 0) {
+			return enErreur(classerErreur(undefined, 'rétention illisible'))
+		}
+		return pret(jours)
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+const MILLISECONDES_PAR_JOUR = 24 * 60 * 60 * 1000
+
+/**
+ * La date à partir de laquelle un objet est effacé : sa date de corbeille plus la rétention (§8.5).
+ *
+ * Le calcul est fait en jours de 24 heures, comme la base le fait sous le fuseau UTC des sessions
+ * (`deleted_at < now() - interval '30 days'`). La purge passant chaque nuit, l'objet disparaît dans la
+ * nuit qui suit cette date ; le manuel le dit. Une date de corbeille illisible rend `null`, jamais une
+ * date devinée.
+ */
+export function dateEffacement(retireLe: string, joursRetention: number): Date | null {
+	const debut = new Date(retireLe)
+	if (Number.isNaN(debut.getTime())) return null
+	return new Date(debut.getTime() + joursRetention * MILLISECONDES_PAR_JOUR)
+}
+
+// ---------------------------------------------------------------------------------------------
 // Ce que l'écran ÉCRIT — §3.4, §4.5
 // ---------------------------------------------------------------------------------------------
 
@@ -490,12 +537,12 @@ export type ResultatGesteCorbeille =
 	| { readonly statut: 'refus'; readonly refus: RefusGeste }
 
 /**
- * Met une affaire à la corbeille : `deleted_at` horodatée, sur cette seule ligne.
+ * Met une affaire à la corbeille : `deleted_at` non nulle, sur cette seule ligne.
  *
- * L'HORODATAGE EST CELUI DU CLIENT (§4 ter.6, §4 bis.4) : le poser côté serveur remplacerait la date
- * fixe des objets en corbeille du seed par l'instant du rejeu, et la reproductibilité du jeu de
- * démonstration tomberait avec elle (`CLAUDE.md` §8). L'injection de `maintenant` existe pour que la
- * preuve unitaire lise la charge émise, jamais pour déplacer la décision.
+ * LA DATE ENVOYÉE N'EST PLUS CELLE QUI EST GARDÉE (§8.1, révisant §4 ter.6) : la rétention en dépend,
+ * et le déclencheur de la base pose `now()` à la mise en corbeille, quoi que le client envoie. Seule
+ * la NULLITÉ de la valeur compte : le client continue d'en envoyer une, la colonne n'acceptant pas de
+ * marqueur. L'injection de `maintenant` existe pour que la preuve unitaire lise la charge émise.
  *
  * `select('id')` accompagne l'écriture pour que « zéro ligne touchée » existe comme réponse : sans
  * lui, PostgREST ne rend aucun corps et le refus silencieux d'une politique serait indistinguable

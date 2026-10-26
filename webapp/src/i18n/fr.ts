@@ -2565,7 +2565,13 @@ export const fr = {
 
 	'admin.trash.empty.title': 'La corbeille est vide',
 	'admin.trash.empty.body':
-		"Aucun track, channel ni affaire n'est actuellement retiré. Les objets mis à la corbeille apparaissent ici jusqu'à leur restauration.",
+		"Aucun track, channel ni affaire n'est actuellement retiré. Les objets mis à la corbeille apparaissent ici jusqu'à leur restauration ou leur effacement.",
+
+	// La règle de rétention et la corbeille personnelle — CRM-077, docs/SPEC-corbeille.md §8.5. Le nombre de
+	// jours est LU EN BASE (`trash_retention_days()`), jamais écrit ici.
+	'admin.trash.rule':
+		"Un objet reste {jours} jours dans la corbeille, puis il est effacé définitivement, avec ce qu'il contient.",
+	'admin.trash.personal': 'Vous voyez ce que vous avez mis à la corbeille.',
 
 	'admin.trash.error.title': "La corbeille n'a pas pu être chargée",
 	'admin.trash.error.body': "La requête n'a pas abouti. Réessayer relance le chargement.",
@@ -2576,6 +2582,7 @@ export const fr = {
 	'admin.trash.table.name': 'Nom',
 	'admin.trash.table.by': 'Retiré par',
 	'admin.trash.table.at': 'Retiré le',
+	'admin.trash.table.purge': 'Effacement',
 	'admin.trash.table.holds': 'Retient avec lui',
 	'admin.trash.table.action': 'Action',
 
@@ -2586,6 +2593,8 @@ export const fr = {
 
 	// L'auteur non enregistré est un FAIT à nommer, pas une cellule vide (§4.3).
 	'admin.trash.author.unknown': 'Auteur inconnu',
+	// Une rétention qui n'a pas pu être lue ne fait jamais deviner une date (docs/DESIGN_SYSTEM.md §5.16).
+	'admin.trash.purge.unknown': 'Inconnue',
 
 	// Les trois états de la colonne d'énumération ne se confondent pas (docs/DESIGN_SYSTEM.md §5.16).
 	'admin.trash.holds.loading': 'En cours de mesure',

@@ -13,6 +13,9 @@
 -- Elle NE prouve PAS que la corbeille est invisible : elle ne l'est pas, et c'est mesuré et voulu
 -- (§2.2 de la spécification). Une assertion d'invisibilité fixerait une règle que le produit n'a
 -- pas et rendrait tout écran de corbeille impossible à écrire.
+-- RÉVISÉ PAR LA DIXIÈME TRANCHE (§8.4, décision 707) : une ligne en corbeille est désormais réservée à
+-- l'administratrice et à l'auteur du retrait. Cette règle est prouvée par `0114_corbeille_retention.test.sql` ;
+-- l'assertion 9 ci-dessous en tient compte. (`@verifies` CRM-077 dixième tranche, §8.4.)
 --
 -- La suite s'exécute en transaction et fait `rollback` : le seed est rendu intact.
 
@@ -108,10 +111,15 @@ select is(
 --    des trois dont la politique d'écriture (`cards_maj`, par `app.can_write_channel`) laisse
 --    passer un profil DIFFÉRENT de celui qui a supprimé : sur `tracks` et `channels`, réservés à
 --    l'administrateur, la même preuve n'aurait comparé l'audit qu'à lui-même.
+--    RÉVISÉE PAR LA DIXIÈME TRANCHE (docs/SPEC-corbeille.md §8.4) : une ligne en corbeille n'est plus lisible que par
+--    l'administratrice et l'auteur du retrait. Le retrait est donc fait par Driss, et le TIERS qui écrit ensuite est
+--    l'administratrice, qui lit la ligne — un tiers qui ne la lirait pas ne la toucherait pas, et la preuve serait vide.
+select pg_temp.redevenir_proprietaire();
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012'::uuid);
 update public.cards set deleted_at = now() where id = '5eed0000-0000-4000-8000-0000000000c3';
 
 select pg_temp.redevenir_proprietaire();
-select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012'::uuid);
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011'::uuid);
 
 update public.cards
    set description = coalesce(description, '') || ' (touchée par un tiers)'
@@ -119,7 +127,7 @@ update public.cards
 
 select is(
 	(select deleted_by from public.cards where id = '5eed0000-0000-4000-8000-0000000000c3'),
-	'5eed0000-0000-4000-8000-000000000011'::uuid,
+	'5eed0000-0000-4000-8000-000000000012'::uuid,
 	'9 — une écriture ultérieure par un TIERS ne se réattribue pas la suppression');
 
 -- 10 et 11. LA RESTAURATION efface l'audit avec l'état qu'il documentait. Jouée par

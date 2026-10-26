@@ -2286,6 +2286,36 @@ refus, l'écriture, le figement et l'unicité jugés sur le rattachement ; l'ins
 `app.executer_sequences_relance` juge l'inéligibilité par le rattachement inscrit. **Retrait** : supprimer la fonction,
 réappliquer celle de la migration `0060`, l'index sur `card_id` et l'exécuteur de la `0060`, avec la webapp d'avant.
 
+### Migration `0120` — la rétention et la corbeille personnelle (`CRM-077` dixième tranche, décisions 707, 734 et 735 ; livrée en développement le 2026-10-26)
+
+`docs/SPEC-corbeille.md` §8 ; `docs/SPEC-audit.md` §4.6.
+
+- **La date de corbeille est posée par le serveur** : `app.corbeille_avant_ecriture()` (déclencheurs `tracks_corbeille`,
+  `channels_corbeille`, `cards_corbeille`) pose `deleted_at := now()` quand la ligne entre en corbeille, à l'insertion
+  comme à la mise à jour, et fige la date avec l'auteur tant qu'elle y reste. La porte étroite d'INC-076 est inchangée.
+- **`app.trash_retention() returns interval`** (`30 days`, l'unique endroit où la durée est écrite) et
+  **`public.trash_retention_days() returns integer`**, `SECURITY INVOKER`, `EXECUTE` à `authenticated` et `service_role`.
+- **`app.purge_trash() returns integer`**, `SECURITY DEFINER`, fermée à tous, tâche pg_cron **`p2enjoy-purge-corbeille`**
+  (`29 3 * * *`). Tracks, puis channels, puis affaires dont `deleted_at < now() - app.trash_retention()` : énumération,
+  entrée `audit_log` `purged` (famille `retention`), destruction ; les déclencheurs de la `0115` écrivent ensuite les
+  `destroyed`. Chaque objet est atomique : les affaires d'un track partent avant lui, et un objet refusé
+  (`foreign_key_violation`, INC-316) reste en corbeille sans rien journaliser. Appuis fermés : `app.trash_enumerate_cards(uuid[])`, `app.trash_move_time_entries(uuid[], uuid[], uuid,
+  uuid)`.
+- **Les saisies de temps sont reportées** (Q1, option B) : avant la destruction d'une affaire, sur son channel ; d'un
+  channel, sur son track ; fusionnées avec une saisie existante de la même personne le même jour sur la cible parente.
+  `app.saisies_temps_auteur()` admet ce changement de cible sous `app.trash_purge = on` seulement, les autres colonnes
+  inchangées.
+- **Les politiques de lecture** `cards_lecture`, `channels_lecture_membre`, `tracks_lecture_membre` gagnent la condition
+  `deleted_at is null or app.is_workspace_admin(workspace_id) or deleted_by = auth.uid()` ; une ligne vivante garde sa
+  règle.
+
+**Retrait** : `select cron.unschedule('p2enjoy-purge-corbeille')` ; `drop function app.purge_trash(),
+app.trash_enumerate_cards(uuid[]), app.trash_move_time_entries(uuid[], uuid[], uuid, uuid),
+public.trash_retention_days(), app.trash_retention()` ; réappliquer `app.corbeille_avant_ecriture()` de la `0037`,
+`app.saisies_temps_auteur()` de la `0087` et les trois politiques de lecture d'avant (`cards_lecture` de la `0011`,
+`channels_lecture_membre` de la `0010`, `tracks_lecture_membre` de la `0034`), avec la webapp d'avant. **Ce qui a été purgé ne se
+restaure pas.**
+
 ## 9 quater. Temps et coût du personnel — `CRM-098`, et réels multiples — `CRM-099` (écrits le 2026-10-11, avant le code)
 
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)

@@ -66,8 +66,8 @@
 | 17 quater | Le journal d'audit de l'espace | `CRM-072` | **Livré en développement** — voir le chapitre 10 *ter*. « Réglages ▸ Journal d'audit » montre aux administrateurs de l'espace les gestes sensibles : droits et appartenances, configuration, connexions, effacements et corbeille. Personne ne modifie le journal, et il est conservé un an. Sur la fiche d'un contact, la zone « Données personnelles (RGPD) » exporte ses données ou l'anonymise (chapitre 3 *ter*). |
 | 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
 | 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103`, `CRM-108` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Ses outils : la liste des espaces et, **en développement**, les huit outils de la famille « Recettes » (`CRM-108`) et les outils des affaires, de la structure, de la recherche et des contacts (`CRM-104` T2.a, T2.b, T1 et T3) ; les autres familles arrivent avec la suite de `CRM-104` |
-| 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. La **suppression définitive n'existe pas** : archiver masque, la corbeille retire, et les deux restent réversibles |
-| 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Aucun effacement définitif n'est offert** : la durée de conservation n'est pas arrêtée |
+| 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. **Aucune suppression manuelle n'existe** : archiver masque, la corbeille retire, et les deux restent réversibles — jusqu'à l'effacement automatique d'un objet resté 30 jours dans la corbeille (chapitre 5 ter) |
+| 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Un objet reste 30 jours dans la corbeille**, puis il est effacé définitivement, chaque nuit, et l'effacement est inscrit au journal d'audit ; la colonne « Effacement » dit quand. Un membre qui n'administre pas l'espace n'y voit que **ce qu'il y a lui-même mis**. Aucun effacement manuel n'est offert |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
 | 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. L'**éditeur** est livré : un administrateur **crée** un workflow depuis « Réglages ▸ Workflows » — nom, portée globale ou propre à un track —, puis en compose les étapes et les transitions (chapitres 5 bis.0 à 5 bis.3). Un espace **neuf**, lui, n'a aucun workflow : depuis `CRM-094`, le guide de démarrage y pose le workflow de départ en un geste (chapitre 1 bis.4). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Ce qui reste hors interface est la **copie** vers un track et la désignation du workflow **par défaut** |
 | 20 bis | Garder une photographie d'un workflow, la comparer et y revenir | `CRM-078` | **Livré.** Un workflow change : ses étapes, ses déplacements, ses questions et leurs règles sont modifiables à tout moment, et rien ne disait jusqu'ici sous quelle forme une affaire avait circulé. Un administrateur peut désormais **publier une version** : le produit fige une photographie datée, numérotée et signée de la composition entière du workflow, que plus personne ne peut réécrire — pas même le produit lui-même. Publier une version **ne change rien** au fonctionnement : les affaires continuent de circuler sur le workflow vivant, une version est un témoin et non une cible. Republier sans avoir rien modifié est refusé, pour que deux versions ne soient jamais indiscernables. Le produit sait aussi **comparer deux versions** — quelles étapes, quels déplacements, quelles questions et quelles règles ont été ajoutés, retirés ou modifiés, et pour chaque modification ce qui a changé et de quoi vers quoi. Et, avant de revenir à une version, il sait dire **affaire par affaire où elle atterrit** : celles dont l'étape existe toujours ne bougent pas, et celles dont l'étape a été créée depuis restent **sans destination** tant qu'un administrateur n'a pas dit où les envoyer. Le produit ne devine jamais à sa place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne la choisit pas. Les affaires archivées et celles en corbeille sont comptées comme les autres. Le produit sait désormais **appliquer** ce plan en une seule transaction, et **revenir en arrière** : la composition d'avant est publiée comme point de retour avant toute écriture. Et les quatre gestes ont leur **écran**, au bas de l'éditeur de workflows : voir le chapitre 5 bis.6 |
@@ -3290,11 +3290,21 @@ pas l'espace, avec un bandeau qui dit pourquoi (section 3.6) ; le serveur refuse
 
 **Ce que l'écran montre.** Un tableau des objets retirés — tracks, channels et affaires mêlés —, du
 plus récemment retiré au plus ancien. Chaque ligne dit son **type**, son **nom**, **qui** l'a
-retiré, **quand**, et **ce qu'il retient avec lui**.
+retiré, **quand**, **quand il sera effacé**, et **ce qu'il retient avec lui**.
 
-**Vous n'y voyez que ce que vous avez le droit de lire**, comme partout ailleurs dans le produit :
-une affaire d'un channel qui vous est fermé n'apparaît pas dans votre corbeille. Le nombre affiché
-dans « Retient avec lui » suit la même règle — c'est **votre** décompte, pas un inventaire complet.
+**Un objet reste 30 jours dans la corbeille, puis il est effacé définitivement, avec ce qu'il
+contient.** Une phrase en tête de l'écran le rappelle. La colonne **« Effacement »** donne, pour
+chaque ligne, la date à partir de laquelle l'objet sera effacé ; l'effacement a lieu **dans la nuit
+qui suit**. La date de mise à la corbeille est celle du serveur, au moment du geste. Si la durée de
+conservation n'a pas pu être lue, la phrase n'est pas affichée et la colonne écrit « Inconnue ».
+
+**Ce que vous y voyez dépend de votre rôle.** Un **administrateur de l'espace** voit tout ce qui est
+dans la corbeille. **Un autre membre n'y voit que ce qu'il y a lui-même mis** — une phrase le lui
+rappelle en tête de l'écran : « Vous voyez ce que vous avez mis à la corbeille. ». C'est une règle
+du serveur : une affaire qu'un autre a mise à la corbeille vous est introuvable, même par son
+adresse. Dans tous les cas, vous n'y voyez que ce que vous avez par ailleurs le droit de lire, et le
+nombre affiché dans « Retient avec lui » suit la même règle — c'est **votre** décompte, pas un
+inventaire complet.
 
 **« Auteur inconnu » n'est pas une anomalie.** Un objet peut avoir été retiré par un traitement
 technique plutôt que par une personne, ou par un compte supprimé depuis. Le produit le dit au lieu
@@ -3325,19 +3335,31 @@ pour un script ou une intégration qui tenterait la même chose.
 
 - **On n'y retire rien, on y rend.** Le geste de mise à la corbeille vit là où vivent les objets —
   chapitre 5 pour un track et un channel, chapitre 4.7 *bis* pour une affaire.
-- **Aucun effacement définitif, et aucun « vider la corbeille ».** La **durée de conservation** n'est
-  pas arrêtée, et livrer une destruction irréversible avant d'avoir fixé une règle de conservation
-  serait le contraire d'une garantie.
+- **Aucun effacement manuel, et aucun « vider la corbeille ».** Seul l'effacement automatique, au
+  bout de 30 jours, détruit un objet (section 5 ter.3).
 - **Aucun filtre, aucun tri, aucune pagination** : la corbeille est rendue en entier, la plus
   récemment retirée d'abord.
 
-### 5 ter.3 Ce qui n'est pas encore là
+### 5 ter.3 L'effacement définitif
+
+Chaque nuit, le produit efface ce qui est dans la corbeille depuis plus de 30 jours : les tracks
+d'abord, puis les channels, puis les affaires. **Ce qui est effacé ne se restaure plus.**
+
+- **Un objet emporte ce qu'il contient** : un track ses channels et leurs affaires, une affaire ses
+  commentaires, ses activités, ses valeurs de champs, ses coûts et ses recettes. Les messages liés à
+  une affaire effacée ne sont pas effacés : ils perdent seulement ce lien.
+- **Le temps saisi n'est pas perdu avec son affaire.** Avant d'effacer une affaire, le produit
+  reporte ses saisies de temps sur son channel ; avant d'effacer un channel, sur son track. Le temps
+  et son coût restent dans les rapports, sous le dossier parent. Seul le temps saisi sur un **track**
+  effacé disparaît, faute de parent.
+- **Chaque effacement est inscrit au journal d'audit** (chapitre 10 *ter*), avec ce qu'il a emporté
+  et ce qu'il a reporté, sans auteur : c'est le produit qui efface, pas une personne.
+
+### 5 ter.4 Ce qui n'est pas encore là
 
 - Le retrait d'une **affaire** se fait depuis sa fiche (chapitre 4.7 *bis*), et non depuis le
   tableau kanban ni la vue liste.
-- La **durée de conservation** et l'**effacement définitif** attendent une décision.
-- La corbeille suit aujourd'hui la lecture de l'objet. Savoir si un membre ordinaire doit y avoir
-  accès, ou le seul administrateur, n'est pas tranché.
+- La durée de conservation est la même pour tout l'espace ; elle ne se règle pas.
 
 ## 5 quater. Le catalogue de nœuds : le vocabulaire de vos workflows
 

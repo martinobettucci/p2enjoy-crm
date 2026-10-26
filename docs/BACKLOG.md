@@ -7503,7 +7503,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
-| CRM-077 | Corbeille et restauration des objets métier | `[@]` |
+| CRM-077 | Corbeille et restauration des objets métier | `[P]` |
 | CRM-078 | Versionnement des workflows et plans de remappage | `[x]` |
 | CRM-079 | Onboarding guidé au premier lancement | `[x]` |
 | CRM-080 | Sauvegardes chiffrées et restauration prouvée | `[x]` |
@@ -12880,8 +12880,7 @@ plus haut comme « reste dû » — réglage en lot, liste nominative — n'appa
 of Done : les deux sont explicitement hors périmètre depuis le §7 bis.11.7, et relèveront d'une
 unité qui les portera.
 
-### CRM-077 — Corbeille et restauration `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 13:42 UTC — état avant : [~]*
+### CRM-077 — Corbeille et restauration `[P]`
 *Dixième tranche proposée le 2026-10-26 (décision 734), **validée telle quelle le même jour (décision 735)** : `docs/SPEC-corbeille.md` §8 ; Q1, option B — les saisies de temps d'une affaire effacée sont reportées sur son channel, puis son track.*
 ***Connecteur (décision 708, M3 A)** : aucun outil nouveau ; la règle de visibilité s'applique d'elle-même à ce que lisent les outils existants. Prête à spécifier.*
 ***Arbitré le 2026-10-25 (décision 707)** : rétention de **30 jours** ; à l'expiration, **effacement définitif automatique et journalisé** ; un membre ordinaire voit dans la corbeille **ce qu'il y a lui-même mis**. L'unité redevient du travail de construction, à spécifier — les deux questions du connecteur MCP d'abord.*
@@ -13269,6 +13268,33 @@ définitif** et son parcours RGPD, qui ne sera pas livré tant que la rétention
 livrer une destruction irréversible sans règle de conservation serait le contraire d'une mesure de
 conformité ; et la **visibilité de la corbeille** pour un membre ordinaire. Aucun n'est tranché
 ici.
+
+**Dixième tranche livrée en développement, 2026-10-26 — la rétention, l'effacement définitif et la corbeille
+personnelle** (`docs/SPEC-corbeille.md` §8 ; décisions 707, 734, 735 et 737). Les trois points ci-dessus sont tranchés
+(décision 707) et livrés :
+
+- [x] **Migration `0120`** : date de corbeille posée par le serveur et figée ; `app.trash_retention()` (30 jours, en un
+      seul endroit) et `public.trash_retention_days()` ; `app.purge_trash()`, tâche `p2enjoy-purge-corbeille`
+      (`29 3 * * *`) — tracks, puis channels, puis affaires ; énumération, entrée `purged` (famille `retention`),
+      destruction, chaque objet atomique ; saisies de temps reportées sur le parent (Q1, option B) ; trois politiques de
+      lecture réservant une ligne en corbeille à l'administrateur et à l'auteur du retrait.
+- [x] **pgTAP `0114`** : **37 assertions** — horodatage serveur et gel, rétention lue, corbeille personnelle (témoins
+      d'abord), purge ordonnée, énumérée, journalisée (`purged` puis `destroyed`), ligne de coût soldée traversée,
+      saisies reportées et fusionnées, saisie d'un track effacée, règle commune des saisies intacte, et le cas refusé
+      d'INC-316 laissé en corbeille sans rien journaliser.
+- [x] **API** (`E7`, 4 scénarios, jetons réels) ; **UI** (2 scénarios, captures observées : administratrice, lectrice,
+      business developer) ; **unitaires** (10 de plus) ; seed (visibilité vérifiée : Camille 3, Farida 0).
+- [x] **Preuves révisées, aucune supprimée** : pgTAP `0035` (assertion 9) et `0086` ; API `channels`, `tracks`,
+      `droits-interface` ; UI de la lectrice. Chacune porte son motif.
+- [x] Écran : la règle, la seconde phrase, la colonne « Effacement » (`docs/DESIGN_SYSTEM.md` §5.16) ; manuel
+      (chapitre 5 *ter*) ; `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md` (le risque de la première nuit), `docs/SPEC-seed.md`
+      §10.6, `docs/SPEC-audit.md` §4.6 ; `scripts/verify-corbeille.sh` **44/44**.
+- [ ] **INC-316**, arbitrage du responsable : un track dont un budget porte la dépense d'une affaire d'un autre track
+      reste en corbeille au-delà de sa date.
+
+**L'unité passe `[P]`** : tout est implémenté et vérifié en développement ; il reste la livraison de la `0120` sur
+instruction du responsable — après le compte, validé par lui, de ce que la première nuit effacera — et son constat en
+production (`docs/PROD_MIGRATIONS.md`, ligne 120).
 
 ### CRM-078 — Versionnement des workflows `[x]`
 

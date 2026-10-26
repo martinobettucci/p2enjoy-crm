@@ -1,3 +1,4 @@
+-- @verifies CRM-077 (docs/BACKLOG.md), dixième tranche — docs/SPEC-corbeille.md §8.4 (…038 en corbeille fermé à qui ne l'a pas retiré)
 -- @verifies CRM-093 (docs/BACKLOG.md) — tranche T1 : la capacité d'écriture sur un channel et sur une affaire, lisible
 --           par l'interface
 -- @verifies docs/SPEC-droits-interface.md §2.1 (deux colonnes calculées, SECURITY INVOKER, droits d'exécution, aucune
@@ -14,6 +15,9 @@
 -- 3. La matrice des channels, profil par profil, mesurée le 2026-10-21 : l'administratrice écrit les huit ; le
 --    business developer les écrit sauf « maintenance » ; la lectrice ne lit que six channels et n'écrit que
 --    « prospection », rouvert par un droit fin sous un track fermé.
+--    RÉVISÉE PAR CRM-077 DIXIÈME TRANCHE (docs/SPEC-corbeille.md §8.4, décision 707) : « Annexes 2023 » …038 est en
+--    corbeille, retiré par l'administratrice ; il n'est plus lisible que par elle. Le business developer en lit donc
+--    sept, la lectrice cinq — la règle de cette suite est inchangée, c'est la corbeille personnelle qui ferme …038.
 -- 4. Une affaire porte la capacité de son channel, pour chacun des trois profils.
 -- 5. L'anonyme : zéro ligne, sans erreur de privilège.
 --
@@ -91,14 +95,14 @@ select is(pg_temp.ecrits(), '031,032,033,034,035,036,037,038', 'l''administratri
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
-select is(pg_temp.lus(), '031,032,033,034,035,036,037,038', 'le business developer lit les huit channels');
-select is(pg_temp.ecrits(), '031,032,033,034,036,037,038',
+select is(pg_temp.lus(), '031,032,033,034,035,036,037', 'le business developer lit sept channels : …038 est en corbeille, retiré par l''administratrice');
+select is(pg_temp.ecrits(), '031,032,033,034,036,037',
           'le business developer les écrit tous sauf « maintenance », où un droit fin le restreint en lecture');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
-select is(pg_temp.lus(), '031,034,035,036,037,038',
-          'la lectrice ne lit que six channels : « Conseil & IA » lui est fermé, sauf « prospection »');
+select is(pg_temp.lus(), '031,034,035,036,037',
+          'la lectrice ne lit que cinq channels : « Conseil & IA » lui est fermé, sauf « prospection », et …038 est en corbeille');
 select is(pg_temp.ecrits(), '031',
           'la lectrice n''écrit que « prospection », rouvert par un droit fin sous un track fermé — transitivité');
 select is((select c.ecriture_permise from public.channels c where c.id = '5eed0000-0000-4000-8000-000000000032'), null,

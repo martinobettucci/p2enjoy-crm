@@ -196,6 +196,7 @@ comptées par `admission_refus` (CRM-092).
 | Événement | `entity_type` | `action` | `details` |
 |---|---|---|---|
 | la purge quotidienne efface des entrées de l'espace (§6) | `audit_log` | `purged` | `{count, before}` |
+| la purge de la corbeille efface un objet resté plus de 30 jours (`docs/SPEC-corbeille.md` §8.3, `CRM-077`, décision 735) | `card`, `channel`, `track` | `purged` | `{deleted_at, deleted_by, enumerated}`, l'énumération comptant par table ce que la destruction emporte, les messages déliés, et les saisies de temps reportées et effacées |
 
 ## 5. Ce que `details` contient, et ce qu'il ne contient jamais
 

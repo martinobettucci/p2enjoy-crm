@@ -35438,3 +35438,29 @@ autre sur la vérification de corbeille que le seed de `CRM-077` exigeait avant 
 répertoire. Une reconstruction qui dépend d'un arbre partagé par plusieurs sessions hérite de leur travail en cours :
 c'est ce que dit le dernier cas, et la coordination par messages l'a résolu.
 
+### décision 737 — `CRM-077`, dixième tranche livrée en développement : ce que la preuve a appris
+
+*2026-10-26, session interactive.* **Livré** : migration `0120` (`docs/SPEC-corbeille.md` §8), écran de corbeille
+(règle, seconde phrase, colonne « Effacement »), seed, manuel (chapitre 5 *ter*), preuves pgTAP `0114`, API `E7`, UI.
+
+**Observations, et ce qu'elles ont changé.**
+1. **Une destruction de track était refusée** par `card_costs_budget_id_fkey` (`restrict`) : la cascade atteignait les
+   budgets du track avant les lignes de coût de ses affaires. La purge détruit donc **les affaires d'un track avant
+   lui**. Elle compte aussi ses budgets dans l'énumération.
+2. **Un cas reste refusé, et il n'est pas tranché** : le budget d'un track en corbeille qui porte la dépense d'une
+   affaire d'un **autre** track (INC-316). Chaque objet est purgé dans un bloc atomique ; un objet refusé reste en
+   corbeille, sans rien journaliser ni effacer, et la purge continue. Arbitrage demandé au responsable.
+3. **Les dates d'avant la `0120` sont celles du client.** Sur une base existante, la première nuit efface ce qui est en
+   corbeille depuis plus de 30 jours selon ces dates : en développement, les trois objets du seed d'avant (datés du
+   20 juillet), qu'un seed rejoué recrée ; en production, ce que le responsable aura mis à la corbeille. Le contrat de
+   déploiement exige de compter ces objets et de faire valider le compte avant la fenêtre.
+4. **La suite pgTAP s'isole** de ce qui est déjà en corbeille : dans sa transaction annulée, tout objet en corbeille
+   prend la date du jour, puis seules les fixtures sont reculées.
+5. **Deux preuves existantes sont révisées, aucune supprimée** : `0035` (assertion 9 — le tiers qui écrit sur une affaire
+   en corbeille doit pouvoir la lire : le retrait est fait par Driss, l'écriture par l'administratrice) et `0086` (le
+   business developer lit sept channels, la lectrice cinq : …038 est en corbeille, retiré par l'administratrice).
+6. **Preuves** : pgTAP **104 fichiers, 4299 assertions** ; API **1230/1231** (le rouge restant est `ingestion.spec.ts:91`,
+   `CRM-058`, antérieur) ; interface **962/962** ; unitaires **4514/4514** ; trois `tsc` ; `verify-corbeille.sh`
+   **44/44** (quatre dégradations vues) ; seed rejoué ; captures observées. Une réponse `502` de realtime, au
+   redémarrage de son conteneur pendant la campagne, a fait rougir quatre scénarios de la corbeille ; rejoués, verts.
+7. **Livraison** : aucune, faute d'instruction du responsable (décisions 726, 730, 733). `CRM-077` passe `[P]`.

@@ -46,6 +46,9 @@ il appelle une migration.
 
 ### 2.2 La corbeille des cards n'est aujourd'hui filtrée par AUCUNE politique
 
+> **Révisé par le §8.4 (dixième tranche).** Une ligne en corbeille n'est plus lisible que par un administrateur de
+> l'espace ou par l'auteur du retrait ; une ligne vivante garde la règle décrite ici.
+
 MESURÉ : `select tablename, policyname from pg_policies where qual like '%deleted_at%'` rend
 **zéro ligne**, et l'appel réel
 `GET /rest/v1/cards?select=id,title,deleted_at&deleted_at=not.is.null` avec le jeton de
@@ -645,13 +648,13 @@ celles qui existent et refuse de rendre vert quand l'une d'elles a cessé de mes
 
 | # | Preuve | Fichiers | Attendu MESURÉ, figé |
 |---|---|---|---|
-| 1 | Traçabilité | les 6 fichiers de code et les 6 fichiers de preuve de l'unité | chacun porte `@spec` ou `@verifies CRM-077` dans son en-tête |
-| 2 | Captures (`CLAUDE.md` §16) | `docs/captures/CRM-077/` | les quatre paliers de l'écran, les quatre de la confirmation d'un track, les quatre de celle d'une affaire, l'**état vide**, et les deux états dédiés du geste d'une affaire |
-| 3 | pgTAP | `0035_corbeille.test.sql`, `0036_corbeille_restauration.test.sql` | **2 fichiers, 20 assertions** |
-| 4 | Vitest — modèle et écran | `corbeille.test.ts`, `Corbeille.test.tsx` | **2 fichiers, 44 tests** — 39 jusqu'à `1c42e16` (`CRM-001`, INC-299, décision 700), constaté le 2026-10-25 (décision 704) |
+| 1 | Traçabilité | les 6 fichiers de code et les 8 fichiers de preuve de l'unité (la migration `0120` et la suite `0114` depuis la dixième tranche) | chacun porte `@spec` ou `@verifies CRM-077` dans son en-tête |
+| 2 | Captures (`CLAUDE.md` §16) | `docs/captures/CRM-077/` | les quatre paliers de l'écran, les quatre de la confirmation d'un track, les quatre de celle d'une affaire, l'**état vide**, les deux états dédiés du geste d'une affaire, et les trois captures de la rétention — administratrice, lectrice, business developer (dixième tranche) |
+| 3 | pgTAP | `0035_corbeille.test.sql`, `0036_corbeille_restauration.test.sql`, `0114_corbeille_retention.test.sql` | **3 fichiers, 57 assertions** — 2 et 20 jusqu'à la dixième tranche (2026-10-26) |
+| 4 | Vitest — modèle et écran | `corbeille.test.ts`, `Corbeille.test.tsx` | **2 fichiers, 54 tests** — 44 jusqu'à la dixième tranche (2026-10-26) ; 39 jusqu'à `1c42e16` (`CRM-001`, INC-299, décision 700), constaté le 2026-10-25 (décision 704) |
 | 5 | Vitest — le geste sur la route de détail | `RouteCard.test.tsx` | **1 fichier, 8 tests** — 7 jusqu'à `9f83599` (`CRM-114` T3), constaté le 2026-10-25 (décision 704) |
-| 6 | API, jetons réels | `e2e/api/corbeille.spec.ts` | **22 scénarios** |
-| 7 | UI, clavier et souris, console stricte | `e2e/ui/corbeille.spec.ts` | **24 scénarios** |
+| 6 | API, jetons réels | `e2e/api/corbeille.spec.ts` | **26 scénarios** — 22 jusqu'à la dixième tranche |
+| 7 | UI, clavier et souris, console stricte | `e2e/ui/corbeille.spec.ts` | **25 scénarios** — 24 jusqu'à la dixième tranche |
 
 **Les deux compteurs sont figés, pas seulement l'un des deux** — fichiers ET assertions pour pgTAP,
 fichiers ET tests pour Vitest. C'est la décision 279 : vérifier les seules assertions ne détecte pas
@@ -688,8 +691,8 @@ le harnais doit fonctionner dans un arbre portant une évolution légitime non e
   sont celles de `CRM-040`, `CRM-020` et `CRM-021`, déjà prouvées par leurs harnais ; ce que
   `CRM-077` y ajoute — les trois refus `42501` sur `deleted_by`, la garde `parent_en_corbeille` — est
   prouvé par les deux suites pgTAP du tableau, rejouées ici et non redites.
-- **Aucun effacement définitif**, aucune rétention : le §6 n'est pas arbitré, et un harnais ne
-  tranche pas ce qu'une spécification laisse ouvert.
+- **La purge n'est pas jouée sur la base partagée** : elle détruit. Sa preuve est la suite pgTAP `0114`, en
+  transaction annulée (§8.6).
 - **La convergence du seed n'est pas rejouée.** Les trois objets en corbeille du seed sont la
   matière des preuves d'API et d'interface ; leur convergence appartient à `verify-seed-demo.sh`.
 
@@ -705,6 +708,11 @@ Le script **ne démarre ni n'arrête rien**, comme tous les autres harnais, et c
 
 ## 6. Points ouverts — ARBITRAGE DU RESPONSABLE, non tranchés ici
 
+> **Tranchés le 2026-10-25 (décision 707), spécifiés au §8 (décisions 734 et 735).** Rétention de 30 jours, valeur
+> unique `app.trash_retention()` (point 1) ; effacement définitif automatique, chaque nuit, énuméré et journalisé — le
+> parcours RGPD des contacts reste celui de `CRM-072` (point 2) ; un membre ordinaire voit ce qu'il a lui-même mis à la
+> corbeille, l'administrateur tout (point 3). Les trois points sont gardés ci-dessous tels qu'ils étaient posés.
+
 1. **La durée de rétention.** `docs/SPEC-cards.md` §10 point 2 la laisse déjà ouverte : « toute
    rétention est une décision de conformité (`CLAUDE.md` §11) ». Cette spécification ne la fixe pas.
    Elle pose seulement que, le jour où elle sera décidée, elle sera une **valeur de configuration
@@ -718,9 +726,8 @@ Le script **ne démarre ni n'arrête rien**, comme tous les autres harnais, et c
 
 ## 7. Limites connues
 
-1. **La corbeille est rendue en entier, sans pagination** (§4.7). Bornée en pratique par le volume
-   d'un workspace de démonstration, elle ne l'est par aucune règle tant que la rétention du §6 n'est
-   pas arbitrée. Une pagination posée aujourd'hui devrait l'être sur trois tables et un tri commun
+1. **La corbeille est rendue en entier, sans pagination** (§4.7). Elle est désormais bornée par la
+   rétention de 30 jours (§8.2) : ce qu'un espace peut y mettre en un mois. Une pagination posée aujourd'hui devrait l'être sur trois tables et un tri commun
    calculé côté client — un coût qui n'a pas de contrepartie tant que le volume n'est pas mesuré
    comme un problème (`CLAUDE.md` §21, « ne pas optimiser sans mesure »).
 2. **Le tri croisé des trois tables est fait côté client.** Chaque lecture est ordonnée par le
@@ -728,7 +735,9 @@ Le script **ne démarre ni n'arrête rien**, comme tous les autres harnais, et c
    est donc exact, et il porte sur ce qui a déjà été rapporté. Une pagination serveur, si elle est un
    jour due, demandera une vue SQL réunissant les trois tables — et c'est la même unité qui portera
    les deux.
-3. **`deleted_at` est horodatée par le CLIENT** (§4 bis.4), comme `archived_at` depuis `CRM-075`.
+3. **Révisé par le §8.1 : `deleted_at` est désormais posée par le SERVEUR**, la rétention en dépendant ; le seed
+   prend la date de son passage, et la purge se prouve par pgTAP (§8.6). Le texte d'origine est gardé :
+   *`deleted_at` est horodatée par le CLIENT* (§4 bis.4), comme `archived_at` depuis `CRM-075`.
    L'écran de corbeille l'affiche et trie dessus ; deux postes dont les horloges divergent peuvent
    donc s'ordonner l'un par rapport à l'autre d'un écart égal à cette divergence. Aucune règle du
    produit ne dépend de la valeur, seule sa nullité en décide, et la rétention qui en dépendrait n'est
@@ -742,8 +751,12 @@ Le script **ne démarre ni n'arrête rien**, comme tous les autres harnais, et c
    d'abord de leur ajouter une surface de commandes, ce qui est une décision qu'aucune unité ne
    porte aujourd'hui.
 5. **Aucun geste de masse.** Ni sélection multiple, ni « vider », ni retrait en lot — sur aucune des
-   trois surfaces. Le volume que cela viserait est celui que la pagination du point 1 borne, et les
-   deux appartiennent à la même décision de rétention (§6 point 1).
+   trois surfaces. La décision 707 ne demande que l'effacement automatique (§8.5).
+6. **La purge efface dans la nuit qui SUIT la date affichée.** La colonne « Effacement » montre la date de corbeille
+   plus la rétention ; la tâche passe à 3 h 29 UTC, et un objet devient effaçable à l'heure exacte de son retrait plus
+   30 jours. Le manuel le dit.
+7. **La rétention n'est pas réglable par espace** (§8.2) ; la fonction unique permettrait de l'ajouter sans changer le
+   contrat.
 
 ## 8. La rétention, l'effacement définitif et la corbeille personnelle — dixième tranche (décision 707)
 
@@ -795,6 +808,12 @@ la purge reporte ses saisies sur le **channel** de l'affaire ; avant de détruir
 saisie change de cible, garde son jour, ses minutes et sa personne, et son coût reste dans les rapports, sous le dossier
 parent. Seules les saisies d'un **track** détruit disparaissent, faute de parent. L'énumération du journal dit combien
 de saisies ont été reportées, et combien effacées.
+
+**Chaque objet est purgé dans un bloc atomique** (constaté à la preuve, INC-316). Les affaires d'un track sont détruites
+avant lui, pour que leurs lignes de coût partent avant que la cascade n'atteigne ses budgets (`restrict`). Un objet que
+la base refuse encore de détruire — un budget du track portant la dépense d'une affaire d'un autre track — **reste en
+corbeille** : rien de lui n'est journalisé, reporté ni effacé, un avertissement est écrit au journal de PostgreSQL, et la
+purge continue. L'énumération d'un track compte aussi ses budgets.
 
 ### 8.4 La corbeille personnelle d'un membre — une règle de la base
 
