@@ -34870,3 +34870,9 @@ de la santé commerciale (fraîcheur linéaire de 7 à 30 jours, ponctualité 10
 fois le seuil) ; un signal inconnu voit son poids réparti plutôt que compté pour zéro ; aucun score pour une affaire
 décidée, archivée ou à la corbeille ; deux colonnes calculées `SECURITY INVOKER` ; aucune pastille dans la vue liste.
 **Coordination** : `CRM-111` T2.4 transportera les deux fonctions vers `card_placements`. **Aucun code avant la validation.**
+- **Rejeux complets sur la base reconstruite** : `verify-webapp` **43/44** et `verify-harness --rapide` **31/32**. Leur seule
+  anomalie est chaque fois la suite d'interface complète (928 passés et 5 échecs ; 926 et 4), et les scénarios qui
+  échouent changent d'un passage à l'autre. Les cinq nommés pour `verify-webapp` (`administration-workflows:1167`,
+  `contacts:336`, `couts-a-saisir:390`, `formulaire:378`, `objectifs:1872`) sont **verts rejoués seuls** (8/8 avec leurs
+  paliers) : des instabilités sous la charge d'une suite d'1 h 15, famille d'INC-305, sans défaut de produit nommable.
+  Unitaires **4362**, pgTAP et API verts dans les deux harnais.
