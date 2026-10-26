@@ -10895,7 +10895,7 @@ sont indépendantes l'une de l'autre et suivent la Definition of Done commune.
 | CRM-083 | Canevas d'objectifs : blocs, flèches, ouverture du channel | `[x]` |
 | CRM-084 | Budgets, occurrences et clôture : modèle, RLS et API | `[x]` |
 | CRM-085 | Lignes de coût d'une affaire : modèle et section de la fiche | `[x]` |
-| CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[~]` |
+| CRM-086 | Écrans de coûts : histogramme du track et cumul du workspace | `[x]` |
 
 **Contrainte d'ordre :** `CRM-082` précède `CRM-083`, `CRM-084` précède `CRM-085` qui précède
 `CRM-086`. Les deux chaînes sont indépendantes et peuvent s'intercaler.
