@@ -17058,3 +17058,6 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
 - [ ] **T2.d — le catalogue de nœuds, le workflow d'un channel** : mêmes preuves ; E2E : un nœud créé par le connecteur
       paraît dans le catalogue. `crm_channel_workflow_change` **après T1.b**.
 - [ ] **T3 — livraison**, sur instruction du responsable.
+
+### CRM-119 — Preuves croisées des droits fins : de l'écran « Membres » à l'écran du membre, et à travers le connecteur MCP `[@]`
+*Prise en charge : session du 2026-10-23 10:17 UTC depuis 2026-10-26 23:35 UTC — état avant : [ ]*
