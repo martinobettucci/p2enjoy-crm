@@ -36046,3 +36046,19 @@ emporte l'en-tête comme sur toute page longue, la coquille n'ayant pas d'en-tê
 `tsconfig.tools.json`, `webapp/vitest.config.ts` et la révision de `0029` — trouvé en relisant l'état de la copie de
 travail avant ce commit, qui les emporte. **Vérifié** : suites complètes pgTAP 109 fichiers et 4378 assertions, API
 1246/1246, unitaires 4694/4694, build et contrôle des classes. **Reste à T2** : la campagne d'interface complète.
+
+### `CRM-117` T3 : le plan du manuel public, rangé par sujet (2026-10-27)
+
+*Choix de l'agent, soumis à la relecture du responsable avec la première tranche réécrite.* **Observé** en relevant les
+titres du manuel : 5 465 lignes, 166 identifiants d'unité, 60 chemins du dépôt, 58 mentions du seed ou du développement ;
+des sujets entiers rangés dans le chapitre d'un autre — le carnet de contacts dans la navigation (en `####`), les boîtes,
+l'inbox et la réponse dans l'affaire, les budgets dans l'arborescence — et une numérotation qui suit l'ordre des
+livraisons (« 4.7 bis » après « 4.7 quater », « 4.6 » après « 4.11 »). Renuméroter seulement aurait gardé ces
+désordres. **Décision** : un plan de trente-trois chapitres rangés par sujet, dans l'ordre où l'on découvre le produit
+(`docs/SPEC-manual.md` §10 bis) ; les renvois « chapitre 4.8 » deviennent des liens vers l'identifiant de la section,
+que la construction vérifie. **Conséquences** : une tranche T3.0 pose le plan sans réécrire les phrases ; les adresses
+de quelques chapitres changent avec leur titre, et `aide-ecrans.ts` les suit dans la même tranche ;
+`scripts/verify-manual.sh` est révisé dès T3.0 et non à la fin de T3.5, comme le backlog le prévoyait — ses contrôles du
+chunk 3 (annexe A, dossiers de captures, unités citées, couverture) exigeaient exactement ce que le §10 interdit, et
+seraient devenus rouges au premier chapitre réécrit. **Coordination** : les sessions qui écrivent dans le manuel
+(`CRM-068`, `CRM-118`) sont prévenues du nouveau plan au commit de T3.0.

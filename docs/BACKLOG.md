@@ -17010,9 +17010,20 @@ responsable** : traitée juste après `CRM-116`.*
       entrent par ce commit.
 - [ ] **T3 — la réécriture**, par groupes de chapitres : retrait de toute référence interne et de ce qui parle du
       développement ou du jeu de démonstration, numérotation simple, phrases réécrites pour le lecteur ; table du
-      §12 et de `aide-ecrans.ts` tenues à mesure. T3.1 prise en main et navigation ; T3.2 l'affaire ; T3.3
-      l'administration ; T3.4 la messagerie ; T3.5 le pilotage, la plateforme et le connecteur. `scripts/verify-manual.sh`
-      révisé à la fin de T3.5 : aucune référence interne, nulle part.
+      §12 et de `aide-ecrans.ts` tenues à mesure. **Plan du manuel public : `docs/SPEC-manual.md` §10 bis** (choix de
+      l'agent du 2026-10-27, soumis à relecture avec T3.1) — trente-trois chapitres rangés par sujet.
+      - [ ] **T3.0 — le plan posé** : chapitres déplacés et renumérotés selon le §10 bis, renvois changés en liens,
+            sommaire écrit à la main, annexe A et règles de rédaction retirés, sans réécrire les phrases ;
+            `aide-ecrans.ts` et ses unitaires suivent les nouvelles adresses ; `scripts/verify-manual.sh` révisé dès
+            cette tranche — ses contrôles du chunk 3 (annexe A, dossiers de captures, unités citées, couverture)
+            exigeaient ce que le §10 interdit —, le contrôle « aucune référence interne » portant sur les chapitres
+            déjà réécrits ; manuel construit et publié en développement.
+      - [ ] **T3.1 — prise en main** : chapitres 1 à 5, dont une section sur l'aide elle-même.
+      - [ ] **T3.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10.
+      - [ ] **T3.3 — la messagerie** : chapitres 11 à 16.
+      - [ ] **T3.4 — l'administration de l'espace** : chapitres 17 à 22.
+      - [ ] **T3.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33 ; le contrôle « aucune
+            référence interne » couvre alors tout le manuel.
 - [ ] **T4 — les images**, par les mêmes groupes : l'aide `illustrer`, les scénarios `e2e/manuel/`, le manifeste, les
       images placées et observées ; la preuve « un élément cité, une image » et la table des exceptions (§11.3) soumise
       au responsable.

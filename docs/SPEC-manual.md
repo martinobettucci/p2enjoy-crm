@@ -329,6 +329,70 @@ Un chapitre n'est conforme que s'il tient **les huit** points suivants. Ils remp
 8. **Il se lit sans numérotation latine.** La numérotation « bis, ter, quater… » héritée des livraisons successives est
    remplacée par une numérotation simple, chapitre par chapitre, à la réécriture.
 
+## 10 bis. Le plan du manuel public
+
+*Choix de l'agent, 2026-10-27, soumis à la relecture du responsable avec la première tranche réécrite.* Le manuel a grandi
+au fil des livraisons : un sujet entier vivait dans le chapitre d'un autre — le carnet de contacts dans la navigation,
+les boîtes et l'inbox dans l'affaire, les budgets dans l'arborescence —, et sa numérotation (« 5 undecies.6 bis »)
+suivait l'ordre des livraisons, pas celui du lecteur. Le plan public range les chapitres **par sujet**, dans l'ordre où
+une personne découvre le produit, et les numérote simplement (§10, point 8).
+
+| N° | Chapitre | Repris de |
+|---|---|---|
+| | **Prise en main** | |
+| 1 | Se connecter et se déconnecter | 1 (sans 1.5, qui décrivait le développement) |
+| 2 | Le guide de démarrage : par où commencer | 1 bis |
+| 3 | Naviguer : barre latérale, onglets, états | 3, sans le carnet de contacts ; une section nouvelle sur l'aide |
+| 4 | Retrouver n'importe quoi : la recherche | 9 |
+| 5 | Vos notifications : savoir qu'on vous a nommé | 8 |
+| | **Le suivi quotidien et l'affaire** | |
+| 6 | Ma journée : ce qui est en retard, ce qui est dû aujourd'hui | 3 quater |
+| 7 | Les affaires figées : ce qui dort depuis trop longtemps | 3 quinquies |
+| 8 | Les objectifs : le tableau blanc de l'équipe | 3 sexies |
+| 9 | L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître | 4.1 à 4.11 |
+| 10 | Le carnet de contacts | 3 ter |
+| | **La messagerie** | |
+| 11 | Les boîtes de réception et les adresses d'expédition | 4.12, 4.13 |
+| 12 | L'inbox : lire, trier et répondre | 4.14, 4.15, 4.16 |
+| 13 | Consulter l'état de la messagerie | 6 |
+| 14 | Écrire des modèles d'emails et les prévisualiser | 7 |
+| 15 | Signer les messages expédiés depuis une identité | 7 bis |
+| 16 | Enchaîner des relances : les séquences | 7 ter |
+| | **L'administration de l'espace** | |
+| 17 | Administrer l'arborescence : tracks et channels | 5.1 à 5.4 |
+| 18 | Composer un workflow : ses étapes, ses transitions et son formulaire | 5 bis |
+| 19 | Le catalogue de nœuds : le vocabulaire de vos workflows | 5 quater |
+| 20 | La corbeille : ce qui a été retiré, et comment le rendre | 5 ter |
+| 21 | Les membres de votre espace : qui y travaille, avec quel rôle | 10 bis |
+| 22 | Le journal d'audit : ce qui s'est fait dans votre espace | 10 ter |
+| | **Le pilotage** | |
+| 23 | Les budgets d'un track | 5.4 bis, 5.5, 5.6 |
+| 24 | Les coûts d'un track : ce qui était prévu, ce qui a été dépensé | 5 quinquies |
+| 25 | Le détail d'un budget : occurrence par occurrence, ligne par ligne | 5 sexies |
+| 26 | Les coûts de tout l'espace de travail : un cumul par track | 5 septies |
+| 27 | L'onglet « À saisir » : renseigner les coûts réels à la suite | 5 octies |
+| 28 | Le temps passé et le coût du personnel | 5 undecies |
+| 29 | Les recettes d'une affaire et sa rentabilité | 5 duodecies |
+| 30 | L'entonnoir de conversion : où se tiennent vos affaires | 5 nonies |
+| 31 | Le prévisionnel pondéré et le taux de conversion | 5 decies |
+| | **La plateforme et le connecteur** | |
+| 32 | La plateforme : espaces, membres et superadministrateurs | 10 |
+| 33 | Le connecteur MCP : piloter le CRM depuis votre assistant | 11 |
+
+**Retirés** : le sommaire écrit à la main (la page `/aide` le construit), l'annexe A sur l'espace de démonstration, les
+règles de rédaction (elles vivent dans ce document), et les sections « En développement ». Les lignes « en gras » du
+tableau sont des regroupements de lecture : elles ne sont pas des chapitres et n'ont pas d'adresse.
+
+**Les renvois deviennent des liens.** Un renvoi d'un chapitre à un autre s'écrit en lien vers l'identifiant de la
+section visée (`[le tableau kanban](#le-tableau-kanban-d-un-channel)`), et non plus « chapitre 4.8 » : la construction
+refuse un lien qui ne mène nulle part (§15), et un numéro recopié en toutes lettres ne serait vérifié par rien.
+
+**L'ordre des tranches** : T3.0 pose ce plan dans le manuel — chapitres déplacés et renumérotés, renvois changés en
+liens, sans réécrire les phrases —, puis T3.1 à T3.5 réécrivent les groupes. `scripts/verify-manual.sh` est révisé dès
+T3.0 : ses contrôles du chunk 3 (annexe A, dossiers de captures, unités citées, couverture) exigeaient ce que le §10
+interdit, et le contrôle « aucune référence interne » s'applique aux chapitres déjà réécrits, liste qui grandit à
+chaque tranche et couvre tout le manuel à la fin de T3.5.
+
 ## 11. Les images
 
 **La règle du responsable** (décision 736) : « Si on réfère un champ, un bouton, une fenêtre, il faut l'image, et il
