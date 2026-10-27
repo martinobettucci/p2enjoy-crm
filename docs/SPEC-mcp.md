@@ -959,13 +959,13 @@ de `CRM-068` T3b ; il est marqué *après T1.b* ou *après `CRM-068` T3b* ci-des
 | `crm_workflow_starter_create` | `ajouter` | `workspace:workspace` | `creer_workflow_de_depart(p_workspace)` | le geste « workflow de départ » (`CRM-094`) |
 | `crm_workflow_step_add` | `ajouter` | `workflow:workflow_id` ; `autres` : `node:node_id` | `POST workflow_steps` | `ajouterEtape` : position en fin (trigger) ; surcharges facultatives (libellé, probabilité, seuil de relance) |
 | `crm_workflow_transition_add` | `ajouter` | `workflow:workflow_id` ; `autres` : `step:from_step_id`, `step:to_step_id` | `POST workflow_transitions` | `declarerTransition` : libellé, motif exigé |
-| `crm_workflow_update` | `modifier` | `workflow:workflow_id` | `PATCH workflows` | **après T1.b** : le nom, et la désignation par défaut, comme l'écran les offrira |
+| `crm_workflow_update` | `modifier` | `workflow:workflow_id` | `PATCH workflows` | **après T1.b** : le nom (`PATCH workflows`), et la désignation par défaut par la fonction atomique `set_default_workflow` (décision 758) |
 | `crm_workflow_step_update` | `modifier` | `step:step_id` | `PATCH workflow_steps` | `surchargerEtape` : libellé, probabilité, seuil ; `null` rend la valeur du catalogue (§2.5 : `0` n'est pas `null`). `is_initial: true` suit `designerEtapeInitiale` : l'ancienne initiale retirée, puis la nouvelle posée |
 | `crm_workflow_step_move` | `modifier` | `step:step_id` ; `autres` : `step:after_step_id`, facultative | `PATCH workflow_steps set position` | une écriture, la position entre les deux voisines (`calculerDeplacement`) ; sans `after_step_id`, en tête |
 | `crm_workflow_transition_update` | `modifier` | `transition:transition_id` | `PATCH workflow_transitions` | `modifierTransition` : libellé, motif exigé ; ni le départ ni l'arrivée |
 | `crm_workflow_step_remove` | `supprimer`, `destructiveHint` | `step:step_id` | `DELETE workflow_steps` | `retirerEtape` ; emporte ses arêtes (§3.4) ; **une étape occupée par une affaire est refusée par la base** ; exception assumée à « `supprimer` = corbeille ou archive » (décision 754) |
 | `crm_workflow_transition_remove` | `supprimer`, `destructiveHint` | `transition:transition_id` | `DELETE workflow_transitions` | `retirerTransition` ; même exception |
-| `crm_workflow_archive` | `supprimer`, `destructiveHint` | `workflow:workflow_id` | `PATCH workflows set archived_at` | **après T1.b**, avec la garde côté serveur qu'elle pose |
+| `crm_workflow_archive` | `supprimer`, `destructiveHint` | `workflow:workflow_id` | `PATCH workflows set archived_at` | **après T1.b**, avec la garde côté serveur qu'elle pose : refusé pour un workflow qu'emploie un channel hors corbeille (`workflow_in_use`) ou pour le workflow par défaut (`workflow_is_default`) ; archive seulement, rétablir reste un geste d'écran (décision 758) |
 
 #### T2.b — le formulaire, la visibilité, les exigences (douze outils)
 

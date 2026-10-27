@@ -35999,3 +35999,20 @@ quatre droits fins du seed et un droit temporaire, chacune rendant l'état du se
 **Conséquences.** Aucun code de production, donc aucun test unitaire nouveau : écart assumé à `CLAUDE.md` §15, la logique
 éprouvée ayant déjà ses unitaires. La question du connecteur est sans objet, aucune fonctionnalité ne change.
 **Persisté** : `docs/SPEC-permissions-rls.md` §7.5, `docs/BACKLOG.md` (`CRM-119`). Les tests suivent.
+
+### décision 758 — `CRM-118` T1.b : les gestes d'écran qui manquent, arbitrés
+
+*2026-10-27, arbitrages du responsable, sur les recommandations de l'agent.* La décision 756 veut que les gestes que la
+base permet sans écran reçoivent d'abord leur écran, le connecteur suivant l'écran. Quatre choix l'encadrent :
+1. **L'archivage d'un workflow est gardé par la base** : il est refusé si un channel hors corbeille l'emploie
+   (`workflow_in_use`) ou s'il est le workflow par défaut de l'espace (`workflow_is_default` — en désigner un autre
+   d'abord). La garde est un déclencheur, côté serveur (`CLAUDE.md` §10).
+2. **Désigner le workflow par défaut passe par une fonction atomique**, `set_default_workflow(workflow_id)`, réservée à
+   l'administrateur, en une transaction ; l'écran et le connecteur l'appellent l'un et l'autre. Une migration la porte.
+3. **Changer le workflow d'un channel se fait depuis l'arborescence**, sur la ligne du channel : un panneau dans le
+   flux — workflow cible, une destination par étape occupée, et le consentement explicite à la perte des réponses de
+   formulaire quand il y en a —, qui appelle `change_channel_workflow`.
+4. **Rétablir un workflow archivé est offert à l'écran seulement** ; l'outil `crm_workflow_archive` n'archive que.
+Renommer un workflow et le copier vers un track complètent la tranche, sans choix à arbitrer. **Persisté** :
+`docs/BACKLOG.md` (`CRM-118` T1.b), `docs/SPEC-mcp.md` §9.2 undecies ; la spécification d'écran suit dans
+`docs/SPEC-workflow-engine.md`, avant le code. Aucun code.

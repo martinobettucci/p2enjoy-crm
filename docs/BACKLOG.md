@@ -17031,6 +17031,10 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
       workflow qu'emploient des channels), le copier vers un track (`copy_workflow_to_track`), changer le workflow d'un
       channel (`change_channel_workflow`). Unitaires, API, E2E, captures, manuel, design system. Connecteur MCP : oui,
       famille `workflows` (décisions 752 et 756).
+      - [x] **Arbitrée le 2026-10-27** (décision 758) : archivage refusé pour un workflow employé par un channel hors
+        corbeille ou par défaut (déclencheur) ; désignation par défaut par une fonction atomique `set_default_workflow`
+        (migration) ; changement de workflow d'un channel depuis l'arborescence, ligne du channel, panneau dans le flux ;
+        rétablir un workflow archivé à l'écran seulement.
 - [P] **T2.a — le workflow, ses étapes, ses transitions** : migration et pgTAP, genres d'ancre,
       `mcp/crm_mcp/outils/workflows.py`, unitaires et mutations, intégration contre la vraie pile (succès, refus par la
       matrice, refus par le CRM malgré la matrice ouverte, journal), E2E (une étape ajoutée par un vrai client MCP paraît
