@@ -7498,7 +7498,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
-| CRM-068 | Checklists et modèles de cards | `[@]` |
+| CRM-068 | Checklists et modèles de cards | `[~]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
@@ -12344,8 +12344,11 @@ un motif explicite.
 | CRM-P11 sauvegarde/restauration | `CRM-080` | retenue |
 | CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
-### CRM-068 — Checklists et modèles de cards `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-27 07:17 UTC — état avant : [~]*
+### CRM-068 — Checklists et modèles de cards `[~]`
+*Prise libérée le 2026-10-27 : T1 à T5 sont livrées et prouvées en développement. Il ne reste que le manuel de T3b, T4 et
+T5 (9.9, 9.10, 18.10, 18.15 et le chapitre du connecteur), écrit au plan de `CRM-117` dans l'arbre de travail, à
+committer après le T3.0 de `CRM-117` avec la correspondance de l'aide (`aide-ecrans.ts`). Une tâche planifiée n'a rien à
+reprendre avant ce T3.0.*
 
 Checklists d'une affaire et modèles de cards (`docs/SPEC-modeles-emails.md` §1 : objets distincts des modèles d'emails).
 *Arbitrée le 2026-10-26 (décision 747)* : checklists libres, ajoutées par l'étape, exigibles par une transition ;
