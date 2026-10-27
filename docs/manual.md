@@ -2728,6 +2728,26 @@ choisi. *Livré par `CRM-100`.*
 - Rien n'est créé tant que vous n'avez pas cliqué **Créer** dans le formulaire du channel : quitter
   l'éditeur par un autre chemin laisse le workflow créé, mais aucun channel.
 
+**Changer le workflow d'un channel qui porte des affaires** (*livré par `CRM-118` tranche T1.b*). Le formulaire de
+modification ne change que le workflow d'un channel **vide** : sur un channel qui porte des affaires, il refuse et vous
+renvoie à la commande **Changer de workflow** de la ligne du channel (l'icône d'un petit schéma, entre le crayon et
+l'archivage). Elle ouvre un panneau sous la ligne, qui nomme le workflow actuel :
+
+1. Choisissez le **nouveau workflow** — un workflow global, ou propre à ce track, non archivé.
+2. Sous « Où vont les affaires », chaque étape **occupée** du workflow actuel est listée avec son nombre d'affaires
+   (affaires archivées et en corbeille comprises). Choisissez pour chacune sa **destination** dans le nouveau workflow.
+   **Rien n'est choisi à votre place** : tant qu'une étape n'a pas sa destination, « Changer de workflow » reste
+   indisponible. Un channel sans affaire le dit, et n'attend que le nouveau workflow.
+3. Cliquez **Changer de workflow**. Si des affaires ont répondu à des questions de formulaire que le nouveau workflow
+   ne connaît pas, le changement s'arrête et le panneau dit **combien de réponses seraient perdues**. Il ne les supprime
+   jamais sans votre accord : cochez « J'accepte de perdre ces réponses », puis cliquez à nouveau sur **Changer de
+   workflow** — ou annulez.
+
+Le changement est fait d'un bloc : toutes les affaires passent à leur destination en même temps, et chacune garde une
+trace « workflow changé » dans son fil. Un message confirme le nouveau workflow. Comme les autres commandes de
+l'arborescence, celle-ci demande d'administrer l'espace de travail. *Captures :
+`docs/captures/CRM-118/changement-workflow-*.jpg`.*
+
 ### 5.3 Quand un déplacement est indisponible sans être en bout de liste
 
 Il arrive qu'une flèche soit désactivée alors que la ligne n'est ni en tête ni en fin. L'infobulle
@@ -3079,6 +3099,34 @@ workflow » ; celles qui créent un workflow restent sous la liste des workflows
 
 La colonne de gauche liste les workflows de l'espace de travail, celui **par défaut** en tête, et
 le premier est ouvert d'office. Chaque entrée dit sa portée — globale, ou propre à un track.
+
+La case **Afficher les archivés**, au-dessus de la liste, y ajoute les workflows archivés ; chacun porte la mention
+« Archivé ». Sans elle, un workflow archivé quitte la liste. *Livré par `CRM-118` tranche T1.b.*
+
+**L'en-tête du workflow ouvert.** En haut de la colonne de droite, le nom du workflow, puis ses pastilles : sa portée
+(« Global », ou le nom de son track), « Par défaut » s'il l'est, « Archivé » s'il l'est. Dessous, ses commandes :
+
+- **Renommer** remplace le nom par un champ « Nom du workflow », déjà rempli. « Enregistrer » reste indisponible tant
+  que le champ est vide ; `Échap` ou « Annuler » referme sans rien changer.
+- **Définir par défaut** fait de ce workflow le workflow par défaut de l'espace de travail, en un geste et sans
+  confirmation : l'ancien défaut cesse de l'être au même instant — il n'y en a jamais deux, ni aucun. Le défaut est le
+  workflow proposé en tête quand on crée un channel. Seul un workflow **global** et **non archivé** peut l'être : la
+  commande n'apparaît pas sur les autres, ni sur le défaut lui-même. Pour revenir en arrière, ouvrez l'ancien défaut et
+  redéfinissez-le.
+- **Copier vers un track** ouvre un petit formulaire : choisissez le **track**, et donnez si vous le voulez un **nom à la
+  copie** (il reprend sinon celui du workflow). La copie reprend les étapes, les transitions et le formulaire, devient
+  propre à ce track, puis évolue seule ; elle s'ouvre aussitôt, et dit de quel workflow elle vient. Seul un workflow
+  global non archivé se copie ainsi.
+- **Archiver** demande une confirmation, qui rappelle qu'aucun channel ne pourra plus choisir ce workflow. Sa structure
+  et ses versions sont conservées. Deux refus sont possibles, et chacun dit quoi faire :
+  - le workflow est **employé par des channels** — y compris des channels archivés : le refus en donne le nombre.
+    Changez d'abord leur workflow depuis l'arborescence (« Changer de workflow », sur la ligne de chaque channel) ;
+  - c'est le **workflow par défaut** : désignez d'abord un autre workflow par défaut.
+- **Rétablir**, sur un workflow archivé (cochez « Afficher les archivés » pour le retrouver), le remet en service, sans
+  confirmation.
+
+Ces commandes demandent d'**administrer l'espace de travail**. Sans ce droit, elles restent visibles mais grisées, et
+le motif est écrit en tête de l'éditeur. *Captures : `docs/captures/CRM-118/entete-workflow-*.jpg`.*
 
 ### 5 bis.2 Les étapes
 

@@ -131,7 +131,7 @@ describe('l’ouverture par l’adresse (§13.5)', () => {
 
 	it('sans `creer`, rien ne s’ouvre et aucun bandeau n’est rendu', async () => {
 		monter('/reglages/workflows')
-		await screen.findByText('Pipeline standard')
+		await screen.findByRole('heading', { level: 2, name: 'Pipeline standard' })
 		expect(screen.queryByTestId('workflows-formulaire-creation')).toBeNull()
 		expect(screen.queryByTestId('bandeau-retour-channel')).toBeNull()
 	})
@@ -155,7 +155,7 @@ describe('le bandeau de retour (§13.5, §13.7)', () => {
 		['sans formulaire ouvert', '/tracks/studio-web'],
 	])('un retour invalide — %s — n’ouvre aucun bandeau', async (_cas, retour) => {
 		monter(editeurAvec({ retour }))
-		await screen.findByText('Pipeline standard')
+		await screen.findByRole('heading', { level: 2, name: 'Pipeline standard' })
 		expect(screen.queryByTestId('bandeau-retour-channel')).toBeNull()
 	})
 })
@@ -184,7 +184,7 @@ describe('le workflow créé (§13.5)', () => {
 	it('créé par l’acceptation d’une suggestion de l’IA, il compte de même', async () => {
 		const utilisateur = userEvent.setup()
 		monter(editeurAvec({ retour: RETOUR }))
-		await screen.findByText('Pipeline standard')
+		await screen.findByRole('heading', { level: 2, name: 'Pipeline standard' })
 		await utilisateur.click(screen.getByRole('button', { name: 'Créer avec l’IA' }))
 		await utilisateur.click(await screen.findByRole('button', { name: 'Accepter la suggestion (double)' }))
 		await waitFor(() => expect(parametresAdresse()['workflow-cree']).toBe('wf-ia'))
@@ -224,7 +224,7 @@ describe('le formulaire ouvert par l’adresse, remonté par une relecture (§13
 		act(() => {
 			globalThis.dispatchEvent(new Event(EVENEMENT_WORKFLOW_DEPART))
 		})
-		await screen.findByText('Pipeline standard')
+		await screen.findByRole('heading', { level: 2, name: 'Pipeline standard' })
 		const remonte = await screen.findByTestId('workflows-formulaire-creation')
 		expect((within(remonte).getByLabelText('Nom') as HTMLInputElement).value).toBe('Partenariats')
 		expect((within(remonte).getByLabelText('Portée') as HTMLSelectElement).value).toBe('track')

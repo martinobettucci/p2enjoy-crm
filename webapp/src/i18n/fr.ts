@@ -1679,6 +1679,44 @@ export const fr = {
 	'admin.tree.title': "Administration de l'arborescence",
 	'admin.tree.aria': "Tracks et channels de l'espace de travail",
 	'admin.tree.showArchived': 'Afficher les archivés',
+	// CRM-118 T1.b — changer le workflow d'un channel (docs/SPEC-workflow-engine.md §7 quinquies.3, DESIGN_SYSTEM §5.72).
+	'admin.action.changeWorkflow': 'Changer le workflow du channel {nom}',
+	'admin.tree.workflowChange.aria': 'Changer le workflow du channel {channel}',
+	'admin.tree.workflowChange.title': 'Changer de workflow — « {channel} » suit aujourd’hui « {workflow} »',
+	'admin.tree.workflowChange.title.sans-nom': 'Changer de workflow — « {channel} »',
+	'admin.tree.workflowChange.error': 'Ce qu’il faut pour changer de workflow n’a pas pu être chargé. Fermez et rouvrez le panneau.',
+	'admin.tree.workflowChange.workflow': 'Nouveau workflow',
+	'admin.tree.workflowChange.workflow.choose': 'Choisir un workflow…',
+	'admin.tree.workflowChange.workflow.none':
+		'Aucun autre workflow n’est affectable à ce channel : créez-en un dans l’éditeur de workflows.',
+	'admin.tree.workflowChange.mapping.title': 'Où vont les affaires',
+	'admin.tree.workflowChange.mapping.empty': 'Aucune affaire dans ce channel : rien à déplacer.',
+	'admin.tree.workflowChange.cards.one': '1 affaire',
+	'admin.tree.workflowChange.cards.other': '{n} affaires',
+	'admin.tree.workflowChange.destination': 'Destination',
+	'admin.tree.workflowChange.destination.of': ' des affaires de « {etape} »',
+	'admin.tree.workflowChange.destination.choose': 'Choisir une étape…',
+	'admin.tree.workflowChange.loss.one':
+		'1 réponse de formulaire serait perdue : son champ n’existe pas dans le nouveau workflow.',
+	'admin.tree.workflowChange.loss.other':
+		'{n} réponses de formulaire seraient perdues : leurs champs n’existent pas dans le nouveau workflow.',
+	'admin.tree.workflowChange.loss.accept': 'J’accepte de perdre ces réponses',
+	'admin.tree.workflowChange.submit': 'Changer de workflow',
+	'admin.tree.workflowChange.done': 'Le channel « {channel} » suit désormais « {workflow} ».',
+	'admin.tree.workflowChange.refus.meme-workflow': 'Ce channel suit déjà ce workflow.',
+	'admin.tree.workflowChange.refus.mapping-incomplet':
+		'Chaque étape occupée doit recevoir une destination. Le channel a peut-être reçu une affaire entre-temps : fermez et rouvrez le panneau.',
+	'admin.tree.workflowChange.refus.mapping-invalide': 'Les destinations choisies ne sont pas valides. Fermez et rouvrez le panneau.',
+	'admin.tree.workflowChange.refus.etape-hors-workflow':
+		'Une destination n’appartient plus au nouveau workflow : il a peut-être changé entre-temps. Choisissez-la à nouveau.',
+	'admin.tree.workflowChange.refus.workflow-introuvable': 'Ce workflow est introuvable : il a peut-être été archivé entre-temps.',
+	'admin.tree.workflowChange.refus.workflow-incompatible': 'Ce workflow n’est pas affectable au track de ce channel.',
+	'admin.tree.workflowChange.refus.channel-introuvable': 'Ce channel est introuvable : il a peut-être été retiré entre-temps.',
+	'admin.tree.workflowChange.refus.interdit': 'Seul un administrateur de l’espace de travail peut changer le workflow d’un channel.',
+	'admin.tree.workflowChange.refus.reseau': 'Le serveur n’a pas pu être joint. Vérifiez la connexion et réessayez.',
+	'admin.tree.workflowChange.refus.inconnu': 'Le changement n’a pas abouti. Réessayez, ou rechargez l’écran.',
+	'admin.refus.channel-occupe':
+		'Ce channel porte des affaires : son workflow se change par la commande « Changer de workflow » de sa ligne, qui dit où va chaque affaire.',
 	'admin.tree.archived': 'Archivé',
 	'admin.tree.channels.aria': 'Channels du track {track}',
 
@@ -2077,6 +2115,52 @@ export const fr = {
 	'admin.workflows.default': 'Par défaut',
 	'admin.workflows.scope.global': 'Global',
 	'admin.workflows.scope.track': 'Propre à un track',
+	// CRM-118 T1.b — l'en-tête du workflow choisi (docs/SPEC-workflow-engine.md §7 quinquies.2, docs/DESIGN_SYSTEM.md §5.72).
+	'admin.workflows.archived': 'Archivé',
+	'admin.workflows.showArchived': 'Afficher les archivés',
+	'admin.workflows.header.toolbar': 'Commandes du workflow {nom}',
+	'admin.workflows.header.rename': 'Renommer',
+	'admin.workflows.header.rename.aria': 'Renommer le workflow {nom}',
+	'admin.workflows.header.rename.field': 'Nom du workflow',
+	'admin.workflows.header.default': 'Définir par défaut',
+	'admin.workflows.header.default.aria': 'Définir le workflow {nom} par défaut',
+	'admin.workflows.header.copy': 'Copier vers un track',
+	'admin.workflows.header.copy.aria': 'Copier le workflow {nom} vers un track',
+	'admin.workflows.header.copy.title': 'Copier « {nom} » vers un track',
+	'admin.workflows.header.copy.track': 'Track',
+	'admin.workflows.header.copy.name': 'Nom de la copie',
+	'admin.workflows.header.copy.name.help':
+		'La copie reprend les étapes, les transitions et le formulaire, puis évolue seule. Laissé vide, le nom reprend celui du workflow.',
+	'admin.workflows.header.copy.submit': 'Copier',
+	'admin.workflows.header.archive': 'Archiver',
+	'admin.workflows.header.archive.aria': 'Archiver le workflow {nom}',
+	'admin.workflows.header.archive.confirm.title': 'Archiver le workflow « {nom} » ?',
+	'admin.workflows.header.archive.confirm.body':
+		'Aucun channel ne pourra plus le choisir. Sa structure et ses versions sont conservées, et vous pourrez le rétablir en cochant « Afficher les archivés ».',
+	'admin.workflows.header.archive.confirm.action': 'Archiver',
+	'admin.workflows.header.restore': 'Rétablir',
+	'admin.workflows.header.restore.aria': 'Rétablir le workflow {nom}',
+	'admin.workflows.header.live.renamed': 'Le workflow s’appelle désormais « {nom} ».',
+	'admin.workflows.header.live.default': 'Le workflow « {nom} » est désormais le workflow par défaut.',
+	'admin.workflows.header.live.copied': 'La copie de « {nom} » est créée, et c’est elle qui est ouverte.',
+	'admin.workflows.header.live.archived': 'Le workflow « {nom} » est archivé.',
+	'admin.workflows.header.live.restored': 'Le workflow « {nom} » est rétabli.',
+	'admin.workflows.header.refus.employe.one':
+		'Un channel emploie encore ce workflow : changez-lui de workflow depuis l’arborescence d’abord.',
+	'admin.workflows.header.refus.employe.other':
+		'{n} channels emploient encore ce workflow : changez-leur de workflow depuis l’arborescence d’abord.',
+	'admin.workflows.header.refus.par-defaut':
+		'C’est le workflow par défaut : désignez un autre workflow par défaut d’abord.',
+	'admin.workflows.header.refus.non-global':
+		'Seul un workflow global peut être le défaut, ou être copié vers un track.',
+	'admin.workflows.header.refus.archive': 'Ce workflow est archivé : rétablissez-le d’abord.',
+	'admin.workflows.header.refus.nom-vide': 'Le nom du workflow ne peut pas être vide.',
+	'admin.workflows.header.refus.track-introuvable': 'Ce track est introuvable dans cet espace de travail.',
+	'admin.workflows.header.refus.introuvable': 'Ce workflow est introuvable : il a peut-être été retiré entre-temps.',
+	'admin.workflows.header.refus.interdit': 'Seul un administrateur de l’espace de travail peut faire ce geste.',
+	'admin.workflows.header.refus.reseau': 'Le serveur n’a pas pu être joint. Vérifiez la connexion et réessayez.',
+	'admin.workflows.header.refus.inconnu': 'Le geste n’a pas abouti. Réessayez, ou rechargez l’écran.',
+	'admin.workflows.header.refus.sans-effet': 'Rien n’a changé : ce workflow ne vous est peut-être plus accessible.',
 	'admin.workflows.empty.title': "Aucun workflow dans cet espace de travail",
 	// L'état vide portait « un workflow se crée par l'API » : c'était vrai jusqu'à CRM-031, dont le
 	// §3 bis livre le geste ici. Un état vide d'écran d'administration doit porter l'issue qui le

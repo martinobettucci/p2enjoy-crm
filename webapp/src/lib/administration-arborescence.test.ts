@@ -1,4 +1,6 @@
 // @verifies CRM-075 (docs/BACKLOG.md) — administration des tracks et des channels
+// @verifies CRM-118 (docs/BACKLOG.md) tranche T1.b — le refus `channel-occupe` renvoie à « Changer de workflow »
+//           (docs/SPEC-workflow-engine.md §7 quinquies.3)
 // @verifies CRM-116 (docs/BACKLOG.md) tranche T3 — la couleur d'un channel lue et écrite
 //           (docs/SPEC-administration-arborescence.md §14.3, §14.4)
 // @verifies CRM-077 (docs/BACKLOG.md) — corbeille, septième tranche : le geste de mise à la
@@ -28,6 +30,7 @@ import {
 	archiverTrack,
 	calculerDeplacement,
 	classerRefusEcriture,
+	reclasserChannelOccupe,
 	creerChannel,
 	creerTrack,
 	deplacerTrack,
@@ -363,6 +366,21 @@ describe('classerRefusEcriture — sur le code, jamais sur la phrase (§9)', () 
 			classerRefusEcriture(409, '23503', 'violates foreign key constraint "channels_track_id_workspace_id_fkey"')
 				.nature,
 		).toBe('reference-absente')
+	})
+
+	it('range à part le channel occupé dont le formulaire change le workflow, par le NOM des deux clés', () => {
+		const refus = (detail: string) =>
+			reclasserChannelOccupe({ statut: 'refus', refus: classerRefusEcriture(409, '23503', detail) })
+		expect(refus('violates foreign key constraint "cards_channel_id_workflow_id_fkey" on table "cards"')).toMatchObject({
+			refus: { nature: 'channel-occupe' },
+		})
+		expect(refus('violates foreign key constraint "card_placements_channel_workflow_fk"')).toMatchObject({
+			refus: { nature: 'channel-occupe' },
+		})
+		expect(refus('violates foreign key constraint "channels_track_id_workspace_id_fkey"')).toMatchObject({
+			refus: { nature: 'reference-absente' },
+		})
+		expect(reclasserChannelOccupe({ statut: 'applique' })).toEqual({ statut: 'applique' })
 	})
 
 	it('distingue une panne de transport d’un refus', () => {

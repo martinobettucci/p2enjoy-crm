@@ -214,6 +214,16 @@ Découpage prévu : `src/lib` (client Supabase, types générés, helpers), `src
   ouverte. Aucune écriture nouvelle : `creerChannel` et `creerWorkflow` sous les politiques existantes.
   **Compromis** : le brouillon (nom, identifiant, description d'un channel) entre dans l'historique du navigateur
   comme toute adresse ;
+- `src/app/EnTeteWorkflow.tsx` et `src/lib/entete-workflow.ts`, `src/app/PanneauChangementWorkflow.tsx` et
+  `src/lib/changement-workflow-channel.ts` (`CRM-118` T1.b, `docs/SPEC-workflow-engine.md` §7 quinquies) — l'en-tête du
+  workflow choisi dans l'éditeur (renommer par `PATCH workflows`, définir par défaut par `public.set_default_workflow`,
+  copier par `public.copy_workflow_to_track`, archiver et rétablir par `PATCH archived_at`) et le panneau « Changer de
+  workflow » de l'arborescence (`public.change_channel_workflow`, mapping explicite, perte consentie). **Les gardes sont
+  en base** (migration `0130`) : un défaut seulement global, posé en une transaction ; l'archivage d'un workflow employé
+  ou par défaut refusé par un déclencheur. L'écran ne rend pas une commande vouée au refus d'après la ligne lue, traduit
+  chaque refus par un dictionnaire fermé, et ne propose la perte des réponses qu'après le refus
+  `field_values_would_be_lost` qui la mesure. Le `23503` du formulaire de channel sur un channel occupé est reconnu au
+  nom de sa clé (`reclasserChannelOccupe`) et renvoie à « Changer de workflow ». Aucune dépendance nouvelle.
 - `src/app/Temps.tsx`, `src/app/SaisieTemps.tsx`, `src/lib/temps.ts` et `src/lib/saisie-temps.ts` (`CRM-098`,
   `docs/SPEC-temps.md` §7) — l'écran « Temps » et sa matrice de la semaine. `temps.ts` est pur (unités, semaine du
   lundi, mode d'une journée, lignes de la matrice) ; `saisie-temps.ts` lit et écrit `saisies_temps` sans rejouer

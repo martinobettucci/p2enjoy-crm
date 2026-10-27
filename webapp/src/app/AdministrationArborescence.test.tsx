@@ -3,6 +3,9 @@
 //           channel (docs/SPEC-administration-arborescence.md §14 ; docs/DESIGN_SYSTEM.md §5.68)
 //           motif, dépliage offert (docs/SPEC-droits-interface.md §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @verifies CRM-075 (docs/BACKLOG.md) — écran d'administration des tracks et des channels
+// @verifies CRM-118 (docs/BACKLOG.md) tranche T1.b — « Changer de workflow » sur la ligne d'un channel non archivé, son
+//           panneau sous la ligne, le focus rendu à la commande (docs/SPEC-workflow-engine.md §7 quinquies.3 ;
+//           docs/DESIGN_SYSTEM.md §5.72)
 // @verifies CRM-077 (docs/BACKLOG.md) — corbeille, septième tranche : le GESTE de mise à la
 //           corbeille d'un track et d'un channel, et sa confirmation portant l'énumération
 // @verifies docs/SPEC-corbeille.md §3.1 (les deux états sont indépendants), §4 bis.3 (les quatre
@@ -154,7 +157,8 @@ function clientFactice(options: Options = {}): { client: ClientCrm; ecritures: E
 		// `in` a été ajouté par `CRM-077` : l'énumération d'un track compte les affaires de SES
 		// channels, et sans lui la chaîne rompait au lieu de rendre une réponse.
 		// `limit` : un compte est un `GET` borné à zéro ligne (`compter.ts`, INC-299, décision 700).
-		for (const methode of ['is', 'eq', 'or', 'in', 'not', 'limit']) chaine[methode] = () => chaine
+		// `neq`, `maybeSingle` : les lectures du panneau « Changer de workflow » (`CRM-118` T1.b).
+		for (const methode of ['is', 'eq', 'or', 'in', 'not', 'limit', 'neq', 'maybeSingle']) chaine[methode] = () => chaine
 		chaine['order'] = () => chaine
 		chaine['then'] = (resoudre: (valeur: unknown) => unknown) => Promise.resolve(resultat).then(resoudre)
 		return chaine
@@ -561,6 +565,36 @@ describe('archiver et désarchiver (§6.3, §6.4)', () => {
 // ---------------------------------------------------------------------------------------------
 // §3.2 et §7 — Les channels
 // ---------------------------------------------------------------------------------------------
+
+describe('changer le workflow d’un channel (CRM-118 T1.b, §5.72)', () => {
+	it('la ligne d’un channel porte la commande ; elle ouvre le panneau sous la ligne, Annuler rend le focus', async () => {
+		const utilisateur = userEvent.setup()
+		monter()
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		// Un track n'en porte pas : la commande appartient au channel.
+		expect(screen.queryByRole('button', { name: 'Changer le workflow du channel Conseil & IA' })).toBeNull()
+		const commande = screen.getByRole('button', { name: 'Changer le workflow du channel Grands comptes' })
+		expect(commande.getAttribute('aria-expanded')).toBe('false')
+		await utilisateur.click(commande)
+		const panneau = await screen.findByTestId('panneau-changement-workflow')
+		expect(panneau.getAttribute('aria-label')).toBe('Changer le workflow du channel Grands comptes')
+		expect(commande.getAttribute('aria-expanded')).toBe('true')
+		await utilisateur.click(within(panneau).getByRole('button', { name: 'Annuler' }))
+		expect(screen.queryByTestId('panneau-changement-workflow')).toBeNull()
+		await waitFor(() => expect(document.activeElement).toBe(commande))
+	})
+
+	it('un channel archivé n’en porte pas', async () => {
+		const utilisateur = userEvent.setup()
+		monter({ channels: [{ ...CHANNELS[0], archived_at: '2026-10-27T10:00:00Z' }] })
+		await attendreTracks()
+		await utilisateur.click(screen.getByRole('button', { name: 'Déplier Conseil & IA' }))
+		await screen.findByText('Prospection')
+		expect(screen.queryByRole('button', { name: 'Changer le workflow du channel Prospection' })).toBeNull()
+	})
+})
 
 describe('les channels (§3.2, §7)', () => {
 	it('ne charge les channels QU’AU dépliage du track', async () => {

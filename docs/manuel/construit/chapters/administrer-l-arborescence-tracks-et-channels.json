@@ -1019,6 +1019,228 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Changer le workflow d'un channel qui porte des affaires"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-118"
+						},
+						{
+							"type": "text",
+							"text": " tranche T1.b"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Le formulaire de\nmodification ne change que le workflow d'un channel "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vide"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : sur un channel qui porte des affaires, il refuse et vous\nrenvoie à la commande "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Changer de workflow"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la ligne du channel (l'icône d'un petit schéma, entre le crayon et\nl'archivage). Elle ouvre un panneau sous la ligne, qui nomme le workflow actuel :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Choisissez le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "nouveau workflow"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — un workflow global, ou propre à ce track, non archivé."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Sous « Où vont les affaires », chaque étape "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "occupée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " du workflow actuel est listée avec son nombre d'affaires\n(affaires archivées et en corbeille comprises). Choisissez pour chacune sa "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "destination"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dans le nouveau workflow.\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Rien n'est choisi à votre place"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : tant qu'une étape n'a pas sa destination, « Changer de workflow » reste\nindisponible. Un channel sans affaire le dit, et n'attend que le nouveau workflow."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Cliquez "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Changer de workflow"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Si des affaires ont répondu à des questions de formulaire que le nouveau workflow\nne connaît pas, le changement s'arrête et le panneau dit "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "combien de réponses seraient perdues"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Il ne les supprime\njamais sans votre accord : cochez « J'accepte de perdre ces réponses », puis cliquez à nouveau sur "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Changer de\nworkflow"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — ou annulez."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le changement est fait d'un bloc : toutes les affaires passent à leur destination en même temps, et chacune garde une\ntrace « workflow changé » dans son fil. Un message confirme le nouveau workflow. Comme les autres commandes de\nl'arborescence, celle-ci demande d'administrer l'espace de travail. "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Captures :\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-118/changement-workflow-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "quand-un-deplacement-est-indisponible-sans-etre-en-bout-de-liste",

@@ -50,6 +50,10 @@
 //       quittent l'adresse ; un workflow créé — formulaire ou acceptation de l'IA — inscrit `workflow-cree` ; le
 //       bandeau et son lien de retour tant que `retour` est valide), §13.7 (la validation du retour) ;
 //       docs/SPEC-workflow-engine.md §3 bis.2 ; docs/DESIGN_SYSTEM.md §5.55 ; docs/JOURNAL.md décision 623
+// @spec CRM-118 (docs/BACKLOG.md) tranche T1.b — l'en-tête du workflow choisi en tête de sa colonne, et la case
+//       « Afficher les archivés » au-dessus de la liste, un workflow archivé y portant sa mention
+//       (docs/SPEC-workflow-engine.md §7 quinquies.2 ; docs/DESIGN_SYSTEM.md §5.72 ; décisions 758 et 760) ; l'en-tête
+//       lui-même est `EnTeteWorkflow.tsx`
 //
 // AUCUN DROIT N'EST CALCULÉ ICI — la règle de `CRM-075`, reprise mot pour mot. Les commandes sont
 // rendues pour tout le monde ; l'écriture part, et le refus du backend est traduit. Une commande
@@ -94,6 +98,7 @@ import {
 import { lireChecklistsWorkflow, type ChecklistsWorkflow } from '../lib/administration-checklists'
 import { CHEMIN_ADMIN_CATALOGUE } from './chemins'
 import { ListeCollections } from './CollectionsComparees'
+import { EnTeteWorkflow, type OuvertureEnTete } from './EnTeteWorkflow'
 import { PanneauSuggestionIa, type OuverturePanneauIa } from './PanneauSuggestionIa'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -2521,6 +2526,11 @@ export function AdministrationWorkflows({
 	const droit = proprietesCommande(capacites.administration, ID_MOTIF_WORKFLOWS)
 	const [workflows, setWorkflows] = useState<EtatAsync<readonly WorkflowAdministrable[]>>(enChargement)
 	const [idChoisi, setIdChoisi] = useState<string | null>(null)
+	/** `CRM-118` T1.b (§5.72) : la case « Afficher les archivés », sans quoi « Rétablir » serait introuvable. */
+	const [inclureArchives, setInclureArchives] = useState(false)
+	const [ouvertureEnTete, setOuvertureEnTete] = useState<OuvertureEnTete>(null)
+	/** Les tracks de l'espace, pour la pilule d'un workflow propre à un track et le choix d'une copie. */
+	const [tracksEnTete, setTracksEnTete] = useState<EtatAsync<readonly TrackAffectable[]>>(enChargement)
 	const [etapes, setEtapes] = useState<EtatAsync<readonly EtapeAdministrable[]>>(enChargement)
 	const [transitions, setTransitions] =
 		useState<EtatAsync<readonly TransitionAdministrable[]>>(enChargement)
@@ -2651,7 +2661,7 @@ export function AdministrationWorkflows({
 		const rang = ++courant.current
 		setWorkflows(enChargement)
 		void (async () => {
-			const lus = await lireWorkflowsAdministrables(client, false)
+			const lus = await lireWorkflowsAdministrables(client, inclureArchives)
 			if (rang !== courant.current) return
 			setWorkflows(lus)
 			// Le premier workflow — le défaut, par l'ordre de la requête — est choisi d'office :
@@ -2659,10 +2669,38 @@ export function AdministrationWorkflows({
 			// de trop, et le seed comme la production ont toujours un workflow par défaut.
 			if (lus.statut === 'pret') {
 				const premier = lus.donnees[0]
-				setIdChoisi((choisi) => choisi ?? premier?.id ?? null)
+				// Un workflow choisi que la liste ne montre plus — archivé, case décochée — cède sa place au premier.
+				setIdChoisi((choisi) =>
+					choisi !== null && lus.donnees.some((workflow) => workflow.id === choisi) ? choisi : (premier?.id ?? null),
+				)
 			}
 		})()
-	}, [client, tentative])
+	}, [client, tentative, inclureArchives])
+
+	// `CRM-118` T1.b : les tracks de l'en-tête ne sont lus que lorsqu'il les montre — la pilule d'un workflow propre à un
+	// track, ou le choix d'une copie, relu à chaque ouverture — et jamais au chargement (§3 bis.3, lecture 4).
+	const porteeChoisie =
+		workflows.statut === 'pret' ? workflows.donnees.find((workflow) => workflow.id === idChoisi)?.scope : undefined
+	const tracksVoulus = ouvertureEnTete === 'copier' || porteeChoisie === 'track'
+	useEffect(() => {
+		if (client === null || !tracksVoulus) return
+		let vivant = true
+		void lireTracksAffectables(client).then((lus) => {
+			if (vivant) setTracksEnTete(lus)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [client, tracksVoulus])
+
+	// Un seul élément ouvert à la fois, tous blocs confondus (§5.28) : un formulaire de l'éditeur ou des checklists
+	// ferme l'en-tête, et choisir un autre workflow aussi.
+	useEffect(() => {
+		if (ouverture.type !== 'aucune' || ouvertureChecklist !== null) setOuvertureEnTete(null)
+	}, [ouverture, ouvertureChecklist])
+	useEffect(() => {
+		setOuvertureEnTete(null)
+	}, [idChoisi])
 
 	// Le workspace courant — CRM-031, §3 bis.3. Il n'est PAS saisi : le laisser saisir offrirait un
 	// champ dont toute autre valeur est refusée en `42501`, mesuré au §3 bis.5. Il est lu comme
@@ -3568,6 +3606,15 @@ export function AdministrationWorkflows({
 							</Button>
 						)}
 						{commandeCreerAvecIa}
+						<label className="inline-flex items-center gap-2 min-h-[var(--size-target)] text-sm">
+							<input
+								type="checkbox"
+								checked={inclureArchives}
+								onChange={(evenement) => setInclureArchives(evenement.target.checked)}
+								className="size-6 rounded-sm border border-border"
+							/>
+							{t('admin.workflows.showArchived')}
+						</label>
 						<ul className="flex flex-col rounded-lg border border-border bg-surface">
 							{workflows.donnees.map((workflow) => (
 								<li key={workflow.id}>
@@ -3593,6 +3640,7 @@ export function AdministrationWorkflows({
 													: t('admin.workflows.scope.track')}
 											</span>
 											{workflow.is_default ? <span>{t('admin.workflows.default')}</span> : null}
+											{workflow.archived_at === null ? null : <span>{t('admin.workflows.archived')}</span>}
 										</span>
 									</button>
 								</li>
@@ -3614,6 +3662,25 @@ export function AdministrationWorkflows({
 								aria-label={t('admin.workflows.steps.aria', { workflow: choisi.name })}
 								className="flex flex-col gap-3"
 							>
+								{/* `CRM-118` T1.b (§5.72) : l'en-tête ouvre la colonne — ce qu'est le workflow, avant d'où il vient. */}
+								<EnTeteWorkflow
+									client={client}
+									workflow={choisi}
+									tracks={tracksEnTete}
+									ouverture={ouvertureEnTete}
+									onOuvrir={(suivante) => {
+										if (suivante !== null) {
+											setOuverture(AUCUNE)
+											setOuvertureChecklist(null)
+										}
+										setOuvertureEnTete(suivante)
+									}}
+									onApplique={(texte, idSuivant) => {
+										setAnnonce(texte)
+										if (idSuivant !== undefined) setIdChoisi(idSuivant)
+										setTentative((precedente) => precedente + 1)
+									}}
+								/>
 								{/* LA MENTION DE DIVERGENCE EST EN TÊTE DE CETTE COLONNE — CRM-032,
 								    docs/SPEC-workflow-engine.md §4 bis.2 : elle porte sur le workflow ENTIER,
 								    pas sur une de ses étapes, et cette colonne est ce qui décrit le workflow

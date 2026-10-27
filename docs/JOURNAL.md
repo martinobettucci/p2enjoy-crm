@@ -36160,6 +36160,28 @@ la main.
   GitHub liste les manifestes Python après le push.
 - **Question du connecteur** : sans objet, c'est de l'outillage du dépôt.
 
+## décision 764 — `CRM-118` T1.b : le seed n'est pas étendu pour les gestes d'en-tête
+
+*Choix de l'agent, 2026-10-27, consigné ici pour être renversable.* `docs/SPEC-workflow-engine.md` §7 quinquies.5
+demandait le seed « si un état manque pour la démonstration ».
+
+**Observations.** Le jeu porte trois workflows, tous employés par un channel : le défaut (`…051`), sa copie du track
+Conseil & IA, le workflow des checklists (`…c6801`). Il démontre donc, sans rien ajouter : renommer, définir par défaut
+(le workflow des checklists est global), copier vers un track, l'archivage **refusé** (le défaut, employé), et
+« Changer de workflow » sur un channel occupé (« Grands comptes » vers le workflow des checklists, par exemple). Seul
+l'archivage **accepté** — et avec lui « Afficher les archivés » et « Rétablir » — demande un workflow libre.
+
+**Solutions envisagées.** (a) Un quatrième workflow, libre et archivé, dans `apply-seed.sh` ; (b) rien, l'archivage
+accepté se démontrant sur un workflow créé d'un geste (« Nouveau workflow »).
+
+**Décision : (b).** (a) obligerait à réviser cinq preuves qui dénombrent les workflows du jeu (pgTAP `0007`,
+`scripts/verify-workflows.sh`, `e2e/api/workflows.spec.ts`, `e2e/ui/coherence-workflow.spec.ts`,
+`e2e/ui/administration-workflows.spec.ts` — le mécanisme de la décision 51), dont plusieurs sont en cours de révision par
+d'autres sessions, pour un état que la démonstration obtient en un clic.
+
+**Conséquences.** `docs/SPEC-workflow-engine.md` §7 quinquies.5 le note ; l'E2E de la tranche pose ses propres workflows
+jetables. Renverser ce choix revient à appliquer (a) avec ses cinq révisions.
+
 ## décision 765 — `CRM-068` T4b1 : les modèles d'affaires à l'écran — ce que le code a précisé
 
 *2026-10-27, session interactive (Claude Code, poste du responsable). Numérotée 765 : le 764 est pris par une session

@@ -6842,8 +6842,9 @@ rendu si elle a été démontée, §5.25), alerte de refus dans le bloc concern�
   `--color-accent-soft` / `--color-accent-on-soft` (ce n'est pas une panne) dit combien de réponses de formulaire
   seraient perdues, suivie d'une case de 24 px, décochée, « J'accepte de perdre ces réponses » ; le bouton reste
   désactivé tant qu'elle n'est pas cochée. Jamais de perte implicite.
-- **LE SUCCÈS** referme le panneau, s'annonce dans la région vivante (« Le channel « … » suit désormais « … » »), et la
-  ligne relue montre le nouveau workflow ; le focus revient à la commande.
+- **LE SUCCÈS** referme le panneau, s'annonce dans la région vivante (« Le channel « … » suit désormais « … » ») — c'est
+  elle qui nomme le nouveau workflow : la ligne d'un channel ne montre pas son workflow, elle est relue et le panneau
+  rouvert le nomme dans son titre ; le focus revient à la commande.
 - **SOUS `md`**, les lignes du panneau se replient — le nom de l'étape sur sa ligne, le `select` dessous —, cibles
   conservées ; `md` et jamais `sm` (§11). Le panneau est borné à la fenêtre dans l'arborescence qui défile (§5.27).
 - **Les commandes suivent la capacité d'administrer l'espace** (§5.59) dans l'éditeur comme dans l'arborescence.

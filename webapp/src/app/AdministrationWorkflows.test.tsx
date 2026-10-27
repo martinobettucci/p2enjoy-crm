@@ -431,7 +431,7 @@ function monter(options: Options = {}, adresse = '/reglages/workflows') {
 }
 
 const attendreEcran = async () => {
-	await screen.findByText('Pipeline standard')
+	await screen.findByRole('heading', { level: 2, name: 'Pipeline standard' })
 	await screen.findAllByTestId('ligne-etape')
 }
 
@@ -458,7 +458,7 @@ describe('les états systématiques (§7 bis.6, docs/DESIGN_SYSTEM.md §5.8)', (
 
 	it('un workflow sans étape dit ce qui manque', async () => {
 		monter({ etapes: [] })
-		await screen.findByText('Pipeline standard')
+		await screen.findByRole('heading', { level: 2, name: 'Pipeline standard' })
 		expect(await screen.findByText("Ce workflow n'a aucune étape.")).toBeTruthy()
 	})
 })

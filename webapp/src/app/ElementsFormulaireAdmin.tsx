@@ -5,6 +5,8 @@
 // @spec CRM-100 (docs/BACKLOG.md) tranche T1 — docs/SPEC-administration-arborescence.md §13.2 : ces éléments
 //       quittent `AdministrationArborescence.tsx`, inchangés, parce que le formulaire de channel est désormais
 //       partagé avec la vue d'un track ; les recopier ferait diverger le premier refus traduit d'un côté seulement.
+// @spec CRM-118 (docs/BACKLOG.md) tranche T1.b — docs/SPEC-workflow-engine.md §7 quinquies.3 : le refus d'un channel
+//       occupé renvoie à « Changer de workflow »
 
 import { TriangleAlert } from 'lucide-react'
 import { t } from '../i18n'
@@ -23,6 +25,8 @@ export function texteRefus(refus: RefusEcriture): string {
 			return t('admin.refus.forme-refusee')
 		case 'reference-absente':
 			return t('admin.refus.reference-absente')
+		case 'channel-occupe':
+			return t('admin.refus.channel-occupe')
 		case 'network':
 			return t('admin.refus.network')
 		case 'unknown':

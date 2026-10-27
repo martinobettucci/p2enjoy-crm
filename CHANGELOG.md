@@ -25,9 +25,9 @@ d'exécuter le code attendu.
   dès l'appel suivant, l'administrateur jamais restreint, la recherche.
 - INC-319 consigne une dépendance d'ordre, antérieure, entre deux fichiers d'intégration du connecteur.
 
-### `CRM-118` T2.a à T2.d — la famille `workflows` du connecteur (décisions 752, 754 et 756)
+### `CRM-118` T1.b et T2.a à T2.d — les gestes d'écran des workflows, et la famille `workflows` du connecteur (décisions 752, 754, 756, 758 et 760)
 
-*En développement seulement. La migration `0129` attend la prochaine fenêtre de production.*
+*En développement seulement. Les migrations `0129` et `0130` attendent la prochaine fenêtre de production.*
 
 - **Migration `0129`** : la matrice du connecteur MCP accepte une dixième famille, « Workflows », juste après
   « Structure ». Rien d'autre ne change en base.
@@ -46,7 +46,7 @@ d'exécuter le code attendu.
   les nœuds dont les étapes sont faites — comme l'écran du catalogue, et pour les seuls administrateurs. La clé d'un
   nœud ne change jamais ; un nœud occupé par des affaires actives ne s'archive pas.
 - **Plateforme ▸ Connecteur MCP** : la matrice des droits gagne la ligne « Workflows », après « Structure ».
-- **Migration `0130` (T1.b, en cours)** : le workflow par défaut se désigne en une transaction (`set_default_workflow`,
+- **Migration `0130` (T1.b)** : le workflow par défaut se désigne en une transaction (`set_default_workflow`,
   administrateur, workflow global seulement) ; la base refuse d'archiver un workflow qu'un channel emploie encore ou le
   workflow par défaut.
 - **Éditeur de workflows, l'en-tête du workflow ouvert (T1.b)** : son nom et ses pastilles (portée, « Par défaut »,

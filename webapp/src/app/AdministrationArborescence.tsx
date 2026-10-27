@@ -25,6 +25,9 @@
 //       `p2enjoy:tracks-modifies`, que la coquille écoute pour relire sa barre latérale
 // @spec CRM-116 (docs/BACKLOG.md) tranche T3 — le sélecteur de couleur du formulaire de track, la pilule colorée d'un
 //       channel, sa couleur lue et écrite (docs/SPEC-administration-arborescence.md §14 ; docs/DESIGN_SYSTEM.md §5.68)
+// @spec CRM-118 (docs/BACKLOG.md) tranche T1.b — « Changer de workflow » sur la ligne d'un channel non archivé, et son
+//       panneau sous la ligne (docs/SPEC-workflow-engine.md §7 quinquies.3 ; docs/DESIGN_SYSTEM.md §5.72 ; décisions
+//       758 et 760) ; le panneau lui-même est `PanneauChangementWorkflow.tsx`
 //
 // AUCUN DROIT N'EST CALCULÉ ICI, et c'est la règle qui gouverne tout le fichier. Les commandes sont
 // rendues pour tout le monde ; l'écriture part, et le refus du backend est traduit (§10). Une
@@ -47,6 +50,7 @@ import {
 	Trash2,
 	ArrowDown,
 	ArrowUp,
+	Workflow,
 } from 'lucide-react'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -90,6 +94,7 @@ import {
 import { BlocBudgetsTrack } from './BlocBudgetsTrack'
 import { AlerteRefus, ChampTexte, texteRefus } from './ElementsFormulaireAdmin'
 import { FormulaireChannel, type SaisieChannel } from './FormulaireChannel'
+import { PanneauChangementWorkflow } from './PanneauChangementWorkflow'
 import { classesPastille, classesPilule, iconeTrack, NOMS_ICONES } from './presentation-tracks'
 import { SelecteurCouleur } from './SelecteurCouleur'
 import { texteLigneEnumeration, type EtatEnumeration } from './presentation-corbeille'
@@ -127,6 +132,7 @@ type Ouverture =
 	| { readonly type: 'edition-channel'; readonly id: string; readonly idTrack: string }
 	| { readonly type: 'archivage-channel'; readonly id: string; readonly idTrack: string }
 	| { readonly type: 'corbeille-channel'; readonly id: string; readonly idTrack: string }
+	| { readonly type: 'changement-workflow'; readonly id: string; readonly idTrack: string }
 
 const AUCUNE: Ouverture = { type: 'aucune' }
 
@@ -430,6 +436,9 @@ type ProprietesCommandes = {
 	readonly onModifier: () => void
 	readonly onArchiver: () => void
 	readonly onCorbeille: () => void
+	/** `CRM-118` T1.b : « Changer de workflow », sur la ligne d'un channel seulement (§7 quinquies.3). */
+	readonly onChangerWorkflow?: () => void
+	readonly changementOuvert?: boolean
 }
 
 /**
@@ -448,6 +457,8 @@ function CommandesLigne({
 	onModifier,
 	onArchiver,
 	onCorbeille,
+	onChangerWorkflow,
+	changementOuvert = false,
 }: ProprietesCommandes) {
 	const droit = useRefus()
 	/**
@@ -538,6 +549,19 @@ function CommandesLigne({
 			>
 				<Pencil aria-hidden="true" size={16} strokeWidth={2} />
 			</Button>
+			{onChangerWorkflow === undefined ? null : (
+				<Button
+					taille="compacte"
+					variante="discret"
+					{...droit}
+					data-commande-workflow={id}
+					aria-expanded={changementOuvert}
+					onClick={onChangerWorkflow}
+					aria-label={t('admin.action.changeWorkflow', { nom })}
+				>
+					<Workflow aria-hidden="true" size={16} strokeWidth={2} />
+				</Button>
+			)}
 			<Button
 				taille="compacte"
 				variante="discret"
@@ -587,6 +611,18 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 	 * formulaire à la fois, donc un seul état suffit et aucune clé n'est à tenir à jour.
 	 */
 	const [enumeration, setEnumeration] = useState<EtatEnumeration>({ statut: 'chargement' })
+	/**
+	 * `CRM-118` T1.b (§5.72) : le channel dont la commande « Changer de workflow » reprend le focus, un rendu après que
+	 * le panneau s'est refermé et que la ligne relue l'a remontée. Aucune temporisation.
+	 */
+	const [focusChangement, setFocusChangement] = useState<string | null>(null)
+	useEffect(() => {
+		if (focusChangement === null) return
+		const cible = document.querySelector<HTMLButtonElement>(`[data-commande-workflow="${focusChangement}"]`)
+		if (cible === null) return
+		cible.focus()
+		setFocusChangement(null)
+	}, [focusChangement, channels, ouverture])
 
 	// Une réponse arrivée après le démontage ne doit pas écrire dans un composant démonté, ni une
 	// réponse périmée écraser une réponse plus récente — la case des archivés change la requête.
@@ -1168,6 +1204,23 @@ export function AdministrationArborescence({ client = clientCrm }: ProprietesAdm
 											)
 										}
 										enumeration={enumeration}
+										client={client}
+										onOuvrirChangement={(channel) => {
+											setRefus(null)
+											setOuverture({ type: 'changement-workflow', id: channel.id, idTrack: track.id })
+										}}
+										onFermerChangement={(channel) => {
+											setOuverture(AUCUNE)
+											setFocusChangement(channel.id)
+										}}
+										onChangementApplique={(channel, nomWorkflow) => {
+											setOuverture(AUCUNE)
+											setAnnonce(
+												t('admin.tree.workflowChange.done', { channel: channel.name, workflow: nomWorkflow }),
+											)
+											setFocusChangement(channel.id)
+											void rechargerChannels(track.id)
+										}}
 										onCorbeille={(channel) =>
 											ouvrirCorbeille({ type: 'channel', id: channel.id }, {
 												type: 'corbeille-channel',
@@ -1229,6 +1282,11 @@ type ProprietesListeChannels = {
 	readonly onConfirmerArchivage: (channel: ChannelAdministrable) => void
 	/** L'énumération de la confirmation ouverte, s'il y en a une : une seule à la fois (§4 bis.3). */
 	readonly enumeration: EtatEnumeration
+	/** `CRM-118` T1.b : le panneau « Changer de workflow » lit et écrit lui-même ; `null` hors client. */
+	readonly client: ClientCrm | null
+	readonly onOuvrirChangement: (channel: ChannelAdministrable) => void
+	readonly onFermerChangement: (channel: ChannelAdministrable) => void
+	readonly onChangementApplique: (channel: ChannelAdministrable, nomWorkflow: string) => void
 	readonly onCorbeille: (channel: ChannelAdministrable) => void
 	readonly onConfirmerCorbeille: (channel: ChannelAdministrable) => void
 }
@@ -1250,6 +1308,10 @@ function ListeChannels({
 	onArchiver,
 	onConfirmerArchivage,
 	enumeration,
+	client,
+	onOuvrirChangement,
+	onFermerChangement,
+	onChangementApplique,
 	onCorbeille,
 	onConfirmerCorbeille,
 }: ProprietesListeChannels) {
@@ -1310,6 +1372,8 @@ function ListeChannels({
 										onModifier={() => onOuvrirEdition(channel)}
 										onArchiver={() => onArchiver(channel)}
 										onCorbeille={() => onCorbeille(channel)}
+										onChangerWorkflow={() => onOuvrirChangement(channel)}
+										changementOuvert={ouverture.type === 'changement-workflow' && ouverture.id === channel.id}
 									/>
 								</span>
 							</div>
@@ -1329,6 +1393,14 @@ function ListeChannels({
 									enCours={enCours}
 									onAnnuler={onAnnuler}
 									onValider={(saisie) => onValiderEdition(channel.id, saisie)}
+								/>
+							) : null}
+							{ouverture.type === 'changement-workflow' && ouverture.id === channel.id && client !== null ? (
+								<PanneauChangementWorkflow
+									client={client}
+									channel={channel}
+									onAnnuler={() => onFermerChangement(channel)}
+									onApplique={(nomWorkflow) => onChangementApplique(channel, nomWorkflow)}
 								/>
 							) : null}
 							{ouverture.type === 'archivage-channel' && ouverture.id === channel.id ? (

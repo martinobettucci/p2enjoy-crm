@@ -17087,7 +17087,7 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
 - [x] **T1 — spécification, écrite avant le code** — *validée le 2026-10-26* (décision 756) : `docs/SPEC-mcp.md` §9.2
       undecies — trente-sept outils en quatre sous-tranches, six genres d'ancre, la migration de la liste fermée, la
       phrase de l'onglet, les refus nommés, les preuves. Le connecteur suit strictement l'écran.
-- [ ] **T1.b — les gestes d'écran qui manquent** (décision 756), spécifiés dans `docs/SPEC-workflow-engine.md` avant leur
+- [P] **T1.b — les gestes d'écran qui manquent** (décision 756), spécifiés dans `docs/SPEC-workflow-engine.md` avant leur
       code, et validés : renommer un workflow, le désigner par défaut, l'archiver (avec une garde côté serveur pour un
       workflow qu'emploient des channels), le copier vers un track (`copy_workflow_to_track`), changer le workflow d'un
       channel (`change_channel_workflow`). Unitaires, API, E2E, captures, manuel, design system. Connecteur MCP : oui,
@@ -17103,9 +17103,26 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
       - [x] **Base, le 2026-10-27** : migration `0130` (`set_default_workflow` et la garde d'archivage), appliquée en
         développement ; pgTAP `0121` **18/18**, huit mutations tuées ; `0022`, `0037`, `0111` révisées (l'état « archivé
         employé » posé garde suspendue) ; types régénérés, témoin des fonctions de `database.types.test-d.ts` à jour.
-      - [ ] Écrans : l'en-tête du workflow (après la livraison de l'éditeur des checklists de `CRM-068` T3b, qui touche le
-        même fichier), le panneau « Changer de workflow » de l'arborescence ; unitaires, API, E2E, captures, manuel,
-        design system.
+      - [x] **Écrans, le 2026-10-27** : design system §5.72 écrit avant le code (« Copier vers un track » porte
+        `GitBranchPlus`, `CopyPlus` étant pris par `CRM-068` §5.71) ; `EnTeteWorkflow.tsx` (nom, pastilles, cinq commandes,
+        une commande vouée au refus non rendue, confirmation d'archivage, refus nommant leur recours) et la case
+        « Afficher les archivés » de l'éditeur ; `PanneauChangementWorkflow.tsx` sur la ligne d'un channel non archivé
+        (mapping sans destination devinée, perte comptée par la base puis consentie) ; le formulaire de channel renvoie
+        à « Changer de workflow » sur un channel occupé (`reclasserChannelOccupe`). Seed non étendu (décision 764).
+      - Unitaires : `EnTeteWorkflow.test.tsx` **9**, `PanneauChangementWorkflow.test.tsx` **6**, `entete-workflow.test.ts`
+        et `changement-workflow-channel.test.ts` **33**, `AdministrationArborescence.test.tsx` **65** (+2),
+        `administration-arborescence.test.ts` (+1), `AdministrationWorkflows.test.tsx` **135** et
+        `AdministrationWorkflows.nouveau-channel.test.tsx` **12** (le nom du workflow se lit désormais dans le titre).
+      - **API** `e2e/api/defaut-archivage-workflow.spec.ts` **7/7**, par requête directe aux vrais jetons : l'anonyme, la
+        lectrice et le business developer refusés ; défaut global seulement, en une transaction ; la garde (employé,
+        défaut) ; rétablir libre ; la lectrice sans effet.
+      - **E2E** `e2e/ui/workflow-entete-changement.spec.ts` **5/5** : renommer, définir par défaut, archiver refusé
+        (employé, puis défaut) puis accepté, « Afficher les archivés », rétablir, copier ; un channel occupé change de
+        workflow, la perte consentie, l'affaire relue à sa destination au board ; la lectrice aux commandes éteintes ;
+        quatre paliers de l'en-tête et du panneau. Captures observées (`docs/captures/CRM-118/entete-workflow-*.jpg`,
+        `changement-workflow-*.jpg`).
+      - Manuel (l'en-tête du workflow ouvert ; changer le workflow d'un channel qui porte des affaires), DAT, CHANGELOG.
+        **Reste** : la livraison de la migration `0130` et de la webapp sur instruction du responsable, et son constat.
 - [ ] **T2.e — les quatre outils qui suivent leur écran** (après T1.b) : `crm_workflow_update`, `crm_workflow_archive`,
       `crm_workflow_copy_to_track`, `crm_channel_workflow_change` (`docs/SPEC-mcp.md` §9.2 undecies). Mêmes preuves.
 - [P] **T2.a — le workflow, ses étapes, ses transitions** : migration et pgTAP, genres d'ancre,

@@ -13,6 +13,7 @@
 // @spec docs/SPEC-permissions-rls.md §4 (écriture réservée à l'administrateur)
 // @spec CRM-116 (docs/BACKLOG.md) tranche T3 — la couleur d'un channel, lue et écrite comme celle d'un track
 //       (docs/SPEC-administration-arborescence.md §14.3, §14.4 ; décision 729)
+// @spec CRM-118 (docs/BACKLOG.md) tranche T1.b — le refus `channel-occupe` (docs/SPEC-workflow-engine.md §7 quinquies.3)
 //
 // CE MODULE N'INVENTE AUCUNE RÈGLE. C'est la contrainte la plus forte de `CRM-075`, et elle est
 // vérifiable ligne à ligne : chaque refus traduit ici est déjà posé et mesuré par `CRM-020`,
@@ -357,10 +358,14 @@ export type NatureRefusEcriture =
 	| 'network'
 	| 'unknown'
 
-export type RefusEcriture = {
+/** Un refus tel que `classerRefusEcriture` le range, d'après les seuls codes. */
+export type RefusClasse = {
 	readonly nature: NatureRefusEcriture
 	readonly detail: string
 }
+
+/** Un refus d'écriture d'arborescence : rangé par les codes, ou reconnu au nom de sa clé (`channel-occupe`). */
+export type RefusEcriture = RefusClasse | { readonly nature: 'channel-occupe'; readonly detail: string }
 
 /**
  * Classe un refus d'écriture sur le **code PostgreSQL** d'abord, le **code HTTP** ensuite, et
@@ -383,7 +388,7 @@ export function classerRefusEcriture(
 	statutHttp: number | undefined,
 	code: string | undefined,
 	detail: string,
-): RefusEcriture {
+): RefusClasse {
 	if (code === '23505') return { nature: 'slug-pris', detail }
 	if (code === '23503') return { nature: 'reference-absente', detail }
 	if (code === '23514') {
@@ -620,12 +625,28 @@ export type ModificationChannel = {
  * sur `channels` garde. L'écran l'expose parce que l'énoncé de `CRM-075` le demande explicitement
  * (« plus son rattachement à un track et son **workflow** ») ; le refus reste celui du trigger.
  */
+/** Les clés étrangères qui gardent un channel occupé de changer de workflow hors de `change_channel_workflow`. */
+export const CONTRAINTES_CHANNEL_OCCUPE = ['cards_channel_id_workflow_id_fkey', 'card_placements_channel_workflow_fk']
+
+/**
+ * `CRM-118` T1.b (docs/SPEC-workflow-engine.md §7 quinquies.3) : le `23503` d'un channel occupé dont le formulaire
+ * change le workflow n'est pas une référence absente — son geste est « Changer de workflow ». Seul `modifierChannel`
+ * peut le recevoir, et le NOM de la clé, écrit dans la migration, le distingue (la règle de `classerRefusEcriture`).
+ */
+export function reclasserChannelOccupe(resultat: ResultatEcriture): ResultatEcriture {
+	if (resultat.statut !== 'refus' || resultat.refus.nature !== 'reference-absente') return resultat
+	const { detail } = resultat.refus
+	return CONTRAINTES_CHANNEL_OCCUPE.some((nom) => detail.includes(nom))
+		? { statut: 'refus', refus: { nature: 'channel-occupe', detail } }
+		: resultat
+}
+
 export async function modifierChannel(
 	client: ClientCrm,
 	id: string,
 	modification: ModificationChannel,
 ): Promise<ResultatEcriture> {
-	return executer(() =>
+	return reclasserChannelOccupe(await executer(() =>
 		client
 			.from('channels')
 			.update({
@@ -636,7 +657,7 @@ export async function modifierChannel(
 			})
 			.eq('id', id)
 			.select('id'),
-	)
+	))
 }
 
 export async function deplacerChannel(

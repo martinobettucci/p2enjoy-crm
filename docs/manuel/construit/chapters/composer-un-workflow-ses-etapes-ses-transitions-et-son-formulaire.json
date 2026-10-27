@@ -1579,6 +1579,324 @@
 			]
 		},
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "La case "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Afficher les archivés"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au-dessus de la liste, y ajoute les workflows archivés ; chacun porte la mention\n« Archivé ». Sans elle, un workflow archivé quitte la liste. "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-118"
+						},
+						{
+							"type": "text",
+							"text": " tranche T1.b."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'en-tête du workflow ouvert."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " En haut de la colonne de droite, le nom du workflow, puis ses pastilles : sa portée\n(« Global », ou le nom de son track), « Par défaut » s'il l'est, « Archivé » s'il l'est. Dessous, ses commandes :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Renommer"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " remplace le nom par un champ « Nom du workflow », déjà rempli. « Enregistrer » reste indisponible tant\nque le champ est vide ; "
+							},
+							{
+								"type": "code",
+								"text": "Échap"
+							},
+							{
+								"type": "text",
+								"text": " ou « Annuler » referme sans rien changer."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Définir par défaut"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " fait de ce workflow le workflow par défaut de l'espace de travail, en un geste et sans\nconfirmation : l'ancien défaut cesse de l'être au même instant — il n'y en a jamais deux, ni aucun. Le défaut est le\nworkflow proposé en tête quand on crée un channel. Seul un workflow "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "global"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "non archivé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " peut l'être : la\ncommande n'apparaît pas sur les autres, ni sur le défaut lui-même. Pour revenir en arrière, ouvrez l'ancien défaut et\nredéfinissez-le."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Copier vers un track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ouvre un petit formulaire : choisissez le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et donnez si vous le voulez un "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "nom à la\ncopie"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " (il reprend sinon celui du workflow). La copie reprend les étapes, les transitions et le formulaire, devient\npropre à ce track, puis évolue seule ; elle s'ouvre aussitôt, et dit de quel workflow elle vient. Seul un workflow\nglobal non archivé se copie ainsi."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Archiver"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " demande une confirmation, qui rappelle qu'aucun channel ne pourra plus choisir ce workflow. Sa structure\net ses versions sont conservées. Deux refus sont possibles, et chacun dit quoi faire :"
+							}
+						]
+					},
+					{
+						"type": "list",
+						"ordered": false,
+						"start": null,
+						"items": [
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "text",
+											"text": "le workflow est "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "employé par des channels"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " — y compris des channels archivés : le refus en donne le nombre.\nChangez d'abord leur workflow depuis l'arborescence (« Changer de workflow », sur la ligne de chaque channel) ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "text",
+											"text": "c'est le "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "workflow par défaut"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : désignez d'abord un autre workflow par défaut."
+										}
+									]
+								}
+							]
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Rétablir"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", sur un workflow archivé (cochez « Afficher les archivés » pour le retrouver), le remet en service, sans\nconfirmation."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ces commandes demandent d'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrer l'espace de travail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Sans ce droit, elles restent visibles mais grisées, et\nle motif est écrit en tête de l'éditeur. "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Captures : "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-118/entete-workflow-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "les-etapes",

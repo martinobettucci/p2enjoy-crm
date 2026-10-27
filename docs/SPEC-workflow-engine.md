@@ -5417,9 +5417,11 @@ dans le flux, un panneau qui remplace la commande (§5.13), un seul ouvert à la
 
 L'appel est `change_channel_workflow(channel_id, workflow_id, step_mapping, discard_field_values)`. Ses refus
 (`docs/SPEC-change-channel-workflow.md` §3) sont traduits, lus dans le panneau ; le succès referme le panneau, annonce
-« Le channel « … » suit désormais « … » », et la ligne relue montre le nouveau workflow. **Le formulaire de
-modification du channel garde son sélecteur** : il ne change que le workflow d'un channel vide, et son refus sur un
-channel occupé renvoie désormais à « Changer de workflow ».
+« Le channel « … » suit désormais « … » », et la ligne est relue — elle ne montre pas son workflow ; le panneau rouvert
+le nomme dans son titre. **Le formulaire de modification du channel garde son sélecteur** : il ne change que le
+workflow d'un channel vide, et son refus sur un channel occupé — le `23503` de `cards_channel_id_workflow_id_fkey` ou de
+`card_placements_channel_workflow_fk`, reconnu au nom de la clé par `reclasserChannelOccupe` et pour ce seul geste —
+renvoie désormais à « Changer de workflow ».
 
 ### 7 quinquies.4 Ce que la tranche ne fait pas
 
@@ -5436,7 +5438,8 @@ les fonctions d'écran (lecture des étapes occupées, composition du mapping, d
 définir par défaut, copier, archiver refusé puis accepté, rétablir dans l'éditeur ; changer le workflow d'un channel
 occupé avec la perte consentie, l'affaire relue à sa destination au board ; la lectrice qui voit les commandes
 éteintes ; quatre paliers, captures observées. **Manuel**, **design system** (§5.15, §5.13), **seed** si un état
-manque pour la démonstration.
+manque pour la démonstration — il n'est pas étendu (décision 764) : le jeu démontre tous les gestes sauf l'archivage
+accepté, qui se démontre sur un workflow créé d'un geste.
 
 ## 8. Vérification exigée
 

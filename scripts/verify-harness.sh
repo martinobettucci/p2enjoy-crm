@@ -1198,7 +1198,9 @@ ASSERTIONS_ATTENDUES=4434
 # **+1 par `CRM-068` T3b, 2026-10-27** : `e2e/api/checklists.spec.ts` gagne le refus des gestes de l'éditeur au business
 # developer, par requête directe. 1246 + 1 = 1247, COMPTÉE.
 # **+4 par `CRM-068` T4a, 2026-10-27** : `e2e/api/modeles-affaires.spec.ts`, fichier NEUF. COMPTÉE.
-SCENARIOS_API=1251
+# **+7 par `CRM-118` T1.b, 2026-10-27** : `e2e/api/defaut-archivage-workflow.spec.ts`, fichier NEUF — `set_default_workflow`
+# (refus des trois profils, défaut global seulement, une transaction) et la garde d'archivage. 1251 + 7 = 1258, COMPTÉE.
+SCENARIOS_API=1258
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1737,7 +1739,10 @@ SCENARIOS_API=1251
 # (lire, poser, nom pris refusé, archiver, 390 px), l'entrée et l'adresse réservées pour la lectrice, la création depuis un
 # modèle et son effet en base, le `select` absent sans modèle, « Enregistrer comme modèle » et son refus. 988 + 6 =
 # 994, COMPTÉE.
-SCENARIOS_UI=994
+# **+5 par `CRM-118` T1.b, 2026-10-27** : `e2e/ui/workflow-entete-changement.spec.ts`, fichier NEUF — les gestes de
+# l'en-tête du workflow, « Changer de workflow » avec la perte consentie, la lectrice, quatre paliers de chacun. 994 + 5 =
+# 999, COMPTÉE.
+SCENARIOS_UI=999
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
