@@ -12418,7 +12418,10 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
           archivées avec le contrôle de leur type, écrites à « Enregistrer » ; vide = sans réponse ; `contact`, `user`,
           `file` et questions archivées conservées sans saisie ; changer de workflow à la création vide les réponses ;
           connecteur : non (décision 747).
-- [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`.
+- [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`. *Précisée le
+      2026-10-27 (décision 767)* : `docs/SPEC-mcp.md` §9.2 *duodecies* — genre d'ancre `card_checklist_item`, aucune
+      migration ; preuves unitaires, d'intégration contre la vraie base, et E2E (un point coché par le connecteur sur la
+      fiche).
 
 ### CRM-072 — Journal d'audit consultable et conformité RGPD `[P]`
 

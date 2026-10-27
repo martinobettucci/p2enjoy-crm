@@ -36248,3 +36248,24 @@ Le formulaire du modèle passe en `noValidate` : la bulle native du navigateur a
 sous les champs. Constat sur capture : la légende « Réponses aux questions » se confondait avec le libellé de la première
 question. La graisse seule n'y suffisant pas, les deux légendes de groupe prennent `--color-ink`
 (`docs/DESIGN_SYSTEM.md` §5.71 bis).
+
+## décision 767 — `CRM-068` T5 : les deux outils de checklist du connecteur, inscrits au catalogue avant le code
+
+*2026-10-27, session interactive (Claude Code, poste du responsable).*
+
+**Problème.** `docs/SPEC-checklists.md` §5, validé par les décisions 747 et 748, nomme deux outils dans la famille
+`affaires` : `crm_card_checklist_list` et `crm_card_checklist_set`. Leur entrée au catalogue du connecteur
+(`docs/SPEC-mcp.md` §9.2) manquait. La vérification de démarrage exige en outre que tout argument d'identifiant soit une
+ancre.
+
+**Décisions.**
+
+1. L'entrée est inscrite en §9.2 *duodecies*. Les deux outils entrent dans la famille existante : aucune migration,
+   aucune case nouvelle.
+2. Le point coché se désigne par `item_id`, ancré par un genre nouveau, `card_checklist_item` (table
+   `card_checklist_items`, qui porte son espace). L'écriture est filtrée sur l'affaire : un point d'une autre affaire
+   rend zéro ligne, donc un refus.
+3. La lecture rend ce que montre la fiche : points libres, puis ceux de l'étape courante, puis ceux des étapes
+   traversées. Chaque point dit son état, qui l'a coché et quand, et les étapes pour lesquelles il est exigé.
+
+**Connecteur MCP — les deux questions.** Oui, dans la famille `affaires`, déjà tranchée par la décision 747.
