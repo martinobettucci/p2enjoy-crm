@@ -36497,3 +36497,16 @@ main ; des libellés **relevés dans la page** et non déclarés par le scénari
 non-régression ; des contrôles qui grandissent chapitre par chapitre, comme ceux de T3. **Découpage** : T4.0, l'outillage,
 se fait sans la pile ; T4.1 à T4.5 produisent les images et **exigent la pile**, que le responsable a demandé de ne pas
 relancer : elles attendent son accord.
+
+### `CRM-117` T4.0 : l'outillage des images, sans la pile (2026-10-27)
+
+**Fait** : `scripts/manuel/images.mjs`, module pur — la découpe (le rectangle des cibles, 16 px de marge, borné à la
+page), la fusion du manifeste, les valeurs du catalogue (une valeur à paramètres devient un motif), les éléments cités
+par section (une citation coupée par un retour à la ligne compte), la cohérence manuel–manifeste–disque et la preuve
+« un élément cité, une image », avec les exceptions lues dans la table du §11.3 — 11 unitaires, deux mutations tuées.
+L'aide Playwright `e2e/manuel/illustrer.ts` et le projet `manuel` ; les contrôles 8 et 9 de `scripts/verify-manual.sh`,
+qui portent sur les chapitres illustrés, et leur contre-épreuve (huit familles). **Mesuré** sur le manuel réel :
+**870** éléments cités, dans **181** sections. **Non éprouvé, et dit** : l'aide `illustrer` elle-même — son relevé des
+libellés dans la page, sa découpe réelle —, qui exige la pile ; sa première exécution sera celle de T4.1. **Constaté au
+passage** : les trois fichiers construits que `CRM-068` avait régénérés avant la réécriture des chapitres 9 et 18
+restaient dans la copie de travail, en retard sur HEAD ; réalignés sur HEAD, sans perte — leur source est poussée.

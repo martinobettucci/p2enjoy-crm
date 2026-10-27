@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # @verifies CRM-117 (docs/BACKLOG.md) tranche T3.0 — la preuve du manuel public, révisée avant la réécriture
+# @verifies CRM-117 tranche T4.0 — les contrôles d'images et la preuve « un élément cité, une image » (docs/SPEC-manual.md §11.4)
 # @verifies docs/SPEC-manual.md §10 (le contrat d'un chapitre public : aucune référence interne, libellés réels, aucun
 #           volume, aucun secret), §10 bis (le plan, les chapitres réécrits à mesure), §12 (la correspondance entre
 #           unités et chapitres), §15 (le manuel construit est à jour), §16 (la preuve du manuel et sa contre-épreuve)
@@ -30,7 +31,11 @@
 #   4. aucun volume du jeu de démonstration n'est recopié (§10, point 4) ;
 #   5. le manuel ne porte aucune valeur de variable d'environnement, aucune clé, aucun jeton ;
 #   6. chaque chapitre et chaque section de la table du §12 existe dans le manuel construit ;
-#   7. le numéro écrit dans le texte d'un lien interne est celui que porte le titre visé (§10 bis).
+#   7. le numéro écrit dans le texte d'un lien interne est celui que porte le titre visé (§10 bis) ;
+#   8. dans les chapitres illustrés, chaque image citée est au manifeste et sur le disque, rangée là où elle paraît, et
+#      aucune n'est orpheline ; une image pleine page ouvre son chapitre (§11.1, §11.2) ;
+#   9. dans les chapitres illustrés, chaque élément cité de l'interface est visible dans une image de sa section, hors
+#      exceptions de la table du §11.3 — la preuve « un élément cité, une image » (§11.4).
 #
 # RÉVISÉ PAR `CRM-117` T3.0 (docs/SPEC-manual.md §10 bis, 2026-10-27). La version de `CRM-047` exigeait l'annexe A
 # comparée à la base, les dossiers de captures cités, les unités citées et leur couverture : exactement ce que le §10
@@ -58,6 +63,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 MANUEL=docs/manual.md
+IMAGES=docs/manuel/images
+MANIFESTE=docs/manuel/images/manifeste.json
 SPEC=docs/SPEC-manual.md
 CONSTRUIT=docs/manuel/construit
 I18N=webapp/src/i18n/fr.ts
@@ -74,6 +81,13 @@ done
 
 failures=0
 checks=0
+
+# ---------------------------------------------------------------------------------------------
+# Les chapitres déjà illustrés (docs/SPEC-manual.md §11.4). Chaque tranche de T4 y ajoute les siens ; les contrôles 8 et
+# 9 ne portent que sur eux tant que l'illustration n'est pas finie, puis la liste disparaît au profit du manuel entier.
+# ---------------------------------------------------------------------------------------------
+CHAPITRES_ILLUSTRES=(
+)
 
 ok()    { checks=$((checks + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }
 fail()  { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31mECHEC\033[0m %s\n' "$1"; }
@@ -387,6 +401,61 @@ controler_liens() {
 	fi
 }
 
+# Les contrôles d'images lisent le manifeste et le disque par le module `scripts/manuel/images.mjs`. `$1` : le manuel,
+# `$2` : le manifeste, `$3` : la spécification (exceptions du §11.3), puis les chapitres contrôlés.
+controles_images() {
+	local famille=$1 fichier=$2 manifeste=$3 spec=$4
+	shift 4
+	node --input-type=module - "$famille" "$fichier" "$manifeste" "$spec" "$IMAGES" "$I18N" "$@" <<'JS'
+import { existsSync, readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { controlerIllustration, controlerImages, exceptionsDeLaSpecification, valeursInterface } from './scripts/manuel/images.mjs'
+const [famille, fichier, manifeste, spec, images, i18n, ...chapitres] = process.argv.slice(2)
+const source = readFileSync(fichier, 'utf8')
+const lu = existsSync(manifeste) ? JSON.parse(readFileSync(manifeste, 'utf8')) : { images: [] }
+const portee = { chapitres: new Set(chapitres) }
+const surDisque = existsSync(images)
+	? readdirSync(images, { withFileTypes: true }).filter((d) => d.isDirectory() && !d.name.startsWith('.'))
+		.flatMap((d) => readdirSync(join(images, d.name)).filter((f) => f.endsWith('.jpg')).map((f) => `${d.name}/${f}`))
+	: []
+const anomalies = famille === 'images'
+	? controlerImages(source, lu, surDisque, portee)
+	: controlerIllustration(source, lu, valeursInterface(readFileSync(i18n, 'utf8')), {
+		...portee,
+		exceptions: exceptionsDeLaSpecification(readFileSync(spec, 'utf8')),
+	})
+for (const a of anomalies) console.log(a)
+JS
+}
+
+controler_images() {
+	local fichier=$1 manifeste=$2
+	shift 2
+	titre "8. Les images des chapitres illustrés : citées, au manifeste, sur le disque, à leur place (§11.1, §11.2)"
+	if [ $# -eq 0 ]; then info "aucun chapitre n'est encore illustré : la liste CHAPITRES_ILLUSTRES grandit avec T4"; return 0; fi
+	local trouve=0 ligne
+	while IFS= read -r ligne; do
+		[ -z "$ligne" ] && continue
+		trouve=1
+		fail "$ligne"
+	done < <(controles_images images "$fichier" "$manifeste" "$SPEC" "$@")
+	if [ "$trouve" -eq 0 ]; then ok "images cohérentes dans $# chapitre(s) illustré(s)"; fi
+}
+
+controler_illustration() {
+	local fichier=$1 manifeste=$2 spec=$3
+	shift 3
+	titre "9. Un élément cité, une image (§11.4)"
+	if [ $# -eq 0 ]; then info "aucun chapitre n'est encore illustré : la liste CHAPITRES_ILLUSTRES grandit avec T4"; return 0; fi
+	local trouve=0 ligne
+	while IFS= read -r ligne; do
+		[ -z "$ligne" ] && continue
+		trouve=1
+		fail "$ligne"
+	done < <(controles_images illustration "$fichier" "$manifeste" "$spec" "$@")
+	if [ "$trouve" -eq 0 ]; then ok "chaque élément cité est illustré dans $# chapitre(s)"; fi
+}
+
 executer_tous() {
 	local fichier=$1 spec=$2
 	shift 2
@@ -397,6 +466,8 @@ executer_tous() {
 	controler_secrets "$fichier"
 	controler_correspondance "$spec" "$CONSTRUIT/contents.json"
 	controler_liens "$fichier"
+	controler_images "$fichier" "$MANIFESTE" "${CHAPITRES_ILLUSTRES[@]}"
+	controler_illustration "$fichier" "$MANIFESTE" "$spec" "${CHAPITRES_ILLUSTRES[@]}"
 }
 
 # ---------------------------------------------------------------------------------------------
@@ -410,7 +481,9 @@ executer_tous() {
 #   4. un volume recopié dans un chapitre ;
 #   5. une clé recopiée ;
 #   6. une ligne du §12 qui désigne une section disparue ;
-#   7. un lien dont le numéro écrit n'est pas celui de sa cible.
+#   7. un lien dont le numéro écrit n'est pas celui de sa cible ;
+#   8. une image citée absente du manifeste et du disque, et une image orpheline du manifeste ;
+#   9. un élément de l'interface cité sans aucune image.
 # Le contrôle 1 lit le dépôt et non une copie : sa contre-épreuve est celle de la construction
 # (`scripts/manuel/construction.test.ts`), qui dégrade la source.
 if [ "$CONTRE_EPREUVE" = true ]; then
@@ -425,8 +498,12 @@ if [ "$CONTRE_EPREUVE" = true ]; then
 		printf 'Livré par CRM-999, voir docs/SPEC-x.md ; la variable SUPABASE_URL ; le seed le montre.\n\n'
 		printf 'Cette adresse affiche « Affaire introuvable », et le channel porte 42 affaires.\n\n'
 		printf 'SERVICE_ROLE_KEY=abc\n\n'
-		printf 'Voir la [section 99.9](#le-carnet-de-contacts).\n'
+		printf 'Voir la [section 99.9](#le-carnet-de-contacts).\n\n'
+		printf 'Le bouton « Nouveau channel » ouvre le formulaire.\n\n'
+		printf '![Une image absente](manuel/images/un-chapitre-degrade/absente.jpg)\n'
 	} > "$COPIE"
+	MANIFESTE_COPIE="$TEMPORAIRE/manifeste.json"
+	printf '{"images":[{"fichier":"un-chapitre-degrade/orpheline.jpg","largeur":10,"hauteur":10,"chapitre":"un-chapitre-degrade","section":null,"pleinePage":false,"libelles":[]}]}\n' > "$MANIFESTE_COPIE"
 	awk '
 		/^## 12\. / { dans = 1 }
 		dans && /^\| Unité \|/ { print; getline; print; print "| `CRM-998` | le-carnet-de-contacts | une-section-disparue |"; next }
@@ -447,10 +524,14 @@ if [ "$CONTRE_EPREUVE" = true ]; then
 	[ "$(compter controler_correspondance "$SPEC_COPIE" "$CONSTRUIT/contents.json")" -ge 1 ] || manquantes+=("6 (table du §12)")
 	failures=0
 	[ "$(compter controler_liens "$COPIE")" -ge 1 ] || manquantes+=("7 (numéros des liens)")
+	failures=0
+	[ "$(compter controler_images "$COPIE" "$MANIFESTE_COPIE" un-chapitre-degrade)" -ge 2 ] || manquantes+=("8 (images)")
+	failures=0
+	[ "$(compter controler_illustration "$COPIE" "$MANIFESTE_COPIE" "$SPEC" un-chapitre-degrade)" -ge 1 ] || manquantes+=("9 (un élément cité, une image)")
 
 	printf '\n'
 	if [ "${#manquantes[@]}" -eq 0 ]; then
-		printf '\033[32mLe harnais MORD : chacune des six familles dégradées produit son anomalie.\033[0m\n'
+		printf '\033[32mLe harnais MORD : chacune des huit familles dégradées produit son anomalie.\033[0m\n'
 		exit 0
 	fi
 	printf '\033[31mLe harnais est COMPLAISANT pour : %s.\033[0m\n' "${manquantes[*]}"

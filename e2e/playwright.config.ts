@@ -2,6 +2,7 @@
 // @spec CRM-008 (docs/BACKLOG.md) — projets Playwright, déclaration du webServer, rapport HTML
 // @spec CRM-091 (docs/BACKLOG.md) — build de preuve configuré pour le Keycloak de développement
 // @spec CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §8.6 — relais de l'échangeur au `vite preview`
+// @spec CRM-117 (docs/BACKLOG.md) — tranche T4.0 : le projet `manuel`, qui produit les images du manuel (docs/SPEC-manual.md §11.4)
 // @spec docs/SPEC-test-harness.md §4 (projets), §4.2 (webServer), §5 (rapport)
 // @spec docs/SPEC-webapp.md §13 (commandes), §14 (preuves) ; docs/DESIGN_SYSTEM.md §11 (captures)
 // @spec README.md §7 (tests)
@@ -53,8 +54,8 @@ const PROJETS_DEMANDES = (process.env['E2E_PROJETS'] ?? 'api,mail,ui')
 	.map((nom) => nom.trim())
 	.filter((nom) => nom.length > 0)
 
-/** Seul `ui` a besoin de l'application construite et servie. */
-const SERVEUR_REQUIS = PROJETS_DEMANDES.includes('ui')
+/** `ui` et `manuel` ont besoin de l'application construite et servie. */
+const SERVEUR_REQUIS = PROJETS_DEMANDES.includes('ui') || PROJETS_DEMANDES.includes('manuel')
 
 /**
  * Chemin d'un Chromium **fourni par l'environnement**, employé à la place de celui que Playwright
@@ -146,6 +147,22 @@ export default defineConfig({
 			use: {
 				baseURL: URL_BASE,
 				...devices['Desktop Chrome'],
+				...(CHROMIUM_FOURNI === ''
+					? {}
+					: { launchOptions: { executablePath: CHROMIUM_FOURNI } }),
+			},
+		},
+		{
+			// Les images du manuel — `CRM-117` T4, docs/SPEC-manual.md §11.4. Ces scénarios PRODUISENT des images et leur
+			// manifeste ; ils ne prouvent rien eux-mêmes et ne sont pas comptés dans les campagnes de non-régression :
+			// la preuve est `scripts/verify-manual.sh`. Projet demandé explicitement (`E2E_PROJETS=manuel`), jamais par
+			// défaut.
+			name: 'manuel',
+			testDir: join(import.meta.dirname, 'manuel'),
+			use: {
+				baseURL: URL_BASE,
+				...devices['Desktop Chrome'],
+				viewport: { width: 1440, height: 900 },
 				...(CHROMIUM_FOURNI === ''
 					? {}
 					: { launchOptions: { executablePath: CHROMIUM_FOURNI } }),

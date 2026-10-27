@@ -17135,9 +17135,14 @@ responsable** : traitée juste après `CRM-116`.*
       images placées et observées ; la preuve « un élément cité, une image » et la table des exceptions (§11.3) soumise
       au responsable. Contrat technique : `docs/SPEC-manual.md` §11.4 (mesure : environ 620 libellés cités, dans 157
       sections).
-      - [ ] **T4.0 — l'outillage, sans la pile** : `scripts/manuel/images.mjs` (découpe, manifeste, éléments cités et leur
+      - [x] **T4.0 — l'outillage, sans la pile** : `scripts/manuel/images.mjs` (découpe, manifeste, éléments cités et leur
             illustration — module pur, unitaires), l'aide `e2e/manuel/illustrer.ts`, le projet Playwright `manuel`, les
             contrôles d'images de `scripts/verify-manual.sh` sur les chapitres illustrés, avec leur contre-épreuve.
+            *Fait le 2026-10-27* : `images.mjs` **11 unitaires**, deux mutations tuées (l'orpheline, la pleine page qui
+            illustre son chapitre) ; mesuré sur le manuel réel : **870 éléments cités dans 181 sections** ;
+            `verify-manual.sh` contrôles 8 et 9, contre-épreuve à huit familles ; projet `manuel` déclaré, hors des
+            campagnes ; `test:unit` 4866/4866, typecheck vert. **Non éprouvé** : l'aide `illustrer` elle-même, qui exige
+            la pile — sa première exécution est celle de T4.1.
       - [ ] **T4.1 à T4.5 — les images**, groupe par groupe comme T3 : scénarios, images observées, liste des chapitres
             illustrés. **Exigent la pile de développement**, que le responsable a demandé de ne pas relancer le
             2026-10-27 : elles attendent son accord.
