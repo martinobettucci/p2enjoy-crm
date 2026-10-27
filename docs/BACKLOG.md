@@ -17123,6 +17123,10 @@ responsable** : traitée juste après `CRM-116`.*
             référence interne ; huit passages devenus faux ou mal liés corrigés (journal) ; table du §12 tenue. Le
             contrôle « aucune référence interne » couvre 31 chapitres sur 33 : les chapitres 9 et 18 attendent T3.2b et
             T3.4b, après le commit des ajouts de `CRM-068`.
+            **Correctif, même jour** : le message du commit `f0d2ec64` dit le manuel « publié en développement » ; c'est
+            faux pour cette tranche. La publication a échoué (API injoignable) : la pile de développement avait été
+            arrêtée par le responsable, qui a demandé de ne pas la relancer. Le bucket porte le manuel de T3.4a ; la
+            prochaine publication (seed ou `scripts/manuel/publier.sh`) le mettra à jour.
 - [ ] **T4 — les images**, par les mêmes groupes : l'aide `illustrer`, les scénarios `e2e/manuel/`, le manifeste, les
       images placées et observées ; la preuve « un élément cité, une image » et la table des exceptions (§11.3) soumise
       au responsable.
