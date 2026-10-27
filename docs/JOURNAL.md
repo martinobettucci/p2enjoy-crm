@@ -36217,3 +36217,27 @@ légende collée au premier point, et des guillemets coupés en fin de ligne.
 
 **Conséquences.** Le manuel (9.10, 18.15) est écrit au plan de `CRM-117` et sera committé après son T3.0, comme celui de
 T3b. La correspondance de l'aide (`aide-ecrans.ts`) le sera avec lui : sa preuve lit le manuel construit.
+
+## décision 766 — `CRM-068` T4b2 : les réponses d'un modèle se saisissent dans sa fiche
+
+*2026-10-27, session interactive (Claude Code, poste du responsable), avant le code.*
+
+**Problème.** `docs/SPEC-checklists.md` §4 veut que la fiche d'un modèle « montre les questions du workflow choisi » ;
+T4b1 ne les reprenait que d'une affaire. Restait à dire comment ces questions se rendent et s'écrivent dans un document
+qui s'enregistre d'un bloc.
+
+**Décisions** (`docs/DESIGN_SYSTEM.md` §5.71 bis) :
+
+1. Les questions non archivées du workflow, avec le contrôle de leur type. Elles sont écrites avec le modèle, à
+   « Enregistrer », et non champ par champ.
+2. Vide vaut « sans réponse » : la clé est retirée. Une case décochée est aussi sans réponse, et non « non ».
+3. `contact`, `user` et `file` ne se répondent pas dans un modèle. Une réponse reprise d'une affaire est conservée, de
+   même qu'une réponse à une question archivée.
+4. À la création, changer de workflow vide les réponses.
+5. Tant que les questions ne sont pas lues, aucune réponse n'est envoyée : le modèle garde les siennes.
+
+**Connecteur MCP.** La question est déjà tranchée par la décision 747 : le connecteur ne porte que les checklists. Les
+modèles n'y entrent pas.
+
+**Conséquences.** `lib/modeles-affaires.ts` compose les réponses d'après les questions lues ; la fiche les rend. La base
+ne change pas : `card_templates_valider` juge déjà chaque valeur (migration `0131`).

@@ -6789,6 +6789,34 @@ porteur du geste, borne de liste à `104ch`.
 - **La légende « Points de checklist » prend `mb-1`** : sans elle, l'anneau de focus du premier point la touchait.
 - **Le panneau de la fiche reste ouvert après le succès**, pour l'annonce ; « Annuler » y devient « Fermer ».
 
+### 5.71 bis Les réponses d'un modèle d'affaire — `CRM-068` T4b2
+
+*Écrit le 2026-10-27, avant le code (décision 766).* `docs/SPEC-checklists.md` §4 : « le formulaire montre les questions
+du workflow choisi ». Ces règles disent de quoi la fiche d'un modèle a l'air quand elle les montre.
+
+- **UN `fieldset` « Réponses aux questions », après « Points de checklist »**, légende comme celle des points. Les
+  questions **non archivées** du workflow, dans l'ordre du formulaire (`position`), chacune avec le **contrôle de son
+  type** (§5.7 : libellé au-dessus, texte d'aide dessous, mêmes formes que la fiche d'affaire), **sans astérisque ni
+  mention d'étape** : aucune réponse n'est exigée d'un modèle.
+- **LES CONTRÔLES S'ÉCRIVENT AVEC LE MODÈLE, À « ENREGISTRER »** — et non champ par champ comme sur la fiche d'affaire
+  (§5.7 ter) : un modèle est un document qu'on prépare, dont aucune affaire ne dépend avant son enregistrement. Un champ
+  vide est **sans réponse** : sa clé est retirée du modèle. Une **case à cocher** cochée répond « oui » ; décochée, elle
+  est sans réponse — un modèle qui imposerait « non » à chaque affaire ne servirait personne.
+- **LES QUESTIONS QUI DÉSIGNENT UNE PERSONNE OU UN FICHIER** (`contact`, `user`, `file`) ne se répondent pas dans un
+  modèle : elles nomment ce qui appartient à **une** affaire. Elles sont rendues en **phrase**, 13 px `--color-text-2`
+  (§5.15) — « Se renseigne sur l'affaire. » — ou, quand le modèle en porte une réponse reprise d'une affaire,
+  « Réponse reprise d'une affaire, conservée. ». Une réponse à une **question archivée** est conservée de même, et une
+  phrase en dit le nombre sous la liste.
+- **À LA CRÉATION, changer de workflow vide les réponses** : les questions sont celles d'un autre workflow. Une phrase
+  sous le `select` le dit tant qu'une réponse est saisie : « Changer de workflow efface les réponses saisies. »
+- **ÉTATS** (§5.8) : pendant la lecture des questions, « Chargement des questions… » en 13 px `--color-text-3` ; en
+  échec, la phrase d'erreur et « Réessayer » (discret compact) — le modèle reste enregistrable, ses réponses
+  **inchangées** : aucune n'est envoyée tant que les questions ne sont pas lues ; sans question, « Ce workflow ne pose
+  aucune question. ».
+- **LE REFUS D'UNE RÉPONSE** (`invalid_field_value`, `template_field_unknown`) s'écrit sous les champs comme les autres
+  (§5.71) ; la phrase de T4b1 sur les réponses reprises disparaît.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
 
 ### 5.72 L'en-tête du workflow choisi, et le changement de workflow d'un channel — `CRM-118` T1.b
 

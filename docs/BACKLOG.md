@@ -12406,7 +12406,10 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
           par « Cocher ces points » attend la capacité) ; harnais UI +6. **Reste le manuel** (9.10 et 18.15, écrits au plan
           de `CRM-117`, committés après son T3.0, avec la correspondance de l'aide `aide-ecrans.ts`).
     - [ ] **T4b2** — la saisie des réponses aux questions du workflow dans la fiche d'un modèle
-          (`docs/DESIGN_SYSTEM.md` §5.71).
+          (`docs/DESIGN_SYSTEM.md` §5.71). *Précisée le 2026-10-27 (décision 766)* : §5.71 bis — les questions non
+          archivées avec le contrôle de leur type, écrites à « Enregistrer » ; vide = sans réponse ; `contact`, `user`,
+          `file` et questions archivées conservées sans saisie ; changer de workflow à la création vide les réponses ;
+          connecteur : non (décision 747).
 - [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`.
 
 ### CRM-072 — Journal d'audit consultable et conformité RGPD `[P]`
