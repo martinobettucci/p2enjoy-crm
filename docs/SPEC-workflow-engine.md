@@ -5334,7 +5334,7 @@ pure addition d'une fonction : aucune table, aucune politique, aucun privilège 
 ## 7 quinquies. Les gestes d'en-tête d'un workflow, et le changement de workflow d'un channel — `CRM-118` T1.b
 
 *Écrit le 2026-10-27, avant le code, sur les arbitrages du responsable (`docs/JOURNAL.md` décision 758) ; les choix de
-l'agent sont marqués « choix de l'agent ».* La décision 756 veut que tout geste offert au connecteur ait d'abord son
+l'agent, marqués « choix de l'agent », sont **validés le même jour** (décision 760).* La décision 756 veut que tout geste offert au connecteur ait d'abord son
 écran. Cinq gestes que la base permet n'en avaient pas : renommer un workflow, le désigner par défaut, l'archiver (et le
 rétablir), le copier vers un track, changer le workflow d'un channel qui porte des affaires. Cette section les spécifie ;
 le connecteur les reprend ensuite (`docs/SPEC-mcp.md` §9.2 undecies, T2.e).

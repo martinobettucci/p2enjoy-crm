@@ -36078,3 +36078,12 @@ ont été posés au responsable. **Réponses** :
 **Persisté** : `docs/SPEC-checklists.md` §4 (T3b), `docs/DESIGN_SYSTEM.md` §5.70 bis et §5.7 quinquies (révisé), après
 relecture intégrale du design system. Le code suit.
 
+
+### décision 760 — `CRM-118` T1.b : la spécification d'écran validée
+
+*2026-10-27, validation du responsable.* `docs/SPEC-workflow-engine.md` §7 quinquies est validée telle qu'écrite : le
+défaut d'un espace est un workflow **global** seulement (`set_default_workflow` refuse un workflow propre à un track) ;
+l'en-tête du workflow choisi et ses cinq commandes, avec les icônes `Star` et `CopyPlus` ; la case « Afficher les
+archivés » ; le panneau « Changer de workflow » sur la ligne du channel de l'arborescence ; puis T2.e, les quatre outils
+du connecteur qui suivent leur écran. **Persisté** : `docs/SPEC-workflow-engine.md` §7 quinquies (en-tête de section),
+`docs/BACKLOG.md` (`CRM-118` T1.b).

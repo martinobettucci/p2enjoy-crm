@@ -17058,10 +17058,10 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
         corbeille ou par défaut (déclencheur) ; désignation par défaut par une fonction atomique `set_default_workflow`
         (migration) ; changement de workflow d'un channel depuis l'arborescence, ligne du channel, panneau dans le flux ;
         rétablir un workflow archivé à l'écran seulement.
-      - [~] **Spécification écrite le 2026-10-27**, avant le code : `docs/SPEC-workflow-engine.md` §7 quinquies — la
+      - [x] **Spécification écrite et validée le 2026-10-27** (décision 760), avant le code : `docs/SPEC-workflow-engine.md` §7 quinquies — la
         fonction `set_default_workflow` et la garde d'archivage (une migration), l'en-tête du workflow choisi et ses cinq
         commandes, la case « Afficher les archivés », le panneau « Changer de workflow » de l'arborescence, les preuves ;
-        choix de l'agent marqués pour relecture.
+        défaut global seulement.
 - [ ] **T2.e — les quatre outils qui suivent leur écran** (après T1.b) : `crm_workflow_update`, `crm_workflow_archive`,
       `crm_workflow_copy_to_track`, `crm_channel_workflow_change` (`docs/SPEC-mcp.md` §9.2 undecies). Mêmes preuves.
 - [P] **T2.a — le workflow, ses étapes, ses transitions** : migration et pgTAP, genres d'ancre,
