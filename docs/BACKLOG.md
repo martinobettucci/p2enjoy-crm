@@ -12385,8 +12385,15 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
         2/2 et `checklists.spec.ts` 5/5, éditeur, cohérence, versions et board 119/120 puis la preuve corrigée verte ;
         captures observées — un défaut vu à 390 px (libellé coupé lettre à lettre) corrigé ; **reste le manuel** (18.10 et 9.9,
         écrits au plan de `CRM-117`, committés après son T3.0, qui réorganise le fichier) ; harnais UI 988, API 1247. Connecteur : outils livrés par `CRM-118` (décisions 759, 761).
-- [ ] **T4 — les modèles d'affaires** : `card_templates`, `creer_affaire` étendue, `save_card_as_template`, Réglages,
-      « Nouvelle affaire », « Enregistrer comme modèle ».
+- [ ] **T4 — les modèles d'affaires**, découpée le 2026-10-27 en deux livraisons :
+  - [ ] **T4a — la base** : `card_templates` (RLS : écriture administrateur, lecture membre ; nom unique parmi les
+        modèles non archivés ; `field_values` validées à l'écriture par la même règle que les valeurs d'une affaire,
+        extraite du déclencheur de `card_field_values` en une fonction partagée), `creer_affaire(p_channel, p_titre,
+        p_template)` qui applique le modèle dans la même transaction, `save_card_as_template(p_placement, p_name)` ;
+        pgTAP, API.
+  - [ ] **T4b — les écrans et le seed** : Réglages ▸ Modèles d'affaires, le `select` « Modèle » de « Nouvelle
+        affaire », « Enregistrer comme modèle » sur la fiche ; deux modèles au seed dont un enregistré depuis une
+        affaire (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel.
 - [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`.
 
 ### CRM-072 — Journal d'audit consultable et conformité RGPD `[P]`
