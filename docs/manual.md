@@ -1386,9 +1386,6 @@ connecteur MCP saura lister, consigner et corriger les activités d'une affaire 
 
 ### 9.9 La checklist d'une affaire : les points à cocher
 
-*Livré par `CRM-068`, tranches T1 à T3a, en développement. Captures dans `docs/captures/CRM-068/`, préfixées
-`fiche-checklist-` et `board-`.*
-
 **À quoi cela sert.** Dire ce qu'il reste à faire sur une affaire, point par point, et savoir qui l'a fait. Certains
 points viennent de l'**étape** où se trouve l'affaire ; d'autres sont **libres**, ajoutés à la main sur une affaire.
 
@@ -1433,9 +1430,9 @@ grisés, et le bandeau en tête de la fiche dit pourquoi ([chapitre 3.11](#les-c
 IA — Cerfrance » (un point coché sur deux, un point libre), « Atelier prompt — Lycée Vauban » (bloquée en Relance tant
 que « Proposition envoyée » n'est pas coché) et « Parcours data — Mairie de Rennes » (tout coché, en Négociation).
 
-**Ce qui n'est pas encore livré.** Définir les points d'une étape et les points exigés par un déplacement se fait
-aujourd'hui sans écran : l'éditeur de workflows les recevra (`CRM-068` T3b), avec un lien du bandeau de refus vers la
-fiche. Les **modèles d'affaires** (T4) et les outils du **connecteur MCP** (T5) suivront.
+**Définir les points d'une étape** et les points exigés par un déplacement se fait dans l'éditeur de workflows
+([section 18.10](#les-checklists-des-etapes-et-les-points-qu-un-chemin-exige)). Le bandeau de refus du tableau porte le lien **« Cocher ces points »**, qui ouvre la fiche sur ce
+bloc, le premier point exigé non coché prêt à être coché.
 
 ### 9.10 Le tableau kanban d'un channel
 
@@ -1469,6 +1466,12 @@ par-dessus : le tableau reste visible. Un seul champ, le **titre** ; tout le res
 responsable, échéance, contacts — se complète ensuite sur la fiche.
 
 - **« Créer » reste grisé tant que le titre est vide** — des espaces seuls ne comptent pas.
+- **Partir d'un modèle.** Quand le workflow du channel a au moins un modèle d'affaire, une liste
+  **« Modèle »** paraît sous le titre, « Aucun modèle » en tête. Choisir un modèle **remplit le titre s'il est encore
+  vide** — jamais par-dessus ce que vous avez tapé —, et l'affaire naît avec la description, le montant, les réponses
+  aux questions et les points de checklist du modèle ; les points de l'étape initiale s'y ajoutent comme à toute
+  création. Un channel dont le workflow n'a aucun modèle ne montre pas la liste. Les modèles se préparent dans
+  **Réglages ▸ Modèles d'affaires** ([section 18.15](#preparer-des-modeles-d-affaires)).
 - **L'affaire entre toujours par l'étape initiale** du workflow du channel, quelle que soit la façon
   dont vous avez ouvert le formulaire. C'est le serveur qui la choisit, pas l'écran.
 - **Une fois créée, sa fiche s'ouvre** : c'est là que l'affaire se complète.
@@ -1481,7 +1484,7 @@ responsable, échéance, contacts — se complète ensuite sur la fiche.
 - **Quand le serveur refuse**, la raison s'écrit sous le champ, et ce que vous avez tapé reste en
   place : channel archivé ou mis à la corbeille ; workflow sans étape initiale — avec le lien **Ouvrir
   l'éditeur de workflows**, où l'étape initiale se désigne ; droit d'écriture insuffisant sur ce
-  channel. Le bouton est montré à tous les profils : un compte en lecture seule le voit, et le refus
+  channel ; modèle qui n'est plus proposé — archivé entre-temps. Le bouton est montré à tous les profils : un compte en lecture seule le voit, et le refus
   le lui dit.
 - **Un channel sans aucune affaire** l'annonce au-dessus du tableau, avec le geste à faire :
   « Créez la première avec « Nouvelle affaire », au-dessus des colonnes ».
@@ -3279,7 +3282,7 @@ dit en tête et la suggestion ne peut pas être acceptée. Vous pouvez choisir u
 transitions, champs, règles et exigences, et déplace les affaires vers leur destination. **Juste avant**,
 le produit garde une **version** du workflow tel qu'il était — le *point de retour* — et l'annonce la
 nomme : « Point de retour : version 4 ». Pour revenir en arrière, restaurez cette version depuis le bloc
-« Versions » du même écran ([chapitre 18.12](#garder-une-photographie-d-un-workflow-et-y-revenir)).
+« Versions » du même écran ([chapitre 18.13](#garder-une-photographie-d-un-workflow-et-y-revenir)).
 
 **Si le workflow a changé entre-temps** — un collègue a ajouté une étape, renommé une transition —,
 l'acceptation est refusée : « Le workflow a changé depuis cette suggestion : elle ne peut plus être
@@ -3475,7 +3478,36 @@ Si un autre administrateur déclare la même exigence pendant que vous remplisse
 l'écran vous le dit — « Ce champ est déjà exigé par cette transition » — au lieu d'afficher une
 erreur technique.
 
-### 18.10 Ce qu'une exigence fera aux affaires en cours
+### 18.10 Les checklists des étapes, et les points qu'un chemin exige
+
+**Les points d'une étape.** Juste avant les exigences, le bloc **« Checklists des étapes »** liste chaque étape du
+workflow dans l'ordre du graphe, avec ses points. Ces points sont **ajoutés automatiquement aux affaires qui entrent dans
+l'étape** ; elles les cochent ensuite sur leur fiche ([section 9.9](#la-checklist-d-une-affaire-les-points-a-cocher)).
+
+- **« Ajouter un point »**, sous chaque étape, ouvre un champ : saisissez le libellé, puis « Ajouter » ou Entrée.
+- **« Monter »** et **« Descendre »** changent l'ordre ; ils sont grisés en tête et en queue de liste.
+- **« Renommer »** corrige le libellé. Les affaires qui portent déjà ce point gardent l'ancien libellé : il a été copié
+  à leur entrée dans l'étape.
+- **« Archiver »** retire le point des affaires **à venir** : il n'est plus ajouté à celles qui entrent dans l'étape,
+  mais celles qui le portent déjà le gardent. Le point reste dans la liste, marqué « Archivé », et **« Désarchiver »** le
+  rétablit. Aucun de ces gestes ne demande de confirmation : chacun se défait d'un clic.
+
+**Les points qu'un chemin exige.** Dans le bloc des exigences, sous chaque chemin et après les questions exigées, la
+ligne **« Points de checklist exigés »** liste les points qu'une affaire doit avoir cochés pour emprunter ce chemin.
+
+- **« Exiger un point »** propose les seuls points **de l'étape de départ** du chemin — ceux que l'affaire a reçus en y
+  entrant —, non archivés et pas encore exigés. Quand il n'y en a aucun, une phrase le dit à la place du bouton.
+- **« Ne plus exiger »** retire l'exigence, sans confirmation ; le point reste dans l'étape.
+- **Un point archivé encore exigé reste exigé**, et l'écran le dit : « Toujours exigé : retirez l'exigence pour ne plus
+  bloquer cette transition. »
+- Un workflow **sans question** montre quand même ses chemins, pour leurs points.
+
+Sur le tableau, un déplacement refusé faute de points cochés **nomme les points**, et le lien **« Cocher ces points »**
+ouvre la fiche de l'affaire sur son bloc « Checklist », le premier point exigé prêt à être coché.
+
+Ces gestes sont réservés aux administrateurs de l'espace ; les autres voient le bloc, ses commandes grisées.
+
+### 18.11 Ce qu'une exigence fera aux affaires en cours
 
 Rendre une question obligatoire est le seul réglage de cet écran qui puisse **empêcher** une affaire
 existante d'avancer. L'éditeur vous dit donc, **avant** d'enregistrer, ce que le réglage ferait.
@@ -3507,7 +3539,7 @@ Deux précisions honnêtes :
   possible** : c'est une aide à la décision, pas une autorisation. Le contrôle réel reste appliqué
   au moment où une affaire tente de changer d'étape.
 
-### 18.11 Ce qui n'est pas encore là
+### 18.12 Ce qui n'est pas encore là
 
 - La prévisualisation ne montre **aucune liste nominative** des affaires concernées, seulement leur
   nombre.
@@ -3515,7 +3547,7 @@ Deux précisions honnêtes :
 - Exiger une même question sur **plusieurs chemins d'un coup** n'est pas possible : le geste se
   répète chemin par chemin.
 
-### 18.12 Garder une photographie d'un workflow, et y revenir
+### 18.13 Garder une photographie d'un workflow, et y revenir
 
 *Livré par `CRM-078`, cinquième tranche. Captures dans `docs/captures/CRM-078/`.*
 
@@ -3567,13 +3599,52 @@ devenue surnuméraire est **archivée**, jamais supprimée : les réponses déj�
 l'espace de travail. Les commandes restent visibles pour tout le monde, grisées pour qui n'administre
 pas l'espace, avec un bandeau qui dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) ; le serveur refuse de toute façon.
 
-### 18.13 Ce qui n'est pas encore là, côté versions
+### 18.14 Ce qui n'est pas encore là, côté versions
 
 - La **liste des affaires** du plan est bornée à deux cents entrées, et l'écran écrit combien il en
   montre sur combien. Cette borne n'est pas réglable depuis l'interface.
 - Aucune **purge** ni rétention : le nombre de versions ne fait que croître.
 - Une version ne porte **aucune commande de ligne** : elle ne se renomme pas, ne se supprime pas, et
   sa note ne se modifie plus après coup.
+
+### 18.15 Préparer des modèles d'affaires
+
+Quand vos affaires se ressemblent — un audit, une formation, un atelier —, un **modèle** évite de tout ressaisir : choisi
+dans « Nouvelle affaire » ([section 9.10](#le-tableau-kanban-d-un-channel)), il pose sur l'affaire qui naît un titre
+proposé, une description, un montant, les réponses aux questions du workflow et des points de checklist. Un modèle sert
+**les affaires d'un workflow** : il n'est proposé que dans les channels qui suivent ce workflow.
+
+**L'écran.** **Réglages ▸ Modèles d'affaires**, juste après les workflows, range les modèles par workflow. Chaque ligne
+donne le nom du modèle, puis son titre proposé, son montant et son nombre de points.
+
+- **« Nouveau modèle »** ouvre une fiche dans la page : **Workflow**, **Nom**, **Titre proposé**, **Description**,
+  **Montant** et **Devise**, puis les **points de checklist** — « Ajouter un point » ajoute une ligne, « Retirer » l'ôte.
+  « Enregistrer » le pose ; « Annuler » ou `Échap` referme sans rien écrire.
+- **« Modifier »** rouvre la fiche d'un modèle. Son workflow ne change plus : la fiche le dit en une phrase, parce que
+  ses réponses répondent aux questions de ce workflow-là.
+- **« Archiver »** retire le modèle de « Nouvelle affaire », sans confirmation ; la case **« Afficher les archivés »** le
+  ramène dans la liste, marqué « Archivé », avec **« Désarchiver »**. Archiver libère son nom.
+- Deux modèles non archivés ne peuvent pas porter **le même nom**, majuscules comprises : l'écran le dit sous les champs
+  et garde votre saisie.
+
+**Les réponses aux questions.** Sous les points, la fiche montre les questions du workflow, chacune avec le même
+contrôle que sur la fiche d'une affaire. Elles s'enregistrent avec le modèle. Laissez une question vide pour qu'elle reste
+sans réponse ; une case décochée reste aussi sans réponse. Les questions qui désignent une personne ou un fichier —
+contact, membre, pièce jointe — ne se répondent pas dans un modèle : elles appartiennent à une affaire. Si le modèle en
+porte une réponse, parce qu'il a été enregistré depuis une affaire, elle est conservée, et la fiche le dit. À la
+création, changer de workflow efface les réponses déjà saisies : ce ne sont plus les mêmes questions. Une réponse mal
+formée, comme une adresse incomplète, est refusée sous les champs, et votre saisie reste en place.
+
+**Enregistrer une affaire comme modèle.** Sur la fiche d'une affaire, après « Mettre en sommeil », le bouton
+**« Enregistrer comme modèle »** ouvre un petit panneau : le **nom du modèle**, prérempli du titre de l'affaire, puis
+« Enregistrer ». Le modèle reprend le titre, la description, le montant, les réponses aux questions et les libellés des
+points de checklist de l'affaire — **sans les cochages** : un modèle prépare une affaire, il ne dit pas où elle en est.
+Un message confirme le nom du modèle enregistré.
+
+**Qui peut le faire.** Préparer, modifier, archiver un modèle et enregistrer une affaire comme modèle sont réservés aux
+**administrateurs de l'espace**. Les autres voient l'entrée des réglages grisée, et le bouton de la fiche grisé, avec la
+raison ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Choisir un modèle à la création
+d'une affaire est ouvert à quiconque peut créer une affaire dans le channel.
 
 ## 19. Le catalogue de nœuds : le vocabulaire de vos workflows
 
@@ -4907,7 +4978,7 @@ Les dix familles, et ce que chacune couvre :
 - **Workflows** : créer, modifier et archiver les workflows, leurs étapes, leurs transitions et leur formulaire, le
   catalogue de nœuds ; leurs versions, leur copie vers un track, le workflow d'un channel ; la lecture d'un workflow
   reste à « Structure » ;
-- **Affaires** : affaires, champs, étapes, commentaires, contacts liés, activités (appels, réunions, visios) ;
+- **Affaires** : affaires, champs, étapes, commentaires, contacts liés, activités (appels, réunions, visios), checklist ;
 - **Contacts** : les contacts du carnet ;
 - **Organisations** : les organisations du carnet, et leurs contacts en lecture ;
 - **Budgets** : budgets, occurrences, lignes de coût, réels ;
@@ -4997,6 +5068,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - **lire son historique**, comme le fil de la fiche ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)) : événements, commentaires et activités, du plus
     ancien au plus récent ;
   - **lire ses commentaires**, et **ses activités** ([chapitre 9.8](#les-activites-d-une-affaire-appels-reunions-visios)) ;
+  - **lire sa checklist** ([section 9.9](#la-checklist-d-une-affaire-les-points-a-cocher)) : les points libres, ceux de l'étape
+    courante et ceux des étapes passées, cochés ou non, par qui et quand, et les étapes pour lesquelles un point est
+    exigé ;
   - **les affaires figées** de l'espace ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)) ;
   - **votre journée** ([chapitre 6](#ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui)) : ce qui est en retard, dû aujourd'hui ou à venir dans les sept jours, pour
     vos affaires ou pour tout ce que vous lisez.
@@ -5011,7 +5085,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     prochaine action et échéance, responsable désigné par son nom — et ses **réponses au formulaire** ; la
     **déplacer** vers une étape désignée par son nom, dans les seuls déplacements que le workflow déclare ; la **changer
     de channel** ; la **mettre en sommeil** ou la **réveiller** ; **lier ou délier un contact** (ce geste demande aussi
-    « Contacts ▸ Consulter ») ; **corriger une activité** dont vous êtes l'auteur ;
+    « Contacts ▸ Consulter ») ; **corriger une activité** dont vous êtes l'auteur ; **cocher ou décocher un point de
+    checklist** — le fil de l'affaire le dit à votre nom, comme depuis la fiche. L'assistant
+    n'ajoute, ne renomme ni ne retire aucun point : ces gestes restent ceux de la fiche ;
   - *Supprimer* (« Affaires ▸ Supprimer ») : la **mettre à la corbeille**, d'où un administrateur la restaure.
 
   Les règles sont celles de l'écran. Un déplacement non déclaré, un motif manquant, une question obligatoire sans

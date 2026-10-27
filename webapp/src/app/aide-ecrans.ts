@@ -1,3 +1,4 @@
+// @spec CRM-068 (docs/BACKLOG.md) — tranche T4b1 : Réglages ▸ Modèles d'affaires mène à sa section (docs/DESIGN_SYSTEM.md §5.71)
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T2 : la correspondance entre un écran et le chapitre qui le décrit
 // @spec CRM-117 tranche T3.0 — les adresses du plan public (docs/SPEC-manual.md §10 bis) : carnet, boîtes, inbox
 // @spec docs/SPEC-manual.md §13.2 (un seul endroit, le motif le plus précis l'emporte), §16 (chaque identifiant existe
@@ -22,6 +23,7 @@ import {
 	CHEMIN_ADMIN_MEMBRES,
 	CHEMIN_ADMIN_MODELES_MAIL,
 	CHEMIN_ADMIN_SEQUENCES_MAIL,
+	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_AFFAIRES_FIGEES,
 	CHEMIN_CONTACTS,
@@ -80,6 +82,8 @@ export const ECRANS_AIDE: ReadonlyArray<readonly [motif: string, cible: CibleAid
 	[CHEMIN_ADMIN_MEMBRES, { chapitre: 'les-membres-de-votre-espace-qui-y-travaille-avec-quel-role' }],
 	[CHEMIN_ADMIN_JOURNAL, { chapitre: 'le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace' }],
 	[CHEMIN_ADMIN_WORKFLOWS, { chapitre: 'composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire' }],
+	// `CRM-068` T4b1 : Réglages ▸ Modèles d'affaires, décrit par la dernière section du chapitre des workflows.
+	[CHEMIN_ADMIN_MODELES_AFFAIRES, { chapitre: 'composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire', section: 'preparer-des-modeles-d-affaires' }],
 	[CHEMIN_ADMIN_CATALOGUE, { chapitre: 'le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows' }],
 	[CHEMIN_ADMIN_COMPTES_MAIL, { chapitre: BOITES, section: 'les-boites-de-reception-declarees' }],
 	[CHEMIN_ADMIN_IDENTITES_MAIL, { chapitre: BOITES, section: 'les-adresses-d-expedition' }],

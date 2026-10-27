@@ -66,7 +66,7 @@ d'exécuter le code attendu.
   seraient perdues sont comptées, et ne le sont qu'avec votre accord explicite. Le formulaire de modification d'un
   channel qui porte des affaires renvoie désormais à cette commande.
 
-### `CRM-068` — les checklists et les modèles d'une affaire (en cours : T1 à T5)
+### `CRM-068` — les checklists et les modèles d'une affaire (T1 à T5, à livrer)
 
 - **Base** — migration `0125` : les points d'une étape (`workflow_step_checklist_items`, écrits par l'administrateur), les
   points d'une affaire (`card_checklist_items`, libres ou ajoutés par la base à l'entrée d'un rattachement dans une
@@ -106,8 +106,9 @@ d'exécuter le code attendu.
   (`crm_card_checklist_list`, « Consulter ») et cocher ou décocher un point (`crm_card_checklist_set`, « Modifier »). La
   fiche et le fil le disent au nom de la personne. Aucun ajout, renommage ni retrait de point par l'assistant. Image `mcp`
   à reconstruire.
-- Reste : le manuel de T3b, de T4 et de T5, qui attend le plan de `CRM-117`. Les outils de l'éditeur des checklists sont
-  livrés par `CRM-118`.
+- **Manuel** — la checklist de la fiche (9.9), le modèle dans « Nouvelle affaire » (9.10), les checklists de l'éditeur
+  (18.10), les modèles d'affaires (18.15) et les deux outils du connecteur ; l'aide de Réglages ▸ Modèles d'affaires
+  mène à sa section. Les outils de l'éditeur des checklists sont livrés par `CRM-118`.
 
 ### `CRM-117` — le manuel joignable depuis la webapp (en cours)
 

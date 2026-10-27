@@ -1612,7 +1612,7 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "chapitre 18.12"
+							"text": "chapitre 18.13"
 						}
 					]
 				},
@@ -3350,11 +3350,388 @@
 		{
 			"type": "heading",
 			"level": 3,
+			"anchor": "les-checklists-des-etapes-et-les-points-qu-un-chemin-exige",
+			"content": [
+				{
+					"type": "text",
+					"text": "18.10 Les checklists des étapes, et les points qu'un chemin exige"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les points d'une étape."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Juste avant les exigences, le bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Checklists des étapes »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste chaque étape du\nworkflow dans l'ordre du graphe, avec ses points. Ces points sont "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ajoutés automatiquement aux affaires qui entrent dans\nl'étape"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; elles les cochent ensuite sur leur fiche ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "la-checklist-d-une-affaire-les-points-a-cocher"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 9.9"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Ajouter un point »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", sous chaque étape, ouvre un champ : saisissez le libellé, puis « Ajouter » ou Entrée."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Monter »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Descendre »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " changent l'ordre ; ils sont grisés en tête et en queue de liste."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Renommer »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " corrige le libellé. Les affaires qui portent déjà ce point gardent l'ancien libellé : il a été copié\nà leur entrée dans l'étape."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Archiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " retire le point des affaires "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "à venir"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : il n'est plus ajouté à celles qui entrent dans l'étape,\nmais celles qui le portent déjà le gardent. Le point reste dans la liste, marqué « Archivé », et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Désarchiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " le\nrétablit. Aucun de ces gestes ne demande de confirmation : chacun se défait d'un clic."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les points qu'un chemin exige."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Dans le bloc des exigences, sous chaque chemin et après les questions exigées, la\nligne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Points de checklist exigés »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste les points qu'une affaire doit avoir cochés pour emprunter ce chemin."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Exiger un point »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " propose les seuls points "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "de l'étape de départ"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " du chemin — ceux que l'affaire a reçus en y\nentrant —, non archivés et pas encore exigés. Quand il n'y en a aucun, une phrase le dit à la place du bouton."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Ne plus exiger »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " retire l'exigence, sans confirmation ; le point reste dans l'étape."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un point archivé encore exigé reste exigé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et l'écran le dit : « Toujours exigé : retirez l'exigence pour ne plus\nbloquer cette transition. »"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un workflow "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "sans question"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " montre quand même ses chemins, pour leurs points."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Sur le tableau, un déplacement refusé faute de points cochés "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nomme les points"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et le lien "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Cocher ces points »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nouvre la fiche de l'affaire sur son bloc « Checklist », le premier point exigé prêt à être coché."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ces gestes sont réservés aux administrateurs de l'espace ; les autres voient le bloc, ses commandes grisées."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
 			"anchor": "ce-qu-une-exigence-fera-aux-affaires-en-cours",
 			"content": [
 				{
 					"type": "text",
-					"text": "18.10 Ce qu'une exigence fera aux affaires en cours"
+					"text": "18.11 Ce qu'une exigence fera aux affaires en cours"
 				}
 			]
 		},
@@ -3633,7 +4010,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "18.11 Ce qui n'est pas encore là"
+					"text": "18.12 Ce qui n'est pas encore là"
 				}
 			]
 		},
@@ -3710,7 +4087,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "18.12 Garder une photographie d'un workflow, et y revenir"
+					"text": "18.13 Garder une photographie d'un workflow, et y revenir"
 				}
 			]
 		},
@@ -4164,7 +4541,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "18.13 Ce qui n'est pas encore là, côté versions"
+					"text": "18.14 Ce qui n'est pas encore là, côté versions"
 				}
 			]
 		},
@@ -4245,6 +4622,439 @@
 						]
 					}
 				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "preparer-des-modeles-d-affaires",
+			"content": [
+				{
+					"type": "text",
+					"text": "18.15 Préparer des modèles d'affaires"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Quand vos affaires se ressemblent — un audit, une formation, un atelier —, un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "modèle"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " évite de tout ressaisir : choisi\ndans « Nouvelle affaire » ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "le-tableau-kanban-d-un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 9.10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), il pose sur l'affaire qui naît un titre\nproposé, une description, un montant, les réponses aux questions du workflow et des points de checklist. Un modèle sert\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "les affaires d'un workflow"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il n'est proposé que dans les channels qui suivent ce workflow."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'écran."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages ▸ Modèles d'affaires"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", juste après les workflows, range les modèles par workflow. Chaque ligne\ndonne le nom du modèle, puis son titre proposé, son montant et son nombre de points."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Nouveau modèle »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ouvre une fiche dans la page : "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Workflow"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Titre proposé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Description"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ",\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Montant"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Devise"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", puis les "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "points de checklist"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — « Ajouter un point » ajoute une ligne, « Retirer » l'ôte.\n« Enregistrer » le pose ; « Annuler » ou "
+							},
+							{
+								"type": "code",
+								"text": "Échap"
+							},
+							{
+								"type": "text",
+								"text": " referme sans rien écrire."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Modifier »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " rouvre la fiche d'un modèle. Son workflow ne change plus : la fiche le dit en une phrase, parce que\nses réponses répondent aux questions de ce workflow-là."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Archiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " retire le modèle de « Nouvelle affaire », sans confirmation ; la case "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Afficher les archivés »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " le\nramène dans la liste, marqué « Archivé », avec "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Désarchiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Archiver libère son nom."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Deux modèles non archivés ne peuvent pas porter "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "le même nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", majuscules comprises : l'écran le dit sous les champs\net garde votre saisie."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les réponses aux questions."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sous les points, la fiche montre les questions du workflow, chacune avec le même\ncontrôle que sur la fiche d'une affaire. Elles s'enregistrent avec le modèle. Laissez une question vide pour qu'elle reste\nsans réponse ; une case décochée reste aussi sans réponse. Les questions qui désignent une personne ou un fichier —\ncontact, membre, pièce jointe — ne se répondent pas dans un modèle : elles appartiennent à une affaire. Si le modèle en\nporte une réponse, parce qu'il a été enregistré depuis une affaire, elle est conservée, et la fiche le dit. À la\ncréation, changer de workflow efface les réponses déjà saisies : ce ne sont plus les mêmes questions. Une réponse mal\nformée, comme une adresse incomplète, est refusée sous les champs, et votre saisie reste en place."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Enregistrer une affaire comme modèle."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sur la fiche d'une affaire, après « Mettre en sommeil », le bouton\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Enregistrer comme modèle »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ouvre un petit panneau : le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nom du modèle"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", prérempli du titre de l'affaire, puis\n« Enregistrer ». Le modèle reprend le titre, la description, le montant, les réponses aux questions et les libellés des\npoints de checklist de l'affaire — "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sans les cochages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : un modèle prépare une affaire, il ne dit pas où elle en est.\nUn message confirme le nom du modèle enregistré."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui peut le faire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Préparer, modifier, archiver un modèle et enregistrer une affaire comme modèle sont réservés aux\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs de l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Les autres voient l'entrée des réglages grisée, et le bouton de la fiche grisé, avec la\nraison ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Choisir un modèle à la création\nd'une affaire est ouvert à quiconque peut créer une affaire dans le channel."
+				}
 			]
 		}
 	]

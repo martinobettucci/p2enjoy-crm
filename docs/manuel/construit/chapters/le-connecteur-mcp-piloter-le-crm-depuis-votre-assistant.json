@@ -221,7 +221,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : affaires, champs, étapes, commentaires, contacts liés, activités (appels, réunions, visios) ;"
+								"text": " : affaires, champs, étapes, commentaires, contacts liés, activités (appels, réunions, visios), checklist ;"
 							}
 						]
 					}
@@ -1363,6 +1363,43 @@
 											"content": [
 												{
 													"type": "text",
+													"text": "lire sa checklist"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+												"anchor": "la-checklist-d-une-affaire-les-points-a-cocher"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "section 9.9"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") : les points libres, ceux de l'étape\ncourante et ceux des étapes passées, cochés ou non, par qui et quand, et les étapes pour lesquelles un point est\nexigé ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
 													"text": "les affaires figées"
 												}
 											]
@@ -1640,7 +1677,20 @@
 										},
 										{
 											"type": "text",
-											"text": " dont vous êtes l'auteur ;"
+											"text": " dont vous êtes l'auteur ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "cocher ou décocher un point de\nchecklist"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " — le fil de l'affaire le dit à votre nom, comme depuis la fiche. L'assistant\nn'ajoute, ne renomme ni ne retire aucun point : ces gestes restent ceux de la fiche ;"
 										}
 									]
 								}

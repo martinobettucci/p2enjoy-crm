@@ -4299,52 +4299,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-068"
-						},
-						{
-							"type": "text",
-							"text": ", tranches T1 à T3a, en développement. Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-068/"
-						},
-						{
-							"type": "text",
-							"text": ", préfixées\n"
-						},
-						{
-							"type": "code",
-							"text": "fiche-checklist-"
-						},
-						{
-							"type": "text",
-							"text": " et "
-						},
-						{
-							"type": "code",
-							"text": "board-"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -4847,47 +4801,43 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Ce qui n'est pas encore livré."
+							"text": "Définir les points d'une étape"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " Définir les points d'une étape et les points exigés par un déplacement se fait\naujourd'hui sans écran : l'éditeur de workflows les recevra ("
+					"text": " et les points exigés par un déplacement se fait dans l'éditeur de workflows\n("
 				},
 				{
-					"type": "code",
-					"text": "CRM-068"
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "les-checklists-des-etapes-et-les-points-qu-un-chemin-exige"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 18.10"
+						}
+					]
 				},
 				{
 					"type": "text",
-					"text": " T3b), avec un lien du bandeau de refus vers la\nfiche. Les "
+					"text": "). Le bandeau de refus du tableau porte le lien "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "modèles d'affaires"
+							"text": "« Cocher ces points »"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " (T4) et les outils du "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "connecteur MCP"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " (T5) suivront."
+					"text": ", qui ouvre la fiche sur ce\nbloc, le premier point exigé non coché prêt à être coché."
 				}
 			]
 		},
@@ -5245,6 +5195,82 @@
 								"content": [
 									{
 										"type": "text",
+										"text": "Partir d'un modèle."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Quand le workflow du channel a au moins un modèle d'affaire, une liste\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Modèle »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " paraît sous le titre, « Aucun modèle » en tête. Choisir un modèle "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "remplit le titre s'il est encore\nvide"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — jamais par-dessus ce que vous avez tapé —, et l'affaire naît avec la description, le montant, les réponses\naux questions et les points de checklist du modèle ; les points de l'étape initiale s'y ajoutent comme à toute\ncréation. Un channel dont le workflow n'a aucun modèle ne montre pas la liste. Les modèles se préparent dans\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Réglages ▸ Modèles d'affaires"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+									"anchor": "preparer-des-modeles-d-affaires"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 18.15"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
 										"text": "L'affaire entre toujours par l'étape initiale"
 									}
 								]
@@ -5415,7 +5441,7 @@
 							},
 							{
 								"type": "text",
-								"text": ", où l'étape initiale se désigne ; droit d'écriture insuffisant sur ce\nchannel. Le bouton est montré à tous les profils : un compte en lecture seule le voit, et le refus\nle lui dit."
+								"text": ", où l'étape initiale se désigne ; droit d'écriture insuffisant sur ce\nchannel ; modèle qui n'est plus proposé — archivé entre-temps. Le bouton est montré à tous les profils : un compte en lecture seule le voit, et le refus\nle lui dit."
 							}
 						]
 					}

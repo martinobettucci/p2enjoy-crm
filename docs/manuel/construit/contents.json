@@ -566,20 +566,28 @@
 					"title": "18.9 Ce qu'il faut avoir rempli pour emprunter un chemin"
 				},
 				{
+					"anchor": "les-checklists-des-etapes-et-les-points-qu-un-chemin-exige",
+					"title": "18.10 Les checklists des étapes, et les points qu'un chemin exige"
+				},
+				{
 					"anchor": "ce-qu-une-exigence-fera-aux-affaires-en-cours",
-					"title": "18.10 Ce qu'une exigence fera aux affaires en cours"
+					"title": "18.11 Ce qu'une exigence fera aux affaires en cours"
 				},
 				{
 					"anchor": "ce-qui-n-est-pas-encore-la",
-					"title": "18.11 Ce qui n'est pas encore là"
+					"title": "18.12 Ce qui n'est pas encore là"
 				},
 				{
 					"anchor": "garder-une-photographie-d-un-workflow-et-y-revenir",
-					"title": "18.12 Garder une photographie d'un workflow, et y revenir"
+					"title": "18.13 Garder une photographie d'un workflow, et y revenir"
 				},
 				{
 					"anchor": "ce-qui-n-est-pas-encore-la-cote-versions",
-					"title": "18.13 Ce qui n'est pas encore là, côté versions"
+					"title": "18.14 Ce qui n'est pas encore là, côté versions"
+				},
+				{
+					"anchor": "preparer-des-modeles-d-affaires",
+					"title": "18.15 Préparer des modèles d'affaires"
 				}
 			]
 		},

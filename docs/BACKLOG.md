@@ -7498,7 +7498,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
-| CRM-068 | Checklists et modèles de cards | `[~]` |
+| CRM-068 | Checklists et modèles de cards | `[P]` |
 | CRM-069 | Étiquettes et digest quotidien — **arbitrée** (décision 769) : catalogue d'étiquettes par espace (administrateurs ; palette fermée ; archivable), posées par qui écrit l'affaire ; digest quotidien par email consenti (7 h, `pg_cron`, identité de service) ; connecteur : étiquettes oui, famille `affaires` existante ; digest non. Spécification `docs/SPEC-etiquettes-digest.md` à valider — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-27 17:11 UTC — état avant : [ ]* | `[@]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
@@ -12344,11 +12344,12 @@ un motif explicite.
 | CRM-P11 sauvegarde/restauration | `CRM-080` | retenue |
 | CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
-### CRM-068 — Checklists et modèles de cards `[~]`
-*Prise libérée le 2026-10-27 : T1 à T5 sont livrées et prouvées en développement. Il ne reste que le manuel de T3b, T4 et
-T5 (9.9, 9.10, 18.10, 18.15 et le chapitre du connecteur), écrit au plan de `CRM-117` dans l'arbre de travail, à
-committer après le T3.0 de `CRM-117` avec la correspondance de l'aide (`aide-ecrans.ts`). Une tâche planifiée n'a rien à
-reprendre avant ce T3.0.*
+### CRM-068 — Checklists et modèles de cards `[P]`
+*`[P]` depuis le 2026-10-27* : T1 à T5 sont livrées et prouvées en développement, manuel compris (9.9, 9.10, 18.10, 18.15
+et le chapitre du connecteur, sur le plan de `CRM-117` T3.0 ; `scripts/verify-manual.sh` 145 contrôles sans anomalie ;
+l'aide de Réglages ▸ Modèles d'affaires mène à 18.15). Il ne reste que la **livraison** — migrations `0125`, `0128` et
+`0131`, la webapp et l'image `mcp` de `main` (`docs/PROD_MIGRATIONS.md` §3) — sur instruction du responsable, et son
+constat.
 
 Checklists d'une affaire et modèles de cards (`docs/SPEC-modeles-emails.md` §1 : objets distincts des modèles d'emails).
 *Arbitrée le 2026-10-26 (décision 747)* : checklists libres, ajoutées par l'étape, exigibles par une transition ;
@@ -12364,7 +12365,7 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       **Livrée en développement le 2026-10-26** : migration `0128` (numérotée après les 0126 et 0127 de `CRM-117`), pgTAP
       `0118` **9/9**, API 5/5, bandeau du board (`docs/DESIGN_SYSTEM.md` §5.7 quinquies) et ses unitaires, E2E
       `e2e/ui/checklists.spec.ts` sur un workflow jetable, capture observée ; `docs/SPEC-workflow-engine.md` §5.3.
-- [~] **T3 — les écrans**, découpée le 2026-10-26 en deux livraisons :
+- [x] **T3 — les écrans**, découpée le 2026-10-26 en deux livraisons :
   - [x] **T3a — la fiche, le board et le seed** : le bloc « Checklist » de la fiche (points de l'étape du rattachement,
         points libres, cocher, ajouter, retirer, mention d'exigence), le compte « n/m » sur la carte du board, le seed
         des points (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel. **Livrée en développement le
@@ -12378,7 +12379,7 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
         (décision 51 : pgTAP `0015`, `0061`, `0068`, `0086`, `0117` ; API `analytique`, `channels`, `coherence-workflow`,
         `colonnes-protegees`, `droits-interface`, `workflows` ; interface `administration-catalogue`, `coherence-workflow`,
         `pilotage`) ; manuel 4.7 *quinquies*, CHANGELOG, harnais.
-  - [~] **T3b — l'éditeur de workflows** : les points de chaque étape et les points exigés par une transition ; le lien
+  - [x] **T3b — l'éditeur de workflows** : les points de chaque étape et les points exigés par une transition ; le lien
         « Cocher ces points » du bandeau du board vers la fiche. **Livrée en développement le 2026-10-27** (décision 759) :
         `docs/DESIGN_SYSTEM.md` §5.70 bis et §5.7 quinquies révisé, après relecture intégrale ; `lib/administration-checklists.ts`
         et `app/ChecklistsWorkflow.tsx` — bloc « Checklists des étapes » avant les exigences, points exigés sous chaque
@@ -12386,9 +12387,9 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
         bibliothèque 10, composants 10, bandeau et arrivée 4 (garde de `Board.test.tsx` révisée, décision 51), suite 4731 ;
         API `checklists.spec.ts` 6/6 (refus du business developer par requête directe) ; E2E `checklists-editeur.spec.ts`
         2/2 et `checklists.spec.ts` 5/5, éditeur, cohérence, versions et board 119/120 puis la preuve corrigée verte ;
-        captures observées — un défaut vu à 390 px (libellé coupé lettre à lettre) corrigé ; **reste le manuel** (18.10 et 9.9,
+        captures observées — un défaut vu à 390 px (libellé coupé lettre à lettre) corrigé ; manuel (18.10 et 9.9,
         écrits au plan de `CRM-117`, committés après son T3.0, qui réorganise le fichier) ; harnais UI 988, API 1247. Connecteur : outils livrés par `CRM-118` (décisions 759, 761).
-- [ ] **T4 — les modèles d'affaires**, découpée le 2026-10-27 en deux livraisons :
+- [x] **T4 — les modèles d'affaires**, découpée le 2026-10-27 en deux livraisons :
   - [x] **T4a — la base** : `card_templates` (RLS : écriture administrateur, lecture membre ; nom unique parmi les
         modèles non archivés ; `field_values` validées à l'écriture par la même règle que les valeurs d'une affaire,
         extraite du déclencheur de `card_field_values` en une fonction partagée), `creer_affaire(p_channel, p_titre,
@@ -12397,11 +12398,11 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
         **22/22** ; `0014` **103/103** (la validation extraite, messages inchangés) ; gardes révisées (décision 51) : `0016`
         171 politiques, `0075` signature à trois arguments, `database.types.test-d.ts` ; API `modeles-affaires.spec.ts`
         **4/4** (refus du business developer et de l'anonyme par requête directe) ; types régénérés.
-  - [ ] **T4b — les écrans et le seed** : Réglages ▸ Modèles d'affaires, le `select` « Modèle » de « Nouvelle
+  - [x] **T4b — les écrans et le seed** : Réglages ▸ Modèles d'affaires, le `select` « Modèle » de « Nouvelle
         affaire », « Enregistrer comme modèle » sur la fiche ; deux modèles au seed dont un enregistré depuis une
         affaire (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel.
         *Découpée le 2026-10-27* :
-    - [~] **T4b1** — le `select` « Modèle », « Enregistrer comme modèle », Réglages ▸ Modèles d'affaires (nom, titre,
+    - [x] **T4b1** — le `select` « Modèle », « Enregistrer comme modèle », Réglages ▸ Modèles d'affaires (nom, titre,
           description, montant, devise, points, archivage), le seed. **Livrée en développement le 2026-10-27**
           (décision 765) : `lib/modeles-affaires.ts`, `creerAffaire(…, idModele)` et son refus `modele`,
           `app/ReglagesModelesAffaires.tsx` (route `/reglages/modeles-affaires`, entrée d'index après les workflows),
@@ -12409,26 +12410,25 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
           `IndexReglages.test.tsx` et `droits-interface.spec.ts`, décision 51) ; seed §29, appliqué puis rejoué (3 modèles) ;
           unitaires 26 + 7 + 6 + 4 + 2, suite 4845 ; API 6/6 ; E2E `modeles-affaires.spec.ts` 6/6 et les specs voisins
           40/40 ; captures observées (deux défauts d'apparence corrigés) ; un défaut de T3b trouvé et corrigé (l'arrivée
-          par « Cocher ces points » attend la capacité) ; harnais UI +6. **Reste le manuel** (9.10 et 18.15, écrits au plan
+          par « Cocher ces points » attend la capacité) ; harnais UI +6. Manuel (9.10 et 18.15, écrits au plan
           de `CRM-117`, committés après son T3.0, avec la correspondance de l'aide `aide-ecrans.ts`).
-    - [~] **T4b2** — la saisie des réponses aux questions du workflow dans la fiche d'un modèle
+    - [x] **T4b2** — la saisie des réponses aux questions du workflow dans la fiche d'un modèle
           (`docs/DESIGN_SYSTEM.md` §5.71). **Livrée en développement le 2026-10-27** : `lireQuestionsModele`,
           `composerReponses` et leurs voisins (`lib/modeles-affaires.ts`, unitaires +6) ; le `fieldset` « Réponses aux
           questions » de `ReglagesModelesAffaires.tsx`, contrôles contrôlés, `noValidate` (la base juge, l'écran écrit le
           refus) ; unitaires écran +3, suite 4854 ; E2E `modeles-affaires.spec.ts` 7/7 (réponses posées, adresse mal formée
           refusée, affaire née du modèle qui les porte en base) et voisins 20/20 ; capture observée, la légende encrée ;
-          harnais UI +1. **Reste le manuel** (18.15, avec celui de T4b1). *Précisée le 2026-10-27 (décision 766)* : §5.71 bis — les questions non
+          harnais UI +1. Manuel committé avec l'unité. *Précisée le 2026-10-27 (décision 766)* : §5.71 bis — les questions non
           archivées avec le contrôle de leur type, écrites à « Enregistrer » ; vide = sans réponse ; `contact`, `user`,
           `file` et questions archivées conservées sans saisie ; changer de workflow à la création vide les réponses ;
           connecteur : non (décision 747).
-- [~] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`. **Livrée en
+- [x] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`. **Livrée en
       développement le 2026-10-27** : `mcp/crm_mcp/outils/affaires_checklists.py`, genre d'ancre `card_checklist_item`
       (`politique.py`) ; pytest unitaires 7 (suite 262) ; intégration `test_integration_affaires_checklists.py` 3/3 contre
       la vraie pile — succès, auteur et fil posés par la base, refus par la matrice, refus du CRM malgré la matrice ouverte
       (la lectrice), point d'une autre affaire refusé ; garde `CONSULTATIONS_AFFAIRES` révisée (décision 51) ;
       `scripts/verify-mcp.sh` **104 contrôles, aucune anomalie** ; E2E `connecteur-checklists.spec.ts` 1/1 et
-      `connecteur-mcp.spec.ts` 8/8, capture observée ; contrat de déploiement (image `mcp`) ; harnais UI +1. **Reste le
-      manuel** (chapitre du connecteur, avec ceux de T3b et T4). *Précisée le
+      `connecteur-mcp.spec.ts` 8/8, capture observée ; contrat de déploiement (image `mcp`) ; harnais UI +1. Manuel committé avec l'unité. *Précisée le
       2026-10-27 (décision 767)* : `docs/SPEC-mcp.md` §9.2 *duodecies* — genre d'ancre `card_checklist_item`, aucune
       migration ; preuves unitaires, d'intégration contre la vraie base, et E2E (un point coché par le connecteur sur la
       fiche).
