@@ -1035,6 +1035,14 @@ ou `workflow_is_default`, nommés ; archive seulement), `crm_workflow_copy_to_tr
 leurs lignes sont dans les tableaux T2.a, T2.c et T2.d ci-dessus. Ils se livrent ensemble, une fois les écrans de
 `docs/SPEC-workflow-engine.md` §7 quinquies livrés, avec les mêmes preuves.
 
+**Livrés en développement le 2026-10-27**, après T1.b, dans `mcp/crm_mcp/outils/workflows_entete.py`. Précisions du
+code : `crm_workflow_update` prend `name` et/ou `make_default` (vrai seulement : on ne retire pas le défaut, on en
+désigne un autre) ; `crm_workflow_archive` sur un workflow déjà archivé ne réécrit rien ; `crm_channel_workflow_change`
+reçoit `step_mapping` (une instruction par étape occupée, ordonnée comme `composerMapping`) et, sur
+`step_mapping_incomplete` — que la fonction ne détaille pas —, relit les étapes occupées du channel comme le panneau pour
+nommer celles qui manquent. Les consignes au modèle gagnent une ligne : demander à la personne avant
+`discard_field_values`. La phrase de l'onglet atteint sa cible.
+
 **Les points ouverts du 2026-10-26 sont tranchés** (décision 756) : les gestes sans écran reçoivent d'abord leur écran
 (T1.b) ; le catalogue et le workflow d'un channel entrent dans la famille (T2.d) ; exiger ou ne plus exiger relève de
 `modifier`.

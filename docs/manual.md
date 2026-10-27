@@ -70,7 +70,7 @@
 | 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. **Aucune suppression manuelle n'existe** : archiver masque, la corbeille retire, et les deux restent réversibles — jusqu'à l'effacement automatique d'un objet resté 30 jours dans la corbeille (chapitre 5 ter) |
 | 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Un objet reste 30 jours dans la corbeille**, puis il est effacé définitivement, chaque nuit, et l'effacement est inscrit au journal d'audit ; la colonne « Effacement » dit quand. Un membre qui n'administre pas l'espace n'y voit que **ce qu'il y a lui-même mis**. Aucun effacement manuel n'est offert |
 | 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
-| 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. L'**éditeur** est livré : un administrateur **crée** un workflow depuis « Réglages ▸ Workflows » — nom, portée globale ou propre à un track —, puis en compose les étapes et les transitions (chapitres 5 bis.0 à 5 bis.3). Un espace **neuf**, lui, n'a aucun workflow : depuis `CRM-094`, le guide de démarrage y pose le workflow de départ en un geste (chapitre 1 bis.4). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Ce qui reste hors interface est la **copie** vers un track et la désignation du workflow **par défaut** |
+| 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. L'**éditeur** est livré : un administrateur **crée** un workflow depuis « Réglages ▸ Workflows » — nom, portée globale ou propre à un track —, puis en compose les étapes et les transitions (chapitres 5 bis.0 à 5 bis.3). Un espace **neuf**, lui, n'a aucun workflow : depuis `CRM-094`, le guide de démarrage y pose le workflow de départ en un geste (chapitre 1 bis.4). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Depuis `CRM-118`, l'en-tête de l'éditeur **renomme**, **copie** vers un track, désigne **par défaut**, **archive** et **rétablit** un workflow |
 | 20 bis | Garder une photographie d'un workflow, la comparer et y revenir | `CRM-078` | **Livré.** Un workflow change : ses étapes, ses déplacements, ses questions et leurs règles sont modifiables à tout moment, et rien ne disait jusqu'ici sous quelle forme une affaire avait circulé. Un administrateur peut désormais **publier une version** : le produit fige une photographie datée, numérotée et signée de la composition entière du workflow, que plus personne ne peut réécrire — pas même le produit lui-même. Publier une version **ne change rien** au fonctionnement : les affaires continuent de circuler sur le workflow vivant, une version est un témoin et non une cible. Republier sans avoir rien modifié est refusé, pour que deux versions ne soient jamais indiscernables. Le produit sait aussi **comparer deux versions** — quelles étapes, quels déplacements, quelles questions et quelles règles ont été ajoutés, retirés ou modifiés, et pour chaque modification ce qui a changé et de quoi vers quoi. Et, avant de revenir à une version, il sait dire **affaire par affaire où elle atterrit** : celles dont l'étape existe toujours ne bougent pas, et celles dont l'étape a été créée depuis restent **sans destination** tant qu'un administrateur n'a pas dit où les envoyer. Le produit ne devine jamais à sa place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne la choisit pas. Les affaires archivées et celles en corbeille sont comptées comme les autres. Le produit sait désormais **appliquer** ce plan en une seule transaction, et **revenir en arrière** : la composition d'avant est publiée comme point de retour avant toute écriture. Et les quatre gestes ont leur **écran**, au bas de l'éditeur de workflows : voir le chapitre 5 bis.6 |
 | 20 ter | Créer un workflow avec l'assistant IA | `CRM-097` | **Livré en développement, en production avec la tranche T4** — voir le chapitre 5 bis.0 bis. Un administrateur décrit le workflow voulu ; l'IA rend une **suggestion**, qu'il relit, corrige à la main ou fait revoir avec une consigne, puis accepte — le workflow est alors créé en une fois — ou abandonne sans que rien n'ait été écrit. Les suggestions en revue sont conservées et partagées entre administrateurs |
 | 20 quater | Faire évoluer un workflow existant avec l'assistant IA | `CRM-097` | **Livré en développement, en production avec la tranche T4** — voir le chapitre 5 bis.0 ter. « Suggérer », en tête des étapes, des transitions et des champs d'un workflow : l'IA propose le workflow tel qu'il deviendrait ; vous relisez ce qui serait ajouté, modifié ou retiré, choisissez où vont les affaires des étapes retirées, puis acceptez. Une version du workflow d'avant est gardée, qu'on restaure en un geste |
@@ -2921,8 +2921,8 @@ Ces absences sont voulues, et non des oublis :
 déjà : il choisit leurs étapes dans le catalogue de nœuds, les ordonne, les surcharge, désigne
 celle par laquelle les affaires entrent, déclare les **transitions** qui relient les étapes, et
 définit les **questions du formulaire** posées sur chaque affaire. Depuis `CRM-031`, il **crée**
-aussi un workflow (chapitre 5 bis.0). Il ne le copie pas vers un track et ne le rend pas par
-défaut : ces deux gestes restent hors interface.
+aussi un workflow (chapitre 5 bis.0). Depuis `CRM-118`, son en-tête le renomme, le copie vers un
+track, le rend par défaut, l'archive et le rétablit.
 
 **Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Comme au
 chapitre 5, les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du
@@ -3321,8 +3321,6 @@ Deux précisions honnêtes :
 - Retirer une exigence n'est pas prévisualisé : cela ne bloque rien, cela lève une contrainte.
 - Exiger une même question sur **plusieurs chemins d'un coup** n'est pas possible : le geste se
   répète chemin par chemin.
-- **Copier** vers un track et **rendre par défaut** un workflow restent hors interface. Créer, en
-  revanche, est livré depuis `CRM-031` — chapitre 5 bis.0.
 
 ### 5 bis.6 Garder une photographie d'un workflow, et y revenir
 
@@ -5187,8 +5185,9 @@ membre reste sans effet.
 Les dix familles, et ce que chacune couvre :
 
 - **Structure** : tracks, channels, lecture des workflows ;
-- **Workflows** : créer et modifier les workflows, leurs étapes, leurs transitions et leur formulaire, le catalogue de
-  nœuds, publier et restaurer leurs versions ; la lecture d'un workflow reste à « Structure » ;
+- **Workflows** : créer, modifier et archiver les workflows, leurs étapes, leurs transitions et leur formulaire, le
+  catalogue de nœuds ; leurs versions, leur copie vers un track, le workflow d'un channel ; la lecture d'un workflow
+  reste à « Structure » ;
 - **Affaires** : affaires, champs, étapes, commentaires, contacts liés, activités (appels, réunions, visios) ;
 - **Contacts** : les contacts du carnet ;
 - **Organisations** : les organisations du carnet, et leurs contacts en lecture ;
@@ -5314,14 +5313,13 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     **workflow** — ses étapes, les déplacements qu'il déclare, le motif ou les questions qu'ils exigent ;
   - *Ajouter* : créer un track, ou un channel avec son workflow ;
   - *Modifier* : renommer un track ou un channel, changer sa description, la couleur ou l'icône d'un track. Le slug
-    — l'adresse — ne change jamais, et changer le workflow d'un channel reste un geste de l'écran, comme choisir la
-    couleur d'un channel (`CRM-116`) ;
+    — l'adresse — ne change jamais ; changer le workflow d'un channel relève de la famille « Workflows », et choisir la
+    couleur d'un channel reste un geste de l'écran (`CRM-116`) ;
   - *Supprimer* : mettre un track ou un channel à la corbeille.
 
   Le CRM réserve ces écritures aux administrateurs de l'espace : pour un autre membre, l'assistant reçoit un refus.
 
-- **Workflows** — *livrés en développement par `CRM-118`, tranches T2.a à T2.d ; la suite vient avec les tranches
-  suivantes* :
+- **Workflows** — *livrés en développement par `CRM-118`, tranches T2.a à T2.e* :
   - *Consulter* : la liste des workflows d'un espace, le workflow par défaut en tête, avec leur portée (tout l'espace ou
     un seul track) et le workflow d'origine d'une copie ; le **formulaire** d'un workflow, tel que l'éditeur le montre —
     ses champs, archivés compris, la visibilité de chaque champ à chaque étape, ce que chaque déplacement exige ; et, avant
@@ -5334,9 +5332,13 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     démarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité ou un seuil de
     relance qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif
     exigé ; ajouter une question au formulaire — une clé, un libellé, l'un des quinze types, une aide, les choix d'une
-    liste ou la devise d'un montant ; **publier une version** du workflow, avec une note ; ajouter un **nœud** au
+    liste ou la devise d'un montant ; **publier une version** du workflow, avec une note ; **copier** un workflow global vers un track — la copie reprend
+    ses étapes, ses déplacements et son formulaire, puis évolue seule ; ajouter un **nœud** au
     catalogue ;
-  - *Modifier* : changer les valeurs propres d'une étape, ou les retirer pour reprendre celles du catalogue ; désigner
+  - *Modifier* : **renommer** un workflow, ou le **désigner par défaut** — il y en a toujours un seul, et il est global ;
+    **changer le workflow d'un channel** : chaque étape occupée reçoit sa destination, rien n'est deviné, et si des
+    réponses de formulaire seraient perdues, le CRM refuse et l'assistant doit vous le dire et obtenir votre accord ;
+    changer les valeurs propres d'une étape, ou les retirer pour reprendre celles du catalogue ; désigner
     l'**étape initiale** ; changer l'ordre des étapes ; changer le libellé d'un déplacement, ou s'il exige un motif ;
     changer le libellé, l'aide, les choix ou la devise d'une question — **jamais sa clé ni son type** — et l'ordre des
     questions ; régler la visibilité d'une question à une étape (masquée, affichée, exigée, ou par défaut) ; **exiger une
@@ -5349,11 +5351,12 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     déplacement**. Ces retraits sont **définitifs**. Le CRM refuse de retirer une étape sur laquelle se trouvent des
     affaires. **Archiver une question** du formulaire : elle quitte le formulaire, ses réponses sont gardées, et un
     administrateur la restaure dans l'éditeur. **Archiver un nœud** du catalogue : il n'est plus proposé aux nouvelles
-    étapes ; le CRM refuse tant que des affaires actives se trouvent sur une étape qui en est faite.
+    étapes ; le CRM refuse tant que des affaires actives se trouvent sur une étape qui en est faite. **Archiver un
+    workflow** : aucun channel ne peut plus le choisir ; le CRM refuse tant que des channels le suivent, et pour le
+    workflow par défaut. Le rétablir reste un geste de l'écran.
 
-  Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace. Renommer, archiver ou désigner
-  par défaut un workflow, le copier vers un track et changer le workflow d'un channel arriveront dans le connecteur
-  après leur écran ; les points de checklist d'une étape, après l'éditeur des checklists.
+  Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace. Les points de checklist d'une
+  étape arriveront dans le connecteur avec une tranche suivante.
 
 - **Contacts** — *livrés en développement par `CRM-104`, tranche T3* :
   - *Consulter* : lister les contacts du carnet, par mots du nom, de l'adresse ou de la fonction, ou par

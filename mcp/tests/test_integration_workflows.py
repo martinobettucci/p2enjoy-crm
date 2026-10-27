@@ -384,3 +384,126 @@ async def test_le_business_developer_lit_le_catalogue_sans_l_ecrire():
     finally:
         await _retirer(DRISS, cases)
         await _nettoyer_noeud()
+
+
+# --- T2.e — les quatre outils qui suivent leur écran ------------------------------------------------------------------
+
+NOM_ANCIEN = "Workflow MCP T2.e ancien"
+NOM_NOUVEAU = "Workflow MCP T2.e nouveau"
+NOM_COPIE = "Workflow MCP T2.e copie"
+TRACK_CONSEIL = "5eed0000-0000-4000-8000-000000000021"
+QUALIFICATION = "5eed0000-0000-4000-8000-000000000048"
+CHANNEL_T2E = "e1180000-0000-4000-8000-0000000000f1"
+CARD_T2E = "e1180000-0000-4000-8000-0000000000f2"
+
+
+async def _nettoyer_t2e() -> None:
+    # Le défaut d'abord : la garde refuse d'archiver un défaut, et d'autres preuves l'attendent.
+    await _service("PATCH", "/workflows", params={"workspace_id": f"eq.{ESPACE_SEEDE}", "is_default": "is.true",
+                                                  "id": f"neq.{WORKFLOW_DEFAUT}"}, json={"is_default": False})
+    await _service("PATCH", "/workflows", params={"id": f"eq.{WORKFLOW_DEFAUT}"}, json={"is_default": True})
+    await _service("DELETE", "/cards", params={"id": f"eq.{CARD_T2E}"})
+    await _service("DELETE", "/channels", params={"id": f"eq.{CHANNEL_T2E}"})
+    for nom in (NOM_ANCIEN, NOM_NOUVEAU, NOM_COPIE):
+        await _service("DELETE", "/workflows", params={"workspace_id": f"eq.{ESPACE_SEEDE}", "name": f"eq.{nom}"})
+
+
+async def test_l_entete_et_le_changement_de_workflow_par_l_administratrice():
+    await _nettoyer_t2e()
+    await _poser(CAMILLE, WORKFLOWS)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(CAMILLE)) as client:
+            await _attendre_visible(client, "crm_channel_workflow_change")
+
+            async def appeler(outil: str, arguments: dict) -> dict:
+                resultat = (await client.call_tool(outil, arguments)).structured_content
+                assert await _dernier_journal(CAMILLE[1]) == (outil, "ok"), outil
+                return resultat
+
+            async def refuse(outil: str, arguments: dict, motif: str) -> None:
+                with pytest.raises(ToolError, match=motif):
+                    await client.call_tool(outil, arguments)
+                assert await _dernier_journal(CAMILLE[1]) == (outil, "refus_crm"), outil
+
+            ancien = (await appeler("crm_workflow_create", {"workspace": "p2enjoy", "name": "Brouillon T2.e"}))["workflow"]["id"]
+            relance = (await appeler("crm_workflow_step_add", {"workflow_id": ancien, "node_id": RELANCE}))["step"]["id"]
+            await appeler("crm_workflow_step_update", {"step_id": relance, "make_initial": True})
+            nouveau = (await appeler("crm_workflow_create", {"workspace": "p2enjoy", "name": NOM_NOUVEAU}))["workflow"]["id"]
+            qualif = (await appeler("crm_workflow_step_add", {"workflow_id": nouveau, "node_id": QUALIFICATION}))["step"]["id"]
+
+            # Renommer, définir par défaut : la fonction atomique, un seul défaut.
+            renomme = (await appeler("crm_workflow_update", {"workflow_id": ancien, "name": f"  {NOM_ANCIEN} "}))["workflow"]
+            assert renomme["name"] == NOM_ANCIEN
+            assert (await appeler("crm_workflow_update", {"workflow_id": nouveau, "make_default": True}))["workflow"]["default"] is True
+            defauts = (await _service("GET", "/workflows", params={"workspace_id": f"eq.{ESPACE_SEEDE}", "is_default": "is.true", "select": "id"})).json()
+            assert defauts == [{"id": nouveau}]
+            await refuse("crm_workflow_archive", {"workflow_id": nouveau}, "workflow_is_default")
+            await appeler("crm_workflow_update", {"workflow_id": WORKFLOW_DEFAUT, "make_default": True})
+            await refuse("crm_workflow_archive", {"workflow_id": WORKFLOW_DEFAUT}, r"workflow_in_use — \d+ channel")
+
+            # Copier vers un track.
+            copie = (await appeler("crm_workflow_copy_to_track", {
+                "workflow_id": ancien, "track_id": TRACK_CONSEIL, "new_name": NOM_COPIE,
+            }))["workflow"]
+            assert copie["scope"] == "track" and copie["track"]["id"] == TRACK_CONSEIL and copie["copied_from_workflow_id"] == ancien
+            await refuse("crm_workflow_copy_to_track", {"workflow_id": copie["id"], "track_id": TRACK_CONSEIL}, "workflow_not_global")
+
+            # Un channel occupé change de workflow : le mapping incomplet nomme l'étape oubliée.
+            assert (await _service("POST", "/channels", json={
+                "id": CHANNEL_T2E, "workspace_id": ESPACE_SEEDE, "track_id": TRACK_CONSEIL, "workflow_id": ancien,
+                "name": "Channel MCP T2.e", "slug": "mcp-t2e",
+            })).status_code == 201
+            assert (await _service("POST", "/cards", json={
+                "id": CARD_T2E, "workspace_id": ESPACE_SEEDE, "channel_id": CHANNEL_T2E, "workflow_id": ancien,
+                "current_step_id": relance, "title": "Affaire MCP T2.e",
+            })).status_code == 201
+            await refuse("crm_channel_workflow_change", {
+                "channel_id": CHANNEL_T2E, "workflow_id": nouveau, "step_mapping": [],
+            }, rf"step_mapping_incomplete — .*\({relance}, 1 affaire")
+            change = await appeler("crm_channel_workflow_change", {
+                "channel_id": CHANNEL_T2E, "workflow_id": nouveau,
+                "step_mapping": [{"from_step_id": relance, "to_step_id": qualif}],
+            })
+            assert change["placements_moved"] == 1
+            rattachement = (await _service("GET", "/card_placements", params={"card_id": f"eq.{CARD_T2E}", "select": "workflow_id,current_step_id"})).json()
+            assert rattachement == [{"workflow_id": nouveau, "current_step_id": qualif}]
+            await refuse("crm_channel_workflow_change", {
+                "channel_id": CHANNEL_T2E, "workflow_id": nouveau, "step_mapping": [],
+            }, "same_workflow")
+
+            # Libre et non défaut, l'ancien s'archive ; rétablir n'existe pas au connecteur.
+            archive = (await appeler("crm_workflow_archive", {"workflow_id": ancien}))["workflow"]
+            assert archive["archived"] is True
+            noms = {o.name for o in await client.list_tools()}
+            assert not noms & {"crm_workflow_restore", "crm_workflow_unarchive"} and "crm_workflow_version_restore" in noms
+    finally:
+        await _retirer(CAMILLE, WORKFLOWS)
+        await _nettoyer_t2e()
+
+
+async def test_le_business_developer_ne_change_ni_l_entete_ni_le_workflow_d_un_channel():
+    cases = [("workflows", "consulter"), ("workflows", "ajouter"), ("workflows", "modifier")]
+    await _poser(DRISS, cases)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_outils(
+                client, lambda noms: "crm_workflow_update" in noms and "crm_workflow_archive" not in noms, "matrice attendue"
+            )
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_workflow_update", {"workflow_id": WORKFLOW_DEFAUT, "name": "Réécrit"})
+            assert await _dernier_journal(DRISS[1]) == ("crm_workflow_update", "refus_crm")
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_workflow_update", {"workflow_id": WORKFLOW_DEFAUT, "make_default": True})
+            assert await _dernier_journal(DRISS[1]) == ("crm_workflow_update", "refus_crm")
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_channel_workflow_change", {
+                    "channel_id": "5eed0000-0000-4000-8000-000000000031", "workflow_id": WORKFLOW_DEFAUT, "step_mapping": [],
+                })
+            assert await _dernier_journal(DRISS[1]) == ("crm_channel_workflow_change", "refus_crm")
+            with pytest.raises(ToolError):
+                await client.call_tool("crm_workflow_archive", {"workflow_id": WORKFLOW_DEFAUT})
+        assert (await _service("GET", "/workflows", params={"id": f"eq.{WORKFLOW_DEFAUT}", "select": "name,archived_at"})).json() == [
+            {"name": "Cycle commercial standard", "archived_at": None}
+        ]
+    finally:
+        await _retirer(DRISS, cases)

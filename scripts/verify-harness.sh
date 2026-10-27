@@ -1744,7 +1744,9 @@ SCENARIOS_API=1258
 # 999, COMPTÉE.
 # **+1 par `CRM-068` T4b2, 2026-10-27** : `e2e/ui/modeles-affaires.spec.ts` gagne les réponses d'un modèle — posées,
 # l'adresse mal formée refusée, l'affaire née du modèle qui les porte en base. 999 + 1 = 1000, COMPTÉE.
-SCENARIOS_UI=1000
+# **+1 par `CRM-118` T2.e, 2026-10-27** : `e2e/ui/connecteur-workflows.spec.ts` gagne un scénario — un channel dont le
+# connecteur change le workflow montre son affaire à sa destination au board. 1000 + 1 = 1001, COMPTÉE.
+SCENARIOS_UI=1001
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -10,6 +10,9 @@
 //           docs/SPEC-workflow-engine.md §7 ter.12, §7 ter.13
 // @verifies docs/SPEC-mcp.md §9.2 undecies T2.d (« un nœud créé par le connecteur paraît dans le catalogue »,
 //           crm_workflow_node_create) ; docs/SPEC-workflow-engine.md §2 bis
+// @verifies docs/SPEC-mcp.md §9.2 undecies T2.e (« les mêmes preuves » : un channel dont le connecteur change le workflow
+//           montre son affaire à sa destination au board, crm_channel_workflow_change) ; docs/SPEC-workflow-engine.md
+//           §7 quinquies.3 ; docs/SPEC-change-channel-workflow.md §2
 //
 // Un VRAI client MCP crée un workflow et lui ajoute une étape au nom de l'administratrice ; la webapp, sous le même
 // compte, montre le workflow et son étape dans l'éditeur. Les cases posées pour la preuve, et le workflow, sont retirés à
@@ -27,6 +30,8 @@ const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const CAMILLE = { adresse: 'admin@p2enjoy.test', sub: '5eed0000-0000-4000-8000-000000000011' }
 const PROSPECTION = '5eed0000-0000-4000-8000-000000000041'
 const NOM = 'E2E MCP workflow'
+// T2.e : le workflow d'arrivée du changement, retiré à la fin comme le premier.
+const NOM_ARRIVEE = 'E2E MCP workflow arrivée'
 const ETAPE = 'E2E Étape MCP'
 const CASES: readonly [string, string][] = [
 	['workflows', 'consulter'],
@@ -70,9 +75,11 @@ async function retirer(request: APIRequestContext): Promise<void> {
 		await request.delete(rest(`channels?id=eq.${id}`), { headers: enTetesService() })
 	}
 	await request.delete(rest(`workflow_nodes_catalog?workspace_id=eq.${ESPACE}&key=eq.${CLE_NOEUD}`), { headers: enTetesService() })
-	await request.delete(rest(`workflows?workspace_id=eq.${ESPACE}&name=eq.${encodeURIComponent(NOM)}`), {
-		headers: enTetesService(),
-	})
+	for (const nom of [NOM, NOM_ARRIVEE]) {
+		await request.delete(rest(`workflows?workspace_id=eq.${ESPACE}&name=eq.${encodeURIComponent(nom)}`), {
+			headers: enTetesService(),
+		})
+	}
 	await request.delete(rest(`workflow_transition_required_fields?transition_id=eq.${TRANSITION_RELANCER}&field_id=eq.${CHAMP_DATE_SIGNATURE}`), {
 		headers: enTetesService(),
 	})
@@ -247,4 +254,53 @@ test('un nœud créé par le connecteur paraît dans le catalogue, avec son type
 	await expect(ligne.getByTestId('probabilite-noeud')).toHaveText('100 %')
 	await ligne.scrollIntoViewIfNeeded()
 	await capturer(page, 'connecteur-noeud-catalogue-1440', UNITE)
+})
+
+test('un channel dont le connecteur change le workflow montre son affaire à sa destination au board', async ({ page, browser, request }) => {
+	const session = await sessionDe(browser, CAMILLE.adresse)
+	const outil = async (name: string, args: Record<string, unknown>) => {
+		const resultat = await session.appeler('tools/call', { name, arguments: args })
+		expect(resultat.isError ?? false, `${name} ${JSON.stringify(resultat)}`).toBe(false)
+		return resultat.structuredContent
+	}
+	const depart = (await outil('crm_workflow_create', { workspace: 'p2enjoy', name: NOM })).workflow.id as string
+	const relance = (await outil('crm_workflow_step_add', { workflow_id: depart, node_id: NOEUDS.relance })).step.id as string
+	await outil('crm_workflow_step_update', { step_id: relance, make_initial: true })
+	const arrivee = (await outil('crm_workflow_create', { workspace: 'p2enjoy', name: NOM_ARRIVEE })).workflow.id as string
+	const prospection = (await outil('crm_workflow_step_add', { workflow_id: arrivee, node_id: NOEUDS.prospection })).step.id as string
+	const negociation = (await outil('crm_workflow_step_add', { workflow_id: arrivee, node_id: NOEUDS.negociation })).step.id as string
+	await outil('crm_workflow_step_update', { step_id: prospection, make_initial: true })
+
+	const canal = await request.post(rest('channels'), {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: { workspace_id: ESPACE, track_id: TRACK_CONSEIL, workflow_id: depart, name: 'E2E MCP changement', slug: SLUG_REMAP },
+	})
+	expect(canal.status(), await canal.text()).toBe(201)
+	const idChannel = ((await canal.json()) as { id: string }[])[0]?.id ?? ''
+	const idCard = randomUUID()
+	const titre = `E2E MCP changement ${idCard.slice(0, 8)}`
+	const carte = await request.post(rest('cards'), {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: { id: idCard, workspace_id: ESPACE, channel_id: idChannel, workflow_id: depart, current_step_id: relance, title: titre },
+	})
+	expect(carte.status(), await carte.text()).toBe(201)
+
+	// Rien n'est deviné : sans destination pour « Relance », le CRM refuse et l'outil nomme l'étape.
+	const refus = await session.appeler('tools/call', {
+		name: 'crm_channel_workflow_change',
+		arguments: { channel_id: idChannel, workflow_id: arrivee, step_mapping: [] },
+	})
+	expect(refus.isError).toBe(true)
+	expect(JSON.stringify(refus.content)).toContain('step_mapping_incomplete')
+	const change = await outil('crm_channel_workflow_change', {
+		channel_id: idChannel, workflow_id: arrivee, step_mapping: [{ from_step_id: relance, to_step_id: negociation }],
+	})
+	expect(change.placements_moved).toBe(1)
+
+	await connecterAvecLeLabs(page, CAMILLE.adresse)
+	await page.goto(`/tracks/conseil-ia/${SLUG_REMAP}`)
+	await expect(page.getByTestId('colonne')).toHaveCount(2)
+	await expect(page.locator(`[data-testid="colonne"][data-etape="${negociation}"] [data-card="${idCard}"]`)).toHaveCount(1)
+	await expect(page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)).toContainText(titre)
+	await capturer(page, 'connecteur-changement-workflow-board-1440', UNITE)
 })

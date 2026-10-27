@@ -639,7 +639,9 @@ dépréciation.
 **La 130 aussi** (`CRM-118` T1.b — le workflow par défaut en une transaction, la garde d'archivage ; sa ligne au §3.2),
 **après la 129**. Elle ajoute une fonction et un déclencheur ; aucune donnée ne change. **À livrer avec la webapp de
 `CRM-118` T1.b** (l'en-tête du workflow et ses refus nommés) ; sans elle, un archivage refusé s'afficherait en refus
-inconnu. Appliquée en développement le 2026-10-27.
+inconnu. **L'image `mcp` de `CRM-118` T2.e** (`crm_workflow_update`, `crm_workflow_archive`, `crm_workflow_copy_to_track`,
+`crm_channel_workflow_change`) **s'appuie aussi sur elle** : la livrer après la 130, jamais avant — sans elle,
+`make_default` rend un refus inconnu. Appliquée en développement le 2026-10-27.
 
 **La 129 aussi** (`CRM-118` T2.a — la famille `workflows` du connecteur MCP ; sa ligne au §3.2), **après la 128**. Elle
 ne change que les quatre listes fermées des familles ; aucune table ni donnée. **À livrer avec l'image `mcp` qui porte les

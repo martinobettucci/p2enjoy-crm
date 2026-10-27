@@ -25,7 +25,7 @@ d'exécuter le code attendu.
   dès l'appel suivant, l'administrateur jamais restreint, la recherche.
 - INC-319 consigne une dépendance d'ordre, antérieure, entre deux fichiers d'intégration du connecteur.
 
-### `CRM-118` T1.b et T2.a à T2.d — les gestes d'écran des workflows, et la famille `workflows` du connecteur (décisions 752, 754, 756, 758 et 760)
+### `CRM-118` T1.b et T2.a à T2.e — les gestes d'écran des workflows, et la famille `workflows` du connecteur (décisions 752, 754, 756, 758 et 760)
 
 *En développement seulement. Les migrations `0129` et `0130` attendent la prochaine fenêtre de production.*
 
@@ -45,6 +45,10 @@ d'exécuter le code attendu.
 - **Connecteur MCP, le catalogue de nœuds (T2.d)** : un assistant peut lister, créer, modifier, réordonner et archiver
   les nœuds dont les étapes sont faites — comme l'écran du catalogue, et pour les seuls administrateurs. La clé d'un
   nœud ne change jamais ; un nœud occupé par des affaires actives ne s'archive pas.
+- **Connecteur MCP, l'en-tête d'un workflow et le workflow d'un channel (T2.e)** : un assistant peut renommer un workflow
+  et le désigner par défaut, l'archiver (refusé, en le disant, tant que des channels le suivent ou pour le défaut), le
+  copier vers un track, et changer le workflow d'un channel — une destination par étape occupée, rien de deviné, et les
+  réponses de formulaire perdues seulement après votre accord. Rétablir un workflow archivé reste un geste de l'écran.
 - **Plateforme ▸ Connecteur MCP** : la matrice des droits gagne la ligne « Workflows », après « Structure ».
 - **Migration `0130` (T1.b)** : le workflow par défaut se désigne en une transaction (`set_default_workflow`,
   administrateur, workflow global seulement) ; la base refuse d'archiver un workflow qu'un channel emploie encore ou le

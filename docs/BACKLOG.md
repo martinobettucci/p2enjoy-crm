@@ -17137,8 +17137,24 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
         `changement-workflow-*.jpg`).
       - Manuel (l'en-tête du workflow ouvert ; changer le workflow d'un channel qui porte des affaires), DAT, CHANGELOG.
         **Reste** : la livraison de la migration `0130` et de la webapp sur instruction du responsable, et son constat.
-- [ ] **T2.e — les quatre outils qui suivent leur écran** (après T1.b) : `crm_workflow_update`, `crm_workflow_archive`,
+- [P] **T2.e — les quatre outils qui suivent leur écran** (après T1.b) : `crm_workflow_update`, `crm_workflow_archive`,
       `crm_workflow_copy_to_track`, `crm_channel_workflow_change` (`docs/SPEC-mcp.md` §9.2 undecies). Mêmes preuves.
+      - **Fait le 2026-10-27** : `mcp/crm_mcp/outils/workflows_entete.py`, **quatre outils** (l'archive et le changement
+        de workflow d'un channel destructifs ; aucun outil pour rétablir) ; consignes au modèle (demander avant
+        `discard_field_values`) ; la phrase de l'onglet « Connecteur MCP » atteint sa cible (`fr.ts`, design system §5.56).
+      - Unitaires `tests/test_workflows_entete.py` **9** ; **neuf mutations tuées sur onze**, les deux survivantes
+        équivalentes (sans leur entrée, `42501` et `forbidden` rejoignent déjà le refus uniforme par `refus`) ; suite
+        unitaire du connecteur **255 réussis**.
+      - Intégration contre la vraie pile : renommer, définir par défaut (un seul défaut), `workflow_is_default`,
+        `workflow_in_use`, la copie vers Conseil & IA (`workflow_not_global` sur la copie), un channel occupé changé de
+        workflow (`step_mapping_incomplete` nommant l'étape oubliée, puis le rattachement relu à sa destination,
+        `same_workflow`), l'archive ; le business developer refusé par le CRM malgré la matrice ouverte, l'archive fermée
+        par la matrice. Fichier **10/10**.
+      - **E2E** `connecteur-workflows.spec.ts` : un channel dont un vrai client MCP change le workflow montre son affaire à
+        sa destination au board — **5/5**, capture observée (`connecteur-changement-workflow-board-1440.jpg`).
+      - Manuel (famille « Workflows » du connecteur ; les mentions « hors interface » de la copie et du défaut, devenues
+        fausses avec T1.b, retirées), DAT, CHANGELOG, harnais (UI +1). **Reste** : la livraison de l'image `mcp` sur
+        instruction du responsable, et son constat.
 - [P] **T2.a — le workflow, ses étapes, ses transitions** : migration et pgTAP, genres d'ancre,
       `mcp/crm_mcp/outils/workflows.py`, unitaires et mutations, intégration contre la vraie pile (succès, refus par la
       matrice, refus par le CRM malgré la matrice ouverte, journal), E2E (une étape ajoutée par un vrai client MCP paraît

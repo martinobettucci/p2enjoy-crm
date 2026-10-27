@@ -2993,7 +2993,28 @@
 						},
 						{
 							"type": "text",
-							"text": ", le guide de démarrage y pose le workflow de départ en un geste (chapitre 1 bis.4). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Ce qui reste hors interface est la "
+							"text": ", le guide de démarrage y pose le workflow de départ en un geste (chapitre 1 bis.4). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Depuis "
+						},
+						{
+							"type": "code",
+							"text": "CRM-118"
+						},
+						{
+							"type": "text",
+							"text": ", l'en-tête de l'éditeur "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "renomme"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", "
 						},
 						{
 							"type": "strong",
@@ -3006,7 +3027,7 @@
 						},
 						{
 							"type": "text",
-							"text": " vers un track et la désignation du workflow "
+							"text": " vers un track, désigne "
 						},
 						{
 							"type": "strong",
@@ -3016,6 +3037,36 @@
 									"text": "par défaut"
 								}
 							]
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "archive"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " et "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "rétablit"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " un workflow"
 						}
 					]
 				],

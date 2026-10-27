@@ -239,7 +239,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : créer et modifier les workflows, leurs étapes, leurs transitions et leur formulaire, le catalogue de\nnœuds, publier et restaurer leurs versions ; la lecture d'un workflow reste à « Structure » ;"
+								"text": " : créer, modifier et archiver les workflows, leurs étapes, leurs transitions et leur formulaire, le\ncatalogue de nœuds ; leurs versions, leur copie vers un track, le workflow d'un channel ; la lecture d'un workflow\nreste à « Structure » ;"
 							}
 						]
 					}
@@ -1875,7 +1875,7 @@
 										},
 										{
 											"type": "text",
-											"text": " : renommer un track ou un channel, changer sa description, la couleur ou l'icône d'un track. Le slug\n— l'adresse — ne change jamais, et changer le workflow d'un channel reste un geste de l'écran, comme choisir la\ncouleur d'un channel ("
+											"text": " : renommer un track ou un channel, changer sa description, la couleur ou l'icône d'un track. Le slug\n— l'adresse — ne change jamais ; changer le workflow d'un channel relève de la famille « Workflows », et choisir la\ncouleur d'un channel reste un geste de l'écran ("
 										},
 										{
 											"type": "code",
@@ -1950,7 +1950,7 @@
 									},
 									{
 										"type": "text",
-										"text": ", tranches T2.a à T2.d ; la suite vient avec les tranches\nsuivantes"
+										"text": ", tranches T2.a à T2.e"
 									}
 								]
 							},
@@ -2091,7 +2091,20 @@
 										},
 										{
 											"type": "text",
-											"text": " du workflow, avec une note ; ajouter un "
+											"text": " du workflow, avec une note ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "copier"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " un workflow global vers un track — la copie reprend\nses étapes, ses déplacements et son formulaire, puis évolue seule ; ajouter un "
 										},
 										{
 											"type": "strong",
@@ -2124,7 +2137,46 @@
 										},
 										{
 											"type": "text",
-											"text": " : changer les valeurs propres d'une étape, ou les retirer pour reprendre celles du catalogue ; désigner\nl'"
+											"text": " : "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "renommer"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " un workflow, ou le "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "désigner par défaut"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " — il y en a toujours un seul, et il est global ;\n"
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "changer le workflow d'un channel"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : chaque étape occupée reçoit sa destination, rien n'est deviné, et si des\nréponses de formulaire seraient perdues, le CRM refuse et l'assistant doit vous le dire et obtenir votre accord ;\nchanger les valeurs propres d'une étape, ou les retirer pour reprendre celles du catalogue ; désigner\nl'"
 										},
 										{
 											"type": "strong",
@@ -2261,7 +2313,20 @@
 										},
 										{
 											"type": "text",
-											"text": " du catalogue : il n'est plus proposé aux nouvelles\nétapes ; le CRM refuse tant que des affaires actives se trouvent sur une étape qui en est faite."
+											"text": " du catalogue : il n'est plus proposé aux nouvelles\nétapes ; le CRM refuse tant que des affaires actives se trouvent sur une étape qui en est faite. "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Archiver un\nworkflow"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : aucun channel ne peut plus le choisir ; le CRM refuse tant que des channels le suivent, et pour le\nworkflow par défaut. Le rétablir reste un geste de l'écran."
 										}
 									]
 								}
@@ -2273,7 +2338,7 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace. Renommer, archiver ou désigner\npar défaut un workflow, le copier vers un track et changer le workflow d'un channel arriveront dans le connecteur\naprès leur écran ; les points de checklist d'une étape, après l'éditeur des checklists."
+								"text": "Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace. Les points de checklist d'une\nétape arriveront dans le connecteur avec une tranche suivante."
 							}
 						]
 					}

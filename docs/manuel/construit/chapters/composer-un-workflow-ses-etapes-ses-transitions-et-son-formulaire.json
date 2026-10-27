@@ -145,7 +145,15 @@
 				},
 				{
 					"type": "text",
-					"text": "\naussi un workflow (chapitre 5 bis.0). Il ne le copie pas vers un track et ne le rend pas par\ndéfaut : ces deux gestes restent hors interface."
+					"text": "\naussi un workflow (chapitre 5 bis.0). Depuis "
+				},
+				{
+					"type": "code",
+					"text": "CRM-118"
+				},
+				{
+					"type": "text",
+					"text": ", son en-tête le renomme, le copie vers un\ntrack, le rend par défaut, l'archive et le rétablit."
 				}
 			]
 		},
@@ -3516,47 +3524,6 @@
 							{
 								"type": "text",
 								"text": " n'est pas possible : le geste se\nrépète chemin par chemin."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Copier"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " vers un track et "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "rendre par défaut"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " un workflow restent hors interface. Créer, en\nrevanche, est livré depuis "
-							},
-							{
-								"type": "code",
-								"text": "CRM-031"
-							},
-							{
-								"type": "text",
-								"text": " — chapitre 5 bis.0."
 							}
 						]
 					}

@@ -10,7 +10,7 @@
 #       (docs/SPEC-mcp.md §9.2 sexies)
 # @spec CRM-104 (docs/BACKLOG.md) tranches T2.a, T2.b, T1 et T3 — les affaires, la structure, la recherche et les contacts
 #       enregistrés et nommés au modèle (docs/SPEC-mcp.md §9.2 bis à quinquies)
-# @spec CRM-118 (docs/BACKLOG.md) tranches T2.a à T2.d — la famille `workflows` enregistrée, sa ligne dans les consignes au
+# @spec CRM-118 (docs/BACKLOG.md) tranches T2.a à T2.e — la famille `workflows` enregistrée, sa ligne dans les consignes au
 #       modèle (docs/SPEC-mcp.md §9.2 undecies)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
@@ -48,6 +48,7 @@ from crm_mcp.outils import (
     structure,
     temps,
     workflows,
+    workflows_entete,
     workflows_formulaire,
     workflows_noeuds,
     workflows_versions,
@@ -83,6 +84,7 @@ you see and change exactly what you could in the CRM web app, never more.
 - Lists are paginated: use limit (max 100) and offset.
 - "supprimer" moves to the trash or archives, with one exception: removing a workflow step or move (family
   workflows) deletes it for good, as the workflow editor does. Confirm such a removal with the person first.
+- Changing a channel's workflow can destroy form answers: ask the person before setting discard_field_values.
 """
 
 
@@ -169,6 +171,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     workflows_versions.ajouter(serveur, moteur, crm)
     # `CRM-118` T2.d : le catalogue de nœuds (docs/SPEC-mcp.md §9.2 undecies).
     workflows_noeuds.ajouter(serveur, moteur, crm)
+    # `CRM-118` T2.e : les quatre outils qui suivent leur écran (docs/SPEC-mcp.md §9.2 undecies).
+    workflows_entete.ajouter(serveur, moteur, crm)
     # `CRM-104` T3 : les contacts (docs/SPEC-mcp.md §9.2 quinquies).
     contacts.ajouter(serveur, moteur, crm)
     # `CRM-114` T4 : les organisations (docs/SPEC-mcp.md §9.2 sexies).
