@@ -1169,6 +1169,54 @@
 					[
 						{
 							"type": "text",
+							"text": "4.7 quinquies"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La checklist d’une affaire : les points à cocher"
+						}
+					],
+					[
+						{
+							"type": "code",
+							"text": "CRM-068"
+						}
+					],
+					[
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Livré en développement"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " — voir le chapitre 4.7 "
+						},
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "quinquies"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Le bloc « Checklist » de la fiche montre les points de l’étape — ajoutés automatiquement à l’entrée dans l’étape —, ceux des étapes traversées et les points libres ; on coche, on décoche, on ajoute et on retire un point libre. Un point exigé pour quitter l’étape le dit, et le tableau refuse le déplacement en nommant les points à cocher. La carte du tableau porte le compte « 1/2 ». Ce qui manque : l’écran de l’éditeur de workflows pour définir les points (T3b), les modèles d’affaires et le connecteur"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
 							"text": "7 bis"
 						}
 					],

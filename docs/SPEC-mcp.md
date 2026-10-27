@@ -1006,7 +1006,8 @@ partout (§9.3).
 (`crm_workflow_get`) avant de le modifier, dire à la personne ce qui va changer, montrer le plan avant une
 restauration. **L'onglet « Connecteur MCP »** gagne la ligne `workflows` et sa phrase de portée, **qui grandit avec les
 sous-tranches** pour ne jamais promettre un outil absent. Avec T2.a : « Créer et modifier les workflows, leurs étapes et
-transitions ; la lecture reste à Structure ». Cible, toutes sous-tranches livrées : « Créer, modifier et archiver les
+transitions ; la lecture reste à Structure » ; avec T2.b : « Créer et modifier les workflows, leurs étapes, transitions et
+formulaire ; la lecture reste à Structure ». Cible, toutes sous-tranches livrées : « Créer, modifier et archiver les
 workflows, leurs étapes, transitions et formulaire, le catalogue de nœuds ; versions, copie, workflow d'un channel. La
 lecture d'un workflow reste à Structure. »
 

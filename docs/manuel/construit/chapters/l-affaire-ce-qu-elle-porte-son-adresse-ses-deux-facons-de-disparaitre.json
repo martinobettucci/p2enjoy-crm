@@ -4046,6 +4046,579 @@
 		{
 			"type": "heading",
 			"level": 3,
+			"anchor": "la-checklist-d-une-affaire-les-points-a-cocher",
+			"content": [
+				{
+					"type": "text",
+					"text": "4.7 quinquies La checklist d'une affaire : les points à cocher"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-068"
+						},
+						{
+							"type": "text",
+							"text": ", tranches T1 à T3a, en développement. Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-068/"
+						},
+						{
+							"type": "text",
+							"text": ", préfixées\n"
+						},
+						{
+							"type": "code",
+							"text": "fiche-checklist-"
+						},
+						{
+							"type": "text",
+							"text": " et "
+						},
+						{
+							"type": "code",
+							"text": "board-"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "À quoi cela sert."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Dire ce qu'il reste à faire sur une affaire, point par point, et savoir qui l'a fait. Certains\npoints viennent de l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "étape"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " où se trouve l'affaire ; d'autres sont "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "libres"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ajoutés à la main sur une affaire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Dans la colonne de gauche de la fiche, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "juste après le formulaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : le bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Checklist »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Son titre\nporte le compte des points cochés : « 2 sur 3 ». Une affaire sans aucun point affiche « Aucun point pour cette\naffaire. », et le champ d'ajout reste offert."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le bloc montre."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Étape Relance »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — les points de l'étape où se trouve l'affaire, en premier. Ils sont ajoutés "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "automatiquement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "\nquand l'affaire entre dans l'étape ; un administrateur les définit pour chaque étape du processus."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Sous leur propre titre, les points des "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "étapes déjà traversées"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : ils restent, cochés ou non, pour mémoire. Si une\nétape a été supprimée depuis, ses points restent sous « Étape supprimée »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Points libres »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — ceux que l'on a ajoutés sur cette affaire."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un point coché dit "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "qui l'a coché, et quand"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : « Coché par Driss Lemoine, le 26/10/2026 14:05 »."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Un point "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "exigé"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " pour quitter l'étape porte la mention "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Exigé pour passer à Négociation »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : tant qu'il n'est pas\ncoché, ce déplacement est refusé."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Cocher, décocher."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Cliquez sur la case, ou appuyez sur Espace quand elle a le focus. La case bascule tout de suite ;\nsi le serveur refuse, elle revient à son état et le motif s'écrit sous le point. Tout point se coche et se décoche, qu'il\nvienne de l'étape ou qu'il soit libre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ajouter un point libre."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Saisissez son libellé dans "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nouveau point »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous les points libres, puis "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Ajouter »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "\nou Entrée. Le champ se vide et garde le focus, pour en ajouter un autre. « Ajouter » reste grisé tant que le champ est\nvide. Un libellé fait 200 caractères au plus."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Retirer un point libre."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Retirer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la ligne le retire aussitôt, sans confirmation : il se\nréécrit en un instant. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un point d'étape ne se retire pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et n'a pas de bouton : il appartient à l'étape."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Sur le tableau kanban."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une carte dont l'étape porte des points montre leur compte, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« 1/2 »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", à côté de son\nancienneté ; tous cochés, la pastille passe au vert. Une carte dont l'étape n'a aucun point ne montre rien. Si vous\nglissez une affaire vers une étape alors qu'un point exigé n'est pas coché, le déplacement est refusé et le bandeau\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nomme les points à cocher"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : « Ces points de la checklist doivent être cochés avant ce déplacement : Proposition\nenvoyée ». La carte revient à sa place."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Dans l'historique de l'affaire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Chaque cochage et chaque décochage paraît dans le fil (chapitre 4.10), sous le\nfiltre « Champs » : « Point de checklist coché », avec le libellé du point et son auteur."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Si vous ne pouvez pas écrire sur cette affaire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les cases, « Retirer » et le champ d'ajout restent visibles mais\ngrisés, et le bandeau en tête de la fiche dit pourquoi (chapitre 3.6). Vous lisez la checklist comme les autres."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Dans l'espace de démonstration."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le channel "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Checklists »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du track Studio web porte trois affaires : « Formation\nIA — Cerfrance » (un point coché sur deux, un point libre), « Atelier prompt — Lycée Vauban » (bloquée en Relance tant\nque « Proposition envoyée » n'est pas coché) et « Parcours data — Mairie de Rennes » (tout coché, en Négociation)."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui n'est pas encore livré."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Définir les points d'une étape et les points exigés par un déplacement se fait\naujourd'hui sans écran : l'éditeur de workflows les recevra ("
+				},
+				{
+					"type": "code",
+					"text": "CRM-068"
+				},
+				{
+					"type": "text",
+					"text": " T3b), avec un lien du bandeau de refus vers la\nfiche. Les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "modèles d'affaires"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (T4) et les outils du "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "connecteur MCP"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (T5) suivront."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
 			"anchor": "mettre-une-affaire-a-la-corbeille",
 			"content": [
 				{

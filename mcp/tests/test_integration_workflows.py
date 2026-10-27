@@ -1,7 +1,8 @@
-# @verifies CRM-118 (docs/BACKLOG.md) — tranche T2.a : les outils de la famille `workflows` contre le vrai Keycloak, la
-#           vraie base et le vrai service `mcp`, par le parcours OAuth réel
+# @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a et T2.b : les outils de la famille `workflows` contre le vrai Keycloak,
+#           la vraie base et le vrai service `mcp`, par le parcours OAuth réel
 # @verifies docs/SPEC-mcp.md §13 (par outil : succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
-#           journal écrit), §9.2 undecies (T2.a : le workflow, ses étapes, ses transitions, les refus nommés) ;
+#           journal écrit), §9.2 undecies (T2.a : le workflow, ses étapes, ses transitions ; T2.b : le formulaire, la
+#           visibilité, les exigences ; les refus nommés) ; docs/SPEC-workflow-engine.md §7 bis.10 à §7 bis.13 ;
 #           docs/SPEC-workflow-engine.md §3.4, §3.5, §3.7 ; décisions 754 et 756
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
@@ -134,3 +135,95 @@ async def test_le_business_developer_est_refuse_par_le_crm_et_le_retrait_ferme_p
     finally:
         await _retirer(DRISS, cases)
         await _nettoyer()
+
+
+# --- T2.b — le formulaire, la visibilité, les exigences ---------------------------------------------------------------
+
+CHAMP_DEFAUT = "5eed0000-0000-4000-8000-000000000081"  # « budget », du workflow par défaut
+
+
+async def test_le_formulaire_compose_par_l_administratrice_outil_par_outil():
+    await _nettoyer()
+    await _poser(CAMILLE, WORKFLOWS)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(CAMILLE)) as client:
+            await _attendre_visible(client, "crm_form_field_archive")
+
+            async def appeler(outil: str, arguments: dict) -> dict:
+                resultat = (await client.call_tool(outil, arguments)).structured_content
+                assert await _dernier_journal(CAMILLE[1]) == (outil, "ok"), outil
+                return resultat
+
+            async def refuse(outil: str, arguments: dict, motif: str) -> None:
+                with pytest.raises(ToolError, match=motif):
+                    await client.call_tool(outil, arguments)
+                assert await _dernier_journal(CAMILLE[1]) == (outil, "refus_crm"), outil
+
+            wf = (await appeler("crm_workflow_create", {"workspace": "p2enjoy", "name": NOM}))["workflow"]["id"]
+            depart = (await appeler("crm_workflow_step_add", {"workflow_id": wf, "node_id": PROSPECTION}))["step"]["id"]
+            arrivee = (await appeler("crm_workflow_step_add", {"workflow_id": wf, "node_id": RELANCE}))["step"]["id"]
+            arete = (await appeler("crm_workflow_transition_add", {
+                "workflow_id": wf, "from_step_id": depart, "to_step_id": arrivee,
+            }))["transition"]["id"]
+
+            source = (await appeler("crm_form_field_add", {
+                "workflow_id": wf, "key": "source-mcp", "label": "Source", "type": "select",
+                "choices": [{"key": "web", "label": "Web"}, {"key": "salon", "label": "Salon"}],
+            }))["field"]
+            montant = (await appeler("crm_form_field_add", {
+                "workflow_id": wf, "key": "montant-mcp", "label": "Montant", "type": "money", "currency": "eur",
+            }))["field"]
+            assert montant["options"] == {"currency": "EUR"}
+            await refuse("crm_form_field_add", {"workflow_id": wf, "key": "source-mcp", "label": "X", "type": "text"},
+                         "field_key_taken")
+            await appeler("crm_form_field_update", {"field_id": source["id"], "label": "Origine", "help_text": "Où l'avez-vous connu ?"})
+            await appeler("crm_form_field_move", {"field_id": montant["id"]})
+            ordre = (await _service("GET", "/form_fields", params={"workflow_id": f"eq.{wf}", "select": "key", "order": "position.asc"})).json()
+            assert [c["key"] for c in ordre] == ["montant-mcp", "source-mcp"]
+
+            effets = await appeler("crm_transition_requirement_preview", {"field_id": source["id"], "step_id": arrivee})
+            assert effets == {**effets, "affaires_already_there": 0, "affaires_blocked_at_entry": 0}
+            await appeler("crm_form_field_visibility_set", {"field_id": source["id"], "step_id": arrivee, "visibility": "required"})
+            await appeler("crm_form_field_visibility_set", {"field_id": source["id"], "step_id": arrivee, "visibility": "hidden"})
+            assert (await _service("GET", "/form_field_rules", params={"field_id": f"eq.{source['id']}", "select": "visibility"})).json() == [
+                {"visibility": "hidden"}
+            ]
+            await appeler("crm_form_field_visibility_set", {"field_id": source["id"], "step_id": arrivee, "visibility": "default"})
+            assert (await _service("GET", "/form_field_rules", params={"field_id": f"eq.{source['id']}", "select": "visibility"})).json() == []
+
+            await appeler("crm_transition_required_field_set", {"transition_id": arete, "field_id": source["id"], "required": True})
+            await refuse("crm_transition_required_field_set", {"transition_id": arete, "field_id": source["id"], "required": True},
+                         "already_required")
+            await refuse("crm_transition_required_field_set", {"transition_id": arete, "field_id": CHAMP_DEFAUT, "required": True},
+                         "required_field_workflow_mismatch")
+            formulaire = await appeler("crm_workflow_form_get", {"workflow_id": wf})
+            assert formulaire["transitions"][0]["required_field_ids"] == [source["id"]]
+            assert [c["label"] for c in formulaire["fields"]] == ["Montant", "Origine"]
+            await appeler("crm_transition_required_field_set", {"transition_id": arete, "field_id": source["id"], "required": False})
+            await refuse("crm_transition_required_field_set", {"transition_id": arete, "field_id": source["id"], "required": False},
+                         "not_required")
+            await appeler("crm_form_field_archive", {"field_id": montant["id"]})
+            assert (await _service("GET", "/form_fields", params={"id": f"eq.{montant['id']}", "select": "archived_at"})).json()[0]["archived_at"]
+    finally:
+        await _retirer(CAMILLE, WORKFLOWS)
+        await _nettoyer()
+
+
+async def test_le_business_developer_ne_compose_pas_le_formulaire():
+    cases = [("workflows", "consulter"), ("workflows", "ajouter"), ("workflows", "modifier")]
+    await _poser(DRISS, cases)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_outils(
+                client, lambda noms: "crm_form_field_add" in noms and "crm_form_field_archive" not in noms, "matrice attendue"
+            )
+            assert (await client.call_tool("crm_workflow_form_get", {"workflow_id": WORKFLOW_DEFAUT})).structured_content["fields"]
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_form_field_add", {"workflow_id": WORKFLOW_DEFAUT, "key": "refuse", "label": "R", "type": "text"})
+            assert await _dernier_journal(DRISS[1]) == ("crm_form_field_add", "refus_crm")
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_form_field_update", {"field_id": CHAMP_DEFAUT, "label": "Réécrit"})
+            assert await _dernier_journal(DRISS[1]) == ("crm_form_field_update", "refus_crm")
+        assert (await _service("GET", "/form_fields", params={"id": f"eq.{CHAMP_DEFAUT}", "select": "label"})).json()[0]["label"] != "Réécrit"
+    finally:
+        await _retirer(DRISS, cases)

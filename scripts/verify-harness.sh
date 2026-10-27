@@ -1710,7 +1710,9 @@ SCENARIOS_API=1246
 # « 974 passed, 10 failed » sur 984, les dix rejoués verts après révision.
 # **+1 par `CRM-118` T2.a, 2026-10-27** : `e2e/ui/connecteur-workflows.spec.ts`, fichier NEUF, **1** scénario — une étape
 # ajoutée par un vrai client MCP paraît dans l'éditeur de workflows. 969 + 1 = 970, COMPTÉE.
-SCENARIOS_UI=970
+# **+1 par `CRM-118` T2.b, 2026-10-27** : `e2e/ui/connecteur-workflows.spec.ts` gagne le champ exigé par un vrai client MCP
+# qui bloque un déplacement au board, puis l'exigence levée. 970 + 1 = 971, COMPTÉE.
+SCENARIOS_UI=971
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

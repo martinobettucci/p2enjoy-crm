@@ -17060,8 +17060,23 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
       - **Implémentée et vérifiée en développement le 2026-10-27.** **Reste `[P]`** : la livraison, sur instruction du
         responsable — migration `0129`, image `mcp` reconstruite, webapp (`docs/PROD_MIGRATIONS.md`) —, et son constat :
         un assistant connecté qui compose un workflow.
-- [ ] **T2.b — le formulaire, la visibilité, les exigences** : mêmes preuves ; E2E : un champ exigé par le connecteur
+- [P] **T2.b — le formulaire, la visibilité, les exigences** : mêmes preuves ; E2E : un champ exigé par le connecteur
       bloque un déplacement au board. Les cinq outils de checklist **après `CRM-068` T3b**.
+      - **Fait le 2026-10-27** : `mcp/crm_mcp/outils/workflows_formulaire.py`, **huit outils** (les cinq de checklist ne
+        sont pas déclarés) ; genre d'ancre `field` ; phrase de l'onglet « … transitions et formulaire … ».
+      - Unitaires `tests/test_workflows_formulaire.py` **11** ; **douze mutations tuées sur douze** (deux après
+        renforcement : l'horodatage d'archive, le champ déplacé qui n'est pas son propre voisin) ; suite unitaire 232.
+      - Intégration contre la vraie pile : le formulaire composé outil par outil par l'administratrice, journal `ok` par
+        outil, effets relus en base ; refus nommés `field_key_taken`, `already_required`,
+        `required_field_workflow_mismatch`, `not_required` ; le business developer refusé par le CRM malgré la matrice
+        ouverte ; l'archive fermée par la matrice. Fichier `test_integration_workflows.py` **4/4**.
+      - **E2E** `connecteur-workflows.spec.ts` : un champ exigé par un vrai client MCP pour « Relancer » bloque le
+        déplacement d'une affaire au board, le bandeau nomme « Date de signature prévue », puis l'exigence levée laisse
+        passer — **2/2**, capture observée. La matrice de la plateforme observée avec la nouvelle phrase.
+      - Manuel 11.1 et 11.5 et chapitres construits (le chapitre de l'affaire et le sommaire rattrapent aussi le manuel
+        modifié par `35b29739`), DAT, design system §5.56, SPEC-mcp, CHANGELOG. INC-320 consignée
+        (`plateforme-mcp.spec.ts` dépend d'un journal frais).
+      - **Reste `[P]`** : la livraison, avec T2.a, et le constat du responsable.
 - [ ] **T2.c — la copie, les versions, le remappage** : mêmes preuves ; E2E : une restauration par le connecteur remappe
       une affaire visible au board. `crm_workflow_copy_to_track` **après T1.b**.
 - [ ] **T2.d — le catalogue de nœuds, le workflow d'un channel** : mêmes preuves ; E2E : un nœud créé par le connecteur

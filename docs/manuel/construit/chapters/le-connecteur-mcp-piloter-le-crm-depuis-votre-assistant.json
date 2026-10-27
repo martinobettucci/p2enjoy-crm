@@ -239,7 +239,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : créer et modifier les workflows, leurs étapes et leurs transitions ; la lecture d'un workflow reste à\n« Structure » ;"
+								"text": " : créer et modifier les workflows, leurs étapes, leurs transitions et leur formulaire ; la lecture d'un\nworkflow reste à « Structure » ;"
 							}
 						]
 					}
@@ -1950,7 +1950,7 @@
 									},
 									{
 										"type": "text",
-										"text": ", tranche T2.a ; la suite vient avec les tranches suivantes"
+										"text": ", tranches T2.a et T2.b ; la suite vient avec les tranches\nsuivantes"
 									}
 								]
 							},
@@ -1980,7 +1980,33 @@
 										},
 										{
 											"type": "text",
-											"text": " : la liste des workflows d'un espace, le workflow par défaut en tête, avec leur portée (tout l'espace ou\nun seul track) et le workflow d'origine d'une copie. Lire un workflow, étape par étape, demande « Structure ▸\nConsulter » ;"
+											"text": " : la liste des workflows d'un espace, le workflow par défaut en tête, avec leur portée (tout l'espace ou\nun seul track) et le workflow d'origine d'une copie ; le "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "formulaire"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " d'un workflow, tel que l'éditeur le montre —\nses champs, archivés compris, la visibilité de chaque champ à chaque étape, ce que chaque déplacement exige ; et, avant\nd'exiger un champ, "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "combien d'affaires en cours seraient concernées"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ". Lire un workflow, étape par étape, demande\n« Structure ▸ Consulter » ;"
 										}
 									]
 								}
@@ -2013,7 +2039,7 @@
 										},
 										{
 											"type": "text",
-											"text": " dans un espace qui n'en a aucun, comme le panneau « Bien\ndémarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité ou un seuil de\nrelance qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif\nexigé ;"
+											"text": " dans un espace qui n'en a aucun, comme le panneau « Bien\ndémarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité ou un seuil de\nrelance qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif\nexigé ; ajouter une question au formulaire — une clé, un libellé, l'un des quinze types, une aide, les choix d'une\nliste ou la devise d'un montant ;"
 										}
 									]
 								}
@@ -2046,7 +2072,33 @@
 										},
 										{
 											"type": "text",
-											"text": " ; changer l'ordre des étapes ; changer le libellé d'un déplacement, ou s'il exige un motif ;"
+											"text": " ; changer l'ordre des étapes ; changer le libellé d'un déplacement, ou s'il exige un motif ;\nchanger le libellé, l'aide, les choix ou la devise d'une question — "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "jamais sa clé ni son type"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " — et l'ordre des\nquestions ; régler la visibilité d'une question à une étape (masquée, affichée, exigée, ou par défaut) ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "exiger une\nquestion pour un déplacement"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", ou ne plus l'exiger : une affaire ne passe alors plus sans y avoir répondu ;"
 										}
 									]
 								}
@@ -2105,7 +2157,20 @@
 										},
 										{
 											"type": "text",
-											"text": ". Le CRM refuse de retirer une étape sur laquelle se trouvent des\naffaires."
+											"text": ". Le CRM refuse de retirer une étape sur laquelle se trouvent des\naffaires. "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Archiver une question"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " du formulaire : elle quitte le formulaire, ses réponses sont gardées, et un\nadministrateur la restaure dans l'éditeur."
 										}
 									]
 								}
@@ -2117,7 +2182,7 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace. Renommer, archiver ou désigner\npar défaut un workflow, le copier vers un track et changer le workflow d'un channel arriveront dans le connecteur\naprès leur écran."
+								"text": "Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace. Renommer, archiver ou désigner\npar défaut un workflow, le copier vers un track et changer le workflow d'un channel arriveront dans le connecteur\naprès leur écran ; les points de checklist d'une étape, après l'éditeur des checklists."
 							}
 						]
 					}

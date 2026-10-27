@@ -8154,3 +8154,17 @@ les autres fichiers (`_attendre_outils`). Le produit se conduit comme spécifié
 **Sans effet sur le harnais** : `scripts/verify-mcp.sh` joue `oauth` en premier (56/56, deux fois). **Non corrigé** :
 le fichier relève de `CRM-102`. **Issue proposée** : attendre la liste exacte par `_attendre_outils`, bornée par
 `DUREE_VISIBILITE_S`, au lieu de la lire une fois.
+
+### INC-320 — `plateforme-mcp.spec.ts` lit le refus du seed sur la première page du journal, qu'une campagne d'intégration remplit
+
+*Constaté le 2026-10-27 par `CRM-118` T2.b, en rejouant `e2e/ui/plateforme-mcp.spec.ts` après plusieurs campagnes
+`scripts/verify-mcp.sh` et intégrations du connecteur sur la même pile.* Le scénario « le journal des appels filtré par
+issue » attend une ligne `crm_profitability_report` / Driss Lemoine parmi les appels « Refusé par le CRM ». Il échoue :
+la base porte **463** appels `refus_crm`, dont 17 `crm_profitability_report`, et l'écran n'en lit qu'une page de
+**50** (`PAGE_JOURNAL`), les plus récents d'abord — chaque campagne d'intégration ajoute des refus de Driss d'autres
+outils, qui repoussent celui du seed hors de la première page. Vert à 01:26 le même jour, avant deux campagnes.
+
+**Le produit se conduit comme spécifié** (`docs/SPEC-mcp.md` §8.1, pagination « Entrées plus anciennes »). C'est la
+preuve qui suppose une base fraîchement seedée. **Non corrigé** : le fichier relève de `CRM-103`. **Issues proposées** :
+filtrer aussi par compte (le filtre existe dans la RPC, `p_sub`) ou lire le journal propre de la fiche de Driss ; ou
+reseeder avant la preuve.

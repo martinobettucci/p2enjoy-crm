@@ -6,7 +6,7 @@
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T4 : les genres d'ancre `cost`, `cost_actual` et `occurrence` (docs/SPEC-mcp.md §9.2 septies)
 # @spec CRM-114 (docs/BACKLOG.md) tranche T4 — la famille `organizations` dans la liste fermée (docs/SPEC-organisations.md §5)
 # @spec CRM-118 (docs/BACKLOG.md) — tranche T2.a : la famille `workflows` après `structure`, les genres d'ancre `step`,
-#       `transition` et `node` (docs/SPEC-mcp.md §9.2 undecies, décisions 752, 754 et 756)
+#       `transition` et `node` (docs/SPEC-mcp.md §9.2 undecies, décisions 752, 754 et 756) ; tranche T2.b : le genre `field`
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T1 : le genre d'ancre `workflow` (docs/SPEC-mcp.md §9.2 quater, décision 656)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `activity` (docs/SPEC-mcp.md §9.2 ter, décision 655)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : l'ancre `autres` FACULTATIVE, permise si son argument vaut `None` par
@@ -89,6 +89,8 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "step": ("workflow_steps", "workspace_id", ("workspace_id",)),
     "transition": ("workflow_transitions", "workspace_id", ("workspace_id",)),
     "node": ("workflow_nodes_catalog", "workspace_id", ("workspace_id",)),
+    # `CRM-118` T2.b : un champ de formulaire porte son espace.
+    "field": ("form_fields", "workspace_id", ("workspace_id",)),
     # `CRM-104` T4 : une ligne de coût, et un coût réel, résolus jusqu'à l'espace par leur affaire (décision 669).
     "cost": ("card_costs", "card:cards(workspace_id)", ("card", "workspace_id")),
     "cost_actual": ("card_cost_actuals", "ligne:card_costs(card:cards(workspace_id))", ("ligne", "card", "workspace_id")),
@@ -120,6 +122,7 @@ LIBELLES = {
     "step": "étape",
     "transition": "transition",
     "node": "nœud du catalogue",
+    "field": "champ de formulaire",
     "cost": "ligne de coût",
     "cost_actual": "coût réel",
     "occurrence": "occurrence de budget",
