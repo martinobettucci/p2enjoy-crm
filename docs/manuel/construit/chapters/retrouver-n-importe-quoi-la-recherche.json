@@ -6,45 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-065"
-						},
-						{
-							"type": "text",
-							"text": ". Le contrat est écrit dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/SPEC-recherche.md"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Le produit compte plus de trente écrans et une arborescence à trois niveaux. Jusqu'ici, retrouver\nun objet dont on ne savait plus où il vivait demandait de le chercher écran par écran : chaque\nliste portait au mieux un filtre local, aveugle à tout ce qui n'était pas elle."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -55,7 +16,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", depuis n'importe quel écran, sans le quitter."
+					"text": ", depuis n'importe quel écran, sans le quitter : une affaire, un contact,\nune organisation, un commentaire ou un message dont vous ne savez plus où il se trouve."
 				}
 			]
 		},
@@ -991,7 +952,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : ni ce que vous cherchez, ni quand, ni combien de résultats. Il n'y a\npas d'historique de recherche, et il n'y en aura pas sans qu'on vous le demande."
+								"text": " : ni ce que vous cherchez, ni quand, ni combien de résultats. Il n'y a\npas d'historique de recherche."
 							}
 						]
 					}

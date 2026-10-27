@@ -386,6 +386,10 @@ tableau sont des regroupements de lecture : elles ne sont pas des chapitres et n
 **Les renvois deviennent des liens.** Un renvoi d'un chapitre à un autre s'écrit en lien vers l'identifiant de la
 section visée (`[le tableau kanban](#le-tableau-kanban-d-un-channel)`), et non plus « chapitre 4.8 » : la construction
 refuse un lien qui ne mène nulle part (§15), et un numéro recopié en toutes lettres ne serait vérifié par rien.
+**Le numéro écrit dans le texte d'un lien suit sa cible** : « [la section 3.4](#les-onglets-d-un-track) » doit nommer
+le numéro que porte réellement le titre visé. `npm run manuel:liens` le recalcule — il garde le mot de l'auteur,
+« chapitre » ou « section », pour ne pas casser l'accord de la phrase —, et la preuve du §16 le vérifie. Un lien vers
+une section au titre répété mène à son chapitre et garde le numéro de la section, qui appartient à ce chapitre.
 
 **L'ordre des tranches** : T3.0 pose ce plan dans le manuel — chapitres déplacés et renumérotés, renvois changés en
 liens, sans réécrire les phrases —, puis T3.1 à T3.5 réécrivent les groupes. `scripts/verify-manual.sh` est révisé dès
@@ -447,7 +451,21 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 
 | Unité | Chapitre | Section |
 |---|---|---|
-| *(établie chapitre par chapitre à la réécriture)* | | |
+| `CRM-092` | se-connecter-et-se-deconnecter | — |
+| `CRM-079` | le-guide-de-demarrage-par-ou-commencer | — |
+| `CRM-094` | le-guide-de-demarrage-par-ou-commencer | le-workflow-de-depart-en-un-geste |
+| `CRM-007` | naviguer-barre-laterale-onglets-etats | la-disposition-de-l-ecran |
+| `CRM-110` | naviguer-barre-laterale-onglets-etats | le-fil-d-ariane-savoir-ou-vous-etes |
+| `CRM-020` | naviguer-barre-laterale-onglets-etats | la-barre-laterale-et-la-section-tracks |
+| `CRM-021` | naviguer-barre-laterale-onglets-etats | les-onglets-d-un-track |
+| `CRM-100` | naviguer-barre-laterale-onglets-etats | les-onglets-d-un-track |
+| `CRM-012` | naviguer-barre-laterale-onglets-etats | les-acces-par-track-et-par-channel |
+| `CRM-105` | naviguer-barre-laterale-onglets-etats | la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol |
+| `CRM-093` | naviguer-barre-laterale-onglets-etats | les-commandes-grisees-ce-que-votre-role-vous-laisse-faire |
+| `CRM-117` | naviguer-barre-laterale-onglets-etats | l-aide-le-manuel-depuis-n-importe-quel-ecran |
+| `CRM-065` | retrouver-n-importe-quoi-la-recherche | — |
+| `CRM-064` | vos-notifications-savoir-qu-on-vous-a-nomme | — |
+| *(les autres chapitres à leur réécriture : T3.2 à T3.5)* | | |
 
 ## 13. Le manuel dans la webapp
 

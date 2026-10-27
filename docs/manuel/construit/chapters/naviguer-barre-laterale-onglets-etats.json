@@ -6,29 +6,8 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-007"
-						},
-						{
-							"type": "text",
-							"text": ". Décrit l'application réellement exécutée ; captures dans\n"
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-007/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
+					"type": "text",
+					"text": "Ce chapitre décrit ce qui entoure chaque page du CRM : la barre latérale à gauche, l'en-tête en haut, la barre\nd'onglets d'un track, et la façon dont l'application vous dit qu'elle charge, qu'elle n'a rien à montrer ou qu'elle\nn'a pas pu lire."
 				}
 			]
 		},
@@ -48,7 +27,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "L'écran se lit en trois zones :"
+					"text": "L'écran se lit en quatre zones :"
 				}
 			]
 		},
@@ -76,20 +55,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : le nom du produit, les cinq entrées de navigation — Board,\nInbox, "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Contacts"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", Ma journée, Réglages — puis la section "
+								"text": " : les entrées de navigation, puis la section "
 							},
 							{
 								"type": "strong",
@@ -102,7 +68,24 @@
 							},
 							{
 								"type": "text",
-								"text": " ;"
+								"text": "\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats",
+									"anchor": "la-barre-laterale-et-la-section-tracks"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 3.3"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ;"
 							}
 						]
 					}
@@ -139,7 +122,7 @@
 							},
 							{
 								"type": "text",
-								"text": ", qui dit où vous êtes, de votre espace de travail à la page\nouverte ("
+								"text": ", qui dit où vous êtes ("
 							},
 							{
 								"type": "link",
@@ -156,7 +139,33 @@
 							},
 							{
 								"type": "text",
-								"text": "), puis la recherche, les notifications et votre profil ;"
+								"text": "),\npuis la recherche, l'icône "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Aide »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", la cloche des notifications, votre nom et "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Se déconnecter"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ;"
 							}
 						]
 					}
@@ -180,7 +189,24 @@
 							},
 							{
 								"type": "text",
-								"text": ", qui listera les channels du track courant ;"
+								"text": " : les channels du track ouvert ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats",
+									"anchor": "les-onglets-d-un-track"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 3.4"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Hors\nd'un track, elle écrit « Aucun channel » ;"
 							}
 						]
 					}
@@ -219,36 +245,6 @@
 				{
 					"type": "text",
 					"text": "3.2 Le fil d'Ariane : savoir où vous êtes"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-110"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-110/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
 				}
 			]
 		},
@@ -551,6 +547,29 @@
 					[
 						{
 							"type": "text",
+							"text": "un chapitre du manuel"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "espace / Aide / "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "chapitre"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
 							"text": "toute autre page (Inbox, Contacts, Réglages…)"
 						}
 					],
@@ -604,7 +623,7 @@
 				},
 				{
 					"type": "text",
-					"text": " (moins de 1 024 pixels), le fil passe sur sa propre ligne, sous\nla recherche, les notifications et votre profil. "
+					"text": ", le fil passe sur sa propre ligne, sous la recherche, l'aide,\nles notifications et votre profil. "
 				},
 				{
 					"type": "strong",
@@ -617,7 +636,7 @@
 				},
 				{
 					"type": "text",
-					"text": " (moins de 768 pixels), il ne montre que le\nniveau précédent et le titre : « … / Grands comptes / "
+					"text": ", il ne montre que le niveau précédent et le titre : « … /\nGrands comptes / "
 				},
 				{
 					"type": "strong",
@@ -643,7 +662,7 @@
 				},
 				{
 					"type": "text",
-					"text": " ouvre la liste\ndes niveaux masqués — votre espace et le track —, chacun cliquable. Au clavier, atteignez-le avec "
+					"text": " ouvre la liste des niveaux masqués — votre espace et\nle track —, chacun cliquable. Au clavier, atteignez-le avec "
 				},
 				{
 					"type": "code",
@@ -651,7 +670,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", ouvrez-le avec\n"
+					"text": ", ouvrez-le avec "
 				},
 				{
 					"type": "code",
@@ -685,18 +704,18 @@
 				},
 				{
 					"type": "text",
-					"text": " Un channel auquel vous n'avez pas accès n'y apparaît jamais, pas plus\nqu'un nom tapé dans l'adresse qui ne correspond à rien : le fil s'arrête au dernier niveau que vos droits vous laissent\nvoir."
+					"text": " Un channel auquel vous n'avez pas accès n'y apparaît jamais, pas plus\nqu'un nom tapé dans l'adresse qui ne correspond à rien."
 				}
 			]
 		},
 		{
 			"type": "heading",
 			"level": 3,
-			"anchor": "ce-que-vous-voyez-aujourd-hui-et-pourquoi",
+			"anchor": "la-barre-laterale-et-la-section-tracks",
 			"content": [
 				{
 					"type": "text",
-					"text": "3.3 Ce que vous voyez aujourd'hui, et pourquoi"
+					"text": "3.3 La barre latérale et la section Tracks"
 				}
 			]
 		},
@@ -705,23 +724,179 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Sans session, aucune page de l'application ne s'affiche : toute adresse mène à l'écran de\nconnexion ("
+					"text": "La barre latérale porte, dans cet ordre : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Board"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Inbox"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Contacts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Objectifs"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Coûts"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Pilotage"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ",\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rentabilité"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Temps"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ma journée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Affaires figées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Une personne superadministratrice y\ntrouve en plus, en dernier, l'entrée "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Plateforme"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
 				},
 				{
 					"type": "link",
 					"target": {
-						"chapter": "se-connecter-et-se-deconnecter"
+						"chapter": "la-plateforme-espaces-membres-et-superadministrateurs"
 					},
 					"content": [
 						{
 							"type": "text",
-							"text": "chapitre 1"
+							"text": "chapitre 32"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": "). Après connexion, la barre latérale montre les tracks consentis à votre compte ;\nleurs onglets ouvrent les channels, le tableau et les fiches réels. Une administratrice du jeu de\ndémonstration voit par exemple « Conseil & IA », « Studio web » et « Formation »."
+					"text": ")."
 				}
 			]
 		},
@@ -730,175 +905,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Après connexion, l'en-tête nomme votre workspace et votre profil. Les cards nomment leur\nresponsable, les commentaires leur auteur et les événements leur acteur lorsque cette identité est\nconnue. Une identité supprimée ne transforme jamais son UUID en libellé : un commentaire conserve\nsa place avec « Compte supprimé », tandis qu'un événement de service reste sans acteur affiché."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce qui a un écran, et ce qui n'en a pas."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " L'affaire a sa fiche, le tableau kanban de son channel\net la vue liste ; la discussion et l'historique vivent dans la fiche. Le "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "carnet de contacts"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " a\nle sien ("
-				},
-				{
-					"type": "link",
-					"target": {
-						"chapter": "le-carnet-de-contacts"
-					},
-					"content": [
-						{
-							"type": "text",
-							"text": "section 10"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "), en lecture. L'arborescence a son écran\nd'administration ("
-				},
-				{
-					"type": "link",
-					"target": {
-						"chapter": "administrer-l-arborescence-tracks-et-channels"
-					},
-					"content": [
-						{
-							"type": "text",
-							"text": "chapitre 17"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "), et la "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "composition d'un workflow"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " — ses étapes, ses transitions et\nles "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "questions de son formulaire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " — le sien ("
-				},
-				{
-					"type": "link",
-					"target": {
-						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire"
-					},
-					"content": [
-						{
-							"type": "text",
-							"text": "chapitre 18"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "). En revanche, le catalogue de nœuds,\nla "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "visibilité question par étape"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " et les droits d'accès n'ont toujours aucun écran\nd'administration. La connexion rend\naccessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs encore absents."
-				}
-			]
-		},
-		{
-			"type": "heading",
-			"level": 3,
-			"anchor": "la-section-tracks",
-			"content": [
-				{
-					"type": "text",
-					"text": "3.4 La section Tracks"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-020"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-020/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Sous les quatre entrées de navigation, la section "
+					"text": "Dessous, la section "
 				},
 				{
 					"type": "strong",
@@ -911,7 +918,7 @@
 				},
 				{
 					"type": "text",
-					"text": " liste les activités de votre espace de\ntravail — par exemple « Conseil & IA », « Studio web », « Formation ». Chaque track s'affiche en\npilule colorée, précédée de son icône."
+					"text": " liste les activités de votre espace de travail — par exemple « Conseil & IA », « Studio\nweb », « Formation ». Chaque track s'affiche en pilule colorée, précédée de son icône."
 				}
 			]
 		},
@@ -939,7 +946,7 @@
 							},
 							{
 								"type": "text",
-								"text": " est celui défini par l'administration de l'espace, pas l'ordre de création."
+								"text": " est celui que l'administration de l'espace a choisi, pas l'ordre de création."
 							}
 						]
 					}
@@ -963,7 +970,7 @@
 							},
 							{
 								"type": "text",
-								"text": " n'apparaît pas dans cette liste. L'archivage masque sans détruire : il est\nréversible à tout moment par une personne administratrice."
+								"text": " n'apparaît pas. L'archivage masque sans détruire : une personne administratrice peut le rendre\nà tout moment."
 							}
 						]
 					}
@@ -1000,7 +1007,7 @@
 							},
 							{
 								"type": "text",
-								"text": " sont choisies parmi un jeu fixe : elles aident à repérer un track\nd'un coup d'œil, et ne portent jamais seules une information — le libellé et l'icône\nl'accompagnent toujours."
+								"text": " aident à repérer un track d'un coup d'œil ; elles ne portent jamais seules une\ninformation, le nom les accompagne toujours."
 							}
 						]
 					}
@@ -1011,24 +1018,7 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "Les pilules sont "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "cliquables depuis "
-									},
-									{
-										"type": "code",
-										"text": "CRM-021"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " : un clic ouvre le track sur ses channels. Le\ntrack ouvert se signale par un anneau bleu, qui s'ajoute à sa couleur sans la remplacer."
+								"text": "Un clic sur la pilule ouvre le track sur ses channels. Le track ouvert se signale par un anneau bleu, qui s'ajoute à\nsa couleur sans la remplacer."
 							}
 						]
 					}
@@ -1039,55 +1029,15 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Qui peut faire quoi."
-						}
-					]
-				},
-				{
 					"type": "text",
-					"text": " Créer, renommer, réordonner ou archiver un track est réservé aux personnes\n"
+					"text": "Créer, renommer, réordonner ou archiver un track est réservé aux administrateurs de l'espace, depuis "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "administratrices"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " de l'espace de travail. Les autres profils les consultent. Cette règle est\nappliquée par le serveur, et non par l'affichage : elle tient même si l'on s'adresse directement à\nl'API. La suppression définitive d'un track n'est "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "jamais"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " proposée — l'archivage en tient lieu."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ils se gèrent dans Réglages ▸ Arborescence"
+							"text": "Réglages ▸\nArborescence"
 						}
 					]
 				},
@@ -1109,24 +1059,7 @@
 				},
 				{
 					"type": "text",
-					"text": ") : créer, renommer, réordonner, archiver\nun track ou un channel. "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Cette phrase disait que les tracks ne se géraient que par l'API ; l'écran\nd'administration de l'arborescence le fait depuis "
-						},
-						{
-							"type": "code",
-							"text": "CRM-075"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
+					"text": "). Le serveur applique cette règle, quel que\nsoit le chemin emprunté pour la contourner."
 				}
 			]
 		},
@@ -1137,37 +1070,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3.5 Les onglets d'un track"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-021"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-021/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
+					"text": "3.4 Les onglets d'un track"
 				}
 			]
 		},
@@ -1176,15 +1079,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Ouvrir un track — en cliquant sa pilule, ou en saisissant son adresse "
-				},
-				{
-					"type": "code",
-					"text": "/tracks/<identifiant>"
-				},
-				{
-					"type": "text",
-					"text": " —\naffiche ses "
+					"text": "Ouvrir un track affiche ses "
 				},
 				{
 					"type": "strong",
@@ -1197,24 +1092,7 @@
 				},
 				{
 					"type": "text",
-					"text": " en onglets, juste sous l'en-tête. Le nom du track devient le titre de la\npage ; ouvrir un channel en fait le titre à son tour, et le fil d'Ariane nomme alors le track avant lui ("
-				},
-				{
-					"type": "link",
-					"target": {
-						"chapter": "naviguer-barre-laterale-onglets-etats",
-						"anchor": "le-fil-d-ariane-savoir-ou-vous-etes"
-					},
-					"content": [
-						{
-							"type": "text",
-							"text": "section\n3.2"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ")."
+					"text": " en onglets, juste sous l'en-tête. Le nom du track devient le titre de la page\n; ouvrir un channel en fait le titre à son tour, et le fil d'Ariane nomme alors le track avant lui."
 				}
 			]
 		},
@@ -1242,18 +1120,7 @@
 							},
 							{
 								"type": "text",
-								"text": " des onglets est celui défini par l'administration, pas l'ordre de création."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "Un channel "
+								"text": " des onglets est celui que l'administration a choisi. Un channel "
 							},
 							{
 								"type": "strong",
@@ -1266,7 +1133,7 @@
 							},
 							{
 								"type": "text",
-								"text": " n'apparaît pas. Comme pour les tracks, l'archivage masque sans détruire,\net reste réversible."
+								"text": " n'apparaît pas."
 							}
 						]
 					}
@@ -1290,7 +1157,7 @@
 							},
 							{
 								"type": "text",
-								"text": " se signale par un libellé bleu et un soulignement : jamais par la couleur\nseule."
+								"text": " se signale par un libellé bleu et un soulignement, jamais par la couleur seule."
 							}
 						]
 					}
@@ -1314,24 +1181,7 @@
 							},
 							{
 								"type": "text",
-								"text": " ("
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livré par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-116"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": "). Elle se\nchoisit dans le formulaire du channel ("
+								"text": ". Elle se choisit dans le\nformulaire du channel ("
 							},
 							{
 								"type": "link",
@@ -1342,13 +1192,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "chapitre 17.2"
+										"text": "section 17.2"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": ") ; elle accompagne le nom et ne change pas quand l'onglet est\nouvert."
+								"text": ") et ne change pas quand l'onglet est ouvert."
 							}
 						]
 					}
@@ -1372,7 +1222,7 @@
 							},
 							{
 								"type": "text",
-								"text": " plutôt que de tronquer les libellés. Une\nombre au bord indique qu'il reste des onglets à voir de ce côté."
+								"text": " plutôt que de tronquer les noms. Une ombre au bord indique\nqu'il reste des onglets à voir de ce côté."
 							}
 						]
 					}
@@ -1386,51 +1236,26 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Nouveau channel"
+										"text": "« Nouveau channel »"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": ", après les onglets et avant « Coûts », crée un channel "
+								"text": ", après les onglets, crée un channel "
 							},
 							{
 								"type": "strong",
 								"content": [
 									{
 										"type": "text",
-										"text": "sans quitter le\ntrack"
+										"text": "sans quitter le track"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " ("
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livré par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-100"
-									},
-									{
-										"type": "text",
-										"text": " ; captures dans "
-									},
-									{
-										"type": "code",
-										"text": "docs/captures/CRM-100/"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": "). Le formulaire s'ouvre en\nhaut de la page — nom, identifiant d'adresse proposé depuis le nom, workflow, description —, le\ntableau restant visible dessous. "
+								"text": ". Le formulaire s'ouvre en haut de\nla page — nom, identifiant d'adresse proposé depuis le nom, workflow, description —, le tableau restant visible\ndessous. "
 							},
 							{
 								"type": "strong",
@@ -1443,7 +1268,7 @@
 							},
 							{
 								"type": "text",
-								"text": " ouvre aussitôt le tableau du nouveau channel, dont\nl'onglet paraît dans la barre ; "
+								"text": " ouvre aussitôt le tableau du nouveau channel ; "
 							},
 							{
 								"type": "strong",
@@ -1459,17 +1284,12 @@
 								"text": " ou la touche "
 							},
 							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Échap"
-									}
-								]
+								"type": "code",
+								"text": "Échap"
 							},
 							{
 								"type": "text",
-								"text": " referment le formulaire sans rien\ncréer. Le formulaire ouvert fait partie de l'adresse de la page : un rechargement le conserve. La\ncommande est offerte à tous ; seul un administrateur de l'espace de travail peut créer un channel,\net le serveur refuse aux autres comptes avec un message écrit dans le formulaire, votre saisie\nconservée."
+								"text": " referment le\nformulaire sans rien créer. Un rechargement de la page garde le formulaire ouvert. Seul un administrateur de l'espace\npeut créer un channel : pour un autre compte, le refus s'écrit dans le formulaire, sa saisie conservée."
 							}
 						]
 					}
@@ -1479,68 +1299,27 @@
 						"type": "paragraph",
 						"content": [
 							{
-								"type": "text",
-								"text": "Un track "
-							},
-							{
 								"type": "strong",
 								"content": [
 									{
 										"type": "text",
-										"text": "sans channel"
+										"text": "« Coûts »"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " affiche « Aucun channel dans ce track », et dit que le channel se crée\navec « Nouveau channel », dans la barre d'onglets juste au-dessus."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "Un channel dont le workflow "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "n'a aucune étape"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " n'a pas de tableau : l'écran le dit (« Ce workflow\nne déclare aucune étape ») et propose le lien "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Ouvrir l'éditeur de workflows"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", où les étapes\ns'ajoutent ("
+								"text": ", en dernier, ouvre les coûts du track\n("
 							},
 							{
 								"type": "link",
 								"target": {
-									"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire"
+									"chapter": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense"
 								},
 								"content": [
 									{
 										"type": "text",
-										"text": "chapitre 18"
+										"text": "chapitre 24"
 									}
 								]
 							},
@@ -1558,7 +1337,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Ouvrir un onglet change l'adresse de la page : elle se partage et se met en favori. Le contenu d'un\nchannel se lit désormais de "
+					"text": "Le contenu d'un channel se lit de "
 				},
 				{
 					"type": "strong",
@@ -1571,7 +1350,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", et une bascule en haut de la zone principale passe de\nl'une à l'autre : le "
+					"text": ", et une bascule en haut de la page passe de l'une à l'autre : le\n"
 				},
 				{
 					"type": "strong",
@@ -1595,26 +1374,26 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "chapitre 9.10"
+							"text": "section 9.10"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": "), qui est la vue par défaut, et la "
+					"text": "), vue par défaut, et la "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "vue\nliste"
+							"text": "vue liste"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " ("
+					"text": "\n("
 				},
 				{
 					"type": "link",
@@ -1625,13 +1404,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "chapitre 9.11"
+							"text": "section 9.11"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": "). Chacune a sa propre adresse."
+					"text": "). Chacune a sa propre adresse, qui se partage et se met en favori."
 				}
 			]
 		},
@@ -1639,75 +1418,130 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Si l'adresse ne correspond à aucun track"
-						}
-					]
-				},
-				{
 					"type": "text",
-					"text": ", ou si votre compte n'y a pas accès, l'écran affiche\n« Track introuvable » et propose un retour à l'accueil. Les deux situations produisent le "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "même"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "\nmessage : cela évite de renseigner qui que ce soit sur l'existence d'un track qu'il n'a pas le\ndroit de voir."
+					"text": "Trois écrans particuliers :"
 				}
 			]
 		},
 		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Qui peut faire quoi."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Créer, renommer, réordonner ou archiver un channel est réservé aux\npersonnes "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "administratrices"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " de l'espace de travail, exactement comme pour les tracks, et la\nrègle est appliquée par le serveur. La suppression définitive n'est jamais proposée. "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Aucun écran\nne permet encore de les gérer"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "."
-				}
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "un track "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "sans channel"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " affiche « Aucun channel dans ce track » : « Un channel se crée avec « Nouveau channel »,\ndans la barre d'onglets ci-dessus. » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "un channel dont le workflow "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "n'a aucune étape"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " n'a pas de tableau : « Ce workflow ne déclare aucune étape », avec le\nlien "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Ouvrir l'éditeur de workflows »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 18"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "une adresse qui ne correspond à "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucun track"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", ou à un track auquel vous n'avez pas accès, affiche « Track\nintrouvable ». Les deux cas produisent le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "même"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " message : il ne renseigne personne sur l'existence d'un track\nqu'il n'a pas le droit de voir."
+							}
+						]
+					}
+				]
 			]
 		},
 		{
@@ -1717,29 +1551,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3.6 Les accès par track et par channel"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-012"
-						},
-						{
-							"type": "text",
-							"text": ". Aucune capture : cette règle n'a pas encore d'écran, voir plus bas."
-						}
-					]
+					"text": "3.5 Les accès par track et par channel"
 				}
 			]
 		},
@@ -1748,123 +1560,90 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Par défaut, votre accès à un track ou à un channel découle de votre "
+					"text": "Votre accès à un track ou à un channel découle d'abord de votre "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "rôle dans l'espace de\ntravail"
+							"text": "rôle dans l'espace"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " : une personne administratrice administre, une business developer travaille, une\nobservatrice consulte. Rien à configurer."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Une personne administratrice peut cependant poser une "
+					"text": " : une administratrice\nadministre, un business developer travaille, une lectrice consulte. Un administrateur peut ensuite poser, pour une\npersonne et sur un track ou un channel précis, un "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "exception"
+							"text": "droit fin"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " sur un track ou sur un channel\nprécis, pour une personne précise. Trois exceptions existent :"
+					"text": " qui le restreint ou le rouvre — "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Membre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (lecture et\nécriture), "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Lecture"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Aucun accès"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role",
+						"anchor": "les-droits-fins-restreindre-ou-rouvrir-un-track-ou-un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 21.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
-			]
-		},
-		{
-			"type": "table",
-			"align": [
-				null,
-				null
-			],
-			"header": [
-				[
-					{
-						"type": "text",
-						"text": "Exception"
-					}
-				],
-				[
-					{
-						"type": "text",
-						"text": "Effet sur ce track ou ce channel"
-					}
-				]
-			],
-			"rows": [
-				[
-					[
-						{
-							"type": "strong",
-							"content": [
-								{
-									"type": "text",
-									"text": "Accès complet"
-								}
-							]
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "vous y lisez et y écrivez, même si votre rôle est « observatrice »"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "strong",
-							"content": [
-								{
-									"type": "text",
-									"text": "Lecture seule"
-								}
-							]
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "vous y lisez sans y écrire, même si votre rôle vous autorise à écrire ailleurs"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "strong",
-							"content": [
-								{
-									"type": "text",
-									"text": "Aucun accès"
-								}
-							]
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "ce track ou ce channel disparaît de votre affichage"
-						}
-					]
-				]
 			]
 		},
 		{
@@ -1872,7 +1651,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Trois choses méritent d'être sues, parce qu'elles surprennent :"
+					"text": "Ce que vous en voyez :"
 				}
 			]
 		},
@@ -1890,26 +1669,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "L'exception la plus précise l'emporte."
+										"text": "Le droit le plus précis l'emporte"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " Une exception posée sur un channel prime sur celle de\nson track. On peut donc vous fermer tout un track "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "et"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " vous rouvrir un seul de ses channels : ce\nchannel restera visible alors que le track qui le contient ne le sera plus."
+								"text": " : celui d'un channel sur celui de son track, celui d'un track sur votre rôle.\nOn peut vous fermer un track et vous en rouvrir un seul channel : vous voyez alors le nom du track, pour atteindre ce\nchannel, et rien d'autre de ce track."
 							}
 						]
 					}
@@ -1923,13 +1689,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Une exception ne s'applique jamais à une personne administratrice."
+										"text": "Ce qui vous est fermé n'apparaît pas comme « interdit » : il n'apparaît pas."
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " Elle peut être enregistrée\nsur son compte, elle restera sans effet tant que cette personne administre l'espace — sans quoi\nune exception malheureuse pourrait rendre un espace impossible à administrer. Elle reprendrait\neffet si ce compte cessait d'être administrateur."
+								"text": " Un libellé « accès refusé »\nrévélerait l'existence d'une activité que vous n'avez pas à connaître."
 							}
 						]
 					}
@@ -1943,53 +1709,54 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Un track ou un channel qui vous est fermé n'apparaît pas comme « interdit » : il n'apparaît\npas du tout."
+										"text": "Sur un onglet en lecture"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " C'est voulu. Un libellé « accès refusé » révélerait l'existence et le nom d'une\nactivité que vous n'avez pas à connaître."
+								"text": ", les commandes qui modifieraient les affaires restent visibles, grisées, et un bandeau\ndit pourquoi ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats",
+									"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 3.11"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un administrateur n'est jamais restreint"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", même si un droit fin a été posé sur son compte."
 							}
 						]
 					}
 				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce que vous pouvez voir de vos propres exceptions."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Vous pouvez consulter celles qui vous\nconcernent — une restriction invisible à celle qui la subit serait une mauvaise règle — mais pas\ncelles de vos collègues, et vous ne pouvez pas lever la vôtre. Seule une personne administratrice\npose et retire une exception. Retirer une exception ne « redonne » pas un accès particulier : elle\nrend l'accès à ce qu'il aurait été sans elle, c'est-à-dire celui de votre rôle."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Aucun écran ne permet encore de les gérer."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " La règle est en revanche appliquée par le serveur,\net non par l'affichage : elle tient même si l'on s'adresse directement à l'API."
-				}
 			]
 		},
 		{
@@ -1999,37 +1766,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3.7 La description d'un track, d'un channel ou d'une affaire, au survol"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-105"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-105/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
+					"text": "3.6 La description d'un track, d'un channel ou d'une affaire, au survol"
 				}
 			]
 		},
@@ -2051,36 +1788,20 @@
 				},
 				{
 					"type": "text",
-					"text": " : un texte libre qui dit à quoi\nsert l'activité, ce que regroupe le channel, ou ce que recouvre l'affaire. Celle d'un track et d'un\nchannel se saisit dans "
+					"text": " : un texte libre qui dit à quoi sert l'activité,\nce que regroupe le channel, ou ce que recouvre l'affaire. Celle d'un track et d'un channel se saisit dans "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "Réglages ▸ Arborescence"
+							"text": "Réglages ▸\nArborescence"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " ("
-				},
-				{
-					"type": "link",
-					"target": {
-						"chapter": "administrer-l-arborescence-tracks-et-channels"
-					},
-					"content": [
-						{
-							"type": "text",
-							"text": "chapitre 17"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "), dans le champ « Description » du\nformulaire."
+					"text": ", champ « Description » du formulaire."
 				}
 			]
 		},
@@ -2126,7 +1847,7 @@
 							},
 							{
 								"type": "text",
-								"text": ", après un court instant, sur la pilule du track dans la barre\nlatérale (la bulle s'ouvre à sa droite), sur l'onglet du channel, et sur le titre de l'affaire —\ndans sa carte du tableau comme dans sa ligne de la vue liste (la bulle s'ouvre dessous) ;"
+								"text": ", après un court instant, sur la pilule du track dans la barre latérale, sur l'onglet du\nchannel, et sur le titre de l'affaire — dans sa carte du tableau comme dans sa ligne de la vue liste ;"
 							}
 						]
 					}
@@ -2149,13 +1870,8 @@
 								"text": ", dès que l'élément reçoit le focus par la touche "
 							},
 							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Tab"
-									}
-								]
+								"type": "code",
+								"text": "Tab"
 							},
 							{
 								"type": "text",
@@ -2184,20 +1900,15 @@
 				},
 				{
 					"type": "text",
-					"text": " de l'objet, puis sa description, avec ses retours à la ligne. Une\ndescription très longue défile à l'intérieur de la bulle. Vous pouvez y amener la souris pour la\nlire : elle reste ouverte tant que le pointeur est sur l'élément ou sur elle. La touche "
+					"text": ", puis la description, avec ses retours à la ligne ; une description très longue\ndéfile à l'intérieur. Vous pouvez y amener la souris pour la lire : elle reste ouverte tant que le pointeur est sur\nl'élément ou sur elle. "
 				},
 				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Échap"
-						}
-					]
+					"type": "code",
+					"text": "Échap"
 				},
 				{
 					"type": "text",
-					"text": " la\nferme ; un clic sur l'élément ouvre l'objet, comme avant, sans laisser de bulle."
+					"text": " la ferme ; un clic sur l'élément l'ouvre, sans laisser de bulle."
 				}
 			]
 		},
@@ -2215,7 +1926,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : aucune bulle, et le nom complet reste lisible au survol comme\nauparavant. Un lecteur d'écran annonce la description avec le nom de l'élément, que la bulle soit\nouverte ou non."
+					"text": " : aucune bulle, et le nom complet reste lisible au survol. Un lecteur d'écran\nannonce la description avec le nom de l'élément."
 				}
 			]
 		},
@@ -2233,7 +1944,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : sur un écran tactile, il n'y a pas de survol, et toucher l'élément\nl'ouvre ; la description ne paraît donc pas en bulle. La description d'une affaire ne se saisit pas\nencore depuis l'interface."
+					"text": " : sur un écran tactile, il n'y a pas de survol, et toucher l'élément l'ouvre ; la\ndescription n'y paraît pas en bulle. La description d'une affaire ne se saisit pas encore depuis l'écran."
 				}
 			]
 		},
@@ -2244,7 +1955,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3.8 Replier la barre latérale"
+					"text": "3.7 Replier la barre latérale"
 				}
 			]
 		},
@@ -2253,20 +1964,20 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Le bouton en haut de la barre latérale la replie en colonne d'icônes, et la déplie à nouveau. Ce\nchoix vaut "
+					"text": "Le bouton en haut de la barre latérale la replie en colonne d'icônes, et la déplie à nouveau. Ce choix vaut "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "pour la session en cours"
+							"text": "pour la\nsession en cours"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " : il est oublié à la fermeture de l'onglet, et rien n'est\nconservé sur votre appareil au-delà."
+					"text": " : il est oublié à la fermeture de l'onglet, et rien n'est conservé sur votre appareil."
 				}
 			]
 		},
@@ -2288,7 +1999,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : le bouton en haut à gauche de\nl'en-tête l'ouvre, la croix ou la touche "
+					"text": " : le bouton en haut à gauche de l'en-tête l'ouvre, la\ncroix ou la touche "
 				},
 				{
 					"type": "code",
@@ -2307,7 +2018,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3.9 Naviguer au clavier"
+					"text": "3.8 Naviguer au clavier"
 				}
 			]
 		},
@@ -2344,7 +2055,7 @@
 							},
 							{
 								"type": "text",
-								"text": ", qui saute la\nnavigation ;"
+								"text": ", qui saute la navigation ;"
 							}
 						]
 					}
@@ -2355,7 +2066,7 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "les tabulations suivantes parcourent le bouton de repli, puis les quatre entrées de navigation ;"
+								"text": "les tabulations suivantes parcourent le bouton de repli, puis les entrées de la barre latérale ;"
 							}
 						]
 					}
@@ -2370,7 +2081,7 @@
 							},
 							{
 								"type": "text",
-								"text": " active l'entrée sélectionnée ;"
+								"text": " active l'élément qui a le focus ;"
 							}
 						]
 					}
@@ -2386,6 +2097,217 @@
 						]
 					}
 				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "l-aide-le-manuel-depuis-n-importe-quel-ecran",
+			"content": [
+				{
+					"type": "text",
+					"text": "3.9 L'aide : le manuel, depuis n'importe quel écran"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'icône "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Aide »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de l'en-tête — un livre ouvert, à gauche de la cloche — ouvre un petit panneau :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Aide sur cet écran »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " mène à la section du manuel qui décrit la page où vous êtes ; le lien porte le titre de\ncette section ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Sommaire du manuel »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " mène à la liste de tous les chapitres."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un écran que le manuel ne décrit pas en propre — l'index des réglages, par exemple — n'offre que le sommaire."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le panneau se referme par "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Fermer l’aide »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", par la touche "
+				},
+				{
+					"type": "code",
+					"text": "Échap"
+				},
+				{
+					"type": "text",
+					"text": " — le focus revient alors sur l'icône —, par un\nclic ailleurs, ou en suivant l'un de ses liens. Au clavier, ouvrir le panneau place le focus sur son premier lien.\nOuvrir l'aide referme les notifications, et inversement : un seul panneau de l'en-tête est ouvert à la fois."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le sommaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " liste chaque chapitre et ses sections, chacun cliquable. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un chapitre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " s'ouvre sur « Dans ce\nchapitre », la liste de ses sections, et se termine par deux liens, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Chapitre précédent »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Chapitre\nsuivant »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Les renvois d'un chapitre à l'autre sont des liens. Une illustration large propose "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Voir en taille\nréelle »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui l'ouvre dans un nouvel onglet."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le manuel n'est lisible qu'avec une session : sans session, ses adresses mènent à l'écran de connexion. Si le manuel ne\npeut pas être lu, la page le dit — « Le manuel n’a pas pu être chargé » — et propose "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Réessayer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; un chapitre qui\nn'existe pas affiche « Chapitre introuvable » et un lien vers le sommaire."
+				}
 			]
 		},
 		{
@@ -2457,7 +2379,7 @@
 					[
 						{
 							"type": "text",
-							"text": "Le serveur n'a rien à afficher pour vous"
+							"text": "Il n'y a rien à afficher pour vous"
 						}
 					],
 					[
@@ -2492,7 +2414,7 @@
 						},
 						{
 							"type": "text",
-							"text": " ; le bouton relance la requête sans recharger la page"
+							"text": " : le bouton relance la lecture sans recharger la page"
 						}
 					]
 				],
@@ -2506,7 +2428,7 @@
 					[
 						{
 							"type": "text",
-							"text": "Le serveur a refusé la lecture"
+							"text": "Votre compte n'a pas les droits nécessaires"
 						}
 					],
 					[
@@ -2526,13 +2448,13 @@
 					[
 						{
 							"type": "text",
-							"text": "L'application a été construite sans l'adresse du serveur"
+							"text": "L'application a été installée sans l'adresse de son serveur"
 						}
 					],
 					[
 						{
 							"type": "text",
-							"text": "Prévenir la personne qui a déployé l'application"
+							"text": "Prévenir la personne qui l'a installée"
 						}
 					]
 				]
@@ -2556,7 +2478,7 @@
 				},
 				{
 					"type": "text",
-					"text": " avant d'afficher l'erreur : le\nmessage peut donc mettre quelques secondes à apparaître."
+					"text": " avant d'afficher l'erreur : le message peut donc\nmettre quelques secondes à apparaître."
 				}
 			]
 		},
@@ -2576,7 +2498,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Le produit ne vous propose pas un geste que le serveur vous refuserait. Une commande que vous ne pouvez\npas utiliser "
+					"text": "Le produit ne vous propose pas un geste que le serveur vous refuserait. Une commande que vous ne pouvez pas utiliser\n"
 				},
 				{
 					"type": "strong",
@@ -2602,7 +2524,7 @@
 				},
 				{
 					"type": "text",
-					"text": " — une icône en forme d'œil sur fond gris\nclair — dit en tête du bloc pourquoi : « Vous consultez … : les commandes restent visibles mais sont\ninactives. » Un seul bandeau par bloc ; chaque commande grisée y renvoie, et un lecteur d'écran le lit\nquand elle a le focus."
+					"text": " — une icône en forme d'œil sur fond gris clair — dit en tête du bloc\npourquoi : « Vous consultez … : les commandes restent visibles mais sont inactives. » Un seul bandeau par bloc ;\nchaque commande grisée y renvoie, et un lecteur d'écran le lit quand elle a le focus."
 				}
 			]
 		},
@@ -2611,7 +2533,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Trois choses décident de ce que vous pouvez faire, et le serveur les mesure pour vous :"
+					"text": "Trois choses décident de ce que vous pouvez faire :"
 				}
 			]
 		},
@@ -2741,7 +2663,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Le troisième dépend des "
+					"text": "Le troisième suit les "
 				},
 				{
 					"type": "strong",
@@ -2765,13 +2687,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "chapitre 3.6"
+							"text": "section 3.5"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": ") : un business\ndeveloper peut être limité à la lecture sur un onglet, et une personne en lecture seule peut être\nrouverte en écriture sur un autre. Le produit suit exactement ces accès, onglet par onglet."
+					"text": ") : un\nbusiness developer peut être limité à la lecture sur un onglet, et une lectrice rouverte en écriture sur un autre."
 				}
 			]
 		},
@@ -2789,7 +2711,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : ce qui ne regarde que vous — vos préférences de notifications, votre\npropre boîte de réception et vos propres identités d'expédition, la saisie de votre temps."
+					"text": " : ce qui ne regarde que vous — vos préférences de notifications, votre propre boîte de\nréception et vos propres identités d'expédition, la saisie de votre temps."
 				}
 			]
 		},
@@ -2807,7 +2729,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", le temps que vos droits soient lus, les commandes peuvent être\ngrisées un instant "
+					"text": ", le temps que vos droits soient lus, les commandes peuvent être grisées un\ninstant "
 				},
 				{
 					"type": "strong",
@@ -2820,7 +2742,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : rien n'est encore dit, rien n'est refusé. Si vos droits ne peuvent\npas être lus — une coupure réseau —, les commandes restent offertes, et c'est la réponse du serveur\nqui s'affiche si vous tentez un geste."
+					"text": " : rien n'est encore refusé. Si vos droits ne peuvent pas être lus — une coupure réseau —, les\ncommandes restent offertes, et c'est la réponse du serveur qui s'affiche si vous tentez un geste."
 				}
 			]
 		},
@@ -2838,7 +2760,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Griser une commande aide à ne pas tenter un geste voué au refus ;\ncela ne protège rien à soi seul. Si vos droits changent pendant que vous travaillez, le serveur refuse,\net l'écran affiche son refus."
+					"text": " Griser une commande vous évite un geste voué au refus ; cela ne protège rien à soi\nseul. Si vos droits changent pendant que vous travaillez, le serveur refuse, et l'écran affiche son refus."
 				}
 			]
 		},
@@ -2860,25 +2782,22 @@
 				},
 				{
 					"type": "text",
-					"text": ", l'entrée « Coût du personnel » devient un texte grisé si vous n'administrez pas\nl'espace : son écran vous serait refusé. Les autres écrans d'administration restent ouverts "
+					"text": ", l'entrée « Coût du personnel » devient un texte grisé si vous n'administrez pas l'espace : son écran\nvous serait refusé. Les autres écrans d'administration restent ouverts "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "en\nlecture"
+							"text": "en lecture"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " : vous y voyez la configuration, commandes grisées."
+					"text": " : vous y voyez la configuration,\ncommandes grisées."
 				}
 			]
-		},
-		{
-			"type": "rule"
 		}
 	]
 }

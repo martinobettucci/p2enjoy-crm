@@ -29,7 +29,8 @@
 #   3. chaque libellé du parcours cité par le manuel existe LITTÉRALEMENT dans `webapp/src/i18n/fr.ts` ;
 #   4. aucun volume du jeu de démonstration n'est recopié (§10, point 4) ;
 #   5. le manuel ne porte aucune valeur de variable d'environnement, aucune clé, aucun jeton ;
-#   6. chaque chapitre et chaque section de la table du §12 existe dans le manuel construit.
+#   6. chaque chapitre et chaque section de la table du §12 existe dans le manuel construit ;
+#   7. le numéro écrit dans le texte d'un lien interne est celui que porte le titre visé (§10 bis).
 #
 # RÉVISÉ PAR `CRM-117` T3.0 (docs/SPEC-manual.md §10 bis, 2026-10-27). La version de `CRM-047` exigeait l'annexe A
 # comparée à la base, les dossiers de captures cités, les unités citées et leur couverture : exactement ce que le §10
@@ -84,6 +85,12 @@ info()  { printf '  %s\n' "$1"; }
 # ajoute les siens ; le contrôle 2 ne porte que sur eux tant que la réécriture n'est pas finie.
 # ---------------------------------------------------------------------------------------------
 CHAPITRES_REECRITS=(
+	# T3.1 — prise en main (2026-10-27)
+	se-connecter-et-se-deconnecter
+	le-guide-de-demarrage-par-ou-commencer
+	naviguer-barre-laterale-onglets-etats
+	retrouver-n-importe-quoi-la-recherche
+	vos-notifications-savoir-qu-on-vous-a-nomme
 )
 
 # Libellés que le manuel cite entre guillemets pour décrire un parcours, et qui
@@ -382,6 +389,20 @@ JS
 	done <<< "$resultat"
 }
 
+controler_liens() {
+	local fichier=$1
+	titre "7. Le numéro écrit dans un lien interne suit sa cible (§10 bis)"
+	local sortie
+	if sortie=$(node scripts/manuel/renumeroter.mjs "$fichier" --verifier 2>&1); then
+		ok "le numéro de chaque lien suit sa cible"
+	else
+		local ligne
+		while IFS= read -r ligne; do
+			case "$ligne" in ligne\ *) fail "lien : $ligne" ;; esac
+		done <<< "$sortie"
+	fi
+}
+
 executer_tous() {
 	local fichier=$1 spec=$2
 	shift 2
@@ -391,6 +412,7 @@ executer_tous() {
 	controler_volumes "$fichier"
 	controler_secrets "$fichier"
 	controler_correspondance "$spec" "$CONSTRUIT/contents.json"
+	controler_liens "$fichier"
 }
 
 # ---------------------------------------------------------------------------------------------
@@ -403,7 +425,8 @@ executer_tous() {
 #   3. le libellé faux, remis (« Affaire introuvable ») ;
 #   4. un volume recopié dans un chapitre ;
 #   5. une clé recopiée ;
-#   6. une ligne du §12 qui désigne une section disparue.
+#   6. une ligne du §12 qui désigne une section disparue ;
+#   7. un lien dont le numéro écrit n'est pas celui de sa cible.
 # Le contrôle 1 lit le dépôt et non une copie : sa contre-épreuve est celle de la construction
 # (`scripts/manuel/construction.test.ts`), qui dégrade la source.
 if [ "$CONTRE_EPREUVE" = true ]; then
@@ -417,7 +440,8 @@ if [ "$CONTRE_EPREUVE" = true ]; then
 		printf '\n## 99. Un chapitre dégradé\n\n'
 		printf 'Livré par CRM-999, voir docs/SPEC-x.md ; la variable SUPABASE_URL ; le seed le montre.\n\n'
 		printf 'Cette adresse affiche « Affaire introuvable », et le channel porte 42 affaires.\n\n'
-		printf 'SERVICE_ROLE_KEY=abc\n'
+		printf 'SERVICE_ROLE_KEY=abc\n\n'
+		printf 'Voir la [section 99.9](#le-carnet-de-contacts).\n'
 	} > "$COPIE"
 	awk '
 		/^## 12\. / { dans = 1 }
@@ -437,10 +461,12 @@ if [ "$CONTRE_EPREUVE" = true ]; then
 	[ "$(compter controler_secrets "$COPIE")" -ge 1 ] || manquantes+=("5 (secrets)")
 	failures=0
 	[ "$(compter controler_correspondance "$SPEC_COPIE" "$CONSTRUIT/contents.json")" -ge 1 ] || manquantes+=("6 (table du §12)")
+	failures=0
+	[ "$(compter controler_liens "$COPIE")" -ge 1 ] || manquantes+=("7 (numéros des liens)")
 
 	printf '\n'
 	if [ "${#manquantes[@]}" -eq 0 ]; then
-		printf '\033[32mLe harnais MORD : chacune des cinq familles dégradées produit son anomalie.\033[0m\n'
+		printf '\033[32mLe harnais MORD : chacune des six familles dégradées produit son anomalie.\033[0m\n'
 		exit 0
 	fi
 	printf '\033[31mLe harnais est COMPLAISANT pour : %s.\033[0m\n' "${manquantes[*]}"

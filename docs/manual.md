@@ -7,15 +7,11 @@ mène à la section qui le décrit.
 
 ## 1. Se connecter et se déconnecter
 
-*Connexion par le seul SSO LeLabs, livrée par `CRM-092` (tranche T5) ; elle remplace le formulaire par
-mot de passe de `CRM-011` et la seconde voie de `CRM-091`. Captures dans `docs/captures/CRM-092/`.*
-
-Le CRM n'a **pas de mot de passe à lui** : vous vous connectez avec votre compte LeLabs. Ouvrez
-`/connexion` et choisissez **Se connecter avec LeLabs** — c'est la seule action de l'écran. Le
-produit vous envoie sur la page de connexion de LeLabs ; une fois connecté là-bas, vous revenez au
-CRM, à l'adresse d'où vous étiez parti si vous aviez commencé depuis une fiche ou un board. Pendant
-l'aller, le bouton affiche « Redirection vers LeLabs… » ; au retour, une carte grisée annonce
-« Connexion LeLabs en cours » le temps que le CRM vérifie votre connexion.
+Le CRM n'a **pas de mot de passe à lui** : vous vous connectez avec votre compte LeLabs. L'écran de connexion n'offre
+qu'une action, **Se connecter avec LeLabs**. Le produit vous envoie sur la page de connexion de LeLabs ; une fois
+connecté là-bas, vous revenez au CRM, à la page d'où vous étiez parti si vous aviez commencé depuis une fiche ou un
+board. Pendant l'aller, le bouton affiche « Redirection vers LeLabs… » ; au retour, une carte grisée annonce « Connexion
+LeLabs en cours » le temps que le CRM vérifie votre connexion.
 
 **Ouvrir une adresse du CRM sans être connecté** — un lien reçu, un favori — affiche l'écran de
 connexion, et rien d'autre : ni menu, ni page vide. Une fois connecté avec LeLabs, vous arrivez sur
@@ -34,8 +30,8 @@ Un compte LeLabs n'ouvre le CRM que si **trois** conditions sont réunies :
 À votre première connexion, votre inscription devient votre place dans l'espace, avec le rôle que
 l'administrateur a choisi pour vous.
 
-**Les administrateurs de LeLabs administrent le CRM.** C'est une règle de tout le domaine
-`lelabs.tech` : qui porte le rôle d'administration de LeLabs est administrateur de **chaque** espace
+**Les administrateurs de LeLabs administrent le CRM.** C'est une règle commune aux produits LeLabs :
+qui porte le rôle d'administration de LeLabs est administrateur de **chaque** espace
 du CRM, sans avoir à y être inscrit, et cesse de l'être dans les cinq minutes qui suivent le retrait
 de ce rôle chez LeLabs. Tout autre rôle LeLabs ne change rien à vos droits dans le CRM : ils restent
 ceux de votre espace.
@@ -64,7 +60,7 @@ général de recommencer.
 | La connexion LeLabs n'a pas abouti. Recommencez depuis cet écran. | Le retour de LeLabs n'a pas pu être vérifié — par exemple si vous avez mis plus de dix minutes, ou ouvert le retour dans un autre onglet. |
 | Le serveur n'a pas répondu… | LeLabs ou le CRM est momentanément injoignable. Réessayez. |
 | Votre session a pris fin. Reconnectez-vous avec LeLabs. | Votre session LeLabs a été fermée, ou un droit vous a été retiré. |
-| La connexion n'est pas configurée sur ce déploiement. | Ce déploiement du CRM ne connaît pas LeLabs : prévenez son exploitant. Aucun bouton n'est alors proposé. |
+| La connexion n'est pas configurée sur ce déploiement. | Cette installation du CRM ne connaît pas LeLabs : prévenez la personne qui l'a installée. Aucun bouton n'est alors proposé. |
 
 Dans les deux cas, le bouton **Se connecter avec LeLabs** reste disponible.
 
@@ -91,10 +87,6 @@ compte LeLabs.
 
 ## 2. Le guide de démarrage : par où commencer
 
-*Livré par `CRM-079`, révisé par `CRM-094` (six étapes, le workflow de départ, le guide flottant) et
-par `CRM-095` (l'étape « affaire » mène au board du premier channel). Décrit l'application réellement
-exécutée ; captures dans `docs/captures/CRM-079/`, `docs/captures/CRM-094/` et `docs/captures/CRM-095/`.*
-
 À la première connexion, l'accueil ne montre aucun board — il n'y en a pas encore. Il montre à la
 place le **Guide de démarrage**, une liste de **six étapes** qui mènent chacune vers l'écran qui
 la réalise.
@@ -106,7 +98,7 @@ Les six étapes, dans l'ordre :
 | Rejoindre un espace de travail | Votre compte appartient à un espace | Aucun écran : elle est accomplie par votre connexion |
 | Créer un premier track | Un dossier de premier niveau existe | Réglages ▸ Arborescence |
 | Préparer un premier workflow | Les affaires ont des étapes à suivre | Réglages ▸ Workflows — ou, pour un administrateur, le bouton **Créer le workflow de départ** du guide ([§2.4](#le-workflow-de-depart-en-un-geste)) |
-| Ouvrir un channel dans ce track | Un onglet de travail existe sous ce track | **Nouveau channel**, dans la barre d'onglets du track ([chapitre 3.5](#les-onglets-d-un-track)), ou Réglages ▸ Arborescence |
+| Ouvrir un channel dans ce track | Un onglet de travail existe sous ce track | **Nouveau channel**, dans la barre d'onglets du track ([chapitre 3.4](#les-onglets-d-un-track)), ou Réglages ▸ Arborescence |
 | Créer une première affaire | Un board a quelque chose à montrer | Le board du premier channel : dès qu'un channel existe, le lien **Ouvrir le board et créer l'affaire** y mène, et le bouton **Nouvelle affaire** crée l'affaire ([chapitre 9.10](#le-tableau-kanban-d-un-channel)). Sans channel, le lien mène à l'arborescence |
 | Raccorder une boîte de réception | Le courrier entrant se classe dans les affaires | Réglages ▸ État de la messagerie |
 
@@ -152,9 +144,8 @@ Le bouton **Masquer le guide** le retire de l'accueil **pour cette session** et 
 board. Un lien discret, *Rouvrir le guide de démarrage*, reste sur l'accueil. Pour un
 administrateur, il masque aussi la pastille du guide flottant ([§2.5](#le-guide-flottant-des-administrateurs)).
 
-Le guide vit aussi à son adresse propre, `/demarrage`, et **Réglages ▸ Guide de démarrage** le
-place en tête de l'index. Là, il est toujours rendu : même masqué, même intégralement accompli.
-C'est ce qui le rend relançable.
+Le guide vit aussi dans **Réglages ▸ Guide de démarrage**, en tête de l'index. Là, il est toujours rendu : même
+masqué, même intégralement accompli. C'est ce qui le rend relançable.
 
 Le masquage survit au **rechargement** de l'onglet, et disparaît quand l'onglet se ferme. C'est
 délibéré : cette préférence d'affichage ne justifie aucun stockage durable sur votre appareil, et
@@ -199,7 +190,7 @@ le nom déjà saisi.
 
 Pour un **administrateur**, le guide ne reste pas sur l'accueil : il le suit sur toutes les pages,
 sous la forme d'une **pastille** en bas à droite de l'écran — « Démarrage · 2 sur 6 », ou « 2/6 »
-sur un téléphone. Les autres rôles gardent le guide sur l'accueil et à son adresse `/demarrage`.
+sur un téléphone. Les autres rôles gardent le guide sur l'accueil et dans les réglages.
 
 - **L'ouvrir** : un clic sur la pastille (ou `Entrée` quand elle a le focus) déploie au-dessus
   d'elle un panneau avec les six étapes, leurs liens et le bouton du workflow de départ.
@@ -212,34 +203,33 @@ sur un téléphone. Les autres rôles gardent le guide sur l'accueil et à son a
 - **Ce qu'il retient** : ouvert ou réduit, pour la durée de l'onglet seulement ; rien d'autre, et
   rien de durable sur votre appareil.
 - **Quand il disparaît** : une fois les six étapes accomplies. Il n'apparaît pas non plus sur
-  l'accueil ni sur `/demarrage`, qui montrent déjà le guide dans la page.
+  l'accueil ni dans **Réglages ▸ Guide de démarrage**, qui montrent déjà le guide dans la page.
 
 Le panneau n'est pas une fenêtre modale : le reste de la page reste utilisable, panneau ouvert. Il
 couvre en revanche la partie droite de l'écran ; **Réduire** la libère d'un geste.
 
-**Ce qui reste hors du guide.** Il **lit et renvoie**, à une exception près : le workflow de départ,
-qu'il pose en un geste parce qu'aucun écran ne l'accomplissait en une fois. Il ne crée ni track, ni
-channel, ni affaire : ces écrans existent, et le guide y mène.
+**Ce qui reste hors du guide.** Il **lit et renvoie**, à une exception près : le workflow de départ, qu'il pose en un
+geste. Il ne crée ni track, ni channel, ni affaire : ces écrans existent, et le guide y mène.
 
 ## 3. Naviguer : barre latérale, onglets, états
 
-*Livré par `CRM-007`. Décrit l'application réellement exécutée ; captures dans
-`docs/captures/CRM-007/`.*
+Ce chapitre décrit ce qui entoure chaque page du CRM : la barre latérale à gauche, l'en-tête en haut, la barre
+d'onglets d'un track, et la façon dont l'application vous dit qu'elle charge, qu'elle n'a rien à montrer ou qu'elle
+n'a pas pu lire.
 
 ### 3.1 La disposition de l'écran
 
-L'écran se lit en trois zones :
+L'écran se lit en quatre zones :
 
-- à gauche, la **barre latérale** : le nom du produit, les cinq entrées de navigation — Board,
-  Inbox, **Contacts**, Ma journée, Réglages — puis la section **Tracks** ;
-- en haut, l'**en-tête** : le **fil d'Ariane**, qui dit où vous êtes, de votre espace de travail à la page
-  ouverte ([section 3.2](#le-fil-d-ariane-savoir-ou-vous-etes)), puis la recherche, les notifications et votre profil ;
-- sous l'en-tête, la **barre d'onglets**, qui listera les channels du track courant ;
+- à gauche, la **barre latérale** : les entrées de navigation, puis la section **Tracks**
+  ([section 3.3](#la-barre-laterale-et-la-section-tracks)) ;
+- en haut, l'**en-tête** : le **fil d'Ariane**, qui dit où vous êtes ([section 3.2](#le-fil-d-ariane-savoir-ou-vous-etes)),
+  puis la recherche, l'icône **« Aide »**, la cloche des notifications, votre nom et **Se déconnecter** ;
+- sous l'en-tête, la **barre d'onglets** : les channels du track ouvert ([section 3.4](#les-onglets-d-un-track)). Hors
+  d'un track, elle écrit « Aucun channel » ;
 - au centre, le **contenu** de la page.
 
 ### 3.2 Le fil d'Ariane : savoir où vous êtes
-
-*Livré par `CRM-110`. Captures dans `docs/captures/CRM-110/`.*
 
 En haut de l'écran, le **fil d'Ariane** nomme le chemin qui mène à la page ouverte, du plus général au plus précis.
 Sur une affaire, il se lit par exemple :
@@ -261,225 +251,174 @@ Le fil suit la page :
 | un track, sans channel ouvert | espace / **track** |
 | les coûts d'un track | espace / track / **Coûts** |
 | le détail d'un budget | espace / track / Coûts / **budget** |
+| un chapitre du manuel | espace / Aide / **chapitre** |
 | toute autre page (Inbox, Contacts, Réglages…) | espace / **nom de la page** |
 
 **Un nom trop long** est raccourci par « … » ; survolez-le pour lire le nom complet.
 
-**Sur un écran plus étroit qu'un ordinateur portable** (moins de 1 024 pixels), le fil passe sur sa propre ligne, sous
-la recherche, les notifications et votre profil. **Sur un téléphone** (moins de 768 pixels), il ne montre que le
-niveau précédent et le titre : « … / Grands comptes / **Migration ERP Sogexia** ». Le bouton **« … »** ouvre la liste
-des niveaux masqués — votre espace et le track —, chacun cliquable. Au clavier, atteignez-le avec `Tab`, ouvrez-le avec
-`Entrée`, refermez-le avec `Échap`.
+**Sur un écran plus étroit qu'un ordinateur portable**, le fil passe sur sa propre ligne, sous la recherche, l'aide,
+les notifications et votre profil. **Sur un téléphone**, il ne montre que le niveau précédent et le titre : « … /
+Grands comptes / **Migration ERP Sogexia** ». Le bouton **« … »** ouvre la liste des niveaux masqués — votre espace et
+le track —, chacun cliquable. Au clavier, atteignez-le avec `Tab`, ouvrez-le avec `Entrée`, refermez-le avec `Échap`.
 
 **Le fil ne nomme que ce que vous pouvez lire.** Un channel auquel vous n'avez pas accès n'y apparaît jamais, pas plus
-qu'un nom tapé dans l'adresse qui ne correspond à rien : le fil s'arrête au dernier niveau que vos droits vous laissent
-voir.
+qu'un nom tapé dans l'adresse qui ne correspond à rien.
 
-### 3.3 Ce que vous voyez aujourd'hui, et pourquoi
+### 3.3 La barre latérale et la section Tracks
 
-Sans session, aucune page de l'application ne s'affiche : toute adresse mène à l'écran de
-connexion ([chapitre 1](#se-connecter-et-se-deconnecter)). Après connexion, la barre latérale montre les tracks consentis à votre compte ;
-leurs onglets ouvrent les channels, le tableau et les fiches réels. Une administratrice du jeu de
-démonstration voit par exemple « Conseil & IA », « Studio web » et « Formation ».
+La barre latérale porte, dans cet ordre : **Board**, **Inbox**, **Contacts**, **Objectifs**, **Coûts**, **Pilotage**,
+**Rentabilité**, **Temps**, **Ma journée**, **Affaires figées** et **Réglages**. Une personne superadministratrice y
+trouve en plus, en dernier, l'entrée **Plateforme** ([chapitre 32](#la-plateforme-espaces-membres-et-superadministrateurs)).
 
-Après connexion, l'en-tête nomme votre workspace et votre profil. Les cards nomment leur
-responsable, les commentaires leur auteur et les événements leur acteur lorsque cette identité est
-connue. Une identité supprimée ne transforme jamais son UUID en libellé : un commentaire conserve
-sa place avec « Compte supprimé », tandis qu'un événement de service reste sans acteur affiché.
+Dessous, la section **Tracks** liste les activités de votre espace de travail — par exemple « Conseil & IA », « Studio
+web », « Formation ». Chaque track s'affiche en pilule colorée, précédée de son icône.
 
-**Ce qui a un écran, et ce qui n'en a pas.** L'affaire a sa fiche, le tableau kanban de son channel
-et la vue liste ; la discussion et l'historique vivent dans la fiche. Le **carnet de contacts** a
-le sien ([section 10](#le-carnet-de-contacts)), en lecture. L'arborescence a son écran
-d'administration ([chapitre 17](#administrer-l-arborescence-tracks-et-channels)), et la **composition d'un workflow** — ses étapes, ses transitions et
-les **questions de son formulaire** — le sien ([chapitre 18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)). En revanche, le catalogue de nœuds,
-la **visibilité question par étape** et les droits d'accès n'ont toujours aucun écran
-d'administration. La connexion rend
-accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs encore absents.
+- L'**ordre** est celui que l'administration de l'espace a choisi, pas l'ordre de création.
+- Un track **archivé** n'apparaît pas. L'archivage masque sans détruire : une personne administratrice peut le rendre
+  à tout moment.
+- La **couleur** et l'**icône** aident à repérer un track d'un coup d'œil ; elles ne portent jamais seules une
+  information, le nom les accompagne toujours.
+- Un clic sur la pilule ouvre le track sur ses channels. Le track ouvert se signale par un anneau bleu, qui s'ajoute à
+  sa couleur sans la remplacer.
 
-### 3.4 La section Tracks
+Créer, renommer, réordonner ou archiver un track est réservé aux administrateurs de l'espace, depuis **Réglages ▸
+Arborescence** ([chapitre 17](#administrer-l-arborescence-tracks-et-channels)). Le serveur applique cette règle, quel que
+soit le chemin emprunté pour la contourner.
 
-*Livrée par `CRM-020`. Captures dans `docs/captures/CRM-020/`.*
+### 3.4 Les onglets d'un track
 
-Sous les quatre entrées de navigation, la section **Tracks** liste les activités de votre espace de
-travail — par exemple « Conseil & IA », « Studio web », « Formation ». Chaque track s'affiche en
-pilule colorée, précédée de son icône.
+Ouvrir un track affiche ses **channels** en onglets, juste sous l'en-tête. Le nom du track devient le titre de la page
+; ouvrir un channel en fait le titre à son tour, et le fil d'Ariane nomme alors le track avant lui.
 
-- L'**ordre** est celui défini par l'administration de l'espace, pas l'ordre de création.
-- Un track **archivé** n'apparaît pas dans cette liste. L'archivage masque sans détruire : il est
-  réversible à tout moment par une personne administratrice.
-- La **couleur** et l'**icône** sont choisies parmi un jeu fixe : elles aident à repérer un track
-  d'un coup d'œil, et ne portent jamais seules une information — le libellé et l'icône
-  l'accompagnent toujours.
-- Les pilules sont **cliquables depuis `CRM-021`** : un clic ouvre le track sur ses channels. Le
-  track ouvert se signale par un anneau bleu, qui s'ajoute à sa couleur sans la remplacer.
+- L'**ordre** des onglets est celui que l'administration a choisi. Un channel **archivé** n'apparaît pas.
+- L'onglet **ouvert** se signale par un libellé bleu et un soulignement, jamais par la couleur seule.
+- Chaque onglet porte, devant son nom, une **pastille de la couleur de son channel**. Elle se choisit dans le
+  formulaire du channel ([section 17.2](#un-channel)) et ne change pas quand l'onglet est ouvert.
+- Sur un écran étroit, la barre **défile horizontalement** plutôt que de tronquer les noms. Une ombre au bord indique
+  qu'il reste des onglets à voir de ce côté.
+- **« Nouveau channel »**, après les onglets, crée un channel **sans quitter le track**. Le formulaire s'ouvre en haut de
+  la page — nom, identifiant d'adresse proposé depuis le nom, workflow, description —, le tableau restant visible
+  dessous. **Créer** ouvre aussitôt le tableau du nouveau channel ; **Annuler** ou la touche `Échap` referment le
+  formulaire sans rien créer. Un rechargement de la page garde le formulaire ouvert. Seul un administrateur de l'espace
+  peut créer un channel : pour un autre compte, le refus s'écrit dans le formulaire, sa saisie conservée.
+- **« Coûts »**, en dernier, ouvre les coûts du track
+  ([chapitre 24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)).
 
-**Qui peut faire quoi.** Créer, renommer, réordonner ou archiver un track est réservé aux personnes
-**administratrices** de l'espace de travail. Les autres profils les consultent. Cette règle est
-appliquée par le serveur, et non par l'affichage : elle tient même si l'on s'adresse directement à
-l'API. La suppression définitive d'un track n'est **jamais** proposée — l'archivage en tient lieu.
+Le contenu d'un channel se lit de **deux façons**, et une bascule en haut de la page passe de l'une à l'autre : le
+**tableau kanban** ([section 9.10](#le-tableau-kanban-d-un-channel)), vue par défaut, et la **vue liste**
+([section 9.11](#la-vue-liste-d-un-channel)). Chacune a sa propre adresse, qui se partage et se met en favori.
 
-**Ils se gèrent dans Réglages ▸ Arborescence** ([chapitre 17](#administrer-l-arborescence-tracks-et-channels)) : créer, renommer, réordonner, archiver
-un track ou un channel. *Cette phrase disait que les tracks ne se géraient que par l'API ; l'écran
-d'administration de l'arborescence le fait depuis `CRM-075`.*
+Trois écrans particuliers :
 
-### 3.5 Les onglets d'un track
+- un track **sans channel** affiche « Aucun channel dans ce track » : « Un channel se crée avec « Nouveau channel »,
+  dans la barre d'onglets ci-dessus. » ;
+- un channel dont le workflow **n'a aucune étape** n'a pas de tableau : « Ce workflow ne déclare aucune étape », avec le
+  lien **« Ouvrir l'éditeur de workflows »** ([chapitre 18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)) ;
+- une adresse qui ne correspond à **aucun track**, ou à un track auquel vous n'avez pas accès, affiche « Track
+  introuvable ». Les deux cas produisent le **même** message : il ne renseigne personne sur l'existence d'un track
+  qu'il n'a pas le droit de voir.
 
-*Livrée par `CRM-021`. Captures dans `docs/captures/CRM-021/`.*
+### 3.5 Les accès par track et par channel
 
-Ouvrir un track — en cliquant sa pilule, ou en saisissant son adresse `/tracks/<identifiant>` —
-affiche ses **channels** en onglets, juste sous l'en-tête. Le nom du track devient le titre de la
-page ; ouvrir un channel en fait le titre à son tour, et le fil d'Ariane nomme alors le track avant lui ([section
-3.2](#le-fil-d-ariane-savoir-ou-vous-etes)).
+Votre accès à un track ou à un channel découle d'abord de votre **rôle dans l'espace** : une administratrice
+administre, un business developer travaille, une lectrice consulte. Un administrateur peut ensuite poser, pour une
+personne et sur un track ou un channel précis, un **droit fin** qui le restreint ou le rouvre — **Membre** (lecture et
+écriture), **Lecture**, ou **Aucun accès** ([section 21.6](#les-droits-fins-restreindre-ou-rouvrir-un-track-ou-un-channel)).
 
-- L'**ordre** des onglets est celui défini par l'administration, pas l'ordre de création.
-- Un channel **archivé** n'apparaît pas. Comme pour les tracks, l'archivage masque sans détruire,
-  et reste réversible.
-- L'onglet **ouvert** se signale par un libellé bleu et un soulignement : jamais par la couleur
-  seule.
-- Chaque onglet porte, devant son nom, une **pastille de la couleur de son channel** (*livré par `CRM-116`*). Elle se
-  choisit dans le formulaire du channel ([chapitre 17.2](#un-channel)) ; elle accompagne le nom et ne change pas quand l'onglet est
-  ouvert.
-- Sur un écran étroit, la barre **défile horizontalement** plutôt que de tronquer les libellés. Une
-  ombre au bord indique qu'il reste des onglets à voir de ce côté.
-- **Nouveau channel**, après les onglets et avant « Coûts », crée un channel **sans quitter le
-  track** (*livré par `CRM-100` ; captures dans `docs/captures/CRM-100/`*). Le formulaire s'ouvre en
-  haut de la page — nom, identifiant d'adresse proposé depuis le nom, workflow, description —, le
-  tableau restant visible dessous. **Créer** ouvre aussitôt le tableau du nouveau channel, dont
-  l'onglet paraît dans la barre ; **Annuler** ou la touche **Échap** referment le formulaire sans rien
-  créer. Le formulaire ouvert fait partie de l'adresse de la page : un rechargement le conserve. La
-  commande est offerte à tous ; seul un administrateur de l'espace de travail peut créer un channel,
-  et le serveur refuse aux autres comptes avec un message écrit dans le formulaire, votre saisie
-  conservée.
-- Un track **sans channel** affiche « Aucun channel dans ce track », et dit que le channel se crée
-  avec « Nouveau channel », dans la barre d'onglets juste au-dessus.
-- Un channel dont le workflow **n'a aucune étape** n'a pas de tableau : l'écran le dit (« Ce workflow
-  ne déclare aucune étape ») et propose le lien **Ouvrir l'éditeur de workflows**, où les étapes
-  s'ajoutent ([chapitre 18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)).
+Ce que vous en voyez :
 
-Ouvrir un onglet change l'adresse de la page : elle se partage et se met en favori. Le contenu d'un
-channel se lit désormais de **deux façons**, et une bascule en haut de la zone principale passe de
-l'une à l'autre : le **tableau kanban** ([chapitre 9.10](#le-tableau-kanban-d-un-channel)), qui est la vue par défaut, et la **vue
-liste** ([chapitre 9.11](#la-vue-liste-d-un-channel)). Chacune a sa propre adresse.
+- **Le droit le plus précis l'emporte** : celui d'un channel sur celui de son track, celui d'un track sur votre rôle.
+  On peut vous fermer un track et vous en rouvrir un seul channel : vous voyez alors le nom du track, pour atteindre ce
+  channel, et rien d'autre de ce track.
+- **Ce qui vous est fermé n'apparaît pas comme « interdit » : il n'apparaît pas.** Un libellé « accès refusé »
+  révélerait l'existence d'une activité que vous n'avez pas à connaître.
+- **Sur un onglet en lecture**, les commandes qui modifieraient les affaires restent visibles, grisées, et un bandeau
+  dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
+- **Un administrateur n'est jamais restreint**, même si un droit fin a été posé sur son compte.
 
-**Si l'adresse ne correspond à aucun track**, ou si votre compte n'y a pas accès, l'écran affiche
-« Track introuvable » et propose un retour à l'accueil. Les deux situations produisent le **même**
-message : cela évite de renseigner qui que ce soit sur l'existence d'un track qu'il n'a pas le
-droit de voir.
+### 3.6 La description d'un track, d'un channel ou d'une affaire, au survol
 
-**Qui peut faire quoi.** Créer, renommer, réordonner ou archiver un channel est réservé aux
-personnes **administratrices** de l'espace de travail, exactement comme pour les tracks, et la
-règle est appliquée par le serveur. La suppression définitive n'est jamais proposée. **Aucun écran
-ne permet encore de les gérer**.
-
-### 3.6 Les accès par track et par channel
-
-*Livrée par `CRM-012`. Aucune capture : cette règle n'a pas encore d'écran, voir plus bas.*
-
-Par défaut, votre accès à un track ou à un channel découle de votre **rôle dans l'espace de
-travail** : une personne administratrice administre, une business developer travaille, une
-observatrice consulte. Rien à configurer.
-
-Une personne administratrice peut cependant poser une **exception** sur un track ou sur un channel
-précis, pour une personne précise. Trois exceptions existent :
-
-| Exception | Effet sur ce track ou ce channel |
-|---|---|
-| **Accès complet** | vous y lisez et y écrivez, même si votre rôle est « observatrice » |
-| **Lecture seule** | vous y lisez sans y écrire, même si votre rôle vous autorise à écrire ailleurs |
-| **Aucun accès** | ce track ou ce channel disparaît de votre affichage |
-
-Trois choses méritent d'être sues, parce qu'elles surprennent :
-
-- **L'exception la plus précise l'emporte.** Une exception posée sur un channel prime sur celle de
-  son track. On peut donc vous fermer tout un track *et* vous rouvrir un seul de ses channels : ce
-  channel restera visible alors que le track qui le contient ne le sera plus.
-- **Une exception ne s'applique jamais à une personne administratrice.** Elle peut être enregistrée
-  sur son compte, elle restera sans effet tant que cette personne administre l'espace — sans quoi
-  une exception malheureuse pourrait rendre un espace impossible à administrer. Elle reprendrait
-  effet si ce compte cessait d'être administrateur.
-- **Un track ou un channel qui vous est fermé n'apparaît pas comme « interdit » : il n'apparaît
-  pas du tout.** C'est voulu. Un libellé « accès refusé » révélerait l'existence et le nom d'une
-  activité que vous n'avez pas à connaître.
-
-**Ce que vous pouvez voir de vos propres exceptions.** Vous pouvez consulter celles qui vous
-concernent — une restriction invisible à celle qui la subit serait une mauvaise règle — mais pas
-celles de vos collègues, et vous ne pouvez pas lever la vôtre. Seule une personne administratrice
-pose et retire une exception. Retirer une exception ne « redonne » pas un accès particulier : elle
-rend l'accès à ce qu'il aurait été sans elle, c'est-à-dire celui de votre rôle.
-
-**Aucun écran ne permet encore de les gérer.** La règle est en revanche appliquée par le serveur,
-et non par l'affichage : elle tient même si l'on s'adresse directement à l'API.
-
-### 3.7 La description d'un track, d'un channel ou d'une affaire, au survol
-
-*Livrée par `CRM-105`. Captures dans `docs/captures/CRM-105/`.*
-
-Un track, un channel et une affaire peuvent porter une **description** : un texte libre qui dit à quoi
-sert l'activité, ce que regroupe le channel, ou ce que recouvre l'affaire. Celle d'un track et d'un
-channel se saisit dans **Réglages ▸ Arborescence** ([chapitre 17](#administrer-l-arborescence-tracks-et-channels)), dans le champ « Description » du
-formulaire.
+Un track, un channel et une affaire peuvent porter une **description** : un texte libre qui dit à quoi sert l'activité,
+ce que regroupe le channel, ou ce que recouvre l'affaire. Celle d'un track et d'un channel se saisit dans **Réglages ▸
+Arborescence**, champ « Description » du formulaire.
 
 Quand une description existe, elle paraît dans une **infobulle** :
 
-- **au survol de la souris**, après un court instant, sur la pilule du track dans la barre
-  latérale (la bulle s'ouvre à sa droite), sur l'onglet du channel, et sur le titre de l'affaire —
-  dans sa carte du tableau comme dans sa ligne de la vue liste (la bulle s'ouvre dessous) ;
-- **au clavier**, dès que l'élément reçoit le focus par la touche **Tab**.
+- **au survol de la souris**, après un court instant, sur la pilule du track dans la barre latérale, sur l'onglet du
+  channel, et sur le titre de l'affaire — dans sa carte du tableau comme dans sa ligne de la vue liste ;
+- **au clavier**, dès que l'élément reçoit le focus par la touche `Tab`.
 
-La bulle écrit d'abord le **nom** de l'objet, puis sa description, avec ses retours à la ligne. Une
-description très longue défile à l'intérieur de la bulle. Vous pouvez y amener la souris pour la
-lire : elle reste ouverte tant que le pointeur est sur l'élément ou sur elle. La touche **Échap** la
-ferme ; un clic sur l'élément ouvre l'objet, comme avant, sans laisser de bulle.
+La bulle écrit d'abord le **nom**, puis la description, avec ses retours à la ligne ; une description très longue
+défile à l'intérieur. Vous pouvez y amener la souris pour la lire : elle reste ouverte tant que le pointeur est sur
+l'élément ou sur elle. `Échap` la ferme ; un clic sur l'élément l'ouvre, sans laisser de bulle.
 
-**Sans description, rien ne change** : aucune bulle, et le nom complet reste lisible au survol comme
-auparavant. Un lecteur d'écran annonce la description avec le nom de l'élément, que la bulle soit
-ouverte ou non.
+**Sans description, rien ne change** : aucune bulle, et le nom complet reste lisible au survol. Un lecteur d'écran
+annonce la description avec le nom de l'élément.
 
-**Ce qui n'est pas proposé** : sur un écran tactile, il n'y a pas de survol, et toucher l'élément
-l'ouvre ; la description ne paraît donc pas en bulle. La description d'une affaire ne se saisit pas
-encore depuis l'interface.
+**Ce qui n'est pas proposé** : sur un écran tactile, il n'y a pas de survol, et toucher l'élément l'ouvre ; la
+description n'y paraît pas en bulle. La description d'une affaire ne se saisit pas encore depuis l'écran.
 
-### 3.8 Replier la barre latérale
+### 3.7 Replier la barre latérale
 
-Le bouton en haut de la barre latérale la replie en colonne d'icônes, et la déplie à nouveau. Ce
-choix vaut **pour la session en cours** : il est oublié à la fermeture de l'onglet, et rien n'est
-conservé sur votre appareil au-delà.
+Le bouton en haut de la barre latérale la replie en colonne d'icônes, et la déplie à nouveau. Ce choix vaut **pour la
+session en cours** : il est oublié à la fermeture de l'onglet, et rien n'est conservé sur votre appareil.
 
-Sur un écran étroit, la barre latérale devient un **tiroir** : le bouton en haut à gauche de
-l'en-tête l'ouvre, la croix ou la touche `Échap` la referme.
+Sur un écran étroit, la barre latérale devient un **tiroir** : le bouton en haut à gauche de l'en-tête l'ouvre, la
+croix ou la touche `Échap` la referme.
 
-### 3.9 Naviguer au clavier
+### 3.8 Naviguer au clavier
 
 L'application s'utilise entièrement au clavier :
 
-- la première tabulation fait apparaître le lien **« Aller au contenu »**, qui saute la
-  navigation ;
-- les tabulations suivantes parcourent le bouton de repli, puis les quatre entrées de navigation ;
-- `Entrée` active l'entrée sélectionnée ;
+- la première tabulation fait apparaître le lien **« Aller au contenu »**, qui saute la navigation ;
+- les tabulations suivantes parcourent le bouton de repli, puis les entrées de la barre latérale ;
+- `Entrée` active l'élément qui a le focus ;
 - l'élément qui a le focus est toujours entouré d'un liseré bleu visible.
+
+### 3.9 L'aide : le manuel, depuis n'importe quel écran
+
+L'icône **« Aide »** de l'en-tête — un livre ouvert, à gauche de la cloche — ouvre un petit panneau :
+
+- **« Aide sur cet écran »** mène à la section du manuel qui décrit la page où vous êtes ; le lien porte le titre de
+  cette section ;
+- **« Sommaire du manuel »** mène à la liste de tous les chapitres.
+
+Un écran que le manuel ne décrit pas en propre — l'index des réglages, par exemple — n'offre que le sommaire.
+
+Le panneau se referme par **« Fermer l’aide »**, par la touche `Échap` — le focus revient alors sur l'icône —, par un
+clic ailleurs, ou en suivant l'un de ses liens. Au clavier, ouvrir le panneau place le focus sur son premier lien.
+Ouvrir l'aide referme les notifications, et inversement : un seul panneau de l'en-tête est ouvert à la fois.
+
+**Le sommaire** liste chaque chapitre et ses sections, chacun cliquable. **Un chapitre** s'ouvre sur « Dans ce
+chapitre », la liste de ses sections, et se termine par deux liens, **« Chapitre précédent »** et **« Chapitre
+suivant »**. Les renvois d'un chapitre à l'autre sont des liens. Une illustration large propose **« Voir en taille
+réelle »**, qui l'ouvre dans un nouvel onglet.
+
+Le manuel n'est lisible qu'avec une session : sans session, ses adresses mènent à l'écran de connexion. Si le manuel ne
+peut pas être lu, la page le dit — « Le manuel n’a pas pu être chargé » — et propose **« Réessayer »** ; un chapitre qui
+n'existe pas affiche « Chapitre introuvable » et un lien vers le sommaire.
 
 ### 3.10 Quand quelque chose ne va pas
 
 | Ce qui s'affiche | Ce que cela signifie | Ce que vous pouvez faire |
 |---|---|---|
 | Barres grises animées | Les données sont en cours de chargement | Patienter |
-| « Aucun … » | Le serveur n'a rien à afficher pour vous | Rien : ce n'est pas une erreur |
-| « Chargement impossible » | Le serveur n'a pas répondu | **Réessayer** ; le bouton relance la requête sans recharger la page |
-| « Accès refusé » | Le serveur a refusé la lecture | Demander l'accès à un administrateur de l'espace |
-| « Configuration incomplète » | L'application a été construite sans l'adresse du serveur | Prévenir la personne qui a déployé l'application |
+| « Aucun … » | Il n'y a rien à afficher pour vous | Rien : ce n'est pas une erreur |
+| « Chargement impossible » | Le serveur n'a pas répondu | **Réessayer** : le bouton relance la lecture sans recharger la page |
+| « Accès refusé » | Votre compte n'a pas les droits nécessaires | Demander l'accès à un administrateur de l'espace |
+| « Configuration incomplète » | L'application a été installée sans l'adresse de son serveur | Prévenir la personne qui l'a installée |
 
-En cas de panne du serveur, l'application **réessaie trois fois** avant d'afficher l'erreur : le
-message peut donc mettre quelques secondes à apparaître.
+En cas de panne du serveur, l'application **réessaie trois fois** avant d'afficher l'erreur : le message peut donc
+mettre quelques secondes à apparaître.
 
 ### 3.11 Les commandes grisées : ce que votre rôle vous laisse faire
 
-Le produit ne vous propose pas un geste que le serveur vous refuserait. Une commande que vous ne pouvez
-pas utiliser **reste à sa place, grisée**, et un **bandeau** — une icône en forme d'œil sur fond gris
-clair — dit en tête du bloc pourquoi : « Vous consultez … : les commandes restent visibles mais sont
-inactives. » Un seul bandeau par bloc ; chaque commande grisée y renvoie, et un lecteur d'écran le lit
-quand elle a le focus.
+Le produit ne vous propose pas un geste que le serveur vous refuserait. Une commande que vous ne pouvez pas utiliser
+**reste à sa place, grisée**, et un **bandeau** — une icône en forme d'œil sur fond gris clair — dit en tête du bloc
+pourquoi : « Vous consultez … : les commandes restent visibles mais sont inactives. » Un seul bandeau par bloc ;
+chaque commande grisée y renvoie, et un lecteur d'écran le lit quand elle a le focus.
 
-Trois choses décident de ce que vous pouvez faire, et le serveur les mesure pour vous :
+Trois choses décident de ce que vous pouvez faire :
 
 | Ce que vous voulez faire | Il faut | Exemples |
 |---|---|---|
@@ -487,37 +426,27 @@ Trois choses décident de ce que vous pouvez faire, et le serveur les mesure pou
 | Éditer le carnet et les modèles | être administrateur ou **business developer** | créer ou modifier un contact, un modèle d'email, une séquence de relance |
 | Travailler une affaire | pouvoir **écrire sur son onglet** | créer, modifier, déplacer, endormir une affaire ; ses contacts, ses coûts, ses commentaires, ses envois |
 
-Le troisième dépend des **accès par track et par channel** ([chapitre 3.6](#les-acces-par-track-et-par-channel)) : un business
-developer peut être limité à la lecture sur un onglet, et une personne en lecture seule peut être
-rouverte en écriture sur un autre. Le produit suit exactement ces accès, onglet par onglet.
+Le troisième suit les **accès par track et par channel** ([section 3.5](#les-acces-par-track-et-par-channel)) : un
+business developer peut être limité à la lecture sur un onglet, et une lectrice rouverte en écriture sur un autre.
 
-**Ce qui n'est jamais grisé** : ce qui ne regarde que vous — vos préférences de notifications, votre
-propre boîte de réception et vos propres identités d'expédition, la saisie de votre temps.
+**Ce qui n'est jamais grisé** : ce qui ne regarde que vous — vos préférences de notifications, votre propre boîte de
+réception et vos propres identités d'expédition, la saisie de votre temps.
 
-**Juste après l'ouverture d'un écran**, le temps que vos droits soient lus, les commandes peuvent être
-grisées un instant **sans bandeau** : rien n'est encore dit, rien n'est refusé. Si vos droits ne peuvent
-pas être lus — une coupure réseau —, les commandes restent offertes, et c'est la réponse du serveur
-qui s'affiche si vous tentez un geste.
+**Juste après l'ouverture d'un écran**, le temps que vos droits soient lus, les commandes peuvent être grisées un
+instant **sans bandeau** : rien n'est encore refusé. Si vos droits ne peuvent pas être lus — une coupure réseau —, les
+commandes restent offertes, et c'est la réponse du serveur qui s'affiche si vous tentez un geste.
 
-**Le serveur reste la seule règle.** Griser une commande aide à ne pas tenter un geste voué au refus ;
-cela ne protège rien à soi seul. Si vos droits changent pendant que vous travaillez, le serveur refuse,
-et l'écran affiche son refus.
+**Le serveur reste la seule règle.** Griser une commande vous évite un geste voué au refus ; cela ne protège rien à soi
+seul. Si vos droits changent pendant que vous travaillez, le serveur refuse, et l'écran affiche son refus.
 
-Dans **Réglages**, l'entrée « Coût du personnel » devient un texte grisé si vous n'administrez pas
-l'espace : son écran vous serait refusé. Les autres écrans d'administration restent ouverts **en
-lecture** : vous y voyez la configuration, commandes grisées.
-
----
+Dans **Réglages**, l'entrée « Coût du personnel » devient un texte grisé si vous n'administrez pas l'espace : son écran
+vous serait refusé. Les autres écrans d'administration restent ouverts **en lecture** : vous y voyez la configuration,
+commandes grisées.
 
 ## 4. Retrouver n'importe quoi : la recherche
 
-*Livrée par `CRM-065`. Le contrat est écrit dans `docs/SPEC-recherche.md`.*
-
-Le produit compte plus de trente écrans et une arborescence à trois niveaux. Jusqu'ici, retrouver
-un objet dont on ne savait plus où il vivait demandait de le chercher écran par écran : chaque
-liste portait au mieux un filtre local, aveugle à tout ce qui n'était pas elle.
-
-**La recherche cherche partout à la fois**, depuis n'importe quel écran, sans le quitter.
+**La recherche cherche partout à la fois**, depuis n'importe quel écran, sans le quitter : une affaire, un contact,
+une organisation, un commentaire ou un message dont vous ne savez plus où il se trouve.
 
 ### 4.1 L'ouvrir
 
@@ -608,7 +537,7 @@ nécessairement la même liste, et c'est voulu.
 - **L'ordre est celui de la pertinence**, familles mêlées : un message peut passer devant une
   affaire s'il correspond mieux.
 - **Rien n'est enregistré** : ni ce que vous cherchez, ni quand, ni combien de résultats. Il n'y a
-  pas d'historique de recherche, et il n'y en aura pas sans qu'on vous le demande.
+  pas d'historique de recherche.
 - **Aucun filtre par famille**, aucune suggestion, aucune correction de frappe.
 - **Aucune action sur un résultat** : la recherche mène, elle n'agit pas.
 - **Les tracks et les channels ne sont pas cherchés.** On les trouve par la navigation, qui les
@@ -620,12 +549,8 @@ nécessairement la même liste, et c'est voulu.
 
 ## 5. Vos notifications : savoir qu'on vous a nommé
 
-*Livré par `CRM-064`, sous-tranche 3a. Les règles d'accès sont celles des tranches 1 et 2 : cet
-écran n'en invente aucune. Captures : `docs/captures/CRM-064/`.*
-
-**Où.** En haut à droite de chaque écran, la **cloche**, entre le nom de votre espace de travail et
-votre identité. Elle est visible partout, parce qu'une notification n'est pas une destination : on
-y jette un œil et l'on retourne à ce qu'on faisait.
+**Où.** En haut à droite de chaque écran, la **cloche**, entre l'icône « Aide » et votre nom. Elle est visible partout,
+parce qu'une notification n'est pas une destination : on y jette un œil et l'on retourne à ce qu'on faisait.
 
 **Qui.** Chacun voit **ses** notifications, et elles seules. Personne d'autre — ni un collègue, ni
 un administrateur de l'espace de travail. La boîte de quelqu'un n'est pas une donnée
@@ -646,7 +571,7 @@ qui afficherait « 12 » sur douze messages tous lus ne dirait rien d'utile.
 
 Un clic — ou `Entrée` au clavier — ouvre le panneau **sous la cloche**, sans quitter l'écran où
 vous êtes. `Échap`, un clic à l'extérieur, ou « Fermer les notifications » le referment ; le focus
-revient alors à la cloche.
+revient alors à la cloche. Ouvrir les notifications referme le panneau d'aide, et inversement.
 
 Chaque ligne porte :
 
@@ -683,12 +608,10 @@ page — il n'annonce jamais une modification qui n'a pas eu lieu.
 ### 5.4 La mise à jour est immédiate
 
 Le panneau et le compteur s'actualisent **sans rechargement** dès qu'une notification vous est
-adressée : ils écoutent la base en temps réel. Le produit ne vous envoie **aucun email**, ne fait
+adressée. Le produit ne vous envoie **aucun email**, ne fait
 sonner **aucun son** et ne modifie **pas** le titre de l'onglet.
 
 ### 5.5 Mentionner quelqu’un dans un commentaire
-
-*Livré par `CRM-064`, sous-tranche 3b. Captures : `docs/captures/CRM-064/`.*
 
 Sous la zone de saisie du fil d'une affaire, la commande **« Mentionner »** ouvre la liste des
 personnes que ce commentaire peut prévenir. Cochez-en une ou plusieurs, écrivez votre message, et
@@ -720,10 +643,10 @@ sachiez ce qu'il reste à faire.
 
 ### 5.6 Choisir ce que vous recevez
 
-*Réglages → Notifications, ou directement `/reglages/notifications`.*
+*Réglages ▸ Notifications.*
 
 C'est **votre** réglage : personne d'autre ne le voit, pas même l'administratrice de l'espace de
-travail. C'est aussi la seule section des réglages qui règle votre compte plutôt que l'instance, et
+travail. C'est aussi la seule section des réglages qui règle votre compte plutôt que l'espace, et
 c'est pourquoi elle vient en dernier dans la liste.
 
 **Une case par type de notification**, cochée par défaut. Aujourd'hui il n'y en a qu'une :
@@ -920,7 +843,7 @@ travail à faire, pas une erreur.
 
 L'écran ne montre que les affaires que **vos droits vous laissent lire**. Deux collègues ouvrant la
 même page au même instant peuvent donc y voir des listes différentes, et c'est voulu : les droits
-par track et par onglet ([chapitre 3.6](#les-acces-par-track-et-par-channel)) s'appliquent ici comme partout.
+par track et par onglet ([chapitre 3.5](#les-acces-par-track-et-par-channel)) s'appliquent ici comme partout.
 
 **L'écran ne dit jamais qu'il vous cache quelque chose.** Aucune mention « une affaire vous est
 masquée » n'apparaît : ce serait divulguer par la bande l'existence de ce que vos droits ferment.
@@ -1065,8 +988,6 @@ L'assistant connecté par le **connecteur MCP** lit et compose aussi les canevas
 
 ## 9. L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître
 
-*Livrée par `CRM-040`. Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir [§3.3](#ce-que-vous-voyez-aujourd-hui-et-pourquoi).*
-
 L'**affaire** — appelée *card* dans le produit — est l'objet autour duquel tout le CRM s'organise :
 une opportunité, un dossier, un projet. Elle vit dans un onglet (channel), à une étape du workflow
 que cet onglet suit, et c'est à elle que se rattacheront les commentaires, les documents et les
@@ -1206,7 +1127,7 @@ refuse, plutôt que de faire disparaître une colonne du tableau sous les affair
 ### 9.5 Qui peut faire quoi
 
 - **Voir** les affaires d'un onglet suppose le droit de lire cet onglet. Les accès par track et par
-  channel du [§3.6](#les-acces-par-track-et-par-channel) s'appliquent **dès la première affaire** : une restriction `Aucun accès`
+  channel du [§3.5](#les-acces-par-track-et-par-channel) s'appliquent **dès la première affaire** : une restriction `Aucun accès`
   masque les affaires comme elle masque l'onglet, et un accès `Membre` posé sur un onglet les rouvre
   même si le track est fermé.
 - **Créer et modifier** une affaire suppose le droit d'**écriture** sur l'onglet. Une personne en
@@ -1904,8 +1825,6 @@ messagerie. Et la **vue liste** n'offre pas le geste — elle laisse la case d'a
 vers la fiche.
 
 ### 9.14 Ranger une affaire dans un autre dossier
-
-*Livrée par `CRM-045`. Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir [§3.3](#ce-que-vous-voyez-aujourd-hui-et-pourquoi).*
 
 Une affaire peut **changer d'onglet** — de dossier. Le geste répond à une situation banale : une
 affaire a été ouverte au mauvais endroit, ou elle a changé de nature et relève désormais d'une
@@ -3172,7 +3091,7 @@ Les mêmes six gestes s'appliquent, avec deux différences :
 
 **Un channel a sa propre couleur** (*livré par `CRM-116`*). Elle se choisit comme celle d'un track, avec les mêmes cinq
 couleurs, à la création comme en modification, et un nouveau channel est Gris tant que vous n'en choisissez pas
-d'autre. Elle s'affiche en **pastille** devant le nom de son onglet ([section 3.5](#les-onglets-d-un-track)) et en **pilule** dans
+d'autre. Elle s'affiche en **pastille** devant le nom de son onglet ([section 3.4](#les-onglets-d-un-track)) et en **pilule** dans
 l'arborescence. Elle aide à repérer un channel d'un coup d'œil ; elle ne remplace jamais son nom.
 
 Si aucun workflow n'est affectable à ce track, l'écran vous le dit au lieu d'afficher un formulaire
@@ -3270,7 +3189,7 @@ trois champs :
 vous ne lui en avez pas donné au moins une, désignée comme initiale ([chapitre 18.5](#les-etapes)). L'écran le
 dit dès la création : « Ce workflow n'a aucune étape. » Un workflow sans étape initiale est un
 brouillon parfaitement licite, pas une erreur. Un channel qui le suit n'a pas de tableau : son onglet
-le dit, et propose le lien **Ouvrir l'éditeur de workflows** ([chapitre 3.5](#les-onglets-d-un-track)).
+le dit, et propose le lien **Ouvrir l'éditeur de workflows** ([chapitre 3.4](#les-onglets-d-un-track)).
 
 Le workflow créé devient aussitôt le workflow **choisi**, prêt à être composé.
 

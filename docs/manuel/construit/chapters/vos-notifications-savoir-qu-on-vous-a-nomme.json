@@ -6,36 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-064"
-						},
-						{
-							"type": "text",
-							"text": ", sous-tranche 3a. Les règles d'accès sont celles des tranches 1 et 2 : cet\nécran n'en invente aucune. Captures : "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-064/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -59,7 +29,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", entre le nom de votre espace de travail et\nvotre identité. Elle est visible partout, parce qu'une notification n'est pas une destination : on\ny jette un œil et l'on retourne à ce qu'on faisait."
+					"text": ", entre l'icône « Aide » et votre nom. Elle est visible partout,\nparce qu'une notification n'est pas une destination : on y jette un œil et l'on retourne à ce qu'on faisait."
 				}
 			]
 		},
@@ -232,7 +202,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", un clic à l'extérieur, ou « Fermer les notifications » le referment ; le focus\nrevient alors à la cloche."
+					"text": ", un clic à l'extérieur, ou « Fermer les notifications » le referment ; le focus\nrevient alors à la cloche. Ouvrir les notifications referme le panneau d'aide, et inversement."
 				}
 			]
 		},
@@ -520,7 +490,7 @@
 				},
 				{
 					"type": "text",
-					"text": " dès qu'une notification vous est\nadressée : ils écoutent la base en temps réel. Le produit ne vous envoie "
+					"text": " dès qu'une notification vous est\nadressée. Le produit ne vous envoie "
 				},
 				{
 					"type": "strong",
@@ -571,36 +541,6 @@
 				{
 					"type": "text",
 					"text": "5.5 Mentionner quelqu’un dans un commentaire"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-064"
-						},
-						{
-							"type": "text",
-							"text": ", sous-tranche 3b. Captures : "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-064/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
 				}
 			]
 		},
@@ -779,15 +719,7 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Réglages → Notifications, ou directement "
-						},
-						{
-							"type": "code",
-							"text": "/reglages/notifications"
-						},
-						{
-							"type": "text",
-							"text": "."
+							"text": "Réglages ▸ Notifications."
 						}
 					]
 				}
@@ -811,7 +743,7 @@
 				},
 				{
 					"type": "text",
-					"text": " réglage : personne d'autre ne le voit, pas même l'administratrice de l'espace de\ntravail. C'est aussi la seule section des réglages qui règle votre compte plutôt que l'instance, et\nc'est pourquoi elle vient en dernier dans la liste."
+					"text": " réglage : personne d'autre ne le voit, pas même l'administratrice de l'espace de\ntravail. C'est aussi la seule section des réglages qui règle votre compte plutôt que l'espace, et\nc'est pourquoi elle vient en dernier dans la liste."
 				}
 			]
 		},

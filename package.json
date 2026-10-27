@@ -12,6 +12,7 @@
     "types:check": "scripts/generate-types.sh --check",
     "manuel:construire": "node scripts/manuel/construire.mjs",
     "manuel:verifier": "node scripts/manuel/construire.mjs --verifier",
+    "manuel:liens": "node scripts/manuel/renumeroter.mjs",
     "verify:identites": "./scripts/verify-identites.sh",
     "typecheck": "tsc -p tsconfig.json && tsc -p webapp/tsconfig.json && tsc -p webapp/tsconfig.test.json && tsc -p tsconfig.tools.json",
     "dev": "vite --config webapp/vite.config.ts",

@@ -6,45 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-040"
-						},
-						{
-							"type": "text",
-							"text": ". Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir "
-						},
-						{
-							"type": "link",
-							"target": {
-								"chapter": "naviguer-barre-laterale-onglets-etats",
-								"anchor": "ce-que-vous-voyez-aujourd-hui-et-pourquoi"
-							},
-							"content": [
-								{
-									"type": "text",
-									"text": "§3.3"
-								}
-							]
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "L'"
 				},
@@ -1382,7 +1343,7 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "§3.6"
+										"text": "§3.5"
 									}
 								]
 							},
@@ -8687,45 +8648,6 @@
 				{
 					"type": "text",
 					"text": "9.14 Ranger une affaire dans un autre dossier"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-045"
-						},
-						{
-							"type": "text",
-							"text": ". Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir "
-						},
-						{
-							"type": "link",
-							"target": {
-								"chapter": "naviguer-barre-laterale-onglets-etats",
-								"anchor": "ce-que-vous-voyez-aujourd-hui-et-pourquoi"
-							},
-							"content": [
-								{
-									"type": "text",
-									"text": "§3.3"
-								}
-							]
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
 				}
 			]
 		},

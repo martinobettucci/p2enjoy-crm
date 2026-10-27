@@ -6,68 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-079"
-						},
-						{
-							"type": "text",
-							"text": ", révisé par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-094"
-						},
-						{
-							"type": "text",
-							"text": " (six étapes, le workflow de départ, le guide flottant) et\npar "
-						},
-						{
-							"type": "code",
-							"text": "CRM-095"
-						},
-						{
-							"type": "text",
-							"text": " (l'étape « affaire » mène au board du premier channel). Décrit l'application réellement\nexécutée ; captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-079/"
-						},
-						{
-							"type": "text",
-							"text": ", "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-094/"
-						},
-						{
-							"type": "text",
-							"text": " et "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-095/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "À la première connexion, l'accueil ne montre aucun board — il n'y en a pas encore. Il montre à la\nplace le "
 				},
@@ -262,7 +200,7 @@
 							"content": [
 								{
 									"type": "text",
-									"text": "chapitre 3.5"
+									"text": "chapitre 3.4"
 								}
 							]
 						},
@@ -766,15 +704,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Le guide vit aussi à son adresse propre, "
-				},
-				{
-					"type": "code",
-					"text": "/demarrage"
-				},
-				{
-					"type": "text",
-					"text": ", et "
+					"text": "Le guide vit aussi dans "
 				},
 				{
 					"type": "strong",
@@ -787,7 +717,7 @@
 				},
 				{
 					"type": "text",
-					"text": " le\nplace en tête de l'index. Là, il est toujours rendu : même masqué, même intégralement accompli.\nC'est ce qui le rend relançable."
+					"text": ", en tête de l'index. Là, il est toujours rendu : même\nmasqué, même intégralement accompli. C'est ce qui le rend relançable."
 				}
 			]
 		},
@@ -1178,15 +1108,7 @@
 				},
 				{
 					"type": "text",
-					"text": " en bas à droite de l'écran — « Démarrage · 2 sur 6 », ou « 2/6 »\nsur un téléphone. Les autres rôles gardent le guide sur l'accueil et à son adresse "
-				},
-				{
-					"type": "code",
-					"text": "/demarrage"
-				},
-				{
-					"type": "text",
-					"text": "."
+					"text": " en bas à droite de l'écran — « Démarrage · 2 sur 6 », ou « 2/6 »\nsur un téléphone. Les autres rôles gardent le guide sur l'accueil et dans les réglages."
 				}
 			]
 		},
@@ -1358,11 +1280,16 @@
 							},
 							{
 								"type": "text",
-								"text": " : une fois les six étapes accomplies. Il n'apparaît pas non plus sur\nl'accueil ni sur "
+								"text": " : une fois les six étapes accomplies. Il n'apparaît pas non plus sur\nl'accueil ni dans "
 							},
 							{
-								"type": "code",
-								"text": "/demarrage"
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Réglages ▸ Guide de démarrage"
+									}
+								]
 							},
 							{
 								"type": "text",
@@ -1422,7 +1349,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", à une exception près : le workflow de départ,\nqu'il pose en un geste parce qu'aucun écran ne l'accomplissait en une fois. Il ne crée ni track, ni\nchannel, ni affaire : ces écrans existent, et le guide y mène."
+					"text": ", à une exception près : le workflow de départ, qu'il pose en un\ngeste. Il ne crée ni track, ni channel, ni affaire : ces écrans existent, et le guide y mène."
 				}
 			]
 		}

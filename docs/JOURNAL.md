@@ -36339,3 +36339,28 @@ lignes de `CRM-068`, encore en cours.
 
 **Coordination** : les sessions de `CRM-068` et de `CRM-118` écrivent dans le manuel ; leurs lignes non poussées restent
 dans la copie de travail, hors de ce commit, qui s'applique à HEAD sans toucher leur copie.
+
+### `CRM-117` T3.1 : la prise en main réécrite pour le lecteur (2026-10-27)
+
+**Fait** : les chapitres 1 à 5 — se connecter, le guide de démarrage, naviguer, la recherche, les notifications — ne
+portent plus aucune référence interne : ni identifiant d'unité, ni chemin du dépôt, ni adresse de la webapp, ni mention
+du développement ou du jeu de démonstration. Le chapitre 3 est réécrit en entier ; les autres, phrase par phrase.
+
+**Vérifié contre le code, et non recopié** : chaque libellé cité a été relu dans `webapp/src/i18n/fr.ts`, l'ordre de la
+barre latérale dans `routes.tsx`, la destination de chaque étape du guide dans `GuideDemarrage.tsx`. Quatre phrases
+étaient devenues fausses et sont corrigées : la barre latérale ne compte pas « cinq entrées » mais onze, et la
+plateforme en dernier pour une personne superadministratrice ; les droits fins **ont** un écran (chapitre 21) ; un track
+fermé dont un channel est rouvert **reste nommé**, pour atteindre ce channel (la phrase disait l'inverse, contredite par
+le chapitre des membres) ; la cloche se trouve entre l'icône « Aide » et votre nom. La section « Ce que vous voyez
+aujourd'hui, et pourquoi » est retirée : elle décrivait l'état du produit à une date, pas son usage. **Ajouté** : la
+section 3.9, « L'aide », qui décrit l'icône, son panneau, le sommaire, un chapitre et leurs états.
+
+**Un outil, né d'un défaut constaté** : renuméroter le chapitre 3 laissait des renvois justes par leur cible et faux
+par leur texte (« chapitre 3.5 » vers ce qui était devenu 3.4) — la construction ne le voit pas. `npm run manuel:liens`
+recalcule le numéro écrit dans un lien d'après le titre visé, en gardant le mot de l'auteur (« le chapitre », « la
+section ») pour ne pas casser l'accord : une première version changeait aussi le mot, et la relecture de sa sortie l'a
+montré (« le [section 9.10] »). Un lien vers une section au titre répété garde le numéro de la section. La preuve du
+manuel le vérifie (contrôle 7), et sa contre-épreuve le dégrade.
+
+**Coordination** : la session de `CRM-068` écrit dans les chapitres 9 et 18 ; ses lignes restent les siennes, hors de ce
+commit, qui s'applique à HEAD — la même réécriture a été appliquée à la copie de travail, où elle donne le même résultat.

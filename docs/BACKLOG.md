@@ -17097,7 +17097,12 @@ responsable** : traitée juste après `CRM-116`.*
             `budgets.spec.ts`, `manuel.spec.ts` rejoués verts. Les renvois numérotés des en-têtes de spécification et des
             commentaires de code suivent ; ceux qui racontent une livraison passée restent tels quels, comme la migration
             `0081`. Les ajouts de `CRM-118` au manuel, poussés entre-temps sur l'ancien plan, y sont repris.
-      - [ ] **T3.1 — prise en main** : chapitres 1 à 5, dont une section sur l'aide elle-même.
+      - [x] **T3.1 — prise en main** : chapitres 1 à 5, dont une section sur l'aide elle-même.
+            *Fait le 2026-10-27* : aucune référence interne dans les cinq chapitres (contrôle 2 de `verify-manual.sh`) ;
+            chapitre 3 réécrit en entier, les autres phrase par phrase, chaque libellé relu dans `fr.ts` ; quatre phrases
+            devenues fausses corrigées (journal) ; section 3.9 « L'aide » ajoutée ; table du §12 tenue pour ces chapitres ;
+            `npm run manuel:liens` (`scripts/manuel/liens.mjs`, 5 unitaires, deux mutations tuées) et contrôle 7 de la
+            preuve du manuel, contre-épreuve à six familles ; manuel construit et publié en développement.
       - [ ] **T3.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10.
       - [ ] **T3.3 — la messagerie** : chapitres 11 à 16.
       - [ ] **T3.4 — l'administration de l'espace** : chapitres 17 à 22.

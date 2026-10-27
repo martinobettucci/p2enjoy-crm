@@ -6,52 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Connexion par le seul SSO LeLabs, livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-092"
-						},
-						{
-							"type": "text",
-							"text": " (tranche T5) ; elle remplace le formulaire par\nmot de passe de "
-						},
-						{
-							"type": "code",
-							"text": "CRM-011"
-						},
-						{
-							"type": "text",
-							"text": " et la seconde voie de "
-						},
-						{
-							"type": "code",
-							"text": "CRM-091"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-092/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "Le CRM n'a "
 				},
@@ -66,15 +20,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : vous vous connectez avec votre compte LeLabs. Ouvrez\n"
-				},
-				{
-					"type": "code",
-					"text": "/connexion"
-				},
-				{
-					"type": "text",
-					"text": " et choisissez "
+					"text": " : vous vous connectez avec votre compte LeLabs. L'écran de connexion n'offre\nqu'une action, "
 				},
 				{
 					"type": "strong",
@@ -87,7 +33,7 @@
 				},
 				{
 					"type": "text",
-					"text": " — c'est la seule action de l'écran. Le\nproduit vous envoie sur la page de connexion de LeLabs ; une fois connecté là-bas, vous revenez au\nCRM, à l'adresse d'où vous étiez parti si vous aviez commencé depuis une fiche ou un board. Pendant\nl'aller, le bouton affiche « Redirection vers LeLabs… » ; au retour, une carte grisée annonce\n« Connexion LeLabs en cours » le temps que le CRM vérifie votre connexion."
+					"text": ". Le produit vous envoie sur la page de connexion de LeLabs ; une fois\nconnecté là-bas, vous revenez au CRM, à la page d'où vous étiez parti si vous aviez commencé depuis une fiche ou un\nboard. Pendant l'aller, le bouton affiche « Redirection vers LeLabs… » ; au retour, une carte grisée annonce « Connexion\nLeLabs en cours » le temps que le CRM vérifie votre connexion."
 				}
 			]
 		},
@@ -257,15 +203,7 @@
 				},
 				{
 					"type": "text",
-					"text": " C'est une règle de tout le domaine\n"
-				},
-				{
-					"type": "code",
-					"text": "lelabs.tech"
-				},
-				{
-					"type": "text",
-					"text": " : qui porte le rôle d'administration de LeLabs est administrateur de "
+					"text": " C'est une règle commune aux produits LeLabs :\nqui porte le rôle d'administration de LeLabs est administrateur de "
 				},
 				{
 					"type": "strong",
@@ -517,7 +455,7 @@
 					[
 						{
 							"type": "text",
-							"text": "Ce déploiement du CRM ne connaît pas LeLabs : prévenez son exploitant. Aucun bouton n'est alors proposé."
+							"text": "Cette installation du CRM ne connaît pas LeLabs : prévenez la personne qui l'a installée. Aucun bouton n'est alors proposé."
 						}
 					]
 				]
