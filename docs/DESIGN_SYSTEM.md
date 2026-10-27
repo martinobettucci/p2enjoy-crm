@@ -6169,7 +6169,8 @@ relecture des §4, §5.43, §5.46, §7, §8 et §12.2.* Ce que chaque route plac
 - **UN NOM EST UNE DONNÉE : TRONQUÉ, JAMAIS PERDU.** Chaque ancêtre est borné à `24ch` et tronqué par `…`, son nom
   complet en `title` ; le titre prend le reste de la ligne et se tronque en dernier. **Un ancêtre ne descend jamais sous
   `10ch`** : il cède avant le titre, mais à 1152 px, sur le titre le plus long du seed, « P2E… / Stu… / Mai… » ne
-  nommait plus rien (capture de la tranche T2).
+  nommait plus rien (capture de la tranche T2). **Un nom plus court que ce plancher garde sa largeur propre et ne cède
+  pas** (`CRM-117`, 2026-10-27) : le plancher appliqué à « Aide » l'écartait du titre de 50 px, mesurés sur capture.
 - **SOUS 1024 px, LE FIL A SA PROPRE LIGNE** (décision 641) : l'en-tête passe sur deux lignes — le tiroir, la
   recherche, la cloche et l'identité en haut, le fil sur toute la largeur en dessous. ≥ 1024 px, une seule ligne.
   Mesuré avant cette règle : à 390 px, la ligne unique ne laissait au titre qu'une vingtaine de pixels — « B. » pour
@@ -6617,9 +6618,13 @@ partie II ; ces règles disent de quoi l'aide a l'air.
 - **LE SOMMAIRE, `/aide`** : la liste ordonnée des chapitres (`ol`), chaque titre en lien `font-medium`, et dessous la
   liste de ses sections en liens 13 px `--color-text-2`. Deux colonnes à partir de `xl`, une en dessous. *Choix de
   l'agent* : les sections sont visibles d'emblée, sans dépli, parce que c'est par elles qu'on cherche un geste.
-- **UN CHAPITRE, `/aide/:chapitre`** : le titre du chapitre est le `h1` du fil d'Ariane (§5.62) ; le contenu, une colonne
-  de prose bornée à `72ch`. En tête, une `nav` « Dans ce chapitre » liste ses sections en liens. En pied, deux liens
-  « Chapitre précédent » et « Chapitre suivant », chacun suivi du titre visé, absents aux extrémités.
+- **UN CHAPITRE, `/aide/:chapitre`** : le titre du chapitre est le `h1` du fil d'Ariane (§5.62) — jamais « Aide », qui
+  est déjà l'ancêtre : « Chapitre » pendant la lecture ou après un échec, « Chapitre introuvable » pour un chapitre que
+  le manuel ne porte pas ; le contenu, une colonne de prose bornée à `72ch`. En tête, une `nav` « Dans ce chapitre »
+  liste ses sections en liens. **Un lien de section, ici comme au sommaire, garde la cible de 40 px et un rembourrage
+  vertical de 8 px** : un titre qui passe sur deux lignes, à 390 px, reste séparé de son voisin comme un titre d'une
+  ligne (constaté sur capture, 2026-10-27). En pied, deux liens « Chapitre précédent » et « Chapitre suivant », chacun
+  suivi du titre visé, absents aux extrémités.
 - **LES BLOCS SUIVENT LE DESIGN SYSTEM, PAS LE NAVIGATEUR** : sections en `h2` (`--text-h2`), sous-sections en `h3` ;
   corps en 15 px à l'interligne de 1,55 (§2) ; listes à puces et numérotées avec leur retrait natif ; code en ligne en
   `code` sur `--color-hover` (§5.15) ; un tableau du manuel est un tableau du §5.9, dans un conteneur

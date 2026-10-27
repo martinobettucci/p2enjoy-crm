@@ -886,6 +886,7 @@ export const fr = {
 	// `CRM-117` — l'aide : l'icône de l'en-tête, son panneau, le sommaire et un chapitre du manuel (docs/SPEC-manual.md §13,
 	// docs/DESIGN_SYSTEM.md §5.69).
 	'route.help.title': 'Aide',
+	'route.help.chapter.title': 'Chapitre',
 	'help.header.button': 'Aide',
 	'help.panel.aria': 'Aide',
 	'help.panel.title': 'Aide',

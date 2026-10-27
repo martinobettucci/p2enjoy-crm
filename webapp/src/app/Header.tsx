@@ -15,6 +15,8 @@
 //       absorbe le contexte d'espace de fin de ligne (docs/SPEC-webapp.md §5.1 bis ; docs/DESIGN_SYSTEM.md §5.62, §12.2)
 // @spec CRM-110 — INC-293, décision 679 (option b du responsable) : entre `lg` et `xl`, le nom de la session passe en
 //       `sr-only` pour que le titre de route tienne (docs/DESIGN_SYSTEM.md §12.2, §12.3, §5.12)
+// @spec CRM-117 (docs/BACKLOG.md) tranche T2 — l'icône « Aide » et son panneau, avant la cloche (docs/DESIGN_SYSTEM.md
+//       §5.69 ; docs/SPEC-manual.md §13.2 ; décision 740)
 //
 // L'en-tête porte le fil d'Ariane et, sous 1024 px, l'ouverture du tiroir de navigation.
 //
@@ -35,6 +37,7 @@ import type { NiveauAriane } from '../lib/fil-ariane'
 import type { Workspace } from '../lib/workspaces'
 import { useAuthentification } from './Authentification'
 import { FilAriane } from './FilAriane'
+import { AideEntete } from './AideEntete'
 import { ClocheNotifications } from './Notifications'
 import { PaletteRecherche } from './PaletteRecherche'
 
@@ -136,6 +139,9 @@ export function Header({ titreRoute, ancetres, onOuvrirTiroir, etatWorkspaces }:
 			>
 				{/* Le contexte d'espace qui ouvrait cette fin de ligne est passé en tête du fil (`CRM-110`, §5.62).
 				    Sans session, aucune coquille n'est rendue (`CRM-092` T9, §5.12). */}
+				{/* L'aide — `CRM-117` : AVANT la cloche, parce qu'elle porte sur le produit et non sur l'utilisateur
+				    (docs/DESIGN_SYSTEM.md §5.69). */}
+				<AideEntete />
 				<ClocheNotifications />
 				<ControleSession />
 			</div>

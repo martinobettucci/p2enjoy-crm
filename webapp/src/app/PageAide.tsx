@@ -70,7 +70,7 @@ export function SommaireAide({ client = clientCrm }: ProprietesPage = {}) {
 										<li key={section.anchor}>
 											<Link
 												to={cheminAide(chapitre.slug, section.anchor)}
-												className={`${CLASSES_LIEN} inline-flex items-center min-h-[var(--size-target)] text-sm text-text-2`}
+												className={`${CLASSES_LIEN} inline-flex items-center min-h-[var(--size-target)] py-2 text-sm text-text-2`}
 											>
 												{section.title}
 											</Link>
@@ -97,10 +97,13 @@ export function ChapitreAide({ client = clientCrm }: ProprietesPage = {}) {
 	const { etat: etatSommaire } = useSommaireManuel(client)
 	const chapitre = etat.statut === 'pret' ? etat.donnees : null
 
+	// Le titre n'est jamais « Aide », déjà l'ancêtre : « Chapitre » pendant la lecture ou après un échec, « Chapitre
+	// introuvable » quand le manuel ne le porte pas (constaté sur capture, 2026-10-27).
+	const titre = chapitre?.title ?? (etat.statut === 'pret' ? t('help.chapter.notfound.title') : undefined)
 	return (
 		<AppShell
-			cleTitreRoute="route.help.title"
-			{...(chapitre === null ? {} : { titreRoute: chapitre.title })}
+			cleTitreRoute={'route.help.chapter.title'}
+			{...(titre === undefined ? {} : { titreRoute: titre })}
 			ancetres={[{ libelle: t('route.help.title'), vers: CHEMIN_AIDE }]}
 		>
 			<VueChapitre
@@ -184,7 +187,7 @@ function ContenuChapitre({
 					<ul className="flex flex-col">
 						{sections.map((section) => (
 							<li key={section.ancre}>
-								<a href={`#${section.ancre}`} className={`${CLASSES_LIEN} inline-flex items-center min-h-[var(--size-target)] text-sm`}>
+								<a href={`#${section.ancre}`} className={`${CLASSES_LIEN} inline-flex items-center min-h-[var(--size-target)] py-2 text-sm`}>
 									<EnLigneManuel contenu={section.contenu} />
 								</a>
 							</li>

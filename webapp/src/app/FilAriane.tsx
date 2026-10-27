@@ -4,6 +4,7 @@
 //       sacrifice), §5.43 (panneau ancré à l'en-tête, Échap et clic extérieur), §5.46 (le fil cède à la recherche
 //       ouverte), §7 (aucun contenu masqué sans point d'accès), §8 (cibles ≥ 40 px, focus visible)
 // @spec docs/JOURNAL.md décision 641 — sous 1024 px, le fil prend sa propre ligne ; le repli ne sert plus que sous `md`
+// @spec CRM-117 (docs/BACKLOG.md) tranche T2 — `shrinkAncetre` : un nom plus court que le plancher garde sa largeur
 //
 // Le premier niveau est le workspace, le dernier le titre de la route — seul `h1` de la page. Entre les deux, les
 // ancêtres que la route a composés (`webapp/src/lib/fil-ariane.ts`).
@@ -114,7 +115,8 @@ export function FilAriane({ titre, ancetres, etatWorkspaces, rechercheOuverte }:
 						<Separateur />
 					</li>
 					{/* Un ancêtre cède avant le titre (`shrink-[4]`), mais jamais sous dix caractères : en deçà, « P2E… /
-					    Stu… » ne nomme plus rien — mesuré à 1152 px sur le titre le plus long du seed (§5.62). */}
+					    Stu… » ne nomme plus rien — mesuré à 1152 px sur le titre le plus long du seed (§5.62). Un nom plus
+					    court que ce plancher garde sa largeur propre (`shrinkAncetre`) : le plancher l'écartait du titre. */}
 					<li className="hidden md:flex items-center gap-2 min-w-[10ch] max-w-[24ch] shrink-[4]">
 						<NiveauWorkspace etat={etatWorkspaces} enLigne />
 						<Separateur />
@@ -126,7 +128,8 @@ export function FilAriane({ titre, ancetres, etatWorkspaces, rechercheOuverte }:
 							className={[
 								// Sous `md`, seul le parent immédiat reste en ligne (§12.2).
 								rang === dernier ? 'flex' : 'hidden md:flex',
-								'items-center gap-2 min-w-[10ch] max-w-[24ch] shrink-[4]',
+								'items-center gap-2',
+								shrinkAncetre(niveau.libelle),
 							].join(' ')}
 						>
 							<Link to={niveau.vers} title={niveau.libelle} className={CLASSES_LIEN}>
@@ -178,6 +181,15 @@ export function FilAriane({ titre, ancetres, etatWorkspaces, rechercheOuverte }:
 			</div>
 		</nav>
 	)
+}
+
+/**
+ * `CRM-117` — le plancher de `10ch` ne vaut que pour un nom qui peut céder jusqu'à lui. Un nom plus court, « Aide »,
+ * recevait la largeur du plancher et s'écartait du titre de la moitié d'un mot (capture du 2026-10-27, §5.62) : il garde
+ * sa largeur propre, toujours inférieure au plancher, et ne cède pas.
+ */
+export function shrinkAncetre(libelle: string): string {
+	return libelle.length < 10 ? 'shrink-0' : 'min-w-[10ch] max-w-[24ch] shrink-[4]'
 }
 
 function Separateur() {

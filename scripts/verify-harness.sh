@@ -621,7 +621,7 @@ PORT_RAPPORT=9323
 # **+1 par `CRM-068` T1, 2026-10-26** : `0117_checklists.test.sql`, fichier NEUF. 106 + 1 = 107, MESURÉ.
 # **+1 par `CRM-068` T2, 2026-10-26** : `0118_transition_exige_checklist.test.sql`, fichier NEUF. 107 + 1 = 108, MESURÉ.
 # **+1 par `CRM-117` T2, 2026-10-26** : `0119_lecture_du_manuel.test.sql`, fichier NEUF. 108 + 1 = 109, CALCULÉ — la
-# campagne complète était suspendue (décision 753).
+# campagne complète était suspendue (décision 753) —, puis MESURÉ le 2026-10-27 : « 109 fichiers, 4378 assertions ».
 # **+1 par `CRM-118` T2.a, 2026-10-26** : `0120_famille_workflows.test.sql`, fichier NEUF. 109 + 1 = 110, MESURÉ —
 # « 110 fichiers, 4394 assertions, aucune anomalie ».
 FICHIERS_SQL_ATTENDUS=110
@@ -772,7 +772,7 @@ FICHIERS_SQL_ATTENDUS=110
 # le point libre qui ne compte pas, le point archivé toujours exigé, l'ordre des vérifications). 4359 + 9 = 4368.
 # **+10 par `CRM-117` T2, 2026-10-26** : `0119_lecture_du_manuel` **10** assertions (le bucket privé, une seule politique de
 # lecture bornée au bucket, une session lit et n'écrit pas, `anon` ne lit rien) ; `0029` RÉVISÉE sans changer de plan.
-# 4368 + 10 = 4378, CALCULÉ (décision 753).
+# 4368 + 10 = 4378, CALCULÉ (décision 753), puis MESURÉ le 2026-10-27 avec la suite complète.
 # **+16 par `CRM-118` T2.a, 2026-10-26** : `0120_famille_workflows` **16** assertions (la famille dans les quatre listes,
 # son rang après `structure`, les politiques des workflows par profil, l'étape occupée refusée) ; quatre mutations tuées
 # (chaque liste fermée privée de la famille). 4378 + 16 = 4394, MESURÉ.
@@ -1716,7 +1716,10 @@ SCENARIOS_API=1246
 # qui remappe une affaire, visible au board. 971 + 1 = 972, COMPTÉE.
 # **+1 par `CRM-118` T2.d, 2026-10-27** : `e2e/ui/connecteur-workflows.spec.ts` gagne le nœud créé par un vrai client MCP,
 # visible dans le catalogue. 972 + 1 = 973, COMPTÉE.
-SCENARIOS_UI=973
+# **+13 par `CRM-117` T2, 2026-10-27** : `e2e/ui/aide.spec.ts`, fichier NEUF — du board à la section qui le décrit, le
+# panneau au clavier, l'écran sans chapitre, un seul panneau de l'en-tête, chaque chapitre du sommaire lu, précédent et
+# suivant, le chapitre inconnu, la lectrice, la session absente, les quatre paliers. 973 + 13 = 986, COMPTÉE.
+SCENARIOS_UI=986
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -1,6 +1,7 @@
 // @verifies CRM-110 (docs/BACKLOG.md) tranche T2 — le fil d'Ariane de l'en-tête
 // @verifies docs/SPEC-webapp.md §5.1 bis (workspace en tête, ancêtres en liens, titre ; règle 4, le workspace sans
 //           donnée)
+// @verifies CRM-117 (docs/BACKLOG.md) tranche T2 — un ancêtre plus court que le plancher de `10ch` garde sa largeur
 // @verifies docs/DESIGN_SYSTEM.md §5.62 (liens, `h1` en `aria-current`, repli au clavier, Échap, clic extérieur),
 //           §12.2 (ordre de sacrifice), §5.46 (le fil cède à la recherche ouverte)
 //
@@ -14,7 +15,7 @@ import { MemoryRouter } from 'react-router'
 import type { EtatAsync } from '../lib/async'
 import type { NiveauAriane } from '../lib/fil-ariane'
 import type { Workspace } from '../lib/workspaces'
-import { FilAriane } from './FilAriane'
+import { FilAriane, shrinkAncetre } from './FilAriane'
 
 const ESPACE: EtatAsync<readonly Workspace[]> = {
 	statut: 'pret',
@@ -116,6 +117,16 @@ describe('FilAriane — ordre de sacrifice (§12.2, décision 641)', () => {
 		expect(track?.className).toContain('hidden md:flex')
 		expect(channel?.className.split(' ')).not.toContain('hidden')
 		expect(screen.getByRole('heading', { level: 1 }).closest('li')?.className.split(' ')).not.toContain('hidden')
+	})
+
+	it('un ancêtre de dix caractères ou plus cède jusqu’au plancher ; un nom plus court garde sa largeur (`CRM-117`)', () => {
+		expect(shrinkAncetre('Gestion commerciale').split(' ')).toEqual(['min-w-[10ch]', 'max-w-[24ch]', 'shrink-[4]'])
+		expect(shrinkAncetre('Conseil IA')).toBe('min-w-[10ch] max-w-[24ch] shrink-[4]')
+		expect(shrinkAncetre('Aide')).toBe('shrink-0')
+		monter({ ancetres: [{ libelle: 'Aide', vers: '/aide' }] })
+		const [aide] = screen.getAllByTestId('fil-ariane-ancetre')
+		expect(aide?.className.split(' ')).toContain('shrink-0')
+		expect(aide?.className).not.toContain('min-w-[10ch]')
 	})
 
 	it('le repli et son panneau n’existent que sous `md`, où ils cachent au moins le workspace', () => {

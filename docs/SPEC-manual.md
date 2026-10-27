@@ -472,8 +472,9 @@ refus de session mène, comme partout, à la reprise de session de la coquille.
 - **Source unique** : `docs/manual.md` et `docs/manuel/images/`. Rien d'autre n'est rédigé.
 - **Un script de construction**, `scripts/manuel/construire.mjs` (`npm run manuel:construire`), lit la source, la
   découpe en chapitres (titres de niveau 2) et en sections (niveau 3), calcule les identifiants (§10, point 7), et
-  écrit le **manuel construit** dans `docs/manuel/construit/` : `contents.json` — `{ "chapters": [{ "slug", "title",
-  "sections": [{ "anchor", "title" }] }] }` — et un `chapters/<slug>.json` par chapitre — `{ "slug", "title",
+  écrit le **manuel construit** dans `docs/manuel/construit/` : `contents.json` — `{ "introduction": [...], "chapters": [{
+  "slug", "title", "sections": [{ "anchor", "title" }] }] }`, où `introduction` porte en blocs ce qui précède le premier
+  chapitre, rendu en tête du sommaire — et un `chapters/<slug>.json` par chapitre — `{ "slug", "title",
   "blocks": [...] }`. Un bloc d'image porte sa largeur et sa hauteur, lues dans le manifeste, pour que la page réserve
   sa place avant de la charger. Les clés de ce contrat sont en anglais (`docs/DAT.md` §12 bis).
 - **Le manuel construit est versionné**, et `npm run manuel:verifier` échoue s'il diffère de ce que la source

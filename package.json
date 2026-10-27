@@ -10,6 +10,8 @@
   "scripts": {
     "types:generate": "scripts/generate-types.sh",
     "types:check": "scripts/generate-types.sh --check",
+    "manuel:construire": "node scripts/manuel/construire.mjs",
+    "manuel:verifier": "node scripts/manuel/construire.mjs --verifier",
     "verify:identites": "./scripts/verify-identites.sh",
     "typecheck": "tsc -p tsconfig.json && tsc -p webapp/tsconfig.json && tsc -p webapp/tsconfig.test.json && tsc -p tsconfig.tools.json",
     "dev": "vite --config webapp/vite.config.ts",
@@ -32,6 +34,7 @@
     "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.5",
     "jsdom": "30.0.1",
+    "marked": "18.1.1",
     "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vite": "8.3.5",

@@ -36016,3 +36016,33 @@ base permet sans écran reçoivent d'abord leur écran, le connecteur suivant l'
 Renommer un workflow et le copier vers un track complètent la tranche, sans choix à arbitrer. **Persisté** :
 `docs/BACKLOG.md` (`CRM-118` T1.b), `docs/SPEC-mcp.md` §9.2 undecies ; la spécification d'écran suit dans
 `docs/SPEC-workflow-engine.md`, avant le code. Aucun code.
+
+### `CRM-117` T2 : l'aide éprouvée à l'écran, et trois défauts que seules les captures montraient (2026-10-27)
+
+*Reprise de la tranche après la décision 753, sur consigne du responsable de continuer.* **Observé** : les unitaires de
+l'icône et des pages passent (8 et 8), et l'E2E de l'aide, `e2e/ui/aide.spec.ts`, passe ses treize scénarios contre la
+pile réelle et le manuel publié. Une première passe avait échoué sur six scénarios : une autre session recréait la base et
+rejouait le seed pendant la campagne (connexion refusée, objets du bucket en `400`) ; rejouée sur la pile stable, elle
+est verte. Deux mutations la font rougir : l'écran sans correspondance avec un chapitre, et le plancher de `10ch` rendu à
+un ancêtre court.
+
+**Trois défauts, vus sur les captures et non par les tests** :
+1. **« Aide / Aide »** : sur un chapitre en lecture ou introuvable, le titre de repli était « Aide », déjà l'ancêtre.
+   Décision : « Chapitre » pendant la lecture, « Chapitre introuvable » pour un chapitre absent — l'E2E lit ce titre.
+2. **« Aide » écarté du titre de 50 px** : le fil d'Ariane donne à chaque ancêtre un plancher de `10ch` (`CRM-110`,
+   §5.62) ; un nom plus court en recevait la largeur. Aucun ancêtre du seed n'avait moins de dix caractères : l'aide est le
+   premier écran à le montrer. Décision : un nom de moins de dix caractères garde sa largeur propre et ne cède pas
+   (`shrinkAncetre`) ; l'E2E mesure l'écart du lien au titre (66,8 px avec le plancher, moins de 32 px sans).
+3. **Les liens de section sur deux lignes collés à leur voisin**, à 390 px : la cible de 40 px centrait une ligne mais
+   pas deux. Décision : un rembourrage vertical de 8 px, au sommaire comme dans « Dans ce chapitre ».
+
+La capture `chapitre-introuvable` était prise après le retour au sommaire : elle montrait le sommaire. Prise désormais
+sur l'état qu'elle nomme. **Gardé tel quel, après lecture** : la bande « Aucun channel » sous l'en-tête des pages d'aide
+est la règle de la coquille hors d'un track (`TabBar.tsx`), commune à l'inbox et aux réglages ; le défilement d'un chapitre
+emporte l'en-tête comme sur toute page longue, la coquille n'ayant pas d'en-tête collant.
+
+**Écart de méthode, corrigé** : le commit `26e78598` n'avait pas emporté le montage de l'aide (`App.tsx`, `Header.tsx`,
+`Notifications.tsx`, `chemins.ts`), ni `marked` et les scripts `manuel:*` (`package.json`, `package-lock.json`), ni
+`tsconfig.tools.json`, `webapp/vitest.config.ts` et la révision de `0029` — trouvé en relisant l'état de la copie de
+travail avant ce commit, qui les emporte. **Vérifié** : suites complètes pgTAP 109 fichiers et 4378 assertions, API
+1246/1246, unitaires 4694/4694, build et contrôle des classes. **Reste à T2** : la campagne d'interface complète.

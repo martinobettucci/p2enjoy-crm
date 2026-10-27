@@ -332,3 +332,15 @@ export function cheminFicheMcp(sub: string, espace?: string): string {
 export function cheminFicheEspace(slug: string): string {
 	return `${CHEMIN_PLATEFORME_ESPACES}/${encodeURIComponent(slug)}`
 }
+
+/**
+ * L'aide — `CRM-117`, docs/SPEC-manual.md §13.1. Le sommaire du manuel, puis un chapitre ; une section s'atteint par le
+ * fragment. Hors de `ROUTES` : l'aide s'ouvre depuis l'en-tête, jamais depuis la barre latérale (docs/DESIGN_SYSTEM.md
+ * §5.69).
+ */
+export const CHEMIN_AIDE = '/aide' as const
+export const CHEMIN_AIDE_CHAPITRE = '/aide/:chapitre' as const
+
+export function cheminAide(chapitre: string, section?: string): string {
+	return `${CHEMIN_AIDE}/${encodeURIComponent(chapitre)}${section === undefined ? '' : `#${encodeURIComponent(section)}`}`
+}

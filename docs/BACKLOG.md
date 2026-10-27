@@ -16968,7 +16968,6 @@ décision 729) : une couleur propre au channel, des pastilles nommées, pas de c
 - [ ] **T5 — livraison** : migration en fenêtre et reconstruction de la webapp, sur instruction du responsable.
 ### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[@]`
 *Prise en charge : session interactive 2026-10-23 (fil d'Ariane `CRM-110`, Claude Code, poste du responsable) depuis 2026-10-26 21:33 UTC — état avant : [~]*
-***Reste réel au 2026-10-26, T2 interrompue sur consigne du responsable** (fin de session) : le panneau d'aide et les pages restent à éprouver (unitaires de `AideEntete` et `PageAide`, E2E, paliers, captures observées), puis T3 à T6. La base, la publication, la construction et la lecture sont faites et prouvées (décision 753).*
 *Créée le 2026-10-26 — constat du responsable : « on a un manuel mais il n'est joignable nulle part depuis la webapp ;
 est-ce dans le backlog ou c'est un loupé ? ». Mesuré le même jour : un loupé. La webapp ne porte aucun lien ni entrée
 « Aide » vers `docs/manual.md` ; aucune unité ne le prévoit — les mentions du manuel au backlog portent sur sa
@@ -16995,8 +16994,20 @@ responsable** : traitée juste après `CRM-116`.*
       révisée ; `e2e/api/manuel.spec.ts` **9/9** (mutation tuée) ; `marked` 18.1.1 mesuré (`docs/DAT.md` §15) ;
       construction et vérification (22 unitaires), publication en miroir à la fin du seed ; lecture (`lib/manuel.ts`, 12
       unitaires), correspondance écran → chapitre (42 unitaires), rendu des blocs (9 unitaires), pages `/aide` et
-      `/aide/:chapitre`, icône et panneau de l'en-tête. **Reste** : unitaires de `AideEntete` et `PageAide`, E2E,
-      paliers, captures observées, campagnes.
+      `/aide/:chapitre`, icône et panneau de l'en-tête.
+      *Fait le 2026-10-27 (journal, `CRM-117` T2 : l'aide éprouvée à l'écran)* : unitaires `AideEntete` **8** et
+      `PageAide` **8** ; `e2e/ui/aide.spec.ts` **13/13**, deux mutations tuées (aucune correspondance écran → chapitre ;
+      plancher de `10ch` rendu à « Aide ») ; non-régression de l'en-tête `fil-ariane`, `notifications`, `entete-card`
+      vertes ; captures `docs/captures/CRM-117/` observées aux quatre paliers. Trois défauts vus sur capture et corrigés :
+      le titre « Aide » répété sous l'ancêtre « Aide » ; « Aide » écarté du titre de 50 px par le plancher de `10ch` du
+      fil d'Ariane (`docs/DESIGN_SYSTEM.md` §5.62 précisé) ; les liens de section sur deux lignes collés à leur voisin à
+      390 px (§5.69 précisé). Suites complètes : pgTAP **109 fichiers, 4378 assertions**, API **1246/1246**, unitaires
+      **4694/4694**, build et contrôle des classes verts. **Reste** : la campagne d'interface complète, l'en-tête de tous
+      les écrans portant désormais l'icône.
+      **Correctif de méthode** : le commit `26e78598` avait omis le montage de l'aide (`App.tsx`, `Header.tsx`,
+      `Notifications.tsx`, `chemins.ts`), `marked` et les scripts `manuel:*` de `package.json`, `tsconfig.tools.json`,
+      `webapp/vitest.config.ts` et la révision de `0029` : l'arbre poussé portait les composants sans les monter. Ils
+      entrent par ce commit.
 - [ ] **T3 — la réécriture**, par groupes de chapitres : retrait de toute référence interne et de ce qui parle du
       développement ou du jeu de démonstration, numérotation simple, phrases réécrites pour le lecteur ; table du
       §12 et de `aide-ecrans.ts` tenues à mesure. T3.1 prise en main et navigation ; T3.2 l'affaire ; T3.3

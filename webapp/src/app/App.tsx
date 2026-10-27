@@ -31,6 +31,8 @@ import { ChargementAuthentification, EcranConnexion } from './EcranConnexion'
 import { RetourSso } from './RetourSso'
 import { CHEMIN_RETOUR_SSO } from '../lib/sso'
 import {
+	CHEMIN_AIDE,
+	CHEMIN_AIDE_CHAPITRE,
 	CHEMIN_PLATEFORME,
 	CHEMIN_PLATEFORME_ESPACE,
 	CHEMIN_PLATEFORME_ESPACES,
@@ -163,6 +165,9 @@ const ReglagesMembres = lazy(async () => ({
 const ReglagesJournal = lazy(async () => ({
 	default: (await import('./ReglagesJournal')).ReglagesJournal,
 }))
+// `CRM-117` — l'aide : le sommaire du manuel et un chapitre, chargés à la demande comme les réglages.
+const SommaireAide = lazy(async () => ({ default: (await import('./PageAide')).SommaireAide }))
+const ChapitreAide = lazy(async () => ({ default: (await import('./PageAide')).ChapitreAide }))
 const ReglagesNotifications = lazy(async () => ({
 	default: (await import('./ReglagesNotifications')).ReglagesNotifications,
 }))
@@ -414,6 +419,18 @@ function RoutesPages() {
 						</AppShell>
 					}
 				/>
+				{/* L'aide — `CRM-117`, docs/SPEC-manual.md §13.1. Le sommaire sous la coquille ; un chapitre porte la sienne,
+				    son titre étant une donnée du manuel. Hors de la barre latérale : l'aide s'ouvre depuis l'en-tête
+				    (docs/DESIGN_SYSTEM.md §5.69). */}
+				<Route
+					path={CHEMIN_AIDE}
+					element={
+						<AppShell cleTitreRoute="route.help.title">
+							<SommaireAide />
+						</AppShell>
+					}
+				/>
+				<Route path={CHEMIN_AIDE_CHAPITRE} element={<ChapitreAide />} />
 				{/* L'éditeur de workflows — `CRM-076`. Même position que l'administration de
 				    l'arborescence : hors de la barre latérale, atteint depuis l'index des
 				    réglages (docs/SPEC-workflow-engine.md §7 bis.2). */}

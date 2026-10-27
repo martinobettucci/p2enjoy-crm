@@ -3,6 +3,7 @@
 //       channel), §5.10 (avatar 24 px et date absolue), §5.1 (le liseré), §5.5 (variantes),
 //       §5.8 (états systématiques), §5.13 (le focus), §8 (accessibilité), §9 (icônes), §10
 // @spec docs/SPEC-notifications.md §23 (où la surface vit), §26 (ce que l'écran rend)
+// @spec CRM-117 (docs/BACKLOG.md) — tranche T2 : un seul panneau de l'en-tête ouvert à la fois (docs/DESIGN_SYSTEM.md §5.69)
 //
 // LA CLOCHE VIT DANS L'EN-TÊTE, ET CE N'EST PAS UNE DESTINATION. Le §4 du design system range dans
 // la barre latérale les surfaces où l'on va **travailler** ; une boîte de notifications n'en est
@@ -31,6 +32,7 @@ import {
 } from '../lib/notifications'
 import { clientCrm } from '../lib/supabase'
 import { useAuthentification } from './Authentification'
+import { fermerLesAutresPanneaux, useFermetureParUnAutrePanneau } from './panneaux-entete'
 
 /**
  * Le nombre de caractères d'extrait rendus sur une ligne.
@@ -59,6 +61,9 @@ export function ClocheNotifications() {
 	const ancre = useRef<HTMLDivElement | null>(null)
 	const cloche = useRef<HTMLButtonElement | null>(null)
 	const panneau = useRef<HTMLDivElement | null>(null)
+
+	const fermerSansFocus = useCallback(() => setOuvert(false), [])
+	useFermetureParUnAutrePanneau('notifications', fermerSansFocus)
 
 	const fermer = useCallback(() => {
 		setOuvert(false)
@@ -139,7 +144,9 @@ export function ClocheNotifications() {
 				aria-label={libelleCloche(nonLues)}
 				onClick={() => {
 					setMessage(null)
-					setOuvert((precedent) => !precedent)
+					// UN SEUL PANNEAU DE L'EN-TÊTE OUVERT À LA FOIS (`CRM-117`, docs/DESIGN_SYSTEM.md §5.69).
+					if (!ouvert) fermerLesAutresPanneaux('notifications')
+					setOuvert(!ouvert)
 				}}
 				className={[
 					'relative inline-flex items-center justify-center shrink-0',

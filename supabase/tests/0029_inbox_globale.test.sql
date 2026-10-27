@@ -1,5 +1,6 @@
 -- @verifies CRM-057 (docs/BACKLOG.md) — inbox globale : qui voit un message non classé
 -- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : assertion révisée par les migrations 106 et 107 (docs/SPEC-mail-subsystem.md §19 bis.3)
+-- @verifies CRM-117 (docs/BACKLOG.md) — tranche T2 : assertion 20 révisée par la migration 127 (docs/SPEC-manual.md §14.1)
 -- @verifies docs/SPEC-mail-subsystem.md §18.1 (la visibilité suit la boîte), §18.2 (classer exige
 --           les deux droits), §18.3 (l'arborescence), §18.5 (la pièce saine, et elle seule)
 -- @verifies docs/SPEC-permissions-rls.md §5 (Storage), §7.2 preuve de refus n° 9
@@ -202,13 +203,17 @@ select pg_temp.redevenir_proprietaire();
 -- 6. La politique de stockage — §18.5, preuve de refus n° 9 RÉVISÉE
 -- =============================================================================================
 
+-- RÉVISÉE PAR `CRM-117` (décision 751), NON AFFAIBLIE : le manuel ajoute une politique de lecture bornée au bucket
+-- `manual`, prouvée par 0119. Ce que l'assertion garde est inchangé : aucune politique n'ouvre le stockage entier,
+-- chacune nomme son bucket.
 select is(
 	(select count(*) from pg_policies
 	  where schemaname = 'storage' and tablename = 'objects'
-	    and (coalesce(qual, '') || coalesce(with_check, '')) not like '%bucket_id = ''mail-%'),
+	    and (coalesce(qual, '') || coalesce(with_check, '')) not like '%bucket_id = ''mail-%'
+	    and (coalesce(qual, '') || coalesce(with_check, '')) not like '%bucket_id = ''manual''%'),
 	0::bigint,
-	'20 — AUCUNE politique de `storage.objects` qui ne soit bornée à un bucket de courrier nommé : ouvrir large ouvrirait '
-	'tout le stockage (révisée par `CRM-058` tranche 2, qui en ajoute trois sur `mail-outbound-attachments`)');
+	'20 — AUCUNE politique de `storage.objects` qui ne soit bornée à un bucket nommé — courrier ou manuel : ouvrir large '
+	'ouvrirait tout le stockage (révisée par `CRM-058` tranche 2, puis par `CRM-117`)');
 
 select ok(
 	(select qual from pg_policies
