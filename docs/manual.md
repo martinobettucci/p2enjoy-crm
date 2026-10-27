@@ -1126,11 +1126,8 @@ refuse, plutôt que de faire disparaître une colonne du tableau sous les affair
 
 ### 9.6 La fiche d'une affaire : son en-tête, son formulaire, et ce qu'ils montrent
 
-*Livrée par `CRM-037`, son en-tête par `CRM-040`. Captures dans `docs/captures/CRM-037/` et
-`docs/captures/CRM-040/`.*
-
-Une affaire s'ouvre à l'adresse `/tracks/<track>/<onglet>/cards/<identifiant de l'affaire>`. Cet
-écran affiche à gauche **l'en-tête de l'affaire** puis le **formulaire de l'étape où elle se
+Une affaire s'ouvre depuis sa carte du tableau, sa ligne de la vue liste, ou tout lien qui la nomme ; son adresse se
+partage. Cet écran affiche à gauche **l'en-tête de l'affaire** puis le **formulaire de l'étape où elle se
 trouve**, et à droite son **historique et sa discussion** ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
 
 **L'en-tête, en haut de la colonne de gauche**, dit ce que l'affaire *est* :
@@ -1272,9 +1269,6 @@ l'adresse mène à l'écran de connexion, qui y ramène une fois connecté.
 
 ### 9.7 Les contacts d'une affaire : les rattacher, les détacher
 
-*Livré par `CRM-060`, sous-tranche 4c. Captures dans `docs/captures/CRM-060/`, préfixées
-`contacts-affaire-`.*
-
 **Où.** Dans la colonne de gauche de la fiche, **entre le formulaire et le bouton de mise à la
 corbeille** : le bloc **« Contacts de l'affaire »**. Il dit qui, dans le carnet de l'espace
 ([chapitre 10](#le-carnet-de-contacts)), est associé à cette affaire.
@@ -1309,19 +1303,15 @@ Un détachement refusé, lui, affiche **« Aucun rattachement n'a été retiré.
 exacte du serveur, qui ne distingue pas un refus d'une ligne déjà retirée par quelqu'un d'autre — et
 le produit préfère le dire ainsi plutôt qu'annoncer un retrait qui n'a pas eu lieu.
 
-**Corriger un rôle depuis cette page n'est pas livré, mais le geste existe ailleurs.** Ici, il faut
-détacher puis rattacher. Depuis la **fiche du contact**, en revanche, le rôle se corrige d'un seul
-geste — bouton « Modifier le rôle » sur chaque ligne ([chapitre 10](#le-carnet-de-contacts), sous-tranche 4j) —, et la
-fiche de l'affaire est atteignable en un clic depuis là.
+**Corriger un rôle ne se fait pas depuis cette page**, mais depuis la **fiche du contact** : le bouton « Modifier le
+rôle » de chaque ligne le corrige d'un seul geste ([section 10.8](#corriger-le-role-d-une-personne-dans-une-affaire)).
+Ici, il faudrait détacher puis rattacher.
 
-**Ce qui n'est pas encore livré.** Une affaire ne se rattache pas depuis le carnet ni depuis la
+**Ce que cette page ne fait pas.** Une affaire ne se rattache pas depuis le carnet ni depuis la
 fiche d'organisation — le geste part toujours de l'affaire ou de la fiche du contact. Et un
 rattachement n'apparaît **pas** dans l'historique de l'affaire ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
 
 ### 9.8 Les activités d'une affaire : appels, réunions, visios
-
-*Livré par `CRM-067`, tranches T2 et T3, en développement. Captures dans `docs/captures/CRM-067/`, préfixées
-`activites-`.*
 
 **À quoi cela sert.** Garder la trace de ce qui **a eu lieu** avec le client hors du CRM : un appel, une réunion, une
 visio. La « prochaine action » de l'en-tête dit ce qui **vient** ; les activités disent ce qui **s'est passé**.
@@ -1380,9 +1370,10 @@ n'est pas annulée pour autant.
 lieu** et non à celle où elle a été saisie : un appel consigné le lendemain s'insère à sa place dans l'histoire. Le fil
 montre le type, le sujet, la durée et l'auteur. Le compte rendu et les participants restent dans le bloc.
 
-**Ce qui n'est pas livré.** Aucune planification, aucun rappel, aucune liste de toutes les activités de l'espace. Le
-connecteur MCP saura lister, consigner et corriger les activités d'une affaire avec la tranche des outils
-« affaires » de `CRM-104`. Il ne saura pas les retirer : le retrait reste un geste de l'écran.
+**Ce qui n'est pas offert.** Aucune planification, aucun rappel, aucune liste de toutes les activités de l'espace.
+Le connecteur MCP liste, consigne et corrige les activités d'une affaire
+([chapitre 33](#le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant)) ; il ne les retire pas : le retrait reste un
+geste de l'écran.
 
 ### 9.9 La checklist d'une affaire : les points à cocher
 
@@ -1426,17 +1417,11 @@ filtre « Champs » : « Point de checklist coché », avec le libellé du point
 **Si vous ne pouvez pas écrire sur cette affaire.** Les cases, « Retirer » et le champ d'ajout restent visibles mais
 grisés, et le bandeau en tête de la fiche dit pourquoi ([chapitre 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Vous lisez la checklist comme les autres.
 
-**Dans l'espace de démonstration.** Le channel **« Checklists »** du track Studio web porte trois affaires : « Formation
-IA — Cerfrance » (un point coché sur deux, un point libre), « Atelier prompt — Lycée Vauban » (bloquée en Relance tant
-que « Proposition envoyée » n'est pas coché) et « Parcours data — Mairie de Rennes » (tout coché, en Négociation).
-
 **Définir les points d'une étape** et les points exigés par un déplacement se fait dans l'éditeur de workflows
 ([section 18.10](#les-checklists-des-etapes-et-les-points-qu-un-chemin-exige)). Le bandeau de refus du tableau porte le lien **« Cocher ces points »**, qui ouvre la fiche sur ce
 bloc, le premier point exigé non coché prêt à être coché.
 
 ### 9.10 Le tableau kanban d'un channel
-
-*Livré par `CRM-041`. Captures dans `docs/captures/CRM-041/`, dont une vidéo du glisser-déposer.*
 
 Ouvrir un onglet de channel affiche son **tableau** : une colonne par étape de son workflow, dans
 l'ordre de ces étapes.
@@ -1460,7 +1445,7 @@ son cumul de montants portent sur les cartes **affichées** : ils changent donc 
 Si toutes les affaires d'un channel dorment, le tableau ne prétend pas qu'il est vide : il annonce
 « Toutes les affaires de ce channel sont en sommeil » et propose le geste qui les révèle.
 
-**Créer une affaire.** *Livré par `CRM-095`.* Le bouton **Nouvelle affaire**, en tête de la barre
+**Créer une affaire.** Le bouton **Nouvelle affaire**, en tête de la barre
 au-dessus des colonnes, ouvre un formulaire **dans la page**, sous la barre — pas une fenêtre
 par-dessus : le tableau reste visible. Un seul champ, le **titre** ; tout le reste — montant,
 responsable, échéance, contacts — se complète ensuite sur la fiche.
@@ -1519,11 +1504,8 @@ glisser-déposer. Sans connexion, l'adresse mène à l'écran de connexion.
 
 ### 9.11 La vue liste d'un channel
 
-*Livrée par `CRM-042`. Captures dans `docs/captures/CRM-042/`.*
-
 À côté du tableau, un channel se lit aussi **en liste**. La bascule **Tableau / Liste**, en haut de
-la zone principale, passe de l'une à l'autre ; chaque vue a son adresse, et la liste ajoute la
-sienne au chemin du channel (`…/liste`).
+la zone principale, passe de l'une à l'autre ; chaque vue a sa propre adresse.
 
 **À quoi elle sert.** Le tableau répond à « où en est chaque affaire ? ». La liste répond à
 « laquelle, parmi toutes, dois-je ouvrir ? ». Elle montre les mêmes affaires — celles qui ne sont
@@ -1533,8 +1515,8 @@ ni archivées ni en corbeille — rangées par leurs propres colonnes plutôt qu
 filtres, et ouvre le même formulaire que sur le tableau ([chapitre 9.10](#le-tableau-kanban-d-un-channel)) — même titre seul, même étape
 initiale, même fiche qui s'ouvre.
 
-**Ce que montre une ligne.** Le titre de l'affaire, qui est un **lien** vers sa fiche ; son étape,
-en pastille de couleur ; son montant ; sa prochaine action ; et son échéance. Une ligne tient sur
+**Ce que montre une ligne.** Le titre de l'affaire, qui est un **lien** vers sa fiche ; son **responsable** ; son
+étape, en pastille de couleur ; son montant ; sa prochaine action ; et son échéance. Une ligne tient sur
 **une seule ligne de texte** : un titre trop long est coupé, et la valeur entière apparaît en
 survolant. C'est délibéré — une liste se balaye en diagonale, là où une carte de tableau se lit.
 
@@ -1584,19 +1566,15 @@ en sommeil reprennent leur valeur par défaut : le bouton rend la vue par défau
 défaut ne montre pas les affaires endormies. Il apparaît donc aussi sur une liste dont la seule
 différence est que ces affaires y sont visibles.
 
-**Ce que la liste ne fait pas.** Elle **lit**. On n'y crée, n'y modifie, n'y archive et n'y déplace
-aucune affaire : le déplacement reste le geste du tableau ([chapitre 9.10](#le-tableau-kanban-d-un-channel)), et le reste n'a pas encore
-d'écran. Le **responsable** n'y figure pas non plus, pour le même motif qu'au tableau : aucun nom
-n'est aujourd'hui lisible, et le produit préfère ne rien afficher qu'un identifiant technique.
+**Ce que la liste ne fait pas.** En dehors de la création, elle **lit** : on n'y modifie, n'y archive et n'y déplace
+aucune affaire. Le déplacement est le geste du tableau ([section 9.10](#le-tableau-kanban-d-un-channel)) ; le reste se
+fait sur la fiche.
 
 Pour un track que votre compte ne peut pas lire, cette adresse affiche « Track introuvable », comme
 pour le tableau. Sinon, la liste réelle est consultable, triable et filtrable. Sans connexion,
 l'adresse mène à l'écran de connexion.
 
 ### 9.12 L'historique et la discussion d'une affaire
-
-*Livrée par `CRM-043` et `CRM-044`. Captures dans `docs/captures/CRM-043/` et
-`docs/captures/CRM-044/`.*
 
 À droite de la fiche d'une affaire — sous le formulaire lorsque l'écran est étroit — se trouve
 **Historique et discussion**. C'est **un seul fil**, du plus ancien en haut au plus récent en bas
@@ -1622,8 +1600,7 @@ lieu :
 | L'affaire est restée trop longtemps dans son étape | *Relance automatique*, avec le retard et le seuil |
 
 **Ces traces ne peuvent être ni fabriquées, ni corrigées, ni effacées.** Personne ne peut en écrire
-une à la main — ni un utilisateur, ni un administrateur, ni le compte technique qui installe le jeu
-de démonstration. C'est le serveur qui les écrit, au moment de l'acte. Une fois écrite, une trace ne
+une à la main — ni un utilisateur, ni un administrateur, ni un compte technique. C'est le serveur qui les écrit, au moment de l'acte. Une fois écrite, une trace ne
 peut plus être modifiée par qui que ce soit. Ce que l'historique montre a donc **réellement eu
 lieu**, et il dit désormais **qui** l'a fait lorsque l'acte a un auteur : le nom apparaît à côté de
 la date. Certaines lignes n'en portent pas, et c'est normal — une relance nocturne n'a pas d'auteur,
@@ -1651,8 +1628,7 @@ le moment » seraient un contrôle sans objet.
 **Les changements de contexte sont nommés.** Lorsqu'une affaire change de dossier ([chapitre 9.14](#ranger-une-affaire-dans-un-autre-dossier)),
 le serveur écrit une trace **« Dossier changé »**. Lorsqu'un administrateur remappe toutes les
 affaires d'un dossier vers un autre processus, le fil dit **« Workflow modifié »**. Il ne donne pas
-les noms avant/après : la vue ne résout pas ces noms historiques et n'en invente aucun. INC-077 est
-close par `CRM-019`.
+les noms avant/après : la vue ne résout pas ces noms historiques et n'en invente aucun.
 
 **Qui peut écrire.** Toute personne qui a le droit d'**écrire** dans le channel de l'affaire. Un
 compte en consultation seule **lit** la discussion sans pouvoir y ajouter quoi que ce soit : la
@@ -1721,19 +1697,11 @@ n'apparaît qu'au prochain chargement.
 
 - **On lit, on filtre, on ne fait rien d'autre** : aucune action n'est proposée depuis une ligne
   d'historique.
-- **Le motif d'un déplacement n'est conservé nulle part.** L'écran le demande lorsqu'une affaire est
-  marquée perdue, et il n'est enregistré ni dans le fil, ni ailleurs.
-- **Les emails et les activités — appels, réunions — n'apparaissent pas** : les boîtes de réception
-  se déclarent et se testent depuis `CRM-052` ([chapitre 11.1](#les-boites-de-reception-declarees)), mais aucun message n'est encore
-  relevé, et les activités n'existent pas
-  dans le produit.
+- **Le motif d'un déplacement** n'est pas recopié dans la ligne d'historique : quand un chemin exige un motif, il est
+  conservé une fois, comme un commentaire de la discussion.
 - **Aucune recherche, aucun regroupement par jour, aucun export** du fil.
-
-- **Aucun nom d'auteur n'est affiché** : aucun nom de personne n'est aujourd'hui lisible dans le
-  produit, et il est préféré de ne rien afficher plutôt qu'un identifiant technique. C'est la même
-  limite que pour le responsable d'une affaire (chapitres [9.10](#le-tableau-kanban-d-un-channel) et [9.11](#la-vue-liste-d-un-channel)).
-- **Les mentions ne préviennent personne** : écrire le nom d'un collègue dans un commentaire ne lui
-  envoie aucune notification.
+- **Écrire « @ » et un nom dans le texte ne prévient personne** : on prévient un collègue par la commande
+  « Mentionner » du composeur ([section 5.5](#mentionner-quelqu-un-dans-un-commentaire)).
 - **La mise en forme n'est pas interprétée** : le texte est affiché tel qu'il a été saisi, retours à
   la ligne compris, sans gras ni liens cliquables.
 - **Un retrait par la modération n'apparaît pas dans l'historique** : le fil montre la pierre
@@ -1743,8 +1711,6 @@ Après connexion, le composeur publie réellement le commentaire si votre compte
 le channel. Un profil en lecture seule reçoit un refus explicite et conserve son texte saisi.
 
 ### 9.13 Mettre une affaire en sommeil, et la retrouver
-
-*Livrée par `CRM-081`. Captures dans `docs/captures/CRM-081/`.*
 
 Certaines affaires n'attendent rien de vous avant plusieurs semaines : un client qui rappellera
 après ses congés, une décision reportée au prochain comité. Les laisser dans le tableau et dans la
@@ -1811,9 +1777,8 @@ montre, sinon son compteur désignerait des cartes introuvables à l'œil.
 affaire endormie se déplace, se modifie et se commente exactement comme une autre, et toute personne
 qui pouvait la lire peut encore la retrouver. Le sommeil **range**, il ne protège pas.
 
-**Ce qui n'est pas encore livré.** Seules les **affaires** peuvent dormir : pas encore les fils de
-messagerie. Et la **vue liste** n'offre pas le geste — elle laisse la case d'affichage et le lien
-vers la fiche.
+**Les fils de messagerie dorment aussi**, depuis l'inbox ([section 12.2](#l-inbox-lire-et-trier-le-courrier-recu)).
+La **vue liste** n'offre pas le geste : elle laisse la case d'affichage et le lien vers la fiche.
 
 ### 9.14 Ranger une affaire dans un autre dossier
 
@@ -1864,12 +1829,9 @@ semaines paraîtrait y être entrée à l'instant.
 l'historique de l'affaire, y compris lorsque personne ne passe par l'application. Le fil ne nomme
 pas les dossiers avant/après, car il ne résout pas leurs noms historiques ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
 
-**Aucun écran ne porte ce geste.** Le rangement passe aujourd'hui par l'API, ce qui est une
-opération d'exploitation et non un parcours produit.
+**Ce rangement ne se fait pas encore depuis l'écran** : aucune commande de la fiche ne le propose.
 
 ### 9.15 Mettre une affaire à la corbeille
-
-*Livré par `CRM-077`. Captures dans `docs/captures/CRM-077/`, préfixées `card-geste-`.*
 
 **Où.** En bas de la colonne de gauche de la fiche, sous le formulaire : le bouton **« Mettre à la
 corbeille »**. C'est le seul endroit d'où une affaire se retire — ni le tableau kanban ni la vue
@@ -1909,21 +1871,19 @@ personne en lecture seule obtient la deuxième réponse du tableau ci-dessus.
 **Le retrait est inscrit dans l'historique de l'affaire** ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)), sous « Cycle de vie »,
 avec son auteur et sa date. Vous le relisez après restauration.
 
-### 9.16 Ce qui n'est pas encore livré
+### 9.16 Ce qui n'est pas encore offert
 
 - **Les vues sauvegardées** : la vue liste et ses filtres existent ([chapitre 9.11](#la-vue-liste-d-un-channel)), mais aucun filtre
   ne se conserve d'une session à l'autre autrement qu'en gardant l'adresse.
 - **Le choix du nombre de lignes par page** : la liste en affiche vingt-cinq, et cela ne se règle pas.
-- **La recherche sur tout l'espace de travail** : la recherche de la vue liste est bornée au channel
-  ouvert.
+- **La recherche de la vue liste** est bornée au channel ouvert ; la recherche de l'en-tête cherche partout
+  ([chapitre 4](#retrouver-n-importe-quoi-la-recherche)).
 - **Le réordonnancement d'une affaire dans sa colonne** : le déplacement change d'étape, pas de rang.
 - **Le rangement d'une affaire dans un autre dossier depuis l'écran** : la règle existe et le
-  serveur l'applique ([chapitre 9.14](#ranger-une-affaire-dans-un-autre-dossier)), mais aucun bouton ne le propose.
-- **Les étiquettes sur une carte du tableau** : elles ne sont pas portées par le produit. Le
-  responsable, lui, est lisible sur la fiche depuis le [chapitre 9.6](#la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent).
-- **Les documents** : aucune pièce jointe n'est portée par le produit. L'historique, lui, est livré
-  ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
-- **Le score de santé** : la colonne existe, rien ne l'alimente.
+  serveur l'applique ([section 9.14](#ranger-une-affaire-dans-un-autre-dossier)), mais aucune commande ne le propose.
+- **Les étiquettes sur une carte du tableau** : elles ne sont pas portées par le produit.
+- **Les documents** : une affaire ne porte pas de documents propres ; les pièces jointes de son courrier se trouvent
+  avec ses messages ([chapitre 12](#l-inbox-lire-trier-et-repondre)).
 
 ## 10. Le carnet de contacts
 
@@ -3108,25 +3068,20 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 
 ## 18. Composer un workflow : ses étapes, ses transitions et son formulaire
 
-*Livré par `CRM-076` ; les règles d'accès sont celles de `CRM-031`, inchangées. Captures dans
-`docs/captures/CRM-076/`.*
-
 **Où.** Barre latérale ▸ **Réglages** ▸ « Workflows : étapes et composition ».
 
 **Ce que cet écran fait, et ce qu'il ne fait pas.** Il **compose** les workflows qui existent
 déjà : il choisit leurs étapes dans le catalogue de nœuds, les ordonne, les surcharge, désigne
 celle par laquelle les affaires entrent, déclare les **transitions** qui relient les étapes, et
-définit les **questions du formulaire** posées sur chaque affaire. Depuis `CRM-031`, il **crée**
-aussi un workflow ([chapitre 18.1](#creer-un-workflow)). Depuis `CRM-118`, son en-tête le renomme, le copie vers un
-track, le rend par défaut, l'archive et le rétablit.
+définit les **questions du formulaire** posées sur chaque affaire. Il **crée** aussi un workflow
+([section 18.1](#creer-un-workflow)), et son en-tête le renomme, le copie vers un track, le rend par défaut, l'archive
+et le rétablit ([section 18.4](#choisir-un-workflow)).
 
 **Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Comme au
 [chapitre 17](#administrer-l-arborescence-tracks-et-channels), les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du
 serveur, « Seul un administrateur de cet espace de travail peut composer un workflow. »
 
 ### 18.1 Créer un workflow
-
-*Livré par `CRM-031`. Captures dans `docs/captures/CRM-031/`.*
 
 Le bouton **« Nouveau workflow »**, au-dessus de la liste de gauche, ouvre un formulaire à deux ou
 trois champs :
@@ -3147,7 +3102,8 @@ Le workflow créé devient aussitôt le workflow **choisi**, prêt à être comp
 
 **Ce que le formulaire ne propose pas, et pourquoi.** Aucune case « par défaut » : un espace de
 travail n'a qu'un seul workflow par défaut, et le proposer à chaque création reviendrait à offrir
-un réglage refusé neuf fois sur dix. Rendre un workflow par défaut reste un geste d'API.
+un réglage refusé neuf fois sur dix. Un workflow devient le défaut par la commande « Définir par défaut » de son
+en-tête ([section 18.4](#choisir-un-workflow)).
 
 **Arrivé depuis le formulaire d'un channel** (lien **Nouveau workflow**, [chapitre 17.2](#un-channel)), l'éditeur
 s'ouvre formulaire de création ouvert, portée réglée sur le track du channel, et un bandeau rappelle
@@ -3161,10 +3117,6 @@ espace neuf : le plus court est souvent le workflow de départ du guide ([§2.4]
 recomposez ensuite ici.
 
 ### 18.2 Créer un workflow avec l'IA
-
-*Livré en développement par `CRM-097` (tranche T2) ; en production avec la tranche T4. Captures dans
-`docs/captures/CRM-097/`. Le nom et la probabilité de chaque étape, et les champs que l'affaire porte déjà : `CRM-113`,
-livré en développement, captures dans `docs/captures/CRM-113/`.*
 
 L'assistant IA **propose** un workflow à partir d'une description écrite en français ; **il ne crée
 rien**. Ce qu'il rend est une **suggestion** : vous la relisez, la corrigez, la faites revoir autant de
@@ -3244,9 +3196,6 @@ faire évoluer un workflow déjà en usage, voir le chapitre suivant.
 
 ### 18.3 Faire évoluer un workflow avec l'IA
 
-*Livré en développement par `CRM-097` (tranche T3) ; en production avec la tranche T4. Captures dans
-`docs/captures/CRM-097/` (`ia-modification-*`).*
-
 Le même assistant fait évoluer un workflow **existant** — y compris un workflow qui porte des affaires.
 Comme pour une création, il ne change rien lui-même : il **suggère** le workflow tel qu'il deviendrait, et
 rien ne change avant « Accepter ». Le panneau le rappelle : « Suggestion — rien ne change avant
@@ -3297,7 +3246,7 @@ La colonne de gauche liste les workflows de l'espace de travail, celui **par dé
 le premier est ouvert d'office. Chaque entrée dit sa portée — globale, ou propre à un track.
 
 La case **Afficher les archivés**, au-dessus de la liste, y ajoute les workflows archivés ; chacun porte la mention
-« Archivé ». Sans elle, un workflow archivé quitte la liste. *Livré par `CRM-118` tranche T1.b.*
+« Archivé ». Sans elle, un workflow archivé quitte la liste.
 
 **L'en-tête du workflow ouvert.** En haut de la colonne de droite, le nom du workflow, puis ses pastilles : sa portée
 (« Global », ou le nom de son track), « Par défaut » s'il l'est, « Archivé » s'il l'est. Dessous, ses commandes :
@@ -3322,7 +3271,7 @@ La case **Afficher les archivés**, au-dessus de la liste, y ajoute les workflow
   confirmation.
 
 Ces commandes demandent d'**administrer l'espace de travail**. Sans ce droit, elles restent visibles mais grisées, et
-le motif est écrit en tête de l'éditeur. *Captures : `docs/captures/CRM-118/entete-workflow-*.jpg`.*
+le motif est écrit en tête de l'éditeur.
 
 ### 18.5 Les étapes
 
@@ -3549,8 +3498,6 @@ Deux précisions honnêtes :
 
 ### 18.13 Garder une photographie d'un workflow, et y revenir
 
-*Livré par `CRM-078`, cinquième tranche. Captures dans `docs/captures/CRM-078/`.*
-
 **Où.** Le bloc **Versions**, tout en bas de l'éditeur de workflows, sous les exigences de chemin.
 
 Un workflow change : ses étapes, ses transitions, ses questions et leurs règles se modifient à tout
@@ -3560,7 +3507,7 @@ Elle ne se modifie pas et ne se supprime pas — c'est tout son intérêt.
 **Le tableau des versions** liste, de la plus récente à la plus ancienne : son numéro, la date de
 publication, la personne qui l'a publiée, sa note éventuelle et le début de son empreinte — le
 condensé qui identifie la composition. Un workflow qui n'a jamais été publié le dit en toutes
-lettres ; c'est le cas de la copie « Cycle commercial — Conseil IA » de l'espace de démonstration.
+lettres.
 
 **Publier une version** fige la composition actuelle. Une note facultative aide à la retrouver plus
 tard ; elle ne change rien à ce qui est conservé. Publier **ne change rien** au fonctionnement : les

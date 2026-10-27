@@ -1470,62 +1470,8 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-037"
-						},
-						{
-							"type": "text",
-							"text": ", son en-tête par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-040"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-037/"
-						},
-						{
-							"type": "text",
-							"text": " et\n"
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-040/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
-					"text": "Une affaire s'ouvre à l'adresse "
-				},
-				{
-					"type": "code",
-					"text": "/tracks/<track>/<onglet>/cards/<identifiant de l'affaire>"
-				},
-				{
-					"type": "text",
-					"text": ". Cet\nécran affiche à gauche "
+					"text": "Une affaire s'ouvre depuis sa carte du tableau, sa ligne de la vue liste, ou tout lien qui la nomme ; son adresse se\npartage. Cet écran affiche à gauche "
 				},
 				{
 					"type": "strong",
@@ -2886,44 +2832,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-060"
-						},
-						{
-							"type": "text",
-							"text": ", sous-tranche 4c. Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-060/"
-						},
-						{
-							"type": "text",
-							"text": ", préfixées\n"
-						},
-						{
-							"type": "code",
-							"text": "contacts-affaire-"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -3314,13 +3222,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Corriger un rôle depuis cette page n'est pas livré, mais le geste existe ailleurs."
+							"text": "Corriger un rôle ne se fait pas depuis cette page"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " Ici, il faut\ndétacher puis rattacher. Depuis la "
+					"text": ", mais depuis la "
 				},
 				{
 					"type": "strong",
@@ -3333,23 +3241,24 @@
 				},
 				{
 					"type": "text",
-					"text": ", en revanche, le rôle se corrige d'un seul\ngeste — bouton « Modifier le rôle » sur chaque ligne ("
+					"text": " : le bouton « Modifier le\nrôle » de chaque ligne le corrige d'un seul geste ("
 				},
 				{
 					"type": "link",
 					"target": {
-						"chapter": "le-carnet-de-contacts"
+						"chapter": "le-carnet-de-contacts",
+						"anchor": "corriger-le-role-d-une-personne-dans-une-affaire"
 					},
 					"content": [
 						{
 							"type": "text",
-							"text": "chapitre 10"
+							"text": "section 10.8"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": ", sous-tranche 4j) —, et la\nfiche de l'affaire est atteignable en un clic depuis là."
+					"text": ").\nIci, il faudrait détacher puis rattacher."
 				}
 			]
 		},
@@ -3361,7 +3270,7 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Ce qui n'est pas encore livré."
+							"text": "Ce que cette page ne fait pas."
 						}
 					]
 				},
@@ -3409,44 +3318,6 @@
 				{
 					"type": "text",
 					"text": "9.8 Les activités d'une affaire : appels, réunions, visios"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-067"
-						},
-						{
-							"type": "text",
-							"text": ", tranches T2 et T3, en développement. Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-067/"
-						},
-						{
-							"type": "text",
-							"text": ", préfixées\n"
-						},
-						{
-							"type": "code",
-							"text": "activites-"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
 				}
 			]
 		},
@@ -4266,21 +4137,29 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Ce qui n'est pas livré."
+							"text": "Ce qui n'est pas offert."
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " Aucune planification, aucun rappel, aucune liste de toutes les activités de l'espace. Le\nconnecteur MCP saura lister, consigner et corriger les activités d'une affaire avec la tranche des outils\n« affaires » de "
+					"text": " Aucune planification, aucun rappel, aucune liste de toutes les activités de l'espace.\nLe connecteur MCP liste, consigne et corrige les activités d'une affaire\n("
 				},
 				{
-					"type": "code",
-					"text": "CRM-104"
+					"type": "link",
+					"target": {
+						"chapter": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 33"
+						}
+					]
 				},
 				{
 					"type": "text",
-					"text": ". Il ne saura pas les retirer : le retrait reste un geste de l'écran."
+					"text": ") ; il ne les retire pas : le retrait reste un\ngeste de l'écran."
 				}
 			]
 		},
@@ -4770,37 +4649,6 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Dans l'espace de démonstration."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Le channel "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "« Checklists »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " du track Studio web porte trois affaires : « Formation\nIA — Cerfrance » (un point coché sur deux, un point libre), « Atelier prompt — Lycée Vauban » (bloquée en Relance tant\nque « Proposition envoyée » n'est pas coché) et « Parcours data — Mairie de Rennes » (tout coché, en Négociation)."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
 							"text": "Définir les points d'une étape"
 						}
 					]
@@ -4849,36 +4697,6 @@
 				{
 					"type": "text",
 					"text": "9.10 Le tableau kanban d'un channel"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-041"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-041/"
-						},
-						{
-							"type": "text",
-							"text": ", dont une vidéo du glisser-déposer."
-						}
-					]
 				}
 			]
 		},
@@ -5092,27 +4910,6 @@
 						{
 							"type": "text",
 							"text": "Créer une affaire."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-095"
-						},
-						{
-							"type": "text",
-							"text": "."
 						}
 					]
 				},
@@ -5749,36 +5546,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-042"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-042/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "À côté du tableau, un channel se lit aussi "
 				},
@@ -5806,15 +5573,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", en haut de\nla zone principale, passe de l'une à l'autre ; chaque vue a son adresse, et la liste ajoute la\nsienne au chemin du channel ("
-				},
-				{
-					"type": "code",
-					"text": "…/liste"
-				},
-				{
-					"type": "text",
-					"text": ")."
+					"text": ", en haut de\nla zone principale, passe de l'une à l'autre ; chaque vue a sa propre adresse."
 				}
 			]
 		},
@@ -5911,7 +5670,20 @@
 				},
 				{
 					"type": "text",
-					"text": " vers sa fiche ; son étape,\nen pastille de couleur ; son montant ; sa prochaine action ; et son échéance. Une ligne tient sur\n"
+					"text": " vers sa fiche ; son "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "responsable"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; son\nétape, en pastille de couleur ; son montant ; sa prochaine action ; et son échéance. Une ligne tient sur\n"
 				},
 				{
 					"type": "strong",
@@ -6333,7 +6105,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Elle "
+					"text": " En dehors de la création, elle "
 				},
 				{
 					"type": "strong",
@@ -6346,7 +6118,7 @@
 				},
 				{
 					"type": "text",
-					"text": ". On n'y crée, n'y modifie, n'y archive et n'y déplace\naucune affaire : le déplacement reste le geste du tableau ("
+					"text": " : on n'y modifie, n'y archive et n'y déplace\naucune affaire. Le déplacement est le geste du tableau ("
 				},
 				{
 					"type": "link",
@@ -6357,26 +6129,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "chapitre 9.10"
+							"text": "section 9.10"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": "), et le reste n'a pas encore\nd'écran. Le "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "responsable"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " n'y figure pas non plus, pour le même motif qu'au tableau : aucun nom\nn'est aujourd'hui lisible, et le produit préfère ne rien afficher qu'un identifiant technique."
+					"text": ") ; le reste se\nfait sur la fiche."
 				}
 			]
 		},
@@ -6397,52 +6156,6 @@
 				{
 					"type": "text",
 					"text": "9.12 L'historique et la discussion d'une affaire"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-043"
-						},
-						{
-							"type": "text",
-							"text": " et "
-						},
-						{
-							"type": "code",
-							"text": "CRM-044"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-043/"
-						},
-						{
-							"type": "text",
-							"text": " et\n"
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-044/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
 				}
 			]
 		},
@@ -6943,7 +6656,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Personne ne peut en écrire\nune à la main — ni un utilisateur, ni un administrateur, ni le compte technique qui installe le jeu\nde démonstration. C'est le serveur qui les écrit, au moment de l'acte. Une fois écrite, une trace ne\npeut plus être modifiée par qui que ce soit. Ce que l'historique montre a donc "
+					"text": " Personne ne peut en écrire\nune à la main — ni un utilisateur, ni un administrateur, ni un compte technique. C'est le serveur qui les écrit, au moment de l'acte. Une fois écrite, une trace ne\npeut plus être modifiée par qui que ce soit. Ce que l'historique montre a donc "
 				},
 				{
 					"type": "strong",
@@ -7193,15 +6906,7 @@
 				},
 				{
 					"type": "text",
-					"text": ". Il ne donne pas\nles noms avant/après : la vue ne résout pas ces noms historiques et n'en invente aucun. INC-077 est\nclose par "
-				},
-				{
-					"type": "code",
-					"text": "CRM-019"
-				},
-				{
-					"type": "text",
-					"text": "."
+					"text": ". Il ne donne pas\nles noms avant/après : la vue ne résout pas ces noms historiques et n'en invente aucun."
 				}
 			]
 		},
@@ -7840,58 +7545,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Le motif d'un déplacement n'est conservé nulle part."
+										"text": "Le motif d'un déplacement"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " L'écran le demande lorsqu'une affaire est\nmarquée perdue, et il n'est enregistré ni dans le fil, ni ailleurs."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Les emails et les activités — appels, réunions — n'apparaissent pas"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " : les boîtes de réception\nse déclarent et se testent depuis "
-							},
-							{
-								"type": "code",
-								"text": "CRM-052"
-							},
-							{
-								"type": "text",
-								"text": " ("
-							},
-							{
-								"type": "link",
-								"target": {
-									"chapter": "les-boites-de-reception-et-les-adresses-d-expedition",
-									"anchor": "les-boites-de-reception-declarees"
-								},
-								"content": [
-									{
-										"type": "text",
-										"text": "chapitre 11.1"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": "), mais aucun message n'est encore\nrelevé, et les activités n'existent pas\ndans le produit."
+								"text": " n'est pas recopié dans la ligne d'historique : quand un chemin exige un motif, il est\nconservé une fois, comme un commentaire de la discussion."
 							}
 						]
 					}
@@ -7925,67 +7585,30 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Aucun nom d'auteur n'est affiché"
+										"text": "Écrire « @ » et un nom dans le texte ne prévient personne"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " : aucun nom de personne n'est aujourd'hui lisible dans le\nproduit, et il est préféré de ne rien afficher plutôt qu'un identifiant technique. C'est la même\nlimite que pour le responsable d'une affaire (chapitres "
+								"text": " : on prévient un collègue par la commande\n« Mentionner » du composeur ("
 							},
 							{
 								"type": "link",
 								"target": {
-									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-									"anchor": "le-tableau-kanban-d-un-channel"
+									"chapter": "vos-notifications-savoir-qu-on-vous-a-nomme",
+									"anchor": "mentionner-quelqu-un-dans-un-commentaire"
 								},
 								"content": [
 									{
 										"type": "text",
-										"text": "9.10"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " et "
-							},
-							{
-								"type": "link",
-								"target": {
-									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-									"anchor": "la-vue-liste-d-un-channel"
-								},
-								"content": [
-									{
-										"type": "text",
-										"text": "9.11"
+										"text": "section 5.5"
 									}
 								]
 							},
 							{
 								"type": "text",
 								"text": ")."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Les mentions ne préviennent personne"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " : écrire le nom d'un collègue dans un commentaire ne lui\nenvoie aucune notification."
 							}
 						]
 					}
@@ -8049,36 +7672,6 @@
 				{
 					"type": "text",
 					"text": "9.13 Mettre une affaire en sommeil, et la retrouver"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-081"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-081/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
 				}
 			]
 		},
@@ -8630,26 +8223,30 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Ce qui n'est pas encore livré."
+							"text": "Les fils de messagerie dorment aussi"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " Seules les "
+					"text": ", depuis l'inbox ("
 				},
 				{
-					"type": "strong",
+					"type": "link",
+					"target": {
+						"chapter": "l-inbox-lire-trier-et-repondre",
+						"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "affaires"
+							"text": "section 12.2"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " peuvent dormir : pas encore les fils de\nmessagerie. Et la "
+					"text": ").\nLa "
 				},
 				{
 					"type": "strong",
@@ -8662,7 +8259,7 @@
 				},
 				{
 					"type": "text",
-					"text": " n'offre pas le geste — elle laisse la case d'affichage et le lien\nvers la fiche."
+					"text": " n'offre pas le geste : elle laisse la case d'affichage et le lien vers la fiche."
 				}
 			]
 		},
@@ -9228,13 +8825,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Aucun écran ne porte ce geste."
+							"text": "Ce rangement ne se fait pas encore depuis l'écran"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " Le rangement passe aujourd'hui par l'API, ce qui est une\nopération d'exploitation et non un parcours produit."
+					"text": " : aucune commande de la fiche ne le propose."
 				}
 			]
 		},
@@ -9246,44 +8843,6 @@
 				{
 					"type": "text",
 					"text": "9.15 Mettre une affaire à la corbeille"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-077"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-077/"
-						},
-						{
-							"type": "text",
-							"text": ", préfixées "
-						},
-						{
-							"type": "code",
-							"text": "card-geste-"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
 				}
 			]
 		},
@@ -9656,11 +9215,11 @@
 		{
 			"type": "heading",
 			"level": 3,
-			"anchor": "ce-qui-n-est-pas-encore-livre",
+			"anchor": "ce-qui-n-est-pas-encore-offert",
 			"content": [
 				{
 					"type": "text",
-					"text": "9.16 Ce qui n'est pas encore livré"
+					"text": "9.16 Ce qui n'est pas encore offert"
 				}
 			]
 		},
@@ -9735,13 +9294,29 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "La recherche sur tout l'espace de travail"
+										"text": "La recherche de la vue liste"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " : la recherche de la vue liste est bornée au channel\nouvert."
+								"text": " est bornée au channel ouvert ; la recherche de l'en-tête cherche partout\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "retrouver-n-importe-quoi-la-recherche"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 4"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -9792,13 +9367,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "chapitre 9.14"
+										"text": "section 9.14"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": "), mais aucun bouton ne le propose."
+								"text": "), mais aucune commande ne le propose."
 							}
 						]
 					}
@@ -9818,24 +9393,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : elles ne sont pas portées par le produit. Le\nresponsable, lui, est lisible sur la fiche depuis le "
-							},
-							{
-								"type": "link",
-								"target": {
-									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-									"anchor": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent"
-								},
-								"content": [
-									{
-										"type": "text",
-										"text": "chapitre 9.6"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": "."
+								"text": " : elles ne sont pas portées par le produit."
 							}
 						]
 					}
@@ -9855,44 +9413,23 @@
 							},
 							{
 								"type": "text",
-								"text": " : aucune pièce jointe n'est portée par le produit. L'historique, lui, est livré\n("
+								"text": " : une affaire ne porte pas de documents propres ; les pièces jointes de son courrier se trouvent\navec ses messages ("
 							},
 							{
 								"type": "link",
 								"target": {
-									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-									"anchor": "l-historique-et-la-discussion-d-une-affaire"
+									"chapter": "l-inbox-lire-trier-et-repondre"
 								},
 								"content": [
 									{
 										"type": "text",
-										"text": "chapitre 9.12"
+										"text": "chapitre 12"
 									}
 								]
 							},
 							{
 								"type": "text",
 								"text": ")."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Le score de santé"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " : la colonne existe, rien ne l'alimente."
 							}
 						]
 					}

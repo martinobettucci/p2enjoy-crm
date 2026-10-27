@@ -36465,3 +36465,23 @@ déclencheur `AFTER INSERT` de `card_placements` lorsque le rattachement insér�
 même charge utile (`title`, `channel_id`, `step_id`). Écrit à la validation, il manquerait à toute lecture faite dans la
 transaction de création — celle de `creer_affaire` qui rend la fiche, et les preuves pgTAP, qui annulent leur
 transaction.
+
+### `CRM-117` T3.2b et T3.4b : l'affaire et les workflows réécrits ; le manuel public ne porte plus aucune référence interne (2026-10-27)
+
+**Fait** après le commit des ajouts de `CRM-068` (`a9ad64d3`) : les chapitres 9 (l'affaire) et 18 (composer un
+workflow). Le contrôle « aucune référence interne » de `scripts/verify-manual.sh` porte désormais sur le **manuel
+entier** — la liste des chapitres réécrits disparaît, comme le §10 bis le prévoyait — et rend zéro.
+
+**Vérifié contre le code — dix passages étaient devenus faux, et sont corrigés** : la vue liste a une colonne
+« Responsable » (`liste.colonne.owner`), qu'elle disait absente faute de nom lisible ; elle crée une affaire, ce que
+« on n'y crée aucune affaire » démentait trois paragraphes plus bas ; le motif d'un déplacement **est** conservé, comme
+un commentaire (`board.comment.stored`) ; les messages et les activités paraissent dans l'historique ; les noms des
+auteurs y sont lisibles ; les mentions préviennent par la commande « Mentionner » ; les fils de messagerie dorment
+aussi ; la recherche de l'en-tête cherche partout ; les scores de santé existent ; un workflow devient le défaut par
+« Définir par défaut ». **Vérifiés et gardés** : corriger le rôle d'un contact ne se fait que depuis sa fiche
+(`ModificationRoleRattachement` n'est monté que là) ; ranger une affaire dans un autre channel n'a toujours aucune
+commande à l'écran. **Retirés** : l'adresse technique d'une fiche, le jeu de démonstration des checklists et la copie
+« Conseil IA » de l'espace de démonstration.
+
+**Non publié en développement** : la pile est arrêtée, à la demande du responsable ; le bucket sera mis à jour à la
+prochaine publication.

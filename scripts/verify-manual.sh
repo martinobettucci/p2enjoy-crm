@@ -23,7 +23,7 @@
 # Ce que ce harnais prouve.
 # ---------------------------------------------------------------------------------------------
 #   1. le manuel construit (`docs/manuel/construit/`) est celui que la source produit ;
-#   2. les chapitres déjà réécrits ne portent aucune référence interne — identifiant d'unité, d'incohérence ou de
+#   2. le manuel ne porte aucune référence interne — identifiant d'unité, d'incohérence ou de
 #      décision, tranche, chemin ou nom de fichier du dépôt, nom de variable d'environnement, commande de terminal,
 #      mention du seed, du jeu de démonstration ou du développement (§10, point 2) ;
 #   3. chaque libellé du parcours cité par le manuel existe LITTÉRALEMENT dans `webapp/src/i18n/fr.ts` ;
@@ -37,8 +37,8 @@
 # interdit désormais. Ces quatre contrôles sont RETIRÉS, non affaiblis : leur objet a disparu du manuel. Le harnais ne
 # lit plus la base.
 #
-# LE CONTRÔLE 2 GRANDIT AVEC LA RÉÉCRITURE. Il porte sur `CHAPITRES_REECRITS`, que chaque tranche de T3 complète ; à la
-# fin de T3.5, il couvre tout le manuel et la liste disparaît au profit du manuel entier.
+# LE CONTRÔLE 2 PORTE SUR LE MANUEL ENTIER depuis la fin de la réécriture (`CRM-117` T3, 2026-10-27). Pendant la
+# réécriture, il portait sur la liste des chapitres déjà réécrits ; elle a disparu avec le dernier d'entre eux.
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais NE prouve PAS, et le dit.
@@ -80,48 +80,6 @@ fail()  { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31m
 titre() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 info()  { printf '  %s\n' "$1"; }
 
-# ---------------------------------------------------------------------------------------------
-# Les chapitres déjà réécrits pour le lecteur (docs/SPEC-manual.md §10 bis), par identifiant. Chaque tranche de T3 y
-# ajoute les siens ; le contrôle 2 ne porte que sur eux tant que la réécriture n'est pas finie.
-# ---------------------------------------------------------------------------------------------
-CHAPITRES_REECRITS=(
-	# T3.1 — prise en main (2026-10-27)
-	se-connecter-et-se-deconnecter
-	le-guide-de-demarrage-par-ou-commencer
-	naviguer-barre-laterale-onglets-etats
-	retrouver-n-importe-quoi-la-recherche
-	vos-notifications-savoir-qu-on-vous-a-nomme
-	# T3.2a — le suivi quotidien et le carnet (2026-10-27)
-	ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui
-	les-affaires-figees-ce-qui-dort-depuis-trop-longtemps
-	les-objectifs-le-tableau-blanc-de-l-equipe
-	le-carnet-de-contacts
-	# T3.3 — la messagerie (2026-10-27)
-	les-boites-de-reception-et-les-adresses-d-expedition
-	l-inbox-lire-trier-et-repondre
-	consulter-l-etat-de-la-messagerie
-	ecrire-des-modeles-d-emails-et-les-previsualiser
-	signer-les-messages-expedies-depuis-une-identite
-	enchainer-des-relances-les-sequences
-	# T3.4a — l'administration, sans les workflows (2026-10-27)
-	administrer-l-arborescence-tracks-et-channels
-	le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows
-	la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre
-	les-membres-de-votre-espace-qui-y-travaille-avec-quel-role
-	le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace
-	# T3.5 — le pilotage, la plateforme et le connecteur (2026-10-27)
-	les-budgets-d-un-track
-	les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense
-	le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne
-	les-couts-de-tout-l-espace-de-travail-un-cumul-par-track
-	l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite
-	le-temps-passe-et-le-cout-du-personnel
-	les-recettes-d-une-affaire-et-sa-rentabilite
-	l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires
-	le-previsionnel-pondere-et-le-taux-de-conversion
-	la-plateforme-espaces-membres-et-superadministrateurs
-	le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant
-)
 
 # Libellés que le manuel cite entre guillemets pour décrire un parcours, et qui
 # doivent exister LITTÉRALEMENT dans le catalogue de traductions. C'est le contrôle qui aurait
@@ -280,7 +238,7 @@ let courant = null
 readFileSync(fichier, 'utf8').split('\n').forEach((ligne, i) => {
 	const titre = /^## (.*)$/.exec(ligne)
 	if (titre) courant = identifiant(titre[1])
-	if (!chapitres.has(courant)) return
+	if (!chapitres.has('*') && !chapitres.has(courant)) return
 	for (const [famille, motif] of motifs)
 		if (motif.test(ligne)) console.log(`${famille}|${courant}|${i + 1}|${ligne.slice(0, 140)}`)
 })
@@ -290,18 +248,14 @@ JS
 controler_references() {
 	local fichier=$1
 	shift
-	titre "2. Aucune référence interne dans les chapitres réécrits (§10, point 2)"
-	if [ $# -eq 0 ]; then
-		info "aucun chapitre n'est encore réécrit : la liste CHAPITRES_REECRITS grandit à chaque tranche de T3"
-		return 0
-	fi
+	titre "2. Aucune référence interne dans le manuel (§10, point 2)"
 	local trouve=0 famille chapitre numero ligne
 	while IFS='|' read -r famille chapitre numero ligne; do
 		[ -z "$famille" ] && continue
 		trouve=1
 		fail "référence interne ($famille), $chapitre, ligne $numero : $ligne"
 	done < <(references_internes "$fichier" "$@" -- "${MOTIFS_INTERNES[@]}")
-	if [ "$trouve" -eq 0 ]; then ok "aucune référence interne dans $# chapitre(s) réécrit(s)"; fi
+	if [ "$trouve" -eq 0 ]; then ok "aucune référence interne"; fi
 }
 
 controler_libelles() {
@@ -506,7 +460,7 @@ fi
 titre "Preuves du manuel public — CRM-117 (docs/SPEC-manual.md §16)"
 info "Manuel : $MANUEL — spécification : $SPEC"
 
-executer_tous "$MANUEL" "$SPEC" "${CHAPITRES_REECRITS[@]}"
+executer_tous "$MANUEL" "$SPEC" '*'
 
 printf '\n'
 if [ "$failures" -eq 0 ]; then

@@ -465,6 +465,24 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 | `CRM-117` | naviguer-barre-laterale-onglets-etats | l-aide-le-manuel-depuis-n-importe-quel-ecran |
 | `CRM-065` | retrouver-n-importe-quoi-la-recherche | — |
 | `CRM-064` | vos-notifications-savoir-qu-on-vous-a-nomme | — |
+| `CRM-040` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | — |
+| `CRM-013` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | l-adresse-email-de-l-affaire |
+| `CRM-034` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | faire-avancer-une-affaire-ce-que-le-produit-autorise-et-ce-qu-il-refuse |
+| `CRM-037` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent |
+| `CRM-067` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | les-activites-d-une-affaire-appels-reunions-visios |
+| `CRM-068` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | la-checklist-d-une-affaire-les-points-a-cocher |
+| `CRM-041` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | le-tableau-kanban-d-un-channel |
+| `CRM-095` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | le-tableau-kanban-d-un-channel |
+| `CRM-042` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | la-vue-liste-d-un-channel |
+| `CRM-043` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | l-historique-et-la-discussion-d-une-affaire |
+| `CRM-044` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | l-historique-et-la-discussion-d-une-affaire |
+| `CRM-081` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | mettre-une-affaire-en-sommeil-et-la-retrouver |
+| `CRM-045` | l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre | ranger-une-affaire-dans-un-autre-dossier |
+| `CRM-076` | composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire | — |
+| `CRM-031` | composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire | creer-un-workflow |
+| `CRM-097` | composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire | creer-un-workflow-avec-l-ia |
+| `CRM-035` | composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire | les-questions-du-formulaire |
+| `CRM-078` | composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire | garder-une-photographie-d-un-workflow-et-y-revenir |
 | `CRM-061` | ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui | — |
 | `CRM-062` | les-affaires-figees-ce-qui-dort-depuis-trop-longtemps | — |
 | `CRM-082` | les-objectifs-le-tableau-blanc-de-l-equipe | — |
@@ -498,7 +516,6 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 | `CRM-102` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | — |
 | `CRM-103` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | accorder-des-droits-du-connecteur |
 | `CRM-104` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | ce-que-l-assistant-sait-faire |
-| *(les autres chapitres à leur réécriture : T3.2 à T3.5)* | | |
 
 ## 13. Le manuel dans la webapp
 

@@ -6,44 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-076"
-						},
-						{
-							"type": "text",
-							"text": " ; les règles d'accès sont celles de "
-						},
-						{
-							"type": "code",
-							"text": "CRM-031"
-						},
-						{
-							"type": "text",
-							"text": ", inchangées. Captures dans\n"
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-076/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -124,15 +86,7 @@
 				},
 				{
 					"type": "text",
-					"text": " posées sur chaque affaire. Depuis "
-				},
-				{
-					"type": "code",
-					"text": "CRM-031"
-				},
-				{
-					"type": "text",
-					"text": ", il "
+					"text": " posées sur chaque affaire. Il "
 				},
 				{
 					"type": "strong",
@@ -145,7 +99,7 @@
 				},
 				{
 					"type": "text",
-					"text": "\naussi un workflow ("
+					"text": " aussi un workflow\n("
 				},
 				{
 					"type": "link",
@@ -156,21 +110,30 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "chapitre 18.1"
+							"text": "section 18.1"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": "). Depuis "
+					"text": "), et son en-tête le renomme, le copie vers un track, le rend par défaut, l'archive\net le rétablit ("
 				},
 				{
-					"type": "code",
-					"text": "CRM-118"
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "choisir-un-workflow"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 18.4"
+						}
+					]
 				},
 				{
 					"type": "text",
-					"text": ", son en-tête le renomme, le copie vers un\ntrack, le rend par défaut, l'archive et le rétablit."
+					"text": ")."
 				}
 			]
 		},
@@ -229,36 +192,6 @@
 				{
 					"type": "text",
 					"text": "18.1 Créer un workflow"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-031"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-031/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
 				}
 			]
 		},
@@ -464,7 +397,24 @@
 				},
 				{
 					"type": "text",
-					"text": " Aucune case « par défaut » : un espace de\ntravail n'a qu'un seul workflow par défaut, et le proposer à chaque création reviendrait à offrir\nun réglage refusé neuf fois sur dix. Rendre un workflow par défaut reste un geste d'API."
+					"text": " Aucune case « par défaut » : un espace de\ntravail n'a qu'un seul workflow par défaut, et le proposer à chaque création reviendrait à offrir\nun réglage refusé neuf fois sur dix. Un workflow devient le défaut par la commande « Définir par défaut » de son\nen-tête ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "choisir-un-workflow"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 18.4"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -598,52 +548,6 @@
 				{
 					"type": "text",
 					"text": "18.2 Créer un workflow avec l'IA"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré en développement par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-097"
-						},
-						{
-							"type": "text",
-							"text": " (tranche T2) ; en production avec la tranche T4. Captures dans\n"
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-097/"
-						},
-						{
-							"type": "text",
-							"text": ". Le nom et la probabilité de chaque étape, et les champs que l'affaire porte déjà : "
-						},
-						{
-							"type": "code",
-							"text": "CRM-113"
-						},
-						{
-							"type": "text",
-							"text": ",\nlivré en développement, captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-113/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
 				}
 			]
 		},
@@ -1148,44 +1052,6 @@
 				{
 					"type": "text",
 					"text": "18.3 Faire évoluer un workflow avec l'IA"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré en développement par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-097"
-						},
-						{
-							"type": "text",
-							"text": " (tranche T3) ; en production avec la tranche T4. Captures dans\n"
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-097/"
-						},
-						{
-							"type": "text",
-							"text": " ("
-						},
-						{
-							"type": "code",
-							"text": "ia-modification-*"
-						},
-						{
-							"type": "text",
-							"text": ")."
-						}
-					]
 				}
 			]
 		},
@@ -1709,24 +1575,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", au-dessus de la liste, y ajoute les workflows archivés ; chacun porte la mention\n« Archivé ». Sans elle, un workflow archivé quitte la liste. "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-118"
-						},
-						{
-							"type": "text",
-							"text": " tranche T1.b."
-						}
-					]
+					"text": ", au-dessus de la liste, y ajoute les workflows archivés ; chacun porte la mention\n« Archivé ». Sans elle, un workflow archivé quitte la liste."
 				}
 			]
 		},
@@ -1988,24 +1837,7 @@
 				},
 				{
 					"type": "text",
-					"text": ". Sans ce droit, elles restent visibles mais grisées, et\nle motif est écrit en tête de l'éditeur. "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Captures : "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-118/entete-workflow-*.jpg"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
+					"text": ". Sans ce droit, elles restent visibles mais grisées, et\nle motif est écrit en tête de l'éditeur."
 				}
 			]
 		},
@@ -4095,36 +3927,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-078"
-						},
-						{
-							"type": "text",
-							"text": ", cinquième tranche. Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-078/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -4188,7 +3990,7 @@
 				},
 				{
 					"type": "text",
-					"text": " liste, de la plus récente à la plus ancienne : son numéro, la date de\npublication, la personne qui l'a publiée, sa note éventuelle et le début de son empreinte — le\ncondensé qui identifie la composition. Un workflow qui n'a jamais été publié le dit en toutes\nlettres ; c'est le cas de la copie « Cycle commercial — Conseil IA » de l'espace de démonstration."
+					"text": " liste, de la plus récente à la plus ancienne : son numéro, la date de\npublication, la personne qui l'a publiée, sa note éventuelle et le début de son empreinte — le\ncondensé qui identifie la composition. Un workflow qui n'a jamais été publié le dit en toutes\nlettres."
 				}
 			]
 		},

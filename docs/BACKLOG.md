@@ -17078,7 +17078,7 @@ responsable** : traitée juste après `CRM-116`.*
       `Notifications.tsx`, `chemins.ts`), `marked` et les scripts `manuel:*` de `package.json`, `tsconfig.tools.json`,
       `webapp/vitest.config.ts` et la révision de `0029` : l'arbre poussé portait les composants sans les monter. Ils
       entrent par ce commit.
-- [ ] **T3 — la réécriture**, par groupes de chapitres : retrait de toute référence interne et de ce qui parle du
+- [x] **T3 — la réécriture**, par groupes de chapitres : retrait de toute référence interne et de ce qui parle du
       développement ou du jeu de démonstration, numérotation simple, phrases réécrites pour le lecteur ; table du
       §12 et de `aide-ecrans.ts` tenues à mesure. **Plan du manuel public : `docs/SPEC-manual.md` §10 bis** (choix de
       l'agent du 2026-10-27, soumis à relecture avec T3.1) — trente-trois chapitres rangés par sujet.
@@ -17103,22 +17103,26 @@ responsable** : traitée juste après `CRM-116`.*
             devenues fausses corrigées (journal) ; section 3.9 « L'aide » ajoutée ; table du §12 tenue pour ces chapitres ;
             `npm run manuel:liens` (`scripts/manuel/liens.mjs`, 5 unitaires, deux mutations tuées) et contrôle 7 de la
             preuve du manuel, contre-épreuve à six familles ; manuel construit et publié en développement.
-      - [~] **T3.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10.
+      - [x] **T3.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10.
         - [x] **T3.2a — chapitres 6, 7, 8 et 10** (Ma journée, les affaires figées, les objectifs, le carnet) — *fait le
               2026-10-27* : aucune référence interne ; libellés relus dans `fr.ts` ; trois passages devenus faux corrigés
               (les séquences de relance existent, le rattachement d'un contact a son écran, la suppression d'un contact
               existe) ; un lien que T3.0 avait mal posé (catalogue de nœuds) et deux renvois mal ciblés réparés ; table du
               §12 tenue.
-        - [ ] **T3.2b — chapitre 9, l'affaire** : après le commit des ajouts de `CRM-068` à ce chapitre.
+        - [x] **T3.2b — chapitre 9, l'affaire** — *fait le 2026-10-27*, après le commit des ajouts de `CRM-068` : aucune
+              référence interne ; neuf passages devenus faux corrigés (journal) ; table du §12 tenue.
       - [x] **T3.3 — la messagerie** : chapitres 11 à 16. *Fait le 2026-10-27* : aucune référence interne ; une
             introduction aux deux chapitres nés du plan (11, 12) ; libellés et comportements relus dans le code ; huit
             passages devenus faux corrigés (journal) ; table du §12 tenue.
-      - [~] **T3.4 — l'administration de l'espace** : chapitres 17 à 22.
+      - [x] **T3.4 — l'administration de l'espace** : chapitres 17 à 22.
         - [x] **T3.4a — chapitres 17, 19, 20, 21 et 22** (arborescence, catalogue, corbeille, membres, journal d'audit) —
               *fait le 2026-10-27* : aucune référence interne ; six passages du chapitre 17 devenus faux ou
               contradictoires corrigés (journal) ; le lien vers une spécification, seul avertissement de la construction,
               retiré ; table du §12 tenue.
-        - [ ] **T3.4b — chapitre 18, composer un workflow** : après le commit des ajouts de `CRM-068` à ce chapitre.
+        - [x] **T3.4b — chapitre 18, composer un workflow** — *fait le 2026-10-27* : aucune référence interne ; « rendre un
+              workflow par défaut reste un geste d'API » corrigé (la commande « Définir par défaut » existe) ; table du §12
+              tenue. **Le contrôle « aucune référence interne » porte désormais sur le manuel entier** : 0 sur 33
+              chapitres.
       - [x] **T3.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33. *Fait le 2026-10-27* : aucune
             référence interne ; huit passages devenus faux ou mal liés corrigés (journal) ; table du §12 tenue. Le
             contrôle « aucune référence interne » couvre 31 chapitres sur 33 : les chapitres 9 et 18 attendent T3.2b et
