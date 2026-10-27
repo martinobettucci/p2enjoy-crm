@@ -25,7 +25,7 @@ d'exécuter le code attendu.
   dès l'appel suivant, l'administrateur jamais restreint, la recherche.
 - INC-319 consigne une dépendance d'ordre, antérieure, entre deux fichiers d'intégration du connecteur.
 
-### `CRM-118` T2.a et T2.b — la famille `workflows` du connecteur (décisions 752, 754 et 756)
+### `CRM-118` T2.a à T2.c — la famille `workflows` du connecteur (décisions 752, 754 et 756)
 
 *En développement seulement. La migration `0129` attend la prochaine fenêtre de production.*
 
@@ -39,6 +39,9 @@ d'exécuter le code attendu.
   visibilité de chaque question à chaque étape, mesurer combien d'affaires une exigence toucherait, ajouter, modifier,
   réordonner et archiver une question, régler sa visibilité à une étape, et exiger une question pour un déplacement —
   comme l'éditeur, et pour les seuls administrateurs. Ni la clé ni le type d'une question ne changent.
+- **Connecteur MCP, les versions d'un workflow (T2.c)** : un assistant peut lister les versions d'un workflow, comparer
+  deux versions ou une copie avec sa source, publier une version, et restaurer une version après avoir montré le plan de
+  ce qu'elle ferait des affaires — comme le bloc « Versions » de l'éditeur, et pour les seuls administrateurs.
 - **Plateforme ▸ Connecteur MCP** : la matrice des droits gagne la ligne « Workflows », après « Structure ».
 
 ### `CRM-068` — les checklists d'une affaire (en cours : T1, T2, T3a)

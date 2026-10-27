@@ -17077,8 +17077,20 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
         modifié par `35b29739`), DAT, design system §5.56, SPEC-mcp, CHANGELOG. INC-320 consignée
         (`plateforme-mcp.spec.ts` dépend d'un journal frais).
       - **Reste `[P]`** : la livraison, avec T2.a, et le constat du responsable.
-- [ ] **T2.c — la copie, les versions, le remappage** : mêmes preuves ; E2E : une restauration par le connecteur remappe
+- [P] **T2.c — la copie, les versions, le remappage** : mêmes preuves ; E2E : une restauration par le connecteur remappe
       une affaire visible au board. `crm_workflow_copy_to_track` **après T1.b**.
+      - **Fait le 2026-10-27** : `mcp/crm_mcp/outils/workflows_versions.py`, **six outils** (la copie n'est pas déclarée) ;
+        genre d'ancre `version` ; la restauration ne transmet **aucune empreinte vivante**, comme l'écran — la spécification
+        le supposait à tort, corrigée (`docs/SPEC-mcp.md` §9.2 undecies).
+      - Unitaires `tests/test_workflows_versions.py` **6** ; **neuf mutations tuées sur neuf**.
+      - Intégration contre la vraie pile : deux versions publiées, `composition_unchanged`, la liste, la comparaison, le
+        plan, la restauration (l'étape ajoutée retirée ; la version d'avant sert de point de retour sans republier), la
+        comparaison d'une copie du seed à sa source ; le business developer qui lit mais ne publie ni ne restaure.
+        Fichier **6/6**.
+      - **E2E** `connecteur-workflows.spec.ts` : une affaire posée sur l'étape qu'une version retire est remappée par une
+        restauration du connecteur, et le board la montre à sa nouvelle étape — **3/3**, capture observée.
+      - Phrase de l'onglet, manuel 11.1 et 11.5 et chapitre construit, DAT, design system, SPEC-mcp, CHANGELOG.
+      - **Reste `[P]`** : la livraison, avec T2.a et T2.b, et le constat du responsable.
 - [ ] **T2.d — le catalogue de nœuds, le workflow d'un channel** : mêmes preuves ; E2E : un nœud créé par le connecteur
       paraît dans le catalogue. `crm_channel_workflow_change` **après T1.b**.
 - [ ] **T3 — livraison**, sur instruction du responsable.

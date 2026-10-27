@@ -1,10 +1,13 @@
-// @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a et T2.b : l'effet des outils de la famille `workflows`, constaté dans
+// @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a à T2.c : l'effet des outils de la famille `workflows`, constaté dans
 //           la webapp
 // @verifies docs/SPEC-mcp.md §9.2 undecies (« une étape ajoutée par un vrai client MCP paraît dans l'éditeur de
 //           workflows », crm_workflow_create, crm_workflow_step_add), §5 (sous l'identité de la personne) ;
 //           docs/SPEC-workflow-engine.md §7 bis.3 ; CLAUDE.md §16 (captures)
 // @verifies docs/SPEC-mcp.md §9.2 undecies T2.b (« un champ exigé par le connecteur bloque un déplacement au board »,
 //           crm_transition_required_field_set) ; docs/SPEC-workflow-engine.md §5.7, §7.10 (le bandeau de refus)
+// @verifies docs/SPEC-mcp.md §9.2 undecies T2.c (« une restauration par le connecteur remappe une affaire visible au
+//           board », crm_workflow_version_publish, crm_workflow_remap_plan, crm_workflow_version_restore) ;
+//           docs/SPEC-workflow-engine.md §7 ter.12, §7 ter.13
 //
 // Un VRAI client MCP crée un workflow et lui ajoute une étape au nom de l'administratrice ; la webapp, sous le même
 // compte, montre le workflow et son étape dans l'éditeur. Les cases posées pour la preuve, et le workflow, sont retirés à
@@ -35,6 +38,14 @@ const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
 const ETAPE_PROSPECTION = '5eed0000-0000-4000-8000-000000000061'
 const TRANSITION_RELANCER = '5eed0000-0000-4000-8000-000000000071'
 const CHAMP_DATE_SIGNATURE = '5eed0000-0000-4000-8000-000000000083'
+// T2.c : un channel jetable du track « Conseil & IA », servi par le workflow de la preuve.
+const TRACK_CONSEIL = '5eed0000-0000-4000-8000-000000000021'
+const SLUG_REMAP = 'e2e-mcp-remap'
+const NOEUDS = {
+	prospection: '5eed0000-0000-4000-8000-000000000041',
+	relance: '5eed0000-0000-4000-8000-000000000042',
+	negociation: '5eed0000-0000-4000-8000-000000000043',
+}
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 
 test.use({ viewport: { width: 1440, height: 900 } })
@@ -44,6 +55,15 @@ async function retirer(request: APIRequestContext): Promise<void> {
 		await request.delete(rest(`mcp_droits?sub=eq.${CAMILLE.sub}&workspace_id=eq.${ESPACE}&famille=eq.${famille}&action=eq.${action}`), {
 			headers: enTetesService(),
 		})
+	}
+	const canaux = await request.get(rest(`channels?track_id=eq.${TRACK_CONSEIL}&slug=eq.${SLUG_REMAP}&select=id`), { headers: enTetesService() })
+	for (const { id } of (await canaux.json()) as { id: string }[]) {
+		const cartes = await request.get(rest(`cards?channel_id=eq.${id}&select=id`), { headers: enTetesService() })
+		for (const carte of (await cartes.json()) as { id: string }[]) {
+			await request.delete(rest(`card_field_values?card_id=eq.${carte.id}`), { headers: enTetesService() })
+			await request.delete(rest(`cards?id=eq.${carte.id}`), { headers: enTetesService() })
+		}
+		await request.delete(rest(`channels?id=eq.${id}`), { headers: enTetesService() })
 	}
 	await request.delete(rest(`workflows?workspace_id=eq.${ESPACE}&name=eq.${encodeURIComponent(NOM)}`), {
 		headers: enTetesService(),
@@ -158,4 +178,49 @@ test('un champ exigé par le connecteur bloque le déplacement au board, et le b
 		await request.delete(rest(`card_field_values?card_id=eq.${idCard}`), { headers: enTetesService() })
 		await request.delete(rest(`cards?id=eq.${idCard}`), { headers: enTetesService() })
 	}
+})
+
+test('une restauration par le connecteur remappe une affaire, et le board la montre à sa nouvelle étape', async ({ page, browser, request }) => {
+	const session = await sessionDe(browser, CAMILLE.adresse)
+	const outil = async (name: string, args: Record<string, unknown>) => {
+		const resultat = await session.appeler('tools/call', { name, arguments: args })
+		expect(resultat.isError ?? false, `${name} ${JSON.stringify(resultat)}`).toBe(false)
+		return resultat.structuredContent
+	}
+	const workflow = (await outil('crm_workflow_create', { workspace: 'p2enjoy', name: NOM })).workflow.id as string
+	const prospection = (await outil('crm_workflow_step_add', { workflow_id: workflow, node_id: NOEUDS.prospection })).step.id as string
+	const relance = (await outil('crm_workflow_step_add', { workflow_id: workflow, node_id: NOEUDS.relance })).step.id as string
+	await outil('crm_workflow_step_update', { step_id: prospection, make_initial: true })
+	await outil('crm_workflow_transition_add', { workflow_id: workflow, from_step_id: prospection, to_step_id: relance })
+	const v1 = (await outil('crm_workflow_version_publish', { workflow_id: workflow, note: 'Deux étapes' })).version.id as string
+	const negociation = (await outil('crm_workflow_step_add', { workflow_id: workflow, node_id: NOEUDS.negociation })).step.id as string
+	await outil('crm_workflow_transition_add', { workflow_id: workflow, from_step_id: relance, to_step_id: negociation })
+
+	const canal = await request.post(rest('channels'), {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: { workspace_id: ESPACE, track_id: TRACK_CONSEIL, workflow_id: workflow, name: 'E2E MCP remap', slug: SLUG_REMAP },
+	})
+	expect(canal.status(), await canal.text()).toBe(201)
+	const idChannel = ((await canal.json()) as { id: string }[])[0]?.id ?? ''
+	const idCard = randomUUID()
+	const titre = `E2E MCP remap ${idCard.slice(0, 8)}`
+	const carte = await request.post(rest('cards'), {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
+		data: { id: idCard, workspace_id: ESPACE, channel_id: idChannel, workflow_id: workflow, current_step_id: negociation, title: titre },
+	})
+	expect(carte.status(), await carte.text()).toBe(201)
+
+	// Sans instruction, le plan n'est pas applicable : l'affaire de « Négociation » n'a pas de destination.
+	const plan = await outil('crm_workflow_remap_plan', { version_id: v1 })
+	expect(plan.plan.ready).toBe(false)
+	const pret = await outil('crm_workflow_remap_plan', { version_id: v1, step_overrides: [{ from_step_id: negociation, to_step_id: relance }] })
+	expect(pret.plan.ready).toBe(true)
+	await outil('crm_workflow_version_restore', { version_id: v1, step_overrides: [{ from_step_id: negociation, to_step_id: relance }] })
+
+	await connecterAvecLeLabs(page, CAMILLE.adresse)
+	await page.goto(`/tracks/conseil-ia/${SLUG_REMAP}`)
+	await expect(page.getByTestId('colonne')).toHaveCount(2)
+	await expect(page.locator(`[data-testid="colonne"][data-etape="${relance}"] [data-card="${idCard}"]`)).toHaveCount(1)
+	await expect(page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)).toContainText(titre)
+	await capturer(page, 'connecteur-restauration-board-1440', UNITE)
 })

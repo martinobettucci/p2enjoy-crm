@@ -991,10 +991,10 @@ de `CRM-068` T3b ; il est marqué *après T1.b* ou *après `CRM-068` T3b* ci-des
 | `crm_workflow_version_list` | `consulter` | `workflow:workflow_id` | `workflow_versions` | numéro, note, auteur, date ; sans la composition |
 | `crm_workflow_version_compare` | `consulter` | `version:base_version_id` ; `autres` : `version:target_version_id` | `compare_workflow_versions` | ajouts, retraits, modifications, par libellé |
 | `crm_workflow_source_compare` | `consulter` | `workflow:workflow_id` | `workflow_derivations`, `compare_workflow_with_source` | la divergence d'une copie avec sa source (§4 ter) |
-| `crm_workflow_remap_plan` | `consulter` | `version:version_id` | `plan_card_remapping(target_version_id, step_overrides, card_limit)` | où chaque affaire atterrirait ; n'écrit rien ; rend l'empreinte vivante à repasser à la restauration |
+| `crm_workflow_remap_plan` | `consulter` | `version:version_id` | `plan_card_remapping(target_version_id, step_overrides)` | où chaque affaire atterrirait ; n'écrit rien ; `card_limit` n'est pas offert, l'écran ne l'envoie pas |
 | `crm_workflow_copy_to_track` | `ajouter` | `workflow:workflow_id` ; `autres` : `track:track_id` | `copy_workflow_to_track(workflow_id, track_id, new_name)` | **après T1.b** : aucun écran n'appelle la fonction aujourd'hui |
 | `crm_workflow_version_publish` | `ajouter` | `workflow:workflow_id` | `publish_workflow_version(target_workflow_id, note)` | une photographie immuable (§7 ter.5) |
-| `crm_workflow_version_restore` | `modifier`, `destructiveHint` | `version:version_id` | `restore_workflow_version(target_version_id, step_overrides, expected_live_fingerprint)` | réécrit la composition vivante **et remappe les affaires**, en une transaction ; le plan est rejoué, l'empreinte vérifiée (§7 ter.13). La description demande de montrer le plan à la personne avant |
+| `crm_workflow_version_restore` | `modifier`, `destructiveHint` | `version:version_id` | `restore_workflow_version(target_version_id, step_overrides)` | réécrit la composition vivante **et remappe les affaires**, en une transaction ; le plan est rejoué dans la transaction (§7 ter.13). **Aucune empreinte vivante n'est transmise** : aucune fonction publique ne la rend, et l'écran ne l'envoie pas (`docs/SPEC-workflow-engine.md` §7 ter.14.8) — *corrigé à l'écriture du code, le 2026-10-27 ; la première rédaction le supposait possible*. La description demande de montrer le plan à la personne avant |
 
 **Refus nommés**, et non le refus uniforme : la personne qui administre doit savoir pourquoi. Les contraintes nommées
 (`23514`) et les unicités (`23505` : un nœud déjà présent, une seconde étape initiale, une arête déjà déclarée, une clé
@@ -1007,7 +1007,8 @@ partout (§9.3).
 restauration. **L'onglet « Connecteur MCP »** gagne la ligne `workflows` et sa phrase de portée, **qui grandit avec les
 sous-tranches** pour ne jamais promettre un outil absent. Avec T2.a : « Créer et modifier les workflows, leurs étapes et
 transitions ; la lecture reste à Structure » ; avec T2.b : « Créer et modifier les workflows, leurs étapes, transitions et
-formulaire ; la lecture reste à Structure ». Cible, toutes sous-tranches livrées : « Créer, modifier et archiver les
+formulaire ; la lecture reste à Structure » ; avec T2.c : « … et formulaire, publier et restaurer leurs versions ; la lecture
+reste à Structure ». Cible, toutes sous-tranches livrées : « Créer, modifier et archiver les
 workflows, leurs étapes, transitions et formulaire, le catalogue de nœuds ; versions, copie, workflow d'un channel. La
 lecture d'un workflow reste à Structure. »
 

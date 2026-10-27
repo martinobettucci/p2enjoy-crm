@@ -239,7 +239,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : créer et modifier les workflows, leurs étapes, leurs transitions et leur formulaire ; la lecture d'un\nworkflow reste à « Structure » ;"
+								"text": " : créer et modifier les workflows, leurs étapes, leurs transitions et leur formulaire, publier et\nrestaurer leurs versions ; la lecture d'un workflow reste à « Structure » ;"
 							}
 						]
 					}
@@ -1950,7 +1950,7 @@
 									},
 									{
 										"type": "text",
-										"text": ", tranches T2.a et T2.b ; la suite vient avec les tranches\nsuivantes"
+										"text": ", tranches T2.a à T2.c ; la suite vient avec les tranches\nsuivantes"
 									}
 								]
 							},
@@ -2006,7 +2006,33 @@
 										},
 										{
 											"type": "text",
-											"text": ". Lire un workflow, étape par étape, demande\n« Structure ▸ Consulter » ;"
+											"text": " ; les "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "versions"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " publiées d'un workflow, et la\ncomparaison de deux versions, ou d'une copie avec le workflow dont elle vient ; enfin, avant une restauration, "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "le\nplan"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " de ce qu'elle ferait des affaires — sans rien changer. Lire un workflow, étape par étape, demande « Structure ▸\nConsulter » ;"
 										}
 									]
 								}
@@ -2039,7 +2065,20 @@
 										},
 										{
 											"type": "text",
-											"text": " dans un espace qui n'en a aucun, comme le panneau « Bien\ndémarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité ou un seuil de\nrelance qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif\nexigé ; ajouter une question au formulaire — une clé, un libellé, l'un des quinze types, une aide, les choix d'une\nliste ou la devise d'un montant ;"
+											"text": " dans un espace qui n'en a aucun, comme le panneau « Bien\ndémarrer » ; ajouter une étape à partir d'un nœud du catalogue, avec un libellé, une probabilité ou un seuil de\nrelance qui lui sont propres ; déclarer un déplacement d'une étape vers une autre, avec son libellé et un motif\nexigé ; ajouter une question au formulaire — une clé, un libellé, l'un des quinze types, une aide, les choix d'une\nliste ou la devise d'un montant ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "publier une version"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " du workflow, avec une note ;"
 										}
 									]
 								}
@@ -2098,7 +2137,20 @@
 										},
 										{
 											"type": "text",
-											"text": ", ou ne plus l'exiger : une affaire ne passe alors plus sans y avoir répondu ;"
+											"text": ", ou ne plus l'exiger : une affaire ne passe alors plus sans y avoir répondu ;\n"
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "restaurer une version"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : le workflow reprend ses étapes, ses déplacements et son formulaire d'alors, et les affaires\ndes étapes qu'elle retire vont où vous l'indiquez — l'assistant doit vous montrer le plan d'abord ; l'état d'avant\nreste disponible comme version ;"
 										}
 									]
 								}

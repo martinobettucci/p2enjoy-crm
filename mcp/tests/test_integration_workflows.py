@@ -1,8 +1,9 @@
-# @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a et T2.b : les outils de la famille `workflows` contre le vrai Keycloak,
+# @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a à T2.c : les outils de la famille `workflows` contre le vrai Keycloak,
 #           la vraie base et le vrai service `mcp`, par le parcours OAuth réel
 # @verifies docs/SPEC-mcp.md §13 (par outil : succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
 #           journal écrit), §9.2 undecies (T2.a : le workflow, ses étapes, ses transitions ; T2.b : le formulaire, la
-#           visibilité, les exigences ; les refus nommés) ; docs/SPEC-workflow-engine.md §7 bis.10 à §7 bis.13 ;
+#           visibilité, les exigences ; T2.c : les versions et le remappage ; les refus nommés) ;
+#           docs/SPEC-workflow-engine.md §7 bis.10 à §7 bis.13, §7 ter.5, §7 ter.11 à §7 ter.13 ;
 #           docs/SPEC-workflow-engine.md §3.4, §3.5, §3.7 ; décisions 754 et 756
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
@@ -225,5 +226,87 @@ async def test_le_business_developer_ne_compose_pas_le_formulaire():
                 await client.call_tool("crm_form_field_update", {"field_id": CHAMP_DEFAUT, "label": "Réécrit"})
             assert await _dernier_journal(DRISS[1]) == ("crm_form_field_update", "refus_crm")
         assert (await _service("GET", "/form_fields", params={"id": f"eq.{CHAMP_DEFAUT}", "select": "label"})).json()[0]["label"] != "Réécrit"
+    finally:
+        await _retirer(DRISS, cases)
+
+
+# --- T2.c — les versions, les comparaisons, le remappage --------------------------------------------------------------
+
+NEGOCIATION = "5eed0000-0000-4000-8000-000000000043"
+
+
+async def test_les_versions_publiees_comparees_et_restaurees_par_l_administratrice():
+    await _nettoyer()
+    await _poser(CAMILLE, WORKFLOWS)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(CAMILLE)) as client:
+            await _attendre_visible(client, "crm_workflow_version_restore")
+
+            async def appeler(outil: str, arguments: dict) -> dict:
+                resultat = (await client.call_tool(outil, arguments)).structured_content
+                assert await _dernier_journal(CAMILLE[1]) == (outil, "ok"), outil
+                return resultat
+
+            async def refuse(outil: str, arguments: dict, motif: str) -> None:
+                with pytest.raises(ToolError, match=motif):
+                    await client.call_tool(outil, arguments)
+                assert await _dernier_journal(CAMILLE[1]) == (outil, "refus_crm"), outil
+
+            wf = (await appeler("crm_workflow_create", {"workspace": "p2enjoy", "name": NOM}))["workflow"]["id"]
+            depart = (await appeler("crm_workflow_step_add", {"workflow_id": wf, "node_id": PROSPECTION}))["step"]["id"]
+            arrivee = (await appeler("crm_workflow_step_add", {"workflow_id": wf, "node_id": RELANCE}))["step"]["id"]
+            await appeler("crm_workflow_step_update", {"step_id": depart, "make_initial": True})
+            v1 = (await appeler("crm_workflow_version_publish", {"workflow_id": wf, "note": "Deux étapes"}))["version"]
+            await refuse("crm_workflow_version_publish", {"workflow_id": wf}, "composition_unchanged")
+            troisieme = (await appeler("crm_workflow_step_add", {"workflow_id": wf, "node_id": NEGOCIATION}))["step"]["id"]
+            await appeler("crm_workflow_transition_add", {"workflow_id": wf, "from_step_id": arrivee, "to_step_id": troisieme})
+            v2 = (await appeler("crm_workflow_version_publish", {"workflow_id": wf}))["version"]
+            assert v2["version_number"] == v1["version_number"] + 1
+
+            versions = (await appeler("crm_workflow_version_list", {"workflow_id": wf}))["versions"]
+            assert [v["version_number"] for v in versions] == [v2["version_number"], v1["version_number"]]
+            assert versions[1]["note"] == "Deux étapes" and versions[1]["published_by"] == "Camille Aubert"
+            comparaison = (await appeler("crm_workflow_version_compare", {
+                "base_version_id": v1["id"], "target_version_id": v2["id"],
+            }))["comparison"]
+            assert comparaison and comparaison != {}
+
+            plan = (await appeler("crm_workflow_remap_plan", {"version_id": v1["id"]}))["plan"]
+            assert plan["ready"] is True and plan["summary"]["steps_removed"] == 1
+            restauration = (await appeler("crm_workflow_version_restore", {"version_id": v1["id"]}))["restoration"]
+            assert restauration["matches_version"] is True
+            etapes = (await _service("GET", "/workflow_steps", params={"workflow_id": f"eq.{wf}", "select": "id"})).json()
+            assert {e["id"] for e in etapes} == {depart, arrivee}
+            # L'état d'avant était déjà la version 2 : elle est le point de retour, rien n'est republié (§7 ter.13).
+            assert restauration["rollback_version"]["version_number"] == v2["version_number"]
+            assert restauration["rollback_version"]["published"] is False
+            assert len((await appeler("crm_workflow_version_list", {"workflow_id": wf}))["versions"]) == 2
+
+            copie = (await _service("GET", "/workflows", params={
+                "workspace_id": f"eq.{ESPACE_SEEDE}", "derived_from_workflow_id": f"eq.{WORKFLOW_DEFAUT}", "select": "id",
+            })).json()[0]["id"]
+            source = await appeler("crm_workflow_source_compare", {"workflow_id": copie})
+            assert source["source"]["workflow_id"] == WORKFLOW_DEFAUT and source["comparison"]
+    finally:
+        await _retirer(CAMILLE, WORKFLOWS)
+        await _nettoyer()
+
+
+async def test_le_business_developer_compare_mais_ne_publie_ni_ne_restaure():
+    cases = [("workflows", "consulter"), ("workflows", "ajouter"), ("workflows", "modifier")]
+    await _poser(DRISS, cases)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_outils(client, lambda noms: "crm_workflow_version_restore" in noms, "matrice attendue")
+            versions = (await client.call_tool("crm_workflow_version_list", {"workflow_id": WORKFLOW_DEFAUT})).structured_content["versions"]
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_workflow_version_publish", {"workflow_id": WORKFLOW_DEFAUT, "note": "refusée"})
+            assert await _dernier_journal(DRISS[1]) == ("crm_workflow_version_publish", "refus_crm")
+            if versions:
+                with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                    await client.call_tool("crm_workflow_version_restore", {"version_id": versions[-1]["id"]})
+                assert await _dernier_journal(DRISS[1]) == ("crm_workflow_version_restore", "refus_crm")
+        apres = (await _service("GET", "/workflow_versions", params={"workflow_id": f"eq.{WORKFLOW_DEFAUT}", "select": "id"})).json()
+        assert len(apres) == len(versions)
     finally:
         await _retirer(DRISS, cases)
