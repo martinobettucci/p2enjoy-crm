@@ -17031,7 +17031,7 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
       workflow qu'emploient des channels), le copier vers un track (`copy_workflow_to_track`), changer le workflow d'un
       channel (`change_channel_workflow`). Unitaires, API, E2E, captures, manuel, design system. Connecteur MCP : oui,
       famille `workflows` (décisions 752 et 756).
-- [~] **T2.a — le workflow, ses étapes, ses transitions** : migration et pgTAP, genres d'ancre,
+- [P] **T2.a — le workflow, ses étapes, ses transitions** : migration et pgTAP, genres d'ancre,
       `mcp/crm_mcp/outils/workflows.py`, unitaires et mutations, intégration contre la vraie pile (succès, refus par la
       matrice, refus par le CRM malgré la matrice ouverte, journal), E2E (une étape ajoutée par un vrai client MCP paraît
       dans l'éditeur), onglet « Connecteur MCP », seed, manuel, DAT. `crm_workflow_update` et `crm_workflow_archive`
@@ -17051,8 +17051,15 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
         `crm_workflow_get` absent sans `structure`. Intégration complète **51 réussis**.
       - Webapp : `plateforme.test.ts` révisé, mutation tuée ; `typecheck` vert ; `test:unit` **4693** ; DAT, design system
         §5.56, manuel 11.1 et 11.5, CHANGELOG, contrat de déploiement.
-      - **Reste** : l'E2E `connecteur-workflows.spec.ts` (écrit, pas encore joué : le port de prévisualisation est tenu
-        par une campagne d'une autre session) et sa capture ; `verify-mcp.sh` complet.
+      - **E2E** `connecteur-workflows.spec.ts` : un workflow créé et une étape ajoutée par un vrai client MCP paraissent
+        dans l'éditeur de workflows — **1/1**, capture observée (`docs/captures/CRM-118/`) ; `plateforme-mcp.spec.ts` 6/6,
+        la ligne « Workflows » observée aux paliers 1440 et 390 (`docs/captures/CRM-103/`). Harnais `SCENARIOS_UI` +1.
+      - Rejoué après le seed §28 de `CRM-068` (`35b29739`) : pgTAP `0120` 16/16, intégration 5/5.
+      - `scripts/verify-mcp.sh` **92 contrôles** (voir le compte rendu du commit) ; sa traçabilité accepte aussi
+        `CRM-119`, dont le test d'intégration la faisait rougir.
+      - **Implémentée et vérifiée en développement le 2026-10-27.** **Reste `[P]`** : la livraison, sur instruction du
+        responsable — migration `0129`, image `mcp` reconstruite, webapp (`docs/PROD_MIGRATIONS.md`) —, et son constat :
+        un assistant connecté qui compose un workflow.
 - [ ] **T2.b — le formulaire, la visibilité, les exigences** : mêmes preuves ; E2E : un champ exigé par le connecteur
       bloque un déplacement au board. Les cinq outils de checklist **après `CRM-068` T3b**.
 - [ ] **T2.c — la copie, les versions, le remappage** : mêmes preuves ; E2E : une restauration par le connecteur remappe

@@ -134,7 +134,7 @@ while IFS= read -r fichier; do
 	# Un fichier du connecteur cite son unité : `CRM-102` pour le socle, `CRM-103` pour le seed du connecteur
 	# (docs/SPEC-seed.md §22), `CRM-108` pour la famille `recettes` (docs/SPEC-recettes.md §7), `CRM-104` pour les familles
 	# de son catalogue (docs/SPEC-mcp.md §9.2 bis), qui y ajoutent leurs propres modules sans les rattacher au socle.
-	if head -8 "$fichier" | grep -Eq '@(spec|verifies) CRM-(10[2348]|11[48])'; then ok "$fichier cite son unité (CRM-102, CRM-103, CRM-104, CRM-108, CRM-114 ou CRM-118)"; else fail "$fichier ne cite ni CRM-102, ni CRM-103, ni CRM-104, ni CRM-108, ni CRM-114, ni CRM-118"; fi
+	if head -8 "$fichier" | grep -Eq '@(spec|verifies) CRM-(10[2348]|11[489])'; then ok "$fichier cite son unité (CRM-102, CRM-103, CRM-104, CRM-108, CRM-114, CRM-118 ou CRM-119)"; else fail "$fichier ne cite ni CRM-102, ni CRM-103, ni CRM-104, ni CRM-108, ni CRM-114, ni CRM-118, ni CRM-119"; fi
 done < <(
 	find mcp -type f \( -name '*.py' -o -name 'Dockerfile' -o -name '*.toml' -o -name '*.lock' \) | sort
 	printf '%s\n' supabase/migrations/0090_connecteur_mcp.sql supabase/tests/0085_connecteur_mcp.test.sql \
