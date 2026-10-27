@@ -3,6 +3,57 @@
 	"title": "11. Les boîtes de réception et les adresses d'expédition",
 	"blocks": [
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le CRM ne remplace pas votre messagerie : il s'y raccorde. Une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "boîte de réception"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " déclarée lui permet de relever\nle courrier et de le ranger dans les affaires ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-inbox-lire-trier-et-repondre"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") ; une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "adresse\nd'expédition"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " lui permet d'écrire en votre nom. Ce chapitre dit comment les déclarer, et ce que le produit garantit\nensuite."
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "les-boites-de-reception-declarees",
@@ -71,15 +122,7 @@
 				},
 				{
 					"type": "text",
-					"text": " ("
-				},
-				{
-					"type": "code",
-					"text": "CRM-088"
-				},
-				{
-					"type": "text",
-					"text": "). L'écran\nliste les boîtes que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les\ndéclarer ou les corriger. Il vient "
+					"text": ". L'écran\nliste les boîtes que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les\ndéclarer ou les corriger. Il vient "
 				},
 				{
 					"type": "strong",
@@ -295,20 +338,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Il n'est pas enregistré dans la même\ntable que le reste : il part dans un coffre chiffré, et la table ne conserve qu'une "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "référence"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ".\nCette référence elle-même est fermée à toute personne connectée — administrateur compris. Seul le\nservice de messagerie, qui doit ouvrir la connexion, peut obtenir le mot de passe en clair."
+					"text": " Il n'est pas conservé avec le reste de la configuration :\nil part dans un coffre chiffré, qui n'est ouvert à aucune personne connectée — administrateur compris. Seul le service\nde messagerie, qui doit ouvrir la connexion, peut obtenir le mot de passe en clair."
 				}
 			]
 		},
@@ -585,15 +615,7 @@
 				},
 				{
 					"type": "text",
-					"text": " ("
-				},
-				{
-					"type": "code",
-					"text": "CRM-089"
-				},
-				{
-					"type": "text",
-					"text": "). L'écran liste\nles adresses que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les\ndéclarer ou les corriger. Il vient "
+					"text": ". L'écran liste\nles adresses que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les\ndéclarer ou les corriger. Il vient "
 				},
 				{
 					"type": "strong",
@@ -886,20 +908,20 @@
 							},
 							{
 								"type": "text",
-								"text": " ; ni le "
+								"text": " ; aucun réglage du "
 							},
 							{
 								"type": "strong",
 								"content": [
 									{
 										"type": "text",
-										"text": "quota quotidien"
+										"text": "plafond quotidien"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " ni la "
+								"text": " d'envois (voir plus bas). La\n"
 							},
 							{
 								"type": "strong",
@@ -912,7 +934,23 @@
 							},
 							{
 								"type": "text",
-								"text": ", que\nl'écran ne touche jamais et n'écrase donc jamais."
+								"text": ", elle, se règle sur ce même écran ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "signer-les-messages-expedies-depuis-une-identite"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 15"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -958,7 +996,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : le produit ne lie pas les deux, et\nl'espace de démonstration le montre. Une adresse d'expédition porte son serveur d'envoi, son\nidentifiant, son mot de passe — chiffré comme celui d'une boîte de réception —, un nom affiché et\nune signature."
+					"text": " : le produit ne lie pas les deux. Une adresse\nd'expédition porte son serveur d'envoi, son\nidentifiant, son mot de passe — chiffré comme celui d'une boîte de réception —, un nom affiché et\nune signature."
 				}
 			]
 		},
@@ -1067,13 +1105,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Un quota quotidien peut être déclaré, mais il n'est appliqué par rien aujourd'hui"
+							"text": "Une adresse peut porter un plafond d'envois quotidien."
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " : l'envoi\nlui-même n'est pas encore livré, et le dire vaut mieux que de laisser croire à un garde-fou qui\nn'existe pas."
+					"text": " Par défaut, elle n'en a aucun, et l'écran ne le règle pas.\nQuand un plafond est atteint, tout nouveau message est refusé au moment où vous l'envoyez — « Cette adresse\nd'expédition a atteint son plafond du jour. » — et le compte repart au jour suivant, compté en temps universel. Les messages déjà en attente\nd'envoi comptent : le plafond protège le serveur d'envoi, pas une statistique."
 				}
 			]
 		}

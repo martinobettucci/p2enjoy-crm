@@ -36376,3 +36376,20 @@ lien posé par T3.0 était faux** : un renvoi « chapitre 5 *quater* » coupé p
 « chapitre 5 » (l'arborescence) ; il mène au catalogue de nœuds. Deux renvois de Ma journée visaient la mauvaise
 section (archivage, sommeil). Les volumes du jeu de démonstration (« quatre affaires figées », des noms de contacts)
 sont retirés. **Le chapitre 9** attend le commit des ajouts de `CRM-068`, qui y écrit : T3.2b.
+
+### `CRM-117` T3.3 : la messagerie réécrite pour le lecteur (2026-10-27)
+
+**Fait** : chapitres 11 à 16 — les boîtes et les adresses d'expédition, l'inbox, l'état de la messagerie, les modèles,
+les signatures, les séquences —, sans aucune référence interne (ni unité, ni variable d'environnement, ni nom de table,
+ni personne du jeu de démonstration). Les chapitres 11 et 12, nés du plan, reçoivent une introduction.
+
+**Vérifié contre le code, et corrigé — huit passages étaient devenus faux** : la signature se règle sur l'écran des
+identités (le chapitre disait l'inverse) ; le plafond quotidien d'envoi **est** appliqué — compté sur la journée en
+temps universel, en attente comprise, refusé avec « Cette adresse d'expédition a atteint son plafond du jour. » — alors
+que le chapitre le disait « appliqué par rien » et l'envoi « pas encore livré » ; l'inbox disait l'envoi et la
+suggestion de classement non livrés, et l'absence de « lu / non lu » qu'elle décrit quelques lignes plus haut ; les
+modèles et les séquences disaient leurs commandes jamais grisées selon le rôle, alors qu'elles le sont (bandeau du §3.11
+en lisant `ReglagesModelesEmails.tsx`, `ReglagesSequencesRelance.tsx`, `BlocSequenceCard.tsx`) ; les modèles disaient les
+séquences non livrées. Le nombre de variables d'un modèle (douze) est mesuré en base. **Retirés** : le nom de la
+variable d'environnement de la relève, les messages « reçus avant l'été 2026 », la séquence et la signature du jeu de
+démonstration.

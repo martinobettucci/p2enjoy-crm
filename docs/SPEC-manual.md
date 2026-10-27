@@ -471,6 +471,15 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 | `CRM-083` | les-objectifs-le-tableau-blanc-de-l-equipe | le-canevas |
 | `CRM-060` | le-carnet-de-contacts | — |
 | `CRM-114` | le-carnet-de-contacts | l-onglet-organisations |
+| `CRM-052` | les-boites-de-reception-et-les-adresses-d-expedition | les-boites-de-reception-declarees |
+| `CRM-088` | les-boites-de-reception-et-les-adresses-d-expedition | les-boites-de-reception-declarees |
+| `CRM-053` | les-boites-de-reception-et-les-adresses-d-expedition | les-adresses-d-expedition |
+| `CRM-089` | les-boites-de-reception-et-les-adresses-d-expedition | les-adresses-d-expedition |
+| `CRM-054` | l-inbox-lire-trier-et-repondre | ce-que-le-produit-fait-d-un-message-recu |
+| `CRM-057` | l-inbox-lire-trier-et-repondre | l-inbox-lire-et-trier-le-courrier-recu |
+| `CRM-058` | l-inbox-lire-trier-et-repondre | ecrire-et-repondre |
+| `CRM-059` | consulter-l-etat-de-la-messagerie | — |
+| `CRM-063` | ecrire-des-modeles-d-emails-et-les-previsualiser | — |
 | *(les autres chapitres à leur réécriture : T3.2 à T3.5)* | | |
 
 ## 13. Le manuel dans la webapp

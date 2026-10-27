@@ -17110,7 +17110,9 @@ responsable** : traitée juste après `CRM-116`.*
               existe) ; un lien que T3.0 avait mal posé (catalogue de nœuds) et deux renvois mal ciblés réparés ; table du
               §12 tenue.
         - [ ] **T3.2b — chapitre 9, l'affaire** : après le commit des ajouts de `CRM-068` à ce chapitre.
-      - [ ] **T3.3 — la messagerie** : chapitres 11 à 16.
+      - [x] **T3.3 — la messagerie** : chapitres 11 à 16. *Fait le 2026-10-27* : aucune référence interne ; une
+            introduction aux deux chapitres nés du plan (11, 12) ; libellés et comportements relus dans le code ; huit
+            passages devenus faux corrigés (journal) ; table du §12 tenue.
       - [ ] **T3.4 — l'administration de l'espace** : chapitres 17 à 22.
       - [ ] **T3.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33 ; le contrôle « aucune
             référence interne » couvre alors tout le manuel.

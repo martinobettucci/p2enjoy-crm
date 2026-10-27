@@ -6,44 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-059"
-						},
-						{
-							"type": "text",
-							"text": " ; les règles d'accès sont celles de "
-						},
-						{
-							"type": "code",
-							"text": "CRM-052"
-						},
-						{
-							"type": "text",
-							"text": " (comptes entrants) et de\n"
-						},
-						{
-							"type": "code",
-							"text": "CRM-058"
-						},
-						{
-							"type": "text",
-							"text": " (file sortante) — cet écran n'en invente aucune."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -282,7 +244,7 @@
 							},
 							{
 								"type": "text",
-								"text": " lorsqu'un compte tombe en erreur : cet écran est le seul endroit où\nle constater. Une notification proactive relèverait d'une unité dédiée aux notifications."
+								"text": " lorsqu'un compte tombe en erreur : cet écran est le seul endroit où\nle constater."
 							}
 						]
 					}
@@ -296,21 +258,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Aucune veille par IDLE"
+										"text": "La relève n'est pas instantanée"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " : la relève reste une scrutation régulière, dont l'intervalle se règle\npar la variable d'environnement "
-							},
-							{
-								"type": "code",
-								"text": "MAIL_SYNC_POLL_INTERVAL"
-							},
-							{
-								"type": "text",
-								"text": " (opération d'exploitation, hors de cet\nécran)."
+								"text": " : elle a lieu à intervalles réguliers, fixés à l'installation du CRM et non\ndepuis cet écran. Un message arrivé dans votre boîte paraît dans le CRM au passage suivant."
 							}
 						]
 					}

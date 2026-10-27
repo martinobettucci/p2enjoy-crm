@@ -3,6 +3,44 @@
 	"title": "12. L'inbox : lire, trier et répondre",
 	"blocks": [
 		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Inbox"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la barre latérale rassemble le courrier que le CRM a relevé dans les boîtes déclarées\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-boites-de-reception-et-les-adresses-d-expedition"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : celui qu'il a rangé dans les affaires, et\ncelui qui attend d'être trié. On y lit, on y range, et l'on écrit depuis une affaire."
+				}
+			]
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "ce-que-le-produit-fait-d-un-message-recu",
@@ -156,24 +194,6 @@
 				{
 					"type": "text",
 					"text": " : le produit affiche un nom sûr, et\nconserve le nom d'origine tel que l'expéditeur l'a écrit."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce que ces chapitres ne couvrent pas encore."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " L'envoi n'est pas livré, ni la relève\nautomatique — elle est déclenchée par l'exploitant. La suggestion par contact connu attend la\nfiche contact."
 				}
 			]
 		},
@@ -657,7 +677,7 @@
 				},
 				{
 					"type": "text",
-					"text": " son état. Les messages arrivés avant l'apparition de cette fonction sont non lus\npour tout le monde au départ : « Tout marquer comme lu » les solde d'un geste. Si l'enregistrement\néchoue, un message rouge le dit et "
+					"text": " son état. Si l'enregistrement\néchoue, un message rouge le dit et "
 				},
 				{
 					"type": "strong",
@@ -1229,21 +1249,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "La case se retient dans l'adresse."
+							"text": "La case se retient dans l'adresse de la page"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " Une fois cochée, l'adresse de la page se termine par\n"
-				},
-				{
-					"type": "code",
-					"text": "?sommeil=visibles"
-				},
-				{
-					"type": "text",
-					"text": " : vous pouvez recharger la page, la mettre en favori ou en envoyer le lien à un\ncollègue sans que la case se décoche. Elle vaut pour "
+					"text": " : vous pouvez recharger la page, la mettre en favori ou en envoyer\nle lien à un collègue sans que la case se décoche. Elle vaut pour "
 				},
 				{
 					"type": "strong",
@@ -1435,7 +1447,23 @@
 				},
 				{
 					"type": "text",
-					"text": " Il n'existe pas de notion de « lu / non lu », ni de recherche : la\nliste montre les cinquante messages les plus récents d'un dossier, et le dit lorsqu'elle en laisse\nde côté. "
+					"text": " L'inbox n'a pas de recherche propre — la recherche de l'en-tête trouve les messages\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "retrouver-n-importe-quoi-la-recherche"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 4"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). La liste montre les cinquante messages les plus récents d'un\ndossier, et le dit lorsqu'elle en laisse de côté. "
 				},
 				{
 					"type": "strong",
@@ -1448,20 +1476,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : une conversation dont\nune partie seulement tient dans ces cinquante n'en affiche que cette partie, et son compte porte\nsur ce qui est affiché. Enfin, les messages reçus "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "avant l'été 2026"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " n'ont pas conservé de quoi\nretrouver leur conversation : chacun reste sur sa propre ligne, et rien ne les regroupera\nrétroactivement."
+					"text": " : une\nconversation dont une partie seulement tient dans ces cinquante n'en affiche que cette partie, et son compte porte sur\nce qui est affiché. Un message dont l'expéditeur n'a pas transmis de quoi retrouver la conversation reste sur sa propre\nligne."
 				}
 			]
 		},
@@ -1487,6 +1502,26 @@
 							"text": "Depuis la fiche d'une affaire, ou depuis un message de l'inbox."
 						}
 					]
+				},
+				{
+					"type": "text",
+					"text": " Pour enchaîner plusieurs envois à des délais\nchoisis, voyez les séquences ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "enchainer-des-relances-les-sequences"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 16"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},

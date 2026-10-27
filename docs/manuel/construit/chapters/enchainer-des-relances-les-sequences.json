@@ -6,28 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-063"
-						},
-						{
-							"type": "text",
-							"text": ", tranche 4. L'écran n'invente aucune règle d'accès : ce sont celles des\nsous-tranches 4a et 4b."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -181,33 +159,7 @@
 				},
 				{
 					"type": "text",
-					"text": " — créer, modifier,\nréordonner, supprimer — est réservé aux rôles "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "administrateur"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " et "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "développement commercial"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ".\n"
+					"text": " — créer, modifier,\nréordonner, supprimer — est réservé aux administrateurs et aux business developers. "
 				},
 				{
 					"type": "strong",
@@ -220,7 +172,7 @@
 				},
 				{
 					"type": "text",
-					"text": " une relance sur une affaire suppose le droit d'y "
+					"text": " une relance sur une\naffaire suppose le droit d'y "
 				},
 				{
 					"type": "strong",
@@ -233,7 +185,24 @@
 				},
 				{
 					"type": "text",
-					"text": ". Aucun bouton n'est masqué\nselon votre rôle : le produit vous dit en toutes lettres qu'il refuse, au moment où vous agissez."
+					"text": ". Sans ce droit, les commandes restent visibles, grisées, et un bandeau dit\npourquoi ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") ; le serveur reste la règle, et\nun refus de dernière minute s'écrit sous la commande."
 				}
 			]
 		},
@@ -363,13 +332,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Un même modèle peut servir plusieurs paliers."
+							"text": "Un même modèle peut servir plusieurs paliers"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " La séquence de démonstration le fait : ses paliers\n1 et 3 emploient tous deux « Relance sans réponse »."
+					"text": " : les paliers 1 et 3 d'une cadence peuvent employer tous deux\n« Relance sans réponse »."
 				}
 			]
 		},

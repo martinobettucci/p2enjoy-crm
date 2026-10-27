@@ -2292,13 +2292,19 @@ la fiche à jour, et l'annonce « Organisation enregistrée » le confirme ; « 
 sans rien écrire. Les refus sont ceux de la création.
 
 ## 11. Les boîtes de réception et les adresses d'expédition
+
+Le CRM ne remplace pas votre messagerie : il s'y raccorde. Une **boîte de réception** déclarée lui permet de relever
+le courrier et de le ranger dans les affaires ([chapitre 12](#l-inbox-lire-trier-et-repondre)) ; une **adresse
+d'expédition** lui permet d'écrire en votre nom. Ce chapitre dit comment les déclarer, et ce que le produit garantit
+ensuite.
+
 ### 11.1 Les boîtes de réception déclarées
 
 **Ce que le produit sait faire.** Un espace de travail peut déclarer une **boîte système** — celle
 qui reçoit tout ce qui est adressé aux affaires — et chaque personne peut déclarer **la sienne**.
 Une boîte porte un serveur, un port, un mode de sécurité, un identifiant et un mot de passe.
 
-**Où se fait la déclaration : « Réglages ▸ Comptes de messagerie entrante »** (`CRM-088`). L'écran
+**Où se fait la déclaration : « Réglages ▸ Comptes de messagerie entrante »**. L'écran
 liste les boîtes que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les
 déclarer ou les corriger. Il vient **avant** « État de la messagerie » dans la liste des réglages :
 on configure une boîte avant d'en superviser la relève.
@@ -2322,10 +2328,9 @@ on configure une boîte avant d'en superviser la relève.
 
 Le reste du chapitre décrit ce que le produit garantit une fois la boîte déclarée.
 
-**Le mot de passe n'est jamais relisible, par personne.** Il n'est pas enregistré dans la même
-table que le reste : il part dans un coffre chiffré, et la table ne conserve qu'une **référence**.
-Cette référence elle-même est fermée à toute personne connectée — administrateur compris. Seul le
-service de messagerie, qui doit ouvrir la connexion, peut obtenir le mot de passe en clair.
+**Le mot de passe n'est jamais relisible, par personne.** Il n'est pas conservé avec le reste de la configuration :
+il part dans un coffre chiffré, qui n'est ouvert à aucune personne connectée — administrateur compris. Seul le service
+de messagerie, qui doit ouvrir la connexion, peut obtenir le mot de passe en clair.
 
 **Vous ne voyez que votre boîte.** Un administrateur voit la boîte système et celles de son équipe,
 puisqu'il en répond. Une personne qui n'est pas administratrice ne voit **que la sienne** : la
@@ -2355,7 +2360,7 @@ volontaire : une option de ce genre finit toujours par rester activée.
 
 ### 11.2 Les adresses d'expédition
 
-**Où se fait la déclaration : « Réglages ▸ Identités d'expédition »** (`CRM-089`). L'écran liste
+**Où se fait la déclaration : « Réglages ▸ Identités d'expédition »**. L'écran liste
 les adresses que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les
 déclarer ou les corriger. Il vient **après** « Comptes de messagerie entrante » et **avant** « État
 de la messagerie » : on reçoit avant d'expédier, et on configure avant de superviser.
@@ -2385,14 +2390,14 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
   que le produit ferait de toute façon. La décocher n'est utile que si vous en avez déjà une.
 - **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucun bouton *Tester la
   connexion* — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état
-  de l'identité ; aucune **suppression** ; ni le **quota quotidien** ni la **signature**, que
-  l'écran ne touche jamais et n'écrase donc jamais.
+  de l'identité ; aucune **suppression** ; aucun réglage du **plafond quotidien** d'envois (voir plus bas). La
+  **signature**, elle, se règle sur ce même écran ([chapitre 15](#signer-les-messages-expedies-depuis-une-identite)).
 
 Le reste du chapitre décrit ce que le produit garantit une fois l'adresse déclarée.
 
 **Recevoir et expédier sont deux choses distinctes.** Une personne peut relever sa boîte
-`bizdev@…` et pourtant écrire à ses clients depuis `contact@…` : le produit ne lie pas les deux, et
-l'espace de démonstration le montre. Une adresse d'expédition porte son serveur d'envoi, son
+`bizdev@…` et pourtant écrire à ses clients depuis `contact@…` : le produit ne lie pas les deux. Une adresse
+d'expédition porte son serveur d'envoi, son
 identifiant, son mot de passe — chiffré comme celui d'une boîte de réception —, un nom affiché et
 une signature.
 
@@ -2409,11 +2414,17 @@ de suite, plutôt que d'échouer plus tard, à l'envoi, sur un compte annoncé c
 aucun message** : il ouvre une session avec le serveur d'envoi, s'authentifie, et referme. Les
 causes d'échec affichées sont les mêmes que celles du [chapitre 11.1](#les-boites-de-reception-declarees).
 
-**Un quota quotidien peut être déclaré, mais il n'est appliqué par rien aujourd'hui** : l'envoi
-lui-même n'est pas encore livré, et le dire vaut mieux que de laisser croire à un garde-fou qui
-n'existe pas.
+**Une adresse peut porter un plafond d'envois quotidien.** Par défaut, elle n'en a aucun, et l'écran ne le règle pas.
+Quand un plafond est atteint, tout nouveau message est refusé au moment où vous l'envoyez — « Cette adresse
+d'expédition a atteint son plafond du jour. » — et le compte repart au jour suivant, compté en temps universel. Les messages déjà en attente
+d'envoi comptent : le plafond protège le serveur d'envoi, pas une statistique.
 
 ## 12. L'inbox : lire, trier et répondre
+
+L'**Inbox** de la barre latérale rassemble le courrier que le CRM a relevé dans les boîtes déclarées
+([chapitre 11](#les-boites-de-reception-et-les-adresses-d-expedition)) : celui qu'il a rangé dans les affaires, et
+celui qui attend d'être trié. On y lit, on y range, et l'on écrit depuis une affaire.
+
 ### 12.1 Ce que le produit fait d'un message reçu
 
 **Les messages sont relevés, et rangés dans l'affaire à qui ils s'adressent.** Chaque affaire a son
@@ -2435,10 +2446,6 @@ non analysé n'est pas un fichier sain.
 
 **Le nom d'un fichier reçu est nettoyé sans être perdu** : le produit affiche un nom sûr, et
 conserve le nom d'origine tel que l'expéditeur l'a écrit.
-
-**Ce que ces chapitres ne couvrent pas encore.** L'envoi n'est pas livré, ni la relève
-automatique — elle est déclenchée par l'exploitant. La suggestion par contact connu attend la
-fiche contact.
 
 ### 12.2 L'inbox : lire et trier le courrier reçu
 
@@ -2493,8 +2500,7 @@ baisse d'autant. Trois gestes complètent cela :
 
 Seul l'écran de l'inbox marque un message comme lu. Le lire dans l'historique d'une affaire, le
 retrouver par la recherche, ou le faire lire par un assistant à travers le connecteur ([chapitre 33](#le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant))
-**ne change pas** son état. Les messages arrivés avant l'apparition de cette fonction sont non lus
-pour tout le monde au départ : « Tout marquer comme lu » les solde d'un geste. Si l'enregistrement
+**ne change pas** son état. Si l'enregistrement
 échoue, un message rouge le dit et **l'état affiché ne change pas** : l'écran ne montre jamais lu ce
 qui n'a pas été enregistré. L'état de lecture n'est pas partagé avec votre logiciel de messagerie :
 lire un message dans le CRM ne le marque pas lu dans votre boîte, et inversement.
@@ -2561,9 +2567,8 @@ Le sommeil est **partagé** : un fil endormi l'est pour toute personne qui le vo
 d'être réveillé à la main — une échéance passée n'est plus un sommeil, et le fil revient tout seul.
 Une échéance déjà passée est refusée, avec son motif écrit sous le champ.
 
-**La case se retient dans l'adresse.** Une fois cochée, l'adresse de la page se termine par
-`?sommeil=visibles` : vous pouvez recharger la page, la mettre en favori ou en envoyer le lien à un
-collègue sans que la case se décoche. Elle vaut pour **tous les dossiers** de la boîte tant qu'elle
+**La case se retient dans l'adresse de la page** : vous pouvez recharger la page, la mettre en favori ou en envoyer
+le lien à un collègue sans que la case se décoche. Elle vaut pour **tous les dossiers** de la boîte tant qu'elle
 est cochée, et le bouton « Précédent » du navigateur la décoche comme il défait n'importe quel autre
 geste. C'est exactement ce que fait déjà la case « Afficher les affaires en sommeil » du tableau et
 de la vue liste d'un channel.
@@ -2589,17 +2594,17 @@ s'il refuse malgré tout, l'écran vous l'écrit sous la confirmation.
 eu lieu — et une ligne « **Message retiré de l'affaire** » vient s'ajouter, avec l'objet du message
 et le nom de la personne qui l'a retiré. Le geste se fait entièrement au clavier.
 
-**Ce qui n'est pas encore là.** Il n'existe pas de notion de « lu / non lu », ni de recherche : la
-liste montre les cinquante messages les plus récents d'un dossier, et le dit lorsqu'elle en laisse
-de côté. **Ce sont bien cinquante messages, pas cinquante conversations** : une conversation dont
-une partie seulement tient dans ces cinquante n'en affiche que cette partie, et son compte porte
-sur ce qui est affiché. Enfin, les messages reçus **avant l'été 2026** n'ont pas conservé de quoi
-retrouver leur conversation : chacun reste sur sa propre ligne, et rien ne les regroupera
-rétroactivement.
+**Ce qui n'est pas encore là.** L'inbox n'a pas de recherche propre — la recherche de l'en-tête trouve les messages
+([chapitre 4](#retrouver-n-importe-quoi-la-recherche)). La liste montre les cinquante messages les plus récents d'un
+dossier, et le dit lorsqu'elle en laisse de côté. **Ce sont bien cinquante messages, pas cinquante conversations** : une
+conversation dont une partie seulement tient dans ces cinquante n'en affiche que cette partie, et son compte porte sur
+ce qui est affiché. Un message dont l'expéditeur n'a pas transmis de quoi retrouver la conversation reste sur sa propre
+ligne.
 
 ### 12.3 Écrire et répondre
 
-*Depuis la fiche d'une affaire, ou depuis un message de l'inbox.*
+*Depuis la fiche d'une affaire, ou depuis un message de l'inbox.* Pour enchaîner plusieurs envois à des délais
+choisis, voyez les séquences ([chapitre 16](#enchainer-des-relances-les-sequences)).
 
 **Écrire depuis une affaire.** La fiche porte un bouton « Écrire un message ». Choisissez l'adresse
 d'expédition, un ou plusieurs destinataires — séparés par une virgule ou un point-virgule —, un
@@ -2658,9 +2663,6 @@ ordinateur. Un message qui échoue à partir est marqué en échec et le dit.
 
 ## 13. Consulter l'état de la messagerie
 
-*Livré par `CRM-059` ; les règles d'accès sont celles de `CRM-052` (comptes entrants) et de
-`CRM-058` (file sortante) — cet écran n'en invente aucune.*
-
 **Où.** Barre latérale ▸ **Réglages** ▸ « État de la messagerie ».
 
 **Qui.** Un administrateur de l'espace de travail voit **tous** les comptes de messagerie entrante
@@ -2689,15 +2691,11 @@ rafraîchissez la page pour la mettre à jour.
 ### 13.1 Ce qui n'est pas encore là
 
 - **Aucune alerte n'est envoyée** lorsqu'un compte tombe en erreur : cet écran est le seul endroit où
-  le constater. Une notification proactive relèverait d'une unité dédiée aux notifications.
-- **Aucune veille par IDLE** : la relève reste une scrutation régulière, dont l'intervalle se règle
-  par la variable d'environnement `MAIL_SYNC_POLL_INTERVAL` (opération d'exploitation, hors de cet
-  écran).
+  le constater.
+- **La relève n'est pas instantanée** : elle a lieu à intervalles réguliers, fixés à l'installation du CRM et non
+  depuis cet écran. Un message arrivé dans votre boîte paraît dans le CRM au passage suivant.
 
 ## 14. Écrire des modèles d'emails et les prévisualiser
-
-*Livré par `CRM-063`, tranche 2. Les règles d'accès sont celles de la tranche 1 : cet écran n'en
-invente aucune.*
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « Modèles d'emails ».
 
@@ -2707,10 +2705,9 @@ travail réemploie : une relance sans réponse, une prise de contact. Il porte d
 concernée. Deux personnes qui écrivent au même prospect envoient ainsi le même texte.
 
 **Qui.** Tout membre de l'espace de travail **lit** les modèles et peut les prévisualiser. Les
-**écrire** — créer, modifier, supprimer — est réservé aux rôles *administrateur* et *développement
-commercial*. Aucun bouton n'est masqué selon votre rôle : si vous n'avez pas le droit d'écrire, le
-produit vous le dit en toutes lettres au moment où vous enregistrez, plutôt que de vous laisser
-croire que le geste n'existe pas.
+**écrire** — créer, modifier, supprimer — est réservé aux administrateurs et aux business developers. Pour un autre
+rôle, ces commandes restent visibles, grisées, et un bandeau dit pourquoi
+([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
 
 **La liste.** Une ligne par modèle : son **nom** — unique dans l'espace de travail — puis son
 **objet**. L'objet y est montré **tel qu'il est écrit**, trous compris : la liste n'est pas une
@@ -2773,20 +2770,16 @@ supprimé, il faut le réécrire.
 
 ### 14.4 Ce qui n'est pas encore offert
 
-- **Aucun envoi depuis cet écran.** La prévisualisation montre ; elle n'expédie rien. Composer un
-  message à partir d'un modèle viendra avec les séquences de relance.
-- ~~**Aucune signature.**~~ **Livrée** — voir le [chapitre 15](#signer-les-messages-expedies-depuis-une-identite). Une identité
-  d'expédition porte désormais sa signature, ajoutée à la fin de chaque message expédié depuis elle.
-- **Aucune séquence de relance.** Les paliers — un modèle, un délai, puis le suivant — ne sont pas
-  livrés.
+- **Aucun envoi depuis cet écran.** La prévisualisation montre ; elle n'expédie rien. Un modèle part par une
+  **séquence de relance** ([chapitre 16](#enchainer-des-relances-les-sequences)) ; le formulaire « Écrire un message »
+  d'une affaire ne propose pas encore de partir d'un modèle.
+- **La signature** n'appartient pas au modèle : elle est celle de l'identité d'expédition, ajoutée à la fin de chaque
+  message ([chapitre 15](#signer-les-messages-expedies-depuis-une-identite)).
 - **Les dates sont rendues en UTC.** Une échéance affichée « 16/08/2026 09:00 » dans un message est
   exprimée en temps universel : le produit ne connaît pas encore le fuseau de votre espace de
   travail. Un destinataire français lira donc 09:00 là où le rendez-vous est à 11:00 en heure d'été.
 
 ## 15. Signer les messages expédiés depuis une identité
-
-*Livré par `CRM-063`, tranche 3. L'écran est celui des identités d'expédition (`CRM-089`) ; cette
-tranche y ajoute un champ, et rien d'autre.*
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « Identités d'expédition », puis « Configurer » sur
 l'identité concernée.
@@ -2830,8 +2823,8 @@ Bonjour,
 voici le devis dont nous avons parlé.
 
 -- 
-Driss Lemoine — Business developer
-P2Enjoy SAS
+Camille Martin — Business developer
+Votre société
 ```
 
 **Ce que vous voyez dans le CRM est exactement ce qui est parti.** Le message conservé par le
@@ -2857,9 +2850,6 @@ sa **présence** qui vous intéresse d'un coup d'œil.
 
 ## 16. Enchaîner des relances : les séquences
 
-*Livré par `CRM-063`, tranche 4. L'écran n'invente aucune règle d'accès : ce sont celles des
-sous-tranches 4a et 4b.*
-
 **Où.** Deux endroits, et le partage est délibéré : la **cadence** s'écrit dans Barre latérale ▸
 **Réglages** ▸ « Séquences de relance » ; elle **s'arme** depuis la fiche de l'affaire qu'elle doit
 relancer, dans le bloc « Relance automatique », sous les coûts.
@@ -2869,9 +2859,10 @@ choisis. Armée sur une affaire qui n'avance plus, elle expédie le premier mod�
 deuxième après le sien, et ainsi de suite — **et elle s'arrête dès qu'une réponse arrive**.
 
 **Qui.** Tout membre de l'espace de travail **lit** les séquences. Les **écrire** — créer, modifier,
-réordonner, supprimer — est réservé aux rôles *administrateur* et *développement commercial*.
-**Armer** une relance sur une affaire suppose le droit d'y **écrire**. Aucun bouton n'est masqué
-selon votre rôle : le produit vous dit en toutes lettres qu'il refuse, au moment où vous agissez.
+réordonner, supprimer — est réservé aux administrateurs et aux business developers. **Armer** une relance sur une
+affaire suppose le droit d'y **écrire**. Sans ce droit, les commandes restent visibles, grisées, et un bandeau dit
+pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) ; le serveur reste la règle, et
+un refus de dernière minute s'écrit sous la commande.
 
 ### 16.1 Écrire une cadence
 
@@ -2894,8 +2885,8 @@ cadence ne vous oblige donc à rien renuméroter.
 **Le délai va de 1 à 365 jours.** Zéro est refusé : un palier de délai nul partirait en même temps
 que celui qui le précède, ce qui n'est pas une cadence mais un doublon.
 
-**Un même modèle peut servir plusieurs paliers.** La séquence de démonstration le fait : ses paliers
-1 et 3 emploient tous deux « Relance sans réponse ».
+**Un même modèle peut servir plusieurs paliers** : les paliers 1 et 3 d'une cadence peuvent employer tous deux
+« Relance sans réponse ».
 
 ### 16.2 Changer l'ordre des paliers
 

@@ -6,36 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-063"
-						},
-						{
-							"type": "text",
-							"text": ", tranche 3. L'écran est celui des identités d'expédition ("
-						},
-						{
-							"type": "code",
-							"text": "CRM-089"
-						},
-						{
-							"type": "text",
-							"text": ") ; cette\ntranche y ajoute un champ, et rien d'autre."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -311,7 +281,7 @@
 		},
 		{
 			"type": "codeblock",
-			"text": "Bonjour,\n\nvoici le devis dont nous avons parlé.\n\n-- \nDriss Lemoine — Business developer\nP2Enjoy SAS"
+			"text": "Bonjour,\n\nvoici le devis dont nous avons parlé.\n\n-- \nCamille Martin — Business developer\nVotre société"
 		},
 		{
 			"type": "paragraph",

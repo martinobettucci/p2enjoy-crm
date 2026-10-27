@@ -6,28 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-063"
-						},
-						{
-							"type": "text",
-							"text": ", tranche 2. Les règles d'accès sont celles de la tranche 1 : cet écran n'en\ninvente aucune."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -155,33 +133,24 @@
 				},
 				{
 					"type": "text",
-					"text": " — créer, modifier, supprimer — est réservé aux rôles "
+					"text": " — créer, modifier, supprimer — est réservé aux administrateurs et aux business developers. Pour un autre\nrôle, ces commandes restent visibles, grisées, et un bandeau dit pourquoi\n("
 				},
 				{
-					"type": "emphasis",
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "administrateur"
+							"text": "section 3.11"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " et "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "développement\ncommercial"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ". Aucun bouton n'est masqué selon votre rôle : si vous n'avez pas le droit d'écrire, le\nproduit vous le dit en toutes lettres au moment où vous enregistrez, plutôt que de vous laisser\ncroire que le geste n'existe pas."
+					"text": ")."
 				}
 			]
 		},
@@ -690,7 +659,36 @@
 							},
 							{
 								"type": "text",
-								"text": " La prévisualisation montre ; elle n'expédie rien. Composer un\nmessage à partir d'un modèle viendra avec les séquences de relance."
+								"text": " La prévisualisation montre ; elle n'expédie rien. Un modèle part par une\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "séquence de relance"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "enchainer-des-relances-les-sequences"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 16"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ; le formulaire « Écrire un message »\nd'une affaire ne propose pas encore de partir d'un modèle."
 							}
 						]
 					}
@@ -700,35 +698,17 @@
 						"type": "paragraph",
 						"content": [
 							{
-								"type": "deleted",
-								"content": [
-									{
-										"type": "strong",
-										"content": [
-											{
-												"type": "text",
-												"text": "Aucune signature."
-											}
-										]
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " "
-							},
-							{
 								"type": "strong",
 								"content": [
 									{
 										"type": "text",
-										"text": "Livrée"
+										"text": "La signature"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " — voir le "
+								"text": " n'appartient pas au modèle : elle est celle de l'identité d'expédition, ajoutée à la fin de chaque\nmessage ("
 							},
 							{
 								"type": "link",
@@ -744,27 +724,7 @@
 							},
 							{
 								"type": "text",
-								"text": ". Une identité\nd'expédition porte désormais sa signature, ajoutée à la fin de chaque message expédié depuis elle."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Aucune séquence de relance."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " Les paliers — un modèle, un délai, puis le suivant — ne sont pas\nlivrés."
+								"text": ")."
 							}
 						]
 					}

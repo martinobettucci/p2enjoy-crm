@@ -96,6 +96,13 @@ CHAPITRES_REECRITS=(
 	les-affaires-figees-ce-qui-dort-depuis-trop-longtemps
 	les-objectifs-le-tableau-blanc-de-l-equipe
 	le-carnet-de-contacts
+	# T3.3 — la messagerie (2026-10-27)
+	les-boites-de-reception-et-les-adresses-d-expedition
+	l-inbox-lire-trier-et-repondre
+	consulter-l-etat-de-la-messagerie
+	ecrire-des-modeles-d-emails-et-les-previsualiser
+	signer-les-messages-expedies-depuis-une-identite
+	enchainer-des-relances-les-sequences
 )
 
 # Libellés que le manuel cite entre guillemets pour décrire un parcours, et qui
