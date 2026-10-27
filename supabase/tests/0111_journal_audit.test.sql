@@ -141,11 +141,14 @@ select ok(position('valeur-a-taire' in (pg_temp.derniere())::text) = 0,
 
 -- L'étape et le workflow sont choisis dans l'espace, jamais par un identifiant : le seed crée les workflows dérivés avec
 -- des identifiants neufs à chaque reconstruction (défaut relevé sur base reconstruite, assertions 21 et 22).
+-- `CRM-118` T1.b (migration 0130) : un workflow employé par un channel ne s'archive plus ; l'archivage journalisé porte
+-- donc sur un workflow libre, posé ici (rendu par le rollback).
+insert into public.workflows (id, workspace_id, name)
+values ('11820000-0000-4000-8000-000000000001', :ws, 'pgTAP audit — workflow libre');
 create temporary table pg_temp_cible as
 select (select s.id from public.workflow_steps s where s.workspace_id = :ws
          and s.stale_after_days is distinct from 21 order by s.id limit 1) as etape,
-       (select w.id from public.workflows w where w.workspace_id = :ws and w.archived_at is null and not w.is_default
-         order by w.id limit 1) as workflow;
+       '11820000-0000-4000-8000-000000000001'::uuid as workflow;
 update public.workflow_steps set stale_after_days = 21 where id = (select etape from pg_temp_cible);
 select is(array[pg_temp.derniere() ->> 'entity_type', pg_temp.derniere() ->> 'action',
 		pg_temp.derniere() -> 'details' -> 'after' ->> 'stale_after_days'],

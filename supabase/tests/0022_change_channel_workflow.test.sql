@@ -276,7 +276,12 @@ select is(pg_temp.erreur('01900000-0000-4000-8000-000000000010',
 	'P0001:workflow_not_found', 'un workflow absent rend workflow_not_found');
 
 select pg_temp.redevenir_proprietaire();
+-- `CRM-118` T1.b (migration 0130) : un channel employant ce workflow, la garde d'archivage le refuse désormais. L'état
+-- « workflow archivé » existe pourtant encore — archivé avant la garde —, et c'est le refus de la RPC face à lui qu'on
+-- prouve : le propriétaire le pose garde suspendue, le temps de la transaction (rendue par le rollback).
+alter table public.workflows disable trigger workflows_garder_archivage;
 update public.workflows set archived_at = now() where id = pg_temp.workflow_derive();
+alter table public.workflows enable trigger workflows_garder_archivage;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 select is(pg_temp.erreur('01900000-0000-4000-8000-000000000010', pg_temp.workflow_derive(), '[]'),
 	'P0001:workflow_not_found', 'un workflow archivé est traité comme absent');

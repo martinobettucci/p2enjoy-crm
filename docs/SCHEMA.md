@@ -2399,6 +2399,37 @@ reprise **à l'identique** de sa définition en base, plus l'étape 6 bis : apr�
 `P0001 checklist_incomplete`, `DETAIL` = tableau JSON des libellés manquants. Droits inchangés. *Numérotée 0128 et non 0126 :
 la 0126 et la 0127 avaient été prises entre-temps par `CRM-117`.* **Retrait** : réappliquer `move_card` de la migration
 `0114`, avec la webapp d'avant (qui ignore ce refus et le rendrait « refus inconnu »).
+
+### Migration `0130` — le workflow par défaut en une transaction, et la garde d'archivage (`CRM-118` T1.b, décisions 758 et 760 ; livrée en développement le 2026-10-27)
+
+`docs/SPEC-workflow-engine.md` §7 quinquies.1. **`public.set_default_workflow(p_workflow uuid) returns public.workflows`**,
+`security invoker`, `search_path` vide, `EXECUTE` à `authenticated` seul : refus nommés `authentification requise`
+(`42501`), `workflow introuvable` (`P0002`), `reserve aux administrateurs` (`42501`), `workflow archive` et `workflow non
+global` (`P0001`) ; éteint l'ancien défaut puis allume le nouveau, dans la même transaction ; le défaut déjà en place
+rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur `BEFORE UPDATE OF archived_at` sur
+`workflows`, au seul passage de `NULL` à une date : `workflow_in_use : <n> channel(s)` si un channel hors corbeille
+(archivé compris) l'emploie, `workflow_is_default` s'il est le défaut (`P0001`) ; `SECURITY DEFINER` pour compter les
+channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
+`0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
+déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0131` — les modèles d'affaires (`CRM-068` T4a, décisions 747 à 749 ; livrée en développement le 2026-10-27)
+
+`docs/SPEC-checklists.md` §3.5, §3.6. **`public.card_templates`** : `id`, `workspace_id`, `workflow_id` (clé composite vers
+`workflows`, cascade), `name` (non blanc, 120 au plus, unique par espace parmi les non archivés, à la casse près), `title`,
+`description`, `amount numeric(14,2)`, `currency` (`^[A-Z]{3}$`, `EUR` par défaut), `field_values jsonb` (objet, chaque clé
+une question NON archivée du workflow — `22023 template_field_unknown` —, chaque valeur passant la règle d'une valeur
+d'affaire), `checklist jsonb` (tableau de libellés de 1 à 200 caractères — `22023 template_checklist_invalid`),
+`archived_at`, `created_by` (posé par la base), `created_at`, `updated_at`. RLS : lecture par tout membre, écriture par
+l'administrateur ; privilèges : `select`, `insert` et `update` de colonnes, **aucun `delete`**. **`app.valider_valeur_champ
+(form_fields, jsonb, uuid)`** : la règle d'une valeur, extraite de `app.card_field_values_valider`, qui l'appelle désormais —
+messages inchangés (pgTAP `0014`). **`public.creer_affaire(p_channel, p_titre, p_template uuid default null)`** remplace la
+version à deux arguments (retirée : l'appel à deux arguments garde sa forme) ; un modèle illisible ou archivé rend `P0002
+template_not_found`, d'un autre workflow `22023 template_workflow_mismatch` ; appliqué dans la même transaction, sous la RLS
+de l'appelant (description, devise, montant du rattachement, valeurs de champ, points libres). **`public.save_card_as_template
+(p_placement, p_name) returns uuid`** : réservée à l'administrateur (`42501 reserved_to_admins`), `P0002 placement_not_found`.
+**Retrait** : réappliquer `creer_affaire` et `app.card_field_values_valider` de leur dernière définition, retirer
+`save_card_as_template`, `app.valider_valeur_champ`, `app.card_templates_valider` et la table.
+
 ### Migration `0087` — la saisie de temps (`CRM-098` T1, décision 621 ; livrée en développement le 2026-10-11)
 
 `docs/SPEC-temps.md` §3 à §6.

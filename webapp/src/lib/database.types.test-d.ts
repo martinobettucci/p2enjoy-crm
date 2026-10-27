@@ -4,6 +4,8 @@
 // @verifies docs/SCHEMA.md §1 (socle d'identité) ; docs/INCONSISTENCY_REPORT.md INC-010
 // @verifies CRM-094 (docs/BACKLOG.md) tranche T1 — `creer_workflow_de_depart` au témoin des fonctions
 //           (docs/SPEC-workflow-engine.md §7 quater)
+// @verifies CRM-118 (docs/BACKLOG.md) tranche T1.b — `set_default_workflow` au témoin des fonctions
+//           (docs/SPEC-workflow-engine.md §7 quinquies.1)
 // @verifies CRM-095 (docs/BACKLOG.md) tranche T1 — `creer_affaire` au témoin des fonctions
 //           (docs/SPEC-cards.md §18.2)
 // @verifies CRM-097 (docs/BACKLOG.md) tranches T1 et T2 — `suggestions_ia`, `suggestions_ia_revisions` et
@@ -121,6 +123,10 @@ type Expect<T extends true> = T
 // `app.budget_est_ouvert` n'apparaît pas davantage dans `_fonctions` : elle vit dans le schéma
 // `app`. Le compte de fonctions appelables en RPC reste inchangé.
 
+// `card_templates`, LIVRÉE PAR `CRM-068` T4a (migration `0131`) : les modèles d'affaires. CE QUI ÉCHAPPE AU GÉNÉRATEUR :
+// `field_values` est un `Json` dont chaque clé doit répondre à une question NON archivée du workflow et chaque valeur passer
+// la règle d'une valeur d'affaire (`app.card_templates_valider`, `22023 template_field_unknown`, `invalid_field_value`) ;
+// `id` et `created_by` sont fermés au client par privilège de colonne ; aucune suppression n'est ouverte.
 type _tables = Expect<
   Equal<
     keyof Database['public']['Tables'],
@@ -136,6 +142,7 @@ type _tables = Expect<
     // client n'écrit ni `checked_at`, ni `checked_by`, ni `placement_id` (privilèges de colonne) ; un point d'étape ne se
     // renomme ni ne se retire (`step_item_locked`) ; une exigence ne vise que l'étape de départ de sa transition.
     | 'card_checklist_items'
+    | 'card_templates'
     | 'card_comment_mentions'
     | 'card_comments'
     // `0088` de `CRM-099` TRANCHE T1 ajoute `card_cost_actuals` — les réels d'une ligne de coût, dont la base tient la
@@ -1096,6 +1103,10 @@ type _vueDerivationColonnes = Expect<
 // bloquent l'effacement d'un track en corbeille, et leur réaffectation (docs/SPEC-corbeille.md §9). CE QUI ÉCHAPPE AU
 // GÉNÉRATEUR : les deux sont réservées à l'administrateur (`42501`), un track ou une ligne hors de l'espace rend `P0002`,
 // et la réaffectation porte six refus nommés avant les règles des coûts (`23514`).
+// `0130` de `CRM-118` TRANCHE T1.b ajoute `set_default_workflow` — désigner le workflow par défaut en une transaction
+// (docs/SPEC-workflow-engine.md §7 quinquies.1). CE QUI ÉCHAPPE AU GÉNÉRATEUR : réservée à l'administrateur (`42501`),
+// un workflow invisible rend `P0002`, un workflow archivé ou propre à un track `P0001` ; l'anonyme ne peut pas
+// l'appeler. Le compte s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1173,6 +1184,10 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'trash_retention_days'
     | 'trash_blocking_costs'
     | 'reassign_trashed_track_cost'
+    // `0131` de `CRM-068` T4a — « Enregistrer comme modèle » : réservée à l'administrateur (`42501 reserved_to_admins`),
+    // un rattachement illisible rend `P0002 placement_not_found` ; `creer_affaire` gagne `p_template`, sa forme d'appel
+    // à deux arguments gardée (`22023 template_workflow_mismatch`, `P0002 template_not_found`).
+    | 'save_card_as_template'
     | 'mark_message_unread'
     | 'is_read'
     | 'messages_a_ranger'
@@ -1188,6 +1203,7 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'ouvrir_session_sso'
     | 'mon_role_espace'
     | 'creer_workflow_de_depart'
+    | 'set_default_workflow'
     | 'creer_affaire'
     | 'ouvrir_session_serveur'
     | 'lire_session_serveur'

@@ -287,8 +287,13 @@ select pg_temp.redevenir_proprietaire();
 -- workflow dérivé se désigne PAR SON NOM. Son identifiant est engendré par `copy_workflow_to_track`
 -- et le seed ne l'épingle pas — cité en dur, il n'archivait rien et la RPC rendait « workflow
 -- introuvable » là où la preuve attendait « workflow archive ».
+-- `CRM-118` T1.b (migration 0130) : ce workflow est employé par un channel, la garde d'archivage le refuse désormais ;
+-- l'état « archivé » existe encore (archivé avant la garde), et c'est le refus de la publication face à lui qu'on prouve :
+-- posé par le propriétaire, garde suspendue le temps de la transaction.
+alter table public.workflows disable trigger workflows_garder_archivage;
 update public.workflows set archived_at = now()
  where name = 'Cycle commercial — Conseil IA';
+alter table public.workflows enable trigger workflows_garder_archivage;
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 select throws_ok(

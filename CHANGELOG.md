@@ -46,6 +46,9 @@ d'exécuter le code attendu.
   les nœuds dont les étapes sont faites — comme l'écran du catalogue, et pour les seuls administrateurs. La clé d'un
   nœud ne change jamais ; un nœud occupé par des affaires actives ne s'archive pas.
 - **Plateforme ▸ Connecteur MCP** : la matrice des droits gagne la ligne « Workflows », après « Structure ».
+- **Migration `0130` (T1.b, en cours)** : le workflow par défaut se désigne en une transaction (`set_default_workflow`,
+  administrateur, workflow global seulement) ; la base refuse d'archiver un workflow qu'un channel emploie encore ou le
+  workflow par défaut. Les écrans qui s'en servent suivent.
 
 ### `CRM-068` — les checklists d'une affaire (en cours : T1, T2, T3a, T3b)
 

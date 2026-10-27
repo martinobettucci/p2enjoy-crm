@@ -624,7 +624,9 @@ PORT_RAPPORT=9323
 # campagne complète était suspendue (décision 753) —, puis MESURÉ le 2026-10-27 : « 109 fichiers, 4378 assertions ».
 # **+1 par `CRM-118` T2.a, 2026-10-26** : `0120_famille_workflows.test.sql`, fichier NEUF. 109 + 1 = 110, MESURÉ —
 # « 110 fichiers, 4394 assertions, aucune anomalie ».
-FICHIERS_SQL_ATTENDUS=110
+# **+1 par `CRM-118` T1.b, 2026-10-27** : `0121_defaut_et_archivage_workflow.test.sql`, fichier NEUF. 110 + 1 = 111, CALCULÉ —
+# la suite complète rend aussi l'échec de `0075`, révisée par une session parallèle (migration 0131 non committée).
+FICHIERS_SQL_ATTENDUS=111
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -776,7 +778,10 @@ FICHIERS_SQL_ATTENDUS=110
 # **+16 par `CRM-118` T2.a, 2026-10-26** : `0120_famille_workflows` **16** assertions (la famille dans les quatre listes,
 # son rang après `structure`, les politiques des workflows par profil, l'étape occupée refusée) ; quatre mutations tuées
 # (chaque liste fermée privée de la famille). 4378 + 16 = 4394, MESURÉ.
-ASSERTIONS_ATTENDUES=4394
+# **+18 par `CRM-118` T1.b, 2026-10-27** : `0121_defaut_et_archivage_workflow` **18** assertions (set_default_workflow : refus
+# par profil, défaut global seulement, atomicité ; la garde : employé, archivé, en corbeille, défaut, rétablissement) ;
+# huit mutations tuées ; `0022`, `0037`, `0111` révisées sans changer de plan. 4394 + 18 = 4412, CALCULÉ.
+ASSERTIONS_ATTENDUES=4412
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
