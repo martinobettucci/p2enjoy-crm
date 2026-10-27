@@ -48,9 +48,17 @@ d'exécuter le code attendu.
 - **Plateforme ▸ Connecteur MCP** : la matrice des droits gagne la ligne « Workflows », après « Structure ».
 - **Migration `0130` (T1.b, en cours)** : le workflow par défaut se désigne en une transaction (`set_default_workflow`,
   administrateur, workflow global seulement) ; la base refuse d'archiver un workflow qu'un channel emploie encore ou le
-  workflow par défaut. Les écrans qui s'en servent suivent.
+  workflow par défaut.
+- **Éditeur de workflows, l'en-tête du workflow ouvert (T1.b)** : son nom et ses pastilles (portée, « Par défaut »,
+  « Archivé »), et cinq commandes — **Renommer**, **Définir par défaut**, **Copier vers un track**, **Archiver** (avec
+  confirmation ; refusé, en le disant, pour un workflow qu'emploient des channels ou pour le défaut) et **Rétablir**. La
+  liste gagne la case **Afficher les archivés**.
+- **Arborescence, « Changer de workflow » (T1.b)** : sur la ligne d'un channel, un panneau choisit le nouveau workflow et,
+  pour chaque étape occupée, la destination de ses affaires — rien n'est choisi d'office. Les réponses de formulaire qui
+  seraient perdues sont comptées, et ne le sont qu'avec votre accord explicite. Le formulaire de modification d'un
+  channel qui porte des affaires renvoie désormais à cette commande.
 
-### `CRM-068` — les checklists d'une affaire (en cours : T1, T2, T3a, T3b)
+### `CRM-068` — les checklists et les modèles d'une affaire (en cours : T1, T2, T3a, T3b, T4a, T4b1)
 
 - **Base** — migration `0125` : les points d'une étape (`workflow_step_checklist_items`, écrits par l'administrateur), les
   points d'une affaire (`card_checklist_items`, libres ou ajoutés par la base à l'entrée d'un rattachement dans une
@@ -71,9 +79,19 @@ d'exécuter le code attendu.
   points », le premier point exigé non coché prenant le focus.
 - **Modèles d'affaires, la base** (T4a) — migration `0131` : la table `card_templates` (écriture administrateur, lecture
   membre ; valeurs validées par la règle d'une valeur d'affaire), `creer_affaire` applique un modèle choisi, et
-  `save_card_as_template` enregistre une affaire comme modèle. Les écrans arrivent avec T4b.
-- Reste : les écrans des modèles et le seed (T4b), le connecteur (T5 ; les outils de l'éditeur sont livrés par
-  `CRM-118`).
+  `save_card_as_template` enregistre une affaire comme modèle.
+- **Modèles d'affaires, les écrans** (T4b1, décision 765) — **Réglages ▸ Modèles d'affaires**, réservé aux
+  administrateurs : les modèles rangés par workflow, « Nouveau modèle » (nom, titre proposé, description, montant,
+  devise, points), « Modifier », « Archiver » / « Désarchiver », « Afficher les archivés ». **« Nouvelle affaire »** gagne
+  une liste « Modèle » quand le workflow du channel en a un : le titre proposé remplit un titre vide, et l'affaire naît
+  avec le modèle. **« Enregistrer comme modèle »** sur la fiche d'une affaire, après « Mettre en sommeil ». Le motif de
+  l'index des réglages nomme les trois entrées réservées.
+- **Seed** (`docs/SPEC-seed.md` §29) — trois modèles : « Audit flash » sur le workflow par défaut, « Parcours data »
+  enregistré depuis l'affaire de Rennes, un modèle archivé.
+- **Correction** — l'arrivée par « Cocher ces points » attend que les droits de la fiche soient lus : sous charge, la
+  case n'était pas encore active et ne prenait pas le focus.
+- Reste : la saisie des réponses dans la fiche d'un modèle (T4b2), le manuel de T3b et de T4b1 (après le plan de
+  `CRM-117`), le connecteur (T5 ; les outils de l'éditeur sont livrés par `CRM-118`).
 
 ### `CRM-117` — le manuel joignable depuis la webapp (en cours)
 

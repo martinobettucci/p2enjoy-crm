@@ -170,6 +170,11 @@ rattachement qui n'a pas coché le point. Le workflow par défaut reçoit les po
 les trois affaires et les deux points libres vivent dans un **channel de démonstration** du track `studio-web`, dont le workflow est dédié
 (`docs/SPEC-seed.md` §28).
 
+**Précisé le 2026-10-27 (décision 765)** : trois modèles et non deux — le troisième, **archivé**, montre l'état que
+« Afficher les archivés » ramène. « Audit flash » sur le workflow par défaut, posé comme par l'écran ; « Parcours data »
+enregistré depuis l'affaire « Parcours data — Mairie de Rennes » ; « Atelier découverte (2025) » archivé
+(`docs/SPEC-seed.md` §29).
+
 ## 7. Tranches
 
 - **T1 — le modèle des checklists** : les trois tables de checklists, RLS, privilèges de colonne, déclencheurs (ajout à

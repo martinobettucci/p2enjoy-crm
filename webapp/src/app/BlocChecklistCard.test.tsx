@@ -256,6 +256,29 @@ describe('BlocChecklistCard — l’arrivée par « Cocher ces points » (CRM-06
 		}
 	})
 
+	it('avec l’ancre, le focus attend la fin de la lecture de la capacité : une case encore éteinte ne le reçoit pas', async () => {
+		// Défaut trouvé par la campagne E2E de `CRM-068` T4b1 : sous charge, la checklist était lue AVANT la capacité
+		// d'écrire sur l'affaire ; la case, éteinte pendant cette lecture (§5.59), refusait le focus, et l'arrivée — traitée
+		// une seule fois — était perdue.
+		Element.prototype.scrollIntoView = vi.fn()
+		window.history.replaceState(null, '', '#checklist')
+		try {
+			const client = clientDouble().client
+			const bloc = (valeur: { disabled?: boolean }) => (
+				<FournisseurRefus valeur={valeur}>
+					<BlocChecklistCard client={client} idCard="card-1" idWorkspace="espace-1" idRattachement={RATTACHEMENT} idEtapeCourante={RELANCE} />
+				</FournisseurRefus>
+			)
+			const { rerender } = render(bloc({ disabled: true }))
+			const caseBudget = await screen.findByRole('checkbox', { name: 'Budget connu' })
+			expect(document.activeElement).toBe(document.body)
+			rerender(bloc({}))
+			await waitFor(() => expect(document.activeElement).toBe(caseBudget))
+		} finally {
+			window.history.replaceState(null, '', window.location.pathname)
+		}
+	})
+
 	it('sans l’ancre, la fiche ne prend pas la main', async () => {
 		const defiler = vi.fn()
 		Element.prototype.scrollIntoView = defiler

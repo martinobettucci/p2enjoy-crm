@@ -53,6 +53,7 @@ import {
 	CHEMIN_ADMIN_COUT_PERSONNEL,
 	CHEMIN_ADMIN_MEMBRES,
 	CHEMIN_ADMIN_JOURNAL,
+	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_COUTS_BUDGET,
 	CHEMIN_COUTS_TRACK,
@@ -75,6 +76,7 @@ import {
 	CLE_TITRE_COUT_PERSONNEL,
 	CLE_TITRE_MEMBRES,
 	CLE_TITRE_JOURNAL,
+	CLE_TITRE_MODELES_AFFAIRES,
 	CLE_TITRE_REGLAGES_NOTIFICATIONS,
 	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_COMPTES_MAIL,
@@ -164,6 +166,10 @@ const ReglagesMembres = lazy(async () => ({
 // `CRM-072` T2 — Réglages ▸ Journal d'audit, chargé à la demande comme les autres écrans de réglages.
 const ReglagesJournal = lazy(async () => ({
 	default: (await import('./ReglagesJournal')).ReglagesJournal,
+}))
+// `CRM-068` T4b1 — Réglages ▸ Modèles d'affaires, chargé à la demande comme les autres écrans de réglages.
+const ReglagesModelesAffaires = lazy(async () => ({
+	default: (await import('./ReglagesModelesAffaires')).ReglagesModelesAffaires,
 }))
 // `CRM-117` — l'aide : le sommaire du manuel et un chapitre, chargés à la demande comme les réglages.
 const SommaireAide = lazy(async () => ({ default: (await import('./PageAide')).SommaireAide }))
@@ -439,6 +445,16 @@ function RoutesPages() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ADMIN_WORKFLOWS}>
 							<AdministrationWorkflows />
+						</AppShell>
+					}
+				/>
+				{/* Réglages ▸ Modèles d'affaires — `CRM-068` T4b1. Déclarée APRÈS les workflows, comme dans l'index des
+				    réglages (docs/DESIGN_SYSTEM.md §5.71). */}
+				<Route
+					path={CHEMIN_ADMIN_MODELES_AFFAIRES}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_MODELES_AFFAIRES}>
+							<ReglagesModelesAffaires />
 						</AppShell>
 					}
 				/>

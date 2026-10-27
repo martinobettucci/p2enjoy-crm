@@ -1733,7 +1733,11 @@ SCENARIOS_API=1251
 # un workflow jetable (ajouter, monter, renommer, exiger, archiver un point exigé, ne plus l'exiger, 390 px), la lectrice
 # aux commandes éteintes ; `checklists.spec.ts` gagne le lien « Cocher ces points » dans un scénario existant. 986 + 2 =
 # 988, COMPTÉE.
-SCENARIOS_UI=988
+# **+6 par `CRM-068` T4b1, 2026-10-27** : `e2e/ui/modeles-affaires.spec.ts`, fichier NEUF — Réglages ▸ Modèles d'affaires
+# (lire, poser, nom pris refusé, archiver, 390 px), l'entrée et l'adresse réservées pour la lectrice, la création depuis un
+# modèle et son effet en base, le `select` absent sans modèle, « Enregistrer comme modèle » et son refus. 988 + 6 =
+# 994, COMPTÉE.
+SCENARIOS_UI=994
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -73,6 +73,7 @@ import {
 	CHEMIN_ADMIN_COUT_PERSONNEL,
 	CHEMIN_ADMIN_MEMBRES,
 	CHEMIN_ADMIN_JOURNAL,
+	CHEMIN_ADMIN_MODELES_AFFAIRES,
 } from './chemins'
 
 export {
@@ -110,6 +111,7 @@ export {
 	CHEMIN_ADMIN_COUT_PERSONNEL,
 	CHEMIN_ADMIN_MEMBRES,
 	CHEMIN_ADMIN_JOURNAL,
+	CHEMIN_ADMIN_MODELES_AFFAIRES,
 }
 
 /**
@@ -234,6 +236,9 @@ export const CLE_TITRE_MEMBRES: CleTraduction = 'members.title'
 
 /** Titre de Réglages ▸ Journal d'audit — `CRM-072` T2, docs/SPEC-audit.md §8. */
 export const CLE_TITRE_JOURNAL: CleTraduction = 'audit.title'
+
+/** Titre de Réglages ▸ Modèles d'affaires — `CRM-068` T4b1, docs/DESIGN_SYSTEM.md §5.71. */
+export const CLE_TITRE_MODELES_AFFAIRES: CleTraduction = 'admin.cardTemplates.title'
 
 /** Titre de la plateforme — `CRM-101`, docs/SPEC-plateforme.md §7 (hors de `ROUTES`, comme les réglages). */
 export const CLE_TITRE_PLATEFORME: CleTraduction = 'platform.title'
@@ -450,6 +455,31 @@ export function IndexReglages() {
 						<span className="font-medium">{t('admin.settings.index.workflows')}</span>
 						<span className="text-sm text-text-2">{t('admin.settings.index.workflows.body')}</span>
 					</Link>
+				</li>
+				{/* Les modèles d'affaires viennent APRÈS les workflows — `CRM-068` T4b1, docs/DESIGN_SYSTEM.md §5.71 : un modèle
+				    sert les affaires d'un workflow, et se lit après lui. Réservé aux administrateurs : l'entrée suit la règle de
+				    « Coût du personnel » (§5.59), un texte citant le motif quand la base refuse l'administration. */}
+				<li>
+					{coutRefuse ? (
+						<div
+							data-testid="entree-modeles-affaires"
+							aria-disabled="true"
+							{...(capacites.administration === 'refusee' ? { 'aria-describedby': ID_MOTIF_REGLAGES } : {})}
+							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] rounded-lg text-text-2"
+						>
+							<span className="font-medium">{t('admin.settings.index.cardTemplates')}</span>
+							<span className="text-sm">{t('admin.settings.index.cardTemplates.body')}</span>
+						</div>
+					) : (
+						<Link
+							to={CHEMIN_ADMIN_MODELES_AFFAIRES}
+							data-testid="entree-modeles-affaires"
+							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+						>
+							<span className="font-medium">{t('admin.settings.index.cardTemplates')}</span>
+							<span className="text-sm text-text-2">{t('admin.settings.index.cardTemplates.body')}</span>
+						</Link>
+					)}
 				</li>
 				{/* Le catalogue vient APRÈS les workflows — `CRM-030`,
 				    docs/SPEC-workflow-engine.md §2 bis.2 : on découvre l'éditeur avant le

@@ -3,6 +3,8 @@
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : « Nouvelle affaire », sur le board et dans la vue liste
 // @spec docs/SPEC-cards.md §18.1 (les arbitrages : le board, le titre seul, la fiche qui s'ouvre),
 //       §18.3 (l'écran : bouton, formulaire dans le flux, refus, succès) ; docs/JOURNAL.md décision 609
+// @spec CRM-068 (docs/BACKLOG.md) — tranche T4b1 : le `select` « Modèle », rendu si le workflow du channel en a un ;
+//       docs/SPEC-checklists.md §3.6 (`creer_affaire` applique le modèle) ; docs/DESIGN_SYSTEM.md §5.71
 // @spec docs/DESIGN_SYSTEM.md §5.50 (Nouvelle affaire), §5.2 (l'action de la colonne initiale vide),
 //       §5.13 (formulaire dans le flux, focus entrant puis rendu), §5.25 (retour du focus différé d'un
 //       tour de rendu), §5.7 (champ, refus `role="alert"`), §8 (états désactivés lisibles), §9 (`Plus`)
@@ -20,6 +22,7 @@ import { Link, useNavigate } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { t, type CleTraduction } from '../i18n'
 import { creerAffaire, type RefusCreationAffaire } from '../lib/creer-affaire'
+import { lireModelesDuChannel, type ModeleAffaire } from '../lib/modeles-affaires'
 import type { ClientCrm } from '../lib/supabase'
 import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { useRefus } from '../components/ui/RefusCommandes'
@@ -118,11 +121,12 @@ export function ActionColonneInitiale({ creation }: { readonly creation: Creatio
 	)
 }
 
-/** Les quatre refus, par un dictionnaire FERMÉ : un refus nouveau ne compile pas sans son texte. */
+/** Les cinq refus, par un dictionnaire FERMÉ : un refus nouveau ne compile pas sans son texte. */
 const CLES_REFUS: Readonly<Record<RefusCreationAffaire, CleTraduction>> = {
 	'channel-ferme': 'affaire.creation.refus.ferme',
 	'sans-etape-initiale': 'affaire.creation.refus.initiale',
 	interdit: 'affaire.creation.refus.interdit',
+	modele: 'affaire.creation.refus.modele',
 	panne: 'affaire.creation.refus.panne',
 }
 
@@ -165,7 +169,10 @@ export function FormulaireNouvelleAffaire({
 	const naviguer = useNavigate()
 	const idChamp = useId()
 	const idRefus = useId()
+	const idModele = useId()
 	const [titre, setTitre] = useState('')
+	const [modeles, setModeles] = useState<readonly ModeleAffaire[]>([])
+	const [modele, setModele] = useState('')
 	const [enCours, setEnCours] = useState(false)
 	const [refus, setRefus] = useState<RefusCreationAffaire | null>(null)
 	const champ = useRef<HTMLInputElement | null>(null)
@@ -175,6 +182,25 @@ export function FormulaireNouvelleAffaire({
 	useEffect(() => {
 		champ.current?.focus()
 	}, [])
+
+	// LES MODÈLES DU WORKFLOW DU CHANNEL (§5.71) : lus à l'ouverture ; sans modèle, le `select` n'est pas rendu, et
+	// une lecture en panne laisse le formulaire tel qu'avant — la création ne dépend pas d'elle.
+	useEffect(() => {
+		let actif = true
+		void lireModelesDuChannel(client, idChannel).then((lus) => {
+			if (actif) setModeles(lus)
+		})
+		return () => {
+			actif = false
+		}
+	}, [client, idChannel])
+
+	const choisirModele = (id: string) => {
+		setModele(id)
+		// LE TITRE PROPOSÉ NE REMPLACE JAMAIS UNE SAISIE (§5.71) : il ne remplit qu'un titre encore blanc.
+		const choisi = modeles.find((m) => m.id === id)
+		if (choisi !== undefined && choisi.titre !== null && titre.trim() === '') setTitre(choisi.titre)
+	}
 
 	// UN CHAMP REQUIS, NON UN DROIT CALCULÉ (§5.50) : « Créer » reste éteint tant que le titre est blanc,
 	// comme le nom d'un channel. La base refuserait de toute façon (`23514`) ; l'écran n'envoie pas une
@@ -192,7 +218,7 @@ export function FormulaireNouvelleAffaire({
 		if (blanc || enCours) return
 		setRefus(null)
 		setEnCours(true)
-		const issue = await creerAffaire(client, idChannel, titre)
+		const issue = await creerAffaire(client, idChannel, titre, modele === '' ? null : modele)
 		if (issue.ok) {
 			naviguer(`/tracks/${slugTrack}/${slugChannel}/cards/${issue.idCard}`)
 			return
@@ -238,6 +264,28 @@ export function FormulaireNouvelleAffaire({
 					className="min-h-[var(--size-target)] px-3 rounded-sm border border-border bg-surface text-base"
 				/>
 			</div>
+
+			{modeles.length === 0 ? null : (
+				<div className="flex flex-col gap-1 max-w-[72ch]">
+					<label htmlFor={idModele} className="text-sm text-text-2">
+						{t('affaire.creation.modele')}
+					</label>
+					<select
+						id={idModele}
+						data-testid="select-modele-affaire"
+						value={modele}
+						onChange={(evenement) => choisirModele(evenement.target.value)}
+						className="min-h-[var(--size-target)] px-3 rounded-sm border border-border bg-surface text-base"
+					>
+						<option value="">{t('affaire.creation.modele.aucun')}</option>
+						{modeles.map((m) => (
+							<option key={m.id} value={m.id}>
+								{m.nom}
+							</option>
+						))}
+					</select>
+				</div>
+			)}
 
 			{refus === null ? null : (
 				<div

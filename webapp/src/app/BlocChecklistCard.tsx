@@ -106,8 +106,13 @@ export function BlocChecklistCard({
 	// défilement qui reprendrait la main pendant la saisie serait un vol de focus (§5.7 quater).
 	const section = useRef<HTMLElement>(null)
 	const arriveeTraitee = useRef(false)
+	// L'ARRIVÉE ATTEND LA FIN DE LA LECTURE DE LA CAPACITÉ (§5.59 : éteinte SANS motif pendant cette lecture) : une case
+	// éteinte refuse le focus, et l'arrivée, traitée une fois, serait perdue — défaut trouvé sous charge par la campagne E2E
+	// de `CRM-068` T4b1. Refusée (éteinte AVEC motif), la capacité ne s'attend plus : le bloc est amené en vue, sans focus.
+	const droitBloc = useRefus()
+	const capaciteEnLecture = droitBloc.disabled === true && droitBloc['aria-describedby'] === undefined
 	useEffect(() => {
-		if (arriveeTraitee.current || etat.statut !== 'pret') return
+		if (arriveeTraitee.current || etat.statut !== 'pret' || capaciteEnLecture) return
 		if (typeof window === 'undefined' || window.location.hash !== '#checklist') return
 		arriveeTraitee.current = true
 		const cible = premierPointAReprendre(etat.donnees)
@@ -117,7 +122,7 @@ export function BlocChecklistCard({
 				: section.current?.querySelector<HTMLInputElement>(`[data-point="${cible}"] input[type="checkbox"]`)
 		section.current?.scrollIntoView({ block: 'center', behavior: preferenceMouvementReduit() ? 'auto' : 'smooth' })
 		element?.focus({ preventScroll: true })
-	}, [etat])
+	}, [etat, capaciteEnLecture])
 
 	if (client === null) return null
 	const checklist = etat.statut === 'pret' ? etat.donnees : null

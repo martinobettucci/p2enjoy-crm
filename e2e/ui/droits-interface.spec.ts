@@ -98,7 +98,8 @@ test.describe('la lectrice — Farida Nowak', () => {
 		await page.goto('/reglages')
 		// Le motif n'est dit qu'une fois la capacité LUE : l'attendre, c'est attendre l'état stable (§4).
 		const motif = page.getByTestId('motif-reglages')
-		await expect(motif).toContainText('« Coût du personnel » est réservé aux administrateurs')
+		// Révisé par `CRM-068` T4b1 : le motif nomme désormais les trois entrées réservées (décision 51).
+		await expect(motif).toContainText('« Coût du personnel » sont réservés aux administrateurs')
 		const entree = entreeCout(page)
 		await expect(entree).toHaveAttribute('aria-disabled', 'true')
 		await expect(entree).toHaveAttribute('aria-describedby', (await motif.getAttribute('id'))!)

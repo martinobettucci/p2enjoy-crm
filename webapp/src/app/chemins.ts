@@ -107,6 +107,13 @@ export const CHEMIN_ADMIN_JOURNAL = '/reglages/journal' as const
 /** Éditeur de workflows — `CRM-076`. */
 export const CHEMIN_ADMIN_WORKFLOWS = '/reglages/workflows' as const
 
+/**
+ * Réglages ▸ Modèles d'affaires — `CRM-068` T4b1, `docs/DESIGN_SYSTEM.md` §5.71. Après les workflows : un modèle sert les
+ * affaires d'un workflow, et se lit après lui. Réservé aux administrateurs : son entrée suit la règle de « Coût du
+ * personnel » (§5.59).
+ */
+export const CHEMIN_ADMIN_MODELES_AFFAIRES = '/reglages/modeles-affaires' as const
+
 /** Administration du catalogue de nœuds — `CRM-030`, `docs/SPEC-workflow-engine.md` §2 bis.2. */
 export const CHEMIN_ADMIN_CATALOGUE = '/reglages/catalogue' as const
 

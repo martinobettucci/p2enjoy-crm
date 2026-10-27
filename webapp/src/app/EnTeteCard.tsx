@@ -1,5 +1,7 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
 //       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
+// @spec CRM-068 (docs/BACKLOG.md) — tranche T4b1 : « Enregistrer comme modèle », dans la rangée de « Mettre en sommeil »,
+//       son panneau sous elle (docs/DESIGN_SYSTEM.md §5.71 ; `EnregistrerModele.tsx`)
 // @spec CRM-040 (docs/BACKLOG.md) — les champs d'en-tête de la fiche d'affaire, et leur écriture
 // @spec docs/SPEC-cards.md §15.2 (où l'en-tête vit), §15.4 (les six données), §15.5 (l'action de
 //       copie et ce qu'elle promet), §15.6 (accessibilité), §15.7 (les trois états de donnée),
@@ -21,7 +23,7 @@
 // serait une requête gratuite sur l'écran le plus ouvert du produit.
 
 import { Archive, Copy, Moon, PencilLine, Sun } from 'lucide-react'
-import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Avatar } from '../components/ui/Avatar'
 import { Button } from '../components/ui/Button'
 import {
@@ -56,6 +58,7 @@ import { CLE_PRESET_SOMMEIL, mentionSommeil } from '../components/ui/Sommeil'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { t, type CleTraduction } from '../i18n'
 import { useRefus } from '../components/ui/RefusCommandes'
+import { CommandeEnregistrerModele, PanneauEnregistrerModele } from './EnregistrerModele'
 
 /** Durée de la confirmation « Copié », en millisecondes (§15.5, point 3). */
 const DUREE_CONFIRMATION = 2000
@@ -118,6 +121,17 @@ export function EnTeteCard({
 		commande.current?.focus()
 		setFocusARendre(false)
 	}, [edition, focusARendre])
+
+	// « ENREGISTRER COMME MODÈLE » (§5.71) : même mécanisme de retour du focus que l'édition — la commande est démontée
+	// tant que son panneau est ouvert.
+	const [panneauModele, setPanneauModele] = useState(false)
+	const commandeModele = useRef<HTMLButtonElement>(null)
+	const [focusModele, setFocusModele] = useState(false)
+	useEffect(() => {
+		if (panneauModele || !focusModele) return
+		commandeModele.current?.focus()
+		setFocusModele(false)
+	}, [panneauModele, focusModele])
 
 	const appliquer = useCallback((ligne: LigneEnteteEcrite, membres: readonly MembreAffectable[]) => {
 		// LA LIGNE RENDUE NE PORTE QUE LES COLONNES DE LA TABLE ÉCRITE depuis `CRM-111` T2.3.2 — l'affaire ou son
@@ -216,6 +230,22 @@ export function EnTeteCard({
 					dort={dort}
 					maintenant={maintenant}
 					onAppliquer={appliquerSommeil}
+					commandeSuivante={
+						panneauModele ? null : (
+							<CommandeEnregistrerModele ref={commandeModele} onOuvrir={() => setPanneauModele(true)} />
+						)
+					}
+				/>
+			)}
+			{client === null || edition || !panneauModele ? null : (
+				<PanneauEnregistrerModele
+					client={client}
+					idRattachement={idRattachement(card)}
+					titreAffaire={card.title}
+					onFermer={() => {
+						setPanneauModele(false)
+						setFocusModele(true)
+					}}
 				/>
 			)}
 
@@ -816,12 +846,15 @@ function BlocSommeil({
 	dort,
 	maintenant,
 	onAppliquer,
+	commandeSuivante,
 }: {
 	readonly card: CardOuverte
 	readonly client: ClientCrm
 	readonly dort: boolean
 	readonly maintenant?: Date
 	readonly onAppliquer: (snoozedUntil: string | null) => void
+	/** La commande qui suit « Mettre en sommeil » dans la même rangée — « Enregistrer comme modèle » (§5.71). */
+	readonly commandeSuivante?: ReactNode
 }) {
 	const droit = useRefus()
 	const [panneau, setPanneau] = useState(false)
@@ -911,6 +944,7 @@ function BlocSommeil({
 						{t(CLE_ENDORMIR)}
 					</Button>
 				)}
+				{commandeSuivante}
 			</div>
 
 			{panneau && !dort && (

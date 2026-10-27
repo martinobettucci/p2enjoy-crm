@@ -1,3 +1,4 @@
+// @spec CRM-068 (docs/BACKLOG.md) — tranche T4b1 : la création depuis un modèle (docs/SPEC-checklists.md §3.6)
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : l'appel de l'écran au geste serveur de création
 // @spec docs/SPEC-cards.md §18.2 (le geste serveur et ses refus nommés), §18.3 (l'écran : succès qui
 //       ouvre la fiche, refus traduits) ; docs/JOURNAL.md décision 609
@@ -13,8 +14,11 @@
 
 import type { ClientCrm } from './supabase'
 
-/** Les quatre refus que l'écran sait dire (docs/SPEC-cards.md §18.3). */
-export type RefusCreationAffaire = 'channel-ferme' | 'sans-etape-initiale' | 'interdit' | 'panne'
+/**
+ * Les refus que l'écran sait dire (docs/SPEC-cards.md §18.3) ; `modele` depuis `CRM-068` T4b1 : le modèle choisi n'est plus
+ * proposé — archivé, illisible — ou sert un autre workflow que le channel (docs/SPEC-checklists.md §3.6).
+ */
+export type RefusCreationAffaire = 'channel-ferme' | 'sans-etape-initiale' | 'interdit' | 'modele' | 'panne'
 
 export type IssueCreationAffaire =
 	| { readonly ok: true; readonly idCard: string }
@@ -46,14 +50,24 @@ export async function creerAffaire(
 	client: ClientCrm | null,
 	idChannel: string,
 	titre: string,
+	/** `CRM-068` T4b1 : le modèle appliqué à la création, dans la même transaction ; absent, l'affaire naît nue. */
+	idModele: string | null = null,
 ): Promise<IssueCreationAffaire> {
 	if (client === null) return { ok: false, refus: 'panne' }
 	try {
-		const reponse = await client.rpc('creer_affaire', { p_channel: idChannel, p_titre: titre })
+		const reponse = await client.rpc('creer_affaire', {
+			p_channel: idChannel,
+			p_titre: titre,
+			...(idModele === null ? {} : { p_template: idModele }),
+		})
 		if (reponse.error === null) {
 			return typeof reponse.data === 'string' && FORME_IDENTIFIANT.test(reponse.data)
 				? { ok: true, idCard: reponse.data }
 				: { ok: false, refus: 'panne' }
+		}
+		// Le modèle se nomme par son symbole, AVANT le `P0002` du channel, que la base confond délibérément avec un refus.
+		if (reponse.error.message === 'template_not_found' || reponse.error.message === 'template_workflow_mismatch') {
+			return { ok: false, refus: 'modele' }
 		}
 		if (reponse.error.code === '42501' || reponse.error.code === 'P0002') return { ok: false, refus: 'interdit' }
 		if (reponse.error.code === 'P0001') {

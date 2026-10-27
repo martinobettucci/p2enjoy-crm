@@ -5003,6 +5003,57 @@ printf '  %-36s Négociation, tout coché, 1 point libre coché\n' 'Parcours dat
 info "Checklists : 3 points sur le workflow par défaut, sans exigence ; un workflow de démonstration et son exigence,
       3 affaires dans le channel « Checklists », dont une bloquée — docs/SPEC-seed.md §28"
 
+# --- 8 sexvicies. Les modèles d'affaires — CRM-068 T4b1, docs/SPEC-seed.md §29 ------------------------------------------
+# @spec CRM-068 (docs/BACKLOG.md) — tranche T4b1 : trois modèles — un posé par l'écran, un enregistré depuis une affaire,
+#       un archivé (docs/SPEC-checklists.md §3.5, §3.6 ; docs/SPEC-seed.md §29)
+#
+# LE VRAI CHEMIN (§29.2) : sous le jeton de l'administratrice, comme Réglages ▸ Modèles d'affaires et « Enregistrer comme
+# modèle ». L'identifiant d'un modèle n'est pas ouvert au client (privilège de colonne) : la présence se lit au NOM.
+echo
+say "8 sexvicies. Modèles d'affaires"
+MA_WORKFLOW_DEFAUT='5eed0000-0000-4000-8000-000000000051'
+# Un jeton FRAIS : le jeton interne vit 300 s.
+JETON_ADMIN_MA=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_MA" ] || die "connexion de l'administratrice impossible : les modèles s'écrivent sous son jeton (§29.2)."
+
+# Rend vrai si un modèle de ce nom existe déjà, archivé ou non (convergence par présence, §29.3).
+ma_present() { # $1 = nom
+	code=$(api GET "/rest/v1/card_templates?select=id&name=eq.$(jq -rn --arg n "$1" '$n|@uri')")
+	attendu "$code" "lecture du modèle « $1 »" 200
+	[ "$(jq -r 'length' "$CORPS")" != "0" ]
+}
+
+if ! ma_present 'Audit flash'; then
+	code=$(api_jeton "$JETON_ADMIN_MA" POST /rest/v1/card_templates -d "$(jq -nc --arg ws "$CK_ESPACE" --arg wf "$MA_WORKFLOW_DEFAUT" \
+		'{workspace_id: $ws, workflow_id: $wf, name: "Audit flash", title: "Audit flash — ", description: "Deux jours sur site : entretiens, revue des outils, restitution.",
+		  amount: 4800, currency: "EUR", field_values: {budget: 4800, source: "salon"},
+		  checklist: ["Envoyer la convention", "Planifier les entretiens"]}')")
+	attendu "$code" "modèle « Audit flash »" 201
+fi
+printf '  %-36s workflow par défaut, 4 800 EUR, 2 réponses, 2 points\n' 'Audit flash'
+
+# « Enregistrer comme modèle » depuis l'affaire de Rennes, toute cochée : la base reprend titre, montant et libellés.
+if ! ma_present 'Parcours data'; then
+	code=$(api GET "/rest/v1/card_placements?select=id,affaire:cards!inner(title)&channel_id=eq.$CK_CHANNEL&affaire.title=eq.$(jq -rn '"Parcours data — Mairie de Rennes"|@uri')")
+	attendu "$code" "lecture de l'affaire de Rennes" 200
+	MA_RENNES=$(jq -r '.[0].id // empty' "$CORPS")
+	[ -n "$MA_RENNES" ] || die "l'affaire « Parcours data — Mairie de Rennes » manque : la section 8 quinvicies la pose (§29.1)."
+	code=$(api_jeton "$JETON_ADMIN_MA" POST /rest/v1/rpc/save_card_as_template -d "$(jq -nc --arg p "$MA_RENNES" '{p_placement: $p, p_name: "Parcours data"}')")
+	attendu "$code" "modèle « Parcours data » enregistré depuis l'affaire de Rennes" 200
+fi
+printf '  %-36s workflow « Cycle commercial — checklists », depuis l'"'"'affaire de Rennes\n' 'Parcours data'
+
+if ! ma_present 'Atelier découverte (2025)'; then
+	code=$(api_jeton "$JETON_ADMIN_MA" POST /rest/v1/card_templates -H 'Prefer: return=representation' -d "$(jq -nc --arg ws "$CK_ESPACE" \
+		--arg wf "$MA_WORKFLOW_DEFAUT" '{workspace_id: $ws, workflow_id: $wf, name: "Atelier découverte (2025)", title: "Atelier découverte — ", amount: 900}')")
+	attendu "$code" "modèle « Atelier découverte (2025) »" 201
+	code=$(api_jeton "$JETON_ADMIN_MA" PATCH "/rest/v1/card_templates?id=eq.$(jq -r '.[0].id' "$CORPS")" -H 'Prefer: return=representation' \
+		-d '{"archived_at": "2026-01-15T09:00:00Z"}')
+	attendu "$code" "archivage du modèle « Atelier découverte (2025) »" 200
+fi
+printf '  %-36s workflow par défaut, archivé\n' 'Atelier découverte (2025)'
+info "Modèles d'affaires : 3, dont un enregistré depuis une affaire et un archivé — docs/SPEC-seed.md §29"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens

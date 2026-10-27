@@ -1,3 +1,5 @@
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T4b1 : le `select` « Modèle », rendu seulement si le workflow du channel
+//           a un modèle ; le titre proposé ne remplace jamais une saisie ; le refus `modele` (docs/DESIGN_SYSTEM.md §5.71)
 // @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 : le geste « Nouvelle affaire », rendu réel
 // @verifies docs/SPEC-cards.md §18.3 (le formulaire dans le flux, « Créer » éteint sur un titre blanc,
 //           `Échap`, les refus qui gardent la saisie, le succès qui ouvre la fiche), §18.1 (arbitrages)
@@ -236,5 +238,78 @@ describe('« Créer » sous une capacité refusée (CRM-093 T4)', () => {
 		expect(creer.getAttribute('aria-describedby')).toBe('motif-channel')
 		await userEvent.click(creer)
 		expect(appels).toEqual([])
+	})
+})
+
+// `CRM-068` T4b1 — le `select` « Modèle » (docs/DESIGN_SYSTEM.md §5.71, docs/SPEC-checklists.md §3.6).
+describe('le modèle d’une affaire nouvelle (CRM-068 T4b1)', () => {
+	/** Client espion qui sert aussi les deux lectures des modèles : le channel, puis les modèles de son workflow. */
+	function clientAvecModeles(modeles: readonly Record<string, unknown>[], reponse: Reponse = { data: ID_CARD, error: null }) {
+		const appels: [string, unknown][] = []
+		const lectures: string[] = []
+		const faux = {
+			rpc: (nom: string, args: unknown) => {
+				appels.push([nom, args])
+				return Promise.resolve(reponse)
+			},
+			from: (table: string) => {
+				const maillon: Record<string, unknown> = {}
+				for (const methode of ['select', 'eq', 'is']) maillon[methode] = () => maillon
+				maillon.maybeSingle = () => Promise.resolve({ data: { workflow_id: 'wf-1' }, error: null, status: 200 })
+				maillon.then = (resoudre: (r: unknown) => unknown) => {
+					lectures.push(table)
+					return resoudre({ data: table === 'card_templates' ? modeles : [], error: null, status: 200 })
+				}
+				return maillon
+			},
+		} as unknown as ClientCrm
+		return { client: faux, appels, lectures }
+	}
+	const MODELE = {
+		id: 'm-1', workflow_id: 'wf-1', name: 'Audit flash', title: 'Audit flash — client', description: null, amount: 4800,
+		currency: 'EUR', field_values: {}, checklist: ['Envoyer la convention'], archived_at: null, created_at: '2026-10-27T08:00:00Z',
+	}
+	const select = () => screen.findByTestId('select-modele-affaire') as Promise<HTMLSelectElement>
+
+	it('sans modèle pour le workflow du channel, le `select` n’est pas rendu (§5.36)', async () => {
+		const { client: c, lectures } = clientAvecModeles([])
+		monter(c)
+		await userEvent.click(screen.getByTestId('nouvelle-affaire'))
+		// La lecture des modèles a eu lieu, et rendu une liste vide : l'absence est alors la règle, non un état transitoire.
+		await waitFor(() => expect(lectures).toContain('card_templates'))
+		expect(screen.queryByTestId('select-modele-affaire')).toBeNull()
+	})
+
+	it('avec un modèle : « Aucun modèle » en tête ; choisi, il remplit un titre BLANC et part avec la création', async () => {
+		const { client: c, appels } = clientAvecModeles([MODELE])
+		monter(c)
+		await userEvent.click(screen.getByTestId('nouvelle-affaire'))
+		const liste = await select()
+		expect(screen.getByLabelText(fr['affaire.creation.modele'])).toBe(liste)
+		expect([...liste.options].map((o) => o.textContent)).toEqual([fr['affaire.creation.modele.aucun'], 'Audit flash'])
+		await userEvent.selectOptions(liste, 'm-1')
+		expect(champ().value).toBe('Audit flash — client')
+		await userEvent.click(creer())
+		expect(appels).toEqual([['creer_affaire', { p_channel: 'ch-1', p_titre: 'Audit flash — client', p_template: 'm-1' }]])
+		expect((await screen.findByTestId('fiche-ouverte')).textContent).toBe(ID_CARD)
+	})
+
+	it('un titre déjà saisi n’est jamais remplacé par celui du modèle', async () => {
+		monter(clientAvecModeles([MODELE]).client)
+		await userEvent.click(screen.getByTestId('nouvelle-affaire'))
+		await userEvent.type(champ(), 'Mon titre')
+		await userEvent.selectOptions(await select(), 'm-1')
+		expect(champ().value).toBe('Mon titre')
+	})
+
+	it('le refus du modèle s’écrit sous le formulaire, la saisie gardée', async () => {
+		monter(clientAvecModeles([MODELE], { data: null, error: { code: '22023', message: 'template_workflow_mismatch' } }).client)
+		await userEvent.click(screen.getByTestId('nouvelle-affaire'))
+		await userEvent.selectOptions(await select(), 'm-1')
+		await userEvent.click(creer())
+		const refus = await screen.findByRole('alert')
+		expect(refus.getAttribute('data-refus')).toBe('modele')
+		expect(refus.textContent).toContain(fr['affaire.creation.refus.modele'])
+		expect(champ().value).toBe('Audit flash — client')
 	})
 })

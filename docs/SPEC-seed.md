@@ -2575,3 +2575,38 @@ workflow, ses étapes, ses transitions et ses points sont posés par identifiant
 - Le channel « Checklists » et son workflow comptent parmi les channels et les workflows du jeu : les preuves qui les
   dénombrent sont révisées dans le même changement (décision 51).
 
+
+## 29. Les modèles d'affaires — `CRM-068` T4b1 (décisions 747, 749, 765)
+
+*Écrit le 2026-10-27, avec la section du script. Contrat : `docs/SPEC-checklists.md` §6.*
+
+### 29.1 Ce que le jeu porte
+
+| Modèle (nom stable) | Workflow | Ce qu'il démontre |
+|---|---|---|
+| « Audit flash » | par défaut (`…051`) | posé comme par Réglages ▸ Modèles d'affaires : titre proposé « Audit flash — », description, 4 800 EUR, deux réponses (`budget`, `source`), deux points ; proposé par « Nouvelle affaire » dans les channels du workflow par défaut |
+| « Parcours data » | « Cycle commercial — checklists » (`…c6801`) | **enregistré depuis l'affaire « Parcours data — Mairie de Rennes »** (§28) : titre de l'affaire, libellés de ses quatre points, sans les cochages |
+| « Atelier découverte (2025) » | par défaut | **archivé** : absent de « Nouvelle affaire », visible sous « Afficher les archivés » |
+
+Aucun modèle sur le workflow dérivé « Cycle commercial — Conseil IA » : le channel `conseil-ia/prospection` montre
+« Nouvelle affaire » **sans** le `select` « Modèle » (`docs/DESIGN_SYSTEM.md` §5.71).
+
+### 29.2 Le vrai chemin
+
+Tout est écrit **sous le jeton de l'administratrice** : les deux modèles posés, par `POST /card_templates` comme l'écran ;
+l'archivage, par le `PATCH` de « Archiver » ; le modèle repris, par `public.save_card_as_template` sur le rattachement de
+l'affaire de Rennes, comme « Enregistrer comme modèle ». L'identifiant d'un modèle n'est pas ouvert au client (privilège
+de colonne, migration `0131`) : il est donc posé par la base, et **non stable**.
+
+### 29.3 Convergence
+
+**Par présence, au nom.** Un modèle est cherché par son nom, archivé ou non ; présent, il n'est ni recréé ni modifié. La
+date d'archivage est fixe (2026-01-15), pour qu'un rejeu à vide rende le même état.
+
+### 29.4 Ce que les preuves en attendent
+
+- `e2e/ui/modeles-affaires.spec.ts` lit les deux sections « Cycle commercial standard » et « Cycle commercial —
+  checklists », « Audit flash » et ses deux points, l'archivé sous sa case ; crée une affaire depuis « Audit flash » dans
+  `studio-web/refonte` ; retrouve le nom « Parcours data » pour prouver le refus d'un nom pris. Ses propres modèles et
+  affaires portent le préfixe `ZZ 068`, retirés à la fin.
+- Les pgTAP `0122` et l'API `modeles-affaires.spec.ts` posent des noms `ZZ …` distincts des noms du jeu.

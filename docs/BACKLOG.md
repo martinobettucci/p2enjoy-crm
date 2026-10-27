@@ -12394,9 +12394,19 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
   - [ ] **T4b — les écrans et le seed** : Réglages ▸ Modèles d'affaires, le `select` « Modèle » de « Nouvelle
         affaire », « Enregistrer comme modèle » sur la fiche ; deux modèles au seed dont un enregistré depuis une
         affaire (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel.
-        *Découpée le 2026-10-27* : **T4b1** — le `select` « Modèle », « Enregistrer comme modèle », Réglages ▸ Modèles
-        d'affaires (nom, titre, description, montant, devise, points, archivage), le seed ; **T4b2** — la saisie des
-        réponses aux questions du workflow dans la fiche d'un modèle (`docs/DESIGN_SYSTEM.md` §5.71).
+        *Découpée le 2026-10-27* :
+    - [~] **T4b1** — le `select` « Modèle », « Enregistrer comme modèle », Réglages ▸ Modèles d'affaires (nom, titre,
+          description, montant, devise, points, archivage), le seed. **Livrée en développement le 2026-10-27**
+          (décision 765) : `lib/modeles-affaires.ts`, `creerAffaire(…, idModele)` et son refus `modele`,
+          `app/ReglagesModelesAffaires.tsx` (route `/reglages/modeles-affaires`, entrée d'index après les workflows),
+          `app/EnregistrerModele.tsx` dans la rangée de « Mettre en sommeil » ; motif de l'index des réglages révisé (gardes
+          `IndexReglages.test.tsx` et `droits-interface.spec.ts`, décision 51) ; seed §29, appliqué puis rejoué (3 modèles) ;
+          unitaires 26 + 7 + 6 + 4 + 2, suite 4845 ; API 6/6 ; E2E `modeles-affaires.spec.ts` 6/6 et les specs voisins
+          40/40 ; captures observées (deux défauts d'apparence corrigés) ; un défaut de T3b trouvé et corrigé (l'arrivée
+          par « Cocher ces points » attend la capacité) ; harnais UI +6. **Reste le manuel** (9.10 et 18.15, écrits au plan
+          de `CRM-117`, committés après son T3.0, avec la correspondance de l'aide `aide-ecrans.ts`).
+    - [ ] **T4b2** — la saisie des réponses aux questions du workflow dans la fiche d'un modèle
+          (`docs/DESIGN_SYSTEM.md` §5.71).
 - [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`.
 
 ### CRM-072 — Journal d'audit consultable et conformité RGPD `[P]`

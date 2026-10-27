@@ -917,6 +917,9 @@ morte du §5.10. Aucune couleur, aucun jeton, aucune icône nouvelle.
 **« Cocher ces points »** vers la fiche (`#checklist`), dans la forme du lien « Renseigner » des champs exigés
 (§5.7 quater) ; à l'arrivée, le bloc est amené en vue et le premier point **exigé non coché** prend le focus, une seule
 fois par adresse.
+*Précisé le 2026-10-27 (décision 765)* : l'arrivée **attend la fin de la lecture de la capacité** d'écrire sur l'affaire
+— la case, éteinte sans motif pendant cette lecture (§5.59), refusait le focus, et l'arrivée était perdue sous charge.
+Refusée, la capacité ne s'attend plus : le bloc est amené en vue, sans focus.
 
 ### 5.8 États systématiques
 
@@ -6769,6 +6772,22 @@ porteur du geste, borne de liste à `104ch`.
 - **ÉTATS** (§5.8) : squelette au premier chargement, erreur avec « Réessayer », vide « Aucun modèle d'affaire. » avec
   « Nouveau modèle ».
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `CopyPlus`.**
+
+*Précisé à l'écriture du code, le 2026-10-27 (décision 765), après observation des captures :*
+
+- **Seuls les workflows qui ont un modèle visible ont leur section** : une section sans ligne serait un titre vide. L'ordre
+  est celui de la liste de l'éditeur (le défaut en tête, puis par nom).
+- **« Enregistrer comme modèle » refusée porte elle-même son motif** — écart borné de « Nouveau channel » (§5.59) : un
+  bandeau en tête de chaque fiche, pour une seule commande d'administration, serait du bruit ; la commande éteinte cite
+  un `sr-only` adjacent par `aria-describedby` et l'infobulle native `title`. Elle suit la capacité d'**administrer
+  l'espace**, non celle d'écrire sur l'affaire : le bandeau de la fiche ne l'éteint pas.
+- **Le motif de l'index des réglages nomme les trois entrées réservées** — « Journal d'audit », « Modèles d'affaires »,
+  « Coût du personnel » — au lieu de la seule dernière.
+- **Un refus rend le focus au champ à corriger** : le nom pour un nom pris, le montant pour un montant illisible — refusé
+  avant envoi, la base ne jugeant que le nombre. « Enregistrer », éteint pendant l'envoi, avait perdu le focus, et
+  `Échap` tombé sur le document ne refermait plus la fiche (trouvé par la preuve E2E).
+- **La légende « Points de checklist » prend `mb-1`** : sans elle, l'anneau de focus du premier point la touchait.
+- **Le panneau de la fiche reste ouvert après le succès**, pour l'annonce ; « Annuler » y devient « Fermer ».
 
 
 ### 5.72 L'en-tête du workflow choisi, et le changement de workflow d'un channel — `CRM-118` T1.b

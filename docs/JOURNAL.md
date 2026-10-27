@@ -36159,3 +36159,39 @@ la main.
 - Une unité dédiée, `CRM-121`. Elle prouve que l'image `mcp` se construit à l'identique, que pytest reste vert, et que
   GitHub liste les manifestes Python après le push.
 - **Question du connecteur** : sans objet, c'est de l'outillage du dépôt.
+
+## décision 765 — `CRM-068` T4b1 : les modèles d'affaires à l'écran — ce que le code a précisé
+
+*2026-10-27, session interactive (Claude Code, poste du responsable). Numérotée 765 : le 764 est pris par une session
+parallèle de `CRM-118`.*
+
+**Problème.** Le design system §5.71 avait été écrit avant le code ; l'écriture des écrans, leurs preuves et
+l'observation des captures ont posé des questions qu'il ne tranchait pas.
+
+**Observations et décisions.**
+
+1. **« Enregistrer comme modèle » refusée porte elle-même son motif** (sr-only cité par `aria-describedby`, et `title`),
+   sur le modèle de « Nouveau channel » (§5.59, écart borné). Un bandeau en tête de chaque fiche, pour une seule
+   commande d'administration, serait du bruit. Elle suit la capacité d'administrer l'espace, et non celle d'écrire sur
+   l'affaire.
+2. **Le motif de l'index des réglages nomme les trois entrées réservées** (« Journal d'audit », « Modèles d'affaires »,
+   « Coût du personnel ») : il ne nommait que la dernière, ce qui était déjà inexact depuis le journal d'audit. Les deux
+   gardes qui le lisaient (`IndexReglages.test.tsx`, `e2e/ui/droits-interface.spec.ts`) sont révisées (décision 51).
+3. **Seuls les workflows qui ont un modèle visible ont leur section** à l'écran des réglages.
+4. **Un refus rend le focus au champ à corriger.** Trouvé par l'E2E : après un nom pris, le focus était sur le
+   document, et `Échap` ne refermait plus la fiche.
+5. **Le seed porte trois modèles et non deux** (`docs/SPEC-seed.md` §29) : le troisième, archivé, montre l'état
+   qu'« Afficher les archivés » ramène. La présence se lit au nom, l'identifiant n'étant pas ouvert au client.
+6. **Défaut de T3b trouvé par la campagne de T4b1** : l'arrivée par « Cocher ces points » donnait le focus une seule
+   fois, dès la checklist lue. Sous charge, la capacité d'écrire sur l'affaire n'était pas encore lue : la case, éteinte,
+   refusait le focus, et l'arrivée était perdue. L'arrivée attend désormais la fin de cette lecture
+   (`BlocChecklistCard.tsx` ; §5.7 quinquies précisé). Le test unitaire écrit d'abord a échoué, puis il est passé.
+
+**Vérifications.** Unitaires 4845/4845 (dont la bibliothèque 26, l'écran 7, la commande 6, le `select` 4 et l'arrivée 1) ;
+typecheck, classes CSS ; API `modeles-affaires` et `creer-affaire` 6/6 ; E2E `modeles-affaires.spec.ts` 6/6, et avec
+`nouvelle-affaire`, `droits-interface`, `checklists`, `checklists-editeur`, `entete-card` et `entete-card-ecriture` : 40/40 ;
+seed appliqué puis rejoué, trois modèles ; captures observées. Deux défauts d'apparence ont été corrigés sur capture : la
+légende collée au premier point, et des guillemets coupés en fin de ligne.
+
+**Conséquences.** Le manuel (9.10, 18.15) est écrit au plan de `CRM-117` et sera committé après son T3.0, comme celui de
+T3b. La correspondance de l'aide (`aide-ecrans.ts`) le sera avec lui : sa preuve lit le manuel construit.

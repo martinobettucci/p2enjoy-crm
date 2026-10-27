@@ -4,6 +4,8 @@
 //           docs/DESIGN_SYSTEM.md §5.59, §5.10
 // @verifies CRM-070 (docs/BACKLOG.md) — tranche T2 : l'entrée « Membres » vient après l'arborescence, et reste un lien
 //           pour tous — l'écran se consulte (docs/SPEC-membres.md §3 ; docs/DESIGN_SYSTEM.md §5.61)
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T4b1 : l'entrée « Modèles d'affaires », réservée, suit la règle de « Coût du
+//           personnel » (docs/DESIGN_SYSTEM.md §5.71, §5.59)
 
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router'
@@ -32,7 +34,11 @@ describe('la navigation des réglages et la capacité d’administration (CRM-09
 		expect(entree.tagName).not.toBe('A')
 		expect(entree.getAttribute('aria-disabled')).toBe('true')
 		expect(entree.getAttribute('aria-describedby')).toBe(motif.id)
-		expect(motif.textContent).toContain('« Coût du personnel » est réservé aux administrateurs')
+		// Révisé par `CRM-068` T4b1 : le motif nomme désormais les trois entrées réservées (décision 51).
+		expect(motif.textContent).toContain('« Coût du personnel » sont réservés aux administrateurs')
+		const modeles = screen.getByTestId('entree-modeles-affaires')
+		expect(modeles.tagName).not.toBe('A')
+		expect(modeles.getAttribute('aria-describedby')).toBe(motif.id)
 	})
 
 	it('refusée : les écrans consultables en lecture seule gardent leur lien', () => {

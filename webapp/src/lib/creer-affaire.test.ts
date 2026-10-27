@@ -1,3 +1,5 @@
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T4b1 : `p_template` envoyé, le refus `modele` lu sur son symbole
+//           (docs/SPEC-checklists.md §3.6 ; docs/DESIGN_SYSTEM.md §5.71)
 // @verifies CRM-095 (docs/BACKLOG.md) — tranche T2 : l'appel de l'écran au geste serveur de création
 // @verifies docs/SPEC-cards.md §18.2 (les refus nommés de `public.creer_affaire`), §18.3 (l'écran les
 //           traduit ; un succès rend l'identifiant qui ouvre la fiche) ; docs/SPEC-webapp.md §6.4
@@ -89,5 +91,30 @@ describe('creerAffaire — les refus, lus sur le code (docs/SPEC-cards.md §18.2
 			refus: 'panne',
 		})
 		expect(await creerAffaire(client(new Error('coupure')).client, 'ch-1', 'A')).toEqual({ ok: false, refus: 'panne' })
+	})
+})
+
+// `CRM-068` T4b1 — la création depuis un modèle (docs/SPEC-checklists.md §3.6, docs/DESIGN_SYSTEM.md §5.71).
+describe('creerAffaire — avec un modèle', () => {
+	it('envoie `p_template` quand un modèle est choisi, et seulement alors', async () => {
+		const { client: c, appels } = client({ data: ID_CARD, error: null })
+		await creerAffaire(c, 'ch-1', 'Audit', 'm-1')
+		await creerAffaire(c, 'ch-1', 'Audit', null)
+		expect(appels).toEqual([
+			['creer_affaire', { p_channel: 'ch-1', p_titre: 'Audit', p_template: 'm-1' }],
+			['creer_affaire', { p_channel: 'ch-1', p_titre: 'Audit' }],
+		])
+	})
+
+	it('`template_not_found` (P0002) et `template_workflow_mismatch` (22023) disent le modèle, pas le channel', async () => {
+		for (const erreur of [
+			{ code: 'P0002', message: 'template_not_found' },
+			{ code: '22023', message: 'template_workflow_mismatch' },
+		]) {
+			expect(await creerAffaire(client({ data: null, error: erreur }).client, 'ch-1', 'A', 'm-1')).toEqual({
+				ok: false,
+				refus: 'modele',
+			})
+		}
 	})
 })
