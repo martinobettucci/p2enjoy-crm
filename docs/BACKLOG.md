@@ -17093,8 +17093,10 @@ responsable** : traitée juste après `CRM-116`.*
       `CHANGELOG.md`, contrat de déploiement.
 - [ ] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.
 
-### CRM-118 — Connecteur MCP : la famille `workflows` `[@]`
-*Prise en charge : session interactive 2026-10-23 15:31 UTC (MCP workflows, Claude Code, poste du responsable) depuis 2026-10-26 21:38 UTC — état avant : [ ]*
+### CRM-118 — Connecteur MCP : la famille `workflows` `[P]`
+*Développement terminé et prouvé le 2026-10-27 (T1.b, T2.a à T2.e, les checklists d'étape) ; reste T3 — livrer les
+migrations `0129` et `0130`, la webapp et l'image `mcp` sur instruction du responsable (`docs/PROD_MIGRATIONS.md` §3),
+puis son constat.*
 *Créée le 2026-10-26 — décision 752, arbitrage du responsable sur les deux questions de la décision 659.* Le connecteur
 ne fait que lire un workflow (`crm_workflow_get`, `structure`, `CRM-104` T1). Le responsable veut qu'un assistant puisse
 **créer, modifier et archiver** les workflows, leurs étapes et leurs transitions, sous une **famille propre**,
