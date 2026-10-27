@@ -131,6 +131,24 @@ de l'éditeur le dit (comme une exigence sur une question archivée, `docs/DESIG
 `docs/DESIGN_SYSTEM.md` est complété avant le code de chaque écran, après sa relecture intégrale ; le manuel reçoit un
 chapitre « Checklists » et une section « Modèles d'affaires ».
 
+**L'éditeur de workflows — T3b, précisé le 2026-10-27 (décision 759).**
+
+- **Un bloc « Checklists des étapes »**, juste avant le bloc des exigences de transition : on n'exige pas un point qu'on
+  n'a pas posé. Une section par étape, dans l'ordre du graphe, titrée par le nom de l'étape ; ses points dans l'ordre de
+  `position`, chacun avec « Monter », « Descendre », « Renommer », « Archiver » ou « Désarchiver » ; un point archivé
+  porte la pilule « Archivé » et reste à sa place (il n'est plus ajouté aux affaires qui entrent dans l'étape, ceux déjà
+  copiés restent, §3.1). « Ajouter un point » sous chaque étape. Écriture réservée à l'administrateur (§3.1).
+- **Dans le bloc des exigences, sous chaque transition**, après les champs exigés : les points exigés, chacun avec
+  « Ne plus exiger », et « Exiger un point », qui ne propose que les points **non archivés** de l'étape de départ pas
+  encore exigés (§3.4). Un point archivé encore exigé le dit : « Point archivé, toujours exigé ».
+- **Le bandeau de refus du board** gagne le lien « Cocher ces points » vers la fiche de l'affaire (`#checklist`). À
+  l'arrivée, le bloc « Checklist » est amené en vue et le premier point exigé non coché prend le focus, une seule fois
+  par adresse — la règle des champs exigés (`docs/DESIGN_SYSTEM.md` §5.7 quater).
+- **Connecteur** (les deux questions, décision 759) : oui, ces gestes existeront dans le connecteur, dans la **famille
+  `workflows` existante** (migration `0129` de `CRM-118`) — ajouter ou renommer un point relève de `modifier`, exiger ou
+  ne plus exiger aussi (décision 756), retirer de `supprimer`. Les outils sont livrés par `CRM-118`, au catalogue de sa
+  famille (`docs/SPEC-mcp.md` §9.2 *undecies*), et non par T3b.
+
 ## 5. Connecteur MCP — famille `affaires`
 
 Deux outils au catalogue (`docs/SPEC-mcp.md` §9.2) : `crm_card_checklist_list` (`consulter`) rend les points d'une

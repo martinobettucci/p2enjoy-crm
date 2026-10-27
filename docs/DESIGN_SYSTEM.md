@@ -913,6 +913,10 @@ place. Sa phrase dit la règle — « Ces points de la checklist doivent être c
 liste des points manquants, leurs libellés tels que la base les rend, dans l'ordre de l'étape. **Aucun lien vers la
 fiche tant qu'elle ne montre pas la checklist** (T3) : un lien vers un écran où le geste n'existe pas serait la commande
 morte du §5.10. Aucune couleur, aucun jeton, aucune icône nouvelle.
+*Révisé le 2026-10-27 par T3b (décision 759)* : la fiche montre la checklist depuis T3a. Le bandeau porte donc le lien
+**« Cocher ces points »** vers la fiche (`#checklist`), dans la forme du lien « Renseigner » des champs exigés
+(§5.7 quater) ; à l'arrivée, le bloc est amené en vue et le premier point **exigé non coché** prend le focus, une seule
+fois par adresse.
 
 ### 5.8 États systématiques
 
@@ -6683,3 +6687,43 @@ spécifié par `docs/SPEC-checklists.md` §2 à §4 ; ces règles ne disent que 
   même objet que le compte de la carte —, « Point de checklist décoché » porte `SquareDashed` en teinte neutre, rien n'étant
   perdu ; le détail est le libellé du point. *Précisé à l'écriture du code, le 2026-10-26.*
 - **Aucune couleur, aucun jeton nouveau ; deux icônes Lucide nouvelles, `SquareCheck` et `SquareDashed`.**
+
+### 5.70 bis Les checklists dans l'éditeur de workflows — `CRM-068` T3b
+
+*Écrit le 2026-10-27, avant le code, après relecture intégrale de ce document (décision 759).* Ce que l'éditeur lit,
+écrit et refuse est spécifié par `docs/SPEC-checklists.md` §3.1, §3.4 et §4 ; ces règles ne disent que de quoi il a
+l'air. Tout ce que le §5.15 pose pour l'éditeur vaut sans être répété : listes et non diagramme, barre de boutons discrets
+compacts toujours visibles, commandes d'ordre désactivées aux extrémités et jamais masquées, formulaires dans le flux —
+aucune modale —, focus entrant dans le premier champ et rendu à la commande, alerte de refus dans le bloc concerné, un
+seul élément ouvert à la fois (§5.28).
+
+- **UN BLOC « Checklists des étapes », JUSTE AVANT LE BLOC DES EXIGENCES**, dans la même colonne et par la même règle
+  d'ordre (§5.15) : on n'exige pas un point qu'on n'a pas posé. Titre `h3` et une phrase en 13 px `--color-text-2` qui
+  dit la règle — les points d'une étape sont ajoutés aux affaires qui y entrent.
+- **UNE SECTION PAR ÉTAPE, DANS L'ORDRE DU GRAPHE**, titrée par le nom de l'étape en `font-medium` (§5.15 : le libellé
+  d'une étape se répète d'un bloc à l'autre, et c'est voulu). Ses points sont la liste plate du §5.18 — `--size-target`,
+  bordure basse `--color-border` —, chacun portant son libellé puis la barre « Monter » (`ArrowUp`), « Descendre »
+  (`ArrowDown`), « Renommer » (`Pencil`), « Archiver » (`Archive`) ou « Désarchiver » (`ArchiveRestore`), noms accessibles
+  nommant le point (§5.29). Une étape sans point écrit « Aucun point pour cette étape. » (§5.15 : jamais un vide).
+- **UN POINT ARCHIVÉ PORTE LA PILULE « Archivé »** et reste à sa place (§5.15, §5.18) ; « Monter », « Descendre » et
+  « Renommer » disparaissent de sa ligne (§5.18).
+- **« Ajouter un point » SOUS CHAQUE ÉTAPE**, bouton discret compact `Plus`, qui ouvre à sa place un champ « Libellé du
+  point » et « Ajouter » (primaire, désactivé tant que le champ est blanc, §5.50) / « Annuler ». Le renommage s'ouvre à la
+  place de la ligne, prérempli. Ni l'un ni l'autre ne demande confirmation ; l'archivage non plus : il se défait d'un
+  geste (§5.41).
+- **DANS LE BLOC DES EXIGENCES, SOUS CHAQUE TRANSITION, APRÈS LES CHAMPS EXIGÉS** : un sous-titre en 13 px
+  `--color-text-2`, « Points de checklist exigés », puis la liste des points exigés, chacun avec « Ne plus exiger »
+  (discret compact, `X`, nom accessible nommant le point et la transition). **Un point archivé encore exigé porte la
+  pilule « Archivé » et la phrase « Toujours exigé : retirez l'exigence pour ne plus bloquer cette transition. »** (§5.15,
+  liaison sans effet nommée). Aucun point exigé : « Aucun point exigé. »
+- **« Exiger un point »**, discret compact `Plus`, ouvre un `select` « Point » (option vide en tête, §5.22) qui ne propose
+  que les points **non archivés de l'étape de départ** pas encore exigés — le refus d'une commande vouée au refus, non un
+  droit (§5.21) ; sans point disponible, la phrase « Tous les points de l'étape de départ sont déjà exigés. » ou « L'étape
+  de départ n'a aucun point. » remplace la commande. « Exiger » (primaire) / « Annuler ».
+- **LES COMMANDES SUIVENT LA CAPACITÉ D'ADMINISTRER L'ESPACE** (§5.59), comme le reste de l'éditeur.
+- **ÉTATS** (§5.8) : squelette au premier chargement, erreur avec « Réessayer » ; après une écriture, les listes sont
+  relues sans squelette (§5.29 tranche 2 c) ; l'issue s'annonce dans la région vivante de l'éditeur.
+- **SOUS `md`**, la barre d'une ligne passe à la ligne suivante, cibles conservées ; `md` et jamais `sm` (§11).
+- **Aucune couleur, aucun jeton, aucune icône nouvelle** : `ArrowUp`, `ArrowDown`, `Pencil`, `Archive`, `ArchiveRestore`,
+  `Plus` et `X` servent déjà ces gestes.
+

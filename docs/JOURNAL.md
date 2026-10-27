@@ -36062,3 +36062,19 @@ de quelques chapitres changent avec leur titre, et `aide-ecrans.ts` les suit dan
 chunk 3 (annexe A, dossiers de captures, unités citées, couverture) exigeaient exactement ce que le §10 interdit, et
 seraient devenus rouges au premier chapitre réécrit. **Coordination** : les sessions qui écrivent dans le manuel
 (`CRM-068`, `CRM-118`) sont prévenues du nouveau plan au commit de T3.0.
+
+### Décision 759 — `CRM-068` T3b : l'éditeur des checklists, ses exigences, et le lien du bandeau (2026-10-27)
+
+*2026-10-27, session interactive.* Avant de spécifier T3b, les deux questions du connecteur et deux choix d'interface
+ont été posés au responsable. **Réponses** :
+1. **Connecteur** : oui — par `CRM-118`, dont la décision 756 prévoit que « les outils de checklist attendent `CRM-068`
+   T3b ». **Famille `workflows` existante** (migration `0129`) : ajouter, renommer, exiger relèvent de `modifier`, retirer
+   de `supprimer`. Aucun outil n'est livré par T3b.
+2. **Les exigences se règlent dans le bloc des exigences**, sous chaque transition, à côté des champs exigés, comme
+   l'écrit `docs/SPEC-checklists.md` §4 ; les points eux-mêmes dans un nouveau bloc « Checklists des étapes », juste
+   avant.
+3. **Le lien « Cocher ces points » du bandeau** mène à la fiche, qui amène le bloc en vue et donne le focus au premier
+   point exigé non coché, une fois par adresse (`docs/DESIGN_SYSTEM.md` §5.7 quater).
+**Persisté** : `docs/SPEC-checklists.md` §4 (T3b), `docs/DESIGN_SYSTEM.md` §5.70 bis et §5.7 quinquies (révisé), après
+relecture intégrale du design system. Le code suit.
+
