@@ -6,33 +6,8 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-108"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				},
-				{
 					"type": "text",
-					"text": " Une affaire porte ce qu'elle doit rapporter et ce qu'elle a rapporté, comme elle porte ce qu'elle\ncoûte. Le rapport de rentabilité rapproche les trois : recettes, coûts et coût du personnel. Captures :\n"
-				},
-				{
-					"type": "code",
-					"text": "docs/captures/CRM-108/"
-				},
-				{
-					"type": "text",
-					"text": "."
+					"text": "Une affaire porte ce qu'elle doit rapporter et ce qu'elle a rapporté, comme elle porte ce qu'elle coûte. Le rapport\nde rentabilité rapproche les trois : recettes, coûts et coût du personnel."
 				}
 			]
 		},

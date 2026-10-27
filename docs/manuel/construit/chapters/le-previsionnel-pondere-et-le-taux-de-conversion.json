@@ -6,57 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-066"
-						},
-						{
-							"type": "text",
-							"text": " tranche 3 a. C'est le "
-						},
-						{
-							"type": "strong",
-							"content": [
-								{
-									"type": "text",
-									"text": "chapitre 29"
-								}
-							]
-						},
-						{
-							"type": "text",
-							"text": " que "
-						},
-						{
-							"type": "code",
-							"text": "docs/SPEC-analytique.md"
-						},
-						{
-							"type": "text",
-							"text": " nomme.\nCaptures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-066/pilotage-*.jpg"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -404,12 +353,12 @@
 				{
 					"type": "link",
 					"target": {
-						"chapter": "le-carnet-de-contacts"
+						"chapter": "les-objectifs-le-tableau-blanc-de-l-equipe"
 					},
 					"content": [
 						{
 							"type": "text",
-							"text": "§10"
+							"text": "chapitre 8"
 						}
 					]
 				},
@@ -450,7 +399,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Cet écran livre donc le prévisionnel "
+					"text": "Cet écran donne donc le prévisionnel "
 				},
 				{
 					"type": "strong",
@@ -463,7 +412,7 @@
 				},
 				{
 					"type": "text",
-					"text": ". La confrontation n'est pas oubliée : elle n'a pas\nencore été arbitrée, et l'inventer ici produirait une comparaison que personne n'a demandée."
+					"text": " : il ne le compare à aucun objectif."
 				}
 			]
 		},

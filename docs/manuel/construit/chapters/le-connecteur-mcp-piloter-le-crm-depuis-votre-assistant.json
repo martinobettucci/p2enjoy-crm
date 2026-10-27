@@ -6,44 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-102"
-						},
-						{
-							"type": "text",
-							"text": " (le connecteur) et "
-						},
-						{
-							"type": "code",
-							"text": "CRM-103"
-						},
-						{
-							"type": "text",
-							"text": " (son administration, en développement) ; les outils de la famille\n« Recettes » par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-108"
-						},
-						{
-							"type": "text",
-							"text": " (en développement)."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "Le "
 				},
@@ -1101,23 +1063,6 @@
 							},
 							{
 								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrés en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-108"
-									}
-								]
-							},
-							{
-								"type": "text",
 								"text": " :"
 							}
 						]
@@ -1238,27 +1183,6 @@
 									{
 										"type": "text",
 										"text": "Affaires, en lecture"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrés en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-104"
-									},
-									{
-										"type": "text",
-										"text": ", tranche T2.a"
 									}
 								]
 							},
@@ -1524,27 +1448,6 @@
 									{
 										"type": "text",
 										"text": "Affaires, en écriture"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrés en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-104"
-									},
-									{
-										"type": "text",
-										"text": ", tranche T2.b"
 									}
 								]
 							},
@@ -1820,27 +1723,6 @@
 							},
 							{
 								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrée en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-104"
-									},
-									{
-										"type": "text",
-										"text": ", tranche T1"
-									}
-								]
-							},
-							{
-								"type": "text",
 								"text": " : retrouver des affaires, des contacts, des\norganisations, des commentaires et des messages par des mots, comme la barre de recherche de l'en-tête. Un résultat\nn'est rendu que si le connecteur peut consulter sa famille dans son espace — « Affaires », « Contacts »,\n« Organisations » ou « Messagerie ». "
 							},
 							{
@@ -1869,27 +1751,6 @@
 									{
 										"type": "text",
 										"text": "Structure"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrés en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-104"
-									},
-									{
-										"type": "text",
-										"text": ", tranche T1"
 									}
 								]
 							},
@@ -1972,15 +1833,7 @@
 										},
 										{
 											"type": "text",
-											"text": " : renommer un track ou un channel, changer sa description, la couleur ou l'icône d'un track. Le slug\n— l'adresse — ne change jamais ; changer le workflow d'un channel relève de la famille « Workflows », et choisir la\ncouleur d'un channel reste un geste de l'écran ("
-										},
-										{
-											"type": "code",
-											"text": "CRM-116"
-										},
-										{
-											"type": "text",
-											"text": ") ;"
+											"text": " : renommer un track ou un channel, changer sa description, la couleur ou l'icône d'un track. Le slug\n— l'adresse — ne change jamais ; changer le workflow d'un channel relève de la famille « Workflows », et choisir la\ncouleur d'un channel reste un geste de l'écran ;"
 										}
 									]
 								}
@@ -2027,27 +1880,6 @@
 									{
 										"type": "text",
 										"text": "Workflows"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrés en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-118"
-									},
-									{
-										"type": "text",
-										"text": ", tranches T2.a à T2.e"
 									}
 								]
 							},
@@ -2494,27 +2326,6 @@
 							},
 							{
 								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrés en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-104"
-									},
-									{
-										"type": "text",
-										"text": ", tranche T3"
-									}
-								]
-							},
-							{
-								"type": "text",
 								"text": " :"
 							}
 						]
@@ -2615,27 +2426,6 @@
 									{
 										"type": "text",
 										"text": "Organisations"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrées en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-114"
-									},
-									{
-										"type": "text",
-										"text": ", tranche T4"
 									}
 								]
 							},
@@ -2745,27 +2535,6 @@
 									{
 										"type": "text",
 										"text": "Budgets"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrés en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-104"
-									},
-									{
-										"type": "text",
-										"text": ", tranche T4"
 									}
 								]
 							},
@@ -2893,27 +2662,6 @@
 							},
 							{
 								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livré en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-104"
-									},
-									{
-										"type": "text",
-										"text": ", tranche T5"
-									}
-								]
-							},
-							{
-								"type": "text",
 								"text": " :"
 							}
 						]
@@ -3011,27 +2759,6 @@
 									{
 										"type": "text",
 										"text": "Objectifs"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrés en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-104"
-									},
-									{
-										"type": "text",
-										"text": ", tranche T6"
 									}
 								]
 							},
@@ -3170,27 +2897,6 @@
 									{
 										"type": "text",
 										"text": "Messagerie"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "livrée en développement par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-104"
-									},
-									{
-										"type": "text",
-										"text": ", tranche T7"
 									}
 								]
 							},
@@ -3392,7 +3098,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Toutes les familles ont désormais leurs outils. Restent des gestes de l'écran : "
+					"text": "Toutes les familles ont leurs outils. Restent des gestes de l'écran : "
 				},
 				{
 					"type": "strong",

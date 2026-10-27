@@ -486,6 +486,18 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 | `CRM-077` | la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre | — |
 | `CRM-070` | les-membres-de-votre-espace-qui-y-travaille-avec-quel-role | — |
 | `CRM-072` | le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace | — |
+| `CRM-084` | les-budgets-d-un-track | — |
+| `CRM-086` | les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense | — |
+| `CRM-099` | l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite | — |
+| `CRM-098` | le-temps-passe-et-le-cout-du-personnel | — |
+| `CRM-106` | le-temps-passe-et-le-cout-du-personnel | saisir-son-temps-depuis-la-fiche-d-une-affaire |
+| `CRM-107` | le-temps-passe-et-le-cout-du-personnel | regler-le-cout-du-personnel |
+| `CRM-108` | les-recettes-d-une-affaire-et-sa-rentabilite | — |
+| `CRM-066` | l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires | — |
+| `CRM-101` | la-plateforme-espaces-membres-et-superadministrateurs | — |
+| `CRM-102` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | — |
+| `CRM-103` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | accorder-des-droits-du-connecteur |
+| `CRM-104` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | ce-que-l-assistant-sait-faire |
 | *(les autres chapitres à leur réécriture : T3.2 à T3.5)* | | |
 
 ## 13. Le manuel dans la webapp

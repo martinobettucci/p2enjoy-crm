@@ -17119,8 +17119,10 @@ responsable** : traitée juste après `CRM-116`.*
               contradictoires corrigés (journal) ; le lien vers une spécification, seul avertissement de la construction,
               retiré ; table du §12 tenue.
         - [ ] **T3.4b — chapitre 18, composer un workflow** : après le commit des ajouts de `CRM-068` à ce chapitre.
-      - [ ] **T3.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33 ; le contrôle « aucune
-            référence interne » couvre alors tout le manuel.
+      - [x] **T3.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33. *Fait le 2026-10-27* : aucune
+            référence interne ; huit passages devenus faux ou mal liés corrigés (journal) ; table du §12 tenue. Le
+            contrôle « aucune référence interne » couvre 31 chapitres sur 33 : les chapitres 9 et 18 attendent T3.2b et
+            T3.4b, après le commit des ajouts de `CRM-068`.
 - [ ] **T4 — les images**, par les mêmes groupes : l'aide `illustrer`, les scénarios `e2e/manuel/`, le manifeste, les
       images placées et observées ; la preuve « un élément cité, une image » et la table des exceptions (§11.3) soumise
       au responsable.

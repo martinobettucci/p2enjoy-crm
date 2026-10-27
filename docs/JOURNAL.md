@@ -36407,3 +36407,15 @@ précède). Une affirmation vérifiée et **gardée** : la clé proposée pour �
 (`proposerSlug` ne convertit pas la ligature). Le lien vers `docs/SPEC-workflow-engine.md`, seul avertissement de la
 construction, disparaît avec la ligne « Livré par » qui le portait. **Le chapitre 18** attend les ajouts de `CRM-068` :
 T3.4b.
+
+### `CRM-117` T3.5 : le pilotage, la plateforme et le connecteur réécrits (2026-10-27)
+
+**Fait** : chapitres 23 à 33, sans aucune référence interne — les lignes « Livré par… », les notes de livraison par
+famille du connecteur (« livrés en développement par `CRM-104`, tranche T2.a »), les chemins de captures, les adresses
+techniques (`/couts`, `/pilotage?track=…`) décrites par leur effet. **Corrigés** : la place de « Coûts » et de
+« Pilotage » dans la barre latérale (entre « Objectifs » et « Pilotage », entre « Coûts » et « Rentabilité ») ;
+« aucun score de santé… rien ne l'alimente », alors que les deux scores existent sur la carte et la fiche — l'entonnoir
+ne les montre pas, et le dit en renvoyant à la section 9.1 ; un renvoi des objectifs qui menait au carnet de contacts,
+erreur de conversion de T3.0 ; une mise en gras cassée ; « désormais livré », « pas encore arbitrée », « désormais » ;
+l'exemple chiffré du jeu de démonstration, rendu générique. **Reste** : les chapitres 9 et 18, où écrit la session de
+`CRM-068` — T3.2b et T3.4b. Le contrôle « aucune référence interne » couvrira tout le manuel avec eux.

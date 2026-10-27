@@ -6,36 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-098"
-						},
-						{
-							"type": "text",
-							"text": " ; captures : "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-098/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "L'écran "
 				},
@@ -484,32 +454,7 @@
 				},
 				{
 					"type": "text",
-					"text": " ouvre un\npetit calcul ("
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-107"
-						},
-						{
-							"type": "text",
-							"text": " ; captures : "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-107/"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "). Saisissez le salaire brut mensuel, les charges sociales en pourcentage du brut,\nles frais de gestion et les avantages par mois, et le nombre de jours travaillés par an — 218 par défaut, le forfait\njours ; un salarié qui n’est pas au forfait en travaille plutôt 228 environ (365 jours, moins les week-ends, 25 jours de congés et les\nfériés). Le calcul affiche, à mesure que vous tapez, le coût mensuel complet et le coût par quart :"
+					"text": " ouvre un\npetit calcul. Saisissez le salaire brut mensuel, les charges sociales en pourcentage du brut,\nles frais de gestion et les avantages par mois, et le nombre de jours travaillés par an — 218 par défaut, le forfait\njours ; un salarié qui n’est pas au forfait en travaille plutôt 228 environ (365 jours, moins les week-ends, 25 jours de congés et les\nfériés). Le calcul affiche, à mesure que vous tapez, le coût mensuel complet et le coût par quart :"
 				}
 			]
 		},
@@ -639,33 +584,8 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-106"
-						},
-						{
-							"type": "text",
-							"text": " ; captures : "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-106/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				},
-				{
 					"type": "text",
-					"text": " Sous le résumé « Temps passé », "
+					"text": "Sous le résumé « Temps passé », "
 				},
 				{
 					"type": "strong",

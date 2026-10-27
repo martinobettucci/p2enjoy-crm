@@ -6,98 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-066"
-						},
-						{
-							"type": "text",
-							"text": " tranche 3 a, complété par les tranches 3 b (le sélecteur de portée,\n"
-						},
-						{
-							"type": "link",
-							"target": {
-								"chapter": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires",
-								"anchor": "choisir-la-portee-tout-l-espace-un-track-un-channel"
-							},
-							"content": [
-								{
-									"type": "text",
-									"text": "§30.1"
-								}
-							]
-						},
-						{
-							"type": "text",
-							"text": ") et 3 c (les étapes vides, nommées au "
-						},
-						{
-							"type": "link",
-							"target": {
-								"chapter": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires"
-							},
-							"content": [
-								{
-									"type": "text",
-									"text": "§30.2"
-								}
-							]
-						},
-						{
-							"type": "text",
-							"text": ").\nC'est le "
-						},
-						{
-							"type": "strong",
-							"content": [
-								{
-									"type": "text",
-									"text": "chapitre 28"
-								}
-							]
-						},
-						{
-							"type": "text",
-							"text": " que "
-						},
-						{
-							"type": "code",
-							"text": "docs/SPEC-analytique.md"
-						},
-						{
-							"type": "text",
-							"text": " nomme. Captures dans\n"
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-066/pilotage-*.jpg"
-						},
-						{
-							"type": "text",
-							"text": " et "
-						},
-						{
-							"type": "code",
-							"text": "pilotage-portee-*.jpg"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -121,15 +29,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", entre « Coûts » et « Ma journée ». L'adresse est\n"
-				},
-				{
-					"type": "code",
-					"text": "/pilotage"
-				},
-				{
-					"type": "text",
-					"text": " ; elle est partageable et rechargeable."
+					"text": ", entre « Coûts » et « Rentabilité ». L'adresse de la page est partageable et\nrechargeable."
 				}
 			]
 		},
@@ -176,20 +76,6 @@
 				{
 					"type": "text",
 					"text": "30.1 Choisir la portée : tout l'espace, un track, un channel"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par la tranche 3 b."
-						}
-					]
 				}
 			]
 		},
@@ -281,26 +167,30 @@
 				},
 				{
 					"type": "text",
-					"text": " Les nombres se replient instantanément : l'écran a lu une\nseule fois, et la portée ne fait que choisir ce qu'il additionne. Les *"
+					"text": " Les nombres se replient instantanément : l'écran a lu une\nseule fois, et la portée ne fait que choisir ce qu'il additionne. Les "
 				},
 				{
-					"type": "emphasis",
+					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "deux nombres du "
-						},
+							"text": "deux nombres"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-previsionnel-pondere-et-le-taux-de-conversion"
+					},
+					"content": [
 						{
-							"type": "link",
-							"target": {
-								"chapter": "le-previsionnel-pondere-et-le-taux-de-conversion"
-							},
-							"content": [
-								{
-									"type": "text",
-									"text": "§31"
-								}
-							]
+							"type": "text",
+							"text": "chapitre 31"
 						}
 					]
 				},
@@ -331,58 +221,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "L'adresse porte votre choix, et se partage."
+							"text": "L'adresse porte votre choix, et se partage"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " "
-				},
-				{
-					"type": "code",
-					"text": "/pilotage?track=studio-web"
-				},
-				{
-					"type": "text",
-					"text": " ouvre le track ;\n"
-				},
-				{
-					"type": "code",
-					"text": "/pilotage?track=studio-web&channel=refonte"
-				},
-				{
-					"type": "text",
-					"text": " ouvre le channel. Les "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "deux"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " clés sont nécessaires\npour un channel : un nom court de channel n'est unique qu'à l'intérieur de son track, si bien que\n"
-				},
-				{
-					"type": "code",
-					"text": "?channel=refonte"
-				},
-				{
-					"type": "text",
-					"text": " seul ne désignerait rien de sûr. "
-				},
-				{
-					"type": "code",
-					"text": "/pilotage"
-				},
-				{
-					"type": "text",
-					"text": " sans rien est tout l'espace de\ntravail."
+					"text": " : recharger la page, la mettre en favori ou en envoyer le lien garde la\nportée. Pour un channel, l'adresse nomme aussi son track, parce que le nom court d'un channel n'est unique qu'à\nl'intérieur de son track."
 				}
 			]
 		},
@@ -1714,7 +1559,24 @@
 							},
 							{
 								"type": "text",
-								"text": " aujourd'hui : la colonne existe et rien ne l'alimente. Ce qu'un score\n« transparent » devrait agréger n'est arbitré nulle part, et il n'est donc pas inventé ici."
+								"text": " : l'entonnoir compte des affaires, il ne les note pas. Les deux scores d'une affaire se\nlisent sur sa carte du tableau et sur sa fiche ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "ce-qu-une-affaire-porte"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 9.1"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}

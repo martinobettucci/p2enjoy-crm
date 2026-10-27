@@ -3900,9 +3900,6 @@ les élargir.
 
 ## 23. Les budgets d'un track
 
-*Livré par `CRM-084` tranche 2 ; le seuil d'ancienneté par sa tranche 4. Captures dans
-`docs/captures/CRM-084/budgets-*.jpg`.*
-
 **À quoi sert un budget.** Un budget est une **enveloppe de dépenses** d'un track — « Publicité
 2026 », « Salon du web 2025 ». Les lignes de coût d'une affaire s'y rattachent, depuis la section
 « Coûts » de sa fiche, et les écrans de coûts comparent, budget par budget, ce qui était prévu à ce qui
@@ -3975,8 +3972,6 @@ restent ouverts.
 
 ### 23.1 Les occurrences d'un budget récurrent
 
-*Livré par `CRM-084` tranche 3. Captures dans `docs/captures/CRM-084/occurrences-*.jpg`.*
-
 **Où.** Sous un track déplié, dans le tableau « Budgets ». Un budget déclaré **récurrent** affiche
 dans la colonne « Occurrences ouvertes » un nombre **cliquable** : il déplie la liste de ses
 occurrences sous le tableau. Un budget non récurrent affiche une cellule vide, et n'offre pas ce
@@ -4041,8 +4036,6 @@ Ces absences sont voulues, et non des oublis :
 
 ## 24. Les coûts d'un track : ce qui était prévu, ce qui a été dépensé
 
-*Livré par `CRM-086` tranche 3. Captures dans `docs/captures/CRM-086/`.*
-
 **Où.** Ouvrez un track, puis l'entrée **« Coûts »** de la barre d'onglets, à droite des channels et
 séparée d'eux par un filet. L'adresse est partageable et rechargeable.
 
@@ -4061,7 +4054,7 @@ qui les distingue mal. Il porte les mêmes chiffres, plus une colonne **« Sans 
 lignes dont le coût réel n'a pas encore été saisi, budget par budget.
 
 **Un budget récurrent apparaît ici en UNE seule paire de barres**, toutes ses occurrences confondues.
-Le détail occurrence par occurrence appartient à l'écran du budget, désormais livré : **le nom d'un
+Le détail occurrence par occurrence appartient à l'écran du budget : **le nom d'un
 budget est un lien** vers sa fiche ([§25](#le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne)).
 
 **Un budget clôturé n'apparaît pas sur cet écran.** Il n'a pas disparu : ses lignes existent
@@ -4119,11 +4112,9 @@ saisir à la suite. L'onglet « À saisir » porte un **compteur** : le nombre d
 Le second onglet vit dans l'adresse (`?onglet=saisir`) : il est donc **partageable et
 rechargeable**, comme le reste du produit. Tout est décrit au **[§27](#l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite)*.
 
-*Le **cumul de l'espace de travail** est livré : voir le [§26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track).*
+Le **cumul de l'espace de travail** a son propre écran ([chapitre 26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track)).
 
 ## 25. Le détail d'un budget : occurrence par occurrence, ligne par ligne
-
-*Livré par `CRM-086` tranche 4. Captures dans `docs/captures/CRM-086/couts-budget-*.jpg`.*
 
 **Où.** Depuis l'écran de coûts d'un track ([§24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)), **cliquez sur le nom d'un budget** dans
 le tableau sous le graphique. L'adresse est partageable et rechargeable ; elle désigne le budget par
@@ -4189,10 +4180,8 @@ vous venez, et là où les autres budgets sont listés.
 
 ## 26. Les coûts de tout l'espace de travail : un cumul par track
 
-*Livré par `CRM-086` tranche 5. Captures dans `docs/captures/CRM-086/couts-workspace-*.jpg`.*
-
-**Où.** Barre latérale ▸ **« Coûts »**, entre « Objectifs » et « Ma journée ». L'adresse est
-`/couts` ; elle est partageable et rechargeable.
+**Où.** Barre latérale ▸ **« Coûts »**, entre « Objectifs » et « Pilotage ». L'adresse de la page est partageable et
+rechargeable.
 
 **Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
 droit de lire — voir le [§26.3](#votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue), qui est la partie la plus importante de cette page.
@@ -4282,9 +4271,6 @@ en attente de **tous les tracks que vous lisez**, et non celles d'un seul. Tout 
 
 ## 27. L'onglet « À saisir » : renseigner les coûts réels à la suite
 
-*Livré par `CRM-086` tranche 6 ; plusieurs réels par ligne et la case « Soldé » par `CRM-099`. Captures dans
-`docs/captures/CRM-086/couts-a-saisir-*.jpg` et `docs/captures/CRM-099/`.*
-
 **Où.** Sur l'écran de coûts d'un track ([§24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)) ou sur celui de l'espace de travail
 ([§26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track)), l'onglet **« À saisir »**, à droite de « Vue d'ensemble ». L'adresse gagne
 `?onglet=saisir` : elle se partage et se recharge, et le bouton « précédent » du navigateur revient
@@ -4369,10 +4355,9 @@ chose.
 > devises confondues ; les mentions sous les histogrammes ne comptent que les budgets qu'ils
 > montrent. »
 
-Un exemple, sur le jeu de démonstration : le track « Studio web » porte des lignes non soldées sur
-un budget ouvert et sur le budget clôturé « Salon du web 2025 », dont une qui a déjà reçu un réel ; le
-badge les compte toutes, quand la mention sous le graphique ne compte que la ligne sans réel du
-budget ouvert. Les valeurs exactes du jeu sont dans l'annexe A.
+Un exemple : un track porte des lignes non soldées sur un budget ouvert et sur un budget clôturé, dont une qui a déjà
+reçu un réel ; le badge les compte toutes, quand la mention sous le graphique ne compte que la ligne sans réel du
+budget ouvert.
 
 C'est la même règle que celle du cumul du workspace ([§26.3](#votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue)) : quand deux nombres d'un même
 écran ne comptent pas la même chose, l'écran écrit lequel compte quoi.
@@ -4404,8 +4389,6 @@ et le coût estimé. La flèche au début des actions de la ligne **déplie ses 
 Un budget clôturé n'empêche rien de tout cela : on clôt une campagne, puis les factures arrivent.
 
 ## 28. Le temps passé et le coût du personnel
-
-*Livré par `CRM-098` ; captures : `docs/captures/CRM-098/`.*
 
 L'écran **« Temps »**, dans la barre latérale, a deux onglets : **« Saisie »**, où chacun note le temps qu'il a passé,
 et **« Rapport mensuel »**, où ce temps est valorisé par le coût du personnel.
@@ -4462,7 +4445,7 @@ déjà saisi. **« Historique »** liste les versions ; une version **programmé
 en vigueur jamais.
 
 **Calculer le coût par quart.** Dans le formulaire « Nouvelle version », **« Calculer depuis le coût mensuel »** ouvre un
-petit calcul (*livré par `CRM-107` ; captures : `docs/captures/CRM-107/`*). Saisissez le salaire brut mensuel, les charges sociales en pourcentage du brut,
+petit calcul. Saisissez le salaire brut mensuel, les charges sociales en pourcentage du brut,
 les frais de gestion et les avantages par mois, et le nombre de jours travaillés par an — 218 par défaut, le forfait
 jours ; un salarié qui n’est pas au forfait en travaille plutôt 228 environ (365 jours, moins les week-ends, 25 jours de congés et les
 fériés). Le calcul affiche, à mesure que vous tapez, le coût mensuel complet et le coût par quart :
@@ -4484,7 +4467,7 @@ portée : « Votre temps » pour un membre, « Le temps de toute l’équipe » 
 
 ### 28.7 Saisir son temps depuis la fiche d'une affaire
 
-*Livré par `CRM-106` ; captures : `docs/captures/CRM-106/`.* Sous le résumé « Temps passé », **« Votre semaine »** montre la ligne de l'affaire, du lundi au
+Sous le résumé « Temps passé », **« Votre semaine »** montre la ligne de l'affaire, du lundi au
 dimanche : les mêmes cases que l'écran « Temps », au quart de journée ou, en cochant la case sous un jour, au quart
 d'heure. Une case s'enregistre seule ; `Entrée` passe au jour suivant. Taper une nouvelle valeur **remplace** celle du jour ; vider
 la case retire ce temps. Sous la bande, le total de la semaine sur l'affaire.
@@ -4504,9 +4487,8 @@ passé, aucune conversion de devise, aucun export.
 
 ## 29. Les recettes d'une affaire et sa rentabilité
 
-*Livré par `CRM-108`.* Une affaire porte ce qu'elle doit rapporter et ce qu'elle a rapporté, comme elle porte ce qu'elle
-coûte. Le rapport de rentabilité rapproche les trois : recettes, coûts et coût du personnel. Captures :
-`docs/captures/CRM-108/`.
+Une affaire porte ce qu'elle doit rapporter et ce qu'elle a rapporté, comme elle porte ce qu'elle coûte. Le rapport
+de rentabilité rapproche les trois : recettes, coûts et coût du personnel.
 
 ### 29.1 Saisir les recettes dans la fiche
 
@@ -4559,20 +4541,13 @@ recette entre plusieurs affaires, aucun export.
 
 ## 30. L'entonnoir de conversion : où se tiennent vos affaires
 
-*Livré par `CRM-066` tranche 3 a, complété par les tranches 3 b (le sélecteur de portée,
-[§30.1](#choisir-la-portee-tout-l-espace-un-track-un-channel)) et 3 c (les étapes vides, nommées au [§30.2](#l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires)).
-C'est le **chapitre 28** que `docs/SPEC-analytique.md` nomme. Captures dans
-`docs/captures/CRM-066/pilotage-*.jpg` et `pilotage-portee-*.jpg`.*
-
-**Où.** Barre latérale ▸ **« Pilotage »**, entre « Coûts » et « Ma journée ». L'adresse est
-`/pilotage` ; elle est partageable et rechargeable.
+**Où.** Barre latérale ▸ **« Pilotage »**, entre « Coûts » et « Rentabilité ». L'adresse de la page est partageable et
+rechargeable.
 
 **Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
 droit de lire — voir le [§30.5](#vos-nombres-sont-les-votres-et-ils-peuvent-differer-de-ceux-d-un-collegue), qui est la partie la plus importante de cette page.
 
 ### 30.1 Choisir la portée : tout l'espace, un track, un channel
-
-*Livré par la tranche 3 b.*
 
 En **tête** de l'écran, au-dessus des deux nombres, un champ **« Portée »** choisit ce que tout le
 reste de la page mesure : **tout l'espace de travail** — le défaut —, **un track entier**, ou **un
@@ -4581,15 +4556,13 @@ track », « Studio web — Refonte de site ». Vous ne voyez que les tracks et 
 avez le droit de lire.
 
 **Changer de portée ne recharge rien.** Les nombres se replient instantanément : l'écran a lu une
-seule fois, et la portée ne fait que choisir ce qu'il additionne. Les **deux nombres du [§31](#le-previsionnel-pondere-et-le-taux-de-conversion)*
+seule fois, et la portée ne fait que choisir ce qu'il additionne. Les **deux nombres** du [chapitre 31](#le-previsionnel-pondere-et-le-taux-de-conversion)
 et les **mentions** suivent la portée, comme les tableaux — un prévisionnel de tout l'espace
 au-dessus d'un entonnoir d'un seul channel dirait le contraire de ce qu'il montre.
 
-**L'adresse porte votre choix, et se partage.** `/pilotage?track=studio-web` ouvre le track ;
-`/pilotage?track=studio-web&channel=refonte` ouvre le channel. Les **deux** clés sont nécessaires
-pour un channel : un nom court de channel n'est unique qu'à l'intérieur de son track, si bien que
-`?channel=refonte` seul ne désignerait rien de sûr. `/pilotage` sans rien est tout l'espace de
-travail.
+**L'adresse porte votre choix, et se partage** : recharger la page, la mettre en favori ou en envoyer le lien garde la
+portée. Pour un channel, l'adresse nomme aussi son track, parce que le nom court d'un channel n'est unique qu'à
+l'intérieur de son track.
 
 **Une adresse que l'écran ne sait pas résoudre ne provoque aucune erreur.** Un track que vous ne
 lisez pas, un nom mal recopié, un channel nommé sous un track qui ne le porte pas : l'écran retombe
@@ -4718,17 +4691,14 @@ comme un chiffre d'affaires.
 
 - **On n'y saisit rien**, et aucune ligne n'est cliquable. Les probabilités se saisissent au
   catalogue ([§19](#le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows)), dans l'éditeur de workflows ([§18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)) et sur la fiche d'une affaire ([§9](#l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre)).
-- **Aucun score de santé** aujourd'hui : la colonne existe et rien ne l'alimente. Ce qu'un score
-  « transparent » devrait agréger n'est arbitré nulle part, et il n'est donc pas inventé ici.
+- **Aucun score de santé** : l'entonnoir compte des affaires, il ne les note pas. Les deux scores d'une affaire se
+  lisent sur sa carte du tableau et sur sa fiche ([section 9.1](#ce-qu-une-affaire-porte)).
 - **Aucune lecture d'historique.** L'entonnoir est un **instantané** de l'état courant, jamais une
   analyse par période : il dit où vos affaires se tiennent **aujourd'hui**, pas ce qu'elles sont
   devenues depuis janvier.
 - **Aucun export, aucune période, aucune conversion de devise.**
 
 ## 31. Le prévisionnel pondéré et le taux de conversion
-
-*Livré par `CRM-066` tranche 3 a. C'est le **chapitre 29** que `docs/SPEC-analytique.md` nomme.
-Captures dans `docs/captures/CRM-066/pilotage-*.jpg`.*
 
 **Où.** En **tête** de l'écran « Pilotage » ([§30](#l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires)), au-dessus des tableaux : deux nombres, et
 c'est la lecture que la plupart des visites viennent chercher.
@@ -4769,12 +4739,11 @@ dit « tout a été perdu » ; l'absence de toute décision ne dit rien.
 
 ### 31.3 Aucun objectif chiffré n'est confronté à ce prévisionnel
 
-Les **objectifs** existent dans le produit ([§10](#le-carnet-de-contacts)) sous forme de tableaux de blocs et de flèches,
+Les **objectifs** existent dans le produit ([chapitre 8](#les-objectifs-le-tableau-blanc-de-l-equipe)) sous forme de tableaux de blocs et de flèches,
 avec un **remplissage** que vous saisissez à la main. Rien n'y décrit un objectif **chiffré** qu'un
 prévisionnel viendrait remplir automatiquement.
 
-Cet écran livre donc le prévisionnel **seul**. La confrontation n'est pas oubliée : elle n'a pas
-encore été arbitrée, et l'inventer ici produirait une comparaison que personne n'a demandée.
+Cet écran donne donc le prévisionnel **seul** : il ne le compare à aucun objectif.
 
 ### 31.4 Ce que ces deux nombres ne sont pas
 
@@ -4786,8 +4755,6 @@ encore été arbitrée, et l'inventer ici produirait une comparaison que personn
   et c'est la seule grandeur de cet écran qui le fasse légitimement.
 
 ## 32. La plateforme : espaces, membres et superadministrateurs
-
-*Livré par `CRM-101` ; captures : `docs/captures/CRM-101/`.*
 
 La **plateforme** est l'étage au-dessus des espaces de travail. On y crée un espace, on y désigne qui en est membre et
 avec quel rôle, et on y inscrit les personnes attendues. Elle est réservée aux **superadministrateurs**.
@@ -4920,9 +4887,6 @@ ne peut modifier ni supprimer une entrée de ces journaux ([chapitre 22](#le-jou
 
 ## 33. Le connecteur MCP : piloter le CRM depuis votre assistant
 
-*Livré par `CRM-102` (le connecteur) et `CRM-103` (son administration, en développement) ; les outils de la famille
-« Recettes » par `CRM-108` (en développement).*
-
 Le **connecteur MCP** relie votre assistant — Claude, ChatGPT, ou tout client MCP — au CRM. L'assistant agit **en votre
 nom** : il voit et modifie exactement ce que vous pourriez voir et modifier dans le CRM, jamais davantage.
 
@@ -5012,7 +4976,7 @@ propres appels.
 L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'apparaît pas dans sa liste.
 
 - **La liste des espaces** qui vous sont ouverts, dès qu'un droit du connecteur vous est accordé.
-- **Recettes** — *livrés en développement par `CRM-108`* :
+- **Recettes** :
   - *Consulter* : les lignes de recette d'une affaire ; les recettes réelles restant à saisir dans un espace ; le
     **rapport de rentabilité** d'un espace, qui demande aussi « Budgets ▸ Consulter » et « Temps ▸ Consulter »,
     puisqu'il montre les coûts et le coût du personnel. Le CRM le réserve aux administrateurs de l'espace : pour un
@@ -5023,7 +4987,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   Aucun outil ne supprime une ligne de recette. Les règles sont celles de la fiche ([chapitre 29](#les-recettes-d-une-affaire-et-sa-rentabilite)) : une ligne
   soldée n'accepte plus de recette réelle, la recette réelle d'une ligne est la somme de ses réels, et la marge du
   rapport se calcule comme sur l'écran « Rentabilité ». Ce que l'assistant écrit apparaît aussitôt dans la fiche.
-- **Affaires, en lecture** — *livrés en développement par `CRM-104`, tranche T2.a* (« Affaires ▸ Consulter ») :
+- **Affaires, en lecture** (« Affaires ▸ Consulter ») :
   - **lister les affaires** d'un espace, par titre, avec leur track, leur channel, leur étape, leur responsable et leur
     prochaine action — filtrées au besoin par channel, par mots du titre, par étape ou par échéance (en retard,
     aujourd'hui, dans la semaine). Les affaires en sommeil n'y paraissent que si on le demande ;
@@ -5039,7 +5003,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 
   L'assistant lit ce que vous liriez dans la webapp, et rien de plus : une affaire d'un track qui vous est fermé est
   « introuvable » pour lui aussi.
-- **Affaires, en écriture** — *livrés en développement par `CRM-104`, tranche T2.b* :
+- **Affaires, en écriture** :
   - *Ajouter* (« Affaires ▸ Ajouter ») : **créer une affaire** dans un channel, avec son titre — elle naît à l'étape
     initiale, comme par le bouton « Nouvelle affaire » ; **la commenter** ; y **consigner une activité** réalisée,
     avec ses participants ;
@@ -5058,23 +5022,23 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   **Ce que l'assistant ne fait pas** : corriger ou retirer un commentaire, retirer une activité, restaurer une affaire
   de la corbeille, l'archiver, mentionner quelqu'un. Ces gestes restent ceux de l'écran.
 
-- **La recherche** — *livrée en développement par `CRM-104`, tranche T1* : retrouver des affaires, des contacts, des
+- **La recherche** : retrouver des affaires, des contacts, des
   organisations, des commentaires et des messages par des mots, comme la barre de recherche de l'en-tête. Un résultat
   n'est rendu que si le connecteur peut consulter sa famille dans son espace — « Affaires », « Contacts »,
   « Organisations » ou « Messagerie ». **Une organisation demande « Organisations ▸ Consulter »** : « Contacts » ne
   l'ouvre pas.
-- **Structure** — *livrés en développement par `CRM-104`, tranche T1* :
+- **Structure** :
   - *Consulter* : les tracks d'un espace, un track et ses channels, un channel et son nombre d'affaires actives, et un
     **workflow** — ses étapes, les déplacements qu'il déclare, le motif ou les questions qu'ils exigent ;
   - *Ajouter* : créer un track, ou un channel avec son workflow ;
   - *Modifier* : renommer un track ou un channel, changer sa description, la couleur ou l'icône d'un track. Le slug
     — l'adresse — ne change jamais ; changer le workflow d'un channel relève de la famille « Workflows », et choisir la
-    couleur d'un channel reste un geste de l'écran (`CRM-116`) ;
+    couleur d'un channel reste un geste de l'écran ;
   - *Supprimer* : mettre un track ou un channel à la corbeille.
 
   Le CRM réserve ces écritures aux administrateurs de l'espace : pour un autre membre, l'assistant reçoit un refus.
 
-- **Workflows** — *livrés en développement par `CRM-118`, tranches T2.a à T2.e* :
+- **Workflows** :
   - *Consulter* : la liste des workflows d'un espace, le workflow par défaut en tête, avec leur portée (tout l'espace ou
     un seul track) et le workflow d'origine d'une copie ; le **formulaire** d'un workflow, tel que l'éditeur le montre —
     ses champs, archivés compris, la visibilité de chaque champ à chaque étape, ce que chaque déplacement exige ; et, avant
@@ -5116,7 +5080,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 
   Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace.
 
-- **Contacts** — *livrés en développement par `CRM-104`, tranche T3* :
+- **Contacts** :
   - *Consulter* : lister les contacts du carnet, par mots du nom, de l'adresse ou de la fonction, ou par
     organisation ; lire la fiche d'un contact, avec les affaires auxquelles il est lié et son rôle dans chacune ;
   - *Ajouter* : créer un contact, avec une organisation qui existe déjà ;
@@ -5125,7 +5089,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   **Aucun outil ne supprime un contact** : le CRM ne sait que le détruire, et l'assistant ne détruit rien. Le nom de
   l'organisation d'un contact fait partie du contact ; les organisations elles-mêmes sont la famille suivante.
 
-- **Organisations** — *livrées en développement par `CRM-114`, tranche T4* :
+- **Organisations** :
   - *Consulter* : lister les organisations du carnet, par mots du nom ou du domaine, avec le nombre de contacts de
     chacune — y compris celles qui n'en ont aucun ; lire la fiche d'une organisation, avec ses contacts ;
   - *Ajouter* : créer une organisation — un nom, et un domaine et un site web facultatifs. Le domaine est enregistré en
@@ -5136,7 +5100,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   l'espace. **Aucun outil ne supprime une organisation** : ses contacts la perdraient sans laisser de trace. Pour
   rattacher un contact à une organisation, l'assistant modifie le contact (famille « Contacts »).
 
-- **Budgets** — *livrés en développement par `CRM-104`, tranche T4* :
+- **Budgets** :
   - *Consulter* : les budgets des tracks, avec ce qui est prévu et ce qui est déjà connu de leurs dépenses ; le détail
     d'un budget, occurrence par occurrence, avec ses lignes et leur affaire ; les lignes de coût d'une affaire et leurs
     dépenses réelles ; les lignes « à saisir », comme l'onglet du même nom ;
@@ -5149,7 +5113,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   faut la rouvrir d'abord. Deux devises ne s'additionnent jamais. **Aucun outil ne supprime une ligne ni une dépense** —
   le CRM ne saurait que les détruire —, et **créer, modifier ou clôturer un budget** reste un geste de l'écran.
 
-- **Temps** — *livré en développement par `CRM-104`, tranche T5* :
+- **Temps** :
   - *Consulter* : vos saisies de temps sur une période de trois mois au plus — ou celles d'une personne nommée, ou de
     tout l'espace, que seul un administrateur peut lire —, chacune avec son jour et sa cible ; le rapport valorisé,
     minutes et coût par personne et cible, comme le rapport mensuel de l'écran « Temps » ;
@@ -5160,7 +5124,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   du personnel — les taux — reste un geste de l'écran. Deux devises ne s'additionnent jamais, et une minute sans taux
   est comptée à part, jamais à zéro.
 
-- **Objectifs** — *livrés en développement par `CRM-104`, tranche T6* :
+- **Objectifs** :
   - *Consulter* : les tableaux d'objectifs de l'espace ; un tableau lu comme un texte — ses blocs dans l'ordre de
     lecture, avec leur avancement et leur channel lié, et les flèches qui les relient ;
   - *Ajouter* : un bloc — titre, texte, avancement, channel lié facultatif —, posé à droite des blocs existants ; une
@@ -5172,7 +5136,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   redimensionner ou colorer un bloc, créer ou renommer un tableau restent des gestes de l'écran. **Aucun outil ne
   supprime un bloc ni une flèche.**
 
-- **Messagerie** — *livrée en développement par `CRM-104`, tranche T7* :
+- **Messagerie** :
   - *Consulter* : les emails classés dans une affaire, du plus ancien au plus récent — sens, date, expéditeur,
     destinataires, objet, un extrait, et le **nombre** de pièces jointes ; un email en entier, avec son texte. Quand
     l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit
@@ -5191,6 +5155,6 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 
 ### 33.6 Ce que le connecteur n'offre pas
 
-Toutes les familles ont désormais leurs outils. Restent des gestes de l'écran : **les pièces jointes**, ni lues ni
+Toutes les familles ont leurs outils. Restent des gestes de l'écran : **les pièces jointes**, ni lues ni
 envoyées par le connecteur ; **classer, déclasser ou mettre en sommeil** un fil de la boîte de réception ; **les modèles
 et les séquences** de relance.

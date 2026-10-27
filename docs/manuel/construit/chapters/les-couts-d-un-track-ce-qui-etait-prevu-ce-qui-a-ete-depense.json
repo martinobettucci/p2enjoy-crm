@@ -6,36 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-086"
-						},
-						{
-							"type": "text",
-							"text": " tranche 3. Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-086/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -196,7 +166,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", toutes ses occurrences confondues.\nLe détail occurrence par occurrence appartient à l'écran du budget, désormais livré : "
+					"text": ", toutes ses occurrences confondues.\nLe détail occurrence par occurrence appartient à l'écran du budget : "
 				},
 				{
 					"type": "strong",
@@ -664,42 +634,37 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
+					"type": "text",
+					"text": "Le "
+				},
+				{
+					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "Le "
-						},
-						{
-							"type": "strong",
-							"content": [
-								{
-									"type": "text",
-									"text": "cumul de l'espace de travail"
-								}
-							]
-						},
-						{
-							"type": "text",
-							"text": " est livré : voir le "
-						},
-						{
-							"type": "link",
-							"target": {
-								"chapter": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track"
-							},
-							"content": [
-								{
-									"type": "text",
-									"text": "§26"
-								}
-							]
-						},
-						{
-							"type": "text",
-							"text": "."
+							"text": "cumul de l'espace de travail"
 						}
 					]
+				},
+				{
+					"type": "text",
+					"text": " a son propre écran ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 26"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		}
