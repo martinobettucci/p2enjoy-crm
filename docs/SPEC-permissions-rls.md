@@ -908,13 +908,15 @@ de service constatant à la fin que l'état du seed est rendu. Le seed n'est pas
 
 **T2 — la boucle de l'écran, `e2e/ui/droits-fins-croises.spec.ts`**, deux contextes de navigateur ouverts en même temps,
 Camille et Driss, chacun connecté par la vraie page du SSO :
-- **U1** — Driss ouvre « Migration ERP Sogexia » (« Grands comptes », où il écrit) : la fiche porte ses commandes
-  d'écriture. Camille pose « Aucun accès » à Driss sur « Grands comptes », au clavier, dans « Réglages ▸ Membres ». La ligne
+- **U1** — Driss ouvre « Migration ERP Sogexia » (« Grands comptes », où il écrit), et le channel lui offre « Nouvelle
+  affaire ». Camille pose « Aucun accès » à Driss sur « Grands comptes », au clavier, dans « Réglages ▸ Membres ». La ligne
   `channel_members` est relue par la clé de service. Driss recharge la même adresse, sans se reconnecter : « Card
   introuvable » ; le channel a quitté la barre d'onglets du track.
-- **U2** — Camille passe le droit à « Lecture » : Driss rouvre la fiche, lisible et sans commande d'écriture ; une
-  écriture directe par l'API avec le jeton de Driss est refusée, et la ligne relue est inchangée.
-- **U3** — Camille rend « Hérité » : la ligne est supprimée en base, et Driss retrouve ses commandes d'écriture.
+- **U2** — Camille passe le droit à « Lecture » : Driss rouvre la fiche ; dans le channel, « Nouvelle affaire » est
+  éteinte et le motif de lecture seule est dit (`docs/SPEC-droits-interface.md` §3) ; une création directe par l'API
+  (`creer_affaire`) avec le jeton de Driss est refusée en `403`, et aucune affaire n'est écrite.
+- **U3** — Camille rend « Hérité » : la ligne est supprimée en base, et « Nouvelle affaire » est de nouveau offerte à
+  Driss, sans motif.
 - Captures JPEG de chacun des trois états, côté Driss, observées (`CLAUDE.md` §16).
 
 **T3 — le connecteur, `mcp/tests/test_integration_droits_fins.py`**, contre le vrai Keycloak, la vraie base et le vrai

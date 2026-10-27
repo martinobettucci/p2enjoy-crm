@@ -13,6 +13,18 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-119` — preuves croisées des droits fins (décision 757)
+
+*Aucun changement du produit : des preuves seulement, rien à livrer.*
+
+- **Un droit fin posé dans « Réglages ▸ Membres » est prouvé jusqu'à l'écran du membre** : « Aucun accès » lui cache la
+  fiche et l'onglet du channel, « Lecture » éteint « Nouvelle affaire » avec son motif, « Hérité » lui rend l'écriture,
+  sans reconnexion ; la base refuse la requête directe.
+- **Le connecteur MCP respecte les droits fins**, prouvé contre la vraie pile : un droit qui rouvre l'écriture à une
+  lectrice, un droit qui restreint un business developer en lecture, un droit posé pendant une session ouverte, appliqué
+  dès l'appel suivant, l'administrateur jamais restreint, la recherche.
+- INC-319 consigne une dépendance d'ordre, antérieure, entre deux fichiers d'intégration du connecteur.
+
 ### `CRM-118` T2.a — la famille `workflows` du connecteur (décisions 752, 754 et 756)
 
 *En développement seulement. La migration `0129` attend la prochaine fenêtre de production.*

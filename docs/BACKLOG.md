@@ -17059,8 +17059,7 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
       paraît dans le catalogue. `crm_channel_workflow_change` **après T1.b**.
 - [ ] **T3 — livraison**, sur instruction du responsable.
 
-### CRM-119 — Preuves croisées des droits fins : de l'écran « Membres » à l'écran du membre, et à travers le connecteur MCP `[@]`
-*Prise en charge : session du 2026-10-23 10:17 UTC depuis 2026-10-26 23:35 UTC — état avant : [ ]*
+### CRM-119 — Preuves croisées des droits fins : de l'écran « Membres » à l'écran du membre, et à travers le connecteur MCP `[x]`
 Demandée par le responsable le 2026-10-26 (décision 757). Spécification : `docs/SPEC-permissions-rls.md` §7.5. Aucun code
 de production : l'unité ajoute des preuves, sur deux chemins qui n'en avaient pas — la boucle de l'écran « Membres »
 jusqu'à l'écran du membre, et le connecteur MCP face aux droits fins.
@@ -17069,10 +17068,16 @@ observées ; campagnes rejouées après synchronisation ; commit poussé. Pas de
 nouvelle (écart assumé, décision 757) ; question du connecteur sans objet.
 
 - [x] **T1 — spécification** : `docs/SPEC-permissions-rls.md` §7.5, ce backlog, `docs/JOURNAL.md` décision 757.
-- [ ] **T2 — la boucle de l'écran** : `e2e/ui/droits-fins-croises.spec.ts`, U1 à U3, deux contextes de navigateur,
+- [x] **T2 — la boucle de l'écran** : `e2e/ui/droits-fins-croises.spec.ts`, U1 à U3, deux contextes de navigateur,
       captures `docs/captures/CRM-119/`.
+      **Fait le 2026-10-27** : **1/1** contre la vraie pile (9,5 s), base relue à chaque droit, création directe refusée
+      en `403` ; quatre captures observées (« Card introuvable » et l'onglet retiré, le channel en lecture avec son
+      motif, le channel rendu). Un premier passage, dans la campagne d'une autre session, a échoué sur un sélecteur
+      ambigu (le titre de l'affaire est aussi dans le fil d'Ariane) : corrigé, aucun défaut du produit. Le §7.5 dit
+      désormais la commande réellement éprouvée en U1 et U2, « Nouvelle affaire » du channel.
 - [x] **T3 — le connecteur** : `mcp/tests/test_integration_droits_fins.py`, M1 à M5, joué par `scripts/verify-mcp.sh`.
       **Fait le 2026-10-27** : **5/5** contre la vraie pile ; dégradation réelle dénoncée (le `member` de Farida sur
       « Prospection » retiré : M1 échoue, droit restauré et relu) ; intégration complète du connecteur **56/56**, deux
       fois, dans l'ordre du harnais. Dans l'ordre alphabétique, un échec **antérieur** à l'unité, consigné INC-319.
-- [ ] **T4 — clôture** : synchronisation, campagnes rejouées, `CHANGELOG.md`.
+- [x] **T4 — clôture** : synchronisation (aucun commit distant depuis T3), `CHANGELOG.md`. Rien à livrer en
+      production : l'unité n'ajoute que des preuves.
