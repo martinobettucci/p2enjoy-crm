@@ -7498,7 +7498,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
-| CRM-068 | Checklists et modèles de cards | `[~]` |
+| CRM-068 | Checklists et modèles de cards | `[@]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
@@ -12344,7 +12344,7 @@ un motif explicite.
 | CRM-P11 sauvegarde/restauration | `CRM-080` | retenue |
 | CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
-### CRM-068 — Checklists et modèles de cards `[~]`
+### CRM-068 — Checklists et modèles de cards `[@]`
 
 Checklists d'une affaire et modèles de cards (`docs/SPEC-modeles-emails.md` §1 : objets distincts des modèles d'emails).
 *Arbitrée le 2026-10-26 (décision 747)* : checklists libres, ajoutées par l'étape, exigibles par une transition ;
@@ -12374,8 +12374,9 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
         (décision 51 : pgTAP `0015`, `0061`, `0068`, `0086`, `0117` ; API `analytique`, `channels`, `coherence-workflow`,
         `colonnes-protegees`, `droits-interface`, `workflows` ; interface `administration-catalogue`, `coherence-workflow`,
         `pilotage`) ; manuel 4.7 *quinquies*, CHANGELOG, harnais.
-  - [ ] **T3b — l'éditeur de workflows** : les points de chaque étape et les points exigés par une transition ; le lien
+  - [@] **T3b — l'éditeur de workflows** : les points de chaque étape et les points exigés par une transition ; le lien
         « Cocher ces points » du bandeau du board vers la fiche.
+        *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-27 07:17 UTC — état avant : [ ]*
 - [ ] **T4 — les modèles d'affaires** : `card_templates`, `creer_affaire` étendue, `save_card_as_template`, Réglages,
       « Nouvelle affaire », « Enregistrer comme modèle ».
 - [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`.
