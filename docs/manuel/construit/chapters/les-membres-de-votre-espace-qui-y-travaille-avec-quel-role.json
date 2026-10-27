@@ -6,28 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré en développement par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-070"
-						},
-						{
-							"type": "text",
-							"text": " : la liste des membres, leurs rôles, les attentes et les droits fins par track et\npar channel."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "Chaque espace de travail a ses "
 				},
@@ -228,7 +206,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", sans bouton\nà presser. Un message sous la liste le confirme — « Rôle de Driss Lemoine modifié. » —, puis la liste est relue."
+					"text": ", sans bouton\nà presser. Un message sous la liste le confirme — « Rôle de Jeanne Martin modifié. » —, puis la liste est relue."
 				}
 			]
 		},

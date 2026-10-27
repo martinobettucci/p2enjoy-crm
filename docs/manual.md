@@ -2963,24 +2963,19 @@ Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste
 
 ## 17. Administrer l'arborescence : tracks et channels
 
-*Livré par `CRM-075` ; les règles d'accès sont celles de `CRM-020` et `CRM-021`, inchangées.*
-
 **Où.** Barre latérale ▸ **Réglages** ▸ « Arborescence : tracks et channels ».
 
-**L'index.** Ouvrir « Réglages » affiche d'abord un INDEX des sections de réglages, sous le titre
-« Sections de réglages » — « Arborescence : tracks et channels » en est la première entrée. Ce
-n'est plus, depuis `CRM-075`, la page sans contenu qu'elle a été : chaque nouvelle section de
-réglages (permissions, workflows) y ajoutera sa propre entrée plutôt que de déplacer une adresse
-déjà partagée.
+**L'index.** Ouvrir « Réglages » affiche d'abord l'index des sections de réglages, sous le titre « Sections de
+réglages » ; « Arborescence : tracks et channels » en est une entrée.
 
 **Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Les autres membres
 voient l'arborescence — ils ont le droit de la lire — et leurs modifications sont refusées par le
 serveur avec le message « Seul un administrateur de cet espace de travail peut modifier
 l'arborescence. »
 
-**Les boutons ne sont pas masqués pour autant**, et c'est délibéré : votre rôle peut changer pendant
-que la page est ouverte, et cacher un bouton sur la foi d'un rôle lu à l'arrivée reviendrait à vous
-interdire un geste qui vous est peut-être permis. Le produit préfère vous montrer le refus réel.
+**Les boutons ne sont pas masqués pour autant** : ils restent visibles, grisés, et un bandeau dit pourquoi
+([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Si votre rôle change pendant que la page
+est ouverte, c'est la réponse du serveur qui s'affiche.
 
 ### 17.1 Un track
 
@@ -2992,8 +2987,7 @@ interdire un geste qui vous est peut-être permis. Le produit préfère vous mon
 - **Choisir la couleur** : le champ « Couleur » propose cinq couleurs, chacune avec sa pastille et son nom — Bleu,
   Vert, Jaune, Rouge, Gris. Cliquez sur celle que vous voulez, ou, au clavier, atteignez le groupe avec `Tab` et
   changez de couleur avec les flèches. Un nouveau track est Gris tant que vous n'en choisissez pas d'autre. La couleur
-  colore sa pilule dans la barre latérale et dans cet écran. *Livré par `CRM-116` ; captures dans
-  `docs/captures/CRM-116/`.*
+  colore sa pilule dans la barre latérale et dans cet écran.
   **Le slug ne se modifie pas depuis cet écran** : c'est l'adresse que vous partagez, et la changer
   romprait les liens déjà transmis sans que rien ne les rattrape.
 - **Réordonner** : les flèches. Elles sont **désactivées** en tête et en fin de liste, et disent
@@ -3013,9 +3007,9 @@ renommé ou recoloré y change, un track archivé ou mis à la corbeille la quit
 dès que vous le désarchivez ou le restaurez depuis la corbeille. L'ancienne liste reste affichée le
 temps de la mise à jour : la barre ne clignote pas.
 
-**La suppression définitive n'existe pas**, et ce n'est pas un oubli : le produit ne l'expose nulle
-part, et la base la refuse. Archiver masque ; mettre à la corbeille retire. Les deux sont
-réversibles, et **rien n'efface**.
+**Aucun geste ne supprime définitivement**, et ce n'est pas un oubli : archiver masque ; mettre à la corbeille
+retire. Les deux sont réversibles. Seul un objet resté **30 jours** dans la corbeille est effacé, automatiquement
+([section 20.3](#l-effacement-definitif)).
 
 **Archiver et mettre à la corbeille sont deux états distincts**, et ils ne se remplacent pas :
 
@@ -3050,7 +3044,7 @@ Les mêmes six gestes s'appliquent, avec deux différences :
   défaut est présenté en tête et signalé comme tel, **mais il n'est pas coché** — le produit ne
   choisit pas à votre place. Tant qu'aucun workflow n'est choisi, « Créer » reste indisponible.
 
-**Un channel a sa propre couleur** (*livré par `CRM-116`*). Elle se choisit comme celle d'un track, avec les mêmes cinq
+**Un channel a sa propre couleur.** Elle se choisit comme celle d'un track, avec les mêmes cinq
 couleurs, à la création comme en modification, et un nouveau channel est Gris tant que vous n'en choisissez pas
 d'autre. Elle s'affiche en **pastille** devant le nom de son onglet ([section 3.4](#les-onglets-d-un-track)) et en **pilule** dans
 l'arborescence. Elle aide à repérer un channel d'un coup d'œil ; elle ne remplace jamais son nom.
@@ -3065,7 +3059,7 @@ portée réglée sur ce track — vous pouvez choisir « Global ». Créez le wo
 étapes, puis cliquez **Revenir au nouveau channel**, dans le bandeau en haut de l'éditeur : le
 formulaire du channel se rouvre là où vous l'aviez laissé — dans la vue du track ou dans
 l'arborescence —, avec le nom, l'identifiant, la couleur et la description déjà saisis, et le workflow créé déjà
-choisi. *Livré par `CRM-100`.*
+choisi.
 
 - Le lien n'existe que dans le formulaire de **création** ; changer le workflow d'un channel existant
   reste un geste de modification.
@@ -3074,7 +3068,7 @@ choisi. *Livré par `CRM-100`.*
 - Rien n'est créé tant que vous n'avez pas cliqué **Créer** dans le formulaire du channel : quitter
   l'éditeur par un autre chemin laisse le workflow créé, mais aucun channel.
 
-**Changer le workflow d'un channel qui porte des affaires** (*livré par `CRM-118` tranche T1.b*). Le formulaire de
+**Changer le workflow d'un channel qui porte des affaires.** Le formulaire de
 modification ne change que le workflow d'un channel **vide** : sur un channel qui porte des affaires, il refuse et vous
 renvoie à la commande **Changer de workflow** de la ligne du channel (l'icône d'un petit schéma, entre le crayon et
 l'archivage). Elle ouvre un panneau sous la ligne, qui nomme le workflow actuel :
@@ -3091,8 +3085,7 @@ l'archivage). Elle ouvre un panneau sous la ligne, qui nomme le workflow actuel 
 
 Le changement est fait d'un bloc : toutes les affaires passent à leur destination en même temps, et chacune garde une
 trace « workflow changé » dans son fil. Un message confirme le nouveau workflow. Comme les autres commandes de
-l'arborescence, celle-ci demande d'administrer l'espace de travail. *Captures :
-`docs/captures/CRM-118/changement-workflow-*.jpg`.*
+l'arborescence, celle-ci demande d'administrer l'espace de travail.
 
 ### 17.3 Quand un déplacement est indisponible sans être en bout de liste
 
@@ -3103,16 +3096,11 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 
 ### 17.4 Ce qui n'est pas encore là
 
-- Le geste de mise à la corbeille existe pour un **track** et un **channel**, pas pour une
-  **affaire** : une affaire ne se retire depuis aucun écran pour l'instant.
-- Un objet retiré **disparaît de cette liste immédiatement**, mais la barre latérale garde le track
-  jusqu'au prochain chargement de la page. Le même décalage existe depuis toujours pour l'archivage.
-- Aucune **capture** de cet écran n'a encore été produite, et son parcours de bout en bout n'a pas
-  été rejoué : les deux exigent la pile de développement complète.
+- Une **affaire** se met à la corbeille depuis sa fiche ([section 9.15](#mettre-une-affaire-a-la-corbeille)), pas
+  depuis cet écran.
 - Le **déplacement d'un channel vers un autre track** n'est pas proposé.
-- L'édition des **workflows** eux-mêmes relève du **[chapitre 18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)* pour leurs étapes, leurs
-  transitions et les **questions** de leur formulaire ; la visibilité d'une question étape par
-  étape n'a, elle, toujours pas d'écran.
+- La composition des **workflows** — étapes, transitions, questions et leur visibilité étape par étape — relève du
+  [chapitre 18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire).
 - Les **droits fins** par track et par channel relèvent de la [section 21.6](#les-droits-fins-restreindre-ou-rouvrir-un-track-ou-un-channel).
 
 ## 18. Composer un workflow : ses étapes, ses transitions et son formulaire
@@ -3589,9 +3577,6 @@ pas l'espace, avec un bandeau qui dit pourquoi ([section 3.11](#les-commandes-gr
 
 ## 19. Le catalogue de nœuds : le vocabulaire de vos workflows
 
-*Livré par `CRM-030` ; l'écran est spécifié au §2 bis de
-[`docs/SPEC-workflow-engine.md`](SPEC-workflow-engine.md).*
-
 Un **nœud** est un état par lequel une affaire peut passer : « Prospection », « Négociation »,
 « Perdu ». Le catalogue est la liste de ceux qui ont un nom dans votre espace de travail, et les
 workflows y puisent leurs étapes. Deux workflows différents qui emploient le même nœud parlent du
@@ -3663,8 +3648,6 @@ Déplacer un état dans la liste ne déplace aucune affaire.
   refus d'archivage.
 
 ## 20. La corbeille : ce qui a été retiré, et comment le rendre
-
-*Livré par `CRM-077`. Captures dans `docs/captures/CRM-077/`.*
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « Corbeille ».
 
@@ -3752,9 +3735,6 @@ d'abord, puis les channels, puis les affaires. **Ce qui est effacé ne se restau
 
 ## 21. Les membres de votre espace : qui y travaille, avec quel rôle
 
-*Livré en développement par `CRM-070` : la liste des membres, leurs rôles, les attentes et les droits fins par track et
-par channel.*
-
 Chaque espace de travail a ses **membres**, et chacun y tient un **rôle** : **Administrateur**, **Business developer**
 ou **Lecteur**. Cet écran les montre à tous les membres ; seuls les administrateurs de l'espace y changent quelque chose.
 
@@ -3775,7 +3755,7 @@ mais ils sont inactifs.
 ### 21.3 Changer le rôle d'un membre
 
 Choisissez le nouveau rôle dans le sélecteur de sa ligne : le changement est enregistré **dès le choix**, sans bouton
-à presser. Un message sous la liste le confirme — « Rôle de Driss Lemoine modifié. » —, puis la liste est relue.
+à presser. Un message sous la liste le confirme — « Rôle de Jeanne Martin modifié. » —, puis la liste est relue.
 
 **Un espace garde toujours au moins un administrateur.** Retirer le rôle d'administrateur au dernier d'entre eux est
 refusé, et le message le dit : nommez d'abord un autre administrateur. Le sélecteur revient alors au rôle enregistré.
@@ -3853,8 +3833,6 @@ Le message sous la liste dit pourquoi :
 - **le serveur n'a pas répondu** : vérifiez votre connexion et réessayez.
 
 ## 22. Le journal d'audit : ce qui s'est fait dans votre espace
-
-*Livré en développement par `CRM-072` T1 et T2.*
 
 Le CRM tient un **journal des gestes sensibles** de chaque espace. Ce sont les gestes qui changent qui peut faire quoi,
 comment l'espace est configuré, et ce qui disparaît :

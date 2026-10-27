@@ -6,36 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-077"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-077/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{

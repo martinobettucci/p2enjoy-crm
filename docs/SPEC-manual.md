@@ -480,6 +480,12 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 | `CRM-058` | l-inbox-lire-trier-et-repondre | ecrire-et-repondre |
 | `CRM-059` | consulter-l-etat-de-la-messagerie | — |
 | `CRM-063` | ecrire-des-modeles-d-emails-et-les-previsualiser | — |
+| `CRM-075` | administrer-l-arborescence-tracks-et-channels | — |
+| `CRM-116` | administrer-l-arborescence-tracks-et-channels | un-channel |
+| `CRM-030` | le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows | — |
+| `CRM-077` | la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre | — |
+| `CRM-070` | les-membres-de-votre-espace-qui-y-travaille-avec-quel-role | — |
+| `CRM-072` | le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace | — |
 | *(les autres chapitres à leur réécriture : T3.2 à T3.5)* | | |
 
 ## 13. Le manuel dans la webapp

@@ -6,44 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-075"
-						},
-						{
-							"type": "text",
-							"text": " ; les règles d'accès sont celles de "
-						},
-						{
-							"type": "code",
-							"text": "CRM-020"
-						},
-						{
-							"type": "text",
-							"text": " et "
-						},
-						{
-							"type": "code",
-							"text": "CRM-021"
-						},
-						{
-							"type": "text",
-							"text": ", inchangées."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "strong",
 					"content": [
 						{
@@ -85,15 +47,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Ouvrir « Réglages » affiche d'abord un INDEX des sections de réglages, sous le titre\n« Sections de réglages » — « Arborescence : tracks et channels » en est la première entrée. Ce\nn'est plus, depuis "
-				},
-				{
-					"type": "code",
-					"text": "CRM-075"
-				},
-				{
-					"type": "text",
-					"text": ", la page sans contenu qu'elle a été : chaque nouvelle section de\nréglages (permissions, workflows) y ajoutera sa propre entrée plutôt que de déplacer une adresse\ndéjà partagée."
+					"text": " Ouvrir « Réglages » affiche d'abord l'index des sections de réglages, sous le titre « Sections de\nréglages » ; « Arborescence : tracks et channels » en est une entrée."
 				}
 			]
 		},
@@ -142,7 +96,24 @@
 				},
 				{
 					"type": "text",
-					"text": ", et c'est délibéré : votre rôle peut changer pendant\nque la page est ouverte, et cacher un bouton sur la foi d'un rôle lu à l'arrivée reviendrait à vous\ninterdire un geste qui vous est peut-être permis. Le produit préfère vous montrer le refus réel."
+					"text": " : ils restent visibles, grisés, et un bandeau dit pourquoi\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Si votre rôle change pendant que la page\nest ouverte, c'est la réponse du serveur qui s'affiche."
 				}
 			]
 		},
@@ -238,36 +209,7 @@
 							},
 							{
 								"type": "text",
-								"text": " et\nchangez de couleur avec les flèches. Un nouveau track est Gris tant que vous n'en choisissez pas d'autre. La couleur\ncolore sa pilule dans la barre latérale et dans cet écran. "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "Livré par "
-									},
-									{
-										"type": "code",
-										"text": "CRM-116"
-									},
-									{
-										"type": "text",
-										"text": " ; captures dans\n"
-									},
-									{
-										"type": "code",
-										"text": "docs/captures/CRM-116/"
-									},
-									{
-										"type": "text",
-										"text": "."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": "\n"
+								"text": " et\nchangez de couleur avec les flèches. Un nouveau track est Gris tant que vous n'en choisissez pas d'autre. La couleur\ncolore sa pilule dans la barre latérale et dans cet écran.\n"
 							},
 							{
 								"type": "strong",
@@ -487,26 +429,43 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "La suppression définitive n'existe pas"
+							"text": "Aucun geste ne supprime définitivement"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": ", et ce n'est pas un oubli : le produit ne l'expose nulle\npart, et la base la refuse. Archiver masque ; mettre à la corbeille retire. Les deux sont\nréversibles, et "
+					"text": ", et ce n'est pas un oubli : archiver masque ; mettre à la corbeille\nretire. Les deux sont réversibles. Seul un objet resté "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "rien n'efface"
+							"text": "30 jours"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": "."
+					"text": " dans la corbeille est effacé, automatiquement\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre",
+						"anchor": "l-effacement-definitif"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 20.3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -832,30 +791,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Un channel a sa propre couleur"
+							"text": "Un channel a sa propre couleur."
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " ("
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-116"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "). Elle se choisit comme celle d'un track, avec les mêmes cinq\ncouleurs, à la création comme en modification, et un nouveau channel est Gris tant que vous n'en choisissez pas\nd'autre. Elle s'affiche en "
+					"text": " Elle se choisit comme celle d'un track, avec les mêmes cinq\ncouleurs, à la création comme en modification, et un nouveau channel est Gris tant que vous n'en choisissez pas\nd'autre. Elle s'affiche en "
 				},
 				{
 					"type": "strong",
@@ -968,24 +910,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", dans le bandeau en haut de l'éditeur : le\nformulaire du channel se rouvre là où vous l'aviez laissé — dans la vue du track ou dans\nl'arborescence —, avec le nom, l'identifiant, la couleur et la description déjà saisis, et le workflow créé déjà\nchoisi. "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-100"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
+					"text": ", dans le bandeau en haut de l'éditeur : le\nformulaire du channel se rouvre là où vous l'aviez laissé — dans la vue du track ou dans\nl'arborescence —, avec le nom, l'identifiant, la couleur et la description déjà saisis, et le workflow créé déjà\nchoisi."
 				}
 			]
 		},
@@ -1076,34 +1001,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Changer le workflow d'un channel qui porte des affaires"
+							"text": "Changer le workflow d'un channel qui porte des affaires."
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " ("
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-118"
-						},
-						{
-							"type": "text",
-							"text": " tranche T1.b"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "). Le formulaire de\nmodification ne change que le workflow d'un channel "
+					"text": " Le formulaire de\nmodification ne change que le workflow d'un channel "
 				},
 				{
 					"type": "strong",
@@ -1269,24 +1173,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Le changement est fait d'un bloc : toutes les affaires passent à leur destination en même temps, et chacune garde une\ntrace « workflow changé » dans son fil. Un message confirme le nouveau workflow. Comme les autres commandes de\nl'arborescence, celle-ci demande d'administrer l'espace de travail. "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Captures :\n"
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-118/changement-workflow-*.jpg"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
+					"text": "Le changement est fait d'un bloc : toutes les affaires passent à leur destination en même temps, et chacune garde une\ntrace « workflow changé » dans son fil. Un message confirme le nouveau workflow. Comme les autres commandes de\nl'arborescence, celle-ci demande d'administrer l'espace de travail."
 				}
 			]
 		},
@@ -1345,33 +1232,7 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "Le geste de mise à la corbeille existe pour un "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "track"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " et un "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "channel"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", pas pour une\n"
+								"text": "Une "
 							},
 							{
 								"type": "strong",
@@ -1384,55 +1245,24 @@
 							},
 							{
 								"type": "text",
-								"text": " : une affaire ne se retire depuis aucun écran pour l'instant."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "Un objet retiré "
+								"text": " se met à la corbeille depuis sa fiche ("
 							},
 							{
-								"type": "strong",
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "mettre-une-affaire-a-la-corbeille"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "disparaît de cette liste immédiatement"
+										"text": "section 9.15"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": ", mais la barre latérale garde le track\njusqu'au prochain chargement de la page. Le même décalage existe depuis toujours pour l'archivage."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "Aucune "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "capture"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " de cet écran n'a encore été produite, et son parcours de bout en bout n'a pas\nété rejoué : les deux exigent la pile de développement complète."
+								"text": "), pas\ndepuis cet écran."
 							}
 						]
 					}
@@ -1467,7 +1297,7 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "L'édition des "
+								"text": "La composition des "
 							},
 							{
 								"type": "strong",
@@ -1480,7 +1310,7 @@
 							},
 							{
 								"type": "text",
-								"text": " eux-mêmes relève du **"
+								"text": " — étapes, transitions, questions et leur visibilité étape par étape — relève du\n"
 							},
 							{
 								"type": "link",
@@ -1496,20 +1326,7 @@
 							},
 							{
 								"type": "text",
-								"text": "* pour leurs étapes, leurs\ntransitions et les "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "questions"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " de leur formulaire ; la visibilité d'une question étape par\nétape n'a, elle, toujours pas d'écran."
+								"text": "."
 							}
 						]
 					}

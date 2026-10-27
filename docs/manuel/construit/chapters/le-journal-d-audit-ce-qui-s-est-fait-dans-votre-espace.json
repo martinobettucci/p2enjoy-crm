@@ -6,28 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré en développement par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-072"
-						},
-						{
-							"type": "text",
-							"text": " T1 et T2."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "Le CRM tient un "
 				},

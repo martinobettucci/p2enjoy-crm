@@ -36393,3 +36393,17 @@ en lisant `ReglagesModelesEmails.tsx`, `ReglagesSequencesRelance.tsx`, `BlocSequ
 séquences non livrées. Le nombre de variables d'un modèle (douze) est mesuré en base. **Retirés** : le nom de la
 variable d'environnement de la relève, les messages « reçus avant l'été 2026 », la séquence et la signature du jeu de
 démonstration.
+
+### `CRM-117` T3.4a : l'administration réécrite pour le lecteur, sans les workflows (2026-10-27)
+
+**Fait** : chapitres 17 (arborescence), 19 (catalogue de nœuds), 20 (corbeille), 21 (membres) et 22 (journal d'audit),
+sans aucune référence interne. **Le chapitre 17 se contredisait, ou contredisait le produit, six fois**, et chaque point
+est corrigé après lecture du code : les boutons « non masqués… pour montrer le refus réel » sont grisés avec un bandeau
+(`AdministrationArborescence.tsx` lit les capacités de l'espace) ; « une affaire ne se retire depuis aucun écran »
+(section 9.15 l'y retire) ; « la barre latérale garde le track jusqu'au prochain chargement », démenti trois paragraphes
+plus haut ; « la visibilité d'une question n'a toujours pas d'écran » (le chapitre 18 la décrit) ; « rien n'efface »
+(la corbeille efface au bout de 30 jours) ; l'arborescence « première entrée » de l'index (le guide de démarrage la
+précède). Une affirmation vérifiée et **gardée** : la clé proposée pour « Nœud de suivi » est bien `n-ud-de-suivi`
+(`proposerSlug` ne convertit pas la ligature). Le lien vers `docs/SPEC-workflow-engine.md`, seul avertissement de la
+construction, disparaît avec la ligne « Livré par » qui le portait. **Le chapitre 18** attend les ajouts de `CRM-068` :
+T3.4b.

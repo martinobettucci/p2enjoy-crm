@@ -17113,7 +17113,12 @@ responsable** : traitée juste après `CRM-116`.*
       - [x] **T3.3 — la messagerie** : chapitres 11 à 16. *Fait le 2026-10-27* : aucune référence interne ; une
             introduction aux deux chapitres nés du plan (11, 12) ; libellés et comportements relus dans le code ; huit
             passages devenus faux corrigés (journal) ; table du §12 tenue.
-      - [ ] **T3.4 — l'administration de l'espace** : chapitres 17 à 22.
+      - [~] **T3.4 — l'administration de l'espace** : chapitres 17 à 22.
+        - [x] **T3.4a — chapitres 17, 19, 20, 21 et 22** (arborescence, catalogue, corbeille, membres, journal d'audit) —
+              *fait le 2026-10-27* : aucune référence interne ; six passages du chapitre 17 devenus faux ou
+              contradictoires corrigés (journal) ; le lien vers une spécification, seul avertissement de la construction,
+              retiré ; table du §12 tenue.
+        - [ ] **T3.4b — chapitre 18, composer un workflow** : après le commit des ajouts de `CRM-068` à ce chapitre.
       - [ ] **T3.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33 ; le contrôle « aucune
             référence interne » couvre alors tout le manuel.
 - [ ] **T4 — les images**, par les mêmes groupes : l'aide `illustrer`, les scénarios `e2e/manuel/`, le manifeste, les

@@ -6,36 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-030"
-						},
-						{
-							"type": "text",
-							"text": " ; l'écran est spécifié au §2 bis de\n"
-						},
-						{
-							"type": "text",
-							"text": "docs/SPEC-workflow-engine.md"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "Un "
 				},

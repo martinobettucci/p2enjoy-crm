@@ -103,6 +103,12 @@ CHAPITRES_REECRITS=(
 	ecrire-des-modeles-d-emails-et-les-previsualiser
 	signer-les-messages-expedies-depuis-une-identite
 	enchainer-des-relances-les-sequences
+	# T3.4a — l'administration, sans les workflows (2026-10-27)
+	administrer-l-arborescence-tracks-et-channels
+	le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows
+	la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre
+	les-membres-de-votre-espace-qui-y-travaille-avec-quel-role
+	le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace
 )
 
 # Libellés que le manuel cite entre guillemets pour décrire un parcours, et qui
