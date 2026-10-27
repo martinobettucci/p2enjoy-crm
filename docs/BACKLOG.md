@@ -17133,7 +17133,14 @@ responsable** : traitée juste après `CRM-116`.*
             prochaine publication (seed ou `scripts/manuel/publier.sh`) le mettra à jour.
 - [ ] **T4 — les images**, par les mêmes groupes : l'aide `illustrer`, les scénarios `e2e/manuel/`, le manifeste, les
       images placées et observées ; la preuve « un élément cité, une image » et la table des exceptions (§11.3) soumise
-      au responsable.
+      au responsable. Contrat technique : `docs/SPEC-manual.md` §11.4 (mesure : environ 620 libellés cités, dans 157
+      sections).
+      - [ ] **T4.0 — l'outillage, sans la pile** : `scripts/manuel/images.mjs` (découpe, manifeste, éléments cités et leur
+            illustration — module pur, unitaires), l'aide `e2e/manuel/illustrer.ts`, le projet Playwright `manuel`, les
+            contrôles d'images de `scripts/verify-manual.sh` sur les chapitres illustrés, avec leur contre-épreuve.
+      - [ ] **T4.1 à T4.5 — les images**, groupe par groupe comme T3 : scénarios, images observées, liste des chapitres
+            illustrés. **Exigent la pile de développement**, que le responsable a demandé de ne pas relancer le
+            2026-10-27 : elles attendent son accord.
 - [ ] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
       `CHANGELOG.md`, contrat de déploiement.
 - [ ] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.

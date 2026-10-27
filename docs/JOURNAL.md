@@ -36485,3 +36485,15 @@ commande à l'écran. **Retirés** : l'adresse technique d'une fiche, le jeu de 
 
 **Non publié en développement** : la pile est arrêtée, à la demande du responsable ; le bucket sera mis à jour à la
 prochaine publication.
+
+### `CRM-117` T4 : le contrat technique des images, avant le code (2026-10-27)
+
+**Mesuré** : environ **620** textes entre guillemets du manuel sont des libellés réels de l'interface, répartis dans
+**157** sections — borne basse, les citations coupées par un retour à la ligne échappant au décompte. T4 produira donc de
+l'ordre de 150 à 200 images découpées ; la règle du responsable ne se tient qu'avec un générateur et une preuve
+mécanique. **Choix de l'agent** (`docs/SPEC-manual.md` §11.4) : un manifeste écrit par l'aide `illustrer` et jamais à la
+main ; des libellés **relevés dans la page** et non déclarés par le scénario, pour que la preuve soit opposable ; un
+élément cité illustré quand il figure dans une image de sa section ; un projet Playwright `manuel` hors des campagnes de
+non-régression ; des contrôles qui grandissent chapitre par chapitre, comme ceux de T3. **Découpage** : T4.0, l'outillage,
+se fait sans la pile ; T4.1 à T4.5 produisent les images et **exigent la pile**, que le responsable a demandé de ne pas
+relancer : elles attendent son accord.

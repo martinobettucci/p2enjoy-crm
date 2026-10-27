@@ -442,6 +442,31 @@ est autorisée en début de chapitre. »
 |---|---|---|
 | *(aucune à ce jour ; la table se remplit à la réécriture des chapitres, une ligne par exception, et chaque ligne est soumise au responsable)* | | |
 
+### 11.4 Le contrat technique des images
+
+*Choix de l'agent, 2026-10-27, avant le code de T4 (mesure : environ 620 libellés de l'interface cités, dans 157
+sections).*
+
+- **Le manifeste** `docs/manuel/images/manifeste.json` est `{ "images": [ … ] }`, une entrée par image, rangée par
+  fichier : `fichier` (`<chapitre>/<nom>.jpg`, relatif à `docs/manuel/images/`), `largeur`, `hauteur`, `chapitre`,
+  `section` (l'identifiant de la section, ou `null` pour l'introduction du chapitre), `pleinePage` (booléen) et
+  `libelles` (les textes visibles dans le rectangle, dédoublonnés et triés). Le fichier est écrit par `illustrer`, jamais
+  à la main ; un scénario rejoué remplace ses entrées, et laisse celles des autres.
+- **La découpe** (`scripts/manuel/images.mjs`, module pur) : le rectangle qui englobe les cibles, élargi de 16 px de
+  chaque côté et borné à la page. Une image **pleine page** prend la fenêtre de 1440 × 900.
+- **Les libellés relevés** sont les textes que la page rend dans le rectangle — nœuds de texte visibles, `aria-label`,
+  `placeholder` et `value` des champs —, normalisés (apostrophe droite, espaces réduits). Ils sont **lus dans la page**,
+  jamais déclarés par le scénario : c'est ce qui rend la preuve « un élément cité, une image » opposable.
+- **Un élément cité** est un texte entre guillemets français, dans une section, qui est une valeur de
+  `webapp/src/i18n/fr.ts` ; une valeur à paramètres (`{nom}`) se compare comme un motif. Il est **illustré** quand il
+  figure, à la normalisation près, dans les libellés d'une image de **la même section** — ou de l'introduction de son
+  chapitre pour une image pleine page.
+- **Le projet Playwright `manuel`** (`e2e/manuel/`) joue les scénarios, sur la pile de développement et le seed, comme
+  `ui` ; il n'est pas compté dans les campagnes de non-régression : ses scénarios produisent des images, et la preuve est
+  celle du §16.
+- **La preuve grandit avec T4**, comme celle des références internes avec T3 : les contrôles d'images portent sur les
+  chapitres déjà illustrés, liste qui couvre tout le manuel à la fin de T4.
+
 ## 12. Correspondance entre unités et chapitres
 
 La partie I faisait porter au manuel la trace des unités. Elle vit ici, et seulement ici. **Une ligne par unité livrée
