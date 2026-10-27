@@ -17103,7 +17103,13 @@ responsable** : traitée juste après `CRM-116`.*
             devenues fausses corrigées (journal) ; section 3.9 « L'aide » ajoutée ; table du §12 tenue pour ces chapitres ;
             `npm run manuel:liens` (`scripts/manuel/liens.mjs`, 5 unitaires, deux mutations tuées) et contrôle 7 de la
             preuve du manuel, contre-épreuve à six familles ; manuel construit et publié en développement.
-      - [ ] **T3.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10.
+      - [~] **T3.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10.
+        - [x] **T3.2a — chapitres 6, 7, 8 et 10** (Ma journée, les affaires figées, les objectifs, le carnet) — *fait le
+              2026-10-27* : aucune référence interne ; libellés relus dans `fr.ts` ; trois passages devenus faux corrigés
+              (les séquences de relance existent, le rattachement d'un contact a son écran, la suppression d'un contact
+              existe) ; un lien que T3.0 avait mal posé (catalogue de nœuds) et deux renvois mal ciblés réparés ; table du
+              §12 tenue.
+        - [ ] **T3.2b — chapitre 9, l'affaire** : après le commit des ajouts de `CRM-068` à ce chapitre.
       - [ ] **T3.3 — la messagerie** : chapitres 11 à 16.
       - [ ] **T3.4 — l'administration de l'espace** : chapitres 17 à 22.
       - [ ] **T3.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33 ; le contrôle « aucune

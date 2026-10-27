@@ -6,36 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-062"
-						},
-						{
-							"type": "text",
-							"text": ", tranche 3. Captures : "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-062/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "« Ma journée » vous dit ce qui est "
 				},
@@ -221,30 +191,17 @@
 							},
 							{
 								"type": "text",
-								"text": " du catalogue dont l'étape est une occurrence ("
+								"text": " du catalogue dont l'étape est une occurrence\n("
 							},
 							{
 								"type": "link",
 								"target": {
-									"chapter": "administrer-l-arborescence-tracks-et-channels"
+									"chapter": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows"
 								},
 								"content": [
 									{
 										"type": "text",
-										"text": "chapitre 17"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": "\n"
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "quater"
+										"text": "chapitre 19"
 									}
 								]
 							},
@@ -271,33 +228,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Personne n'a dit au bout de combien de temps\nelle est en retard, et le produit n'invente pas ce chiffre. C'est le cas des étapes terminales de\nl'espace de démonstration — "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " et "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Perdu"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " —, dont les affaires n'apparaissent donc jamais ici."
+					"text": " Personne n'a dit au bout de combien de temps\nelle est en retard, et le produit n'invente pas ce chiffre. C'est souvent le cas des étapes terminales, comme\n« Livré » ou « Perdu » : leurs affaires n'apparaissent alors jamais ici."
 				}
 			]
 		},
@@ -743,41 +674,6 @@
 			]
 		},
 		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Dans l'espace de démonstration, l'administratrice et le business developer lisent "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "quatre"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "\naffaires figées ; la lectrice en lit "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "trois"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " — la quatrième vit dans un track qui lui est fermé."
-				}
-			]
-		},
-		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "la-relance-inscrite-dans-l-affaire",
@@ -905,13 +801,42 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Aucun email n'est envoyé."
+										"text": "Aucun email n'est envoyé par cette relance."
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " Une relance est un fait inscrit dans le produit, que vous rencontrez\nen l'ouvrant. Les modèles d'emails et les séquences de relance relèvent d'une autre unité, non\nlivrée ;"
+								"text": " C'est un fait inscrit dans le produit, que vous rencontrez en\nl'ouvrant. Relancer par email est le rôle des "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "séquences"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", qu'on arme sur la fiche d'une affaire figée\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "enchainer-des-relances-les-sequences"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 16"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ;"
 							}
 						]
 					}
@@ -1025,10 +950,10 @@
 				},
 				{
 					"type": "text",
-					"text": ", l'écran le dit et propose "
+					"text": ", l'écran le dit — « Les affaires figées n’ont pas pu être chargées » — et propose\n"
 				},
 				{
-					"type": "emphasis",
+					"type": "strong",
 					"content": [
 						{
 							"type": "text",
@@ -1038,7 +963,7 @@
 				},
 				{
 					"type": "text",
-					"text": ". Un écran vide et une\npanne ne se confondent jamais."
+					"text": ". Un écran vide et une panne ne se confondent jamais."
 				}
 			]
 		}

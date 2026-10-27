@@ -465,6 +465,12 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 | `CRM-117` | naviguer-barre-laterale-onglets-etats | l-aide-le-manuel-depuis-n-importe-quel-ecran |
 | `CRM-065` | retrouver-n-importe-quoi-la-recherche | — |
 | `CRM-064` | vos-notifications-savoir-qu-on-vous-a-nomme | — |
+| `CRM-061` | ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui | — |
+| `CRM-062` | les-affaires-figees-ce-qui-dort-depuis-trop-longtemps | — |
+| `CRM-082` | les-objectifs-le-tableau-blanc-de-l-equipe | — |
+| `CRM-083` | les-objectifs-le-tableau-blanc-de-l-equipe | le-canevas |
+| `CRM-060` | le-carnet-de-contacts | — |
+| `CRM-114` | le-carnet-de-contacts | l-onglet-organisations |
 | *(les autres chapitres à leur réécriture : T3.2 à T3.5)* | | |
 
 ## 13. Le manuel dans la webapp

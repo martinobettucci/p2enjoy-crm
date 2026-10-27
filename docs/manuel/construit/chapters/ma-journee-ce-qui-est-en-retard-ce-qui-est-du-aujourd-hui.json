@@ -6,36 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-061"
-						},
-						{
-							"type": "text",
-							"text": ", tranche 1. Décrit l'application réellement exécutée ; captures dans\n"
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-061/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "L'entrée "
 				},
@@ -623,23 +593,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : "
-				},
-				{
-					"type": "code",
-					"text": "/ma-journee"
-				},
-				{
-					"type": "text",
-					"text": " d'un côté, "
-				},
-				{
-					"type": "code",
-					"text": "/ma-journee?qui=tous"
-				},
-				{
-					"type": "text",
-					"text": " de l'autre. Une\nadresse copiée à un collègue lui montre donc ce que vous voyez — sous réserve de ses propres droits,\nqui restent seuls juges de ce qu'il peut lire."
+					"text": " de la page : une adresse copiée à un collègue lui montre donc ce que vous voyez — sous\nréserve de ses propres droits, qui restent seuls juges de ce qu'il peut lire."
 				}
 			]
 		},
@@ -731,12 +685,12 @@
 							"type": "link",
 							"target": {
 								"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-								"anchor": "qui-peut-faire-quoi"
+								"anchor": "archiver-n-est-pas-supprimer"
 							},
 							"content": [
 								{
 									"type": "text",
-									"text": "chapitre 9.5"
+									"text": "section 9.4"
 								}
 							]
 						},
@@ -771,12 +725,12 @@
 							"type": "link",
 							"target": {
 								"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-								"anchor": "ce-qui-n-est-pas-encore-livre"
+								"anchor": "mettre-une-affaire-en-sommeil-et-la-retrouver"
 							},
 							"content": [
 								{
 									"type": "text",
-									"text": "chapitre 9.16"
+									"text": "section 9.13"
 								}
 							]
 						},

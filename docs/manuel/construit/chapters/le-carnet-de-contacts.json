@@ -6,52 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-060"
-						},
-						{
-							"type": "text",
-							"text": ", sous-tranches 4a, 4b, 4e, 4f, 4g et 4h, et par la tranche 6 ; l'onglet\n« Organisations », la création et la modification d'une organisation par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-114"
-						},
-						{
-							"type": "text",
-							"text": ". Décrit\nl'application réellement exécutée ; captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-060/"
-						},
-						{
-							"type": "text",
-							"text": " et\n"
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-114/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "L'entrée "
 				},
@@ -273,7 +227,7 @@
 				},
 				{
 					"type": "text",
-					"text": " Le carnet n'écrit ni tiret ni\n« non renseigné » : un contact peut n'être qu'un nom et un téléphone, et c'est un cas ordinaire, pas\nune donnée manquante à corriger. Dans l'espace de démonstration, Sophie Dupont n'a pas\nd'organisation et Élise Fabre n'a pas d'email."
+					"text": " Le carnet n'écrit ni tiret ni\n« non renseigné » : un contact peut n'être qu'un nom et un téléphone, et c'est un cas ordinaire, pas\nune donnée manquante à corriger."
 				}
 			]
 		},
@@ -344,20 +298,41 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Le rattachement d'un contact à une affaire existe déjà "
+					"text": "Rattacher une personne à une affaire se fait depuis sa fiche\n("
 				},
 				{
-					"type": "strong",
+					"type": "link",
+					"target": {
+						"chapter": "le-carnet-de-contacts",
+						"anchor": "rattacher-une-personne-a-une-affaire"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "en base"
+							"text": "section 10.6"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " — c'est lui qui alimente la\nsuggestion de classement d'un message dont l'expéditeur est un contact connu —, mais il ne se\nrègle pas encore depuis un écran."
+					"text": ") ou depuis celle de l'affaire\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "les-contacts-d-une-affaire-les-rattacher-les-detacher"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 9.7"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Ce rattachement sert aussi à ranger le\ncourrier : un message dont l'expéditeur est un contact rattaché à une affaire est proposé pour cette affaire."
 				}
 			]
 		},
@@ -892,7 +867,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "C'est la seule page qui répond à la question « sur quoi travaillons-nous avec cette personne ? »,\net depuis la sous-tranche 4h c'est aussi d'ici que l'on "
+					"text": "C'est la seule page qui répond à la question « sur quoi travaillons-nous avec cette personne ? »,\net c'est aussi d'ici que l'on "
 				},
 				{
 					"type": "strong",
@@ -905,7 +880,24 @@
 				},
 				{
 					"type": "text",
-					"text": " une affaire à cette liste\n(« Rattacher une personne à une affaire », plus bas)."
+					"text": " une affaire à cette liste\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-carnet-de-contacts",
+						"anchor": "rattacher-une-personne-a-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 10.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -1338,20 +1330,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par la tranche 6."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "Le bouton "
 				},
@@ -1677,28 +1655,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré en développement par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-072"
-						},
-						{
-							"type": "text",
-							"text": " T3."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "En bas de la fiche, la zone "
 				},
@@ -1943,20 +1899,6 @@
 				{
 					"type": "text",
 					"text": "10.6 Rattacher une personne à une affaire"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par la sous-tranche 4h."
-						}
-					]
 				}
 			]
 		},
@@ -2280,30 +2222,8 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par la sous-tranche 4i."
-						}
-					]
-				},
-				{
 					"type": "text",
-					"text": " Ce geste se faisait auparavant "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "depuis l'affaire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " seulement ; il\nexiste désormais "
+					"text": "Ce geste existe "
 				},
 				{
 					"type": "strong",
@@ -2316,7 +2236,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", et celui de l'affaire n'a pas changé ("
+					"text": " : ici, et sur la fiche de l'affaire\n("
 				},
 				{
 					"type": "link",
@@ -2327,7 +2247,7 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "chapitre 9.7"
+							"text": "section 9.7"
 						}
 					]
 				},
@@ -2549,30 +2469,21 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par la sous-tranche 4j."
-						}
-					]
-				},
-				{
 					"type": "text",
-					"text": " Jusqu'ici, corriger un rôle mal saisi obligeait à "
+					"text": "Corriger un rôle mal saisi ne demande pas de "
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "détacher puis\nrattacher"
+							"text": "détacher puis rattacher"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " — c'est-à-dire à défaire le lien pour le refaire. Ce n'est plus nécessaire."
+					"text": " la personne : le rôle se modifie en place."
 				}
 			]
 		},
@@ -2836,24 +2747,6 @@
 			]
 		},
 		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "La suppression n'est pas un oubli."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Un contact peut être désigné par des champs de formulaire\nd'affaires déjà remplis ; le supprimer laisserait ces valeurs pointer vers quelqu'un qui n'existe\nplus. Ce que le produit doit faire de ces traces reste à décider, et la commande n'existera pas\navant."
-				}
-			]
-		},
-		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "l-onglet-organisations",
@@ -2895,7 +2788,7 @@
 				},
 				{
 					"type": "text",
-					"text": " : c'est le seul chemin qui mène à elles. Dans\nl'espace de démonstration, Comptoir Vasseur est dans ce cas."
+					"text": " : c'est le seul chemin qui mène à elles."
 				}
 			]
 		},

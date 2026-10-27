@@ -689,9 +689,6 @@ une case qui ne commande rien serait une promesse que le produit ne tiendrait pa
 
 ## 6. Ma journée : ce qui est en retard, ce qui est dû aujourd'hui
 
-*Livré par `CRM-061`, tranche 1. Décrit l'application réellement exécutée ; captures dans
-`docs/captures/CRM-061/`.*
-
 L'entrée **Ma journée** de la barre latérale répond à une seule question : **que dois-je faire
 aujourd'hui ?** Elle rassemble les affaires qui portent une **échéance** — la date de leur prochaine
 action —, à travers tout votre espace de travail, sans avoir à ouvrir un dossier après l'autre.
@@ -743,9 +740,8 @@ Deux onglets en haut de l'écran choisissent la **portée** :
 - **Mes affaires**, la vue par défaut : les affaires dont **vous** êtes responsable ;
 - **Tout l'espace de travail** : toutes celles que vos droits vous laissent lire.
 
-Le choix vit dans l'**adresse** : `/ma-journee` d'un côté, `/ma-journee?qui=tous` de l'autre. Une
-adresse copiée à un collègue lui montre donc ce que vous voyez — sous réserve de ses propres droits,
-qui restent seuls juges de ce qu'il peut lire.
+Le choix vit dans l'**adresse** de la page : une adresse copiée à un collègue lui montre donc ce que vous voyez — sous
+réserve de ses propres droits, qui restent seuls juges de ce qu'il peut lire.
 
 **Élargir la portée n'ouvre rien.** Ce que vous voyez reste ce que le serveur vous consent : une
 affaire d'un track qui vous est fermé n'apparaît dans aucune des deux portées, et l'écran ne la
@@ -755,8 +751,8 @@ nomme jamais.
 
 | Absent de l'écran | Motif |
 |---|---|
-| Les affaires **archivées** et celles **à la corbeille** | Elles ne sont plus en cours ([chapitre 9.5](#qui-peut-faire-quoi)) |
-| Les affaires **en sommeil** | Les endormir est précisément le geste qui dit « pas aujourd'hui » ([chapitre 9.16](#ce-qui-n-est-pas-encore-livre)). Elles restent visibles dans leur tableau et leur vue liste, où une case à cocher les ramène |
+| Les affaires **archivées** et celles **à la corbeille** | Elles ne sont plus en cours ([section 9.4](#archiver-n-est-pas-supprimer)) |
+| Les affaires **en sommeil** | Les endormir est précisément le geste qui dit « pas aujourd'hui » ([section 9.13](#mettre-une-affaire-en-sommeil-et-la-retrouver)). Elles restent visibles dans leur tableau et leur vue liste, où une case à cocher les ramène |
 | Les affaires **sans échéance** | Il n'y a rien à ranger dans une journée |
 | Les échéances au-delà de **sept jours** | Voir l'horizon ci-dessus |
 
@@ -786,8 +782,6 @@ Sans session, la page ne s'affiche pas : son adresse mène à l'écran de connex
 
 ## 7. Les affaires figées : ce qui dort depuis trop longtemps
 
-*Livré par `CRM-062`, tranche 3. Captures : `docs/captures/CRM-062/`.*
-
 « Ma journée » vous dit ce qui est **dû**. Cet écran-ci vous dit ce qui **dort**. Les deux
 questions se ressemblent et ne sont pas la même : une affaire peut porter une prochaine action à
 demain et n'avoir pas bougé d'étape depuis six semaines. C'est pourquoi les deux entrées sont
@@ -803,12 +797,12 @@ cette étape**. Ce n'est ni un jugement ni un score : c'est une durée comparée
 Le seuil vient du **processus**, et il se lit en deux temps :
 
 1. l'étape elle-même peut porter un seuil, réglé dans l'éditeur de workflows ([chapitre 18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)) ;
-2. sinon, c'est celui du **nœud** du catalogue dont l'étape est une occurrence ([chapitre 17](#administrer-l-arborescence-tracks-et-channels)
-   *quater*).
+2. sinon, c'est celui du **nœud** du catalogue dont l'étape est une occurrence
+   ([chapitre 19](#le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows)).
 
 **Une étape sans seuil ne fige jamais ses affaires.** Personne n'a dit au bout de combien de temps
-elle est en retard, et le produit n'invente pas ce chiffre. C'est le cas des étapes terminales de
-l'espace de démonstration — *Livré* et *Perdu* —, dont les affaires n'apparaissent donc jamais ici.
+elle est en retard, et le produit n'invente pas ce chiffre. C'est souvent le cas des étapes terminales, comme
+« Livré » ou « Perdu » : leurs affaires n'apparaissent alors jamais ici.
 
 Le compte se fait en **jours révolus**, et la borne est **large** : une affaire qui atteint
 exactement son seuil est figée, et son retard vaut alors zéro.
@@ -848,9 +842,6 @@ par track et par onglet ([chapitre 3.5](#les-acces-par-track-et-par-channel)) s'
 **L'écran ne dit jamais qu'il vous cache quelque chose.** Aucune mention « une affaire vous est
 masquée » n'apparaît : ce serait divulguer par la bande l'existence de ce que vos droits ferment.
 
-Dans l'espace de démonstration, l'administratrice et le business developer lisent **quatre**
-affaires figées ; la lectrice en lit **trois** — la quatrième vit dans un track qui lui est fermé.
-
 ### 7.4 La relance inscrite dans l'affaire
 
 Chaque nuit, le produit parcourt les affaires figées et inscrit dans l'historique de chacune une
@@ -865,9 +856,9 @@ Cette ligne **n'a pas d'auteur** : personne ne l'a écrite, c'est l'horloge.
 
 ### 7.5 Ce que le produit ne fait PAS
 
-- **Aucun email n'est envoyé.** Une relance est un fait inscrit dans le produit, que vous rencontrez
-  en l'ouvrant. Les modèles d'emails et les séquences de relance relèvent d'une autre unité, non
-  livrée ;
+- **Aucun email n'est envoyé par cette relance.** C'est un fait inscrit dans le produit, que vous rencontrez en
+  l'ouvrant. Relancer par email est le rôle des **séquences**, qu'on arme sur la fiche d'une affaire figée
+  ([chapitre 16](#enchainer-des-relances-les-sequences)) ;
 - **aucune notification** ne vous prévient ;
 - **aucune cadence n'est réglable** : le passage a lieu une fois par jour, et l'heure n'est pas un
   réglage du produit ;
@@ -881,13 +872,10 @@ Cette ligne **n'a pas d'auteur** : personne ne l'a écrite, c'est l'horloge.
 étape au-delà de son seuil. Le message ne propose aucun bouton, et ce n'est pas un oubli : il n'y a
 rien à faire d'une liste vide, et c'est une bonne nouvelle.
 
-Si la liste **n'a pas pu être lue**, l'écran le dit et propose *Réessayer*. Un écran vide et une
-panne ne se confondent jamais.
+Si la liste **n'a pas pu être lue**, l'écran le dit — « Les affaires figées n’ont pas pu être chargées » — et propose
+**Réessayer**. Un écran vide et une panne ne se confondent jamais.
 
 ## 8. Les objectifs : le tableau blanc de l'équipe
-
-*Livré par `CRM-082` (ce que le produit enregistre et qui peut l'écrire) et `CRM-083` (l'écran). Décrit l'application
-réellement exécutée ; captures dans `docs/captures/CRM-083/`. Spécification : `docs/SPEC-goals.md`.*
 
 L'entrée **Objectifs** de la barre latérale ouvre les **tableaux d'objectifs** de votre espace de travail. Un tableau est
 un **tableau blanc** : vous y posez des **blocs** — un objectif chacun —, vous les reliez par des **flèches** pour dire ce
@@ -912,7 +900,7 @@ Un **administrateur** ou un **business developer** de l'espace administre les ta
   **« Afficher les archivés »** le fait reparaître avec la mention **« Archivé »** et la seule commande
   **« Désarchiver »**. Un tableau archivé garde son nom : un autre tableau ne peut pas le prendre tant qu'il existe.
 
-Pour un autre compte, la base refuse ces gestes, et l'écran le dit sous la commande : *« Vous ne pouvez pas
+Pour un autre compte, le serveur refuse ces gestes, et l'écran le dit sous la commande : *« Vous ne pouvez pas
 administrer les tableaux de cet espace de travail. »*
 
 ### 8.2 Le canevas
@@ -974,7 +962,7 @@ plus — contrairement à un tableau, qui s'archive.
 **Tout membre de l'espace lit les tableaux.** Les **administrateurs** et les **business developers** de l'espace les
 administrent et les composent ; pour un autre compte, le canevas affiche : *« Vous consultez ce tableau. Vous n'avez
 pas le droit d'y écrire : les commandes de modification restent visibles mais sont inactives. »* — et la fiche d'un
-bloc s'ouvre en lecture. C'est la base qui décide : un refus de dernière minute est dit sous la commande, sans que
+bloc s'ouvre en lecture. C'est le serveur qui décide : un refus de dernière minute est dit sous la commande, sans que
 rien ne soit écrit.
 
 ### 8.7 Quand il n'y a rien
@@ -1936,11 +1924,6 @@ avec son auteur et sa date. Vous le relisez après restauration.
 
 ## 10. Le carnet de contacts
 
-*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e, 4f, 4g et 4h, et par la tranche 6 ; l'onglet
-« Organisations », la création et la modification d'une organisation par `CRM-114`. Décrit
-l'application réellement exécutée ; captures dans `docs/captures/CRM-060/` et
-`docs/captures/CRM-114/`.*
-
 L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
 personnes avec qui vos affaires se traitent, et l'organisation à laquelle chacune appartient.
 
@@ -1960,8 +1943,7 @@ Le carnet se présente en tableau, une ligne par contact, rangé par nom :
 
 **Une cellule vide veut dire « pas renseigné », et rien d'autre.** Le carnet n'écrit ni tiret ni
 « non renseigné » : un contact peut n'être qu'un nom et un téléphone, et c'est un cas ordinaire, pas
-une donnée manquante à corriger. Dans l'espace de démonstration, Sophie Dupont n'a pas
-d'organisation et Élise Fabre n'a pas d'email.
+une donnée manquante à corriger.
 
 **Qui voit quoi.** Tout membre de l'espace de travail lit le carnet, y compris un compte en lecture
 seule. Une ligne que votre compte n'a pas le droit de lire n'apparaît simplement pas, et c'est la
@@ -1975,9 +1957,10 @@ de chaque ligne d'une liste que l'on parcourt. Cliquer sur un email n'ouvre pas 
 messagerie. Il n'y a pas non plus de recherche ni de filtre : le carnet affiche l'ensemble des
 contacts de l'espace.
 
-Le rattachement d'un contact à une affaire existe déjà **en base** — c'est lui qui alimente la
-suggestion de classement d'un message dont l'expéditeur est un contact connu —, mais il ne se
-règle pas encore depuis un écran.
+Rattacher une personne à une affaire se fait depuis sa fiche
+([section 10.6](#rattacher-une-personne-a-une-affaire)) ou depuis celle de l'affaire
+([section 9.7](#les-contacts-d-une-affaire-les-rattacher-les-detacher)). Ce rattachement sert aussi à ranger le
+courrier : un message dont l'expéditeur est un contact rattaché à une affaire est proposé pour cette affaire.
 
 ### 10.1 Créer un contact
 
@@ -2023,8 +2006,8 @@ organisation — ouvre sa **fiche**. Elle porte son **nom en titre**, puis deux 
   (par exemple « decideur »), et son **état**. Le titre de chaque affaire est un lien qui l'ouvre.
 
 C'est la seule page qui répond à la question « sur quoi travaillons-nous avec cette personne ? »,
-et depuis la sous-tranche 4h c'est aussi d'ici que l'on **ajoute** une affaire à cette liste
-(« Rattacher une personne à une affaire », plus bas).
+et c'est aussi d'ici que l'on **ajoute** une affaire à cette liste
+([section 10.6](#rattacher-une-personne-a-une-affaire)).
 
 **Le rôle dans l'affaire n'est pas la fonction.** La fonction qualifie la personne dans son
 organisation ; le rôle dit ce qu'elle est **dans cette affaire-là**. Les deux portent le même mot
@@ -2073,8 +2056,6 @@ ouvert et votre saisie est intacte, pour que vous ne perdiez rien.
 
 ### 10.4 Supprimer un contact
 
-*Livré par la tranche 6.*
-
 Le bouton **« Supprimer »** se trouve à côté de **« Modifier »**, en haut de la fiche. Il vient en
 second, et c'est délibéré : on lit d'abord le geste que l'on peut défaire.
 
@@ -2115,8 +2096,6 @@ messagerie d'une affaire reste dans l'affaire.
 
 ### 10.5 Les données personnelles d'un contact : les exporter, les anonymiser
 
-*Livré en développement par `CRM-072` T3.*
-
 En bas de la fiche, la zone **« Données personnelles (RGPD) »** porte deux gestes, réservés aux **administrateurs de
 l'espace**. Pour un autre membre, les deux boutons restent visibles mais grisés, et une phrase dit pourquoi. Chaque geste
 est inscrit au **journal d'audit** ([chapitre 22](#le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace)), sans le nom de la personne.
@@ -2139,8 +2118,6 @@ L'anonymisation est **définitive**. **Les messages ne sont pas touchés** : ils
 l'adresse ou la signature de la personne peuvent encore y paraître.
 
 ### 10.6 Rattacher une personne à une affaire
-
-*Livré par la sous-tranche 4h.*
 
 Le bouton **« Rattacher à une affaire »** se trouve dans le bloc **Affaires**, juste sous son titre.
 Il ouvre un formulaire **dans la page** — le tableau reste visible en dessous, et c'est voulu :
@@ -2176,8 +2153,8 @@ décidera, il envoie et vous rapporte la réponse.
 
 ### 10.7 Détacher une personne d'une affaire
 
-*Livré par la sous-tranche 4i.* Ce geste se faisait auparavant **depuis l'affaire** seulement ; il
-existe désormais **des deux côtés**, et celui de l'affaire n'a pas changé ([chapitre 9.7](#les-contacts-d-une-affaire-les-rattacher-les-detacher)).
+Ce geste existe **des deux côtés** : ici, et sur la fiche de l'affaire
+([section 9.7](#les-contacts-d-une-affaire-les-rattacher-les-detacher)).
 
 Chaque ligne du tableau **Affaires** porte un bouton **« Détacher »**, dans une dernière colonne
 « Commandes ». Toutes les lignes le portent, **y compris celle d'une affaire archivée** : détacher
@@ -2203,8 +2180,7 @@ par affaire : le même compte peut détacher sur l'une et se voir opposer ce mes
 
 ### 10.8 Corriger le rôle d'une personne dans une affaire
 
-*Livré par la sous-tranche 4j.* Jusqu'ici, corriger un rôle mal saisi obligeait à **détacher puis
-rattacher** — c'est-à-dire à défaire le lien pour le refaire. Ce n'est plus nécessaire.
+Corriger un rôle mal saisi ne demande pas de **détacher puis rattacher** la personne : le rôle se modifie en place.
 
 Chaque ligne du tableau **Affaires** porte un second bouton, **« Modifier le rôle »**, placé
 **avant** « Détacher » dans la colonne « Commandes » : le geste qui corrige vient avant celui qui
@@ -2234,16 +2210,10 @@ ne prétend pas le contraire.
 Le rôle est un **texte libre** : aucune liste imposée, aucune longueur maximale. Les exemples du
 texte d'aide — décideur, prescripteur, contact technique — ne sont que des exemples.
 
-**La suppression n'est pas un oubli.** Un contact peut être désigné par des champs de formulaire
-d'affaires déjà remplis ; le supprimer laisserait ces valeurs pointer vers quelqu'un qui n'existe
-plus. Ce que le produit doit faire de ces traces reste à décider, et la commande n'existera pas
-avant.
-
 ### 10.9 L'onglet « Organisations »
 
 L'onglet **Organisations** liste toutes les organisations de l'espace de travail, rangées par nom,
-**y compris celles qui n'ont encore aucun contact** : c'est le seul chemin qui mène à elles. Dans
-l'espace de démonstration, Comptoir Vasseur est dans ce cas.
+**y compris celles qui n'ont encore aucun contact** : c'est le seul chemin qui mène à elles.
 
 | Colonne | Ce qu'elle porte |
 |---|---|

@@ -91,6 +91,11 @@ CHAPITRES_REECRITS=(
 	naviguer-barre-laterale-onglets-etats
 	retrouver-n-importe-quoi-la-recherche
 	vos-notifications-savoir-qu-on-vous-a-nomme
+	# T3.2a — le suivi quotidien et le carnet (2026-10-27)
+	ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui
+	les-affaires-figees-ce-qui-dort-depuis-trop-longtemps
+	les-objectifs-le-tableau-blanc-de-l-equipe
+	le-carnet-de-contacts
 )
 
 # Libellés que le manuel cite entre guillemets pour décrire un parcours, et qui

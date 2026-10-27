@@ -6,52 +6,6 @@
 			"type": "paragraph",
 			"content": [
 				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-082"
-						},
-						{
-							"type": "text",
-							"text": " (ce que le produit enregistre et qui peut l'écrire) et "
-						},
-						{
-							"type": "code",
-							"text": "CRM-083"
-						},
-						{
-							"type": "text",
-							"text": " (l'écran). Décrit l'application\nréellement exécutée ; captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-083/"
-						},
-						{
-							"type": "text",
-							"text": ". Spécification : "
-						},
-						{
-							"type": "code",
-							"text": "docs/SPEC-goals.md"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
 					"type": "text",
 					"text": "L'entrée "
 				},
@@ -378,7 +332,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Pour un autre compte, la base refuse ces gestes, et l'écran le dit sous la commande : "
+					"text": "Pour un autre compte, le serveur refuse ces gestes, et l'écran le dit sous la commande : "
 				},
 				{
 					"type": "emphasis",
@@ -1178,7 +1132,7 @@
 				},
 				{
 					"type": "text",
-					"text": " — et la fiche d'un\nbloc s'ouvre en lecture. C'est la base qui décide : un refus de dernière minute est dit sous la commande, sans que\nrien ne soit écrit."
+					"text": " — et la fiche d'un\nbloc s'ouvre en lecture. C'est le serveur qui décide : un refus de dernière minute est dit sous la commande, sans que\nrien ne soit écrit."
 				}
 			]
 		},

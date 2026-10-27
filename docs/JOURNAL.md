@@ -36364,3 +36364,15 @@ manuel le vérifie (contrôle 7), et sa contre-épreuve le dégrade.
 
 **Coordination** : la session de `CRM-068` écrit dans les chapitres 9 et 18 ; ses lignes restent les siennes, hors de ce
 commit, qui s'applique à HEAD — la même réécriture a été appliquée à la copie de travail, où elle donne le même résultat.
+
+### `CRM-117` T3.2a : le suivi quotidien et le carnet réécrits (2026-10-27)
+
+**Fait** : chapitres 6 (Ma journée), 7 (les affaires figées), 8 (les objectifs) et 10 (le carnet de contacts), sans
+aucune référence interne, chaque libellé cité relu dans `webapp/src/i18n/fr.ts`. **Trois passages étaient devenus faux**
+et sont corrigés : « les séquences de relance relèvent d'une autre unité, non livrée » (elles existent, chapitre 16) ;
+« le rattachement d'un contact ne se règle pas encore depuis un écran » (il se règle depuis les deux fiches) ; « la
+suppression n'est pas un oubli… la commande n'existera pas » (la suppression d'un contact existe, section 10.4). **Un
+lien posé par T3.0 était faux** : un renvoi « chapitre 5 *quater* » coupé par un retour à la ligne avait été lu
+« chapitre 5 » (l'arborescence) ; il mène au catalogue de nœuds. Deux renvois de Ma journée visaient la mauvaise
+section (archivage, sommeil). Les volumes du jeu de démonstration (« quatre affaires figées », des noms de contacts)
+sont retirés. **Le chapitre 9** attend le commit des ajouts de `CRM-068`, qui y écrit : T3.2b.
