@@ -36087,3 +36087,12 @@ l'en-tête du workflow choisi et ses cinq commandes, avec les icônes `Star` et 
 archivés » ; le panneau « Changer de workflow » sur la ligne du channel de l'arborescence ; puis T2.e, les quatre outils
 du connecteur qui suivent leur écran. **Persisté** : `docs/SPEC-workflow-engine.md` §7 quinquies (en-tête de section),
 `docs/BACKLOG.md` (`CRM-118` T1.b).
+
+### décision 761 — `CRM-118` : ajouter un point de checklist à une étape relève de `ajouter`
+
+*2026-10-27, arbitrage du responsable.* La décision 759 (`CRM-068` T3b) écrivait que, dans le connecteur, « ajouter,
+renommer, exiger relèvent de `modifier` » ; la liste validée de `CRM-118` T2.b (décision 756) range l'ajout d'un point
+sous `ajouter`, comme toute création de la famille (étape, transition, champ, nœud). **Arbitré : `ajouter`.** Renommer
+et réordonner un point, exiger ou ne plus exiger relèvent de `modifier` ; archiver de `supprimer`. Les deux textes
+s'accordent désormais. **Persisté** : `docs/SPEC-checklists.md` §4 (T3b, la phrase du connecteur), `docs/SPEC-mcp.md`
+§9.2 undecies T2.b (inchangé, il le disait déjà).

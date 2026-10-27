@@ -145,8 +145,9 @@ chapitre « Checklists » et une section « Modèles d'affaires ».
   l'arrivée, le bloc « Checklist » est amené en vue et le premier point exigé non coché prend le focus, une seule fois
   par adresse — la règle des champs exigés (`docs/DESIGN_SYSTEM.md` §5.7 quater).
 - **Connecteur** (les deux questions, décision 759) : oui, ces gestes existeront dans le connecteur, dans la **famille
-  `workflows` existante** (migration `0129` de `CRM-118`) — ajouter ou renommer un point relève de `modifier`, exiger ou
-  ne plus exiger aussi (décision 756), retirer de `supprimer`. Les outils sont livrés par `CRM-118`, au catalogue de sa
+  `workflows` existante** (migration `0129` de `CRM-118`) — ajouter un point relève de `ajouter`, le renommer ou le
+  réordonner de `modifier`, exiger ou ne plus exiger aussi (décision 756), l'archiver de `supprimer` (décision 761,
+  qui corrige ici la décision 759). Les outils sont livrés par `CRM-118`, au catalogue de sa
   famille (`docs/SPEC-mcp.md` §9.2 *undecies*), et non par T3b.
 
 ## 5. Connecteur MCP — famille `affaires`
