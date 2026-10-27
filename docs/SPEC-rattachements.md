@@ -263,6 +263,8 @@ les événements `attached` et `detached`.
 - `UNIQUE (id, workflow_id)` : condition de la clé composite de `card_field_values` (§3.3).
 - **Toute affaire a au moins un rattachement**, archivé ou non. Tenu par un déclencheur de contrainte *deferred* : la
   création insère l'affaire puis son rattachement dans la même transaction.
+  La clé de service en est exemptée (décision 770) : le seed pose l'affaire puis son rattachement en deux requêtes
+  (décision 746).
 
 ### 3.2 Ce qui reste à l'affaire, et ce qui la quitte
 

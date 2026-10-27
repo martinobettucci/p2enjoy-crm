@@ -36449,3 +36449,19 @@ et le rapport hebdomadaire `CRM-P07` (« retenue, planifié par `pg_cron` »).
 
 **Conséquences.** La spécification `docs/SPEC-etiquettes-digest.md` est écrite à partir de ces décisions et soumise au
 responsable avant le code. Le rapport hebdomadaire `CRM-P07` y est situé, sans être livré d'office.
+
+### décision 770 — `CRM-111` T2.4.5 : l'invariant « au moins un rattachement » ne s'applique pas à la clé de service ; l'événement `created` naît avec le premier rattachement
+
+*2026-10-27, réponse du responsable (question posée par `AskUserQuestion`, session interactive), avant le code.*
+**Question.** L'invariant du §3.1 (`docs/SPEC-rattachements.md`) — toute affaire a au moins un rattachement, vérifié à la
+validation de la transaction — empêche le seed de poster l'affaire puis son rattachement en deux requêtes REST, comme le
+veut la décision 746 : chaque requête est sa propre transaction. **Décision : la clé de service en est exemptée.**
+L'invariant s'applique aux utilisateurs (`authenticated`, `anon`) ; `service_role`, déjà au-dessus de la RLS et réservée au
+seed et aux preuves, pose l'affaire puis son rattachement en deux requêtes. La décision 746 reste telle quelle. Une
+affaire orpheline n'est possible que si le seed échoue entre ses deux écritures, en développement.
+
+**Précision d'exécution de la décision 768, point 2.** L'événement `created` n'est pas écrit à la validation, mais par un
+déclencheur `AFTER INSERT` de `card_placements` lorsque le rattachement inséré est le **premier** de l'affaire, avec la
+même charge utile (`title`, `channel_id`, `step_id`). Écrit à la validation, il manquerait à toute lecture faite dans la
+transaction de création — celle de `creer_affaire` qui rend la fiche, et les preuves pgTAP, qui annulent leur
+transaction.
