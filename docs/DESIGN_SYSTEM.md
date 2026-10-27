@@ -6723,7 +6723,9 @@ seul élément ouvert à la fois (§5.28).
 - **LES COMMANDES SUIVENT LA CAPACITÉ D'ADMINISTRER L'ESPACE** (§5.59), comme le reste de l'éditeur.
 - **ÉTATS** (§5.8) : squelette au premier chargement, erreur avec « Réessayer » ; après une écriture, les listes sont
   relues sans squelette (§5.29 tranche 2 c) ; l'issue s'annonce dans la région vivante de l'éditeur.
-- **SOUS `md`**, la barre d'une ligne passe à la ligne suivante, cibles conservées ; `md` et jamais `sm` (§11).
+- **SOUS `md`**, le libellé d'un point prend sa propre ligne et sa barre passe dessous, cibles conservées — *précisé en
+  regardant la capture à 390 px* : resserré à côté des commandes, le libellé se coupait lettre à lettre ; `md` et jamais
+  `sm` (§11).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : `ArrowUp`, `ArrowDown`, `Pencil`, `Archive`, `ArchiveRestore`,
   `Plus` et `X` servent déjà ces gestes.
 

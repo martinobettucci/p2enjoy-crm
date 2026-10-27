@@ -1188,7 +1188,9 @@ ASSERTIONS_ATTENDUES=4394
 # 1236 + 1 = 1237, COMPTÉE.
 # **+9 par `CRM-117` T2, 2026-10-26** : `e2e/api/manuel.spec.ts`, fichier NEUF, **9** scénarios (le miroir publié, quatre
 # refus sans session, les trois sessions du seed qui lisent, aucune écriture). 1237 + 9 = 1246, COMPTÉE.
-SCENARIOS_API=1246
+# **+1 par `CRM-068` T3b, 2026-10-27** : `e2e/api/checklists.spec.ts` gagne le refus des gestes de l'éditeur au business
+# developer, par requête directe. 1246 + 1 = 1247, COMPTÉE.
+SCENARIOS_API=1247
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1719,7 +1721,11 @@ SCENARIOS_API=1246
 # **+13 par `CRM-117` T2, 2026-10-27** : `e2e/ui/aide.spec.ts`, fichier NEUF — du board à la section qui le décrit, le
 # panneau au clavier, l'écran sans chapitre, un seul panneau de l'en-tête, chaque chapitre du sommaire lu, précédent et
 # suivant, le chapitre inconnu, la lectrice, la session absente, les quatre paliers. 973 + 13 = 986, COMPTÉE.
-SCENARIOS_UI=986
+# **+2 par `CRM-068` T3b, 2026-10-27** : `e2e/ui/checklists-editeur.spec.ts`, fichier NEUF — les gestes de l'éditeur sur
+# un workflow jetable (ajouter, monter, renommer, exiger, archiver un point exigé, ne plus l'exiger, 390 px), la lectrice
+# aux commandes éteintes ; `checklists.spec.ts` gagne le lien « Cocher ces points » dans un scénario existant. 986 + 2 =
+# 988, COMPTÉE.
+SCENARIOS_UI=988
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

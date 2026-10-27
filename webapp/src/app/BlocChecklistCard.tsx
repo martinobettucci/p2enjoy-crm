@@ -101,11 +101,31 @@ export function BlocChecklistCard({
 		[onChange],
 	)
 
+	// `CRM-068` T3b — L'ARRIVÉE PAR LE LIEN « Cocher ces points » DU BOARD (docs/DESIGN_SYSTEM.md §5.7 quinquies) : l'ancre
+	// `#checklist` amène le bloc en vue et donne le focus au premier point exigé non coché, UNE FOIS par montage — un
+	// défilement qui reprendrait la main pendant la saisie serait un vol de focus (§5.7 quater).
+	const section = useRef<HTMLElement>(null)
+	const arriveeTraitee = useRef(false)
+	useEffect(() => {
+		if (arriveeTraitee.current || etat.statut !== 'pret') return
+		if (typeof window === 'undefined' || window.location.hash !== '#checklist') return
+		arriveeTraitee.current = true
+		const cible = premierPointAReprendre(etat.donnees)
+		const element =
+			cible === null
+				? null
+				: section.current?.querySelector<HTMLInputElement>(`[data-point="${cible}"] input[type="checkbox"]`)
+		section.current?.scrollIntoView({ block: 'center', behavior: preferenceMouvementReduit() ? 'auto' : 'smooth' })
+		element?.focus({ preventScroll: true })
+	}, [etat])
+
 	if (client === null) return null
 	const checklist = etat.statut === 'pret' ? etat.donnees : null
 
 	return (
 		<section
+			ref={section}
+			id="checklist"
 			data-testid="bloc-checklist-card"
 			aria-labelledby="bloc-checklist-titre"
 			className="flex flex-col gap-3 border-t border-border pt-4"
@@ -178,6 +198,21 @@ export function BlocChecklistCard({
 		</section>
 	)
 }
+
+/** Le point à reprendre à l'arrivée : le premier exigé non coché de l'étape courante, sinon le premier non coché. */
+export function premierPointAReprendre(checklist: ChecklistAffichee): string | null {
+	const courants = checklist.etapeCourante?.points ?? []
+	return (
+		courants.find((point) => !point.coche && point.exigePour.length > 0)?.id ??
+		courants.find((point) => !point.coche)?.id ??
+		null
+	)
+}
+
+const preferenceMouvementReduit = (): boolean =>
+	typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+		? window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		: false
 
 /** Un groupe titré `h3` ; vide, il n'est pas rendu, sauf s'il porte un geste (« Points libres » et son ajout). */
 function GroupePoints({

@@ -12345,6 +12345,7 @@ un motif explicite.
 | CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
 ### CRM-068 — Checklists et modèles de cards `[@]`
+*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-27 07:17 UTC — état avant : [~]*
 
 Checklists d'une affaire et modèles de cards (`docs/SPEC-modeles-emails.md` §1 : objets distincts des modèles d'emails).
 *Arbitrée le 2026-10-26 (décision 747)* : checklists libres, ajoutées par l'étape, exigibles par une transition ;
@@ -12374,9 +12375,16 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
         (décision 51 : pgTAP `0015`, `0061`, `0068`, `0086`, `0117` ; API `analytique`, `channels`, `coherence-workflow`,
         `colonnes-protegees`, `droits-interface`, `workflows` ; interface `administration-catalogue`, `coherence-workflow`,
         `pilotage`) ; manuel 4.7 *quinquies*, CHANGELOG, harnais.
-  - [@] **T3b — l'éditeur de workflows** : les points de chaque étape et les points exigés par une transition ; le lien
-        « Cocher ces points » du bandeau du board vers la fiche.
-        *Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-27 07:17 UTC — état avant : [ ]*
+  - [~] **T3b — l'éditeur de workflows** : les points de chaque étape et les points exigés par une transition ; le lien
+        « Cocher ces points » du bandeau du board vers la fiche. **Livrée en développement le 2026-10-27** (décision 759) :
+        `docs/DESIGN_SYSTEM.md` §5.70 bis et §5.7 quinquies révisé, après relecture intégrale ; `lib/administration-checklists.ts`
+        et `app/ChecklistsWorkflow.tsx` — bloc « Checklists des étapes » avant les exigences, points exigés sous chaque
+        transition (y compris sur un workflow sans question), lien du bandeau et focus à l'arrivée sur la fiche ; unitaires
+        bibliothèque 10, composants 10, bandeau et arrivée 4 (garde de `Board.test.tsx` révisée, décision 51), suite 4731 ;
+        API `checklists.spec.ts` 6/6 (refus du business developer par requête directe) ; E2E `checklists-editeur.spec.ts`
+        2/2 et `checklists.spec.ts` 5/5, éditeur, cohérence, versions et board 119/120 puis la preuve corrigée verte ;
+        captures observées — un défaut vu à 390 px (libellé coupé lettre à lettre) corrigé ; **reste le manuel** (18.10 et 9.9,
+        écrits au plan de `CRM-117`, committés après son T3.0, qui réorganise le fichier) ; harnais UI 988, API 1247. Connecteur : outils livrés par `CRM-118` (décisions 759, 761).
 - [ ] **T4 — les modèles d'affaires** : `card_templates`, `creer_affaire` étendue, `save_card_as_template`, Réglages,
       « Nouvelle affaire », « Enregistrer comme modèle ».
 - [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`.

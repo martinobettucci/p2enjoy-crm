@@ -47,7 +47,7 @@ d'exécuter le code attendu.
   nœud ne change jamais ; un nœud occupé par des affaires actives ne s'archive pas.
 - **Plateforme ▸ Connecteur MCP** : la matrice des droits gagne la ligne « Workflows », après « Structure ».
 
-### `CRM-068` — les checklists d'une affaire (en cours : T1, T2, T3a)
+### `CRM-068` — les checklists d'une affaire (en cours : T1, T2, T3a, T3b)
 
 - **Base** — migration `0125` : les points d'une étape (`workflow_step_checklist_items`, écrits par l'administrateur), les
   points d'une affaire (`card_checklist_items`, libres ou ajoutés par la base à l'entrée d'un rattachement dans une
@@ -62,7 +62,11 @@ d'exécuter le code attendu.
 - **Seed** (`docs/SPEC-seed.md` §28, décision 755) — trois points d'étape sur le workflow par défaut, sans exigence ; un
   channel « Checklists » (track Studio web) servi par un workflow de démonstration et son exigence, trois affaires dont une
   bloquée.
-- Reste : l'éditeur de workflows (T3b), les modèles d'affaires (T4), le connecteur (T5).
+- **Éditeur de workflows** (T3b, décision 759) — un bloc « Checklists des étapes » : ajouter, réordonner, renommer,
+  archiver les points de chaque étape ; dans le bloc des exigences, les points exigés par chaque transition (« Exiger un
+  point », borné à l'étape de départ ; « Ne plus exiger »). Le bandeau de refus du board mène à la fiche par « Cocher ces
+  points », le premier point exigé non coché prenant le focus.
+- Reste : les modèles d'affaires (T4), le connecteur (T5 ; les outils de l'éditeur sont livrés par `CRM-118`).
 
 ### `CRM-117` — le manuel joignable depuis la webapp (en cours)
 

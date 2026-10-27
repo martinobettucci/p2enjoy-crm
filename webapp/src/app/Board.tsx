@@ -973,6 +973,11 @@ export function cheminReprise(
 	idCard: string,
 	refus: RefusDeplacement,
 ): string | null {
+	// `CRM-068` T3b (docs/DESIGN_SYSTEM.md §5.7 quinquies) : les points à cocher se reprennent dans le bloc « Checklist »
+	// de la fiche, que l'ancre désigne ; sans point nommé, aucun lien — il n'y aurait rien à y mettre en évidence.
+	if (refus.cle === 'checklist_incomplete') {
+		return refus.pointsManquants.length === 0 ? null : `/tracks/${slugTrack}/${slugChannel}/cards/${idCard}#checklist`
+	}
 	if (refus.cle !== 'missing_required_fields') return null
 	if (refus.clesManquantes.length === 0) return null
 	const exiges = encodeURIComponent(refus.clesManquantes.join(','))
@@ -1023,7 +1028,7 @@ function BandeauRefus({
 				    copie de l'adresse. */}
 				{chemin === null ? null : (
 					<Link to={chemin} data-testid="reprendre-saisie" className={CLASSES_REPRISE}>
-						{t('board.refusal.fill')}
+						{refus.cle === 'checklist_incomplete' ? t('board.refusal.check') : t('board.refusal.fill')}
 					</Link>
 				)}
 			</div>

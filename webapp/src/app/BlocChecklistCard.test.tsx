@@ -1,3 +1,5 @@
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T3b : l'arrivée par « Cocher ces points » — le bloc en vue, le focus sur
+//           le premier point exigé non coché (docs/DESIGN_SYSTEM.md §5.7 quinquies, décision 759)
 // @verifies CRM-068 (docs/BACKLOG.md) — tranche T3a : le bloc « Checklist » de la fiche, monté pour de vrai
 // @verifies docs/SPEC-checklists.md §4 (la fiche : points d'étape groupés, points libres, compte, mention d'exigence) ;
 //           docs/DESIGN_SYSTEM.md §5.70 (ce bloc), §5.31 bis (la case revient si la base refuse), §5.41 (retrait sans
@@ -7,10 +9,10 @@
 import { cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { BlocChecklistCard } from './BlocChecklistCard'
+import { BlocChecklistCard, premierPointAReprendre } from './BlocChecklistCard'
 import { FournisseurRefus } from '../components/ui/RefusCommandes'
 import { fr } from '../i18n'
-import type { PointLu } from '../lib/checklists'
+import { projeterChecklist, type PointLu } from '../lib/checklists'
 import type { ClientCrm } from '../lib/supabase'
 
 afterEach(cleanup)
@@ -223,5 +225,43 @@ describe('BlocChecklistCard — gestes', () => {
 		expect((screen.getByTestId('checklist-retirer') as HTMLButtonElement).disabled).toBe(true)
 		expect((screen.getByLabelText('Nouveau point') as HTMLButtonElement).disabled).toBe(true)
 		expect(screen.getByRole('button', { name: 'Ajouter' }).getAttribute('aria-describedby')).toBe('motif-fiche')
+	})
+})
+
+describe('BlocChecklistCard — l’arrivée par « Cocher ces points » (CRM-068 T3b)', () => {
+	it('choisit le premier point exigé non coché de l’étape courante, sinon le premier non coché', () => {
+		const vue = projeterChecklist([POINT_COCHE, POINT_ETAPE, POINT_LIBRE], RATTACHEMENT, RELANCE)
+		expect(premierPointAReprendre(vue)).toBe('r1')
+		const sansExigence = projeterChecklist(
+			[{ ...POINT_ETAPE, origine: { step_id: RELANCE, etape: relance, exigences: [] } }],
+			RATTACHEMENT,
+			RELANCE,
+		)
+		expect(premierPointAReprendre(sansExigence)).toBe('r1')
+		expect(premierPointAReprendre(projeterChecklist([POINT_COCHE], RATTACHEMENT, RELANCE))).toBeNull()
+	})
+
+	it('avec l’ancre #checklist, amène le bloc en vue et donne le focus à la case du point exigé', async () => {
+		const defiler = vi.fn()
+		Element.prototype.scrollIntoView = defiler
+		window.history.replaceState(null, '', '#checklist')
+		try {
+			monter(clientDouble().client)
+			const caseBudget = await screen.findByRole('checkbox', { name: 'Budget connu' })
+			await waitFor(() => expect(document.activeElement).toBe(caseBudget))
+			expect(defiler).toHaveBeenCalledTimes(1)
+			expect(screen.getByTestId('bloc-checklist-card').id).toBe('checklist')
+		} finally {
+			window.history.replaceState(null, '', window.location.pathname)
+		}
+	})
+
+	it('sans l’ancre, la fiche ne prend pas la main', async () => {
+		const defiler = vi.fn()
+		Element.prototype.scrollIntoView = defiler
+		monter(clientDouble().client)
+		await screen.findByRole('checkbox', { name: 'Budget connu' })
+		expect(defiler).not.toHaveBeenCalled()
+		expect(document.activeElement).toBe(document.body)
 	})
 })

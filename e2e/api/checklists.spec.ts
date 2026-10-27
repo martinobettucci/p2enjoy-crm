@@ -1,3 +1,5 @@
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T3b : les gestes de l'éditeur réservés à l'administratrice, par requête
+//           directe (docs/SPEC-checklists.md §3.1, §3.4 ; CLAUDE.md §10)
 // @verifies CRM-068 (docs/BACKLOG.md) — tranches T1 et T2 : le modèle des checklists et l'exigence de transition, hors interface
 // @verifies docs/SPEC-checklists.md §3.1 (les points d'une étape, réservés à l'administrateur), §3.2 (cocher : la base pose
 //           l'heure et l'auteur, fermés au client ; un point d'étape ne se retire pas), §3.3 (l'ajout à l'entrée dans
@@ -118,6 +120,30 @@ test.describe('les checklists — hors interface (docs/SPEC-checklists.md §3)',
 		})
 		expect([200, 401]).toContain(anonyme.status())
 		if (anonyme.status() === 200) expect(await anonyme.json()).toEqual([])
+	})
+
+	test('T3b — le business developer ne renomme, n’archive ni n’exige un point d’étape ; l’administratrice, si', async ({
+		request,
+	}) => {
+		const driss = await jetonDe('bizdev@p2enjoy.test')
+		const camille = await jetonDe('admin@p2enjoy.test')
+		const point = `${URL_API}/rest/v1/workflow_step_checklist_items?id=eq.${POINT_ETAPE}`
+		// Renommer et archiver : la politique filtre en silence, `200` et zéro ligne (décision 70).
+		const renommage = await request.patch(point, { headers: representation(driss), data: { label: 'ZZ renommé' } })
+		expect(renommage.status()).toBe(200)
+		expect(await renommage.json()).toEqual([])
+		const archivage = await request.patch(point, { headers: representation(driss), data: { archived_at: '2026-10-27T10:00:00Z' } })
+		expect(await archivage.json()).toEqual([])
+		// Exiger : l'insertion est refusée par la politique, `403`.
+		const exigence = await request.post(`${URL_API}/rest/v1/workflow_transition_required_checklist_items`, {
+			headers: representation(driss),
+			data: { transition_id: '5eed0000-0000-4000-8000-000000000071', step_item_id: POINT_ETAPE },
+		})
+		expect(exigence.status()).toBe(403)
+		// Contre-épreuve : l'administratrice renomme, puis remet le libellé.
+		const parAdmin = await request.patch(point, { headers: representation(camille), data: { label: 'ZZ renommé' } })
+		expect(await parAdmin.json()).toMatchObject([{ label: 'ZZ renommé' }])
+		await request.patch(point, { headers: representation(camille), data: { label: LIBELLE } })
 	})
 
 	test('T2 — une transition qui exige le point refuse le déplacement, puis le laisse passer une fois coché', async ({

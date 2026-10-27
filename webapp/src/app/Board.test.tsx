@@ -3,6 +3,8 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranches T2.3.1 et T2.3.3 : le sommeil et `move_card` désignent le rattachement de l'affaire
 //           (docs/SPEC-rattachements.md §5)
 // @verifies CRM-093 (docs/BACKLOG.md) tranche T4 — le board sous le refus du channel (docs/DESIGN_SYSTEM.md §5.59)
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T3b : le lien « Cocher ces points » du bandeau vers la fiche
+//           (docs/DESIGN_SYSTEM.md §5.7 quinquies, décision 759)
 // @verifies CRM-068 (docs/BACKLOG.md) — tranche T3a : le compte « 3/5 » de la checklist sur la carte (docs/DESIGN_SYSTEM.md §5.70)
 // @verifies CRM-041 (docs/BACKLOG.md) — rendu réel du board, de son menu et de ses refus
 // @verifies CRM-022 (docs/BACKLOG.md) — avatar du responsable sans UUID
@@ -464,7 +466,9 @@ describe('les sept refus, affichés (§7.10)', () => {
 		)
 	})
 
-	it('nomme les points de checklist à cocher, et n’offre aucun lien vers une fiche qui ne les montre pas (CRM-068 T2)', async () => {
+	// RÉVISÉE PAR `CRM-068` T3b (décision 51, décision 759) : la fiche montre la checklist depuis T3a, et le bandeau porte
+	// désormais le lien « Cocher ces points » vers son bloc — l'objet de la preuve, nommer les points, est inchangé.
+	it('nomme les points de checklist à cocher, et mène au bloc « Checklist » de la fiche (CRM-068 T2, T3b)', async () => {
 		const bandeau = await provoquer({
 			message: 'checklist_incomplete',
 			details: '["Besoin confirmé"]',
@@ -473,7 +477,9 @@ describe('les sept refus, affichés (§7.10)', () => {
 		expect(bandeau.getAttribute('data-cle')).toBe('checklist_incomplete')
 		expect(within(bandeau).getByText('Ces points de la checklist doivent être cochés avant ce déplacement :')).toBeTruthy()
 		expect(within(bandeau).getByTestId('points-manquants').textContent).toBe('Besoin confirmé')
-		expect(within(bandeau).queryByTestId('reprendre-saisie')).toBeNull()
+		const lien = within(bandeau).getByTestId('reprendre-saisie')
+		expect(lien.textContent).toBe(fr['board.refusal.check'])
+		expect(lien.getAttribute('href')).toMatch(/^\/tracks\/conseil-ia\/grands-comptes\/cards\/[^/?#]+#checklist$/)
 	})
 
 	it('reconnaît l’appelant sans session par son SQLSTATE', async () => {

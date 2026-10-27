@@ -84,6 +84,14 @@ import {
 	TriangleAlert,
 } from 'lucide-react'
 import { BlocVersionsWorkflow } from './BlocVersionsWorkflow'
+import {
+	BlocChecklistsEtapes,
+	ExigencesPointsSansChamp,
+	ExigencesPointsTransition,
+	type ContexteChecklistsWorkflow,
+	type OuvertureChecklist,
+} from './ChecklistsWorkflow'
+import { lireChecklistsWorkflow, type ChecklistsWorkflow } from '../lib/administration-checklists'
 import { CHEMIN_ADMIN_CATALOGUE } from './chemins'
 import { ListeCollections } from './CollectionsComparees'
 import { PanneauSuggestionIa, type OuverturePanneauIa } from './PanneauSuggestionIa'
@@ -2521,6 +2529,9 @@ export function AdministrationWorkflows({
 	const [regles, setRegles] = useState<EtatAsync<readonly RegleAdministrable[]>>(enChargement)
 	const [exigences, setExigences] =
 		useState<EtatAsync<readonly ExigenceAdministrable[]>>(enChargement)
+	/** `CRM-068` T3b (docs/DESIGN_SYSTEM.md §5.70 bis) : les points des étapes et les points exigés, lus avec le graphe. */
+	const [checklists, setChecklists] = useState<EtatAsync<ChecklistsWorkflow>>(enChargement)
+	const [ouvertureChecklist, setOuvertureChecklist] = useState<OuvertureChecklist>(null)
 	/** La dérivation du workflow choisi — CRM-032, §4 bis.3. `null` veut dire « pas une copie ». */
 	const [derivation, setDerivation] = useState<EtatAsync<DerivationWorkflow | null>>(enChargement)
 	/**
@@ -3009,14 +3020,17 @@ export function AdministrationWorkflows({
 			// La dérivation part avec eux par le §4 bis.3 : la mention décrit le même workflow au
 			// même instant que son graphe, et une mention lue à un autre instant pourrait décrire
 			// un état que l'écran ne montre pas.
-			const [lues, arretes, formulaire, visibilites, exigees, origine] = await Promise.all([
+			// `CRM-068` T3b : les checklists partent avec eux — un point n'a de sens qu'entre une étape du même instant.
+			const [lues, arretes, formulaire, visibilites, exigees, origine, pointsEtExigences] = await Promise.all([
 				lireEtapes(client, idWorkflow),
 				lireTransitions(client, idWorkflow),
 				lireChamps(client, idWorkflow),
 				lireRegles(client, idWorkflow),
 				lireExigences(client, idWorkflow),
 				lireDerivation(client, idWorkflow),
+				lireChecklistsWorkflow(client, idWorkflow),
 			])
+			setChecklists(pointsEtExigences)
 			setEtapes(lues)
 			setTransitions(arretes)
 			setChamps(formulaire)
@@ -3032,6 +3046,19 @@ export function AdministrationWorkflows({
 			// remappage du §7 ter.14.5.
 			setComparaisonSource(null)
 			setRefusComparaison(null)
+		},
+		[client],
+	)
+
+	// `CRM-068` T3b — UN SEUL ÉLÉMENT OUVERT À LA FOIS DANS L'ÉDITEUR (§5.28) : ouvrir un élément des checklists ferme celui
+	// de l'éditeur, et réciproquement. Une écriture relit les seules checklists : elle ne touche rien d'autre du graphe.
+	useEffect(() => {
+		if (ouverture.type !== 'aucune') setOuvertureChecklist(null)
+	}, [ouverture])
+	const relireChecklists = useCallback(
+		async (idWorkflow: string) => {
+			if (client === null) return
+			setChecklists(await lireChecklistsWorkflow(client, idWorkflow))
 		},
 		[client],
 	)
@@ -3423,6 +3450,25 @@ export function AdministrationWorkflows({
 		workflows.statut === 'pret'
 			? (workflows.donnees.find((workflow) => workflow.id === idChoisi) ?? null)
 			: null
+
+	// `CRM-068` T3b : ce que les deux composants des checklists partagent — l'état lu, l'ouverture, et la relecture.
+	const contexteChecklists: ContexteChecklistsWorkflow | null =
+		choisi === null
+			? null
+			: {
+					client,
+					checklists,
+					ouverture: ouvertureChecklist,
+					onOuvrir: (suivante) => {
+						if (suivante !== null) setOuverture(AUCUNE)
+						setOuvertureChecklist(suivante)
+					},
+					onEcrit: (texte) => {
+						setAnnonce(texte)
+						void relireChecklists(choisi.id)
+					},
+					onReprise: () => void relireChecklists(choisi.id),
+				}
 
 	return (
 		<FournisseurRefus valeur={droit}>
@@ -4194,6 +4240,18 @@ export function AdministrationWorkflows({
 											) : null}
 										</section>
 
+										{/* LES CHECKLISTS DES ÉTAPES — `CRM-068` T3b, docs/DESIGN_SYSTEM.md §5.70 bis : juste avant les
+										    exigences, par la même règle d'ordre — on n'exige pas un point qu'on n'a pas posé. */}
+										{contexteChecklists !== null && etapes.statut === 'pret' ? (
+											<BlocChecklistsEtapes
+												etapes={etapes.donnees.map((etape) => ({ id: etape.id, libelle: libelleEtape(etape) }))}
+												idWorkspace={choisi.workspace_id}
+												idWorkflow={choisi.id}
+												nomWorkflow={choisi.name}
+												contexte={contexteChecklists}
+											/>
+										) : null}
+
 										{/* Les exigences de transition, CINQUIÈME bloc et dans la même colonne : on
 										    n'ajoute pas d'exigence propre à une arête avant d'avoir vu ce que les
 										    règles exigent déjà (§7 bis.12.6). */}
@@ -4234,13 +4292,23 @@ export function AdministrationWorkflows({
 														{t('admin.workflows.requirements.noTransitions')}
 													</p>
 												) : champs.donnees.every((champ) => champ.archived_at !== null) ? (
-													<p
-														role="status"
-														data-testid="exigences-sans-champ"
-														className="text-sm text-text-2"
-													>
-														{t('admin.workflows.requirements.noFields')}
-													</p>
+													<>
+														<p
+															role="status"
+															data-testid="exigences-sans-champ"
+															className="text-sm text-text-2"
+														>
+															{t('admin.workflows.requirements.noFields')}
+														</p>
+														{/* `CRM-068` T3b : sans question, une transition peut encore exiger des points. */}
+														{contexteChecklists === null ? null : (
+															<ExigencesPointsSansChamp
+																etapes={etapes.donnees}
+																transitions={transitions.donnees}
+																contexte={contexteChecklists}
+															/>
+														)}
+													</>
 												) : (
 													<ol
 														data-testid="liste-exigences"
@@ -4450,6 +4518,15 @@ export function AdministrationWorkflows({
 																						{t('admin.workflows.requirements.action.add')}
 																					</Button>
 																				</div>
+																			)}
+																			{/* `CRM-068` T3b : les points exigés, après les champs exigés (§5.70 bis). */}
+																			{contexteChecklists === null ? null : (
+																				<ExigencesPointsTransition
+																					idTransition={sortie.id}
+																					idEtapeDepart={groupe.etape.id}
+																					nomTransition={nomTransition}
+																					contexte={contexteChecklists}
+																				/>
 																			)}
 																		</li>
 																	)

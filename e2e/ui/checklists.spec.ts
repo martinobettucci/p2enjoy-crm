@@ -1,6 +1,8 @@
 // @verifies CRM-068 (docs/BACKLOG.md) — tranche T2 : un déplacement refusé faute de points de checklist cochés, sur la vraie pile
 // @verifies docs/SPEC-checklists.md §3.4 (le refus `checklist_incomplete` et ses points nommés), §4 (le bandeau du board) ;
 //           docs/DESIGN_SYSTEM.md §5.7 quinquies ; CLAUDE.md §10 (la règle est en base), §16 (capture observée)
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T3b : le lien « Cocher ces points » du bandeau, et le focus à l'arrivée
+//           (docs/DESIGN_SYSTEM.md §5.7 quinquies, décision 759)
 // @verifies CRM-068 (docs/BACKLOG.md) — tranche T3a : le bloc « Checklist » de la fiche et le compte « n/m » du board, sur
 //           le jeu du seed (docs/SPEC-checklists.md §4, §6 ; docs/SPEC-seed.md §28 ; docs/DESIGN_SYSTEM.md §5.70) ;
 //           cocher, ajouter, retirer sur une affaire jetable, et le fil qui nomme le cochage
@@ -155,6 +157,15 @@ test.describe('la checklist d’une affaire — la fiche et le board (docs/DESIG
 		const bandeau = page.getByTestId('refus-deplacement')
 		await expect(bandeau).toHaveAttribute('data-cle', 'checklist_incomplete')
 		await expect(bandeau.getByTestId('points-manquants')).toHaveText('Proposition envoyée')
+		// T3b : le bandeau mène au bloc de la fiche, et le point exigé non coché prend le focus à l'arrivée.
+		await bandeau.getByRole('link', { name: 'Cocher ces points' }).click()
+		await expect(page).toHaveURL(/\/cards\/[^/#]+#checklist$/)
+		const caseExigee = page.getByTestId('bloc-checklist-card').getByRole('checkbox', { name: 'Proposition envoyée' })
+		await expect(caseExigee).toBeFocused()
+		// Le défilement est doux (§6) : la capture attend que la case soit en vue et que la page ne bouge plus.
+		await expect(caseExigee).toBeInViewport()
+		await page.waitForFunction(() => new Promise((fin) => requestAnimationFrame(() => requestAnimationFrame(() => fin(true)))))
+		await capturer(page, 'fiche-arrivee-cocher-ces-points-1440', 'CRM-068')
 		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
 	})
 
