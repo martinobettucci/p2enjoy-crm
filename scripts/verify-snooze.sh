@@ -11,6 +11,8 @@
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.1 : le sommeil désigne le rattachement (docs/SPEC-rattachements.md §5)
 # @verifies CLAUDE.md §16 (vérification visuelle), §17 (Definition of Done), §25 (ne jamais
 #           annoncer une preuve non exécutée)
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -278,11 +280,11 @@ verifier_compte() {
 	fi
 }
 verifier_compte "affaires portant une échéance de sommeil" \
-	"select count(*) from public.cards where snoozed_until is not null" 2
+	"select count(*) from public.card_placements where snoozed_until is not null" 2
 verifier_compte "affaires RÉELLEMENT en sommeil (échéance future)" \
-	"select count(*) from public.cards where snoozed_until > now()" 1
+	"select count(*) from public.card_placements where snoozed_until > now()" 1
 verifier_compte "affaires dont le sommeil est ÉCHU (§16.2 : le temps seul les réveille)" \
-	"select count(*) from public.cards where snoozed_until is not null and snoozed_until <= now()" 1
+	"select count(*) from public.card_placements where snoozed_until is not null and snoozed_until <= now()" 1
 verifier_compte "fils endormis résiduels (§16.14.7 : les preuves réveillent ce qu'elles endorment)" \
 	"select count(*) from public.mail_thread_snoozes" 0
 

@@ -10,6 +10,8 @@
 #           INC-075 (droit sans chemin de navigation)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les quatorze preuves du §9.9 de `docs/SPEC-seed.md`, **hors interface**, contre l'API
 # réelle et la base réelle.
@@ -567,7 +569,7 @@ for compte in admin bizdev viewer; do
 	vides=''
 	while IFS='|' read -r cid cslug; do
 		[ -n "$cid" ] || continue
-		n=$(lire "$jeton" "/rest/v1/cards?select=id&channel_id=eq.$cid&archived_at=is.null&deleted_at=is.null" | jq -r 'length')
+		n=$(lire "$jeton" "/rest/v1/card_placements?select=id,affaire:cards!inner(deleted_at)&channel_id=eq.$cid&archived_at=is.null&affaire.deleted_at=is.null" | jq -r 'length')
 		[ "${n:-0}" -ge 1 ] || vides="$vides $cslug"
 	done <<< "$channels"
 
@@ -598,7 +600,7 @@ jeton_viewer=$(jeton_de viewer)
 if [ -n "$jeton_viewer" ]; then
 	voit_track=$(lire "$jeton_viewer" "/rest/v1/tracks?select=id&id=eq.$TRACK_CONSEIL" | jq -r 'length')
 	voit_channel=$(lire "$jeton_viewer" "/rest/v1/channels?select=id&id=eq.$CH_PROSPECTION" | jq -r 'length')
-	voit_cards=$(lire "$jeton_viewer" "/rest/v1/cards?select=id&channel_id=eq.$CH_PROSPECTION&archived_at=is.null&deleted_at=is.null" | jq -r 'length')
+	voit_cards=$(lire "$jeton_viewer" "/rest/v1/card_placements?select=id,affaire:cards!inner(deleted_at)&channel_id=eq.$CH_PROSPECTION&archived_at=is.null&affaire.deleted_at=is.null" | jq -r 'length')
 
 	if [ "$voit_track" = '1' ]; then
 		ok "le viewer lit le track « conseil-ia » PAR TRANSITIVITÉ, malgré track_members.access = none"
@@ -737,14 +739,21 @@ else
 	#
 	# Elle porte désormais sur un PRÉDICAT — toute card active de l'étape —, et le seed les rend
 	# toutes. Le compte d'écritures attendu par N6 en découle, il n'est pas recopié.
+	# `CRM-111` T2.4.4 : l'étape et l'archivage sont ceux du RATTACHEMENT ; la corbeille, celle de l'affaire. Les
+	# rattachements visés sont désignés par identifiant : PostgREST ne filtre pas une écriture sur une ressource plongée.
 	cards_livre=$(psql_db -c "
 		select count(*)
-		  from cards c
+		  from card_placements c
+		  join cards a on a.id = c.card_id
 		  join workflow_steps s on s.id = c.current_step_id
 		  join workflow_nodes_catalog n on n.id = s.node_id
 		 where s.workflow_id = '$WF_GLOBAL' and n.key = 'livre'
-		   and c.archived_at is null and c.deleted_at is null")
-	patch_service "cards?current_step_id=eq.$ETAPE_LIVRE&archived_at=is.null&deleted_at=is.null" \
+		   and c.archived_at is null and a.deleted_at is null")
+	rattachements_livre=$(psql_db -c "
+		select string_agg(c.id::text, ',')
+		  from card_placements c join cards a on a.id = c.card_id
+		 where c.current_step_id = '$ETAPE_LIVRE' and c.archived_at is null and a.deleted_at is null")
+	patch_service "card_placements?id=in.($rattachements_livre)" \
 		'{"archived_at": "2026-08-06T00:00:00Z"}'
 	vides_degrade=$(psql_db -c "
 		select coalesce(string_agg(n.key, ', ' order by s.position), '')
@@ -752,9 +761,9 @@ else
 		  join workflow_nodes_catalog n on n.id = s.node_id
 		 where s.workflow_id = '$WF_GLOBAL'
 		   and not exists (
-		         select 1 from cards c
+		         select 1 from card_placements c join cards a on a.id = c.card_id
 		          where c.current_step_id = s.id
-		            and c.archived_at is null and c.deleted_at is null)")
+		            and c.archived_at is null and a.deleted_at is null)")
 	if [ "$vides_degrade" = 'livre' ]; then
 		ok "N1 : les $cards_livre cards actives de « livre » archivées, l'étape redevient vide — le contrôle n° 2 mord"
 	else

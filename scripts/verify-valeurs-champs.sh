@@ -14,6 +14,8 @@
 #           INC-053 (`user` non résolu), INC-054 (`value` nullable)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-036` :
 #
@@ -172,8 +174,7 @@ menage() {
 	psql_db -c "delete from public.card_field_values
 	             where card_id = '$CARD_C6' and field_id in ('$CHAMP_LIEN', '$CHAMP_BUDGET');" \
 		>/dev/null 2>&1 || true
-	psql_db -c "update public.cards set current_step_id = '$ETAPE_RELANCE', position = 2
-	             where id = '$CARD_C2' and current_step_id <> '$ETAPE_RELANCE';" >/dev/null 2>&1 || true
+	psql_db -c "update public.card_placements set current_step_id = '$ETAPE_RELANCE', position = 2 where card_id = '$CARD_C2' and current_step_id <> '$ETAPE_RELANCE';" >/dev/null 2>&1 || true
 }
 
 # LA POLITIQUE D'INSERTION D'ORIGINE, relue en base avant toute dégradation : la dégradation 3 la remplace, et le
@@ -492,7 +493,7 @@ deplacer() {
 code=$(deplacer "$T_ADMIN" "$CARD_C1" "$ETAPE_NEGOCIATION")
 message=$(jq -r '.message // empty' < "$CORPS")
 detail=$(jq -r '.details // empty' < "$CORPS")
-etape=$(psql_db -c "select current_step_id from public.cards where id = '$CARD_C1';")
+etape=$(psql_db -c "select current_step_id from public.card_placements where card_id = '$CARD_C1';")
 [ "$code" = "400" ] && [ "$message" = "missing_required_fields" ] && [ "$detail" = "budget" ] \
 	&& [ "$etape" = "$ETAPE_RELANCE" ] \
 	&& ok "un champ \`required\` VIDE refuse la transition : 400, message stable, \`DETAIL\` portant "\
@@ -501,7 +502,7 @@ etape=$(psql_db -c "select current_step_id from public.cards where id = '$CARD_C
 
 # LE CAS SYMÉTRIQUE. Sans lui, le contrôle précédent serait vert sur une garde qui refuse TOUT.
 code=$(deplacer "$T_ADMIN" "$CARD_C2" "$ETAPE_NEGOCIATION")
-etape=$(psql_db -c "select current_step_id from public.cards where id = '$CARD_C2';")
+etape=$(psql_db -c "select current_step_id from public.card_placements where card_id = '$CARD_C2';")
 [ "$code" = "200" ] && [ "$etape" = "$ETAPE_NEGOCIATION" ] \
 	&& ok "la MÊME transition, sur une card dont le champ est renseigné, **réussit** : la règle "\
 "discrimine" \
@@ -599,8 +600,7 @@ else
 	fail "dégradation 2 : la sixième vérification n'a pas pu être retirée — contrôle non concluant"
 fi
 degradations_restaurer
-psql_db -c "update public.cards set current_step_id = '$ETAPE_RELANCE', position = 1
-             where id = '$CARD_C1';" >/dev/null
+psql_db -c "update public.card_placements set current_step_id = '$ETAPE_RELANCE', position = 1 where card_id = '$CARD_C1';" >/dev/null
 
 # --- Dégradation 3 : la politique d'écriture est ouverte à tout membre ----------------------------
 # `app.can_write_card` est remplacée par `app.can_read_card` : un `viewer` écrirait.

@@ -13,6 +13,8 @@
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
 # @verifies docs/BACKLOG.md « Correctifs arbitrés », INC-252 ; docs/JOURNAL.md décision 596 —
 #           restauration par le runner complet, suivie de la suite globale (docs/SPEC-test-harness.md §3.5)
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-034` :
 #
@@ -206,7 +208,7 @@ CARDS_A_L_OUVERTURE=$(psql_db -c "select count(*) from public.cards where id::te
 # que le seed recrée avec des identifiants nouveaux à chaque reconstruction de la base ; leur identifiant d'étape
 # changeait donc sans qu'aucun déplacement de ce harnais ne reste défait. Le nœud et la position, eux, sont
 # stables, et un déplacement oublié les change toujours.
-EMPREINTE_CARDS_A_L_OUVERTURE=$(psql_db -c "select md5(string_agg(c.id::text || ':' || coalesce(s.node_id::text || '@' || s.position, '-'), ',' order by c.id)) from public.cards c left join public.workflow_steps s on s.id = c.current_step_id where c.id::text like '5eed%';")
+EMPREINTE_CARDS_A_L_OUVERTURE=$(psql_db -c "select md5(string_agg(c.id::text || ':' || coalesce(s.node_id::text || '@' || s.position, '-'), ',' order by c.id)) from public.cards c join public.card_placements cp on cp.card_id = c.id left join public.workflow_steps s on s.id = cp.current_step_id where c.id::text like '5eed%';")
 
 # LES COMMENTAIRES SONT RELEVÉS EUX AUSSI, et c'est ce relevé qui manquait : depuis le lot G,
 # `move_card` conserve le motif fourni, donc ce harnais ÉCRIT dans `card_comments` — voir la note de
@@ -250,15 +252,15 @@ deplacer() {
 	fi
 }
 
-etape_de()    { psql_db -c "select current_step_id from public.cards where id = '$1';"; }
-position_de() { psql_db -c "select position from public.cards where id = '$1';"; }
-instant_de()  { psql_db -c "select entered_step_at from public.cards where id = '$1';"; }
+etape_de()    { psql_db -c "select current_step_id from public.card_placements where card_id = '$1';"; }
+position_de() { psql_db -c "select position from public.card_placements where card_id = '$1';"; }
+instant_de()  { psql_db -c "select entered_step_at from public.card_placements where card_id = '$1';"; }
 
 # Remet une card où elle était. Passe par psql, donc par le propriétaire : les privilèges de colonne
 # posés par cette unité ne s'appliquent pas à lui, et c'est exactement pourquoi la restauration est
 # possible alors que le `PATCH` du client ne l'est pas.
 remettre() {
-	psql_db -c "update public.cards set current_step_id = '$2', position = $3 where id = '$1';" >/dev/null
+	psql_db -c "update public.card_placements set current_step_id = '$2', position = $3 where card_id = '$1';" >/dev/null
 }
 
 # Vérifie qu'un refus n'a RIEN écrit. C'est la moitié de chaque preuve : un code d'erreur seul
@@ -403,7 +405,7 @@ constater_inchangee "$CARD_C3" "$etape_avant" "$position_avant" "$instant_avant"
 # --- lignes b, c, d : le succès et ses effets --------------------------------------------------
 # L'état de départ est constaté : la colonne d'arrivée contient DÉJÀ deux cards. Sur une colonne
 # vide, « en fin » et « au début » donneraient tous deux 1.
-rang_max=$(psql_db -c "select coalesce(max(position), 0) from public.cards where channel_id = (select channel_id from public.cards where id = '$CARD_C3') and current_step_id = '$ETAPE_RELANCE';")
+rang_max=$(psql_db -c "select coalesce(max(position), 0) from public.card_placements where channel_id = (select channel_id from public.card_placements where card_id = '$CARD_C3') and current_step_id = '$ETAPE_RELANCE';")
 [ "$rang_max" = "2" ] \
 	&& ok 'état de départ constaté — la colonne d’arrivée porte déjà deux cards' \
 	|| fail "état de départ inattendu — rang max $rang_max au lieu de 2 ; le seed est-il à jour ?"
@@ -686,7 +688,7 @@ titre '7. Le seed est inchangé par cette unité'
 
 # LE COMPTE NE SUFFIT PAS, et c'est le second membre du retournement : ce harnais déplace des cards
 # pour éprouver la garde. Une remise en place oubliée laisserait le compte juste et le seed faux.
-[ "$(psql_db -c "select md5(string_agg(c.id::text || ':' || coalesce(s.node_id::text || '@' || s.position, '-'), ',' order by c.id)) from public.cards c left join public.workflow_steps s on s.id = c.current_step_id where c.id::text like '5eed%';")" = "$EMPREINTE_CARDS_A_L_OUVERTURE" ] \
+[ "$(psql_db -c "select md5(string_agg(c.id::text || ':' || coalesce(s.node_id::text || '@' || s.position, '-'), ',' order by c.id)) from public.cards c join public.card_placements cp on cp.card_id = c.id left join public.workflow_steps s on s.id = cp.current_step_id where c.id::text like '5eed%';")" = "$EMPREINTE_CARDS_A_L_OUVERTURE" ] \
 	&& ok 'chaque card seedée a retrouvé son étape : les déplacements de ce harnais sont TOUS défaits' \
 	|| fail 'une card seedée n’a pas retrouvé son étape : ce harnais sort sur un seed dégradé'
 

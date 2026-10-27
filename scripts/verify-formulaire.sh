@@ -10,6 +10,8 @@
 #           techniques), §7 (paliers), §8 (accessibilité), §11 (classes réellement engendrées)
 # @verifies docs/INCONSISTENCY_REPORT.md INC-021 (webapp anonyme), INC-062 (parcours de
 #           transition), INC-065 (l'adresse d'une card n'est confrontée à rien)
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-037` :
 #
@@ -192,7 +194,7 @@ fi
 
 titre "2. Le seed porte les données que le rendu démontre"
 
-etape=$(psql_db -c "select current_step_id from public.cards where id='$CARD_C6'")
+etape=$(psql_db -c "select current_step_id from public.card_placements where card_id='$CARD_C6'")
 if [ "$etape" = "$ETAPE_PROSPECTION" ]; then
 	ok "la card c6 est à l'étape Prospection"
 else

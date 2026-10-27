@@ -92,8 +92,9 @@ async function relire(requete: APIRequestContext, idCard: string) {
 		{ headers: enTetesService() },
 	)
 	expect(reponse.status()).toBe(200)
-	const [ligne] = (await reponse.json()) as { card_placements: Record<string, unknown>[] }[]
-	if (ligne === undefined) return undefined
+	// La réponse garde le typage libre de `json()`, comme avant la conversion : les preuves lisent ses colonnes par nom.
+	const ligne = (await reponse.json())[0]
+	if (ligne === undefined) return ligne
 	const { card_placements, ...affaire } = ligne
 	return { ...affaire, ...card_placements[0] }
 }

@@ -16749,7 +16749,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           `0122` ; `change_channel_workflow` rend `SETOF card_placements`. pgTAP 104 fichiers sans anomalie,
           unitaires 4514/4514, API 1230/1231 (`ingestion.spec.ts:91`, étranger), `verify-change-channel-workflow.sh`
           24/24.
-      - [@] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
+      - [~] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
         `creer_affaire` écrit le rattachement elle-même (venu de T2.3.7, décision 738),
         politique de `cards` sous la forme optimisée ; types régénérés. *Transporte aussi vers `card_placements` les deux
         colonnes calculées de santé de `CRM-066` tranche 4 (`health_momentum`, `health_commercial`, et leur appui
@@ -16757,7 +16757,6 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         (`docs/SPEC-analytique.md` §13.5 ; accord des deux sessions, 2026-10-26).* Preuve : aucun changement visible, toute la suite
         verte ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière possible tant que chaque affaire
         n'a qu'un rattachement).
-        *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-26 17:02 UTC — état avant : [ ]*
         **Découpage, arrêté le 2026-10-26 (journal, entrée « `CRM-111` T2.4 — le découpage »)** — une étape poussée chacune,
         `main` vert à chaque fois. Mesuré avant (base jetable, `docs/mesures/CRM-111/02-fonctions-cassees.sql`) : le
         retrait casse encore **dix fonctions** — les deux miroirs, `app.card_events_apres_insertion_card`,
@@ -16785,7 +16784,14 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           échéances, workflow et channel sur `card_placements`. **Sa création reste celle de l'affaire**, dont le miroir
           pose le rattachement, tant que `cards` porte ses colonnes non nulles : la poste du rattachement passe à T2.4.5.
           Aucun autre script que les harnais de preuve (T2.4.4) ne lit une colonne de rattachement. Preuves au journal.
-        - [ ] **T2.4.4 — les preuves** : pgTAP et specs lisent le rattachement là où elles lisaient `cards`.
+        - [~] **T2.4.4 — les preuves** : pgTAP et specs lisent le rattachement là où elles lisaient `cards`.
+          *État au 2026-10-26 (session arrêtée sur consigne)* : pgTAP, specs API, mail et d'interface converties et vertes
+          (étapes 1 à 3) ; seize harnais `verify-*` convertis (étape 4), dont **vérifiés verts** analytique, liste,
+          seed-demo ; ma-journee et formulaire rouges sur la suite unitaire pendant le passage — rouge passager du
+          travail d'autres sessions, la suite étant verte juste après (4647/4647) ; snooze, l'écart étranger d'INC-253 ;
+          **restent à rejouer** : timeline (interrompu), rendu-modeles-emails, move-card, cards, colonnes-protegees,
+          valeurs-champs, move-card-to-channel, change-channel-workflow, relances, board. Résidu relevé pour T1 ter :
+          `verify-mail-classement.sh` restaure une définition d'`app.card_par_adresse` antérieure à T2.2.
           *Découpage (2026-10-26, mesuré)* : les **lectures** et les **mises à jour** de colonnes de rattachement passent à
           `card_placements` dans cette étape — pgTAP (dont 13 fichiers qui mettent à jour ces colonnes), specs API et
           d'interface, harnais `verify-*` (24 scripts). Les **créations** d'affaires des preuves (12 fichiers pgTAP, 4
@@ -16800,6 +16806,10 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           contrat inchangé, et **le prédicat « dépense bloquante » reste exactement celui par lequel la purge détruit une
           affaire** (`docs/SPEC-corbeille.md` §9.1, « défini par ce que la purge détruit »), de préférence une seule
           fonction `app.*` partagée ; preuves : pgTAP `0115`, specs corbeille.
+          *À garder de `CRM-068` T1 (migration `0125`, session parallèle)* : si `card_events_type_check` est redéfinie,
+          reprendre `checklist_checked` et `checklist_unchecked` ; le déclencheur de copie des points d'étape sur
+          `card_placements` est conservé tel quel ; `move_card` garde l'étape 6 bis de la migration `0128`
+          (`checklist_incomplete`), toute réécriture partant de la définition en base.
       *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses
@@ -17077,6 +17087,12 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
         fonction `set_default_workflow` et la garde d'archivage (une migration), l'en-tête du workflow choisi et ses cinq
         commandes, la case « Afficher les archivés », le panneau « Changer de workflow » de l'arborescence, les preuves ;
         défaut global seulement.
+      - [x] **Base, le 2026-10-27** : migration `0130` (`set_default_workflow` et la garde d'archivage), appliquée en
+        développement ; pgTAP `0121` **18/18**, huit mutations tuées ; `0022`, `0037`, `0111` révisées (l'état « archivé
+        employé » posé garde suspendue) ; types régénérés, témoin des fonctions de `database.types.test-d.ts` à jour.
+      - [ ] Écrans : l'en-tête du workflow (après la livraison de l'éditeur des checklists de `CRM-068` T3b, qui touche le
+        même fichier), le panneau « Changer de workflow » de l'arborescence ; unitaires, API, E2E, captures, manuel,
+        design system.
 - [ ] **T2.e — les quatre outils qui suivent leur écran** (après T1.b) : `crm_workflow_update`, `crm_workflow_archive`,
       `crm_workflow_copy_to_track`, `crm_channel_workflow_change` (`docs/SPEC-mcp.md` §9.2 undecies). Mêmes preuves.
 - [P] **T2.a — le workflow, ses étapes, ses transitions** : migration et pgTAP, genres d'ancre,

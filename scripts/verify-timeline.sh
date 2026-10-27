@@ -9,6 +9,8 @@
 # @verifies CLAUDE.md §8 (aucune trace fabriquée), §10 (règles prouvées hors interface)
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.4 : les déplacements écrivent sur `card_placements` (T2.3.0), et la
 #           restauration ne rejoue plus aucune migration ancienne (docs/SPEC-test-harness.md §3.6, §3.7, INC-304)
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-044`, POUR CE QUI EST LIVRÉ :
 #
@@ -300,8 +302,8 @@ fi
 
 # L'ÉTAT DU SEED EST INCHANGÉ PAR LES ALLERS-RETOURS. Sans ce contrôle, la démonstration de la
 # timeline se paierait d'une dérive silencieuse des autres unités.
-etat=$(psql_db -c "select (select current_step_id from public.cards where id='5eed0000-0000-4000-8000-0000000000c4')
-	|| ':' || (select owner_id from public.cards where id='5eed0000-0000-4000-8000-0000000000c1')")
+etat=$(psql_db -c "select (select current_step_id from public.card_placements where card_id='5eed0000-0000-4000-8000-0000000000c4')
+	|| ':' || (select owner_id from public.card_placements where card_id='5eed0000-0000-4000-8000-0000000000c1')")
 if [ "$etat" = '5eed0000-0000-4000-8000-000000000063:5eed0000-0000-4000-8000-000000000012' ]; then
 	ok "les allers-retours n'ont laissé AUCUNE trace d'état : c4 en négociation, c1 à Driss Lemoine"
 else

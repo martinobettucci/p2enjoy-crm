@@ -11,6 +11,8 @@
 # @verifies docs/SPEC-permissions-rls.md §4.4.7 — tranche INC-238 de `CRM-013` (décision 687)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-013` :
 #
@@ -230,8 +232,8 @@ restaurer() {
 	# (`scripts/lib/reconstruction.sh`, docs/SPEC-test-harness.md §3.6), puis seedés. Un échec n'est pas
 	# masqué : son motif sort sur l'erreur standard, et la lecture de la card C1 qui suit l'arrête.
 	reconstruire_base_dev >/dev/null || true
-	psql_db -c "update public.cards set description = null, next_action = 'Relancer la DSI après la démo'
-	             where id = '$CARD_C1';" >/dev/null 2>&1 || true
+	psql_db -c "update public.cards set description = null where id = '$CARD_C1';
+update public.card_placements set next_action = 'Relancer la DSI après la démo' where card_id = '$CARD_C1';" >/dev/null 2>&1 || true
 	psql_db -c "delete from public.cards where title like 'tst-crm013%';" >/dev/null 2>&1 || true
 }
 trap 'restaurer; rm -f "$CORPS"' EXIT
@@ -346,7 +348,7 @@ code=$(http PATCH "$API/rest/v1/card_placements?card_id=eq.$CARD_C1" \
 [ "$code" = "204" ] \
 	&& ok "ligne e — le bizdev écrit bien sur cette card : le refus qui suit vient du PRIVILÈGE" \
 	|| fail "ligne e — le bizdev n'écrit pas sur cette card ($code) : le contrôle suivant ne prouverait rien"
-psql_db -c "update public.cards set next_action = 'Relancer la DSI après la démo' where id = '$CARD_C1';" >/dev/null
+psql_db -c "update public.card_placements set next_action = 'Relancer la DSI après la démo' where card_id = '$CARD_C1';" >/dev/null
 
 code=$(patch_adresse "$T_BIZDEV" 'c-00000000')
 [ "$code" = "403" ] && ok "ligne e — business_developer refusé sur une card qu'il ÉCRIT" \
@@ -398,11 +400,11 @@ code=$(http GET "$API/rest/v1/cards?select=id" -H "apikey: $ANON_KEY")
 	&& ok "ligne j — preuve n° 11 : l'anonyme obtient 200 et [] sur une table qui porte 9 lignes" \
 	|| fail "ligne j — l'anonyme obtient $code / $(jq 'length' < "$CORPS") ligne(s)"
 
-total_gc=$(psql_db -c "select count(*) from public.cards where channel_id = '$CHANNEL_GRANDS_COMPTES';")
+total_gc=$(psql_db -c "select count(*) from public.card_placements where channel_id = '$CHANNEL_GRANDS_COMPTES';")
 [ "$total_gc" -gt 0 ] \
 	&& ok "ligne k — le channel fermé au viewer porte $total_gc cards : le contrôle suivant a un sujet" \
 	|| fail "ligne k — le channel est vide : « zéro ligne » serait vrai dans tous les cas"
-code=$(http GET "$API/rest/v1/cards?channel_id=eq.$CHANNEL_GRANDS_COMPTES&select=id" \
+code=$(http GET "$API/rest/v1/card_placements?channel_id=eq.$CHANNEL_GRANDS_COMPTES&select=id" \
 	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_VIEWER")
 [ "$code" = "200" ] && [ "$(jq 'length' < "$CORPS")" = "0" ] \
 	&& ok "ligne k — preuve n° 4 : droit fin « none » sur le track, zéro ligne et non une erreur" \

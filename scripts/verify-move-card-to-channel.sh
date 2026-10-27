@@ -12,6 +12,8 @@
 #           rend, la garde `already_attached` (docs/SPEC-rattachements.md §5, §14 ; docs/JOURNAL.md décision 731) ;
 #           les événements naissent sur `card_placements` (T2.3.0), les colonnes ouvertes sont quatre (T2.3.2) ; aucune
 #           migration ancienne n'est plus rejouée (docs/SPEC-test-harness.md §3.7, INC-304)
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-045` :
 #
@@ -330,7 +332,7 @@ fi
 # Le PATCH direct reste refusé après CRM-019 : la nouvelle RPC ferme INC-046 sans relâcher la clé.
 # Une assertion de refus prouve cette protection ; une assertion de vide ne prouvait que l'absence
 # d'occasion de l'enfreindre.
-cards_prospection=$(psql_db -c "select count(*) from public.cards
+cards_prospection=$(psql_db -c "select count(*) from public.card_placements
 	where channel_id='$CHANNEL_PROSPECTION'")
 if [ "$cards_prospection" = 2 ]; then
 	ok "prospection porte ses DEUX cards dérivées depuis CRM-046 (docs/SPEC-seed.md §9.3)"
@@ -338,11 +340,11 @@ else
 	fail "$cards_prospection card(s) dans prospection au lieu de 2"
 fi
 
-derive=$(psql_db -c "select count(*) from public.cards c
-	join public.channels ch on ch.id = c.channel_id
-	where c.channel_id='$CHANNEL_PROSPECTION'
-	  and c.workflow_id = ch.workflow_id
-	  and c.workflow_id <> '5eed0000-0000-4000-8000-000000000051'")
+derive=$(psql_db -c "select count(*) from public.cards c join public.card_placements cp on cp.card_id = c.id
+	join public.channels ch on ch.id = cp.channel_id
+	where cp.channel_id='$CHANNEL_PROSPECTION'
+	  and cp.workflow_id = ch.workflow_id
+	  and cp.workflow_id <> '5eed0000-0000-4000-8000-000000000051'")
 if [ "$derive" = 2 ]; then
 	ok "elles suivent la COPIE de portée track, jamais le workflow global — lecture n° 1 d'INC-046"
 else
@@ -360,7 +362,7 @@ else
 	ok "le PATCH direct d'un channel PEUPLÉ reste REFUSÉ ; CRM-019 exige son mapping"
 fi
 
-etat=$(psql_db -c "select channel_id||'|'||workflow_id from public.cards where id='$CARD_SEED'")
+etat=$(psql_db -c "select channel_id||'|'||workflow_id from public.card_placements where card_id='$CARD_SEED'")
 if [ "$etat" = '5eed0000-0000-4000-8000-000000000035|5eed0000-0000-4000-8000-000000000051' ]; then
 	ok "la card du seed est rendue à son channel ET à son workflow : l'aller-retour CONVERGE"
 else
@@ -404,7 +406,7 @@ if [ "$RAPIDE" = false ]; then
 	# cette unité : `position` n'est jamais rendue par un aller-retour (§6.5), donc aucune preuve
 	# ne doit déplacer une card du seed sans la recréer elle-même.
 	rangs=$(psql_db -c "select string_agg(position::text, ',' order by position)
-		from public.cards where current_step_id='5eed0000-0000-4000-8000-000000000062'
+		from public.card_placements where current_step_id='5eed0000-0000-4000-8000-000000000062'
 		  and channel_id='5eed0000-0000-4000-8000-000000000032'")
 	if [ "$rangs" = '1,2' ]; then
 		ok "les rangs du seed sont intacts : aucune preuve n'a déplacé une card seedée"

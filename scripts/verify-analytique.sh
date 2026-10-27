@@ -8,6 +8,8 @@
 #           §6 (contrat d'API), §7 (les deux grandeurs dérivées), §12 (preuves attendues)
 # @verifies docs/SCHEMA.md §9 bis.11 ; docs/PROD_MIGRATIONS.md §3 (migration 73)
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves des deux tranches, puis DÉGRADE RÉELLEMENT le produit — une
@@ -75,8 +77,7 @@ nettoyer() {
 		fi
 	fi
 	if [ "$surcharge_seed_due" = true ]; then
-		if ! psql_db -c "update public.cards set probability_override = $SEED_PROBA_CARD
-			where id = '$SEED_CARD';" >/dev/null 2>&1; then
+		if ! psql_db -c "update public.card_placements set probability_override = $SEED_PROBA_CARD where card_id = '$SEED_CARD';" >/dev/null 2>&1; then
 			printf 'ERREUR : la restauration de secours de la surcharge seedée a échoué.\n' >&2
 			statut=1
 		fi
@@ -433,7 +434,7 @@ echo "8. Le SEED exerce les trois niveaux de la résolution — tranche 2 c"
 niveaux=$(psql_db -F '|' -c "select
 	(select n.default_probability from public.workflow_nodes_catalog n where n.key = '$SEED_NOEUD'),
 	(select s.probability_override from public.workflow_steps s where s.id = '$SEED_ETAPE'),
-	(select c.probability_override from public.cards c where c.id = '$SEED_CARD');")
+	(select c.probability_override from public.card_placements c where c.card_id = '$SEED_CARD');")
 if [ "$niveaux" = "$SEED_PROBA_NOEUD|$SEED_PROBA_ETAPE|$SEED_PROBA_CARD" ]; then
 	ok "le seed pose trois niveaux DISTINCTS : catalogue $SEED_PROBA_NOEUD, étape $SEED_PROBA_ETAPE, affaire $SEED_PROBA_CARD"
 else
@@ -460,17 +461,17 @@ fi
 # réécriture de son contrat de cards, par exemple — laisserait la tranche 2 c vide sans que rien
 # ne rougisse.
 surcharge_seed_due=true
-psql_db -c "update public.cards set probability_override = null where id = '$SEED_CARD';" >/dev/null 2>&1
+psql_db -c "update public.card_placements set probability_override = null where card_id = '$SEED_CARD';" >/dev/null 2>&1
 if suite_sql_verte; then
 	fail "COMPLAISANT — la surcharge d'affaire du seed retirée, la suite pgTAP reste VERTE"
 else
 	ok "dégradation « surcharge d'affaire du seed retirée » : la suite pgTAP rougit, comme elle doit"
 fi
-psql_db -c "update public.cards set probability_override = $SEED_PROBA_CARD where id = '$SEED_CARD';" >/dev/null 2>&1
+psql_db -c "update public.card_placements set probability_override = $SEED_PROBA_CARD where card_id = '$SEED_CARD';" >/dev/null 2>&1
 surcharge_seed_due=false
 
 # ET LA RESTAURATION EST CONSTATÉE, jamais supposée — même règle qu'au contrôle 7.
-retabli=$(psql_db -c "select probability_override from public.cards where id = '$SEED_CARD';")
+retabli=$(psql_db -c "select probability_override from public.card_placements where card_id = '$SEED_CARD';")
 if [ "$retabli" = "$SEED_PROBA_CARD" ]; then
 	ok "la surcharge seedée est restaurée : la base porte de nouveau $SEED_PROBA_CARD"
 else

@@ -6,6 +6,8 @@
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.7 : la RPC remappe et rend les rattachements (décision 738) ; la 20,
 #           SUJET de la section 2, se rejoue privée de la fonction dont la migration 0122 est l'autorité ; les
 #           dégradations visent le déclencheur du rattachement et sa clé channel/workflow (docs/SPEC-test-harness.md §3.7)
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Ce harnais ne démarre ni n'arrête la pile. Il rejoue la migration sur la base seedée, mesure
 # l'absence de mutation métier et la conservation des OID conformes, exerce une vraie course entre
@@ -357,8 +359,8 @@ fi
 
 etat=$(psql_db -F '|' -c "select
 	(select workflow_id from public.channels where id='$CHANNEL_CONCURRENT'),
-	(select workflow_id from public.cards where id='$CARD_EXISTANTE'),
-	(select current_step_id from public.cards where id='$CARD_EXISTANTE'),
+	(select workflow_id from public.card_placements where card_id='$CARD_EXISTANTE'),
+	(select current_step_id from public.card_placements where card_id='$CARD_EXISTANTE'),
 	(select count(*) from public.cards where id='$CARD_CONCURRENTE'),
 	(select count(*) from public.card_events
 	 where card_id='$CARD_EXISTANTE' and type='workflow_changed');")

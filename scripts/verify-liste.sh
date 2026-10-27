@@ -9,6 +9,8 @@
 # @verifies docs/INCONSISTENCY_REPORT.md INC-021 (webapp anonyme), INC-067 (représentation de
 #           `cards.amount`) ; CRM-022 ferme INC-014 par une identité embarquée
 # @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la page lit les rattachements du channel (docs/SPEC-rattachements.md §8)
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-042` :
 #
@@ -175,14 +177,14 @@ fi
 
 titre "2. Le seed porte les données que la liste démontre"
 
-actives=$(psql_db -c "select count(*) from public.cards where channel_id='$CHANNEL_GRANDS_COMPTES' and archived_at is null and deleted_at is null")
+actives=$(psql_db -c "select count(*) from public.card_placements where channel_id='$CHANNEL_GRANDS_COMPTES' and archived_at is null and card_id in (select id from public.cards where deleted_at is null)")
 if [ "${actives:-0}" -eq 4 ]; then
 	ok "quatre cards actives dans « Grands comptes » : le tableau a de quoi être non vide"
 else
 	fail "$actives cards actives au lieu de 4 : les preuves de la liste ne tiennent plus"
 fi
 
-rangees=$(psql_db -c "select count(*) from public.cards where channel_id='$CHANNEL_GRANDS_COMPTES' and (archived_at is not null or deleted_at is not null)")
+rangees=$(psql_db -c "select count(*) from public.card_placements where channel_id='$CHANNEL_GRANDS_COMPTES' and (archived_at is not null or card_id in (select id from public.cards where deleted_at is not null))")
 if [ "${rangees:-0}" -eq 2 ]; then
 	ok "deux cards rangées : la contre-épreuve d'exclusion du §5 est démontrable"
 else
@@ -198,7 +200,7 @@ fi
 
 # Une card sans montant : c'est ce qui rend `nullslast` démontrable par une donnée permanente, et
 # non par un cas fabriqué (§12.4).
-sans_montant=$(psql_db -c "select count(*) from public.cards where channel_id='$CHANNEL_INTER_ENTREPRISES' and amount is null and archived_at is null and deleted_at is null")
+sans_montant=$(psql_db -c "select count(*) from public.card_placements where channel_id='$CHANNEL_INTER_ENTREPRISES' and amount is null and archived_at is null and card_id in (select id from public.cards where deleted_at is null)")
 if [ "${sans_montant:-0}" -eq 1 ]; then
 	ok "une card sans montant : nullslast est démontré par une donnée, pas par un cas fabriqué"
 else
@@ -233,7 +235,7 @@ else
 fi
 
 # Un channel de plus de 25 cards actives : la seconde page est démontrable CONTRE LA BASE RÉELLE.
-plus_gros=$(psql_db -c "select coalesce(max(n), 0) from (select count(*) n from public.cards where archived_at is null and deleted_at is null group by channel_id) c")
+plus_gros=$(psql_db -c "select coalesce(max(n), 0) from (select count(*) n from public.card_placements p join public.cards a on a.id = p.card_id where p.archived_at is null and a.deleted_at is null group by p.channel_id) c")
 if [ "${plus_gros:-0}" -gt 25 ]; then
 	ok "un channel porte $plus_gros cards actives : la seconde page est démontrable en réel (§9.11.2)"
 else

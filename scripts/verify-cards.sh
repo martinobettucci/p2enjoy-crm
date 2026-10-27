@@ -12,6 +12,8 @@
 #           INC-031 (close par la garde), INC-046 (le workflow d'un channel occupé)
 # @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — tranche T4 : jetons par la vraie
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-040` :
 #
@@ -388,8 +390,8 @@ code=$(poster "$T_VIEWER" "$(carte_json 'tst-crm040-viewer')")
 	|| fail "création par le viewer : $code, attendu 403"
 
 # Preuve n° 4 sur les cards : la table N'EST PAS VIDE, constaté d'abord avec la base.
-reelles=$(psql_db -c "select count(*) from public.cards where channel_id = '$CH_GRANDS_COMPTES';")
-vues=$(http GET "$API/rest/v1/cards?channel_id=eq.$CH_GRANDS_COMPTES&select=id" \
+reelles=$(psql_db -c "select count(*) from public.card_placements where channel_id = '$CH_GRANDS_COMPTES';")
+vues=$(http GET "$API/rest/v1/card_placements?channel_id=eq.$CH_GRANDS_COMPTES&select=id" \
         -H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_VIEWER" >/dev/null; jq 'length' "$CORPS")
 [ "$reelles" -gt 0 ] && [ "$vues" = "0" ] \
 	&& ok "PREUVE N° 4 : $reelles cards existent dans \`grands-comptes\`, le \`viewer\` en voit 0 — "\
@@ -516,11 +518,11 @@ etat=$(psql_db -c "select count(*) || '/' || count(distinct email_local_part)
 	&& ok "les $FIXTURES_A_L_OUVERTURE fixtures seedées sont intactes : ce harnais n'en a ni créé ni détruit" \
 	|| fail "la population des fixtures a changé pendant ce harnais"
 
-[ "$(psql_db -c "select count(*) from public.cards c
-	                  join public.workflows w on w.id = c.workflow_id
+[ "$(psql_db -c "select count(*) from public.cards c join public.card_placements cp on cp.card_id = c.id
+	                  join public.workflows w on w.id = cp.workflow_id
 	                 where c.id in ('5eed0000-0000-4000-8000-0000000000ca',
 	                                '5eed0000-0000-4000-8000-0000000000cb')
-	                   and c.channel_id = '5eed0000-0000-4000-8000-000000000031'
+	                   and cp.channel_id = '5eed0000-0000-4000-8000-000000000031'
 	                   and w.derived_from_workflow_id = '5eed0000-0000-4000-8000-000000000051';")" = "2" ] \
 	&& ok "deux cards dans \`prospection\`, toutes deux sur le workflow dérivé" \
 	|| fail "\`prospection\` ne porte pas exactement ses deux fixtures dérivées"
@@ -547,7 +549,7 @@ psql_db -c "
 	drop policy cards_lecture on public.cards;
 	create policy cards_lecture on public.cards for select to anon, authenticated
 		using (app.is_workspace_member(workspace_id));" >/dev/null
-http GET "$API/rest/v1/cards?channel_id=eq.$CH_GRANDS_COMPTES&select=id" \
+http GET "$API/rest/v1/card_placements?channel_id=eq.$CH_GRANDS_COMPTES&select=id" \
 	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_VIEWER" >/dev/null
 [ "$(jq 'length' "$CORPS")" -gt 0 ] \
 	&& ok "dégradation a : politique ramenée à \`is_workspace_member\`, le \`viewer\` voit les cards "\
@@ -598,8 +600,7 @@ code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_SONDE" \
 	&& ok "dégradation b, second temps : les DEUX barrières tombées, la card se déplace vers un "\
 "channel interdit ($code) — le contrôle de la ligne s du §8.1 aurait échoué" \
 	|| fail "dégradation b : le refus tient avec un \`WITH CHECK\` permissif ET le privilège rendu"
-psql_db -c "update public.cards set channel_id = '$CH_GRANDS_COMPTES'
-             where id = '$CARD_SONDE';" >/dev/null 2>&1 || true
+psql_db -c "update public.card_placements set channel_id = '$CH_GRANDS_COMPTES' where card_id = '$CARD_SONDE';" >/dev/null 2>&1 || true
 
 # c. La garde d'archivage retirée : un nœud occupé devient archivable.
 psql_db -c "drop trigger workflow_nodes_catalog_refuser_archivage_occupe
@@ -625,7 +626,7 @@ restaure=$(psql_db -c "select
 	&& ok "restauration constatée : le \`WITH CHECK\` est revenu et la garde d'archivage aussi" \
 	|| fail "restauration incomplète : « $restaure », attendu « 1/1 »"
 
-http GET "$API/rest/v1/cards?channel_id=eq.$CH_GRANDS_COMPTES&select=id" \
+http GET "$API/rest/v1/card_placements?channel_id=eq.$CH_GRANDS_COMPTES&select=id" \
 	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_VIEWER" >/dev/null
 [ "$(jq 'length' "$CORPS")" = "0" ] \
 	&& ok "et le \`viewer\` ne voit de nouveau aucune card de \`grands-comptes\`" \

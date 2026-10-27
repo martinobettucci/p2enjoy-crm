@@ -11,6 +11,8 @@
 # @verifies docs/INCONSISTENCY_REPORT.md INC-021 (webapp anonyme), INC-048 (le motif n'est
 #           conservé nulle part), INC-066 (aucun éditeur de workflow), INC-241 (le contrôle des
 #           lectures de channels était plus strict que la règle qu'il cite) ; CRM-022 ferme INC-014
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-041` :
 #
@@ -119,12 +121,10 @@ restaurer() {
 		cp "$fichier" "$cible"
 	done
 	if [ "$anciennete_degradee" = true ]; then
-		psql_db -c "update public.cards set entered_step_at = now()
-		            where id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
+		psql_db -c "update public.card_placements set entered_step_at = now() where card_id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
 	fi
 	if [ "$figee_rajeunie" = true ]; then
-		psql_db -c "update public.cards set entered_step_at = now() - interval '12 days'
-		            where id = '$CARD_FIGEE_LEGACY';" >/dev/null
+		psql_db -c "update public.card_placements set entered_step_at = now() - interval '12 days' where card_id = '$CARD_FIGEE_LEGACY';" >/dev/null
 	fi
 	rm -rf "$TRAVAIL" "${DEPART:-}"
 }
@@ -454,14 +454,14 @@ else
 	fail "$sans_sortie étapes sans transition sortante au lieu de 2"
 fi
 
-actives=$(psql_db -c "select count(*) from public.cards where channel_id='$CHANNEL_GRANDS_COMPTES' and archived_at is null and deleted_at is null")
+actives=$(psql_db -c "select count(*) from public.card_placements where channel_id='$CHANNEL_GRANDS_COMPTES' and archived_at is null and card_id in (select id from public.cards where deleted_at is null)")
 if [ "${actives:-0}" -eq 4 ]; then
 	ok "grands-comptes porte quatre cards actives"
 else
 	fail "grands-comptes porte $actives cards actives au lieu de 4"
 fi
 
-rangees=$(psql_db -c "select count(*) from public.cards where channel_id='$CHANNEL_GRANDS_COMPTES' and (archived_at is not null or deleted_at is not null)")
+rangees=$(psql_db -c "select count(*) from public.card_placements where channel_id='$CHANNEL_GRANDS_COMPTES' and (archived_at is not null or card_id in (select id from public.cards where deleted_at is not null))")
 if [ "${rangees:-0}" -eq 2 ]; then
 	ok "et deux cards rangées — archivée et corbeille — que le board doit exclure"
 else
@@ -472,7 +472,7 @@ fi
 # composition partant des étapes d'un groupement des cards (§7.3).
 occupees=$(psql_db -c "
 	select count(distinct current_step_id) from public.cards
-	where channel_id='$CHANNEL_GRANDS_COMPTES' and archived_at is null and deleted_at is null")
+	where channel_id='$CHANNEL_GRANDS_COMPTES' and archived_at is null and card_id in (select id from public.cards where deleted_at is null)")
 if [ "${occupees:-0}" -eq 3 ]; then
 	ok "elles n'occupent que trois étapes sur sept : quatre colonnes vides sont démontrées"
 else
@@ -493,12 +493,12 @@ fi
 CARD_EN_RETARD='5eed0000-0000-4000-8000-0000000000c3'
 # $1 : ce qui est projeté ; $2 : la comparaison à l'intervalle du seuil.
 lire_anciennete() {
-	psql_db -c "select $1 from public.cards c
-		join public.workflow_steps s on s.id = c.current_step_id
+	psql_db -c "select $1 from public.cards c join public.card_placements cp on cp.card_id = c.id
+		join public.workflow_steps s on s.id = cp.current_step_id
 		join public.workflow_nodes_catalog n on n.id = s.node_id
-		where c.archived_at is null and c.deleted_at is null
+		where cp.archived_at is null and c.deleted_at is null
 		  and coalesce(s.stale_after_days, n.default_stale_after_days) is not null
-		  and now() - c.entered_step_at $2
+		  and now() - cp.entered_step_at $2
 		      make_interval(days => coalesce(s.stale_after_days, n.default_stale_after_days))"
 }
 # CONTRÔLE RÉVISÉ UNE SECONDE FOIS — `CRM-062` tranche 3a, docs/SPEC-relances.md §10.2.2.
@@ -864,16 +864,14 @@ else
 	# quatre » ne serait pas mesuré — un contrôle qui compte pourrait compter n'importe quoi tant
 	# que rien ne le contredit.
 	anciennete_degradee=true
-	psql_db -c "update public.cards set entered_step_at = now() - interval '8 days'
-	            where id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
+	psql_db -c "update public.card_placements set entered_step_at = now() - interval '8 days' where card_id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
 	temoin=$(lire_anciennete 'count(*)' '>=')
 	if [ "${temoin:-0}" -eq 4 ]; then
 		fail "COMPLAISANT : une cinquième card vieillie et le compte reste à quatre"
 	else
 		ok "« une cinquième card vieillie » fait bien passer le compte à $temoin : le contrôle mord"
 	fi
-	psql_db -c "update public.cards set entered_step_at = now()
-	            where id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
+	psql_db -c "update public.card_placements set entered_step_at = now() where card_id = '$CARD_TEMOIN_ANCIENNETE';" >/dev/null
 	anciennete_degradee=false
 
 	# D9 bis — LA DÉGRADATION DANS L'AUTRE SENS, et elle est due depuis que le jeu en compte
@@ -881,8 +879,7 @@ else
 	# l'une des quatre passerait inaperçu, et l'écran perdrait son classement sans qu'un contrôle
 	# ne bronche. Elle rajeunit `…0cf`, la moins en retard des quatre.
 	figee_rajeunie=true
-	psql_db -c "update public.cards set entered_step_at = now()
-	            where id = '$CARD_FIGEE_LEGACY';" >/dev/null
+	psql_db -c "update public.card_placements set entered_step_at = now() where card_id = '$CARD_FIGEE_LEGACY';" >/dev/null
 	manquante=$(lire_anciennete 'count(*)' '>=')
 	if [ "${manquante:-0}" -eq 4 ]; then
 		fail "COMPLAISANT : une des quatre rajeunie et le compte reste à quatre"
@@ -890,8 +887,7 @@ else
 		ok "« une des quatre rajeunie » fait bien passer le compte à $manquante : le contrôle mord
    dans les DEUX sens"
 	fi
-	psql_db -c "update public.cards set entered_step_at = now() - interval '12 days'
-	            where id = '$CARD_FIGEE_LEGACY';" >/dev/null
+	psql_db -c "update public.card_placements set entered_step_at = now() - interval '12 days' where card_id = '$CARD_FIGEE_LEGACY';" >/dev/null
 	figee_rajeunie=false
 
 	rendu=$(lire_anciennete 'count(*)' '>=')

@@ -9,6 +9,8 @@
 # @verifies docs/SCHEMA.md §9 bis.9 et §9 bis.10 ; docs/PROD_MIGRATIONS.md §3 (migrations 53 et 54)
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
 # @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — la dégradation de l'appariement suit la clé du rattachement (docs/SPEC-rattachements.md §5)
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
 # seedée. Il rejoue les preuves de l'unité, puis DÉGRADE RÉELLEMENT la fonction — une dégradation
@@ -260,16 +262,16 @@ else
 fi
 
 if [ "$(psql_db -c "select count(*) from public.cards_figees() f
-	join public.cards c on c.id = f.card_id
-	where c.archived_at is not null or c.deleted_at is not null;")" = 0 ]; then
+	join public.cards c on c.id = f.card_id join public.card_placements cp on cp.card_id = c.id
+	where cp.archived_at is not null or c.deleted_at is not null;")" = 0 ]; then
 	ok "aucune affaire archivée ni en corbeille n'est rendue"
 else
 	fail "une affaire rangée est rendue comme figée"
 fi
 
 if [ "$(psql_db -c "select count(*) from public.cards_figees() f
-	join public.cards c on c.id = f.card_id
-	where c.snoozed_until > now();")" = 0 ]; then
+	join public.cards c on c.id = f.card_id join public.card_placements cp on cp.card_id = c.id
+	where cp.snoozed_until > now();")" = 0 ]; then
 	ok "aucune affaire encore endormie n'est rendue"
 else
 	fail "une affaire en sommeil est rendue comme figée"
@@ -283,12 +285,12 @@ fi
 
 # LE CONTRASTE EST MESURÉ, PAS SUPPOSÉ : sans au moins une affaire EN DEÇÀ de son seuil, « exactement
 # une au-delà » serait vrai sur un pipeline entièrement frais comme sur un seuil mal choisi.
-if [ "$(psql_db -c "select count(*) from public.cards c
-	join public.workflow_steps ws on ws.id = c.current_step_id
+if [ "$(psql_db -c "select count(*) from public.cards c join public.card_placements cp on cp.card_id = c.id
+	join public.workflow_steps ws on ws.id = cp.current_step_id
 	join public.workflow_nodes_catalog n on n.id = ws.node_id
-	where c.archived_at is null and c.deleted_at is null
+	where cp.archived_at is null and c.deleted_at is null
 	  and coalesce(ws.stale_after_days, n.default_stale_after_days) is not null
-	  and floor(extract(epoch from (now() - c.entered_step_at)) / 86400.0)
+	  and floor(extract(epoch from (now() - cp.entered_step_at)) / 86400.0)
 	      < coalesce(ws.stale_after_days, n.default_stale_after_days);")" -ge 1 ]; then
 	ok "le contraste existe : au moins une affaire porte un seuil et reste en deçà"
 else

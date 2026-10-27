@@ -14,6 +14,8 @@
 #           docs/JOURNAL.md décisions 592 et 595 — le jour du seed est celui du lecteur, éprouvé sous
 #           un fuseau dont la date diffère de la date UTC au moment de l'exécution
 # @verifies CRM-111 T2.4.1 (docs/BACKLOG.md) — le contrôle lit la constante des rattachements (docs/SPEC-rattachements.md §5)
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+#           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-061` :
 #
@@ -222,7 +224,8 @@ titre "2. Le contrat du seed, mesuré en base (docs/SPEC-seed.md §13.5)"
 # (§16.2), et les trois intervalles du §17.5 calculés depuis le début du jour LOCAL — le jour du
 # lecteur, comme l'écran et comme le seed (INC-248, docs/SPEC-seed.md §13.2 bis). Compter en jour
 # UTC, comme ce harnais le faisait, rendait ce contrôle vert la nuit où l'écran était vide.
-ACTIVE="archived_at is null and deleted_at is null and (snoozed_until is null or snoozed_until <= now())"
+# `CRM-111` T2.4.4 : les échéances, l'archivage et le sommeil sont ceux du rattachement ; la corbeille, celle de l'affaire.
+ACTIVE="archived_at is null and card_id in (select id from public.cards where deleted_at is null) and (snoozed_until is null or snoozed_until <= now())"
 bornes_locales() { # $1 = fuseau
 	JOUR_LOCAL="date_trunc('day', now() at time zone '$1')"
 	JOUR="($JOUR_LOCAL at time zone '$1')"
@@ -234,7 +237,7 @@ fuseau_forme_sure "$FUSEAU_HOTE" || { echo "fuseau de l'hôte illisible : « $FU
 bornes_locales "$FUSEAU_HOTE"
 
 compte_journee() {
-	psql_db -c "select count(*) from public.cards where next_action_at is not null and $ACTIVE and $1"
+	psql_db -c "select count(*) from public.card_placements where next_action_at is not null and $ACTIVE and $1"
 }
 
 retard=$(compte_journee "owner_id = '$CAMILLE' and next_action_at < $JOUR")
@@ -266,14 +269,14 @@ else
 	fail "ligne d : la portée élargie rend $tous lignes contre $moi — la bascule ne démontre rien"
 fi
 
-endormies=$(psql_db -c "select count(*) from public.cards where next_action_at is not null and archived_at is null and deleted_at is null and snoozed_until > now() and next_action_at < $HORIZON")
+endormies=$(psql_db -c "select count(*) from public.card_placements where next_action_at is not null and archived_at is null and card_id in (select id from public.cards where deleted_at is null) and snoozed_until > now() and next_action_at < $HORIZON")
 if [ "${endormies:-0}" -eq 1 ]; then
 	ok "ligne e : exactement une affaire ENDORMIE porte une échéance dans l'horizon"
 else
 	fail "ligne e : $endormies affaire(s) endormie(s) dans l'horizon au lieu d'une — l'exclusion du sommeil n'est plus démontrée par une donnée"
 fi
 
-endormie_nommee=$(psql_db -c "select count(*) from public.cards where id = '$CARD_ENDORMIE' and snoozed_until > now() and next_action_at < $HORIZON")
+endormie_nommee=$(psql_db -c "select count(*) from public.card_placements where card_id = '$CARD_ENDORMIE' and snoozed_until > now() and next_action_at < $HORIZON")
 if [ "${endormie_nommee:-0}" -eq 1 ]; then
 	ok "l'affaire endormie de l'horizon est bien « Cadrage data — Groupe Vallier » (§13.5 ligne e)"
 else
@@ -283,7 +286,7 @@ fi
 # Le décalage du §13.2 est CONVERGENT : il repart des littéraux du §9 à chaque passage. Un seed qui
 # aurait été décalé deux fois porterait ses échéances un mois plus loin, et la journée serait vide.
 # Le contrôle ci-dessus le mesure déjà par ses effets ; celui-ci le mesure par sa cause.
-hors_horizon=$(psql_db -c "select count(*) from public.cards where next_action_at >= $HORIZON and $ACTIVE")
+hors_horizon=$(psql_db -c "select count(*) from public.card_placements where next_action_at >= $HORIZON and $ACTIVE")
 if [ "${hors_horizon:-0}" -ge 1 ]; then
 	ok "$hors_horizon affaire(s) au-delà de l'horizon : la borne du §17.5 a de quoi retrancher"
 else
