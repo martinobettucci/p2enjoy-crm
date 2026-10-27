@@ -85,13 +85,15 @@ select c.id, pg_temp.id('W'), pg_temp.id('TRK'), c.nom, c.slug, c.flux, c.rang, 
 -- 1. Le contrat
 -- =============================================================================================
 
+-- RÉVISÉES PAR `CRM-068` T4a (décision 51) : la signature gagne `p_template uuid default null` (migration `0131`) ; les
+-- appels à deux arguments gardent leur forme, le contrat éprouvé ici ne bouge pas.
 select ok(
-	not has_function_privilege('anon', 'public.creer_affaire(uuid, text)', 'EXECUTE')
-	and has_function_privilege('authenticated', 'public.creer_affaire(uuid, text)', 'EXECUTE'),
+	not has_function_privilege('anon', 'public.creer_affaire(uuid, text, uuid)', 'EXECUTE')
+	and has_function_privilege('authenticated', 'public.creer_affaire(uuid, text, uuid)', 'EXECUTE'),
 	'1 — EXECUTE à `authenticated`, refusé à `anon` par le privilège');
 select is(
 	(select prosecdef::text || '|' || array_to_string(proconfig, ',') from pg_proc
-	  where oid = 'public.creer_affaire(uuid, text)'::regprocedure),
+	  where oid = 'public.creer_affaire(uuid, text, uuid)'::regprocedure),
 	'false|search_path=""',
 	'2 — SECURITY INVOKER, `search_path` vide : la RLS de `cards` fait foi');
 

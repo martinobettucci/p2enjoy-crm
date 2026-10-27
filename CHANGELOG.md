@@ -69,7 +69,11 @@ d'exécuter le code attendu.
   archiver les points de chaque étape ; dans le bloc des exigences, les points exigés par chaque transition (« Exiger un
   point », borné à l'étape de départ ; « Ne plus exiger »). Le bandeau de refus du board mène à la fiche par « Cocher ces
   points », le premier point exigé non coché prenant le focus.
-- Reste : les modèles d'affaires (T4), le connecteur (T5 ; les outils de l'éditeur sont livrés par `CRM-118`).
+- **Modèles d'affaires, la base** (T4a) — migration `0131` : la table `card_templates` (écriture administrateur, lecture
+  membre ; valeurs validées par la règle d'une valeur d'affaire), `creer_affaire` applique un modèle choisi, et
+  `save_card_as_template` enregistre une affaire comme modèle. Les écrans arrivent avec T4b.
+- Reste : les écrans des modèles et le seed (T4b), le connecteur (T5 ; les outils de l'éditeur sont livrés par
+  `CRM-118`).
 
 ### `CRM-117` — le manuel joignable depuis la webapp (en cours)
 

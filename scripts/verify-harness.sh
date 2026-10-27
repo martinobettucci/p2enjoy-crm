@@ -626,7 +626,8 @@ PORT_RAPPORT=9323
 # « 110 fichiers, 4394 assertions, aucune anomalie ».
 # **+1 par `CRM-118` T1.b, 2026-10-27** : `0121_defaut_et_archivage_workflow.test.sql`, fichier NEUF. 110 + 1 = 111, CALCULÉ —
 # la suite complète rend aussi l'échec de `0075`, révisée par une session parallèle (migration 0131 non committée).
-FICHIERS_SQL_ATTENDUS=111
+# **+1 par `CRM-068` T4a, 2026-10-27** : `supabase/tests/0122_modeles_affaires.test.sql`, 22 assertions. COMPTÉE.
+FICHIERS_SQL_ATTENDUS=112
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -781,7 +782,8 @@ FICHIERS_SQL_ATTENDUS=111
 # **+18 par `CRM-118` T1.b, 2026-10-27** : `0121_defaut_et_archivage_workflow` **18** assertions (set_default_workflow : refus
 # par profil, défaut global seulement, atomicité ; la garde : employé, archivé, en corbeille, défaut, rétablissement) ;
 # huit mutations tuées ; `0022`, `0037`, `0111` révisées sans changer de plan. 4394 + 18 = 4412, CALCULÉ.
-ASSERTIONS_ATTENDUES=4412
+# **+22 par `CRM-068` T4a, 2026-10-27** (`0122`). COMPTÉE.
+ASSERTIONS_ATTENDUES=4434
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1195,7 +1197,8 @@ ASSERTIONS_ATTENDUES=4412
 # refus sans session, les trois sessions du seed qui lisent, aucune écriture). 1237 + 9 = 1246, COMPTÉE.
 # **+1 par `CRM-068` T3b, 2026-10-27** : `e2e/api/checklists.spec.ts` gagne le refus des gestes de l'éditeur au business
 # developer, par requête directe. 1246 + 1 = 1247, COMPTÉE.
-SCENARIOS_API=1247
+# **+4 par `CRM-068` T4a, 2026-10-27** : `e2e/api/modeles-affaires.spec.ts`, fichier NEUF. COMPTÉE.
+SCENARIOS_API=1251
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

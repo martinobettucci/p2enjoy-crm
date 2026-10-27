@@ -12386,7 +12386,7 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
         captures observées — un défaut vu à 390 px (libellé coupé lettre à lettre) corrigé ; **reste le manuel** (18.10 et 9.9,
         écrits au plan de `CRM-117`, committés après son T3.0, qui réorganise le fichier) ; harnais UI 988, API 1247. Connecteur : outils livrés par `CRM-118` (décisions 759, 761).
 - [ ] **T4 — les modèles d'affaires**, découpée le 2026-10-27 en deux livraisons :
-  - [ ] **T4a — la base** : `card_templates` (RLS : écriture administrateur, lecture membre ; nom unique parmi les
+  - [x] **T4a — la base** : `card_templates` (RLS : écriture administrateur, lecture membre ; nom unique parmi les
         modèles non archivés ; `field_values` validées à l'écriture par la même règle que les valeurs d'une affaire,
         extraite du déclencheur de `card_field_values` en une fonction partagée), `creer_affaire(p_channel, p_titre,
         p_template)` qui applique le modèle dans la même transaction, `save_card_as_template(p_placement, p_name)` ;

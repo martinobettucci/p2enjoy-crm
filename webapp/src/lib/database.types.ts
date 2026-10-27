@@ -1128,6 +1128,93 @@ export type Database = {
           },
         ]
       }
+      card_templates: {
+        Row: {
+          amount: number | null
+          archived_at: string | null
+          checklist: Json
+          created_at: string
+          created_by: string | null
+          currency: string
+          description: string | null
+          field_values: Json
+          id: string
+          name: string
+          title: string | null
+          updated_at: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Insert: {
+          amount?: number | null
+          archived_at?: string | null
+          checklist?: Json
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          field_values?: Json
+          id?: string
+          name: string
+          title?: string | null
+          updated_at?: string
+          workflow_id: string
+          workspace_id: string
+        }
+        Update: {
+          amount?: number | null
+          archived_at?: string | null
+          checklist?: Json
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          description?: string | null
+          field_values?: Json
+          id?: string
+          name?: string
+          title?: string | null
+          updated_at?: string
+          workflow_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_templates_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_templates_workflow_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["source_workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_templates_workflow_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflow_derivations"
+            referencedColumns: ["workflow_id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_templates_workflow_fkey"
+            columns: ["workflow_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workflows"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_templates_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       cards: {
         Row: {
           amount: number | null
@@ -4053,7 +4140,7 @@ export type Database = {
         Returns: string
       }
       creer_affaire: {
-        Args: { p_channel: string; p_titre: string }
+        Args: { p_channel: string; p_template?: string; p_titre: string }
         Returns: string
       }
       creer_workflow_de_depart: {
@@ -4712,6 +4799,10 @@ export type Database = {
           target_version_id: string
         }
         Returns: Json
+      }
+      save_card_as_template: {
+        Args: { p_name: string; p_placement: string }
+        Returns: string
       }
       set_default_workflow: {
         Args: { p_workflow: string }

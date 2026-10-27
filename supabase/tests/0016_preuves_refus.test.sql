@@ -230,8 +230,8 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	169,
-	'CENT SOIXANTE-NEUF politiques dans `public`, et pas une de plus — 161 avant `CRM-068` tranche T1, plus les HUIT des '
+	171,
+	'CENT SOIXANTE ET ONZE politiques dans `public`, et pas une de plus — 169 avant `CRM-068` tranche T4a, plus les DEUX des modèles d''affaires (docs/SPEC-checklists.md §3.5) : la lecture de `card_templates` par tout membre, l''écriture par l''administrateur seul. AUCUNE SUPPRESSION, et c''est un refus double : la politique d''écriture la couvrirait, mais aucun privilège `DELETE` n''est accordé — un modèle s''archive. Avant elles : 169, soit 161 avant `CRM-068` tranche T1, plus les HUIT des '
 	'checklists (docs/SPEC-checklists.md §3) : lecture et écriture des points d''une étape, lecture et écriture des '
 	'exigences d''une transition — toutes deux réservées à l''administrateur —, puis lecture, insertion, mise à jour et '
 	'suppression des points d''une affaire, l''insertion et la suppression bornées aux points LIBRES. Avant elles : 161, '
