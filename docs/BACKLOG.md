@@ -12418,7 +12418,14 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
           archivées avec le contrôle de leur type, écrites à « Enregistrer » ; vide = sans réponse ; `contact`, `user`,
           `file` et questions archivées conservées sans saisie ; changer de workflow à la création vide les réponses ;
           connecteur : non (décision 747).
-- [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`. *Précisée le
+- [~] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`. **Livrée en
+      développement le 2026-10-27** : `mcp/crm_mcp/outils/affaires_checklists.py`, genre d'ancre `card_checklist_item`
+      (`politique.py`) ; pytest unitaires 7 (suite 262) ; intégration `test_integration_affaires_checklists.py` 3/3 contre
+      la vraie pile — succès, auteur et fil posés par la base, refus par la matrice, refus du CRM malgré la matrice ouverte
+      (la lectrice), point d'une autre affaire refusé ; garde `CONSULTATIONS_AFFAIRES` révisée (décision 51) ;
+      `scripts/verify-mcp.sh` **104 contrôles, aucune anomalie** ; E2E `connecteur-checklists.spec.ts` 1/1 et
+      `connecteur-mcp.spec.ts` 8/8, capture observée ; contrat de déploiement (image `mcp`) ; harnais UI +1. **Reste le
+      manuel** (chapitre du connecteur, avec ceux de T3b et T4). *Précisée le
       2026-10-27 (décision 767)* : `docs/SPEC-mcp.md` §9.2 *duodecies* — genre d'ancre `card_checklist_item`, aucune
       migration ; preuves unitaires, d'intégration contre la vraie base, et E2E (un point coché par le connecteur sur la
       fiche).

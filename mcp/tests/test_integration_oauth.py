@@ -62,9 +62,11 @@ from .parcours_oauth import (  # noqa: F401 — réexportés pour `test_integrat
 )
 
 #: Les sept consultations de la famille `affaires`, livrées par `CRM-104` T2.a (docs/SPEC-mcp.md §9.2 bis).
+# Révisé par `CRM-068` T5 (décision 51) : la lecture de la checklist d'une affaire est une consultation de la famille
+# (docs/SPEC-mcp.md §9.2 duodecies).
 CONSULTATIONS_AFFAIRES = frozenset({
     "crm_card_list", "crm_card_get", "crm_card_timeline", "crm_card_comment_list", "crm_card_activity_list",
-    "crm_stale_card_list", "crm_card_mine",
+    "crm_stale_card_list", "crm_card_mine", "crm_card_checklist_list",
 })
 
 pytestmark = [

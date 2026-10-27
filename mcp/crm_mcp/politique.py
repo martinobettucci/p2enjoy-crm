@@ -2,6 +2,7 @@
 # @spec CRM-108 (docs/BACKLOG.md) — tranche T4 : la famille `recettes`, les ancres `revenue` et `revenue_actual`
 #       (docs/SPEC-recettes.md §7, docs/SPEC-mcp.md §6.1, §9.1)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T7 : le genre d'ancre `message` (docs/SPEC-mcp.md §9.2 decies, décision 684)
+# @spec CRM-068 (docs/BACKLOG.md) — tranche T5 : le genre d'ancre `card_checklist_item` (docs/SPEC-mcp.md §9.2 duodecies, décision 767)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T6 : le genre d'ancre `block` (docs/SPEC-mcp.md §9.2 nonies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T4 : les genres d'ancre `cost`, `cost_actual` et `occurrence` (docs/SPEC-mcp.md §9.2 septies)
 # @spec CRM-114 (docs/BACKLOG.md) tranche T4 — la famille `organizations` dans la liste fermée (docs/SPEC-organisations.md §5)
@@ -101,6 +102,8 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "block": ("goal_blocks", "board:goal_boards(workspace_id)", ("board", "workspace_id")),
     # `CRM-104` T7 : un email, qui porte son espace (décision 684).
     "message": ("mail_messages", "workspace_id", ("workspace_id",)),
+    # `CRM-068` T5 : un point de checklist d'une affaire porte son espace (docs/SPEC-mcp.md §9.2 duodecies, décision 767).
+    "card_checklist_item": ("card_checklist_items", "workspace_id", ("workspace_id",)),
     # Une occurrence de budget, résolue par son budget puis son track : tout identifiant passé à un outil est une ancre.
     "occurrence": (
         "budget_occurrences",
@@ -132,6 +135,7 @@ LIBELLES = {
     "occurrence": "occurrence de budget",
     "block": "bloc d'objectif",
     "message": "message",
+    "card_checklist_item": "point de checklist",
 }
 
 _UUID = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")

@@ -36269,3 +36269,11 @@ ancre.
    traversées. Chaque point dit son état, qui l'a coché et quand, et les étapes pour lesquelles il est exigé.
 
 **Connecteur MCP — les deux questions.** Oui, dans la famille `affaires`, déjà tranchée par la décision 747.
+
+**Livraison en développement de la décision 767 (`CRM-068` T5), même jour.** Le module des deux outils, le genre
+d'ancre et l'enregistrement sont écrits. pytest unitaires 7 (suite 262/262). `scripts/verify-mcp.sh` a d'abord rendu
+deux échecs, une seule cause : la garde `CONSULTATIONS_AFFAIRES` de `test_integration_oauth.py` énumère exactement les
+consultations de la famille, et la lecture de la checklist en est une. La garde est révisée (décision 51), et le banc
+rend 104 contrôles sans anomalie, dont les trois preuves d'intégration nouvelles. E2E : un point coché par un vrai client
+MCP paraît coché sur la fiche, au nom de Driss, avec la ligne du fil (capture observée). Le banc a été lancé après la fin
+de celui d'une session parallèle, pour ne pas reconstruire `mcp` sous elle.
