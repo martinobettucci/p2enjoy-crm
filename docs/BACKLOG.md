@@ -17195,7 +17195,7 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
         responsable — migration `0129`, image `mcp` reconstruite, webapp (`docs/PROD_MIGRATIONS.md`) —, et son constat :
         un assistant connecté qui compose un workflow.
 - [P] **T2.b — le formulaire, la visibilité, les exigences** : mêmes preuves ; E2E : un champ exigé par le connecteur
-      bloque un déplacement au board. Les cinq outils de checklist **après `CRM-068` T3b**.
+      bloque un déplacement au board. Les outils de checklist **après `CRM-068` T3b** — livrés le 2026-10-27.
       - **Fait le 2026-10-27** : `mcp/crm_mcp/outils/workflows_formulaire.py`, **huit outils** (les cinq de checklist ne
         sont pas déclarés) ; genre d'ancre `field` ; phrase de l'onglet « … transitions et formulaire … ».
       - Unitaires `tests/test_workflows_formulaire.py` **11** ; **douze mutations tuées sur douze** (deux après
@@ -17210,6 +17210,15 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
       - Manuel 11.1 et 11.5 et chapitres construits (le chapitre de l'affaire et le sommaire rattrapent aussi le manuel
         modifié par `35b29739`), DAT, design system §5.56, SPEC-mcp, CHANGELOG. INC-320 consignée
         (`plateforme-mcp.spec.ts` dépend d'un journal frais).
+      - **Fait le 2026-10-27, après `CRM-068` T3b** : les **quatre outils de checklist** (le cinquième, la lecture, est
+        `crm_workflow_form_get`), `mcp/crm_mcp/outils/workflows_checklists.py` — ajout sous `ajouter` (décision 761),
+        renommer, réordonner et exiger sous `modifier`, l'archive sous `supprimer` ; genre d'ancre `checklist_item`.
+        Unitaires `tests/test_workflows_checklists.py` **6** ; **douze mutations tuées sur douze** ; suite du connecteur
+        **268 réussis**. Intégration : un point ajouté, renommé, remonté, exigé, `checklist_item_already_required`,
+        `checklist_item_not_from_source_step`, relu par `crm_workflow_form_get`, plus exigé, `not_required`, archivé ; le
+        business developer refusé par le CRM, l'archive fermée par la matrice — fichier **12/12**. **E2E** : un point ajouté
+        et exigé par un vrai client MCP paraît dans l'éditeur — `connecteur-workflows.spec.ts` **6/6**, capture observée.
+        Manuel, DAT, SPEC-mcp, CHANGELOG, harnais (UI +1).
       - **Reste `[P]`** : la livraison, avec T2.a, et le constat du responsable.
 - [P] **T2.c — la copie, les versions, le remappage** : mêmes preuves ; E2E : une restauration par le connecteur remappe
       une affaire visible au board. `crm_workflow_copy_to_track` **après T1.b**.

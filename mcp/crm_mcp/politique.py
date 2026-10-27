@@ -9,6 +9,7 @@
 # @spec CRM-118 (docs/BACKLOG.md) — tranche T2.a : la famille `workflows` après `structure`, les genres d'ancre `step`,
 #       `transition` et `node` (docs/SPEC-mcp.md §9.2 undecies, décisions 752, 754 et 756) ; tranche T2.b : le genre `field` ;
 #       tranche T2.c : le genre `version`
+# @spec CRM-118 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `checklist_item` (docs/SPEC-mcp.md §9.2 undecies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T1 : le genre d'ancre `workflow` (docs/SPEC-mcp.md §9.2 quater, décision 656)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : le genre d'ancre `activity` (docs/SPEC-mcp.md §9.2 ter, décision 655)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : l'ancre `autres` FACULTATIVE, permise si son argument vaut `None` par
@@ -95,6 +96,8 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "field": ("form_fields", "workspace_id", ("workspace_id",)),
     # `CRM-118` T2.c : une version publiée porte son espace.
     "version": ("workflow_versions", "workspace_id", ("workspace_id",)),
+    # `CRM-118` T2.b : un point de checklist d'étape porte son espace (`CRM-068`, migration 0125).
+    "checklist_item": ("workflow_step_checklist_items", "workspace_id", ("workspace_id",)),
     # `CRM-104` T4 : une ligne de coût, et un coût réel, résolus jusqu'à l'espace par leur affaire (décision 669).
     "cost": ("card_costs", "card:cards(workspace_id)", ("card", "workspace_id")),
     "cost_actual": ("card_cost_actuals", "ligne:card_costs(card:cards(workspace_id))", ("ligne", "card", "workspace_id")),
@@ -130,6 +133,7 @@ LIBELLES = {
     "node": "nœud du catalogue",
     "field": "champ de formulaire",
     "version": "version de workflow",
+    "checklist_item": "point de checklist d'étape",
     "cost": "ligne de coût",
     "cost_actual": "coût réel",
     "occurrence": "occurrence de budget",

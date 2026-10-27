@@ -984,6 +984,15 @@ de `CRM-068` T3b ; il est marqué *après T1.b* ou *après `CRM-068` T3b* ci-des
 | `crm_form_field_archive` | `supprimer`, `destructiveHint` | `field:field_id` | `PATCH form_fields set archived_at` | `archiverChamp` : un champ ne se supprime pas |
 | `crm_step_checklist_item_archive` | `supprimer`, `destructiveHint` | `checklist_item:item_id` | `PATCH workflow_step_checklist_items set archived_at` | **après `CRM-068` T3b** ; le geste exact (archive ou retrait) suit l'éditeur |
 
+**Les quatre outils de checklist, livrés en développement le 2026-10-27** (`CRM-068` T3b livré), dans
+`mcp/crm_mcp/outils/workflows_checklists.py`, les écritures de `administration-checklists.ts`. Précisions du code :
+le genre d'ancre `checklist_item` (`workflow_step_checklist_items`, qui porte son espace) ; l'ajout se place après le
+dernier point de l'étape, archivés compris ; `crm_step_checklist_item_update` prend `label`, et `after_item_id` ou
+`move_to_top` pour l'ordre, compté parmi les points **non archivés** de l'étape — un point archivé ne se déplace pas,
+comme à l'écran (`docs/DESIGN_SYSTEM.md` §5.18) ; le geste de l'éditeur est l'**archive**, et désarchiver reste un
+geste d'écran, comme restaurer un champ. Les refus nommés : `label`, `checklist_item_not_from_source_step`,
+`checklist_item_already_required`, `not_required`.
+
 #### T2.c — la copie, les versions, le remappage (sept outils)
 
 | Outil | Action | Ancre (et `autres`) | Ce qu'il appelle | Remarques |

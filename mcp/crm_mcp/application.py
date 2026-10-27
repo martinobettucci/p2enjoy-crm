@@ -50,6 +50,7 @@ from crm_mcp.outils import (
     structure,
     temps,
     workflows,
+    workflows_checklists,
     workflows_entete,
     workflows_formulaire,
     workflows_noeuds,
@@ -171,6 +172,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     workflows.ajouter(serveur, moteur, crm)
     # `CRM-118` T2.b : le formulaire, la visibilité et les exigences d'un workflow (docs/SPEC-mcp.md §9.2 undecies).
     workflows_formulaire.ajouter(serveur, moteur, crm)
+    # `CRM-118` T2.b, après `CRM-068` T3b : les points de checklist d'une étape (docs/SPEC-mcp.md §9.2 undecies).
+    workflows_checklists.ajouter(serveur, moteur, crm)
     # `CRM-118` T2.c : les versions, les comparaisons, le remappage (docs/SPEC-mcp.md §9.2 undecies).
     workflows_versions.ajouter(serveur, moteur, crm)
     # `CRM-118` T2.d : le catalogue de nœuds (docs/SPEC-mcp.md §9.2 undecies).

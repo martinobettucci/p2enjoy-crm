@@ -1,7 +1,7 @@
 # @spec CRM-118 (docs/BACKLOG.md) — tranche T2.b : le formulaire d'un workflow, la visibilité de ses champs étape par
 #       étape et les exigences de ses transitions, famille `workflows` (décisions 752, 754 et 756)
-# @spec docs/SPEC-mcp.md §9.2 undecies (la liste T2.b, ses ancres ; les cinq outils de checklist attendent `CRM-068` T3b
-#       et ne sont pas déclarés ; exiger ou ne plus exiger relève de `modifier`), §9.1 (les tables de l'éditeur :
+# @spec docs/SPEC-mcp.md §9.2 undecies (la liste T2.b, ses ancres ; les outils de checklist d'étape vivent dans
+#       `workflows_checklists.py` ; exiger ou ne plus exiger relève de `modifier`), §9.1 (les tables de l'éditeur :
 #       `administration-workflows.ts`), §9.3 ; docs/SPEC-workflow-engine.md §7 bis.10 (les champs : déclarer, modifier,
 #       déplacer, archiver ; ni la clé ni le type), §7 bis.11 (la grille champ × étape : régler par `upsert`, rendre au
 #       défaut par retrait), §7 bis.12 (exiger un champ pour une transition : `POST` simple, retrait), §7 bis.13 (la

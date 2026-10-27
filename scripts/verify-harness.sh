@@ -1748,7 +1748,9 @@ SCENARIOS_API=1258
 # connecteur change le workflow montre son affaire à sa destination au board. 1000 + 1 = 1001, COMPTÉE.
 # **+1 par `CRM-068` T5, 2026-10-27** : `e2e/ui/connecteur-checklists.spec.ts`, fichier NEUF — un point coché par un vrai
 # client MCP paraît coché sur la fiche, au nom de la personne, avec la ligne du fil. 1001 + 1 = 1002, COMPTÉE.
-SCENARIOS_UI=1002
+# **+1 par `CRM-118` T2.b (checklists), 2026-10-27** : `e2e/ui/connecteur-workflows.spec.ts` gagne un scénario — un point de
+# checklist ajouté et exigé par le connecteur paraît dans l'éditeur. 1002 + 1 = 1003, COMPTÉE.
+SCENARIOS_UI=1003
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

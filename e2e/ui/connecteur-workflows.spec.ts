@@ -13,6 +13,9 @@
 // @verifies docs/SPEC-mcp.md §9.2 undecies T2.e (« les mêmes preuves » : un channel dont le connecteur change le workflow
 //           montre son affaire à sa destination au board, crm_channel_workflow_change) ; docs/SPEC-workflow-engine.md
 //           §7 quinquies.3 ; docs/SPEC-change-channel-workflow.md §2
+// @verifies docs/SPEC-mcp.md §9.2 undecies T2.b, les points de checklist d'une étape (« un point ajouté par le connecteur
+//           paraît dans l'éditeur », crm_step_checklist_item_add, crm_transition_required_checklist_item_set) ;
+//           docs/SPEC-checklists.md §3.4 ; docs/DESIGN_SYSTEM.md §5.70 bis
 //
 // Un VRAI client MCP crée un workflow et lui ajoute une étape au nom de l'administratrice ; la webapp, sous le même
 // compte, montre le workflow et son étape dans l'éditeur. Les cases posées pour la preuve, et le workflow, sont retirés à
@@ -303,4 +306,34 @@ test('un channel dont le connecteur change le workflow montre son affaire à sa 
 	await expect(page.locator(`[data-testid="colonne"][data-etape="${negociation}"] [data-card="${idCard}"]`)).toHaveCount(1)
 	await expect(page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)).toContainText(titre)
 	await capturer(page, 'connecteur-changement-workflow-board-1440', UNITE)
+})
+
+test('un point de checklist ajouté et exigé par le connecteur paraît dans l’éditeur de workflows', async ({ page, browser }) => {
+	const session = await sessionDe(browser, CAMILLE.adresse)
+	const outil = async (name: string, args: Record<string, unknown>) => {
+		const resultat = await session.appeler('tools/call', { name, arguments: args })
+		expect(resultat.isError ?? false, `${name} ${JSON.stringify(resultat)}`).toBe(false)
+		return resultat.structuredContent
+	}
+	const workflow = (await outil('crm_workflow_create', { workspace: 'p2enjoy', name: NOM })).workflow.id as string
+	const depart = (await outil('crm_workflow_step_add', { workflow_id: workflow, node_id: NOEUDS.prospection })).step.id as string
+	const arrivee = (await outil('crm_workflow_step_add', { workflow_id: workflow, node_id: NOEUDS.relance })).step.id as string
+	const arete = (await outil('crm_workflow_transition_add', { workflow_id: workflow, from_step_id: depart, to_step_id: arrivee }))
+		.transition.id as string
+	const point = (await outil('crm_step_checklist_item_add', { step_id: depart, label: 'Point ajouté par le connecteur' }))
+		.checklist_item.id as string
+	await outil('crm_transition_required_checklist_item_set', { transition_id: arete, item_id: point, required: true })
+
+	await connecterAvecLeLabs(page, CAMILLE.adresse)
+	await page.goto('/reglages/workflows')
+	const choix = page.getByRole('button', { name: new RegExp(`^${NOM}`, 'u') })
+	await choix.click()
+	await expect(choix).toHaveAttribute('aria-current', 'true')
+	const bloc = page.getByTestId('bloc-checklists-etapes')
+	await expect(bloc.getByTestId('checklist-point-etape')).toHaveCount(1)
+	await expect(bloc.getByTestId('checklist-point-etape').first()).toContainText('Point ajouté par le connecteur')
+	// L'exigence posée par le connecteur se lit sous sa transition, dans le bloc des exigences.
+	await expect(page.getByText('Point ajouté par le connecteur')).toHaveCount(2)
+	await bloc.scrollIntoViewIfNeeded()
+	await capturer(page, 'connecteur-checklist-editeur-1440', UNITE)
 })

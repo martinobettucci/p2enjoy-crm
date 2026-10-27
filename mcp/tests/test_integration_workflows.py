@@ -507,3 +507,92 @@ async def test_le_business_developer_ne_change_ni_l_entete_ni_le_workflow_d_un_c
         ]
     finally:
         await _retirer(DRISS, cases)
+
+
+# --- T2.b, après `CRM-068` T3b — les points de checklist d'une étape ---------------------------------------------------
+
+#: Un point du workflow par défaut, posé par le seed sur Prospection (docs/SPEC-seed.md §28).
+POINT_SEED = "5eed0000-0000-4000-8000-0000000c6861"
+
+
+async def test_les_checklists_d_etape_composees_par_l_administratrice():
+    await _nettoyer()
+    await _poser(CAMILLE, WORKFLOWS)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(CAMILLE)) as client:
+            await _attendre_visible(client, "crm_step_checklist_item_archive")
+
+            async def appeler(outil: str, arguments: dict) -> dict:
+                resultat = (await client.call_tool(outil, arguments)).structured_content
+                assert await _dernier_journal(CAMILLE[1]) == (outil, "ok"), outil
+                return resultat
+
+            async def refuse(outil: str, arguments: dict, motif: str) -> None:
+                with pytest.raises(ToolError, match=motif):
+                    await client.call_tool(outil, arguments)
+                assert await _dernier_journal(CAMILLE[1]) == (outil, "refus_crm"), outil
+
+            wf = (await appeler("crm_workflow_create", {"workspace": "p2enjoy", "name": NOM}))["workflow"]["id"]
+            depart = (await appeler("crm_workflow_step_add", {"workflow_id": wf, "node_id": PROSPECTION}))["step"]["id"]
+            arrivee = (await appeler("crm_workflow_step_add", {"workflow_id": wf, "node_id": RELANCE}))["step"]["id"]
+            arete = (await appeler("crm_workflow_transition_add", {
+                "workflow_id": wf, "from_step_id": depart, "to_step_id": arrivee,
+            }))["transition"]["id"]
+
+            premier = (await appeler("crm_step_checklist_item_add", {"step_id": depart, "label": " Besoin confirmé "}))["checklist_item"]
+            second = (await appeler("crm_step_checklist_item_add", {"step_id": depart, "label": "Décideur identifié"}))["checklist_item"]
+            ailleurs = (await appeler("crm_step_checklist_item_add", {"step_id": arrivee, "label": "Proposition envoyée"}))["checklist_item"]
+            assert premier["label"] == "Besoin confirmé" and second["position"] > premier["position"]
+            await appeler("crm_step_checklist_item_update", {"item_id": second["id"], "label": "Décideur rencontré", "move_to_top": True})
+            ordre = (await _service("GET", "/workflow_step_checklist_items", params={
+                "step_id": f"eq.{depart}", "select": "label", "order": "position.asc",
+            })).json()
+            assert [p["label"] for p in ordre] == ["Décideur rencontré", "Besoin confirmé"]
+
+            await appeler("crm_transition_required_checklist_item_set", {"transition_id": arete, "item_id": premier["id"], "required": True})
+            await refuse("crm_transition_required_checklist_item_set", {
+                "transition_id": arete, "item_id": premier["id"], "required": True,
+            }, "checklist_item_already_required")
+            await refuse("crm_transition_required_checklist_item_set", {
+                "transition_id": arete, "item_id": ailleurs["id"], "required": True,
+            }, "checklist_item_not_from_source_step")
+            # `crm_workflow_form_get` relit ce que l'outil a écrit.
+            formulaire = await appeler("crm_workflow_form_get", {"workflow_id": wf})
+            exiges = {t["id"]: t["required_checklist_item_ids"] for t in formulaire["transitions"]}
+            assert exiges[arete] == [premier["id"]]
+            await appeler("crm_transition_required_checklist_item_set", {"transition_id": arete, "item_id": premier["id"], "required": False})
+            await refuse("crm_transition_required_checklist_item_set", {
+                "transition_id": arete, "item_id": premier["id"], "required": False,
+            }, "not_required")
+
+            archive = (await appeler("crm_step_checklist_item_archive", {"item_id": premier["id"]}))["checklist_item"]
+            assert archive["archived"] is True
+    finally:
+        await _retirer(CAMILLE, WORKFLOWS)
+        await _nettoyer()
+
+
+async def test_le_business_developer_ne_compose_pas_les_checklists():
+    cases = [("workflows", "consulter"), ("workflows", "ajouter"), ("workflows", "modifier")]
+    await _poser(DRISS, cases)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_outils(
+                client,
+                lambda noms: "crm_step_checklist_item_add" in noms and "crm_step_checklist_item_archive" not in noms,
+                "matrice attendue",
+            )
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_step_checklist_item_add", {"step_id": ETAPE_OCCUPEE, "label": "Refusé"})
+            assert await _dernier_journal(DRISS[1]) == ("crm_step_checklist_item_add", "refus_crm")
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_step_checklist_item_update", {"item_id": POINT_SEED, "label": "Réécrit"})
+            assert await _dernier_journal(DRISS[1]) == ("crm_step_checklist_item_update", "refus_crm")
+            with pytest.raises(ToolError):
+                await client.call_tool("crm_step_checklist_item_archive", {"item_id": POINT_SEED})
+        assert (await _service("GET", "/workflow_step_checklist_items", params={
+            "id": f"eq.{POINT_SEED}", "select": "label,archived_at",
+        })).json() == [{"label": "Besoin confirmé", "archived_at": None}]
+        assert (await _service("GET", "/workflow_step_checklist_items", params={"label": "eq.Refusé", "select": "id"})).json() == []
+    finally:
+        await _retirer(DRISS, cases)

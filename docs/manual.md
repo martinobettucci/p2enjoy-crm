@@ -5334,7 +5334,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     exigé ; ajouter une question au formulaire — une clé, un libellé, l'un des quinze types, une aide, les choix d'une
     liste ou la devise d'un montant ; **publier une version** du workflow, avec une note ; **copier** un workflow global vers un track — la copie reprend
     ses étapes, ses déplacements et son formulaire, puis évolue seule ; ajouter un **nœud** au
-    catalogue ;
+    catalogue ; ajouter un **point de checklist** à une étape — les affaires qui y entrent ensuite le reçoivent ;
   - *Modifier* : **renommer** un workflow, ou le **désigner par défaut** — il y en a toujours un seul, et il est global ;
     **changer le workflow d'un channel** : chaque étape occupée reçoit sa destination, rien n'est deviné, et si des
     réponses de formulaire seraient perdues, le CRM refuse et l'assistant doit vous le dire et obtenir votre accord ;
@@ -5346,17 +5346,20 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     **restaurer une version** : le workflow reprend ses étapes, ses déplacements et son formulaire d'alors, et les affaires
     des étapes qu'elle retire vont où vous l'indiquez — l'assistant doit vous montrer le plan d'abord ; l'état d'avant
     reste disponible comme version ; changer le libellé, le type, la couleur ou les valeurs par défaut d'un nœud — jamais
-    sa clé — et l'ordre du catalogue ;
+    sa clé — et l'ordre du catalogue ; renommer un point de checklist d'étape — les affaires qui l'ont déjà gardent
+    l'ancien libellé — ou changer son ordre ; **exiger un point** de l'étape de départ pour un déplacement, ou ne plus
+    l'exiger : une affaire ne passe alors plus sans l'avoir coché ;
   - *Supprimer* : **retirer une étape** — avec les déplacements qui y mènent ou en partent — ou **retirer un
     déplacement**. Ces retraits sont **définitifs**. Le CRM refuse de retirer une étape sur laquelle se trouvent des
     affaires. **Archiver une question** du formulaire : elle quitte le formulaire, ses réponses sont gardées, et un
     administrateur la restaure dans l'éditeur. **Archiver un nœud** du catalogue : il n'est plus proposé aux nouvelles
     étapes ; le CRM refuse tant que des affaires actives se trouvent sur une étape qui en est faite. **Archiver un
     workflow** : aucun channel ne peut plus le choisir ; le CRM refuse tant que des channels le suivent, et pour le
-    workflow par défaut. Le rétablir reste un geste de l'écran.
+    workflow par défaut. Le rétablir reste un geste de l'écran. **Archiver un point de checklist** d'une étape : les
+    affaires qui y entrent ne le reçoivent plus, celles qui l'ont le gardent, et un déplacement qui l'exigeait l'exige
+    toujours ; le désarchiver reste un geste de l'écran.
 
-  Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace. Les points de checklist d'une
-  étape arriveront dans le connecteur avec une tranche suivante.
+  Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace.
 
 - **Contacts** — *livrés en développement par `CRM-104`, tranche T3* :
   - *Consulter* : lister les contacts du carnet, par mots du nom, de l'adresse ou de la fonction, ou par

@@ -45,6 +45,10 @@ d'exécuter le code attendu.
 - **Connecteur MCP, le catalogue de nœuds (T2.d)** : un assistant peut lister, créer, modifier, réordonner et archiver
   les nœuds dont les étapes sont faites — comme l'écran du catalogue, et pour les seuls administrateurs. La clé d'un
   nœud ne change jamais ; un nœud occupé par des affaires actives ne s'archive pas.
+- **Connecteur MCP, les checklists d'une étape (T2.b, après l'éditeur de `CRM-068`)** : un assistant peut ajouter un
+  point de checklist à une étape, le renommer, le réordonner, l'exiger pour un déplacement — un point de l'étape de
+  départ — ou ne plus l'exiger, et l'archiver, comme le bloc « Checklists des étapes » de l'éditeur. Le désarchiver reste
+  un geste de l'écran.
 - **Connecteur MCP, l'en-tête d'un workflow et le workflow d'un channel (T2.e)** : un assistant peut renommer un workflow
   et le désigner par défaut, l'archiver (refusé, en le disant, tant que des channels le suivent ou pour le défaut), le
   copier vers un track, et changer le workflow d'un channel — une destination par étape occupée, rien de deviné, et les

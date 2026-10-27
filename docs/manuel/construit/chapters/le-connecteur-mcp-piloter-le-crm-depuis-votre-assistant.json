@@ -2117,7 +2117,20 @@
 										},
 										{
 											"type": "text",
-											"text": " au\ncatalogue ;"
+											"text": " au\ncatalogue ; ajouter un "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "point de checklist"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " à une étape — les affaires qui y entrent ensuite le reçoivent ;"
 										}
 									]
 								}
@@ -2228,7 +2241,20 @@
 										},
 										{
 											"type": "text",
-											"text": " : le workflow reprend ses étapes, ses déplacements et son formulaire d'alors, et les affaires\ndes étapes qu'elle retire vont où vous l'indiquez — l'assistant doit vous montrer le plan d'abord ; l'état d'avant\nreste disponible comme version ; changer le libellé, le type, la couleur ou les valeurs par défaut d'un nœud — jamais\nsa clé — et l'ordre du catalogue ;"
+											"text": " : le workflow reprend ses étapes, ses déplacements et son formulaire d'alors, et les affaires\ndes étapes qu'elle retire vont où vous l'indiquez — l'assistant doit vous montrer le plan d'abord ; l'état d'avant\nreste disponible comme version ; changer le libellé, le type, la couleur ou les valeurs par défaut d'un nœud — jamais\nsa clé — et l'ordre du catalogue ; renommer un point de checklist d'étape — les affaires qui l'ont déjà gardent\nl'ancien libellé — ou changer son ordre ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "exiger un point"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " de l'étape de départ pour un déplacement, ou ne plus\nl'exiger : une affaire ne passe alors plus sans l'avoir coché ;"
 										}
 									]
 								}
@@ -2326,7 +2352,20 @@
 										},
 										{
 											"type": "text",
-											"text": " : aucun channel ne peut plus le choisir ; le CRM refuse tant que des channels le suivent, et pour le\nworkflow par défaut. Le rétablir reste un geste de l'écran."
+											"text": " : aucun channel ne peut plus le choisir ; le CRM refuse tant que des channels le suivent, et pour le\nworkflow par défaut. Le rétablir reste un geste de l'écran. "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Archiver un point de checklist"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " d'une étape : les\naffaires qui y entrent ne le reçoivent plus, celles qui l'ont le gardent, et un déplacement qui l'exigeait l'exige\ntoujours ; le désarchiver reste un geste de l'écran."
 										}
 									]
 								}
@@ -2338,7 +2377,7 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace. Les points de checklist d'une\nétape arriveront dans le connecteur avec une tranche suivante."
+								"text": "Comme dans l'éditeur, le CRM réserve ces écritures aux administrateurs de l'espace."
 							}
 						]
 					}
