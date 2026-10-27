@@ -12363,14 +12363,17 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
 - [~] **T3 — les écrans**, découpée le 2026-10-26 en deux livraisons :
   - [x] **T3a — la fiche, le board et le seed** : le bloc « Checklist » de la fiche (points de l'étape du rattachement,
         points libres, cocher, ajouter, retirer, mention d'exigence), le compte « n/m » sur la carte du board, le seed
-        des points (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel.
-        *Arrêtée le 2026-10-26 sur consigne du responsable (fin de conversation), état réel :* faits — `docs/DESIGN_SYSTEM.md`
-        §5.70 ; `webapp/src/lib/checklists.ts` (lecture en une requête, éprouvée sur la pile, cocher, ajouter, retirer, refus
-        classés) ; `webapp/src/app/BlocChecklistCard.tsx` ; le fil nomme `checklist_checked` et `checklist_unchecked`
-        (famille « Champs », garde des types révisée à 21, décision 51) et `PanneauTimeline` accepte `relectureEvenements` ;
-        typecheck vert, unitaires du fil et des traductions 613/613. **Restent** : brancher le bloc dans
-        `RouteCard.tsx` après `FormulaireCard` (`idRattachement(card)`, `card.current_step_id`, `relectureEvenements`) ;
-        unitaires propres de `checklists.ts` et du bloc ; le compte « n/m » du board ; le seed ; E2E, captures, manuel.
+        des points (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel. **Livrée en développement le
+        2026-10-27** : `docs/DESIGN_SYSTEM.md` §5.70 ; `lib/checklists.ts` et `BlocChecklistCard.tsx`, branché après le
+        formulaire, le fil relu après un geste ; le compte du board, relu après un déplacement ; le fil nomme le cochage
+        (famille « Champs ») ; seed §28 (décision 755 : workflow de démonstration dédié, channel « Checklists » de
+        `studio-web`), convergent — reconstruction puis rejeu, 42 points, 7 cochés ; unitaires checklists 11, bloc 9, board
+        5 + 1, suite 4693 ; E2E `checklists.spec.ts` 5/5, captures observées (fiche 1440 et 390, gestes, lectrice, board) ;
+        un défaut trouvé par l'E2E (le champ d'ajout perdait le focus) corrigé ; pgTAP complète 110 fichiers, 4394
+        assertions ; API 1246/1246 ; interface 974 + les dix rouges rejoués verts après révision des gardes de compte
+        (décision 51 : pgTAP `0015`, `0061`, `0068`, `0086`, `0117` ; API `analytique`, `channels`, `coherence-workflow`,
+        `colonnes-protegees`, `droits-interface`, `workflows` ; interface `administration-catalogue`, `coherence-workflow`,
+        `pilotage`) ; manuel 4.7 *quinquies*, CHANGELOG, harnais.
   - [ ] **T3b — l'éditeur de workflows** : les points de chaque étape et les points exigés par une transition ; le lien
         « Cocher ces points » du bandeau du board vers la fiche.
 - [ ] **T4 — les modèles d'affaires** : `card_templates`, `creer_affaire` étendue, `save_card_as_template`, Réglages,
