@@ -36096,3 +36096,10 @@ sous `ajouter`, comme toute création de la famille (étape, transition, champ, 
 et réordonner un point, exiger ou ne plus exiger relèvent de `modifier` ; archiver de `supprimer`. Les deux textes
 s'accordent désormais. **Persisté** : `docs/SPEC-checklists.md` §4 (T3b, la phrase du connecteur), `docs/SPEC-mcp.md`
 §9.2 undecies T2.b (inchangé, il le disait déjà).
+
+### `CRM-118` T1.b, précision du 2026-10-27 — l'icône de « Copier vers un track »
+
+La décision 760 validait `CopyPlus`. Entre-temps, `CRM-068` T4b1 a posé `CopyPlus` pour « Enregistrer comme modèle »
+(`docs/DESIGN_SYSTEM.md` §5.71, commité avant), et le §9 interdit qu'une icône serve deux objets. **« Copier vers un
+track » porte `GitBranchPlus`** : une copie qui diverge de sa source (`docs/SPEC-workflow-engine.md` §4.1). Choix de
+l'agent, de même nature que celui que la décision validait ; `docs/SPEC-workflow-engine.md` §7 quinquies.2 corrigé.

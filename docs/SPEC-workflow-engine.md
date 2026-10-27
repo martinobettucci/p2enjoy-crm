@@ -5382,7 +5382,7 @@ discrètes compactes, toujours visibles (§5.13 du design system) :
 |---|---|---|---|
 | « Renommer » | `PencilLine` | un formulaire d'un champ, dans le flux, à la place du nom ; `PATCH workflows set name` | toujours |
 | « Définir par défaut » | `Star` — *choix de l'agent*, icône nouvelle (§9) | `set_default_workflow` ; sans confirmation, réversible d'un geste | ni défaut, ni archivé, ni de portée track (vouée au refus, §5.21) |
-| « Copier vers un track » | `CopyPlus` — *choix de l'agent*, icône nouvelle : `Copy` copie une adresse (§5.3 bis) | un formulaire dans le flux : « Track » (`select`, option vide en tête) et « Nom de la copie » (facultatif, prérempli du nom) ; `copy_workflow_to_track` ; la copie devient le workflow choisi | workflow global, non archivé |
+| « Copier vers un track » | `GitBranchPlus` — *choix de l'agent*, icône nouvelle : `Copy` copie une adresse (§5.3 bis), et `CopyPlus`, d'abord retenue, sert « Enregistrer comme modèle » (`docs/DESIGN_SYSTEM.md` §5.71, `CRM-068`, posé avant) ; la branche dit une copie qui diverge (§4.1) | un formulaire dans le flux : « Track » (`select`, option vide en tête) et « Nom de la copie » (facultatif, prérempli du nom) ; `copy_workflow_to_track` ; la copie devient le workflow choisi | workflow global, non archivé |
 | « Archiver » | `Archive` | une confirmation dans le flux, bouton destructif (§5.13), qui dit que les channels ne pourront plus le choisir | non archivé |
 | « Rétablir » | `ArchiveRestore` | `PATCH workflows set archived_at = null`, sans confirmation (§5.16) | archivé |
 

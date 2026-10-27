@@ -6770,3 +6770,62 @@ porteur du geste, borne de liste à `104ch`.
   « Nouveau modèle ».
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `CopyPlus`.**
 
+
+### 5.72 L'en-tête du workflow choisi, et le changement de workflow d'un channel — `CRM-118` T1.b
+
+*Écrit le 2026-10-27, avant le code, après relecture intégrale de ce document le même jour et de ses §5.70 bis et §5.71
+ajoutés depuis (décisions 758 et 760).* Ce que les gestes envoient et refusent est spécifié par
+`docs/SPEC-workflow-engine.md` §7 quinquies ; ces règles ne disent que de quoi ils ont l'air. Tout ce que les §5.13 et
+§5.15 posent vaut sans être répété : barre de boutons discrets compacts toujours visibles, formulaires et confirmations
+**dans le flux — aucune modale** —, focus entrant dans le premier champ et rendu à la commande qui a ouvert (différé d'un
+rendu si elle a été démontée, §5.25), alerte de refus dans le bloc concerné, un seul élément ouvert à la fois (§5.28).
+
+**L'en-tête du workflow choisi.**
+
+- **IL OUVRE LA COLONNE DE DROITE**, au-dessus de la mention de divergence (§5.15) : on lit ce qu'est le workflow avant
+  d'où il vient. Le nom en `h2` (`--text-h2`), puis ses pilules neutres du §5.6 — la portée, « Global » ou le nom du
+  track, « Par défaut », « Archivé » (`--color-accent-soft` / `--color-accent-on-soft` et l'icône `Archive`, §5.15).
+- **CINQ COMMANDES, DANS CET ORDRE** — le geste qui corrige avant celui qui retire (§5.28) : « Renommer » (`PencilLine`),
+  « Définir par défaut » (`Star`), « Copier vers un track » (`GitBranchPlus`), puis « Archiver » (`Archive`) ou
+  « Rétablir » (`ArchiveRestore`) — deux visages, un seul rendu à la fois (§5.15). Leur nom accessible nomme le workflow.
+  **`Star` et `GitBranchPlus` sont nouvelles** et ne servent aucun autre objet (§9) ; `CopyPlus` sert déjà « Enregistrer
+  comme modèle » (§5.71).
+- **UNE COMMANDE VOUÉE AU REFUS N'EST PAS RENDUE** (§5.21) : « Définir par défaut » sur le défaut, sur un archivé ou sur un
+  workflow propre à un track ; « Copier vers un track » sur un archivé ou un workflow propre à un track.
+- **« Renommer » remplace le nom par un champ « Nom du workflow »** prérempli, « Enregistrer » (primaire, désactivé tant
+  que le champ est blanc, §5.50) / « Annuler ». **« Copier vers un track »** ouvre sous l'en-tête un formulaire : « Track »
+  (`select`, option vide en tête, §5.22), « Nom de la copie » prérempli du nom, « Copier » / « Annuler » ; la copie devient
+  le workflow choisi, et la liste est relue (§5.15, création).
+- **« Archiver » ouvre une confirmation dans le flux**, qui nomme le workflow et dit qu'aucun channel ne pourra plus le
+  choisir ; son bouton est destructif (§5.13). **« Définir par défaut » et « Rétablir » n'en demandent aucune** : ils se
+  défont d'un geste (§5.16).
+- **LES REFUS SE LISENT SOUS L'EN-TÊTE**, `role="alert"`, `--color-danger-soft` / `--color-danger-on-soft`. Celui d'un
+  workflow employé nomme le nombre de channels et le recours, l'arborescence — la règle du §5.29 bis : un refus nomme
+  le geste qui le lève. Celui du défaut nomme le sien : « désignez un autre workflow par défaut d'abord ».
+- **LA LISTE GAGNE LA CASE « Afficher les archivés »** au-dessus des workflows, la forme exacte du §5.29 bis : case de
+  24 px sur une ligne de `--size-target`, rendue même quand aucun workflow n'est archivé. Un workflow archivé y porte la
+  mention « Archivé » en 13 px `--color-text-2`.
+
+**Le changement de workflow d'un channel, dans l'arborescence.**
+
+- **UNE COMMANDE DE PLUS SUR LA LIGNE D'UN CHANNEL NON ARCHIVÉ**, après « Renommer » et avant « Archiver » : « Changer de
+  workflow », bouton discret compact, icône `Workflow` — celle de l'événement `workflow_changed` du fil (§5.11), le même
+  objet. Nom accessible nommant le channel.
+- **ELLE OUVRE UN PANNEAU SOUS LA LIGNE**, dans le flux, `--color-surface`, bordure `--color-border`, `--radius-lg`,
+  rembourrage 16 px, dont le titre nomme le channel et son workflow courant. Dans l'ordre : « Nouveau workflow »
+  (`select`, option vide en tête) ; puis, sous le titre « Où vont les affaires », **une ligne par étape occupée** — son nom,
+  son nombre d'affaires en toutes lettres et par clé (« 3 affaires », §10), et un `select` « Destination » des étapes du
+  nouveau workflow, option vide en tête : aucune destination n'est devinée (§5.15, remappage). Un channel sans affaire
+  écrit « Aucune affaire dans ce channel : rien à déplacer. »
+- **« Changer de workflow » (primaire) est désactivé tant qu'un choix manque** — l'état de la saisie, jamais un droit
+  (§5.50) ; « Annuler » (secondaire), et `Échap`.
+- **LA PERTE DES RÉPONSES EST UN CONSENTEMENT EXPLICITE** : au refus `field_values_would_be_lost`, une alerte
+  `--color-accent-soft` / `--color-accent-on-soft` (ce n'est pas une panne) dit combien de réponses de formulaire
+  seraient perdues, suivie d'une case de 24 px, décochée, « J'accepte de perdre ces réponses » ; le bouton reste
+  désactivé tant qu'elle n'est pas cochée. Jamais de perte implicite.
+- **LE SUCCÈS** referme le panneau, s'annonce dans la région vivante (« Le channel « … » suit désormais « … » »), et la
+  ligne relue montre le nouveau workflow ; le focus revient à la commande.
+- **SOUS `md`**, les lignes du panneau se replient — le nom de l'étape sur sa ligne, le `select` dessous —, cibles
+  conservées ; `md` et jamais `sm` (§11). Le panneau est borné à la fenêtre dans l'arborescence qui défile (§5.27).
+- **Les commandes suivent la capacité d'administrer l'espace** (§5.59) dans l'éditeur comme dans l'arborescence.
+- **Aucune couleur, aucun jeton nouveau ; deux icônes Lucide nouvelles, `Star` et `GitBranchPlus`.**
