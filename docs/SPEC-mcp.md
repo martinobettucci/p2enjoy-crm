@@ -1008,7 +1008,8 @@ restauration. **L'onglet « Connecteur MCP »** gagne la ligne `workflows` et sa
 sous-tranches** pour ne jamais promettre un outil absent. Avec T2.a : « Créer et modifier les workflows, leurs étapes et
 transitions ; la lecture reste à Structure » ; avec T2.b : « Créer et modifier les workflows, leurs étapes, transitions et
 formulaire ; la lecture reste à Structure » ; avec T2.c : « … et formulaire, publier et restaurer leurs versions ; la lecture
-reste à Structure ». Cible, toutes sous-tranches livrées : « Créer, modifier et archiver les
+reste à Structure » ; avec T2.d : « … et formulaire, le catalogue de nœuds, publier et restaurer leurs versions ; la
+lecture reste à Structure ». Cible, toutes sous-tranches livrées : « Créer, modifier et archiver les
 workflows, leurs étapes, transitions et formulaire, le catalogue de nœuds ; versions, copie, workflow d'un channel. La
 lecture d'un workflow reste à Structure. »
 
@@ -1022,7 +1023,7 @@ retirer les droits de la famille, puis réappliquer `0101`.
 |---|---|---|---|---|
 | `crm_workflow_node_list` | `consulter` | `workspace:workspace` | `workflow_nodes_catalog` | clé, libellé, type, couleur, probabilité et seuil par défaut, rang ; les archivés sur demande |
 | `crm_workflow_node_create` | `ajouter` | `workspace:workspace` | `POST workflow_nodes_catalog` | `creerNoeud` |
-| `crm_workflow_node_update` | `modifier` | `node:node_id` | `PATCH workflow_nodes_catalog` | `modifierNoeud` : libellé, couleur, probabilité et seuil ; **jamais la clé** (§2.3) |
+| `crm_workflow_node_update` | `modifier` | `node:node_id` | `PATCH workflow_nodes_catalog` | `modifierNoeud` : libellé, **type**, couleur, probabilité et seuil — *le type ajouté à l'écriture du code, le 2026-10-27 : l'écran le modifie* ; **jamais la clé** (§2.3) |
 | `crm_workflow_node_move` | `modifier` | `node:node_id` ; `autres` : `node:after_node_id`, facultative | `PATCH workflow_nodes_catalog set position` | `deplacerNoeud`, comme `crm_workflow_step_move` |
 | `crm_workflow_node_archive` | `supprimer`, `destructiveHint` | `node:node_id` | `PATCH workflow_nodes_catalog set archived_at` | `archiverNoeud` ; la garde d'un nœud occupé (`docs/SPEC-workflow-engine.md` §2.6) est rendue nommée |
 | `crm_channel_workflow_change` | `modifier`, `destructiveHint` | `channel:channel_id` ; `autres` : `workflow:workflow_id` | `change_channel_workflow(channel_id, workflow_id, step_mapping, discard_field_values)` | **après T1.b** ; remappe toutes les affaires du channel, la correspondance des étapes explicite et exhaustive (`docs/SPEC-change-channel-workflow.md`) ; la perte des réponses de formulaire exigée explicitement, comme `crm_card_move_to_channel`. `crm_channel_update` (`structure`) ne change toujours pas le workflow |

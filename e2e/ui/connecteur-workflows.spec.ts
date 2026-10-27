@@ -1,4 +1,4 @@
-// @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a à T2.c : l'effet des outils de la famille `workflows`, constaté dans
+// @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a à T2.d : l'effet des outils de la famille `workflows`, constaté dans
 //           la webapp
 // @verifies docs/SPEC-mcp.md §9.2 undecies (« une étape ajoutée par un vrai client MCP paraît dans l'éditeur de
 //           workflows », crm_workflow_create, crm_workflow_step_add), §5 (sous l'identité de la personne) ;
@@ -8,6 +8,8 @@
 // @verifies docs/SPEC-mcp.md §9.2 undecies T2.c (« une restauration par le connecteur remappe une affaire visible au
 //           board », crm_workflow_version_publish, crm_workflow_remap_plan, crm_workflow_version_restore) ;
 //           docs/SPEC-workflow-engine.md §7 ter.12, §7 ter.13
+// @verifies docs/SPEC-mcp.md §9.2 undecies T2.d (« un nœud créé par le connecteur paraît dans le catalogue »,
+//           crm_workflow_node_create) ; docs/SPEC-workflow-engine.md §2 bis
 //
 // Un VRAI client MCP crée un workflow et lui ajoute une étape au nom de l'administratrice ; la webapp, sous le même
 // compte, montre le workflow et son étape dans l'éditeur. Les cases posées pour la preuve, et le workflow, sont retirés à
@@ -41,6 +43,8 @@ const CHAMP_DATE_SIGNATURE = '5eed0000-0000-4000-8000-000000000083'
 // T2.c : un channel jetable du track « Conseil & IA », servi par le workflow de la preuve.
 const TRACK_CONSEIL = '5eed0000-0000-4000-8000-000000000021'
 const SLUG_REMAP = 'e2e-mcp-remap'
+// T2.d : un nœud jamais employé, retiré à la fin.
+const CLE_NOEUD = 'e2e-mcp-noeud'
 const NOEUDS = {
 	prospection: '5eed0000-0000-4000-8000-000000000041',
 	relance: '5eed0000-0000-4000-8000-000000000042',
@@ -65,6 +69,7 @@ async function retirer(request: APIRequestContext): Promise<void> {
 		}
 		await request.delete(rest(`channels?id=eq.${id}`), { headers: enTetesService() })
 	}
+	await request.delete(rest(`workflow_nodes_catalog?workspace_id=eq.${ESPACE}&key=eq.${CLE_NOEUD}`), { headers: enTetesService() })
 	await request.delete(rest(`workflows?workspace_id=eq.${ESPACE}&name=eq.${encodeURIComponent(NOM)}`), {
 		headers: enTetesService(),
 	})
@@ -223,4 +228,23 @@ test('une restauration par le connecteur remappe une affaire, et le board la mon
 	await expect(page.locator(`[data-testid="colonne"][data-etape="${relance}"] [data-card="${idCard}"]`)).toHaveCount(1)
 	await expect(page.locator(`[data-testid="carte-card"][data-card="${idCard}"]`)).toContainText(titre)
 	await capturer(page, 'connecteur-restauration-board-1440', UNITE)
+})
+
+test('un nœud créé par le connecteur paraît dans le catalogue, avec son type en toutes lettres', async ({ page, browser }) => {
+	const session = await sessionDe(browser, CAMILLE.adresse)
+	const creation = await session.appeler('tools/call', {
+		name: 'crm_workflow_node_create',
+		arguments: { workspace: 'p2enjoy', key: CLE_NOEUD, label: 'E2E nœud MCP', kind: 'won', color: 'success', default_probability: 100 },
+	})
+	expect(creation.isError ?? false, JSON.stringify(creation)).toBe(false)
+
+	await connecterAvecLeLabs(page, CAMILLE.adresse)
+	await page.goto('/reglages/catalogue')
+	await expect(page.getByTestId('liste-catalogue')).toBeVisible()
+	const ligne = page.locator(`[data-testid="ligne-noeud"][data-noeud="${CLE_NOEUD}"]`)
+	await expect(ligne).toContainText('E2E nœud MCP')
+	await expect(ligne.getByTestId('type-noeud')).toHaveText('Gagné')
+	await expect(ligne.getByTestId('probabilite-noeud')).toHaveText('100 %')
+	await ligne.scrollIntoViewIfNeeded()
+	await capturer(page, 'connecteur-noeud-catalogue-1440', UNITE)
 })

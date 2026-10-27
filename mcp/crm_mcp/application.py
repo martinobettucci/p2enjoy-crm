@@ -10,7 +10,7 @@
 #       (docs/SPEC-mcp.md §9.2 sexies)
 # @spec CRM-104 (docs/BACKLOG.md) tranches T2.a, T2.b, T1 et T3 — les affaires, la structure, la recherche et les contacts
 #       enregistrés et nommés au modèle (docs/SPEC-mcp.md §9.2 bis à quinquies)
-# @spec CRM-118 (docs/BACKLOG.md) tranches T2.a à T2.c — la famille `workflows` enregistrée, sa ligne dans les consignes au
+# @spec CRM-118 (docs/BACKLOG.md) tranches T2.a à T2.d — la famille `workflows` enregistrée, sa ligne dans les consignes au
 #       modèle (docs/SPEC-mcp.md §9.2 undecies)
 # @spec docs/SPEC-mcp.md §2 (un service, un hôte, `/mcp`), §3 (mandataire OAuth, état chiffré), §6.2 (audit puis
 #       politique, avant l'outil), §11 (`/sante`, `/pret`) ; docs/JOURNAL.md décision 627 (D1, D5, D8)
@@ -49,6 +49,7 @@ from crm_mcp.outils import (
     temps,
     workflows,
     workflows_formulaire,
+    workflows_noeuds,
     workflows_versions,
 )
 from crm_mcp.politique import MoteurPolitique, PolitiqueOutils
@@ -166,6 +167,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     workflows_formulaire.ajouter(serveur, moteur, crm)
     # `CRM-118` T2.c : les versions, les comparaisons, le remappage (docs/SPEC-mcp.md §9.2 undecies).
     workflows_versions.ajouter(serveur, moteur, crm)
+    # `CRM-118` T2.d : le catalogue de nœuds (docs/SPEC-mcp.md §9.2 undecies).
+    workflows_noeuds.ajouter(serveur, moteur, crm)
     # `CRM-104` T3 : les contacts (docs/SPEC-mcp.md §9.2 quinquies).
     contacts.ajouter(serveur, moteur, crm)
     # `CRM-114` T4 : les organisations (docs/SPEC-mcp.md §9.2 sexies).

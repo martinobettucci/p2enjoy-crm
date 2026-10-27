@@ -239,7 +239,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : créer et modifier les workflows, leurs étapes, leurs transitions et leur formulaire, publier et\nrestaurer leurs versions ; la lecture d'un workflow reste à « Structure » ;"
+								"text": " : créer et modifier les workflows, leurs étapes, leurs transitions et leur formulaire, le catalogue de\nnœuds, publier et restaurer leurs versions ; la lecture d'un workflow reste à « Structure » ;"
 							}
 						]
 					}
@@ -1950,7 +1950,7 @@
 									},
 									{
 										"type": "text",
-										"text": ", tranches T2.a à T2.c ; la suite vient avec les tranches\nsuivantes"
+										"text": ", tranches T2.a à T2.d ; la suite vient avec les tranches\nsuivantes"
 									}
 								]
 							},
@@ -2032,7 +2032,20 @@
 										},
 										{
 											"type": "text",
-											"text": " de ce qu'elle ferait des affaires — sans rien changer. Lire un workflow, étape par étape, demande « Structure ▸\nConsulter » ;"
+											"text": " de ce qu'elle ferait des affaires — sans rien changer ; le "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "catalogue de nœuds"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", dont les étapes sont faites.\nLire un workflow, étape par étape, demande « Structure ▸ Consulter » ;"
 										}
 									]
 								}
@@ -2078,7 +2091,20 @@
 										},
 										{
 											"type": "text",
-											"text": " du workflow, avec une note ;"
+											"text": " du workflow, avec une note ; ajouter un "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "nœud"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " au\ncatalogue ;"
 										}
 									]
 								}
@@ -2150,7 +2176,7 @@
 										},
 										{
 											"type": "text",
-											"text": " : le workflow reprend ses étapes, ses déplacements et son formulaire d'alors, et les affaires\ndes étapes qu'elle retire vont où vous l'indiquez — l'assistant doit vous montrer le plan d'abord ; l'état d'avant\nreste disponible comme version ;"
+											"text": " : le workflow reprend ses étapes, ses déplacements et son formulaire d'alors, et les affaires\ndes étapes qu'elle retire vont où vous l'indiquez — l'assistant doit vous montrer le plan d'abord ; l'état d'avant\nreste disponible comme version ; changer le libellé, le type, la couleur ou les valeurs par défaut d'un nœud — jamais\nsa clé — et l'ordre du catalogue ;"
 										}
 									]
 								}
@@ -2222,7 +2248,20 @@
 										},
 										{
 											"type": "text",
-											"text": " du formulaire : elle quitte le formulaire, ses réponses sont gardées, et un\nadministrateur la restaure dans l'éditeur."
+											"text": " du formulaire : elle quitte le formulaire, ses réponses sont gardées, et un\nadministrateur la restaure dans l'éditeur. "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Archiver un nœud"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " du catalogue : il n'est plus proposé aux nouvelles\nétapes ; le CRM refuse tant que des affaires actives se trouvent sur une étape qui en est faite."
 										}
 									]
 								}

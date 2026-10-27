@@ -17091,8 +17091,17 @@ administrateurs d'espace par la base (`docs/SPEC-workflow-engine.md` §3.7).
         restauration du connecteur, et le board la montre à sa nouvelle étape — **3/3**, capture observée.
       - Phrase de l'onglet, manuel 11.1 et 11.5 et chapitre construit, DAT, design system, SPEC-mcp, CHANGELOG.
       - **Reste `[P]`** : la livraison, avec T2.a et T2.b, et le constat du responsable.
-- [ ] **T2.d — le catalogue de nœuds, le workflow d'un channel** : mêmes preuves ; E2E : un nœud créé par le connecteur
+- [P] **T2.d — le catalogue de nœuds, le workflow d'un channel** : mêmes preuves ; E2E : un nœud créé par le connecteur
       paraît dans le catalogue. `crm_channel_workflow_change` **après T1.b**.
+      - **Fait le 2026-10-27** : `mcp/crm_mcp/outils/workflows_noeuds.py`, **cinq outils** (le changement de workflow d'un
+        channel n'est pas déclaré) ; le type d'un nœud se modifie, comme à l'écran (spécification complétée).
+      - Unitaires `tests/test_workflows_noeuds.py` **8** ; **neuf mutations tuées sur neuf**.
+      - Intégration contre la vraie pile : le catalogue tenu par l'administratrice, `node_key_taken`, `node_occupied` sur
+        « Prospection », l'archive ; le business developer qui lit sans écrire. Fichier **8/8**.
+      - **E2E** `connecteur-workflows.spec.ts` : un nœud créé par un vrai client MCP paraît dans le catalogue, son type en
+        toutes lettres — **4/4**, capture observée.
+      - Phrase de l'onglet, manuel 11.1 et 11.5 et chapitre construit, DAT, design system, SPEC-mcp, CHANGELOG.
+      - **Reste `[P]`** : la livraison, avec T2.a à T2.c, et le constat du responsable.
 - [ ] **T3 — livraison**, sur instruction du responsable.
 
 ### CRM-119 — Preuves croisées des droits fins : de l'écran « Membres » à l'écran du membre, et à travers le connecteur MCP `[x]`

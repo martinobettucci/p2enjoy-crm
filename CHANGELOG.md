@@ -25,7 +25,7 @@ d'exécuter le code attendu.
   dès l'appel suivant, l'administrateur jamais restreint, la recherche.
 - INC-319 consigne une dépendance d'ordre, antérieure, entre deux fichiers d'intégration du connecteur.
 
-### `CRM-118` T2.a à T2.c — la famille `workflows` du connecteur (décisions 752, 754 et 756)
+### `CRM-118` T2.a à T2.d — la famille `workflows` du connecteur (décisions 752, 754 et 756)
 
 *En développement seulement. La migration `0129` attend la prochaine fenêtre de production.*
 
@@ -42,6 +42,9 @@ d'exécuter le code attendu.
 - **Connecteur MCP, les versions d'un workflow (T2.c)** : un assistant peut lister les versions d'un workflow, comparer
   deux versions ou une copie avec sa source, publier une version, et restaurer une version après avoir montré le plan de
   ce qu'elle ferait des affaires — comme le bloc « Versions » de l'éditeur, et pour les seuls administrateurs.
+- **Connecteur MCP, le catalogue de nœuds (T2.d)** : un assistant peut lister, créer, modifier, réordonner et archiver
+  les nœuds dont les étapes sont faites — comme l'écran du catalogue, et pour les seuls administrateurs. La clé d'un
+  nœud ne change jamais ; un nœud occupé par des affaires actives ne s'archive pas.
 - **Plateforme ▸ Connecteur MCP** : la matrice des droits gagne la ligne « Workflows », après « Structure ».
 
 ### `CRM-068` — les checklists d'une affaire (en cours : T1, T2, T3a)

@@ -1,9 +1,9 @@
-# @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a à T2.c : les outils de la famille `workflows` contre le vrai Keycloak,
+# @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a à T2.d : les outils de la famille `workflows` contre le vrai Keycloak,
 #           la vraie base et le vrai service `mcp`, par le parcours OAuth réel
 # @verifies docs/SPEC-mcp.md §13 (par outil : succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
 #           journal écrit), §9.2 undecies (T2.a : le workflow, ses étapes, ses transitions ; T2.b : le formulaire, la
-#           visibilité, les exigences ; T2.c : les versions et le remappage ; les refus nommés) ;
-#           docs/SPEC-workflow-engine.md §7 bis.10 à §7 bis.13, §7 ter.5, §7 ter.11 à §7 ter.13 ;
+#           visibilité, les exigences ; T2.c : les versions et le remappage ; T2.d : le catalogue de nœuds ; les refus nommés) ;
+#           docs/SPEC-workflow-engine.md §7 bis.10 à §7 bis.13, §7 ter.5, §7 ter.11 à §7 ter.13, §2.3 à §2.6 ;
 #           docs/SPEC-workflow-engine.md §3.4, §3.5, §3.7 ; décisions 754 et 756
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
@@ -310,3 +310,77 @@ async def test_le_business_developer_compare_mais_ne_publie_ni_ne_restaure():
         assert len(apres) == len(versions)
     finally:
         await _retirer(DRISS, cases)
+
+
+# --- T2.d — le catalogue de nœuds -------------------------------------------------------------------------------------
+
+CLE_NOEUD = "mcp-noeud-integration"
+
+
+async def _nettoyer_noeud() -> None:
+    await _service("DELETE", "/workflow_nodes_catalog", params={"workspace_id": f"eq.{ESPACE_SEEDE}", "key": f"eq.{CLE_NOEUD}"})
+
+
+async def test_le_catalogue_tenu_par_l_administratrice_outil_par_outil():
+    await _nettoyer_noeud()
+    await _poser(CAMILLE, WORKFLOWS)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(CAMILLE)) as client:
+            await _attendre_visible(client, "crm_workflow_node_archive")
+
+            async def appeler(outil: str, arguments: dict) -> dict:
+                resultat = (await client.call_tool(outil, arguments)).structured_content
+                assert await _dernier_journal(CAMILLE[1]) == (outil, "ok"), outil
+                return resultat
+
+            async def refuse(outil: str, arguments: dict, motif: str) -> None:
+                with pytest.raises(ToolError, match=motif):
+                    await client.call_tool(outil, arguments)
+                assert await _dernier_journal(CAMILLE[1]) == (outil, "refus_crm"), outil
+
+            noeuds = (await appeler("crm_workflow_node_list", {"workspace": "p2enjoy"}))["nodes"]
+            assert "prospection" in {n["key"] for n in noeuds} and not any(n["archived"] for n in noeuds)
+            cree = (await appeler("crm_workflow_node_create", {
+                "workspace": "p2enjoy", "key": CLE_NOEUD, "label": "Nœud MCP", "default_probability": 30,
+            }))["node"]
+            await refuse("crm_workflow_node_create", {"workspace": "p2enjoy", "key": CLE_NOEUD, "label": "Doublon"}, "node_key_taken")
+            modifie = (await appeler("crm_workflow_node_update", {
+                "node_id": cree["id"], "label": "Nœud MCP gagné", "kind": "won", "color": "success",
+                "reset": ["default_probability"],
+            }))["node"]
+            assert (modifie["kind"], modifie["default_probability"]) == ("won", None)
+            await appeler("crm_workflow_node_move", {"node_id": cree["id"]})
+            premier = (await _service("GET", "/workflow_nodes_catalog", params={
+                "workspace_id": f"eq.{ESPACE_SEEDE}", "select": "key", "order": "position.asc", "limit": "1",
+            })).json()
+            assert premier == [{"key": CLE_NOEUD}]
+            await refuse("crm_workflow_node_archive", {"node_id": PROSPECTION}, "node_occupied")
+            await appeler("crm_workflow_node_archive", {"node_id": cree["id"]})
+            assert (await _service("GET", "/workflow_nodes_catalog", params={"id": f"eq.{cree['id']}", "select": "archived_at"})).json()[0]["archived_at"]
+    finally:
+        await _retirer(CAMILLE, WORKFLOWS)
+        await _nettoyer_noeud()
+
+
+async def test_le_business_developer_lit_le_catalogue_sans_l_ecrire():
+    cases = [("workflows", "consulter"), ("workflows", "ajouter"), ("workflows", "modifier")]
+    await _nettoyer_noeud()
+    await _poser(DRISS, cases)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_outils(
+                client, lambda noms: "crm_workflow_node_create" in noms and "crm_workflow_node_archive" not in noms, "matrice attendue"
+            )
+            assert (await client.call_tool("crm_workflow_node_list", {"workspace": "p2enjoy"})).structured_content["nodes"]
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_workflow_node_create", {"workspace": "p2enjoy", "key": CLE_NOEUD, "label": "Refusé"})
+            assert await _dernier_journal(DRISS[1]) == ("crm_workflow_node_create", "refus_crm")
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_workflow_node_update", {"node_id": PROSPECTION, "label": "Réécrit"})
+            assert await _dernier_journal(DRISS[1]) == ("crm_workflow_node_update", "refus_crm")
+        assert (await _service("GET", "/workflow_nodes_catalog", params={"id": f"eq.{PROSPECTION}", "select": "label"})).json() == [
+            {"label": "Prospection"}
+        ]
+    finally:
+        await _retirer(DRISS, cases)
+        await _nettoyer_noeud()
