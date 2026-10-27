@@ -36280,3 +36280,35 @@ de celui d'une session parallèle, pour ne pas reconstruire `mcp` sous elle.
 
 **Clôture de `CRM-117` T2, 2026-10-27.** Campagne d'interface complète : 982 réussis sur 987, les cinq échecs rejoués et
 expliqués (backlog, T2). La tranche passe `[x]`.
+
+### décision 768 — `CRM-111` T2.4.5 : comment le retrait s'exécute (création, événement `created`, purge, santé)
+
+*2026-10-27, session interactive, précisions d'exécution de `docs/SPEC-rattachements.md` §3, §4, §5 et §10, avant le code
+de l'étape ; aucune ne change un contrat.* Relevé en base le 2026-10-27 : hors des deux miroirs, le retrait casse
+`creer_affaire`, `app.card_events_apres_insertion_card`, `app.cards_attribuer_position`,
+`app.cards_restauration_verifier_parent`, `health_momentum`, `health_commercial`, `app.health_context`, `app.purge_trash`,
+`trash_blocking_costs` et `reassign_trashed_track_cost` (`CRM-077`, migration `0123`) ; l'entonnoir, les affaires figées
+et la recherche lisent déjà le rattachement. Les politiques de `cards` tombent avec `channel_id`.
+
+1. **La création.** `creer_affaire` reste `SECURITY INVOKER` (ses lectures sous la RLS de l'appelant ne changent pas) :
+   elle insère l'affaire, puis son premier rattachement par **`app.poser_premier_rattachement(card, channel, step)`**,
+   `SECURITY DEFINER`, dans le schéma `app` que PostgREST n'expose pas. Elle refuse en `42501` qui n'écrit pas le channel
+   (le refus que donnait `cards_insertion`), et refuse une affaire qui a déjà un rattachement ou une étape qui n'est pas
+   l'étape initiale du workflow du channel. **L'invariant du §3.1** — toute affaire a au moins un rattachement — est tenu
+   par un déclencheur de contrainte **différé** : une affaire sans rattachement ne passe pas la validation de sa
+   transaction. La politique d'insertion de `cards` devient « membre de l'espace » ; l'invariant ferme le reste.
+2. **L'événement `created`** est écrit par ce même déclencheur différé, à la validation : même charge utile qu'aujourd'hui
+   (`title`, `channel_id`, `step_id` du premier rattachement), même horodatage de transaction.
+3. **Le rang** est attribué par un déclencheur `BEFORE INSERT` sur `card_placements`, la règle de
+   `app.cards_attribuer_position` (dernier rang de l'étape du channel, plus un) transportée.
+4. **La restauration** d'une affaire est refusée si le channel ou le track de l'un de ses rattachements est en corbeille.
+5. **La purge et la dépense bloquante** partagent un seul prédicat, **`app.affaire_detruite_avec_track(card, track)`** :
+   l'affaire est détruite avec le track lorsque **tous** ses rattachements sont dans des channels de ce track. Pendant la
+   bascule, une affaire n'a qu'un rattachement et la règle rend exactement celle d'aujourd'hui ; le cas d'une affaire
+   rattachée aussi ailleurs est la question posée avant T3 (backlog), qui pourra changer ce prédicat — et lui seul.
+6. **Les scores de santé** passent sur le rattachement (`health_momentum(card_placements)`,
+   `health_commercial(card_placements)`, `app.health_context(card_placements)`) — accord des deux sessions du
+   2026-10-26 ; le board, la fiche et le connecteur les lisent sur le rattachement. `cards.health_score`, inemployée,
+   tombe avec les autres colonnes.
+7. **Les politiques de `cards`** : lecture sous la forme optimisée du §4 (l'affaire se lit si l'un de ses rattachements
+   se lit), corbeille comprise comme aujourd'hui ; mise à jour par `app.can_write_card(id)` (un rattachement écrivable).

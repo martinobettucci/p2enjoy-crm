@@ -16835,7 +16835,9 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           d'interface, harnais `verify-*` (24 scripts). Les **créations** d'affaires des preuves (12 fichiers pgTAP, 4
           specs API) restent celles de l'affaire, dont le miroir pose le rattachement, et passent à T2.4.5 avec le seed :
           `cards` porte ses colonnes non nulles jusque-là.
-        - [ ] **T2.4.5 — le retrait en base** : colonnes, miroirs et index de `cards` retirés ; les dix fonctions
+        - [ ] **T2.4.5 — le retrait en base** *(exécution précisée par la décision 768 : création par
+          `app.poser_premier_rattachement` et invariant différé, événement `created` à la validation, rang par déclencheur
+          du rattachement, prédicat de purge partagé, santé sur le rattachement, politiques de `cards`)* : colonnes, miroirs et index de `cards` retirés ; les dix fonctions
           réécrites ; `creer_affaire` écrit le rattachement ; le seed et les preuves (pgTAP, API) postent l'affaire
           puis son rattachement (venu de T2.4.3 et T2.4.4, décision 746) ; scores de santé transportés ; politiques de `cards` sous
           la forme optimisée ; types régénérés ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
