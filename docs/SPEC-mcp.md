@@ -1028,6 +1028,13 @@ retirer les droits de la famille, puis réappliquer `0101`.
 | `crm_workflow_node_archive` | `supprimer`, `destructiveHint` | `node:node_id` | `PATCH workflow_nodes_catalog set archived_at` | `archiverNoeud` ; la garde d'un nœud occupé (`docs/SPEC-workflow-engine.md` §2.6) est rendue nommée |
 | `crm_channel_workflow_change` | `modifier`, `destructiveHint` | `channel:channel_id` ; `autres` : `workflow:workflow_id` | `change_channel_workflow(channel_id, workflow_id, step_mapping, discard_field_values)` | **après T1.b** ; remappe toutes les affaires du channel, la correspondance des étapes explicite et exhaustive (`docs/SPEC-change-channel-workflow.md`) ; la perte des réponses de formulaire exigée explicitement, comme `crm_card_move_to_channel`. `crm_channel_update` (`structure`) ne change toujours pas le workflow |
 
+#### T2.e — les quatre outils qui suivent leur écran (après T1.b)
+
+`crm_workflow_update` (le nom ; le défaut par `set_default_workflow`), `crm_workflow_archive` (refusé `workflow_in_use`
+ou `workflow_is_default`, nommés ; archive seulement), `crm_workflow_copy_to_track`, `crm_channel_workflow_change` :
+leurs lignes sont dans les tableaux T2.a, T2.c et T2.d ci-dessus. Ils se livrent ensemble, une fois les écrans de
+`docs/SPEC-workflow-engine.md` §7 quinquies livrés, avec les mêmes preuves.
+
 **Les points ouverts du 2026-10-26 sont tranchés** (décision 756) : les gestes sans écran reçoivent d'abord leur écran
 (T1.b) ; le catalogue et le workflow d'un channel entrent dans la famille (T2.d) ; exiger ou ne plus exiger relève de
 `modifier`.

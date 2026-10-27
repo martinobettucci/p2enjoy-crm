@@ -5331,6 +5331,113 @@ reste le geste de l'administrateur quand il le juge utile.
 pgTAP, API et E2E du `docs/SPEC-onboarding.md` §10.6. La migration est `0080_workflow_de_depart.sql`,
 pure addition d'une fonction : aucune table, aucune politique, aucun privilège de table ne change.
 
+## 7 quinquies. Les gestes d'en-tête d'un workflow, et le changement de workflow d'un channel — `CRM-118` T1.b
+
+*Écrit le 2026-10-27, avant le code, sur les arbitrages du responsable (`docs/JOURNAL.md` décision 758) ; les choix de
+l'agent sont marqués « choix de l'agent ».* La décision 756 veut que tout geste offert au connecteur ait d'abord son
+écran. Cinq gestes que la base permet n'en avaient pas : renommer un workflow, le désigner par défaut, l'archiver (et le
+rétablir), le copier vers un track, changer le workflow d'un channel qui porte des affaires. Cette section les spécifie ;
+le connecteur les reprend ensuite (`docs/SPEC-mcp.md` §9.2 undecies, T2.e).
+
+### 7 quinquies.1 Ce que la base gagne — une migration, au prochain numéro libre
+
+**`public.set_default_workflow(p_workflow uuid) returns public.workflows`** — désigner le workflow par défaut, en une
+transaction (décision 758, point 2). `security invoker` : elle n'ouvre aucun droit, la RLS de `workflows` (écriture par
+l'administrateur) s'applique à ses deux écritures. `search_path` vide ; `EXECUTE` à `authenticated` seul, révoqué de
+`public` et d'`anon` par des `revoke` nommés. Les vérifications, dans cet ordre :
+
+| # | Vérification | Refus | `SQLSTATE` |
+|---|---|---|---|
+| 1 | l'appelant est authentifié | `authentification requise` | `42501` |
+| 2 | le workflow est lisible par l'appelant | `workflow introuvable` | `P0002` |
+| 3 | l'appelant administre son espace | `reserve aux administrateurs` | `42501` |
+| 4 | le workflow n'est pas archivé | `workflow archive` | `P0001` |
+| 5 | le workflow est de portée `global` — *choix de l'agent* : le défaut sert tout l'espace, un workflow propre à un track ne le peut pas | `workflow non global` | `P0001` |
+
+Puis elle **éteint l'ancien défaut, allume le nouveau**, deux `update` dans la même transaction — l'ordre qui ne heurte
+jamais l'index « au plus un défaut » (§3.2), atomique cette fois. Désigner le défaut déjà en place n'écrit rien et rend
+la ligne. Elle rend la ligne du nouveau défaut.
+
+**La garde d'archivage**, un déclencheur `BEFORE UPDATE OF archived_at` sur `workflows`, au seul passage de `NULL` à une
+date (décision 758, point 1) :
+
+| Cas | Refus | `SQLSTATE` |
+|---|---|---|
+| un channel **hors corbeille** (`deleted_at is null`, archivé compris) l'emploie | `workflow_in_use : <n> channel(s)` | `P0001` |
+| il est le workflow par défaut de l'espace | `workflow_is_default` | `P0001` |
+
+Un channel archivé l'emploie encore : le rétablir retrouverait un workflow archivé. Rétablir un workflow (`archived_at`
+remis à `NULL`) n'est jamais refusé par cette garde.
+
+**Retour arrière** : supprimer le déclencheur et la fonction (`drop trigger …; drop function …`), sans donnée à
+reprendre.
+
+### 7 quinquies.2 L'en-tête du workflow choisi, dans l'éditeur
+
+Un bloc **« en-tête »** ouvre la colonne de droite, au-dessus de la mention de divergence (§4 bis.2) : le nom du workflow
+(`h2`), ses pilules — portée (« Global » ou le nom du track), « Par défaut », « Archivé » —, puis une barre de commandes
+discrètes compactes, toujours visibles (§5.13 du design system) :
+
+| Commande | Icône Lucide | Geste | Quand elle est rendue |
+|---|---|---|---|
+| « Renommer » | `PencilLine` | un formulaire d'un champ, dans le flux, à la place du nom ; `PATCH workflows set name` | toujours |
+| « Définir par défaut » | `Star` — *choix de l'agent*, icône nouvelle (§9) | `set_default_workflow` ; sans confirmation, réversible d'un geste | ni défaut, ni archivé, ni de portée track (vouée au refus, §5.21) |
+| « Copier vers un track » | `CopyPlus` — *choix de l'agent*, icône nouvelle : `Copy` copie une adresse (§5.3 bis) | un formulaire dans le flux : « Track » (`select`, option vide en tête) et « Nom de la copie » (facultatif, prérempli du nom) ; `copy_workflow_to_track` ; la copie devient le workflow choisi | workflow global, non archivé |
+| « Archiver » | `Archive` | une confirmation dans le flux, bouton destructif (§5.13), qui dit que les channels ne pourront plus le choisir | non archivé |
+| « Rétablir » | `ArchiveRestore` | `PATCH workflows set archived_at = null`, sans confirmation (§5.16) | archivé |
+
+**Les refus** sont traduits par un dictionnaire fermé et lus dans l'en-tête, `role="alert"` (§5.13) : `workflow_in_use`
+nomme le nombre de channels et le recours — « changez-leur de workflow depuis l'arborescence d'abord » —,
+`workflow_is_default` le sien — « désignez un autre workflow par défaut d'abord » —, `workflow non global`, nom vide,
+droit refusé, réseau, inconnu. Les succès s'annoncent dans la région vivante de l'écran ; la liste est relue.
+
+**La liste des workflows gagne la case « Afficher les archivés »** (§5.29 bis, la même forme) : sans elle, un workflow
+archivé quitterait la liste et « Rétablir » serait introuvable. Un workflow archivé y porte la mention « Archivé ».
+
+**Capacités** (§5.59) : les commandes suivent la capacité d'administrer l'espace ; refusée, elles sont montées,
+désactivées, lisibles, et citent le motif déjà posé en tête de l'éditeur.
+
+### 7 quinquies.3 Changer le workflow d'un channel, depuis l'arborescence
+
+Sur la ligne d'un channel (`docs/SPEC-administration-arborescence.md`), une commande de plus, **« Changer de workflow »**,
+icône `Workflow` — celle de l'événement `workflow_changed` du fil (§5.11), le même objet. Elle ouvre, sous la ligne et
+dans le flux, un panneau qui remplace la commande (§5.13), un seul ouvert à la fois :
+
+1. **« Nouveau workflow »** : un `select` des workflows affectables au channel (§4.12 — globaux, et ceux du track du
+   channel), hors archivés et hors le workflow courant, option vide en tête.
+2. **Une ligne par étape occupée** du workflow courant — les étapes portant au moins un rattachement du channel, affaires
+   archivées et en corbeille comprises (`docs/SPEC-change-channel-workflow.md` §2, §3) —, avec son nom et son nombre
+   d'affaires, et un `select` « Destination » des étapes du nouveau workflow, option vide en tête : **aucune
+   destination n'est devinée**. Un channel sans affaire n'a aucune ligne.
+3. **« Changer de workflow »** (primaire), désactivé tant qu'un workflow ou une destination manque — l'état de la
+   saisie, jamais un droit (§5.50) ; « Annuler » (secondaire), et `Échap`.
+4. **La perte des réponses** : au refus `field_values_would_be_lost`, le panneau dit combien de réponses de formulaire
+   seraient perdues et offre une case « J'accepte de perdre ces <n> réponses », décochée ; cochée, le même envoi
+   repart avec `discard_field_values = true`. Aucune perte n'est jamais implicite.
+
+L'appel est `change_channel_workflow(channel_id, workflow_id, step_mapping, discard_field_values)`. Ses refus
+(`docs/SPEC-change-channel-workflow.md` §3) sont traduits, lus dans le panneau ; le succès referme le panneau, annonce
+« Le channel « … » suit désormais « … » », et la ligne relue montre le nouveau workflow. **Le formulaire de
+modification du channel garde son sélecteur** : il ne change que le workflow d'un channel vide, et son refus sur un
+channel occupé renvoie désormais à « Changer de workflow ».
+
+### 7 quinquies.4 Ce que la tranche ne fait pas
+
+Ni modifier la portée ou le track d'un workflow existant, ni le supprimer, ni copier un workflow d'un track vers un
+autre (§4.3, contrôle 3). Le connecteur n'archive que : rétablir reste un geste d'écran (décision 758, point 4).
+
+### 7 quinquies.5 Preuves
+
+**pgTAP** : `set_default_workflow` — l'ordre des vérifications, l'atomicité (un seul défaut après), le défaut déjà en
+place sans écriture, la lectrice et le business developer refusés ; la garde — channel employant, channel archivé
+employant, channel en corbeille qui ne compte pas, défaut refusé, rétablissement libre ; mutations (chaque branche
+retirée rougit). **API** (`e2e/api/`) : les deux, par requête directe aux vrais jetons, refus compris. **Unitaires** :
+les fonctions d'écran (lecture des étapes occupées, composition du mapping, dictionnaires de refus). **E2E** : renommer,
+définir par défaut, copier, archiver refusé puis accepté, rétablir dans l'éditeur ; changer le workflow d'un channel
+occupé avec la perte consentie, l'affaire relue à sa destination au board ; la lectrice qui voit les commandes
+éteintes ; quatre paliers, captures observées. **Manuel**, **design system** (§5.15, §5.13), **seed** si un état
+manque pour la démonstration.
+
 ## 8. Vérification exigée
 
 | Niveau | Preuves attendues |
