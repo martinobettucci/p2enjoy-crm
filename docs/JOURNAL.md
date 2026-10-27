@@ -36103,3 +36103,59 @@ La décision 760 validait `CopyPlus`. Entre-temps, `CRM-068` T4b1 a posé `CopyP
 (`docs/DESIGN_SYSTEM.md` §5.71, commité avant), et le §9 interdit qu'une icône serve deux objets. **« Copier vers un
 track » porte `GitBranchPlus`** : une copie qui diverge de sa source (`docs/SPEC-workflow-engine.md` §4.1). Choix de
 l'agent, de même nature que celui que la décision validait ; `docs/SPEC-workflow-engine.md` §7 quinquies.2 corrigé.
+
+## décision 762 — les refus « introuvable » (`P0002`) passent de HTTP 500 à HTTP 404
+
+*2026-10-27 ; arbitrage du responsable, posé par la session de `CRM-103` sur son constat de T3.a. Choix retenu parmi
+trois : « Passer en 404 (Recommandé) », plutôt que P0001 (400) ou le statu quo documenté.*
+
+**Problème.** PostgREST rend HTTP **500** pour tout SQLSTATE de la famille `P0` hors `P0001` (mesuré le 2026-10-23,
+`e2e/api/connecteur-administration.spec.ts`). Les refus « introuvable » de la base se lisent donc comme une panne en
+supervision. La webapp n'en souffre pas, puisqu'elle classe par message. Mais **le connecteur MCP ne traduit un refus du
+CRM que si le statut est inférieur à 500** (`mcp/crm_mcp/politique.py`, l. 256), si bien qu'un « introuvable » y
+devient aujourd'hui une erreur générique.
+
+**Inventaire relevé à la décision (à confirmer en T1).** Une trentaine de migrations lèvent `P0002`, de `0007` à `0131` :
+`profil_introuvable` ×10, `message_not_found` ×7, `outbox_not_found` ×2, puis `espace_introuvable`, `track_not_found`,
+`placement_not_found`, `identity_not_found`, `cost_not_found`, `contact_not_found`, `budget_not_found`,
+`account_not_found` et `outbox_not_reschedulable`, ce dernier n'étant pas un « introuvable ». Deux clients lisent le
+code `P0002` lui-même : `webapp/src/lib/creer-affaire.ts` et `webapp/src/lib/rgpd.ts`.
+
+**Décision.** Ces refus rendent **HTTP 404**, **le message restant le même** : c'est lui que la webapp et le connecteur
+classent.
+- **Forme visée** : l'erreur personnalisée de PostgREST (`raise sqlstate 'PGRST'`, avec le code et le message en JSON et
+  le statut 404 en détail), sous réserve que la version de PostgREST de la pile la porte. T1 le mesure avant toute
+  écriture.
+- **Hors du lot** : un refus `P0002` qui n'est pas un « introuvable » (`outbox_not_reschedulable`). Il est nommé, et
+  son statut cible tranché en T1.
+
+**Conséquences.**
+- Une unité dédiée, `CRM-120` : une migration qui réécrit les fonctions concernées ; les pgTAP et les preuves API
+  révisés (dont `STATUT_P0002` de `e2e/api/connecteur-administration.spec.ts`) ; les deux lectures du code `P0002`
+  côté webapp ; et, côté connecteur, des refus « introuvable » désormais traduits.
+- `docs/SPEC-plateforme.md` §6.1 et les dictionnaires de refus nomment le statut.
+- **Question du connecteur** : ce n'est pas une fonctionnalité nouvelle. Le connecteur gagne seulement la traduction de
+  ces refus ; aucune famille ni aucun outil ne change.
+
+## décision 763 — Dependabot surveille aussi les dépendances Python
+
+*2026-10-27 ; arbitrage du responsable, posé par la session de `CRM-103` après la revue de sécurité du 2026-10-23.
+Choix retenu parmi quatre : « Dependabot pour Python (Recommandé) », plutôt qu'un `pip-audit` dans le harnais, les
+deux, ou le statu quo.*
+
+**Problème.** Le dépôt n'a aucun `.github/dependabot.yml`. GitHub n'alerte donc que sur npm, d'après le graphe de
+dépendances. Les dépendances Python ne remontent pas : `mcp/requirements.lock` et `mcp/requirements-dev.lock` portent un
+nom que Dependabot ne lit pas. Les CVE d'`opentelemetry-api` et d'`httpx2` n'ont été vues que par un `pip-audit` lancé à
+la main.
+
+**Décision.**
+- **Configuration** : `.github/dependabot.yml` déclare npm à la racine, et pip pour `mcp/` et `mail-sync/`.
+  `mail-sync` porte déjà des `requirements*.txt`, que Dependabot lit.
+- **Renommage** : `mcp/requirements.lock` et `mcp/requirements-dev.lock` prennent des noms que Dependabot lit
+  (`requirements.txt`, `requirements-dev.txt`). Le `Dockerfile`, `pyproject.toml`, `docs/SPEC-mcp.md` et toute
+  référence vivante suivent. Le contenu épinglé ne change pas.
+
+**Conséquences.**
+- Une unité dédiée, `CRM-121`. Elle prouve que l'image `mcp` se construit à l'identique, que pytest reste vert, et que
+  GitHub liste les manifestes Python après le push.
+- **Question du connecteur** : sans objet, c'est de l'outillage du dépôt.

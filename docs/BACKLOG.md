@@ -17193,3 +17193,34 @@ nouvelle (écart assumé, décision 757) ; question du connecteur sans objet.
       fois, dans l'ordre du harnais. Dans l'ordre alphabétique, un échec **antérieur** à l'unité, consigné INC-319.
 - [x] **T4 — clôture** : synchronisation (aucun commit distant depuis T3), `CHANGELOG.md`. Rien à livrer en
       production : l'unité n'ajoute que des preuves.
+
+### CRM-120 — Les refus « introuvable » rendent HTTP 404, et non 500 `[ ]`
+Arbitrage du responsable du 2026-10-27 (décision 762). La base lève `P0002` pour une trentaine de refus « introuvable »,
+que PostgREST rend en **500**, lu comme une panne en supervision et comme une erreur générique par le connecteur MCP
+(qui ne traduit un refus que sous 500). Ils passent à **404**, message inchangé.
+**DoD** : inventaire mesuré des fonctions concernées ; forme du refus prouvée sur la version de PostgREST de la pile ;
+migration qui réécrit ces fonctions ; pgTAP et preuves API révisés, statut 404 constaté en requête directe aux vrais
+jetons ; lectures du code `P0002` de la webapp adaptées, tests unitaires vus rouges puis verts ; le connecteur traduit
+ces refus (pytest) ; dictionnaires de refus et `docs/SPEC-plateforme.md` §6.1 révisés ; contrat de déploiement ;
+campagnes. Question du connecteur : aucune fonctionnalité nouvelle (décision 762).
+
+- [ ] **T1 — mesure et forme** : inventaire exact (fonctions, codes, appelants, preuves qui affirment 500) ; la forme
+      `raise sqlstate 'PGRST'` prouvée sur la pile, ou une autre forme si elle n'est pas portée ; le statut de
+      `outbox_not_reschedulable` tranché ; spécification écrite et committée avant le code.
+- [ ] **T2 — migration et preuves en base** : réécriture des fonctions, pgTAP, harnais.
+- [ ] **T3 — clients et preuves** : webapp (`creer-affaire.ts`, `rgpd.ts`, dictionnaires), connecteur, preuves API
+      et E2E, documentation.
+- [ ] **T4 — livraison en production et constat.**
+
+### CRM-121 — Dependabot surveille les dépendances Python `[ ]`
+Arbitrage du responsable du 2026-10-27 (décision 763). GitHub n'alerte que sur npm : aucun `.github/dependabot.yml`, et
+`mcp/requirements*.lock` porte un nom que Dependabot ne lit pas.
+**DoD** : `.github/dependabot.yml` (npm à la racine, pip pour `mcp/` et `mail-sync/`) ; les deux verrous de `mcp/`
+renommés en `requirements.txt` et `requirements-dev.txt`, avec toutes les références vivantes (`Dockerfile`,
+`pyproject.toml`, `docs/SPEC-mcp.md`, scripts) ; l'image `mcp` reconstruite à l'identique et pytest vert ; les
+manifestes Python constatés dans le graphe de dépendances de GitHub après le push. Question du connecteur : sans objet
+(décision 763).
+
+- [ ] **T1 — configuration et renommage**, avec les preuves ci-dessus.
+- [ ] **T2 — livraison** : la prochaine reconstruction de l'image `mcp` de production prend le verrou renommé
+      (contenu identique) ; aucune autre action en production.
