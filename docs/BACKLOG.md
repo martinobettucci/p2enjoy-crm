@@ -7499,7 +7499,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
 | CRM-068 | Checklists et modèles de cards | `[~]` |
-| CRM-069 | Étiquettes et digest quotidien — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-27 17:11 UTC — état avant : [ ]* | `[@]` |
+| CRM-069 | Étiquettes et digest quotidien — **arbitrée** (décision 769) : catalogue d'étiquettes par espace (administrateurs ; palette fermée ; archivable), posées par qui écrit l'affaire ; digest quotidien par email consenti (7 h, `pg_cron`, identité de service) ; connecteur : étiquettes oui, famille `affaires` existante ; digest non. Spécification `docs/SPEC-etiquettes-digest.md` à valider — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-27 17:11 UTC — état avant : [ ]* | `[@]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |

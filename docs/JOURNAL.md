@@ -36419,3 +36419,33 @@ ne les montre pas, et le dit en renvoyant à la section 9.1 ; un renvoi des obje
 erreur de conversion de T3.0 ; une mise en gras cassée ; « désormais livré », « pas encore arbitrée », « désormais » ;
 l'exemple chiffré du jeu de démonstration, rendu générique. **Reste** : les chapitres 9 et 18, où écrit la session de
 `CRM-068` — T3.2b et T3.4b. Le contrôle « aucune référence interne » couvrira tout le manuel avec eux.
+
+## décision 769 — `CRM-069` arbitrée : étiquettes en catalogue par espace, digest quotidien par email consenti
+
+*2026-10-27, arbitrage du responsable, en session interactive (Claude Code, poste du responsable), avant toute
+spécification détaillée et tout code.*
+
+**Problème.** `CRM-069`, « Étiquettes et digest quotidien », n'avait qu'une ligne au tableau du backlog. Elle porte aussi
+deux dettes : les pastilles d'étiquettes que le design system prescrit depuis `CRM-000` sur la carte du board (INC-068),
+et le rapport hebdomadaire `CRM-P07` (« retenue, planifié par `pg_cron` »).
+
+**Décisions du responsable :**
+
+1. **Étiquettes : un catalogue par espace.** Les administrateurs de l'espace le tiennent dans les Réglages. Une
+   étiquette porte un nom et une couleur de la palette fermée des tracks et des channels (`brand`, `success`, `accent`,
+   `danger`, `neutral`), et s'archive. Quiconque peut écrire une affaire lui pose ou lui retire une étiquette. Elles se
+   lisent en pastilles sur la carte du board, la fiche et la vue liste, et la liste se filtre par étiquette.
+2. **Digest quotidien : par email, sur consentement.** Chaque matin à 7 h, heure de Paris, par `pg_cron`, un email part
+   vers chaque membre qui l'a demandé dans Réglages ▸ Notifications. Il contient ses actions en retard ou dues (la
+   lecture de « Ma journée »), ses mentions non lues et les affaires figées. Il part de l'**identité de service** : il
+   faut pour cela une branche de la file d'envoi qui ne dépende d'aucune affaire. Rien ne part s'il n'y a rien à dire.
+   Le consentement est une donnée persistée côté serveur (`CLAUDE.md` §10, §11), privée à la personne, comme
+   `notification_preferences`.
+3. **Connecteur MCP, question 1 : oui pour les étiquettes.** Les lire sur une affaire (`crm_card_get`), filtrer
+   `crm_card_list` par étiquette, poser ou retirer une étiquette. Le digest n'entre pas dans le connecteur.
+4. **Connecteur MCP, question 2 : dans la famille `affaires`, existante.** Lire relève de `consulter`, poser ou retirer
+   de `modifier`. Aucune migration de la liste fermée, aucune ligne nouvelle. Le catalogue reste un geste d'écran : aucun
+   outil ne le gère.
+
+**Conséquences.** La spécification `docs/SPEC-etiquettes-digest.md` est écrite à partir de ces décisions et soumise au
+responsable avant le code. Le rapport hebdomadaire `CRM-P07` y est situé, sans être livré d'office.
