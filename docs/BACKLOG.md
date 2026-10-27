@@ -16786,7 +16786,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           `0122` ; `change_channel_workflow` rend `SETOF card_placements`. pgTAP 104 fichiers sans anomalie,
           unitaires 4514/4514, API 1230/1231 (`ingestion.spec.ts:91`, étranger), `verify-change-channel-workflow.sh`
           24/24.
-      - [~] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
+      - [@] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
         `creer_affaire` écrit le rattachement elle-même (venu de T2.3.7, décision 738),
         politique de `cards` sous la forme optimisée ; types régénérés. *Transporte aussi vers `card_placements` les deux
         colonnes calculées de santé de `CRM-066` tranche 4 (`health_momentum`, `health_commercial`, et leur appui
@@ -16794,6 +16794,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         (`docs/SPEC-analytique.md` §13.5 ; accord des deux sessions, 2026-10-26).* Preuve : aucun changement visible, toute la suite
         verte ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière possible tant que chaque affaire
         n'a qu'un rattachement).
+        *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-27 17:09 UTC — état avant : [~]*
         **Découpage, arrêté le 2026-10-26 (journal, entrée « `CRM-111` T2.4 — le découpage »)** — une étape poussée chacune,
         `main` vert à chaque fois. Mesuré avant (base jetable, `docs/mesures/CRM-111/02-fonctions-cassees.sql`) : le
         retrait casse encore **dix fonctions** — les deux miroirs, `app.card_events_apres_insertion_card`,
