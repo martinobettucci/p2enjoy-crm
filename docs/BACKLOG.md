@@ -12394,6 +12394,9 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
   - [ ] **T4b — les écrans et le seed** : Réglages ▸ Modèles d'affaires, le `select` « Modèle » de « Nouvelle
         affaire », « Enregistrer comme modèle » sur la fiche ; deux modèles au seed dont un enregistré depuis une
         affaire (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel.
+        *Découpée le 2026-10-27* : **T4b1** — le `select` « Modèle », « Enregistrer comme modèle », Réglages ▸ Modèles
+        d'affaires (nom, titre, description, montant, devise, points, archivage), le seed ; **T4b2** — la saisie des
+        réponses aux questions du workflow dans la fiche d'un modèle (`docs/DESIGN_SYSTEM.md` §5.71).
 - [ ] **T5 — le connecteur** : `crm_card_checklist_list`, `crm_card_checklist_set`, famille `affaires`.
 
 ### CRM-072 — Journal d'audit consultable et conformité RGPD `[P]`

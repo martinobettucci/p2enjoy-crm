@@ -6729,3 +6729,44 @@ seul élément ouvert à la fois (§5.28).
 - **Aucune couleur, aucun jeton, aucune icône nouvelle** : `ArrowUp`, `ArrowDown`, `Pencil`, `Archive`, `ArchiveRestore`,
   `Plus` et `X` servent déjà ces gestes.
 
+### 5.71 Les modèles d'affaires — `CRM-068` T4b1
+
+*Écrit le 2026-10-27, avant le code, après relecture intégrale de ce document le même jour.* Ce que les écrans lisent,
+écrivent et refusent est spécifié par `docs/SPEC-checklists.md` §3.5, §3.6 et §4 ; ces règles ne disent que de quoi ils
+ont l'air. Tout ce que le §5.39 pose pour les modèles d'emails vaut pour l'écran des réglages sans être répété : liste
+plate et non tableau, fiche repliée **dans le flux — aucune modale** —, focus entrant dans le premier champ et rendu à la
+commande, commande d'enregistrement unique, refus `role="alert"` sous les champs qui n'efface pas la saisie, état vide
+porteur du geste, borne de liste à `104ch`.
+
+- **RÉGLAGES ▸ « Modèles d'affaires », APRÈS « Workflows » DANS L'INDEX** : un modèle sert les affaires d'un workflow, et
+  se lit après lui. L'entrée suit la capacité d'administrer l'espace (§5.59) : un lien pour qui administre, un texte au
+  même endroit sinon, jamais masquée.
+- **UNE SECTION PAR WORKFLOW**, titrée par son nom (`h2`), dans l'ordre de la liste des workflows ; chaque modèle est une
+  ligne : son **nom** en tête (c'est la clé, §5.39), puis en second ton le titre proposé et, s'il y en a, le montant en
+  donnée technique avec sa devise dans son propre élément (§5.11) et le nombre de points « 3 points » (accord par clé,
+  §10). Un modèle archivé porte la pilule « Archivé » et ne s'affiche que sous la case « Afficher les archivés »
+  (§5.29 bis).
+- **« Nouveau modèle »**, primaire, ouvre la fiche : « Workflow » (`select`, sans option vide — un modèle sert toujours un
+  workflow), « Nom », « Titre proposé », « Description », « Montant » et « Devise » (§5.3 ter : deux contrôles), puis
+  « Points de checklist » — une liste de lignes, chacune un champ et « Retirer » (`X`), « Ajouter un point » dessous (§5.15,
+  choix d'un champ à choix). « Enregistrer » (primaire), « Annuler » (secondaire). **« Modifier » et « Archiver » /
+  « Désarchiver »** sur chaque ligne, discrets compacts ; l'archivage sans confirmation — il se défait d'un clic (§5.41).
+  Le workflow d'un modèle existant se lit en **phrase**, jamais en champ désactivé (§5.15) : ses réponses répondent aux
+  questions de ce workflow.
+- **LES RÉPONSES AUX QUESTIONS DU WORKFLOW NE SE SAISISSENT PAS ENCORE ICI** (T4b2) : la fiche le dit en une phrase en 13 px
+  `--color-text-2` — « Les réponses aux questions de ce workflow se reprennent d'une affaire, par « Enregistrer comme
+  modèle ». » — et, quand le modèle en porte, leur nombre : « 2 réponses reprises ».
+- **« NOUVELLE AFFAIRE » GAGNE UN `select` « Modèle »**, sous le titre, option vide en tête « Aucun modèle » (§5.22) ; il
+  n'est **rendu que si le workflow du channel a au moins un modèle** (§5.36 : un contrôle sans objet ne se rend pas).
+  Choisir un modèle remplit le titre **s'il est encore blanc**, jamais par-dessus une saisie. Le refus « modèle d'un autre
+  workflow » ou « modèle introuvable » s'écrit sous le formulaire, comme les autres (§5.50).
+- **« ENREGISTRER COMME MODÈLE » SUR LA FICHE**, dans la rangée de commandes de l'en-tête, après « Mettre en sommeil »,
+  secondaire compacte, icône Lucide **`CopyPlus`** — qui ne sert aucun autre objet (§9). Elle suit la capacité
+  d'administrer l'espace (§5.59). Elle ouvre sous l'en-tête un panneau dans le flux (§5.3 quater) : « Nom du modèle »,
+  prérempli du titre de l'affaire, une phrase qui dit ce qui est repris — titre, description, montant, réponses,
+  libellés des points, sans les cochages —, « Enregistrer » (primaire) et « Annuler ». Le succès s'annonce en
+  `role="status"` et nomme le modèle ; `Échap` referme.
+- **ÉTATS** (§5.8) : squelette au premier chargement, erreur avec « Réessayer », vide « Aucun modèle d'affaire. » avec
+  « Nouveau modèle ».
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `CopyPlus`.**
+
