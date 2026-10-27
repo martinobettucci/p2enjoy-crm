@@ -4713,6 +4713,29 @@ export type Database = {
         }
         Returns: Json
       }
+      set_default_workflow: {
+        Args: { p_workflow: string }
+        Returns: {
+          archived_at: string | null
+          created_at: string
+          derived_at: string | null
+          derived_from_workflow_id: string | null
+          id: string
+          is_default: boolean
+          name: string
+          scope: string
+          source_composition_fingerprint: string | null
+          track_id: string | null
+          updated_at: string
+          workspace_id: string
+        }
+        SetofOptions: {
+          from: "*"
+          to: "workflows"
+          isOneToOne: true
+          isSetofReturn: false
+        }
+      }
       snooze_card: {
         Args: { p_placement: string; until: string }
         Returns: {
