@@ -1,4 +1,6 @@
 // @verifies CRM-068 (docs/BACKLOG.md) — tranche T4b1 : la bibliothèque des modèles d'affaires — lecture, écriture, refus
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T4b2 : les questions d'un modèle et la composition de ses réponses
+//           (docs/DESIGN_SYSTEM.md §5.71 bis, décision 766)
 // @verifies docs/SPEC-checklists.md §3.5 (la forme d'un modèle tenue par la base, ses refus nommés), §3.6
 //           (`save_card_as_template`, `creer_affaire` et son modèle) ; docs/DESIGN_SYSTEM.md §5.71
 //
@@ -6,17 +8,23 @@
 // `e2e/api/modeles-affaires.spec.ts` et la suite pgTAP `0122` les mesurent sur la pile réelle.
 
 import { describe, expect, it } from 'vitest'
+import type { ChampFormulaire } from './formulaire'
 import {
 	archiverModele,
 	classerRefusModele,
 	COLONNES_MODELE,
+	composerReponses,
 	enregistrerCommeModele,
 	lireModeles,
 	lireModelesDuChannel,
 	lireMontant,
+	lireQuestionsModele,
 	modifierModele,
 	poserModele,
 	projeterModeles,
+	questionsSaisissables,
+	reponsesConserveesArchivees,
+	saisiesDepuisReponses,
 	type ModeleLu,
 	type SaisieModele,
 } from './modeles-affaires'
@@ -35,7 +43,7 @@ function client(reponses: Record<string, Reponse>, rpc?: Reponse) {
 		from: (table: string) => {
 			appels.push(['from', table])
 			const maillon: Record<string, unknown> = {}
-			for (const methode of ['select', 'eq', 'is', 'insert', 'update', 'maybeSingle']) {
+			for (const methode of ['select', 'eq', 'is', 'order', 'insert', 'update', 'maybeSingle']) {
 				maillon[methode] = (...args: unknown[]) => {
 					appels.push([methode, ...args])
 					return maillon
@@ -216,5 +224,49 @@ describe('enregistrerCommeModele — « Enregistrer comme modèle »', () => {
 	] as const)('%o → %s', async (erreur, statut, attendu) => {
 		const { client: c } = client({}, { data: null, error: erreur, status: statut })
 		expect(await enregistrerCommeModele(c, 'pl-1', 'Audit')).toEqual({ statut: 'refus', nature: attendu })
+	})
+})
+
+// `CRM-068` T4b2 — les réponses d'un modèle (docs/DESIGN_SYSTEM.md §5.71 bis, décision 766).
+describe('les réponses d’un modèle (T4b2)', () => {
+	const champ = (key: string, type: string, archive = false): ChampFormulaire => ({
+		id: `f-${key}`, key, label: key, type, position: 1, options: null, help_text: null, archived_at: archive ? '2026-01-01T00:00:00Z' : null,
+	})
+	const CHAMPS = [champ('budget', 'money'), champ('source', 'select'), champ('urgent', 'checkbox'), champ('tags', 'multiselect'),
+		champ('interlocuteur', 'contact'), champ('ancien', 'text', true)]
+	const EXISTANTES = { budget: 4800, source: 'salon', urgent: true, interlocuteur: 'c-1', ancien: 'x', inconnue: 1 }
+
+	it('ne se saisissent que les questions non archivées d’un type qui ne désigne pas une affaire', () => {
+		expect(questionsSaisissables(CHAMPS).map((c) => c.key)).toEqual(['budget', 'source', 'urgent', 'tags'])
+	})
+
+	it('l’état initial des contrôles reprend les réponses du modèle', () => {
+		expect(saisiesDepuisReponses(CHAMPS, EXISTANTES)).toEqual({ budget: '4800', source: 'salon', urgent: true, tags: [] })
+		expect(saisiesDepuisReponses(CHAMPS, null)).toEqual({ budget: '', source: '', urgent: false, tags: [] })
+	})
+
+	it('vide et case décochée retirent la clé ; les réponses conservées sont reportées telles quelles', () => {
+		const reponses = composerReponses(CHAMPS, EXISTANTES, { budget: '', source: 'web', urgent: false, tags: ['a', 'b'] })
+		expect(reponses).toEqual({ source: 'web', tags: ['a', 'b'], interlocuteur: 'c-1', ancien: 'x', inconnue: 1 })
+		expect(composerReponses(CHAMPS, undefined, { budget: '1200.5', urgent: true })).toEqual({ budget: 1200.5, urgent: true })
+	})
+
+	it('compte les réponses à des questions archivées ou inconnues', () => {
+		expect(reponsesConserveesArchivees(CHAMPS, EXISTANTES)).toBe(2)
+		expect(reponsesConserveesArchivees(CHAMPS, {})).toBe(0)
+	})
+
+	it('les réponses partent avec le modèle seulement quand elles sont composées', async () => {
+		const { client: c, appels } = client({ card_templates: { data: [{ id: 'm-1' }], error: null, status: 200 } })
+		await modifierModele(c, 'm-1', { ...SAISIE, reponses: { budget: 1 } }, null)
+		expect((appels.find((a) => a[0] === 'update')![1] as { field_values: unknown }).field_values).toEqual({ budget: 1 })
+	})
+
+	it('lit les questions du workflow, archivées comprises, dans l’ordre du formulaire', async () => {
+		const { client: c, appels } = client({ form_fields: { data: CHAMPS, error: null, status: 200 } })
+		const lues = await lireQuestionsModele(c, 'wf-1')
+		expect(lues.statut).toBe('pret')
+		expect(appels).toContainEqual(['eq', 'workflow_id', 'wf-1'])
+		expect(appels.some((a) => a[0] === 'is')).toBe(false)
 	})
 })

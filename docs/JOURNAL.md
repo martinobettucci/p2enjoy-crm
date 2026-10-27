@@ -36241,3 +36241,10 @@ modèles n'y entrent pas.
 
 **Conséquences.** `lib/modeles-affaires.ts` compose les réponses d'après les questions lues ; la fiche les rend. La base
 ne change pas : `card_templates_valider` juge déjà chaque valeur (migration `0131`).
+
+**Livraison en développement de la décision 766 (`CRM-068` T4b2), même jour.** Unitaires 4854/4854 (bibliothèque +6, écran
++3) ; typecheck, classes CSS ; E2E `modeles-affaires.spec.ts` 7/7, avec `nouvelle-affaire` et `droits-interface` 20/20.
+Le formulaire du modèle passe en `noValidate` : la bulle native du navigateur aurait dit un refus d'adresse ailleurs que
+sous les champs. Constat sur capture : la légende « Réponses aux questions » se confondait avec le libellé de la première
+question. La graisse seule n'y suffisant pas, les deux légendes de groupe prennent `--color-ink`
+(`docs/DESIGN_SYSTEM.md` §5.71 bis).

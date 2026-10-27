@@ -58,7 +58,7 @@ d'exécuter le code attendu.
   seraient perdues sont comptées, et ne le sont qu'avec votre accord explicite. Le formulaire de modification d'un
   channel qui porte des affaires renvoie désormais à cette commande.
 
-### `CRM-068` — les checklists et les modèles d'une affaire (en cours : T1, T2, T3a, T3b, T4a, T4b1)
+### `CRM-068` — les checklists et les modèles d'une affaire (en cours : T1, T2, T3a, T3b, T4a, T4b1, T4b2)
 
 - **Base** — migration `0125` : les points d'une étape (`workflow_step_checklist_items`, écrits par l'administrateur), les
   points d'une affaire (`card_checklist_items`, libres ou ajoutés par la base à l'entrée d'un rattachement dans une
@@ -90,8 +90,12 @@ d'exécuter le code attendu.
   enregistré depuis l'affaire de Rennes, un modèle archivé.
 - **Correction** — l'arrivée par « Cocher ces points » attend que les droits de la fiche soient lus : sous charge, la
   case n'était pas encore active et ne prenait pas le focus.
-- Reste : la saisie des réponses dans la fiche d'un modèle (T4b2), le manuel de T3b et de T4b1 (après le plan de
-  `CRM-117`), le connecteur (T5 ; les outils de l'éditeur sont livrés par `CRM-118`).
+- **Les réponses d'un modèle** (T4b2, décision 766) — la fiche d'un modèle montre les questions du workflow, chacune avec
+  son contrôle, enregistrées avec le modèle ; une question vide reste sans réponse ; les questions qui désignent une
+  personne ou un fichier, et celles qui sont archivées, gardent la réponse reprise d'une affaire ; une réponse mal formée
+  est refusée sous les champs.
+- Reste : le manuel de T3b et de T4 (après le plan de `CRM-117`), le connecteur (T5 ; les outils de l'éditeur sont livrés
+  par `CRM-118`).
 
 ### `CRM-117` — le manuel joignable depuis la webapp (en cours)
 

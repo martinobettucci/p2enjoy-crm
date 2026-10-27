@@ -822,13 +822,14 @@ function SectionAutresEtapes({
 }
 
 /**
- * Le type HTML du contrôle, dérivé du type du champ (§2.3).
+ * Le type HTML du contrôle, dérivé du type du champ (§2.3). Exporté pour la fiche d'un modèle d'affaire (`CRM-068` T4b2),
+ * qui rend les mêmes questions avec les mêmes contrôles.
  *
  * `money` reste un `number` : la devise vit dans `options.currency` et n'a pas de type HTML.
  * Tout type inconnu du backend — la colonne est un `text`, et un type ne garantit jamais une
  * valeur (`docs/SPEC-types.md`) — se replie sur `text`, qui affiche la valeur telle quelle.
  */
-function typeHtml(type: string): string {
+export function typeHtml(type: string): string {
 	if (type === 'number' || type === 'money') return 'number'
 	if (type === 'date') return 'date'
 	if (type === 'datetime') return 'datetime-local'
@@ -883,7 +884,7 @@ function cles(valeur: unknown): readonly string[] {
  * objet portant `key` et `label` en chaînes est donc **écartée**, plutôt que rendue en `[object
  * Object]`.
  */
-function choix(options: unknown): readonly { key: string; label: string }[] {
+export function choix(options: unknown): readonly { key: string; label: string }[] {
 	if (typeof options !== 'object' || options === null) return []
 	const brut = (options as { choices?: unknown }).choices
 	if (!Array.isArray(brut)) return []

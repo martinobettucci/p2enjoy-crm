@@ -121,6 +121,61 @@ test.describe('Réglages ▸ Modèles d’affaires (docs/DESIGN_SYSTEM.md §5.71
 	})
 })
 
+// `CRM-068` T4b2 — les réponses aux questions du workflow (docs/DESIGN_SYSTEM.md §5.71 bis).
+test.describe('les réponses d’un modèle (docs/DESIGN_SYSTEM.md §5.71 bis)', () => {
+	test('l’administratrice répond aux questions ; une adresse mal formée est refusée ; l’affaire née du modèle les porte', async ({ page, request }) => {
+		await connecterAvecLeLabs(page, 'admin@p2enjoy.test')
+		await page.goto('/reglages/modeles-affaires')
+		await page.getByTestId('nouveau-modele-affaire').click()
+		const fiche = page.getByTestId('fiche-modele-affaire')
+		await expect(fiche.getByLabel('Workflow')).toHaveValue('5eed0000-0000-4000-8000-000000000051')
+		const reponses = fiche.getByTestId('modele-reponses')
+		await expect(reponses.getByTestId('reponse-sans-saisie')).toHaveCount(2)
+		await fiche.getByLabel('Nom', { exact: true }).fill(`${PREFIXE} Réponses`)
+		await reponses.getByLabel('Budget estimé').fill('2500')
+		await reponses.getByLabel('Origine du contact').selectOption({ label: 'Recommandation' })
+		await reponses.getByLabel('Décideur identifié').check()
+		await reponses.getByLabel('Lien vers la proposition').fill('pas une adresse')
+		await fiche.getByTestId('modele-enregistrer').click()
+		await expect(fiche.getByRole('alert')).toContainText('Une réponse ne convient pas')
+		autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
+		await reponses.getByLabel('Lien vers la proposition').fill('')
+		await reponses.scrollIntoViewIfNeeded()
+		await capturer(page, 'modele-reponses-1440', UNITE)
+		await fiche.getByTestId('modele-enregistrer').click()
+		await expect(fiche).toHaveCount(0)
+		const [pose] = await lire<{ field_values: Record<string, unknown> }[]>(
+			request,
+			`card_templates?name=eq.${encodeURIComponent(`${PREFIXE} Réponses`)}&select=field_values`,
+		)
+		expect(pose!.field_values).toEqual({ budget: 2500, source: 'recommandation', 'decideur-identifie': true })
+
+		// Rouverte, la fiche relit ses réponses.
+		await page.getByRole('button', { name: `Modifier le modèle ${PREFIXE} Réponses` }).click()
+		await expect(reponses.getByLabel('Budget estimé')).toHaveValue('2500')
+		await expect(reponses.getByLabel('Décideur identifié')).toBeChecked()
+		await page.keyboard.press('Escape')
+
+		// L'affaire née du modèle porte ses réponses sur son rattachement.
+		await page.goto(REFONTE)
+		await page.getByTestId('nouvelle-affaire').click()
+		await page.getByLabel('Modèle', { exact: true }).selectOption({ label: `${PREFIXE} Réponses` })
+		await page.getByTestId('champ-titre-affaire').fill(`${PREFIXE} Affaire répondue`)
+		await page.getByTestId('creer-affaire').click()
+		await expect(page).toHaveURL(/\/cards\//)
+		const idCard = page.url().split('/cards/')[1]!.split(/[?#]/)[0]!
+		const valeurs = await lire<{ value: unknown; form_fields: { key: string } }[]>(
+			request,
+			`card_field_values?card_id=eq.${idCard}&select=value,form_fields!card_field_values_field_id_workflow_id_fkey(key)`,
+		)
+		expect(Object.fromEntries(valeurs.map((v) => [v.form_fields.key, v.value]))).toEqual({
+			budget: 2500,
+			source: 'recommandation',
+			'decideur-identifie': true,
+		})
+	})
+})
+
 test.describe('le modèle à la création d’une affaire (docs/DESIGN_SYSTEM.md §5.71)', () => {
 	test('le business developer choisit « Audit flash » : le titre se remplit, l’affaire naît avec le modèle', async ({ page, request }) => {
 		await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')

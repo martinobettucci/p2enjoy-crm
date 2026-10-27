@@ -1742,7 +1742,9 @@ SCENARIOS_API=1258
 # **+5 par `CRM-118` T1.b, 2026-10-27** : `e2e/ui/workflow-entete-changement.spec.ts`, fichier NEUF — les gestes de
 # l'en-tête du workflow, « Changer de workflow » avec la perte consentie, la lectrice, quatre paliers de chacun. 994 + 5 =
 # 999, COMPTÉE.
-SCENARIOS_UI=999
+# **+1 par `CRM-068` T4b2, 2026-10-27** : `e2e/ui/modeles-affaires.spec.ts` gagne les réponses d'un modèle — posées,
+# l'adresse mal formée refusée, l'affaire née du modèle qui les porte en base. 999 + 1 = 1000, COMPTÉE.
+SCENARIOS_UI=1000
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

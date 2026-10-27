@@ -12390,7 +12390,10 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
         modèles non archivés ; `field_values` validées à l'écriture par la même règle que les valeurs d'une affaire,
         extraite du déclencheur de `card_field_values` en une fonction partagée), `creer_affaire(p_channel, p_titre,
         p_template)` qui applique le modèle dans la même transaction, `save_card_as_template(p_placement, p_name)` ;
-        pgTAP, API.
+        pgTAP, API. **Livrée en développement le 2026-10-27** : migration `0131` (après la 0130 de `CRM-118`) ; pgTAP `0122`
+        **22/22** ; `0014` **103/103** (la validation extraite, messages inchangés) ; gardes révisées (décision 51) : `0016`
+        171 politiques, `0075` signature à trois arguments, `database.types.test-d.ts` ; API `modeles-affaires.spec.ts`
+        **4/4** (refus du business developer et de l'anonyme par requête directe) ; types régénérés.
   - [ ] **T4b — les écrans et le seed** : Réglages ▸ Modèles d'affaires, le `select` « Modèle » de « Nouvelle
         affaire », « Enregistrer comme modèle » sur la fiche ; deux modèles au seed dont un enregistré depuis une
         affaire (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel.
@@ -12405,8 +12408,13 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
           40/40 ; captures observées (deux défauts d'apparence corrigés) ; un défaut de T3b trouvé et corrigé (l'arrivée
           par « Cocher ces points » attend la capacité) ; harnais UI +6. **Reste le manuel** (9.10 et 18.15, écrits au plan
           de `CRM-117`, committés après son T3.0, avec la correspondance de l'aide `aide-ecrans.ts`).
-    - [ ] **T4b2** — la saisie des réponses aux questions du workflow dans la fiche d'un modèle
-          (`docs/DESIGN_SYSTEM.md` §5.71). *Précisée le 2026-10-27 (décision 766)* : §5.71 bis — les questions non
+    - [~] **T4b2** — la saisie des réponses aux questions du workflow dans la fiche d'un modèle
+          (`docs/DESIGN_SYSTEM.md` §5.71). **Livrée en développement le 2026-10-27** : `lireQuestionsModele`,
+          `composerReponses` et leurs voisins (`lib/modeles-affaires.ts`, unitaires +6) ; le `fieldset` « Réponses aux
+          questions » de `ReglagesModelesAffaires.tsx`, contrôles contrôlés, `noValidate` (la base juge, l'écran écrit le
+          refus) ; unitaires écran +3, suite 4854 ; E2E `modeles-affaires.spec.ts` 7/7 (réponses posées, adresse mal formée
+          refusée, affaire née du modèle qui les porte en base) et voisins 20/20 ; capture observée, la légende encrée ;
+          harnais UI +1. **Reste le manuel** (18.15, avec celui de T4b1). *Précisée le 2026-10-27 (décision 766)* : §5.71 bis — les questions non
           archivées avec le contrôle de leur type, écrites à « Enregistrer » ; vide = sans réponse ; `contact`, `user`,
           `file` et questions archivées conservées sans saisie ; changer de workflow à la création vide les réponses ;
           connecteur : non (décision 747).

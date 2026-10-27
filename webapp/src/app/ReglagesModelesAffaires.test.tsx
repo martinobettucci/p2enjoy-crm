@@ -1,5 +1,8 @@
 // @verifies CRM-068 (docs/BACKLOG.md) — tranche T4b1 : Réglages ▸ Modèles d'affaires — sections par workflow, lignes,
 //           archivés sous leur case, fiche dans le flux (nouveau, modifier), archivage sans confirmation, états
+// @verifies CRM-068 (docs/BACKLOG.md) — tranche T4b2 : les réponses aux questions du workflow dans la fiche — contrôles
+//           préremplis, réponses conservées sans saisie, envoi composé, workflow changé qui efface, lecture en échec qui
+//           n'envoie rien (docs/DESIGN_SYSTEM.md §5.71 bis, décision 766)
 // @verifies docs/SPEC-checklists.md §3.5 ; docs/DESIGN_SYSTEM.md §5.71, §5.39, §5.8 (états), §5.15 (le workflow d'un modèle
 //           existant se lit en phrase), §5.59 (écran réservé atteint par son adresse)
 //
@@ -29,13 +32,35 @@ const modele = (partiel: Record<string, unknown>) => ({
 
 type Ecriture = { readonly methode: string; readonly valeur: unknown }
 
-function client(modeles: readonly Record<string, unknown>[], ecriture: { data: unknown; error: unknown; status: number } = { data: [{ id: 'm-new' }], error: null, status: 201 }) {
+const champ = (workflow: string, key: string, type: string, partiel: Record<string, unknown> = {}) => ({
+	id: `f-${key}`, workflow_id: workflow, key, label: key[0]!.toUpperCase() + key.slice(1), type, position: 1, options: null,
+	help_text: null, archived_at: null, ...partiel,
+})
+/** Les questions du seed, réduites : le workflow `wf-1` en pose quatre dont une archivée, `wf-2` une seule. */
+const QUESTIONS = [
+	champ('wf-1', 'budget', 'money', { help_text: 'Montant hors taxes.' }),
+	champ('wf-1', 'source', 'select', { options: { choices: [{ key: 'salon', label: 'Salon' }, { key: 'web', label: 'Site web' }] } }),
+	champ('wf-1', 'interlocuteur', 'contact'),
+	champ('wf-1', 'ancien', 'text', { archived_at: '2026-01-01T00:00:00Z' }),
+	champ('wf-2', 'public', 'text'),
+]
+
+function client(
+	modeles: readonly Record<string, unknown>[],
+	ecriture: { data: unknown; error: unknown; status: number } = { data: [{ id: 'm-new' }], error: null, status: 201 },
+	questionsEnPanne = false,
+) {
 	const ecritures: Ecriture[] = []
 	const faux = {
 		from: (table: string) => {
 			const maillon: Record<string, unknown> = {}
 			let ecrit = false
-			for (const methode of ['select', 'eq', 'is', 'order']) maillon[methode] = () => maillon
+			let workflow: unknown = null
+			for (const methode of ['select', 'is', 'order']) maillon[methode] = () => maillon
+			maillon.eq = (colonne: string, valeur: unknown) => {
+				if (colonne === 'workflow_id') workflow = valeur
+				return maillon
+			}
 			for (const methode of ['insert', 'update']) {
 				maillon[methode] = (valeur: unknown) => {
 					ecrit = true
@@ -43,8 +68,17 @@ function client(modeles: readonly Record<string, unknown>[], ecriture: { data: u
 					return maillon
 				}
 			}
-			maillon.then = (resoudre: (r: unknown) => unknown) =>
-				resoudre(ecrit ? ecriture : { data: table === 'workflows' ? WORKFLOWS : modeles, error: null, status: 200 })
+			maillon.then = (resoudre: (r: unknown) => unknown) => {
+				if (ecrit) return resoudre(ecriture)
+				if (table === 'form_fields') {
+					return resoudre(
+						questionsEnPanne
+							? { data: null, error: { message: 'boom' }, status: 500 }
+							: { data: QUESTIONS.filter((q) => q.workflow_id === workflow), error: null, status: 200 },
+					)
+				}
+				return resoudre({ data: table === 'workflows' ? WORKFLOWS : modeles, error: null, status: 200 })
+			}
 			return maillon
 		},
 	} as unknown as ClientCrm
@@ -113,19 +147,19 @@ describe('la fiche d’un modèle', () => {
 		expect(ecritures).toEqual([
 			{
 				methode: 'insert',
-				valeur: { workspace_id: 'ws-1', workflow_id: 'wf-2', name: 'Inter', title: null, description: null, amount: 1200.5, currency: 'EUR', checklist: ['Convention'] },
+				// T4b2 : les questions lues, les réponses partent avec le modèle — ici aucune.
+				valeur: { workspace_id: 'ws-1', workflow_id: 'wf-2', name: 'Inter', title: null, description: null, amount: 1200.5, currency: 'EUR', checklist: ['Convention'], field_values: {} },
 			},
 		])
 		await waitFor(() => expect(screen.queryByTestId('fiche-modele-affaire')).toBeNull())
 		expect(screen.getByTestId('annonce-modeles-affaires').textContent).toBe('Modèle « Inter » enregistré.')
 	})
 
-	it('« Modifier » : le workflow en phrase, le nombre de réponses reprises, et un nom pris refusé sous les champs', async () => {
+	it('« Modifier » : le workflow en phrase, et un nom pris refusé sous les champs', async () => {
 		monter(client([modele({})], { data: null, error: { code: '23505', message: 'dup' }, status: 409 }).client)
 		await userEvent.click(await screen.findByRole('button', { name: 'Modifier le modèle Audit flash' }))
 		expect(screen.getByTestId('modele-workflow-phrase').textContent).toBe('Ce modèle sert les affaires du workflow « Cycle commercial ».')
 		expect(screen.queryByLabelText(fr['admin.cardTemplates.field.workflow'])).toBeNull()
-		expect(screen.getByTestId('modele-reponses').textContent).toContain('2 réponses reprises.')
 		const nom = screen.getByLabelText(fr['admin.cardTemplates.field.name']) as HTMLInputElement
 		expect(document.activeElement).toBe(nom)
 		await userEvent.click(screen.getByTestId('modele-enregistrer'))
@@ -154,5 +188,54 @@ describe('la fiche d’un modèle', () => {
 		expect(ecritures[0]!.methode).toBe('update')
 		expect(typeof (ecritures[0]!.valeur as { archived_at: unknown }).archived_at).toBe('string')
 		await waitFor(() => expect(screen.getByTestId('annonce-modeles-affaires').textContent).toBe('Modèle « Audit flash » archivé.'))
+	})
+})
+
+// `CRM-068` T4b2 — les réponses aux questions (docs/DESIGN_SYSTEM.md §5.71 bis).
+describe('les réponses d’un modèle (T4b2)', () => {
+	const AVEC_REPONSES = modele({ field_values: { budget: 4800, source: 'salon', interlocuteur: 'c-1', ancien: 'x' } })
+
+	it('préremplit les contrôles ; contact et question archivée sont dits conservés ; l’envoi compose les réponses', async () => {
+		const { client: c, ecritures } = client([AVEC_REPONSES], { data: [{ id: 'm-1' }], error: null, status: 200 })
+		monter(c)
+		await userEvent.click(await screen.findByRole('button', { name: 'Modifier le modèle Audit flash' }))
+		const budget = (await screen.findByLabelText('Budget')) as HTMLInputElement
+		expect(budget.value).toBe('4800')
+		expect(budget.type).toBe('number')
+		expect(document.getElementById(budget.getAttribute('aria-describedby')!)?.textContent).toBe('Montant hors taxes.')
+		const source = screen.getByLabelText('Source') as HTMLSelectElement
+		expect(source.value).toBe('salon')
+		expect(screen.getByTestId('reponse-sans-saisie').textContent).toContain(fr['admin.cardTemplates.answers.kept'])
+		expect(screen.getByTestId('reponses-archivees').textContent).toBe('1 réponse à une question archivée, conservée.')
+		await userEvent.clear(budget)
+		await userEvent.selectOptions(source, 'web')
+		await userEvent.click(screen.getByTestId('modele-enregistrer'))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect((ecritures[0]!.valeur as { field_values: unknown }).field_values).toEqual({ source: 'web', interlocuteur: 'c-1', ancien: 'x' })
+	})
+
+	it('à la création, changer de workflow le dit puis efface les réponses saisies', async () => {
+		const { client: c, ecritures } = client([])
+		monter(c)
+		await userEvent.click(await screen.findByTestId('nouveau-modele-affaire'))
+		expect(screen.getByTestId('reponse-sans-saisie').textContent).toContain(fr['admin.cardTemplates.answers.onCard'])
+		await userEvent.type(await screen.findByLabelText('Budget'), '900')
+		expect(screen.getByTestId('modele-workflow-efface').textContent).toBe(fr['admin.cardTemplates.answers.workflowChange'])
+		await userEvent.selectOptions(screen.getByLabelText(fr['admin.cardTemplates.field.workflow']), 'wf-2')
+		await userEvent.type(await screen.findByLabelText('Public'), 'Lycées')
+		expect(screen.queryByLabelText('Budget')).toBeNull()
+		await userEvent.type(screen.getByLabelText(fr['admin.cardTemplates.field.name']), 'Inter')
+		await userEvent.click(screen.getByTestId('modele-enregistrer'))
+		expect((ecritures[0]!.valeur as { field_values: unknown }).field_values).toEqual({ public: 'Lycées' })
+	})
+
+	it('questions illisibles : la fiche le dit, et le modèle part sans toucher à ses réponses', async () => {
+		const { client: c, ecritures } = client([AVEC_REPONSES], { data: [{ id: 'm-1' }], error: null, status: 200 }, true)
+		monter(c)
+		await userEvent.click(await screen.findByRole('button', { name: 'Modifier le modèle Audit flash' }))
+		expect(await screen.findByText(fr['admin.cardTemplates.answers.error'])).toBeDefined()
+		await userEvent.click(screen.getByTestId('modele-enregistrer'))
+		await waitFor(() => expect(ecritures).toHaveLength(1))
+		expect('field_values' in (ecritures[0]!.valeur as object)).toBe(false)
 	})
 })

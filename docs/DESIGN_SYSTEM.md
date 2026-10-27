@@ -6794,7 +6794,9 @@ porteur du geste, borne de liste à `104ch`.
 *Écrit le 2026-10-27, avant le code (décision 766).* `docs/SPEC-checklists.md` §4 : « le formulaire montre les questions
 du workflow choisi ». Ces règles disent de quoi la fiche d'un modèle a l'air quand elle les montre.
 
-- **UN `fieldset` « Réponses aux questions », après « Points de checklist »**, légende comme celle des points. Les
+- **UN `fieldset` « Réponses aux questions », après « Points de checklist »**, légende comme celle des points — toutes deux
+  en `font-medium` et `--color-ink` (*précisé sur capture* : en 13 px `--color-text-2`, comme un libellé, la légende se
+  confondait avec celui de la première question ; la graisse seule ne suffisait pas). Les
   questions **non archivées** du workflow, dans l'ordre du formulaire (`position`), chacune avec le **contrôle de son
   type** (§5.7 : libellé au-dessus, texte d'aide dessous, mêmes formes que la fiche d'affaire), **sans astérisque ni
   mention d'étape** : aucune réponse n'est exigée d'un modèle.

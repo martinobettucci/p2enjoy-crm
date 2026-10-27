@@ -2091,10 +2091,16 @@ export const fr = {
 	'admin.cardTemplates.point.remove': 'Retirer',
 	'admin.cardTemplates.point.remove.aria': 'Retirer le point {n}',
 	'admin.cardTemplates.point.add': 'Ajouter un point',
-	'admin.cardTemplates.answers.hint':
-		'Les réponses aux questions de ce workflow se reprennent d’une affaire, par « Enregistrer comme modèle ».',
-	'admin.cardTemplates.answers.one': '{n} réponse reprise.',
-	'admin.cardTemplates.answers.many': '{n} réponses reprises.',
+	'admin.cardTemplates.answers.legend': 'Réponses aux questions',
+	'admin.cardTemplates.answers.loading': 'Chargement des questions…',
+	'admin.cardTemplates.answers.error':
+		'Les questions de ce workflow n’ont pas pu être lues : le modèle garde ses réponses si vous l’enregistrez.',
+	'admin.cardTemplates.answers.none': 'Ce workflow ne pose aucune question.',
+	'admin.cardTemplates.answers.onCard': 'Se renseigne sur l’affaire.',
+	'admin.cardTemplates.answers.kept': 'Réponse reprise d’une affaire, conservée.',
+	'admin.cardTemplates.answers.archived.one': '{n} réponse à une question archivée, conservée.',
+	'admin.cardTemplates.answers.archived.many': '{n} réponses à des questions archivées, conservées.',
+	'admin.cardTemplates.answers.workflowChange': 'Changer de workflow efface les réponses saisies.',
 	'admin.cardTemplates.save': 'Enregistrer',
 	'admin.cardTemplates.pending': 'Enregistrement…',
 	'admin.cardTemplates.cancel': 'Annuler',
@@ -2102,7 +2108,8 @@ export const fr = {
 	'admin.cardTemplates.refus.forme':
 		'Ce modèle ne convient pas : le nom compte de 1 à 120 caractères, le titre au plus 500, et la devise trois lettres majuscules.',
 	'admin.cardTemplates.refus.point': 'Un point de checklist est vide ou dépasse 200 caractères.',
-	'admin.cardTemplates.refus.reponse': 'Une réponse reprise ne convient plus aux questions de ce workflow.',
+	'admin.cardTemplates.refus.reponse':
+		'Une réponse ne convient pas à sa question — une adresse, un nombre ou une date mal formés : corrigez-la.',
 	'admin.cardTemplates.refus.forbidden': "Les modèles d'affaires se gèrent par les administrateurs de l'espace.",
 	'admin.cardTemplates.refus.sansEffet': "Rien n'a été enregistré : ce modèle n'est plus modifiable par vous, ou il a disparu.",
 	'admin.cardTemplates.refus.panne': "Le modèle n'a pas pu être enregistré. Réessayez.",

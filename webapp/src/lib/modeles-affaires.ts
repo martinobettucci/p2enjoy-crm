@@ -2,14 +2,17 @@
 //       affaire comme modèle
 // @spec docs/SPEC-checklists.md §3.5 (la table, écriture administrateur, lecture membre), §3.6 (`save_card_as_template`),
 //       §4 ; docs/DESIGN_SYSTEM.md §5.71
+// @spec CRM-068 (docs/BACKLOG.md) — tranche T4b2 : les questions du workflow d'un modèle et la composition de ses
+//       réponses (docs/DESIGN_SYSTEM.md §5.71 bis, décision 766)
 // @spec CLAUDE.md §10 — ce module ne décide AUCUN droit : il écrit, et la base tranche ; ses refus sont classés ici
 //
-// Ce module ne rend rien : il lit, écrit et classe les refus. Les réponses aux questions d'un modèle (`field_values`) sont
-// LUES et REPORTÉES telles quelles à l'écriture d'un modèle existant : leur saisie arrive avec T4b2.
+// Ce module ne rend rien : il lit, écrit et classe les refus. Les réponses d'un modèle (`field_values`) ne sont ENVOYÉES
+// que lorsque la fiche a lu les questions du workflow (T4b2) : sans elles, le modèle garde les siennes.
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { Database } from './database.types'
 import type { Json } from './database.types'
+import { COLONNES_CHAMP, normaliserSaisie, type ChampFormulaire } from './formulaire'
 import type { ClientCrm } from './supabase'
 
 /** Colonnes réellement demandées. Exportées pour que les tests éprouvent la requête émise. */
@@ -175,6 +178,85 @@ export type SaisieModele = {
 	readonly montant: string
 	readonly devise: string
 	readonly points: readonly string[]
+	/** `CRM-068` T4b2 : les réponses composées (`composerReponses`) ; absentes, la colonne n'est pas envoyée. */
+	readonly reponses?: Readonly<Record<string, Json>>
+}
+
+// ---------------------------------------------------------------------------------------------
+// Les réponses d'un modèle — T4b2, docs/DESIGN_SYSTEM.md §5.71 bis
+// ---------------------------------------------------------------------------------------------
+
+/** Les types qui désignent ce qui appartient à UNE affaire : ils ne se répondent pas dans un modèle (§5.71 bis). */
+export const TYPES_SANS_SAISIE: ReadonlySet<string> = new Set(['contact', 'user', 'file'])
+
+/** Ce qu'un contrôle de la fiche porte : du texte, une case, ou les clés d'une liste multiple. */
+export type SaisieReponse = string | boolean | readonly string[]
+
+/** Les questions du workflow, archivées comprises — elles disent quelles réponses sont conservées sans saisie. */
+export async function lireQuestionsModele(
+	client: ClientCrm,
+	idWorkflow: string,
+): Promise<EtatAsync<readonly ChampFormulaire[]>> {
+	try {
+		const reponse = await client.from('form_fields').select(COLONNES_CHAMP).eq('workflow_id', idWorkflow).order('position')
+		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
+		return pret((reponse.data ?? []) as readonly ChampFormulaire[])
+	} catch (cause) {
+		return enErreur(classerErreur(undefined, cause instanceof Error ? cause.message : String(cause)))
+	}
+}
+
+/** Les questions qui se répondent dans la fiche : non archivées, et d'un type qui ne désigne pas une affaire. */
+export function questionsSaisissables(champs: readonly ChampFormulaire[]): readonly ChampFormulaire[] {
+	return champs.filter((c) => c.archived_at === null && !TYPES_SANS_SAISIE.has(c.type))
+}
+
+const objet = (valeur: Json | undefined): Readonly<Record<string, Json>> =>
+	valeur !== null && valeur !== undefined && typeof valeur === 'object' && !Array.isArray(valeur)
+		? (valeur as Record<string, Json>)
+		: {}
+
+/** L'état initial des contrôles, d'après les réponses du modèle. */
+export function saisiesDepuisReponses(
+	champs: readonly ChampFormulaire[],
+	reponses: Json | undefined,
+): Readonly<Record<string, SaisieReponse>> {
+	const lues = objet(reponses)
+	const saisies: Record<string, SaisieReponse> = {}
+	for (const champ of questionsSaisissables(champs)) {
+		const valeur = lues[champ.key]
+		if (champ.type === 'checkbox') saisies[champ.key] = valeur === true
+		else if (champ.type === 'multiselect')
+			saisies[champ.key] = Array.isArray(valeur) ? valeur.filter((v): v is string => typeof v === 'string') : []
+		else saisies[champ.key] = valeur === null || valeur === undefined ? '' : typeof valeur === 'string' ? valeur : String(valeur)
+	}
+	return saisies
+}
+
+/**
+ * Les réponses à envoyer : celles du modèle, où chaque question saisissable prend la valeur de son contrôle. Vide — et case
+ * décochée — vaut « sans réponse » : la clé est retirée (§5.71 bis). Les autres clés — questions archivées, `contact`,
+ * `user`, `file` — sont reportées telles quelles.
+ */
+export function composerReponses(
+	champs: readonly ChampFormulaire[],
+	existantes: Json | undefined,
+	saisies: Readonly<Record<string, SaisieReponse>>,
+): Readonly<Record<string, Json>> {
+	const reponses: Record<string, Json> = { ...objet(existantes) }
+	for (const champ of questionsSaisissables(champs)) {
+		const saisie = saisies[champ.key]
+		const valeur = saisie === undefined ? null : normaliserSaisie(champ.type, saisie)
+		if (valeur === null || valeur === false) delete reponses[champ.key]
+		else reponses[champ.key] = valeur
+	}
+	return reponses
+}
+
+/** Le nombre de réponses conservées sans saisie : questions archivées ou inconnues (§5.71 bis). */
+export function reponsesConserveesArchivees(champs: readonly ChampFormulaire[], reponses: Json | undefined): number {
+	const actives = new Set(champs.filter((c) => c.archived_at === null).map((c) => c.key))
+	return Object.keys(objet(reponses)).filter((cle) => !actives.has(cle)).length
 }
 
 /** Un montant saisi : vide vaut `null`, un nombre décimal à virgule ou à point est envoyé ; le reste est refusé avant envoi. */
@@ -192,6 +274,7 @@ const colonnes = (saisie: SaisieModele, montant: number | null) => ({
 	amount: montant,
 	currency: saisie.devise.trim().toUpperCase(),
 	checklist: saisie.points.map((p) => p.trim()).filter((p) => p !== ''),
+	...(saisie.reponses === undefined ? {} : { field_values: saisie.reponses as Json }),
 })
 
 /** Pose un modèle pour un workflow. L'auteur et les dates sont posés par la base. */

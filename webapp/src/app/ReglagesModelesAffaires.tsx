@@ -2,11 +2,13 @@
 // @spec docs/SPEC-checklists.md §3.5 (écriture administrateur, lecture membre ; nom unique parmi les non archivés), §4 ;
 //       docs/DESIGN_SYSTEM.md §5.71 (l'écran), §5.39 (la forme de l'écran des modèles d'emails, reprise sans être
 //       répétée), §5.59 (la capacité d'administrer l'espace), §5.8 (états), §5.41 (archivage sans confirmation)
+// @spec CRM-068 (docs/BACKLOG.md) — tranche T4b2 : les réponses aux questions du workflow, dans la fiche d'un modèle
+//       (docs/DESIGN_SYSTEM.md §5.71 bis, décision 766 ; docs/SPEC-checklists.md §4)
 // @spec CLAUDE.md §10 — l'écran ne décide aucun droit : refusée par la base, la capacité d'administrer ferme l'écran ; la
 //       RLS de `card_templates` reste seule juge de chaque écriture, et son refus est traduit sous les champs
 //
-// LES RÉPONSES AUX QUESTIONS D'UN MODÈLE NE SE SAISISSENT PAS ICI (T4b2) : la fiche dit leur nombre et la façon de les
-// reprendre, et une modification les laisse telles quelles — la colonne n'est pas envoyée.
+// LES RÉPONSES S'ÉCRIVENT AVEC LE MODÈLE, À « ENREGISTRER » (T4b2, §5.71 bis), et seulement une fois les questions du
+// workflow lues : sans elles, la colonne n'est pas envoyée, et le modèle garde ses réponses.
 
 import { Plus, TriangleAlert, X } from 'lucide-react'
 import { useEffect, useId, useRef, useState } from 'react'
@@ -15,20 +17,28 @@ import { Button } from '../components/ui/Button'
 import { SkeletonListe } from '../components/ui/Skeleton'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { t, type CleTraduction } from '../i18n'
-import type { NatureErreur } from '../lib/async'
+import { enChargement, type EtatAsync, type NatureErreur } from '../lib/async'
+import type { ChampFormulaire } from '../lib/formulaire'
 import { lireWorkflowsAdministrables, type WorkflowAdministrable } from '../lib/administration-workflows'
 import {
 	archiverModele,
+	composerReponses,
 	lireModeles,
 	lireMontant,
+	lireQuestionsModele,
 	modifierModele,
 	poserModele,
+	reponsesConserveesArchivees,
+	saisiesDepuisReponses,
+	TYPES_SANS_SAISIE,
 	type ModeleAffaire,
 	type NatureRefusModele,
 	type SaisieModele,
+	type SaisieReponse,
 } from '../lib/modeles-affaires'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { useContexteEspace } from './ContexteEspace'
+import { choix, typeHtml } from './FormulaireCard'
 
 const CLASSES_CHAMP = 'min-h-[var(--size-target)] rounded-sm border border-border bg-surface px-3 text-base text-text'
 const CLASSES_LIBELLE = 'text-sm text-text-2'
@@ -316,6 +326,13 @@ function FicheModele({
 	})
 	const [enCours, setEnCours] = useState(false)
 	const [refus, setRefus] = useState<NatureRefusModele | 'montant' | null>(null)
+	// T4b2 — les questions du workflow choisi, et la saisie de chaque contrôle (§5.71 bis).
+	const [questions, setQuestions] = useState<EtatAsync<readonly ChampFormulaire[]>>(enChargement)
+	const [saisies, setSaisies] = useState<Readonly<Record<string, SaisieReponse>>>({})
+	const [lectureQuestions, setLectureQuestions] = useState(0)
+	// Les réponses de départ, figées à l'ouverture : une relecture de la liste — un autre modèle archivé pendant la saisie —
+	// rend un nouvel objet `modele`, qui ne doit ni relire les questions ni effacer ce qui est saisi.
+	const reponsesInitiales = useRef(modele?.reponses)
 	const premier = useRef<HTMLSelectElement | HTMLInputElement | null>(null)
 	const nomRef = useRef<HTMLInputElement | null>(null)
 	const montantRef = useRef<HTMLInputElement | null>(null)
@@ -325,6 +342,23 @@ function FicheModele({
 	useEffect(() => {
 		premier.current?.focus()
 	}, [])
+
+	// Les questions du workflow, relues quand il change : à la création, changer de workflow vide les réponses (§5.71 bis).
+	useEffect(() => {
+		if (idWorkflow === '') return
+		let actif = true
+		setQuestions(enChargement())
+		void lireQuestionsModele(client, idWorkflow).then((lues) => {
+			if (!actif) return
+			setQuestions(lues)
+			if (lues.statut === 'pret') setSaisies(saisiesDepuisReponses(lues.donnees, reponsesInitiales.current))
+		})
+		return () => {
+			actif = false
+		}
+	}, [client, idWorkflow, lectureQuestions])
+
+	const reponseSaisie = Object.values(saisies).some((v) => (Array.isArray(v) ? v.length > 0 : v !== '' && v !== false))
 
 	// Un point ajouté prend le focus : « Ajouter un point » puis la saisie, sans chercher le champ (§5.15).
 	useEffect(() => {
@@ -347,10 +381,13 @@ function FicheModele({
 		}
 		setRefus(null)
 		setEnCours(true)
+		// Les réponses ne partent qu'avec les questions lues : sans elles, le modèle garde les siennes (§5.71 bis).
+		const saisieEnvoyee: SaisieModele =
+			questions.statut === 'pret' ? { ...saisie, reponses: composerReponses(questions.donnees, reponsesInitiales.current, saisies) } : saisie
 		const issue =
 			modele === null
-				? await poserModele(client, { idWorkspace, idWorkflow }, saisie, montant.valeur)
-				: await modifierModele(client, modele.id, saisie, montant.valeur)
+				? await poserModele(client, { idWorkspace, idWorkflow }, saisieEnvoyee, montant.valeur)
+				: await modifierModele(client, modele.id, saisieEnvoyee, montant.valeur)
 		setEnCours(false)
 		if (issue.statut === 'applique') return onEnregistre(saisie.nom.trim())
 		setRefus(issue.nature)
@@ -362,6 +399,9 @@ function FicheModele({
 	return (
 		<form
 			data-testid="fiche-modele-affaire"
+			// La base juge chaque réponse (`invalid_field_value`) et l'écran écrit son refus sous les champs (§5.71) : la
+			// bulle native du navigateur, sur une adresse ou un courriel, dirait autrement la même chose ailleurs.
+			noValidate
 			aria-label={t(modele === null ? 'admin.cardTemplates.form.new' : 'admin.cardTemplates.form.edit')}
 			className="flex flex-col gap-3 rounded-lg border border-border bg-surface p-4"
 			onSubmit={(evenement) => {
@@ -396,6 +436,11 @@ function FicheModele({
 							</option>
 						))}
 					</select>
+					{reponseSaisie ? (
+						<p className="text-sm text-text-2" data-testid="modele-workflow-efface">
+							{t('admin.cardTemplates.answers.workflowChange')}
+						</p>
+					) : null}
 				</div>
 			) : (
 				// LE WORKFLOW D'UN MODÈLE EXISTANT SE LIT EN PHRASE (§5.15) : ses réponses répondent aux questions de ce workflow.
@@ -484,7 +529,7 @@ function FicheModele({
 				</div>
 			</div>
 			<fieldset className="flex flex-col gap-2 max-w-[72ch]">
-				<legend className={`${CLASSES_LIBELLE} mb-1`}>{t('admin.cardTemplates.field.points')}</legend>
+				<legend className="mb-1 text-sm font-medium text-ink">{t('admin.cardTemplates.field.points')}</legend>
 				{saisie.points.length === 0 ? null : (
 					<ul ref={listePoints} className="flex flex-col gap-2" data-testid="modele-points">
 						{saisie.points.map((point, rangPoint) => (
@@ -527,12 +572,13 @@ function FicheModele({
 					{t('admin.cardTemplates.point.add')}
 				</Button>
 			</fieldset>
-			<p className="text-sm text-text-2 max-w-[72ch]" data-testid="modele-reponses">
-				{t('admin.cardTemplates.answers.hint')}
-				{modele === null || modele.nombreReponses === 0
-					? null
-					: ` ${t(modele.nombreReponses === 1 ? 'admin.cardTemplates.answers.one' : 'admin.cardTemplates.answers.many', { n: String(modele.nombreReponses) })}`}
-			</p>
+			<ReponsesModele
+				questions={questions}
+				reponses={modele?.reponses}
+				saisies={saisies}
+				onSaisie={(cle, valeur) => setSaisies((precedentes) => ({ ...precedentes, [cle]: valeur }))}
+				onReprise={() => setLectureQuestions((n) => n + 1)}
+			/>
 			{refus === null ? null : (
 				<p
 					role="alert"
@@ -553,5 +599,165 @@ function FicheModele({
 				</Button>
 			</div>
 		</form>
+	)
+}
+
+/**
+ * Le `fieldset` « Réponses aux questions » (§5.71 bis) : les questions non archivées du workflow avec le contrôle de leur
+ * type ; `contact`, `user` et `file` en phrase ; le nombre de réponses conservées à des questions archivées.
+ */
+function ReponsesModele({
+	questions,
+	reponses,
+	saisies,
+	onSaisie,
+	onReprise,
+}: {
+	readonly questions: EtatAsync<readonly ChampFormulaire[]>
+	readonly reponses: ModeleAffaire['reponses'] | undefined
+	readonly saisies: Readonly<Record<string, SaisieReponse>>
+	readonly onSaisie: (cle: string, valeur: SaisieReponse) => void
+	readonly onReprise: () => void
+}) {
+	const id = useId()
+	const lues =
+		reponses !== null && reponses !== undefined && typeof reponses === 'object' && !Array.isArray(reponses) ? reponses : {}
+	return (
+		<fieldset className="flex flex-col gap-3 max-w-[72ch]" data-testid="modele-reponses">
+			<legend className="mb-1 text-sm font-medium text-ink">{t('admin.cardTemplates.answers.legend')}</legend>
+			{questions.statut === 'chargement' ? (
+				<p className="text-sm text-text-3">{t('admin.cardTemplates.answers.loading')}</p>
+			) : questions.statut === 'erreur' ? (
+				<div className="flex flex-wrap items-center gap-2">
+					<p className="text-sm text-text-2">{t('admin.cardTemplates.answers.error')}</p>
+					<Button variante="discret" taille="compacte" onClick={onReprise}>
+						{t('state.error.retry')}
+					</Button>
+				</div>
+			) : questions.donnees.filter((c) => c.archived_at === null).length === 0 ? (
+				<p className="text-sm text-text-2">{t('admin.cardTemplates.answers.none')}</p>
+			) : (
+				questions.donnees
+					.filter((c) => c.archived_at === null)
+					.map((champ) => {
+						const idControle = `${id}-${champ.key}`
+						const idAide = `${idControle}-aide`
+						if (TYPES_SANS_SAISIE.has(champ.type)) {
+							return (
+								<div key={champ.id} className="flex flex-col gap-1" data-testid="reponse-sans-saisie">
+									<span className={CLASSES_LIBELLE}>{champ.label}</span>
+									<p className="text-sm text-text-2">
+										{t(champ.key in lues ? 'admin.cardTemplates.answers.kept' : 'admin.cardTemplates.answers.onCard')}
+									</p>
+								</div>
+							)
+						}
+						return (
+							<div key={champ.id} className="flex flex-col gap-1">
+								<label htmlFor={idControle} className={CLASSES_LIBELLE}>
+									{champ.label}
+								</label>
+								<ControleReponse
+									id={idControle}
+									champ={champ}
+									saisie={saisies[champ.key]}
+									decritPar={champ.help_text === null || champ.help_text === '' ? undefined : idAide}
+									onSaisie={(valeur) => onSaisie(champ.key, valeur)}
+								/>
+								{champ.help_text === null || champ.help_text === '' ? null : (
+									<p id={idAide} className="text-sm text-text-3">
+										{champ.help_text}
+									</p>
+								)}
+							</div>
+						)
+					})
+			)}
+			{questions.statut === 'pret' && reponsesConserveesArchivees(questions.donnees, reponses) > 0 ? (
+				<p className="text-sm text-text-2" data-testid="reponses-archivees">
+					{t(
+						reponsesConserveesArchivees(questions.donnees, reponses) === 1
+							? 'admin.cardTemplates.answers.archived.one'
+							: 'admin.cardTemplates.answers.archived.many',
+						{ n: String(reponsesConserveesArchivees(questions.donnees, reponses)) },
+					)}
+				</p>
+			) : null}
+		</fieldset>
+	)
+}
+
+/** Le contrôle d'une question, CONTRÔLÉ : la valeur vit dans la fiche jusqu'à « Enregistrer » (§5.71 bis). */
+function ControleReponse({
+	id,
+	champ,
+	saisie,
+	decritPar,
+	onSaisie,
+}: {
+	readonly id: string
+	readonly champ: ChampFormulaire
+	readonly saisie: SaisieReponse | undefined
+	readonly decritPar: string | undefined
+	readonly onSaisie: (valeur: SaisieReponse) => void
+}) {
+	const commun = { id, 'data-reponse': champ.key, ...(decritPar === undefined ? {} : { 'aria-describedby': decritPar }) }
+	if (champ.type === 'checkbox') {
+		return (
+			<span className="flex items-center min-h-[var(--size-target)]">
+				<input
+					{...commun}
+					type="checkbox"
+					checked={saisie === true}
+					onChange={(evenement) => onSaisie(evenement.currentTarget.checked)}
+					className="size-6 rounded-sm border border-border"
+				/>
+			</span>
+		)
+	}
+	if (champ.type === 'textarea') {
+		return (
+			<textarea
+				{...commun}
+				rows={3}
+				value={typeof saisie === 'string' ? saisie : ''}
+				onChange={(evenement) => onSaisie(evenement.currentTarget.value)}
+				className={`${CLASSES_CHAMP} py-2`}
+			/>
+		)
+	}
+	if (champ.type === 'select' || champ.type === 'multiselect') {
+		const multiple = champ.type === 'multiselect'
+		return (
+			<select
+				{...commun}
+				multiple={multiple}
+				value={multiple ? (Array.isArray(saisie) ? [...saisie] : []) : typeof saisie === 'string' ? saisie : ''}
+				onChange={(evenement) =>
+					onSaisie(
+						multiple
+							? [...evenement.currentTarget.selectedOptions].map((option) => option.value)
+							: evenement.currentTarget.value,
+					)
+				}
+				className={`${CLASSES_CHAMP} ${multiple ? 'py-2' : ''}`}
+			>
+				{multiple ? null : <option value="">{t('form.select.none')}</option>}
+				{choix(champ.options).map((entree) => (
+					<option key={entree.key} value={entree.key}>
+						{entree.label}
+					</option>
+				))}
+			</select>
+		)
+	}
+	return (
+		<input
+			{...commun}
+			type={typeHtml(champ.type)}
+			value={typeof saisie === 'string' ? saisie : ''}
+			onChange={(evenement) => onSaisie(evenement.currentTarget.value)}
+			className={CLASSES_CHAMP}
+		/>
 	)
 }
