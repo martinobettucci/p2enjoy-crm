@@ -148,7 +148,7 @@ libres ; deux modèles d'affaires, dont un créé par « Enregistrer comme modè
 **Précisé le 2026-10-26 (décision 755)** : l'exigence n'est **pas** posée sur le workflow par défaut. Une quinzaine de
 preuves (pgTAP, API, interface) y déplacent des affaires de Relance vers Négociation, et une exigence bloquerait tout
 rattachement qui n'a pas coché le point. Le workflow par défaut reçoit les points d'étape **sans exigence** ; l'exigence,
-les trois affaires et les deux points libres vivent dans un **channel de démonstration** dont le workflow est dédié
+les trois affaires et les deux points libres vivent dans un **channel de démonstration** du track `studio-web`, dont le workflow est dédié
 (`docs/SPEC-seed.md` §28).
 
 ## 7. Tranches

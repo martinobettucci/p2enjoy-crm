@@ -56,6 +56,13 @@ select ok(has_column_privilege('authenticated', 'public.card_checklist_items', '
 	and not has_column_privilege('authenticated', 'public.card_checklist_items', 'placement_id', 'INSERT'),
 	'5 — le client coche ; l''heure, l''auteur et le rattachement d''un point lui sont fermés');
 
+-- ISOLATION — `CRM-068` T3a (décision 51) : le seed pose depuis `docs/SPEC-seed.md` §28 des points de MÊMES libellés sur
+-- le workflow par défaut, que les affaires du jeu portent. Cette suite désigne ses points par leur libellé : elle retire
+-- donc, dans sa transaction annulée au `rollback`, les points du seed — leur origine d'abord, ce qui détache les points
+-- copiés sur les affaires, puis ces points détachés, qu'un point d'étape interdirait de retirer.
+delete from public.workflow_step_checklist_items where id::text not like 'c0680000%';
+delete from public.card_checklist_items;
+
 -- =============================================================================================
 -- 2. Les points d'une étape — écrits par l'administrateur
 -- =============================================================================================

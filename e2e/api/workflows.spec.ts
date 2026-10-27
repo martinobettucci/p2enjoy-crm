@@ -110,7 +110,9 @@ test.describe('W0 — le seed a réellement posé le workflow par défaut', () =
 		// `track` livrée par `docs/SPEC-workflow-engine.md` §4.10. L'assertion d'origine comptait
 		// « un workflow, ni plus ni moins » ; elle est resserrée sur ce que cette unité garantit
 		// réellement, plutôt que relâchée : un seul workflow **global**, un seul **par défaut**.
-		expect(workflows.filter((w) => w.scope === 'global')).toHaveLength(1)
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : le workflow de démonstration des checklists (`…c6801`,
+		// `docs/SPEC-seed.md` §28) est global sans être par défaut. Un seul workflow PAR DÉFAUT, toujours ; deux globaux.
+		expect(workflows.filter((w) => w.scope === 'global')).toHaveLength(2)
 		expect(workflows.filter((w) => w.is_default)).toHaveLength(1)
 
 		const defaut = workflows.find((w) => w.id === WORKFLOW_SEED)!
@@ -186,7 +188,9 @@ test.describe('W0 — le seed a réellement posé le workflow par défaut', () =
 		)
 		expect(reponse.status()).toBe(200)
 		const channels = (await reponse.json()) as { id: string; workflow_id: string | null }[]
-		expect(channels).toHaveLength(8)
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du track `studio-web` (`docs/SPEC-seed.md` §28,
+	// décision 755), servi par son propre workflow global, s'ajoute au jeu ; l'objet de l'assertion ne bouge pas.
+		expect(channels).toHaveLength(9)
 		expect(channels.every((c) => c.workflow_id !== null)).toBe(true)
 		expect(channels.filter((c) => c.workflow_id === WORKFLOW_SEED)).toHaveLength(7)
 	})

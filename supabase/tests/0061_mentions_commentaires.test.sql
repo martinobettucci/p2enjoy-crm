@@ -296,15 +296,17 @@ select is(
 select is(
 	(select count(*) from public.channels ch
 	  where app.can_read_channel_pour(ch.id, pg_temp.p_admin())),
-	8::bigint,
-	'CRM-064 §5.4 — l''administratrice lit les HUIT channels : `resolve_access` rend « write » '
+	-- RÉVISÉE PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du track `studio-web` (`docs/SPEC-seed.md` §28)
+	-- porte le jeu à neuf channels, que la lectrice lit comme le reste de `studio-web`.
+	9::bigint,
+	'CRM-064 §5.4 — l''administratrice lit les NEUF channels : `resolve_access` rend « write » '
 	'pour un `admin` avant même de regarder les droits fins, et la délégation le préserve');
 
 select is(
 	(select count(*) from public.channels ch
 	  where app.can_read_channel_pour(ch.id, pg_temp.p_viewer())),
-	6::bigint,
-	'CRM-064 §5.4 — la lectrice lit SIX channels sur huit : `appels-offres` et `grands-comptes` '
+	7::bigint,
+	'CRM-064 §5.4 — la lectrice lit SEPT channels sur neuf : `appels-offres` et `grands-comptes` '
 	'lui sont fermés par le droit fin « none » posé sur leur track (mesure M5)');
 
 select ok(

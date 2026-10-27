@@ -333,7 +333,9 @@ function AjoutPoint({ onAjouter }: { readonly onAjouter: (libelle: string) => Pr
 	const [libelle, setLibelle] = useState('')
 	const [enVol, setEnVol] = useState(false)
 	const [refus, setRefus] = useState<NatureRefusChecklist | null>(null)
-	const droit = useRefus(enVol)
+	// LE CHAMP N'EST PAS ÉTEINT PENDANT L'ENVOI, seul le bouton l'est : un champ désactivé perd le focus, et le navigateur
+	// ne le lui rend pas au rendu qui le réactive — mesuré par l'E2E, que jsdom ne voit pas. `envoyer` refuse le double envoi.
+	const droit = useRefus()
 	const bouton = useRefus(enVol || libelle.trim() === '')
 	const champ = useRef<HTMLInputElement>(null)
 	const idChamp = useId()

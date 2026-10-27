@@ -145,7 +145,7 @@ test.describe('K0 — le seed est dans l’état que le §4.12.7 déclare', () =
 	// RÉVISÉ PAR `CRM-077` : le seed pose deux channels de plus sous le track en corbeille
 	// (`docs/SPEC-seed.md` §10). Ce que ce scénario garantit est inchangé — aucun channel sans
 	// workflow, et un SEUL suivant la copie de portée `track` —, seul le compte total bouge.
-	test('huit channels rattachés, un seul suivant un workflow de portée `track`', async ({
+	test('neuf channels rattachés, un seul suivant un workflow de portée `track`', async ({
 		request,
 	}) => {
 		const reponse = await request.get(
@@ -154,7 +154,9 @@ test.describe('K0 — le seed est dans l’état que le §4.12.7 déclare', () =
 		)
 		expect(reponse.status()).toBe(200)
 		const channels = (await reponse.json()) as Channel[]
-		expect(channels).toHaveLength(8)
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du track `studio-web` (`docs/SPEC-seed.md` §28,
+	// décision 755), servi par son propre workflow global, s'ajoute au jeu ; l'objet de l'assertion ne bouge pas.
+		expect(channels).toHaveLength(9)
 		expect(channels.every((c) => c.workflow_id !== null)).toBe(true)
 
 		const copie = await copieDuSeed(request)

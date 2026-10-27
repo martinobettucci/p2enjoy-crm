@@ -2543,7 +2543,8 @@ entre dans une étape après leur pose : ils se lisent sur les affaires que l'on
 étapes — Prospection (`…c6811`, initiale), Relance (`…c6812`), Négociation (`…c6813`) —, deux transitions — Prospection →
 Relance (`…c6821`), Relance → Négociation (`…c6822`) —, les mêmes trois points (`…c6831`, `…c6832` sur Prospection,
 `…c6833` sur Relance), et **une exigence** : Relance → Négociation exige « Proposition envoyée ». Il sert le channel
-« Checklists » (`…c6841`, slug `checklists`) du track `formation`.
+« Checklists » (`…c6841`, slug `checklists`) du track `studio-web` — et non `formation`, qui doit rester le seul track
+à un seul channel : `e2e/api/channels.spec.ts` y prouve la barre à un seul onglet (mesuré le 2026-10-27).
 
 | Affaire (titre stable) | Étape | Ce qu'elle démontre |
 |---|---|---|

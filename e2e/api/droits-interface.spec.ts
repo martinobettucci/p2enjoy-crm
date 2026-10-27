@@ -44,10 +44,12 @@ test.describe('la capacité d’écriture lue par l’interface (docs/SPEC-droit
 	test('par channel : l’administratrice écrit tout, le business developer tout sauf « maintenance », la lectrice « prospection » seul', async ({
 		request,
 	}) => {
-		expect(await ecrits(request, await jetonDe(ADMIN.adresse))).toEqual(['031', '032', '033', '034', '035', '036', '037', '038'])
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du track `studio-web` (`docs/SPEC-seed.md` §28,
+	// décision 755), servi par son propre workflow global, s'ajoute au jeu ; l'objet de l'assertion ne bouge pas.
+		expect(await ecrits(request, await jetonDe(ADMIN.adresse))).toEqual(['031', '032', '033', '034', '035', '036', '037', '038', '841'])
 		// RÉVISÉ PAR `CRM-077` DIXIÈME TRANCHE (§8.4) : …038 est en corbeille, retiré par l'administratrice, et le business
 		// developer ne le lit plus — il n'en reçoit donc aucune capacité.
-		expect(await ecrits(request, await jetonDe(BIZDEV.adresse))).toEqual(['031', '032', '033', '034', '036', '037'])
+		expect(await ecrits(request, await jetonDe(BIZDEV.adresse))).toEqual(['031', '032', '033', '034', '036', '037', '841'])
 		expect(await ecrits(request, await jetonDe(VIEWER.adresse))).toEqual(['031'])
 	})
 

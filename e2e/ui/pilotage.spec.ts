@@ -97,7 +97,9 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		// que la tranche 2 c a posé les deux surcharges — jamais 183 425,00, la valeur qu'il avait
 		// quand le catalogue l'emportait partout.
 		const negociation = ligneNoeud(page, 'EUR', 'Négociation')
-		await expect(negociation.getByTestId('pilotage-affaires')).toHaveText('9')
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : les trois affaires du channel « Checklists » (`docs/SPEC-seed.md` §28),
+		// nées sans montant en prospection, relance et négociation, s'ajoutent aux comptes ; montants et pondérés intacts.
+		await expect(negociation.getByTestId('pilotage-affaires')).toHaveText('10')
 		expect(chiffresDe(await negociation.getByTestId('pilotage-montant').innerText())).toBe(36685000)
 		expect(chiffresDe(await negociation.getByTestId('pilotage-pondere').innerText())).toBe(23075250)
 	})
@@ -176,8 +178,9 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		// La mention du §7.3 : une affaire active sans montant — `Piste entrante à qualifier`. Sans
 		// elle, un prévisionnel bas se lit comme un portefeuille PAUVRE au lieu d'un portefeuille MAL
 		// RENSEIGNÉ.
+		// RÉVISÉ PAR `CRM-068` T3a : les trois affaires du channel « Checklists » (§28) sont nées sans montant — QUATRE.
 		await expect(page.getByTestId('pilotage-sans-montant')).toHaveText(
-			'1 affaire sans montant renseigné.',
+			'4 affaires sans montant renseigné.',
 		)
 		// La portée est ÉCRITE : sans elle, l'écart avec le total d'un collègue se lirait comme une
 		// erreur de calcul.
@@ -200,17 +203,19 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 
 		// Trois lignes repliées diffèrent, et elles sont NOMMÉES au §5.3 : `prospection` 11 → 10,
 		// `relance` 8 → 6, `livre` 7 → 6.
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : les trois affaires du channel « Checklists » (`docs/SPEC-seed.md` §28),
+		// nées sans montant en prospection, relance et négociation, s'ajoutent aux comptes ; montants et pondérés intacts.
 		await expect(
 			ligneNoeud(page, 'EUR', 'Prospection').getByTestId('pilotage-affaires'),
-		).toHaveText('10')
+		).toHaveText('11')
 		await expect(ligneNoeud(page, 'EUR', 'Relance').getByTestId('pilotage-affaires')).toHaveText(
-			'6',
+			'7',
 		)
 		await expect(ligneNoeud(page, 'EUR', 'Livré').getByTestId('pilotage-affaires')).toHaveText('6')
 		// Et `Négociation` est IDENTIQUE : aucune des affaires qu'elle ne voit pas n'est à ce nœud.
 		await expect(
 			ligneNoeud(page, 'EUR', 'Négociation').getByTestId('pilotage-affaires'),
-		).toHaveText('9')
+		).toHaveText('10')
 
 		// L'ÉCRAN NE NOMME JAMAIS CE QU'IL NE MONTRE PAS (§5.48) : aucune phrase ne dit qu'une
 		// affaire lui est masquée, et l'y écrire divulguerait par la bande ce que la RLS ferme.
@@ -232,10 +237,10 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		// preuve qui n'observerait que le nombre de lignes ne dirait pas si l'entonnoir a été calculé
 		// avant ou après la RLS.
 		expect(eur - 34489250, 'l’écart entre les deux profils vaut 36 150,00 EUR').toBe(3615000)
-		// Le compte des affaires suit la même règle : onze pour elle, dix pour la lectrice.
+		// Le compte des affaires suit la même règle : douze pour elle, onze pour la lectrice (révisé par `CRM-068` T3a).
 		await expect(
 			ligneNoeud(page, 'EUR', 'Prospection').getByTestId('pilotage-affaires'),
-		).toHaveText('11')
+		).toHaveText('12')
 	})
 
 	test('S7 — l’entrée « Pilotage » de la barre latérale mène ici, atteinte au CLAVIER', async ({
@@ -291,7 +296,7 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 	// peut poser : la SECONDE lecture contre la vraie RLS, et l'adresse contre le vrai routeur.
 	// -------------------------------------------------------------------------------------------
 
-	test('S9 — le sélecteur offre les six channels du seed, groupés par track (§5.48 bis)', async ({
+	test('S9 — le sélecteur offre les sept channels du seed, groupés par track (§5.48 bis)', async ({
 		page,
 	}) => {
 		await connecter(page)
@@ -319,7 +324,8 @@ test.describe('CRM-066 — tableau de pilotage (docs/SPEC-analytique.md §8)', (
 		])
 		// M9, MESURÉ : quatre tracks offrables, six channels, plus l'option de tête et les quatre
 		// « Tout le track » — onze options. `appels-offres` est archivé, `annexes-2023` en corbeille.
-		await expect(selecteur.locator('option')).toHaveCount(11)
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : « Checklists » (`studio-web`, §28) — sept channels, DOUZE options.
+		await expect(selecteur.locator('option')).toHaveCount(12)
 		await expect(selecteur.getByRole('option', { name: /Appels d’offres/ })).toHaveCount(0)
 		await expect(selecteur.getByRole('option', { name: /Annexes 2023/ })).toHaveCount(0)
 		// CHAQUE OPTION NOMME SON TRACK — défaut trouvé en regardant `pilotage-portee-xl-1440.jpg` :

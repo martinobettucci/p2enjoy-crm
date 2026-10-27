@@ -317,7 +317,9 @@ test.describe('Administration du catalogue de nœuds — CRM-030', () => {
 		// RÉVISÉ PAR `CRM-046` TRANCHE 2 : les cards de volume de `docs/SPEC-seed.md` §9.11
 		// occupent elles aussi `prospection`, qui en porte ONZE actives. Le compte suit la donnée ;
 		// ce que le scénario démontre — le refus vient de la base ET porte son compte — est intact.
-		await expect(alerte).toContainText('11 affaires en cours')
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : « Formation IA — Cerfrance », au nœud `prospection` du workflow de
+		// démonstration des checklists (`docs/SPEC-seed.md` §28), y porte DOUZE affaires actives.
+		await expect(alerte).toContainText('12 affaires en cours')
 		await expect(alerte).toContainText('déplacez-les')
 
 		// LA LIGNE EST RELUE : le refus n'a rien archivé, et une preuve qui se contenterait de

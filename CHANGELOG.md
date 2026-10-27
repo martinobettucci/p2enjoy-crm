@@ -37,6 +37,23 @@ d'exécuter le code attendu.
   pour les seuls administrateurs de l'espace. Ces retraits sont définitifs, comme dans l'éditeur.
 - **Plateforme ▸ Connecteur MCP** : la matrice des droits gagne la ligne « Workflows », après « Structure ».
 
+### `CRM-068` — les checklists d'une affaire (en cours : T1, T2, T3a)
+
+- **Base** — migration `0125` : les points d'une étape (`workflow_step_checklist_items`, écrits par l'administrateur), les
+  points d'une affaire (`card_checklist_items`, libres ou ajoutés par la base à l'entrée d'un rattachement dans une
+  étape), les points exigés par une transition ; l'heure et l'auteur d'un cochage posés par la base, le fil le trace
+  (`checklist_checked`, `checklist_unchecked`). Migration `0128` : `move_card` refuse `checklist_incomplete` en nommant
+  les points manquants.
+- **Fiche** — le bloc « Checklist », après le formulaire : points de l'étape courante (avec « Exigé pour passer à … »),
+  des étapes traversées, points libres ; cocher, décocher, ajouter et retirer un point libre ; le compte « 2 sur 3 ».
+- **Board** — la carte porte le compte « n/m » des points de son étape, relu après un déplacement ; le bandeau d'un refus
+  nomme les points à cocher.
+- **Fil** — « Point de checklist coché » et « … décoché », famille « Champs ».
+- **Seed** (`docs/SPEC-seed.md` §28, décision 755) — trois points d'étape sur le workflow par défaut, sans exigence ; un
+  channel « Checklists » (track Studio web) servi par un workflow de démonstration et son exigence, trois affaires dont une
+  bloquée.
+- Reste : l'éditeur de workflows (T3b), les modèles d'affaires (T4), le connecteur (T5).
+
 ### `CRM-117` — le manuel joignable depuis la webapp (en cours)
 
 - **Une icône « Aide » dans l'en-tête**, à côté de la cloche : un panneau mène au chapitre qui décrit l'écran courant, et au

@@ -280,21 +280,24 @@ release savepoint p_insert;
 -- peine d'être redite : le compte suit le contrat du seed, l'OBJET de l'assertion ne bouge pas.
 -- Sur quarante et une adresses, l'unicité de la colonne générée est d'ailleurs éprouvée sur un
 -- échantillon presque trois fois plus grand qu'avant.
+--
+-- RÉVISÉE PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du seed (`docs/SPEC-seed.md` §28, décision 755)
+-- porte trois affaires de plus. Le compte suit le contrat du seed ; l'objet de l'assertion ne bouge pas.
 select is(
 	(select count(*)::int from public.cards),
-	41,
-	'les quarante et une cards du seed sont intactes : cette unité ne touche aucun contenu');
+	44,
+	'les quarante-quatre cards du seed sont intactes : cette unité ne touche aucun contenu');
 
 select is(
 	(select count(*)::int from public.cards
 	  where email_local_part ~ '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}$'),
-	41,
-	'et leurs quarante et une adresses ont toujours la forme générée : aucune n''a été réécrite');
+	44,
+	'et leurs quarante-quatre adresses ont toujours la forme générée : aucune n''a été réécrite');
 
 select is(
 	(select count(distinct email_local_part)::int from public.cards),
-	41,
-	'quarante et une adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne '
+	44,
+	'quarante-quatre adresses DISTINCTES : l''index unique tient, et le retrait du privilège ne '
 	'l''a pas relâché');
 
 -- =============================================================================================

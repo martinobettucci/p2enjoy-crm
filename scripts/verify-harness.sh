@@ -1704,7 +1704,11 @@ SCENARIOS_API=1246
 # 390 px avec Échap. 962 + 2 = 964, valeur COMPTÉE.
 # **+1 par `CRM-068` T2, 2026-10-26** : `e2e/ui/checklists.spec.ts`, fichier NEUF (le bandeau du board nomme le point,
 # puis le déplacement passe). 964 + 1 = 965, COMPTÉE.
-SCENARIOS_UI=965
+# **+4 par `CRM-068` T3a, 2026-10-27** : `e2e/ui/checklists.spec.ts` gagne la fiche sur le jeu du seed (groupes, exigence,
+# compte, 1440 et 390), le compte du board et l'affaire bloquée, les gestes sur une affaire jetable avec le fil, la
+# lectrice. 965 + 4 = 969, COMPTÉE ; la campagne complète, jouée avec des specs d'autres sessions non committées, rendait
+# « 974 passed, 10 failed » sur 984, les dix rejoués verts après révision.
+SCENARIOS_UI=969
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

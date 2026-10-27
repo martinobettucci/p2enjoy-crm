@@ -159,10 +159,12 @@ select ok(
 
 select pg_temp.endosser(pg_temp.camille());
 
+-- RÉVISÉE PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du seed (`docs/SPEC-seed.md` §28, décision 755)
+-- porte trois affaires de plus. Le compte suit le contrat du seed ; l'objet de l'assertion ne bouge pas.
 select is(
 	(select sum(e.affaires)::integer from public.entonnoir_conversion() e),
-	39,
-	'CRM-066 : Camille, administratrice, totalise 39 affaires actives — un droit fin `none` sur '
+	42,
+	'CRM-066 : Camille, administratrice, totalise 42 affaires actives — un droit fin `none` sur '
 	'`conseil-ia` ne restreint JAMAIS un administrateur de workspace');
 
 select pg_temp.redevenir_proprietaire();
@@ -170,17 +172,17 @@ select pg_temp.endosser(pg_temp.driss());
 
 select is(
 	(select sum(e.affaires)::integer from public.entonnoir_conversion() e),
-	39,
-	'CRM-066 : Driss, business developer, totalise lui aussi 39 affaires');
+	42,
+	'CRM-066 : Driss, business developer, totalise lui aussi 42 affaires');
 
 select pg_temp.redevenir_proprietaire();
 select pg_temp.endosser(pg_temp.farida());
 
 select is(
 	(select sum(e.affaires)::integer from public.entonnoir_conversion() e),
-	35,
-	'CRM-066 : Farida, lectrice, totalise 35 affaires — QUATRE de moins. C''EST LA PREUVE que '
-	'l''agrégat s''exécute sous l''identité de l''appelant : en `definer` elle en verrait 39');
+	38,
+	'CRM-066 : Farida, lectrice, totalise 38 affaires — QUATRE de moins. C''EST LA PREUVE que '
+	'l''agrégat s''exécute sous l''identité de l''appelant : en `definer` elle en verrait 42');
 
 select is(
 	(select count(*)::integer from public.entonnoir_conversion() e

@@ -35952,6 +35952,10 @@ révision des preuves ; aucune exigence au seed.
 **Décision du responsable : le workflow de démonstration dédié.** Les points d'étape vont sur le workflow par défaut,
 sans exigence ; l'exigence, les trois affaires et les points libres vivent dans un channel « Checklists » du track
 `formation`, servi par un workflow dédié.
+*Précisé le 2026-10-27, à la mesure* : le channel est posé dans le track **`studio-web`**, et non `formation` comme écrit
+d'abord. `formation` était le seul track à un seul channel, et `e2e/api/channels.spec.ts` y prouve la barre à un seul
+onglet : y ajouter « Checklists » effaçait cet état du jeu. Le choix du responsable — un workflow de démonstration
+dédié — est inchangé.
 **Persisté** : `docs/SPEC-checklists.md` §6 (précision), `docs/SPEC-seed.md` §28. Le code suit.
 
 *Même session, reprise de `CRM-068` T3a.* Une consigne de fin relayée par p2enjoy-crm-64 avait arrêté la tranche

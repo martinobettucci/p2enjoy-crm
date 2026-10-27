@@ -133,7 +133,8 @@ test.describe('les checklists — hors interface (docs/SPEC-checklists.md §3)',
 			const rattachement = await request.get(`${URL_API}/rest/v1/card_placements?card_id=eq.${carte}&select=id`, {
 				headers: service,
 			})
-			const [{ id }] = (await rattachement.json()) as { id: string }[]
+			const id = ((await rattachement.json()) as { id: string }[])[0]?.id ?? ''
+			expect(id, 'le rattachement de l’affaire créée').not.toBe('')
 			const driss = await jetonDe('bizdev@p2enjoy.test')
 			// Le point peut avoir été coché par un scénario précédent : il est décoché d'abord, par Driss.
 			await request.patch(pointDeLaCarte(driss), { headers: representation(driss), data: { checked: false } })

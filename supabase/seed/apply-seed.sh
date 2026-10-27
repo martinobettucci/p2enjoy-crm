@@ -1707,6 +1707,32 @@ info "Droits fins : ${#DROITS_FINS[@]} — une ligne par situation de la matrice
 info "Farida Nowak (viewer) ne voit plus « Conseil & IA », mais voit « Prospection » : le droit"
 info "de channel rouvre ce que le droit de track ferme. Camille Aubert (admin) voit tout."
 
+# --- 8 bis bis. Points de checklist du workflow par défaut — CRM-068 T3a, docs/SPEC-seed.md §28.1 ----------------------------
+# @spec CRM-068 (docs/BACKLOG.md) — tranche T3a : trois points d'étape sur le workflow par défaut, sans exigence
+#       (docs/SPEC-checklists.md §6, décision 755 ; docs/SPEC-seed.md §28)
+#
+# POSÉS AVANT LES CARDS, ET C'EST CE QUI REND LE JEU CONVERGENT. Le déclencheur de la base ajoute les points d'une étape au
+# rattachement qui y entre ; la convergence des cards réécrit l'étape à chaque passage. Posés après, ils manquaient aux
+# affaires d'un premier passage et apparaissaient au second (mesuré le 2026-10-26). Posés ici, chaque affaire du jeu entrée
+# en Prospection ou en Relance les porte dès le premier passage. Écrits sous le jeton de l'administratrice (§28.2).
+JETON_ADMIN_CK_DEFAUT=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_CK_DEFAUT" ] || die "connexion de l'administratrice impossible : les points d'étape s'écrivent sous son
+        jeton (docs/SPEC-seed.md §28.2)."
+for ligne in "61|5eed0000-0000-4000-8000-000000000061|Besoin confirmé|1" "62|5eed0000-0000-4000-8000-000000000061|Décideur identifié|2" \
+	"63|5eed0000-0000-4000-8000-000000000062|Proposition envoyée|1"; do
+	IFS='|' read -r suffixe etape libelle position <<< "$ligne"
+	id="5eed0000-0000-4000-8000-0000000c68$suffixe"
+	code=$(api GET "/rest/v1/workflow_step_checklist_items?select=id&id=eq.$id")
+	attendu "$code" "lecture du point « $libelle »" 200
+	[ "$(jq -r 'length' "$CORPS")" != "0" ] && continue
+	code=$(curl -s -o "$CORPS" -w '%{http_code}' -X POST "$API/rest/v1/workflow_step_checklist_items" \
+		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN_CK_DEFAUT" -H 'Content-Type: application/json' \
+		-d "$(jq -nc --arg id "$id" --arg e "$etape" --arg l "$libelle" --argjson p "$position" \
+			'{id: $id, workspace_id: "5eed0000-0000-4000-8000-000000000001", workflow_id: "5eed0000-0000-4000-8000-000000000051",
+			  step_id: $e, label: $l, position: $p}')")
+	attendu "$code" "point « $libelle » du workflow par défaut" 201
+done
+
 # --- 8 ter. Cards — docs/SPEC-cards.md §9 ------------------------------------------------------
 # Mêmes règles que les sections précédentes : véritable API REST, clé de service, écriture
 # convergente sur la clé primaire.
@@ -4841,6 +4867,141 @@ if [ "$(jq -r '.[0].deleted_at // "null"' "$CORPS")" = 'null' ]; then
 fi
 info "Activités : ${#ACTIVITES_SEED[@]} sur 2 affaires — appel, réunion, visio —, une corrigée par son auteur, une
       retirée par la modération — docs/SPEC-seed.md §23"
+
+# --- 8 quinvicies. Les checklists d'une affaire — CRM-068 T3a, docs/SPEC-seed.md §28 ------------------------------------
+# @spec CRM-068 (docs/BACKLOG.md) — tranche T3a : les points d'étape du workflow par défaut, sans exigence ; un workflow de
+#       démonstration dédié, son exigence, trois affaires et deux points libres (docs/SPEC-checklists.md §6, décision 755 ;
+#       docs/SPEC-seed.md §28)
+#
+# LE VRAI CHEMIN (§28.2) : la structure est écrite sous le jeton de l'administratrice, comme l'éditeur de workflows ; les
+# affaires naissent par `creer_affaire` et avancent par `move_card` sous le jeton de Driss ; les points d'étape sont
+# ajoutés par le déclencheur de la base à l'entrée dans l'étape, JAMAIS insérés ici.
+CK_PREFIXE='5eed0000-0000-4000-8000-0000000c68'
+CK_WORKFLOW="${CK_PREFIXE}01"
+CK_PROSPECTION="${CK_PREFIXE}11"
+CK_RELANCE="${CK_PREFIXE}12"
+CK_NEGOCIATION="${CK_PREFIXE}13"
+CK_VERS_RELANCE="${CK_PREFIXE}21"
+CK_VERS_NEGOCIATION="${CK_PREFIXE}22"
+CK_CHANNEL="${CK_PREFIXE}41"
+CK_TRACK_STUDIO='5eed0000-0000-4000-8000-000000000022'
+CK_ESPACE='5eed0000-0000-4000-8000-000000000001'
+
+echo
+say "8 quinvicies. Checklists d'une affaire"
+
+JETON_ADMIN_CK=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+JETON_BIZDEV_CK=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_CK" ] && [ -n "$JETON_BIZDEV_CK" ] || die "connexion d'un compte du jeu impossible : les checklists
+        s'écrivent sous le jeton de l'administratrice et de Driss (docs/SPEC-seed.md §28.2)."
+
+# Pose une ligne sous le jeton de l'administratrice si son identifiant est absent (convergence par présence, §28.3).
+ck_poser() { # $1 = table, $2 = filtre de présence, $3 = charge JSON, $4 = libellé
+	code=$(api GET "/rest/v1/$1?select=*&$2")
+	attendu "$code" "lecture de $4" 200
+	[ "$(jq -r 'length' "$CORPS")" != "0" ] && return 0
+	code=$(api_jeton "$JETON_ADMIN_CK" POST "/rest/v1/$1" -d "$3")
+	attendu "$code" "$4" 201
+}
+
+# 1. Le workflow par défaut a reçu ses points avant les cards (section « 8 bis bis ») ; ici,
+#    le workflow de démonstration, ses étapes, ses transitions, ses points et son exigence.
+ck_poser workflows "id=eq.$CK_WORKFLOW" "$(jq -nc --arg id "$CK_WORKFLOW" --arg ws "$CK_ESPACE" \
+	'{id: $id, workspace_id: $ws, name: "Cycle commercial — checklists", scope: "global", is_default: false}')" \
+	"workflow « Cycle commercial — checklists »"
+for ligne in "$CK_PROSPECTION|5eed0000-0000-4000-8000-000000000041|1|true" "$CK_RELANCE|5eed0000-0000-4000-8000-000000000042|2|false" \
+	"$CK_NEGOCIATION|5eed0000-0000-4000-8000-000000000043|3|false"; do
+	IFS='|' read -r id noeud position initiale <<< "$ligne"
+	ck_poser workflow_steps "id=eq.$id" "$(jq -nc --arg id "$id" --arg wf "$CK_WORKFLOW" --arg ws "$CK_ESPACE" --arg n "$noeud" \
+		--argjson p "$position" --argjson i "$initiale" '{id: $id, workflow_id: $wf, workspace_id: $ws, node_id: $n, position: $p, is_initial: $i}')" \
+		"étape $position du workflow de démonstration"
+done
+for ligne in "$CK_VERS_RELANCE|$CK_PROSPECTION|$CK_RELANCE|Relancer" "$CK_VERS_NEGOCIATION|$CK_RELANCE|$CK_NEGOCIATION|Négocier"; do
+	IFS='|' read -r id de vers libelle <<< "$ligne"
+	ck_poser workflow_transitions "id=eq.$id" "$(jq -nc --arg id "$id" --arg wf "$CK_WORKFLOW" --arg ws "$CK_ESPACE" --arg de "$de" \
+		--arg vers "$vers" --arg l "$libelle" '{id: $id, workflow_id: $wf, workspace_id: $ws, from_step_id: $de, to_step_id: $vers, label: $l}')" \
+		"transition « $libelle » du workflow de démonstration"
+done
+for ligne in "${CK_PREFIXE}31|$CK_PROSPECTION|Besoin confirmé|1" "${CK_PREFIXE}32|$CK_PROSPECTION|Décideur identifié|2" \
+	"${CK_PREFIXE}33|$CK_RELANCE|Proposition envoyée|1"; do
+	IFS='|' read -r id etape libelle position <<< "$ligne"
+	ck_poser workflow_step_checklist_items "id=eq.$id" "$(jq -nc --arg id "$id" --arg ws "$CK_ESPACE" --arg wf "$CK_WORKFLOW" --arg e "$etape" \
+		--arg l "$libelle" --argjson p "$position" '{id: $id, workspace_id: $ws, workflow_id: $wf, step_id: $e, label: $l, position: $p}')" \
+		"point « $libelle » du workflow de démonstration"
+done
+ck_poser workflow_transition_required_checklist_items "transition_id=eq.$CK_VERS_NEGOCIATION&step_item_id=eq.${CK_PREFIXE}33" \
+	"$(jq -nc --arg t "$CK_VERS_NEGOCIATION" --arg i "${CK_PREFIXE}33" '{transition_id: $t, step_item_id: $i}')" \
+	"exigence « Proposition envoyée » de Relance → Négociation"
+ck_poser channels "id=eq.$CK_CHANNEL" "$(jq -nc --arg id "$CK_CHANNEL" --arg ws "$CK_ESPACE" --arg t "$CK_TRACK_STUDIO" --arg wf "$CK_WORKFLOW" \
+	'{id: $id, workspace_id: $ws, track_id: $t, name: "Checklists", slug: "checklists", workflow_id: $wf}')" \
+	"channel « Checklists »"
+
+# 2. Les trois affaires, sous le jeton de Driss : création, déplacements, cochages, points libres.
+# Rend dans CK_RATTACHEMENT le rattachement de l'affaire au titre donné, créée si absente du channel.
+ck_affaire() { # $1 = titre
+	code=$(api GET "/rest/v1/card_placements?select=id,affaire:cards!inner(title)&channel_id=eq.$CK_CHANNEL&affaire.title=eq.$(jq -rn --arg t "$1" '$t|@uri')")
+	attendu "$code" "lecture de l'affaire « $1 »" 200
+	CK_RATTACHEMENT=$(jq -r '.[0].id // empty' "$CORPS")
+	CK_NOUVELLE=non
+	[ -n "$CK_RATTACHEMENT" ] && return 0
+	code=$(api_jeton "$JETON_BIZDEV_CK" POST /rest/v1/rpc/creer_affaire -d "$(jq -nc --arg c "$CK_CHANNEL" --arg t "$1" '{p_channel: $c, p_titre: $t}')")
+	attendu "$code" "création de l'affaire « $1 »" 200
+	code=$(api GET "/rest/v1/card_placements?select=id&card_id=eq.$(jq -r '.' "$CORPS")")
+	attendu "$code" "rattachement de l'affaire « $1 »" 200
+	CK_RATTACHEMENT=$(jq -r '.[0].id' "$CORPS")
+	CK_NOUVELLE=oui
+}
+ck_deplacer() { # $1 = rattachement, $2 = étape cible, $3 = libellé
+	code=$(api_jeton "$JETON_BIZDEV_CK" POST /rest/v1/rpc/move_card -d "$(jq -nc --arg p "$1" --arg e "$2" '{p_placement: $p, to_step_id: $e}')")
+	attendu "$code" "déplacement de « $3 »" 200
+}
+ck_cocher() { # $1 = rattachement, $2 = point d'étape d'origine, $3 = libellé
+	code=$(api_jeton "$JETON_BIZDEV_CK" PATCH "/rest/v1/card_checklist_items?placement_id=eq.$1&step_item_id=eq.$2&checked=eq.false" \
+		-H 'Prefer: return=representation' -d '{"checked": true}')
+	attendu "$code" "cochage de « $3 »" 200
+}
+ck_point_libre() { # $1 = rattachement, $2 = libellé, $3 = coché (true|false)
+	code=$(api GET "/rest/v1/card_placements?select=card_id&id=eq.$1")
+	attendu "$code" "affaire du rattachement" 200
+	local carte
+	carte=$(jq -r '.[0].card_id' "$CORPS")
+	code=$(api GET "/rest/v1/card_checklist_items?select=id&card_id=eq.$carte&placement_id=is.null&label=eq.$(jq -rn --arg l "$2" '$l|@uri')")
+	attendu "$code" "lecture du point libre « $2 »" 200
+	[ "$(jq -r 'length' "$CORPS")" != "0" ] && return 0
+	code=$(api_jeton "$JETON_BIZDEV_CK" POST /rest/v1/card_checklist_items -d "$(jq -nc --arg c "$carte" --arg ws "$CK_ESPACE" \
+		--arg l "$2" --argjson k "$3" '{card_id: $c, workspace_id: $ws, label: $l, position: 1, checked: $k}')")
+	attendu "$code" "point libre « $2 »" 201
+}
+
+ck_affaire 'Formation IA — Cerfrance'
+ck_cocher "$CK_RATTACHEMENT" "${CK_PREFIXE}31" 'Besoin confirmé'
+ck_point_libre "$CK_RATTACHEMENT" 'Envoyer le programme détaillé' false
+printf '  %-36s Prospection, 1 point sur 2 coché, 1 point libre\n' 'Formation IA — Cerfrance'
+
+ck_affaire 'Atelier prompt — Lycée Vauban'
+if [ "$CK_NOUVELLE" = oui ]; then
+	ck_cocher "$CK_RATTACHEMENT" "${CK_PREFIXE}31" 'Besoin confirmé'
+	ck_cocher "$CK_RATTACHEMENT" "${CK_PREFIXE}32" 'Décideur identifié'
+	ck_deplacer "$CK_RATTACHEMENT" "$CK_RELANCE" 'Atelier prompt — Lycée Vauban'
+fi
+# LE REFUS EST CONSTATÉ, jamais supposé (§28.2) : « Proposition envoyée » n'est pas cochée, Négociation est refusée.
+code=$(api_jeton "$JETON_BIZDEV_CK" POST /rest/v1/rpc/move_card -d "$(jq -nc --arg p "$CK_RATTACHEMENT" --arg e "$CK_NEGOCIATION" '{p_placement: $p, to_step_id: $e}')")
+[ "$code" = 400 ] && [ "$(jq -r '.message' "$CORPS")" = checklist_incomplete ] || die "« Atelier prompt — Lycée Vauban » devait
+        être refusée en Négociation (checklist_incomplete) : code $code, $(head -c 200 "$CORPS") (docs/SPEC-seed.md §28.1)."
+printf '  %-36s Relance, bloquée : Négociation refusée (checklist_incomplete)\n' 'Atelier prompt — Lycée Vauban'
+
+ck_affaire 'Parcours data — Mairie de Rennes'
+if [ "$CK_NOUVELLE" = oui ]; then
+	ck_cocher "$CK_RATTACHEMENT" "${CK_PREFIXE}31" 'Besoin confirmé'
+	ck_cocher "$CK_RATTACHEMENT" "${CK_PREFIXE}32" 'Décideur identifié'
+	ck_deplacer "$CK_RATTACHEMENT" "$CK_RELANCE" 'Parcours data — Mairie de Rennes'
+	ck_cocher "$CK_RATTACHEMENT" "${CK_PREFIXE}33" 'Proposition envoyée'
+	ck_deplacer "$CK_RATTACHEMENT" "$CK_NEGOCIATION" 'Parcours data — Mairie de Rennes'
+fi
+ck_point_libre "$CK_RATTACHEMENT" 'Relancer la DAF' true
+printf '  %-36s Négociation, tout coché, 1 point libre coché\n' 'Parcours data — Mairie de Rennes'
+info "Checklists : 3 points sur le workflow par défaut, sans exigence ; un workflow de démonstration et son exigence,
+      3 affaires dans le channel « Checklists », dont une bloquée — docs/SPEC-seed.md §28"
 
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base

@@ -117,7 +117,7 @@ test.describe('C0 — la table contient réellement des lignes', () => {
 	// `legacy-2023` lui-même en corbeille (`docs/SPEC-seed.md` §10). Le compte passe de six à huit
 	// et les tracks porteurs de trois à quatre. Les dimensions ajoutées sont ASSERTÉES plutôt que
 	// tolérées : ce scénario est la condition de validité de tout le fichier.
-	test('le seed a posé huit channels, dont un archivé et un en corbeille, sur quatre tracks', async ({
+	test('le seed a posé neuf channels, dont un archivé et un en corbeille, sur quatre tracks', async ({
 		request,
 	}) => {
 		const reponse = await request.get(
@@ -126,7 +126,9 @@ test.describe('C0 — la table contient réellement des lignes', () => {
 		)
 		expect(reponse.status()).toBe(200)
 		const lignes = (await reponse.json()) as Channel[]
-		expect(lignes).toHaveLength(8)
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du track `studio-web` (`docs/SPEC-seed.md` §28,
+	// décision 755), servi par son propre workflow global, s'ajoute au jeu ; l'objet de l'assertion ne bouge pas.
+		expect(lignes).toHaveLength(9)
 		expect(lignes.filter((c) => c.archived_at !== null)).toHaveLength(1)
 		expect(lignes.filter((c) => c.deleted_at !== null)).toHaveLength(1)
 		expect(lignes.find((c) => c.deleted_at !== null)?.slug).toBe(CHANNEL_CORBEILLE)
@@ -147,8 +149,11 @@ test.describe('C0 — la table contient réellement des lignes', () => {
 		// `CRM-033` ne connaît pas la corbeille. Sept sur huit suivent donc le global ; le
 		// huitième reste `prospection`, sur la copie de portée `track`.
 		expect(lignes.every((c) => c.workflow_id !== null)).toBe(true)
+		//
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : le neuvième, « Checklists », suit le workflow de démonstration des
+		// checklists (`docs/SPEC-seed.md` §28). Deux channels hors du global : `prospection` et lui.
 		expect(lignes.filter((c) => c.workflow_id === WORKFLOW_SEED)).toHaveLength(7)
-		expect(lignes.filter((c) => c.workflow_id !== WORKFLOW_SEED)).toHaveLength(1)
+		expect(lignes.filter((c) => c.workflow_id !== WORKFLOW_SEED).map((c) => c.slug).sort()).toEqual(['checklists', 'prospection'])
 	})
 })
 
@@ -183,7 +188,9 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 			// ligne en corbeille n'est plus lisible que par l'administratrice et l'auteur du retrait. Le
 			// `business_developer` ne lit donc plus `annexes-2023`, retiré par l'administratrice : sept.
 			const enCorbeilleLu = compte.role === 'admin'
-			expect(lignes).toHaveLength(enCorbeilleLu ? 8 : 7)
+			// RÉVISÉ PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du track `studio-web` (`docs/SPEC-seed.md` §28,
+			// décision 755), servi par son propre workflow global, s'ajoute au jeu ; l'objet de l'assertion ne bouge pas.
+			expect(lignes).toHaveLength(enCorbeilleLu ? 9 : 8)
 			if (enCorbeilleLu) expect(lignes.map((c) => c.slug)).toContain('annexes-2023')
 			else expect(lignes.map((c) => c.slug)).not.toContain('annexes-2023')
 			// Lire n'exige pas d'écrire : le `business_developer` voit ce que voit l'admin.
@@ -191,7 +198,7 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 		})
 	}
 
-	test('le `viewer` seedé ne voit que cinq channels, dont un rouvert sous un track fermé', async ({
+	test('le `viewer` seedé ne voit que six channels, dont un rouvert sous un track fermé', async ({
 		request,
 	}) => {
 		// LE SCÉNARIO LE PLUS INSTRUCTIF DE CE FICHIER, et il porte sur les données du seed.
@@ -216,7 +223,10 @@ test.describe('C1 — lecture (docs/SPEC-channels.md §7, lignes b, c, d)', () =
 		//
 		// RÉVISÉ PAR `CRM-077` DIXIÈME TRANCHE (§8.4, décision 707) : `annexes-2023` en sort. Il est en
 		// corbeille, retiré par l'administratrice, et la corbeille personnelle le ferme au `viewer`.
+		// RÉVISÉ PAR `CRM-068` T3a (décision 51) : le channel « Checklists » du track `studio-web` (`docs/SPEC-seed.md` §28,
+	// décision 755), servi par son propre workflow global, s'ajoute au jeu ; l'objet de l'assertion ne bouge pas.
 		expect(slugs).toEqual([
+			'checklists',
 			'dossiers-2023',
 			'inter-entreprises',
 			'maintenance',
@@ -313,9 +323,10 @@ test.describe('C2 — écriture réservée aux administrateurs (lignes e, f, g, 
 
 		expect(reponse.status()).toBe(201)
 		const [cree] = (await reponse.json()) as Channel[]
-		// `studio-web` porte déjà deux channels : le trigger place celui-ci en troisième position
-		// **de son track**, et non à la suite de tous les channels du workspace (décision 61).
-		expect(Number(cree?.position)).toBe(3)
+		// `studio-web` porte déjà trois channels — `refonte`, `maintenance` et, depuis `CRM-068` T3a, `checklists`
+		// (`docs/SPEC-seed.md` §28) : le trigger place celui-ci en quatrième position **de son track**, et non à la suite de
+		// tous les channels du workspace (décision 61).
+		expect(Number(cree?.position)).toBe(4)
 		expect(cree?.workflow_id).toBe(WORKFLOW_SEED)
 
 		await request.delete(`${CHEMIN}?id=eq.${cree?.id}`, { headers: enTetesService() })

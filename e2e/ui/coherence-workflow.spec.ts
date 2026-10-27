@@ -41,6 +41,9 @@ const TRACK_STUDIO = 'Studio web'
 const OPTION_VIDE = 'Choisir un workflow…'
 const OPTION_GLOBALE = 'Cycle commercial standard (par défaut)'
 const OPTION_CONSEIL = 'Cycle commercial — Conseil IA'
+// `CRM-068` T3a (`docs/SPEC-seed.md` §28) : le workflow de démonstration des checklists est GLOBAL, donc proposé sous tout
+// track — les listes comparées ci-dessous l'incluent (décision 51) ; ce qu'elles démontrent, la portée `track`, est intact.
+const OPTION_CHECKLISTS = 'Cycle commercial — checklists'
 
 const CHEMIN_WORKFLOWS = `${URL_API}/rest/v1/workflows`
 const CHEMIN_CHANNELS = `${URL_API}/rest/v1/channels`
@@ -102,6 +105,7 @@ test.describe('le sélecteur de workflow (docs/SPEC-workflow-engine.md §4.12.9.
 		await expect.poll(async () => optionsWorkflow(page)).toEqual([
 			OPTION_VIDE,
 			OPTION_GLOBALE,
+			OPTION_CHECKLISTS,
 			OPTION_CONSEIL,
 		])
 
@@ -121,9 +125,9 @@ test.describe('le sélecteur de workflow (docs/SPEC-workflow-engine.md §4.12.9.
 
 		// --- Le track voisin, qui ne doit PAS voir le workflow du premier ---------------------
 		await ouvrirCreationChannel(page, TRACK_STUDIO)
-		await expect.poll(async () => optionsWorkflow(page)).toEqual([OPTION_VIDE, OPTION_GLOBALE])
-		// Même geste, et il ne peut mener qu'ailleurs : le seul workflow choisissable ici est le
-		// global. La comparaison des deux captures montre la différence que l'égalité mesure.
+		await expect.poll(async () => optionsWorkflow(page)).toEqual([OPTION_VIDE, OPTION_GLOBALE, OPTION_CHECKLISTS])
+		// Même geste, et il ne peut mener qu'ailleurs : seuls les workflows globaux sont choisissables ici — le
+		// défaut, et depuis `CRM-068` T3a celui des checklists. La comparaison des deux captures montre la différence que l'égalité mesure.
 		await page.getByTestId('formulaire-channel').getByLabel('Workflow').selectOption({ label: OPTION_GLOBALE })
 		await capturer(page, 'selecteur-workflow-track-voisin', UNITE)
 	})
@@ -197,6 +201,7 @@ test.describe('le refus quand la liste est périmée (docs/SPEC-workflow-engine.
 			await expect.poll(async () => optionsWorkflow(page)).toEqual([
 				OPTION_VIDE,
 				OPTION_GLOBALE,
+				OPTION_CHECKLISTS,
 				nomWorkflow,
 			])
 			await formulaire.getByLabel('Nom').fill(nomChannel)

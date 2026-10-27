@@ -7498,7 +7498,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-065 | Recherche globale plein texte et palette Cmd+K | `[x]` |
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
-| CRM-068 | Checklists et modèles de cards | `[@]` |
+| CRM-068 | Checklists et modèles de cards | `[~]` |
 | CRM-069 | Étiquettes et digest quotidien | `[ ]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
@@ -12344,8 +12344,7 @@ un motif explicite.
 | CRM-P11 sauvegarde/restauration | `CRM-080` | retenue |
 | CRM-P12 enrichissement automatique | aucun porteur sans base légale, fournisseur et DPA | refusée |
 
-### CRM-068 — Checklists et modèles de cards `[@]`
-*Prise en charge : session interactive 2026-10-23 (Claude Code, poste du responsable) depuis 2026-10-26 21:36 UTC — état avant : [~]*
+### CRM-068 — Checklists et modèles de cards `[~]`
 
 Checklists d'une affaire et modèles de cards (`docs/SPEC-modeles-emails.md` §1 : objets distincts des modèles d'emails).
 *Arbitrée le 2026-10-26 (décision 747)* : checklists libres, ajoutées par l'étape, exigibles par une transition ;
@@ -12361,8 +12360,8 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       **Livrée en développement le 2026-10-26** : migration `0128` (numérotée après les 0126 et 0127 de `CRM-117`), pgTAP
       `0118` **9/9**, API 5/5, bandeau du board (`docs/DESIGN_SYSTEM.md` §5.7 quinquies) et ses unitaires, E2E
       `e2e/ui/checklists.spec.ts` sur un workflow jetable, capture observée ; `docs/SPEC-workflow-engine.md` §5.3.
-- [ ] **T3 — les écrans**, découpée le 2026-10-26 en deux livraisons :
-  - [~] **T3a — la fiche, le board et le seed** : le bloc « Checklist » de la fiche (points de l'étape du rattachement,
+- [~] **T3 — les écrans**, découpée le 2026-10-26 en deux livraisons :
+  - [x] **T3a — la fiche, le board et le seed** : le bloc « Checklist » de la fiche (points de l'étape du rattachement,
         points libres, cocher, ajouter, retirer, mention d'exigence), le compte « n/m » sur la carte du board, le seed
         des points (`docs/SPEC-checklists.md` §6) ; unitaires, E2E, captures, manuel.
         *Arrêtée le 2026-10-26 sur consigne du responsable (fin de conversation), état réel :* faits — `docs/DESIGN_SYSTEM.md`

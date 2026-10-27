@@ -39,6 +39,7 @@
 | 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
 | 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger est réservé à l'auteur**, et **supprimer lui est ouvert ainsi qu'aux administrateurs du workspace**, avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; **le retrait par un administrateur a son bouton depuis le 2026-08-14**, unique — *Supprimer*, jamais *Modifier* —, et le fil distingue un retrait par la modération d'une suppression par l'auteur. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
 | 4.7 quater | Les activités d’une affaire : appels, réunions, visios | `CRM-067` | **Livré en développement** — voir le chapitre 4.7 *quater*. Le bloc « Activités » de la fiche consigne ce qui a eu lieu : type, date (jamais dans le futur), durée, sujet, compte rendu et participants choisis parmi les contacts de l'affaire et les membres de l'espace. L'auteur corrige et retire ; un administrateur retire l'activité d'une autre personne. Chaque activité paraît dans l'historique à la date où elle a eu lieu, sous un sixième filtre « Activités ». La durée ne compte pas dans le temps passé |
+| 4.7 quinquies | La checklist d’une affaire : les points à cocher | `CRM-068` | **Livré en développement** — voir le chapitre 4.7 *quinquies*. Le bloc « Checklist » de la fiche montre les points de l’étape — ajoutés automatiquement à l’entrée dans l’étape —, ceux des étapes traversées et les points libres ; on coche, on décoche, on ajoute et on retire un point libre. Un point exigé pour quitter l’étape le dit, et le tableau refuse le déplacement en nommant les points à cocher. La carte du tableau porte le compte « 1/2 ». Ce qui manque : l’écran de l’éditeur de workflows pour définir les points (T3b), les modèles d’affaires et le connecteur |
 | 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace **« Dossier changé »** dans l'historique, y compris quand personne ne passe par l'application. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement |
 | 4.7 bis | Mettre une affaire à la corbeille | `CRM-077` | **Livré et vérifié** — voir le chapitre 4.7 *bis*. Le bouton vit en bas de la fiche de l'affaire, demande une confirmation qui la nomme, et remplace ensuite l'écran par les deux chemins utiles : revenir au channel, ou ouvrir la corbeille. Le geste suppose le droit d'**écrire** sur l'onglet, et non un rôle d'administrateur |
 | 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
@@ -1709,6 +1710,59 @@ montre le type, le sujet, la durée et l'auteur. Le compte rendu et les particip
 **Ce qui n'est pas livré.** Aucune planification, aucun rappel, aucune liste de toutes les activités de l'espace. Le
 connecteur MCP saura lister, consigner et corriger les activités d'une affaire avec la tranche des outils
 « affaires » de `CRM-104`. Il ne saura pas les retirer : le retrait reste un geste de l'écran.
+
+### 4.7 quinquies La checklist d'une affaire : les points à cocher
+
+*Livré par `CRM-068`, tranches T1 à T3a, en développement. Captures dans `docs/captures/CRM-068/`, préfixées
+`fiche-checklist-` et `board-`.*
+
+**À quoi cela sert.** Dire ce qu'il reste à faire sur une affaire, point par point, et savoir qui l'a fait. Certains
+points viennent de l'**étape** où se trouve l'affaire ; d'autres sont **libres**, ajoutés à la main sur une affaire.
+
+**Où.** Dans la colonne de gauche de la fiche, **juste après le formulaire** : le bloc **« Checklist »**. Son titre
+porte le compte des points cochés : « 2 sur 3 ». Une affaire sans aucun point affiche « Aucun point pour cette
+affaire. », et le champ d'ajout reste offert.
+
+**Ce que le bloc montre.**
+- **« Étape Relance »** — les points de l'étape où se trouve l'affaire, en premier. Ils sont ajoutés **automatiquement**
+  quand l'affaire entre dans l'étape ; un administrateur les définit pour chaque étape du processus.
+- Sous leur propre titre, les points des **étapes déjà traversées** : ils restent, cochés ou non, pour mémoire. Si une
+  étape a été supprimée depuis, ses points restent sous « Étape supprimée ».
+- **« Points libres »** — ceux que l'on a ajoutés sur cette affaire.
+- Un point coché dit **qui l'a coché, et quand** : « Coché par Driss Lemoine, le 26/10/2026 14:05 ».
+- Un point **exigé** pour quitter l'étape porte la mention **« Exigé pour passer à Négociation »** : tant qu'il n'est pas
+  coché, ce déplacement est refusé.
+
+**Cocher, décocher.** Cliquez sur la case, ou appuyez sur Espace quand elle a le focus. La case bascule tout de suite ;
+si le serveur refuse, elle revient à son état et le motif s'écrit sous le point. Tout point se coche et se décoche, qu'il
+vienne de l'étape ou qu'il soit libre.
+
+**Ajouter un point libre.** Saisissez son libellé dans **« Nouveau point »**, sous les points libres, puis **« Ajouter »**
+ou Entrée. Le champ se vide et garde le focus, pour en ajouter un autre. « Ajouter » reste grisé tant que le champ est
+vide. Un libellé fait 200 caractères au plus.
+
+**Retirer un point libre.** Le bouton **« Retirer »** de la ligne le retire aussitôt, sans confirmation : il se
+réécrit en un instant. **Un point d'étape ne se retire pas** et n'a pas de bouton : il appartient à l'étape.
+
+**Sur le tableau kanban.** Une carte dont l'étape porte des points montre leur compte, **« 1/2 »**, à côté de son
+ancienneté ; tous cochés, la pastille passe au vert. Une carte dont l'étape n'a aucun point ne montre rien. Si vous
+glissez une affaire vers une étape alors qu'un point exigé n'est pas coché, le déplacement est refusé et le bandeau
+**nomme les points à cocher** : « Ces points de la checklist doivent être cochés avant ce déplacement : Proposition
+envoyée ». La carte revient à sa place.
+
+**Dans l'historique de l'affaire.** Chaque cochage et chaque décochage paraît dans le fil (chapitre 4.10), sous le
+filtre « Champs » : « Point de checklist coché », avec le libellé du point et son auteur.
+
+**Si vous ne pouvez pas écrire sur cette affaire.** Les cases, « Retirer » et le champ d'ajout restent visibles mais
+grisés, et le bandeau en tête de la fiche dit pourquoi (chapitre 3.6). Vous lisez la checklist comme les autres.
+
+**Dans l'espace de démonstration.** Le channel **« Checklists »** du track Studio web porte trois affaires : « Formation
+IA — Cerfrance » (un point coché sur deux, un point libre), « Atelier prompt — Lycée Vauban » (bloquée en Relance tant
+que « Proposition envoyée » n'est pas coché) et « Parcours data — Mairie de Rennes » (tout coché, en Négociation).
+
+**Ce qui n'est pas encore livré.** Définir les points d'une étape et les points exigés par un déplacement se fait
+aujourd'hui sans écran : l'éditeur de workflows les recevra (`CRM-068` T3b), avec un lien du bandeau de refus vers la
+fiche. Les **modèles d'affaires** (T4) et les outils du **connecteur MCP** (T5) suivront.
 
 ### 4.7 bis Mettre une affaire à la corbeille
 
