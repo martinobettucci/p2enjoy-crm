@@ -17048,7 +17048,7 @@ responsable** : traitée juste après `CRM-116`.*
       §18 ; les §3 points 2 et 4 et le §4 de la partie I tombent), `docs/DESIGN_SYSTEM.md` §5.69, `docs/SPEC-webapp.md`
       §5.1 bis et §5.2, `docs/DAT.md` §3.7 quater, `docs/SCHEMA.md` §9 septies. Six choix de l'agent marqués pour
       relecture (`docs/SPEC-manual.md` §18) ; connecteur MCP : non.
-- [~] **T2 — le socle** : le bucket `manual` et sa politique de lecture (deux migrations aux prochains numéros
+- [x] **T2 — le socle** : le bucket `manual` et sa politique de lecture (deux migrations aux prochains numéros
       libres, pgTAP, preuves d'API par requête directe ; décision 751) ; la publication `scripts/manuel/publier.sh` ; la construction et sa
       vérification (`marked` après la mesure du `CLAUDE.md` §19) ; `/aide` et `/aide/:chapitre`, le rendu en blocs,
       l'icône « Aide » et son panneau, `aide-ecrans.ts` (unitaires, E2E, paliers, captures observées). Sur le manuel
@@ -17065,8 +17065,13 @@ responsable** : traitée juste après `CRM-116`.*
       le titre « Aide » répété sous l'ancêtre « Aide » ; « Aide » écarté du titre de 50 px par le plancher de `10ch` du
       fil d'Ariane (`docs/DESIGN_SYSTEM.md` §5.62 précisé) ; les liens de section sur deux lignes collés à leur voisin à
       390 px (§5.69 précisé). Suites complètes : pgTAP **109 fichiers, 4378 assertions**, API **1246/1246**, unitaires
-      **4694/4694**, build et contrôle des classes verts. **Reste** : la campagne d'interface complète, l'en-tête de tous
-      les écrans portant désormais l'icône.
+      **4694/4694**, build et contrôle des classes verts.
+      *Campagne d'interface complète, 2026-10-27* : **982 réussis sur 987**. Les cinq échecs, rejoués et expliqués :
+      trois de `budgets.spec.ts`, causés par T3.0 (le manuel remplacé pendant la campagne), verts une fois la spec
+      révisée ; `formulaire.spec.ts`, un `503` passager à la connexion, vert au rejeu (`aide.spec.ts` et
+      `formulaire.spec.ts` : 39/39) ; `plateforme-mcp.spec.ts:195`, la ligne `refus_crm` du seed poussée hors de la
+      première page du journal des appels par les appels des tests d'intégration du connecteur — une donnée de la pile
+      partagée, sans lien avec l'aide, signalée à la session de `CRM-118` ; elle repasse après un seed.
       **Correctif de méthode** : le commit `26e78598` avait omis le montage de l'aide (`App.tsx`, `Header.tsx`,
       `Notifications.tsx`, `chemins.ts`), `marked` et les scripts `manuel:*` de `package.json`, `tsconfig.tools.json`,
       `webapp/vitest.config.ts` et la révision de `0029` : l'arbre poussé portait les composants sans les monter. Ils

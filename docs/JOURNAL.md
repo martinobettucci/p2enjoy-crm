@@ -36277,3 +36277,6 @@ consultations de la famille, et la lecture de la checklist en est une. La garde 
 rend 104 contrôles sans anomalie, dont les trois preuves d'intégration nouvelles. E2E : un point coché par un vrai client
 MCP paraît coché sur la fiche, au nom de Driss, avec la ligne du fil (capture observée). Le banc a été lancé après la fin
 de celui d'une session parallèle, pour ne pas reconstruire `mcp` sous elle.
+
+**Clôture de `CRM-117` T2, 2026-10-27.** Campagne d'interface complète : 982 réussis sur 987, les cinq échecs rejoués et
+expliqués (backlog, T2). La tranche passe `[x]`.
