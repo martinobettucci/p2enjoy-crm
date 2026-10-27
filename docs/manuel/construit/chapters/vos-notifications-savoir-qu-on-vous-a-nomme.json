@@ -1,6 +1,6 @@
 {
 	"slug": "vos-notifications-savoir-qu-on-vous-a-nomme",
-	"title": "8. Vos notifications : savoir qu'on vous a nommé",
+	"title": "5. Vos notifications : savoir qu'on vous a nommé",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -101,7 +101,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "8.1 Ce que la cloche annonce"
+					"text": "5.1 Ce que la cloche annonce"
 				}
 			]
 		},
@@ -194,7 +194,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "8.2 Ce que le panneau montre"
+					"text": "5.2 Ce que le panneau montre"
 				}
 			]
 		},
@@ -425,7 +425,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "8.3 Marquer lu, et marquer non lu"
+					"text": "5.3 Marquer lu, et marquer non lu"
 				}
 			]
 		},
@@ -498,7 +498,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "8.4 La mise à jour est immédiate"
+					"text": "5.4 La mise à jour est immédiate"
 				}
 			]
 		},
@@ -570,7 +570,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "8.5 Mentionner quelqu’un dans un commentaire"
+					"text": "5.5 Mentionner quelqu’un dans un commentaire"
 				}
 			]
 		},
@@ -767,7 +767,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "8.6 Choisir ce que vous recevez"
+					"text": "5.6 Choisir ce que vous recevez"
 				}
 			]
 		},
@@ -938,7 +938,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "8.7 Ce qui n'est pas encore là"
+					"text": "5.7 Ce qui n'est pas encore là"
 				}
 			]
 		},
@@ -1018,7 +1018,24 @@
 							},
 							{
 								"type": "text",
-								"text": " : ni email, ni résumé quotidien. Le §8.6 dit ce que\nvous pouvez régler, et ce qui n'existe pas."
+								"text": " : ni email, ni résumé quotidien. Le "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "vos-notifications-savoir-qu-on-vous-a-nomme",
+									"anchor": "choisir-ce-que-vous-recevez"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§5.6"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dit ce que\nvous pouvez régler, et ce qui n'existe pas."
 							}
 						]
 					}

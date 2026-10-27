@@ -1,6 +1,6 @@
 {
 	"slug": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires",
-	"title": "5 nonies. L'entonnoir de conversion : où se tiennent vos affaires",
+	"title": "30. L'entonnoir de conversion : où se tiennent vos affaires",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -18,7 +18,40 @@
 						},
 						{
 							"type": "text",
-							"text": " tranche 3 a, complété par les tranches 3 b (le sélecteur de portée,\n§5 nonies.0) et 3 c (les étapes vides, nommées au §5 nonies.1).\nC'est le "
+							"text": " tranche 3 a, complété par les tranches 3 b (le sélecteur de portée,\n"
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires",
+								"anchor": "choisir-la-portee-tout-l-espace-un-track-un-channel"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§30.1"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ") et 3 c (les étapes vides, nommées au "
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§30.2"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ").\nC'est le "
 						},
 						{
 							"type": "strong",
@@ -114,7 +147,24 @@
 				},
 				{
 					"type": "text",
-					"text": " Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le\ndroit de lire — voir le §5 nonies.4, qui est la partie la plus importante de cette page."
+					"text": " Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le\ndroit de lire — voir le "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires",
+						"anchor": "vos-nombres-sont-les-votres-et-ils-peuvent-differer-de-ceux-d-un-collegue"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§30.5"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui est la partie la plus importante de cette page."
 				}
 			]
 		},
@@ -125,7 +175,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 nonies.0 Choisir la portée : tout l'espace, un track, un channel"
+					"text": "30.1 Choisir la portée : tout l'espace, un track, un channel"
 				}
 			]
 		},
@@ -231,14 +281,26 @@
 				},
 				{
 					"type": "text",
-					"text": " Les nombres se replient instantanément : l'écran a lu une\nseule fois, et la portée ne fait que choisir ce qu'il additionne. Les "
+					"text": " Les nombres se replient instantanément : l'écran a lu une\nseule fois, et la portée ne fait que choisir ce qu'il additionne. Les *"
 				},
 				{
-					"type": "strong",
+					"type": "emphasis",
 					"content": [
 						{
 							"type": "text",
-							"text": "deux nombres du §5 decies"
+							"text": "deux nombres du "
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "le-previsionnel-pondere-et-le-taux-de-conversion"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§31"
+								}
+							]
 						}
 					]
 				},
@@ -437,7 +499,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 nonies.1 Ce que l'écran montre"
+					"text": "30.2 Ce que l'écran montre"
 				}
 			]
 		},
@@ -544,7 +606,19 @@
 					[
 						{
 							"type": "text",
-							"text": "« Ouvert », « Gagné » ou « Perdu ». C'est lui, et lui seul, qui dit pourquoi une étape entre ou n'entre pas dans le prévisionnel du §5 decies"
+							"text": "« Ouvert », « Gagné » ou « Perdu ». C'est lui, et lui seul, qui dit pourquoi une étape entre ou n'entre pas dans le prévisionnel du "
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "le-previsionnel-pondere-et-le-taux-de-conversion"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§31"
+								}
+							]
 						}
 					]
 				],
@@ -614,7 +688,24 @@
 						},
 						{
 							"type": "text",
-							"text": " (§5 nonies.3)"
+							"text": " ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires",
+								"anchor": "la-probabilite-d-une-affaire-trois-niveaux-et-le-plus-precis-gagne"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§30.4"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ")"
 						}
 					]
 				]
@@ -711,7 +802,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 nonies.2 Quelles affaires y entrent, et lesquelles n'y entrent pas"
+					"text": "30.3 Quelles affaires y entrent, et lesquelles n'y entrent pas"
 				}
 			]
 		},
@@ -867,7 +958,24 @@
 				},
 				{
 					"type": "text",
-					"text": ". Une affaire\ngagnée puis archivée ne compte donc ni dans l'entonnoir, ni dans le taux de conversion du\n§5 decies.2."
+					"text": ". Une affaire\ngagnée puis archivée ne compte donc ni dans l'entonnoir, ni dans le taux de conversion du\n"
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-previsionnel-pondere-et-le-taux-de-conversion",
+						"anchor": "le-taux-de-conversion-des-affaires-decidees"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§31.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
 				}
 			]
 		},
@@ -878,7 +986,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 nonies.3 La probabilité d'une affaire : trois niveaux, et le plus précis gagne"
+					"text": "30.4 La probabilité d'une affaire : trois niveaux, et le plus précis gagne"
 				}
 			]
 		},
@@ -948,7 +1056,23 @@
 							},
 							{
 								"type": "text",
-								"text": " du workflow, saisie dans l'éditeur de workflows (§5 bis) ;"
+								"text": " du workflow, saisie dans l'éditeur de workflows ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§18"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ;"
 							}
 						]
 					}
@@ -972,7 +1096,23 @@
 							},
 							{
 								"type": "text",
-								"text": ", saisie au catalogue (§5 quater)."
+								"text": ", saisie au catalogue ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§19"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -1096,7 +1236,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 nonies.4 Vos nombres sont les vôtres, et ils peuvent différer de ceux d'un collègue"
+					"text": "30.5 Vos nombres sont les vôtres, et ils peuvent différer de ceux d'un collègue"
 				}
 			]
 		},
@@ -1114,7 +1254,24 @@
 				},
 				{
 					"type": "text",
-					"text": ", et c'est exactement celle du cumul des coûts\n(§5 septies.3). L'entonnoir est calculé "
+					"text": ", et c'est exactement celle du cumul des coûts\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track",
+						"anchor": "votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§26.3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). L'entonnoir est calculé "
 				},
 				{
 					"type": "strong",
@@ -1294,7 +1451,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 nonies.5 Les devises ne se mélangent jamais"
+					"text": "30.6 Les devises ne se mélangent jamais"
 				}
 			]
 		},
@@ -1362,7 +1519,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 nonies.6 Ce que l'écran écrit quand il n'y a rien à montrer"
+					"text": "30.7 Ce que l'écran écrit quand il n'y a rien à montrer"
 				}
 			]
 		},
@@ -1465,7 +1622,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 nonies.7 Ce que cet écran ne fait pas"
+					"text": "30.8 Ce que cet écran ne fait pas"
 				}
 			]
 		},
@@ -1489,7 +1646,55 @@
 							},
 							{
 								"type": "text",
-								"text": ", et aucune ligne n'est cliquable. Les probabilités se saisissent au\ncatalogue (§5 quater), dans l'éditeur de workflows (§5 bis) et sur la fiche d'une affaire (§4)."
+								"text": ", et aucune ligne n'est cliquable. Les probabilités se saisissent au\ncatalogue ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§19"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), dans l'éditeur de workflows ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§18"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") et sur la fiche d'une affaire ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§9"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}

@@ -1,6 +1,6 @@
 {
 	"slug": "retrouver-n-importe-quoi-la-recherche",
-	"title": "9. Retrouver n'importe quoi : la recherche",
+	"title": "4. Retrouver n'importe quoi : la recherche",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -66,7 +66,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "9.1 L'ouvrir"
+					"text": "4.1 L'ouvrir"
 				}
 			]
 		},
@@ -231,7 +231,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "9.2 Ce qu'elle cherche"
+					"text": "4.2 Ce qu'elle cherche"
 				}
 			]
 		},
@@ -404,7 +404,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "9.3 Ce qu'elle comprend, et ce qu'elle ne comprend pas"
+					"text": "4.3 Ce qu'elle comprend, et ce qu'elle ne comprend pas"
 				}
 			]
 		},
@@ -522,7 +522,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "9.4 La parcourir au clavier, et y aller"
+					"text": "4.4 La parcourir au clavier, et y aller"
 				}
 			]
 		},
@@ -885,7 +885,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "9.5 Vous ne trouvez que ce que vous avez le droit de lire"
+					"text": "4.5 Vous ne trouvez que ce que vous avez le droit de lire"
 				}
 			]
 		},
@@ -927,7 +927,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "9.6 Ce que la recherche affiche, et ce qu'elle ne fait pas"
+					"text": "4.6 Ce que la recherche affiche, et ce qu'elle ne fait pas"
 				}
 			]
 		},
@@ -1091,7 +1091,23 @@
 							},
 							{
 								"type": "text",
-								"text": " : aucune page ne s'affiche sans session\n(chapitre 1)."
+								"text": " : aucune page ne s'affiche sans session\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "se-connecter-et-se-deconnecter"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 1"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}

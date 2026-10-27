@@ -1,7 +1,8 @@
 // @verifies CRM-047 (docs/BACKLOG.md) — Definition of Done du manuel utilisateur du chunk 3
 // @verifies docs/SPEC-manual.md §3.1 (les libellés cités sont les libellés réels), §5 (les huit
 //           adresses du parcours et leur jeu de captures), §7.1 (preuve d'interface)
-// @verifies docs/manual.md §3.1, §3.2, §3.5, §4.7, §4.8, §4.9, §4.10, §4.11
+// @verifies docs/manual.md §3.1, §3.3, §3.10, §9.6, §9.10, §9.11, §9.12, §9.14
+// @verifies CRM-117 (docs/BACKLOG.md) tranche T3.0 — sections renumérotées selon le plan public (docs/SPEC-manual.md §10 bis)
 // @verifies docs/INCONSISTENCY_REPORT.md INC-077 (le changement de dossier est désormais nommé)
 // @verifies docs/DESIGN_SYSTEM.md §5.8 (états explicites), §12.5 (réponses substituées)
 // @verifies CLAUDE.md §7 (documentation utilisateur), §16 (vérification visuelle)
@@ -48,7 +49,7 @@ const UNITE = 'CRM-047'
 
 /** Identifiants du seed, employés tels quels : le manuel cite des adresses réelles du produit. */
 const TRACK = 'conseil-ia'
-/** Un track qu'aucune ligne ne porte : même écran qu'un track non consenti (docs/manual.md §3.2 ter). */
+/** Un track qu'aucune ligne ne porte : même écran qu'un track non consenti (docs/manual.md §3.5). */
 const TRACK_INEXISTANT = 'ce-track-nexiste-pas'
 const CHANNEL = 'grands-comptes'
 const CARD = '5eed0000-0000-4000-8000-0000000000c3'
@@ -77,11 +78,11 @@ const LIBELLES = {
 	dossierChange: 'Dossier changé',
 } as const
 
-test.describe('le parcours que le manuel décrit, sans aucune substitution (docs/manual.md §3.2)', () => {
-	// RÉVISÉ PAR `CRM-092` T9 : l'accueil anonyme et ses trois refus n'existent plus. Le §3.2 décrit
+test.describe('le parcours que le manuel décrit, sans aucune substitution (docs/manual.md §3.3)', () => {
+	// RÉVISÉ PAR `CRM-092` T9 : l'accueil anonyme et ses trois refus n'existent plus. Le §3.3 décrit
 	// désormais ce qu'un compte voit après connexion : son espace, et les tracks du jeu de
 	// démonstration dans la barre latérale.
-	test('l’accueil montre, après connexion, ce que le manuel annonce (§3.2)', async ({ page }) => {
+	test('l’accueil montre, après connexion, ce que le manuel annonce (§3.3)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/')
 
@@ -94,10 +95,10 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 	})
 
 	// RÉVISÉ PAR `CRM-092` T9 : ce scénario prouvait le REFUS de la messagerie à un anonyme, qui
-	// n'atteint plus l'écran. Il éprouve désormais ce que le §4.15 promet à un compte : « Non
+	// n'atteint plus l'écran. Il éprouve désormais ce que le §12.2 promet à un compte : « Non
 	// classés » en premier, même vide — et un zéro qui n'est pas une panne, ce que la lectrice lit.
 	// Plus aucun `401` à consommer : la console doit rester vierge.
-	test('/inbox ouvre « Non classés » en premier, à zéro sans panne (§4.15)', async ({ page }) => {
+	test('/inbox ouvre « Non classés » en premier, à zéro sans panne (§12.2)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/inbox')
 
@@ -109,10 +110,10 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		await capturer(page, 'manuel-inbox-1440', UNITE)
 	})
 
-	// RÉVISÉ PAR `CRM-092` T9 : l'anonyme lisait le premier des deux vides du §3 quater.6, « mes
+	// RÉVISÉ PAR `CRM-092` T9 : l'anonyme lisait le premier des deux vides du §6.6, « mes
 	// affaires » n'ayant pas de sujet sans session. La lectrice, elle, a une affaire à son nom : le
-	// scénario éprouve la bascule de portée que le §3 quater.3 décrit, sans dépendre d'une date.
-	test('/ma-journee s’ouvre sur « Mes affaires », avec la bascule vers tout l’espace (§3 quater.3)', async ({
+	// scénario éprouve la bascule de portée que le §6.3 décrit, sans dépendre d'une date.
+	test('/ma-journee s’ouvre sur « Mes affaires », avec la bascule vers tout l’espace (§6.3)', async ({
 		page,
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
@@ -125,12 +126,12 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		await capturer(page, 'manuel-ma-journee-1440', UNITE)
 	})
 
-	// RÉVISÉ PAR `CRM-075`, § 5 « L'index » : `/reglages` a cessé d'être un état vide le jour où
+	// RÉVISÉ PAR `CRM-075`, §17 « L'index » : `/reglages` a cessé d'être un état vide le jour où
 	// l'administration de l'arborescence lui a donné une première section. L'assertion n'avait
 	// jamais pu être rejouée contre la vraie pile depuis ce changement (docs/JOURNAL.md décision
 	// 343) ; corrigée ici plutôt que contournée, pour un visiteur anonyme comme pour un membre —
 	// l'index ne lit aucune donnée protégée.
-	test('/reglages rend l’index des sections que le manuel promet (§5)', async ({ page }) => {
+	test('/reglages rend l’index des sections que le manuel promet (§17)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto('/reglages')
 
@@ -143,8 +144,8 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 	})
 
 	// RÉVISÉ PAR `CRM-092` T9 : un track du seed n'est plus refusé à personne qui atteigne l'écran ;
-	// le §3.2 ter promet le même message pour une adresse qui ne désigne aucun track.
-	test('une adresse qui ne désigne aucun track est « Track introuvable » (§3.2 ter)', async ({ page }) => {
+	// le §3.5 promet le même message pour une adresse qui ne désigne aucun track.
+	test('une adresse qui ne désigne aucun track est « Track introuvable » (§3.5)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto(`/tracks/${TRACK_INEXISTANT}`)
 
@@ -154,7 +155,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		await capturer(page, 'manuel-track-1440', UNITE)
 	})
 
-	test('le tableau kanban n’est jamais atteint, et le manuel le dit (§4.8)', async ({ page }) => {
+	test('le tableau kanban n’est jamais atteint, et le manuel le dit (§9.10)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto(`/tracks/${TRACK_INEXISTANT}/${CHANNEL}`)
 
@@ -164,7 +165,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		await capturer(page, 'manuel-board-1440', UNITE)
 	})
 
-	test('la vue liste non plus, pour la même cause (§4.9)', async ({ page }) => {
+	test('la vue liste non plus, pour la même cause (§9.11)', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await page.goto(`/tracks/${TRACK_INEXISTANT}/${CHANNEL}/liste`)
 
@@ -174,7 +175,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		await capturer(page, 'manuel-liste-1440', UNITE)
 	})
 
-	test('la fiche d’une affaire dit « Card introuvable », et non « Affaire introuvable » (§4.7)', async ({
+	test('la fiche d’une affaire dit « Card introuvable », et non « Affaire introuvable » (§9.6)', async ({
 		page,
 	}) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
@@ -186,7 +187,7 @@ test.describe('le parcours que le manuel décrit, sans aucune substitution (docs
 		// libellé que le produit n'affiche pas. Cette assertion interdit de l'y remettre.
 		await expect(etatVide(page)).not.toContainText('Affaire introuvable')
 
-		// Le fil n'est donc jamais atteint (§4.10, dernière phrase).
+		// Le fil n'est donc jamais atteint (§9.12, dernière phrase).
 		await expect(page.getByRole('region', { name: 'Fil de cette affaire' })).toHaveCount(0)
 
 		await capturer(page, 'manuel-fiche-1440', UNITE)

@@ -17082,12 +17082,21 @@ responsable** : traitée juste après `CRM-116`.*
       développement ou du jeu de démonstration, numérotation simple, phrases réécrites pour le lecteur ; table du
       §12 et de `aide-ecrans.ts` tenues à mesure. **Plan du manuel public : `docs/SPEC-manual.md` §10 bis** (choix de
       l'agent du 2026-10-27, soumis à relecture avec T3.1) — trente-trois chapitres rangés par sujet.
-      - [ ] **T3.0 — le plan posé** : chapitres déplacés et renumérotés selon le §10 bis, renvois changés en liens,
+      - [x] **T3.0 — le plan posé** : chapitres déplacés et renumérotés selon le §10 bis, renvois changés en liens,
             sommaire écrit à la main, annexe A et règles de rédaction retirés, sans réécrire les phrases ;
             `aide-ecrans.ts` et ses unitaires suivent les nouvelles adresses ; `scripts/verify-manual.sh` révisé dès
             cette tranche — ses contrôles du chunk 3 (annexe A, dossiers de captures, unités citées, couverture)
             exigeaient ce que le §10 interdit —, le contrôle « aucune référence interne » portant sur les chapitres
             déjà réécrits ; manuel construit et publié en développement.
+            *Fait le 2026-10-27* : le plan posé par un script rejouable depuis HEAD (183 renvois changés en liens, cinq
+            corrigés à la main, aucune ligne perdue, mesuré en comparant les lignes avant et après) ; 33 chapitres, la
+            construction sans erreur ; `verify-manual.sh` **96 contrôles verts**, contre-épreuve : chacune des cinq
+            familles mord, et une famille rendue aveugle est nommée ; `aide-ecrans` et construction **67/67** ;
+            publication en développement et `e2e/api/manuel.spec.ts` **9/9** ; `budgets.spec.ts` lit le chapitre des
+            budgets par son titre, `aide.spec.ts` lit la section de l'inbox dans son nouveau chapitre ; `aide.spec.ts`,
+            `budgets.spec.ts`, `manuel.spec.ts` rejoués verts. Les renvois numérotés des en-têtes de spécification et des
+            commentaires de code suivent ; ceux qui racontent une livraison passée restent tels quels, comme la migration
+            `0081`. Les ajouts de `CRM-118` au manuel, poussés entre-temps sur l'ancien plan, y sont repris.
       - [ ] **T3.1 — prise en main** : chapitres 1 à 5, dont une section sur l'aide elle-même.
       - [ ] **T3.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10.
       - [ ] **T3.3 — la messagerie** : chapitres 11 à 16.

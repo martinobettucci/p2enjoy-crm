@@ -1,6 +1,6 @@
 {
 	"slug": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant",
-	"title": "11. Le connecteur MCP : piloter le CRM depuis votre assistant",
+	"title": "33. Le connecteur MCP : piloter le CRM depuis votre assistant",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -82,7 +82,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "11.1 Ce que l'assistant a le droit de faire"
+					"text": "33.1 Ce que l'assistant a le droit de faire"
 				}
 			]
 		},
@@ -505,7 +505,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "11.2 Ajouter le connecteur à votre assistant"
+					"text": "33.2 Ajouter le connecteur à votre assistant"
 				}
 			]
 		},
@@ -663,7 +663,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "11.3 Accorder des droits du connecteur"
+					"text": "33.3 Accorder des droits du connecteur"
 				}
 			]
 		},
@@ -672,7 +672,23 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Dans la plateforme (chapitre 10), l'onglet "
+					"text": "Dans la plateforme ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "la-plateforme-espaces-membres-et-superadministrateurs"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 32"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), l'onglet "
 				},
 				{
 					"type": "strong",
@@ -722,7 +738,24 @@
 							},
 							{
 								"type": "text",
-								"text": " s'est connecté au connecteur sans avoir jamais été admis dans le CRM : il faut\nd'abord inscrire une attente à son adresse dans un espace (§10.5)."
+								"text": " s'est connecté au connecteur sans avoir jamais été admis dans le CRM : il faut\nd'abord inscrire une attente à son adresse dans un espace ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "la-plateforme-espaces-membres-et-superadministrateurs",
+									"anchor": "les-attentes"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§32.5"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -788,7 +821,24 @@
 							},
 							{
 								"type": "text",
-								"text": " (§11.4)."
+								"text": " ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant",
+									"anchor": "le-journal-des-appels"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§33.4"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -965,7 +1015,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "11.4 Le journal des appels"
+					"text": "33.4 Le journal des appels"
 				}
 			]
 		},
@@ -998,7 +1048,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "11.5 Ce que l'assistant sait faire"
+					"text": "33.5 Ce que l'assistant sait faire"
 				}
 			]
 		},
@@ -1157,14 +1207,17 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "Aucun outil ne supprime une ligne de recette. Les règles sont celles de la fiche (chapitre 5 "
+								"text": "Aucun outil ne supprime une ligne de recette. Les règles sont celles de la fiche ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "les-recettes-d-une-affaire-et-sa-rentabilite"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "duodecies"
+										"text": "chapitre 29"
 									}
 								]
 							},
@@ -1268,7 +1321,24 @@
 										},
 										{
 											"type": "text",
-											"text": " avec leur détail (chapitre 4.1) — la liste\ndes affaires les rend aussi ;"
+											"text": " avec leur détail ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+												"anchor": "ce-qu-une-affaire-porte"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "chapitre 9.1"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") — la liste\ndes affaires les rend aussi ;"
 										}
 									]
 								}
@@ -1288,7 +1358,24 @@
 										},
 										{
 											"type": "text",
-											"text": ", comme le fil de la fiche (chapitre 4.10) : événements, commentaires et activités, du plus\nancien au plus récent ;"
+											"text": ", comme le fil de la fiche ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+												"anchor": "l-historique-et-la-discussion-d-une-affaire"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "chapitre 9.12"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") : événements, commentaires et activités, du plus\nancien au plus récent ;"
 										}
 									]
 								}
@@ -1321,14 +1408,18 @@
 										},
 										{
 											"type": "text",
-											"text": " (chapitre 4.7 "
+											"text": " ("
 										},
 										{
-											"type": "emphasis",
+											"type": "link",
+											"target": {
+												"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+												"anchor": "les-activites-d-une-affaire-appels-reunions-visios"
+											},
 											"content": [
 												{
 													"type": "text",
-													"text": "quater"
+													"text": "chapitre 9.8"
 												}
 											]
 										},
@@ -1354,14 +1445,17 @@
 										},
 										{
 											"type": "text",
-											"text": " de l'espace (chapitre 3 "
+											"text": " de l'espace ("
 										},
 										{
-											"type": "emphasis",
+											"type": "link",
+											"target": {
+												"chapter": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps"
+											},
 											"content": [
 												{
 													"type": "text",
-													"text": "quinquies"
+													"text": "chapitre 7"
 												}
 											]
 										},
@@ -1387,14 +1481,17 @@
 										},
 										{
 											"type": "text",
-											"text": " (chapitre 3 "
+											"text": " ("
 										},
 										{
-											"type": "emphasis",
+											"type": "link",
+											"target": {
+												"chapter": "ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui"
+											},
 											"content": [
 												{
 													"type": "text",
-													"text": "quater"
+													"text": "chapitre 6"
 												}
 											]
 										},
@@ -3149,7 +3246,24 @@
 										},
 										{
 											"type": "text",
-											"text": " (chapitre 4.15) ; le lire par l'assistant ne le marque pas lu, et aucun outil\nne change cet état ;"
+											"text": " ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-inbox-lire-trier-et-repondre",
+												"anchor": "l-inbox-lire-et-trier-le-courrier-recu"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "chapitre 12.2"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") ; le lire par l'assistant ne le marque pas lu, et aucun outil\nne change cet état ;"
 										}
 									]
 								}
@@ -3269,7 +3383,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "11.6 Ce que le connecteur n'offre pas"
+					"text": "33.6 Ce que le connecteur n'offre pas"
 				}
 			]
 		},

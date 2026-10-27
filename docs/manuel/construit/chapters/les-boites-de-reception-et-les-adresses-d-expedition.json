@@ -1,0 +1,1081 @@
+{
+	"slug": "les-boites-de-reception-et-les-adresses-d-expedition",
+	"title": "11. Les boîtes de réception et les adresses d'expédition",
+	"blocks": [
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-boites-de-reception-declarees",
+			"content": [
+				{
+					"type": "text",
+					"text": "11.1 Les boîtes de réception déclarées"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le produit sait faire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un espace de travail peut déclarer une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "boîte système"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — celle\nqui reçoit tout ce qui est adressé aux affaires — et chaque personne peut déclarer "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "la sienne"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ".\nUne boîte porte un serveur, un port, un mode de sécurité, un identifiant et un mot de passe."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où se fait la déclaration : « Réglages ▸ Comptes de messagerie entrante »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "code",
+					"text": "CRM-088"
+				},
+				{
+					"type": "text",
+					"text": "). L'écran\nliste les boîtes que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les\ndéclarer ou les corriger. Il vient "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "avant"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « État de la messagerie » dans la liste des réglages :\non configure une boîte avant d'en superviser la relève."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Choisissez d'abord la boîte visée."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " La liste propose les boîtes que vous voyez, plus celle que\nvous pouvez créer — la vôtre si vous n'en avez pas encore, et la boîte système de l'espace de\ntravail. Choisir une boîte déjà déclarée remplit le formulaire de ses valeurs."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La boîte système et celle d'un collègue sont réservées à une administratrice ou un\nadministrateur."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " L'option reste proposée à tout le monde ; si vous n'administrez pas l'espace,\n« Configurer » et « Enregistrer » sont grisés sur ces boîtes, et un bandeau en tête de l'écran dit\npourquoi. Votre propre boîte reste configurable ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats",
+									"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 3.11"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le mot de passe est toujours vide à l'ouverture, et il n'est jamais affiché."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Le laisser vide\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "conserve"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " celui qui est enregistré ; le remplir le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "remplace"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Sur une boîte qui n'existe\npas encore, il est obligatoire — sans lui, aucune connexion ne serait possible."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Changer la connexion remet l'état à « En attente »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et efface le dernier incident : un\n« Connectée » obtenu avec l'ancien serveur ne dirait plus rien du nouveau."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ce que l'écran n'offre pas"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et c'est écrit plutôt que suggéré : aucun bouton "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "Tester la\nconnexion"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état\nde la boîte ; aucune "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "suppression"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " de boîte ; aucun réglage des dossiers relevés ni de la\nprofondeur d'historique, que l'écran ne touche jamais."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le reste du chapitre décrit ce que le produit garantit une fois la boîte déclarée."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le mot de passe n'est jamais relisible, par personne."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Il n'est pas enregistré dans la même\ntable que le reste : il part dans un coffre chiffré, et la table ne conserve qu'une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "référence"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ".\nCette référence elle-même est fermée à toute personne connectée — administrateur compris. Seul le\nservice de messagerie, qui doit ouvrir la connexion, peut obtenir le mot de passe en clair."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Vous ne voyez que votre boîte."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un administrateur voit la boîte système et celles de son équipe,\npuisqu'il en répond. Une personne qui n'est pas administratrice ne voit "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "que la sienne"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : la\nboîte d'un collègue est sa correspondance, et le serveur ne la lui montre pas. Une personne sans\nboîte voit une liste vide, ce qui n'est pas une erreur."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le produit essaie vraiment la connexion."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Il ne se contente pas d'enregistrer ce qui a été\nsaisi : il ouvre une session avec le serveur déclaré et regarde ce qui se passe. Le résultat est\nenregistré, et il ne dit jamais plus que nécessaire :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Ce qui est affiché"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce que cela veut dire"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "Identifiants refusés"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le mot de passe est faux "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ou"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " le compte n'existe pas — les serveurs de messagerie ne font pas la différence, et le produit ne l'invente pas"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "Serveur introuvable"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le nom du serveur ne correspond à rien"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "Connexion refusée"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Rien n'écoute à cette adresse et sur ce port"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "Sécurité impossible à vérifier"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le certificat du serveur ne peut pas être vérifié"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "Délai dépassé"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le serveur n'a pas répondu à temps"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "emphasis",
+							"content": [
+								{
+									"type": "text",
+									"text": "Réponse inattendue"
+								}
+							]
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le serveur a répondu, mais pas comme un serveur de messagerie"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le message d'origine du serveur n'est jamais conservé."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un serveur tiers peut écrire n'importe\nquoi dans son refus — l'identifiant essayé, une adresse interne, un numéro de dossier. Ce texte\nfinirait affiché, puis dans une capture d'écran. Le produit note "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "la cause"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et rien d'autre."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La vérification de sécurité n'a pas de dérogation."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Si le certificat d'un serveur ne peut pas\nêtre vérifié, la connexion est refusée — il n'existe aucune option pour passer outre. C'est\nvolontaire : une option de ce genre finit toujours par rester activée."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-adresses-d-expedition",
+			"content": [
+				{
+					"type": "text",
+					"text": "11.2 Les adresses d'expédition"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où se fait la déclaration : « Réglages ▸ Identités d'expédition »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "code",
+					"text": "CRM-089"
+				},
+				{
+					"type": "text",
+					"text": "). L'écran liste\nles adresses que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les\ndéclarer ou les corriger. Il vient "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "après"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « Comptes de messagerie entrante » et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "avant"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « État\nde la messagerie » : on reçoit avant d'expédier, et on configure avant de superviser."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Une ligne commence par l'adresse"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", précédée du nom affiché quand il est renseigné — sous la\nforme "
+							},
+							{
+								"type": "code",
+								"text": "Nom <adresse>"
+							},
+							{
+								"type": "text",
+								"text": ", celle que verront vos destinataires. C'est cette adresse qui distingue\ndeux identités, et non leur libellé, qui peut être le même."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Choisissez d'abord l'identité visée."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " La liste propose celles que vous voyez, plus deux\nentrées pour en déclarer une nouvelle : la vôtre, ou celle de service de l'espace de travail."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "L'identité de service et celle d'un collègue sont réservées à une administratrice ou un\nadministrateur."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " L'entrée reste proposée à tout le monde ; si vous n'administrez pas l'espace,\n« Configurer » et « Enregistrer » sont grisés sur ces identités, et un bandeau en tête de l'écran\ndit pourquoi. Vos propres identités restent configurables ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats",
+									"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 3.11"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "ATTENTION — changer l'adresse d'expédition ne renomme pas une identité : cela en déclare une\nseconde"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et la première demeure. L'adresse fait partie de ce qui identifie la configuration, au\nmême titre que son propriétaire. L'écran vous le rappelle sous le champ, et la liste relue vous\nmontre alors "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "deux"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " lignes. Si vous vouliez corriger une faute de frappe, retirez ensuite\nl'ancienne — ce que l'écran ne sait pas encore faire, voir plus bas."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le mot de passe est toujours vide à l'ouverture, et il n'est jamais affiché."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Le laisser vide\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "conserve"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " celui qui est enregistré ; le remplir le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "remplace"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Sur une identité qui n'existe\npas encore, il est obligatoire. "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "Conséquence de la règle précédente"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : si vous modifiez l'adresse\nsans saisir de mot de passe, le produit vous répond qu'un mot de passe est exigé — parce que la\nnouvelle adresse fait de votre enregistrement une déclaration, et non une correction."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le nom d'expéditeur se vide en effaçant le champ"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", contrairement au mot de passe : un champ\nvide y est une valeur, et non une absence de changement."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "La case « identité par défaut » est cochée d'avance sur une déclaration"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", parce que c'est ce\nque le produit ferait de toute façon. La décocher n'est utile que si vous en avez déjà une."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ce que l'écran n'offre pas"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", et c'est écrit plutôt que suggéré : aucun bouton "
+							},
+							{
+								"type": "emphasis",
+								"content": [
+									{
+										"type": "text",
+										"text": "Tester la\nconnexion"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état\nde l'identité ; aucune "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "suppression"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ; ni le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "quota quotidien"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ni la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "signature"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", que\nl'écran ne touche jamais et n'écrase donc jamais."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le reste du chapitre décrit ce que le produit garantit une fois l'adresse déclarée."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Recevoir et expédier sont deux choses distinctes."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une personne peut relever sa boîte\n"
+				},
+				{
+					"type": "code",
+					"text": "bizdev@…"
+				},
+				{
+					"type": "text",
+					"text": " et pourtant écrire à ses clients depuis "
+				},
+				{
+					"type": "code",
+					"text": "contact@…"
+				},
+				{
+					"type": "text",
+					"text": " : le produit ne lie pas les deux, et\nl'espace de démonstration le montre. Une adresse d'expédition porte son serveur d'envoi, son\nidentifiant, son mot de passe — chiffré comme celui d'une boîte de réception —, un nom affiché et\nune signature."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une adresse est « celle par défaut », et il y en a toujours exactement une."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " En déclarer une\nnouvelle comme adresse par défaut "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "déplace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " la marque : l'ancienne la perd au même instant. Vous\nn'avez jamais à la retirer d'abord, et il n'existe aucun moment où vous n'auriez plus d'adresse par\ndéfaut."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'adresse d'expédition est vérifiée à l'enregistrement."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " C'est la seule donnée de cette\nconfiguration que vos destinataires verront ; une chaîne qui n'est pas une adresse est refusée tout\nde suite, plutôt que d'échouer plus tard, à l'envoi, sur un compte annoncé comme valide."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le produit essaie vraiment la connexion"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", comme pour une boîte de réception, et "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sans envoyer\naucun message"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il ouvre une session avec le serveur d'envoi, s'authentifie, et referme. Les\ncauses d'échec affichées sont les mêmes que celles du "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-boites-de-reception-et-les-adresses-d-expedition",
+						"anchor": "les-boites-de-reception-declarees"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 11.1"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un quota quotidien peut être déclaré, mais il n'est appliqué par rien aujourd'hui"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : l'envoi\nlui-même n'est pas encore livré, et le dire vaut mieux que de laisser croire à un garde-fou qui\nn'existe pas."
+				}
+			]
+		}
+	]
+}

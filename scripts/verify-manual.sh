@@ -1,71 +1,71 @@
 #!/usr/bin/env bash
-# @verifies CRM-047 (docs/BACKLOG.md) — Definition of Done du manuel utilisateur du chunk 3
-# @verifies docs/SPEC-manual.md §2 (contrat de couverture), §3 (contrat d'un chapitre),
-#           §4 (les chiffres vivent dans l'annexe A), §5 (contrat de captures),
-#           §7.2 (preuve documentaire et sa contre-épreuve)
-# @verifies docs/manual.md (annexe A, règles de rédaction) ; docs/BACKLOG.md (unités citées)
-# @verifies CLAUDE.md §7 (documentation utilisateur, aucun secret)
+# @verifies CRM-117 (docs/BACKLOG.md) tranche T3.0 — la preuve du manuel public, révisée avant la réécriture
+# @verifies docs/SPEC-manual.md §10 (le contrat d'un chapitre public : aucune référence interne, libellés réels, aucun
+#           volume, aucun secret), §10 bis (le plan, les chapitres réécrits à mesure), §12 (la correspondance entre
+#           unités et chapitres), §15 (le manuel construit est à jour), §16 (la preuve du manuel et sa contre-épreuve)
+# @verifies CLAUDE.md §7 (documentation utilisateur : compréhensible sans le code, sans secret ni adresse interne)
+# @verifies CRM-047 (docs/BACKLOG.md) — l'origine de ce harnais et de ses contrôles des libellés et des volumes
 # @verifies CRM-097 (docs/BACKLOG.md) tranche T2.d — les libellés du parcours de l'assistant IA (docs/SPEC-ia.md §12.5)
-# @verifies CRM-097 tranche T3.d — les libellés du parcours « Suggérer » (docs/SPEC-ia.md §13.6, chapitre 5 bis.0 ter)
-# @verifies CRM-098 (docs/BACKLOG.md) tranche T4 — les libellés de la saisie de temps et du coût du personnel, et les
-#           versions de coût de l'annexe A (docs/SPEC-temps.md §7, chapitre 5 undecies)
-# @verifies CRM-099 (docs/BACKLOG.md) — les libellés des réels d'une ligne de coût (chapitre 5 octies)
+# @verifies CRM-097 tranche T3.d — les libellés du parcours « Suggérer » (docs/SPEC-ia.md §13.6, chapitre 18.3)
+# @verifies CRM-098 (docs/BACKLOG.md) tranche T4 — les libellés de la saisie de temps et du coût du personnel
+#           (docs/SPEC-temps.md §7, chapitre 28)
+# @verifies CRM-099 (docs/BACKLOG.md) — les libellés des réels d'une ligne de coût (chapitre 27)
 # @verifies CRM-106 (docs/BACKLOG.md) tranche T3 — les libellés de la bande de la fiche (docs/SPEC-temps.md §7.6,
-#           chapitre 5 undecies.6 bis) ; CRM-107 tranche T3 — ceux du calculateur (§7.4 bis, chapitre 5 undecies.5)
-# @verifies CRM-101 (docs/BACKLOG.md) tranche T4 — les libellés de la plateforme (docs/SPEC-plateforme.md §7, chapitre 10)
+#           chapitre 28.7) ; CRM-107 tranche T3 — ceux du calculateur (§7.4 bis, chapitre 28.5)
+# @verifies CRM-101 (docs/BACKLOG.md) tranche T4 — les libellés de la plateforme (docs/SPEC-plateforme.md §7, chapitre 32)
 # @verifies CRM-103 (docs/BACKLOG.md) tranche T3 — les libellés de l'administration du connecteur (docs/SPEC-mcp.md §8.1,
-#           chapitre 11)
+#           chapitre 33)
 #
-# Vérifie que `docs/manual.md` décrit le produit **réellement exécuté**, hors interface, contre la
-# base réelle et contre les fichiers du dépôt.
+# Vérifie que `docs/manual.md` est un manuel PUBLIC : écrit pour une personne membre d'un espace, qui ne connaît ni le
+# dépôt, ni le backlog, ni le jeu de démonstration (docs/SPEC-manual.md §9).
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
 # ---------------------------------------------------------------------------------------------
-#   1. chaque grandeur de l'annexe A égale ce que la base porte, valeur par valeur ;
-#   2. chaque dossier `docs/captures/<unité>/` cité par le manuel existe et n'est pas vide ;
-#   3. chaque unité `CRM-0NN` citée par le manuel existe dans `docs/BACKLOG.md` ;
-#   4. chaque unité du chunk 3 livrée est citée par le manuel — le contrat de couverture du §2 ;
-#   5. chaque libellé du parcours cité par le manuel existe LITTÉRALEMENT dans `webapp/src/i18n/fr.ts` ;
-#   6. aucun volume mesurable n'est recopié hors de l'annexe A ;
-#   7. le manuel ne porte aucune valeur de variable d'environnement, aucune clé, aucun jeton.
+#   1. le manuel construit (`docs/manuel/construit/`) est celui que la source produit ;
+#   2. les chapitres déjà réécrits ne portent aucune référence interne — identifiant d'unité, d'incohérence ou de
+#      décision, tranche, chemin ou nom de fichier du dépôt, nom de variable d'environnement, commande de terminal,
+#      mention du seed, du jeu de démonstration ou du développement (§10, point 2) ;
+#   3. chaque libellé du parcours cité par le manuel existe LITTÉRALEMENT dans `webapp/src/i18n/fr.ts` ;
+#   4. aucun volume du jeu de démonstration n'est recopié (§10, point 4) ;
+#   5. le manuel ne porte aucune valeur de variable d'environnement, aucune clé, aucun jeton ;
+#   6. chaque chapitre et chaque section de la table du §12 existe dans le manuel construit.
+#
+# RÉVISÉ PAR `CRM-117` T3.0 (docs/SPEC-manual.md §10 bis, 2026-10-27). La version de `CRM-047` exigeait l'annexe A
+# comparée à la base, les dossiers de captures cités, les unités citées et leur couverture : exactement ce que le §10
+# interdit désormais. Ces quatre contrôles sont RETIRÉS, non affaiblis : leur objet a disparu du manuel. Le harnais ne
+# lit plus la base.
+#
+# LE CONTRÔLE 2 GRANDIT AVEC LA RÉÉCRITURE. Il porte sur `CHAPITRES_REECRITS`, que chaque tranche de T3 complète ; à la
+# fin de T3.5, il couvre tout le manuel et la liste disparaît au profit du manuel entier.
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais NE prouve PAS, et le dit.
 # ---------------------------------------------------------------------------------------------
-# Il vérifie des FAITS, pas du SENS. Il attrape un chiffre faux, un libellé paraphrasé, une capture
-# disparue, une unité oubliée, un secret recopié. Il n'attrape pas une phrase juste mais trompeuse,
-# ni un chapitre qui décrirait correctement un écran sans dire l'essentiel. La relecture humaine
-# reste la seule preuve de la qualité d'un manuel (docs/SPEC-manual.md §8).
-#
-# Il ne prouve **aucun écran** : c'est l'objet de `e2e/ui/manuel.spec.ts`, qui ouvre les huit
-# adresses citées par le manuel avec la session réelle de la lectrice (`CRM-092` T9).
-#
-# Le script ne démarre ni n'arrête rien : la pile de développement doit déjà tourner
-# (`./runDev.sh`) et le seed être appliqué (`supabase/seed/apply-seed.sh`).
+# Il vérifie des FAITS, pas du SENS. Il ne reconnaît pas un nom de table ou de colonne écrit en toutes lettres, ni une
+# phrase juste mais trompeuse. Les identifiants de `aide-ecrans.ts` sont prouvés par sa preuve unitaire
+# (`webapp/src/app/aide-ecrans.test.ts`). Les images arrivent avec T4, et leurs contrôles avec elles. La relecture
+# humaine reste la seule preuve de la qualité d'un manuel.
 #
 # Usage :
 #   scripts/verify-manual.sh
-#   scripts/verify-manual.sh --contre-epreuve   dégrade une COPIE du manuel et exige que le
-#                                               harnais morde ; ne touche jamais au dépôt
+#   scripts/verify-manual.sh --contre-epreuve   dégrade une COPIE du manuel et de la table du §12, et exige que
+#                                               chaque famille de contrôles morde ; ne touche jamais au dépôt
 
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
 MANUEL=docs/manual.md
-BACKLOG=docs/BACKLOG.md
+SPEC=docs/SPEC-manual.md
+CONSTRUIT=docs/manuel/construit
 I18N=webapp/src/i18n/fr.ts
-# shellcheck source=scripts/lib/conteneur.sh
-source scripts/lib/conteneur.sh
-# @spec CRM-115 (docs/BACKLOG.md) T2, docs/SPEC-pile-par-session.md §6 : le conteneur se désigne par son service.
-DB_CONTAINER=$(conteneur db)
 
 CONTRE_EPREUVE=false
 while [ $# -gt 0 ]; do
 	case "$1" in
 		--contre-epreuve) CONTRE_EPREUVE=true ;;
-		--help|-h) sed -n '2,38p' "$0"; exit 0 ;;
+		--help|-h) sed -n '2,52p' "$0"; exit 0 ;;
 		*) echo "option inconnue « $1 ». Voir --help." >&2; exit 1 ;;
 	esac
 	shift
@@ -79,57 +79,14 @@ fail()  { checks=$((checks + 1)); failures=$((failures + 1)); printf '  \033[31m
 titre() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 info()  { printf '  %s\n' "$1"; }
 
-psql_db() { docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA "$@"; }
-
 # ---------------------------------------------------------------------------------------------
-# Les grandeurs de l'annexe A, et la requête qui fait foi pour chacune.
+# Les chapitres déjà réécrits pour le lecteur (docs/SPEC-manual.md §10 bis), par identifiant. Chaque tranche de T3 y
+# ajoute les siens ; le contrôle 2 ne porte que sur eux tant que la réécriture n'est pas finie.
 # ---------------------------------------------------------------------------------------------
-# Le libellé de gauche est celui de la table du manuel, AU CARACTÈRE PRÈS : c'est la clé de
-# jointure entre le document et la base. Le changer d'un côté sans l'autre rend le contrôle rouge,
-# ce qui est le comportement voulu — une grandeur renommée en douce cesserait d'être vérifiée.
-GRANDEURS=(
-	# `archived_at is null` NE SUFFIT PLUS À DIRE « ACTIF » depuis que `CRM-077` a livré la
-	# corbeille aux tracks et aux channels : un objet retiré y était compté comme actif, et les
-	# deux grandeurs sont devenues fausses le jour où le seed a posé un track et un channel en
-	# corbeille. Les deux requêtes excluent donc `deleted_at`, et DEUX GRANDEURS NOUVELLES rendent
-	# la corbeille visible dans l'inventaire au lieu de la fondre dans l'actif — les trois états
-	# de `docs/SPEC-corbeille.md` §3.1 sont indépendants, l'annexe les compte séparément.
-	"Tracks actifs|select count(*) from tracks where archived_at is null and deleted_at is null"
-	"Tracks archivés|select count(*) from tracks where archived_at is not null"
-	"Tracks en corbeille|select count(*) from tracks where deleted_at is not null"
-	"Channels actifs|select count(*) from channels where archived_at is null and deleted_at is null"
-	"Channels archivés|select count(*) from channels where archived_at is not null"
-	"Channels en corbeille|select count(*) from channels where deleted_at is not null"
-	"États du catalogue actifs|select count(*) from workflow_nodes_catalog where archived_at is null"
-	"États du catalogue archivés|select count(*) from workflow_nodes_catalog where archived_at is not null"
-	"Workflows|select count(*) from workflows"
-	"Workflows copiés dans un track|select count(*) from workflows where scope = 'track'"
-	"Étapes du workflow général|select count(*) from workflow_steps s join workflows w on w.id = s.workflow_id where w.scope = 'global'"
-	"Déplacements déclarés par le workflow général|select count(*) from workflow_transitions t join workflows w on w.id = t.workflow_id where w.scope = 'global'"
-	"Questions du formulaire actives|select count(*) from form_fields where archived_at is null"
-	"Questions du formulaire retirées|select count(*) from form_fields where archived_at is not null"
-	"Affaires|select count(*) from cards"
-	"Affaires actives|select count(*) from cards where archived_at is null and deleted_at is null"
-	"Affaires archivées|select count(*) from cards where archived_at is not null"
-	"Affaires en corbeille|select count(*) from cards where deleted_at is not null"
-	"Réponses de formulaire|select count(*) from card_field_values"
-	"Affaires portant au moins une réponse|select count(distinct card_id) from card_field_values"
-	"Commentaires|select count(*) from card_comments"
-	"Commentaires supprimés|select count(*) from card_comments where deleted_at is not null"
-	"Comptes de démonstration|select count(*) from workspace_members"
-	# CRM-098 — trois versions, dont une programmée (docs/SPEC-seed.md §17). Le temps saisi n'y figure pas : il suit le
-	# calendrier du jour où le seed est appliqué, comme les événements d'historique.
-	"Versions de coût du personnel|select count(*) from couts_personnel"
+CHAPITRES_REECRITS=(
 )
 
-# Unités du chunk 3 qui ont livré du comportement visible ou opposable, et que le manuel doit donc
-# citer (docs/SPEC-manual.md §2). `CRM-046` y figure : l'annexe A est son chapitre.
-UNITES_CHUNK3=(
-	CRM-007 CRM-012 CRM-013 CRM-020 CRM-021 CRM-030 CRM-031 CRM-032 CRM-033 CRM-034
-	CRM-035 CRM-036 CRM-037 CRM-040 CRM-041 CRM-042 CRM-043 CRM-044 CRM-045 CRM-046
-)
-
-# Libellés que le manuel cite entre guillemets pour décrire le parcours d'un visiteur, et qui
+# Libellés que le manuel cite entre guillemets pour décrire un parcours, et qui
 # doivent exister LITTÉRALEMENT dans le catalogue de traductions. C'est le contrôle qui aurait
 # attrapé « Affaire introuvable » deux unités plus tôt.
 LIBELLES_PARCOURS=(
@@ -148,7 +105,7 @@ LIBELLES_PARCOURS=(
 	"Aucun élément pour ces filtres"
 	"Aucun événement pour le moment"
 	"Commentaire supprimé"
-	# CRM-097 T2 — l'assistant IA (chapitre 5 bis.0 bis)
+	# CRM-097 T2 — l'assistant IA (chapitre 18.2)
 	"Créer avec l’IA"
 	"Décrivez le workflow"
 	"Générer la suggestion"
@@ -157,7 +114,7 @@ LIBELLES_PARCOURS=(
 	"Accepter et créer le workflow"
 	"Abandonner la suggestion"
 	"Suggestions de l’IA en revue"
-	# CRM-097 T3 — faire évoluer un workflow (chapitre 5 bis.0 ter)
+	# CRM-097 T3 — faire évoluer un workflow (chapitre 18.3)
 	"Suggérer"
 	"Décrivez ce qui doit changer"
 	"Ce qui change"
@@ -165,7 +122,7 @@ LIBELLES_PARCOURS=(
 	"Aucune destination"
 	"Accepter et faire évoluer le workflow"
 	"Suggestions de l’IA pour ce workflow"
-	# CRM-098 — la saisie de temps et le coût du personnel (chapitre 5 undecies)
+	# CRM-098 — la saisie de temps et le coût du personnel (chapitre 28)
 	"Ajouter une affaire"
 	"Cette valeur dépasserait la journée de 7 heures."
 	"Semaine précédente"
@@ -182,21 +139,21 @@ LIBELLES_PARCOURS=(
 	"Temps passé"
 	"Votre temps"
 	"Le temps de toute l’équipe"
-	# CRM-106 — saisir son temps depuis la fiche (chapitre 5 undecies.6 bis)
+	# CRM-106 — saisir son temps depuis la fiche (chapitre 28.7)
 	"Votre semaine"
 	"Ouvrir dans Temps"
-	# CRM-107 — le calculateur du coût par quart (chapitre 5 undecies.5)
+	# CRM-107 — le calculateur du coût par quart (chapitre 28.5)
 	"Calculer depuis le coût mensuel"
 	"Utiliser ce coût"
 	"Enregistrer la version"
 	"Coût par quart"
-	# CRM-099 — plusieurs réels par ligne de coût (chapitre 5 octies)
+	# CRM-099 — plusieurs réels par ligne de coût (chapitre 27)
 	"Un réel de plus"
 	"Déjà saisi"
 	"Ajouter le réel"
 	"Sans libellé"
 	"Soldé"
-	# CRM-101 — la plateforme (chapitre 10)
+	# CRM-101 — la plateforme (chapitre 32)
 	"Plateforme"
 	"Accès réservé"
 	"Espaces"
@@ -219,7 +176,7 @@ LIBELLES_PARCOURS=(
 	"Amorçage"
 	"Accorder le drapeau"
 	"Entrées plus anciennes"
-	# CRM-101 T6 et CRM-103 — les utilisateurs et le connecteur (chapitres 10.6 bis et 11)
+	# CRM-101 T6 et CRM-103 — les utilisateurs et le connecteur (chapitres 32.7 et 33)
 	"Utilisateurs"
 	"Rechercher un utilisateur"
 	"Droits du connecteur"
@@ -239,110 +196,83 @@ LIBELLES_PARCOURS=(
 	"Réponse trop volumineuse"
 )
 
+
 # ---------------------------------------------------------------------------------------------
 # Contrôles.
 # ---------------------------------------------------------------------------------------------
 
-# Extrait la valeur d'une grandeur de l'annexe A. Le manuel étant en Markdown, la ligne est de la
-# forme `| <libellé> | <valeur> |`. L'appariement est ANCRÉ sur le libellé entier : un libellé
-# préfixe d'un autre — « Affaires » et « Affaires actives » — ne doit jamais capturer sa suite.
-valeur_annexe() {
-	local libelle=$1 fichier=$2
-	awk -F'|' -v cible=" $libelle " '
-		NF >= 3 && $2 == cible { gsub(/^[ \t]+|[ \t]+$/, "", $3); print $3; exit }
-	' "$fichier"
-}
-
-controler_annexe() {
-	local fichier=$1
-	titre "1. Les grandeurs de l'annexe A égalent la base (docs/SPEC-manual.md §4)"
-	local entree libelle requete attendu mesure
-	for entree in "${GRANDEURS[@]}"; do
-		libelle=${entree%%|*}
-		requete=${entree#*|}
-		attendu=$(valeur_annexe "$libelle" "$fichier")
-		if [ -z "$attendu" ]; then
-			fail "annexe A : grandeur « $libelle » absente du manuel"
-			continue
-		fi
-		mesure=$(psql_db -c "$requete" | tr -d '[:space:]')
-		if [ "$attendu" = "$mesure" ]; then
-			ok "annexe A : $libelle = $mesure"
-		else
-			fail "annexe A : $libelle — le manuel dit « $attendu », la base dit « $mesure »"
-		fi
-	done
-
-	# LE TOTAL D'ÉVÉNEMENTS N'EST PAS DANS LA TABLE, ET C'EST MESURÉ, PAS SUPPOSÉ (décision 234).
-	# Il y figurait ; la première exécution de ce harnais après la suite d'API a rendu « le manuel
-	# dit 38, la base dit 73 ». Un total d'événements ne se fige pas — décision 226 l'avait déjà
-	# établi pour le seed. Ce qui se fige est l'invariant : aucune affaire sans son `created`.
-	local orphelines
-	orphelines=$(psql_db -c "select count(*) from cards c where not exists (select 1 from card_events e where e.card_id = c.id and e.type = 'created')" | tr -d '[:space:]')
-	if [ "$orphelines" = "0" ]; then
-		ok "annexe A : chaque affaire porte l'événement de sa création"
+controler_construit() {
+	titre "1. Le manuel construit est celui que la source produit (§15)"
+	if node scripts/manuel/construire.mjs --verifier >/dev/null 2>&1; then
+		ok "docs/manuel/construit/ est à jour"
 	else
-		fail "annexe A : $orphelines affaire(s) sans événement de création"
+		fail "docs/manuel/construit/ diffère de ce que docs/manual.md produit : npm run manuel:construire"
 	fi
 }
 
-controler_captures() {
+# Les motifs d'une référence interne (§10, point 2). Chacun est une forme RÉELLEMENT présente dans le manuel d'avant
+# la réécriture : 166 identifiants d'unité, 60 chemins, 58 mentions du seed ou du développement (mesuré le 2026-10-27).
+MOTIFS_INTERNES=(
+	'unité|\bCRM-[0-9P][0-9]{2}'
+	'incohérence|\bINC-[0-9]+'
+	'décision|\b[Dd]écisions? (n° ?)?[0-9]+'
+	'tranche|\b[Tt]ranches? [0-9T]|\bT[0-9]+(\.[0-9a-z]+)?\b'
+	'chemin du dépôt|\b(docs|scripts|webapp|supabase|e2e|mcp|stalwart)/'
+	'fichier du dépôt|\b[A-Za-z0-9_.-]+\.(md|ts|tsx|mjs|sql|sh|py)\b'
+	'variable d'"'"'environnement|\b[A-Z][A-Z0-9]*_[A-Z0-9_]{2,}\b'
+	'commande|\b(npm|npx|docker|psql|git|curl) [a-z-]'
+	'jeu de démonstration|\b[Ss]eed\b|[Dd]émonstration|\.test\b|localhost'
+	'développement|[Dd]éveloppement'
+)
+
+# Rend, pour chaque chapitre nommé, les lignes qui portent une référence interne : « famille|chapitre|n°|ligne ».
+references_internes() {
 	local fichier=$1
-	titre "2. Chaque dossier de captures cité existe et n'est pas vide (§3.4)"
-	local dossiers dossier
-	dossiers=$(grep -o 'docs/captures/CRM-[0-9]\{3\}/' "$fichier" | sort -u)
-	if [ -z "$dossiers" ]; then
-		fail "aucun dossier de captures n'est cité par le manuel"
-		return
+	shift
+	node --input-type=module - "$fichier" "$@" <<'JS'
+import { readFileSync } from 'node:fs'
+import { identifiant } from './scripts/manuel/construction.mjs'
+const [fichier, ...listes] = process.argv.slice(2)
+const separation = listes.indexOf('--')
+const chapitres = new Set(listes.slice(0, separation))
+const motifs = listes.slice(separation + 1).map((m) => {
+	const i = m.indexOf('|')
+	return [m.slice(0, i), new RegExp(m.slice(i + 1))]
+})
+let courant = null
+readFileSync(fichier, 'utf8').split('\n').forEach((ligne, i) => {
+	const titre = /^## (.*)$/.exec(ligne)
+	if (titre) courant = identifiant(titre[1])
+	if (!chapitres.has(courant)) return
+	for (const [famille, motif] of motifs)
+		if (motif.test(ligne)) console.log(`${famille}|${courant}|${i + 1}|${ligne.slice(0, 140)}`)
+})
+JS
+}
+
+controler_references() {
+	local fichier=$1
+	shift
+	titre "2. Aucune référence interne dans les chapitres réécrits (§10, point 2)"
+	if [ $# -eq 0 ]; then
+		info "aucun chapitre n'est encore réécrit : la liste CHAPITRES_REECRITS grandit à chaque tranche de T3"
+		return 0
 	fi
-	for dossier in $dossiers; do
-		if [ ! -d "$dossier" ]; then
-			fail "captures : « $dossier » est cité et n'existe pas"
-		elif [ -z "$(ls -A "$dossier" 2>/dev/null)" ]; then
-			fail "captures : « $dossier » existe et est vide"
-		else
-			ok "captures : $dossier ($(ls -1 "$dossier" | wc -l | tr -d ' ') fichier(s))"
-		fi
-	done
-}
-
-controler_unites_citees() {
-	local fichier=$1
-	titre "3. Chaque unité citée par le manuel existe dans le backlog"
-	local unites unite
-	unites=$(grep -o 'CRM-[0-9P][0-9]\{2\}' "$fichier" | sort -u)
-	for unite in $unites; do
-		# Deux formes légitimes dans le backlog : un en-tête `### CRM-0NN — …` pour les unités
-		# détaillées, une ligne de tableau `| CRM-0NN | … |` pour le chunk 5, dont les unités
-		# n'ont pas encore de fiche propre.
-		if grep -q "^### $unite " "$BACKLOG" || grep -q "^| $unite |" "$BACKLOG"; then
-			ok "backlog : $unite existe"
-		else
-			fail "backlog : le manuel cite « $unite », qui n'a aucune unité"
-		fi
-	done
-}
-
-controler_couverture() {
-	local fichier=$1
-	titre "4. Chaque unité du chunk 3 est citée par le manuel (contrat de couverture, §2)"
-	local unite
-	for unite in "${UNITES_CHUNK3[@]}"; do
-		if grep -q "$unite" "$fichier"; then
-			ok "couverture : $unite"
-		else
-			fail "couverture : $unite a livré du comportement et le manuel n'en parle nulle part"
-		fi
-	done
+	local trouve=0 famille chapitre numero ligne
+	while IFS='|' read -r famille chapitre numero ligne; do
+		[ -z "$famille" ] && continue
+		trouve=1
+		fail "référence interne ($famille), $chapitre, ligne $numero : $ligne"
+	done < <(references_internes "$fichier" "$@" -- "${MOTIFS_INTERNES[@]}")
+	if [ "$trouve" -eq 0 ]; then ok "aucune référence interne dans $# chapitre(s) réécrit(s)"; fi
 }
 
 controler_libelles() {
 	local fichier=$1
-	titre "5. Chaque libellé du parcours cité est le libellé réel du produit (§3.1)"
+	titre "3. Chaque libellé du parcours cité est le libellé réel du produit (§10, point 1)"
 
-	# Le manuel est replié à cent colonnes : un libellé de plusieurs mots y est coupé par un
-	# retour à la ligne. Comparer ligne à ligne déclarerait « non cité » un libellé pourtant
-	# présent — et le contrôle serait vert sans rien prouver. Le document est donc aplati d'abord.
+	# Le manuel est replié à cent vingt colonnes : un libellé de plusieurs mots y est coupé par un retour à la ligne.
+	# Comparer ligne à ligne déclarerait « non cité » un libellé pourtant présent. Le document est donc aplati d'abord.
 	local aplati
 	aplati=$(mktemp)
 	tr '\n' ' ' < "$fichier" | tr -s ' ' > "$aplati"
@@ -360,27 +290,21 @@ controler_libelles() {
 		fi
 	done
 
-	# Le contraire du même contrôle : un libellé PROCHE mais faux ne doit jamais reparaître. Il
-	# n'est pas déduit — il est nommé, parce qu'il a réellement figuré dans le manuel.
+	# Le contraire du même contrôle : un libellé PROCHE mais faux ne doit jamais reparaître. Il n'est pas déduit — il est
+	# nommé, parce qu'il a réellement figuré dans le manuel.
 	if grep -qF 'Affaire introuvable' "$aplati"; then
 		fail "libellé : « Affaire introuvable » est de retour ; l'écran dit « Card introuvable »"
 	else
-		ok "libellé : « Affaire introuvable » n'est pas revenu (écart n° 1 de docs/SPEC-manual.md §6)"
+		ok "libellé : « Affaire introuvable » n'est pas revenu"
 	fi
 	rm -f "$aplati"
 }
 
-controler_chiffres_hors_annexe() {
+controler_volumes() {
 	local fichier=$1
-	titre "6. Aucun volume du jeu de démonstration n'est écrit hors de l'annexe A (§4)"
-	# Le corps du manuel s'arrête où commence l'annexe : au-delà, les chiffres sont à leur place.
-	local corps
-	corps=$(mktemp)
-	awk '/^## Annexe A /{exit} {print}' "$fichier" > "$corps"
-
-	# Tournures qui ont RÉELLEMENT produit une dérive, et elles seules. Un contrôle qui
-	# interdirait tout nombre attraperait « 25 lignes par page », qui est une règle du produit et
-	# doit rester dans son chapitre.
+	titre "4. Aucun volume du jeu de démonstration n'est recopié (§10, point 4)"
+	# Tournures qui ont RÉELLEMENT produit une dérive, et elles seules. Un contrôle qui interdirait tout nombre
+	# attraperait « 25 lignes par page », qui est une règle du produit et doit rester dans son chapitre.
 	local motifs=(
 		'[0-9]\+ affaires\?'
 		'[0-9]\+ cards\?'
@@ -390,8 +314,7 @@ controler_chiffres_hors_annexe() {
 		'[0-9]\+ channels\?'
 		'[0-9]\+ tracks\?'
 	)
-	# Exclusions, et chacune est une RÈGLE du produit, pas un état de la base : « 25 affaires par
-	# page » ne bouge qu'avec `LIGNES_PAR_PAGE`, et sa place est dans son chapitre (§4).
+	# Exclusions, et chacune est une RÈGLE du produit, pas un état de la base.
 	local regles='affaires par page'
 
 	local motif trouve=0 ligne
@@ -400,23 +323,19 @@ controler_chiffres_hors_annexe() {
 			[ -z "$ligne" ] && continue
 			if printf '%s' "$ligne" | grep -q "$regles"; then continue; fi
 			trouve=1
-			fail "chiffre hors annexe : $ligne"
-		done < <(grep -n "$motif" "$corps" | cut -c1-160)
+			fail "volume recopié : $ligne"
+		done < <(grep -n "$motif" "$fichier" | cut -c1-160)
 	done
-	rm -f "$corps"
-	# `if`, et non `[ … ] && ok …` : sous `set -e`, un `&&` dont la condition est fausse fait
-	# rendre 1 à la FONCTION, et le script s'interrompt à la première anomalie sans jouer les
-	# contrôles suivants. Défaut trouvé par la contre-épreuve, jamais par une exécution verte
-	# (docs/JOURNAL.md décision 234).
-	if [ "$trouve" -eq 0 ]; then ok "aucun volume recopié dans un chapitre"; fi
+	# `if`, et non `[ … ] && ok …` : sous `set -e`, un `&&` dont la condition est fausse fait rendre 1 à la FONCTION, et
+	# le script s'interrompt à la première anomalie sans jouer les contrôles suivants.
+	if [ "$trouve" -eq 0 ]; then ok "aucun volume recopié"; fi
 }
 
 controler_secrets() {
 	local fichier=$1
-	titre "7. Le manuel ne porte aucun secret (CLAUDE.md §7)"
+	titre "5. Le manuel ne porte aucun secret (CLAUDE.md §7)"
 	local trouve=0 motif
-	# Un JWT, une clé de service, un mot de passe recopié : les trois formes qu'un secret prend
-	# dans ce dépôt. Le NOM d'une variable reste permis, sa VALEUR jamais.
+	# Un JWT, une clé de service, un mot de passe recopié : les trois formes qu'un secret prend dans ce dépôt.
 	for motif in 'eyJ[A-Za-z0-9_-]\{10,\}\.' 'SERVICE_ROLE_KEY[[:space:]]*=[[:space:]]*[^[:space:]]' 'ANON_KEY[[:space:]]*=[[:space:]]*[^[:space:]]' 'POSTGRES_PASSWORD[[:space:]]*=[[:space:]]*[^[:space:]]'; do
 		if grep -q "$motif" "$fichier"; then
 			trouve=1
@@ -426,71 +345,112 @@ controler_secrets() {
 	if [ "$trouve" -eq 0 ]; then ok "aucune valeur de secret dans le manuel"; fi
 }
 
+# La table du §12 : « | `CRM-0NN` | identifiant-du-chapitre | identifiant-de-section ou — | ».
+controler_correspondance() {
+	local spec=$1 sommaire=$2
+	titre "6. Chaque chapitre et chaque section de la table du §12 existe dans le manuel construit"
+	local resultat
+	resultat=$(node --input-type=module - "$spec" "$sommaire" <<'JS'
+import { readFileSync } from 'node:fs'
+const [spec, sommaire] = process.argv.slice(2)
+const texte = readFileSync(spec, 'utf8')
+const debut = texte.indexOf('## 12. ')
+const fin = texte.indexOf('\n## ', debut + 1)
+const { chapters } = JSON.parse(readFileSync(sommaire, 'utf8'))
+let lignes = 0
+for (const ligne of texte.slice(debut, fin).split('\n')) {
+	const m = /^\| `?(CRM-[0-9]{3})`? \| `?([a-z0-9-]+)`? \| `?([a-z0-9-]+|—)`? \|/.exec(ligne)
+	if (!m) continue
+	lignes += 1
+	const [, unite, slug, ancre] = m
+	const chapitre = chapters.find((c) => c.slug === slug)
+	if (!chapitre) console.log(`ECHEC|${unite} : le chapitre « ${slug} » n'existe pas`)
+	else if (ancre !== '—' && !chapitre.sections.some((s) => s.anchor === ancre))
+		console.log(`ECHEC|${unite} : la section « ${ancre} » n'existe pas dans « ${slug} »`)
+	else console.log(`OK|${unite} : ${slug}${ancre === '—' ? '' : '#' + ancre}`)
+}
+if (lignes === 0) console.log('INFO|la table du §12 n’a encore aucune ligne : elle s’établit à la réécriture')
+JS
+)
+	local statut message
+	while IFS='|' read -r statut message; do
+		case "$statut" in
+			OK) ok "$message" ;;
+			ECHEC) fail "$message" ;;
+			INFO) info "$message" ;;
+		esac
+	done <<< "$resultat"
+}
+
 executer_tous() {
-	local fichier=$1
-	controler_annexe "$fichier"
-	controler_captures "$fichier"
-	controler_unites_citees "$fichier"
-	controler_couverture "$fichier"
+	local fichier=$1 spec=$2
+	shift 2
+	controler_construit
+	controler_references "$fichier" "$@"
 	controler_libelles "$fichier"
-	controler_chiffres_hors_annexe "$fichier"
+	controler_volumes "$fichier"
 	controler_secrets "$fichier"
+	controler_correspondance "$spec" "$CONSTRUIT/contents.json"
 }
 
 # ---------------------------------------------------------------------------------------------
-# Contre-épreuve : le harnais doit MORDRE.
+# Contre-épreuve : chaque famille de contrôles doit MORDRE.
 # ---------------------------------------------------------------------------------------------
-# Un harnais qu'on n'a jamais vu échouer ne prouve pas qu'il échoue. Trois dégradations sont
-# posées sur une COPIE du manuel — jamais sur le dépôt — et chacune doit produire au moins une
-# anomalie de la famille visée.
+# Un harnais qu'on n'a jamais vu échouer ne prouve pas qu'il échoue. Les dégradations sont posées sur des COPIES du
+# manuel et de la spécification — jamais sur le dépôt —, et CHACUNE doit produire au moins une anomalie de sa famille :
+# un total global laisserait passer une famille devenue aveugle si une autre en produisait plusieurs.
+#   2. un chapitre réécrit qui cite une unité, un fichier, une variable et le seed ;
+#   3. le libellé faux, remis (« Affaire introuvable ») ;
+#   4. un volume recopié dans un chapitre ;
+#   5. une clé recopiée ;
+#   6. une ligne du §12 qui désigne une section disparue.
+# Le contrôle 1 lit le dépôt et non une copie : sa contre-épreuve est celle de la construction
+# (`scripts/manuel/construction.test.ts`), qui dégrade la source.
 if [ "$CONTRE_EPREUVE" = true ]; then
-	titre "Contre-épreuve — le harnais est-il complaisant ?"
+	titre "Contre-épreuve — chaque famille mord-elle ?"
 	TEMPORAIRE=$(mktemp -d)
+	trap 'rm -rf "$TEMPORAIRE"' EXIT
 	COPIE="$TEMPORAIRE/manual-degrade.md"
-
-	# CINQ DÉGRADATIONS, UNE PAR FAMILLE DE CONTRÔLE, posées sur une COPIE — jamais sur le dépôt.
-	# Chacune reproduit une dérive RÉELLEMENT survenue, ou qui survient de la même façon :
-	#   1. un volume de l'annexe faussé          → contrôle 1 (écart n° 6 des treize)
-	#   2. un dossier de captures qui n'existe pas → contrôle 2
-	#   3. une unité citée qui n'a aucun backlog   → contrôle 3
-	#   4. le libellé faux, remis                  → contrôle 5 (écart n° 1 des treize)
-	#   5. un volume recopié dans un chapitre      → contrôle 6 (écart n° 7 des treize)
+	SPEC_COPIE="$TEMPORAIRE/SPEC-degradee.md"
+	{
+		cat "$MANUEL"
+		printf '\n## 99. Un chapitre dégradé\n\n'
+		printf 'Livré par CRM-999, voir docs/SPEC-x.md ; la variable SUPABASE_URL ; le seed le montre.\n\n'
+		printf 'Cette adresse affiche « Affaire introuvable », et le channel porte 42 affaires.\n\n'
+		printf 'SERVICE_ROLE_KEY=abc\n'
+	} > "$COPIE"
 	awk '
-		/^\| Affaires \| [0-9]+ \|$/ { print "| Affaires | 999 |"; next }
-		/^## Annexe A / {
-			print "Voir `docs/captures/CRM-999/` — capture inexistante, unité `CRM-998` inconnue."
-			print ""
-			print "Cette adresse affiche « Affaire introuvable », et le channel porte 42 affaires."
-			print ""
-		}
+		/^## 12\. / { dans = 1 }
+		dans && /^\| Unité \|/ { print; getline; print; print "| `CRM-998` | le-carnet-de-contacts | une-section-disparue |"; next }
 		{ print }
-	' "$MANUEL" > "$COPIE"
+	' "$SPEC" > "$SPEC_COPIE"
 
+	compter() { local avant=$failures; "$@" > /dev/null; echo $((failures - avant)); }
+	manquantes=()
 	failures=0
-	checks=0
-	executer_tous "$COPIE"
-	degradees=$failures
-	rm -rf "$TEMPORAIRE"
+	[ "$(compter controler_references "$COPIE" un-chapitre-degrade)" -ge 1 ] || manquantes+=("2 (références internes)")
+	failures=0
+	[ "$(compter controler_libelles "$COPIE")" -ge 1 ] || manquantes+=("3 (libellés)")
+	failures=0
+	[ "$(compter controler_volumes "$COPIE")" -ge 1 ] || manquantes+=("4 (volumes)")
+	failures=0
+	[ "$(compter controler_secrets "$COPIE")" -ge 1 ] || manquantes+=("5 (secrets)")
+	failures=0
+	[ "$(compter controler_correspondance "$SPEC_COPIE" "$CONSTRUIT/contents.json")" -ge 1 ] || manquantes+=("6 (table du §12)")
 
 	printf '\n'
-	if [ "$degradees" -ge 5 ]; then
-		printf '\033[32mLe harnais MORD : %s anomalie(s) sur le manuel dégradé.\033[0m\n' "$degradees"
+	if [ "${#manquantes[@]}" -eq 0 ]; then
+		printf '\033[32mLe harnais MORD : chacune des cinq familles dégradées produit son anomalie.\033[0m\n'
 		exit 0
 	fi
-	printf '\033[31mLe harnais est COMPLAISANT : %s anomalie(s) seulement sur un manuel dégradé, 5 attendues.\033[0m\n' \
-		"$degradees"
+	printf '\033[31mLe harnais est COMPLAISANT pour : %s.\033[0m\n' "${manquantes[*]}"
 	exit 1
 fi
 
-if ! docker ps --format '{{.Names}}' | grep -qx "$DB_CONTAINER"; then
-	echo "ERREUR : conteneur « $DB_CONTAINER » absent. Lancez ./runDev.sh." >&2
-	exit 1
-fi
+titre "Preuves du manuel public — CRM-117 (docs/SPEC-manual.md §16)"
+info "Manuel : $MANUEL — spécification : $SPEC"
 
-titre "Preuves du manuel utilisateur du chunk 3 — CRM-047"
-info "Manuel : $MANUEL — spécification : docs/SPEC-manual.md"
-
-executer_tous "$MANUEL"
+executer_tous "$MANUEL" "$SPEC" "${CHAPITRES_REECRITS[@]}"
 
 printf '\n'
 if [ "$failures" -eq 0 ]; then

@@ -1,6 +1,6 @@
 {
 	"slug": "les-recettes-d-une-affaire-et-sa-rentabilite",
-	"title": "5 duodecies. Les recettes d'une affaire et sa rentabilité",
+	"title": "29. Les recettes d'une affaire et sa rentabilité",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -43,7 +43,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 duodecies.1 Saisir les recettes dans la fiche"
+					"text": "29.1 Saisir les recettes dans la fiche"
 				}
 			]
 		},
@@ -146,7 +146,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 duodecies.2 La rentabilité d'une affaire"
+					"text": "29.2 La rentabilité d'une affaire"
 				}
 			]
 		},
@@ -266,7 +266,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 duodecies.3 L'écran « Rentabilité »"
+					"text": "29.3 L'écran « Rentabilité »"
 				}
 			]
 		},
@@ -427,7 +427,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 duodecies.4 L'onglet « À saisir »"
+					"text": "29.4 L'onglet « À saisir »"
 				}
 			]
 		},
@@ -481,7 +481,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 duodecies.5 Ce qui n'est pas offert"
+					"text": "29.5 Ce qui n'est pas offert"
 				}
 			]
 		},

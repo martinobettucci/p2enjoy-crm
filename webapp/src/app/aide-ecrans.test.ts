@@ -1,4 +1,5 @@
 // @verifies CRM-117 (docs/BACKLOG.md) — tranche T2 : la correspondance entre un écran et son chapitre
+// @verifies CRM-117 tranche T3.0 — les écrans du carnet, des boîtes et de l'inbox suivent le plan public (§10 bis)
 // @verifies docs/SPEC-manual.md §13.2 (un seul endroit, le motif le plus précis l'emporte) et §16 (chaque identifiant de
 //           `aide-ecrans.ts` existe dans le manuel construit) ; docs/DESIGN_SYSTEM.md §5.69
 
@@ -29,8 +30,8 @@ describe('aideDeLecran — le motif le plus précis l’emporte', () => {
 		)
 	})
 
-	it('une sous-adresse du carnet, des objectifs et de la plateforme mène au chapitre de la section', () => {
-		expect(aideDeLecran('/contacts/organisations/x')?.section).toBe('le-carnet-de-contacts')
+	it('une sous-adresse du carnet, des objectifs et de la plateforme mène à son chapitre', () => {
+		expect(aideDeLecran('/contacts/organisations/x')).toEqual({ chapitre: 'le-carnet-de-contacts' })
 		expect(aideDeLecran('/objectifs/x')?.chapitre).toBe('les-objectifs-le-tableau-blanc-de-l-equipe')
 		expect(aideDeLecran('/plateforme/espaces/p2enjoy')?.chapitre).toBe('la-plateforme-espaces-membres-et-superadministrateurs')
 	})
@@ -39,6 +40,18 @@ describe('aideDeLecran — le motif le plus précis l’emporte', () => {
 		expect(aideDeLecran('/reglages')).toBeNull()
 		expect(aideDeLecran('/aide/le-board')).toBeNull()
 		expect(aideDeLecran('/nulle-part/ici')).toBeNull()
+	})
+})
+
+// `CRM-117` T3.0 — le plan du manuel public (docs/SPEC-manual.md §10 bis) : le carnet, les boîtes et l'inbox ont leur
+// chapitre, et l'aide de leurs écrans les suit.
+describe('les écrans dont le chapitre a été déplacé par le plan public', () => {
+	it.each([
+		['/inbox', 'l-inbox-lire-trier-et-repondre', 'l-inbox-lire-et-trier-le-courrier-recu'],
+		['/reglages/comptes-mail', 'les-boites-de-reception-et-les-adresses-d-expedition', 'les-boites-de-reception-declarees'],
+		['/reglages/identites-mail', 'les-boites-de-reception-et-les-adresses-d-expedition', 'les-adresses-d-expedition'],
+	])('%s → %s#%s', (chemin, chapitre, section) => {
+		expect(aideDeLecran(chemin)).toEqual({ chapitre, section })
 	})
 })
 

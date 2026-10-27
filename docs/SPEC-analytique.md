@@ -8,8 +8,8 @@ Documents liés : `docs/SCHEMA.md` §4 (`workflow_nodes_catalog`, `workflow_step
 §2 (catalogue de nœuds) et §3.3 (résolution d'un attribut d'étape) ; `docs/SPEC-permissions-rls.md`
 §3.6, §3.7 et §7 (le refus est **zéro ligne**) ; `docs/SPEC-costs.md` §2.3 (« nul n'est pas zéro »)
 et §4.5 (un cumul se calcule **après** la RLS) ; `docs/SPEC-relances.md` §2.2 (un seuil absent n'est
-jamais remplacé par un défaut) ; `docs/SPEC-webapp.md` §5.2 (routes) ; `docs/manual.md` chapitres 28
-et 29.
+jamais remplacé par un défaut) ; `docs/SPEC-webapp.md` §5.2 (routes) ; `docs/manual.md` chapitres 30
+et 31 (plan public, `docs/SPEC-manual.md` §10 bis).
 
 Ce document est écrit **après mesure sur la pile de développement seedée**, et non de mémoire. Les
 sept mesures du §2 ont été relevées le 2026-08-30 avant sa rédaction. Il est écrit et committé
@@ -33,7 +33,7 @@ sept mesures du §2 ont été relevées le 2026-08-30 avant sa rédaction. Il es
 | La **probabilité effective** d'une affaire, résolue à trois niveaux (§3) | Trois colonnes existent et **aucune surface ne les lit** — mesure M4 |
 | `public.entonnoir_conversion()`, agrégat serveur sous l'identité de l'appelant (§5) | `CLAUDE.md` §21 : ne pas télécharger tout le portefeuille pour l'écarter côté client |
 | Le contrat d'API opposable de cette fonction (§6) | `CLAUDE.md` §10 : une règle de produit s'applique là où l'interface ne peut pas être contournée |
-| Les deux grandeurs dérivées — taux de conversion des affaires décidées, prévisionnel par devise (§7) | `docs/manual.md` chapitres 28 et 29 |
+| Les deux grandeurs dérivées — taux de conversion des affaires décidées, prévisionnel par devise (§7) | `docs/manual.md` chapitres 30 et 31 |
 | L'écran `/pilotage` et ses états (§8, tranche 3) | `docs/SPEC-webapp.md` §5.2 |
 | Le seed portant les deux surcharges de probabilité (§9) | `CLAUDE.md` §8 : une règle métier neuve se démontre sur des données seedées |
 

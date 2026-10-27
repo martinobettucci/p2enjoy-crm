@@ -1,6 +1,6 @@
 {
 	"slug": "la-plateforme-espaces-membres-et-superadministrateurs",
-	"title": "10. La plateforme : espaces, membres et superadministrateurs",
+	"title": "32. La plateforme : espaces, membres et superadministrateurs",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -74,7 +74,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10.1 Qui est superadministrateur"
+					"text": "32.1 Qui est superadministrateur"
 				}
 			]
 		},
@@ -189,7 +189,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10.2 Ouvrir la plateforme"
+					"text": "32.2 Ouvrir la plateforme"
 				}
 			]
 		},
@@ -296,7 +296,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10.3 Créer un espace"
+					"text": "32.3 Créer un espace"
 				}
 			]
 		},
@@ -429,14 +429,17 @@
 				},
 				{
 					"type": "text",
-					"text": " : sa fiche le dit, et la liste porte\n« Aucun administrateur ». Donnez-lui son premier administrateur, comme décrit ci-dessous. À sa première connexion, cet\nadministrateur trouvera le guide de démarrage, qui pose le workflow de départ (chapitre 1 "
+					"text": " : sa fiche le dit, et la liste porte\n« Aucun administrateur ». Donnez-lui son premier administrateur, comme décrit ci-dessous. À sa première connexion, cet\nadministrateur trouvera le guide de démarrage, qui pose le workflow de départ ("
 				},
 				{
-					"type": "emphasis",
+					"type": "link",
+					"target": {
+						"chapter": "le-guide-de-demarrage-par-ou-commencer"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "bis"
+							"text": "chapitre 2"
 						}
 					]
 				},
@@ -453,7 +456,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10.4 Les membres d'un espace"
+					"text": "32.4 Les membres d'un espace"
 				}
 			]
 		},
@@ -564,7 +567,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10.5 Les attentes"
+					"text": "32.5 Les attentes"
 				}
 			]
 		},
@@ -599,7 +602,23 @@
 				},
 				{
 					"type": "text",
-					"text": ", avec l'adresse et le rôle. Elle devient membre à sa première connexion LeLabs, si son\nadresse et son compte sont vérifiés (chapitre 1). Réinscrire une adresse remplace son rôle, et "
+					"text": ", avec l'adresse et le rôle. Elle devient membre à sa première connexion LeLabs, si son\nadresse et son compte sont vérifiés ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "se-connecter-et-se-deconnecter"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 1"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Réinscrire une adresse remplace son rôle, et "
 				},
 				{
 					"type": "strong",
@@ -702,7 +721,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10.6 Modifier ou supprimer un espace"
+					"text": "32.6 Modifier ou supprimer un espace"
 				}
 			]
 		},
@@ -842,7 +861,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10.6 bis Les utilisateurs"
+					"text": "32.7 Les utilisateurs"
 				}
 			]
 		},
@@ -981,7 +1000,41 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "L'onglet ne modifie rien. Pour ajouter une personne à un espace, ouvrez la fiche de l'espace (§10.4). Pour lui donner\nle drapeau, passez par l'onglet « Superadministrateurs » (§10.7). "
+					"text": "L'onglet ne modifie rien. Pour ajouter une personne à un espace, ouvrez la fiche de l'espace ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "la-plateforme-espaces-membres-et-superadministrateurs",
+						"anchor": "les-membres-d-un-espace"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§32.4"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Pour lui donner\nle drapeau, passez par l'onglet « Superadministrateurs » ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "la-plateforme-espaces-membres-et-superadministrateurs",
+						"anchor": "les-superadministrateurs-et-le-journal"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§32.8"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). "
 				},
 				{
 					"type": "strong",
@@ -994,7 +1047,23 @@
 				},
 				{
 					"type": "text",
-					"text": ", sur chaque ligne, mène\nà ses droits du connecteur MCP (chapitre 11). Le rôle "
+					"text": ", sur chaque ligne, mène\nà ses droits du connecteur MCP ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 33"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Le rôle "
 				},
 				{
 					"type": "code",
@@ -1013,7 +1082,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10.7 Les superadministrateurs et le journal"
+					"text": "32.8 Les superadministrateurs et le journal"
 				}
 			]
 		},
@@ -1249,14 +1318,17 @@
 				},
 				{
 					"type": "text",
-					"text": " avec le nombre d'entrées effacées de chacun. Personne\nne peut modifier ni supprimer une entrée de ces journaux (chapitre 10 "
+					"text": " avec le nombre d'entrées effacées de chacun. Personne\nne peut modifier ni supprimer une entrée de ces journaux ("
 				},
 				{
-					"type": "emphasis",
+					"type": "link",
+					"target": {
+						"chapter": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "ter"
+							"text": "chapitre 22"
 						}
 					]
 				},
@@ -1273,7 +1345,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10.8 Ce que la plateforme n'offre pas"
+					"text": "32.9 Ce que la plateforme n'offre pas"
 				}
 			]
 		},
@@ -1297,14 +1369,17 @@
 							},
 							{
 								"type": "text",
-								"text": ", sans être superadministrateur : c'est l'écran\n« Réglages ▸ Membres » (chapitre 10 "
+								"text": ", sans être superadministrateur : c'est l'écran\n« Réglages ▸ Membres » ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "bis"
+										"text": "chapitre 21"
 									}
 								]
 							},

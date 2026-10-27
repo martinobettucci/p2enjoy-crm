@@ -1,6 +1,6 @@
 {
 	"slug": "le-temps-passe-et-le-cout-du-personnel",
-	"title": "5 undecies. Le temps passé et le coût du personnel",
+	"title": "28. Le temps passé et le coût du personnel",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -87,7 +87,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 undecies.1 Saisir sa semaine"
+					"text": "28.1 Saisir sa semaine"
 				}
 			]
 		},
@@ -215,7 +215,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 undecies.2 Saisir une journée en heures"
+					"text": "28.2 Saisir une journée en heures"
 				}
 			]
 		},
@@ -248,7 +248,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 undecies.3 Saisir pour quelqu'un d'autre"
+					"text": "28.3 Saisir pour quelqu'un d'autre"
 				}
 			]
 		},
@@ -281,7 +281,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 undecies.4 Le rapport mensuel"
+					"text": "28.4 Le rapport mensuel"
 				}
 			]
 		},
@@ -375,7 +375,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 undecies.5 Régler le coût du personnel"
+					"text": "28.5 Régler le coût du personnel"
 				}
 			]
 		},
@@ -397,7 +397,24 @@
 				},
 				{
 					"type": "text",
-					"text": ", réservé aux administrateurs — pour les autres, l'entrée des\nréglages est un texte grisé (section 3.6) —, chaque personne a sa carte : son coût en\nvigueur, sa prochaine version s'il y en a une. "
+					"text": ", réservé aux administrateurs — pour les autres, l'entrée des\nréglages est un texte grisé ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") —, chaque personne a sa carte : son coût en\nvigueur, sa prochaine version s'il y en a une. "
 				},
 				{
 					"type": "strong",
@@ -552,7 +569,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 undecies.6 Le coût du personnel à côté des coûts"
+					"text": "28.6 Le coût du personnel à côté des coûts"
 				}
 			]
 		},
@@ -561,7 +578,23 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Sur l'écran de coûts d'un track (chapitre 5 quinquies), sous l'histogramme, "
+					"text": "Sur l'écran de coûts d'un track ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 24"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), sous l'histogramme, "
 				},
 				{
 					"type": "strong",
@@ -598,7 +631,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 undecies.6 bis Saisir son temps depuis la fiche d'une affaire"
+					"text": "28.7 Saisir son temps depuis la fiche d'une affaire"
 				}
 			]
 		},
@@ -734,7 +767,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 undecies.7 Ce qui n'est pas offert"
+					"text": "28.8 Ce qui n'est pas offert"
 				}
 			]
 		},

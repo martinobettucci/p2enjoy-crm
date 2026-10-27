@@ -1,6 +1,6 @@
 {
 	"slug": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite",
-	"title": "5 octies. L'onglet « À saisir » : renseigner les coûts réels à la suite",
+	"title": "27. L'onglet « À saisir » : renseigner les coûts réels à la suite",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -62,7 +62,39 @@
 				},
 				{
 					"type": "text",
-					"text": " Sur l'écran de coûts d'un track (§5 quinquies) ou sur celui de l'espace de travail\n(§5 septies), l'onglet "
+					"text": " Sur l'écran de coûts d'un track ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§24"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") ou sur celui de l'espace de travail\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§26"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), l'onglet "
 				},
 				{
 					"type": "strong",
@@ -343,7 +375,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 octies.1 Saisir, au clavier"
+					"text": "27.1 Saisir, au clavier"
 				}
 			]
 		},
@@ -549,7 +581,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 octies.2 Ce que vous ne pouvez pas modifier reste visible"
+					"text": "27.2 Ce que vous ne pouvez pas modifier reste visible"
 				}
 			]
 		},
@@ -665,7 +697,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 octies.3 Ce que l'écran écrit quand quelque chose ne va pas"
+					"text": "27.3 Ce que l'écran écrit quand quelque chose ne va pas"
 				}
 			]
 		},
@@ -792,7 +824,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 octies.4 Le compteur de l'onglet"
+					"text": "27.4 Le compteur de l'onglet"
 				}
 			]
 		},
@@ -908,7 +940,24 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "C'est la même règle que celle du cumul du workspace (§5 septies.3) : quand deux nombres d'un même\nécran ne comptent pas la même chose, l'écran écrit lequel compte quoi."
+					"text": "C'est la même règle que celle du cumul du workspace ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track",
+						"anchor": "votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§26.3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : quand deux nombres d'un même\nécran ne comptent pas la même chose, l'écran écrit lequel compte quoi."
 				}
 			]
 		},
@@ -919,7 +968,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 octies.5 Ce que cet onglet ne fait pas"
+					"text": "27.5 Ce que cet onglet ne fait pas"
 				}
 			]
 		},
@@ -983,7 +1032,24 @@
 							},
 							{
 								"type": "text",
-								"text": " : cela se fait depuis la fiche de son affaire\n(§5 octies.6)."
+								"text": " : cela se fait depuis la fiche de son affaire\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite",
+									"anchor": "les-reels-d-une-ligne-dans-la-fiche-d-une-affaire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§27.6"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -1013,7 +1079,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 octies.6 Les réels d'une ligne, dans la fiche d'une affaire"
+					"text": "27.6 Les réels d'une ligne, dans la fiche d'une affaire"
 				}
 			]
 		},

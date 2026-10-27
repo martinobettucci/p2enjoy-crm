@@ -1,6 +1,6 @@
 {
 	"slug": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense",
-	"title": "5 quinquies. Les coûts d'un track : ce qui était prévu, ce qui a été dépensé",
+	"title": "24. Les coûts d'un track : ce qui était prévu, ce qui a été dépensé",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -209,7 +209,23 @@
 				},
 				{
 					"type": "text",
-					"text": " vers sa fiche (§5 sexies)."
+					"text": " vers sa fiche ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§25"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -238,7 +254,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quinquies.1 La phrase sous le graphique, et pourquoi elle compte"
+					"text": "24.1 La phrase sous le graphique, et pourquoi elle compte"
 				}
 			]
 		},
@@ -321,7 +337,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quinquies.2 Plusieurs devises"
+					"text": "24.2 Plusieurs devises"
 				}
 			]
 		},
@@ -354,7 +370,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quinquies.3 Les états que vous pouvez rencontrer"
+					"text": "24.3 Les états que vous pouvez rencontrer"
 				}
 			]
 		},
@@ -488,7 +504,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quinquies.4 Ce que cet écran ne fait pas"
+					"text": "24.4 Ce que cet écran ne fait pas"
 				}
 			]
 		},
@@ -546,7 +562,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quinquies.5 Deux onglets, et le second est celui où l'on saisit"
+					"text": "24.5 Deux onglets, et le second est celui où l'on saisit"
 				}
 			]
 		},
@@ -624,20 +640,23 @@
 				},
 				{
 					"type": "text",
-					"text": ", comme le reste du produit. Tout est décrit au "
+					"text": ", comme le reste du produit. Tout est décrit au **"
 				},
 				{
-					"type": "strong",
+					"type": "link",
+					"target": {
+						"chapter": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "§5 octies"
+							"text": "§27"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": "."
+					"text": "*."
 				}
 			]
 		},
@@ -662,7 +681,23 @@
 						},
 						{
 							"type": "text",
-							"text": " est livré : voir le §5 septies."
+							"text": " est livré : voir le "
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§26"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "."
 						}
 					]
 				}

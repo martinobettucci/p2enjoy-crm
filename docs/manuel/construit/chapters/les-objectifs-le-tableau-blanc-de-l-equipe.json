@@ -1,6 +1,6 @@
 {
 	"slug": "les-objectifs-le-tableau-blanc-de-l-equipe",
-	"title": "3 sexies. Les objectifs : le tableau blanc de l'équipe",
+	"title": "8. Les objectifs : le tableau blanc de l'équipe",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -147,7 +147,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 sexies.1 La liste des tableaux"
+					"text": "8.1 La liste des tableaux"
 				}
 			]
 		},
@@ -398,7 +398,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 sexies.2 Le canevas"
+					"text": "8.2 Le canevas"
 				}
 			]
 		},
@@ -688,7 +688,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 sexies.3 Poser, déplacer et modifier un bloc"
+					"text": "8.3 Poser, déplacer et modifier un bloc"
 				}
 			]
 		},
@@ -972,7 +972,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 sexies.4 Tracer et supprimer une flèche"
+					"text": "8.4 Tracer et supprimer une flèche"
 				}
 			]
 		},
@@ -1066,7 +1066,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 sexies.5 Supprimer un bloc"
+					"text": "8.5 Supprimer un bloc"
 				}
 			]
 		},
@@ -1121,7 +1121,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 sexies.6 Qui peut écrire"
+					"text": "8.6 Qui peut écrire"
 				}
 			]
 		},
@@ -1189,7 +1189,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 sexies.7 Quand il n'y a rien"
+					"text": "8.7 Quand il n'y a rien"
 				}
 			]
 		},
@@ -1268,7 +1268,23 @@
 				},
 				{
 					"type": "text",
-					"text": " lit et compose aussi les canevas, dans vos droits (chapitre 11)."
+					"text": " lit et compose aussi les canevas, dans vos droits ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 33"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		}

@@ -1,6 +1,6 @@
 {
 	"slug": "le-previsionnel-pondere-et-le-taux-de-conversion",
-	"title": "5 decies. Le prévisionnel pondéré et le taux de conversion",
+	"title": "31. Le prévisionnel pondéré et le taux de conversion",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -80,7 +80,23 @@
 				},
 				{
 					"type": "text",
-					"text": " de l'écran « Pilotage » (§5 nonies), au-dessus des tableaux : deux nombres, et\nc'est la lecture que la plupart des visites viennent chercher."
+					"text": " de l'écran « Pilotage » ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§30"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), au-dessus des tableaux : deux nombres, et\nc'est la lecture que la plupart des visites viennent chercher."
 				}
 			]
 		},
@@ -91,7 +107,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 decies.1 Le prévisionnel pondéré"
+					"text": "31.1 Le prévisionnel pondéré"
 				}
 			]
 		},
@@ -113,7 +129,24 @@
 				},
 				{
 					"type": "text",
-					"text": ", chacune multipliée par sa probabilité\n(§5 nonies.3), "
+					"text": ", chacune multipliée par sa probabilité\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires",
+						"anchor": "la-probabilite-d-une-affaire-trois-niveaux-et-le-plus-precis-gagne"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§30.4"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), "
 				},
 				{
 					"type": "strong",
@@ -217,7 +250,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 decies.2 Le taux de conversion des affaires décidées"
+					"text": "31.2 Le taux de conversion des affaires décidées"
 				}
 			]
 		},
@@ -344,7 +377,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 decies.3 Aucun objectif chiffré n'est confronté à ce prévisionnel"
+					"text": "31.3 Aucun objectif chiffré n'est confronté à ce prévisionnel"
 				}
 			]
 		},
@@ -366,7 +399,23 @@
 				},
 				{
 					"type": "text",
-					"text": " existent dans le produit (§3 ter) sous forme de tableaux de blocs et de flèches,\navec un "
+					"text": " existent dans le produit ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-carnet-de-contacts"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") sous forme de tableaux de blocs et de flèches,\navec un "
 				},
 				{
 					"type": "strong",
@@ -425,7 +474,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 decies.4 Ce que ces deux nombres ne sont pas"
+					"text": "31.4 Ce que ces deux nombres ne sont pas"
 				}
 			]
 		},
@@ -469,7 +518,24 @@
 							},
 							{
 								"type": "text",
-								"text": " sans précaution : chacun lit les siens sur\nson propre portefeuille (§5 nonies.4)."
+								"text": " sans précaution : chacun lit les siens sur\nson propre portefeuille ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires",
+									"anchor": "vos-nombres-sont-les-votres-et-ils-peuvent-differer-de-ceux-d-un-collegue"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§30.5"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}

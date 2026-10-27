@@ -9,7 +9,7 @@ Documents liés : `docs/SPEC-plateforme.md` (superadministrateurs, amorçage, jo
 `docs/SPEC-session-sso.md` (échangeur, jeton interne, admission), `docs/SPEC-permissions-rls.md`,
 `docs/SSO.md`, `docs/SPEC-session-sso.md` §12 (le client confidentiel du CRM), `docs/SCHEMA.md` §9 quinquies,
 `docs/DAT.md` §3 et §7, `docs/SPEC-deploiement-spark.md`, `docs/DESIGN_SYSTEM.md` (section
-« Connecteur MCP », écrite avec `CRM-103`), `docs/manual.md` (chapitre 11, écrit avec `CRM-103`).
+« Connecteur MCP », écrite avec `CRM-103`), `docs/manual.md` (chapitre 33 du plan public, écrit avec `CRM-103`).
 Modèle éprouvé : le connecteur Evoliz du même responsable (`p2enjoy-evoliz`, en production depuis le
 2026-10-06), dont le mandataire OAuth, la garde d'entrée et la connexion longue sont repris.
 

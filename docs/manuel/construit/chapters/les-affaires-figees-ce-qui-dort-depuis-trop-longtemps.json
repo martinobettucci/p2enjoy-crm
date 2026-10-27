@@ -1,6 +1,6 @@
 {
 	"slug": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps",
-	"title": "3 quinquies. Les affaires figées : ce qui dort depuis trop longtemps",
+	"title": "7. Les affaires figées : ce qui dort depuis trop longtemps",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -109,7 +109,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quinquies.1 Ce qu'être « figée » veut dire"
+					"text": "7.1 Ce qu'être « figée » veut dire"
 				}
 			]
 		},
@@ -181,14 +181,17 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "l'étape elle-même peut porter un seuil, réglé dans l'éditeur de workflows (chapitre 5 "
+								"text": "l'étape elle-même peut porter un seuil, réglé dans l'éditeur de workflows ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "bis"
+										"text": "chapitre 18"
 									}
 								]
 							},
@@ -218,7 +221,23 @@
 							},
 							{
 								"type": "text",
-								"text": " du catalogue dont l'étape est une occurrence (chapitre 5\n"
+								"text": " du catalogue dont l'étape est une occurrence ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "administrer-l-arborescence-tracks-et-channels"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 17"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "\n"
 							},
 							{
 								"type": "emphasis",
@@ -383,14 +402,17 @@
 							},
 							{
 								"type": "text",
-								"text": " — elle est sortie du produit (chapitre 5 "
+								"text": " — elle est sortie du produit ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "ter"
+										"text": "chapitre 20"
 									}
 								]
 							},
@@ -420,14 +442,18 @@
 							},
 							{
 								"type": "text",
-								"text": " — mettre en sommeil est précisément le geste qui dit « pas\nmaintenant » (chapitre 4.9 "
+								"text": " — mettre en sommeil est précisément le geste qui dit « pas\nmaintenant » ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "mettre-une-affaire-en-sommeil-et-la-retrouver"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "bis"
+										"text": "chapitre 9.13"
 									}
 								]
 							},
@@ -460,7 +486,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quinquies.2 Ce que l'écran montre"
+					"text": "7.2 Ce que l'écran montre"
 				}
 			]
 		},
@@ -655,7 +681,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quinquies.3 Deux personnes n'y lisent pas la même chose"
+					"text": "7.3 Deux personnes n'y lisent pas la même chose"
 				}
 			]
 		},
@@ -677,14 +703,18 @@
 				},
 				{
 					"type": "text",
-					"text": ". Deux collègues ouvrant la\nmême page au même instant peuvent donc y voir des listes différentes, et c'est voulu : les droits\npar track et par onglet (chapitre 3.2 "
+					"text": ". Deux collègues ouvrant la\nmême page au même instant peuvent donc y voir des listes différentes, et c'est voulu : les droits\npar track et par onglet ("
 				},
 				{
-					"type": "emphasis",
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-acces-par-track-et-par-channel"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "quater"
+							"text": "chapitre 3.6"
 						}
 					]
 				},
@@ -754,7 +784,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quinquies.4 La relance inscrite dans l'affaire"
+					"text": "7.4 La relance inscrite dans l'affaire"
 				}
 			]
 		},
@@ -776,7 +806,24 @@
 				},
 				{
 					"type": "text",
-					"text": ", avec son retard et son seuil au moment du passage. Vous la\ntrouvez dans le fil de la fiche (chapitre 4.10), dans la famille "
+					"text": ", avec son retard et son seuil au moment du passage. Vous la\ntrouvez dans le fil de la fiche ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), dans la famille "
 				},
 				{
 					"type": "emphasis",
@@ -840,7 +887,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quinquies.5 Ce que le produit ne fait PAS"
+					"text": "7.5 Ce que le produit ne fait PAS"
 				}
 			]
 		},
@@ -938,7 +985,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quinquies.6 Quand il n'y a rien"
+					"text": "7.6 Quand il n'y a rien"
 				}
 			]
 		},

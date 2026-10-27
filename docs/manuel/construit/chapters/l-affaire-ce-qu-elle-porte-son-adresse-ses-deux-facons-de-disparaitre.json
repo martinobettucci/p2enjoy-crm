@@ -1,6 +1,6 @@
 {
 	"slug": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-	"title": "4. L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître",
+	"title": "9. L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -18,7 +18,24 @@
 						},
 						{
 							"type": "text",
-							"text": ". Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir §3.2."
+							"text": ". Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir "
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "naviguer-barre-laterale-onglets-etats",
+								"anchor": "ce-que-vous-voyez-aujourd-hui-et-pourquoi"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§3.3"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "."
 						}
 					]
 				}
@@ -66,7 +83,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "4.1 Ce qu'une affaire porte"
+					"text": "9.1 Ce qu'une affaire porte"
 				}
 			]
 		},
@@ -440,7 +457,23 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "Un assistant connecté par le connecteur lit les mêmes scores (chapitre 11)."
+								"text": "Un assistant connecté par le connecteur lit les mêmes scores ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 33"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -454,7 +487,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "4.2 L'adresse email de l'affaire"
+					"text": "9.2 L'adresse email de l'affaire"
 				}
 			]
 		},
@@ -535,7 +568,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "4.3 Faire avancer une affaire : ce que le produit autorise, et ce qu'il refuse"
+					"text": "9.3 Faire avancer une affaire : ce que le produit autorise, et ce qu'il refuse"
 				}
 			]
 		},
@@ -959,7 +992,24 @@
 							},
 							{
 								"type": "text",
-								"text": ", avec les deux étapes (chapitre 4.10). Cette trace ne peut\nêtre ni fabriquée, ni corrigée, ni effacée."
+								"text": ", avec les deux étapes ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "l-historique-et-la-discussion-d-une-affaire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.12"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Cette trace ne peut\nêtre ni fabriquée, ni corrigée, ni effacée."
 							}
 						]
 					}
@@ -979,7 +1029,24 @@
 							},
 							{
 								"type": "text",
-								"text": " Depuis le\n2026-08-14, la raison que vous écrivez au moment du déplacement apparaît dans le fil de\nl'affaire, signée de votre nom et datée, exactement comme si vous l'aviez publiée vous-même\n(chapitre 4.10). Vous pouvez donc la corriger ou la retirer ensuite, comme n'importe lequel de\nvos commentaires."
+								"text": " Depuis le\n2026-08-14, la raison que vous écrivez au moment du déplacement apparaît dans le fil de\nl'affaire, signée de votre nom et datée, exactement comme si vous l'aviez publiée vous-même\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "l-historique-et-la-discussion-d-une-affaire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.12"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Vous pouvez donc la corriger ou la retirer ensuite, comme n'importe lequel de\nvos commentaires."
 							}
 						]
 					},
@@ -1083,7 +1150,24 @@
 				},
 				{
 					"type": "text",
-					"text": " : le tableau kanban du chapitre 4.8, à la souris comme au\nclavier. La règle décrite ici lui préexiste et ne dépend pas de lui — c'est volontaire, l'interface\nne fait qu'exercer une garde qui tient de toute façon si l'on s'adresse directement à l'API."
+					"text": " : le tableau kanban du "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "le-tableau-kanban-d-un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", à la souris comme au\nclavier. La règle décrite ici lui préexiste et ne dépend pas de lui — c'est volontaire, l'interface\nne fait qu'exercer une garde qui tient de toute façon si l'on s'adresse directement à l'API."
 				}
 			]
 		},
@@ -1094,7 +1178,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "4.4 Archiver n'est pas supprimer"
+					"text": "9.4 Archiver n'est pas supprimer"
 				}
 			]
 		},
@@ -1223,7 +1307,23 @@
 				},
 				{
 					"type": "text",
-					"text": " C'est ce qui permet d'archiver un\nétat du catalogue (chapitre 19) une fois que toutes les affaires qui s'y trouvaient ont été closes.\nÀ l'inverse, un état qu'une affaire "
+					"text": " C'est ce qui permet d'archiver un\nétat du catalogue ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 19"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") une fois que toutes les affaires qui s'y trouvaient ont été closes.\nÀ l'inverse, un état qu'une affaire "
 				},
 				{
 					"type": "strong",
@@ -1247,7 +1347,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "4.5 Qui peut faire quoi"
+					"text": "9.5 Qui peut faire quoi"
 				}
 			]
 		},
@@ -1271,14 +1371,18 @@
 							},
 							{
 								"type": "text",
-								"text": " les affaires d'un onglet suppose le droit de lire cet onglet. Les accès par track et par\nchannel du §3.2 "
+								"text": " les affaires d'un onglet suppose le droit de lire cet onglet. Les accès par track et par\nchannel du "
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats",
+									"anchor": "les-acces-par-track-et-par-channel"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "quater"
+										"text": "§3.6"
 									}
 								]
 							},
@@ -1346,7 +1450,24 @@
 							},
 							{
 								"type": "text",
-								"text": " sur l'onglet. Une personne en\nlecture seule voit les affaires et ne peut pas les toucher : les commandes sont grisées, et un\nbandeau en tête de l'onglet et de la fiche dit pourquoi (section 3.6)."
+								"text": " sur l'onglet. Une personne en\nlecture seule voit les affaires et ne peut pas les toucher : les commandes sont grisées, et un\nbandeau en tête de l'onglet et de la fiche dit pourquoi ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "naviguer-barre-laterale-onglets-etats",
+									"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 3.11"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -1380,7 +1501,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "4.7 La fiche d'une affaire : son en-tête, son formulaire, et ce qu'ils montrent"
+					"text": "9.6 La fiche d'une affaire : son en-tête, son formulaire, et ce qu'ils montrent"
 				}
 			]
 		},
@@ -1482,7 +1603,24 @@
 				},
 				{
 					"type": "text",
-					"text": " (chapitre 4.10)."
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -1637,7 +1775,24 @@
 							},
 							{
 								"type": "text",
-								"text": " (chapitre 4.2), avec le bouton "
+								"text": " ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "l-adresse-email-de-l-affaire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.2"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), avec le bouton "
 							},
 							{
 								"type": "strong",
@@ -1674,7 +1829,24 @@
 							},
 							{
 								"type": "text",
-								"text": " lorsque l'affaire est archivée (chapitre 4.4). Sa fiche reste\nconsultable, et cette mention est ce qui la distingue d'une affaire en cours."
+								"text": " lorsque l'affaire est archivée ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "archiver-n-est-pas-supprimer"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.4"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "). Sa fiche reste\nconsultable, et cette mention est ce qui la distingue d'une affaire en cours."
 							}
 						]
 					}
@@ -1847,7 +2019,24 @@
 							},
 							{
 								"type": "text",
-								"text": " de l'affaire (chapitre 4.10), sous la forme\n« Responsable modifié ». Les autres champs ne laissent pas de trace dans ce fil."
+								"text": " de l'affaire ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "l-historique-et-la-discussion-d-une-affaire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.12"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), sous la forme\n« Responsable modifié ». Les autres champs ne laissent pas de trace dans ce fil."
 							}
 						]
 					}
@@ -2300,14 +2489,17 @@
 							},
 							{
 								"type": "text",
-								"text": " est celle du carnet (chapitre 3 "
+								"text": " est celle du carnet ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "le-carnet-de-contacts"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "ter"
+										"text": "chapitre 10"
 									}
 								]
 							},
@@ -2494,7 +2686,24 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Sur le board, déplacer une affaire peut être refusé parce que des réponses obligatoires manquent\n(chapitre 4.8). Le message de refus les nomme, et il porte désormais un lien "
+					"text": "Sur le board, déplacer une affaire peut être refusé parce que des réponses obligatoires manquent\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "le-tableau-kanban-d-un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Le message de refus les nomme, et il porte désormais un lien "
 				},
 				{
 					"type": "strong",
@@ -2671,14 +2880,18 @@
 				},
 				{
 					"type": "text",
-					"text": " (chapitre 4.7 "
+					"text": " ("
 				},
 				{
-					"type": "emphasis",
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "mettre-une-affaire-a-la-corbeille"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "bis"
+							"text": "chapitre 9.15"
 						}
 					]
 				},
@@ -2704,7 +2917,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "4.7 ter Les contacts d'une affaire : les rattacher, les détacher"
+					"text": "9.7 Les contacts d'une affaire : les rattacher, les détacher"
 				}
 			]
 		},
@@ -2786,14 +2999,17 @@
 				},
 				{
 					"type": "text",
-					"text": ". Il dit qui, dans le carnet de l'espace\n(chapitre 3 "
+					"text": ". Il dit qui, dans le carnet de l'espace\n("
 				},
 				{
-					"type": "emphasis",
+					"type": "link",
+					"target": {
+						"chapter": "le-carnet-de-contacts"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "ter"
+							"text": "chapitre 10"
 						}
 					]
 				},
@@ -2979,14 +3195,17 @@
 							},
 							{
 								"type": "text",
-								"text": " : le bloc l'écrit, dit que le contact se crée dans le carnet avec\n« Nouveau contact » (section 3 "
+								"text": " : le bloc l'écrit, dit que le contact se crée dans le carnet avec\n« Nouveau contact » ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "le-carnet-de-contacts"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "ter"
+										"text": "section 10"
 									}
 								]
 							},
@@ -3153,14 +3372,17 @@
 				},
 				{
 					"type": "text",
-					"text": ", en revanche, le rôle se corrige d'un seul\ngeste — bouton « Modifier le rôle » sur chaque ligne (chapitre 3 "
+					"text": ", en revanche, le rôle se corrige d'un seul\ngeste — bouton « Modifier le rôle » sur chaque ligne ("
 				},
 				{
-					"type": "emphasis",
+					"type": "link",
+					"target": {
+						"chapter": "le-carnet-de-contacts"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "ter"
+							"text": "chapitre 10"
 						}
 					]
 				},
@@ -3197,7 +3419,24 @@
 				},
 				{
 					"type": "text",
-					"text": " dans l'historique de l'affaire (chapitre 4.10)."
+					"text": " dans l'historique de l'affaire ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -3208,7 +3447,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "4.7 quater Les activités d'une affaire : appels, réunions, visios"
+					"text": "9.8 Les activités d'une affaire : appels, réunions, visios"
 				}
 			]
 		},
@@ -3624,14 +3863,17 @@
 							},
 							{
 								"type": "text",
-								"text": " : votre temps se\nsaisit dans « Temps » (chapitre 5 "
+								"text": " : votre temps se\nsaisit dans « Temps » ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "le-temps-passe-et-le-cout-du-personnel"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "undecies"
+										"text": "chapitre 28"
 									}
 								]
 							},
@@ -3723,14 +3965,18 @@
 							},
 							{
 								"type": "text",
-								"text": ", à cocher. Un contact qui\nn'est pas lié à l'affaire ne peut pas être choisi : rattachez-le d'abord (chapitre 4.7 "
+								"text": ", à cocher. Un contact qui\nn'est pas lié à l'affaire ne peut pas être choisi : rattachez-le d'abord ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "les-contacts-d-une-affaire-les-rattacher-les-detacher"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "ter"
+										"text": "chapitre 9.7"
 									}
 								]
 							},
@@ -3880,7 +4126,24 @@
 				},
 				{
 					"type": "text",
-					"text": " Les boutons restent visibles mais grisés, et le bandeau en tête de\nla fiche dit pourquoi (chapitre 3.6). Vous lisez les activités comme les autres."
+					"text": " Les boutons restent visibles mais grisés, et le bandeau en tête de\nla fiche dit pourquoi ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Vous lisez les activités comme les autres."
 				}
 			]
 		},
@@ -4000,7 +4263,24 @@
 				},
 				{
 					"type": "text",
-					"text": " Chaque activité paraît aussi dans le fil (chapitre 4.10), "
+					"text": " Chaque activité paraît aussi dans le fil ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), "
 				},
 				{
 					"type": "strong",
@@ -4050,7 +4330,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "4.7 quinquies La checklist d'une affaire : les points à cocher"
+					"text": "9.9 La checklist d'une affaire : les points à cocher"
 				}
 			]
 		},
@@ -4511,7 +4791,24 @@
 				},
 				{
 					"type": "text",
-					"text": " Chaque cochage et chaque décochage paraît dans le fil (chapitre 4.10), sous le\nfiltre « Champs » : « Point de checklist coché », avec le libellé du point et son auteur."
+					"text": " Chaque cochage et chaque décochage paraît dans le fil ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), sous le\nfiltre « Champs » : « Point de checklist coché », avec le libellé du point et son auteur."
 				}
 			]
 		},
@@ -4529,7 +4826,24 @@
 				},
 				{
 					"type": "text",
-					"text": " Les cases, « Retirer » et le champ d'ajout restent visibles mais\ngrisés, et le bandeau en tête de la fiche dit pourquoi (chapitre 3.6). Vous lisez la checklist comme les autres."
+					"text": " Les cases, « Retirer » et le champ d'ajout restent visibles mais\ngrisés, et le bandeau en tête de la fiche dit pourquoi ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Vous lisez la checklist comme les autres."
 				}
 			]
 		},
@@ -4619,360 +4933,11 @@
 		{
 			"type": "heading",
 			"level": 3,
-			"anchor": "mettre-une-affaire-a-la-corbeille",
-			"content": [
-				{
-					"type": "text",
-					"text": "4.7 bis Mettre une affaire à la corbeille"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livré par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-077"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-077/"
-						},
-						{
-							"type": "text",
-							"text": ", préfixées "
-						},
-						{
-							"type": "code",
-							"text": "card-geste-"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Où."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " En bas de la colonne de gauche de la fiche, sous le formulaire : le bouton "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "« Mettre à la\ncorbeille »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ". C'est le seul endroit d'où une affaire se retire — ni le tableau kanban ni la vue\nliste ne l'offrent, et ce n'est pas un oubli : le menu d'une carte du tableau porte les gestes qui\nse défont d'eux-mêmes — un déplacement, une mise en sommeil —, et un retrait y serait d'une autre\nnature."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce que le produit demande avant d'agir."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Une confirmation, sous le formulaire, qui "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "nomme\nl'affaire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " et rappelle ce que le geste fait : elle quitte le tableau, la vue liste et la recherche,\nsans être supprimée, et se restaure depuis la corbeille. Tant que vous n'avez pas confirmé, "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "rien\nn'est écrit"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ". « Annuler » referme la confirmation et vous rend le bouton — au clavier aussi."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Contrairement au retrait d'un track ou d'un channel (chapitre 5), "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "aucun décompte n'accompagne la\nquestion"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : une affaire ne porte pas d'objet qui deviendrait inaccessible avec elle."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce que vous voyez ensuite."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " L'écran est remplacé par un message qui dit que l'affaire est à la\ncorbeille, avec deux chemins : "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "revenir au channel"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", ou "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "ouvrir la corbeille"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " pour l'y retrouver\net la restaurer (chapitre 5 ter). Il ne dit pas « Card introuvable » : l'affaire existe, vous venez\nde la retirer."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Trois réponses sont possibles, et l'écran les distingue"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " :"
-				}
-			]
-		},
-		{
-			"type": "table",
-			"align": [
-				null,
-				null
-			],
-			"header": [
-				[
-					{
-						"type": "text",
-						"text": "Ce que vous voyez"
-					}
-				],
-				[
-					{
-						"type": "text",
-						"text": "Ce qui s'est passé"
-					}
-				]
-			],
-			"rows": [
-				[
-					[
-						{
-							"type": "text",
-							"text": "Le message « Affaire mise à la corbeille »"
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Le retrait est enregistré, et votre nom avec lui"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "text",
-							"text": "« Aucune modification : votre compte ne peut pas écrire dans cette affaire. »"
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Votre compte lit l'affaire mais n'a pas le droit d'y écrire. "
-						},
-						{
-							"type": "strong",
-							"content": [
-								{
-									"type": "text",
-									"text": "Rien n'a changé"
-								}
-							]
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "text",
-							"text": "« Votre compte n'a pas le droit de retirer cette affaire. »"
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Le serveur a refusé explicitement"
-						}
-					]
-				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le bouton est grisé si vous ne pouvez pas écrire sur l'onglet"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", et la fiche dit pourquoi\n(section 3.6). La règle reste celle du serveur : si vos droits changent entre l'ouverture de la fiche\net le clic, c'est sa réponse, ci-dessus, qui s'affiche."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Qui peut le faire."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Toute personne ayant le droit d'"
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "écrire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " sur l'onglet de l'affaire — ce\nn'est pas réservé à une administratrice, contrairement au retrait d'un track ou d'un channel. Une\npersonne en lecture seule obtient la deuxième réponse du tableau ci-dessus."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le retrait est inscrit dans l'historique de l'affaire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " (chapitre 4.10), sous « Cycle de vie »,\navec son auteur et sa date. Vous le relisez après restauration."
-				}
-			]
-		},
-		{
-			"type": "heading",
-			"level": 3,
 			"anchor": "le-tableau-kanban-d-un-channel",
 			"content": [
 				{
 					"type": "text",
-					"text": "4.8 Le tableau kanban d'un channel"
+					"text": "9.10 Le tableau kanban d'un channel"
 				}
 			]
 		},
@@ -5121,7 +5086,24 @@
 				},
 				{
 					"type": "text",
-					"text": " n'y figurent pas : le tableau montre l'activité\nen cours (chapitre 4.4). Les affaires "
+					"text": " n'y figurent pas : le tableau montre l'activité\nen cours ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "archiver-n-est-pas-supprimer"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.4"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Les affaires "
 				},
 				{
 					"type": "strong",
@@ -5147,7 +5129,24 @@
 				},
 				{
 					"type": "text",
-					"text": ", au-dessus des colonnes, les\nramène — marquées de leur date de réveil (chapitre 4.9 bis). Le nombre d'affaires d'une colonne et\nson cumul de montants portent sur les cartes "
+					"text": ", au-dessus des colonnes, les\nramène — marquées de leur date de réveil ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "mettre-une-affaire-en-sommeil-et-la-retrouver"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.13"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Le nombre d'affaires d'une colonne et\nson cumul de montants portent sur les cartes "
 				},
 				{
 					"type": "strong",
@@ -5575,7 +5574,24 @@
 							},
 							{
 								"type": "text",
-								"text": ".\nLorsqu'une étape n'en propose aucun, le menu s'ouvre quand même et le dit en toutes lettres : il\nporte aussi le geste de sommeil (chapitre 4.9 bis), qui, lui, reste disponible."
+								"text": ".\nLorsqu'une étape n'en propose aucun, le menu s'ouvre quand même et le dit en toutes lettres : il\nporte aussi le geste de sommeil ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "mettre-une-affaire-en-sommeil-et-la-retrouver"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.13"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), qui, lui, reste disponible."
 							}
 						]
 					}
@@ -5587,7 +5603,24 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Les deux gestes passent par le même contrôle du serveur, celui du chapitre 4.3 : l'écran ne propose\njamais une action que le serveur refuserait, et il ne se substitue jamais à lui."
+					"text": "Les deux gestes passent par le même contrôle du serveur, celui du "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "faire-avancer-une-affaire-ce-que-le-produit-autorise-et-ce-qu-il-refuse"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : l'écran ne propose\njamais une action que le serveur refuserait, et il ne se substitue jamais à lui."
 				}
 			]
 		},
@@ -5631,7 +5664,24 @@
 				},
 				{
 					"type": "text",
-					"text": " : il rejoint l'historique de l'affaire, comme un\ncommentaire à votre nom (chapitre 4.10), et l'écran de saisie le dit. "
+					"text": " : il rejoint l'historique de l'affaire, comme un\ncommentaire à votre nom ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), et l'écran de saisie le dit. "
 				},
 				{
 					"type": "emphasis",
@@ -5704,7 +5754,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "4.9 La vue liste d'un channel"
+					"text": "9.11 La vue liste d'un channel"
 				}
 			]
 		},
@@ -5826,7 +5876,24 @@
 				},
 				{
 					"type": "text",
-					"text": " vient en tête de la barre des\nfiltres, et ouvre le même formulaire que sur le tableau (chapitre 4.8) — même titre seul, même étape\ninitiale, même fiche qui s'ouvre."
+					"text": " vient en tête de la barre des\nfiltres, et ouvre le même formulaire que sur le tableau ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "le-tableau-kanban-d-un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") — même titre seul, même étape\ninitiale, même fiche qui s'ouvre."
 				}
 			]
 		},
@@ -6082,7 +6149,24 @@
 							},
 							{
 								"type": "text",
-								"text": ". Les affaires\nmises en sommeil sont rangées hors de la liste jusqu'à leur échéance ; cette case les ramène.\nVoir le chapitre 4.9 bis."
+								"text": ". Les affaires\nmises en sommeil sont rangées hors de la liste jusqu'à leur échéance ; cette case les ramène.\nVoir le "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "mettre-une-affaire-en-sommeil-et-la-retrouver"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.13"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
 							}
 						]
 					}
@@ -6275,7 +6359,24 @@
 				},
 				{
 					"type": "text",
-					"text": ". On n'y crée, n'y modifie, n'y archive et n'y déplace\naucune affaire : le déplacement reste le geste du tableau (chapitre 4.8), et le reste n'a pas encore\nd'écran. Le "
+					"text": ". On n'y crée, n'y modifie, n'y archive et n'y déplace\naucune affaire : le déplacement reste le geste du tableau ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "le-tableau-kanban-d-un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), et le reste n'a pas encore\nd'écran. Le "
 				},
 				{
 					"type": "strong",
@@ -6304,602 +6405,11 @@
 		{
 			"type": "heading",
 			"level": 3,
-			"anchor": "mettre-une-affaire-en-sommeil-et-la-retrouver",
-			"content": [
-				{
-					"type": "text",
-					"text": "4.9 bis Mettre une affaire en sommeil, et la retrouver"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Livrée par "
-						},
-						{
-							"type": "code",
-							"text": "CRM-081"
-						},
-						{
-							"type": "text",
-							"text": ". Captures dans "
-						},
-						{
-							"type": "code",
-							"text": "docs/captures/CRM-081/"
-						},
-						{
-							"type": "text",
-							"text": "."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Certaines affaires n'attendent rien de vous avant plusieurs semaines : un client qui rappellera\naprès ses congés, une décision reportée au prochain comité. Les laisser dans le tableau et dans la\nliste les fait relire chaque jour pour rien. Le "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "sommeil"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " les range jusqu'à une échéance que vous\nchoisissez, sans les archiver et sans rien leur retirer."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Endormir une affaire, depuis sa fiche."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Le bouton "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Mettre en sommeil"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " ouvre un petit panneau\nqui propose quatre échéances usuelles — "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Demain"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Dans trois jours"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "La semaine prochaine"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", "
-				},
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le\nmois prochain"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " — et une échéance libre, à saisir. L'affaire porte alors, à côté de son titre, la\nmention "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "« En sommeil jusqu'au … »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ou depuis le tableau, sans quitter l'écran."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Le bouton "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Actions"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " d'une carte ouvre son menu,\nqui porte deux parties : les déplacements déclarés, puis "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Sommeil"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ". Les quatre mêmes échéances y\nsont proposées directement. La carte "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "quitte alors le tableau"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " — c'est tout l'intérêt du geste :\nranger une affaire sans changer d'écran — et le compteur de sa colonne suit."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "L'"
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "échéance libre"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", elle, ne se saisit que depuis la fiche : une carte de tableau est trop étroite\npour un champ de date. Sur une affaire endormie que la case « Afficher les affaires en sommeil »\nramène, ce même menu porte "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Réveiller"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " à la place des quatre échéances."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Quand vous lisez cette affaire sans avoir le droit de l'écrire, le geste est grisé et un bandeau\nen tête de l'onglet dit pourquoi (section 3.6). Si le serveur refuse malgré tout — vos droits ont\nchangé entre-temps —, "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "le menu reste ouvert"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " et la raison s'affiche dessous, mot pour mot celle de\nla fiche."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Une échéance "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "déjà passée"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " est refusée, et le message le dit sous le champ sans effacer votre\nsaisie. Une affaire peut être "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "à la fois archivée et endormie"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : les deux mentions coexistent, car\nelles ne disent pas la même chose."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "La réveiller."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Sur une affaire endormie, le même emplacement porte "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Réveiller"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ". Le geste est\nimmédiat, sans confirmation : il n'y a rien à perdre, l'affaire redevient simplement visible.\nRéveiller une affaire qui ne dormait pas ne produit rien — ce n'est pas une erreur, c'est un état\ndéjà atteint."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce que le sommeil change dans les deux vues."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Une affaire endormie "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "sort du tableau et de la\nliste"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " aussi longtemps que son échéance est future. C'est tout l'intérêt du geste : sans cela,\nl'endormir ne changerait rien pour vous."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Elle n'est pour autant jamais perdue. Une case à cocher "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Afficher les affaires en sommeil"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " — au\ndessus des colonnes du tableau, et dans les filtres de la liste — les ramène d'un clic. Rendues\nvisibles, elles sont "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "marquées"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " d'une petite pastille portant l'icône de lune et leur date de\nréveil, pour que vous ne les confondiez pas avec les autres."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le choix suit la vue."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Ce réglage s'inscrit dans l'adresse de la page : recharger vous ramène au\nmême état, l'adresse se partage telle quelle, et passer du tableau à la liste — ou l'inverse — le\nconserve. Vous n'avez donc à le demander qu'une fois."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Une échéance passée n'est plus un sommeil."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Le produit n'a besoin d'aucun réveil automatique :\ndès que l'échéance est dépassée, l'affaire redevient visible partout, sans pastille et sans que\npersonne ait à intervenir. Sa date reste inscrite dans son historique, mais elle ne la range plus.\nRien ne clignote pour autant à la seconde près : la mention disparaît au prochain affichage de\nl'écran, et une échéance de sommeil se compte en jours."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "L'historique garde les deux gestes."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Le fil de l'affaire nomme "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "« Mise en sommeil »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " et\n"
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "« Réveil »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", avec l'échéance concernée. Comme tout le fil, ces lignes ne s'effacent pas\n(chapitre 4.10)."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Les compteurs suivent ce que vous voyez."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Le nombre d'affaires d'une colonne du tableau, le total\nde montants qui l'accompagne et le compte « Affaires : n » de la liste portent sur les affaires\n"
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "affichées"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : ils changent donc lorsque vous cochez la case. Une colonne annonce ce qu'elle\nmontre, sinon son compteur désignerait des cartes introuvables à l'œil."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce que le sommeil n'est pas."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Ce n'est ni une archive, ni une suppression, ni une permission : une\naffaire endormie se déplace, se modifie et se commente exactement comme une autre, et toute personne\nqui pouvait la lire peut encore la retrouver. Le sommeil "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "range"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", il ne protège pas."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce qui n'est pas encore livré."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Seules les "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "affaires"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " peuvent dormir : pas encore les fils de\nmessagerie. Et la "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "vue liste"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " n'offre pas le geste — elle laisse la case d'affichage et le lien\nvers la fiche."
-				}
-			]
-		},
-		{
-			"type": "heading",
-			"level": 3,
 			"anchor": "l-historique-et-la-discussion-d-une-affaire",
 			"content": [
 				{
 					"type": "text",
-					"text": "4.10 L'historique et la discussion d'une affaire"
+					"text": "9.12 L'historique et la discussion d'une affaire"
 				}
 			]
 		},
@@ -7296,14 +6806,18 @@
 					[
 						{
 							"type": "text",
-							"text": "Un appel, une réunion ou une visio a été consigné (chapitre 4.7 "
+							"text": "Un appel, une réunion ou une visio a été consigné ("
 						},
 						{
-							"type": "emphasis",
+							"type": "link",
+							"target": {
+								"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+								"anchor": "les-activites-d-une-affaire-appels-reunions-visios"
+							},
 							"content": [
 								{
 									"type": "text",
-									"text": "quater"
+									"text": "chapitre 9.8"
 								}
 							]
 						},
@@ -7649,7 +7163,24 @@
 				},
 				{
 					"type": "text",
-					"text": " Lorsqu'une affaire change de dossier (chapitre 4.11),\nle serveur écrit une trace "
+					"text": " Lorsqu'une affaire change de dossier ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "ranger-une-affaire-dans-un-autre-dossier"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.14"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "),\nle serveur écrit une trace "
 				},
 				{
 					"type": "strong",
@@ -8356,7 +7887,24 @@
 							},
 							{
 								"type": "text",
-								"text": " (chapitre 4.12), mais aucun message n'est encore\nrelevé, et les activités n'existent pas\ndans le produit."
+								"text": " ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "les-boites-de-reception-et-les-adresses-d-expedition",
+									"anchor": "les-boites-de-reception-declarees"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 11.1"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), mais aucun message n'est encore\nrelevé, et les activités n'existent pas\ndans le produit."
 							}
 						]
 					}
@@ -8396,7 +7944,41 @@
 							},
 							{
 								"type": "text",
-								"text": " : aucun nom de personne n'est aujourd'hui lisible dans le\nproduit, et il est préféré de ne rien afficher plutôt qu'un identifiant technique. C'est la même\nlimite que pour le responsable d'une affaire (chapitres 4.8 et 4.9)."
+								"text": " : aucun nom de personne n'est aujourd'hui lisible dans le\nproduit, et il est préféré de ne rien afficher plutôt qu'un identifiant technique. C'est la même\nlimite que pour le responsable d'une affaire (chapitres "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "le-tableau-kanban-d-un-channel"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "9.10"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "la-vue-liste-d-un-channel"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "9.11"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -8475,11 +8057,636 @@
 		{
 			"type": "heading",
 			"level": 3,
+			"anchor": "mettre-une-affaire-en-sommeil-et-la-retrouver",
+			"content": [
+				{
+					"type": "text",
+					"text": "9.13 Mettre une affaire en sommeil, et la retrouver"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livrée par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-081"
+						},
+						{
+							"type": "text",
+							"text": ". Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-081/"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Certaines affaires n'attendent rien de vous avant plusieurs semaines : un client qui rappellera\naprès ses congés, une décision reportée au prochain comité. Les laisser dans le tableau et dans la\nliste les fait relire chaque jour pour rien. Le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sommeil"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les range jusqu'à une échéance que vous\nchoisissez, sans les archiver et sans rien leur retirer."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Endormir une affaire, depuis sa fiche."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Mettre en sommeil"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ouvre un petit panneau\nqui propose quatre échéances usuelles — "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Demain"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Dans trois jours"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "La semaine prochaine"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", "
+				},
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le\nmois prochain"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — et une échéance libre, à saisir. L'affaire porte alors, à côté de son titre, la\nmention "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« En sommeil jusqu'au … »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ou depuis le tableau, sans quitter l'écran."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Actions"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'une carte ouvre son menu,\nqui porte deux parties : les déplacements déclarés, puis "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Sommeil"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Les quatre mêmes échéances y\nsont proposées directement. La carte "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "quitte alors le tableau"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — c'est tout l'intérêt du geste :\nranger une affaire sans changer d'écran — et le compteur de sa colonne suit."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "L'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "échéance libre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", elle, ne se saisit que depuis la fiche : une carte de tableau est trop étroite\npour un champ de date. Sur une affaire endormie que la case « Afficher les affaires en sommeil »\nramène, ce même menu porte "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réveiller"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " à la place des quatre échéances."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Quand vous lisez cette affaire sans avoir le droit de l'écrire, le geste est grisé et un bandeau\nen tête de l'onglet dit pourquoi ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Si le serveur refuse malgré tout — vos droits ont\nchangé entre-temps —, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "le menu reste ouvert"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et la raison s'affiche dessous, mot pour mot celle de\nla fiche."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une échéance "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "déjà passée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " est refusée, et le message le dit sous le champ sans effacer votre\nsaisie. Une affaire peut être "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "à la fois archivée et endormie"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : les deux mentions coexistent, car\nelles ne disent pas la même chose."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "La réveiller."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sur une affaire endormie, le même emplacement porte "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réveiller"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". Le geste est\nimmédiat, sans confirmation : il n'y a rien à perdre, l'affaire redevient simplement visible.\nRéveiller une affaire qui ne dormait pas ne produit rien — ce n'est pas une erreur, c'est un état\ndéjà atteint."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le sommeil change dans les deux vues."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une affaire endormie "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sort du tableau et de la\nliste"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " aussi longtemps que son échéance est future. C'est tout l'intérêt du geste : sans cela,\nl'endormir ne changerait rien pour vous."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Elle n'est pour autant jamais perdue. Une case à cocher "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Afficher les affaires en sommeil"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — au\ndessus des colonnes du tableau, et dans les filtres de la liste — les ramène d'un clic. Rendues\nvisibles, elles sont "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "marquées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'une petite pastille portant l'icône de lune et leur date de\nréveil, pour que vous ne les confondiez pas avec les autres."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le choix suit la vue."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ce réglage s'inscrit dans l'adresse de la page : recharger vous ramène au\nmême état, l'adresse se partage telle quelle, et passer du tableau à la liste — ou l'inverse — le\nconserve. Vous n'avez donc à le demander qu'une fois."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Une échéance passée n'est plus un sommeil."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le produit n'a besoin d'aucun réveil automatique :\ndès que l'échéance est dépassée, l'affaire redevient visible partout, sans pastille et sans que\npersonne ait à intervenir. Sa date reste inscrite dans son historique, mais elle ne la range plus.\nRien ne clignote pour autant à la seconde près : la mention disparaît au prochain affichage de\nl'écran, et une échéance de sommeil se compte en jours."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'historique garde les deux gestes."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le fil de l'affaire nomme "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Mise en sommeil »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Réveil »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", avec l'échéance concernée. Comme tout le fil, ces lignes ne s'effacent pas\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les compteurs suivent ce que vous voyez."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le nombre d'affaires d'une colonne du tableau, le total\nde montants qui l'accompagne et le compte « Affaires : n » de la liste portent sur les affaires\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "affichées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : ils changent donc lorsque vous cochez la case. Une colonne annonce ce qu'elle\nmontre, sinon son compteur désignerait des cartes introuvables à l'œil."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le sommeil n'est pas."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Ce n'est ni une archive, ni une suppression, ni une permission : une\naffaire endormie se déplace, se modifie et se commente exactement comme une autre, et toute personne\nqui pouvait la lire peut encore la retrouver. Le sommeil "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "range"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", il ne protège pas."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce qui n'est pas encore livré."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Seules les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "affaires"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " peuvent dormir : pas encore les fils de\nmessagerie. Et la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vue liste"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " n'offre pas le geste — elle laisse la case d'affichage et le lien\nvers la fiche."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
 			"anchor": "ranger-une-affaire-dans-un-autre-dossier",
 			"content": [
 				{
 					"type": "text",
-					"text": "4.11 Ranger une affaire dans un autre dossier"
+					"text": "9.14 Ranger une affaire dans un autre dossier"
 				}
 			]
 		},
@@ -8499,7 +8706,24 @@
 						},
 						{
 							"type": "text",
-							"text": ". Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir §3.2."
+							"text": ". Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir "
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "naviguer-barre-laterale-onglets-etats",
+								"anchor": "ce-que-vous-voyez-aujourd-hui-et-pourquoi"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§3.3"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "."
 						}
 					]
 				}
@@ -8532,7 +8756,24 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Ce n'est pas un déplacement d'étape (chapitre 4.3), et les deux ne se confondent pas : l'un fait\navancer une affaire "
+					"text": "Ce n'est pas un déplacement d'étape ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "faire-avancer-une-affaire-ce-que-le-produit-autorise-et-ce-qu-il-refuse"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), et les deux ne se confondent pas : l'un fait\navancer une affaire "
 				},
 				{
 					"type": "strong",
@@ -8905,7 +9146,24 @@
 				},
 				{
 					"type": "text",
-					"text": " qu'elles ont laissées dans l'historique restent, avec leurs dates (chapitre 4.10).\nRien ne peut effacer l'historique d'une affaire."
+					"text": " qu'elles ont laissées dans l'historique restent, avec leurs dates ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ").\nRien ne peut effacer l'historique d'une affaire."
 				}
 			]
 		},
@@ -8993,7 +9251,24 @@
 				},
 				{
 					"type": "text",
-					"text": " dans\nl'historique de l'affaire, y compris lorsque personne ne passe par l'application. Le fil ne nomme\npas les dossiers avant/après, car il ne résout pas leurs noms historiques (chapitre 4.10)."
+					"text": " dans\nl'historique de l'affaire, y compris lorsque personne ne passe par l'application. Le fil ne nomme\npas les dossiers avant/après, car il ne résout pas leurs noms historiques ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -9018,11 +9293,426 @@
 		{
 			"type": "heading",
 			"level": 3,
+			"anchor": "mettre-une-affaire-a-la-corbeille",
+			"content": [
+				{
+					"type": "text",
+					"text": "9.15 Mettre une affaire à la corbeille"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-077"
+						},
+						{
+							"type": "text",
+							"text": ". Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-077/"
+						},
+						{
+							"type": "text",
+							"text": ", préfixées "
+						},
+						{
+							"type": "code",
+							"text": "card-geste-"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " En bas de la colonne de gauche de la fiche, sous le formulaire : le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Mettre à la\ncorbeille »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". C'est le seul endroit d'où une affaire se retire — ni le tableau kanban ni la vue\nliste ne l'offrent, et ce n'est pas un oubli : le menu d'une carte du tableau porte les gestes qui\nse défont d'eux-mêmes — un déplacement, une mise en sommeil —, et un retrait y serait d'une autre\nnature."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le produit demande avant d'agir."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une confirmation, sous le formulaire, qui "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "nomme\nl'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et rappelle ce que le geste fait : elle quitte le tableau, la vue liste et la recherche,\nsans être supprimée, et se restaure depuis la corbeille. Tant que vous n'avez pas confirmé, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rien\nn'est écrit"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ". « Annuler » referme la confirmation et vous rend le bouton — au clavier aussi."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Contrairement au retrait d'un track ou d'un channel ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "administrer-l-arborescence-tracks-et-channels"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 17"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "aucun décompte n'accompagne la\nquestion"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : une affaire ne porte pas d'objet qui deviendrait inaccessible avec elle."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que vous voyez ensuite."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " L'écran est remplacé par un message qui dit que l'affaire est à la\ncorbeille, avec deux chemins : "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "revenir au channel"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ouvrir la corbeille"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " pour l'y retrouver\net la restaurer ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 20"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Il ne dit pas « Card introuvable » : l'affaire existe, vous venez\nde la retirer."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Trois réponses sont possibles, et l'écran les distingue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Ce que vous voyez"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qui s'est passé"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Le message « Affaire mise à la corbeille »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le retrait est enregistré, et votre nom avec lui"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Aucune modification : votre compte ne peut pas écrire dans cette affaire. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Votre compte lit l'affaire mais n'a pas le droit d'y écrire. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Rien n'a changé"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Votre compte n'a pas le droit de retirer cette affaire. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le serveur a refusé explicitement"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le bouton est grisé si vous ne pouvez pas écrire sur l'onglet"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et la fiche dit pourquoi\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). La règle reste celle du serveur : si vos droits changent entre l'ouverture de la fiche\net le clic, c'est sa réponse, ci-dessus, qui s'affiche."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui peut le faire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Toute personne ayant le droit d'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "écrire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " sur l'onglet de l'affaire — ce\nn'est pas réservé à une administratrice, contrairement au retrait d'un track ou d'un channel. Une\npersonne en lecture seule obtient la deuxième réponse du tableau ci-dessus."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Le retrait est inscrit dans l'historique de l'affaire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), sous « Cycle de vie »,\navec son auteur et sa date. Vous le relisez après restauration."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
 			"anchor": "ce-qui-n-est-pas-encore-livre",
 			"content": [
 				{
 					"type": "text",
-					"text": "4.6 Ce qui n'est pas encore livré"
+					"text": "9.16 Ce qui n'est pas encore livré"
 				}
 			]
 		},
@@ -9046,7 +9736,24 @@
 							},
 							{
 								"type": "text",
-								"text": " : la vue liste et ses filtres existent (chapitre 4.9), mais aucun filtre\nne se conserve d'une session à l'autre autrement qu'en gardant l'adresse."
+								"text": " : la vue liste et ses filtres existent ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "la-vue-liste-d-un-channel"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.11"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), mais aucun filtre\nne se conserve d'une session à l'autre autrement qu'en gardant l'adresse."
 							}
 						]
 					}
@@ -9126,7 +9833,24 @@
 							},
 							{
 								"type": "text",
-								"text": " : la règle existe et le\nserveur l'applique (chapitre 4.11), mais aucun bouton ne le propose."
+								"text": " : la règle existe et le\nserveur l'applique ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "ranger-une-affaire-dans-un-autre-dossier"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.14"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), mais aucun bouton ne le propose."
 							}
 						]
 					}
@@ -9146,7 +9870,24 @@
 							},
 							{
 								"type": "text",
-								"text": " : elles ne sont pas portées par le produit. Le\nresponsable, lui, est lisible sur la fiche depuis le chapitre 4.7."
+								"text": " : elles ne sont pas portées par le produit. Le\nresponsable, lui, est lisible sur la fiche depuis le "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.6"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
 							}
 						]
 					}
@@ -9166,7 +9907,24 @@
 							},
 							{
 								"type": "text",
-								"text": " : aucune pièce jointe n'est portée par le produit. L'historique, lui, est livré\n(chapitre 4.10)."
+								"text": " : aucune pièce jointe n'est portée par le produit. L'historique, lui, est livré\n("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "l-historique-et-la-discussion-d-une-affaire"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.12"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -9191,2911 +9949,6 @@
 						]
 					}
 				]
-			]
-		},
-		{
-			"type": "heading",
-			"level": 3,
-			"anchor": "les-boites-de-reception-declarees",
-			"content": [
-				{
-					"type": "text",
-					"text": "4.12 Les boîtes de réception déclarées"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce que le produit sait faire."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Un espace de travail peut déclarer une "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "boîte système"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " — celle\nqui reçoit tout ce qui est adressé aux affaires — et chaque personne peut déclarer "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "la sienne"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ".\nUne boîte porte un serveur, un port, un mode de sécurité, un identifiant et un mot de passe."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Où se fait la déclaration : « Réglages ▸ Comptes de messagerie entrante »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " ("
-				},
-				{
-					"type": "code",
-					"text": "CRM-088"
-				},
-				{
-					"type": "text",
-					"text": "). L'écran\nliste les boîtes que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les\ndéclarer ou les corriger. Il vient "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "avant"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " « État de la messagerie » dans la liste des réglages :\non configure une boîte avant d'en superviser la relève."
-				}
-			]
-		},
-		{
-			"type": "list",
-			"ordered": false,
-			"start": null,
-			"items": [
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Choisissez d'abord la boîte visée."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " La liste propose les boîtes que vous voyez, plus celle que\nvous pouvez créer — la vôtre si vous n'en avez pas encore, et la boîte système de l'espace de\ntravail. Choisir une boîte déjà déclarée remplit le formulaire de ses valeurs."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "La boîte système et celle d'un collègue sont réservées à une administratrice ou un\nadministrateur."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " L'option reste proposée à tout le monde ; si vous n'administrez pas l'espace,\n« Configurer » et « Enregistrer » sont grisés sur ces boîtes, et un bandeau en tête de l'écran dit\npourquoi. Votre propre boîte reste configurable (section 3.6)."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Le mot de passe est toujours vide à l'ouverture, et il n'est jamais affiché."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " Le laisser vide\n"
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "conserve"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " celui qui est enregistré ; le remplir le "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "remplace"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ". Sur une boîte qui n'existe\npas encore, il est obligatoire — sans lui, aucune connexion ne serait possible."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Changer la connexion remet l'état à « En attente »"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " et efface le dernier incident : un\n« Connectée » obtenu avec l'ancien serveur ne dirait plus rien du nouveau."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Ce que l'écran n'offre pas"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", et c'est écrit plutôt que suggéré : aucun bouton "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "Tester la\nconnexion"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état\nde la boîte ; aucune "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "suppression"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " de boîte ; aucun réglage des dossiers relevés ni de la\nprofondeur d'historique, que l'écran ne touche jamais."
-							}
-						]
-					}
-				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Le reste du chapitre décrit ce que le produit garantit une fois la boîte déclarée."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le mot de passe n'est jamais relisible, par personne."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Il n'est pas enregistré dans la même\ntable que le reste : il part dans un coffre chiffré, et la table ne conserve qu'une "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "référence"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ".\nCette référence elle-même est fermée à toute personne connectée — administrateur compris. Seul le\nservice de messagerie, qui doit ouvrir la connexion, peut obtenir le mot de passe en clair."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Vous ne voyez que votre boîte."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Un administrateur voit la boîte système et celles de son équipe,\npuisqu'il en répond. Une personne qui n'est pas administratrice ne voit "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "que la sienne"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : la\nboîte d'un collègue est sa correspondance, et le serveur ne la lui montre pas. Une personne sans\nboîte voit une liste vide, ce qui n'est pas une erreur."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le produit essaie vraiment la connexion."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Il ne se contente pas d'enregistrer ce qui a été\nsaisi : il ouvre une session avec le serveur déclaré et regarde ce qui se passe. Le résultat est\nenregistré, et il ne dit jamais plus que nécessaire :"
-				}
-			]
-		},
-		{
-			"type": "table",
-			"align": [
-				null,
-				null
-			],
-			"header": [
-				[
-					{
-						"type": "text",
-						"text": "Ce qui est affiché"
-					}
-				],
-				[
-					{
-						"type": "text",
-						"text": "Ce que cela veut dire"
-					}
-				]
-			],
-			"rows": [
-				[
-					[
-						{
-							"type": "emphasis",
-							"content": [
-								{
-									"type": "text",
-									"text": "Identifiants refusés"
-								}
-							]
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Le mot de passe est faux "
-						},
-						{
-							"type": "strong",
-							"content": [
-								{
-									"type": "text",
-									"text": "ou"
-								}
-							]
-						},
-						{
-							"type": "text",
-							"text": " le compte n'existe pas — les serveurs de messagerie ne font pas la différence, et le produit ne l'invente pas"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "emphasis",
-							"content": [
-								{
-									"type": "text",
-									"text": "Serveur introuvable"
-								}
-							]
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Le nom du serveur ne correspond à rien"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "emphasis",
-							"content": [
-								{
-									"type": "text",
-									"text": "Connexion refusée"
-								}
-							]
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Rien n'écoute à cette adresse et sur ce port"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "emphasis",
-							"content": [
-								{
-									"type": "text",
-									"text": "Sécurité impossible à vérifier"
-								}
-							]
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Le certificat du serveur ne peut pas être vérifié"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "emphasis",
-							"content": [
-								{
-									"type": "text",
-									"text": "Délai dépassé"
-								}
-							]
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Le serveur n'a pas répondu à temps"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "emphasis",
-							"content": [
-								{
-									"type": "text",
-									"text": "Réponse inattendue"
-								}
-							]
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Le serveur a répondu, mais pas comme un serveur de messagerie"
-						}
-					]
-				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le message d'origine du serveur n'est jamais conservé."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Un serveur tiers peut écrire n'importe\nquoi dans son refus — l'identifiant essayé, une adresse interne, un numéro de dossier. Ce texte\nfinirait affiché, puis dans une capture d'écran. Le produit note "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "la cause"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", et rien d'autre."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "La vérification de sécurité n'a pas de dérogation."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Si le certificat d'un serveur ne peut pas\nêtre vérifié, la connexion est refusée — il n'existe aucune option pour passer outre. C'est\nvolontaire : une option de ce genre finit toujours par rester activée."
-				}
-			]
-		},
-		{
-			"type": "heading",
-			"level": 3,
-			"anchor": "les-adresses-d-expedition",
-			"content": [
-				{
-					"type": "text",
-					"text": "4.13 Les adresses d'expédition"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Où se fait la déclaration : « Réglages ▸ Identités d'expédition »"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " ("
-				},
-				{
-					"type": "code",
-					"text": "CRM-089"
-				},
-				{
-					"type": "text",
-					"text": "). L'écran liste\nles adresses que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les\ndéclarer ou les corriger. Il vient "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "après"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " « Comptes de messagerie entrante » et "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "avant"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " « État\nde la messagerie » : on reçoit avant d'expédier, et on configure avant de superviser."
-				}
-			]
-		},
-		{
-			"type": "list",
-			"ordered": false,
-			"start": null,
-			"items": [
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Une ligne commence par l'adresse"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", précédée du nom affiché quand il est renseigné — sous la\nforme "
-							},
-							{
-								"type": "code",
-								"text": "Nom <adresse>"
-							},
-							{
-								"type": "text",
-								"text": ", celle que verront vos destinataires. C'est cette adresse qui distingue\ndeux identités, et non leur libellé, qui peut être le même."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Choisissez d'abord l'identité visée."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " La liste propose celles que vous voyez, plus deux\nentrées pour en déclarer une nouvelle : la vôtre, ou celle de service de l'espace de travail."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "L'identité de service et celle d'un collègue sont réservées à une administratrice ou un\nadministrateur."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " L'entrée reste proposée à tout le monde ; si vous n'administrez pas l'espace,\n« Configurer » et « Enregistrer » sont grisés sur ces identités, et un bandeau en tête de l'écran\ndit pourquoi. Vos propres identités restent configurables (section 3.6)."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "ATTENTION — changer l'adresse d'expédition ne renomme pas une identité : cela en déclare une\nseconde"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", et la première demeure. L'adresse fait partie de ce qui identifie la configuration, au\nmême titre que son propriétaire. L'écran vous le rappelle sous le champ, et la liste relue vous\nmontre alors "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "deux"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " lignes. Si vous vouliez corriger une faute de frappe, retirez ensuite\nl'ancienne — ce que l'écran ne sait pas encore faire, voir plus bas."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Le mot de passe est toujours vide à l'ouverture, et il n'est jamais affiché."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " Le laisser vide\n"
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "conserve"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " celui qui est enregistré ; le remplir le "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "remplace"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ". Sur une identité qui n'existe\npas encore, il est obligatoire. "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "Conséquence de la règle précédente"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " : si vous modifiez l'adresse\nsans saisir de mot de passe, le produit vous répond qu'un mot de passe est exigé — parce que la\nnouvelle adresse fait de votre enregistrement une déclaration, et non une correction."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Le nom d'expéditeur se vide en effaçant le champ"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", contrairement au mot de passe : un champ\nvide y est une valeur, et non une absence de changement."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "La case « identité par défaut » est cochée d'avance sur une déclaration"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", parce que c'est ce\nque le produit ferait de toute façon. La décocher n'est utile que si vous en avez déjà une."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Ce que l'écran n'offre pas"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", et c'est écrit plutôt que suggéré : aucun bouton "
-							},
-							{
-								"type": "emphasis",
-								"content": [
-									{
-										"type": "text",
-										"text": "Tester la\nconnexion"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état\nde l'identité ; aucune "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "suppression"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " ; ni le "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "quota quotidien"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " ni la "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "signature"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", que\nl'écran ne touche jamais et n'écrase donc jamais."
-							}
-						]
-					}
-				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Le reste du chapitre décrit ce que le produit garantit une fois l'adresse déclarée."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Recevoir et expédier sont deux choses distinctes."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Une personne peut relever sa boîte\n"
-				},
-				{
-					"type": "code",
-					"text": "bizdev@…"
-				},
-				{
-					"type": "text",
-					"text": " et pourtant écrire à ses clients depuis "
-				},
-				{
-					"type": "code",
-					"text": "contact@…"
-				},
-				{
-					"type": "text",
-					"text": " : le produit ne lie pas les deux, et\nl'espace de démonstration le montre. Une adresse d'expédition porte son serveur d'envoi, son\nidentifiant, son mot de passe — chiffré comme celui d'une boîte de réception —, un nom affiché et\nune signature."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Une adresse est « celle par défaut », et il y en a toujours exactement une."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " En déclarer une\nnouvelle comme adresse par défaut "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "déplace"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " la marque : l'ancienne la perd au même instant. Vous\nn'avez jamais à la retirer d'abord, et il n'existe aucun moment où vous n'auriez plus d'adresse par\ndéfaut."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "L'adresse d'expédition est vérifiée à l'enregistrement."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " C'est la seule donnée de cette\nconfiguration que vos destinataires verront ; une chaîne qui n'est pas une adresse est refusée tout\nde suite, plutôt que d'échouer plus tard, à l'envoi, sur un compte annoncé comme valide."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le produit essaie vraiment la connexion"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", comme pour une boîte de réception, et "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "sans envoyer\naucun message"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : il ouvre une session avec le serveur d'envoi, s'authentifie, et referme. Les\ncauses d'échec affichées sont les mêmes que celles du chapitre 4.12."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Un quota quotidien peut être déclaré, mais il n'est appliqué par rien aujourd'hui"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : l'envoi\nlui-même n'est pas encore livré, et le dire vaut mieux que de laisser croire à un garde-fou qui\nn'existe pas."
-				}
-			]
-		},
-		{
-			"type": "heading",
-			"level": 3,
-			"anchor": "ce-que-le-produit-fait-d-un-message-recu",
-			"content": [
-				{
-					"type": "text",
-					"text": "4.14 Ce que le produit fait d'un message reçu"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Les messages sont relevés, et rangés dans l'affaire à qui ils s'adressent."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Chaque affaire a son\nadresse propre (chapitre 4.2) ; un message envoyé à cette adresse est rattaché à l'affaire "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "tout\nseul"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", et une trace en apparaît dans son historique. Une réponse à un message déjà rangé suit la\nmême affaire."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Un message qu'on ne sait pas rattacher n'est pas perdu"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : il est conservé, et reste « non\nclassé » jusqu'à ce que quelqu'un le range. Le ranger exige le droit d'"
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "écrire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " sur l'affaire :\ny ajouter un message, c'est y ajouter du contenu."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Une affaire archivée ou en corbeille ne reçoit plus."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Un message qui lui était adressé reste non\nclassé plutôt que de revenir dans un dossier que vous avez fermé."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Les pièces jointes sont analysées avant d'être proposées."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Une pièce n'est téléchargeable\nqu'une fois déclarée saine ; une pièce reconnue dangereuse est conservée mais "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "jamais"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": "\ntéléchargeable, et une pièce que l'antivirus n'a pas pu examiner ne l'est pas davantage. Un fichier\nnon analysé n'est pas un fichier sain."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le nom d'un fichier reçu est nettoyé sans être perdu"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : le produit affiche un nom sûr, et\nconserve le nom d'origine tel que l'expéditeur l'a écrit."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce que ces chapitres ne couvrent pas encore."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " L'envoi n'est pas livré, ni la relève\nautomatique — elle est déclenchée par l'exploitant. La suggestion par contact connu attend la\nfiche contact."
-				}
-			]
-		},
-		{
-			"type": "heading",
-			"level": 3,
-			"anchor": "l-inbox-lire-et-trier-le-courrier-recu",
-			"content": [
-				{
-					"type": "text",
-					"text": "4.15 L'inbox : lire et trier le courrier reçu"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Écran « Inbox » de la barre latérale."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "L'inbox montre "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "trois panneaux"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : les dossiers à gauche, la liste des messages au milieu, le\nmessage lui-même à droite. Sous 1024 px de large, les trois deviennent une "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "pile"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : on descend\nd'un panneau au suivant, et un bouton « Retour » remonte d'un cran."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Les dossiers."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " « Non classés » vient toujours en premier, même quand il est vide : c'est\nl'entrée du travail de tri. Viennent ensuite les affaires qui portent du courrier, rangées sous\nleur track et leur channel. "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Une affaire sans courrier n'apparaît pas"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : l'inbox est une vue du\ncourrier reçu, pas une seconde copie du board. Chaque ligne affiche le nombre de messages "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "que\nvous pouvez voir"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", ce qui explique que deux personnes n'y lisent pas les mêmes nombres. Quand un\ndossier contient des messages que vous n'avez pas encore lus, une "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "pastille bleue"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " en donne le\nnombre, juste avant ce total, et le nom du dossier passe en gras."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Qui voit quoi."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Un message déjà rangé dans une affaire se lit comme l'affaire : si vous pouvez\nla lire, vous lisez son courrier. Un message "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "non classé"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", lui, n'appartient encore à aucune\naffaire : il est visible par le "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "propriétaire de la boîte"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " où il est arrivé, et par les\n"
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "administrateurs"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " de l'espace de travail. Si votre panneau « Non classés » affiche zéro, ce n'est\npas une panne : c'est qu'aucune boîte dont vous répondez n'a reçu de courrier en attente."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "La liste énumère des fils, pas des messages."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Une conversation — un premier message et les\nréponses qui le citent — tient sur "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "une seule ligne"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ". Cette ligne porte l'expéditeur, l'objet et\nla date de son "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "dernier"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " message, et, dès qu'elle en rassemble plusieurs, un petit "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "compte"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " à\ncôté de l'objet. Une conversation d'un seul message ressemble exactement à ce qu'elle était avant :\nni compte, ni rien d'autre à faire."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Le nombre affiché à côté d'un dossier, lui, continue de compter des "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "messages"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : un dossier\nannonçant « 2 » au-dessus d'une liste d'une seule ligne portant « 2 » dit la même chose deux fois,\net non deux choses différentes."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Parcourir une conversation."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Ouvrir une ligne affiche son message le "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "plus récent"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ". Quand la\nconversation en compte plusieurs, un encadré « Messages de ce fil » apparaît sous l'en-tête, avec\nun bouton par message — le plus récent d'abord. Choisissez-en un autre et le panneau de lecture\nchange, "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "sans que la ligne perde sa sélection"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : vous naviguez à l'intérieur de ce que vous avez\nchoisi, pas ailleurs."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Lu et non lu."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Chaque personne a "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "son propre"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " état de lecture : ce que vous avez lu reste non\nlu pour vos collègues, et inversement. Une conversation non lue se reconnaît à un "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "trait bleu"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " sur\nson bord gauche et à son objet en gras ; un lecteur d'écran l'annonce par « Non lu ». "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ouvrir une\nconversation la marque lue tout entière"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", tous ses messages compris, et la pastille du dossier\nbaisse d'autant. Trois gestes complètent cela :"
-				}
-			]
-		},
-		{
-			"type": "list",
-			"ordered": false,
-			"start": null,
-			"items": [
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "dans l'en-tête du message ouvert, le bouton à l'enveloppe fermée, « "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Marquer comme non lu"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " »,\nrend la conversation non lue — le message reste affiché, et il ne se remarque pas lu tant que vous\nne l'avez pas rouvert. Le même bouton propose ensuite « "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Marquer comme lu"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " » ;"
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "en tête de la liste, « "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Tout marquer comme lu"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " » marque lues les conversations affichées. Il\nn'apparaît que lorsqu'il en reste au moins une non lue ;"
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "le courrier que vous "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "envoyez"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " n'est jamais « non lu » : seul le courrier reçu en porte l'état."
-							}
-						]
-					}
-				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Seul l'écran de l'inbox marque un message comme lu. Le lire dans l'historique d'une affaire, le\nretrouver par la recherche, ou le faire lire par un assistant à travers le connecteur (chapitre 11)\n"
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "ne change pas"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " son état. Les messages arrivés avant l'apparition de cette fonction sont non lus\npour tout le monde au départ : « Tout marquer comme lu » les solde d'un geste. Si l'enregistrement\néchoue, un message rouge le dit et "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "l'état affiché ne change pas"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : l'écran ne montre jamais lu ce\nqui n'a pas été enregistré. L'état de lecture n'est pas partagé avec votre logiciel de messagerie :\nlire un message dans le CRM ne le marque pas lu dans votre boîte, et inversement."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Lire un message."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " L'expéditeur, les destinataires et la date d'arrivée sont affichés en tête,\npuis le corps du message. "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Le corps est toujours affiché en texte"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", jamais avec la mise en forme\nde l'expéditeur : un courrier venu de l'extérieur ne doit pas pouvoir exécuter quoi que ce soit\ndans votre navigateur, ni charger d'images qui signaleraient l'ouverture de votre message. Quand un\nmessage n'a été envoyé qu'en HTML, le produit vous le dit et n'en affiche que le texte."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Les pièces jointes."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Une pièce déclarée saine porte un bouton « Télécharger ». Une pièce en\ncours d'analyse, écartée par l'antivirus ou non analysée n'en a "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "pas"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : son état est écrit en\ntoutes lettres à côté de son nom. Un bouton grisé promettrait ce que le serveur refuserait."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ranger un message."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Un message non classé propose « Classer dans une affaire ». Choisissez\nl'affaire dans la liste, puis validez : le message rejoint l'affaire, son historique en garde la\ntrace, et vous le retrouvez ensuite "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "des deux côtés"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " — dans l'affaire et sous son dossier dans\nl'inbox. Ranger exige le droit d'"
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "écrire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " sur l'affaire choisie, et celui de "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "voir"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " le message.\nUne affaire archivée ou en corbeille est refusée, avec son motif."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "La suggestion de classement."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Quand l'expéditeur d'un message non classé est un "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "contact"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " de\nvotre carnet et qu'il n'est rattaché qu'à "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "une seule"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " affaire en cours, le produit vous le dit :\nun encadré « "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Suggestion de classement"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " » apparaît au-dessus du bouton « Classer dans une\naffaire ». Il nomme l'affaire, la rend cliquable pour que vous puissiez aller la vérifier, écrit la\nraison de la suggestion — « l'expéditeur est un contact rattaché à cette affaire » —, et propose\n« "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Classer dans cette affaire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " », qui range le message d'un seul geste."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "C'est une "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "suggestion, pas une décision"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " :"
-				}
-			]
-		},
-		{
-			"type": "list",
-			"ordered": false,
-			"start": null,
-			"items": [
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "elle ne range "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "rien"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " toute seule. Tant que vous n'avez pas appuyé, le message reste non classé ;"
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "« Classer dans une affaire » reste offert à côté, et propose "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "toutes"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " les affaires : une\nsuggestion peut désigner la mauvaise, et vous gardez le dernier mot ;"
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "elle ne vous donne "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "aucun droit de plus"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ". Si vous n'avez pas le droit d'écrire sur l'affaire\nproposée, « Classer ici » est grisé et l'encadré dit pourquoi ; vous pouvez la consulter, ou\nranger le message ailleurs ;"
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "elle n'apparaît que si vous "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "pouvez voir"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " l'affaire suggérée. Sinon, l'encadré n'est pas\naffiché du tout : le produit ne nomme jamais une affaire qui ne vous est pas ouverte ;"
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "elle est calculée "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "à l'arrivée du message"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " et n'est plus recalculée ensuite. Rattacher le\ncontact à une seconde affaire ne la fait pas disparaître."
-							}
-						]
-					}
-				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "La plupart des messages n'en portent aucune, et c'est normal : la règle demande un expéditeur connu\n"
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "et"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " une seule affaire en cours."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Tout se fait au clavier."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " La tabulation parcourt les dossiers, la liste puis le message ;\nEntrée ouvre. Le dossier retenu et le message ouvert sont annoncés aux lecteurs d'écran, et pas\nseulement signalés par une couleur."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Mettre un fil en sommeil."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Un "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "fil"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " rassemble les messages d'une même conversation. Sous\nl'en-tête du message ouvert, « Mettre le fil en sommeil » ouvre un petit panneau : quatre échéances\nusuelles — demain, dans trois jours, la semaine prochaine, le mois prochain — ou une échéance de\nvotre choix. Une fois le fil endormi :"
-				}
-			]
-		},
-		{
-			"type": "list",
-			"ordered": false,
-			"start": null,
-			"items": [
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "la conversation "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "entière disparaît de la liste"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " tant que l'échéance n'est pas passée — tous\nses messages, pas seulement celui que la ligne montrait. Le message que vous êtes en train de\nlire, lui, reste affiché : rien ne disparaît sous votre doigt ;"
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "une "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "pastille"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " portant une petite lune et la date rappelle jusqu'à quand il dort, "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "une fois"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": "\nsur la ligne de la conversation, et dans l'en-tête du message ;"
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "« "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Réveiller le fil"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " » le ramène immédiatement, sans confirmation ;"
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "text",
-								"text": "la case « "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Afficher les fils en sommeil"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " », en haut de la liste, les fait tous réapparaître,\nreconnaissables à leur pastille. Si un dossier ne contient plus que des fils endormis, la liste\nvous le dit et vous propose la case au lieu d'un vide muet."
-							}
-						]
-					}
-				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "Le sommeil est "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "partagé"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : un fil endormi l'est pour toute personne qui le voit. Il n'a pas besoin\nd'être réveillé à la main — une échéance passée n'est plus un sommeil, et le fil revient tout seul.\nUne échéance déjà passée est refusée, avec son motif écrit sous le champ."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "La case se retient dans l'adresse."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Une fois cochée, l'adresse de la page se termine par\n"
-				},
-				{
-					"type": "code",
-					"text": "?sommeil=visibles"
-				},
-				{
-					"type": "text",
-					"text": " : vous pouvez recharger la page, la mettre en favori ou en envoyer le lien à un\ncollègue sans que la case se décoche. Elle vaut pour "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "tous les dossiers"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " de la boîte tant qu'elle\nest cochée, et le bouton « Précédent » du navigateur la décoche comme il défait n'importe quel autre\ngeste. C'est exactement ce que fait déjà la case « Afficher les affaires en sommeil » du tableau et\nde la vue liste d'un channel."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Retirer un message d'une affaire."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Un message rangé dans la mauvaise affaire n'y reste pas.\nSous le message ouvert, en bas et séparée du reste, la commande « "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Retirer de l'affaire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " »\ndemande d'abord confirmation. La confirmation dit deux choses, et elles comptent toutes les deux :"
-				}
-			]
-		},
-		{
-			"type": "list",
-			"ordered": false,
-			"start": null,
-			"items": [
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "rien n'est supprimé."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " Le message quitte l'affaire et repasse dans les messages non classés,\nd'où vous pouvez le ranger ailleurs. Aucun courrier n'est détruit par ce geste ;"
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "vous pourriez cesser de le voir."
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " Un message est visible soit parce que vous lisez l'affaire\noù il est rangé, soit parce qu'il est arrivé dans une boîte que vous suivez. Si seule la première\nraison s'applique à vous, le retrait vous en prive : le message existe toujours, mais il ne vous\nest plus ouvert, et c'est à une personne qui suit la boîte de le ranger de nouveau. La phrase\nvous le dit "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "avant"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " le geste, jamais après."
-							}
-						]
-					}
-				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "text",
-					"text": "« Annuler » referme sans rien envoyer. Si vous ne pouvez pas modifier l'affaire où le message est\nrangé, la commande est grisée et un bandeau dit pourquoi (section 3.6). Le serveur reste la règle :\ns'il refuse malgré tout, l'écran vous l'écrit sous la confirmation."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "L'affaire garde la mémoire des deux faits."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Dans l'historique de l'affaire, la ligne\n« Message reçu » "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "reste"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " — le courrier y est bien arrivé, et le produit ne réécrit pas ce qui a\neu lieu — et une ligne « "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Message retiré de l'affaire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " » vient s'ajouter, avec l'objet du message\net le nom de la personne qui l'a retiré. Le geste se fait entièrement au clavier."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce qui n'est pas encore là."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Il n'existe pas de notion de « lu / non lu », ni de recherche : la\nliste montre les cinquante messages les plus récents d'un dossier, et le dit lorsqu'elle en laisse\nde côté. "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce sont bien cinquante messages, pas cinquante conversations"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : une conversation dont\nune partie seulement tient dans ces cinquante n'en affiche que cette partie, et son compte porte\nsur ce qui est affiché. Enfin, les messages reçus "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "avant l'été 2026"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " n'ont pas conservé de quoi\nretrouver leur conversation : chacun reste sur sa propre ligne, et rien ne les regroupera\nrétroactivement."
-				}
-			]
-		},
-		{
-			"type": "heading",
-			"level": 3,
-			"anchor": "ecrire-et-repondre",
-			"content": [
-				{
-					"type": "text",
-					"text": "4.16 Écrire et répondre"
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "emphasis",
-					"content": [
-						{
-							"type": "text",
-							"text": "Depuis la fiche d'une affaire, ou depuis un message de l'inbox."
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Écrire depuis une affaire."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " La fiche porte un bouton « Écrire un message ». Choisissez l'adresse\nd'expédition, un ou plusieurs destinataires — séparés par une virgule ou un point-virgule —, un\nobjet et un message, puis « Mettre en file »."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Une copie cachée."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Sous les destinataires, le lien « "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ajouter Cci"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " » ouvre le champ « Copie cachée (Cci) ». Ces\nadresses reçoivent le message "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "sans qu'aucun autre destinataire ne le sache"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : rien, dans le message reçu, ne les\nnomme. Elles restent en revanche "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "visibles dans l'affaire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " — l'inbox affiche « Cci : … » sur le message envoyé —, parce\nque la copie cachée est cachée aux destinataires, pas à votre équipe."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Des pièces jointes."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " « "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Joindre des fichiers"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " » (le trombone) ouvre le sélecteur de votre ordinateur ; vous pouvez\naussi déposer des fichiers sur le formulaire. Chaque fichier part aussitôt vers le produit — la ligne dit « Envoi du\nfichier… » — puis s'affiche avec sa taille et un bouton pour le retirer. Sous la liste, le total est écrit : « 2 fichiers,\n3,4 Mo sur 10 Mo »."
-				}
-			]
-		},
-		{
-			"type": "list",
-			"ordered": false,
-			"start": null,
-			"items": [
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Dix fichiers et 10 Mo au total"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": ", au plus, par message. Au-delà, le bouton « Mettre en file » s'éteint et le\nformulaire dit lequel des deux plafonds est dépassé ; retirez des fichiers pour continuer. Le bouton reste aussi éteint\ntant qu'un fichier est en cours d'envoi."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Un nom accentué est simplifié"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " : « Proposition révisée.pdf » part sous le nom « Proposition revisee.pdf »."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Retirer un fichier, ou annuler le formulaire, le supprime"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " du produit. Un fichier abandonné autrement — un onglet\nfermé — est effacé de lui-même au bout de 24 heures."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Les fichiers envoyés restent dans l'affaire"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " : le message envoyé les montre comme ceux d'un message reçu. Quand\nl'analyse antivirus est en place, un fichier sain se télécharge, et "
-							},
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "un fichier infecté empêche le message de\npartir"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " : il est marqué en échec, et le dit. Sans antivirus, le message part et ses fichiers sont « non analysés »,\ndonc non téléchargeables, comme les pièces reçues."
-							}
-						]
-					}
-				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Répondre depuis l'inbox."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Un message rangé dans une affaire porte un bouton « Répondre » : le\ndestinataire et l'objet sont déjà remplis, et votre réponse reste rattachée à la conversation. Un\nmessage "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "non classé"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " n'offre pas de réponse : tant qu'il n'appartient à aucune affaire, il n'y a\npas d'adresse à laquelle votre correspondant pourrait répondre. Classez-le d'abord."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Les réponses de votre correspondant reviennent dans l'affaire"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": ", quelle que soit sa messagerie :\nle produit place dans chaque message qu'il envoie une adresse de retour qui pointe vers l'affaire.\nC'est écrit sous le formulaire, parce que cette adresse n'est pas la vôtre."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "« Mis en file » n'est pas « envoyé »."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Le produit n'expédie pas au moment où vous validez : il\ninscrit votre message dans une file, qu'un service vide ensuite. Tant que ce service n'a pas parlé,\nle produit ne prétend pas que votre message est arrivé."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce que le produit peut refuser, et pourquoi :"
-						}
-					]
-				}
-			]
-		},
-		{
-			"type": "table",
-			"align": [
-				null,
-				null
-			],
-			"header": [
-				[
-					{
-						"type": "text",
-						"text": "Refus"
-					}
-				],
-				[
-					{
-						"type": "text",
-						"text": "Ce qu'il faut faire"
-					}
-				]
-			],
-			"rows": [
-				[
-					[
-						{
-							"type": "text",
-							"text": "Vous ne pouvez pas écrire au nom de cette affaire"
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Demander le droit d'écriture sur son dossier"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "text",
-							"text": "Cette adresse d'expédition ne vous est pas attribuée"
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "En choisir une autre dans la liste"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "text",
-							"text": "Cette affaire ne peut pas recevoir de réponse"
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Elle est archivée ou en corbeille : la restaurer d'abord"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "text",
-							"text": "Cette adresse a atteint son plafond du jour"
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Attendre le lendemain, ou demander un plafond plus haut"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "text",
-							"text": "Une pièce jointe n'est plus disponible"
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "La retirer, puis la joindre de nouveau"
-						}
-					]
-				],
-				[
-					[
-						{
-							"type": "text",
-							"text": "Les pièces jointes dépassent le plafond"
-						}
-					],
-					[
-						{
-							"type": "text",
-							"text": "Retirer des fichiers : 10 au plus, 10 Mo au total"
-						}
-					]
-				]
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Votre texte n'est jamais perdu"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " : un refus laisse le formulaire ouvert, avec ce que vous aviez\nécrit."
-				}
-			]
-		},
-		{
-			"type": "paragraph",
-			"content": [
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "Ce qui n'est pas encore là."
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " Joindre une pièce "
-				},
-				{
-					"type": "strong",
-					"content": [
-						{
-							"type": "text",
-							"text": "déjà reçue"
-						}
-					]
-				},
-				{
-					"type": "text",
-					"text": " dans l'affaire : un fichier se prend sur votre\nordinateur. Un message qui échoue à partir est marqué en échec et le dit."
-				}
 			]
 		}
 	]

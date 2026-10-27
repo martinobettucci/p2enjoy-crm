@@ -1,0 +1,1552 @@
+{
+	"slug": "les-budgets-d-un-track",
+	"title": "23. Les budgets d'un track",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-084"
+						},
+						{
+							"type": "text",
+							"text": " tranche 2 ; le seuil d'ancienneté par sa tranche 4. Captures dans\n"
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-084/budgets-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "À quoi sert un budget."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un budget est une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "enveloppe de dépenses"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " d'un track — « Publicité\n2026 », « Salon du web 2025 ». Les lignes de coût d'une affaire s'y rattachent, depuis la section\n« Coûts » de sa fiche, et les écrans de coûts comparent, budget par budget, ce qui était prévu à ce qui\na été dépensé ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 24"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « Arborescence : tracks et channels ». Dépliez un track avec\nle chevron : sous ses channels paraît le bloc "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Budgets »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que le tableau montre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", une ligne par budget :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Colonne"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Contenu"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Nom"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "le nom du budget"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Devise"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "trois lettres — "
+						},
+						{
+							"type": "code",
+							"text": "EUR"
+						},
+						{
+							"type": "text",
+							"text": ", "
+						},
+						{
+							"type": "code",
+							"text": "CHF"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Enveloppe"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "le montant prévu ; "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "cellule vide"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " si l'enveloppe n'est pas décidée — ce n'est pas zéro"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Récurrent"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "« Oui » ou « Non »"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Occurrences ouvertes"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "pour un budget récurrent, le nombre de ses occurrences "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "non clôturées"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " ; c'est aussi le lien qui les déplie ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "les-budgets-d-un-track",
+								"anchor": "les-occurrences-d-un-budget-recurrent"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "chapitre 23.1"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "). "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Cellule vide"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " pour un budget non récurrent, qui n'en porte jamais"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "État"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "« Ouvert » ou « Clôturé », écrit en toutes lettres"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Actions"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "monter, descendre, modifier, clôturer — ou rouvrir"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les budgets clôturés sont masqués par défaut."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Cochez "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Afficher les budgets clôturés »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " pour\nles faire reparaître : ils ne sont pas supprimés, ils sortent seulement du chemin."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Créer un budget."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Nouveau budget »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", sous le tableau, ouvre le formulaire dans la\npage, le curseur dans le premier champ :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Champ"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Règle"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Nom"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "obligatoire. Deux budgets "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "ouverts"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " d'un même track ne portent pas le même nom ; un budget clôturé peut, lui, garder un nom qu'un nouveau budget reprend — « Salon 2025 » l'année suivante"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Devise"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "trois lettres majuscules, "
+						},
+						{
+							"type": "code",
+							"text": "EUR"
+						},
+						{
+							"type": "text",
+							"text": " par défaut. Une autre écriture est signalée sur le champ, et « Créer » reste indisponible"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Enveloppe (facultative)"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "un nombre. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Laissez vide"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " si l'enveloppe n'est pas décidée ; un montant "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "négatif"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " est accepté — un avoir, un remboursement. Une saisie qui n'est pas un nombre est signalée sur le champ"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Seuil d'ancienneté (facultatif)"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "un nombre de "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "jours entiers, à partir de 1"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ". Au delà, une dépense de ce budget qui attend son coût réel est signalée "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "en retard"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " dans l'onglet « À saisir » ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "chapitre 27"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "). "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Laissez vide pour ne rien signaler"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : aucun seuil n'est alors appliqué, pas même un seuil « par défaut ». « 0 » ou « 2,5 » sont signalés sur le champ"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Budget récurrent (porte des occurrences)"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "à cocher pour un budget qui se décline en périodes — « Janvier 2026 », « Février 2026 ». Un budget récurrent ne reçoit aucune ligne de coût tant qu'il ne porte pas au moins une occurrence ouverte ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "les-budgets-d-un-track",
+								"anchor": "les-occurrences-d-un-budget-recurrent"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "chapitre 23.1"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ")"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Modifier un budget."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le crayon rouvre le même formulaire, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prérempli"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " avec les valeurs\nactuelles. Vider l'enveloppe ou le seuil les "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "efface"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " réellement. Un budget qui porte des\noccurrences ne redevient pas non récurrent : retirez d'abord ses occurrences."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réordonner."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les flèches montent ou descendent un budget d'un cran ; elles sont désactivées en tête\net en fin de liste, et le disent."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Clôturer un budget."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Le cadenas demande une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "confirmation"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", dans la page : « Clôturer le budget\n« … » ? ». Elle dit ce que la clôture fait — le budget sort du tableau sans être supprimé, et peut\nêtre rouvert — et elle "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "compte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les dépenses du budget qui attendent encore leur coût réel : « Ce\nbudget porte n ligne(s) sans coût réel ; elles resteront saisissables après la clôture. » La clôture\nn'est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "pas empêchée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " par ce décompte : c'est une décision de gestion, elle est seulement éclairée.\nUn budget clôturé "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "ne reçoit plus de nouvelle ligne de coût"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; celles qu'il porte restent, et leur\ncoût réel se saisit encore — les factures arrivent souvent après la clôture."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Rouvrir un budget."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Affichez les budgets clôturés, puis utilisez le cadenas ouvert. Aucune\nconfirmation n'est demandée. Si un budget ouvert du track a repris son nom entre-temps, la\nréouverture est refusée : renommez l'un des deux."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un budget ne se supprime pas"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : des dépenses le référencent, et le supprimer effacerait la\ndépense constatée. On le clôture."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Créer, modifier, réordonner, clôturer et rouvrir un budget sont réservés aux\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs de l'espace de travail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " — le serveur l'applique. Un autre membre voit le tableau\ndes budgets des tracks qu'il lit ; ses commandes restent à leur place, "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "grisées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et le bandeau de\nl'écran dit pourquoi ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Afficher les budgets clôturés et déplier les occurrences lui\nrestent ouverts."
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Message"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'il signifie"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Un budget ouvert de ce track porte déjà ce nom… »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Choisissez un autre nom, ou clôturez l'autre budget"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Ce budget porte des occurrences : supprimez-les avant de le rendre non récurrent. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Retirez ses occurrences d'abord ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "les-budgets-d-un-track",
+								"anchor": "les-occurrences-d-un-budget-recurrent"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "chapitre 23.1"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ")"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Cette valeur a été refusée : vérifiez le nom et la devise. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le serveur a refusé la forme d'une valeur"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Seul un administrateur de cet espace de travail peut gérer les budgets. »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le geste demande un droit que votre compte n'a pas"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Rien n'a été modifié… »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Vos droits sur ce budget ont changé depuis l'ouverture de l'écran, ou il a disparu"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "les-occurrences-d-un-budget-recurrent",
+			"content": [
+				{
+					"type": "text",
+					"text": "23.1 Les occurrences d'un budget récurrent"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "emphasis",
+					"content": [
+						{
+							"type": "text",
+							"text": "Livré par "
+						},
+						{
+							"type": "code",
+							"text": "CRM-084"
+						},
+						{
+							"type": "text",
+							"text": " tranche 3. Captures dans "
+						},
+						{
+							"type": "code",
+							"text": "docs/captures/CRM-084/occurrences-*.jpg"
+						},
+						{
+							"type": "text",
+							"text": "."
+						}
+					]
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sous un track déplié, dans le tableau « Budgets ». Un budget déclaré "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "récurrent"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " affiche\ndans la colonne « Occurrences ouvertes » un nombre "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "cliquable"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : il déplie la liste de ses\noccurrences sous le tableau. Un budget non récurrent affiche une cellule vide, et n'offre pas ce\ngeste — il ne peut porter aucune occurrence."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Pourquoi c'est nécessaire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un budget récurrent ne peut recevoir aucune ligne de coût tant qu'il\nne porte pas au moins une occurrence : le sélecteur de la fiche d'affaire ne le propose pas. Avant\ncet écran, cocher « récurrent » produisait donc un budget inutilisable."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que la liste montre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", de la plus récente à la plus ancienne : le libellé, la période si elle\nest renseignée, l'enveloppe si elle est décidée, et l'état — « Ouverte » ou « Clôturée »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les occurrences clôturées ne sont pas masquées"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", contrairement aux budgets. C'est voulu : les\nfactures arrivent souvent après la clôture, et l'onglet « À saisir » des écrans de coûts liste\nprécisément leurs lignes."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les cinq gestes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", tous réservés à un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateur de l'espace de travail"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :"
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Geste"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'il fait"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "Ouvrir une occurrence"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Déclare une instance — « Janvier 2026 ». Le libellé est obligatoire ; la période et l'enveloppe ne le sont pas"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Modifier"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Change le libellé, la période et l'enveloppe. Reste offert sur une occurrence "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "clôturée"
+								}
+							]
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Clôturer"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La retire des choix proposés à une nouvelle ligne de coût. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Sans confirmation"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": " : elle se rouvre d'un clic"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Rouvrir"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "L'inverse, également sans confirmation"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "Retirer"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "La supprime. "
+						},
+						{
+							"type": "strong",
+							"content": [
+								{
+									"type": "text",
+									"text": "Avec confirmation"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ", et refusé si des lignes de coût y sont rattachées"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Aucune occurrence n'est engendrée automatiquement."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " On crée « janvier », puis « février », à la\nmain. Un mois sans occurrence est une information — il ne s'est rien passé — qu'une génération\nautomatique détruirait en fabriquant une occurrence vide."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Vider un champ facultatif l'efface réellement."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une enveloppe posée par erreur se retire en\nlaissant le champ vide, de même que les deux bornes de période."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les périodes ne contraignent rien."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Elles servent à ordonner et à libeller : aucune ligne de coût\nn'est refusée parce que sa date sortirait de la période, et rien n'exige que la fin suive le début."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Deux libellés qui ne diffèrent que par la casse coexistent."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « Janvier 2026 » et « janvier 2026 »\nsont deux occurrences distinctes ; seuls les espaces de début et de fin sont ignorés. C'est la même\nrègle que pour le nom d'un budget."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Ce que vous pouvez lire sans pouvoir l'écrire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " La liste est visible à qui lit le budget. Si vous\nn'êtes pas administrateur, vos gestes sont refusés par le serveur et l'écran vous le dit — il ne les\nmasque pas, parce que vos droits peuvent avoir changé depuis l'ouverture de la page."
+				}
+			]
+		},
+		{
+			"type": "table",
+			"align": [
+				null,
+				null
+			],
+			"header": [
+				[
+					{
+						"type": "text",
+						"text": "Message"
+					}
+				],
+				[
+					{
+						"type": "text",
+						"text": "Ce qu'il signifie"
+					}
+				]
+			],
+			"rows": [
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Ce budget porte déjà une occurrence de ce libellé »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Choisissez un autre libellé"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Ce budget n'est pas récurrent »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Rendez-le récurrent avant d'y ouvrir une occurrence"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Cette occurrence porte des lignes de coût »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Clôturez-la plutôt que de la retirer : la dépense constatée n'est pas effacée"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Seul un administrateur… »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Le geste demande un droit que votre compte n'a pas"
+						}
+					]
+				],
+				[
+					[
+						{
+							"type": "text",
+							"text": "« Rien n'a été modifié »"
+						}
+					],
+					[
+						{
+							"type": "text",
+							"text": "Vos droits sur ce budget ont changé depuis l'ouverture de l'écran"
+						}
+					]
+				]
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-qui-n-est-pas-la-cote-budgets",
+			"content": [
+				{
+					"type": "text",
+					"text": "23.2 Ce qui n'est pas là, côté budgets"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ces absences sont voulues, et non des oublis :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucune conversion de devise"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : chaque budget compte dans sa propre devise, et les écrans de coûts\nrendent un histogramme par devise plutôt qu'un total qui mélangerait des euros et des francs ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucune occurrence engendrée automatiquement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", aucun calendrier ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "les-budgets-d-un-track",
+									"anchor": "les-occurrences-d-un-budget-recurrent"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 23.1"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ") ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucune alerte de dépassement"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ni aucun envoi d'email : un dépassement se lit sur l'histogramme ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "aucun export comptable"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", aucun import de factures."
+							}
+						]
+					}
+				]
+			]
+		}
+	]
+}

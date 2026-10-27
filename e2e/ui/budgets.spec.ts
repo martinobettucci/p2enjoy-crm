@@ -11,7 +11,8 @@
 // @verifies docs/DESIGN_SYSTEM.md §5.9 (le patron de tableau), §5.13 (commandes toujours visibles,
 //           confirmation dans le flux du document), §7 (paliers), §8 (accessibilité)
 // @verifies CLAUDE.md §16 (vérification visuelle), §22 (accessibilité clavier)
-// @verifies docs/manual.md §5.4 bis — CRM-084, clôture de l'unité : chaque libellé que le chapitre cite est exigé
+// @verifies CRM-117 (docs/BACKLOG.md) tranche T3.0 — le chapitre des budgets lu par son titre (docs/SPEC-manual.md §10 bis)
+// @verifies docs/manual.md chapitre 23 (« Les budgets d'un track ») — CRM-084, clôture de l'unité : chaque libellé que le chapitre cite est exigé
 //           À LA FOIS dans le chapitre et à l'écran réel (CLAUDE.md §7 ; même doctrine que `manuel.spec.ts`,
 //           docs/SPEC-manual.md §3.1)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du
@@ -551,11 +552,14 @@ test.describe('paliers responsive', () => {
 })
 
 // -------------------------------------------------------------------------------------------
-// Le manuel dit ce que l'écran montre — docs/manual.md §5.4 bis, CLAUDE.md §7
+// Le manuel dit ce que l'écran montre — docs/manual.md chapitre 23, CLAUDE.md §7
 // -------------------------------------------------------------------------------------------
 
 /**
- * Le chapitre 5.4 bis du manuel, lu dans le fichier lui-même : de son titre au titre suivant.
+ * Le chapitre « Les budgets d'un track » du manuel, lu dans le fichier lui-même : de son titre au chapitre suivant.
+ *
+ * RÉVISÉ PAR `CRM-117` T3.0 (docs/SPEC-manual.md §10 bis) : la section 5.4 bis est devenue le chapitre 23. Le chapitre
+ * est trouvé par son TITRE et non par son numéro, que le plan public peut encore déplacer.
  *
  * LA PREUVE LIE LES DEUX SENS. `manuel.spec.ts` recopie les libellés à la main, si bien qu'un manuel réécrit sans
  * que l'écran change reste vert. Ici chaque phrase est exigée dans le CHAPITRE et à l'ÉCRAN : modifier l'un sans
@@ -563,9 +567,9 @@ test.describe('paliers responsive', () => {
  */
 function chapitreBudgets(): string {
 	const manuel = readFileSync(join(RACINE, 'docs/manual.md'), 'utf8')
-	const debut = manuel.indexOf("### 5.4 bis Les budgets d'un track")
-	expect(debut, 'le chapitre 5.4 bis existe dans docs/manual.md').toBeGreaterThanOrEqual(0)
-	const fin = manuel.indexOf('\n### ', debut + 1)
+	const debut = manuel.search(/^## \d+\. Les budgets d'un track$/m)
+	expect(debut, 'le chapitre « Les budgets d’un track » existe dans docs/manual.md').toBeGreaterThanOrEqual(0)
+	const fin = manuel.indexOf('\n## ', debut + 1)
 	return manuel.slice(debut, fin === -1 ? undefined : fin)
 }
 
@@ -579,14 +583,14 @@ function normaliser(texte: string): string {
 
 /** Exige `phrase` dans le chapitre ET dans le texte rendu par `element`. */
 async function citeeEtRendue(chapitre: string, element: Locator, phrase: string): Promise<void> {
-	expect(normaliser(chapitre), `le manuel §5.4 bis cite « ${phrase} »`).toContain(normaliser(phrase))
+	expect(normaliser(chapitre), `le manuel, chapitre des budgets, cite « ${phrase} »`).toContain(normaliser(phrase))
 	await expect(element).toBeVisible()
 	expect(normaliser((await element.textContent()) ?? ''), `l'écran rend « ${phrase} »`).toContain(
 		normaliser(phrase),
 	)
 }
 
-test.describe('le manuel §5.4 bis cite les libellés réels de l’écran', () => {
+test.describe('le chapitre des budgets du manuel cite les libellés réels de l’écran', () => {
 	test('le tableau, l’interrupteur, le formulaire et ses aides', async ({ page }) => {
 		const chapitre = chapitreBudgets()
 		await connecter(page)

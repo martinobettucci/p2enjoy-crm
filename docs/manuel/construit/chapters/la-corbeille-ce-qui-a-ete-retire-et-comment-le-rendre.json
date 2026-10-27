@@ -1,6 +1,6 @@
 {
 	"slug": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre",
-	"title": "5 ter. La corbeille : ce qui a été retiré, et comment le rendre",
+	"title": "20. La corbeille : ce qui a été retiré, et comment le rendre",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -285,7 +285,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 ter.1 Restaurer"
+					"text": "20.1 Restaurer"
 				}
 			]
 		},
@@ -421,7 +421,24 @@
 				},
 				{
 					"type": "text",
-					"text": " (section 3.6) : un track ou un channel se restaure\npar un administrateur de l'espace, une affaire par qui peut écrire sur son onglet. Un bandeau en tête du\ntableau dit lequel des deux cas vous concerne. Le message « Rien n'a été restauré » ne paraît plus que si\nvos droits ont changé entre-temps ou n'ont pas pu être lus."
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : un track ou un channel se restaure\npar un administrateur de l'espace, une affaire par qui peut écrire sur son onglet. Un bandeau en tête du\ntableau dit lequel des deux cas vous concerne. Le message « Rien n'a été restauré » ne paraît plus que si\nvos droits ont changé entre-temps ou n'ont pas pu être lus."
 				}
 			]
 		},
@@ -450,7 +467,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 ter.2 Ce que cet écran ne fait pas"
+					"text": "20.2 Ce que cet écran ne fait pas"
 				}
 			]
 		},
@@ -474,14 +491,34 @@
 							},
 							{
 								"type": "text",
-								"text": " Le geste de mise à la corbeille vit là où vivent les objets —\nchapitre 5 pour un track et un channel, chapitre 4.7 "
+								"text": " Le geste de mise à la corbeille vit là où vivent les objets —\n"
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "administrer-l-arborescence-tracks-et-channels"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "bis"
+										"text": "chapitre 17"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " pour un track et un channel, "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "mettre-une-affaire-a-la-corbeille"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 9.15"
 									}
 								]
 							},
@@ -507,7 +544,24 @@
 							},
 							{
 								"type": "text",
-								"text": " Seul l'effacement automatique, au\nbout de 30 jours, détruit un objet (section 5 ter.3)."
+								"text": " Seul l'effacement automatique, au\nbout de 30 jours, détruit un objet ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre",
+									"anchor": "l-effacement-definitif"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "section 20.3"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -541,7 +595,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 ter.3 L'effacement définitif"
+					"text": "20.3 L'effacement définitif"
 				}
 			]
 		},
@@ -636,14 +690,17 @@
 							},
 							{
 								"type": "text",
-								"text": " (chapitre 10 "
+								"text": " ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "ter"
+										"text": "chapitre 22"
 									}
 								]
 							},
@@ -761,7 +818,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 ter.4 Ce qui n'est pas encore là"
+					"text": "20.4 Ce qui n'est pas encore là"
 				}
 			]
 		},
@@ -789,14 +846,18 @@
 							},
 							{
 								"type": "text",
-								"text": " se fait depuis sa fiche (chapitre 4.7 "
+								"text": " se fait depuis sa fiche ("
 							},
 							{
-								"type": "emphasis",
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "mettre-une-affaire-a-la-corbeille"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "bis"
+										"text": "chapitre 9.15"
 									}
 								]
 							},

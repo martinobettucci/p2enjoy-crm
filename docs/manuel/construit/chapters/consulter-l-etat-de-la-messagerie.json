@@ -1,6 +1,6 @@
 {
 	"slug": "consulter-l-etat-de-la-messagerie",
-	"title": "6. Consulter l'état de la messagerie",
+	"title": "13. Consulter l'état de la messagerie",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -258,7 +258,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "6.1 Ce qui n'est pas encore là"
+					"text": "13.1 Ce qui n'est pas encore là"
 				}
 			]
 		},

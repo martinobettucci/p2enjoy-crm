@@ -1,6 +1,6 @@
 {
 	"slug": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
-	"title": "5 bis. Composer un workflow : ses étapes, ses transitions et son formulaire",
+	"title": "18. Composer un workflow : ses étapes, ses transitions et son formulaire",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -145,7 +145,24 @@
 				},
 				{
 					"type": "text",
-					"text": "\naussi un workflow (chapitre 5 bis.0). Depuis "
+					"text": "\naussi un workflow ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "creer-un-workflow"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 18.1"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Depuis "
 				},
 				{
 					"type": "code",
@@ -184,7 +201,23 @@
 				},
 				{
 					"type": "text",
-					"text": " de l'espace de travail. Comme au\nchapitre 5, les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du\nserveur, « Seul un administrateur de cet espace de travail peut composer un workflow. »"
+					"text": " de l'espace de travail. Comme au\n"
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "administrer-l-arborescence-tracks-et-channels"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 17"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du\nserveur, « Seul un administrateur de cet espace de travail peut composer un workflow. »"
 				}
 			]
 		},
@@ -195,7 +228,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.0 Créer un workflow"
+					"text": "18.1 Créer un workflow"
 				}
 			]
 		},
@@ -344,7 +377,24 @@
 				},
 				{
 					"type": "text",
-					"text": " Il n'a aucune étape, et il n'est utilisable par aucun channel tant que\nvous ne lui en avez pas donné au moins une, désignée comme initiale (chapitre 5 bis.2). L'écran le\ndit dès la création : « Ce workflow n'a aucune étape. » Un workflow sans étape initiale est un\nbrouillon parfaitement licite, pas une erreur. Un channel qui le suit n'a pas de tableau : son onglet\nle dit, et propose le lien "
+					"text": " Il n'a aucune étape, et il n'est utilisable par aucun channel tant que\nvous ne lui en avez pas donné au moins une, désignée comme initiale ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "les-etapes"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 18.5"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). L'écran le\ndit dès la création : « Ce workflow n'a aucune étape. » Un workflow sans étape initiale est un\nbrouillon parfaitement licite, pas une erreur. Un channel qui le suit n'a pas de tableau : son onglet\nle dit, et propose le lien "
 				},
 				{
 					"type": "strong",
@@ -357,14 +407,18 @@
 				},
 				{
 					"type": "text",
-					"text": " (chapitre 3.2 "
+					"text": " ("
 				},
 				{
-					"type": "emphasis",
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-onglets-d-un-track"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "ter"
+							"text": "chapitre 3.5"
 						}
 					]
 				},
@@ -441,7 +495,24 @@
 				},
 				{
 					"type": "text",
-					"text": ", chapitre 5.2), l'éditeur\ns'ouvre formulaire de création ouvert, portée réglée sur le track du channel, et un bandeau rappelle\n« Vous créez un channel ». Une fois le workflow créé — par ce formulaire ou par "
+					"text": ", "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "administrer-l-arborescence-tracks-et-channels",
+						"anchor": "un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 17.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), l'éditeur\ns'ouvre formulaire de création ouvert, portée réglée sur le track du channel, et un bandeau rappelle\n« Vous créez un channel ». Une fois le workflow créé — par ce formulaire ou par "
 				},
 				{
 					"type": "strong",
@@ -498,7 +569,24 @@
 				},
 				{
 					"type": "text",
-					"text": " dans un\nespace neuf : le plus court est souvent le workflow de départ du guide (§1 bis.4), que vous\nrecomposez ensuite ici."
+					"text": " dans un\nespace neuf : le plus court est souvent le workflow de départ du guide ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-guide-de-demarrage-par-ou-commencer",
+						"anchor": "le-workflow-de-depart-en-un-geste"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§2.4"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), que vous\nrecomposez ensuite ici."
 				}
 			]
 		},
@@ -509,7 +597,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.0 bis Créer un workflow avec l'IA"
+					"text": "18.2 Créer un workflow avec l'IA"
 				}
 			]
 		},
@@ -1059,7 +1147,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.0 ter Faire évoluer un workflow avec l'IA"
+					"text": "18.3 Faire évoluer un workflow avec l'IA"
 				}
 			]
 		},
@@ -1513,7 +1601,24 @@
 				},
 				{
 					"type": "text",
-					"text": " — et l'annonce la\nnomme : « Point de retour : version 4 ». Pour revenir en arrière, restaurez cette version depuis le bloc\n« Versions » du même écran (chapitre 5 bis.6)."
+					"text": " — et l'annonce la\nnomme : « Point de retour : version 4 ». Pour revenir en arrière, restaurez cette version depuis le bloc\n« Versions » du même écran ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire",
+						"anchor": "garder-une-photographie-d-un-workflow-et-y-revenir"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 18.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -1560,7 +1665,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.1 Choisir un workflow"
+					"text": "18.4 Choisir un workflow"
 				}
 			]
 		},
@@ -1911,7 +2016,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.2 Les étapes"
+					"text": "18.5 Les étapes"
 				}
 			]
 		},
@@ -1990,7 +2095,24 @@
 							},
 							{
 								"type": "text",
-								"text": " : les flèches montent et descendent une étape. Une flèche désactivée sans être en\nbout de liste s'explique comme au §5.3."
+								"text": " : les flèches montent et descendent une étape. Une flèche désactivée sans être en\nbout de liste s'explique comme au "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "administrer-l-arborescence-tracks-et-channels",
+									"anchor": "quand-un-deplacement-est-indisponible-sans-etre-en-bout-de-liste"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§17.3"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
 							}
 						]
 					}
@@ -2098,7 +2220,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.3 Les transitions"
+					"text": "18.6 Les transitions"
 				}
 			]
 		},
@@ -2232,7 +2354,24 @@
 							},
 							{
 								"type": "text",
-								"text": " : la case rend le commentaire obligatoire. Le déplacement d'une affaire par\ncette transition sera refusé sans lui — c'est la règle décrite au §4.3, vue depuis son réglage."
+								"text": " : la case rend le commentaire obligatoire. Le déplacement d'une affaire par\ncette transition sera refusé sans lui — c'est la règle décrite au "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+									"anchor": "faire-avancer-une-affaire-ce-que-le-produit-autorise-et-ce-qu-il-refuse"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§9.3"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", vue depuis son réglage."
 							}
 						]
 					}
@@ -2295,7 +2434,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.4 Les questions du formulaire"
+					"text": "18.7 Les questions du formulaire"
 				}
 			]
 		},
@@ -2317,7 +2456,24 @@
 				},
 				{
 					"type": "text",
-					"text": " de ce workflow, dans l'ordre où elles apparaissent sur la fiche (§4.7). Chaque ligne\nmontre le libellé de la question, sa "
+					"text": " de ce workflow, dans l'ordre où elles apparaissent sur la fiche ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§9.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Chaque ligne\nmontre le libellé de la question, sa "
 				},
 				{
 					"type": "strong",
@@ -2617,7 +2773,24 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Si vous n'êtes pas administrateur de l'espace de travail, les commandes de l'éditeur sont grisées et\nun bandeau dit pourquoi (section 3.6) ; le serveur refuse de toute façon l'enregistrement."
+					"text": "Si vous n'êtes pas administrateur de l'espace de travail, les commandes de l'éditeur sont grisées et\nun bandeau dit pourquoi ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") ; le serveur refuse de toute façon l'enregistrement."
 				}
 			]
 		},
@@ -2628,7 +2801,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.4 bis La visibilité des questions, étape par étape"
+					"text": "18.8 La visibilité des questions, étape par étape"
 				}
 			]
 		},
@@ -2891,7 +3064,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.4 ter Ce qu'il faut avoir rempli pour emprunter un chemin"
+					"text": "18.9 Ce qu'il faut avoir rempli pour emprunter un chemin"
 				}
 			]
 		},
@@ -3181,7 +3354,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.4 quater Ce qu'une exigence fera aux affaires en cours"
+					"text": "18.10 Ce qu'une exigence fera aux affaires en cours"
 				}
 			]
 		},
@@ -3460,7 +3633,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.5 Ce qui n'est pas encore là"
+					"text": "18.11 Ce qui n'est pas encore là"
 				}
 			]
 		},
@@ -3537,7 +3710,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.6 Garder une photographie d'un workflow, et y revenir"
+					"text": "18.12 Garder une photographie d'un workflow, et y revenir"
 				}
 			]
 		},
@@ -3963,7 +4136,24 @@
 				},
 				{
 					"type": "text",
-					"text": " de\nl'espace de travail. Les commandes restent visibles pour tout le monde, grisées pour qui n'administre\npas l'espace, avec un bandeau qui dit pourquoi (section 3.6) ; le serveur refuse de toute façon."
+					"text": " de\nl'espace de travail. Les commandes restent visibles pour tout le monde, grisées pour qui n'administre\npas l'espace, avec un bandeau qui dit pourquoi ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") ; le serveur refuse de toute façon."
 				}
 			]
 		},
@@ -3974,7 +4164,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 bis.7 Ce qui n'est pas encore là, côté versions"
+					"text": "18.13 Ce qui n'est pas encore là, côté versions"
 				}
 			]
 		},

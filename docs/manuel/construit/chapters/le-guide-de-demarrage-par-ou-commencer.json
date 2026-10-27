@@ -1,6 +1,6 @@
 {
 	"slug": "le-guide-de-demarrage-par-ou-commencer",
-	"title": "1 bis. Le guide de démarrage : par où commencer",
+	"title": "2. Le guide de démarrage : par où commencer",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -205,7 +205,24 @@
 						},
 						{
 							"type": "text",
-							"text": " du guide (§1 bis.4)"
+							"text": " du guide ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "le-guide-de-demarrage-par-ou-commencer",
+								"anchor": "le-workflow-de-depart-en-un-geste"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "§2.4"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ")"
 						}
 					]
 				],
@@ -234,14 +251,18 @@
 						},
 						{
 							"type": "text",
-							"text": ", dans la barre d'onglets du track (chapitre 3.2 "
+							"text": ", dans la barre d'onglets du track ("
 						},
 						{
-							"type": "emphasis",
+							"type": "link",
+							"target": {
+								"chapter": "naviguer-barre-laterale-onglets-etats",
+								"anchor": "les-onglets-d-un-track"
+							},
 							"content": [
 								{
 									"type": "text",
-									"text": "ter"
+									"text": "chapitre 3.5"
 								}
 							]
 						},
@@ -293,7 +314,24 @@
 						},
 						{
 							"type": "text",
-							"text": " crée l'affaire (chapitre 4.8). Sans channel, le lien mène à l'arborescence"
+							"text": " crée l'affaire ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+								"anchor": "le-tableau-kanban-d-un-channel"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "chapitre 9.10"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "). Sans channel, le lien mène à l'arborescence"
 						}
 					]
 				],
@@ -359,7 +397,24 @@
 				},
 				{
 					"type": "text",
-					"text": ", qui ouvre l'éditeur et vous ramène ensuite au channel en cours (chapitre 5.2)."
+					"text": ", qui ouvre l'éditeur et vous ramène ensuite au channel en cours ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "administrer-l-arborescence-tracks-et-channels",
+						"anchor": "un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 17.2"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -370,7 +425,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "1 bis.1 L'état d'une étape est mesuré, jamais mémorisé"
+					"text": "2.1 L'état d'une étape est mesuré, jamais mémorisé"
 				}
 			]
 		},
@@ -530,7 +585,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "1 bis.2 Ce que le guide dit exactement, et ce qu'il ne dit pas"
+					"text": "2.2 Ce que le guide dit exactement, et ce qu'il ne dit pas"
 				}
 			]
 		},
@@ -574,7 +629,24 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Si vous n'administrez pas l'espace, les liens du guide vers un geste d'administration deviennent un texte\ngrisé, et un bandeau en tête de la liste dit pourquoi (section 3.6). Les écrans vers lesquels le guide renvoie\nportent eux-mêmes leurs refus, et c'est là que vous les rencontrerez, expliqués."
+					"text": "Si vous n'administrez pas l'espace, les liens du guide vers un geste d'administration deviennent un texte\ngrisé, et un bandeau en tête de la liste dit pourquoi ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). Les écrans vers lesquels le guide renvoie\nportent eux-mêmes leurs refus, et c'est là que vous les rencontrerez, expliqués."
 				}
 			]
 		},
@@ -620,7 +692,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "1 bis.3 Le masquer, et le retrouver"
+					"text": "2.3 Le masquer, et le retrouver"
 				}
 			]
 		},
@@ -668,7 +740,24 @@
 				},
 				{
 					"type": "text",
-					"text": ", reste sur l'accueil. Pour un\nadministrateur, il masque aussi la pastille du guide flottant (§1 bis.5)."
+					"text": ", reste sur l'accueil. Pour un\nadministrateur, il masque aussi la pastille du guide flottant ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-guide-de-demarrage-par-ou-commencer",
+						"anchor": "le-guide-flottant-des-administrateurs"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§2.5"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -731,7 +820,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "1 bis.4 Le workflow de départ, en un geste"
+					"text": "2.4 Le workflow de départ, en un geste"
 				}
 			]
 		},
@@ -1054,7 +1143,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "1 bis.5 Le guide flottant des administrateurs"
+					"text": "2.5 Le guide flottant des administrateurs"
 				}
 			]
 		},

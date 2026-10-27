@@ -222,8 +222,8 @@ la question d'une façade `npm` par-dessus `runDev.sh` et consorts reste ouverte
 | `supabase/seed/apply-seed.sh` | Applique le seed socle **et le jeu de démonstration** sur la pile de développement | **disponible** |
 | `scripts/verify-seed-demo.sh` | Rejoue les preuves du jeu de démonstration : étapes peuplées, workflow dérivé exercé, aucun channel actif vide, convergence | **disponible** |
 | `scripts/verify-seed-demo.sh --empreinte` | N'affiche que l'empreinte de reproductibilité du seed, et sort | **disponible** |
-| `scripts/verify-manual.sh` | Rejoue les preuves du manuel utilisateur : chiffres de l'annexe A comparés à la base, captures citées, unités couvertes, libellés réels, absence de secret | **disponible** |
-| `scripts/verify-manual.sh --contre-epreuve` | Dégrade une **copie** du manuel et exige que le harnais morde ; ne touche jamais au dépôt | **disponible** |
+| `scripts/verify-manual.sh` | Rejoue les preuves du manuel public : manuel construit à jour, aucune référence interne dans les chapitres réécrits, libellés réels, aucun volume recopié, aucun secret, table des chapitres de `docs/SPEC-manual.md` §12 ; ne lit pas la base | **disponible** |
+| `scripts/verify-manual.sh --contre-epreuve` | Dégrade une **copie** du manuel et de la table du §12, et exige que **chaque** famille de contrôles morde ; ne touche jamais au dépôt | **disponible** |
 | `scripts/verify-corbeille.sh` | Rejoue les preuves de la corbeille et de la restauration : traçabilité, captures, pgTAP, Vitest, API et interface aux comptes figés, quatre dégradations réelles et restauration constatée | **disponible** |
 | `scripts/verify-corbeille.sh --rapide` | Omet Playwright, et l'annonce dans sa sortie plutôt que de le taire | **disponible** |
 | `scripts/verify-modeles-emails.sh` | Rejoue les preuves des modèles d'email : traçabilité, forme de la table et privilèges mesurés dans le catalogue, la liste fermée des douze variables comparée à sa spécification, le jeu de démonstration, pgTAP, contrat d'API, **six dégradations réelles** et restauration constatée octet à octet | **disponible** |
@@ -611,7 +611,7 @@ scripts/verify-commentaires.sh # commentaires : RLS, temps réel, panneau et cap
 scripts/verify-timeline.sh     # timeline : mémoire append-only, filtres et captures (CRM-044)
 scripts/verify-move-card-to-channel.sh # déplacement entre channels et perte explicite (CRM-045)
 scripts/verify-seed-demo.sh    # jeu de démonstration complet : toutes les étapes peuplées (CRM-046)
-scripts/verify-manual.sh       # manuel utilisateur : annexe A, captures, libellés réels  (CRM-047)
+scripts/verify-manual.sh       # manuel public : références internes, libellés réels, secrets  (CRM-117)
 scripts/verify-ma-journee.sh   # « Ma journée » : sections, bornes, portée, seed daté  (CRM-061)
 scripts/verify-corbeille.sh    # corbeille : modèle, garde, écran, gestes, non-complaisance (CRM-077)
 scripts/verify-modeles-emails.sh # modèles d'email : liste fermée des variables, RLS, seed (CRM-063)

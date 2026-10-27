@@ -1,6 +1,6 @@
 {
 	"slug": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role",
-	"title": "10 bis. Les membres de votre espace : qui y travaille, avec quel rôle",
+	"title": "21. Les membres de votre espace : qui y travaille, avec quel rôle",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -105,7 +105,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 bis.1 Ouvrir l'écran"
+					"text": "21.1 Ouvrir l'écran"
 				}
 			]
 		},
@@ -173,7 +173,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 bis.2 Si vous n'administrez pas l'espace"
+					"text": "21.2 Si vous n'administrez pas l'espace"
 				}
 			]
 		},
@@ -206,7 +206,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 bis.3 Changer le rôle d'un membre"
+					"text": "21.3 Changer le rôle d'un membre"
 				}
 			]
 		},
@@ -266,7 +266,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 bis.4 Retirer un membre de l'espace"
+					"text": "21.4 Retirer un membre de l'espace"
 				}
 			]
 		},
@@ -352,7 +352,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 bis.5 Les attentes : les personnes qu'on attend"
+					"text": "21.5 Les attentes : les personnes qu'on attend"
 				}
 			]
 		},
@@ -387,7 +387,23 @@
 				},
 				{
 					"type": "text",
-					"text": " avec cette adresse vérifiée (chapitre 1)."
+					"text": " avec cette adresse vérifiée ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "se-connecter-et-se-deconnecter"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 1"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -562,7 +578,23 @@
 							},
 							{
 								"type": "text",
-								"text": " ne se consommera qu'à l'arrivée d'un administrateur : c'est le cas d'une attente qui\nn'est pas administratrice, dans un espace qui n'a encore aucun administrateur membre. Vous ne la verrez que rarement\nici, puisqu'un administrateur membre suffit à lever le suspens ; la plateforme la montre (chapitre 10)."
+								"text": " ne se consommera qu'à l'arrivée d'un administrateur : c'est le cas d'une attente qui\nn'est pas administratrice, dans un espace qui n'a encore aucun administrateur membre. Vous ne la verrez que rarement\nici, puisqu'un administrateur membre suffit à lever le suspens ; la plateforme la montre ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "la-plateforme-espaces-membres-et-superadministrateurs"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 32"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}
@@ -644,7 +676,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 bis.6 Les droits fins : restreindre ou rouvrir un track ou un channel"
+					"text": "21.6 Les droits fins : restreindre ou rouvrir un track ou un channel"
 				}
 			]
 		},
@@ -969,7 +1001,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 bis.7 Quand un geste n'aboutit pas"
+					"text": "21.7 Quand un geste n'aboutit pas"
 				}
 			]
 		},

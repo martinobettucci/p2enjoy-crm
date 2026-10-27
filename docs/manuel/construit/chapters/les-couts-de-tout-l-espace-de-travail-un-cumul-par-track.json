@@ -1,6 +1,6 @@
 {
 	"slug": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track",
-	"title": "5 septies. Les coûts de tout l'espace de travail : un cumul par track",
+	"title": "26. Les coûts de tout l'espace de travail : un cumul par track",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -85,7 +85,24 @@
 				},
 				{
 					"type": "text",
-					"text": " Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le\ndroit de lire — voir le §5 septies.3, qui est la partie la plus importante de cette page."
+					"text": " Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le\ndroit de lire — voir le "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track",
+						"anchor": "votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§26.3"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", qui est la partie la plus importante de cette page."
 				}
 			]
 		},
@@ -96,7 +113,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 septies.1 Ce que l'écran montre"
+					"text": "26.1 Ce que l'écran montre"
 				}
 			]
 		},
@@ -162,7 +179,23 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "C'est la différence exacte avec l'écran de coûts d'un track (§5 quinquies) : là-bas, une paire de\nbarres désigne "
+					"text": "C'est la différence exacte avec l'écran de coûts d'un track ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§24"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : là-bas, une paire de\nbarres désigne "
 				},
 				{
 					"type": "strong",
@@ -250,7 +283,23 @@
 				},
 				{
 					"type": "text",
-					"text": " vers ses propres coûts, budget par budget (§5 quinquies). C'est le\nchemin normal : on lit d'abord quels tracks dépensent, puis on ouvre celui qu'on veut détailler."
+					"text": " vers ses propres coûts, budget par budget ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§24"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "). C'est le\nchemin normal : on lit d'abord quels tracks dépensent, puis on ouvre celui qu'on veut détailler."
 				}
 			]
 		},
@@ -268,7 +317,23 @@
 				},
 				{
 					"type": "text",
-					"text": " Il ne disparaît pas pour autant : ses lignes restent\nlisibles depuis sa propre fiche (§5 sexies)."
+					"text": " Il ne disparaît pas pour autant : ses lignes restent\nlisibles depuis sa propre fiche ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§25"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -297,7 +362,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 septies.2 Les devises ne se mélangent jamais"
+					"text": "26.2 Les devises ne se mélangent jamais"
 				}
 			]
 		},
@@ -365,7 +430,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 septies.3 Votre total est le vôtre, et il peut différer de celui d'un collègue"
+					"text": "26.3 Votre total est le vôtre, et il peut différer de celui d'un collègue"
 				}
 			]
 		},
@@ -514,7 +579,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 septies.4 Ce que l'écran écrit quand il n'y a rien à montrer"
+					"text": "26.4 Ce que l'écran écrit quand il n'y a rien à montrer"
 				}
 			]
 		},
@@ -617,7 +682,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 septies.5 Ce que cet écran ne fait pas"
+					"text": "26.5 Ce que cet écran ne fait pas"
 				}
 			]
 		},
@@ -681,7 +746,23 @@
 							},
 							{
 								"type": "text",
-								"text": " — voir le §5 septies.2."
+								"text": " — voir le "
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "les-couts-de-tout-l-espace-de-travail-un-cumul-par-track"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "§26.2"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "."
 							}
 						]
 					}
@@ -695,7 +776,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 septies.6 Deux onglets, ici aussi"
+					"text": "26.6 Deux onglets, ici aussi"
 				}
 			]
 		},
@@ -717,7 +798,24 @@
 				},
 				{
 					"type": "text",
-					"text": " que celui d'un track (§5 quinquies.5) : « Vue\nd'ensemble » et "
+					"text": " que celui d'un track ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense",
+						"anchor": "deux-onglets-et-le-second-est-celui-ou-l-on-saisit"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§24.5"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : « Vue\nd'ensemble » et "
 				},
 				{
 					"type": "strong",
@@ -756,7 +854,23 @@
 				},
 				{
 					"type": "text",
-					"text": ", et non celles d'un seul. Tout est décrit au\n§5 octies."
+					"text": ", et non celles d'un seul. Tout est décrit au\n"
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§27"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
 				}
 			]
 		}

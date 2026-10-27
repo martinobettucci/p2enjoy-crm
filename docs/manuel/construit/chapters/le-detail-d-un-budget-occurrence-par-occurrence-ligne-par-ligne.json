@@ -1,6 +1,6 @@
 {
 	"slug": "le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne",
-	"title": "5 sexies. Le détail d'un budget : occurrence par occurrence, ligne par ligne",
+	"title": "25. Le détail d'un budget : occurrence par occurrence, ligne par ligne",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -46,7 +46,23 @@
 				},
 				{
 					"type": "text",
-					"text": " Depuis l'écran de coûts d'un track (§5 quinquies), "
+					"text": " Depuis l'écran de coûts d'un track ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§24"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "), "
 				},
 				{
 					"type": "strong",
@@ -200,7 +216,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 sexies.1 Filtrer par occurrence"
+					"text": "25.1 Filtrer par occurrence"
 				}
 			]
 		},
@@ -268,7 +284,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 sexies.2 La colonne « Réel » laissée vide"
+					"text": "25.2 La colonne « Réel » laissée vide"
 				}
 			]
 		},
@@ -309,7 +325,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 sexies.3 Les états que vous pouvez rencontrer"
+					"text": "25.3 Les états que vous pouvez rencontrer"
 				}
 			]
 		},
@@ -484,7 +500,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 sexies.4 Ce que cet écran ne fait pas"
+					"text": "25.4 Ce que cet écran ne fait pas"
 				}
 			]
 		},

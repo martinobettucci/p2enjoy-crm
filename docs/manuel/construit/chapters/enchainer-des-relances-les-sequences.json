@@ -1,6 +1,6 @@
 {
 	"slug": "enchainer-des-relances-les-sequences",
-	"title": "7 ter. Enchaîner des relances : les séquences",
+	"title": "16. Enchaîner des relances : les séquences",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -108,7 +108,23 @@
 				},
 				{
 					"type": "text",
-					"text": " (chapitre 7) à des délais\nchoisis. Armée sur une affaire qui n'avance plus, elle expédie le premier modèle après son délai, le\ndeuxième après le sien, et ainsi de suite — "
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "ecrire-des-modeles-d-emails-et-les-previsualiser"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 14"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") à des délais\nchoisis. Armée sur une affaire qui n'avance plus, elle expédie le premier modèle après son délai, le\ndeuxième après le sien, et ainsi de suite — "
 				},
 				{
 					"type": "strong",
@@ -228,7 +244,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7 ter.1 Écrire une cadence"
+					"text": "16.1 Écrire une cadence"
 				}
 			]
 		},
@@ -364,7 +380,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7 ter.2 Changer l'ordre des paliers"
+					"text": "16.2 Changer l'ordre des paliers"
 				}
 			]
 		},
@@ -472,7 +488,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7 ter.3 Supprimer une séquence"
+					"text": "16.3 Supprimer une séquence"
 				}
 			]
 		},
@@ -543,7 +559,23 @@
 				},
 				{
 					"type": "text",
-					"text": " (chapitre 7) : retirez-le\nd'abord des paliers qui l'emploient."
+					"text": " ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "ecrire-des-modeles-d-emails-et-les-previsualiser"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 14"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : retirez-le\nd'abord des paliers qui l'emploient."
 				}
 			]
 		},
@@ -554,7 +586,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7 ter.4 Armer une relance sur une affaire"
+					"text": "16.4 Armer une relance sur une affaire"
 				}
 			]
 		},
@@ -620,14 +652,17 @@
 				},
 				{
 					"type": "text",
-					"text": ", c'est-à-dire immobile dans son étape depuis plus longtemps que le\nseuil de relance de cette étape (chapitre 3 "
+					"text": ", c'est-à-dire immobile dans son étape depuis plus longtemps que le\nseuil de relance de cette étape ("
 				},
 				{
-					"type": "emphasis",
+					"type": "link",
+					"target": {
+						"chapter": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "quinquies"
+							"text": "chapitre 7"
 						}
 					]
 				},
@@ -711,7 +746,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7 ter.5 Ce qui arrête une relance, sans que vous ayez rien à faire"
+					"text": "16.5 Ce qui arrête une relance, sans que vous ayez rien à faire"
 				}
 			]
 		},
@@ -818,7 +853,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7 ter.6 Ce qui n'est pas offert"
+					"text": "16.6 Ce qui n'est pas offert"
 				}
 			]
 		},
@@ -875,7 +910,24 @@
 							},
 							{
 								"type": "text",
-								"text": " Prévisualisez ses modèles un par un depuis\nl'écran des modèles (chapitre 7.2)."
+								"text": " Prévisualisez ses modèles un par un depuis\nl'écran des modèles ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "ecrire-des-modeles-d-emails-et-les-previsualiser",
+									"anchor": "previsualiser-un-modele-sur-une-affaire-reelle"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 14.2"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}

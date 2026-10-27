@@ -115,6 +115,7 @@ d'exécuter le code attendu.
   sommaire du manuel. Les pages `/aide` et `/aide/<chapitre>` lisent le manuel, réservé aux personnes connectées.
 - **Migrations `0126` et `0127`** : le bucket privé `manual` et sa politique de lecture. Le seed publie le manuel.
 - **Le fil d'Ariane** : un ancêtre au nom court, comme « Aide », n'est plus écarté du titre qui le suit.
+- **Le manuel est rangé par sujet**, en trente-trois chapitres numérotés simplement, et ses renvois sont des liens.
 - **En cours** : le manuel n'est pas encore réécrit pour ses lecteurs, ni illustré ; l'unité ne se livre pas en l'état.
 
 ### `CRM-077` onzième tranche — débloquer l'effacement d'un track

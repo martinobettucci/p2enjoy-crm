@@ -7,7 +7,7 @@ Documents liés : `docs/SPEC-session-sso.md` §6 (admission, révisée par le §
 `docs/SPEC-permissions-rls.md` §2 et §3, `docs/SPEC-identite.md` §5 (invariant du dernier
 administrateur), `docs/SPEC-mcp.md` (le connecteur, qui s'appuie sur ce document), `docs/SCHEMA.md`
 §1 bis, `docs/DAT.md` §7, `docs/DESIGN_SYSTEM.md` (section de l'écran, écrite avec la tranche T3),
-`docs/manual.md` (chapitre 10, écrit avec la tranche T4).
+`docs/manual.md` (chapitre 32 du plan public, écrit avec la tranche T4).
 
 Écrite le 2026-10-20 **avant la première ligne de code**.
 

@@ -4,7 +4,7 @@
 //           membre » et son avertissement, « Franchit la matrice », enregistrement qui relit, journal filtré par issue),
 //           §8 (A5 : le droit vaut dès la connexion suivante), §5 (le client lit sous la RLS) ; docs/SPEC-seed.md §22
 //           (comptes et journal du seed) ; docs/DESIGN_SYSTEM.md §5.56 (onglet « Connecteur MCP »), §7 (quatre paliers,
-//           aucun défilement horizontal de la page), §8 (clavier seul) ; docs/manual.md chapitre 11
+//           aucun défilement horizontal de la page), §8 (clavier seul) ; docs/manual.md chapitre 33
 // @verifies CLAUDE.md §10 (le refus d'un non-superadministrateur), §15 (état déterministe, effets confirmés en base et par
 //           un vrai client), §16 (captures observées)
 //

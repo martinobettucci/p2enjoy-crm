@@ -1,4 +1,5 @@
 // @verifies CRM-117 (docs/BACKLOG.md) — tranche T2 : l'aide de la webapp, sur la pile réelle et le manuel publié
+// @verifies CRM-117 tranche T3.0 — l'écran de l'inbox mène à son chapitre du plan public (docs/SPEC-manual.md §10 bis)
 // @verifies docs/SPEC-manual.md §13 (les adresses, le panneau, le rendu, les états), §14 (lu avec la session), §16
 //           (preuve E2E) ; docs/DESIGN_SYSTEM.md §5.69 (l'icône et son panneau, le sommaire, un chapitre), §5.43 (cadre
 //           du panneau mesuré), §7 (aucun défilement horizontal), §8 (clavier) ; docs/JOURNAL.md décision 740 ;
@@ -64,7 +65,10 @@ test.describe('l’aide, pour une session', () => {
 		await page.goto('/inbox')
 		await icone(page).focus()
 		await page.keyboard.press('Enter')
-		await expect(panneau(page).getByRole('link', { name: chapitre(AFFAIRE).sections.find((s) => s.anchor === 'l-inbox-lire-et-trier-le-courrier-recu')?.title ?? '' })).toBeFocused()
+		// L'inbox a son chapitre depuis le plan public (docs/SPEC-manual.md §10 bis) : le titre est lu dans ce chapitre.
+		const inbox = chapitre('l-inbox-lire-trier-et-repondre').sections.find((s) => s.anchor === 'l-inbox-lire-et-trier-le-courrier-recu')
+		expect(inbox, 'la section de l’inbox existe dans le manuel construit').toBeDefined()
+		await expect(panneau(page).getByRole('link', { name: inbox?.title ?? '' })).toBeFocused()
 		await page.keyboard.press('Tab')
 		await expect(panneau(page).getByRole('link', { name: 'Sommaire du manuel' })).toBeFocused()
 		await page.keyboard.press('Escape')

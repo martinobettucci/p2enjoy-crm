@@ -3,7 +3,7 @@
 # @verifies docs/SPEC-notifications.md §24 (le modèle de lecture, et ce qu'il ne demande pas),
 #           §25 (la publication et les deux règles d'abonnement), §26 (ce que l'écran rend),
 #           §27 (le contrat d'API), §31 (les preuves attendues)
-# @verifies docs/DESIGN_SYSTEM.md §5.43 (la cloche et le panneau) ; docs/manual.md §8
+# @verifies docs/DESIGN_SYSTEM.md §5.43 (la cloche et le panneau) ; docs/manual.md chapitre 5
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
 # @verifies CLAUDE.md §10 (une règle d'accès se prouve hors interface), §16 (vérification visuelle)
 # @verifies CRM-001 (docs/BACKLOG.md) tranche INC-299, docs/DAT.md §3.5 bis (décision 700) — le compteur est un

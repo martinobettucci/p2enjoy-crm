@@ -1,6 +1,6 @@
 {
 	"slug": "signer-les-messages-expedies-depuis-une-identite",
-	"title": "7 bis. Signer les messages expédiés depuis une identité",
+	"title": "15. Signer les messages expédiés depuis une identité",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -148,7 +148,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7 bis.1 Écrire, modifier, supprimer une signature"
+					"text": "15.1 Écrire, modifier, supprimer une signature"
 				}
 			]
 		},
@@ -283,7 +283,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7 bis.2 Où la signature apparaît dans le message"
+					"text": "15.2 Où la signature apparaît dans le message"
 				}
 			]
 		},
@@ -369,7 +369,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7 bis.3 Ce qui n'est pas offert"
+					"text": "15.3 Ce qui n'est pas offert"
 				}
 			]
 		},
@@ -434,7 +434,23 @@
 							},
 							{
 								"type": "text",
-								"text": ". Les trous sont une propriété des modèles d'emails (chapitre 7), pas des\nsignatures."
+								"text": ". Les trous sont une propriété des modèles d'emails ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "ecrire-des-modeles-d-emails-et-les-previsualiser"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 14"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": "), pas des\nsignatures."
 							}
 						]
 					}

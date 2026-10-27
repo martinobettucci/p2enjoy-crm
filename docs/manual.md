@@ -1,100 +1,9 @@
 # Manuel utilisateur — P2Enjoy CRM
 
-> **Ce manuel est en cours de constitution.**
-> Chaque chapitre est rédigé **au moment où l'unité correspondante est livrée**, à partir de
-> l'application réellement exécutée, avec des captures produites lors de la vérification
-> visuelle. Aucun chapitre n'est écrit d'avance : décrire un écran qui n'existe pas encore
-> produirait une documentation fausse.
->
-> Les chapitres marqués « à livrer » n'ont pas encore d'implémentation. Leur intitulé indique
-> l'unité de backlog qui les produira (`docs/BACKLOG.md`).
->
-> **Relu et corrigé de bout en bout par `CRM-047`, le 2026-08-06**, contre la pile réellement
-> exécutée : treize écarts ont été relevés et douze refermés. Le treizième, INC-077, a été refermé
-> par `CRM-019` le 2026-08-09. Ce que le manuel doit contenir et comment on le prouve sont spécifiés
-> dans `docs/SPEC-manual.md`.
-
----
-
-## Sommaire
-
-### Prise en main
-
-| Chapitre | Contenu | Unité | État |
-|---|---|---|---|
-| 1 | Se connecter avec LeLabs, se déconnecter | `CRM-011`, `CRM-092` | **Livré et vérifié** — voir le chapitre 1. La connexion passe par le seul SSO LeLabs : aucun mot de passe n'existe dans le CRM, donc aucune récupération à y faire. Les attentes — adresse ou compte à vérifier chez LeLabs, inscription à demander — sont nommées à l'écran. La session vit dans le navigateur et se prolonge d'elle-même |
-| 1 bis | Le guide de démarrage : par où commencer | `CRM-079`, `CRM-094` | **Livré et vérifié** — voir le chapitre 1 *bis*. **Six** étapes mesurées à chaque affichage, chacune renvoyant vers l'écran qui la réalise ; le workflow y précède le channel. L'état est **mesuré**, jamais mémorisé : supprimer le dernier track décoche l'étape. Le guide se masque pour la session — rien n'est écrit durablement sur l'appareil — et reste toujours consultable depuis « Réglages ▸ Guide de démarrage ». Depuis `CRM-094`, un administrateur y **crée le workflow de départ en un geste**, et le guide le **suit sur toutes les pages** sous forme de pastille (§1 bis.4 et §1 bis.5). Pour le reste, il **lit et renvoie** : il ne crée ni track, ni channel, ni affaire |
-| 2 | Comprendre l'organisation : espace, tracks, channels, cards | `CRM-020`, `CRM-021` | À livrer |
-| 3 | Naviguer : barre latérale, onglets, recherche | `CRM-007`, `CRM-065` | **Partiellement livré** — voir ci-dessous ; la recherche relève de `CRM-065` |
-| 3.6 | Les commandes grisées : ce que votre rôle vous laisse faire | `CRM-093` | **Livré en développement** — voir la section 3.6. Une commande que le serveur vous refuserait reste à sa place, grisée, et un bandeau dit pourquoi : administrer l'espace, éditer le carnet et les modèles, travailler une affaire sur un onglet où vous écrivez. Vos préférences, vos propres boîtes et la saisie de votre temps ne sont jamais grisées. Le serveur reste la seule règle |
-| 3 ter | Le carnet de contacts | `CRM-060` | **Livré en LECTURE** — voir la section 3 *ter*. L'entrée « Contacts » de la barre latérale ouvre le carnet de l'espace : nom, organisation, fonction, email et téléphone, une ligne par personne. Tout membre le lit, y compris un compte en lecture seule. Le nom d'organisation ouvre sa **fiche** (sous-tranche 4b) : domaine, site web et contacts rattachés. Une affaire **rattache et détache** ses contacts depuis sa fiche (sous-tranche 4c, chapitre 4.7 *ter*). Un contact **se crée** depuis le carnet (sous-tranche 4e) : le bouton « Nouveau contact » ouvre un formulaire au-dessus du tableau. Il **se modifie** depuis sa fiche (sous-tranche 4g) : le bouton « Modifier » ouvre le même formulaire, prérempli. Il **se rattache à une affaire** depuis sa fiche (sous-tranche 4h) : le bouton « Rattacher à une affaire » vit dans le bloc des affaires, et il **s'en détache** depuis la même page (sous-tranche 4i), chaque ligne du tableau portant sa commande. Le **rôle** d'un rattachement **se corrige** depuis la même page (sous-tranche 4j) : un bouton « Modifier le rôle » par ligne, et vider le champ efface le rôle sans défaire le lien. Ce qui manque est dit : aucune suppression d'un contact, aucune création d'organisation, aucune recherche |
-| 3 quater | Ma journée : ce qui est en retard, ce qui est dû aujourd'hui | `CRM-061` | **Livré en LECTURE, vérifié visuellement** — voir la section 3 *quater*. L'entrée « Ma journée » rassemble les affaires à échéance de tout l'espace, en trois sections : **En retard** (sans limite d'ancienneté), **Aujourd'hui** (dans le fuseau de votre appareil) et **À venir** (sept jours, horizon non réglable). Deux portées, dont le choix vit dans l'adresse : vos affaires, ou tout ce que vos droits vous laissent lire. Les affaires archivées, à la corbeille et **en sommeil** en sont absentes. Ce qui manque est dit : l'écran **lit** et n'écrit pas — reporter une échéance reste le geste de l'en-tête de la fiche —, il n'est ni un agenda, ni la liste des relances |
-
-### Suivi quotidien
-
-| Chapitre | Contenu | Unité | État |
-|---|---|---|---|
-| 4 | Créer une card et renseigner sa fiche | `CRM-040`, `CRM-037`, `CRM-095` | **Livré, avec ses écrans** — voir les chapitres 4, 4.7 et 4.8. Une affaire **se crée** depuis le tableau ou la vue liste de son channel, avec son seul titre : le bouton **Nouvelle affaire** l'y fait naître à l'étape initiale, et sa fiche s'ouvre (`CRM-095`). Sa fiche en **modifie les champs d'en-tête** — titre, responsable, montant, prochaine action — et en saisit **les réponses au formulaire** (`CRM-036`, chapitre 24) ; les questions de type **contact** et **membre** se répondent dans une liste de NOMS depuis la sous-tranche 4d de `CRM-060`. Combien l'espace de démonstration en porte : **annexe A**. *Cette ligne disait que l'écran de création et l'édition de l'en-tête manquaient : les deux sont livrés.* |
-| 5 | Faire avancer une card dans son workflow | `CRM-034`, `CRM-041` | **Livré, avec son écran** — voir les chapitres 4.3 et 4.8. Une affaire ne change d'étape que par un déplacement **déclaré** dans son workflow, et le produit refuse toute écriture directe de l'étape, y compris par une administratrice. **Les six vérifications sont en place** : une affaire ne peut pas entrer dans une étape sans que les questions obligatoires de cette étape aient une réponse. Le tableau kanban, son glisser-déposer et son menu de déplacements sont utilisables après connexion |
-| 6 | Comprendre pourquoi une transition est refusée | `CRM-034`, `CRM-037`, `CRM-041` | **Livré** : les **six** motifs de refus existent, sont nommés (chapitre 4.3) et sont désormais **affichés** par le tableau (chapitre 4.8), y compris celui qui liste les questions restées sans réponse — nommées par leur libellé |
-| 7 | Commenter et suivre l'historique d'une card | `CRM-043`, `CRM-044` | **Livré, avec son écran** — la **discussion** et l'**historique** d'une affaire tiennent dans un seul fil filtrable (chapitre 4.10). Écrire un commentaire exige le droit d'écriture sur le channel ; **corriger est réservé à l'auteur**, et **supprimer lui est ouvert ainsi qu'aux administrateurs du workspace**, avec trace nominative du retrait. Les deux gestes de l'auteur sont offerts par l'écran, la suppression après confirmation et elle est définitive ; **le retrait par un administrateur a son bouton depuis le 2026-08-14**, unique — *Supprimer*, jamais *Modifier* —, et le fil distingue un retrait par la modération d'une suppression par l'auteur. L'historique est écrit par le serveur seul et ne peut être ni fabriqué, ni corrigé, ni effacé |
-| 4.7 quater | Les activités d’une affaire : appels, réunions, visios | `CRM-067` | **Livré en développement** — voir le chapitre 4.7 *quater*. Le bloc « Activités » de la fiche consigne ce qui a eu lieu : type, date (jamais dans le futur), durée, sujet, compte rendu et participants choisis parmi les contacts de l'affaire et les membres de l'espace. L'auteur corrige et retire ; un administrateur retire l'activité d'une autre personne. Chaque activité paraît dans l'historique à la date où elle a eu lieu, sous un sixième filtre « Activités ». La durée ne compte pas dans le temps passé |
-| 4.7 quinquies | La checklist d’une affaire : les points à cocher | `CRM-068` | **Livré en développement** — voir le chapitre 4.7 *quinquies*. Le bloc « Checklist » de la fiche montre les points de l’étape — ajoutés automatiquement à l’entrée dans l’étape —, ceux des étapes traversées et les points libres ; on coche, on décoche, on ajoute et on retire un point libre. Un point exigé pour quitter l’étape le dit, et le tableau refuse le déplacement en nommant les points à cocher. La carte du tableau porte le compte « 1/2 ». Ce qui manque : l’écran de l’éditeur de workflows pour définir les points (T3b), les modèles d’affaires et le connecteur |
-| 7 bis | Ranger une affaire dans un autre dossier | `CRM-045` | **Livré côté serveur, sans écran** — voir le chapitre 4.11. Une affaire peut changer de channel — donc, si le channel d'arrivée suit un autre processus, changer de processus. L'étape d'arrivée doit alors être **choisie explicitement** : l'application ne devine jamais l'étape équivalente, deux processus pouvant porter la même étape sans qu'elle veuille dire la même chose. **Les réponses au formulaire de l'affaire sont perdues** lorsque le processus change — elles répondaient aux questions de l'ancien —, et l'opération est refusée tant que cette perte n'a pas été acceptée explicitement ; le refus indique combien de réponses seraient perdues. L'historique de l'affaire, lui, conserve les réponses données : la mémoire survit à la donnée. Le déplacement laisse une trace **« Dossier changé »** dans l'historique, y compris quand personne ne passe par l'application. Ce qui manque est uniquement l'écran : aucun bouton ne permet encore ce rangement |
-| 4.7 bis | Mettre une affaire à la corbeille | `CRM-077` | **Livré et vérifié** — voir le chapitre 4.7 *bis*. Le bouton vit en bas de la fiche de l'affaire, demande une confirmation qui la nomme, et remplace ensuite l'écran par les deux chemins utiles : revenir au channel, ou ouvrir la corbeille. Le geste suppose le droit d'**écrire** sur l'onglet, et non un rôle d'administrateur |
-| 8 | Vue liste, filtres et vues sauvegardées | `CRM-042`, `CRM-071` | **Partiellement livré** — la vue liste, son tri, ses deux filtres et sa pagination existent (chapitre 4.9) ; les **vues sauvegardées** relèvent de `CRM-071` et ne sont pas livrées |
-| 3 sexies | Les objectifs : le tableau blanc de l'équipe | `CRM-082`, `CRM-083` | **Livré et vérifié** — voir le chapitre 3 *sexies*. L'entrée « Objectifs » de la barre latérale ouvre les tableaux d'objectifs de l'espace : des blocs posés sur un canevas qu'on déplace et qu'on zoome, reliés par des flèches, chacun avec son remplissage **saisi à la main** — jamais calculé — et, s'il vise un channel, une pilule qui l'ouvre. Les administrateurs et les business developers créent, renomment, réordonnent et archivent les tableaux, posent, déplacent, redimensionnent, modifient et suppriment les blocs et les flèches ; tout membre lit. Un bloc supprimé ne se restaure pas ; un tableau s'archive |
-| 9 bis | Les affaires figées et leurs relances | `CRM-062` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 3 *quinquies*. L'entrée « Affaires figées » de la barre latérale, sous *Ma journée*, liste les affaires restées dans leur étape au-delà du **seuil de relance** de cette étape, groupées par dossier et rangées du plus gros retard au plus petit. Chaque nuit, une ligne **« Relance automatique »** est inscrite dans l'historique de chaque affaire figée, avec son retard et son seuil — au plus une par séjour dans une étape, sans auteur. Les affaires archivées, à la corbeille et **en sommeil** en sont absentes, et une étape sans seuil ne fige jamais rien. Ce qui n'est **pas** livré, et l'absence est voulue : **aucun email**, **aucune notification**, aucune cadence réglable, et l'écran **lit** sans jamais écrire |
-| 9 | Prochaine action et vue « Ma journée » | `CRM-061` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 3 *quater*. L'entrée « Ma journée » de la barre latérale rassemble les affaires à échéance de tout l'espace de travail, en trois sections : **En retard**, **Aujourd'hui**, **À venir dans sept jours**. Deux portées — vos affaires, ou tout ce que vos droits vous laissent lire —, dont le choix vit dans l'adresse. Les affaires archivées, à la corbeille et **en sommeil** en sont absentes. Ce qui manque : l'écran **lit** et n'écrit pas — reporter une échéance ou la saisir reste le geste de l'en-tête de la fiche (chapitre 4.2 *bis*) —, et l'horizon de sept jours n'est pas réglable |
-
-### Messagerie
-
-| Chapitre | Contenu | Unité | État |
-|---|---|---|---|
-| 10 | Connecter sa boîte de réception (IMAP) | `CRM-052`, `CRM-088` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 4.12. « Réglages ▸ Comptes de messagerie entrante » déclare la boîte système de l'espace de travail et la boîte personnelle de chacun : serveur, port, sécurité, identifiant et mot de passe. Le mot de passe n'est **jamais** affiché, et un champ laissé vide conserve celui qui est enregistré. Ce qui manque : **aucun bouton « Tester la connexion »** depuis l'écran, et **aucune suppression** de boîte |
-| 11 | Configurer son adresse d'expédition (SMTP) | `CRM-053`, `CRM-089` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 4.13. « Réglages ▸ Identités d'expédition » déclare l'identité de service de l'espace de travail et celles de chacun : adresse d'expédition, nom affiché, serveur SMTP, identifiant et mot de passe. Le mot de passe n'est **jamais** affiché, et un champ laissé vide conserve celui qui est enregistré. Ce qui manque : **aucun bouton « Tester la connexion »** depuis l'écran, **aucune suppression**, et ni le quota ni la signature ne sont modifiables |
-| 12 | L'adresse email d'une card : à quoi elle sert | `CRM-040`, `CRM-013`, `CRM-054` | **Partiellement livré** : l'adresse est **générée** à la création de chaque affaire, non devinable, et depuis `CRM-013` **non modifiable** — le refus est appliqué par le serveur et tient hors de l'écran (chapitre 4.2). Ce à quoi elle sert — recevoir les messages et les rattacher à l'affaire — relève de `CRM-054` |
-| 13 | L'inbox : dossiers, messages non classés, classement, **suggestion** | `CRM-055`, `CRM-057`, `CRM-060` | À livrer |
-| 14 | Répondre depuis une card ou depuis l'inbox | `CRM-058` | À livrer |
-| 15 | Modèles d'emails, signature et séquences de relance | `CRM-063` | **Livré et vérifié visuellement, les TROIS objets.** Voir les chapitres 7, **7 bis** et **7 ter**. « Réglages ▸ Modèles d'emails » écrit les textes réutilisables de l'espace de travail, à trous, et les prévisualise sur une affaire réelle ; « Réglages ▸ Identités d'expédition » porte la **signature** ajoutée à la fin de chaque message expédié ; « Réglages ▸ Séquences de relance » enchaîne des modèles à des délais choisis, et le bloc « Relance automatique » de la fiche d'affaire **arme** la cadence sur une affaire figée puis l'**interrompt**. Une relance s'arrête d'elle-même dès qu'une réponse arrive, ou dès que l'affaire cesse d'être figée. Ce qui manque, et l'absence est voulue : **aucun envoi depuis l'écran des modèles** — composer un message à partir d'un modèle n'est pas encore offert —, **aucune date de prochain envoi** — la cadence glisse sur les envois réels —, et aucune trace de l'armement dans l'historique de l'affaire |
-| 16 | Que faire quand un compte mail est en erreur | `CRM-059` | **Livré avec son écran, vérifié visuellement** — voir le chapitre 6. « Réglages ▸ État de la messagerie » montre la dernière relève réussie et le dernier incident de chaque boîte visible, ainsi que la file sortante en attente et en échec définitif. Ce qui manque : aucune alerte n'est envoyée, l'écran reste le seul endroit où le constater |
-
-### Administration
-
-| Chapitre | Contenu | Unité | État |
-|---|---|---|---|
-| 17 | Attendre et gérer les membres | `CRM-070`, `CRM-092` | **Livré en développement** — voir le chapitre 10 *bis*. Un administrateur d'espace y change un rôle, retire un membre, inscrit, remplace et retire une attente, et pose les droits fins de chacun par track et par channel ; chaque membre consulte la liste des membres. **Depuis `CRM-092`, on n'invite plus un compte : on attend une personne.** Le CRM ne crée aucun compte — votre identité est celle de LeLabs. Un administrateur de l'espace inscrit une **attente**, une adresse et un rôle ; la personne devient membre à sa **première connexion LeLabs**, si son adresse est vérifiée et si LeLabs a vérifié son compte (rôle `verified`). Tant que ce n'est pas le cas, elle voit « Accès en attente » à la connexion, qui dit quel geste manque (chapitre 1). **Depuis `CRM-101`, un superadministrateur inscrit les attentes et gère les membres depuis la plateforme** (chapitre 10). L'écran d'un administrateur d'espace sur ses membres et ses attentes est livré par `CRM-070` ([`docs/JOURNAL.md`](JOURNAL.md), décisions 256 et 579, INC-015) |
-| 17 quater | Le journal d'audit de l'espace | `CRM-072` | **Livré en développement** — voir le chapitre 10 *ter*. « Réglages ▸ Journal d'audit » montre aux administrateurs de l'espace les gestes sensibles : droits et appartenances, configuration, connexions, effacements et corbeille. Personne ne modifie le journal, et il est conservé un an. Sur la fiche d'un contact, la zone « Données personnelles (RGPD) » exporte ses données ou l'anonymise (chapitre 3 *ter*). |
-| 17 bis | La plateforme : espaces, membres, attentes et superadministrateurs | `CRM-101` | **Livré en développement** — voir le chapitre 10. Un superadministrateur — porteur du rôle `admin` LeLabs, ou titulaire du drapeau du CRM, amorcé une seule fois à l'installation — crée les espaces, leur donne leurs membres et leurs rôles, inscrit les attentes, supprime un espace après en avoir saisi l'identifiant court, et lit le journal de chaque geste. Le drapeau n'ouvre aucune donnée commerciale |
-| 17 ter | Le connecteur MCP : piloter le CRM depuis votre assistant | `CRM-102`, `CRM-103`, `CRM-108` | **Le connecteur est livré ; son administration est livrée en développement** — voir le chapitre 11. L'assistant agit en votre nom, dans vos droits du CRM et dans ceux qu'un superadministrateur accorde au connecteur, espace par espace, par famille et par action. Ses outils : la liste des espaces et, **en développement**, les huit outils de la famille « Recettes » (`CRM-108`) et les outils des affaires, de la structure, de la recherche et des contacts (`CRM-104` T2.a, T2.b, T1 et T3) ; les autres familles arrivent avec la suite de `CRM-104` |
-| 18 | Créer des tracks et des channels | `CRM-020`, `CRM-021`, `CRM-075`, `CRM-077` | **Livré et vérifié** — voir le chapitre 5. Un administrateur crée, renomme, réordonne, archive, désarchive et **met à la corbeille** un track comme un channel, depuis « Réglages ▸ Arborescence ». Le rattachement d'un channel à son track et le choix de son workflow y sont faits. **Aucune suppression manuelle n'existe** : archiver masque, la corbeille retire, et les deux restent réversibles — jusqu'à l'effacement automatique d'un objet resté 30 jours dans la corbeille (chapitre 5 ter) |
-| 18 bis | Retrouver et restaurer ce qui a été retiré | `CRM-077` | **Livré et vérifié** — voir le chapitre 5 ter. « Réglages ▸ Corbeille » liste les tracks, channels et affaires retirés, qui les a retirés, quand, et ce que chacun retient avec lui ; un clic les rend. Un enfant dont le parent est lui-même dans la corbeille n'est pas restaurable seul, et le produit dit lequel restaurer d'abord. **Un objet reste 30 jours dans la corbeille**, puis il est effacé définitivement, chaque nuit, et l'effacement est inscrit au journal d'audit ; la colonne « Effacement » dit quand. Un membre qui n'administre pas l'espace n'y voit que **ce qu'il y a lui-même mis**. Aucun effacement manuel n'est offert |
-| 19 | Le catalogue de nœuds | `CRM-030` | **Livré et vérifié** — voir le chapitre 5 *quater*. Les états par lesquels une affaire passe ont désormais leur écran, « Réglages ▸ Catalogue de nœuds » : un administrateur y crée un nœud, en modifie le libellé, le type, la couleur et les valeurs par défaut, l'archive et le rétablit. La **clé ne se modifie pas** — les statistiques s'appuient sur elle —, et un nœud sur lequel des affaires se trouvent encore **ne s'archive pas** : le produit dit combien il en porte. Deux flèches par ligne **réordonnent** le catalogue, d'un cran à la fois |
-| 20 | Construire un workflow et ses transitions | `CRM-031` | **Partiellement livré, sans écran.** Le workflow existe côté serveur — l'espace de travail est livré avec le sien, « Cycle commercial standard », ses étapes et les déplacements qu'il autorise (annexe A), et chacun de ses channels suit un workflow. L'**éditeur** est livré : un administrateur **crée** un workflow depuis « Réglages ▸ Workflows » — nom, portée globale ou propre à un track —, puis en compose les étapes et les transitions (chapitres 5 bis.0 à 5 bis.3). Un espace **neuf**, lui, n'a aucun workflow : depuis `CRM-094`, le guide de démarrage y pose le workflow de départ en un geste (chapitre 1 bis.4). Le workflow naît vide et reste un brouillon tant qu'il n'a pas d'étape initiale. Depuis `CRM-118`, l'en-tête de l'éditeur **renomme**, **copie** vers un track, désigne **par défaut**, **archive** et **rétablit** un workflow |
-| 20 bis | Garder une photographie d'un workflow, la comparer et y revenir | `CRM-078` | **Livré.** Un workflow change : ses étapes, ses déplacements, ses questions et leurs règles sont modifiables à tout moment, et rien ne disait jusqu'ici sous quelle forme une affaire avait circulé. Un administrateur peut désormais **publier une version** : le produit fige une photographie datée, numérotée et signée de la composition entière du workflow, que plus personne ne peut réécrire — pas même le produit lui-même. Publier une version **ne change rien** au fonctionnement : les affaires continuent de circuler sur le workflow vivant, une version est un témoin et non une cible. Republier sans avoir rien modifié est refusé, pour que deux versions ne soient jamais indiscernables. Le produit sait aussi **comparer deux versions** — quelles étapes, quels déplacements, quelles questions et quelles règles ont été ajoutés, retirés ou modifiés, et pour chaque modification ce qui a changé et de quoi vers quoi. Et, avant de revenir à une version, il sait dire **affaire par affaire où elle atterrit** : celles dont l'étape existe toujours ne bougent pas, et celles dont l'étape a été créée depuis restent **sans destination** tant qu'un administrateur n'a pas dit où les envoyer. Le produit ne devine jamais à sa place, même lorsqu'une étape disparue est sur le point d'être rétablie : il la nomme, il ne la choisit pas. Les affaires archivées et celles en corbeille sont comptées comme les autres. Le produit sait désormais **appliquer** ce plan en une seule transaction, et **revenir en arrière** : la composition d'avant est publiée comme point de retour avant toute écriture. Et les quatre gestes ont leur **écran**, au bas de l'éditeur de workflows : voir le chapitre 5 bis.6 |
-| 20 ter | Créer un workflow avec l'assistant IA | `CRM-097` | **Livré en développement, en production avec la tranche T4** — voir le chapitre 5 bis.0 bis. Un administrateur décrit le workflow voulu ; l'IA rend une **suggestion**, qu'il relit, corrige à la main ou fait revoir avec une consigne, puis accepte — le workflow est alors créé en une fois — ou abandonne sans que rien n'ait été écrit. Les suggestions en revue sont conservées et partagées entre administrateurs |
-| 20 quater | Faire évoluer un workflow existant avec l'assistant IA | `CRM-097` | **Livré en développement, en production avec la tranche T4** — voir le chapitre 5 bis.0 ter. « Suggérer », en tête des étapes, des transitions et des champs d'un workflow : l'IA propose le workflow tel qu'il deviendrait ; vous relisez ce qui serait ajouté, modifié ou retiré, choisissez où vont les affaires des étapes retirées, puis acceptez. Une version du workflow d'avant est gardée, qu'on restaure en un geste |
-| 21 | Copier un workflow dans un track et le modifier | `CRM-032`, `CRM-018` | **Partiellement livré, sans écran.** La copie existe côté serveur : un administrateur duplique un workflow global vers un track, avec ses étapes, transitions, champs, règles et exigences remappés, et la copie se souvient de son origine. L'espace de travail est livré avec un exemple, « Cycle commercial — Conseil IA » sur le track « Conseil & IA ». Une empreinte de composition permet au produit de signaler toute divergence, suppression comprise. Ce qui manque est l'écran : aucun bouton ne permet encore de copier, et la mention de divergence n'est affichée nulle part |
-| 22 | Choisir le workflow d'un channel | `CRM-033`, `CRM-019` | **Livré côté serveur, sans écran.** Un channel suit désormais **obligatoirement** un workflow, et pas n'importe lequel : le workflow général de l'espace de travail, ou celui de son propre track. Toute affectation directe incohérente est refusée. Même lorsque le channel contient des affaires, une administratrice peut changer son workflow par l'API en donnant le mapping exhaustif de toutes les étapes occupées ; aucune affaire n'est laissée à moitié remappée et toute perte de réponse doit être acceptée explicitement. L'espace de travail livré le montre : tous ses channels suivent « Cycle commercial standard », sauf « Prospection » qui suit la copie réservée à son track (annexe A). Ce qui manque est l'écran : aucun sélecteur ne permet encore ce geste |
-| 23 | Composer le formulaire d'un workflow | `CRM-035`, `CRM-018`, `CRM-076` | **Partiellement livré dans l'écran** — voir le chapitre 5 bis.4. Un workflow porte son propre formulaire : budget estimé, origine du contact, date de signature prévue, motif de la perte, décideur identifié et lien vers la proposition, ainsi qu'un champ retiré dont les réponses restent consultables (volumes en annexe A). Un champ non déclaré à une étape y reste simplement visible : on ne déclare que les exceptions. Lorsqu'un workflow est copié vers un track, son formulaire, ses règles et ses exigences sont remappés avec lui ; il est utilisable immédiatement sans partager les identifiants de la source. L'obligation est appliquée : voir le chapitre 24. Depuis `CRM-076`, un administrateur **déclare, modifie, réordonne, archive et restaure** les questions depuis « Réglages ▸ Workflows ». Ce qui manque est la **grille champ × étape** : régler la visibilité d'une question sur une étape reste un geste d'API |
-| 24 | Répondre aux questions d'une affaire | `CRM-036`, `CRM-037` | **Partiellement livré dans l'écran.** Une affaire porte ses réponses, et le produit les **vérifie** : une réponse doit correspondre au type de la question — un montant est un nombre, une case est cochée ou non, une date est une date, et une liste de choix n'accepte que les choix déclarés. Les réponses et les exigences sont consultables sur la fiche, et **s'y enregistrent** : chaque question s'écrit pour elle-même, dit ce qu'elle a fait, et montre son refus sous elle |
-| 24 bis | Restreindre l'accès à un track ou à un channel | `CRM-070` | **Livré en développement** — voir le chapitre 10 *bis*.6. Un administrateur pose, pour chaque membre, un droit sur un track ou un channel — membre, lecture ou aucun accès — et lit l'accès qui en résulte |
-| 12 bis | Ce que le produit fait d'un message reçu | `CRM-054`, `CRM-055` | **Livré côté serveur, sans écran** — voir le chapitre 4.14. Les messages sont relevés, rangés dans l'affaire à qui ils s'adressent, et une trace en apparaît dans son historique. Un message qu'on ne sait pas rattacher est conservé et reste « non classé » ; le ranger exige le droit d'**écrire** sur l'affaire. Une affaire archivée ne reçoit plus. Les pièces jointes sont **analysées** : une pièce n'est téléchargeable qu'une fois déclarée saine, et une pièce non analysée ne l'est pas davantage |
-| 25 bis | Écrire depuis une autre adresse que celle où l'on reçoit | `CRM-053` | **Livré côté serveur, sans écran** — voir le chapitre 4.13. Recevoir et expédier sont deux choses distinctes : une personne peut relever `bizdev@` et écrire depuis `contact@`, et l'espace de démonstration le montre. Une adresse par défaut existe toujours, et en déclarer une nouvelle **déplace** la marque au lieu d'exiger qu'on retire l'ancienne. L'adresse d'expédition est vérifiée à l'enregistrement, puisque c'est la seule donnée que vos destinataires verront. Le quota quotidien peut être déclaré mais **n'est appliqué par rien** tant que l'envoi n'est pas livré |
-| 25 | Boîte mail système de l'espace | `CRM-052` | **Livré côté serveur, sans écran** — voir le chapitre 4.12. L'espace de travail et chaque personne peuvent avoir une boîte de réception déclarée, avec son serveur, son identifiant et son mot de passe **chiffré**. Le mot de passe n'est jamais réaffiché, ni même sa référence : personne ne peut le relire, pas même un administrateur. Le produit sait **essayer réellement la connexion** et dire ce qui a échoué. Ce qui manque est l'écran : aucun formulaire ne permet encore de déclarer une boîte depuis l'application |
-| 26 | Jetons d'API et webhooks | `CRM-073` | À livrer |
-| 27 | Journal d'audit, export et suppression de données | `CRM-072` | À livrer |
-
-### Pilotage
-
-| Chapitre | Contenu | Unité | État |
-|---|---|---|---|
-| 28 | Analytique de conversion par channel et par track | `CRM-066` | À livrer |
-| 29 | Prévisionnel pondéré | `CRM-066` | À livrer — *les objectifs, que cette ligne citait, ont leur chapitre, le 3 sexies* |
-| 30 | Cards figées et relances automatiques | `CRM-062` | À livrer |
-| 31 | Saisir son temps et piloter le coût du personnel | `CRM-098` | **Livré en développement** — voir le chapitre 5 undecies. Chacun saisit, semaine par semaine, le temps passé sur les tracks, les channels et les affaires, au quart de journée ou en heures ; chaque personne a un coût par quart, versionné ; le rapport mensuel et les écrans de coûts montrent ce que le personnel a coûté |
-
----
+Ce manuel décrit le CRM tel que vous l'utilisez : chaque écran, chaque geste, et ce que le produit refuse et pourquoi.
+Il suit l'ordre dans lequel on découvre le produit — se connecter, se repérer, suivre ses affaires, échanger avec ses
+contacts, administrer son espace, piloter son activité. Depuis n'importe quel écran, l'icône « Aide » de l'en-tête
+mène à la section qui le décrit.
 
 ## 1. Se connecter et se déconnecter
 
@@ -180,20 +89,7 @@ ouverte dans ce navigateur, **Se connecter avec LeLabs** vous reconnecte sans vo
 mot de passe. Sur un ordinateur partagé, fermez aussi votre session LeLabs, depuis votre espace de
 compte LeLabs.
 
-### 1.5 En développement
-
-Un LeLabs local reproduit le SSO réel. Ses comptes portent les adresses de la démonstration et un
-mot de passe commun, `SeedDev2026Local` : `admin@p2enjoy.test`, `bizdev@p2enjoy.test` et
-`viewer@p2enjoy.test` entrent dans le CRM ; `exploitante@p2enjoy.test`, administratrice du LeLabs
-local, y entre sans être inscrite et administre chaque espace ; `inconnu@p2enjoy.test`,
-`attendu@p2enjoy.test` et `adresse-non-verifiee@p2enjoy.test` montrent chacun l'un des trois messages
-d'attente. Ces
-identifiants `.test` ne sont jamais des comptes de production.
-
-**Ce qui reste hors interface.** Inscrire une personne dans un espace est encore une opération
-d'exploitation : aucun écran du CRM ne la porte avant `CRM-070`.
-
-## 1 bis. Le guide de démarrage : par où commencer
+## 2. Le guide de démarrage : par où commencer
 
 *Livré par `CRM-079`, révisé par `CRM-094` (six étapes, le workflow de départ, le guide flottant) et
 par `CRM-095` (l'étape « affaire » mène au board du premier channel). Décrit l'application réellement
@@ -209,17 +105,17 @@ Les six étapes, dans l'ordre :
 |---|---|---|
 | Rejoindre un espace de travail | Votre compte appartient à un espace | Aucun écran : elle est accomplie par votre connexion |
 | Créer un premier track | Un dossier de premier niveau existe | Réglages ▸ Arborescence |
-| Préparer un premier workflow | Les affaires ont des étapes à suivre | Réglages ▸ Workflows — ou, pour un administrateur, le bouton **Créer le workflow de départ** du guide (§1 bis.4) |
-| Ouvrir un channel dans ce track | Un onglet de travail existe sous ce track | **Nouveau channel**, dans la barre d'onglets du track (chapitre 3.2 *ter*), ou Réglages ▸ Arborescence |
-| Créer une première affaire | Un board a quelque chose à montrer | Le board du premier channel : dès qu'un channel existe, le lien **Ouvrir le board et créer l'affaire** y mène, et le bouton **Nouvelle affaire** crée l'affaire (chapitre 4.8). Sans channel, le lien mène à l'arborescence |
+| Préparer un premier workflow | Les affaires ont des étapes à suivre | Réglages ▸ Workflows — ou, pour un administrateur, le bouton **Créer le workflow de départ** du guide ([§2.4](#le-workflow-de-depart-en-un-geste)) |
+| Ouvrir un channel dans ce track | Un onglet de travail existe sous ce track | **Nouveau channel**, dans la barre d'onglets du track ([chapitre 3.5](#les-onglets-d-un-track)), ou Réglages ▸ Arborescence |
+| Créer une première affaire | Un board a quelque chose à montrer | Le board du premier channel : dès qu'un channel existe, le lien **Ouvrir le board et créer l'affaire** y mène, et le bouton **Nouvelle affaire** crée l'affaire ([chapitre 9.10](#le-tableau-kanban-d-un-channel)). Sans channel, le lien mène à l'arborescence |
 | Raccorder une boîte de réception | Le courrier entrant se classe dans les affaires | Réglages ▸ État de la messagerie |
 
 **Le workflow vient avant le channel, et ce n'est pas un détail d'ordre** : un channel suit
 toujours un workflow, et un espace neuf n'en a **aucun**. Tant qu'il n'y en a pas, le formulaire
 « Nouveau channel » le dit — « Aucun workflow n'est affectable à ce track » — et propose le lien
-**Nouveau workflow**, qui ouvre l'éditeur et vous ramène ensuite au channel en cours (chapitre 5.2).
+**Nouveau workflow**, qui ouvre l'éditeur et vous ramène ensuite au channel en cours ([chapitre 17.2](#un-channel)).
 
-### 1 bis.1 L'état d'une étape est mesuré, jamais mémorisé
+### 2.1 L'état d'une étape est mesuré, jamais mémorisé
 
 Une étape n'est pas « cochée » : à **chaque affichage**, le produit compte ce que votre compte voit
 réellement, et en déduit l'état. Trois conséquences directes, et elles sont voulues :
@@ -233,7 +129,7 @@ réellement, et en déduit l'état. Trois conséquences directes, et elles sont 
 Chaque état est écrit **en toutes lettres** — *Fait*, *À faire* — à côté de son icône, et la
 progression est une phrase, « 3 étape(s) sur 6 », jamais une barre seule.
 
-### 1 bis.2 Ce que le guide dit exactement, et ce qu'il ne dit pas
+### 2.2 Ce que le guide dit exactement, et ce qu'il ne dit pas
 
 Une étape non accomplie écrit « **Vous n'en voyez aucun pour le moment** », et le mot est choisi :
 le guide rapporte ce que **votre compte** voit, jamais ce qui existe dans l'espace. Deux personnes
@@ -242,7 +138,7 @@ de réception là où l'espace en porte trois, et sa dernière étape restera «
 un défaut d'affichage : ce sont ses droits, et le guide ne prétend jamais les contourner.
 
 Si vous n'administrez pas l'espace, les liens du guide vers un geste d'administration deviennent un texte
-grisé, et un bandeau en tête de la liste dit pourquoi (section 3.6). Les écrans vers lesquels le guide renvoie
+grisé, et un bandeau en tête de la liste dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Les écrans vers lesquels le guide renvoie
 portent eux-mêmes leurs refus, et c'est là que vous les rencontrerez, expliqués.
 
 Lorsqu'une étape **n'a pas pu être mesurée** — une coupure réseau, une session expirée —, sa ligne
@@ -250,11 +146,11 @@ le dit (« Cette étape n'a pas pu être vérifiée ») et propose de **réessay
 réellement les six mesures. Les cinq autres étapes restent lisibles : une mesure manquante n'en
 efface aucune.
 
-### 1 bis.3 Le masquer, et le retrouver
+### 2.3 Le masquer, et le retrouver
 
 Le bouton **Masquer le guide** le retire de l'accueil **pour cette session** et rend la place au
 board. Un lien discret, *Rouvrir le guide de démarrage*, reste sur l'accueil. Pour un
-administrateur, il masque aussi la pastille du guide flottant (§1 bis.5).
+administrateur, il masque aussi la pastille du guide flottant ([§2.5](#le-guide-flottant-des-administrateurs)).
 
 Le guide vit aussi à son adresse propre, `/demarrage`, et **Réglages ▸ Guide de démarrage** le
 place en tête de l'index. Là, il est toujours rendu : même masqué, même intégralement accompli.
@@ -264,7 +160,7 @@ Le masquage survit au **rechargement** de l'onglet, et disparaît quand l'onglet
 délibéré : cette préférence d'affichage ne justifie aucun stockage durable sur votre appareil, et
 le produit n'en écrit aucun.
 
-### 1 bis.4 Le workflow de départ, en un geste
+### 2.4 Le workflow de départ, en un geste
 
 Dans un espace neuf, l'étape **Préparer un premier workflow** porte, pour un **administrateur** de
 l'espace, un bouton **Créer le workflow de départ**. Il pose en une fois le cycle commercial type :
@@ -299,7 +195,7 @@ l'éditeur de workflows, le catalogue de nœuds ou un formulaire « Nouveau chan
 écran se relit aussitôt : le formulaire de channel propose alors le nouveau workflow, sans perdre
 le nom déjà saisi.
 
-### 1 bis.5 Le guide flottant des administrateurs
+### 2.5 Le guide flottant des administrateurs
 
 Pour un **administrateur**, le guide ne reste pas sur l'accueil : il le suit sur toutes les pages,
 sous la forme d'une **pastille** en bas à droite de l'écran — « Démarrage · 2 sur 6 », ou « 2/6 »
@@ -337,11 +233,11 @@ L'écran se lit en trois zones :
 - à gauche, la **barre latérale** : le nom du produit, les cinq entrées de navigation — Board,
   Inbox, **Contacts**, Ma journée, Réglages — puis la section **Tracks** ;
 - en haut, l'**en-tête** : le **fil d'Ariane**, qui dit où vous êtes, de votre espace de travail à la page
-  ouverte (section 3.1 bis), puis la recherche, les notifications et votre profil ;
+  ouverte ([section 3.2](#le-fil-d-ariane-savoir-ou-vous-etes)), puis la recherche, les notifications et votre profil ;
 - sous l'en-tête, la **barre d'onglets**, qui listera les channels du track courant ;
 - au centre, le **contenu** de la page.
 
-### 3.1 bis Le fil d'Ariane : savoir où vous êtes
+### 3.2 Le fil d'Ariane : savoir où vous êtes
 
 *Livré par `CRM-110`. Captures dans `docs/captures/CRM-110/`.*
 
@@ -379,10 +275,10 @@ des niveaux masqués — votre espace et le track —, chacun cliquable. Au clav
 qu'un nom tapé dans l'adresse qui ne correspond à rien : le fil s'arrête au dernier niveau que vos droits vous laissent
 voir.
 
-### 3.2 Ce que vous voyez aujourd'hui, et pourquoi
+### 3.3 Ce que vous voyez aujourd'hui, et pourquoi
 
 Sans session, aucune page de l'application ne s'affiche : toute adresse mène à l'écran de
-connexion (chapitre 1). Après connexion, la barre latérale montre les tracks consentis à votre compte ;
+connexion ([chapitre 1](#se-connecter-et-se-deconnecter)). Après connexion, la barre latérale montre les tracks consentis à votre compte ;
 leurs onglets ouvrent les channels, le tableau et les fiches réels. Une administratrice du jeu de
 démonstration voit par exemple « Conseil & IA », « Studio web » et « Formation ».
 
@@ -393,401 +289,14 @@ sa place avec « Compte supprimé », tandis qu'un événement de service reste 
 
 **Ce qui a un écran, et ce qui n'en a pas.** L'affaire a sa fiche, le tableau kanban de son channel
 et la vue liste ; la discussion et l'historique vivent dans la fiche. Le **carnet de contacts** a
-le sien (section 3 *ter*), en lecture. L'arborescence a son écran
-d'administration (chapitre 5), et la **composition d'un workflow** — ses étapes, ses transitions et
-les **questions de son formulaire** — le sien (chapitre 5 bis). En revanche, le catalogue de nœuds,
+le sien ([section 10](#le-carnet-de-contacts)), en lecture. L'arborescence a son écran
+d'administration ([chapitre 17](#administrer-l-arborescence-tracks-et-channels)), et la **composition d'un workflow** — ses étapes, ses transitions et
+les **questions de son formulaire** — le sien ([chapitre 18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)). En revanche, le catalogue de nœuds,
 la **visibilité question par étape** et les droits d'accès n'ont toujours aucun écran
 d'administration. La connexion rend
 accessibles les surfaces déjà livrées ; elle ne fabrique pas les éditeurs encore absents.
 
-### 3 ter. Le carnet de contacts
-
-*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e, 4f, 4g et 4h, et par la tranche 6 ; l'onglet
-« Organisations », la création et la modification d'une organisation par `CRM-114`. Décrit
-l'application réellement exécutée ; captures dans `docs/captures/CRM-060/` et
-`docs/captures/CRM-114/`.*
-
-L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
-personnes avec qui vos affaires se traitent, et l'organisation à laquelle chacune appartient.
-
-Le carnet a **deux onglets**, en tête de page : **Contacts**, la liste des personnes, et
-**Organisations**, la liste des organisations (voir plus bas). Chaque onglet a sa propre adresse :
-vous pouvez l'ajouter à vos favoris ou la partager.
-
-Le carnet se présente en tableau, une ligne par contact, rangé par nom :
-
-| Colonne | Ce qu'elle porte |
-|---|---|
-| Nom | Le nom complet de la personne. Il est toujours renseigné. **C'est un lien** : il ouvre la fiche de ce contact |
-| Organisation | L'organisation à laquelle la personne appartient, lorsqu'elle en a une. **C'est un lien** : il ouvre la fiche de cette organisation |
-| Fonction | Sa fonction, par exemple « Directeur achats » |
-| Email | Son adresse, lorsqu'elle est connue |
-| Téléphone | Son numéro, lorsqu'il est connu |
-
-**Une cellule vide veut dire « pas renseigné », et rien d'autre.** Le carnet n'écrit ni tiret ni
-« non renseigné » : un contact peut n'être qu'un nom et un téléphone, et c'est un cas ordinaire, pas
-une donnée manquante à corriger. Dans l'espace de démonstration, Sophie Dupont n'a pas
-d'organisation et Élise Fabre n'a pas d'email.
-
-**Qui voit quoi.** Tout membre de l'espace de travail lit le carnet, y compris un compte en lecture
-seule. Une ligne que votre compte n'a pas le droit de lire n'apparaît simplement pas, et c'est la
-règle générale du produit — un refus se manifeste par l'absence de donnée,
-jamais par un message d'erreur technique.
-
-**Ce que le carnet ne fait pas encore, et c'est dit plutôt que laissé à deviner.** Il permet de
-**créer** un contact, mais ni de le modifier ni de le supprimer : ces deux gestes vivent sur la
-**fiche** du contact, et non sur une ligne du carnet — on ne pose pas un geste irréversible au bout
-de chaque ligne d'une liste que l'on parcourt. Cliquer sur un email n'ouvre pas votre logiciel de
-messagerie. Il n'y a pas non plus de recherche ni de filtre : le carnet affiche l'ensemble des
-contacts de l'espace.
-
-Le rattachement d'un contact à une affaire existe déjà **en base** — c'est lui qui alimente la
-suggestion de classement d'un message dont l'expéditeur est un contact connu —, mais il ne se
-règle pas encore depuis un écran.
-
-#### La fiche d'une organisation
-
-Cliquer sur le nom d'une organisation, dans la colonne **Organisation** du carnet ou dans l'onglet
-**Organisations**, ouvre sa **fiche**.
-
-La fiche porte le **nom de l'organisation en titre**, puis deux blocs :
-
-- **ce qui la caractérise** — son **domaine** (par exemple `sogexia.example`, celui qui sert à
-  reconnaître ses adresses email) et son **site web**. Le site est un lien : il s'ouvre dans un
-  **nouvel onglet**, et vous quittez alors l'application. Le domaine, lui, n'est pas un lien : ce
-  n'est pas une adresse à visiter. Comme dans le carnet, une valeur absente laisse la place **vide**
-  plutôt qu'un tiret ;
-- **ses contacts** — un tableau à quatre colonnes : nom, fonction, email et téléphone. La colonne
-  « Organisation » du carnet n'y figure pas, puisqu'elle répéterait le titre de la page. Lorsque
-  l'organisation n'a **aucun contact rattaché**, la fiche le dit explicitement au lieu d'afficher un
-  tableau vide.
-
-**Une adresse inconnue, une organisation supprimée ou une organisation que vous n'avez pas le droit
-de lire donnent toutes le même écran** : « Organisation introuvable », avec un bouton de retour au
-carnet. C'est délibéré — distinguer ces cas révélerait à quelqu'un sans droit qu'une organisation
-existe.
-
-**Ce que la fiche ne fait pas.** Elle ne **supprime** pas une organisation — c'est délibéré : ses
-contacts perdraient leur organisation sans laisser de trace —, et elle ne montre pas les affaires de
-l'organisation. Le nom d'un contact, lui, est un lien vers sa fiche. Pour **modifier**
-l'organisation, voir « Modifier une organisation » ci-dessous.
-
-#### L'onglet « Organisations »
-
-L'onglet **Organisations** liste toutes les organisations de l'espace de travail, rangées par nom,
-**y compris celles qui n'ont encore aucun contact** : c'est le seul chemin qui mène à elles. Dans
-l'espace de démonstration, Comptoir Vasseur est dans ce cas.
-
-| Colonne | Ce qu'elle porte |
-|---|---|
-| Nom | Le nom de l'organisation. **C'est un lien** : il ouvre sa fiche |
-| Domaine | Son domaine, par exemple `sogexia.example`, lorsqu'il est renseigné |
-| Site web | L'adresse de son site, lorsqu'elle est renseignée. Ici ce n'est pas un lien : la fiche le porte |
-| Contacts | Le nombre de contacts du carnet rattachés à l'organisation |
-
-Comme partout dans le carnet, une valeur absente laisse la cellule **vide**. Sur un écran étroit, le
-tableau défile de côté dans son cadre ; la page, elle, ne défile jamais de côté. Lorsque l'espace ne
-compte aucune organisation, l'onglet le dit, et le bouton « Nouvelle organisation » reste offert.
-
-**Qui voit quoi.** Tout membre de l'espace lit l'onglet. **Créer et modifier** une organisation sont
-réservés aux **administrateurs** et aux **business developers** de l'espace : pour un compte en
-lecture seule, « Nouvelle organisation » et « Modifier » restent visibles mais grisés, avec le motif
-écrit au-dessus (section 3.6). Le serveur applique la même règle.
-
-#### Créer une organisation
-
-Le bouton **« Nouvelle organisation »**, au-dessus du tableau, ouvre un formulaire **dans la page**.
-Trois champs, et un seul est obligatoire :
-
-- **Nom** — obligatoire.
-- **Domaine** — facultatif. Minuscules, chiffres, tirets et points, par exemple `sogexia.fr`. Si
-  vous tapez des majuscules, le domaine est enregistré **en minuscules** : la casse d'un domaine ne
-  change rien.
-- **Site web** — facultatif. Une adresse commençant par `http://` ou `https://`.
-
-Après la création, **la fiche de la nouvelle organisation s'ouvre**. Vous pouvez ensuite lui
-rattacher des contacts depuis le carnet : en créant un contact, ou depuis la fiche d'un contact
-existant, avec « Modifier ».
-
-**Si la création est refusée**, le message le dit en clair, dans le formulaire, et **votre saisie
-est conservée** :
-
-- *« Ce domaine est déjà celui d'une autre organisation de l'espace. »* — un domaine est unique
-  dans l'espace de travail ;
-- *« Le domaine n'a pas la bonne forme… »* ou *« Le site web doit commencer par http:// ou
-  https://. »* — corrigez le champ et renvoyez ;
-- *« Le nom est requis. »* ;
-- *« Vous ne pouvez pas modifier les organisations de cet espace. »* — d'ordinaire, la commande est
-  déjà grisée ; ce message ne paraît que si vos droits ont changé entre-temps.
-
-#### Modifier une organisation
-
-Sur la fiche d'une organisation, le bouton **« Modifier »** remplace les caractéristiques par le
-même formulaire, **prérempli**. **Vider** le domaine ou le site web l'efface. « Enregistrer » relit
-la fiche à jour, et l'annonce « Organisation enregistrée » le confirme ; « Annuler » rend la fiche
-sans rien écrire. Les refus sont ceux de la création.
-
-#### La fiche d'un contact
-
-Cliquer sur le nom d'une personne — dans le carnet, ou dans la liste des contacts d'une
-organisation — ouvre sa **fiche**. Elle porte son **nom en titre**, puis deux blocs :
-
-- **ce qui la caractérise** — sa **fonction**, son **organisation**, son **email** et son
-  **téléphone**. L'organisation est un lien vers sa propre fiche ; comme partout dans le carnet, une
-  valeur absente laisse la place **vide** plutôt qu'un tiret ;
-- **ses affaires** — un tableau à trois colonnes : l'affaire, le **rôle** que la personne y tient
-  (par exemple « decideur »), et son **état**. Le titre de chaque affaire est un lien qui l'ouvre.
-
-C'est la seule page qui répond à la question « sur quoi travaillons-nous avec cette personne ? »,
-et depuis la sous-tranche 4h c'est aussi d'ici que l'on **ajoute** une affaire à cette liste
-(« Rattacher une personne à une affaire », plus bas).
-
-**Le rôle dans l'affaire n'est pas la fonction.** La fonction qualifie la personne dans son
-organisation ; le rôle dit ce qu'elle est **dans cette affaire-là**. Les deux portent le même mot
-dans la langue courante, c'est pourquoi ils vivent dans deux blocs séparés.
-
-**Quelles affaires sont listées.** Uniquement celles que **vous** avez le droit de lire : si une
-affaire appartient à un univers qui vous est fermé, elle n'apparaît pas, et la page ne le signale
-pas — elle ne peut pas vous parler de ce que vous ne pouvez pas voir. Une affaire **archivée** reste
-listée, avec la mention **« Archivée »**, parce que l'historique d'une personne compte. Une affaire
-**mise à la corbeille** n'est pas listée : c'est la corbeille qui en répond.
-
-**Une adresse inconnue, un contact supprimé ou un contact que vous n'avez pas le droit de lire
-donnent tous le même écran** : « Contact introuvable », avec un bouton de retour au carnet — même
-règle que pour l'organisation, et pour la même raison.
-
-#### Modifier un contact
-
-Le bouton **« Modifier »**, en haut de la fiche, ouvre un formulaire **dans la page** — pas une
-fenêtre par-dessus : les deux blocs restent visibles en dessous, et vous corrigez en voyant ce que
-vous corrigez.
-
-Les cinq champs sont ceux de la création, **déjà remplis** avec les valeurs actuelles. Le **nom**
-reste obligatoire ; les autres peuvent être vidés, et ils redeviennent alors vides sur la fiche.
-Vider le champ **Organisation** détache la personne de son organisation, sans la supprimer.
-
-Une fois enregistrée, la modification apparaît **immédiatement** dans le bloc du haut, et le titre
-de la page suit le nouveau nom. Le tableau des affaires, lui, ne bouge pas : modifier une personne
-ne change rien à ce sur quoi elle travaille.
-
-**Si la modification est refusée**, le message le dit en clair et **votre saisie est conservée** :
-
-- *« Un autre contact porte déjà cette adresse email »* — l'adresse est unique dans l'espace de
-  travail, quelle que soit la casse. Vous pouvez en revanche réenregistrer la personne avec sa
-  **propre** adresse sans rien changer : elle ne se heurte pas à elle-même ;
-- *« Cette organisation n'existe plus »* — la liste que vous aviez sous les yeux a vieilli ;
-- *« Une des valeurs saisies n'a pas la forme attendue »* — un email mal formé, par exemple ;
-- *« Rien n'a été modifié »* — et ce message-là mérite une explication.
-
-**Pourquoi « Rien n'a été modifié » ne dit pas pourquoi.** Deux situations donnent exactement la
-même réponse du serveur, et le produit ne peut pas les distinguer : soit votre rôle ne vous permet
-pas de modifier ce contact — d'ordinaire, « Modifier » est alors grisé (section 3.6) ; ce message ne paraît
-que si vos droits ont changé entre-temps ou n'ont pas pu être lus —, soit le contact a été supprimé entre le moment où vous
-avez ouvert sa fiche et celui où vous avez enregistré. Le message ne tranche donc pas, et vous
-invite à **recharger la fiche** : son état actuel répondra à la question. Le formulaire reste
-ouvert et votre saisie est intacte, pour que vous ne perdiez rien.
-
-#### Supprimer un contact
-
-*Livré par la tranche 6.*
-
-Le bouton **« Supprimer »** se trouve à côté de **« Modifier »**, en haut de la fiche. Il vient en
-second, et c'est délibéré : on lit d'abord le geste que l'on peut défaire.
-
-Il ouvre une **confirmation dans la page**, qui **nomme la personne** et vous dit **deux choses que
-l'écran ne montre pas** :
-
-- **combien d'affaires perdent ce contact**, et que **chacune gardera dans son historique la trace
-  de ce détachement**. Supprimer un contact retire tous ses rattachements d'un seul coup, et chaque
-  affaire concernée reçoit une ligne « Contact détaché » dans son fil. Cette trace est
-  **définitive** : l'historique d'une affaire ne s'efface pas, c'est ce qui en fait une mémoire ;
-- **que les formulaires d'affaires qui désignent ce contact conservent leur valeur.** Ils
-  n'affichent pas un champ vidé, mais une **« référence inconnue »** avec l'identifiant. C'est
-  volontaire : effacer la valeur détruirait une donnée historique juste — cette affaire a bien été
-  suivie par cette personne —, et un champ vidé donnerait à croire que rien n'y avait été saisi.
-
-Quand la personne n'est rattachée à **aucune** affaire, la première phrase n'apparaît pas : il n'y
-a rien à annoncer.
-
-**Une suppression réussie vous ramène au carnet**, qui ne porte plus la ligne. C'est là que vous
-vérifiez que le geste a abouti.
-
-**Si rien n'a été supprimé, l'écran le dit.** Vous restez sur la fiche, elle est relue, et un
-message vous annonce qu'« aucun contact n'a été supprimé ». Deux causes mènent là et le produit ne
-peut pas les distinguer : soit vous n'avez pas le droit de supprimer ce contact — d'ordinaire, le
-bouton est alors grisé (section 3.6) ; ce message ne paraît que si vos droits ont changé entre-temps
-ou n'ont pas pu être lus —, soit le contact avait déjà été supprimé. La fiche relue répond à la question.
-
-**La suppression est définitive : il n'y a pas de corbeille pour les contacts.** Les affaires en
-ont une (chapitre 5 *ter*), les contacts n'en ont pas. Recréer un contact supprimé est possible,
-mais ses rattachements aux affaires devront être refaits un par un, et leurs rôles ressaisis.
-
-**Un seul geste ouvert à la fois.** Ouvrir la confirmation referme le formulaire de modification, et
-inversement : deux questions posées en même temps sur la même personne ne diraient pas à laquelle
-vous répondez.
-
-**Ce que la fiche ne fait pas encore.** Elle ne montre pas les emails échangés avec la personne : la
-messagerie d'une affaire reste dans l'affaire.
-
-#### Les données personnelles d'un contact : les exporter, les anonymiser
-
-*Livré en développement par `CRM-072` T3.*
-
-En bas de la fiche, la zone **« Données personnelles (RGPD) »** porte deux gestes, réservés aux **administrateurs de
-l'espace**. Pour un autre membre, les deux boutons restent visibles mais grisés, et une phrase dit pourquoi. Chaque geste
-est inscrit au **journal d'audit** (chapitre 10 *ter*), sans le nom de la personne.
-
-**« Exporter les données »** télécharge un fichier JSON nommé `contact-…-AAAA-MM-JJ.json`. Il réunit tout ce que le CRM
-garde sur cette personne : sa fiche, son organisation, les affaires où elle est rattachée et son rôle, les activités dont
-elle est participante, les messages où son adresse paraît, et les champs de formulaire qui la désignent. Le fichier
-n'est enregistré nulle part dans le CRM : il n'existe que sur votre poste.
-
-**« Anonymiser ce contact »** efface la personne sans effacer l'historique des affaires :
-
-1. Le bouton ouvre une confirmation dans la page, qui dit ce qui va se passer : le nom, l'email, le téléphone et la
-   fonction sont effacés ; les affaires gardent ce contact, anonyme ; les messages ne sont pas modifiés.
-2. **Retapez le nom exact du contact** : le bouton **« Anonymiser définitivement »** ne s'active qu'à l'égalité.
-3. La fiche se relit. Elle porte la mention **« Anonymisé le … »**, son nom devient « Contact anonymisé », et
-   **« Modifier » est grisé** : un contact anonymisé ne se modifie plus, pour qu'aucune saisie ne le ré-identifie par
-   mégarde. **« Supprimer » reste possible.**
-
-L'anonymisation est **définitive**. **Les messages ne sont pas touchés** : ils sont la correspondance de l'entreprise, et
-l'adresse ou la signature de la personne peuvent encore y paraître.
-
-#### Rattacher une personne à une affaire
-
-*Livré par la sous-tranche 4h.*
-
-Le bouton **« Rattacher à une affaire »** se trouve dans le bloc **Affaires**, juste sous son titre.
-Il ouvre un formulaire **dans la page** — le tableau reste visible en dessous, et c'est voulu :
-c'est lui qui vous dit à quelles affaires la personne est **déjà** rattachée.
-
-Deux champs :
-
-- **Affaire** — la liste des affaires de l'espace de travail que vous avez le droit de lire,
-  rangées par titre. Les affaires auxquelles cette personne est **déjà** rattachée n'y figurent
-  pas : les proposer serait proposer un geste qui échouerait ;
-- **Rôle dans l'affaire** — facultatif, et libre : « décideur », « prescripteur », « contact
-  technique »… Laissé vide, il reste vide.
-
-**Une affaire archivée peut être rattachée**, et la liste le dit : son titre est suivi de
-**« (archivée) »**. Rattacher quelqu'un à une affaire close est un geste ordinaire de mise à jour
-d'un historique. Une affaire **mise à la corbeille**, en revanche, n'est pas proposée : elle
-n'apparaîtrait pas dans le tableau, et vous auriez agi sans rien voir changer.
-
-Une fois enregistré, le formulaire se referme et **le tableau se relit** : la nouvelle affaire
-apparaît avec son rôle, son état et son lien.
-
-**Si le rattachement est refusé**, le message le dit en clair et **votre saisie est conservée** :
-
-- *« Ce contact est déjà rattaché à cette affaire »* — quelqu'un d'autre a agi entre-temps ;
-- *« Le rattachement a été refusé »* — vous n'avez pas le droit d'écrire sur cette affaire, ou elle
-  n'est plus accessible. Le message ne tranche pas entre les deux, parce que le serveur répond la
-  même chose dans les deux cas, et il vous invite à recharger la liste.
-
-**Pouvoir lire une affaire ne veut pas dire pouvoir y rattacher quelqu'un.** Les droits se règlent
-**affaire par affaire** : le même compte peut réussir sur l'une et être refusé sur l'autre, et c'est
-mesuré. Le bouton n'est donc jamais grisé d'avance — le produit ne devine pas ce que le serveur
-décidera, il envoie et vous rapporte la réponse.
-
-#### Détacher une personne d'une affaire
-
-*Livré par la sous-tranche 4i.* Ce geste se faisait auparavant **depuis l'affaire** seulement ; il
-existe désormais **des deux côtés**, et celui de l'affaire n'a pas changé (chapitre 4.7 *ter*).
-
-Chaque ligne du tableau **Affaires** porte un bouton **« Détacher »**, dans une dernière colonne
-« Commandes ». Toutes les lignes le portent, **y compris celle d'une affaire archivée** : détacher
-une personne d'une affaire close est un geste ordinaire de correction d'historique.
-
-Le bouton ouvre une **confirmation**, sur une ligne à elle, juste sous celle qu'elle concerne. Elle
-**nomme l'affaire** et rappelle ce qui part avec le rattachement : **le rôle de la personne dans
-cette affaire**. Vous pourrez la rattacher de nouveau, mais le rôle devra être ressaisi. Une seule
-confirmation reste ouverte à la fois : en ouvrir une autre referme la précédente.
-
-Une fois confirmé, **le tableau se relit** et la ligne disparaît. Si c'était la dernière affaire, le
-bloc revient à son état vide, qui garde le bouton « Rattacher à une affaire ».
-
-**Un détachement peut n'avoir aucun effet, et le produit vous le dit.** Sous le tableau apparaît
-alors : *« Aucun rattachement n'a été retiré. Vous n'avez peut-être pas le droit de modifier cette
-affaire, ou le rattachement avait déjà été supprimé. »* Le message **ne tranche pas** entre les deux
-causes, parce que le serveur répond exactement la même chose dans les deux cas — et **la ligne
-reste affichée**, parce qu'elle est toujours là. C'est délibéré : faire disparaître la ligne vous
-aurait annoncé un détachement qui n'a pas eu lieu.
-
-Comme pour le rattachement, **le bouton n'est jamais grisé d'avance**. Les droits se règlent affaire
-par affaire : le même compte peut détacher sur l'une et se voir opposer ce message sur l'autre.
-
-#### Corriger le rôle d'une personne dans une affaire
-
-*Livré par la sous-tranche 4j.* Jusqu'ici, corriger un rôle mal saisi obligeait à **détacher puis
-rattacher** — c'est-à-dire à défaire le lien pour le refaire. Ce n'est plus nécessaire.
-
-Chaque ligne du tableau **Affaires** porte un second bouton, **« Modifier le rôle »**, placé
-**avant** « Détacher » dans la colonne « Commandes » : le geste qui corrige vient avant celui qui
-retire. Toutes les lignes le portent, **y compris celle d'une affaire archivée**.
-
-Le bouton ouvre un formulaire sur une ligne à lui, juste sous celle qu'il concerne. Il **nomme
-l'affaire**, et son champ est **prérempli** du rôle actuel — c'est exactement ce que vous venez
-corriger. Un rattachement sans rôle donne un champ **vide**.
-
-**Un seul bloc reste ouvert à la fois dans le tableau**, quel que soit le geste : ouvrir ce
-formulaire referme une confirmation de détachement en cours, et inversement. Deux questions
-ouvertes en même temps ne diraient pas à laquelle vous répondez.
-
-**Vider le champ efface le rôle**, et le rattachement à l'affaire est **conservé** : c'est la façon
-de retirer un rôle saisi par erreur sans défaire le lien. Le texte sous le champ le rappelle.
-
-Une fois enregistré, le formulaire se referme et **la cellule « Rôle dans l'affaire » porte la
-nouvelle valeur**. Aucun message de succès n'est affiché : la cellule est la confirmation.
-
-**Une modification peut n'avoir aucun effet, et le produit vous le dit.** Le formulaire affiche
-alors : *« Aucun rôle n'a été modifié. Vous n'avez peut-être pas le droit de modifier cette affaire,
-ou le rattachement n'existe plus. »* Comme pour le détachement, le message **ne tranche pas** entre
-les deux causes — le serveur répond la même chose dans les deux cas. **Le formulaire reste ouvert,
-votre saisie est conservée**, et la cellule garde son ancienne valeur : rien n'a changé, et l'écran
-ne prétend pas le contraire.
-
-Le rôle est un **texte libre** : aucune liste imposée, aucune longueur maximale. Les exemples du
-texte d'aide — décideur, prescripteur, contact technique — ne sont que des exemples.
-
-**La suppression n'est pas un oubli.** Un contact peut être désigné par des champs de formulaire
-d'affaires déjà remplis ; le supprimer laisserait ces valeurs pointer vers quelqu'un qui n'existe
-plus. Ce que le produit doit faire de ces traces reste à décider, et la commande n'existera pas
-avant.
-
-#### Créer un contact
-
-Le bouton **« Nouveau contact »**, au-dessus du tableau, ouvre un formulaire **dans la page** — pas
-une fenêtre par-dessus : la liste reste visible, et c'est elle qui vous dit si la personne y figure
-déjà.
-
-Cinq champs, et un seul est obligatoire :
-
-- **Nom** — obligatoire. Un nom vide est refusé avant même l'envoi.
-- **Organisation** — au choix parmi celles de l'espace de travail, ou aucune. Le formulaire ne crée
-  pas d'organisation : créez-la d'abord dans l'onglet **Organisations**.
-- **Fonction**, **Email**, **Téléphone** — facultatifs. Laissés vides, ils restent vides : le carnet
-  n'écrit ni tiret ni « non renseigné ».
-
-Le contact créé **rejoint aussitôt le tableau**, à sa place dans l'ordre alphabétique, sans que la
-page ne se recharge.
-
-**Si la création est refusée**, le message le dit en clair et **votre saisie est conservée** :
-
-- *« Un contact porte déjà cette adresse email »* — l'adresse est unique dans l'espace de travail,
-  quelle que soit la casse ;
-- *« Cette organisation n'existe plus »* — la liste que vous aviez sous les yeux a vieilli ;
-  relisez-la et choisissez-en une autre ;
-- *« Votre rôle ne permet pas de créer un contact »* — d'ordinaire, « Nouveau contact » est grisé
-  pour un compte qui ne peut pas créer (section 3.6) ; ce message ne paraît que si vos droits ont
-  changé entre-temps ou n'ont pas pu être lus. Le serveur reste la règle.
-
-**Ce que ce formulaire ne fait pas**, et c'est dit plutôt que caché : il ne **supprime** pas un
-contact existant et il ne crée pas d'organisation ; il n'existe que sur le carnet — ni depuis la
-fiche d'une affaire, ni depuis un champ de formulaire. Pour **modifier** une personne déjà créée,
-ouvrez sa fiche : le bouton « Modifier » y attend.
-
-### 3.2 bis La section Tracks
+### 3.4 La section Tracks
 
 *Livrée par `CRM-020`. Captures dans `docs/captures/CRM-020/`.*
 
@@ -809,11 +318,60 @@ pilule colorée, précédée de son icône.
 appliquée par le serveur, et non par l'affichage : elle tient même si l'on s'adresse directement à
 l'API. La suppression définitive d'un track n'est **jamais** proposée — l'archivage en tient lieu.
 
-**Ils se gèrent dans Réglages ▸ Arborescence** (chapitre 5) : créer, renommer, réordonner, archiver
+**Ils se gèrent dans Réglages ▸ Arborescence** ([chapitre 17](#administrer-l-arborescence-tracks-et-channels)) : créer, renommer, réordonner, archiver
 un track ou un channel. *Cette phrase disait que les tracks ne se géraient que par l'API ; l'écran
 d'administration de l'arborescence le fait depuis `CRM-075`.*
 
-### 3.2 quater Les accès par track et par channel
+### 3.5 Les onglets d'un track
+
+*Livrée par `CRM-021`. Captures dans `docs/captures/CRM-021/`.*
+
+Ouvrir un track — en cliquant sa pilule, ou en saisissant son adresse `/tracks/<identifiant>` —
+affiche ses **channels** en onglets, juste sous l'en-tête. Le nom du track devient le titre de la
+page ; ouvrir un channel en fait le titre à son tour, et le fil d'Ariane nomme alors le track avant lui ([section
+3.2](#le-fil-d-ariane-savoir-ou-vous-etes)).
+
+- L'**ordre** des onglets est celui défini par l'administration, pas l'ordre de création.
+- Un channel **archivé** n'apparaît pas. Comme pour les tracks, l'archivage masque sans détruire,
+  et reste réversible.
+- L'onglet **ouvert** se signale par un libellé bleu et un soulignement : jamais par la couleur
+  seule.
+- Chaque onglet porte, devant son nom, une **pastille de la couleur de son channel** (*livré par `CRM-116`*). Elle se
+  choisit dans le formulaire du channel ([chapitre 17.2](#un-channel)) ; elle accompagne le nom et ne change pas quand l'onglet est
+  ouvert.
+- Sur un écran étroit, la barre **défile horizontalement** plutôt que de tronquer les libellés. Une
+  ombre au bord indique qu'il reste des onglets à voir de ce côté.
+- **Nouveau channel**, après les onglets et avant « Coûts », crée un channel **sans quitter le
+  track** (*livré par `CRM-100` ; captures dans `docs/captures/CRM-100/`*). Le formulaire s'ouvre en
+  haut de la page — nom, identifiant d'adresse proposé depuis le nom, workflow, description —, le
+  tableau restant visible dessous. **Créer** ouvre aussitôt le tableau du nouveau channel, dont
+  l'onglet paraît dans la barre ; **Annuler** ou la touche **Échap** referment le formulaire sans rien
+  créer. Le formulaire ouvert fait partie de l'adresse de la page : un rechargement le conserve. La
+  commande est offerte à tous ; seul un administrateur de l'espace de travail peut créer un channel,
+  et le serveur refuse aux autres comptes avec un message écrit dans le formulaire, votre saisie
+  conservée.
+- Un track **sans channel** affiche « Aucun channel dans ce track », et dit que le channel se crée
+  avec « Nouveau channel », dans la barre d'onglets juste au-dessus.
+- Un channel dont le workflow **n'a aucune étape** n'a pas de tableau : l'écran le dit (« Ce workflow
+  ne déclare aucune étape ») et propose le lien **Ouvrir l'éditeur de workflows**, où les étapes
+  s'ajoutent ([chapitre 18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)).
+
+Ouvrir un onglet change l'adresse de la page : elle se partage et se met en favori. Le contenu d'un
+channel se lit désormais de **deux façons**, et une bascule en haut de la zone principale passe de
+l'une à l'autre : le **tableau kanban** ([chapitre 9.10](#le-tableau-kanban-d-un-channel)), qui est la vue par défaut, et la **vue
+liste** ([chapitre 9.11](#la-vue-liste-d-un-channel)). Chacune a sa propre adresse.
+
+**Si l'adresse ne correspond à aucun track**, ou si votre compte n'y a pas accès, l'écran affiche
+« Track introuvable » et propose un retour à l'accueil. Les deux situations produisent le **même**
+message : cela évite de renseigner qui que ce soit sur l'existence d'un track qu'il n'a pas le
+droit de voir.
+
+**Qui peut faire quoi.** Créer, renommer, réordonner ou archiver un channel est réservé aux
+personnes **administratrices** de l'espace de travail, exactement comme pour les tracks, et la
+règle est appliquée par le serveur. La suppression définitive n'est jamais proposée. **Aucun écran
+ne permet encore de les gérer**.
+
+### 3.6 Les accès par track et par channel
 
 *Livrée par `CRM-012`. Aucune capture : cette règle n'a pas encore d'écran, voir plus bas.*
 
@@ -852,62 +410,13 @@ rend l'accès à ce qu'il aurait été sans elle, c'est-à-dire celui de votre r
 **Aucun écran ne permet encore de les gérer.** La règle est en revanche appliquée par le serveur,
 et non par l'affichage : elle tient même si l'on s'adresse directement à l'API.
 
-### 3.2 ter Les onglets d'un track
-
-*Livrée par `CRM-021`. Captures dans `docs/captures/CRM-021/`.*
-
-Ouvrir un track — en cliquant sa pilule, ou en saisissant son adresse `/tracks/<identifiant>` —
-affiche ses **channels** en onglets, juste sous l'en-tête. Le nom du track devient le titre de la
-page ; ouvrir un channel en fait le titre à son tour, et le fil d'Ariane nomme alors le track avant lui (section
-3.1 bis).
-
-- L'**ordre** des onglets est celui défini par l'administration, pas l'ordre de création.
-- Un channel **archivé** n'apparaît pas. Comme pour les tracks, l'archivage masque sans détruire,
-  et reste réversible.
-- L'onglet **ouvert** se signale par un libellé bleu et un soulignement : jamais par la couleur
-  seule.
-- Chaque onglet porte, devant son nom, une **pastille de la couleur de son channel** (*livré par `CRM-116`*). Elle se
-  choisit dans le formulaire du channel (chapitre 5.2) ; elle accompagne le nom et ne change pas quand l'onglet est
-  ouvert.
-- Sur un écran étroit, la barre **défile horizontalement** plutôt que de tronquer les libellés. Une
-  ombre au bord indique qu'il reste des onglets à voir de ce côté.
-- **Nouveau channel**, après les onglets et avant « Coûts », crée un channel **sans quitter le
-  track** (*livré par `CRM-100` ; captures dans `docs/captures/CRM-100/`*). Le formulaire s'ouvre en
-  haut de la page — nom, identifiant d'adresse proposé depuis le nom, workflow, description —, le
-  tableau restant visible dessous. **Créer** ouvre aussitôt le tableau du nouveau channel, dont
-  l'onglet paraît dans la barre ; **Annuler** ou la touche **Échap** referment le formulaire sans rien
-  créer. Le formulaire ouvert fait partie de l'adresse de la page : un rechargement le conserve. La
-  commande est offerte à tous ; seul un administrateur de l'espace de travail peut créer un channel,
-  et le serveur refuse aux autres comptes avec un message écrit dans le formulaire, votre saisie
-  conservée.
-- Un track **sans channel** affiche « Aucun channel dans ce track », et dit que le channel se crée
-  avec « Nouveau channel », dans la barre d'onglets juste au-dessus.
-- Un channel dont le workflow **n'a aucune étape** n'a pas de tableau : l'écran le dit (« Ce workflow
-  ne déclare aucune étape ») et propose le lien **Ouvrir l'éditeur de workflows**, où les étapes
-  s'ajoutent (chapitre 5 bis).
-
-Ouvrir un onglet change l'adresse de la page : elle se partage et se met en favori. Le contenu d'un
-channel se lit désormais de **deux façons**, et une bascule en haut de la zone principale passe de
-l'une à l'autre : le **tableau kanban** (chapitre 4.8), qui est la vue par défaut, et la **vue
-liste** (chapitre 4.9). Chacune a sa propre adresse.
-
-**Si l'adresse ne correspond à aucun track**, ou si votre compte n'y a pas accès, l'écran affiche
-« Track introuvable » et propose un retour à l'accueil. Les deux situations produisent le **même**
-message : cela évite de renseigner qui que ce soit sur l'existence d'un track qu'il n'a pas le
-droit de voir.
-
-**Qui peut faire quoi.** Créer, renommer, réordonner ou archiver un channel est réservé aux
-personnes **administratrices** de l'espace de travail, exactement comme pour les tracks, et la
-règle est appliquée par le serveur. La suppression définitive n'est jamais proposée. **Aucun écran
-ne permet encore de les gérer**.
-
-### 3.2 quinquies La description d'un track, d'un channel ou d'une affaire, au survol
+### 3.7 La description d'un track, d'un channel ou d'une affaire, au survol
 
 *Livrée par `CRM-105`. Captures dans `docs/captures/CRM-105/`.*
 
 Un track, un channel et une affaire peuvent porter une **description** : un texte libre qui dit à quoi
 sert l'activité, ce que regroupe le channel, ou ce que recouvre l'affaire. Celle d'un track et d'un
-channel se saisit dans **Réglages ▸ Arborescence** (chapitre 5), dans le champ « Description » du
+channel se saisit dans **Réglages ▸ Arborescence** ([chapitre 17](#administrer-l-arborescence-tracks-et-channels)), dans le champ « Description » du
 formulaire.
 
 Quand une description existe, elle paraît dans une **infobulle** :
@@ -930,7 +439,7 @@ ouverte ou non.
 l'ouvre ; la description ne paraît donc pas en bulle. La description d'une affaire ne se saisit pas
 encore depuis l'interface.
 
-### 3.3 Replier la barre latérale
+### 3.8 Replier la barre latérale
 
 Le bouton en haut de la barre latérale la replie en colonne d'icônes, et la déplie à nouveau. Ce
 choix vaut **pour la session en cours** : il est oublié à la fermeture de l'onglet, et rien n'est
@@ -939,7 +448,7 @@ conservé sur votre appareil au-delà.
 Sur un écran étroit, la barre latérale devient un **tiroir** : le bouton en haut à gauche de
 l'en-tête l'ouvre, la croix ou la touche `Échap` la referme.
 
-### 3.4 Naviguer au clavier
+### 3.9 Naviguer au clavier
 
 L'application s'utilise entièrement au clavier :
 
@@ -949,7 +458,7 @@ L'application s'utilise entièrement au clavier :
 - `Entrée` active l'entrée sélectionnée ;
 - l'élément qui a le focus est toujours entouré d'un liseré bleu visible.
 
-### 3.5 Quand quelque chose ne va pas
+### 3.10 Quand quelque chose ne va pas
 
 | Ce qui s'affiche | Ce que cela signifie | Ce que vous pouvez faire |
 |---|---|---|
@@ -962,7 +471,7 @@ L'application s'utilise entièrement au clavier :
 En cas de panne du serveur, l'application **réessaie trois fois** avant d'afficher l'erreur : le
 message peut donc mettre quelques secondes à apparaître.
 
-### 3.6 Les commandes grisées : ce que votre rôle vous laisse faire
+### 3.11 Les commandes grisées : ce que votre rôle vous laisse faire
 
 Le produit ne vous propose pas un geste que le serveur vous refuserait. Une commande que vous ne pouvez
 pas utiliser **reste à sa place, grisée**, et un **bandeau** — une icône en forme d'œil sur fond gris
@@ -978,7 +487,7 @@ Trois choses décident de ce que vous pouvez faire, et le serveur les mesure pou
 | Éditer le carnet et les modèles | être administrateur ou **business developer** | créer ou modifier un contact, un modèle d'email, une séquence de relance |
 | Travailler une affaire | pouvoir **écrire sur son onglet** | créer, modifier, déplacer, endormir une affaire ; ses contacts, ses coûts, ses commentaires, ses envois |
 
-Le troisième dépend des **accès par track et par channel** (chapitre 3.2 *quater*) : un business
+Le troisième dépend des **accès par track et par channel** ([chapitre 3.6](#les-acces-par-track-et-par-channel)) : un business
 developer peut être limité à la lecture sur un onglet, et une personne en lecture seule peut être
 rouverte en écriture sur un autre. Le produit suit exactement ces accès, onglet par onglet.
 
@@ -1000,7 +509,262 @@ lecture** : vous y voyez la configuration, commandes grisées.
 
 ---
 
-## 3 quater. Ma journée : ce qui est en retard, ce qui est dû aujourd'hui
+## 4. Retrouver n'importe quoi : la recherche
+
+*Livrée par `CRM-065`. Le contrat est écrit dans `docs/SPEC-recherche.md`.*
+
+Le produit compte plus de trente écrans et une arborescence à trois niveaux. Jusqu'ici, retrouver
+un objet dont on ne savait plus où il vivait demandait de le chercher écran par écran : chaque
+liste portait au mieux un filtre local, aveugle à tout ce qui n'était pas elle.
+
+**La recherche cherche partout à la fois**, depuis n'importe quel écran, sans le quitter.
+
+### 4.1 L'ouvrir
+
+Trois chemins, et ils mènent au même endroit :
+
+- le raccourci **`Cmd + K`** sur Mac, **`Ctrl + K`** ailleurs. Il fonctionne **partout**, y compris
+  pendant que vous écrivez un commentaire ;
+- un clic dans le champ **« Rechercher… »**, en haut de l'écran ;
+- sur un écran étroit, le bouton en forme de loupe, à la même place.
+
+Le raccourci est rappelé **dans le champ lui-même** : il n'y a rien à apprendre par cœur.
+
+**Appuyer une seconde fois ne referme pas la recherche** : le texte déjà tapé est simplement
+sélectionné, prêt à être remplacé. Pour refermer, appuyez sur **`Échap`**, ou cliquez ailleurs.
+
+### 4.2 Ce qu'elle cherche
+
+Cinq familles d'objets, dans la même frappe :
+
+| Famille | Ce qui est cherché |
+|---|---|
+| **Affaire** | son titre |
+| **Contact** | son nom, sa fonction, son adresse email |
+| **Organisation** | son nom, son domaine |
+| **Commentaire** | le texte du propos |
+| **Message** | l'objet, le corps, l'expéditeur |
+
+Chaque résultat porte **le nom de sa famille en toutes lettres**, puis ce qui l'identifie et le
+contexte où il vit — le channel d'une affaire, l'organisation d'un contact, l'auteur d'un
+commentaire. Pour un commentaire et un message, un **extrait du passage trouvé** est affiché.
+
+### 4.3 Ce qu'elle comprend, et ce qu'elle ne comprend pas
+
+- **Il suffit de commencer un mot** : « audi » trouve déjà « Audit sécurité applicative ».
+- **Les accents ne comptent pas, dans les deux sens** : « creance » trouve « créance », et
+  « créance » trouve « creance ».
+- **Deux mots saisis doivent être présents tous les deux.** « audit sécurité » ne rend pas tout ce
+  qui contient « audit ».
+- **Aucune tolérance à la faute de frappe.** « audti » ne trouve rien. La recherche cherche des
+  mots, elle ne les devine pas.
+- **Ce qui est à la corbeille ne se cherche pas**, y compris les commentaires d'une affaire mise à
+  la corbeille.
+
+### 4.4 La parcourir au clavier, et y aller
+
+La main ne quitte pas le clavier :
+
+| Touche | Effet |
+|---|---|
+| **`↓`** | descend d'un résultat ; du dernier, revient au premier |
+| **`↑`** | monte d'un résultat ; du premier, va au dernier |
+| **`Entrée`** | ouvre le résultat en surbrillance |
+| **`Échap`** | referme la recherche |
+| **`Tab`**, **`Maj+Tab`** | quittent la recherche, qui se referme ; le curseur va où la touche l'envoie |
+
+Un clic sur une ligne fait la même chose que `Entrée`.
+
+**Où chaque famille vous mène** :
+
+| Famille | Destination |
+|---|---|
+| Affaire | sa fiche |
+| Commentaire | **la fiche de l'affaire commentée**, où le propos se lit dans le fil |
+| Contact | sa fiche |
+| Organisation | sa fiche |
+| Message | **votre boîte, le message ouvert**, dans le dossier où il est classé |
+
+**Un message vous mène au message, pas seulement à votre boîte.** Le dossier est celui de son
+affaire quand il est classé, et **« Non classés »** quand il ne l'est pas — vous arrivez donc là où
+le message se trouve réellement, sans avoir à le retrouver dans la liste.
+
+L'adresse qui vous y a mené **ne reste pas dans la barre du navigateur** : recharger la page vous
+laisse dans votre boîte, sans rouvrir un message que vous aviez peut-être quitté depuis longtemps.
+Et si le message n'existe plus, ou s'il ne vous est pas lisible, **votre boîte s'ouvre simplement
+sans sélection** — aucune erreur ne s'affiche.
+
+### 4.5 Vous ne trouvez que ce que vous avez le droit de lire
+
+**La recherche n'ouvre rien.** Une affaire d'un track qui ne vous est pas ouvert, son commentaire,
+un message que vous ne pouvez pas lire : rien de tout cela n'apparaît, et **rien ne signale que
+quelque chose vous est caché**. Deux personnes cherchant le même mot ne voient donc pas
+nécessairement la même liste, et c'est voulu.
+
+### 4.6 Ce que la recherche affiche, et ce qu'elle ne fait pas
+
+- **Au plus vingt résultats**, et quand la liste est pleine elle l'écrit : « 20 résultats
+  affichés ». Précisez votre terme pour en voir d'autres.
+- **L'ordre est celui de la pertinence**, familles mêlées : un message peut passer devant une
+  affaire s'il correspond mieux.
+- **Rien n'est enregistré** : ni ce que vous cherchez, ni quand, ni combien de résultats. Il n'y a
+  pas d'historique de recherche, et il n'y en aura pas sans qu'on vous le demande.
+- **Aucun filtre par famille**, aucune suggestion, aucune correction de frappe.
+- **Aucune action sur un résultat** : la recherche mène, elle n'agit pas.
+- **Les tracks et les channels ne sont pas cherchés.** On les trouve par la navigation, qui les
+  liste tous à l'écran.
+- **Un résultat dont l'écran n'est pas atteignable reste affiché**, marqué « Objet non
+  atteignable » et non cliquable — plutôt que de disparaître ou de mener à un écran cassé.
+- **Sans être connecté, la recherche n'existe pas** : aucune page ne s'affiche sans session
+  ([chapitre 1](#se-connecter-et-se-deconnecter)).
+
+## 5. Vos notifications : savoir qu'on vous a nommé
+
+*Livré par `CRM-064`, sous-tranche 3a. Les règles d'accès sont celles des tranches 1 et 2 : cet
+écran n'en invente aucune. Captures : `docs/captures/CRM-064/`.*
+
+**Où.** En haut à droite de chaque écran, la **cloche**, entre le nom de votre espace de travail et
+votre identité. Elle est visible partout, parce qu'une notification n'est pas une destination : on
+y jette un œil et l'on retourne à ce qu'on faisait.
+
+**Qui.** Chacun voit **ses** notifications, et elles seules. Personne d'autre — ni un collègue, ni
+un administrateur de l'espace de travail. La boîte de quelqu'un n'est pas une donnée
+d'exploitation. Sans session ouverte, aucune page ne s'affiche, cloche comprise.
+
+### 5.1 Ce que la cloche annonce
+
+Le chiffre posé sur la cloche compte vos notifications **non lues**, jamais le total : une cloche
+qui afficherait « 12 » sur douze messages tous lus ne dirait rien d'utile.
+
+- **Aucun chiffre** signifie l'une de deux choses, et jamais « zéro par défaut » : soit vous n'avez
+  rien de non lu, soit le compte n'a pas encore été mesuré. Dans le second cas, la cloche
+  s'annonce simplement « Notifications », sans prétendre que tout est lu.
+- **Au-delà de quatre-vingt-dix-neuf**, la cloche écrit « 99+ » — un badge à quatre chiffres la
+  déformerait. Le compte **exact** reste annoncé aux lecteurs d'écran.
+
+### 5.2 Ce que le panneau montre
+
+Un clic — ou `Entrée` au clavier — ouvre le panneau **sous la cloche**, sans quitter l'écran où
+vous êtes. `Échap`, un clic à l'extérieur, ou « Fermer les notifications » le referment ; le focus
+revient alors à la cloche.
+
+Chaque ligne porte :
+
+- **qui vous a nommé**, avec son avatar — « Camille Aubert vous a mentionné » ;
+- **ce qui a été écrit**, en extrait ;
+- **l'affaire concernée**, dont le titre est un lien vers sa fiche ;
+- **le dossier**, en pastille « Track › Channel », qui mène au channel ;
+- **la date et l'heure**, absolues.
+
+Une **ligne non lue** porte un liseré bleu à gauche et son libellé en gras. L'ordre est celui de
+l'arrivée : **le plus récent en haut**. C'est l'inverse du fil de discussion d'une affaire, où la
+conversation se lit dans le sens où elle s'est tenue ; une boîte de réception, elle, se lit en
+commençant par ce qui vient d'arriver. **Les non-lues ne remontent pas en tête** : une ligne qui
+sauterait au moment où vous la marquez vous la ferait perdre de vue.
+
+**Une ligne dont le propos n'est plus lisible garde sa place**, avec son affaire, sa date et son
+lien, mais sans auteur ni extrait. Le produit ne dit alors ni que le message a été supprimé, ni que
+vous n'y avez plus accès : les deux causes sont indistinguables, et les nommer divulguerait la
+seconde.
+
+### 5.3 Marquer lu, et marquer non lu
+
+Le bouton en bout de ligne bascule l'état, **dans les deux sens** : on ouvre une notification par
+mégarde, et une boîte dont on ne peut pas remettre un message de côté n'est pas une boîte.
+
+**Suivre le lien d'une affaire ne marque rien.** Ce sont deux gestes distincts : fondre les deux
+ferait disparaître du compteur une notification que vous avez seulement effleurée en visant autre
+chose.
+
+La ligne ne change qu'**après** la réponse du serveur. Si vos droits ont changé depuis l'ouverture
+du panneau, le produit écrit « Aucune notification n'a été modifiée » et invite à recharger la
+page — il n'annonce jamais une modification qui n'a pas eu lieu.
+
+### 5.4 La mise à jour est immédiate
+
+Le panneau et le compteur s'actualisent **sans rechargement** dès qu'une notification vous est
+adressée : ils écoutent la base en temps réel. Le produit ne vous envoie **aucun email**, ne fait
+sonner **aucun son** et ne modifie **pas** le titre de l'onglet.
+
+### 5.5 Mentionner quelqu’un dans un commentaire
+
+*Livré par `CRM-064`, sous-tranche 3b. Captures : `docs/captures/CRM-064/`.*
+
+Sous la zone de saisie du fil d'une affaire, la commande **« Mentionner »** ouvre la liste des
+personnes que ce commentaire peut prévenir. Cochez-en une ou plusieurs, écrivez votre message, et
+publiez : chacune reçoit sa notification.
+
+**Il n'y a pas de syntaxe à connaître.** Taper « @ » dans le texte ne fait rien : le produit ne lit
+pas votre commentaire pour y deviner des noms. Vous choisissez explicitement qui vous prévenez, et
+vous le voyez avant d'envoyer — la commande porte le nombre de personnes cochées, même repliée.
+
+**La liste ne contient que les personnes qui peuvent lire cette affaire**, et elle **change d'une
+affaire à l'autre** : un collègue proposé sur un dossier peut être absent d'un autre, parce que ses
+droits ne sont pas les mêmes partout. Ce n'est pas l'écran qui décide — c'est la même règle
+d'autorisation que partout ailleurs dans le produit.
+
+**Vous n'y figurez jamais vous-même.** Se mentionner n'enverrait rien : vous savez déjà ce que vous
+venez d'écrire.
+
+**Si personne d'autre ne peut lire l'affaire**, la liste le dit en toutes lettres. Ce n'est pas une
+panne : c'est un dossier dont vous êtes le seul lecteur.
+
+**Quand une mention échoue, votre commentaire reste publié.** Le cas est rare — il faut qu'un droit
+change entre le moment où vous ouvrez la liste et celui où vous publiez —, et le produit ne le
+cache pas : un message sous le composeur **nomme la personne** qui n'a pas été prévenue et dit
+pourquoi. Votre texte, lui, est bien en ligne : le retirer effacerait un propos que vous avez
+réellement tenu. Les personnes qui n'ont pas pu être prévenues restent cochées, pour que vous
+sachiez ce qu'il reste à faire.
+
+**Mentionner est facultatif.** Un commentaire sans mention se publie exactement comme avant.
+
+### 5.6 Choisir ce que vous recevez
+
+*Réglages → Notifications, ou directement `/reglages/notifications`.*
+
+C'est **votre** réglage : personne d'autre ne le voit, pas même l'administratrice de l'espace de
+travail. C'est aussi la seule section des réglages qui règle votre compte plutôt que l'instance, et
+c'est pourquoi elle vient en dernier dans la liste.
+
+**Une case par type de notification**, cochée par défaut. Aujourd'hui il n'y en a qu'une :
+« Recevoir les mentions ». Décochez-la, et les mentions cessent d'arriver dans votre cloche — le
+compteur tombe, le panneau se vide, et rien ne s'affiche plus en direct.
+
+**Rien n'est supprimé.** Les notifications continuent d'être produites et conservées : elles sont
+simplement **masquées** tant que la case est décochée. Recochez-la, et tout revient — non lu, dans
+l'ordre, exactement comme avant. C'est la différence entre couper le son et jeter le courrier.
+
+**Il n'y a pas de bouton « Enregistrer ».** La case écrit dès que vous la basculez, et affiche
+« Enregistré » sous elle. Elle ne se coche qu'**après** la confirmation du serveur : ce que vous
+voyez est ce que le produit a réellement retenu, jamais ce qu'il a cru envoyer.
+
+**Une chose à savoir**, parce qu'elle surprend : tant qu'un type est décoché, vous ne pouvez pas
+marquer lues les notifications de ce type. Vous ne les voyez pas, donc vous ne les marquez pas ;
+elles vous attendront, non lues, si vous recochez.
+
+**Il n'y a qu'un seul canal, et l'écran n'en promet pas d'autre.** Le produit n'envoie aucune
+notification par email, ni de résumé quotidien. Vous ne trouverez donc aucune case pour cela :
+une case qui ne commande rien serait une promesse que le produit ne tiendrait pas.
+
+### 5.7 Ce qui n'est pas encore là
+
+- **Les mentions d'un commentaire déjà publié ne se corrigent pas.** On choisit avant de publier,
+  pas après ; ni la liste des personnes nommées, ni leur retrait ne sont offerts par l'écran.
+- **Le fil ne montre pas qui un commentaire mentionne.** La personne prévenue le voit dans sa
+  cloche ; le commentaire, lui, ne l'affiche pas.
+- **La liste des personnes n'a ni recherche ni pagination.**
+- **Aucun canal en dehors de l'application** : ni email, ni résumé quotidien. Le [§5.6](#choisir-ce-que-vous-recevez) dit ce que
+  vous pouvez régler, et ce qui n'existe pas.
+- **La préférence vaut pour tous vos espaces de travail** : elle porte sur vous, pas sur un
+  contexte. Vous ne pouvez pas couper les mentions d'un espace en les gardant dans un autre.
+- **Aucune suppression, et aucune expiration.** Une notification ne s'efface pas. Le panneau montre
+  les **vingt plus récentes**, et le dit en toutes lettres quand il en manque ; le compteur, lui,
+  les compte toutes.
+- **Aucun regroupement** : dix mentions sur la même affaire font dix lignes.
+- **Aucun « tout marquer comme lu »** : un geste de masse ne saurait pas dire *lesquelles* n'ont pas
+  bougé si vos droits ont changé, et le produit ne montre jamais une issue qu'il n'a pas mesurée.
+
+## 6. Ma journée : ce qui est en retard, ce qui est dû aujourd'hui
 
 *Livré par `CRM-061`, tranche 1. Décrit l'application réellement exécutée ; captures dans
 `docs/captures/CRM-061/`.*
@@ -1015,7 +779,7 @@ C'est la troisième façon de lire vos affaires, et elle range par le **temps** 
 - la **vue liste** les range par leurs colonnes, dans un channel — « laquelle dois-je ouvrir ? » ;
 - **Ma journée** les range par échéance, partout — « qu'est-ce qui est en retard ? ».
 
-### 3 quater.1 Les trois sections
+### 6.1 Les trois sections
 
 L'écran se lit de haut en bas, en trois sections, et chacune écrit **combien** d'affaires elle
 porte :
@@ -1032,7 +796,7 @@ fois « rien » ; leur absence le dit une fois.
 **L'horizon est de sept jours, et il n'est pas réglable.** Au-delà, ce ne serait plus une journée :
 c'est la vue liste d'un channel, triée par échéance, qui répond à cette question-là.
 
-### 3 quater.2 Ce qu'une ligne montre
+### 6.2 Ce qu'une ligne montre
 
 Chaque ligne porte, dans cet ordre : l'**échéance** avec son heure, le **titre** de l'affaire — qui
 est un lien vers sa fiche —, la **prochaine action** à mener, et la **situation** de l'affaire sous
@@ -1049,7 +813,7 @@ erreur.
 **Une affaire peut porter une échéance sans prochaine action écrite.** La colonne reste alors vide —
 ni tiret, ni « non renseigné ». L'échéance seule est déjà une information.
 
-### 3 quater.3 « Mes affaires » ou tout l'espace de travail
+### 6.3 « Mes affaires » ou tout l'espace de travail
 
 Deux onglets en haut de l'écran choisissent la **portée** :
 
@@ -1064,29 +828,29 @@ qui restent seuls juges de ce qu'il peut lire.
 affaire d'un track qui vous est fermé n'apparaît dans aucune des deux portées, et l'écran ne la
 nomme jamais.
 
-### 3 quater.4 Ce qui n'apparaît pas, et pourquoi
+### 6.4 Ce qui n'apparaît pas, et pourquoi
 
 | Absent de l'écran | Motif |
 |---|---|
-| Les affaires **archivées** et celles **à la corbeille** | Elles ne sont plus en cours (chapitre 4.5) |
-| Les affaires **en sommeil** | Les endormir est précisément le geste qui dit « pas aujourd'hui » (chapitre 4.6). Elles restent visibles dans leur tableau et leur vue liste, où une case à cocher les ramène |
+| Les affaires **archivées** et celles **à la corbeille** | Elles ne sont plus en cours ([chapitre 9.5](#qui-peut-faire-quoi)) |
+| Les affaires **en sommeil** | Les endormir est précisément le geste qui dit « pas aujourd'hui » ([chapitre 9.16](#ce-qui-n-est-pas-encore-livre)). Elles restent visibles dans leur tableau et leur vue liste, où une case à cocher les ramène |
 | Les affaires **sans échéance** | Il n'y a rien à ranger dans une journée |
 | Les échéances au-delà de **sept jours** | Voir l'horizon ci-dessus |
 
-### 3 quater.5 Ce que l'écran ne fait pas
+### 6.5 Ce que l'écran ne fait pas
 
 **Il lit, il n'écrit pas.** Aucun bouton n'y reporte une échéance, ne coche « fait » ni ne saisit une
 prochaine action. Ces deux valeurs se modifient à un seul endroit — l'**en-tête de la fiche** de
-l'affaire (chapitre 4.2 *bis*) —, et le rester est ce qui évite deux façons de faire la même chose.
+l'affaire ([section 9.6](#la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent)) —, et le rester est ce qui évite deux façons de faire la même chose.
 
 **Ce n'est pas un agenda** : ni créneau, ni durée, ni rendez-vous, ni récurrence. Une affaire porte
 un instant, pas une plage.
 
 **Ce n'est pas la liste des relances.** Une affaire peut stagner dans son étape au-delà de son seuil
 de relance sans porter aucune échéance, et l'inverse. La **pastille d'ancienneté** du tableau
-(chapitre 4.8) répond à cette autre question.
+([chapitre 9.10](#le-tableau-kanban-d-un-channel)) répond à cette autre question.
 
-### 3 quater.6 Quand il n'y a rien
+### 6.6 Quand il n'y a rien
 
 Deux messages, et ils ne disent pas la même chose :
 
@@ -1095,9 +859,9 @@ Deux messages, et ils ne disent pas la même chose :
 - **« Aucune échéance dans les 7 prochains jours »** — personne n'en a, parmi ce que vous pouvez
   lire. Il n'y a rien à élargir, et l'écran n'offre donc aucun bouton.
 
-Sans session, la page ne s'affiche pas : son adresse mène à l'écran de connexion (chapitre 1).
+Sans session, la page ne s'affiche pas : son adresse mène à l'écran de connexion ([chapitre 1](#se-connecter-et-se-deconnecter)).
 
-## 3 quinquies. Les affaires figées : ce qui dort depuis trop longtemps
+## 7. Les affaires figées : ce qui dort depuis trop longtemps
 
 *Livré par `CRM-062`, tranche 3. Captures : `docs/captures/CRM-062/`.*
 
@@ -1108,15 +872,15 @@ voisines dans la barre latérale, dans cet ordre.
 
 Vous y arrivez par **Affaires figées**, immédiatement sous *Ma journée*.
 
-### 3 quinquies.1 Ce qu'être « figée » veut dire
+### 7.1 Ce qu'être « figée » veut dire
 
 Une affaire est **figée** lorsqu'elle est restée dans son étape **au-delà du seuil de relance de
 cette étape**. Ce n'est ni un jugement ni un score : c'est une durée comparée à un seuil.
 
 Le seuil vient du **processus**, et il se lit en deux temps :
 
-1. l'étape elle-même peut porter un seuil, réglé dans l'éditeur de workflows (chapitre 5 *bis*) ;
-2. sinon, c'est celui du **nœud** du catalogue dont l'étape est une occurrence (chapitre 5
+1. l'étape elle-même peut porter un seuil, réglé dans l'éditeur de workflows ([chapitre 18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)) ;
+2. sinon, c'est celui du **nœud** du catalogue dont l'étape est une occurrence ([chapitre 17](#administrer-l-arborescence-tracks-et-channels)
    *quater*).
 
 **Une étape sans seuil ne fige jamais ses affaires.** Personne n'a dit au bout de combien de temps
@@ -1129,12 +893,12 @@ exactement son seuil est figée, et son retard vaut alors zéro.
 **Trois affaires ne sont jamais figées, quel que soit leur âge** :
 
 - une affaire **archivée** — elle n'est pas en retard, elle est rangée ;
-- une affaire **à la corbeille** — elle est sortie du produit (chapitre 5 *ter*) ;
+- une affaire **à la corbeille** — elle est sortie du produit ([chapitre 20](#la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre)) ;
 - une affaire **en sommeil** — mettre en sommeil est précisément le geste qui dit « pas
-  maintenant » (chapitre 4.9 *bis*), et la relancer annulerait le seul geste posé contre les
+  maintenant » ([chapitre 9.13](#mettre-une-affaire-en-sommeil-et-la-retrouver)), et la relancer annulerait le seul geste posé contre les
   relances. Une échéance de sommeil **échue** ne protège plus : l'affaire est réveillée de fait.
 
-### 3 quinquies.2 Ce que l'écran montre
+### 7.2 Ce que l'écran montre
 
 Les affaires sont **groupées par dossier**, et les groupes sont rangés du **plus gros retard au
 plus petit**. Chaque titre de groupe porte son compte entre parenthèses.
@@ -1152,11 +916,11 @@ Une ligne se lit de gauche à droite :
 Le rouge porte sur le **retard seul**, jamais sur la ligne entière : une affaire figée est un
 travail à faire, pas une erreur.
 
-### 3 quinquies.3 Deux personnes n'y lisent pas la même chose
+### 7.3 Deux personnes n'y lisent pas la même chose
 
 L'écran ne montre que les affaires que **vos droits vous laissent lire**. Deux collègues ouvrant la
 même page au même instant peuvent donc y voir des listes différentes, et c'est voulu : les droits
-par track et par onglet (chapitre 3.2 *quater*) s'appliquent ici comme partout.
+par track et par onglet ([chapitre 3.6](#les-acces-par-track-et-par-channel)) s'appliquent ici comme partout.
 
 **L'écran ne dit jamais qu'il vous cache quelque chose.** Aucune mention « une affaire vous est
 masquée » n'apparaît : ce serait divulguer par la bande l'existence de ce que vos droits ferment.
@@ -1164,11 +928,11 @@ masquée » n'apparaît : ce serait divulguer par la bande l'existence de ce que
 Dans l'espace de démonstration, l'administratrice et le business developer lisent **quatre**
 affaires figées ; la lectrice en lit **trois** — la quatrième vit dans un track qui lui est fermé.
 
-### 3 quinquies.4 La relance inscrite dans l'affaire
+### 7.4 La relance inscrite dans l'affaire
 
 Chaque nuit, le produit parcourt les affaires figées et inscrit dans l'historique de chacune une
 ligne **« Relance automatique »**, avec son retard et son seuil au moment du passage. Vous la
-trouvez dans le fil de la fiche (chapitre 4.10), dans la famille *Cycle de vie*.
+trouvez dans le fil de la fiche ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)), dans la famille *Cycle de vie*.
 
 **Au plus une par séjour dans une étape** : une affaire figée depuis six semaines ne reçoit pas
 quarante-deux lignes. Si vous la déplacez puis qu'elle s'y rendort, une nouvelle relance est écrite
@@ -1176,7 +940,7 @@ quarante-deux lignes. Si vous la déplacez puis qu'elle s'y rendort, une nouvell
 
 Cette ligne **n'a pas d'auteur** : personne ne l'a écrite, c'est l'horloge.
 
-### 3 quinquies.5 Ce que le produit ne fait PAS
+### 7.5 Ce que le produit ne fait PAS
 
 - **Aucun email n'est envoyé.** Une relance est un fait inscrit dans le produit, que vous rencontrez
   en l'ouvrant. Les modèles d'emails et les séquences de relance relèvent d'une autre unité, non
@@ -1188,7 +952,7 @@ Cette ligne **n'a pas d'auteur** : personne ne l'a écrite, c'est l'horloge.
   gestes vivent sur la fiche de l'affaire, et les dédoubler ici en ferait deux définitions du même
   geste.
 
-### 3 quinquies.6 Quand il n'y a rien
+### 7.6 Quand il n'y a rien
 
 **« Aucune affaire figée »** — aucune affaire, parmi celles que vous pouvez lire, ne dort dans son
 étape au-delà de son seuil. Le message ne propose aucun bouton, et ce n'est pas un oubli : il n'y a
@@ -1197,7 +961,7 @@ rien à faire d'une liste vide, et c'est une bonne nouvelle.
 Si la liste **n'a pas pu être lue**, l'écran le dit et propose *Réessayer*. Un écran vide et une
 panne ne se confondent jamais.
 
-## 3 sexies. Les objectifs : le tableau blanc de l'équipe
+## 8. Les objectifs : le tableau blanc de l'équipe
 
 *Livré par `CRM-082` (ce que le produit enregistre et qui peut l'écrire) et `CRM-083` (l'écran). Décrit l'application
 réellement exécutée ; captures dans `docs/captures/CRM-083/`. Spécification : `docs/SPEC-goals.md`.*
@@ -1210,7 +974,7 @@ qui nourrit quoi, et vous indiquez sur chaque bloc où vous en êtes.
 déduit rien des affaires de ce channel : c'est vous qui décidez de ce que le pourcentage signifie, et vous qui le
 tenez à jour. La fiche du bloc le rappelle sous son remplissage.
 
-### 3 sexies.1 La liste des tableaux
+### 8.1 La liste des tableaux
 
 L'écran **« Tableaux d'objectifs »** liste les tableaux de l'espace dans leur ordre, chacun avec sa description et son
 nombre de blocs. Cliquer sur le nom d'un tableau ouvre son canevas.
@@ -1228,7 +992,7 @@ Un **administrateur** ou un **business developer** de l'espace administre les ta
 Pour un autre compte, la base refuse ces gestes, et l'écran le dit sous la commande : *« Vous ne pouvez pas
 administrer les tableaux de cet espace de travail. »*
 
-### 3 sexies.2 Le canevas
+### 8.2 Le canevas
 
 Le canevas d'un tableau se **déplace** — faites-le glisser — et se **zoome** avec les boutons **« Réduire le canevas »**
 et **« Agrandir le canevas »**, la valeur courante affichée entre les deux. **« Retour aux tableaux »** ramène à la
@@ -1249,7 +1013,7 @@ corbeille** reste affiché, sans pilule, avec la mention **« Lien perdu »** : 
 **détruit** définitivement, le bloc redevient un bloc libre, sans mention — rien ne permet plus de savoir qu'il visait
 un channel.
 
-### 3 sexies.3 Poser, déplacer et modifier un bloc
+### 8.3 Poser, déplacer et modifier un bloc
 
 **« Poser un bloc »** fait apparaître un repère : cliquez sur le canevas à l'endroit voulu, ou, au clavier, déplacez le
 repère avec les flèches, validez par Entrée et annulez par Échap. Le bloc naît avec un titre provisoire, et sa fiche
@@ -1268,7 +1032,7 @@ flèches le redimensionnent. **Entrée** ouvre sa **fiche** :
 
 Chaque champ s'enregistre de lui-même et dit **« Enregistré »** ; **« Fermer la fiche »** ou Échap la referment.
 
-### 3 sexies.4 Tracer et supprimer une flèche
+### 8.4 Tracer et supprimer une flèche
 
 **« Tracer une flèche »**, puis cliquez sur le bloc de départ et sur celui d'arrivée — ou, au clavier, **Espace** sur le
 bloc de départ, puis Entrée ou Espace sur le second. Le bloc de départ, Échap ou le bouton annulent le tracé. Une
@@ -1276,13 +1040,13 @@ flèche relie deux blocs **du même tableau**, jamais un bloc à lui-même, et *
 Dans « Liens du diagramme », chaque flèche porte un sélecteur de **direction** et la commande **« Supprimer la
 flèche »**.
 
-### 3 sexies.5 Supprimer un bloc
+### 8.5 Supprimer un bloc
 
 **« Supprimer le bloc »**, au bas de sa fiche, demande une confirmation qui nomme le bloc et compte les flèches qui
 partiront avec lui ; **« Supprimer définitivement »** l'efface. **Un bloc supprimé ne se restaure pas**, une flèche non
 plus — contrairement à un tableau, qui s'archive.
 
-### 3 sexies.6 Qui peut écrire
+### 8.6 Qui peut écrire
 
 **Tout membre de l'espace lit les tableaux.** Les **administrateurs** et les **business developers** de l'espace les
 administrent et les composent ; pour un autre compte, le canevas affiche : *« Vous consultez ce tableau. Vous n'avez
@@ -1290,25 +1054,25 @@ pas le droit d'y écrire : les commandes de modification restent visibles mais s
 bloc s'ouvre en lecture. C'est la base qui décide : un refus de dernière minute est dit sous la commande, sans que
 rien ne soit écrit.
 
-### 3 sexies.7 Quand il n'y a rien
+### 8.7 Quand il n'y a rien
 
 **« Aucun tableau d'objectifs »** — l'espace n'en a pas encore ; « Créer un tableau » reste offert à qui peut écrire.
 **« Aucun objectif sur ce tableau »** — posez un premier bloc. **« Tableau introuvable »** — l'adresse ne mène à aucun
 tableau que vous puissiez lire, ou il est archivé. Si les tableaux **n'ont pas pu être chargés**, l'écran le dit et
 propose « Réessayer ».
 
-L'assistant connecté par le **connecteur MCP** lit et compose aussi les canevas, dans vos droits (chapitre 11).
+L'assistant connecté par le **connecteur MCP** lit et compose aussi les canevas, dans vos droits ([chapitre 33](#le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant)).
 
-## 4. L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître
+## 9. L'affaire : ce qu'elle porte, son adresse, ses deux façons de disparaître
 
-*Livrée par `CRM-040`. Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir §3.2.*
+*Livrée par `CRM-040`. Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir [§3.3](#ce-que-vous-voyez-aujourd-hui-et-pourquoi).*
 
 L'**affaire** — appelée *card* dans le produit — est l'objet autour duquel tout le CRM s'organise :
 une opportunité, un dossier, un projet. Elle vit dans un onglet (channel), à une étape du workflow
 que cet onglet suit, et c'est à elle que se rattacheront les commentaires, les documents et les
 échanges de messagerie.
 
-### 4.1 Ce qu'une affaire porte
+### 9.1 Ce qu'une affaire porte
 
 | Ce que vous renseignez | Ce que cela sert |
 |---|---|
@@ -1338,9 +1102,9 @@ colorié.
   retard 0) et l'ancienneté dans l'étape rapportée à son seuil (15 %). Un signal qu'on ne peut pas mesurer — aucune
   probabilité, aucun seuil — est écrit « inconnu », et son poids se répartit sur les autres au lieu de compter pour zéro.
 - **Une affaire gagnée, perdue, archivée ou à la corbeille n'a pas de score.** Une affaire en sommeil garde les siens.
-- Un assistant connecté par le connecteur lit les mêmes scores (chapitre 11).
+- Un assistant connecté par le connecteur lit les mêmes scores ([chapitre 33](#le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant)).
 
-### 4.2 L'adresse email de l'affaire
+### 9.2 L'adresse email de l'affaire
 
 Chaque affaire reçoit à sa création une **adresse email qui lui est propre**, de la forme
 `c-3p55qdgw@…`. Elle est tirée au hasard sur un espace d'environ mille milliards de possibilités :
@@ -1357,7 +1121,7 @@ hasard par une adresse triviale pour que n'importe qui puisse écrire à l'affai
 **lit**, en revanche, par toute personne qui peut consulter l'affaire : c'est une identité, pas un
 mot de passe.
 
-### 4.3 Faire avancer une affaire : ce que le produit autorise, et ce qu'il refuse
+### 9.3 Faire avancer une affaire : ce que le produit autorise, et ce qu'il refuse
 
 Une affaire change d'étape par **un seul chemin**, et c'est délibéré : le produit refuse désormais
 qu'on écrive directement l'étape d'une affaire, même à une administratrice. Tout déplacement passe
@@ -1399,12 +1163,12 @@ est placée **en fin** de la colonne d'arrivée, sans bousculer l'ordre que vous
 **Ce qui reste de l'affaire après un déplacement, et ce qui n'en reste pas.**
 
 1. **Le déplacement laisse une trace**, écrite par le serveur au moment où il a lieu : le fil de
-   l'affaire affiche *Étape franchie*, avec les deux étapes (chapitre 4.10). Cette trace ne peut
+   l'affaire affiche *Étape franchie*, avec les deux étapes ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)). Cette trace ne peut
    être ni fabriquée, ni corrigée, ni effacée.
 2. **Le motif que vous donnez est conservé, et il l'est comme un commentaire.** Depuis le
    2026-08-14, la raison que vous écrivez au moment du déplacement apparaît dans le fil de
    l'affaire, signée de votre nom et datée, exactement comme si vous l'aviez publiée vous-même
-   (chapitre 4.10). Vous pouvez donc la corriger ou la retirer ensuite, comme n'importe lequel de
+   ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)). Vous pouvez donc la corriger ou la retirer ensuite, comme n'importe lequel de
    vos commentaires.
 
    Trois précisions utiles. Le motif est enregistré **en même temps** que le déplacement : si l'un
@@ -1417,11 +1181,11 @@ est placée **en fin** de la colonne d'arrivée, sans bousculer l'ordre que vous
    Le motif n'apparaît pas dans la ligne d'historique *Étape franchie* : il vit **une seule fois**,
    dans la discussion, et non recopié dans la trace.
 
-**Ce geste a désormais son écran** : le tableau kanban du chapitre 4.8, à la souris comme au
+**Ce geste a désormais son écran** : le tableau kanban du [chapitre 9.10](#le-tableau-kanban-d-un-channel), à la souris comme au
 clavier. La règle décrite ici lui préexiste et ne dépend pas de lui — c'est volontaire, l'interface
 ne fait qu'exercer une garde qui tient de toute façon si l'on s'adresse directement à l'API.
 
-### 4.4 Archiver n'est pas supprimer
+### 9.4 Archiver n'est pas supprimer
 
 Une affaire a **deux** façons de quitter votre vue, et elles ne veulent pas dire la même chose.
 
@@ -1435,30 +1199,30 @@ administratrice. Ce qu'il appelle « supprimer » est toujours une date posée s
 peut retirer.
 
 **Une affaire archivée ou en corbeille n'occupe plus son étape.** C'est ce qui permet d'archiver un
-état du catalogue (chapitre 19) une fois que toutes les affaires qui s'y trouvaient ont été closes.
+état du catalogue ([chapitre 19](#le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows)) une fois que toutes les affaires qui s'y trouvaient ont été closes.
 À l'inverse, un état qu'une affaire **active** occupe encore ne peut pas être archivé : le produit
 refuse, plutôt que de faire disparaître une colonne du tableau sous les affaires qu'elle contient.
 
-### 4.5 Qui peut faire quoi
+### 9.5 Qui peut faire quoi
 
 - **Voir** les affaires d'un onglet suppose le droit de lire cet onglet. Les accès par track et par
-  channel du §3.2 *quater* s'appliquent **dès la première affaire** : une restriction `Aucun accès`
+  channel du [§3.6](#les-acces-par-track-et-par-channel) s'appliquent **dès la première affaire** : une restriction `Aucun accès`
   masque les affaires comme elle masque l'onglet, et un accès `Membre` posé sur un onglet les rouvre
   même si le track est fermé.
 - **Créer et modifier** une affaire suppose le droit d'**écriture** sur l'onglet. Une personne en
   lecture seule voit les affaires et ne peut pas les toucher : les commandes sont grisées, et un
-  bandeau en tête de l'onglet et de la fiche dit pourquoi (section 3.6).
+  bandeau en tête de l'onglet et de la fiche dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
 - **Déplacer** une affaire vers un onglet où vous n'avez pas le droit d'écrire est refusé, même si
   vous aviez le droit d'écrire là où elle se trouvait.
 
-### 4.7 La fiche d'une affaire : son en-tête, son formulaire, et ce qu'ils montrent
+### 9.6 La fiche d'une affaire : son en-tête, son formulaire, et ce qu'ils montrent
 
 *Livrée par `CRM-037`, son en-tête par `CRM-040`. Captures dans `docs/captures/CRM-037/` et
 `docs/captures/CRM-040/`.*
 
 Une affaire s'ouvre à l'adresse `/tracks/<track>/<onglet>/cards/<identifiant de l'affaire>`. Cet
 écran affiche à gauche **l'en-tête de l'affaire** puis le **formulaire de l'étape où elle se
-trouve**, et à droite son **historique et sa discussion** (chapitre 4.10).
+trouve**, et à droite son **historique et sa discussion** ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
 
 **L'en-tête, en haut de la colonne de gauche**, dit ce que l'affaire *est* :
 
@@ -1468,11 +1232,11 @@ trouve**, et à droite son **historique et sa discussion** (chapitre 4.10).
 - son **montant** et sa devise, lorsqu'un montant est renseigné. Sinon la ligne n'apparaît pas : une
   affaire qui débute n'est pas encore chiffrée, et un tiret se lirait comme une valeur ;
 - sa **prochaine action** et son échéance, aux mêmes conditions ;
-- son **adresse email** (chapitre 4.2), avec le bouton **« Copier l'adresse »** et la phrase qui en
+- son **adresse email** ([chapitre 9.2](#l-adresse-email-de-l-affaire)), avec le bouton **« Copier l'adresse »** et la phrase qui en
   dit l'usage. Le bouton confirme la copie par « Copié » pendant deux secondes ; si votre navigateur
   la refuse — cela arrive hors connexion sécurisée —, l'écran vous dit de sélectionner l'adresse à
   la main plutôt que de faire comme si la copie avait eu lieu ;
-- la mention **« Archivé »** lorsque l'affaire est archivée (chapitre 4.4). Sa fiche reste
+- la mention **« Archivé »** lorsque l'affaire est archivée ([chapitre 9.4](#archiver-n-est-pas-supprimer)). Sa fiche reste
   consultable, et cette mention est ce qui la distingue d'une affaire en cours.
 
 **Ces six champs se modifient depuis la fiche.** Le bouton **« Modifier »**, à droite du titre,
@@ -1493,7 +1257,7 @@ Quelques points à connaître :
   volontaire —, mais l'écran vous répond « Rien n'a été enregistré : votre compte ne peut pas
   modifier cette affaire ». Vous savez ainsi que la tentative a bien eu lieu, et qu'elle a été
   refusée ;
-- **changer le responsable apparaît dans l'historique** de l'affaire (chapitre 4.10), sous la forme
+- **changer le responsable apparaît dans l'historique** de l'affaire ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)), sous la forme
   « Responsable modifié ». Les autres champs ne laissent pas de trace dans ce fil.
 
 Le formulaire de l'étape, lui, s'enregistre de la même façon, question par question.
@@ -1549,7 +1313,7 @@ quand vous quittez un champ de saisie, ou dès que vous cochez une case ou chois
 Une question dont le type est « contact » ou « membre de l'espace » n'est plus un champ où l'on
 saisit un texte : elle offre la **liste** des personnes concernées, et vous y choisissez un nom.
 
-- **La liste des contacts** est celle du carnet (chapitre 3 *ter*), avec l'organisation à côté du
+- **La liste des contacts** est celle du carnet ([chapitre 10](#le-carnet-de-contacts)), avec l'organisation à côté du
   nom lorsqu'elle est connue — « Léo Marchand — Sogexia ». C'est ce qui distingue deux homonymes.
 - **La liste des membres** est celle de l'espace de travail : les personnes qui y ont un accès.
 - **« — Aucun choix — » efface la réponse**, comme pour toute autre liste.
@@ -1571,7 +1335,7 @@ et reçoit le même message rouge que pour toute autre question.
 **Quand un déplacement vous a été refusé, la fiche vous emmène aux questions qui manquent.**
 
 Sur le board, déplacer une affaire peut être refusé parce que des réponses obligatoires manquent
-(chapitre 4.8). Le message de refus les nomme, et il porte désormais un lien **« Renseigner ces
+([chapitre 9.10](#le-tableau-kanban-d-un-channel)). Le message de refus les nomme, et il porte désormais un lien **« Renseigner ces
 champs »**. Il ouvre la fiche de l'affaire, et cette fiche :
 
 - **affiche les questions concernées, même celles que l'étape courante ne montre pas d'habitude.**
@@ -1591,20 +1355,20 @@ revenez au board et refaites votre geste. Et la mention ne nomme pas l'étape ve
 vouliez aller : la fiche ne la connaît pas, et le produit préfère ne rien dire plutôt que de
 deviner.
 
-**Un second geste y est offert : mettre l'affaire à la corbeille** (chapitre 4.7 *bis*).
+**Un second geste y est offert : mettre l'affaire à la corbeille** ([chapitre 9.15](#mettre-une-affaire-a-la-corbeille)).
 
 Une card que votre compte ne peut pas lire — ou qui n'existe pas — affiche « Card introuvable » :
 c'est le refus réel du serveur. Une card consentie ouvre sa fiche et son fil. Sans connexion,
 l'adresse mène à l'écran de connexion, qui y ramène une fois connecté.
 
-### 4.7 ter Les contacts d'une affaire : les rattacher, les détacher
+### 9.7 Les contacts d'une affaire : les rattacher, les détacher
 
 *Livré par `CRM-060`, sous-tranche 4c. Captures dans `docs/captures/CRM-060/`, préfixées
 `contacts-affaire-`.*
 
 **Où.** Dans la colonne de gauche de la fiche, **entre le formulaire et le bouton de mise à la
 corbeille** : le bloc **« Contacts de l'affaire »**. Il dit qui, dans le carnet de l'espace
-(chapitre 3 *ter*), est associé à cette affaire.
+([chapitre 10](#le-carnet-de-contacts)), est associé à cette affaire.
 
 **Ce que chaque ligne montre.** Le **nom** de la personne, le nom de son **organisation** — qui est
 un lien vers sa fiche — et son **rôle dans cette affaire** : « décideur », « prescripteur »,
@@ -1623,7 +1387,7 @@ Deux cas sont dits en toutes lettres plutôt que laissés à deviner :
 - **toutes les personnes du carnet sont déjà rattachées** : le bloc l'écrit, et n'ouvre pas une
   liste vide ;
 - **le carnet de l'espace est vide** : le bloc l'écrit, dit que le contact se crée dans le carnet avec
-  « Nouveau contact » (section 3 *ter*), et propose le lien **Ouvrir le carnet**.
+  « Nouveau contact » ([section 10](#le-carnet-de-contacts)), et propose le lien **Ouvrir le carnet**.
 
 **Détacher.** Chaque ligne porte un bouton **« Détacher »**. Il demande une **confirmation qui nomme
 la personne** : le rattachement et le rôle saisi sont perdus, la personne restant au carnet et
@@ -1638,14 +1402,14 @@ le produit préfère le dire ainsi plutôt qu'annoncer un retrait qui n'a pas eu
 
 **Corriger un rôle depuis cette page n'est pas livré, mais le geste existe ailleurs.** Ici, il faut
 détacher puis rattacher. Depuis la **fiche du contact**, en revanche, le rôle se corrige d'un seul
-geste — bouton « Modifier le rôle » sur chaque ligne (chapitre 3 *ter*, sous-tranche 4j) —, et la
+geste — bouton « Modifier le rôle » sur chaque ligne ([chapitre 10](#le-carnet-de-contacts), sous-tranche 4j) —, et la
 fiche de l'affaire est atteignable en un clic depuis là.
 
 **Ce qui n'est pas encore livré.** Une affaire ne se rattache pas depuis le carnet ni depuis la
 fiche d'organisation — le geste part toujours de l'affaire ou de la fiche du contact. Et un
-rattachement n'apparaît **pas** dans l'historique de l'affaire (chapitre 4.10).
+rattachement n'apparaît **pas** dans l'historique de l'affaire ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
 
-### 4.7 quater Les activités d'une affaire : appels, réunions, visios
+### 9.8 Les activités d'une affaire : appels, réunions, visios
 
 *Livré par `CRM-067`, tranches T2 et T3, en développement. Captures dans `docs/captures/CRM-067/`, préfixées
 `activites-`.*
@@ -1671,11 +1435,11 @@ page, sans fenêtre par-dessus :
   activité consignée est une activité qui a déjà eu lieu. Le produit tolère cinq minutes d'avance pour l'horloge de
   votre poste.
 - **Durée (minutes)** : facultative, de 1 à 1440. **Elle ne compte pas dans votre temps passé** : votre temps se
-  saisit dans « Temps » (chapitre 5 *undecies*), et le formulaire le rappelle.
+  saisit dans « Temps » ([chapitre 28](#le-temps-passe-et-le-cout-du-personnel)), et le formulaire le rappelle.
 - **Sujet** : obligatoire, 200 caractères au plus. Tant qu'il est vide, « Consigner » reste grisé.
 - **Compte rendu** : facultatif.
 - **Participants** : les **contacts liés à cette affaire** et les **membres de l'espace**, à cocher. Un contact qui
-  n'est pas lié à l'affaire ne peut pas être choisi : rattachez-le d'abord (chapitre 4.7 *ter*).
+  n'est pas lié à l'affaire ne peut pas être choisi : rattachez-le d'abord ([chapitre 9.7](#les-contacts-d-une-affaire-les-rattacher-les-detacher)).
 
 « Annuler », ou la touche Échap, referme le formulaire sans rien écrire.
 
@@ -1690,7 +1454,7 @@ page, sans fenêtre par-dessus :
 - **Une activité retirée ne se rétablit pas.**
 
 **Si vous ne pouvez pas écrire sur cette affaire.** Les boutons restent visibles mais grisés, et le bandeau en tête de
-la fiche dit pourquoi (chapitre 3.6). Vous lisez les activités comme les autres.
+la fiche dit pourquoi ([chapitre 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Vous lisez les activités comme les autres.
 
 **Ce que le produit refuse, et comment il le dit.** Chaque refus s'écrit **dans le formulaire**, en français, et votre
 saisie est conservée :
@@ -1703,7 +1467,7 @@ saisie est conservée :
 Si un participant est refusé alors que l'activité, elle, est enregistrée, le bloc le dit sous la liste : l'activité
 n'est pas annulée pour autant.
 
-**Dans l'historique de l'affaire.** Chaque activité paraît aussi dans le fil (chapitre 4.10), **à la date où elle a eu
+**Dans l'historique de l'affaire.** Chaque activité paraît aussi dans le fil ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)), **à la date où elle a eu
 lieu** et non à celle où elle a été saisie : un appel consigné le lendemain s'insère à sa place dans l'histoire. Le fil
 montre le type, le sujet, la durée et l'auteur. Le compte rendu et les participants restent dans le bloc.
 
@@ -1711,7 +1475,7 @@ montre le type, le sujet, la durée et l'auteur. Le compte rendu et les particip
 connecteur MCP saura lister, consigner et corriger les activités d'une affaire avec la tranche des outils
 « affaires » de `CRM-104`. Il ne saura pas les retirer : le retrait reste un geste de l'écran.
 
-### 4.7 quinquies La checklist d'une affaire : les points à cocher
+### 9.9 La checklist d'une affaire : les points à cocher
 
 *Livré par `CRM-068`, tranches T1 à T3a, en développement. Captures dans `docs/captures/CRM-068/`, préfixées
 `fiche-checklist-` et `board-`.*
@@ -1750,11 +1514,11 @@ glissez une affaire vers une étape alors qu'un point exigé n'est pas coché, l
 **nomme les points à cocher** : « Ces points de la checklist doivent être cochés avant ce déplacement : Proposition
 envoyée ». La carte revient à sa place.
 
-**Dans l'historique de l'affaire.** Chaque cochage et chaque décochage paraît dans le fil (chapitre 4.10), sous le
+**Dans l'historique de l'affaire.** Chaque cochage et chaque décochage paraît dans le fil ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)), sous le
 filtre « Champs » : « Point de checklist coché », avec le libellé du point et son auteur.
 
 **Si vous ne pouvez pas écrire sur cette affaire.** Les cases, « Retirer » et le champ d'ajout restent visibles mais
-grisés, et le bandeau en tête de la fiche dit pourquoi (chapitre 3.6). Vous lisez la checklist comme les autres.
+grisés, et le bandeau en tête de la fiche dit pourquoi ([chapitre 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Vous lisez la checklist comme les autres.
 
 **Dans l'espace de démonstration.** Le channel **« Checklists »** du track Studio web porte trois affaires : « Formation
 IA — Cerfrance » (un point coché sur deux, un point libre), « Atelier prompt — Lycée Vauban » (bloquée en Relance tant
@@ -1764,49 +1528,7 @@ que « Proposition envoyée » n'est pas coché) et « Parcours data — Mairie 
 aujourd'hui sans écran : l'éditeur de workflows les recevra (`CRM-068` T3b), avec un lien du bandeau de refus vers la
 fiche. Les **modèles d'affaires** (T4) et les outils du **connecteur MCP** (T5) suivront.
 
-### 4.7 bis Mettre une affaire à la corbeille
-
-*Livré par `CRM-077`. Captures dans `docs/captures/CRM-077/`, préfixées `card-geste-`.*
-
-**Où.** En bas de la colonne de gauche de la fiche, sous le formulaire : le bouton **« Mettre à la
-corbeille »**. C'est le seul endroit d'où une affaire se retire — ni le tableau kanban ni la vue
-liste ne l'offrent, et ce n'est pas un oubli : le menu d'une carte du tableau porte les gestes qui
-se défont d'eux-mêmes — un déplacement, une mise en sommeil —, et un retrait y serait d'une autre
-nature.
-
-**Ce que le produit demande avant d'agir.** Une confirmation, sous le formulaire, qui **nomme
-l'affaire** et rappelle ce que le geste fait : elle quitte le tableau, la vue liste et la recherche,
-sans être supprimée, et se restaure depuis la corbeille. Tant que vous n'avez pas confirmé, **rien
-n'est écrit**. « Annuler » referme la confirmation et vous rend le bouton — au clavier aussi.
-
-Contrairement au retrait d'un track ou d'un channel (chapitre 5), **aucun décompte n'accompagne la
-question** : une affaire ne porte pas d'objet qui deviendrait inaccessible avec elle.
-
-**Ce que vous voyez ensuite.** L'écran est remplacé par un message qui dit que l'affaire est à la
-corbeille, avec deux chemins : **revenir au channel**, ou **ouvrir la corbeille** pour l'y retrouver
-et la restaurer (chapitre 5 ter). Il ne dit pas « Card introuvable » : l'affaire existe, vous venez
-de la retirer.
-
-**Trois réponses sont possibles, et l'écran les distingue** :
-
-| Ce que vous voyez | Ce qui s'est passé |
-|---|---|
-| Le message « Affaire mise à la corbeille » | Le retrait est enregistré, et votre nom avec lui |
-| « Aucune modification : votre compte ne peut pas écrire dans cette affaire. » | Votre compte lit l'affaire mais n'a pas le droit d'y écrire. **Rien n'a changé** |
-| « Votre compte n'a pas le droit de retirer cette affaire. » | Le serveur a refusé explicitement |
-
-**Le bouton est grisé si vous ne pouvez pas écrire sur l'onglet**, et la fiche dit pourquoi
-(section 3.6). La règle reste celle du serveur : si vos droits changent entre l'ouverture de la fiche
-et le clic, c'est sa réponse, ci-dessus, qui s'affiche.
-
-**Qui peut le faire.** Toute personne ayant le droit d'**écrire** sur l'onglet de l'affaire — ce
-n'est pas réservé à une administratrice, contrairement au retrait d'un track ou d'un channel. Une
-personne en lecture seule obtient la deuxième réponse du tableau ci-dessus.
-
-**Le retrait est inscrit dans l'historique de l'affaire** (chapitre 4.10), sous « Cycle de vie »,
-avec son auteur et sa date. Vous le relisez après restauration.
-
-### 4.8 Le tableau kanban d'un channel
+### 9.10 Le tableau kanban d'un channel
 
 *Livré par `CRM-041`. Captures dans `docs/captures/CRM-041/`, dont une vidéo du glisser-déposer.*
 
@@ -1824,9 +1546,9 @@ Ce dernier repère passe au **rouge** quand le seuil de relance de l'étape est 
 n'apparaît pas lorsque l'étape n'en définit aucun.
 
 Les affaires **archivées** et celles en **corbeille** n'y figurent pas : le tableau montre l'activité
-en cours (chapitre 4.4). Les affaires **en sommeil** n'y figurent pas non plus, jusqu'à leur
+en cours ([chapitre 9.4](#archiver-n-est-pas-supprimer)). Les affaires **en sommeil** n'y figurent pas non plus, jusqu'à leur
 échéance : une case à cocher **« Afficher les affaires en sommeil »**, au-dessus des colonnes, les
-ramène — marquées de leur date de réveil (chapitre 4.9 bis). Le nombre d'affaires d'une colonne et
+ramène — marquées de leur date de réveil ([chapitre 9.13](#mettre-une-affaire-en-sommeil-et-la-retrouver)). Le nombre d'affaires d'une colonne et
 son cumul de montants portent sur les cartes **affichées** : ils changent donc avec cette case.
 
 Si toutes les affaires d'un channel dorment, le tableau ne prétend pas qu'il est vide : il annonce
@@ -1863,15 +1585,15 @@ responsable, échéance, contacts — se complète ensuite sur la fiche.
 - **Au clavier**, par le bouton « Actions » de la carte, qui ouvre son menu. La partie
   **Déplacer vers** y liste les déplacements déclarés depuis l'étape courante — et **eux seuls**.
   Lorsqu'une étape n'en propose aucun, le menu s'ouvre quand même et le dit en toutes lettres : il
-  porte aussi le geste de sommeil (chapitre 4.9 bis), qui, lui, reste disponible.
+  porte aussi le geste de sommeil ([chapitre 9.13](#mettre-une-affaire-en-sommeil-et-la-retrouver)), qui, lui, reste disponible.
 
-Les deux gestes passent par le même contrôle du serveur, celui du chapitre 4.3 : l'écran ne propose
+Les deux gestes passent par le même contrôle du serveur, celui du [chapitre 9.3](#faire-avancer-une-affaire-ce-que-le-produit-autorise-et-ce-qu-il-refuse) : l'écran ne propose
 jamais une action que le serveur refuserait, et il ne se substitue jamais à lui.
 
 **Quand un motif est exigé.** Certains déplacements — « Marquer perdu », par exemple — exigent une
 raison. L'écran la demande **avant** d'envoyer quoi que ce soit, et l'affaire ne bouge pas tant que
 vous ne l'avez pas donnée. **Ce motif est conservé** : il rejoint l'historique de l'affaire, comme un
-commentaire à votre nom (chapitre 4.10), et l'écran de saisie le dit. *Cette phrase disait qu'il était
+commentaire à votre nom ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)), et l'écran de saisie le dit. *Cette phrase disait qu'il était
 perdu ; il est enregistré depuis que l'historique des affaires existe.*
 
 **Quand le serveur refuse.** L'affaire **retourne exactement à sa place**, et la raison s'affiche :
@@ -1883,7 +1605,7 @@ Pour un track que votre compte ne peut pas lire, cette adresse affiche « Track 
 le tableau réel est atteint et les déplacements consentis sont exécutables depuis le menu ou par
 glisser-déposer. Sans connexion, l'adresse mène à l'écran de connexion.
 
-### 4.9 La vue liste d'un channel
+### 9.11 La vue liste d'un channel
 
 *Livrée par `CRM-042`. Captures dans `docs/captures/CRM-042/`.*
 
@@ -1896,7 +1618,7 @@ sienne au chemin du channel (`…/liste`).
 ni archivées ni en corbeille — rangées par leurs propres colonnes plutôt que par le workflow.
 
 **Créer une affaire** depuis la liste : le bouton **Nouvelle affaire** vient en tête de la barre des
-filtres, et ouvre le même formulaire que sur le tableau (chapitre 4.8) — même titre seul, même étape
+filtres, et ouvre le même formulaire que sur le tableau ([chapitre 9.10](#le-tableau-kanban-d-un-channel)) — même titre seul, même étape
 initiale, même fiche qui s'ouvre.
 
 **Ce que montre une ligne.** Le titre de l'affaire, qui est un **lien** vers sa fiche ; son étape,
@@ -1923,7 +1645,7 @@ grosse affaire du channel.
   Elle est faite pour le français : une affaire rédigée en anglais peut lui échapper ;
 - **Afficher les affaires en sommeil** — une case à cocher, **décochée par défaut**. Les affaires
   mises en sommeil sont rangées hors de la liste jusqu'à leur échéance ; cette case les ramène.
-  Voir le chapitre 4.9 bis.
+  Voir le [chapitre 9.13](#mettre-une-affaire-en-sommeil-et-la-retrouver).
 
 Le compte affiché à droite — « Affaires : 3 » — est celui des affaires **qui correspondent aux
 filtres**, pas celui du channel entier.
@@ -1951,7 +1673,7 @@ défaut ne montre pas les affaires endormies. Il apparaît donc aussi sur une li
 différence est que ces affaires y sont visibles.
 
 **Ce que la liste ne fait pas.** Elle **lit**. On n'y crée, n'y modifie, n'y archive et n'y déplace
-aucune affaire : le déplacement reste le geste du tableau (chapitre 4.8), et le reste n'a pas encore
+aucune affaire : le déplacement reste le geste du tableau ([chapitre 9.10](#le-tableau-kanban-d-un-channel)), et le reste n'a pas encore
 d'écran. Le **responsable** n'y figure pas non plus, pour le même motif qu'au tableau : aucun nom
 n'est aujourd'hui lisible, et le produit préfère ne rien afficher qu'un identifiant technique.
 
@@ -1959,80 +1681,7 @@ Pour un track que votre compte ne peut pas lire, cette adresse affiche « Track 
 pour le tableau. Sinon, la liste réelle est consultable, triable et filtrable. Sans connexion,
 l'adresse mène à l'écran de connexion.
 
-### 4.9 bis Mettre une affaire en sommeil, et la retrouver
-
-*Livrée par `CRM-081`. Captures dans `docs/captures/CRM-081/`.*
-
-Certaines affaires n'attendent rien de vous avant plusieurs semaines : un client qui rappellera
-après ses congés, une décision reportée au prochain comité. Les laisser dans le tableau et dans la
-liste les fait relire chaque jour pour rien. Le **sommeil** les range jusqu'à une échéance que vous
-choisissez, sans les archiver et sans rien leur retirer.
-
-**Endormir une affaire, depuis sa fiche.** Le bouton **Mettre en sommeil** ouvre un petit panneau
-qui propose quatre échéances usuelles — *Demain*, *Dans trois jours*, *La semaine prochaine*, *Le
-mois prochain* — et une échéance libre, à saisir. L'affaire porte alors, à côté de son titre, la
-mention **« En sommeil jusqu'au … »**.
-
-**Ou depuis le tableau, sans quitter l'écran.** Le bouton **Actions** d'une carte ouvre son menu,
-qui porte deux parties : les déplacements déclarés, puis **Sommeil**. Les quatre mêmes échéances y
-sont proposées directement. La carte **quitte alors le tableau** — c'est tout l'intérêt du geste :
-ranger une affaire sans changer d'écran — et le compteur de sa colonne suit.
-
-L'**échéance libre**, elle, ne se saisit que depuis la fiche : une carte de tableau est trop étroite
-pour un champ de date. Sur une affaire endormie que la case « Afficher les affaires en sommeil »
-ramène, ce même menu porte **Réveiller** à la place des quatre échéances.
-
-Quand vous lisez cette affaire sans avoir le droit de l'écrire, le geste est grisé et un bandeau
-en tête de l'onglet dit pourquoi (section 3.6). Si le serveur refuse malgré tout — vos droits ont
-changé entre-temps —, **le menu reste ouvert** et la raison s'affiche dessous, mot pour mot celle de
-la fiche.
-
-Une échéance **déjà passée** est refusée, et le message le dit sous le champ sans effacer votre
-saisie. Une affaire peut être **à la fois archivée et endormie** : les deux mentions coexistent, car
-elles ne disent pas la même chose.
-
-**La réveiller.** Sur une affaire endormie, le même emplacement porte **Réveiller**. Le geste est
-immédiat, sans confirmation : il n'y a rien à perdre, l'affaire redevient simplement visible.
-Réveiller une affaire qui ne dormait pas ne produit rien — ce n'est pas une erreur, c'est un état
-déjà atteint.
-
-**Ce que le sommeil change dans les deux vues.** Une affaire endormie **sort du tableau et de la
-liste** aussi longtemps que son échéance est future. C'est tout l'intérêt du geste : sans cela,
-l'endormir ne changerait rien pour vous.
-
-Elle n'est pour autant jamais perdue. Une case à cocher **Afficher les affaires en sommeil** — au
-dessus des colonnes du tableau, et dans les filtres de la liste — les ramène d'un clic. Rendues
-visibles, elles sont **marquées** d'une petite pastille portant l'icône de lune et leur date de
-réveil, pour que vous ne les confondiez pas avec les autres.
-
-**Le choix suit la vue.** Ce réglage s'inscrit dans l'adresse de la page : recharger vous ramène au
-même état, l'adresse se partage telle quelle, et passer du tableau à la liste — ou l'inverse — le
-conserve. Vous n'avez donc à le demander qu'une fois.
-
-**Une échéance passée n'est plus un sommeil.** Le produit n'a besoin d'aucun réveil automatique :
-dès que l'échéance est dépassée, l'affaire redevient visible partout, sans pastille et sans que
-personne ait à intervenir. Sa date reste inscrite dans son historique, mais elle ne la range plus.
-Rien ne clignote pour autant à la seconde près : la mention disparaît au prochain affichage de
-l'écran, et une échéance de sommeil se compte en jours.
-
-**L'historique garde les deux gestes.** Le fil de l'affaire nomme **« Mise en sommeil »** et
-**« Réveil »**, avec l'échéance concernée. Comme tout le fil, ces lignes ne s'effacent pas
-(chapitre 4.10).
-
-**Les compteurs suivent ce que vous voyez.** Le nombre d'affaires d'une colonne du tableau, le total
-de montants qui l'accompagne et le compte « Affaires : n » de la liste portent sur les affaires
-**affichées** : ils changent donc lorsque vous cochez la case. Une colonne annonce ce qu'elle
-montre, sinon son compteur désignerait des cartes introuvables à l'œil.
-
-**Ce que le sommeil n'est pas.** Ce n'est ni une archive, ni une suppression, ni une permission : une
-affaire endormie se déplace, se modifie et se commente exactement comme une autre, et toute personne
-qui pouvait la lire peut encore la retrouver. Le sommeil **range**, il ne protège pas.
-
-**Ce qui n'est pas encore livré.** Seules les **affaires** peuvent dormir : pas encore les fils de
-messagerie. Et la **vue liste** n'offre pas le geste — elle laisse la case d'affichage et le lien
-vers la fiche.
-
-### 4.10 L'historique et la discussion d'une affaire
+### 9.12 L'historique et la discussion d'une affaire
 
 *Livrée par `CRM-043` et `CRM-044`. Captures dans `docs/captures/CRM-043/` et
 `docs/captures/CRM-044/`.*
@@ -2056,7 +1705,7 @@ lieu :
 | Un courrier est arrivé sur l'affaire, ou en est parti | *Message reçu* / *Message envoyé*, avec son objet et son correspondant |
 | Un contact a été rattaché à l'affaire, ou détaché | *Contact rattaché* / *Contact détaché*, avec son nom et son rôle |
 | Le rôle d'un contact rattaché a changé | *Rôle du contact modifié*, avec l'ancien rôle et le nouveau |
-| Un appel, une réunion ou une visio a été consigné (chapitre 4.7 *quater*) | *Appel*, *Réunion* ou *Visio*, avec son sujet, à la date où l'activité a eu lieu ; *Activité retirée* une fois retirée |
+| Un appel, une réunion ou une visio a été consigné ([chapitre 9.8](#les-activites-d-une-affaire-appels-reunions-visios)) | *Appel*, *Réunion* ou *Visio*, avec son sujet, à la date où l'activité a eu lieu ; *Activité retirée* une fois retirée |
 | L'affaire a été mise en sommeil, ou réveillée | *Affaire mise en sommeil* / *Affaire réveillée*, avec l'échéance |
 | L'affaire est restée trop longtemps dans son étape | *Relance automatique*, avec le retard et le seuil |
 
@@ -2087,7 +1736,7 @@ rétablit le fil complet, et aucune préférence n'est enregistrée sur votre ap
 fil est vide, elle est absente : six bascules affichant « 0 » au-dessus de « aucun événement pour
 le moment » seraient un contrôle sans objet.
 
-**Les changements de contexte sont nommés.** Lorsqu'une affaire change de dossier (chapitre 4.11),
+**Les changements de contexte sont nommés.** Lorsqu'une affaire change de dossier ([chapitre 9.14](#ranger-une-affaire-dans-un-autre-dossier)),
 le serveur écrit une trace **« Dossier changé »**. Lorsqu'un administrateur remappe toutes les
 affaires d'un dossier vers un autre processus, le fil dit **« Workflow modifié »**. Il ne donne pas
 les noms avant/après : la vue ne résout pas ces noms historiques et n'en invente aucun. INC-077 est
@@ -2163,14 +1812,14 @@ n'apparaît qu'au prochain chargement.
 - **Le motif d'un déplacement n'est conservé nulle part.** L'écran le demande lorsqu'une affaire est
   marquée perdue, et il n'est enregistré ni dans le fil, ni ailleurs.
 - **Les emails et les activités — appels, réunions — n'apparaissent pas** : les boîtes de réception
-  se déclarent et se testent depuis `CRM-052` (chapitre 4.12), mais aucun message n'est encore
+  se déclarent et se testent depuis `CRM-052` ([chapitre 11.1](#les-boites-de-reception-declarees)), mais aucun message n'est encore
   relevé, et les activités n'existent pas
   dans le produit.
 - **Aucune recherche, aucun regroupement par jour, aucun export** du fil.
 
 - **Aucun nom d'auteur n'est affiché** : aucun nom de personne n'est aujourd'hui lisible dans le
   produit, et il est préféré de ne rien afficher plutôt qu'un identifiant technique. C'est la même
-  limite que pour le responsable d'une affaire (chapitres 4.8 et 4.9).
+  limite que pour le responsable d'une affaire (chapitres [9.10](#le-tableau-kanban-d-un-channel) et [9.11](#la-vue-liste-d-un-channel)).
 - **Les mentions ne préviennent personne** : écrire le nom d'un collègue dans un commentaire ne lui
   envoie aucune notification.
 - **La mise en forme n'est pas interprétée** : le texte est affiché tel qu'il a été saisi, retours à
@@ -2181,15 +1830,88 @@ n'apparaît qu'au prochain chargement.
 Après connexion, le composeur publie réellement le commentaire si votre compte peut écrire dans
 le channel. Un profil en lecture seule reçoit un refus explicite et conserve son texte saisi.
 
-### 4.11 Ranger une affaire dans un autre dossier
+### 9.13 Mettre une affaire en sommeil, et la retrouver
 
-*Livrée par `CRM-045`. Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir §3.2.*
+*Livrée par `CRM-081`. Captures dans `docs/captures/CRM-081/`.*
+
+Certaines affaires n'attendent rien de vous avant plusieurs semaines : un client qui rappellera
+après ses congés, une décision reportée au prochain comité. Les laisser dans le tableau et dans la
+liste les fait relire chaque jour pour rien. Le **sommeil** les range jusqu'à une échéance que vous
+choisissez, sans les archiver et sans rien leur retirer.
+
+**Endormir une affaire, depuis sa fiche.** Le bouton **Mettre en sommeil** ouvre un petit panneau
+qui propose quatre échéances usuelles — *Demain*, *Dans trois jours*, *La semaine prochaine*, *Le
+mois prochain* — et une échéance libre, à saisir. L'affaire porte alors, à côté de son titre, la
+mention **« En sommeil jusqu'au … »**.
+
+**Ou depuis le tableau, sans quitter l'écran.** Le bouton **Actions** d'une carte ouvre son menu,
+qui porte deux parties : les déplacements déclarés, puis **Sommeil**. Les quatre mêmes échéances y
+sont proposées directement. La carte **quitte alors le tableau** — c'est tout l'intérêt du geste :
+ranger une affaire sans changer d'écran — et le compteur de sa colonne suit.
+
+L'**échéance libre**, elle, ne se saisit que depuis la fiche : une carte de tableau est trop étroite
+pour un champ de date. Sur une affaire endormie que la case « Afficher les affaires en sommeil »
+ramène, ce même menu porte **Réveiller** à la place des quatre échéances.
+
+Quand vous lisez cette affaire sans avoir le droit de l'écrire, le geste est grisé et un bandeau
+en tête de l'onglet dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Si le serveur refuse malgré tout — vos droits ont
+changé entre-temps —, **le menu reste ouvert** et la raison s'affiche dessous, mot pour mot celle de
+la fiche.
+
+Une échéance **déjà passée** est refusée, et le message le dit sous le champ sans effacer votre
+saisie. Une affaire peut être **à la fois archivée et endormie** : les deux mentions coexistent, car
+elles ne disent pas la même chose.
+
+**La réveiller.** Sur une affaire endormie, le même emplacement porte **Réveiller**. Le geste est
+immédiat, sans confirmation : il n'y a rien à perdre, l'affaire redevient simplement visible.
+Réveiller une affaire qui ne dormait pas ne produit rien — ce n'est pas une erreur, c'est un état
+déjà atteint.
+
+**Ce que le sommeil change dans les deux vues.** Une affaire endormie **sort du tableau et de la
+liste** aussi longtemps que son échéance est future. C'est tout l'intérêt du geste : sans cela,
+l'endormir ne changerait rien pour vous.
+
+Elle n'est pour autant jamais perdue. Une case à cocher **Afficher les affaires en sommeil** — au
+dessus des colonnes du tableau, et dans les filtres de la liste — les ramène d'un clic. Rendues
+visibles, elles sont **marquées** d'une petite pastille portant l'icône de lune et leur date de
+réveil, pour que vous ne les confondiez pas avec les autres.
+
+**Le choix suit la vue.** Ce réglage s'inscrit dans l'adresse de la page : recharger vous ramène au
+même état, l'adresse se partage telle quelle, et passer du tableau à la liste — ou l'inverse — le
+conserve. Vous n'avez donc à le demander qu'une fois.
+
+**Une échéance passée n'est plus un sommeil.** Le produit n'a besoin d'aucun réveil automatique :
+dès que l'échéance est dépassée, l'affaire redevient visible partout, sans pastille et sans que
+personne ait à intervenir. Sa date reste inscrite dans son historique, mais elle ne la range plus.
+Rien ne clignote pour autant à la seconde près : la mention disparaît au prochain affichage de
+l'écran, et une échéance de sommeil se compte en jours.
+
+**L'historique garde les deux gestes.** Le fil de l'affaire nomme **« Mise en sommeil »** et
+**« Réveil »**, avec l'échéance concernée. Comme tout le fil, ces lignes ne s'effacent pas
+([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
+
+**Les compteurs suivent ce que vous voyez.** Le nombre d'affaires d'une colonne du tableau, le total
+de montants qui l'accompagne et le compte « Affaires : n » de la liste portent sur les affaires
+**affichées** : ils changent donc lorsque vous cochez la case. Une colonne annonce ce qu'elle
+montre, sinon son compteur désignerait des cartes introuvables à l'œil.
+
+**Ce que le sommeil n'est pas.** Ce n'est ni une archive, ni une suppression, ni une permission : une
+affaire endormie se déplace, se modifie et se commente exactement comme une autre, et toute personne
+qui pouvait la lire peut encore la retrouver. Le sommeil **range**, il ne protège pas.
+
+**Ce qui n'est pas encore livré.** Seules les **affaires** peuvent dormir : pas encore les fils de
+messagerie. Et la **vue liste** n'offre pas le geste — elle laisse la case d'affichage et le lien
+vers la fiche.
+
+### 9.14 Ranger une affaire dans un autre dossier
+
+*Livrée par `CRM-045`. Aucune capture : cette fonctionnalité n'a pas encore d'écran, voir [§3.3](#ce-que-vous-voyez-aujourd-hui-et-pourquoi).*
 
 Une affaire peut **changer d'onglet** — de dossier. Le geste répond à une situation banale : une
 affaire a été ouverte au mauvais endroit, ou elle a changé de nature et relève désormais d'une
 autre activité.
 
-Ce n'est pas un déplacement d'étape (chapitre 4.3), et les deux ne se confondent pas : l'un fait
+Ce n'est pas un déplacement d'étape ([chapitre 9.3](#faire-avancer-une-affaire-ce-que-le-produit-autorise-et-ce-qu-il-refuse)), et les deux ne se confondent pas : l'un fait
 avancer une affaire **dans** son processus, l'autre la fait changer **de** dossier — et donc, si le
 dossier d'arrivée suit un autre processus, **de processus**.
 
@@ -2219,7 +1941,7 @@ accepter explicitement la perte pour que le rangement ait lieu. Rien n'est perdu
 processus reste le même.
 
 **La mémoire, elle, survit à la donnée.** Les réponses disparaissent de la fiche ; les traces
-*Champ renseigné* qu'elles ont laissées dans l'historique restent, avec leurs dates (chapitre 4.10).
+*Champ renseigné* qu'elles ont laissées dans l'historique restent, avec leurs dates ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
 Rien ne peut effacer l'historique d'une affaire.
 
 **Deux effets accompagnent le rangement.** L'affaire est placée **en fin** de la colonne d'arrivée,
@@ -2230,28 +1952,458 @@ semaines paraîtrait y être entrée à l'instant.
 
 **Une trace est écrite.** Le rangement laisse un événement **« Dossier changé »** dans
 l'historique de l'affaire, y compris lorsque personne ne passe par l'application. Le fil ne nomme
-pas les dossiers avant/après, car il ne résout pas leurs noms historiques (chapitre 4.10).
+pas les dossiers avant/après, car il ne résout pas leurs noms historiques ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
 
 **Aucun écran ne porte ce geste.** Le rangement passe aujourd'hui par l'API, ce qui est une
 opération d'exploitation et non un parcours produit.
 
-### 4.6 Ce qui n'est pas encore livré
+### 9.15 Mettre une affaire à la corbeille
 
-- **Les vues sauvegardées** : la vue liste et ses filtres existent (chapitre 4.9), mais aucun filtre
+*Livré par `CRM-077`. Captures dans `docs/captures/CRM-077/`, préfixées `card-geste-`.*
+
+**Où.** En bas de la colonne de gauche de la fiche, sous le formulaire : le bouton **« Mettre à la
+corbeille »**. C'est le seul endroit d'où une affaire se retire — ni le tableau kanban ni la vue
+liste ne l'offrent, et ce n'est pas un oubli : le menu d'une carte du tableau porte les gestes qui
+se défont d'eux-mêmes — un déplacement, une mise en sommeil —, et un retrait y serait d'une autre
+nature.
+
+**Ce que le produit demande avant d'agir.** Une confirmation, sous le formulaire, qui **nomme
+l'affaire** et rappelle ce que le geste fait : elle quitte le tableau, la vue liste et la recherche,
+sans être supprimée, et se restaure depuis la corbeille. Tant que vous n'avez pas confirmé, **rien
+n'est écrit**. « Annuler » referme la confirmation et vous rend le bouton — au clavier aussi.
+
+Contrairement au retrait d'un track ou d'un channel ([chapitre 17](#administrer-l-arborescence-tracks-et-channels)), **aucun décompte n'accompagne la
+question** : une affaire ne porte pas d'objet qui deviendrait inaccessible avec elle.
+
+**Ce que vous voyez ensuite.** L'écran est remplacé par un message qui dit que l'affaire est à la
+corbeille, avec deux chemins : **revenir au channel**, ou **ouvrir la corbeille** pour l'y retrouver
+et la restaurer ([chapitre 20](#la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre)). Il ne dit pas « Card introuvable » : l'affaire existe, vous venez
+de la retirer.
+
+**Trois réponses sont possibles, et l'écran les distingue** :
+
+| Ce que vous voyez | Ce qui s'est passé |
+|---|---|
+| Le message « Affaire mise à la corbeille » | Le retrait est enregistré, et votre nom avec lui |
+| « Aucune modification : votre compte ne peut pas écrire dans cette affaire. » | Votre compte lit l'affaire mais n'a pas le droit d'y écrire. **Rien n'a changé** |
+| « Votre compte n'a pas le droit de retirer cette affaire. » | Le serveur a refusé explicitement |
+
+**Le bouton est grisé si vous ne pouvez pas écrire sur l'onglet**, et la fiche dit pourquoi
+([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). La règle reste celle du serveur : si vos droits changent entre l'ouverture de la fiche
+et le clic, c'est sa réponse, ci-dessus, qui s'affiche.
+
+**Qui peut le faire.** Toute personne ayant le droit d'**écrire** sur l'onglet de l'affaire — ce
+n'est pas réservé à une administratrice, contrairement au retrait d'un track ou d'un channel. Une
+personne en lecture seule obtient la deuxième réponse du tableau ci-dessus.
+
+**Le retrait est inscrit dans l'historique de l'affaire** ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)), sous « Cycle de vie »,
+avec son auteur et sa date. Vous le relisez après restauration.
+
+### 9.16 Ce qui n'est pas encore livré
+
+- **Les vues sauvegardées** : la vue liste et ses filtres existent ([chapitre 9.11](#la-vue-liste-d-un-channel)), mais aucun filtre
   ne se conserve d'une session à l'autre autrement qu'en gardant l'adresse.
 - **Le choix du nombre de lignes par page** : la liste en affiche vingt-cinq, et cela ne se règle pas.
 - **La recherche sur tout l'espace de travail** : la recherche de la vue liste est bornée au channel
   ouvert.
 - **Le réordonnancement d'une affaire dans sa colonne** : le déplacement change d'étape, pas de rang.
 - **Le rangement d'une affaire dans un autre dossier depuis l'écran** : la règle existe et le
-  serveur l'applique (chapitre 4.11), mais aucun bouton ne le propose.
+  serveur l'applique ([chapitre 9.14](#ranger-une-affaire-dans-un-autre-dossier)), mais aucun bouton ne le propose.
 - **Les étiquettes sur une carte du tableau** : elles ne sont pas portées par le produit. Le
-  responsable, lui, est lisible sur la fiche depuis le chapitre 4.7.
+  responsable, lui, est lisible sur la fiche depuis le [chapitre 9.6](#la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent).
 - **Les documents** : aucune pièce jointe n'est portée par le produit. L'historique, lui, est livré
-  (chapitre 4.10).
+  ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
 - **Le score de santé** : la colonne existe, rien ne l'alimente.
 
-### 4.12 Les boîtes de réception déclarées
+## 10. Le carnet de contacts
+
+*Livré par `CRM-060`, sous-tranches 4a, 4b, 4e, 4f, 4g et 4h, et par la tranche 6 ; l'onglet
+« Organisations », la création et la modification d'une organisation par `CRM-114`. Décrit
+l'application réellement exécutée ; captures dans `docs/captures/CRM-060/` et
+`docs/captures/CRM-114/`.*
+
+L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
+personnes avec qui vos affaires se traitent, et l'organisation à laquelle chacune appartient.
+
+Le carnet a **deux onglets**, en tête de page : **Contacts**, la liste des personnes, et
+**Organisations**, la liste des organisations (voir plus bas). Chaque onglet a sa propre adresse :
+vous pouvez l'ajouter à vos favoris ou la partager.
+
+Le carnet se présente en tableau, une ligne par contact, rangé par nom :
+
+| Colonne | Ce qu'elle porte |
+|---|---|
+| Nom | Le nom complet de la personne. Il est toujours renseigné. **C'est un lien** : il ouvre la fiche de ce contact |
+| Organisation | L'organisation à laquelle la personne appartient, lorsqu'elle en a une. **C'est un lien** : il ouvre la fiche de cette organisation |
+| Fonction | Sa fonction, par exemple « Directeur achats » |
+| Email | Son adresse, lorsqu'elle est connue |
+| Téléphone | Son numéro, lorsqu'il est connu |
+
+**Une cellule vide veut dire « pas renseigné », et rien d'autre.** Le carnet n'écrit ni tiret ni
+« non renseigné » : un contact peut n'être qu'un nom et un téléphone, et c'est un cas ordinaire, pas
+une donnée manquante à corriger. Dans l'espace de démonstration, Sophie Dupont n'a pas
+d'organisation et Élise Fabre n'a pas d'email.
+
+**Qui voit quoi.** Tout membre de l'espace de travail lit le carnet, y compris un compte en lecture
+seule. Une ligne que votre compte n'a pas le droit de lire n'apparaît simplement pas, et c'est la
+règle générale du produit — un refus se manifeste par l'absence de donnée,
+jamais par un message d'erreur technique.
+
+**Ce que le carnet ne fait pas encore, et c'est dit plutôt que laissé à deviner.** Il permet de
+**créer** un contact, mais ni de le modifier ni de le supprimer : ces deux gestes vivent sur la
+**fiche** du contact, et non sur une ligne du carnet — on ne pose pas un geste irréversible au bout
+de chaque ligne d'une liste que l'on parcourt. Cliquer sur un email n'ouvre pas votre logiciel de
+messagerie. Il n'y a pas non plus de recherche ni de filtre : le carnet affiche l'ensemble des
+contacts de l'espace.
+
+Le rattachement d'un contact à une affaire existe déjà **en base** — c'est lui qui alimente la
+suggestion de classement d'un message dont l'expéditeur est un contact connu —, mais il ne se
+règle pas encore depuis un écran.
+
+### 10.1 Créer un contact
+
+Le bouton **« Nouveau contact »**, au-dessus du tableau, ouvre un formulaire **dans la page** — pas
+une fenêtre par-dessus : la liste reste visible, et c'est elle qui vous dit si la personne y figure
+déjà.
+
+Cinq champs, et un seul est obligatoire :
+
+- **Nom** — obligatoire. Un nom vide est refusé avant même l'envoi.
+- **Organisation** — au choix parmi celles de l'espace de travail, ou aucune. Le formulaire ne crée
+  pas d'organisation : créez-la d'abord dans l'onglet **Organisations**.
+- **Fonction**, **Email**, **Téléphone** — facultatifs. Laissés vides, ils restent vides : le carnet
+  n'écrit ni tiret ni « non renseigné ».
+
+Le contact créé **rejoint aussitôt le tableau**, à sa place dans l'ordre alphabétique, sans que la
+page ne se recharge.
+
+**Si la création est refusée**, le message le dit en clair et **votre saisie est conservée** :
+
+- *« Un contact porte déjà cette adresse email »* — l'adresse est unique dans l'espace de travail,
+  quelle que soit la casse ;
+- *« Cette organisation n'existe plus »* — la liste que vous aviez sous les yeux a vieilli ;
+  relisez-la et choisissez-en une autre ;
+- *« Votre rôle ne permet pas de créer un contact »* — d'ordinaire, « Nouveau contact » est grisé
+  pour un compte qui ne peut pas créer ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) ; ce message ne paraît que si vos droits ont
+  changé entre-temps ou n'ont pas pu être lus. Le serveur reste la règle.
+
+**Ce que ce formulaire ne fait pas**, et c'est dit plutôt que caché : il ne **supprime** pas un
+contact existant et il ne crée pas d'organisation ; il n'existe que sur le carnet — ni depuis la
+fiche d'une affaire, ni depuis un champ de formulaire. Pour **modifier** une personne déjà créée,
+ouvrez sa fiche : le bouton « Modifier » y attend.
+
+### 10.2 La fiche d'un contact
+
+Cliquer sur le nom d'une personne — dans le carnet, ou dans la liste des contacts d'une
+organisation — ouvre sa **fiche**. Elle porte son **nom en titre**, puis deux blocs :
+
+- **ce qui la caractérise** — sa **fonction**, son **organisation**, son **email** et son
+  **téléphone**. L'organisation est un lien vers sa propre fiche ; comme partout dans le carnet, une
+  valeur absente laisse la place **vide** plutôt qu'un tiret ;
+- **ses affaires** — un tableau à trois colonnes : l'affaire, le **rôle** que la personne y tient
+  (par exemple « decideur »), et son **état**. Le titre de chaque affaire est un lien qui l'ouvre.
+
+C'est la seule page qui répond à la question « sur quoi travaillons-nous avec cette personne ? »,
+et depuis la sous-tranche 4h c'est aussi d'ici que l'on **ajoute** une affaire à cette liste
+(« Rattacher une personne à une affaire », plus bas).
+
+**Le rôle dans l'affaire n'est pas la fonction.** La fonction qualifie la personne dans son
+organisation ; le rôle dit ce qu'elle est **dans cette affaire-là**. Les deux portent le même mot
+dans la langue courante, c'est pourquoi ils vivent dans deux blocs séparés.
+
+**Quelles affaires sont listées.** Uniquement celles que **vous** avez le droit de lire : si une
+affaire appartient à un univers qui vous est fermé, elle n'apparaît pas, et la page ne le signale
+pas — elle ne peut pas vous parler de ce que vous ne pouvez pas voir. Une affaire **archivée** reste
+listée, avec la mention **« Archivée »**, parce que l'historique d'une personne compte. Une affaire
+**mise à la corbeille** n'est pas listée : c'est la corbeille qui en répond.
+
+**Une adresse inconnue, un contact supprimé ou un contact que vous n'avez pas le droit de lire
+donnent tous le même écran** : « Contact introuvable », avec un bouton de retour au carnet — même
+règle que pour l'organisation, et pour la même raison.
+
+### 10.3 Modifier un contact
+
+Le bouton **« Modifier »**, en haut de la fiche, ouvre un formulaire **dans la page** — pas une
+fenêtre par-dessus : les deux blocs restent visibles en dessous, et vous corrigez en voyant ce que
+vous corrigez.
+
+Les cinq champs sont ceux de la création, **déjà remplis** avec les valeurs actuelles. Le **nom**
+reste obligatoire ; les autres peuvent être vidés, et ils redeviennent alors vides sur la fiche.
+Vider le champ **Organisation** détache la personne de son organisation, sans la supprimer.
+
+Une fois enregistrée, la modification apparaît **immédiatement** dans le bloc du haut, et le titre
+de la page suit le nouveau nom. Le tableau des affaires, lui, ne bouge pas : modifier une personne
+ne change rien à ce sur quoi elle travaille.
+
+**Si la modification est refusée**, le message le dit en clair et **votre saisie est conservée** :
+
+- *« Un autre contact porte déjà cette adresse email »* — l'adresse est unique dans l'espace de
+  travail, quelle que soit la casse. Vous pouvez en revanche réenregistrer la personne avec sa
+  **propre** adresse sans rien changer : elle ne se heurte pas à elle-même ;
+- *« Cette organisation n'existe plus »* — la liste que vous aviez sous les yeux a vieilli ;
+- *« Une des valeurs saisies n'a pas la forme attendue »* — un email mal formé, par exemple ;
+- *« Rien n'a été modifié »* — et ce message-là mérite une explication.
+
+**Pourquoi « Rien n'a été modifié » ne dit pas pourquoi.** Deux situations donnent exactement la
+même réponse du serveur, et le produit ne peut pas les distinguer : soit votre rôle ne vous permet
+pas de modifier ce contact — d'ordinaire, « Modifier » est alors grisé ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) ; ce message ne paraît
+que si vos droits ont changé entre-temps ou n'ont pas pu être lus —, soit le contact a été supprimé entre le moment où vous
+avez ouvert sa fiche et celui où vous avez enregistré. Le message ne tranche donc pas, et vous
+invite à **recharger la fiche** : son état actuel répondra à la question. Le formulaire reste
+ouvert et votre saisie est intacte, pour que vous ne perdiez rien.
+
+### 10.4 Supprimer un contact
+
+*Livré par la tranche 6.*
+
+Le bouton **« Supprimer »** se trouve à côté de **« Modifier »**, en haut de la fiche. Il vient en
+second, et c'est délibéré : on lit d'abord le geste que l'on peut défaire.
+
+Il ouvre une **confirmation dans la page**, qui **nomme la personne** et vous dit **deux choses que
+l'écran ne montre pas** :
+
+- **combien d'affaires perdent ce contact**, et que **chacune gardera dans son historique la trace
+  de ce détachement**. Supprimer un contact retire tous ses rattachements d'un seul coup, et chaque
+  affaire concernée reçoit une ligne « Contact détaché » dans son fil. Cette trace est
+  **définitive** : l'historique d'une affaire ne s'efface pas, c'est ce qui en fait une mémoire ;
+- **que les formulaires d'affaires qui désignent ce contact conservent leur valeur.** Ils
+  n'affichent pas un champ vidé, mais une **« référence inconnue »** avec l'identifiant. C'est
+  volontaire : effacer la valeur détruirait une donnée historique juste — cette affaire a bien été
+  suivie par cette personne —, et un champ vidé donnerait à croire que rien n'y avait été saisi.
+
+Quand la personne n'est rattachée à **aucune** affaire, la première phrase n'apparaît pas : il n'y
+a rien à annoncer.
+
+**Une suppression réussie vous ramène au carnet**, qui ne porte plus la ligne. C'est là que vous
+vérifiez que le geste a abouti.
+
+**Si rien n'a été supprimé, l'écran le dit.** Vous restez sur la fiche, elle est relue, et un
+message vous annonce qu'« aucun contact n'a été supprimé ». Deux causes mènent là et le produit ne
+peut pas les distinguer : soit vous n'avez pas le droit de supprimer ce contact — d'ordinaire, le
+bouton est alors grisé ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) ; ce message ne paraît que si vos droits ont changé entre-temps
+ou n'ont pas pu être lus —, soit le contact avait déjà été supprimé. La fiche relue répond à la question.
+
+**La suppression est définitive : il n'y a pas de corbeille pour les contacts.** Les affaires en
+ont une ([chapitre 20](#la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre)), les contacts n'en ont pas. Recréer un contact supprimé est possible,
+mais ses rattachements aux affaires devront être refaits un par un, et leurs rôles ressaisis.
+
+**Un seul geste ouvert à la fois.** Ouvrir la confirmation referme le formulaire de modification, et
+inversement : deux questions posées en même temps sur la même personne ne diraient pas à laquelle
+vous répondez.
+
+**Ce que la fiche ne fait pas encore.** Elle ne montre pas les emails échangés avec la personne : la
+messagerie d'une affaire reste dans l'affaire.
+
+### 10.5 Les données personnelles d'un contact : les exporter, les anonymiser
+
+*Livré en développement par `CRM-072` T3.*
+
+En bas de la fiche, la zone **« Données personnelles (RGPD) »** porte deux gestes, réservés aux **administrateurs de
+l'espace**. Pour un autre membre, les deux boutons restent visibles mais grisés, et une phrase dit pourquoi. Chaque geste
+est inscrit au **journal d'audit** ([chapitre 22](#le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace)), sans le nom de la personne.
+
+**« Exporter les données »** télécharge un fichier JSON nommé `contact-…-AAAA-MM-JJ.json`. Il réunit tout ce que le CRM
+garde sur cette personne : sa fiche, son organisation, les affaires où elle est rattachée et son rôle, les activités dont
+elle est participante, les messages où son adresse paraît, et les champs de formulaire qui la désignent. Le fichier
+n'est enregistré nulle part dans le CRM : il n'existe que sur votre poste.
+
+**« Anonymiser ce contact »** efface la personne sans effacer l'historique des affaires :
+
+1. Le bouton ouvre une confirmation dans la page, qui dit ce qui va se passer : le nom, l'email, le téléphone et la
+   fonction sont effacés ; les affaires gardent ce contact, anonyme ; les messages ne sont pas modifiés.
+2. **Retapez le nom exact du contact** : le bouton **« Anonymiser définitivement »** ne s'active qu'à l'égalité.
+3. La fiche se relit. Elle porte la mention **« Anonymisé le … »**, son nom devient « Contact anonymisé », et
+   **« Modifier » est grisé** : un contact anonymisé ne se modifie plus, pour qu'aucune saisie ne le ré-identifie par
+   mégarde. **« Supprimer » reste possible.**
+
+L'anonymisation est **définitive**. **Les messages ne sont pas touchés** : ils sont la correspondance de l'entreprise, et
+l'adresse ou la signature de la personne peuvent encore y paraître.
+
+### 10.6 Rattacher une personne à une affaire
+
+*Livré par la sous-tranche 4h.*
+
+Le bouton **« Rattacher à une affaire »** se trouve dans le bloc **Affaires**, juste sous son titre.
+Il ouvre un formulaire **dans la page** — le tableau reste visible en dessous, et c'est voulu :
+c'est lui qui vous dit à quelles affaires la personne est **déjà** rattachée.
+
+Deux champs :
+
+- **Affaire** — la liste des affaires de l'espace de travail que vous avez le droit de lire,
+  rangées par titre. Les affaires auxquelles cette personne est **déjà** rattachée n'y figurent
+  pas : les proposer serait proposer un geste qui échouerait ;
+- **Rôle dans l'affaire** — facultatif, et libre : « décideur », « prescripteur », « contact
+  technique »… Laissé vide, il reste vide.
+
+**Une affaire archivée peut être rattachée**, et la liste le dit : son titre est suivi de
+**« (archivée) »**. Rattacher quelqu'un à une affaire close est un geste ordinaire de mise à jour
+d'un historique. Une affaire **mise à la corbeille**, en revanche, n'est pas proposée : elle
+n'apparaîtrait pas dans le tableau, et vous auriez agi sans rien voir changer.
+
+Une fois enregistré, le formulaire se referme et **le tableau se relit** : la nouvelle affaire
+apparaît avec son rôle, son état et son lien.
+
+**Si le rattachement est refusé**, le message le dit en clair et **votre saisie est conservée** :
+
+- *« Ce contact est déjà rattaché à cette affaire »* — quelqu'un d'autre a agi entre-temps ;
+- *« Le rattachement a été refusé »* — vous n'avez pas le droit d'écrire sur cette affaire, ou elle
+  n'est plus accessible. Le message ne tranche pas entre les deux, parce que le serveur répond la
+  même chose dans les deux cas, et il vous invite à recharger la liste.
+
+**Pouvoir lire une affaire ne veut pas dire pouvoir y rattacher quelqu'un.** Les droits se règlent
+**affaire par affaire** : le même compte peut réussir sur l'une et être refusé sur l'autre, et c'est
+mesuré. Le bouton n'est donc jamais grisé d'avance — le produit ne devine pas ce que le serveur
+décidera, il envoie et vous rapporte la réponse.
+
+### 10.7 Détacher une personne d'une affaire
+
+*Livré par la sous-tranche 4i.* Ce geste se faisait auparavant **depuis l'affaire** seulement ; il
+existe désormais **des deux côtés**, et celui de l'affaire n'a pas changé ([chapitre 9.7](#les-contacts-d-une-affaire-les-rattacher-les-detacher)).
+
+Chaque ligne du tableau **Affaires** porte un bouton **« Détacher »**, dans une dernière colonne
+« Commandes ». Toutes les lignes le portent, **y compris celle d'une affaire archivée** : détacher
+une personne d'une affaire close est un geste ordinaire de correction d'historique.
+
+Le bouton ouvre une **confirmation**, sur une ligne à elle, juste sous celle qu'elle concerne. Elle
+**nomme l'affaire** et rappelle ce qui part avec le rattachement : **le rôle de la personne dans
+cette affaire**. Vous pourrez la rattacher de nouveau, mais le rôle devra être ressaisi. Une seule
+confirmation reste ouverte à la fois : en ouvrir une autre referme la précédente.
+
+Une fois confirmé, **le tableau se relit** et la ligne disparaît. Si c'était la dernière affaire, le
+bloc revient à son état vide, qui garde le bouton « Rattacher à une affaire ».
+
+**Un détachement peut n'avoir aucun effet, et le produit vous le dit.** Sous le tableau apparaît
+alors : *« Aucun rattachement n'a été retiré. Vous n'avez peut-être pas le droit de modifier cette
+affaire, ou le rattachement avait déjà été supprimé. »* Le message **ne tranche pas** entre les deux
+causes, parce que le serveur répond exactement la même chose dans les deux cas — et **la ligne
+reste affichée**, parce qu'elle est toujours là. C'est délibéré : faire disparaître la ligne vous
+aurait annoncé un détachement qui n'a pas eu lieu.
+
+Comme pour le rattachement, **le bouton n'est jamais grisé d'avance**. Les droits se règlent affaire
+par affaire : le même compte peut détacher sur l'une et se voir opposer ce message sur l'autre.
+
+### 10.8 Corriger le rôle d'une personne dans une affaire
+
+*Livré par la sous-tranche 4j.* Jusqu'ici, corriger un rôle mal saisi obligeait à **détacher puis
+rattacher** — c'est-à-dire à défaire le lien pour le refaire. Ce n'est plus nécessaire.
+
+Chaque ligne du tableau **Affaires** porte un second bouton, **« Modifier le rôle »**, placé
+**avant** « Détacher » dans la colonne « Commandes » : le geste qui corrige vient avant celui qui
+retire. Toutes les lignes le portent, **y compris celle d'une affaire archivée**.
+
+Le bouton ouvre un formulaire sur une ligne à lui, juste sous celle qu'il concerne. Il **nomme
+l'affaire**, et son champ est **prérempli** du rôle actuel — c'est exactement ce que vous venez
+corriger. Un rattachement sans rôle donne un champ **vide**.
+
+**Un seul bloc reste ouvert à la fois dans le tableau**, quel que soit le geste : ouvrir ce
+formulaire referme une confirmation de détachement en cours, et inversement. Deux questions
+ouvertes en même temps ne diraient pas à laquelle vous répondez.
+
+**Vider le champ efface le rôle**, et le rattachement à l'affaire est **conservé** : c'est la façon
+de retirer un rôle saisi par erreur sans défaire le lien. Le texte sous le champ le rappelle.
+
+Une fois enregistré, le formulaire se referme et **la cellule « Rôle dans l'affaire » porte la
+nouvelle valeur**. Aucun message de succès n'est affiché : la cellule est la confirmation.
+
+**Une modification peut n'avoir aucun effet, et le produit vous le dit.** Le formulaire affiche
+alors : *« Aucun rôle n'a été modifié. Vous n'avez peut-être pas le droit de modifier cette affaire,
+ou le rattachement n'existe plus. »* Comme pour le détachement, le message **ne tranche pas** entre
+les deux causes — le serveur répond la même chose dans les deux cas. **Le formulaire reste ouvert,
+votre saisie est conservée**, et la cellule garde son ancienne valeur : rien n'a changé, et l'écran
+ne prétend pas le contraire.
+
+Le rôle est un **texte libre** : aucune liste imposée, aucune longueur maximale. Les exemples du
+texte d'aide — décideur, prescripteur, contact technique — ne sont que des exemples.
+
+**La suppression n'est pas un oubli.** Un contact peut être désigné par des champs de formulaire
+d'affaires déjà remplis ; le supprimer laisserait ces valeurs pointer vers quelqu'un qui n'existe
+plus. Ce que le produit doit faire de ces traces reste à décider, et la commande n'existera pas
+avant.
+
+### 10.9 L'onglet « Organisations »
+
+L'onglet **Organisations** liste toutes les organisations de l'espace de travail, rangées par nom,
+**y compris celles qui n'ont encore aucun contact** : c'est le seul chemin qui mène à elles. Dans
+l'espace de démonstration, Comptoir Vasseur est dans ce cas.
+
+| Colonne | Ce qu'elle porte |
+|---|---|
+| Nom | Le nom de l'organisation. **C'est un lien** : il ouvre sa fiche |
+| Domaine | Son domaine, par exemple `sogexia.example`, lorsqu'il est renseigné |
+| Site web | L'adresse de son site, lorsqu'elle est renseignée. Ici ce n'est pas un lien : la fiche le porte |
+| Contacts | Le nombre de contacts du carnet rattachés à l'organisation |
+
+Comme partout dans le carnet, une valeur absente laisse la cellule **vide**. Sur un écran étroit, le
+tableau défile de côté dans son cadre ; la page, elle, ne défile jamais de côté. Lorsque l'espace ne
+compte aucune organisation, l'onglet le dit, et le bouton « Nouvelle organisation » reste offert.
+
+**Qui voit quoi.** Tout membre de l'espace lit l'onglet. **Créer et modifier** une organisation sont
+réservés aux **administrateurs** et aux **business developers** de l'espace : pour un compte en
+lecture seule, « Nouvelle organisation » et « Modifier » restent visibles mais grisés, avec le motif
+écrit au-dessus ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Le serveur applique la même règle.
+
+### 10.10 La fiche d'une organisation
+
+Cliquer sur le nom d'une organisation, dans la colonne **Organisation** du carnet ou dans l'onglet
+**Organisations**, ouvre sa **fiche**.
+
+La fiche porte le **nom de l'organisation en titre**, puis deux blocs :
+
+- **ce qui la caractérise** — son **domaine** (par exemple `sogexia.example`, celui qui sert à
+  reconnaître ses adresses email) et son **site web**. Le site est un lien : il s'ouvre dans un
+  **nouvel onglet**, et vous quittez alors l'application. Le domaine, lui, n'est pas un lien : ce
+  n'est pas une adresse à visiter. Comme dans le carnet, une valeur absente laisse la place **vide**
+  plutôt qu'un tiret ;
+- **ses contacts** — un tableau à quatre colonnes : nom, fonction, email et téléphone. La colonne
+  « Organisation » du carnet n'y figure pas, puisqu'elle répéterait le titre de la page. Lorsque
+  l'organisation n'a **aucun contact rattaché**, la fiche le dit explicitement au lieu d'afficher un
+  tableau vide.
+
+**Une adresse inconnue, une organisation supprimée ou une organisation que vous n'avez pas le droit
+de lire donnent toutes le même écran** : « Organisation introuvable », avec un bouton de retour au
+carnet. C'est délibéré — distinguer ces cas révélerait à quelqu'un sans droit qu'une organisation
+existe.
+
+**Ce que la fiche ne fait pas.** Elle ne **supprime** pas une organisation — c'est délibéré : ses
+contacts perdraient leur organisation sans laisser de trace —, et elle ne montre pas les affaires de
+l'organisation. Le nom d'un contact, lui, est un lien vers sa fiche. Pour **modifier**
+l'organisation, voir « Modifier une organisation » ci-dessous.
+
+### 10.11 Créer une organisation
+
+Le bouton **« Nouvelle organisation »**, au-dessus du tableau, ouvre un formulaire **dans la page**.
+Trois champs, et un seul est obligatoire :
+
+- **Nom** — obligatoire.
+- **Domaine** — facultatif. Minuscules, chiffres, tirets et points, par exemple `sogexia.fr`. Si
+  vous tapez des majuscules, le domaine est enregistré **en minuscules** : la casse d'un domaine ne
+  change rien.
+- **Site web** — facultatif. Une adresse commençant par `http://` ou `https://`.
+
+Après la création, **la fiche de la nouvelle organisation s'ouvre**. Vous pouvez ensuite lui
+rattacher des contacts depuis le carnet : en créant un contact, ou depuis la fiche d'un contact
+existant, avec « Modifier ».
+
+**Si la création est refusée**, le message le dit en clair, dans le formulaire, et **votre saisie
+est conservée** :
+
+- *« Ce domaine est déjà celui d'une autre organisation de l'espace. »* — un domaine est unique
+  dans l'espace de travail ;
+- *« Le domaine n'a pas la bonne forme… »* ou *« Le site web doit commencer par http:// ou
+  https://. »* — corrigez le champ et renvoyez ;
+- *« Le nom est requis. »* ;
+- *« Vous ne pouvez pas modifier les organisations de cet espace. »* — d'ordinaire, la commande est
+  déjà grisée ; ce message ne paraît que si vos droits ont changé entre-temps.
+
+### 10.12 Modifier une organisation
+
+Sur la fiche d'une organisation, le bouton **« Modifier »** remplace les caractéristiques par le
+même formulaire, **prérempli**. **Vider** le domaine ou le site web l'efface. « Enregistrer » relit
+la fiche à jour, et l'annonce « Organisation enregistrée » le confirme ; « Annuler » rend la fiche
+sans rien écrire. Les refus sont ceux de la création.
+
+## 11. Les boîtes de réception et les adresses d'expédition
+### 11.1 Les boîtes de réception déclarées
 
 **Ce que le produit sait faire.** Un espace de travail peut déclarer une **boîte système** — celle
 qui reçoit tout ce qui est adressé aux affaires — et chaque personne peut déclarer **la sienne**.
@@ -2268,7 +2420,7 @@ on configure une boîte avant d'en superviser la relève.
 - **La boîte système et celle d'un collègue sont réservées à une administratrice ou un
   administrateur.** L'option reste proposée à tout le monde ; si vous n'administrez pas l'espace,
   « Configurer » et « Enregistrer » sont grisés sur ces boîtes, et un bandeau en tête de l'écran dit
-  pourquoi. Votre propre boîte reste configurable (section 3.6).
+  pourquoi. Votre propre boîte reste configurable ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
 - **Le mot de passe est toujours vide à l'ouverture, et il n'est jamais affiché.** Le laisser vide
   **conserve** celui qui est enregistré ; le remplir le **remplace**. Sur une boîte qui n'existe
   pas encore, il est obligatoire — sans lui, aucune connexion ne serait possible.
@@ -2312,7 +2464,7 @@ finirait affiché, puis dans une capture d'écran. Le produit note **la cause**,
 être vérifié, la connexion est refusée — il n'existe aucune option pour passer outre. C'est
 volontaire : une option de ce genre finit toujours par rester activée.
 
-### 4.13 Les adresses d'expédition
+### 11.2 Les adresses d'expédition
 
 **Où se fait la déclaration : « Réglages ▸ Identités d'expédition »** (`CRM-089`). L'écran liste
 les adresses que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les
@@ -2327,7 +2479,7 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
 - **L'identité de service et celle d'un collègue sont réservées à une administratrice ou un
   administrateur.** L'entrée reste proposée à tout le monde ; si vous n'administrez pas l'espace,
   « Configurer » et « Enregistrer » sont grisés sur ces identités, et un bandeau en tête de l'écran
-  dit pourquoi. Vos propres identités restent configurables (section 3.6).
+  dit pourquoi. Vos propres identités restent configurables ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
 - **ATTENTION — changer l'adresse d'expédition ne renomme pas une identité : cela en déclare une
   seconde**, et la première demeure. L'adresse fait partie de ce qui identifie la configuration, au
   même titre que son propriétaire. L'écran vous le rappelle sous le champ, et la liste relue vous
@@ -2366,16 +2518,17 @@ de suite, plutôt que d'échouer plus tard, à l'envoi, sur un compte annoncé c
 
 **Le produit essaie vraiment la connexion**, comme pour une boîte de réception, et **sans envoyer
 aucun message** : il ouvre une session avec le serveur d'envoi, s'authentifie, et referme. Les
-causes d'échec affichées sont les mêmes que celles du chapitre 4.12.
+causes d'échec affichées sont les mêmes que celles du [chapitre 11.1](#les-boites-de-reception-declarees).
 
 **Un quota quotidien peut être déclaré, mais il n'est appliqué par rien aujourd'hui** : l'envoi
 lui-même n'est pas encore livré, et le dire vaut mieux que de laisser croire à un garde-fou qui
 n'existe pas.
 
-### 4.14 Ce que le produit fait d'un message reçu
+## 12. L'inbox : lire, trier et répondre
+### 12.1 Ce que le produit fait d'un message reçu
 
 **Les messages sont relevés, et rangés dans l'affaire à qui ils s'adressent.** Chaque affaire a son
-adresse propre (chapitre 4.2) ; un message envoyé à cette adresse est rattaché à l'affaire **tout
+adresse propre ([chapitre 9.2](#l-adresse-email-de-l-affaire)) ; un message envoyé à cette adresse est rattaché à l'affaire **tout
 seul**, et une trace en apparaît dans son historique. Une réponse à un message déjà rangé suit la
 même affaire.
 
@@ -2398,7 +2551,7 @@ conserve le nom d'origine tel que l'expéditeur l'a écrit.
 automatique — elle est déclenchée par l'exploitant. La suggestion par contact connu attend la
 fiche contact.
 
-### 4.15 L'inbox : lire et trier le courrier reçu
+### 12.2 L'inbox : lire et trier le courrier reçu
 
 *Écran « Inbox » de la barre latérale.*
 
@@ -2450,7 +2603,7 @@ baisse d'autant. Trois gestes complètent cela :
 - le courrier que vous **envoyez** n'est jamais « non lu » : seul le courrier reçu en porte l'état.
 
 Seul l'écran de l'inbox marque un message comme lu. Le lire dans l'historique d'une affaire, le
-retrouver par la recherche, ou le faire lire par un assistant à travers le connecteur (chapitre 11)
+retrouver par la recherche, ou le faire lire par un assistant à travers le connecteur ([chapitre 33](#le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant))
 **ne change pas** son état. Les messages arrivés avant l'apparition de cette fonction sont non lus
 pour tout le monde au départ : « Tout marquer comme lu » les solde d'un geste. Si l'enregistrement
 échoue, un message rouge le dit et **l'état affiché ne change pas** : l'écran ne montre jamais lu ce
@@ -2539,7 +2692,7 @@ demande d'abord confirmation. La confirmation dit deux choses, et elles comptent
   vous le dit **avant** le geste, jamais après.
 
 « Annuler » referme sans rien envoyer. Si vous ne pouvez pas modifier l'affaire où le message est
-rangé, la commande est grisée et un bandeau dit pourquoi (section 3.6). Le serveur reste la règle :
+rangé, la commande est grisée et un bandeau dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Le serveur reste la règle :
 s'il refuse malgré tout, l'écran vous l'écrit sous la confirmation.
 
 **L'affaire garde la mémoire des deux faits.** Dans l'historique de l'affaire, la ligne
@@ -2555,7 +2708,7 @@ sur ce qui est affiché. Enfin, les messages reçus **avant l'été 2026** n'ont
 retrouver leur conversation : chacun reste sur sa propre ligne, et rien ne les regroupera
 rétroactivement.
 
-### 4.16 Écrire et répondre
+### 12.3 Écrire et répondre
 
 *Depuis la fiche d'une affaire, ou depuis un message de l'inbox.*
 
@@ -2614,8 +2767,321 @@ le produit ne prétend pas que votre message est arrivé.
 **Ce qui n'est pas encore là.** Joindre une pièce **déjà reçue** dans l'affaire : un fichier se prend sur votre
 ordinateur. Un message qui échoue à partir est marqué en échec et le dit.
 
+## 13. Consulter l'état de la messagerie
 
-## 5. Administrer l'arborescence : tracks et channels
+*Livré par `CRM-059` ; les règles d'accès sont celles de `CRM-052` (comptes entrants) et de
+`CRM-058` (file sortante) — cet écran n'en invente aucune.*
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « État de la messagerie ».
+
+**Qui.** Un administrateur de l'espace de travail voit **tous** les comptes de messagerie entrante
+du workspace, la boîte système comprise. Un membre ordinaire ne voit que **sa propre boîte**, s'il en
+possède une ; sans boîte propre et sans droit d'administration, l'écran affiche « Aucune boîte à
+superviser » plutôt qu'un tableau vide qui prétendrait avoir cherché sans rien trouver.
+
+**Ce que le tableau montre, par boîte :**
+
+- **Dernière relève réussie** — la date et l'heure du dernier relevé qui a abouti. Une boîte jamais
+  relevée l'annonce en toutes lettres : « Jamais relevée », et non une case vide.
+- **Dernier incident** — si la boîte est en échec, un texte compréhensible : « Authentification
+  refusée », « Hôte injoignable », « Connexion refusée », « Échec TLS », « Délai dépassé » ou
+  « Erreur de protocole ». Le produit ne montre jamais le message technique brut renvoyé par votre
+  serveur mail, qui peut contenir des détails de connexion.
+
+**Ce que les deux chiffres montrent :** le nombre de messages **en attente d'envoi** (mis en file ou
+en cours d'envoi) et le nombre d'**échecs définitifs** — un envoi qui a épuisé ses tentatives de
+reprise. Un membre ordinaire ne compte que la file des affaires qu'il a le droit de lire ; un
+administrateur compte celle de tout l'espace de travail.
+
+**Ce que cet écran ne fait pas.** Il **lit**, il n'agit pas : aucun bouton ne relance une relève,
+n'acquitte un incident ni ne modifie un réglage depuis cette page. La donnée est lue à l'ouverture ;
+rafraîchissez la page pour la mettre à jour.
+
+### 13.1 Ce qui n'est pas encore là
+
+- **Aucune alerte n'est envoyée** lorsqu'un compte tombe en erreur : cet écran est le seul endroit où
+  le constater. Une notification proactive relèverait d'une unité dédiée aux notifications.
+- **Aucune veille par IDLE** : la relève reste une scrutation régulière, dont l'intervalle se règle
+  par la variable d'environnement `MAIL_SYNC_POLL_INTERVAL` (opération d'exploitation, hors de cet
+  écran).
+
+## 14. Écrire des modèles d'emails et les prévisualiser
+
+*Livré par `CRM-063`, tranche 2. Les règles d'accès sont celles de la tranche 1 : cet écran n'en
+invente aucune.*
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Modèles d'emails ».
+
+**À quoi cela sert.** Un modèle est un texte que vous écrivez **une fois** et que tout l'espace de
+travail réemploie : une relance sans réponse, une prise de contact. Il porte des **trous** —
+`{{card.title}}`, `{{contact.full_name}}` — que le produit remplace par les valeurs de l'affaire
+concernée. Deux personnes qui écrivent au même prospect envoient ainsi le même texte.
+
+**Qui.** Tout membre de l'espace de travail **lit** les modèles et peut les prévisualiser. Les
+**écrire** — créer, modifier, supprimer — est réservé aux rôles *administrateur* et *développement
+commercial*. Aucun bouton n'est masqué selon votre rôle : si vous n'avez pas le droit d'écrire, le
+produit vous le dit en toutes lettres au moment où vous enregistrez, plutôt que de vous laisser
+croire que le geste n'existe pas.
+
+**La liste.** Une ligne par modèle : son **nom** — unique dans l'espace de travail — puis son
+**objet**. L'objet y est montré **tel qu'il est écrit**, trous compris : la liste n'est pas une
+prévisualisation, et elle n'a pas d'affaire sur laquelle remplir les trous.
+
+### 14.1 Écrire un modèle
+
+« Nouveau modèle » ouvre la fiche, sous la liste — jamais dans une fenêtre qui recouvrirait l'écran.
+Trois champs : le **nom**, l'**objet** et le **corps du message**.
+
+**Les variables disponibles sont proposées sous le corps**, en douze boutons. Un clic insère la
+variable **à l'endroit du curseur**, dans le champ que vous venez de quitter — l'objet ou le corps.
+Vous pouvez aussi les taper à la main : rien ne vous en empêche.
+
+**Une variable qui n'existe pas est refusée**, et le produit dit **dans quel champ** elle se trouve :
+« L'objet emploie une variable qui n'existe pas ». C'est le serveur qui refuse, pas l'écran — ce qui
+signifie que la faute ne peut pas passer par un autre chemin et se découvrir chez le destinataire.
+Votre saisie n'est pas effacée : corrigez la variable et réenregistrez.
+
+Les autres refus sont dits de la même façon : un nom de plus de 120 caractères, un objet de plus de
+300, un corps de plus de 20 000, ou un nom déjà employé par un autre modèle.
+
+### 14.2 Prévisualiser un modèle sur une affaire réelle
+
+« Prévisualiser », sur la ligne d'un modèle, ouvre un panneau à trois choix :
+
+- **l'affaire** — obligatoire. Aucune n'est choisie d'avance : le produit ne devine pas de quelle
+  affaire vous voulez parler ;
+- **le contact** — facultatif. La liste porte **tous** les contacts que vous pouvez lire, et pas
+  seulement ceux qui sont rattachés à l'affaire choisie ;
+- **l'identité d'expédition** — facultative. Aucune n'est choisie d'avance non plus : plusieurs
+  identités peuvent être « par défaut », chacune pour une personne, et le produit ne tranche pas à
+  votre place.
+
+« Prévisualiser » affiche alors l'**objet** et le **corps** exactement tels qu'ils partiront, retours
+à la ligne compris.
+
+**Les trous sans valeur sont NOMMÉS.** Si l'affaire n'a pas de montant, ou si vous n'avez choisi
+aucune identité, le produit rend ces trous **vides** — jamais un tiret, qui se lirait comme une
+valeur — et l'écrit sous le message : « 2 variables sans valeur », suivi de la liste des variables
+concernées, dans la graphie exacte que vous avez tapée. C'est ce qui vous permet de voir le manque
+**avant** l'envoi, plutôt que le destinataire après.
+
+Quand toutes les variables employées ont une valeur, **rien n'est affiché** : l'absence de message
+dit déjà que tout est rempli.
+
+**Si aucune affaire n'est choisie**, ou si l'affaire choisie ne vous est plus lisible, le produit
+écrit « Aucun rendu : choisissez une affaire, ou l'affaire choisie n'est plus lisible ». Les deux
+causes sont volontairement dites ensemble : les distinguer révélerait l'existence d'affaires que vos
+droits vous cachent.
+
+### 14.3 Supprimer un modèle
+
+Le bouton vit **dans la fiche** du modèle, et non sur sa ligne : un geste qui détruit ne se déclenche
+pas depuis une liste qu'on parcourt du regard. Il demande une confirmation qui **nomme** le modèle et
+dit ce qui est perdu : « Le texte du modèle est définitivement perdu. »
+
+Il n'y a **pas de corbeille** pour un modèle : il ne contient aucun travail, c'est un texte. Une fois
+supprimé, il faut le réécrire.
+
+### 14.4 Ce qui n'est pas encore offert
+
+- **Aucun envoi depuis cet écran.** La prévisualisation montre ; elle n'expédie rien. Composer un
+  message à partir d'un modèle viendra avec les séquences de relance.
+- ~~**Aucune signature.**~~ **Livrée** — voir le [chapitre 15](#signer-les-messages-expedies-depuis-une-identite). Une identité
+  d'expédition porte désormais sa signature, ajoutée à la fin de chaque message expédié depuis elle.
+- **Aucune séquence de relance.** Les paliers — un modèle, un délai, puis le suivant — ne sont pas
+  livrés.
+- **Les dates sont rendues en UTC.** Une échéance affichée « 16/08/2026 09:00 » dans un message est
+  exprimée en temps universel : le produit ne connaît pas encore le fuseau de votre espace de
+  travail. Un destinataire français lira donc 09:00 là où le rendez-vous est à 11:00 en heure d'été.
+
+## 15. Signer les messages expédiés depuis une identité
+
+*Livré par `CRM-063`, tranche 3. L'écran est celui des identités d'expédition (`CRM-089`) ; cette
+tranche y ajoute un champ, et rien d'autre.*
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Identités d'expédition », puis « Configurer » sur
+l'identité concernée.
+
+**À quoi cela sert.** Une signature est le pied de message que vos destinataires liront sous chaque
+courriel parti depuis cette adresse : votre nom, votre fonction, votre société, un téléphone. Vous
+l'écrivez **une fois**, et le produit l'ajoute ensuite à **tous** les messages expédiés depuis cette
+identité — ceux que vous composez à la main comme ceux que le produit enverra pour vous.
+
+**La signature appartient à l'ADRESSE, pas à vous.** Si vous expédiez depuis deux adresses —
+`contact@` et `recrutement@`, par exemple —, chacune porte la sienne, et vous les remplissez
+séparément. C'est voulu : on ne signe pas de la même façon selon l'adresse sous laquelle on écrit.
+L'identité de service de l'espace de travail, qui n'appartient à personne en particulier, a elle
+aussi la sienne.
+
+### 15.1 Écrire, modifier, supprimer une signature
+
+Le champ **Signature** se trouve dans le formulaire, juste après le nom d'expéditeur. Il accepte
+plusieurs lignes, et les conserve telles que vous les écrivez : les retours à la ligne et les
+alignements que vous posez sont ceux que votre destinataire verra.
+
+- **Écrire** : remplissez le champ, puis « Enregistrer ». C'est immédiat, et cela vaut pour le
+  prochain message.
+- **Modifier** : rouvrez « Configurer ». Le champ est prérempli avec la signature enregistrée — le
+  produit ne vous demande jamais de la réécrire de mémoire.
+- **Supprimer** : **videz le champ**, puis « Enregistrer ». La signature disparaît, et les messages
+  suivants partent sans elle.
+
+Une signature est limitée à **2 000 caractères**. Au-delà, l'enregistrement est refusé et le produit
+vous le dit : rien n'est écrit à moitié.
+
+### 15.2 Où la signature apparaît dans le message
+
+Elle est ajoutée **à la fin** du corps, après une ligne vide et une ligne de séparation composée de
+deux tirets. C'est la convention que les logiciels de messagerie reconnaissent pour replier ou
+griser une signature :
+
+```
+Bonjour,
+
+voici le devis dont nous avons parlé.
+
+-- 
+Driss Lemoine — Business developer
+P2Enjoy SAS
+```
+
+**Ce que vous voyez dans le CRM est exactement ce qui est parti.** Le message conservé par le
+produit porte sa signature : il n'y a pas d'un côté ce que vous avez écrit et de l'autre ce que
+votre destinataire a reçu.
+
+**Dans la liste des identités**, une pastille « Signature » marque les identités qui en portent une.
+La signature elle-même n'y est pas montrée — elle serait trop longue pour une ligne de liste ; c'est
+sa **présence** qui vous intéresse d'un coup d'œil.
+
+### 15.3 Ce qui n'est pas offert
+
+- **Une signature est du texte, jamais de la mise en forme riche.** Pas de gras, pas de logo, pas de
+  lien cliquable : toute la messagerie du produit expédie du texte, et une signature en HTML
+  arriverait chez votre destinataire avec ses balises en toutes lettres.
+- **Aucun trou dans une signature.** `{{contact.full_name}}` écrit dans une signature part
+  **littéralement**. Les trous sont une propriété des modèles d'emails ([chapitre 14](#ecrire-des-modeles-d-emails-et-les-previsualiser)), pas des
+  signatures.
+- **Un message vide ne part pas, même signé.** Si vous laissez le corps vide, le produit refuse
+  l'envoi : une signature seule n'est pas un message.
+- **Aucune signature commune à tout l'espace de travail.** Chaque identité porte la sienne, ou n'en
+  porte pas.
+
+## 16. Enchaîner des relances : les séquences
+
+*Livré par `CRM-063`, tranche 4. L'écran n'invente aucune règle d'accès : ce sont celles des
+sous-tranches 4a et 4b.*
+
+**Où.** Deux endroits, et le partage est délibéré : la **cadence** s'écrit dans Barre latérale ▸
+**Réglages** ▸ « Séquences de relance » ; elle **s'arme** depuis la fiche de l'affaire qu'elle doit
+relancer, dans le bloc « Relance automatique », sous les coûts.
+
+**À quoi cela sert.** Une séquence enchaîne plusieurs **modèles d'emails** ([chapitre 14](#ecrire-des-modeles-d-emails-et-les-previsualiser)) à des délais
+choisis. Armée sur une affaire qui n'avance plus, elle expédie le premier modèle après son délai, le
+deuxième après le sien, et ainsi de suite — **et elle s'arrête dès qu'une réponse arrive**.
+
+**Qui.** Tout membre de l'espace de travail **lit** les séquences. Les **écrire** — créer, modifier,
+réordonner, supprimer — est réservé aux rôles *administrateur* et *développement commercial*.
+**Armer** une relance sur une affaire suppose le droit d'y **écrire**. Aucun bouton n'est masqué
+selon votre rôle : le produit vous dit en toutes lettres qu'il refuse, au moment où vous agissez.
+
+### 16.1 Écrire une cadence
+
+« Nouvelle séquence » ouvre la fiche, sous la liste. Un seul champ pour commencer : le **nom**,
+unique dans l'espace de travail.
+
+**Les paliers n'apparaissent qu'une fois la séquence enregistrée**, et ce n'est pas une contrainte
+d'écran : un palier appartient à une séquence, et il ne peut pas être posé avant qu'elle existe. La
+fiche vous le dit — « Enregistrez la séquence pour lui ajouter des paliers ».
+
+**Un palier, c'est un modèle et un délai.** Choisissez le modèle dans la liste, tapez le délai en
+jours, « Ajouter le palier ». Le palier prend le **rang suivant** : vous n'avez jamais à saisir une
+position.
+
+**LE DÉLAI SE COMPTE DEPUIS LE PALIER PRÉCÉDENT**, et le tout premier depuis l'armement. C'est ce
+que « J+3 », « J+7 », « J+14 » veulent dire dans la liste : trois jours après l'armement, puis sept
+jours après le premier envoi, puis quatorze après le deuxième. Un palier glissé au milieu d'une
+cadence ne vous oblige donc à rien renuméroter.
+
+**Le délai va de 1 à 365 jours.** Zéro est refusé : un palier de délai nul partirait en même temps
+que celui qui le précède, ce qui n'est pas une cadence mais un doublon.
+
+**Un même modèle peut servir plusieurs paliers.** La séquence de démonstration le fait : ses paliers
+1 et 3 emploient tous deux « Relance sans réponse ».
+
+### 16.2 Changer l'ordre des paliers
+
+Deux flèches par ligne, **Monter** et **Descendre**. La flèche qui n'a pas de sens — monter le
+premier, descendre le dernier — reste **visible mais inactive** : elle ne disparaît pas, sans quoi
+les boutons sauteraient d'une ligne à l'autre sous votre curseur.
+
+**L'ordre est enregistré immédiatement**, et la liste est **relue** : ce que vous voyez après un
+déplacement est ce que le produit a réellement retenu, jamais un affichage optimiste. Si vos droits
+ne permettent pas l'écriture, le produit écrit « Aucun palier n'a été réordonné » — jamais un succès
+qui n'a pas eu lieu.
+
+**« Retirer » ne demande aucune confirmation**, et c'est voulu : retirer un palier ne détruit aucun
+texte. Le modèle reste, la séquence reste, et reposer le palier est un formulaire de deux champs.
+
+### 16.3 Supprimer une séquence
+
+Le bouton vit **dans la fiche**, jamais sur la ligne de la liste : un geste destructeur ne se
+déclenche pas depuis une liste qu'on parcourt. La confirmation **nomme la séquence** et dit combien
+de paliers partiront avec elle.
+
+**Une séquence qui relance actuellement une affaire ne peut pas être supprimée**, et la confirmation
+vous en avertit avant que vous ne cliquiez. Interrompez la relance depuis l'affaire concernée, puis
+réessayez.
+
+**Un modèle employé par une séquence ne peut pas être supprimé non plus** ([chapitre 14](#ecrire-des-modeles-d-emails-et-les-previsualiser)) : retirez-le
+d'abord des paliers qui l'emploient.
+
+### 16.4 Armer une relance sur une affaire
+
+Ouvrez la fiche de l'affaire, descendez jusqu'au bloc **« Relance automatique »**. Deux choix : la
+**séquence**, et l'**adresse d'expédition** depuis laquelle les messages partiront. Aucun des deux
+n'est présélectionné — le produit ne choisit pas à votre place l'adresse qui signera vos relances.
+
+**L'affaire doit être « figée »**, c'est-à-dire immobile dans son étape depuis plus longtemps que le
+seuil de relance de cette étape ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)). Si elle ne l'est pas, le produit vous le
+dit : « Cette affaire n'a pas dépassé le seuil d'inactivité de son étape ». Faites avancer l'affaire,
+ou attendez — une relance automatique n'a de sens que sur une conversation qui s'est arrêtée.
+
+**Une seule relance à la fois par affaire.** Si une autre personne en a armé une entre-temps, le
+produit refuse la seconde plutôt que d'envoyer deux fois.
+
+**Ce que le bloc montre ensuite** : le nom de la séquence, l'adresse qui expédie, et où en est la
+cadence — « Aucun palier envoyé pour l'instant », puis « Palier 2 envoyé le 12/09/2026 ».
+
+**« Interrompre la relance »** ferme la cadence. Le bloc revient alors à son geste, et il ne
+l'annonce qu'après avoir **vérifié** que la relance est bien close.
+
+### 16.5 Ce qui arrête une relance, sans que vous ayez rien à faire
+
+Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste :
+
+1. **une réponse du destinataire arrive sur l'affaire** — c'est la raison d'être de la cadence, et
+   relancer quelqu'un qui vient de répondre est le seul défaut qu'un système de relance ne doit
+   jamais avoir ;
+2. **l'affaire cesse d'être figée** : vous la faites avancer d'une étape, vous la mettez en sommeil,
+   vous l'archivez ou vous la mettez à la corbeille ;
+3. **le dernier palier est parti** : la cadence est épuisée ;
+4. **vous l'interrompez** depuis le bloc.
+
+### 16.6 Ce qui n'est pas offert
+
+- **Aucune date de prochain envoi n'est affichée.** La cadence **glisse** sur les envois réels : un
+  palier parti avec un jour de retard décale tous les suivants d'autant. Une date annoncée serait
+  fausse au premier décalage, et le produit préfère ne rien dire plutôt que dire faux.
+- **Aucune prévisualisation d'une séquence entière.** Prévisualisez ses modèles un par un depuis
+  l'écran des modèles ([chapitre 14.2](#previsualiser-un-modele-sur-une-affaire-reelle)).
+- **Aucune trace dans l'historique de l'affaire.** L'armement et l'interruption n'y écrivent rien.
+- **Les relances passées ne sont pas listées.** Le bloc porte un geste, pas une histoire.
+- **Aucun réordonnancement à la souris par glisser-déposer.** Les deux flèches font le même travail,
+  et elles restent utilisables au clavier.
+- **Aucune duplication de séquence**, aucun archivage, aucune corbeille : une séquence se supprime
+  ou se garde.
+
+## 17. Administrer l'arborescence : tracks et channels
 
 *Livré par `CRM-075` ; les règles d'accès sont celles de `CRM-020` et `CRM-021`, inchangées.*
 
@@ -2636,7 +3102,7 @@ l'arborescence. »
 que la page est ouverte, et cacher un bouton sur la foi d'un rôle lu à l'arrivée reviendrait à vous
 interdire un geste qui vous est peut-être permis. Le produit préfère vous montrer le refus réel.
 
-### 5.1 Un track
+### 17.1 Un track
 
 - **Créer** : bouton « Nouveau track ». Le **slug** — l'identifiant qui apparaît dans l'adresse — est
   proposé à partir du nom et reste modifiable tant que vous n'avez pas validé. Il n'accepte que des
@@ -2660,7 +3126,7 @@ interdire un geste qui vous est peut-être permis. Le produit préfère vous mon
   et **dit ce qui devient inaccessible avec lui** : le nombre de ses channels, puis celui de leurs
   affaires. Le track quitte
   alors l'arborescence et se retrouve dans **Réglages ▸ Corbeille**, d'où il se restaure
-  (chapitre 5 ter).
+  ([chapitre 20](#la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre)).
 
 **La barre latérale suit vos gestes, sans rechargement** : un track créé y paraît aussitôt, un track
 renommé ou recoloré y change, un track archivé ou mis à la corbeille la quitte — et il y revient
@@ -2692,7 +3158,7 @@ décompte de la confirmation. Ses channels et leurs affaires ne sont pas retiré
 restauré, exactement tels qu'ils étaient. C'est aussi pourquoi un channel dont le track est dans la
 corbeille **ne se restaure pas seul** : le produit vous demande de restaurer le track d'abord.
 
-### 5.2 Un channel
+### 17.2 Un channel
 
 Dépliez un track avec le chevron : ses channels sont chargés à ce moment-là, et pas avant.
 
@@ -2706,12 +3172,12 @@ Les mêmes six gestes s'appliquent, avec deux différences :
 
 **Un channel a sa propre couleur** (*livré par `CRM-116`*). Elle se choisit comme celle d'un track, avec les mêmes cinq
 couleurs, à la création comme en modification, et un nouveau channel est Gris tant que vous n'en choisissez pas
-d'autre. Elle s'affiche en **pastille** devant le nom de son onglet (section 3.2 ter) et en **pilule** dans
+d'autre. Elle s'affiche en **pastille** devant le nom de son onglet ([section 3.5](#les-onglets-d-un-track)) et en **pilule** dans
 l'arborescence. Elle aide à repérer un channel d'un coup d'œil ; elle ne remplace jamais son nom.
 
 Si aucun workflow n'est affectable à ce track, l'écran vous le dit au lieu d'afficher un formulaire
 que le serveur refuserait. C'est le cas d'un espace neuf : le guide de démarrage pose alors le
-workflow de départ en un geste (§1 bis.4), et un formulaire resté ouvert le propose aussitôt.
+workflow de départ en un geste ([§2.4](#le-workflow-de-depart-en-un-geste)), et un formulaire resté ouvert le propose aussitôt.
 
 **Le channel a besoin d'un workflow qui n'existe pas encore ?** Le lien **Nouveau workflow**, sous la
 liste des workflows, ouvre l'éditeur de workflows avec son formulaire de création déjà ouvert, la
@@ -2748,14 +3214,14 @@ trace « workflow changé » dans son fil. Un message confirme le nouveau workfl
 l'arborescence, celle-ci demande d'administrer l'espace de travail. *Captures :
 `docs/captures/CRM-118/changement-workflow-*.jpg`.*
 
-### 5.3 Quand un déplacement est indisponible sans être en bout de liste
+### 17.3 Quand un déplacement est indisponible sans être en bout de liste
 
 Il arrive qu'une flèche soit désactivée alors que la ligne n'est ni en tête ni en fin. L'infobulle
 l'explique : deux positions voisines sont **indistinctes**, et le déplacement ne changerait rien à
 l'ordre affiché. Le produit préfère le dire plutôt que d'écrire une valeur sans effet. Remettre une
 telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 
-### 5.4 Ce qui n'est pas encore là
+### 17.4 Ce qui n'est pas encore là
 
 - Le geste de mise à la corbeille existe pour un **track** et un **channel**, pas pour une
   **affaire** : une affaire ne se retire depuis aucun écran pour l'instant.
@@ -2764,153 +3230,12 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 - Aucune **capture** de cet écran n'a encore été produite, et son parcours de bout en bout n'a pas
   été rejoué : les deux exigent la pile de développement complète.
 - Le **déplacement d'un channel vers un autre track** n'est pas proposé.
-- L'édition des **workflows** eux-mêmes relève du **chapitre 5 bis** pour leurs étapes, leurs
+- L'édition des **workflows** eux-mêmes relève du **[chapitre 18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)* pour leurs étapes, leurs
   transitions et les **questions** de leur formulaire ; la visibilité d'une question étape par
   étape n'a, elle, toujours pas d'écran.
-- Les **droits fins** par track et par channel relèvent du chapitre 24 bis.
+- Les **droits fins** par track et par channel relèvent de la [section 21.6](#les-droits-fins-restreindre-ou-rouvrir-un-track-ou-un-channel).
 
-### 5.4 bis Les budgets d'un track
-
-*Livré par `CRM-084` tranche 2 ; le seuil d'ancienneté par sa tranche 4. Captures dans
-`docs/captures/CRM-084/budgets-*.jpg`.*
-
-**À quoi sert un budget.** Un budget est une **enveloppe de dépenses** d'un track — « Publicité
-2026 », « Salon du web 2025 ». Les lignes de coût d'une affaire s'y rattachent, depuis la section
-« Coûts » de sa fiche, et les écrans de coûts comparent, budget par budget, ce qui était prévu à ce qui
-a été dépensé (chapitre 5 *quinquies*).
-
-**Où.** Barre latérale ▸ **Réglages** ▸ « Arborescence : tracks et channels ». Dépliez un track avec
-le chevron : sous ses channels paraît le bloc **« Budgets »**.
-
-**Ce que le tableau montre**, une ligne par budget :
-
-| Colonne | Contenu |
-|---|---|
-| Nom | le nom du budget |
-| Devise | trois lettres — `EUR`, `CHF` |
-| Enveloppe | le montant prévu ; **cellule vide** si l'enveloppe n'est pas décidée — ce n'est pas zéro |
-| Récurrent | « Oui » ou « Non » |
-| Occurrences ouvertes | pour un budget récurrent, le nombre de ses occurrences **non clôturées** ; c'est aussi le lien qui les déplie (chapitre 5.5). **Cellule vide** pour un budget non récurrent, qui n'en porte jamais |
-| État | « Ouvert » ou « Clôturé », écrit en toutes lettres |
-| Actions | monter, descendre, modifier, clôturer — ou rouvrir |
-
-**Les budgets clôturés sont masqués par défaut.** Cochez **« Afficher les budgets clôturés »** pour
-les faire reparaître : ils ne sont pas supprimés, ils sortent seulement du chemin.
-
-**Créer un budget.** Le bouton **« Nouveau budget »**, sous le tableau, ouvre le formulaire dans la
-page, le curseur dans le premier champ :
-
-| Champ | Règle |
-|---|---|
-| Nom | obligatoire. Deux budgets **ouverts** d'un même track ne portent pas le même nom ; un budget clôturé peut, lui, garder un nom qu'un nouveau budget reprend — « Salon 2025 » l'année suivante |
-| Devise | trois lettres majuscules, `EUR` par défaut. Une autre écriture est signalée sur le champ, et « Créer » reste indisponible |
-| Enveloppe (facultative) | un nombre. **Laissez vide** si l'enveloppe n'est pas décidée ; un montant **négatif** est accepté — un avoir, un remboursement. Une saisie qui n'est pas un nombre est signalée sur le champ |
-| Seuil d'ancienneté (facultatif) | un nombre de **jours entiers, à partir de 1**. Au delà, une dépense de ce budget qui attend son coût réel est signalée **en retard** dans l'onglet « À saisir » (chapitre 5 *octies*). **Laissez vide pour ne rien signaler** : aucun seuil n'est alors appliqué, pas même un seuil « par défaut ». « 0 » ou « 2,5 » sont signalés sur le champ |
-| Budget récurrent (porte des occurrences) | à cocher pour un budget qui se décline en périodes — « Janvier 2026 », « Février 2026 ». Un budget récurrent ne reçoit aucune ligne de coût tant qu'il ne porte pas au moins une occurrence ouverte (chapitre 5.5) |
-
-**Modifier un budget.** Le crayon rouvre le même formulaire, **prérempli** avec les valeurs
-actuelles. Vider l'enveloppe ou le seuil les **efface** réellement. Un budget qui porte des
-occurrences ne redevient pas non récurrent : retirez d'abord ses occurrences.
-
-**Réordonner.** Les flèches montent ou descendent un budget d'un cran ; elles sont désactivées en tête
-et en fin de liste, et le disent.
-
-**Clôturer un budget.** Le cadenas demande une **confirmation**, dans la page : « Clôturer le budget
-« … » ? ». Elle dit ce que la clôture fait — le budget sort du tableau sans être supprimé, et peut
-être rouvert — et elle **compte** les dépenses du budget qui attendent encore leur coût réel : « Ce
-budget porte n ligne(s) sans coût réel ; elles resteront saisissables après la clôture. » La clôture
-n'est **pas empêchée** par ce décompte : c'est une décision de gestion, elle est seulement éclairée.
-Un budget clôturé **ne reçoit plus de nouvelle ligne de coût** ; celles qu'il porte restent, et leur
-coût réel se saisit encore — les factures arrivent souvent après la clôture.
-
-**Rouvrir un budget.** Affichez les budgets clôturés, puis utilisez le cadenas ouvert. Aucune
-confirmation n'est demandée. Si un budget ouvert du track a repris son nom entre-temps, la
-réouverture est refusée : renommez l'un des deux.
-
-**Un budget ne se supprime pas** : des dépenses le référencent, et le supprimer effacerait la
-dépense constatée. On le clôture.
-
-**Qui.** Créer, modifier, réordonner, clôturer et rouvrir un budget sont réservés aux
-**administrateurs de l'espace de travail** — le serveur l'applique. Un autre membre voit le tableau
-des budgets des tracks qu'il lit ; ses commandes restent à leur place, **grisées**, et le bandeau de
-l'écran dit pourquoi (chapitre 3.6). Afficher les budgets clôturés et déplier les occurrences lui
-restent ouverts.
-
-| Message | Ce qu'il signifie |
-|---|---|
-| « Un budget ouvert de ce track porte déjà ce nom… » | Choisissez un autre nom, ou clôturez l'autre budget |
-| « Ce budget porte des occurrences : supprimez-les avant de le rendre non récurrent. » | Retirez ses occurrences d'abord (chapitre 5.5) |
-| « Cette valeur a été refusée : vérifiez le nom et la devise. » | Le serveur a refusé la forme d'une valeur |
-| « Seul un administrateur de cet espace de travail peut gérer les budgets. » | Le geste demande un droit que votre compte n'a pas |
-| « Rien n'a été modifié… » | Vos droits sur ce budget ont changé depuis l'ouverture de l'écran, ou il a disparu |
-
-### 5.5 Les occurrences d'un budget récurrent
-
-*Livré par `CRM-084` tranche 3. Captures dans `docs/captures/CRM-084/occurrences-*.jpg`.*
-
-**Où.** Sous un track déplié, dans le tableau « Budgets ». Un budget déclaré **récurrent** affiche
-dans la colonne « Occurrences ouvertes » un nombre **cliquable** : il déplie la liste de ses
-occurrences sous le tableau. Un budget non récurrent affiche une cellule vide, et n'offre pas ce
-geste — il ne peut porter aucune occurrence.
-
-**Pourquoi c'est nécessaire.** Un budget récurrent ne peut recevoir aucune ligne de coût tant qu'il
-ne porte pas au moins une occurrence : le sélecteur de la fiche d'affaire ne le propose pas. Avant
-cet écran, cocher « récurrent » produisait donc un budget inutilisable.
-
-**Ce que la liste montre**, de la plus récente à la plus ancienne : le libellé, la période si elle
-est renseignée, l'enveloppe si elle est décidée, et l'état — « Ouverte » ou « Clôturée ».
-
-**Les occurrences clôturées ne sont pas masquées**, contrairement aux budgets. C'est voulu : les
-factures arrivent souvent après la clôture, et l'onglet « À saisir » des écrans de coûts liste
-précisément leurs lignes.
-
-**Les cinq gestes**, tous réservés à un **administrateur de l'espace de travail** :
-
-| Geste | Ce qu'il fait |
-|---|---|
-| Ouvrir une occurrence | Déclare une instance — « Janvier 2026 ». Le libellé est obligatoire ; la période et l'enveloppe ne le sont pas |
-| Modifier | Change le libellé, la période et l'enveloppe. Reste offert sur une occurrence **clôturée** |
-| Clôturer | La retire des choix proposés à une nouvelle ligne de coût. **Sans confirmation** : elle se rouvre d'un clic |
-| Rouvrir | L'inverse, également sans confirmation |
-| Retirer | La supprime. **Avec confirmation**, et refusé si des lignes de coût y sont rattachées |
-
-**Aucune occurrence n'est engendrée automatiquement.** On crée « janvier », puis « février », à la
-main. Un mois sans occurrence est une information — il ne s'est rien passé — qu'une génération
-automatique détruirait en fabriquant une occurrence vide.
-
-**Vider un champ facultatif l'efface réellement.** Une enveloppe posée par erreur se retire en
-laissant le champ vide, de même que les deux bornes de période.
-
-**Les périodes ne contraignent rien.** Elles servent à ordonner et à libeller : aucune ligne de coût
-n'est refusée parce que sa date sortirait de la période, et rien n'exige que la fin suive le début.
-
-**Deux libellés qui ne diffèrent que par la casse coexistent.** « Janvier 2026 » et « janvier 2026 »
-sont deux occurrences distinctes ; seuls les espaces de début et de fin sont ignorés. C'est la même
-règle que pour le nom d'un budget.
-
-**Ce que vous pouvez lire sans pouvoir l'écrire.** La liste est visible à qui lit le budget. Si vous
-n'êtes pas administrateur, vos gestes sont refusés par le serveur et l'écran vous le dit — il ne les
-masque pas, parce que vos droits peuvent avoir changé depuis l'ouverture de la page.
-
-| Message | Ce qu'il signifie |
-|---|---|
-| « Ce budget porte déjà une occurrence de ce libellé » | Choisissez un autre libellé |
-| « Ce budget n'est pas récurrent » | Rendez-le récurrent avant d'y ouvrir une occurrence |
-| « Cette occurrence porte des lignes de coût » | Clôturez-la plutôt que de la retirer : la dépense constatée n'est pas effacée |
-| « Seul un administrateur… » | Le geste demande un droit que votre compte n'a pas |
-| « Rien n'a été modifié » | Vos droits sur ce budget ont changé depuis l'ouverture de l'écran |
-
-### 5.6 Ce qui n'est pas là, côté budgets
-
-Ces absences sont voulues, et non des oublis :
-
-- **aucune conversion de devise** : chaque budget compte dans sa propre devise, et les écrans de coûts
-  rendent un histogramme par devise plutôt qu'un total qui mélangerait des euros et des francs ;
-- **aucune occurrence engendrée automatiquement**, aucun calendrier (chapitre 5.5) ;
-- **aucune alerte de dépassement** ni aucun envoi d'email : un dépassement se lit sur l'histogramme ;
-- **aucun export comptable**, aucun import de factures.
-
-## 5 bis. Composer un workflow : ses étapes, ses transitions et son formulaire
+## 18. Composer un workflow : ses étapes, ses transitions et son formulaire
 
 *Livré par `CRM-076` ; les règles d'accès sont celles de `CRM-031`, inchangées. Captures dans
 `docs/captures/CRM-076/`.*
@@ -2921,14 +3246,14 @@ Ces absences sont voulues, et non des oublis :
 déjà : il choisit leurs étapes dans le catalogue de nœuds, les ordonne, les surcharge, désigne
 celle par laquelle les affaires entrent, déclare les **transitions** qui relient les étapes, et
 définit les **questions du formulaire** posées sur chaque affaire. Depuis `CRM-031`, il **crée**
-aussi un workflow (chapitre 5 bis.0). Depuis `CRM-118`, son en-tête le renomme, le copie vers un
+aussi un workflow ([chapitre 18.1](#creer-un-workflow)). Depuis `CRM-118`, son en-tête le renomme, le copie vers un
 track, le rend par défaut, l'archive et le rétablit.
 
 **Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Comme au
-chapitre 5, les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du
+[chapitre 17](#administrer-l-arborescence-tracks-et-channels), les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du
 serveur, « Seul un administrateur de cet espace de travail peut composer un workflow. »
 
-### 5 bis.0 Créer un workflow
+### 18.1 Créer un workflow
 
 *Livré par `CRM-031`. Captures dans `docs/captures/CRM-031/`.*
 
@@ -2942,10 +3267,10 @@ trois champs :
   n'est pas un champ grisé, c'est un champ sans objet.
 
 **Le workflow naît vide.** Il n'a aucune étape, et il n'est utilisable par aucun channel tant que
-vous ne lui en avez pas donné au moins une, désignée comme initiale (chapitre 5 bis.2). L'écran le
+vous ne lui en avez pas donné au moins une, désignée comme initiale ([chapitre 18.5](#les-etapes)). L'écran le
 dit dès la création : « Ce workflow n'a aucune étape. » Un workflow sans étape initiale est un
 brouillon parfaitement licite, pas une erreur. Un channel qui le suit n'a pas de tableau : son onglet
-le dit, et propose le lien **Ouvrir l'éditeur de workflows** (chapitre 3.2 *ter*).
+le dit, et propose le lien **Ouvrir l'éditeur de workflows** ([chapitre 3.5](#les-onglets-d-un-track)).
 
 Le workflow créé devient aussitôt le workflow **choisi**, prêt à être composé.
 
@@ -2953,7 +3278,7 @@ Le workflow créé devient aussitôt le workflow **choisi**, prêt à être comp
 travail n'a qu'un seul workflow par défaut, et le proposer à chaque création reviendrait à offrir
 un réglage refusé neuf fois sur dix. Rendre un workflow par défaut reste un geste d'API.
 
-**Arrivé depuis le formulaire d'un channel** (lien **Nouveau workflow**, chapitre 5.2), l'éditeur
+**Arrivé depuis le formulaire d'un channel** (lien **Nouveau workflow**, [chapitre 17.2](#un-channel)), l'éditeur
 s'ouvre formulaire de création ouvert, portée réglée sur le track du channel, et un bandeau rappelle
 « Vous créez un channel ». Une fois le workflow créé — par ce formulaire ou par **Créer avec l'IA** —,
 le bandeau le nomme : c'est lui qui sera choisi au retour. Composez-le, puis **Revenir au nouveau
@@ -2961,10 +3286,10 @@ channel**.
 
 **Si l'espace de travail est vide**, l'écran affiche « Aucun workflow dans cet espace de travail »
 et porte le même bouton. Un workflow composé ainsi part d'un catalogue de nœuds **vide** dans un
-espace neuf : le plus court est souvent le workflow de départ du guide (§1 bis.4), que vous
+espace neuf : le plus court est souvent le workflow de départ du guide ([§2.4](#le-workflow-de-depart-en-un-geste)), que vous
 recomposez ensuite ici.
 
-### 5 bis.0 bis Créer un workflow avec l'IA
+### 18.2 Créer un workflow avec l'IA
 
 *Livré en développement par `CRM-097` (tranche T2) ; en production avec la tranche T4. Captures dans
 `docs/captures/CRM-097/`. Le nom et la probabilité de chaque étape, et les champs que l'affaire porte déjà : `CRM-113`,
@@ -3046,7 +3371,7 @@ la même demande.
 **Ce que l'assistant ne fait pas.** Il ne touche ni aux affaires, ni aux contacts, ni aux messages. Pour
 faire évoluer un workflow déjà en usage, voir le chapitre suivant.
 
-### 5 bis.0 ter Faire évoluer un workflow avec l'IA
+### 18.3 Faire évoluer un workflow avec l'IA
 
 *Livré en développement par `CRM-097` (tranche T3) ; en production avec la tranche T4. Captures dans
 `docs/captures/CRM-097/` (`ia-modification-*`).*
@@ -3086,7 +3411,7 @@ dit en tête et la suggestion ne peut pas être acceptée. Vous pouvez choisir u
 transitions, champs, règles et exigences, et déplace les affaires vers leur destination. **Juste avant**,
 le produit garde une **version** du workflow tel qu'il était — le *point de retour* — et l'annonce la
 nomme : « Point de retour : version 4 ». Pour revenir en arrière, restaurez cette version depuis le bloc
-« Versions » du même écran (chapitre 5 bis.6).
+« Versions » du même écran ([chapitre 18.12](#garder-une-photographie-d-un-workflow-et-y-revenir)).
 
 **Si le workflow a changé entre-temps** — un collègue a ajouté une étape, renommé une transition —,
 l'acceptation est refusée : « Le workflow a changé depuis cette suggestion : elle ne peut plus être
@@ -3095,7 +3420,7 @@ acceptée. » Abandonnez-la, puis demandez une nouvelle suggestion, qui partira 
 **Les suggestions d'un workflow** sont listées au-dessus de ses étapes, dans « Suggestions de l’IA pour ce
 workflow » ; celles qui créent un workflow restent sous la liste des workflows.
 
-### 5 bis.1 Choisir un workflow
+### 18.4 Choisir un workflow
 
 La colonne de gauche liste les workflows de l'espace de travail, celui **par défaut** en tête, et
 le premier est ouvert d'office. Chaque entrée dit sa portée — globale, ou propre à un track.
@@ -3128,7 +3453,7 @@ La case **Afficher les archivés**, au-dessus de la liste, y ajoute les workflow
 Ces commandes demandent d'**administrer l'espace de travail**. Sans ce droit, elles restent visibles mais grisées, et
 le motif est écrit en tête de l'éditeur. *Captures : `docs/captures/CRM-118/entete-workflow-*.jpg`.*
 
-### 5 bis.2 Les étapes
+### 18.5 Les étapes
 
 Les étapes s'affichent dans l'ordre du graphe, avec pour chacune sa probabilité et son seuil de
 relance — ceux du catalogue, ou ceux que vous avez surchargés.
@@ -3139,7 +3464,7 @@ relance — ceux du catalogue, ou ceux que vous avez surchargés.
   **vide** — le cas d'un espace neuf —, l'écran le dit aussi, autrement, et propose le lien **Ouvrir
   le catalogue de nœuds**.
 - **Ordonner** : les flèches montent et descendent une étape. Une flèche désactivée sans être en
-  bout de liste s'explique comme au §5.3.
+  bout de liste s'explique comme au [§17.3](#quand-un-deplacement-est-indisponible-sans-etre-en-bout-de-liste).
 - **Surcharger** : le crayon ouvre un formulaire à trois champs — libellé, probabilité, seuil de
   relance. **Un champ laissé vide veut dire « prendre la valeur du catalogue »**, et ce n'est pas
   la même chose que zéro : une probabilité surchargée à `0` est une probabilité nulle voulue, que
@@ -3151,7 +3476,7 @@ relance — ceux du catalogue, ou ceux que vous avez surchargés.
   retirable : le serveur refuse, et l'écran nomme le refus. Retirer une étape ne supprime pas son
   nœud du catalogue.
 
-### 5 bis.3 Les transitions
+### 18.6 Les transitions
 
 Sous les étapes, le bloc « Transitions déclarées » montre le graphe : chaque étape y figure avec
 **ses sorties**, dans l'ordre du graphe. Une affaire ne peut aller que là où une transition la
@@ -3168,7 +3493,7 @@ affaire, et la mention **« Motif exigé »** lorsqu'un commentaire est obligato
 - **Le libellé du bouton est facultatif.** Laissé vide, le menu d'une affaire affiche le libellé de
   l'étape d'arrivée. Une valeur composée uniquement d'espaces est refusée.
 - **Exiger un motif** : la case rend le commentaire obligatoire. Le déplacement d'une affaire par
-  cette transition sera refusé sans lui — c'est la règle décrite au §4.3, vue depuis son réglage.
+  cette transition sera refusé sans lui — c'est la règle décrite au [§9.3](#faire-avancer-une-affaire-ce-que-le-produit-autorise-et-ce-qu-il-refuse), vue depuis son réglage.
 - **Modifier** : le crayon change le libellé et le motif exigé, jamais les deux extrémités. Changer
   une extrémité, c'est une autre transition : déclarez-la, puis retirez l'ancienne.
 - **Retirer** : la corbeille, après confirmation. Rien ne retient une transition — contrairement à
@@ -3180,10 +3505,10 @@ Si un autre administrateur déclare la même transition pendant que votre formul
 serveur refuse la vôtre et l'écran affiche « Cette transition est déjà déclarée. » Rien n'est écrit
 deux fois.
 
-### 5 bis.4 Les questions du formulaire
+### 18.7 Les questions du formulaire
 
 Sous les transitions, le bloc « Champs du formulaire » liste les **questions posées sur chaque
-affaire** de ce workflow, dans l'ordre où elles apparaissent sur la fiche (§4.7). Chaque ligne
+affaire** de ce workflow, dans l'ordre où elles apparaissent sur la fiche ([§9.6](#la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent)). Chaque ligne
 montre le libellé de la question, sa **clé** entre parenthèses techniques, son **type**, et son
 texte d'aide s'il en porte un.
 
@@ -3209,9 +3534,9 @@ texte d'aide s'il en porte un.
   restauration la remet en place.
 
 Si vous n'êtes pas administrateur de l'espace de travail, les commandes de l'éditeur sont grisées et
-un bandeau dit pourquoi (section 3.6) ; le serveur refuse de toute façon l'enregistrement.
+un bandeau dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) ; le serveur refuse de toute façon l'enregistrement.
 
-### 5 bis.4 bis La visibilité des questions, étape par étape
+### 18.8 La visibilité des questions, étape par étape
 
 Sous les questions, le bloc « Visibilité des champs, étape par étape » est une **grille** : une
 ligne par question, une colonne par étape, et sur chaque case ce que la question devient à cette
@@ -3241,7 +3566,7 @@ Deux précisions que l'écran écrit lui-même sous le tableau :
 La grille se parcourt entièrement au clavier, chaque case annonçant la question **et** l'étape
 qu'elle règle.
 
-### 5 bis.4 ter Ce qu'il faut avoir rempli pour emprunter un chemin
+### 18.9 Ce qu'il faut avoir rempli pour emprunter un chemin
 
 Sous la grille, le bloc « Champs exigés pour franchir une transition » reprend les chemins dans
 l'ordre du graphe et écrit, sous chacun, ce qu'une affaire doit avoir renseigné pour l'emprunter.
@@ -3282,7 +3607,7 @@ Si un autre administrateur déclare la même exigence pendant que vous remplisse
 l'écran vous le dit — « Ce champ est déjà exigé par cette transition » — au lieu d'afficher une
 erreur technique.
 
-### 5 bis.4 quater Ce qu'une exigence fera aux affaires en cours
+### 18.10 Ce qu'une exigence fera aux affaires en cours
 
 Rendre une question obligatoire est le seul réglage de cet écran qui puisse **empêcher** une affaire
 existante d'avancer. L'éditeur vous dit donc, **avant** d'enregistrer, ce que le réglage ferait.
@@ -3314,7 +3639,7 @@ Deux précisions honnêtes :
   possible** : c'est une aide à la décision, pas une autorisation. Le contrôle réel reste appliqué
   au moment où une affaire tente de changer d'étape.
 
-### 5 bis.5 Ce qui n'est pas encore là
+### 18.11 Ce qui n'est pas encore là
 
 - La prévisualisation ne montre **aucune liste nominative** des affaires concernées, seulement leur
   nombre.
@@ -3322,7 +3647,7 @@ Deux précisions honnêtes :
 - Exiger une même question sur **plusieurs chemins d'un coup** n'est pas possible : le geste se
   répète chemin par chemin.
 
-### 5 bis.6 Garder une photographie d'un workflow, et y revenir
+### 18.12 Garder une photographie d'un workflow, et y revenir
 
 *Livré par `CRM-078`, cinquième tranche. Captures dans `docs/captures/CRM-078/`.*
 
@@ -3372,9 +3697,9 @@ devenue surnuméraire est **archivée**, jamais supprimée : les réponses déj�
 
 **Qui peut le faire.** Publier, prévoir et restaurer sont réservés aux **administrateurs** de
 l'espace de travail. Les commandes restent visibles pour tout le monde, grisées pour qui n'administre
-pas l'espace, avec un bandeau qui dit pourquoi (section 3.6) ; le serveur refuse de toute façon.
+pas l'espace, avec un bandeau qui dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) ; le serveur refuse de toute façon.
 
-### 5 bis.7 Ce qui n'est pas encore là, côté versions
+### 18.13 Ce qui n'est pas encore là, côté versions
 
 - La **liste des affaires** du plan est bornée à deux cents entrées, et l'écran écrit combien il en
   montre sur combien. Cette borne n'est pas réglable depuis l'interface.
@@ -3382,7 +3707,82 @@ pas l'espace, avec un bandeau qui dit pourquoi (section 3.6) ; le serveur refuse
 - Une version ne porte **aucune commande de ligne** : elle ne se renomme pas, ne se supprime pas, et
   sa note ne se modifie plus après coup.
 
-## 5 ter. La corbeille : ce qui a été retiré, et comment le rendre
+## 19. Le catalogue de nœuds : le vocabulaire de vos workflows
+
+*Livré par `CRM-030` ; l'écran est spécifié au §2 bis de
+[`docs/SPEC-workflow-engine.md`](SPEC-workflow-engine.md).*
+
+Un **nœud** est un état par lequel une affaire peut passer : « Prospection », « Négociation »,
+« Perdu ». Le catalogue est la liste de ceux qui ont un nom dans votre espace de travail, et les
+workflows y puisent leurs étapes. Deux workflows différents qui emploient le même nœud parlent du
+même état — c'est ce qui rend comparable le temps passé en « Relance » d'un channel à l'autre.
+
+On y arrive par **« Réglages ▸ Catalogue de nœuds »**.
+
+### 19.1 Ce que chaque ligne montre
+
+- le **libellé**, dans la couleur du nœud — la même que celle que le tableau kanban lui donnera ;
+- sa **clé**, en petits caractères techniques : c'est l'identifiant durable sur lequel les
+  statistiques s'appuient ;
+- son **type** — « Ouvert », « Gagné » ou « Perdu » —, écrit en toutes lettres. C'est lui qui permet
+  de calculer un taux de conversion sans deviner d'après le libellé ;
+- sa **probabilité par défaut** et son **seuil de relance**, quand ils sont renseignés. Une case
+  vide veut dire que le nœud ne se prononce pas, ce qui n'est **pas** la même chose que zéro :
+  « Perdu » vaut réellement 0 %, alors qu'un autre nœud peut n'avoir aucune signification
+  prévisionnelle ;
+- la mention **« Archivé »**, le cas échéant.
+
+### 19.2 Créer un nœud
+
+« Nouveau nœud » ouvre un formulaire sous l'en-tête. Le libellé propose une clé, que vous pouvez
+corriger : elle doit être en minuscules, chiffres et tirets, et rester unique dans l'espace de
+travail. La proposition est une commodité et rien de plus — pour « Nœud de suivi », elle rend
+`n-ud-de-suivi`, la ligature « œ » n'étant pas convertible automatiquement ; corrigez-la avant
+d'enregistrer.
+
+Probabilité et seuil de relance sont facultatifs. Laissés vides, ils restent vides.
+
+### 19.3 Modifier un nœud
+
+« Modifier » ouvre le même formulaire à la place de la ligne, sans la clé : **la clé ne se modifie
+pas**. Elle est ce sur quoi vos statistiques s'appuient, et la renommer réécrirait l'histoire de
+toutes les affaires passées par ce nœud. Si un nœud ne convient plus, archivez-le et créez-en un
+autre.
+
+### 19.4 Archiver un nœud, et le rétablir
+
+Archiver retire le nœud des workflows à composer, sans rien effacer. Le nœud reste dans la liste,
+marqué « Archivé », et « Rétablir » le remet en service — ce geste-là ne demande aucune
+confirmation, puisqu'il ne détruit rien.
+
+**Un nœud sur lequel des affaires se trouvent encore ne s'archive pas.** Le produit refuse, dit
+combien d'affaires en cours l'occupent, et vous demande de les déplacer d'abord. Ce refus vient du
+serveur : la commande reste offerte, et c'est en la déclenchant que vous obtenez le compte exact.
+Les affaires archivées ou mises à la corbeille ne comptent pas.
+
+### 19.5 Réordonner le catalogue
+
+Les deux flèches en tête des commandes d'une ligne la font monter ou descendre d'un cran. Chaque
+clic écrit l'ordre immédiatement : il n'y a rien à valider.
+
+- La flèche est **éteinte** quand le geste n'a nulle part où aller — sur la première ligne pour
+  « monter », sur la dernière pour « descendre ». Survolez-la : elle dit pourquoi.
+- Un nœud **archivé** ne se déplace pas, et ne porte donc aucune flèche. Il **garde sa place** dans
+  la liste, et les nœuds actifs le franchissent normalement.
+- Cet ordre est celui de l'écran et celui des listes où l'on choisit un nœud. Il ne change **rien**
+  aux affaires en cours, ni aux workflows déjà composés : réordonner le vocabulaire ne réordonne
+  aucun parcours.
+
+Le geste reste possible sur un nœud que des affaires occupent — contrairement à l'archivage.
+Déplacer un état dans la liste ne déplace aucune affaire.
+
+### 19.6 Ce qui n'est pas encore là
+
+- **Supprimer** un nœud n'existe pas, et n'est pas prévu : l'archivage tient lieu de retrait.
+- Le nombre d'affaires posées sur un nœud n'est **pas affiché à l'avance** ; il apparaît dans le
+  refus d'archivage.
+
+## 20. La corbeille : ce qui a été retiré, et comment le rendre
 
 *Livré par `CRM-077`. Captures dans `docs/captures/CRM-077/`.*
 
@@ -3410,7 +3810,7 @@ inventaire complet.
 technique plutôt que par une personne, ou par un compte supprimé depuis. Le produit le dit au lieu
 de laisser la case vide.
 
-### 5 ter.1 Restaurer
+### 20.1 Restaurer
 
 Le bouton **Restaurer** de la ligne. Aucune confirmation n'est demandée : restaurer ne détruit rien,
 et le geste inverse est précisément celui qui a rempli cet écran.
@@ -3423,7 +3823,7 @@ Trois réponses sont possibles, et l'écran les distingue :
 | « Son parent est lui-même en corbeille : restaurez-le d'abord. » | Le rendre seul l'aurait rendu **à un endroit invisible** — un channel dans un track retiré, une affaire dans un channel retiré |
 | « Rien n'a été restauré : cet objet n'est plus modifiable avec votre compte. » | Votre compte n'a pas le droit d'écrire sur cet objet. **Rien n'a changé** |
 
-**« Restaurer » est grisé quand vous ne pouvez pas le faire** (section 3.6) : un track ou un channel se restaure
+**« Restaurer » est grisé quand vous ne pouvez pas le faire** ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) : un track ou un channel se restaure
 par un administrateur de l'espace, une affaire par qui peut écrire sur son onglet. Un bandeau en tête du
 tableau dit lequel des deux cas vous concerne. Le message « Rien n'a été restauré » ne paraît plus que si
 vos droits ont changé entre-temps ou n'ont pas pu être lus.
@@ -3431,16 +3831,16 @@ vos droits ont changé entre-temps ou n'ont pas pu être lus.
 **La deuxième réponse est une règle du serveur, pas une précaution de l'écran** : elle vaut aussi
 pour un script ou une intégration qui tenterait la même chose.
 
-### 5 ter.2 Ce que cet écran ne fait pas
+### 20.2 Ce que cet écran ne fait pas
 
 - **On n'y retire rien, on y rend.** Le geste de mise à la corbeille vit là où vivent les objets —
-  chapitre 5 pour un track et un channel, chapitre 4.7 *bis* pour une affaire.
+  [chapitre 17](#administrer-l-arborescence-tracks-et-channels) pour un track et un channel, [chapitre 9.15](#mettre-une-affaire-a-la-corbeille) pour une affaire.
 - **Aucun effacement manuel, et aucun « vider la corbeille ».** Seul l'effacement automatique, au
-  bout de 30 jours, détruit un objet (section 5 ter.3).
+  bout de 30 jours, détruit un objet ([section 20.3](#l-effacement-definitif)).
 - **Aucun filtre, aucun tri, aucune pagination** : la corbeille est rendue en entier, la plus
   récemment retirée d'abord.
 
-### 5 ter.3 L'effacement définitif
+### 20.3 L'effacement définitif
 
 Chaque nuit, le produit efface ce qui est dans la corbeille depuis plus de 30 jours : les tracks
 d'abord, puis les channels, puis les affaires. **Ce qui est effacé ne se restaure plus.**
@@ -3452,7 +3852,7 @@ d'abord, puis les channels, puis les affaires. **Ce qui est effacé ne se restau
   reporte ses saisies de temps sur son channel ; avant d'effacer un channel, sur son track. Le temps
   et son coût restent dans les rapports, sous le dossier parent. Seul le temps saisi sur un **track**
   effacé disparaît, faute de parent.
-- **Chaque effacement est inscrit au journal d'audit** (chapitre 10 *ter*), avec ce qu'il a emporté
+- **Chaque effacement est inscrit au journal d'audit** ([chapitre 22](#le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace)), avec ce qu'il a emporté
   et ce qu'il a reporté, sans auteur : c'est le produit qui efface, pas une personne.
 - **Un track peut rester bloqué.** Une affaire d'un autre track peut avoir imputé une dépense à l'un
   de ses budgets : effacer le track détruirait ce budget, et la dépense avec. Le produit ne le fait
@@ -3464,1536 +3864,13 @@ d'abord, puis les channels, puis les affaires. **Ce qui est effacé ne se restau
   budget »** est proposé à sa place. Quand plus rien ne bloque, l'écran le dit, et le track sera
   effacé à sa date.
 
-### 5 ter.4 Ce qui n'est pas encore là
+### 20.4 Ce qui n'est pas encore là
 
-- Le retrait d'une **affaire** se fait depuis sa fiche (chapitre 4.7 *bis*), et non depuis le
+- Le retrait d'une **affaire** se fait depuis sa fiche ([chapitre 9.15](#mettre-une-affaire-a-la-corbeille)), et non depuis le
   tableau kanban ni la vue liste.
 - La durée de conservation est la même pour tout l'espace ; elle ne se règle pas.
 
-## 5 quater. Le catalogue de nœuds : le vocabulaire de vos workflows
-
-*Livré par `CRM-030` ; l'écran est spécifié au §2 bis de
-[`docs/SPEC-workflow-engine.md`](SPEC-workflow-engine.md).*
-
-Un **nœud** est un état par lequel une affaire peut passer : « Prospection », « Négociation »,
-« Perdu ». Le catalogue est la liste de ceux qui ont un nom dans votre espace de travail, et les
-workflows y puisent leurs étapes. Deux workflows différents qui emploient le même nœud parlent du
-même état — c'est ce qui rend comparable le temps passé en « Relance » d'un channel à l'autre.
-
-On y arrive par **« Réglages ▸ Catalogue de nœuds »**.
-
-### 5 quater.1 Ce que chaque ligne montre
-
-- le **libellé**, dans la couleur du nœud — la même que celle que le tableau kanban lui donnera ;
-- sa **clé**, en petits caractères techniques : c'est l'identifiant durable sur lequel les
-  statistiques s'appuient ;
-- son **type** — « Ouvert », « Gagné » ou « Perdu » —, écrit en toutes lettres. C'est lui qui permet
-  de calculer un taux de conversion sans deviner d'après le libellé ;
-- sa **probabilité par défaut** et son **seuil de relance**, quand ils sont renseignés. Une case
-  vide veut dire que le nœud ne se prononce pas, ce qui n'est **pas** la même chose que zéro :
-  « Perdu » vaut réellement 0 %, alors qu'un autre nœud peut n'avoir aucune signification
-  prévisionnelle ;
-- la mention **« Archivé »**, le cas échéant.
-
-### 5 quater.2 Créer un nœud
-
-« Nouveau nœud » ouvre un formulaire sous l'en-tête. Le libellé propose une clé, que vous pouvez
-corriger : elle doit être en minuscules, chiffres et tirets, et rester unique dans l'espace de
-travail. La proposition est une commodité et rien de plus — pour « Nœud de suivi », elle rend
-`n-ud-de-suivi`, la ligature « œ » n'étant pas convertible automatiquement ; corrigez-la avant
-d'enregistrer.
-
-Probabilité et seuil de relance sont facultatifs. Laissés vides, ils restent vides.
-
-### 5 quater.3 Modifier un nœud
-
-« Modifier » ouvre le même formulaire à la place de la ligne, sans la clé : **la clé ne se modifie
-pas**. Elle est ce sur quoi vos statistiques s'appuient, et la renommer réécrirait l'histoire de
-toutes les affaires passées par ce nœud. Si un nœud ne convient plus, archivez-le et créez-en un
-autre.
-
-### 5 quater.4 Archiver un nœud, et le rétablir
-
-Archiver retire le nœud des workflows à composer, sans rien effacer. Le nœud reste dans la liste,
-marqué « Archivé », et « Rétablir » le remet en service — ce geste-là ne demande aucune
-confirmation, puisqu'il ne détruit rien.
-
-**Un nœud sur lequel des affaires se trouvent encore ne s'archive pas.** Le produit refuse, dit
-combien d'affaires en cours l'occupent, et vous demande de les déplacer d'abord. Ce refus vient du
-serveur : la commande reste offerte, et c'est en la déclenchant que vous obtenez le compte exact.
-Les affaires archivées ou mises à la corbeille ne comptent pas.
-
-### 5 quater.5 Réordonner le catalogue
-
-Les deux flèches en tête des commandes d'une ligne la font monter ou descendre d'un cran. Chaque
-clic écrit l'ordre immédiatement : il n'y a rien à valider.
-
-- La flèche est **éteinte** quand le geste n'a nulle part où aller — sur la première ligne pour
-  « monter », sur la dernière pour « descendre ». Survolez-la : elle dit pourquoi.
-- Un nœud **archivé** ne se déplace pas, et ne porte donc aucune flèche. Il **garde sa place** dans
-  la liste, et les nœuds actifs le franchissent normalement.
-- Cet ordre est celui de l'écran et celui des listes où l'on choisit un nœud. Il ne change **rien**
-  aux affaires en cours, ni aux workflows déjà composés : réordonner le vocabulaire ne réordonne
-  aucun parcours.
-
-Le geste reste possible sur un nœud que des affaires occupent — contrairement à l'archivage.
-Déplacer un état dans la liste ne déplace aucune affaire.
-
-### 5 quater.6 Ce qui n'est pas encore là
-
-- **Supprimer** un nœud n'existe pas, et n'est pas prévu : l'archivage tient lieu de retrait.
-- Le nombre d'affaires posées sur un nœud n'est **pas affiché à l'avance** ; il apparaît dans le
-  refus d'archivage.
-
-## 5 quinquies. Les coûts d'un track : ce qui était prévu, ce qui a été dépensé
-
-*Livré par `CRM-086` tranche 3. Captures dans `docs/captures/CRM-086/`.*
-
-**Où.** Ouvrez un track, puis l'entrée **« Coûts »** de la barre d'onglets, à droite des channels et
-séparée d'eux par un filet. L'adresse est partageable et rechargeable.
-
-**L'entrée est là même si le track n'a aucun channel.** Un track porte ses budgets indépendamment de
-ses channels ; ne pas encore avoir ouvert de channel n'empêche pas d'avoir engagé des dépenses.
-
-**Ce que l'écran montre.** Pour chaque budget **ouvert** du track, deux barres côte à côte : le
-**prévisionnel** — la somme des coûts estimés des lignes rattachées à ce budget — et le **réel** — la
-somme des coûts réellement saisis. La barre du réel passe au rouge lorsqu'elle **dépasse** le
-prévisionnel, et le tableau sous le graphique l'écrit aussi en toutes lettres : une couleur ne porte
-jamais seule une information dans ce produit.
-
-**Le tableau sous le graphique n'est pas un doublon.** C'est la version que lit un lecteur d'écran,
-et celle qui reste juste si les couleurs ne passent pas — à l'impression, sur un projecteur, ou pour
-qui les distingue mal. Il porte les mêmes chiffres, plus une colonne **« Sans réel »** qui compte les
-lignes dont le coût réel n'a pas encore été saisi, budget par budget.
-
-**Un budget récurrent apparaît ici en UNE seule paire de barres**, toutes ses occurrences confondues.
-Le détail occurrence par occurrence appartient à l'écran du budget, désormais livré : **le nom d'un
-budget est un lien** vers sa fiche (§5 sexies).
-
-**Un budget clôturé n'apparaît pas sur cet écran.** Il n'a pas disparu : ses lignes existent
-toujours, et leur coût réel reste saisissable — clôturer une campagne n'empêche pas les factures
-d'arriver ensuite. Il sort simplement de la comparaison des budgets en cours.
-
-### 5 quinquies.1 La phrase sous le graphique, et pourquoi elle compte
-
-Quand des coûts réels manquent, l'écran écrit sous le graphique :
-
-> « 1 ligne(s) sans coût réel saisi, pour 100 € de prévisionnel. »
-
-**Sans elle, un réel bas se lirait comme une économie alors qu'il n'est qu'une saisie en retard**,
-et c'est la principale façon dont un tel écran pourrait mentir. Une ligne sans coût réel **ne compte
-pas** dans la barre du réel : le produit ne confond jamais « pas encore su » et « rien dépensé ».
-
-**Elle disparaît quand tous les réels sont saisis**, au lieu d'afficher « 0 ligne ». Un
-avertissement affiché en permanence cesse d'être lu, et c'est quand il apparaît qu'il doit se
-remarquer.
-
-### 5 quinquies.2 Plusieurs devises
-
-Si le track porte des budgets dans plusieurs devises, l'écran rend **un graphique par devise**,
-chacun avec son propre total. Il n'additionne jamais deux devises : aucune conversion et aucun taux
-de change n'existent dans le produit, et un total unique n'aurait donc aucun sens. Si tout est dans
-la même devise — le cas courant — vous ne voyez rien de cette mécanique.
-
-### 5 quinquies.3 Les états que vous pouvez rencontrer
-
-| Ce que vous voyez | Ce que cela veut dire |
-|---|---|
-| « Aucun budget sur ce track » | Aucun budget **ouvert** que vous ayez le droit de lire. Un administrateur en crée depuis « Réglages ▸ Arborescence » |
-| Deux barres à zéro et « Aucune dépense rattachée. » | Le budget existe, aucune affaire n'y a encore rattaché de ligne de coût |
-| « Accès refusé » | Votre compte n'a pas le droit de lire ces budgets |
-| « Track introuvable » | L'adresse ne désigne aucun track que vous puissiez lire |
-
-**Ce que vous voyez est ce que vos droits vous consentent.** Un budget que vous n'avez pas le droit
-de lire n'entre pas dans le total, et **l'écran ne vous signale aucun manque** : le signaler
-reviendrait à vous apprendre l'existence de ce qu'il cache. Votre total peut donc être plus petit
-que celui d'un collègue, et c'est le comportement voulu.
-
-### 5 quinquies.4 Ce que cet écran ne fait pas
-
-- **On n'y saisit rien.** Les lignes de coût d'une affaire se créent et se modifient depuis la fiche
-  de l'affaire, section « Coûts ». Les budgets s'administrent depuis « Réglages ▸ Arborescence ».
-- **Aucun filtre, aucun tri, aucune période.** L'écran rend les budgets ouverts du track dans l'ordre
-  de leur administration.
-
-### 5 quinquies.5 Deux onglets, et le second est celui où l'on saisit
-
-Cet écran porte **deux onglets** : « Vue d'ensemble » — le graphique décrit ci-dessus — et
-**« À saisir »**, qui liste les lignes de ce track en attente de leur coût réel et permet de les
-saisir à la suite. L'onglet « À saisir » porte un **compteur** : le nombre de lignes qu'il liste.
-
-Le second onglet vit dans l'adresse (`?onglet=saisir`) : il est donc **partageable et
-rechargeable**, comme le reste du produit. Tout est décrit au **§5 octies**.
-
-*Le **cumul de l'espace de travail** est livré : voir le §5 septies.*
-
-## 5 sexies. Le détail d'un budget : occurrence par occurrence, ligne par ligne
-
-*Livré par `CRM-086` tranche 4. Captures dans `docs/captures/CRM-086/couts-budget-*.jpg`.*
-
-**Où.** Depuis l'écran de coûts d'un track (§5 quinquies), **cliquez sur le nom d'un budget** dans
-le tableau sous le graphique. L'adresse est partageable et rechargeable ; elle désigne le budget par
-son identifiant, et non par son nom — deux budgets peuvent porter le même nom dès que l'un est clos.
-
-**Ce que l'écran montre, de haut en bas :**
-
-1. **La devise du budget et son enveloppe**, quand une enveloppe a été décidée. Si aucune ne l'a été,
-   la ligne n'apparaît pas du tout : le produit ne confond jamais « rien n'a été décidé » et
-   « l'enveloppe vaut zéro ».
-2. **Un graphique à deux barres par occurrence** — le prévisionnel et le réel —, dans l'ordre des
-   périodes. C'est ce que l'écran du track agrège en une seule paire. Un budget **non récurrent**
-   n'en rend qu'une, nommée « Sans occurrence ».
-3. **La liste de ses lignes de coût** : l'affaire, la nature de la dépense, le coût estimé, le coût
-   réel et l'auteur de la saisie. Le titre de l'affaire est un lien vers sa fiche.
-
-**Une occurrence qui n'a rien coûté garde ses deux barres, à zéro.** Qu'il ne se soit rien passé en
-février est une information ; la faire disparaître ferait lire le budget comme s'il n'avait jamais
-porté ce mois-là.
-
-**Sous le libellé d'une occurrence, sa période.** Le libellé est libre — rien n'oblige
-« Janvier 2026 » à couvrir janvier —, et la période dit ce que le libellé ne garantit pas. Elle est
-purement descriptive : elle ne refuse aucune ligne de coût.
-
-### 5 sexies.1 Filtrer par occurrence
-
-Dès que le budget porte des occurrences, un sélecteur **« Filtrer par occurrence »** apparaît
-au-dessus de la liste. Il ne retient que **la liste** : le graphique reste celui du budget entier,
-sans quoi vous perdriez la comparaison entre occurrences, qui est ce que cet écran sert à voir.
-
-L'option **« Toutes les occurrences »** lève le filtre. Un budget non récurrent, ou un budget
-récurrent qui ne porte encore aucune occurrence, n'affiche aucun sélecteur : il n'y aurait rien à
-filtrer.
-
-### 5 sexies.2 La colonne « Réel » laissée vide
-
-Une ligne dont le coût réel n'a pas encore été saisi laisse sa cellule **vide** — pas un tiret, pas
-« non renseigné », et surtout pas `0 €`. Le produit ne confond jamais « pas encore su » et « rien
-dépensé » : un zéro affiché ferait passer une saisie en retard pour une économie. Le compte de ces
-lignes est donné une seule fois, par la phrase sous le graphique.
-
-### 5 sexies.3 Les états que vous pouvez rencontrer
-
-| Ce que vous voyez | Ce que cela veut dire |
-|---|---|
-| « Budget clôturé — ses lignes restent lisibles et leur coût réel saisissable. » | Le budget a été clos. Il ne figure plus sur l'écran du track, mais son histoire reste entière et les factures qui arrivent après coup restent saisissables |
-| « Aucune occurrence ouverte. » | Le budget est récurrent mais n'en porte aucune. Tant que c'est le cas, aucune dépense ne peut lui être rattachée |
-| Deux barres à zéro et « Aucune dépense rattachée. » | Le budget existe, aucune affaire n'y a encore rattaché de ligne |
-| « Aucune dépense sur cette occurrence. » | Le filtre est posé sur une occurrence qui ne porte aucune ligne — ce n'est pas la même chose qu'un budget vide |
-| « Budget introuvable » | Ce budget n'existe pas, **ou** il ne vous est pas accessible, **ou** l'adresse est mal formée. Les trois se ressemblent **volontairement** : distinguer les cas vous apprendrait l'existence d'un budget que vous n'avez pas le droit de voir |
-| « Auteur inconnu » dans la colonne « Auteur » | Le compte qui a saisi la ligne a été supprimé depuis. La ligne, elle, est intacte |
-
-**Le bouton « Revenir aux coûts du track »** de l'écran « Budget introuvable » vous ramène là d'où
-vous venez, et là où les autres budgets sont listés.
-
-### 5 sexies.4 Ce que cet écran ne fait pas
-
-- **On n'y saisit rien.** Les lignes de coût se créent et se modifient depuis la fiche de l'affaire,
-  section « Coûts » ; les budgets et leurs occurrences s'administrent depuis
-  « Réglages ▸ Arborescence ».
-- **Aucun tri, aucune période, aucun export.** La liste rend les lignes de la plus ancienne à la
-  plus récente.
-
-## 5 septies. Les coûts de tout l'espace de travail : un cumul par track
-
-*Livré par `CRM-086` tranche 5. Captures dans `docs/captures/CRM-086/couts-workspace-*.jpg`.*
-
-**Où.** Barre latérale ▸ **« Coûts »**, entre « Objectifs » et « Ma journée ». L'adresse est
-`/couts` ; elle est partageable et rechargeable.
-
-**Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
-droit de lire — voir le §5 septies.3, qui est la partie la plus importante de cette page.
-
-### 5 septies.1 Ce que l'écran montre
-
-**Un groupe de deux barres par track**, cumulant **tous ses budgets ouverts** : le **prévisionnel**
-— la somme des coûts estimés — et le **réel** — la somme des coûts réellement saisis. La barre du
-réel passe au rouge lorsqu'elle dépasse le prévisionnel, et la légende nomme les trois séries.
-
-C'est la différence exacte avec l'écran de coûts d'un track (§5 quinquies) : là-bas, une paire de
-barres désigne **un budget** ; ici, elle désigne **un track entier**. Un track qui porte trois
-budgets ouverts en euros rend donc **une** seule paire de barres, dont les montants sont la somme
-des trois.
-
-**Sous le graphique, le même tableau que partout ailleurs** : une ligne par track, le prévisionnel,
-le réel, le nombre de lignes en attente de leur coût réel, et un **total**. Ce tableau est la
-version lisible du graphique : il reste juste si la couleur ne passe pas, et c'est lui que lit un
-lecteur d'écran.
-
-**Le nom d'un track est un lien** vers ses propres coûts, budget par budget (§5 quinquies). C'est le
-chemin normal : on lit d'abord quels tracks dépensent, puis on ouvre celui qu'on veut détailler.
-
-**Un budget clôturé n'entre dans aucun cumul.** Il ne disparaît pas pour autant : ses lignes restent
-lisibles depuis sa propre fiche (§5 sexies).
-
-**Un track archivé ou mis à la corbeille ne figure pas sur cet écran** — comme il ne figure pas dans
-la barre latérale. Si un budget y est resté ouvert, il se lit depuis l'écran de coûts de ce track,
-dont l'adresse continue de répondre.
-
-### 5 septies.2 Les devises ne se mélangent jamais
-
-Si les budgets que vous lisez sont libellés dans **plusieurs devises**, l'écran rend **un graphique
-par devise**, chacun avec son **titre** — « Coûts en EUR », « Coûts en CHF » — et son propre total.
-Additionner des francs et des euros ne voudrait rien dire, et les poser sur un même axe rendrait la
-comparaison fausse à l'œil.
-
-Si tout est libellé dans une seule devise — le cas courant —, vous ne voyez rien de cette mécanique :
-un seul graphique, sans titre de devise.
-
-### 5 septies.3 Votre total est le vôtre, et il peut différer de celui d'un collègue
-
-**C'est la règle la plus importante de cet écran.** Le cumul est calculé **à partir de ce que vos
-droits vous laissent lire**, jamais à partir de tout ce qui existe. Un budget qui appartient à un
-track qui vous est fermé :
-
-- n'apparaît nulle part ;
-- n'entre dans **aucun** total ;
-- et **n'est signalé par rien**.
-
-Deux collègues aux droits différents lisent donc deux nombres différents sur le même écran, au même
-instant. Ce n'est pas une erreur de calcul : afficher un total « complet » vous apprendrait, par
-simple soustraction, l'existence et le montant d'un budget que vous n'avez pas le droit de voir.
-
-L'écran l'écrit sous les graphiques, pour que personne n'ait à le deviner :
-
-> « Ce cumul ne porte que sur les budgets ouverts des tracks que vous pouvez lire. Un track archivé
-> ou mis à la corbeille n'y figure pas ; ses budgets restent lisibles depuis son propre écran de
-> coûts. »
-
-Si un montant vous paraît manquer, la question à poser n'est donc pas « l'écran s'est-il trompé ? »
-mais « ai-je le droit de lire ce track ? ».
-
-### 5 septies.4 Ce que l'écran écrit quand il n'y a rien à montrer
-
-| Ce que vous lisez | Ce que cela veut dire |
-|---|---|
-| « n ligne(s) sans coût réel saisi, pour m € de prévisionnel. » | Des dépenses ont été engagées sans que leur coût réel ait encore été saisi. La barre du réel est donc plus basse que la réalité |
-| « Aucune dépense rattachée. » | Les tracks de cette devise ont bien un budget ouvert, mais aucune affaire n'y a encore rattaché la moindre ligne de coût |
-| « Aucun budget ouvert » | Aucun des tracks que vous pouvez lire ne porte de budget ouvert — **ou** vous n'en lisez aucun. Les deux cas se ressemblent volontairement : les distinguer vous apprendrait l'existence de ce que l'écran cache |
-| « Aucun espace de travail » | Votre session a expiré, ou votre compte n'appartient à aucun espace de travail. Reconnectez-vous |
-
-### 5 septies.5 Ce que cet écran ne fait pas
-
-- **On n'y saisit rien.** Les lignes de coût se créent depuis la fiche d'une affaire, section
-  « Coûts » ; les budgets s'administrent depuis « Réglages ▸ Arborescence ».
-- **Aucun filtre, aucune période, aucun export, aucune conversion de devise.** L'écran rend les
-  tracks dans l'ordre de la barre latérale.
-- **Aucun total toutes devises confondues** — voir le §5 septies.2.
-
-### 5 septies.6 Deux onglets, ici aussi
-
-Cet écran porte les **mêmes deux onglets** que celui d'un track (§5 quinquies.5) : « Vue
-d'ensemble » et **« À saisir »**. La différence est la **portée** : ici, l'onglet liste les lignes
-en attente de **tous les tracks que vous lisez**, et non celles d'un seul. Tout est décrit au
-§5 octies.
-
-## 5 octies. L'onglet « À saisir » : renseigner les coûts réels à la suite
-
-*Livré par `CRM-086` tranche 6 ; plusieurs réels par ligne et la case « Soldé » par `CRM-099`. Captures dans
-`docs/captures/CRM-086/couts-a-saisir-*.jpg` et `docs/captures/CRM-099/`.*
-
-**Où.** Sur l'écran de coûts d'un track (§5 quinquies) ou sur celui de l'espace de travail
-(§5 septies), l'onglet **« À saisir »**, à droite de « Vue d'ensemble ». L'adresse gagne
-`?onglet=saisir` : elle se partage et se recharge, et le bouton « précédent » du navigateur revient
-à l'onglet d'avant.
-
-**À quoi il sert.** Le graphique dit **combien** de coûts réels manquent ; il ne permettait pas de
-les saisir. Il fallait ouvrir une affaire après l'autre. Cet onglet est la surface de **saisie en
-série** : une ligne par coût en attente, un champ par ligne, et le clavier pour aller de l'une à
-l'autre.
-
-**Ce que la table liste.** Toutes les lignes de coût **non soldées** que vous avez le droit de
-**lire**, dans la portée de l'écran, **de la plus ancienne à la plus récente** — celle qui attend
-depuis le plus longtemps est celle qu'on oublie. Une ligne reçoit autant de coûts réels qu'il en
-faut — une facture, puis une autre — et reste dans la table tant qu'on ne l'a pas **soldée**. Chaque
-ligne porte son **ancienneté**, son **budget**, son **occurrence** le cas échéant, son **affaire** (le
-titre est un lien vers la fiche), la **nature** de la dépense, son **coût estimé**, et ce qui est
-**« Déjà saisi »** — la somme de ses réels.
-
-**Les budgets clôturés y figurent, et c'est voulu :** c'est précisément après la clôture que les
-factures arrivent. La ligne d'un budget clos porte une pastille **« clôturé »** — une indication
-neutre, jamais une alerte : la clôture n'empêche pas de saisir le coût réel, elle empêche seulement
-de **changer le rattachement** d'une ligne.
-
-### 5 octies.1 Saisir, au clavier
-
-- **Tapez le montant dans le champ « Un réel de plus », puis `Entrée`.** Le réel s'ajoute à la
-  ligne immédiatement — il n'y a **aucun bouton d'enregistrement** —, « Déjà saisi » montre la
-  nouvelle somme, le champ se vide pour le réel suivant, et le curseur passe au champ de la **ligne
-  suivante**. C'est cela, saisir à la suite.
-- **La date et le libellé** (« Facture n° 42 ») se règlent à la demande, par le crayon à côté du
-  champ ; sans eux, le réel est daté du jour et sans libellé.
-- **Cochez « Soldé »** quand toutes les factures d'une ligne sont arrivées : elle quitte la table au
-  prochain chargement. Soldée sans aucun réel, elle vaut **zéro** — « finalement rien dépensé ».
-- **`Échap`** annule la saisie en cours et laisse la ligne intacte : rien n'est envoyé.
-- **La ligne enregistrée ne disparaît pas sous vos doigts.** Elle reste à sa place, sur un fond
-  vert, marquée « Enregistré », **jusqu'au prochain chargement de l'onglet**. La retirer aussitôt
-  ferait remonter les lignes suivantes pendant que vous tapez, et vous feriez écrire une valeur dans
-  la mauvaise ligne.
-- **Un champ laissé vide n'envoie rien.** Un `0` saisi est un réel comme un autre ; c'est « Soldé »
-  qui fait sortir une ligne de l'attente. La règle est écrite sous la table, avec la consigne
-  clavier.
-
-### 5 octies.2 Ce que vous ne pouvez pas modifier reste visible
-
-Une ligne que vous pouvez **lire** mais pas **écrire** est rendue comme les autres, avec son champ
-**désactivé** et la phrase « Vous ne pouvez pas modifier cette affaire. » sous lui. Elle n'est
-**jamais masquée** : une table qui cacherait des lignes se lirait comme complète alors qu'elle ne
-l'est pas.
-
-Si **aucune** des lignes que vous lisez n'est modifiable — le cas d'un compte en lecture seule —, la
-table est rendue entière et le dit **en tête** : « Aucune de ces lignes ne peut être modifiée avec
-vos droits : ce tableau est en lecture seule. »
-
-Ce droit est demandé à la base, ligne par ligne, et jamais déduit de votre rôle : les droits fins
-ouvrent l'écriture channel par channel, et un rôle ne dirait pas la vérité.
-
-### 5 octies.3 Ce que l'écran écrit quand quelque chose ne va pas
-
-| Ce que vous lisez sous le champ | Ce que cela veut dire |
-|---|---|
-| « Enregistrement… » | L'envoi est en cours |
-| « Enregistré » | La base a retenu le réel — « Déjà saisi » montre **la somme qu'elle tient** |
-| « Ce montant n'est pas un nombre. » | La saisie n'a pas été envoyée, et elle reste à l'écran pour être corrigée |
-| « Aucune ligne n'a été enregistrée. […] rechargez l'onglet. » | Ni un succès ni une erreur : vos droits ont pu changer depuis l'ouverture de l'écran. Rien n'a été écrit |
-| « Vous ne pouvez pas modifier cette affaire. » | La base a refusé l'écriture |
-| « Tous les coûts réels sont saisis » | Il n'y a rien à saisir dans cette portée. C'est une bonne nouvelle, pas un écran en panne |
-
-### 5 octies.4 Le compteur de l'onglet
-
-Le badge porte le nombre de lignes **que la table liste** — les lignes non soldées que vous lisez,
-budgets clôturés compris, y compris celles que vous ne pouvez pas modifier.
-
-**Il peut différer du nombre écrit sous le graphique** de la vue d'ensemble (« n ligne(s) sans coût
-réel saisi »), et ce n'est pas une erreur : le graphique **exclut les budgets clôturés** et compte
-**par devise**, là où le badge est un nombre unique. Les deux chiffres ne comptent pas la même
-chose.
-
-**L'écran le dit lui-même, et vous n'avez donc rien à deviner.** Dès que le badge paraît, l'onglet
-« Vue d'ensemble » écrit sous la barre d'onglets :
-
-> « Le compteur de l'onglet "À saisir" porte sur tout cet écran, budgets clôturés compris et toutes
-> devises confondues ; les mentions sous les histogrammes ne comptent que les budgets qu'ils
-> montrent. »
-
-Un exemple, sur le jeu de démonstration : le track « Studio web » porte des lignes non soldées sur
-un budget ouvert et sur le budget clôturé « Salon du web 2025 », dont une qui a déjà reçu un réel ; le
-badge les compte toutes, quand la mention sous le graphique ne compte que la ligne sans réel du
-budget ouvert. Les valeurs exactes du jeu sont dans l'annexe A.
-
-C'est la même règle que celle du cumul du workspace (§5 septies.3) : quand deux nombres d'un même
-écran ne comptent pas la même chose, l'écran écrit lequel compte quoi.
-
-### 5 octies.5 Ce que cet onglet ne fait pas
-
-- **Il ne crée aucune ligne de coût** : une dépense se crée depuis la fiche de son affaire, section
-  « Coûts ».
-- **Il ajoute des réels et solde des lignes** — il ne modifie ni la nature, ni le budget, ni
-  l'occurrence, ni le coût estimé.
-- **Il ne corrige ni ne retire un réel déjà saisi** : cela se fait depuis la fiche de son affaire
-  (§5 octies.6).
-- **Aucun import de fichier, aucun rapprochement automatique avec une facture.**
-
-### 5 octies.6 Les réels d'une ligne, dans la fiche d'une affaire
-
-Dans la section « Coûts » d'une fiche, la colonne « Réel » d'une ligne est la **somme de ses réels**,
-et le formulaire d'une ligne ne porte plus de réel : il en règle la nature, le budget, l'occurrence
-et le coût estimé. La flèche au début des actions de la ligne **déplie ses réels**, sous la table :
-
-- la liste des réels — date, libellé ou « Sans libellé », montant —, chacun **modifiable** (crayon)
-  et **retirable** (corbeille, après confirmation) ;
-- la saisie d'un réel de plus : montant, date (celle du jour par défaut), libellé facultatif, puis
-  « Ajouter le réel » ;
-- la case **« Soldé »**. Une ligne soldée porte la pastille « Soldé » ; ses réels ne se modifient
-  plus, et l'écran le dit : « Ligne soldée — décochez « Soldé » pour la modifier. » Décocher la
-  rouvre.
-
-Un budget clôturé n'empêche rien de tout cela : on clôt une campagne, puis les factures arrivent.
-
-## 5 nonies. L'entonnoir de conversion : où se tiennent vos affaires
-
-*Livré par `CRM-066` tranche 3 a, complété par les tranches 3 b (le sélecteur de portée,
-§5 nonies.0) et 3 c (les étapes vides, nommées au §5 nonies.1).
-C'est le **chapitre 28** que `docs/SPEC-analytique.md` nomme. Captures dans
-`docs/captures/CRM-066/pilotage-*.jpg` et `pilotage-portee-*.jpg`.*
-
-**Où.** Barre latérale ▸ **« Pilotage »**, entre « Coûts » et « Ma journée ». L'adresse est
-`/pilotage` ; elle est partageable et rechargeable.
-
-**Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
-droit de lire — voir le §5 nonies.4, qui est la partie la plus importante de cette page.
-
-### 5 nonies.0 Choisir la portée : tout l'espace, un track, un channel
-
-*Livré par la tranche 3 b.*
-
-En **tête** de l'écran, au-dessus des deux nombres, un champ **« Portée »** choisit ce que tout le
-reste de la page mesure : **tout l'espace de travail** — le défaut —, **un track entier**, ou **un
-channel**. Les options sont groupées par track, et chacune nomme son track : « Studio web — tout le
-track », « Studio web — Refonte de site ». Vous ne voyez que les tracks et les channels que vous
-avez le droit de lire.
-
-**Changer de portée ne recharge rien.** Les nombres se replient instantanément : l'écran a lu une
-seule fois, et la portée ne fait que choisir ce qu'il additionne. Les **deux nombres du §5 decies**
-et les **mentions** suivent la portée, comme les tableaux — un prévisionnel de tout l'espace
-au-dessus d'un entonnoir d'un seul channel dirait le contraire de ce qu'il montre.
-
-**L'adresse porte votre choix, et se partage.** `/pilotage?track=studio-web` ouvre le track ;
-`/pilotage?track=studio-web&channel=refonte` ouvre le channel. Les **deux** clés sont nécessaires
-pour un channel : un nom court de channel n'est unique qu'à l'intérieur de son track, si bien que
-`?channel=refonte` seul ne désignerait rien de sûr. `/pilotage` sans rien est tout l'espace de
-travail.
-
-**Une adresse que l'écran ne sait pas résoudre ne provoque aucune erreur.** Un track que vous ne
-lisez pas, un nom mal recopié, un channel nommé sous un track qui ne le porte pas : l'écran retombe
-sur la portée la plus large qu'il a comprise — le track, ou tout l'espace de travail — et **le champ
-« Portée » affiche alors la portée réellement appliquée**. Rien ne vous dit si le nom que vous aviez
-tapé existe ailleurs : ce serait vous renseigner sur ce que vos droits ferment.
-
-**Une portée sans affaire garde son champ.** Si le track ou le channel choisi ne porte aucune
-affaire active lisible, l'écran l'écrit — « Aucune affaire active dans cette portée » — **sans**
-retirer le champ, pour que vous puissiez en choisir une autre sans repasser par l'adresse.
-
-**Un track sans channel n'est pas proposé**, et un channel **archivé** ou **à la corbeille** non
-plus : il n'y a rien d'actif à y mesurer.
-
-### 5 nonies.1 Ce que l'écran montre
-
-Un **tableau par devise**, une **ligne par étape** de vos workflows, dans **l'ordre du catalogue** —
-celui-là même que suivent les colonnes de vos boards. Chaque ligne porte :
-
-| Colonne | Ce qu'elle dit |
-|---|---|
-| **Étape** | Le nom du nœud, tel que le catalogue le porte — jamais le nom qu'un workflow lui a donné localement. C'est ce qui permet de comparer deux workflows sur la même ligne |
-| **Genre** | « Ouvert », « Gagné » ou « Perdu ». C'est lui, et lui seul, qui dit pourquoi une étape entre ou n'entre pas dans le prévisionnel du §5 decies |
-| **Affaires** | Combien d'affaires actives se tiennent à cette étape |
-| **Montant (…)** | La somme de leurs montants, dans la devise que l'en-tête nomme |
-| **Pondéré (…)** | La même somme, chaque affaire multipliée par sa **probabilité** (§5 nonies.3) |
-
-**L'ordre ne se change pas, et aucune colonne ne se trie.** Un entonnoir est un **chemin** : le
-reclasser par montant en ferait un palmarès, où « Perdu » remonterait au-dessus de « Prospection ».
-
-**Une étape où aucune affaire ne se tient n'a pas de ligne — elle est NOMMÉE sous les tableaux.**
-Elle n'est jamais rendue « à zéro » : un zéro affirmerait une mesure que l'écran n'a pas faite, et il
-faudrait de surcroît le poser dans une devise qu'aucune affaire n'y porte. L'écran écrit donc, sous
-les tableaux et dans l'ordre du catalogue : « Aucune affaire active aux étapes Signature et Perdu. »
-
-C'est la lecture la plus utile de cet écran sous une portée restreinte : elle dit **de quelles
-étapes** un track ou un channel est absent — où est le trou du chemin. Une étape **archivée** n'y
-figure pas : elle n'est plus une étape du chemin, et la nommer « sans affaire » inviterait à y en
-mettre une.
-
-### 5 nonies.2 Quelles affaires y entrent, et lesquelles n'y entrent pas
-
-**Y entrent** toutes vos affaires **actives** — celles qui ne sont ni archivées, ni à la corbeille.
-Cela comprend :
-
-- les affaires **gagnées** et **perdues**, qui ont leur propre ligne, marquée par la colonne
-  « Genre » ;
-- les affaires **en sommeil**. Mettre une affaire en sommeil dit « ne me réveille pas à son sujet »,
-  jamais « cette affaire n'est plus au portefeuille » : la retirer ferait **disparaître un montant**
-  d'un total du seul fait qu'on a demandé le silence.
-
-**N'y entrent pas** les affaires **archivées** et celles qui sont **à la corbeille**. Une affaire
-gagnée puis archivée ne compte donc ni dans l'entonnoir, ni dans le taux de conversion du
-§5 decies.2.
-
-### 5 nonies.3 La probabilité d'une affaire : trois niveaux, et le plus précis gagne
-
-Le montant **pondéré** est le montant de l'affaire multiplié par sa probabilité. Cette probabilité
-se résout à trois niveaux, du plus précis au plus général :
-
-1. **la probabilité de l'affaire elle-même**, saisie sur sa fiche ;
-2. sinon, **la probabilité de l'étape** du workflow, saisie dans l'éditeur de workflows (§5 bis) ;
-3. sinon, **la probabilité par défaut du nœud**, saisie au catalogue (§5 quater).
-
-**Une probabilité absente n'est jamais remplacée par un défaut.** Si aucun des trois niveaux n'est
-renseigné, la probabilité est **inconnue** : l'affaire est comptée dans la colonne « Affaires »,
-elle est comptée dans la mention « n affaire(s) sans probabilité renseignée », et elle ne contribue
-**pas** au montant pondéré. Écrire zéro à sa place transformerait « personne n'a dit ce que vaut
-cette affaire » en « cette affaire ne vaut rien ».
-
-**Un montant absent suit la même règle** : l'affaire est comptée, elle est signalée par la mention
-« n affaire(s) sans montant renseigné », et elle ne contribue ni au montant ni au pondéré.
-
-Ces deux mentions sont rendues **sous les tableaux**, et seulement lorsqu'elles ont un objet. Sans
-elles, un prévisionnel bas se lirait comme un portefeuille **pauvre** au lieu d'un portefeuille
-**mal renseigné**.
-
-### 5 nonies.4 Vos nombres sont les vôtres, et ils peuvent différer de ceux d'un collègue
-
-**C'est la règle la plus importante de cet écran**, et c'est exactement celle du cumul des coûts
-(§5 septies.3). L'entonnoir est calculé **à partir de ce que vos droits vous laissent lire**, jamais
-à partir de tout ce qui existe. Une affaire d'un channel qui vous est fermé :
-
-- n'apparaît dans aucune ligne ;
-- n'entre dans **aucun** total ;
-- et **n'est signalée par rien**.
-
-Deux collègues aux droits différents lisent donc deux nombres différents sur le même écran, au même
-instant. Ce n'est pas une erreur de calcul : afficher un total « complet » vous apprendrait, par
-simple soustraction, l'existence et le montant d'une affaire que vous n'avez pas le droit de voir.
-
-L'écran l'écrit sous les tableaux, pour que personne n'ait à le deviner — et la phrase **nomme la
-portée courante** :
-
-> « Ces nombres portent sur toutes les affaires actives que vous pouvez lire, tous tracks et tous
-> channels confondus. Un collègue dont les droits diffèrent des vôtres lit d'autres totaux sur les
-> mêmes données. »
-
-> « Ces nombres portent sur les affaires actives du track « Studio web » que vous pouvez lire. […] »
-
-**Le sélecteur de portée n'ouvre aucun droit.** Choisir un channel, ou l'écrire dans l'adresse, ne
-montre rien de plus que ce que vos droits consentent déjà : la restriction s'applique **après** vos
-droits, jamais à leur place.
-
-### 5 nonies.5 Les devises ne se mélangent jamais
-
-Si vos affaires sont libellées dans **plusieurs devises**, l'écran rend **un tableau par devise**,
-chacun avec son **titre** — « Entonnoir en EUR », « Entonnoir en CHF ». Si tout est libellé dans une
-seule devise — le cas courant —, vous ne voyez pas ce titre ; les en-têtes des deux colonnes de
-montant nomment la devise dans tous les cas.
-
-Aucun total « toutes devises confondues » n'est affiché : additionner des francs et des euros
-demanderait un taux de change que le produit ne connaît pas, et le nombre obtenu se lirait pourtant
-comme un chiffre d'affaires.
-
-### 5 nonies.6 Ce que l'écran écrit quand il n'y a rien à montrer
-
-| Ce que vous lisez | Ce que cela veut dire |
-|---|---|
-| « Aucune affaire active » | Aucune affaire active ne vous est lisible — **ou** il n'en existe aucune. Les deux cas se ressemblent volontairement : les distinguer vous apprendrait l'existence de ce que l'écran cache |
-| « Lecture refusée » | Votre session ne permet pas de lire l'entonnoir. Reconnectez-vous, puis revenez sur cet écran |
-| « L'entonnoir n'a pas pu être lu » | La lecture a échoué. Le bouton « Réessayer » relance réellement la requête |
-| « Aucun espace de travail » | Votre session a expiré, ou votre compte n'appartient à aucun espace de travail |
-
-### 5 nonies.7 Ce que cet écran ne fait pas
-
-- **On n'y saisit rien**, et aucune ligne n'est cliquable. Les probabilités se saisissent au
-  catalogue (§5 quater), dans l'éditeur de workflows (§5 bis) et sur la fiche d'une affaire (§4).
-- **Aucun score de santé** aujourd'hui : la colonne existe et rien ne l'alimente. Ce qu'un score
-  « transparent » devrait agréger n'est arbitré nulle part, et il n'est donc pas inventé ici.
-- **Aucune lecture d'historique.** L'entonnoir est un **instantané** de l'état courant, jamais une
-  analyse par période : il dit où vos affaires se tiennent **aujourd'hui**, pas ce qu'elles sont
-  devenues depuis janvier.
-- **Aucun export, aucune période, aucune conversion de devise.**
-
-## 5 decies. Le prévisionnel pondéré et le taux de conversion
-
-*Livré par `CRM-066` tranche 3 a. C'est le **chapitre 29** que `docs/SPEC-analytique.md` nomme.
-Captures dans `docs/captures/CRM-066/pilotage-*.jpg`.*
-
-**Où.** En **tête** de l'écran « Pilotage » (§5 nonies), au-dessus des tableaux : deux nombres, et
-c'est la lecture que la plupart des visites viennent chercher.
-
-### 5 decies.1 Le prévisionnel pondéré
-
-C'est la somme des montants de vos affaires **ouvertes**, chacune multipliée par sa probabilité
-(§5 nonies.3), **par devise**.
-
-**Les étapes terminales en sont exclues**, et les deux motifs sont distincts : une affaire **gagnée**
-n'est plus une prévision, et une affaire **perdue** vaut zéro — l'inclure ne changerait aucun total
-tout en laissant croire qu'elle compte. C'est pourquoi la colonne « Genre » de l'entonnoir n'est pas
-décorative : elle vous dit quelles lignes du tableau alimentent ce nombre.
-
-**Une devise dont toutes les affaires sont closes n'apparaît pas.** « CHF : 0,00 » se lirait comme
-une prévision nulle au lieu d'une absence de prévision.
-
-**S'il n'y a aucune affaire ouverte**, l'écran écrit « Aucune affaire ouverte à ce jour. » plutôt
-qu'un zéro.
-
-### 5 decies.2 Le taux de conversion des affaires décidées
-
-**Son nom entier compte, et l'écran ne l'abrège jamais.** Ce nombre est la part **gagnée** parmi les
-affaires qui se tiennent **actuellement** à une étape terminale :
-
-> gagnées ÷ (gagnées + perdues)
-
-Il est accompagné de son numérateur et de son dénominateur en toutes lettres — « 7 gagnées sur
-8 décidées » —, parce qu'un pourcentage seul ne dit pas sur combien il porte.
-
-**Ce n'est pas « la part gagnée parmi les affaires ouvertes en janvier ».** Les deux lectures
-diffèrent dès qu'une affaire décidée est archivée : une affaire gagnée puis archivée ne compte dans
-**ni l'une ni l'autre** de ce que cet écran montre. L'analyse par période — dite par cohortes — n'est
-pas livrée, et appeler ce nombre du nom de l'autre serait un compteur complaisant.
-
-**Zéro affaire décidée rend « Aucune affaire décidée à ce jour. », jamais « 0 % ».** Un taux de 0 %
-dit « tout a été perdu » ; l'absence de toute décision ne dit rien.
-
-### 5 decies.3 Aucun objectif chiffré n'est confronté à ce prévisionnel
-
-Les **objectifs** existent dans le produit (§3 ter) sous forme de tableaux de blocs et de flèches,
-avec un **remplissage** que vous saisissez à la main. Rien n'y décrit un objectif **chiffré** qu'un
-prévisionnel viendrait remplir automatiquement.
-
-Cet écran livre donc le prévisionnel **seul**. La confrontation n'est pas oubliée : elle n'a pas
-encore été arbitrée, et l'inventer ici produirait une comparaison que personne n'a demandée.
-
-### 5 decies.4 Ce que ces deux nombres ne sont pas
-
-- **Ils ne sont pas un chiffre d'affaires.** Le prévisionnel est une espérance : il vaut ce que
-  valent les probabilités saisies.
-- **Ils ne sont pas comparables d'un collègue à l'autre** sans précaution : chacun lit les siens sur
-  son propre portefeuille (§5 nonies.4).
-- **Le taux ne traverse pas les devises par accident** : il compte des **affaires**, pas de l'argent,
-  et c'est la seule grandeur de cet écran qui le fasse légitimement.
-
-## 5 undecies. Le temps passé et le coût du personnel
-
-*Livré par `CRM-098` ; captures : `docs/captures/CRM-098/`.*
-
-L'écran **« Temps »**, dans la barre latérale, a deux onglets : **« Saisie »**, où chacun note le temps qu'il a passé,
-et **« Rapport mensuel »**, où ce temps est valorisé par le coût du personnel.
-
-### 5 undecies.1 Saisir sa semaine
-
-La matrice montre une semaine, du lundi au dimanche. Ses lignes sont les tracks que vous lisez, chacun suivi de ses
-channels, et sous eux les affaires qui portent déjà du temps — celles de la semaine affichée et de la précédente sont
-reprises d'office. Pour une autre affaire, tapez son titre dans **« Ajouter une affaire »** et choisissez-la : sa ligne
-paraît sous son channel.
-
-Chaque cellule se saisit au **quart de journée** : une journée compte **7 heures**, un quart vaut donc 1 h 45, et une
-cellule va de 0 à 4. La valeur **s'enregistre seule** quand vous quittez la cellule ou appuyez sur `Entrée` — qui
-descend à la ligne suivante ; les flèches vont de cellule en cellule, `Échap` rétablit la valeur enregistrée. Une
-cellule vide vaut zéro, et vider une cellule retire ce temps.
-
-Le pied de la matrice dit, jour par jour, où vous en êtes — « 3 / 4 quarts » ; une journée pleine est surlignée. **Une
-journée ne dépasse jamais 7 heures** : une valeur qui la dépasserait est refusée, avec le message « Cette valeur
-dépasserait la journée de 7 heures. »
-
-« Semaine précédente », « Semaine suivante » et « Cette semaine » changent de semaine ; l'adresse de l'écran garde la
-semaine affichée.
-
-### 5 undecies.2 Saisir une journée en heures
-
-Plus de quatre affaires dans la journée : cochez **« En heures »** sous le jour. Ses cellules se saisissent alors en
-heures, au quart d'heure — « 1,5 » pour une heure et demie, « 0,25 » pour un quart d'heure —, toujours dans la limite de
-7 heures. Tant qu'une valeur de ce jour ne tombe pas sur un quart, la case reste cochée, et l'écran le dit.
-
-### 5 undecies.3 Saisir pour quelqu'un d'autre
-
-Un administrateur dispose de **« Saisir pour »** : il choisit une personne, et un bandeau rappelle « Vous saisissez le
-temps de… ». Le produit garde la trace de qui a saisi. Un membre ne saisit que son propre temps, et seulement sur ce
-qu'il peut lire.
-
-### 5 undecies.4 Le rapport mensuel
-
-Choisissez un mois : le rapport liste chaque track, channel et affaire où du temps a été passé, avec ce temps et son
-coût. Le coût est celui de la personne **le jour où le temps a été passé** : une augmentation ne change pas le coût des
-semaines d'avant. Les montants restent séparés par devise. Le temps d'une personne qui n'a pas encore de coût est
-compté, et dit **« non valorisé »** — jamais zéro.
-
-Un membre ne voit que **son** temps et **son** coût. Un administrateur choisit une personne, ou **« Toute l’équipe »**,
-qui rend une section par personne.
-
-### 5 undecies.5 Régler le coût du personnel
-
-Dans **Réglages ▸ « Coût du personnel »**, réservé aux administrateurs — pour les autres, l'entrée des
-réglages est un texte grisé (section 3.6) —, chaque personne a sa carte : son coût en
-vigueur, sa prochaine version s'il y en a une. **« Nouvelle version »** fixe un coût par quart, une devise et une date
-d'effet : augmenter quelqu'un, c'est créer une version, qui vaut à partir de sa date. Une version ne se modifie jamais ;
-une date d'effet n'est jamais passée, sauf pour la toute première version d'une personne, qui peut valoriser du temps
-déjà saisi. **« Historique »** liste les versions ; une version **programmée** peut encore être retirée, une version
-en vigueur jamais.
-
-**Calculer le coût par quart.** Dans le formulaire « Nouvelle version », **« Calculer depuis le coût mensuel »** ouvre un
-petit calcul (*livré par `CRM-107` ; captures : `docs/captures/CRM-107/`*). Saisissez le salaire brut mensuel, les charges sociales en pourcentage du brut,
-les frais de gestion et les avantages par mois, et le nombre de jours travaillés par an — 218 par défaut, le forfait
-jours ; un salarié qui n’est pas au forfait en travaille plutôt 228 environ (365 jours, moins les week-ends, 25 jours de congés et les
-fériés). Le calcul affiche, à mesure que vous tapez, le coût mensuel complet et le coût par quart :
-
-> coût mensuel complet = brut × (1 + charges) + frais + avantages ;
-> coût par quart = coût mensuel complet × 12 ÷ (jours × 4).
-
-Par exemple, 3 000 € de brut, 42 % de charges, 150 € de frais et 100 € d'avantages font 4 510 € par mois, soit
-62,06 € par quart sur 218 jours. **« Utiliser ce coût »** recopie le résultat dans « Coût par quart » ; rien n'est
-enregistré tant que vous n'avez pas cliqué **« Enregistrer la version »**, et seul le coût par quart l'est — le salaire
-et les charges ne sont conservés nulle part.
-
-### 5 undecies.6 Le coût du personnel à côté des coûts
-
-Sur l'écran de coûts d'un track (chapitre 5 quinquies), sous l'histogramme, **« Coût du personnel »** donne le temps et
-son coût du mois choisi, channel par channel. Dans la fiche d'une affaire, **« Temps passé »** donne le temps passé
-depuis le premier jour et son coût. Ces chiffres ne se mêlent ni aux budgets ni aux lignes de coût. Ils disent leur
-portée : « Votre temps » pour un membre, « Le temps de toute l’équipe » pour un administrateur.
-
-### 5 undecies.6 bis Saisir son temps depuis la fiche d'une affaire
-
-*Livré par `CRM-106` ; captures : `docs/captures/CRM-106/`.* Sous le résumé « Temps passé », **« Votre semaine »** montre la ligne de l'affaire, du lundi au
-dimanche : les mêmes cases que l'écran « Temps », au quart de journée ou, en cochant la case sous un jour, au quart
-d'heure. Une case s'enregistre seule ; `Entrée` passe au jour suivant. Taper une nouvelle valeur **remplace** celle du jour ; vider
-la case retire ce temps. Sous la bande, le total de la semaine sur l'affaire.
-
-Le total sous chaque jour compte **tout** votre temps de la journée, sur toutes les cibles : c'est lui qui ne dépasse
-pas 7 heures. « Semaine précédente », « Semaine suivante » et « Cette semaine » changent de semaine ;
-**« Ouvrir dans Temps »** ouvre la matrice sur la même semaine, pour le reste de votre journée.
-
-Chacun n'y saisit que **son** temps — un administrateur aussi : pour saisir le temps de quelqu'un d'autre, passez par
-« Saisir pour », sur l'écran « Temps ». Une lectrice saisit son temps sur une affaire qu'elle lit, même si elle ne peut
-pas modifier l'affaire.
-
-### 5 undecies.7 Ce qui n'est pas offert
-
-Aucune validation ni clôture d'un mois, aucun calendrier de congés ou de jours fériés, aucune facturation au temps
-passé, aucune conversion de devise, aucun export.
-
-## 5 duodecies. Les recettes d'une affaire et sa rentabilité
-
-*Livré par `CRM-108`.* Une affaire porte ce qu'elle doit rapporter et ce qu'elle a rapporté, comme elle porte ce qu'elle
-coûte. Le rapport de rentabilité rapproche les trois : recettes, coûts et coût du personnel. Captures :
-`docs/captures/CRM-108/`.
-
-### 5 duodecies.1 Saisir les recettes dans la fiche
-
-Dans la fiche d'une affaire, le bloc **« Recettes »** vient avant « Coûts ». **« Nouvelle ligne de recette »** ajoute une
-ligne : sa nature — « Acompte », « Solde », « Lot 1 » — et sa recette prévue. Les montants sont dans la devise de
-l'affaire, rappelée dans l'en-tête des colonnes.
-
-Chaque ligne se déplie : on y ajoute une **recette réelle** par facture ou par encaissement — un montant, une date
-(celle du jour par défaut) et un libellé facultatif. La colonne « Réel » est leur somme ; tant qu'aucune n'est saisie,
-elle montre un tiret : la recette réelle est **inconnue**, pas nulle. Quand tout est encaissé, cochez **« Soldé »** :
-la ligne ne reçoit plus de recette réelle, et une ligne soldée sans recette réelle vaut zéro. Décocher la rouvre.
-
-Il faut pouvoir modifier l'affaire pour saisir ses recettes. Tant qu'une affaire porte des lignes de recette, sa devise
-ne change plus.
-
-### 5 duodecies.2 La rentabilité d'une affaire
-
-Pour un administrateur de l'espace, le bloc **« Rentabilité »** suit « Temps passé » : recettes, coûts, coût du
-personnel et marge, en **prévu** et en **réel**, et le taux de marge réelle. La marge est **recettes − coûts −
-personnel**. Une marge négative est écrite avec son signe, sur fond rouge. La mention **« partielle »** dit qu'il manque
-encore quelque chose — une recette ou un coût sans réel, du temps sans coût défini ; survolez-la pour savoir quoi.
-
-La marge prévue soustrait le temps **déjà passé** : le CRM ne prévoit pas le temps. Une affaire dont les montants sont
-dans plusieurs devises a une marge **« Non calculable — plusieurs devises »** : le CRM ne convertit pas les devises.
-
-### 5 duodecies.3 L'écran « Rentabilité »
-
-Barre latérale ▸ **« Rentabilité »**, après « Pilotage ». L'onglet **« Vue d'ensemble »** rend un tableau par devise :
-chaque track, ses channels et leurs affaires, avec un sous-total à chaque niveau et le total. Les filtres :
-
-- **« Du »** et **« Au »** retiennent les recettes réelles, les coûts réels et le temps par leur date ; les montants
-  prévus portent toujours sur toute l'affaire ;
-- **« État »** : toutes les affaires, les gagnées, les en cours ou les perdues ;
-- **« Réel »** et **« Prévu »** changent de vue.
-
-Seuls les **administrateurs** de l'espace lisent ce rapport : il soustrait le coût du temps de toute l'équipe, que
-seuls eux peuvent lire. Un autre membre lit « Réservé aux administrateurs » et un lien vers l'onglet « À saisir ».
-
-### 5 duodecies.4 L'onglet « À saisir »
-
-Il liste les lignes de recette **non soldées**, de la plus ancienne à la plus récente, pour tout membre. Tapez un montant
-dans **« Une recette de plus »** : `Entrée` l'enregistre, à la date du jour, et passe à la ligne suivante. Saisir 0
-enregistre une recette nulle ; laisser le champ vide ne change rien. Cochez « Soldé » quand la ligne est encaissée. Une
-ligne que vous ne pouvez pas modifier reste visible, son champ éteint, avec le motif.
-
-### 5 duodecies.5 Ce qui n'est pas offert
-
-Aucune facturation ni relance d'impayé, aucune conversion de devise, aucune prévision du temps, aucune répartition d'une
-recette entre plusieurs affaires, aucun export.
-
-## 6. Consulter l'état de la messagerie
-
-*Livré par `CRM-059` ; les règles d'accès sont celles de `CRM-052` (comptes entrants) et de
-`CRM-058` (file sortante) — cet écran n'en invente aucune.*
-
-**Où.** Barre latérale ▸ **Réglages** ▸ « État de la messagerie ».
-
-**Qui.** Un administrateur de l'espace de travail voit **tous** les comptes de messagerie entrante
-du workspace, la boîte système comprise. Un membre ordinaire ne voit que **sa propre boîte**, s'il en
-possède une ; sans boîte propre et sans droit d'administration, l'écran affiche « Aucune boîte à
-superviser » plutôt qu'un tableau vide qui prétendrait avoir cherché sans rien trouver.
-
-**Ce que le tableau montre, par boîte :**
-
-- **Dernière relève réussie** — la date et l'heure du dernier relevé qui a abouti. Une boîte jamais
-  relevée l'annonce en toutes lettres : « Jamais relevée », et non une case vide.
-- **Dernier incident** — si la boîte est en échec, un texte compréhensible : « Authentification
-  refusée », « Hôte injoignable », « Connexion refusée », « Échec TLS », « Délai dépassé » ou
-  « Erreur de protocole ». Le produit ne montre jamais le message technique brut renvoyé par votre
-  serveur mail, qui peut contenir des détails de connexion.
-
-**Ce que les deux chiffres montrent :** le nombre de messages **en attente d'envoi** (mis en file ou
-en cours d'envoi) et le nombre d'**échecs définitifs** — un envoi qui a épuisé ses tentatives de
-reprise. Un membre ordinaire ne compte que la file des affaires qu'il a le droit de lire ; un
-administrateur compte celle de tout l'espace de travail.
-
-**Ce que cet écran ne fait pas.** Il **lit**, il n'agit pas : aucun bouton ne relance une relève,
-n'acquitte un incident ni ne modifie un réglage depuis cette page. La donnée est lue à l'ouverture ;
-rafraîchissez la page pour la mettre à jour.
-
-### 6.1 Ce qui n'est pas encore là
-
-- **Aucune alerte n'est envoyée** lorsqu'un compte tombe en erreur : cet écran est le seul endroit où
-  le constater. Une notification proactive relèverait d'une unité dédiée aux notifications.
-- **Aucune veille par IDLE** : la relève reste une scrutation régulière, dont l'intervalle se règle
-  par la variable d'environnement `MAIL_SYNC_POLL_INTERVAL` (opération d'exploitation, hors de cet
-  écran).
-
-## 7. Écrire des modèles d'emails et les prévisualiser
-
-*Livré par `CRM-063`, tranche 2. Les règles d'accès sont celles de la tranche 1 : cet écran n'en
-invente aucune.*
-
-**Où.** Barre latérale ▸ **Réglages** ▸ « Modèles d'emails ».
-
-**À quoi cela sert.** Un modèle est un texte que vous écrivez **une fois** et que tout l'espace de
-travail réemploie : une relance sans réponse, une prise de contact. Il porte des **trous** —
-`{{card.title}}`, `{{contact.full_name}}` — que le produit remplace par les valeurs de l'affaire
-concernée. Deux personnes qui écrivent au même prospect envoient ainsi le même texte.
-
-**Qui.** Tout membre de l'espace de travail **lit** les modèles et peut les prévisualiser. Les
-**écrire** — créer, modifier, supprimer — est réservé aux rôles *administrateur* et *développement
-commercial*. Aucun bouton n'est masqué selon votre rôle : si vous n'avez pas le droit d'écrire, le
-produit vous le dit en toutes lettres au moment où vous enregistrez, plutôt que de vous laisser
-croire que le geste n'existe pas.
-
-**La liste.** Une ligne par modèle : son **nom** — unique dans l'espace de travail — puis son
-**objet**. L'objet y est montré **tel qu'il est écrit**, trous compris : la liste n'est pas une
-prévisualisation, et elle n'a pas d'affaire sur laquelle remplir les trous.
-
-### 7.1 Écrire un modèle
-
-« Nouveau modèle » ouvre la fiche, sous la liste — jamais dans une fenêtre qui recouvrirait l'écran.
-Trois champs : le **nom**, l'**objet** et le **corps du message**.
-
-**Les variables disponibles sont proposées sous le corps**, en douze boutons. Un clic insère la
-variable **à l'endroit du curseur**, dans le champ que vous venez de quitter — l'objet ou le corps.
-Vous pouvez aussi les taper à la main : rien ne vous en empêche.
-
-**Une variable qui n'existe pas est refusée**, et le produit dit **dans quel champ** elle se trouve :
-« L'objet emploie une variable qui n'existe pas ». C'est le serveur qui refuse, pas l'écran — ce qui
-signifie que la faute ne peut pas passer par un autre chemin et se découvrir chez le destinataire.
-Votre saisie n'est pas effacée : corrigez la variable et réenregistrez.
-
-Les autres refus sont dits de la même façon : un nom de plus de 120 caractères, un objet de plus de
-300, un corps de plus de 20 000, ou un nom déjà employé par un autre modèle.
-
-### 7.2 Prévisualiser un modèle sur une affaire réelle
-
-« Prévisualiser », sur la ligne d'un modèle, ouvre un panneau à trois choix :
-
-- **l'affaire** — obligatoire. Aucune n'est choisie d'avance : le produit ne devine pas de quelle
-  affaire vous voulez parler ;
-- **le contact** — facultatif. La liste porte **tous** les contacts que vous pouvez lire, et pas
-  seulement ceux qui sont rattachés à l'affaire choisie ;
-- **l'identité d'expédition** — facultative. Aucune n'est choisie d'avance non plus : plusieurs
-  identités peuvent être « par défaut », chacune pour une personne, et le produit ne tranche pas à
-  votre place.
-
-« Prévisualiser » affiche alors l'**objet** et le **corps** exactement tels qu'ils partiront, retours
-à la ligne compris.
-
-**Les trous sans valeur sont NOMMÉS.** Si l'affaire n'a pas de montant, ou si vous n'avez choisi
-aucune identité, le produit rend ces trous **vides** — jamais un tiret, qui se lirait comme une
-valeur — et l'écrit sous le message : « 2 variables sans valeur », suivi de la liste des variables
-concernées, dans la graphie exacte que vous avez tapée. C'est ce qui vous permet de voir le manque
-**avant** l'envoi, plutôt que le destinataire après.
-
-Quand toutes les variables employées ont une valeur, **rien n'est affiché** : l'absence de message
-dit déjà que tout est rempli.
-
-**Si aucune affaire n'est choisie**, ou si l'affaire choisie ne vous est plus lisible, le produit
-écrit « Aucun rendu : choisissez une affaire, ou l'affaire choisie n'est plus lisible ». Les deux
-causes sont volontairement dites ensemble : les distinguer révélerait l'existence d'affaires que vos
-droits vous cachent.
-
-### 7.3 Supprimer un modèle
-
-Le bouton vit **dans la fiche** du modèle, et non sur sa ligne : un geste qui détruit ne se déclenche
-pas depuis une liste qu'on parcourt du regard. Il demande une confirmation qui **nomme** le modèle et
-dit ce qui est perdu : « Le texte du modèle est définitivement perdu. »
-
-Il n'y a **pas de corbeille** pour un modèle : il ne contient aucun travail, c'est un texte. Une fois
-supprimé, il faut le réécrire.
-
-### 7.4 Ce qui n'est pas encore offert
-
-- **Aucun envoi depuis cet écran.** La prévisualisation montre ; elle n'expédie rien. Composer un
-  message à partir d'un modèle viendra avec les séquences de relance.
-- ~~**Aucune signature.**~~ **Livrée** — voir le chapitre **7 bis** ci-dessous. Une identité
-  d'expédition porte désormais sa signature, ajoutée à la fin de chaque message expédié depuis elle.
-- **Aucune séquence de relance.** Les paliers — un modèle, un délai, puis le suivant — ne sont pas
-  livrés.
-- **Les dates sont rendues en UTC.** Une échéance affichée « 16/08/2026 09:00 » dans un message est
-  exprimée en temps universel : le produit ne connaît pas encore le fuseau de votre espace de
-  travail. Un destinataire français lira donc 09:00 là où le rendez-vous est à 11:00 en heure d'été.
-
-## 7 bis. Signer les messages expédiés depuis une identité
-
-*Livré par `CRM-063`, tranche 3. L'écran est celui des identités d'expédition (`CRM-089`) ; cette
-tranche y ajoute un champ, et rien d'autre.*
-
-**Où.** Barre latérale ▸ **Réglages** ▸ « Identités d'expédition », puis « Configurer » sur
-l'identité concernée.
-
-**À quoi cela sert.** Une signature est le pied de message que vos destinataires liront sous chaque
-courriel parti depuis cette adresse : votre nom, votre fonction, votre société, un téléphone. Vous
-l'écrivez **une fois**, et le produit l'ajoute ensuite à **tous** les messages expédiés depuis cette
-identité — ceux que vous composez à la main comme ceux que le produit enverra pour vous.
-
-**La signature appartient à l'ADRESSE, pas à vous.** Si vous expédiez depuis deux adresses —
-`contact@` et `recrutement@`, par exemple —, chacune porte la sienne, et vous les remplissez
-séparément. C'est voulu : on ne signe pas de la même façon selon l'adresse sous laquelle on écrit.
-L'identité de service de l'espace de travail, qui n'appartient à personne en particulier, a elle
-aussi la sienne.
-
-### 7 bis.1 Écrire, modifier, supprimer une signature
-
-Le champ **Signature** se trouve dans le formulaire, juste après le nom d'expéditeur. Il accepte
-plusieurs lignes, et les conserve telles que vous les écrivez : les retours à la ligne et les
-alignements que vous posez sont ceux que votre destinataire verra.
-
-- **Écrire** : remplissez le champ, puis « Enregistrer ». C'est immédiat, et cela vaut pour le
-  prochain message.
-- **Modifier** : rouvrez « Configurer ». Le champ est prérempli avec la signature enregistrée — le
-  produit ne vous demande jamais de la réécrire de mémoire.
-- **Supprimer** : **videz le champ**, puis « Enregistrer ». La signature disparaît, et les messages
-  suivants partent sans elle.
-
-Une signature est limitée à **2 000 caractères**. Au-delà, l'enregistrement est refusé et le produit
-vous le dit : rien n'est écrit à moitié.
-
-### 7 bis.2 Où la signature apparaît dans le message
-
-Elle est ajoutée **à la fin** du corps, après une ligne vide et une ligne de séparation composée de
-deux tirets. C'est la convention que les logiciels de messagerie reconnaissent pour replier ou
-griser une signature :
-
-```
-Bonjour,
-
-voici le devis dont nous avons parlé.
-
--- 
-Driss Lemoine — Business developer
-P2Enjoy SAS
-```
-
-**Ce que vous voyez dans le CRM est exactement ce qui est parti.** Le message conservé par le
-produit porte sa signature : il n'y a pas d'un côté ce que vous avez écrit et de l'autre ce que
-votre destinataire a reçu.
-
-**Dans la liste des identités**, une pastille « Signature » marque les identités qui en portent une.
-La signature elle-même n'y est pas montrée — elle serait trop longue pour une ligne de liste ; c'est
-sa **présence** qui vous intéresse d'un coup d'œil.
-
-### 7 bis.3 Ce qui n'est pas offert
-
-- **Une signature est du texte, jamais de la mise en forme riche.** Pas de gras, pas de logo, pas de
-  lien cliquable : toute la messagerie du produit expédie du texte, et une signature en HTML
-  arriverait chez votre destinataire avec ses balises en toutes lettres.
-- **Aucun trou dans une signature.** `{{contact.full_name}}` écrit dans une signature part
-  **littéralement**. Les trous sont une propriété des modèles d'emails (chapitre 7), pas des
-  signatures.
-- **Un message vide ne part pas, même signé.** Si vous laissez le corps vide, le produit refuse
-  l'envoi : une signature seule n'est pas un message.
-- **Aucune signature commune à tout l'espace de travail.** Chaque identité porte la sienne, ou n'en
-  porte pas.
-
-## 7 ter. Enchaîner des relances : les séquences
-
-*Livré par `CRM-063`, tranche 4. L'écran n'invente aucune règle d'accès : ce sont celles des
-sous-tranches 4a et 4b.*
-
-**Où.** Deux endroits, et le partage est délibéré : la **cadence** s'écrit dans Barre latérale ▸
-**Réglages** ▸ « Séquences de relance » ; elle **s'arme** depuis la fiche de l'affaire qu'elle doit
-relancer, dans le bloc « Relance automatique », sous les coûts.
-
-**À quoi cela sert.** Une séquence enchaîne plusieurs **modèles d'emails** (chapitre 7) à des délais
-choisis. Armée sur une affaire qui n'avance plus, elle expédie le premier modèle après son délai, le
-deuxième après le sien, et ainsi de suite — **et elle s'arrête dès qu'une réponse arrive**.
-
-**Qui.** Tout membre de l'espace de travail **lit** les séquences. Les **écrire** — créer, modifier,
-réordonner, supprimer — est réservé aux rôles *administrateur* et *développement commercial*.
-**Armer** une relance sur une affaire suppose le droit d'y **écrire**. Aucun bouton n'est masqué
-selon votre rôle : le produit vous dit en toutes lettres qu'il refuse, au moment où vous agissez.
-
-### 7 ter.1 Écrire une cadence
-
-« Nouvelle séquence » ouvre la fiche, sous la liste. Un seul champ pour commencer : le **nom**,
-unique dans l'espace de travail.
-
-**Les paliers n'apparaissent qu'une fois la séquence enregistrée**, et ce n'est pas une contrainte
-d'écran : un palier appartient à une séquence, et il ne peut pas être posé avant qu'elle existe. La
-fiche vous le dit — « Enregistrez la séquence pour lui ajouter des paliers ».
-
-**Un palier, c'est un modèle et un délai.** Choisissez le modèle dans la liste, tapez le délai en
-jours, « Ajouter le palier ». Le palier prend le **rang suivant** : vous n'avez jamais à saisir une
-position.
-
-**LE DÉLAI SE COMPTE DEPUIS LE PALIER PRÉCÉDENT**, et le tout premier depuis l'armement. C'est ce
-que « J+3 », « J+7 », « J+14 » veulent dire dans la liste : trois jours après l'armement, puis sept
-jours après le premier envoi, puis quatorze après le deuxième. Un palier glissé au milieu d'une
-cadence ne vous oblige donc à rien renuméroter.
-
-**Le délai va de 1 à 365 jours.** Zéro est refusé : un palier de délai nul partirait en même temps
-que celui qui le précède, ce qui n'est pas une cadence mais un doublon.
-
-**Un même modèle peut servir plusieurs paliers.** La séquence de démonstration le fait : ses paliers
-1 et 3 emploient tous deux « Relance sans réponse ».
-
-### 7 ter.2 Changer l'ordre des paliers
-
-Deux flèches par ligne, **Monter** et **Descendre**. La flèche qui n'a pas de sens — monter le
-premier, descendre le dernier — reste **visible mais inactive** : elle ne disparaît pas, sans quoi
-les boutons sauteraient d'une ligne à l'autre sous votre curseur.
-
-**L'ordre est enregistré immédiatement**, et la liste est **relue** : ce que vous voyez après un
-déplacement est ce que le produit a réellement retenu, jamais un affichage optimiste. Si vos droits
-ne permettent pas l'écriture, le produit écrit « Aucun palier n'a été réordonné » — jamais un succès
-qui n'a pas eu lieu.
-
-**« Retirer » ne demande aucune confirmation**, et c'est voulu : retirer un palier ne détruit aucun
-texte. Le modèle reste, la séquence reste, et reposer le palier est un formulaire de deux champs.
-
-### 7 ter.3 Supprimer une séquence
-
-Le bouton vit **dans la fiche**, jamais sur la ligne de la liste : un geste destructeur ne se
-déclenche pas depuis une liste qu'on parcourt. La confirmation **nomme la séquence** et dit combien
-de paliers partiront avec elle.
-
-**Une séquence qui relance actuellement une affaire ne peut pas être supprimée**, et la confirmation
-vous en avertit avant que vous ne cliquiez. Interrompez la relance depuis l'affaire concernée, puis
-réessayez.
-
-**Un modèle employé par une séquence ne peut pas être supprimé non plus** (chapitre 7) : retirez-le
-d'abord des paliers qui l'emploient.
-
-### 7 ter.4 Armer une relance sur une affaire
-
-Ouvrez la fiche de l'affaire, descendez jusqu'au bloc **« Relance automatique »**. Deux choix : la
-**séquence**, et l'**adresse d'expédition** depuis laquelle les messages partiront. Aucun des deux
-n'est présélectionné — le produit ne choisit pas à votre place l'adresse qui signera vos relances.
-
-**L'affaire doit être « figée »**, c'est-à-dire immobile dans son étape depuis plus longtemps que le
-seuil de relance de cette étape (chapitre 3 *quinquies*). Si elle ne l'est pas, le produit vous le
-dit : « Cette affaire n'a pas dépassé le seuil d'inactivité de son étape ». Faites avancer l'affaire,
-ou attendez — une relance automatique n'a de sens que sur une conversation qui s'est arrêtée.
-
-**Une seule relance à la fois par affaire.** Si une autre personne en a armé une entre-temps, le
-produit refuse la seconde plutôt que d'envoyer deux fois.
-
-**Ce que le bloc montre ensuite** : le nom de la séquence, l'adresse qui expédie, et où en est la
-cadence — « Aucun palier envoyé pour l'instant », puis « Palier 2 envoyé le 12/09/2026 ».
-
-**« Interrompre la relance »** ferme la cadence. Le bloc revient alors à son geste, et il ne
-l'annonce qu'après avoir **vérifié** que la relance est bien close.
-
-### 7 ter.5 Ce qui arrête une relance, sans que vous ayez rien à faire
-
-Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste :
-
-1. **une réponse du destinataire arrive sur l'affaire** — c'est la raison d'être de la cadence, et
-   relancer quelqu'un qui vient de répondre est le seul défaut qu'un système de relance ne doit
-   jamais avoir ;
-2. **l'affaire cesse d'être figée** : vous la faites avancer d'une étape, vous la mettez en sommeil,
-   vous l'archivez ou vous la mettez à la corbeille ;
-3. **le dernier palier est parti** : la cadence est épuisée ;
-4. **vous l'interrompez** depuis le bloc.
-
-### 7 ter.6 Ce qui n'est pas offert
-
-- **Aucune date de prochain envoi n'est affichée.** La cadence **glisse** sur les envois réels : un
-  palier parti avec un jour de retard décale tous les suivants d'autant. Une date annoncée serait
-  fausse au premier décalage, et le produit préfère ne rien dire plutôt que dire faux.
-- **Aucune prévisualisation d'une séquence entière.** Prévisualisez ses modèles un par un depuis
-  l'écran des modèles (chapitre 7.2).
-- **Aucune trace dans l'historique de l'affaire.** L'armement et l'interruption n'y écrivent rien.
-- **Les relances passées ne sont pas listées.** Le bloc porte un geste, pas une histoire.
-- **Aucun réordonnancement à la souris par glisser-déposer.** Les deux flèches font le même travail,
-  et elles restent utilisables au clavier.
-- **Aucune duplication de séquence**, aucun archivage, aucune corbeille : une séquence se supprime
-  ou se garde.
-
-## 8. Vos notifications : savoir qu'on vous a nommé
-
-*Livré par `CRM-064`, sous-tranche 3a. Les règles d'accès sont celles des tranches 1 et 2 : cet
-écran n'en invente aucune. Captures : `docs/captures/CRM-064/`.*
-
-**Où.** En haut à droite de chaque écran, la **cloche**, entre le nom de votre espace de travail et
-votre identité. Elle est visible partout, parce qu'une notification n'est pas une destination : on
-y jette un œil et l'on retourne à ce qu'on faisait.
-
-**Qui.** Chacun voit **ses** notifications, et elles seules. Personne d'autre — ni un collègue, ni
-un administrateur de l'espace de travail. La boîte de quelqu'un n'est pas une donnée
-d'exploitation. Sans session ouverte, aucune page ne s'affiche, cloche comprise.
-
-### 8.1 Ce que la cloche annonce
-
-Le chiffre posé sur la cloche compte vos notifications **non lues**, jamais le total : une cloche
-qui afficherait « 12 » sur douze messages tous lus ne dirait rien d'utile.
-
-- **Aucun chiffre** signifie l'une de deux choses, et jamais « zéro par défaut » : soit vous n'avez
-  rien de non lu, soit le compte n'a pas encore été mesuré. Dans le second cas, la cloche
-  s'annonce simplement « Notifications », sans prétendre que tout est lu.
-- **Au-delà de quatre-vingt-dix-neuf**, la cloche écrit « 99+ » — un badge à quatre chiffres la
-  déformerait. Le compte **exact** reste annoncé aux lecteurs d'écran.
-
-### 8.2 Ce que le panneau montre
-
-Un clic — ou `Entrée` au clavier — ouvre le panneau **sous la cloche**, sans quitter l'écran où
-vous êtes. `Échap`, un clic à l'extérieur, ou « Fermer les notifications » le referment ; le focus
-revient alors à la cloche.
-
-Chaque ligne porte :
-
-- **qui vous a nommé**, avec son avatar — « Camille Aubert vous a mentionné » ;
-- **ce qui a été écrit**, en extrait ;
-- **l'affaire concernée**, dont le titre est un lien vers sa fiche ;
-- **le dossier**, en pastille « Track › Channel », qui mène au channel ;
-- **la date et l'heure**, absolues.
-
-Une **ligne non lue** porte un liseré bleu à gauche et son libellé en gras. L'ordre est celui de
-l'arrivée : **le plus récent en haut**. C'est l'inverse du fil de discussion d'une affaire, où la
-conversation se lit dans le sens où elle s'est tenue ; une boîte de réception, elle, se lit en
-commençant par ce qui vient d'arriver. **Les non-lues ne remontent pas en tête** : une ligne qui
-sauterait au moment où vous la marquez vous la ferait perdre de vue.
-
-**Une ligne dont le propos n'est plus lisible garde sa place**, avec son affaire, sa date et son
-lien, mais sans auteur ni extrait. Le produit ne dit alors ni que le message a été supprimé, ni que
-vous n'y avez plus accès : les deux causes sont indistinguables, et les nommer divulguerait la
-seconde.
-
-### 8.3 Marquer lu, et marquer non lu
-
-Le bouton en bout de ligne bascule l'état, **dans les deux sens** : on ouvre une notification par
-mégarde, et une boîte dont on ne peut pas remettre un message de côté n'est pas une boîte.
-
-**Suivre le lien d'une affaire ne marque rien.** Ce sont deux gestes distincts : fondre les deux
-ferait disparaître du compteur une notification que vous avez seulement effleurée en visant autre
-chose.
-
-La ligne ne change qu'**après** la réponse du serveur. Si vos droits ont changé depuis l'ouverture
-du panneau, le produit écrit « Aucune notification n'a été modifiée » et invite à recharger la
-page — il n'annonce jamais une modification qui n'a pas eu lieu.
-
-### 8.4 La mise à jour est immédiate
-
-Le panneau et le compteur s'actualisent **sans rechargement** dès qu'une notification vous est
-adressée : ils écoutent la base en temps réel. Le produit ne vous envoie **aucun email**, ne fait
-sonner **aucun son** et ne modifie **pas** le titre de l'onglet.
-
-### 8.5 Mentionner quelqu’un dans un commentaire
-
-*Livré par `CRM-064`, sous-tranche 3b. Captures : `docs/captures/CRM-064/`.*
-
-Sous la zone de saisie du fil d'une affaire, la commande **« Mentionner »** ouvre la liste des
-personnes que ce commentaire peut prévenir. Cochez-en une ou plusieurs, écrivez votre message, et
-publiez : chacune reçoit sa notification.
-
-**Il n'y a pas de syntaxe à connaître.** Taper « @ » dans le texte ne fait rien : le produit ne lit
-pas votre commentaire pour y deviner des noms. Vous choisissez explicitement qui vous prévenez, et
-vous le voyez avant d'envoyer — la commande porte le nombre de personnes cochées, même repliée.
-
-**La liste ne contient que les personnes qui peuvent lire cette affaire**, et elle **change d'une
-affaire à l'autre** : un collègue proposé sur un dossier peut être absent d'un autre, parce que ses
-droits ne sont pas les mêmes partout. Ce n'est pas l'écran qui décide — c'est la même règle
-d'autorisation que partout ailleurs dans le produit.
-
-**Vous n'y figurez jamais vous-même.** Se mentionner n'enverrait rien : vous savez déjà ce que vous
-venez d'écrire.
-
-**Si personne d'autre ne peut lire l'affaire**, la liste le dit en toutes lettres. Ce n'est pas une
-panne : c'est un dossier dont vous êtes le seul lecteur.
-
-**Quand une mention échoue, votre commentaire reste publié.** Le cas est rare — il faut qu'un droit
-change entre le moment où vous ouvrez la liste et celui où vous publiez —, et le produit ne le
-cache pas : un message sous le composeur **nomme la personne** qui n'a pas été prévenue et dit
-pourquoi. Votre texte, lui, est bien en ligne : le retirer effacerait un propos que vous avez
-réellement tenu. Les personnes qui n'ont pas pu être prévenues restent cochées, pour que vous
-sachiez ce qu'il reste à faire.
-
-**Mentionner est facultatif.** Un commentaire sans mention se publie exactement comme avant.
-
-### 8.6 Choisir ce que vous recevez
-
-*Réglages → Notifications, ou directement `/reglages/notifications`.*
-
-C'est **votre** réglage : personne d'autre ne le voit, pas même l'administratrice de l'espace de
-travail. C'est aussi la seule section des réglages qui règle votre compte plutôt que l'instance, et
-c'est pourquoi elle vient en dernier dans la liste.
-
-**Une case par type de notification**, cochée par défaut. Aujourd'hui il n'y en a qu'une :
-« Recevoir les mentions ». Décochez-la, et les mentions cessent d'arriver dans votre cloche — le
-compteur tombe, le panneau se vide, et rien ne s'affiche plus en direct.
-
-**Rien n'est supprimé.** Les notifications continuent d'être produites et conservées : elles sont
-simplement **masquées** tant que la case est décochée. Recochez-la, et tout revient — non lu, dans
-l'ordre, exactement comme avant. C'est la différence entre couper le son et jeter le courrier.
-
-**Il n'y a pas de bouton « Enregistrer ».** La case écrit dès que vous la basculez, et affiche
-« Enregistré » sous elle. Elle ne se coche qu'**après** la confirmation du serveur : ce que vous
-voyez est ce que le produit a réellement retenu, jamais ce qu'il a cru envoyer.
-
-**Une chose à savoir**, parce qu'elle surprend : tant qu'un type est décoché, vous ne pouvez pas
-marquer lues les notifications de ce type. Vous ne les voyez pas, donc vous ne les marquez pas ;
-elles vous attendront, non lues, si vous recochez.
-
-**Il n'y a qu'un seul canal, et l'écran n'en promet pas d'autre.** Le produit n'envoie aucune
-notification par email, ni de résumé quotidien. Vous ne trouverez donc aucune case pour cela :
-une case qui ne commande rien serait une promesse que le produit ne tiendrait pas.
-
-### 8.7 Ce qui n'est pas encore là
-
-- **Les mentions d'un commentaire déjà publié ne se corrigent pas.** On choisit avant de publier,
-  pas après ; ni la liste des personnes nommées, ni leur retrait ne sont offerts par l'écran.
-- **Le fil ne montre pas qui un commentaire mentionne.** La personne prévenue le voit dans sa
-  cloche ; le commentaire, lui, ne l'affiche pas.
-- **La liste des personnes n'a ni recherche ni pagination.**
-- **Aucun canal en dehors de l'application** : ni email, ni résumé quotidien. Le §8.6 dit ce que
-  vous pouvez régler, et ce qui n'existe pas.
-- **La préférence vaut pour tous vos espaces de travail** : elle porte sur vous, pas sur un
-  contexte. Vous ne pouvez pas couper les mentions d'un espace en les gardant dans un autre.
-- **Aucune suppression, et aucune expiration.** Une notification ne s'efface pas. Le panneau montre
-  les **vingt plus récentes**, et le dit en toutes lettres quand il en manque ; le compteur, lui,
-  les compte toutes.
-- **Aucun regroupement** : dix mentions sur la même affaire font dix lignes.
-- **Aucun « tout marquer comme lu »** : un geste de masse ne saurait pas dire *lesquelles* n'ont pas
-  bougé si vos droits ont changé, et le produit ne montre jamais une issue qu'il n'a pas mesurée.
-
-## 9. Retrouver n'importe quoi : la recherche
-
-*Livrée par `CRM-065`. Le contrat est écrit dans `docs/SPEC-recherche.md`.*
-
-Le produit compte plus de trente écrans et une arborescence à trois niveaux. Jusqu'ici, retrouver
-un objet dont on ne savait plus où il vivait demandait de le chercher écran par écran : chaque
-liste portait au mieux un filtre local, aveugle à tout ce qui n'était pas elle.
-
-**La recherche cherche partout à la fois**, depuis n'importe quel écran, sans le quitter.
-
-### 9.1 L'ouvrir
-
-Trois chemins, et ils mènent au même endroit :
-
-- le raccourci **`Cmd + K`** sur Mac, **`Ctrl + K`** ailleurs. Il fonctionne **partout**, y compris
-  pendant que vous écrivez un commentaire ;
-- un clic dans le champ **« Rechercher… »**, en haut de l'écran ;
-- sur un écran étroit, le bouton en forme de loupe, à la même place.
-
-Le raccourci est rappelé **dans le champ lui-même** : il n'y a rien à apprendre par cœur.
-
-**Appuyer une seconde fois ne referme pas la recherche** : le texte déjà tapé est simplement
-sélectionné, prêt à être remplacé. Pour refermer, appuyez sur **`Échap`**, ou cliquez ailleurs.
-
-### 9.2 Ce qu'elle cherche
-
-Cinq familles d'objets, dans la même frappe :
-
-| Famille | Ce qui est cherché |
-|---|---|
-| **Affaire** | son titre |
-| **Contact** | son nom, sa fonction, son adresse email |
-| **Organisation** | son nom, son domaine |
-| **Commentaire** | le texte du propos |
-| **Message** | l'objet, le corps, l'expéditeur |
-
-Chaque résultat porte **le nom de sa famille en toutes lettres**, puis ce qui l'identifie et le
-contexte où il vit — le channel d'une affaire, l'organisation d'un contact, l'auteur d'un
-commentaire. Pour un commentaire et un message, un **extrait du passage trouvé** est affiché.
-
-### 9.3 Ce qu'elle comprend, et ce qu'elle ne comprend pas
-
-- **Il suffit de commencer un mot** : « audi » trouve déjà « Audit sécurité applicative ».
-- **Les accents ne comptent pas, dans les deux sens** : « creance » trouve « créance », et
-  « créance » trouve « creance ».
-- **Deux mots saisis doivent être présents tous les deux.** « audit sécurité » ne rend pas tout ce
-  qui contient « audit ».
-- **Aucune tolérance à la faute de frappe.** « audti » ne trouve rien. La recherche cherche des
-  mots, elle ne les devine pas.
-- **Ce qui est à la corbeille ne se cherche pas**, y compris les commentaires d'une affaire mise à
-  la corbeille.
-
-### 9.4 La parcourir au clavier, et y aller
-
-La main ne quitte pas le clavier :
-
-| Touche | Effet |
-|---|---|
-| **`↓`** | descend d'un résultat ; du dernier, revient au premier |
-| **`↑`** | monte d'un résultat ; du premier, va au dernier |
-| **`Entrée`** | ouvre le résultat en surbrillance |
-| **`Échap`** | referme la recherche |
-| **`Tab`**, **`Maj+Tab`** | quittent la recherche, qui se referme ; le curseur va où la touche l'envoie |
-
-Un clic sur une ligne fait la même chose que `Entrée`.
-
-**Où chaque famille vous mène** :
-
-| Famille | Destination |
-|---|---|
-| Affaire | sa fiche |
-| Commentaire | **la fiche de l'affaire commentée**, où le propos se lit dans le fil |
-| Contact | sa fiche |
-| Organisation | sa fiche |
-| Message | **votre boîte, le message ouvert**, dans le dossier où il est classé |
-
-**Un message vous mène au message, pas seulement à votre boîte.** Le dossier est celui de son
-affaire quand il est classé, et **« Non classés »** quand il ne l'est pas — vous arrivez donc là où
-le message se trouve réellement, sans avoir à le retrouver dans la liste.
-
-L'adresse qui vous y a mené **ne reste pas dans la barre du navigateur** : recharger la page vous
-laisse dans votre boîte, sans rouvrir un message que vous aviez peut-être quitté depuis longtemps.
-Et si le message n'existe plus, ou s'il ne vous est pas lisible, **votre boîte s'ouvre simplement
-sans sélection** — aucune erreur ne s'affiche.
-
-### 9.5 Vous ne trouvez que ce que vous avez le droit de lire
-
-**La recherche n'ouvre rien.** Une affaire d'un track qui ne vous est pas ouvert, son commentaire,
-un message que vous ne pouvez pas lire : rien de tout cela n'apparaît, et **rien ne signale que
-quelque chose vous est caché**. Deux personnes cherchant le même mot ne voient donc pas
-nécessairement la même liste, et c'est voulu.
-
-### 9.6 Ce que la recherche affiche, et ce qu'elle ne fait pas
-
-- **Au plus vingt résultats**, et quand la liste est pleine elle l'écrit : « 20 résultats
-  affichés ». Précisez votre terme pour en voir d'autres.
-- **L'ordre est celui de la pertinence**, familles mêlées : un message peut passer devant une
-  affaire s'il correspond mieux.
-- **Rien n'est enregistré** : ni ce que vous cherchez, ni quand, ni combien de résultats. Il n'y a
-  pas d'historique de recherche, et il n'y en aura pas sans qu'on vous le demande.
-- **Aucun filtre par famille**, aucune suggestion, aucune correction de frappe.
-- **Aucune action sur un résultat** : la recherche mène, elle n'agit pas.
-- **Les tracks et les channels ne sont pas cherchés.** On les trouve par la navigation, qui les
-  liste tous à l'écran.
-- **Un résultat dont l'écran n'est pas atteignable reste affiché**, marqué « Objet non
-  atteignable » et non cliquable — plutôt que de disparaître ou de mener à un écran cassé.
-- **Sans être connecté, la recherche n'existe pas** : aucune page ne s'affiche sans session
-  (chapitre 1).
-
-## 10. La plateforme : espaces, membres et superadministrateurs
-
-*Livré par `CRM-101` ; captures : `docs/captures/CRM-101/`.*
-
-La **plateforme** est l'étage au-dessus des espaces de travail. On y crée un espace, on y désigne qui en est membre et
-avec quel rôle, et on y inscrit les personnes attendues. Elle est réservée aux **superadministrateurs**.
-
-### 10.1 Qui est superadministrateur
-
-Deux sortes de personnes le sont :
-
-- celles qui portent le rôle **`admin` chez LeLabs** : elles exploitent le SSO, et la règle du domaine fait d'elles les
-  administratrices de toute application qui s'y branche ;
-- celles qui ont reçu le **drapeau** dans le CRM.
-
-**Le tout premier drapeau** est posé une seule fois, à la première connexion d'une adresse que l'exploitant a désignée
-à l'installation. La connexion doit être vérifiée chez LeLabs. Dès qu'un superadministrateur existe, plus aucun ne
-s'amorce de cette façon : les suivants reçoivent le drapeau de la main d'un superadministrateur.
-
-**Être superadministrateur ne donne accès à aucune donnée commerciale.** On ne lit ni les tracks, ni les affaires, ni
-les coûts d'un espace dont on n'est pas membre. Pour y travailler, un superadministrateur s'ajoute lui-même comme
-membre de cet espace, et ce geste est inscrit au journal.
-
-### 10.2 Ouvrir la plateforme
-
-Un superadministrateur voit l'entrée **« Plateforme »** en bas de la barre latérale, après « Réglages ». Personne
-d'autre ne la voit. Une adresse de la plateforme ouverte sans le drapeau affiche **« Accès réservé »**.
-
-La plateforme a quatre onglets : **« Espaces »**, **« Utilisateurs »**, **« Superadministrateurs »** et **« Journal »**.
-
-### 10.3 Créer un espace
-
-Dans l'onglet « Espaces », **« Nouvel espace »** ouvre un formulaire à trois champs :
-
-- **« Nom »** ;
-- **« Identifiant court »** : en minuscules, chiffres et tirets. Il nomme les dossiers de la messagerie et **ne se
-  modifie plus ensuite** ;
-- **« Domaine entrant (facultatif) »** : le domaine des adresses de ses affaires.
-
-**« Créer »** ouvre la fiche du nouvel espace. Un espace naît **sans membre** : sa fiche le dit, et la liste porte
-« Aucun administrateur ». Donnez-lui son premier administrateur, comme décrit ci-dessous. À sa première connexion, cet
-administrateur trouvera le guide de démarrage, qui pose le workflow de départ (chapitre 1 *bis*).
-
-### 10.4 Les membres d'un espace
-
-La fiche d'un espace liste ses **« Membres »**. Le rôle d'un membre se change dans sa ligne, et s'enregistre dès qu'on
-le choisit.
-
-- **« Ajouter un membre »** cherche une personne **par son nom**, deux caractères au moins, puis lui donne un rôle. Seules
-  les personnes qui se sont déjà connectées au CRM y figurent.
-- **« Retirer »** demande confirmation. Les droits fins de la personne sur les tracks et les channels de cet espace
-  partent avec son appartenance.
-
-**Un espace garde toujours au moins un administrateur.** Le premier membre d'un espace doit être administrateur, et le
-dernier administrateur ne se retire ni ne se rétrograde. Le refus le dit, et indique quoi faire.
-
-### 10.5 Les attentes
-
-Une personne qui ne s'est jamais connectée n'a pas encore de nom dans le CRM. On l'**attend** à son adresse :
-**« Inscrire une attente »**, avec l'adresse et le rôle. Elle devient membre à sa première connexion LeLabs, si son
-adresse et son compte sont vérifiés (chapitre 1). Réinscrire une adresse remplace son rôle, et **« Retirer »** efface
-l'attente, sans confirmation.
-
-Dans un espace qui n'a encore aucun administrateur, une attente qui n'est pas administratrice porte **« En
-suspens »** : elle ne se consommera qu'après l'arrivée d'un administrateur. Inscrivez donc d'abord l'administrateur.
-
-**« Dernière tentative »** dit si la personne attendue a déjà essayé de se connecter, et pourquoi elle a été refusée :
-« Refusée le 21/10 : compte LeLabs pas encore vérifié », avec le nombre de refus quand il y en a eu plusieurs. Trois
-motifs existent : **adresse non vérifiée chez LeLabs** (la personne doit confirmer son adresse dans son compte
-LeLabs), **compte LeLabs pas encore vérifié** (LeLabs doit vérifier son compte), **l'espace n'a pas encore
-d'administrateur** (nommez-en un). « Aucune tentative refusée » veut dire que la personne n'a pas essayé — ou que son
-dernier essai date de plus de 90 jours : le CRM n'en garde pas la trace au-delà. Une adresse que personne n'attend ne
-laisse jamais de trace, et réinscrire une attente efface la sienne.
-
-### 10.6 Modifier ou supprimer un espace
-
-**« Modifier »** change le nom et le domaine entrant d'un espace. Son identifiant court ne change pas.
-
-**« Supprimer l’espace »**, en bas de la fiche, ouvre une confirmation.
-
-- **Ce qu'elle dit :** ce que l'espace emporte avec lui — ses appartenances, ses attentes, et tout son contenu.
-- **Ce qu'elle demande :** de **saisir l'identifiant court** de l'espace. **« Supprimer définitivement »** reste
-  inactif tant que la saisie diffère.
-- **Ce qui ne se rattrape pas :** la suppression est définitive. Seule la restauration d'une sauvegarde la défait.
-
-### 10.6 bis Les utilisateurs
-
-L'onglet **« Utilisateurs »** liste toutes les personnes admises au moins une fois dans le CRM. Pour chacune, il
-affiche :
-
-- ses **espaces**, chacun suivi de son rôle ; un clic sur un espace ouvre sa fiche. « Aucun espace » dit qu'elle n'en a
-  plus ;
-- la pilule **« Superadministrateur »**, si elle porte le drapeau ;
-- sa **dernière activité au connecteur MCP**, ou « Jamais connecté » ;
-- la date de sa première admission.
-
-**« Rechercher un utilisateur »** filtre la liste par nom pendant que vous tapez, sans tenir compte des accents ni des
-majuscules. La liste montre au plus 200 personnes ; au-delà, elle le dit, et la recherche affine.
-
-L'onglet ne modifie rien. Pour ajouter une personne à un espace, ouvrez la fiche de l'espace (§10.4). Pour lui donner
-le drapeau, passez par l'onglet « Superadministrateurs » (§10.7). **« Droits du connecteur »**, sur chaque ligne, mène
-à ses droits du connecteur MCP (chapitre 11). Le rôle `admin` LeLabs n'y est pas affiché : le CRM
-ne le connaît que par la connexion.
-
-### 10.7 Les superadministrateurs et le journal
-
-L'onglet **« Superadministrateurs »** liste les drapeaux posés dans le CRM.
-
-- **« Amorçage »** désigne le premier drapeau, posé à l'installation.
-- **« Accorder le drapeau »** le donne à une personne déjà connectée ; **« Retirer »** le lui reprend, après
-  confirmation. Le dernier drapeau ne se retire pas : accordez-en un autre d'abord.
-- **Les porteurs du rôle `admin` LeLabs** sont aussi superadministrateurs, mais n'y figurent pas.
-
-L'onglet **« Journal »** retrace chaque geste de la plateforme, du plus récent au plus ancien :
-
-- la date ;
-- qui a agi ;
-- le geste, en mots ;
-- son détail.
-
-**« Entrées plus anciennes »** remonte le temps, une page après l'autre.
-
-Le journal de la plateforme et celui des appels du connecteur sont **conservés un an**. Chaque nuit, le CRM efface les
-entrées plus anciennes, et inscrit le geste **« Journaux purgés »** avec le nombre d'entrées effacées de chacun. Personne
-ne peut modifier ni supprimer une entrée de ces journaux (chapitre 10 *ter*).
-
-### 10.8 Ce que la plateforme n'offre pas
-
-- **Gérer ses propres membres en tant qu'administrateur d'espace**, sans être superadministrateur : c'est l'écran
-  « Réglages ▸ Membres » (chapitre 10 *bis*), avec les attentes et les droits fins par track et par channel.
-- **Changer l'identifiant court d'un espace.**
-- **Annuler une suppression.**
-
-## 10 bis. Les membres de votre espace : qui y travaille, avec quel rôle
+## 21. Les membres de votre espace : qui y travaille, avec quel rôle
 
 *Livré en développement par `CRM-070` : la liste des membres, leurs rôles, les attentes et les droits fins par track et
 par channel.*
@@ -5001,7 +3878,7 @@ par channel.*
 Chaque espace de travail a ses **membres**, et chacun y tient un **rôle** : **Administrateur**, **Business developer**
 ou **Lecteur**. Cet écran les montre à tous les membres ; seuls les administrateurs de l'espace y changent quelque chose.
 
-### 10 bis.1 Ouvrir l'écran
+### 21.1 Ouvrir l'écran
 
 Barre latérale ▸ **Réglages** ▸ **« Membres : personnes et rôles »**, juste après « Arborescence : tracks et channels ».
 
@@ -5009,13 +3886,13 @@ La liste montre une ligne par membre : son nom, son rôle et la date depuis laqu
 administrateurs viennent en tête, puis les autres membres par ordre alphabétique. Une personne dont le profil n'a pas
 de nom apparaît comme **« Compte sans nom »**.
 
-### 10 bis.2 Si vous n'administrez pas l'espace
+### 21.2 Si vous n'administrez pas l'espace
 
 Vous consultez la liste, mais vous ne la modifiez pas. Un bandeau le dit en tête de l'écran : les modifications sont
 réservées aux administrateurs de l'espace. Les sélecteurs de rôle et les boutons **« Retirer »** restent visibles,
 mais ils sont inactifs.
 
-### 10 bis.3 Changer le rôle d'un membre
+### 21.3 Changer le rôle d'un membre
 
 Choisissez le nouveau rôle dans le sélecteur de sa ligne : le changement est enregistré **dès le choix**, sans bouton
 à presser. Un message sous la liste le confirme — « Rôle de Driss Lemoine modifié. » —, puis la liste est relue.
@@ -5026,7 +3903,7 @@ refusé, et le message le dit : nommez d'abord un autre administrateur. Le séle
 Vous pouvez changer votre propre rôle. Si vous cessez d'être administrateur, vous ne pourrez plus rien modifier sur
 cet écran.
 
-### 10 bis.4 Retirer un membre de l'espace
+### 21.4 Retirer un membre de l'espace
 
 **« Retirer »**, au bout de sa ligne, ouvre une confirmation sous la ligne. Elle nomme la personne et l'espace, et dit
 ce que le retrait emporte : **ses droits fins sur les tracks et les channels de l'espace partent avec elle**. Le reste
@@ -5036,11 +3913,11 @@ la confirmation sans rien changer.
 **Vous retirer vous-même** est possible, et la confirmation vous prévient : vous ne serez plus membre de l'espace, et
 vous perdrez l'accès à ses affaires comme à son administration. Le dernier administrateur ne peut pas se retirer.
 
-### 10 bis.5 Les attentes : les personnes qu'on attend
+### 21.5 Les attentes : les personnes qu'on attend
 
 Le CRM ne crée aucun compte : on y entre avec son identité LeLabs. Pour faire entrer quelqu'un dans l'espace, un
 administrateur inscrit une **attente** — une adresse et un rôle. La personne devient membre, avec ce rôle, à sa
-**première connexion LeLabs** avec cette adresse vérifiée (chapitre 1).
+**première connexion LeLabs** avec cette adresse vérifiée ([chapitre 1](#se-connecter-et-se-deconnecter)).
 
 La section **« Attentes »** vient sous la liste des membres. **Seuls les administrateurs de l'espace la voient** : pour
 les autres membres, elle n'apparaît pas.
@@ -5053,7 +3930,7 @@ les autres membres, elle n'apparaît pas.
   revenir en arrière.
 - Une attente **« En suspens »** ne se consommera qu'à l'arrivée d'un administrateur : c'est le cas d'une attente qui
   n'est pas administratrice, dans un espace qui n'a encore aucun administrateur membre. Vous ne la verrez que rarement
-  ici, puisqu'un administrateur membre suffit à lever le suspens ; la plateforme la montre (chapitre 10).
+  ici, puisqu'un administrateur membre suffit à lever le suspens ; la plateforme la montre ([chapitre 32](#la-plateforme-espaces-membres-et-superadministrateurs)).
 - **« Dernière tentative »** dit si la personne attendue a déjà essayé de se connecter, et pourquoi elle a été refusée :
   « Refusée le 21/10 : compte LeLabs pas encore vérifié », avec le nombre de refus quand il y en a eu plusieurs. Trois
   motifs existent : **adresse non vérifiée chez LeLabs** (la personne doit confirmer son adresse dans son compte
@@ -5064,7 +3941,7 @@ les autres membres, elle n'apparaît pas.
 
 Une adresse mal formée est refusée, et le formulaire reste ouvert pour la corriger.
 
-### 10 bis.6 Les droits fins : restreindre ou rouvrir un track ou un channel
+### 21.6 Les droits fins : restreindre ou rouvrir un track ou un channel
 
 Le rôle d'un membre vaut pour tout l'espace. Les **droits fins** le précisent, track par track et channel par channel.
 La section **« Droits fins »** vient en dernier ; **seuls les administrateurs de l'espace la voient**.
@@ -5085,7 +3962,7 @@ avec la mention **« Lisible par l'un de ses channels »** : la personne voit so
 **Un administrateur n'est jamais restreint.** Sa matrice s'affiche, une phrase le rappelle, et ses droits ne se
 modifient pas ici.
 
-### 10 bis.7 Quand un geste n'aboutit pas
+### 21.7 Quand un geste n'aboutit pas
 
 Le message sous la liste dit pourquoi :
 
@@ -5095,7 +3972,7 @@ Le message sous la liste dit pourquoi :
 - **ce geste est réservé aux administrateurs de l'espace** ;
 - **le serveur n'a pas répondu** : vérifiez votre connexion et réessayez.
 
-## 10 ter. Le journal d'audit : ce qui s'est fait dans votre espace
+## 22. Le journal d'audit : ce qui s'est fait dans votre espace
 
 *Livré en développement par `CRM-072` T1 et T2.*
 
@@ -5121,7 +3998,7 @@ Le journal ne garde **jamais le nom d'un contact** : il ne garde que son identif
 carnet au moment de l'affichage. Il ne garde pas non plus de contenu : ni le texte d'un commentaire, ni celui d'un
 message, ni un mot de passe, ni la valeur d'un réglage.
 
-### 10 ter.1 Ouvrir le journal
+### 22.1 Ouvrir le journal
 
 1. Ouvrez **« Réglages »** dans la barre latérale.
 2. Choisissez **« Journal d'audit »**, juste après « Membres ».
@@ -5129,7 +4006,7 @@ message, ni un mot de passe, ni la valeur d'un réglage.
 Le journal est **réservé aux administrateurs de l'espace**. Pour un autre membre, l'entrée de l'index est grisée, et
 l'adresse ouverte directement affiche **« Réservé aux administrateurs »**.
 
-### 10 ter.2 Lire une entrée
+### 22.2 Lire une entrée
 
 Le tableau montre les entrées les plus récentes en tête, sur quatre colonnes :
 
@@ -5143,7 +4020,7 @@ Le tableau montre les entrées les plus récentes en tête, sur quatre colonnes 
 
 Cinquante entrées s'affichent d'abord. **« Entrées plus anciennes »**, sous le tableau, ajoute les cinquante suivantes.
 
-### 10 ter.3 Filtrer
+### 22.3 Filtrer
 
 Au-dessus du tableau, quatre filtres se combinent :
 
@@ -5155,15 +4032,1035 @@ Les filtres sont inscrits dans l'adresse de la page : vous pouvez la partager av
 **« Aucun geste sur cette période »** dit qu'aucune entrée ne correspond aux filtres. Les filtres restent au-dessus pour
 les élargir.
 
-### 10 ter.4 Ce que le journal ne fait pas
+### 22.4 Ce que le journal ne fait pas
 
 - Il ne s'exporte pas : on le consulte à l'écran.
 - Il n'inscrit pas les gestes ordinaires de la vie d'une affaire, comme un déplacement, un champ rempli ou un
   commentaire. L'historique de l'affaire les montre déjà.
 - Il n'inscrit pas la déconnexion. Le CRM ne distingue pas une déconnexion d'une session expirée.
-- Le superadministrateur garde son propre journal, celui de la plateforme (chapitre 10).
+- Le superadministrateur garde son propre journal, celui de la plateforme ([chapitre 32](#la-plateforme-espaces-membres-et-superadministrateurs)).
 
-## 11. Le connecteur MCP : piloter le CRM depuis votre assistant
+## 23. Les budgets d'un track
+
+*Livré par `CRM-084` tranche 2 ; le seuil d'ancienneté par sa tranche 4. Captures dans
+`docs/captures/CRM-084/budgets-*.jpg`.*
+
+**À quoi sert un budget.** Un budget est une **enveloppe de dépenses** d'un track — « Publicité
+2026 », « Salon du web 2025 ». Les lignes de coût d'une affaire s'y rattachent, depuis la section
+« Coûts » de sa fiche, et les écrans de coûts comparent, budget par budget, ce qui était prévu à ce qui
+a été dépensé ([chapitre 24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)).
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Arborescence : tracks et channels ». Dépliez un track avec
+le chevron : sous ses channels paraît le bloc **« Budgets »**.
+
+**Ce que le tableau montre**, une ligne par budget :
+
+| Colonne | Contenu |
+|---|---|
+| Nom | le nom du budget |
+| Devise | trois lettres — `EUR`, `CHF` |
+| Enveloppe | le montant prévu ; **cellule vide** si l'enveloppe n'est pas décidée — ce n'est pas zéro |
+| Récurrent | « Oui » ou « Non » |
+| Occurrences ouvertes | pour un budget récurrent, le nombre de ses occurrences **non clôturées** ; c'est aussi le lien qui les déplie ([chapitre 23.1](#les-occurrences-d-un-budget-recurrent)). **Cellule vide** pour un budget non récurrent, qui n'en porte jamais |
+| État | « Ouvert » ou « Clôturé », écrit en toutes lettres |
+| Actions | monter, descendre, modifier, clôturer — ou rouvrir |
+
+**Les budgets clôturés sont masqués par défaut.** Cochez **« Afficher les budgets clôturés »** pour
+les faire reparaître : ils ne sont pas supprimés, ils sortent seulement du chemin.
+
+**Créer un budget.** Le bouton **« Nouveau budget »**, sous le tableau, ouvre le formulaire dans la
+page, le curseur dans le premier champ :
+
+| Champ | Règle |
+|---|---|
+| Nom | obligatoire. Deux budgets **ouverts** d'un même track ne portent pas le même nom ; un budget clôturé peut, lui, garder un nom qu'un nouveau budget reprend — « Salon 2025 » l'année suivante |
+| Devise | trois lettres majuscules, `EUR` par défaut. Une autre écriture est signalée sur le champ, et « Créer » reste indisponible |
+| Enveloppe (facultative) | un nombre. **Laissez vide** si l'enveloppe n'est pas décidée ; un montant **négatif** est accepté — un avoir, un remboursement. Une saisie qui n'est pas un nombre est signalée sur le champ |
+| Seuil d'ancienneté (facultatif) | un nombre de **jours entiers, à partir de 1**. Au delà, une dépense de ce budget qui attend son coût réel est signalée **en retard** dans l'onglet « À saisir » ([chapitre 27](#l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite)). **Laissez vide pour ne rien signaler** : aucun seuil n'est alors appliqué, pas même un seuil « par défaut ». « 0 » ou « 2,5 » sont signalés sur le champ |
+| Budget récurrent (porte des occurrences) | à cocher pour un budget qui se décline en périodes — « Janvier 2026 », « Février 2026 ». Un budget récurrent ne reçoit aucune ligne de coût tant qu'il ne porte pas au moins une occurrence ouverte ([chapitre 23.1](#les-occurrences-d-un-budget-recurrent)) |
+
+**Modifier un budget.** Le crayon rouvre le même formulaire, **prérempli** avec les valeurs
+actuelles. Vider l'enveloppe ou le seuil les **efface** réellement. Un budget qui porte des
+occurrences ne redevient pas non récurrent : retirez d'abord ses occurrences.
+
+**Réordonner.** Les flèches montent ou descendent un budget d'un cran ; elles sont désactivées en tête
+et en fin de liste, et le disent.
+
+**Clôturer un budget.** Le cadenas demande une **confirmation**, dans la page : « Clôturer le budget
+« … » ? ». Elle dit ce que la clôture fait — le budget sort du tableau sans être supprimé, et peut
+être rouvert — et elle **compte** les dépenses du budget qui attendent encore leur coût réel : « Ce
+budget porte n ligne(s) sans coût réel ; elles resteront saisissables après la clôture. » La clôture
+n'est **pas empêchée** par ce décompte : c'est une décision de gestion, elle est seulement éclairée.
+Un budget clôturé **ne reçoit plus de nouvelle ligne de coût** ; celles qu'il porte restent, et leur
+coût réel se saisit encore — les factures arrivent souvent après la clôture.
+
+**Rouvrir un budget.** Affichez les budgets clôturés, puis utilisez le cadenas ouvert. Aucune
+confirmation n'est demandée. Si un budget ouvert du track a repris son nom entre-temps, la
+réouverture est refusée : renommez l'un des deux.
+
+**Un budget ne se supprime pas** : des dépenses le référencent, et le supprimer effacerait la
+dépense constatée. On le clôture.
+
+**Qui.** Créer, modifier, réordonner, clôturer et rouvrir un budget sont réservés aux
+**administrateurs de l'espace de travail** — le serveur l'applique. Un autre membre voit le tableau
+des budgets des tracks qu'il lit ; ses commandes restent à leur place, **grisées**, et le bandeau de
+l'écran dit pourquoi ([chapitre 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Afficher les budgets clôturés et déplier les occurrences lui
+restent ouverts.
+
+| Message | Ce qu'il signifie |
+|---|---|
+| « Un budget ouvert de ce track porte déjà ce nom… » | Choisissez un autre nom, ou clôturez l'autre budget |
+| « Ce budget porte des occurrences : supprimez-les avant de le rendre non récurrent. » | Retirez ses occurrences d'abord ([chapitre 23.1](#les-occurrences-d-un-budget-recurrent)) |
+| « Cette valeur a été refusée : vérifiez le nom et la devise. » | Le serveur a refusé la forme d'une valeur |
+| « Seul un administrateur de cet espace de travail peut gérer les budgets. » | Le geste demande un droit que votre compte n'a pas |
+| « Rien n'a été modifié… » | Vos droits sur ce budget ont changé depuis l'ouverture de l'écran, ou il a disparu |
+
+### 23.1 Les occurrences d'un budget récurrent
+
+*Livré par `CRM-084` tranche 3. Captures dans `docs/captures/CRM-084/occurrences-*.jpg`.*
+
+**Où.** Sous un track déplié, dans le tableau « Budgets ». Un budget déclaré **récurrent** affiche
+dans la colonne « Occurrences ouvertes » un nombre **cliquable** : il déplie la liste de ses
+occurrences sous le tableau. Un budget non récurrent affiche une cellule vide, et n'offre pas ce
+geste — il ne peut porter aucune occurrence.
+
+**Pourquoi c'est nécessaire.** Un budget récurrent ne peut recevoir aucune ligne de coût tant qu'il
+ne porte pas au moins une occurrence : le sélecteur de la fiche d'affaire ne le propose pas. Avant
+cet écran, cocher « récurrent » produisait donc un budget inutilisable.
+
+**Ce que la liste montre**, de la plus récente à la plus ancienne : le libellé, la période si elle
+est renseignée, l'enveloppe si elle est décidée, et l'état — « Ouverte » ou « Clôturée ».
+
+**Les occurrences clôturées ne sont pas masquées**, contrairement aux budgets. C'est voulu : les
+factures arrivent souvent après la clôture, et l'onglet « À saisir » des écrans de coûts liste
+précisément leurs lignes.
+
+**Les cinq gestes**, tous réservés à un **administrateur de l'espace de travail** :
+
+| Geste | Ce qu'il fait |
+|---|---|
+| Ouvrir une occurrence | Déclare une instance — « Janvier 2026 ». Le libellé est obligatoire ; la période et l'enveloppe ne le sont pas |
+| Modifier | Change le libellé, la période et l'enveloppe. Reste offert sur une occurrence **clôturée** |
+| Clôturer | La retire des choix proposés à une nouvelle ligne de coût. **Sans confirmation** : elle se rouvre d'un clic |
+| Rouvrir | L'inverse, également sans confirmation |
+| Retirer | La supprime. **Avec confirmation**, et refusé si des lignes de coût y sont rattachées |
+
+**Aucune occurrence n'est engendrée automatiquement.** On crée « janvier », puis « février », à la
+main. Un mois sans occurrence est une information — il ne s'est rien passé — qu'une génération
+automatique détruirait en fabriquant une occurrence vide.
+
+**Vider un champ facultatif l'efface réellement.** Une enveloppe posée par erreur se retire en
+laissant le champ vide, de même que les deux bornes de période.
+
+**Les périodes ne contraignent rien.** Elles servent à ordonner et à libeller : aucune ligne de coût
+n'est refusée parce que sa date sortirait de la période, et rien n'exige que la fin suive le début.
+
+**Deux libellés qui ne diffèrent que par la casse coexistent.** « Janvier 2026 » et « janvier 2026 »
+sont deux occurrences distinctes ; seuls les espaces de début et de fin sont ignorés. C'est la même
+règle que pour le nom d'un budget.
+
+**Ce que vous pouvez lire sans pouvoir l'écrire.** La liste est visible à qui lit le budget. Si vous
+n'êtes pas administrateur, vos gestes sont refusés par le serveur et l'écran vous le dit — il ne les
+masque pas, parce que vos droits peuvent avoir changé depuis l'ouverture de la page.
+
+| Message | Ce qu'il signifie |
+|---|---|
+| « Ce budget porte déjà une occurrence de ce libellé » | Choisissez un autre libellé |
+| « Ce budget n'est pas récurrent » | Rendez-le récurrent avant d'y ouvrir une occurrence |
+| « Cette occurrence porte des lignes de coût » | Clôturez-la plutôt que de la retirer : la dépense constatée n'est pas effacée |
+| « Seul un administrateur… » | Le geste demande un droit que votre compte n'a pas |
+| « Rien n'a été modifié » | Vos droits sur ce budget ont changé depuis l'ouverture de l'écran |
+
+### 23.2 Ce qui n'est pas là, côté budgets
+
+Ces absences sont voulues, et non des oublis :
+
+- **aucune conversion de devise** : chaque budget compte dans sa propre devise, et les écrans de coûts
+  rendent un histogramme par devise plutôt qu'un total qui mélangerait des euros et des francs ;
+- **aucune occurrence engendrée automatiquement**, aucun calendrier ([chapitre 23.1](#les-occurrences-d-un-budget-recurrent)) ;
+- **aucune alerte de dépassement** ni aucun envoi d'email : un dépassement se lit sur l'histogramme ;
+- **aucun export comptable**, aucun import de factures.
+
+## 24. Les coûts d'un track : ce qui était prévu, ce qui a été dépensé
+
+*Livré par `CRM-086` tranche 3. Captures dans `docs/captures/CRM-086/`.*
+
+**Où.** Ouvrez un track, puis l'entrée **« Coûts »** de la barre d'onglets, à droite des channels et
+séparée d'eux par un filet. L'adresse est partageable et rechargeable.
+
+**L'entrée est là même si le track n'a aucun channel.** Un track porte ses budgets indépendamment de
+ses channels ; ne pas encore avoir ouvert de channel n'empêche pas d'avoir engagé des dépenses.
+
+**Ce que l'écran montre.** Pour chaque budget **ouvert** du track, deux barres côte à côte : le
+**prévisionnel** — la somme des coûts estimés des lignes rattachées à ce budget — et le **réel** — la
+somme des coûts réellement saisis. La barre du réel passe au rouge lorsqu'elle **dépasse** le
+prévisionnel, et le tableau sous le graphique l'écrit aussi en toutes lettres : une couleur ne porte
+jamais seule une information dans ce produit.
+
+**Le tableau sous le graphique n'est pas un doublon.** C'est la version que lit un lecteur d'écran,
+et celle qui reste juste si les couleurs ne passent pas — à l'impression, sur un projecteur, ou pour
+qui les distingue mal. Il porte les mêmes chiffres, plus une colonne **« Sans réel »** qui compte les
+lignes dont le coût réel n'a pas encore été saisi, budget par budget.
+
+**Un budget récurrent apparaît ici en UNE seule paire de barres**, toutes ses occurrences confondues.
+Le détail occurrence par occurrence appartient à l'écran du budget, désormais livré : **le nom d'un
+budget est un lien** vers sa fiche ([§25](#le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne)).
+
+**Un budget clôturé n'apparaît pas sur cet écran.** Il n'a pas disparu : ses lignes existent
+toujours, et leur coût réel reste saisissable — clôturer une campagne n'empêche pas les factures
+d'arriver ensuite. Il sort simplement de la comparaison des budgets en cours.
+
+### 24.1 La phrase sous le graphique, et pourquoi elle compte
+
+Quand des coûts réels manquent, l'écran écrit sous le graphique :
+
+> « 1 ligne(s) sans coût réel saisi, pour 100 € de prévisionnel. »
+
+**Sans elle, un réel bas se lirait comme une économie alors qu'il n'est qu'une saisie en retard**,
+et c'est la principale façon dont un tel écran pourrait mentir. Une ligne sans coût réel **ne compte
+pas** dans la barre du réel : le produit ne confond jamais « pas encore su » et « rien dépensé ».
+
+**Elle disparaît quand tous les réels sont saisis**, au lieu d'afficher « 0 ligne ». Un
+avertissement affiché en permanence cesse d'être lu, et c'est quand il apparaît qu'il doit se
+remarquer.
+
+### 24.2 Plusieurs devises
+
+Si le track porte des budgets dans plusieurs devises, l'écran rend **un graphique par devise**,
+chacun avec son propre total. Il n'additionne jamais deux devises : aucune conversion et aucun taux
+de change n'existent dans le produit, et un total unique n'aurait donc aucun sens. Si tout est dans
+la même devise — le cas courant — vous ne voyez rien de cette mécanique.
+
+### 24.3 Les états que vous pouvez rencontrer
+
+| Ce que vous voyez | Ce que cela veut dire |
+|---|---|
+| « Aucun budget sur ce track » | Aucun budget **ouvert** que vous ayez le droit de lire. Un administrateur en crée depuis « Réglages ▸ Arborescence » |
+| Deux barres à zéro et « Aucune dépense rattachée. » | Le budget existe, aucune affaire n'y a encore rattaché de ligne de coût |
+| « Accès refusé » | Votre compte n'a pas le droit de lire ces budgets |
+| « Track introuvable » | L'adresse ne désigne aucun track que vous puissiez lire |
+
+**Ce que vous voyez est ce que vos droits vous consentent.** Un budget que vous n'avez pas le droit
+de lire n'entre pas dans le total, et **l'écran ne vous signale aucun manque** : le signaler
+reviendrait à vous apprendre l'existence de ce qu'il cache. Votre total peut donc être plus petit
+que celui d'un collègue, et c'est le comportement voulu.
+
+### 24.4 Ce que cet écran ne fait pas
+
+- **On n'y saisit rien.** Les lignes de coût d'une affaire se créent et se modifient depuis la fiche
+  de l'affaire, section « Coûts ». Les budgets s'administrent depuis « Réglages ▸ Arborescence ».
+- **Aucun filtre, aucun tri, aucune période.** L'écran rend les budgets ouverts du track dans l'ordre
+  de leur administration.
+
+### 24.5 Deux onglets, et le second est celui où l'on saisit
+
+Cet écran porte **deux onglets** : « Vue d'ensemble » — le graphique décrit ci-dessus — et
+**« À saisir »**, qui liste les lignes de ce track en attente de leur coût réel et permet de les
+saisir à la suite. L'onglet « À saisir » porte un **compteur** : le nombre de lignes qu'il liste.
+
+Le second onglet vit dans l'adresse (`?onglet=saisir`) : il est donc **partageable et
+rechargeable**, comme le reste du produit. Tout est décrit au **[§27](#l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite)*.
+
+*Le **cumul de l'espace de travail** est livré : voir le [§26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track).*
+
+## 25. Le détail d'un budget : occurrence par occurrence, ligne par ligne
+
+*Livré par `CRM-086` tranche 4. Captures dans `docs/captures/CRM-086/couts-budget-*.jpg`.*
+
+**Où.** Depuis l'écran de coûts d'un track ([§24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)), **cliquez sur le nom d'un budget** dans
+le tableau sous le graphique. L'adresse est partageable et rechargeable ; elle désigne le budget par
+son identifiant, et non par son nom — deux budgets peuvent porter le même nom dès que l'un est clos.
+
+**Ce que l'écran montre, de haut en bas :**
+
+1. **La devise du budget et son enveloppe**, quand une enveloppe a été décidée. Si aucune ne l'a été,
+   la ligne n'apparaît pas du tout : le produit ne confond jamais « rien n'a été décidé » et
+   « l'enveloppe vaut zéro ».
+2. **Un graphique à deux barres par occurrence** — le prévisionnel et le réel —, dans l'ordre des
+   périodes. C'est ce que l'écran du track agrège en une seule paire. Un budget **non récurrent**
+   n'en rend qu'une, nommée « Sans occurrence ».
+3. **La liste de ses lignes de coût** : l'affaire, la nature de la dépense, le coût estimé, le coût
+   réel et l'auteur de la saisie. Le titre de l'affaire est un lien vers sa fiche.
+
+**Une occurrence qui n'a rien coûté garde ses deux barres, à zéro.** Qu'il ne se soit rien passé en
+février est une information ; la faire disparaître ferait lire le budget comme s'il n'avait jamais
+porté ce mois-là.
+
+**Sous le libellé d'une occurrence, sa période.** Le libellé est libre — rien n'oblige
+« Janvier 2026 » à couvrir janvier —, et la période dit ce que le libellé ne garantit pas. Elle est
+purement descriptive : elle ne refuse aucune ligne de coût.
+
+### 25.1 Filtrer par occurrence
+
+Dès que le budget porte des occurrences, un sélecteur **« Filtrer par occurrence »** apparaît
+au-dessus de la liste. Il ne retient que **la liste** : le graphique reste celui du budget entier,
+sans quoi vous perdriez la comparaison entre occurrences, qui est ce que cet écran sert à voir.
+
+L'option **« Toutes les occurrences »** lève le filtre. Un budget non récurrent, ou un budget
+récurrent qui ne porte encore aucune occurrence, n'affiche aucun sélecteur : il n'y aurait rien à
+filtrer.
+
+### 25.2 La colonne « Réel » laissée vide
+
+Une ligne dont le coût réel n'a pas encore été saisi laisse sa cellule **vide** — pas un tiret, pas
+« non renseigné », et surtout pas `0 €`. Le produit ne confond jamais « pas encore su » et « rien
+dépensé » : un zéro affiché ferait passer une saisie en retard pour une économie. Le compte de ces
+lignes est donné une seule fois, par la phrase sous le graphique.
+
+### 25.3 Les états que vous pouvez rencontrer
+
+| Ce que vous voyez | Ce que cela veut dire |
+|---|---|
+| « Budget clôturé — ses lignes restent lisibles et leur coût réel saisissable. » | Le budget a été clos. Il ne figure plus sur l'écran du track, mais son histoire reste entière et les factures qui arrivent après coup restent saisissables |
+| « Aucune occurrence ouverte. » | Le budget est récurrent mais n'en porte aucune. Tant que c'est le cas, aucune dépense ne peut lui être rattachée |
+| Deux barres à zéro et « Aucune dépense rattachée. » | Le budget existe, aucune affaire n'y a encore rattaché de ligne |
+| « Aucune dépense sur cette occurrence. » | Le filtre est posé sur une occurrence qui ne porte aucune ligne — ce n'est pas la même chose qu'un budget vide |
+| « Budget introuvable » | Ce budget n'existe pas, **ou** il ne vous est pas accessible, **ou** l'adresse est mal formée. Les trois se ressemblent **volontairement** : distinguer les cas vous apprendrait l'existence d'un budget que vous n'avez pas le droit de voir |
+| « Auteur inconnu » dans la colonne « Auteur » | Le compte qui a saisi la ligne a été supprimé depuis. La ligne, elle, est intacte |
+
+**Le bouton « Revenir aux coûts du track »** de l'écran « Budget introuvable » vous ramène là d'où
+vous venez, et là où les autres budgets sont listés.
+
+### 25.4 Ce que cet écran ne fait pas
+
+- **On n'y saisit rien.** Les lignes de coût se créent et se modifient depuis la fiche de l'affaire,
+  section « Coûts » ; les budgets et leurs occurrences s'administrent depuis
+  « Réglages ▸ Arborescence ».
+- **Aucun tri, aucune période, aucun export.** La liste rend les lignes de la plus ancienne à la
+  plus récente.
+
+## 26. Les coûts de tout l'espace de travail : un cumul par track
+
+*Livré par `CRM-086` tranche 5. Captures dans `docs/captures/CRM-086/couts-workspace-*.jpg`.*
+
+**Où.** Barre latérale ▸ **« Coûts »**, entre « Objectifs » et « Ma journée ». L'adresse est
+`/couts` ; elle est partageable et rechargeable.
+
+**Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
+droit de lire — voir le [§26.3](#votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue), qui est la partie la plus importante de cette page.
+
+### 26.1 Ce que l'écran montre
+
+**Un groupe de deux barres par track**, cumulant **tous ses budgets ouverts** : le **prévisionnel**
+— la somme des coûts estimés — et le **réel** — la somme des coûts réellement saisis. La barre du
+réel passe au rouge lorsqu'elle dépasse le prévisionnel, et la légende nomme les trois séries.
+
+C'est la différence exacte avec l'écran de coûts d'un track ([§24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)) : là-bas, une paire de
+barres désigne **un budget** ; ici, elle désigne **un track entier**. Un track qui porte trois
+budgets ouverts en euros rend donc **une** seule paire de barres, dont les montants sont la somme
+des trois.
+
+**Sous le graphique, le même tableau que partout ailleurs** : une ligne par track, le prévisionnel,
+le réel, le nombre de lignes en attente de leur coût réel, et un **total**. Ce tableau est la
+version lisible du graphique : il reste juste si la couleur ne passe pas, et c'est lui que lit un
+lecteur d'écran.
+
+**Le nom d'un track est un lien** vers ses propres coûts, budget par budget ([§24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)). C'est le
+chemin normal : on lit d'abord quels tracks dépensent, puis on ouvre celui qu'on veut détailler.
+
+**Un budget clôturé n'entre dans aucun cumul.** Il ne disparaît pas pour autant : ses lignes restent
+lisibles depuis sa propre fiche ([§25](#le-detail-d-un-budget-occurrence-par-occurrence-ligne-par-ligne)).
+
+**Un track archivé ou mis à la corbeille ne figure pas sur cet écran** — comme il ne figure pas dans
+la barre latérale. Si un budget y est resté ouvert, il se lit depuis l'écran de coûts de ce track,
+dont l'adresse continue de répondre.
+
+### 26.2 Les devises ne se mélangent jamais
+
+Si les budgets que vous lisez sont libellés dans **plusieurs devises**, l'écran rend **un graphique
+par devise**, chacun avec son **titre** — « Coûts en EUR », « Coûts en CHF » — et son propre total.
+Additionner des francs et des euros ne voudrait rien dire, et les poser sur un même axe rendrait la
+comparaison fausse à l'œil.
+
+Si tout est libellé dans une seule devise — le cas courant —, vous ne voyez rien de cette mécanique :
+un seul graphique, sans titre de devise.
+
+### 26.3 Votre total est le vôtre, et il peut différer de celui d'un collègue
+
+**C'est la règle la plus importante de cet écran.** Le cumul est calculé **à partir de ce que vos
+droits vous laissent lire**, jamais à partir de tout ce qui existe. Un budget qui appartient à un
+track qui vous est fermé :
+
+- n'apparaît nulle part ;
+- n'entre dans **aucun** total ;
+- et **n'est signalé par rien**.
+
+Deux collègues aux droits différents lisent donc deux nombres différents sur le même écran, au même
+instant. Ce n'est pas une erreur de calcul : afficher un total « complet » vous apprendrait, par
+simple soustraction, l'existence et le montant d'un budget que vous n'avez pas le droit de voir.
+
+L'écran l'écrit sous les graphiques, pour que personne n'ait à le deviner :
+
+> « Ce cumul ne porte que sur les budgets ouverts des tracks que vous pouvez lire. Un track archivé
+> ou mis à la corbeille n'y figure pas ; ses budgets restent lisibles depuis son propre écran de
+> coûts. »
+
+Si un montant vous paraît manquer, la question à poser n'est donc pas « l'écran s'est-il trompé ? »
+mais « ai-je le droit de lire ce track ? ».
+
+### 26.4 Ce que l'écran écrit quand il n'y a rien à montrer
+
+| Ce que vous lisez | Ce que cela veut dire |
+|---|---|
+| « n ligne(s) sans coût réel saisi, pour m € de prévisionnel. » | Des dépenses ont été engagées sans que leur coût réel ait encore été saisi. La barre du réel est donc plus basse que la réalité |
+| « Aucune dépense rattachée. » | Les tracks de cette devise ont bien un budget ouvert, mais aucune affaire n'y a encore rattaché la moindre ligne de coût |
+| « Aucun budget ouvert » | Aucun des tracks que vous pouvez lire ne porte de budget ouvert — **ou** vous n'en lisez aucun. Les deux cas se ressemblent volontairement : les distinguer vous apprendrait l'existence de ce que l'écran cache |
+| « Aucun espace de travail » | Votre session a expiré, ou votre compte n'appartient à aucun espace de travail. Reconnectez-vous |
+
+### 26.5 Ce que cet écran ne fait pas
+
+- **On n'y saisit rien.** Les lignes de coût se créent depuis la fiche d'une affaire, section
+  « Coûts » ; les budgets s'administrent depuis « Réglages ▸ Arborescence ».
+- **Aucun filtre, aucune période, aucun export, aucune conversion de devise.** L'écran rend les
+  tracks dans l'ordre de la barre latérale.
+- **Aucun total toutes devises confondues** — voir le [§26.2](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track).
+
+### 26.6 Deux onglets, ici aussi
+
+Cet écran porte les **mêmes deux onglets** que celui d'un track ([§24.5](#deux-onglets-et-le-second-est-celui-ou-l-on-saisit)) : « Vue
+d'ensemble » et **« À saisir »**. La différence est la **portée** : ici, l'onglet liste les lignes
+en attente de **tous les tracks que vous lisez**, et non celles d'un seul. Tout est décrit au
+[§27](#l-onglet-a-saisir-renseigner-les-couts-reels-a-la-suite).
+
+## 27. L'onglet « À saisir » : renseigner les coûts réels à la suite
+
+*Livré par `CRM-086` tranche 6 ; plusieurs réels par ligne et la case « Soldé » par `CRM-099`. Captures dans
+`docs/captures/CRM-086/couts-a-saisir-*.jpg` et `docs/captures/CRM-099/`.*
+
+**Où.** Sur l'écran de coûts d'un track ([§24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)) ou sur celui de l'espace de travail
+([§26](#les-couts-de-tout-l-espace-de-travail-un-cumul-par-track)), l'onglet **« À saisir »**, à droite de « Vue d'ensemble ». L'adresse gagne
+`?onglet=saisir` : elle se partage et se recharge, et le bouton « précédent » du navigateur revient
+à l'onglet d'avant.
+
+**À quoi il sert.** Le graphique dit **combien** de coûts réels manquent ; il ne permettait pas de
+les saisir. Il fallait ouvrir une affaire après l'autre. Cet onglet est la surface de **saisie en
+série** : une ligne par coût en attente, un champ par ligne, et le clavier pour aller de l'une à
+l'autre.
+
+**Ce que la table liste.** Toutes les lignes de coût **non soldées** que vous avez le droit de
+**lire**, dans la portée de l'écran, **de la plus ancienne à la plus récente** — celle qui attend
+depuis le plus longtemps est celle qu'on oublie. Une ligne reçoit autant de coûts réels qu'il en
+faut — une facture, puis une autre — et reste dans la table tant qu'on ne l'a pas **soldée**. Chaque
+ligne porte son **ancienneté**, son **budget**, son **occurrence** le cas échéant, son **affaire** (le
+titre est un lien vers la fiche), la **nature** de la dépense, son **coût estimé**, et ce qui est
+**« Déjà saisi »** — la somme de ses réels.
+
+**Les budgets clôturés y figurent, et c'est voulu :** c'est précisément après la clôture que les
+factures arrivent. La ligne d'un budget clos porte une pastille **« clôturé »** — une indication
+neutre, jamais une alerte : la clôture n'empêche pas de saisir le coût réel, elle empêche seulement
+de **changer le rattachement** d'une ligne.
+
+### 27.1 Saisir, au clavier
+
+- **Tapez le montant dans le champ « Un réel de plus », puis `Entrée`.** Le réel s'ajoute à la
+  ligne immédiatement — il n'y a **aucun bouton d'enregistrement** —, « Déjà saisi » montre la
+  nouvelle somme, le champ se vide pour le réel suivant, et le curseur passe au champ de la **ligne
+  suivante**. C'est cela, saisir à la suite.
+- **La date et le libellé** (« Facture n° 42 ») se règlent à la demande, par le crayon à côté du
+  champ ; sans eux, le réel est daté du jour et sans libellé.
+- **Cochez « Soldé »** quand toutes les factures d'une ligne sont arrivées : elle quitte la table au
+  prochain chargement. Soldée sans aucun réel, elle vaut **zéro** — « finalement rien dépensé ».
+- **`Échap`** annule la saisie en cours et laisse la ligne intacte : rien n'est envoyé.
+- **La ligne enregistrée ne disparaît pas sous vos doigts.** Elle reste à sa place, sur un fond
+  vert, marquée « Enregistré », **jusqu'au prochain chargement de l'onglet**. La retirer aussitôt
+  ferait remonter les lignes suivantes pendant que vous tapez, et vous feriez écrire une valeur dans
+  la mauvaise ligne.
+- **Un champ laissé vide n'envoie rien.** Un `0` saisi est un réel comme un autre ; c'est « Soldé »
+  qui fait sortir une ligne de l'attente. La règle est écrite sous la table, avec la consigne
+  clavier.
+
+### 27.2 Ce que vous ne pouvez pas modifier reste visible
+
+Une ligne que vous pouvez **lire** mais pas **écrire** est rendue comme les autres, avec son champ
+**désactivé** et la phrase « Vous ne pouvez pas modifier cette affaire. » sous lui. Elle n'est
+**jamais masquée** : une table qui cacherait des lignes se lirait comme complète alors qu'elle ne
+l'est pas.
+
+Si **aucune** des lignes que vous lisez n'est modifiable — le cas d'un compte en lecture seule —, la
+table est rendue entière et le dit **en tête** : « Aucune de ces lignes ne peut être modifiée avec
+vos droits : ce tableau est en lecture seule. »
+
+Ce droit est demandé à la base, ligne par ligne, et jamais déduit de votre rôle : les droits fins
+ouvrent l'écriture channel par channel, et un rôle ne dirait pas la vérité.
+
+### 27.3 Ce que l'écran écrit quand quelque chose ne va pas
+
+| Ce que vous lisez sous le champ | Ce que cela veut dire |
+|---|---|
+| « Enregistrement… » | L'envoi est en cours |
+| « Enregistré » | La base a retenu le réel — « Déjà saisi » montre **la somme qu'elle tient** |
+| « Ce montant n'est pas un nombre. » | La saisie n'a pas été envoyée, et elle reste à l'écran pour être corrigée |
+| « Aucune ligne n'a été enregistrée. […] rechargez l'onglet. » | Ni un succès ni une erreur : vos droits ont pu changer depuis l'ouverture de l'écran. Rien n'a été écrit |
+| « Vous ne pouvez pas modifier cette affaire. » | La base a refusé l'écriture |
+| « Tous les coûts réels sont saisis » | Il n'y a rien à saisir dans cette portée. C'est une bonne nouvelle, pas un écran en panne |
+
+### 27.4 Le compteur de l'onglet
+
+Le badge porte le nombre de lignes **que la table liste** — les lignes non soldées que vous lisez,
+budgets clôturés compris, y compris celles que vous ne pouvez pas modifier.
+
+**Il peut différer du nombre écrit sous le graphique** de la vue d'ensemble (« n ligne(s) sans coût
+réel saisi »), et ce n'est pas une erreur : le graphique **exclut les budgets clôturés** et compte
+**par devise**, là où le badge est un nombre unique. Les deux chiffres ne comptent pas la même
+chose.
+
+**L'écran le dit lui-même, et vous n'avez donc rien à deviner.** Dès que le badge paraît, l'onglet
+« Vue d'ensemble » écrit sous la barre d'onglets :
+
+> « Le compteur de l'onglet "À saisir" porte sur tout cet écran, budgets clôturés compris et toutes
+> devises confondues ; les mentions sous les histogrammes ne comptent que les budgets qu'ils
+> montrent. »
+
+Un exemple, sur le jeu de démonstration : le track « Studio web » porte des lignes non soldées sur
+un budget ouvert et sur le budget clôturé « Salon du web 2025 », dont une qui a déjà reçu un réel ; le
+badge les compte toutes, quand la mention sous le graphique ne compte que la ligne sans réel du
+budget ouvert. Les valeurs exactes du jeu sont dans l'annexe A.
+
+C'est la même règle que celle du cumul du workspace ([§26.3](#votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue)) : quand deux nombres d'un même
+écran ne comptent pas la même chose, l'écran écrit lequel compte quoi.
+
+### 27.5 Ce que cet onglet ne fait pas
+
+- **Il ne crée aucune ligne de coût** : une dépense se crée depuis la fiche de son affaire, section
+  « Coûts ».
+- **Il ajoute des réels et solde des lignes** — il ne modifie ni la nature, ni le budget, ni
+  l'occurrence, ni le coût estimé.
+- **Il ne corrige ni ne retire un réel déjà saisi** : cela se fait depuis la fiche de son affaire
+  ([§27.6](#les-reels-d-une-ligne-dans-la-fiche-d-une-affaire)).
+- **Aucun import de fichier, aucun rapprochement automatique avec une facture.**
+
+### 27.6 Les réels d'une ligne, dans la fiche d'une affaire
+
+Dans la section « Coûts » d'une fiche, la colonne « Réel » d'une ligne est la **somme de ses réels**,
+et le formulaire d'une ligne ne porte plus de réel : il en règle la nature, le budget, l'occurrence
+et le coût estimé. La flèche au début des actions de la ligne **déplie ses réels**, sous la table :
+
+- la liste des réels — date, libellé ou « Sans libellé », montant —, chacun **modifiable** (crayon)
+  et **retirable** (corbeille, après confirmation) ;
+- la saisie d'un réel de plus : montant, date (celle du jour par défaut), libellé facultatif, puis
+  « Ajouter le réel » ;
+- la case **« Soldé »**. Une ligne soldée porte la pastille « Soldé » ; ses réels ne se modifient
+  plus, et l'écran le dit : « Ligne soldée — décochez « Soldé » pour la modifier. » Décocher la
+  rouvre.
+
+Un budget clôturé n'empêche rien de tout cela : on clôt une campagne, puis les factures arrivent.
+
+## 28. Le temps passé et le coût du personnel
+
+*Livré par `CRM-098` ; captures : `docs/captures/CRM-098/`.*
+
+L'écran **« Temps »**, dans la barre latérale, a deux onglets : **« Saisie »**, où chacun note le temps qu'il a passé,
+et **« Rapport mensuel »**, où ce temps est valorisé par le coût du personnel.
+
+### 28.1 Saisir sa semaine
+
+La matrice montre une semaine, du lundi au dimanche. Ses lignes sont les tracks que vous lisez, chacun suivi de ses
+channels, et sous eux les affaires qui portent déjà du temps — celles de la semaine affichée et de la précédente sont
+reprises d'office. Pour une autre affaire, tapez son titre dans **« Ajouter une affaire »** et choisissez-la : sa ligne
+paraît sous son channel.
+
+Chaque cellule se saisit au **quart de journée** : une journée compte **7 heures**, un quart vaut donc 1 h 45, et une
+cellule va de 0 à 4. La valeur **s'enregistre seule** quand vous quittez la cellule ou appuyez sur `Entrée` — qui
+descend à la ligne suivante ; les flèches vont de cellule en cellule, `Échap` rétablit la valeur enregistrée. Une
+cellule vide vaut zéro, et vider une cellule retire ce temps.
+
+Le pied de la matrice dit, jour par jour, où vous en êtes — « 3 / 4 quarts » ; une journée pleine est surlignée. **Une
+journée ne dépasse jamais 7 heures** : une valeur qui la dépasserait est refusée, avec le message « Cette valeur
+dépasserait la journée de 7 heures. »
+
+« Semaine précédente », « Semaine suivante » et « Cette semaine » changent de semaine ; l'adresse de l'écran garde la
+semaine affichée.
+
+### 28.2 Saisir une journée en heures
+
+Plus de quatre affaires dans la journée : cochez **« En heures »** sous le jour. Ses cellules se saisissent alors en
+heures, au quart d'heure — « 1,5 » pour une heure et demie, « 0,25 » pour un quart d'heure —, toujours dans la limite de
+7 heures. Tant qu'une valeur de ce jour ne tombe pas sur un quart, la case reste cochée, et l'écran le dit.
+
+### 28.3 Saisir pour quelqu'un d'autre
+
+Un administrateur dispose de **« Saisir pour »** : il choisit une personne, et un bandeau rappelle « Vous saisissez le
+temps de… ». Le produit garde la trace de qui a saisi. Un membre ne saisit que son propre temps, et seulement sur ce
+qu'il peut lire.
+
+### 28.4 Le rapport mensuel
+
+Choisissez un mois : le rapport liste chaque track, channel et affaire où du temps a été passé, avec ce temps et son
+coût. Le coût est celui de la personne **le jour où le temps a été passé** : une augmentation ne change pas le coût des
+semaines d'avant. Les montants restent séparés par devise. Le temps d'une personne qui n'a pas encore de coût est
+compté, et dit **« non valorisé »** — jamais zéro.
+
+Un membre ne voit que **son** temps et **son** coût. Un administrateur choisit une personne, ou **« Toute l’équipe »**,
+qui rend une section par personne.
+
+### 28.5 Régler le coût du personnel
+
+Dans **Réglages ▸ « Coût du personnel »**, réservé aux administrateurs — pour les autres, l'entrée des
+réglages est un texte grisé ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) —, chaque personne a sa carte : son coût en
+vigueur, sa prochaine version s'il y en a une. **« Nouvelle version »** fixe un coût par quart, une devise et une date
+d'effet : augmenter quelqu'un, c'est créer une version, qui vaut à partir de sa date. Une version ne se modifie jamais ;
+une date d'effet n'est jamais passée, sauf pour la toute première version d'une personne, qui peut valoriser du temps
+déjà saisi. **« Historique »** liste les versions ; une version **programmée** peut encore être retirée, une version
+en vigueur jamais.
+
+**Calculer le coût par quart.** Dans le formulaire « Nouvelle version », **« Calculer depuis le coût mensuel »** ouvre un
+petit calcul (*livré par `CRM-107` ; captures : `docs/captures/CRM-107/`*). Saisissez le salaire brut mensuel, les charges sociales en pourcentage du brut,
+les frais de gestion et les avantages par mois, et le nombre de jours travaillés par an — 218 par défaut, le forfait
+jours ; un salarié qui n’est pas au forfait en travaille plutôt 228 environ (365 jours, moins les week-ends, 25 jours de congés et les
+fériés). Le calcul affiche, à mesure que vous tapez, le coût mensuel complet et le coût par quart :
+
+> coût mensuel complet = brut × (1 + charges) + frais + avantages ;
+> coût par quart = coût mensuel complet × 12 ÷ (jours × 4).
+
+Par exemple, 3 000 € de brut, 42 % de charges, 150 € de frais et 100 € d'avantages font 4 510 € par mois, soit
+62,06 € par quart sur 218 jours. **« Utiliser ce coût »** recopie le résultat dans « Coût par quart » ; rien n'est
+enregistré tant que vous n'avez pas cliqué **« Enregistrer la version »**, et seul le coût par quart l'est — le salaire
+et les charges ne sont conservés nulle part.
+
+### 28.6 Le coût du personnel à côté des coûts
+
+Sur l'écran de coûts d'un track ([chapitre 24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)), sous l'histogramme, **« Coût du personnel »** donne le temps et
+son coût du mois choisi, channel par channel. Dans la fiche d'une affaire, **« Temps passé »** donne le temps passé
+depuis le premier jour et son coût. Ces chiffres ne se mêlent ni aux budgets ni aux lignes de coût. Ils disent leur
+portée : « Votre temps » pour un membre, « Le temps de toute l’équipe » pour un administrateur.
+
+### 28.7 Saisir son temps depuis la fiche d'une affaire
+
+*Livré par `CRM-106` ; captures : `docs/captures/CRM-106/`.* Sous le résumé « Temps passé », **« Votre semaine »** montre la ligne de l'affaire, du lundi au
+dimanche : les mêmes cases que l'écran « Temps », au quart de journée ou, en cochant la case sous un jour, au quart
+d'heure. Une case s'enregistre seule ; `Entrée` passe au jour suivant. Taper une nouvelle valeur **remplace** celle du jour ; vider
+la case retire ce temps. Sous la bande, le total de la semaine sur l'affaire.
+
+Le total sous chaque jour compte **tout** votre temps de la journée, sur toutes les cibles : c'est lui qui ne dépasse
+pas 7 heures. « Semaine précédente », « Semaine suivante » et « Cette semaine » changent de semaine ;
+**« Ouvrir dans Temps »** ouvre la matrice sur la même semaine, pour le reste de votre journée.
+
+Chacun n'y saisit que **son** temps — un administrateur aussi : pour saisir le temps de quelqu'un d'autre, passez par
+« Saisir pour », sur l'écran « Temps ». Une lectrice saisit son temps sur une affaire qu'elle lit, même si elle ne peut
+pas modifier l'affaire.
+
+### 28.8 Ce qui n'est pas offert
+
+Aucune validation ni clôture d'un mois, aucun calendrier de congés ou de jours fériés, aucune facturation au temps
+passé, aucune conversion de devise, aucun export.
+
+## 29. Les recettes d'une affaire et sa rentabilité
+
+*Livré par `CRM-108`.* Une affaire porte ce qu'elle doit rapporter et ce qu'elle a rapporté, comme elle porte ce qu'elle
+coûte. Le rapport de rentabilité rapproche les trois : recettes, coûts et coût du personnel. Captures :
+`docs/captures/CRM-108/`.
+
+### 29.1 Saisir les recettes dans la fiche
+
+Dans la fiche d'une affaire, le bloc **« Recettes »** vient avant « Coûts ». **« Nouvelle ligne de recette »** ajoute une
+ligne : sa nature — « Acompte », « Solde », « Lot 1 » — et sa recette prévue. Les montants sont dans la devise de
+l'affaire, rappelée dans l'en-tête des colonnes.
+
+Chaque ligne se déplie : on y ajoute une **recette réelle** par facture ou par encaissement — un montant, une date
+(celle du jour par défaut) et un libellé facultatif. La colonne « Réel » est leur somme ; tant qu'aucune n'est saisie,
+elle montre un tiret : la recette réelle est **inconnue**, pas nulle. Quand tout est encaissé, cochez **« Soldé »** :
+la ligne ne reçoit plus de recette réelle, et une ligne soldée sans recette réelle vaut zéro. Décocher la rouvre.
+
+Il faut pouvoir modifier l'affaire pour saisir ses recettes. Tant qu'une affaire porte des lignes de recette, sa devise
+ne change plus.
+
+### 29.2 La rentabilité d'une affaire
+
+Pour un administrateur de l'espace, le bloc **« Rentabilité »** suit « Temps passé » : recettes, coûts, coût du
+personnel et marge, en **prévu** et en **réel**, et le taux de marge réelle. La marge est **recettes − coûts −
+personnel**. Une marge négative est écrite avec son signe, sur fond rouge. La mention **« partielle »** dit qu'il manque
+encore quelque chose — une recette ou un coût sans réel, du temps sans coût défini ; survolez-la pour savoir quoi.
+
+La marge prévue soustrait le temps **déjà passé** : le CRM ne prévoit pas le temps. Une affaire dont les montants sont
+dans plusieurs devises a une marge **« Non calculable — plusieurs devises »** : le CRM ne convertit pas les devises.
+
+### 29.3 L'écran « Rentabilité »
+
+Barre latérale ▸ **« Rentabilité »**, après « Pilotage ». L'onglet **« Vue d'ensemble »** rend un tableau par devise :
+chaque track, ses channels et leurs affaires, avec un sous-total à chaque niveau et le total. Les filtres :
+
+- **« Du »** et **« Au »** retiennent les recettes réelles, les coûts réels et le temps par leur date ; les montants
+  prévus portent toujours sur toute l'affaire ;
+- **« État »** : toutes les affaires, les gagnées, les en cours ou les perdues ;
+- **« Réel »** et **« Prévu »** changent de vue.
+
+Seuls les **administrateurs** de l'espace lisent ce rapport : il soustrait le coût du temps de toute l'équipe, que
+seuls eux peuvent lire. Un autre membre lit « Réservé aux administrateurs » et un lien vers l'onglet « À saisir ».
+
+### 29.4 L'onglet « À saisir »
+
+Il liste les lignes de recette **non soldées**, de la plus ancienne à la plus récente, pour tout membre. Tapez un montant
+dans **« Une recette de plus »** : `Entrée` l'enregistre, à la date du jour, et passe à la ligne suivante. Saisir 0
+enregistre une recette nulle ; laisser le champ vide ne change rien. Cochez « Soldé » quand la ligne est encaissée. Une
+ligne que vous ne pouvez pas modifier reste visible, son champ éteint, avec le motif.
+
+### 29.5 Ce qui n'est pas offert
+
+Aucune facturation ni relance d'impayé, aucune conversion de devise, aucune prévision du temps, aucune répartition d'une
+recette entre plusieurs affaires, aucun export.
+
+## 30. L'entonnoir de conversion : où se tiennent vos affaires
+
+*Livré par `CRM-066` tranche 3 a, complété par les tranches 3 b (le sélecteur de portée,
+[§30.1](#choisir-la-portee-tout-l-espace-un-track-un-channel)) et 3 c (les étapes vides, nommées au [§30.2](#l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires)).
+C'est le **chapitre 28** que `docs/SPEC-analytique.md` nomme. Captures dans
+`docs/captures/CRM-066/pilotage-*.jpg` et `pilotage-portee-*.jpg`.*
+
+**Où.** Barre latérale ▸ **« Pilotage »**, entre « Coûts » et « Ma journée ». L'adresse est
+`/pilotage` ; elle est partageable et rechargeable.
+
+**Qui.** Tout membre de l'espace de travail. Ce que l'écran montre dépend de ce que vous avez le
+droit de lire — voir le [§30.5](#vos-nombres-sont-les-votres-et-ils-peuvent-differer-de-ceux-d-un-collegue), qui est la partie la plus importante de cette page.
+
+### 30.1 Choisir la portée : tout l'espace, un track, un channel
+
+*Livré par la tranche 3 b.*
+
+En **tête** de l'écran, au-dessus des deux nombres, un champ **« Portée »** choisit ce que tout le
+reste de la page mesure : **tout l'espace de travail** — le défaut —, **un track entier**, ou **un
+channel**. Les options sont groupées par track, et chacune nomme son track : « Studio web — tout le
+track », « Studio web — Refonte de site ». Vous ne voyez que les tracks et les channels que vous
+avez le droit de lire.
+
+**Changer de portée ne recharge rien.** Les nombres se replient instantanément : l'écran a lu une
+seule fois, et la portée ne fait que choisir ce qu'il additionne. Les **deux nombres du [§31](#le-previsionnel-pondere-et-le-taux-de-conversion)*
+et les **mentions** suivent la portée, comme les tableaux — un prévisionnel de tout l'espace
+au-dessus d'un entonnoir d'un seul channel dirait le contraire de ce qu'il montre.
+
+**L'adresse porte votre choix, et se partage.** `/pilotage?track=studio-web` ouvre le track ;
+`/pilotage?track=studio-web&channel=refonte` ouvre le channel. Les **deux** clés sont nécessaires
+pour un channel : un nom court de channel n'est unique qu'à l'intérieur de son track, si bien que
+`?channel=refonte` seul ne désignerait rien de sûr. `/pilotage` sans rien est tout l'espace de
+travail.
+
+**Une adresse que l'écran ne sait pas résoudre ne provoque aucune erreur.** Un track que vous ne
+lisez pas, un nom mal recopié, un channel nommé sous un track qui ne le porte pas : l'écran retombe
+sur la portée la plus large qu'il a comprise — le track, ou tout l'espace de travail — et **le champ
+« Portée » affiche alors la portée réellement appliquée**. Rien ne vous dit si le nom que vous aviez
+tapé existe ailleurs : ce serait vous renseigner sur ce que vos droits ferment.
+
+**Une portée sans affaire garde son champ.** Si le track ou le channel choisi ne porte aucune
+affaire active lisible, l'écran l'écrit — « Aucune affaire active dans cette portée » — **sans**
+retirer le champ, pour que vous puissiez en choisir une autre sans repasser par l'adresse.
+
+**Un track sans channel n'est pas proposé**, et un channel **archivé** ou **à la corbeille** non
+plus : il n'y a rien d'actif à y mesurer.
+
+### 30.2 Ce que l'écran montre
+
+Un **tableau par devise**, une **ligne par étape** de vos workflows, dans **l'ordre du catalogue** —
+celui-là même que suivent les colonnes de vos boards. Chaque ligne porte :
+
+| Colonne | Ce qu'elle dit |
+|---|---|
+| **Étape** | Le nom du nœud, tel que le catalogue le porte — jamais le nom qu'un workflow lui a donné localement. C'est ce qui permet de comparer deux workflows sur la même ligne |
+| **Genre** | « Ouvert », « Gagné » ou « Perdu ». C'est lui, et lui seul, qui dit pourquoi une étape entre ou n'entre pas dans le prévisionnel du [§31](#le-previsionnel-pondere-et-le-taux-de-conversion) |
+| **Affaires** | Combien d'affaires actives se tiennent à cette étape |
+| **Montant (…)** | La somme de leurs montants, dans la devise que l'en-tête nomme |
+| **Pondéré (…)** | La même somme, chaque affaire multipliée par sa **probabilité** ([§30.4](#la-probabilite-d-une-affaire-trois-niveaux-et-le-plus-precis-gagne)) |
+
+**L'ordre ne se change pas, et aucune colonne ne se trie.** Un entonnoir est un **chemin** : le
+reclasser par montant en ferait un palmarès, où « Perdu » remonterait au-dessus de « Prospection ».
+
+**Une étape où aucune affaire ne se tient n'a pas de ligne — elle est NOMMÉE sous les tableaux.**
+Elle n'est jamais rendue « à zéro » : un zéro affirmerait une mesure que l'écran n'a pas faite, et il
+faudrait de surcroît le poser dans une devise qu'aucune affaire n'y porte. L'écran écrit donc, sous
+les tableaux et dans l'ordre du catalogue : « Aucune affaire active aux étapes Signature et Perdu. »
+
+C'est la lecture la plus utile de cet écran sous une portée restreinte : elle dit **de quelles
+étapes** un track ou un channel est absent — où est le trou du chemin. Une étape **archivée** n'y
+figure pas : elle n'est plus une étape du chemin, et la nommer « sans affaire » inviterait à y en
+mettre une.
+
+### 30.3 Quelles affaires y entrent, et lesquelles n'y entrent pas
+
+**Y entrent** toutes vos affaires **actives** — celles qui ne sont ni archivées, ni à la corbeille.
+Cela comprend :
+
+- les affaires **gagnées** et **perdues**, qui ont leur propre ligne, marquée par la colonne
+  « Genre » ;
+- les affaires **en sommeil**. Mettre une affaire en sommeil dit « ne me réveille pas à son sujet »,
+  jamais « cette affaire n'est plus au portefeuille » : la retirer ferait **disparaître un montant**
+  d'un total du seul fait qu'on a demandé le silence.
+
+**N'y entrent pas** les affaires **archivées** et celles qui sont **à la corbeille**. Une affaire
+gagnée puis archivée ne compte donc ni dans l'entonnoir, ni dans le taux de conversion du
+[§31.2](#le-taux-de-conversion-des-affaires-decidees).
+
+### 30.4 La probabilité d'une affaire : trois niveaux, et le plus précis gagne
+
+Le montant **pondéré** est le montant de l'affaire multiplié par sa probabilité. Cette probabilité
+se résout à trois niveaux, du plus précis au plus général :
+
+1. **la probabilité de l'affaire elle-même**, saisie sur sa fiche ;
+2. sinon, **la probabilité de l'étape** du workflow, saisie dans l'éditeur de workflows ([§18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)) ;
+3. sinon, **la probabilité par défaut du nœud**, saisie au catalogue ([§19](#le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows)).
+
+**Une probabilité absente n'est jamais remplacée par un défaut.** Si aucun des trois niveaux n'est
+renseigné, la probabilité est **inconnue** : l'affaire est comptée dans la colonne « Affaires »,
+elle est comptée dans la mention « n affaire(s) sans probabilité renseignée », et elle ne contribue
+**pas** au montant pondéré. Écrire zéro à sa place transformerait « personne n'a dit ce que vaut
+cette affaire » en « cette affaire ne vaut rien ».
+
+**Un montant absent suit la même règle** : l'affaire est comptée, elle est signalée par la mention
+« n affaire(s) sans montant renseigné », et elle ne contribue ni au montant ni au pondéré.
+
+Ces deux mentions sont rendues **sous les tableaux**, et seulement lorsqu'elles ont un objet. Sans
+elles, un prévisionnel bas se lirait comme un portefeuille **pauvre** au lieu d'un portefeuille
+**mal renseigné**.
+
+### 30.5 Vos nombres sont les vôtres, et ils peuvent différer de ceux d'un collègue
+
+**C'est la règle la plus importante de cet écran**, et c'est exactement celle du cumul des coûts
+([§26.3](#votre-total-est-le-votre-et-il-peut-differer-de-celui-d-un-collegue)). L'entonnoir est calculé **à partir de ce que vos droits vous laissent lire**, jamais
+à partir de tout ce qui existe. Une affaire d'un channel qui vous est fermé :
+
+- n'apparaît dans aucune ligne ;
+- n'entre dans **aucun** total ;
+- et **n'est signalée par rien**.
+
+Deux collègues aux droits différents lisent donc deux nombres différents sur le même écran, au même
+instant. Ce n'est pas une erreur de calcul : afficher un total « complet » vous apprendrait, par
+simple soustraction, l'existence et le montant d'une affaire que vous n'avez pas le droit de voir.
+
+L'écran l'écrit sous les tableaux, pour que personne n'ait à le deviner — et la phrase **nomme la
+portée courante** :
+
+> « Ces nombres portent sur toutes les affaires actives que vous pouvez lire, tous tracks et tous
+> channels confondus. Un collègue dont les droits diffèrent des vôtres lit d'autres totaux sur les
+> mêmes données. »
+
+> « Ces nombres portent sur les affaires actives du track « Studio web » que vous pouvez lire. […] »
+
+**Le sélecteur de portée n'ouvre aucun droit.** Choisir un channel, ou l'écrire dans l'adresse, ne
+montre rien de plus que ce que vos droits consentent déjà : la restriction s'applique **après** vos
+droits, jamais à leur place.
+
+### 30.6 Les devises ne se mélangent jamais
+
+Si vos affaires sont libellées dans **plusieurs devises**, l'écran rend **un tableau par devise**,
+chacun avec son **titre** — « Entonnoir en EUR », « Entonnoir en CHF ». Si tout est libellé dans une
+seule devise — le cas courant —, vous ne voyez pas ce titre ; les en-têtes des deux colonnes de
+montant nomment la devise dans tous les cas.
+
+Aucun total « toutes devises confondues » n'est affiché : additionner des francs et des euros
+demanderait un taux de change que le produit ne connaît pas, et le nombre obtenu se lirait pourtant
+comme un chiffre d'affaires.
+
+### 30.7 Ce que l'écran écrit quand il n'y a rien à montrer
+
+| Ce que vous lisez | Ce que cela veut dire |
+|---|---|
+| « Aucune affaire active » | Aucune affaire active ne vous est lisible — **ou** il n'en existe aucune. Les deux cas se ressemblent volontairement : les distinguer vous apprendrait l'existence de ce que l'écran cache |
+| « Lecture refusée » | Votre session ne permet pas de lire l'entonnoir. Reconnectez-vous, puis revenez sur cet écran |
+| « L'entonnoir n'a pas pu être lu » | La lecture a échoué. Le bouton « Réessayer » relance réellement la requête |
+| « Aucun espace de travail » | Votre session a expiré, ou votre compte n'appartient à aucun espace de travail |
+
+### 30.8 Ce que cet écran ne fait pas
+
+- **On n'y saisit rien**, et aucune ligne n'est cliquable. Les probabilités se saisissent au
+  catalogue ([§19](#le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows)), dans l'éditeur de workflows ([§18](#composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire)) et sur la fiche d'une affaire ([§9](#l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre)).
+- **Aucun score de santé** aujourd'hui : la colonne existe et rien ne l'alimente. Ce qu'un score
+  « transparent » devrait agréger n'est arbitré nulle part, et il n'est donc pas inventé ici.
+- **Aucune lecture d'historique.** L'entonnoir est un **instantané** de l'état courant, jamais une
+  analyse par période : il dit où vos affaires se tiennent **aujourd'hui**, pas ce qu'elles sont
+  devenues depuis janvier.
+- **Aucun export, aucune période, aucune conversion de devise.**
+
+## 31. Le prévisionnel pondéré et le taux de conversion
+
+*Livré par `CRM-066` tranche 3 a. C'est le **chapitre 29** que `docs/SPEC-analytique.md` nomme.
+Captures dans `docs/captures/CRM-066/pilotage-*.jpg`.*
+
+**Où.** En **tête** de l'écran « Pilotage » ([§30](#l-entonnoir-de-conversion-ou-se-tiennent-vos-affaires)), au-dessus des tableaux : deux nombres, et
+c'est la lecture que la plupart des visites viennent chercher.
+
+### 31.1 Le prévisionnel pondéré
+
+C'est la somme des montants de vos affaires **ouvertes**, chacune multipliée par sa probabilité
+([§30.4](#la-probabilite-d-une-affaire-trois-niveaux-et-le-plus-precis-gagne)), **par devise**.
+
+**Les étapes terminales en sont exclues**, et les deux motifs sont distincts : une affaire **gagnée**
+n'est plus une prévision, et une affaire **perdue** vaut zéro — l'inclure ne changerait aucun total
+tout en laissant croire qu'elle compte. C'est pourquoi la colonne « Genre » de l'entonnoir n'est pas
+décorative : elle vous dit quelles lignes du tableau alimentent ce nombre.
+
+**Une devise dont toutes les affaires sont closes n'apparaît pas.** « CHF : 0,00 » se lirait comme
+une prévision nulle au lieu d'une absence de prévision.
+
+**S'il n'y a aucune affaire ouverte**, l'écran écrit « Aucune affaire ouverte à ce jour. » plutôt
+qu'un zéro.
+
+### 31.2 Le taux de conversion des affaires décidées
+
+**Son nom entier compte, et l'écran ne l'abrège jamais.** Ce nombre est la part **gagnée** parmi les
+affaires qui se tiennent **actuellement** à une étape terminale :
+
+> gagnées ÷ (gagnées + perdues)
+
+Il est accompagné de son numérateur et de son dénominateur en toutes lettres — « 7 gagnées sur
+8 décidées » —, parce qu'un pourcentage seul ne dit pas sur combien il porte.
+
+**Ce n'est pas « la part gagnée parmi les affaires ouvertes en janvier ».** Les deux lectures
+diffèrent dès qu'une affaire décidée est archivée : une affaire gagnée puis archivée ne compte dans
+**ni l'une ni l'autre** de ce que cet écran montre. L'analyse par période — dite par cohortes — n'est
+pas livrée, et appeler ce nombre du nom de l'autre serait un compteur complaisant.
+
+**Zéro affaire décidée rend « Aucune affaire décidée à ce jour. », jamais « 0 % ».** Un taux de 0 %
+dit « tout a été perdu » ; l'absence de toute décision ne dit rien.
+
+### 31.3 Aucun objectif chiffré n'est confronté à ce prévisionnel
+
+Les **objectifs** existent dans le produit ([§10](#le-carnet-de-contacts)) sous forme de tableaux de blocs et de flèches,
+avec un **remplissage** que vous saisissez à la main. Rien n'y décrit un objectif **chiffré** qu'un
+prévisionnel viendrait remplir automatiquement.
+
+Cet écran livre donc le prévisionnel **seul**. La confrontation n'est pas oubliée : elle n'a pas
+encore été arbitrée, et l'inventer ici produirait une comparaison que personne n'a demandée.
+
+### 31.4 Ce que ces deux nombres ne sont pas
+
+- **Ils ne sont pas un chiffre d'affaires.** Le prévisionnel est une espérance : il vaut ce que
+  valent les probabilités saisies.
+- **Ils ne sont pas comparables d'un collègue à l'autre** sans précaution : chacun lit les siens sur
+  son propre portefeuille ([§30.5](#vos-nombres-sont-les-votres-et-ils-peuvent-differer-de-ceux-d-un-collegue)).
+- **Le taux ne traverse pas les devises par accident** : il compte des **affaires**, pas de l'argent,
+  et c'est la seule grandeur de cet écran qui le fasse légitimement.
+
+## 32. La plateforme : espaces, membres et superadministrateurs
+
+*Livré par `CRM-101` ; captures : `docs/captures/CRM-101/`.*
+
+La **plateforme** est l'étage au-dessus des espaces de travail. On y crée un espace, on y désigne qui en est membre et
+avec quel rôle, et on y inscrit les personnes attendues. Elle est réservée aux **superadministrateurs**.
+
+### 32.1 Qui est superadministrateur
+
+Deux sortes de personnes le sont :
+
+- celles qui portent le rôle **`admin` chez LeLabs** : elles exploitent le SSO, et la règle du domaine fait d'elles les
+  administratrices de toute application qui s'y branche ;
+- celles qui ont reçu le **drapeau** dans le CRM.
+
+**Le tout premier drapeau** est posé une seule fois, à la première connexion d'une adresse que l'exploitant a désignée
+à l'installation. La connexion doit être vérifiée chez LeLabs. Dès qu'un superadministrateur existe, plus aucun ne
+s'amorce de cette façon : les suivants reçoivent le drapeau de la main d'un superadministrateur.
+
+**Être superadministrateur ne donne accès à aucune donnée commerciale.** On ne lit ni les tracks, ni les affaires, ni
+les coûts d'un espace dont on n'est pas membre. Pour y travailler, un superadministrateur s'ajoute lui-même comme
+membre de cet espace, et ce geste est inscrit au journal.
+
+### 32.2 Ouvrir la plateforme
+
+Un superadministrateur voit l'entrée **« Plateforme »** en bas de la barre latérale, après « Réglages ». Personne
+d'autre ne la voit. Une adresse de la plateforme ouverte sans le drapeau affiche **« Accès réservé »**.
+
+La plateforme a quatre onglets : **« Espaces »**, **« Utilisateurs »**, **« Superadministrateurs »** et **« Journal »**.
+
+### 32.3 Créer un espace
+
+Dans l'onglet « Espaces », **« Nouvel espace »** ouvre un formulaire à trois champs :
+
+- **« Nom »** ;
+- **« Identifiant court »** : en minuscules, chiffres et tirets. Il nomme les dossiers de la messagerie et **ne se
+  modifie plus ensuite** ;
+- **« Domaine entrant (facultatif) »** : le domaine des adresses de ses affaires.
+
+**« Créer »** ouvre la fiche du nouvel espace. Un espace naît **sans membre** : sa fiche le dit, et la liste porte
+« Aucun administrateur ». Donnez-lui son premier administrateur, comme décrit ci-dessous. À sa première connexion, cet
+administrateur trouvera le guide de démarrage, qui pose le workflow de départ ([chapitre 2](#le-guide-de-demarrage-par-ou-commencer)).
+
+### 32.4 Les membres d'un espace
+
+La fiche d'un espace liste ses **« Membres »**. Le rôle d'un membre se change dans sa ligne, et s'enregistre dès qu'on
+le choisit.
+
+- **« Ajouter un membre »** cherche une personne **par son nom**, deux caractères au moins, puis lui donne un rôle. Seules
+  les personnes qui se sont déjà connectées au CRM y figurent.
+- **« Retirer »** demande confirmation. Les droits fins de la personne sur les tracks et les channels de cet espace
+  partent avec son appartenance.
+
+**Un espace garde toujours au moins un administrateur.** Le premier membre d'un espace doit être administrateur, et le
+dernier administrateur ne se retire ni ne se rétrograde. Le refus le dit, et indique quoi faire.
+
+### 32.5 Les attentes
+
+Une personne qui ne s'est jamais connectée n'a pas encore de nom dans le CRM. On l'**attend** à son adresse :
+**« Inscrire une attente »**, avec l'adresse et le rôle. Elle devient membre à sa première connexion LeLabs, si son
+adresse et son compte sont vérifiés ([chapitre 1](#se-connecter-et-se-deconnecter)). Réinscrire une adresse remplace son rôle, et **« Retirer »** efface
+l'attente, sans confirmation.
+
+Dans un espace qui n'a encore aucun administrateur, une attente qui n'est pas administratrice porte **« En
+suspens »** : elle ne se consommera qu'après l'arrivée d'un administrateur. Inscrivez donc d'abord l'administrateur.
+
+**« Dernière tentative »** dit si la personne attendue a déjà essayé de se connecter, et pourquoi elle a été refusée :
+« Refusée le 21/10 : compte LeLabs pas encore vérifié », avec le nombre de refus quand il y en a eu plusieurs. Trois
+motifs existent : **adresse non vérifiée chez LeLabs** (la personne doit confirmer son adresse dans son compte
+LeLabs), **compte LeLabs pas encore vérifié** (LeLabs doit vérifier son compte), **l'espace n'a pas encore
+d'administrateur** (nommez-en un). « Aucune tentative refusée » veut dire que la personne n'a pas essayé — ou que son
+dernier essai date de plus de 90 jours : le CRM n'en garde pas la trace au-delà. Une adresse que personne n'attend ne
+laisse jamais de trace, et réinscrire une attente efface la sienne.
+
+### 32.6 Modifier ou supprimer un espace
+
+**« Modifier »** change le nom et le domaine entrant d'un espace. Son identifiant court ne change pas.
+
+**« Supprimer l’espace »**, en bas de la fiche, ouvre une confirmation.
+
+- **Ce qu'elle dit :** ce que l'espace emporte avec lui — ses appartenances, ses attentes, et tout son contenu.
+- **Ce qu'elle demande :** de **saisir l'identifiant court** de l'espace. **« Supprimer définitivement »** reste
+  inactif tant que la saisie diffère.
+- **Ce qui ne se rattrape pas :** la suppression est définitive. Seule la restauration d'une sauvegarde la défait.
+
+### 32.7 Les utilisateurs
+
+L'onglet **« Utilisateurs »** liste toutes les personnes admises au moins une fois dans le CRM. Pour chacune, il
+affiche :
+
+- ses **espaces**, chacun suivi de son rôle ; un clic sur un espace ouvre sa fiche. « Aucun espace » dit qu'elle n'en a
+  plus ;
+- la pilule **« Superadministrateur »**, si elle porte le drapeau ;
+- sa **dernière activité au connecteur MCP**, ou « Jamais connecté » ;
+- la date de sa première admission.
+
+**« Rechercher un utilisateur »** filtre la liste par nom pendant que vous tapez, sans tenir compte des accents ni des
+majuscules. La liste montre au plus 200 personnes ; au-delà, elle le dit, et la recherche affine.
+
+L'onglet ne modifie rien. Pour ajouter une personne à un espace, ouvrez la fiche de l'espace ([§32.4](#les-membres-d-un-espace)). Pour lui donner
+le drapeau, passez par l'onglet « Superadministrateurs » ([§32.8](#les-superadministrateurs-et-le-journal)). **« Droits du connecteur »**, sur chaque ligne, mène
+à ses droits du connecteur MCP ([chapitre 33](#le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant)). Le rôle `admin` LeLabs n'y est pas affiché : le CRM
+ne le connaît que par la connexion.
+
+### 32.8 Les superadministrateurs et le journal
+
+L'onglet **« Superadministrateurs »** liste les drapeaux posés dans le CRM.
+
+- **« Amorçage »** désigne le premier drapeau, posé à l'installation.
+- **« Accorder le drapeau »** le donne à une personne déjà connectée ; **« Retirer »** le lui reprend, après
+  confirmation. Le dernier drapeau ne se retire pas : accordez-en un autre d'abord.
+- **Les porteurs du rôle `admin` LeLabs** sont aussi superadministrateurs, mais n'y figurent pas.
+
+L'onglet **« Journal »** retrace chaque geste de la plateforme, du plus récent au plus ancien :
+
+- la date ;
+- qui a agi ;
+- le geste, en mots ;
+- son détail.
+
+**« Entrées plus anciennes »** remonte le temps, une page après l'autre.
+
+Le journal de la plateforme et celui des appels du connecteur sont **conservés un an**. Chaque nuit, le CRM efface les
+entrées plus anciennes, et inscrit le geste **« Journaux purgés »** avec le nombre d'entrées effacées de chacun. Personne
+ne peut modifier ni supprimer une entrée de ces journaux ([chapitre 22](#le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace)).
+
+### 32.9 Ce que la plateforme n'offre pas
+
+- **Gérer ses propres membres en tant qu'administrateur d'espace**, sans être superadministrateur : c'est l'écran
+  « Réglages ▸ Membres » ([chapitre 21](#les-membres-de-votre-espace-qui-y-travaille-avec-quel-role)), avec les attentes et les droits fins par track et par channel.
+- **Changer l'identifiant court d'un espace.**
+- **Annuler une suppression.**
+
+## 33. Le connecteur MCP : piloter le CRM depuis votre assistant
 
 *Livré par `CRM-102` (le connecteur) et `CRM-103` (son administration, en développement) ; les outils de la famille
 « Recettes » par `CRM-108` (en développement).*
@@ -5171,7 +5068,7 @@ les élargir.
 Le **connecteur MCP** relie votre assistant — Claude, ChatGPT, ou tout client MCP — au CRM. L'assistant agit **en votre
 nom** : il voit et modifie exactement ce que vous pourriez voir et modifier dans le CRM, jamais davantage.
 
-### 11.1 Ce que l'assistant a le droit de faire
+### 33.1 Ce que l'assistant a le droit de faire
 
 Deux règles se cumulent :
 
@@ -5205,7 +5102,7 @@ corbeille.
 
 **Un superadministrateur franchit les droits du connecteur** : l'assistant lui ouvre tout ce que le CRM lui permet.
 
-### 11.2 Ajouter le connecteur à votre assistant
+### 33.2 Ajouter le connecteur à votre assistant
 
 1. Ouvrez la **page d'accueil du connecteur**, et cliquez sur **« Copier l'adresse du connecteur »**.
 2. Dans votre assistant, ajoutez un **connecteur personnalisé** avec cette adresse.
@@ -5217,17 +5114,17 @@ de vous en accorder, puis relancez la connexion.
 
 La page d'accueil porte aussi **« Ouvrir la plateforme du CRM »**, qui mène à l'administration décrite ci-dessous.
 
-### 11.3 Accorder des droits du connecteur
+### 33.3 Accorder des droits du connecteur
 
-Dans la plateforme (chapitre 10), l'onglet **« Connecteur MCP »** réunit trois blocs.
+Dans la plateforme ([chapitre 32](#la-plateforme-espaces-membres-et-superadministrateurs)), l'onglet **« Connecteur MCP »** réunit trois blocs.
 
 - **Les comptes venus au connecteur** : leur dernière activité et le nombre d'espaces où ils ont des droits. Un compte
   marqué **« Sans profil dans le CRM »** s'est connecté au connecteur sans avoir jamais été admis dans le CRM : il faut
-  d'abord inscrire une attente à son adresse dans un espace (§10.5).
+  d'abord inscrire une attente à son adresse dans un espace ([§32.5](#les-attentes)).
 - **« Accorder des droits à un utilisateur »** : cherchez une personne par son nom, parmi **tous** les utilisateurs du
   CRM, même ceux qui ne se sont jamais connectés au connecteur. Leurs droits vaudront dès leur première connexion.
   L'onglet « Utilisateurs » mène au même endroit, par **« Droits du connecteur »** sur chaque ligne.
-- **Le journal des appels** (§11.4).
+- **Le journal des appels** ([§33.4](#le-journal-des-appels)).
 
 **La fiche d'un utilisateur** montre :
 
@@ -5245,14 +5142,14 @@ enregistrés. »** le confirme, et le geste est inscrit au journal de la platefo
 
 Pour un superadministrateur, la grille reste visible mais ne se modifie pas, puisqu'il la franchit.
 
-### 11.4 Le journal des appels
+### 33.4 Le journal des appels
 
 Chaque appel de l'assistant est inscrit, sans son contenu : la date, le compte, l'outil appelé, l'espace et l'issue —
 « Réussi », « Refusé par la matrice », « Refusé par le CRM », « Erreur » ou « Réponse trop volumineuse ». Un filtre
 retient une seule issue, et **« Entrées plus anciennes »** remonte le temps. La fiche d'un utilisateur montre ses
 propres appels.
 
-### 11.5 Ce que l'assistant sait faire
+### 33.5 Ce que l'assistant sait faire
 
 L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'apparaît pas dans sa liste.
 
@@ -5265,7 +5162,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - *Ajouter* : une ligne de recette, avec sa nature et son montant prévu, ou une recette réelle datée ;
   - *Modifier* : corriger une ligne ou une recette réelle, solder une ligne ou la rouvrir.
 
-  Aucun outil ne supprime une ligne de recette. Les règles sont celles de la fiche (chapitre 5 *duodecies*) : une ligne
+  Aucun outil ne supprime une ligne de recette. Les règles sont celles de la fiche ([chapitre 29](#les-recettes-d-une-affaire-et-sa-rentabilite)) : une ligne
   soldée n'accepte plus de recette réelle, la recette réelle d'une ligne est la somme de ses réels, et la marge du
   rapport se calcule comme sur l'écran « Rentabilité ». Ce que l'assistant écrit apparaît aussitôt dans la fiche.
 - **Affaires, en lecture** — *livrés en développement par `CRM-104`, tranche T2.a* (« Affaires ▸ Consulter ») :
@@ -5273,13 +5170,13 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     prochaine action — filtrées au besoin par channel, par mots du titre, par étape ou par échéance (en retard,
     aujourd'hui, dans la semaine). Les affaires en sommeil n'y paraissent que si on le demande ;
   - **lire une affaire** : son en-tête, sa description, sa probabilité, ses contacts liés et leur rôle, ses réponses au
-    formulaire, si vous pouvez la modifier, et ses **deux scores de santé** avec leur détail (chapitre 4.1) — la liste
+    formulaire, si vous pouvez la modifier, et ses **deux scores de santé** avec leur détail ([chapitre 9.1](#ce-qu-une-affaire-porte)) — la liste
     des affaires les rend aussi ;
-  - **lire son historique**, comme le fil de la fiche (chapitre 4.10) : événements, commentaires et activités, du plus
+  - **lire son historique**, comme le fil de la fiche ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)) : événements, commentaires et activités, du plus
     ancien au plus récent ;
-  - **lire ses commentaires**, et **ses activités** (chapitre 4.7 *quater*) ;
-  - **les affaires figées** de l'espace (chapitre 3 *quinquies*) ;
-  - **votre journée** (chapitre 3 *quater*) : ce qui est en retard, dû aujourd'hui ou à venir dans les sept jours, pour
+  - **lire ses commentaires**, et **ses activités** ([chapitre 9.8](#les-activites-d-une-affaire-appels-reunions-visios)) ;
+  - **les affaires figées** de l'espace ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)) ;
+  - **votre journée** ([chapitre 6](#ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui)) : ce qui est en retard, dû aujourd'hui ou à venir dans les sept jours, pour
     vos affaires ou pour tout ce que vous lisez.
 
   L'assistant lit ce que vous liriez dans la webapp, et rien de plus : une affaire d'un track qui vous est fermé est
@@ -5421,7 +5318,7 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - *Consulter* : les emails classés dans une affaire, du plus ancien au plus récent — sens, date, expéditeur,
     destinataires, objet, un extrait, et le **nombre** de pièces jointes ; un email en entier, avec son texte. Quand
     l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit
-    aussi s'il est **lu ou non lu pour vous** (chapitre 4.15) ; le lire par l'assistant ne le marque pas lu, et aucun outil
+    aussi s'il est **lu ou non lu pour vous** ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; le lire par l'assistant ne le marque pas lu, et aucun outil
     ne change cet état ;
   - *Ajouter* : **envoyer un email depuis une affaire**, par la même file que le bouton « Envoyer » de la fiche : la
     signature de l'identité est ajoutée, le message part, puis paraît dans le fil de l'affaire. L'assistant peut
@@ -5434,86 +5331,8 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   L'envoi exige aussi la case « Affaires — Consulter », et le droit d'écrire sur l'affaire. Le quota journalier de
   l'identité s'applique comme à l'écran.
 
-### 11.6 Ce que le connecteur n'offre pas
+### 33.6 Ce que le connecteur n'offre pas
 
 Toutes les familles ont désormais leurs outils. Restent des gestes de l'écran : **les pièces jointes**, ni lues ni
 envoyées par le connecteur ; **classer, déclasser ou mettre en sommeil** un fil de la boîte de réception ; **les modèles
 et les séquences** de relance.
-
-## Annexe A — Ce que contient l'espace de démonstration
-
-*Livrée par `CRM-047` ; le jeu lui-même est livré par `CRM-046` (`docs/SPEC-seed.md` §9).*
-
-L'espace de travail livré avec le produit sert à **démontrer chaque fonctionnalité** : il n'existe
-pas d'écran vide faute de données. Les volumes ci-dessous sont **mesurés sur la base**, et non
-recopiés de mémoire ; `scripts/verify-manual.sh` les compare à la base à chaque vérification.
-
-Ces nombres décrivent l'espace **tel que le seed le pose**. Ils changent dès que quelqu'un y
-travaille : ce sont des états, pas des règles du produit. Les règles — vingt-cinq lignes par page,
-dix mille caractères par commentaire, une probabilité entre 0 et 100 — vivent dans leur chapitre et
-ne bougent qu'avec le produit.
-
-| Grandeur | Valeur |
-|---|---|
-| Tracks actifs | 3 |
-| Tracks archivés | 1 |
-| Tracks en corbeille | 1 |
-| Channels actifs | 6 |
-| Channels archivés | 1 |
-| Channels en corbeille | 1 |
-| États du catalogue actifs | 7 |
-| États du catalogue archivés | 1 |
-| Workflows | 2 |
-| Workflows copiés dans un track | 1 |
-| Étapes du workflow général | 7 |
-| Déplacements déclarés par le workflow général | 11 |
-| Questions du formulaire actives | 16 |
-| Questions du formulaire retirées | 2 |
-| Affaires | 41 |
-| Affaires actives | 39 |
-| Affaires archivées | 1 |
-| Affaires en corbeille | 1 |
-| Réponses de formulaire | 23 |
-| Affaires portant au moins une réponse | 11 |
-| Commentaires | 5 |
-| Commentaires supprimés | 1 |
-| Comptes de démonstration | 3 |
-| Versions de coût du personnel | 3 |
-
-**Une grandeur manque, et son absence est un fait.** Le nombre d'**événements d'historique** ne
-figure pas dans cette table : il ne peut que croître, et il croît dès que quiconque — une personne
-ou une preuve automatisée — touche une affaire. Le figer par une égalité rendrait l'annexe fausse à
-la première utilisation de l'espace. Ce qui est vérifié à la place est le seul invariant que ce fil
-possède : **chaque affaire porte au moins l'événement de sa création**, et rien ne peut l'effacer
-(chapitre 4.10).
-
-**Pourquoi une annexe plutôt qu'une phrase dans chaque chapitre.** Un nombre recopié dans une
-phrase n'a aucun lien avec la base qui le produit : il ne vieillit pas, il devient faux en silence
-le jour où une autre livraison change le jeu de données. C'est exactement ce qui s'est produit deux
-fois dans ce manuel avant `CRM-047`. Rassemblés ici, ces nombres sont vérifiables d'un coup, et une
-dérive devient rouge au lieu de rester invisible (`docs/JOURNAL.md` décision 231).
-
-## Règles de rédaction de ce manuel
-
-Rappelées ici pour que chaque contribution s'y conforme :
-
-- Le manuel décrit **le comportement réel**, constaté dans l'application exécutée, jamais un
-  comportement supposé.
-- Il est compréhensible **sans lire le code**.
-- Il ne contient **aucun secret**, aucune clé, aucune adresse interne, aucun détail exploitable
-  sur l'infrastructure. Les noms de variables d'environnement peuvent être cités, jamais leurs
-  valeurs.
-- Toute évolution du comportement met à jour le chapitre concerné **dans le même changement** :
-  nouveau champ, nouvelle validation, nouveau bouton, nouvelle modale, nouvel onglet, nouvel
-  état, nouveau filtre, nouveau message, parcours modifié.
-- Les captures sont **renouvelées** dès que l'apparence ou le parcours change, et chaque chapitre
-  nomme le dossier `docs/captures/<unité>/` où les siennes se trouvent.
-- Un **libellé cité entre guillemets** est le libellé réel de l'application, au caractère près : le
-  manuel ne paraphrase jamais un message d'erreur, il le cite.
-- **Aucun volume du jeu de démonstration n'est écrit dans un chapitre** : ils vivent tous dans
-  l'annexe A, où ils sont vérifiés contre la base. Les nombres qui sont des **règles du produit** —
-  vingt-cinq lignes par page, dix mille caractères — restent dans leur chapitre.
-- Ces règles sont opposables : `scripts/verify-manual.sh` en vérifie quatre, et
-  `e2e/ui/manuel.spec.ts` exerce les huit adresses citées par le manuel avec la session réelle de
-  la lectrice du jeu de démonstration (`CRM-092` T9 : un visiteur sans session n'en atteint plus
-  aucune).

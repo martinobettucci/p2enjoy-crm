@@ -1,6 +1,6 @@
 {
 	"slug": "ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui",
-	"title": "3 quater. Ma journée : ce qui est en retard, ce qui est dû aujourd'hui",
+	"title": "6. Ma journée : ce qui est en retard, ce qui est dû aujourd'hui",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -184,7 +184,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quater.1 Les trois sections"
+					"text": "6.1 Les trois sections"
 				}
 			]
 		},
@@ -372,7 +372,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quater.2 Ce qu'une ligne montre"
+					"text": "6.2 Ce qu'une ligne montre"
 				}
 			]
 		},
@@ -519,7 +519,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quater.3 « Mes affaires » ou tout l'espace de travail"
+					"text": "6.3 « Mes affaires » ou tout l'espace de travail"
 				}
 			]
 		},
@@ -668,7 +668,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quater.4 Ce qui n'apparaît pas, et pourquoi"
+					"text": "6.4 Ce qui n'apparaît pas, et pourquoi"
 				}
 			]
 		},
@@ -725,7 +725,24 @@
 					[
 						{
 							"type": "text",
-							"text": "Elles ne sont plus en cours (chapitre 4.5)"
+							"text": "Elles ne sont plus en cours ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+								"anchor": "qui-peut-faire-quoi"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "chapitre 9.5"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": ")"
 						}
 					]
 				],
@@ -748,7 +765,24 @@
 					[
 						{
 							"type": "text",
-							"text": "Les endormir est précisément le geste qui dit « pas aujourd'hui » (chapitre 4.6). Elles restent visibles dans leur tableau et leur vue liste, où une case à cocher les ramène"
+							"text": "Les endormir est précisément le geste qui dit « pas aujourd'hui » ("
+						},
+						{
+							"type": "link",
+							"target": {
+								"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+								"anchor": "ce-qui-n-est-pas-encore-livre"
+							},
+							"content": [
+								{
+									"type": "text",
+									"text": "chapitre 9.16"
+								}
+							]
+						},
+						{
+							"type": "text",
+							"text": "). Elles restent visibles dans leur tableau et leur vue liste, où une case à cocher les ramène"
 						}
 					]
 				],
@@ -807,7 +841,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quater.5 Ce que l'écran ne fait pas"
+					"text": "6.5 Ce que l'écran ne fait pas"
 				}
 			]
 		},
@@ -838,14 +872,18 @@
 				},
 				{
 					"type": "text",
-					"text": " de\nl'affaire (chapitre 4.2 "
+					"text": " de\nl'affaire ("
 				},
 				{
-					"type": "emphasis",
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent"
+					},
 					"content": [
 						{
 							"type": "text",
-							"text": "bis"
+							"text": "section 9.6"
 						}
 					]
 				},
@@ -900,7 +938,24 @@
 				},
 				{
 					"type": "text",
-					"text": " du tableau\n(chapitre 4.8) répond à cette autre question."
+					"text": " du tableau\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "le-tableau-kanban-d-un-channel"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 9.10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") répond à cette autre question."
 				}
 			]
 		},
@@ -911,7 +966,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "3 quater.6 Quand il n'y a rien"
+					"text": "6.6 Quand il n'y a rien"
 				}
 			]
 		},
@@ -989,7 +1044,23 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "Sans session, la page ne s'affiche pas : son adresse mène à l'écran de connexion (chapitre 1)."
+					"text": "Sans session, la page ne s'affiche pas : son adresse mène à l'écran de connexion ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "se-connecter-et-se-deconnecter"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 1"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		}

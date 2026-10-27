@@ -1,6 +1,6 @@
 {
 	"slug": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows",
-	"title": "5 quater. Le catalogue de nœuds : le vocabulaire de vos workflows",
+	"title": "19. Le catalogue de nœuds : le vocabulaire de vos workflows",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -83,7 +83,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quater.1 Ce que chaque ligne montre"
+					"text": "19.1 Ce que chaque ligne montre"
 				}
 			]
 		},
@@ -247,7 +247,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quater.2 Créer un nœud"
+					"text": "19.2 Créer un nœud"
 				}
 			]
 		},
@@ -284,7 +284,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quater.3 Modifier un nœud"
+					"text": "19.3 Modifier un nœud"
 				}
 			]
 		},
@@ -317,7 +317,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quater.4 Archiver un nœud, et le rétablir"
+					"text": "19.4 Archiver un nœud, et le rétablir"
 				}
 			]
 		},
@@ -355,7 +355,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quater.5 Réordonner le catalogue"
+					"text": "19.5 Réordonner le catalogue"
 				}
 			]
 		},
@@ -476,7 +476,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "5 quater.6 Ce qui n'est pas encore là"
+					"text": "19.6 Ce qui n'est pas encore là"
 				}
 			]
 		},

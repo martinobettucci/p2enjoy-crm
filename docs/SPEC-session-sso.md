@@ -11,7 +11,7 @@ Contrats du fournisseur : `docs/SSO.md` (général), `docs/SSO-client-lelabs-crm
 Documents liés : `docs/SPEC-auth.md` (état remplacé), `docs/SPEC-identite.md` §3 à §6,
 `docs/SPEC-permissions-rls.md` §1 à §3, `docs/SPEC-edge-functions.md` §2 à §5, `docs/SPEC-seed.md`
 §2.2 à §3.5, `docs/SPEC-test-harness.md`, `docs/SPEC-deploiement-spark.md`, `docs/SCHEMA.md` §1,
-`docs/DAT.md` §3 et §4.1, `docs/DESIGN_SYSTEM.md` §5.12, `docs/manual.md` chapitres 1 et 17.
+`docs/DAT.md` §3 et §4.1, `docs/DESIGN_SYSTEM.md` §5.12, `docs/manual.md` chapitres 1 et 21 (plan public).
 
 Écrite le 2026-09-23 **avant la première ligne de code**, sur des faits mesurés : chaque
 affirmation ci-dessous renvoie à une mesure K*n* ou est signalée comme restant à mesurer.

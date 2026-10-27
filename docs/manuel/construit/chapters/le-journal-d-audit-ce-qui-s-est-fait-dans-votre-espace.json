@@ -1,6 +1,6 @@
 {
 	"slug": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace",
-	"title": "10 ter. Le journal d'audit : ce qui s'est fait dans votre espace",
+	"title": "22. Le journal d'audit : ce qui s'est fait dans votre espace",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -230,7 +230,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 ter.1 Ouvrir le journal"
+					"text": "22.1 Ouvrir le journal"
 				}
 			]
 		},
@@ -331,7 +331,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 ter.2 Lire une entrée"
+					"text": "22.2 Lire une entrée"
 				}
 			]
 		},
@@ -473,7 +473,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 ter.3 Filtrer"
+					"text": "22.3 Filtrer"
 				}
 			]
 		},
@@ -595,7 +595,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "10 ter.4 Ce que le journal ne fait pas"
+					"text": "22.4 Ce que le journal ne fait pas"
 				}
 			]
 		},
@@ -643,7 +643,23 @@
 						"content": [
 							{
 								"type": "text",
-								"text": "Le superadministrateur garde son propre journal, celui de la plateforme (chapitre 10)."
+								"text": "Le superadministrateur garde son propre journal, celui de la plateforme ("
+							},
+							{
+								"type": "link",
+								"target": {
+									"chapter": "la-plateforme-espaces-membres-et-superadministrateurs"
+								},
+								"content": [
+									{
+										"type": "text",
+										"text": "chapitre 32"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ")."
 							}
 						]
 					}

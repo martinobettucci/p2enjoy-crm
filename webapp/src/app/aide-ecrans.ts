@@ -1,4 +1,5 @@
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T2 : la correspondance entre un écran et le chapitre qui le décrit
+// @spec CRM-117 tranche T3.0 — les adresses du plan public (docs/SPEC-manual.md §10 bis) : carnet, boîtes, inbox
 // @spec docs/SPEC-manual.md §13.2 (un seul endroit, le motif le plus précis l'emporte), §16 (chaque identifiant existe
 //       dans le manuel construit) ; docs/DESIGN_SYSTEM.md §5.69 (« Aide sur cet écran ») ; docs/JOURNAL.md décision 740
 //
@@ -48,6 +49,7 @@ export type CibleAide = { readonly chapitre: string; readonly section?: string }
 const AFFAIRE = 'l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre'
 const NAVIGUER = 'naviguer-barre-laterale-onglets-etats'
 const TEMPS = 'le-temps-passe-et-le-cout-du-personnel'
+const BOITES = 'les-boites-de-reception-et-les-adresses-d-expedition'
 
 /**
  * La table, dans l'ordre où elle est consultée. Un motif finissant par `/*` couvre aussi ses sous-adresses.
@@ -63,8 +65,8 @@ export const ECRANS_AIDE: ReadonlyArray<readonly [motif: string, cible: CibleAid
 	['/tracks/:slugTrack', { chapitre: NAVIGUER, section: 'les-onglets-d-un-track' }],
 	// Les entrées de la barre latérale.
 	['/', { chapitre: NAVIGUER }],
-	[CHEMIN_INBOX, { chapitre: AFFAIRE, section: 'l-inbox-lire-et-trier-le-courrier-recu' }],
-	[`${CHEMIN_CONTACTS}/*`, { chapitre: NAVIGUER, section: 'le-carnet-de-contacts' }],
+	[CHEMIN_INBOX, { chapitre: 'l-inbox-lire-trier-et-repondre', section: 'l-inbox-lire-et-trier-le-courrier-recu' }],
+	[`${CHEMIN_CONTACTS}/*`, { chapitre: 'le-carnet-de-contacts' }],
 	[CHEMIN_MA_JOURNEE, { chapitre: 'ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui' }],
 	[CHEMIN_AFFAIRES_FIGEES, { chapitre: 'les-affaires-figees-ce-qui-dort-depuis-trop-longtemps' }],
 	[`${CHEMIN_OBJECTIFS}/*`, { chapitre: 'les-objectifs-le-tableau-blanc-de-l-equipe' }],
@@ -79,8 +81,8 @@ export const ECRANS_AIDE: ReadonlyArray<readonly [motif: string, cible: CibleAid
 	[CHEMIN_ADMIN_JOURNAL, { chapitre: 'le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace' }],
 	[CHEMIN_ADMIN_WORKFLOWS, { chapitre: 'composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire' }],
 	[CHEMIN_ADMIN_CATALOGUE, { chapitre: 'le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows' }],
-	[CHEMIN_ADMIN_COMPTES_MAIL, { chapitre: AFFAIRE, section: 'les-boites-de-reception-declarees' }],
-	[CHEMIN_ADMIN_IDENTITES_MAIL, { chapitre: AFFAIRE, section: 'les-adresses-d-expedition' }],
+	[CHEMIN_ADMIN_COMPTES_MAIL, { chapitre: BOITES, section: 'les-boites-de-reception-declarees' }],
+	[CHEMIN_ADMIN_IDENTITES_MAIL, { chapitre: BOITES, section: 'les-adresses-d-expedition' }],
 	[CHEMIN_ADMIN_MODELES_MAIL, { chapitre: 'ecrire-des-modeles-d-emails-et-les-previsualiser' }],
 	[CHEMIN_ADMIN_SEQUENCES_MAIL, { chapitre: 'enchainer-des-relances-les-sequences' }],
 	[CHEMIN_ETAT_MESSAGERIE, { chapitre: 'consulter-l-etat-de-la-messagerie' }],

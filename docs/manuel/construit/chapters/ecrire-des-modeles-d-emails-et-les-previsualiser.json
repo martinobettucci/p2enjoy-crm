@@ -1,6 +1,6 @@
 {
 	"slug": "ecrire-des-modeles-d-emails-et-les-previsualiser",
-	"title": "7. Écrire des modèles d'emails et les prévisualiser",
+	"title": "14. Écrire des modèles d'emails et les prévisualiser",
 	"blocks": [
 		{
 			"type": "paragraph",
@@ -249,7 +249,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7.1 Écrire un modèle"
+					"text": "14.1 Écrire un modèle"
 				}
 			]
 		},
@@ -379,7 +379,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7.2 Prévisualiser un modèle sur une affaire réelle"
+					"text": "14.2 Prévisualiser un modèle sur une affaire réelle"
 				}
 			]
 		},
@@ -598,7 +598,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7.3 Supprimer un modèle"
+					"text": "14.3 Supprimer un modèle"
 				}
 			]
 		},
@@ -666,7 +666,7 @@
 			"content": [
 				{
 					"type": "text",
-					"text": "7.4 Ce qui n'est pas encore offert"
+					"text": "14.4 Ce qui n'est pas encore offert"
 				}
 			]
 		},
@@ -728,20 +728,23 @@
 							},
 							{
 								"type": "text",
-								"text": " — voir le chapitre "
+								"text": " — voir le "
 							},
 							{
-								"type": "strong",
+								"type": "link",
+								"target": {
+									"chapter": "signer-les-messages-expedies-depuis-une-identite"
+								},
 								"content": [
 									{
 										"type": "text",
-										"text": "7 bis"
+										"text": "chapitre 15"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " ci-dessous. Une identité\nd'expédition porte désormais sa signature, ajoutée à la fin de chaque message expédié depuis elle."
+								"text": ". Une identité\nd'expédition porte désormais sa signature, ajoutée à la fin de chaque message expédié depuis elle."
 							}
 						]
 					}

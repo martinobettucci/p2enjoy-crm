@@ -36312,3 +36312,30 @@ et la recherche lisent déjà le rattachement. Les politiques de `cards` tombent
    tombe avec les autres colonnes.
 7. **Les politiques de `cards`** : lecture sous la forme optimisée du §4 (l'affaire se lit si l'un de ses rattachements
    se lit), corbeille comprise comme aujourd'hui ; mise à jour par `app.can_write_card(id)` (un rattachement écrivable).
+
+### `CRM-117` T3.0 : le plan du manuel public posé, sans réécrire une phrase (2026-10-27)
+
+**Fait** : le manuel suit le plan du `docs/SPEC-manual.md` §10 bis, par un script rejouable depuis HEAD, qui déplace,
+renumérote et change les renvois en liens. **183 renvois** « chapitre 4.8 », « § 1 bis.4 », « section 3.6 » sont devenus
+des liens vers l'identifiant de leur cible ; un renvoi vers une section dont le titre se répète ailleurs (« Ce qui n'est
+pas encore là ») mène à son chapitre, faute d'adresse unique. **Cinq** renvois échappaient au motif — coupés par un
+retour à la ligne, en gras, ou écrits dans la numérotation de l'ancien sommaire — et sont corrigés un à un dans le même
+script. **Mesuré** : aucune ligne perdue ni dupliquée, en comparant les lignes des deux versions une fois les titres, les
+liens et les chapitres retirés mis à part ; la construction rend 33 chapitres sans erreur.
+
+**Une décision en cours de route** : un chapitre nouveau qui porte le nom de sa première section (« Les budgets d'un
+track ») aurait donné deux identifiants identiques ; la section devient l'introduction du chapitre.
+
+**Un effet sur une campagne, nommé** : `e2e/ui/budgets.spec.ts` lit le manuel pendant le test et cherchait le titre
+« 5.4 bis » ; remplacé pendant la campagne d'interface de T2, il a rendu trois échecs. Corrigé : le chapitre est trouvé
+par son titre, sans numéro. `e2e/ui/aide.spec.ts` lisait la section de l'inbox dans le chapitre de l'affaire : il la lit
+dans son chapitre. **Gardé tel quel** : les renvois qui racontent une livraison passée (journal, backlog, tableaux de
+tranches des spécifications) et le commentaire de la migration `0081`, dont l'empreinte est inscrite au registre.
+
+**Incident de méthode** : le dossier de travail temporaire de la session a été effacé avant ce commit — scripts, version
+du manuel, extraits. Tout a été reconstruit depuis la trace de la session, et le résultat vérifié : appliqué au manuel
+de HEAD, qui portait entre-temps les ajouts de `CRM-118`, le script rend la copie de travail à l'exception des seules
+lignes de `CRM-068`, encore en cours.
+
+**Coordination** : les sessions de `CRM-068` et de `CRM-118` écrivent dans le manuel ; leurs lignes non poussées restent
+dans la copie de travail, hors de ce commit, qui s'applique à HEAD sans toucher leur copie.

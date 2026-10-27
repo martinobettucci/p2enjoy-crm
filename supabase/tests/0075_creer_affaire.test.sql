@@ -5,7 +5,7 @@
 --           `card_placements` (docs/SPEC-rattachements.md §3.2, §5)
 --
 -- La règle que ce fichier tient le plus fort : une affaire créée par le geste entre par l'étape
--- INITIALE du workflow de son channel — la règle du manuel (§5 bis.2) que rien ne tenait. Le workflow
+-- INITIALE du workflow de son channel — la règle du manuel (§18.5, ex-§5 bis.2) que rien ne tenait. Le workflow
 -- est posé par le geste de `CRM-094` lui-même, comme dans un espace neuf. Tout se joue dans une
 -- transaction annulée.
 
