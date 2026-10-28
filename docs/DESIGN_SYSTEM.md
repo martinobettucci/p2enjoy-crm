@@ -6920,3 +6920,27 @@ tracks et des channels, rendue par les jetons doux du §12.5.
 - **LE FIL** : « Étiquette posée » et « Étiquette retirée », suivis du nom de l'étiquette, dans la famille « Champs »,
   icône Lucide `Tag` pour les deux. L'icône n'informe pas : la phrase dit le geste.
 - **Icônes Lucide nouvelles : `Tags` (la commande), `Tag` (le fil).**
+
+
+### 5.74 Le récapitulatif quotidien par email — `CRM-069` T5
+
+*Écrit le 2026-10-28, avant le code, après relecture des §5.45, §5.7 bis, §5.7 ter et §5.13.* Ce que la case écrit et ce
+que le digest contient est spécifié par `docs/SPEC-etiquettes-digest.md` §5 ; ces règles ne disent que de quoi elle a
+l'air.
+
+- **LE CANAL EXISTE DÉSORMAIS, ET LA RÈGLE DU §5.45 « AUCUNE CASE POUR UN CANAL QUI N'EXISTE PAS » N'EST PAS LEVÉE, ELLE EST
+  TENUE.** Le digest part réellement, par la vraie file d'envoi (`CRM-069` T4) : sa case commande quelque chose. La règle
+  reste vraie pour tout autre canal.
+- **UN SECOND `fieldset`, « Par email »**, sous celui des mentions, sa légende visible (`text-sm font-medium text-ink`) :
+  le premier dit ce qui arrive dans l'application, le second ce qui arrive dans la boîte de la personne. **Une case** :
+  « Recevoir chaque matin le récapitulatif de {espace} ». Dessous, une phrase en `--color-text-2` dit ce qu'il contient
+  et quand : « Vers 7 h : vos actions en retard ou dues aujourd'hui, vos mentions non lues, vos affaires figées. Rien
+  n'est envoyé les jours où il n'y a rien. ».
+- **LA CASE DIT CE QU'ON REÇOIT, ET ELLE EST DÉCOCHÉE PAR DÉFAUT** — l'inverse des mentions, et c'est la règle du
+  consentement (`CLAUDE.md` §11) : un email ne part que sur une action explicite. Elle porte le nom de l'**espace
+  courant** : le consentement vaut pour un espace.
+- **LES SIX RÈGLES DU §5.7 TER S'APPLIQUENT SANS ÉCART**, comme à la case des mentions : elle ne se coche qu'après la
+  réponse, n'est jamais désactivée pendant l'envoi, et sa mention d'état vit dessous, alignée à 36 px.
+- **ÉTATS** (§5.8) : la lecture du consentement en panne laisse le premier `fieldset` intact et dit, à la place de la
+  case, « Le récapitulatif n'a pas pu être lu. », avec « Réessayer ». Sans espace courant, le `fieldset` n'est pas rendu.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**
