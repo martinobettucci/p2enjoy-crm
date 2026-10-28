@@ -131,10 +131,11 @@ select ok(
 -- 2. La colonne est fermée en écriture directe — docs/SPEC-cards.md §16.7
 -- =============================================================================================
 
-select ok(not has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update'),
+select ok(not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'snoozed_until') then has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update') else false end),
 	'`snoozed_until` est fermée : sans quoi les quatre refus seraient contournables par un `PATCH`');
 
-select ok(has_column_privilege('service_role', 'public.cards', 'snoozed_until', 'update'),
+-- RÉVISÉE PAR `CRM-111` T2.4.5 : le sommeil est celui du rattachement, que la clé de service écrit (migration 124).
+select ok(has_column_privilege('service_role', 'public.card_placements', 'snoozed_until', 'update'),
 	'`service_role` la conserve : le seed et l''exploitation écrivent, et le trigger les trace');
 
 -- =============================================================================================

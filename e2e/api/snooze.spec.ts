@@ -8,6 +8,7 @@
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.1 : les deux gestes désignent le RATTACHEMENT et le rendent
 //           (docs/SPEC-rattachements.md §5, décision 661)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : les cards d'essai posent l'affaire puis son rattachement (§3.2)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. La suite pgTAP prouve les mêmes règles DANS la base,
 // avec `set local role` : elle ne traverse ni Kong, ni PostgREST, ni GoTrue. Or le §16.8 est un
@@ -23,8 +24,11 @@
 
 import { expect, test } from '@playwright/test'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { posterAffaire } from '../affaire'
 
 const CARDS = '/rest/v1/cards'
+/** `CRM-111` T2.4.5 : le sommeil d'une affaire est celui de son rattachement. */
+const RATTACHEMENTS = '/rest/v1/card_placements'
 const EVENEMENTS = '/rest/v1/card_events'
 const RPC = '/rest/v1/rpc'
 
@@ -66,8 +70,10 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 			[CARD_FERMEE, CHANNEL_GRANDS_COMPTES],
 			[CARD_LUE, CHANNEL_MAINTENANCE],
 		] as const) {
-			const creation = await request.post(`${URL_API}${CARDS}`, {
-				headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
+			// `CRM-111` T2.4.5 : la clé de service pose l'affaire, puis son rattachement — le chemin d'un utilisateur,
+			// `creer_affaire`, ne choisit pas l'identifiant que ce fichier fixe (décisions 746, 768).
+			const creation = await posterAffaire(request, `${URL_API}${CARDS}`, {
+				headers: { ...enTetesService(), Prefer: 'return=representation' },
 				data: {
 					id,
 					workspace_id: WORKSPACE,
@@ -77,8 +83,8 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 					title: 'Sonde de sommeil',
 				},
 			})
-			expect(creation.status(), 'la card d’essai est créée par le vrai chemin').toBe(201)
-			// `CRM-111` T2.3.1 : les gestes désignent le rattachement, que la création a posé (miroir de T2.1).
+			expect(creation.status(), await creation.text()).toBe(201)
+			// `CRM-111` T2.3.1 : les gestes désignent le rattachement.
 			const rattachements = await request.get(`${URL_API}/rest/v1/card_placements?card_id=eq.${id}&select=id`, {
 				headers: enTetesService(),
 			})
@@ -119,7 +125,7 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 	test('2 — une échéance passée est refusée, et la ligne est relue inchangée', async ({
 		request,
 	}) => {
-		const avant = await request.get(`${URL_API}${CARDS}?id=eq.${CARD_LUE}&select=snoozed_until`, {
+		const avant = await request.get(`${URL_API}${RATTACHEMENTS}?card_id=eq.${CARD_LUE}&select=snoozed_until`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
 		expect((await avant.json()).at(0)?.snoozed_until).toBeNull()
@@ -131,7 +137,7 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 		expect(reponse.status()).toBe(400)
 		expect((await reponse.json()).message).toBe('snooze_date_in_past')
 
-		const apres = await request.get(`${URL_API}${CARDS}?id=eq.${CARD_LUE}&select=snoozed_until`, {
+		const apres = await request.get(`${URL_API}${RATTACHEMENTS}?card_id=eq.${CARD_LUE}&select=snoozed_until`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
 		expect((await apres.json()).at(0)?.snoozed_until, 'le refus n’a rien écrit').toBeNull()
@@ -174,7 +180,8 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 	test('6 — le `PATCH` direct de `snoozed_until` est refusé par privilège', async ({
 		request,
 	}) => {
-		const reponse = await request.patch(`${URL_API}${CARDS}?id=eq.${CARD_LUE}`, {
+		// `CRM-111` T2.4.5 : le sommeil est celui du RATTACHEMENT, où la colonne reste fermée à `authenticated`.
+		const reponse = await request.patch(`${URL_API}${RATTACHEMENTS}?card_id=eq.${CARD_LUE}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 			data: { snoozed_until: ECHEANCE },
 		})
@@ -183,7 +190,7 @@ test.describe('CRM-081 — la mise en sommeil, hors interface', () => {
 			'sans cette fermeture, les quatre refus seraient contournables (§16.7)',
 		).toBe(403)
 
-		const apres = await request.get(`${URL_API}${CARDS}?id=eq.${CARD_LUE}&select=snoozed_until`, {
+		const apres = await request.get(`${URL_API}${RATTACHEMENTS}?card_id=eq.${CARD_LUE}&select=snoozed_until`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
 		expect((await apres.json()).at(0)?.snoozed_until).toBeNull()

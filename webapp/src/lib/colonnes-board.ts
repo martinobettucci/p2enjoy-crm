@@ -74,7 +74,7 @@ export const COLONNES_TRANSITION = 'id, from_step_id, to_step_id, label, require
 export const COLONNES_POINT_CARTE = 'checked, origine:workflow_step_checklist_items(step_id)'
 
 export const COLONNES_RATTACHEMENT_BOARD =
-	'id, created_at, position, amount, next_action, current_step_id, entered_step_at, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, email_local_part, health_momentum, health_commercial, etiquettes:card_labels(etiquette:labels(id, name, color, archived_at))), points:card_checklist_items!card_checklist_items_placement_id_fkey(checked, origine:workflow_step_checklist_items(step_id))'
+	'id, created_at, position, amount, next_action, current_step_id, entered_step_at, owner_id, snoozed_until, health_momentum, health_commercial, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, email_local_part, etiquettes:card_labels(etiquette:labels(id, name, color, archived_at))), points:card_checklist_items!card_checklist_items_placement_id_fkey(checked, origine:workflow_step_checklist_items(step_id))'
 
 /**
  * Champs du workflow, réduits à ce qui traduit un refus.

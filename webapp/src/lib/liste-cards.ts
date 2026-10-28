@@ -29,6 +29,7 @@ import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './a
 // l'importe (décision 188). La même donnée lue deux fois finit par être lue de deux façons.
 import { lireEtapes, resoudreEtape, type EtapeBoard } from './board'
 import { CODE_PAGE_INEXISTANTE, COLONNES_RATTACHEMENT_LISTE, COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE, LIGNES_PAR_PAGE } from './colonnes-liste'
+import type { LigneAffaire } from './rattachements'
 import type { Database } from './database.types'
 import {
 	CLE_URL_SOMMEIL,
@@ -277,7 +278,7 @@ export function plageDe(page: number): { readonly de: number; readonly a: number
 // --- La lecture (§12.3) ----------------------------------------------------------------------
 
 export type CardListe = Pick<
-	Database['public']['Tables']['cards']['Row'],
+	LigneAffaire,
 	| 'id'
 	| 'title'
 	// Lue depuis `CRM-105` : l'infobulle du titre de la ligne (docs/DESIGN_SYSTEM.md §5.58).

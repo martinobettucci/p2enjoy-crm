@@ -43,7 +43,7 @@ import {
 import type { Database } from './database.types'
 import { MODE_SOMMEIL_PAR_DEFAUT, type ModeSommeil } from './filtre-sommeil'
 import type { ProfilAffiche } from './identites'
-import { idRattachement, type RattachementsLus } from './rattachements'
+import { idRattachement, type RattachementsLus, type LigneAffaire } from './rattachements'
 import { estEnSommeil } from './sommeil-card'
 import type { ClientCrm } from './supabase'
 
@@ -95,7 +95,7 @@ export type EtapeBoard = {
 }
 
 export type CardBoard = Pick<
-	Database['public']['Tables']['cards']['Row'],
+	LigneAffaire,
 	| 'id'
 	| 'title'
 	// Lue depuis `CRM-105` : l'infobulle du titre de la carte (docs/DESIGN_SYSTEM.md §5.58).
@@ -674,12 +674,15 @@ export type RattachementBoard = Pick<
 	| 'entered_step_at'
 	| 'owner_id'
 	| 'snoozed_until'
+	// `CRM-111` T2.4.5 : les scores de santé se calculent sur le rattachement (décision 768).
+	| 'health_momentum'
+	| 'health_commercial'
 > & {
 	readonly responsable: ProfilAffiche | null
 	readonly points?: readonly PointCarte[] | null
 	readonly affaire: Pick<
 		Database['public']['Tables']['cards']['Row'],
-		'id' | 'title' | 'description' | 'currency' | 'email_local_part' | 'health_momentum' | 'health_commercial'
+		'id' | 'title' | 'description' | 'currency' | 'email_local_part'
 	> & { readonly etiquettes?: readonly { readonly etiquette: EtiquetteLue | null }[] | null }
 }
 
@@ -696,8 +699,8 @@ export function carteDepuisRattachement(ligne: RattachementBoard): CardBoard {
 		description: ligne.affaire.description,
 		currency: ligne.affaire.currency,
 		email_local_part: ligne.affaire.email_local_part,
-		health_momentum: ligne.affaire.health_momentum,
-		health_commercial: ligne.affaire.health_commercial,
+		health_momentum: ligne.health_momentum,
+		health_commercial: ligne.health_commercial,
 		etiquettes: etiquettesDeLAffaire(ligne.affaire.etiquettes),
 		position: ligne.position,
 		amount: ligne.amount,

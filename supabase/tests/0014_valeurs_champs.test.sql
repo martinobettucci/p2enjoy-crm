@@ -120,8 +120,10 @@ select has_index('public', 'card_field_values', 'card_field_values_field_idx',
 -- composite de la section 3.1. MESURÉ sans elle : « there is no unique constraint matching given
 -- keys for referenced table "cards" ».
 
-select col_is_unique('public', 'cards', array['id', 'workflow_id'],
-	'`cards (id, workflow_id)` est unique — ajoutée par `CRM-036`, condition de la clé étrangère '
+-- RÉVISÉE PAR `CRM-111` T2.4.5 : le workflow a quitté l'affaire ; l'unicité qui fonde la clé composite des valeurs est
+-- celle du RATTACHEMENT (`card_placements (id, workflow_id)`, docs/SPEC-rattachements.md §3.1).
+select col_is_unique('public', 'card_placements', array['id', 'workflow_id'],
+	'`card_placements (id, workflow_id)` est unique — héritière de celle de `CRM-036` sur `cards`, condition de la clé étrangère '
 	'composite des valeurs. Ne change AUCUN comportement de `cards`, `id` étant déjà clé primaire');
 
 -- =============================================================================================
@@ -215,13 +217,16 @@ select throws_ok($$
 
 select pg_temp.postgres();
 
-insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title, position)
-values ('5eed0000-0000-4000-8000-0000000000d1',
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (values ('5eed0000-0000-4000-8000-0000000000d1',
         '5eed0000-0000-4000-8000-000000000001',
         '5eed0000-0000-4000-8000-000000000032',
         '5eed0000-0000-4000-8000-000000000051',
         '5eed0000-0000-4000-8000-000000000061',
-        'Sonde de cascade', 99);
+        'Sonde de cascade', 99)) as v(id, workspace_id, channel_id, workflow_id, current_step_id, title, position)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title) select id::uuid, workspace_id::uuid, title from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+select id::uuid, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid, position::numeric from __source;
 
 insert into public.card_field_values (card_id, field_id, workflow_id, workspace_id, value)
 values ('5eed0000-0000-4000-8000-0000000000d1', '5eed0000-0000-4000-8000-000000000081',

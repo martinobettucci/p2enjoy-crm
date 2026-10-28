@@ -13,6 +13,7 @@
 #           annoncer une preuve non exécutée)
 # @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
 #           (docs/SPEC-rattachements.md §3.2, §5)
+# @verifies CRM-111 T2.4.5 (docs/BACKLOG.md) — la fermeture de `snoozed_until` se constate sur le rattachement
 #
 # ---------------------------------------------------------------------------------------------
 # Ce que ce harnais prouve.
@@ -208,10 +209,11 @@ fi
 # LE CONSTAT QUI COÛTERAIT LE PLUS CHER À PERDRE (§16 bis.1) : la colonne rouverte, l'écran
 # écrirait une échéance sans passer par la garde, et les quatre refus du §16.3 deviendraient
 # contournables sans qu'aucune preuve d'API ne rougisse — elles interrogent les fonctions.
-if [ "$(psql_db "select has_column_privilege('authenticated','public.cards','snoozed_until','update')")" = f ]; then
-	ok "cards.snoozed_until est FERMÉE en écriture directe : les gestes sont la seule porte"
+# `CRM-111` T2.4.5 : le sommeil est celui du RATTACHEMENT, l'affaire ne porte plus la colonne (migration 0134).
+if [ "$(psql_db "select has_column_privilege('authenticated','public.card_placements','snoozed_until','update')")" = f ]; then
+	ok "card_placements.snoozed_until est FERMÉE en écriture directe : les gestes sont la seule porte"
 else
-	fail "cards.snoozed_until est réouverte : la garde des quatre refus est contournable"
+	fail "card_placements.snoozed_until est réouverte : la garde des quatre refus est contournable"
 fi
 
 for evenement in snoozed woken; do

@@ -13,6 +13,7 @@
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
 # @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
 #           (docs/SPEC-rattachements.md §3.2, §5)
+# @verifies CRM-111 T2.4.5 (docs/BACKLOG.md) — l'insertion directe sans rattachement est refusée par l'invariant (§3.1)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-013` :
 #
@@ -373,14 +374,31 @@ code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_C1" \
 	&& ok "ligne g — l'anonyme obtient 401 — LIGNE RÉVISÉE PAR LA MESURE, le §4.4.4 disait « refus »" \
 	|| fail "ligne g — l'anonyme obtient $code au lieu de 401"
 
+# `CRM-111` T2.4.5 (décisions 768 et 770) : une affaire naît avec son rattachement. L'insertion DIRECTE d'un
+# utilisateur, sans rattachement, est refusée par l'invariant à la validation ; un utilisateur crée par
+# `creer_affaire`, qui ne prend pas d'adresse.
 code=$(http POST "$API/rest/v1/cards" \
 	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_ADMIN" \
-	-H 'Content-Type: application/json' -H 'Prefer: return=representation' \
-	-d "$(jq -nc --arg w "$WS_SEED" --arg c "$CHANNEL_GRANDS_COMPTES" --arg f "$WF_GLOBAL" \
-		--arg e "$ETAPE_RELANCE" \
-		'{workspace_id:$w, channel_id:$c, workflow_id:$f, current_step_id:$e,
-		  title:"tst-crm013-harnais", email_local_part:"c-zzzzzzzz"}')")
-adresse_sonde=$(jq -r '.[0].email_local_part // ""' < "$CORPS")
+	-H 'Content-Type: application/json' -H 'Prefer: return=minimal' \
+	-d "$(jq -nc --arg w "$WS_SEED" '{workspace_id:$w, title:"tst-crm013-harnais", email_local_part:"c-zzzzzzzz"}')")
+[ "$code" = "400" ] && [ "$(jq -r '.message // ""' < "$CORPS")" = "card_without_placement" ] \
+	&& ok "ligne h — l'insertion directe d'une affaire sans rattachement est REFUSÉE par l'invariant" \
+	|| fail "ligne h — insertion directe : $code / $(jq -r '.message // ""' < "$CORPS")"
+
+# Le privilège `INSERT` reste de table (§4.4.2, décision 140) : le déclencheur écrase la valeur fournie, y compris
+# par la clé de service, qui pose ici l'affaire PUIS son rattachement — il ne juge pas l'appelant.
+id_sonde=$(psql_db -c "select gen_random_uuid();")
+code=$(http POST "$API/rest/v1/cards" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	-H 'Content-Type: application/json' -H 'Prefer: return=minimal' \
+	-d "$(jq -nc --arg i "$id_sonde" --arg w "$WS_SEED" \
+		'{id:$i, workspace_id:$w, title:"tst-crm013-harnais", email_local_part:"c-zzzzzzzz"}')")
+[ "$code" = "201" ] && code=$(http POST "$API/rest/v1/card_placements" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	-H 'Content-Type: application/json' -H 'Prefer: return=minimal' \
+	-d "$(jq -nc --arg i "$id_sonde" --arg w "$WS_SEED" --arg c "$CHANNEL_GRANDS_COMPTES" --arg f "$WF_GLOBAL" \
+		--arg e "$ETAPE_RELANCE" '{card_id:$i, workspace_id:$w, channel_id:$c, workflow_id:$f, current_step_id:$e}')")
+adresse_sonde=$(psql_db -c "select email_local_part from public.cards where id = '$id_sonde';")
 [ "$code" = "201" ] && [ "$adresse_sonde" != "c-zzzzzzzz" ] \
 	&& ok "ligne h — l'insertion est ACCEPTÉE et l'adresse choisie IGNORÉE : « $adresse_sonde »" \
 	|| fail "ligne h — insertion $code, adresse « $adresse_sonde »"

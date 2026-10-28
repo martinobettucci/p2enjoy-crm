@@ -153,9 +153,14 @@ select ok(
 -- docs/SPEC-permissions-rls.md §7.
 
 select ok(
-	not has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update'),
-	'PREUVE DE REFUS N° 5 : `authenticated` n''a PLUS `UPDATE` sur `cards.current_step_id`. La '
-	'garde n''est plus contournable par un `PATCH` (§5.5)');
+	-- RÉVISÉE PAR `CRM-111` T2.4.5 : l'étape a quitté l'affaire (migration 0134) ; la garde se prouve là où elle vit, sur le
+	-- rattachement. Sans cette révision, l'assertion serait vraie par l'absence de la colonne, et ne prouverait rien.
+	not has_column_privilege('authenticated', 'public.card_placements', 'current_step_id', 'update')
+	and not has_column_privilege('authenticated', 'public.card_placements', 'entered_step_at', 'update')
+	and not exists (select 1 from information_schema.columns
+	                 where table_schema = 'public' and table_name = 'cards' and column_name = 'current_step_id'),
+	'PREUVE DE REFUS N° 5 : `authenticated` n''a pas `UPDATE` sur l''étape ni sur l''ancienneté du rattachement, et '
+	'l''affaire ne porte plus l''étape. La garde n''est pas contournable par un `PATCH` (§5.5)');
 
 select ok(
 	not has_table_privilege('authenticated', 'public.cards', 'update'),
@@ -163,13 +168,16 @@ select ok(
 	'colonne d''un privilège de table, c''est le mécanisme du §2.1 de la migration');
 
 select ok(
-	has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'select'),
+	-- RÉVISÉE PAR `CRM-111` T2.4.5 : l'étape est celle du rattachement.
+	has_column_privilege('authenticated', 'public.card_placements', 'current_step_id', 'select'),
 	'`SELECT` sur `current_step_id` est INTACT : la colonne se lit, elle ne s''écrit plus');
 
 select ok(
-	has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'insert'),
-	'`INSERT` sur `current_step_id` est INTACT : une card naît à une étape, et la clé composite de '
-	'`CRM-040` garantit déjà qu''elle appartient au workflow');
+	-- RÉVISÉE PAR `CRM-111` T2.4.5 : un rattachement naît par `creer_affaire`, à l'étape initiale ; aucun client ne
+	-- l'insère directement (décision 768).
+	not has_table_privilege('authenticated', 'public.card_placements', 'insert'),
+	'`INSERT` d''un rattachement est FERMÉ au client : il naît par `creer_affaire`, à l''étape initiale, et la clé '
+	'composite de `CRM-040` garantit déjà qu''il appartient au workflow');
 
 -- Les douze colonnes que le §5.5 laisse ouvertes. Les vérifier une à une n'est pas de la
 -- redondance : le `grant` de la migration est une liste, et une liste se tronque.
@@ -180,41 +188,41 @@ select ok(has_column_privilege('authenticated', 'public.cards', 'description', '
 -- RÉVISÉES PAR `CRM-111` T2.3.2 (migration 112, décision 51) : les sept colonnes de rattachement ouvertes au client
 -- s'écrivent sur `card_placements` — le privilège y est ouvert, et fermé sur `cards`.
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'position', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'position', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'position') then has_column_privilege('authenticated', 'public.cards', 'position', 'update') else false end),
 	'`position` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable : réordonner une colonne du board n''est pas un déplacement');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'owner_id', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'owner_id', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'owner_id') then has_column_privilege('authenticated', 'public.cards', 'owner_id', 'update') else false end),
 	'`owner_id` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'amount', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'amount', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'amount') then has_column_privilege('authenticated', 'public.cards', 'amount', 'update') else false end),
 	'`amount` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable');
 select ok(has_column_privilege('authenticated', 'public.cards', 'currency', 'update'),
 	'`currency` reste modifiable');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'probability_override', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'probability_override', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'probability_override') then has_column_privilege('authenticated', 'public.cards', 'probability_override', 'update') else false end),
 	'`probability_override` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'next_action', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'next_action', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'next_action') then has_column_privilege('authenticated', 'public.cards', 'next_action', 'update') else false end),
 	'`next_action` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'next_action_at', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'next_action_at', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'next_action_at') then has_column_privilege('authenticated', 'public.cards', 'next_action_at', 'update') else false end),
 	'`next_action_at` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable');
 -- ASSERTION RETOURNÉE À `CRM-081` (décision 51) : elle constatait « `snoozed_until` reste
 -- modifiable ». La migration 44 la FERME — la valeur devient le constat d'un geste gardé,
 -- `public.snooze_card` et `public.wake_card` (docs/SPEC-cards.md §16.7). La preuve est révisée,
 -- jamais retirée, et le motif est écrit ici.
-select ok(not has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update'),
+select ok(not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'snoozed_until') then has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update') else false end),
 	'`snoozed_until` est FERMÉE depuis `CRM-081` : `move_card` n''est pas la seule garde de colonne');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'archived_at', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'archived_at', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'archived_at') then has_column_privilege('authenticated', 'public.cards', 'archived_at', 'update') else false end),
 	'`archived_at` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste modifiable : archiver reste un geste du client');
 select ok(has_column_privilege('authenticated', 'public.cards', 'deleted_at', 'update'),
 	'`deleted_at` reste modifiable : la corbeille reste un geste du client');
 
 -- Les colonnes fermées par voie de conséquence. Le §2.3 de la migration les nomme.
-select ok(not has_column_privilege('authenticated', 'public.cards', 'workflow_id', 'update'),
+select ok(not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'workflow_id') then has_column_privilege('authenticated', 'public.cards', 'workflow_id', 'update') else false end),
 	'`workflow_id` est fermée par conséquence : elle ne changeait déjà que par `CRM-045`');
-select ok(not has_column_privilege('authenticated', 'public.cards', 'entered_step_at', 'update'),
+select ok(not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'entered_step_at') then has_column_privilege('authenticated', 'public.cards', 'entered_step_at', 'update') else false end),
 	'`entered_step_at` est fermée : docs/SPEC-cards.md §2.9 la réserve NOMMÉMENT à `move_card`, et '
 	'un client qui la réécrirait fausserait toute mesure d''ancienneté');
 select ok(not has_column_privilege('authenticated', 'public.cards', 'workspace_id', 'update'),
@@ -559,8 +567,9 @@ select ok(
 	'`move_card`, et c''est ici qu''elle prend son sens');
 
 select ok(
-	(select c.updated_at from public.cards c
-	  where c.id = '5eed0000-0000-4000-8000-0000000000c3')
+	-- RÉVISÉE PAR `CRM-111` T2.4.5 : le geste écrit le rattachement, et c'est sa date qui avance.
+	(select c.updated_at from public.card_placements c
+	  where c.card_id = '5eed0000-0000-4000-8000-0000000000c3')
 	>= (select instant from t_avant),
 	'`updated_at` est écrite par le trigger `app.set_updated_at()` de `CRM-040`, que la fonction '
 	'n''a PAS à toucher — la garde ne réimplémente pas ce qui existe');
@@ -619,9 +628,9 @@ savepoint contournement;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select throws_ok($$
-	update public.cards set current_step_id = '5eed0000-0000-4000-8000-000000000067'
-	 where id = '5eed0000-0000-4000-8000-0000000000c3' $$,
-	'42501', 'permission denied for table cards',
+	update public.card_placements set current_step_id = '5eed0000-0000-4000-8000-000000000067'
+	 where card_id = '5eed0000-0000-4000-8000-0000000000c3' $$,
+	'42501', 'permission denied for table card_placements',
 	'CONTOURNEMENT REFUSÉ, sous le rôle réel de l''administratrice : la mise à jour directe de '
 	'`current_step_id` échoue en `42501`. C''est l''assertion `lives_ok` de '
 	'`0012_cards.test.sql` §11 qui est RETOURNÉE ici — elle avait désigné son moment');
@@ -776,7 +785,7 @@ select ok(
 	'§5.5 et INC-050 — et le produit est resté dégradé (décisions 108, 135)');
 
 select ok(
-	not has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update'),
+	not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'current_step_id') then has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update') else false end),
 	'INC-049, chevauchement TRANCHÉ du côté de `CRM-034` : seule la colonne que CETTE garde protège '
 	'est traitée. Une unité dont la Definition of Done exige une preuve doit livrer ce qui la rend '
 	'possible');

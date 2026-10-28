@@ -37,6 +37,7 @@
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 import { corpsParRattachement } from './rattachements'
+import { posterAffaire } from '../affaire'
 
 /** Le workspace, le workflow global et ses étapes (`docs/SPEC-seed.md` §2). */
 const WS_SEED = '5eed0000-0000-4000-8000-000000000001'
@@ -141,7 +142,7 @@ async function lignes(
  */
 async function poserChaineB(requete: APIRequestContext): Promise<void> {
 	const creer = async (table: string, corps: Record<string, unknown>) => {
-		const reponse = await requete.post(`/rest/v1/${table}`, {
+		const reponse = await posterAffaire(requete, `/rest/v1/${table}`, {
 			headers: { ...enTetesService(), 'Content-Type': 'application/json' },
 			data: corps,
 		})
@@ -288,7 +289,7 @@ test.describe('PREUVE N° 2 — un `business_developer` ne touche pas au vocabul
 
 	for (const table of FAMILLE_WORKFLOW) {
 		test(`${table} : l’insertion est refusée par une erreur, 403 et 42501`, async ({ request }) => {
-			const reponse = await request.post(`/rest/v1/${table}`, {
+			const reponse = await posterAffaire(request, `/rest/v1/${table}`, {
 				headers: { ...enTetesAuthentifies(jetonBizdev), 'Content-Type': 'application/json' },
 				data: corpsMinimal[table],
 			})

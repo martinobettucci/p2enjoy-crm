@@ -241,6 +241,14 @@ d'exécuter le code attendu.
   refus de plus). **`mail-sync`** joint les pièces, archive avant d'envoyer, efface les dépôts abandonnés après 24 heures.
 - **Le seed** fait partir un message réel avec copie cachée et pièce jointe depuis « Refonte du monitoring — Vertuo ».
 
+- **`CRM-111` T2.4.5 — le retrait : l'affaire ne porte plus son channel, son étape ni ses montants** (migration `0134`,
+  décisions 768 et 770). Les treize colonnes de rattachement quittent `cards`, avec les deux miroirs : le rattachement est
+  désormais le seul endroit où vivent le channel, le workflow, l'étape, le rang, le responsable, le montant, la
+  probabilité, la prochaine action, l'ancienneté, le sommeil et l'archivage. Une affaire naît par « Nouvelle affaire »
+  (`creer_affaire`) avec son premier rattachement, et la base refuse une affaire sans rattachement ; l'événement
+  « Affaire créée » naît avec ce rattachement. Les scores de santé, la purge de la corbeille et la dépense bloquante d'un
+  track se calculent sur les rattachements. **Aucun changement visible.** À livrer avec la webapp, l'image `mcp` et
+  l'image `mail-sync` de `main`, après une sauvegarde.
 - **`CRM-111` T2.4.3 — le seed lit et met à jour les rattachements** (migration `0124`) : la clé de service peut écrire `card_placements` pour le seed (décision 746) ; sommeil, ancienneté, échéances, workflow et channel du jeu de démonstration se lisent et se réarment sur le rattachement. Aucun changement visible.
 - **`CRM-111` T2.4.2 — le connecteur MCP et `mail-sync` lisent les rattachements** : la liste, « Ma journée », la fiche, le fil, les outils d'écriture, le compte d'un channel et la fiche contact du connecteur, ainsi que le classement des dossiers IMAP, lisent `card_placements`. Aucun changement de contrat ; le service `mcp` et `mail-sync` sont à redéployer avec la tranche.
 - **`CRM-111` T2.4.1 — la webapp lit les rattachements** : le board, la vue liste, la fiche, Ma journée, l'inbox, la saisie de temps, les contacts, les notifications, la recherche, les coûts, les recettes, la rentabilité, les affaires figées et la corbeille lisent `card_placements` au lieu des colonnes de rattachement de `cards`. Aucun changement visible ; les affaires figées s'apparient désormais par rattachement (affaire et channel).

@@ -19,6 +19,7 @@ import { connecterAvecLeLabs, expect, test } from './fixtures'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { corpsParRattachement } from '../api/rattachements'
 import { capturer } from './captures'
+import { posterAffaire } from '../affaire'
 
 const ADMIN = 'admin@p2enjoy.test'
 const ID_ADMIN = '5eed0000-0000-4000-8000-000000000011'
@@ -67,8 +68,9 @@ test.describe('le fil nomme l’étape franchie comme le board (INC-301, sans su
 
 		const reference = (await (
 			await request.get(
-				`${URL_API}/rest/v1/cards?id=eq.${CARD_REFERENCE}` +
-					'&select=channel_id,channel:channels!cards_channel_id_workspace_id_fkey(slug,track:tracks(slug))',
+				// `CRM-111` T2.4.5 : le channel est celui du rattachement de l'affaire.
+				`${URL_API}/rest/v1/card_placements?card_id=eq.${CARD_REFERENCE}` +
+					'&select=channel_id,channel:channels!card_placements_channel_fk(slug,track:tracks(slug))',
 				{ headers: enTetesAuthentifies(jeton) },
 			)
 		).json()) as Array<{ channel_id: string; channel: { slug: string; track: { slug: string } } }>
@@ -77,7 +79,7 @@ test.describe('le fil nomme l’étape franchie comme le board (INC-301, sans su
 
 		// Naissance de l'affaire d'essai à *Signature*, par la clé de service — comme les cards d'essai de
 		// `e2e/api/move-card-to-channel.spec.ts`.
-		const creation = await request.post(`${URL_API}/rest/v1/cards`, {
+		const creation = await posterAffaire(request, `${URL_API}/rest/v1/cards`, {
 			headers: enTetesService(),
 			data: {
 				id: CARD_ESSAI,

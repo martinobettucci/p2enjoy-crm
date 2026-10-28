@@ -98,6 +98,8 @@ class CrmAffaires(CrmSimule):
     COLONNES_RATTACHEMENT = (
         "workflow_id", "amount", "probability_override", "next_action", "next_action_at", "snoozed_until", "archived_at",
         "entered_step_at", "responsable", "channel", "etape",
+        # `CRM-111` T2.4.5 : les scores de santé se calculent sur le rattachement.
+        "health_momentum", "health_commercial",
     )
 
     def _rattachements(self) -> list[dict[str, Any]]:
@@ -107,7 +109,7 @@ class CrmAffaires(CrmSimule):
                 "id": f"r-{c['id']}", "card_id": c["id"], "workspace_id": c["workspace_id"], "channel_id": CHANNEL_A,
                 "created_at": "2026-10-01T00:00:00+00:00",
                 **{k: c.get(k) for k in self.COLONNES_RATTACHEMENT},
-                "affaire": {k: c.get(k) for k in ("id", "title", "currency", "health_momentum", "health_commercial")},
+                "affaire": {k: c.get(k) for k in ("id", "title", "currency", "etiquettes")},
             }
             for c in self._cards()
         ]

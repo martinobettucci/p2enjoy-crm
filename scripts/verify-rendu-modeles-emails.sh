@@ -7,6 +7,8 @@
 # @verifies docs/SPEC-seed.md §14 (les deux modèles du seed)
 # @verifies docs/SPEC-test-harness.md §7.2 (un harnais dégrade réellement et constate la restauration)
 # @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
+# @verifies CRM-111 T2.4.5 (docs/BACKLOG.md), INC-304 — les dégradations partent de la dernière autorité du rendu, la 0109
+#           (docs/SPEC-test-harness.md §3.7 ; docs/SPEC-rattachements.md §3.2)
 #           (docs/SPEC-rattachements.md §3.2, §5)
 #
 # Le script ne démarre ni n'arrête la pile. Il exige la base locale de développement migrée et
@@ -61,13 +63,36 @@ anomalies=0
 TRAVAIL=$(mktemp -d)
 restauration_due=false
 
+# LA SOURCE DES DÉGRADATIONS — `CRM-111` T2.4.5, de la famille d'INC-304 (docs/SPEC-test-harness.md §3.7). La 56 n'est plus
+# la dernière autorité sur `public.rendre_modele_email` : la 109 (`CRM-111` T2.2) l'a réécrite pour lire le premier
+# rattachement. Rejouer la 56 rétablissait donc en silence une définition antérieure à T2.2, et depuis la 134, qui
+# retire de `cards` les colonnes qu'elle lit, elle ne s'applique plus du tout. La source est la 56 dont le CORPS du
+# rendu est celui de la 109 : l'en-tête, les privilèges et `app.mail_template_substituer`, que les dégradations
+# visent, restent ceux de la 56, seule autorité à leur sujet.
+AUTORITE_RENDU=supabase/migrations/0109_card_placements_lectures.sql
+SOURCE=$TRAVAIL/source.sql
+python3 - "$MIGRATION" "$AUTORITE_RENDU" "$SOURCE" <<'PY'
+import io, sys
+migration, autorite, cible = sys.argv[1:4]
+texte = io.open(migration, encoding='utf-8').read()
+debut = texte.index('create or replace function public.rendre_modele_email(')
+corps_debut = texte.index('\nas $$\n', debut) + len('\nas $$\n')
+corps_fin = texte.index('\n$$;', corps_debut)
+recente = io.open(autorite, encoding='utf-8').read()
+r_debut = recente.index('CREATE OR REPLACE FUNCTION public.rendre_modele_email(')
+r_corps = recente.index('AS $function$\n', r_debut) + len('AS $function$\n')
+r_fin = recente.index('$function$;', r_corps)
+corps = recente[r_corps:r_fin].rstrip()
+io.open(cible, 'w', encoding='utf-8').write(texte[:corps_debut] + corps + texte[corps_fin:])
+PY
+
 nettoyer() {
 	local statut=$?
 	trap - EXIT
 	set +e
 	if [ "$restauration_due" = true ]; then
-		if ! psql_db -f - < "$MIGRATION" >/dev/null 2>&1; then
-			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$MIGRATION" >&2
+		if ! psql_db -f - < "$SOURCE" >/dev/null 2>&1; then
+			printf 'ERREUR : la restauration de secours de %s a échoué.\n' "$SOURCE" >&2
 			statut=1
 		fi
 	fi
@@ -96,7 +121,7 @@ suite_sql_verte() {
 degrader() {
 	local avant=$1 apres=$2 nom=$3
 	rm -f -- "$TRAVAIL/degrade.sql"
-	if ! python3 - "$MIGRATION" "$TRAVAIL/degrade.sql" "$avant" "$apres" <<-'PY'
+	if ! python3 - "$SOURCE" "$TRAVAIL/degrade.sql" "$avant" "$apres" <<-'PY'
 		import io, sys
 		source, cible, avant, apres = sys.argv[1:5]
 		texte = io.open(source, encoding='utf-8').read()
@@ -105,10 +130,10 @@ degrader() {
 		io.open(cible, 'w', encoding='utf-8').write(texte.replace(avant, apres))
 	PY
 	then
-		fail "dégradation « $nom » IMPOSSIBLE : motif absent ou ambigu dans $MIGRATION"
+		fail "dégradation « $nom » IMPOSSIBLE : motif absent ou ambigu dans $SOURCE"
 		return 1
 	fi
-	if cmp -s "$MIGRATION" "$TRAVAIL/degrade.sql"; then
+	if cmp -s "$SOURCE" "$TRAVAIL/degrade.sql"; then
 		fail "dégradation « $nom » IMPOSSIBLE : la substitution n'a rien changé"
 		return 1
 	fi
@@ -129,7 +154,7 @@ degrader() {
 }
 
 restaurer() {
-	psql_db -f - < "$MIGRATION" >/dev/null 2>&1
+	psql_db -f - < "$SOURCE" >/dev/null 2>&1
 	restauration_due=false
 }
 

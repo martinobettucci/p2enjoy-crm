@@ -15,6 +15,7 @@
 #           restauration par le runner complet, suivie de la suite globale (docs/SPEC-test-harness.md §3.5)
 # @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
 #           (docs/SPEC-rattachements.md §3.2, §5)
+# @verifies CRM-111 T2.4.5 (docs/BACKLOG.md) — la protection de l'étape, et sa dégradation, portent sur le rattachement
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-034` :
 #
@@ -351,11 +352,12 @@ titre '2. La forme de la fonction et ses privilèges'
 titre '3. La protection de colonne — preuve de refus n° 5'
 # =============================================================================================
 
-[ "$(psql_db -c "select has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update');")" = "f" ] \
+# `CRM-111` T2.4.5 : l'étape et son ancienneté sont celles du RATTACHEMENT (migration 0134).
+[ "$(psql_db -c "select has_column_privilege('authenticated', 'public.card_placements', 'current_step_id', 'update');")" = "f" ] \
 	&& ok 'current_step_id est FERMÉE à authenticated — la garde n’est pas contournable' \
 	|| fail 'current_step_id reste ouverte : la garde est facultative'
 
-[ "$(psql_db -c "select has_column_privilege('authenticated', 'public.cards', 'entered_step_at', 'update');")" = "f" ] \
+[ "$(psql_db -c "select has_column_privilege('authenticated', 'public.card_placements', 'entered_step_at', 'update');")" = "f" ] \
 	&& ok 'entered_step_at est fermée : docs/SPEC-cards.md §2.9 la réserve à move_card' \
 	|| fail 'entered_step_at reste ouverte'
 
@@ -530,7 +532,7 @@ psql_db -c "delete from public.card_comments
 
 # --- ligne m : la garde n'est pas contournable -------------------------------------------------
 etape_avant=$(etape_de "$CARD_C3"); position_avant=$(position_de "$CARD_C3"); instant_avant=$(instant_de "$CARD_C3")
-code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_C3" \
+code=$(http PATCH "$API/rest/v1/card_placements?card_id=eq.$CARD_C3" \
 	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $JETON_ADMIN" \
 	-H 'Content-Type: application/json' \
 	-d "$(jq -nc --arg s "$ETAPE_PERDU" '{current_step_id: $s}')")
@@ -544,7 +546,7 @@ constater_inchangee "$CARD_C3" "$etape_avant" "$position_avant" "$instant_avant"
 
 # INC-026, quatrième occurrence : le `hint` divulgue la commande GRANT à exécuter. Comportement de
 # PostgREST et non du produit — constaté, non masqué, pour que sa disparition soit remarquée.
-jq -r '.hint // empty' "$CORPS" | grep -q 'GRANT UPDATE ON public.cards' \
+jq -r '.hint // empty' "$CORPS" | grep -q 'GRANT UPDATE ON public.card_placements' \
 	&& ok 'INC-026 — le hint de PostgREST divulgue la commande GRANT : constaté, non masqué' \
 	|| fail 'INC-026 — le hint attendu a changé ; l’entrée doit être révisée'
 
@@ -566,7 +568,7 @@ else
 	fail 'la migration échoue au rejeu'
 fi
 
-[ "$(psql_db -c "select has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update');")" = "f" ] \
+[ "$(psql_db -c "select has_column_privilege('authenticated', 'public.card_placements', 'current_step_id', 'update');")" = "f" ] \
 	&& ok 'le rejeu laisse current_step_id fermée' \
 	|| fail 'le rejeu a rouvert current_step_id'
 
@@ -599,7 +601,8 @@ rejouer_tap() {
 }
 
 # --- dégradation a : le privilège de colonne est rendu ----------------------------------------
-psql_db -c "grant update on public.cards to authenticated;" >/dev/null
+# `CRM-111` T2.4.5 : la colonne gardée est celle du RATTACHEMENT.
+psql_db -c "grant update on public.card_placements to authenticated;" >/dev/null
 echecs=$(rejouer_tap)
 [ "$echecs" -gt 0 ] \
 	&& ok "dégradation a (privilège de colonne rendu) — la suite pgTAP échoue : $echecs assertion(s)" \

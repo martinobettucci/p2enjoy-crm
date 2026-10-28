@@ -57,7 +57,9 @@ create or replace function pg_temp.lus() returns text language sql as $$
 $$;
 -- Les affaires lues dont la capacité diffère de celle de leur channel : doit être vide.
 create or replace function pg_temp.divergences() returns bigint language sql as $$
-	select count(*) from public.cards k join public.channels c on c.id = k.channel_id
+	-- `CRM-111` T2.4.5 : l'affaire se compare au channel de son rattachement.
+	select count(*) from public.cards k join public.card_placements p on p.card_id = k.id
+	  join public.channels c on c.id = p.channel_id
 	 where k.ecriture_permise is distinct from c.ecriture_permise
 $$;
 
@@ -121,18 +123,18 @@ select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
 select is(pg_temp.divergences(), 0::bigint, 'business developer : chaque affaire porte la capacité de son channel');
-select ok(exists (select 1 from public.cards k
-                   where k.channel_id = '5eed0000-0000-4000-8000-000000000035' and not k.ecriture_permise),
+select ok(exists (select 1 from public.cards k join public.card_placements p on p.card_id = k.id
+                   where p.channel_id = '5eed0000-0000-4000-8000-000000000035' and not k.ecriture_permise),
           'business developer : une affaire de « maintenance » est en lecture seule');
 select pg_temp.redevenir_proprietaire();
 
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');
 select is(pg_temp.divergences(), 0::bigint, 'lectrice : chaque affaire porte la capacité de son channel');
-select ok(exists (select 1 from public.cards k
-                   where k.channel_id = '5eed0000-0000-4000-8000-000000000031' and k.ecriture_permise),
+select ok(exists (select 1 from public.cards k join public.card_placements p on p.card_id = k.id
+                   where p.channel_id = '5eed0000-0000-4000-8000-000000000031' and k.ecriture_permise),
           'lectrice : une affaire de « prospection » est modifiable');
-select ok(not exists (select 1 from public.cards k
-                       where k.channel_id <> '5eed0000-0000-4000-8000-000000000031' and k.ecriture_permise),
+select ok(not exists (select 1 from public.cards k join public.card_placements p on p.card_id = k.id
+                       where p.channel_id <> '5eed0000-0000-4000-8000-000000000031' and k.ecriture_permise),
           'lectrice : aucune autre affaire n''est modifiable');
 select pg_temp.redevenir_proprietaire();
 

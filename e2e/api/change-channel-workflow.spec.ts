@@ -5,9 +5,12 @@
 // @verifies CLAUDE.md §8 et §10 — aucune trace fabriquée, backend réellement opposable
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.7 : la RPC remappe les RATTACHEMENTS du channel et les rend
 //           (`SETOF card_placements`, docs/JOURNAL.md décision 738 ; docs/SPEC-rattachements.md §5)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : les fixtures posent les affaires puis leurs rattachements ; le
+//           refus se constate sur les rattachements, inchangés (docs/SPEC-rattachements.md §3.2)
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { posterAffaire } from '../affaire'
 
 const RPC = '/rest/v1/rpc/change_channel_workflow'
 const CHANNELS = '/rest/v1/channels'
@@ -128,7 +131,8 @@ test.describe('CRM-019 — changement atomique du workflow d’un channel', () =
 			expect(creation.status(), await creation.text()).toBe(201)
 		}
 
-		const creationCards = await request.post(`${URL_API}${CARDS}`, {
+		// `CRM-111` T2.4.5 : les trois affaires, puis leurs trois rattachements.
+		const creationCards = await posterAffaire(request, `${URL_API}${CARDS}`, {
 			headers: { ...enTetesService(), Prefer: 'return=minimal' },
 			data: [
 				{
@@ -328,7 +332,7 @@ test.describe('CRM-019 — changement atomique du workflow d’un channel', () =
 		})
 
 		const cards = await request.get(
-			`${URL_API}${CARDS}?channel_id=eq.${CHANNEL}&select=id,workflow_id,current_step_id&order=id`,
+			`${URL_API}/rest/v1/card_placements?channel_id=eq.${CHANNEL}&select=id:card_id,workflow_id,current_step_id&order=card_id`,
 			{ headers: enTetesService() },
 		)
 		const lignes = (await cards.json()) as Array<{ workflow_id: string }>

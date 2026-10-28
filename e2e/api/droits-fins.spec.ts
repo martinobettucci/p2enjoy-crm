@@ -21,6 +21,7 @@
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { COMPTES_SEED, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { posterAffaire } from '../affaire'
 
 /** Le workspace du seed socle (`docs/SPEC-seed.md` §2). */
 const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
@@ -421,7 +422,7 @@ test.describe('D5 — décision 107 : l’écriture avec `return=representation`
 							slug,
 						}
 
-			const reponse = await request.post(`/rest/v1/${table}`, {
+			const reponse = await posterAffaire(request, `/rest/v1/${table}`, {
 				headers: {
 					...enTetesAuthentifies(jeton),
 					'Content-Type': 'application/json',

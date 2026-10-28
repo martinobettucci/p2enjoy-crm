@@ -152,8 +152,9 @@ select col_is_unique('public', 'cards', array['id', 'workspace_id'],
 	'`cards (id, workspace_id)` est unique — ajoutée par `CRM-043`, condition de la clé étrangère '
 	'composite des commentaires. Ne change AUCUN comportement de `cards`');
 
-select col_is_unique('public', 'cards', array['id', 'workflow_id'],
-	'`cards (id, workflow_id)` est toujours là — celle de `CRM-036` : cette unité n''a pas défait '
+-- RÉVISÉE PAR `CRM-111` T2.4.5 : l'unicité de `CRM-036` vit désormais sur le rattachement.
+select col_is_unique('public', 'card_placements', array['id', 'workflow_id'],
+	'`card_placements (id, workflow_id)` est toujours là — l''héritière de celle de `CRM-036` : cette unité n''a pas défait '
 	'ce que l''autre avait posé');
 
 select has_fk('public', 'card_comments', '`card_comments` porte une clé étrangère');

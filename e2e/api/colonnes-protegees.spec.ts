@@ -12,6 +12,8 @@
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement de
 //           l'affaire (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : l'insertion directe d'une affaire sans rattachement est refusée
+//           par l'invariant (docs/SPEC-rattachements.md §3.1 ; décisions 768 et 770)
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé — et
@@ -32,6 +34,7 @@
 
 import { expect, test } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { posterAffaire } from '../affaire'
 
 const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
@@ -280,9 +283,23 @@ test.describe('CRM-013 — ce que l’unité ne devait PAS changer', () => {
 		const contexte = await playwright.request.newContext({
 			extraHTTPHeaders: enTetesAuthentifies(jetonAdmin),
 		})
+		const service = await playwright.request.newContext({ extraHTTPHeaders: enTetesService() })
 		let sonde: string | undefined
 		try {
-			const reponse = await contexte.post(CARDS, {
+			// `CRM-111` T2.4.5 (décisions 768 et 770) : une affaire naît avec son rattachement. L'insertion DIRECTE d'un
+			// utilisateur, sans rattachement, est refusée par l'invariant à la validation — un utilisateur crée par
+			// `creer_affaire`, qui ne prend pas d'adresse.
+			const directe = await contexte.post(CARDS, {
+				headers: { Prefer: 'return=minimal' },
+				data: { workspace_id: WORKSPACE_SEED, title: 'tst-crm013-insertion', email_local_part: 'c-zzzzzzzz' },
+			})
+			expect(directe.status(), 'l’insertion directe est refusée par l’invariant').toBe(400)
+			expect(((await directe.json()) as { code: string; message: string }).message).toBe('card_without_placement')
+
+			// §4.4.2, décision 140 : le privilège `INSERT` reste **de table**, parce que le trigger de `CRM-040` écrase
+			// la valeur fournie — y compris par la clé de service, qui pose ici l'affaire et son rattachement : il ne juge
+			// pas l'appelant.
+			const reponse = await posterAffaire(service, CARDS, {
 				headers: { Prefer: 'return=representation' },
 				data: {
 					workspace_id: WORKSPACE_SEED,
@@ -293,9 +310,6 @@ test.describe('CRM-013 — ce que l’unité ne devait PAS changer', () => {
 					email_local_part: 'c-zzzzzzzz',
 				},
 			})
-			// §4.4.2, décision 140 : le privilège `INSERT` reste **de table**, parce que le trigger
-			// de `CRM-040` écrase déjà la valeur fournie. Fermer ce chemin refuserait une requête
-			// que le produit accepte sans dommage.
 			expect(reponse.status(), 'l’insertion reste ACCEPTÉE').toBe(201)
 			const ligne = premiere((await reponse.json()) as Card[], 'card insérée')
 			sonde = ligne.id
@@ -304,15 +318,9 @@ test.describe('CRM-013 — ce que l’unité ne devait PAS changer', () => {
 				FORME_ADRESSE,
 			)
 		} finally {
-			if (sonde) {
-				// `authenticated` n'a pas le privilège `DELETE` sur `cards` : le ménage passe par la
-				// clé de service, ce qui est dit plutôt que masqué.
-				const service = await playwright.request.newContext({
-					extraHTTPHeaders: enTetesService(),
-				})
-				await service.delete(`${CARDS}?id=eq.${sonde}`)
-				await service.dispose()
-			}
+			// `authenticated` n'a pas le privilège `DELETE` sur `cards` : le ménage passe par la clé de service.
+			if (sonde) await service.delete(`${CARDS}?id=eq.${sonde}`)
+			await service.dispose()
 			await contexte.dispose()
 		}
 	})
@@ -386,14 +394,15 @@ test.describe('CRM-013 — les refus de LECTURE restent zéro ligne, non une err
 			extraHTTPHeaders: enTetesAuthentifies(jetonViewer),
 		})
 		try {
+			// `CRM-111` T2.4.5 : le channel d'une affaire est celui de son rattachement.
 			const existantes = await service.get(
-				`${CARDS}?channel_id=eq.${CHANNEL_GRANDS_COMPTES}&select=id`,
+				`/rest/v1/card_placements?channel_id=eq.${CHANNEL_GRANDS_COMPTES}&select=id:card_id`,
 			)
 			const total = ((await existantes.json()) as Card[]).length
 			expect(total, 'le channel doit porter des cards, sinon l’assertion suivante est vide')
 				.toBeGreaterThan(0)
 
-			const reponse = await contexte.get(`${CARDS}?channel_id=eq.${CHANNEL_GRANDS_COMPTES}&select=id`)
+			const reponse = await contexte.get(`/rest/v1/card_placements?channel_id=eq.${CHANNEL_GRANDS_COMPTES}&select=id:card_id`)
 			expect(reponse.status()).toBe(200)
 			expect(await reponse.json(), 'droit fin `none` sur le track : zéro ligne').toEqual([])
 		} finally {

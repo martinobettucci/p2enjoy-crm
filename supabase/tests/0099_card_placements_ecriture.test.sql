@@ -37,16 +37,13 @@ begin
 end;
 $$;
 
+-- RÉVISÉE PAR `CRM-111` T2.4.5 : l'affaire ne porte plus de colonnes de rattachement, et les miroirs sont retirés ; la
+-- mesure compte les affaires qui n'ont pas exactement UN rattachement.
 create or replace function pg_temp.divergences()
 returns bigint language sql stable as $$
 	select count(*)
 	  from public.cards c
-	  join public.card_placements p on p.card_id = c.id
-	 where (c.channel_id, c.workflow_id, c.current_step_id, c.position, c.owner_id, c.amount, c.probability_override,
-	        c.next_action, c.next_action_at, c.entered_step_at, c.health_score, c.snoozed_until, c.archived_at)
-	       is distinct from
-	       (p.channel_id, p.workflow_id, p.current_step_id, p.position, p.owner_id, p.amount, p.probability_override,
-	        p.next_action, p.next_action_at, p.entered_step_at, p.health_score, p.snoozed_until, p.archived_at);
+	 where (select count(*) from public.card_placements q where q.card_id = c.id) <> 1;
 $$;
 
 create temp table t_debut as select clock_timestamp() as t;
@@ -70,10 +67,12 @@ $$;
 select is(
 	(select array_agg(tgname::text order by tgname) from pg_trigger
 	  where tgrelid = 'public.card_placements'::regclass and not tgisinternal),
-	array['card_placements_add_step_items', 'card_placements_mirror_to_card', 'card_placements_set_updated_at',
-	      'card_placements_write_events'],
-	'quatre déclencheurs sur le rattachement : la timeline, le miroir inverse, l''horodatage, et depuis `CRM-068` T1 '
-	'l''ajout des points de checklist de l''étape (docs/SPEC-checklists.md §3.3)');
+	array['card_placements_add_step_items', 'card_placements_attribuer_position',
+	      'card_placements_au_moins_un_rattachement', 'card_placements_evenement_creation',
+	      'card_placements_set_updated_at', 'card_placements_write_events'],
+	'six déclencheurs sur le rattachement : la timeline, l''horodatage, l''ajout des points de checklist de l''étape '
+	'(`CRM-068` T1) et, depuis `CRM-111` T2.4.5, le rang, l''invariant « au moins un rattachement » et l''événement '
+	'`created` ; le miroir inverse est retiré');
 select hasnt_trigger('public', 'cards', 'card_events_apres_maj_sommeil',
 	'le déclencheur de sommeil de `cards` est retiré : le rattachement écrit `snoozed` et `woken`');
 select has_trigger('public', 'cards', 'card_events_apres_maj',
@@ -96,14 +95,16 @@ select ok(not has_table_privilege('authenticated', 'public.card_placements', 'IN
 
 -- 2.1 Le chemin de `cards`, que gardent le propriétaire et la clé de service (le seed) depuis T2.3.2. Le rattachement
 --     suit (T2.1), et c'est LUI qui écrit l'événement. L'acteur est alors le service, et l'écriture se fait en propriétaire.
-update public.cards set owner_id = '5eed0000-0000-4000-8000-000000000011'
- where id = '5eed0000-0000-4000-8000-0000000000c4';
+-- RÉVISÉ PAR `CRM-111` T2.4.5 : le responsable n'est plus une colonne de l'affaire ; le propriétaire l'écrit sur le
+-- rattachement, et c'est toujours lui qui écrit l'événement.
+update public.card_placements set owner_id = '5eed0000-0000-4000-8000-000000000011'
+ where card_id = '5eed0000-0000-4000-8000-0000000000c4';
 select pg_temp.proprietaire();
 select results_eq(
 	$$select * from pg_temp.evenements('5eed0000-0000-4000-8000-0000000000c4')$$,
 	$$values ('assigned'::text, app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'))$$,
-	'par `cards` : UN événement `assigned`, qui désigne le rattachement');
-select is(pg_temp.divergences(), 0::bigint, '…et l''affaire et son rattachement sont égaux');
+	'par le propriétaire : UN événement `assigned`, qui désigne le rattachement');
+select is(pg_temp.divergences(), 0::bigint, '…et l''affaire garde exactement un rattachement');
 
 -- 2.2 Le chemin nouveau : le rattachement, écrit directement. L'affaire suit par le miroir inverse.
 truncate t_debut; insert into t_debut values (clock_timestamp());
@@ -114,10 +115,10 @@ select pg_temp.proprietaire();
 select results_eq(
 	$$select * from pg_temp.evenements('5eed0000-0000-4000-8000-0000000000c4')$$,
 	$$values ('archived'::text, app.card_first_placement('5eed0000-0000-4000-8000-0000000000c4'))$$,
-	'par le rattachement : UN événement `archived` — le miroir inverse n''en écrit pas un second');
-select is(pg_temp.divergences(), 0::bigint, '…et l''affaire a suivi : archivage et prochaine action');
-select is((select next_action from public.cards where id = '5eed0000-0000-4000-8000-0000000000c4'), 'Clore le dossier',
-	'(témoin) la colonne de l''affaire porte bien la valeur écrite sur le rattachement');
+	'par le rattachement : UN événement `archived`, et un seul');
+select is(pg_temp.divergences(), 0::bigint, '…et l''affaire garde exactement un rattachement');
+select is((select next_action from public.card_placements where card_id = '5eed0000-0000-4000-8000-0000000000c4'),
+	'Clore le dossier', '(témoin) le rattachement porte bien la valeur écrite');
 
 truncate t_debut; insert into t_debut values (clock_timestamp());
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
@@ -154,7 +155,7 @@ select results_eq(
 	$$select type from pg_temp.evenements('5eed0000-0000-4000-8000-0000000000c2')$$,
 	$$values ('moved'::text)$$,
 	'`move_card` : UN événement `moved`');
-select is(pg_temp.divergences(), 0::bigint, 'après les gestes, l''affaire et son rattachement restent égaux');
+select is(pg_temp.divergences(), 0::bigint, 'après les gestes, l''affaire garde exactement un rattachement');
 
 -- 2.4 La corbeille reste un événement de l'AFFAIRE, sans rattachement.
 truncate t_debut; insert into t_debut values (clock_timestamp());
@@ -190,8 +191,8 @@ select is((select p.ecriture_permise from public.card_placements p
 	'…et vraie sur un rattachement de `refonte`, qu''il écrit');
 update public.card_placements set next_action = 'Rappeler mardi' where card_id = '5eed0000-0000-4000-8000-0000000000c4';
 select pg_temp.proprietaire();
-select is((select next_action from public.cards where id = '5eed0000-0000-4000-8000-0000000000c4'), 'Rappeler mardi',
-	'il écrit le rattachement d''un channel qu''il écrit, et l''affaire suit');
+select is((select next_action from public.card_placements where card_id = '5eed0000-0000-4000-8000-0000000000c4'),
+	'Rappeler mardi', 'il écrit le rattachement d''un channel qu''il écrit');
 
 -- La lectrice n'écrit rien.
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');

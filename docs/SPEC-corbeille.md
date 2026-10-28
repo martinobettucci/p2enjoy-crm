@@ -902,6 +902,13 @@ dont l'affaire **n'est pas** détruite avec lui — c'est-à-dire dont `cards.ch
 définition suit exactement la purge (§8.3), qui détruit les affaires des channels du track : un rattachement de
 `CRM-111` dans un autre channel ne change rien à cette règle.
 
+*Révisé par `CRM-111` T2.4.5 (migration `0134`, décision 768).* L'affaire n'a plus de `channel_id` : la purge et la
+dépense bloquante partagent un seul prédicat, `app.cartes_detruites_avec_channels(uuid[])` — une affaire est détruite avec
+un ensemble de channels lorsque **tous** ses rattachements y sont —, et `app.affaire_detruite_avec_track(card, track)`, qui
+l'applique aux channels d'un track. Tant qu'une affaire n'a qu'un rattachement, la règle rend exactement celle d'avant. Le
+cas d'une affaire rattachée aussi hors du track ne se présente qu'avec `CRM-111` T3 ; il est soumis au responsable avant
+T3, et ne changera que ce prédicat.
+
 `public.trash_blocking_costs(p_track uuid)` les rend : identifiant de la ligne, libellé, estimé, réel, soldée ou non,
 l'affaire (identifiant, titre), le budget et l'occurrence actuels (identifiant, nom, clôturé ou non). `SECURITY
 DEFINER`, réservée à l'**administrateur de l'espace** du track (`42501 reserved_to_admins`), `P0002 track_not_found` hors

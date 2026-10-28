@@ -521,10 +521,9 @@ describe('les quatre lectures du board (§7.2)', () => {
 	it('plonge les étiquettes de l’affaire, triées par nom (CRM-069 T2)', () => {
 		const carte = carteDepuisRattachement({
 			id: 'r', created_at: 't', position: 1, amount: null, next_action: null, current_step_id: 's', entered_step_at: 't',
-			owner_id: null, snoozed_until: null, responsable: null,
+			owner_id: null, snoozed_until: null, responsable: null, health_momentum: null, health_commercial: null,
 			affaire: {
-				id: 'c', title: 'T', description: null, currency: 'EUR', email_local_part: 'c', health_momentum: null,
-				health_commercial: null,
+				id: 'c', title: 'T', description: null, currency: 'EUR', email_local_part: 'c',
 				etiquettes: [
 					{ etiquette: { id: 'e2', name: 'Public', color: 'brand', archived_at: null } },
 					{ etiquette: { id: 'e1', name: 'Partenaire', color: 'success', archived_at: '2026-01-01' } },
@@ -549,14 +548,14 @@ describe('les quatre lectures du board (§7.2)', () => {
 			owner_id: 'p-1',
 			snoozed_until: null,
 			responsable: null,
+			health_momentum: null,
+			health_commercial: null,
 			affaire: {
 				id: 'card-1',
 				title: 'Refonte',
 				description: null,
 				currency: 'EUR',
 				email_local_part: 'c-abcdefgh',
-				health_momentum: null,
-				health_commercial: null,
 			},
 		})
 		expect(carte).toEqual({
@@ -904,7 +903,9 @@ describe('le compte de checklist de la carte (CRM-068 T3a, docs/DESIGN_SYSTEM.md
 			snoozed_until: null,
 			responsable: null,
 			points,
-			affaire: { id: 'c1', title: 'A', description: null, currency: 'EUR', email_local_part: 'a', health_momentum: null, health_commercial: null },
+			health_momentum: null,
+			health_commercial: null,
+			affaire: { id: 'c1', title: 'A', description: null, currency: 'EUR', email_local_part: 'a' },
 		}
 		expect(carteDepuisRattachement(ligne).checklist).toEqual({ coches: 1, total: 2 })
 		expect(carteDepuisRattachement({ ...ligne, points: [] })).not.toHaveProperty('checklist')

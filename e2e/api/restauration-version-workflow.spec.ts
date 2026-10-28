@@ -8,6 +8,8 @@
 // @verifies docs/SPEC-permissions-rls.md §7 (preuve de refus n° 3 au niveau des versions)
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : les fixtures posent l'affaire puis son rattachement ; l'étape
+//           remappée se relit sur le rattachement (docs/SPEC-rattachements.md §3.2)
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // trois profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé :
@@ -34,6 +36,7 @@
 // deux versions de plus au workflow par défaut du seed à chaque exécution.
 
 import { randomUUID } from 'node:crypto'
+import { posterAffaire, supprimerAffairesDuChannel } from '../affaire'
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { COMPTES_SEED, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 
@@ -174,7 +177,8 @@ async function cardJetable(
 	titre: string,
 ): Promise<string> {
 	const id = randomUUID()
-	const reponse = await api.post(CARDS, {
+	// `CRM-111` T2.4.5 : l'affaire, puis son rattachement, qui porte l'étape.
+	const reponse = await posterAffaire(api, CARDS, {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
 		data: {
 			id,
@@ -239,7 +243,7 @@ async function rendreLaBase(
 	channelId?: string,
 ): Promise<void> {
 	if (channelId) {
-		await api.delete(`${CARDS}?channel_id=eq.${channelId}`, { headers: enTetesService() })
+		await supprimerAffairesDuChannel(api, channelId, enTetesService())
 		await api.delete(`${CHANNELS}?id=eq.${channelId}`, { headers: enTetesService() })
 	}
 	await api.delete(`${WF}?id=eq.${workflowId}`, { headers: enTetesService() })
@@ -451,7 +455,7 @@ test.describe('N3 — le plan rejoué, son refus et son instruction (lignes e, f
 
 			// LE REFUS N'A RIEN ÉCRIT : l'affaire est relue sur son étape d'origine. Un refus qui
 			// laisse une trace n'est pas un refus.
-			const apresRefus = await request.get(`${CARDS}?id=eq.${premiere}&select=current_step_id`, {
+			const apresRefus = await request.get(`/rest/v1/card_placements?card_id=eq.${premiere}&select=current_step_id`, {
 				headers: enTetesService(),
 			})
 			expect(((await apresRefus.json()) as { current_step_id: string }[])[0]?.current_step_id).toBe(
@@ -469,7 +473,7 @@ test.describe('N3 — le plan rejoué, son refus et son instruction (lignes e, f
 			// RELU EN BASE, et non déduit du compteur : les deux affaires sont sur l'étape nommée par
 			// l'instruction, et sur aucune autre.
 			const deplacees = await request.get(
-				`${CARDS}?id=in.(${premiere},${seconde})&select=id,current_step_id`,
+				`/rest/v1/card_placements?card_id=in.(${premiere},${seconde})&select=id:card_id,current_step_id`,
 				{ headers: enTetesService() },
 			)
 			const lignes = (await deplacees.json()) as { id: string; current_step_id: string }[]

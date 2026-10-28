@@ -16889,7 +16889,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           d'interface, harnais `verify-*` (24 scripts). Les **créations** d'affaires des preuves (12 fichiers pgTAP, 4
           specs API) restent celles de l'affaire, dont le miroir pose le rattachement, et passent à T2.4.5 avec le seed :
           `cards` porte ses colonnes non nulles jusque-là.
-        - [ ] **T2.4.5 — le retrait en base** *(exécution précisée par la décision 768 : création par
+        - [~] **T2.4.5 — le retrait en base** *(exécution précisée par la décision 768 : création par
           `app.poser_premier_rattachement` et invariant différé, événement `created` à la validation, rang par déclencheur
           du rattachement, prédicat de purge partagé, santé sur le rattachement, politiques de `cards`)* : colonnes, miroirs et index de `cards` retirés ; les dix fonctions
           réécrites ; `creer_affaire` écrit le rattachement ; le seed et les preuves (pgTAP, API) postent l'affaire
@@ -16904,6 +16904,18 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           reprendre `checklist_checked` et `checklist_unchecked` ; le déclencheur de copie des points d'étape sur
           `card_placements` est conservé tel quel ; `move_card` garde l'étape 6 bis de la migration `0128`
           (`checklist_incomplete`), toute réécriture partant de la définition en base.
+          *État au 2026-10-28 (journal, « `CRM-111` T2.4.5 — le retrait en base, et la campagne qui le suit »)* :
+          migration `0134` écrite et appliquée en développement ; types régénérés ; webapp, connecteur, seed, 24 fichiers
+          pgTAP, specs d'API et d'interface convertis, assistant commun `e2e/affaire.ts` ; preuves de miroir révisées en
+          preuves du retrait ; harnais `verify-*` convertis (cards, move-card, snooze, colonnes-protegees,
+          change-channel-workflow, board) ; SCHEMA, PROD_MIGRATIONS, DAT, SPEC-rattachements, SPEC-corbeille §9.1,
+          SPEC-recherche §5.4, CHANGELOG. **Vérifié** : API 1270/1273 (trois rouges étrangers, `0130` et un résidu du
+          connecteur), interface 963/1011 puis les fichiers corrigés 164/172 (huit rouges étrangers, journal), mail 46/46,
+          pgTAP 113/114 (`0001` n° 7, étranger), pytest du connecteur 274, unitaires 4918/4919 (instable de `CRM-118`),
+          typecheck propre ; harnais sans reconstruction verts (formulaire, snooze, board, ma-journee,
+          rendu-modeles-emails, ce dernier corrigé : sa source est la dernière autorité du rendu). **Reste** : les huit
+          harnais qui reconstruisent la base (timeline, move-card, cards, colonnes-protegees, valeurs-champs,
+          move-card-to-channel, change-channel-workflow, relances), avec l'accord des sessions actives.
       *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses

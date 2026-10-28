@@ -31,6 +31,7 @@ import {
 import { randomUUID } from 'node:crypto'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
+import { posterAffaire } from '../affaire'
 
 const ADMIN = 'admin@p2enjoy.test'
 const VIEWER = 'viewer@p2enjoy.test'
@@ -164,7 +165,8 @@ test('le viewer ouvre les actions d’une carte : le déplacement est ÉTEINT, a
 	await expect(motif).toContainText('Vos droits ne vous permettent pas d’en modifier les affaires')
 
 	const relecture = await request.get(
-		urlRest('cards', { id: `eq.${CARD_MAINTENANCE}`, select: 'id,current_step_id' }),
+		// `CRM-111` T2.4.5 : l'étape est celle du rattachement de l'affaire.
+		urlRest('card_placements', { card_id: `eq.${CARD_MAINTENANCE}`, select: 'id:card_id,current_step_id' }),
 		{ headers: enTetesService() },
 	)
 	expect(relecture.status(), await relecture.text()).toBe(200)
@@ -179,7 +181,7 @@ test('l’administratrice déplace une card d’essai et la base confirme la nou
 }) => {
 	const idCard = randomUUID()
 	const titre = `tst-crm011 déplacement ${idCard.slice(0, 8)}`
-	const creation = await request.post(urlRest('cards'), {
+	const creation = await posterAffaire(request, urlRest('cards'), {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
 		data: {
 			id: idCard,
@@ -214,7 +216,7 @@ test('l’administratrice déplace une card d’essai et la base confirme la nou
 		)
 
 		const relecture = await request.get(
-			urlRest('cards', { id: `eq.${idCard}`, select: 'id,current_step_id' }),
+			urlRest('card_placements', { card_id: `eq.${idCard}`, select: 'id:card_id,current_step_id' }),
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect(relecture.status(), await relecture.text()).toBe(200)

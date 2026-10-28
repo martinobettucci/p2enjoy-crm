@@ -63,8 +63,11 @@ begin
 	values (pg_temp.id(w), pg_temp.id('W'), pg_temp.id(w || '_A'), pg_temp.id(w || '_B'));
 	insert into public.channels (id, workspace_id, track_id, name, slug, workflow_id, position)
 	values (pg_temp.id(w || '_CH'), pg_temp.id('W'), pg_temp.id('TRACK'), 'inc-270 ' || w, 'inc-270-' || lower(w), pg_temp.id(w), 99);
-	insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title, position)
-	values (pg_temp.id(w || '_CARD'), pg_temp.id('W'), pg_temp.id(w || '_CH'), pg_temp.id(w), pg_temp.id(w || '_B'), 'inc-270 affaire', 1);
+	-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement.
+	insert into public.cards (id, workspace_id, title)
+	values (pg_temp.id(w || '_CARD'), pg_temp.id('W'), 'inc-270 affaire');
+	insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+	values (pg_temp.id(w || '_CARD'), pg_temp.id('W'), pg_temp.id(w || '_CH'), pg_temp.id(w), pg_temp.id(w || '_B'), 1);
 end;
 $$;
 grant execute on function pg_temp.workflow(text) to authenticated;

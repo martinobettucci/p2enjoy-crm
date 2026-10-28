@@ -22,8 +22,9 @@ insert into pg_temp_ref select 'etape', current_step_id from public.card_placeme
 insert into pg_temp_ref
 select 'noeud', ws.node_id from public.workflow_steps ws where ws.id = (select valeur from pg_temp_ref where nom = 'etape');
 
-create or replace function pg_temp.carte() returns public.cards language sql as $$
-	select c from public.cards c where c.id = (select valeur from pg_temp_ref where nom = 'carte');
+-- RÉVISÉE PAR `CRM-111` T2.4.5 (décision 768) : les scores se calculent sur le RATTACHEMENT de l'affaire.
+create or replace function pg_temp.carte() returns public.card_placements language sql as $$
+	select p from public.card_placements p where p.card_id = (select valeur from pg_temp_ref where nom = 'carte');
 $$;
 create or replace function pg_temp.m() returns jsonb language sql as $$ select public.health_momentum(pg_temp.carte()); $$;
 create or replace function pg_temp.s() returns jsonb language sql as $$ select public.health_commercial(pg_temp.carte()); $$;
@@ -48,12 +49,12 @@ update public.card_placements set entered_step_at = now() - interval '3 days', n
 -- 1. Les objets
 -- =============================================================================================
 
-select has_function('public', 'health_momentum', array['cards'], '1 — la dynamique est une colonne calculée de cards');
-select has_function('public', 'health_commercial', array['cards'], '2 — la santé commerciale aussi');
+select has_function('public', 'health_momentum', array['card_placements'], '1 — la dynamique est une colonne calculée du rattachement');
+select has_function('public', 'health_commercial', array['card_placements'], '2 — la santé commerciale aussi');
 select is((select bool_or(prosecdef) from pg_proc where proname in ('health_momentum', 'health_commercial',
             'health_context', 'health_last_contact')), false,
 	'3 — toutes `SECURITY INVOKER` : le dernier contact se lit sous la RLS de l''appelant');
-select ok(not has_function_privilege('anon', 'public.health_momentum(public.cards)', 'execute'),
+select ok(not has_function_privilege('anon', 'public.health_momentum(public.card_placements)', 'execute'),
 	'4 — l''anonyme ne l''exécute pas');
 select is(array[app.health_tier(39), app.health_tier(40), app.health_tier(69), app.health_tier(70)],
 	array['danger', 'watch', 'watch', 'healthy'], '5 — les paliers à 39, 40, 69 et 70 (décision 708)');

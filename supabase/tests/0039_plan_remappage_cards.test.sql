@@ -187,9 +187,8 @@ values ('d0000000-0000-4000-8000-000000000010', '5eed0000-0000-4000-8000-0000000
 -- QUATRE affaires, dont une ARCHIVÉE et une en CORBEILLE. Les deux dernières ne sont pas un décor :
 -- elles portent un `current_step_id` réel et une clé étrangère opposable, et une restauration qui
 -- les ignorerait échouerait en base (docs/SPEC-cards.md §4).
-insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title,
-                          position, entered_step_at, archived_at, deleted_at)
-values ('d0000000-0000-4000-8000-0000000000a1', '5eed0000-0000-4000-8000-000000000001',
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (values ('d0000000-0000-4000-8000-0000000000a1', '5eed0000-0000-4000-8000-000000000001',
         'd0000000-0000-4000-8000-000000000010', 'd0000000-0000-4000-8000-000000000001',
         'd0000000-0000-4000-8000-000000000011', 'tst remappage active', 1,
         '2020-01-01T00:00:00Z', null, null),
@@ -204,7 +203,10 @@ values ('d0000000-0000-4000-8000-0000000000a1', '5eed0000-0000-4000-8000-0000000
        ('d0000000-0000-4000-8000-0000000000a4', '5eed0000-0000-4000-8000-000000000001',
         'd0000000-0000-4000-8000-000000000010', 'd0000000-0000-4000-8000-000000000001',
         'd0000000-0000-4000-8000-000000000011', 'tst remappage corbeille', 4,
-        '2020-01-01T00:00:00Z', null, now());
+        '2020-01-01T00:00:00Z', null, now())) as v(id, workspace_id, channel_id, workflow_id, current_step_id, title, position, entered_step_at, archived_at, deleted_at)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title, deleted_at) select id::uuid, workspace_id::uuid, title, deleted_at::timestamptz from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position, entered_step_at, archived_at)
+select id::uuid, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid, position::numeric, entered_step_at::timestamptz, archived_at::timestamptz from __source;
 
 -- Version 1, publiée par Camille, administratrice, avec le VRAI geste.
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');

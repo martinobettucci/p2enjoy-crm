@@ -1782,18 +1782,28 @@ poser_card_globale() {
 	       created_by: "5eed0000-0000-4000-8000-000000000011",
 	       archived_at: $archive, deleted_at: $corbeille}')
 
-	# `CRM-111` T2.4.3 : tant que `cards` porte ses colonnes de rattachement (non nulles jusqu'au retrait T2.4.5), le
-	# miroir d'insertion pose le rattachement ; T2.4.5 fera poster l'affaire puis son rattachement (décision 746).
+	# `CRM-111` T2.4.5 : l'affaire, puis son rattachement (décisions 746 et 770). La clé de service pose l'une puis
+	# l'autre ; le rattachement converge par l'index « un rattachement par affaire » (`on_conflict=card_id`), qui tient
+	# pendant la bascule.
+	local charge_affaire charge_rattachement adresse
+	charge_affaire=$(jq -c '{id, workspace_id, title, description, currency, created_by, deleted_at}' <<< "$charge")
+	charge_rattachement=$(jq -c '{card_id: .id, workspace_id, channel_id, workflow_id, current_step_id, owner_id,
+	                              amount, position, next_action, next_action_at, archived_at, created_by}' <<< "$charge")
 	code=$(api POST /rest/v1/cards \
 		-H 'Prefer: return=representation,resolution=merge-duplicates' \
-		-d "$charge")
+		-d "$charge_affaire")
 	attendu "$code" "création de la card ${titre:0:28}" 200 201
+	adresse=$(jq -r '.[0].email_local_part // "?"' "$CORPS")
+	code=$(api POST "/rest/v1/card_placements?on_conflict=card_id" \
+		-H 'Prefer: return=minimal,resolution=merge-duplicates' \
+		-d "$charge_rattachement")
+	attendu "$code" "rattachement de la card ${titre:0:28}" 200 201
 
 	if   [ "$corbeille" != '-' ]; then etat='corbeille'
 	elif [ "$archive"   != '-' ]; then etat='archivée'
 	else                               etat='active'
 	fi
-	printf '  %-36s %-10s %s\n' "${titre:0:36}" "$etat" "$(jq -r '.[0].email_local_part // "?"' "$CORPS")"
+	printf '  %-36s %-10s %s\n' "${titre:0:36}" "$etat" "$adresse"
 }
 
 for ligne in "${CARDS[@]}"; do
@@ -1872,14 +1882,23 @@ for ligne in "${CARDS_DERIVE[@]}"; do
 	       created_by: "5eed0000-0000-4000-8000-000000000011",
 	       archived_at: null, deleted_at: null}')
 
-	# `CRM-111` T2.4.3 : tant que `cards` porte ses colonnes de rattachement (non nulles jusqu'au retrait T2.4.5), le
-	# miroir d'insertion pose le rattachement ; T2.4.5 fera poster l'affaire puis son rattachement (décision 746).
+	# `CRM-111` T2.4.5 : l'affaire, puis son rattachement (décisions 746 et 770). La clé de service pose l'une puis
+	# l'autre ; le rattachement converge par l'index « un rattachement par affaire » (`on_conflict=card_id`), qui tient
+	# pendant la bascule.
+	charge_affaire=$(jq -c '{id, workspace_id, title, description, currency, created_by, deleted_at}' <<< "$charge")
+	charge_rattachement=$(jq -c '{card_id: .id, workspace_id, channel_id, workflow_id, current_step_id, owner_id,
+	                              amount, position, next_action, next_action_at, archived_at, created_by}' <<< "$charge")
 	code=$(api POST /rest/v1/cards \
 		-H 'Prefer: return=representation,resolution=merge-duplicates' \
-		-d "$charge")
+		-d "$charge_affaire")
 	attendu "$code" "création de la card ${titre:0:28}" 200 201
+	adresse=$(jq -r '.[0].email_local_part // "?"' "$CORPS")
+	code=$(api POST "/rest/v1/card_placements?on_conflict=card_id" \
+		-H 'Prefer: return=minimal,resolution=merge-duplicates' \
+		-d "$charge_rattachement")
+	attendu "$code" "rattachement de la card ${titre:0:28}" 200 201
 
-	printf '  %-36s %-14s %s\n' "${titre:0:36}" "$cle_noeud" "$(jq -r '.[0].email_local_part // "?"' "$CORPS")"
+	printf '  %-36s %-14s %s\n' "${titre:0:36}" "$cle_noeud" "$adresse"
 done
 
 info "Cards du workflow dérivé : ${#CARDS_DERIVE[@]}, dans « prospection », à deux étapes distinctes"
@@ -5187,8 +5206,9 @@ info "Activités : cinq sur trois affaires, une de chaque type, une corrigée, u
 # @spec CRM-066 (docs/BACKLOG.md) — tranche 4 ; docs/SPEC-analytique.md §13.8 ; docs/JOURNAL.md décisions 723 et 724
 # VÉRIFIÉ, PAS FORCÉ : les scores se calculent à la lecture, et le seed ne peut rien y écrire. Il lit les deux colonnes
 # calculées, sous la clé de service, et exige chaque palier — healthy, watch, danger — pour chacun des deux scores.
-# `CRM-111` T2.4.3 : « ouverte » se lit sur le rattachement — l'affaire en a un non archivé.
-paliers_sante=$(curl -s "$API/rest/v1/cards?select=health_momentum,health_commercial,card_placements!card_placements_card_fk!inner(archived_at)&card_placements.archived_at=is.null&deleted_at=is.null" \
+# `CRM-111` T2.4.5 : les scores se calculent sur le RATTACHEMENT (décision 768) ; « ouvert » est un rattachement non
+# archivé d'une affaire hors corbeille.
+paliers_sante=$(curl -s "$API/rest/v1/card_placements?select=health_momentum,health_commercial,affaire:cards!inner(deleted_at)&archived_at=is.null&affaire.deleted_at=is.null" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
 	| jq -r '[.[] | select(.health_momentum != null) | "m-" + .health_momentum.tier, "s-" + .health_commercial.tier] | unique | join(",")')
 for palier in m-healthy m-watch m-danger s-healthy s-watch s-danger; do

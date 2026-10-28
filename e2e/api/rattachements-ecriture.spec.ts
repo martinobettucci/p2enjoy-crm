@@ -3,9 +3,11 @@
 // @verifies docs/SPEC-rattachements.md §4 (écrire un rattachement, c'est écrire son channel), §5 (timeline), §14 ;
 //           docs/JOURNAL.md décision 705
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`) ; CLAUDE.md §10 (règle d'accès prouvée hors interface)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : les colonnes ont quitté l'affaire (migration 0134) ; le
+//           rattachement est la seule ligne écrite, et nommer une colonne retirée sur `cards` est refusé
+//           (docs/SPEC-rattachements.md §3.2)
 //
-// Avec les jetons réels du seed : le business developer écrit le rattachement d'une affaire de `refonte`, qu'il écrit,
-// et l'affaire suit ; sur Maintenance, où il n'est que `viewer`, son écriture ne touche rien — un refus de POLITIQUE,
+// Avec les jetons réels du seed : le business developer écrit le rattachement d'une affaire de `refonte`, qu'il écrit ; sur Maintenance, où il n'est que `viewer`, son écriture ne touche rien — un refus de POLITIQUE,
 // qui filtre sans erreur. Archiver un rattachement écrit UN événement `archived`, qui le désigne. Les écritures sur une
 // affaire du seed sont restituées dans un `finally` ; l'archivage se joue sur une affaire jetable, retirée ensuite.
 
@@ -30,15 +32,15 @@ async function lire(requete: APIRequestContext, chemin: string): Promise<Ligne[]
 	return (await reponse.json()) as Ligne[]
 }
 
-async function prochaineAction(requete: APIRequestContext, idCard: string): Promise<{ affaire: unknown; rattachement: unknown }> {
-	const [carte] = await lire(requete, `cards?id=eq.${idCard}&select=next_action`)
+/** La prochaine action de l'affaire, celle de son rattachement (`CRM-111` T2.4.5 : l'affaire ne la porte plus). */
+async function prochaineAction(requete: APIRequestContext, idCard: string): Promise<unknown> {
 	const [rattachement] = await lire(requete, `card_placements?card_id=eq.${idCard}&select=next_action`)
-	if (carte === undefined || rattachement === undefined) throw new Error(`${idCard} : le seed est-il appliqué ?`)
-	return { affaire: carte['next_action'], rattachement: rattachement['next_action'] }
+	if (rattachement === undefined) throw new Error(`${idCard} : le seed est-il appliqué ?`)
+	return rattachement['next_action']
 }
 
 test.describe('CRM-111 T2.3.0 — écrire un rattachement par l’API', () => {
-	test('le business developer écrit le rattachement d’un channel qu’il écrit, et l’affaire suit', async ({ request }) => {
+	test('le business developer écrit le rattachement d’un channel qu’il écrit', async ({ request }) => {
 		const h = enTetesAuthentifies(await jetonDe(BIZDEV))
 		const origine = await prochaineAction(request, CARD_C4)
 		try {
@@ -48,14 +50,11 @@ test.describe('CRM-111 T2.3.0 — écrire un rattachement par l’API', () => {
 			})
 			expect(reponse.status(), await reponse.text()).toBe(200)
 			expect(await reponse.json(), 'une ligne écrite').toHaveLength(1)
-			expect(await prochaineAction(request, CARD_C4), 'le miroir inverse a reporté l’écriture sur l’affaire').toEqual({
-				affaire: 'Sonde T2.3.0 — rappeler',
-				rattachement: 'Sonde T2.3.0 — rappeler',
-			})
+			expect(await prochaineAction(request, CARD_C4)).toBe('Sonde T2.3.0 — rappeler')
 		} finally {
-			const restitution = await request.patch(rest(`cards?id=eq.${CARD_C4}`), {
+			const restitution = await request.patch(rest(`card_placements?card_id=eq.${CARD_C4}`), {
 				headers: enTetesService(),
-				data: { next_action: origine.affaire },
+				data: { next_action: origine },
 			})
 			expect(restitution.status(), 'la valeur seedée est restituée').toBe(204)
 		}
@@ -71,10 +70,13 @@ test.describe('CRM-111 T2.3.0 — écrire un rattachement par l’API', () => {
 		})
 		expect(reponse.status(), 'refus de POLITIQUE : un filtrage, non une erreur').toBe(200)
 		expect(await reponse.json(), 'aucune ligne écrite').toEqual([])
-		expect(await prochaineAction(request, CARD_C5), 'ni le rattachement ni l’affaire n’ont changé').toEqual(origine)
+		expect(await prochaineAction(request, CARD_C5), 'le rattachement n’a pas changé').toEqual(origine)
 	})
 
-	test('T2.3.2 — les sept colonnes de rattachement sont FERMÉES sur l’affaire : un refus de privilège, la ligne intacte', async ({
+	// RÉVISÉ PAR `CRM-111` T2.4.5 (décision 51) : fermées par privilège depuis T2.3.2, les sept colonnes sont désormais
+	// RETIRÉES de l'affaire ; le refus n'est plus celui du privilège (`403` / `42501`) mais celui du schéma (`400` /
+	// `PGRST204`), avant toute écriture.
+	test('T2.4.5 — les sept colonnes de rattachement ont quitté l’affaire : un refus du schéma, la ligne intacte', async ({
 		request,
 	}) => {
 		const h = enTetesAuthentifies(await jetonDe(ADMIN))
@@ -89,8 +91,8 @@ test.describe('CRM-111 T2.3.0 — écrire un rattachement par l’API', () => {
 			{ archived_at: new Date().toISOString() },
 		]) {
 			const reponse = await request.patch(rest(`cards?id=eq.${CARD_C4}`), { headers: h, data: charge })
-			expect(reponse.status(), `${Object.keys(charge)[0]} : refus de PRIVILÈGE, non un filtrage`).toBe(403)
-			expect(((await reponse.json()) as { code: string }).code).toBe('42501')
+			expect(reponse.status(), `${Object.keys(charge)[0]} : refus du SCHÉMA, non un filtrage`).toBe(400)
+			expect(((await reponse.json()) as { code: string }).code).toBe('PGRST204')
 		}
 		expect(await prochaineAction(request, CARD_C4), 'rien n’a changé').toEqual(origine)
 	})
@@ -115,8 +117,8 @@ test.describe('CRM-111 T2.3.0 — écrire un rattachement par l’API', () => {
 				`card_events?card_id=eq.${idCard}&type=neq.created&select=type,placement_id&order=created_at,id`,
 			)
 			expect(evenements).toEqual([{ type: 'archived', placement_id: rattachement?.['id'] }])
-			const [carte] = await lire(request, `cards?id=eq.${idCard}&select=archived_at`)
-			expect(carte?.['archived_at'], 'l’affaire est archivée par le miroir inverse').not.toBeNull()
+			const [relu] = await lire(request, `card_placements?card_id=eq.${idCard}&select=archived_at`)
+			expect(relu?.['archived_at'], 'le rattachement est archivé').not.toBeNull()
 		} finally {
 			const retrait = await request.delete(rest(`cards?id=eq.${idCard}`), { headers: enTetesService() })
 			expect(retrait.status(), 'l’affaire jetable est retirée').toBe(204)

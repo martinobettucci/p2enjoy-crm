@@ -11,6 +11,7 @@
 //           s'écrivent sur le rattachement de l'affaire (docs/SPEC-rattachements.md §3.2, §4)
 // @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur `card_placements`
 //           (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies CRM-111 T2.4.5 (docs/BACKLOG.md) — `current_step_id`, fermée par privilège, se prouve sur le rattachement
 //
 // Ces scénarios rejouent une à une les quinze lignes du tableau de `docs/SPEC-cards.md` §15 bis.8,
 // écrit **avant** le code, avec les jetons réels des trois profils seedés.
@@ -62,7 +63,9 @@ test.beforeAll(async () => {
  * Les colonnes de l'en-tête qui appartiennent au RATTACHEMENT de l'affaire depuis `CRM-111` T2.3.2
  * (docs/SPEC-rattachements.md §3.2) : le produit les écrit sur `card_placements`, et elles sont fermées sur `cards`.
  */
-const COLONNES_DU_RATTACHEMENT = new Set(['owner_id', 'amount', 'next_action', 'next_action_at'])
+// `CRM-111` T2.4.5 : `current_step_id` a quitté l'affaire ; la preuve k la vise donc sur le rattachement, où elle reste
+// fermée par privilège.
+const COLONNES_DU_RATTACHEMENT = new Set(['owner_id', 'amount', 'next_action', 'next_action_at', 'current_step_id'])
 
 /**
  * Un `PATCH` tel que le produit l'émet : une colonne, et la représentation demandée — sur la table de la colonne.

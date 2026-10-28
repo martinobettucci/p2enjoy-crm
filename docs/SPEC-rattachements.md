@@ -274,7 +274,9 @@ contacts, mails, coûts, recettes, saisies de temps, notifications.
 
 **Quittent `cards`** : `channel_id`, `workflow_id`, `current_step_id`, `position`, `owner_id`, `amount`,
 `probability_override`, `next_action`, `next_action_at`, `entered_step_at`, `health_score`, `snoozed_until`,
-`archived_at`.
+`archived_at`. **Retirées par la migration `0134` (T2.4.5, livrée en développement le 2026-10-28)**, avec leurs index, leurs
+clés et les deux miroirs ; la création, l'invariant, le rang, l'événement `created`, les scores de santé et le prédicat de
+la purge passent au rattachement (décisions 768 et 770 ; `docs/SCHEMA.md` « Migration `0134` »).
 
 **Une affaire archivée** est une affaire dont **tous** les rattachements sont archivés (décision 639). La corbeille reste
 un geste de l'affaire entière : `deleted_at` est sur `cards`, et une affaire à la corbeille disparaît de tous ses

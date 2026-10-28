@@ -14,6 +14,9 @@
 #           connexion LeLabs et l'échangeur de session, plus par GoTrue
 # @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
 #           (docs/SPEC-rattachements.md §3.2, §5)
+# @verifies CRM-111 T2.4.5 (docs/BACKLOG.md) — un utilisateur crée par `creer_affaire` ; la clé de service pose l'affaire
+#           puis son rattachement ; les clés, la politique de mise à jour et leurs dégradations sont celles du
+#           rattachement (docs/SPEC-rattachements.md §3.1, §3.2, §4 ; décisions 746, 768, 770)
 #
 # Rejoue les preuves exigées par la Definition of Done de `CRM-040` :
 #
@@ -147,6 +150,7 @@ require_env() {
 
 KONG_HTTP_PORT=$(require_env KONG_HTTP_PORT)
 ANON_KEY=$(require_env ANON_KEY)
+SERVICE_KEY=$(require_env SERVICE_ROLE_KEY)
 API="http://127.0.0.1:${KONG_HTTP_PORT}"
 
 failures=0
@@ -179,12 +183,37 @@ jeton_de() {
 	sso_jeton_interne "$API" "$ANON_KEY" "$1" 2>/dev/null || true
 }
 
-poster() {
-	local jeton=$1 charge=$2
-	http POST "$API/rest/v1/cards" \
+# `CRM-111` T2.4.5 (décision 768) : un utilisateur crée une affaire par `creer_affaire`, dans un channel, à l'étape
+# initiale de son workflow ; la fonction rend l'identifiant (`200`), ou `403` à qui n'écrit pas le channel.
+creer() {
+	local jeton=$1 titre=$2 channel=${3:-$CH_GRANDS_COMPTES}
+	http POST "$API/rest/v1/rpc/creer_affaire" \
 		-H "apikey: $ANON_KEY" -H "Authorization: Bearer $jeton" \
-		-H 'Content-Type: application/json' -H 'Prefer: return=representation' \
-		-d "$charge"
+		-H 'Content-Type: application/json' \
+		-d "$(jq -nc --arg c "$channel" --arg t "$titre" '{p_channel: $c, p_titre: $t}')"
+}
+
+adresse_de() {
+	psql_db -c "select email_local_part from public.cards where title = '$1';"
+}
+
+# La clé de service pose une affaire PUIS son rattachement (décisions 746 et 770) : le chemin des fixtures qui
+# choisissent ce que `creer_affaire` ne laisse pas choisir — l'étape, le workflow, l'adresse. Rend le code de la
+# première écriture refusée, ou `201` ; le corps est celui de cette écriture. Un rattachement refusé retire l'affaire.
+poser_service() {
+	local charge=$1 id code
+	id=$(psql_db -c "select gen_random_uuid();")
+	code=$(http POST "$API/rest/v1/cards" \
+		-H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY" \
+		-H 'Content-Type: application/json' -H 'Prefer: return=minimal' \
+		-d "$(jq -c --arg id "$id" '{id: $id, workspace_id, title} + (if has("email_local_part") then {email_local_part} else {} end)' <<<"$charge")")
+	if [ "$code" != "201" ]; then printf '%s' "$code"; return; fi
+	code=$(http POST "$API/rest/v1/card_placements" \
+		-H "apikey: $SERVICE_KEY" -H "Authorization: Bearer $SERVICE_KEY" \
+		-H 'Content-Type: application/json' -H 'Prefer: return=minimal' \
+		-d "$(jq -c --arg id "$id" '{card_id: $id, workspace_id, channel_id, workflow_id, current_step_id}' <<<"$charge")")
+	[ "$code" = "201" ] || psql_db -c "delete from public.cards where id = '$id';" >/dev/null
+	printf '%s' "$code"
 }
 
 carte_json() {
@@ -224,14 +253,15 @@ empreinte() {
 		select string_agg(x, '|' order by x) from (
 			select 'con:' || c.conname || ':' || md5(pg_get_constraintdef(c.oid)) as x
 			  from pg_constraint c
-			 where c.conrelid in ('public.cards'::regclass, 'public.channels'::regclass)
+			 where c.conrelid in ('public.cards'::regclass, 'public.channels'::regclass,
+			                      'public.card_placements'::regclass)
 			union all
 			select 'pol:' || p.polname
 			  from pg_policy p where p.polrelid = 'public.cards'::regclass
 			union all
 			select 'trg:' || t.tgname
 			  from pg_trigger t
-			 where t.tgrelid in ('public.cards'::regclass,
+			 where t.tgrelid in ('public.cards'::regclass, 'public.card_placements'::regclass,
 			                     'public.workflow_nodes_catalog'::regclass)
 			   and not t.tgisinternal
 			union all
@@ -241,7 +271,7 @@ empreinte() {
 			select 'fn:' || md5(pg_get_functiondef(p.oid))
 			  from pg_proc p join pg_namespace n on n.oid = p.pronamespace
 			 where n.nspname = 'app'
-			   and p.proname in ('can_read_card', 'cards_attribuer_position',
+			   and p.proname in ('can_read_card', 'card_placements_attribuer_position',
 			                     'cards_generer_email_local_part',
 			                     'catalogue_refuser_archivage_noeud_occupe')
 		) t;
@@ -277,16 +307,17 @@ rejouer_migrations || true
 	|| fail "la contrainte retirée n'est pas rétablie"
 
 # Convergence de la forme la plus difficile (décision 78) : une clé composite dégradée en clé
-# **simple** portant le même nom. Tester la présence du nom la laisserait passer.
+# **simple** portant le même nom. Tester la présence du nom la laisserait passer. `CRM-111` T2.4.5 : la clé
+# channel-workflow est celle du RATTACHEMENT, l'affaire ne portant plus ni l'un ni l'autre (migration 0134).
 psql_db -c "
-	alter table public.cards drop constraint cards_channel_id_workflow_id_fkey;
-	alter table public.cards
-		add constraint cards_channel_id_workflow_id_fkey
+	alter table public.card_placements drop constraint card_placements_channel_workflow_fk;
+	alter table public.card_placements
+		add constraint card_placements_channel_workflow_fk
 		foreign key (channel_id) references public.channels (id);
 " >/dev/null
 rejouer_migrations || true
 definition=$(psql_db -c "select pg_get_constraintdef(oid) from pg_constraint
-                          where conname = 'cards_channel_id_workflow_id_fkey';")
+                          where conname = 'card_placements_channel_workflow_fk';")
 case "$definition" in
 	*'(channel_id, workflow_id)'*)
 		ok "une clé composite **dégradée en clé simple** sous le même nom est réparée par un rejeu "\
@@ -306,25 +337,27 @@ T_VIEWER=$(jeton_de "$MAIL_VIEWER")
 [ -n "$T_VIEWER" ] && ok "jeton du viewer obtenu par la vraie route de connexion" \
 	|| fail "connexion du viewer impossible"
 
-code=$(poster "$T_ADMIN" "$(carte_json 'tst-crm040-une')")
-adresse_une=$(jq -r '.[0].email_local_part // empty' "$CORPS")
-[ "$code" = "201" ] && ok "l'administratrice crée une card (ligne a du §8.1)" \
+code=$(creer "$T_ADMIN" 'tst-crm040-une')
+adresse_une=$(adresse_de 'tst-crm040-une')
+[ "$code" = "200" ] && ok "l'administratrice crée une card par \`creer_affaire\` (ligne a du §8.1)" \
 	|| fail "création refusée : $code"
 printf '%s' "$adresse_une" | grep -Eq '^c-[0-9abcdefghjkmnpqrstvwxyz]{8}$' \
 	&& ok "l'adresse générée a la forme \`c-<8 base32 Crockford>\` : « $adresse_une »" \
 	|| fail "adresse hors forme : « $adresse_une »"
 
-code=$(poster "$T_ADMIN" "$(carte_json 'tst-crm040-deux')")
-adresse_deux=$(jq -r '.[0].email_local_part // empty' "$CORPS")
+code=$(creer "$T_ADMIN" 'tst-crm040-deux')
+adresse_deux=$(adresse_de 'tst-crm040-deux')
 [ "$adresse_une" != "$adresse_deux" ] \
 	&& ok "deux cards portent deux adresses différentes (ligne b)" \
 	|| fail "deux cards partagent la même adresse : « $adresse_une »"
 
+# `creer_affaire` ne prend pas d'adresse : c'est la clé de service, qui écrit la colonne, qui la propose — et le
+# déclencheur la remplace quand même, sans juger l'appelant.
 charge=$(carte_json 'tst-crm040-imposee' | jq -c '. + {email_local_part: "c-00000000"}')
-code=$(poster "$T_ADMIN" "$charge")
-adresse_imposee=$(jq -r '.[0].email_local_part // empty' "$CORPS")
+code=$(poser_service "$charge")
+adresse_imposee=$(adresse_de 'tst-crm040-imposee')
 [ "$code" = "201" ] && [ "$adresse_imposee" != "c-00000000" ] \
-	&& ok "une adresse fournie par le client est **ignorée et remplacée** (ligne c, §3.4)" \
+	&& ok "une adresse fournie à l'insertion est **ignorée et remplacée** (ligne c, §3.4)" \
 	|| fail "l'adresse du client a été retenue : $code / « $adresse_imposee »"
 
 # Ce qui garantit l'unicité est l'INDEX, non la boucle du trigger (décision 112). La preuve passe
@@ -345,11 +378,14 @@ end \$\$;" 2>&1 | grep -o 'REFUSE\|ACCEPTE' | head -1)
 
 titre "4. Cohérence structurelle — §2.4, décision 109"
 
+# `CRM-111` T2.4.5 : les clés composites sont celles du RATTACHEMENT, posé par la clé de service ; le refus est celui
+# de la base, inchangé.
+
 etape_etrangere=$(psql_db -c "select id from public.workflow_steps
                                where workflow_id <> '$WF_GLOBAL' limit 1;")
 charge=$(carte_json 'tst-crm040-etape-etrangere' \
          | jq -c --arg s "$etape_etrangere" '. + {current_step_id: $s}')
-code=$(poster "$T_ADMIN" "$charge")
+code=$(poser_service "$charge")
 sqlstate=$(jq -r '.code // empty' "$CORPS")
 [ "$code" = "409" ] && [ "$sqlstate" = "23503" ] \
 	&& ok "une étape d'un AUTRE workflow est refusée en 409 / 23503 (ligne e) — vérification n° 3 "\
@@ -358,7 +394,7 @@ sqlstate=$(jq -r '.code // empty' "$CORPS")
 
 wf_etranger=$(psql_db -c "select id from public.workflows where id <> '$WF_GLOBAL' limit 1;")
 charge=$(carte_json 'tst-crm040-wf-etranger' | jq -c --arg w "$wf_etranger" '. + {workflow_id: $w}')
-code=$(poster "$T_ADMIN" "$charge")
+code=$(poser_service "$charge")
 [ "$code" = "409" ] \
 	&& ok "un \`workflow_id\` autre que celui du channel est refusé (ligne f) — « suit le channel »" \
 	|| fail "workflow étranger : $code, attendu 409"
@@ -376,16 +412,16 @@ end \$\$;" 2>&1 | grep -o 'REFUSE\|ACCEPTE' | head -1)
 
 titre "5. Autorisations, avec les jetons réels (§8.1, lignes k à s)"
 
-code=$(poster "$T_BIZDEV" "$(carte_json 'tst-crm040-bizdev')")
-[ "$code" = "201" ] && ok "le business developer crée une card là où rien ne le restreint (ligne k)" \
-	|| fail "création par le business developer : $code, attendu 201"
+code=$(creer "$T_BIZDEV" 'tst-crm040-bizdev')
+[ "$code" = "200" ] && ok "le business developer crée une card là où rien ne le restreint (ligne k)" \
+	|| fail "création par le business developer : $code, attendu 200"
 
-code=$(poster "$T_BIZDEV" "$(carte_json 'tst-crm040-bizdev-maint' "$CH_MAINTENANCE")")
+code=$(creer "$T_BIZDEV" 'tst-crm040-bizdev-maint' "$CH_MAINTENANCE")
 [ "$code" = "403" ] \
 	&& ok "…et il est refusé dans \`maintenance\`, où un droit fin le met en lecture seule (ligne l)" \
 	|| fail "création dans maintenance par le business developer : $code, attendu 403"
 
-code=$(poster "$T_VIEWER" "$(carte_json 'tst-crm040-viewer')")
+code=$(creer "$T_VIEWER" 'tst-crm040-viewer')
 [ "$code" = "403" ] && ok "le \`viewer\` est refusé : créer exige le droit d'ÉCRITURE (ligne m)" \
 	|| fail "création par le viewer : $code, attendu 403"
 
@@ -461,8 +497,8 @@ psql_db -c "delete from public.cards where title = 'tst-crm040-noeud-libre';
 
 titre "7. Cycle de vie et absence de suppression — §4"
 
-code=$(poster "$T_ADMIN" "$(carte_json 'tst-crm040-cycle')")
-carte_cycle=$(jq -r '.[0].id // empty' "$CORPS")
+code=$(creer "$T_ADMIN" 'tst-crm040-cycle')
+carte_cycle=$(jq -r '. // empty' "$CORPS")
 # `CRM-111` T2.3.2 : archiver est un geste sur le RATTACHEMENT de l'affaire (docs/SPEC-rattachements.md §5).
 code=$(http PATCH "$API/rest/v1/card_placements?card_id=eq.$carte_cycle" \
         -H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_ADMIN" \
@@ -501,8 +537,8 @@ etat=$(psql_db -c "select count(*) || '/' || count(distinct email_local_part)
 #    de ce harnais désignent `…0c8` et `…0c9` ; ce sont eux qui doivent porter l'archivage et la
 #    corbeille, et un compte de « une archivée » resterait vert si l'archivage passait sur une autre
 #    ligne.
-[ "$(psql_db -c "select count(*) from public.cards
-                  where id = '5eed0000-0000-4000-8000-0000000000c8' and archived_at is not null;")" = "1" ] \
+[ "$(psql_db -c "select count(*) from public.card_placements
+                  where card_id = '5eed0000-0000-4000-8000-0000000000c8' and archived_at is not null;")" = "1" ] \
 	&& ok "\`…0c8\` est bien la card ARCHIVÉE des fixtures" \
 	|| fail "\`…0c8\` n'est plus archivée : les scénarios d'archivage perdent leur objet"
 [ "$(psql_db -c "select count(*) from public.cards
@@ -545,9 +581,11 @@ titre "9. Non-complaisance : le harnais échoue-t-il quand le produit se dégrad
 
 # a. La politique de lecture ramenée au cloisonnement par workspace : les droits fins cessent de
 #    s'appliquer, et le `viewer` voit ce qu'il ne doit pas voir.
+# `CRM-111` T2.4.5 : le channel est celui du rattachement, qui se lit par sa propre politique — c'est elle que la
+# dégradation ramène au cloisonnement par espace.
 psql_db -c "
-	drop policy cards_lecture on public.cards;
-	create policy cards_lecture on public.cards for select to anon, authenticated
+	drop policy card_placements_select on public.card_placements;
+	create policy card_placements_select on public.card_placements for select to authenticated
 		using (app.is_workspace_member(workspace_id));" >/dev/null
 http GET "$API/rest/v1/card_placements?channel_id=eq.$CH_GRANDS_COMPTES&select=id" \
 	-H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_VIEWER" >/dev/null
@@ -564,9 +602,10 @@ http GET "$API/rest/v1/card_placements?channel_id=eq.$CH_GRANDS_COMPTES&select=i
 #    `NULL`, et PostgreSQL **réutilise alors le `USING`** pour juger la nouvelle ligne. Retirer la
 #    clause ne dégrade donc rien — c'est ce qui a fait échouer cette dégradation à sa première
 #    écriture, et ce qui a corrigé le §6.1 de la spécification.
+# `CRM-111` T2.4.5 : déplacer, c'est écrire le channel du RATTACHEMENT ; la dégradation porte sur sa politique.
 psql_db -c "
-	drop policy cards_maj on public.cards;
-	create policy cards_maj on public.cards for update to authenticated
+	drop policy card_placements_update on public.card_placements;
+	create policy card_placements_update on public.card_placements for update to authenticated
 		using (app.can_write_channel(channel_id)) with check (true);" >/dev/null
 #
 #    RÉVISÉE LE 2026-08-05, ET LA RÉVISION CORRIGE UN CONTRÔLE QUI PASSAIT POUR UNE MAUVAISE RAISON
@@ -582,7 +621,7 @@ psql_db -c "
 #    fois ce privilège rendu. Le refus est DOUBLE, et chaque barrière est mesurée séparément.
 CARD_SONDE=$(psql_db -c "select id from public.cards where title = 'tst-crm040-une';")
 
-code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_SONDE" \
+code=$(http PATCH "$API/rest/v1/card_placements?card_id=eq.$CARD_SONDE" \
         -H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_BIZDEV" \
         -H 'Content-Type: application/json' \
         -d "$(jq -nc --arg c "$CH_MAINTENANCE" '{channel_id: $c}')")
@@ -591,8 +630,8 @@ code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_SONDE" \
 "privilège de colonne de \`CRM-034\` refuse encore le déplacement. Le refus est double" \
 	|| fail "dégradation b : le privilège de colonne ne refuse plus le PATCH de channel_id ($code)"
 
-psql_db -c "grant update (channel_id) on public.cards to authenticated;" >/dev/null
-code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_SONDE" \
+psql_db -c "grant update (channel_id) on public.card_placements to authenticated;" >/dev/null
+code=$(http PATCH "$API/rest/v1/card_placements?card_id=eq.$CARD_SONDE" \
         -H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_BIZDEV" \
         -H 'Content-Type: application/json' \
         -d "$(jq -nc --arg c "$CH_MAINTENANCE" '{channel_id: $c}')")
@@ -618,8 +657,9 @@ psql_db -c "update public.workflow_nodes_catalog set archived_at = null where id
 # Restauration par la migration elle-même, puis CONSTAT — jamais supposé.
 rejouer_migrations || true
 restaure=$(psql_db -c "select
-	(select count(*) from pg_policy where polrelid = 'public.cards'::regclass
-	   and polname = 'cards_maj' and polwithcheck is not null)::text || '/' ||
+	(select count(*) from pg_policy where polrelid = 'public.card_placements'::regclass
+	   and polname = 'card_placements_update'
+	   and pg_get_expr(polwithcheck, polrelid) = 'app.can_write_channel(channel_id)')::text || '/' ||
 	(select count(*) from pg_trigger where tgrelid = 'public.workflow_nodes_catalog'::regclass
 	   and tgname = 'workflow_nodes_catalog_refuser_archivage_occupe')::text;")
 [ "$restaure" = "1/1" ] \

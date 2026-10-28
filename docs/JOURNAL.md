@@ -36684,3 +36684,84 @@ par l'absence, jamais par ce refus), et « Enregistrer », cité pour dire que l
 **Suite** : les scénarios des chapitres 6 à 16 et 19 à 29 sont écrits mais n'ont jamais tourné ; ils attendent la fin de
 la bascule de `CRM-111` T2.4.5 (le rattachement d'une affaire quitte `cards`), et ne sont donc pas livrés avec cette
 tranche.
+
+### `CRM-111` T2.4.5 — le retrait en base, et la campagne qui le suit (2026-10-28)
+
+*2026-10-28, session interactive, dans la fenêtre convenue avec les sessions de `CRM-069` et de `CRM-117`.*
+
+**Ce qui est fait.** La migration `0134` (décisions 768 et 770) retire de `cards` les treize colonnes de rattachement,
+leurs index, leurs clés et les deux miroirs ; `creer_affaire` insère l'affaire puis appelle
+`app.poser_premier_rattachement` ; l'invariant « au moins un rattachement » est tenu par deux déclencheurs de contrainte
+différés, dont la clé de service et les sessions d'administration sont exemptées ; le rang et l'événement `created` sont
+ceux du premier rattachement ; les scores de santé se calculent sur `card_placements` ; la purge et la dépense bloquante
+partagent `app.cartes_detruites_avec_channels`. Appliquée en développement ; types régénérés ; la webapp
+(`LigneAffaire`, board, fiche, en-tête, liste, santé), le connecteur (scores dans la liste et la fiche du rattachement),
+le seed (l'affaire, puis son rattachement par `on_conflict=card_id`) et vingt-quatre fichiers pgTAP suivent.
+
+**Les preuves d'API, converties.** Un assistant commun, `e2e/affaire.ts`, garde la forme des fixtures d'avant :
+`posterAffaire` partage une charge (ou un tableau) entre l'affaire et son rattachement, `ligneAffaire` et
+`lireLignesAffaire` ramènent une affaire à la ligne d'avant (ses colonnes, plus celles de son plus ancien rattachement),
+`patcherAffaire` partage un `PATCH`, `supprimerAffairesDuChannel` remplace le `DELETE /cards?channel_id=…` qu'une écriture
+PostgREST ne peut plus filtrer. **Un utilisateur crée par `creer_affaire`** dans les preuves (`cards` C1, C4 ; `timeline`
+i, dont l'événement `created` porte l'acteur) ; la clé de service pose les fixtures qui choisissent l'étape, le rang ou
+l'adresse. **Mesuré** : un `POST /cards` direct d'un utilisateur rend `400 / 23514 card_without_placement` — la ligne h de
+`colonnes-protegees` le prouve désormais, et prouve l'adresse ignorée par la clé de service.
+
+**Révisions par la décision 51, motivées ici.**
+- `rattachements-miroir` éprouvait le MIROIR ; il n'y a plus rien à recopier. Il prouve désormais qu'une affaire lue a
+  exactement un rattachement lisible (tant que `card_placements_one_per_card_idx` tient) et, pour chacune des treize
+  colonnes, qu'une lecture ou une écriture qui la nomme sur `cards` est refusée (`42703`, `PGRST204`).
+- `rattachements-ecriture` : « l'affaire suit » et « fermées par privilège » deviennent « le rattachement est la seule
+  ligne écrite » et « refusées par le schéma » (`400 / PGRST204`).
+- `coherence-workflow` ligne i : la clé qui refuse le workflow introuvable d'un channel occupé est
+  `card_placements_channel_workflow_fk`.
+- **pgTAP `0013`, preuve de refus n° 5** : elle était devenue VRAIE PAR CONSTRUCTION (la colonne absente de `cards`) ;
+  elle porte maintenant sur `card_placements.current_step_id` et `entered_step_at`, fermées à `authenticated`.
+- **`verify-change-channel-workflow.sh`, section 2** : elle rejouait la 20 seule pour mettre à niveau la clé
+  `cards_channel_id_workflow_id_fkey` ; cette clé et ses colonnes ont disparu, la 20 ne s'applique plus à la base courante.
+  Elle constate la clé du rattachement (`deferrable initially immediate`) et le retrait de l'ancienne ; la dégradation de
+  la clé de `cards` est retirée, celle du rattachement demeure (six protections au lieu de sept).
+- `verify-cards.sh` : créations par `creer_affaire`, fixtures par la clé de service, dégradations portées sur
+  `card_placements_select` et `card_placements_update`, convergence éprouvée sur `card_placements_channel_workflow_fk`.
+  `verify-move-card.sh`, `verify-snooze.sh`, `verify-colonnes-protegees.sh` : privilèges et refus constatés sur le
+  rattachement.
+- **Défaut trouvé dans une conversion de T2.4.4** : `verify-board.sh` comptait les étapes occupées sur `public.cards` en
+  filtrant `card_id` — une requête qui n'aurait jamais tourné ; elle lit `card_placements`.
+
+**`cards_recherche_idx`** tombe avec `cards.next_action`. Il ne servait déjà plus depuis la `0109`, où la recherche lit la
+prochaine action du rattachement : son expression ne correspondait plus (`docs/SPEC-recherche.md` §5.4). Rien ne change.
+
+**Ménage de la base de développement.** Mes premières courses, avant conversion, avaient laissé soixante-dix channels
+jetables (`tst-plan-*`, `tst-restauration-*`, `tst-ia-*`, `api-cree-*`) et soixante-sept workflows jetables
+(« Plan — … », « Restauration — … », « Sonde … »), leur ménage échouant sur `DELETE /cards?channel_id=…`. Retirés par la
+clé de service, par préfixe ; le seed réappliqué une fois (les étapes du jeu, déplacées par un `remettre` en échec).
+
+**Vérifications.** Suite d'API : **1270 passent, 3 échouent, étrangers** — `copie-workflow` h et
+`restauration-version-workflow` q (archiver un workflow employé, refusé depuis la `0130` de `CRM-118`), `workflows` W0 (un
+workflow « Workflow MCP T2.e ancien » laissé par une preuve du connecteur). Unitaires 4918/4919 : le rouge,
+`PanneauChangementWorkflow` (focus, `CRM-118`), passe seul trois fois sur trois — instable sous charge, sans lien avec
+la bascule. pgTAP `0013` 83/83 après sa révision. Typecheck : la seule erreur est celle, étrangère, de
+`e2e/ui/etiquettes.spec.ts:112`.
+
+**Suite de la campagne (même jour).** Interface : la course entière rend 963/1011 ; les rouges de la bascule — specs qui
+lisaient, créaient ou restauraient les colonnes retirées (`authentification`, `connecteur-workflows`, `corbeille`,
+`parcours-transition`, `workflow-entete-changement`, `timeline-etape-surchargee`, `formulaire-etapes`,
+`entete-card-ecriture`, dont la restauration en échec dégradait `…0c6` et faisait rougir `entete-card`) — sont corrigés,
+et leurs 19 fichiers rejoués après le seed rendent **164 passés, 8 rouges étrangers** : la colonne « Étiquettes » de
+`CRM-069` décale les colonnes (`liste-cards` ×2, `filtre-sommeil`), deux « Enregistrer » sur la fiche
+(`commentaires-gestes`), le manuel (`aide`), deux workflows du connecteur dans la liste (`coherence-workflow` ×2, dont
+« Workflow MCP T2.e ancien », archivé mais proposé), l'appel refusé du seed poussé hors de la première page du journal MCP
+par les appels des courses (`plateforme-mcp`). Mail **46/46**. pgTAP **113/114** (`0001` n° 7, `profiles.email` de la
+`0133`). Pytest du connecteur **274**. Typecheck propre, après correction d'une déstructuration de
+`e2e/ui/etiquettes.spec.ts` refusée sous `noUncheckedIndexedAccess` (étiquettes 5/5).
+
+**Harnais sans reconstruction** : formulaire 27/27, snooze 70/70, board 43/43, ma-journee 65/65 (un rouge unitaire au
+premier passage, `PanneauTimeline`, vert seul trois fois — instable sous charge, comme `PanneauChangementWorkflow`),
+rendu-modeles-emails **32/32 après correction** : il dégradait et restaurait le rendu depuis la 56, qui n'en est plus la
+dernière autorité depuis la 109 ; il rétablissait donc en silence une définition antérieure à T2.2, et depuis la 134 la 56
+ne s'applique plus. Sa source est désormais la 56 au corps de rendu de la 109 — empreinte de la fonction identique à
+celle de la base — : même famille qu'INC-304, que T1 ter traite pour les autres harnais.
+
+**Reste** : les huit harnais qui reconstruisent la base (timeline, move-card, cards, colonnes-protegees, valeurs-champs,
+move-card-to-channel, change-channel-workflow, relances) ; accord de la session de `CRM-117` reçu, celui de la session de
+`CRM-069` attendu. Commit intermédiaire de la bascule, T2.4.5 restant `[~]`.

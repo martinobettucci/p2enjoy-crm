@@ -11,6 +11,7 @@
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement de
 //           l'affaire (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : l'étape d'une affaire se relit sur son rattachement (§3.2)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. `supabase/tests/0068_entonnoir_conversion.test.sql`
 // prouve la règle **en base**, sous des rôles endossés. Rien n'y garantit que la pile la rende par
@@ -29,7 +30,6 @@ import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from '.
 
 const RPC = '/rest/v1/rpc/entonnoir_conversion'
 const RPC_FIGEES = '/rest/v1/rpc/cards_figees'
-const CARDS = '/rest/v1/cards'
 const ETAPES = '/rest/v1/workflow_steps'
 
 /** Channels du seed — `docs/SPEC-seed.md` §2.6. */
@@ -349,7 +349,8 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		request,
 	}) => {
 		const carte = await request.get(
-			`${CARDS}?id=eq.${CADRAGE_DATA}&select=current_step_id`,
+			// `CRM-111` T2.4.5 : l'étape est celle du rattachement.
+			`/rest/v1/card_placements?card_id=eq.${CADRAGE_DATA}&select=current_step_id`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		const etape = ((await carte.json()) as { current_step_id: string }[])[0]?.current_step_id
@@ -390,7 +391,8 @@ test.describe("l'entonnoir de conversion, par la vraie route (docs/SPEC-analytiq
 		request,
 	}) => {
 		const carte = await request.get(
-			`${CARDS}?id=eq.${CADRAGE_DATA}&select=current_step_id`,
+			// `CRM-111` T2.4.5 : l'étape est celle du rattachement.
+			`/rest/v1/card_placements?card_id=eq.${CADRAGE_DATA}&select=current_step_id`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		const etape = ((await carte.json()) as { current_step_id: string }[])[0]?.current_step_id

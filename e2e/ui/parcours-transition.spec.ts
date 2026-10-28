@@ -38,6 +38,7 @@ import {
 import { randomUUID } from 'node:crypto'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { capturer } from './captures'
+import { posterAffaire } from '../affaire'
 
 const ADMIN = 'admin@p2enjoy.test'
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
@@ -85,7 +86,7 @@ async function fabriquerCard(
 	idCard: string,
 	titre: string,
 ): Promise<void> {
-	const creation = await request.post(urlRest('cards'), {
+	const creation = await posterAffaire(request, urlRest('cards'), {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
 		data: {
 			id: idCard,
@@ -213,7 +214,7 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 
 			// 10. Et la base porte la nouvelle étape, relue hors interface.
 			const relecture = await request.get(
-				urlRest('cards', { id: `eq.${idCard}`, select: 'id,current_step_id' }),
+				urlRest('card_placements', { card_id: `eq.${idCard}`, select: 'id:card_id,current_step_id' }),
 				{ headers: enTetesAuthentifies(jetonAdmin) },
 			)
 			expect(relecture.status(), await relecture.text()).toBe(200)
@@ -301,7 +302,7 @@ test.describe('le parcours enchaîné, sans aucune substitution réseau (§4 qua
 			autoriserErreursConsole(page, [ERREUR_RESSOURCE_HTTP[400]])
 
 			const relecture = await request.get(
-				urlRest('cards', { id: `eq.${idCard}`, select: 'current_step_id' }),
+				urlRest('card_placements', { card_id: `eq.${idCard}`, select: 'current_step_id' }),
 				{ headers: enTetesAuthentifies(jetonAdmin) },
 			)
 			expect(await relecture.json()).toEqual([{ current_step_id: ETAPE_SIGNATURE }])

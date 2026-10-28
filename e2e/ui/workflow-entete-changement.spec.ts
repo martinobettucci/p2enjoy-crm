@@ -13,6 +13,7 @@ import { randomUUID } from 'node:crypto'
 import { autoriserErreursConsole, connecterAvecLeLabs, ERREUR_RESSOURCE_HTTP, expect, test, type APIRequestContext } from './fixtures'
 import { capturer, PALIERS } from './captures'
 import { URL_API, enTetesService } from '../api/jetons'
+import { posterAffaire } from '../affaire'
 
 const UNITE = 'CRM-118'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
@@ -52,7 +53,7 @@ const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 const service = { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=representation' }
 
 async function poser(request: APIRequestContext, table: string, lignes: unknown): Promise<unknown[]> {
-	const reponse = await request.post(rest(table), { headers: service, data: lignes })
+	const reponse = await posterAffaire(request, rest(table), { headers: service, data: lignes })
 	expect(reponse.status(), `${table} : ${await reponse.text()}`).toBe(201)
 	return (await reponse.json()) as unknown[]
 }
@@ -64,7 +65,7 @@ async function ranger(request: APIRequestContext): Promise<void> {
 		data: { is_default: false },
 	})
 	await request.patch(rest(`workflows?id=eq.${DEFAUT_SEED}`), { headers: service, data: { is_default: true } })
-	const cartes = await request.get(rest(`cards?channel_id=eq.${IDS.channel}&select=id`), { headers: service })
+	const cartes = await request.get(rest(`card_placements?channel_id=eq.${IDS.channel}&select=id:card_id`), { headers: service })
 	for (const { id } of (await cartes.json()) as { id: string }[]) {
 		await request.delete(rest(`card_field_values?card_id=eq.${id}`), { headers: service })
 		await request.delete(rest(`cards?id=eq.${id}`), { headers: service })

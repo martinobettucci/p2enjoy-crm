@@ -10,11 +10,17 @@ const injecte: { ligne: Record<string, unknown> | null } = { ligne: null }
 vi.mock('../lib/supabase', () => ({
 	get clientCrm() {
 		return {
+			// `CRM-111` T2.4.5 : la lecture trie les rattachements de l'affaire avant d'en prendre un.
 			from: () => ({
 				select: () => ({
-					eq: () => ({
-						limit: () => Promise.resolve({ data: injecte.ligne === null ? [] : [injecte.ligne], error: null, status: 200 }),
-					}),
+					eq: () => {
+						const chaine = {
+							order: () => chaine,
+							limit: () =>
+								Promise.resolve({ data: injecte.ligne === null ? [] : [injecte.ligne], error: null, status: 200 }),
+						}
+						return chaine
+					},
 				}),
 			}),
 		}

@@ -60,14 +60,30 @@ describe('la lecture des scores (§13.5)', () => {
 })
 
 describe('la lecture d’une affaire', () => {
-	const client = (data: unknown[] | null, error: unknown = null, status = 200) =>
-		({
-			from: () => ({ select: () => ({ eq: () => ({ limit: () => Promise.resolve({ data, error, status }) }) }) }),
-		}) as unknown as ClientCrm
+	// `CRM-111` T2.4.5 : les scores se lisent sur le rattachement le plus ancien de l'affaire (`card_placements`, triés
+	// par création puis identifiant) ; le double enregistre la table et la colonne de filtre.
+	const appels: { table: string; filtre: string }[] = []
+	const client = (data: unknown[] | null, error: unknown = null, status = 200) => {
+		const chaine = {
+			order: () => chaine,
+			limit: () => Promise.resolve({ data, error, status }),
+		}
+		return {
+			from: (table: string) => ({
+				select: () => ({
+					eq: (colonne: string) => {
+						appels.push({ table, filtre: colonne })
+						return chaine
+					},
+				}),
+			}),
+		} as unknown as ClientCrm
+	}
 
 	it('demande les deux colonnes calculées et les lit', async () => {
 		const etat = await lireScoresAffaire(client([{ health_momentum: DYNAMIQUE, health_commercial: COMMERCIALE }]), 'c1')
 		expect(etat.statut === 'pret' && etat.donnees.dynamique?.score).toBe(55)
+		expect(appels.at(-1)).toEqual({ table: 'card_placements', filtre: 'card_id' })
 	})
 
 	it('une affaire décidée rend deux scores nuls, pas une erreur', async () => {

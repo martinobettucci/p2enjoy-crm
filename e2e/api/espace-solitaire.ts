@@ -31,6 +31,7 @@
 
 import { expect, type APIRequestContext } from '@playwright/test'
 import { CLE_SERVICE, URL_API } from './jetons'
+import { posterAffaire } from '../affaire'
 
 /** Le profil du seed qui sera l'unique membre de l'espace jetable — `docs/SPEC-seed.md` §2.3. */
 export const DRISS_SOLITAIRE = '5eed0000-0000-4000-8000-000000000012'
@@ -85,7 +86,7 @@ export async function monterEspaceSolitaire(requete: APIRequestContext): Promise
 	await demonterEspaceSolitaire(requete, { constater: false })
 
 	const creer = async (table: string, corps: Record<string, unknown>) => {
-		const reponse = await requete.post(`${URL_API}/rest/v1/${table}`, {
+		const reponse = await posterAffaire(requete, `${URL_API}/rest/v1/${table}`, {
 			headers: ENTETES_SERVICE,
 			data: corps,
 		})

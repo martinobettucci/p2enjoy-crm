@@ -10,6 +10,8 @@
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.1 : la lecture n° 3 part des rattachements du channel
 //           (docs/SPEC-rattachements.md §8)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : montant, ancienneté et archivage se mesurent sur le rattachement
+//           (docs/SPEC-rattachements.md §3.2)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. Le board compose ses colonnes à partir de quatre
 // lectures (§7.2). La composition elle-même est éprouvée par `webapp/src/lib/board.test.ts`,
@@ -55,7 +57,6 @@ import {
 
 const ETAPES = '/rest/v1/workflow_steps'
 const TRANSITIONS = '/rest/v1/workflow_transitions'
-const CARDS = '/rest/v1/cards'
 // `CRM-111` T2.4.1 : le board lit les rattachements du channel, l'affaire en plongement.
 const RATTACHEMENTS = '/rest/v1/card_placements'
 const CHAMPS = '/rest/v1/form_fields'
@@ -305,10 +306,16 @@ test.describe('B3 — la lecture des cards rend le contenu des colonnes (§7.2, 
 	// une donnée permanente, pas par un cas fabriqué.
 	test('le seed exerce le montant renseigné ET son absence', async ({ request }) => {
 		const toutes = await request.get(
-			`${CARDS}?select=amount,currency&deleted_at=is.null&archived_at=is.null`,
+			// `CRM-111` T2.4.5 : le montant et l'archivage sont ceux du rattachement, la devise et la corbeille ceux de
+			// l'affaire.
+			`${RATTACHEMENTS}?select=amount,affaire:cards!card_placements_card_fk!inner(currency,deleted_at)` +
+				'&archived_at=is.null&affaire.deleted_at=is.null',
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
-		const cards = (await toutes.json()) as { amount: number | null; currency: string }[]
+		expect(toutes.status(), await toutes.text()).toBe(200)
+		const cards = ((await toutes.json()) as { amount: number | null; affaire: { currency: string } }[]).map(
+			(ligne) => ({ amount: ligne.amount, currency: ligne.affaire.currency }),
+		)
 		expect(cards.filter((card) => card.amount === null).length).toBeGreaterThan(0)
 		expect(cards.filter((card) => card.amount !== null).length).toBeGreaterThan(0)
 		expect(new Set(cards.map((card) => card.currency)).size).toBeGreaterThan(1)
@@ -393,7 +400,10 @@ test.describe('B5 — les identités consenties au board sont mesurées (§7.4)'
 		request,
 	}) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id,entered_step_at,workflow_steps!cards_current_step_id_workflow_id_fkey(stale_after_days,workflow_nodes_catalog(default_stale_after_days))&deleted_at=is.null&archived_at=is.null`,
+			// `CRM-111` T2.4.5 : l'étape et son ancienneté sont celles du rattachement ; l'identifiant rendu est l'affaire.
+			`${RATTACHEMENTS}?select=id:card_id,entered_step_at,affaire:cards!card_placements_card_fk!inner(deleted_at),` +
+				'workflow_steps!card_placements_step_fk(stale_after_days,workflow_nodes_catalog(default_stale_after_days))' +
+				'&affaire.deleted_at=is.null&archived_at=is.null',
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		expect(reponse.status(), await reponse.text()).toBe(200)
@@ -476,7 +486,8 @@ test.describe('B5 — les identités consenties au board sont mesurées (§7.4)'
 	// la vieillirait — ou la rafraîchirait — l'écarterait de sa date de création, et la preuve rougirait.
 	test('aucune card archivée n’est vieillie par le seed', async ({ request }) => {
 		const reponse = await request.get(
-			`${CARDS}?select=id,entered_step_at,created_at,archived_at&id=eq.${CARD_ARCHIVEE}`,
+			// `CRM-111` T2.4.5 : l'ancienneté et l'archivage sont ceux du rattachement, qui naît avec son ancienneté.
+			`${RATTACHEMENTS}?select=id:card_id,entered_step_at,created_at,archived_at&card_id=eq.${CARD_ARCHIVEE}`,
 			{ headers: enTetesAuthentifies(jetonAdmin) },
 		)
 		const [card] = (await reponse.json()) as { entered_step_at: string; created_at: string; archived_at: string | null }[]

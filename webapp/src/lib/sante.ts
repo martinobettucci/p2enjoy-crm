@@ -108,11 +108,21 @@ export type ScoresAffaire = {
 	readonly commerciale: ScoreCommercial | null
 }
 
-/** Les deux scores d'une affaire, pour la fiche. La RLS décide : une affaire illisible rend un refus classé. */
+/**
+ * Les deux scores d'une affaire, pour la fiche. La RLS décide : une affaire illisible rend un refus classé. `CRM-111`
+ * T2.4.5 : les scores se calculent sur le RATTACHEMENT (décision 768) ; la fiche lit ceux du plus ancien, comme ses autres
+ * colonnes de rattachement (`cardDepuisRattachements`).
+ */
 export async function lireScoresAffaire(client: ClientCrm | null, idCard: string): Promise<EtatAsync<ScoresAffaire>> {
 	if (client === null) return enErreur({ nature: 'unknown', detail: 'configuration_absente' })
 	try {
-		const reponse = await client.from('cards').select('health_momentum, health_commercial').eq('id', idCard).limit(1)
+		const reponse = await client
+			.from('card_placements')
+			.select('health_momentum, health_commercial')
+			.eq('card_id', idCard)
+			.order('created_at')
+			.order('id')
+			.limit(1)
 		if (reponse.error !== null) return enErreur(classerErreur(reponse.status, reponse.error.message))
 		const ligne = reponse.data[0]
 		if (ligne === undefined) return enErreur({ nature: 'forbidden', detail: 'card_invisible' })

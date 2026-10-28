@@ -34,6 +34,7 @@ import { connecterAvecLeLabs, expect, test, type Page } from './fixtures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole } from './fixtures'
 import { URL_API, enTetesAuthentifies, enTetesService, jetonDe } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
+import { posterAffaire } from '../affaire'
 
 const UNITE = 'CRM-077'
 const ADMIN = 'admin@p2enjoy.test'
@@ -236,7 +237,7 @@ test.describe('corbeille (docs/SPEC-corbeille.md §4)', () => {
 
 	test('le business developer voit l’affaire qu’il a retirée, et elle seule (§8.4)', async ({ page }) => {
 		const jeton = await jetonDe('bizdev@p2enjoy.test')
-		const creation = await page.request.post(`${URL_API}/rest/v1/cards`, {
+		const creation = await posterAffaire(page.request, `${URL_API}/rest/v1/cards`, {
 			headers: { ...enTetesService(), Prefer: 'return=representation' },
 			data: {
 				workspace_id: '5eed0000-0000-4000-8000-000000000001',
@@ -609,7 +610,8 @@ async function supprimerAffaireJetable(page: Page): Promise<void> {
 
 /** Crée une affaire jetable ACTIVE dans un channel du seed, et rend son identifiant. */
 async function creerAffaireJetable(page: Page, suffixe: string): Promise<string> {
-	const reponse = await page.request.post(CHEMIN_CARDS, {
+	// `CRM-111` T2.4.5 : l'affaire, puis son rattachement.
+	const reponse = await posterAffaire(page.request, CHEMIN_CARDS, {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
 		data: {
 			workspace_id: WORKSPACE_SEED,
@@ -770,7 +772,7 @@ test.describe('les dépenses qui bloquent l’effacement d’un track (docs/SPEC
 	async function poser(page: Page, suffixe: string) {
 		const service = { ...enTetesService(), Prefer: 'return=representation' }
 		const creer = async (table: string, data: Record<string, unknown>) => {
-			const reponse = await page.request.post(`${URL_API}/rest/v1/${table}`, { headers: service, data })
+			const reponse = await posterAffaire(page.request, `${URL_API}/rest/v1/${table}`, { headers: service, data })
 			expect(reponse.status(), await reponse.text()).toBe(201)
 			return ((await reponse.json()) as { id: string }[])[0]!.id
 		}

@@ -12,6 +12,7 @@ import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
 import { capturer } from './captures'
 import { ERREUR_RESSOURCE_HTTP, autoriserErreursConsole, connecterAvecLeLabs, expect, test } from './fixtures'
+import { posterAffaire } from '../affaire'
 
 const UNITE = 'CRM-069'
 const PREFIXE = 'ZZ 069'
@@ -97,7 +98,7 @@ test.describe('les étiquettes des affaires (docs/DESIGN_SYSTEM.md §5.73)', () 
 	})
 
 	test('le business developer pose une étiquette sur la fiche ; la base, la pastille et le fil le disent', async ({ page, request }) => {
-		const creee = await request.post(rest('cards'), {
+		const creee = await posterAffaire(request, rest('cards'), {
 			headers: { ...enTetesService(), Prefer: 'return=representation' },
 			data: {
 				workspace_id: ESPACE,
@@ -108,7 +109,7 @@ test.describe('les étiquettes des affaires (docs/DESIGN_SYSTEM.md §5.73)', () 
 			},
 		})
 		expect(creee.status(), await creee.text()).toBe(201)
-		const [{ id: jetable }] = (await creee.json()) as { id: string }[]
+		const jetable = ((await creee.json()) as { id: string }[])[0]!.id
 		await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')
 		await page.goto(`/tracks/studio-web/checklists/cards/${jetable}`)
 		const commande = page.getByTestId('entete-card-etiquettes')

@@ -671,14 +671,17 @@ select ('00000000-0000-4000-8000-b2' || '0000000' || w || t || c)::uuid,
        'Channel ' || w || t || c, 'channel-' || w || '-' || t || '-' || c, c
   from generate_series(1, 4) w, generate_series(1, 4) t, generate_series(1, 4) c;
 
-insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title)
-select m.card_id,
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (select m.card_id,
        ('00000000-0000-4000-8000-b0000000000' || m.w)::uuid,
        m.channel_id,
        ('00000000-0000-4000-8000-b30000000' || '00' || m.w)::uuid,
        ('00000000-0000-4000-8000-b600000000' || m.w || '1')::uuid,
        'Card ' || m.w::text || m.t::text || m.c::text
-  from tst_matrice m;
+  from tst_matrice m) as v(id, workspace_id, channel_id, workflow_id, current_step_id, title)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title) select id::uuid, workspace_id::uuid, title from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id)
+select id::uuid, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid from __source;
 
 insert into public.track_members (track_id, user_id, access)
 select distinct m.track_id, '00000000-0000-4000-8000-000000000006'::uuid, m.acces_track
@@ -893,8 +896,11 @@ drop policy tst_rec_cards_definer on public.cards;
 
 create function app.tst_can_read_card_invoker(card uuid)
 returns boolean language sql stable security invoker set search_path = '' as $$
-	select coalesce((select app.can_read_channel(c.channel_id)
-	                   from public.cards c where c.id = card), false);
+	-- `CRM-111` T2.4.5 : le channel est celui des rattachements, que l'affaire ne porte plus ; la jumelle relit
+	-- toujours `cards`, et c'est cette relecture sous sa propre politique qui épuise la pile.
+	select coalesce((select bool_or(app.can_read_channel(p.channel_id))
+	                   from public.cards c join public.card_placements p on p.card_id = c.id
+	                  where c.id = card), false);
 $$;
 grant execute on function app.tst_can_read_card_invoker(uuid) to authenticated;
 
@@ -911,8 +917,16 @@ reset role;
 
 drop policy tst_rec_cards_invoker on public.cards;
 drop function app.tst_can_read_card_invoker(uuid);
+-- RÉVISÉE PAR `CRM-111` T2.4.5 : la politique restaurée est celle de la migration de retrait (forme optimisée du §4).
 create policy cards_lecture on public.cards
-	for select to authenticated using (app.can_read_channel(channel_id));
+	for select to authenticated
+	using (
+		id in (select p.card_id from public.card_placements p
+		        where p.channel_id in (select unnest(app.readable_channel_ids())))
+		and (deleted_at is null
+		     or app.is_workspace_admin(workspace_id)
+		     or deleted_by = (select auth.uid()))
+	);
 
 -- 8.4 Le graphe **réellement livré** ne referme aucun de ces cycles, et sa plus longue chaîne
 --     répond : `card_field_values` → `can_read_card` → `cards` → `can_read_channel` → `channels`

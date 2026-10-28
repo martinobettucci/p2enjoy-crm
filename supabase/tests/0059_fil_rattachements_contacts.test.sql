@@ -232,12 +232,14 @@ select gen_random_uuid() as card,
        (select s.workspace from sonde s) as workspace,
        (select s.contact from sonde s) as contact;
 
-insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title,
-                          position, created_by)
-select ss.card, ss.workspace, c.channel_id, c.workflow_id, c.current_step_id,
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (select ss.card, ss.workspace, p.channel_id, p.workflow_id, p.current_step_id,
        'Sonde suppression tranche 5', 9999, c.created_by
-  from sonde_suppression ss, public.cards c, sonde s
- where c.id = s.card;
+  from sonde_suppression ss, public.cards c, public.card_placements p, sonde s
+ where c.id = s.card and p.card_id = c.id) as v(id, workspace_id, channel_id, workflow_id, current_step_id, title, position, created_by)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title, created_by) select id::uuid, workspace_id::uuid, title, created_by::uuid from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+select id::uuid, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid, position::numeric from __source;
 
 insert into public.card_contacts (workspace_id, card_id, contact_id, role)
 select ss.workspace, ss.card, ss.contact, 'decideur' from sonde_suppression ss;

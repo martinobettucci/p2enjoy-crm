@@ -26,7 +26,7 @@ import { libelleEtape } from './affaires-figees'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import type { Database, Json } from './database.types'
 import type { ProfilAffiche } from './identites'
-import { premierRattachement, type RattachementsLus } from './rattachements'
+import { premierRattachement, type RattachementsLus, type LigneAffaire } from './rattachements'
 import type { ClientCrm } from './supabase'
 import { estRenseigne } from './valeur-renseignee'
 
@@ -109,7 +109,7 @@ export type EtapeCourante = {
  * composable. C'est la troisième raison, avec le refus et l'absence, de ne rendre aucune adresse.
  */
 export type CardOuverte = Pick<
-	Database['public']['Tables']['cards']['Row'],
+	LigneAffaire,
 	| 'id'
 	| 'title'
 	| 'workflow_id'

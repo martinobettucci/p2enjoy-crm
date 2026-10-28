@@ -412,8 +412,9 @@ test.describe('K4 — le trigger se tait là où la base parle mieux (ligne i)',
 		expect(reponse.status()).toBe(409)
 		const corps = (await reponse.json()) as Erreur
 		expect(corps.code).toBe('23503')
-		// INC-046 : sur un channel OCCUPÉ, c'est la clé de `cards` qui refuse d'abord.
-		expect(corps.message).toContain('cards_channel_id_workflow_id_fkey')
+		// INC-046 : sur un channel OCCUPÉ, c'est la clé de ses affaires qui refuse d'abord — depuis `CRM-111` T2.4.5,
+		// celle de leurs RATTACHEMENTS, qui portent le couple channel-workflow (docs/SPEC-rattachements.md §3.2).
+		expect(corps.message).toContain('card_placements_channel_workflow_fk')
 	})
 
 	// Le refus d'origine — celui de `CRM-033` — reste prouvé, sur un channel que le seed laisse

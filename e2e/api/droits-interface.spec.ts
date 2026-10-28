@@ -4,6 +4,8 @@
 // @verifies docs/SPEC-droits-interface.md §2.1 (deux colonnes calculées : la capacité du rôle ET des droits fins ;
 //           aucune ligne de plus que la RLS), §2.2 (les deux capacités de l'espace) ; docs/SPEC-permissions-rls.md §3.3 bis,
 //           §7 ; CLAUDE.md §10
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : l'affaire d'un channel et sa capacité d'écriture se lisent sur son
+//           rattachement (docs/SPEC-rattachements.md §3.2, §5)
 //
 // La colonne est une AIDE : la règle reste la politique. Ce fichier prouve donc aussi que ce que la colonne annonce
 // est ce que la base fait — une affaire annoncée en lecture seule refuse réellement l'écriture, une affaire annoncée
@@ -31,13 +33,17 @@ async function ecrits(request: APIRequestContext, jeton: string): Promise<string
 }
 
 async function premiereAffaire(request: APIRequestContext, jeton: string, channel: string): Promise<Ligne & { title: string }> {
+	// `CRM-111` T2.4.5 : le channel et l'archivage sont ceux du rattachement ; sa capacité d'écriture est celle qu'il
+	// annonce (`ecriture_permise(card_placements)`), le titre et la corbeille ceux de l'affaire.
 	const reponse = await request.get(
-		`${CARDS}?select=id,title,ecriture_permise&channel_id=eq.${channel}&archived_at=is.null&deleted_at=is.null&order=id&limit=1`,
+		`/rest/v1/card_placements?select=id:card_id,ecriture_permise,affaire:cards!card_placements_card_fk!inner(title,deleted_at)` +
+			`&channel_id=eq.${channel}&archived_at=is.null&affaire.deleted_at=is.null&order=card_id&limit=1`,
 		{ headers: enTetesAuthentifies(jeton) },
 	)
-	const [affaire] = (await reponse.json()) as (Ligne & { title: string })[]
-	expect(affaire, `une affaire lisible dans le channel ${channel}`).toBeDefined()
-	return affaire!
+	expect(reponse.status(), await reponse.text()).toBe(200)
+	const [lue] = (await reponse.json()) as (Ligne & { affaire: { title: string } })[]
+	expect(lue, `une affaire lisible dans le channel ${channel}`).toBeDefined()
+	return { id: lue!.id, ecriture_permise: lue!.ecriture_permise, title: lue!.affaire.title }
 }
 
 test.describe('la capacité d’écriture lue par l’interface (docs/SPEC-droits-interface.md §2.1)', () => {

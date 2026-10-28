@@ -402,7 +402,14 @@ recherche **transverse** — pondérée, en `app.francais_sans_accent`, sur `tit
 `description`.
 
 Les deux répondent à des requêtes différentes et aucune ne peut servir l'autre : un index n'est
-retenu que sur l'expression exacte qu'il porte (§5.2). Cette tranche ne touche **ni** la colonne
+retenu que sur l'expression exacte qu'il porte (§5.2).
+
+> **Révisé par `CRM-111` T2.4.5 (migration `0134`).** `cards_recherche_idx` a été **retiré** avec la colonne
+> `cards.next_action`, qu'il indexait. Il ne servait déjà plus depuis la migration `0109` (`CRM-111` T2.2) : la branche
+> `affaire` de `recherche_globale` lit la prochaine action sur le **plus ancien rattachement**, si bien que son
+> expression ne correspondait plus à celle de l'index (§5.2). Le retrait ne change donc ni le résultat ni le plan
+> mesuré ; une expression qui mêle `cards` et `card_placements` ne peut pas être indexée d'un seul index. Seul
+> `cards_search_tsv_idx` demeure sur `public.cards`. Cette tranche ne touche **ni** la colonne
 `search_tsv`, **ni** son index, **ni** l'écran qui les emploie. L'écart de vocabulaire entre les deux
 recherches — la vue liste reste sujette à l'écart de M2 — est **consigné à INC-230** et **laissé
 inchangé** : il appartient à `CRM-042`.

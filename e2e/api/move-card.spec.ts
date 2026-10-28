@@ -30,6 +30,7 @@
 //     identifiant — jamais par prédicat métier (décision 108). Sans quoi le seed serait durablement
 //     faux pour les scénarios suivants, et l'ordre d'exécution deviendrait significatif.
 
+import { lireLignesAffaire, patcherAffaire } from '../affaire'
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 import { corpsParRattachement } from './rattachements'
@@ -90,10 +91,8 @@ test.beforeAll(async () => {
 
 /** Lit une card avec la clé de service : sert à CONSTATER un état, jamais à prouver un refus. */
 async function lire(requete: APIRequestContext, id: string): Promise<Card> {
-	const reponse = await requete.get(`${CARDS}?id=eq.${id}&select=*`, { headers: enTetesService() })
-	expect(reponse.status()).toBe(200)
-	const lignes = (await reponse.json()) as Card[]
-	const [card] = lignes
+	// `CRM-111` T2.4.5 : l'étape, le rang et l'ancienneté sont ceux du rattachement, relus avec l'affaire.
+	const [card] = await lireLignesAffaire<Card>(requete, `id=eq.${id}`, enTetesService())
 	expect(card, `la card ${id} doit exister — le seed est-il appliqué ?`).toBeDefined()
 	return card as Card
 }
@@ -120,7 +119,7 @@ async function lire(requete: APIRequestContext, id: string): Promise<Card> {
  * droit.
  */
 async function remettre(requete: APIRequestContext, id: string, avant: Card): Promise<void> {
-	const reponse = await requete.patch(`${CARDS}?id=eq.${id}`, {
+	const reponse = await patcherAffaire(requete, `${CARDS}?id=eq.${id}`, {
 		headers: { ...enTetesService(), 'Content-Type': 'application/json' },
 		data: {
 			current_step_id: avant.current_step_id,
@@ -688,7 +687,8 @@ test.describe('M6 — ligne m : la garde n’est pas contournable', () => {
 	}) => {
 		const avant = await lire(request, CARD_C3)
 
-		const reponse = await request.patch(`${CARDS}?id=eq.${CARD_C3}`, {
+		// `CRM-111` T2.4.5 : l'étape est celle du RATTACHEMENT, et la colonne y reste fermée à `authenticated`.
+		const reponse = await request.patch(`/rest/v1/card_placements?card_id=eq.${CARD_C3}`, {
 			headers: { ...enTetesAuthentifies(jetonAdmin), 'Content-Type': 'application/json' },
 			data: { current_step_id: ETAPE_PERDU },
 		})
@@ -696,12 +696,12 @@ test.describe('M6 — ligne m : la garde n’est pas contournable', () => {
 		expect(reponse.status()).toBe(403)
 		const erreur = (await reponse.json()) as Erreur
 		expect(erreur.code).toBe('42501')
-		expect(erreur.message).toContain('permission denied for table cards')
+		expect(erreur.message).toContain('permission denied for table card_placements')
 
 		// INC-026, quatrième occurrence : le message de refus DIVULGUE la commande `GRANT` à
 		// exécuter. C'est un comportement de PostgREST et non du produit ; il est constaté et non
 		// masqué, pour que sa disparition ou son aggravation soit remarquée.
-		expect(erreur.hint).toContain('GRANT UPDATE ON public.cards')
+		expect(erreur.hint).toContain('GRANT UPDATE ON public.card_placements')
 
 		await constaterInchangee(request, CARD_C3, avant)
 	})
@@ -730,7 +730,7 @@ test.describe('M6 — ligne m : la garde n’est pas contournable', () => {
 	}) => {
 		const avant = await lire(request, CARD_C3)
 
-		const reponse = await request.patch(`${CARDS}?id=eq.${CARD_C3}`, {
+		const reponse = await request.patch(`/rest/v1/card_placements?card_id=eq.${CARD_C3}`, {
 			headers: { ...enTetesAuthentifies(jetonAdmin), 'Content-Type': 'application/json' },
 			data: { entered_step_at: '2020-01-01T00:00:00Z' },
 		})

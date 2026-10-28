@@ -288,8 +288,12 @@ select hasnt_trigger('public', 'card_events', 'card_events_refuser_suppression',
 -- 5. Les cinq triggers, et leur `SECURITY DEFINER` — docs/SPEC-cards.md §14.5
 -- =============================================================================================
 
-select has_trigger('public', 'cards', t, format('Le trigger `%s` est posé sur `cards`', t))
-  from unnest(array['card_events_apres_insertion','card_events_apres_maj']) t;
+-- RÉVISÉ PAR `CRM-111` T2.4.5 (décision 770) : l'événement `created` naît avec le premier RATTACHEMENT, que l'affaire
+-- ne porte plus en colonnes ; le déclencheur de la corbeille reste sur `cards`.
+select has_trigger('public', 'card_placements', 'card_placements_evenement_creation',
+	'Le trigger `card_placements_evenement_creation` est posé sur `card_placements`');
+select has_trigger('public', 'cards', 'card_events_apres_maj',
+	'Le trigger `card_events_apres_maj` est posé sur `cards`');
 
 select has_trigger('public', 'card_field_values', 'card_events_apres_ecriture_valeur',
 	'Le trigger de valeurs de formulaire est posé');
@@ -299,7 +303,7 @@ select has_trigger('public', 'card_field_values', 'card_events_apres_ecriture_va
 select ok(p.prosecdef, format('`app.%s` est SECURITY DEFINER', p.proname))
   from pg_proc p
  where p.pronamespace = 'app'::regnamespace
-   and p.proname in ('card_event_ecrire', 'card_events_apres_insertion_card',
+   and p.proname in ('card_event_ecrire', 'card_placements_evenement_creation',
                      'card_events_apres_maj_card', 'card_events_apres_ecriture_valeur');
 
 -- Une fonction `SECURITY DEFINER` sans `search_path` figé est une porte ouverte : la garde est
@@ -326,9 +330,11 @@ select ok(not p.prosecdef, '`app.card_events_refuser_maj` est SECURITY INVOKER :
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 -- --- 6.1 Naissance ----------------------------------------------------------------------------
-insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title)
-select workspace_id, channel_id, workflow_id, current_step_id, 'Sonde timeline'
-  from public.cards where id = '5eed0000-0000-4000-8000-0000000000c1';
+-- RÉVISÉ PAR `CRM-111` T2.4.5 : une affaire ne naît plus par une insertion directe, que l'utilisatrice ne peut plus
+-- poser seule (le rattachement exige la création, décision 768) ; elle naît par le geste réel, dans le channel de `…c1`.
+select public.creer_affaire(
+	(select p.channel_id from public.card_placements p where p.card_id = '5eed0000-0000-4000-8000-0000000000c1'),
+	'Sonde timeline');
 
 select is(
 	(select type from public.card_events e

@@ -59,9 +59,13 @@ insert into public.tracks (id, workspace_id, name, slug, position) values
 insert into public.channels (id, workspace_id, track_id, name, slug, workflow_id, position) values
 	(:ca, :ws, :ta, 'INC-316 — channel vivant', 'inc316-ca', :wf, 960),
 	(:cb, :ws, :tb, 'INC-316 — channel du track à effacer', 'inc316-cb', :wf, 961);
-insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title, position) values
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (values
 	(:ka, :ws, :ca, :wf, :etape, 'INC-316 — affaire d''un autre track', 960),
-	(:kb, :ws, :cb, :wf, :etape, 'INC-316 — affaire du track à effacer', 961);
+	(:kb, :ws, :cb, :wf, :etape, 'INC-316 — affaire du track à effacer', 961)) as v(id, workspace_id, channel_id, workflow_id, current_step_id, title, position)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title) select id::uuid, workspace_id::uuid, title from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+select id::uuid, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid, position::numeric from __source;
 insert into public.budgets (id, track_id, name, position, currency, is_recurrent) values
 	(:b_ouvert, :tb, 'INC-316 — budget ouvert', 960, 'EUR', false),
 	(:b_clos, :tb, 'INC-316 — budget clos', 961, 'EUR', false),

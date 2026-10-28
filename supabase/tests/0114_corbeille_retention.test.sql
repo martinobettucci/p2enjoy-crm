@@ -65,11 +65,15 @@ insert into public.channels (id, workspace_id, track_id, name, slug, workflow_id
 	(:ca1, :ws, :ta, 'Rétention — channel vivant', 'retention-ca1', :wf, 950),
 	(:ca2, :ws, :ta, 'Rétention — channel effacé', 'retention-ca2', :wf, 951),
 	(:cb, :ws, :tb, 'Rétention — channel du track effacé', 'retention-cb', :wf, 952);
-insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title, position) values
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (values
 	(:k1, :ws, :ca1, :wf, :etape, 'Rétention — affaire de 31 jours', 950),
 	(:k2, :ws, :ca1, :wf, :etape, 'Rétention — affaire de 29 jours', 951),
 	(:k3, :ws, :ca2, :wf, :etape, 'Rétention — affaire sous channel effacé', 952),
-	(:k4, :ws, :cb, :wf, :etape, 'Rétention — affaire du track effacé', 953);
+	(:k4, :ws, :cb, :wf, :etape, 'Rétention — affaire du track effacé', 953)) as v(id, workspace_id, channel_id, workflow_id, current_step_id, title, position)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title) select id::uuid, workspace_id::uuid, title from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+select id::uuid, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid, position::numeric from __source;
 -- Driss écrit sur le track vivant, Farida le lit.
 insert into public.track_members (track_id, user_id, access) values (:ta, :driss, 'member'), (:ta, :farida, 'viewer')
 	on conflict (track_id, user_id) do update set access = excluded.access;
@@ -100,8 +104,11 @@ insert into public.tracks (id, workspace_id, name, slug, position)
 values ('b7a50000-0000-4000-8000-0000000000a3', :ws, 'Rétention — track au budget partagé', 'retention-partage', 952);
 insert into public.budgets (id, track_id, name, position)
 values ('b7a50000-0000-4000-8000-0000000000d3', 'b7a50000-0000-4000-8000-0000000000a3', 'Rétention — budget partagé', 952);
-insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title, position)
-values ('b7a50000-0000-4000-8000-0000000000c5', :ws, :ca1, :wf, :etape, 'Rétention — affaire au budget d''ailleurs', 954);
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (values ('b7a50000-0000-4000-8000-0000000000c5', :ws, :ca1, :wf, :etape, 'Rétention — affaire au budget d''ailleurs', 954)) as v(id, workspace_id, channel_id, workflow_id, current_step_id, title, position)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title) select id::uuid, workspace_id::uuid, title from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+select id::uuid, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid, position::numeric from __source;
 insert into public.card_costs (id, card_id, budget_id, label, estimated_cost)
 values ('b7a50000-0000-4000-8000-0000000000e3', 'b7a50000-0000-4000-8000-0000000000c5',
         'b7a50000-0000-4000-8000-0000000000d3', 'Salon', 300);
@@ -138,8 +145,11 @@ select pg_temp.redevenir_proprietaire();
 select is((select deleted_at from public.cards where id = :k1), now(),
 	'7 — une fois en corbeille, la date ne se réécrit pas, même par l''administratrice');
 
-insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title, position, deleted_at)
-values ('b7a50000-0000-4000-8000-0000000000c9', :ws, :ca1, :wf, :etape, 'Rétention — née en corbeille', 959, '2020-01-01');
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (values ('b7a50000-0000-4000-8000-0000000000c9', :ws, :ca1, :wf, :etape, 'Rétention — née en corbeille', 959, '2020-01-01')) as v(id, workspace_id, channel_id, workflow_id, current_step_id, title, position, deleted_at)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title, deleted_at) select id::uuid, workspace_id::uuid, title, deleted_at::timestamptz from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+select id::uuid, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid, position::numeric from __source;
 select is((select deleted_at from public.cards where id = 'b7a50000-0000-4000-8000-0000000000c9'), now(),
 	'8 — une ligne qui naît en corbeille prend aussi la date du serveur');
 delete from public.cards where id = 'b7a50000-0000-4000-8000-0000000000c9';

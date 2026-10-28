@@ -504,7 +504,7 @@ select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 -- section 4 vient d'établir.
 create temporary table pg_temp_avant as
 	select entered_step_at, position, channel_id, workflow_id, current_step_id
-	  from public.cards where id = '5eed0000-0000-4000-8000-0000000000c7';
+	  from public.card_placements where card_id = '5eed0000-0000-4000-8000-0000000000c7';
 
 -- LES COMPTES D'ÉVÉNEMENTS SONT DES ÉCARTS, JAMAIS DES CUMULS — décision 210, dont c'est la
 -- seconde occurrence. Une timeline enregistre tout, y compris ce que les autres preuves du dépôt
@@ -527,7 +527,7 @@ create temporary table pg_temp_compte_c6 as
 -- l'assertion de `position` indépendante du volume du seed (révision de `CRM-046`).
 create temporary table pg_temp_rang_avant as
 	select coalesce(max(position), 0) as rang_max
-	  from public.cards
+	  from public.card_placements
 	 where channel_id = '5eed0000-0000-4000-8000-000000000031'
 	   and current_step_id = pg_temp.etape_derivee();
 
@@ -746,17 +746,17 @@ select throws_ok(
 -- qu'aucune migration ne pose est un privilège qu'aucune migration ne défend. La défense est ici.
 
 select ok(
-	not has_column_privilege('authenticated', 'public.cards', 'channel_id', 'update'),
+	not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'channel_id') then has_column_privilege('authenticated', 'public.cards', 'channel_id', 'update') else false end),
 	'`channel_id` est FERMÉE à `authenticated` : la garde était close AVANT d''exister, et c''est '
 	'`CRM-013` qui l''avait fermée (décision 214). **Preuve de refus n° 5** reconduite');
 
 select ok(
-	not has_column_privilege('authenticated', 'public.cards', 'workflow_id', 'update'),
+	not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'workflow_id') then has_column_privilege('authenticated', 'public.cards', 'workflow_id', 'update') else false end),
 	'`workflow_id` est FERMÉE elle aussi : sans quoi un `PATCH` direct ouvrirait la seule '
 	'combinaison que la clé composite refuse');
 
 select ok(
-	not has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update'),
+	not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'current_step_id') then has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update') else false end),
 	'`current_step_id` reste fermée : `CRM-045` ne rouvre pas ce que `CRM-034` avait fermé');
 
 select is(
@@ -771,7 +771,8 @@ select is(
 	'privilège que plus aucune migration ne pose (décision 214)');
 
 select ok(
-	has_column_privilege('service_role', 'public.cards', 'channel_id', 'update'),
+	-- RÉVISÉE PAR `CRM-111` T2.4.5 : le channel est celui du rattachement, que la clé de service écrit (migration 124).
+	has_column_privilege('service_role', 'public.card_placements', 'channel_id', 'update'),
 	'`service_role` conserve l''écriture : le seed en dépend, et la limite est celle, déjà nommée, '
 	'de docs/SPEC-permissions-rls.md §4.4.3 — le trigger la rend au moins VISIBLE');
 

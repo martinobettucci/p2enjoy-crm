@@ -9,6 +9,9 @@
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec le jeton réel)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement de
 //           l'affaire (docs/SPEC-rattachements.md §3.2, §5)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : un utilisateur crée par `creer_affaire`, la clé de service pose
+//           l'affaire puis son rattachement ; les colonnes de rattachement et leurs clés se lisent et se prouvent sur le
+//           rattachement (docs/SPEC-rattachements.md §3.1, §3.2, §4, §5 ; décisions 768, 770)
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé — et
@@ -28,6 +31,7 @@
 //   * chaque scénario qui écrit **nettoie derrière lui**, y compris en cas d'échec — et par
 //     identifiant ou par préfixe de titre, **jamais par prédicat métier** : un `delete` par
 //     prédicat amputerait le seed, défaut réel trouvé à `CRM-012` (décision 108).
+import { lireLignesAffaire, posterAffaire } from '../affaire'
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
@@ -128,23 +132,40 @@ function corpsCard(channel: string, etape = ETAPE_PROSPECTION, extra: Record<str
 	}
 }
 
-/** Crée une card avec le jeton fourni et rend la réponse brute. */
-async function creer(
-	requete: APIRequestContext,
-	jeton: string,
-	corps: Record<string, unknown>,
-) {
-	return requete.post(CARDS, {
-		headers: { ...enTetesAuthentifies(jeton), Prefer: 'return=representation' },
+/** Les affaires d'un filtre, lues avec la clé de service et ramenées à la ligne d'avant (`CRM-111` T2.4.5). */
+async function lireLignes(requete: APIRequestContext, filtre: string): Promise<Card[]> {
+	return lireLignesAffaire<Card>(requete, `${filtre}&order=id`, enTetesService())
+}
+
+/**
+ * Crée une affaire avec le jeton fourni, par le SEUL chemin d'un utilisateur : `creer_affaire`, dans le channel de la
+ * charge, à l'étape initiale (`CRM-111` T2.4.5, décision 768). Rend la réponse brute de la fonction et l'affaire relue.
+ */
+async function creer(requete: APIRequestContext, jeton: string, corps: Record<string, unknown>) {
+	const reponse = await requete.post('/rest/v1/rpc/creer_affaire', {
+		headers: enTetesAuthentifies(jeton),
+		data: { p_channel: corps['channel_id'], p_titre: corps['title'] },
+	})
+	const id = reponse.ok() ? ((await reponse.json()) as string) : null
+	return { reponse, carte: id === null ? undefined : await relire(requete, id) }
+}
+
+/**
+ * Pose une affaire par la clé de service, l'affaire puis son rattachement (décisions 746 et 770) : le chemin des
+ * fixtures qui choisissent ce que `creer_affaire` ne choisit pas — l'étape, le rang, l'adresse, la probabilité.
+ */
+async function poser(requete: APIRequestContext, corps: Record<string, unknown>) {
+	const reponse = await posterAffaire(requete, CARDS, {
+		headers: { ...enTetesService(), Prefer: 'return=representation' },
 		data: corps,
 	})
+	const id = reponse.ok() ? ((await reponse.json()) as { id: string }[])[0]?.id : undefined
+	return { reponse, carte: id === undefined ? undefined : await relire(requete, id) }
 }
 
 /** Relit une card avec la clé de service — jamais employée pour prouver un refus. */
 async function relire(requete: APIRequestContext, id: string): Promise<Card | undefined> {
-	const reponse = await requete.get(`${CARDS}?id=eq.${id}&select=*`, { headers: enTetesService() })
-	expect(reponse.status()).toBe(200)
-	return ((await reponse.json()) as Card[])[0]
+	return (await lireLignes(requete, `id=eq.${id}`))[0]
 }
 
 let jetonAdmin: string
@@ -169,11 +190,7 @@ test.describe('C0 — le seed est dans l’état que le §9 déclare', () => {
 	test('quinze cards, dont une archivée et une en corbeille, toutes avec une adresse conforme', async ({
 		request,
 	}) => {
-		const reponse = await request.get(`${CARDS}?${FILTRE_SEED}&select=*&order=id`, {
-			headers: enTetesService(),
-		})
-		expect(reponse.status()).toBe(200)
-		const cards = (await reponse.json()) as Card[]
+		const cards = await lireLignes(request, FILTRE_SEED)
 
 		expect(cards).toHaveLength(15)
 		expect(cards.filter((c) => c.archived_at !== null)).toHaveLength(1)
@@ -188,12 +205,7 @@ test.describe('C0 — le seed est dans l’état que le §9 déclare', () => {
 	test('CRM-046 — les deux cards de « prospection » suivent le workflow dérivé', async ({
 		request,
 	}) => {
-		const reponse = await request.get(
-			`${CARDS}?channel_id=eq.${CH_PROSPECTION}&${FILTRE_SEED}&select=id,workflow_id`,
-			{ headers: enTetesService() },
-		)
-		expect(reponse.status()).toBe(200)
-		const cards = (await reponse.json()) as Pick<Card, 'id' | 'workflow_id'>[]
+		const cards = (await lireLignes(request, FILTRE_SEED)).filter((card) => card.channel_id === CH_PROSPECTION)
 		expect(cards).toHaveLength(2)
 		expect(new Set(cards.map((card) => card.workflow_id)).size).toBe(1)
 		expect(cards.every((card) => card.workflow_id !== WORKFLOW_GLOBAL)).toBe(true)
@@ -202,30 +214,29 @@ test.describe('C0 — le seed est dans l’état que le §9 déclare', () => {
 
 test.describe('C1 — création : lignes a à d du §8.1', () => {
 	test('a — l’admin crée une card, et l’adresse est générée', async ({ request }) => {
-		const reponse = await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))
-		expect(reponse.status(), await reponse.text()).toBe(201)
-		const [card] = (await reponse.json()) as Card[]
-		expect(card!.email_local_part).toMatch(FORME_ADRESSE)
+		const { reponse, carte } = await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))
+		expect(reponse.status(), await reponse.text()).toBe(200)
+		expect(carte!.email_local_part).toMatch(FORME_ADRESSE)
 	})
 
 	test('b — deux cards portent deux adresses différentes', async ({ request }) => {
-		const une = (await (await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))).json()) as Card[]
-		const deux = (await (await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))).json()) as Card[]
-		expect(une[0]!.email_local_part).not.toBe(deux[0]!.email_local_part)
+		const une = (await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))).carte
+		const deux = (await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))).carte
+		expect(une!.email_local_part).not.toBe(deux!.email_local_part)
 	})
 
 	test('c — une adresse fournie par le client est ignorée et remplacée', async ({ request }) => {
 		// « Généré » signifie que la valeur ne vient pas de l'appelant : l'accepter laisserait
 		// choisir une adresse devinable (docs/SPEC-cards.md §3.4).
-		const reponse = await creer(
+		// `CRM-111` T2.4.5 : `creer_affaire` ne prend pas d'adresse ; c'est la clé de service, qui écrit la colonne, qui la
+		// propose ici — et le déclencheur la remplace quand même : il ne juge pas l'appelant.
+		const { reponse, carte } = await poser(
 			request,
-			jetonAdmin,
 			corpsCard(CH_GRANDS_COMPTES, ETAPE_PROSPECTION, { email_local_part: 'c-00000000' }),
 		)
 		expect(reponse.status(), await reponse.text()).toBe(201)
-		const [card] = (await reponse.json()) as Card[]
-		expect(card!.email_local_part).not.toBe('c-00000000')
-		expect(card!.email_local_part).toMatch(FORME_ADRESSE)
+		expect(carte!.email_local_part).not.toBe('c-00000000')
+		expect(carte!.email_local_part).toMatch(FORME_ADRESSE)
 	})
 
 	test('d — sans `position`, la card est placée en fin de colonne du board', async ({ request }) => {
@@ -239,25 +250,23 @@ test.describe('C1 — création : lignes a à d du §8.1', () => {
 		)
 		const [etapePerdu] = (await etapes.json()) as { id: string }[]
 
-		const premiere = (await (
-			await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES, etapePerdu!.id))
-		).json()) as Card[]
-		const seconde = (await (
-			await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES, etapePerdu!.id))
-		).json()) as Card[]
+		// `CRM-111` T2.4.5 : le rang est attribué au RATTACHEMENT ; la fixture choisit l'étape, donc la clé de service.
+		const premiere = (await poser(request, corpsCard(CH_GRANDS_COMPTES, etapePerdu!.id))).carte
+		const seconde = (await poser(request, corpsCard(CH_GRANDS_COMPTES, etapePerdu!.id))).carte
 
-		expect(Number(premiere[0]!.position)).toBe(1)
-		expect(Number(seconde[0]!.position)).toBe(2)
+		expect(Number(premiere!.position)).toBe(1)
+		expect(Number(seconde!.position)).toBe(2)
 
 		// Et l'étape `relance`, déjà peuplée par le seed, poursuit SA propre suite : la portée
 		// n'est pas le channel.
-		const autreColonne = (await (
-			await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES, ETAPE_RELANCE))
-		).json()) as Card[]
-		expect(Number(autreColonne[0]!.position)).toBeGreaterThan(2)
+		const autreColonne = (await poser(request, corpsCard(CH_GRANDS_COMPTES, ETAPE_RELANCE))).carte
+		expect(Number(autreColonne!.position)).toBeGreaterThan(2)
 	})
 })
 
+// `CRM-111` T2.4.5 : les trois clés composites sont celles du RATTACHEMENT, et la contrainte de probabilité aussi ; les
+// lignes sont posées par la clé de service, qui écrit ce que `creer_affaire` ne laisse pas choisir. Le refus est celui de
+// la base, inchangé.
 test.describe('C2 — cohérence structurelle : lignes e à g du §8.1', () => {
 	test('e — une étape d’un autre workflow est refusée en 409 / 23503', async ({ request }) => {
 		// Vérification n° 3 des six de `move_card`, acquise structurellement
@@ -268,11 +277,7 @@ test.describe('C2 — cohérence structurelle : lignes e à g du §8.1', () => {
 		)
 		const [autre] = (await etapeCopie.json()) as { id: string }[]
 
-		const reponse = await creer(
-			request,
-			jetonAdmin,
-			corpsCard(CH_GRANDS_COMPTES, autre!.id),
-		)
+		const { reponse } = await poser(request, corpsCard(CH_GRANDS_COMPTES, autre!.id))
 		expect(reponse.status()).toBe(409)
 		expect(((await reponse.json()) as Erreur).code).toBe('23503')
 	})
@@ -284,7 +289,7 @@ test.describe('C2 — cohérence structurelle : lignes e à g du §8.1', () => {
 		)
 		const [autre] = (await copie.json()) as { id: string }[]
 
-		const reponse = await creer(request, jetonAdmin, {
+		const { reponse } = await poser(request, {
 			...corpsCard(CH_GRANDS_COMPTES),
 			workflow_id: autre!.id,
 		})
@@ -293,7 +298,7 @@ test.describe('C2 — cohérence structurelle : lignes e à g du §8.1', () => {
 	})
 
 	test('g — un `workspace_id` autre que celui du channel est refusé', async ({ request }) => {
-		const reponse = await creer(request, jetonAdmin, {
+		const { reponse } = await poser(request, {
 			...corpsCard(CH_GRANDS_COMPTES),
 			workspace_id: '55550000-0000-4000-8000-0000000000ff',
 		})
@@ -304,7 +309,7 @@ test.describe('C2 — cohérence structurelle : lignes e à g du §8.1', () => {
 
 test.describe('C3 — contraintes de valeur : lignes h à j du §8.1', () => {
 	test('h — un titre d’espaces est refusé en 400 / 23514', async ({ request }) => {
-		const reponse = await creer(request, jetonAdmin, { ...corpsCard(CH_GRANDS_COMPTES), title: '   ' })
+		const { reponse } = await poser(request, { ...corpsCard(CH_GRANDS_COMPTES), title: '   ' })
 		expect(reponse.status()).toBe(400)
 		expect(((await reponse.json()) as Erreur).code).toBe('23514')
 	})
@@ -312,7 +317,7 @@ test.describe('C3 — contraintes de valeur : lignes h à j du §8.1', () => {
 	test('i — `currency = "euro"` est refusée : la forme ISO 4217 est tenue par la base', async ({
 		request,
 	}) => {
-		const reponse = await creer(request, jetonAdmin, {
+		const { reponse } = await poser(request, {
 			...corpsCard(CH_GRANDS_COMPTES),
 			currency: 'euro',
 		})
@@ -321,7 +326,7 @@ test.describe('C3 — contraintes de valeur : lignes h à j du §8.1', () => {
 	})
 
 	test('j — `probability_override = 101` est refusée', async ({ request }) => {
-		const reponse = await creer(request, jetonAdmin, {
+		const { reponse } = await poser(request, {
 			...corpsCard(CH_GRANDS_COMPTES),
 			probability_override: 101,
 		})
@@ -330,22 +335,24 @@ test.describe('C3 — contraintes de valeur : lignes h à j du §8.1', () => {
 	})
 })
 
+// `CRM-111` T2.4.5 : un utilisateur crée par `creer_affaire` (décision 768) ; la fonction rend l'identifiant (`200`), et
+// refuse en `403` / `42501` qui n'écrit pas le channel — le refus que donnait la politique d'insertion.
 test.describe('C4 — autorisations d’écriture : lignes k à n du §8.1', () => {
 	test('k — le `business_developer` crée une card là où rien ne le restreint', async ({ request }) => {
-		const reponse = await creer(request, jetonBizdev, corpsCard(CH_GRANDS_COMPTES))
-		expect(reponse.status(), await reponse.text()).toBe(201)
+		const { reponse } = await creer(request, jetonBizdev, corpsCard(CH_GRANDS_COMPTES))
+		expect(reponse.status(), await reponse.text()).toBe(200)
 	})
 
 	test('l — …et il est refusé dans `maintenance`, où un droit fin le met en lecture seule', async ({
 		request,
 	}) => {
-		const reponse = await creer(request, jetonBizdev, corpsCard(CH_MAINTENANCE))
+		const { reponse } = await creer(request, jetonBizdev, corpsCard(CH_MAINTENANCE))
 		expect(reponse.status()).toBe(403)
 		expect(((await reponse.json()) as Erreur).code).toBe('42501')
 	})
 
 	test('m — le `viewer` est refusé là où il ne fait que lire', async ({ request }) => {
-		const reponse = await creer(request, jetonViewer, corpsCard(CH_REFONTE))
+		const { reponse } = await creer(request, jetonViewer, corpsCard(CH_REFONTE))
 		expect(reponse.status()).toBe(403)
 		expect(((await reponse.json()) as Erreur).code).toBe('42501')
 	})
@@ -362,14 +369,13 @@ test.describe('C4 — autorisations d’écriture : lignes k à n du §8.1', () 
 		)
 		const [etape] = (await etapes.json()) as { id: string; workflow_id: string }[]
 
-		const reponse = await creer(request, jetonViewer, {
-			workspace_id: WORKSPACE_SEED,
+		// `creer_affaire` prend l'étape initiale du workflow du channel ; l'étape lue ci-dessus n'est plus choisie.
+		void etape
+		const { reponse } = await creer(request, jetonViewer, {
 			channel_id: CH_PROSPECTION,
-			workflow_id: etape!.workflow_id,
-			current_step_id: etape!.id,
 			title: `${PREFIXE} par le viewer`,
 		})
-		expect(reponse.status(), await reponse.text()).toBe(201)
+		expect(reponse.status(), await reponse.text()).toBe(200)
 	})
 })
 
@@ -379,12 +385,12 @@ test.describe('C5 — lecture : lignes o à q du §8.1', () => {
 	}) => {
 		// D'abord constater, avec la clé de service, que la table N'EST PAS VIDE : sans cela, le
 		// zéro ligne serait vrai que la RLS refuse ou qu'elle autorise tout (décision 50).
-		const reel = await request.get(`${CARDS}?channel_id=eq.${CH_GRANDS_COMPTES}&select=id`, {
+		const reel = await request.get(`/rest/v1/card_placements?channel_id=eq.${CH_GRANDS_COMPTES}&select=id:card_id`, {
 			headers: enTetesService(),
 		})
 		expect(((await reel.json()) as unknown[]).length).toBeGreaterThan(0)
 
-		const vu = await request.get(`${CARDS}?channel_id=eq.${CH_GRANDS_COMPTES}&select=id`, {
+		const vu = await request.get(`/rest/v1/card_placements?channel_id=eq.${CH_GRANDS_COMPTES}&select=id:card_id`, {
 			headers: enTetesAuthentifies(jetonViewer),
 		})
 		expect(vu.status()).toBe(200)
@@ -392,7 +398,7 @@ test.describe('C5 — lecture : lignes o à q du §8.1', () => {
 	})
 
 	test('o bis — …mais il voit celles des channels que rien ne lui ferme', async ({ request }) => {
-		const vu = await request.get(`${CARDS}?channel_id=eq.${CH_REFONTE}&select=id`, {
+		const vu = await request.get(`/rest/v1/card_placements?channel_id=eq.${CH_REFONTE}&select=id:card_id`, {
 			headers: enTetesAuthentifies(jetonViewer),
 		})
 		expect(vu.status()).toBe(200)
@@ -437,7 +443,9 @@ test.describe('C6 — mise à jour : lignes r et s du §8.1', () => {
 	}) => {
 		const avant = await relire(request, CARD_GRANDS_COMPTES)
 
-		const reponse = await request.patch(`${CARDS}?id=eq.${CARD_GRANDS_COMPTES}`, {
+		// `CRM-111` T2.4.5 : le channel est celui du rattachement, et la colonne n'est pas ouverte au client — le refus est
+		// celui du privilège, plus tôt encore que celui de la politique.
+		const reponse = await request.patch(`/rest/v1/card_placements?card_id=eq.${CARD_GRANDS_COMPTES}`, {
 			headers: enTetesAuthentifies(jetonBizdev),
 			data: { channel_id: CH_MAINTENANCE },
 		})
@@ -458,9 +466,7 @@ test.describe('C7 — cycle de vie : lignes t à v du §8.1', () => {
 	test('t et u — archivage et corbeille sont deux gestes distincts, tous deux réversibles', async ({
 		request,
 	}) => {
-		const [card] = (await (
-			await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))
-		).json()) as Card[]
+		const card = (await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))).carte
 
 		// `CRM-111` T2.3.2 : archiver est un geste sur le RATTACHEMENT ; la corbeille reste à l'affaire.
 		const archive = await request.patch(`/rest/v1/card_placements?card_id=eq.${card!.id}`, {
@@ -484,9 +490,7 @@ test.describe('C7 — cycle de vie : lignes t à v du §8.1', () => {
 	test('v — `DELETE` est refusé : aucun privilège, aucune suppression physique', async ({
 		request,
 	}) => {
-		const [card] = (await (
-			await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))
-		).json()) as Card[]
+		const card = (await creer(request, jetonAdmin, corpsCard(CH_GRANDS_COMPTES))).carte
 
 		const reponse = await request.delete(`${CARDS}?id=eq.${card!.id}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
@@ -543,14 +547,16 @@ test.describe('C8 — la garde d’archivage d’un nœud occupé : lignes w et 
 
 		// Préalable : TOUTES les cards actives de cette étape sont archivées le temps du scénario.
 		const actives = await request.get(
-			`${CARDS}?select=id&current_step_id=eq.${ETAPE_LIVRE}&archived_at=is.null&deleted_at=is.null`,
+			`/rest/v1/card_placements?select=id,affaire:cards!inner(deleted_at)&current_step_id=eq.${ETAPE_LIVRE}` +
+				`&archived_at=is.null&affaire.deleted_at=is.null`,
 			{ headers: enTetesService() },
 		)
+		// `CRM-111` T2.4.5 : l'étape et l'archivage sont ceux des RATTACHEMENTS, désignés par leur identifiant.
 		const aRendre = ((await actives.json()) as { id: string }[]).map((c) => c.id)
 		expect(aRendre.length, 'l’étape doit porter des cards actives, sinon le scénario est vide')
 			.toBeGreaterThan(0)
 
-		const misEnPlace = await request.patch(`${CARDS}?id=in.(${aRendre.join(',')})`, {
+		const misEnPlace = await request.patch(`/rest/v1/card_placements?id=in.(${aRendre.join(',')})`, {
 			headers: enTetesService(),
 			data: { archived_at: '2026-05-01T09:00:00Z' },
 		})
@@ -558,7 +564,8 @@ test.describe('C8 — la garde d’archivage d’un nœud occupé : lignes w et 
 
 		try {
 			const restantes = await request.get(
-				`${CARDS}?select=id&current_step_id=eq.${ETAPE_LIVRE}&archived_at=is.null&deleted_at=is.null`,
+				`/rest/v1/card_placements?select=id,affaire:cards!inner(deleted_at)&current_step_id=eq.${ETAPE_LIVRE}` +
+					`&archived_at=is.null&affaire.deleted_at=is.null`,
 				{ headers: enTetesService() },
 			)
 			expect(
@@ -579,7 +586,7 @@ test.describe('C8 — la garde d’archivage d’un nœud occupé : lignes w et 
 			})
 			expect([200, 204]).toContain(restauration.status())
 
-			const rendue = await request.patch(`${CARDS}?id=in.(${aRendre.join(',')})`, {
+			const rendue = await request.patch(`/rest/v1/card_placements?id=in.(${aRendre.join(',')})`, {
 				headers: enTetesService(),
 				data: { archived_at: null },
 			})

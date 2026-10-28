@@ -44,26 +44,26 @@ CHANNEL = "channel:channels!card_placements_channel_fk(id,name,slug,track:tracks
 ETAPE = "etape:workflow_steps!card_placements_step_fk(id,probability_override,noeud:workflow_nodes_catalog(label,default_probability))"
 RESPONSABLE = "responsable:profiles!card_placements_owner_id_fkey(id,full_name)"
 #: `health_momentum` et `health_commercial` — `CRM-066` tranche 4 : les deux scores de santé, colonnes calculées par la
-#: base (docs/SPEC-analytique.md §13.7), rendus tels quels par la liste et par la fiche (décision 708, M4 B). Ils restent
-#: sur l'affaire jusqu'à leur transport (`CRM-111` T2.4.5).
+#: base (docs/SPEC-analytique.md §13.7), rendus tels quels par la liste et par la fiche (décision 708, M4 B). Ils se
+#: calculent sur le RATTACHEMENT depuis `CRM-111` T2.4.5 (décision 768).
 SANTE = "health_momentum,health_commercial"
 #: `CRM-069` T3 : les étiquettes de l'affaire, plongées depuis `cards` (docs/SPEC-mcp.md §9.2 tredecies).
 ETIQUETTES = "etiquettes:card_labels(etiquette:labels(name,color,archived_at))"
 #: La liste part des rattachements (`CRM-111` T2.4.2) et plonge l'affaire ; `ligne_depuis_rattachement` rend la ligne
 #: d'avant à `resume_carte`.
 COLONNES_LISTE = (
-    f"id,created_at,amount,next_action,next_action_at,snoozed_until,{RESPONSABLE},{CHANNEL},{ETAPE},"
-    f"affaire:cards!inner(id,title,currency,{SANTE},{ETIQUETTES})"
+    f"id,created_at,amount,next_action,next_action_at,snoozed_until,{SANTE},{RESPONSABLE},{CHANNEL},{ETAPE},"
+    f"affaire:cards!inner(id,title,currency,{ETIQUETTES})"
 )
 #: Les colonnes d'un rattachement que la fiche lit, plongées dans l'affaire ; `fiche_depuis_rattachements` prend celles du
 #: plus ancien, comme `app.card_first_placement` en base.
 COLONNES_RATTACHEMENT_FICHE = (
     "id,created_at,amount,probability_override,next_action,next_action_at,snoozed_until,archived_at,workflow_id,"
-    f"entered_step_at,{RESPONSABLE},{CHANNEL},{ETAPE}"
+    f"entered_step_at,{SANTE},{RESPONSABLE},{CHANNEL},{ETAPE}"
 )
 COLONNES_FICHE = (
     "id,title,description,currency,email_local_part,created_at,updated_at,ecriture_permise,"
-    f"{SANTE},{ETIQUETTES},card_placements!card_placements_card_fk({COLONNES_RATTACHEMENT_FICHE})"
+    f"{ETIQUETTES},card_placements!card_placements_card_fk({COLONNES_RATTACHEMENT_FICHE})"
 )
 COLONNES_EVENEMENT = "id,type,payload,created_at,acteur:profiles!card_events_actor_id_fkey(full_name)"
 COLONNES_COMMENTAIRE = (

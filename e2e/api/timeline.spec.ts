@@ -12,6 +12,8 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.2 : les colonnes de rattachement s'écrivent sur le rattachement de
 //           l'affaire (docs/SPEC-rattachements.md §3.2, §5)
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.3 : `move_card` désigne le rattachement de l'affaire
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : l'affaire d'essai naît par `creer_affaire`, dont le `created`
+//           porte l'acteur ; archivage et étape se lisent et s'écrivent sur le rattachement (décisions 768, 770)
 //           (docs/SPEC-rattachements.md §5) ; les scénarios nomment l'affaire, `e2e/api/rattachements.ts` donne le rattachement
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. La suite pgTAP prouve les mêmes règles **dans la
@@ -37,6 +39,7 @@ import {
 	jetonDe,
 } from './jetons'
 import { corpsParRattachement } from './rattachements'
+import { patcherAffaire } from '../affaire'
 
 const EVENEMENTS = '/rest/v1/card_events'
 const CARDS = '/rest/v1/cards'
@@ -46,15 +49,18 @@ const CARD_GRANDS_COMPTES = '5eed0000-0000-4000-8000-0000000000c1'
 const CARD_REFONTE = '5eed0000-0000-4000-8000-0000000000c4'
 const CARD_MAINTENANCE = '5eed0000-0000-4000-8000-0000000000c5'
 const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
-const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
 const ETAPE_QUALIFICATION = '5eed0000-0000-4000-8000-000000000061'
 const ETAPE_RELANCE = '5eed0000-0000-4000-8000-000000000062'
 const WORKSPACE = '5eed0000-0000-4000-8000-000000000001'
 const ADMIN = '5eed0000-0000-4000-8000-000000000011'
 const BIZDEV = '5eed0000-0000-4000-8000-000000000012'
 
-/** La card d'essai de ce fichier. Préfixe `f00d`, jamais `5eed` : INC-061 en sens inverse. */
-const CARD_ESSAI = 'f00d0000-0000-4000-8000-0000000000e1'
+/**
+ * La card d'essai de ce fichier. `CRM-111` T2.4.5 : elle naît par `creer_affaire`, le seul chemin d'un utilisateur, qui
+ * choisit son identifiant ; la valeur initiale, préfixée `f00d` et jamais `5eed` (INC-061 en sens inverse), ne désigne
+ * aucune ligne, et le ménage reste sûr si la naissance échoue.
+ */
+let CARD_ESSAI = 'f00d0000-0000-4000-8000-0000000000e1'
 
 const champs = 'id,card_id,type,actor_id,payload,created_at'
 const filDe = (card: string) =>
@@ -206,18 +212,13 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 	}) => {
 		// La card d'essai naît ici : elle porte le premier scénario d'écriture, et sert aux
 		// suivants. Elle est détruite dans `afterAll`.
-		const creation = await request.post(`${URL_API}${CARDS}`, {
-			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'return=representation' },
-			data: {
-				id: CARD_ESSAI,
-				workspace_id: WORKSPACE,
-				channel_id: CHANNEL_GRANDS_COMPTES,
-				workflow_id: WORKFLOW_GLOBAL,
-				current_step_id: ETAPE_QUALIFICATION,
-				title: 'Sonde de timeline',
-			},
+		// `CRM-111` T2.4.5 : par `creer_affaire`, dans le channel, à l'étape initiale de son workflow — la qualification.
+		const creation = await request.post(`${URL_API}/rest/v1/rpc/creer_affaire`, {
+			headers: enTetesAuthentifies(jetonAdmin),
+			data: { p_channel: CHANNEL_GRANDS_COMPTES, p_titre: 'Sonde de timeline' },
 		})
-		expect(creation.status()).toBe(201)
+		expect(creation.status(), await creation.text()).toBe(200)
+		CARD_ESSAI = (await creation.json()) as string
 
 		// l — le `created` est écrit, et son acteur est l'administratrice : `auth.uid()` est bien
 		// atteint depuis une fonction `SECURITY DEFINER` (§14.5).
@@ -304,11 +305,12 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 			{ deleted_at: new Date().toISOString() },
 			{ deleted_at: null },
 		]) {
-			const reponse = await request.patch(`${URL_API}${CARDS}?id=eq.${CARD_ESSAI}`, {
+			// `CRM-111` T2.4.5 : l'archivage est celui du rattachement, la corbeille celle de l'affaire.
+			const reponse = await patcherAffaire(request, `${URL_API}${CARDS}?id=eq.${CARD_ESSAI}`, {
 				headers: { ...enTetesService(), Prefer: 'return=representation' },
 				data: etat,
 			})
-			expect(reponse.status()).toBe(200)
+			expect(reponse.status(), await reponse.text()).toBe(200)
 		}
 
 		const fil = await request.get(filDe(CARD_ESSAI), { headers: enTetesService() })
@@ -398,7 +400,8 @@ test.describe('CRM-044 — la mémoire d’une affaire, hors interface', () => {
 
 	test('n — l’aller-retour du seed n’a laissé AUCUNE trace d’état', async ({ request }) => {
 		const reponse = await request.get(
-			`${URL_API}${CARDS}?id=in.(${CARD_GRANDS_COMPTES},${CARD_REFONTE})&select=id,current_step_id,owner_id&order=id`,
+			// `CRM-111` T2.4.5 : l'étape et le responsable sont ceux du rattachement.
+			`${URL_API}/rest/v1/card_placements?card_id=in.(${CARD_GRANDS_COMPTES},${CARD_REFONTE})&select=id:card_id,current_step_id,owner_id&order=card_id`,
 			{ headers: enTetesService() },
 		)
 		const cards = (await reponse.json()) as Array<{

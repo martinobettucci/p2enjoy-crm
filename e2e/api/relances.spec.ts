@@ -6,6 +6,8 @@
 // @verifies docs/SPEC-permissions-rls.md §7 (le refus est ZÉRO LIGNE, jamais une erreur ;
 //           preuves n° 4 et n° 11)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : l'ancienneté, le sommeil et l'archivage se lisent sur le
+//           rattachement (docs/SPEC-rattachements.md §3.2)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. `supabase/tests/0051_cards_figees.test.sql` prouve la
 // règle **en base**, sous des rôles endossés. Rien n'y garantit que la pile la rende par la vraie
@@ -32,7 +34,6 @@ import { enTetesAnonymes, enTetesAuthentifies, jetonDe } from './jetons'
 import { ancienneteDepassee, joursDansEtape, seuilEffectif } from '../../webapp/src/lib/carte-figee'
 
 const RPC = '/rest/v1/rpc/cards_figees'
-const CARDS = '/rest/v1/cards'
 
 /** Identifiants du seed — `docs/SPEC-seed.md` §2.3, §9.12.1 et `docs/SPEC-cards.md` §9. */
 const CAMILLE = '5eed0000-0000-4000-8000-000000000011'
@@ -299,29 +300,33 @@ test.describe('les affaires figées, par la vraie route (docs/SPEC-relances.md �
 		// deviendrait intermittente pour une raison qui ne dit rien du produit.
 		const maintenant = new Date()
 
+		// `CRM-111` T2.4.5 : l'étape, son ancienneté, le sommeil et l'archivage sont ceux du RATTACHEMENT ; la corbeille
+		// reste celle de l'affaire, plongée. L'identifiant rendu est celui de l'affaire, que la fonction rend aussi.
 		const colonnes =
-			'id, entered_step_at, snoozed_until, archived_at, deleted_at,' +
-			// LE NOM DE LA CLÉ EST CELUI DE LA CONTRAINTE COMPOSITE, et il est MESURÉ : `cards` porte
-			// `cards_current_step_id_workflow_id_fkey`, jamais `cards_current_step_id_fkey`. Le désigner
-			// est obligatoire — sans indication, PostgREST rend `PGRST200`, ne trouvant pas la relation.
-			'workflow_steps!cards_current_step_id_workflow_id_fkey(stale_after_days,' +
+			'id:card_id, entered_step_at, snoozed_until, archived_at, affaire:cards!card_placements_card_fk(deleted_at),' +
+			// LE NOM DE LA CLÉ EST CELUI DE LA CONTRAINTE COMPOSITE, et il est MESURÉ : le rattachement porte
+			// `card_placements_step_fk`. Le désigner est obligatoire — sans indication, PostgREST rend `PGRST200`.
+			'workflow_steps!card_placements_step_fk(stale_after_days,' +
 			'workflow_nodes_catalog(default_stale_after_days))'
-		const lues = await request.get(`${CARDS}?select=${encodeURIComponent(colonnes)}`, {
+		const lues = await request.get(`/rest/v1/card_placements?select=${encodeURIComponent(colonnes)}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 		})
-		expect(lues.status()).toBe(200)
-		type CardLue = {
+		expect(lues.status(), await lues.text()).toBe(200)
+		type RattachementLu = {
 			id: string
 			entered_step_at: string
 			snoozed_until: string | null
 			archived_at: string | null
-			deleted_at: string | null
+			affaire: { deleted_at: string | null }
 			workflow_steps: {
 				stale_after_days: number | null
 				workflow_nodes_catalog: { default_stale_after_days: number | null } | null
 			} | null
 		}
-		const cards = (await lues.json()) as CardLue[]
+		const cards = ((await lues.json()) as RattachementLu[]).map(({ affaire, ...ligne }) => ({
+			...ligne,
+			deleted_at: affaire.deleted_at,
+		}))
 		// Le seed porte quarante et une affaires, dont deux rangées : sans ce garde-fou, une lecture
 		// vide rendrait l'égalité ci-dessous vraie et vide de sens.
 		expect(cards.length).toBeGreaterThan(30)

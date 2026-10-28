@@ -8,6 +8,20 @@
 // réponse (mesuré, `formulaire.ts`). La clé est nommée, ce qui fige le contrat au lieu de laisser PostgREST la déduire.
 // Ce module dit lequel employer ; T7 donnera à la fiche ses blocs par rattachement, et ce choix disparaîtra avec eux.
 
+import type { Database } from './database.types'
+
+/**
+ * La ligne d'avant `CRM-111` T2.4.5 : l'affaire et les colonnes de son rattachement, la forme que les écrans reçoivent depuis
+ * T2.4.1 (`carteDepuisRattachement`, `ligneDepuisRattachement`, `cardDepuisRattachements`). Les colonnes de rattachement
+ * ont quitté `cards` ; ce type les reprend du rattachement, pour que les projections des écrans restent écrites colonne par
+ * colonne (docs/SPEC-rattachements.md §3.2).
+ */
+export type LigneAffaire = Database['public']['Tables']['cards']['Row'] &
+	Omit<
+		Database['public']['Tables']['card_placements']['Row'],
+		'id' | 'workspace_id' | 'card_id' | 'created_at' | 'updated_at' | 'created_by'
+	>
+
 /** Ce qu'une affaire lue porte de ses rattachements. */
 export type RattachementsLus = {
 	readonly card_placements: readonly { readonly id: string; readonly created_at: string }[]

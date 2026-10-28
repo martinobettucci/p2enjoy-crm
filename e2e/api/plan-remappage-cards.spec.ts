@@ -7,6 +7,8 @@
 // @verifies docs/SPEC-permissions-rls.md §7 (preuve de refus n° 3 au niveau des versions)
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : les fixtures posent l'affaire puis son rattachement, qui porte
+//           l'étape, le workflow et l'archivage (docs/SPEC-rattachements.md §3.2)
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // trois profils seedés obtenus par la véritable route de connexion. Aucun navigateur n'est lancé :
@@ -36,6 +38,7 @@
 // ferait avancer son numéro de version à chaque exécution.
 
 import { randomUUID } from 'node:crypto'
+import { posterAffaire, supprimerAffairesDuChannel } from '../affaire'
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { COMPTES_SEED, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 
@@ -163,7 +166,8 @@ async function cardJetable(
 	etat: 'active' | 'archived' | 'deleted' = 'active',
 ): Promise<string> {
 	const id = randomUUID()
-	const reponse = await api.post(CARDS, {
+	// `CRM-111` T2.4.5 : l'affaire, puis son rattachement, qui porte l'étape et l'archivage.
+	const reponse = await posterAffaire(api, CARDS, {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
 		data: {
 			id,
@@ -193,7 +197,7 @@ async function publier(api: APIRequestContext, jeton: string, workflowId: string
 
 /** Déplace une affaire par la clé de service : la preuve porte sur le plan, non sur `move_card`. */
 async function poser(api: APIRequestContext, cardId: string, etapeId: string): Promise<void> {
-	const reponse = await api.patch(`${CARDS}?id=eq.${cardId}`, {
+	const reponse = await api.patch(`/rest/v1/card_placements?card_id=eq.${cardId}`, {
 		headers: enTetesService(),
 		data: { current_step_id: etapeId },
 	})
@@ -220,7 +224,7 @@ async function rendreLaBase(
 	channelId?: string,
 ): Promise<void> {
 	if (channelId) {
-		await api.delete(`${CARDS}?channel_id=eq.${channelId}`, { headers: enTetesService() })
+		await supprimerAffairesDuChannel(api, channelId, enTetesService())
 		await api.delete(`${CHANNELS}?id=eq.${channelId}`, { headers: enTetesService() })
 	}
 	await api.delete(`${WF}?id=eq.${workflowId}`, { headers: enTetesService() })
@@ -274,7 +278,9 @@ test.describe('N1 — le plan nominal, et l’exhaustivité (lignes a, b)', () =
 		// l'administratrice en voyait moins, le plan serait partiel et le dirait prêt quand même.
 		// L'administratrice porte pourtant un droit fin `none` sur un track du seed — c'est la règle
 		// 2 d'`app.resolve_access` qui la protège, et c'est elle que cette ligne éprouve.
-		const total = await request.get(`${CARDS}?workflow_id=eq.${WORKFLOW_SEED}&select=id`, {
+		// `CRM-111` T2.4.5 : le workflow est celui du rattachement ; le plan en compte un par affaire tant que
+		// `card_placements_one_per_card_idx` tient (T3).
+		const total = await request.get(`/rest/v1/card_placements?workflow_id=eq.${WORKFLOW_SEED}&select=id`, {
 			headers: { ...enTetesService(), Prefer: 'count=exact' },
 		})
 		expect(total.status()).toBe(200)

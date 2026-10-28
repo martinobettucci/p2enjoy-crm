@@ -18,6 +18,8 @@
 //           réels : les dépenses bloquantes réservées à l'administratrice, la réaffectation refusée aux autres et vers une
 //           autre devise, puis acceptée, relue en base ; décisions 741 à 743
 // @verifies CLAUDE.md §10 (toute règle se prouve hors interface, avec les jetons réels)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : l'énumération compte les rattachements du channel dont l'affaire
+//           n'est pas à la corbeille (docs/SPEC-corbeille.md §9.1, docs/SPEC-rattachements.md §3.2)
 //
 // Ces scénarios émettent LES REQUÊTES DE `webapp/src/lib/corbeille.ts`, avec les mêmes chemins et
 // les mêmes filtres, et lisent le compte là où PostgREST le rend — l'en-tête `content-range` d'un
@@ -29,6 +31,7 @@
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { posterAffaire } from '../affaire'
 
 const WORKSPACE_SEED = '5eed0000-0000-4000-8000-000000000001'
 const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
@@ -46,6 +49,9 @@ const TRACK_SANS_CHANNEL = '5eed0000-0000-4000-8000-000000000024'
 
 const CHANNELS = '/rest/v1/channels'
 const CARDS = '/rest/v1/cards'
+const RATTACHEMENTS = '/rest/v1/card_placements'
+/** La sélection EXACTE de `COLONNES_RATTACHEMENT_ENFANT` (`webapp/src/lib/corbeille.ts`) — figée ici, et non recomposée. */
+const COLONNES_RATTACHEMENT_ENFANT = 'id, affaire:cards!inner(id)'
 const TRACKS = '/rest/v1/tracks'
 const PREFIXE = 'ZZ énumération'
 /** Préfixe des objets jetables du geste : ils sont créés ici, et retirés par `menage`. */
@@ -83,7 +89,9 @@ async function compterAffaires(
 	jeton: string,
 	filtre: string,
 ): Promise<number> {
-	const reponse = await requete.get(`${CARDS}?select=id&${filtre}&deleted_at=is.null`, {
+	// `CRM-111` T2.4.5 : comme `compterEnfantsInaccessibles`, le compte porte sur les RATTACHEMENTS du channel, dont
+	// l'affaire n'est pas à la corbeille (`COLONNES_RATTACHEMENT_ENFANT`).
+	const reponse = await requete.get(`${RATTACHEMENTS}?select=${encodeURIComponent(COLONNES_RATTACHEMENT_ENFANT)}&${filtre}&affaire.deleted_at=is.null`, {
 		headers: { ...enTetesAuthentifies(jeton), Prefer: 'count=exact', Range: '0-0' },
 	})
 	expect(reponse.status()).toBeLessThan(300)
@@ -187,7 +195,7 @@ test.describe('E1 — l’énumération du track en corbeille', () => {
 	}) => {
 		// Elle est retenue un cran plus bas : restaurer le track ne la rendrait pas (§3.5). Aucune
 		// donnée du seed ne porte ce cas — la fixture est posée ici, et retirée par `menage`.
-		const posee = await request.post(CARDS, {
+		const posee = await posterAffaire(request, CARDS, {
 			headers: { ...enTetesService(), Prefer: 'return=representation' },
 			data: {
 				workspace_id: WORKSPACE_SEED,
@@ -248,7 +256,7 @@ test.describe('E3 — l’énumération vide', () => {
 	test('`channel_id=in.()` n’est pas un piège : il rend `200` et zéro ligne', async ({ request }) => {
 		// MESURÉ, et c'est ce qui autorise à parler d'une requête ÉPARGNÉE plutôt que d'un
 		// contournement (§3.5).
-		const reponse = await request.get(`${CARDS}?select=id&channel_id=in.()&deleted_at=is.null`, {
+		const reponse = await request.get(`${RATTACHEMENTS}?select=${encodeURIComponent(COLONNES_RATTACHEMENT_ENFANT)}&channel_id=in.()&affaire.deleted_at=is.null`, {
 			headers: { ...enTetesAuthentifies(jetonAdmin), Prefer: 'count=exact', Range: '0-0' },
 		})
 		expect(reponse.status()).toBe(200)
@@ -454,7 +462,7 @@ test.describe('E5 — les lectures de l’administration excluent la corbeille (
  * et la preuve ne dirait rien du refus d'ÉCRITURE qu'elle prétend mesurer.
  */
 async function cardJetable(requete: APIRequestContext, suffixe: string): Promise<string> {
-	const reponse = await requete.post(CARDS, {
+	const reponse = await posterAffaire(requete, CARDS, {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
 		data: {
 			workspace_id: WORKSPACE_SEED,

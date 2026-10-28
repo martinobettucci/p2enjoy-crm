@@ -10,6 +10,8 @@
 //           SSO, fixture connecterAvecLeLabs (CRM-092 T5) : plus aucun mot de passe du CRM
 // @verifies CRM-093 (docs/BACKLOG.md) — le scénario de la lectrice révisé : la commande refusée est éteinte avec le motif de l'affaire 
 //           (docs/SPEC-droits-interface.md §3, §5)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : la restauration de l'état seedé écrit l'affaire et son rattachement
+//           (docs/SPEC-rattachements.md §3.2)
 //
 // AUCUNE RÉPONSE N'EST SUBSTITUÉE. Ces scénarios se connectent réellement, ouvrent une affaire du
 // seed, écrivent par la vraie route et RELISENT l'effet — soit dans le fil de l'affaire, soit après
@@ -29,6 +31,7 @@ import {
 } from './fixtures'
 import { URL_API, enTetesService } from '../api/jetons'
 import { PALIERS, capturer } from './captures'
+import { patcherAffaire } from '../affaire'
 
 const UNITE = 'CRM-040'
 const ADMIN = 'admin@p2enjoy.test'
@@ -56,11 +59,12 @@ async function connecter(page: Page, adresse = ADMIN): Promise<void> {
 }
 
 test.afterEach(async ({ request }) => {
-	const reponse = await request.patch(`${URL_API}/rest/v1/cards?id=eq.${DEPOUILLEE.id}`, {
+	// `CRM-111` T2.4.5 : le titre et la devise sont ceux de l'affaire, le reste celui de son rattachement.
+	const reponse = await patcherAffaire(request, `${URL_API}/rest/v1/cards?id=eq.${DEPOUILLEE.id}`, {
 		headers: enTetesService(),
 		data: ETAT_SEEDE,
 	})
-	expect(reponse.status()).toBe(204)
+	expect(reponse.status(), await reponse.text()).toBe(204)
 })
 
 test.describe("écriture des champs d'en-tête (docs/SPEC-cards.md §15 bis)", () => {

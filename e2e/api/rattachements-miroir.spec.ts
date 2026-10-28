@@ -6,6 +6,10 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.0 : les colonnes fermées du rattachement le restent
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.3 : la clé de service insère pour le seed, ne retire rien, et
 //           n'écrit pas ce que la base tient seule (docs/SPEC-rattachements.md §12, décision 746)
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : les colonnes ont QUITTÉ l'affaire (migration 0134) ; il n'y a
+//           plus de miroir à éprouver, mais une affaire lue a exactement un rattachement lisible tant que
+//           `card_placements_one_per_card_idx` tient (T3), et une requête qui nomme une colonne retirée est refusée
+//           (docs/SPEC-rattachements.md §3.1, §3.2)
 //
 // Tout part du SEED : chaque appelant voit exactement un rattachement par affaire qu'il lit, égal à elle ; la lectrice ne
 // voit aucun rattachement d'un channel qui lui est fermé ; l'anonyme lit zéro ligne. PERSONNE n'écrit la table : ni le
@@ -24,7 +28,7 @@ const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
 /** `…0c4`, dans `refonte` : une affaire que la lectrice lit. */
 const CARD_C4 = '5eed0000-0000-4000-8000-0000000000c4'
 
-/** Les treize colonnes que l'affaire porte encore, et que son rattachement reprend (§3.1). */
+/** Les treize colonnes du rattachement, que l'affaire ne porte plus depuis la migration 0134 (§3.2). */
 const COLONNES = [
 	'channel_id', 'workflow_id', 'current_step_id', 'position', 'owner_id', 'amount', 'probability_override',
 	'next_action', 'next_action_at', 'entered_step_at', 'health_score', 'snoozed_until', 'archived_at',
@@ -35,9 +39,9 @@ type Erreur = { code: string; message: string }
 
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 
-/** Les affaires et les rattachements que l'appelant lit, chacun avec ses treize colonnes. */
+/** Les affaires et les rattachements que l'appelant lit, ceux-ci avec leurs treize colonnes. */
 async function lire(requete: APIRequestContext, enTetes: Record<string, string>) {
-	const cartes = await requete.get(rest(`cards?select=id,${COLONNES.join(',')}`), { headers: enTetes })
+	const cartes = await requete.get(rest('cards?select=id'), { headers: enTetes })
 	const rattachements = await requete.get(rest(`card_placements?select=id,card_id,${COLONNES.join(',')}`), {
 		headers: enTetes,
 	})
@@ -46,27 +50,24 @@ async function lire(requete: APIRequestContext, enTetes: Record<string, string>)
 	return { cartes: (await cartes.json()) as Ligne[], rattachements: (await rattachements.json()) as Ligne[] }
 }
 
-/** Les écarts entre chaque affaire lue et son rattachement : vide quand le miroir est exact. */
+/**
+ * Les écarts entre les affaires lues et leurs rattachements lus : vide quand chaque affaire a exactement un rattachement
+ * lisible, porteur d'un channel, et qu'aucun rattachement lisible ne désigne une affaire illisible.
+ */
 function ecarts(cartes: Ligne[], rattachements: Ligne[]): string[] {
-	const parCarte = new Map(rattachements.map((r) => [r.card_id, r]))
 	const sortie: string[] = []
+	const lues = new Set(cartes.map((carte) => carte.id))
 	for (const carte of cartes) {
-		const r = parCarte.get(carte.id)
-		if (r === undefined) {
-			sortie.push(`${carte.id} : aucun rattachement`)
-			continue
-		}
-		for (const colonne of COLONNES) {
-			if (JSON.stringify(carte[colonne]) !== JSON.stringify(r[colonne])) {
-				sortie.push(`${carte.id}.${colonne} : ${JSON.stringify(carte[colonne])} ≠ ${JSON.stringify(r[colonne])}`)
-			}
-		}
+		const siens = rattachements.filter((r) => r.card_id === carte.id)
+		if (siens.length !== 1) sortie.push(`${carte.id} : ${siens.length} rattachement(s)`)
+		else if (siens[0]!.channel_id === null) sortie.push(`${carte.id} : rattachement sans channel`)
 	}
+	for (const r of rattachements) if (!lues.has(r.card_id!)) sortie.push(`${r.id} : affaire ${r.card_id} illisible`)
 	return sortie
 }
 
 test.describe('CRM-111 T2.1 — les rattachements, lus et refusés par l’API', () => {
-	test('l’administratrice lit un rattachement par affaire, égal à elle', async ({ request }) => {
+	test('l’administratrice lit un rattachement par affaire', async ({ request }) => {
 		const { cartes, rattachements } = await lire(request, enTetesAuthentifies(await jetonDe(ADMIN)))
 		expect(cartes.length, 'le seed porte des affaires').toBeGreaterThan(0)
 		expect(rattachements).toHaveLength(cartes.length)
@@ -134,32 +135,19 @@ test.describe('CRM-111 T2.1 — les rattachements, lus et refusés par l’API',
 		})
 	}
 
-	// RÉVISÉ PAR `CRM-111` T2.3.2 : un client n'écrit plus ces colonnes sur `cards` ; la clé de service, si — le seed en
-	// dépend —, et c'est elle qui éprouve désormais le miroir de l'affaire vers son rattachement.
-	test('une écriture de l’affaire par la clé de service est reportée dans son rattachement', async ({ request }) => {
-		const h = enTetesService()
-		const initiale = await request.get(rest(`cards?id=eq.${CARD_C4}&select=next_action`), { headers: enTetesService() })
-		const [carte] = (await initiale.json()) as { next_action: string | null }[]
-		if (carte === undefined) throw new Error('CARD_C4 du seed : aucune ligne — le seed est-il appliqué ?')
-		const seedee = carte.next_action
-		try {
-			const ecriture = await request.patch(rest(`cards?id=eq.${CARD_C4}`), {
-				headers: h,
-				data: { next_action: 'Sonde T2.1 — relancer' },
-			})
-			expect(ecriture.status()).toBe(204)
-			const relu = await request.get(rest(`card_placements?card_id=eq.${CARD_C4}&select=next_action`), { headers: h })
-			expect(await relu.json()).toEqual([{ next_action: 'Sonde T2.1 — relancer' }])
-		} finally {
-			const restitution = await request.patch(rest(`cards?id=eq.${CARD_C4}`), {
-				headers: enTetesService(),
-				data: { next_action: seedee },
-			})
-			expect(restitution.status(), 'la valeur seedée est restituée').toBe(204)
-		}
-		const final = await request.get(rest(`card_placements?card_id=eq.${CARD_C4}&select=next_action`), {
-			headers: enTetesService(),
+	// RÉVISÉ PAR `CRM-111` T2.4.5 (décision 51) : ce scénario éprouvait le MIROIR — une écriture de l'affaire par la clé de
+	// service reportée dans son rattachement. La migration 0134 a retiré les colonnes de l'affaire : il n'y a plus rien à
+	// reporter, et la preuve devient celle du retrait, pour tout appelant, clé de service comprise.
+	for (const colonne of COLONNES) {
+		test(`\`${colonne}\` a quitté l’affaire : la lire ou l’écrire sur \`cards\` est refusé`, async ({ request }) => {
+			const h = enTetesService()
+			const lecture = await request.get(rest(`cards?id=eq.${CARD_C4}&select=id,${colonne}`), { headers: h })
+			expect(lecture.status(), await lecture.text()).toBe(400)
+			expect(((await lecture.json()) as Erreur).code).toBe('42703')
+
+			const ecriture = await request.patch(rest(`cards?id=eq.${CARD_C4}`), { headers: h, data: { [colonne]: null } })
+			expect(ecriture.status(), await ecriture.text()).toBe(400)
+			expect(((await ecriture.json()) as Erreur).code).toBe('PGRST204')
 		})
-		expect(await final.json(), 'le rattachement a suivi la restitution').toEqual([{ next_action: seedee }])
-	})
+	}
 })

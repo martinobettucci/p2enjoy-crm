@@ -138,10 +138,11 @@ test.describe('le formulaire à chaque étape du workflow global, sans substitut
 				card_id: `in.(${SUPPORT.map((s) => s.card).join(',')})`,
 				select: 'card_id,field_id,value',
 			}),
-			lire<Affaire>(page, 'cards', {
-				id: `in.(${SUPPORT.map((s) => s.card).join(',')})`,
-				// Deux clés composites mènent de `cards` à `channels` (workflow et workspace) : la relation est nommée.
-				select: 'id,current_step_id,channel:channels!cards_channel_id_workspace_id_fkey(slug,track:tracks(slug))',
+			// `CRM-111` T2.4.5 : l'étape et le channel sont ceux du rattachement ; deux clés composites mènent du
+			// rattachement à `channels` (workflow et workspace) : la relation est nommée.
+			lire<Affaire>(page, 'card_placements', {
+				card_id: `in.(${SUPPORT.map((s) => s.card).join(',')})`,
+				select: 'id:card_id,current_step_id,channel:channels!card_placements_channel_fk(slug,track:tracks(slug))',
 			}),
 		])
 

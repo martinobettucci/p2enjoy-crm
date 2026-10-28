@@ -20,10 +20,9 @@
 // politique `cards_maj` existe depuis `CRM-040`. Ce qui manquait était le **chemin** vers elles.
 
 import { classerErreur, enErreur, pret, type EtatAsync } from './async'
-import type { Database } from './database.types'
 import type { ProfilAffiche } from './identites'
 import type { CardOuverte } from './formulaire'
-import { idRattachement } from './rattachements'
+import { idRattachement, type LigneAffaire } from './rattachements'
 import type { ClientCrm } from './supabase'
 
 /**
@@ -218,10 +217,7 @@ export const CHAMPS_DU_RATTACHEMENT: ReadonlySet<ChampEntete> = new Set(['owner_
  * la table écrite : celles de l'affaire, ou celles du rattachement.
  */
 export type LigneEnteteEcrite = Partial<
-	Pick<
-		Database['public']['Tables']['cards']['Row'],
-		'title' | 'owner_id' | 'amount' | 'currency' | 'next_action' | 'next_action_at'
-	>
+	Pick<LigneAffaire, 'title' | 'owner_id' | 'amount' | 'currency' | 'next_action' | 'next_action_at'>
 >
 
 export type ResultatEcritureEntete =

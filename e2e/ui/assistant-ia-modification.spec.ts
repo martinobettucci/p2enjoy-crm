@@ -31,6 +31,7 @@ import {
 } from './fixtures'
 import { PALIERS, capturer } from './captures'
 import { URL_API, enTetesService } from '../api/jetons'
+import { posterAffaire } from '../affaire'
 
 const UNITE = 'CRM-097'
 const ADMIN = 'admin@p2enjoy.test'
@@ -59,7 +60,7 @@ async function lireService<T>(requete: APIRequestContext, chemin: string): Promi
 }
 
 async function inserer(requete: APIRequestContext, table: string, ligne: Record<string, unknown>): Promise<void> {
-	const reponse = await requete.post(rest(table), { headers: enTetesService(), data: ligne })
+	const reponse = await posterAffaire(requete, rest(table), { headers: enTetesService(), data: ligne })
 	expect(reponse.status(), `${table} : ${await reponse.text()}`).toBe(201)
 }
 

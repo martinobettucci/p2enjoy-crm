@@ -12,6 +12,7 @@ import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
 import { connecterAvecLeLabs, expect, test } from './fixtures'
 import { capturer } from './captures'
+import { posterAffaire } from '../affaire'
 
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const NOEUD_PROSPECTION = '5eed0000-0000-4000-8000-000000000041'
@@ -19,7 +20,7 @@ const NOEUD_RELANCE = '5eed0000-0000-4000-8000-000000000042'
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 
 async function inserer(requete: APIRequestContext, table: string, ligne: Record<string, unknown>): Promise<void> {
-	const reponse = await requete.post(rest(table), { headers: enTetesService(), data: ligne })
+	const reponse = await posterAffaire(requete, rest(table), { headers: enTetesService(), data: ligne })
 	expect(reponse.status(), `${table} : ${await reponse.text()}`).toBe(201)
 }
 

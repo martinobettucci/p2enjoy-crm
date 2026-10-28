@@ -100,34 +100,34 @@ select ok(has_column_privilege('authenticated', 'public.cards', 'description', '
 -- RÉVISÉES PAR `CRM-111` T2.3.2 (migration 112, décision 51) : les sept colonnes de rattachement ouvertes au client
 -- s'écrivent sur `card_placements` — le privilège y est ouvert, et fermé sur `cards`.
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'position', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'position', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'position') then has_column_privilege('authenticated', 'public.cards', 'position', 'update') else false end),
 	'`position` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'owner_id', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'owner_id', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'owner_id') then has_column_privilege('authenticated', 'public.cards', 'owner_id', 'update') else false end),
 	'`owner_id` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'amount', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'amount', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'amount') then has_column_privilege('authenticated', 'public.cards', 'amount', 'update') else false end),
 	'`amount` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
 select ok(has_column_privilege('authenticated', 'public.cards', 'currency', 'update'),
 	'`currency` reste ouverte');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'probability_override', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'probability_override', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'probability_override') then has_column_privilege('authenticated', 'public.cards', 'probability_override', 'update') else false end),
 	'`probability_override` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'next_action', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'next_action', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'next_action') then has_column_privilege('authenticated', 'public.cards', 'next_action', 'update') else false end),
 	'`next_action` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'next_action_at', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'next_action_at', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'next_action_at') then has_column_privilege('authenticated', 'public.cards', 'next_action_at', 'update') else false end),
 	'`next_action_at` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte');
 -- ASSERTION RETOURNÉE (décision 51, mécanisme du `docs/CloudWorker.md` §3.1) : cette suite
 -- constatait « `snoozed_until` reste ouverte ». `CRM-081` la FERME — la valeur cesse d'être une
 -- saisie libre pour devenir le constat d'un geste gardé, `public.snooze_card` et
 -- `public.wake_card` (docs/SPEC-cards.md §16.7). La preuve n'est ni retirée ni contournée : elle
 -- asserte désormais la règle nouvelle, motif écrit ici.
-select ok(not has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update'),
+select ok(not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'snoozed_until') then has_column_privilege('authenticated', 'public.cards', 'snoozed_until', 'update') else false end),
 	'`snoozed_until` est FERMÉE depuis `CRM-081` : elle s''écrit par `snooze_card` et `wake_card`');
 select ok(has_column_privilege('authenticated', 'public.card_placements', 'archived_at', 'update')
-	      and not has_column_privilege('authenticated', 'public.cards', 'archived_at', 'update'),
+	      and not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'archived_at') then has_column_privilege('authenticated', 'public.cards', 'archived_at', 'update') else false end),
 	'`archived_at` s''écrit sur le RATTACHEMENT depuis `CRM-111` T2.3.2, et plus sur l''affaire — avant : reste ouverte : l''archivage est une suppression douce, pas une transition');
 select ok(has_column_privilege('authenticated', 'public.cards', 'deleted_at', 'update'),
 	'`deleted_at` reste ouverte : la corbeille non plus n''est pas une transition');
@@ -144,17 +144,17 @@ select is(
 	'fermeture de `snoozed_until` (docs/SPEC-cards.md §16.7)');
 
 -- Les colonnes fermées par conséquence du mécanisme, reconduites de `CRM-034`.
-select ok(not has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update'),
+select ok(not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'current_step_id') then has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update') else false end),
 	'INC-049 : `current_step_id` reste fermée par `CRM-034` — cette unité ne la rouvre pas');
-select ok(not has_column_privilege('authenticated', 'public.cards', 'entered_step_at', 'update'),
+select ok(not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'entered_step_at') then has_column_privilege('authenticated', 'public.cards', 'entered_step_at', 'update') else false end),
 	'`entered_step_at` reste fermée : `docs/SPEC-cards.md` §2.9 la réserve à `move_card`');
 select ok(not has_column_privilege('authenticated', 'public.cards', 'workspace_id', 'update'),
 	'`workspace_id` reste fermée');
-select ok(not has_column_privilege('authenticated', 'public.cards', 'channel_id', 'update'),
+select ok(not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'channel_id') then has_column_privilege('authenticated', 'public.cards', 'channel_id', 'update') else false end),
 	'`channel_id` reste fermée');
-select ok(not has_column_privilege('authenticated', 'public.cards', 'workflow_id', 'update'),
+select ok(not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'workflow_id') then has_column_privilege('authenticated', 'public.cards', 'workflow_id', 'update') else false end),
 	'`workflow_id` reste fermée');
-select ok(not has_column_privilege('authenticated', 'public.cards', 'health_score', 'update'),
+select ok(not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'health_score') then has_column_privilege('authenticated', 'public.cards', 'health_score', 'update') else false end),
 	'`health_score` reste fermée : jamais alimentée, `docs/SPEC-cards.md` §2.9');
 
 -- =============================================================================================
@@ -231,15 +231,17 @@ select is(
 savepoint p_insert;
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
-insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title,
-                          email_local_part, created_by)
-values ('5eed0000-0000-4000-8000-000000000001',
-        '5eed0000-0000-4000-8000-000000000032',
-        '5eed0000-0000-4000-8000-000000000051',
-        '5eed0000-0000-4000-8000-000000000062',
-        'tst-crm013-insertion',
-        'c-zzzzzzzz',
+-- `CRM-111` T2.4.5 : l'affaire est insérée sous le rôle réel — c'est elle dont l'adresse choisie doit être remplacée —,
+-- puis son rattachement est posé par le propriétaire, et l'identité réelle reprise pour relire.
+insert into public.cards (workspace_id, title, email_local_part, created_by)
+values ('5eed0000-0000-4000-8000-000000000001', 'tst-crm013-insertion', 'c-zzzzzzzz',
         '5eed0000-0000-4000-8000-000000000011');
+reset role;
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id)
+select c.id, c.workspace_id, '5eed0000-0000-4000-8000-000000000032', '5eed0000-0000-4000-8000-000000000051',
+       '5eed0000-0000-4000-8000-000000000062'
+  from public.cards c where c.title = 'tst-crm013-insertion';
+select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 
 select isnt(
 	(select email_local_part from public.cards where title = 'tst-crm013-insertion'),
@@ -360,7 +362,7 @@ select is(
 -- La sixième cible, elle, est livrée — mais par `CRM-034`, et le rappeler tient INC-049 sous les
 -- yeux plutôt que dans un rapport.
 select ok(
-	not has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update'),
+	not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'current_step_id') then has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update') else false end),
 	'CIBLE 6/6 : livrée, mais par `CRM-034` — INC-049, chevauchement de Definition of Done tranché '
 	'du côté de l''unité dont la preuve n° 5 dépendait');
 

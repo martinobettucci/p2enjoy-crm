@@ -12,6 +12,7 @@
 
 import { expect, test, type APIRequestContext } from '@playwright/test'
 import { COMPTES_SEED, URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { posterAffaire } from '../affaire'
 
 const ADMIN = COMPTES_SEED[0]
 const BIZDEV = COMPTES_SEED[1]
@@ -45,7 +46,7 @@ async function monter(requete: APIRequestContext): Promise<void> {
 		['workspace_members', { workspace_id: ESPACE.workspace, user_id: ID_ADMIN, role: 'admin' }],
 		['workspace_members', { workspace_id: ESPACE.workspace, user_id: ID_BIZDEV, role: 'business_developer' }],
 	] as const) {
-		const reponse = await requete.post(rest(table), { headers: enTetesService(), data: corps })
+		const reponse = await posterAffaire(requete, rest(table), { headers: enTetesService(), data: corps })
 		expect(reponse.status(), `montage ${table} : ${await reponse.text()}`).toBe(201)
 	}
 }

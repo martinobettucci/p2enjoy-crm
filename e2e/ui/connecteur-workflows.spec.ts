@@ -27,6 +27,7 @@ import { autoriserErreursConsole, connecterAvecLeLabs, ERREUR_RESSOURCE_HTTP, ex
 import { capturer } from './captures'
 import { MOT_DE_PASSE_SEED, URL_API, enTetesService } from '../api/jetons'
 import { RETOUR_CLIENT, SessionMcp, echangerCode, preparerAutorisation } from '../mcp/client'
+import { posterAffaire } from '../affaire'
 
 const UNITE = 'CRM-118'
 const ESPACE = '5eed0000-0000-4000-8000-000000000001'
@@ -70,7 +71,8 @@ async function retirer(request: APIRequestContext): Promise<void> {
 	}
 	const canaux = await request.get(rest(`channels?track_id=eq.${TRACK_CONSEIL}&slug=eq.${SLUG_REMAP}&select=id`), { headers: enTetesService() })
 	for (const { id } of (await canaux.json()) as { id: string }[]) {
-		const cartes = await request.get(rest(`cards?channel_id=eq.${id}&select=id`), { headers: enTetesService() })
+		// `CRM-111` T2.4.5 : le channel d'une affaire est celui de son rattachement.
+		const cartes = await request.get(rest(`card_placements?channel_id=eq.${id}&select=id:card_id`), { headers: enTetesService() })
 		for (const carte of (await cartes.json()) as { id: string }[]) {
 			await request.delete(rest(`card_field_values?card_id=eq.${carte.id}`), { headers: enTetesService() })
 			await request.delete(rest(`cards?id=eq.${carte.id}`), { headers: enTetesService() })
@@ -150,7 +152,7 @@ test('une étape ajoutée par le connecteur paraît dans l’éditeur de workflo
 test('un champ exigé par le connecteur bloque le déplacement au board, et le bandeau le nomme', async ({ page, browser, request }) => {
 	const idCard = randomUUID()
 	const titre = `E2E MCP exigence ${idCard.slice(0, 8)}`
-	const creation = await request.post(rest('cards'), {
+	const creation = await posterAffaire(request, rest('cards'), {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
 		data: {
 			id: idCard, workspace_id: ESPACE, channel_id: CHANNEL_GRANDS_COMPTES, workflow_id: WORKFLOW_DEFAUT,
@@ -219,7 +221,7 @@ test('une restauration par le connecteur remappe une affaire, et le board la mon
 	const idChannel = ((await canal.json()) as { id: string }[])[0]?.id ?? ''
 	const idCard = randomUUID()
 	const titre = `E2E MCP remap ${idCard.slice(0, 8)}`
-	const carte = await request.post(rest('cards'), {
+	const carte = await posterAffaire(request, rest('cards'), {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
 		data: { id: idCard, workspace_id: ESPACE, channel_id: idChannel, workflow_id: workflow, current_step_id: negociation, title: titre },
 	})
@@ -282,7 +284,7 @@ test('un channel dont le connecteur change le workflow montre son affaire à sa 
 	const idChannel = ((await canal.json()) as { id: string }[])[0]?.id ?? ''
 	const idCard = randomUUID()
 	const titre = `E2E MCP changement ${idCard.slice(0, 8)}`
-	const carte = await request.post(rest('cards'), {
+	const carte = await posterAffaire(request, rest('cards'), {
 		headers: { ...enTetesService(), Prefer: 'return=representation' },
 		data: { id: idCard, workspace_id: ESPACE, channel_id: idChannel, workflow_id: depart, current_step_id: relance, title: titre },
 	})

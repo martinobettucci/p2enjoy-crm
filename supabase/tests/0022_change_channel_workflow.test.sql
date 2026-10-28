@@ -148,17 +148,18 @@ select ok(has_function_privilege('service_role',
 	'public.change_channel_workflow(uuid,uuid,jsonb,boolean)', 'execute'),
 	'service_role conserve le privilège attendu');
 
+-- RÉVISÉES PAR `CRM-111` T2.4.5 : la clé composite channel/workflow est celle du RATTACHEMENT, `cards` ne la porte plus.
 select is((select count(*) from pg_constraint
-	where conrelid = 'public.cards'::regclass and conname = 'cards_channel_id_workflow_id_fkey'),
-	1::bigint, 'la clé composite cards → channel/workflow existe');
+	where conrelid = 'public.card_placements'::regclass and conname = 'card_placements_channel_workflow_fk'),
+	1::bigint, 'la clé composite card_placements → channel/workflow existe');
 select is((select condeferrable from pg_constraint
-	where conrelid = 'public.cards'::regclass and conname = 'cards_channel_id_workflow_id_fkey'),
+	where conrelid = 'public.card_placements'::regclass and conname = 'card_placements_channel_workflow_fk'),
 	true, 'la clé composite est différable pour le lot');
 select is((select condeferred from pg_constraint
-	where conrelid = 'public.cards'::regclass and conname = 'cards_channel_id_workflow_id_fkey'),
+	where conrelid = 'public.card_placements'::regclass and conname = 'card_placements_channel_workflow_fk'),
 	false, 'elle est initialement immédiate pour toute écriture ordinaire');
 select is((select pg_get_constraintdef(oid) from pg_constraint
-	where conrelid = 'public.cards'::regclass and conname = 'cards_channel_id_workflow_id_fkey'),
+	where conrelid = 'public.card_placements'::regclass and conname = 'card_placements_channel_workflow_fk'),
 	'FOREIGN KEY (channel_id, workflow_id) REFERENCES channels(id, workflow_id) DEFERRABLE',
 	'la définition référentielle complète n''a pas été relâchée');
 
@@ -190,10 +191,8 @@ insert into public.channels (
 	'tst CRM-019', 'tst-crm-019', '5eed0000-0000-4000-8000-000000000051', 99
 );
 
-insert into public.cards (
-	id, workspace_id, channel_id, workflow_id, current_step_id, title, position,
-	entered_step_at, archived_at, deleted_at
-) values
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (values
 	('01900000-0000-4000-8000-0000000000a1', '5eed0000-0000-4000-8000-000000000001',
 	 '01900000-0000-4000-8000-000000000010', '5eed0000-0000-4000-8000-000000000051',
 	 '5eed0000-0000-4000-8000-000000000061', 'tst CRM-019 active', 4,
@@ -205,7 +204,10 @@ insert into public.cards (
 	('01900000-0000-4000-8000-0000000000a3', '5eed0000-0000-4000-8000-000000000001',
 	 '01900000-0000-4000-8000-000000000010', '5eed0000-0000-4000-8000-000000000051',
 	 '5eed0000-0000-4000-8000-000000000062', 'tst CRM-019 corbeille', 1,
-	 '2020-01-01T00:00:00Z', null, now());
+	 '2020-01-01T00:00:00Z', null, now())) as v(id, workspace_id, channel_id, workflow_id, current_step_id, title, position, entered_step_at, archived_at, deleted_at)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title, deleted_at) select id::uuid, workspace_id::uuid, title, deleted_at::timestamptz from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position, entered_step_at, archived_at)
+select id::uuid, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid, position::numeric, entered_step_at::timestamptz, archived_at::timestamptz from __source;
 
 insert into public.card_field_values (
 	card_id, field_id, workflow_id, workspace_id, value

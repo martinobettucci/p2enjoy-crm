@@ -499,7 +499,7 @@ select ok(
 	'retrait, posé par `CRM-034`, qui rend `move_card` incontournable');
 
 select ok(
-	not has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update'),
+	not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'current_step_id') then has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update') else false end),
 	'PREUVE N° 5, sa cible exacte : `current_step_id` n''est pas modifiable colonne à colonne non '
 	'plus. Un `grant update (…)` trop large la rouvrirait sans toucher au privilège de table');
 

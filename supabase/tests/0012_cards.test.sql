@@ -64,14 +64,18 @@ $$;
 -- 1. La table et ses colonnes — docs/SCHEMA.md §5
 -- =============================================================================================
 
+-- RÉVISÉE PAR `CRM-111` T2.4.5 : les colonnes de rattachement — responsable, montant, archivage, score, rang, ancienneté —
+-- ont quitté `cards` pour `card_placements` (docs/SPEC-rattachements.md §3.2) ; leurs assertions y sont reportées, à
+-- l'identique.
+
 select has_table('public', 'cards', '`public.cards` est livrée — INC-031 et INC-043 en dépendaient');
 
 select has_column('public', 'cards', 'email_local_part', '`email_local_part` existe');
-select has_column('public', 'cards', 'owner_id',         '`owner_id` — le responsable de CRM-040');
-select has_column('public', 'cards', 'amount',           '`amount` — le montant de CRM-040');
-select has_column('public', 'cards', 'archived_at',      '`archived_at` — l''archivage');
+select has_column('public', 'card_placements', 'owner_id',         '`owner_id` — le responsable de CRM-040');
+select has_column('public', 'card_placements', 'amount',           '`amount` — le montant de CRM-040');
+select has_column('public', 'card_placements', 'archived_at',      '`archived_at` — l''archivage');
 select has_column('public', 'cards', 'deleted_at',       '`deleted_at` — la corbeille, distincte');
-select has_column('public', 'cards', 'health_score',     '`health_score` — livrée, jamais alimentée (§2.9)');
+select has_column('public', 'card_placements', 'health_score',     '`health_score` — livrée, jamais alimentée (§2.9)');
 select has_column('public', 'cards', 'search_tsv',       '`search_tsv` — recherche plein texte');
 
 -- INC-025, troisième occurrence : le tableau du §5 omet les colonnes communes, la convention fait foi.
@@ -80,22 +84,22 @@ select has_column('public', 'cards', 'created_at',
 select has_column('public', 'cards', 'updated_at',
 	'INC-025 : `updated_at` de même');
 
-select col_type_is('public', 'cards', 'amount',   'numeric(14,2)', '`amount` est `numeric(14,2)`');
-select col_type_is('public', 'cards', 'position', 'numeric',
+select col_type_is('public', 'card_placements', 'amount',   'numeric(14,2)', '`amount` est `numeric(14,2)`');
+select col_type_is('public', 'card_placements', 'position', 'numeric',
 	'`position` est `numeric` : index fractionnaire, comme `tracks` et `channels` (§2.6)');
 select col_type_is('public', 'cards', 'search_tsv', 'tsvector', '`search_tsv` est un `tsvector`');
 
 select col_not_null('public', 'cards', 'email_local_part',
 	'`email_local_part` est non nul : le trigger précède toujours l''insertion');
-select col_not_null('public', 'cards', 'position',
+select col_not_null('public', 'card_placements', 'position',
 	'`position` est non nul — le trigger la renseigne lorsqu''elle est omise');
-select col_not_null('public', 'cards', 'entered_step_at', '`entered_step_at` est non nul');
+select col_not_null('public', 'card_placements', 'entered_step_at', '`entered_step_at` est non nul');
 select col_has_default('public', 'cards', 'currency', '`currency` a un défaut de colonne');
 select col_default_is('public', 'cards', 'currency', 'EUR'::text, 'ce défaut vaut `EUR`');
 
 -- `position` n'a **pas** de défaut de colonne : c'est le trigger qui la renseigne, et un défaut
 -- l'empêcherait de se déclencher — `new.position` ne serait jamais nul.
-select col_hasnt_default('public', 'cards', 'position',
+select col_hasnt_default('public', 'card_placements', 'position',
 	'`position` n''a AUCUN défaut de colonne : un défaut rendrait le trigger du §2.6 inerte');
 
 select is(
@@ -117,29 +121,29 @@ select c.workspace_id, c.id as channel_id, c.workflow_id,
         where s.workflow_id = c.workflow_id and n.key = 'prospection') as step_id
   from public.channels c where c.slug = 'grands-comptes';
 
+-- RÉVISÉES PAR `CRM-111` T2.4.5 : le titre et la devise restent à l'affaire ; la probabilité est au rattachement, et une
+-- affaire s'écrit avec lui (docs/SPEC-rattachements.md §3.2).
 select throws_ok($$
-	insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title)
-	select workspace_id, channel_id, workflow_id, step_id, '   ' from t_ctx $$,
+	insert into public.cards (workspace_id, title) select workspace_id, '   ' from t_ctx $$,
 	'23514', null,
 	'un titre d''espaces est refusé : `cards_title_check`');
 
 select throws_ok($$
-	insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title, currency)
-	select workspace_id, channel_id, workflow_id, step_id, 'Devise', 'euro' from t_ctx $$,
+	insert into public.cards (workspace_id, title, currency) select workspace_id, 'Devise', 'euro' from t_ctx $$,
 	'23514', null,
 	'`currency = ''euro''` est refusée : la FORME ISO 4217 est tenue par la base (§2.3)');
 
 select throws_ok($$
-	insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title,
-	                          probability_override)
-	select workspace_id, channel_id, workflow_id, step_id, 'Proba', 101 from t_ctx $$,
+	with c as (insert into public.cards (workspace_id, title) select workspace_id, 'Proba' from t_ctx returning id, workspace_id)
+	insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, probability_override)
+	select c.id, c.workspace_id, channel_id, workflow_id, step_id, 101 from c, t_ctx  $$,
 	'23514', null,
 	'`probability_override = 101` est refusée : bornée à [0, 100]');
 
 select lives_ok($$
-	insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title,
-	                          probability_override)
-	select workspace_id, channel_id, workflow_id, step_id, 'Proba nulle', null from t_ctx $$,
+	with c as (insert into public.cards (workspace_id, title) select workspace_id, 'Proba nulle' from t_ctx returning id, workspace_id)
+	insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, probability_override)
+	select c.id, c.workspace_id, channel_id, workflow_id, step_id, null from c, t_ctx  $$,
 	'`probability_override` nulle est acceptée : la contrainte ne juge qu''une valeur fournie');
 
 -- =============================================================================================
@@ -152,33 +156,37 @@ select has_index('public', 'channels', 'channels_id_workspace_id_key',
 select has_index('public', 'channels', 'channels_id_workflow_id_key',
 	'l''unicité `channels (id, workflow_id)` existe');
 
+-- RÉVISÉES PAR `CRM-111` T2.4.5 : les trois clés composites sont celles du RATTACHEMENT (`card_placements_channel_fk`,
+-- `card_placements_channel_workflow_fk`, `card_placements_step_fk`), éprouvées dans les deux sens comme avant.
 select lives_ok($$
-	insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title)
-	select workspace_id, channel_id, workflow_id, step_id, 'Cohérente' from t_ctx $$,
+	with c as (insert into public.cards (workspace_id, title) select workspace_id, 'Cohérente' from t_ctx returning id, workspace_id)
+	insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id)
+	select c.id, c.workspace_id, channel_id, workflow_id, step_id from c, t_ctx  $$,
 	'une card cohérente est acceptée : les trois clés ne ferment pas le cas nominal');
 
 select throws_ok($$
-	insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title)
-	select '55550000-0000-4000-8000-0000000000ff', channel_id, workflow_id, step_id, 'Faux ws'
-	  from t_ctx $$,
+	with c as (insert into public.cards (workspace_id, title)
+	           select '55550000-0000-4000-8000-0000000000ff', 'Faux ws' returning id)
+	insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id)
+	select c.id, '55550000-0000-4000-8000-0000000000ff', t.channel_id, t.workflow_id, t.step_id from c, t_ctx t $$,
 	'23503', null,
 	'un `workspace_id` autre que celui du channel est refusé : le dénormalisé ne peut pas mentir');
 
 select throws_ok($$
-	insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title)
-	select t.workspace_id, t.channel_id,
-	       (select w.id from public.workflows w where w.id <> t.workflow_id limit 1),
-	       t.step_id, 'Faux wf'
-	  from t_ctx t $$,
+	with c as (insert into public.cards (workspace_id, title) select workspace_id, 'Faux wf' from t_ctx returning id)
+	insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id)
+	select c.id, t.workspace_id, t.channel_id,
+	       (select w.id from public.workflows w where w.id <> t.workflow_id limit 1), t.step_id
+	  from c, t_ctx t $$,
 	'23503', null,
 	'un `workflow_id` autre que celui du channel est refusé — « suit le channel » (§2.5)');
 
 select throws_ok($$
-	insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title)
-	select t.workspace_id, t.channel_id, t.workflow_id,
-	       (select s.id from public.workflow_steps s where s.workflow_id <> t.workflow_id limit 1),
-	       'Fausse étape'
-	  from t_ctx t $$,
+	with c as (insert into public.cards (workspace_id, title) select workspace_id, 'Fausse étape' from t_ctx returning id)
+	insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id)
+	select c.id, t.workspace_id, t.channel_id, t.workflow_id,
+	       (select s.id from public.workflow_steps s where s.workflow_id <> t.workflow_id limit 1)
+	  from c, t_ctx t $$,
 	'23503', null,
 	'une étape d''un AUTRE workflow est refusée : c''est la vérification n° 3 des six de '
 	'`move_card`, acquise structurellement (docs/SPEC-workflow-engine.md §5)');
@@ -205,9 +213,11 @@ select matches(
 	'l''adresse générée a la forme `c-<8 base32 Crockford minuscule>` — sans `i`, `l`, `o` ni `u`');
 
 -- La valeur fournie par le client est IGNORÉE : « généré » signifie qu'elle ne vient pas de lui.
-insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title,
-                          email_local_part)
-select workspace_id, channel_id, workflow_id, step_id, 'Adresse imposée', 'c-00000000' from t_ctx;
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (select workspace_id, channel_id, workflow_id, step_id, 'Adresse imposée', 'c-00000000' from t_ctx) as v(workspace_id, channel_id, workflow_id, current_step_id, title, email_local_part)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title, email_local_part) select __id, workspace_id::uuid, title, email_local_part from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id)
+select __id, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid from __source;
 
 select isnt(
 	(select email_local_part from public.cards where title = 'Adresse imposée'),
@@ -244,21 +254,27 @@ select is(
 	(select p.position from public.card_placements p join public.cards c on c.id = p.card_id where c.title = 'Cohérente') + 1,
 	'`position` est attribuée en fin de COLONNE — portée (channel, étape), non le channel entier');
 
-insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title, position)
-select workspace_id, channel_id, workflow_id, step_id, 'Position fournie', 42 from t_ctx;
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (select workspace_id, channel_id, workflow_id, step_id, 'Position fournie', 42 from t_ctx) as v(workspace_id, channel_id, workflow_id, current_step_id, title, position)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title) select __id, workspace_id::uuid, title from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+select __id, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid, position::numeric from __source;
 
 select is(
 	(select p.position from public.card_placements p join public.cards c on c.id = p.card_id where c.title = 'Position fournie'), 42::numeric,
 	'une `position` fournie n''est pas écrasée : le trigger ne se déclenche que si elle est omise');
 
 -- Une autre étape du même channel repart de 1 : c'est ce qui distingue « colonne » de « channel ».
-insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title)
-select t.workspace_id, t.channel_id, t.workflow_id,
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (select t.workspace_id, t.channel_id, t.workflow_id,
        (select s.id from public.workflow_steps s
          join public.workflow_nodes_catalog n on n.id = s.node_id
         where s.workflow_id = t.workflow_id and n.key = 'perdu'),
        'Autre colonne'
-  from t_ctx t;
+  from t_ctx t) as v(workspace_id, channel_id, workflow_id, current_step_id, title)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title) select __id, workspace_id::uuid, title from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id)
+select __id, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid from __source;
 
 select is(
 	(select p.position from public.card_placements p join public.cards c on c.id = p.card_id where c.title = 'Autre colonne'), 1::numeric,
@@ -305,13 +321,14 @@ select is(
 	true,
 	'et il se trouve AVEC son accent : la symétrie vaut dans les DEUX sens (docs/SPEC-recherche.md §3.2)');
 
-select has_index('public', 'cards', 'cards_channel_step_position_idx',
+-- RÉVISÉES PAR `CRM-111` T2.4.5 : les index des colonnes de rattachement vivent sur `card_placements`.
+select has_index('public', 'card_placements', 'card_placements_channel_step_position_idx',
 	'index d''une colonne de board, docs/SCHEMA.md §10');
-select has_index('public', 'cards', 'cards_workspace_next_action_idx',
+select has_index('public', 'card_placements', 'card_placements_workspace_next_action_idx',
 	'index de la vue « Ma journée »');
 select has_index('public', 'cards', 'cards_search_tsv_idx',
 	'index GIN de recherche');
-select has_index('public', 'cards', 'cards_owner_idx',
+select has_index('public', 'card_placements', 'card_placements_owner_idx',
 	'index sur `owner_id` : ne figure pas au §10, et s''y ajoute — PostgreSQL n''indexe pas la '
 	'colonne référençante d''une clé étrangère, et `on delete set null` parcourrait la table');
 
@@ -370,12 +387,9 @@ select isnt(
 	'et il voit celles des channels que rien ne lui ferme : la politique cloisonne, elle ne ferme '
 	'pas tout');
 
+-- RÉVISÉE PAR `CRM-111` T2.4.5 : une affaire naît avec son rattachement, par `creer_affaire` (décision 768).
 select throws_ok($$
-	insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title)
-	select c.workspace_id, c.id, c.workflow_id,
-	       (select s.id from public.workflow_steps s where s.workflow_id = c.workflow_id limit 1),
-	       'Par un viewer'
-	  from public.channels c where c.slug = 'refonte' $$,
+	select public.creer_affaire((select c.id from public.channels c where c.slug = 'refonte'), 'Par un viewer') $$,
 	'42501', null,
 	'un `viewer` de workspace ne PEUT PAS créer de card, même là où il lit : la création exige le '
 	'droit d''ÉCRITURE sur le channel');
@@ -407,11 +421,12 @@ select is(
 	'ligne touchée, la card reste intacte (décision 106, transposée à `update`)');
 
 -- L'écart entre `USING` et `WITH CHECK` : la ligne de départ est permise, la destination non.
+-- RÉVISÉE PAR `CRM-111` T2.4.5 : le channel est celui du rattachement, dont la colonne n'est pas ouverte au client.
 select throws_ok($$
-	update public.cards
+	update public.card_placements
 	   set channel_id = (select id from public.channels where slug = 'maintenance'),
 	       workflow_id = (select workflow_id from public.channels where slug = 'maintenance')
-	 where id = '5eed0000-0000-4000-8000-0000000000c1' $$,
+	 where card_id = '5eed0000-0000-4000-8000-0000000000c1' $$,
 	'42501', null,
 	'et il ne peut pas non plus DÉPLACER une card VERS `maintenance` : la règle appliquée à la '
 	'ligne d''ARRIVÉE refuse, celle de la ligne de départ ayant accepté (§6.1)');
@@ -627,8 +642,9 @@ select is(
 	(select array_agg(tgrelid::regclass::text || '.' || tgname order by tgrelid::regclass::text, tgname)::text
 	   from pg_trigger
 	  where tgrelid in ('public.cards'::regclass, 'public.card_placements'::regclass) and not tgisinternal
-	    and (tgname like 'card_events%' or tgname = 'card_placements_write_events')),
-	'{card_placements.card_placements_write_events,cards.card_events_apres_insertion,cards.card_events_apres_maj}',
+	    and (tgname like 'card_events%' or tgname in ('card_placements_write_events',
+	                                                     'card_placements_evenement_creation'))),
+	'{card_placements.card_placements_evenement_creation,card_placements.card_placements_write_events,cards.card_events_apres_maj}',
 	'les triggers de timeline sont sur les TABLES, non dans une RPC : `cards` écrit la création et la corbeille, '
 	'`card_placements` tout ce qui appartient au rattachement — `owner_id` et `archived_at` s''écrivent par un PATCH '
 	'qu''aucune fonction ne médie (décision 203)');
@@ -681,12 +697,12 @@ select throws_ok($$
 -- fermé ce chemin. Le `lives_ok` devient un `throws_ok`, et l'assertion est désormais PLUS FORTE —
 -- elle ne constate plus un manque, elle oppose un refus.
 select throws_ok($$
-	update public.cards
+	update public.card_placements
 	   set current_step_id = (select s.id from public.workflow_steps s
 	                           join public.workflow_nodes_catalog n on n.id = s.node_id
-	                          where s.workflow_id = public.cards.workflow_id and n.key = 'perdu')
-	 where id = '5eed0000-0000-4000-8000-0000000000c1' $$,
-	'42501', 'permission denied for table cards',
+	                          where s.workflow_id = public.card_placements.workflow_id and n.key = 'perdu')
+	 where card_id = '5eed0000-0000-4000-8000-0000000000c1' $$,
+	'42501', 'permission denied for table card_placements',
 	'`CRM-034` EST LIVRÉE : `current_step_id` ne s''écrit PLUS directement. La garde n''est plus '
 	'contournable, et `move_card` est le seul chemin. `CRM-013` reste due pour les AUTRES colonnes '
 	'— INC-049, INC-050');
@@ -695,8 +711,10 @@ rollback to savepoint p_crm013;
 
 -- §10, point ouvert n° 1 : l'absence de contrainte de signe est un CHOIX, figé plutôt que subi.
 select lives_ok($$
-	insert into public.cards (workspace_id, channel_id, workflow_id, current_step_id, title, amount)
-	select workspace_id, channel_id, workflow_id, step_id, 'Montant négatif', -1200.00 from t_ctx $$,
+	with c as (insert into public.cards (workspace_id, title) select workspace_id, 'Montant négatif' from t_ctx
+	           returning id)
+	insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, amount)
+	select c.id, t.workspace_id, t.channel_id, t.workflow_id, t.step_id, -1200.00 from c, t_ctx t $$,
 	'`amount` accepte un NÉGATIF, et c''est délibéré : un avoir, une remise ou une perte constatée '
 	'peuvent s''exprimer ainsi. Refuser serait une décision de produit que personne n''a prise '
 	'(§10, point ouvert n° 1)');

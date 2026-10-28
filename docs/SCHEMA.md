@@ -588,30 +588,31 @@ tableau d'origine ne portait pas :
 
 ### `cards`
 
+**Depuis la migration `0134` (`CRM-111` T2.4.5), l'affaire ne porte plus que ce qui lui appartient en propre** : son
+channel, son workflow, son étape, son rang, son responsable, son montant, sa probabilité, sa prochaine action, son
+ancienneté, son sommeil et son archivage sont ceux de ses **rattachements** (`card_placements`, ci-dessous ;
+`docs/SPEC-rattachements.md` §3.2). Une affaire a toujours au moins un rattachement : l'invariant est tenu en base (§3.1,
+décision 770).
+
 | Colonne | Type | Contraintes |
 |---|---|---|
 | `id` | `uuid` | PK |
 | `workspace_id` | `uuid` | FK, non nul (dénormalisé pour les politiques RLS) |
-| `channel_id` | `uuid` | FK, non nul |
-| `workflow_id` | `uuid` | FK, non nul — figé à la création, suit le channel |
-| `current_step_id` | `uuid` | FK `workflow_steps`, non nul |
 | `title` | `text` | non nul |
 | `description` | `text` | |
-| `position` | `numeric` | index fractionnaire pour le glisser-déposer |
-| `owner_id` | `uuid` | FK `profiles` |
-| `amount` | `numeric(14,2)` | montant de l'affaire |
 | `currency` | `text` | défaut `'EUR'` |
-| `probability_override` | `numeric(5,2)` | sinon celle de l'étape |
-| `next_action` | `text` | prochaine action à mener |
-| `next_action_at` | `timestamptz` | échéance, alimente la vue « Ma journée » |
-| `entered_step_at` | `timestamptz` | date d'entrée dans l'étape courante, base des relances |
-| `health_score` | `integer` | **inemployée** : les deux scores de santé se calculent à la lecture (`CRM-066` tranche 4, colonnes calculées `health_momentum` et `health_commercial`, migration `0113`) ; son retrait appartient à `CRM-111` T2.4 |
 | `email_local_part` | `text` | unique global, partie locale de l'adresse de la card |
-| `snoozed_until` | `timestamptz` | mise en sommeil : non nulle ET future ⇒ la card dort. **Fermée en écriture à `authenticated` depuis `CRM-081`** — elle s'écrit par `snooze_card` et `wake_card` |
-| `archived_at`, `deleted_at` | `timestamptz` | |
+| `deleted_at` | `timestamptz` | corbeille de l'AFFAIRE (`CRM-077`) |
+| `deleted_by` | `uuid` | FK `profiles`, auteur du retrait |
 | `created_by` | `uuid` | FK `profiles` |
 | `created_at`, `updated_at` | `timestamptz` | |
 | `search_tsv` | `tsvector` | colonne générée, index GIN |
+
+**Création** : un utilisateur crée par `creer_affaire` (`SECURITY INVOKER`), qui insère l'affaire puis appelle
+`app.poser_premier_rattachement` (`SECURITY DEFINER`, refus `42501` sans le droit d'écrire le channel) ; une insertion
+directe sans rattachement est refusée à la validation, `23514 card_without_placement` (décision 768). **Politiques** :
+lecture si l'un de ses rattachements se lit (forme optimisée de la décision 667), et la corbeille selon `CRM-077` ; mise à
+jour par `app.can_write_card` ; insertion par un membre de l'espace, sous l'invariant.
 
 `email_local_part` est généré par trigger sous la forme `c-<8 caractères base32>`, non devinable
 afin qu'une adresse divulguée ne permette pas d'énumérer les autres cards. L'adresse complète
@@ -634,18 +635,36 @@ porte pas, et qui sont opposables :
 - l'alphabet base32 retenu est celui de **Crockford en minuscules**, `0123456789abcdefghjkmnpqrstvwxyz`,
   et la forme est tenue par un `CHECK`, non seulement par le trigger qui la produit.
 
-### `card_placements` — le rattachement d'une affaire à un channel (`CRM-111`, migrations `0108` à `0110`)
+### `card_placements` — le rattachement d'une affaire à un channel (`CRM-111`, migrations `0108` à `0110`, `0134`)
 
-`docs/SPEC-rattachements.md` §3.1. Les treize colonnes de rattachement de `cards` — `channel_id`, `workflow_id`,
-`current_step_id`, `position`, `owner_id`, `amount`, `probability_override`, `next_action`, `next_action_at`,
-`entered_step_at`, `health_score`, `snoozed_until`, `archived_at` — aux mêmes types, plus `id`, `workspace_id`,
-`card_id`, `created_by`, `created_at`, `updated_at`.
+`docs/SPEC-rattachements.md` §3.1. Les treize colonnes qui étaient celles de `cards` jusqu'à la migration `0134`, aux mêmes
+types, plus `id`, `workspace_id`, `card_id`, `created_by`, `created_at`, `updated_at` :
+
+| Colonne | Type | Contraintes |
+|---|---|---|
+| `channel_id` | `uuid` | non nul |
+| `workflow_id` | `uuid` | non nul — suit le channel |
+| `current_step_id` | `uuid` | non nul ; écrite par `move_card`, `move_card_to_channel` et `change_channel_workflow` seulement |
+| `position` | `numeric` | rang dans la colonne du board ; **attribué par `card_placements_attribuer_position`** quand il manque (migration `0134`) |
+| `owner_id` | `uuid` | FK `profiles` |
+| `amount` | `numeric(14,2)` | montant |
+| `probability_override` | `numeric(5,2)` | sinon celle de l'étape ; `CHECK` 0 à 100 |
+| `next_action`, `next_action_at` | `text`, `timestamptz` | prochaine action, alimente « Ma journée » |
+| `entered_step_at` | `timestamptz` | entrée dans l'étape courante, base des relances ; écrite par les fonctions seulement |
+| `health_score` | `integer` | **inemployée** : les scores se calculent à la lecture, `health_momentum(card_placements)` et `health_commercial(card_placements)` (migration `0134`, décision 768) |
+| `snoozed_until` | `timestamptz` | sommeil ; écrite par `snooze_card` et `wake_card` seulement |
+| `archived_at` | `timestamptz` | archivage du rattachement |
+
+**Le premier rattachement d'une affaire écrit son événement `created`** (`card_placements_evenement_creation`, migration
+`0134`, décision 770) ; l'invariant « au moins un rattachement » est tenu par deux déclencheurs de contrainte **différés**,
+`cards_au_moins_un_rattachement` et `card_placements_au_moins_un_rattachement`, dont la clé de service et les sessions
+d'administration sont exemptées (décision 770).
 
 | Contrainte | Règle |
 |---|---|
 | `card_placements_card_fk` | `(card_id, workspace_id) → cards (id, workspace_id)`, `on delete cascade` |
 | `card_placements_channel_fk` | `(channel_id, workspace_id) → channels (id, workspace_id)`, `on delete cascade` |
-| `card_placements_channel_workflow_fk` | `(channel_id, workflow_id) → channels (id, workflow_id)`, **`deferrable initially deferred`** pendant la transition : `change_channel_workflow` change le workflow du channel avant celui des affaires et ne diffère que la clé de `cards`, qu'il nomme |
+| `card_placements_channel_workflow_fk` | `(channel_id, workflow_id) → channels (id, workflow_id)`, **`deferrable initially immediate`** : `change_channel_workflow` change le workflow du channel avant celui des rattachements, et la diffère en la nommant (depuis la migration `0134`, elle seule : la clé de `cards` a disparu avec ses colonnes) |
 | `card_placements_step_fk` | `(current_step_id, workflow_id) → workflow_steps (id, workflow_id)` |
 | uniques | `(card_id, channel_id)`, `(id, workflow_id)`, `(id, card_id)` ; **`card_placements_one_per_card_idx` sur `card_id`** tant que dure la transition — `CRM-111` T3 le retire |
 | index | `(channel_id, current_step_id, position)`, `(workspace_id, next_action_at)`, `(owner_id)` |
@@ -654,20 +673,21 @@ porte pas, et qui sont opposables :
 `channel_id in (select unnest(app.readable_channel_ids()))`, la fonction étant `STABLE`, `SECURITY DEFINER`, sans cache, et
 sa fraîcheur prouvée en requête préparée (`supabase/tests/0097`).
 
-**Deux miroirs pendant la transition (décision 705).** `card_placements_mirror_insert` et `card_placements_mirror_update`,
-sur `cards` (T2.1), reportent dans le rattachement toute écriture de l'affaire ; `card_placements_mirror_to_card`, sur
-`card_placements` (T2.3.0, migration `0110`), reporte sur `cards` toute écriture du rattachement, tant que des lecteurs y
-lisent encore ces colonnes. Ils ne bouclent pas : chacun n'écrit que si l'autre côté diffère. T2.4 les retire avec les
-colonnes de `cards`.
+**Deux miroirs pendant la transition (décision 705) — retirés par la migration `0134`.** `card_placements_mirror_insert` et
+`card_placements_mirror_update`, sur `cards` (T2.1), reportaient dans le rattachement toute écriture de l'affaire ;
+`card_placements_mirror_to_card`, sur `card_placements` (T2.3.0, migration `0110`), reportait sur `cards` toute écriture du
+rattachement. Ils sont tombés avec les colonnes de `cards`.
 
 **Écriture** (T2.3.0) : `authenticated` écrit les sept colonnes ouvertes — `position`, `owner_id`, `amount`,
 `probability_override`, `next_action`, `next_action_at`, `archived_at` — sous `card_placements_update`, qui exige d'écrire
 le channel du rattachement ; `public.ecriture_permise(card_placements)` le dit à l'interface. L'étape, le channel, le
-workflow et le sommeil restent aux fonctions ; ni insertion ni suppression ; `service_role` ne fait que lire.
+workflow et le sommeil restent aux fonctions ; ni insertion ni suppression. `service_role` insère et met à jour pour le
+seed depuis la migration `0124` (décision 746), et ne retire rien.
 
 **Timeline** (T2.3.0) : `channel_changed`, `workflow_changed`, `moved`, `assigned`, `archived`, `unarchived`, `snoozed`
 et `woken` sont écrits par le déclencheur `card_placements_write_events`, avec le vocabulaire et les charges utiles d'avant
-et le rattachement dans `card_events.placement_id` ; `cards` ne garde que la création et la corbeille.
+et le rattachement dans `card_events.placement_id` ; `cards` ne garde que la corbeille, la création étant écrite par le
+premier rattachement depuis la migration `0134`.
 
 ### `card_comments`
 
@@ -1795,7 +1815,9 @@ appelant les affaires, les contacts et les messages de tous.
 
 **`public.cards` porte donc deux index GIN**, et c'est voulu : `cards_search_tsv_idx` de `CRM-040`
 sert la recherche **locale** de la vue liste, sur la colonne générée `search_tsv`
-(§4 ci-dessus) ; `cards_recherche_idx` sert la recherche **transverse**.
+(§4 ci-dessus) ; `cards_recherche_idx` sert la recherche **transverse**. *Révisé par `CRM-111` T2.4.5 : `cards_recherche_idx` est
+retiré par la migration `0134` avec `cards.next_action` ; il ne servait plus depuis la `0109`, où la recherche lit la
+prochaine action du rattachement (`docs/SPEC-recherche.md` §5.4).*
 
 **LES DEUX EMPLOIENT LE MÊME VOCABULAIRE DEPUIS LA MIGRATION 69** (`CRM-042`, décision 532 §2,
 arbitrage du responsable fermant INC-230). La colonne `search_tsv` était générée en `french` par la
@@ -2412,6 +2434,26 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0134` — le retrait : les colonnes de rattachement quittent `cards` (`CRM-111` T2.4.5, décisions 705, 738, 746, 768, 770 ; livrée en développement le 2026-10-28)
+
+`docs/SPEC-rattachements.md` §3.1, §3.2, §4, §5, §10. **Retirés de `cards`** : `channel_id`, `workflow_id`,
+`current_step_id`, `position`, `owner_id`, `amount`, `probability_override`, `next_action`, `next_action_at`,
+`entered_step_at`, `health_score`, `snoozed_until`, `archived_at`, avec leurs index (`cards_channel_step_position_idx`,
+`cards_workspace_next_action_idx`, `cards_owner_idx`, `cards_recherche_idx`), leurs clés (`cards_channel_id_*`,
+`cards_current_step_id_workflow_id_fkey`, `cards_owner_id_fkey`, `cards_id_workflow_id_key`) et leur contrainte
+(`cards_probability_override_check`). **Retirés** : les deux miroirs et le miroir inverse, `app.cards_attribuer_position`,
+`app.card_events_apres_insertion_card`, les scores de santé de l'affaire. **Nouveaux** : `app.poser_premier_rattachement`
+(création, décision 768), l'invariant différé « au moins un rattachement » (`cards_au_moins_un_rattachement`,
+`card_placements_au_moins_un_rattachement`, la clé de service et les sessions d'administration exemptées, décision 770),
+le rang et l'événement `created` sur `card_placements`, `app.cartes_detruites_avec_channels` et
+`app.affaire_detruite_avec_track` (purge et dépense bloquante, `CRM-077`), `health_momentum(card_placements)`,
+`health_commercial(card_placements)`, `app.health_context(card_placements)`. **Réécrits** : `creer_affaire`,
+`app.purge_trash`, `trash_blocking_costs`, `reassign_trashed_track_cost`, `app.cards_restauration_verifier_parent`,
+`change_channel_workflow` (`set constraints` ne nomme plus la clé de `cards`). **Politiques de `cards`** : lecture sous la
+forme optimisée du §4, mise à jour par `app.can_write_card`, insertion par un membre de l'espace. **Retour arrière** :
+possible tant que chaque affaire n'a qu'un rattachement — rajouter les colonnes, les recopier depuis le rattachement,
+rejouer les définitions d'avant ; sauvegarde exigée.
+
 ### Migration `0133` — le récapitulatif quotidien (`CRM-069` T4, décisions 769, 771 à 773 ; livrée en développement le 2026-10-28)
 
 `docs/SPEC-etiquettes-digest.md` §5. **`profiles.email`** (texte, nul pour qui ne s'est jamais connecté) : l'adresse vérifiée

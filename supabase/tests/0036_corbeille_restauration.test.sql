@@ -63,8 +63,8 @@ values ('a0000000-0000-4000-8000-000000000004',
         'Corbeille — channel vivant', 'preuve-corbeille-vivant',
         '5eed0000-0000-4000-8000-000000000051', 901);
 
-insert into public.cards (id, workspace_id, channel_id, workflow_id, current_step_id, title, position)
-values ('a0000000-0000-4000-8000-000000000003',
+-- `CRM-111` T2.4.5 : l'affaire, puis son rattachement, en une instruction (les colonnes de rattachement ont quitté `cards`).
+with __source as (select gen_random_uuid() as __id, * from (select * from (values ('a0000000-0000-4000-8000-000000000003',
         '5eed0000-0000-4000-8000-000000000001',
         'a0000000-0000-4000-8000-000000000002',
         '5eed0000-0000-4000-8000-000000000051',
@@ -75,7 +75,10 @@ values ('a0000000-0000-4000-8000-000000000003',
         'a0000000-0000-4000-8000-000000000004',
         '5eed0000-0000-4000-8000-000000000051',
         '5eed0000-0000-4000-8000-000000000061',
-        'Corbeille — affaire sous channel vivant', 901);
+        'Corbeille — affaire sous channel vivant', 901)) as v(id, workspace_id, channel_id, workflow_id, current_step_id, title, position)) as s),
+     __affaires as (insert into public.cards (id, workspace_id, title) select id::uuid, workspace_id::uuid, title from __source)
+insert into public.card_placements (card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+select id::uuid, workspace_id::uuid, channel_id::uuid, workflow_id::uuid, current_step_id::uuid, position::numeric from __source;
 
 -- Les trois sont mis à la corbeille. LE PARENT NE DESCEND PAS (§3.3) : chacun est horodaté
 -- explicitement, ce qui est exactement l'état que l'écran produira.

@@ -13,6 +13,8 @@
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.3.4 : `move_card_to_channel` désigne le rattachement de l'affaire et le
 //           rend (docs/SPEC-rattachements.md §5, §14) ; les scénarios nomment l'affaire, `corpsParRattachement` transmet
 //           son rattachement
+// @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : les cards d'essai posent l'affaire puis son rattachement ; le
+//           channel et l'étape se relisent, et se refusent en écriture directe, sur le rattachement (§3.2, §4)
 //
 // LA QUESTION À LAQUELLE CE FICHIER RÉPOND. La suite pgTAP prouve les mêmes règles **dans la
 // base**, avec `set local role` : elle ne traverse ni PostgREST, ni Kong, ni GoTrue. Or les huit
@@ -30,9 +32,12 @@
 import { expect, test } from '@playwright/test'
 import { URL_API, enTetesAnonymes, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
 import { corpsParRattachement } from './rattachements'
+import { posterAffaire } from '../affaire'
 
 const RPC = '/rest/v1/rpc/move_card_to_channel'
 const CARDS = '/rest/v1/cards'
+/** `CRM-111` T2.4.5 : le channel, le workflow et l'étape d'une affaire sont ceux de son rattachement. */
+const RATTACHEMENTS = '/rest/v1/card_placements'
 const EVENEMENTS = '/rest/v1/card_events'
 const VALEURS = '/rest/v1/card_field_values'
 
@@ -124,7 +129,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		request: import('@playwright/test').APIRequestContext,
 		id: string,
 	): Promise<void> {
-		const creation = await request.post(`${URL_API}${CARDS}`, {
+		const creation = await posterAffaire(request, `${URL_API}${CARDS}`, {
 			headers: { ...enTetesService(), Prefer: 'return=representation' },
 			data: {
 				id,
@@ -144,7 +149,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		request: import('@playwright/test').APIRequestContext,
 		id: string,
 	): Promise<void> {
-		const creation = await request.post(`${URL_API}${CARDS}`, {
+		const creation = await posterAffaire(request, `${URL_API}${CARDS}`, {
 			headers: { ...enTetesService(), Prefer: 'return=representation' },
 			data: {
 				id,
@@ -386,7 +391,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		await cardDEssaiAvecReponse(request, CARD_ESSAI_L)
 
 		const avant = await request.get(
-			`${URL_API}${CARDS}?id=eq.${CARD_ESSAI_L}&select=current_step_id,entered_step_at`,
+			`${URL_API}/rest/v1/card_placements?card_id=eq.${CARD_ESSAI_L}&select=current_step_id,entered_step_at`,
 			{ headers: enTetesService() },
 		)
 		const etatsAvant = (await avant.json()) as Array<{
@@ -585,7 +590,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		request,
 	}) => {
 		const initial = await request.get(
-			`${URL_API}${CARDS}?id=eq.${CARD_MAINTENANCE}&select=channel_id`,
+			`${URL_API}${RATTACHEMENTS}?card_id=eq.${CARD_MAINTENANCE}&select=channel_id`,
 			{ headers: enTetesService() },
 		)
 		const avantPatch = ((await initial.json()) as Array<{ channel_id: string }>)[0]?.channel_id
@@ -593,8 +598,9 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		// **PREUVE DE REFUS N° 5** de docs/SPEC-permissions-rls.md §7, reconduite sur `channel_id`.
 		// LE POINT DE LA DÉCISION 214 : ce refus ne vient PAS de cette unité. `CRM-013` avait fermé
 		// la colonne « par voie de conséquence », et la garde était donc close avant d'exister.
+		// `CRM-111` T2.4.5 : le channel est celui du RATTACHEMENT, dont la colonne reste fermée à `authenticated`.
 		const reponse = await request.patch(
-			`${URL_API}${CARDS}?id=eq.${CARD_MAINTENANCE}`,
+			`${URL_API}${RATTACHEMENTS}?card_id=eq.${CARD_MAINTENANCE}`,
 			{
 				headers: enTetesAuthentifies(jetonAdmin),
 				data: { channel_id: CHANNEL_APPELS_OFFRES },
@@ -605,7 +611,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 
 		// Et la ligne est relue INCHANGÉE : le refus n'est pas seulement un code de retour.
 		const relue = await request.get(
-			`${URL_API}${CARDS}?id=eq.${CARD_MAINTENANCE}&select=channel_id`,
+			`${URL_API}${RATTACHEMENTS}?card_id=eq.${CARD_MAINTENANCE}&select=channel_id`,
 			{ headers: enTetesService() },
 		)
 		// LA LIGNE EST RELUE INCHANGÉE, ET « INCHANGÉE » SE MESURE PAR RAPPORT À CE QU'ELLE ÉTAIT
@@ -616,7 +622,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 	})
 
 	test('o bis — le même PATCH sur workflow_id : refusé lui aussi', async ({ request }) => {
-		const reponse = await request.patch(`${URL_API}${CARDS}?id=eq.${CARD_MAINTENANCE}`, {
+		const reponse = await request.patch(`${URL_API}${RATTACHEMENTS}?card_id=eq.${CARD_MAINTENANCE}`, {
 			headers: enTetesAuthentifies(jetonAdmin),
 			data: { workflow_id: WORKFLOW_GLOBAL },
 		})
@@ -649,7 +655,7 @@ test.describe('CRM-045 — le déplacement entre channels, hors interface', () =
 		).toBeGreaterThanOrEqual(2)
 
 		const restantes = await request.get(
-			`${URL_API}${CARDS}?channel_id=eq.${CHANNEL_PROSPECTION}&select=id,workflow_id`,
+			`${URL_API}${RATTACHEMENTS}?channel_id=eq.${CHANNEL_PROSPECTION}&select=id:card_id,workflow_id`,
 			{ headers: enTetesService() },
 		)
 		const cards = (await restantes.json()) as { id: string; workflow_id: string }[]

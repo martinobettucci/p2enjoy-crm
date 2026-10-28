@@ -117,9 +117,13 @@ select is(
 	   join pg_index i on i.indexrelid = c.oid
 	   join pg_am am on am.oid = c.relam
 	  where n.nspname = 'public' and c.relname like '%\_recherche\_idx' and am.amname = 'gin'),
-	array['card_comments_recherche_idx', 'cards_recherche_idx', 'contacts_recherche_idx',
+	-- RÉVISÉE PAR `CRM-111` T2.4.5 : `cards_recherche_idx` indexait le titre, la PROCHAINE ACTION et la description de
+	-- l'affaire ; la prochaine action a quitté `cards`, et l'index avec elle. Depuis T2.2, `recherche_globale` lit la
+	-- prochaine action sur le rattachement, par une jointure qu'aucun index d'expression de `cards` ne sert.
+	array['card_comments_recherche_idx', 'contacts_recherche_idx',
 	      'mail_messages_recherche_idx', 'organizations_recherche_idx'],
-	'CRM-065 §5.1 — les CINQ index GIN d''expression existent, un par famille');
+	'CRM-065 §5.1 — les index GIN d''expression des familles existent ; celui des affaires est tombé avec la '
+	'prochaine action (`CRM-111` T2.4.5)');
 
 -- ASSERTION RÉVISÉE À L'ÉCRITURE, JAMAIS RETIRÉE, et son motif est écrit ici (mécanisme de la
 -- décision 51). Elle figeait « aucune colonne `tsvector` sur les cinq tables », et elle a rougi :
@@ -142,10 +146,9 @@ select is(
 select is(
 	(select array_agg(indexname::text order by indexname)
 	   from pg_indexes where tablename = 'cards' and indexdef ilike '%gin%'),
-	array['cards_recherche_idx', 'cards_search_tsv_idx'],
-	'CRM-065 §5.4 — `public.cards` porte DEUX index GIN, et c''est voulu : celui de `CRM-040` sert '
-	'la recherche locale de la vue liste en `french`, celui-ci la recherche transverse pondérée en '
-	'`app.francais_sans_accent`. La tranche 1 ne touche pas le premier');
+	array['cards_search_tsv_idx'],
+	'CRM-065 §5.4 — `public.cards` porte l''index GIN de `CRM-040`, qui sert la recherche locale de la vue liste ; '
+	'celui de la recherche transverse est tombé avec la prochaine action (`CRM-111` T2.4.5)');
 
 -- ---------------------------------------------------------------------------------------------
 -- 6 à 10. La forme de la fonction et ses privilèges — docs/SPEC-recherche.md §6.3

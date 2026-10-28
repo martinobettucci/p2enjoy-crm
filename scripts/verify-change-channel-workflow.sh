@@ -8,10 +8,12 @@
 #           dégradations visent le déclencheur du rattachement et sa clé channel/workflow (docs/SPEC-test-harness.md §3.7)
 # @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — les colonnes de rattachement se lisent et s'écrivent sur card_placements
 #           (docs/SPEC-rattachements.md §3.2, §5)
+# @verifies CRM-111 T2.4.5 (docs/BACKLOG.md) — la clé que la 20 rendait différable a quitté l'affaire avec ses colonnes
+#           (migration 0134) : la section 2 constate la clé du RATTACHEMENT au lieu de rejouer la 20 ; la course insère
+#           l'affaire puis son rattachement (docs/SPEC-rattachements.md §3.2)
 #
-# Ce harnais ne démarre ni n'arrête la pile. Il rejoue la migration sur la base seedée, mesure
-# l'absence de mutation métier et la conservation des OID conformes, exerce une vraie course entre
-# la RPC et une insertion, puis affaiblit ACL, autorisation, FK, trigger, vocabulaire et mapping.
+# Ce harnais ne démarre ni n'arrête la pile. Il constate la clé channel/workflow du rattachement, exerce une vraie course
+# entre la RPC et une insertion, puis affaiblit ACL, autorisation, FK, trigger, vocabulaire et mapping.
 # Chaque contre-épreuve doit rendre pgTAP rouge et toute sortie restaure l'état livré.
 
 set -euo pipefail
@@ -19,8 +21,6 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 # shellcheck source=scripts/lib/reconstruction.sh
 source scripts/lib/reconstruction.sh
-# shellcheck source=scripts/lib/degradation.sh
-source scripts/lib/degradation.sh
 
 # shellcheck source=scripts/lib/node.sh
 source scripts/lib/node.sh
@@ -58,18 +58,6 @@ psql_db() {
 	docker exec -i "$DB_CONTAINER" psql -U postgres -d postgres -qtA -v ON_ERROR_STOP=1 "$@"
 }
 
-# Rejeu de la SEULE migration de cette unité. Elle est le SUJET des deux contrôles d'idempotence
-# du §2 — « cette migration se réapplique-t-elle sans rien reconstruire ? » —, et c'est son unique
-# usage légitime. Elle n'est JAMAIS une restauration : voir `restaurer_etat_courant` ci-dessous.
-#
-# RÉVISÉ PAR `CRM-111` T2.3.7 (docs/SPEC-test-harness.md §3.7) : la 20 est rejouée PRIVÉE de `change_channel_workflow`,
-# dont la migration 0122 est la dernière autorité — elle rend les rattachements, et la 20 rejouée échouerait sur le
-# type de retour après en avoir appliqué une partie. Le sujet de la section 2, la clé et le vocabulaire, reste entier.
-appliquer_migration() {
-	[ -s "$WORK/0020-sans-fonction.sql" ] \
-		|| migration_sans_fonction "$MIGRATION" public.change_channel_workflow "$WORK/0020-sans-fonction.sql"
-	psql_db -f - < "$WORK/0020-sans-fonction.sql"
-}
 
 # RESTAURATION PAR LE RUNNER COMPLET — INC-198, corrigée le 2026-08-21 (décision 499).
 #
@@ -147,31 +135,6 @@ api_verte() {
 		&& grep -q '14 passed' "$WORK/api.log"
 }
 
-empreinte_metier() {
-	psql_db -c "select md5(coalesce(string_agg(ligne, E'\\n' order by ligne), ''))
-		from (
-			select 'channel:' || row_to_json(ch)::text as ligne from public.channels ch
-			union all select 'card:' || row_to_json(c)::text from public.cards c
-			union all select 'value:' || row_to_json(v)::text from public.card_field_values v
-			union all select 'comment:' || row_to_json(cc)::text from public.card_comments cc
-			union all select 'event:' || row_to_json(e)::text from public.card_events e
-		) donnees;"
-}
-
-identites() {
-	psql_db -c "select string_agg(type || ':' || oid::text, '|' order by type) from (
-		select 'check' as type, oid from pg_constraint
-		 where conrelid='public.card_events'::regclass and conname='card_events_type_check'
-		union all select 'fk', oid from pg_constraint
-		 where conrelid='public.cards'::regclass and conname='cards_channel_id_workflow_id_fkey'
-		union all select 'rpc', oid from pg_proc where oid='$SIGNATURE'::regprocedure
-		union all select 'timeline-fn', oid from pg_proc
-		 where oid='app.card_events_apres_maj_card()'::regprocedure
-		union all select 'trigger', oid from pg_trigger
-		 where tgrelid='public.cards'::regclass and tgname='card_events_apres_maj'
-	) objets;"
-}
-
 degrader_et_verifier() {
 	local libelle=$1
 	local degradation=$2
@@ -213,51 +176,27 @@ psql_db -c "select pg_get_functiondef('app.is_workspace_admin(uuid)'::regprocedu
 	> "$WORK/is_workspace_admin.sql"
 
 echo
-echo "2. Migration seedée, données intactes et convergence"
-avant_metier=$(empreinte_metier)
-
-# Une base issue de CRM-018 porte encore la clé non différable. La recréer ainsi reproduit ce
-# seul état legacy, sans toucher une ligne métier, puis la vraie migration fait la mise à niveau.
-psql_db -c "alter table public.cards drop constraint cards_channel_id_workflow_id_fkey;
-	alter table public.cards add constraint cards_channel_id_workflow_id_fkey
-	foreign key (channel_id, workflow_id) references public.channels(id, workflow_id);" >/dev/null
-if appliquer_migration > "$WORK/legacy.log" 2>&1 \
-	&& [ "$(psql_db -c "select condeferrable and not condeferred from pg_constraint
-		where conrelid='public.cards'::regclass
-		and conname='cards_channel_id_workflow_id_fkey';")" = t ]; then
-	ok "la migration met réellement à niveau la clé legacy en DEFERRABLE INITIALLY IMMEDIATE"
+echo "2. La clé du lot, sur le rattachement"
+# RÉVISÉE PAR `CRM-111` T2.4.5 (décision 51). Cette section rejouait la 20 SEULE, pour mettre à niveau la clé
+# `cards_channel_id_workflow_id_fkey` en DEFERRABLE INITIALLY IMMEDIATE et constater qu'un rejeu ne reconstruisait rien.
+# La migration 0134 a retiré de l'affaire son channel et son workflow, et cette clé avec eux : la 20 ne s'applique plus
+# à la base courante, et son objet vit sur le RATTACHEMENT, où la migration 0110 l'a posé dans la même forme. Le
+# contrôle porte donc sur cette clé, et sur le retrait de l'ancienne.
+if [ "$(psql_db -c "select condeferrable and not condeferred from pg_constraint
+	where conrelid='public.card_placements'::regclass
+	and conname='card_placements_channel_workflow_fk';")" = t ]; then
+	ok "la clé channel/workflow du rattachement est DEFERRABLE INITIALLY IMMEDIATE"
 else
-	fail "la mise à niveau de la clé legacy échoue"
-	tail -n 20 "$WORK/legacy.log" | sed 's/^/        /'
+	fail "la clé channel/workflow du rattachement n'a pas la forme que le lot exige"
 fi
-
-identites_avant=$(identites)
-if appliquer_migration > "$WORK/replay.log" 2>&1; then
-	if grep -Eqi 'warning|error|fatal' "$WORK/replay.log"; then
-		fail "le rejeu émet un warning ou une erreur"
-	else
-		ok "la migration se rejoue sans warning ni erreur"
-	fi
+if [ "$(psql_db -c "select count(*) from pg_constraint
+	where conrelid='public.cards'::regclass and conname='cards_channel_id_workflow_id_fkey';")" = 0 ] \
+	&& [ "$(psql_db -c "select count(*) from information_schema.columns
+		where table_schema='public' and table_name='cards' and column_name in ('channel_id','workflow_id');")" = 0 ]; then
+	ok "l'ancienne clé de l'affaire a quitté la base avec ses colonnes (migration 0134)"
 else
-	fail "la migration échoue sur son propre état final"
+	fail "l'affaire porte encore la clé ou les colonnes que la migration 0134 retire"
 fi
-identites_apres=$(identites)
-if [ "$identites_avant" = "$identites_apres" ]; then
-	ok "le rejeu conserve les OID des contraintes, fonctions et du trigger conformes"
-else
-	fail "le rejeu reconstruit encore un objet conforme : $identites_avant → $identites_apres"
-fi
-if [ "$avant_metier" = "$(empreinte_metier)" ]; then
-	ok "mise à niveau et rejeu ne modifient aucune donnée métier seedée"
-else
-	fail "une donnée métier a changé pendant l'application de la migration"
-fi
-
-# Les deux contrôles ci-dessus rejouent la migration 20 SEULE : c'est leur sujet. Ce faisant, ils
-# laissent la base à l'état que la 20 décrit, et non à celui du dépôt — §3.5 de
-# `docs/SPEC-test-harness.md`. On rend donc l'état courant AVANT toute suite globale, faute de quoi
-# les mesures qui suivent porteraient sur un produit d'un instant révolu (INC-198).
-restaurer_etat_courant >/dev/null
 
 if suite_verte; then
 	ok "suite pgTAP ciblée verte — 59 assertions"
@@ -283,10 +222,11 @@ psql_db -c "insert into public.channels
 	(id, workspace_id, track_id, name, slug, workflow_id, position)
 	values ('$CHANNEL_CONCURRENT','$WORKSPACE','$TRACK','Concurrence CRM-019',
 	'concurrence-crm-019','$WORKFLOW_SOURCE',999);
-	insert into public.cards
-	(id, workspace_id, channel_id, workflow_id, current_step_id, title, position, created_by)
-	values ('$CARD_EXISTANTE','$WORKSPACE','$CHANNEL_CONCURRENT','$WORKFLOW_SOURCE',
-	'$ETAPE_SOURCE','Card existante concurrence CRM-019',1,'$ADMIN');" >/dev/null
+	insert into public.cards (id, workspace_id, title, created_by)
+	values ('$CARD_EXISTANTE','$WORKSPACE','Card existante concurrence CRM-019','$ADMIN');
+	insert into public.card_placements
+	(card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+	values ('$CARD_EXISTANTE','$WORKSPACE','$CHANNEL_CONCURRENT','$WORKFLOW_SOURCE','$ETAPE_SOURCE',1);" >/dev/null
 
 psql_db -c "begin;
 	select set_config('request.jwt.claims',
@@ -312,10 +252,11 @@ done
 
 if [ "$fenetre" = true ]; then
 	psql_db -c "set statement_timeout='8s';
-		insert into public.cards
-		(id, workspace_id, channel_id, workflow_id, current_step_id, title, position, created_by)
-		values ('$CARD_CONCURRENTE','$WORKSPACE','$CHANNEL_CONCURRENT','$WORKFLOW_SOURCE',
-		'$ETAPE_SOURCE','Card concurrente CRM-019',2,'$ADMIN');" \
+		insert into public.cards (id, workspace_id, title, created_by)
+		values ('$CARD_CONCURRENTE','$WORKSPACE','Card concurrente CRM-019','$ADMIN');
+		insert into public.card_placements
+		(card_id, workspace_id, channel_id, workflow_id, current_step_id, position)
+		values ('$CARD_CONCURRENTE','$WORKSPACE','$CHANNEL_CONCURRENT','$WORKFLOW_SOURCE','$ETAPE_SOURCE',2);" \
 		> "$WORK/concurrence-b.log" 2>&1 &
 	pid_b=$!
 else
@@ -372,7 +313,7 @@ fi
 nettoyer_fixture
 
 echo
-echo "4. Non-complaisance : sept protections réellement nécessaires"
+echo "4. Non-complaisance : six protections réellement nécessaires"
 
 degrader_et_verifier \
 	"EXECUTE rendu à anon — le geste d'administration deviendrait public" \
@@ -387,12 +328,6 @@ else
 	fail "DÉGRADATION NON VUE : la garde administrateur consent tout membre"
 fi
 psql_db -f - < "$WORK/is_workspace_admin.sql" >/dev/null
-
-degrader_et_verifier \
-	"la clé composite rendue NOT DEFERRABLE — le lot ne peut plus rester atomique" \
-	"alter table public.cards drop constraint cards_channel_id_workflow_id_fkey;
-	 alter table public.cards add constraint cards_channel_id_workflow_id_fkey
-	 foreign key (channel_id, workflow_id) references public.channels(id, workflow_id)"
 
 degrader_et_verifier \
 	"workflow_changed retiré du vocabulaire — la trace serveur serait refusée" \
@@ -424,7 +359,7 @@ degrader_et_verifier \
 echo
 echo "5. Restauration constatée"
 if suite_verte; then
-	ok "pgTAP redevient vert après les sept restaurations — 59 assertions"
+	ok "pgTAP redevient vert après les six restaurations — 59 assertions"
 else
 	fail "pgTAP reste rouge après restauration"
 	tail -n 25 "$WORK/tap.log" | sed 's/^/        /'

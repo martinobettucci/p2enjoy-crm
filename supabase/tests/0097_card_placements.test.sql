@@ -38,22 +38,14 @@ begin
 end;
 $$;
 
--- LA MESURE DU MIROIR : le nombre d'affaires dont le rattachement manque, est en double, ou diffère d'au moins une des
--- treize colonnes. Lue en propriétaire : la RLS ne doit rien cacher à la mesure.
+-- LA MESURE : le nombre d'affaires dont le rattachement manque ou est en double. RÉVISÉE PAR `CRM-111` T2.4.5 : elle
+-- comparait aussi les treize colonnes de l'affaire à celles de son rattachement, tenues égales par les miroirs ; les
+-- colonnes ont quitté `cards` et les miroirs sont retirés. Lue en propriétaire : la RLS ne doit rien cacher.
 create or replace function pg_temp.divergences()
 returns bigint language sql stable as $$
 	select count(*)
 	  from public.cards c
-	  left join public.card_placements p on p.card_id = c.id
-	 where p.id is null
-	    or (select count(*) from public.card_placements q where q.card_id = c.id) <> 1
-	    or (c.workspace_id, c.channel_id, c.workflow_id, c.current_step_id, c.position, c.owner_id, c.amount,
-	        c.probability_override, c.next_action, c.next_action_at, c.entered_step_at, c.health_score,
-	        c.snoozed_until, c.archived_at)
-	       is distinct from
-	       (p.workspace_id, p.channel_id, p.workflow_id, p.current_step_id, p.position, p.owner_id, p.amount,
-	        p.probability_override, p.next_action, p.next_action_at, p.entered_step_at, p.health_score,
-	        p.snoozed_until, p.archived_at);
+	 where (select count(*) from public.card_placements q where q.card_id = c.id) <> 1;
 $$;
 
 -- =============================================================================================
@@ -91,7 +83,7 @@ select is(
 	    and column_name in ('channel_id', 'workflow_id', 'current_step_id', 'position', 'owner_id', 'amount',
 	                        'probability_override', 'next_action', 'next_action_at', 'entered_step_at',
 	                        'health_score', 'snoozed_until', 'archived_at')),
-	13, '`cards` garde ses treize colonnes de rattachement : elle reste le chemin d''écriture (T2.4 les retirera)');
+	0, '`cards` ne porte plus aucune colonne de rattachement : `CRM-111` T2.4.5 les a retirées');
 
 -- =============================================================================================
 -- 2. La reprise — §10
@@ -99,7 +91,7 @@ select is(
 
 select isnt((select count(*)::int from public.cards), 0, 'le seed porte des affaires : la reprise a une matière');
 select is(pg_temp.divergences(), 0::bigint,
-	'après la reprise, chaque affaire a exactement UN rattachement, égal à ses treize colonnes');
+	'chaque affaire a exactement UN rattachement');
 select is(
 	(select count(*)::int from public.card_placements p
 	   join public.channels ch on ch.id = p.channel_id
@@ -122,23 +114,23 @@ select pg_temp.proprietaire();
 select is(
 	(select count(*)::int from public.card_placements p join t_nouvelle n on n.card_id = p.card_id), 1,
 	'`creer_affaire` : l''affaire reçoit son rattachement dans la même transaction');
-select is(pg_temp.divergences(), 0::bigint, '…égal à l''affaire, position et ancienneté comprises');
+select is(pg_temp.divergences(), 0::bigint, '…et un seul');
 
 -- 3.2 Les sept colonnes de rattachement. RÉVISÉ PAR `CRM-111` T2.3.2 : un client ne les écrit plus sur `cards`, mais le
 --     propriétaire et la clé de service, eux, le peuvent encore — le seed en dépend —, et le miroir doit les suivre.
 --     L'écriture se fait donc en propriétaire.
-update public.cards
+update public.card_placements
    set owner_id = '5eed0000-0000-4000-8000-000000000012', amount = 4200.50, probability_override = 35,
        next_action = 'Relancer le client', next_action_at = '2026-11-02 09:00+01', position = 9.5
- where id = (select card_id from t_nouvelle);
+ where card_id = (select card_id from t_nouvelle);
 select pg_temp.proprietaire();
 select is(pg_temp.divergences(), 0::bigint,
-	'`UPDATE` des colonnes ouvertes : responsable, montant, probabilité, prochaine action, position reportés');
+	'`UPDATE` des colonnes ouvertes du rattachement : l''affaire en garde un, et un seul');
 
-update public.cards set archived_at = now() where id = (select card_id from t_nouvelle);
-select is(pg_temp.divergences(), 0::bigint, 'archiver : `archived_at` reporté');
-update public.cards set archived_at = null where id = (select card_id from t_nouvelle);
-select is(pg_temp.divergences(), 0::bigint, 'désarchiver : reporté');
+update public.card_placements set archived_at = now() where card_id = (select card_id from t_nouvelle);
+select is(pg_temp.divergences(), 0::bigint, 'archiver le rattachement : l''affaire en garde un');
+update public.card_placements set archived_at = null where card_id = (select card_id from t_nouvelle);
+select is(pg_temp.divergences(), 0::bigint, 'désarchiver : de même');
 
 -- 3.3 Un changement de la seule partie commune ne touche pas le rattachement.
 --     Toute écriture d'une ligne en crée une version nouvelle, d'adresse (`ctid`) nouvelle : une adresse inchangée
@@ -152,10 +144,8 @@ select is(
 	(select adresse from t_avant),
 	'renommer une affaire n''écrit pas son rattachement');
 select is(
-	(select count(*)::int from pg_trigger
-	  where tgrelid = 'public.cards'::regclass and tgname = 'card_placements_mirror_update'
-	    and pg_get_triggerdef(oid) like '%WHEN%'),
-	1, 'le report ne se déclenche que si une colonne de rattachement change : renommer n''écrit pas le rattachement');
+	(select count(*)::int from pg_trigger where tgname like 'card_placements_mirror%'),
+	0, 'aucun miroir ne subsiste entre l''affaire et son rattachement (`CRM-111` T2.4.5)');
 
 -- 3.4 Faire avancer une affaire. `…0c2` renseigne `budget` : la garde de transition la laisse passer (cf. 0013).
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
@@ -163,7 +153,7 @@ select lives_ok(
 	$$select public.move_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c2'), '5eed0000-0000-4000-8000-000000000063')$$,
 	'`move_card` passe, comme avant');
 select pg_temp.proprietaire();
-select is(pg_temp.divergences(), 0::bigint, '`move_card` : étape, position et ancienneté reportées');
+select is(pg_temp.divergences(), 0::bigint, '`move_card` : l''affaire garde un rattachement');
 
 -- 3.5 Changer de channel. Le business developer (…012) écrit `refonte` (…034) (cf. 0019).
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000012');
@@ -171,18 +161,18 @@ select lives_ok(
 	$$select public.move_card_to_channel(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c6'), '5eed0000-0000-4000-8000-000000000034')$$,
 	'`move_card_to_channel` passe, comme avant');
 select pg_temp.proprietaire();
-select is(pg_temp.divergences(), 0::bigint, '`move_card_to_channel` : channel, workflow, étape et position reportés');
+select is(pg_temp.divergences(), 0::bigint, '`move_card_to_channel` : l''affaire garde un rattachement');
 
 -- 3.6 Endormir puis réveiller.
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 select lives_ok($$select public.snooze_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'), now() + interval '3 days')$$,
 	'`snooze_card` passe');
 select pg_temp.proprietaire();
-select is(pg_temp.divergences(), 0::bigint, '`snooze_card` : `snoozed_until` reporté');
+select is(pg_temp.divergences(), 0::bigint, '`snooze_card` : l''affaire garde un rattachement');
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000011');
 select lives_ok($$select public.wake_card(app.card_first_placement('5eed0000-0000-4000-8000-0000000000c3'))$$, '`wake_card` passe');
 select pg_temp.proprietaire();
-select is(pg_temp.divergences(), 0::bigint, '`wake_card` : reporté');
+select is(pg_temp.divergences(), 0::bigint, '`wake_card` : de même');
 
 -- 3.7 Changer le workflow d'un channel occupé : le geste qui change le workflow du CHANNEL avant celui des affaires.
 --     Toutes les étapes du workflow d'origine vont à la première étape du workflow de `…031`.
@@ -199,12 +189,12 @@ select lives_ok(
 		   from public.workflow_steps s
 		  where s.workflow_id = (select workflow_id from public.channels
 		                          where id = '5eed0000-0000-4000-8000-000000000032')
-		    and exists (select 1 from public.cards c
+		    and exists (select 1 from public.card_placements c
 		                 where c.channel_id = '5eed0000-0000-4000-8000-000000000032' and c.current_step_id = s.id)),
 		true)$$,
 	'`change_channel_workflow` passe sur un channel qui porte des affaires : la clé ajournée ne le refuse pas');
 select pg_temp.proprietaire();
-select is(pg_temp.divergences(), 0::bigint, '`change_channel_workflow` : workflow, étapes et positions reportés');
+select is(pg_temp.divergences(), 0::bigint, '`change_channel_workflow` : chaque affaire garde un rattachement');
 select lives_ok($$set constraints all immediate$$,
 	'à la validation, aucune clé ajournée ne trouve de rattachement hors du workflow de son channel');
 
@@ -277,8 +267,9 @@ select is(
 	    and grantee in ('anon', 'authenticated', 'service_role')),
 	array['anon:SELECT', 'authenticated:SELECT', 'service_role:INSERT', 'service_role:SELECT'],
 	'`anon` et `authenticated` LISENT seulement ; `service_role` lit et insère, pour le seed (décision 746)');
-select ok(not has_function_privilege('authenticated', 'app.card_placements_mirror_update()', 'execute'),
-	'les fonctions du miroir ne s''appellent pas');
+-- RÉVISÉE PAR `CRM-111` T2.4.5 : les miroirs sont retirés ; c'est la garde de l'invariant qui ne s'appelle pas.
+select ok(not has_function_privilege('authenticated', 'app.cards_verifier_rattachement()', 'execute'),
+	'la garde de l''invariant « au moins un rattachement » ne s''appelle pas');
 
 -- La lectrice est fermée sur le track « Conseil & IA » (…021), qui porte `grands-comptes` (…032).
 select pg_temp.endosser('5eed0000-0000-4000-8000-000000000013');

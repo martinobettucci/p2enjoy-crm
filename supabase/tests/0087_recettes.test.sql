@@ -157,7 +157,7 @@ select throws_ok(
 	$$update public.cards set currency = 'USD' where id = '5eed0000-0000-4000-8000-0000000000c4'$$,
 	'23514', 'devise verrouillee par les recettes', '21 — une affaire qui porte des recettes ne change pas de devise');
 select lives_ok(
-	$$update public.cards set amount = amount + 1 where id = '5eed0000-0000-4000-8000-0000000000c4'$$,
+	$$update public.card_placements set amount = amount + 1 where card_id = '5eed0000-0000-4000-8000-0000000000c4'$$,
 	'22 — son montant, lui, reste libre');
 select lives_ok(
 	$$update public.cards set currency = 'USD' where id = '5eed0000-0000-4000-8000-0000000000cb'$$,

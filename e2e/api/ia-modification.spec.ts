@@ -16,6 +16,7 @@
 import { randomUUID } from 'node:crypto'
 import { expect, test, type APIRequestContext, type APIResponse } from '@playwright/test'
 import { COMPTES_SEED, URL_API, enTetesAuthentifies, enTetesService, jetonDe } from './jetons'
+import { posterAffaire } from '../affaire'
 
 const ADMIN = COMPTES_SEED[0]
 const BIZDEV = COMPTES_SEED[1]
@@ -49,7 +50,7 @@ async function lireService<T>(requete: APIRequestContext, chemin: string): Promi
 }
 
 async function inserer(requete: APIRequestContext, table: string, ligne: Record<string, unknown>): Promise<void> {
-	const reponse = await requete.post(rest(table), { headers: enTetesService(), data: ligne })
+	const reponse = await posterAffaire(requete, rest(table), { headers: enTetesService(), data: ligne })
 	expect(reponse.status(), `${table} : ${await reponse.text()}`).toBe(201)
 }
 

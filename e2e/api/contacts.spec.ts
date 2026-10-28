@@ -708,8 +708,10 @@ const ID_CARD_ERP = '5eed0000-0000-4000-8000-0000000000c2'
 const SELECT_FICHE_CONTACT =
 	'id,full_name,email,phone,role_title,organization_id,' +
 	'organizations(id,name,domain),' +
-	'card_contacts(role,cards!inner(id,title,archived_at,' +
-	'channels!cards_channel_id_workspace_id_fkey(slug,tracks(slug))))'
+	// `CRM-111` T2.4.5 : l'archivage et le channel sont ceux des rattachements de l'affaire (docs/SPEC-rattachements.md §5).
+	'card_contacts(role,cards!inner(id,title,' +
+	'card_placements!card_placements_card_fk(id,created_at,archived_at,' +
+	'channels!card_placements_channel_fk(slug,tracks(slug)))))'
 
 /** L'adresse complète de la fiche, filtre de corbeille et tri compris. */
 function adresseFiche(idContact: string): string {
@@ -725,12 +727,18 @@ type LigneFiche = {
 	organizations: { id: string; name: string } | null
 	card_contacts: Array<{
 		role: string | null
-		cards: { id: string; title: string; archived_at: string | null; channels: { slug: string; tracks: { slug: string } } }
+		cards: {
+			id: string
+			title: string
+			card_placements: Array<{ archived_at: string | null; channels: { slug: string; tracks: { slug: string } } }>
+		}
 	}>
 }
 
 test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-contacts.md §15)', () => {
-	test('l’embarquement `cards → channels` est AMBIGU sans clé nommée : PGRST201', async ({
+	// `CRM-111` T2.4.5 : le channel est atteint par le rattachement, que DEUX clés relient encore à `channels`
+	// (`card_placements_channel_fk`, celle du cloisonnement, et `card_placements_channel_workflow_fk`).
+	test('l’embarquement `card_placements → channels` est AMBIGU sans clé nommée : PGRST201', async ({
 		request,
 	}) => {
 		// C'EST LA MESURE QUI A DÉCIDÉ DE LA REQUÊTE (§15.3), et elle est figée ici parce qu'elle
@@ -738,7 +746,7 @@ test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-co
 		// que produirait un embarquement écrit « comme d'habitude » est REFUSÉE. Sans ce scénario,
 		// un futur remaniement retirerait la clé nommée en croyant simplifier.
 		const jeton = await jetonDe('admin@p2enjoy.test')
-		const naive = 'card_contacts(role,cards(id,channels(slug)))'
+		const naive = 'card_contacts(role,cards(id,card_placements!card_placements_card_fk(channels(slug))))'
 		const reponse = await request.get(
 			`/rest/v1/contacts?id=eq.${ID_LEO}&select=${encodeURIComponent(naive)}`,
 			{ headers: enTetesAuthentifies(jeton) },
@@ -769,8 +777,8 @@ test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-co
 		expect(rattachement.cards.title).toBe('Migration ERP Sogexia')
 		// LES SLUGS SONT LÀ, et c'est tout l'enjeu de la clé nommée : l'adresse d'une affaire
 		// s'en déduit sans les trois requêtes en cascade de `lireCheminCard`.
-		expect(rattachement.cards.channels.slug).toBe('grands-comptes')
-		expect(rattachement.cards.channels.tracks.slug).toBe('conseil-ia')
+		expect(rattachement.cards.card_placements[0]!.channels.slug).toBe('grands-comptes')
+		expect(rattachement.cards.card_placements[0]!.channels.tracks.slug).toBe('conseil-ia')
 	})
 
 	test('2 — un identifiant inexistant rend 200 et []', async ({ request }) => {

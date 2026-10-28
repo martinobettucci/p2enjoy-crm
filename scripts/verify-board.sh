@@ -471,7 +471,7 @@ fi
 # Cinq colonnes vides sur sept sont la situation NORMALE, et c'est ce qui distingue une
 # composition partant des étapes d'un groupement des cards (§7.3).
 occupees=$(psql_db -c "
-	select count(distinct current_step_id) from public.cards
+	select count(distinct current_step_id) from public.card_placements
 	where channel_id='$CHANNEL_GRANDS_COMPTES' and archived_at is null and card_id in (select id from public.cards where deleted_at is null)")
 if [ "${occupees:-0}" -eq 3 ]; then
 	ok "elles n'occupent que trois étapes sur sept : quatre colonnes vides sont démontrées"

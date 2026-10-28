@@ -65,8 +65,8 @@ select is(char_length(app.assainir_segment_dossier(repeat('é', 300))), 120,
 -- =============================================================================================
 
 select matches(
-	public.chemin_dossier_card((select id from public.cards
-	                             where archived_at is null and deleted_at is null limit 1)),
+	public.chemin_dossier_card((select c.id from public.cards c join public.card_placements p on p.card_id = c.id
+	                             where p.archived_at is null and c.deleted_at is null limit 1)),
 	'^CRM/[^/]+/[^/]+/[^/]+$',
 	'13 — le chemin d''une card a QUATRE segments : CRM, track, channel, card');
 
