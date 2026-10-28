@@ -7499,7 +7499,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
 | CRM-068 | Checklists et modèles de cards | `[P]` |
-| CRM-069 | Étiquettes et digest quotidien — **arbitrée** (décision 769) : catalogue d'étiquettes par espace (administrateurs ; palette fermée ; archivable), posées par qui écrit l'affaire ; digest quotidien par email consenti (7 h, `pg_cron`, identité de service) ; connecteur : étiquettes oui, famille `affaires` existante ; digest non. Spécification `docs/SPEC-etiquettes-digest.md` **validée** (décision 771) | `[P]` |
+| CRM-069 | Étiquettes et digest quotidien — **arbitrée** (décision 769) : catalogue d'étiquettes par espace (administrateurs ; palette fermée ; archivable), posées par qui écrit l'affaire ; digest quotidien par email consenti (7 h, `pg_cron`, identité de service) ; connecteur : étiquettes oui, famille `affaires` existante ; digest non. Spécification `docs/SPEC-etiquettes-digest.md` **validée** (décision 771) | `[~]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |
@@ -10803,7 +10803,7 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       été rejouée — elle n'est la Definition of Done d'aucune unité (décision 553) et reste l'objet
       d'une session dédiée. Les trois harnais que ce changement touche l'ont été.
 
-### CRM-069 — Étiquettes et digest quotidien `[P]`
+### CRM-069 — Étiquettes et digest quotidien `[~]`
 
 Arbitrée par la décision 769, spécification validée par la décision 771 : `docs/SPEC-etiquettes-digest.md`. Connecteur :
 étiquettes dans la famille `affaires` existante ; digest hors connecteur. Tranches (§7) :
@@ -10850,7 +10850,14 @@ Arbitrée par la décision 769, spécification validée par la décision 771 : `
       voisins de la fiche **69/69** ; unitaires **4919/4919**. Manuel 5.4, 5.6, 5.7 et 33.5 réécrits, construit,
       `verify-manual` 163 contrôles sans anomalie ; capture observée.*
 
-**`[P]` le 2026-10-28** : tout est prouvé en développement. Reste la livraison sur instruction du responsable, et son
+**Revenue `[~]` le 2026-10-28** : la session de `CRM-111` a relevé, après sa bascule, des gardes d'autres unités rougies
+par `CRM-068` et `CRM-069` : la colonne « Étiquettes » décale `liste-cards.spec.ts` (sept en-têtes, la prochaine action en
+sixième cellule) et `filtre-sommeil.spec.ts` (l'étape en quatrième) ; « Enregistrer comme modèle » rend ambigu le
+« Enregistrer » de `commentaires-gestes.spec.ts` ; `profiles.email` manquait à `docs/SCHEMA.md` §1 et à la pgTAP `0001`
+(assertion 7) ; `preferences-notifications.spec.ts` laissait sa ligne, que `0064` trouvait. Les cinq sont révisées (décision
+51), **non encore rejouées** : la pile est réservée à la série de `CRM-111`. Une fois rejouées, l'unité repasse `[P]`.
+
+**`[P]` le 2026-10-28, avant la révision ci-dessus** : tout est prouvé en développement. Reste la livraison sur instruction du responsable, et son
 constat en production : la migration `0133` après la `0132`, l'image `mail-sync` et sa variable `SITE_URL`, le connecteur
 (`docs/PROD_MIGRATIONS.md`) ; puis un digest reçu un matin par un membre abonné.
 

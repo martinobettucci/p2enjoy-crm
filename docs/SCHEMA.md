@@ -52,6 +52,7 @@ dont les tables restent, inertes.
 | `avatar_url` | `text` | |
 | `locale` | `text` | défaut `'fr'` |
 | `created_at`, `updated_at` | `timestamptz` | |
+| `email` | `text` | nul tant que la personne ne s'est pas connectée ; l'adresse vérifiée du SSO, en minuscules, posée par `ouvrir_session_serveur` et `renouveler_session_serveur` ; aucun privilège client d'écriture ; lisible des membres de l'espace (migration `0133`, `CRM-069` T4, décision 773) |
 
 **Contrat `CRM-022` :** `full_name` est normalisé, non blanc et borné à 120 caractères ;
 `avatar_url` est nul, un chemin même origine ou une URL HTTPS, bornée à 2048 caractères. Un profil

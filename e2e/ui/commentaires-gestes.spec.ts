@@ -172,7 +172,8 @@ test.describe('les deux gestes de l’auteur, sur la vraie base', () => {
 			const zone = page.getByLabel('Corriger votre commentaire')
 			await zone.fill(`${texte} — corrigé`)
 			await capturer(page, 'commentaire-edition-1440', 'CRM-043')
-			await page.getByRole('button', { name: 'Enregistrer' }).click()
+			// Exact depuis « Enregistrer comme modèle » de l'en-tête (`CRM-068`, révisée, décision 51).
+			await page.getByRole('button', { name: 'Enregistrer', exact: true }).click()
 
 			await expect(page.getByText(`${texte} — corrigé`)).toBeVisible()
 			// La mention « modifié » n'est pas décidée par l'écran : elle vient d'`edited_at`, que

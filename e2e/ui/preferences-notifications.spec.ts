@@ -71,7 +71,7 @@ test.describe('L’écran des préférences (docs/DESIGN_SYSTEM.md §5.45)', () 
 	 * que dans `e2e/api/preferences-notifications.spec.ts`, et c'est ce qui permet à chaque
 	 * scénario de partir de l'état d'un compte neuf : AUCUNE ligne (§43.4, §48 bis).
 	 */
-	test.beforeEach(async () => {
+	const remettreEnEtat = async () => {
 		const contexte = await requetePlaywright.newContext({ baseURL: URL_API })
 		try {
 			const reponse = await contexte.delete(
@@ -82,7 +82,11 @@ test.describe('L’écran des préférences (docs/DESIGN_SYSTEM.md §5.45)', () 
 		} finally {
 			await contexte.dispose()
 		}
-	})
+	}
+	test.beforeEach(remettreEnEtat)
+	// AUSSI APRÈS : le dernier scénario laissait sa ligne, et la pgTAP `0064`, qui part du jeu (aucune
+	// ligne, §48 bis), la trouvait (relevé le 2026-10-28 par la session de `CRM-111`).
+	test.afterEach(remettreEnEtat)
 
 	// L'ÉCRAN EST ATTEIGNABLE DEPUIS L'INDEX DES RÉGLAGES, et il y vient EN DERNIER : toutes les
 	// entrées au-dessus administrent l'instance, celle-ci règle le compte de qui la regarde.

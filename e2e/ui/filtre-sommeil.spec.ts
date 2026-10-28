@@ -295,7 +295,8 @@ test.describe('l’état vide cesse de mentir (§16.12.6)', () => {
 		// L'étape de l'affaire endormie, lue à l'écran.
 		const ligne = page.getByTestId('ligne-card').filter({ hasText: PROSPECTION.endormie })
 		await expect(ligne).toHaveCount(1)
-		const etape = (await ligne.locator('td').nth(2).innerText()).trim()
+		// La quatrième cellule depuis la colonne « Étiquettes » (`CRM-069` T2, révisée, décision 51).
+		const etape = (await ligne.locator('td').nth(3).innerText()).trim()
 		expect(etape.length).toBeGreaterThan(0)
 
 		// Le même filtre d'étape, mode masqué : si l'autre affaire occupe une autre étape, il ne reste

@@ -345,13 +345,16 @@ test.describe('le tableau (§12.7)', () => {
 		await connecterLectrice(page)
 	})
 
-	test('rend une ligne par affaire, avec ses six colonnes', async ({ page }) => {
+	test('rend une ligne par affaire, avec ses sept colonnes', async ({ page }) => {
 		await page.setViewportSize({ width: 1440, height: 900 })
 		await ouvrir(page, ADRESSE)
 
 		await expect(page.getByTestId('tableau-liste')).toBeVisible()
 		await expect(page.getByTestId('ligne-card')).toHaveCount(3)
-		await expect(page.getByRole('columnheader')).toHaveCount(6)
+		// Sept depuis `CRM-069` T2 (révisée, décision 51) : la colonne « Étiquettes » suit le titre
+		// (docs/DESIGN_SYSTEM.md §5.73).
+		await expect(page.getByRole('columnheader')).toHaveCount(7)
+		await expect(page.getByRole('columnheader', { name: 'Étiquettes' })).toBeVisible()
 		await expect(page.getByRole('columnheader', { name: 'Responsable' })).toBeVisible()
 		await expect(page.getByRole('link', { name: 'Refonte du site vitrine' })).toHaveAttribute(
 			'href',
@@ -714,7 +717,8 @@ test.describe('les données longues et la seconde page, contre la pile réelle',
 		// La valeur entière reste atteignable par l'attribut `title` : rien n'est perdu (§12.7).
 		await expect(lien).toHaveAttribute('title', titre)
 
-		const action = (await ligne.locator('td').nth(4).getAttribute('title')) ?? ''
+		// La sixième cellule depuis la colonne « Étiquettes » (`CRM-069` T2, révisée).
+		const action = (await ligne.locator('td').nth(5).getAttribute('title')) ?? ''
 		expect(action.length, 'la prochaine action servie par la pile réelle').toBe(LONGUEUR_ACTION)
 
 		// Une seule ligne de texte : la hauteur de la cellule ne dépasse pas la cible de 40 px.

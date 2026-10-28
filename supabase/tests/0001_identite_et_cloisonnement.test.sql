@@ -4,6 +4,8 @@
 --           du SSO et ne référence plus `auth.users` (assertions 18, 19 et 43 RÉVISÉES) ; §7.5 —
 --           tranche T6 : le trigger de création de profil est retiré par `0077`, ses assertions
 --           avec lui (docs/JOURNAL.md décision 589)
+-- @verifies CRM-069 (docs/BACKLOG.md) — tranche T4 : `profiles.email` (migration `0133`, décision 773) ; l'assertion 7
+--           RÉVISÉE (décision 51), son nombre inchangé
 -- @verifies docs/SCHEMA.md §1 (identité et cloisonnement), « Conventions générales »
 -- @verifies docs/SPEC-permissions-rls.md §2 (rôles), §4 (politiques), §7 (preuves de refus)
 --
@@ -44,7 +46,7 @@ select has_table('public', 'channel_members',   'table `channel_members`');
 
 select columns_are(
 	'public', 'profiles',
-	array['id', 'full_name', 'avatar_url', 'locale', 'created_at', 'updated_at'],
+	array['id', 'full_name', 'avatar_url', 'locale', 'created_at', 'updated_at', 'email'],
 	'`profiles` porte exactement les colonnes de docs/SCHEMA.md §1'
 );
 

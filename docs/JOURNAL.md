@@ -36765,3 +36765,21 @@ celle de la base — : même famille qu'INC-304, que T1 ter traite pour les autr
 **Reste** : les huit harnais qui reconstruisent la base (timeline, move-card, cards, colonnes-protegees, valeurs-champs,
 move-card-to-channel, change-channel-workflow, relances) ; accord de la session de `CRM-117` reçu, celui de la session de
 `CRM-069` attendu. Commit intermédiaire de la bascule, T2.4.5 restant `[~]`.
+
+### `CRM-069` — des gardes d'autres unités rougies, relevées par `CRM-111` (2026-10-28)
+
+*Session interactive (Claude Code, poste du responsable).*
+
+**Observations** (session de `CRM-111`, après sa migration `0134`). La colonne « Étiquettes », posée après le titre de la
+vue liste, décale les gardes qui comptent les en-têtes ou lisent une cellule par son rang (`liste-cards.spec.ts`,
+`filtre-sommeil.spec.ts`). « Enregistrer comme modèle » (`CRM-068`) rend ambigu un `getByRole('button', { name:
+'Enregistrer' })` non exact sur la fiche (`commentaires-gestes.spec.ts`). `profiles.email` (`0133`) manquait à la liste
+fermée de `docs/SCHEMA.md` §1 que vérifie la pgTAP `0001`. Et `preferences-notifications.spec.ts` ne nettoyait qu'avant
+chaque scénario : sa dernière ligne restait, et `0064`, qui part du jeu, la trouvait.
+
+**Cause commune.** Les preuves des unités voisines n'ont pas été rejouées avant de passer `[P]` : mon lot de voisins couvrait
+la fiche et les préférences, non la vue liste ni la pgTAP `0001`.
+
+**Décision.** Gardes révisées, non retirées (décision 51) ; `docs/SCHEMA.md` §1 complété ; nettoyage aussi après chaque
+scénario. `CRM-069` revient `[~]` jusqu'à leur passage, que la série de `CRM-111` (pile réservée) retarde.
+
