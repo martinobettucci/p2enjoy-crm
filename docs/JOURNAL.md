@@ -36521,3 +36521,18 @@ valeur n'en fait pas un. **Vérifié** : un unitaire nouveau échoue avant la co
 comptaient « Pas un libellé ») ; 12/12 après. **Mesure corrigée** : **678** éléments cités dans **166** sections, conforme
 à l'ordre de grandeur annoncé par le contrat (environ 620 dans 157). La pile est relancée avec l'accord du responsable
 (2026-10-28) ; le manuel courant y est publié (34 fichiers).
+
+## décision 771 — `CRM-069` : la spécification des étiquettes et du digest est validée telle quelle
+
+*2026-10-28, validation du responsable en session interactive (Claude Code, poste du responsable).*
+
+`docs/SPEC-etiquettes-digest.md` (`e3ecbd6c`) est validée sans changement. Le responsable a tranché les cinq points du §8 :
+
+1. Les étiquettes se posent sur l'affaire, et non sur un rattachement.
+2. Le fil trace la pose et le retrait, famille « Champs ».
+3. Le digest est envoyé par espace.
+4. Le digest ne contient que ce dont la personne est responsable ou ce qui lui est adressé, chaque ligne filtrée par son
+   droit de lecture.
+5. Sans identité de service, rien ne part, et `digest_runs` l'inscrit.
+
+Le découpage en cinq tranches (§7) est validé aussi. Le travail commence par T1.

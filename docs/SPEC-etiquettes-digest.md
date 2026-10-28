@@ -1,6 +1,7 @@
 # Étiquettes et digest quotidien — `CRM-069`
 
-*Proposée le 2026-10-27, après l'arbitrage du responsable (décision 769). À valider avant le code.*
+*Proposée le 2026-10-27, après l'arbitrage du responsable (décision 769). **Validée telle quelle le 2026-10-28** (décision
+771) : les cinq points du §8 sont acceptés, et le découpage du §7 aussi.*
 
 ## 1. Intention et frontière
 
@@ -147,7 +148,7 @@ Le digest n'entre pas dans le connecteur (décision 769).
 - **T5 — le consentement à l'écran et la preuve de bout en bout** : la case de Réglages ▸ Notifications ; seed ; E2E
   jusqu'à la boîte de développement ; manuel.
 
-## 8. Points à valider
+## 8. Points validés (décision 771)
 
 1. Les étiquettes se posent sur l'affaire, et non sur un rattachement (§2.2).
 2. Le fil trace la pose et le retrait d'une étiquette (§2.2).
