@@ -13,6 +13,14 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-069` — les étiquettes et le digest quotidien (en cours : T1)
+
+*En développement seulement. La migration `0132` attend la prochaine fenêtre de production.*
+
+- **Migration `0132`** (T1) : le catalogue d'étiquettes d'un espace, tenu par ses administrateurs (un nom, une couleur de
+  la palette des tracks, archivable), et les étiquettes posées sur une affaire par qui peut l'écrire. Une étiquette
+  archivée n'est plus posée. Le fil de l'affaire trace la pose et le retrait. Les écrans suivent.
+
 ### `CRM-119` — preuves croisées des droits fins (décision 757)
 
 *Aucun changement du produit : des preuves seulement, rien à livrer.*

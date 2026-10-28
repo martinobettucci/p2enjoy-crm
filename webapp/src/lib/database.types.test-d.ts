@@ -1,3 +1,4 @@
+// @verifies CRM-069 (docs/BACKLOG.md) — tranche T1 : `labels` et `card_labels` au témoin des tables (docs/SPEC-etiquettes-digest.md §2)
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T1 : les trois surcharges de `ecriture_permise`, docs/SCHEMA.md §9 bis.8 ter
 // @verifies CRM-006 (docs/BACKLOG.md) — contrat des types générés depuis le schéma
 // @verifies docs/SPEC-types.md §5 (fichier produit), §7 (ce que les types n'expriment pas)
@@ -143,6 +144,12 @@ type _tables = Expect<
     // renomme ni ne se retire (`step_item_locked`) ; une exigence ne vise que l'étape de départ de sa transition.
     | 'card_checklist_items'
     | 'card_templates'
+    // `0132` de `CRM-069` TRANCHE T1 ajoute `labels` et `card_labels` (docs/SPEC-etiquettes-digest.md §2). CE QUI ÉCHAPPE
+    // AU GÉNÉRATEUR : `card_labels.Insert` expose `workspace_id` et `created_by`, que la base pose (privilèges de colonne,
+    // `app.card_labels_avant`) ; une étiquette archivée est refusée (`22023 label_archived`) ; le catalogue ne se supprime
+    // pas.
+    | 'labels'
+    | 'card_labels'
     | 'card_comment_mentions'
     | 'card_comments'
     // `0088` de `CRM-099` TRANCHE T1 ajoute `card_cost_actuals` — les réels d'une ligne de coût, dont la base tient la

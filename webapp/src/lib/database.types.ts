@@ -810,6 +810,52 @@ export type Database = {
           },
         ]
       }
+      card_labels: {
+        Row: {
+          card_id: string
+          created_at: string
+          created_by: string | null
+          label_id: string
+          workspace_id: string
+        }
+        Insert: {
+          card_id: string
+          created_at?: string
+          created_by?: string | null
+          label_id: string
+          workspace_id: string
+        }
+        Update: {
+          card_id?: string
+          created_at?: string
+          created_by?: string | null
+          label_id?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "card_labels_card_fkey"
+            columns: ["card_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "cards"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "card_labels_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "card_labels_label_fkey"
+            columns: ["label_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "labels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+        ]
+      }
       card_placements: {
         Row: {
           amount: number | null
@@ -1901,6 +1947,54 @@ export type Database = {
             columns: ["target_block_id"]
             isOneToOne: false
             referencedRelation: "goal_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      labels: {
+        Row: {
+          archived_at: string | null
+          color: string
+          created_at: string
+          created_by: string | null
+          id: string
+          name: string
+          updated_at: string
+          workspace_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+          workspace_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          color?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "labels_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "labels_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
             referencedColumns: ["id"]
           },
         ]

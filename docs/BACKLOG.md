@@ -10808,8 +10808,11 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
 Arbitrée par la décision 769, spécification validée par la décision 771 : `docs/SPEC-etiquettes-digest.md`. Connecteur :
 étiquettes dans la famille `affaires` existante ; digest hors connecteur. Tranches (§7) :
 
-- [ ] **T1 — les étiquettes en base** : `labels`, `card_labels`, déclencheur du fil, `label_added` et `label_removed` ;
-      pgTAP, API, types.
+- [x] **T1 — les étiquettes en base** : `labels`, `card_labels`, déclencheur du fil, `label_added` et `label_removed` ;
+      pgTAP, API, types. **Livrée en développement le 2026-10-28** : migration `0132` ; pgTAP `0123` **20/20** ; gardes
+      révisées (décision 51) : `0016` 176 politiques, `0019` vingt-trois types du fil, `database.types.test-d.ts` ; API
+      `etiquettes.spec.ts` **3/3** (refus du business developer, de la lectrice et de l'anonyme par requête directe ;
+      aucune suppression du catalogue) ; types régénérés, typecheck vert ; SCHEMA, PROD_MIGRATIONS, CHANGELOG, harnais.
 - [ ] **T2 — les étiquettes à l'écran** : design system ; Réglages ▸ Étiquettes, fiche, board, liste et filtre ; seed ;
       unitaires, E2E, captures, manuel.
 - [ ] **T3 — les étiquettes dans le connecteur** : `crm_card_get`, `crm_card_list`, `crm_card_label_set` (catalogue

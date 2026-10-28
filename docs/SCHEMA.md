@@ -2412,6 +2412,21 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0132` — les étiquettes (`CRM-069` T1, décisions 769 et 771 ; livrée en développement le 2026-10-28)
+
+`docs/SPEC-etiquettes-digest.md` §2. **`public.labels`** : `id`, `workspace_id` (cascade), `name` (non blanc, 40 au plus,
+unique par espace parmi les non archivées, à la casse près), `color` (`brand`, `success`, `accent`, `danger`, `neutral` ;
+`neutral` par défaut), `archived_at`, `created_by` (posé par la base), `created_at`, `updated_at` ; unique `(id,
+workspace_id)`. RLS : lecture par tout membre, écriture par l'administrateur ; privilèges : `select`, `insert (workspace_id,
+name, color)`, `update (name, color, archived_at)`, **aucun `delete`**. **`public.card_labels`** : `(card_id, label_id)` clé
+primaire, `workspace_id` posé par la base depuis l'affaire, clés composites vers `cards` et `labels` (cascade ; une
+étiquette d'un autre espace rend `23503`), `created_by`, `created_at`. RLS : lecture `app.can_read_card`, pose et retrait
+`app.can_write_card` ; privilèges : `select`, `delete`, `insert (card_id, label_id)`. Déclencheurs :
+`app.card_labels_avant` (espace, auteur ; `22023 label_archived`) ; `app.card_labels_evenement` écrit `label_added` et
+`label_removed` dans `card_events` (événements de l'affaire), sauf pour un retrait en cascade. `card_events_type_check`
+gagne les deux types. **Retrait** : retirer les deux tables et les trois fonctions, puis reposer `card_events_type_check`
+sans les deux types, une fois retirés les événements qui les portent.
+
 ### Migration `0131` — les modèles d'affaires (`CRM-068` T4a, décisions 747 à 749 ; livrée en développement le 2026-10-27)
 
 `docs/SPEC-checklists.md` §3.5, §3.6. **`public.card_templates`** : `id`, `workspace_id`, `workflow_id` (clé composite vers

@@ -627,7 +627,8 @@ PORT_RAPPORT=9323
 # **+1 par `CRM-118` T1.b, 2026-10-27** : `0121_defaut_et_archivage_workflow.test.sql`, fichier NEUF. 110 + 1 = 111, CALCULÉ —
 # la suite complète rend aussi l'échec de `0075`, révisée par une session parallèle (migration 0131 non committée).
 # **+1 par `CRM-068` T4a, 2026-10-27** : `supabase/tests/0122_modeles_affaires.test.sql`, 22 assertions. COMPTÉE.
-FICHIERS_SQL_ATTENDUS=112
+# **+1 par `CRM-069` T1, 2026-10-28** : `supabase/tests/0123_etiquettes.test.sql`, fichier NEUF. 112 + 1 = 113, COMPTÉE.
+FICHIERS_SQL_ATTENDUS=113
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -783,7 +784,9 @@ FICHIERS_SQL_ATTENDUS=112
 # par profil, défaut global seulement, atomicité ; la garde : employé, archivé, en corbeille, défaut, rétablissement) ;
 # huit mutations tuées ; `0022`, `0037`, `0111` révisées sans changer de plan. 4394 + 18 = 4412, CALCULÉ.
 # **+22 par `CRM-068` T4a, 2026-10-27** (`0122`). COMPTÉE.
-ASSERTIONS_ATTENDUES=4434
+# **+20 par `CRM-069` T1, 2026-10-28** (`0123` : catalogue, pose, refus, fil ; `0016` et `0019` révisées sans changer de
+# plan). 4434 + 20 = 4454, COMPTÉE.
+ASSERTIONS_ATTENDUES=4454
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1200,7 +1203,10 @@ ASSERTIONS_ATTENDUES=4434
 # **+4 par `CRM-068` T4a, 2026-10-27** : `e2e/api/modeles-affaires.spec.ts`, fichier NEUF. COMPTÉE.
 # **+7 par `CRM-118` T1.b, 2026-10-27** : `e2e/api/defaut-archivage-workflow.spec.ts`, fichier NEUF — `set_default_workflow`
 # (refus des trois profils, défaut global seulement, une transaction) et la garde d'archivage. 1251 + 7 = 1258, COMPTÉE.
-SCENARIOS_API=1258
+# **+3 par `CRM-069` T1, 2026-10-28** : `e2e/api/etiquettes.spec.ts`, fichier NEUF — le catalogue (pose, refus du business
+# developer, aucune suppression, lecture), la pose et ses refus (lectrice, archivée) et le fil, l'anonyme. 1258 + 3 = 1261,
+# COMPTÉE.
+SCENARIOS_API=1261
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
