@@ -5092,23 +5092,25 @@ et_etiquette 'Secteur public' brand; ET_PUBLIC=$ET_ID
 et_etiquette 'Partenaire' success; ET_PARTENAIRE=$ET_ID
 et_etiquette 'Salon 2025' neutral; ET_SALON=$ET_ID
 
-ET_LYON='5eed0000-0000-4000-8000-00000000d001'
-ET_VAULX='5eed0000-0000-4000-8000-00000000d007'
-ET_BERANGER='5eed0000-0000-4000-8000-00000000d013'
+# Des affaires que Driss ÉCRIT (`app.can_write_card`) : la base refuse la pose ailleurs, et c'est sa règle (§30.2).
+# MESURÉ le 2026-10-28 : les affaires de « maintenance », d'abord retenues, lui sont fermées en écriture (42501).
+ET_LYON='5eed0000-0000-4000-8000-0000000000c4'
+ET_VAULX='5eed0000-0000-4000-8000-0000000000cc'
+ET_BERANGER='5eed0000-0000-4000-8000-0000000000cb'
 ET_AUDIT='5eed0000-0000-4000-8000-0000000000c3'
-ET_SOGEXIA='5eed0000-0000-4000-8000-00000000d022'
+ET_SOGEXIA='5eed0000-0000-4000-8000-0000000000cf'
 # Une étiquette archivée ne se pose plus : les poses de « Salon 2025 » ne se rejouent que tant qu'elle ne l'est pas.
 code=$(api GET "/rest/v1/labels?select=archived_at&id=eq.$ET_SALON")
 attendu "$code" "lecture de « Salon 2025 »" 200
 if [ "$(jq -r '.[0].archived_at' "$CORPS")" = null ]; then
 	et_poser "$ET_LYON" "$ET_SALON" 'Salon 2025 — Ville de Lyon'
-	et_poser "$ET_SOGEXIA" "$ET_SALON" 'Salon 2025 — extranet Sogexia'
+	et_poser "$ET_SOGEXIA" "$ET_SALON" 'Salon 2025 — dossier Marchand'
 fi
 et_poser "$ET_LYON" "$ET_PRIORITAIRE" 'Prioritaire — Ville de Lyon'
 et_poser "$ET_LYON" "$ET_PUBLIC" 'Secteur public — Ville de Lyon'
 et_poser "$ET_LYON" "$ET_PARTENAIRE" 'Partenaire — Ville de Lyon'
-et_poser "$ET_VAULX" "$ET_PUBLIC" 'Secteur public — Mairie de Vaulx'
-et_poser "$ET_BERANGER" "$ET_PRIORITAIRE" 'Prioritaire — Transports Béranger'
+et_poser "$ET_VAULX" "$ET_PUBLIC" 'Secteur public — MGEN Loire'
+et_poser "$ET_BERANGER" "$ET_PRIORITAIRE" 'Prioritaire — Nordis'
 et_poser "$ET_AUDIT" "$ET_PARTENAIRE" 'Partenaire — Audit sécurité applicative'
 code=$(api_jeton "$JETON_ADMIN_ET" PATCH "/rest/v1/labels?id=eq.$ET_SALON&archived_at=is.null" -H 'Prefer: return=representation' \
 	-d '{"archived_at": "2026-01-15T09:00:00Z"}')

@@ -2619,10 +2619,13 @@ date d'archivage est fixe (2026-01-15), pour qu'un rejeu à vide rende le même 
 
 | Étiquette (nom stable) | Couleur | Posée sur |
 |---|---|---|
-| « Prioritaire » | `danger` | « Astreinte 24/7… Ville de Lyon » (`…d001`), « Astreinte week-end — Transports Béranger » (`…d013`) |
-| « Secteur public » | `brand` | la Ville de Lyon, « Contrat TMA 2026 — Mairie de Vaulx » (`…d007`) |
+| « Prioritaire » | `danger` | « Refonte intranet Ville de Lyon » (`…0c4`, `studio-web/refonte`), « Assistant IA support — Nordis » (`…0cb`) |
+| « Secteur public » | `brand` | la Ville de Lyon, « Portail adhérents — MGEN Loire » (`…0cc`, `refonte`) |
 | « Partenaire » | `success` | la Ville de Lyon, « Audit sécurité applicative » (`…0c3`) |
-| « Salon 2025 » | `neutral`, **archivée** | la Ville de Lyon, « Correctif majeur livré — extranet Sogexia » (`…d022`) |
+| « Salon 2025 » | `neutral`, **archivée** | la Ville de Lyon, « Reprise du dossier Marchand » (`…0cf`) |
+
+*Révisé le 2026-10-28* : les affaires de `studio-web/maintenance`, d'abord retenues, sont fermées en écriture à Driss, et la
+base refusait la pose (`42501`, mesuré lors d'une reconstruction). Les poses vont à des affaires qu'il écrit.
 
 La Ville de Lyon porte **quatre** étiquettes : sa carte du board montre trois pastilles et « +1 » (`docs/DESIGN_SYSTEM.md`
 §5.73). « Salon 2025 », archivée **après** avoir été posée, montre la pastille d'une étiquette archivée et la case qui se
@@ -2643,5 +2646,5 @@ puisqu'une étiquette archivée ne se pose plus (`22023 label_archived`). La dat
 ### 30.4 Ce que les preuves en attendent
 
 `e2e/ui/etiquettes.spec.ts` lit le catalogue dans les Réglages, la carte de la Ville de Lyon au board de
-`studio-web/maintenance` (trois pastilles et « +1 »), et filtre la vue liste par « Secteur public ». Ses propres étiquettes
+`studio-web/refonte` (trois pastilles et « +1 »), et filtre la vue liste de `refonte` par « Secteur public ». Ses propres étiquettes
 portent le préfixe `ZZ 069`, retirées à la fin.
