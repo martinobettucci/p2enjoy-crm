@@ -36602,3 +36602,24 @@ fonctions : une image prise pendant ce temps montrerait un faux état). La séri
 dans la section des étiquettes de `CRM-069`, que sa session corrige. Les scénarios des images (`e2e/manuel/`) sont écrits
 pour les chapitres 1 à 16, 19 à 29 ; ils attendent un seed complet pour leur premier passage, et ne sont pas encore
 committés : un scénario qui n'a jamais tourné n'est pas livré.
+
+## décision 773 — `CRM-069` T4 : l'adresse du digest est celle du profil, posée à chaque connexion
+
+*2026-10-28, arbitrage du responsable, en session interactive (Claude Code, poste du responsable).*
+
+**Problème.** Le digest (§5) part par email, mais le CRM ne garde aucune adresse de membre. Les identités vivent dans le
+SSO LeLabs, `auth.users` est vide, le jeton interne ne porte que `sub` et `role`, et ni `profiles` ni `sessions_sso`
+n'ont d'adresse. C'est mesuré : la première exécution du job mettait en file une ligne adressée à `null`.
+
+**Options présentées.**
+1. L'adresse ajoutée au jeton interne et retenue sur la ligne de consentement, lisible par la seule personne.
+2. L'adresse posée sur `profiles` à chaque connexion — simple, mais lisible par l'équipe.
+3. L'adresse lue par `mail-sync` dans l'API d'administration du SSO, au moment d'envoyer.
+
+**Décision du responsable : l'option 2.** `profiles.email`, posée par `ouvrir_session_serveur` et
+`renouveler_session_serveur` depuis l'adresse vérifiée reçue du SSO. Aucun client ne l'écrit. La conséquence est
+acceptée : les membres d'un espace lisent l'adresse de leurs collègues.
+
+**Conséquences.** La migration `0133`, pas encore poussée, porte la colonne et les deux fonctions de session redéfinies à
+l'identique, plus une ligne chacune. Le job lit `profiles.email`. Un abonné qui ne s'est jamais connecté reste `no_address`.
+`docs/SPEC-etiquettes-digest.md` §5.1 est précisé.

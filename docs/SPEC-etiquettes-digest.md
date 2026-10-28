@@ -85,6 +85,14 @@ est séparée de `profiles` pour la même raison que `notification_preferences` 
 décision personnelle ne se publie pas à l'équipe. **Réglages ▸ Notifications** gagne la case « Recevoir chaque matin le
 récapitulatif de cet espace par email ». La décocher supprime la ligne.
 
+**L'adresse du destinataire — décidée le 2026-10-28 par le responsable (décision 773).** Le CRM ne gardait aucune adresse
+de membre : les identités vivent dans le SSO LeLabs, `auth.users` est vide, et le jeton interne ne porte pas d'adresse.
+`profiles` gagne une colonne `email`, que la base pose **à chaque ouverture et à chaque renouvellement de session**
+(`ouvrir_session_serveur`, `renouveler_session_serveur`), depuis l'adresse vérifiée que l'échangeur reçoit du SSO
+(`email_verified`). Le digest part à cette adresse. **Conséquence acceptée par le responsable** : `profiles` étant lisible
+par les membres de l'espace, l'adresse de chacun l'est aussi. Aucun client ne l'écrit, et une personne qui ne s'est jamais
+connectée n'a pas d'adresse : son digest est inscrit `no_address` et rien ne part.
+
 ### 5.2 Le contenu — ce que la personne peut lire, et rien d'autre
 
 Pour chaque abonnement, au matin du jour *J* (heure de Paris) :
