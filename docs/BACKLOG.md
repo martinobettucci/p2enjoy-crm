@@ -16863,6 +16863,9 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           **restent à rejouer** : timeline (interrompu), rendu-modeles-emails, move-card, cards, colonnes-protegees,
           valeurs-champs, move-card-to-channel, change-channel-workflow, relances, board. Résidu relevé pour T1 ter :
           `verify-mail-classement.sh` restaure une définition d'`app.card_par_adresse` antérieure à T2.2.
+          *Décidé le 2026-10-28* : les harnais restants sont rejoués **une seule fois, dans la campagne qui suit le
+          retrait** (T2.4.5) — plusieurs reconstruisent la base partagée (journal, « incident »), et deux séries en
+          doubleraient l'effet sur les sessions parallèles. Le retrait se fait dans une fenêtre convenue avec elles.
           *Découpage (2026-10-26, mesuré)* : les **lectures** et les **mises à jour** de colonnes de rattachement passent à
           `card_placements` dans cette étape — pgTAP (dont 13 fichiers qui mettent à jour ces colonnes), specs API et
           d'interface, harnais `verify-*` (24 scripts). Les **créations** d'affaires des preuves (12 fichiers pgTAP, 4
