@@ -36581,3 +36581,24 @@ l'archivage des workflows, migration `0130` d'une autre session ; son interface 
 interrompu) ; `verify-move-card` 57/61 (le seed interrompu, et les rouges qui en découlent, dont la pgTAP du digest
 `0124` d'une autre session). À rejouer quand le seed sera entier : timeline, move-card, cards, colonnes-protegees,
 valeurs-champs, move-card-to-channel, change-channel-workflow, relances, ma-journee, formulaire, board.
+
+### `CRM-117` T4.0, second correctif : la citation imbriquée et la citation à paramètres (2026-10-28)
+
+**Problème 1** : « Un channel se crée avec « Nouveau channel », dans la barre d'onglets ci-dessus. », message réel de
+l'écran, était lu jusqu'au premier « » » : « Un channel se crée avec « Nouveau channel », qui n'est aucun libellé et
+qu'aucune image ne pouvait donc porter. **Correction** : les guillemets sont appariés ; la citation se lit entière, et
+celle qu'elle contient compte aussi. **Problème 2** : le manuel cite « Anonymisé le … » ou « Page 2 sur 5 », quand l'écran
+porte une date ou un rang réels ; la comparaison littérale ne les aurait jamais trouvés illustrés. **Correction** : un
+élément cité qui n'est pas une valeur exacte du catalogue, mais une valeur à paramètres, est illustré quand une image de
+sa section porte un texte de **la même** valeur — jamais d'une autre. **Vérifié** : deux unitaires nouveaux, rouges avant,
+verts après (14/14 ; 41 pour l'outillage du manuel). **Mesure** : 684 éléments cités dans 166 sections.
+
+**Deux citations du manuel corrigées contre l'écran**, relevées en préparant les scénarios : la case du formulaire d'une
+adresse d'expédition s'appelle « Identité par défaut pour cet expéditeur », non « identité par défaut » (11.2) ; « Modifier
+une organisation » (10.10) était un renvoi à une section, non un libellé : il devient un lien vers la section 10.12.
+
+**Pile** : relancée avec l'accord du responsable, puis cédée à `CRM-111` pour sa série de harnais (qui dégradent des
+fonctions : une image prise pendant ce temps montrerait un faux état). La série a reconstruit la base, et le seed s'arrête
+dans la section des étiquettes de `CRM-069`, que sa session corrige. Les scénarios des images (`e2e/manuel/`) sont écrits
+pour les chapitres 1 à 16, 19 à 29 ; ils attendent un seed complet pour leur premier passage, et ne sont pas encore
+committés : un scénario qui n'a jamais tourné n'est pas livré.

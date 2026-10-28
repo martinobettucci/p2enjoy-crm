@@ -70,6 +70,23 @@ export function valeursInterface(sourceFr) {
 	return { exactes, motifs }
 }
 
+/**
+ * Les textes entre guillemets français, appariés : « Créez-en un avec « Nouveau channel ». » se lit entier, et la
+ * citation qu'il contient aussi. Une citation de plus de 120 signes n'est pas un libellé.
+ */
+function citations(texte) {
+	const trouvees = []
+	const ouvertes = []
+	for (let i = 0; i < texte.length; i += 1) {
+		if (texte[i] === '«') ouvertes.push(i + 1)
+		else if (texte[i] === '»' && ouvertes.length > 0) {
+			const debut = ouvertes.pop()
+			if (i - debut <= 122) trouvees.push(texte.slice(debut, i))
+		}
+	}
+	return trouvees
+}
+
 const estValeur = (texte, valeurs) => valeurs.exactes.has(texte) || valeurs.motifs.some((m) => m.test(texte))
 
 /**
@@ -86,8 +103,8 @@ export function elementsCites(source, valeurs) {
 	const vider = () => {
 		if (chapitre === null) return (tampon = [])
 		const cle = section === null ? chapitre : `${chapitre}#${section}`
-		for (const m of tampon.join(' ').matchAll(/«\s*([^»]{1,120}?)\s*»/g)) {
-			const texte = normaliserLibelle(m[1])
+		for (const citation of citations(tampon.join(' '))) {
+			const texte = normaliserLibelle(citation)
 			if (!estValeur(texte, valeurs)) continue
 			if (!parSection.has(cle)) parSection.set(cle, new Set())
 			parSection.get(cle).add(texte)
@@ -192,6 +209,9 @@ export function controlerIllustration(source, manifeste, valeurs, { chapitres = 
 		)
 		for (const libelle of cites) {
 			if (visibles.has(libelle) || excepte.has(`${chapitre}|${libelle}`)) continue
+			// « Anonymisé le … » ou « Page 2 sur 5 » : la page porte la même valeur avec d'autres paramètres.
+			const motifs = valeurs.exactes.has(libelle) ? [] : valeurs.motifs.filter((m) => m.test(libelle))
+			if (motifs.some((m) => [...visibles].some((v) => m.test(v)))) continue
 			anomalies.push(`élément cité sans image : « ${libelle} » (${cle})`)
 		}
 	}

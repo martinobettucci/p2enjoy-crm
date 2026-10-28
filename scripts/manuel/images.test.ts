@@ -105,6 +105,12 @@ describe('éléments cités (§11.4)', () => {
 		])
 		expect([...(cites.get('naviguer#l-aide') ?? [])]).toEqual(["Fermer l'aide"])
 	})
+
+	it('une citation qui en contient une autre se lit entière, et celle qu’elle contient compte aussi', () => {
+		const valeurs = valeursInterface(["'a': 'Nouveau channel',", "'b': 'Créez-en un avec « Nouveau channel ».',"].join('\n'))
+		const cites = elementsCites('## 3. Naviguer\n\nIl écrit « Créez-en un avec « Nouveau channel ». »\n', valeurs)
+		expect([...(cites.get('naviguer') ?? [])].sort()).toEqual(['Créez-en un avec « Nouveau channel ».', 'Nouveau channel'])
+	})
 })
 
 describe('controlerImages (§11.2)', () => {
@@ -158,6 +164,13 @@ describe('controlerIllustration (§11.1, §11.3)', () => {
 				exceptions: [{ libelle: "Fermer l'aide", chapitre: 'naviguer' }],
 			}),
 		).not.toContain("élément cité sans image : « Fermer l'aide » (naviguer#l-aide)")
+	})
+
+	it('un élément cité à paramètres est illustré par la même valeur, aux paramètres près — jamais par une autre', () => {
+		const vue = (libelles: string[]) => ({ images: [image('naviguer/formulaire.jpg', 'les-onglets', ['Nouveau channel', 'Aucun channel dans ce track', ...libelles])] })
+		const sansImage = "élément cité sans image : « Page 2 sur 5 » (naviguer#les-onglets)"
+		expect(controlerIllustration(MANUEL, vue(['Page 1 sur 3']), VALEURS)).not.toContain(sansImage)
+		expect(controlerIllustration(MANUEL, vue(['Nouveau channel 3']), VALEURS)).toContain(sansImage)
 	})
 
 	it('lit les exceptions de la table du §11.3, sans son en-tête ni son gabarit', () => {

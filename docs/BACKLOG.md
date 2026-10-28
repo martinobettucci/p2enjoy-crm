@@ -17179,6 +17179,9 @@ responsable** : traitée juste après `CRM-116`.*
             **Correctif, 2026-10-28** : une valeur du catalogue faite de paramètres seuls (`{prenom} {nom}`) devenait un
             motif qui reconnaissait toute citation ; un motif garde désormais un mot. Unitaire nouveau, rouge avant et
             vert après (12/12) ; mesure corrigée : **678 éléments cités dans 166 sections**.
+            **Second correctif, même jour** : les guillemets imbriqués sont appariés, et un élément cité à paramètres
+            (« Anonymisé le … ») est illustré par la même valeur aux paramètres près ; deux unitaires, rouges avant
+            (14/14) ; **684 éléments dans 166 sections**.
       - [ ] **T4.1 à T4.5 — les images**, groupe par groupe comme T3 : scénarios, images observées, liste des chapitres
             illustrés. **Exigent la pile de développement** ; le responsable a donné son accord pour la relancer le
             2026-10-28.

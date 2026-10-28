@@ -2257,7 +2257,7 @@ existe.
 **Ce que la fiche ne fait pas.** Elle ne **supprime** pas une organisation — c'est délibéré : ses
 contacts perdraient leur organisation sans laisser de trace —, et elle ne montre pas les affaires de
 l'organisation. Le nom d'un contact, lui, est un lien vers sa fiche. Pour **modifier**
-l'organisation, voir « Modifier une organisation » ci-dessous.
+l'organisation, voir la [section 10.12](#modifier-une-organisation).
 
 ### 10.11 Créer une organisation
 
@@ -2387,7 +2387,7 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
   nouvelle adresse fait de votre enregistrement une déclaration, et non une correction.
 - **Le nom d'expéditeur se vide en effaçant le champ**, contrairement au mot de passe : un champ
   vide y est une valeur, et non une absence de changement.
-- **La case « identité par défaut » est cochée d'avance sur une déclaration**, parce que c'est ce
+- **La case « Identité par défaut pour cet expéditeur » est cochée d'avance sur une déclaration**, parce que c'est ce
   que le produit ferait de toute façon. La décocher n'est utile que si vous en avez déjà une.
 - **Ce que l'écran n'offre pas**, et c'est écrit plutôt que suggéré : aucun bouton *Tester la
   connexion* — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état

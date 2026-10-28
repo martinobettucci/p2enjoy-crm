@@ -3247,7 +3247,24 @@
 				},
 				{
 					"type": "text",
-					"text": "\nl'organisation, voir « Modifier une organisation » ci-dessous."
+					"text": "\nl'organisation, voir la "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-carnet-de-contacts",
+						"anchor": "modifier-une-organisation"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 10.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": "."
 				}
 			]
 		},
