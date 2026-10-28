@@ -10817,6 +10817,8 @@ Arbitrée par la décision 769, spécification validée par la décision 771 : `
       unitaires, E2E, captures, manuel.
 - [ ] **T3 — les étiquettes dans le connecteur** : `crm_card_get`, `crm_card_list`, `crm_card_label_set` (catalogue
       `docs/SPEC-mcp.md` §9.2) ; pytest, intégration, E2E.
+      *Inscrite au catalogue le 2026-10-28* : `docs/SPEC-mcp.md` §9.2 *tredecies* (noms résolus dans l'espace de
+      l'affaire, `add` et `remove`, refus avant écriture d'un nom inconnu ou archivé, filtre `label` au serveur).
 - [ ] **T4 — le digest en base et à l'envoi** : `digest_subscriptions`, `digest_runs`, `mail_outbox.kind`,
       `app.envoyer_digests` et son job ; `mail-sync` sans `Reply-To` ; pgTAP, pytest, contrat de déploiement.
 - [ ] **T5 — le consentement à l'écran et la preuve de bout en bout** : la case de Réglages ▸ Notifications ; seed ; E2E

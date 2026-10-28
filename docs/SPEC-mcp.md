@@ -305,7 +305,7 @@ connecteur.
 | Famille | Ce qu'elle couvre |
 |---|---|
 | `structure` | tracks, channels, lecture des workflows et de leurs étapes |
-| `affaires` | affaires (cards) : champs, description, probabilité, étape, déplacement, sommeil, commentaires, timeline, contacts liés, **activités réalisées** (appels, réunions, visios — `CRM-067`, décision 647), **checklist** (lire, cocher — `CRM-068`, décision 747) |
+| `affaires` | affaires (cards) : champs, description, probabilité, étape, déplacement, sommeil, commentaires, timeline, contacts liés, **activités réalisées** (appels, réunions, visios — `CRM-067`, décision 647), **checklist** (lire, cocher — `CRM-068`, décision 747), **étiquettes** (lire, filtrer, poser, retirer — `CRM-069`, décision 769) |
 | `contacts` | contacts du carnet — les organisations sont à `organizations` depuis `CRM-114` T4 ; le nom de l'organisation d'un contact reste un attribut du contact (décision 666) |
 | `organizations` | organisations : les lister, les lire, les créer, les modifier ; elles filtrent aussi les résultats `organisation` de `crm_search` (décision 666) — **ajoutée par `CRM-114`** (`docs/SPEC-organisations.md` §5, décisions 660 et 663, migration `0101`) ; nom anglais (décision 658) |
 | `budgets` | budgets, occurrences, lignes de coût d'une affaire et leurs réels |
@@ -592,7 +592,7 @@ documentation, **avant** son code. Le catalogue ci-dessous est la cible.
 |---|---|---|---|---|
 | référence | `crm_workspace_list`, `crm_search` (recherche globale ; chaque ligne est filtrée par la matrice de sa famille) | — | — | — |
 | `structure` | `crm_track_list`, `crm_track_get`, `crm_channel_list`, `crm_channel_get`, `crm_workflow_get` (étapes, transitions, champs exigés) | `crm_track_create`, `crm_channel_create` | `crm_track_update`, `crm_channel_update` | `crm_track_trash`, `crm_channel_trash` |
-| `affaires` | `crm_card_list` (par channel, étape, échéance), `crm_card_get` (champs, étape, contacts, prochaine action), `crm_card_timeline`, `crm_card_comment_list`, `crm_stale_card_list` (affaires figées), `crm_card_checklist_list` (§9.2 *duodecies*) | `crm_card_create`, `crm_card_comment_add` | `crm_card_update` (titre, champs, prochaine action, échéance), `crm_card_move` (étape, par `move_card`), `crm_card_move_to_channel`, `crm_card_snooze`, `crm_card_wake`, `crm_card_contact_link` (`aussi` : `contacts:consulter`), `crm_card_checklist_set` (§9.2 *duodecies*) | `crm_card_trash` |
+| `affaires` | `crm_card_list` (par channel, étape, échéance), `crm_card_get` (champs, étape, contacts, prochaine action), `crm_card_timeline`, `crm_card_comment_list`, `crm_stale_card_list` (affaires figées), `crm_card_checklist_list` (§9.2 *duodecies*) | `crm_card_create`, `crm_card_comment_add` | `crm_card_update` (titre, champs, prochaine action, échéance), `crm_card_move` (étape, par `move_card`), `crm_card_move_to_channel`, `crm_card_snooze`, `crm_card_wake`, `crm_card_contact_link` (`aussi` : `contacts:consulter`), `crm_card_checklist_set` (§9.2 *duodecies*), `crm_card_label_set` (§9.2 *tredecies*) | `crm_card_trash` |
 | `contacts` — **livrée par `CRM-104` T3** (§9.2 *quinquies*) | `crm_contact_list`, `crm_contact_get` | `crm_contact_create` | `crm_contact_update` | — (le CRM ne sait que détruire, A4) |
 | `organizations` — **`CRM-114` T4** (§9.2 *sexies*) | `crm_organization_list`, `crm_organization_get` | `crm_organization_create` | `crm_organization_update` | — (décision 660) |
 | `budgets` — **`CRM-104` T4** (§9.2 *septies*) | `crm_budget_list`, `crm_budget_get` (occurrences), `crm_card_cost_list`, `crm_costs_to_enter` (« à saisir ») | `crm_card_cost_add`, `crm_card_cost_actual_add` | `crm_card_cost_update`, `crm_card_cost_actual_update`, `crm_card_cost_settle` (soldé) | — (le CRM ne sait que détruire, A4 ; l'administration des budgets reste à l'écran, décision 668) |
@@ -1083,6 +1083,25 @@ modèles d'affaires. Ce sont des gestes d'écran.
 décochée) ; refus par le CRM malgré la matrice ouverte (la lectrice qui coche : la RLS ne lui ouvre pas l'affaire en
 écriture) ; un point d'une **autre** affaire refusé ; journal écrit ; et **E2E** : un point coché par le connecteur
 paraît coché sur la fiche, avec le nom de la personne, et la ligne du fil.
+
+### 9.2 tredecies Les étiquettes d'une affaire — `CRM-069` T3 (liste fixée par `docs/SPEC-etiquettes-digest.md` §4, validée le 2026-10-28, décisions 769 et 771)
+
+**Famille `affaires`, existante** : aucune migration, aucune ligne nouvelle. Les outils lisent et écrivent les tables que
+la fiche et la vue liste lisent et écrivent (`labels`, `card_labels`), sous le jeton de la personne : la RLS décide, et le
+déclencheur de la base pose l'espace, l'auteur et la ligne du fil.
+
+| Outil | Action | Ancre | Ce qui change |
+|---|---|---|---|
+| `crm_card_get` | `consulter` | `card:card_id` | rend `labels` : nom, couleur et archivage de chaque étiquette de l'affaire, triées par nom |
+| `crm_card_list` | `consulter` | inchangée | rend `labels` sur chaque ligne ; un argument facultatif `label` (un **nom**, sans tenir compte de la casse) borne la liste aux affaires qui portent cette étiquette, au serveur, avant la pagination |
+| `crm_card_label_set` (nouveau) | `modifier` | `card:card_id` | `add` et `remove` : deux listes de **noms**, résolus dans le catalogue de l'espace de l'affaire (sans tenir compte de la casse). Un nom inconnu, ou archivé dans `add`, est refusé avant toute écriture, et le refus nomme les étiquettes possibles. Chaque nom devient un `POST` ou un `DELETE card_labels` ; poser une étiquette déjà posée, ou retirer une absente, ne change rien et le dit. Rend les étiquettes de l'affaire après le geste |
+
+Les noms ne finissent pas par `_id` : ils sont jugés dans l'espace de l'affaire, comme l'étape d'arrivée de
+`crm_card_move` (§9.2 ter). **Le catalogue n'a pas d'outil** (décision 769) : il reste un geste des Réglages.
+
+**Preuves** (§13) : succès ; refus par la matrice (case décochée) ; refus par le CRM malgré la matrice ouverte (la
+lectrice qui pose) ; un nom inconnu refusé sans écriture ; journal écrit ; et **E2E** : une étiquette posée par le
+connecteur paraît sur la fiche, et le fil la nomme.
 
 ### 9.3 Réponses
 
