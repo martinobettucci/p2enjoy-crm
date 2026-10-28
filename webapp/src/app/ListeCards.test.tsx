@@ -1,3 +1,5 @@
+// @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la colonne « Étiquettes » et le filtre « Étiquette » de la vue liste
+//           (docs/DESIGN_SYSTEM.md §5.73)
 // @verifies CRM-042 (docs/BACKLOG.md) — rendu réel du tableau, de ses tris, filtres et pages
 // @verifies CRM-022 (docs/BACKLOG.md) — colonne Responsable avec avatar et nom
 // @verifies CRM-105 (docs/BACKLOG.md) — la description d'une affaire en infobulle sur le titre de sa ligne :
@@ -20,6 +22,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { BasculeVue, ListeCards } from './ListeCards'
 import { fr } from '../i18n'
 import type { EtapeBoard } from '../lib/board'
+import type { Etiquette } from '../lib/etiquettes'
 import {
 	LIGNES_PAR_PAGE,
 	PARAMETRES_PAR_DEFAUT,
@@ -81,17 +84,20 @@ function rendre({
 	params = parametres(),
 	total = CARDS.length,
 	onParametres = vi.fn(),
+	catalogueEtiquettes = [],
 }: {
 	cards?: readonly CardListe[]
 	params?: ParametresListe
 	total?: number
 	onParametres?: (parametres: ParametresListe) => void
+	catalogueEtiquettes?: readonly Etiquette[]
 } = {}) {
 	render(
 		<MemoryRouter>
 			<ListeCards
 				cards={cards}
 				etapes={ETAPES}
+				catalogueEtiquettes={catalogueEtiquettes}
 				parametres={params}
 				total={total}
 				slugTrack="conseil-ia"
@@ -114,16 +120,18 @@ describe('le tableau de la vue liste (§12.7)', () => {
 		expect(screen.getByRole('table').tagName).toBe('TABLE')
 	})
 
-	it('porte les six colonnes, dont le responsable livré par CRM-022', () => {
+	// RÉVISÉE PAR `CRM-069` T2 (décision 51) : la colonne « Étiquettes » s'insère après le titre (docs/DESIGN_SYSTEM.md §5.73).
+	it('porte les sept colonnes, dont le responsable livré par CRM-022 et les étiquettes de CRM-069', () => {
 		rendre()
 		const entetes = screen.getAllByRole('columnheader').map((entete) => entete.textContent ?? '')
-		expect(entetes).toHaveLength(6)
+		expect(entetes).toHaveLength(7)
 		expect(entetes[0]).toContain(fr['liste.colonne.title'])
-		expect(entetes[1]).toContain(fr['liste.colonne.owner'])
-		expect(entetes[2]).toContain(fr['liste.colonne.etape'])
-		expect(entetes[3]).toContain(fr['liste.colonne.amount'])
-		expect(entetes[4]).toContain(fr['liste.colonne.next_action'])
-		expect(entetes[5]).toContain(fr['liste.colonne.next_action_at'])
+		expect(entetes[1]).toContain(fr['liste.colonne.etiquettes'])
+		expect(entetes[2]).toContain(fr['liste.colonne.owner'])
+		expect(entetes[3]).toContain(fr['liste.colonne.etape'])
+		expect(entetes[4]).toContain(fr['liste.colonne.amount'])
+		expect(entetes[5]).toContain(fr['liste.colonne.next_action'])
+		expect(entetes[6]).toContain(fr['liste.colonne.next_action_at'])
 	})
 
 	it('rend avatar et nom du responsable, jamais son identifiant', () => {
@@ -189,10 +197,12 @@ describe('le tableau de la vue liste (§12.7)', () => {
 		rendre({ cards: [card({ id: 'c6', title: 'Piste entrante à qualifier' })] })
 		const ligne = screen.getAllByTestId('ligne-card')[0]
 		const cellules = within(ligne as HTMLElement).getAllByRole('cell')
+		// Révisée par `CRM-069` T2 : la cellule des étiquettes (1) s'ajoute aux cellules vides ; l'étape glisse en 3.
 		expect(cellules[1]?.textContent).toBe('')
-		expect(cellules[3]?.textContent).toBe('')
+		expect(cellules[2]?.textContent).toBe('')
 		expect(cellules[4]?.textContent).toBe('')
 		expect(cellules[5]?.textContent).toBe('')
+		expect(cellules[6]?.textContent).toBe('')
 	})
 
 	it('rend l’échéance en donnée technique au format court', () => {
@@ -404,6 +414,8 @@ describe('la pagination (§12.6)', () => {
 			tri: 'amount',
 			sens: 'desc',
 			etape: 's1',
+			// `CRM-069` T2 : le septième paramètre, l'étiquette, nommé avec son défaut.
+			etiquette: null,
 			recherche: '',
 			page: 3,
 			sommeil: 'masquees',
@@ -790,5 +802,37 @@ describe('infobulle de description (docs/DESIGN_SYSTEM.md §5.58) — CRM-105', 
 		const nue = screen.getByRole('link', { name: 'Audit' })
 		expect(nue.getAttribute('title')).toBe('Audit')
 		expect(nue.hasAttribute('aria-describedby')).toBe(false)
+	})
+})
+
+// `CRM-069` T2 — la colonne « Étiquettes » et le filtre « Étiquette » (docs/DESIGN_SYSTEM.md §5.73).
+describe('les étiquettes de la vue liste (CRM-069 T2)', () => {
+	const PUBLIC: Etiquette = { id: '5eed0000-0000-4000-8000-0000000e1a01', nom: 'Secteur public', couleur: 'brand', archivee: false }
+	const PRIORITAIRE: Etiquette = { id: '5eed0000-0000-4000-8000-0000000e1a02', nom: 'Prioritaire', couleur: 'danger', archivee: false }
+
+	it('la cellule porte toutes les pastilles de l’affaire, sans plafond', () => {
+		rendre({ cards: [card({ id: 'c1', etiquettes: [PRIORITAIRE, PUBLIC] })], catalogueEtiquettes: [PRIORITAIRE, PUBLIC] })
+		const cellule = screen.getByTestId('cellule-etiquettes')
+		expect(within(cellule).getAllByTestId('pastille-etiquette').map((p) => p.textContent)).toEqual(['Prioritaire', 'Secteur public'])
+	})
+
+	it('le filtre propose le catalogue ; choisir ramène à la page 1 avec l’étiquette', async () => {
+		const onParametres = vi.fn()
+		rendre({ params: parametres({ page: 2 }), onParametres, catalogueEtiquettes: [PRIORITAIRE, PUBLIC] })
+		const filtre = screen.getByLabelText(fr['liste.filtre.etiquette']) as HTMLSelectElement
+		expect([...filtre.options].map((o) => o.textContent)).toEqual([fr['liste.filtre.etiquette.toutes'], 'Prioritaire', 'Secteur public'])
+		await userEvent.setup().selectOptions(filtre, PUBLIC.id)
+		expect(onParametres).toHaveBeenCalledWith(expect.objectContaining({ etiquette: PUBLIC.id, page: 1 }))
+	})
+
+	it('sans étiquette dans l’espace, aucun filtre ; « Effacer les filtres » retire aussi l’étiquette', async () => {
+		rendre()
+		expect(screen.queryByTestId('filtre-etiquette')).toBeNull()
+		cleanup()
+		const onParametres = vi.fn()
+		rendre({ params: parametres({ etiquette: PUBLIC.id }), onParametres })
+		expect(screen.getByTestId('filtre-etiquette')).toBeDefined()
+		await userEvent.setup().click(screen.getByTestId('effacer-filtres'))
+		expect(onParametres).toHaveBeenCalledWith(expect.objectContaining({ etiquette: null }))
 	})
 })

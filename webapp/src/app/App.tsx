@@ -1,3 +1,4 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-007 (docs/BACKLOG.md) — racine applicative et routage
 // @spec CRM-009 (docs/BACKLOG.md) — route de connexion et restauration de session
 // @spec CRM-091 (docs/BACKLOG.md) — route publique de retour du SSO (docs/SPEC-auth.md §10.3)
@@ -54,6 +55,7 @@ import {
 	CHEMIN_ADMIN_MEMBRES,
 	CHEMIN_ADMIN_JOURNAL,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
+	CHEMIN_ADMIN_ETIQUETTES,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_COUTS_BUDGET,
 	CHEMIN_COUTS_TRACK,
@@ -77,6 +79,7 @@ import {
 	CLE_TITRE_MEMBRES,
 	CLE_TITRE_JOURNAL,
 	CLE_TITRE_MODELES_AFFAIRES,
+	CLE_TITRE_ETIQUETTES,
 	CLE_TITRE_REGLAGES_NOTIFICATIONS,
 	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_COMPTES_MAIL,
@@ -170,6 +173,10 @@ const ReglagesJournal = lazy(async () => ({
 // `CRM-068` T4b1 — Réglages ▸ Modèles d'affaires, chargé à la demande comme les autres écrans de réglages.
 const ReglagesModelesAffaires = lazy(async () => ({
 	default: (await import('./ReglagesModelesAffaires')).ReglagesModelesAffaires,
+}))
+// `CRM-069` T2 — Réglages ▸ Étiquettes, chargé à la demande comme les autres écrans de réglages.
+const ReglagesEtiquettes = lazy(async () => ({
+	default: (await import('./ReglagesEtiquettes')).ReglagesEtiquettes,
 }))
 // `CRM-117` — l'aide : le sommaire du manuel et un chapitre, chargés à la demande comme les réglages.
 const SommaireAide = lazy(async () => ({ default: (await import('./PageAide')).SommaireAide }))
@@ -455,6 +462,15 @@ function RoutesPages() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_MODELES_AFFAIRES}>
 							<ReglagesModelesAffaires />
+						</AppShell>
+					}
+				/>
+				{/* Réglages ▸ Étiquettes — `CRM-069` T2. Déclarée APRÈS les modèles d'affaires, comme dans l'index (§5.73). */}
+				<Route
+					path={CHEMIN_ADMIN_ETIQUETTES}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_ETIQUETTES}>
+							<ReglagesEtiquettes />
 						</AppShell>
 					}
 				/>

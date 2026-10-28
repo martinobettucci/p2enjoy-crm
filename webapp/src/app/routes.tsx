@@ -1,3 +1,4 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : Réglages ▸ Étiquettes, son adresse, sa route et son entrée d'index (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-007 (docs/BACKLOG.md) — routes de premier niveau et leur contenu
 // @spec CRM-075 (docs/BACKLOG.md) — index des réglages et route de l'administration
 // @spec CRM-093 (docs/BACKLOG.md) — tranche T4 : l'entrée « Coût du personnel » devient un texte citant son motif quand
@@ -74,6 +75,7 @@ import {
 	CHEMIN_ADMIN_MEMBRES,
 	CHEMIN_ADMIN_JOURNAL,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
+	CHEMIN_ADMIN_ETIQUETTES,
 } from './chemins'
 
 export {
@@ -112,6 +114,7 @@ export {
 	CHEMIN_ADMIN_MEMBRES,
 	CHEMIN_ADMIN_JOURNAL,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
+	CHEMIN_ADMIN_ETIQUETTES,
 }
 
 /**
@@ -239,6 +242,9 @@ export const CLE_TITRE_JOURNAL: CleTraduction = 'audit.title'
 
 /** Titre de Réglages ▸ Modèles d'affaires — `CRM-068` T4b1, docs/DESIGN_SYSTEM.md §5.71. */
 export const CLE_TITRE_MODELES_AFFAIRES: CleTraduction = 'admin.cardTemplates.title'
+
+/** Titre de Réglages ▸ Étiquettes — `CRM-069` T2, docs/DESIGN_SYSTEM.md §5.73. */
+export const CLE_TITRE_ETIQUETTES: CleTraduction = 'admin.labels.title'
 
 /** Titre de la plateforme — `CRM-101`, docs/SPEC-plateforme.md §7 (hors de `ROUTES`, comme les réglages). */
 export const CLE_TITRE_PLATEFORME: CleTraduction = 'platform.title'
@@ -478,6 +484,30 @@ export function IndexReglages() {
 						>
 							<span className="font-medium">{t('admin.settings.index.cardTemplates')}</span>
 							<span className="text-sm text-text-2">{t('admin.settings.index.cardTemplates.body')}</span>
+						</Link>
+					)}
+				</li>
+				{/* Les étiquettes viennent APRÈS les modèles d'affaires — `CRM-069` T2, docs/DESIGN_SYSTEM.md §5.73 : un catalogue
+				    de l'espace, réservé aux administrateurs, sous la même règle d'entrée (§5.59). */}
+				<li>
+					{coutRefuse ? (
+						<div
+							data-testid="entree-etiquettes"
+							aria-disabled="true"
+							{...(capacites.administration === 'refusee' ? { 'aria-describedby': ID_MOTIF_REGLAGES } : {})}
+							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] rounded-lg text-text-2"
+						>
+							<span className="font-medium">{t('admin.settings.index.labels')}</span>
+							<span className="text-sm">{t('admin.settings.index.labels.body')}</span>
+						</div>
+					) : (
+						<Link
+							to={CHEMIN_ADMIN_ETIQUETTES}
+							data-testid="entree-etiquettes"
+							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+						>
+							<span className="font-medium">{t('admin.settings.index.labels')}</span>
+							<span className="text-sm text-text-2">{t('admin.settings.index.labels.body')}</span>
 						</Link>
 					)}
 				</li>

@@ -1434,7 +1434,8 @@ normale : un workflow de sept étapes est rarement occupé partout.
 **Ce que montre une affaire.** Un liseré à la couleur de son étape, son titre — cliquable, il ouvre
 sa fiche —, son montant, sa prochaine action, et depuis combien de jours elle est dans cette étape.
 Ce dernier repère passe au **rouge** quand le seuil de relance de l'étape est dépassé ; il
-n'apparaît pas lorsque l'étape n'en définit aucun.
+n'apparaît pas lorsque l'étape n'en définit aucun. Sous le titre, ses **étiquettes** : trois au plus, puis « +1 »,
+« +2 »… qui nomme les autres ([section 9.16](#les-etiquettes-d-une-affaire)).
 
 Les affaires **archivées** et celles en **corbeille** n'y figurent pas : le tableau montre l'activité
 en cours ([chapitre 9.4](#archiver-n-est-pas-supprimer)). Les affaires **en sommeil** n'y figurent pas non plus, jusqu'à leur
@@ -1871,7 +1872,45 @@ personne en lecture seule obtient la deuxième réponse du tableau ci-dessus.
 **Le retrait est inscrit dans l'historique de l'affaire** ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)), sous « Cycle de vie »,
 avec son auteur et sa date. Vous le relisez après restauration.
 
-### 9.16 Ce qui n'est pas encore offert
+### 9.16 Les étiquettes d'une affaire
+
+**À quoi elles servent.** Une étiquette qualifie une affaire d'un mot commun à toute l'équipe — « Prioritaire », « Secteur
+public », « Partenaire » —, pour la reconnaître d'un coup d'œil et retrouver toutes celles qui la portent. Une étiquette
+appartient à l'affaire, et non à un dossier : elle la suit dans tous ses channels.
+
+**Où elles se voient.** En pastilles de couleur, chacune avec son nom : sous le titre de la fiche ; sous le titre de la
+carte du tableau, trois au plus, puis « +1 », « +2 »… dont l'infobulle nomme les autres ; dans la colonne
+**« Étiquettes »** de la vue liste, toutes.
+
+**Poser ou retirer une étiquette.** Sur la fiche, le bouton **« Étiquettes »**, à côté de « Mettre en sommeil », ouvre la
+liste des étiquettes de l'espace, une case par étiquette. Cocher pose l'étiquette, décocher la retire : chaque case
+s'enregistre aussitôt. Si l'enregistrement est refusé, la case revient, et la raison s'écrit dessous. Une étiquette
+**archivée** encore posée sur l'affaire reste dans la liste, cochée : elle peut être retirée, mais plus posée à nouveau.
+**« Fermer »**, ou la touche Échap, referme la liste. L'historique de l'affaire garde chaque pose et chaque retrait, avec
+le nom de la personne ([section 9.12](#l-historique-et-la-discussion-d-une-affaire)).
+
+**Filtrer la vue liste.** La liste **« Étiquette »** de la barre de filtres ne montre que les affaires qui portent
+l'étiquette choisie ; « Toutes les étiquettes » retire le filtre, comme « Effacer les filtres ». Le filtre est gardé
+dans l'adresse de la page.
+
+**Préparer les étiquettes.** **Réglages ▸ Étiquettes**, après « Modèles d'affaires », tient la liste des étiquettes de
+l'espace.
+
+- **« Nouvelle étiquette »** ouvre une fiche : le **nom**, jusqu'à quarante caractères, et la **couleur**, à choisir
+  parmi « Bleu », « Vert », « Jaune », « Rouge » et « Gris ». « Enregistrer » la pose ; « Annuler » ou Échap referme.
+- **« Modifier »** change le nom ou la couleur ; les affaires qui la portent suivent aussitôt.
+- **« Archiver »** retire l'étiquette des propositions, sans confirmation : les affaires qui la portent la gardent,
+  marquée comme archivée. **« Afficher les archivées »** la ramène dans la liste, avec **« Désarchiver »**. Archiver
+  libère son nom.
+- Deux étiquettes non archivées ne portent jamais **le même nom**, majuscules comprises : l'écran le dit sous le champ
+  et garde votre saisie.
+
+**Qui peut le faire.** Préparer les étiquettes est réservé aux **administrateurs de l'espace** ; les autres voient
+l'entrée des réglages grisée. Poser ou retirer une étiquette est ouvert à quiconque peut modifier l'affaire ; pour les
+autres, le bouton de la fiche est grisé, avec la raison
+([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)).
+
+### 9.17 Ce qui n'est pas encore offert
 
 - **Les vues sauvegardées** : la vue liste et ses filtres existent ([chapitre 9.11](#la-vue-liste-d-un-channel)), mais aucun filtre
   ne se conserve d'une session à l'autre autrement qu'en gardant l'adresse.
@@ -1881,7 +1920,6 @@ avec son auteur et sa date. Vous le relisez après restauration.
 - **Le réordonnancement d'une affaire dans sa colonne** : le déplacement change d'étape, pas de rang.
 - **Le rangement d'une affaire dans un autre dossier depuis l'écran** : la règle existe et le
   serveur l'applique ([section 9.14](#ranger-une-affaire-dans-un-autre-dossier)), mais aucune commande ne le propose.
-- **Les étiquettes sur une carte du tableau** : elles ne sont pas portées par le produit.
 - **Les documents** : une affaire ne porte pas de documents propres ; les pièces jointes de son courrier se trouvent
   avec ses messages ([chapitre 12](#l-inbox-lire-trier-et-repondre)).
 

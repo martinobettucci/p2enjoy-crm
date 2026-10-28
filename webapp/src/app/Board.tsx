@@ -35,6 +35,7 @@
 // Aucune règle d'accès n'est portée ici : ce que le board montre est ce que la RLS a consenti à
 // rendre, et ce qu'il n'offre pas, `move_card` le refuse de son côté (CLAUDE.md §10).
 
+import { PastillesEtiquettes } from '../components/ui/PastilleEtiquette'
 import { CalendarClock, Clock, GripVertical, Moon, SquareCheck, Sun, TriangleAlert } from 'lucide-react'
 import { useCallback, useId, useMemo, useState } from 'react'
 import { Link } from 'react-router'
@@ -625,6 +626,9 @@ function CarteDeCard({
 						)}
 					</Infobulle>
 				</div>
+
+				{/* LES ÉTIQUETTES — `CRM-069` T2, docs/DESIGN_SYSTEM.md §5.73 : sous le titre, trois au plus puis « +n ». */}
+				<PastillesEtiquettes etiquettes={card.etiquettes ?? []} plafond={3} />
 
 				{card.amount === null ? null : (
 					<code data-testid="montant-card" className="text-text-2">

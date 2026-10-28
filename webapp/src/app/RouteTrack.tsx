@@ -1,3 +1,4 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : la liste reçoit le catalogue d'étiquettes pour son filtre (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — le board et la liste lisent la capacité d'écrire sur le channel et la
 //       fournissent à leurs commandes (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-021 (docs/BACKLOG.md) — route d'un track : ses onglets et le contenu d'un channel
@@ -39,6 +40,7 @@
 // distinguer renseignerait un appelant sans droit sur l'existence d'un track
 // (docs/SPEC-permissions-rls.md §7).
 
+import { lireEtiquettes, type Etiquette } from '../lib/etiquettes'
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
@@ -522,6 +524,19 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 		page: pageBornee ?? demandes.page,
 	}
 	const { etat, total, recharger } = usePageCards(clientCrm, channel.id, parametres)
+	// `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : les étiquettes non archivées de l'espace, que le filtre propose. Une
+	// lecture en panne laisse le filtre absent : la liste ne dépend pas d'elle.
+	const [catalogueEtiquettes, setCatalogueEtiquettes] = useState<readonly Etiquette[]>([])
+	useEffect(() => {
+		if (clientCrm === null) return
+		let actif = true
+		void lireEtiquettes(clientCrm).then((lu) => {
+			if (actif && lu.statut === 'pret') setCatalogueEtiquettes(lu.donnees)
+		})
+		return () => {
+			actif = false
+		}
+	}, [])
 
 	// Le bornage se fait **après** une réponse qui porte un total, jamais avant : borner par un
 	// total qu'on n'a pas reviendrait à inventer une valeur par défaut (CLAUDE.md §18).
@@ -680,6 +695,7 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 			<ListeRendue
 				cards={cards}
 				etapes={etapes.etat.donnees}
+				catalogueEtiquettes={catalogueEtiquettes}
 				parametres={parametres}
 				total={totalFiltre}
 				slugTrack={slugTrack}
@@ -711,6 +727,7 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 function ListeRendue({
 	cards,
 	etapes,
+	catalogueEtiquettes,
 	parametres,
 	total,
 	slugTrack,
@@ -722,6 +739,7 @@ function ListeRendue({
 }: {
 	readonly cards: readonly CardListeRendue[]
 	readonly etapes: readonly EtapeBoard[]
+	readonly catalogueEtiquettes: readonly Etiquette[]
 	readonly parametres: ParametresListe
 	readonly total: number
 	readonly slugTrack: string
@@ -737,6 +755,7 @@ function ListeRendue({
 			<ListeCards
 				cards={cards}
 				etapes={etapes}
+				catalogueEtiquettes={catalogueEtiquettes}
 				parametres={parametres}
 				total={total}
 				slugTrack={slugTrack}

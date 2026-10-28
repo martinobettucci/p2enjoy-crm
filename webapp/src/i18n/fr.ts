@@ -717,7 +717,7 @@ export const fr = {
 	'rights.readonly.mail.identities':
 		'Vous consultez ces identités. L’identité de service et celles des autres membres sont configurées par les administrateurs de l’espace : leurs commandes restent visibles mais sont inactives. Vos propres identités restent configurables.',
 	'rights.readonly.settings':
-		'Vous consultez les réglages. « Journal d’audit », « Modèles d’affaires » et « Coût du personnel » sont réservés aux administrateurs de l’espace : leurs entrées restent visibles mais inactives.',
+		'Vous consultez les réglages. « Journal d’audit », « Modèles d’affaires », « Étiquettes » et « Coût du personnel » sont réservés aux administrateurs de l’espace : leurs entrées restent visibles mais inactives.',
 	'goals.readonly.notice':
 		'Vous consultez ce tableau. Vous n’avez pas le droit d’y écrire : les commandes de modification restent visibles mais sont inactives.',
 	// LA FICHE A SA PROPRE PHRASE, plus courte : elle REMPLACE la consigne d'édition, qui serait
@@ -1331,6 +1331,8 @@ export const fr = {
 	// `CRM-068` T3a — docs/SPEC-checklists.md §3.6. Le détail porte le libellé du point, lu dans le payload.
 	'timeline.event.checklist_checked': 'Point de checklist coché',
 	'timeline.event.checklist_unchecked': 'Point de checklist décoché',
+	'timeline.event.label_added': 'Étiquette posée',
+	'timeline.event.label_removed': 'Étiquette retirée',
 	// Deux formes, et l'accord est POSÉ plutôt que construit par concaténation (§10) : un
 	// rattachement sans rôle est légitime — le §12 laisse le rôle libre et facultatif.
 	'timeline.contact.avecRole': '{contact} ({role})',
@@ -2049,6 +2051,64 @@ export const fr = {
 	'admin.settings.index.workflows': 'Workflows : étapes et composition',
 	'admin.settings.index.workflows.body':
 		"Composer un workflow : choisir ses étapes dans le catalogue, les ordonner, surcharger leur libellé, leur probabilité et leur seuil de relance, désigner l'étape initiale, et déclarer les transitions qui relient les étapes.",
+	// Les étiquettes — CRM-069 T2, docs/DESIGN_SYSTEM.md §5.73.
+	'labels.pill.archived': '{nom}, étiquette archivée',
+	'labels.list.aria': 'Étiquettes',
+	'labels.more.aria': '{n} autres étiquettes : {noms}',
+	'admin.settings.index.labels': 'Étiquettes',
+	'admin.settings.index.labels.body':
+		'Préparer les étiquettes de l’espace : un nom et une couleur, que l’équipe pose ensuite sur ses affaires pour les qualifier et les filtrer.',
+	'admin.labels.title': 'Étiquettes',
+	'admin.labels.intro':
+		'Les étiquettes qualifient les affaires d’un mot commun à l’équipe. Toute personne qui peut modifier une affaire y pose une étiquette de cette liste.',
+	'admin.labels.noworkspace': 'Choisissez un espace de travail pour en voir les étiquettes.',
+	'admin.labels.forbidden.title': 'Réservé aux administrateurs',
+	'admin.labels.forbidden.body': 'Les étiquettes de l’espace se gèrent par ses administrateurs.',
+	'admin.labels.error.title': 'Les étiquettes n’ont pas pu être lues',
+	'admin.labels.empty.title': 'Aucune étiquette.',
+	'admin.labels.empty.body': 'Posez la première par « Nouvelle étiquette ».',
+	'admin.labels.new': 'Nouvelle étiquette',
+	'admin.labels.showArchived': 'Afficher les archivées',
+	'admin.labels.archived': 'Archivée',
+	'admin.labels.edit': 'Modifier',
+	'admin.labels.edit.aria': 'Modifier l’étiquette {nom}',
+	'admin.labels.archive': 'Archiver',
+	'admin.labels.archive.aria': 'Archiver l’étiquette {nom}',
+	'admin.labels.unarchive': 'Désarchiver',
+	'admin.labels.unarchive.aria': 'Désarchiver l’étiquette {nom}',
+	'admin.labels.form.new': 'Nouvelle étiquette',
+	'admin.labels.form.edit': 'Modifier l’étiquette',
+	'admin.labels.field.name': 'Nom',
+	'admin.labels.field.color': 'Couleur',
+	'admin.labels.color.brand': 'Bleu',
+	'admin.labels.color.success': 'Vert',
+	'admin.labels.color.accent': 'Jaune',
+	'admin.labels.color.danger': 'Rouge',
+	'admin.labels.color.neutral': 'Gris',
+	'admin.labels.save': 'Enregistrer',
+	'admin.labels.pending': 'Enregistrement…',
+	'admin.labels.cancel': 'Annuler',
+	'admin.labels.saved': 'Étiquette « {nom} » enregistrée.',
+	'admin.labels.archived.done': 'Étiquette « {nom} » archivée.',
+	'admin.labels.unarchived': 'Étiquette « {nom} » désarchivée.',
+	'admin.labels.refus.nom': 'Une étiquette non archivée porte déjà ce nom : choisissez-en un autre.',
+	'admin.labels.refus.forme': 'Le nom d’une étiquette compte de 1 à 40 caractères.',
+	'admin.labels.refus.forbidden': 'Les étiquettes de l’espace se gèrent par ses administrateurs.',
+	'admin.labels.refus.sansEffet': 'Rien n’a été enregistré : cette étiquette n’est plus modifiable par vous, ou elle a disparu.',
+	'admin.labels.refus.panne': 'L’étiquette n’a pas pu être enregistrée. Réessayez.',
+	'card.labels.open': 'Étiquettes',
+	'card.labels.legend': 'Étiquettes de l’affaire',
+	'card.labels.close': 'Fermer',
+	'card.labels.empty': 'Aucune étiquette dans cet espace.',
+	'card.labels.empty.link': 'Préparer les étiquettes',
+	'card.labels.loading': 'Chargement des étiquettes…',
+	'card.labels.error': 'Les étiquettes n’ont pas pu être lues.',
+	'card.labels.refus.archivee': 'Cette étiquette est archivée : elle ne se pose plus.',
+	'card.labels.refus.forbidden': 'Vos droits ne vous permettent pas de modifier les étiquettes de cette affaire.',
+	'card.labels.refus.panne': 'L’étiquette n’a pas pu être modifiée. Réessayez.',
+	'liste.filtre.etiquette': 'Étiquette',
+	'liste.filtre.etiquette.toutes': 'Toutes les étiquettes',
+	'liste.colonne.etiquettes': 'Étiquettes',
 	// Réglages ▸ Modèles d'affaires — CRM-068 T4b1, docs/DESIGN_SYSTEM.md §5.71.
 	'admin.settings.index.cardTemplates': "Modèles d'affaires",
 	'admin.settings.index.cardTemplates.body':

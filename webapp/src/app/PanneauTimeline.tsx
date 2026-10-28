@@ -1,3 +1,4 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : « Étiquette posée » et « Étiquette retirée » dans le fil, famille « Champs » (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
 //       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-044 (docs/BACKLOG.md) — timeline unifiée du détail de card
@@ -60,6 +61,7 @@ import {
 	Sparkles,
 	SquareCheck,
 	SquareDashed,
+	Tag,
 	Sun,
 	Trash2,
 	UserRoundCog,
@@ -185,6 +187,9 @@ const PRESENTATION: Readonly<
 	// du board ; le décochage prend `SquareDashed`, en teinte neutre : rien n'est perdu, un point redevient à faire.
 	checklist_checked: { cle: 'timeline.event.checklist_checked', icone: SquareCheck, pastille: 'bg-success-soft text-success-on-soft' },
 	checklist_unchecked: { cle: 'timeline.event.checklist_unchecked', icone: SquareDashed, pastille: 'bg-hover text-text-3' },
+	// `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : une icône pour les deux gestes ; la phrase dit lequel.
+	label_added: { cle: 'timeline.event.label_added', icone: Tag, pastille: 'bg-brand-soft text-brand-on-soft' },
+	label_removed: { cle: 'timeline.event.label_removed', icone: Tag, pastille: 'bg-hover text-text-3' },
 }
 
 /**

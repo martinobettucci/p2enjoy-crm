@@ -4780,7 +4780,37 @@
 				},
 				{
 					"type": "text",
-					"text": " quand le seuil de relance de l'étape est dépassé ; il\nn'apparaît pas lorsque l'étape n'en définit aucun."
+					"text": " quand le seuil de relance de l'étape est dépassé ; il\nn'apparaît pas lorsque l'étape n'en définit aucun. Sous le titre, ses "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "étiquettes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : trois au plus, puis « +1 »,\n« +2 »… qui nomme les autres ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "les-etiquettes-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 9.16"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -9215,11 +9245,398 @@
 		{
 			"type": "heading",
 			"level": 3,
+			"anchor": "les-etiquettes-d-une-affaire",
+			"content": [
+				{
+					"type": "text",
+					"text": "9.16 Les étiquettes d'une affaire"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "À quoi elles servent."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une étiquette qualifie une affaire d'un mot commun à toute l'équipe — « Prioritaire », « Secteur\npublic », « Partenaire » —, pour la reconnaître d'un coup d'œil et retrouver toutes celles qui la portent. Une étiquette\nappartient à l'affaire, et non à un dossier : elle la suit dans tous ses channels."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où elles se voient."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " En pastilles de couleur, chacune avec son nom : sous le titre de la fiche ; sous le titre de la\ncarte du tableau, trois au plus, puis « +1 », « +2 »… dont l'infobulle nomme les autres ; dans la colonne\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Étiquettes »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la vue liste, toutes."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Poser ou retirer une étiquette."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sur la fiche, le bouton "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Étiquettes »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", à côté de « Mettre en sommeil », ouvre la\nliste des étiquettes de l'espace, une case par étiquette. Cocher pose l'étiquette, décocher la retire : chaque case\ns'enregistre aussitôt. Si l'enregistrement est refusé, la case revient, et la raison s'écrit dessous. Une étiquette\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "archivée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " encore posée sur l'affaire reste dans la liste, cochée : elle peut être retirée, mais plus posée à nouveau.\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Fermer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", ou la touche Échap, referme la liste. L'historique de l'affaire garde chaque pose et chaque retrait, avec\nle nom de la personne ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+						"anchor": "l-historique-et-la-discussion-d-une-affaire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 9.12"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Filtrer la vue liste."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " La liste "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Étiquette »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de la barre de filtres ne montre que les affaires qui portent\nl'étiquette choisie ; « Toutes les étiquettes » retire le filtre, comme « Effacer les filtres ». Le filtre est gardé\ndans l'adresse de la page."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Préparer les étiquettes."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages ▸ Étiquettes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", après « Modèles d'affaires », tient la liste des étiquettes de\nl'espace."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Nouvelle étiquette »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " ouvre une fiche : le "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", jusqu'à quarante caractères, et la "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "couleur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", à choisir\nparmi « Bleu », « Vert », « Jaune », « Rouge » et « Gris ». « Enregistrer » la pose ; « Annuler » ou Échap referme."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Modifier »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " change le nom ou la couleur ; les affaires qui la portent suivent aussitôt."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Archiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " retire l'étiquette des propositions, sans confirmation : les affaires qui la portent la gardent,\nmarquée comme archivée. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Afficher les archivées »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " la ramène dans la liste, avec "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Désarchiver »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ". Archiver\nlibère son nom."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "Deux étiquettes non archivées ne portent jamais "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "le même nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", majuscules comprises : l'écran le dit sous le champ\net garde votre saisie."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui peut le faire."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Préparer les étiquettes est réservé aux "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "administrateurs de l'espace"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; les autres voient\nl'entrée des réglages grisée. Poser ou retirer une étiquette est ouvert à quiconque peut modifier l'affaire ; pour les\nautres, le bouton de la fiche est grisé, avec la raison\n("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "naviguer-barre-laterale-onglets-etats",
+						"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "section 3.11"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
 			"anchor": "ce-qui-n-est-pas-encore-offert",
 			"content": [
 				{
 					"type": "text",
-					"text": "9.16 Ce qui n'est pas encore offert"
+					"text": "9.17 Ce qui n'est pas encore offert"
 				}
 			]
 		},
@@ -9374,26 +9791,6 @@
 							{
 								"type": "text",
 								"text": "), mais aucune commande ne le propose."
-							}
-						]
-					}
-				],
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Les étiquettes sur une carte du tableau"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " : elles ne sont pas portées par le produit."
 							}
 						]
 					}

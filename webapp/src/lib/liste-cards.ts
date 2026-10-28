@@ -1,3 +1,5 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : le filtre « Étiquette » de la vue liste, porté par l'adresse et appliqué au
+//       serveur ; les étiquettes de chaque ligne (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-042 (docs/BACKLOG.md) — composition de la vue liste : tri, filtres, pagination
 // @spec CRM-022 (docs/BACKLOG.md) — identité du responsable embarquée dans la page
 // @spec docs/SPEC-cards.md §12.2 (l'adresse porte tout), §12.3 (ce que la liste lit),
@@ -20,12 +22,13 @@
 // Sans session, la lecture rend `200` et un total de zéro ; avec la session restaurée par
 // `CRM-009`, elle rend les lignes consenties par la RLS. Le module ne bifurque jamais sur un rôle.
 
+import { etiquettesDeLAffaire, type Etiquette, type EtiquetteLue } from './etiquettes'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 // La lecture des étapes n'est **pas** réécrite ici : elle vit dans le module du board et la liste
 // l'importe (décision 188). La même donnée lue deux fois finit par être lue de deux façons.
 import { lireEtapes, resoudreEtape, type EtapeBoard } from './board'
-import { CODE_PAGE_INEXISTANTE, COLONNES_RATTACHEMENT_LISTE, LIGNES_PAR_PAGE } from './colonnes-liste'
+import { CODE_PAGE_INEXISTANTE, COLONNES_RATTACHEMENT_LISTE, COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE, LIGNES_PAR_PAGE } from './colonnes-liste'
 import type { Database } from './database.types'
 import {
 	CLE_URL_SOMMEIL,
@@ -119,7 +122,9 @@ export type RattachementListe = Pick<
 	'id' | 'amount' | 'next_action' | 'next_action_at' | 'current_step_id' | 'owner_id' | 'snoozed_until'
 > & {
 	readonly responsable: ProfilAffiche | null
-	readonly affaire: Pick<Database['public']['Tables']['cards']['Row'], 'id' | 'title' | 'description' | 'currency'>
+	readonly affaire: Pick<Database['public']['Tables']['cards']['Row'], 'id' | 'title' | 'description' | 'currency'> & {
+		readonly etiquettes?: readonly { readonly etiquette: EtiquetteLue | null }[] | null
+	}
 }
 
 /** La ligne d'avant, depuis le rattachement lu (`CRM-111` T2.4.1) : l'affaire désignée par son identifiant. */
@@ -136,6 +141,7 @@ export function ligneDepuisRattachement(ligne: RattachementListe): CardListe {
 		owner_id: ligne.owner_id,
 		snoozed_until: ligne.snoozed_until,
 		responsable: ligne.responsable ?? null,
+		etiquettes: etiquettesDeLAffaire(ligne.affaire.etiquettes),
 	}
 }
 
@@ -146,6 +152,8 @@ export type ParametresListe = {
 	readonly sens: SensTri
 	/** Identifiant d'étape, ou `null` : aucun filtre par étape. */
 	readonly etape: string | null
+	/** `CRM-069` T2 : identifiant d'étiquette, ou `null` : aucun filtre par étiquette (docs/DESIGN_SYSTEM.md §5.73). */
+	readonly etiquette?: string | null
 	/** Termes de recherche, déjà découpés des espaces. Chaîne vide : aucune recherche. */
 	readonly recherche: string
 	/** Rang de page, **au moins 1**. Le bornage par le total est fait à part (§12.6). */
@@ -163,6 +171,7 @@ export const PARAMETRES_PAR_DEFAUT: ParametresListe = {
 	tri: TRI_PAR_DEFAUT,
 	sens: 'asc',
 	etape: null,
+	etiquette: null,
 	recherche: '',
 	page: 1,
 	sommeil: MODE_SOMMEIL_PAR_DEFAUT,
@@ -173,6 +182,7 @@ export const CLES_URL = {
 	tri: 'tri',
 	sens: 'sens',
 	etape: 'etape',
+	etiquette: 'etiquette',
 	recherche: 'q',
 	page: 'page',
 	sommeil: CLE_URL_SOMMEIL,
@@ -202,11 +212,13 @@ export function lireParametres(recherche: URLSearchParams): ParametresListe {
 			? sensDemande
 			: (connu?.sensParDefaut ?? PARAMETRES_PAR_DEFAUT.sens)
 	const etapeDemandee = recherche.get(CLES_URL.etape)
+	const etiquetteDemandee = recherche.get(CLES_URL.etiquette)
 	const pageDemandee = Number.parseInt(recherche.get(CLES_URL.page) ?? '', 10)
 	return {
 		tri,
 		sens,
 		etape: etapeDemandee !== null && FORME_UUID.test(etapeDemandee) ? etapeDemandee : null,
+		etiquette: etiquetteDemandee !== null && FORME_UUID.test(etiquetteDemandee) ? etiquetteDemandee : null,
 		recherche: (recherche.get(CLES_URL.recherche) ?? '').trim(),
 		page: Number.isFinite(pageDemandee) && pageDemandee >= 1 ? pageDemandee : 1,
 		sommeil: lireModeSommeil(recherche.get(CLES_URL.sommeil)),
@@ -226,6 +238,7 @@ export function ecrireParametres(parametres: ParametresListe): URLSearchParams {
 	if (parametres.tri !== TRI_PAR_DEFAUT) sortie.set(CLES_URL.tri, parametres.tri)
 	if (parametres.sens !== sensParDefaut) sortie.set(CLES_URL.sens, parametres.sens)
 	if (parametres.etape !== null) sortie.set(CLES_URL.etape, parametres.etape)
+	if (parametres.etiquette !== null && parametres.etiquette !== undefined) sortie.set(CLES_URL.etiquette, parametres.etiquette)
 	if (parametres.recherche !== '') sortie.set(CLES_URL.recherche, parametres.recherche)
 	if (parametres.page > 1) sortie.set(CLES_URL.page, String(parametres.page))
 	// Le défaut « masquées » ne s'écrit jamais : la vue par défaut reste l'adresse la plus courte
@@ -280,6 +293,8 @@ export type CardListe = Pick<
 	| 'snoozed_until'
 > & {
 	readonly responsable: ProfilAffiche | null
+	/** `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : les étiquettes de l'affaire, triées par nom. */
+	readonly etiquettes?: readonly Etiquette[]
 }
 
 /**
@@ -363,7 +378,12 @@ export async function lirePageCards(
 		// corbeille sont exclus côté serveur, comme avant.
 		let requete = client
 			.from('card_placements')
-			.select(COLONNES_RATTACHEMENT_LISTE, { count: 'exact' })
+			.select(
+				parametres.etiquette === null || parametres.etiquette === undefined
+					? COLONNES_RATTACHEMENT_LISTE
+					: COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE,
+				{ count: 'exact' },
+			)
 			.eq('channel_id', channelId)
 			.is('archived_at', null)
 			.is('affaire.deleted_at', null)
@@ -374,6 +394,10 @@ export async function lirePageCards(
 			requete = requete.or(filtreExclusionSommeil(maintenant))
 		}
 		if (parametres.etape !== null) requete = requete.eq('current_step_id', parametres.etape)
+		// `CRM-069` T2 : au serveur, avant la pagination et le compte, comme les autres filtres (§12.5).
+		if (parametres.etiquette !== null && parametres.etiquette !== undefined) {
+			requete = requete.eq('affaire.filtre.label_id', parametres.etiquette)
+		}
 		if (parametres.recherche !== '') {
 			// `plfts` et non `ilike` : `search_tsv` est une colonne générée `STORED` indexée en GIN
 			// (docs/SPEC-cards.md §2.7), qu'un `ilike '%…%'` ne peut pas employer. La configuration
@@ -450,6 +474,7 @@ export function usePageCards(
 	const courant = useRef(0)
 
 	const { tri, sens, etape, recherche, page, sommeil } = parametres
+	const etiquette = parametres.etiquette ?? null
 
 	useEffect(() => {
 		if (client === null || channelId === undefined) return
@@ -458,7 +483,7 @@ export function usePageCards(
 		void (async () => {
 			const resultat = await lirePageCards(client, {
 				channelId,
-				parametres: { tri, sens, etape, recherche, page, sommeil },
+				parametres: { tri, sens, etape, etiquette, recherche, page, sommeil },
 				// L'instant est pris AU MOMENT DE LA LECTURE, jamais au rendu : un `new Date()` calculé
 				// dans le corps du composant changerait à chaque rendu et relancerait l'effet en boucle.
 				maintenant: new Date(),
@@ -469,7 +494,7 @@ export function usePageCards(
 			}
 			setEtat(resultat)
 		})()
-	}, [client, channelId, tri, sens, etape, recherche, page, sommeil, tentative])
+	}, [client, channelId, tri, sens, etape, etiquette, recherche, page, sommeil, tentative])
 
 	const recharger = useCallback(() => {
 		setTentative((precedente) => precedente + 1)

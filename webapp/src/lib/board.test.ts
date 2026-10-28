@@ -1,3 +1,4 @@
+// @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la carte du board porte les étiquettes de l'affaire (docs/DESIGN_SYSTEM.md §5.73)
 // @verifies CRM-068 (docs/BACKLOG.md) — tranche T3a : le compte « n/m » des points de l'étape sur la carte, relu après un
 //           déplacement (docs/SPEC-checklists.md §3.3, §4 ; docs/DESIGN_SYSTEM.md §5.70)
 // @verifies CRM-068 (docs/BACKLOG.md) — tranche T2 : le refus `checklist_incomplete` classé et rendu dans le bandeau
@@ -517,6 +518,25 @@ describe('les quatre lectures du board (§7.2)', () => {
 		expect(appel.tris).toEqual(['position', 'affaire(title)'])
 	})
 
+	it('plonge les étiquettes de l’affaire, triées par nom (CRM-069 T2)', () => {
+		const carte = carteDepuisRattachement({
+			id: 'r', created_at: 't', position: 1, amount: null, next_action: null, current_step_id: 's', entered_step_at: 't',
+			owner_id: null, snoozed_until: null, responsable: null,
+			affaire: {
+				id: 'c', title: 'T', description: null, currency: 'EUR', email_local_part: 'c', health_momentum: null,
+				health_commercial: null,
+				etiquettes: [
+					{ etiquette: { id: 'e2', name: 'Public', color: 'brand', archived_at: null } },
+					{ etiquette: { id: 'e1', name: 'Partenaire', color: 'success', archived_at: '2026-01-01' } },
+				],
+			},
+		})
+		expect(carte.etiquettes).toEqual([
+			{ id: 'e1', nom: 'Partenaire', couleur: 'success', archivee: true },
+			{ id: 'e2', nom: 'Public', couleur: 'brand', archivee: false },
+		])
+	})
+
 	it('rend la carte d’avant depuis le rattachement : l’affaire par son identifiant, son rattachement à côté', () => {
 		const carte = carteDepuisRattachement({
 			id: 'rattachement-1',
@@ -547,6 +567,8 @@ describe('les quatre lectures du board (§7.2)', () => {
 			email_local_part: 'c-abcdefgh',
 			health_momentum: null,
 			health_commercial: null,
+			// `CRM-069` T2 (décision 51) : les étiquettes de l'affaire, vides sans plongement.
+			etiquettes: [],
 			position: 2,
 			amount: 1200,
 			next_action: 'Relancer',

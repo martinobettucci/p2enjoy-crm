@@ -1,3 +1,5 @@
+// @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : le filtre par étiquette, porté par l'adresse et appliqué au serveur ;
+//           les étiquettes de la ligne (docs/DESIGN_SYSTEM.md §5.73)
 // @verifies CRM-042 (docs/BACKLOG.md) — composition de la vue liste : tri, filtres, pagination
 // @verifies CRM-022 (docs/BACKLOG.md) — relation responsable embarquée
 // @verifies docs/SPEC-cards.md §12.2 (repli des paramètres d'adresse), §12.3 (ce que la liste
@@ -38,6 +40,7 @@ import {
 	type ParametresListe,
 	type ReponseLue,
 } from './liste-cards'
+import { COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE } from './colonnes-liste'
 import type { ClientCrm } from './supabase'
 
 const CHANNEL = '5eed0000-0000-4000-8000-000000000032'
@@ -154,10 +157,20 @@ describe('les paramètres d’adresse (§12.2)', () => {
 			tri: 'amount',
 			sens: 'asc',
 			etape: ETAPE,
+			// `CRM-069` T2 (décision 51) : l'étiquette, absente de l'adresse, vaut son défaut.
+			etiquette: null,
 			recherche: 'refonte',
 			page: 3,
 			sommeil: 'masquees',
 		})
+	})
+
+	// `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : l'étiquette entre par sa forme d'identifiant, et ressort de même.
+	it('lit et écrit le filtre par étiquette, et replie une valeur mal formée', () => {
+		expect(lireParametres(new URLSearchParams({ etiquette: ETAPE })).etiquette).toBe(ETAPE)
+		expect(lireParametres(new URLSearchParams({ etiquette: 'tout' })).etiquette).toBeNull()
+		expect(ecrireParametres({ ...PARAMETRES_PAR_DEFAUT, etiquette: ETAPE }).get('etiquette')).toBe(ETAPE)
+		expect(ecrireParametres(PARAMETRES_PAR_DEFAUT).has('etiquette')).toBe(false)
 	})
 
 	// LA clôture : un `tri=` inconnu ne devient jamais un `order=` envoyé à PostgREST (§12.2).
@@ -453,6 +466,18 @@ describe('la lecture d’une page (§12.3)', () => {
 		])
 	})
 
+	// `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : le filtre par étiquette est au serveur, avant la pagination et le compte.
+	it('filtre par étiquette au serveur : la lecture à plongement `!inner`, et l’égalité sur son étiquette', async () => {
+		const { client, appel } = clientEspion(OK)
+		await lirePageCards(client, { channelId: CHANNEL, parametres: parametres({ etiquette: ETAPE }) })
+		expect(appel.colonnes).toBe(COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE)
+		expect(appel.egalites).toContainEqual(['affaire.filtre.label_id', ETAPE])
+		const sans = clientEspion(OK)
+		await lirePageCards(sans.client, { channelId: CHANNEL, parametres: parametres() })
+		expect(sans.appel.colonnes).toBe(COLONNES_RATTACHEMENT_LISTE)
+		expect(sans.appel.egalites.map(([colonne]) => colonne)).not.toContain('affaire.filtre.label_id')
+	})
+
 	it('n’envoie aucun filtre d’étape lorsque l’adresse n’en porte pas', async () => {
 		const { client, appel } = clientEspion(OK)
 		await lirePageCards(client, { channelId: CHANNEL, parametres: parametres() })
@@ -551,7 +576,8 @@ describe('la lecture d’une page (§12.3)', () => {
 
 	it('recompose la ligne d’avant depuis le rattachement : l’affaire désignée par son identifiant', () => {
 		const ligne = card({ id: 'c1', title: 'Refonte', amount: 12000, owner_id: 'p-1' })
-		expect(ligneDepuisRattachement(enRattachement(ligne))).toEqual(ligne)
+		// Révisée par `CRM-069` T2 (décision 51) : la ligne porte ses étiquettes, vides sans plongement.
+		expect(ligneDepuisRattachement(enRattachement(ligne))).toEqual({ ...ligne, etiquettes: [] })
 	})
 
 	it('trie le titre, la création et le départage sur l’affaire, le montant et l’échéance sur le rattachement', () => {

@@ -1,3 +1,4 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : la colonne « Étiquettes » et le filtre « Étiquette » (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-042 (docs/BACKLOG.md) — vue liste d'un channel : tableau, tri, filtres, pagination
 // @spec CRM-022 (docs/BACKLOG.md) — colonne Responsable avec avatar et nom
 // @spec CRM-081 (docs/BACKLOG.md) — tranche 2 b : la bascule du sommeil et la pastille compacte
@@ -22,6 +23,8 @@
 // Aucune règle d'accès n'est portée ici : ce que la liste montre est ce que la RLS a consenti à
 // rendre (CLAUDE.md §10).
 
+import { PastillesEtiquettes } from '../components/ui/PastilleEtiquette'
+import type { Etiquette } from '../lib/etiquettes'
 import { ArrowDown, ArrowUp, ArrowUpDown, Search } from 'lucide-react'
 import { useId, type ReactNode } from 'react'
 import { Link } from 'react-router'
@@ -63,10 +66,11 @@ const TONS: Readonly<Record<CouleurNoeud, TonBadge>> = {
 }
 
 /** Libellé de chaque colonne triable, et de chaque colonne tout court. */
-const LIBELLES: Readonly<Record<CleTri | 'responsable' | 'etape' | 'next_action', CleTraduction>> = {
+const LIBELLES: Readonly<Record<CleTri | 'responsable' | 'etape' | 'next_action' | 'etiquettes', CleTraduction>> = {
 	title: 'liste.colonne.title',
 	responsable: 'liste.colonne.owner',
 	etape: 'liste.colonne.etape',
+	etiquettes: 'liste.colonne.etiquettes',
 	amount: 'liste.colonne.amount',
 	next_action: 'liste.colonne.next_action',
 	next_action_at: 'liste.colonne.next_action_at',
@@ -123,6 +127,8 @@ function formaterEcheance(horodatage: string): string {
 export type ProprietesListeCards = {
 	readonly cards: readonly CardListe[]
 	readonly etapes: readonly EtapeBoard[]
+	/** `CRM-069` T2 (§5.73) : les étiquettes non archivées de l'espace, que le filtre propose. */
+	readonly catalogueEtiquettes?: readonly Etiquette[]
 	readonly parametres: ParametresListe
 	readonly total: number
 	readonly slugTrack: string
@@ -168,6 +174,7 @@ export type ProprietesListeCards = {
 export function ListeCards({
 	cards,
 	etapes,
+	catalogueEtiquettes = [],
 	parametres,
 	total,
 	slugTrack,
@@ -193,6 +200,7 @@ export function ListeCards({
 				{commandeCreation}
 				<BarreFiltres
 					etapes={etapes}
+					catalogueEtiquettes={catalogueEtiquettes}
 					parametres={parametres}
 					total={total}
 					onParametres={onParametres}
@@ -220,6 +228,7 @@ export function ListeCards({
 										onParametres={onParametres}
 										alignementDroite={false}
 									/>
+									<EnTeteFixe cle="etiquettes" />
 									<EnTeteFixe cle="responsable" />
 									<EnTeteFixe cle="etape" />
 									<EnTeteTriable
@@ -318,7 +327,7 @@ function EnTeteTriable({
 }
 
 /** En-tête d'une colonne non triable. `aria-sort` y serait un mensonge, il n'y est pas. */
-function EnTeteFixe({ cle }: { readonly cle: 'responsable' | 'etape' | 'next_action' }) {
+function EnTeteFixe({ cle }: { readonly cle: 'responsable' | 'etape' | 'next_action' | 'etiquettes' }) {
 	return (
 		<th
 			scope="col"
@@ -377,6 +386,10 @@ function Ligne({
 					/>
 				</span>
 			</td>
+			{/* LES ÉTIQUETTES — `CRM-069` T2, §5.73 : toutes, sans plafond ; la cellule passe à la ligne. */}
+			<td data-testid="cellule-etiquettes" className="px-3 py-1 min-w-[16ch] max-w-[32ch]">
+				<PastillesEtiquettes etiquettes={card.etiquettes ?? []} />
+			</td>
 			<td className="h-[var(--size-target)] px-3 whitespace-nowrap">
 				{card.responsable === null ? null : (
 					<span className="flex items-center gap-2 min-w-0" title={card.responsable.full_name}>
@@ -422,12 +435,14 @@ function Ligne({
  */
 function BarreFiltres({
 	etapes,
+	catalogueEtiquettes,
 	parametres,
 	total,
 	onParametres,
 	offrirEffacement,
 }: {
 	readonly etapes: readonly EtapeBoard[]
+	readonly catalogueEtiquettes: readonly Etiquette[]
 	readonly parametres: ParametresListe
 	readonly total: number
 	readonly onParametres: (parametres: ParametresListe) => void
@@ -435,14 +450,16 @@ function BarreFiltres({
 	readonly offrirEffacement: boolean
 }) {
 	const idEtape = useId()
+	const idEtiquette = useId()
 	const idRecherche = useId()
+	const etiquette = parametres.etiquette ?? null
 	// « EFFACER LES FILTRES » EFFACE CELUI-CI AUSSI (§16.12.5) : l'action ramène l'adresse à son état
 	// nu, et l'état nu ne montre pas les affaires en sommeil. Elle apparaît donc désormais sur une
 	// liste dont la seule différence est que les affaires endormies y sont visibles — c'est la lecture
 	// la plus prévisible de « effacer les filtres ».
 	const filtre =
 		offrirEffacement &&
-		(parametres.etape !== null || parametres.recherche !== '' || parametres.sommeil === 'visibles')
+		(parametres.etape !== null || etiquette !== null || parametres.recherche !== '' || parametres.sommeil === 'visibles')
 
 	return (
 		<form
@@ -484,6 +501,33 @@ function BarreFiltres({
 				</select>
 			</div>
 
+			{/* LE FILTRE « ÉTIQUETTE » — `CRM-069` T2, §5.73 : rendu dès que l'espace a une étiquette, ou qu'un filtre posé
+			    par l'adresse doit pouvoir se retirer. */}
+			{catalogueEtiquettes.length === 0 && etiquette === null ? null : (
+				<div className="flex flex-col gap-1">
+					<label htmlFor={idEtiquette} className="text-sm text-text-2">
+						{t('liste.filtre.etiquette')}
+					</label>
+					<select
+						id={idEtiquette}
+						data-testid="filtre-etiquette"
+						value={etiquette ?? ''}
+						onChange={(evenement) => {
+							const choisie = evenement.target.value
+							onParametres({ ...parametres, etiquette: choisie === '' ? null : choisie, page: 1 })
+						}}
+						className="min-h-[var(--size-target)] px-3 rounded-sm border border-border bg-surface text-base"
+					>
+						<option value="">{t('liste.filtre.etiquette.toutes')}</option>
+						{catalogueEtiquettes.map((e) => (
+							<option key={e.id} value={e.id}>
+								{e.nom}
+							</option>
+						))}
+					</select>
+				</div>
+			)}
+
 			<div className="flex flex-col gap-1 min-w-0">
 				<label htmlFor={idRecherche} className="text-sm text-text-2">
 					{t('liste.filtre.recherche')}
@@ -524,6 +568,7 @@ function BarreFiltres({
 						onParametres({
 							...parametres,
 							etape: null,
+							etiquette: null,
 							recherche: '',
 							sommeil: MODE_SOMMEIL_PAR_DEFAUT,
 							page: 1,

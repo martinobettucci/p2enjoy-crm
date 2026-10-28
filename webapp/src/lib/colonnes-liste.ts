@@ -1,3 +1,4 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : les étiquettes lues avec la ligne, et le filtre par étiquette (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-042 (docs/BACKLOG.md) — les colonnes demandées par la lecture paginée de la vue liste
 // @spec CRM-022 (docs/BACKLOG.md) — responsable embarqué dans chaque ligne
 // @spec docs/SPEC-cards.md §12.3 (ce que la liste lit), §12.7 (colonnes du tableau)
@@ -42,7 +43,15 @@
 // PostgREST ne trie sur `affaire(…)` qu'une colonne que le plongement SÉLECTIONNE (mesuré, `42703`) : `id`, `title` et
 // `created_at` y sont donc, même ceux que la ligne n'affiche pas.
 export const COLONNES_RATTACHEMENT_LISTE =
-	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at)'
+	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at, etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)))'
+
+/**
+ * `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : la même lecture, filtrée par une étiquette. Le second plongement, `!inner`,
+ * ne rapporte rien à l'écran : il borne au serveur les rattachements à ceux dont l'affaire porte l'étiquette, AVANT la
+ * pagination et le compte (§12.5) ; le premier rapporte toutes les étiquettes de l'affaire.
+ */
+export const COLONNES_RATTACHEMENT_LISTE_PAR_ETIQUETTE =
+	'id, amount, next_action, next_action_at, current_step_id, owner_id, snoozed_until, responsable:profiles!card_placements_owner_id_fkey(id, full_name, avatar_url), affaire:cards!inner(id, title, description, currency, created_at, etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), filtre:card_labels!inner(label_id))'
 
 /**
  * Nombre de lignes d'une page.

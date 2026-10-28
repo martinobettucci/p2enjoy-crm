@@ -1,3 +1,4 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : la fiche lit les étiquettes de l'affaire (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-037 (docs/BACKLOG.md) — composition du formulaire conditionnel d'une étape, et la
 //       saisie depuis la fiche
 // @spec docs/SPEC-form-composer.md §4.1 (composition), §4.2 (trois destinations),
@@ -19,6 +20,7 @@
 // le refus réel du backend. Avec la session restaurée par `CRM-009`, le même chargeur rend le
 // formulaire réellement consenti ; aucune branche d'autorisation ne vit ici.
 
+import { etiquettesDeLAffaire, type Etiquette, type EtiquetteLue } from './etiquettes'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { libelleEtape } from './affaires-figees'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
@@ -86,7 +88,7 @@ export const COLONNES_VALEUR = 'field_id, value'
 // se lisent sur `card_placements`, plongé ; `cardDepuisRattachements` les rend à la forme d'avant, celles du plus
 // ancien (docs/SPEC-rattachements.md §5). Le responsable se nomme par la contrainte du rattachement.
 export const COLONNES_CARD_FORMULAIRE =
-	'id, title, workspace_id, email_local_part, currency, workspaces(inbound_domain), card_placements!card_placements_card_fk(id, created_at, workflow_id, current_step_id, amount, next_action, next_action_at, archived_at, snoozed_until, profiles!card_placements_owner_id_fkey(id, full_name, avatar_url))'
+	'id, title, workspace_id, email_local_part, currency, workspaces(inbound_domain), etiquettes:card_labels(etiquette:labels(id, name, color, archived_at)), card_placements!card_placements_card_fk(id, created_at, workflow_id, current_step_id, amount, next_action, next_action_at, archived_at, snoozed_until, profiles!card_placements_owner_id_fkey(id, full_name, avatar_url))'
 
 /** L'étape courante, telle que la mention « requis à l'étape <étape> » a besoin de la nommer (décision 688). */
 export type EtapeCourante = {
@@ -126,6 +128,8 @@ export type CardOuverte = Pick<
 > & {
 	readonly profiles: ProfilAffiche | null
 	readonly workspaces: { readonly inbound_domain: string | null } | null
+	/** `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : les étiquettes de l'affaire, triées par nom. */
+	readonly etiquettes?: readonly Etiquette[]
 } & RattachementsLus
 
 /** Le rattachement tel que `COLONNES_CARD_FORMULAIRE` le plonge (`CRM-111` T2.4.1). */
@@ -148,6 +152,7 @@ export type CardFormulaireLue = Pick<
 	'id' | 'title' | 'workspace_id' | 'email_local_part' | 'currency'
 > & {
 	readonly workspaces: { readonly inbound_domain: string | null } | null
+	readonly etiquettes?: readonly { readonly etiquette: EtiquetteLue | null }[] | null
 	readonly card_placements: readonly RattachementFormulaire[]
 }
 
@@ -166,6 +171,7 @@ export function cardDepuisRattachements(lue: CardFormulaireLue): CardOuverte | n
 		email_local_part: lue.email_local_part,
 		currency: lue.currency,
 		workspaces: lue.workspaces,
+		etiquettes: etiquettesDeLAffaire(lue.etiquettes),
 		workflow_id: rattachement.workflow_id,
 		current_step_id: rattachement.current_step_id,
 		amount: rattachement.amount,

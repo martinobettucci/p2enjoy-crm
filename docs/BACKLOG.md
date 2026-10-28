@@ -10813,8 +10813,15 @@ Arbitrée par la décision 769, spécification validée par la décision 771 : `
       révisées (décision 51) : `0016` 176 politiques, `0019` vingt-trois types du fil, `database.types.test-d.ts` ; API
       `etiquettes.spec.ts` **3/3** (refus du business developer, de la lectrice et de l'anonyme par requête directe ;
       aucune suppression du catalogue) ; types régénérés, typecheck vert ; SCHEMA, PROD_MIGRATIONS, CHANGELOG, harnais.
-- [ ] **T2 — les étiquettes à l'écran** : design system ; Réglages ▸ Étiquettes, fiche, board, liste et filtre ; seed ;
-      unitaires, E2E, captures, manuel.
+- [~] **T2 — les étiquettes à l'écran** : design system ; Réglages ▸ Étiquettes, fiche, board, liste et filtre ; seed ;
+      unitaires, E2E, captures, manuel. **Écrite le 2026-10-28, prouvée en unitaires** : `docs/DESIGN_SYSTEM.md` §5.73 ;
+      `lib/etiquettes.ts`, `PastilleEtiquette`, la carte du board (trois puis « +n »), la fiche (`EtiquettesCard.tsx`), le
+      fil, la colonne et le filtre de la vue liste (au serveur), `ReglagesEtiquettes.tsx`, l'entrée d'index et l'aide ;
+      unitaires +38 et gardes révisées (décision 51 : `ListeCards`, `liste-cards`, `timeline`, `board`) ; un défaut trouvé
+      par l'unitaire (sans case, `Échap` ne refermait pas le panneau) corrigé ; manuel 9.16 (verify-manual 163 contrôles
+      sans anomalie) ; seed §30 écrit. **Reste** : rejouer le seed, le build et les classes CSS, l'E2E
+      `e2e/ui/etiquettes.spec.ts` et les captures. Tout cela attend la fin d'une campagne `verify-*` d'une session
+      parallèle, qui sert le build sur le port 4173.
 - [ ] **T3 — les étiquettes dans le connecteur** : `crm_card_get`, `crm_card_list`, `crm_card_label_set` (catalogue
       `docs/SPEC-mcp.md` §9.2) ; pytest, intégration, E2E.
       *Inscrite au catalogue le 2026-10-28* : `docs/SPEC-mcp.md` §9.2 *tredecies* (noms résolus dans l'espace de

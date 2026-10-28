@@ -5054,6 +5054,69 @@ fi
 printf '  %-36s workflow par défaut, archivé\n' 'Atelier découverte (2025)'
 info "Modèles d'affaires : 3, dont un enregistré depuis une affaire et un archivé — docs/SPEC-seed.md §29"
 
+# --- 8 septvicies. Les étiquettes — CRM-069 T2, docs/SPEC-seed.md §30 ----------------------------------------------------
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : quatre étiquettes au catalogue, dont une archivée après avoir été posée ;
+#       cinq affaires étiquetées, dont une qui en porte quatre (docs/SPEC-etiquettes-digest.md §6 ; docs/SPEC-seed.md §30)
+#
+# LE VRAI CHEMIN (§30.2) : le catalogue sous le jeton de l'administratrice, comme Réglages ▸ Étiquettes ; les poses sous le
+# jeton de Driss, comme le panneau de la fiche ; l'archivage en dernier, une étiquette archivée ne se posant plus.
+echo
+say "8 septvicies. Étiquettes"
+JETON_ADMIN_ET=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+JETON_BIZDEV_ET=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_ET" ] && [ -n "$JETON_BIZDEV_ET" ] || die "connexion d'un compte du jeu impossible : les étiquettes
+        s'écrivent sous le jeton de l'administratrice et de Driss (docs/SPEC-seed.md §30.2)."
+
+# Rend dans ET_ID l'identifiant de l'étiquette au nom donné, posée si absente (convergence par présence, au nom, §30.3).
+et_etiquette() { # $1 = nom, $2 = couleur
+	code=$(api GET "/rest/v1/labels?select=id&workspace_id=eq.$CK_ESPACE&name=eq.$(jq -rn --arg n "$1" '$n|@uri')")
+	attendu "$code" "lecture de l'étiquette « $1 »" 200
+	ET_ID=$(jq -r '.[0].id // empty' "$CORPS")
+	if [ -z "$ET_ID" ]; then
+		code=$(api_jeton "$JETON_ADMIN_ET" POST /rest/v1/labels -H 'Prefer: return=representation' \
+			-d "$(jq -nc --arg ws "$CK_ESPACE" --arg n "$1" --arg c "$2" '{workspace_id: $ws, name: $n, color: $c}')")
+		attendu "$code" "étiquette « $1 »" 201
+		ET_ID=$(jq -r '.[0].id' "$CORPS")
+	fi
+}
+et_poser() { # $1 = affaire, $2 = étiquette, $3 = libellé
+	code=$(api GET "/rest/v1/card_labels?select=card_id&card_id=eq.$1&label_id=eq.$2")
+	attendu "$code" "lecture de la pose « $3 »" 200
+	[ "$(jq -r 'length' "$CORPS")" != "0" ] && return 0
+	code=$(api_jeton "$JETON_BIZDEV_ET" POST /rest/v1/card_labels -d "$(jq -nc --arg c "$1" --arg l "$2" '{card_id: $c, label_id: $l}')")
+	attendu "$code" "pose « $3 »" 201
+}
+
+et_etiquette 'Prioritaire' danger; ET_PRIORITAIRE=$ET_ID
+et_etiquette 'Secteur public' brand; ET_PUBLIC=$ET_ID
+et_etiquette 'Partenaire' success; ET_PARTENAIRE=$ET_ID
+et_etiquette 'Salon 2025' neutral; ET_SALON=$ET_ID
+
+ET_LYON='5eed0000-0000-4000-8000-00000000d001'
+ET_VAULX='5eed0000-0000-4000-8000-00000000d007'
+ET_BERANGER='5eed0000-0000-4000-8000-00000000d013'
+ET_AUDIT='5eed0000-0000-4000-8000-0000000000c3'
+ET_SOGEXIA='5eed0000-0000-4000-8000-00000000d022'
+# Une étiquette archivée ne se pose plus : les poses de « Salon 2025 » ne se rejouent que tant qu'elle ne l'est pas.
+code=$(api GET "/rest/v1/labels?select=archived_at&id=eq.$ET_SALON")
+attendu "$code" "lecture de « Salon 2025 »" 200
+if [ "$(jq -r '.[0].archived_at' "$CORPS")" = null ]; then
+	et_poser "$ET_LYON" "$ET_SALON" 'Salon 2025 — Ville de Lyon'
+	et_poser "$ET_SOGEXIA" "$ET_SALON" 'Salon 2025 — extranet Sogexia'
+fi
+et_poser "$ET_LYON" "$ET_PRIORITAIRE" 'Prioritaire — Ville de Lyon'
+et_poser "$ET_LYON" "$ET_PUBLIC" 'Secteur public — Ville de Lyon'
+et_poser "$ET_LYON" "$ET_PARTENAIRE" 'Partenaire — Ville de Lyon'
+et_poser "$ET_VAULX" "$ET_PUBLIC" 'Secteur public — Mairie de Vaulx'
+et_poser "$ET_BERANGER" "$ET_PRIORITAIRE" 'Prioritaire — Transports Béranger'
+et_poser "$ET_AUDIT" "$ET_PARTENAIRE" 'Partenaire — Audit sécurité applicative'
+code=$(api_jeton "$JETON_ADMIN_ET" PATCH "/rest/v1/labels?id=eq.$ET_SALON&archived_at=is.null" -H 'Prefer: return=representation' \
+	-d '{"archived_at": "2026-01-15T09:00:00Z"}')
+attendu "$code" "archivage de « Salon 2025 »" 200
+printf '  %-36s 4 étiquettes, dont « Salon 2025 » archivée ; 5 affaires étiquetées\n' 'Étiquettes'
+info "Étiquettes : 4, dont une archivée ; la Ville de Lyon en porte 4 (« +1 » au board) — docs/SPEC-seed.md §30"
+
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens

@@ -1,3 +1,4 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : « Étiquette posée » et « Étiquette retirée » dans le fil, famille « Champs » (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-044 (docs/BACKLOG.md) — lecture des événements et fusion du fil unifié
 // @spec CRM-062 (docs/BACKLOG.md) — tranche 3b : la relance automatique NOMMÉE dans le fil
 //       (docs/SPEC-relances.md §10.3, §10.3.1 ; docs/INCONSISTENCY_REPORT.md INC-207)
@@ -105,6 +106,9 @@ export const TYPES_EVENEMENT = [
 	// `0125`. Inscrit avec l'écran qui le montre : depuis T1, le fil le rendait « Événement » (le défaut d'INC-207).
 	'checklist_checked',
 	'checklist_unchecked',
+	// `CRM-069` T1 (docs/SPEC-etiquettes-digest.md §2.2) : la pose et le retrait d'une étiquette.
+	'label_added',
+	'label_removed',
 ] as const
 
 export type TypeEvenement = (typeof TYPES_EVENEMENT)[number]
@@ -181,6 +185,8 @@ export const FAMILLE_PAR_TYPE: Readonly<Record<TypeEvenement, Famille>> = {
 	// COCHER UN POINT EST UNE RÉPONSE SUR L'AFFAIRE, comme renseigner un champ : « Champs » (décision 748, Q2).
 	checklist_checked: 'champs',
 	checklist_unchecked: 'champs',
+	label_added: 'champs',
+	label_removed: 'champs',
 }
 
 /**
@@ -404,6 +410,7 @@ export function resoudreDetail(ligne: LigneEvenement, libelles: LibellesFil): De
 	// point libre retiré n'est plus lisible nulle part, et le libellé qu'il portait au moment du geste est la valeur même
 	// du fait — le point coché, tel qu'il était écrit.
 	if (ligne.type === 'checklist_checked' || ligne.type === 'checklist_unchecked') return { detail: texte(ligne.payload['label']) }
+	if (ligne.type === 'label_added' || ligne.type === 'label_removed') return { detail: texte(ligne.payload['name']) }
 	return { detail: null }
 }
 

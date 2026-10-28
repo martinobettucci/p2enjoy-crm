@@ -1,3 +1,5 @@
+// @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : l'entrée « Étiquettes », réservée, suit la règle de « Coût du personnel »
+//           (docs/DESIGN_SYSTEM.md §5.73, §5.59)
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T4 : la navigation des réglages ; l'entrée d'un écran REFUSÉ devient un
 //           texte citant son motif, les écrans consultables gardent leur lien
 // @verifies docs/SPEC-droits-interface.md §3 (précision T4), §4 (en lecture : éteinte sans motif ; inconnue : offerte) ;
@@ -39,6 +41,11 @@ describe('la navigation des réglages et la capacité d’administration (CRM-09
 		const modeles = screen.getByTestId('entree-modeles-affaires')
 		expect(modeles.tagName).not.toBe('A')
 		expect(modeles.getAttribute('aria-describedby')).toBe(motif.id)
+		// `CRM-069` T2 : l'entrée « Étiquettes » suit la même règle (docs/DESIGN_SYSTEM.md §5.73).
+		const etiquettes = screen.getByTestId('entree-etiquettes')
+		expect(etiquettes.tagName).not.toBe('A')
+		expect(etiquettes.getAttribute('aria-describedby')).toBe(motif.id)
+		expect(motif.textContent).toContain('« Étiquettes »')
 	})
 
 	it('refusée : les écrans consultables en lecture seule gardent leur lien', () => {

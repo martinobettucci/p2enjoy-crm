@@ -2610,3 +2610,38 @@ date d'archivage est fixe (2026-01-15), pour qu'un rejeu à vide rende le même 
   `studio-web/refonte` ; retrouve le nom « Parcours data » pour prouver le refus d'un nom pris. Ses propres modèles et
   affaires portent le préfixe `ZZ 068`, retirés à la fin.
 - Les pgTAP `0122` et l'API `modeles-affaires.spec.ts` posent des noms `ZZ …` distincts des noms du jeu.
+
+## 30. Les étiquettes — `CRM-069` T2 (décisions 769 et 771)
+
+*Écrit le 2026-10-28, avec la section du script. Contrat : `docs/SPEC-etiquettes-digest.md` §6.*
+
+### 30.1 Ce que le jeu porte
+
+| Étiquette (nom stable) | Couleur | Posée sur |
+|---|---|---|
+| « Prioritaire » | `danger` | « Astreinte 24/7… Ville de Lyon » (`…d001`), « Astreinte week-end — Transports Béranger » (`…d013`) |
+| « Secteur public » | `brand` | la Ville de Lyon, « Contrat TMA 2026 — Mairie de Vaulx » (`…d007`) |
+| « Partenaire » | `success` | la Ville de Lyon, « Audit sécurité applicative » (`…0c3`) |
+| « Salon 2025 » | `neutral`, **archivée** | la Ville de Lyon, « Correctif majeur livré — extranet Sogexia » (`…d022`) |
+
+La Ville de Lyon porte **quatre** étiquettes : sa carte du board montre trois pastilles et « +1 » (`docs/DESIGN_SYSTEM.md`
+§5.73). « Salon 2025 », archivée **après** avoir été posée, montre la pastille d'une étiquette archivée et la case qui se
+décoche seulement.
+
+### 30.2 Le vrai chemin
+
+Le catalogue est écrit sous le jeton de l'administratrice (`POST /labels`), comme Réglages ▸ Étiquettes ; les poses sous
+celui de Driss (`POST /card_labels`), comme le panneau de la fiche : la base pose l'espace, l'auteur et la ligne du fil.
+L'archivage vient en dernier, par le `PATCH` d'« Archiver ».
+
+### 30.3 Convergence
+
+**Par présence.** Une étiquette est cherchée par son nom dans l'espace (son identifiant n'est pas ouvert au client) ; une
+pose, par le couple affaire-étiquette. Les poses de « Salon 2025 » ne se rejouent que tant qu'elle n'est pas archivée,
+puisqu'une étiquette archivée ne se pose plus (`22023 label_archived`). La date d'archivage est fixe (2026-01-15).
+
+### 30.4 Ce que les preuves en attendent
+
+`e2e/ui/etiquettes.spec.ts` lit le catalogue dans les Réglages, la carte de la Ville de Lyon au board de
+`studio-web/maintenance` (trois pastilles et « +1 »), et filtre la vue liste par « Secteur public ». Ses propres étiquettes
+portent le préfixe `ZZ 069`, retirées à la fin.

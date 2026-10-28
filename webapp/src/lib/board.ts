@@ -16,6 +16,7 @@
 // @spec CRM-095 (docs/BACKLOG.md) — tranche T2 : l'étape INITIALE résolue avec chaque colonne
 //       (docs/SPEC-cards.md §18.3, docs/DESIGN_SYSTEM.md §5.2)
 // @spec CRM-105 (docs/BACKLOG.md) — `description` portée par chaque card, pour l'infobulle du titre
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : les étiquettes de l'affaire plongées dans la carte (docs/DESIGN_SYSTEM.md §5.73)
 //       (docs/SPEC-workflow-engine.md §7.2, docs/DESIGN_SYSTEM.md §5.58)
 //
 // Ce module ne rend rien : il **compose**, et il appelle. La séparation est ce qui rend les
@@ -28,6 +29,7 @@
 // reçoit `200` et `[]` ; un membre consent les colonnes réelles, et le parcours connecté est
 // éprouvé sans substitution par `e2e/ui/authentification.spec.ts`.
 
+import { etiquettesDeLAffaire, type Etiquette, type EtiquetteLue } from './etiquettes'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { classerErreur, enChargement, enErreur, pret, type EtatAsync } from './async'
 import { ancienneteDepassee, joursDansEtape, seuilEffectif } from './carte-figee'
@@ -119,6 +121,8 @@ export type CardBoard = Pick<
 	 * l'étape n'en porte aucun — la carte ne dit alors rien.
 	 */
 	readonly checklist?: CompteChecklist
+	/** `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : les étiquettes de l'affaire, triées par nom ; vide quand elle n'en porte pas. */
+	readonly etiquettes?: readonly Etiquette[]
 } & RattachementsLus
 
 /** Le compte « 3/5 » d'une carte : les points de checklist de l'étape où se trouve son rattachement. */
@@ -676,7 +680,7 @@ export type RattachementBoard = Pick<
 	readonly affaire: Pick<
 		Database['public']['Tables']['cards']['Row'],
 		'id' | 'title' | 'description' | 'currency' | 'email_local_part' | 'health_momentum' | 'health_commercial'
-	>
+	> & { readonly etiquettes?: readonly { readonly etiquette: EtiquetteLue | null }[] | null }
 }
 
 /**
@@ -694,6 +698,7 @@ export function carteDepuisRattachement(ligne: RattachementBoard): CardBoard {
 		email_local_part: ligne.affaire.email_local_part,
 		health_momentum: ligne.affaire.health_momentum,
 		health_commercial: ligne.affaire.health_commercial,
+		etiquettes: etiquettesDeLAffaire(ligne.affaire.etiquettes),
 		position: ligne.position,
 		amount: ligne.amount,
 		next_action: ligne.next_action,

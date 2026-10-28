@@ -1,3 +1,5 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : les pastilles d'étiquettes sous le titre, la commande « Étiquettes » et son
+//       panneau (docs/DESIGN_SYSTEM.md §5.73 ; `EtiquettesCard.tsx`)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
 //       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
 // @spec CRM-068 (docs/BACKLOG.md) — tranche T4b1 : « Enregistrer comme modèle », dans la rangée de « Mettre en sommeil »,
@@ -59,6 +61,8 @@ import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { t, type CleTraduction } from '../i18n'
 import { useRefus } from '../components/ui/RefusCommandes'
 import { CommandeEnregistrerModele, PanneauEnregistrerModele } from './EnregistrerModele'
+import { CommandeEtiquettes, PanneauEtiquettes } from './EtiquettesCard'
+import { PastillesEtiquettes } from '../components/ui/PastilleEtiquette'
 
 /** Durée de la confirmation « Copié », en millisecondes (§15.5, point 3). */
 const DUREE_CONFIRMATION = 2000
@@ -125,6 +129,15 @@ export function EnTeteCard({
 	// « ENREGISTRER COMME MODÈLE » (§5.71) : même mécanisme de retour du focus que l'édition — la commande est démontée
 	// tant que son panneau est ouvert.
 	const [panneauModele, setPanneauModele] = useState(false)
+	// « ÉTIQUETTES » (`CRM-069` T2, §5.73) : le même mécanisme, sa commande démontée tant que son panneau est ouvert.
+	const [panneauEtiquettes, setPanneauEtiquettes] = useState(false)
+	const commandeEtiquettes = useRef<HTMLButtonElement>(null)
+	const [focusEtiquettes, setFocusEtiquettes] = useState(false)
+	useEffect(() => {
+		if (panneauEtiquettes || !focusEtiquettes) return
+		commandeEtiquettes.current?.focus()
+		setFocusEtiquettes(false)
+	}, [panneauEtiquettes, focusEtiquettes])
 	const commandeModele = useRef<HTMLButtonElement>(null)
 	const [focusModele, setFocusModele] = useState(false)
 	useEffect(() => {
@@ -221,6 +234,9 @@ export function EnTeteCard({
 				)}
 			</div>
 
+			{/* LES ÉTIQUETTES — `CRM-069` T2, §5.73 : sous la ligne du titre ; aucune ligne si l'affaire n'en porte pas. */}
+			<PastillesEtiquettes etiquettes={card.etiquettes ?? []} testId="entete-card-etiquettes-pastilles" />
+
 			{/* Le geste de sommeil est masqué pendant l'édition : deux panneaux ouverts sous le même
 			    en-tête feraient de la fiche deux formulaires empilés, ce que le §5.3 ter refuse. */}
 			{client === null || edition ? null : (
@@ -231,10 +247,27 @@ export function EnTeteCard({
 					maintenant={maintenant}
 					onAppliquer={appliquerSommeil}
 					commandeSuivante={
-						panneauModele ? null : (
-							<CommandeEnregistrerModele ref={commandeModele} onOuvrir={() => setPanneauModele(true)} />
-						)
+						<>
+							{panneauModele ? null : (
+								<CommandeEnregistrerModele ref={commandeModele} onOuvrir={() => setPanneauModele(true)} />
+							)}
+							{panneauEtiquettes ? null : (
+								<CommandeEtiquettes ref={commandeEtiquettes} onOuvrir={() => setPanneauEtiquettes(true)} />
+							)}
+						</>
 					}
+				/>
+			)}
+			{client === null || edition || !panneauEtiquettes ? null : (
+				<PanneauEtiquettes
+					client={client}
+					idCard={card.id}
+					etiquettes={card.etiquettes ?? []}
+					onChange={(etiquettes) => setCard((precedente) => ({ ...precedente, etiquettes }))}
+					onFermer={() => {
+						setPanneauEtiquettes(false)
+						setFocusEtiquettes(true)
+					}}
 				/>
 			)}
 			{client === null || edition || !panneauModele ? null : (
