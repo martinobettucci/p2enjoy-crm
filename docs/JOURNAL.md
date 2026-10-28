@@ -36561,3 +36561,23 @@ trancher ce que le succès d'un envoi sans affaire écrit, et à quelle minute l
 
 **Conséquences.** `docs/SPEC-etiquettes-digest.md` §5.3 est précisé. La migration `0133` redéfinit `reserver_envois` et
 `marquer_envoi_reussi` à l'identique, hors de la branche du digest.
+
+### `CRM-111` T2.4.4 — incident : un harnais de la série a reconstruit la base partagée (2026-10-28)
+
+*2026-10-28, session interactive.* En rejouant les harnais convertis à l'étape 4, `verify-timeline.sh` a **reconstruit la
+base de développement** (`reconstruire_base_dev` : base vidée, migrations du répertoire rejouées, seed rejoué), puis
+`verify-move-card.sh` de même. **Le défaut est le mien** : j'avais annoncé aux sessions parallèles une série « sans
+reconstruction » sans l'avoir vérifié ; douze harnais du dépôt reconstruisent (`grep reconstruire_base_dev`), dont sept
+de la série. Le seed s'est arrêté dans la section « 8 septvicies. Étiquettes » de `CRM-069`, alors en cours dans sa
+session (`card_labels` refuse l'écriture, `42501`) : la base est restée à moitié semée. La série a été arrêtée, la
+session de `CRM-069` et celle de `CRM-117` prévenues ; la correction du seed revient à `CRM-069`.
+
+**Règle que je m'applique désormais** : avant toute série de harnais sur la pile partagée, relever ceux qui
+reconstruisent et ne les lancer qu'avec l'accord des sessions actives, annoncé comme tel.
+
+**État des harnais de l'étape 4 au moment de l'arrêt** : vérifiés verts — analytique 29/29, liste 71/71, seed-demo
+69/69 (2026-10-26), rendu-modeles-emails 32/32 ; `verify-timeline` 76/79 (sa suite d'API rouge sur trois scénarios de
+l'archivage des workflows, migration `0130` d'une autre session ; son interface et sa reconstruction rouges sur le seed
+interrompu) ; `verify-move-card` 57/61 (le seed interrompu, et les rouges qui en découlent, dont la pgTAP du digest
+`0124` d'une autre session). À rejouer quand le seed sera entier : timeline, move-card, cards, colonnes-protegees,
+valeurs-champs, move-card-to-channel, change-channel-workflow, relances, ma-journee, formulaire, board.
