@@ -10822,10 +10822,15 @@ Arbitrée par la décision 769, spécification validée par la décision 771 : `
       sans anomalie) ; seed §30 écrit. **Reste** : rejouer le seed, le build et les classes CSS, l'E2E
       `e2e/ui/etiquettes.spec.ts` et les captures. Tout cela attend la fin d'une campagne `verify-*` d'une session
       parallèle, qui sert le build sur le port 4173.
-- [ ] **T3 — les étiquettes dans le connecteur** : `crm_card_get`, `crm_card_list`, `crm_card_label_set` (catalogue
+- [~] **T3 — les étiquettes dans le connecteur** : `crm_card_get`, `crm_card_list`, `crm_card_label_set` (catalogue
       `docs/SPEC-mcp.md` §9.2) ; pytest, intégration, E2E.
       *Inscrite au catalogue le 2026-10-28* : `docs/SPEC-mcp.md` §9.2 *tredecies* (noms résolus dans l'espace de
       l'affaire, `add` et `remove`, refus avant écriture d'un nom inconnu ou archivé, filtre `label` au serveur).
+      **Écrite le 2026-10-28, prouvée en unitaires** : `crm_card_get` et `crm_card_list` rendent `labels`, filtre `label`
+      résolu dans le catalogue de l'espace ; `affaires_etiquettes.py` (`crm_card_label_set`) ; le détail des événements
+      `label_added` et `label_removed` ; pytest unitaires +6, suite 274 ; intégration
+      `test_integration_affaires_etiquettes.py` écrite et inscrite à `verify-mcp.sh`. **Reste** : `verify-mcp.sh` et l'E2E
+      du connecteur, après la campagne de la session parallèle.
 - [ ] **T4 — le digest en base et à l'envoi** : `digest_subscriptions`, `digest_runs`, `mail_outbox.kind`,
       `app.envoyer_digests` et son job ; `mail-sync` sans `Reply-To` ; pgTAP, pytest, contrat de déploiement.
 - [ ] **T5 — le consentement à l'écran et la preuve de bout en bout** : la case de Réglages ▸ Notifications ; seed ; E2E

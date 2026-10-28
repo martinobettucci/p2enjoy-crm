@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T3 : les étiquettes rendues par crm_card_get et crm_card_list, le filtre `label`, le
+#       détail des événements `label_added` et `label_removed` (docs/SPEC-mcp.md §9.2 tredecies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : les sept outils de LECTURE de la famille `affaires` (décisions 652 à 654)
 # @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : les deux scores de santé dans crm_card_list et crm_card_get —
 #       docs/SPEC-analytique.md §13.7 ; décision 708 (M4 B)
@@ -45,11 +47,13 @@ RESPONSABLE = "responsable:profiles!card_placements_owner_id_fkey(id,full_name)"
 #: base (docs/SPEC-analytique.md §13.7), rendus tels quels par la liste et par la fiche (décision 708, M4 B). Ils restent
 #: sur l'affaire jusqu'à leur transport (`CRM-111` T2.4.5).
 SANTE = "health_momentum,health_commercial"
+#: `CRM-069` T3 : les étiquettes de l'affaire, plongées depuis `cards` (docs/SPEC-mcp.md §9.2 tredecies).
+ETIQUETTES = "etiquettes:card_labels(etiquette:labels(name,color,archived_at))"
 #: La liste part des rattachements (`CRM-111` T2.4.2) et plonge l'affaire ; `ligne_depuis_rattachement` rend la ligne
 #: d'avant à `resume_carte`.
 COLONNES_LISTE = (
     f"id,created_at,amount,next_action,next_action_at,snoozed_until,{RESPONSABLE},{CHANNEL},{ETAPE},"
-    f"affaire:cards!inner(id,title,currency,{SANTE})"
+    f"affaire:cards!inner(id,title,currency,{SANTE},{ETIQUETTES})"
 )
 #: Les colonnes d'un rattachement que la fiche lit, plongées dans l'affaire ; `fiche_depuis_rattachements` prend celles du
 #: plus ancien, comme `app.card_first_placement` en base.
@@ -59,7 +63,7 @@ COLONNES_RATTACHEMENT_FICHE = (
 )
 COLONNES_FICHE = (
     "id,title,description,currency,email_local_part,created_at,updated_at,ecriture_permise,"
-    f"{SANTE},card_placements!card_placements_card_fk({COLONNES_RATTACHEMENT_FICHE})"
+    f"{SANTE},{ETIQUETTES},card_placements!card_placements_card_fk({COLONNES_RATTACHEMENT_FICHE})"
 )
 COLONNES_EVENEMENT = "id,type,payload,created_at,acteur:profiles!card_events_actor_id_fkey(full_name)"
 COLONNES_COMMENTAIRE = (
@@ -126,6 +130,19 @@ def fiche_depuis_rattachements(fiche: dict[str, Any]) -> dict[str, Any] | None:
     return {**{k: v for k, v in fiche.items() if k != "card_placements"}, **colonnes}
 
 
+def etiquettes(ligne: dict[str, Any]) -> list[dict[str, Any]]:
+    """Les étiquettes d'une affaire, triées par nom ; une étiquette illisible (plongement nul) est écartée (§9.2 tredecies)."""
+    lues = [(e or {}).get("etiquette") for e in ligne.get("etiquettes") or []]
+    return sorted(
+        (
+            {"name": e["name"], "color": e.get("color"), "archived": e.get("archived_at") is not None}
+            for e in lues
+            if isinstance(e, dict) and isinstance(e.get("name"), str)
+        ),
+        key=lambda e: e["name"].casefold(),
+    )
+
+
 def resume_carte(ligne: dict[str, Any]) -> dict[str, Any]:
     """Une affaire nommée : identifiants ET libellés utiles (docs/SPEC-mcp.md §9.3)."""
     channel = ligne.get("channel") or {}
@@ -148,6 +165,8 @@ def resume_carte(ligne: dict[str, Any]) -> dict[str, Any]:
         # affaire décidée, archivée ou à la corbeille.
         "health_momentum": ligne.get("health_momentum"),
         "health_commercial": ligne.get("health_commercial"),
+        # `CRM-069` T3 (§9.2 tredecies) : les étiquettes de l'affaire, par nom.
+        "labels": etiquettes(ligne),
     }
 
 
@@ -180,6 +199,9 @@ def detail_evenement(
         if isinstance(seuil, int) and isinstance(retard, int):
             return {"threshold_days": seuil, "overdue_days": retard}
         return {}
+    if type_ in ("label_added", "label_removed"):
+        # `CRM-069` : le nom de l'étiquette est une valeur du fait, gardé dans la charge par le déclencheur.
+        return {"label": texte("name")} if texte("name") is not None else {}
     if type_ == "mail_unclassified":
         return {"subject": texte("subject")} if texte("subject") is not None else {}
     if type_ in ("contact_linked", "contact_unlinked", "contact_role_changed"):
@@ -328,6 +350,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         step: Annotated[str | None, Field(description="Optional step name (FR: étape), exact, e.g. Négociation")] = None,
         due: Annotated[str | None, Field(description="Optional next action due: overdue, today or week")] = None,
         include_snoozed: Annotated[bool, Field(description="Include affaires put to sleep (FR: en sommeil)")] = False,
+        label: Annotated[str | None, Field(description="Optional label name (FR: étiquette), any case", max_length=40)] = None,
         timezone: Annotated[str, Field(description="IANA time zone for `today`")] = "Europe/Paris",
         limit: Annotated[int, Field(ge=1, le=LIMITE_MAX)] = 50,
         offset: Annotated[int, Field(ge=0)] = 0,
@@ -364,6 +387,20 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             parametres["next_action_at"] = f"lt.{fin.isoformat()}"
             if due == "today":
                 parametres["and"] = f"(next_action_at.gte.{debut.isoformat()})"
+        if label is not None:
+            # `CRM-069` T3 (§9.2 tredecies) : le nom est résolu dans le catalogue de l'espace, puis le filtre est posé au
+            # serveur par un second plongement `!inner`, avant la pagination — la règle du filtre de la vue liste.
+            catalogue = _lignes(
+                await crm.lire(appel.jeton, "labels", {"workspace_id": f"eq.{appel.espace}", "select": "id,name"}),
+                "workspace",
+                workspace,
+            )
+            trouvees = [e for e in catalogue if str(e.get("name") or "").strip().casefold() == label.strip().casefold()]
+            if not trouvees:
+                connues = ", ".join(sorted(str(e["name"]) for e in catalogue))
+                raise ToolError(f"No label named {label!r} in this workspace. Known: {connues}.")
+            colonnes = colonnes.replace(f"{ETIQUETTES})", f"{ETIQUETTES},filtre:card_labels!inner(label_id))")
+            parametres["affaire.filtre.label_id"] = f"eq.{trouvees[0]['id']}"
         if not include_snoozed:
             # La règle de la webapp (`filtreExclusionSommeil`) : une affaire endormie sort des vues par défaut.
             parametres["or"] = f"(snoozed_until.is.null,snoozed_until.lte.{maintenant.isoformat()})"
@@ -386,8 +423,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         description=(
             "Lists the active affaires (FR: affaires, cards) of a workspace you can read, by title: track, channel, step, "
             "owner, amount, next action and its due date, and the two health scores (health_momentum: 100 minus listed "
-            "penalties; health_commercial: weighted signals; tiers healthy/watch/danger). Filters: channel, words of the title, step name, next action "
-            "due (overdue, today, week). Sleeping affaires are left out unless include_snoozed. Paginated."
+            "penalties; health_commercial: weighted signals; tiers healthy/watch/danger), and the labels (FR: étiquettes). Filters: channel, words "
+            "of the title, step name, label name, next action due (overdue, today, week). Sleeping affaires are left out unless "
+            "include_snoozed. Paginated."
         ),
     )
 
@@ -475,7 +513,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         description=(
             "Reads one affaire (card): title, description, track, channel, workflow and step, owner, amount and currency, "
             "probability (the affaire's own, else its step's, else its node's), next action and due date, sleep, the "
-            "linked contacts with their role, the form answers by label, can_write — whether the CRM lets you change it — "
+            "linked contacts with their role, the labels (FR: étiquettes), the form answers by label, can_write — whether the CRM lets you change it — "
             "and the two health scores: health_momentum (100 minus each listed penalty) and health_commercial (four "
             "weighted signals; an unknown one has its weight shared). Tiers: healthy ≥ 70, watch 40–69, danger < 40; none "
             "for a decided, archived or trashed affaire."

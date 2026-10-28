@@ -8,6 +8,7 @@
 #       (docs/SPEC-mcp.md §9.2 decies, décision 684)
 # @spec CRM-114 (docs/BACKLOG.md) tranche T4 — la famille `organizations` enregistrée et nommée au modèle
 #       (docs/SPEC-mcp.md §9.2 sexies)
+# @spec CRM-069 (docs/BACKLOG.md) tranche T3 — les étiquettes d'une affaire enregistrées (docs/SPEC-mcp.md §9.2 tredecies)
 # @spec CRM-068 (docs/BACKLOG.md) tranche T5 — la checklist d'une affaire enregistrée (docs/SPEC-mcp.md §9.2 duodecies)
 # @spec CRM-104 (docs/BACKLOG.md) tranches T2.a, T2.b, T1 et T3 — les affaires, la structure, la recherche et les contacts
 #       enregistrés et nommés au modèle (docs/SPEC-mcp.md §9.2 bis à quinquies)
@@ -39,6 +40,7 @@ from crm_mcp.garde import GardeEntree
 from crm_mcp.outils import (
     affaires,
     affaires_checklists,
+    affaires_etiquettes,
     affaires_ecriture,
     budgets,
     contacts,
@@ -166,6 +168,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     affaires_ecriture.ajouter(serveur, moteur, crm)
     # `CRM-068` T5 : la checklist d'une affaire (docs/SPEC-mcp.md §9.2 duodecies).
     affaires_checklists.ajouter(serveur, moteur, crm)
+    # `CRM-069` T3 : les étiquettes d'une affaire (docs/SPEC-mcp.md §9.2 tredecies).
+    affaires_etiquettes.ajouter(serveur, moteur, crm)
     # `CRM-104` T1 : la structure et la recherche globale (docs/SPEC-mcp.md §9.2 quater).
     structure.ajouter(serveur, moteur, crm)
     # `CRM-118` T2.a : la famille `workflows`, le workflow, ses étapes et ses transitions (docs/SPEC-mcp.md §9.2 undecies).
