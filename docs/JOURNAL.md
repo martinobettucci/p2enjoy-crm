@@ -36510,3 +36510,14 @@ qui portent sur les chapitres illustrés, et leur contre-épreuve (huit familles
 libellés dans la page, sa découpe réelle —, qui exige la pile ; sa première exécution sera celle de T4.1. **Constaté au
 passage** : les trois fichiers construits que `CRM-068` avait régénérés avant la réécriture des chapitres 9 et 18
 restaient dans la copie de travail, en retard sur HEAD ; réalignés sur HEAD, sans perte — leur source est poussée.
+
+### `CRM-117` T4.0, correctif : un motif fait de paramètres seuls reconnaissait toute citation (2026-10-28)
+
+**Problème** : le décompte des éléments cités de T4.0 (870 dans 181 sections) comptait des citations qui ne sont pas des
+libellés — « zéro par défaut », « à faire », « accès refusé ». **Cause** : une valeur du catalogue faite de paramètres et
+de ponctuation seulement — `{prenom} {nom}`, `{track} › {channel}` — devenait le motif `^.+? .+?$`, qui reconnaît toute
+citation de deux mots. **Correction** : un motif garde au moins un mot de deux lettres hors de ses paramètres ; sinon la
+valeur n'en fait pas un. **Vérifié** : un unitaire nouveau échoue avant la correction (et deux existants avec lui, qui
+comptaient « Pas un libellé ») ; 12/12 après. **Mesure corrigée** : **678** éléments cités dans **166** sections, conforme
+à l'ordre de grandeur annoncé par le contrat (environ 620 dans 157). La pile est relancée avec l'accord du responsable
+(2026-10-28) ; le manuel courant y est publié (34 fichiers).

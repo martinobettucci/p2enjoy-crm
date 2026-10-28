@@ -24,6 +24,8 @@ const FR = [
 	'\t\'c\':',
 	'\t\t"Aucun channel dans ce track",',
 	"\t'd': 'Page {rang} sur {pages}',",
+	"\t'e': '{prenom} {nom}',",
+	"\t'f': '{track} › {channel}',",
 	'}',
 ].join('\n')
 const VALEURS = valeursInterface(FR)
@@ -87,6 +89,11 @@ describe('éléments cités (§11.4)', () => {
 		expect(normaliserLibelle('Fermer l’aide')).toBe("Fermer l'aide")
 		expect(VALEURS.exactes.has('Aucun channel dans ce track')).toBe(true)
 		expect(VALEURS.motifs.some((m) => m.test('Page 2 sur 5'))).toBe(true)
+	})
+
+	it('une valeur faite de paramètres et de ponctuation seulement n’est pas un motif : elle reconnaîtrait toute citation', () => {
+		expect(VALEURS.motifs).toHaveLength(1)
+		expect(VALEURS.motifs.some((m) => m.test('zéro par défaut') || m.test('Track › Channel'))).toBe(false)
 	})
 
 	it('par section, y compris une citation coupée par un retour à la ligne ; pas ce qui n’est pas un libellé', () => {

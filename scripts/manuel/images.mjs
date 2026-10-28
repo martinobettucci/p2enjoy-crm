@@ -61,6 +61,8 @@ export function valeursInterface(sourceFr) {
 		const valeur = normaliserLibelle(m[2].replace(/\\(['"\\])/g, '$1'))
 		if (valeur === '') continue
 		if (/\{[a-zA-Z]+\}/.test(valeur)) {
+			// « {prenom} {nom} » ou « {track} › {channel} » reconnaîtraient toute citation : un motif garde au moins un mot.
+			if (!/\p{L}{2,}/u.test(valeur.replace(/\{[a-zA-Z]+\}/g, ''))) continue
 			const echappe = valeur.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\\?\{[a-zA-Z]+\\?\}/g, '.+?')
 			motifs.push(new RegExp(`^${echappe}$`))
 		} else exactes.add(valeur)

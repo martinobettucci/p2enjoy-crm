@@ -17143,9 +17143,12 @@ responsable** : traitée juste après `CRM-116`.*
             `verify-manual.sh` contrôles 8 et 9, contre-épreuve à huit familles ; projet `manuel` déclaré, hors des
             campagnes ; `test:unit` 4866/4866, typecheck vert. **Non éprouvé** : l'aide `illustrer` elle-même, qui exige
             la pile — sa première exécution est celle de T4.1.
+            **Correctif, 2026-10-28** : une valeur du catalogue faite de paramètres seuls (`{prenom} {nom}`) devenait un
+            motif qui reconnaissait toute citation ; un motif garde désormais un mot. Unitaire nouveau, rouge avant et
+            vert après (12/12) ; mesure corrigée : **678 éléments cités dans 166 sections**.
       - [ ] **T4.1 à T4.5 — les images**, groupe par groupe comme T3 : scénarios, images observées, liste des chapitres
-            illustrés. **Exigent la pile de développement**, que le responsable a demandé de ne pas relancer le
-            2026-10-27 : elles attendent son accord.
+            illustrés. **Exigent la pile de développement** ; le responsable a donné son accord pour la relancer le
+            2026-10-28.
 - [ ] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
       `CHANGELOG.md`, contrat de déploiement.
 - [ ] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.
