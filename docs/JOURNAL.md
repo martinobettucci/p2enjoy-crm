@@ -36536,3 +36536,28 @@ comptaient « Pas un libellé ») ; 12/12 après. **Mesure corrigée** : **678**
 5. Sans identité de service, rien ne part, et `digest_runs` l'inscrit.
 
 Le découpage en cinq tranches (§7) est validé aussi. Le travail commence par T1.
+
+## décision 772 — `CRM-069` T4 : les liens d'un digest, son succès, son heure
+
+*2026-10-28, session interactive (Claude Code, poste du responsable), à l'écriture de T4, avant son application.*
+
+**Problème.** La spécification (§5.2) veut que chaque ligne du digest porte le lien de la fiche, mais la base ne connaît
+pas l'adresse publique de la webapp : `SITE_URL` n'existe que dans l'environnement des services. Restaient aussi à
+trancher ce que le succès d'un envoi sans affaire écrit, et à quelle minute le job tourne.
+
+**Solutions envisagées pour les liens.**
+- Un réglage en base de l'adresse publique : une donnée de déploiement de plus à tenir en base, pour un seul usage.
+- Composer le digest dans `mail-sync` : le contenu et ses règles de lecture quitteraient la base, contre la spécification
+  (§5.2, filtre par `app.can_read_card_pour`).
+- **Retenu** : un jeton `{site}` en tête des chemins, que `mail-sync` remplace par son `SITE_URL` pour le seul envoi sans
+  affaire. Un envoi d'affaire n'est jamais réécrit, et sans `SITE_URL` les liens restent relatifs.
+
+**Décisions.**
+1. Le jeton `{site}`, comme ci-dessus ; `mail-sync` reçoit `SITE_URL` (Compose, contrat de déploiement).
+2. Le succès d'un digest ne range rien dans le courrier d'une affaire : `marquer_envoi_reussi` clôt la ligne de file,
+   sans `mail_messages` ni ligne de fil. La réservation rend son `Reply-To` nul, et `mail-sync` n'écrit pas l'en-tête.
+3. Le job, `p2enjoy-digest-quotidien`, tourne à la minute 2 de chaque heure (relevé de `cron.job` : 7, 17, 23, 29, 41, 53
+   sont pris).
+
+**Conséquences.** `docs/SPEC-etiquettes-digest.md` §5.3 est précisé. La migration `0133` redéfinit `reserver_envois` et
+`marquer_envoi_reussi` à l'identique, hors de la branche du digest.

@@ -112,6 +112,15 @@ n'appartient à aucune affaire. La file gagne une colonne `kind`, valant `card` 
   n'est classée nulle part ;
 - l'écriture dans `mail_outbox` passe par une fonction `app.` réservée au job, jamais ouverte à `authenticated`.
 
+**Précisé le 2026-10-28 à l'écriture de T4 (décision 772)** :
+- **les liens** d'un digest commencent par le jeton `{site}`, que `mail-sync` remplace par sa variable `SITE_URL` pour
+  le seul envoi sans affaire, car la base ne connaît pas l'adresse publique de la webapp. Sans `SITE_URL`, les liens restent
+  relatifs, et le digest part quand même ;
+- **le succès d'un digest ne range rien** dans le courrier d'une affaire : `marquer_envoi_reussi` clôt sa ligne de file,
+  sans écrire de `mail_messages` ni de ligne de fil ;
+- **le job tourne à la minute 2** de chaque heure, qu'aucune autre tâche n'occupe. Il s'appelle
+  `p2enjoy-digest-quotidien`, comme les autres tâches du produit.
+
 ### 5.4 Le job — `pg_cron`, idempotent
 
 `app.envoyer_digests(p_maintenant timestamptz default now())` est appelée **toutes les heures à la minute 0**. Elle
