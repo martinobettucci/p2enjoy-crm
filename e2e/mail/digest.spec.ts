@@ -21,6 +21,8 @@ const ESPACE = '5eed0000-0000-4000-8000-000000000001'
 const DRISS = '5eed0000-0000-4000-8000-000000000012'
 const BOITE_DRISS = 'bizdev@p2enjoy.test'
 const OBJET = 'Votre journée dans'
+// La recherche IMAP et le ménage cherchent un motif ASCII : `imaplib` n'encode pas « é » sans jeu de caractères déclaré.
+const MOTIF = 'Votre journ'
 const BOITES: readonly Boite[] = [{ adresse: BOITE_DRISS, motDePasse: lireEnv('STALWART_MAILBOX_PASSWORD') }]
 
 function docker(...arguments_: string[]): string {
@@ -68,23 +70,24 @@ except urllib.error.HTTPError as e:
 function digestRecu(): { entetes: Record<string, string>; corps: string } {
 	const brut = python(
 		`
-import email, imaplib, json, os
+import email, email.policy, imaplib, json, os
 c = imaplib.IMAP4("stalwart", 143)
 c.login(os.environ["BOITE"], os.environ["MOT_DE_PASSE"])
 c.select("INBOX")
-typ, ids = c.search(None, "HEADER", "Subject", os.environ["OBJET"])
+typ, ids = c.search(None, "HEADER", "Subject", '"' + os.environ["MOTIF"] + '"')
 resultat = {"entetes": {}, "corps": ""}
 uids = ids[0].split()
 if uids:
     typ, brut = c.fetch(uids[-1], "(BODY.PEEK[])")
-    message = email.message_from_bytes(brut[0][1])
+    # La politique moderne décode les en-têtes encodés (RFC 2047) : le sujet porte « é ».
+    message = email.message_from_bytes(brut[0][1], policy=email.policy.default)
     resultat["entetes"] = {cle: str(message.get(cle)) for cle in ("From", "To", "Subject", "Reply-To") if message.get(cle) is not None}
-    partie = message.get_body(preferencelist=("plain",)) if hasattr(message, "get_body") else message
-    resultat["corps"] = (partie or message).get_payload(decode=True).decode("utf-8", "replace")
+    partie = message.get_body(preferencelist=("plain",)) or message
+    resultat["corps"] = partie.get_content()
 c.logout()
 print(json.dumps(resultat))
 `,
-		{ BOITE: BOITE_DRISS, MOT_DE_PASSE: lireEnv('STALWART_MAILBOX_PASSWORD'), OBJET },
+		{ BOITE: BOITE_DRISS, MOT_DE_PASSE: lireEnv('STALWART_MAILBOX_PASSWORD'), MOTIF },
 	)
 	return JSON.parse(brut) as { entetes: Record<string, string>; corps: string }
 }
@@ -93,6 +96,8 @@ test.describe('le récapitulatif quotidien — du job à la boîte', () => {
 	test('Driss, abonné, reçoit son digest du jour par l’identité de service, sans Reply-To, ses liens complets', async ({
 		request,
 	}) => {
+		// Un conteneur par lecture IMAP, et l'attente de la remise : le délai par défaut ne suffit pas.
+		test.setTimeout(120_000)
 		const debut = new Date().toISOString()
 		const dossiersAvant = await instantaneDesBoites(BOITES)
 		const service = { ...enTetesService(), 'Content-Type': 'application/json' }
@@ -114,7 +119,8 @@ test.describe('le récapitulatif quotidien — du job à la boîte', () => {
 			expect(run!.status).toBe('queued')
 			file = run!.outbox_id
 
-			expect(viderLaFile()['envoyes'] ?? 0).toBeGreaterThanOrEqual(1)
+			const passe = viderLaFile()
+			expect(passe['sent'], `passe = ${JSON.stringify(passe)}`).toBeGreaterThanOrEqual(1)
 			const ligne = await request.get(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}&select=status,kind,card_id`, { headers: service })
 			expect(await ligne.json()).toEqual([{ status: 'sent', kind: 'digest', card_id: null }])
 
@@ -127,7 +133,7 @@ test.describe('le récapitulatif quotidien — du job à la boîte', () => {
 			expect(corps).not.toContain('{site}')
 		} finally {
 			if (file !== undefined) await request.delete(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}`, { headers: service })
-			await rendreLesBoites(request, { boites: BOITES, motif: OBJET, avant: dossiersAvant, debut })
+			await rendreLesBoites(request, { boites: BOITES, motif: MOTIF, avant: dossiersAvant, debut })
 		}
 	})
 })

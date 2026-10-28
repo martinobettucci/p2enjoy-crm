@@ -108,6 +108,9 @@ export function PanneauEtiquettes({
 			: []
 
 	const basculer = async (etiquette: Etiquette, posee: boolean) => {
+		// Une écriture à la fois : la case n'est jamais désactivée pendant l'envoi (§5.7 ter, elle perdrait le focus), un
+		// clic pendant le vol est ignoré, et la case contrôlée garde l'état que la base a retenu.
+		if (enVol !== null) return
 		setRefus(null)
 		setEnVol(etiquette.id)
 		const issue = await basculerEtiquetteAffaire(client, idCard, etiquette.id, posee)
@@ -169,7 +172,7 @@ export function PanneauEtiquettes({
 										data-testid="case-etiquette"
 										checked={cochee}
 										// Une archivée encore posée se décoche seulement : elle ne se pose plus (§5.73).
-										disabled={droit.disabled === true || enVol === etiquette.id || (etiquette.archivee && !cochee)}
+										disabled={droit.disabled === true || (etiquette.archivee && !cochee)}
 										{...(refusee ? { 'aria-describedby': idRefus } : droit['aria-describedby'] === undefined ? {} : { 'aria-describedby': droit['aria-describedby'] })}
 										onChange={(evenement) => void basculer(etiquette, evenement.currentTarget.checked)}
 										className="size-6 shrink-0 accent-[var(--color-brand)]"

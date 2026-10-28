@@ -1,4 +1,6 @@
 // @verifies CRM-064 (docs/BACKLOG.md) — tranche 4 : les préférences, sur session réelle
+// @verifies CRM-069 (docs/BACKLOG.md) — tranche T5 : la garde du §42.1 révisée — le récapitulatif, seul canal sortant
+//           (docs/SPEC-etiquettes-digest.md §5.1 ; docs/SPEC-notifications.md §42.1, révision du 2026-10-28)
 // @verifies docs/SPEC-notifications.md §42.1 (aucune case pour un canal qui n'existe pas),
 //           §43.4 (l'absence de ligne vaut consentement), §44 (couper MASQUE la cloche et son
 //           compteur, rétablir les rend), §46.3 (l'écriture par la RPC), §49
@@ -112,11 +114,17 @@ test.describe('L’écran des préférences (docs/DESIGN_SYSTEM.md §5.45)', () 
 
 		await expect(laCase(page)).toBeChecked()
 
-		// AUCUNE CASE POUR UN CANAL QUI N'EXISTE PAS (§42.1) : ni email, ni résumé quotidien. Une
-		// case qui ne commande rien serait une promesse fausse — l'utilisateur croirait avoir
-		// demandé un email.
-		await expect(page.getByRole('checkbox')).toHaveCount(1)
-		await expect(page.getByText(/email/i)).toHaveCount(0)
+		// AUCUNE CASE POUR UN CANAL QUI N'EXISTE PAS (§42.1). Une case qui ne commande rien serait une
+		// promesse fausse — l'utilisateur croirait avoir demandé un email. Révisée par `CRM-069` T5
+		// (décision 51 : une garde se révise, jamais ne se retire) : le récapitulatif quotidien EXISTE,
+		// sous « Par email », et c'est le SEUL canal sortant — une seule case dans l'application, une
+		// seule par email, aucun email par notification.
+		await expect(page.getByRole('group', { name: 'Ce que vous recevez dans l\'application' }).getByRole('checkbox')).toHaveCount(1)
+		const parEmail = page.getByTestId('fieldset-digest')
+		await expect(parEmail.getByRole('checkbox')).toHaveCount(1)
+		await expect(parEmail.getByRole('checkbox')).toHaveAccessibleName(/Recevoir chaque matin le récapitulatif de/)
+		await expect(page.getByRole('checkbox')).toHaveCount(2)
+		await expect(page.getByText(/email/i)).toHaveCount(1)
 		await expect(page.getByText(/résumé quotidien/i)).toHaveCount(0)
 
 		// AUCUN BOUTON D'ENREGISTREMENT (§5.7 ter) : un réglage à une seule valeur n'a rien à valider.

@@ -1,4 +1,5 @@
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — la fiche lit la capacité d'écrire sur l'affaire et la FOURNIT à ses blocs ;
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : une étiquette posée ou retirée depuis l'en-tête fait relire le fil — docs/DESIGN_SYSTEM.md §5.73
 // @spec CRM-066 (docs/BACKLOG.md) — tranche 4 : le bloc « Santé de l'affaire » sous l'en-tête — docs/DESIGN_SYSTEM.md §5.65
 //       refusée par la base, le motif se pose en tête de la colonne de gauche (docs/SPEC-droits-interface.md §2.1, §3 ;
 //       docs/DESIGN_SYSTEM.md §5.59)
@@ -293,7 +294,7 @@ function ContenuCard({
 				    QU'EST l'affaire, là où le formulaire dit ce qu'on en sait ; et le bas de la colonne
 				    est déjà pris par le geste de retrait. Placé en dessous, il aurait de plus été poussé
 				    hors de vue par le défilement de la reprise d'un déplacement refusé (§4 ter). */}
-				<EnTeteCard card={etat.donnees.card} />
+				<EnTeteCard card={etat.donnees.card} onEvenement={relireEvenements} />
 				{/* LES DEUX SCORES DE SANTÉ — `CRM-066` tranche 4, docs/DESIGN_SYSTEM.md §5.65 : sous l'en-tête, qui dit ce
 				    qu'est l'affaire ; les scores disent comment elle va. Aucun bloc pour une affaire décidée. */}
 				<BlocSanteCard idCard={etat.donnees.card.id} />

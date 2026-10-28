@@ -2284,6 +2284,13 @@ ligne du §8 de `docs/SCHEMA.md` est **révisée** dans le même changement pour
 fait réellement, et le jour où un canal sortant existera, il amènera sa colonne avec la migration
 qui le livre — pas avant.
 
+> **Révision du 2026-10-28 (`CRM-069` T4 et T5, décisions 769 et 771).** Un canal sortant existe désormais : le
+> **récapitulatif quotidien par email**, consenti espace par espace (`docs/SPEC-etiquettes-digest.md` §5). Il arrive avec sa
+> migration (`0133`) et sa propre table, `digest_subscriptions`, et non une colonne de `notification_preferences` : c'est un
+> envoi groupé, pas une préférence par type. Réglages ▸ Notifications porte donc une seconde case, sous « Par email »,
+> **décochée par défaut** — à l'inverse des mentions, l'absence de ligne vaut refus. Le raisonnement ci-dessus tient pour
+> tout canal qui n'existe toujours pas : aucune case pour un email par notification, ni pour un webhook.
+
 ---
 
 ## 43. Modèle : `public.notification_preferences`

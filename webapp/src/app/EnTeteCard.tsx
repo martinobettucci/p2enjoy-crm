@@ -89,6 +89,7 @@ export function EnTeteCard({
 	copier = copierDansLePressePapier,
 	client = clientCrm,
 	maintenant,
+	onEvenement,
 }: {
 	readonly card: CardOuverte
 	/** Injectable pour les preuves ; en production, l'API du navigateur. */
@@ -103,6 +104,8 @@ export function EnTeteCard({
 	 * production, il vaut l'instant du rendu.
 	 */
 	readonly maintenant?: Date
+	/** Une étiquette posée ou retirée écrit une ligne du fil, que la fiche relit (`CRM-069` T2, docs/DESIGN_SYSTEM.md §5.73). */
+	readonly onEvenement?: () => void
 }) {
 	const droit = useRefus()
 	// La card vit ici pendant la visite : une écriture confirmée la met à jour EN PLACE, à partir de
@@ -263,7 +266,10 @@ export function EnTeteCard({
 					client={client}
 					idCard={card.id}
 					etiquettes={card.etiquettes ?? []}
-					onChange={(etiquettes) => setCard((precedente) => ({ ...precedente, etiquettes }))}
+					onChange={(etiquettes) => {
+						setCard((precedente) => ({ ...precedente, etiquettes }))
+						onEvenement?.()
+					}}
 					onFermer={() => {
 						setPanneauEtiquettes(false)
 						setFocusEtiquettes(true)

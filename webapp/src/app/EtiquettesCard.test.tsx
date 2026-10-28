@@ -36,7 +36,12 @@ const carte = (etiquettes: readonly Etiquette[]) =>
 		card_placements: [{ id: 'r-1', created_at: '2026-10-01T00:00:00Z' }], etiquettes,
 	}) as unknown as CardOuverte
 
-function client(catalogue: readonly unknown[] = LUES, ecriture: { data: unknown; error: unknown; status: number } = { data: [{ card_id: 'card-1' }], error: null, status: 201 }) {
+function client(
+	catalogue: readonly unknown[] = LUES,
+	ecriture: { data: unknown; error: unknown; status: number } = { data: [{ card_id: 'card-1' }], error: null, status: 201 },
+	/** Retient la réponse d'une écriture jusqu'à sa résolution : l'écriture « en vol ». */
+	attente?: Promise<void>,
+) {
 	const ecritures: { methode: string; valeur: unknown; filtres: unknown[][] }[] = []
 	const faux = {
 		from: (table: string) => {
@@ -56,19 +61,25 @@ function client(catalogue: readonly unknown[] = LUES, ecriture: { data: unknown;
 				}
 			}
 			maillon.then = (resoudre: (r: unknown) => unknown) =>
-				resoudre(courante !== null ? ecriture : { data: table === 'labels' ? catalogue : [], error: null, status: 200 })
+				courante !== null && attente !== undefined
+					? attente.then(() => resoudre(ecriture))
+					: resoudre(courante !== null ? ecriture : { data: table === 'labels' ? catalogue : [], error: null, status: 200 })
 			return maillon
 		},
 	} as unknown as ClientCrm
 	return { client: faux, ecritures }
 }
 
-function monter(c: ClientCrm, etiquettes: readonly Etiquette[] = [], options: { refus?: boolean; administration?: Capacite } = {}) {
+function monter(
+	c: ClientCrm,
+	etiquettes: readonly Etiquette[] = [],
+	options: { refus?: boolean; administration?: Capacite; onEvenement?: () => void } = {},
+) {
 	return render(
 		<MemoryRouter>
 			<FournisseurEspace valeur={{ idWorkspace: 'ws-1', estAdmin: false, capacites: { ...CAPACITES_INCONNUES, administration: options.administration ?? 'permise' } }}>
 				<FournisseurRefus valeur={options.refus === true ? { disabled: true, 'aria-describedby': 'motif-card' } : {}}>
-					<EnTeteCard card={carte(etiquettes)} client={c} copier={() => Promise.resolve(true)} />
+					<EnTeteCard card={carte(etiquettes)} client={c} copier={() => Promise.resolve(true)} {...(options.onEvenement ? { onEvenement: options.onEvenement } : {})} />
 				</FournisseurRefus>
 			</FournisseurEspace>
 		</MemoryRouter>,
@@ -98,7 +109,8 @@ describe('les étiquettes sur la fiche', () => {
 
 	it('le panneau : le focus dans la première case ; cocher pose l’étiquette, la pastille paraît ; décocher la retire', async () => {
 		const { client: c, ecritures } = client()
-		monter(c)
+		const relectures: number[] = []
+		monter(c, [], { onEvenement: () => relectures.push(1) })
 		await userEvent.click(commande())
 		const prio = await screen.findByRole('checkbox', { name: 'Prioritaire' })
 		await waitFor(() => expect(document.activeElement).toBe(prio))
@@ -108,6 +120,29 @@ describe('les étiquettes sur la fiche', () => {
 		await userEvent.click(prio)
 		await waitFor(() => expect(screen.queryByTestId('entete-card-etiquettes-pastilles')).toBeNull())
 		expect(ecritures[1]).toMatchObject({ methode: 'delete', filtres: [['card_id', 'card-1'], ['label_id', 'e-prio']] })
+		// Chaque écriture confirmée fait relire le fil de la fiche, qui la raconte.
+		expect(relectures).toHaveLength(2)
+	})
+
+	it('pendant l’écriture, la case reste active et garde le focus ; un second clic n’écrit rien (§5.7 ter)', async () => {
+		// Trouvé par l'E2E : la case désactivée pendant l'envoi perdait le focus, et `Échap` ne refermait plus le panneau.
+		let liberer: () => void = () => {}
+		const attente = new Promise<void>((r) => {
+			liberer = r
+		})
+		const { client: c, ecritures } = client(LUES, undefined, attente)
+		monter(c)
+		await userEvent.click(commande())
+		const prio = (await screen.findByRole('checkbox', { name: 'Prioritaire' })) as HTMLInputElement
+		await waitFor(() => expect(document.activeElement).toBe(prio))
+		await userEvent.click(prio)
+		expect(prio.disabled).toBe(false)
+		expect(document.activeElement).toBe(prio)
+		await userEvent.click(prio)
+		expect(ecritures).toHaveLength(1)
+		liberer()
+		await waitFor(() => expect(prio.checked).toBe(true))
+		expect(document.activeElement).toBe(prio)
 	})
 
 	it('une archivée encore posée se décoche seulement ; un refus fait revenir la case et s’écrit dessous', async () => {

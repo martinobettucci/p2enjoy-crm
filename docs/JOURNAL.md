@@ -36623,3 +36623,35 @@ acceptée : les membres d'un espace lisent l'adresse de leurs collègues.
 **Conséquences.** La migration `0133`, pas encore poussée, porte la colonne et les deux fonctions de session redéfinies à
 l'identique, plus une ligne chacune. Le job lit `profiles.email`. Un abonné qui ne s'est jamais connecté reste `no_address`.
 `docs/SPEC-etiquettes-digest.md` §5.1 est précisé.
+
+### `CRM-069` T2 à T5 — la campagne de preuves, et ce qu'elle a trouvé (2026-10-28)
+
+*Session interactive (Claude Code, poste du responsable).*
+
+**Observations.** La première passe des E2E a rendu quatre échecs, dont deux défauts du produit :
+1. **La case d'une étiquette, désactivée pendant l'écriture, perdait le focus.** Le navigateur retire le focus d'un
+   contrôle désactivé ; `Échap` partait alors au document, et le panneau restait ouvert, sa commande masquée. C'est la règle
+   « jamais désactivé pendant l'envoi » du `docs/DESIGN_SYSTEM.md` §5.7 ter, que le panneau enfreignait. Correction : la
+   case reste active, un clic pendant le vol est ignoré ; un unitaire, rouge avant, vert après.
+2. **Le fil ne racontait une pose qu'au rechargement.** L'en-tête ne savait pas faire relire le fil ; il reçoit
+   `onEvenement`, comme la checklist (`CRM-068` T3a).
+
+Les deux autres étaient des défauts des preuves : la clé de réponse de la route de vidage (`sent`), le sujet encodé
+(RFC 2047) que le lecteur IMAP de la preuve ne décodait pas. Le connecteur rendait « outil inconnu » : son conteneur
+tournait sur une image antérieure, reconstruite.
+
+**Le fil est en ajout seul, même pour la clé de service** (`0016_timeline.sql` : `select` seul). Les preuves qui posaient
+une étiquette sur une affaire du jeu y laissaient leurs lignes de fil : l'E2E de la fiche sur « Refonte du site vitrine »
+(six lignes en base de développement, effacées par la prochaine reconstruction) et l'intégration du connecteur sur
+Sogexia, qui de plus ne s'exécutait pas (envoi groupé aux clés inégales, 400). Les deux posent désormais sur une affaire
+jetable, retirée avec son fil.
+
+**La garde du §42.1** de `docs/SPEC-notifications.md` (« aucune case pour un canal qui n'existe pas ») est révisée, non
+retirée (décision 51) : le récapitulatif existe, une seule case sous « Par email ».
+
+**Hors périmètre, consigné.** `PanneauChangementWorkflow.test.tsx` (« focus dans Nouveau workflow ») a rougi une fois sous
+la charge de la suite complète, puis passé trois fois isolé et dans une suite complète rejouée (4919/4919) : une attente de
+focus sensible à la charge, de la classe corrigée par la décision 765. Non touché ici.
+
+**Vérifications.** E2E étiquettes 5/5, connecteur 1/1, consentement 1/1, digest `mail` 1/1, voisins 69/69, préférences
+11/11 ; `verify-mcp.sh` 108 contrôles ; unitaires 4919/4919 ; build et classes CSS ; captures observées.

@@ -4,8 +4,9 @@
 //           semé) ; CLAUDE.md §10 (refus par la base), §16 (captures)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du SSO
 //
-// Les gestes écrivent : les étiquettes de la preuve portent le préfixe `ZZ 069` et sont retirées à la fin ; la pose sur une
-// affaire du seed est défaite, et ses lignes de fil effacées, par la clé de service.
+// Les gestes écrivent : les étiquettes de la preuve portent le préfixe `ZZ 069` et sont retirées à la fin. La pose se fait
+// sur une affaire jetable du même préfixe, retirée à la fin avec son fil : le fil est en ajout seul, même pour la clé de
+// service, et une pose sur une affaire du seed y laisserait ses lignes.
 
 import type { APIRequestContext } from '@playwright/test'
 import { URL_API, enTetesService } from '../api/jetons'
@@ -16,7 +17,11 @@ const UNITE = 'CRM-069'
 const PREFIXE = 'ZZ 069'
 const REFONTE = '/tracks/studio-web/refonte'
 const LYON = '5eed0000-0000-4000-8000-0000000000c4'
-const VITRINE = '5eed0000-0000-4000-8000-0000000000c1'
+const ESPACE = '5eed0000-0000-4000-8000-000000000001'
+// Le channel « Checklists » de Studio web, que Driss écrit, son workflow et son étape initiale (docs/SPEC-seed.md).
+const CHANNEL_CHECKLISTS = '5eed0000-0000-4000-8000-0000000c6841'
+const WORKFLOW_CHECKLISTS = '5eed0000-0000-4000-8000-0000000c6801'
+const ETAPE_INITIALE = '5eed0000-0000-4000-8000-0000000c6811'
 const rest = (chemin: string) => `${URL_API}/rest/v1/${chemin}`
 
 async function lire<T>(requete: APIRequestContext, chemin: string): Promise<T> {
@@ -29,9 +34,8 @@ test.use({ viewport: { width: 1440, height: 1000 } })
 
 test.afterEach(async ({ request }) => {
 	await request.delete(rest(`labels?name=like.${encodeURIComponent(`${PREFIXE}*`)}`), { headers: enTetesService() })
-	// La pose de la preuve sur « Refonte du site vitrine », et les lignes de fil qu'elle a écrites.
-	await request.delete(rest(`card_labels?card_id=eq.${VITRINE}`), { headers: enTetesService() })
-	await request.delete(rest(`card_events?card_id=eq.${VITRINE}&type=like.label_*`), { headers: enTetesService() })
+	// L'affaire jetable : ses poses et son fil partent avec elle.
+	await request.delete(rest(`cards?title=like.${encodeURIComponent(`${PREFIXE}*`)}`), { headers: enTetesService() })
 })
 
 test.describe('Réglages ▸ Étiquettes (docs/DESIGN_SYSTEM.md §5.73)', () => {
@@ -93,8 +97,20 @@ test.describe('les étiquettes des affaires (docs/DESIGN_SYSTEM.md §5.73)', () 
 	})
 
 	test('le business developer pose une étiquette sur la fiche ; la base, la pastille et le fil le disent', async ({ page, request }) => {
+		const creee = await request.post(rest('cards'), {
+			headers: { ...enTetesService(), Prefer: 'return=representation' },
+			data: {
+				workspace_id: ESPACE,
+				channel_id: CHANNEL_CHECKLISTS,
+				workflow_id: WORKFLOW_CHECKLISTS,
+				current_step_id: ETAPE_INITIALE,
+				title: `${PREFIXE} Mutuelle Rhône`,
+			},
+		})
+		expect(creee.status(), await creee.text()).toBe(201)
+		const [{ id: jetable }] = (await creee.json()) as { id: string }[]
 		await connecterAvecLeLabs(page, 'bizdev@p2enjoy.test')
-		await page.goto(`/tracks/conseil-ia/grands-comptes/cards/${VITRINE}`)
+		await page.goto(`/tracks/studio-web/checklists/cards/${jetable}`)
 		const commande = page.getByTestId('entete-card-etiquettes')
 		await commande.click()
 		const panneau = page.getByTestId('entete-card-panneau-etiquettes')
@@ -102,10 +118,12 @@ test.describe('les étiquettes des affaires (docs/DESIGN_SYSTEM.md §5.73)', () 
 		await expect(partenaire).toBeFocused()
 		// L'archivée n'est pas proposée sur une affaire qui ne la porte pas.
 		await expect(panneau.getByRole('checkbox', { name: /Salon 2025/ })).toHaveCount(0)
-		await partenaire.check()
+		// La case ne se coche qu'après la réponse de la base : un clic, puis l'état constaté.
+		await partenaire.click()
+		await expect(partenaire).toBeChecked()
 		await expect(page.getByTestId('entete-card-etiquettes-pastilles')).toContainText('Partenaire')
 		await capturer(page, 'etiquettes-fiche-panneau-1440', UNITE)
-		const poses = await lire<{ created_by: string }[]>(request, `card_labels?card_id=eq.${VITRINE}&select=created_by`)
+		const poses = await lire<{ created_by: string }[]>(request, `card_labels?card_id=eq.${jetable}&select=created_by`)
 		expect(poses).toEqual([{ created_by: '5eed0000-0000-4000-8000-000000000012' }])
 		await page.keyboard.press('Escape')
 		await expect(commande).toBeFocused()

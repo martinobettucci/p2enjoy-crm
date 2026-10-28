@@ -7499,7 +7499,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
 | CRM-068 | Checklists et modèles de cards | `[P]` |
-| CRM-069 | Étiquettes et digest quotidien — **arbitrée** (décision 769) : catalogue d'étiquettes par espace (administrateurs ; palette fermée ; archivable), posées par qui écrit l'affaire ; digest quotidien par email consenti (7 h, `pg_cron`, identité de service) ; connecteur : étiquettes oui, famille `affaires` existante ; digest non. Spécification `docs/SPEC-etiquettes-digest.md` **validée** (décision 771) — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-27 17:11 UTC — état avant : [ ]* | `[@]` |
+| CRM-069 | Étiquettes et digest quotidien — **arbitrée** (décision 769) : catalogue d'étiquettes par espace (administrateurs ; palette fermée ; archivable), posées par qui écrit l'affaire ; digest quotidien par email consenti (7 h, `pg_cron`, identité de service) ; connecteur : étiquettes oui, famille `affaires` existante ; digest non. Spécification `docs/SPEC-etiquettes-digest.md` **validée** (décision 771) | `[P]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV | `[ ]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |
@@ -10803,7 +10803,7 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       été rejouée — elle n'est la Definition of Done d'aucune unité (décision 553) et reste l'objet
       d'une session dédiée. Les trois harnais que ce changement touche l'ont été.
 
-### CRM-069 — Étiquettes et digest quotidien `[@]`
+### CRM-069 — Étiquettes et digest quotidien `[P]`
 
 Arbitrée par la décision 769, spécification validée par la décision 771 : `docs/SPEC-etiquettes-digest.md`. Connecteur :
 étiquettes dans la famille `affaires` existante ; digest hors connecteur. Tranches (§7) :
@@ -10813,35 +10813,46 @@ Arbitrée par la décision 769, spécification validée par la décision 771 : `
       révisées (décision 51) : `0016` 176 politiques, `0019` vingt-trois types du fil, `database.types.test-d.ts` ; API
       `etiquettes.spec.ts` **3/3** (refus du business developer, de la lectrice et de l'anonyme par requête directe ;
       aucune suppression du catalogue) ; types régénérés, typecheck vert ; SCHEMA, PROD_MIGRATIONS, CHANGELOG, harnais.
-- [~] **T2 — les étiquettes à l'écran** : design system ; Réglages ▸ Étiquettes, fiche, board, liste et filtre ; seed ;
+- [x] **T2 — les étiquettes à l'écran** : design system ; Réglages ▸ Étiquettes, fiche, board, liste et filtre ; seed ;
       unitaires, E2E, captures, manuel. **Écrite le 2026-10-28, prouvée en unitaires** : `docs/DESIGN_SYSTEM.md` §5.73 ;
       `lib/etiquettes.ts`, `PastilleEtiquette`, la carte du board (trois puis « +n »), la fiche (`EtiquettesCard.tsx`), le
       fil, la colonne et le filtre de la vue liste (au serveur), `ReglagesEtiquettes.tsx`, l'entrée d'index et l'aide ;
       unitaires +38 et gardes révisées (décision 51 : `ListeCards`, `liste-cards`, `timeline`, `board`) ; un défaut trouvé
       par l'unitaire (sans case, `Échap` ne refermait pas le panneau) corrigé ; manuel 9.16 (verify-manual 163 contrôles
-      sans anomalie) ; seed §30 écrit. **Reste** : rejouer le seed, le build et les classes CSS, l'E2E
-      `e2e/ui/etiquettes.spec.ts` et les captures. Tout cela attend la fin d'une campagne `verify-*` d'une session
-      parallèle, qui sert le build sur le port 4173.
-- [~] **T3 — les étiquettes dans le connecteur** : `crm_card_get`, `crm_card_list`, `crm_card_label_set` (catalogue
+      sans anomalie) ; seed §30 rejoué, convergent. **Prouvée le 2026-10-28** : build vert, classes CSS sans manque ;
+      `e2e/ui/etiquettes.spec.ts` **5/5**, captures observées (réglages 1440 et 390, fiche et panneau, board « +1 »,
+      filtre de la liste). Deux défauts trouvés par l'E2E et corrigés : la case désactivée pendant l'écriture perdait le
+      focus (`Échap` ne refermait plus le panneau ; unitaire rouge avant, vert après) ; le fil ne relisait pas une pose
+      faite depuis l'en-tête. La pose de la preuve se fait sur une affaire jetable : le fil est en ajout seul.
+- [x] **T3 — les étiquettes dans le connecteur** : `crm_card_get`, `crm_card_list`, `crm_card_label_set` (catalogue
       `docs/SPEC-mcp.md` §9.2) ; pytest, intégration, E2E.
       *Inscrite au catalogue le 2026-10-28* : `docs/SPEC-mcp.md` §9.2 *tredecies* (noms résolus dans l'espace de
       l'affaire, `add` et `remove`, refus avant écriture d'un nom inconnu ou archivé, filtre `label` au serveur).
       **Écrite le 2026-10-28, prouvée en unitaires** : `crm_card_get` et `crm_card_list` rendent `labels`, filtre `label`
       résolu dans le catalogue de l'espace ; `affaires_etiquettes.py` (`crm_card_label_set`) ; le détail des événements
       `label_added` et `label_removed` ; pytest unitaires +6, suite 274 ; intégration
-      `test_integration_affaires_etiquettes.py` écrite et inscrite à `verify-mcp.sh`. **Reste** : `verify-mcp.sh` et l'E2E
-      du connecteur, après la campagne de la session parallèle.
-- [~] **T4 — le digest en base et à l'envoi** : `digest_subscriptions`, `digest_runs`, `mail_outbox.kind`,
+      `test_integration_affaires_etiquettes.py` écrite et inscrite à `verify-mcp.sh`. **Prouvée le 2026-10-28** :
+      `verify-mcp.sh` **108 contrôles sans anomalie** (unitaires 274, intégration 72, interface 8), après correction de
+      l'intégration (un envoi groupé aux clés inégales rendait 400 ; affaire jetable) ; E2E
+      `e2e/ui/connecteur-etiquettes.spec.ts` **1/1** (un vrai client MCP pose deux étiquettes, l'archivée est refusée
+      avant écriture, la fiche montre les pastilles et le fil), capture observée.
+- [x] **T4 — le digest en base et à l'envoi** : `digest_subscriptions`, `digest_runs`, `mail_outbox.kind`,
       `app.envoyer_digests` et son job ; `mail-sync` sans `Reply-To` ; pgTAP, pytest, contrat de déploiement.
       *2026-10-28 : migration `0133` (adresse du profil posée à chaque session, décision 773) ; pgTAP `0124` 23/23,
-      `0016` révisée, lot de 33 fichiers voisins vert ; `mail-sync` 260/260 ; unitaires 4918/4918, typecheck vert. Reste :
-      l'E2E `mail` de bout en bout (T5).*
-- [~] **T5 — le consentement à l'écran et la preuve de bout en bout** : la case de Réglages ▸ Notifications ; seed ; E2E
+      `0016` révisée, lot de 33 fichiers voisins vert ; `mail-sync` 260/260 ; unitaires 4918/4918, typecheck vert ; E2E
+      `mail` de bout en bout vert (T5).*
+- [x] **T5 — le consentement à l'écran et la preuve de bout en bout** : la case de Réglages ▸ Notifications ; seed ; E2E
       jusqu'à la boîte de développement ; manuel.
       *2026-10-28 : la case « Par email », `lib/digest.ts`, unitaires ; seed « 8 octovicies » (`docs/SPEC-seed.md` §31) ;
-      `e2e/ui/digest-consentement.spec.ts` et `e2e/mail/digest.spec.ts` écrits, non encore joués (le port 4173 est tenu
-      par une autre session). Manuel 5.4, 5.6, 5.7 et 33.5 réécrits, construit, `verify-manual` 163 contrôles sans anomalie. Reste :
-      les deux E2E, les captures.*
+      `e2e/ui/digest-consentement.spec.ts` **1/1** et `e2e/mail/digest.spec.ts` **1/1** — le vrai job pour 7 h 15, la
+      vraie file, le vrai `mail-sync`, la boîte de Driss : l'identité de service, aucun `Reply-To`, les liens complets ;
+      garde du §42.1 de `docs/SPEC-notifications.md` révisée (décision 51), `preferences-notifications.spec.ts` **11/11** ;
+      voisins de la fiche **69/69** ; unitaires **4919/4919**. Manuel 5.4, 5.6, 5.7 et 33.5 réécrits, construit,
+      `verify-manual` 163 contrôles sans anomalie ; capture observée.*
+
+**`[P]` le 2026-10-28** : tout est prouvé en développement. Reste la livraison sur instruction du responsable, et son
+constat en production : la migration `0133` après la `0132`, l'image `mail-sync` et sa variable `SITE_URL`, le connecteur
+(`docs/PROD_MIGRATIONS.md`) ; puis un digest reçu un matin par un membre abonné.
 
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 
