@@ -12,6 +12,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/un-board.jpg",
+			"alt": "Un écran du CRM : la barre latérale à gauche, l'en-tête, la barre d'onglets du track et le tableau d'un channel",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "la-disposition-de-l-ecran",
@@ -238,6 +245,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/en-tete.jpg",
+			"alt": "L'en-tête : la recherche, l'icône « Aide », la cloche des notifications, le nom et « Se déconnecter »",
+			"width": 686,
+			"height": 68
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/aucun-channel.jpg",
+			"alt": "La barre d'onglets hors d'un track, qui écrit « Aucun channel »",
+			"width": 123,
+			"height": 53
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "le-fil-d-ariane-savoir-ou-vous-etes",
@@ -292,6 +313,13 @@
 					]
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/fil-d-ariane.jpg",
+			"alt": "Le fil d'Ariane d'une affaire : l'espace, le track, le channel, puis le titre de l'affaire en gras",
+			"width": 527,
+			"height": 68
 		},
 		{
 			"type": "list",
@@ -605,7 +633,7 @@
 				},
 				{
 					"type": "text",
-					"text": " est raccourci par « … » ; survolez-le pour lire le nom complet."
+					"text": " est raccourci par des points de suspension ; survolez-le pour lire le nom complet."
 				}
 			]
 		},
@@ -656,13 +684,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "« … »"
+							"text": "…"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " ouvre la liste des niveaux masqués — votre espace et\nle track —, chacun cliquable. Au clavier, atteignez-le avec "
+					"text": ", « Afficher le chemin complet », ouvre la liste des niveaux masqués — votre espace et\nle track —, chacun cliquable. Au clavier, atteignez-le avec "
 				},
 				{
 					"type": "code",
@@ -689,6 +717,13 @@
 					"text": "."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/fil-d-ariane-telephone.jpg",
+			"alt": "Le fil d'Ariane sur un téléphone : le bouton aux points de suspension, le channel, puis le titre de l'affaire",
+			"width": 390,
+			"height": 72
 		},
 		{
 			"type": "paragraph",
@@ -899,6 +934,13 @@
 					"text": ")."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/barre-laterale.jpg",
+			"alt": "La barre latérale : les entrées de navigation, puis la section Tracks et ses pilules colorées",
+			"width": 251,
+			"height": 681
 		},
 		{
 			"type": "paragraph",
@@ -1333,6 +1375,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/barre-d-onglets.jpg",
+			"alt": "La barre d'onglets d'un track : les channels, puis « Nouveau channel » et « Coûts »",
+			"width": 313,
+			"height": 72
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1543,6 +1592,27 @@
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/track-sans-channel.jpg",
+			"alt": "Un track sans channel : « Aucun channel dans ce track »",
+			"width": 548,
+			"height": 235
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/workflow-sans-etape.jpg",
+			"alt": "Un channel dont le workflow n'a aucune étape : « Ce workflow ne déclare aucune étape » et le lien « Ouvrir l'éditeur de workflows »",
+			"width": 548,
+			"height": 287
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/track-introuvable.jpg",
+			"alt": "Une adresse qui ne mène à aucun track : « Track introuvable »",
+			"width": 174,
+			"height": 52
 		},
 		{
 			"type": "heading",
@@ -1806,6 +1876,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/champ-description.jpg",
+			"alt": "Le champ « Description » du formulaire d'un track, dans Réglages ▸ Arborescence",
+			"width": 1132,
+			"height": 97
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1881,6 +1958,13 @@
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/infobulle.jpg",
+			"alt": "L'infobulle d'un track survolé : son nom, puis sa description",
+			"width": 603,
+			"height": 135
 		},
 		{
 			"type": "paragraph",
@@ -2100,6 +2184,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/aller-au-contenu.jpg",
+			"alt": "Le lien « Aller au contenu », apparu à la première tabulation",
+			"width": 172,
+			"height": 64
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "l-aide-le-manuel-depuis-n-importe-quel-ecran",
@@ -2178,6 +2269,13 @@
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/panneau-aide.jpg",
+			"alt": "Le panneau de l'aide ouvert sous son icône : « Aide sur cet écran », le titre de la section, et « Sommaire du manuel »",
+			"width": 433,
+			"height": 285
 		},
 		{
 			"type": "paragraph",
@@ -2289,6 +2387,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/un-chapitre.jpg",
+			"alt": "Un chapitre du manuel : son titre, puis « Dans ce chapitre » et la liste de ses sections",
+			"width": 650,
+			"height": 592
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/voir-en-taille-reelle.jpg",
+			"alt": "Sous une illustration large du manuel, le lien qui l'ouvre en taille réelle dans un nouvel onglet",
+			"width": 163,
+			"height": 57
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -2309,6 +2421,20 @@
 					"text": " ; un chapitre qui\nn'existe pas affiche « Chapitre introuvable » et un lien vers le sommaire."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/chapitre-introuvable.jpg",
+			"alt": "L'adresse d'un chapitre qui n'existe pas : « Chapitre introuvable »",
+			"width": 640,
+			"height": 279
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/manuel-indisponible.jpg",
+			"alt": "Le manuel qui n'a pas pu être lu : « Le manuel n'a pas pu être chargé » et le bouton « Réessayer »",
+			"width": 548,
+			"height": 264
 		},
 		{
 			"type": "heading",
@@ -2483,6 +2609,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/chargement-impossible.jpg",
+			"alt": "L'état « Chargement impossible », avec le bouton « Réessayer »",
+			"width": 548,
+			"height": 287
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire",
@@ -2527,6 +2660,13 @@
 					"text": " — une icône en forme d'œil sur fond gris clair — dit en tête du bloc\npourquoi : « Vous consultez … : les commandes restent visibles mais sont inactives. » Un seul bandeau par bloc ;\nchaque commande grisée y renvoie, et un lecteur d'écran le lit quand elle a le focus."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/bandeau-lecture.jpg",
+			"alt": "Le bandeau d'une lectrice, une icône en forme d'œil sur fond gris, et le bouton « Nouvelle affaire » grisé",
+			"width": 553,
+			"height": 91
 		},
 		{
 			"type": "paragraph",
@@ -2798,6 +2938,13 @@
 					"text": " : vous y voyez la configuration,\ncommandes grisées."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "naviguer-barre-laterale-onglets-etats/reglages-lectrice.jpg",
+			"alt": "L'index des réglages vu par une lectrice : l'entrée « Coût du personnel » en texte grisé",
+			"width": 545,
+			"height": 124
 		}
 	]
 }

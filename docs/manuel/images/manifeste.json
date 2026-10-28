@@ -1,0 +1,927 @@
+{
+	"images": [
+		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/accueil-espace-neuf.jpg",
+			"largeur": 1440,
+			"hauteur": 900,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": null,
+			"pleinePage": true,
+			"libelles": [
+				"/",
+				"1 étape(s) sur 6",
+				"Affaires figées",
+				"Aide",
+				"Aucun channel",
+				"Aucun channel Les channels apparaîtront ici une fois un track ouvert.",
+				"Aucun track",
+				"Board",
+				"Board Inbox Contacts Objectifs Coûts Pilotage Rentabilité Temps Ma journée Affaires figées Réglages",
+				"CM",
+				"Channels du track courant",
+				"Claire Morel",
+				"Contacts",
+				"Coûts",
+				"Créer le workflow de départ",
+				"Créer un premier track",
+				"Créer un premier track Un track regroupe des activités proches — un métier, un marché, une équipe. À faire Vous n'en voyez aucun pour le moment. Ouvrir l'administration de l'arborescence",
+				"Ctrl+K",
+				"En-tête de l'application",
+				"Fait",
+				"Fil d'Ariane",
+				"Guide de démarrage",
+				"Inbox",
+				"Le cycle commercial type — Prospection, Relance, Négociation, Signature, Réalisation, Livré, Perdu —, que vous pourrez modifier ensuite dans l'éditeur.",
+				"Ma journée",
+				"Navigation principale",
+				"Notifications — aucune non lue",
+				"Nouvel espace",
+				"Nouvel espace /",
+				"Nouvel espace / Board",
+				"Nouvel espace / Board Rechercher dans le CRM Ctrl+K CM Claire Morel Se déconnecter",
+				"Objectifs",
+				"Ouvrir l'administration de l'arborescence",
+				"Ouvrir l'éditeur de workflows",
+				"Ouvrir un channel dans ce track",
+				"P2Enjoy CRM",
+				"Pilotage",
+				"Préparer un premier workflow",
+				"Préparer un premier workflow Un workflow décrit les étapes d'une affaire, de la prospection à la signature. Chaque channel en suit un : il faut donc un workflow avant le premier channel. À faire Vous n'en voyez aucun pour le moment. Créer le workflow de départ Le cycle commercial type — Prospection, Relance, Négociation, Signature, Réalisation, Livré, Perdu —, que vous pourrez modifier ensuite dans l'éditeur. Ouvrir l'éditeur de workflows",
+				"Rechercher…",
+				"Rejoindre un espace de travail",
+				"Rejoindre un espace de travail Un espace de travail contient vos tracks, vos channels et vos affaires. Sans lui, rien n'est lisible. Fait",
+				"Rentabilité",
+				"Replier la barre latérale",
+				"Réglages",
+				"Se déconnecter",
+				"Six étapes pour rendre le CRM utilisable. Chacune renvoie vers l'écran qui la réalise, et son état est mesuré à chaque affichage.",
+				"TRACKS",
+				"Temps",
+				"Tracks",
+				"Un espace de travail contient vos tracks, vos channels et vos affaires. Sans lui, rien n'est lisible.",
+				"Un track regroupe des activités proches — un métier, un marché, une équipe.",
+				"Un workflow décrit les étapes d'une affaire, de la prospection à la signature. Chaque channel en suit un : il faut donc un workflow avant le premier channel.",
+				"Vous n'en voyez aucun pour le moment.",
+				"À faire",
+				"À faire Vous n'en voyez aucun pour le moment."
+			]
+		},
+		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/bouton-workflow-de-depart.jpg",
+			"largeur": 631,
+			"hauteur": 339,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": "le-workflow-de-depart-en-un-geste",
+			"pleinePage": false,
+			"libelles": [
+				"Créer le workflow de départ",
+				"Le cycle commercial type — Prospection, Relance, Négociation, Signature, Réalisation, Livré, Perdu —, que vous pourrez modifier ensuite dans l'éditeur.",
+				"Ouvrir l'éditeur de workflows",
+				"Préparer un premier workflow",
+				"Préparer un premier workflow Un workflow décrit les étapes d'une affaire, de la prospection à la signature. Chaque channel en suit un : il faut donc un workflow avant le premier channel. À faire Vous n'en voyez aucun pour le moment. Créer le workflow de départ Le cycle commercial type — Prospection, Relance, Négociation, Signature, Réalisation, Livré, Perdu —, que vous pourrez modifier ensuite dans l'éditeur. Ouvrir l'éditeur de workflows",
+				"Un workflow décrit les étapes d'une affaire, de la prospection à la signature. Chaque channel en suit un : il faut donc un workflow avant le premier channel.",
+				"Vous n'en voyez aucun pour le moment.",
+				"À faire",
+				"À faire Vous n'en voyez aucun pour le moment."
+			]
+		},
+		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/channel-avec-workflow.jpg",
+			"largeur": 1130,
+			"hauteur": 584,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": "le-workflow-de-depart-en-un-geste",
+			"pleinePage": false,
+			"libelles": [
+				"Annuler",
+				"Bleu",
+				"Choisir un workflow…",
+				"Couleur",
+				"Créer",
+				"Description",
+				"Gris",
+				"Identifiant d'URL : minuscules, chiffres et tirets.",
+				"Jaune",
+				"Nom",
+				"Nouveau channel",
+				"Nouveau channel Nom Slug Identifiant d'URL : minuscules, chiffres et tirets. Couleur Bleu Vert Jaune Rouge Gris Workflow Choisir un workflow… Cycle commercial (par défaut) Nouveau workflow Description Créer Annuler",
+				"Nouveau workflow",
+				"Rouge",
+				"Slug",
+				"Vert",
+				"Workflow",
+				"accent",
+				"brand",
+				"danger",
+				"neutral",
+				"success"
+			]
+		},
+		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/channel-sans-workflow.jpg",
+			"largeur": 1130,
+			"hauteur": 564,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": null,
+			"pleinePage": false,
+			"libelles": [
+				"Annuler",
+				"Aucun workflow n'est affectable à ce track. Un channel doit en suivre un ; créez d'abord un workflow global ou propre à ce track.",
+				"Bleu",
+				"Couleur",
+				"Créer",
+				"Description",
+				"Gris",
+				"Identifiant d'URL : minuscules, chiffres et tirets.",
+				"Jaune",
+				"Nom",
+				"Nouveau channel",
+				"Nouveau channel Nom Slug Identifiant d'URL : minuscules, chiffres et tirets. Couleur Bleu Vert Jaune Rouge Gris Workflow Aucun workflow n'est affectable à ce track. Un channel doit en suivre un ; créez d'abord un workflow global ou propre à ce track. Nouveau workflow Description Créer Annuler",
+				"Nouveau workflow",
+				"Rouge",
+				"Slug",
+				"Vert",
+				"Workflow",
+				"accent",
+				"brand",
+				"danger",
+				"neutral",
+				"success"
+			]
+		},
+		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/creation-en-cours.jpg",
+			"largeur": 631,
+			"hauteur": 339,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": "le-workflow-de-depart-en-un-geste",
+			"pleinePage": false,
+			"libelles": [
+				"Création…",
+				"Le cycle commercial type — Prospection, Relance, Négociation, Signature, Réalisation, Livré, Perdu —, que vous pourrez modifier ensuite dans l'éditeur.",
+				"Ouvrir l'éditeur de workflows",
+				"Préparer un premier workflow",
+				"Préparer un premier workflow Un workflow décrit les étapes d'une affaire, de la prospection à la signature. Chaque channel en suit un : il faut donc un workflow avant le premier channel. À faire Vous n'en voyez aucun pour le moment. Création… Le cycle commercial type — Prospection, Relance, Négociation, Signature, Réalisation, Livré, Perdu —, que vous pourrez modifier ensuite dans l'éditeur. Ouvrir l'éditeur de workflows",
+				"Un workflow décrit les étapes d'une affaire, de la prospection à la signature. Chaque channel en suit un : il faut donc un workflow avant le premier channel.",
+				"Vous n'en voyez aucun pour le moment.",
+				"À faire",
+				"À faire Vous n'en voyez aucun pour le moment."
+			]
+		},
+		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/etape-non-verifiee.jpg",
+			"largeur": 631,
+			"hauteur": 197,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": "ce-que-le-guide-dit-exactement-et-ce-qu-il-ne-dit-pas",
+			"pleinePage": false,
+			"libelles": [
+				"Cette étape n'a pas pu être vérifiée",
+				"Cette étape n'a pas pu être vérifiée Réessayer",
+				"Créer un premier track",
+				"Créer un premier track Un track regroupe des activités proches — un métier, un marché, une équipe. Cette étape n'a pas pu être vérifiée Réessayer Ouvrir l'administration de l'arborescence",
+				"Ouvrir l'administration de l'arborescence",
+				"Réessayer",
+				"Un track regroupe des activités proches — un métier, un marché, une équipe."
+			]
+		},
+		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/masquer-le-guide.jpg",
+			"largeur": 633,
+			"hauteur": 73,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": "le-masquer-et-le-retrouver",
+			"pleinePage": false,
+			"libelles": [
+				"Masquer le guide"
+			]
+		},
+		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/panneau-ouvert.jpg",
+			"largeur": 412,
+			"hauteur": 640,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": "le-guide-flottant-des-administrateurs",
+			"pleinePage": false,
+			"libelles": [
+				"2 étape(s) sur 6",
+				"Créer le workflow de départ",
+				"Créer un premier track",
+				"Créer un premier track Un track regroupe des activités proches — un métier, un marché, une équipe. Fait Ouvrir l'administration de l'arborescence",
+				"Démarrage",
+				"Démarrage · 2 sur 6",
+				"Fait",
+				"Ouvrir l'administration de l'arborescence",
+				"Préparer un premier workflow",
+				"Rejoindre un espace de travail",
+				"Rejoindre un espace de travail Un espace de travail contient vos tracks, vos channels et vos affaires. Sans lui, rien n'est lisible. Fait",
+				"Un espace de travail contient vos tracks, vos channels et vos affaires. Sans lui, rien n'est lisible.",
+				"Un track regroupe des activités proches — un métier, un marché, une équipe.",
+				"Un workflow décrit les étapes d'une affaire, de la prospection à la signature. Chaque channel en suit un : il faut donc un workflow avant le premier channel.",
+				"Vous n'en voyez aucun pour le moment.",
+				"À faire",
+				"À faire Vous n'en voyez aucun pour le moment."
+			]
+		},
+		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/pastille.jpg",
+			"largeur": 232,
+			"hauteur": 72,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": "le-guide-flottant-des-administrateurs",
+			"pleinePage": false,
+			"libelles": [
+				"Démarrage · 2 sur 6"
+			]
+		},
+		{
+			"fichier": "le-guide-de-demarrage-par-ou-commencer/progression.jpg",
+			"largeur": 633,
+			"hauteur": 504,
+			"chapitre": "le-guide-de-demarrage-par-ou-commencer",
+			"section": "l-etat-d-une-etape-est-mesure-jamais-memorise",
+			"pleinePage": false,
+			"libelles": [
+				"3 étape(s) sur 6",
+				"Créer un premier track",
+				"Créer un premier track Un track regroupe des activités proches — un métier, un marché, une équipe. Fait Ouvrir l'administration de l'arborescence",
+				"Fait",
+				"Ouvrir l'administration de l'arborescence",
+				"Ouvrir l'éditeur de workflows",
+				"Préparer un premier workflow",
+				"Préparer un premier workflow Un workflow décrit les étapes d'une affaire, de la prospection à la signature. Chaque channel en suit un : il faut donc un workflow avant le premier channel. Fait Ouvrir l'éditeur de workflows",
+				"Rejoindre un espace de travail",
+				"Rejoindre un espace de travail Un espace de travail contient vos tracks, vos channels et vos affaires. Sans lui, rien n'est lisible. Fait",
+				"Un espace de travail contient vos tracks, vos channels et vos affaires. Sans lui, rien n'est lisible.",
+				"Un track regroupe des activités proches — un métier, un marché, une équipe.",
+				"Un workflow décrit les étapes d'une affaire, de la prospection à la signature. Chaque channel en suit un : il faut donc un workflow avant le premier channel."
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/aller-au-contenu.jpg",
+			"largeur": 172,
+			"hauteur": 64,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "naviguer-au-clavier",
+			"pleinePage": false,
+			"libelles": [
+				"Aller au contenu",
+				"P2Enjoy CRM"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/aucun-channel.jpg",
+			"largeur": 123,
+			"hauteur": 53,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "la-disposition-de-l-ecran",
+			"pleinePage": false,
+			"libelles": [
+				"Aucun channel",
+				"Aucun channel Les channels apparaîtront ici une fois un track ouvert.",
+				"Channels du track courant"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/bandeau-lecture.jpg",
+			"largeur": 553,
+			"hauteur": 91,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire",
+			"pleinePage": false,
+			"libelles": [
+				"Vous consultez ce channel. Vos droits ne vous permettent pas d'en modifier les affaires : les commandes restent visibles mais sont inactives."
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/barre-d-onglets.jpg",
+			"largeur": 313,
+			"hauteur": 72,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "les-onglets-d-un-track",
+			"pleinePage": false,
+			"libelles": [
+				"Coûts",
+				"Nouveau channel",
+				"Vues du track"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/barre-laterale.jpg",
+			"largeur": 251,
+			"hauteur": 681,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "la-barre-laterale-et-la-section-tracks",
+			"pleinePage": false,
+			"libelles": [
+				"Affaires figées",
+				"Board",
+				"Board Inbox Contacts Objectifs Coûts Pilotage Rentabilité Temps Ma journée Affaires figées Réglages",
+				"Conseil & IA",
+				"Conseil & IA Missions de conseil et de mise en œuvre de l'intelligence artificielle : diagnostic, prototype, déploiement.",
+				"Contacts",
+				"Coûts",
+				"Formation",
+				"Inbox",
+				"Ma journée",
+				"Navigation principale",
+				"Objectifs",
+				"Pilotage",
+				"Rentabilité",
+				"Réglages",
+				"Studio web",
+				"Studio web Conception, développement et maintenance de sites et d'applications web.",
+				"TRACKS",
+				"Temps",
+				"Tracks"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/champ-description.jpg",
+			"largeur": 1132,
+			"hauteur": 97,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol",
+			"pleinePage": false,
+			"libelles": [
+				"Description",
+				"Missions de conseil et de mise en œuvre de l'intelligence artificielle : diagnostic, prototype, déploiement."
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/chapitre-introuvable.jpg",
+			"largeur": 640,
+			"hauteur": 279,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "l-aide-le-manuel-depuis-n-importe-quel-ecran",
+			"pleinePage": false,
+			"libelles": [
+				"/",
+				"Ce chapitre n'existe pas, ou plus, dans le manuel.",
+				"Chapitre introuvable",
+				"Ctrl+K",
+				"Rechercher…"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/chargement-impossible.jpg",
+			"largeur": 548,
+			"hauteur": 287,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "quand-quelque-chose-ne-va-pas",
+			"pleinePage": false,
+			"libelles": [
+				"Chargement impossible",
+				"Le serveur n'a pas répondu. Vérifiez que l'instance est démarrée, puis réessayez.",
+				"Réessayer"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/en-tete.jpg",
+			"largeur": 686,
+			"hauteur": 68,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "la-disposition-de-l-ecran",
+			"pleinePage": false,
+			"libelles": [
+				"1",
+				"Aide",
+				"Camille Aubert",
+				"Ctrl+K",
+				"Notifications — 1 non lue",
+				"Rechercher…",
+				"Se déconnecter"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/fil-d-ariane-telephone.jpg",
+			"largeur": 390,
+			"hauteur": 72,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "le-fil-d-ariane-savoir-ou-vous-etes",
+			"pleinePage": false,
+			"libelles": [
+				"/",
+				"Afficher le chemin complet",
+				"Afficher le chemin complet /",
+				"Afficher le chemin complet / Grands comptes / Migration ERP Sogexia",
+				"Fil d'Ariane",
+				"Grands comptes",
+				"Grands comptes /",
+				"Migration ERP Sogexia"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/fil-d-ariane.jpg",
+			"largeur": 527,
+			"hauteur": 68,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "le-fil-d-ariane-savoir-ou-vous-etes",
+			"pleinePage": false,
+			"libelles": [
+				"/",
+				"Conseil & IA",
+				"Conseil & IA /",
+				"Fil d'Ariane",
+				"Grands comptes",
+				"Grands comptes /",
+				"Migration ERP Sogexia",
+				"P2Enjoy SAS",
+				"P2Enjoy SAS /",
+				"P2Enjoy SAS / Conseil & IA / Grands comptes / Migration ERP Sogexia"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/infobulle.jpg",
+			"largeur": 603,
+			"hauteur": 135,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "la-description-d-un-track-d-un-channel-ou-d-une-affaire-au-survol",
+			"pleinePage": false,
+			"libelles": [
+				"Actions",
+				"Actions Audit sécurité applicative",
+				"Conseil & IA",
+				"Conseil & IA Missions de conseil et de mise en œuvre de l'intelligence artificielle : diagnostic, prototype, déploiement.",
+				"Formation",
+				"Missions de conseil et de mise en œuvre de l'intelligence artificielle : diagnostic, prototype, déploiement.",
+				"Studio web",
+				"Studio web Conception, développement et maintenance de sites et d'applications web."
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/manuel-indisponible.jpg",
+			"largeur": 548,
+			"hauteur": 264,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "l-aide-le-manuel-depuis-n-importe-quel-ecran",
+			"pleinePage": false,
+			"libelles": [
+				"Le manuel n'a pas pu être chargé",
+				"Réessayer",
+				"Vérifiez votre connexion, puis réessayez."
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/panneau-aide.jpg",
+			"largeur": 433,
+			"hauteur": 285,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "l-aide-le-manuel-depuis-n-importe-quel-ecran",
+			"pleinePage": false,
+			"libelles": [
+				"0",
+				"1",
+				"9.10 Le tableau kanban d'un channel",
+				"Aide",
+				"Aide Fermer l'aide Aide sur cet écran 9.10 Le tableau kanban d'un channel Sommaire du manuel",
+				"Aide sur cet écran",
+				"Camille Aubert",
+				"Fermer l'aide",
+				"Notifications — 1 non lue",
+				"Se déconnecter",
+				"Sommaire du manuel"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/reglages-lectrice.jpg",
+			"largeur": 545,
+			"hauteur": 124,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "les-commandes-grisees-ce-que-votre-role-vous-laisse-faire",
+			"pleinePage": false,
+			"libelles": [
+				"Coût du personnel",
+				"Coût du personnel Le coût d'un quart de journée de chacun, versionné par date d'effet, qui valorise le temps saisi.",
+				"Le coût d'un quart de journée de chacun, versionné par date d'effet, qui valorise le temps saisi."
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/track-introuvable.jpg",
+			"largeur": 174,
+			"hauteur": 52,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "les-onglets-d-un-track",
+			"pleinePage": false,
+			"libelles": [
+				"Track introuvable"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/track-sans-channel.jpg",
+			"largeur": 548,
+			"hauteur": 235,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "les-onglets-d-un-track",
+			"pleinePage": false,
+			"libelles": [
+				"Aucun channel dans ce track",
+				"Un channel se crée avec « Nouveau channel », dans la barre d'onglets ci-dessus."
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/un-board.jpg",
+			"largeur": 1440,
+			"hauteur": 900,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": null,
+			"pleinePage": true,
+			"libelles": [
+				"/",
+				"0",
+				"0 j dans cette étape",
+				"0/1",
+				"0/1 0 point coché sur 1 dans cette étape",
+				"0/2",
+				"0/2 0 point coché sur 2 dans cette étape",
+				"1",
+				"125 000 €",
+				"15",
+				"15 500 €",
+				"173 000 €",
+				"2",
+				"30",
+				"30 j dans cette étape",
+				"4",
+				"44",
+				"48",
+				"48 000 €",
+				"75",
+				"Actions",
+				"Actions Audit sécurité applicative",
+				"Actions Migration ERP Sogexia",
+				"Actions Refonte du site vitrine",
+				"Affaires figées",
+				"Affichage des affaires en sommeil",
+				"Afficher les affaires en sommeil",
+				"Aide",
+				"Aucune affaire à cette étape.",
+				"Audit sécurité applicative",
+				"Audit sécurité applicative Partenaire 15 500 € Dynamique 15 Santé 4 Premier appel de qualification 30 j dans cette étape 0/2 0 point coché sur 2 dans cette étape Actions",
+				"Board",
+				"Board Inbox Contacts Objectifs Coûts Pilotage Rentabilité Temps Ma journée Affaires figées Réglages",
+				"Board du channel",
+				"Camille Aubert",
+				"Channels du track courant",
+				"Conseil & IA",
+				"Conseil & IA /",
+				"Conseil & IA Missions de conseil et de mise en œuvre de l'intelligence artificielle : diagnostic, prototype, déploiement.",
+				"Contacts",
+				"Coûts",
+				"Ctrl+K",
+				"Driss Lemoine",
+				"Dynamique",
+				"Dynamique 15",
+				"Dynamique 15 sur 100, en danger",
+				"Dynamique 75",
+				"Dynamique 75 sur 100, sain",
+				"En-tête de l'application",
+				"Fil d'Ariane",
+				"Formation",
+				"Grands comptes",
+				"Grands comptes Clients stratégiques suivis par un interlocuteur dédié, sur des cycles de décision longs.",
+				"Inbox",
+				"Liste",
+				"Ma journée",
+				"Migration ERP Sogexia",
+				"Migration ERP Sogexia Bascule de l'ancien progiciel de gestion vers la nouvelle plateforme comptable. Décision attendue de la direction financière avant la clôture de l'exercice. 125 000 € Dynamique 75 Santé 44 Obtenir le cadrage technique 0 j dans cette étape 0/1 0 point coché sur 1 dans cette étape Actions",
+				"Navigation principale",
+				"Notifications — 1 non lue",
+				"Nouveau channel",
+				"Nouvelle affaire",
+				"Négociation",
+				"Négociation 0 Aucune affaire à cette étape.",
+				"Objectifs",
+				"Obtenir le cadrage technique",
+				"P2Enjoy CRM",
+				"P2Enjoy SAS",
+				"P2Enjoy SAS /",
+				"P2Enjoy SAS / Conseil & IA / Grands comptes",
+				"P2Enjoy SAS / Conseil & IA / Grands comptes Rechercher dans le CRM Ctrl+K 1 Camille Aubert Se déconnecter",
+				"Partenaire",
+				"Pilotage",
+				"Premier appel de qualification",
+				"Prospection",
+				"Prospection 1 15 500 € Audit sécurité applicative Partenaire 15 500 € Dynamique 15 Santé 4 Premier appel de qualification 30 j dans cette étape 0/2 0 point coché sur 2 dans cette étape Actions",
+				"Prospection 1 15 500 € Audit sécurité applicative Partenaire 15 500 € Dynamique 15 Santé 4 Premier appel de qualification 30 j dans cette étape 0/2 0 point coché sur 2 dans cette étape Actions Relance 2 173 000 € Refonte du site vitrine 48 000 € Dynamique 75 Santé 48 Relancer la DSI après la démo 0 j dans cette étape 0/1 0 point coché sur 1 dans cette étape Actions Migration ERP Sogexia Bascule de l'ancien progiciel de gestion vers la nouvelle plateforme comptable. Décision attendue de la direction financière avant la clôture de l'exercice. 125 000 € Dynamique 75 Santé 44 Obtenir le cadrage technique 0 j dans cette étape 0/1 0 point coché sur 1 dans cette étape Actions Négociation 0 Aucune affaire à cette étape. Signature 0 Aucune affaire à cette étape. Réalisation en cours 0 Aucune affaire à cette étape. Livré 1 210 000 € Socle analytique — Vertuo Entrepôt de données et tableaux de bord pour les équipes commerciales. 210 000 € Actions Perdu 0 Aucune affaire à cette étape.",
+				"Prospection Premiers contacts et pistes à qualifier avant toute proposition chiffrée.",
+				"Prospection Premiers contacts et pistes à qualifier avant toute proposition chiffrée. Grands comptes Clients stratégiques suivis par un interlocuteur dédié, sur des cycles de décision longs.",
+				"Rechercher…",
+				"Refonte du site vitrine",
+				"Refonte du site vitrine 48 000 € Dynamique 75 Santé 48 Relancer la DSI après la démo 0 j dans cette étape 0/1 0 point coché sur 1 dans cette étape Actions",
+				"Relance",
+				"Relance 2 173 000 € Refonte du site vitrine 48 000 € Dynamique 75 Santé 48 Relancer la DSI après la démo 0 j dans cette étape 0/1 0 point coché sur 1 dans cette étape Actions Migration ERP Sogexia Bascule de l'ancien progiciel de gestion vers la nouvelle plateforme comptable. Décision attendue de la direction financière avant la clôture de l'exercice. 125 000 € Dynamique 75 Santé 44 Obtenir le cadrage technique 0 j dans cette étape 0/1 0 point coché sur 1 dans cette étape Actions",
+				"Relancer la DSI après la démo",
+				"Rentabilité",
+				"Replier la barre latérale",
+				"Réglages",
+				"Santé",
+				"Santé 4",
+				"Santé 4 sur 100, en danger",
+				"Santé 44",
+				"Santé 44 sur 100, à surveiller",
+				"Santé 48",
+				"Santé 48 sur 100, à surveiller",
+				"Se déconnecter",
+				"Signature",
+				"Studio web",
+				"Studio web Conception, développement et maintenance de sites et d'applications web.",
+				"TRACKS",
+				"Tableau",
+				"Tableau Liste",
+				"Temps",
+				"Tracks",
+				"Vue du channel",
+				"Vues du track",
+				"j dans cette étape",
+				"on",
+				"Étiquettes"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/un-chapitre.jpg",
+			"largeur": 650,
+			"hauteur": 592,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "l-aide-le-manuel-depuis-n-importe-quel-ecran",
+			"pleinePage": false,
+			"libelles": [
+				"/",
+				"3. Naviguer : barre latérale, onglets, états",
+				"3.1 La disposition de l'écran",
+				"3.10 Quand quelque chose ne va pas",
+				"3.11 Les commandes grisées : ce que votre rôle vous laisse faire",
+				"3.2 Le fil d'Ariane : savoir où vous êtes",
+				"3.3 La barre latérale et la section Tracks",
+				"3.4 Les onglets d'un track",
+				"3.5 Les accès par track et par channel",
+				"3.6 La description d'un track, d'un channel ou d'une affaire, au survol",
+				"3.7 Replier la barre latérale",
+				"3.8 Naviguer au clavier",
+				"3.9 L'aide : le manuel, depuis n'importe quel écran",
+				"Aide",
+				"Aide /",
+				"Aucun channel",
+				"Aucun channel Les channels apparaîtront ici une fois un track ouvert.",
+				"Channels du track courant",
+				"Dans ce chapitre",
+				"Dans ce chapitre 3.1 La disposition de l'écran 3.2 Le fil d'Ariane : savoir où vous êtes 3.3 La barre latérale et la section Tracks 3.4 Les onglets d'un track 3.5 Les accès par track et par channel 3.6 La description d'un track, d'un channel ou d'une affaire, au survol 3.7 Replier la barre latérale 3.8 Naviguer au clavier 3.9 L'aide : le manuel, depuis n'importe quel écran 3.10 Quand quelque chose ne va pas 3.11 Les commandes grisées : ce que votre rôle vous laisse faire",
+				"Fil d'Ariane",
+				"P2Enjoy SAS",
+				"P2Enjoy SAS /",
+				"P2Enjoy SAS / Aide / 3. Naviguer : barre latérale, onglets, états"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/voir-en-taille-reelle.jpg",
+			"largeur": 163,
+			"hauteur": 57,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "l-aide-le-manuel-depuis-n-importe-quel-ecran",
+			"pleinePage": false,
+			"libelles": [
+				"Voir en taille réelle",
+				"Voir en taille réelle, dans un nouvel onglet : L'écran de connexion du CRM, avec son unique bouton « Se connecter avec LeLabs »"
+			]
+		},
+		{
+			"fichier": "naviguer-barre-laterale-onglets-etats/workflow-sans-etape.jpg",
+			"largeur": 548,
+			"hauteur": 287,
+			"chapitre": "naviguer-barre-laterale-onglets-etats",
+			"section": "les-onglets-d-un-track",
+			"pleinePage": false,
+			"libelles": [
+				"Ce workflow ne déclare aucune étape",
+				"Ouvrir l'éditeur de workflows",
+				"Un board sans étape n'a aucune colonne. Les étapes d'un workflow s'ajoutent dans l'éditeur de workflows."
+			]
+		},
+		{
+			"fichier": "retrouver-n-importe-quoi-la-recherche/champ.jpg",
+			"largeur": 273,
+			"hauteur": 68,
+			"chapitre": "retrouver-n-importe-quoi-la-recherche",
+			"section": "l-ouvrir",
+			"pleinePage": false,
+			"libelles": [
+				"Ctrl+K",
+				"Rechercher…"
+			]
+		},
+		{
+			"fichier": "retrouver-n-importe-quoi-la-recherche/message-non-classe.jpg",
+			"largeur": 295,
+			"hauteur": 98,
+			"chapitre": "retrouver-n-importe-quoi-la-recherche",
+			"section": "la-parcourir-au-clavier-et-y-aller",
+			"pleinePage": false,
+			"libelles": [
+				"2",
+				"DOSSIERS",
+				"Dossiers",
+				"Non classés",
+				"Non classés 2"
+			]
+		},
+		{
+			"fichier": "retrouver-n-importe-quoi-la-recherche/resultats.jpg",
+			"largeur": 479,
+			"hauteur": 324,
+			"chapitre": "retrouver-n-importe-quoi-la-recherche",
+			"section": "ce-qu-elle-cherche",
+			"pleinePage": false,
+			"libelles": [
+				"0",
+				"1",
+				"2",
+				"Affaire",
+				"Affaire Correctif majeur livré — extranet Sogexia Maintenance",
+				"Affaire Migration ERP Sogexia Grands comptes",
+				"Affaire Reprise de dette technique — API Sogexia Maintenance",
+				"Aide",
+				"Camille Aubert",
+				"Correctif majeur livré — extranet Sogexia",
+				"Coûts",
+				"Grands comptes",
+				"Maintenance",
+				"Migration ERP Sogexia",
+				"Notifications — 1 non lue",
+				"Négociation",
+				"Organisation",
+				"Organisation Sogexia sogexia.example",
+				"Organisation Sogexia sogexia.example Affaire Correctif majeur livré — extranet Sogexia Maintenance Affaire Migration ERP Sogexia Grands comptes Affaire Reprise de dette technique — API Sogexia Maintenance",
+				"Rechercher…",
+				"Reprise de dette technique — API Sogexia",
+				"Résultats de la recherche",
+				"Sogexia",
+				"sogexia",
+				"sogexia.example"
+			]
+		},
+		{
+			"fichier": "se-connecter-et-se-deconnecter/acces-en-attente.jpg",
+			"largeur": 430,
+			"hauteur": 264,
+			"chapitre": "se-connecter-et-se-deconnecter",
+			"section": "les-messages-de-l-ecran-de-connexion",
+			"pleinePage": false,
+			"libelles": [
+				"Accès en attente",
+				"Accès en attente Votre compte LeLabs attendu@p2enjoy.test n'est pas encore vérifié. Un administrateur de LeLabs doit confirmer votre identité avant que le CRM vous ouvre ses espaces ; ce geste est humain et peut prendre du temps.",
+				"Se connecter avec LeLabs",
+				"Votre compte LeLabs attendu@p2enjoy.test n'est pas encore vérifié. Un administrateur de LeLabs doit confirmer votre identité avant que le CRM vous ouvre ses espaces ; ce geste est humain et peut prendre du temps."
+			]
+		},
+		{
+			"fichier": "se-connecter-et-se-deconnecter/connexion-en-cours.jpg",
+			"largeur": 430,
+			"hauteur": 184,
+			"chapitre": "se-connecter-et-se-deconnecter",
+			"section": null,
+			"pleinePage": false,
+			"libelles": [
+				"Connexion LeLabs en cours"
+			]
+		},
+		{
+			"fichier": "se-connecter-et-se-deconnecter/ecran-de-connexion.jpg",
+			"largeur": 1440,
+			"hauteur": 900,
+			"chapitre": "se-connecter-et-se-deconnecter",
+			"section": null,
+			"pleinePage": true,
+			"libelles": [
+				"L'accès est réservé aux personnes inscrites par un administrateur de leur espace, avec un compte LeLabs vérifié.",
+				"P2Enjoy CRM",
+				"Se connecter",
+				"Se connecter avec LeLabs"
+			]
+		},
+		{
+			"fichier": "se-connecter-et-se-deconnecter/redirection-vers-lelabs.jpg",
+			"largeur": 430,
+			"hauteur": 73,
+			"chapitre": "se-connecter-et-se-deconnecter",
+			"section": null,
+			"pleinePage": false,
+			"libelles": [
+				"Redirection vers LeLabs…"
+			]
+		},
+		{
+			"fichier": "se-connecter-et-se-deconnecter/se-deconnecter.jpg",
+			"largeur": 289,
+			"hauteur": 68,
+			"chapitre": "se-connecter-et-se-deconnecter",
+			"section": "se-deconnecter",
+			"pleinePage": false,
+			"libelles": [
+				"Camille Aubert",
+				"Se déconnecter"
+			]
+		},
+		{
+			"fichier": "vos-notifications-savoir-qu-on-vous-a-nomme/cloche-sans-compte.jpg",
+			"largeur": 73,
+			"hauteur": 68,
+			"chapitre": "vos-notifications-savoir-qu-on-vous-a-nomme",
+			"section": "ce-que-la-cloche-annonce",
+			"pleinePage": false,
+			"libelles": [
+				"Notifications"
+			]
+		},
+		{
+			"fichier": "vos-notifications-savoir-qu-on-vous-a-nomme/cloche.jpg",
+			"largeur": 430,
+			"hauteur": 68,
+			"chapitre": "vos-notifications-savoir-qu-on-vous-a-nomme",
+			"section": null,
+			"pleinePage": false,
+			"libelles": [
+				"1",
+				"Aide",
+				"Driss Lemoine",
+				"Notifications — 1 non lue",
+				"Se déconnecter"
+			]
+		},
+		{
+			"fichier": "vos-notifications-savoir-qu-on-vous-a-nomme/marquage-sans-effet.jpg",
+			"largeur": 376,
+			"hauteur": 264,
+			"chapitre": "vos-notifications-savoir-qu-on-vous-a-nomme",
+			"section": "marquer-lu-et-marquer-non-lu",
+			"pleinePage": false,
+			"libelles": [
+				"Aucune notification n'a été modifiée. Vos droits ont peut-être changé depuis l'ouverture : rechargez la page.",
+				"Aucune notification.",
+				"Fermer les notifications",
+				"Notifications",
+				"Notifications Fermer les notifications Aucune notification. Vous serez prévenu ici lorsqu'on vous mentionnera dans une affaire. Aucune notification n'a été modifiée. Vos droits ont peut-être changé depuis l'ouverture : rechargez la page.",
+				"Vos notifications",
+				"Vous serez prévenu ici lorsqu'on vous mentionnera dans une affaire."
+			]
+		},
+		{
+			"fichier": "vos-notifications-savoir-qu-on-vous-a-nomme/mentionner.jpg",
+			"largeur": 519,
+			"hauteur": 158,
+			"chapitre": "vos-notifications-savoir-qu-on-vous-a-nomme",
+			"section": "mentionner-quelqu-un-dans-un-commentaire",
+			"pleinePage": false,
+			"libelles": [
+				"Driss Lemoine",
+				"Mentionner",
+				"Personnes à prévenir",
+				"on"
+			]
+		},
+		{
+			"fichier": "vos-notifications-savoir-qu-on-vous-a-nomme/panneau.jpg",
+			"largeur": 376,
+			"hauteur": 260,
+			"chapitre": "vos-notifications-savoir-qu-on-vous-a-nomme",
+			"section": "ce-que-le-panneau-montre",
+			"pleinePage": false,
+			"libelles": [
+				"28/10/2026 01:51",
+				"Camille Aubert",
+				"Camille Aubert vous a mentionné",
+				"Camille Aubert vous a mentionné 28/10/2026 01:51 La DSI a confirmé le périmètre de la refonte : trois gabarits, pas cinq. Refonte du site vitrine Conseil & IA › Grands comptes",
+				"Conseil & IA › Grands comptes",
+				"Fermer les notifications",
+				"La DSI a confirmé le périmètre de la refonte : trois gabarits, pas cinq.",
+				"Marquer comme lue",
+				"Notifications",
+				"Notifications Fermer les notifications Camille Aubert vous a mentionné 28/10/2026 01:51 La DSI a confirmé le périmètre de la refonte : trois gabarits, pas cinq. Refonte du site vitrine Conseil & IA › Grands comptes",
+				"Ouvrir Conseil & IA › Grands comptes",
+				"Ouvrir Refonte du site vitrine",
+				"Refonte du site vitrine",
+				"Vos notifications"
+			]
+		},
+		{
+			"fichier": "vos-notifications-savoir-qu-on-vous-a-nomme/recevoir-les-mentions.jpg",
+			"largeur": 633,
+			"hauteur": 339,
+			"chapitre": "vos-notifications-savoir-qu-on-vous-a-nomme",
+			"section": "choisir-ce-que-vous-recevez",
+			"pleinePage": false,
+			"libelles": [
+				"Décochez ce que vous ne voulez plus voir arriver dans la cloche. Rien n'est supprimé : les notifications continuent d'être conservées, elles sont simplement masquées, et recocher les rend.",
+				"Enregistré",
+				"Notifications",
+				"Par email",
+				"Quand quelqu'un vous nomme dans le commentaire d'une affaire.",
+				"Recevoir chaque matin le récapitulatif de P2Enjoy SAS",
+				"Recevoir chaque matin le récapitulatif de P2Enjoy SAS Vers 7 h : vos actions en retard ou dues aujourd'hui, vos mentions non lues, vos affaires figées. Rien n'est envoyé les jours où il n'y a rien.",
+				"Recevoir les mentions",
+				"Recevoir les mentions Quand quelqu'un vous nomme dans le commentaire d'une affaire.",
+				"Vers 7 h : vos actions en retard ou dues aujourd'hui, vos mentions non lues, vos affaires figées. Rien n'est envoyé les jours où il n'y a rien.",
+				"on"
+			]
+		}
+	]
+}

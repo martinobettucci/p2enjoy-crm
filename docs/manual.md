@@ -13,6 +13,12 @@ connecté là-bas, vous revenez au CRM, à la page d'où vous étiez parti si vo
 board. Pendant l'aller, le bouton affiche « Redirection vers LeLabs… » ; au retour, une carte grisée annonce « Connexion
 LeLabs en cours » le temps que le CRM vérifie votre connexion.
 
+![L'écran de connexion du CRM, avec son unique bouton « Se connecter avec LeLabs »](manuel/images/se-connecter-et-se-deconnecter/ecran-de-connexion.jpg)
+
+![Le bouton pendant l'aller vers LeLabs, qui affiche « Redirection vers LeLabs… »](manuel/images/se-connecter-et-se-deconnecter/redirection-vers-lelabs.jpg)
+
+![La carte grisée « Connexion LeLabs en cours », au retour de LeLabs](manuel/images/se-connecter-et-se-deconnecter/connexion-en-cours.jpg)
+
 **Ouvrir une adresse du CRM sans être connecté** — un lien reçu, un favori — affiche l'écran de
 connexion, et rien d'autre : ni menu, ni page vide. Une fois connecté avec LeLabs, vous arrivez sur
 la page demandée.
@@ -43,6 +49,8 @@ Deux sortes de messages existent, et ils ne se ressemblent pas.
 **« Accès en attente »** — sur fond jaune pâle, avec une icône de cercle en pointillés. Vous n'avez
 rien fait de faux : un geste manque, qui n'est pas le vôtre ou que vous faites ailleurs. Le message
 nomme votre adresse.
+
+![Le message « Accès en attente » sur fond jaune pâle, qui nomme l'adresse, au-dessus du bouton « Se connecter avec LeLabs »](manuel/images/se-connecter-et-se-deconnecter/acces-en-attente.jpg)
 
 | Message | Ce qu'il faut faire |
 |---|---|
@@ -85,11 +93,15 @@ ouverte dans ce navigateur, **Se connecter avec LeLabs** vous reconnecte sans vo
 mot de passe. Sur un ordinateur partagé, fermez aussi votre session LeLabs, depuis votre espace de
 compte LeLabs.
 
+![L'en-tête : le nom de la personne connectée et l'action « Se déconnecter »](manuel/images/se-connecter-et-se-deconnecter/se-deconnecter.jpg)
+
 ## 2. Le guide de démarrage : par où commencer
 
 À la première connexion, l'accueil ne montre aucun board — il n'y en a pas encore. Il montre à la
 place le **Guide de démarrage**, une liste de **six étapes** qui mènent chacune vers l'écran qui
 la réalise.
+
+![L'accueil d'un espace neuf : le guide de démarrage et ses six étapes, une seule accomplie](manuel/images/le-guide-de-demarrage-par-ou-commencer/accueil-espace-neuf.jpg)
 
 Les six étapes, dans l'ordre :
 
@@ -107,6 +119,8 @@ toujours un workflow, et un espace neuf n'en a **aucun**. Tant qu'il n'y en a pa
 « Nouveau channel » le dit — « Aucun workflow n'est affectable à ce track » — et propose le lien
 **Nouveau workflow**, qui ouvre l'éditeur et vous ramène ensuite au channel en cours ([chapitre 17.2](#un-channel)).
 
+![Le formulaire « Nouveau channel » d'un espace sans workflow : le message « Aucun workflow n'est affectable à ce track » et le lien « Nouveau workflow »](manuel/images/le-guide-de-demarrage-par-ou-commencer/channel-sans-workflow.jpg)
+
 ### 2.1 L'état d'une étape est mesuré, jamais mémorisé
 
 Une étape n'est pas « cochée » : à **chaque affichage**, le produit compte ce que votre compte voit
@@ -120,6 +134,8 @@ réellement, et en déduit l'état. Trois conséquences directes, et elles sont 
 
 Chaque état est écrit **en toutes lettres** — *Fait*, *À faire* — à côté de son icône, et la
 progression est une phrase, « 3 étape(s) sur 6 », jamais une barre seule.
+
+![La progression « 3 étape(s) sur 6 » et deux étapes marquées « Fait », chacune avec son lien](manuel/images/le-guide-de-demarrage-par-ou-commencer/progression.jpg)
 
 ### 2.2 Ce que le guide dit exactement, et ce qu'il ne dit pas
 
@@ -138,11 +154,15 @@ le dit (« Cette étape n'a pas pu être vérifiée ») et propose de **réessay
 réellement les six mesures. Les cinq autres étapes restent lisibles : une mesure manquante n'en
 efface aucune.
 
+![Une étape dont la mesure a échoué : « Cette étape n'a pas pu être vérifiée », avec le bouton « Réessayer »](manuel/images/le-guide-de-demarrage-par-ou-commencer/etape-non-verifiee.jpg)
+
 ### 2.3 Le masquer, et le retrouver
 
 Le bouton **Masquer le guide** le retire de l'accueil **pour cette session** et rend la place au
 board. Un lien discret, *Rouvrir le guide de démarrage*, reste sur l'accueil. Pour un
 administrateur, il masque aussi la pastille du guide flottant ([§2.5](#le-guide-flottant-des-administrateurs)).
+
+![Le bouton « Masquer le guide », en tête du guide](manuel/images/le-guide-de-demarrage-par-ou-commencer/masquer-le-guide.jpg)
 
 Le guide vit aussi dans **Réglages ▸ Guide de démarrage**, en tête de l'index. Là, il est toujours rendu : même
 masqué, même intégralement accompli. C'est ce qui le rend relançable.
@@ -155,6 +175,8 @@ le produit n'en écrit aucun.
 
 Dans un espace neuf, l'étape **Préparer un premier workflow** porte, pour un **administrateur** de
 l'espace, un bouton **Créer le workflow de départ**. Il pose en une fois le cycle commercial type :
+
+![L'étape « Préparer un premier workflow » avec le bouton « Créer le workflow de départ »](manuel/images/le-guide-de-demarrage-par-ou-commencer/bouton-workflow-de-depart.jpg)
 
 - un workflow **Cycle commercial**, le workflow **par défaut** de l'espace ;
 - sept étapes — Prospection (l'étape initiale), Relance, Négociation, Signature, Réalisation,
@@ -178,6 +200,8 @@ Ce que l'écran montre pendant et après :
   workflow à la main ;
 - sur une coupure réseau, le message invite à réessayer, et le bouton reste disponible.
 
+![Le même bouton pendant la création, désactivé, qui dit « Création… »](manuel/images/le-guide-de-demarrage-par-ou-commencer/creation-en-cours.jpg)
+
 Le bouton n'est montré qu'aux administrateurs, et le serveur refuse ce geste à tout autre rôle.
 Un compte qui n'est pas administrateur voit l'étape et son lien, pas le bouton.
 
@@ -186,11 +210,15 @@ l'éditeur de workflows, le catalogue de nœuds ou un formulaire « Nouveau chan
 écran se relit aussitôt : le formulaire de channel propose alors le nouveau workflow, sans perdre
 le nom déjà saisi.
 
+![Le formulaire « Nouveau channel » qui propose désormais le workflow posé](manuel/images/le-guide-de-demarrage-par-ou-commencer/channel-avec-workflow.jpg)
+
 ### 2.5 Le guide flottant des administrateurs
 
 Pour un **administrateur**, le guide ne reste pas sur l'accueil : il le suit sur toutes les pages,
 sous la forme d'une **pastille** en bas à droite de l'écran — « Démarrage · 2 sur 6 », ou « 2/6 »
 sur un téléphone. Les autres rôles gardent le guide sur l'accueil et dans les réglages.
+
+![La pastille du guide flottant, en bas à droite : « Démarrage · 2 sur 6 »](manuel/images/le-guide-de-demarrage-par-ou-commencer/pastille.jpg)
 
 - **L'ouvrir** : un clic sur la pastille (ou `Entrée` quand elle a le focus) déploie au-dessus
   d'elle un panneau avec les six étapes, leurs liens et le bouton du workflow de départ.
@@ -205,6 +233,8 @@ sur un téléphone. Les autres rôles gardent le guide sur l'accueil et dans les
 - **Quand il disparaît** : une fois les six étapes accomplies. Il n'apparaît pas non plus sur
   l'accueil ni dans **Réglages ▸ Guide de démarrage**, qui montrent déjà le guide dans la page.
 
+![Le panneau du guide flottant ouvert au-dessus de sa pastille, avec les six étapes et le bouton qui le réduit](manuel/images/le-guide-de-demarrage-par-ou-commencer/panneau-ouvert.jpg)
+
 Le panneau n'est pas une fenêtre modale : le reste de la page reste utilisable, panneau ouvert. Il
 couvre en revanche la partie droite de l'écran ; **Réduire** la libère d'un geste.
 
@@ -216,6 +246,8 @@ geste. Il ne crée ni track, ni channel, ni affaire : ces écrans existent, et l
 Ce chapitre décrit ce qui entoure chaque page du CRM : la barre latérale à gauche, l'en-tête en haut, la barre
 d'onglets d'un track, et la façon dont l'application vous dit qu'elle charge, qu'elle n'a rien à montrer ou qu'elle
 n'a pas pu lire.
+
+![Un écran du CRM : la barre latérale à gauche, l'en-tête, la barre d'onglets du track et le tableau d'un channel](manuel/images/naviguer-barre-laterale-onglets-etats/un-board.jpg)
 
 ### 3.1 La disposition de l'écran
 
@@ -229,12 +261,18 @@ L'écran se lit en quatre zones :
   d'un track, elle écrit « Aucun channel » ;
 - au centre, le **contenu** de la page.
 
+![L'en-tête : la recherche, l'icône « Aide », la cloche des notifications, le nom et « Se déconnecter »](manuel/images/naviguer-barre-laterale-onglets-etats/en-tete.jpg)
+
+![La barre d'onglets hors d'un track, qui écrit « Aucun channel »](manuel/images/naviguer-barre-laterale-onglets-etats/aucun-channel.jpg)
+
 ### 3.2 Le fil d'Ariane : savoir où vous êtes
 
 En haut de l'écran, le **fil d'Ariane** nomme le chemin qui mène à la page ouverte, du plus général au plus précis.
 Sur une affaire, il se lit par exemple :
 
 > P2Enjoy SAS / Conseil & IA / Grands comptes / **Migration ERP Sogexia**
+
+![Le fil d'Ariane d'une affaire : l'espace, le track, le channel, puis le titre de l'affaire en gras](manuel/images/naviguer-barre-laterale-onglets-etats/fil-d-ariane.jpg)
 
 - Le **premier niveau** est votre **espace de travail**. Il mène au Board.
 - Viennent ensuite le **track**, puis le **channel**. Chacun est un lien : cliquez le channel pour revenir à son
@@ -254,12 +292,14 @@ Le fil suit la page :
 | un chapitre du manuel | espace / Aide / **chapitre** |
 | toute autre page (Inbox, Contacts, Réglages…) | espace / **nom de la page** |
 
-**Un nom trop long** est raccourci par « … » ; survolez-le pour lire le nom complet.
+**Un nom trop long** est raccourci par des points de suspension ; survolez-le pour lire le nom complet.
 
 **Sur un écran plus étroit qu'un ordinateur portable**, le fil passe sur sa propre ligne, sous la recherche, l'aide,
 les notifications et votre profil. **Sur un téléphone**, il ne montre que le niveau précédent et le titre : « … /
-Grands comptes / **Migration ERP Sogexia** ». Le bouton **« … »** ouvre la liste des niveaux masqués — votre espace et
+Grands comptes / **Migration ERP Sogexia** ». Le bouton **…**, « Afficher le chemin complet », ouvre la liste des niveaux masqués — votre espace et
 le track —, chacun cliquable. Au clavier, atteignez-le avec `Tab`, ouvrez-le avec `Entrée`, refermez-le avec `Échap`.
+
+![Le fil d'Ariane sur un téléphone : le bouton aux points de suspension, le channel, puis le titre de l'affaire](manuel/images/naviguer-barre-laterale-onglets-etats/fil-d-ariane-telephone.jpg)
 
 **Le fil ne nomme que ce que vous pouvez lire.** Un channel auquel vous n'avez pas accès n'y apparaît jamais, pas plus
 qu'un nom tapé dans l'adresse qui ne correspond à rien.
@@ -269,6 +309,8 @@ qu'un nom tapé dans l'adresse qui ne correspond à rien.
 La barre latérale porte, dans cet ordre : **Board**, **Inbox**, **Contacts**, **Objectifs**, **Coûts**, **Pilotage**,
 **Rentabilité**, **Temps**, **Ma journée**, **Affaires figées** et **Réglages**. Une personne superadministratrice y
 trouve en plus, en dernier, l'entrée **Plateforme** ([chapitre 32](#la-plateforme-espaces-membres-et-superadministrateurs)).
+
+![La barre latérale : les entrées de navigation, puis la section Tracks et ses pilules colorées](manuel/images/naviguer-barre-laterale-onglets-etats/barre-laterale.jpg)
 
 Dessous, la section **Tracks** liste les activités de votre espace de travail — par exemple « Conseil & IA », « Studio
 web », « Formation ». Chaque track s'affiche en pilule colorée, précédée de son icône.
@@ -304,6 +346,8 @@ Ouvrir un track affiche ses **channels** en onglets, juste sous l'en-tête. Le n
 - **« Coûts »**, en dernier, ouvre les coûts du track
   ([chapitre 24](#les-couts-d-un-track-ce-qui-etait-prevu-ce-qui-a-ete-depense)).
 
+![La barre d'onglets d'un track : les channels, puis « Nouveau channel » et « Coûts »](manuel/images/naviguer-barre-laterale-onglets-etats/barre-d-onglets.jpg)
+
 Le contenu d'un channel se lit de **deux façons**, et une bascule en haut de la page passe de l'une à l'autre : le
 **tableau kanban** ([section 9.10](#le-tableau-kanban-d-un-channel)), vue par défaut, et la **vue liste**
 ([section 9.11](#la-vue-liste-d-un-channel)). Chacune a sa propre adresse, qui se partage et se met en favori.
@@ -317,6 +361,12 @@ Trois écrans particuliers :
 - une adresse qui ne correspond à **aucun track**, ou à un track auquel vous n'avez pas accès, affiche « Track
   introuvable ». Les deux cas produisent le **même** message : il ne renseigne personne sur l'existence d'un track
   qu'il n'a pas le droit de voir.
+
+![Un track sans channel : « Aucun channel dans ce track »](manuel/images/naviguer-barre-laterale-onglets-etats/track-sans-channel.jpg)
+
+![Un channel dont le workflow n'a aucune étape : « Ce workflow ne déclare aucune étape » et le lien « Ouvrir l'éditeur de workflows »](manuel/images/naviguer-barre-laterale-onglets-etats/workflow-sans-etape.jpg)
+
+![Une adresse qui ne mène à aucun track : « Track introuvable »](manuel/images/naviguer-barre-laterale-onglets-etats/track-introuvable.jpg)
 
 ### 3.5 Les accès par track et par channel
 
@@ -342,11 +392,15 @@ Un track, un channel et une affaire peuvent porter une **description** : un text
 ce que regroupe le channel, ou ce que recouvre l'affaire. Celle d'un track et d'un channel se saisit dans **Réglages ▸
 Arborescence**, champ « Description » du formulaire.
 
+![Le champ « Description » du formulaire d'un track, dans Réglages ▸ Arborescence](manuel/images/naviguer-barre-laterale-onglets-etats/champ-description.jpg)
+
 Quand une description existe, elle paraît dans une **infobulle** :
 
 - **au survol de la souris**, après un court instant, sur la pilule du track dans la barre latérale, sur l'onglet du
   channel, et sur le titre de l'affaire — dans sa carte du tableau comme dans sa ligne de la vue liste ;
 - **au clavier**, dès que l'élément reçoit le focus par la touche `Tab`.
+
+![L'infobulle d'un track survolé : son nom, puis sa description](manuel/images/naviguer-barre-laterale-onglets-etats/infobulle.jpg)
 
 La bulle écrit d'abord le **nom**, puis la description, avec ses retours à la ligne ; une description très longue
 défile à l'intérieur. Vous pouvez y amener la souris pour la lire : elle reste ouverte tant que le pointeur est sur
@@ -375,6 +429,8 @@ L'application s'utilise entièrement au clavier :
 - `Entrée` active l'élément qui a le focus ;
 - l'élément qui a le focus est toujours entouré d'un liseré bleu visible.
 
+![Le lien « Aller au contenu », apparu à la première tabulation](manuel/images/naviguer-barre-laterale-onglets-etats/aller-au-contenu.jpg)
+
 ### 3.9 L'aide : le manuel, depuis n'importe quel écran
 
 L'icône **« Aide »** de l'en-tête — un livre ouvert, à gauche de la cloche — ouvre un petit panneau :
@@ -382,6 +438,8 @@ L'icône **« Aide »** de l'en-tête — un livre ouvert, à gauche de la cloch
 - **« Aide sur cet écran »** mène à la section du manuel qui décrit la page où vous êtes ; le lien porte le titre de
   cette section ;
 - **« Sommaire du manuel »** mène à la liste de tous les chapitres.
+
+![Le panneau de l'aide ouvert sous son icône : « Aide sur cet écran », le titre de la section, et « Sommaire du manuel »](manuel/images/naviguer-barre-laterale-onglets-etats/panneau-aide.jpg)
 
 Un écran que le manuel ne décrit pas en propre — l'index des réglages, par exemple — n'offre que le sommaire.
 
@@ -394,9 +452,17 @@ chapitre », la liste de ses sections, et se termine par deux liens, **« Chapit
 suivant »**. Les renvois d'un chapitre à l'autre sont des liens. Une illustration large propose **« Voir en taille
 réelle »**, qui l'ouvre dans un nouvel onglet.
 
+![Un chapitre du manuel : son titre, puis « Dans ce chapitre » et la liste de ses sections](manuel/images/naviguer-barre-laterale-onglets-etats/un-chapitre.jpg)
+
+![Sous une illustration large du manuel, le lien qui l'ouvre en taille réelle dans un nouvel onglet](manuel/images/naviguer-barre-laterale-onglets-etats/voir-en-taille-reelle.jpg)
+
 Le manuel n'est lisible qu'avec une session : sans session, ses adresses mènent à l'écran de connexion. Si le manuel ne
 peut pas être lu, la page le dit — « Le manuel n’a pas pu être chargé » — et propose **« Réessayer »** ; un chapitre qui
 n'existe pas affiche « Chapitre introuvable » et un lien vers le sommaire.
+
+![L'adresse d'un chapitre qui n'existe pas : « Chapitre introuvable »](manuel/images/naviguer-barre-laterale-onglets-etats/chapitre-introuvable.jpg)
+
+![Le manuel qui n'a pas pu être lu : « Le manuel n'a pas pu être chargé » et le bouton « Réessayer »](manuel/images/naviguer-barre-laterale-onglets-etats/manuel-indisponible.jpg)
 
 ### 3.10 Quand quelque chose ne va pas
 
@@ -411,12 +477,16 @@ n'existe pas affiche « Chapitre introuvable » et un lien vers le sommaire.
 En cas de panne du serveur, l'application **réessaie trois fois** avant d'afficher l'erreur : le message peut donc
 mettre quelques secondes à apparaître.
 
+![L'état « Chargement impossible », avec le bouton « Réessayer »](manuel/images/naviguer-barre-laterale-onglets-etats/chargement-impossible.jpg)
+
 ### 3.11 Les commandes grisées : ce que votre rôle vous laisse faire
 
 Le produit ne vous propose pas un geste que le serveur vous refuserait. Une commande que vous ne pouvez pas utiliser
 **reste à sa place, grisée**, et un **bandeau** — une icône en forme d'œil sur fond gris clair — dit en tête du bloc
 pourquoi : « Vous consultez … : les commandes restent visibles mais sont inactives. » Un seul bandeau par bloc ;
 chaque commande grisée y renvoie, et un lecteur d'écran le lit quand elle a le focus.
+
+![Le bandeau d'une lectrice, une icône en forme d'œil sur fond gris, et le bouton « Nouvelle affaire » grisé](manuel/images/naviguer-barre-laterale-onglets-etats/bandeau-lecture.jpg)
 
 Trois choses décident de ce que vous pouvez faire :
 
@@ -443,12 +513,16 @@ Dans **Réglages**, l'entrée « Coût du personnel » devient un texte grisé s
 vous serait refusé. Les autres écrans d'administration restent ouverts **en lecture** : vous y voyez la configuration,
 commandes grisées.
 
+![L'index des réglages vu par une lectrice : l'entrée « Coût du personnel » en texte grisé](manuel/images/naviguer-barre-laterale-onglets-etats/reglages-lectrice.jpg)
+
 ## 4. Retrouver n'importe quoi : la recherche
 
 **La recherche cherche partout à la fois**, depuis n'importe quel écran, sans le quitter : une affaire, un contact,
 une organisation, un commentaire ou un message dont vous ne savez plus où il se trouve.
 
 ### 4.1 L'ouvrir
+
+![Le champ « Rechercher… » de l'en-tête](manuel/images/retrouver-n-importe-quoi-la-recherche/champ.jpg)
 
 Trois chemins, et ils mènent au même endroit :
 
@@ -463,6 +537,8 @@ Le raccourci est rappelé **dans le champ lui-même** : il n'y a rien à apprend
 sélectionné, prêt à être remplacé. Pour refermer, appuyez sur **`Échap`**, ou cliquez ailleurs.
 
 ### 4.2 Ce qu'elle cherche
+
+![La palette de recherche ouverte sur « sogexia » : une affaire, une organisation et un commentaire, chacun avec sa famille écrite](manuel/images/retrouver-n-importe-quoi-la-recherche/resultats.jpg)
 
 Cinq familles d'objets, dans la même frappe :
 
@@ -518,6 +594,8 @@ Un clic sur une ligne fait la même chose que `Entrée`.
 affaire quand il est classé, et **« Non classés »** quand il ne l'est pas — vous arrivez donc là où
 le message se trouve réellement, sans avoir à le retrouver dans la liste.
 
+![L'inbox ouverte sur le dossier « Non classés », où mène un message trouvé par la recherche](manuel/images/retrouver-n-importe-quoi-la-recherche/message-non-classe.jpg)
+
 L'adresse qui vous y a mené **ne reste pas dans la barre du navigateur** : recharger la page vous
 laisse dans votre boîte, sans rouvrir un message que vous aviez peut-être quitté depuis longtemps.
 Et si le message n'existe plus, ou s'il ne vous est pas lisible, **votre boîte s'ouvre simplement
@@ -552,6 +630,8 @@ nécessairement la même liste, et c'est voulu.
 **Où.** En haut à droite de chaque écran, la **cloche**, entre l'icône « Aide » et votre nom. Elle est visible partout,
 parce qu'une notification n'est pas une destination : on y jette un œil et l'on retourne à ce qu'on faisait.
 
+![L'en-tête : l'icône « Aide », la cloche des notifications avec son compteur, puis le nom](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/cloche.jpg)
+
 **Qui.** Chacun voit **ses** notifications, et elles seules. Personne d'autre — ni un collègue, ni
 un administrateur de l'espace de travail. La boîte de quelqu'un n'est pas une donnée
 d'exploitation. Sans session ouverte, aucune page ne s'affiche, cloche comprise.
@@ -567,7 +647,11 @@ qui afficherait « 12 » sur douze messages tous lus ne dirait rien d'utile.
 - **Au-delà de quatre-vingt-dix-neuf**, la cloche écrit « 99+ » — un badge à quatre chiffres la
   déformerait. Le compte **exact** reste annoncé aux lecteurs d'écran.
 
+![La cloche sans chiffre, quand le compte n'a pas pu être lu](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/cloche-sans-compte.jpg)
+
 ### 5.2 Ce que le panneau montre
+
+![Le panneau des notifications : « Camille Aubert vous a mentionné », l'extrait, l'affaire et sa pastille de dossier](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/panneau.jpg)
 
 Un clic — ou `Entrée` au clavier — ouvre le panneau **sous la cloche**, sans quitter l'écran où
 vous êtes. `Échap`, un clic à l'extérieur, ou « Fermer les notifications » le referment ; le focus
@@ -605,6 +689,8 @@ La ligne ne change qu'**après** la réponse du serveur. Si vos droits ont chang
 du panneau, le produit écrit « Aucune notification n'a été modifiée » et invite à recharger la
 page — il n'annonce jamais une modification qui n'a pas eu lieu.
 
+![Un marquage resté sans effet : « Aucune notification n'a été modifiée » sous la ligne](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/marquage-sans-effet.jpg)
+
 ### 5.4 La mise à jour est immédiate
 
 Le panneau et le compteur s'actualisent **sans rechargement** dès qu'une notification vous est
@@ -612,6 +698,8 @@ adressée. Une notification n'envoie **aucun email**, ne fait sonner **aucun son
 l'onglet. Seul le récapitulatif du matin, si vous le demandez, passe par email ([§5.6](#choisir-ce-que-vous-recevez)).
 
 ### 5.5 Mentionner quelqu’un dans un commentaire
+
+![La commande « Mentionner » sous le fil d'une affaire, et la liste des personnes qu'elle ouvre](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/mentionner.jpg)
 
 Sous la zone de saisie du fil d'une affaire, la commande **« Mentionner »** ouvre la liste des
 personnes que ce commentaire peut prévenir. Cochez-en une ou plusieurs, écrivez votre message, et
@@ -660,6 +748,8 @@ l'ordre, exactement comme avant. C'est la différence entre couper le son et jet
 **Il n'y a pas de bouton « Enregistrer ».** La case écrit dès que vous la basculez, et affiche
 « Enregistré » sous elle. Elle ne se coche qu'**après** la confirmation du serveur : ce que vous
 voyez est ce que le produit a réellement retenu, jamais ce qu'il a cru envoyer.
+
+![Réglages ▸ Notifications : la case « Recevoir les mentions » et la confirmation « Enregistré »](manuel/images/vos-notifications-savoir-qu-on-vous-a-nomme/recevoir-les-mentions.jpg)
 
 **Une chose à savoir**, parce qu'elle surprend : tant qu'un type est décoché, vous ne pouvez pas
 marquer lues les notifications de ce type. Vous ne les voyez pas, donc vous ne les marquez pas ;

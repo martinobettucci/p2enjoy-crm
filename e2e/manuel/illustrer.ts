@@ -37,9 +37,16 @@ async function libellesDans(page: Page, cadre: Rectangle): Promise<string[]> {
 	return page.evaluate((r) => {
 		const dedans = (b: DOMRect) =>
 			b.width > 0 && b.height > 0 && b.left >= r.x - 1 && b.top >= r.y - 1 && b.right <= r.x + r.width + 1 && b.bottom <= r.y + r.height + 1
+		// Un texte réservé aux lecteurs d'écran (`sr-only` : une boîte d'un pixel, découpée) n'est pas dans l'image : il
+		// ne compte pas, et l'élément qu'il porte relève des exceptions du §11.3.
 		const visible = (e: Element) => {
-			const s = getComputedStyle(e)
-			return s.visibility !== 'hidden' && s.display !== 'none' && Number(s.opacity) > 0
+			for (let n: Element | null = e; n !== null && n !== document.body; n = n.parentElement) {
+				const s = getComputedStyle(n)
+				if (s.visibility === 'hidden' || s.display === 'none' || Number(s.opacity) === 0) return false
+				const b = n.getBoundingClientRect()
+				if (b.width <= 1 && b.height <= 1 && s.overflow === 'hidden') return false
+			}
+			return true
 		}
 		const textes: string[] = []
 		const marcheur = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
@@ -51,7 +58,7 @@ async function libellesDans(page: Page, cadre: Rectangle): Promise<string[]> {
 			if (dedans(plage.getBoundingClientRect())) textes.push(n.textContent ?? '')
 		}
 		// Un libellé coupé entre plusieurs éléments en ligne — « Chapitre suivant : … » — se lit sur l'élément entier.
-		for (const e of document.querySelectorAll('a, button, label, legend, h1, h2, h3, h4, th, td, li, p, span, option, [role]')) {
+		for (const e of document.querySelectorAll('a, button, label, legend, h1, h2, h3, h4, th, td, li, p, span, option, [role], [aria-label]')) {
 			if (!visible(e) || !dedans(e.getBoundingClientRect())) continue
 			const texte = (e as HTMLElement).innerText
 			if (texte !== undefined && texte.trim() !== '') textes.push(texte)
@@ -63,8 +70,9 @@ async function libellesDans(page: Page, cadre: Rectangle): Promise<string[]> {
 		for (const champ of document.querySelectorAll('input, textarea, select')) {
 			if (!visible(champ) || !dedans(champ.getBoundingClientRect())) continue
 			const c = champ as HTMLInputElement
-			for (const valeur of [c.placeholder, c.getAttribute('aria-label'), c.type === 'password' ? '' : c.value])
-				if (valeur) textes.push(valeur)
+			// Une liste montre le texte de son option choisie, pas sa valeur : « — Aucun choix — », jamais « ».
+			const montre = champ instanceof HTMLSelectElement ? (champ.selectedOptions[0]?.text ?? '') : c.type === 'password' ? '' : c.value
+			for (const valeur of [c.placeholder, c.getAttribute('aria-label'), montre]) if (valeur) textes.push(valeur)
 		}
 		return textes
 	}, cadre)
@@ -98,11 +106,19 @@ export async function illustrer(page: Page, illustration: Illustration): Promise
 	if (fenetre === null) throw new Error('la fenêtre du navigateur n’a pas de taille')
 	const boites: Rectangle[] = []
 	for (const cible of cibles) {
-		await cible.first().scrollIntoViewIfNeeded()
-		await cible.first().waitFor({ state: 'visible' })
-		const boite = await cible.first().boundingBox()
-		if (boite === null) throw new Error(`une cible de ${chapitre}/${nom} n'a pas de boîte`)
-		boites.push(boite)
+		// Une cible re-rendue entre deux appels — un panneau que le temps réel relit — se reprend, au plus trois fois.
+		for (let essai = 1; ; essai += 1) {
+			try {
+				await cible.first().scrollIntoViewIfNeeded()
+				await cible.first().waitFor({ state: 'visible' })
+				const boite = await cible.first().boundingBox()
+				if (boite === null) throw new Error(`une cible de ${chapitre}/${nom} n'a pas de boîte`)
+				boites.push(boite)
+				break
+			} catch (erreur) {
+				if (essai >= 3 || !String(erreur).includes('not attached')) throw erreur
+			}
+		}
 	}
 	const cadre = pleinePage
 		? { x: 0, y: 0, width: fenetre.width, height: fenetre.height }

@@ -440,7 +440,14 @@ est autorisée en début de chapitre. »
 
 | Élément cité | Chapitre | Motif |
 |---|---|---|
-| *(aucune à ce jour ; la table se remplit à la réécriture des chapitres, une ligne par exception, et chaque ligne est soumise au responsable)* | | |
+| « Workflow de départ créé » | `le-guide-de-demarrage-par-ou-commencer` | annonce réservée aux lecteurs d'écran : rien ne paraît à l'écran, l'étape passe à « Fait » (image de la section) |
+| « Cet espace a déjà un workflow : ouvrez l'éditeur pour le composer. » | `le-guide-de-demarrage-par-ou-commencer` | annonce réservée aux lecteurs d'écran, qui exige en outre un workflow créé ailleurs entre l'affichage et le geste |
+| « Configuration incomplète » | `naviguer-barre-laterale-onglets-etats` | ne paraît que sur une installation construite sans l'adresse de son serveur ; la pile de développement en a toujours une |
+| « Objet non atteignable » | `retrouver-n-importe-quoi-la-recherche` | exige un résultat lisible dont l'écran ne l'est pas — une affaire dont le channel serait illisible ; aucun état du seed ne le produit |
+| « Enregistrer » | `vos-notifications-savoir-qu-on-vous-a-nomme` | cité pour dire que ce bouton n'existe pas |
+| « Accès refusé » | `naviguer-barre-laterale-onglets-etats` | exige un refus explicite du serveur à une lecture ; les droits du seed se traduisent par l'absence de ce qui est fermé, jamais par ce refus |
+
+*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28), soumises au responsable.*
 
 ### 11.4 Le contrat technique des images
 

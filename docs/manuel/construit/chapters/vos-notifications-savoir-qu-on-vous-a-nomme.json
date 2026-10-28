@@ -34,6 +34,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/cloche.jpg",
+			"alt": "L'en-tête : l'icône « Aide », la cloche des notifications avec son compteur, puis le nom",
+			"width": 430,
+			"height": 68
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -158,6 +165,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/cloche-sans-compte.jpg",
+			"alt": "La cloche sans chiffre, quand le compte n'a pas pu être lu",
+			"width": 73,
+			"height": 68
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "ce-que-le-panneau-montre",
@@ -167,6 +181,13 @@
 					"text": "5.2 Ce que le panneau montre"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/panneau.jpg",
+			"alt": "Le panneau des notifications : « Camille Aubert vous a mentionné », l'extrait, l'affaire et sa pastille de dossier",
+			"width": 376,
+			"height": 260
 		},
 		{
 			"type": "paragraph",
@@ -462,6 +483,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/marquage-sans-effet.jpg",
+			"alt": "Un marquage resté sans effet : « Aucune notification n'a été modifiée » sous la ligne",
+			"width": 376,
+			"height": 264
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "la-mise-a-jour-est-immediate",
@@ -560,6 +588,13 @@
 					"text": "5.5 Mentionner quelqu’un dans un commentaire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/mentionner.jpg",
+			"alt": "La commande « Mentionner » sous le fil d'une affaire, et la liste des personnes qu'elle ouvre",
+			"width": 519,
+			"height": 158
 		},
 		{
 			"type": "paragraph",
@@ -843,6 +878,13 @@
 					"text": " la confirmation du serveur : ce que vous\nvoyez est ce que le produit a réellement retenu, jamais ce qu'il a cru envoyer."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "vos-notifications-savoir-qu-on-vous-a-nomme/recevoir-les-mentions.jpg",
+			"alt": "Réglages ▸ Notifications : la case « Recevoir les mentions » et la confirmation « Enregistré »",
+			"width": 633,
+			"height": 339
 		},
 		{
 			"type": "paragraph",

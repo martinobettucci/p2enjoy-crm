@@ -87,6 +87,11 @@ checks=0
 # 9 ne portent que sur eux tant que l'illustration n'est pas finie, puis la liste disparaît au profit du manuel entier.
 # ---------------------------------------------------------------------------------------------
 CHAPITRES_ILLUSTRES=(
+	se-connecter-et-se-deconnecter
+	le-guide-de-demarrage-par-ou-commencer
+	naviguer-barre-laterale-onglets-etats
+	retrouver-n-importe-quoi-la-recherche
+	vos-notifications-savoir-qu-on-vous-a-nomme
 )
 
 ok()    { checks=$((checks + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }

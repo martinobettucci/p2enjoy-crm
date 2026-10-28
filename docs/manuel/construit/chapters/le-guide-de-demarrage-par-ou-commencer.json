@@ -38,6 +38,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/accueil-espace-neuf.jpg",
+			"alt": "L'accueil d'un espace neuf : le guide de démarrage et ses six étapes, une seule accomplie",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -357,6 +364,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/channel-sans-workflow.jpg",
+			"alt": "Le formulaire « Nouveau channel » d'un espace sans workflow : le message « Aucun workflow n'est affectable à ce track » et le lien « Nouveau workflow »",
+			"width": 1130,
+			"height": 564
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "l-etat-d-une-etape-est-mesure-jamais-memorise",
@@ -517,6 +531,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/progression.jpg",
+			"alt": "La progression « 3 étape(s) sur 6 » et deux étapes marquées « Fait », chacune avec son lien",
+			"width": 633,
+			"height": 504
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "ce-que-le-guide-dit-exactement-et-ce-qu-il-ne-dit-pas",
@@ -624,6 +645,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/etape-non-verifiee.jpg",
+			"alt": "Une étape dont la mesure a échoué : « Cette étape n'a pas pu être vérifiée », avec le bouton « Réessayer »",
+			"width": 631,
+			"height": 197
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "le-masquer-et-le-retrouver",
@@ -698,6 +726,13 @@
 					"text": ")."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/masquer-le-guide.jpg",
+			"alt": "Le bouton « Masquer le guide », en tête du guide",
+			"width": 633,
+			"height": 73
 		},
 		{
 			"type": "paragraph",
@@ -801,6 +836,13 @@
 					"text": ". Il pose en une fois le cycle commercial type :"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/bouton-workflow-de-depart.jpg",
+			"alt": "L'étape « Préparer un premier workflow » avec le bouton « Créer le workflow de départ »",
+			"width": 631,
+			"height": 339
 		},
 		{
 			"type": "list",
@@ -1040,6 +1082,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/creation-en-cours.jpg",
+			"alt": "Le même bouton pendant la création, désactivé, qui dit « Création… »",
+			"width": 631,
+			"height": 339
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1065,6 +1114,13 @@
 					"text": " Si vous créez le workflow depuis le guide flottant alors que\nl'éditeur de workflows, le catalogue de nœuds ou un formulaire « Nouveau channel » est ouvert, cet\nécran se relit aussitôt : le formulaire de channel propose alors le nouveau workflow, sans perdre\nle nom déjà saisi."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/channel-avec-workflow.jpg",
+			"alt": "Le formulaire « Nouveau channel » qui propose désormais le workflow posé",
+			"width": 1130,
+			"height": 584
 		},
 		{
 			"type": "heading",
@@ -1111,6 +1167,13 @@
 					"text": " en bas à droite de l'écran — « Démarrage · 2 sur 6 », ou « 2/6 »\nsur un téléphone. Les autres rôles gardent le guide sur l'accueil et dans les réglages."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/pastille.jpg",
+			"alt": "La pastille du guide flottant, en bas à droite : « Démarrage · 2 sur 6 »",
+			"width": 232,
+			"height": 72
 		},
 		{
 			"type": "list",
@@ -1299,6 +1362,13 @@
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-guide-de-demarrage-par-ou-commencer/panneau-ouvert.jpg",
+			"alt": "Le panneau du guide flottant ouvert au-dessus de sa pastille, avec les six étapes et le bouton qui le réduit",
+			"width": 412,
+			"height": 640
 		},
 		{
 			"type": "paragraph",

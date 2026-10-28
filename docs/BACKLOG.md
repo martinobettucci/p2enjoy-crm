@@ -17203,9 +17203,23 @@ responsable** : traitée juste après `CRM-116`.*
             **Second correctif, même jour** : les guillemets imbriqués sont appariés, et un élément cité à paramètres
             (« Anonymisé le … ») est illustré par la même valeur aux paramètres près ; deux unitaires, rouges avant
             (14/14) ; **684 éléments dans 166 sections**.
-      - [ ] **T4.1 à T4.5 — les images**, groupe par groupe comme T3 : scénarios, images observées, liste des chapitres
-            illustrés. **Exigent la pile de développement** ; le responsable a donné son accord pour la relancer le
-            2026-10-28.
+      - [x] **T4.1 — prise en main** : chapitres 1 à 5. *Fait le 2026-10-28* : scénarios `e2e/manuel/01` à `05` et
+            leur outillage commun (`outils.ts`), **45 images** produites sur la pile et le seed, toutes observées (planches
+            de contrôle ; cinq découpes refaites, une image fausse retirée — « Accès réservé » n'est pas « Accès
+            refusé ») ; placées avec leur texte alternatif ; `CHAPITRES_ILLUSTRES` couvre les cinq chapitres :
+            `verify-manual.sh` **165 contrôles, sans anomalie** ; manuel publié en développement. **Six exceptions**
+            (§11.3) **soumises au responsable**. Ce que les scénarios posent pour faire paraître un écran est retiré ou
+            rendu tel qu'il a été lu ; deux scénarios interrompus avaient laissé une trace, retirée à la main et le
+            scénario corrigé (journal).
+      - [ ] **T4.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10, en deux tranches comme T3.2 — **T4.2a**
+            (6, 7, 8, 10) et **T4.2b** (9, la fiche, le board, la liste). Scénarios écrits, **jamais passés** : ils
+            attendent la fin de la bascule de `CRM-111` T2.4.5, qui déplace le rattachement d'une affaire de `cards`
+            vers `card_placements` ; l'aide `poserAffaire` d'`outils.ts` sera convertie alors.
+      - [ ] **T4.3 — la messagerie** : chapitres 11 à 16. Scénarios écrits, jamais passés.
+      - [ ] **T4.4 — l'administration** : chapitres 17 à 22. Scénarios des chapitres 19 à 22 écrits, jamais passés ;
+            17 et 18 restent à écrire.
+      - [ ] **T4.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33. Scénarios des chapitres 23 à
+            29 écrits, jamais passés ; 30 à 33 restent à écrire.
 - [ ] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
       `CHANGELOG.md`, contrat de déploiement.
 - [ ] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.

@@ -38,6 +38,27 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "se-connecter-et-se-deconnecter/ecran-de-connexion.jpg",
+			"alt": "L'écran de connexion du CRM, avec son unique bouton « Se connecter avec LeLabs »",
+			"width": 1440,
+			"height": 900
+		},
+		{
+			"type": "image",
+			"src": "se-connecter-et-se-deconnecter/redirection-vers-lelabs.jpg",
+			"alt": "Le bouton pendant l'aller vers LeLabs, qui affiche « Redirection vers LeLabs… »",
+			"width": 430,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "se-connecter-et-se-deconnecter/connexion-en-cours.jpg",
+			"alt": "La carte grisée « Connexion LeLabs en cours », au retour de LeLabs",
+			"width": 430,
+			"height": 184
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -257,6 +278,13 @@
 					"text": " — sur fond jaune pâle, avec une icône de cercle en pointillés. Vous n'avez\nrien fait de faux : un geste manque, qui n'est pas le vôtre ou que vous faites ailleurs. Le message\nnomme votre adresse."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "se-connecter-et-se-deconnecter/acces-en-attente.jpg",
+			"alt": "Le message « Accès en attente » sur fond jaune pâle, qui nomme l'adresse, au-dessus du bouton « Se connecter avec LeLabs »",
+			"width": 430,
+			"height": 264
 		},
 		{
 			"type": "table",
@@ -588,6 +616,13 @@
 					"text": " vous reconnecte sans vous redemander votre\nmot de passe. Sur un ordinateur partagé, fermez aussi votre session LeLabs, depuis votre espace de\ncompte LeLabs."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "se-connecter-et-se-deconnecter/se-deconnecter.jpg",
+			"alt": "L'en-tête : le nom de la personne connectée et l'action « Se déconnecter »",
+			"width": 289,
+			"height": 68
 		}
 	]
 }

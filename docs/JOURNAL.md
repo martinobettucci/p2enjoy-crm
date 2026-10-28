@@ -36655,3 +36655,32 @@ focus sensible à la charge, de la classe corrigée par la décision 765. Non to
 
 **Vérifications.** E2E étiquettes 5/5, connecteur 1/1, consentement 1/1, digest `mail` 1/1, voisins 69/69, préférences
 11/11 ; `verify-mcp.sh` 108 contrôles ; unitaires 4919/4919 ; build et classes CSS ; captures observées.
+
+### `CRM-117` T4.1 : les images des chapitres 1 à 5 (2026-10-28)
+
+**Fait** : 45 images produites par les scénarios `e2e/manuel/01` à `05`, sur la pile de développement et le seed, dans le
+créneau que `CRM-069` et `CRM-111` ont laissé (port 4173 et base partagés : ordre convenu par message — `CRM-117`,
+puis `CRM-069`, puis la bascule de `CRM-111`). Toutes observées sur des planches de contrôle. Placées dans le manuel avec
+leur texte alternatif ; `verify-manual.sh` contrôle désormais les chapitres 1 à 5 : 165 contrôles, sans anomalie.
+
+**Ce que le premier passage a appris**, et qui vaut pour les tranches suivantes :
+- une route qui retient une navigation vers un autre domaine ne retient rien de sûr ; retenir l'appel d'API qui la
+  précède (la découverte de LeLabs) fait paraître « Redirection vers LeLabs… » à coup sûr ;
+- un libellé à apostrophe se cherche avec l'apostrophe que l'écran écrit — droite ou typographique ;
+- un panneau relu en temps réel peut se re-rendre entre deux appels : `illustrer` reprend la cible, au plus trois fois ;
+- un scénario interrompu par son délai n'atteint pas son `finally` : deux traces en sont restées (un track, un workflow et
+  un channel posés ; une notification du seed changée de destinataire), retirées et rendues à la main, constatées ; les
+  délais des scénarios concernés sont relevés ;
+- le texte alternatif d'une image compte dans la preuve s'il cite un libellé : il ne cite que ce que l'image montre.
+
+**Quatre écarts du manuel corrigés contre l'écran** : le bouton du fil d'Ariane sur téléphone se nomme « Afficher le
+chemin complet » ; les points de suspension d'un nom tronqué ne sont pas un libellé ; « Accès réservé » de la plateforme
+n'est pas « Accès refusé ».
+
+**Six exceptions proposées** (`docs/SPEC-manual.md` §11.3), soumises au responsable : deux annonces réservées aux
+lecteurs d'écran, « Configuration incomplète », « Objet non atteignable », « Accès refusé » (les droits du seed se lisent
+par l'absence, jamais par ce refus), et « Enregistrer », cité pour dire que le bouton n'existe pas.
+
+**Suite** : les scénarios des chapitres 6 à 16 et 19 à 29 sont écrits mais n'ont jamais tourné ; ils attendent la fin de
+la bascule de `CRM-111` T2.4.5 (le rattachement d'une affaire quitte `cards`), et ne sont donc pas livrés avec cette
+tranche.

@@ -32,6 +32,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "retrouver-n-importe-quoi-la-recherche/champ.jpg",
+			"alt": "Le champ « Rechercher… » de l'en-tête",
+			"width": 273,
+			"height": 68
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -195,6 +202,13 @@
 					"text": "4.2 Ce qu'elle cherche"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "retrouver-n-importe-quoi-la-recherche/resultats.jpg",
+			"alt": "La palette de recherche ouverte sur « sogexia » : une affaire, une organisation et un commentaire, chacun avec sa famille écrite",
+			"width": 479,
+			"height": 324
 		},
 		{
 			"type": "paragraph",
@@ -803,6 +817,13 @@
 					"text": " quand il ne l'est pas — vous arrivez donc là où\nle message se trouve réellement, sans avoir à le retrouver dans la liste."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "retrouver-n-importe-quoi-la-recherche/message-non-classe.jpg",
+			"alt": "L'inbox ouverte sur le dossier « Non classés », où mène un message trouvé par la recherche",
+			"width": 295,
+			"height": 98
 		},
 		{
 			"type": "paragraph",
