@@ -6879,3 +6879,44 @@ rendu si elle a été démontée, §5.25), alerte de refus dans le bloc concern�
   conservées ; `md` et jamais `sm` (§11). Le panneau est borné à la fenêtre dans l'arborescence qui défile (§5.27).
 - **Les commandes suivent la capacité d'administrer l'espace** (§5.59) dans l'éditeur comme dans l'arborescence.
 - **Aucune couleur, aucun jeton nouveau ; deux icônes Lucide nouvelles, `Star` et `GitBranchPlus`.**
+
+
+### 5.73 Les étiquettes d'une affaire — `CRM-069` T2
+
+*Écrit le 2026-10-28, avant le code, après relecture des §1, §5.1, §5.3 bis à quater, §5.6, §5.9, §5.39, §5.59 et §5.71.*
+Ce que les écrans lisent, écrivent et refusent est spécifié par `docs/SPEC-etiquettes-digest.md` §2 et §3 ; ces règles ne
+disent que de quoi ils ont l'air. **Aucune couleur, aucun jeton nouveau** : la palette d'une étiquette est celle des
+tracks et des channels, rendue par les jetons doux du §12.5.
+
+- **LA PASTILLE D'ÉTIQUETTE** (composant `PastilleEtiquette`) est la pilule compacte du §5.6 : `rounded-full`, `text-xs`,
+  `font-medium`, `px-2 py-[2px]`. Elle porte **le point de tête** et le nom : la couleur ne porte jamais seule
+  l'information (§1). Teintes : `brand` sur `--color-brand-soft` et `--color-brand-on-soft` ; `success`, `accent` et
+  `danger` sur leurs `-soft` et `-on-soft` ; `neutral` sur `--color-hover` en `--color-text-2`, point `--color-text-3`.
+  Une étiquette **archivée** garde sa pastille. Son nom accessible et son infobulle disent « {nom}, étiquette archivée ».
+- **LA CARTE DU BOARD** (§5.1, la promesse d'INC-068 tenue) : les pastilles viennent **sous le titre**, sur une ligne qui
+  passe à la ligne au besoin (`flex-wrap gap-1`). **Trois au plus**, dans l'ordre du nom, puis une pastille neutre
+  « +{n} », dont le nom accessible et l'infobulle énumèrent les étiquettes masquées. Une carte sans étiquette n'a pas
+  de ligne vide (§5.3 bis).
+- **LA FICHE** (§5.3 bis) : les pastilles **sous la ligne du titre**, avant le responsable ; aucune ligne si l'affaire n'en
+  porte pas. La commande **« Étiquettes »**, secondaire compacte, icône Lucide **`Tags`**, prend place dans la rangée de
+  « Mettre en sommeil », après « Enregistrer comme modèle ». Elle suit la capacité d'**écrire l'affaire** (§5.59), pas
+  celle d'administrer. Elle ouvre sous l'en-tête un panneau dans le flux (§5.3 quater) : un `fieldset` « Étiquettes de
+  l'affaire », une case par étiquette du catalogue non archivée (case native de 24 px, §5.7 bis, la pastille pour
+  libellé), puis les archivées encore posées, qui se décochent seulement. **Chaque case écrit au clic** et revient si la
+  base refuse, son refus écrit dessous (§5.31 bis). « Fermer » referme, et `Échap` aussi ; le focus revient à la
+  commande. Catalogue vide : « Aucune étiquette dans cet espace. », avec le lien « Préparer les étiquettes » vers
+  Réglages ▸ Étiquettes pour qui administre, et le même texte sans lien pour les autres (§5.59).
+- **LA VUE LISTE** (§5.9) : une colonne « Étiquettes » après le titre, qui porte les mêmes pastilles sans plafond et
+  passe à la ligne. Le filtre **« Étiquette »** (`select`, option vide « Toutes les étiquettes ») rejoint la barre de
+  filtres. Il est porté par l'adresse comme les autres, et ne propose que les étiquettes non archivées.
+- **RÉGLAGES ▸ ÉTIQUETTES**, après « Modèles d'affaires » dans l'index : la forme de l'écran des modèles (§5.71, §5.39).
+  Une liste plate, chaque ligne avec sa pastille pour aperçu, et « Modifier » et « Archiver » ou « Désarchiver », discrets
+  compacts. « Nouvelle étiquette », primaire, ouvre la fiche dans le flux : « Nom » et « Couleur ». La couleur est un
+  groupe de cinq boutons radio natifs, chacun avec sa pastille d'aperçu et son nom : « Bleu », « Vert », « Jaune »,
+  « Rouge », « Gris ». « Enregistrer » et « Annuler ». Un nom pris est refusé sous les champs, la saisie gardée, le
+  focus sur le nom. « Afficher les archivées ». L'entrée de l'index et l'écran suivent la capacité d'administrer
+  l'espace, comme « Modèles d'affaires ». États (§5.8) : squelette, erreur avec « Réessayer », et l'état vide « Aucune
+  étiquette. » avec « Nouvelle étiquette ».
+- **LE FIL** : « Étiquette posée » et « Étiquette retirée », suivis du nom de l'étiquette, dans la famille « Champs »,
+  icône Lucide `Tag` pour les deux. L'icône n'informe pas : la phrase dit le geste.
+- **Icônes Lucide nouvelles : `Tags` (la commande), `Tag` (le fil).**
