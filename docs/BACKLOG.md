@@ -10840,7 +10840,8 @@ Arbitrée par la décision 769, spécification validée par la décision 771 : `
       jusqu'à la boîte de développement ; manuel.
       *2026-10-28 : la case « Par email », `lib/digest.ts`, unitaires ; seed « 8 octovicies » (`docs/SPEC-seed.md` §31) ;
       `e2e/ui/digest-consentement.spec.ts` et `e2e/mail/digest.spec.ts` écrits, non encore joués (le port 4173 est tenu
-      par une autre session). Reste : les deux E2E, les captures, le manuel.*
+      par une autre session). Manuel 5.4, 5.6, 5.7 et 33.5 réécrits, construit, `verify-manual` 163 contrôles sans anomalie. Reste :
+      les deux E2E, les captures.*
 
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 

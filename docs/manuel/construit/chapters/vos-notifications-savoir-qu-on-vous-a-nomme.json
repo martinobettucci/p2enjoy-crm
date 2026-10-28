@@ -490,7 +490,7 @@
 				},
 				{
 					"type": "text",
-					"text": " dès qu'une notification vous est\nadressée. Le produit ne vous envoie "
+					"text": " dès qu'une notification vous est\nadressée. Une notification n'envoie "
 				},
 				{
 					"type": "strong",
@@ -503,7 +503,7 @@
 				},
 				{
 					"type": "text",
-					"text": ", ne fait\nsonner "
+					"text": ", ne fait sonner "
 				},
 				{
 					"type": "strong",
@@ -529,7 +529,24 @@
 				},
 				{
 					"type": "text",
-					"text": " le titre de l'onglet."
+					"text": " le titre de\nl'onglet. Seul le récapitulatif du matin, si vous le demandez, passe par email ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "vos-notifications-savoir-qu-on-vous-a-nomme",
+						"anchor": "choisir-ce-que-vous-recevez"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "§5.6"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ")."
 				}
 			]
 		},
@@ -853,14 +870,225 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "Il n'y a qu'un seul canal, et l'écran n'en promet pas d'autre."
+							"text": "Le récapitulatif du matin, par email."
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " Le produit n'envoie aucune\nnotification par email, ni de résumé quotidien. Vous ne trouverez donc aucune case pour cela :\nune case qui ne commande rien serait une promesse que le produit ne tiendrait pas."
+					"text": " Sous les notifications, la partie "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Par email »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " porte la case "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Recevoir\nchaque matin le récapitulatif de… »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", suivie du nom de l'espace de travail ouvert. Elle est "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "décochée"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " tant que vous\nne l'avez pas cochée vous-même : aucun email ne vous est envoyé sans votre accord. Comme les autres cases, elle\ns'enregistre dès que vous la basculez, et une phrase sous elle confirme votre choix."
 				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Ce qu'il contient."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Vers "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "7 h"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", heure de Paris, un email intitulé « Votre journée dans… » réunit, pour cet\nespace : vos actions "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "en retard"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et celles "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "dues aujourd'hui"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", les commentaires où "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "l'on vous a mentionné"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " et\nque vous n'avez pas encore lus, et les "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "affaires figées"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " dont vous êtes responsable. Chaque ligne porte le lien de\nsa fiche. Une affaire que vous ne pouvez pas lire n'y figure jamais."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Les jours où il n'y a rien"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", aucun email ne part."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Qui l'envoie."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " L'adresse d'envoi commune de l'espace, celle que l'administrateur a désignée pour les envois\nautomatiques. Si l'espace n'en a pas, aucun récapitulatif ne part."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "À quelle adresse."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Celle de votre compte, telle que la page de connexion l'a vérifiée lors de votre dernière\nconnexion. Cette adresse est visible des autres membres de l'espace de travail."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un espace à la fois."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Le récapitulatif se demande espace par espace : changez d'espace de travail pour le régler\ndans un autre. Décocher la case l'arrête dès le lendemain."
+							}
+						]
+					}
+				]
 			]
 		},
 		{
@@ -944,13 +1172,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "Aucun canal en dehors de l'application"
+										"text": "Aucune notification par email, une par une"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": " : ni email, ni résumé quotidien. Le "
+								"text": " : seul le récapitulatif du matin part par email, et seulement si vous\nl'avez demandé ("
 							},
 							{
 								"type": "link",
@@ -967,7 +1195,7 @@
 							},
 							{
 								"type": "text",
-								"text": " dit ce que\nvous pouvez régler, et ce qui n'existe pas."
+								"text": "). Son heure ne se règle pas."
 							}
 						]
 					}

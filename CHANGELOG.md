@@ -33,6 +33,8 @@ d'exécuter le code attendu.
   (décision 773) ; elle devient visible des membres de l'espace. `mail-sync` reçoit `SITE_URL` pour les liens.
 - **Le consentement** (T5) : Réglages ▸ Notifications gagne « Par email », avec la case « Recevoir chaque matin le
   récapitulatif de {espace} », décochée par défaut.
+- **Manuel** : 5.4, 5.6 et 5.7 décrivent le récapitulatif du matin (contenu, expéditeur, adresse, un espace à la fois) au
+  lieu d'en nier l'existence ; 33.5 dit les étiquettes lues, filtrées, posées et retirées par l'assistant.
 
 ### `CRM-119` — preuves croisées des droits fins (décision 757)
 

@@ -1363,6 +1363,43 @@
 											"content": [
 												{
 													"type": "text",
+													"text": "lister par étiquette"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : la liste des affaires se filtre par le nom d'une étiquette, et chaque affaire, lue ou\nlistée, dit ses étiquettes ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+												"anchor": "les-etiquettes-d-une-affaire"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "section 9.16"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ") ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
 													"text": "lire sa checklist"
 												}
 											]
@@ -1690,7 +1727,20 @@
 										},
 										{
 											"type": "text",
-											"text": " — le fil de l'affaire le dit à votre nom, comme depuis la fiche. L'assistant\nn'ajoute, ne renomme ni ne retire aucun point : ces gestes restent ceux de la fiche ;"
+											"text": " — le fil de l'affaire le dit à votre nom, comme depuis la fiche. L'assistant\nn'ajoute, ne renomme ni ne retire aucun point : ces gestes restent ceux de la fiche ; "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "poser ou retirer des\nétiquettes"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", désignées par leur nom parmi celles de l'espace — un nom inconnu, ou celui d'une étiquette archivée à\nposer, est refusé avant toute écriture, et l'assistant reçoit la liste des étiquettes possibles. L'assistant ne crée,\nne renomme ni n'archive aucune étiquette : ces gestes restent ceux des réglages ;"
 										}
 									]
 								}

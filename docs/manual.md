@@ -608,8 +608,8 @@ page — il n'annonce jamais une modification qui n'a pas eu lieu.
 ### 5.4 La mise à jour est immédiate
 
 Le panneau et le compteur s'actualisent **sans rechargement** dès qu'une notification vous est
-adressée. Le produit ne vous envoie **aucun email**, ne fait
-sonner **aucun son** et ne modifie **pas** le titre de l'onglet.
+adressée. Une notification n'envoie **aucun email**, ne fait sonner **aucun son** et ne modifie **pas** le titre de
+l'onglet. Seul le récapitulatif du matin, si vous le demandez, passe par email ([§5.6](#choisir-ce-que-vous-recevez)).
 
 ### 5.5 Mentionner quelqu’un dans un commentaire
 
@@ -665,9 +665,22 @@ voyez est ce que le produit a réellement retenu, jamais ce qu'il a cru envoyer.
 marquer lues les notifications de ce type. Vous ne les voyez pas, donc vous ne les marquez pas ;
 elles vous attendront, non lues, si vous recochez.
 
-**Il n'y a qu'un seul canal, et l'écran n'en promet pas d'autre.** Le produit n'envoie aucune
-notification par email, ni de résumé quotidien. Vous ne trouverez donc aucune case pour cela :
-une case qui ne commande rien serait une promesse que le produit ne tiendrait pas.
+**Le récapitulatif du matin, par email.** Sous les notifications, la partie **« Par email »** porte la case **« Recevoir
+chaque matin le récapitulatif de… »**, suivie du nom de l'espace de travail ouvert. Elle est **décochée** tant que vous
+ne l'avez pas cochée vous-même : aucun email ne vous est envoyé sans votre accord. Comme les autres cases, elle
+s'enregistre dès que vous la basculez, et une phrase sous elle confirme votre choix.
+
+- **Ce qu'il contient.** Vers **7 h**, heure de Paris, un email intitulé « Votre journée dans… » réunit, pour cet
+  espace : vos actions **en retard** et celles **dues aujourd'hui**, les commentaires où **l'on vous a mentionné** et
+  que vous n'avez pas encore lus, et les **affaires figées** dont vous êtes responsable. Chaque ligne porte le lien de
+  sa fiche. Une affaire que vous ne pouvez pas lire n'y figure jamais.
+- **Les jours où il n'y a rien**, aucun email ne part.
+- **Qui l'envoie.** L'adresse d'envoi commune de l'espace, celle que l'administrateur a désignée pour les envois
+  automatiques. Si l'espace n'en a pas, aucun récapitulatif ne part.
+- **À quelle adresse.** Celle de votre compte, telle que la page de connexion l'a vérifiée lors de votre dernière
+  connexion. Cette adresse est visible des autres membres de l'espace de travail.
+- **Un espace à la fois.** Le récapitulatif se demande espace par espace : changez d'espace de travail pour le régler
+  dans un autre. Décocher la case l'arrête dès le lendemain.
 
 ### 5.7 Ce qui n'est pas encore là
 
@@ -676,8 +689,8 @@ une case qui ne commande rien serait une promesse que le produit ne tiendrait pa
 - **Le fil ne montre pas qui un commentaire mentionne.** La personne prévenue le voit dans sa
   cloche ; le commentaire, lui, ne l'affiche pas.
 - **La liste des personnes n'a ni recherche ni pagination.**
-- **Aucun canal en dehors de l'application** : ni email, ni résumé quotidien. Le [§5.6](#choisir-ce-que-vous-recevez) dit ce que
-  vous pouvez régler, et ce qui n'existe pas.
+- **Aucune notification par email, une par une** : seul le récapitulatif du matin part par email, et seulement si vous
+  l'avez demandé ([§5.6](#choisir-ce-que-vous-recevez)). Son heure ne se règle pas.
 - **La préférence vaut pour tous vos espaces de travail** : elle porte sur vous, pas sur un
   contexte. Vous ne pouvez pas couper les mentions d'un espace en les gardant dans un autre.
 - **Aucune suppression, et aucune expiration.** Une notification ne s'efface pas. Le panneau montre
@@ -5053,6 +5066,8 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - **lire son historique**, comme le fil de la fiche ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)) : événements, commentaires et activités, du plus
     ancien au plus récent ;
   - **lire ses commentaires**, et **ses activités** ([chapitre 9.8](#les-activites-d-une-affaire-appels-reunions-visios)) ;
+  - **lister par étiquette** : la liste des affaires se filtre par le nom d'une étiquette, et chaque affaire, lue ou
+    listée, dit ses étiquettes ([section 9.16](#les-etiquettes-d-une-affaire)) ;
   - **lire sa checklist** ([section 9.9](#la-checklist-d-une-affaire-les-points-a-cocher)) : les points libres, ceux de l'étape
     courante et ceux des étapes passées, cochés ou non, par qui et quand, et les étapes pour lesquelles un point est
     exigé ;
@@ -5072,7 +5087,10 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
     de channel** ; la **mettre en sommeil** ou la **réveiller** ; **lier ou délier un contact** (ce geste demande aussi
     « Contacts ▸ Consulter ») ; **corriger une activité** dont vous êtes l'auteur ; **cocher ou décocher un point de
     checklist** — le fil de l'affaire le dit à votre nom, comme depuis la fiche. L'assistant
-    n'ajoute, ne renomme ni ne retire aucun point : ces gestes restent ceux de la fiche ;
+    n'ajoute, ne renomme ni ne retire aucun point : ces gestes restent ceux de la fiche ; **poser ou retirer des
+    étiquettes**, désignées par leur nom parmi celles de l'espace — un nom inconnu, ou celui d'une étiquette archivée à
+    poser, est refusé avant toute écriture, et l'assistant reçoit la liste des étiquettes possibles. L'assistant ne crée,
+    ne renomme ni n'archive aucune étiquette : ces gestes restent ceux des réglages ;
   - *Supprimer* (« Affaires ▸ Supprimer ») : la **mettre à la corbeille**, d'où un administrateur la restaure.
 
   Les règles sont celles de l'écran. Un déplacement non déclaré, un motif manquant, une question obligatoire sans
