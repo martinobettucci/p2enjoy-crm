@@ -1,4 +1,4 @@
--- @verifies CRM-069 (docs/BACKLOG.md) tranche T1 — révision d'un garde-fou de compte (docs/SPEC-etiquettes-digest.md §2), décision 51
+-- @verifies CRM-069 (docs/BACKLOG.md) tranches T1 et T4 — révision d'un garde-fou de compte (docs/SPEC-etiquettes-digest.md §2, §5), décision 51
 -- @verifies CRM-068 (docs/BACKLOG.md) tranche T1 — révision d'un garde-fou de compte (docs/SPEC-checklists.md §3), décision 51
 -- @verifies CRM-014 (docs/BACKLOG.md) — harnais des douze preuves de refus d'autorisation
 -- @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : assertion révisée par les migrations 106 et 107 (docs/SPEC-mail-subsystem.md §19 bis.3)
@@ -231,8 +231,8 @@ select is(pg_temp.politiques('card_sequence_enrollments'),
 
 select is(
 	(select count(*)::int from pg_policies where schemaname = 'public'),
-	176,
-	'CENT SOIXANTE-SEIZE politiques dans `public`, et pas une de plus — 171 avant `CRM-069` tranche T1, plus les CINQ des étiquettes (docs/SPEC-etiquettes-digest.md §2) : la lecture du catalogue par tout membre, son écriture par l''administrateur seul, puis la lecture, la pose et le retrait des étiquettes d''une affaire, bornés à qui la lit et à qui l''écrit. Aucune suppression du catalogue : ni privilège, une étiquette s''archive. Avant elles : 171, soit 169 avant `CRM-068` tranche T4a, plus les DEUX des modèles d''affaires (docs/SPEC-checklists.md §3.5) : la lecture de `card_templates` par tout membre, l''écriture par l''administrateur seul. AUCUNE SUPPRESSION, et c''est un refus double : la politique d''écriture la couvrirait, mais aucun privilège `DELETE` n''est accordé — un modèle s''archive. Avant elles : 169, soit 161 avant `CRM-068` tranche T1, plus les HUIT des '
+	179,
+	'CENT SOIXANTE-DIX-NEUF politiques dans `public`, et pas une de plus — 176 avant `CRM-069` tranche T4, plus les TROIS du consentement au digest (docs/SPEC-etiquettes-digest.md §5.1) : la personne lit, donne et retire SON consentement, et rien d''autre ; `digest_runs` n''en porte aucune, fermée par le privilège. Avant elles : 176, soit 171 avant `CRM-069` tranche T1, plus les CINQ des étiquettes (docs/SPEC-etiquettes-digest.md §2) : la lecture du catalogue par tout membre, son écriture par l''administrateur seul, puis la lecture, la pose et le retrait des étiquettes d''une affaire, bornés à qui la lit et à qui l''écrit. Aucune suppression du catalogue : ni privilège, une étiquette s''archive. Avant elles : 171, soit 169 avant `CRM-068` tranche T4a, plus les DEUX des modèles d''affaires (docs/SPEC-checklists.md §3.5) : la lecture de `card_templates` par tout membre, l''écriture par l''administrateur seul. AUCUNE SUPPRESSION, et c''est un refus double : la politique d''écriture la couvrirait, mais aucun privilège `DELETE` n''est accordé — un modèle s''archive. Avant elles : 169, soit 161 avant `CRM-068` tranche T1, plus les HUIT des '
 	'checklists (docs/SPEC-checklists.md §3) : lecture et écriture des points d''une étape, lecture et écriture des '
 	'exigences d''une transition — toutes deux réservées à l''administrateur —, puis lecture, insertion, mise à jour et '
 	'suppression des points d''une affaire, l''insertion et la suppression bornées aux points LIBRES. Avant elles : 161, '

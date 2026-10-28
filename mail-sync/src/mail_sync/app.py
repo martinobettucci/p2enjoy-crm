@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans affaire — aucun `Reply-To`, le jeton `{site}` remplacé par `SITE_URL`
+#       (docs/SPEC-etiquettes-digest.md §5.3, décision 772)
 # @spec CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.3 et §12.5 — santé, API
 # @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : antivirus des pièces envoyées et purge des dépôts abandonnés —
 #       docs/SPEC-mail-subsystem.md §19 bis.2 points 6 et 8
@@ -527,6 +529,8 @@ def create_app(
                 # relève. Injoignable — la production aujourd'hui —, il rend `skipped` et l'envoi part.
                 clamav_hote=settings_courants.CLAMAV_HOST,
                 clamav_port=settings_courants.CLAMAV_PORT,
+                # `CRM-069` T4 : l'adresse publique, pour les liens d'un digest (décision 772).
+                site_url=settings_courants.SITE_URL,
             )
         except PostgrestError as erreur:
             log_event(

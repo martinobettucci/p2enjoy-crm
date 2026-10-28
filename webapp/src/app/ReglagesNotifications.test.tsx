@@ -1,3 +1,5 @@
+// @verifies CRM-069 (docs/BACKLOG.md) — tranche T5 : la case du récapitulatif quotidien, décochée par défaut, au nom de l'espace
+//           courant ; ses écritures et son refus (docs/DESIGN_SYSTEM.md §5.74, docs/SPEC-etiquettes-digest.md §5.1)
 // @verifies CRM-064 (docs/BACKLOG.md) — tranche 4 : les préférences
 // @verifies docs/SPEC-notifications.md §43.4 (l'absence de ligne vaut consentement),
 //           §46.3 (l'état retenu par la base), §49 (preuves attendues)
@@ -17,6 +19,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ReglagesNotifications } from './ReglagesNotifications'
+import { FournisseurEspace } from './ContexteEspace'
 import { relireBoiteNotifications } from '../lib/notifications'
 import type { ClientCrm } from '../lib/supabase'
 
@@ -261,5 +264,79 @@ describe('l’écran des préférences de notification (§5.45)', () => {
 	it('nomme le problème quand la configuration manque, au lieu d’un sablier sans fin', async () => {
 		render(<ReglagesNotifications client={null} />)
 		await screen.findByText(/n’ont pas pu être chargées|n'ont pas pu être chargées/)
+	})
+})
+
+// `CRM-069` T5 — le récapitulatif quotidien par email (docs/DESIGN_SYSTEM.md §5.74, docs/SPEC-etiquettes-digest.md §5.1).
+describe('la case du récapitulatif quotidien (CRM-069 T5)', () => {
+	function clientDigest(abonne: boolean, ecriture: { error: unknown; status: number } = { error: null, status: 201 }) {
+		const ecritures: { methode: string; valeur?: unknown; filtres: unknown[][] }[] = []
+		const client = {
+			from: (table: string) => {
+				const maillon: Record<string, unknown> = {}
+				let courante: { methode: string; valeur?: unknown; filtres: unknown[][] } | null = null
+				maillon.select = () => maillon
+				maillon.eq = (...args: unknown[]) => {
+					courante?.filtres.push(args)
+					return maillon
+				}
+				maillon.insert = (valeur: unknown) => {
+					courante = { methode: 'insert', valeur, filtres: [] }
+					ecritures.push(courante)
+					return maillon
+				}
+				maillon.delete = () => {
+					courante = { methode: 'delete', filtres: [] }
+					ecritures.push(courante)
+					return maillon
+				}
+				maillon.then = (resoudre: (r: unknown) => unknown) => {
+					if (courante !== null) return resoudre({ data: null, ...ecriture })
+					if (table === 'workspaces') return resoudre({ data: [{ name: 'P2Enjoy SAS' }], error: null, status: 200 })
+					if (table === 'digest_subscriptions') return resoudre({ data: abonne ? [{ workspace_id: 'ws-1' }] : [], error: null, status: 200 })
+					return resoudre(LECTURE_VIDE)
+				}
+				return maillon
+			},
+			rpc: () => Promise.resolve({ data: null, error: null, status: 200 }),
+		} as unknown as ClientCrm
+		return { client, ecritures }
+	}
+
+	const monter = (client: ClientCrm) =>
+		render(
+			<FournisseurEspace valeur={{ idWorkspace: 'ws-1', estAdmin: false }}>
+				<ReglagesNotifications client={client} />
+			</FournisseurEspace>,
+		)
+
+	it('décochée par défaut, au nom de l’espace ; cochée, elle pose le consentement de l’espace courant', async () => {
+		const { client, ecritures } = clientDigest(false)
+		monter(client)
+		const caseDigest = (await screen.findByRole('checkbox', { name: /Recevoir chaque matin le récapitulatif de P2Enjoy SAS/ })) as HTMLInputElement
+		expect(caseDigest.checked).toBe(false)
+		expect(screen.getByRole('group', { name: 'Par email' })).toBeDefined()
+		await userEvent.click(caseDigest)
+		await waitFor(() => expect(caseDigest.checked).toBe(true))
+		expect(ecritures).toEqual([{ methode: 'insert', valeur: { workspace_id: 'ws-1' }, filtres: [] }])
+		expect(screen.getByText('Enregistré')).toBeDefined()
+	})
+
+	it('abonnée, la décocher retire le consentement de cet espace ; un refus laisse la case et le dit', async () => {
+		const { client, ecritures } = clientDigest(true)
+		monter(client)
+		const caseDigest = (await screen.findByRole('checkbox', { name: /Recevoir chaque matin/ })) as HTMLInputElement
+		expect(caseDigest.checked).toBe(true)
+		await userEvent.click(caseDigest)
+		await waitFor(() => expect(caseDigest.checked).toBe(false))
+		expect(ecritures).toEqual([{ methode: 'delete', filtres: [['workspace_id', 'ws-1']] }])
+		cleanup()
+		const refus = clientDigest(false, { error: { code: '42501', message: 'rls' }, status: 403 })
+		monter(refus.client)
+		const autre = (await screen.findByRole('checkbox', { name: /Recevoir chaque matin/ })) as HTMLInputElement
+		await userEvent.click(autre)
+		// Le refus s'écrit sous la case, et la région d'annonce le répète (§5.7 ter).
+		await waitFor(() => expect(document.getElementById('pref-digest-mention')?.textContent).toBe('Ce récapitulatif n’est pas ouvert à votre compte dans cet espace.'))
+		expect(autre.checked).toBe(false)
 	})
 })

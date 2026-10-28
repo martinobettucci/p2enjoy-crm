@@ -390,6 +390,8 @@ services:
       MAIL_SYNC_SMTP_TIMEOUT_SECONDS: ${MAIL_SYNC_SMTP_TIMEOUT_SECONDS:-30}
       # CRM-054 : l'antivirus et la borne d'ingestion. Le nom d'hôte est celui du réseau Compose.
       CLAMAV_HOST: clamav
+      # `CRM-069` T4 : l'adresse publique de la webapp, qui remplace le jeton `{site}` des liens d'un digest (décision 772).
+      SITE_URL: ${SITE_URL}
       CLAMAV_PORT: 3310
       MAIL_MAX_ATTACHMENT_MB: ${MAIL_MAX_ATTACHMENT_MB:-25}
     # L'image est volontairement dépourvue de `curl` et de `wget` : la sonde emprunte le seul

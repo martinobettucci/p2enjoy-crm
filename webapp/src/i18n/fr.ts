@@ -1331,6 +1331,17 @@ export const fr = {
 	// `CRM-068` T3a — docs/SPEC-checklists.md §3.6. Le détail porte le libellé du point, lu dans le payload.
 	'timeline.event.checklist_checked': 'Point de checklist coché',
 	'timeline.event.checklist_unchecked': 'Point de checklist décoché',
+	// Le récapitulatif quotidien — CRM-069 T5, docs/DESIGN_SYSTEM.md §5.74.
+	'settings.digest.legend': 'Par email',
+	'settings.digest.label': 'Recevoir chaque matin le récapitulatif de {espace}',
+	'settings.digest.body':
+		'Vers 7 h : vos actions en retard ou dues aujourd’hui, vos mentions non lues, vos affaires figées. Rien n’est envoyé les jours où il n’y a rien.',
+	'settings.digest.loading': 'Chargement du récapitulatif…',
+	'settings.digest.error': 'Le récapitulatif n’a pas pu être lu.',
+	'settings.digest.saved.on': 'Vous recevrez le récapitulatif chaque matin.',
+	'settings.digest.saved.off': 'Vous ne recevrez plus le récapitulatif.',
+	'settings.digest.refus.forbidden': 'Ce récapitulatif n’est pas ouvert à votre compte dans cet espace.',
+	'settings.digest.refus.panne': 'Votre choix n’a pas pu être enregistré. Réessayez.',
 	'timeline.event.label_added': 'Étiquette posée',
 	'timeline.event.label_removed': 'Étiquette retirée',
 	// Deux formes, et l'accord est POSÉ plutôt que construit par concaténation (§10) : un

@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans affaire — aucun `Reply-To`, le jeton `{site}` remplacé par `SITE_URL`
+#       (docs/SPEC-etiquettes-digest.md §5.3, décision 772)
 # @spec CRM-058 (docs/BACKLOG.md) — composition d'un message sortant
 # @spec docs/SPEC-mail-subsystem.md §5 (envoi), §19.1 (ce que le serveur ne fait pas), §19.5 (ce
 #       que le worker compose)
@@ -39,7 +41,8 @@ class Envoi:
 
     outbox_id: str
     from_address: str
-    reply_to: str
+    #: `None` pour un digest (`CRM-069` T4) : il n'appartient à aucune affaire, et aucune réponse n'a de dossier où revenir.
+    reply_to: str | None
     to_addrs: tuple[str, ...]
     cc_addrs: tuple[str, ...] = ()
     subject: str | None = None
@@ -102,7 +105,8 @@ def composer(envoi: Envoi, identifiant: str) -> EmailMessage:
     message["Message-ID"] = identifiant
     # LE `Reply-To` DE LA CARD — le mécanisme qui ramène les réponses dans le CRM, quel que soit le
     # serveur d'où le destinataire répond (§5).
-    message["Reply-To"] = envoi.reply_to
+    if envoi.reply_to is not None:
+        message["Reply-To"] = envoi.reply_to
 
     references = chaine_references(envoi)
     if envoi.in_reply_to:

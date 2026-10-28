@@ -1,3 +1,5 @@
+# @verifies CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans `Reply-To`, le jeton `{site}` des seuls envois sans affaire
+#           (docs/SPEC-etiquettes-digest.md §5.3, décision 772)
 # @verifies CRM-058 (docs/BACKLOG.md) — en-têtes d'un message sortant
 # @verifies docs/SPEC-mail-subsystem.md §19.1 (le serveur ne vérifie rien), §19.5 (ce que le
 #           worker compose), §19.7 (preuves exigées)
@@ -170,3 +172,10 @@ def test_un_type_absent_part_en_octet_stream() -> None:
 def test_sans_piece_le_message_reste_un_texte_simple() -> None:
     message = composer(envoi(), "<abc@crm.p2enjoy.test>")
     assert message.get_content_type() == "text/plain"
+
+
+# `CRM-069` T4 (docs/SPEC-etiquettes-digest.md §5.3, décision 772) : le digest n'a pas d'affaire.
+def test_un_digest_n_a_pas_de_reply_to() -> None:
+    message = composer(envoi(reply_to=None), "<abc@crm.p2enjoy.test>")
+    assert message["Reply-To"] is None
+    assert message["From"] == "systeme@crm.p2enjoy.test"

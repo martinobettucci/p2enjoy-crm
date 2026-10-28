@@ -10831,10 +10831,16 @@ Arbitrée par la décision 769, spécification validée par la décision 771 : `
       `label_added` et `label_removed` ; pytest unitaires +6, suite 274 ; intégration
       `test_integration_affaires_etiquettes.py` écrite et inscrite à `verify-mcp.sh`. **Reste** : `verify-mcp.sh` et l'E2E
       du connecteur, après la campagne de la session parallèle.
-- [ ] **T4 — le digest en base et à l'envoi** : `digest_subscriptions`, `digest_runs`, `mail_outbox.kind`,
+- [~] **T4 — le digest en base et à l'envoi** : `digest_subscriptions`, `digest_runs`, `mail_outbox.kind`,
       `app.envoyer_digests` et son job ; `mail-sync` sans `Reply-To` ; pgTAP, pytest, contrat de déploiement.
-- [ ] **T5 — le consentement à l'écran et la preuve de bout en bout** : la case de Réglages ▸ Notifications ; seed ; E2E
+      *2026-10-28 : migration `0133` (adresse du profil posée à chaque session, décision 773) ; pgTAP `0124` 23/23,
+      `0016` révisée, lot de 33 fichiers voisins vert ; `mail-sync` 260/260 ; unitaires 4918/4918, typecheck vert. Reste :
+      l'E2E `mail` de bout en bout (T5).*
+- [~] **T5 — le consentement à l'écran et la preuve de bout en bout** : la case de Réglages ▸ Notifications ; seed ; E2E
       jusqu'à la boîte de développement ; manuel.
+      *2026-10-28 : la case « Par email », `lib/digest.ts`, unitaires ; seed « 8 octovicies » (`docs/SPEC-seed.md` §31) ;
+      `e2e/ui/digest-consentement.spec.ts` et `e2e/mail/digest.spec.ts` écrits, non encore joués (le port 4173 est tenu
+      par une autre session). Reste : les deux E2E, les captures, le manuel.*
 
 ### CRM-070 — précision d'arbitrage : l'invitation d'un membre
 

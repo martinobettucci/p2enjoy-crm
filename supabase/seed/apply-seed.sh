@@ -5118,6 +5118,28 @@ attendu "$code" "archivage de « Salon 2025 »" 200
 printf '  %-36s 4 étiquettes, dont « Salon 2025 » archivée ; 5 affaires étiquetées\n' 'Étiquettes'
 info "Étiquettes : 4, dont une archivée ; la Ville de Lyon en porte 4 (« +1 » au board) — docs/SPEC-seed.md §30"
 
+# --- 8 octovicies. Le récapitulatif quotidien — CRM-069 T5, docs/SPEC-seed.md §31 ---------------------------------------
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T5 : Driss consent au digest de l'espace, et le vrai job l'envoie pour 7 h de
+#       Paris ; Camille ne consent pas (docs/SPEC-etiquettes-digest.md §6 ; docs/SPEC-seed.md §31)
+#
+# LE VRAI CHEMIN (§31.2) : le consentement par la même écriture que la case des Réglages, sous le jeton de Driss ; le digest
+# par `app.envoyer_digests`, la fonction du job, pour un instant de 7 h 15 à Paris ; l'envoi par la vraie file, que
+# `mail-sync` vide. Idempotent par `digest_runs` : un rejeu le même jour n'envoie rien de plus.
+echo
+say "8 octovicies. Récapitulatif quotidien"
+JETON_BIZDEV_DG=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
+[ -n "$JETON_BIZDEV_DG" ] || die "connexion de Driss impossible : son consentement s'écrit sous son jeton (§31.2)."
+code=$(api GET "/rest/v1/digest_subscriptions?select=profile_id&profile_id=eq.5eed0000-0000-4000-8000-000000000012&workspace_id=eq.$CK_ESPACE")
+attendu "$code" "lecture du consentement de Driss" 200
+if [ "$(jq -r 'length' "$CORPS")" = "0" ]; then
+	code=$(api_jeton "$JETON_BIZDEV_DG" POST /rest/v1/digest_subscriptions -d "$(jq -nc --arg ws "$CK_ESPACE" '{workspace_id: $ws}')")
+	attendu "$code" "consentement de Driss au récapitulatif" 201
+fi
+DG_FILES=$(psql_seed -c "select app.envoyer_digests(((current_date + time '07:15') at time zone 'Europe/Paris'))")
+DG_ISSUE=$(psql_seed -c "select status from public.digest_runs where profile_id = '5eed0000-0000-4000-8000-000000000012' and workspace_id = '$CK_ESPACE' and day = (now() at time zone 'Europe/Paris')::date")
+[ -n "$DG_ISSUE" ] || die "le digest de Driss n'a pas d'issue pour aujourd'hui : app.envoyer_digests n'a rien inscrit (§31.1)."
+printf '  %-36s Driss abonné ; digest du jour : %s (%s mis en file par ce passage)\n' 'Récapitulatif' "$DG_ISSUE" "$DG_FILES"
+info "Récapitulatif quotidien : Driss abonné, son digest du jour « $DG_ISSUE » ; Camille non abonnée — docs/SPEC-seed.md §31"
 
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base

@@ -2648,3 +2648,25 @@ puisqu'une étiquette archivée ne se pose plus (`22023 label_archived`). La dat
 `e2e/ui/etiquettes.spec.ts` lit le catalogue dans les Réglages, la carte de la Ville de Lyon au board de
 `studio-web/refonte` (trois pastilles et « +1 »), et filtre la vue liste de `refonte` par « Secteur public ». Ses propres étiquettes
 portent le préfixe `ZZ 069`, retirées à la fin.
+
+## 31. Le récapitulatif quotidien — `CRM-069` T5 (décisions 769, 771 et 772)
+
+*Écrit le 2026-10-28, avec la section du script. Contrat : `docs/SPEC-etiquettes-digest.md` §6.*
+
+### 31.1 Ce que le jeu porte
+
+Driss consent au récapitulatif de l'espace ; Camille et Farida n'y consentent pas. Le jour du seed, le vrai job produit
+**le digest de Driss**, mis en file (`queued`) quand il a de quoi le remplir (ses actions en retard ou dues, ses mentions
+non lues, ses affaires figées), ou inscrit `empty` sinon. `mail-sync` l'expédie à la boîte de développement de Driss par
+l'identité de service, comme tout envoi.
+
+### 31.2 Le vrai chemin
+
+Le consentement est écrit sous le jeton de Driss (`POST /digest_subscriptions`), comme la case de Réglages ▸ Notifications.
+Le digest est produit par `app.envoyer_digests`, la fonction que le job `p2enjoy-digest-quotidien` appelle, pour l'instant
+de 7 h 15 à Paris le jour du seed. Aucune ligne de `mail_outbox` ni de `digest_runs` n'est écrite à la main.
+
+### 31.3 Convergence
+
+Le consentement est posé s'il est absent. Le digest est idempotent par `digest_runs` : un rejeu le même jour n'envoie rien
+de plus, et un rejeu un autre jour produit le digest de ce jour-là, comme le job.

@@ -1,4 +1,4 @@
-// @verifies CRM-069 (docs/BACKLOG.md) — tranche T1 : `labels` et `card_labels` au témoin des tables (docs/SPEC-etiquettes-digest.md §2)
+// @verifies CRM-069 (docs/BACKLOG.md) — tranches T1 et T4 : `labels`, `card_labels`, `digest_subscriptions` et `digest_runs` au témoin des tables (docs/SPEC-etiquettes-digest.md §2)
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T1 : les trois surcharges de `ecriture_permise`, docs/SCHEMA.md §9 bis.8 ter
 // @verifies CRM-006 (docs/BACKLOG.md) — contrat des types générés depuis le schéma
 // @verifies docs/SPEC-types.md §5 (fichier produit), §7 (ce que les types n'expriment pas)
@@ -150,6 +150,11 @@ type _tables = Expect<
     // pas.
     | 'labels'
     | 'card_labels'
+    // `0133` de `CRM-069` TRANCHE T4 ajoute `digest_subscriptions` et `digest_runs` (docs/SPEC-etiquettes-digest.md §5). CE
+    // QUI ÉCHAPPE AU GÉNÉRATEUR : `digest_subscriptions.Insert` expose `profile_id`, que la base pose (l'appelant) ;
+    // `digest_runs` est fermée à tout client.
+    | 'digest_subscriptions'
+    | 'digest_runs'
     | 'card_comment_mentions'
     | 'card_comments'
     // `0088` de `CRM-099` TRANCHE T1 ajoute `card_cost_actuals` — les réels d'une ligne de coût, dont la base tient la
@@ -324,7 +329,9 @@ type _tables = Expect<
 type _profilesColonnes = Expect<
   Equal<
     keyof Tables<'profiles'>,
-    'avatar_url' | 'created_at' | 'full_name' | 'id' | 'locale' | 'updated_at'
+    // `email` — `CRM-069` T4, décision 773 : l'adresse vérifiée du SSO, posée par la base à chaque connexion ; aucun
+    // client ne l'écrit (privilège de colonne), ce que le type d'`Update` ne dit pas.
+    'avatar_url' | 'created_at' | 'email' | 'full_name' | 'id' | 'locale' | 'updated_at'
   >
 >
 

@@ -1639,6 +1639,88 @@ export type Database = {
           },
         ]
       }
+      digest_runs: {
+        Row: {
+          created_at: string
+          day: string
+          outbox_id: string | null
+          profile_id: string
+          status: string
+          workspace_id: string
+        }
+        Insert: {
+          created_at?: string
+          day: string
+          outbox_id?: string | null
+          profile_id: string
+          status: string
+          workspace_id: string
+        }
+        Update: {
+          created_at?: string
+          day?: string
+          outbox_id?: string | null
+          profile_id?: string
+          status?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digest_runs_outbox_id_fkey"
+            columns: ["outbox_id"]
+            isOneToOne: false
+            referencedRelation: "mail_outbox"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "digest_runs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "digest_runs_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      digest_subscriptions: {
+        Row: {
+          profile_id: string
+          subscribed_at: string
+          workspace_id: string
+        }
+        Insert: {
+          profile_id?: string
+          subscribed_at?: string
+          workspace_id: string
+        }
+        Update: {
+          profile_id?: string
+          subscribed_at?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "digest_subscriptions_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "digest_subscriptions_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       form_field_rules: {
         Row: {
           created_at: string
@@ -2451,13 +2533,14 @@ export type Database = {
           attempts: number
           bcc_addrs: string[]
           body_text: string
-          card_id: string
+          card_id: string | null
           cc_addrs: string[]
           created_at: string
           created_by: string | null
           id: string
           identity_id: string
           in_reply_to_message_id: string | null
+          kind: string
           last_error: string | null
           next_attempt_at: string
           reserved_at: string | null
@@ -2475,13 +2558,14 @@ export type Database = {
           attempts?: number
           bcc_addrs?: string[]
           body_text: string
-          card_id: string
+          card_id?: string | null
           cc_addrs?: string[]
           created_at?: string
           created_by?: string | null
           id?: string
           identity_id: string
           in_reply_to_message_id?: string | null
+          kind?: string
           last_error?: string | null
           next_attempt_at?: string
           reserved_at?: string | null
@@ -2499,13 +2583,14 @@ export type Database = {
           attempts?: number
           bcc_addrs?: string[]
           body_text?: string
-          card_id?: string
+          card_id?: string | null
           cc_addrs?: string[]
           created_at?: string
           created_by?: string | null
           id?: string
           identity_id?: string
           in_reply_to_message_id?: string | null
+          kind?: string
           last_error?: string | null
           next_attempt_at?: string
           reserved_at?: string | null
@@ -3028,6 +3113,7 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          email: string | null
           full_name: string
           id: string
           locale: string
@@ -3036,6 +3122,7 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          email?: string | null
           full_name: string
           id: string
           locale?: string
@@ -3044,6 +3131,7 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
+          email?: string | null
           full_name?: string
           id?: string
           locale?: string

@@ -628,7 +628,8 @@ PORT_RAPPORT=9323
 # la suite complète rend aussi l'échec de `0075`, révisée par une session parallèle (migration 0131 non committée).
 # **+1 par `CRM-068` T4a, 2026-10-27** : `supabase/tests/0122_modeles_affaires.test.sql`, 22 assertions. COMPTÉE.
 # **+1 par `CRM-069` T1, 2026-10-28** : `supabase/tests/0123_etiquettes.test.sql`, fichier NEUF. 112 + 1 = 113, COMPTÉE.
-FICHIERS_SQL_ATTENDUS=113
+# **+1 par `CRM-069` T4, 2026-10-28** : `supabase/tests/0124_digest_quotidien.test.sql`, fichier NEUF. 113 + 1 = 114, COMPTÉE.
+FICHIERS_SQL_ATTENDUS=114
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -786,7 +787,9 @@ FICHIERS_SQL_ATTENDUS=113
 # **+22 par `CRM-068` T4a, 2026-10-27** (`0122`). COMPTÉE.
 # **+20 par `CRM-069` T1, 2026-10-28** (`0123` : catalogue, pose, refus, fil ; `0016` et `0019` révisées sans changer de
 # plan). 4434 + 20 = 4454, COMPTÉE.
-ASSERTIONS_ATTENDUES=4454
+# **+23 par `CRM-069` T4, 2026-10-28** (`0124` : consentement, file sans affaire, job, adresse de session ; `0016` révisée
+# sans changer de plan). 4454 + 23 = 4477, COMPTÉE.
+ASSERTIONS_ATTENDUES=4477
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1756,7 +1759,12 @@ SCENARIOS_API=1261
 # client MCP paraît coché sur la fiche, au nom de la personne, avec la ligne du fil. 1001 + 1 = 1002, COMPTÉE.
 # **+1 par `CRM-118` T2.b (checklists), 2026-10-27** : `e2e/ui/connecteur-workflows.spec.ts` gagne un scénario — un point de
 # checklist ajouté et exigé par le connecteur paraît dans l'éditeur. 1002 + 1 = 1003, COMPTÉE.
-SCENARIOS_UI=1003
+# **+5 par `CRM-069` T2, 2026-10-28** : `e2e/ui/etiquettes.spec.ts`, fichier NEUF — Réglages ▸ Étiquettes (lire, poser, nom
+# pris refusé, archiver, 390 px), la carte du board et son « +1 », la pose sur la fiche et le fil, le filtre de la liste,
+# la lectrice. 1003 + 5 = 1008, COMPTÉE.
+# **+1 par `CRM-069` T5, 2026-10-28** : `e2e/ui/digest-consentement.spec.ts`, fichier NEUF — la lectrice coche « Par email »,
+# la ligne en base ; décochée, la ligne retirée. 1008 + 1 = 1009, COMPTÉE.
+SCENARIOS_UI=1009
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
@@ -1797,7 +1805,9 @@ SCENARIOS_UI=1003
 # **45 depuis `CRM-058` tranche 2, 2026-10-26** : `e2e/mail/envoi-pieces-jointes.spec.ts`, fichier NEUF, **1** scénario —
 # la copie cachée remise sans en-tête qui la révèle, les pièces intactes, l'archive `clean`. 44 + 1 = 45, valeur COMPTÉE
 # — « Total: 45 tests in 12 files ».
-SCENARIOS_MAIL=45
+# **+1 par `CRM-069` T5, 2026-10-28** : `e2e/mail/digest.spec.ts`, fichier NEUF — le job de 7 h, la file, le worker, la
+# boîte de Driss : le digest par l'identité de service, sans `Reply-To`, ses liens complets. 45 + 1 = 46, COMPTÉE.
+SCENARIOS_MAIL=46
 
 failures=0
 checks=0

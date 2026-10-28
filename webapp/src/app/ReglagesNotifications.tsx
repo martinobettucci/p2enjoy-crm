@@ -1,3 +1,5 @@
+// @spec CRM-069 (docs/BACKLOG.md) — tranche T5 : le second `fieldset`, « Par email » — la case du récapitulatif quotidien de
+//       l'espace courant, décochée par défaut (docs/DESIGN_SYSTEM.md §5.74 ; docs/SPEC-etiquettes-digest.md §5.1)
 // @spec CRM-064 (docs/BACKLOG.md) — tranche 4 : les préférences
 // @spec docs/SPEC-notifications.md §42.1 (il n'y a qu'un canal), §43.4 (l'absence de ligne vaut
 //       consentement), §44 (le filtrage est à la lecture, donc l'écran ne filtre rien),
@@ -34,6 +36,9 @@ import {
 } from '../lib/preferences-notifications'
 import { relireBoiteNotifications } from '../lib/notifications'
 import { clientCrm, type ClientCrm } from '../lib/supabase'
+import { ecrireConsentementDigest, lireConsentementDigest, type ConsentementDigest } from '../lib/digest'
+import { Button } from '../components/ui/Button'
+import { useContexteEspace } from './ContexteEspace'
 
 /**
  * Le libellé et l'explication de chaque type.
@@ -258,8 +263,99 @@ export function ReglagesNotifications({
 					)
 				})}
 			</fieldset>
+			<CaseDigest client={client} onAnnonce={setAnnonce} />
 			<LiveRegion libelle={t('settings.notifications.live')} message={annonce} />
 		</section>
+	)
+}
+
+/**
+ * Le récapitulatif quotidien par email — `CRM-069` T5, docs/DESIGN_SYSTEM.md §5.74. Un second `fieldset`, la case de
+ * l'espace courant, décochée par défaut : un email ne part que sur une action explicite (`CLAUDE.md` §11). Les six règles
+ * du §5.7 ter : la case ne se coche qu'après la réponse, n'est jamais désactivée pendant l'envoi, sa mention vit dessous.
+ */
+function CaseDigest({ client, onAnnonce }: { readonly client: ClientCrm | null; readonly onAnnonce: (texte: string) => void }) {
+	const { idWorkspace } = useContexteEspace()
+	const [etat, setEtat] = useState<EtatAsync<ConsentementDigest>>(enChargement())
+	const [ecriture, setEcriture] = useState<EtatEcriture>({ phase: 'repos' })
+	const [tentative, setTentative] = useState(0)
+
+	useEffect(() => {
+		if (client === null || idWorkspace === null) return
+		let vivant = true
+		setEtat(enChargement())
+		void lireConsentementDigest(client, idWorkspace).then((lu) => {
+			if (vivant) setEtat(lu)
+		})
+		return () => {
+			vivant = false
+		}
+	}, [client, idWorkspace, tentative])
+
+	if (client === null || idWorkspace === null) return null
+
+	const basculer = async (abonne: boolean) => {
+		setEcriture({ phase: 'envoi' })
+		onAnnonce(t('settings.notifications.saving'))
+		const issue = await ecrireConsentementDigest(client, idWorkspace, abonne)
+		if (issue.statut === 'refus') {
+			const cle: CleTraduction = issue.nature === 'forbidden' ? 'settings.digest.refus.forbidden' : 'settings.digest.refus.panne'
+			setEcriture({ phase: 'refus', cle })
+			onAnnonce(t(cle))
+			return
+		}
+		setEtat((precedent) => (precedent.statut === 'pret' ? pret({ ...precedent.donnees, abonne: issue.abonne }) : precedent))
+		setEcriture({ phase: 'ecrite' })
+		onAnnonce(t(issue.abonne ? 'settings.digest.saved.on' : 'settings.digest.saved.off'))
+	}
+
+	const idMention = 'pref-digest-mention'
+	return (
+		<fieldset className="flex flex-col gap-1 rounded-lg border border-border bg-surface px-4 py-3" data-testid="fieldset-digest">
+			<legend className="px-1 text-sm font-medium text-ink">{t('settings.digest.legend')}</legend>
+			{etat.statut === 'chargement' ? (
+				<p className="text-sm text-text-3">{t('settings.digest.loading')}</p>
+			) : etat.statut === 'erreur' ? (
+				<div className="flex flex-wrap items-center gap-2">
+					<p className="text-sm text-text-2">{t('settings.digest.error')}</p>
+					<Button variante="discret" taille="compacte" onClick={() => setTentative((n) => n + 1)}>
+						{t('settings.notifications.error.retry')}
+					</Button>
+				</div>
+			) : (
+				<>
+					<label className="flex items-start gap-3 min-h-[var(--size-target)] cursor-pointer">
+						<input
+							type="checkbox"
+							data-testid="case-digest"
+							className="size-6 shrink-0 accent-brand"
+							checked={etat.donnees.abonne}
+							aria-describedby={ecriture.phase === 'repos' ? undefined : idMention}
+							onChange={(evenement) => void basculer(evenement.target.checked)}
+						/>
+						<span className="flex flex-col gap-1">
+							<span className="font-medium">{t('settings.digest.label', { espace: etat.donnees.espace })}</span>
+							<span className="text-sm text-text-2">{t('settings.digest.body')}</span>
+						</span>
+					</label>
+					{ecriture.phase === 'envoi' ? (
+						<p id={idMention} className="text-sm text-text-3 pl-[36px]">
+							{t('settings.notifications.saving')}
+						</p>
+					) : null}
+					{ecriture.phase === 'ecrite' ? (
+						<p id={idMention} className="text-sm text-success pl-[36px]">
+							{t('settings.notifications.saved')}
+						</p>
+					) : null}
+					{ecriture.phase === 'refus' ? (
+						<p id={idMention} className="text-sm text-danger-on-soft bg-danger-soft rounded px-2 py-1 ml-[36px]">
+							{t(ecriture.cle)}
+						</p>
+					) : null}
+				</>
+			)}
+		</fieldset>
 	)
 }
 

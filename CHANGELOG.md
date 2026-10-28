@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-069` — les étiquettes et le digest quotidien (en cours : T1, T2)
+### `CRM-069` — les étiquettes et le digest quotidien (en cours : T1 à T5)
 
 *En développement seulement. La migration `0132` attend la prochaine fenêtre de production.*
 
@@ -25,6 +25,14 @@ d'exécuter le code attendu.
   chaque case pose ou retire une étiquette. Sur le tableau, trois pastilles au plus par carte, puis « +n ». Dans la vue
   liste, une colonne « Étiquettes » et un filtre « Étiquette » gardé dans l'adresse. Le fil dit « Étiquette posée » et
   « Étiquette retirée ». Le jeu de démonstration porte quatre étiquettes, dont une archivée.
+- **Étiquettes dans le connecteur MCP** (T3) : une affaire lue dit ses étiquettes, la liste se filtre par étiquette, et
+  `crm_card_label_set` pose ou retire des étiquettes par leur nom (famille « Affaires »).
+- **Migration `0133`, le récapitulatif quotidien** (T4) : chaque matin vers 7 h, un email à chaque membre qui l'a demandé,
+  avec ses actions en retard ou dues, ses mentions non lues et ses affaires figées, par l'identité de service de
+  l'espace. Rien ne part les jours où il n'y a rien. L'adresse est celle que le SSO a vérifiée à la dernière connexion
+  (décision 773) ; elle devient visible des membres de l'espace. `mail-sync` reçoit `SITE_URL` pour les liens.
+- **Le consentement** (T5) : Réglages ▸ Notifications gagne « Par email », avec la case « Recevoir chaque matin le
+  récapitulatif de {espace} », décochée par défaut.
 
 ### `CRM-119` — preuves croisées des droits fins (décision 757)
 

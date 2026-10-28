@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans affaire — aucun `Reply-To`, le jeton `{site}` remplacé par `SITE_URL`
+#       (docs/SPEC-etiquettes-digest.md §5.3, décision 772)
 # @spec CRM-058 (docs/BACKLOG.md) — le worker qui vide la file d'envoi
 # @spec CRM-059 (docs/BACKLOG.md) — la reprise d'une panne, et l'envoi orphelin
 # @spec docs/SPEC-mail-subsystem.md §5 (envoi), §19.5 (ce que le worker compose), §20.3 (le
@@ -129,6 +131,19 @@ def preparer_pieces(
     return tuple(pieces), archive
 
 
+JETON_SITE = "{site}"
+
+
+def corps_avec_liens(ligne: dict[str, Any], site_url: str) -> str:
+    """Le corps d'un envoi. Un envoi SANS AFFAIRE — le digest de `CRM-069`, seul de son espèce — porte des liens qui
+    commencent par le jeton `{site}` : la base ne connaît pas l'adresse publique (décision 772). Il est remplacé par
+    `SITE_URL` ; un envoi d'affaire n'est jamais réécrit."""
+    corps = ligne.get("body_text") or ""
+    if ligne.get("card_id") is not None:
+        return corps
+    return corps.replace(JETON_SITE, site_url.rstrip("/"))
+
+
 def vider_la_file(
     client: Any,
     *,
@@ -137,6 +152,7 @@ def vider_la_file(
     journal: Journal | None = None,
     clamav_hote: str | None = None,
     clamav_port: int = 3310,
+    site_url: str = "",
 ) -> ResultatEnvoi:
     """Réserve les envois dus, les soumet, et rapporte ce qui s'est passé.
 
@@ -198,7 +214,7 @@ def vider_la_file(
             to_addrs=tuple(ligne.get("to_addrs") or ()),
             cc_addrs=tuple(ligne.get("cc_addrs") or ()),
             subject=ligne.get("subject"),
-            body_text=ligne.get("body_text") or "",
+            body_text=corps_avec_liens(ligne, site_url),
             in_reply_to=ligne.get("in_reply_to"),
             references_ids=tuple(ligne.get("references_ids") or ()),
             bcc_addrs=tuple(ligne.get("bcc_addrs") or ()),

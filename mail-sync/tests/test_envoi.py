@@ -1,3 +1,5 @@
+# @verifies CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans `Reply-To`, le jeton `{site}` des seuls envois sans affaire
+#           (docs/SPEC-etiquettes-digest.md §5.3, décision 772)
 # @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : le worker joint les pièces, archive avant d'envoyer, refuse une pièce
 #           absente ou infectée, remet la copie cachée par l'enveloppe
 # @verifies docs/SPEC-mail-subsystem.md §19 bis.2 points 6 et 7, §19 bis.4 ; docs/JOURNAL.md décisions 719 et 720
@@ -172,3 +174,14 @@ def test_sans_piece_ni_cci_l_envoi_d_avant_est_inchange(smtp: list[Any]) -> None
     _, message, enveloppe = smtp[1]
     assert enveloppe == ["client@exterieur.test"]
     assert message.get_content_type() == "text/plain"
+
+
+# `CRM-069` T4 (docs/SPEC-etiquettes-digest.md §5.3, décision 772) : les liens d'un digest, et ceux d'aucun autre envoi.
+def test_le_jeton_site_n_est_remplace_que_dans_un_envoi_sans_affaire() -> None:
+    from mail_sync.envoi import corps_avec_liens
+
+    digest = {"card_id": None, "body_text": "Ouvrir {site}/tracks/a/b/cards/c"}
+    assert corps_avec_liens(digest, "https://crm.exemple.test/") == "Ouvrir https://crm.exemple.test/tracks/a/b/cards/c"
+    assert corps_avec_liens(digest, "") == "Ouvrir /tracks/a/b/cards/c"
+    affaire = {"card_id": "c-1", "body_text": "Le texte {site} reste tel quel"}
+    assert corps_avec_liens(affaire, "https://crm.exemple.test") == "Le texte {site} reste tel quel"

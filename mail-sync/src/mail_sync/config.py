@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans affaire — aucun `Reply-To`, le jeton `{site}` remplacé par `SITE_URL`
+#       (docs/SPEC-etiquettes-digest.md §5.3, décision 772)
 # @spec CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.2 — configuration centralisée
 # et refus au démarrage ; ce commentaire de portée couvre toutes les validations de ce fichier.
 
@@ -54,6 +56,9 @@ class Settings(BaseSettings):
     # --- CRM-054 : l'ingestion -----------------------------------------------------------------
     CLAMAV_HOST: str = "clamav"
     CLAMAV_PORT: int = Field(default=3310, ge=1, le=65535)
+    #: `CRM-069` T4 (docs/SPEC-etiquettes-digest.md §5.3, décision 772) : l'adresse publique de la webapp, qui remplace le
+    #: jeton `{site}` des liens d'un digest. Vide, les liens restent relatifs : le digest part quand même.
+    SITE_URL: str = ""
     #: Borne d'ingestion d'une pièce jointe. Le dépassement n'efface RIEN : la pièce est
     #: enregistrée `skipped`, donc non téléchargeable, et reste visible (§4.3).
     MAIL_MAX_ATTACHMENT_MB: int = Field(default=25, ge=1, le=200)

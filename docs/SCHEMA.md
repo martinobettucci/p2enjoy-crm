@@ -2412,6 +2412,24 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0133` — le récapitulatif quotidien (`CRM-069` T4, décisions 769, 771 à 773 ; livrée en développement le 2026-10-28)
+
+`docs/SPEC-etiquettes-digest.md` §5. **`profiles.email`** (texte, nul pour qui ne s'est jamais connecté) : l'adresse vérifiée
+du SSO, posée par **`ouvrir_session_serveur`** et **`renouveler_session_serveur`** (redéfinies à l'identique, plus cette
+écriture) ; aucun privilège client. **`public.digest_subscriptions`** : `(profile_id, workspace_id)` clé primaire,
+`subscribed_at` ; la personne est l'appelant (`app.digest_subscriptions_avant`) ; RLS : lecture, insertion et suppression
+de SA ligne, l'insertion bornée à un espace dont elle est membre ; privilèges : `select`, `delete`, `insert
+(workspace_id)`. **`public.digest_runs`** : `(profile_id, workspace_id, day)` clé primaire, `status` (`queued`, `empty`,
+`no_service_identity`, `no_address`), `outbox_id` ; fermée aux clients. **`mail_outbox.kind`** (`card` par défaut,
+`digest`) ; `card_id` devient nullable, et `card_id is not null` si et seulement si `kind = 'card'`.
+**`reserver_envois`** rend un `Reply-To` nul pour un digest ; **`marquer_envoi_reussi`** clôt un digest sans
+`mail_messages` ni événement. **`app.digest_corps(profile, workspace, instant)`** et **`app.envoyer_digests(instant)`**
+(n'agit qu'à 7 h de Paris, idempotent par `digest_runs`) ; job `pg_cron` **`p2enjoy-digest-quotidien`**, `2 * * * *`.
+**Retrait** : `cron.unschedule('p2enjoy-digest-quotidien')` ; retirer les deux fonctions `app.`, les deux tables ;
+réappliquer `reserver_envois`, `marquer_envoi_reussi` et les deux fonctions de session de leur dernière définition ;
+supprimer les lignes `kind = 'digest'` de `mail_outbox`, puis la contrainte, la colonne `kind`, remettre `card_id not
+null` ; retirer `profiles.email`.
+
 ### Migration `0132` — les étiquettes (`CRM-069` T1, décisions 769 et 771 ; livrée en développement le 2026-10-28)
 
 `docs/SPEC-etiquettes-digest.md` §2. **`public.labels`** : `id`, `workspace_id` (cascade), `name` (non blanc, 40 au plus,
