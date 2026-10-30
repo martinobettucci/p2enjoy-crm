@@ -1103,6 +1103,30 @@ Les noms ne finissent pas par `_id` : ils sont jugés dans l'espace de l'affaire
 lectrice qui pose) ; un nom inconnu refusé sans écriture ; journal écrit ; et **E2E** : une étiquette posée par le
 connecteur paraît sur la fiche, et le fil la nomme.
 
+### 9.2 quattuordecies Les vues sauvegardées — `CRM-071` T3 (décision 775 ; `docs/SPEC-vues-import-export.md` §4)
+
+*Écrit le 2026-10-30, avant le code.* **Famille `affaires`, existante, action `consulter`** : aucune migration, aucune
+ligne nouvelle. Les vues sont lues dans `saved_views`, sous le jeton de la personne : la RLS ne rend que ses vues
+privées et les vues de l'espace sur les channels qu'elle lit. **Aucune écriture de vue** : enregistrer, modifier,
+publier ou supprimer restent des gestes de l'écran.
+
+| Outil | Action | Ancre | Ce qui change |
+|---|---|---|---|
+| `crm_view_list` (nouveau) | `consulter` | `channel:channel_id` | les vues du channel lisibles par la personne, par nom : `id`, `name`, `visibility` (`private` ou `workspace`), et leurs filtres **traduits en clair** — `sort`, `direction`, `step` (le nom de l'étape), `label` (le nom de l'étiquette), `search`, `include_snoozed` |
+| `crm_card_list` | `consulter` | inchangée | un argument facultatif `view` (le **nom** de la vue, sans tenir compte de la casse, ou son identifiant) : ses filtres et son tri s'appliquent, son channel devient celui de la liste ; un argument de l'appel sur la même dimension l'emporte sur la vue. Une vue inconnue est refusée **avant toute lecture des affaires**, et le refus nomme les vues possibles |
+
+Les filtres d'une vue s'appliquent **comme la vue liste les applique** : l'étape par son identifiant sur le rattachement,
+l'étiquette par un plongement `!inner`, la recherche en plein texte sur `search_tsv` avec la configuration
+`francais_sans_accent` (la même requête que l'écran), le tri sur la même colonne — titre et date de création de
+l'affaire, montant et échéance du rattachement —, puis l'identifiant de l'affaire pour un ordre total. Une étape ou une
+étiquette d'une vue qui n'existe plus est **ignorée**, comme l'écran l'ignore (lecture tolérante). Un `channel_id` passé
+avec une vue d'un autre channel est refusé.
+
+**Preuves** (§13) : `crm_view_list` rend la vue privée de la personne et celle de l'espace, jamais la vue privée d'un
+autre ; `crm_card_list` avec `view` rend les affaires de la vue ; une vue inconnue est refusée sans lecture ; refus par la
+matrice (case « Affaires ▸ Consulter » décochée : les outils ne sont pas visibles) ; journal écrit ; et **E2E** : la vue
+choisie à l'écran et la même vue demandée au connecteur rendent les mêmes affaires.
+
 ### 9.3 Réponses
 
 - **Forme.** Un JSON structuré, avec les identifiants **et** les libellés utiles : nom du track,

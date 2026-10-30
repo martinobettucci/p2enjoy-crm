@@ -12517,6 +12517,7 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       la page gardait le tiroir en transition) ; manuel 9.11, `verify-manual` 165 contrôles sans anomalie.
 - [ ] **T3 — les vues dans le connecteur** : `crm_view_list`, paramètre `view` de `crm_card_list` (famille `affaires`,
       `consulter`) ; pytest, intégration, E2E.
+      *Inscrite au catalogue le 2026-10-30, avant le code* : `docs/SPEC-mcp.md` §9.2 *quattuordecies*.
 - [ ] **T4 — l'export CSV** : `export_cards`, `export_contacts`, journal `export`, boutons de la liste et du carnet,
       manuel ; pgTAP, unitaires (format, injection), API, E2E.
 - [ ] **T5 — l'import des contacts et des organisations** : lecteur CSV, `import_contacts`, famille d'audit `import`,
