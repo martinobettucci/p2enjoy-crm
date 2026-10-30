@@ -1,6 +1,8 @@
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T5 : le lecteur du fichier (encodage, BOM, séparateur, guillemets, fins de
 //           ligne), la reconnaissance des en-têtes, les lignes composées, l'appel, les comptes et le rapport
 // @verifies docs/SPEC-vues-import-export.md §6.1, §6.2 bis, §6.5 ; docs/DESIGN_SYSTEM.md §5.77
+// @verifies CRM-071 (docs/BACKLOG.md) — tranche T6 : les en-têtes de l'export des affaires reconnus, le titre exigé, les
+//           motifs des affaires, l'appel d'`import_cards`, les refus d'un channel (§6.3 bis ; docs/DESIGN_SYSTEM.md §5.78)
 
 import { describe, expect, it } from 'vitest'
 import type { ClientCrm } from './supabase'
@@ -11,6 +13,8 @@ import {
 	correspondanceUtile,
 	decoderFichier,
 	detecterSeparateur,
+	champNommant,
+	importerAffaires,
 	importerContacts,
 	lignesPourImport,
 	lireCsv,
@@ -121,5 +125,46 @@ describe('l’appel, les comptes et le rapport (§6.2 bis)', () => {
 		expect(classerRefusImport(400, 'import_too_large')).toBe('trop-grand')
 		expect(classerRefusImport(404, 'workspace_not_found')).toBe('introuvable')
 		expect(classerRefusImport(undefined, 'Failed to fetch')).toBe('network')
+	})
+})
+
+describe('les affaires d’un channel (§6.3 bis)', () => {
+	it('reconnaît les en-têtes de l’export des affaires ; l’identifiant, les étiquettes et l’adresse restent ignorés', () => {
+		const enTetes = ['Identifiant', 'Affaire', 'Étiquettes', 'Responsable', 'Étape', 'Montant', 'Devise', 'Prochaine action',
+			'Échéance', 'Adresse de la fiche', 'Probabilité', 'Email du contact']
+		expect(correspondanceInitiale(enTetes, 'affaires')).toEqual(['ignorer', 'title', 'ignorer', 'owner', 'step', 'amount',
+			'currency', 'next_action', 'next_action_at', 'ignorer', 'probability', 'contact_email'])
+		// Le même en-tête ne désigne pas le même champ d'un objet à l'autre : « Contact » est un nom au carnet, un email ici.
+		expect(reconnaitreEnTete('Contact', 'contacts')).toBe('full_name')
+		expect(reconnaitreEnTete('Contact', 'affaires')).toBe('contact_email')
+	})
+
+	it('il faut une colonne de titre ; la ligne écartée se nomme par son titre', () => {
+		expect(correspondanceUtile(['step', 'amount'], 'affaires')).toBe(false)
+		expect(correspondanceUtile(['ignorer', 'title'], 'affaires')).toBe(true)
+		expect(champNommant('affaires')).toBe('title')
+		expect(champNommant('contacts')).toBe('full_name')
+	})
+
+	it('traduit les codes d’`import_cards`, replie un code inconnu ; une affaire ne compte aucune organisation', () => {
+		expect(motifDe('unknown_step', 'affaires')).toBe('import.motif.unknown_step')
+		expect(motifDe('forbidden', 'affaires')).toBe('import.motif.forbidden.affaire')
+		expect(motifDe('forbidden')).toBe('import.motif.forbidden')
+		expect(motifDe('code_futur', 'affaires')).toBe('import.motif.unknown')
+		expect(compter([{ line: 1, outcome: 'created', code: null }])).toEqual({ crees: 1, ignores: 0, refuses: 0, organisations: 0 })
+	})
+
+	it('appelle import_cards sur le channel, et classe les refus d’un channel', async () => {
+		const appels: unknown[][] = []
+		const client = {
+			rpc: (...args: unknown[]) => {
+				appels.push(args)
+				return Promise.resolve({ data: [], error: null, status: 200 })
+			},
+		} as unknown as ClientCrm
+		expect(await importerAffaires(client, 'ch-1', [{ title: 'Refonte' }], false)).toEqual({ statut: 'juge', issues: [] })
+		expect(appels[0]).toEqual(['import_cards', { p_channel: 'ch-1', p_rows: [{ title: 'Refonte' }], p_dry_run: false }])
+		expect(classerRefusImport(500, 'channel_not_found')).toBe('introuvable')
+		expect(classerRefusImport(400, 'channel_closed')).toBe('ferme')
 	})
 })

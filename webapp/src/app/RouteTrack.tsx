@@ -1,3 +1,5 @@
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : la vue liste monte « Importer un fichier » et son panneau, exclusif du
+//       formulaire de création, puis relit la liste sans chargement (docs/DESIGN_SYSTEM.md §5.78)
 // @spec CRM-071 (docs/BACKLOG.md) — tranches T2 et T4 : la vue liste monte les vues sauvegardées du channel et l'export CSV
 //       de ce que ses filtres retiennent (docs/DESIGN_SYSTEM.md §5.75, §5.76)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : la liste reçoit le catalogue d'étiquettes pour son filtre (docs/DESIGN_SYSTEM.md §5.73)
@@ -43,7 +45,7 @@
 // (docs/SPEC-permissions-rls.md §7).
 
 import { lireEtiquettes, type Etiquette } from '../lib/etiquettes'
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import { EtatErreur, EtatRefus, EtatVide } from '../components/ui/States'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -74,6 +76,7 @@ import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { BasculeVue, ListeCards } from './ListeCards'
 import { CommandesVues, PanneauVue, useVuesSauvegardees } from './VuesSauvegardees'
 import { CommandeExportCsv, type FichierPrepare } from './ExportCsv'
+import { CommandeImportAffaires, PanneauImport } from './ImportCsv'
 import { csvAffaires, dateDuJour, exporterAffaires } from '../lib/export-csv'
 import { filtresDepuisParametres } from '../lib/vues-sauvegardees'
 import { ZoneNouveauChannel } from './NouveauChannelTrack'
@@ -543,6 +546,15 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 	// `CRM-071` T2 (§5.75) : les vues sauvegardées du channel, leur panneau et leurs annonces.
 	const vues = useVuesSauvegardees(clientCrm, channel.id)
 	const clientExport = clientCrm
+	// `CRM-071` T6 (§5.78) : le panneau d'import, exclusif du formulaire de création, et le focus rendu à sa commande.
+	const [importOuvert, setImportOuvert] = useState(false)
+	const [rendreFocusImport, setRendreFocusImport] = useState(false)
+	const commandeImport = useRef<HTMLButtonElement | null>(null)
+	useEffect(() => {
+		if (!rendreFocusImport) return
+		setRendreFocusImport(false)
+		commandeImport.current?.focus()
+	}, [rendreFocusImport])
 	const [parametresUrl, setParametresUrl] = useSearchParams()
 	const demandes = lireParametres(parametresUrl)
 	const workflowId = channel.workflow_id ?? undefined
@@ -552,7 +564,7 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 		...demandes,
 		page: pageBornee ?? demandes.page,
 	}
-	const { etat, total, recharger } = usePageCards(clientCrm, channel.id, parametres)
+	const { etat, total, recharger, relireDiscretement } = usePageCards(clientCrm, channel.id, parametres)
 	// `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : les étiquettes non archivées de l'espace, que le filtre propose. Une
 	// lecture en panne laisse le filtre absent : la liste ne dépend pas d'elle.
 	const [catalogueEtiquettes, setCatalogueEtiquettes] = useState<readonly Etiquette[]>([])
@@ -730,7 +742,7 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 				slugTrack={slugTrack}
 				slugChannel={channel.slug}
 				onParametres={appliquer}
-				commandeCreation={<CommandeNouvelleAffaire creation={creation} />}
+				commandeCreation={importOuvert ? null : <CommandeNouvelleAffaire creation={creation} />}
 				formulaireCreation={
 					creation.ouvert ? (
 						<FormulaireNouvelleAffaire
@@ -752,6 +764,24 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 							testId="exporter-affaires"
 							nomAccessible={t('export.commande.affaires.aria', { channel: channel.name })}
 							preparer={() => preparerExportAffaires(clientExport, channel, parametres)}
+						/>
+					)
+				}
+				commandeImport={
+					clientExport === null || importOuvert || creation.ouvert ? null : (
+						<CommandeImportAffaires ref={commandeImport} onOuvrir={() => setImportOuvert(true)} />
+					)
+				}
+				panneauImport={
+					clientExport === null || !importOuvert ? null : (
+						<PanneauImport
+							client={clientExport}
+							cible={{ objet: 'affaires', idChannel: channel.id }}
+							onFermer={(relire) => {
+								setImportOuvert(false)
+								setRendreFocusImport(true)
+								if (relire) relireDiscretement()
+							}}
 						/>
 					)
 				}
@@ -780,6 +810,8 @@ function ListeRendue({
 	commandesVues,
 	panneauVues,
 	commandeExport,
+	commandeImport,
+	panneauImport,
 	etatVide,
 }: {
 	readonly cards: readonly CardListeRendue[]
@@ -795,6 +827,8 @@ function ListeRendue({
 	readonly commandesVues: ReactNode
 	readonly panneauVues: ReactNode
 	readonly commandeExport: ReactNode
+	readonly commandeImport: ReactNode
+	readonly panneauImport: ReactNode
 	readonly etatVide?: ReactNode
 }) {
 	return (
@@ -814,6 +848,8 @@ function ListeRendue({
 				commandesVues={commandesVues}
 				panneauVues={panneauVues}
 				commandeExport={commandeExport}
+				commandeImport={commandeImport}
+				panneauImport={panneauImport}
 				{...(etatVide === undefined ? {} : { etatVide })}
 			/>
 		</>

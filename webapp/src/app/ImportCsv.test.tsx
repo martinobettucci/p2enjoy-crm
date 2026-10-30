@@ -2,6 +2,9 @@
 //           colonnes reconnues, la vérification et ses lignes écartées, la confirmation, le rapport ; les refus du fichier ;
 //           la commande éteinte avec son motif pour qui ne peut pas éditer l'espace
 // @verifies docs/DESIGN_SYSTEM.md §5.77, §5.59 ; docs/SPEC-vues-import-export.md §6.1, §6.2 bis
+// @verifies CRM-071 (docs/BACKLOG.md) — tranche T6 : le même panneau pour les affaires — leurs colonnes, `import_cards` sur
+//           le channel, le titre nommant les lignes écartées, le rapport sans organisation ; la commande de la vue liste
+//           éteinte par le refus du channel (docs/DESIGN_SYSTEM.md §5.78 ; docs/SPEC-vues-import-export.md §6.3 bis)
 
 import { cleanup, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
@@ -9,8 +12,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fr } from '../i18n'
 import { CAPACITES_INCONNUES, type Capacite } from '../lib/capacites'
 import type { ClientCrm } from '../lib/supabase'
+import { FournisseurRefus } from '../components/ui/RefusCommandes'
 import { FournisseurEspace } from './ContexteEspace'
-import { CommandeImport, PanneauImport } from './ImportContacts'
+import { CommandeImport, CommandeImportAffaires, PanneauImport } from './ImportCsv'
 
 afterEach(cleanup)
 
@@ -21,22 +25,24 @@ const SIMULATION = [
 	{ line: 3, outcome: 'refused', code: 'invalid_email', organization_created: false },
 ]
 
-function client() {
+function client(reponse: readonly unknown[] = SIMULATION) {
 	const appels: Record<string, unknown>[] = []
+	const noms: string[] = []
 	const faux = {
-		rpc: (_nom: string, args: Record<string, unknown>) => {
+		rpc: (nom: string, args: Record<string, unknown>) => {
+			noms.push(nom)
 			appels.push(args)
-			return Promise.resolve({ data: SIMULATION, error: null, status: 200 })
+			return Promise.resolve({ data: reponse, error: null, status: 200 })
 		},
 	} as unknown as ClientCrm
-	return { client: faux, appels }
+	return { client: faux, appels, noms }
 }
 
 describe('le panneau d’import (§5.77)', () => {
 	it('lit le fichier, reconnaît les colonnes, vérifie, importe et rend le rapport', async () => {
 		const { client: c, appels } = client()
 		const onFermer = vi.fn()
-		render(<PanneauImport client={c} idWorkspace="ws-1" onFermer={onFermer} />)
+		render(<PanneauImport client={c} cible={{ objet: 'contacts', idWorkspace: 'ws-1' }} onFermer={onFermer} />)
 		const champ = screen.getByLabelText(fr['import.fichier'])
 		expect(document.activeElement).toBe(champ)
 		await userEvent.upload(champ, new File([FICHIER], 'salon.csv', { type: 'text/csv' }))
@@ -73,14 +79,14 @@ describe('le panneau d’import (§5.77)', () => {
 	})
 
 	it('un fichier sans ligne sous ses en-têtes est refusé sous le champ', async () => {
-		render(<PanneauImport client={client().client} idWorkspace="ws-1" onFermer={() => {}} />)
+		render(<PanneauImport client={client().client} cible={{ objet: 'contacts', idWorkspace: 'ws-1' }} onFermer={() => {}} />)
 		await userEvent.upload(screen.getByLabelText(fr['import.fichier']), new File(['Nom;Email\r\n'], 'vide.csv', { type: 'text/csv' }))
 		expect((await screen.findByTestId('import-erreur-fichier')).textContent).toContain(fr['import.fichier.vide'])
 		expect(screen.queryByTestId('tableau-colonnes-import')).toBeNull()
 	})
 
 	it('sans colonne de nom ni d’organisation, « Vérifier » reste éteint et dit pourquoi', async () => {
-		render(<PanneauImport client={client().client} idWorkspace="ws-1" onFermer={() => {}} />)
+		render(<PanneauImport client={client().client} cible={{ objet: 'contacts', idWorkspace: 'ws-1' }} onFermer={() => {}} />)
 		await userEvent.upload(screen.getByLabelText(fr['import.fichier']), new File(['Email\r\na@b.test\r\n'], 'mails.csv', { type: 'text/csv' }))
 		expect(((await screen.findByTestId('import-verifier')) as HTMLButtonElement).disabled).toBe(true)
 		expect(screen.getByText(fr['import.colonnes.aide'])).toBeTruthy()
@@ -88,7 +94,7 @@ describe('le panneau d’import (§5.77)', () => {
 
 	it('Échap referme le panneau sans relire le carnet quand rien n’a été importé', async () => {
 		const onFermer = vi.fn()
-		render(<PanneauImport client={client().client} idWorkspace="ws-1" onFermer={onFermer} />)
+		render(<PanneauImport client={client().client} cible={{ objet: 'contacts', idWorkspace: 'ws-1' }} onFermer={onFermer} />)
 		await userEvent.keyboard('{Escape}')
 		expect(onFermer).toHaveBeenCalledWith(false)
 	})
@@ -113,5 +119,56 @@ describe('la commande « Importer un fichier » (§5.77, §5.59)', () => {
 	it('permise, elle est offerte', () => {
 		monter('permise')
 		expect((screen.getByTestId('importer-contacts') as HTMLButtonElement).disabled).toBe(false)
+	})
+})
+
+describe('le panneau d’import des affaires (§5.78)', () => {
+	const EXPORT = 'Identifiant;Affaire;Responsable;Étape;Montant\r\nx;Refonte Lumen;Driss Lemoine;Négociation;8 000\r\ny;Refonte Lumen;;;\r\n'
+	const ISSUES = [
+		{ line: 1, outcome: 'created', code: null },
+		{ line: 2, outcome: 'skipped', code: 'duplicate_title' },
+	]
+
+	it('reconnaît les colonnes de l’export, appelle import_cards sur le channel, nomme l’écartée par son titre', async () => {
+		const { client: c, appels, noms } = client(ISSUES)
+		const onFermer = vi.fn()
+		render(<PanneauImport client={c} cible={{ objet: 'affaires', idChannel: 'ch-1' }} onFermer={onFermer} />)
+		expect(screen.getByRole('region', { name: fr['import.aria.affaires'] })).toBeTruthy()
+		await userEvent.upload(screen.getByLabelText(fr['import.fichier']), new File([EXPORT], 'export.csv', { type: 'text/csv' }))
+		const champs = (await screen.findAllByTestId('champ-colonne-import')) as HTMLSelectElement[]
+		expect(champs.map((s) => s.value)).toEqual(['ignorer', 'title', 'owner', 'step', 'amount'])
+		expect(Array.from(champs[0]!.options).map((o) => o.textContent)).toContain(fr['import.champ.contact_email'])
+
+		await userEvent.click(screen.getByTestId('import-verifier'))
+		expect((await screen.findByTestId('import-comptes')).textContent).toBe('1 ligne sera créée, 1 doublon ignoré, aucune ligne refusée.')
+		expect(noms[0]).toBe('import_cards')
+		expect(appels[0]).toMatchObject({ p_channel: 'ch-1', p_dry_run: true, p_rows: [{ title: 'Refonte Lumen', step: 'Négociation' }, { title: 'Refonte Lumen' }] })
+		expect(screen.getByRole('columnheader', { name: fr['import.ecartees.titre'] })).toBeTruthy()
+		expect(screen.getAllByTestId('ligne-ecartee-import').map((l) => l.textContent)).toEqual([
+			`2Refonte Lumen${fr['import.motif.duplicate_title']}`,
+		])
+
+		await userEvent.click(screen.getByTestId('import-confirmer'))
+		expect((await screen.findByTestId('import-rapport')).textContent).toBe('1 ligne créée ; 1 doublon ignoré ; aucune ligne refusée.')
+		await userEvent.click(screen.getByTestId('import-terminer'))
+		expect(onFermer).toHaveBeenCalledWith(true)
+	})
+
+	it('sans colonne de titre, « Vérifier » reste éteint et dit pourquoi', async () => {
+		render(<PanneauImport client={client().client} cible={{ objet: 'affaires', idChannel: 'ch-1' }} onFermer={() => {}} />)
+		await userEvent.upload(screen.getByLabelText(fr['import.fichier']), new File(['Étape\r\nRelance\r\n'], 'e.csv', { type: 'text/csv' }))
+		expect(((await screen.findByTestId('import-verifier')) as HTMLButtonElement).disabled).toBe(true)
+		expect(screen.getByText(fr['import.colonnes.aide.affaires'])).toBeTruthy()
+	})
+
+	it('la commande de la vue liste suit le refus du channel et cite son motif', () => {
+		render(
+			<FournisseurRefus valeur={{ disabled: true, 'aria-describedby': 'motif-channel' }}>
+				<CommandeImportAffaires onOuvrir={() => {}} />
+			</FournisseurRefus>,
+		)
+		const commande = screen.getByTestId('importer-affaires') as HTMLButtonElement
+		expect(commande.disabled).toBe(true)
+		expect(commande.getAttribute('aria-describedby')).toBe('motif-channel')
 	})
 })

@@ -1764,7 +1764,29 @@ fichier s'ouvre dans un tableur : encodage UTF-8, point-virgule entre les colonn
 ne contient que ce que vous pouvez lire, n'est conservé nulle part, et chaque export est inscrit au journal d'audit de
 l'espace. Un export porte au plus 5 000 lignes : au-delà, l'écran demande de filtrer d'abord.
 
-**Ce que la liste ne fait pas.** En dehors de la création, elle **lit** : on n'y modifie, n'y archive et n'y déplace
+**Importer des affaires.** **« Importer un fichier »**, après « Exporter en CSV », ouvre sous la barre le même panneau en
+trois étapes que celui du carnet ([chapitre 10](#le-carnet-de-contacts)) : le fichier, ses colonnes, puis une
+vérification qui juge chaque ligne **sans rien écrire**, avant « Importer » et son rapport. Les colonnes d'un export de la
+liste sont reconnues d'office : un fichier exporté, retouché dans un tableur, se réimporte tel quel. Les champs sont le
+**titre** (obligatoire), l'**étape**, le **responsable**, le **montant**, la **devise**, la **probabilité**, la **prochaine
+action**, l'**échéance** et le **contact** ; l'identifiant, les étiquettes et l'adresse de la fiche sont ignorés.
+
+- **L'affaire naît à l'étape nommée**, sans passer par les précédentes : un import est une création, pas un déplacement,
+  et les conditions d'une transition ne s'appliquent pas. Sans étape, elle entre à l'étape initiale du workflow.
+- **Le responsable** est un membre de l'espace, désigné par son email ou par son nom complet. **Le contact** est désigné par
+  son email, et doit déjà figurer au carnet : il est rattaché à l'affaire, sans rôle.
+- **Les valeurs s'écrivent comme dans un tableur** : un montant avec espaces et virgule (« 12 500,50 »), une devise en
+  trois lettres (EUR par défaut), une probabilité de 0 à 100, une échéance `AAAA-MM-JJ` ou `JJ/MM/AAAA`, avec ou sans
+  heure — une date seule vaut 9 h.
+- **Une affaire de ce channel qui porte déjà le titre** — majuscules comprises, archivée ou non — **est ignorée**, jamais
+  écrasée. Une ligne dont l'étape, le responsable, le contact ou une valeur ne se lit pas est refusée, avec son motif ;
+  les autres sont importées.
+
+Le fil de chaque affaire importée commence par « Affaire créée par import », à votre nom ; chaque import est inscrit au
+journal d'audit de l'espace, avec ses comptes. La commande suit votre droit d'écrire dans le channel, comme « Nouvelle
+affaire » : sans ce droit, elle reste visible mais inactive.
+
+**Ce que la liste ne fait pas.** En dehors de la création et de l'import, elle **lit** : on n'y modifie, n'y archive et n'y déplace
 aucune affaire. Le déplacement est le geste du tableau ([section 9.10](#le-tableau-kanban-d-un-channel)) ; le reste se
 fait sur la fiche.
 

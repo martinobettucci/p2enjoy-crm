@@ -2435,6 +2435,25 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0138` — l'import des affaires (`CRM-071` T6, décision 778 ; livrée en développement le 2026-10-30)
+
+`docs/SPEC-vues-import-export.md` §6.3, §6.3 bis. **`public.import_cards(p_channel uuid, p_rows jsonb, p_dry_run boolean
+default true)`**, `SECURITY INVOKER`, exécutable par `authenticated` : au plus 1 000 lignes jugées une à une sous la RLS
+de la personne, chacune dans sa sous-transaction ; rend `table(line, outcome, code, card_id)`, `code` parmi
+`duplicate_title`, `title_required`, `unknown_step`, `not_a_member`, `unknown_contact`, `invalid_amount`,
+`invalid_currency`, `invalid_probability`, `invalid_date`, `forbidden`, `unknown`. Même simulation que la `0137` (erreur
+interne `ZZ071` rattrapée, sans journal). Quatre fonctions du schéma `app`, hors du schéma exposé :
+**`app.place_imported_card(…)`** (définisseur) pose le rattachement à l'étape nommée avec son responsable, son montant, sa
+probabilité et sa prochaine action, sans transition ni événement `moved` ; **`app.workspace_member_by_contact(p_workspace,
+p_value)`** (définisseur) rend le membre d'un email ou d'un nom complet unique, pour un espace dont l'appelant est membre ;
+**`app.import_numeric`** et **`app.import_timestamp`** lisent un montant ou une échéance écrits à la française.
+**`app.card_placements_evenement_creation`** est redéfinie : l'événement `created` porte `"source": "import"` quand le
+réglage local `app.card_creation_source` vaut `import` — une création ordinaire garde son `payload` d'avant. Le journal
+passe par `app.audit_import(espace, 'card', {created, skipped, refused, channel_id})`. Refus de l'appel entier :
+`22023 invalid_rows`, `22023 import_too_large`, `P0002 channel_not_found`, `P0001 channel_closed`. **Retrait** : retirer
+les cinq fonctions et rendre au déclencheur de création sa définition de la `0134` ; les affaires importées restent des
+affaires ordinaires.
+
 ### Migration `0137` — l'import du carnet (`CRM-071` T5, décisions 774 à 777 ; livrée en développement le 2026-10-30)
 
 `docs/SPEC-vues-import-export.md` §6, §6.2 bis. **`public.import_contacts(p_workspace uuid, p_rows jsonb, p_dry_run

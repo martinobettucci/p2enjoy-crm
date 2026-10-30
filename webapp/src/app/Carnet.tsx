@@ -47,7 +47,7 @@ import { FormulaireCreationContact } from './FormulaireCreationContact'
 import { useContexteEspace } from './ContexteEspace'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { CommandeExportCsv, type FichierPrepare } from './ExportCsv'
-import { CommandeImport, PanneauImport } from './ImportContacts'
+import { CommandeImport, PanneauImport } from './ImportCsv'
 import { csvContacts, dateDuJour, exporterContacts } from '../lib/export-csv'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
 
@@ -265,7 +265,7 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 				{importOuvert ? (
 					<PanneauImport
 						client={client}
-						idWorkspace={idWorkspace}
+						cible={{ objet: 'contacts', idWorkspace }}
 						onFermer={(relire) => {
 							setImportOuvert(false)
 							setRendreFocusImport(true)

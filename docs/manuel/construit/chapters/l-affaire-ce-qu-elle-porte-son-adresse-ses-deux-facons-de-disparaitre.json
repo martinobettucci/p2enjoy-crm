@@ -6370,13 +6370,328 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "Importer des affaires."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Importer un fichier »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", après « Exporter en CSV », ouvre sous la barre le même panneau en\ntrois étapes que celui du carnet ("
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-carnet-de-contacts"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "chapitre 10"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ") : le fichier, ses colonnes, puis une\nvérification qui juge chaque ligne "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sans rien écrire"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", avant « Importer » et son rapport. Les colonnes d'un export de la\nliste sont reconnues d'office : un fichier exporté, retouché dans un tableur, se réimporte tel quel. Les champs sont le\n"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "titre"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " (obligatoire), l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "étape"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "responsable"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "montant"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "devise"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "probabilité"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", la "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "prochaine\naction"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "échéance"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " et le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "contact"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ; l'identifiant, les étiquettes et l'adresse de la fiche sont ignorés."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "L'affaire naît à l'étape nommée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", sans passer par les précédentes : un import est une création, pas un déplacement,\net les conditions d'une transition ne s'appliquent pas. Sans étape, elle entre à l'étape initiale du workflow."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le responsable"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " est un membre de l'espace, désigné par son email ou par son nom complet. "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Le contact"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " est désigné par\nson email, et doit déjà figurer au carnet : il est rattaché à l'affaire, sans rôle."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Les valeurs s'écrivent comme dans un tableur"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : un montant avec espaces et virgule (« 12 500,50 »), une devise en\ntrois lettres (EUR par défaut), une probabilité de 0 à 100, une échéance "
+							},
+							{
+								"type": "code",
+								"text": "AAAA-MM-JJ"
+							},
+							{
+								"type": "text",
+								"text": " ou "
+							},
+							{
+								"type": "code",
+								"text": "JJ/MM/AAAA"
+							},
+							{
+								"type": "text",
+								"text": ", avec ou sans\nheure — une date seule vaut 9 h."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Une affaire de ce channel qui porte déjà le titre"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " — majuscules comprises, archivée ou non — "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "est ignorée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", jamais\nécrasée. Une ligne dont l'étape, le responsable, le contact ou une valeur ne se lit pas est refusée, avec son motif ;\nles autres sont importées."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le fil de chaque affaire importée commence par « Affaire créée par import », à votre nom ; chaque import est inscrit au\njournal d'audit de l'espace, avec ses comptes. La commande suit votre droit d'écrire dans le channel, comme « Nouvelle\naffaire » : sans ce droit, elle reste visible mais inactive."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "Ce que la liste ne fait pas."
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": " En dehors de la création, elle "
+					"text": " En dehors de la création et de l'import, elle "
 				},
 				{
 					"type": "strong",

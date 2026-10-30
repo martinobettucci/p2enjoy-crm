@@ -12536,7 +12536,7 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       téléchargé relu : mêmes affaires et même ordre que la liste ; le carnet entier ; 390 px), voisins 99/99 ; build et
       classes CSS ; captures observées ; manuel 9.11 et 10 ; l'image de « Exporter en CSV » au chapitre 10, ajoutée par
       `CRM-117` (cf82d342) : `verify-manual` 165 contrôles sans anomalie.
-- [~] **T5 — l'import des contacts et des organisations** : lecteur CSV, `import_contacts`, famille d'audit `import`,
+- [x] **T5 — l'import des contacts et des organisations** : lecteur CSV, `import_contacts`, famille d'audit `import`,
       parcours du carnet, seed, manuel ; unitaires, pgTAP, API, E2E.
       *Spécification §6.2 bis et design system §5.77 écrits le 2026-10-30, avant le code.* **Écrite et prouvée le
       2026-10-30** : migration `0137` (`import_contacts` sous la RLS, simulation annulée sans journal, issues ligne par
@@ -12551,10 +12551,21 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       gardes révisées (décision 51) : `e2e/ui/contacts.spec.ts` 57/57, `e2e/api/contacts.spec.ts` 89/89,
       `mcp/tests/test_integration_organisations.py` ; voisins du carnet 85/85 ; build et classes CSS ; captures observées ;
       manuel 10 ; SCHEMA, PROD_MIGRATIONS, changelog, harnais (dont un écart antérieur de 12 scénarios API et d'1 UI,
-      nommé dans `scripts/verify-harness.sh`). **Reste** : les images de « Importer un fichier » au chapitre 10, par les
-      scénarios de `CRM-117` — `verify-manual` rend 8 anomalies « élément cité sans image » jusqu'à elles.
-- [ ] **T6 — l'import des affaires** : `import_cards`, parcours de la vue liste, manuel ; pgTAP, API, E2E.
-      *Spécification §6.3 bis et design system §5.78 écrits le 2026-10-30, avant le code (décision 778).*
+      nommé dans `scripts/verify-harness.sh`). **Terminée le 2026-10-30** : les images de « Importer un fichier » sont posées
+      au chapitre 10 par `CRM-117` (`6b04af78`, `2826de9b`), `verify-manual` 165 contrôles sans anomalie.
+- [x] **T6 — l'import des affaires** : `import_cards`, parcours de la vue liste, manuel ; pgTAP, API, E2E.
+      *Spécification §6.3 bis et design system §5.78 écrits le 2026-10-30, avant le code (décision 778).* **Écrite et prouvée
+      le 2026-10-30** : migration `0138` (`import_cards` sous la RLS ; `app.place_imported_card` pose le rattachement à
+      l'étape nommée avec ses valeurs, sans transition ni `moved` ; `app.workspace_member_by_contact` par email ou nom
+      unique ; `app.import_numeric`, `app.import_timestamp` ; le déclencheur de création marque `source = import`) ; pgTAP
+      `0128` **17/17** (suite 118 fichiers, 4543 assertions) ; le panneau de T5 rendu générique (`ImportCsv.tsx`, cible
+      contacts ou affaires ; `import-csv.ts` : champs, en-têtes de l'export, codes, `importerAffaires`) ; la vue liste
+      relue sans chargement (`usePageCards` gagne `relireDiscretement`) ; « Affaire créée par import » au fil ; unitaires
+      4993/4993, typecheck ; API `import-affaires.spec.ts` **2/2**, voisins 46/46 ; E2E `import-affaires.spec.ts` **2/2**
+      (un export retouché importé, la liste relue et le focus rendu, le fil ; la lectrice, 390 px), voisins 90/90 ; build et
+      classes CSS ; captures observées ; manuel 9.11, `verify-manual` sans anomalie ; SCHEMA, PROD_MIGRATIONS, changelog,
+      harnais. Connecteur `test_integration_affaires_ecriture` : l'échec étranger déjà consigné sous `CRM-111` T2.4.4
+      (`cards.probability_override`), inchangé.
 
 - **Vues sauvegardées** : sur la **vue liste d'un channel** seulement ; une vue mémorise le channel et les filtres de
   l'écran (tri, sens, étape, étiquette, recherche, sommeil). Une vue est **personnelle** par défaut ; un **administrateur

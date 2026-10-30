@@ -479,6 +479,11 @@ export function usePageCards(
 	readonly etat: EtatAsync<ContenuListe>
 	readonly total: number | null
 	readonly recharger: () => void
+	/**
+	 * `CRM-071` T6 (docs/DESIGN_SYSTEM.md §5.78) : relit sans repasser par le chargement — la liste reste à l'écran jusqu'aux
+	 * lignes fraîches, et la commande qui reprend le focus après un import n'est pas démontée entre-temps.
+	 */
+	readonly relireDiscretement: () => void
 } {
 	const [etat, setEtat] = useState<EtatAsync<ContenuListe>>(enChargement)
 	const [total, setTotal] = useState<number | null>(null)
@@ -486,6 +491,7 @@ export function usePageCards(
 	// Une réponse arrivée après le démontage ne doit pas écrire dans un composant démonté, ni une
 	// réponse périmée écraser une réponse plus récente — le tri et la page changent au clic.
 	const courant = useRef(0)
+	const discret = useRef(false)
 
 	const { tri, sens, etape, recherche, page, sommeil } = parametres
 	const etiquette = parametres.etiquette ?? null
@@ -493,7 +499,8 @@ export function usePageCards(
 	useEffect(() => {
 		if (client === null || channelId === undefined) return
 		const rang = ++courant.current
-		setEtat(enChargement)
+		if (discret.current) discret.current = false
+		else setEtat(enChargement)
 		void (async () => {
 			const resultat = await lirePageCards(client, {
 				channelId,
@@ -513,8 +520,12 @@ export function usePageCards(
 	const recharger = useCallback(() => {
 		setTentative((precedente) => precedente + 1)
 	}, [])
+	const relireDiscretement = useCallback(() => {
+		discret.current = true
+		setTentative((precedente) => precedente + 1)
+	}, [])
 
-	return { etat, total, recharger }
+	return { etat, total, recharger, relireDiscretement }
 }
 
 /**

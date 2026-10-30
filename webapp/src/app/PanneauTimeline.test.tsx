@@ -1,3 +1,5 @@
+// @verifies CRM-071 (docs/BACKLOG.md) — tranche T6 : « Affaire créée par import » quand l'événement porte `source`, et la
+//           création ordinaire inchangée (docs/DESIGN_SYSTEM.md §5.78 ; docs/SPEC-vues-import-export.md §6.3 bis)
 // @verifies CRM-044 (docs/BACKLOG.md) — rendu réel de la timeline unifiée
 // @verifies CRM-043 (docs/BACKLOG.md) — le fil des commentaires, repris par cette unité
 // @verifies CRM-022 (docs/BACKLOG.md) — auteurs et acteurs nommés
@@ -754,6 +756,21 @@ describe('le fil unifié (docs/DESIGN_SYSTEM.md §5.11)', () => {
 		await waitFor(() => {
 			expect(screen.getByText(fr['timeline.event.unknown'])).not.toBeNull()
 		})
+	})
+
+	// `CRM-071` T6 (§5.78) : une affaire importée dit son origine ; une création ordinaire garde son libellé.
+	it('dit « Affaire créée par import » quand la création vient d’un import', async () => {
+		monter({
+			evenements: [
+				evenement({ id: 'e1', payload: { source: 'import' } }),
+				evenement({ id: 'e2', created_at: '2026-08-05T10:00:00.000Z' }),
+			],
+		})
+
+		await waitFor(() => {
+			expect(screen.getByText(fr['timeline.event.created.import'])).not.toBeNull()
+		})
+		expect(screen.getByText(fr['timeline.event.created'])).not.toBeNull()
 	})
 
 	// `CRM-057` §18.6 — le courrier reçu n'est plus un événement anonyme : il porte son libellé.

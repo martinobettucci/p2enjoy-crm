@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-071` — vues sauvegardées, import et export CSV (en cours : T1 à T5)
+### `CRM-071` — vues sauvegardées, import et export CSV (T1 à T6)
 
 - **Migration `0135`, les vues sauvegardées en base** (T1) : une vue de la vue liste d'un channel, privée ou publiée pour
   l'espace par un administrateur ; ses filtres limités aux six clés de l'écran ; la propriétaire et l'espace posés par la
@@ -35,6 +35,11 @@ d'exécuter le code attendu.
   qui juge chaque ligne sans rien écrire, puis l'import des lignes valides et un rapport téléchargeable. Doublons d'email
   ignorés, organisations retrouvées par leur domaine ou leur nom, ou créées, chaque import inscrit au journal d'audit (famille `import`).
   Le seed importe un fichier de salon par la même fonction. Manuel 10.
+- **Migration `0138`, l'import des affaires** (T6) : « Importer un fichier » après « Exporter en CSV » dans la vue liste
+  d'un channel — le même panneau en trois étapes, les en-têtes de l'export reconnus pour qu'un export retouché se
+  réimporte. Chaque affaire est créée directement à l'étape nommée, avec son responsable (par email ou par nom), son
+  montant, sa devise, sa probabilité, sa prochaine action et son contact ; une affaire du même titre dans le channel est
+  ignorée. Le fil de l'affaire dit « Affaire créée par import » ; chaque import est inscrit au journal d'audit. Manuel 9.11.
 
 ### `CRM-069` — les étiquettes et le digest quotidien
 

@@ -1,3 +1,4 @@
+// @verifies CRM-071 (docs/BACKLOG.md) — tranche T6 : `import_cards` au témoin des fonctions (docs/SPEC-vues-import-export.md §6.3 bis)
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T4 : `export_cards` et `export_contacts` au témoin des fonctions
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T1 : `saved_views` au témoin des tables (docs/SPEC-vues-import-export.md §2)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranches T1 et T4 : `labels`, `card_labels`, `digest_subscriptions` et `digest_runs` au témoin des tables (docs/SPEC-etiquettes-digest.md §2)
@@ -1137,6 +1138,10 @@ type _vueDerivationColonnes = Expect<
 // `role_title`, `organization_name`, `organization_domain`, `organization_website` ; `outcome` vaut `created`, `skipped` ou
 // `refused`, `code` est un dictionnaire fermé (§6.2 bis) ; plus de 1 000 lignes, `22023 import_too_large`. Le compte
 // s'accroît de un.
+// `0138` de `CRM-071` TRANCHE T6 ajoute `import_cards` — l'import des affaires d'un channel (§6.3, §6.3 bis). CE QUI ÉCHAPPE
+// AU GÉNÉRATEUR : `p_rows` est un `Json` libre — clés `title`, `step`, `owner`, `amount`, `currency`, `probability`,
+// `next_action`, `next_action_at`, `contact_email`, toutes en texte ; `code` est un dictionnaire fermé (§6.3 bis) ; un channel
+// illisible rend `P0002 channel_not_found`, un channel fermé `P0001 channel_closed`. Le compte s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1213,6 +1218,7 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'export_contact'
     | 'export_contacts'
     | 'import_contacts'
+    | 'import_cards'
     | 'anonymize_contact'
     | 'trash_retention_days'
     | 'trash_blocking_costs'

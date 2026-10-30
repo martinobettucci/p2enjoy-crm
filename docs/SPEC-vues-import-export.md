@@ -199,10 +199,12 @@ montants avec un point décimal. Une cellule qui commence par `=`, `+`, `-`, `@`
   « Contact » ou « Email du contact ». « Identifiant », « Étiquettes » et « Adresse de la fiche » sont ignorés d'office.
 - **L'étape** est retrouvée par son libellé affiché (le libellé propre de l'étape, sinon le nom de son nœud), sans casse
   ni blancs superflus, parmi les étapes du workflow du channel ; vide, c'est l'étape initiale. Le rattachement est posé
-  **directement à cette étape** par `app.place_imported_card(p_card, p_channel, p_step)`, définisseur hors du schéma
-  exposé, qui tient les contrôles d'`app.poser_premier_rattachement` (écriture du channel, affaire sans rattachement)
-  mais accepte toute étape du workflow : ni condition de transition, ni événement `moved` ; les points de checklist de
-  l'étape sont posés comme à toute création.
+  **directement à cette étape** par `app.place_imported_card(p_card, p_channel, p_step, p_owner, p_amount,
+  p_probability, p_next_action, p_next_action_at)`, définisseur hors du schéma exposé, qui tient les contrôles
+  d'`app.poser_premier_rattachement` (écriture du channel, affaire sans rattachement) mais accepte toute étape du
+  workflow : ni condition de transition, ni événement `moved` ; les points de checklist de l'étape sont posés comme à
+  toute création. *Précisé à l'écriture du code* : le rattachement reçoit ses valeurs dans la même écriture — une mise à
+  jour du responsable après coup écrirait « Responsable modifié » au fil d'une affaire qui vient de naître.
 - **Le responsable** est un membre de l'espace, retrouvé par son **email** sans casse, ou par son **nom complet** s'il est
   seul à le porter : l'export écrit le nom (§5.3), et le réimport doit le retrouver. Lecture par
   `app.workspace_member_by_contact(p_workspace, p_value)`, définisseur, qui ne répond que pour un espace dont l'appelant

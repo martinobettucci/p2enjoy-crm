@@ -1,3 +1,4 @@
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : « Affaire créée par import » quand l'événement porte `source` (docs/DESIGN_SYSTEM.md §5.78)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : « Étiquette posée » et « Étiquette retirée » dans le fil, famille « Champs » (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
 //       l'écriture sur l'affaire (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
@@ -1045,6 +1046,9 @@ function Evenement({
 	const presentation = PRESENTATION[ligne.type] ?? REPLI
 	const Icone = presentation.icone
 	const { detail } = resoudreDetail(ligne, libelles)
+	// `CRM-071` T6 (§5.78) : une affaire importée dit son origine — même événement, même icône, même pastille.
+	const cle: CleTraduction =
+		ligne.type === 'created' && ligne.payload.source === 'import' ? 'timeline.event.created.import' : presentation.cle
 
 	return (
 		<div className="flex items-start gap-3">
@@ -1062,7 +1066,7 @@ function Evenement({
 			</span>
 			<div className="min-w-0 flex-1">
 				<p className="text-base text-ink">
-					{t(presentation.cle)}
+					{t(cle)}
 					{detail === null ? null : (
 						<span className="text-text-3 before:content-['·'] before:mx-1 break-words">{detail}</span>
 					)}

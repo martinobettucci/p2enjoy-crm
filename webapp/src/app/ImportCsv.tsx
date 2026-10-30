@@ -3,6 +3,9 @@
 // @spec docs/DESIGN_SYSTEM.md §5.77 (`FileUp`, la capacité d'éditer l'espace et son motif, trois étapes titrées dans un panneau
 //       du flux, comptes par clé, lignes écartées en tableau, rapport téléchargeable, gestes désactivés pendant le vol),
 //       §5.59 ; docs/SPEC-vues-import-export.md §6.1, §6.2, §6.2 bis
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : le même panneau pour les affaires d'un channel, et sa commande dans la vue
+//       liste, qui suit la capacité d'écrire le channel (docs/DESIGN_SYSTEM.md §5.78 ; docs/SPEC-vues-import-export.md
+//       §6.3, §6.3 bis)
 //
 // Le fichier est lu dans le navigateur ; la base juge chaque ligne, deux fois : en simulation, puis confirmée. L'écran ne
 // décide ni d'un doublon ni d'un droit : il compose les lignes et dit ce que la base a rendu.
@@ -11,16 +14,19 @@ import { FileSpreadsheet, FileUp, TriangleAlert } from 'lucide-react'
 import { forwardRef, useEffect, useId, useRef, useState } from 'react'
 import { Button } from '../components/ui/Button'
 import { t, type CleTraduction } from '../i18n'
+import { useRefus } from '../components/ui/RefusCommandes'
 import { proprietesCommande } from '../lib/capacites'
 import { dateDuJour, telecharger } from '../lib/export-csv'
 import {
-	CHAMPS,
+	CHAMPS_PAR_OBJET,
 	LIGNES_MAX,
 	POIDS_MAX,
+	champNommant,
 	compter,
 	correspondanceInitiale,
 	correspondanceUtile,
 	decoderFichier,
+	importerAffaires,
 	importerContacts,
 	lignesPourImport,
 	lireCsv,
@@ -28,8 +34,11 @@ import {
 	rapportCsv,
 	type Champ,
 	type Comptes,
+	type IssueImport,
 	type IssueLigne,
+	type LigneImport,
 	type NatureRefusImport,
+	type ObjetImport,
 } from '../lib/import-csv'
 import type { ClientCrm } from '../lib/supabase'
 import { useContexteEspace } from './ContexteEspace'
@@ -40,8 +49,43 @@ const CLASSES_ALERTE = 'flex items-start gap-2 rounded-sm bg-danger-soft p-2 tex
 const CLES_REFUS: Readonly<Record<NatureRefusImport, CleTraduction>> = {
 	'trop-grand': 'import.refus.tropGrand',
 	introuvable: 'import.refus.introuvable',
+	ferme: 'import.refus.ferme',
 	network: 'import.refus.panne',
 	unknown: 'import.refus.panne',
+}
+
+/** Ce que l'import vise : l'espace du carnet (T5), ou le channel de la vue liste (T6). */
+export type CibleImport =
+	| { readonly objet: 'contacts'; readonly idWorkspace: string }
+	| { readonly objet: 'affaires'; readonly idChannel: string }
+
+type TextesObjet = {
+	readonly aria: CleTraduction
+	readonly aide: CleTraduction
+	readonly nom: CleTraduction
+	readonly introuvable: CleTraduction
+}
+
+/** Les textes qui diffèrent d'un objet à l'autre, chacun par une clé écrite en entier (§10). */
+const TEXTES: Readonly<Record<ObjetImport, TextesObjet>> = {
+	contacts: {
+		aria: 'import.aria',
+		aide: 'import.colonnes.aide',
+		nom: 'import.ecartees.nom',
+		introuvable: 'import.refus.introuvable',
+	},
+	affaires: {
+		aria: 'import.aria.affaires',
+		aide: 'import.colonnes.aide.affaires',
+		nom: 'import.ecartees.titre',
+		introuvable: 'import.refus.introuvable.channel',
+	},
+}
+
+function appeler(client: ClientCrm, cible: CibleImport, lignes: readonly LigneImport[], simuler: boolean): Promise<IssueImport> {
+	return cible.objet === 'contacts'
+		? importerContacts(client, cible.idWorkspace, lignes, simuler)
+		: importerAffaires(client, cible.idChannel, lignes, simuler)
 }
 
 /** Le libellé de chaque champ, par une clé écrite en entier (§10 : aucune clé construite). */
@@ -54,6 +98,15 @@ const CLES_CHAMP: Readonly<Record<Champ, CleTraduction>> = {
 	organization_name: 'import.champ.organization_name',
 	organization_domain: 'import.champ.organization_domain',
 	organization_website: 'import.champ.organization_website',
+	title: 'import.champ.title',
+	step: 'import.champ.step',
+	owner: 'import.champ.owner',
+	amount: 'import.champ.amount',
+	currency: 'import.champ.currency',
+	probability: 'import.champ.probability',
+	next_action: 'import.champ.next_action',
+	next_action_at: 'import.champ.next_action_at',
+	contact_email: 'import.champ.contact_email',
 }
 
 /** L'accord par clé (§10) : zéro, un, plusieurs. */
@@ -69,7 +122,15 @@ function phraseVerification(c: Comptes): string {
 	})
 }
 
-function phraseRapport(c: Comptes): string {
+function phraseRapport(c: Comptes, objet: ObjetImport): string {
+	if (objet === 'affaires') {
+		// Une affaire ne crée pas d'organisation : le rapport n'en parle pas (§5.78).
+		return t('import.rapport.phrase.affaires', {
+			crees: accord(c.crees, 'import.rapport.crees.0', 'import.rapport.crees.1', 'import.rapport.crees.n'),
+			ignores: accord(c.ignores, 'import.comptes.ignores.0', 'import.comptes.ignores.1', 'import.comptes.ignores.n'),
+			refuses: accord(c.refuses, 'import.comptes.refuses.0', 'import.comptes.refuses.1', 'import.comptes.refuses.n'),
+		})
+	}
 	return t('import.rapport.phrase', {
 		crees: accord(c.crees, 'import.rapport.crees.0', 'import.rapport.crees.1', 'import.rapport.crees.n'),
 		organisations: accord(c.organisations, 'import.rapport.organisations.0', 'import.rapport.organisations.1', 'import.rapport.organisations.n'),
@@ -100,18 +161,44 @@ export const CommandeImport = forwardRef<HTMLButtonElement, { readonly idMotif: 
 	},
 )
 
+/**
+ * « Importer un fichier » de la vue liste — elle suit la capacité d'écrire le channel, comme « Nouvelle affaire », et cite
+ * le motif de la vue par le contexte de refus (§5.78, §5.59).
+ */
+export const CommandeImportAffaires = forwardRef<HTMLButtonElement, { readonly onOuvrir: () => void }>(
+	function CommandeImportAffaires({ onOuvrir }, ref) {
+		const droit = useRefus()
+		return (
+			<Button
+				{...droit}
+				ref={ref}
+				variante="discret"
+				taille="compacte"
+				data-testid="importer-affaires"
+				aria-expanded={false}
+				onClick={onOuvrir}
+			>
+				<FileUp aria-hidden="true" size={16} strokeWidth={2} />
+				{t('import.commande')}
+			</Button>
+		)
+	},
+)
+
 type Fichier = { readonly nom: string; readonly enTetes: readonly string[]; readonly donnees: readonly (readonly string[])[] }
 
 export function PanneauImport({
 	client,
-	idWorkspace,
+	cible,
 	onFermer,
 }: {
 	readonly client: ClientCrm
-	readonly idWorkspace: string
-	/** `relire` : un import a écrit des lignes, le carnet doit être relu. */
+	readonly cible: CibleImport
+	/** `relire` : un import a écrit des lignes, le carnet ou la liste doit être relu. */
 	readonly onFermer: (relire: boolean) => void
 }) {
+	const objet = cible.objet
+	const textes = TEXTES[objet]
 	const idFichier = useId()
 	const idAideFichier = useId()
 	const idErreurFichier = useId()
@@ -157,7 +244,7 @@ export function PanneauImport({
 				setErreurFichier('import.fichier.long')
 			} else {
 				setFichier({ nom: choisi.name, enTetes, donnees })
-				setCorrespondance(correspondanceInitiale(enTetes))
+				setCorrespondance(correspondanceInitiale(enTetes, objet))
 			}
 		} catch {
 			setErreurFichier('import.fichier.illisible')
@@ -181,7 +268,7 @@ export function PanneauImport({
 		if (fichier === null || enVol !== null) return
 		setRefus(null)
 		setEnVol(simuler ? 'verification' : 'import')
-		const issue = await importerContacts(client, idWorkspace, lignesPourImport(fichier.donnees, correspondance), simuler)
+		const issue = await appeler(client, cible, lignesPourImport(fichier.donnees, correspondance), simuler)
 		setEnVol(null)
 		if (issue.statut === 'refus') {
 			setRefus(issue.nature)
@@ -196,7 +283,8 @@ export function PanneauImport({
 		setCorrespondance((avant) => avant.map((c, i) => (i === index ? champ : c)))
 	}
 
-	const indexNom = correspondance.indexOf('full_name')
+	const indexNom = correspondance.indexOf(champNommant(objet))
+	const utile = correspondanceUtile(correspondance, objet)
 	const comptesSimulation = simulation === null ? null : compter(simulation)
 	const comptesResultat = resultat === null ? null : compter(resultat)
 	const ecartees = (simulation ?? []).filter((i) => i.outcome !== 'created')
@@ -204,7 +292,7 @@ export function PanneauImport({
 	return (
 		<section
 			data-testid="panneau-import"
-			aria-label={t('import.aria')}
+			aria-label={t(textes.aria)}
 			className="flex flex-col gap-4 bg-surface border border-border rounded-lg p-4"
 			onKeyDown={(evenement) => {
 				if (evenement.key !== 'Escape') return
@@ -281,7 +369,7 @@ export function PanneauImport({
 												onChange={(evenement) => choisirChamp(index, evenement.target.value as Champ)}
 												className={CLASSES_CHAMP}
 											>
-												{CHAMPS.map((champ) => (
+												{CHAMPS_PAR_OBJET[objet].map((champ) => (
 													<option key={champ} value={champ}>
 														{t(CLES_CHAMP[champ])}
 													</option>
@@ -293,13 +381,13 @@ export function PanneauImport({
 							</tbody>
 						</table>
 					</div>
-					{correspondanceUtile(correspondance) ? null : <p className="text-sm text-text-2">{t('import.colonnes.aide')}</p>}
+					{utile ? null : <p className="text-sm text-text-2">{t(textes.aide)}</p>}
 					{resultat !== null ? null : (
 						<Button
 							variante="primaire"
 							data-testid="import-verifier"
 							className="self-start"
-							disabled={!correspondanceUtile(correspondance) || enVol !== null}
+							disabled={!utile || enVol !== null}
 							onClick={() => void juger(true)}
 						>
 							{t(enVol === 'verification' ? 'import.verification.enCours' : 'import.verifier')}
@@ -311,7 +399,7 @@ export function PanneauImport({
 			{refus === null ? null : (
 				<p role="alert" data-testid="import-refus" className={CLASSES_ALERTE}>
 					<TriangleAlert aria-hidden="true" size={16} strokeWidth={2} className="shrink-0" />
-					{t(CLES_REFUS[refus])}
+					{t(refus === 'introuvable' ? textes.introuvable : CLES_REFUS[refus])}
 				</p>
 			)}
 
@@ -329,7 +417,7 @@ export function PanneauImport({
 											{t('import.ecartees.ligne')}
 										</th>
 										<th scope="col" className="px-3 h-[var(--size-target)] text-sm font-normal text-text-2">
-											{t('import.ecartees.nom')}
+											{t(textes.nom)}
 										</th>
 										<th scope="col" className="px-3 h-[var(--size-target)] text-sm font-normal text-text-2">
 											{t('import.ecartees.motif')}
@@ -338,7 +426,7 @@ export function PanneauImport({
 								</thead>
 								<tbody>
 									{ecartees.map((issue) => {
-										const motif = motifDe(issue.code)
+										const motif = motifDe(issue.code, objet)
 										return (
 											<tr key={issue.line} data-testid="ligne-ecartee-import" className="border-b border-border">
 												<td className="px-3 h-[var(--size-target)] text-right tabular-nums">
@@ -378,7 +466,7 @@ export function PanneauImport({
 				<div className="flex flex-col gap-2">
 					<h3 className="font-medium text-ink">{t('import.rapport.titre')}</h3>
 					<p role="status" data-testid="import-rapport">
-						{phraseRapport(comptesResultat)}
+						{phraseRapport(comptesResultat, objet)}
 					</p>
 					<div className="flex flex-wrap gap-2">
 						{comptesResultat.ignores + comptesResultat.refuses === 0 ? null : (
@@ -386,7 +474,7 @@ export function PanneauImport({
 								variante="secondaire"
 								data-testid="import-telecharger-rapport"
 								onClick={() =>
-									telecharger(`rapport-import-${dateDuJour()}.csv`, rapportCsv(fichier.enTetes, fichier.donnees, resultat))
+									telecharger(`rapport-import-${dateDuJour()}.csv`, rapportCsv(fichier.enTetes, fichier.donnees, resultat, objet))
 								}
 							>
 								<FileSpreadsheet aria-hidden="true" size={16} strokeWidth={2} />

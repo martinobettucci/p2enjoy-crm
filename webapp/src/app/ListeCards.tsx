@@ -1,3 +1,4 @@
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : « Importer un fichier » après l'export, son panneau sous la barre (docs/DESIGN_SYSTEM.md §5.78)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T4 : « Exporter en CSV » en fin de barre (docs/DESIGN_SYSTEM.md §5.76)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T2 : le sélecteur « Vue » et ses commandes après « Nouvelle affaire », le panneau
 //       sous la barre (docs/DESIGN_SYSTEM.md §5.75, docs/SPEC-vues-import-export.md §3)
@@ -167,6 +168,12 @@ export type ProprietesListeCards = {
 	/** `CRM-071` T4 (§5.76) : « Exporter en CSV », qui ferme la barre de filtres — elle exporte ce qu'ils retiennent. */
 	readonly commandeExport?: ReactNode
 	/**
+	 * `CRM-071` T6 (§5.78) : « Importer un fichier », après « Exporter en CSV » au bout de la barre ; son panneau, sous la
+	 * barre, à la place du formulaire de création — les deux s'excluent. Reçus et placés, comme la création.
+	 */
+	readonly commandeImport?: ReactNode
+	readonly panneauImport?: ReactNode
+	/**
 	 * L'instant qui départage le sommeil pour la **marque** des lignes (§16.12.7).
 	 *
 	 * Injectable pour la même raison qu'au §16.11.1 : sans lui, aucune preuve ne pourrait éprouver
@@ -197,6 +204,8 @@ export function ListeCards({
 	commandesVues,
 	panneauVues,
 	commandeExport,
+	commandeImport,
+	panneauImport,
 	maintenant = new Date(),
 }: ProprietesListeCards) {
 	const etapesParId = new Map(etapes.map((etape) => [etape.id, etape]))
@@ -222,8 +231,10 @@ export function ListeCards({
 					offrirEffacement={!vide}
 				/>
 				{commandeExport}
+				{commandeImport}
 			</div>
 			{formulaireCreation}
+			{panneauImport}
 			{panneauVues}
 			{vide ? (
 				etatVide

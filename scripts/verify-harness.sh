@@ -634,7 +634,9 @@ PORT_RAPPORT=9323
 # **+1 par `CRM-071` T4, 2026-10-30** : `supabase/tests/0126_export_csv.test.sql`, fichier NEUF. 115 + 1 = 116, COMPTÉE.
 # **+1 par `CRM-071` T5, 2026-10-30** : `supabase/tests/0127_import_contacts.test.sql`, fichier NEUF. 116 + 1 = 117,
 # COMPTÉE.
-FICHIERS_SQL_ATTENDUS=117
+# **+1 par `CRM-071` T6, 2026-10-30** : `supabase/tests/0128_import_affaires.test.sql`, fichier NEUF. 117 + 1 = 118,
+# COMPTÉE.
+FICHIERS_SQL_ATTENDUS=118
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -800,7 +802,10 @@ FICHIERS_SQL_ATTENDUS=117
 # COMPTÉE.
 # **+15 par `CRM-071` T5, 2026-10-30** (`0127` : contrat, simulation sans trace, issues ligne par ligne, organisation
 # retrouvée par domaine puis par nom ou créée, journal, refus, plafond). 4511 + 15 = 4526, COMPTÉE.
-ASSERTIONS_ATTENDUES=4526
+# **+17 par `CRM-071` T6, 2026-10-30** (`0128` : contrat, simulation sans trace, une issue par champ, étape posée sans
+# déplacement, responsable par email et par nom, contact, fil « par import », journal, refus, plafond). 4526 + 17 = 4543,
+# COMPTÉE.
+ASSERTIONS_ATTENDUES=4543
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1229,7 +1234,10 @@ ASSERTIONS_ATTENDUES=4526
 # soit 1278 à `0f8aac9c` sans ce fichier — un écart de **douze, antérieur et étranger à T5**, que le harnais ne relevait
 # plus (il s'arrête à sa première section depuis l'absence de garde Node de `scripts/verify-manual.sh`). Porté à la valeur
 # comptée plutôt que laissé rouge, l'écart nommé ici pour être attribué. 1278 + 2 = 1280, COMPTÉE.
-SCENARIOS_API=1280
+# **+2 par `CRM-071` T6, 2026-10-30** : `e2e/api/import-affaires.spec.ts`, fichier NEUF — la simulation sans trace, l'import
+# confirmé (étape, fil « par import », journal) ; la lectrice refusée, le channel inconnu, l'anonyme. 1280 + 2 = 1282,
+# COMPTÉE.
+SCENARIOS_API=1282
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1797,7 +1805,9 @@ SCENARIOS_API=1280
 # importé, le rapport téléchargé, le carnet relu et le focus rendu ; la lectrice et le palier 390. **Énumérés par `--list`
 # le même jour : 1019**, soit 1017 à `0f8aac9c` sans ce fichier — un écart d'**un, antérieur et étranger à T5**, nommé ici
 # pour être attribué. 1017 + 2 = 1019, COMPTÉE.
-SCENARIOS_UI=1019
+# **+2 par `CRM-071` T6, 2026-10-30** : `e2e/ui/import-affaires.spec.ts`, fichier NEUF — un export retouché importé dans la
+# vue liste, la liste relue, le fil « par import » ; la lectrice et le palier 390. 1019 + 2 = 1021, COMPTÉE.
+SCENARIOS_UI=1021
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

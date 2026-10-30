@@ -2,6 +2,9 @@
 //       séparateur, guillemets), reconnaître les colonnes, composer les lignes, appeler `import_contacts`, écrire le rapport
 // @spec docs/SPEC-vues-import-export.md §6.1 (le fichier : 2 Mo, 1 000 lignes, UTF-8 sinon Windows-1252, `;` ou `,`, en-têtes
 //       usuels reconnus, lecture locale sans dépendance), §6.2, §6.2 bis (codes d'issue), §6.5 ; docs/DESIGN_SYSTEM.md §5.77
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : les mêmes étapes pour les affaires d'un channel — leurs champs, les
+//       en-têtes de l'export reconnus, leurs codes d'issue, `import_cards` (docs/SPEC-vues-import-export.md §6.3, §6.3 bis ;
+//       docs/DESIGN_SYSTEM.md §5.78)
 // @spec CLAUDE.md §10 — ce module ne décide AUCUN droit ni aucun doublon : la base juge chaque ligne
 //
 // Ce module ne rend rien : il lit, compose, appelle et écrit le rapport. Le fichier ne quitte pas le navigateur ; seules les
@@ -80,6 +83,9 @@ export function lireCsv(texte: string, separateur: ';' | ',' = detecterSeparateu
 	return rangees.filter((r) => r.some((v) => v.trim() !== ''))
 }
 
+/** Ce qu'un fichier importe : le carnet (T5) ou les affaires d'un channel (T6). */
+export type ObjetImport = 'contacts' | 'affaires'
+
 export type Champ =
 	| 'ignorer'
 	| 'full_name'
@@ -89,17 +95,43 @@ export type Champ =
 	| 'organization_name'
 	| 'organization_domain'
 	| 'organization_website'
+	| 'title'
+	| 'step'
+	| 'owner'
+	| 'amount'
+	| 'currency'
+	| 'probability'
+	| 'next_action'
+	| 'next_action_at'
+	| 'contact_email'
 
-export const CHAMPS: readonly Champ[] = [
-	'ignorer',
-	'full_name',
-	'email',
-	'phone',
-	'role_title',
-	'organization_name',
-	'organization_domain',
-	'organization_website',
-]
+/** Les choix du `select` « Champ », dans l'ordre de l'écran (§5.77, §5.78). */
+export const CHAMPS_PAR_OBJET: Readonly<Record<ObjetImport, readonly Champ[]>> = {
+	contacts: [
+		'ignorer',
+		'full_name',
+		'email',
+		'phone',
+		'role_title',
+		'organization_name',
+		'organization_domain',
+		'organization_website',
+	],
+	affaires: [
+		'ignorer',
+		'title',
+		'step',
+		'owner',
+		'amount',
+		'currency',
+		'probability',
+		'next_action',
+		'next_action_at',
+		'contact_email',
+	],
+}
+
+export const CHAMPS: readonly Champ[] = CHAMPS_PAR_OBJET.contacts
 
 const sansAccent = (texte: string) => texte.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim()
 
@@ -141,25 +173,67 @@ const EN_TETES_USUELS: Readonly<Record<string, Champ>> = {
 	website: 'organization_website',
 }
 
+// Les en-têtes de l'export des affaires (§5.3) d'abord, pour qu'un fichier exporté, retouché, se réimporte (§6.3 bis).
+// « Identifiant », « Étiquettes » et « Adresse de la fiche » n'y sont pas : ils restent ignorés.
+const EN_TETES_AFFAIRES: Readonly<Record<string, Champ>> = {
+	affaire: 'title',
+	titre: 'title',
+	'nom de l affaire': 'title',
+	"nom de l'affaire": 'title',
+	'nom de l’affaire': 'title',
+	title: 'title',
+	etape: 'step',
+	step: 'step',
+	stage: 'step',
+	responsable: 'owner',
+	owner: 'owner',
+	montant: 'amount',
+	amount: 'amount',
+	devise: 'currency',
+	currency: 'currency',
+	probabilite: 'probability',
+	probability: 'probability',
+	'prochaine action': 'next_action',
+	'next action': 'next_action',
+	echeance: 'next_action_at',
+	'date d echeance': 'next_action_at',
+	"date d'echeance": 'next_action_at',
+	'date d’echeance': 'next_action_at',
+	'due date': 'next_action_at',
+	contact: 'contact_email',
+	'email du contact': 'contact_email',
+	'contact (email)': 'contact_email',
+	email: 'contact_email',
+}
+
 /** Le champ qu'un en-tête usuel désigne, sans tenir compte des accents ni de la casse ; inconnu : ignoré. */
-export function reconnaitreEnTete(enTete: string): Champ {
-	return EN_TETES_USUELS[sansAccent(enTete)] ?? 'ignorer'
+export function reconnaitreEnTete(enTete: string, objet: ObjetImport = 'contacts'): Champ {
+	return (objet === 'contacts' ? EN_TETES_USUELS : EN_TETES_AFFAIRES)[sansAccent(enTete)] ?? 'ignorer'
 }
 
 /** Une correspondance n'en associe chaque champ qu'à une colonne : la première l'emporte, les suivantes sont ignorées. */
-export function correspondanceInitiale(enTetes: readonly string[]): Champ[] {
+export function correspondanceInitiale(enTetes: readonly string[], objet: ObjetImport = 'contacts'): Champ[] {
 	const vus = new Set<Champ>()
 	return enTetes.map((enTete) => {
-		const champ = reconnaitreEnTete(enTete)
+		const champ = reconnaitreEnTete(enTete, objet)
 		if (champ === 'ignorer' || vus.has(champ)) return 'ignorer'
 		vus.add(champ)
 		return champ
 	})
 }
 
-/** La correspondance peut-elle produire une ligne ? Il faut un nom de contact ou un nom d'organisation (§6.2 bis). */
-export function correspondanceUtile(correspondance: readonly Champ[]): boolean {
+/**
+ * La correspondance peut-elle produire une ligne ? Il faut un nom de contact ou un nom d'organisation (§6.2 bis) ; pour une
+ * affaire, son titre (§6.3).
+ */
+export function correspondanceUtile(correspondance: readonly Champ[], objet: ObjetImport = 'contacts'): boolean {
+	if (objet === 'affaires') return correspondance.includes('title')
 	return correspondance.includes('full_name') || correspondance.includes('organization_name')
+}
+
+/** La colonne qui nomme une ligne écartée dans le tableau de vérification : le nom du contact, le titre de l'affaire. */
+export function champNommant(objet: ObjetImport): Champ {
+	return objet === 'contacts' ? 'full_name' : 'title'
 }
 
 export type LigneImport = Partial<Record<Exclude<Champ, 'ignorer'>, string>>
@@ -189,11 +263,26 @@ export type CodeIssue =
 	| 'forbidden'
 	| 'unknown'
 
+/** Les codes d'issue d'`import_cards` (§6.3 bis). */
+export type CodeIssueAffaire =
+	| 'duplicate_title'
+	| 'title_required'
+	| 'unknown_step'
+	| 'not_a_member'
+	| 'unknown_contact'
+	| 'invalid_amount'
+	| 'invalid_currency'
+	| 'invalid_probability'
+	| 'invalid_date'
+	| 'forbidden'
+	| 'unknown'
+
 export type IssueLigne = {
 	readonly line: number
 	readonly outcome: 'created' | 'skipped' | 'refused'
-	readonly code: CodeIssue | null
-	readonly organization_created: boolean
+	readonly code: CodeIssue | CodeIssueAffaire | null
+	/** Rendu par `import_contacts` seulement : une affaire ne crée pas d'organisation. */
+	readonly organization_created?: boolean
 }
 
 export const MOTIFS: Readonly<Record<CodeIssue, CleTraduction>> = {
@@ -207,41 +296,73 @@ export const MOTIFS: Readonly<Record<CodeIssue, CleTraduction>> = {
 	unknown: 'import.motif.unknown',
 }
 
+export const MOTIFS_AFFAIRES: Readonly<Record<CodeIssueAffaire, CleTraduction>> = {
+	duplicate_title: 'import.motif.duplicate_title',
+	title_required: 'import.motif.title_required',
+	unknown_step: 'import.motif.unknown_step',
+	not_a_member: 'import.motif.not_a_member',
+	unknown_contact: 'import.motif.unknown_contact',
+	invalid_amount: 'import.motif.invalid_amount',
+	invalid_currency: 'import.motif.invalid_currency',
+	invalid_probability: 'import.motif.invalid_probability',
+	invalid_date: 'import.motif.invalid_date',
+	forbidden: 'import.motif.forbidden.affaire',
+	unknown: 'import.motif.unknown',
+}
+
 /** Un code inconnu de l'écran se lit `unknown` : la base l'a refusé, l'écran ne devine pas pourquoi. */
-export function motifDe(code: string | null): CleTraduction | null {
+export function motifDe(code: string | null, objet: ObjetImport = 'contacts'): CleTraduction | null {
 	if (code === null) return null
+	if (objet === 'affaires') return MOTIFS_AFFAIRES[code as CodeIssueAffaire] ?? MOTIFS_AFFAIRES.unknown
 	return MOTIFS[code as CodeIssue] ?? MOTIFS.unknown
 }
 
-export type NatureRefusImport = 'trop-grand' | 'introuvable' | 'network' | 'unknown'
+export type NatureRefusImport = 'trop-grand' | 'introuvable' | 'ferme' | 'network' | 'unknown'
 
 export function classerRefusImport(statutHttp: number | undefined, message: string): NatureRefusImport {
 	if (message === 'import_too_large') return 'trop-grand'
-	if (message === 'workspace_not_found') return 'introuvable'
+	if (message === 'workspace_not_found' || message === 'channel_not_found') return 'introuvable'
+	if (message === 'channel_closed') return 'ferme'
 	if (statutHttp === undefined || statutHttp === 0) return 'network'
 	return 'unknown'
 }
 
 export type IssueImport = { readonly statut: 'juge'; readonly issues: readonly IssueLigne[] } | { readonly statut: 'refus'; readonly nature: NatureRefusImport }
 
-/** Fait juger les lignes par la base : en simulation, rien ne reste ; confirmé, les lignes valides sont écrites (§6.1). */
-export async function importerContacts(
-	client: ClientCrm,
-	idWorkspace: string,
-	lignes: readonly LigneImport[],
-	simulation: boolean,
-): Promise<IssueImport> {
+type ReponseRpc = { readonly data: unknown; readonly error: { readonly message: string } | null; readonly status: number }
+
+async function juger(appel: () => PromiseLike<ReponseRpc>): Promise<IssueImport> {
 	try {
-		const reponse = await client.rpc('import_contacts', {
-			p_workspace: idWorkspace,
-			p_rows: lignes as unknown as Json,
-			p_dry_run: simulation,
-		})
+		const reponse = await appel()
 		if (reponse.error !== null) return { statut: 'refus', nature: classerRefusImport(reponse.status, reponse.error.message) }
 		return { statut: 'juge', issues: (Array.isArray(reponse.data) ? reponse.data : []) as readonly IssueLigne[] }
 	} catch (cause) {
 		return { statut: 'refus', nature: classerRefusImport(undefined, cause instanceof Error ? cause.message : String(cause)) }
 	}
+}
+
+/** Fait juger les lignes par la base : en simulation, rien ne reste ; confirmé, les lignes valides sont écrites (§6.1). */
+export function importerContacts(
+	client: ClientCrm,
+	idWorkspace: string,
+	lignes: readonly LigneImport[],
+	simulation: boolean,
+): Promise<IssueImport> {
+	return juger(() =>
+		client.rpc('import_contacts', { p_workspace: idWorkspace, p_rows: lignes as unknown as Json, p_dry_run: simulation }),
+	)
+}
+
+/** Les affaires d'un channel, jugées de même par `import_cards` (§6.3, §6.5). */
+export function importerAffaires(
+	client: ClientCrm,
+	idChannel: string,
+	lignes: readonly LigneImport[],
+	simulation: boolean,
+): Promise<IssueImport> {
+	return juger(() =>
+		client.rpc('import_cards', { p_channel: idChannel, p_rows: lignes as unknown as Json, p_dry_run: simulation }),
+	)
 }
 
 export type Comptes = { readonly crees: number; readonly ignores: number; readonly refuses: number; readonly organisations: number }
@@ -251,7 +372,7 @@ export function compter(issues: readonly IssueLigne[]): Comptes {
 		crees: issues.filter((i) => i.outcome === 'created').length,
 		ignores: issues.filter((i) => i.outcome === 'skipped').length,
 		refuses: issues.filter((i) => i.outcome === 'refused').length,
-		organisations: issues.filter((i) => i.organization_created).length,
+		organisations: issues.filter((i) => i.organization_created === true).length,
 	}
 }
 
@@ -259,11 +380,16 @@ export function compter(issues: readonly IssueLigne[]): Comptes {
  * Le rapport : les lignes ignorées et refusées, telles que le fichier les portait, suivies de leur rang et de leur motif —
  * à corriger et réimporter (§6.1, étape 5).
  */
-export function rapportCsv(enTetes: readonly string[], donnees: readonly (readonly string[])[], issues: readonly IssueLigne[]): string {
+export function rapportCsv(
+	enTetes: readonly string[],
+	donnees: readonly (readonly string[])[],
+	issues: readonly IssueLigne[],
+	objet: ObjetImport = 'contacts',
+): string {
 	const lignes = issues
 		.filter((issue) => issue.outcome !== 'created')
 		.map((issue) => {
-			const motif = motifDe(issue.code)
+			const motif = motifDe(issue.code, objet)
 			return [...(donnees[issue.line - 1] ?? []), String(issue.line), motif === null ? '' : t(motif)]
 		})
 	return documentCsv([...enTetes, t('import.rapport.ligne'), t('import.rapport.motif')], lignes)
