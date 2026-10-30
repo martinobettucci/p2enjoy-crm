@@ -798,9 +798,9 @@ FICHIERS_SQL_ATTENDUS=117
 # révisées sans changer de plan). 4477 + 18 = 4495, COMPTÉE.
 # **+16 par `CRM-071` T4, 2026-10-30** (`0126` : contrat, filtres, ordre, journal, refus, plafond). 4495 + 16 = 4511,
 # COMPTÉE.
-# **+14 par `CRM-071` T5, 2026-10-30** (`0127` : contrat, simulation sans trace, issues ligne par ligne, organisation
-# retrouvée ou créée, journal, refus, plafond). 4511 + 14 = 4525, COMPTÉE.
-ASSERTIONS_ATTENDUES=4525
+# **+15 par `CRM-071` T5, 2026-10-30** (`0127` : contrat, simulation sans trace, issues ligne par ligne, organisation
+# retrouvée par domaine puis par nom ou créée, journal, refus, plafond). 4511 + 15 = 4526, COMPTÉE.
+ASSERTIONS_ATTENDUES=4526
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS

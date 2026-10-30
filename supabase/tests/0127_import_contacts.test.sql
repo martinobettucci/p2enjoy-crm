@@ -10,7 +10,7 @@ begin;
 
 create extension if not exists pgtap with schema extensions;
 
-select plan(14);
+select plan(15);
 
 create or replace function pg_temp.endosser(utilisateur uuid) returns void language plpgsql as $$
 begin
@@ -99,6 +99,10 @@ select is((select string_agg(outcome || ':' || code, ', ' order by line)
              from public.import_contacts('5eed0000-0000-4000-8000-000000000001',
                   '[{"full_name": "ZZ Anne Petit", "email": "anne@zz-petit.test"}]', false)),
 	'skipped:duplicate_email', '11 — réimporter le même fichier ne crée pas de doublon');
+select is((select o.name from public.import_contacts('5eed0000-0000-4000-8000-000000000001',
+             '[{"full_name": "ZZ Gaël Sogexia", "organization_name": "ZZ Sogexia France", "organization_domain": "SOGEXIA.example"}]', false) i
+             join public.organizations o on o.id = i.organization_id),
+	'Sogexia', '15 — l''organisation est retrouvée d''abord par son domaine, sans casse, avant son nom (§6.2)');
 select pg_temp.redevenir_proprietaire();
 
 -- =============================================================================================

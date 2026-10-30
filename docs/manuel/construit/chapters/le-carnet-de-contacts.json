@@ -518,13 +518,13 @@
 								"content": [
 									{
 										"type": "text",
-										"text": "L'organisation est retrouvée par son nom"
+										"text": "L'organisation est retrouvée par son domaine"
 									}
 								]
 							},
 							{
 								"type": "text",
-								"text": ", sans tenir compte des majuscules ; si elle n'existe pas, elle est créée\navec le domaine et le site de la ligne. Une ligne qui ne nomme qu'une organisation la crée seule ; si elle existe déjà,\nla ligne est un doublon."
+								"text": ", sinon par son nom, sans tenir compte des majuscules ; si elle\nn'existe pas, elle est créée avec le domaine et le site de la ligne. Une ligne qui ne nomme qu'une organisation la crée seule ; si elle existe déjà,\nla ligne est un doublon."
 							}
 						]
 					}

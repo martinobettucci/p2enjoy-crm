@@ -2442,7 +2442,7 @@ boolean default true)`**, `SECURITY INVOKER`, exécutable par `authenticated` : 
 à une sous la RLS de la personne, chacune dans sa sous-transaction ; rend `table(line, outcome, code, contact_id,
 organization_id, organization_created)`, `outcome` parmi `created`, `skipped`, `refused`, `code` parmi
 `duplicate_email`, `duplicate_organization`, `name_required`, `invalid_email`, `invalid_domain`, `invalid_website`,
-`forbidden`, `unknown`. L'organisation est retrouvée par son nom sans casse, ou créée. La **simulation** (`p_dry_run`,
+`forbidden`, `unknown`. L'organisation est retrouvée par son domaine, puis par son nom, sans casse, ou créée. La **simulation** (`p_dry_run`,
 par défaut) rend le même jugement puis annule tout par une erreur interne `ZZ071` rattrapée, sans journal. Un import
 confirmé écrit `contacts.source = 'import'` et se journalise par **`app.audit_import(p_workspace, p_entity_type,
 p_details)`** (`SECURITY DEFINER`, exécutable par `authenticated`, hors du schéma exposé) : `audit_log.family` gagne

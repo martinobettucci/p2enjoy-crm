@@ -33,7 +33,7 @@ d'exécuter le code attendu.
 - **Migration `0137`, l'import du carnet** (T5) : « Importer un fichier », après « Exporter en CSV » dans le carnet — un
   fichier CSV lu dans le navigateur (1 000 lignes, 2 Mo), ses colonnes associées d'après leurs en-têtes, une vérification
   qui juge chaque ligne sans rien écrire, puis l'import des lignes valides et un rapport téléchargeable. Doublons d'email
-  ignorés, organisations retrouvées par leur nom ou créées, chaque import inscrit au journal d'audit (famille `import`).
+  ignorés, organisations retrouvées par leur domaine ou leur nom, ou créées, chaque import inscrit au journal d'audit (famille `import`).
   Le seed importe un fichier de salon par la même fonction. Manuel 10.
 
 ### `CRM-069` — les étiquettes et le digest quotidien

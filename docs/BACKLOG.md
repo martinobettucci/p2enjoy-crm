@@ -12540,8 +12540,8 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       parcours du carnet, seed, manuel ; unitaires, pgTAP, API, E2E.
       *Spécification §6.2 bis et design system §5.77 écrits le 2026-10-30, avant le code.* **Écrite et prouvée le
       2026-10-30** : migration `0137` (`import_contacts` sous la RLS, simulation annulée sans journal, issues ligne par
-      ligne, organisation retrouvée sans casse ou créée ; `app.audit_import`, famille `import`) ; pgTAP `0127` **14/14**
-      (suite 117 fichiers, 4525 assertions) ; `lib/import-csv.ts` (UTF-8 ou Windows-1252, séparateur, RFC 4180, en-têtes
+      ligne, organisation retrouvée par domaine puis par nom, sans casse, ou créée ; `app.audit_import`, famille `import`) ; pgTAP `0127` **15/15**
+      (suite 117 fichiers, 4526 assertions) ; `lib/import-csv.ts` (UTF-8 ou Windows-1252, séparateur, RFC 4180, en-têtes
       reconnus, rapport) et `ImportContacts.tsx`, montés par le carnet ; unitaires `import-csv.test.ts` et
       `ImportContacts.test.tsx` ; API `import-contacts.spec.ts` **2/2** ; E2E `import-contacts.spec.ts` **2/2** (fichier
       déposé, vérifié, importé, rapport téléchargé, carnet relu, focus rendu ; la lectrice, 390 px) — **défaut trouvé par

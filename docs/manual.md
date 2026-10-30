@@ -2183,8 +2183,8 @@ Ce que l'import décide, ligne par ligne :
 - **Un doublon est ignoré, jamais écrasé.** Une ligne dont l'email est déjà porté par un contact de l'espace — majuscules
   comprises — est laissée de côté ; la fiche existante n'est pas modifiée. Réimporter le même fichier ne crée donc rien de
   plus.
-- **L'organisation est retrouvée par son nom**, sans tenir compte des majuscules ; si elle n'existe pas, elle est créée
-  avec le domaine et le site de la ligne. Une ligne qui ne nomme qu'une organisation la crée seule ; si elle existe déjà,
+- **L'organisation est retrouvée par son domaine**, sinon par son nom, sans tenir compte des majuscules ; si elle
+  n'existe pas, elle est créée avec le domaine et le site de la ligne. Une ligne qui ne nomme qu'une organisation la crée seule ; si elle existe déjà,
   la ligne est un doublon.
 - **Une ligne est refusée** quand elle n'a ni nom ni organisation, quand son email, son domaine ou son site n'en est pas
   un, ou quand vous n'avez pas le droit de modifier le carnet. Les autres lignes du fichier sont importées quand même.
