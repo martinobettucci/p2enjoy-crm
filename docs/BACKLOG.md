@@ -12507,6 +12507,8 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       des filtres sont en anglais (précision du §2.2, décision 658).
 - [ ] **T2 — les vues à l'écran** : design system §5.75, la liste « Vues » de la vue liste, seed, manuel ; unitaires, E2E,
       captures.
+      *Design system §5.75 écrit le 2026-10-30 avant le code ; spécification §3 révisée (décision 777 : la vue choisie
+      est portée par l'adresse).*
 - [ ] **T3 — les vues dans le connecteur** : `crm_view_list`, paramètre `view` de `crm_card_list` (famille `affaires`,
       `consulter`) ; pytest, intégration, E2E.
 - [ ] **T4 — l'export CSV** : `export_cards`, `export_contacts`, journal `export`, boutons de la liste et du carnet,

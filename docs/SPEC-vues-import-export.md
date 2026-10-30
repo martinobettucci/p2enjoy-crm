@@ -77,11 +77,15 @@ Privilèges explicites (`revoke all` puis `grant`) : `select`, `insert (channel_
 
 Sur la **vue liste d'un channel** seulement, dans la barre de filtres :
 
-- une liste **« Vues »** : « Mes vues », puis « Vues de l'espace », chacune par nom ; choisir une vue y navigue. La vue
-  courante est nommée tant que l'adresse correspond exactement à ses filtres ;
+- une liste **« Vues »** : « Mes vues », puis « Vues de l'espace », chacune par nom ; choisir une vue y navigue.
+  **La vue choisie est portée par l'adresse** (`vue=<id>`, à côté des filtres) et reste nommée dans la liste ; si les
+  filtres s'en écartent, l'écran le dit — « Filtres modifiés depuis la vue » — et offre **« Mettre à jour la vue »**.
+  *Révisé le 2026-10-30 avant le code (décision 777)* : la première rédaction nommait la vue « tant que l'adresse
+  correspond exactement à ses filtres », ce qui rendait la mise à jour inatteignable. Un `vue` inconnu ou illisible est
+  ignoré, sans erreur (lecture tolérante de l'adresse) ;
 - **« Enregistrer la vue »** : un nom, et, pour un administrateur, la case « Publier pour tout l'espace » ;
-- sur une vue qu'on peut écrire : **« Renommer »**, **« Mettre à jour avec les filtres actuels »**, **« Supprimer »** (sans
-  confirmation : elle se réenregistre).
+- sur une vue qu'on peut écrire : **« Modifier »** (le nom, et la publication d'une vue privée par un administrateur),
+  **« Mettre à jour la vue »**, **« Supprimer »** (sans confirmation : elle se réenregistre).
 
 Le design system reçoit une section (§5.75), les états de chargement, d'erreur, de refus et d'absence de vue y compris.
 

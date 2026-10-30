@@ -36828,3 +36828,22 @@ refusées rapportées ; bornes de 1 000 lignes par import et 5 000 par export ; 
 famille d'audit nouvelle `import` ; CSV en UTF-8 avec BOM, point-virgule, apostrophe devant une cellule à risque de
 formule. Les deux options écartées : l'import d'affaires soumis aux conditions de transition, et le « tout ou rien ».
 
+## décision 777 — `CRM-071` : la vue choisie est portée par l'adresse
+
+*2026-10-30, arbitrage du responsable, en session interactive (Claude Code, poste du responsable).*
+
+**Problème.** `docs/SPEC-vues-import-export.md` §3, validée par la décision 776, se contredisait : la vue courante y était
+nommée « tant que l'adresse correspond exactement à ses filtres », et l'écran offrait « Mettre à jour avec les filtres
+actuels ». Dès qu'un filtre change, la vue n'est plus nommée : le geste était inatteignable. Relevé en écrivant le §5.75
+du design system, avant le code.
+
+**Options.** (1) La vue choisie suit l'adresse (`vue=<id>`) ; des filtres qui s'en écartent sont signalés, et la mise à
+jour est offerte. (2) Retirer la mise à jour : supprimer et réenregistrer.
+
+**Décision du responsable : l'option 1.** Le §3 est révisé ; « Renommer » devient « Modifier », qui porte aussi la
+publication d'une vue privée par un administrateur (§2.3).
+
+**Précision consignée au passage** (T1, sans décision nouvelle) : les clés stockées des filtres sont en anglais (`sort`,
+`direction`, `step_id`, `label_id`, `search`, `snoozed`), par la règle de nommage (décision 658) ; le §2.2 le dit depuis le
+commit de T1.
+

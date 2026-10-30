@@ -4441,6 +4441,8 @@ l'ouvrent, et c'est la première entrée de `/reglages` dont ce soit le cas.
 - **AUCUNE CASE POUR UN CANAL QUI N'EXISTE PAS.** Ni « par email », ni « résumé quotidien » : le
   §42.1 de la spécification le mesure, aucun canal sortant n'existe. Une case qui ne commande rien
   est la **commande morte** du §5.10, et ici elle serait pire qu'inerte — elle promettrait un email.
+  *Depuis `CRM-069` T5, le récapitulatif quotidien existe et a sa case, sous « Par email » (§5.74) ; la règle reste
+  vraie pour tout autre canal.*
 
 - **LA CASE MESURE 24 px, COMME TOUTE CASE DU PRODUIT (§5.7 bis), ET PORTE L'ACCENT `--color-brand`.**
   Elle mesurait 16 px et citait `--color-primary`, jeton déclaré nulle part : la case prenait la
@@ -6944,3 +6946,50 @@ l'air.
 - **ÉTATS** (§5.8) : la lecture du consentement en panne laisse le premier `fieldset` intact et dit, à la place de la
   case, « Le récapitulatif n'a pas pu être lu. », avec « Réessayer ». Sans espace courant, le `fieldset` n'est pas rendu.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+
+
+### 5.75 Les vues sauvegardées de la vue liste — `CRM-071` T2
+
+*Écrit le 2026-10-30, avant le code, après relecture intégrale de ce document le même jour (décisions 774 à 777).* Ce que
+l'écran lit, écrit et refuse est spécifié par `docs/SPEC-vues-import-export.md` §2 et §3 ; ces règles ne disent que de
+quoi il a l'air. Tout ce que les §5.13 et §5.50 posent vaut sans être répété : panneau **dans le flux — aucune modale** —,
+focus entrant dans le premier champ et rendu à la commande qui a ouvert (différé d'un rendu si elle a été démontée,
+§5.25), refus dit dans le panneau, la saisie conservée (§5.7 ter), `Échap` qui referme.
+
+- **LE SÉLECTEUR « Vue » OUVRE LA BARRE DE FILTRES**, juste après « Nouvelle affaire » (§5.50) et avant les filtres : une
+  vue qualifie tous les filtres qui suivent, et ce qui qualifie se lit avant (§5.48 bis). C'est un `select` natif à
+  libellé visible (§5.22, §5.48 bis), option vide en tête « Aucune vue », puis deux `optgroup` traduits, « Mes vues » et
+  « Vues de l'espace », chacun dans l'ordre du nom ; un groupe vide n'est pas rendu. Les noms sont des données (§10).
+- **CHOISIR UNE VUE NAVIGUE** vers l'adresse qu'elle compose — ses filtres, et `vue=<id>` —, comme le fait chaque filtre de
+  la barre. Choisir « Aucune vue » retire seulement `vue` : les filtres courants restent.
+- **DES FILTRES QUI S'ÉCARTENT DE LA VUE CHOISIE SONT DITS**, sous le sélecteur, en 13 px `--color-text-2` : « Filtres
+  modifiés depuis la vue ». Ce n'est pas une alerte : rien n'a échoué. La vue reste nommée dans le sélecteur.
+- **LES COMMANDES SUIVENT LE SÉLECTEUR**, boutons discrets compacts, sur la ligne de la barre qui se replie :
+  - **« Enregistrer la vue »**, icône Lucide **`BookmarkPlus`**, toujours rendue ;
+  - quand une vue est choisie : **« Mettre à jour la vue »**, icône **`BookmarkCheck`**, rendue seulement quand les filtres
+    s'en écartent (§5.36 : un geste sans objet ne se rend pas) ; **« Modifier »** (`PencilLine`) ; **« Supprimer la
+    vue »** (`Trash2`), sans confirmation — elle se réenregistre (§5.41). Leurs noms accessibles nomment la vue.
+  - Sur une **vue de l'espace**, ces trois commandes suivent la capacité d'**administrer l'espace** (§5.59) : refusée,
+    elles sont montées, désactivées, lisibles, et portent elles-mêmes leur motif — `sr-only` adjacent et `title` —, l'écart
+    borné de « Nouveau channel » (§5.59) : un bandeau au-dessus de la liste pour trois commandes serait du bruit.
+- **« Enregistrer la vue » OUVRE UN PANNEAU SOUS LA BARRE**, `--color-surface`, bordure `--color-border`, `--radius-lg`, la
+  forme du formulaire de « Nouvelle affaire » (§5.50) ; la commande et le panneau s'excluent. Il porte « Nom de la vue »,
+  puis la case de 24 px (§5.7 bis) **« Publier pour tout l'espace »**, avec dessous, en 13 px `--color-text-2`, « Tous les
+  membres qui lisent ce channel la verront. » ; refusée par la capacité d'administrer, la case est désactivée, lisible,
+  et sa phrase devient le motif (§5.59). « Enregistrer » (primaire, désactivé tant que le nom est blanc, §5.50) et
+  « Annuler ». Le succès choisit la vue enregistrée (l'adresse prend son `vue`) et s'annonce dans une région vivante
+  polie : « Vue « … » enregistrée ». Un nom pris est refusé sous le champ, et **le focus revient au champ** (§5.71).
+- **« Modifier » OUVRE LE MÊME PANNEAU**, prérempli : le nom, et la case de publication pour une vue **privée** seulement —
+  une vue publiée ne redevient pas privée, on la supprime (§2.3 de la spécification) ; sa case ne se rend donc pas
+  (§5.15 : une valeur qui ne se modifie plus ne se rend pas en champ désactivé).
+- **APRÈS « Supprimer la vue »**, l'adresse perd son `vue`, les filtres restent, l'issue s'annonce — « Vue « … »
+  supprimée » —, et le focus va au sélecteur : la commande a disparu avec sa vue (§5.13).
+- **ÉTATS** (§5.8) : pendant la lecture des vues, le sélecteur est désactivé avec l'option « Chargement… » (la dérogation
+  bornée du §5.22) ; en échec, la phrase « Les vues n'ont pas pu être lues. » et « Réessayer » ; **sans aucune vue, le
+  sélecteur n'est pas rendu** (§5.36), « Enregistrer la vue » reste. Un `vue` de l'adresse que la liste ne contient pas
+  est ignoré, sans message : l'écran ne nomme jamais ce qu'il ne montre pas (§5.33).
+- **SOUS `md`**, le sélecteur prend toute la largeur et les commandes passent dessous, cibles conservées ; `md` et jamais
+  `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau ; deux icônes Lucide nouvelles, `BookmarkPlus` et `BookmarkCheck`**, qui ne
+  servent aucun autre objet (§9).
+
