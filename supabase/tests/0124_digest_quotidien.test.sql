@@ -133,7 +133,11 @@ select is((select status from public.digest_runs where workspace_id = '5eed0000-
 -- 5. L'envoi — §5.3
 -- =============================================================================================
 
-update public.mail_outbox set status = 'cancelled' where status = 'queued' and kind = 'card';
+-- Toute autre ligne en file est écartée, dans la transaction : celles des affaires, et le digest que le jeu a mis en file
+-- (docs/SPEC-seed.md §31) si `mail-sync` ne l'a pas encore envoyé. La réservation ne rend alors que le digest de la preuve.
+update public.mail_outbox set status = 'cancelled'
+ where status = 'queued'
+   and id <> (select outbox_id from public.digest_runs where profile_id = :driss and workspace_id = :ws);
 select is((select reply_to from public.reserver_envois(10) where card_id is null), null::text,
 	'18 — la réservation rend le digest sans `Reply-To`');
 select is((select count(*)::int from public.mail_messages m where m.rfc822_message_id = '<digest@crm.test>'), 0, '18 bis — témoin : aucun courrier d''affaire avant le succès');

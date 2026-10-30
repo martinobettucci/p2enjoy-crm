@@ -13,6 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-071` — vues sauvegardées, import et export CSV (en cours : T1)
+
+- **Migration `0135`, les vues sauvegardées en base** (T1) : une vue de la vue liste d'un channel, privée ou publiée pour
+  l'espace par un administrateur ; ses filtres limités aux six clés de l'écran ; la propriétaire et l'espace posés par la
+  base. Rien n'est encore visible à l'écran.
+
 ### `CRM-069` — les étiquettes et le digest quotidien
 
 *En développement seulement. La migration `0132` attend la prochaine fenêtre de production.*

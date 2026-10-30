@@ -2435,6 +2435,19 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0135` — les vues sauvegardées (`CRM-071` T1, décisions 774 à 776 ; livrée en développement le 2026-10-30)
+
+`docs/SPEC-vues-import-export.md` §2. **`public.saved_views`** : `id`, `workspace_id` (posé depuis le channel), `channel_id`
+(FK composite vers `channels`, `on delete cascade`), `visibility` (`private` ou `workspace`), `owner_id` (l'appelant, posé
+par `app.saved_views_avant`, `on delete cascade`), `name` (1 à 60 caractères), `filters` (`jsonb` aux six clés fermées,
+vérifiées par **`app.saved_view_filters_valid`** : `sort`, `direction`, `step_id`, `label_id`, `search`, `snoozed`),
+`created_at`, `updated_at`. Nom unique sans casse par `(channel, propriétaire)` parmi les vues privées, par channel parmi
+celles de l'espace. RLS : lecture de sa vue privée et des vues de l'espace sur un channel qu'on lit ; écriture de sa vue
+privée ; publication, modification et suppression d'une vue de l'espace par un administrateur ; une vue publiée ne
+redevient pas privée (`22023 saved_view_cannot_be_unpublished`). Privilèges : `select`, `delete`, `insert (channel_id,
+visibility, name, filters)`, `update (name, filters, visibility)`. **Retrait** : `drop table public.saved_views` ; retirer
+`app.saved_views_avant` et `app.saved_view_filters_valid`.
+
 ### Migration `0134` — le retrait : les colonnes de rattachement quittent `cards` (`CRM-111` T2.4.5, décisions 705, 738, 746, 768, 770 ; livrée en développement le 2026-10-28)
 
 `docs/SPEC-rattachements.md` §3.1, §3.2, §4, §5, §10. **Retirés de `cards`** : `channel_id`, `workflow_id`,

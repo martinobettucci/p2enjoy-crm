@@ -12496,7 +12496,14 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
 **Arbitrée le 2026-10-30 (décision 774).** Spécification `docs/SPEC-vues-import-export.md`
 **validée telle quelle le 2026-10-30** (décision 776). Tranches (§8) :
 
-- [ ] **T1 — les vues en base** : `saved_views`, RLS, privilèges ; pgTAP, API (refus par requête directe), types.
+- [x] **T1 — les vues en base** : `saved_views`, RLS, privilèges ; pgTAP, API (refus par requête directe), types.
+      **Livrée en développement le 2026-10-30** : migration `0135` ; pgTAP `0125` **18/18** ; garde `0016` révisée (183
+      politiques, décision 51), `0124` isolée de la file du jeu ; API `vues-sauvegardees.spec.ts` **3/3** (propriétaire
+      usurpée refusée par le privilège, vue privée illisible et intouchable par l'administratrice, publication refusée au
+      business developer, vue d'un channel fermé illisible par la lectrice, dépublication refusée, anonyme) ; types
+      régénérés, témoin `database.types.test-d.ts` ; suite pgTAP 115 fichiers, 4495 assertions (seule `0020` attend son
+      battement horaire après le redémarrage de la pile) ; SCHEMA, PROD_MIGRATIONS, CHANGELOG, harnais. Les clés stockées
+      des filtres sont en anglais (précision du §2.2, décision 658).
 - [ ] **T2 — les vues à l'écran** : design system §5.75, la liste « Vues » de la vue liste, seed, manuel ; unitaires, E2E,
       captures.
 - [ ] **T3 — les vues dans le connecteur** : `crm_view_list`, paramètre `view` de `crm_card_list` (famille `affaires`,

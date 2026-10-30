@@ -41,15 +41,19 @@ n'importe ni n'exporte (décision 775).
 
 ### 2.2 Ce qu'une vue mémorise
 
-Exactement les paramètres de l'adresse de la vue liste (`webapp/src/lib/liste-cards.ts`, `CLES_URL`), **sauf la page** :
+Exactement les paramètres de l'adresse de la vue liste (`webapp/src/lib/liste-cards.ts`, `CLES_URL`), **sauf la page**.
+Les clés stockées sont **en anglais** (`docs/DAT.md` §12 bis, décision 658) ; l'écran les traduit vers les paramètres de
+l'adresse, entre parenthèses (*précision de rédaction du 2026-10-30 : la première version listait les paramètres de
+l'adresse eux-mêmes*) :
 
-| Clé | Valeur |
+| Clé stockée (paramètre) | Valeur |
 |---|---|
-| `tri`, `sens` | l'un des tris de la liste, `asc` ou `desc` |
-| `etape` | `uuid` d'une étape du workflow du channel |
-| `etiquette` | `uuid` d'une étiquette de l'espace |
-| `q` | texte, 200 caractères au plus |
-| `sommeil` | les valeurs du filtre de sommeil |
+| `sort` (`tri`) | `title`, `amount`, `next_action_at` ou `created_at` |
+| `direction` (`sens`) | `asc` ou `desc` |
+| `step_id` (`etape`) | `uuid` d'une étape du workflow du channel |
+| `label_id` (`etiquette`) | `uuid` d'une étiquette de l'espace |
+| `search` (`q`) | texte, 200 caractères au plus |
+| `snoozed` (`sommeil`) | `hidden` (défaut) ou `shown` (`visibles`) |
 
 Une clé absente prend son défaut. **Ouvrir une vue, c'est naviguer vers l'adresse qu'elle compose** : la lecture tolérante
 de l'adresse (`docs/SPEC-cards.md` §12.2) replie ce qui ne vaut plus (une étape retirée, une étiquette archivée), sans

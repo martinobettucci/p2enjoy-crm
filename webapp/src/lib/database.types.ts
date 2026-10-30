@@ -3167,6 +3167,57 @@ export type Database = {
           },
         ]
       }
+      saved_views: {
+        Row: {
+          channel_id: string
+          created_at: string
+          filters: Json
+          id: string
+          name: string
+          owner_id: string
+          updated_at: string
+          visibility: string
+          workspace_id: string
+        }
+        Insert: {
+          channel_id: string
+          created_at?: string
+          filters?: Json
+          id?: string
+          name: string
+          owner_id?: string
+          updated_at?: string
+          visibility?: string
+          workspace_id: string
+        }
+        Update: {
+          channel_id?: string
+          created_at?: string
+          filters?: Json
+          id?: string
+          name?: string
+          owner_id?: string
+          updated_at?: string
+          visibility?: string
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "saved_views_channel_fkey"
+            columns: ["channel_id", "workspace_id"]
+            isOneToOne: false
+            referencedRelation: "channels"
+            referencedColumns: ["id", "workspace_id"]
+          },
+          {
+            foreignKeyName: "saved_views_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sessions_sso: {
         Row: {
           cree_le: string

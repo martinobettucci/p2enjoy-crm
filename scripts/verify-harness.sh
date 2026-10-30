@@ -629,7 +629,9 @@ PORT_RAPPORT=9323
 # **+1 par `CRM-068` T4a, 2026-10-27** : `supabase/tests/0122_modeles_affaires.test.sql`, 22 assertions. COMPTÉE.
 # **+1 par `CRM-069` T1, 2026-10-28** : `supabase/tests/0123_etiquettes.test.sql`, fichier NEUF. 112 + 1 = 113, COMPTÉE.
 # **+1 par `CRM-069` T4, 2026-10-28** : `supabase/tests/0124_digest_quotidien.test.sql`, fichier NEUF. 113 + 1 = 114, COMPTÉE.
-FICHIERS_SQL_ATTENDUS=114
+# **+1 par `CRM-071` T1, 2026-10-30** : `supabase/tests/0125_vues_sauvegardees.test.sql`, fichier NEUF. 114 + 1 = 115,
+# COMPTÉE.
+FICHIERS_SQL_ATTENDUS=115
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -789,7 +791,9 @@ FICHIERS_SQL_ATTENDUS=114
 # plan). 4434 + 20 = 4454, COMPTÉE.
 # **+23 par `CRM-069` T4, 2026-10-28** (`0124` : consentement, file sans affaire, job, adresse de session ; `0016` révisée
 # sans changer de plan). 4454 + 23 = 4477, COMPTÉE.
-ASSERTIONS_ATTENDUES=4477
+# **+18 par `CRM-071` T1, 2026-10-30** (`0125` : contrat, filtres, vues privées, vues de l'espace ; `0016`, `0124` et `0001`
+# révisées sans changer de plan). 4477 + 18 = 4495, COMPTÉE.
+ASSERTIONS_ATTENDUES=4495
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1209,7 +1213,9 @@ ASSERTIONS_ATTENDUES=4477
 # **+3 par `CRM-069` T1, 2026-10-28** : `e2e/api/etiquettes.spec.ts`, fichier NEUF — le catalogue (pose, refus du business
 # developer, aucune suppression, lecture), la pose et ses refus (lectrice, archivée) et le fil, l'anonyme. 1258 + 3 = 1261,
 # COMPTÉE.
-SCENARIOS_API=1261
+# **+3 par `CRM-071` T1, 2026-10-30** : `e2e/api/vues-sauvegardees.spec.ts`, fichier NEUF — la vue privée et ses refus, la
+# publication et ses refus, l'anonyme. 1261 + 3 = 1264, COMPTÉE.
+SCENARIOS_API=1264
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

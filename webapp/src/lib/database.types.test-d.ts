@@ -1,3 +1,4 @@
+// @verifies CRM-071 (docs/BACKLOG.md) — tranche T1 : `saved_views` au témoin des tables (docs/SPEC-vues-import-export.md §2)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranches T1 et T4 : `labels`, `card_labels`, `digest_subscriptions` et `digest_runs` au témoin des tables (docs/SPEC-etiquettes-digest.md §2)
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T1 : les trois surcharges de `ecriture_permise`, docs/SCHEMA.md §9 bis.8 ter
 // @verifies CRM-006 (docs/BACKLOG.md) — contrat des types générés depuis le schéma
@@ -155,6 +156,11 @@ type _tables = Expect<
     // `digest_runs` est fermée à tout client.
     | 'digest_subscriptions'
     | 'digest_runs'
+    // `0135` de `CRM-071` TRANCHE T1 ajoute `saved_views` (docs/SPEC-vues-import-export.md §2). CE QUI ÉCHAPPE AU
+    // GÉNÉRATEUR : `Insert` expose `workspace_id` et `owner_id`, que la base pose (l'espace du channel, l'appelant) ;
+    // `filters` est un `Json` libre, que `app.saved_view_filters_valid` borne à six clés ; une vue publiée ne redevient pas
+    // privée (`22023 saved_view_cannot_be_unpublished`).
+    | 'saved_views'
     | 'card_comment_mentions'
     | 'card_comments'
     // `0088` de `CRM-099` TRANCHE T1 ajoute `card_cost_actuals` — les réels d'une ligne de coût, dont la base tient la
