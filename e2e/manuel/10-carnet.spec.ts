@@ -24,6 +24,7 @@ import {
 	detruireAffaire,
 	lireService,
 	poserAffaire,
+	retablirLeSeed,
 	service,
 } from './outils'
 
@@ -43,11 +44,15 @@ async function affaireJetable(requete: APIRequestContext, affaire: { readonly id
 
 const entete = (page: Page) => [page.getByTestId('ouvrir-modification-contact'), page.getByTestId('ouvrir-suppression-contact')]
 
+// Le rôle de Driss et les affaires jetables sont rétablis même quand un test dépasse son délai.
+test.afterEach(async ({ request }) => retablirLeSeed(request, [ARCHIVEE.titre, AUDIT.titre]))
+
 test('le carnet, la création et la fiche d’un contact', async ({ page }) => {
 	await connecterAvecLeLabs(page, ADMIN)
 	await page.goto('/contacts')
 	await expect(page.getByTestId('ligne-contact').first()).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'carnet', cibles: [], pleinePage: true })
+	await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'exporter-contacts', cibles: [page.getByTestId('ouvrir-creation-contact'), page.getByTestId('exporter-contacts')] })
 	// Le bouton cède sa place au formulaire : deux images.
 	await illustrer(page, { chapitre: CHAPITRE, section: 'creer-un-contact', nom: 'nouveau-contact', cibles: [page.getByTestId('ouvrir-creation-contact')] })
 	await page.getByTestId('ouvrir-creation-contact').click()

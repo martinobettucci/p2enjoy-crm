@@ -2161,6 +2161,8 @@ préparé dans votre navigateur et n'est conservé nulle part. Un contact anonym
 coordonnées. Chaque export est inscrit au journal d'audit de l'espace, avec le nombre de lignes, jamais leur contenu. Au-
 delà de 5 000 contacts, l'export n'est pas possible d'un seul tenant, et l'écran le dit.
 
+![Le bouton d'export du carnet en CSV, à côté du bouton Nouveau contact](manuel/images/le-carnet-de-contacts/exporter-contacts.jpg)
+
 Rattacher une personne à une affaire se fait depuis sa fiche
 ([section 10.6](#rattacher-une-personne-a-une-affaire)) ou depuis celle de l'affaire
 ([section 9.7](#les-contacts-d-une-affaire-les-rattacher-les-detacher)). Ce rattachement sert aussi à ranger le

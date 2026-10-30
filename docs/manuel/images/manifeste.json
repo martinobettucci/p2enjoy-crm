@@ -48,6 +48,8 @@
 				"Directeur achats",
 				"Email",
 				"En-tête de l'application",
+				"Exporter en CSV",
+				"Exporter en CSV le carnet de contacts",
 				"Fil d'Ariane",
 				"Fonction",
 				"Formation",
@@ -58,7 +60,7 @@
 				"Nom",
 				"Notifications — 1 non lue",
 				"Nouveau contact",
-				"Nouveau contact Contacts de l'espace de travail Nom Organisation Fonction Email Téléphone Contact anonymisé Élise Fabre Studio Meunier Cheffe d'atelier +33 6 12 34 56 78 Léo Marchand Sogexia Directeur achats leo.marchand@sogexia.example Sophie Dupont sophie@dupont.test",
+				"Nouveau contact Exporter en CSV Contacts de l'espace de travail Nom Organisation Fonction Email Téléphone Contact anonymisé Élise Fabre Studio Meunier Cheffe d'atelier +33 6 12 34 56 78 Léo Marchand Sogexia Directeur achats leo.marchand@sogexia.example Sophie Dupont sophie@dupont.test",
 				"Objectifs",
 				"Organisation",
 				"Organisations",
@@ -151,10 +153,10 @@
 			"section": "supprimer-un-contact",
 			"pleinePage": false,
 			"libelles": [
-				"30/10/2026 17:14",
-				"30/10/2026 17:14par Camille Aubert",
+				"30/10/2026 17:42",
+				"30/10/2026 17:42par Camille Aubert",
 				"Contact détaché",
-				"Contact détaché 30/10/2026 17:14par Camille Aubert",
+				"Contact détaché 30/10/2026 17:42par Camille Aubert",
 				"par Camille Aubert"
 			]
 		},
@@ -253,6 +255,19 @@
 				"Nouvelle organisation",
 				"Site web",
 				"Vous ne pouvez pas modifier les organisations de cet espace."
+			]
+		},
+		{
+			"fichier": "le-carnet-de-contacts/exporter-contacts.jpg",
+			"largeur": 330,
+			"hauteur": 73,
+			"chapitre": "le-carnet-de-contacts",
+			"section": null,
+			"pleinePage": false,
+			"libelles": [
+				"Exporter en CSV",
+				"Exporter en CSV le carnet de contacts",
+				"Nouveau contact"
 			]
 		},
 		{

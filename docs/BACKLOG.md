@@ -17314,7 +17314,10 @@ responsable** : traitée juste après `CRM-116`.*
               lignes de fil écrites ; le fil est en ajout seul (`card_events`, migration 0016). Les gestes qui
               écrivent un fil se jouent désormais sur des affaires jetables ; deux passages avaient laissé quatre
               lignes sur l'affaire Sogexia du seed, qui restent jusqu'à la prochaine reconstruction de la base
-              (journal).
+              (journal) **Repris le 2026-10-30** : « Exporter en CSV » de `CRM-071` T4
+              illustré dans l'introduction du chapitre 10 ; un test interrompu par son délai avait laissé Driss
+              Lemoine « viewer » dans la base partagée (rétabli) : `retablirLeSeed`, appelé en `afterEach`, rend son rôle
+              et retire les affaires jetables même après un dépassement de délai.
         - [ ] **T4.2b** (9, la fiche, le board, la liste). Scénarios écrits, jamais passés. La vue liste porte les
               vues sauvegardées de `CRM-071` T2 (9.11) : ses images se prennent sur ce build.
       - [ ] **T4.3 — la messagerie** : chapitres 11 à 16. Scénarios écrits, jamais passés.

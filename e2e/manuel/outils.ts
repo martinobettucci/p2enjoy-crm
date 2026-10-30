@@ -152,3 +152,16 @@ export const ETAPE_SIGNATURE = '5eed0000-0000-4000-8000-000000000064'
 export async function detruireAffaire(requete: APIRequestContext, id: string): Promise<void> {
 	await service(requete, 'delete', `cards?id=eq.${id}`)
 }
+
+/**
+ * Remet le seed partagé dans son état après un scénario : Driss Lemoine rendu à son rôle, les affaires jetables nommées
+ * retirées. À appeler depuis un `test.afterEach` : un test interrompu par son délai ne joue plus utilement son `finally`
+ * — son contexte de requête est déjà fermé quand l'attente rejette —, tandis que le hook tourne avant le démontage.
+ * Constaté le 2026-10-30 : Driss était resté « viewer » dans la base partagée.
+ */
+export async function retablirLeSeed(requete: APIRequestContext, titresJetables: readonly string[] = []): Promise<void> {
+	const [driss] = await lireService<{ id: string }[]>(requete, `profiles?full_name=eq.${encodeURIComponent('Driss Lemoine')}&select=id`)
+	if (driss !== undefined)
+		await service(requete, 'patch', `workspace_members?workspace_id=eq.${WORKSPACE_SEED}&user_id=eq.${driss.id}`, { role: 'business_developer' })
+	for (const titre of titresJetables) await service(requete, 'delete', `cards?title=eq.${encodeURIComponent(titre)}`)
+}
