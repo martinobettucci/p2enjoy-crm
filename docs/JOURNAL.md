@@ -36898,3 +36898,25 @@ au §11.3 : « extrémité hors de portée » (montré, mais fondu dans le libel
 
 **Vérifications.** 7 scénarios verts ; 53 images observées sur planches, trois redécoupées (le titre de l'en-tête au lieu
 du fil d'Ariane tronqué ; le refus de la corbeille entier) ; aucune donnée jetable restante ; rôle de Driss vérifié.
+
+### `CRM-071` T6, avant le code : les précisions de l'import des affaires (2026-10-30, décision 778)
+
+**Problème.** Le §6.3 de `docs/SPEC-vues-import-export.md`, validé tel quel (décision 776), laisse ouverts les moyens :
+un membre ne peut pas écrire `card_placements.current_step_id`, `app.poser_premier_rattachement` n'accepte que l'étape
+initiale, l'email d'un membre (`profiles.email`) n'a aucun privilège client et reste nul avant sa première connexion, et
+l'export écrit le **nom** du responsable, pas son email.
+
+**Observations.** `auth.users` est vide (la session vient du SSO) ; `profiles.email` est la seule adresse d'un membre.
+L'événement `created` est écrit par `app.card_placements_evenement_creation`, avec titre, channel et étape. Les en-têtes
+de l'export sont « Identifiant », « Affaire », « Étiquettes », « Responsable », « Étape », « Montant », « Devise »,
+« Prochaine action », « Échéance », « Adresse de la fiche ».
+
+**Décision 778.** Écrite au §6.3 bis et au design system §5.78 : un définisseur `app.place_imported_card` pose le
+rattachement à l'étape nommée, sans transition ; un définisseur `app.workspace_member_by_contact` retrouve le responsable
+par email ou par nom complet unique, pour qu'un export retouché se réimporte ; les en-têtes de l'export sont reconnus ;
+le fil dit « Affaire créée par import » grâce à un `payload.source` posé par le déclencheur de création, lu d'un réglage
+local à la transaction ; une liste fermée de codes d'issue ; aucun seed d'affaires (§7, validé).
+
+**Conséquences.** Migration `0138` ; le panneau de T5 devient générique (champs, fonction et motifs par objet) ; le fil
+gagne une clé de traduction. Connecteur MCP : non (décision 776).
+

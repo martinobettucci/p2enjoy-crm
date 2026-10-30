@@ -12554,6 +12554,7 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       nommé dans `scripts/verify-harness.sh`). **Reste** : les images de « Importer un fichier » au chapitre 10, par les
       scénarios de `CRM-117` — `verify-manual` rend 8 anomalies « élément cité sans image » jusqu'à elles.
 - [ ] **T6 — l'import des affaires** : `import_cards`, parcours de la vue liste, manuel ; pgTAP, API, E2E.
+      *Spécification §6.3 bis et design system §5.78 écrits le 2026-10-30, avant le code (décision 778).*
 
 - **Vues sauvegardées** : sur la **vue liste d'un channel** seulement ; une vue mémorise le channel et les filtres de
   l'écran (tri, sens, étape, étiquette, recherche, sommeil). Une vue est **personnelle** par défaut ; un **administrateur

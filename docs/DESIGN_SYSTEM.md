@@ -7054,3 +7054,22 @@ contrôle et rendu à la commande, `Échap` qui referme, refus dit dans le panne
   la ligne ; `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `FileUp`.**
 
+### 5.78 L'import CSV de la vue liste — `CRM-071` T6
+
+*Écrit le 2026-10-30, avant le code, après la relecture intégrale de ce document le même jour.* Ce que l'import des
+affaires lit et juge est spécifié par `docs/SPEC-vues-import-export.md` §6.3 et §6.3 bis. **Tout ce que le §5.77 pose vaut,
+à l'identique** — trois étapes dans un seul panneau, dans le flux, le focus, `Échap`, les comptes en lignes, le rapport,
+les états d'attente et de refus, le palier `md` — ; ces règles ne disent que ce qui diffère.
+
+- **LA COMMANDE « Importer un fichier »**, bouton discret compact, **`FileUp`** — le même geste que dans le carnet, donc la
+  même icône (§9) —, suit « Exporter en CSV » au bout de la barre de la vue liste. Elle suit la **capacité d'écrire le
+  channel** (§5.59), comme « Nouvelle affaire », et cite le motif de la vue. Le panneau d'import et le formulaire
+  « Nouvelle affaire » s'excluent (§5.23) : chacun retire la commande de l'autre tant qu'il est ouvert.
+- **LE PANNEAU** s'ouvre sous la barre, à la place du formulaire de création. Les choix du `select` « Champ » : « Ignorer »,
+  « Titre », « Étape », « Responsable », « Montant », « Devise », « Probabilité », « Prochaine action », « Échéance »,
+  « Contact (email) ». « Vérifier » est désactivé tant qu'aucune colonne n'est associée au titre.
+- **« Terminer »** relit la liste **sans repasser par l'état de chargement** et rend le focus à la commande.
+- **AU FIL D'UNE AFFAIRE IMPORTÉE**, la ligne de création dit « Affaire créée par import » : même icône `Sparkles`, même
+  pastille que « Affaire créée » — c'est le même événement, son origine en plus.
+- **Aucune couleur, aucun jeton, aucune icône nouvelle.**
+

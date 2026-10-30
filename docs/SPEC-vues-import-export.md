@@ -190,6 +190,43 @@ montants avec un point décimal. Une cellule qui commence par `=`, `+`, `-`, `@`
 - **Qui** : quiconque **écrit le channel** ; la RLS et `creer_affaire` en décident, ligne par ligne.
 - Le fil de chaque affaire dit « Affaire créée » au nom de la personne, avec la mention « par import ».
 
+### 6.3 bis Précisions écrites avant le code de T6 (2026-10-30, décision 778)
+
+- **Les champs**, clés anglaises (décision 658) : `title` (obligatoire), `step`, `owner`, `amount`, `currency`,
+  `probability`, `next_action`, `next_action_at`, `contact_email`. Les étiquettes ne s'importent pas (liste du §6.3).
+- **Les en-têtes reconnus** sont ceux de l'export (§5.3), pour qu'un fichier exporté, retouché, se réimporte : « Affaire »
+  ou « Titre », « Étape », « Responsable », « Montant », « Devise », « Probabilité », « Prochaine action », « Échéance »,
+  « Contact » ou « Email du contact ». « Identifiant », « Étiquettes » et « Adresse de la fiche » sont ignorés d'office.
+- **L'étape** est retrouvée par son libellé affiché (le libellé propre de l'étape, sinon le nom de son nœud), sans casse
+  ni blancs superflus, parmi les étapes du workflow du channel ; vide, c'est l'étape initiale. Le rattachement est posé
+  **directement à cette étape** par `app.place_imported_card(p_card, p_channel, p_step)`, définisseur hors du schéma
+  exposé, qui tient les contrôles d'`app.poser_premier_rattachement` (écriture du channel, affaire sans rattachement)
+  mais accepte toute étape du workflow : ni condition de transition, ni événement `moved` ; les points de checklist de
+  l'étape sont posés comme à toute création.
+- **Le responsable** est un membre de l'espace, retrouvé par son **email** sans casse, ou par son **nom complet** s'il est
+  seul à le porter : l'export écrit le nom (§5.3), et le réimport doit le retrouver. Lecture par
+  `app.workspace_member_by_contact(p_workspace, p_value)`, définisseur, qui ne répond que pour un espace dont l'appelant
+  est membre. Vide : l'affaire n'a pas de responsable, comme à l'écran. **Limite** : l'email d'un membre n'est connu
+  qu'après sa première connexion depuis `CRM-069` T4 (`profiles.email`) ; son nom le retrouve en attendant.
+- **Les valeurs** : le montant accepte espaces et virgule décimale (« 12 500,50 ») ; la devise, trois lettres, mises en
+  majuscules, `EUR` par défaut ; la probabilité, de 0 à 100, « % » permis ; l'échéance, `AAAA-MM-JJ` ou `JJ/MM/AAAA`,
+  suivie ou non de `HH:MM`, ou l'horodatage ISO de l'export — une date seule vaut 9 h, heure de Paris.
+- **Le contact** est retrouvé par son email, sans casse, dans le carnet de l'espace, et rattaché sans rôle : le
+  déclencheur existant écrit `contact_linked` au fil.
+- **Les codes d'issue** : `created` ; `skipped` avec `duplicate_title` (une affaire de ce channel, archivée comprise, hors
+  corbeille, ou une ligne précédente du fichier, porte ce titre, sans casse ni blancs superflus) ; `refused` avec
+  `title_required`, `unknown_step`, `not_a_member`, `unknown_contact`, `invalid_amount`, `invalid_currency`,
+  `invalid_probability`, `invalid_date`, `forbidden`, `unknown`. Une ligne refusée ne crée rien.
+- **L'appel entier** : `22023 invalid_rows`, `22023 import_too_large` (plus de 1 000 lignes), `P0002 channel_not_found`
+  (illisible ou inexistant), `P0001 channel_closed` (archivé ou à la corbeille).
+- **Le fil** : l'événement `created` d'une affaire importée porte `"source": "import"` dans son `payload` — le déclencheur
+  de création le lit d'un réglage local à la transaction que pose `import_cards` — et se lit « Affaire créée par import ».
+- **Le journal** : `app.audit_import(espace, 'card', {created, skipped, refused, channel_id})` ; une simulation n'est pas
+  journalisée.
+- **La commande** « Importer un fichier » de la vue liste suit la **capacité d'écrire le channel** (§5.59), comme
+  « Nouvelle affaire » ; la migration est la `0138`.
+- **Connecteur MCP** : non (décision 776, rappelée). **Seed** : aucun (§7) — le parcours se démontre sur tout fichier.
+
 ### 6.4 Le journal
 
 Chaque import confirmé écrit **une** entrée dans `audit_log` : famille nouvelle **`import`**, action `imported`, types
