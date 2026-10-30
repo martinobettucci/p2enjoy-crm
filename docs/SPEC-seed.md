@@ -2670,3 +2670,29 @@ de 7 h 15 à Paris le jour du seed. Aucune ligne de `mail_outbox` ni de `digest_
 
 Le consentement est posé s'il est absent. Le digest est idempotent par `digest_runs` : un rejeu le même jour n'envoie rien
 de plus, et un rejeu un autre jour produit le digest de ce jour-là, comme le job.
+
+## 32. Les vues sauvegardées — `CRM-071` T2 (décisions 774 à 777)
+
+*Écrit le 2026-10-30, avec la section du script. Contrat : `docs/SPEC-vues-import-export.md` §7.*
+
+### 32.1 Ce que le jeu porte
+
+Deux vues sur la vue liste de « Refonte de site » (`studio-web/refonte`) :
+
+| Vue | Visibilité | Propriétaire | Filtres |
+|---|---|---|---|
+| « Mes négociations » | privée | Driss | l'étape « Négociation », par échéance |
+| « Secteur public, par échéance » | l'espace | Camille (administratrice) | l'étiquette « Secteur public », par échéance |
+
+Driss voit les deux ; Camille ne voit que la sienne et celle de l'espace, jamais celle de Driss ; Farida, qui lit
+« Studio web », voit celle de l'espace. La seconde porte le préréglage de revue `CRM-P08`.
+
+### 32.2 Le vrai chemin
+
+Chaque vue est écrite sous le jeton de qui l'enregistre (`POST /saved_views`), comme le panneau « Enregistrer la vue » ; la
+base pose la propriétaire et l'espace. L'étiquette « Secteur public » est lue par son nom, posée par la section 8 septvicies
+(§30) : son identifiant n'est pas stable d'une reconstruction à l'autre.
+
+### 32.3 Convergence
+
+Une vue déjà présente sous son nom, sur ce channel et pour ce compte, n'est pas refaite : deux passages laissent deux vues.

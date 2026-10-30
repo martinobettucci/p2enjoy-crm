@@ -12505,10 +12505,16 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       régénérés, témoin `database.types.test-d.ts` ; suite pgTAP 115 fichiers, 4495 assertions (seule `0020` attend son
       battement horaire après le redémarrage de la pile) ; SCHEMA, PROD_MIGRATIONS, CHANGELOG, harnais. Les clés stockées
       des filtres sont en anglais (précision du §2.2, décision 658).
-- [ ] **T2 — les vues à l'écran** : design system §5.75, la liste « Vues » de la vue liste, seed, manuel ; unitaires, E2E,
+- [x] **T2 — les vues à l'écran** : design system §5.75, la liste « Vues » de la vue liste, seed, manuel ; unitaires, E2E,
       captures.
       *Design system §5.75 écrit le 2026-10-30 avant le code ; spécification §3 révisée (décision 777 : la vue choisie
-      est portée par l'adresse).*
+      est portée par l'adresse).* **Livrée en développement le 2026-10-30** : `lib/vues-sauvegardees.ts` (filtres ↔
+      paramètres, écart, lecture, écritures, refus), le paramètre `vue` de l'adresse, `VuesSauvegardees.tsx` (sélecteur,
+      commandes, panneau) monté par la vue liste ; unitaires +21 (lib 11, composant 9, adresse 1) et gardes révisées
+      (décision 51 : `liste-cards.test.ts`, `ListeCards.test.tsx`), suite 4945/4945, typecheck vert ; seed « 8 novovicies »
+      (`docs/SPEC-seed.md` §32), rejoué deux fois, convergent ; E2E `vues-sauvegardees.spec.ts` **3/3**, voisins de la vue
+      liste **66/66** ; build et classes CSS ; captures observées (une capture de palier refaite : redimensionnée en place,
+      la page gardait le tiroir en transition) ; manuel 9.11, `verify-manual` 165 contrôles sans anomalie.
 - [ ] **T3 — les vues dans le connecteur** : `crm_view_list`, paramètre `view` de `crm_card_list` (famille `affaires`,
       `consulter`) ; pytest, intégration, E2E.
 - [ ] **T4 — l'export CSV** : `export_cards`, `export_contacts`, journal `export`, boutons de la liste et du carnet,

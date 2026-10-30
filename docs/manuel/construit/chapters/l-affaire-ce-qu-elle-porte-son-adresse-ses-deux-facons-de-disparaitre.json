@@ -6129,6 +6129,203 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "Les vues sauvegardées."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un jeu de filtres qu'on reprend souvent — « mes affaires en négociation », « le secteur\npublic, par échéance » — s'enregistre comme une "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "vue"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", et se retrouve en un geste."
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Choisir une vue."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " La liste "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Vue »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", juste après « Nouvelle affaire », propose « Mes vues », puis « Vues de\nl'espace ». Choisir une vue applique ses filtres et son tri, et revient à la première page ; l'adresse de la page porte\nla vue choisie, et se partage telle quelle. « Aucune vue » quitte la vue sans toucher aux filtres. Sans aucune vue sur\nce channel, la liste « Vue » n'apparaît pas."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Filtres modifiés."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Si vous changez un filtre ou le tri après avoir choisi une vue, la vue reste nommée et l'écran\nécrit « Filtres modifiés depuis la vue ». "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Mettre à jour la vue »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " remplace alors les filtres de la vue par ceux\nde l'écran. Changer de page ne modifie pas une vue."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Enregistrer une vue."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " « Enregistrer la vue » ouvre un champ « Nom de la vue », sous la barre : la vue retient les\nfiltres et le tri de l'écran, jamais la page. Deux de vos vues ne portent pas le même nom sur un même channel. Une fois\nenregistrée, elle devient la vue choisie."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Pour toute l'équipe."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Une vue est "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "personnelle"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : personne d'autre ne la voit. Un administrateur de l'espace peut\ncocher « Publier pour tout l'espace » : la vue paraît alors sous « Vues de l'espace » pour chaque membre qui lit ce\nchannel — c'est la façon de partager une revue d'équipe. Une vue publiée ne redevient pas personnelle : on la supprime."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Modifier, supprimer."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " « Modifier » change le nom, et permet à un administrateur de publier une de ses vues ;\n« Supprimer la vue » la retire sans confirmation — elle se réenregistre en un geste. Les vues de l'espace se modifient\net se suppriment par les administrateurs ; pour les autres membres, ces commandes sont grisées, avec la raison."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Une vue ne contourne aucun droit."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Elle ne fait que remplir des filtres : la liste ne montre jamais que les affaires\nque vous pouvez lire. Une vue dont l'étape ou l'étiquette a été retirée s'ouvre quand même, ce filtre en moins."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "Ce que la liste ne fait pas."
 						}
 					]
@@ -9645,43 +9842,6 @@
 			"ordered": false,
 			"start": null,
 			"items": [
-				[
-					{
-						"type": "paragraph",
-						"content": [
-							{
-								"type": "strong",
-								"content": [
-									{
-										"type": "text",
-										"text": "Les vues sauvegardées"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": " : la vue liste et ses filtres existent ("
-							},
-							{
-								"type": "link",
-								"target": {
-									"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
-									"anchor": "la-vue-liste-d-un-channel"
-								},
-								"content": [
-									{
-										"type": "text",
-										"text": "chapitre 9.11"
-									}
-								]
-							},
-							{
-								"type": "text",
-								"text": "), mais aucun filtre\nne se conserve d'une session à l'autre autrement qu'en gardant l'adresse."
-							}
-						]
-					}
-				],
 				[
 					{
 						"type": "paragraph",

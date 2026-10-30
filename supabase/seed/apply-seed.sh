@@ -5160,6 +5160,36 @@ DG_ISSUE=$(psql_seed -c "select status from public.digest_runs where profile_id 
 printf '  %-36s Driss abonné ; digest du jour : %s (%s mis en file par ce passage)\n' 'Récapitulatif' "$DG_ISSUE" "$DG_FILES"
 info "Récapitulatif quotidien : Driss abonné, son digest du jour « $DG_ISSUE » ; Camille non abonnée — docs/SPEC-seed.md §31"
 
+# --- 8 novovicies. Les vues sauvegardées — CRM-071 T2, docs/SPEC-seed.md §32 ------------------------------------------
+# @spec CRM-071 (docs/BACKLOG.md) — tranche T2 : une vue privée de Driss et une vue de l'espace publiée par Camille, sur
+#       « Refonte de site » (docs/SPEC-vues-import-export.md §7 ; docs/SPEC-seed.md §32)
+#
+# LE VRAI CHEMIN : chaque vue est écrite par la même requête que le panneau « Enregistrer la vue », sous le jeton de qui
+# l'enregistre ; la base pose la propriétaire et l'espace. Convergent : une vue déjà présente sous son nom n'est pas refaite.
+echo
+say "8 novovicies. Vues sauvegardées"
+VS_CHANNEL='5eed0000-0000-4000-8000-000000000034'
+VS_NEGOCIATION='5eed0000-0000-4000-8000-000000000063'
+JETON_BIZDEV_VS=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
+JETON_ADMIN_VS=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_BIZDEV_VS" ] && [ -n "$JETON_ADMIN_VS" ] || die "connexion de Driss ou de Camille impossible : leurs vues s'écrivent sous leur jeton (§32)."
+VS_SECTEUR_PUBLIC=$(psql_seed -c "select id from public.labels where workspace_id = '$CK_ESPACE' and name = 'Secteur public' and archived_at is null")
+[ -n "$VS_SECTEUR_PUBLIC" ] || die "l'étiquette « Secteur public » manque : la section 8 septvicies la pose (§30)."
+vue_seed() { # $1 = jeton, $2 = nom, $3 = visibilité, $4 = filtres (JSON)
+	code=$(api_jeton "$1" GET "/rest/v1/saved_views?select=name&channel_id=eq.$VS_CHANNEL")
+	attendu "$code" "lecture des vues de « Refonte de site »" 200
+	if [ "$(jq --arg nom "$2" '[.[] | select(.name == $nom)] | length' "$CORPS")" = "0" ]; then
+		code=$(api_jeton "$1" POST /rest/v1/saved_views -d "$(jq -nc --arg ch "$VS_CHANNEL" --arg nom "$2" --arg vis "$3" --argjson f "$4" \
+			'{channel_id: $ch, name: $nom, visibility: $vis, filters: $f}')")
+		attendu "$code" "vue « $2 »" 201
+	fi
+}
+vue_seed "$JETON_BIZDEV_VS" 'Mes négociations' private "$(jq -nc --arg e "$VS_NEGOCIATION" '{step_id: $e, sort: "next_action_at"}')"
+vue_seed "$JETON_ADMIN_VS" 'Secteur public, par échéance' workspace "$(jq -nc --arg l "$VS_SECTEUR_PUBLIC" '{label_id: $l, sort: "next_action_at"}')"
+VS_COMPTE=$(psql_seed -c "select count(*) from public.saved_views where channel_id = '$VS_CHANNEL'")
+printf '  %-36s %s sur « Refonte de site » : une privée de Driss, une de l'"'"'espace par Camille\n' 'Vues sauvegardées' "$VS_COMPTE"
+info "Vues sauvegardées : « Mes négociations » (Driss), « Secteur public, par échéance » (l'espace) — docs/SPEC-seed.md §32"
+
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base
 # ne la rend pas lisible pour autant. L'état réel est désormais mixte, et le dire faux dans un sens

@@ -13,11 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-071` — vues sauvegardées, import et export CSV (en cours : T1)
+### `CRM-071` — vues sauvegardées, import et export CSV (en cours : T1, T2)
 
 - **Migration `0135`, les vues sauvegardées en base** (T1) : une vue de la vue liste d'un channel, privée ou publiée pour
   l'espace par un administrateur ; ses filtres limités aux six clés de l'écran ; la propriétaire et l'espace posés par la
-  base. Rien n'est encore visible à l'écran.
+  base.
+- **Les vues sauvegardées à l'écran** (T2) : dans la vue liste d'un channel, la liste « Vue » (« Mes vues », « Vues de
+  l'espace ») applique ses filtres ; l'adresse porte la vue choisie ; « Filtres modifiés depuis la vue » et « Mettre à
+  jour la vue » ; « Enregistrer la vue », avec « Publier pour tout l'espace » pour un administrateur ; « Modifier » et
+  « Supprimer la vue ». Une vue de l'espace se modifie par ses administrateurs. Le jeu de démonstration porte une vue de
+  Driss et une vue de l'espace. Manuel 9.11.
 
 ### `CRM-069` — les étiquettes et le digest quotidien
 

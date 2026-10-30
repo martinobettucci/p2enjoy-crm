@@ -1670,6 +1670,28 @@ en sommeil reprennent leur valeur par défaut : le bouton rend la vue par défau
 défaut ne montre pas les affaires endormies. Il apparaît donc aussi sur une liste dont la seule
 différence est que ces affaires y sont visibles.
 
+**Les vues sauvegardées.** Un jeu de filtres qu'on reprend souvent — « mes affaires en négociation », « le secteur
+public, par échéance » — s'enregistre comme une **vue**, et se retrouve en un geste.
+
+- **Choisir une vue.** La liste **« Vue »**, juste après « Nouvelle affaire », propose « Mes vues », puis « Vues de
+  l'espace ». Choisir une vue applique ses filtres et son tri, et revient à la première page ; l'adresse de la page porte
+  la vue choisie, et se partage telle quelle. « Aucune vue » quitte la vue sans toucher aux filtres. Sans aucune vue sur
+  ce channel, la liste « Vue » n'apparaît pas.
+- **Filtres modifiés.** Si vous changez un filtre ou le tri après avoir choisi une vue, la vue reste nommée et l'écran
+  écrit « Filtres modifiés depuis la vue ». **« Mettre à jour la vue »** remplace alors les filtres de la vue par ceux
+  de l'écran. Changer de page ne modifie pas une vue.
+- **Enregistrer une vue.** « Enregistrer la vue » ouvre un champ « Nom de la vue », sous la barre : la vue retient les
+  filtres et le tri de l'écran, jamais la page. Deux de vos vues ne portent pas le même nom sur un même channel. Une fois
+  enregistrée, elle devient la vue choisie.
+- **Pour toute l'équipe.** Une vue est **personnelle** : personne d'autre ne la voit. Un administrateur de l'espace peut
+  cocher « Publier pour tout l'espace » : la vue paraît alors sous « Vues de l'espace » pour chaque membre qui lit ce
+  channel — c'est la façon de partager une revue d'équipe. Une vue publiée ne redevient pas personnelle : on la supprime.
+- **Modifier, supprimer.** « Modifier » change le nom, et permet à un administrateur de publier une de ses vues ;
+  « Supprimer la vue » la retire sans confirmation — elle se réenregistre en un geste. Les vues de l'espace se modifient
+  et se suppriment par les administrateurs ; pour les autres membres, ces commandes sont grisées, avec la raison.
+- **Une vue ne contourne aucun droit.** Elle ne fait que remplir des filtres : la liste ne montre jamais que les affaires
+  que vous pouvez lire. Une vue dont l'étape ou l'étiquette a été retirée s'ouvre quand même, ce filtre en moins.
+
 **Ce que la liste ne fait pas.** En dehors de la création, elle **lit** : on n'y modifie, n'y archive et n'y déplace
 aucune affaire. Le déplacement est le geste du tableau ([section 9.10](#le-tableau-kanban-d-un-channel)) ; le reste se
 fait sur la fiche.
@@ -2015,8 +2037,6 @@ autres, le bouton de la fiche est grisé, avec la raison
 
 ### 9.17 Ce qui n'est pas encore offert
 
-- **Les vues sauvegardées** : la vue liste et ses filtres existent ([chapitre 9.11](#la-vue-liste-d-un-channel)), mais aucun filtre
-  ne se conserve d'une session à l'autre autrement qu'en gardant l'adresse.
 - **Le choix du nombre de lignes par page** : la liste en affiche vingt-cinq, et cela ne se règle pas.
 - **La recherche de la vue liste** est bornée au channel ouvert ; la recherche de l'en-tête cherche partout
   ([chapitre 4](#retrouver-n-importe-quoi-la-recherche)).

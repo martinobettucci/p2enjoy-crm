@@ -1,3 +1,5 @@
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T2 : le sélecteur « Vue » et ses commandes après « Nouvelle affaire », le panneau
+//       sous la barre (docs/DESIGN_SYSTEM.md §5.75, docs/SPEC-vues-import-export.md §3)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : la colonne « Étiquettes » et le filtre « Étiquette » (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-042 (docs/BACKLOG.md) — vue liste d'un channel : tableau, tri, filtres, pagination
 // @spec CRM-022 (docs/BACKLOG.md) — colonne Responsable avec avatar et nom
@@ -156,6 +158,12 @@ export type ProprietesListeCards = {
 	readonly commandeCreation?: ReactNode
 	readonly formulaireCreation?: ReactNode
 	/**
+	 * `CRM-071` T2 (§5.75) : le sélecteur « Vue » et ses commandes, placés après « Nouvelle affaire » et avant les filtres
+	 * qu'une vue qualifie ; le panneau d'enregistrement, sous la barre. Reçus et placés, comme la création.
+	 */
+	readonly commandesVues?: ReactNode
+	readonly panneauVues?: ReactNode
+	/**
 	 * L'instant qui départage le sommeil pour la **marque** des lignes (§16.12.7).
 	 *
 	 * Injectable pour la même raison qu'au §16.11.1 : sans lui, aucune preuve ne pourrait éprouver
@@ -183,6 +191,8 @@ export function ListeCards({
 	etatVide,
 	commandeCreation,
 	formulaireCreation,
+	commandesVues,
+	panneauVues,
 	maintenant = new Date(),
 }: ProprietesListeCards) {
 	const etapesParId = new Map(etapes.map((etape) => [etape.id, etape]))
@@ -198,6 +208,7 @@ export function ListeCards({
 			    « filtres », et un geste de création n'en est pas un. */}
 			<div data-testid="barre-liste" className="flex flex-wrap items-end gap-3 min-w-0">
 				{commandeCreation}
+				{commandesVues}
 				<BarreFiltres
 					etapes={etapes}
 					catalogueEtiquettes={catalogueEtiquettes}
@@ -208,6 +219,7 @@ export function ListeCards({
 				/>
 			</div>
 			{formulaireCreation}
+			{panneauVues}
 			{vide ? (
 				etatVide
 			) : (

@@ -1,3 +1,4 @@
+// @verifies CRM-071 (docs/BACKLOG.md) — tranche T2 : la vue choisie portée par l'adresse (docs/SPEC-vues-import-export.md §3)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : le filtre par étiquette, porté par l'adresse et appliqué au serveur ;
 //           les étiquettes de la ligne (docs/DESIGN_SYSTEM.md §5.73)
 // @verifies CRM-042 (docs/BACKLOG.md) — composition de la vue liste : tri, filtres, pagination
@@ -162,7 +163,18 @@ describe('les paramètres d’adresse (§12.2)', () => {
 			recherche: 'refonte',
 			page: 3,
 			sommeil: 'masquees',
+			// `CRM-071` T2 (décision 51) : la vue choisie, absente de l'adresse, vaut son défaut.
+			vue: null,
 		})
+	})
+
+	// `CRM-071` T2 (docs/SPEC-vues-import-export.md §3, décision 777) : la vue choisie entre par sa forme d'identifiant,
+	// ressort de même, et n'est jamais écrite quand elle manque.
+	it('lit et écrit la vue choisie, et replie une valeur mal formée', () => {
+		expect(lireParametres(new URLSearchParams({ vue: ETAPE })).vue).toBe(ETAPE)
+		expect(lireParametres(new URLSearchParams({ vue: 'mes-negociations' })).vue).toBeNull()
+		expect(ecrireParametres({ ...PARAMETRES_PAR_DEFAUT, vue: ETAPE }).get('vue')).toBe(ETAPE)
+		expect(ecrireParametres(PARAMETRES_PAR_DEFAUT).toString()).toBe('')
 	})
 
 	// `CRM-069` T2 (docs/DESIGN_SYSTEM.md §5.73) : l'étiquette entre par sa forme d'identifiant, et ressort de même.

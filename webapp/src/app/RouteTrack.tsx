@@ -1,3 +1,4 @@
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T2 : la vue liste monte les vues sauvegardées du channel (docs/DESIGN_SYSTEM.md §5.75)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : la liste reçoit le catalogue d'étiquettes pour son filtre (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — le board et la liste lisent la capacité d'écrire sur le channel et la
 //       fournissent à leurs commandes (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
@@ -70,6 +71,7 @@ import { AppShell } from './AppShell'
 import { Board } from './Board'
 import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { BasculeVue, ListeCards } from './ListeCards'
+import { CommandesVues, PanneauVue, useVuesSauvegardees } from './VuesSauvegardees'
 import { ZoneNouveauChannel } from './NouveauChannelTrack'
 import { CommandeNouvelleAffaire, FormulaireNouvelleAffaire, useCreationAffaire } from './NouvelleAffaire'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
@@ -514,6 +516,8 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 	// L'ÉTAT DU GESTE DE CRÉATION VIT ICI, et non dans `ListeCards` (`CRM-095`, §5.50) : le tableau rend,
 	// il n'écrit pas — il reçoit la commande et le formulaire, et les place.
 	const creation = useCreationAffaire()
+	// `CRM-071` T2 (§5.75) : les vues sauvegardées du channel, leur panneau et leurs annonces.
+	const vues = useVuesSauvegardees(clientCrm, channel.id)
 	const [parametresUrl, setParametresUrl] = useSearchParams()
 	const demandes = lireParametres(parametresUrl)
 	const workflowId = channel.workflow_id ?? undefined
@@ -713,6 +717,10 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 						/>
 					) : null
 				}
+				commandesVues={<CommandesVues vues={vues} parametres={parametres} onParametres={appliquer} />}
+				panneauVues={
+					vues.panneau === null ? null : <PanneauVue vues={vues} parametres={parametres} onParametres={appliquer} />
+				}
 				{...(etatVide === undefined ? {} : { etatVide })}
 			/>
 		</div>
@@ -735,6 +743,8 @@ function ListeRendue({
 	onParametres,
 	commandeCreation,
 	formulaireCreation,
+	commandesVues,
+	panneauVues,
 	etatVide,
 }: {
 	readonly cards: readonly CardListeRendue[]
@@ -747,6 +757,8 @@ function ListeRendue({
 	readonly onParametres: (parametres: ParametresListe) => void
 	readonly commandeCreation: ReactNode
 	readonly formulaireCreation: ReactNode
+	readonly commandesVues: ReactNode
+	readonly panneauVues: ReactNode
 	readonly etatVide?: ReactNode
 }) {
 	return (
@@ -763,6 +775,8 @@ function ListeRendue({
 				onParametres={onParametres}
 				commandeCreation={commandeCreation}
 				formulaireCreation={formulaireCreation}
+				commandesVues={commandesVues}
+				panneauVues={panneauVues}
 				{...(etatVide === undefined ? {} : { etatVide })}
 			/>
 		</>

@@ -1,3 +1,5 @@
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T2 : la vue sauvegardée choisie, portée par l'adresse (`vue`) —
+//       docs/SPEC-vues-import-export.md §3 (décision 777), docs/DESIGN_SYSTEM.md §5.75
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : le filtre « Étiquette » de la vue liste, porté par l'adresse et appliqué au
 //       serveur ; les étiquettes de chaque ligne (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-042 (docs/BACKLOG.md) — composition de la vue liste : tri, filtres, pagination
@@ -166,6 +168,12 @@ export type ParametresListe = {
 	 * la Definition of Done de `CRM-081` exige qu'une affaire en sommeil sorte des vues par défaut.
 	 */
 	readonly sommeil: ModeSommeil
+	/**
+	 * `CRM-071` T2 : la vue sauvegardée choisie, ou `null` (`docs/SPEC-vues-import-export.md` §3, décision 777). Ce n'est
+	 * pas un filtre : c'est la marque de la vue d'où viennent les filtres, pour dire qu'ils s'en écartent et offrir sa
+	 * mise à jour. « Effacer les filtres » la garde ; « Aucune vue » la retire.
+	 */
+	readonly vue?: string | null
 }
 
 export const PARAMETRES_PAR_DEFAUT: ParametresListe = {
@@ -176,6 +184,7 @@ export const PARAMETRES_PAR_DEFAUT: ParametresListe = {
 	recherche: '',
 	page: 1,
 	sommeil: MODE_SOMMEIL_PAR_DEFAUT,
+	vue: null,
 }
 
 /** Les noms des paramètres dans l'adresse. Déclarés une fois : les preuves les importent. */
@@ -187,6 +196,7 @@ export const CLES_URL = {
 	recherche: 'q',
 	page: 'page',
 	sommeil: CLE_URL_SOMMEIL,
+	vue: 'vue',
 } as const
 
 const FORME_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -214,6 +224,7 @@ export function lireParametres(recherche: URLSearchParams): ParametresListe {
 			: (connu?.sensParDefaut ?? PARAMETRES_PAR_DEFAUT.sens)
 	const etapeDemandee = recherche.get(CLES_URL.etape)
 	const etiquetteDemandee = recherche.get(CLES_URL.etiquette)
+	const vueDemandee = recherche.get(CLES_URL.vue)
 	const pageDemandee = Number.parseInt(recherche.get(CLES_URL.page) ?? '', 10)
 	return {
 		tri,
@@ -223,6 +234,7 @@ export function lireParametres(recherche: URLSearchParams): ParametresListe {
 		recherche: (recherche.get(CLES_URL.recherche) ?? '').trim(),
 		page: Number.isFinite(pageDemandee) && pageDemandee >= 1 ? pageDemandee : 1,
 		sommeil: lireModeSommeil(recherche.get(CLES_URL.sommeil)),
+		vue: vueDemandee !== null && FORME_UUID.test(vueDemandee) ? vueDemandee : null,
 	}
 }
 
@@ -245,6 +257,7 @@ export function ecrireParametres(parametres: ParametresListe): URLSearchParams {
 	// Le défaut « masquées » ne s'écrit jamais : la vue par défaut reste l'adresse la plus courte
 	// (§16.12.4), et `?sommeil=masquees` ne dirait rien de plus que l'adresse nue.
 	if (parametres.sommeil === 'visibles') sortie.set(CLES_URL.sommeil, VALEUR_URL_SOMMEIL_VISIBLES)
+	if (parametres.vue !== null && parametres.vue !== undefined) sortie.set(CLES_URL.vue, parametres.vue)
 	return sortie
 }
 

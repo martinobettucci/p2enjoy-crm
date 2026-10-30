@@ -1,3 +1,4 @@
+// @verifies CRM-071 (docs/BACKLOG.md) — tranche T2 : la pagination conserve la vue choisie (révision, décision 51)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranche T2 : la colonne « Étiquettes » et le filtre « Étiquette » de la vue liste
 //           (docs/DESIGN_SYSTEM.md §5.73)
 // @verifies CRM-042 (docs/BACKLOG.md) — rendu réel du tableau, de ses tris, filtres et pages
@@ -419,6 +420,8 @@ describe('la pagination (§12.6)', () => {
 			recherche: '',
 			page: 3,
 			sommeil: 'masquees',
+			// `CRM-071` T2 (décision 51) : la vue choisie, huitième paramètre, conservée avec son défaut.
+			vue: null,
 		})
 		await utilisateur.click(screen.getByTestId('page-precedente'))
 		expect(onParametres).toHaveBeenCalledWith(expect.objectContaining({ page: 1 }))

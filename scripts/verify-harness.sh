@@ -1773,7 +1773,9 @@ SCENARIOS_API=1264
 # **+1 par `CRM-069` T3, 2026-10-28** : `e2e/ui/connecteur-etiquettes.spec.ts`, fichier NEUF — un vrai client MCP pose deux
 # étiquettes, se voit refuser l'archivée ; la fiche montre les pastilles et le fil, au nom de la personne. 1009 + 1 = 1010,
 # COMPTÉE.
-SCENARIOS_UI=1010
+# **+3 par `CRM-071` T2, 2026-10-30** : `e2e/ui/vues-sauvegardees.spec.ts`, fichier NEUF — choisir, écart, enregistrer,
+# supprimer (Driss) ; mettre à jour une vue de l'espace (Camille) ; la lectrice et le palier 390. 1010 + 3 = 1013, COMPTÉE.
+SCENARIOS_UI=1013
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,
