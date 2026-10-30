@@ -62,6 +62,12 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
+# Les contrôles 1, 8 et 9 passent par Node : la chaîne se prépare par `scripts/lib/node.sh`, comme dans les autres
+# harnais, sans quoi elle retomberait silencieusement sur le Node du système (CRM-008, `verify-node-toolchain.sh`).
+# shellcheck source=lib/node.sh
+source scripts/lib/node.sh
+node_toolchain_prepare "$PWD/.nvmrc" || exit 1
+
 MANUEL=docs/manual.md
 IMAGES=docs/manuel/images
 MANIFESTE=docs/manuel/images/manifeste.json
