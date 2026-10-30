@@ -12491,6 +12491,22 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       migration ; preuves unitaires, d'intégration contre la vraie base, et E2E (un point coché par le connecteur sur la
       fiche).
 
+### CRM-071 — Vues sauvegardées, import et export CSV `[@]`
+
+**Arbitrée le 2026-10-30 (décision 774).** Rien de cette unité n'est encore spécifié : la spécification
+`docs/SPEC-vues-import-export.md` sera écrite à partir de cet arbitrage et soumise à validation avant tout code.
+
+- **Vues sauvegardées** : sur la **vue liste d'un channel** seulement ; une vue mémorise le channel et les filtres de
+  l'écran (tri, sens, étape, étiquette, recherche, sommeil). Une vue est **personnelle** par défaut ; un **administrateur
+  de l'espace** peut en publier pour tout l'espace, ce qui couvre le préréglage de revue (`CRM-P08`). Les droits de lecture
+  des affaires s'appliquent toujours à ce qu'une vue montre.
+- **Import CSV** : **contacts, organisations et affaires**. Correspondance des colonnes, prévisualisation, doublons selon
+  les règles du carnet, aucune écriture avant confirmation, rapport ligne par ligne. Les affaires s'importent dans un
+  channel, avec son workflow et ses étapes, et sous les droits d'écriture de la personne.
+- **Export CSV** : la **vue liste d'un channel** et le **carnet de contacts**, filtres appliqués et droits respectés ; aucun
+  export comptable (`docs/SPEC-costs.md`, `docs/SPEC-recettes.md`, `docs/SPEC-temps.md` restent sans export).
+- **Connecteur MCP** : les deux questions de la consigne (décisions 627 et 659) restent à poser avec la spécification.
+
 ### CRM-072 — Journal d'audit consultable et conformité RGPD `[P]`
 
 *`[P]` depuis le 2026-10-26* : les trois tranches sont livrées et prouvées en développement. **Campagne de clôture**,

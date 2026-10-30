@@ -36783,3 +36783,23 @@ la fiche et les préférences, non la vue liste ni la pgTAP `0001`.
 **Décision.** Gardes révisées, non retirées (décision 51) ; `docs/SCHEMA.md` §1 complété ; nettoyage aussi après chaque
 scénario. `CRM-069` revient `[~]` jusqu'à leur passage, que la série de `CRM-111` (pile réservée) retarde.
 
+## décision 774 — `CRM-071` : le périmètre des vues sauvegardées, de l'import et de l'export
+
+*2026-10-30, arbitrage du responsable, en session interactive (Claude Code, poste du responsable).*
+
+**Problème.** `CRM-071` n'avait qu'une ligne d'index, « Vues sauvegardées et import CSV ». D'autres spécifications lui
+renvoient les vues sauvegardées (`docs/SPEC-cards.md` §12.10, le préréglage de revue `CRM-P08`) et « l'import/export »
+(`docs/SPEC-costs.md`, `docs/SPEC-recettes.md`, `docs/SPEC-temps.md`). Rien n'en fixait la portée.
+
+**Questions posées, et réponses du responsable.**
+1. *À qui appartient une vue ?* — **Personnelle, et partageable à l'espace par un administrateur** (recommandé).
+2. *Sur quels écrans ?* — **La vue liste d'un channel** (recommandé), où les filtres existent déjà.
+3. *L'import CSV porte sur quels objets ?* — **Contacts, organisations et affaires** (la recommandation s'arrêtait aux
+   contacts et organisations ; le responsable y ajoute les affaires).
+4. *L'export CSV ?* — **La vue liste et le carnet** (recommandé), filtres appliqués et droits respectés ; aucun export
+   comptable.
+
+**Conséquences.** La spécification `docs/SPEC-vues-import-export.md` est à écrire depuis ces réponses, avec les deux
+questions du connecteur MCP, puis à valider avant le code. L'import d'affaires est la partie la plus exigeante : workflow,
+étape, responsable et droits d'écriture par channel ; il formera sa propre tranche.
+
