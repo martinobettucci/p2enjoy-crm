@@ -83,6 +83,52 @@ test('le carnet, la création et la fiche d’un contact', async ({ page }) => {
 	await illustrer(page, { chapitre: CHAPITRE, section: 'la-fiche-d-un-contact', nom: 'contact-introuvable', cibles: [introuvable] })
 })
 
+/**
+ * Le fichier d'un salon : deux personnes nouvelles d'une organisation nouvelle, un doublon de Léo Marchand (même email,
+ * en majuscules), une ligne refusée. La colonne « Notes » n'a pas d'équivalent au carnet : elle est ignorée.
+ */
+const FICHIER_SALON = [
+	'Nom;Email;Organisation;Domaine;Site;Notes',
+	'Hélène Garnier;helene.garnier@atelier-orme.example;Atelier Orme;atelier-orme.example;https://www.atelier-orme.example;stand B12',
+	'Yanis Roche;yanis.roche@atelier-orme.example;Atelier Orme;atelier-orme.example;;rappeler en janvier',
+	'Léo Marchand;LEO.MARCHAND@sogexia.example;Sogexia;;;déjà au carnet',
+	'Margaux;pas-un-email;;;;carte illisible',
+].join('\n')
+
+/** Retire ce que l'import a créé : ses deux contacts et son organisation. */
+async function retirerImport(requete: APIRequestContext): Promise<void> {
+	await service(requete, 'delete', `contacts?email=like.${encodeURIComponent('*@atelier-orme.example')}`)
+	await service(requete, 'delete', `organizations?name=eq.${encodeURIComponent('Atelier Orme')}`)
+}
+
+test('importer un fichier : les colonnes, la vérification, le rapport', async ({ page, request }) => {
+	await retirerImport(request)
+	try {
+		await connecterAvecLeLabs(page, ADMIN)
+		await page.goto('/contacts')
+		await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'importer-un-fichier', cibles: [page.getByTestId('exporter-contacts'), page.getByTestId('importer-contacts')] })
+		await page.getByTestId('importer-contacts').click()
+		const panneau = page.getByTestId('panneau-import')
+		await expect(panneau).toBeVisible()
+		await panneau.getByLabel('Fichier CSV').setInputFiles({ name: 'salon.csv', mimeType: 'text/csv', buffer: Buffer.from(FICHIER_SALON, 'utf8') })
+		await expect(panneau.getByTestId('champ-colonne-import')).toHaveCount(6)
+		await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'import-colonnes', cibles: [panneau] })
+
+		await panneau.getByTestId('import-verifier').click()
+		await expect(panneau.getByTestId('import-comptes')).toBeVisible()
+		await expect(panneau.getByTestId('ligne-ecartee-import')).toHaveCount(2)
+		await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'import-verification', cibles: [panneau.getByTestId('import-comptes'), panneau.getByTestId('import-confirmer')] })
+
+		await panneau.getByTestId('import-confirmer').click()
+		await expect(panneau.getByTestId('import-rapport')).toBeVisible()
+		await illustrer(page, { chapitre: CHAPITRE, section: null, nom: 'import-rapport', cibles: [panneau.getByTestId('import-rapport'), panneau.getByTestId('import-terminer')] })
+		await panneau.getByTestId('import-terminer').click()
+		await expect(page.getByRole('link', { name: 'Hélène Garnier' })).toBeVisible()
+	} finally {
+		await retirerImport(request)
+	}
+})
+
 test('rattacher, corriger le rôle, détacher — sur une affaire archivée', async ({ page, request }) => {
 	await affaireJetable(request, ARCHIVEE)
 	await service(request, 'patch', `card_placements?card_id=eq.${ARCHIVEE.id}`, { archived_at: new Date().toISOString() })

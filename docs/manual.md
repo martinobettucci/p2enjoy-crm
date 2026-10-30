@@ -2178,6 +2178,12 @@ delà de 5 000 contacts, l'export n'est pas possible d'un seul tenant, et l'écr
    doublons, combien sont refusées — et, pour chacune des lignes écartées, son rang dans le fichier et la raison.
    **« Importer »** écrit alors les lignes valides ; « Annuler » referme le panneau sans rien changer.
 
+![Le bouton Importer un fichier, après le bouton d'export du carnet](manuel/images/le-carnet-de-contacts/importer-un-fichier.jpg)
+
+![Le panneau d'import : le fichier lu, puis chaque colonne avec un exemple et le champ du carnet associé, dont une colonne ignorée](manuel/images/le-carnet-de-contacts/import-colonnes.jpg)
+
+![La vérification : deux lignes seront créées, un doublon et une ligne refusée sont listés avec leur motif](manuel/images/le-carnet-de-contacts/import-verification.jpg)
+
 Ce que l'import décide, ligne par ligne :
 
 - **Un doublon est ignoré, jamais écrasé.** Une ligne dont l'email est déjà porté par un contact de l'espace — majuscules
@@ -2195,6 +2201,8 @@ réimporter. **« Terminer »** referme le panneau, et le carnet affiche les nou
 journal d'audit de l'espace, avec ses comptes, jamais le contenu des lignes. Comme « Nouveau contact », la commande est
 réservée aux administrateurs et aux business developers de l'espace : pour une personne en lecture seule, elle reste
 visible mais inactive, sous le bandeau qui dit pourquoi.
+
+![Le rapport d'import, avec le téléchargement du rapport et le bouton qui referme le panneau](manuel/images/le-carnet-de-contacts/import-rapport.jpg)
 
 Rattacher une personne à une affaire se fait depuis sa fiche
 ([section 10.6](#rattacher-une-personne-a-une-affaire)) ou depuis celle de l'affaire

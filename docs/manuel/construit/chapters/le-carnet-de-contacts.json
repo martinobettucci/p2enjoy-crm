@@ -476,6 +476,27 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/importer-un-fichier.jpg",
+			"alt": "Le bouton Importer un fichier, après le bouton d'export du carnet",
+			"width": 335,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/import-colonnes.jpg",
+			"alt": "Le panneau d'import : le fichier lu, puis chaque colonne avec un exemple et le champ du carnet associé, dont une colonne ignorée",
+			"width": 1192,
+			"height": 682
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/import-verification.jpg",
+			"alt": "La vérification : deux lignes seront créées, un doublon et une ligne refusée sont listés avec leur motif",
+			"width": 1158,
+			"height": 233
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -598,6 +619,13 @@
 					"text": " referme le panneau, et le carnet affiche les nouveaux contacts. Chaque import est inscrit au\njournal d'audit de l'espace, avec ses comptes, jamais le contenu des lignes. Comme « Nouveau contact », la commande est\nréservée aux administrateurs et aux business developers de l'espace : pour une personne en lecture seule, elle reste\nvisible mais inactive, sous le bandeau qui dit pourquoi."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/import-rapport.jpg",
+			"alt": "Le rapport d'import, avec le téléchargement du rapport et le bouton qui referme le panneau",
+			"width": 1158,
+			"height": 104
 		},
 		{
 			"type": "paragraph",
