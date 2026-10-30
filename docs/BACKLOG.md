@@ -12505,7 +12505,10 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
   channel, avec son workflow et ses étapes, et sous les droits d'écriture de la personne.
 - **Export CSV** : la **vue liste d'un channel** et le **carnet de contacts**, filtres appliqués et droits respectés ; aucun
   export comptable (`docs/SPEC-costs.md`, `docs/SPEC-recettes.md`, `docs/SPEC-temps.md` restent sans export).
-- **Connecteur MCP** : les deux questions de la consigne (décisions 627 et 659) restent à poser avec la spécification.
+- **Connecteur MCP** (décision 775) : les **vues sauvegardées** y entrent **en lecture**, dans la famille `affaires`
+  existante, action `consulter` — lister les vues d'un channel, lister les affaires selon une vue ; créer, modifier ou
+  publier une vue reste un geste de l'écran ; aucune migration de la matrice. L'**import** et l'**export** CSV n'y entrent
+  **pas** : l'assistant crée et lit déjà les objets un par un par les outils existants.
 
 ### CRM-072 — Journal d'audit consultable et conformité RGPD `[P]`
 

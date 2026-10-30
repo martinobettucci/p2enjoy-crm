@@ -36803,3 +36803,17 @@ renvoient les vues sauvegardées (`docs/SPEC-cards.md` §12.10, le préréglage 
 questions du connecteur MCP, puis à valider avant le code. L'import d'affaires est la partie la plus exigeante : workflow,
 étape, responsable et droits d'écriture par channel ; il formera sa propre tranche.
 
+## décision 775 — `CRM-071` : le connecteur MCP lit les vues sauvegardées, sans import ni export
+
+*2026-10-30, arbitrage du responsable, en session interactive (Claude Code, poste du responsable) ; consigne des
+décisions 627 et 659 : les deux questions posées pour chacune des trois fonctions.*
+
+1. **Vues sauvegardées** — *dans le connecteur ?* **Oui, en lecture.** *Quelle famille ?* **`affaires`, existante**,
+   action `consulter` : l'assistant liste les vues d'un channel et liste les affaires selon une vue. Créer, modifier ou
+   publier une vue reste un geste de l'écran. Aucune famille nouvelle, aucune migration de la matrice (`docs/SPEC-mcp.md`
+   §6.1) ; les outils s'inscrivent au catalogue (§9.2) dans une tranche dédiée, `CRM-104` étant livrée.
+2. **Import CSV** — *dans le connecteur ?* **Non.** L'assistant crée déjà contacts, organisations et affaires un par un ;
+   l'import d'un fichier, avec prévisualisation et confirmation, reste un parcours de l'écran.
+3. **Export CSV** — *dans le connecteur ?* **Non.** L'assistant lit déjà les listes et le carnet par les outils de
+   consultation.
+
