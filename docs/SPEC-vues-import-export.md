@@ -106,16 +106,27 @@ au catalogue (`docs/SPEC-mcp.md` §9.2).
 - **La vue liste d'un channel** : **toutes** les affaires que les filtres courants retiennent, pas seulement la page
   affichée ; les colonnes de l'écran (titre, étiquettes, responsable, étape, montant, devise, prochaine action, échéance)
   plus l'identifiant et l'adresse de la fiche.
-- **Le carnet de contacts** : tous les contacts que la recherche courante retient, avec leur organisation ; un contact
-  anonymisé sort tel qu'il est (« Contact anonymisé », sans coordonnées).
+- **Le carnet de contacts** : tous ses contacts, avec leur organisation ; un contact anonymisé sort tel qu'il est
+  (« Contact anonymisé », sans coordonnées). *Précisé le 2026-10-30 avant le code de T4* : la première rédaction parlait
+  des contacts « que la recherche courante retient », mais le carnet n'a pas de recherche (`docs/DESIGN_SYSTEM.md` §5.19) :
+  l'export porte sur le carnet entier, ce que la personne lit.
 
 ### 5.2 Les droits et le journal
 
 - Les lignes sont lues **sous la RLS de la personne** : l'export ne montre rien que l'écran ne montrerait.
 - Deux fonctions `SECURITY INVOKER`, **`export_cards(p_channel uuid, p_filters jsonb)`** et
-  **`export_contacts(p_workspace uuid, p_search text)`**, rendent les lignes **et journalisent l'export** dans `audit_log`
+  **`export_contacts(p_workspace uuid)`**, rendent les lignes **et journalisent l'export** dans `audit_log`
   (famille `export`, actions `exported`, types `card_list` et `contact_list`, `details` : `{count, filters}`, jamais de
   contenu). L'écran formate le CSV ; le fichier n'est jamais stocké.
+- *Précisé le 2026-10-30 avant le code de T4.* Les filtres de `export_cards` sont ceux d'une vue (§2.2), validés par la même
+  fonction ; ils s'appliquent comme la vue liste — l'étape sur le rattachement, l'étiquette, la recherche plein texte
+  `app.francais_sans_accent`, le sommeil, le tri, nuls en dernier, puis titre et identifiant. **Le journal** : une fonction
+  `SECURITY INVOKER` ne peut pas appeler `app.audit_record`, fermée aux clients. Elle appelle **`app.audit_export`**,
+  `SECURITY DEFINER`, exécutable par `authenticated` : PostgREST n'exposant pas le schéma `app`, seuls les deux exports
+  l'atteignent ; elle vérifie que l'appelant est membre de l'espace et n'écrit que la famille `export`. Un channel
+  illisible est refusé (`P0002 channel_not_found`), un espace dont on n'est pas membre aussi (`P0002 workspace_not_found`),
+  des filtres hors forme (`22023 invalid_filters`), plus de 5 000 lignes (`22023 export_too_large`) — avant toute
+  écriture du journal.
 - Plafond : **5 000 lignes** par export ; au-delà, l'écran le dit et invite à filtrer.
 
 ### 5.3 Le format

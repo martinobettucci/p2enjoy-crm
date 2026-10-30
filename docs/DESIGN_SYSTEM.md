@@ -6993,3 +6993,27 @@ focus entrant dans le premier champ et rendu à la commande qui a ouvert (diffé
 - **Aucune couleur, aucun jeton nouveau ; deux icônes Lucide nouvelles, `BookmarkPlus` et `BookmarkCheck`**, qui ne
   servent aucun autre objet (§9).
 
+
+### 5.76 L'export CSV de la vue liste et du carnet — `CRM-071` T4
+
+*Écrit le 2026-10-30, avant le code, après la relecture intégrale de ce document le même jour.* Ce que l'export lit et
+journalise est spécifié par `docs/SPEC-vues-import-export.md` §5 ; ces règles ne disent que de quoi il a l'air.
+
+- **UNE COMMANDE « Exporter en CSV »**, bouton discret compact, icône Lucide **`FileSpreadsheet`** — qui ne sert aucun autre
+  objet (§9) : `FileDown` porte l'export des données d'une personne (§5.67), un autre objet, et `Download` une pièce
+  jointe. Son nom accessible nomme ce qu'elle exporte : « Exporter les affaires de « … » en CSV », « Exporter le carnet en
+  CSV ».
+- **DANS LA VUE LISTE, ELLE FERME LA BARRE DE FILTRES**, après eux : elle exporte ce qu'ils retiennent — toutes les pages,
+  jamais la seule page affichée. **DANS LE CARNET**, sur l'onglet « Contacts », elle suit « Nouveau contact ».
+- **ELLE EST RENDUE À TOUS ET N'EST JAMAIS ÉTEINTE PAR UN DROIT** : exporter est une lecture, et la base ne rend que ce que
+  la personne lit (§5.59 ne s'applique pas : aucune capacité n'est en cause). Une liste vide s'exporte en un fichier qui
+  ne porte que ses en-têtes : c'est un fichier vrai.
+- **PENDANT LA PRÉPARATION**, elle dit « Préparation… » et elle est désactivée — la forme de « Exporter les données » du
+  §5.67 ; le fichier se télécharge sous son nom (`affaires-<channel>-<AAAA-MM-JJ>.csv`, `contacts-<AAAA-MM-JJ>.csv`).
+- **L'ISSUE S'ANNONCE PRÈS DE LA COMMANDE** : « Fichier téléchargé : … » dans une région `role="status"` ; un refus en
+  `role="alert"`, `--color-danger-soft` / `--color-danger-on-soft`, sous la barre — « Plus de 5 000 affaires : filtrez la
+  liste avant d'exporter. », « Plus de 5 000 contacts : l'export du carnet n'est pas possible d'un seul tenant. », ou la
+  panne générique. Le message du serveur n'atteint jamais l'écran.
+- **SOUS `md`**, la commande passe à la ligne avec la barre, cible conservée. `md` et jamais `sm` (§11).
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `FileSpreadsheet`.**
+

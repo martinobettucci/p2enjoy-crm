@@ -12528,6 +12528,7 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       `CRM-111` T2.4.4 ; manuel 33.5, `verify-manual` 165 contrôles sans anomalie.
 - [ ] **T4 — l'export CSV** : `export_cards`, `export_contacts`, journal `export`, boutons de la liste et du carnet,
       manuel ; pgTAP, unitaires (format, injection), API, E2E.
+      *Spécification §5 précisée et design system §5.76 écrit le 2026-10-30, avant le code.*
 - [ ] **T5 — l'import des contacts et des organisations** : lecteur CSV, `import_contacts`, famille d'audit `import`,
       parcours du carnet, seed, manuel ; unitaires, pgTAP, API, E2E.
 - [ ] **T6 — l'import des affaires** : `import_cards`, parcours de la vue liste, manuel ; pgTAP, API, E2E.
