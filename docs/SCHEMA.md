@@ -2435,6 +2435,17 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0136` — l'export CSV (`CRM-071` T4, décisions 774 à 776 ; livrée en développement le 2026-10-30)
+
+`docs/SPEC-vues-import-export.md` §5. **`public.export_cards(p_channel uuid, p_filters jsonb)`** et
+**`public.export_contacts(p_workspace uuid)`**, `SECURITY INVOKER` : les lignes que la RLS de la personne rend — les
+affaires du channel retenues par les filtres d'une vue (§2.2), dans l'ordre de la vue liste ; le carnet entier — et
+chaque export journalisé par **`app.audit_export`** (`SECURITY DEFINER`, exécutable par `authenticated`, hors du schéma
+exposé). `audit_log.entity_type` gagne `card_list` et `contact_list` (famille `export`, action `exported`, `details` :
+`{count, filters, channel_id}`). Refus : `22023 invalid_filters`, `P0002 channel_not_found`, `P0002 workspace_not_found`,
+`22023 export_too_large` (plus de 5 000 lignes), avant tout journal. **Retrait** : retirer les trois fonctions ;
+supprimer les entrées `card_list` et `contact_list` du journal, puis rendre à la contrainte sa liste d'avant.
+
 ### Migration `0135` — les vues sauvegardées (`CRM-071` T1, décisions 774 à 776 ; livrée en développement le 2026-10-30)
 
 `docs/SPEC-vues-import-export.md` §2. **`public.saved_views`** : `id`, `workspace_id` (posé depuis le channel), `channel_id`

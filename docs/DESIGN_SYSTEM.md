@@ -7001,8 +7001,8 @@ journalise est spécifié par `docs/SPEC-vues-import-export.md` §5 ; ces règle
 
 - **UNE COMMANDE « Exporter en CSV »**, bouton discret compact, icône Lucide **`FileSpreadsheet`** — qui ne sert aucun autre
   objet (§9) : `FileDown` porte l'export des données d'une personne (§5.67), un autre objet, et `Download` une pièce
-  jointe. Son nom accessible nomme ce qu'elle exporte : « Exporter les affaires de « … » en CSV », « Exporter le carnet en
-  CSV ».
+  jointe. Son nom accessible nomme ce qu'elle exporte et **commence par le libellé visible** (WCAG 2.5.3) : « Exporter en CSV
+  les affaires de « … » », « Exporter en CSV le carnet de contacts ».
 - **DANS LA VUE LISTE, ELLE FERME LA BARRE DE FILTRES**, après eux : elle exporte ce qu'ils retiennent — toutes les pages,
   jamais la seule page affichée. **DANS LE CARNET**, sur l'onglet « Contacts », elle suit « Nouveau contact ».
 - **ELLE EST RENDUE À TOUS ET N'EST JAMAIS ÉTEINTE PAR UN DROIT** : exporter est une lecture, et la base ne rend que ce que

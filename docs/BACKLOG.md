@@ -12526,9 +12526,16 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       (décision 51) ; E2E `connecteur-vues.spec.ts` **1/1** (mêmes affaires, même ordre, au connecteur et à l'écran) ;
       `verify-mcp.sh` : unitaires, interface 8/8 et traçabilité verts, **3 échecs d'intégration étrangers**, consignés sous
       `CRM-111` T2.4.4 ; manuel 33.5, `verify-manual` 165 contrôles sans anomalie.
-- [ ] **T4 — l'export CSV** : `export_cards`, `export_contacts`, journal `export`, boutons de la liste et du carnet,
+- [~] **T4 — l'export CSV** : `export_cards`, `export_contacts`, journal `export`, boutons de la liste et du carnet,
       manuel ; pgTAP, unitaires (format, injection), API, E2E.
-      *Spécification §5 précisée et design system §5.76 écrit le 2026-10-30, avant le code.*
+      *Spécification §5 précisée et design system §5.76 écrit le 2026-10-30, avant le code.* **Écrite et prouvée le
+      2026-10-30** : migration `0136` (`export_cards`, `export_contacts`, `app.audit_export`, deux types au journal) ; pgTAP
+      `0126` **16/16** (suite 116 fichiers, 4511 assertions) ; témoin des fonctions révisé ; `lib/export-csv.ts` (cellule,
+      BOM, CRLF, injection de formule, colonnes, refus) et `ExportCsv.tsx`, montés par la vue liste et le carnet ;
+      unitaires +12, suite 4962/4962 ; API `export-csv.spec.ts` **2/2** ; E2E `export-csv.spec.ts` **2/2** (le fichier
+      téléchargé relu : mêmes affaires et même ordre que la liste ; le carnet entier ; 390 px), voisins 99/99 ; build et
+      classes CSS ; captures observées ; manuel 9.11 et 10. **Reste** : l'image de « Exporter en CSV » dans le chapitre 10,
+      illustré par les scénarios de `CRM-117` — `verify-manual` rend une anomalie (« élément cité sans image ») jusqu'à elle.
 - [ ] **T5 — l'import des contacts et des organisations** : lecteur CSV, `import_contacts`, famille d'audit `import`,
       parcours du carnet, seed, manuel ; unitaires, pgTAP, API, E2E.
 - [ ] **T6 — l'import des affaires** : `import_cards`, parcours de la vue liste, manuel ; pgTAP, API, E2E.

@@ -1,4 +1,5 @@
-// @spec CRM-071 (docs/BACKLOG.md) — tranche T2 : la vue liste monte les vues sauvegardées du channel (docs/DESIGN_SYSTEM.md §5.75)
+// @spec CRM-071 (docs/BACKLOG.md) — tranches T2 et T4 : la vue liste monte les vues sauvegardées du channel et l'export CSV
+//       de ce que ses filtres retiennent (docs/DESIGN_SYSTEM.md §5.75, §5.76)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : la liste reçoit le catalogue d'étiquettes pour son filtre (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — le board et la liste lisent la capacité d'écrire sur le channel et la
 //       fournissent à leurs commandes (docs/SPEC-droits-interface.md §2.1, §3 ; docs/DESIGN_SYSTEM.md §5.59)
@@ -66,12 +67,15 @@ import {
 	type ModeSommeil,
 	type ParametresListe,
 } from '../lib/liste-cards'
-import { clientCrm } from '../lib/supabase'
+import { clientCrm, type ClientCrm } from '../lib/supabase'
 import { AppShell } from './AppShell'
 import { Board } from './Board'
 import { CHEMIN_ADMIN_WORKFLOWS } from './chemins'
 import { BasculeVue, ListeCards } from './ListeCards'
 import { CommandesVues, PanneauVue, useVuesSauvegardees } from './VuesSauvegardees'
+import { CommandeExportCsv, type FichierPrepare } from './ExportCsv'
+import { csvAffaires, dateDuJour, exporterAffaires } from '../lib/export-csv'
+import { filtresDepuisParametres } from '../lib/vues-sauvegardees'
 import { ZoneNouveauChannel } from './NouveauChannelTrack'
 import { CommandeNouvelleAffaire, FormulaireNouvelleAffaire, useCreationAffaire } from './NouvelleAffaire'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
@@ -501,6 +505,26 @@ function BoardRendu({
 	)
 }
 
+/** `CRM-071` T4 (§5.76) : toutes les affaires que les filtres de l'écran retiennent, dans l'ordre de la liste, en CSV. */
+async function preparerExportAffaires(
+	client: ClientCrm,
+	channel: Channel,
+	parametres: ParametresListe,
+): Promise<FichierPrepare> {
+	const issue = await exporterAffaires(client, channel.id, filtresDepuisParametres(parametres))
+	if (issue.statut === 'refus') {
+		return {
+			refus:
+				issue.nature === 'trop-grand'
+					? 'export.refus.affaires.tropGrand'
+					: issue.nature === 'introuvable'
+						? 'export.refus.introuvable'
+						: 'export.refus.panne',
+		}
+	}
+	return { nom: `affaires-${channel.slug}-${dateDuJour()}.csv`, contenu: csvAffaires(issue.lignes, window.location.origin) }
+}
+
 /**
  * La vue liste d'un channel ouvert — `CRM-042`, `docs/SPEC-cards.md` §12.
  *
@@ -518,6 +542,7 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 	const creation = useCreationAffaire()
 	// `CRM-071` T2 (§5.75) : les vues sauvegardées du channel, leur panneau et leurs annonces.
 	const vues = useVuesSauvegardees(clientCrm, channel.id)
+	const clientExport = clientCrm
 	const [parametresUrl, setParametresUrl] = useSearchParams()
 	const demandes = lireParametres(parametresUrl)
 	const workflowId = channel.workflow_id ?? undefined
@@ -721,6 +746,15 @@ function ZoneListe({ channel, slugTrack }: { readonly channel: Channel; readonly
 				panneauVues={
 					vues.panneau === null ? null : <PanneauVue vues={vues} parametres={parametres} onParametres={appliquer} />
 				}
+				commandeExport={
+					clientExport === null ? null : (
+						<CommandeExportCsv
+							testId="exporter-affaires"
+							nomAccessible={t('export.commande.affaires.aria', { channel: channel.name })}
+							preparer={() => preparerExportAffaires(clientExport, channel, parametres)}
+						/>
+					)
+				}
 				{...(etatVide === undefined ? {} : { etatVide })}
 			/>
 		</div>
@@ -745,6 +779,7 @@ function ListeRendue({
 	formulaireCreation,
 	commandesVues,
 	panneauVues,
+	commandeExport,
 	etatVide,
 }: {
 	readonly cards: readonly CardListeRendue[]
@@ -759,6 +794,7 @@ function ListeRendue({
 	readonly formulaireCreation: ReactNode
 	readonly commandesVues: ReactNode
 	readonly panneauVues: ReactNode
+	readonly commandeExport: ReactNode
 	readonly etatVide?: ReactNode
 }) {
 	return (
@@ -777,6 +813,7 @@ function ListeRendue({
 				formulaireCreation={formulaireCreation}
 				commandesVues={commandesVues}
 				panneauVues={panneauVues}
+				commandeExport={commandeExport}
 				{...(etatVide === undefined ? {} : { etatVide })}
 			/>
 		</>

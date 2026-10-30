@@ -1,3 +1,4 @@
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T4 : « Exporter en CSV » le carnet, après « Nouveau contact » (docs/DESIGN_SYSTEM.md §5.76)
 // @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4a :
 //       le carnet de contacts
 // @spec docs/SPEC-contacts.md §10.2 (où le carnet s'ancre), §10.5 (de quoi il a l'air),
@@ -44,6 +45,8 @@ import { cheminContact, cheminOrganisation } from './chemins'
 import { FormulaireCreationContact } from './FormulaireCreationContact'
 import { useContexteEspace } from './ContexteEspace'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
+import { CommandeExportCsv, type FichierPrepare } from './ExportCsv'
+import { csvContacts, dateDuJour, exporterContacts } from '../lib/export-csv'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
 
 /** Le motif du carnet, cité par sa commande de création quand la base refuse l'édition de l'espace. */
@@ -63,6 +66,22 @@ const CLASSES_ENTETE = 'bg-bg text-sm text-text-2 font-medium h-[var(--size-targ
 
 export type ProprietesCarnet = {
 	readonly client?: ClientCrm | null
+}
+
+/** `CRM-071` T4 (§5.76) : le carnet entier de l'espace, en CSV. */
+async function preparerExportContacts(client: ClientCrm, idWorkspace: string): Promise<FichierPrepare> {
+	const issue = await exporterContacts(client, idWorkspace)
+	if (issue.statut === 'refus') {
+		return {
+			refus:
+				issue.nature === 'trop-grand'
+					? 'export.refus.contacts.tropGrand'
+					: issue.nature === 'introuvable'
+						? 'export.refus.introuvable'
+						: 'export.refus.panne',
+		}
+	}
+	return { nom: `contacts-${dateDuJour()}.csv`, contenu: csvContacts(issue.lignes) }
 }
 
 export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
@@ -207,16 +226,24 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 				{motifVisible(capacites.edition) ? (
 					<MotifLectureSeule id={ID_MOTIF_CARNET}>{t('rights.readonly.edition')}</MotifLectureSeule>
 				) : null}
-				<button
-					type="button"
-					ref={commandeOuverture}
-					data-testid="ouvrir-creation-contact"
-					className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface disabled:cursor-not-allowed disabled:opacity-70"
-					{...commande}
-					onClick={() => setOuvert(true)}
-				>
-					{t('contacts.creation.open')}
-				</button>
+				<div className="flex flex-wrap items-start gap-2">
+					<button
+						type="button"
+						ref={commandeOuverture}
+						data-testid="ouvrir-creation-contact"
+						className="self-start min-h-[var(--size-target)] rounded-md bg-brand px-4 text-surface disabled:cursor-not-allowed disabled:opacity-70"
+						{...commande}
+						onClick={() => setOuvert(true)}
+					>
+						{t('contacts.creation.open')}
+					</button>
+					{/* `CRM-071` T4 (§5.76) : l'export du carnet entier suit « Nouveau contact ». Une lecture : jamais éteinte. */}
+					<CommandeExportCsv
+						testId="exporter-contacts"
+						nomAccessible={t('export.commande.contacts.aria')}
+						preparer={() => preparerExportContacts(client, idWorkspace)}
+					/>
+				</div>
 			</>
 		)
 

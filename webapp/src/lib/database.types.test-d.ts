@@ -1,3 +1,4 @@
+// @verifies CRM-071 (docs/BACKLOG.md) — tranche T4 : `export_cards` et `export_contacts` au témoin des fonctions
 // @verifies CRM-071 (docs/BACKLOG.md) — tranche T1 : `saved_views` au témoin des tables (docs/SPEC-vues-import-export.md §2)
 // @verifies CRM-069 (docs/BACKLOG.md) — tranches T1 et T4 : `labels`, `card_labels`, `digest_subscriptions` et `digest_runs` au témoin des tables (docs/SPEC-etiquettes-digest.md §2)
 // @verifies CRM-093 (docs/BACKLOG.md) — tranche T1 : les trois surcharges de `ecriture_permise`, docs/SCHEMA.md §9 bis.8 ter
@@ -1127,6 +1128,10 @@ type _vueDerivationColonnes = Expect<
 // (docs/SPEC-workflow-engine.md §7 quinquies.1). CE QUI ÉCHAPPE AU GÉNÉRATEUR : réservée à l'administrateur (`42501`),
 // un workflow invisible rend `P0002`, un workflow archivé ou propre à un track `P0001` ; l'anonyme ne peut pas
 // l'appeler. Le compte s'accroît de un.
+// `0136` de `CRM-071` TRANCHE T4 ajoute `export_cards` et `export_contacts` — l'export CSV de la vue liste et du carnet
+// (docs/SPEC-vues-import-export.md §5). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_filters` est un `Json` libre que
+// `app.saved_view_filters_valid` borne à six clés (`22023 invalid_filters`) ; un channel ou un espace illisible rend `P0002` ;
+// au-delà de 5 000 lignes, `22023 export_too_large` ; chaque export est journalisé. Le compte s'accroît de deux.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1199,7 +1204,9 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'depots_envoi_abandonnes'
     | 'health_momentum'
     | 'health_commercial'
+    | 'export_cards'
     | 'export_contact'
+    | 'export_contacts'
     | 'anonymize_contact'
     | 'trash_retention_days'
     | 'trash_blocking_costs'

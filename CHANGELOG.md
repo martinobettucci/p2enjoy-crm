@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-071` — vues sauvegardées, import et export CSV (en cours : T1 à T3)
+### `CRM-071` — vues sauvegardées, import et export CSV (en cours : T1 à T4)
 
 - **Migration `0135`, les vues sauvegardées en base** (T1) : une vue de la vue liste d'un channel, privée ou publiée pour
   l'espace par un administrateur ; ses filtres limités aux six clés de l'écran ; la propriétaire et l'espace posés par la
@@ -26,6 +26,10 @@ d'exécuter le code attendu.
 - **Les vues dans le connecteur MCP** (T3) : `crm_view_list` lit les vues d'un channel, filtres en clair ;
   `crm_card_list` gagne `view`, qui applique les filtres et le tri d'une vue comme l'écran. Aucune écriture de vue. Image
   `mcp` à redéployer.
+- **Migration `0136`, l'export CSV** (T4) : « Exporter en CSV » au bout de la barre de la vue liste — toutes les affaires
+  que les filtres retiennent, dans l'ordre de la liste — et à côté de « Nouveau contact » dans le carnet. UTF-8 avec BOM,
+  point-virgule, apostrophe devant une cellule à risque de formule ; 5 000 lignes au plus ; chaque export est inscrit au
+  journal d'audit. Manuel 9.11 et 10.
 
 ### `CRM-069` — les étiquettes et le digest quotidien
 

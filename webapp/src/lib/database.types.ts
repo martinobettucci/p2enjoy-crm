@@ -4400,7 +4400,37 @@ export type Database = {
           status: string
         }[]
       }
+      export_cards: {
+        Args: { p_channel: string; p_filters?: Json }
+        Returns: {
+          amount: number
+          card_id: string
+          channel_slug: string
+          currency: string
+          labels: string
+          next_action: string
+          next_action_at: string
+          owner_name: string
+          step_label: string
+          title: string
+          track_slug: string
+        }[]
+      }
       export_contact: { Args: { p_contact: string }; Returns: Json }
+      export_contacts: {
+        Args: { p_workspace: string }
+        Returns: {
+          anonymized_at: string
+          contact_id: string
+          created_at: string
+          email: string
+          full_name: string
+          organization_domain: string
+          organization_name: string
+          phone: string
+          role_title: string
+        }[]
+      }
       fermer_session_serveur: {
         Args: { p_empreinte: string }
         Returns: undefined

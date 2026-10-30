@@ -6326,6 +6326,50 @@
 					"content": [
 						{
 							"type": "text",
+							"text": "Exporter la liste."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Exporter en CSV »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", au bout de la barre de filtres, télécharge "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "toutes"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " les affaires que\nles filtres et le tri retiennent — pas seulement la page affichée —, dans le même ordre : le titre, les étiquettes, le\nresponsable, l'étape, le montant et sa devise, la prochaine action et son échéance, puis l'adresse de la fiche. Le\nfichier s'ouvre dans un tableur : encodage UTF-8, point-virgule entre les colonnes ; une cellule qui commencerait par\n« = », « + », « - » ou « @ » est précédée d'une apostrophe, pour qu'un tableur ne la prenne pas pour une formule. Il\nne contient que ce que vous pouvez lire, n'est conservé nulle part, et chaque export est inscrit au journal d'audit de\nl'espace. Un export porte au plus 5 000 lignes : au-delà, l'écran demande de filtrer d'abord."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
 							"text": "Ce que la liste ne fait pas."
 						}
 					]

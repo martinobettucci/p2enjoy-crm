@@ -304,6 +304,37 @@
 			"type": "paragraph",
 			"content": [
 				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Exporter le carnet."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Exporter en CSV »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", à côté de « Nouveau contact », télécharge le carnet entier dans un\nfichier que s'ouvre un tableur : une ligne par contact, avec son organisation et le domaine de celle-ci. Le fichier est\npréparé dans votre navigateur et n'est conservé nulle part. Un contact anonymisé y figure tel qu'il est, sans\ncoordonnées. Chaque export est inscrit au journal d'audit de l'espace, avec le nombre de lignes, jamais leur contenu. Au-\ndelà de 5 000 contacts, l'export n'est pas possible d'un seul tenant, et l'écran le dit."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
 					"type": "text",
 					"text": "Rattacher une personne à une affaire se fait depuis sa fiche\n("
 				},

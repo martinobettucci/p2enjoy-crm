@@ -1756,6 +1756,14 @@ public, par échéance » — s'enregistre comme une **vue**, et se retrouve en 
 - **Une vue ne contourne aucun droit.** Elle ne fait que remplir des filtres : la liste ne montre jamais que les affaires
   que vous pouvez lire. Une vue dont l'étape ou l'étiquette a été retirée s'ouvre quand même, ce filtre en moins.
 
+**Exporter la liste.** **« Exporter en CSV »**, au bout de la barre de filtres, télécharge **toutes** les affaires que
+les filtres et le tri retiennent — pas seulement la page affichée —, dans le même ordre : le titre, les étiquettes, le
+responsable, l'étape, le montant et sa devise, la prochaine action et son échéance, puis l'adresse de la fiche. Le
+fichier s'ouvre dans un tableur : encodage UTF-8, point-virgule entre les colonnes ; une cellule qui commencerait par
+« = », « + », « - » ou « @ » est précédée d'une apostrophe, pour qu'un tableur ne la prenne pas pour une formule. Il
+ne contient que ce que vous pouvez lire, n'est conservé nulle part, et chaque export est inscrit au journal d'audit de
+l'espace. Un export porte au plus 5 000 lignes : au-delà, l'écran demande de filtrer d'abord.
+
 **Ce que la liste ne fait pas.** En dehors de la création, elle **lit** : on n'y modifie, n'y archive et n'y déplace
 aucune affaire. Le déplacement est le geste du tableau ([section 9.10](#le-tableau-kanban-d-un-channel)) ; le reste se
 fait sur la fiche.
@@ -2146,6 +2154,12 @@ jamais par un message d'erreur technique.
 de chaque ligne d'une liste que l'on parcourt. Cliquer sur un email n'ouvre pas votre logiciel de
 messagerie. Il n'y a pas non plus de recherche ni de filtre : le carnet affiche l'ensemble des
 contacts de l'espace.
+
+**Exporter le carnet.** **« Exporter en CSV »**, à côté de « Nouveau contact », télécharge le carnet entier dans un
+fichier que s'ouvre un tableur : une ligne par contact, avec son organisation et le domaine de celle-ci. Le fichier est
+préparé dans votre navigateur et n'est conservé nulle part. Un contact anonymisé y figure tel qu'il est, sans
+coordonnées. Chaque export est inscrit au journal d'audit de l'espace, avec le nombre de lignes, jamais leur contenu. Au-
+delà de 5 000 contacts, l'export n'est pas possible d'un seul tenant, et l'écran le dit.
 
 Rattacher une personne à une affaire se fait depuis sa fiche
 ([section 10.6](#rattacher-une-personne-a-une-affaire)) ou depuis celle de l'affaire

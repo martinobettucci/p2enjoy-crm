@@ -631,7 +631,8 @@ PORT_RAPPORT=9323
 # **+1 par `CRM-069` T4, 2026-10-28** : `supabase/tests/0124_digest_quotidien.test.sql`, fichier NEUF. 113 + 1 = 114, COMPTÉE.
 # **+1 par `CRM-071` T1, 2026-10-30** : `supabase/tests/0125_vues_sauvegardees.test.sql`, fichier NEUF. 114 + 1 = 115,
 # COMPTÉE.
-FICHIERS_SQL_ATTENDUS=115
+# **+1 par `CRM-071` T4, 2026-10-30** : `supabase/tests/0126_export_csv.test.sql`, fichier NEUF. 115 + 1 = 116, COMPTÉE.
+FICHIERS_SQL_ATTENDUS=116
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -793,7 +794,9 @@ FICHIERS_SQL_ATTENDUS=115
 # sans changer de plan). 4454 + 23 = 4477, COMPTÉE.
 # **+18 par `CRM-071` T1, 2026-10-30** (`0125` : contrat, filtres, vues privées, vues de l'espace ; `0016`, `0124` et `0001`
 # révisées sans changer de plan). 4477 + 18 = 4495, COMPTÉE.
-ASSERTIONS_ATTENDUES=4495
+# **+16 par `CRM-071` T4, 2026-10-30** (`0126` : contrat, filtres, ordre, journal, refus, plafond). 4495 + 16 = 4511,
+# COMPTÉE.
+ASSERTIONS_ATTENDUES=4511
 # **504 depuis `CRM-075` et la nuit du 2026-08-12** : l'administration de l'arborescence ajoute ses
 # preuves d'API des huit écritures, et `CRM-059` les siennes. Le contrôle a joué comme prévu — « vert
 # mais 504 au lieu de 486 » — et la révision est faite APRÈS avoir compté les scénarios DÉCLARÉS
@@ -1215,7 +1218,9 @@ ASSERTIONS_ATTENDUES=4495
 # COMPTÉE.
 # **+3 par `CRM-071` T1, 2026-10-30** : `e2e/api/vues-sauvegardees.spec.ts`, fichier NEUF — la vue privée et ses refus, la
 # publication et ses refus, l'anonyme. 1261 + 3 = 1264, COMPTÉE.
-SCENARIOS_API=1264
+# **+2 par `CRM-071` T4, 2026-10-30** : `e2e/api/export-csv.spec.ts`, fichier NEUF — export des affaires et du carnet
+# journalisé ; les refus. 1264 + 2 = 1266, COMPTÉE.
+SCENARIOS_API=1266
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la
@@ -1777,7 +1782,9 @@ SCENARIOS_API=1264
 # supprimer (Driss) ; mettre à jour une vue de l'espace (Camille) ; la lectrice et le palier 390. 1010 + 3 = 1013, COMPTÉE.
 # **+1 par `CRM-071` T3, 2026-10-30** : `e2e/ui/connecteur-vues.spec.ts`, fichier NEUF — la même vue, au connecteur et à
 # l'écran, rend les mêmes affaires dans le même ordre. 1013 + 1 = 1014, COMPTÉE.
-SCENARIOS_UI=1014
+# **+2 par `CRM-071` T4, 2026-10-30** : `e2e/ui/export-csv.spec.ts`, fichier NEUF — le fichier de la liste filtrée relu ;
+# le carnet entier, et le palier 390. 1014 + 2 = 1016, COMPTÉE.
+SCENARIOS_UI=1016
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

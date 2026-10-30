@@ -1,3 +1,4 @@
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T4 : « Exporter en CSV » en fin de barre (docs/DESIGN_SYSTEM.md §5.76)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T2 : le sélecteur « Vue » et ses commandes après « Nouvelle affaire », le panneau
 //       sous la barre (docs/DESIGN_SYSTEM.md §5.75, docs/SPEC-vues-import-export.md §3)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : la colonne « Étiquettes » et le filtre « Étiquette » (docs/DESIGN_SYSTEM.md §5.73)
@@ -163,6 +164,8 @@ export type ProprietesListeCards = {
 	 */
 	readonly commandesVues?: ReactNode
 	readonly panneauVues?: ReactNode
+	/** `CRM-071` T4 (§5.76) : « Exporter en CSV », qui ferme la barre de filtres — elle exporte ce qu'ils retiennent. */
+	readonly commandeExport?: ReactNode
 	/**
 	 * L'instant qui départage le sommeil pour la **marque** des lignes (§16.12.7).
 	 *
@@ -193,6 +196,7 @@ export function ListeCards({
 	formulaireCreation,
 	commandesVues,
 	panneauVues,
+	commandeExport,
 	maintenant = new Date(),
 }: ProprietesListeCards) {
 	const etapesParId = new Map(etapes.map((etape) => [etape.id, etape]))
@@ -217,6 +221,7 @@ export function ListeCards({
 					onParametres={onParametres}
 					offrirEffacement={!vide}
 				/>
+				{commandeExport}
 			</div>
 			{formulaireCreation}
 			{panneauVues}
