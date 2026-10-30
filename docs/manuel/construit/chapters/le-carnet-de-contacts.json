@@ -3222,7 +3222,7 @@
 			"src": "le-carnet-de-contacts/onglet-organisations.jpg",
 			"alt": "L'onglet des organisations : leur nom, leur domaine, leur site web et leur nombre de contacts",
 			"width": 1192,
-			"height": 250
+			"height": 410
 		},
 		{
 			"type": "image",
@@ -3484,15 +3484,15 @@
 			"type": "image",
 			"src": "le-carnet-de-contacts/colonne-organisation.jpg",
 			"alt": "Dans le carnet, la colonne Organisation, dont chaque nom ouvre la fiche",
-			"width": 217,
-			"height": 154
+			"width": 193,
+			"height": 113
 		},
 		{
 			"type": "image",
 			"src": "le-carnet-de-contacts/fiche-organisation.jpg",
 			"alt": "La fiche d'une organisation : ses caractéristiques, puis ses contacts",
 			"width": 1192,
-			"height": 333
+			"height": 373
 		},
 		{
 			"type": "image",
