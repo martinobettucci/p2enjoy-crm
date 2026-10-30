@@ -162,6 +162,21 @@ montants avec un point décimal. Une cellule qui commence par `=`, `+`, `-`, `@`
 - `contacts.source` vaut **`import`** (valeur déjà prévue par la migration `0045`).
 - **Qui** : business developer et administrateur, comme la création d'un contact (`docs/SPEC-contacts.md` §3).
 
+### 6.2 bis Précisions écrites avant le code de T5 (2026-10-30)
+
+- **Une ligne sans nom de contact mais avec un nom d'organisation importe l'organisation seule** : retrouvée par domaine
+  puis par nom, elle est ignorée (`duplicate_organization`) ; absente, elle est créée. Une ligne sans nom ni organisation
+  est refusée (`name_required`).
+- **Les codes d'issue**, en anglais (décision 658) : `created` ; `skipped` avec `duplicate_email` ou
+  `duplicate_organization` ; `refused` avec `name_required`, `invalid_email`, `invalid_domain`, `invalid_website`,
+  `forbidden` (la RLS refuse l'écriture : lecteur), `unknown`. Une ligne refusée ne crée rien, pas même son organisation.
+- **Le journal** : une famille nouvelle `import`, action `imported`, et la fonction `app.audit_import`, définisseur hors du
+  schéma exposé, sur le modèle de `app.audit_export` (§5.2). Une simulation n'est pas journalisée.
+- **Bornes** : 1 000 lignes par appel (`22023 import_too_large`) ; un espace dont on n'est pas membre est
+  `P0002 workspace_not_found`. Le poids du fichier (2 Mo) est vérifié par l'écran, qui lit le fichier.
+- **La commande « Importer un fichier » suit la capacité d'éditer l'espace** (§5.59), comme « Nouveau contact » : refusée,
+  elle est désactivée avec son motif.
+
 ### 6.3 Affaires — depuis la vue liste d'un channel
 
 - **Champs** : titre (obligatoire), étape (par son nom), responsable (par l'email d'un membre), montant, devise, prochaine

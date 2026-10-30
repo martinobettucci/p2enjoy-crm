@@ -7017,3 +7017,37 @@ journalise est spécifié par `docs/SPEC-vues-import-export.md` §5 ; ces règle
 - **SOUS `md`**, la commande passe à la ligne avec la barre, cible conservée. `md` et jamais `sm` (§11).
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `FileSpreadsheet`.**
 
+
+### 5.77 L'import CSV du carnet — `CRM-071` T5
+
+*Écrit le 2026-10-30, avant le code, après la relecture intégrale de ce document le même jour.* Ce que l'import lit, juge
+et écrit est spécifié par `docs/SPEC-vues-import-export.md` §6 ; ces règles ne disent que de quoi il a l'air. Tout ce que
+les §5.13 et §5.50 posent vaut sans être répété : panneau **dans le flux — aucune modale** —, focus entrant dans le premier
+contrôle et rendu à la commande, `Échap` qui referme, refus dit dans le panneau.
+
+- **LA COMMANDE « Importer un fichier »**, bouton discret compact, icône Lucide **`FileUp`** — qui ne sert aucun autre objet
+  (§9) —, suit « Exporter en CSV » sur l'onglet « Contacts ». Elle suit la **capacité d'éditer l'espace** (§5.59), comme
+  « Nouveau contact », et cite le même motif. Le panneau et elle s'excluent (§5.23).
+- **TROIS ÉTAPES DANS UN SEUL PANNEAU**, chacune titrée `h3`, dans l'ordre du geste — on ne mélange pas les étapes, on les
+  enchaîne, et chaque étape franchie reste lisible au-dessus de la suivante :
+  1. **« Fichier »** : un `input type="file"` libellé « Fichier CSV », qui accepte `.csv` ; dessous, en 13 px
+     `--color-text-2`, « 1 000 lignes et 2 Mo au plus ; séparateur point-virgule ou virgule. » Le fichier est lu dans le
+     navigateur ; un fichier vide, trop lourd, trop long ou illisible est refusé sous le champ, `role="alert"`.
+  2. **« Colonnes »** : un tableau du §5.9, une ligne par colonne du fichier — son en-tête, un exemple de valeur en
+     13 px `--color-text-2`, et un `select` « Champ » (« Ignorer », « Nom », « Email », « Téléphone », « Fonction »,
+     « Organisation », « Domaine de l'organisation », « Site de l'organisation »), prérempli d'après l'en-tête. Puis
+     **« Vérifier »** (primaire), désactivé tant qu'aucune colonne n'est associée au nom ni à l'organisation (§5.50).
+  3. **« Vérification »** : les comptes en toutes lettres, par clé (§10) — « 8 seront créés, 1 doublon ignoré, 1 refusé » —,
+     puis le tableau des lignes **ignorées ou refusées** (rang, nom, motif traduit) ; les lignes à créer ne sont pas
+     énumérées, leur compte suffit. **« Importer {n} contacts »** (primaire), désactivé à zéro ; « Annuler ».
+- **APRÈS L'IMPORT**, le panneau devient le **rapport** : les comptes réels, en `role="status"` — « 8 contacts créés,
+  dont 2 organisations ; 1 doublon ignoré ; 1 refusé » —, **« Télécharger le rapport »** (secondaire, `FileSpreadsheet`, un
+  CSV des lignes ignorées et refusées avec leur motif, à corriger et réimporter), et **« Terminer »**, qui referme le panneau
+  et relit le carnet.
+- **PENDANT UNE VÉRIFICATION OU UN IMPORT**, le bouton dit « Vérification… » ou « Import… » et toutes les commandes du panneau
+  sont désactivées (§5.52) : deux gestes simultanés ne diraient pas lequel a abouti.
+- **UN REFUS DE L'APPEL ENTIER** (droit, plafond, panne) s'écrit dans le panneau, `role="alert"`, la saisie conservée.
+- **SOUS `md`**, le tableau des colonnes défile dans son conteneur `.indique-debordement-x` (§12.6), les commandes passent à
+  la ligne ; `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `FileUp`.**
+

@@ -12538,6 +12538,7 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       illustré par les scénarios de `CRM-117` — `verify-manual` rend une anomalie (« élément cité sans image ») jusqu'à elle.
 - [ ] **T5 — l'import des contacts et des organisations** : lecteur CSV, `import_contacts`, famille d'audit `import`,
       parcours du carnet, seed, manuel ; unitaires, pgTAP, API, E2E.
+      *Spécification §6.2 bis et design system §5.77 écrits le 2026-10-30, avant le code.*
 - [ ] **T6 — l'import des affaires** : `import_cards`, parcours de la vue liste, manuel ; pgTAP, API, E2E.
 
 - **Vues sauvegardées** : sur la **vue liste d'un channel** seulement ; une vue mémorise le channel et les filtres de
