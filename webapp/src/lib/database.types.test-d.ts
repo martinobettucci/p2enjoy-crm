@@ -1132,6 +1132,11 @@ type _vueDerivationColonnes = Expect<
 // (docs/SPEC-vues-import-export.md §5). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_filters` est un `Json` libre que
 // `app.saved_view_filters_valid` borne à six clés (`22023 invalid_filters`) ; un channel ou un espace illisible rend `P0002` ;
 // au-delà de 5 000 lignes, `22023 export_too_large` ; chaque export est journalisé. Le compte s'accroît de deux.
+// `0137` de `CRM-071` TRANCHE T5 ajoute `import_contacts` — l'import du carnet (docs/SPEC-vues-import-export.md §6). CE QUI
+// ÉCHAPPE AU GÉNÉRATEUR : `p_rows` est un `Json` libre — un tableau d'objets aux clés `full_name`, `email`, `phone`,
+// `role_title`, `organization_name`, `organization_domain`, `organization_website` ; `outcome` vaut `created`, `skipped` ou
+// `refused`, `code` est un dictionnaire fermé (§6.2 bis) ; plus de 1 000 lignes, `22023 import_too_large`. Le compte
+// s'accroît de un.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1207,6 +1212,7 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'export_cards'
     | 'export_contact'
     | 'export_contacts'
+    | 'import_contacts'
     | 'anonymize_contact'
     | 'trash_retention_days'
     | 'trash_blocking_costs'

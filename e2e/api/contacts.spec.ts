@@ -31,6 +31,21 @@ const ORGANISATION_SOGEXIA = '5eed0000-0000-4000-8000-000000000081'  // Sogexia,
 // Le champ `contact-principal` du workflow global — type `contact`, résolu à l'écriture depuis la
 // tranche 3 (docs/SPEC-contacts.md §9.3). C'est lui qui porte la mesure 9 de la tranche 6.
 const CHAMP_CONTACT_PRINCIPAL = '5eed0000-0000-4000-8000-000000000088'
+// Les contacts du seed dans l'ordre de la collation de la base, mesuré : les quatre d'origine, et depuis `CRM-071` T5 les sept
+// que le seed importe de son fichier de salon (docs/SPEC-seed.md §33).
+const SEED_ONZE_CONTACTS = [
+	'Camille Roy',
+	'Contact anonymisé',
+	'Élise Fabre',
+	'Inès Morel',
+	'Léo Marchand',
+	'Lucas Fontaine',
+	'Marc Lefort',
+	'Nadia Benali',
+	'Paul Ménard',
+	'Sophie Dupont',
+	'Thomas Garnier',
+]
 
 type Sonde = {
 	organizationsSupprimees: string[]
@@ -667,7 +682,7 @@ test.describe('CRM-060 4e — les onze mesures de la création d’un contact (�
 		expect(await relecture.json()).toEqual([])
 	})
 
-	test('le SEED est rendu INTACT : ses quatre contacts, et aucune sonde survivante', async ({
+	test('le SEED est rendu INTACT : ses onze contacts, et aucune sonde survivante', async ({
 		request,
 	}) => {
 		// Ce scénario est la garde du §14.8 : les onze mesures écrivent, et une sonde oubliée
@@ -681,7 +696,9 @@ test.describe('CRM-060 4e — les onze mesures de la création d’un contact (�
 		// c'est bien le serveur qui trie (`order=full_name`), jamais ce fichier.
 		// RÉVISÉ PAR `CRM-072` T3 (décision 51) : le seed porte un quatrième contact, « Régis Anonyme » (`…a9`), exporté puis
 		// anonymisé par les vraies fonctions (docs/SPEC-seed.md §26) — il se lit donc « Contact anonymisé », en tête.
-		expect(noms).toEqual(['Contact anonymisé', 'Élise Fabre', 'Léo Marchand', 'Sophie Dupont'])
+		// RÉVISÉ PAR `CRM-071` T5 (décision 51) : le seed importe son fichier de salon par la vraie fonction d'import, qui crée
+		// sept contacts de source `import` (docs/SPEC-seed.md §33).
+		expect(noms).toEqual(SEED_ONZE_CONTACTS)
 	})
 })
 
@@ -901,7 +918,7 @@ test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-co
 		}
 	})
 
-	test('le SEED est rendu INTACT après 4f : quatre contacts, deux rattachements', async ({
+	test('le SEED est rendu INTACT après 4f : onze contacts, deux rattachements', async ({
 		request,
 	}) => {
 		const contacts = (await (
@@ -909,13 +926,9 @@ test.describe('CRM-060 sous-tranche 4f — la fiche d’un contact (docs/SPEC-co
 				headers: enTetesService(),
 			})
 		).json()) as Array<{ full_name: string }>
-		// Révisé par `CRM-072` T3 : le contact anonymisé du seed (docs/SPEC-seed.md §26), en tête de la collation.
-		expect(contacts.map((c) => c.full_name)).toEqual([
-			'Contact anonymisé',
-			'Élise Fabre',
-			'Léo Marchand',
-			'Sophie Dupont',
-		])
+		// Révisé par `CRM-072` T3 : le contact anonymisé du seed (docs/SPEC-seed.md §26). Puis par `CRM-071` T5 (décision 51) :
+		// les sept contacts que le seed importe (§33).
+		expect(contacts.map((c) => c.full_name)).toEqual(SEED_ONZE_CONTACTS)
 		const rattachements = (await (
 			await request.get('/rest/v1/card_contacts?select=contact_id,role', {
 				headers: enTetesService(),
@@ -2570,7 +2583,7 @@ test.describe('CRM-060 tranche 6 — la suppression d’un contact (§20.2)', ()
 		}
 	})
 
-	test('le seed est rendu INTACT : quatre contacts, deux rattachements, trois organisations', async ({
+	test('le seed est rendu INTACT : onze contacts, deux rattachements, sept organisations', async ({
 		request,
 	}) => {
 		// GARDE DE CLÔTURE. Ces mesures créent et suppriment beaucoup ; une sonde oubliée ferait
@@ -2579,12 +2592,13 @@ test.describe('CRM-060 tranche 6 — la suppression d’un contact (§20.2)', ()
 		const contacts = await request.get('/rest/v1/contacts?select=id', {
 			headers: enTetesAuthentifies(jeton),
 		})
-		// Quatre depuis `CRM-072` T3 : le contact anonymisé du seed (docs/SPEC-seed.md §26) — décision 51.
-		expect((await contacts.json()) as unknown[]).toHaveLength(4)
+		// Quatre depuis `CRM-072` T3 : le contact anonymisé du seed (docs/SPEC-seed.md §26) — décision 51. Onze et sept
+		// organisations depuis `CRM-071` T5 (décision 51) : l'import du fichier de salon du seed (§33) en crée sept et quatre.
+		expect((await contacts.json()) as unknown[]).toHaveLength(SEED_ONZE_CONTACTS.length)
 		const organisations = await request.get('/rest/v1/organizations?select=id', {
 			headers: enTetesAuthentifies(jeton),
 		})
-		expect((await organisations.json()) as unknown[]).toHaveLength(3)
+		expect((await organisations.json()) as unknown[]).toHaveLength(7)
 		const rattachements = await request.get('/rest/v1/card_contacts?select=card_id', {
 			headers: enTetesAuthentifies(jeton),
 		})

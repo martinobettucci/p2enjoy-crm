@@ -45,7 +45,7 @@ async function connecter(page: Page, email: string): Promise<void> {
 }
 
 test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
-	test('la barre latérale mène au carnet, qui rend les quatre contacts du seed', async ({ page }) => {
+	test('la barre latérale mène au carnet, qui rend les onze contacts du seed', async ({ page }) => {
 		await connecter(page, ADMIN)
 
 		// Cas g du §10.6 : l'entrée existe dans la navigation transverse, et le geste est un CLIC
@@ -56,8 +56,9 @@ test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
 
 		const tableau = page.getByTestId('tableau-contacts')
 		await expect(tableau).toBeVisible()
-		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26).
-		await expect(page.getByTestId('ligne-contact')).toHaveCount(4)
+		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26). Onze depuis
+		// `CRM-071` T5 (décision 51) : les sept contacts que le seed crée en important son fichier de salon (§33).
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(11)
 
 		// Les cinq colonnes du §10.5, dans leur ordre.
 		await expect(tableau.getByRole('columnheader')).toHaveText([
@@ -140,8 +141,9 @@ test.describe('carnet de contacts (docs/SPEC-contacts.md §10)', () => {
 		// geste à lui refuser, et l'écran est le même que celui de l'administratrice.
 		await connecter(page, VIEWER)
 		await page.goto('/contacts')
-		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26).
-		await expect(page.getByTestId('ligne-contact')).toHaveCount(4)
+		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26). Onze depuis
+		// `CRM-071` T5 (décision 51) : les sept contacts que le seed crée en important son fichier de salon (§33).
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(11)
 		// RÉVISÉE PAR LA SOUS-TRANCHE 4e, NON RETIRÉE (mécanisme de la décision 51). Cette assertion
 		// exigeait qu'AUCUN geste d'écriture ne soit offert, « à personne » : c'était vrai tant que
 		// le §10.7 nommait cette absence comme une limite de 4a. La limite est levée — le carnet
@@ -252,7 +254,8 @@ test.describe("fiche d'organisation (docs/SPEC-contacts.md §11)", () => {
 
 		const contacts = page.getByTestId('tableau-contacts-organisation')
 		await expect(contacts).toBeVisible()
-		await expect(page.getByTestId('ligne-contact-organisation')).toHaveCount(1)
+		// Deux depuis `CRM-071` T5 (décision 51) : Lucas Fontaine, importé par le seed (docs/SPEC-seed.md §33), rejoint Léo.
+		await expect(page.getByTestId('ligne-contact-organisation')).toHaveCount(2)
 		// QUATRE colonnes, et non les cinq du carnet : « Organisation » y répéterait le titre de la
 		// page à chaque ligne (§11.5).
 		await expect(contacts.getByRole('columnheader')).toHaveText([
@@ -261,7 +264,8 @@ test.describe("fiche d'organisation (docs/SPEC-contacts.md §11)", () => {
 			'Email',
 			'Téléphone',
 		])
-		await expect(page.getByTestId('ligne-contact-organisation')).toContainText('Léo Marchand')
+		const ligneLeo = page.getByTestId('ligne-contact-organisation').filter({ hasText: 'Léo Marchand' })
+		await expect(ligneLeo).toHaveCount(1)
 
 		// Cas c : le site web est un LIEN externe annoncé ; le domaine reste un TEXTE.
 		const site = page.getByTestId('lien-site-organisation')
@@ -278,8 +282,9 @@ test.describe("fiche d'organisation (docs/SPEC-contacts.md §11)", () => {
 		// il n'existait pas de fiche de contact, et un lien y aurait été mort (§11.8). La
 		// sous-tranche 4f livre cette destination ; la preuve est révisée avec son motif, jamais
 		// retirée, et ce qu'elle exige devient plus fort — le lien doit mener à la bonne fiche.
-		await expect(page.getByTestId('ligne-contact-organisation').locator('a')).toHaveCount(1)
-		await expect(page.getByTestId('lien-contact-organisation')).toHaveAttribute(
+		// Révisée par `CRM-071` T5 (décision 51) : la fiche a deux lignes ; la preuve porte sur celle de Léo.
+		await expect(ligneLeo.locator('a')).toHaveCount(1)
+		await expect(ligneLeo.getByTestId('lien-contact-organisation')).toHaveAttribute(
 			'href',
 			'/contacts/5eed0000-0000-4000-8000-000000000091',
 		)
@@ -377,7 +382,8 @@ test.describe("fiche d'organisation (docs/SPEC-contacts.md §11)", () => {
 		await connecter(page, VIEWER)
 		await page.goto('/contacts/organisations/5eed0000-0000-4000-8000-000000000081')
 		await expect(page.getByRole('heading', { name: 'Sogexia' })).toBeVisible()
-		await expect(page.getByTestId('ligne-contact-organisation')).toHaveCount(1)
+		// Deux depuis `CRM-071` T5 (décision 51) : Lucas Fontaine, importé par le seed (docs/SPEC-seed.md §33).
+		await expect(page.getByTestId('ligne-contact-organisation')).toHaveCount(2)
 	})
 
 	// RÉVISÉ PAR `CRM-092` T9 : l'anonyme n'atteint plus la fiche. Le refus reste zéro ligne, et
@@ -518,7 +524,12 @@ test.describe("fiche d'un contact (docs/SPEC-contacts.md §15)", () => {
 	}) => {
 		await connecter(page, ADMIN)
 		await page.goto('/contacts/organisations/5eed0000-0000-4000-8000-000000000081')
-		await page.getByTestId('lien-contact-organisation').click()
+		// Révisée par `CRM-071` T5 (décision 51) : Sogexia porte aussi Lucas Fontaine ; le lien suivi est celui de Léo.
+		await page
+			.getByTestId('ligne-contact-organisation')
+			.filter({ hasText: 'Léo Marchand' })
+			.getByTestId('lien-contact-organisation')
+			.click()
 		await expect(page).toHaveURL(new RegExp(`/contacts/${ID_LEO_UI}$`))
 		await expect(page.getByRole('heading', { name: 'Léo Marchand' })).toBeVisible()
 	})
@@ -1622,15 +1633,16 @@ test.describe('suppression d’un contact (docs/SPEC-contacts.md §20.7)', () =>
 		await expect(page.getByRole('heading', { name: 'Élise Fabre' })).toBeVisible()
 	})
 
-	test('le seed est rendu INTACT : le carnet porte exactement les quatre contacts d’origine', async ({
+	test('le seed est rendu INTACT : le carnet porte exactement les onze contacts d’origine', async ({
 		page,
 	}) => {
 		// GARDE DE CLÔTURE. Une sonde oubliée ferait dériver les compteurs d'autres harnais, et le
 		// défaut se lirait chez eux plutôt qu'ici.
 		await connecter(page, ADMIN)
 		await page.goto('/contacts')
-		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26).
-		await expect(page.getByTestId('ligne-contact')).toHaveCount(4)
+		// Quatre depuis `CRM-072` T3 (décision 51) : le contact anonymisé du seed (docs/SPEC-seed.md §26). Onze depuis
+		// `CRM-071` T5 (décision 51) : les sept contacts que le seed crée en important son fichier de salon (§33).
+		await expect(page.getByTestId('ligne-contact')).toHaveCount(11)
 		await expect(page.getByTestId('ligne-contact').filter({ hasText: 'Sonde tranche 6' })).toHaveCount(
 			0,
 		)

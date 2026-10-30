@@ -342,6 +342,267 @@
 			"type": "paragraph",
 			"content": [
 				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Importer un fichier."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Importer un fichier »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", après « Exporter en CSV », ouvre sous les boutons un panneau en trois\nétapes, qui ne touche au carnet qu'à la dernière :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": true,
+			"start": 1,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Fichier."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Choisissez un fichier CSV — celui d'un salon, d'un autre outil, ou un export du carnet retouché dans un\ntableur. Il est lu dans votre navigateur : 1 000 lignes et 2 Mo au plus, colonnes séparées par des points-virgules ou\ndes virgules, encodage UTF-8 ou celui d'un tableur Windows. Un fichier vide, trop lourd ou illisible est refusé\naussitôt, sous le champ."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Colonnes."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Chaque colonne du fichier est présentée avec un exemple de sa première valeur, et associée à un champ du\ncarnet d'après son en-tête : « Nom », « Email », « Téléphone », « Fonction », « Organisation », « Domaine de\nl'organisation », « Site de l'organisation » — ou « Ignorer ». Corrigez une association si besoin. Il faut au moins\nune colonne de nom ou d'organisation pour continuer."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Vérification."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Vérifier »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " juge chaque ligne "
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "sans rien écrire"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " : combien seront créées, combien sont des\ndoublons, combien sont refusées — et, pour chacune des lignes écartées, son rang dans le fichier et la raison.\n"
+							},
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "« Importer »"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " écrit alors les lignes valides ; « Annuler » referme le panneau sans rien changer."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Ce que l'import décide, ligne par ligne :"
+				}
+			]
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Un doublon est ignoré, jamais écrasé."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Une ligne dont l'email est déjà porté par un contact de l'espace — majuscules\ncomprises — est laissée de côté ; la fiche existante n'est pas modifiée. Réimporter le même fichier ne crée donc rien de\nplus."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "L'organisation est retrouvée par son nom"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": ", sans tenir compte des majuscules ; si elle n'existe pas, elle est créée\navec le domaine et le site de la ligne. Une ligne qui ne nomme qu'une organisation la crée seule ; si elle existe déjà,\nla ligne est un doublon."
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Une ligne est refusée"
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " quand elle n'a ni nom ni organisation, quand son email, son domaine ou son site n'en est pas\nun, ou quand vous n'avez pas le droit de modifier le carnet. Les autres lignes du fichier sont importées quand même."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Après l'import, le panneau donne le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "rapport"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : les lignes créées, dont les organisations nouvelles, les doublons et\nles refus. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Télécharger le rapport »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " fournit un fichier des lignes écartées avec leur motif, à corriger puis à\nréimporter. "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "« Terminer »"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " referme le panneau, et le carnet affiche les nouveaux contacts. Chaque import est inscrit au\njournal d'audit de l'espace, avec ses comptes, jamais le contenu des lignes. Comme « Nouveau contact », la commande est\nréservée aux administrateurs et aux business developers de l'espace : pour une personne en lecture seule, elle reste\nvisible mais inactive, sous le bandeau qui dit pourquoi."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
 					"type": "text",
 					"text": "Rattacher une personne à une affaire se fait depuis sa fiche\n("
 				},

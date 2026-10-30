@@ -7037,13 +7037,16 @@ contrôle et rendu à la commande, `Échap` qui referme, refus dit dans le panne
      13 px `--color-text-2`, et un `select` « Champ » (« Ignorer », « Nom », « Email », « Téléphone », « Fonction »,
      « Organisation », « Domaine de l'organisation », « Site de l'organisation »), prérempli d'après l'en-tête. Puis
      **« Vérifier »** (primaire), désactivé tant qu'aucune colonne n'est associée au nom ni à l'organisation (§5.50).
-  3. **« Vérification »** : les comptes en toutes lettres, par clé (§10) — « 8 seront créés, 1 doublon ignoré, 1 refusé » —,
+  3. **« Vérification »** : les comptes en toutes lettres, par clé (§10) — « 8 lignes seront créées, 1 doublon ignoré, 1 ligne refusée. » —,
      puis le tableau des lignes **ignorées ou refusées** (rang, nom, motif traduit) ; les lignes à créer ne sont pas
-     énumérées, leur compte suffit. **« Importer {n} contacts »** (primaire), désactivé à zéro ; « Annuler ».
-- **APRÈS L'IMPORT**, le panneau devient le **rapport** : les comptes réels, en `role="status"` — « 8 contacts créés,
-  dont 2 organisations ; 1 doublon ignoré ; 1 refusé » —, **« Télécharger le rapport »** (secondaire, `FileSpreadsheet`, un
+     énumérées, leur compte suffit. **« Importer {n} lignes »** (primaire), « Rien à importer » et désactivé à zéro ;
+     « Annuler ». Le compte se dit en **lignes**, non en contacts : une ligne qui ne nomme qu'une organisation ne crée pas de
+     contact *(précision du 2026-10-30, à l'écriture du code)*.
+- **APRÈS L'IMPORT**, le panneau devient le **rapport** : les comptes réels, en `role="status"` — « 8 lignes créées,
+  dont 2 organisations ; 1 doublon ignoré ; 1 ligne refusée. » —, **« Télécharger le rapport »** (secondaire, `FileSpreadsheet`, un
   CSV des lignes ignorées et refusées avec leur motif, à corriger et réimporter), et **« Terminer »**, qui referme le panneau
-  et relit le carnet.
+  et relit le carnet **sans repasser par l'état de chargement** : la liste reste à l'écran jusqu'aux lignes fraîches, pour que
+  la commande « Importer un fichier », qui reprend le focus, ne soit pas démontée entre-temps.
 - **PENDANT UNE VÉRIFICATION OU UN IMPORT**, le bouton dit « Vérification… » ou « Import… » et toutes les commandes du panneau
   sont désactivées (§5.52) : deux gestes simultanés ne diraient pas lequel a abouti.
 - **UN REFUS DE L'APPEL ENTIER** (droit, plafond, panne) s'écrit dans le panneau, `role="alert"`, la saisie conservée.

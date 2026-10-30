@@ -4447,6 +4447,17 @@ export type Database = {
           error: true
         } & "the function public.health_momentum with parameter or with a single unnamed json/jsonb parameter, but no matches were found in the schema cache"
       }
+      import_contacts: {
+        Args: { p_dry_run?: boolean; p_rows: Json; p_workspace: string }
+        Returns: {
+          code: string
+          contact_id: string
+          line: number
+          organization_created: boolean
+          organization_id: string
+          outcome: string
+        }[]
+      }
       inbox_arborescence: {
         Args: never
         Returns: {

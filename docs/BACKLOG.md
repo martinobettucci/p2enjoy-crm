@@ -12536,9 +12536,23 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       téléchargé relu : mêmes affaires et même ordre que la liste ; le carnet entier ; 390 px), voisins 99/99 ; build et
       classes CSS ; captures observées ; manuel 9.11 et 10 ; l'image de « Exporter en CSV » au chapitre 10, ajoutée par
       `CRM-117` (cf82d342) : `verify-manual` 165 contrôles sans anomalie.
-- [ ] **T5 — l'import des contacts et des organisations** : lecteur CSV, `import_contacts`, famille d'audit `import`,
+- [~] **T5 — l'import des contacts et des organisations** : lecteur CSV, `import_contacts`, famille d'audit `import`,
       parcours du carnet, seed, manuel ; unitaires, pgTAP, API, E2E.
-      *Spécification §6.2 bis et design system §5.77 écrits le 2026-10-30, avant le code.*
+      *Spécification §6.2 bis et design system §5.77 écrits le 2026-10-30, avant le code.* **Écrite et prouvée le
+      2026-10-30** : migration `0137` (`import_contacts` sous la RLS, simulation annulée sans journal, issues ligne par
+      ligne, organisation retrouvée sans casse ou créée ; `app.audit_import`, famille `import`) ; pgTAP `0127` **14/14**
+      (suite 117 fichiers, 4525 assertions) ; `lib/import-csv.ts` (UTF-8 ou Windows-1252, séparateur, RFC 4180, en-têtes
+      reconnus, rapport) et `ImportContacts.tsx`, montés par le carnet ; unitaires `import-csv.test.ts` et
+      `ImportContacts.test.tsx` ; API `import-contacts.spec.ts` **2/2** ; E2E `import-contacts.spec.ts` **2/2** (fichier
+      déposé, vérifié, importé, rapport téléchargé, carnet relu, focus rendu ; la lectrice, 390 px) — **défaut trouvé par
+      l'E2E et corrigé** : la relecture après import repassait le carnet en chargement et démontait la commande qui devait
+      reprendre le focus ; le carnet est désormais relu sans quitter l'écran (design system §5.77 précisé, et les comptes
+      dits en lignes). Seed 8 tricies (§33) : un fichier de salon importé par Driss par la vraie fonction, convergent ;
+      gardes révisées (décision 51) : `e2e/ui/contacts.spec.ts` 57/57, `e2e/api/contacts.spec.ts` 89/89,
+      `mcp/tests/test_integration_organisations.py` ; voisins du carnet 85/85 ; build et classes CSS ; captures observées ;
+      manuel 10 ; SCHEMA, PROD_MIGRATIONS, changelog, harnais (dont un écart antérieur de 12 scénarios API et d'1 UI,
+      nommé dans `scripts/verify-harness.sh`). **Reste** : les images de « Importer un fichier » au chapitre 10, par les
+      scénarios de `CRM-117` — `verify-manual` rend 8 anomalies « élément cité sans image » jusqu'à elles.
 - [ ] **T6 — l'import des affaires** : `import_cards`, parcours de la vue liste, manuel ; pgTAP, API, E2E.
 
 - **Vues sauvegardées** : sur la **vue liste d'un channel** seulement ; une vue mémorise le channel et les filtres de

@@ -43,10 +43,11 @@ async def test_lister_lire_creer_et_modifier_une_organisation():
             par_id = {o["id"]: o for o in liste["organizations"]}
             assert par_id[VASSEUR] == {"id": VASSEUR, "name": "Comptoir Vasseur", "domain": "comptoir-vasseur.example",
                                        "website": None, "contacts": 0}
-            assert par_id[SOGEXIA]["contacts"] == 1
+            # Deux depuis CRM-071 T5 (décision 51) : Lucas Fontaine, importé par le seed (docs/SPEC-seed.md §33), rejoint Léo.
+            assert par_id[SOGEXIA]["contacts"] == 2
             assert [o["id"] for o in (await appeler("crm_organization_list", {"workspace": "p2enjoy", "query": "vasseur"}))["organizations"]] == [VASSEUR]
             fiche = await appeler("crm_organization_get", {"organization_id": SOGEXIA})
-            assert [c["full_name"] for c in fiche["contacts"]] == ["Léo Marchand"]
+            assert sorted(c["full_name"] for c in fiche["contacts"]) == ["Lucas Fontaine", "Léo Marchand"]  # ordre non promis
 
             cree = (await appeler("crm_organization_create", {
                 "workspace": "p2enjoy", "name": NOM, "domain": "MCP-Integration.Example", "website": "https://mcp.example",

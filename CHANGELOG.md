@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-071` — vues sauvegardées, import et export CSV (en cours : T1 à T4)
+### `CRM-071` — vues sauvegardées, import et export CSV (en cours : T1 à T5)
 
 - **Migration `0135`, les vues sauvegardées en base** (T1) : une vue de la vue liste d'un channel, privée ou publiée pour
   l'espace par un administrateur ; ses filtres limités aux six clés de l'écran ; la propriétaire et l'espace posés par la
@@ -30,6 +30,11 @@ d'exécuter le code attendu.
   que les filtres retiennent, dans l'ordre de la liste — et à côté de « Nouveau contact » dans le carnet. UTF-8 avec BOM,
   point-virgule, apostrophe devant une cellule à risque de formule ; 5 000 lignes au plus ; chaque export est inscrit au
   journal d'audit. Manuel 9.11 et 10.
+- **Migration `0137`, l'import du carnet** (T5) : « Importer un fichier », après « Exporter en CSV » dans le carnet — un
+  fichier CSV lu dans le navigateur (1 000 lignes, 2 Mo), ses colonnes associées d'après leurs en-têtes, une vérification
+  qui juge chaque ligne sans rien écrire, puis l'import des lignes valides et un rapport téléchargeable. Doublons d'email
+  ignorés, organisations retrouvées par leur nom ou créées, chaque import inscrit au journal d'audit (famille `import`).
+  Le seed importe un fichier de salon par la même fonction. Manuel 10.
 
 ### `CRM-069` — les étiquettes et le digest quotidien
 

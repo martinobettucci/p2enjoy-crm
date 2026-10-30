@@ -2007,11 +2007,15 @@ for entree in "${CARD_CONTACTS_SEED[@]}"; do
 	attendu "$code" "rattachement de $rc_contact à $rc_card" 201 200 204
 done
 
-organizations_count=$(curl -s "$API/rest/v1/organizations?select=id" \
+# RÉVISÉ par `CRM-071` T5 (décision 51) : l'import du carnet (8 tricies, §33) crée ses propres organisations et contacts,
+# vérifiés par sa section. Ce compte porte sur le carnet SEMÉ ICI : ses organisations par leurs identifiants, ses contacts
+# hors de la source `import`.
+organisations_semees=$(printf '%s\n' "${ORGANIZATIONS_SEED[@]}" | cut -d'|' -f1 | paste -sd, -)
+organizations_count=$(curl -s "$API/rest/v1/organizations?select=id&id=in.($organisations_semees)" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 # `…a9`, « Régis Anonyme », est le contact du volet RGPD (`CRM-072` T3, §26) : semé plus loin, il n'appartient pas au
 # carnet que ce compte vérifie, et le rejeu le trouverait déjà là.
-contacts_count=$(curl -s "$API/rest/v1/contacts?select=id&id=neq.5eed0000-0000-4000-8000-0000000000a9" \
+contacts_count=$(curl -s "$API/rest/v1/contacts?select=id&id=neq.5eed0000-0000-4000-8000-0000000000a9&source=neq.import" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
 card_contacts_count=$(curl -s "$API/rest/v1/card_contacts?select=card_id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
@@ -5189,6 +5193,42 @@ vue_seed "$JETON_ADMIN_VS" 'Secteur public, par échéance' workspace "$(jq -nc 
 VS_COMPTE=$(psql_seed -c "select count(*) from public.saved_views where channel_id = '$VS_CHANNEL'")
 printf '  %-36s %s sur « Refonte de site » : une privée de Driss, une de l'"'"'espace par Camille\n' 'Vues sauvegardées' "$VS_COMPTE"
 info "Vues sauvegardées : « Mes négociations » (Driss), « Secteur public, par échéance » (l'espace) — docs/SPEC-seed.md §32"
+
+# --- 8 tricies. L'import du carnet — CRM-071 T5, docs/SPEC-seed.md §33 ----------------------------------------------
+# @spec CRM-071 (docs/BACKLOG.md) — tranche T5 : un fichier de salon importé par Driss, par la vraie fonction
+#       (docs/SPEC-vues-import-export.md §7 ; docs/SPEC-seed.md §33)
+#
+# LE VRAI CHEMIN : le fichier `fichiers/contacts-salon.csv` est lu, ses colonnes associées comme l'écran les reconnaît, et
+# ses lignes jugées puis écrites par `import_contacts` sous le jeton de Driss — la fonction que le panneau appelle ; la base
+# pose la source `import` et inscrit l'import au journal. Convergent : une fois son premier contact présent, l'import n'est
+# pas rejoué, et le journal ne reçoit rien de plus.
+echo
+say "8 tricies. Import du carnet"
+IMP_FICHIER="$RACINE_DEPOT/supabase/seed/fichiers/contacts-salon.csv"
+[ -f "$IMP_FICHIER" ] || die "fichier de démonstration absent : $IMP_FICHIER (§33)."
+IMP_PRESENT=$(psql_seed -c "select count(*) from public.contacts where workspace_id = '$CK_ESPACE' and lower(email) = 'ines.morel@atelier-lumen.example'")
+if [ "$IMP_PRESENT" = "0" ]; then
+	JETON_BIZDEV_IMP=$(sso_jeton_interne "$API" "$ANON_KEY" 'bizdev@p2enjoy.test' || true)
+	[ -n "$JETON_BIZDEV_IMP" ] || die "connexion de Driss impossible : l'import s'écrit sous son jeton (§33)."
+	IMP_LIGNES=$(python3 - "$IMP_FICHIER" <<'PY'
+import csv, json, sys
+champs = {"Nom": "full_name", "Email": "email", "Téléphone": "phone", "Fonction": "role_title",
+          "Société": "organization_name", "Domaine": "organization_domain"}
+with open(sys.argv[1], encoding="utf-8-sig", newline="") as f:
+    lignes = [{champs[c]: v for c, v in rangee.items() if c in champs} for rangee in csv.DictReader(f, delimiter=";")]
+print(json.dumps(lignes, ensure_ascii=False))
+PY
+)
+	code=$(api_jeton "$JETON_BIZDEV_IMP" POST /rest/v1/rpc/import_contacts \
+		-d "$(jq -nc --arg ws "$CK_ESPACE" --argjson r "$IMP_LIGNES" '{p_workspace: $ws, p_rows: $r, p_dry_run: false}')")
+	attendu "$code" "import du fichier de salon" 200
+	IMP_ISSUES=$(jq -r '[group_by(.outcome)[] | "\(.[0].outcome) \(length)"] | join(", ")' "$CORPS")
+	printf '  %-36s %s\n' 'Import du carnet' "$IMP_ISSUES"
+else
+	printf '  %-36s %s\n' 'Import du carnet' 'déjà importé'
+fi
+IMP_COMPTE=$(psql_seed -c "select count(*) from public.contacts where workspace_id = '$CK_ESPACE' and source = 'import'")
+info "Import du carnet : $IMP_COMPTE contacts de source « import », depuis fichiers/contacts-salon.csv — docs/SPEC-seed.md §33"
 
 # --- 9. Ce que le seed rend visible, et ce qu'il ne rend pas visible ----------------------------
 # Rappel volontaire, affiché à chaque exécution, et **mis à jour par `CRM-020`** : peupler la base

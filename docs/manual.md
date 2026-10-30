@@ -2163,6 +2163,39 @@ delà de 5 000 contacts, l'export n'est pas possible d'un seul tenant, et l'écr
 
 ![Le bouton d'export du carnet en CSV, à côté du bouton Nouveau contact](manuel/images/le-carnet-de-contacts/exporter-contacts.jpg)
 
+**Importer un fichier.** **« Importer un fichier »**, après « Exporter en CSV », ouvre sous les boutons un panneau en trois
+étapes, qui ne touche au carnet qu'à la dernière :
+
+1. **Fichier.** Choisissez un fichier CSV — celui d'un salon, d'un autre outil, ou un export du carnet retouché dans un
+   tableur. Il est lu dans votre navigateur : 1 000 lignes et 2 Mo au plus, colonnes séparées par des points-virgules ou
+   des virgules, encodage UTF-8 ou celui d'un tableur Windows. Un fichier vide, trop lourd ou illisible est refusé
+   aussitôt, sous le champ.
+2. **Colonnes.** Chaque colonne du fichier est présentée avec un exemple de sa première valeur, et associée à un champ du
+   carnet d'après son en-tête : « Nom », « Email », « Téléphone », « Fonction », « Organisation », « Domaine de
+   l'organisation », « Site de l'organisation » — ou « Ignorer ». Corrigez une association si besoin. Il faut au moins
+   une colonne de nom ou d'organisation pour continuer.
+3. **Vérification.** **« Vérifier »** juge chaque ligne **sans rien écrire** : combien seront créées, combien sont des
+   doublons, combien sont refusées — et, pour chacune des lignes écartées, son rang dans le fichier et la raison.
+   **« Importer »** écrit alors les lignes valides ; « Annuler » referme le panneau sans rien changer.
+
+Ce que l'import décide, ligne par ligne :
+
+- **Un doublon est ignoré, jamais écrasé.** Une ligne dont l'email est déjà porté par un contact de l'espace — majuscules
+  comprises — est laissée de côté ; la fiche existante n'est pas modifiée. Réimporter le même fichier ne crée donc rien de
+  plus.
+- **L'organisation est retrouvée par son nom**, sans tenir compte des majuscules ; si elle n'existe pas, elle est créée
+  avec le domaine et le site de la ligne. Une ligne qui ne nomme qu'une organisation la crée seule ; si elle existe déjà,
+  la ligne est un doublon.
+- **Une ligne est refusée** quand elle n'a ni nom ni organisation, quand son email, son domaine ou son site n'en est pas
+  un, ou quand vous n'avez pas le droit de modifier le carnet. Les autres lignes du fichier sont importées quand même.
+
+Après l'import, le panneau donne le **rapport** : les lignes créées, dont les organisations nouvelles, les doublons et
+les refus. **« Télécharger le rapport »** fournit un fichier des lignes écartées avec leur motif, à corriger puis à
+réimporter. **« Terminer »** referme le panneau, et le carnet affiche les nouveaux contacts. Chaque import est inscrit au
+journal d'audit de l'espace, avec ses comptes, jamais le contenu des lignes. Comme « Nouveau contact », la commande est
+réservée aux administrateurs et aux business developers de l'espace : pour une personne en lecture seule, elle reste
+visible mais inactive, sous le bandeau qui dit pourquoi.
+
 Rattacher une personne à une affaire se fait depuis sa fiche
 ([section 10.6](#rattacher-une-personne-a-une-affaire)) ou depuis celle de l'affaire
 ([section 9.7](#les-contacts-d-une-affaire-les-rattacher-les-detacher)). Ce rattachement sert aussi à ranger le

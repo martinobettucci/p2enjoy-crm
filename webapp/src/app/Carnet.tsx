@@ -1,4 +1,5 @@
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T4 : « Exporter en CSV » le carnet, après « Nouveau contact » (docs/DESIGN_SYSTEM.md §5.76)
+// @spec CRM-071 (docs/BACKLOG.md) — tranche T5 : « Importer un fichier » et son panneau, puis le carnet relu (docs/DESIGN_SYSTEM.md §5.77)
 // @spec CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4a :
 //       le carnet de contacts
 // @spec docs/SPEC-contacts.md §10.2 (où le carnet s'ancre), §10.5 (de quoi il a l'air),
@@ -46,6 +47,7 @@ import { FormulaireCreationContact } from './FormulaireCreationContact'
 import { useContexteEspace } from './ContexteEspace'
 import { MotifLectureSeule } from '../components/ui/MotifLectureSeule'
 import { CommandeExportCsv, type FichierPrepare } from './ExportCsv'
+import { CommandeImport, PanneauImport } from './ImportContacts'
 import { csvContacts, dateDuJour, exporterContacts } from '../lib/export-csv'
 import { motifVisible, proprietesCommande } from '../lib/capacites'
 
@@ -91,11 +93,15 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 	// Une réponse arrivée après le démontage, ou périmée par une nouvelle tentative, ne doit pas
 	// écraser un état plus récent — même garde que `EtatMessagerie` et `AdministrationArborescence`.
 	const courant = useRef(0)
+	// `CRM-071` T5 (§5.77) : après un import, le carnet est relu sans repasser par le chargement — la liste reste à l'écran
+	// jusqu'aux lignes fraîches, et la commande d'import qui reprend le focus n'est pas démontée entre-temps.
+	const relectureDiscrete = useRef(false)
 
 	useEffect(() => {
 		if (client === null) return
 		const rang = ++courant.current
-		setEtat(enChargement())
+		if (relectureDiscrete.current) relectureDiscrete.current = false
+		else setEtat(enChargement())
 		void (async () => {
 			const lu = await lireContactsDuCarnet(client)
 			if (rang !== courant.current) return
@@ -121,6 +127,15 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 		useState<EtatAsync<readonly OrganisationChoisissable[]>>(enChargement)
 	const [tentativeOrganisations, setTentativeOrganisations] = useState(0)
 	const commandeOuverture = useRef<HTMLButtonElement | null>(null)
+	// `CRM-071` T5 (§5.77) : le panneau d'import, et le focus rendu à sa commande à la fermeture (différé, §5.25).
+	const [importOuvert, setImportOuvert] = useState(false)
+	const [rendreFocusImport, setRendreFocusImport] = useState(false)
+	const commandeImport = useRef<HTMLButtonElement | null>(null)
+	useEffect(() => {
+		if (!rendreFocusImport) return
+		setRendreFocusImport(false)
+		commandeImport.current?.focus()
+	}, [rendreFocusImport])
 	const espaces = useWorkspaces(client)
 
 	// LA LISTE DES ORGANISATIONS N'EST LUE QUE SI LE FORMULAIRE EST OUVERT — même motif que le
@@ -243,7 +258,25 @@ export function Carnet({ client = clientCrm }: ProprietesCarnet = {}) {
 						nomAccessible={t('export.commande.contacts.aria')}
 						preparer={() => preparerExportContacts(client, idWorkspace)}
 					/>
+					{importOuvert ? null : (
+						<CommandeImport ref={commandeImport} idMotif={ID_MOTIF_CARNET} onOuvrir={() => setImportOuvert(true)} />
+					)}
 				</div>
+				{importOuvert ? (
+					<PanneauImport
+						client={client}
+						idWorkspace={idWorkspace}
+						onFermer={(relire) => {
+							setImportOuvert(false)
+							setRendreFocusImport(true)
+							if (relire) {
+								relectureDiscrete.current = true
+								setAjoutes([])
+								setTentative((precedente) => precedente + 1)
+							}
+						}}
+					/>
+				) : null}
 			</>
 		)
 

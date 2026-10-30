@@ -2696,3 +2696,35 @@ base pose la propriétaire et l'espace. L'étiquette « Secteur public » est lu
 ### 32.3 Convergence
 
 Une vue déjà présente sous son nom, sur ce channel et pour ce compte, n'est pas refaite : deux passages laissent deux vues.
+
+## 33. L'import du carnet — `CRM-071` T5 (décisions 774 à 777)
+
+*Écrit le 2026-10-30, avec la section 8 tricies du script. Contrat : `docs/SPEC-vues-import-export.md` §6, §7.*
+
+### 33.1 Ce que le jeu porte
+
+Un fichier de salon, `supabase/seed/fichiers/contacts-salon.csv` (point-virgule, en-têtes français, dix lignes), importé
+par Driss dans l'espace P2Enjoy. Ses dix lignes couvrent chaque issue de l'import :
+
+| Issue | Lignes | Ce qu'elles démontrent |
+|---|---|---|
+| créée | Inès Morel, Thomas Garnier, Nadia Benali, Lucas Fontaine, Camille Roy, Paul Ménard, Marc Lefort | sept contacts de source `import` ; « Atelier Lumen », « Vertigo Conseil » et « Ville d'Annecy » créées avec leur domaine, retrouvées sans casse par les lignes suivantes (« vertigo conseil ») ; Lucas Fontaine rattaché à Sogexia, qui existait ; Paul Ménard sans organisation |
+| créée, organisation seule | « Imprimerie Duval » | une ligne sans nom crée l'organisation seule |
+| ignorée | Léo Marchand (`Leo.Marchand@…`) | le doublon d'email, casse ignorée : la fiche semée n'est pas touchée |
+| refusée | Julie Caron (`julie.caron(at)exemple`) | l'email invalide ; son organisation, déjà là, n'est pas modifiée |
+
+Le carnet porte donc onze contacts et sept organisations, et le journal d'audit une entrée de la famille `import` au nom de
+Driss.
+
+### 33.2 Le vrai chemin
+
+Le fichier est lu par le module `csv` de Python, en-têtes associés comme le préremplissage de l'écran, puis envoyé à
+`public.import_contacts(…, p_dry_run => false)` **sous le jeton de Driss** : la RLS, les doublons, le journal et la source
+sont ceux du panneau « Importer un fichier ».
+
+### 33.3 Convergence
+
+L'import n'est rejoué que si `ines.morel@atelier-lumen.example` est absent du carnet ; sinon la section dit « Import du
+carnet déjà importé ». Un second passage ne crée rien de plus — rejoué malgré tout, il ne rendrait que des doublons. La
+garde du carnet semé (section 8) compte ses organisations par leurs identifiants et ses contacts hors de la source
+`import` (décision 51).

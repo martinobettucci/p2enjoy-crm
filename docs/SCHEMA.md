@@ -2435,6 +2435,22 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0137` — l'import du carnet (`CRM-071` T5, décisions 774 à 777 ; livrée en développement le 2026-10-30)
+
+`docs/SPEC-vues-import-export.md` §6, §6.2 bis. **`public.import_contacts(p_workspace uuid, p_rows jsonb, p_dry_run
+boolean default true)`**, `SECURITY INVOKER`, exécutable par `authenticated` : au plus 1 000 lignes, jugées et écrites une
+à une sous la RLS de la personne, chacune dans sa sous-transaction ; rend `table(line, outcome, code, contact_id,
+organization_id, organization_created)`, `outcome` parmi `created`, `skipped`, `refused`, `code` parmi
+`duplicate_email`, `duplicate_organization`, `name_required`, `invalid_email`, `invalid_domain`, `invalid_website`,
+`forbidden`, `unknown`. L'organisation est retrouvée par son nom sans casse, ou créée. La **simulation** (`p_dry_run`,
+par défaut) rend le même jugement puis annule tout par une erreur interne `ZZ071` rattrapée, sans journal. Un import
+confirmé écrit `contacts.source = 'import'` et se journalise par **`app.audit_import(p_workspace, p_entity_type,
+p_details)`** (`SECURITY DEFINER`, exécutable par `authenticated`, hors du schéma exposé) : `audit_log.family` gagne
+`import`, `action` gagne `imported`, `app.audit_family` les associe ; `details` : `{created, skipped, refused,
+organizations_created}`, jamais une ligne. Refus de l'appel entier : `22023 invalid_rows`, `22023 import_too_large`,
+`P0002 workspace_not_found`. **Retrait** : retirer les deux fonctions ; supprimer les entrées `import` du journal, puis
+rendre aux deux contraintes et à `app.audit_family` leur définition de la `0136`.
+
 ### Migration `0136` — l'export CSV (`CRM-071` T4, décisions 774 à 776 ; livrée en développement le 2026-10-30)
 
 `docs/SPEC-vues-import-export.md` §5. **`public.export_cards(p_channel uuid, p_filters jsonb)`** et
