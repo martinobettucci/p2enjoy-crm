@@ -105,7 +105,8 @@ test.describe('l’aide, pour une session', () => {
 		for (const { slug, title } of SOMMAIRE.chapters) {
 			await page.goto(`/aide/${slug}`)
 			await expect(page.getByRole('heading', { level: 1, name: title }), slug).toBeVisible()
-			await expect(page.getByText('Chapitre introuvable')).toHaveCount(0)
+			// L'état introuvable se lit à son titre : le chapitre 3 CITE ce message en décrivant l'aide, son corps le contient.
+			await expect(page.getByRole('heading', { level: 1, name: 'Chapitre introuvable' }), slug).toHaveCount(0)
 		}
 	})
 
