@@ -1,7 +1,7 @@
 # Vues sauvegardées, import et export CSV — `CRM-071`
 
-*Proposée le 2026-10-30, après l'arbitrage du responsable (décisions 774 et 775). **À valider** : les points du §9 et le
-découpage du §8 attendent la décision du responsable ; aucun code n'est écrit avant.*
+*Proposée le 2026-10-30, après l'arbitrage du responsable (décisions 774 et 775). **Validée telle quelle le 2026-10-30**
+(décision 776) : les huit points du §9 sont acceptés, et le découpage du §8 aussi.*
 
 ## 1. Intention et frontière
 
@@ -190,7 +190,7 @@ annulé : la base applique les mêmes contraintes qu'à l'écriture, et rien ne 
 | **T5** | l'import des contacts et des organisations : lecteur CSV, fonction, parcours, journal, seed, manuel | unitaires (lecteur : guillemets, BOM, Windows-1252), pgTAP, API, E2E |
 | **T6** | l'import des affaires | pgTAP, API, E2E |
 
-## 9. Points à valider
+## 9. Points validés (décision 776)
 
 1. **Vues de l'espace** : publiées par les seuls administrateurs ; lues par tout membre qui lit le channel ; aucune vue
    « par défaut » imposée.

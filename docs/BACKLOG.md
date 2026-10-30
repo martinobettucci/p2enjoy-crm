@@ -12493,8 +12493,19 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
 
 ### CRM-071 — Vues sauvegardées, import et export CSV `[@]`
 
-**Arbitrée le 2026-10-30 (décision 774).** Spécification **proposée** le 2026-10-30 :
-`docs/SPEC-vues-import-export.md` (tranches T1 à T6 au §8, huit points à valider au §9) ; aucun code avant sa validation.
+**Arbitrée le 2026-10-30 (décision 774).** Spécification `docs/SPEC-vues-import-export.md`
+**validée telle quelle le 2026-10-30** (décision 776). Tranches (§8) :
+
+- [ ] **T1 — les vues en base** : `saved_views`, RLS, privilèges ; pgTAP, API (refus par requête directe), types.
+- [ ] **T2 — les vues à l'écran** : design system §5.75, la liste « Vues » de la vue liste, seed, manuel ; unitaires, E2E,
+      captures.
+- [ ] **T3 — les vues dans le connecteur** : `crm_view_list`, paramètre `view` de `crm_card_list` (famille `affaires`,
+      `consulter`) ; pytest, intégration, E2E.
+- [ ] **T4 — l'export CSV** : `export_cards`, `export_contacts`, journal `export`, boutons de la liste et du carnet,
+      manuel ; pgTAP, unitaires (format, injection), API, E2E.
+- [ ] **T5 — l'import des contacts et des organisations** : lecteur CSV, `import_contacts`, famille d'audit `import`,
+      parcours du carnet, seed, manuel ; unitaires, pgTAP, API, E2E.
+- [ ] **T6 — l'import des affaires** : `import_cards`, parcours de la vue liste, manuel ; pgTAP, API, E2E.
 
 - **Vues sauvegardées** : sur la **vue liste d'un channel** seulement ; une vue mémorise le channel et les filtres de
   l'écran (tri, sens, étape, étiquette, recherche, sommeil). Une vue est **personnelle** par défaut ; un **administrateur

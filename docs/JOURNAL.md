@@ -36817,3 +36817,14 @@ décisions 627 et 659 : les deux questions posées pour chacune des trois foncti
 3. **Export CSV** — *dans le connecteur ?* **Non.** L'assistant lit déjà les listes et le carnet par les outils de
    consultation.
 
+## décision 776 — `CRM-071` : la spécification des vues, de l'import et de l'export est validée telle quelle
+
+*2026-10-30, validation du responsable, en session interactive (Claude Code, poste du responsable).*
+
+`docs/SPEC-vues-import-export.md` est validée sans retouche : les huit points du §9 et les six tranches du §8. Les choix
+qu'elle fige : doublons ignorés, jamais écrasés ; organisation d'un contact retrouvée par domaine puis par nom, sinon
+créée ; étape d'une affaire importée posée directement, sans les conditions de transition ; écriture partielle, les lignes
+refusées rapportées ; bornes de 1 000 lignes par import et 5 000 par export ; export et import journalisés, avec une
+famille d'audit nouvelle `import` ; CSV en UTF-8 avec BOM, point-virgule, apostrophe devant une cellule à risque de
+formule. Les deux options écartées : l'import d'affaires soumis aux conditions de transition, et le « tout ou rien ».
+
