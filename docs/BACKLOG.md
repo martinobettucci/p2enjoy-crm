@@ -12493,8 +12493,8 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
 
 ### CRM-071 — Vues sauvegardées, import et export CSV `[@]`
 
-**Arbitrée le 2026-10-30 (décision 774).** Rien de cette unité n'est encore spécifié : la spécification
-`docs/SPEC-vues-import-export.md` sera écrite à partir de cet arbitrage et soumise à validation avant tout code.
+**Arbitrée le 2026-10-30 (décision 774).** Spécification **proposée** le 2026-10-30 :
+`docs/SPEC-vues-import-export.md` (tranches T1 à T6 au §8, huit points à valider au §9) ; aucun code avant sa validation.
 
 - **Vues sauvegardées** : sur la **vue liste d'un channel** seulement ; une vue mémorise le channel et les filtres de
   l'écran (tri, sens, étape, étiquette, recherche, sommeil). Une vue est **personnelle** par défaut ; un **administrateur
