@@ -1,3 +1,5 @@
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.4 : le montant et les scores lus sur le rattachement (révisé par la session
+#           de `CRM-071` T3, 2026-10-30 : la conversion manquait depuis la migration 0134)
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T2.a : les sept outils de lecture des affaires contre le vrai Keycloak, la
 #           vraie base et le vrai service `mcp`, par le parcours OAuth réel
 # @verifies CRM-067 (docs/BACKLOG.md) — tranche T4 : `crm_card_activity_list` lit les activités du seed (docs/SPEC-seed.md
@@ -73,8 +75,12 @@ async def test_chaque_outil_reussit_contre_la_vraie_base_et_le_journal_le_nomme(
             assert par_etape["cards"] and {c["step"]["name"] for c in par_etape["cards"]} == {etape}
 
             fiche = await appeler("crm_card_get", {"card_id": SOGEXIA})
-            enBase = (await _service("GET", "/cards", params={"id": f"eq.{SOGEXIA}", "select": "title,description,amount"})).json()[0]
-            assert (fiche["title"], fiche["description"], fiche["amount"]) == (enBase["title"], enBase["description"], enBase["amount"])
+            enBase = (await _service("GET", "/cards", params={"id": f"eq.{SOGEXIA}", "select": "title,description"})).json()[0]
+            # Le montant vit sur le rattachement depuis la migration 0134 (`CRM-111` T2.4.5) : le plus ancien, comme la fiche.
+            rattachement = (await _service("GET", "/card_placements", params={
+                "card_id": f"eq.{SOGEXIA}", "select": "amount", "order": "created_at.asc,id.asc", "limit": "1",
+            })).json()[0]
+            assert (fiche["title"], fiche["description"], fiche["amount"]) == (enBase["title"], enBase["description"], rattachement["amount"])
             assert fiche["can_write"] is True
             assert {"name": "Léo Marchand", "role": "decideur"}.items() <= next(
                 c for c in fiche["contacts"] if c["name"] == "Léo Marchand"
@@ -143,8 +149,10 @@ async def test_les_scores_de_sante_viennent_de_la_vraie_base():
         async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
             await _attendre_visible(client, "crm_card_get")
             fiche = (await client.call_tool("crm_card_get", {"card_id": SOGEXIA})).structured_content
-            attendu = (await _service("GET", "/cards", params={
-                "id": f"eq.{SOGEXIA}", "select": "health_momentum,health_commercial",
+            # Les scores se calculent sur le rattachement depuis la migration 0134 (`CRM-111` T2.4.5) : le plus ancien.
+            attendu = (await _service("GET", "/card_placements", params={
+                "card_id": f"eq.{SOGEXIA}", "select": "health_momentum,health_commercial", "order": "created_at.asc,id.asc",
+                "limit": "1",
             })).json()[0]
             assert fiche["health_momentum"] == attendu["health_momentum"]
             assert fiche["health_commercial"] == attendu["health_commercial"]

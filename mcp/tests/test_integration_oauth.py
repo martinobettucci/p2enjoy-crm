@@ -1,3 +1,4 @@
+# @verifies CRM-071 (docs/BACKLOG.md) — tranche T3 : `crm_view_list` dans les consultations de la famille `affaires` (révision)
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T3 : le parcours OAuth complet, contre la vraie pile de développement
 # @verifies CRM-102 T3 — docs/SPEC-mcp.md §3.1 (flux : 401, métadonnées, enregistrement, consentement, SSO, retour,
 #           échange), §3.3 (connexion longue : `offline_access` si et seulement si la case est cochée, et le
@@ -64,9 +65,11 @@ from .parcours_oauth import (  # noqa: F401 — réexportés pour `test_integrat
 #: Les sept consultations de la famille `affaires`, livrées par `CRM-104` T2.a (docs/SPEC-mcp.md §9.2 bis).
 # Révisé par `CRM-068` T5 (décision 51) : la lecture de la checklist d'une affaire est une consultation de la famille
 # (docs/SPEC-mcp.md §9.2 duodecies).
+# Révisé par `CRM-071` T3 (décision 51) : la liste des vues sauvegardées d'un channel est une consultation de la famille
+# (docs/SPEC-mcp.md §9.2 quattuordecies).
 CONSULTATIONS_AFFAIRES = frozenset({
     "crm_card_list", "crm_card_get", "crm_card_timeline", "crm_card_comment_list", "crm_card_activity_list",
-    "crm_stale_card_list", "crm_card_mine", "crm_card_checklist_list",
+    "crm_stale_card_list", "crm_card_mine", "crm_card_checklist_list", "crm_view_list",
 })
 
 pytestmark = [

@@ -1,4 +1,5 @@
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T2 : l'assemblage du connecteur
+# @spec CRM-071 (docs/BACKLOG.md) tranche T3 — les vues sauvegardées enregistrées (docs/SPEC-mcp.md §9.2 quattuordecies)
 # @spec CRM-102 tranche T3 — docs/DESIGN_SYSTEM.md §5.57 (l’icône du serveur, monogramme du CRM, sur la page de consentement)
 # @spec CRM-102 tranche T6 — docs/SPEC-mcp.md §2.2 (`/plateforme` et `/admin` mènent à l'administration de la webapp)
 # @spec CRM-108 (docs/BACKLOG.md) tranche T4 — la famille `recettes` enregistrée et nommée au modèle (docs/SPEC-recettes.md §7)
@@ -51,6 +52,7 @@ from crm_mcp.outils import (
     reference,
     structure,
     temps,
+    vues,
     workflows,
     workflows_checklists,
     workflows_entete,
@@ -170,6 +172,8 @@ def construire(reglages: Reglages, *, transport_crm: httpx2.AsyncBaseTransport |
     affaires_checklists.ajouter(serveur, moteur, crm)
     # `CRM-069` T3 : les étiquettes d'une affaire (docs/SPEC-mcp.md §9.2 tredecies).
     affaires_etiquettes.ajouter(serveur, moteur, crm)
+    # `CRM-071` T3 : les vues sauvegardées d'un channel (docs/SPEC-mcp.md §9.2 quattuordecies).
+    vues.ajouter(serveur, moteur, crm)
     # `CRM-104` T1 : la structure et la recherche globale (docs/SPEC-mcp.md §9.2 quater).
     structure.ajouter(serveur, moteur, crm)
     # `CRM-118` T2.a : la famille `workflows`, le workflow, ses étapes et ses transitions (docs/SPEC-mcp.md §9.2 undecies).

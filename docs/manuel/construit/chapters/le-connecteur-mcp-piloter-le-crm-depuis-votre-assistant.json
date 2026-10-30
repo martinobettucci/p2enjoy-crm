@@ -1400,6 +1400,43 @@
 											"content": [
 												{
 													"type": "text",
+													"text": "lister selon une vue sauvegardée"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": " : l'assistant lit les vues d'un channel que vous voyez — les vôtres et celles de\nl'espace —, avec leurs filtres en clair, et liste les affaires d'une vue désignée par son nom, dans le même ordre\nqu'à l'écran ("
+										},
+										{
+											"type": "link",
+											"target": {
+												"chapter": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+												"anchor": "la-vue-liste-d-un-channel"
+											},
+											"content": [
+												{
+													"type": "text",
+													"text": "section 9.11"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": "). Il n'enregistre, ne modifie ni ne supprime aucune vue :\nces gestes restent ceux de la vue liste ;"
+										}
+									]
+								}
+							],
+							[
+								{
+									"type": "paragraph",
+									"content": [
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
 													"text": "lire sa checklist"
 												}
 											]

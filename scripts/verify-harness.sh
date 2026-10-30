@@ -1775,7 +1775,9 @@ SCENARIOS_API=1264
 # COMPTÉE.
 # **+3 par `CRM-071` T2, 2026-10-30** : `e2e/ui/vues-sauvegardees.spec.ts`, fichier NEUF — choisir, écart, enregistrer,
 # supprimer (Driss) ; mettre à jour une vue de l'espace (Camille) ; la lectrice et le palier 390. 1010 + 3 = 1013, COMPTÉE.
-SCENARIOS_UI=1013
+# **+1 par `CRM-071` T3, 2026-10-30** : `e2e/ui/connecteur-vues.spec.ts`, fichier NEUF — la même vue, au connecteur et à
+# l'écran, rend les mêmes affaires dans le même ordre. 1013 + 1 = 1014, COMPTÉE.
+SCENARIOS_UI=1014
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -1,3 +1,4 @@
+# @spec CRM-071 (docs/BACKLOG.md) — tranche T3 : l'argument `view` de crm_card_list (docs/SPEC-mcp.md §9.2 quattuordecies)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T3 : les étiquettes rendues par crm_card_get et crm_card_list, le filtre `label`, le
 #       détail des événements `label_added` et `label_removed` (docs/SPEC-mcp.md §9.2 tredecies)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.a : les sept outils de LECTURE de la famille `affaires` (décisions 652 à 654)
@@ -31,6 +32,7 @@ from fastmcp.exceptions import ToolError
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
+from crm_mcp.outils.vues import CONFIGURATION_RECHERCHE, SENS_PAR_DEFAUT, choisir_vue, filtres, lire_vues, noms_des_filtres, ordre
 from crm_mcp.politique import Declaration, MoteurPolitique, RefusCrm, appel_courant, introuvable, traduire_refus
 
 LIMITE_MAX = 100
@@ -349,8 +351,14 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         query: Annotated[str | None, Field(description="Optional words of the title", max_length=100)] = None,
         step: Annotated[str | None, Field(description="Optional step name (FR: étape), exact, e.g. Négociation")] = None,
         due: Annotated[str | None, Field(description="Optional next action due: overdue, today or week")] = None,
-        include_snoozed: Annotated[bool, Field(description="Include affaires put to sleep (FR: en sommeil)")] = False,
+        include_snoozed: Annotated[
+            bool | None, Field(description="Include affaires put to sleep (FR: en sommeil); default: the view's, else no")
+        ] = None,
         label: Annotated[str | None, Field(description="Optional label name (FR: étiquette), any case", max_length=40)] = None,
+        view: Annotated[
+            str | None,
+            Field(description="Optional saved view (FR: vue sauvegardée) name or id, from crm_view_list", max_length=100),
+        ] = None,
         timezone: Annotated[str, Field(description="IANA time zone for `today`")] = "Europe/Paris",
         limit: Annotated[int, Field(ge=1, le=LIMITE_MAX)] = 50,
         offset: Annotated[int, Field(ge=0)] = 0,
@@ -359,6 +367,16 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         if due is not None and due not in ECHEANCES:
             raise ToolError("due must be one of overdue, today, week.")
         maintenant = datetime.now(UTC)
+        # `CRM-071` T3 (§9.2 quattuordecies) : la vue est résolue AVANT toute lecture des affaires ; son channel devient
+        # celui de la liste, et un argument de l'appel sur la même dimension l'emporte sur elle.
+        vue: dict[str, Any] | None = None
+        noms_etapes: dict[str, str] = {}
+        noms_etiquettes: dict[str, str] = {}
+        if view is not None:
+            vue = choisir_vue(await lire_vues(crm, appel.jeton, appel.espace, channel_id), view)
+            channel_id = vue["channel_id"]
+            noms_etapes, noms_etiquettes = await noms_des_filtres(crm, appel.jeton, appel.espace, [vue])
+        de_la_vue = filtres(vue) if vue is not None else {}
         colonnes = COLONNES_LISTE
         parametres: dict[str, str] = {
             "workspace_id": f"eq.{appel.espace}",
@@ -381,6 +399,12 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                 "noeud:workflow_nodes_catalog!inner(label,default_probability))",
             ).replace("card_placements_step_fk(", "card_placements_step_fk!inner(")
             parametres["etape.noeud.label"] = f"eq.{step}"
+        elif str(de_la_vue.get("step_id")) in noms_etapes:
+            # L'étape de la vue, par son identifiant sur le rattachement, comme la vue liste ; disparue, elle est ignorée.
+            parametres["current_step_id"] = f"eq.{de_la_vue['step_id']}"
+        if query is None and isinstance(de_la_vue.get("search"), str) and de_la_vue["search"].strip():
+            # La recherche de la vue : la même requête plein texte que l'écran (`textSearch`, `type: plain`).
+            parametres["affaire.search_tsv"] = f"plfts({CONFIGURATION_RECHERCHE}).{de_la_vue['search'].strip()}"
         if due is not None:
             debut, demain, _ = bornes_journee(maintenant, _fuseau(timezone))
             fin = {"overdue": maintenant, "today": demain, "week": maintenant + timedelta(days=HORIZON_JOURS)}[due]
@@ -401,6 +425,15 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
                 raise ToolError(f"No label named {label!r} in this workspace. Known: {connues}.")
             colonnes = colonnes.replace(f"{ETIQUETTES})", f"{ETIQUETTES},filtre:card_labels!inner(label_id))")
             parametres["affaire.filtre.label_id"] = f"eq.{trouvees[0]['id']}"
+        elif str(de_la_vue.get("label_id")) in noms_etiquettes:
+            colonnes = colonnes.replace(f"{ETIQUETTES})", f"{ETIQUETTES},filtre:card_labels!inner(label_id))")
+            parametres["affaire.filtre.label_id"] = f"eq.{de_la_vue['label_id']}"
+        if vue is not None:
+            tri = de_la_vue.get("sort") if de_la_vue.get("sort") in SENS_PAR_DEFAUT else "title"
+            sens = de_la_vue.get("direction") if de_la_vue.get("direction") in ("asc", "desc") else SENS_PAR_DEFAUT[tri]
+            parametres["order"] = ordre(str(tri), str(sens))
+        if include_snoozed is None:
+            include_snoozed = de_la_vue.get("snoozed") == "shown"
         if not include_snoozed:
             # La règle de la webapp (`filtreExclusionSommeil`) : une affaire endormie sort des vues par défaut.
             parametres["or"] = f"(snoozed_until.is.null,snoozed_until.lte.{maintenant.isoformat()})"
@@ -412,6 +445,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         return {
             "offset": offset,
             "has_more": len(lignes) > limit,
+            **({} if vue is None else {"view": {"id": vue["id"], "name": vue["name"]}}),
             "cards": [resume_carte(l) for l in lignes[:limit]],
         }
 
@@ -424,8 +458,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
             "Lists the active affaires (FR: affaires, cards) of a workspace you can read, by title: track, channel, step, "
             "owner, amount, next action and its due date, and the two health scores (health_momentum: 100 minus listed "
             "penalties; health_commercial: weighted signals; tiers healthy/watch/danger), and the labels (FR: étiquettes). Filters: channel, words "
-            "of the title, step name, label name, next action due (overdue, today, week). Sleeping affaires are left out unless "
-            "include_snoozed. Paginated."
+            "of the title, step name, label name, next action due (overdue, today, week), or a saved view (FR: vue sauvegardée) "
+            "by name from crm_view_list, whose filters and sort apply and which your own arguments refine. Sleeping affaires "
+            "are left out unless include_snoozed (or the view shows them). Paginated."
         ),
     )
 

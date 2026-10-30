@@ -5306,6 +5306,10 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
   - **lire ses commentaires**, et **ses activités** ([chapitre 9.8](#les-activites-d-une-affaire-appels-reunions-visios)) ;
   - **lister par étiquette** : la liste des affaires se filtre par le nom d'une étiquette, et chaque affaire, lue ou
     listée, dit ses étiquettes ([section 9.16](#les-etiquettes-d-une-affaire)) ;
+  - **lister selon une vue sauvegardée** : l'assistant lit les vues d'un channel que vous voyez — les vôtres et celles de
+    l'espace —, avec leurs filtres en clair, et liste les affaires d'une vue désignée par son nom, dans le même ordre
+    qu'à l'écran ([section 9.11](#la-vue-liste-d-un-channel)). Il n'enregistre, ne modifie ni ne supprime aucune vue :
+    ces gestes restent ceux de la vue liste ;
   - **lire sa checklist** ([section 9.9](#la-checklist-d-une-affaire-les-points-a-cocher)) : les points libres, ceux de l'étape
     courante et ceux des étapes passées, cochés ou non, par qui et quand, et les étapes pour lesquelles un point est
     exigé ;

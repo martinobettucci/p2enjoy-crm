@@ -12515,9 +12515,17 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       (`docs/SPEC-seed.md` §32), rejoué deux fois, convergent ; E2E `vues-sauvegardees.spec.ts` **3/3**, voisins de la vue
       liste **66/66** ; build et classes CSS ; captures observées (une capture de palier refaite : redimensionnée en place,
       la page gardait le tiroir en transition) ; manuel 9.11, `verify-manual` 165 contrôles sans anomalie.
-- [ ] **T3 — les vues dans le connecteur** : `crm_view_list`, paramètre `view` de `crm_card_list` (famille `affaires`,
+- [x] **T3 — les vues dans le connecteur** : `crm_view_list`, paramètre `view` de `crm_card_list` (famille `affaires`,
       `consulter`) ; pytest, intégration, E2E.
-      *Inscrite au catalogue le 2026-10-30, avant le code* : `docs/SPEC-mcp.md` §9.2 *quattuordecies*.
+      *Inscrite au catalogue le 2026-10-30, avant le code* : `docs/SPEC-mcp.md` §9.2 *quattuordecies*. **Livrée en
+      développement le 2026-10-30** : `mcp/crm_mcp/outils/vues.py` (`crm_view_list`), l'argument `view` de `crm_card_list`
+      (étape, étiquette, recherche plein texte `francais_sans_accent`, tri et sommeil de la vue ; l'appel l'emporte ; vue
+      inconnue refusée avant toute lecture) ; pytest unitaires +9 (`test_vues.py`), suite 282 ; intégration
+      `test_integration_vues.py` **3/3** contre la vraie pile (vue privée d'autrui jamais rendue, mêmes affaires que la base
+      pour les filtres de la vue, vue inconnue refusée), inscrite à `verify-mcp.sh` ; garde `CONSULTATIONS_AFFAIRES` révisée
+      (décision 51) ; E2E `connecteur-vues.spec.ts` **1/1** (mêmes affaires, même ordre, au connecteur et à l'écran) ;
+      `verify-mcp.sh` : unitaires, interface 8/8 et traçabilité verts, **3 échecs d'intégration étrangers**, consignés sous
+      `CRM-111` T2.4.4 ; manuel 33.5, `verify-manual` 165 contrôles sans anomalie.
 - [ ] **T4 — l'export CSV** : `export_cards`, `export_contacts`, journal `export`, boutons de la liste et du carnet,
       manuel ; pgTAP, unitaires (format, injection), API, E2E.
 - [ ] **T5 — l'import des contacts et des organisations** : lecteur CSV, `import_contacts`, famille d'audit `import`,
@@ -16934,7 +16942,12 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           travail d'autres sessions, la suite étant verte juste après (4647/4647) ; snooze, l'écart étranger d'INC-253 ;
           *Relevé et corrigé le 2026-10-30 par la session de `CRM-071` T3* : `mcp/tests/test_integration_affaires.py` lisait
           encore le montant et les scores sur `cards` (deux tests rouges depuis la migration 0134) ; ils les lisent sur le
-          plus ancien rattachement, comme la fiche — 4/4.
+          plus ancien rattachement, comme la fiche — 4/4 ; `test_integration_affaires_etiquettes.py` (`CRM-069`) pose son
+          affaire jetable puis son rattachement — 3/3. **Restent rouges, relevés et non corrigés** (hors de la tâche de cette
+          session) : `test_integration_affaires_ecriture.py::test_le_parcours_complet_d_une_affaire_par_le_connecteur` (lit
+          `probability_override` et `owner_id` sur `cards`), `test_integration_workflows.py::test_l_entete_et_le_changement_de_workflow_par_l_administratrice`
+          (`POST /channels` refusé en 400), `test_integration_droits_fins.py::test_m1_un_droit_member_rouvre_en_ecriture_a_la_lectrice`
+          (`POST /cards` avec les colonnes de rattachement, puis `cards.channel_id`) : `verify-mcp.sh` rend 3 échecs d'intégration.
           **restent à rejouer** : timeline (interrompu), rendu-modeles-emails, move-card, cards, colonnes-protegees,
           valeurs-champs, move-card-to-channel, change-channel-workflow, relances, board. Résidu relevé pour T1 ter :
           `verify-mail-classement.sh` restaure une définition d'`app.card_par_adresse` antérieure à T2.2.

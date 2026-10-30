@@ -637,7 +637,10 @@ dépréciation.
 ## 3. Migrations en attente
 
 **La 135 aussi** (`CRM-071` T1 — les vues sauvegardées ; sa ligne au §3.2), **après la 134**. Une table neuve, sans
-donnée existante touchée ; aucun service à redéployer pour elle seule. Appliquée en développement le 2026-10-30.
+donnée existante touchée ; aucun service à redéployer pour elle seule. Appliquée en développement le 2026-10-30. **`CRM-071` T3**
+ajoute au connecteur `crm_view_list` et l'argument `view` de `crm_card_list` : l'**image `mcp`** est à reconstruire
+explicitement (§4), après la 135 ; vérifier ensuite que `crm_view_list` paraît pour un compte qui a « Affaires ▸
+Consulter ».
 
 **La 134 aussi** (`CRM-111` T2.4.5 — le retrait : les colonnes de rattachement quittent `cards` ; sa ligne au §3.2),
 **après la 133, et après les 108 à 124 de `CRM-111`**. **Sauvegarde préalable exigée** : la migration supprime treize

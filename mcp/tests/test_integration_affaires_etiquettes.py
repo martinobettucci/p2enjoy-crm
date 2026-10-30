@@ -1,5 +1,6 @@
 # @verifies CRM-069 (docs/BACKLOG.md) — tranche T3 : les étiquettes par le connecteur contre le vrai Keycloak, la vraie base
 #           et le vrai service `mcp`, par le parcours OAuth réel
+# @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : l'affaire jetable posée puis rattachée (révisé le 2026-10-30, migration 0134)
 # @verifies CRM-104 (docs/BACKLOG.md) — le catalogue du connecteur (docs/SPEC-mcp.md §9.2)
 # @verifies docs/SPEC-mcp.md §13 (succès, refus par la matrice, refus par le CRM malgré la matrice ouverte, journal écrit ;
 #           l'effet dans les tables que lit la webapp), §9.2 tredecies ; docs/SPEC-etiquettes-digest.md §2.2, §4
@@ -11,6 +12,8 @@ seul, même pour la clé de service : une pose sur une affaire du jeu y laissera
 pour la preuve sont retirées."""
 
 from __future__ import annotations
+
+import uuid
 
 import pytest
 from fastmcp import Client
@@ -53,12 +56,17 @@ async def _catalogue() -> str:
     lignes = [{"workspace_id": ESPACE_SEEDE, "name": PREUVES[0], "color": "danger", "archived_at": None},
               {"workspace_id": ESPACE_SEEDE, "name": PREUVES[1], "color": "neutral", "archived_at": "2026-01-15T09:00:00Z"}]
     assert (await _service("POST", "/labels", json=lignes)).status_code == 201
-    carte = {"workspace_id": ESPACE_SEEDE, "channel_id": CHANNEL_CHECKLISTS, "workflow_id": WORKFLOW_CHECKLISTS,
-             "current_step_id": ETAPE_INITIALE, "title": f"{TITRE} Cerfrance"}
-    creee = await _service("POST", "/cards", json=carte)
+    # L'affaire, puis son rattachement : depuis la migration 0134, le channel, le workflow et l'étape vivent sur le
+    # rattachement (`CRM-111` T2.4.5) ; la clé de service est exemptée de l'invariant différé « au moins un rattachement ».
+    identifiant = str(uuid.uuid4())
+    creee = await _service("POST", "/cards", json={"id": identifiant, "workspace_id": ESPACE_SEEDE, "title": f"{TITRE} Cerfrance"})
     assert creee.status_code == 201, creee.text
-    lue = (await _service("GET", "/cards", params={"title": f"eq.{carte['title']}", "select": "id"})).json()
-    return str(lue[0]["id"])
+    pose = await _service("POST", "/card_placements", json={
+        "card_id": identifiant, "workspace_id": ESPACE_SEEDE, "channel_id": CHANNEL_CHECKLISTS,
+        "workflow_id": WORKFLOW_CHECKLISTS, "current_step_id": ETAPE_INITIALE,
+    })
+    assert pose.status_code == 201, pose.text
+    return identifiant
 
 
 async def test_sans_la_case_modifier_la_pose_n_existe_pas():
