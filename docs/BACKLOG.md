@@ -16932,6 +16932,9 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           (étapes 1 à 3) ; seize harnais `verify-*` convertis (étape 4), dont **vérifiés verts** analytique, liste,
           seed-demo ; ma-journee et formulaire rouges sur la suite unitaire pendant le passage — rouge passager du
           travail d'autres sessions, la suite étant verte juste après (4647/4647) ; snooze, l'écart étranger d'INC-253 ;
+          *Relevé et corrigé le 2026-10-30 par la session de `CRM-071` T3* : `mcp/tests/test_integration_affaires.py` lisait
+          encore le montant et les scores sur `cards` (deux tests rouges depuis la migration 0134) ; ils les lisent sur le
+          plus ancien rattachement, comme la fiche — 4/4.
           **restent à rejouer** : timeline (interrompu), rendu-modeles-emails, move-card, cards, colonnes-protegees,
           valeurs-champs, move-card-to-channel, change-channel-workflow, relances, board. Résidu relevé pour T1 ter :
           `verify-mail-classement.sh` restaure une définition d'`app.card_par_adresse` antérieure à T2.2.
@@ -17277,10 +17280,21 @@ responsable** : traitée juste après `CRM-116`.*
             (§11.3) **soumises au responsable**. Ce que les scénarios posent pour faire paraître un écran est retiré ou
             rendu tel qu'il a été lu ; deux scénarios interrompus avaient laissé une trace, retirée à la main et le
             scénario corrigé (journal).
-      - [ ] **T4.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10, en deux tranches comme T3.2 — **T4.2a**
-            (6, 7, 8, 10) et **T4.2b** (9, la fiche, le board, la liste). Scénarios écrits, **jamais passés** : ils
-            attendent la fin de la bascule de `CRM-111` T2.4.5, qui déplace le rattachement d'une affaire de `cards`
-            vers `card_placements` ; l'aide `poserAffaire` d'`outils.ts` sera convertie alors.
+      - [~] **T4.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10, en deux tranches comme T3.2.
+        - [x] **T4.2a** (6, 7, 8, 10), le 2026-10-30 : 64 images produites par `e2e/manuel/06`, `07`, `08` et `10`
+              (22 scénarios verts) sur la pile et le seed, toutes observées, placées avec leur texte alternatif ;
+              `CHAPITRES_ILLUSTRES` couvre neuf chapitres : `verify-manual.sh` **165 contrôles, sans anomalie**.
+              Trois exceptions de plus au §11.3, **soumises au responsable** (9 en tout). Corrigé en chemin : un
+              bouton qui CÈDE SA PLACE à son formulaire ne s'illustre jamais avec lui (deux images) ; deux images
+              d'un même chapitre portaient le même nom — `illustrer` refuse désormais un nom produit deux fois ;
+              `detruireAffaire` ne supprime plus que l'affaire, le reste part en cascade. **Défaut de conception
+              constaté** : le chapitre 10 rattachait des contacts à des affaires du seed et comptait effacer les
+              lignes de fil écrites ; le fil est en ajout seul (`card_events`, migration 0016). Les gestes qui
+              écrivent un fil se jouent désormais sur des affaires jetables ; deux passages avaient laissé quatre
+              lignes sur l'affaire Sogexia du seed, qui restent jusqu'à la prochaine reconstruction de la base
+              (journal).
+        - [ ] **T4.2b** (9, la fiche, le board, la liste). Scénarios écrits, jamais passés. La vue liste porte les
+              vues sauvegardées de `CRM-071` T2 (9.11) : ses images se prennent sur ce build.
       - [ ] **T4.3 — la messagerie** : chapitres 11 à 16. Scénarios écrits, jamais passés.
       - [ ] **T4.4 — l'administration** : chapitres 17 à 22. Scénarios des chapitres 19 à 22 écrits, jamais passés ;
             17 et 18 restent à écrire.

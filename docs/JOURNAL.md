@@ -36847,3 +36847,33 @@ publication d'une vue privée par un administrateur (§2.3).
 `direction`, `step_id`, `label_id`, `search`, `snoozed`), par la règle de nommage (décision 658) ; le §2.2 le dit depuis le
 commit de T1.
 
+
+### `CRM-117` T4.2a : les images des chapitres 6, 7, 8 et 10 (2026-10-30)
+
+**Problème.** Premier passage des scénarios 06, 07, 08 et 10 : 15 verts sur 22.
+
+**Observations et causes.**
+- Chapitre 8 : la fiche d'un bloc dépasse la fenêtre ; l'image cible l'en-tête, le titre et l'état « Enregistré ».
+- Chapitre 10 : trois formulaires — créer un contact, le modifier, créer une organisation, rattacher à une affaire —
+  REMPLACENT le bouton qui les ouvre ; une image qui les réunit attend un bouton qui n'existe plus. Le bouton s'illustre
+  avant le clic, le formulaire après.
+- Chapitre 10 : deux images d'un même chapitre portaient le même nom (`formulaire-de-modification`, `modifier`) ; la
+  seconde écrasait la première sans erreur. `illustrer` refuse désormais un nom produit deux fois dans un passage ; quatre
+  scénarios encore jamais passés (09a, 09b, 11, 27-29) ont le même défaut, à corriger dans leurs tranches.
+- **Défaut de conception du scénario 10** : il rattachait et détachait des contacts sur deux affaires du seed (`c8`,
+  `c2`) et comptait effacer ensuite les lignes de fil écrites. Le fil est en ajout seul : la clé de service n'a que la
+  lecture sur `card_events` (migration 0016), l'effacement est refusé (`42501`). Deux passages ont laissé quatre lignes
+  (« Contact rattaché » / « Contact détaché », Hugo Ferrand) sur l'affaire Sogexia du seed. Elles ne sont pas effacées :
+  le faire exigerait le compte d'administration de la base, sur une base partagée, ce qui relève du responsable ; elles
+  partent à la prochaine reconstruction. `detruireAffaire` avait le même défaut (il effaçait `card_events` avant
+  l'affaire) : il ne supprime plus que l'affaire, dont tout le reste part en cascade, comme `e2e/affaire.ts`.
+- Deux blocs « Ouvrir un bureau à Lyon » laissés par un scénario interrompu sur le tableau du seed ont été retirés, et le
+  scénario retire désormais son bloc en `finally` ; une affaire jetable laissée par un test interrompu aussi.
+
+**Décision.** Les gestes qui écrivent dans un fil se jouent sur des affaires jetables (« Contrat cadre 2024 », archivée ;
+« Audit des accès Sogexia »), supprimées à la fin avec leur fil. Trois éléments cités sans image possible sont proposés
+au §11.3 : « extrémité hors de portée » (montré, mais fondu dans le libellé d'un lien), « Organisation enregistrée »
+(annonce réservée aux lecteurs d'écran), « Le nom est requis. » (« Créer » reste grisé tant que le nom est vide).
+
+**Vérifications.** 22 scénarios verts ; 64 images observées sur planches ; 64 placées avec leur texte alternatif ;
+`verify-manual.sh` sur neuf chapitres : 165 contrôles, sans anomalie ; aucune donnée jetable restante en base.

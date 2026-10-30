@@ -51,6 +51,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui/ma-journee.jpg",
+			"alt": "L'écran Ma journée : les affaires classées en retard, aujourd'hui et à venir, avec la barre latérale",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -347,6 +354,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui/une-ligne.jpg",
+			"alt": "Une ligne de la journée : l'échéance en rouge, l'affaire, sa prochaine action et son channel",
+			"width": 1190,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -492,6 +506,13 @@
 					"text": "6.3 « Mes affaires » ou tout l'espace de travail"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui/portee.jpg",
+			"alt": "Les deux onglets de portée de la journée : vos affaires, ou tout l'espace de travail",
+			"width": 1192,
+			"height": 74
 		},
 		{
 			"type": "paragraph",
@@ -923,6 +944,20 @@
 					"text": "6.6 Quand il n'y a rien"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui/vide-mes-affaires.jpg",
+			"alt": "La journée vide pour vos affaires, avec le bouton qui ouvre tout l'espace de travail",
+			"width": 548,
+			"height": 287
+		},
+		{
+			"type": "image",
+			"src": "ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui/vide-tout-l-espace.jpg",
+			"alt": "La journée vide pour tout l'espace de travail : aucune échéance dans les sept prochains jours",
+			"width": 548,
+			"height": 235
 		},
 		{
 			"type": "paragraph",

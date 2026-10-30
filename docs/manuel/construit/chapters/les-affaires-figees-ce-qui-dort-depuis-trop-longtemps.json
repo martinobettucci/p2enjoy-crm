@@ -38,6 +38,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/affaires-figees.jpg",
+			"alt": "L'écran des affaires figées, groupées par channel, chacune avec ses jours de retard",
+			"width": 1440,
+			"height": 900
+		},
+		{
+			"type": "image",
+			"src": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/barre-laterale.jpg",
+			"alt": "L'entrée Affaires figées de la barre latérale, sous Ma journée",
+			"width": 251,
+			"height": 116
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -82,6 +96,13 @@
 					"text": "7.1 Ce qu'être « figée » veut dire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/etape-perdu.jpg",
+			"alt": "Le nom d'étape Perdu, l'une des étapes de fin qu'une affaire figée ne peut pas occuper",
+			"width": 80,
+			"height": 53
 		},
 		{
 			"type": "paragraph",
@@ -422,6 +443,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/une-ligne.jpg",
+			"alt": "Une ligne d'affaire figée : jours de retard, titre, étape, seuil de relance et channel",
+			"width": 1190,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -685,6 +713,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/relance-dans-le-fil.jpg",
+			"alt": "La relance automatique inscrite dans le fil de l'affaire, avec son retard et son seuil",
+			"width": 479,
+			"height": 80
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -913,6 +948,20 @@
 					"text": "7.6 Quand il n'y a rien"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/aucune-affaire-figee.jpg",
+			"alt": "L'état vide : aucune affaire ne dort au-delà de son seuil de relance",
+			"width": 548,
+			"height": 235
+		},
+		{
+			"type": "image",
+			"src": "les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/chargement-impossible.jpg",
+			"alt": "Les affaires figées qui n'ont pas pu être lues, avec le bouton Réessayer",
+			"width": 548,
+			"height": 287
 		},
 		{
 			"type": "paragraph",

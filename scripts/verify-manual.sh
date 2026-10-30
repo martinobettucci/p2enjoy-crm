@@ -92,6 +92,10 @@ CHAPITRES_ILLUSTRES=(
 	naviguer-barre-laterale-onglets-etats
 	retrouver-n-importe-quoi-la-recherche
 	vos-notifications-savoir-qu-on-vous-a-nomme
+	ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui
+	les-affaires-figees-ce-qui-dort-depuis-trop-longtemps
+	les-objectifs-le-tableau-blanc-de-l-equipe
+	le-carnet-de-contacts
 )
 
 ok()    { checks=$((checks + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }

@@ -38,6 +38,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/carnet.jpg",
+			"alt": "Le carnet de contacts : la liste des personnes, leur organisation, leur fonction et leurs coordonnées",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -346,6 +353,27 @@
 					"text": "10.1 Créer un contact"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/nouveau-contact.jpg",
+			"alt": "Le bouton Nouveau contact, au-dessus du carnet",
+			"width": 184,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/formulaire-de-creation.jpg",
+			"alt": "Le formulaire de création d'un contact : nom, organisation, fonction, email et téléphone",
+			"width": 1192,
+			"height": 487
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/modifier-sur-la-fiche.jpg",
+			"alt": "Les commandes Modifier et Supprimer en tête de la fiche d'un contact",
+			"width": 263,
+			"height": 73
 		},
 		{
 			"type": "paragraph",
@@ -690,6 +718,27 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/fiche-contact.jpg",
+			"alt": "La fiche d'un contact : ses caractéristiques, puis le tableau des affaires auxquelles il est rattaché",
+			"width": 1192,
+			"height": 529
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/affaire-archivee.jpg",
+			"alt": "Une affaire archivée dans le tableau des affaires d'un contact, avec sa pilule Archivée",
+			"width": 1192,
+			"height": 74
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/contact-introuvable.jpg",
+			"alt": "L'adresse d'un contact qui n'existe pas",
+			"width": 192,
+			"height": 53
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1032,6 +1081,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/formulaire-de-modification.jpg",
+			"alt": "Le formulaire de modification d'un contact, prérempli",
+			"width": 314,
+			"height": 519
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/modifier-contact.jpg",
+			"alt": "Le bouton Modifier, en tête de la fiche d'un contact",
+			"width": 124,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1325,6 +1388,20 @@
 					"text": "10.4 Supprimer un contact"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/supprimer.jpg",
+			"alt": "La confirmation de suppression d'un contact rattaché à une affaire",
+			"width": 650,
+			"height": 286
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/contact-detache.jpg",
+			"alt": "La trace Contact détaché dans le fil de l'affaire, datée et signée",
+			"width": 519,
+			"height": 76
 		},
 		{
 			"type": "paragraph",
@@ -1652,6 +1729,27 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/zone-rgpd.jpg",
+			"alt": "La zone des données personnelles d'un contact : exporter, ou anonymiser",
+			"width": 1192,
+			"height": 182
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/confirmation.jpg",
+			"alt": "La confirmation d'anonymisation : le nom du contact retapé rend le bouton actif",
+			"width": 1192,
+			"height": 464
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/contact-anonymise.jpg",
+			"alt": "Un contact anonymisé : sa date d'anonymisation, et des commandes qui ne le modifient plus",
+			"width": 321,
+			"height": 262
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1901,6 +1999,27 @@
 					"text": "10.6 Rattacher une personne à une affaire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/rattacher-a-une-affaire.jpg",
+			"alt": "Le bouton qui ouvre le rattachement à une affaire, sur la fiche d'un contact",
+			"width": 251,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/rattacher.jpg",
+			"alt": "Le formulaire de rattachement : une affaire archivée choisie, et le rôle décideur",
+			"width": 1192,
+			"height": 283
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/deja-rattache.jpg",
+			"alt": "Le rattachement refusé parce que le contact est déjà rattaché à cette affaire ; la saisie est conservée",
+			"width": 1192,
+			"height": 331
 		},
 		{
 			"type": "paragraph",
@@ -2219,6 +2338,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/detacher.jpg",
+			"alt": "La confirmation qui détache un contact d'une affaire, sous sa ligne",
+			"width": 1192,
+			"height": 316
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -2464,6 +2590,13 @@
 					"text": "10.8 Corriger le rôle d'une personne dans une affaire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/modifier-le-role.jpg",
+			"alt": "Le rôle d'un contact dans une affaire, en cours de modification sous sa ligne",
+			"width": 1192,
+			"height": 332
 		},
 		{
 			"type": "paragraph",
@@ -2758,6 +2891,27 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/onglet-organisations.jpg",
+			"alt": "L'onglet des organisations : leur nom, leur domaine, leur site web et leur nombre de contacts",
+			"width": 1192,
+			"height": 250
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/modifier-organisation.jpg",
+			"alt": "Le bouton Modifier de la fiche d'une organisation",
+			"width": 126,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/lectrice.jpg",
+			"alt": "Le bouton Modifier grisé pour une lectrice",
+			"width": 126,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -2998,6 +3152,27 @@
 					"text": "10.10 La fiche d'une organisation"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/colonne-organisation.jpg",
+			"alt": "Dans le carnet, la colonne Organisation, dont chaque nom ouvre la fiche",
+			"width": 217,
+			"height": 154
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/fiche-organisation.jpg",
+			"alt": "La fiche d'une organisation : ses caractéristiques, puis ses contacts",
+			"width": 1192,
+			"height": 333
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/organisation-introuvable.jpg",
+			"alt": "L'adresse d'une organisation qui n'existe pas",
+			"width": 234,
+			"height": 53
 		},
 		{
 			"type": "paragraph",
@@ -3278,6 +3453,41 @@
 					"text": "10.11 Créer une organisation"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/nouvelle-organisation.jpg",
+			"alt": "Le bouton Nouvelle organisation, au-dessus de la liste des organisations",
+			"width": 220,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/site-web.jpg",
+			"alt": "La création refusée : le site web ne commence pas par http:// ou https://",
+			"width": 547,
+			"height": 431
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/domaine-pris.jpg",
+			"alt": "La création refusée : le domaine est déjà celui d'une autre organisation de l'espace",
+			"width": 547,
+			"height": 431
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/droits-retires.jpg",
+			"alt": "La création refusée : les droits de modifier les organisations ont été retirés entre-temps",
+			"width": 547,
+			"height": 431
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/modifier-apres-creation.jpg",
+			"alt": "Le bouton Modifier, sur la fiche de l'organisation créée",
+			"width": 126,
+			"height": 73
 		},
 		{
 			"type": "paragraph",
@@ -3581,6 +3791,20 @@
 					"text": "10.12 Modifier une organisation"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/modifier.jpg",
+			"alt": "Le bouton Modifier, qui ouvre le formulaire de l'organisation",
+			"width": 126,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "le-carnet-de-contacts/formulaire-organisation.jpg",
+			"alt": "Le formulaire de modification d'une organisation, prérempli",
+			"width": 547,
+			"height": 383
 		},
 		{
 			"type": "paragraph",

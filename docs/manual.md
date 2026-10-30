@@ -796,6 +796,8 @@ L'entrée **Ma journée** de la barre latérale répond à une seule question : 
 aujourd'hui ?** Elle rassemble les affaires qui portent une **échéance** — la date de leur prochaine
 action —, à travers tout votre espace de travail, sans avoir à ouvrir un dossier après l'autre.
 
+![L'écran Ma journée : les affaires classées en retard, aujourd'hui et à venir, avec la barre latérale](manuel/images/ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui/ma-journee.jpg)
+
 C'est la troisième façon de lire vos affaires, et elle range par le **temps** :
 
 - le **tableau** d'un channel les range par étape du processus — « où en est chaque affaire ? » ;
@@ -821,6 +823,8 @@ c'est la vue liste d'un channel, triée par échéance, qui répond à cette que
 
 ### 6.2 Ce qu'une ligne montre
 
+![Une ligne de la journée : l'échéance en rouge, l'affaire, sa prochaine action et son channel](manuel/images/ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui/une-ligne.jpg)
+
 Chaque ligne porte, dans cet ordre : l'**échéance** avec son heure, le **titre** de l'affaire — qui
 est un lien vers sa fiche —, la **prochaine action** à mener, et la **situation** de l'affaire sous
 la forme « Track › Channel », elle-même un lien qui ouvre le dossier.
@@ -837,6 +841,8 @@ erreur.
 ni tiret, ni « non renseigné ». L'échéance seule est déjà une information.
 
 ### 6.3 « Mes affaires » ou tout l'espace de travail
+
+![Les deux onglets de portée de la journée : vos affaires, ou tout l'espace de travail](manuel/images/ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui/portee.jpg)
 
 Deux onglets en haut de l'écran choisissent la **portée** :
 
@@ -874,6 +880,10 @@ de relance sans porter aucune échéance, et l'inverse. La **pastille d'ancienne
 
 ### 6.6 Quand il n'y a rien
 
+![La journée vide pour vos affaires, avec le bouton qui ouvre tout l'espace de travail](manuel/images/ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui/vide-mes-affaires.jpg)
+
+![La journée vide pour tout l'espace de travail : aucune échéance dans les sept prochains jours](manuel/images/ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui/vide-tout-l-espace.jpg)
+
 Deux messages, et ils ne disent pas la même chose :
 
 - **« Aucune échéance dans votre journée »** — vous n'êtes responsable d'aucune affaire à échéance.
@@ -890,9 +900,15 @@ questions se ressemblent et ne sont pas la même : une affaire peut porter une p
 demain et n'avoir pas bougé d'étape depuis six semaines. C'est pourquoi les deux entrées sont
 voisines dans la barre latérale, dans cet ordre.
 
+![L'écran des affaires figées, groupées par channel, chacune avec ses jours de retard](manuel/images/les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/affaires-figees.jpg)
+
+![L'entrée Affaires figées de la barre latérale, sous Ma journée](manuel/images/les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/barre-laterale.jpg)
+
 Vous y arrivez par **Affaires figées**, immédiatement sous *Ma journée*.
 
 ### 7.1 Ce qu'être « figée » veut dire
+
+![Le nom d'étape Perdu, l'une des étapes de fin qu'une affaire figée ne peut pas occuper](manuel/images/les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/etape-perdu.jpg)
 
 Une affaire est **figée** lorsqu'elle est restée dans son étape **au-delà du seuil de relance de
 cette étape**. Ce n'est ni un jugement ni un score : c'est une durée comparée à un seuil.
@@ -919,6 +935,8 @@ exactement son seuil est figée, et son retard vaut alors zéro.
   relances. Une échéance de sommeil **échue** ne protège plus : l'affaire est réveillée de fait.
 
 ### 7.2 Ce que l'écran montre
+
+![Une ligne d'affaire figée : jours de retard, titre, étape, seuil de relance et channel](manuel/images/les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/une-ligne.jpg)
 
 Les affaires sont **groupées par dossier**, et les groupes sont rangés du **plus gros retard au
 plus petit**. Chaque titre de groupe porte son compte entre parenthèses.
@@ -947,6 +965,8 @@ masquée » n'apparaît : ce serait divulguer par la bande l'existence de ce que
 
 ### 7.4 La relance inscrite dans l'affaire
 
+![La relance automatique inscrite dans le fil de l'affaire, avec son retard et son seuil](manuel/images/les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/relance-dans-le-fil.jpg)
+
 Chaque nuit, le produit parcourt les affaires figées et inscrit dans l'historique de chacune une
 ligne **« Relance automatique »**, avec son retard et son seuil au moment du passage. Vous la
 trouvez dans le fil de la fiche ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)), dans la famille *Cycle de vie*.
@@ -971,6 +991,10 @@ Cette ligne **n'a pas d'auteur** : personne ne l'a écrite, c'est l'horloge.
 
 ### 7.6 Quand il n'y a rien
 
+![L'état vide : aucune affaire ne dort au-delà de son seuil de relance](manuel/images/les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/aucune-affaire-figee.jpg)
+
+![Les affaires figées qui n'ont pas pu être lues, avec le bouton Réessayer](manuel/images/les-affaires-figees-ce-qui-dort-depuis-trop-longtemps/chargement-impossible.jpg)
+
 **« Aucune affaire figée »** — aucune affaire, parmi celles que vous pouvez lire, ne dort dans son
 étape au-delà de son seuil. Le message ne propose aucun bouton, et ce n'est pas un oubli : il n'y a
 rien à faire d'une liste vide, et c'est une bonne nouvelle.
@@ -984,11 +1008,19 @@ L'entrée **Objectifs** de la barre latérale ouvre les **tableaux d'objectifs**
 un **tableau blanc** : vous y posez des **blocs** — un objectif chacun —, vous les reliez par des **flèches** pour dire ce
 qui nourrit quoi, et vous indiquez sur chaque bloc où vous en êtes.
 
+![Le tableau d'objectifs : ses blocs reliés par des flèches, et la liste des liens du diagramme en dessous](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/canevas.jpg)
+
 **Le remplissage d'un bloc est saisi à la main, jamais calculé.** Un bloc peut viser un channel, mais le produit ne
 déduit rien des affaires de ce channel : c'est vous qui décidez de ce que le pourcentage signifie, et vous qui le
 tenez à jour. La fiche du bloc le rappelle sous son remplissage.
 
 ### 8.1 La liste des tableaux
+
+![La liste des tableaux d'objectifs, avec la case des archivés et les commandes de chaque tableau](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/liste.jpg)
+
+![Un tableau archivé dans la liste, avec sa pilule Archivé et la commande qui le désarchive](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/tableau-archive.jpg)
+
+![Le formulaire de création d'un tableau, refusé à un membre qui n'administre pas l'espace](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/refus-de-creation.jpg)
 
 L'écran **« Tableaux d'objectifs »** liste les tableaux de l'espace dans leur ordre, chacun avec sa description et son
 nombre de blocs. Cliquer sur le nom d'un tableau ouvre son canevas.
@@ -1007,6 +1039,16 @@ Pour un autre compte, le serveur refuse ces gestes, et l'écran le dit sous la c
 administrer les tableaux de cet espace de travail. »*
 
 ### 8.2 Le canevas
+
+![Les commandes du canevas : retour aux tableaux, poser un bloc, tracer une flèche et le zoom](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/commandes-du-canevas.jpg)
+
+![Un bloc : son titre, sa barre de remplissage et le channel qu'il vise](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/un-bloc.jpg)
+
+![Un bloc dont le channel visé n'existe plus, marqué Lien perdu](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/lien-perdu.jpg)
+
+![La liste des liens du diagramme, chacun avec son sens et sa commande de suppression](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/liens-du-diagramme.jpg)
+
+![Un lien dont une extrémité est un bloc que la lectrice ne lit pas](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/extremite-hors-de-portee.jpg)
 
 Le canevas d'un tableau se **déplace** — faites-le glisser — et se **zoome** avec les boutons **« Réduire le canevas »**
 et **« Agrandir le canevas »**, la valeur courante affichée entre les deux. **« Retour aux tableaux »** ramène à la
@@ -1029,6 +1071,12 @@ un channel.
 
 ### 8.3 Poser, déplacer et modifier un bloc
 
+![La pose d'un bloc en cours : la consigne au-dessus du canevas et la commande pour annuler la pose](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/poser-un-bloc.jpg)
+
+![La fiche d'un bloc nouvellement posé : son titre, l'état Enregistré et la commande qui ferme la fiche](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/fiche-du-bloc.jpg)
+
+![Dans la fiche d'un bloc, le channel visé et la commande qui retire le lien](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/channel-vise.jpg)
+
 **« Poser un bloc »** fait apparaître un repère : cliquez sur le canevas à l'endroit voulu, ou, au clavier, déplacez le
 repère avec les flèches, validez par Entrée et annulez par Échap. Le bloc naît avec un titre provisoire, et sa fiche
 s'ouvre pour que vous le nommiez.
@@ -1048,6 +1096,8 @@ Chaque champ s'enregistre de lui-même et dit **« Enregistré »** ; **« Ferme
 
 ### 8.4 Tracer et supprimer une flèche
 
+![La commande Tracer une flèche, au-dessus du canevas, et le lien tracé dans la liste des liens](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/tracer-une-fleche.jpg)
+
 **« Tracer une flèche »**, puis cliquez sur le bloc de départ et sur celui d'arrivée — ou, au clavier, **Espace** sur le
 bloc de départ, puis Entrée ou Espace sur le second. Le bloc de départ, Échap ou le bouton annulent le tracé. Une
 flèche relie deux blocs **du même tableau**, jamais un bloc à lui-même, et **une seule** flèche joint deux blocs donnés.
@@ -1056,11 +1106,17 @@ flèche »**.
 
 ### 8.5 Supprimer un bloc
 
+![La confirmation de suppression d'un bloc, avec Supprimer définitivement et Annuler la suppression](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/supprimer-le-bloc.jpg)
+
+![La commande Supprimer le bloc, dans la fiche d'un bloc](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/commande-supprimer.jpg)
+
 **« Supprimer le bloc »**, au bas de sa fiche, demande une confirmation qui nomme le bloc et compte les flèches qui
 partiront avec lui ; **« Supprimer définitivement »** l'efface. **Un bloc supprimé ne se restaure pas**, une flèche non
 plus — contrairement à un tableau, qui s'archive.
 
 ### 8.6 Qui peut écrire
+
+![Le bandeau de lecture seule d'un tableau, pour un membre qui n'a pas le droit d'y écrire](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/lecture-seule.jpg)
 
 **Tout membre de l'espace lit les tableaux.** Les **administrateurs** et les **business developers** de l'espace les
 administrent et les composent ; pour un autre compte, le canevas affiche : *« Vous consultez ce tableau. Vous n'avez
@@ -1069,6 +1125,14 @@ bloc s'ouvre en lecture. C'est le serveur qui décide : un refus de dernière mi
 rien ne soit écrit.
 
 ### 8.7 Quand il n'y a rien
+
+![L'état vide : aucun tableau d'objectifs, avec le bouton qui en crée un](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/aucun-tableau.jpg)
+
+![Un tableau sans aucun bloc](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/aucun-objectif.jpg)
+
+![L'adresse d'un tableau qui n'existe pas](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/tableau-introuvable.jpg)
+
+![Les objectifs qui n'ont pas pu être lus, avec le bouton Réessayer](manuel/images/les-objectifs-le-tableau-blanc-de-l-equipe/chargement-impossible.jpg)
 
 **« Aucun tableau d'objectifs »** — l'espace n'en a pas encore ; « Créer un tableau » reste offert à qui peut écrire.
 **« Aucun objectif sur ce tableau »** — posez un premier bloc. **« Tableau introuvable »** — l'adresse ne mène à aucun
@@ -2051,6 +2115,8 @@ autres, le bouton de la fiche est grisé, avec la raison
 L'entrée **Contacts** de la barre latérale ouvre le **carnet** de votre espace de travail : les
 personnes avec qui vos affaires se traitent, et l'organisation à laquelle chacune appartient.
 
+![Le carnet de contacts : la liste des personnes, leur organisation, leur fonction et leurs coordonnées](manuel/images/le-carnet-de-contacts/carnet.jpg)
+
 Le carnet a **deux onglets**, en tête de page : **Contacts**, la liste des personnes, et
 **Organisations**, la liste des organisations (voir plus bas). Chaque onglet a sa propre adresse :
 vous pouvez l'ajouter à vos favoris ou la partager.
@@ -2088,6 +2154,12 @@ courrier : un message dont l'expéditeur est un contact rattaché à une affaire
 
 ### 10.1 Créer un contact
 
+![Le bouton Nouveau contact, au-dessus du carnet](manuel/images/le-carnet-de-contacts/nouveau-contact.jpg)
+
+![Le formulaire de création d'un contact : nom, organisation, fonction, email et téléphone](manuel/images/le-carnet-de-contacts/formulaire-de-creation.jpg)
+
+![Les commandes Modifier et Supprimer en tête de la fiche d'un contact](manuel/images/le-carnet-de-contacts/modifier-sur-la-fiche.jpg)
+
 Le bouton **« Nouveau contact »**, au-dessus du tableau, ouvre un formulaire **dans la page** — pas
 une fenêtre par-dessus : la liste reste visible, et c'est elle qui vous dit si la personne y figure
 déjà.
@@ -2120,6 +2192,12 @@ ouvrez sa fiche : le bouton « Modifier » y attend.
 
 ### 10.2 La fiche d'un contact
 
+![La fiche d'un contact : ses caractéristiques, puis le tableau des affaires auxquelles il est rattaché](manuel/images/le-carnet-de-contacts/fiche-contact.jpg)
+
+![Une affaire archivée dans le tableau des affaires d'un contact, avec sa pilule Archivée](manuel/images/le-carnet-de-contacts/affaire-archivee.jpg)
+
+![L'adresse d'un contact qui n'existe pas](manuel/images/le-carnet-de-contacts/contact-introuvable.jpg)
+
 Cliquer sur le nom d'une personne — dans le carnet, ou dans la liste des contacts d'une
 organisation — ouvre sa **fiche**. Elle porte son **nom en titre**, puis deux blocs :
 
@@ -2148,6 +2226,10 @@ donnent tous le même écran** : « Contact introuvable », avec un bouton de re
 règle que pour l'organisation, et pour la même raison.
 
 ### 10.3 Modifier un contact
+
+![Le formulaire de modification d'un contact, prérempli](manuel/images/le-carnet-de-contacts/formulaire-de-modification.jpg)
+
+![Le bouton Modifier, en tête de la fiche d'un contact](manuel/images/le-carnet-de-contacts/modifier-contact.jpg)
 
 Le bouton **« Modifier »**, en haut de la fiche, ouvre un formulaire **dans la page** — pas une
 fenêtre par-dessus : les deux blocs restent visibles en dessous, et vous corrigez en voyant ce que
@@ -2179,6 +2261,10 @@ invite à **recharger la fiche** : son état actuel répondra à la question. Le
 ouvert et votre saisie est intacte, pour que vous ne perdiez rien.
 
 ### 10.4 Supprimer un contact
+
+![La confirmation de suppression d'un contact rattaché à une affaire](manuel/images/le-carnet-de-contacts/supprimer.jpg)
+
+![La trace Contact détaché dans le fil de l'affaire, datée et signée](manuel/images/le-carnet-de-contacts/contact-detache.jpg)
 
 Le bouton **« Supprimer »** se trouve à côté de **« Modifier »**, en haut de la fiche. Il vient en
 second, et c'est délibéré : on lit d'abord le geste que l'on peut défaire.
@@ -2220,6 +2306,12 @@ messagerie d'une affaire reste dans l'affaire.
 
 ### 10.5 Les données personnelles d'un contact : les exporter, les anonymiser
 
+![La zone des données personnelles d'un contact : exporter, ou anonymiser](manuel/images/le-carnet-de-contacts/zone-rgpd.jpg)
+
+![La confirmation d'anonymisation : le nom du contact retapé rend le bouton actif](manuel/images/le-carnet-de-contacts/confirmation.jpg)
+
+![Un contact anonymisé : sa date d'anonymisation, et des commandes qui ne le modifient plus](manuel/images/le-carnet-de-contacts/contact-anonymise.jpg)
+
 En bas de la fiche, la zone **« Données personnelles (RGPD) »** porte deux gestes, réservés aux **administrateurs de
 l'espace**. Pour un autre membre, les deux boutons restent visibles mais grisés, et une phrase dit pourquoi. Chaque geste
 est inscrit au **journal d'audit** ([chapitre 22](#le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace)), sans le nom de la personne.
@@ -2242,6 +2334,12 @@ L'anonymisation est **définitive**. **Les messages ne sont pas touchés** : ils
 l'adresse ou la signature de la personne peuvent encore y paraître.
 
 ### 10.6 Rattacher une personne à une affaire
+
+![Le bouton qui ouvre le rattachement à une affaire, sur la fiche d'un contact](manuel/images/le-carnet-de-contacts/rattacher-a-une-affaire.jpg)
+
+![Le formulaire de rattachement : une affaire archivée choisie, et le rôle décideur](manuel/images/le-carnet-de-contacts/rattacher.jpg)
+
+![Le rattachement refusé parce que le contact est déjà rattaché à cette affaire ; la saisie est conservée](manuel/images/le-carnet-de-contacts/deja-rattache.jpg)
 
 Le bouton **« Rattacher à une affaire »** se trouve dans le bloc **Affaires**, juste sous son titre.
 Il ouvre un formulaire **dans la page** — le tableau reste visible en dessous, et c'est voulu :
@@ -2277,6 +2375,8 @@ décidera, il envoie et vous rapporte la réponse.
 
 ### 10.7 Détacher une personne d'une affaire
 
+![La confirmation qui détache un contact d'une affaire, sous sa ligne](manuel/images/le-carnet-de-contacts/detacher.jpg)
+
 Ce geste existe **des deux côtés** : ici, et sur la fiche de l'affaire
 ([section 9.7](#les-contacts-d-une-affaire-les-rattacher-les-detacher)).
 
@@ -2303,6 +2403,8 @@ Comme pour le rattachement, **le bouton n'est jamais grisé d'avance**. Les droi
 par affaire : le même compte peut détacher sur l'une et se voir opposer ce message sur l'autre.
 
 ### 10.8 Corriger le rôle d'une personne dans une affaire
+
+![Le rôle d'un contact dans une affaire, en cours de modification sous sa ligne](manuel/images/le-carnet-de-contacts/modifier-le-role.jpg)
 
 Corriger un rôle mal saisi ne demande pas de **détacher puis rattacher** la personne : le rôle se modifie en place.
 
@@ -2336,6 +2438,12 @@ texte d'aide — décideur, prescripteur, contact technique — ne sont que des 
 
 ### 10.9 L'onglet « Organisations »
 
+![L'onglet des organisations : leur nom, leur domaine, leur site web et leur nombre de contacts](manuel/images/le-carnet-de-contacts/onglet-organisations.jpg)
+
+![Le bouton Modifier de la fiche d'une organisation](manuel/images/le-carnet-de-contacts/modifier-organisation.jpg)
+
+![Le bouton Modifier grisé pour une lectrice](manuel/images/le-carnet-de-contacts/lectrice.jpg)
+
 L'onglet **Organisations** liste toutes les organisations de l'espace de travail, rangées par nom,
 **y compris celles qui n'ont encore aucun contact** : c'est le seul chemin qui mène à elles.
 
@@ -2356,6 +2464,12 @@ lecture seule, « Nouvelle organisation » et « Modifier » restent visibles ma
 écrit au-dessus ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Le serveur applique la même règle.
 
 ### 10.10 La fiche d'une organisation
+
+![Dans le carnet, la colonne Organisation, dont chaque nom ouvre la fiche](manuel/images/le-carnet-de-contacts/colonne-organisation.jpg)
+
+![La fiche d'une organisation : ses caractéristiques, puis ses contacts](manuel/images/le-carnet-de-contacts/fiche-organisation.jpg)
+
+![L'adresse d'une organisation qui n'existe pas](manuel/images/le-carnet-de-contacts/organisation-introuvable.jpg)
 
 Cliquer sur le nom d'une organisation, dans la colonne **Organisation** du carnet ou dans l'onglet
 **Organisations**, ouvre sa **fiche**.
@@ -2384,6 +2498,16 @@ l'organisation, voir la [section 10.12](#modifier-une-organisation).
 
 ### 10.11 Créer une organisation
 
+![Le bouton Nouvelle organisation, au-dessus de la liste des organisations](manuel/images/le-carnet-de-contacts/nouvelle-organisation.jpg)
+
+![La création refusée : le site web ne commence pas par http:// ou https://](manuel/images/le-carnet-de-contacts/site-web.jpg)
+
+![La création refusée : le domaine est déjà celui d'une autre organisation de l'espace](manuel/images/le-carnet-de-contacts/domaine-pris.jpg)
+
+![La création refusée : les droits de modifier les organisations ont été retirés entre-temps](manuel/images/le-carnet-de-contacts/droits-retires.jpg)
+
+![Le bouton Modifier, sur la fiche de l'organisation créée](manuel/images/le-carnet-de-contacts/modifier-apres-creation.jpg)
+
 Le bouton **« Nouvelle organisation »**, au-dessus du tableau, ouvre un formulaire **dans la page**.
 Trois champs, et un seul est obligatoire :
 
@@ -2409,6 +2533,10 @@ est conservée** :
   déjà grisée ; ce message ne paraît que si vos droits ont changé entre-temps.
 
 ### 10.12 Modifier une organisation
+
+![Le bouton Modifier, qui ouvre le formulaire de l'organisation](manuel/images/le-carnet-de-contacts/modifier.jpg)
+
+![Le formulaire de modification d'une organisation, prérempli](manuel/images/le-carnet-de-contacts/formulaire-organisation.jpg)
 
 Sur la fiche d'une organisation, le bouton **« Modifier »** remplace les caractéristiques par le
 même formulaire, **prérempli**. **Vider** le domaine ou le site web l'efface. « Enregistrer » relit

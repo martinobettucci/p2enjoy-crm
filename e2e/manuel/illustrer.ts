@@ -18,6 +18,8 @@ const IMAGES = join(RACINE, 'docs', 'manuel', 'images')
 const MANIFESTE = join(IMAGES, 'manifeste.json')
 const VERROU = join(IMAGES, '.manifeste.verrou')
 const IDENTIFIANT = /^[a-z0-9-]+$/
+/** Les images produites par ce processus : un même nom deux fois écraserait la première sans que rien ne le dise. */
+const PRODUITES = new Set<string>()
 
 export type Illustration = {
 	/** L'identifiant du chapitre où l'image paraît. */
@@ -101,6 +103,9 @@ export async function illustrer(page: Page, illustration: Illustration): Promise
 	for (const identifiant of [chapitre, section ?? 'introduction', nom])
 		if (!IDENTIFIANT.test(identifiant)) throw new Error(`identifiant d'image hors de forme : « ${identifiant} »`)
 	if (!pleinePage && cibles.length === 0) throw new Error(`l'image ${chapitre}/${nom} ne cite aucun élément : que montre-t-elle ?`)
+	// Une reprise de Playwright rejoue le test dans un processus neuf : seul un doublon du même passage est une faute.
+	if (PRODUITES.has(`${chapitre}/${nom}`)) throw new Error(`l'image ${chapitre}/${nom} est produite deux fois : la seconde écraserait la première`)
+	PRODUITES.add(`${chapitre}/${nom}`)
 
 	const fenetre = page.viewportSize()
 	if (fenetre === null) throw new Error('la fenêtre du navigateur n’a pas de taille')

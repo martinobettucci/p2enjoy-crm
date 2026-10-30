@@ -77,6 +77,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/canevas.jpg",
+			"alt": "Le tableau d'objectifs : ses blocs reliés par des flèches, et la liste des liens du diagramme en dessous",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -104,6 +111,27 @@
 					"text": "8.1 La liste des tableaux"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/liste.jpg",
+			"alt": "La liste des tableaux d'objectifs, avec la case des archivés et les commandes de chaque tableau",
+			"width": 1192,
+			"height": 229
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/tableau-archive.jpg",
+			"alt": "Un tableau archivé dans la liste, avec sa pilule Archivé et la commande qui le désarchive",
+			"width": 1158,
+			"height": 129
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/refus-de-creation.jpg",
+			"alt": "Le formulaire de création d'un tableau, refusé à un membre qui n'administre pas l'espace",
+			"width": 1158,
+			"height": 273
 		},
 		{
 			"type": "paragraph",
@@ -355,6 +383,41 @@
 					"text": "8.2 Le canevas"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/commandes-du-canevas.jpg",
+			"alt": "Les commandes du canevas : retour aux tableaux, poser un bloc, tracer une flèche et le zoom",
+			"width": 644,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/un-bloc.jpg",
+			"alt": "Un bloc : son titre, sa barre de remplissage et le channel qu'il vise",
+			"width": 292,
+			"height": 173
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/lien-perdu.jpg",
+			"alt": "Un bloc dont le channel visé n'existe plus, marqué Lien perdu",
+			"width": 272,
+			"height": 153
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/liens-du-diagramme.jpg",
+			"alt": "La liste des liens du diagramme, chacun avec son sens et sa commande de suppression",
+			"width": 1192,
+			"height": 213
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/extremite-hors-de-portee.jpg",
+			"alt": "Un lien dont une extrémité est un bloc que la lectrice ne lit pas",
+			"width": 1192,
+			"height": 73
 		},
 		{
 			"type": "paragraph",
@@ -647,6 +710,27 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/poser-un-bloc.jpg",
+			"alt": "La pose d'un bloc en cours : la consigne au-dessus du canevas et la commande pour annuler la pose",
+			"width": 1192,
+			"height": 111
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/fiche-du-bloc.jpg",
+			"alt": "La fiche d'un bloc nouvellement posé : son titre, l'état Enregistré et la commande qui ferme la fiche",
+			"width": 1158,
+			"height": 203
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/channel-vise.jpg",
+			"alt": "Dans la fiche d'un bloc, le channel visé et la commande qui retire le lien",
+			"width": 1158,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -931,6 +1015,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/tracer-une-fleche.jpg",
+			"alt": "La commande Tracer une flèche, au-dessus du canevas, et le lien tracé dans la liste des liens",
+			"width": 1192,
+			"height": 761
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1025,6 +1116,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/supprimer-le-bloc.jpg",
+			"alt": "La confirmation de suppression d'un bloc, avec Supprimer définitivement et Annuler la suppression",
+			"width": 1158,
+			"height": 166
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/commande-supprimer.jpg",
+			"alt": "La commande Supprimer le bloc, dans la fiche d'un bloc",
+			"width": 182,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1078,6 +1183,13 @@
 					"text": "8.6 Qui peut écrire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/lecture-seule.jpg",
+			"alt": "Le bandeau de lecture seule d'un tableau, pour un membre qui n'a pas le droit d'y écrire",
+			"width": 553,
+			"height": 82
 		},
 		{
 			"type": "paragraph",
@@ -1146,6 +1258,34 @@
 					"text": "8.7 Quand il n'y a rien"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/aucun-tableau.jpg",
+			"alt": "L'état vide : aucun tableau d'objectifs, avec le bouton qui en crée un",
+			"width": 870,
+			"height": 347
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/aucun-objectif.jpg",
+			"alt": "Un tableau sans aucun bloc",
+			"width": 266,
+			"height": 53
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/tableau-introuvable.jpg",
+			"alt": "L'adresse d'un tableau qui n'existe pas",
+			"width": 192,
+			"height": 53
+		},
+		{
+			"type": "image",
+			"src": "les-objectifs-le-tableau-blanc-de-l-equipe/chargement-impossible.jpg",
+			"alt": "Les objectifs qui n'ont pas pu être lus, avec le bouton Réessayer",
+			"width": 548,
+			"height": 264
 		},
 		{
 			"type": "paragraph",

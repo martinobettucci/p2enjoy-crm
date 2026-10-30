@@ -115,31 +115,40 @@ export async function demonterEspaceNeuf(requete: APIRequestContext, espace: Esp
 }
 
 /**
- * Pose une affaire jetable à une étape donnée, par la clé de service, comme `e2e/ui/parcours-transition.spec.ts`.
+ * Pose une affaire jetable à une étape donnée, par la clé de service.
  *
- * LE SEUL ENDROIT des scénarios du manuel qui écrit `cards` : la bascule de `CRM-111` T2.4.5 déplace le rattachement
- * (channel, workflow, étape) de `cards` vers `card_placements` ; c'est ici qu'il se convertit — une requête sur `cards`,
- * une sur `card_placements`.
+ * LE SEUL ENDROIT des scénarios du manuel qui écrit une affaire. Depuis la bascule de `CRM-111` T2.4.5, `cards` ne porte
+ * plus le rattachement : l'affaire, puis son rattachement dans `card_placements` (channel, workflow, étape ; le rang est
+ * attribué). La clé de service y a le droit (décision 746) et n'est pas soumise à l'invariant « au moins un
+ * rattachement » entre les deux requêtes (décision 770).
  */
 export async function poserAffaire(
 	requete: APIRequestContext,
 	affaire: { readonly id: string; readonly titre: string; readonly channel: string; readonly workflow: string; readonly etape: string },
 ): Promise<void> {
-	await service(requete, 'post', 'cards', [
+	await service(requete, 'post', 'cards', [{ id: affaire.id, workspace_id: WORKSPACE_SEED, title: affaire.titre }])
+	await service(requete, 'post', 'card_placements', [
 		{
-			id: affaire.id,
+			card_id: affaire.id,
 			workspace_id: WORKSPACE_SEED,
 			channel_id: affaire.channel,
 			workflow_id: affaire.workflow,
 			current_step_id: affaire.etape,
-			title: affaire.titre,
 		},
 	])
 }
 
-/** Retire une affaire jetable et ce que les gestes du scénario y ont attaché ; son rattachement part en cascade. */
+/** Les repères du seed où une affaire jetable se pose : « Grands comptes », le workflow global, l'étape Signature. */
+export const CHANNEL_GRANDS_COMPTES = '5eed0000-0000-4000-8000-000000000032'
+export const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
+export const ETAPE_SIGNATURE = '5eed0000-0000-4000-8000-000000000064'
+
+/**
+ * Retire une affaire jetable : tout ce que les gestes du scénario y ont attaché part en cascade — rattachement,
+ * contacts, commentaires, activités, et le fil. Le fil est en ajout seul (`card_events` : la clé de service n'y a que la
+ * lecture, migration 0016) ; c'est pourquoi un geste qui écrit dans un fil se joue sur une affaire jetable, jamais sur
+ * une affaire du seed.
+ */
 export async function detruireAffaire(requete: APIRequestContext, id: string): Promise<void> {
-	for (const table of ['card_activities', 'card_contacts', 'card_comments', 'card_field_values', 'card_checklist_items', 'card_events'])
-		await service(requete, 'delete', `${table}?card_id=eq.${id}`)
 	await service(requete, 'delete', `cards?id=eq.${id}`)
 }

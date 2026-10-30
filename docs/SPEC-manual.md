@@ -446,8 +446,11 @@ est autorisée en début de chapitre. »
 | « Objet non atteignable » | `retrouver-n-importe-quoi-la-recherche` | exige un résultat lisible dont l'écran ne l'est pas — une affaire dont le channel serait illisible ; aucun état du seed ne le produit |
 | « Enregistrer » | `vos-notifications-savoir-qu-on-vous-a-nomme` | cité pour dire que ce bouton n'existe pas |
 | « Accès refusé » | `naviguer-barre-laterale-onglets-etats` | exige un refus explicite du serveur à une lecture ; les droits du seed se traduisent par l'absence de ce qui est fermé, jamais par ce refus |
+| « extrémité hors de portée » | `les-objectifs-le-tableau-blanc-de-l-equipe` | MONTRÉ, sur l'image `extremite-hors-de-portee`, mais fondu dans le libellé du lien (« extrémité hors de portée → Industrialiser la maintenance ») : le contrôle compare des libellés entiers et ne l'y reconnaît pas |
+| « Organisation enregistrée » | `le-carnet-de-contacts` | annonce réservée aux lecteurs d'écran (`LiveRegion`, `sr-only`) : rien ne paraît à l'écran, la fiche relue le montre |
+| « Le nom est requis. » | `le-carnet-de-contacts` | refus du serveur à un nom d'organisation vide (`btrim(name) <> ''`) ; « Créer » reste grisé tant que le nom, rogné, est vide — un contrôle au moins aussi strict —, l'écran n'envoie donc jamais ce nom |
 
-*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28), soumises au responsable.*
+*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28) et T4.2a (2026-10-30, la dernière), soumises au responsable.*
 
 ### 11.4 Le contrat technique des images
 
