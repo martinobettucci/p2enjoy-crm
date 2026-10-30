@@ -36877,3 +36877,24 @@ au §11.3 : « extrémité hors de portée » (montré, mais fondu dans le libel
 
 **Vérifications.** 22 scénarios verts ; 64 images observées sur planches ; 64 placées avec leur texte alternatif ;
 `verify-manual.sh` sur neuf chapitres : 165 contrôles, sans anomalie ; aucune donnée jetable restante en base.
+
+### `CRM-117` T4.2b, premier passage : le chapitre 9 (2026-10-30)
+
+**Observations.**
+- Sept scénarios, sept échecs au premier passage, tous du scénario sauf un : apostrophes typographiques là où l'écran
+  écrit une apostrophe droite ; des boutons qui cèdent leur place à leur formulaire ; des repères de test posés sur une
+  section et non sur son bouton (`geste-corbeille-card`) ; le nom accessible d'un filtre du fil porte son compte
+  (« Champs 0 ») ; un sommeil réussi s'affiche dans un badge d'en-tête, la mention ne porte que les refus ; une affaire
+  créée s'ouvre sur sa fiche ; le refus « vos droits ont changé » exige d'ouvrir le formulaire AVANT d'abaisser les
+  droits.
+- **Défaut produit, hors de `CRM-117`** : changer le responsable depuis l'en-tête écrit bien l'événement `assigned`
+  (déclencheur `card_placements_write_events`), mais le fil ne le relit pas — l'en-tête n'appelle `onEvenement` que pour
+  les étiquettes, comme avant le correctif de `CRM-069`. « Responsable modifié » ne paraît qu'après relecture de la page.
+  Le scénario relit la page ; le défaut est soumis au responsable.
+- **Incident sur la base partagée** : un scénario interrompu par son délai a laissé Driss Lemoine « viewer » quelques
+  minutes — son `finally` n'atteint plus l'API une fois le contexte fermé. Rétabli à la main, la session `CRM-071`
+  prévenue ; `retablirLeSeed`, en `afterEach`, rétablit désormais le rôle et retire les affaires jetables.
+- Une campagne pgTAP d'une autre session a fait tomber deux scénarios en délai de requête (`57014`) ; rejoués seuls, verts.
+
+**Vérifications.** 7 scénarios verts ; 53 images observées sur planches, trois redécoupées (le titre de l'en-tête au lieu
+du fil d'Ariane tronqué ; le refus de la corbeille entier) ; aucune donnée jetable restante ; rôle de Driss vérifié.

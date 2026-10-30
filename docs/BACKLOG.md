@@ -17318,8 +17318,17 @@ responsable** : traitée juste après `CRM-116`.*
               illustré dans l'introduction du chapitre 10 ; un test interrompu par son délai avait laissé Driss
               Lemoine « viewer » dans la base partagée (rétabli) : `retablirLeSeed`, appelé en `afterEach`, rend son rôle
               et retire les affaires jetables même après un dépassement de délai.
-        - [ ] **T4.2b** (9, la fiche, le board, la liste). Scénarios écrits, jamais passés. La vue liste porte les
-              vues sauvegardées de `CRM-071` T2 (9.11) : ses images se prennent sur ce build.
+        - [~] **T4.2b** (9, la fiche, le board, la liste). **Le 2026-10-30** : `e2e/manuel/09a` et `09b` passés et
+              corrigés, 7 scénarios verts, 53 images produites et observées, **pas encore placées** ; le chapitre 9
+              n'est pas encore dans `CHAPITRES_ILLUSTRES`. Restent, mesurés par le contrôle 9 sur le chapitre :
+              environ 40 éléments cités sans image — les vues sauvegardées et « Exporter en CSV » de `CRM-071` (9.11),
+              les étiquettes (9.16), « Dossier changé » et « Workflow modifié » au fil, les états vides du fil,
+              « Informations d'autres étapes », « Étape supprimée », « Toutes les affaires de ce channel sont en
+              sommeil », le second refus de la corbeille ; « Enregistrement… » (l'écriture de l'en-tête n'est plus
+              sur `cards` depuis `CRM-111`) ; la citation de « Rien n'a été enregistré… » sans son point final.
+              **Défaut produit constaté, hors de `CRM-117`, soumis au responsable** : un changement de responsable
+              fait depuis l'en-tête n'est pas relu par le fil (seules les étiquettes appellent `onEvenement`) ;
+              « Responsable modifié » n'y paraît qu'après relecture de la page (journal).
       - [ ] **T4.3 — la messagerie** : chapitres 11 à 16. Scénarios écrits, jamais passés.
       - [ ] **T4.4 — l'administration** : chapitres 17 à 22. Scénarios des chapitres 19 à 22 écrits, jamais passés ;
             17 et 18 restent à écrire.
