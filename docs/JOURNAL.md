@@ -37503,3 +37503,25 @@ a reconstruit la base pendant la campagne finale de `CRM-117`, faute d'avoir ét
 revenue saine, la session de `CRM-117` a rejoué ses preuves. Leçon : un script de vérification se lit avant d'être lancé
 sur une pile partagée.
 
+### `CRM-074` T3 : l'aperçu des pièces jointes, le seed et le manuel (2026-10-31)
+
+**Réalisé** : `docs/DESIGN_SYSTEM.md` §5.80 avant le code ; la ligne d'une pièce et le panneau d'aperçu partagés par l'inbox
+et le fil de l'affaire ; le seed §35 (un courrier réellement reçu à cinq pièces) ; le manuel, chapitres 12 et 33, et l'image
+du journal du chapitre 22 reprise après INC-323.
+
+**Observations et choix** :
+- *La colonne `card_id` des pièces* : les pièces reçues d'un message classé par la règle 1 la gardent nulle ; le fil lit
+  donc par les messages (INC-326, non corrigée).
+- *Le PDF dans les preuves* : le « headless shell » de Playwright n'a pas de lecteur PDF ; le Chromium complet en nouveau
+  mode sans tête en a un. Les preuves de l'aperçu et le scénario du chapitre 12 l'emploient.
+- *Vu sur capture* : à 390 px, le nom en tête du panneau se coupait lettre à lettre ; il prend sa ligne sous `md`.
+- *Un garde pgTAP révisé* (décision 51) : `0095` comptait quatre messages non lus au départ ; le seed en reçoit un cinquième.
+- *Le manuel* : un état cité sans image (« extraction en cours ») est décrit sans être cité ; les images des chapitres 32 et
+  33 reprises par le scénario sans changement visible, sont rendues à leur version, et le manifeste n'est mis à jour que pour
+  les chapitres 12 et 22.
+- *Coordination* : la campagne finale de `CRM-117` close, la pile rendue ; les images du chapitre 22 prises seules, juste
+  après une reconstruction.
+
+**Vérifications** : unitaires 5 101/5 101 ; E2E 7/7 et 26/26 rejoués ; pgTAP 121 fichiers ; manuel 12, 22, 32-33 et
+`verify-manual` sans anomalie.
+

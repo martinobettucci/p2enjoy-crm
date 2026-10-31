@@ -1824,7 +1824,11 @@ SCENARIOS_API=1288
 # **+8 par `CRM-073` T3, 2026-10-31** : `e2e/ui/webhooks.spec.ts`, fichier NEUF — la liste semée et l'historique avec le
 # renvoi, la création (le secret une fois), la modification, la régénération et la suppression, le refus d'une adresse en
 # clair, l'écran refusé à la lectrice, et les quatre paliers. 1021 + 8 = 1029, COMPTÉE (`--list`, « Total: 1029 tests »).
-SCENARIOS_UI=1029
+# **+1 par INC-323, 2026-10-31** : `e2e/ui/journal-audit.spec.ts` — la famille « Imports » rend l'import du seed. 1029 + 1 =
+# 1030. **+7 par `CRM-074` T3, 2026-10-31** : `e2e/ui/pieces-jointes.spec.ts`, fichier NEUF — l'aperçu dans l'inbox (PDF et
+# son texte, scan, image, Office), dans le fil de l'affaire, et les quatre paliers. 1030 + 7 = 1037, COMPTÉE — « Total: 1037
+# tests in 115 files ».
+SCENARIOS_UI=1037
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

@@ -2758,3 +2758,33 @@ final ne dépend pas du moment où la tâche a tiré.
 
 Un webhook dont le nom est déjà là n'est pas recréé, et son secret n'est jamais relu. Sur un rejeu, le volet RGPD ne crée
 plus rien, donc aucune remise nouvelle ne naît, et l'attente est immédiate.
+
+## 35. Un courrier reçu avec cinq pièces jointes — `CRM-074` T3 (décisions 788, 789 et 791)
+
+### 35.1 Ce que le seed pose
+
+Un courrier **réellement reçu**, « Dossier de consultation — monitoring Vertuo », `Message-ID`
+`<seed-pieces-jointes@p2enjoy.test>`, adressé par Driss (`bizdev@p2enjoy.test`) à l'affaire « Refonte du monitoring —
+Vertuo » (`…d012`) et classé par la règle 1. Il porte les cinq fichiers de `supabase/seed/pieces-jointes/`, produits par
+`generer.py` (bibliothèque standard, sortie reproductible) :
+
+| Pièce | Type | Ce qu'elle démontre |
+|---|---|---|
+| `devis-refonte-vertuo.pdf` | PDF avec texte | l'aperçu dans le cadre et le texte extrait |
+| `plan-signe-scanne.pdf` | PDF sans calque de texte | « Aucun texte lisible : le document est sans doute numérisé. » |
+| `maquette-accueil.png` | image PNG | l'aperçu d'une image, sans texte |
+| `cahier-des-charges.docx` | Word | le texte seul d'un fichier Office |
+| `budget-previsionnel.xlsx` | Excel | le texte d'un classeur |
+
+### 35.2 Le vrai chemin
+
+Soumission SMTP authentifiée sur Stalwart, relève par `mail-sync` (la même fonction que le §2.19), antivirus local, classement
+par la règle 1, puis extraction par la route interne de `mail-sync` — la boucle de trente secondes ferait la même chose, plus
+tard ; la route rend l'état final avant la fin du seed. Rien n'est écrit en table à la main (CLAUDE.md §8).
+
+### 35.3 Convergence
+
+Le seed **vérifie** l'état final, et s'arrête avec sa cause sinon : les cinq pièces `clean`, le texte `extracted` pour le
+PDF avec texte, le Word et l'Excel, `empty` pour le scan, aucun statut pour l'image. `Message-ID` fixe : rejouer le seed
+n'envoie rien de plus.
+

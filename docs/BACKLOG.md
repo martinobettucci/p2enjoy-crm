@@ -7504,7 +7504,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-071 | Vues sauvegardées, import et export CSV — les six tranches livrées et prouvées en développement ; reste la livraison (migrations `0135` à `0138`, webapp, image `mcp`) | `[P]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |
 | CRM-073 | Webhooks sortants signés — **arbitrée** (décision 779) : webhooks seuls, **jetons d'API abandonnés** (le connecteur MCP suffit) ; connecteur MCP : non. **Spécification validée** (`docs/SPEC-webhooks.md`, décision 784) ; T1 à T3 livrées et prouvées en développement (migrations `0139`, `0140`, fonction `webhooks`, Réglages ▸ Webhooks, chapitre 34 du manuel) ; reste la livraison — tranches à la section `CRM-073` | `[P]` |
-| CRM-074 | Aperçu des pièces jointes et extraction de texte — **arbitrée** (décision 788) : aperçu des images et des PDF sains, boîte de réception et fil de l'affaire ; texte extrait des PDF et des fichiers Office, montré dans l'aperçu, **hors recherche** ; connecteur MCP : **oui**, famille `messagerie` existante, la pièce rendue en binaire ; tranches à la section `CRM-074` | `[@]` |
+| CRM-074 | Aperçu des pièces jointes et extraction de texte — **arbitrée** (décision 788) : aperçu des images et des PDF sains, boîte de réception et fil de l'affaire ; texte extrait des PDF et des fichiers Office, montré dans l'aperçu, **hors recherche** ; connecteur MCP : **oui**, famille `messagerie` existante, la pièce rendue en binaire ; T1 à T4 livrées et prouvées en développement (migration `0141`, `mail-sync`, aperçu, connecteur) ; reste la livraison — tranches à la section `CRM-074` | `[P]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
 | CRM-077 | Corbeille et restauration des objets métier | `[P]` |
@@ -12705,8 +12705,7 @@ Connecteur MCP : **non**, aux deux questions (décision 779) — aucune famille 
 - [ ] **Livraison en production**, sur instruction du responsable — **dans le lot unique des migrations `0106` à `0140`**
       (décision 786), après la fin de `CRM-117` (décision 783) ; `docs/PROD_MIGRATIONS.md` §3.
 
-### CRM-074 — Aperçu des pièces jointes et extraction de texte `[@]`
-*Prise en charge : session interactive 4522fa9c depuis 2026-10-31 17:53 UTC — état avant : [ ]*
+### CRM-074 — Aperçu des pièces jointes et extraction de texte `[P]`
 
 *Arbitrée le 2026-10-31 (décision 788).* (1) **Aperçu** des images (PNG, JPEG, GIF, WebP) et des PDF, dans une
 visionneuse, pour les seules pièces saines (`clean`), par le lien signé existant ; ni SVG ni HTML. (2) **Extraction de
@@ -12739,8 +12738,18 @@ binaire**, pour que l'agent la lise à sa façon.
       (PDF, scan, Word, Excel, image ignorée, faux fichier, objet absent), puis la boucle seule, journal sans nom ni texte ;
       relève et envoi avec pièces rejoués verts (4/4) ; la preuve d'API de T1 rendue indifférente à la course avec la
       boucle ; compteur du harnais (48 scénarios mail). *Précisions d'exécution* : `docs/SPEC-pieces-jointes.md` §14.
-- [ ] **T3 — l'écran** (§5, §8) : `docs/DESIGN_SYSTEM.md` avant le code ; visionneuse dans la boîte de réception et le fil
+- [x] **T3 — l'écran** (§5, §8) : `docs/DESIGN_SYSTEM.md` avant le code ; visionneuse dans la boîte de réception et le fil
       de l'affaire ; seed par la vraie chaîne ; unitaires, E2E, captures ; manuel.
+      *Livrée en développement le 2026-10-31* — `docs/DESIGN_SYSTEM.md` §5.80 écrit avant le code (décision 791 : un panneau
+      dans le flux, INC-325) ; `webapp/src/lib/pieces-jointes.ts`, `webapp/src/app/PiecesJointes.tsx` partagé par l'inbox
+      et le fil de l'affaire ; seed §35, un courrier réellement reçu à cinq pièces, texte extrait par la vraie chaîne ;
+      manuel, chapitre 12 (quatre images, chapitre repris en entier) et 33, image du journal du chapitre 22 reprise après INC-323.
+      Preuves : unitaires 11 nouveaux, suite 5 101/5 101 ; E2E `e2e/ui/pieces-jointes.spec.ts` 7/7 sur le Chromium complet
+      (lecteur PDF), captures `docs/captures/CRM-074/` observées — un défaut vu à 390 px corrigé ; inbox, envoi et journal
+      rejoués verts (26/26) ; pgTAP 121 fichiers sans anomalie après révision de `0095` (un cinquième message non lu) ;
+      scénarios du manuel 12 (4/4), 22 (journal) et 32-33 (7/7), `verify-manual` 166 contrôles sans anomalie ; compteur du
+      harnais (1 037 scénarios d'interface). INC-326 consignée (la colonne `card_id` des pièces reçues). *Précisions
+      d'exécution* : `docs/SPEC-pieces-jointes.md` §16.
 - [x] **T4 — le connecteur** (§6) : `crm_mail_attachment_get`, `attachments` dans `crm_card_mail_list` et `crm_mail_get` ;
       `docs/SPEC-mcp.md` §9.2 decies ; tests.
       *Livrée en développement le 2026-10-31* — `mcp/crm_mcp/outils/messagerie.py` (pièces listées, outil rendant la pièce

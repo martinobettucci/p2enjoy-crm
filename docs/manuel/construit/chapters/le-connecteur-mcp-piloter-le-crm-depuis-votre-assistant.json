@@ -3182,20 +3182,46 @@
 										},
 										{
 											"type": "text",
-											"text": " : les emails classés dans une affaire, du plus ancien au plus récent — sens, date, expéditeur,\ndestinataires, objet, un extrait, et le "
+											"text": " : les emails classés dans une affaire, du plus ancien au plus récent — sens, date, expéditeur,\ndestinataires, objet, un extrait, et la "
 										},
 										{
 											"type": "strong",
 											"content": [
 												{
 													"type": "text",
-													"text": "nombre"
+													"text": "liste"
 												}
 											]
 										},
 										{
 											"type": "text",
-											"text": " de pièces jointes ; un email en entier, avec son texte. Quand\nl'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit\naussi s'il est "
+											"text": " de ses pièces jointes — nom, type, taille, et si elle est\ndisponible ; un email en entier, avec son texte. "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "Une pièce jointe disponible"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", c'est-à-dire déclarée saine, l'assistant\npeut la "
+										},
+										{
+											"type": "strong",
+											"content": [
+												{
+													"type": "text",
+													"text": "lire elle-même"
+												}
+											]
+										},
+										{
+											"type": "text",
+											"text": ", jusqu'à 25 Mo : il reçoit le fichier et le lit à sa façon. Quand\nl'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit\naussi s'il est "
 										},
 										{
 											"type": "strong",
@@ -3361,13 +3387,13 @@
 					"content": [
 						{
 							"type": "text",
-							"text": "les pièces jointes"
+							"text": "joindre une pièce"
 						}
 					]
 				},
 				{
 					"type": "text",
-					"text": ", ni lues ni\nenvoyées par le connecteur ; "
+					"text": " à un envoi — le connecteur lit\nles pièces jointes, il n'en envoie aucune ; "
 				},
 				{
 					"type": "strong",
@@ -3380,14 +3406,14 @@
 				},
 				{
 					"type": "text",
-					"text": " un fil de la boîte de réception ; "
+					"text": " un fil de la boîte de réception ;\n"
 				},
 				{
 					"type": "strong",
 					"content": [
 						{
 							"type": "text",
-							"text": "les modèles\net les séquences"
+							"text": "les modèles et les séquences"
 						}
 					]
 				},

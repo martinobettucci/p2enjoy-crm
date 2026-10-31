@@ -10,6 +10,8 @@
 //       docs/SPEC-contacts.md §8.8.2 (où le bloc s'ancre), §8.8.4 (les quatre états),
 //       §8.8.5 (ce que le bloc écrit et ce qu'il tait), §8.8.6 (le geste et ses refus) ;
 //       docs/DESIGN_SYSTEM.md §5.4 ter
+// @spec CRM-074 (docs/BACKLOG.md) — tranche T3 : les pièces d'un message par la liste partagée et son aperçu
+//       (docs/DESIGN_SYSTEM.md §5.80, docs/SPEC-pieces-jointes.md §5)
 // @spec CRM-065 (docs/BACKLOG.md) — sous-tranche 2c : l'inbox adressable,
 //       docs/SPEC-recherche.md §15 (ce que 2c livre), §13.5 (le message mène à l'inbox, et son
 //       adresse porte le message), M16 (le classement décide du dossier)
@@ -41,7 +43,7 @@
 // passer (§18.1) ; l'écran ne filtre rien et ne devine rien.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { CheckCheck, ChevronDown, ChevronRight, Inbox, Mail, MailOpen, MailX, Moon, Paperclip, Download, Sparkles, Sun } from 'lucide-react'
+import { CheckCheck, ChevronDown, ChevronRight, Inbox, Mail, MailOpen, MailX, Moon, Sparkles, Sun } from 'lucide-react'
 import { Link, useSearchParams } from 'react-router'
 import { Button } from '../components/ui/Button'
 import { LiveRegion } from '../components/ui/LiveRegion'
@@ -63,7 +65,6 @@ import {
 	marquerLus,
 	marquerNonLu,
 	textePastille,
-	urlPieceJointe,
 	useArborescence,
 	useFilsEndormis,
 	useMessage,
@@ -74,7 +75,6 @@ import {
 	type MessageListe,
 	type NatureRefusClassement,
 	type PageMessages,
-	type PieceJointe,
 	type Selection,
 } from '../lib/inbox'
 import { BasculeSommeil, CLE_PRESET_SOMMEIL, PastilleSommeil } from '../components/ui/Sommeil'
@@ -104,6 +104,7 @@ import { PARAMETRE_MESSAGE } from '../lib/colonnes-recherche'
 import { objetDeReponse } from '../lib/envoi'
 import { clientCrm } from '../lib/supabase'
 import { FormulaireEnvoi } from './FormulaireEnvoi'
+import { ListePiecesJointes } from './PiecesJointes'
 
 /** Le panneau visible sous 1024 px. Sur grand écran, les trois sont montrés ensemble. */
 type Etage = 'dossiers' | 'liste' | 'message'
@@ -640,54 +641,6 @@ function PanneauListe({
 // =================================================================================================
 // Panneau 3 — le message
 // =================================================================================================
-
-/**
- * Le libellé d'un statut d'analyse, avec un repli **documenté**.
- *
- * La valeur vient du backend, et un type ne garantit jamais une valeur (`docs/SPEC-types.md`) :
- * `av_status` est une colonne `text` sous contrainte `CHECK`, non une énumération. Un statut
- * inconnu est donc affiché comme inconnu — et surtout **sans bouton de téléchargement** : le repli
- * ne doit jamais glisser du côté permissif.
- */
-const LIBELLE_STATUT: Readonly<Record<string, CleTraduction>> = {
-	pending: 'inbox.attachments.status.pending',
-	infected: 'inbox.attachments.status.infected',
-	skipped: 'inbox.attachments.status.skipped',
-}
-
-const libelleStatut = (statut: string): CleTraduction =>
-	LIBELLE_STATUT[statut] ?? 'inbox.attachments.status.unknown'
-
-function LignePieceJointe({ piece }: { readonly piece: PieceJointe }) {
-	const [echec, setEchec] = useState(false)
-	const telecharger = useCallback(async () => {
-		const url = await urlPieceJointe(clientCrm, piece.chemin)
-		if (url === null) {
-			setEchec(true)
-			return
-		}
-		setEchec(false)
-		window.open(url, '_blank', 'noopener,noreferrer')
-	}, [piece.chemin])
-
-	return (
-		<li className="flex items-center gap-2 py-1" data-testid="inbox-piece-jointe">
-			<Paperclip aria-hidden="true" size={16} className="shrink-0 text-text-3" />
-			<span className="truncate">{piece.nom}</span>
-			{/* UNE PIÈCE NON SAINE N'A PAS DE BOUTON, elle a un statut en toutes lettres. Un bouton
-			    grisé promet ce que le serveur refusera (§5.4). */}
-			{piece.statutAnalyse === 'clean' ? (
-				<Button variante="discret" taille="compacte" onClick={() => void telecharger()}>
-					<Download aria-hidden="true" size={14} />
-					{t('inbox.attachments.download')}
-				</Button>
-			) : (
-				<span className="text-sm text-text-3">{t(libelleStatut(piece.statutAnalyse))}</span>
-			)}
-			{echec ? <span className="text-sm text-danger">{t('inbox.attachments.unavailable')}</span> : null}
-		</li>
-	)
-}
 
 /**
  * Les quatre refus possibles d'un classement, nommés **littéralement**.
@@ -1580,11 +1533,8 @@ function PanneauMessage({
 					{etat.donnees.pieces.length > 0 ? (
 						<section>
 							<h4 className="text-sm font-medium text-text-2">{t('inbox.attachments.title')}</h4>
-							<ul>
-								{etat.donnees.pieces.map((piece) => (
-									<LignePieceJointe key={piece.id} piece={piece} />
-								))}
-							</ul>
+							{/* `CRM-074` T3 (docs/DESIGN_SYSTEM.md §5.80) : la liste partagée avec le fil de l'affaire, et l'aperçu. */}
+							<ListePiecesJointes pieces={etat.donnees.pieces} client={clientCrm} />
 						</section>
 					) : null}
 

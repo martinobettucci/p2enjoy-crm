@@ -1,6 +1,8 @@
 // @spec CRM-117 (docs/BACKLOG.md) — tranche T4.3 : les images du chapitre 12, « L'inbox : lire, trier et répondre »
 // @spec docs/SPEC-manual.md §11.1, §11.2 ; docs/manual.md chapitre 12 ; docs/SPEC-mail-subsystem.md §19 (l'envoi, les
 //       pièces jointes), §20 (l'inbox, le classement, la suggestion, le sommeil des fils)
+// @spec CRM-074 (docs/BACKLOG.md) — tranche T3 : les images de l'aperçu d'une pièce jointe (docs/DESIGN_SYSTEM.md §5.80,
+//       docs/SPEC-pieces-jointes.md §5, docs/SPEC-seed.md §35)
 //
 // Les messages sont ceux du seed : « Candidature spontanée » (non classé), « Demande de devis — refonte » et sa réponse
 // (classés dans « Refonte du site vitrine »), « Point d'avancement — migration ERP » (suggéré). Rien n'est classé, retiré,
@@ -11,6 +13,10 @@ import { expect, test, type Page } from '@playwright/test'
 import { illustrer } from './illustrer'
 import { ADMIN, AFFAIRE_SOGEXIA, connecterAvecLeLabs, lireService, retenir } from './outils'
 import { URL_API, enTetesService } from '../api/jetons'
+
+// LE CHROMIUM COMPLET, et non le « headless shell » : seul le premier porte le lecteur PDF du navigateur, que l'image de
+// l'aperçu d'un PDF montre (`CRM-074` T3). Le choix vaut pour le fichier entier : Playwright ne le permet pas par groupe.
+test.use({ channel: 'chromium' })
 
 const CHAPITRE = 'l-inbox-lire-trier-et-repondre'
 const LIRE = 'l-inbox-lire-et-trier-le-courrier-recu'
@@ -81,6 +87,44 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 	const telecharger = page.getByTestId('inbox-message-ouvert').getByRole('button', { name: /Télécharger/ }).first()
 	await expect(telecharger).toBeVisible()
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'telecharger', cibles: [piece, telecharger] })
+})
+
+// `CRM-074` T3 (docs/DESIGN_SYSTEM.md §5.80) : l'aperçu des pièces du courrier « Dossier de consultation — monitoring Vertuo »
+// (docs/SPEC-seed.md §35).
+test.describe('l’aperçu d’une pièce jointe', () => {
+	test('le PDF et son texte, un document Word, un scan, et les pièces dans l’historique', async ({ page }) => {
+		await connecterAvecLeLabs(page, ADMIN)
+		await ouvrir(page, /Refonte du monitoring/, 'Dossier de consultation — monitoring Vertuo')
+		const piece = (nom: string) => page.getByTestId('inbox-message-ouvert').getByTestId('inbox-piece-jointe').filter({ hasText: nom })
+
+		const devis = piece('devis-refonte-vertuo.pdf')
+		await devis.getByRole('button', { name: /Aperçu de/ }).click()
+		await expect(devis.getByTestId('texte-contenu')).toContainText('Devis n° 2026-118')
+		await devis.getByTestId('apercu-pdf').scrollIntoViewIfNeeded()
+		// Le lecteur PDF peint hors du processus de la page, sans événement observable : l'attente ne sert qu'à l'image.
+		await page.waitForTimeout(2_000)
+		await page.setViewportSize({ width: 1440, height: 1600 })
+		await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'apercu-pdf', cibles: [devis] })
+
+		const cahier = piece('cahier-des-charges.docx')
+		await cahier.getByRole('button', { name: /Aperçu de/ }).click()
+		await expect(cahier.getByTestId('texte-contenu')).toContainText('Cahier des charges')
+		await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'apercu-texte-extrait', cibles: [cahier] })
+
+		const scan = piece('plan-signe-scanne.pdf')
+		await scan.getByRole('button', { name: /Aperçu de/ }).click()
+		await expect(scan.getByTestId('texte-etat')).toContainText('Aucun texte lisible')
+		await scan.getByTestId('texte-extrait').scrollIntoViewIfNeeded()
+		// La pièce entière, et non la seule phrase : l'image doit dire de quel fichier elle parle.
+		await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'aucun-texte-lisible', cibles: [scan] })
+
+		await page.getByTestId('inbox-pilule-card').click()
+		const ligne = page.getByRole('listitem').filter({ hasText: /^\s*Message reçu.*Dossier de consultation/ }).first()
+		const budget = ligne.getByTestId('inbox-piece-jointe').filter({ hasText: 'budget-previsionnel.xlsx' })
+		await budget.getByRole('button', { name: /Aperçu de/ }).click()
+		await expect(budget.getByTestId('texte-contenu')).toContainText('Tableaux de bord')
+		await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'pieces-dans-l-historique', cibles: [ligne] })
+	})
 })
 
 test('un message non classé, et une suggestion', async ({ page }) => {

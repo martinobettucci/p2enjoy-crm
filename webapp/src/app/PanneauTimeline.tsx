@@ -1,3 +1,5 @@
+// @spec CRM-074 (docs/BACKLOG.md) — tranche T3 : les pièces de chaque courrier sous sa ligne du fil, avec leur aperçu
+//       (docs/DESIGN_SYSTEM.md §5.80, docs/SPEC-pieces-jointes.md §5.1, décision 789)
 // @spec CRM-071 (docs/BACKLOG.md) — tranche T6 : « Affaire créée par import » quand l'événement porte `source` (docs/DESIGN_SYSTEM.md §5.78)
 // @spec CRM-069 (docs/BACKLOG.md) — tranche T2 : « Étiquette posée » et « Étiquette retirée » dans le fil, famille « Champs » (docs/DESIGN_SYSTEM.md §5.73)
 // @spec CRM-093 (docs/BACKLOG.md) tranche T4 — les commandes d'écriture lisent le refus de la fiche quand la base refuse
@@ -92,7 +94,9 @@ import {
 	type NatureRefusMention,
 	type PersonneMentionnable,
 } from '../lib/mentions'
-import { lireMessagesDeCard } from '../lib/inbox'
+import { lireMessagesDeCard, type PieceJointe } from '../lib/inbox'
+import { lirePiecesDesMessages } from '../lib/pieces-jointes'
+import { ListePiecesJointes } from './PiecesJointes'
 import { lireNomsDeContacts } from '../lib/contacts'
 import { lireActivites, type ActiviteAffichee } from '../lib/activites'
 import {
@@ -363,6 +367,8 @@ export function PanneauTimeline({
 	// événements : un classement fait depuis l'inbox ajoute un `mail_received` que le fil doit
 	// pouvoir nommer sans attendre un rechargement complet.
 	const [libellesMessages, setLibellesMessages] = useState<ReadonlyMap<string, string>>(new Map())
+	// `CRM-074` T3 : les pièces des courriers de l'affaire, par message, lues avec leurs libellés (§5.80).
+	const [piecesParMessage, setPiecesParMessage] = useState<ReadonlyMap<string, readonly PieceJointe[]>>(new Map())
 	// Les contacts cités par les trois événements de rattachement — `CRM-060` tranche 5, §19.5.
 	const [libellesContacts, setLibellesContacts] = useState<ReadonlyMap<string, string>>(new Map())
 	// AUCUNE PERSISTANCE (`CLAUDE.md` §11) : ni `localStorage`, ni `sessionStorage`. L'état d'un
@@ -431,12 +437,15 @@ export function PanneauTimeline({
 	useEffect(() => {
 		if (!porteDuCourrier) {
 			setLibellesMessages(new Map())
+			setPiecesParMessage(new Map())
 			return
 		}
 		let vivant = true
 		void (async () => {
 			const messages = await lireMessagesDeCard(client, idCard)
+			const pieces = await lirePiecesDesMessages(client, [...messages.keys()])
 			if (!vivant) return
+			setPiecesParMessage(pieces)
 			setLibellesMessages(
 				new Map(
 					[...messages].map(([identifiant, message]) => [
@@ -657,6 +666,8 @@ export function PanneauTimeline({
 					messages: libellesMessages,
 					contacts: libellesContacts,
 				}}
+				piecesParMessage={piecesParMessage}
+				client={client}
 				onReprise={reprendre}
 				idUtilisateur={idUtilisateur}
 				estAdminWorkspace={estAdminWorkspace}
@@ -954,6 +965,8 @@ function Fil({
 	lignes,
 	totalCharge,
 	libelles,
+	piecesParMessage,
+	client,
 	onReprise,
 	idUtilisateur,
 	estAdminWorkspace,
@@ -964,6 +977,8 @@ function Fil({
 	readonly lignes: readonly LigneFil[]
 	readonly totalCharge: number
 	readonly libelles: LibellesFil
+	readonly piecesParMessage: ReadonlyMap<string, readonly PieceJointe[]>
+	readonly client: ClientCrm | null
 	readonly onReprise: () => void
 	readonly idUtilisateur: string | null
 	readonly estAdminWorkspace: boolean
@@ -1017,7 +1032,7 @@ function Fil({
 					) : ligne.genre === 'activite' ? (
 						<ActiviteDuFil activite={ligne.activite} />
 					) : (
-						<Evenement ligne={ligne} libelles={libelles} />
+						<Evenement ligne={ligne} libelles={libelles} piecesParMessage={piecesParMessage} client={client} />
 					)}
 				</li>
 			))}
@@ -1039,13 +1054,20 @@ function Fil({
 function Evenement({
 	ligne,
 	libelles,
+	piecesParMessage,
+	client,
 }: {
 	readonly ligne: LigneEvenement
 	readonly libelles: LibellesFil
+	readonly piecesParMessage: ReadonlyMap<string, readonly PieceJointe[]>
+	readonly client: ClientCrm | null
 }) {
 	const presentation = PRESENTATION[ligne.type] ?? REPLI
 	const Icone = presentation.icone
 	const { detail } = resoudreDetail(ligne, libelles)
+	const idMessage =
+		ligne.type === 'mail_received' || ligne.type === 'mail_sent' ? ligne.payload['message_id'] : undefined
+	const pieces = typeof idMessage === 'string' ? (piecesParMessage.get(idMessage) ?? []) : []
 	// `CRM-071` T6 (§5.78) : une affaire importée dit son origine — même événement, même icône, même pastille.
 	const cle: CleTraduction =
 		ligne.type === 'created' && ligne.payload.source === 'import' ? 'timeline.event.created.import' : presentation.cle
@@ -1079,6 +1101,8 @@ function Evenement({
 						</span>
 					)}
 				</p>
+				{/* `CRM-074` T3 (§5.80) : les pièces du courrier sous sa ligne ; un courrier sans pièce ne rend aucune liste. */}
+				{pieces.length === 0 ? null : <ListePiecesJointes pieces={pieces} client={client} compacte />}
 			</div>
 		</div>
 	)

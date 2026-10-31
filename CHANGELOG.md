@@ -18,7 +18,7 @@ d'exécuter le code attendu.
 - Le journal d'audit nomme l'import de contacts et d'affaires et l'export CSV du carnet et de la vue liste, avec leurs
   comptes ; le filtre « Famille » gagne « Imports ».
 
-### `CRM-074` — aperçu des pièces jointes et extraction de texte (T1, T2, T4)
+### `CRM-074` — aperçu des pièces jointes et extraction de texte (T1 à T4)
 
 - **Le texte extrait des pièces jointes, en base** (T1, migration `0141`) : chaque pièce saine d'un PDF, d'un fichier Word,
   Excel ou OpenDocument est marquée « à extraire » — les pièces déjà reçues comprises ; l'extraction elle-même et son
@@ -28,6 +28,10 @@ d'exécuter le code attendu.
   PDF par `pypdf`, Word, Excel et OpenDocument par la bibliothèque standard —, dans un processus séparé limité en temps et
   en mémoire ; un document numérisé est reconnu « sans texte lisible », un fichier qui n'est pas ce qu'il annonce « non
   reconnu ». Aucun service externe, aucune variable nouvelle ; l'image `mail-sync` est à reconstruire.
+- **L'aperçu** (T3) : dans l'inbox et dans l'historique d'une affaire, chaque pièce montre sa taille ; une image, un PDF ou un
+  fichier Office sain porte « Aperçu », qui ouvre sous la pièce l'image, le PDF dans le lecteur du navigateur, et le texte
+  extrait avec « Copier le texte » — un document numérisé le dit. Le jeu de démonstration reçoit un courrier à cinq pièces.
+  Manuel, chapitre 12 (et chapitre 33 pour le connecteur).
 - **Le connecteur MCP lit les pièces jointes** (T4, famille « Messagerie », action « Consulter », aucune case nouvelle) :
   la lecture d'un message et celle du fil d'une affaire listent désormais les pièces (nom, type, taille, statut), et le
   nouvel outil `crm_mail_attachment_get` rend une pièce saine elle-même, jusqu'à 25 Mo — une image comme image, tout autre

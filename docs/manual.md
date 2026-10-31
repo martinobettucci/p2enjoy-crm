@@ -3023,6 +3023,23 @@ toutes lettres à côté de son nom. Un bouton grisé promettrait ce que le serv
 
 ![Une pièce jointe déclarée saine, son nom et son bouton « Télécharger »](manuel/images/l-inbox-lire-trier-et-repondre/telecharger.jpg)
 
+**L'aperçu d'une pièce.** Une image (PNG, JPEG, GIF, WebP), un PDF, un document Word, un classeur Excel ou un fichier
+OpenDocument, déclarés sains, portent aussi « **Aperçu** ». L'aperçu s'ouvre **sous la pièce**, dans le message : l'image,
+ou le PDF dans le lecteur de votre navigateur, puis le **texte extrait** du fichier, que « **Copier le texte** » met dans
+votre presse-papiers. Pour un document Word ou un classeur, c'est le texte seul qui est montré. « **Fermer l'aperçu** », ou
+la touche Échap, le referme ; un seul aperçu reste ouvert à la fois.
+
+![L'aperçu d'un PDF sous la pièce : le lecteur du navigateur, puis le texte extrait](manuel/images/l-inbox-lire-trier-et-repondre/apercu-pdf.jpg)
+
+![L'aperçu d'un document Word : son texte extrait et « Copier le texte »](manuel/images/l-inbox-lire-trier-et-repondre/apercu-texte-extrait.jpg)
+
+Le texte est extrait par le CRM lui-même, sans service extérieur, quelques instants après l'arrivée du message : entre-temps,
+l'aperçu dit que l'extraction est en cours, et le texte paraît à la réouverture. Un document **numérisé** n'a pas de texte
+lisible — le CRM ne lit pas les images de texte —, et l'aperçu le dit : « Aucun texte lisible : le document est sans doute
+numérisé. ». Une pièce de plus de 25 Mo n'a pas d'aperçu : elle se télécharge.
+
+![Un document numérisé : « Aucun texte lisible : le document est sans doute numérisé. »](manuel/images/l-inbox-lire-trier-et-repondre/aucun-texte-lisible.jpg)
+
 **Ranger un message.** Un message non classé propose « Classer dans une affaire ». Choisissez
 l'affaire dans la liste, puis validez : le message rejoint l'affaire, son historique en garde la
 trace, et vous le retrouvez ensuite **des deux côtés** — dans l'affaire et sous son dossier dans
@@ -3115,6 +3132,11 @@ eu lieu — et une ligne « **Message retiré de l'affaire** » vient s'ajouter,
 et le nom de la personne qui l'a retiré. Le geste se fait entièrement au clavier.
 
 ![La ligne « Message reçu » dans l'historique de l'affaire](manuel/images/l-inbox-lire-trier-et-repondre/message-recu.jpg)
+
+**Les pièces d'un courrier dans l'historique.** Sous la ligne d'un message reçu ou envoyé, l'historique de l'affaire liste
+ses pièces, avec leur taille, « Aperçu » et « Télécharger » : l'aperçu s'y ouvre comme dans l'inbox, sans quitter la fiche.
+
+![Les pièces d'un message sous sa ligne de l'historique, l'aperçu d'un classeur ouvert](manuel/images/l-inbox-lire-trier-et-repondre/pieces-dans-l-historique.jpg)
 
 **Ce qui n'est pas encore là.** L'inbox n'a pas de recherche propre — la recherche de l'en-tête trouve les messages
 ([chapitre 4](#retrouver-n-importe-quoi-la-recherche)). La liste montre les cinquante messages les plus récents d'un
@@ -6242,7 +6264,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 
 - **Messagerie** :
   - *Consulter* : les emails classés dans une affaire, du plus ancien au plus récent — sens, date, expéditeur,
-    destinataires, objet, un extrait, et le **nombre** de pièces jointes ; un email en entier, avec son texte. Quand
+    destinataires, objet, un extrait, et la **liste** de ses pièces jointes — nom, type, taille, et si elle est
+    disponible ; un email en entier, avec son texte. **Une pièce jointe disponible**, c'est-à-dire déclarée saine, l'assistant
+    peut la **lire elle-même**, jusqu'à 25 Mo : il reçoit le fichier et le lit à sa façon. Quand
     l'expéditeur n'a écrit qu'en HTML, le texte en est extrait comme à l'écran, et l'assistant le sait. Chaque email dit
     aussi s'il est **lu ou non lu pour vous** ([chapitre 12.2](#l-inbox-lire-et-trier-le-courrier-recu)) ; le lire par l'assistant ne le marque pas lu, et aucun outil
     ne change cet état ;
@@ -6259,9 +6283,9 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 
 ### 33.6 Ce que le connecteur n'offre pas
 
-Toutes les familles ont leurs outils. Restent des gestes de l'écran : **les pièces jointes**, ni lues ni
-envoyées par le connecteur ; **classer, déclasser ou mettre en sommeil** un fil de la boîte de réception ; **les modèles
-et les séquences** de relance.
+Toutes les familles ont leurs outils. Restent des gestes de l'écran : **joindre une pièce** à un envoi — le connecteur lit
+les pièces jointes, il n'en envoie aucune ; **classer, déclasser ou mettre en sommeil** un fil de la boîte de réception ;
+**les modèles et les séquences** de relance.
 
 ## 34. Les webhooks : prévenir vos autres outils
 

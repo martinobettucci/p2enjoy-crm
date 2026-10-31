@@ -781,8 +781,134 @@
 			"type": "image",
 			"src": "l-inbox-lire-trier-et-repondre/telecharger.jpg",
 			"alt": "Une pièce jointe déclarée saine, son nom et son bouton « Télécharger »",
-			"width": 338,
+			"width": 373,
 			"height": 73
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "L'aperçu d'une pièce."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une image (PNG, JPEG, GIF, WebP), un PDF, un document Word, un classeur Excel ou un fichier\nOpenDocument, déclarés sains, portent aussi « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Aperçu"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ». L'aperçu s'ouvre "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "sous la pièce"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": ", dans le message : l'image,\nou le PDF dans le lecteur de votre navigateur, puis le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "texte extrait"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du fichier, que « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Copier le texte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " » met dans\nvotre presse-papiers. Pour un document Word ou un classeur, c'est le texte seul qui est montré. « "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Fermer l'aperçu"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " », ou\nla touche Échap, le referme ; un seul aperçu reste ouvert à la fois."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/apercu-pdf.jpg",
+			"alt": "L'aperçu d'un PDF sous la pièce : le lecteur du navigateur, puis le texte extrait",
+			"width": 536,
+			"height": 1116
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/apercu-texte-extrait.jpg",
+			"alt": "L'aperçu d'un document Word : son texte extrait et « Copier le texte »",
+			"width": 536,
+			"height": 407
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Le texte est extrait par le CRM lui-même, sans service extérieur, quelques instants après l'arrivée du message : entre-temps,\nl'aperçu dit que l'extraction est en cours, et le texte paraît à la réouverture. Un document "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "numérisé"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " n'a pas de texte\nlisible — le CRM ne lit pas les images de texte —, et l'aperçu le dit : « Aucun texte lisible : le document est sans doute\nnumérisé. ». Une pièce de plus de 25 Mo n'a pas d'aperçu : elle se télécharge."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/aucun-texte-lisible.jpg",
+			"alt": "Un document numérisé : « Aucun texte lisible : le document est sans doute numérisé. »",
+			"width": 536,
+			"height": 931
 		},
 		{
 			"type": "paragraph",
@@ -1509,6 +1635,31 @@
 			"alt": "La ligne « Message reçu » dans l'historique de l'affaire",
 			"width": 519,
 			"height": 100
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les pièces d'un courrier dans l'historique."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Sous la ligne d'un message reçu ou envoyé, l'historique de l'affaire liste\nses pièces, avec leur taille, « Aperçu » et « Télécharger » : l'aperçu s'y ouvre comme dans l'inbox, sans quitter la fiche."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/pieces-dans-l-historique.jpg",
+			"alt": "Les pièces d'un message sous sa ligne de l'historique, l'aperçu d'un classeur ouvert",
+			"width": 519,
+			"height": 622
 		},
 		{
 			"type": "paragraph",

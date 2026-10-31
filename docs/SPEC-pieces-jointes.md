@@ -223,3 +223,18 @@ Sans changer un point validé :
 - `docs/SPEC-mcp.md` §9.2 decies est révisée en conséquence. La mention de l'outil dans le manuel (chapitre du
   connecteur) arrive avec T3, en même temps que le reste du manuel de l'unité.
 
+## 16. Précisions d'exécution (`CRM-074` T3, écran, seed, manuel)
+
+- **Le fil de l'affaire lit les pièces par les messages de l'affaire**, et non par `mail_attachments.card_id` : mesuré sur le
+  seed, une pièce reçue garde cette colonne nulle quand son message est classé par la règle 1 (INC-326).
+- **La ligne d'une pièce et l'aperçu sont un composant partagé** (`webapp/src/app/PiecesJointes.tsx`) par l'inbox et le fil ;
+  la ligne de l'inbox d'avant y est déplacée, son contrat inchangé, la taille ajoutée.
+- **Le lecteur PDF des preuves** : le « headless shell » de Playwright n'en porte aucun, si bien que le cadre restait blanc
+  sur les captures ; les preuves de l'aperçu et le scénario du chapitre 12 du manuel tournent sur le Chromium complet en
+  nouveau mode sans tête (`channel: 'chromium'`), qui rend le PDF.
+- **Sous `md`**, le nom en tête du panneau prend sa propre ligne (vu sur la capture à 390 px, `docs/DESIGN_SYSTEM.md` §5.80).
+- **Le seed** (§35 de `docs/SPEC-seed.md`) déclenche l'extraction par la route interne de `mail-sync`, et vérifie l'état final.
+- **Le manuel** : chapitre 12, « L'aperçu d'une pièce » et « Les pièces d'un courrier dans l'historique », quatre images ;
+  chapitre 33, l'outil `crm_mail_attachment_get` (texte seul, aucune image nouvelle). L'état « extraction en cours » est
+  décrit sans être cité, faute d'une image qui le montre (règle de la décision 736).
+

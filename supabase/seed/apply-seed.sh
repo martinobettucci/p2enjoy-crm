@@ -12,6 +12,8 @@
 # @spec CRM-078 (docs/BACKLOG.md) — une version publiée du workflow par défaut
 # @spec CRM-073 (docs/BACKLOG.md) — tranche T3 : trois webhooks et leurs remises par la vraie chaîne (docs/SPEC-seed.md §34,
 #       docs/SPEC-webhooks.md §8)
+# @spec CRM-074 (docs/BACKLOG.md) — tranche T3 : un courrier réellement reçu avec cinq pièces jointes, leur texte extrait
+#       par la vraie chaîne (docs/SPEC-seed.md §35, docs/SPEC-pieces-jointes.md §8)
 # @spec CRM-081 (docs/BACKLOG.md) — deux affaires en sommeil, dont une échue (docs/SPEC-cards.md §16.11.6)
 # @spec CRM-062 (docs/BACKLOG.md) — la relance de la card figée, écrite par le VRAI mécanisme
 #       (docs/SPEC-relances.md §9.9)
@@ -3122,6 +3124,93 @@ archive_envoi=$(curl -s "$API/rest/v1/mail_messages?select=bcc_addresses,mail_at
 	&& [ "$(echo "$archive_envoi" | jq -r '.[0].mail_attachments | length')" = 1 ] \
 	|| die "l'envoi de démonstration n'est pas archivé avec sa copie cachée et sa pièce : $archive_envoi"
 info "Envoi : « $OBJET_ENVOI_SEED » soumis par le worker, copie cachée et pièce jointe archivées sur ${CARD_ENVOI_SEED: -4}"
+
+# --- Un courrier reçu avec cinq pièces jointes — CRM-074 T3, docs/SPEC-seed.md §35 ------------------------------------
+# @spec CRM-074 (docs/BACKLOG.md) — tranche T3 : l'aperçu des pièces jointes et leur texte extrait se démontrent sur un
+#       courrier RÉELLEMENT reçu — soumis en SMTP authentifié, relevé par mail-sync, analysé par l'antivirus local, classé
+#       par la règle 1, son texte extrait par la vraie boucle (docs/SPEC-pieces-jointes.md §8, CLAUDE.md §8)
+#
+# Les cinq fichiers sont ceux de `supabase/seed/pieces-jointes/`, reproductibles (`generer.py`). Driss les adresse à
+# l'affaire « Refonte du monitoring — Vertuo » : un PDF avec texte, un PDF numérisé sans texte, une image, un document Word
+# et un classeur Excel. `Message-ID` fixe : rejouer le seed n'envoie rien de plus. L'extraction est déclenchée par la route
+# interne, comme l'envoi l'est par la sienne, pour que l'état soit FINAL quand le seed s'achève : la boucle de trente
+# secondes ferait la même chose, plus tard.
+MSGID_PIECES='seed-pieces-jointes@p2enjoy.test'
+OBJET_PIECES='Dossier de consultation — monitoring Vertuo'
+DOSSIER_PIECES="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/pieces-jointes"
+
+message_pieces() {
+	curl -s "$API/rest/v1/mail_messages?select=id,card_id&rfc822_message_id=eq.%3C$MSGID_PIECES%3E" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY"
+}
+
+if [ "$(message_pieces | jq -r 'length')" = 0 ]; then
+	adresse_monitoring=$(curl -s "$API/rest/v1/cards?select=email_local_part&id=eq.$CARD_ENVOI_SEED" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '.[0].email_local_part // empty')
+	[ -n "$adresse_monitoring" ] || die "l'affaire ${CARD_ENVOI_SEED: -4} n'a pas d'adresse : le courrier aux pièces jointes ne peut pas lui être adressé."
+	envoi_pieces=$(docker compose exec -T \
+		-e DEST="$adresse_monitoring@$INBOUND_DOMAIN" -e MDP="$MAILBOX_PASSWORD" -e MSGID="$MSGID_PIECES" -e OBJET="$OBJET_PIECES" \
+		-e PDF="$(base64 -w0 "$DOSSIER_PIECES/devis-refonte-vertuo.pdf")" \
+		-e SCAN="$(base64 -w0 "$DOSSIER_PIECES/plan-signe-scanne.pdf")" \
+		-e PNG="$(base64 -w0 "$DOSSIER_PIECES/maquette-accueil.png")" \
+		-e DOCX="$(base64 -w0 "$DOSSIER_PIECES/cahier-des-charges.docx")" \
+		-e XLSX="$(base64 -w0 "$DOSSIER_PIECES/budget-previsionnel.xlsx")" \
+		mail-sync python -c '
+import base64, os, smtplib
+from email.message import EmailMessage
+
+message = EmailMessage()
+message["From"] = "bizdev@p2enjoy.test"
+message["To"] = os.environ["DEST"]
+message["Subject"] = os.environ["OBJET"]
+message["Message-ID"] = "<" + os.environ["MSGID"] + ">"
+message.set_content("Bonjour,\n\nVoici le dossier de consultation : le devis, le plan signé, la maquette de la page "
+                    "d accueil, le cahier des charges et le budget prévisionnel.\n\nBien à vous,\nDriss Lemoine")
+for variable, nom, genre, sous_genre in (
+    ("PDF", "devis-refonte-vertuo.pdf", "application", "pdf"),
+    ("SCAN", "plan-signe-scanne.pdf", "application", "pdf"),
+    ("PNG", "maquette-accueil.png", "image", "png"),
+    ("DOCX", "cahier-des-charges.docx", "application", "vnd.openxmlformats-officedocument.wordprocessingml.document"),
+    ("XLSX", "budget-previsionnel.xlsx", "application", "vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+):
+    message.add_attachment(base64.b64decode(os.environ[variable]), maintype=genre, subtype=sous_genre, filename=nom)
+session = smtplib.SMTP("stalwart", 587, timeout=60)
+session.ehlo()
+session.login("bizdev@p2enjoy.test", os.environ["MDP"])
+session.send_message(message)
+session.quit()
+print("envoye")
+' 2>&1) || die "l'envoi du courrier aux pièces jointes a échoué : « $envoi_pieces »"
+	[ "${envoi_pieces##*$'\n'}" = "envoye" ] || die "l'envoi du courrier aux pièces jointes n'a rien confirmé : « $envoi_pieces »"
+	for _tentative in 1 2 3 4 5 6 7 8 9 10; do
+		relever_boite >/dev/null
+		[ "$(message_pieces | jq -r 'length')" = 1 ] && break
+		sleep 3
+	done
+fi
+[ "$(message_pieces | jq -r '.[0].card_id // empty')" = "$CARD_ENVOI_SEED" ] \
+	|| die "le courrier « $OBJET_PIECES » n'est pas classé dans l'affaire ${CARD_ENVOI_SEED: -4} : $(message_pieces)"
+
+# L'extraction, déclenchée tant qu'il reste une pièce à extraire (la boucle du service peut en avoir pris une avant).
+for _tentative in 1 2 3 4 5 6 7 8 9 10; do
+	restantes=$(curl -s "$API/rest/v1/mail_attachments?select=id&message_id=eq.$(message_pieces | jq -r '.[0].id')&text_status=eq.pending" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')
+	[ "$restantes" = 0 ] && break
+	docker compose exec -T -e JETON="$MAIL_SYNC_TOKEN" mail-sync python -c '
+import os, urllib.request
+r = urllib.request.Request("http://localhost:8080/internal/v1/attachments/extract?limit=20", data=b"", method="POST")
+r.add_header("Authorization", "Bearer " + os.environ["JETON"])
+urllib.request.urlopen(r, timeout=180).read()
+' >/dev/null 2>&1 || true
+	sleep 2
+done
+etat_pieces=$(curl -s "$API/rest/v1/mail_attachments?select=filename,av_status,text_status&message_id=eq.$(message_pieces | jq -r '.[0].id')&order=filename" \
+	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+	| jq -r 'map(.filename + ":" + .av_status + ":" + (.text_status // "-")) | join(" ")')
+attendu_pieces='budget-previsionnel.xlsx:clean:extracted cahier-des-charges.docx:clean:extracted devis-refonte-vertuo.pdf:clean:extracted maquette-accueil.png:clean:- plan-signe-scanne.pdf:clean:empty'
+[ "$etat_pieces" = "$attendu_pieces" ] \
+	|| die "les pièces du courrier « $OBJET_PIECES » ne sont pas dans l'état attendu : « $etat_pieces » (attendu « $attendu_pieces »). L'antivirus local et la boucle d'extraction de mail-sync sont-ils démarrés ?"
+info "Pièces jointes : « $OBJET_PIECES » reçu sur ${CARD_ENVOI_SEED: -4}, cinq pièces saines, quatre textes extraits ou constatés"
 
 total_evenements=$(curl -s "$API/rest/v1/card_events?select=id" \
 	-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r 'length')

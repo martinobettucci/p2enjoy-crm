@@ -7193,7 +7193,9 @@ spécification, qui écrivait « fenêtre modale large », est révisée.
 - **DANS LE FIL DE L'AFFAIRE**, la ligne d'un courrier reçu ou envoyé (§5.11, §18.6) porte sous son objet la liste de ses
   pièces, `ul` sans puces, une ligne par pièce dans la forme ci-dessus en 13 px ; le panneau s'ouvre sous la pièce, dans la
   colonne du fil. Un courrier sans pièce ne rend aucune liste. La liste n'est lue que si le fil porte un courrier (§5.11).
-- **SOUS `md`**, les commandes d'une pièce passent sous son nom, cibles conservées ; le panneau prend la largeur de sa colonne.
+- **SOUS `md`**, les commandes d'une pièce passent sous son nom, cibles conservées ; le panneau prend la largeur de sa colonne,
+  et **le nom en tête du panneau prend sa propre ligne**, « Télécharger » et « Fermer l'aperçu » dessous — *vu sur la capture
+  à 390 px* : serré à côté des deux commandes, le nom se coupait lettre à lettre.
   `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `ScanEye`**, qui ne sert aucun autre objet (§9).
 

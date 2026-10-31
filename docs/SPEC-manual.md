@@ -604,6 +604,7 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 | `CRM-103` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | accorder-des-droits-du-connecteur |
 | `CRM-104` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | ce-que-l-assistant-sait-faire |
 | `CRM-073` | les-webhooks-prevenir-vos-autres-outils | — |
+| `CRM-074` | l-inbox-lire-trier-et-repondre | l-inbox-lire-et-trier-le-courrier-recu |
 
 ## 13. Le manuel dans la webapp
 

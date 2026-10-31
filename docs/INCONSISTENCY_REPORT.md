@@ -8268,3 +8268,17 @@ refuse toute modale dans le produit (§5.10, §5.13, §5.23, §5.43, §5.46 et s
 jour (décision 791) : « Panneau dans le flux ». La spécification est révisée, le §5.80 du design system décrit le panneau.
 Connecteur MCP : sans objet.
 
+
+### INC-326 — Une pièce reçue garde `mail_attachments.card_id` nul quand son message est classé par la règle 1
+
+*Constaté le 2026-10-31 par `CRM-074` T3, sur le seed.* Le courrier « Dossier de consultation — monitoring Vertuo », classé
+dans son affaire par la règle 1 à la relève, porte `mail_messages.card_id` renseigné ; ses cinq pièces gardent
+`mail_attachments.card_id` **nul**. Seul le classement manuel et le déclassement réécrivent cette colonne (migration 0109),
+et l'archivage d'un envoi la pose (0106). La colonne est donc incomplète sur les pièces reçues classées automatiquement.
+
+**Sans effet sur les droits** : la lecture d'une pièce et la politique de stockage suivent le **message** (0024, 0029).
+**Contourné, non corrigé** : le fil de l'affaire lit les pièces par les messages de l'affaire, jamais par cette colonne
+(`webapp/src/lib/pieces-jointes.ts`, `lirePiecesDesMessages`). **Issue proposée** : que le classement automatique écrive
+aussi la colonne, et qu'une migration rattrape les pièces existantes — ou retirer la colonne, que plus rien ne lit ; à
+arbitrer. Connecteur MCP : sans objet (il lit par le message).
+
