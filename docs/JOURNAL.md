@@ -36920,3 +36920,24 @@ local à la transaction ; une liste fermée de codes d'issue ; aucun seed d'affa
 **Conséquences.** Migration `0138` ; le panneau de T5 devient générique (champs, fonction et motifs par objet) ; le fil
 gagne une clé de traduction. Connecteur MCP : non (décision 776).
 
+### `CRM-073` : arbitrage du périmètre — webhooks sortants seuls, jetons d'API abandonnés (2026-10-31, décision 779)
+
+**Problème.** `docs/ARBITRAGES.md` §5 laissait au responsable une question de produit : « à qui sert un jeton d'API et que
+peut-il faire ». `CRM-073` réunissait deux volets, des jetons d'API pour qu'un outil tiers appelle le CRM et des webhooks
+signés pour que le CRM prévienne un outil tiers.
+
+**Décision 779, du responsable, en séance.**
+- **Périmètre : les webhooks sortants seuls.**
+- **Les jetons d'API sont abandonnés** : « le MCP fait déjà tout le nécessaire » — le connecteur (`docs/SPEC-mcp.md`) est
+  l'accès programmatique au CRM, au nom d'une personne et sous sa matrice. `api_tokens` sort du modèle cible.
+- **Les événements** : la vie des affaires et des contacts — affaire créée, étape changée, responsable changé, archivée,
+  mise à la corbeille, restaurée ; contact créé, modifié, supprimé. Un webhook choisit ses événements et peut se limiter à
+  un channel. Remise asynchrone, signée (HMAC-SHA256), cinq essais à délai croissant, historique des remises visible de
+  l'administrateur, renvoi manuel possible. Configurés par les administrateurs de l'espace.
+- **Connecteur MCP : non**, aux deux questions de la consigne (décisions 627, 659) — les webhooks restent un réglage
+  d'administrateur à l'écran ; aucune famille nouvelle.
+
+**Conséquences.** La spécification `docs/SPEC-webhooks.md` est à écrire et à faire valider avant tout code. Les mentions
+d'`api_tokens` (`docs/SCHEMA.md`, `docs/DAT.md`, `docs/SPEC-permissions-rls.md` §2.1, §5, §6) sont révisées : la table
+n'existera pas, et la cible de `CRM-013` qui la visait tombe avec elle.
+

@@ -21,7 +21,7 @@ directe avec le jeton réel du profil concerné, démontrant que l'opération in
 
 | Rôle | Portée |
 |---|---|
-| `admin` | Administre le workspace : membres, tracks, channels, catalogue de nœuds, workflows, formulaires, boîte système, jetons d'API, webhooks |
+| `admin` | Administre le workspace : membres, tracks, channels, catalogue de nœuds, workflows, formulaires, boîte système, webhooks (les jetons d'API sont abandonnés, décision 779) |
 | `business_developer` | Travaille : crée et fait avancer des cards, commente, envoie des emails, gère ses propres boîtes |
 | `viewer` | Consulte, sans aucune écriture |
 
@@ -342,7 +342,7 @@ jour à la main.
 | `mail_attachments` | Comme le message porteur | Aucune écriture directe |
 | `mail_outbox` | Propriétaire de l'identité, plus `admin` | Insertion par `queue_outbound_email` uniquement |
 | `audit_log` | `admin` | **Aucune écriture par un client** |
-| `api_tokens` | `admin` | `admin` ; le jeton en clair n'est affiché qu'à la création |
+| ~~`api_tokens`~~ | — | **Abandonnée** (décision 779) : aucune table de jetons, le connecteur MCP suffit |
 | `notifications` | Destinataire | Destinataire, pour marquer comme lu |
 | `saved_views` | Propriétaire, plus les vues partagées du workspace | Propriétaire |
 
@@ -445,7 +445,7 @@ ligne est lisible :
 | `cards.email_local_part` | Généré par trigger, écriture refusée — **LIVRÉE par `CRM-013`**, `supabase/migrations/0014_colonnes_protegees.sql`, spécifiée au §4.4. La **lecture** reste ouverte : une adresse de card est une identité, non un secret. INC-050 est close par cette livraison |
 | `cards.entered_step_at` | Fermée **par conséquence** du mécanisme ci-dessous, et c'est le comportement voulu : `docs/SPEC-cards.md` §2.9 la réserve nommément à `move_card`, et un client qui la réécrirait fausserait toute mesure d'ancienneté à l'étape — livrée par `CRM-034` |
 | `mail_inbound_accounts.secret_id`, `mail_outbound_identities.secret_id` | **`REVOKE SELECT` pour `authenticated`** ; lisible par `service_role` uniquement |
-| `api_tokens.token_hash` | Jamais exposé |
+| ~~`api_tokens.token_hash`~~ | Sans objet : la table est abandonnée (décision 779) |
 | `card_events.*`, `audit_log.*` | Insertion par trigger ou `service_role` |
 | `card_costs.created_at`, `card_costs.updated_at`, `card_revenues.created_at`, `card_revenues.updated_at` | **Insertion et mise à jour refusées à `authenticated`** — LIVRÉE par `CRM-013`, `supabase/migrations/0104_dates_lignes_protegees.sql`, spécifiée au §4.4.7 (INC-238). Lecture ouverte ; `service_role` les pose (seed) |
 
@@ -510,7 +510,7 @@ Le détail de la garde et de ses six vérifications est dans `docs/SPEC-workflow
 
 `CRM-013` porte six cibles dans son énoncé. **Cinq de leurs tables n'existent pas** :
 `mail_inbound_accounts` et `mail_outbound_identities` arrivent avec `CRM-052` et `CRM-053`,
-`api_tokens` avec `CRM-073`, `card_events` avec `CRM-044`, `audit_log` avec `CRM-072`. Une
+`api_tokens` avec `CRM-073` (abandonnée depuis, décision 779), `card_events` avec `CRM-044`, `audit_log` avec `CRM-072`. Une
 protection ne s'écrit pas sur une table absente, et la simuler serait le faux vert que
 `CLAUDE.md` §17 proscrit.
 

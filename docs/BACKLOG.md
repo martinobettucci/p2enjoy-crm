@@ -7503,7 +7503,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées et import CSV — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-28 10:35 UTC — état avant : [ ]* | `[@]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |
-| CRM-073 | Webhooks sortants signés et jetons d'API — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-30 17:55 UTC — état avant : [ ]* | `[@]` |
+| CRM-073 | Webhooks sortants signés — **arbitrée** (décision 779) : webhooks seuls, **jetons d'API abandonnés** (le connecteur MCP suffit) ; événements de la vie des affaires et des contacts ; connecteur MCP : non. Spécification à écrire (`docs/SPEC-webhooks.md`) — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-30 17:47 UTC — état avant : [ ]* | `[@]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
