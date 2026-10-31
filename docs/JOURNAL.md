@@ -37191,3 +37191,20 @@ sur l'état final. **Conditions convenues entre les deux sessions** : le seed de
 stable (noms, dates et ordre fixes, le journal se triant par date) ; la session de `CRM-117` est prévenue avant toute
 évolution du seed, avant la première capture, puis quand T3 est poussée et la base reconstruite ; l'écran est documenté
 dans `docs/manual.md` (CLAUDE.md §7), sous la règle d'image de la décision 736.
+
+### Les captures versionnées réécrites par chaque campagne (2026-10-31, décision 787)
+
+**Problème** : 901 images de `docs/captures/` (unités `CRM-007` à `CRM-073`) étaient modifiées sans être committées, et
+`livrer.sh` refuse un arbre qui n'est pas propre (décision 783). **Observations** : leurs dates de modification les
+attribuent à la campagne d'interface complète de `CRM-111` T2.4.5 (environ 880 images entre 14 h 49 et 15 h 07, commit
+`a3678128` de 15 h 27, qui ne les porte pas), aux vérifications de `CRM-073` T3 (16 à 18 h) et à un passage de nuit du
+2026-10-28 (4 images Roundcube). Comparées pixel par pixel à leur version committée : 14 identiques, 272 à l'écart
+infime, 613 visiblement différentes, ce qu'expliquent l'évolution du seed et de l'interface depuis leurs livraisons.
+**Cause** : `capturer()` (`e2e/ui/captures.ts`) recopie chaque capture dans le dossier versionné de son unité à chaque
+passage, quelle que soit la campagne. Les committer aurait remplacé la preuve de chaque livraison par l'état du jour,
+sans observation (CLAUDE.md §16).
+
+**Décision 787, du responsable, en séance** (« yes ») : les images sont rendues à leur version committée, et une unité
+corrige la cause. **Conséquences** : 885 images restaurées par `git restore` ; les 15 images de `CRM-069` et `CRM-072`
+et le dossier `CRM-073`, que `CRM-073` T3 écrit en ce moment, attendent la clôture de cette tranche ; l'unité `CRM-122`
+porte la correction de l'aide.

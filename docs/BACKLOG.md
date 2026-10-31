@@ -17668,3 +17668,20 @@ manifestes Python constatés dans le graphe de dépendances de GitHub après le 
 - [ ] **T1 — configuration et renommage**, avec les preuves ci-dessus.
 - [ ] **T2 — livraison** : la prochaine reconstruction de l'image `mcp` de production prend le verrou renommé
       (contenu identique) ; aucune autre action en production.
+
+### CRM-122 — Les campagnes de tests ne réécrivent plus les captures versionnées `[ ]`
+Arbitrage du responsable du 2026-10-31 (décision 787). `capturer()` (`e2e/ui/captures.ts`) recopie chaque capture dans
+`docs/captures/<unité>/`, dossier versionné, **à chaque passage** : une campagne de régression réécrit les preuves des
+unités closes sans que personne les observe, et salit l'arbre que `livrer.sh` exige propre (901 images le 2026-10-31,
+après la campagne d'interface de `CRM-111` T2.4.5). Les 885 images réécrites avant 17 h ont été rendues à leur version
+committée ; celles de `CRM-069` et `CRM-072`, et le dossier `CRM-073`, écrits par `CRM-073` T3 en cours, attendent sa
+clôture.
+**DoD** : la copie vers `docs/captures/` n'a lieu que sur demande explicite, limitée à l'unité qui livre (par exemple une
+variable d'environnement documentée qui nomme l'unité) ; sans elle, les captures restent dans `e2e/output/`, ignoré ;
+une campagne d'interface complète laisse `git status` sans capture modifiée (constaté) ; test unitaire de l'aide, avec et
+sans la demande ; `docs/DESIGN_SYSTEM.md` §11, `docs/DAT.md` (commandes de test) et README révisés ; spécification écrite
+et committée avant le code. Question du connecteur : sans objet, outillage de test (proposé, à confirmer par le
+responsable).
+
+- [ ] **T1 — spécification** : la forme de la demande, l'unité qu'elle nomme, son effet sur les captures existantes.
+- [ ] **T2 — l'aide, ses tests, la documentation**, et la campagne complète constatée propre.
