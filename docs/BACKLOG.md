@@ -131,8 +131,8 @@ dev ; aucun service de développement présent en prod.
       `comptes-sans-head.spec.ts` (mutation tuée), `demarrage` et `guide-flottant` révisés ; campagne finale :
       typecheck, build, pgTAP 3974, API 1182, courrier 44, pytest 246 verts, interface 918 passés et 5 échecs rejoués
       seuls verts, **aucun `502` et aucune erreur amont chez Kong sur toute la campagne** (26 à la précédente). Le saut
-      Caddy est prouvé par un Caddy jetable, pas en production. **Reste** : la livraison (`docs/PROD_MIGRATIONS.md`
-      §2.21 : Kong, Caddy, webapp) et le constat du responsable.
+      Caddy est prouvé par un Caddy jetable, pas en production. **Livrée le 2026-11-01** (`docs/PROD_MIGRATIONS.md`
+      §2.21, §8 ; décisions 792 et 793) : webapp, Kong à `= 3`, Caddy à `crm-001`. **Reste** : le constat du responsable.
 
 *DoD adaptée, écarts explicites.* Aucun test unitaire ni test E2E dédié : cette unité ne livre
 aucune logique métier ni parcours utilisateur, seulement l'assemblage d'exécution. Les preuves
@@ -15164,7 +15164,8 @@ décrit la baseline réelle.
 - [x] **Image Realtime transférée seulement si son contenu change** (décision 577) : l'identifiant
       changeait à chaque construction. Harnais porté à **78 vérifications, aucune anomalie**, dont
       une qui rougissait avant la correction.
-- [P] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
+- [~] **MinIO depuis Chainguard, développement et cellule (INC-290, décision 681)** :
+      *Ramenée `[~]` le 2026-11-01 (décision 697) : défaut constaté en production, INC-329 — l'image de Chainguard porte un fichier à l'UID 65532, que le démon rootless de la cellule (plage de 64534) ne peut pas extraire ; `minio` reste sur `quay.io`. Issue à arbitrer : image dérivée (décision 571) ou plage élargie.*
       *Reclassée `[P]` le 2026-10-25 (décision 705, décision 697) : implémentée et vérifiée en développement, il ne reste que la livraison et le constat du responsable en production.*
       `cgr.dev/chainguard/minio` épinglé par empreinte, une seule image pour `minio` et `minio-createbucket`, en
       `user: "0:0"` (aucune donnée de production à changer de propriétaire) ; Dockerfile `bitnamilegacy` retiré ;
@@ -17267,8 +17268,9 @@ car une VM peut être recyclée alors que le système de fichiers est conservé 
         assertions**, API **1182**, courrier **44**, pytest **246** — verts ; interface **927 passés, 6 échecs**, verts
         rejoués seuls avec les dix des deux campagnes de la série (**19 passés**), et **19 passés aussi** sur la ligne de base
         (pile recomposée avec les fichiers d'avant la tranche) — INC-310.
-      - **Reste `[P]`** : la livraison de `docs/PROD_MIGRATIONS.md` §2.22 (Kong et Realtime recréés, noms inchangés),
-        sur l'instruction du responsable, et son constat.
+      - **Livrée le 2026-11-01** (décision 793) : Kong à `crm-115`, l'alias résolu, noms inchangés (§8).
+      - **Reste `[P]`** : le constat du responsable — le temps réel à travers Kong (`docs/PROD_MIGRATIONS.md` §2.22,
+        geste 3).
 - [x] **T3 — le registre et l'attribution d'un emplacement**, avec son harnais (entrée périmée reconnue après un
       recyclage de VM, deux attributions simultanées départagées). Le §11 de la spécification est validé (décision 705).
       *Implémentée et vérifiée le 2026-10-25 (session interactive)* : `scripts/lib/emplacement.sh` — seule source des

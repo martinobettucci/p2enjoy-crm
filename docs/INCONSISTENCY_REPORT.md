@@ -8309,3 +8309,20 @@ ligne `SITE_URL: ${SITE_URL}` de `docker-compose.yml`. Depuis `CRM-069` T4 (`ea8
 et le contrôle rougissait (« dégradation non détectée ») sans qu'aucun défaut ne soit présent. **Corrigé** : la ligne est
 cherchée à partir du bloc `mcp` (garde révisée, décision 51). `verify-spark.sh` passe à 112/112. Connecteur MCP : sans
 objet.
+
+### INC-329 — L'image MinIO de Chainguard ne s'extrait pas dans la cellule : un fichier à l'UID 65532, hors de la plage du démon rootless
+
+*Constaté le 2026-11-01, en appliquant le §2.18 du contrat de déploiement (décision 793).* `./runProd.sh --spark` échoue au
+tirage de `cgr.dev/chainguard/minio@sha256:7329…` : « failed to Lchown …/home/nonroot for UID 65532, GID 65532: invalid
+argument (Hint: try increasing the number of subordinate IDs) ». Le démon Docker de la cellule tourne sans privilèges
+pour `spark-docker`, avec une plage subordonnée de 64534 identifiants (`/etc/subuid`, `/etc/subgid`) : les UID 0 à 64533
+du conteneur. L'image porte `/home/nonroot` à 65532, hors de cette plage. C'est la contrainte de la décision 571, déjà
+rencontrée avec Realtime et levée par une image dérivée. INC-290 l'a manquée : sa preuve est faite sur le démon du poste,
+qui a les privilèges, et aucune ne tire l'image sous la plage de la cellule.
+
+**Aucun effet en production** : le tirage échoue avant toute recréation, et `minio` reste sain sur l'image de `quay.io`.
+La production est relue telle quelle. Les §2.21 et §2.22, indépendants de MinIO, sont appliqués par une recréation
+ciblée de `realtime`, `kong` et `caddy`. **Issue proposée**, à arbitrer par le responsable : (a) une image MinIO dérivée,
+construite sur le poste et chargée dans la cellule comme celle de Realtime (décision 571), avec ses UID ramenés dans la
+plage, et une preuve qui l'inspecte (`verify-spark.sh` §4) ; ou (b) élargir la plage subordonnée de la cellule, un
+geste du propriétaire de l'hôte. Connecteur MCP : sans objet.

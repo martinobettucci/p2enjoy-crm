@@ -524,7 +524,7 @@ de `main`, sur l'instruction du responsable et après la confirmation de l'insta
 **Retour arrière** : la révision précédente de la webapp ; les colonnes peuvent rester en place (sans lecteur, elles ne
 changent rien), ou être retirées par les `drop function` de leurs lignes au §3.2.
 
-### 2.18 INC-290 — MinIO depuis Chainguard dans la cellule (EN ATTENTE de l'instruction du responsable)
+### 2.18 INC-290 — MinIO depuis Chainguard dans la cellule (BLOQUÉE par INC-329 : ordonnée le 2026-11-01 par la décision 793, l'image ne s'extrait pas sous la plage d'UID du démon rootless de la cellule ; `minio` reste sur `quay.io`, sain)
 
 `docker-compose.spark.yml` remplace `quay.io/minio/minio` et `quay.io/minio/mc`, que `quay.io` ne sert plus (`401`), par
 **une seule image** : `cgr.dev/chainguard/minio@sha256:73297936408b731668ca0e835ac9add1a35cb6026a125c2f0cd476d9ef48222c` (décision 681). Les deux services tournent en `user: "0:0"`, comme l'image de `quay.io` : le
@@ -579,7 +579,7 @@ changement du service `mcp`.**
 **Retour arrière** : relivrer la révision précédente de la webapp. **Risque** : aucun connu — un texte d'interface, et
 une colonne de plus lue sur `workflow_steps` (`label_override`), déjà lue par le board.
 
-### 2.21 `CRM-001`, INC-299, décisions 696 et 700 — Kong et Caddy ferment une connexion amont inactive après 3 s ; la webapp ne compte plus par `HEAD` (EN ATTENTE de l'instruction du responsable)
+### 2.21 `CRM-001`, INC-299, décisions 696 et 700 — Kong et Caddy ferment une connexion amont inactive après 3 s ; la webapp ne compte plus par `HEAD` (gestes 1 et 2 accomplis le 2026-11-01, décision 793 : `upstream_keepalive_idle_timeout = 3`, Caddy à `crm-001` ; le constat 3 du responsable reste à faire)
 
 Un `502` intermittent naissait d'une connexion que Kong (60 s) ou Caddy (2 min) gardait plus longtemps que son amont
 (PostgREST, 30 à 60 s ; `mcp`, 5 s ; Kong côté client, 75 s). Les deux relais ferment désormais une connexion inactive
@@ -598,7 +598,7 @@ définition change. **Et la webapp, reconstruite** (décision 700) : elle compte
 **Retour arrière** : relivrer la révision précédente ; Kong et Caddy reprennent leurs défauts. **Risque** : une
 reconnexion de plus par connexion restée inactive plus de 3 s, de l'ordre de la milliseconde sur le réseau interne.
 
-### 2.22 `CRM-115` T2, décisions 702 et 703 — la production garde ses noms ; Kong joint Realtime par un alias réseau (EN ATTENTE de l'instruction du responsable)
+### 2.22 `CRM-115` T2, décisions 702 et 703 — la production garde ses noms ; Kong joint Realtime par un alias réseau (gestes 1 et 2 accomplis le 2026-11-01, décision 793 : Kong à `crm-115`, l'alias résolu, noms inchangés ; le constat 3 du responsable reste à faire)
 
 Le développement ne nomme plus aucun conteneur, pour que plusieurs piles coexistent sur un démon
 (`docs/SPEC-pile-par-session.md` §6). **La production garde exactement ses noms** (`p2enjoy-db`, `p2enjoy-kong`…) : les
@@ -1978,6 +1978,19 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   documentation seule (`88caf34f`), sans code livrable.
 - **Reste** : le constat du responsable, un assistant connecté qui lit ou compose un canevas.
 
+### 2026-11-01 — Kong, Caddy et Realtime recréés (§2.21, §2.22) ; MinIO bloqué (§2.18, INC-329)
+
+- **Instruction** : « Oui, les trois » (décision 793), sous l'instantané du 2026-10-31 au matin.
+- **MinIO** : `./runProd.sh --spark` échoue au tirage de l'image de Chainguard (UID 65532 hors de la plage du démon
+  rootless) avant toute recréation : INC-329. `minio` reste sain sur l'image de `quay.io` ; rien n'a changé.
+- **Kong, Caddy, Realtime** : dans la cellule, `compose_prod up -d --no-deps --wait realtime kong caddy`, les trois
+  sains. **Constat, en lecture seule** : `upstream_keepalive_idle_timeout = 3` chez Kong, révision `crm-115` ; Caddy à
+  `crm-001` ; `realtime-dev.realtime` résolu depuis Kong ; noms de conteneurs inchangés ; `verifier.sh` 32/34 — la
+  révision de la cellule (`6d94d829`) précède le `HEAD` du poste de commits de documentation seulement, et le compteur
+  de redémarrage antérieur de `rest` ; celui de `kong` est remis à zéro par la recréation.
+- **Reste** : le constat du responsable — le temps réel à travers Kong (§2.22, geste 3), aucune ligne `prematurely
+  closed` au journal de Kong sur une journée d'usage (§2.21, geste 3) ; l'arbitrage d'INC-329 pour MinIO.
+
 ### 2026-11-01 — migrations 106 à 141, la webapp de `main`, les images `mcp` et `mail-sync`, le manuel (`CRM-117` T6)
 
 - **Instruction** : « Oui, avec la 0141 », « Celui de ce matin suffit », « Oui, les supprimer » (décision 792) — le lot de
@@ -2001,7 +2014,8 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
 - **Ce qu'elle n'emporte pas** : `--migrate` ne recrée que le runner, et aucun `./runProd.sh --spark` ordinaire n'a été
   joué. **MinIO (§2.18), Kong et Caddy (§2.21), Kong et Realtime (§2.22) gardent leur définition d'avant** — relevé en
   lecture seule : MinIO sur l'image de `quay.io`, Kong à la révision `crm-092`, Caddy à `crm-102`. Ces trois sections
-  restent en attente de l'instruction du responsable ; la webapp livrée ne dépend d'aucune d'elles.
+  restent en attente de l'instruction du responsable ; la webapp livrée ne dépend d'aucune d'elles. *Ordonnées le même
+  jour par la décision 793 : entrée suivante.*
 - **Reste** : le constat du responsable — l'aide et le manuel connecté et déconnecté, l'aperçu d'une pièce jointe, un
   assistant connecté qui lit une pièce (`crm_mail_attachment_get`), un webhook réellement remis, le digest du matin, les
   imports et exports CSV, la corbeille, le journal d'audit.

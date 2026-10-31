@@ -37582,3 +37582,10 @@ chaque section : `minio` sain, `minio-createbucket` terminé en `0`, et une piè
 Kong à `upstream_keepalive_idle_timeout = 3` et Caddy à `crm-001` (§2.21) ; Kong à `crm-115`, l'alias
 `realtime-dev.realtime` résolu, les noms de conteneurs inchangés (§2.22) ; puis `verifier.sh`. Les images de `quay.io`
 restent en cache dans la cellule et ne seront pas purgées avant le constat (§2.18, limite du retour arrière).
+
+**Exécution de la décision 793 (2026-11-01)** : `./runProd.sh --spark` a échoué au tirage de l'image MinIO de Chainguard,
+avant toute recréation. Un fichier à l'UID 65532 dépasse la plage subordonnée du démon rootless (64534 identifiants) :
+INC-329, la contrainte de la décision 571 retrouvée. La production est relue intacte. Les §2.21 et §2.22, qui ne dépendent
+pas de MinIO, sont appliqués par `compose_prod up -d --no-deps --wait realtime kong caddy`, puis vérifiés (contrat, §8).
+Le §2.18 est bloqué, et l'entrée INC-290 du backlog ramenée `[~]` avec le défaut nommé. L'issue d'INC-329 (image dérivée
+ou plage élargie) revient au responsable.
