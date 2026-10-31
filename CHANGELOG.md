@@ -13,6 +13,13 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### `CRM-074` — aperçu des pièces jointes et extraction de texte (T1)
+
+- **Le texte extrait des pièces jointes, en base** (T1, migration `0141`) : chaque pièce saine d'un PDF, d'un fichier Word,
+  Excel ou OpenDocument est marquée « à extraire » — les pièces déjà reçues comprises ; l'extraction elle-même et son
+  affichage arrivent avec les tranches suivantes. Le texte se lit sous les mêmes droits que la pièce ; seule la clé de
+  service l'écrit.
+
 ### `CRM-073` — webhooks sortants signés (T1 à T3)
 
 - **Migration `0139`, les webhooks en base** (T1) : les webhooks d'un espace, réservés à son administrateur, et leurs

@@ -12718,9 +12718,16 @@ binaire**, pour que l'agent la lise à sa façon.
 
 - [x] **Spécification** (`docs/SPEC-pieces-jointes.md`) : **validée le 2026-10-31** (décision 789) — le fil de l'affaire
       liste les pièces ; le connecteur rend tout fichier sain jusqu'à 25 Mo ; le reste du §11 tel quel.
-- [ ] **T1 — en base** (§3, §7) : migration — colonnes du texte sur `mail_attachments`, éligibilité, déclencheur, reprise
+- [x] **T1 — en base** (§3, §7) : migration — colonnes du texte sur `mail_attachments`, éligibilité, déclencheur, reprise
       de l'existant, `claim_attachment_texts` et `record_attachment_text` réservées à `service_role` ; pgTAP (refus
       compris) ; API ; types ; `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`.
+      *Livrée en développement le 2026-10-31* — migration `0141`, essayée d'abord en transaction annulée, puis appliquée par
+      le runner (141 au registre) ; pgTAP `0131` 23/23 ; suite pgTAP 121 fichiers sans anomalie, après correction de `0129`
+      (rouge depuis le seed de `CRM-073` T3 : ses deux webhooks semés recevaient aussi les remises comptées ; la preuve les
+      retire désormais dans sa transaction) ; API `e2e/api/texte-pieces-jointes.spec.ts` 2/2 aux jetons réels, avec les
+      deux preuves de webhooks rejouées vertes (4/4) ; types régénérés — ils rattrapent aussi `verify_webhook_dispatch` de
+      la `0140` —, témoin révisé, typecheck vert ; compteurs du harnais (121 fichiers SQL, 1 288 scénarios d'API).
+      *Précisions d'exécution* : `docs/SPEC-pieces-jointes.md` §13.
 - [ ] **T2 — l'extraction** (§4) : boucle de `mail-sync`, `pypdf`, Office par la bibliothèque standard, processus enfant
       borné ; tests du service ; intégration jusqu'à la base ; DAT.
 - [ ] **T3 — l'écran** (§5, §8) : `docs/DESIGN_SYSTEM.md` avant le code ; visionneuse dans la boîte de réception et le fil

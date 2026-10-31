@@ -34,6 +34,10 @@ $$;
 \set maintenance '\'5eed0000-0000-4000-8000-000000000035\''
 \set affaire '\'5eed0000-0000-4000-8000-0000000000c4\''
 
+-- Les webhooks du seed (`docs/SPEC-seed.md` §34, `CRM-073` T3) écoutent aussi l'espace : retirés le temps de la preuve,
+-- avant le repère du journal, pour que les remises comptées soient celles des seuls webhooks créés ici.
+delete from public.webhook_endpoints;
+
 create temp table pg_temp.cree (nom text primary key, id uuid, secret text);
 grant all on pg_temp.cree to authenticated, service_role;
 create temp table pg_temp.repere as select coalesce(max(id), 0) as id from public.audit_log;

@@ -2020,6 +2020,7 @@ export type Database = {
           av_status: string
           card_id: string | null
           created_at: string
+          extracted_text: string | null
           filename: string
           id: string
           message_id: string
@@ -2028,12 +2029,17 @@ export type Database = {
           sha256: string
           size_bytes: number
           storage_path: string
+          text_attempts: number
+          text_claimed_at: string | null
+          text_status: string | null
+          text_truncated: boolean
         }
         Insert: {
           av_checked_at?: string | null
           av_status?: string
           card_id?: string | null
           created_at?: string
+          extracted_text?: string | null
           filename: string
           id?: string
           message_id: string
@@ -2042,12 +2048,17 @@ export type Database = {
           sha256: string
           size_bytes: number
           storage_path: string
+          text_attempts?: number
+          text_claimed_at?: string | null
+          text_status?: string | null
+          text_truncated?: boolean
         }
         Update: {
           av_checked_at?: string | null
           av_status?: string
           card_id?: string | null
           created_at?: string
+          extracted_text?: string | null
           filename?: string
           id?: string
           message_id?: string
@@ -2056,6 +2067,10 @@ export type Database = {
           sha256?: string
           size_bytes?: number
           storage_path?: string
+          text_attempts?: number
+          text_claimed_at?: string | null
+          text_status?: string | null
+          text_truncated?: boolean
         }
         Relationships: [
           {
@@ -4411,6 +4426,16 @@ export type Database = {
         Args: { p_id: string; p_type: string }
         Returns: string
       }
+      claim_attachment_texts: {
+        Args: { p_limit?: number }
+        Returns: {
+          attachment_id: string
+          attempt: number
+          filename: string
+          mime_type: string
+          storage_path: string
+        }[]
+      }
       claim_webhook_deliveries: {
         Args: { p_limit?: number }
         Returns: {
@@ -5075,6 +5100,15 @@ export type Database = {
           workspace_id: string
         }[]
       }
+      record_attachment_text: {
+        Args: {
+          p_attachment: string
+          p_status: string
+          p_text?: string
+          p_truncated?: boolean
+        }
+        Returns: string
+      }
       record_webhook_attempt: {
         Args: { p_delivery: string; p_error?: string; p_status_code: number }
         Returns: string
@@ -5324,6 +5358,7 @@ export type Database = {
         }
         Returns: string
       }
+      verify_webhook_dispatch: { Args: { p_secret: string }; Returns: boolean }
       wake_card: {
         Args: { p_placement: string }
         Returns: {

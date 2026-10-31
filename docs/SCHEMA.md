@@ -2435,6 +2435,22 @@ rend sa ligne sans écrire. **`app.workflows_garder_archivage()`**, déclencheur
 channels que les droits fins cachent. Rétablir n'est jamais refusé. Trois suites pgTAP antérieures (`0022`, `0037`,
 `0111`) posent l'état « workflow archivé employé » garde suspendue, le temps de leur transaction. **Retrait** : supprimer le
 déclencheur, sa fonction et `set_default_workflow`.
+### Migration `0141` — le texte extrait des pièces jointes (`CRM-074` T1, décisions 788 et 789 ; livrée en développement le 2026-10-31)
+
+`docs/SPEC-pieces-jointes.md` §3, §7. Cinq colonnes sur **`public.mail_attachments`** : `text_status` (`null`, `pending`,
+`extracted`, `empty`, `unsupported`, `failed` ; jamais posé sur une pièce non saine), `extracted_text` (présent si et
+seulement si `extracted`, 200 000 caractères au plus), `text_truncated` (seulement en `extracted`), `text_attempts`
+(`smallint`, 0) et `text_claimed_at` (bail). Index partiel des pièces à extraire. **`app.attachment_text_eligible(mime_type,
+filename)`** (immuable) : PDF, Word et Excel Office Open XML, OpenDocument texte et classeur ; pour un type générique, l'extension.
+**Déclencheur** `mail_attachments_text_pending` (avant insertion et avant mise à jour de `av_status`) : une pièce saine et
+éligible passe `pending` ; une pièce qui cesse d'être saine perd tout texte. **Reprise** : les pièces déjà saines et éligibles
+passent `pending`. **Fonctions** (définisseurs, `service_role` seul) : `claim_attachment_texts(integer)` — au plus 50, essai
+compté, bail de 15 minutes, un troisième essai abandonné clos en `failed` — et `record_attachment_text(uuid, text, text,
+boolean)` — statuts `extracted`, `empty`, `unsupported`, `failed`, `retry` (une erreur passagère rend `pending` sous bail,
+le troisième essai clôt) ; un texte vide vaut `empty`, un texte trop long est coupé et marqué. **Aucune politique nouvelle** :
+le texte se lit sous `mail_attachments_lecture` ; `authenticated` garde le seul `select`. **Retrait** : retirer le
+déclencheur, les trois fonctions, l'index et les cinq colonnes ; aucune autre donnée n'est touchée.
+
 ### Migration `0140` — la cadence de la remise des webhooks (`CRM-073` T2 ; livrée en développement le 2026-10-31)
 
 `docs/SPEC-webhooks.md` §2, §13. Un secret d'appel tiré au hasard dans Vault (`p2enjoy-webhooks-dispatch`, créé s'il

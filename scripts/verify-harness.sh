@@ -639,7 +639,9 @@ PORT_RAPPORT=9323
 # **+1 par `CRM-073` T1, 2026-10-31** : `supabase/tests/0129_webhooks.test.sql`, fichier NEUF. 118 + 1 = 119, COMPTÉE.
 # **+1 par `CRM-073` T2, 2026-10-31** : `supabase/tests/0130_webhooks_remise.test.sql`, fichier NEUF. 119 + 1 = 120,
 # COMPTÉE.
-FICHIERS_SQL_ATTENDUS=120
+# **+1 par `CRM-074` T1, 2026-10-31** : `supabase/tests/0131_texte_pieces_jointes.test.sql`, fichier NEUF. 120 + 1 =
+# 121, COMPTÉE.
+FICHIERS_SQL_ATTENDUS=121
 # **3008 le 2026-08-28** : `npm run test:sql` en COMPTE 3008, et l'écart de deux est ANTÉRIEUR et
 # étranger à `CRM-083` tranche 2 h, qui n'ajoute AUCUNE assertion pgTAP — elle n'ouvre ni table, ni
 # politique, ni migration. Le compteur est porté à la valeur comptée plutôt que laissé rouge pour
@@ -1246,7 +1248,10 @@ ASSERTIONS_ATTENDUES=4543
 # **+2 par `CRM-073` T2, 2026-10-31** : `e2e/api/webhooks-remise.spec.ts`, fichier NEUF — la remise de bout en bout par la
 # tâche `pg_cron` de la minute jusqu'au récepteur local (signature, échec, délai, adresse interne, renvoi) ; l'appel sans
 # secret refusé. 1284 + 2 = 1286, COMPTÉE.
-SCENARIOS_API=1286
+# **+2 par `CRM-074` T1, 2026-10-31** : `e2e/api/texte-pieces-jointes.spec.ts`, fichier NEUF — une pièce saine et retenue
+# passe à extraire, la clé de service la prend et rend le texte, l'administratrice le lit ; les refus de l'écriture, de la
+# prise et du résultat. 1286 + 2 = 1288, COMPTÉE.
+SCENARIOS_API=1288
 # 37 depuis `CRM-021` : 13 scénarios de la route d'un track et de sa barre d'onglets
 # (`e2e/ui/channels.spec.ts`). Inchangé à `CRM-030`, `CRM-031`, `CRM-032`, `CRM-033` puis
 # `CRM-035`, qui ne livrent aucune interface — ni le catalogue de nœuds, ni les workflows, ni la

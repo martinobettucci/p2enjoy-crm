@@ -1154,6 +1154,12 @@ type _vueDerivationColonnes = Expect<
 // (administrateur, `42501 forbidden`, rend le secret une seule fois), `rotate_webhook_secret` et `redeliver_webhook`
 // (`P0002` pour qui ne lit pas le webhook, `P0001 delivery_pending`, `webhook_disabled`), puis `claim_webhook_deliveries`
 // et `record_webhook_attempt`, réservées à la clé de service. Le compte s'accroît de cinq.
+// `0140` de `CRM-073` TRANCHE T2 ajoute `verify_webhook_dispatch`, réservée à la clé de service (le secret d'appel de la
+// fonction edge, docs/SPEC-webhooks.md §13) ; le témoin l'oubliait, faute d'une régénération des types à T2. `0141` de
+// `CRM-074` TRANCHE T1 ajoute `claim_attachment_texts` et `record_attachment_text`, réservées à la clé de service
+// (docs/SPEC-pieces-jointes.md §3). CE QUI ÉCHAPPE AU GÉNÉRATEUR : `p_status` est une liste fermée — `extracted`, `empty`,
+// `unsupported`, `failed`, `retry` (`22023 invalid_text_status`) —, une pièce non prise rend `P0002 attachment_not_found`.
+// Le compte s'accroît de trois.
 type _lesQuatreVingtsFonctions = Expect<
   Equal<
     keyof Database['public']['Functions'],
@@ -1236,6 +1242,9 @@ type _lesQuatreVingtsFonctions = Expect<
     | 'redeliver_webhook'
     | 'claim_webhook_deliveries'
     | 'record_webhook_attempt'
+    | 'verify_webhook_dispatch'
+    | 'claim_attachment_texts'
+    | 'record_attachment_text'
     | 'anonymize_contact'
     | 'trash_retention_days'
     | 'trash_blocking_costs'

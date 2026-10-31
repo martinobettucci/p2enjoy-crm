@@ -180,3 +180,17 @@ et « Télécharger » (« Oui, lister les pièces ») ; (2) le connecteur rend 
 fichier sain, 25 Mo » — la taille maximale d'une pièce reçue par défaut), et ses deux outils de lecture listent les pièces ;
 (3) les autres points du §11 « validés tels quels » : pièces envoyées et du digest comprises, texte borné à 200 000
 caractères, bornes de l'extraction du §4.3, reprise de l'existant après la livraison, quatre tranches.
+
+## 13. Précisions d'exécution (`CRM-074` T1, migration `0141`)
+
+Sans changer un point validé :
+- `record_attachment_text` accepte un cinquième statut, **`retry`** : une erreur passagère (stockage indisponible) rend la
+  pièce `pending` sous bail de 15 minutes, et le troisième essai la clôt en `failed`. `failed` reste définitif (bornes
+  dépassées, §4.3).
+- Une pièce dont le **troisième essai n'a jamais rendu de résultat** (boucle interrompue) passe `failed` à la prise suivante,
+  au lieu d'être reprise sans fin.
+- Un texte vide rendu `extracted` est inscrit `empty` ; un texte trop long est coupé à 200 000 caractères et marqué, même
+  si l'extracteur ne l'a pas fait.
+- Une pièce qui **cesse d'être saine** perd tout texte (déclencheur), ce que la contrainte `mail_attachments_text_clean_only`
+  exige.
+

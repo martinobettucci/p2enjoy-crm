@@ -37303,3 +37303,22 @@ objectif de livrer chaque unité dès qu'elle est terminée (la session interact
 (`scripts/manuel/publier.sh`) et la webapp —, que la session de `CRM-117` décrit au contrat de déploiement pendant T5. La
 règle n'est pas inscrite dans CLAUDE.md : elle s'y ajoute sur instruction du responsable seulement.
 
+### `CRM-074` T1 : le texte extrait des pièces jointes en base (2026-10-31)
+
+**Réalisé** : migration `0141` (`docs/SPEC-pieces-jointes.md` §3, précisions d'exécution au §13) ; pgTAP `0131` ; API
+`e2e/api/texte-pieces-jointes.spec.ts`.
+
+**Observations** :
+- *Régression de `CRM-073` T3, trouvée par la suite pgTAP complète* : `0129_webhooks` était rouge depuis le seed des
+  webhooks — « Tableur commercial » et « Automate Refonte » écoutent l'espace et recevaient aussi les remises que la preuve
+  compte. La campagne de T3 avait rejoué le journal et le RGPD, pas cette suite. **Correction** : la preuve retire les
+  webhooks semés dans sa propre transaction, avant son repère du journal ; 30/30. Les deux preuves d'API des webhooks,
+  rejouées, restaient vertes (elles filtrent sur leurs propres webhooks).
+- *Types en retard d'une migration* : la régénération rattrape `verify_webhook_dispatch` (`0140`), que T2 n'avait pas
+  régénéré ; le témoin des fonctions le compte désormais.
+- *Base partagée* : la migration a été essayée en transaction annulée avant d'être appliquée, la session de `CRM-117`
+  prévenue ; la seule pièce du seed (`text/plain`) n'est pas concernée, aucune image du manuel ne change à cette tranche.
+- *Le lot de livraison* (décision 786) va de la 106 à la 140 : l'entrée de la 141 est laissée à la décision du responsable.
+
+**Vérifications** : pgTAP `0131` 23/23, suite 121 fichiers sans anomalie ; API 2/2 (et webhooks 4/4) ; typecheck vert.
+
