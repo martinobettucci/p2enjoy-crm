@@ -459,8 +459,19 @@ est autorisée en début de chapitre. »
 | « Vues de l'espace » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | même cause : groupe de la liste native « Vue » |
 | « par défaut » | `ecrire-des-modeles-d-emails-et-les-previsualiser` | cité comme une propriété des identités (« plusieurs identités peuvent être « par défaut » »), non comme un texte de la prévisualisation ; la pastille « Par défaut » est montrée au chapitre 11 |
 | « Retirer » | `enchainer-des-relances-les-sequences` | MONTRÉ, sur l'image `paliers` : le bouton d'un palier est une croix sans texte, dont le nom accessible nomme le palier (« Retirer le palier … ») ; le contrôle compare des libellés entiers et ne l'y reconnaît pas |
+| « Désarchiver » | `administrer-l-arborescence-tracks-et-channels` | MONTRÉ, sur l'image `afficher-les-archives` : la commande d'un track archivé est une flèche sans texte, dont le nom accessible nomme le track (« Désarchiver Pipeline 2024 ») ; le contrôle compare des libellés entiers |
+| « par défaut » | `composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire` | cité pour dire que le formulaire de création n'a **pas** de case « par défaut » ; la commande « Définir par défaut » et la pastille « Par défaut » sont montrées |
+| « Nom de l'étape » | `composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire` | MONTRÉ, sur les images `relire` et `corriger` : le champ n'a pas de libellé visible, son nom accessible porte la clé de l'étape (« Nom de l'étape prise-de-contact ») |
+| « Retiré — archivé » | `composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire` | le scénario `modification` du simulateur d'IA retire une étape, jamais un champ ; aucune suggestion du développement ne produit ce marquage |
+| « Inconnue » | `la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre` | une date d'effacement illisible ; tout objet du seed en corbeille porte la sienne |
+| « Bloqué » | `la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre` | un track dont l'effacement de nuit a été bloqué par une dépense d'un autre track : exige le passage de l'effacement automatique sur un objet de plus de 30 jours, qu'aucun état du seed ne réunit |
+| « Réaffecter les dépenses » | `la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre` | même état que « Bloqué » |
+| « Réaffecter » | `la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre` | même état que « Bloqué » |
+| « Rouvrir le budget » | `la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre` | même état que « Bloqué » |
+| « Compte sans nom » | `les-membres-de-votre-espace-qui-y-travaille-avec-quel-role` | un membre dont le compte n'a pas de nom ; chaque compte du seed en porte un |
+| « En suspens » | `les-membres-de-votre-espace-qui-y-travaille-avec-quel-role` | l'attente d'un espace qui n'a pas encore d'administrateur ; l'espace du seed en a un |
 
-*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28), T4.2a et T4.2b (2026-10-30), T4.3 (2026-10-31, les deux dernières), soumises au responsable.*
+*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28), T4.2a et T4.2b (2026-10-30), T4.3 (2026-10-31, « par défaut » des modèles et « Retirer » d'un palier), T4.4 (2026-10-31, les onze suivantes), soumises au responsable.*
 
 ### 11.4 Le contrat technique des images
 

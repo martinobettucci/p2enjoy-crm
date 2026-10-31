@@ -109,6 +109,12 @@ CHAPITRES_ILLUSTRES=(
 	ecrire-des-modeles-d-emails-et-les-previsualiser
 	signer-les-messages-expedies-depuis-une-identite
 	enchainer-des-relances-les-sequences
+	administrer-l-arborescence-tracks-et-channels
+	composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire
+	le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows
+	la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre
+	les-membres-de-votre-espace-qui-y-travaille-avec-quel-role
+	le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace
 	# `CRM-073` T3 (décision 785) : le chapitre 34 naît illustré.
 	les-webhooks-prevenir-vos-autres-outils
 )

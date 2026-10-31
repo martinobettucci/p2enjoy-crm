@@ -37345,3 +37345,35 @@ générées (`supabase/seed/pieces-jointes/`) ; tests du service et intégration
 **Vérifications** : pytest 21 nouveaux, suite 286/286 ; intégration mail 2/2 ; relève et envoi avec pièces 4/4 ; API de T1
 2/2.
 
+
+### `CRM-117` T4.4, clôture : l'administration illustrée, chapitres 17 à 22 (2026-10-31)
+
+**Problème** : illustrer les six chapitres de l'administration (règle de la décision 736), dont le 18, le plus long du
+manuel, sans modifier le seed partagé. **Observations et décisions d'exécution** :
+
+- **Les refus du serveur** cités par le manuel (« Seul un administrateur… peut modifier l'arborescence », « … composer
+  un workflow », « L'assistant est réservé aux administrateurs… », « Rien n'a été restauré… ») ne paraissent qu'à un
+  geste envoyé : l'écran grise les commandes d'un non-administrateur. Ils sont montrés comme le manuel les décrit —
+  **un rôle retiré pendant que la page est ouverte**. L'espace devant garder un administrateur
+  (`last_workspace_admin`), Farida Nowak administre le temps du test ; le hook `afterEach` rend Camille administratrice
+  puis Farida lectrice, dans cet ordre.
+- **Le journal d'audit est en ajout seul**, et les nettoyages des scénarios y écrivent (« Système ou compte supprimé »).
+  Playwright joue les fichiers dans l'ordre alphabétique : un premier passage a photographié un journal pollué par les
+  chapitres 17 et 18. Le journal se photographie donc **seul, sur une base fraîchement reconstruite** (deux
+  reconstructions par la session de livraison, 178 lignes). En T5, il passera le premier, seul.
+- **L'IA** : le simulateur (`x-ia-simulateur`) — `valide`, `catalogue`, `invalide`, `modification` ; les suggestions
+  portent des demandes propres au scénario, retirées après chaque test. L'évolution se montre jusqu'au point de retour
+  sur un workflow jetable ; le point de retour est une annonce aux lecteurs d'écran, l'image montre les étapes devenues
+  et la version.
+- **Les exemples du §22.2** (« Membre ajouté : Jeanne Martin », « Version 4 »…) ne correspondaient à aucune ligne du
+  journal : ils sont remplacés par des lignes réelles du seed (« Webhook ajouté : Ancienne intégration », « Modifié :
+  activation »).
+- **Onze exceptions** au §11.3 (`docs/SPEC-manual.md`), soumises au responsable : deux commandes sans texte visible
+  (« Désarchiver », « Nom de l'étape »), « par défaut » cité comme une absence, « Retiré — archivé » qu'aucun scénario du
+  simulateur ne produit, et sept états absents du seed (effacement bloqué de la corbeille et ses commandes, date
+  d'effacement inconnue, compte sans nom, attente « En suspens » — cette dernière montrée au chapitre 32).
+- **Défaut constaté** : l'import de contacts du seed paraît au journal sans geste ni détail (INC-323), non corrigé.
+
+**Vérifications** : 25 scénarios verts (`17-arborescence` 5, `18-workflows` 8, `19-22-administration` 12) ; images
+observées sur planches ; `manuel:construire` 34 chapitres sans avertissement ; `verify-manual` 166 contrôles sans
+anomalie ; base relue après chaque passage (rôles, corbeille, points de checklist, modèles, suggestions : état du seed).

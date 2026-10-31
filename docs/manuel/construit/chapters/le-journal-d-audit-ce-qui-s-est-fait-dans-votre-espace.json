@@ -25,6 +25,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/journal.jpg",
+			"alt": "L'écran Journal d'audit : les filtres, puis les entrées les plus récentes en tête",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "list",
 			"ordered": false,
 			"start": null,
@@ -213,6 +220,27 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/reglages.jpg",
+			"alt": "Les entrées « Membres » et « Journal d'audit » de l'index des réglages, ce dernier « Réservé aux administrateurs »",
+			"width": 545,
+			"height": 216
+		},
+		{
+			"type": "image",
+			"src": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/membres.jpg",
+			"alt": "Le titre « Membres » de l'écran des membres",
+			"width": 127,
+			"height": 58
+		},
+		{
+			"type": "image",
+			"src": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/reserve-aux-administrateurs.jpg",
+			"alt": "Le journal ouvert par une lectrice : « Réservé aux administrateurs »",
+			"width": 548,
+			"height": 212
+		},
+		{
 			"type": "list",
 			"ordered": true,
 			"start": 1,
@@ -314,6 +342,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/entrees.jpg",
+			"alt": "Les colonnes « Date », « Acteur », « Geste » et « Détail » des premières entrées",
+			"width": 1192,
+			"height": 314
+		},
+		{
+			"type": "image",
+			"src": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/entrees-plus-anciennes.jpg",
+			"alt": "Le bouton « Entrées plus anciennes », au bas du journal",
+			"width": 228,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -395,7 +437,7 @@
 							},
 							{
 								"type": "text",
-								"text": " : une phrase qui dit ce qui s'est passé et sur quoi — « Membre ajouté : Jeanne Martin », « Workflow\npublié : Cycle commercial » ;"
+								"text": " : une phrase qui dit ce qui s'est passé et sur quoi — « Webhook ajouté : Ancienne intégration »,\n« Données personnelles exportées : Contact anonymisé » ;"
 							}
 						]
 					}
@@ -415,12 +457,19 @@
 							},
 							{
 								"type": "text",
-								"text": " : ce qui a changé — « Rôle : Lecteur → Business developer », « Accès : Lecture », « Nom : A → B »,\n« Version 4 ». Un texte trop long est coupé à l'écran ; survolez-le pour le lire en entier."
+								"text": " : ce qui a changé — « Modifié : activation » pour un webhook désactivé, l'ancien et le nouveau rôle\npour un rôle changé, le droit posé pour un droit fin. Un texte trop long est coupé à l'écran ; survolez-le pour le lire\nen entier."
 							}
 						]
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/entree-sans-acteur.jpg",
+			"alt": "Une entrée du journal sans acteur : « Système ou compte supprimé »",
+			"width": 1192,
+			"height": 73
 		},
 		{
 			"type": "paragraph",
@@ -454,6 +503,13 @@
 					"text": "22.3 Filtrer"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/periode-vide.jpg",
+			"alt": "Les filtres « Famille », « Acteur », « Du » et « Au » sur une période sans geste : « Aucun geste sur cette période »",
+			"width": 732,
+			"height": 370
 		},
 		{
 			"type": "paragraph",

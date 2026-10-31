@@ -52,6 +52,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "administrer-l-arborescence-tracks-et-channels/arborescence.jpg",
+			"alt": "L'écran Administration de l'arborescence : les tracks de l'espace, chacun avec ses flèches, son crayon, son archivage et sa corbeille",
+			"width": 1440,
+			"height": 900
+		},
+		{
+			"type": "image",
+			"src": "administrer-l-arborescence-tracks-et-channels/sections-de-reglages.jpg",
+			"alt": "L'index des réglages : « Arborescence : tracks et channels » parmi les sections, sous l'entrée « Réglages » de la barre latérale",
+			"width": 547,
+			"height": 253
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -116,6 +130,13 @@
 					"text": "). Si votre rôle change pendant que la page\nest ouverte, c'est la réponse du serveur qui s'affiche."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "administrer-l-arborescence-tracks-et-channels/refus-role.jpg",
+			"alt": "Le formulaire « Nouveau track » refusé par le serveur : « Seul un administrateur de cet espace de travail peut modifier l'arborescence. »",
+			"width": 1192,
+			"height": 588
 		},
 		{
 			"type": "heading",
@@ -404,6 +425,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "administrer-l-arborescence-tracks-et-channels/nouveau-track.jpg",
+			"alt": "Le formulaire « Nouveau track » : nom, slug, les cinq couleurs, et le refus « Ce slug est déjà utilisé. »",
+			"width": 1192,
+			"height": 644
+		},
+		{
+			"type": "image",
+			"src": "administrer-l-arborescence-tracks-et-channels/afficher-les-archives.jpg",
+			"alt": "La case « Afficher les archivés » cochée : le track archivé « Pipeline 2024 » reparaît, avec sa flèche de restauration",
+			"width": 1190,
+			"height": 245
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -486,6 +521,13 @@
 					"text": ", et ils ne se remplacent pas :"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "administrer-l-arborescence-tracks-et-channels/restaurer.jpg",
+			"alt": "Une ligne de la corbeille et son bouton « Restaurer »",
+			"width": 1192,
+			"height": 74
 		},
 		{
 			"type": "table",
@@ -784,6 +826,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "administrer-l-arborescence-tracks-et-channels/nouveau-channel.jpg",
+			"alt": "Le formulaire « Nouveau channel » : la couleur, la liste des workflows et le lien « Nouveau workflow » ; « Créer » reste indisponible",
+			"width": 1130,
+			"height": 571
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -915,6 +964,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "administrer-l-arborescence-tracks-et-channels/nouveau-workflow.jpg",
+			"alt": "L'éditeur ouvert depuis le formulaire d'un channel : le bandeau « Revenir au nouveau channel », et la portée réglée sur « Global »",
+			"width": 1162,
+			"height": 355
+		},
+		{
 			"type": "list",
 			"ordered": false,
 			"start": null,
@@ -1036,6 +1092,13 @@
 					"text": " de la ligne du channel (l'icône d'un petit schéma, entre le crayon et\nl'archivage). Elle ouvre un panneau sous la ligne, qui nomme le workflow actuel :"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "administrer-l-arborescence-tracks-et-channels/changer-de-workflow.jpg",
+			"alt": "Le panneau « Changer de workflow » sous la ligne du channel « Partenariats » : le nouveau workflow, et sous « Où vont les affaires » la destination de l'étape Relance",
+			"width": 1050,
+			"height": 366
 		},
 		{
 			"type": "list",
@@ -1167,6 +1230,13 @@
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "administrer-l-arborescence-tracks-et-channels/reponses-perdues.jpg",
+			"alt": "Le panneau dit combien de réponses de formulaire seraient perdues, et attend la case « J'accepte de perdre ces réponses »",
+			"width": 670,
+			"height": 117
 		},
 		{
 			"type": "paragraph",

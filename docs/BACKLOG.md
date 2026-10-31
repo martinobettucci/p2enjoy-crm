@@ -17500,10 +17500,17 @@ responsable** : traitée juste après `CRM-116`.*
             (`daily_quota` nul) — le plafond est désormais rendu par un `afterEach`. Rien d'autre n'est laissé : la
             relance armée sur l'affaire figée est retirée (armer n'écrit rien au fil, migration 0119), les fichiers
             joints jamais envoyés aussi.
-      - [ ] **T4.4 — l'administration** : chapitres 17 à 22. Scénarios des chapitres 19 à 22 écrits, jamais passés ;
-            17 et 18 restent à écrire.
-      - [ ] **T4.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33. Scénarios des chapitres 23 à
-            29 écrits, jamais passés ; 30 à 33 restent à écrire.
+      - [x] **T4.4 — l'administration** : chapitres 17 à 22, le 2026-10-31. **100 images** produites par
+            `e2e/manuel/17-arborescence`, `18-workflows` et `19-22-administration` (25 scénarios verts) sur la pile et le
+            seed, observées et placées ; `verify-manual` 166 contrôles sans anomalie (vingt-deux chapitres et le 34).
+            Le journal d'audit se photographie seul, sur une base fraîchement reconstruite : les fichiers passent dans
+            l'ordre alphabétique, et les nettoyages des autres scénarios écrivent au journal. Les refus du serveur sont
+            montrés par un rôle retiré pendant que la page est ouverte (Farida Nowak administre le temps du test,
+            l'espace gardant un administrateur), l'IA par le simulateur. Onze exceptions de plus au §11.3, soumises au
+            responsable (29 en tout). Les exemples du §22.2 suivent le journal réel. INC-323 consignée : l'import de
+            contacts paraît au journal sans geste ni détail.
+      - [@] **T4.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33. Scénarios des chapitres 23 à
+            33 écrits (30 à 33 le 2026-10-31), jamais passés.
 - [ ] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
       toutes les images du manuel reprises par le projet `manuel` dans le navigateur en français (`docs/SPEC-manual.md`
       §11.4 ; les chapitres illustrés avant le 2026-10-31 montrent encore « Choose File » et « mm/dd/yyyy »),

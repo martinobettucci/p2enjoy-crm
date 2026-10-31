@@ -8212,3 +8212,17 @@ d'abord le channel jetable et son affaire, puis archive. Les deux fichiers 29/29
 typecheck vert. La suite d'API, à 1280/1282 par ces seules deux lignes, n'a plus de rouge connu. Connecteur MCP : sans
 objet.
 
+
+### INC-323 — Le journal d'audit affiche l'import de contacts sans geste ni détail
+
+*Constaté le 2026-10-31 par `CRM-117` T4.4, en photographiant le journal sur la base fraîchement reconstruite.* L'import
+de contacts que le seed joue (Driss Lemoine, `audit_log` : famille `import`, action `imported`, entité `contact`, détail
+`{ created: 8, refused: 1, skipped: 1, organizations_created: 4 }`) paraît dans Réglages ▸ Journal d'audit avec sa date et
+son acteur, mais les colonnes « Geste » et « Détail » **vides** : `webapp/src/app/presentation-audit.ts` n'a aucune
+entrée pour `contact.imported` (il connaît `contact.exported`), et le catalogue `fr.ts` aucune phrase pour ce geste.
+`docs/manual.md` §22 annonce pourtant la famille « exports » et « import » parmi celles du journal.
+
+**Non corrigé** : le fichier relève de `CRM-072` (le journal) et de l'unité de l'import ; `CRM-117` ne change pas le
+produit. **Issue proposée** : une phrase « Contacts importés » et un détail qui reprend les quatre nombres, avec son test
+unitaire de présentation. L'image `le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/journal.jpg` montre la ligne
+vide ; elle sera reprise en `CRM-117` T5 si la correction arrive avant. Connecteur MCP : sans objet.

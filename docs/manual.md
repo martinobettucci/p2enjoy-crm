@@ -3548,6 +3548,10 @@ Quatre choses la terminent, et trois d'entre elles ne vous demandent aucun geste
 **L'index.** Ouvrir « Réglages » affiche d'abord l'index des sections de réglages, sous le titre « Sections de
 réglages » ; « Arborescence : tracks et channels » en est une entrée.
 
+![L'écran Administration de l'arborescence : les tracks de l'espace, chacun avec ses flèches, son crayon, son archivage et sa corbeille](manuel/images/administrer-l-arborescence-tracks-et-channels/arborescence.jpg)
+
+![L'index des réglages : « Arborescence : tracks et channels » parmi les sections, sous l'entrée « Réglages » de la barre latérale](manuel/images/administrer-l-arborescence-tracks-et-channels/sections-de-reglages.jpg)
+
 **Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Les autres membres
 voient l'arborescence — ils ont le droit de la lire — et leurs modifications sont refusées par le
 serveur avec le message « Seul un administrateur de cet espace de travail peut modifier
@@ -3556,6 +3560,8 @@ l'arborescence. »
 **Les boutons ne sont pas masqués pour autant** : ils restent visibles, grisés, et un bandeau dit pourquoi
 ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Si votre rôle change pendant que la page
 est ouverte, c'est la réponse du serveur qui s'affiche.
+
+![Le formulaire « Nouveau track » refusé par le serveur : « Seul un administrateur de cet espace de travail peut modifier l'arborescence. »](manuel/images/administrer-l-arborescence-tracks-et-channels/refus-role.jpg)
 
 ### 17.1 Un track
 
@@ -3582,6 +3588,10 @@ est ouverte, c'est la réponse du serveur qui s'affiche.
   alors l'arborescence et se retrouve dans **Réglages ▸ Corbeille**, d'où il se restaure
   ([chapitre 20](#la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre)).
 
+![Le formulaire « Nouveau track » : nom, slug, les cinq couleurs, et le refus « Ce slug est déjà utilisé. »](manuel/images/administrer-l-arborescence-tracks-et-channels/nouveau-track.jpg)
+
+![La case « Afficher les archivés » cochée : le track archivé « Pipeline 2024 » reparaît, avec sa flèche de restauration](manuel/images/administrer-l-arborescence-tracks-et-channels/afficher-les-archives.jpg)
+
 **La barre latérale suit vos gestes, sans rechargement** : un track créé y paraît aussitôt, un track
 renommé ou recoloré y change, un track archivé ou mis à la corbeille la quitte — et il y revient
 dès que vous le désarchivez ou le restaurez depuis la corbeille. L'ancienne liste reste affichée le
@@ -3592,6 +3602,8 @@ retire. Les deux sont réversibles. Seul un objet resté **30 jours** dans la co
 ([section 20.3](#l-effacement-definitif)).
 
 **Archiver et mettre à la corbeille sont deux états distincts**, et ils ne se remplacent pas :
+
+![Une ligne de la corbeille et son bouton « Restaurer »](manuel/images/administrer-l-arborescence-tracks-et-channels/restaurer.jpg)
 
 | | Archiver | Mettre à la corbeille |
 |---|---|---|
@@ -3624,6 +3636,8 @@ Les mêmes six gestes s'appliquent, avec deux différences :
   défaut est présenté en tête et signalé comme tel, **mais il n'est pas coché** — le produit ne
   choisit pas à votre place. Tant qu'aucun workflow n'est choisi, « Créer » reste indisponible.
 
+![Le formulaire « Nouveau channel » : la couleur, la liste des workflows et le lien « Nouveau workflow » ; « Créer » reste indisponible](manuel/images/administrer-l-arborescence-tracks-et-channels/nouveau-channel.jpg)
+
 **Un channel a sa propre couleur.** Elle se choisit comme celle d'un track, avec les mêmes cinq
 couleurs, à la création comme en modification, et un nouveau channel est Gris tant que vous n'en choisissez pas
 d'autre. Elle s'affiche en **pastille** devant le nom de son onglet ([section 3.4](#les-onglets-d-un-track)) et en **pilule** dans
@@ -3641,6 +3655,8 @@ formulaire du channel se rouvre là où vous l'aviez laissé — dans la vue du 
 l'arborescence —, avec le nom, l'identifiant, la couleur et la description déjà saisis, et le workflow créé déjà
 choisi.
 
+![L'éditeur ouvert depuis le formulaire d'un channel : le bandeau « Revenir au nouveau channel », et la portée réglée sur « Global »](manuel/images/administrer-l-arborescence-tracks-et-channels/nouveau-workflow.jpg)
+
 - Le lien n'existe que dans le formulaire de **création** ; changer le workflow d'un channel existant
   reste un geste de modification.
 - Un workflow créé **propre à un autre track** ne peut pas être choisi pour ce channel : le formulaire
@@ -3653,6 +3669,8 @@ modification ne change que le workflow d'un channel **vide** : sur un channel qu
 renvoie à la commande **Changer de workflow** de la ligne du channel (l'icône d'un petit schéma, entre le crayon et
 l'archivage). Elle ouvre un panneau sous la ligne, qui nomme le workflow actuel :
 
+![Le panneau « Changer de workflow » sous la ligne du channel « Partenariats » : le nouveau workflow, et sous « Où vont les affaires » la destination de l'étape Relance](manuel/images/administrer-l-arborescence-tracks-et-channels/changer-de-workflow.jpg)
+
 1. Choisissez le **nouveau workflow** — un workflow global, ou propre à ce track, non archivé.
 2. Sous « Où vont les affaires », chaque étape **occupée** du workflow actuel est listée avec son nombre d'affaires
    (affaires archivées et en corbeille comprises). Choisissez pour chacune sa **destination** dans le nouveau workflow.
@@ -3662,6 +3680,8 @@ l'archivage). Elle ouvre un panneau sous la ligne, qui nomme le workflow actuel 
    ne connaît pas, le changement s'arrête et le panneau dit **combien de réponses seraient perdues**. Il ne les supprime
    jamais sans votre accord : cochez « J'accepte de perdre ces réponses », puis cliquez à nouveau sur **Changer de
    workflow** — ou annulez.
+
+![Le panneau dit combien de réponses de formulaire seraient perdues, et attend la case « J'accepte de perdre ces réponses »](manuel/images/administrer-l-arborescence-tracks-et-channels/reponses-perdues.jpg)
 
 Le changement est fait d'un bloc : toutes les affaires passent à leur destination en même temps, et chacune garde une
 trace « workflow changé » dans son fil. Un message confirme le nouveau workflow. Comme les autres commandes de
@@ -3687,6 +3707,10 @@ telle liste d'aplomb demande une renumérotation, qui n'est pas encore livrée.
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « Workflows : étapes et composition ».
 
+![L'éditeur de workflows : la liste à gauche, « Cycle commercial standard » ouvert à droite, ses étapes et ses transitions](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/editeur.jpg)
+
+![L'entrée « Workflows : étapes et composition » de l'index des réglages](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/reglages.jpg)
+
 **Ce que cet écran fait, et ce qu'il ne fait pas.** Il **compose** les workflows qui existent
 déjà : il choisit leurs étapes dans le catalogue de nœuds, les ordonne, les surcharge, désigne
 celle par laquelle les affaires entrent, déclare les **transitions** qui relient les étapes, et
@@ -3697,6 +3721,8 @@ et le rétablit ([section 18.4](#choisir-un-workflow)).
 **Qui.** L'écriture est réservée aux **administrateurs** de l'espace de travail. Comme au
 [chapitre 17](#administrer-l-arborescence-tracks-et-channels), les boutons ne sont pas masqués aux autres membres : le refus affiché est celui du
 serveur, « Seul un administrateur de cet espace de travail peut composer un workflow. »
+
+![Le formulaire « Nouveau champ » refusé par le serveur : « Seul un administrateur de cet espace de travail peut composer un workflow. »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/refus-role.jpg)
 
 ### 18.1 Créer un workflow
 
@@ -3709,11 +3735,17 @@ trois champs :
 - le **track**, qui n'apparaît que sous la seconde portée. Sous « Global », il n'existe pas : ce
   n'est pas un champ grisé, c'est un champ sans objet.
 
+![Le formulaire « Nouveau workflow » : le nom, et la portée « Global »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/nouveau-workflow.jpg)
+
+![La même fiche sous la portée « Propre à un track » : la liste des tracks apparaît](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/propre-a-un-track.jpg)
+
 **Le workflow naît vide.** Il n'a aucune étape, et il n'est utilisable par aucun channel tant que
 vous ne lui en avez pas donné au moins une, désignée comme initiale ([chapitre 18.5](#les-etapes)). L'écran le
 dit dès la création : « Ce workflow n'a aucune étape. » Un workflow sans étape initiale est un
 brouillon parfaitement licite, pas une erreur. Un channel qui le suit n'a pas de tableau : son onglet
 le dit, et propose le lien **Ouvrir l'éditeur de workflows** ([chapitre 3.4](#les-onglets-d-un-track)).
+
+![Le workflow créé, choisi aussitôt : « Ce workflow n'a aucune étape. », et la commande « Définir par défaut » de son en-tête](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/workflow-vide.jpg)
 
 Le workflow créé devient aussitôt le workflow **choisi**, prêt à être composé.
 
@@ -3728,10 +3760,14 @@ s'ouvre formulaire de création ouvert, portée réglée sur le track du channel
 le bandeau le nomme : c'est lui qui sera choisi au retour. Composez-le, puis **Revenir au nouveau
 channel**.
 
+![Le bandeau « Vous créez un channel » au-dessus du formulaire de création, la portée réglée sur le track](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/vous-creez-un-channel.jpg)
+
 **Si l'espace de travail est vide**, l'écran affiche « Aucun workflow dans cet espace de travail »
 et porte le même bouton. Un workflow composé ainsi part d'un catalogue de nœuds **vide** dans un
 espace neuf : le plus court est souvent le workflow de départ du guide ([§2.4](#le-workflow-de-depart-en-un-geste)), que vous
 recomposez ensuite ici.
+
+![Un espace sans workflow : « Aucun workflow dans cet espace de travail », avec « Nouveau workflow » et « Créer avec l'IA »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/aucun-workflow.jpg)
 
 ### 18.2 Créer un workflow avec l'IA
 
@@ -3748,6 +3784,8 @@ gauche — et dans l'écran vide d'un espace qui n'a encore aucun workflow.
 tout le monde ; un autre membre qui l'utilise reçoit le refus du serveur : « L’assistant est réservé aux
 administrateurs de l’espace de travail. »
 
+![Le refus du serveur dans le panneau : « L'assistant est réservé aux administrateurs de l'espace de travail. »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/refus.jpg)
+
 **1. Demander.** Écrivez dans **« Décrivez le workflow »** ce dont vous avez besoin : les étapes, les
 issues — gagné, perdu —, les informations à saisir sur une affaire. Le texte part vers le serveur d'IA
 de LeLabs : **n'y collez aucune donnée personnelle** — ni nom de client, ni adresse, ni contenu de
@@ -3755,12 +3793,16 @@ message. Puis **« Générer la suggestion »**. La réponse prend environ une d
 dit, avec le temps écoulé. Si l'assistant est indisponible, le panneau le dit et vous pouvez toujours
 créer le workflow à la main.
 
+![Le panneau « Créer un workflow avec l'IA » : la mention « Suggestion — rien n'est créé avant « Accepter » », la description et « Générer la suggestion »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/demander.jpg)
+
 **2. Relire.** La suggestion s'affiche à la place du workflow choisi, dans l'ordre de l'éditeur : le
 nom, les étapes — chacune dit si son nœud est **nouveau** ou vient **du catalogue** —, les transitions
 au départ de chaque étape, les champs, leur visibilité par étape et les champs exigés pour franchir une
 transition. Si la proposition a des **défauts** — deux étapes initiales, une transition vers une étape
 qui n'existe pas, une liste sans choix… —, ils sont listés en tête, et la suggestion **ne peut pas être
 acceptée** tant qu'ils demeurent.
+
+![La suggestion relue : la demande, le nom proposé, et la première étape avec son nœud nouveau](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/relire.jpg)
 
 **3. Corriger à la main.** Dans l'aperçu, vous pouvez renommer le workflow ; donner à **chaque étape**
 son propre nom (**« Nom de l’étape »**) et sa propre probabilité (**« Probabilité de l’étape »**) — laissés
@@ -3774,11 +3816,15 @@ ses transitions et les règles qui la visent — et l'écran annonce ce qui a é
 restent locales jusqu'à **« Enregistrer la correction »** ; « Rétablir » les annule. Ajouter une étape
 ou un champ se demande à l'IA, ou se fait ici même une fois le workflow créé.
 
+![Une étape corrigée à la main : « Nom de l'étape » et « Probabilité de l'étape »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/corriger.jpg)
+
 **4. Faire revoir.** Écrivez une consigne — « ajoute une étape de relance », « rends perdu possible
 depuis chaque étape » — puis **« Revoir avec l’IA »**. L'IA reprend la proposition **telle qu'elle est
 affichée**, vos corrections comprises, avec les défauts relevés, et rend une nouvelle version.
 L'historique, en bas du panneau, garde chaque version : proposée par l'IA ou corrigée à la main, avec
 sa consigne.
+
+![La consigne pour « Revoir avec l'IA », et la barre « Accepter et créer le workflow », « Enregistrer la correction », « Rétablir », « Abandonner la suggestion »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/gestes.jpg)
 
 **5. Accepter ou abandonner.** **« Accepter et créer le workflow »** crée en une seule fois le workflow,
 ses nouveaux nœuds de catalogue, ses étapes, transitions, champs, règles et exigences. Le serveur
@@ -3786,6 +3832,8 @@ revérifie tout à ce moment : si le catalogue a changé entre-temps, il refuse 
 la proposition porte. Le workflow créé devient le workflow choisi, prêt à être affecté à un channel ;
 il n'est pas le workflow par défaut si l'espace en a déjà un. **« Abandonner la suggestion »**, après
 confirmation, la retire de la liste ; rien n'a été créé.
+
+![La confirmation « Abandonner la suggestion » : rien n'a été créé](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/abandonner.jpg)
 
 **Réutiliser le catalogue.** Une étape peut viser un nœud qui existe déjà au catalogue de l'espace tout en
 portant un autre nom : l'IA y est invitée — par exemple l'étape « Premier contact » sur le nœud
@@ -3796,6 +3844,12 @@ les majuscules n'est pas gardé. Le curseur passe dans le nom de l'étape ; l'é
 annonce le nom gardé. Une fois le workflow créé, l'éditeur montre l'étape sous ce nom, avec la mention
 « Libellé surchargé ».
 
+![Deux défauts empêchent l'acceptation : un nœud déjà au catalogue, et un champ « montant » qui reprend le montant de l'affaire](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/defauts.jpg)
+
+![Une étape portée par le nœud « Réalisation » sous un autre nom, avec la mention « Libellé surchargé »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/libelle-surcharge.jpg)
+
+![Une étape de la suggestion qui redéclare un nœud du catalogue, et le bouton « Utiliser le nœud du catalogue »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/utiliser-le-noeud-du-catalogue.jpg)
+
 **Les informations que l'affaire porte déjà.** Toute affaire a déjà son titre, sa description, son
 responsable, son montant et sa devise, sa probabilité, sa prochaine action et son échéance, ses contacts et
 son organisation, ses coûts, ses recettes, son temps, ses commentaires et ses e-mails. L'IA ne doit pas
@@ -3803,10 +3857,16 @@ proposer de champ pour elles ; si un champ nouveau en reprend une — un champ �
 défaut le dit : « Le champ « montant » reprend le montant, déjà porté par l'affaire : retirez-le ou
 renommez-le. » Un champ qui existe déjà dans un workflow n'est jamais signalé.
 
+![Un champ « montant » proposé par l'IA, de type « Montant »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champ-montant.jpg)
+
 **Les suggestions en revue** sont listées sous les workflows, dans « Suggestions de l’IA en revue » :
 elles survivent au rechargement de la page, et les autres administrateurs les voient et peuvent les
 reprendre. Une suggestion dont la génération a échoué le dit, avec la raison, et « Réessayer » relance
 la même demande.
+
+![La liste « Suggestions de l'IA en revue », sous les workflows](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/suggestions-en-revue.jpg)
+
+![Une suggestion dont la génération a échoué, et son bouton « Réessayer »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/echec.jpg)
 
 **Ce que l'assistant ne fait pas.** Il ne touche ni aux affaires, ni aux contacts, ni aux messages. Pour
 faire évoluer un workflow déjà en usage, voir le chapitre suivant.
@@ -3832,11 +3892,15 @@ qualification des besoins », « ajoute un champ pour le canal d'acquisition ».
 qu'il est et le **nombre** d'affaires de chaque étape — rien d'autre des affaires : ni leur titre, ni
 leurs contacts. N'écrivez aucune donnée personnelle. Puis **« Générer la suggestion »**.
 
+![« Faire évoluer les étapes de « Cycle commercial standard » » : le panneau ouvert au-dessus des étapes, et « Décrivez ce qui doit changer »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/decrire-ce-qui-doit-changer.jpg)
+
 **2. Relire ce qui change.** En tête de la suggestion, **« Ce qui change »** liste, collection par
 collection, ce qui serait **ajouté**, **modifié** — avec la valeur d'avant et celle d'après — ou
 **retiré**. Un champ retiré est dit « Retiré — archivé » : il n'est jamais supprimé, ses réponses restent
 consultables. Si rien ne change, la phrase le dit. Le reste de l'aperçu se corrige comme pour une
 création ; le type d'un champ existant, lui, ne se change pas.
+
+![« Ce qui change » : une étape ajoutée, une étape retirée, et les transitions qui en découlent](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/ce-qui-change.jpg)
 
 **3. Choisir où vont les affaires.** Quand la suggestion retire une étape qui porte des affaires, le bloc
 **« Où vont les affaires des étapes retirées »** donne leur nombre et une liste **« Destination »**, ouverte
@@ -3844,11 +3908,19 @@ sur « Aucune destination » : **rien n'est deviné**. Tant qu'une étape n'a pa
 dit en tête et la suggestion ne peut pas être acceptée. Vous pouvez choisir une étape que la suggestion
 **ajoute**. Votre choix s'enregistre avec la correction, ou au moment d'accepter.
 
+![« Où vont les affaires des étapes retirées » : une affaire, et la liste « Destination » ouverte sur « Aucune destination »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/ou-vont-les-affaires.jpg)
+
 **4. Accepter.** **« Accepter et faire évoluer le workflow »** applique tout en une fois : étapes,
 transitions, champs, règles et exigences, et déplace les affaires vers leur destination. **Juste avant**,
 le produit garde une **version** du workflow tel qu'il était — le *point de retour* — et l'annonce la
 nomme : « Point de retour : version 4 ». Pour revenir en arrière, restaurez cette version depuis le bloc
 « Versions » du même écran ([chapitre 18.13](#garder-une-photographie-d-un-workflow-et-y-revenir)).
+
+![La barre de la suggestion, avec « Accepter et faire évoluer le workflow »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/accepter.jpg)
+
+![Les étapes du workflow après l'évolution : la qualification a pris la place de la négociation](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/apres-evolution.jpg)
+
+![Le bloc « Versions » après l'évolution : la version publiée comme point de retour](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/point-de-retour-dans-les-versions.jpg)
 
 **Si le workflow a changé entre-temps** — un collègue a ajouté une étape, renommé une transition —,
 l'acceptation est refusée : « Le workflow a changé depuis cette suggestion : elle ne peut plus être
@@ -3856,6 +3928,8 @@ acceptée. » Abandonnez-la, puis demandez une nouvelle suggestion, qui partira 
 
 **Les suggestions d'un workflow** sont listées au-dessus de ses étapes, dans « Suggestions de l’IA pour ce
 workflow » ; celles qui créent un workflow restent sous la liste des workflows.
+
+![« Suggestions de l'IA pour ce workflow », au-dessus des étapes](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/suggestions-du-workflow.jpg)
 
 ### 18.4 Choisir un workflow
 
@@ -3865,8 +3939,12 @@ le premier est ouvert d'office. Chaque entrée dit sa portée — globale, ou pr
 La case **Afficher les archivés**, au-dessus de la liste, y ajoute les workflows archivés ; chacun porte la mention
 « Archivé ». Sans elle, un workflow archivé quitte la liste.
 
+![« Afficher les archivés » coché : un workflow archivé reparaît dans la liste avec la mention « Archivé »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/afficher-les-archives.jpg)
+
 **L'en-tête du workflow ouvert.** En haut de la colonne de droite, le nom du workflow, puis ses pastilles : sa portée
 (« Global », ou le nom de son track), « Par défaut » s'il l'est, « Archivé » s'il l'est. Dessous, ses commandes :
+
+![L'en-tête du workflow par défaut : ses pastilles « Global » et « Par défaut », puis « Renommer », « Copier vers un track » et « Archiver »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/en-tete.jpg)
 
 - **Renommer** remplace le nom par un champ « Nom du workflow », déjà rempli. « Enregistrer » reste indisponible tant
   que le champ est vide ; `Échap` ou « Annuler » referme sans rien changer.
@@ -3887,6 +3965,10 @@ La case **Afficher les archivés**, au-dessus de la liste, y ajoute les workflow
 - **Rétablir**, sur un workflow archivé (cochez « Afficher les archivés » pour le retrouver), le remet en service, sans
   confirmation.
 
+![« Renommer » : le champ « Nom du workflow », avec « Enregistrer » et « Annuler »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/renommer.jpg)
+
+![Dans l'arborescence, le panneau « Changer de workflow » d'un channel](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/changer-de-workflow.jpg)
+
 Ces commandes demandent d'**administrer l'espace de travail**. Sans ce droit, elles restent visibles mais grisées, et
 le motif est écrit en tête de l'éditeur.
 
@@ -3894,6 +3976,10 @@ le motif est écrit en tête de l'éditeur.
 
 Les étapes s'affichent dans l'ordre du graphe, avec pour chacune sa probabilité et son seuil de
 relance — ceux du catalogue, ou ceux que vous avez surchargés.
+
+![Les étapes du workflow par défaut, avec leur probabilité et leur seuil de relance](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/etapes.jpg)
+
+![Le bouton « Ajouter une étape », sous la dernière étape](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/ajouter-une-etape.jpg)
 
 - **Ajouter** : « Ajouter une étape » ouvre le catalogue des nœuds encore disponibles. Un nœud déjà
   employé par ce workflow n'y figure pas, un nœud archivé non plus. Lorsque tout le catalogue actif
@@ -3920,6 +4006,8 @@ Sous les étapes, le bloc « Transitions déclarées » montre le graphe : chaqu
 mène ; une étape sans sortie est un point d'arrivée, et l'écran l'écrit — « Aucune sortie : les
 cards s'y arrêtent » — plutôt que de la faire disparaître.
 
+![Le bloc « Transitions déclarées » : les sorties de Prospection, dont « Vers Perdu » avec « Motif exigé »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/transitions.jpg)
+
 Chaque sortie affiche l'étape d'arrivée, le **libellé du bouton** qui la déclenche depuis une
 affaire, et la mention **« Motif exigé »** lorsqu'un commentaire est obligatoire pour l'emprunter.
 
@@ -3938,9 +4026,13 @@ affaire, et la mention **« Motif exigé »** lorsqu'un commentaire est obligato
   administrateur. Les deux étapes, elles, restent dans le workflow ; seule la porte entre elles se
   ferme.
 
+![Le bouton « Déclarer une transition », sous un point d'arrivée](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/declarer-une-transition.jpg)
+
 Si un autre administrateur déclare la même transition pendant que votre formulaire est ouvert, le
 serveur refuse la vôtre et l'écran affiche « Cette transition est déjà déclarée. » Rien n'est écrit
 deux fois.
+
+![Le formulaire « Nouvelle transition » refusé : « Cette transition est déjà déclarée. »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/deja-declaree.jpg)
 
 ### 18.7 Les questions du formulaire
 
@@ -3948,6 +4040,10 @@ Sous les transitions, le bloc « Champs du formulaire » liste les **questions p
 affaire** de ce workflow, dans l'ordre où elles apparaissent sur la fiche ([§9.6](#la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent)). Chaque ligne
 montre le libellé de la question, sa **clé** entre parenthèses techniques, son **type**, et son
 texte d'aide s'il en porte un.
+
+![Le bouton « Déclarer un champ », sous la dernière question](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/declarer-un-champ.jpg)
+
+![Le bloc « Champs du formulaire » et sa première question, avec sa clé et son type](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/champs-du-formulaire.jpg)
 
 - **Déclarer** : « Déclarer un champ » ouvre le formulaire. Vous y saisissez une **clé**, un
   **libellé** et un **type**. La clé n'accepte que des minuscules, des chiffres et des tirets
@@ -3970,6 +4066,16 @@ texte d'aide s'il en porte un.
   supprimée. Une question archivée reste dans la liste, marquée « Archivé », et le bouton de
   restauration la remet en place.
 
+![Le formulaire « Nouveau champ » refusé : « Cette clé est déjà prise dans ce workflow. »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/cle-prise.jpg)
+
+![Le type « Choix unique » fait paraître les choix proposés](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/choix-unique.jpg)
+
+![Le type « Choix multiple »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/choix-multiple.jpg)
+
+![Le type « Montant » demande une devise, ici EUR](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/montant.jpg)
+
+![Une question archivée reste dans la liste, marquée « Archivé »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/question-archivee.jpg)
+
 Si vous n'êtes pas administrateur de l'espace de travail, les commandes de l'éditeur sont grisées et
 un bandeau dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)) ; le serveur refuse de toute façon l'enregistrement.
 
@@ -3980,6 +4086,8 @@ ligne par question, une colonne par étape, et sur chaque case ce que la questio
 étape-là.
 
 Quatre états par case :
+
+![La grille « Visibilité des champs, étape par étape » : « Masqué », « Par défaut », « Affiché », « Exigé »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/grille.jpg)
 
 - **Par défaut** — aucune règle n'est enregistrée pour ce couple, et la question est **affichée** ;
 - **Masqué** — la question n'apparaît pas sur les affaires de cette étape, et n'y est pas demandée ;
@@ -4008,6 +4116,8 @@ qu'elle règle.
 Sous la grille, le bloc « Champs exigés pour franchir une transition » reprend les chemins dans
 l'ordre du graphe et écrit, sous chacun, ce qu'une affaire doit avoir renseigné pour l'emprunter.
 
+![« Champs exigés pour franchir une transition » : la transition Prospection vers Relance, sans champ exigé, avec « Exiger un champ » et « Exiger un point »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/exigences.jpg)
+
 Une exigence a **deux origines possibles**, et chaque ligne dit la sienne :
 
 - **exigé par la règle de l'étape d'arrivée** — la question est réglée sur « Exigé » dans la grille
@@ -4016,6 +4126,8 @@ Une exigence a **deux origines possibles**, et chaque ligne dit la sienne :
 - **exigé par cette transition** — la question n'est obligatoire que pour ce chemin-là, quels que
   soient les réglages de l'étape d'arrivée ;
 - une même question peut porter **les deux** ; elle est alors écrite comme telle.
+
+![Une ligne de la grille : la question réglée sur « Exigé » à certaines étapes](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/regle-exigee.jpg)
 
 Cette distinction commande ce que vous pouvez faire depuis ce bloc. Une exigence venue d'une règle
 **n'y porte aucune commande de retrait** : elle se modifie dans la grille, à la case correspondante.
@@ -4050,6 +4162,8 @@ erreur technique.
 workflow dans l'ordre du graphe, avec ses points. Ces points sont **ajoutés automatiquement aux affaires qui entrent dans
 l'étape** ; elles les cochent ensuite sur leur fiche ([section 9.9](#la-checklist-d-une-affaire-les-points-a-cocher)).
 
+![Le bloc « Checklists des étapes » : les points de Prospection, avec « Renommer » et « Archiver »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/checklists.jpg)
+
 - **« Ajouter un point »**, sous chaque étape, ouvre un champ : saisissez le libellé, puis « Ajouter » ou Entrée.
 - **« Monter »** et **« Descendre »** changent l'ordre ; ils sont grisés en tête et en queue de liste.
 - **« Renommer »** corrige le libellé. Les affaires qui portent déjà ce point gardent l'ancien libellé : il a été copié
@@ -4058,8 +4172,14 @@ l'étape** ; elles les cochent ensuite sur leur fiche ([section 9.9](#la-checkli
   mais celles qui le portent déjà le gardent. Le point reste dans la liste, marqué « Archivé », et **« Désarchiver »** le
   rétablit. Aucun de ces gestes ne demande de confirmation : chacun se défait d'un clic.
 
+![Un point archivé, « Proposition envoyée », marqué « Archivé », avec « Désarchiver »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/point-archive.jpg)
+
+![Le bouton « Ajouter un point » sous une étape](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/ajouter-un-point.jpg)
+
 **Les points qu'un chemin exige.** Dans le bloc des exigences, sous chaque chemin et après les questions exigées, la
 ligne **« Points de checklist exigés »** liste les points qu'une affaire doit avoir cochés pour emprunter ce chemin.
+
+![« Points de checklist exigés » sous la transition Relance vers Négociation, avec « Ne plus exiger »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/points-exiges.jpg)
 
 - **« Exiger un point »** propose les seuls points **de l'étape de départ** du chemin — ceux que l'affaire a reçus en y
   entrant —, non archivés et pas encore exigés. Quand il n'y en a aucun, une phrase le dit à la place du bouton.
@@ -4068,8 +4188,16 @@ ligne **« Points de checklist exigés »** liste les points qu'une affaire doit
   bloquer cette transition. »
 - Un workflow **sans question** montre quand même ses chemins, pour leurs points.
 
+![Un point archivé encore exigé : « Toujours exigé : retirez l'exigence pour ne plus bloquer cette transition. »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/toujours-exige.jpg)
+
+![Le bouton « Exiger un point » sous un chemin](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/exiger-un-point.jpg)
+
 Sur le tableau, un déplacement refusé faute de points cochés **nomme les points**, et le lien **« Cocher ces points »**
 ouvre la fiche de l'affaire sur son bloc « Checklist », le premier point exigé prêt à être coché.
+
+![Le refus du tableau nomme le point à cocher, avec le lien « Cocher ces points »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/cocher-ces-points.jpg)
+
+![La fiche ouverte sur son bloc « Checklist », le point exigé à cocher](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/checklist-de-l-affaire.jpg)
 
 Ces gestes sont réservés aux administrateurs de l'espace ; les autres voient le bloc, ses commandes grisées.
 
@@ -4081,6 +4209,10 @@ existante d'avancer. L'éditeur vous dit donc, **avant** d'enregistrer, ce que l
 Quand vous passez une case de la grille à **« Exigé »**, rien n'est enregistré tout de suite : une
 confirmation s'ouvre sous le tableau et annonce **deux** nombres, qui ne se déduisent pas l'un de
 l'autre :
+
+![La confirmation d'une case passée à « Exigé » : les affaires déjà à l'étape, et celles qui ne pourront plus y entrer](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/exiger-une-case.jpg)
+
+![Des lignes de la grille : « Masqué », « Affiché », « Par défaut » et « Exigé »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/etats-d-une-case.jpg)
 
 - combien d'affaires sont **déjà** à cette étape — leur fiche signalera le manque, mais elles ne
   sont **jamais** déplacées ni bloquées en lecture ;
@@ -4097,6 +4229,10 @@ Le formulaire **« Exiger un champ »** d'une transition affiche le même genre 
 choisissez une question, sous la liste : combien d'affaires ne pourront plus emprunter **ce
 chemin-là**. Une exigence de chemin ne concerne que lui, à la différence d'une case de la grille qui
 vaut pour toutes les entrées dans l'étape.
+
+![Le formulaire « Exiger un champ » d'un chemin : le nombre d'affaires qui ne pourront plus l'emprunter](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/exiger-un-champ.jpg)
+
+![Le bouton « Exiger un champ » sous un chemin](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/exiger-un-champ-bouton.jpg)
 
 Deux précisions honnêtes :
 
@@ -4125,6 +4261,8 @@ Elle ne se modifie pas et ne se supprime pas — c'est tout son intérêt.
 publication, la personne qui l'a publiée, sa note éventuelle et le début de son empreinte — le
 condensé qui identifie la composition. Un workflow qui n'a jamais été publié le dit en toutes
 lettres.
+
+![Le bloc « Versions » : la version 1, publiée comme point de retour avant une suggestion de l'IA](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/versions.jpg)
 
 **Publier une version** fige la composition actuelle. Une note facultative aide à la retrouver plus
 tard ; elle ne change rien à ce qui est conservé. Publier **ne change rien** au fonctionnement : les
@@ -4178,8 +4316,14 @@ dans « Nouvelle affaire » ([section 9.10](#le-tableau-kanban-d-un-channel)), i
 proposé, une description, un montant, les réponses aux questions du workflow et des points de checklist. Un modèle sert
 **les affaires d'un workflow** : il n'est proposé que dans les channels qui suivent ce workflow.
 
+![Le bouton « Nouvelle affaire » d'un tableau](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/nouvelle-affaire.jpg)
+
+![La création d'une affaire : le modèle « Audit flash » choisi a rempli le titre](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/choisir-un-modele.jpg)
+
 **L'écran.** **Réglages ▸ Modèles d'affaires**, juste après les workflows, range les modèles par workflow. Chaque ligne
 donne le nom du modèle, puis son titre proposé, son montant et son nombre de points.
+
+![Réglages ▸ Modèles d'affaires : « Nouveau modèle », et le modèle « Audit flash » avec « Modifier » et « Archiver »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/modeles.jpg)
 
 - **« Nouveau modèle »** ouvre une fiche dans la page : **Workflow**, **Nom**, **Titre proposé**, **Description**,
   **Montant** et **Devise**, puis les **points de checklist** — « Ajouter un point » ajoute une ligne, « Retirer » l'ôte.
@@ -4190,6 +4334,10 @@ donne le nom du modèle, puis son titre proposé, son montant et son nombre de p
   ramène dans la liste, marqué « Archivé », avec **« Désarchiver »**. Archiver libère son nom.
 - Deux modèles non archivés ne peuvent pas porter **le même nom**, majuscules comprises : l'écran le dit sous les champs
   et garde votre saisie.
+
+![La fiche d'un nouveau modèle : workflow, nom, titre proposé, montant, un point de checklist avec « Retirer », les questions du workflow](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/nouveau-modele.jpg)
+
+![« Afficher les archivés » coché : le modèle archivé « Atelier découverte (2025) », avec « Désarchiver »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/modele-archive.jpg)
 
 **Les réponses aux questions.** Sous les points, la fiche montre les questions du workflow, chacune avec le même
 contrôle que sur la fiche d'une affaire. Elles s'enregistrent avec le modèle. Laissez une question vide pour qu'elle reste
@@ -4205,6 +4353,8 @@ formée, comme une adresse incomplète, est refusée sous les champs, et votre s
 points de checklist de l'affaire — **sans les cochages** : un modèle prépare une affaire, il ne dit pas où elle en est.
 Un message confirme le nom du modèle enregistré.
 
+![Dans l'en-tête d'une affaire, « Enregistrer comme modèle » après « Mettre en sommeil »](manuel/images/composer-un-workflow-ses-etapes-ses-transitions-et-son-formulaire/enregistrer-comme-modele.jpg)
+
 **Qui peut le faire.** Préparer, modifier, archiver un modèle et enregistrer une affaire comme modèle sont réservés aux
 **administrateurs de l'espace**. Les autres voient l'entrée des réglages grisée, et le bouton de la fiche grisé, avec la
 raison ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Choisir un modèle à la création
@@ -4217,9 +4367,13 @@ Un **nœud** est un état par lequel une affaire peut passer : « Prospection »
 workflows y puisent leurs étapes. Deux workflows différents qui emploient le même nœud parlent du
 même état — c'est ce qui rend comparable le temps passé en « Relance » d'un channel à l'autre.
 
+![L'écran Catalogue de nœuds : chaque nœud avec son libellé, sa clé, sa nature et sa probabilité](manuel/images/le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/catalogue.jpg)
+
 On y arrive par **« Réglages ▸ Catalogue de nœuds »**.
 
 ### 19.1 Ce que chaque ligne montre
+
+![Les lignes du catalogue : « Ouvert », « Gagné », « Perdu », et un nœud « Archivé » avec « Rétablir »](manuel/images/le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/lignes.jpg)
 
 - le **libellé**, dans la couleur du nœud — la même que celle que le tableau kanban lui donnera ;
 - sa **clé**, en petits caractères techniques : c'est l'identifiant durable sur lequel les
@@ -4234,6 +4388,8 @@ On y arrive par **« Réglages ▸ Catalogue de nœuds »**.
 
 ### 19.2 Créer un nœud
 
+![Le formulaire « Nouveau nœud » : libellé, clé, type, couleur, probabilité et seuil de relance](manuel/images/le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/nouveau-noeud.jpg)
+
 « Nouveau nœud » ouvre un formulaire sous l'en-tête. Le libellé propose une clé, que vous pouvez
 corriger : elle doit être en minuscules, chiffres et tirets, et rester unique dans l'espace de
 travail. La proposition est une commodité et rien de plus — pour « Nœud de suivi », elle rend
@@ -4244,12 +4400,16 @@ Probabilité et seuil de relance sont facultatifs. Laissés vides, ils restent v
 
 ### 19.3 Modifier un nœud
 
+![Un nœud du catalogue et sa commande « Modifier »](manuel/images/le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/modifier.jpg)
+
 « Modifier » ouvre le même formulaire à la place de la ligne, sans la clé : **la clé ne se modifie
 pas**. Elle est ce sur quoi vos statistiques s'appuient, et la renommer réécrirait l'histoire de
 toutes les affaires passées par ce nœud. Si un nœud ne convient plus, archivez-le et créez-en un
 autre.
 
 ### 19.4 Archiver un nœud, et le rétablir
+
+![Un nœud archivé, marqué « Archivé », avec « Rétablir »](manuel/images/le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/archive.jpg)
 
 Archiver retire le nœud des workflows à composer, sans rien effacer. Le nœud reste dans la liste,
 marqué « Archivé », et « Rétablir » le remet en service — ce geste-là ne demande aucune
@@ -4286,9 +4446,13 @@ Déplacer un état dans la liste ne déplace aucune affaire.
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « Corbeille ».
 
+![L'écran Corbeille d'un administrateur : un track, un channel et une affaire retirés](manuel/images/la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre/corbeille.jpg)
+
 **Ce que l'écran montre.** Un tableau des objets retirés — tracks, channels et affaires mêlés —, du
 plus récemment retiré au plus ancien. Chaque ligne dit son **type**, son **nom**, **qui** l'a
 retiré, **quand**, **quand il sera effacé**, et **ce qu'il retient avec lui**.
+
+![Le tableau de la corbeille : type, nom, retiré par, dates, ce qu'il retient avec lui, et « Restaurer »](manuel/images/la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre/tableau.jpg)
 
 **Un objet reste 30 jours dans la corbeille, puis il est effacé définitivement, avec ce qu'il
 contient.** Une phrase en tête de l'écran le rappelle. La colonne **« Effacement »** donne, pour
@@ -4304,11 +4468,15 @@ adresse. Dans tous les cas, vous n'y voyez que ce que vous avez par ailleurs le 
 nombre affiché dans « Retient avec lui » suit la même règle — c'est **votre** décompte, pas un
 inventaire complet.
 
+![La corbeille d'un membre qui n'administre pas l'espace : « Vous voyez ce que vous avez mis à la corbeille. »](manuel/images/la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre/corbeille-personnelle.jpg)
+
 **« Auteur inconnu » n'est pas une anomalie.** Un objet peut avoir été retiré par un traitement
 technique plutôt que par une personne, ou par un compte supprimé depuis. Le produit le dit au lieu
 de laisser la case vide.
 
 ### 20.1 Restaurer
+
+![Le refus de restaurer un channel dont le track est en corbeille : « Son parent est lui-même en corbeille : restaurez-le d'abord. »](manuel/images/la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre/parent-en-corbeille.jpg)
 
 Le bouton **Restaurer** de la ligne. Aucune confirmation n'est demandée : restaurer ne détruit rien,
 et le geste inverse est précisément celui qui a rempli cet écran.
@@ -4325,6 +4493,8 @@ Trois réponses sont possibles, et l'écran les distingue :
 par un administrateur de l'espace, une affaire par qui peut écrire sur son onglet. Un bandeau en tête du
 tableau dit lequel des deux cas vous concerne. Le message « Rien n'a été restauré » ne paraît plus que si
 vos droits ont changé entre-temps ou n'ont pas pu être lus.
+
+![Le refus « Rien n'a été restauré : cet objet n'est plus modifiable avec votre compte. » sous la ligne du track](manuel/images/la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre/plus-modifiable.jpg)
 
 **La deuxième réponse est une règle du serveur, pas une précaution de l'écran** : elle vaut aussi
 pour un script ou une intégration qui tenterait la même chose.
@@ -4373,7 +4543,11 @@ d'abord, puis les channels, puis les affaires. **Ce qui est effacé ne se restau
 Chaque espace de travail a ses **membres**, et chacun y tient un **rôle** : **Administrateur**, **Business developer**
 ou **Lecteur**. Cet écran les montre à tous les membres ; seuls les administrateurs de l'espace y changent quelque chose.
 
+![L'écran Membres : les trois membres et leur rôle, les attentes, et les droits fins](manuel/images/les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/membres.jpg)
+
 ### 21.1 Ouvrir l'écran
+
+![L'index des réglages : « Arborescence : tracks et channels », puis « Membres : personnes et rôles »](manuel/images/les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/reglages.jpg)
 
 Barre latérale ▸ **Réglages** ▸ **« Membres : personnes et rôles »**, juste après « Arborescence : tracks et channels ».
 
@@ -4388,6 +4562,8 @@ réservées aux administrateurs de l'espace. Les sélecteurs de rôle et les bou
 mais ils sont inactifs.
 
 ### 21.3 Changer le rôle d'un membre
+
+![Le rôle de Farida Nowak changé, et le message « Rôle de Farida Nowak modifié. »](manuel/images/les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/role-modifie.jpg)
 
 Choisissez le nouveau rôle dans le sélecteur de sa ligne : le changement est enregistré **dès le choix**, sans bouton
 à presser. Un message sous la liste le confirme — « Rôle de Jeanne Martin modifié. » —, puis la liste est relue.
@@ -4405,10 +4581,14 @@ ce que le retrait emporte : **ses droits fins sur les tracks et les channels de 
 de son compte n'est pas touché. **« Retirer de l'espace »** confirme ; **« Annuler »**, ou la touche Échap, referme
 la confirmation sans rien changer.
 
+![La confirmation « Retirer de l'espace » sous la ligne de Driss Lemoine](manuel/images/les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/retirer.jpg)
+
 **Vous retirer vous-même** est possible, et la confirmation vous prévient : vous ne serez plus membre de l'espace, et
 vous perdrez l'accès à ses affaires comme à son administration. Le dernier administrateur ne peut pas se retirer.
 
 ### 21.5 Les attentes : les personnes qu'on attend
+
+![Le bloc « Attentes » : une attente en suspens, une autre remplacée : « Lecteur devient Administrateur »](manuel/images/les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/attentes.jpg)
 
 Le CRM ne crée aucun compte : on y entre avec son identité LeLabs. Pour faire entrer quelqu'un dans l'espace, un
 administrateur inscrit une **attente** — une adresse et un rôle. La personne devient membre, avec ce rôle, à sa
@@ -4434,9 +4614,13 @@ les autres membres, elle n'apparaît pas.
   dernier essai date de plus de 90 jours : le CRM n'en garde pas la trace au-delà. Une adresse que personne n'attend ne
   laisse jamais de trace, et réinscrire une attente efface la sienne.
 
+![Le formulaire d'une attente : « Adresse », « Rôle », et « Inscrire »](manuel/images/les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/inscrire.jpg)
+
 Une adresse mal formée est refusée, et le formulaire reste ouvert pour la corriger.
 
 ### 21.6 Les droits fins : restreindre ou rouvrir un track ou un channel
+
+![Les droits fins de Farida Nowak : par track et par channel, le droit posé et l'accès effectif](manuel/images/les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/droits-fins.jpg)
 
 Le rôle d'un membre vaut pour tout l'espace. Les **droits fins** le précisent, track par track et channel par channel.
 La section **« Droits fins »** vient en dernier ; **seuls les administrateurs de l'espace la voient**.
@@ -4472,6 +4656,8 @@ Le message sous la liste dit pourquoi :
 Le CRM tient un **journal des gestes sensibles** de chaque espace. Ce sont les gestes qui changent qui peut faire quoi,
 comment l'espace est configuré, et ce qui disparaît :
 
+![L'écran Journal d'audit : les filtres, puis les entrées les plus récentes en tête](manuel/images/le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/journal.jpg)
+
 - **les droits et les appartenances** : un membre ajouté ou retiré, un rôle changé, une attente inscrite ou retirée, un
   accès à un track ou à un channel posé ou retiré ;
 - **la configuration** : l'espace lui-même, les tracks, les channels, les workflows et leurs publications, les étapes,
@@ -4493,6 +4679,12 @@ message, ni un mot de passe, ni la valeur d'un réglage.
 
 ### 22.1 Ouvrir le journal
 
+![Les entrées « Membres » et « Journal d'audit » de l'index des réglages, ce dernier « Réservé aux administrateurs »](manuel/images/le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/reglages.jpg)
+
+![Le titre « Membres » de l'écran des membres](manuel/images/le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/membres.jpg)
+
+![Le journal ouvert par une lectrice : « Réservé aux administrateurs »](manuel/images/le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/reserve-aux-administrateurs.jpg)
+
 1. Ouvrez **« Réglages »** dans la barre latérale.
 2. Choisissez **« Journal d'audit »**, juste après « Membres ».
 
@@ -4501,19 +4693,28 @@ l'adresse ouverte directement affiche **« Réservé aux administrateurs »**.
 
 ### 22.2 Lire une entrée
 
+![Les colonnes « Date », « Acteur », « Geste » et « Détail » des premières entrées](manuel/images/le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/entrees.jpg)
+
+![Le bouton « Entrées plus anciennes », au bas du journal](manuel/images/le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/entrees-plus-anciennes.jpg)
+
 Le tableau montre les entrées les plus récentes en tête, sur quatre colonnes :
 
 - **« Date »** : le jour et l'heure du geste ;
 - **« Acteur »** : la personne qui l'a fait. **« Système ou compte supprimé »** désigne une entrée sans acteur : un geste
   du CRM lui-même (une tâche de nuit, par exemple), ou une personne dont le compte a été supprimé depuis ;
-- **« Geste »** : une phrase qui dit ce qui s'est passé et sur quoi — « Membre ajouté : Jeanne Martin », « Workflow
-  publié : Cycle commercial » ;
-- **« Détail »** : ce qui a changé — « Rôle : Lecteur → Business developer », « Accès : Lecture », « Nom : A → B »,
-  « Version 4 ». Un texte trop long est coupé à l'écran ; survolez-le pour le lire en entier.
+- **« Geste »** : une phrase qui dit ce qui s'est passé et sur quoi — « Webhook ajouté : Ancienne intégration »,
+  « Données personnelles exportées : Contact anonymisé » ;
+- **« Détail »** : ce qui a changé — « Modifié : activation » pour un webhook désactivé, l'ancien et le nouveau rôle
+  pour un rôle changé, le droit posé pour un droit fin. Un texte trop long est coupé à l'écran ; survolez-le pour le lire
+  en entier.
+
+![Une entrée du journal sans acteur : « Système ou compte supprimé »](manuel/images/le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/entree-sans-acteur.jpg)
 
 Cinquante entrées s'affichent d'abord. **« Entrées plus anciennes »**, sous le tableau, ajoute les cinquante suivantes.
 
 ### 22.3 Filtrer
+
+![Les filtres « Famille », « Acteur », « Du » et « Au » sur une période sans geste : « Aucun geste sur cette période »](manuel/images/le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/periode-vide.jpg)
 
 Au-dessus du tableau, quatre filtres se combinent :
 

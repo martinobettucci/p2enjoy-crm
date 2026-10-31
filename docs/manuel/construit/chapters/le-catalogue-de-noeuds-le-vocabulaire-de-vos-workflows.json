@@ -25,6 +25,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/catalogue.jpg",
+			"alt": "L'écran Catalogue de nœuds : chaque nœud avec son libellé, sa clé, sa nature et sa probabilité",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -56,6 +63,13 @@
 					"text": "19.1 Ce que chaque ligne montre"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/lignes.jpg",
+			"alt": "Les lignes du catalogue : « Ouvert », « Gagné », « Perdu », et un nœud « Archivé » avec « Rétablir »",
+			"width": 1192,
+			"height": 490
 		},
 		{
 			"type": "list",
@@ -222,6 +236,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/nouveau-noeud.jpg",
+			"alt": "Le formulaire « Nouveau nœud » : libellé, clé, type, couleur, probabilité et seuil de relance",
+			"width": 1192,
+			"height": 295
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -259,6 +280,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/modifier.jpg",
+			"alt": "Un nœud du catalogue et sa commande « Modifier »",
+			"width": 1190,
+			"height": 89
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -290,6 +318,13 @@
 					"text": "19.4 Archiver un nœud, et le rétablir"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "le-catalogue-de-noeuds-le-vocabulaire-de-vos-workflows/archive.jpg",
+			"alt": "Un nœud archivé, marqué « Archivé », avec « Rétablir »",
+			"width": 1190,
+			"height": 89
 		},
 		{
 			"type": "paragraph",

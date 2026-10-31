@@ -77,6 +77,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/membres.jpg",
+			"alt": "L'écran Membres : les trois membres et leur rôle, les attentes, et les droits fins",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "ouvrir-l-ecran",
@@ -86,6 +93,13 @@
 					"text": "21.1 Ouvrir l'écran"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/reglages.jpg",
+			"alt": "L'index des réglages : « Arborescence : tracks et channels », puis « Membres : personnes et rôles »",
+			"width": 545,
+			"height": 216
 		},
 		{
 			"type": "paragraph",
@@ -187,6 +201,13 @@
 					"text": "21.3 Changer le rôle d'un membre"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/role-modifie.jpg",
+			"alt": "Le rôle de Farida Nowak changé, et le message « Rôle de Farida Nowak modifié. »",
+			"width": 992,
+			"height": 127
 		},
 		{
 			"type": "paragraph",
@@ -306,6 +327,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/retirer.jpg",
+			"alt": "La confirmation « Retirer de l'espace » sous la ligne de Driss Lemoine",
+			"width": 992,
+			"height": 215
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -333,6 +361,13 @@
 					"text": "21.5 Les attentes : les personnes qu'on attend"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/attentes.jpg",
+			"alt": "Le bloc « Attentes » : une attente en suspens, une autre remplacée : « Lecteur devient Administrateur »",
+			"width": 992,
+			"height": 307
 		},
 		{
 			"type": "paragraph",
@@ -639,6 +674,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/inscrire.jpg",
+			"alt": "Le formulaire d'une attente : « Adresse », « Rôle », et « Inscrire »",
+			"width": 992,
+			"height": 292
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -657,6 +699,13 @@
 					"text": "21.6 Les droits fins : restreindre ou rouvrir un track ou un channel"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-membres-de-votre-espace-qui-y-travaille-avec-quel-role/droits-fins.jpg",
+			"alt": "Les droits fins de Farida Nowak : par track et par channel, le droit posé et l'accès effectif",
+			"width": 992,
+			"height": 701
 		},
 		{
 			"type": "paragraph",

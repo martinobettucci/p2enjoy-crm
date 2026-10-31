@@ -34,6 +34,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre/corbeille.jpg",
+			"alt": "L'écran Corbeille d'un administrateur : un track, un channel et une affaire retirés",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -128,6 +135,13 @@
 					"text": "."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre/tableau.jpg",
+			"alt": "Le tableau de la corbeille : type, nom, retiré par, dates, ce qu'il retient avec lui, et « Restaurer »",
+			"width": 1192,
+			"height": 197
 		},
 		{
 			"type": "paragraph",
@@ -231,6 +245,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre/corbeille-personnelle.jpg",
+			"alt": "La corbeille d'un membre qui n'administre pas l'espace : « Vous voyez ce que vous avez mis à la corbeille. »",
+			"width": 1192,
+			"height": 53
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -258,6 +279,13 @@
 					"text": "20.1 Restaurer"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre/parent-en-corbeille.jpg",
+			"alt": "Le refus de restaurer un channel dont le track est en corbeille : « Son parent est lui-même en corbeille : restaurez-le d'abord. »",
+			"width": 1192,
+			"height": 111
 		},
 		{
 			"type": "paragraph",
@@ -411,6 +439,13 @@
 					"text": ") : un track ou un channel se restaure\npar un administrateur de l'espace, une affaire par qui peut écrire sur son onglet. Un bandeau en tête du\ntableau dit lequel des deux cas vous concerne. Le message « Rien n'a été restauré » ne paraît plus que si\nvos droits ont changé entre-temps ou n'ont pas pu être lus."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre/plus-modifiable.jpg",
+			"alt": "Le refus « Rien n'a été restauré : cet objet n'est plus modifiable avec votre compte. » sous la ligne du track",
+			"width": 1192,
+			"height": 111
 		},
 		{
 			"type": "paragraph",
