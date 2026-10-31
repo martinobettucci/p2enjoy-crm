@@ -375,9 +375,10 @@ une personne découvre le produit, et les numérote simplement (§10, point 8).
 | 29 | Les recettes d'une affaire et sa rentabilité | 5 duodecies |
 | 30 | L'entonnoir de conversion : où se tiennent vos affaires | 5 nonies |
 | 31 | Le prévisionnel pondéré et le taux de conversion | 5 decies |
-| | **La plateforme et le connecteur** | |
+| | **La plateforme et les intégrations** | |
 | 32 | La plateforme : espaces, membres et superadministrateurs | 10 |
 | 33 | Le connecteur MCP : piloter le CRM depuis votre assistant | 11 |
+| 34 | Les webhooks : prévenir vos autres outils | nouveau (`CRM-073` T3, décision 785) : à la fin, après le connecteur, autre ouverture vers l'extérieur, pour ne pas renuméroter les chapitres 23 à 33 ; le regroupement devient « La plateforme et les intégrations » |
 
 **Retirés** : le sommaire écrit à la main (la page `/aide` le construit), l'annexe A sur l'espace de démonstration, les
 règles de rédaction (elles vivent dans ce document), et les sections « En développement ». Les lignes « en gras » du
@@ -566,6 +567,7 @@ chapitre. La preuve du §16 vérifie que chaque identifiant de cette table exist
 | `CRM-102` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | — |
 | `CRM-103` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | accorder-des-droits-du-connecteur |
 | `CRM-104` | le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant | ce-que-l-assistant-sait-faire |
+| `CRM-073` | les-webhooks-prevenir-vos-autres-outils | — |
 
 ## 13. Le manuel dans la webapp
 

@@ -56,6 +56,7 @@ import {
 	CHEMIN_ADMIN_JOURNAL,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_ETIQUETTES,
+	CHEMIN_ADMIN_WEBHOOKS,
 	CHEMIN_REGLAGES_NOTIFICATIONS,
 	CHEMIN_COUTS_BUDGET,
 	CHEMIN_COUTS_TRACK,
@@ -80,6 +81,7 @@ import {
 	CLE_TITRE_JOURNAL,
 	CLE_TITRE_MODELES_AFFAIRES,
 	CLE_TITRE_ETIQUETTES,
+	CLE_TITRE_WEBHOOKS,
 	CLE_TITRE_REGLAGES_NOTIFICATIONS,
 	CLE_TITRE_DEMARRAGE,
 	CLE_TITRE_COMPTES_MAIL,
@@ -177,6 +179,10 @@ const ReglagesModelesAffaires = lazy(async () => ({
 // `CRM-069` T2 — Réglages ▸ Étiquettes, chargé à la demande comme les autres écrans de réglages.
 const ReglagesEtiquettes = lazy(async () => ({
 	default: (await import('./ReglagesEtiquettes')).ReglagesEtiquettes,
+}))
+// `CRM-073` T3 — Réglages ▸ Webhooks, chargé à la demande comme les autres écrans de réglages.
+const ReglagesWebhooks = lazy(async () => ({
+	default: (await import('./ReglagesWebhooks')).ReglagesWebhooks,
 }))
 // `CRM-117` — l'aide : le sommaire du manuel et un chapitre, chargés à la demande comme les réglages.
 const SommaireAide = lazy(async () => ({ default: (await import('./PageAide')).SommaireAide }))
@@ -471,6 +477,15 @@ function RoutesPages() {
 					element={
 						<AppShell cleTitreRoute={CLE_TITRE_ETIQUETTES}>
 							<ReglagesEtiquettes />
+						</AppShell>
+					}
+				/>
+				{/* Réglages ▸ Webhooks — `CRM-073` T3. Déclarée APRÈS les étiquettes, comme dans l'index (§5.79). */}
+				<Route
+					path={CHEMIN_ADMIN_WEBHOOKS}
+					element={
+						<AppShell cleTitreRoute={CLE_TITRE_WEBHOOKS}>
+							<ReglagesWebhooks />
 						</AppShell>
 					}
 				/>

@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-073` — webhooks sortants signés (T1, T2)
+### `CRM-073` — webhooks sortants signés (T1 à T3)
 
 - **Migration `0139`, les webhooks en base** (T1) : les webhooks d'un espace, réservés à son administrateur, et leurs
   remises ; neuf événements d'affaires et de contacts, un filtre facultatif par channel ; le secret de signature rangé dans
@@ -24,6 +24,12 @@ d'exécuter le code attendu.
   (`X-P2Enjoy-Signature`), refuse toute adresse interne, réessaie à 1 min, 5 min, 30 min et 2 h ; migration `0140`, la
   tâche `pg_cron` qui la réveille par `pg_net` avec un secret d'appel rangé dans Vault ; aucune variable d'environnement
   nouvelle. En développement, le récepteur local `webhook-sink` reçoit les remises en HTTPS.
+- **Réglages ▸ Webhooks** (T3), réservé aux administrateurs : la liste des webhooks de l'espace (hôte seul, événements,
+  channel, état, dernière remise), « Nouveau webhook » (adresse https, channel facultatif — les événements de contact
+  s'éteignent sous un channel —, événements, « Actif »), le secret de signature montré une seule fois avec « Copier le
+  secret », « Régénérer le secret » et « Supprimer » confirmés, l'historique des 50 dernières remises avec le corps envoyé et
+  « Renvoyer ». Le journal d'audit nomme les gestes sur un webhook. Le jeu de démonstration porte trois webhooks, dont les
+  remises passent par la vraie chaîne. Manuel, chapitre 34 « Les webhooks : prévenir vos autres outils », illustré.
 
 ### `CRM-071` — vues sauvegardées, import et export CSV (T1 à T6)
 

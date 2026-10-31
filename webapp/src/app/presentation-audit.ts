@@ -70,6 +70,10 @@ const CLES_GESTE: Readonly<Record<string, CleTraduction>> = {
 	'mail_identity.created': 'audit.geste.mail_identity.created',
 	'mail_identity.updated': 'audit.geste.mail_identity.updated',
 	'mail_identity.deleted': 'audit.geste.mail_identity.deleted',
+	// `CRM-073` T3 (docs/DESIGN_SYSTEM.md §5.79) : la configuration des webhooks sortants.
+	'webhook.created': 'audit.geste.webhook.created',
+	'webhook.updated': 'audit.geste.webhook.updated',
+	'webhook.deleted': 'audit.geste.webhook.deleted',
 	'card.trashed': 'audit.geste.card.trashed',
 	'card.restored': 'audit.geste.card.restored',
 	'card.destroyed': 'audit.geste.card.destroyed',
@@ -126,6 +130,15 @@ const CLES_COLONNE: Readonly<Record<string, CleTraduction>> = {
 	folder_style: 'audit.colonne.folder_style',
 	backfill_months: 'audit.colonne.backfill_months',
 	visibility: 'audit.colonne.visibility',
+	url: 'audit.colonne.url',
+	events: 'audit.colonne.events',
+	channel_id: 'audit.colonne.channel_id',
+	enabled: 'audit.colonne.enabled',
+}
+
+/** Une colonne qui ne dit pas la même chose selon l'objet : le secret d'un webhook n'est pas un mot de passe (§5.79). */
+const CLES_COLONNE_PAR_OBJET: Readonly<Record<string, Readonly<Record<string, CleTraduction>>>> = {
+	webhook: { secret_id: 'audit.colonne.webhookSecret' },
 }
 
 const CLES_ACCES: Readonly<Record<string, CleTraduction>> = {
@@ -147,8 +160,8 @@ const accesDe = (valeur: unknown): string => {
 	const cle = typeof valeur === 'string' ? CLES_ACCES[valeur] : undefined
 	return cle === undefined ? '' : t(cle)
 }
-const colonneDe = (colonne: string): string => {
-	const cle = CLES_COLONNE[colonne]
+const colonneDe = (colonne: string, objet = ''): string => {
+	const cle = CLES_COLONNE_PAR_OBJET[objet]?.[colonne] ?? CLES_COLONNE[colonne]
 	return cle === undefined ? colonne : t(cle)
 }
 
@@ -211,7 +224,7 @@ export function detailAudit(entree: EntreeAudit): string {
 			return t(nombre === 1 ? 'audit.detail.purge.un' : 'audit.detail.purge.plusieurs', { nombre: String(nombre) })
 		}
 		default:
-			return entree.action === 'updated' ? detailModification(d) : ''
+			return entree.action === 'updated' ? detailModification(d, entree.objet) : ''
 	}
 }
 
@@ -219,7 +232,7 @@ export function detailAudit(entree: EntreeAudit): string {
  * Une modification : le renommage d'abord quand le nom ou le libellé change, sinon les colonnes changées en mots, et les
  * CLÉS de réglages changées — jamais leurs valeurs (`docs/SPEC-audit.md` §5).
  */
-function detailModification(d: Readonly<Record<string, unknown>>): string {
+function detailModification(d: Readonly<Record<string, unknown>>, objet = ''): string {
 	const avant = sous(d, 'before')
 	const apres = sous(d, 'after')
 	for (const colonne of ['name', 'label', 'label_override']) {
@@ -230,5 +243,5 @@ function detailModification(d: Readonly<Record<string, unknown>>): string {
 	const cles = listeDeTextes(d['settings_keys'])
 	if (cles.length > 0) return t('audit.detail.reglages', { cles: cles.join(', ') })
 	const colonnes = listeDeTextes(d['changed'])
-	return colonnes.length === 0 ? '' : t('audit.detail.modifie', { colonnes: colonnes.map(colonneDe).join(', ') })
+	return colonnes.length === 0 ? '' : t('audit.detail.modifie', { colonnes: colonnes.map((c) => colonneDe(c, objet)).join(', ') })
 }

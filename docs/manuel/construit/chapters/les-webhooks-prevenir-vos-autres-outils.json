@@ -1,0 +1,592 @@
+{
+	"slug": "les-webhooks-prevenir-vos-autres-outils",
+	"title": "34. Les webhooks : prévenir vos autres outils",
+	"blocks": [
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Un "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "webhook"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " prévient un autre outil — un automate, un tableur, votre comptabilité — dès qu'un événement choisi survient\ndans le CRM : une affaire est créée, change d'étape ou de responsable, un contact est modifié. Le CRM envoie à cet outil\nun message signé, dans la minute, et le réessaie s'il échoue. C'est le pendant du "
+				},
+				{
+					"type": "link",
+					"target": {
+						"chapter": "le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant"
+					},
+					"content": [
+						{
+							"type": "text",
+							"text": "connecteur MCP"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " :\nle connecteur laisse un assistant agir dans le CRM, le webhook laisse le CRM prévenir un outil."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Où."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Barre latérale ▸ "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Réglages"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " ▸ « Webhooks »."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Qui."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Les administrateurs de l'espace. Pour les autres membres, l'entrée des réglages est visible mais inactive, et\nl'écran ouvert par son adresse dit qu'il est réservé aux administrateurs."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/ecran-webhooks.jpg",
+			"alt": "L'écran Webhooks : la liste des webhooks de l'espace, leur état et leur dernière remise",
+			"width": 1440,
+			"height": 900
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque ligne nomme le webhook, montre l'"
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "hôte"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " de son adresse — jamais l'adresse entière, qui peut contenir un jeton\nde l'outil —, le nombre d'événements qu'il écoute, le channel auquel il se limite, son état « Actif » ou « Désactivé », et\nsa dernière remise : « Remise réussie », « Remise en échec », « En attente », ou « Aucune remise »."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/lignes-de-la-liste.jpg",
+			"alt": "Les lignes de la liste, avec leurs états et leur dernière remise",
+			"width": 925,
+			"height": 275
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/derniere-remise-en-echec.jpg",
+			"alt": "Une ligne dont la dernière remise est en échec",
+			"width": 923,
+			"height": 105
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "creer-un-webhook",
+			"content": [
+				{
+					"type": "text",
+					"text": "34.1 Créer un webhook"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Nouveau webhook » ouvre la fiche sous le titre."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/nouveau-webhook.jpg",
+			"alt": "Le bouton « Nouveau webhook »",
+			"width": 221,
+			"height": 73
+		},
+		{
+			"type": "list",
+			"ordered": false,
+			"start": null,
+			"items": [
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "« Nom » — le nom qui vous permet de le reconnaître ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "« Adresse » — l'adresse de l'outil qui reçoit ; elle commence obligatoirement par "
+							},
+							{
+								"type": "code",
+								"text": "https://"
+							},
+							{
+								"type": "text",
+								"text": ". L'outil vous la donne ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "« Channel » — « Tout l'espace » par défaut, ou un seul channel : le webhook ne reçoit alors que les événements des\naffaires de ce channel ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "« Événements » — ce qui déclenche un message. Côté « Affaires » : « Affaire créée », « Étape changée », « Responsable\nchangé », « Affaire archivée », « Affaire mise à la corbeille », « Affaire restaurée ». Côté « Contacts » : « Contact\ncréé », « Contact modifié », « Contact supprimé ou anonymisé » ;"
+							}
+						]
+					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "text",
+								"text": "« Actif » — décoché, le webhook n'envoie plus rien."
+							}
+						]
+					}
+				]
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Enregistrer » crée le webhook ; « Annuler » referme la fiche."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/fiche-webhook.jpg",
+			"alt": "La fiche d'un webhook : nom, adresse, channel, événements et la case « Actif »",
+			"width": 925,
+			"height": 732
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Un webhook limité à un channel ne reçoit pas les événements de contact"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : un contact n'appartient à aucun channel.\nDès qu'un channel est choisi, les cases des contacts s'éteignent, et une phrase le dit."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/contacts-eteints.jpg",
+			"alt": "Les cases des contacts éteintes sous un channel choisi",
+			"width": 891,
+			"height": 446
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les données personnelles."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Un message sur un contact porte son nom, son email et son organisation : vous les envoyez à\nl'outil que vous désignez. Une suppression ou une anonymisation n'envoie que l'identifiant du contact, pour que l'outil\nefface ce qu'il en garde. Un changement de téléphone ou de fonction est signalé, sans que la nouvelle valeur parte."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Les refus."
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " Une adresse qui ne commence pas par "
+				},
+				{
+					"type": "code",
+					"text": "https://"
+				},
+				{
+					"type": "text",
+					"text": " est refusée sous les champs, et votre saisie reste en place."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/refus-adresse.jpg",
+			"alt": "Le refus d'une adresse qui ne commence pas par https://",
+			"width": 650,
+			"height": 630
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "le-secret-de-signature",
+			"content": [
+				{
+					"type": "text",
+					"text": "34.2 Le secret de signature"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "À la création, le CRM affiche le "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "secret de signature"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " du webhook, sous le titre « Copiez ce secret maintenant ». Il\nne sera "
+				},
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "plus jamais affiché"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " : copiez-le avec « Copier le secret », donnez-le à l'outil qui reçoit, puis refermez avec\n« J'ai copié le secret »."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/secret-de-signature.jpg",
+			"alt": "Le secret de signature, montré une seule fois",
+			"width": 719,
+			"height": 341
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "strong",
+					"content": [
+						{
+							"type": "text",
+							"text": "Perdu, ou divulgué ?"
+						}
+					]
+				},
+				{
+					"type": "text",
+					"text": " « Régénérer le secret » en crée un nouveau, après confirmation. L'ancien cesse aussitôt de\nsigner : l'outil qui reçoit refusera les messages tant qu'il n'a pas pris le nouveau."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/regenerer-le-secret.jpg",
+			"alt": "La confirmation avant de régénérer le secret",
+			"width": 650,
+			"height": 178
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "ce-que-recoit-l-outil-et-comment-verifier-la-signature",
+			"content": [
+				{
+					"type": "text",
+					"text": "34.3 Ce que reçoit l'outil, et comment vérifier la signature"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Chaque message est une requête "
+				},
+				{
+					"type": "code",
+					"text": "POST"
+				},
+				{
+					"type": "text",
+					"text": " en JSON. Son corps porte l'identifiant de l'événement, son nom, sa date et ses\ndonnées : pour une affaire, son titre, son channel, son étape, son responsable et son montant ; pour un changement\nd'étape ou de responsable, l'étape ou la personne d'avant."
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Trois en-têtes l'accompagnent : "
+				},
+				{
+					"type": "code",
+					"text": "X-P2Enjoy-Event"
+				},
+				{
+					"type": "text",
+					"text": " (l'événement), "
+				},
+				{
+					"type": "code",
+					"text": "X-P2Enjoy-Delivery"
+				},
+				{
+					"type": "text",
+					"text": " (la remise, utile pour\nreconnaître un doublon) et "
+				},
+				{
+					"type": "code",
+					"text": "X-P2Enjoy-Signature"
+				},
+				{
+					"type": "text",
+					"text": ", de la forme "
+				},
+				{
+					"type": "code",
+					"text": "t=<horodatage>,v1=<signature>"
+				},
+				{
+					"type": "text",
+					"text": ". La signature est le\nHMAC-SHA256, en hexadécimal, du texte "
+				},
+				{
+					"type": "code",
+					"text": "<horodatage>.<corps>"
+				},
+				{
+					"type": "text",
+					"text": ", calculé avec le secret entier. L'outil la recalcule et\nrefuse un message dont l'horodatage a plus de cinq minutes :"
+				}
+			]
+		},
+		{
+			"type": "codeblock",
+			"text": "import hashlib, hmac, time\n\ndef signature_valide(secret: str, entete: str, corps: bytes) -> bool:\n    champs = dict(part.split(\"=\", 1) for part in entete.split(\",\"))\n    attendue = hmac.new(secret.encode(), f\"{champs['t']}.\".encode() + corps, hashlib.sha256).hexdigest()\n    recente = abs(time.time() - int(champs[\"t\"])) < 300\n    return recente and hmac.compare_digest(attendue, champs[\"v1\"])"
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "Une réponse "
+				},
+				{
+					"type": "code",
+					"text": "2xx"
+				},
+				{
+					"type": "text",
+					"text": " vaut réception. Sinon — erreur, ou pas de réponse en dix secondes —, le CRM réessaie, cinq fois au\ntotal, une minute, cinq minutes, trente minutes puis deux heures après l'essai précédent. Le CRM ne joint jamais une\nadresse interne à votre réseau."
+				}
+			]
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "l-historique-des-remises",
+			"content": [
+				{
+					"type": "text",
+					"text": "34.4 L'historique des remises"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Historique » déplie, sous la ligne, les cinquante remises les plus récentes du webhook : leur date, leur événement, leur\nétat — « Remise », « En attente » ou « Échouée » —, le nombre d'essais, et le dernier résultat : le code rendu par l'outil,\nou un motif écrit en toutes lettres — un délai dépassé, une connexion refusée, une adresse interne refusée."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/historique-des-remises.jpg",
+			"alt": "L'historique des remises d'un webhook",
+			"width": 923,
+			"height": 330
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/remise-en-attente.jpg",
+			"alt": "Une remise en attente de son prochain essai",
+			"width": 865,
+			"height": 74
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/remise-echouee.jpg",
+			"alt": "Une remise échouée après cinq essais",
+			"width": 865,
+			"height": 74
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Voir le corps » montre le message exact qui est parti. « Renvoyer » renvoie une remise close, réussie ou échouée : une\nnouvelle remise du même message, avec cinq essais à nouveau. Une remise encore en attente ne se renvoie pas : elle sera\nréessayée d'elle-même. « Fermer l'historique » le replie."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/corps-d-une-remise.jpg",
+			"alt": "Le corps d'une remise, déplié",
+			"width": 867,
+			"height": 330
+		},
+		{
+			"type": "heading",
+			"level": 3,
+			"anchor": "modifier-desactiver-supprimer",
+			"content": [
+				{
+					"type": "text",
+					"text": "34.5 Modifier, désactiver, supprimer"
+				}
+			]
+		},
+		{
+			"type": "paragraph",
+			"content": [
+				{
+					"type": "text",
+					"text": "« Modifier » rouvre la fiche, préremplie : changez l'adresse, les événements ou le channel, ou décochez « Actif » pour\nsuspendre l'envoi sans perdre le réglage. « Supprimer » demande confirmation, puis « Supprimer le webhook » le retire avec\nson historique."
+				}
+			]
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/commandes-d-une-ligne.jpg",
+			"alt": "Les commandes d'une ligne : historique, modifier, régénérer, supprimer",
+			"width": 923,
+			"height": 104
+		},
+		{
+			"type": "image",
+			"src": "les-webhooks-prevenir-vos-autres-outils/supprimer-le-webhook.jpg",
+			"alt": "La confirmation avant de supprimer un webhook",
+			"width": 650,
+			"height": 158
+		}
+	]
+}

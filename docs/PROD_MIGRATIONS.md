@@ -636,6 +636,13 @@ dépréciation.
 
 ## 3. Migrations en attente
 
+**Un seul lot, de la 106 à la 140** (décision 786, 2026-10-31) : une seule fenêtre (§3.1) applique les migrations `0106` à
+`0140`, avec la webapp de `main` et les images `mcp` et `mail-sync` reconstruites, ainsi que la fonction edge `webhooks` et le
+redémarrage de `functions` (ligne 140 du §3.2). La fenêtre **attend toujours la fin de `CRM-117`** (décision 783) ; l'instantané de la machine virtuelle du
+2026-10-31 au matin en est le retour arrière, à condition que la production soit restée inchangée (révision servie et
+registre des migrations relus en lecture seule le jour de la fenêtre). La condition posée sur `CRM-073` T3 — close avant
+la fenêtre — est remplie.
+
 **La 138 aussi** (`CRM-071` T6 — l'import des affaires ; sa ligne au §3.2), **après la 137**. Cinq fonctions et le
 déclencheur de création redéfini, sans donnée existante touchée ; la webapp de `main` porte « Importer un fichier » dans
 la vue liste et « Affaire créée par import » au fil. Appliquée en développement le 2026-10-30.

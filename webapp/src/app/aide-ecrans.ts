@@ -26,6 +26,7 @@ import {
 	CHEMIN_ADMIN_SEQUENCES_MAIL,
 	CHEMIN_ADMIN_ETIQUETTES,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
+	CHEMIN_ADMIN_WEBHOOKS,
 	CHEMIN_ADMIN_WORKFLOWS,
 	CHEMIN_AFFAIRES_FIGEES,
 	CHEMIN_CONTACTS,
@@ -97,6 +98,8 @@ export const ECRANS_AIDE: ReadonlyArray<readonly [motif: string, cible: CibleAid
 	[CHEMIN_CORBEILLE, { chapitre: 'la-corbeille-ce-qui-a-ete-retire-et-comment-le-rendre' }],
 	[CHEMIN_REGLAGES_NOTIFICATIONS, { chapitre: 'vos-notifications-savoir-qu-on-vous-a-nomme', section: 'choisir-ce-que-vous-recevez' }],
 	[CHEMIN_ADMIN_COUT_PERSONNEL, { chapitre: TEMPS, section: 'regler-le-cout-du-personnel' }],
+	// `CRM-073` T3 : Réglages ▸ Webhooks, décrit par le chapitre 34.
+	[CHEMIN_ADMIN_WEBHOOKS, { chapitre: 'les-webhooks-prevenir-vos-autres-outils' }],
 	// La plateforme : le connecteur avant le reste de la section.
 	[`${CHEMIN_PLATEFORME_MCP}/*`, { chapitre: 'le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant', section: 'accorder-des-droits-du-connecteur' }],
 	[`${CHEMIN_PLATEFORME}/*`, { chapitre: 'la-plateforme-espaces-membres-et-superadministrateurs' }],

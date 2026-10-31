@@ -121,6 +121,12 @@ export const CHEMIN_ADMIN_MODELES_AFFAIRES = '/reglages/modeles-affaires' as con
  */
 export const CHEMIN_ADMIN_ETIQUETTES = '/reglages/etiquettes' as const
 
+/**
+ * Réglages ▸ Webhooks — `CRM-073` T3, docs/DESIGN_SYSTEM.md §5.79 : les webhooks sortants de l'espace, réservés aux
+ * administrateurs ; son entrée suit la règle de « Coût du personnel » (§5.59).
+ */
+export const CHEMIN_ADMIN_WEBHOOKS = '/reglages/webhooks' as const
+
 /** Administration du catalogue de nœuds — `CRM-030`, `docs/SPEC-workflow-engine.md` §2 bis.2. */
 export const CHEMIN_ADMIN_CATALOGUE = '/reglages/catalogue' as const
 

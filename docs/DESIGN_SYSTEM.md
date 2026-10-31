@@ -7073,3 +7073,78 @@ les états d'attente et de refus, le palier `md` — ; ces règles ne disent que
   pastille que « Affaire créée » — c'est le même événement, son origine en plus.
 - **Aucune couleur, aucun jeton, aucune icône nouvelle.**
 
+
+### 5.79 Réglages ▸ Webhooks — `CRM-073` T3
+
+*Écrit le 2026-10-31, avant le code, après la relecture intégrale de ce document le même jour (décisions 784 et 785).* Ce
+que l'écran lit, écrit et refuse est spécifié par `docs/SPEC-webhooks.md` §4, §5.3, §7 et §12 ; ces règles ne disent que
+de quoi il a l'air. **Il reprend la forme de Réglages ▸ Étiquettes (§5.73) et des modèles (§5.71, §5.39)** : liste plate et
+non tableau, fiche **dans le flux — aucune modale** —, focus entrant dans le premier champ et rendu à la commande qui a
+ouvert, commande d'enregistrement unique, refus `role="alert"` sous les champs qui n'efface pas la saisie, état vide porteur
+du geste, borne de liste à `104ch`. Seuls les écarts sont écrits.
+
+- **L'ENTRÉE « Webhooks », APRÈS « Étiquettes » DANS L'INDEX**, suit la capacité d'**administrer l'espace** (§5.59) : un lien
+  pour qui administre, un texte au même endroit sinon, qui cite le motif de l'index — jamais masquée. L'adresse ouverte sans
+  la capacité rend l'état « Réservé aux administrateurs » (§5.8, `EtatRefus`) ; aucune lecture ne part.
+- **UNE LIGNE PAR WEBHOOK** : son **nom** en tête, puis en second ton l'**hôte** de son adresse en donnée technique (`code`,
+  §2) — jamais l'adresse entière, qui peut porter un jeton (`docs/SPEC-webhooks.md` §6) —, le nombre d'événements par clé
+  (« 6 événements », §10) dont la liste entière est le nom accessible et l'infobulle, puis le channel en pilule neutre
+  « Track › Channel » (§5.29) quand il en a un. Ferment la ligne : la pilule d'état — `success` « Actif », neutre
+  « Désactivé » (`Badge` du §5.6, son point de tête) — puis la **dernière remise**, pilule `success` « Remise réussie »,
+  `danger` « Remise en échec » ou neutre « En attente », sa date dans le nom accessible ; « Aucune remise » en 13 px
+  `--color-text-2` sinon (§5.14 : une absence se nomme).
+- **QUATRE COMMANDES PAR LIGNE, DANS CET ORDRE** — boutons discrets compacts, noms accessibles nommant le webhook (§5.29) :
+  « Historique » (icône Lucide **`ScrollText`**, `aria-expanded`), « Modifier » (`PencilLine`), « Régénérer le secret »
+  (**`RotateCw`**), « Supprimer » (`Trash2`). Le geste qui lit avant ceux qui corrigent, et celui qui retire en dernier
+  (§5.28, §5.40). **Un seul bloc ouvert à la fois** sur l'écran (§5.28) : historique, fiche, confirmation ou secret.
+- **« Nouveau webhook »**, primaire, `Plus`, ouvre la fiche sous l'en-tête ; la commande et la fiche s'excluent (§5.23). La
+  fiche porte, dans cet ordre :
+  - « Nom », puis « Adresse » — `input type="url"`, avec son aide : « Une adresse https:// de l'outil qui reçoit. » ;
+  - « Channel », un `select` à libellé visible, option vide en tête « Tout l'espace », options groupées par track en
+    `optgroup` et nommant chacune leur track (§5.22, §5.48 bis) ;
+  - un `fieldset` « Événements » à `legend` visible, fait de deux groupes de cases natives de 24 px (§5.7 bis) : « Affaires »
+    (six cases) et « Contacts » (trois). **Quand un channel est choisi, les cases des contacts sont désactivées, lisibles,
+    décochées**, et une phrase en 13 px `--color-text-2` dit pourquoi : « Un webhook limité à un channel ne reçoit pas les
+    événements de contact : les contacts n'appartiennent à aucun channel. » C'est une règle de la base, rendue avec la forme
+    du §5.59 ; la base la refuse de toute façon ;
+  - la case « Actif », cochée à la création ;
+  - **une phrase permanente sur les données personnelles**, en 13 px `--color-text-3`, reliée au fieldset par
+    `aria-describedby` : « Le nom et l'email des contacts sont envoyés à l'outil que vous désignez. » Ce n'est pas une
+    alerte, c'est une règle d'usage (§5.52).
+  « Enregistrer » est désactivé tant que le nom, l'adresse ou les événements manquent — l'état de la saisie, jamais un droit
+  (§5.50). Aucune garde ne double la base sur la forme de l'adresse (§5.3 ter) : une adresse en `http://` est envoyée, et son
+  refus traduit sous les champs, le focus rendu au champ à corriger (§5.71).
+- **LE SECRET S'AFFICHE UNE FOIS, DANS UN BLOC QUI REMPLACE LA FICHE** après une création, ou la confirmation après une
+  régénération. Bandeau `role="status"` en `--color-accent-soft` / `--color-accent-on-soft`, icône `TriangleAlert` — une
+  consigne, pas une erreur —, titré « Copiez ce secret maintenant », puis le secret en donnée technique dans un champ en
+  lecture seule, « Copier le secret » (secondaire, icône `Copy`, celle de la copie d'adresse, §5.3 bis, le même geste), la
+  phrase « Il ne sera plus affiché : l'outil qui reçoit s'en sert pour vérifier la signature. », et « J'ai copié le secret »
+  (primaire), qui referme le bloc. La confirmation de copie remplace l'état dans une région `role="status"`, et son échec est
+  dit (§5.3 bis) : le champ est alors sélectionné.
+- **« Régénérer le secret » ouvre une confirmation dans le flux**, sous la ligne, qui nomme le webhook et dit la conséquence :
+  l'ancien secret cesse aussitôt de signer, et l'outil qui reçoit doit prendre le nouveau. Son bouton est **destructif**
+  (§5.13) : il rompt la vérification chez le tiers jusqu'à la mise à jour.
+- **« Supprimer » ouvre une confirmation dans le flux**, qui nomme le webhook et dit que son historique part avec lui ; bouton
+  destructif. La commande reste montée et désactivée pendant la question (§5.40).
+- **L'HISTORIQUE S'OUVRE SOUS LA LIGNE**, dans le flux : un tableau du §5.9 des **50 remises les plus récentes**, la plus récente
+  en haut (§5.43), cinq colonnes — « Date » (donnée technique alignée à droite, §2), « Événement » (un **mot** traduit par un
+  dictionnaire fermé — « Affaire créée », « Étape changée »… —, jamais le code), « État » (pilule : `success` « Remise »,
+  neutre « En attente », `danger` « Échouée »), « Essais » (« 2 sur 5 », par clé), « Dernier résultat » (le code HTTP en
+  `code`, ou le motif traduit — « Délai dépassé », « Connexion refusée », « Adresse interne refusée », « Certificat refusé »,
+  « Nom introuvable », « Erreur réseau » —, vide avant le premier essai, §5.9) — puis une colonne « Commandes » : « Voir le
+  corps » (discret compact, `aria-expanded`), qui ouvre sous la ligne, en `colSpan` épinglé au bord visible (§5.27), le corps
+  envoyé en `pre` sur `--color-hover`, et **« Renvoyer »** (icône **`Redo2`**), absente d'une remise en attente (§5.21 : une
+  commande vouée au refus ne se rend pas). Un renvoi relit l'historique et s'annonce : « Remise renvoyée ». La troncature est
+  écrite sous le tableau — « Les 50 remises les plus récentes » — quand il est plein (§5.43). Aucune remise : « Aucune remise
+  pour ce webhook. » Le conteneur porte `.indique-debordement-x` (§12.6). « Fermer l'historique », secondaire compact, et
+  `Échap`.
+- **ÉTATS** (§5.8) : squelette au premier chargement seulement — la relecture après un geste garde la liste (§5.29 tranche
+  2 c) ; erreur avec « Réessayer » ; vide « Aucun webhook dans cet espace. » avec « Nouveau webhook ». L'historique a les
+  siens, dans son bloc.
+- **LE JOURNAL D'AUDIT APPREND LE TYPE `webhook`** (§5.66) : « Webhook ajouté : {nom} », « Webhook modifié : {nom} »,
+  « Webhook supprimé : {nom} » ; une régénération se lit « Modifié : secret ».
+- **SOUS `md`**, la ligne se replie et ses commandes passent dessous, cibles conservées ; les champs de la fiche prennent
+  toute la largeur et les cases passent sur une colonne ; l'historique défile dans son conteneur. `md` et jamais `sm` (§11).
+  La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau ; trois icônes Lucide nouvelles, `ScrollText`, `RotateCw` et `Redo2`**, qui ne
+  servent aucun autre objet (§9).

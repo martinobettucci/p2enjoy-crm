@@ -76,6 +76,7 @@ import {
 	CHEMIN_ADMIN_JOURNAL,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_ETIQUETTES,
+	CHEMIN_ADMIN_WEBHOOKS,
 } from './chemins'
 
 export {
@@ -115,6 +116,7 @@ export {
 	CHEMIN_ADMIN_JOURNAL,
 	CHEMIN_ADMIN_MODELES_AFFAIRES,
 	CHEMIN_ADMIN_ETIQUETTES,
+	CHEMIN_ADMIN_WEBHOOKS,
 }
 
 /**
@@ -245,6 +247,9 @@ export const CLE_TITRE_MODELES_AFFAIRES: CleTraduction = 'admin.cardTemplates.ti
 
 /** Titre de Réglages ▸ Étiquettes — `CRM-069` T2, docs/DESIGN_SYSTEM.md §5.73. */
 export const CLE_TITRE_ETIQUETTES: CleTraduction = 'admin.labels.title'
+
+/** Titre de Réglages ▸ Webhooks — `CRM-073` T3, docs/DESIGN_SYSTEM.md §5.79. */
+export const CLE_TITRE_WEBHOOKS: CleTraduction = 'admin.webhooks.title'
 
 /** Titre de la plateforme — `CRM-101`, docs/SPEC-plateforme.md §7 (hors de `ROUTES`, comme les réglages). */
 export const CLE_TITRE_PLATEFORME: CleTraduction = 'platform.title'
@@ -508,6 +513,30 @@ export function IndexReglages() {
 						>
 							<span className="font-medium">{t('admin.settings.index.labels')}</span>
 							<span className="text-sm text-text-2">{t('admin.settings.index.labels.body')}</span>
+						</Link>
+					)}
+				</li>
+				{/* Les webhooks viennent APRÈS les étiquettes — `CRM-073` T3, docs/DESIGN_SYSTEM.md §5.79 : réservés aux
+				    administrateurs, sous la même règle d'entrée (§5.59). */}
+				<li>
+					{coutRefuse ? (
+						<div
+							data-testid="entree-webhooks"
+							aria-disabled="true"
+							{...(capacites.administration === 'refusee' ? { 'aria-describedby': ID_MOTIF_REGLAGES } : {})}
+							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] rounded-lg text-text-2"
+						>
+							<span className="font-medium">{t('admin.settings.index.webhooks')}</span>
+							<span className="text-sm">{t('admin.settings.index.webhooks.body')}</span>
+						</div>
+					) : (
+						<Link
+							to={CHEMIN_ADMIN_WEBHOOKS}
+							data-testid="entree-webhooks"
+							className="flex flex-col gap-1 px-4 py-3 min-h-[var(--size-target)] hover:bg-hover rounded-lg"
+						>
+							<span className="font-medium">{t('admin.settings.index.webhooks')}</span>
+							<span className="text-sm text-text-2">{t('admin.settings.index.webhooks.body')}</span>
 						</Link>
 					)}
 				</li>

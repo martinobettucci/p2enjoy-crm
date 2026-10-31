@@ -5807,3 +5807,123 @@ L'assistant ne voit que les outils que vos droits ouvrent : un outil fermé n'ap
 Toutes les familles ont leurs outils. Restent des gestes de l'écran : **les pièces jointes**, ni lues ni
 envoyées par le connecteur ; **classer, déclasser ou mettre en sommeil** un fil de la boîte de réception ; **les modèles
 et les séquences** de relance.
+
+## 34. Les webhooks : prévenir vos autres outils
+
+Un **webhook** prévient un autre outil — un automate, un tableur, votre comptabilité — dès qu'un événement choisi survient
+dans le CRM : une affaire est créée, change d'étape ou de responsable, un contact est modifié. Le CRM envoie à cet outil
+un message signé, dans la minute, et le réessaie s'il échoue. C'est le pendant du [connecteur MCP](#le-connecteur-mcp-piloter-le-crm-depuis-votre-assistant) :
+le connecteur laisse un assistant agir dans le CRM, le webhook laisse le CRM prévenir un outil.
+
+**Où.** Barre latérale ▸ **Réglages** ▸ « Webhooks ».
+
+**Qui.** Les administrateurs de l'espace. Pour les autres membres, l'entrée des réglages est visible mais inactive, et
+l'écran ouvert par son adresse dit qu'il est réservé aux administrateurs.
+
+![L'écran Webhooks : la liste des webhooks de l'espace, leur état et leur dernière remise](manuel/images/les-webhooks-prevenir-vos-autres-outils/ecran-webhooks.jpg)
+
+Chaque ligne nomme le webhook, montre l'**hôte** de son adresse — jamais l'adresse entière, qui peut contenir un jeton
+de l'outil —, le nombre d'événements qu'il écoute, le channel auquel il se limite, son état « Actif » ou « Désactivé », et
+sa dernière remise : « Remise réussie », « Remise en échec », « En attente », ou « Aucune remise ».
+
+![Les lignes de la liste, avec leurs états et leur dernière remise](manuel/images/les-webhooks-prevenir-vos-autres-outils/lignes-de-la-liste.jpg)
+
+![Une ligne dont la dernière remise est en échec](manuel/images/les-webhooks-prevenir-vos-autres-outils/derniere-remise-en-echec.jpg)
+
+### 34.1 Créer un webhook
+
+« Nouveau webhook » ouvre la fiche sous le titre.
+
+![Le bouton « Nouveau webhook »](manuel/images/les-webhooks-prevenir-vos-autres-outils/nouveau-webhook.jpg)
+
+- « Nom » — le nom qui vous permet de le reconnaître ;
+- « Adresse » — l'adresse de l'outil qui reçoit ; elle commence obligatoirement par `https://`. L'outil vous la donne ;
+- « Channel » — « Tout l'espace » par défaut, ou un seul channel : le webhook ne reçoit alors que les événements des
+  affaires de ce channel ;
+- « Événements » — ce qui déclenche un message. Côté « Affaires » : « Affaire créée », « Étape changée », « Responsable
+  changé », « Affaire archivée », « Affaire mise à la corbeille », « Affaire restaurée ». Côté « Contacts » : « Contact
+  créé », « Contact modifié », « Contact supprimé ou anonymisé » ;
+- « Actif » — décoché, le webhook n'envoie plus rien.
+
+« Enregistrer » crée le webhook ; « Annuler » referme la fiche.
+
+![La fiche d'un webhook : nom, adresse, channel, événements et la case « Actif »](manuel/images/les-webhooks-prevenir-vos-autres-outils/fiche-webhook.jpg)
+
+**Un webhook limité à un channel ne reçoit pas les événements de contact** : un contact n'appartient à aucun channel.
+Dès qu'un channel est choisi, les cases des contacts s'éteignent, et une phrase le dit.
+
+![Les cases des contacts éteintes sous un channel choisi](manuel/images/les-webhooks-prevenir-vos-autres-outils/contacts-eteints.jpg)
+
+**Les données personnelles.** Un message sur un contact porte son nom, son email et son organisation : vous les envoyez à
+l'outil que vous désignez. Une suppression ou une anonymisation n'envoie que l'identifiant du contact, pour que l'outil
+efface ce qu'il en garde. Un changement de téléphone ou de fonction est signalé, sans que la nouvelle valeur parte.
+
+**Les refus.** Une adresse qui ne commence pas par `https://` est refusée sous les champs, et votre saisie reste en place.
+
+![Le refus d'une adresse qui ne commence pas par https://](manuel/images/les-webhooks-prevenir-vos-autres-outils/refus-adresse.jpg)
+
+### 34.2 Le secret de signature
+
+À la création, le CRM affiche le **secret de signature** du webhook, sous le titre « Copiez ce secret maintenant ». Il
+ne sera **plus jamais affiché** : copiez-le avec « Copier le secret », donnez-le à l'outil qui reçoit, puis refermez avec
+« J'ai copié le secret ».
+
+![Le secret de signature, montré une seule fois](manuel/images/les-webhooks-prevenir-vos-autres-outils/secret-de-signature.jpg)
+
+**Perdu, ou divulgué ?** « Régénérer le secret » en crée un nouveau, après confirmation. L'ancien cesse aussitôt de
+signer : l'outil qui reçoit refusera les messages tant qu'il n'a pas pris le nouveau.
+
+![La confirmation avant de régénérer le secret](manuel/images/les-webhooks-prevenir-vos-autres-outils/regenerer-le-secret.jpg)
+
+### 34.3 Ce que reçoit l'outil, et comment vérifier la signature
+
+Chaque message est une requête `POST` en JSON. Son corps porte l'identifiant de l'événement, son nom, sa date et ses
+données : pour une affaire, son titre, son channel, son étape, son responsable et son montant ; pour un changement
+d'étape ou de responsable, l'étape ou la personne d'avant.
+
+Trois en-têtes l'accompagnent : `X-P2Enjoy-Event` (l'événement), `X-P2Enjoy-Delivery` (la remise, utile pour
+reconnaître un doublon) et `X-P2Enjoy-Signature`, de la forme `t=<horodatage>,v1=<signature>`. La signature est le
+HMAC-SHA256, en hexadécimal, du texte `<horodatage>.<corps>`, calculé avec le secret entier. L'outil la recalcule et
+refuse un message dont l'horodatage a plus de cinq minutes :
+
+```python
+import hashlib, hmac, time
+
+def signature_valide(secret: str, entete: str, corps: bytes) -> bool:
+    champs = dict(part.split("=", 1) for part in entete.split(","))
+    attendue = hmac.new(secret.encode(), f"{champs['t']}.".encode() + corps, hashlib.sha256).hexdigest()
+    recente = abs(time.time() - int(champs["t"])) < 300
+    return recente and hmac.compare_digest(attendue, champs["v1"])
+```
+
+Une réponse `2xx` vaut réception. Sinon — erreur, ou pas de réponse en dix secondes —, le CRM réessaie, cinq fois au
+total, une minute, cinq minutes, trente minutes puis deux heures après l'essai précédent. Le CRM ne joint jamais une
+adresse interne à votre réseau.
+
+### 34.4 L'historique des remises
+
+« Historique » déplie, sous la ligne, les cinquante remises les plus récentes du webhook : leur date, leur événement, leur
+état — « Remise », « En attente » ou « Échouée » —, le nombre d'essais, et le dernier résultat : le code rendu par l'outil,
+ou un motif écrit en toutes lettres — un délai dépassé, une connexion refusée, une adresse interne refusée.
+
+![L'historique des remises d'un webhook](manuel/images/les-webhooks-prevenir-vos-autres-outils/historique-des-remises.jpg)
+
+![Une remise en attente de son prochain essai](manuel/images/les-webhooks-prevenir-vos-autres-outils/remise-en-attente.jpg)
+
+![Une remise échouée après cinq essais](manuel/images/les-webhooks-prevenir-vos-autres-outils/remise-echouee.jpg)
+
+« Voir le corps » montre le message exact qui est parti. « Renvoyer » renvoie une remise close, réussie ou échouée : une
+nouvelle remise du même message, avec cinq essais à nouveau. Une remise encore en attente ne se renvoie pas : elle sera
+réessayée d'elle-même. « Fermer l'historique » le replie.
+
+![Le corps d'une remise, déplié](manuel/images/les-webhooks-prevenir-vos-autres-outils/corps-d-une-remise.jpg)
+
+### 34.5 Modifier, désactiver, supprimer
+
+« Modifier » rouvre la fiche, préremplie : changez l'adresse, les événements ou le channel, ou décochez « Actif » pour
+suspendre l'envoi sans perdre le réglage. « Supprimer » demande confirmation, puis « Supprimer le webhook » le retire avec
+son historique.
+
+![Les commandes d'une ligne : historique, modifier, régénérer, supprimer](manuel/images/les-webhooks-prevenir-vos-autres-outils/commandes-d-une-ligne.jpg)
+
+![La confirmation avant de supprimer un webhook](manuel/images/les-webhooks-prevenir-vos-autres-outils/supprimer-le-webhook.jpg)

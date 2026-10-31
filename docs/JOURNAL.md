@@ -37192,6 +37192,42 @@ stable (noms, dates et ordre fixes, le journal se triant par date) ; la session 
 évolution du seed, avant la première capture, puis quand T3 est poussée et la base reconstruite ; l'écran est documenté
 dans `docs/manual.md` (CLAUDE.md §7), sous la règle d'image de la décision 736.
 
+### `CRM-073` T3 : Réglages ▸ Webhooks, le seed et le manuel (2026-10-31)
+
+**Réalisé** : `docs/DESIGN_SYSTEM.md` §5.79, écrit avant le code après relecture intégrale du document ; l'écran
+`/reglages/webhooks` (liste à l'hôte seul, fiche, secret montré une fois, régénération et suppression confirmées,
+historique des 50 dernières remises et « Renvoyer ») ; les phrases du journal d'audit pour le type `webhook` ; le seed §34
+(`docs/SPEC-seed.md`) ; le chapitre 34 du manuel, illustré.
+
+**Observations et choix d'exécution** :
+- *Le seed par la vraie chaîne.* Les trois webhooks sont créés par `create_webhook_endpoint` sous le jeton d'une
+  administratrice ; leurs remises sont produites par les gestes du volet RGPD du seed (création, puis anonymisation d'un
+  contact), remises par la vraie tâche de la minute jusqu'au récepteur local. « Ancienne intégration » vise
+  `/statut/500/` : le seed attend son premier échec réel (code 500, une tentative), puis la désactive. Fin d'état relue :
+  deux remises réussies pour « Tableur commercial », aucune pour « Automate Refonte » (aucun événement d'affaire du seed
+  dans son channel), une en attente pour « Ancienne intégration ».
+- *L'échec définitif* (cinq essais épuisés) ne s'atteint qu'après deux heures et demie de refus : le scénario du manuel le
+  pose sur la remise en attente, par la clé de service, comme le font les autres scénarios pour les incidents, puis lui
+  rend l'état lu avant ; l'E2E le prouve par le refus de la base et le renvoi.
+- *Les remises d'autres preuves.* « Tableur commercial » écoute tout l'espace : l'E2E lit les deux remises du seed comme
+  les plus anciennes, jamais par un compte global.
+- *Le secret d'un webhook* n'est pas un mot de passe : le journal nomme la colonne « Secret de signature » et ne montre
+  jamais de valeur (la base ne garde que la référence Vault).
+
+**Vérifications** : unitaires 15/15 (suite 5 083/5 084, le rouge restant `PanneauChangementWorkflow`, instable connu de
+`CRM-118`, vert rejoué seul) ; E2E `e2e/ui/webhooks.spec.ts` 8/8, captures observées aux quatre paliers ; scénario du manuel
+5/5 ; `verify-manual` sans anomalie ; journal d'audit et RGPD rejoués verts avec le nouveau seed.
+
+### Livraison : un seul lot de la 106 à la 140 (2026-10-31, décision 786)
+
+**Décision 786, du responsable** (« oui », réponse donnée à la session de `CRM-117` qui l'a rapportée) : la livraison se
+fait en **un seul lot**, migrations `0106` à `0140`, à condition que `CRM-073` T3 soit close d'ici là. La fenêtre attend
+toujours la fin de `CRM-117` (décision 783) ; l'instantané du matin reste le retour arrière aux conditions de la décision
+783.
+
+**Conséquences** : `docs/PROD_MIGRATIONS.md` §3 décrit le lot (webapp, images `mcp` et `mail-sync`, fonction edge
+`webhooks`) ; la livraison de `CRM-073` s'y range. La condition est remplie par le commit de T3.
+
 ### Les captures versionnées réécrites par chaque campagne (2026-10-31, décision 787)
 
 **Problème** : 901 images de `docs/captures/` (unités `CRM-007` à `CRM-073`) étaient modifiées sans être committées, et

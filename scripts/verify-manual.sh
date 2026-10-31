@@ -109,6 +109,8 @@ CHAPITRES_ILLUSTRES=(
 	ecrire-des-modeles-d-emails-et-les-previsualiser
 	signer-les-messages-expedies-depuis-une-identite
 	enchainer-des-relances-les-sequences
+	# `CRM-073` T3 (décision 785) : le chapitre 34 naît illustré.
+	les-webhooks-prevenir-vos-autres-outils
 )
 
 ok()    { checks=$((checks + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }

@@ -10,6 +10,8 @@
 # @spec CRM-035 (docs/BACKLOG.md) — champs de formulaire et règles de visibilité
 # @spec CRM-018 (docs/BACKLOG.md) — champs exigés par une transition, avec intégrité référentielle
 # @spec CRM-078 (docs/BACKLOG.md) — une version publiée du workflow par défaut
+# @spec CRM-073 (docs/BACKLOG.md) — tranche T3 : trois webhooks et leurs remises par la vraie chaîne (docs/SPEC-seed.md §34,
+#       docs/SPEC-webhooks.md §8)
 # @spec CRM-081 (docs/BACKLOG.md) — deux affaires en sommeil, dont une échue (docs/SPEC-cards.md §16.11.6)
 # @spec CRM-062 (docs/BACKLOG.md) — la relance de la card figée, écrite par le VRAI mécanisme
 #       (docs/SPEC-relances.md §9.9)
@@ -5290,6 +5292,34 @@ for palier in m-healthy m-watch m-danger s-healthy s-watch s-danger; do
 done
 info "Scores de santé : les trois paliers présents pour la dynamique et pour la santé commerciale — CRM-066, docs/SPEC-seed.md §24"
 
+# --- Les webhooks sortants — CRM-073 T3, docs/SPEC-seed.md §34 ---------------------------------------------------------
+# @spec CRM-073 (docs/BACKLOG.md) — tranche T3 ; docs/SPEC-webhooks.md §8 (seed par la vraie chaîne) ; décisions 784, 785
+# Trois webhooks aux noms FIXES, créés par la VRAIE fonction `create_webhook_endpoint` sous le jeton de l'administratrice,
+# tous vers le récepteur local `webhook-sink` (docker-compose.dev.yml) : « Tableur commercial » (tout l'espace, les neuf
+# événements), « Automate Refonte » (limité au channel « Refonte de site », affaires seulement), « Ancienne intégration »
+# (un chemin qui répond 500). Ils sont posés JUSTE AVANT le volet RGPD : les deux gestes réels qui suivent — la création et
+# l'anonymisation de « Régis Anonyme » — produisent leurs remises par la vraie chaîne (déclencheur, pg_cron, fonction edge,
+# récepteur), sans aucun geste de plus sur les données de démonstration. Convergence par présence du nom : un webhook déjà
+# là n'est pas recréé, et son secret n'est jamais relu.
+JETON_ADMIN_WEBHOOKS=$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test' || true)
+[ -n "$JETON_ADMIN_WEBHOOKS" ] || die "connexion de l'administratrice impossible pour les webhooks du seed."
+WEBHOOKS_SEED=(
+	'Tableur commercial|https://webhook-sink:8443/crm/tableur|-|["card.created","card.step_changed","card.owner_changed","card.archived","card.trashed","card.restored","contact.created","contact.updated","contact.deleted"]'
+	'Automate Refonte|https://webhook-sink:8443/crm/refonte|5eed0000-0000-4000-8000-000000000034|["card.created","card.step_changed"]'
+	'Ancienne intégration|https://webhook-sink:8443/statut/500/ancienne|-|["contact.created"]'
+)
+for entree in "${WEBHOOKS_SEED[@]}"; do
+	IFS='|' read -r nom_webhook url_webhook channel_webhook evenements_webhook <<<"$entree"
+	code=$(api GET "/rest/v1/webhook_endpoints?select=id&workspace_id=eq.$WS_ID&name=eq.$(jq -rn --arg n "$nom_webhook" '$n|@uri')")
+	attendu "$code" "lecture du webhook « $nom_webhook »" 200
+	[ "$(jq -r 'length' "$CORPS")" = "0" ] || continue
+	code=$(api_jeton "$JETON_ADMIN_WEBHOOKS" POST /rest/v1/rpc/create_webhook_endpoint \
+		-d "$(jq -nc --arg ws "$WS_ID" --arg n "$nom_webhook" --arg u "$url_webhook" --arg c "$channel_webhook" \
+			--argjson e "$evenements_webhook" \
+			'{p_workspace: $ws, p_name: $n, p_url: $u, p_events: $e} + (if $c == "-" then {} else {p_channel: $c} end)')")
+	attendu "$code" "création du webhook « $nom_webhook »" 200
+done
+
 # --- Le volet RGPD d'un contact — CRM-072 T3, docs/SPEC-seed.md §26 -----------------------------------------------------
 # @spec CRM-072 (docs/BACKLOG.md) — tranche T3 ; docs/SPEC-audit.md §7, §10 ; docs/JOURNAL.md décisions 725, 726 et 732
 # « Régis Anonyme » est créé, exporté puis anonymisé par les VRAIES fonctions, sous le jeton de Camille, administratrice :
@@ -5316,6 +5346,33 @@ if [ "$(jq -r '.[0].anonymized_at // "null"' "$CORPS")" = 'null' ]; then
 	attendu "$code" "anonymisation de « Régis Anonyme »" 200 204
 fi
 info "RGPD : « Régis Anonyme » exporté puis anonymisé par les vraies fonctions — CRM-072, docs/SPEC-seed.md §26"
+
+# --- Les remises des webhooks, produites par la vraie chaîne — CRM-073 T3, docs/SPEC-seed.md §34 -----------------------
+# @spec CRM-073 (docs/BACKLOG.md) — tranche T3 ; docs/SPEC-webhooks.md §2, §5.2, §8
+# Le volet RGPD vient d'émettre `contact.created` et `contact.deleted`. La tâche `pg_cron` de la minute réveille la fonction
+# edge, qui remet au récepteur local. Le seed ATTEND, au plus trois minutes, que « Tableur commercial » ait ses deux remises
+# réussies et qu'« Ancienne intégration » ait essayé la sienne (500) ; puis il DÉSACTIVE « Ancienne intégration » : sa
+# remise reste en attente, son premier échec lisible, et l'état final est le même à chaque passage. Sur un rejeu, aucune
+# nouvelle remise ne naît (le volet RGPD converge par présence) : l'attente est alors immédiate.
+attente_webhooks=0
+while :; do
+	remises_tableur=$(curl -s "$API/rest/v1/webhook_deliveries?select=status,endpoint:webhook_endpoints!inner(name)&endpoint.name=eq.Tableur%20commercial&workspace_id=eq.$WS_ID" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" | jq -r '[.[] | select(.status == "delivered")] | length')
+	essai_ancienne=$(curl -s "$API/rest/v1/webhook_deliveries?select=last_status_code,endpoint:webhook_endpoints!inner(name,enabled)&endpoint.name=eq.Ancienne%20int%C3%A9gration&workspace_id=eq.$WS_ID" \
+		-H "apikey: $SERVICE_ROLE_KEY" -H "Authorization: Bearer $SERVICE_ROLE_KEY" \
+		| jq -r 'if length == 0 then "aucune" elif (.[0].endpoint.enabled | not) then "close" elif any(.[]; .last_status_code == 500) then "essayee" else "attente" end')
+	{ [ "$remises_tableur" -ge 2 ] && { [ "$essai_ancienne" = "essayee" ] || [ "$essai_ancienne" = "close" ]; }; } && break
+	attente_webhooks=$((attente_webhooks + 5))
+	[ "$attente_webhooks" -le 180 ] || die "les remises des webhooks du seed ne sont pas venues en trois minutes (Tableur
+        commercial : $remises_tableur réussie(s) sur 2, Ancienne intégration : $essai_ancienne). La fonction edge
+        « webhooks » et le récepteur « webhook-sink » sont-ils démarrés ? (docs/SPEC-webhooks.md §8)"
+	sleep 5
+done
+code=$(api_jeton "$(sso_jeton_interne "$API" "$ANON_KEY" 'admin@p2enjoy.test')" PATCH \
+	"/rest/v1/webhook_endpoints?workspace_id=eq.$WS_ID&name=eq.Ancienne%20int%C3%A9gration&enabled=is.true" \
+	-H 'Prefer: return=minimal' -d '{"enabled": false}')
+attendu "$code" "désactivation du webhook « Ancienne intégration »" 204
+info "Webhooks : trois, dont un limité à « Refonte » et un désactivé ; remises produites par la vraie chaîne jusqu'au récepteur local — CRM-073, docs/SPEC-seed.md §34"
 
 # --- Le journal d'audit couvre ses familles — CRM-072 T1, docs/SPEC-seed.md §25 ------------------------------------------
 # @spec CRM-072 (docs/BACKLOG.md) — tranche T1 ; docs/SPEC-audit.md §4, §10 ; docs/JOURNAL.md décisions 725 et 726

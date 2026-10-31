@@ -1020,6 +1020,32 @@
 					"title": "33.6 Ce que le connecteur n'offre pas"
 				}
 			]
+		},
+		{
+			"slug": "les-webhooks-prevenir-vos-autres-outils",
+			"title": "34. Les webhooks : prévenir vos autres outils",
+			"sections": [
+				{
+					"anchor": "creer-un-webhook",
+					"title": "34.1 Créer un webhook"
+				},
+				{
+					"anchor": "le-secret-de-signature",
+					"title": "34.2 Le secret de signature"
+				},
+				{
+					"anchor": "ce-que-recoit-l-outil-et-comment-verifier-la-signature",
+					"title": "34.3 Ce que reçoit l'outil, et comment vérifier la signature"
+				},
+				{
+					"anchor": "l-historique-des-remises",
+					"title": "34.4 L'historique des remises"
+				},
+				{
+					"anchor": "modifier-desactiver-supprimer",
+					"title": "34.5 Modifier, désactiver, supprimer"
+				}
+			]
 		}
 	]
 }

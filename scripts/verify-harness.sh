@@ -1816,7 +1816,10 @@ SCENARIOS_API=1286
 # pour être attribué. 1017 + 2 = 1019, COMPTÉE.
 # **+2 par `CRM-071` T6, 2026-10-30** : `e2e/ui/import-affaires.spec.ts`, fichier NEUF — un export retouché importé dans la
 # vue liste, la liste relue, le fil « par import » ; la lectrice et le palier 390. 1019 + 2 = 1021, COMPTÉE.
-SCENARIOS_UI=1021
+# **+8 par `CRM-073` T3, 2026-10-31** : `e2e/ui/webhooks.spec.ts`, fichier NEUF — la liste semée et l'historique avec le
+# renvoi, la création (le secret une fois), la modification, la régénération et la suppression, le refus d'une adresse en
+# clair, l'écran refusé à la lectrice, et les quatre paliers. 1021 + 8 = 1029, COMPTÉE (`--list`, « Total: 1029 tests »).
+SCENARIOS_UI=1029
 # Projet `mail`, DÉCLARÉ POUR LA PREMIÈRE FOIS par `CRM-050` : il était annoncé par `README.md` §7
 # et laissé vide par `CRM-008`, faute de sujet à exercer (INC-023).
 # **16 scénarios** : trois sessions IMAP réelles (une par boîte), le refus d'un mot de passe faux,

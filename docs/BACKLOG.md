@@ -7503,7 +7503,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées, import et export CSV — les six tranches livrées et prouvées en développement ; reste la livraison (migrations `0135` à `0138`, webapp, image `mcp`) | `[P]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |
-| CRM-073 | Webhooks sortants signés — **arbitrée** (décision 779) : webhooks seuls, **jetons d'API abandonnés** (le connecteur MCP suffit) ; connecteur MCP : non. **Spécification validée** (`docs/SPEC-webhooks.md`, décision 784) ; tranches à la section `CRM-073` — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-30 17:47 UTC — état avant : [ ]* | `[@]` |
+| CRM-073 | Webhooks sortants signés — **arbitrée** (décision 779) : webhooks seuls, **jetons d'API abandonnés** (le connecteur MCP suffit) ; connecteur MCP : non. **Spécification validée** (`docs/SPEC-webhooks.md`, décision 784) ; T1 à T3 livrées et prouvées en développement (migrations `0139`, `0140`, fonction `webhooks`, Réglages ▸ Webhooks, chapitre 34 du manuel) ; reste la livraison — tranches à la section `CRM-073` | `[P]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
@@ -12659,7 +12659,7 @@ messages d'un contact anonymisé restent intacts).
             vérification §25 lit une famille à la fois (une lecture unique rendait mille entrées et manquait l'export).
       - [x] Manuel (chapitre 3 *ter*), `SCHEMA.md`, `PROD_MIGRATIONS.md`, `SPEC-seed.md` §26, CHANGELOG.
 
-### CRM-073 — Webhooks sortants signés `[@]`
+### CRM-073 — Webhooks sortants signés `[P]`
 
 *Spécification : `docs/SPEC-webhooks.md`, validée le 2026-10-31 telle que proposée (décision 784) — charge utile
 « identifiants et changement », pas d'événements de contact sous filtre de channel, l'anonymisation émet
@@ -12690,9 +12690,20 @@ Connecteur MCP : **non**, aux deux questions (décision 779) — aucune famille 
       `e2e/api/webhooks-remise.spec.ts` 2/2 — par la vraie tâche de la minute, jusqu'au récepteur en HTTPS : signature
       recalculée, échec et prochain essai à une minute, délai dépassé, adresse de la pile refusée, renvoi, appel sans secret
       refusé derrière Kong ; compteurs du harnais (120 fichiers SQL, 1 286 scénarios d'API).
-- [ ] **T3 — l'écran** (§7, §8) : `docs/DESIGN_SYSTEM.md` avant le code, Réglages ▸ Webhooks ; seed par la vraie chaîne ;
+- [x] **T3 — l'écran** (§7, §8) : `docs/DESIGN_SYSTEM.md` avant le code, Réglages ▸ Webhooks ; seed par la vraie chaîne ;
       unitaires ; E2E ; captures aux quatre paliers ; manuel, chapitre « Webhooks ».
-- [ ] **Livraison en production**, sur instruction du responsable.
+      *Livrée en développement le 2026-10-31* — `docs/DESIGN_SYSTEM.md` §5.79 écrit avant le code, après relecture intégrale ;
+      `webapp/src/lib/webhooks.ts`, `webapp/src/app/ReglagesWebhooks.tsx`, entrée « Webhooks » de l'index (après
+      « Étiquettes », capacité d'administrer), phrases du journal (`webhook.*`, colonnes nommées, le secret d'un webhook n'étant
+      pas un mot de passe) ; seed §34 : trois webhooks aux noms fixes et deux remises réussies produites par les gestes du volet
+      RGPD, « Ancienne intégration » désactivé après son premier échec (décision 785, conditions de la session de `CRM-117`) ;
+      manuel, chapitre 34 illustré (`e2e/manuel/34-webhooks.spec.ts`, 15 images, `docs/SPEC-manual.md` §10 bis et §12).
+      Preuves : unitaires du module et de l'écran 15/15, suite 5 083/5 084 (le seul rouge, `PanneauChangementWorkflow`, vert
+      rejoué seul, 6/6 — instable de `CRM-118`) ; E2E `e2e/ui/webhooks.spec.ts` 8/8, captures `docs/captures/CRM-073/`
+      observées ; scénario du manuel 5/5 ; `verify-manual` 166 contrôles sans anomalie ; journal d'audit et RGPD rejoués
+      verts avec le nouveau seed (API 8/8, interface 14/14) ; compteur du harnais (1 029 scénarios d'interface).
+- [ ] **Livraison en production**, sur instruction du responsable — **dans le lot unique des migrations `0106` à `0140`**
+      (décision 786), après la fin de `CRM-117` (décision 783) ; `docs/PROD_MIGRATIONS.md` §3.
 
 ### CRM-075 — Administration des tracks et des channels `[x]`
 *Créée le 2026-08-11 par arbitrage du responsable — INC-086, option 2, `docs/JOURNAL.md` décision

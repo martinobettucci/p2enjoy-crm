@@ -2728,3 +2728,33 @@ L'import n'est rejoué que si `ines.morel@atelier-lumen.example` est absent du c
 carnet déjà importé ». Un second passage ne crée rien de plus — rejoué malgré tout, il ne rendrait que des doublons. La
 garde du carnet semé (section 8) compte ses organisations par leurs identifiants et ses contacts hors de la source
 `import` (décision 51).
+
+## 34. Les webhooks sortants — `CRM-073` T3 (décisions 784 et 785)
+
+### 34.1 Ce que le seed pose
+
+Trois webhooks de l'espace P2Enjoy, aux **noms fixes**, tous vers le récepteur local `webhook-sink`
+(`docker-compose.dev.yml`, `docs/SPEC-webhooks.md` §8) :
+
+| Webhook | Adresse | Channel | Événements | État final |
+|---|---|---|---|---|
+| Tableur commercial | `https://webhook-sink:8443/crm/tableur` | tout l'espace | les neuf | actif ; deux remises réussies |
+| Automate Refonte | `https://webhook-sink:8443/crm/refonte` | Refonte de site | affaire créée, étape changée | actif ; aucune remise (l'état « Aucune remise ») |
+| Ancienne intégration | `https://webhook-sink:8443/statut/500/ancienne` | tout l'espace | contact créé | **désactivé** ; une remise en attente après un échec 500 |
+
+Le journal d'audit porte trois « Webhook ajouté » et un « Webhook modifié » (la désactivation), au nom de Camille.
+
+### 34.2 Le vrai chemin
+
+Les trois webhooks sont créés par `create_webhook_endpoint` **sous le jeton de Camille**, administratrice, juste **avant** le
+volet RGPD (§26). La création et l'anonymisation de « Régis Anonyme », gestes que le seed fait déjà, émettent
+`contact.created` et `contact.deleted` : les déclencheurs inscrivent les remises, la tâche `pg_cron` de la minute réveille la
+fonction edge `webhooks`, qui signe et remet au récepteur. Aucun geste de plus sur les données de démonstration, aucune
+remise fabriquée. Le seed attend, au plus trois minutes, les deux remises réussies de « Tableur commercial » et le premier
+essai (500) d'« Ancienne intégration », puis désactive celle-ci sous le même jeton : sa remise reste en attente, et l'état
+final ne dépend pas du moment où la tâche a tiré.
+
+### 34.3 Convergence
+
+Un webhook dont le nom est déjà là n'est pas recréé, et son secret n'est jamais relu. Sur un rejeu, le volet RGPD ne crée
+plus rien, donc aucune remise nouvelle ne naît, et l'attente est immédiate.
