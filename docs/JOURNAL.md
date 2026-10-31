@@ -37244,3 +37244,14 @@ sans observation (CLAUDE.md §16).
 corrige la cause. **Conséquences** : 885 images restaurées par `git restore` ; les 15 images de `CRM-069` et `CRM-072`
 et le dossier `CRM-073`, que `CRM-073` T3 écrit en ce moment, attendent la clôture de cette tranche ; l'unité `CRM-122`
 porte la correction de l'aide.
+
+**Révision de la décision 787, du responsable, même séance** (« oui »). Le responsable a objecté qu'une campagne complète
+qui livre des captures à jour est souhaitable, et CLAUDE.md §7 le prescrit : les captures se renouvellent quand
+l'apparence change. Le défaut tenait à l'absence d'observation et de commit, pas au renouvellement ; l'argument de la
+preuve d'origine était faible, l'historique Git la garde. **Révision** : les campagnes ordinaires (régression,
+vérification d'une tranche) ne touchent plus `docs/captures/`, sauf pour l'unité qui livre ; une **campagne de
+renouvellement**, demandée explicitement et au moins avant chaque livraison en production, régénère toutes les captures,
+fait observer une à une celles qui changent visiblement (tri par écart de pixels), signale les régressions et committe le
+tout en un seul commit. Pour le lot 0106 à 0140 (décision 786), ce renouvellement se fait pendant la campagne finale de
+`CRM-117` (T5). La restauration du jour reste juste : ces 885 images n'avaient pas été observées, et la campagne les
+reproduit. `CRM-122` est réécrite en conséquence.

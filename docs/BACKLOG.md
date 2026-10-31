@@ -17680,19 +17680,25 @@ manifestes Python constatés dans le graphe de dépendances de GitHub après le 
 - [ ] **T2 — livraison** : la prochaine reconstruction de l'image `mcp` de production prend le verrou renommé
       (contenu identique) ; aucune autre action en production.
 
-### CRM-122 — Les campagnes de tests ne réécrivent plus les captures versionnées `[ ]`
-Arbitrage du responsable du 2026-10-31 (décision 787). `capturer()` (`e2e/ui/captures.ts`) recopie chaque capture dans
-`docs/captures/<unité>/`, dossier versionné, **à chaque passage** : une campagne de régression réécrit les preuves des
-unités closes sans que personne les observe, et salit l'arbre que `livrer.sh` exige propre (901 images le 2026-10-31,
-après la campagne d'interface de `CRM-111` T2.4.5). Les 885 images réécrites avant 17 h ont été rendues à leur version
-committée ; celles de `CRM-069` et `CRM-072`, et le dossier `CRM-073`, écrits par `CRM-073` T3 en cours, attendent sa
-clôture.
-**DoD** : la copie vers `docs/captures/` n'a lieu que sur demande explicite, limitée à l'unité qui livre (par exemple une
-variable d'environnement documentée qui nomme l'unité) ; sans elle, les captures restent dans `e2e/output/`, ignoré ;
-une campagne d'interface complète laisse `git status` sans capture modifiée (constaté) ; test unitaire de l'aide, avec et
-sans la demande ; `docs/DESIGN_SYSTEM.md` §11, `docs/DAT.md` (commandes de test) et README révisés ; spécification écrite
-et committée avant le code. Question du connecteur : sans objet, outillage de test (proposé, à confirmer par le
-responsable).
+### CRM-122 — Les captures versionnées se renouvellent par une campagne dédiée, observée et committée `[ ]`
+Arbitrage du responsable du 2026-10-31 (décision 787, révisée en séance). `capturer()` (`e2e/ui/captures.ts`) recopie
+chaque capture dans `docs/captures/<unité>/`, dossier versionné, **à chaque passage** : une campagne de régression
+réécrit les captures de toutes les unités sans que personne les observe ni les committe, et salit l'arbre que
+`livrer.sh` exige propre (901 images le 2026-10-31, après la campagne d'interface de `CRM-111` T2.4.5, rendues à leur
+version committée). Le renouvellement est voulu (CLAUDE.md §7) ; il doit être délibéré, observé et committé.
+**DoD** : (1) une campagne ordinaire ne copie dans `docs/captures/` que les captures de l'unité qui livre, nommée par une
+demande explicite (par exemple une variable d'environnement documentée) ; sans elle, les captures restent dans
+`e2e/output/`, ignoré, et `git status` reste sans capture modifiée (constaté sur une campagne complète) ; (2) une
+**campagne de renouvellement**, demandée explicitement, régénère toutes les captures ; un rapport trie les images
+changées par écart de pixels ; celles qui changent visiblement sont observées une à une, les régressions signalées, et
+le tout est committé en un seul commit ; elle est jouée au moins avant chaque livraison en production (contrat de
+déploiement) ; (3) tests unitaires de l'aide (sans demande, unité nommée, renouvellement) et du tri ;
+`docs/DESIGN_SYSTEM.md` §11, `docs/DAT.md` (commandes de test), README et `docs/PROD_MIGRATIONS.md` révisés ;
+spécification écrite et committée avant le code. Question du connecteur : sans objet, outillage de test (proposé, à
+confirmer par le responsable).
 
-- [ ] **T1 — spécification** : la forme de la demande, l'unité qu'elle nomme, son effet sur les captures existantes.
-- [ ] **T2 — l'aide, ses tests, la documentation**, et la campagne complète constatée propre.
+- [ ] **T1 — spécification** : la forme des deux demandes, le rapport de tri et son seuil, la place du renouvellement
+      dans la préparation d'une livraison.
+- [ ] **T2 — l'aide, le tri, leurs tests, la documentation**, et une campagne ordinaire complète constatée propre.
+- [ ] **T3 — premier renouvellement**, pendant la campagne finale de `CRM-117` (T5), avant la livraison du lot 0106 à
+      0140 (décision 786).
