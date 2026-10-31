@@ -37125,3 +37125,18 @@ palier, montré sur l'image `paliers` mais sous la forme d'une croix dont le nom
 contrôles, aucune anomalie (seize chapitres, 237 images) ; manuel construit, 33 chapitres, sans avertissement ;
 typecheck vert.
 
+
+### La fenêtre attend la fin de `CRM-117` ; l'instantané du matin sert de retour arrière (2026-10-31, décision 783)
+
+**Contexte** : la condition de la décision 782 est remplie — `CRM-111` T2.4 close (`a3678128`), INC-322 corrigée
+(`39de47f4`). La livraison exige un arbre de travail propre (`scripts/spark/livrer.sh`) : il portait 901 captures
+régénérées par les campagnes et les fichiers en cours de `CRM-117` (scénarios `e2e/manuel/` des chapitres 11 à 29, images
+du manuel).
+
+**Décision 783, du responsable, en séance** (« Attendre la fin de CRM-117 ») : la fenêtre des migrations `0106` à `0138`
+(avec la webapp et les images `mcp` et `mail-sync`) **attend la fin de `CRM-117`** — ses images (T4), sa campagne finale
+(T5) et sa propre livraison (T6) —, plutôt que d'interrompre ses prises de vue pour nettoyer l'arbre. À la question de
+l'instantané : « Celui de ce matin suffit » — l'instantané de la machine virtuelle annoncé pour la décision 782 sert de
+retour arrière, **à condition qu'aucune écriture n'ait lieu en production d'ici là** (à revérifier en lecture seule le
+jour de la fenêtre : révision servie et registre des migrations inchangés). En attendant, le backlog continue :
+`CRM-073` (spécification des webhooks), puis `CRM-074` et la file des incohérences.
