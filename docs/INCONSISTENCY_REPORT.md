@@ -8155,6 +8155,10 @@ les autres fichiers (`_attendre_outils`). Le produit se conduit comme spécifié
 le fichier relève de `CRM-102`. **Issue proposée** : attendre la liste exacte par `_attendre_outils`, bornée par
 `DUREE_VISIBILITE_S`, au lieu de la lire une fois.
 
+**Corrigée le 2026-10-31** par `CRM-074` T4 (commit `1cf2c197`), sous le numéro en doublon INC-324 : l'égalité stricte relit
+la liste jusqu'à trois fois `DUREE_VISIBILITE_S` avant d'être affirmée ; toute l'intégration du connecteur, dans l'ordre
+alphabétique, 76/76.
+
 ### INC-320 — `plateforme-mcp.spec.ts` lit le refus du seed sur la première page du journal, qu'une campagne d'intégration remplit
 
 *Constaté le 2026-10-27 par `CRM-118` T2.b, en rejouant `e2e/ui/plateforme-mcp.spec.ts` après plusieurs campagnes
@@ -8229,6 +8233,9 @@ vide ; elle sera reprise en `CRM-117` T5 si la correction arrive avant. Connecte
 
 
 ### INC-324 — La preuve OAuth du connecteur dépend de l'ordre des fichiers de la suite d'intégration
+
+*Doublon d'INC-319, reconnu le 2026-10-31 en relisant la file : le défaut y était consigné depuis le 2026-10-27, avec la même
+cause et la même issue. Les deux entrées disent la même correction ; INC-319 en est la référence.*
 
 *Constaté le 2026-10-31 par `CRM-074` T4, en rejouant toute l'intégration du connecteur.*
 `mcp/tests/test_integration_oauth.py::test_un_droit_suffit_pour_entrer_dans_la_matrice_et_la_rls` affirme l'égalité

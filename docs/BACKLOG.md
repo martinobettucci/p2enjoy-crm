@@ -12748,7 +12748,7 @@ binaire**, pour que l'agent la lise à sa façon.
       `attachment` (`politique.py`), `ClientCrm.lire_objet` (lecture du stockage sous le jeton de la personne, bornée à
       25 Mo) ; `docs/SPEC-mcp.md` §9.2 decies révisée. Preuves : pytest du connecteur 287 passés (dont 5 nouveaux et les
       lectures révisées), intégration 76/76 contre la vraie pile, service `mcp` reconstruit — Driss lit en binaire une
-      pièce saine posée sur un vrai message, la pièce infectée est refusée, la lectrice reçoit le refus uniforme ; INC-324
+      pièce saine posée sur un vrai message, la pièce infectée est refusée, la lectrice reçoit le refus uniforme ; INC-319 (consignée en doublon INC-324)
       (la preuve OAuth dépendait de l'ordre des fichiers) corrigée en chemin. *Reste à T3* : la mention de l'outil au
       chapitre du connecteur dans le manuel. *Précisions d'exécution* : `docs/SPEC-pieces-jointes.md` §15.
 - [ ] **Livraison en production**, sur instruction du responsable.
