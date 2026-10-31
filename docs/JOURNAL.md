@@ -37178,3 +37178,16 @@ récepteur passe par un vrai TLS ; en production, les autorités publiques du ru
 (signature recalculée par une autre implémentation, échec, délai, adresse interne, renvoi, `401` sans secret) ; un essai à
 la main avant la preuve (remise `delivered` en 200, journal de la fonction sans adresse ni corps). **Limite nommée** : la
 résolution vérifiée puis refaite par `fetch` laisse une fenêtre de « DNS rebinding ».
+
+### `CRM-073` T3 avant la campagne finale de `CRM-117` (2026-10-31, décision 785)
+
+**Contexte** : l'écran Réglages ▸ Webhooks et son seed (`docs/SPEC-webhooks.md` §7, §8) ajoutent un onglet à Réglages et
+des lignes au journal de l'espace ; ils changent donc des images du manuel de `CRM-117` (chapitres déjà illustrés qui
+passent par Réglages, et l'administration, chapitres 17 à 22, pas encore prise en vue).
+
+**Décision 785, du responsable, en séance** (« T3 maintenant ») : `CRM-073` T3 se fait tout de suite, seed compris ; la
+session de `CRM-117` reprend les images touchées pendant sa campagne finale (T5) et prend l'administration directement
+sur l'état final. **Conditions convenues entre les deux sessions** : le seed des webhooks passe par la vraie chaîne et reste
+stable (noms, dates et ordre fixes, le journal se triant par date) ; la session de `CRM-117` est prévenue avant toute
+évolution du seed, avant la première capture, puis quand T3 est poussée et la base reconstruite ; l'écran est documenté
+dans `docs/manual.md` (CLAUDE.md §7), sous la règle d'image de la décision 736.
