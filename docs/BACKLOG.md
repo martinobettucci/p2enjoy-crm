@@ -12717,6 +12717,8 @@ externe ; le texte est montré dans l'aperçu, pour copier un passage — **il n
 binaire**, pour que l'agent la lise à sa façon.
 
 - [ ] **Spécification** (`docs/SPEC-pieces-jointes.md`), soumise au responsable avant le code ; découpage en tranches.
+      *Proposée le 2026-10-31* : une migration (texte extrait sur `mail_attachments`), une boucle d'extraction dans
+      `mail-sync`, la visionneuse, l'outil `crm_mail_attachment_get` ; quatre tranches (§10), cinq points soumis (§11).
 
 ### CRM-075 — Administration des tracks et des channels `[x]`
 *Créée le 2026-08-11 par arbitrage du responsable — INC-086, option 2, `docs/JOURNAL.md` décision
