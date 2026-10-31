@@ -1,3 +1,5 @@
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — le channel, la probabilité et le responsable se lisent sur le rattachement
+#           (migration 0134, docs/SPEC-rattachements.md §3.2)
 # @verifies CRM-119 (docs/BACKLOG.md) — tranche T3 : le connecteur MCP face aux droits fins, contre le vrai Keycloak, la
 #           vraie base et le vrai service `mcp`, par le parcours OAuth réel
 # @verifies docs/SPEC-permissions-rls.md §7.5 (M1 un droit qui rouvre, M2 un droit qui restreint, M3 la fraîcheur en
@@ -96,7 +98,10 @@ async def test_m1_un_droit_member_rouvre_en_ecriture_a_la_lectrice():
             await _attendre_visible(client, "crm_card_create")
             creee = (await _rend(client, FARIDA, "crm_card_create", {"channel_id": PROSPECTION, "title": f"{TITRE} rouverte"}))["card"]
             enBase = await _carte(creee["id"])
-            assert (enBase["channel_id"], enBase["created_by"]) == (PROSPECTION, FARIDA[1])
+            # Depuis la migration 0134, le channel vit sur le rattachement (`CRM-111` T2.4.5).
+            rattachement = (await _service("GET", "/card_placements", params={
+                "card_id": f"eq.{creee['id']}", "select": "channel_id"})).json()
+            assert (rattachement[0]["channel_id"], enBase["created_by"]) == (PROSPECTION, FARIDA[1])
 
             liste = await _rend(client, FARIDA, "crm_card_list", {"workspace": "p2enjoy", "channel_id": PROSPECTION, "limit": 100})
             assert creee["id"] in {c["id"] for c in liste["cards"]}

@@ -1,3 +1,5 @@
+# @verifies CRM-111 T2.4.4 (docs/BACKLOG.md) — le channel, la probabilité et le responsable se lisent sur le rattachement
+#           (migration 0134, docs/SPEC-rattachements.md §3.2)
 # @verifies CRM-104 (docs/BACKLOG.md) — tranche T2.b : les douze outils d'écriture des affaires contre le vrai Keycloak, la
 #           vraie base et le vrai service `mcp`, par le parcours OAuth réel
 # @verifies CRM-067 (docs/BACKLOG.md) — tranche T4 : consigner et corriger une activité par le connecteur
@@ -90,8 +92,12 @@ async def test_le_parcours_complet_d_une_affaire_par_le_connecteur():
                 "card_id": ident, "description": "Créée par le connecteur", "probability": 30, "owner": "Camille Aubert",
                 "next_action": "Rappeler", "next_action_at": "2030-01-15T09:00:00+01:00", "answers": {"budget": 45000},
             })
-            fiche = (await _service("GET", "/cards", params={"id": f"eq.{ident}", "select": "description,probability_override,owner_id"})).json()[0]
-            assert fiche == {"description": "Créée par le connecteur", "probability_override": 30, "owner_id": CAMILLE}
+            fiche = (await _service("GET", "/cards", params={"id": f"eq.{ident}", "select": "description"})).json()[0]
+            assert fiche == {"description": "Créée par le connecteur"}
+            # La probabilité et le responsable vivent sur le rattachement depuis la migration 0134 (`CRM-111` T2.4.5).
+            rattachement = (await _service("GET", "/card_placements", params={
+                "card_id": f"eq.{ident}", "select": "probability_override,owner_id"})).json()
+            assert rattachement == [{"probability_override": 30, "owner_id": CAMILLE}]
             # La même écriture que le formulaire de la fiche (`ecrireValeur`), qui ne pose pas `updated_by` non plus.
             valeur = (await _service("GET", "/card_field_values", params={"card_id": f"eq.{ident}", "select": "value"})).json()
             assert valeur == [{"value": 45000}]

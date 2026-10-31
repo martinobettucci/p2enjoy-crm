@@ -17013,7 +17013,10 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           (`POST /cards` avec les colonnes de rattachement, puis `cards.channel_id`) : `verify-mcp.sh` rend 3 échecs d'intégration.
           *Corrigé le 2026-10-31 par la clôture de `CRM-071`* : `test_integration_workflows.py` pose son affaire puis son
           rattachement, et son nettoyage efface la copie avant l'ancien (qui restait en base et faussait `workflows.spec.ts`
-          W0 et `coherence-workflow.spec.ts`) — 12/12, aucun reste. **Restent deux** échecs d'intégration du connecteur.
+          W0 et `coherence-workflow.spec.ts`) — 12/12, aucun reste. *Corrigés le 2026-10-31 par la reprise de T2.4* :
+          `test_integration_affaires_ecriture.py` lit la probabilité et le responsable sur le rattachement,
+          `test_integration_droits_fins.py` (M1) le channel — 9/9 ; tests du connecteur **356/357**, le seul rouge étant
+          `test_integration_oauth.py` joué hors de son ordre (INC-319, vert en tête de `verify-mcp.sh`).
           **restent à rejouer** : timeline (interrompu), rendu-modeles-emails, move-card, cards, colonnes-protegees,
           valeurs-champs, move-card-to-channel, change-channel-workflow, relances, board. Résidu relevé pour T1 ter :
           `verify-mail-classement.sh` restaure une définition d'`app.card_par_adresse` antérieure à T2.2.
