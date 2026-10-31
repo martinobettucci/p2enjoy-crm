@@ -99,7 +99,8 @@ et le statut ; **jamais le texte ni le nom du fichier**.
 
 ### 5.2 La visionneuse
 
-Une fenêtre modale large (`docs/DESIGN_SYSTEM.md`, section à écrire avant le code) :
+~~Une fenêtre modale large~~ — **révisé par la décision 791 (INC-325)** : un **panneau dans le flux**, sous la ligne de la
+pièce, la règle « aucune modale » du design system tenant (`docs/DESIGN_SYSTEM.md` §5.80) :
 
 - **Image** : affichée à la taille de la fenêtre, sans agrandissement au-delà de sa taille réelle.
 - **PDF** : le lecteur du navigateur, dans un cadre. Le fichier est lu par le client de stockage (`download`, sous la
@@ -108,7 +109,8 @@ Une fenêtre modale large (`docs/DESIGN_SYSTEM.md`, section à écrire avant le 
 - **Texte extrait** (PDF et Office) : un panneau « Texte extrait » avec « Copier le texte » ; pour un fichier Office, c'est
   tout l'aperçu. États : extraction en cours, aucun texte lisible (« document numérisé ? »), échec, contenu non reconnu,
   texte tronqué.
-- « Télécharger » dans la fenêtre ; « Fermer » et Échap ; focus piégé puis rendu au bouton d'origine.
+- « Télécharger » dans le panneau ; « Fermer l'aperçu » et Échap ; focus rendu à « Aperçu » (aucun piège de focus : ce
+  n'est pas une modale).
 - Au-delà de 25 Mo, pas d'aperçu : le téléchargement seul.
 - États : chargement, échec de lecture (pièce indisponible), refus.
 

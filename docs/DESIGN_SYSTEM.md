@@ -7148,3 +7148,51 @@ du geste, borne de liste à `104ch`. Seuls les écarts sont écrits.
   La page ne défile jamais horizontalement (§7).
 - **Aucune couleur, aucun jeton nouveau ; trois icônes Lucide nouvelles, `ScrollText`, `RotateCw` et `Redo2`**, qui ne
   servent aucun autre objet (§9).
+
+### 5.80 L'aperçu d'une pièce jointe et son texte extrait — `CRM-074` T3
+
+*Écrit le 2026-10-31, avant le code, après la relecture intégrale de ce document le même jour (décisions 788, 789 et 791).*
+Ce que l'écran lit est spécifié par `docs/SPEC-pieces-jointes.md` §5 ; ces règles ne disent que de quoi il a l'air.
+**L'aperçu est un PANNEAU DANS LE FLUX, jamais une modale** (décision 791, INC-325) : la règle du produit tient, et la
+spécification, qui écrivait « fenêtre modale large », est révisée.
+
+- **LA LIGNE D'UNE PIÈCE**, dans l'inbox (§5.4) comme dans le fil de l'affaire, porte dans cet ordre : l'icône `Paperclip`
+  décorative, le **nom** (ellipse, nom entier en `title`), la **taille** en 13 px `--color-text-2` `tabular-nums` dans son
+  propre élément (« 1,4 Ko », §5.11), puis ses commandes, boutons discrets compacts : **« Aperçu »** (icône Lucide
+  **`ScanEye`**, `aria-expanded`, `aria-controls`) puis **« Télécharger »** (`Download`). Une pièce non saine garde son
+  statut en toutes lettres et aucune commande (§5.4, inchangé).
+- **« Aperçu » N'EST RENDU QUE LÀ OÙ IL A UN OBJET** (§5.21) : une pièce saine, de 25 Mo au plus, qui est une image (PNG,
+  JPEG, GIF, WebP), un PDF, ou un fichier dont le texte est à extraire (Word, Excel, OpenDocument). Ailleurs, seul
+  « Télécharger ». Leurs noms accessibles nomment la pièce : « Aperçu de devis.pdf ».
+- **LE PANNEAU S'OUVRE SOUS LA LIGNE DE LA PIÈCE**, dans le flux — la forme de « Voir le corps » des webhooks (§5.79) et du
+  panneau de l'arborescence (§5.72) : `--color-surface`, bordure `--color-border`, `--radius-lg`, rembourrage 12 px, largeur
+  de la colonne. **Un seul panneau ouvert à la fois** dans un message ou dans un fil (§5.28) ; la commande reste montée et
+  porte `aria-expanded` (§5.43), si bien que le focus lui revient sans différé. En tête : le nom de la pièce en
+  `font-medium`, puis « Télécharger » et « Fermer l'aperçu » (secondaires compacts) ; `Échap` referme depuis le panneau et
+  rend le focus à « Aperçu ».
+- **UNE IMAGE** se rend centrée sur `--color-hover`, à sa taille naturelle au plus, bornée à la largeur du panneau et à
+  `min(70vh, 720px)` de haut (`object-contain`), son texte alternatif « Aperçu de {nom} ».
+- **UN PDF** se rend dans un cadre de toute la largeur du panneau, `min(70vh, 720px)` de haut (`60vh` sous `md`), titré
+  « Aperçu de {nom} », bordure `--color-border`, `--radius-sm` — le lecteur du navigateur, qui porte ses propres commandes.
+  Le fichier est lu par le client de stockage et montré depuis une adresse locale ; aucune ressource extérieure n'est
+  chargée.
+- **LE TEXTE EXTRAIT** suit le visuel, pour un PDF, et le remplace, pour un fichier Office : un sous-titre « Texte extrait »
+  en 13 px `font-medium` `--color-text-2`, puis le texte en `whitespace-pre-wrap`, 14 px `--color-text`, sur `--color-hover`,
+  `--radius-sm`, rembourrage 12 px, borné à `40vh` et défilant en lui-même, dans une région `tabIndex=0` nommée « Texte
+  extrait de {nom} » pour qu'elle défile au clavier (§8). Dessous, **« Copier le texte »** (secondaire compact, `Copy` — le
+  geste de copie du §5.3 bis), dont la confirmation remplace l'état dans une région `role="status"` et dont l'échec est dit.
+  Un texte coupé porte dessous, en 13 px `--color-text-2` : « Texte tronqué aux 200 000 premiers caractères. »
+- **QUATRE ÉTATS DU TEXTE, CHACUN UNE PHRASE** en 13 px `--color-text-2` à la place du texte, jamais une teinte de danger —
+  rien n'a échoué chez la personne qui regarde : « Extraction en cours : le texte paraîtra dans quelques instants. » ;
+  « Aucun texte lisible : le document est sans doute numérisé. » ; « Le contenu de ce fichier n'a pas pu être lu. » ; « Le
+  texte de ce fichier n'a pas pu être extrait. »
+- **ÉTATS DU PANNEAU** (§5.8) : pendant la lecture du fichier, un squelette à la hauteur du visuel attendu ; en échec, « La
+  pièce n'a pas pu être chargée. » en `role="alert"`, `--color-danger-soft` / `--color-danger-on-soft`, avec « Réessayer ».
+  L'adresse locale est libérée à la fermeture.
+- **DANS LE FIL DE L'AFFAIRE**, la ligne d'un courrier reçu ou envoyé (§5.11, §18.6) porte sous son objet la liste de ses
+  pièces, `ul` sans puces, une ligne par pièce dans la forme ci-dessus en 13 px ; le panneau s'ouvre sous la pièce, dans la
+  colonne du fil. Un courrier sans pièce ne rend aucune liste. La liste n'est lue que si le fil porte un courrier (§5.11).
+- **SOUS `md`**, les commandes d'une pièce passent sous son nom, cibles conservées ; le panneau prend la largeur de sa colonne.
+  `md` et jamais `sm` (§11). La page ne défile jamais horizontalement (§7).
+- **Aucune couleur, aucun jeton nouveau ; une icône Lucide nouvelle, `ScanEye`**, qui ne sert aucun autre objet (§9).
+

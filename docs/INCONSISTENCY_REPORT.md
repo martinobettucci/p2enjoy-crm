@@ -8242,3 +8242,12 @@ messagerie puis OAuth, rouge, avec le fichier de messagerie d'avant `CRM-074` co
 **Corrigée le 2026-10-31**, preuve seule : l'égalité stricte relit la liste jusqu'à trois fois la durée de la visibilité
 avant d'être affirmée. Connecteur MCP : la preuve est la sienne ; aucun outil ne change.
 
+
+### INC-325 — La visionneuse de `CRM-074` : « fenêtre modale » dans la spécification, « aucune modale » au design system
+
+*Constaté le 2026-10-31 par `CRM-074` T3, à la relecture intégrale de `docs/DESIGN_SYSTEM.md` avant le code.*
+`docs/SPEC-pieces-jointes.md` §5.2, validée par la décision 789, décrivait « une fenêtre modale large » ; le design system
+refuse toute modale dans le produit (§5.10, §5.13, §5.23, §5.43, §5.46 et suivants). **Arbitré par le responsable** le même
+jour (décision 791) : « Panneau dans le flux ». La spécification est révisée, le §5.80 du design system décrit le panneau.
+Connecteur MCP : sans objet.
+

@@ -37426,3 +37426,16 @@ joués, 30 à 33 restaient à écrire. **Observations et décisions d'exécution
 **Vérifications** : 36 scénarios verts ; images observées sur planches (une reprise : le rapport de l'équipe photographié
 pendant son chargement) ; `manuel:construire` 34 chapitres sans avertissement ; `verify-manual` 166 contrôles sans
 anomalie ; base relue (rôles, espaces, tracks, réels de coût : état du seed).
+
+### `CRM-074` T3 : la visionneuse est un panneau dans le flux (2026-10-31, décision 791)
+
+**Problème** : la spécification validée (décision 789) prévoyait une « fenêtre modale large » ; le design system, relu en
+entier avant le code, refuse toute modale dans le produit (INC-325).
+
+**Décision 791, du responsable, en séance** (« Panneau dans le flux ») : l'aperçu s'ouvre sous la ligne de la pièce, dans le
+flux, comme « Voir le corps » des webhooks. La règle « aucune modale » tient.
+
+**Conséquences** : `docs/SPEC-pieces-jointes.md` §5.2 révisé ; `docs/DESIGN_SYSTEM.md` §5.80 écrit avant le code ; une icône
+nouvelle, `ScanEye`. La reprise des images du manuel touchées (chapitres 12 et 33, et le journal si le seed le change)
+relève de T3, la campagne finale de `CRM-117` étant en cours au moment de la décision.
+
