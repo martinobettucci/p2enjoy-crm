@@ -17548,10 +17548,14 @@ responsable** : traitée juste après `CRM-116`.*
       quatre paliers observées ; deux publications de 514 fichiers, la seconde sans retrait, le bucket identique à la
       source à l'octet près (514 objets comparés). Les images et captures sont prises sur un build de `HEAD`, sans les
       modifications non commitées d'une autre session (journal).
-- [ ] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.
-      **Faite par la session de livraison, et elle seule** (décision 790), dans le lot 0106 à 0140 (décision 786) :
-      la session de `CRM-117` passe l'unité à `[P]` au terme de T5, avec ses gestes décrits au contrat de déploiement,
-      et la lui remet.
+- [P] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.
+      **Faite par la session de livraison, et elle seule** (décision 790), dans le lot 0106 à 0141 (décisions 786 et
+      792). **Livrée le 2026-11-01** (`docs/PROD_MIGRATIONS.md` §8) : les 126 et 127 à leur rang, registre à 141 ; la
+      webapp de `main` ; le manuel publié dans la cellule — après INC-327 (`publier.sh --spark` exigeait `jq`, absent
+      de la cellule, et ne fusionnait pas les fichiers injectés ; corrigé, `scripts/verify-spark.sh` §9) — 518 fichiers,
+      rejoué sans retrait, bucket `manual` privé à 518 objets relu en base. **Reste le constat du responsable** : l'icône
+      « Aide » connecté mène au chapitre de l'écran, `/aide` montre le sommaire et les images, déconnecté `/aide` mène
+      à la connexion.
 
 ### CRM-118 — Connecteur MCP : la famille `workflows` `[P]`
 *Développement terminé et prouvé le 2026-10-27 (T1.b, T2.a à T2.e, les checklists d'étape) ; reste T3 — livrer les

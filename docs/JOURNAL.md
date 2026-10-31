@@ -37540,3 +37540,29 @@ deux fichiers `.orig` du 26/10 et `webapp/tsconfig.tsbuildinfo`, qui bloquaient 
 **Conséquences** : `docs/PROD_MIGRATIONS.md` §3 porte le lot étendu à la 141 ; si la relecture montre une production
 modifiée, la fenêtre s'arrête et la question revient au responsable.
 
+
+### La fenêtre 0106 à 0141 exécutée ; INC-327 et INC-328 (2026-11-01)
+
+**Problème** : exécuter la décision 792 sans emporter ce que le responsable n'a pas ordonné.
+
+**Observations** : avant la fenêtre, la production a été relue inchangée, en lecture seule (révision `8934079d`,
+registre à 105 lignes). Les commits des §2.18 à §2.23 du contrat de déploiement sont tous antérieurs à `8934079d` :
+livrer `main` n'apporte donc aucun code d'infrastructure nouveau. Mais `./runProd.sh --migrate` s'arrête après le runner,
+sans `up` de la pile, et la cellule tourne toujours sur ses définitions d'avant : MinIO sur l'image de `quay.io`, Kong à
+`crm-092`, Caddy à `crm-102`. Un `./runProd.sh --spark` ordinaire aurait recréé MinIO, Kong, Caddy et Realtime, c'est-à-
+dire appliqué les §2.18, §2.21 et §2.22, qui attendent toujours l'instruction du responsable.
+
+**Décision d'exécution** : migrations par `--migrate`, puis seulement les gestes que le lot exige : reconstruction ciblée
+de `mcp` et de `mail-sync` (`--no-deps`), redémarrage de `functions`. Ces deux gestes accomplissent aussi les §2.19
+(gestes 1 et 2) et §2.23, et la webapp déposée accomplit le §2.20. Les §2.18, §2.21 et §2.22 restent en attente.
+
+**INC-327** : `scripts/manuel/publier.sh --spark` refusait dans la cellule, faute de `jq`, et n'y aurait lu ni le port
+ni la clé de service, faute de fusionner les fichiers injectés. La preuve est écrite d'abord, et elle échoue
+(`verify-spark.sh` §9, une cellule simulée sans `jq` ni `node`). Le script est ensuite corrigé (`python3`, fusion),
+commité, puis livré par `livrer.sh --sans-lancer`. Le manuel est publié deux fois : 518 fichiers, aucun retrait. Le
+compte attendu passe de 514 à 518, à cause des quatre images de `CRM-074` T3. **INC-328** : le rejeu de
+`verify-spark.sh` a révélé une dégradation devenue aveugle depuis `CRM-069` T4 ; elle est corrigée, et le rejeu passe à
+112/112.
+
+**Vérifications** : le contrat de déploiement, §8, « 2026-11-01 ». **Conséquences** : les unités du lot restent `[P]`
+jusqu'au constat du responsable, et `CRM-117` T6 passe `[P]`.

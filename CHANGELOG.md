@@ -13,18 +13,37 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### INC-327 — la publication du manuel s'exécute dans la cellule de production
+_Rien à publier pour le moment._
+
+## [Publié]
+
+### Déployé en production, 2026-11-01 — migrations 106 à 141, la webapp de `main`, les images `mcp` et `mail-sync`, le manuel
+
+Cellule Spark `crm`, révision `6e7d6266` puis `6d94d829` : `scripts/spark/livrer.sh -- --migrate --instantane-verifie`
+sur l'instantané de VM du 2026-10-31 au matin, la production relue inchangée avant la fenêtre (décisions 786 et 792) ; les
+migrations **106 à 141** appliquées par le runner ; les images `mcp` et `mail-sync` reconstruites, saines ; `functions`
+redémarré ; le manuel publié par `scripts/manuel/publier.sh --spark` (518 fichiers, rejoué sans retrait) une fois INC-327
+corrigé. **Vérifié, en lecture seule** : registre à 141 lignes ; rattachements complets ; colonnes de la 134 retirées ;
+jobs du digest et des webhooks présents ; la fonction `webhooks` refuse sans secret (`401`) ; bucket `manual` privé à
+518 objets ; boucle d'extraction démarrée sans erreur ; `verifier.sh` 33/34 (le compteur de redémarrage antérieur de
+`kong` et `rest`). **Non constaté** : les écrans par le responsable, un assistant connecté, un webhook réellement remis,
+le digest du matin. **Non livré** : les gestes d'infrastructure des §2.18, §2.21 et §2.22 du contrat de déploiement
+(MinIO, Kong, Caddy, Realtime), qui attendent leur instruction. *Les entrées marquées « développement seulement » ou
+« documentation » ne changent rien en production ; elles sont déplacées avec le reste, comme le veut la règle du
+changelog.*
+
+#### INC-327 — la publication du manuel s'exécute dans la cellule de production
 
 - `scripts/manuel/publier.sh --spark` lit ses réponses JSON avec `python3`, et non plus avec `jq`, que la cellule n'a pas ;
   il prend le port et la clé de service dans la fusion des fichiers injectés. `scripts/verify-spark.sh` §9 le prouve
   dans une cellule simulée.
 
-### INC-323 — les imports et les exports CSV nommés au journal d'audit
+#### INC-323 — les imports et les exports CSV nommés au journal d'audit
 
 - Le journal d'audit nomme l'import de contacts et d'affaires et l'export CSV du carnet et de la vue liste, avec leurs
   comptes ; le filtre « Famille » gagne « Imports ».
 
-### `CRM-074` — aperçu des pièces jointes et extraction de texte (T1 à T4)
+#### `CRM-074` — aperçu des pièces jointes et extraction de texte (T1 à T4)
 
 - **Le texte extrait des pièces jointes, en base** (T1, migration `0141`) : chaque pièce saine d'un PDF, d'un fichier Word,
   Excel ou OpenDocument est marquée « à extraire » — les pièces déjà reçues comprises ; l'extraction elle-même et son
@@ -44,7 +63,7 @@ d'exécuter le code attendu.
   fichier en binaire —, pour que l'assistant la lise à sa façon. L'envoi d'une pièce par le connecteur reste exclu.
   L'image `mcp` est à reconstruire.
 
-### `CRM-073` — webhooks sortants signés (T1 à T3)
+#### `CRM-073` — webhooks sortants signés (T1 à T3)
 
 - **Migration `0139`, les webhooks en base** (T1) : les webhooks d'un espace, réservés à son administrateur, et leurs
   remises ; neuf événements d'affaires et de contacts, un filtre facultatif par channel ; le secret de signature rangé dans
@@ -62,7 +81,7 @@ d'exécuter le code attendu.
   « Renvoyer ». Le journal d'audit nomme les gestes sur un webhook. Le jeu de démonstration porte trois webhooks, dont les
   remises passent par la vraie chaîne. Manuel, chapitre 34 « Les webhooks : prévenir vos autres outils », illustré.
 
-### `CRM-071` — vues sauvegardées, import et export CSV (T1 à T6)
+#### `CRM-071` — vues sauvegardées, import et export CSV (T1 à T6)
 
 - **Migration `0135`, les vues sauvegardées en base** (T1) : une vue de la vue liste d'un channel, privée ou publiée pour
   l'espace par un administrateur ; ses filtres limités aux six clés de l'écran ; la propriétaire et l'espace posés par la
@@ -90,7 +109,7 @@ d'exécuter le code attendu.
   montant, sa devise, sa probabilité, sa prochaine action et son contact ; une affaire du même titre dans le channel est
   ignorée. Le fil de l'affaire dit « Affaire créée par import » ; chaque import est inscrit au journal d'audit. Manuel 9.11.
 
-### `CRM-069` — les étiquettes et le digest quotidien
+#### `CRM-069` — les étiquettes et le digest quotidien
 
 - **Le CRM n'ingère plus ses propres courriels** (T6, INC-321, décision 780) : le digest porte l'en-tête
   `Auto-Submitted: auto-generated`, et la relève d'une boîte synchronisée écarte un courriel automatique de l'identité de
@@ -121,7 +140,7 @@ d'exécuter le code attendu.
 - **Manuel** : 5.4, 5.6 et 5.7 décrivent le récapitulatif du matin (contenu, expéditeur, adresse, un espace à la fois) au
   lieu d'en nier l'existence ; 33.5 dit les étiquettes lues, filtrées, posées et retirées par l'assistant.
 
-### `CRM-119` — preuves croisées des droits fins (décision 757)
+#### `CRM-119` — preuves croisées des droits fins (décision 757)
 
 *Aucun changement du produit : des preuves seulement, rien à livrer.*
 
@@ -133,7 +152,7 @@ d'exécuter le code attendu.
   dès l'appel suivant, l'administrateur jamais restreint, la recherche.
 - INC-319 consigne une dépendance d'ordre, antérieure, entre deux fichiers d'intégration du connecteur.
 
-### `CRM-118` T1.b et T2.a à T2.e — les gestes d'écran des workflows, et la famille `workflows` du connecteur (décisions 752, 754, 756, 758 et 760)
+#### `CRM-118` T1.b et T2.a à T2.e — les gestes d'écran des workflows, et la famille `workflows` du connecteur (décisions 752, 754, 756, 758 et 760)
 
 *En développement seulement. Les migrations `0129` et `0130` attendent la prochaine fenêtre de production.*
 
@@ -174,7 +193,7 @@ d'exécuter le code attendu.
   seraient perdues sont comptées, et ne le sont qu'avec votre accord explicite. Le formulaire de modification d'un
   channel qui porte des affaires renvoie désormais à cette commande.
 
-### `CRM-068` — les checklists et les modèles d'une affaire (T1 à T5, à livrer)
+#### `CRM-068` — les checklists et les modèles d'une affaire (T1 à T5, à livrer)
 
 - **Base** — migration `0125` : les points d'une étape (`workflow_step_checklist_items`, écrits par l'administrateur), les
   points d'une affaire (`card_checklist_items`, libres ou ajoutés par la base à l'entrée d'un rattachement dans une
@@ -218,7 +237,7 @@ d'exécuter le code attendu.
   (18.10), les modèles d'affaires (18.15) et les deux outils du connecteur ; l'aide de Réglages ▸ Modèles d'affaires
   mène à sa section. Les outils de l'éditeur des checklists sont livrés par `CRM-118`.
 
-### `CRM-117` — le manuel joignable depuis la webapp
+#### `CRM-117` — le manuel joignable depuis la webapp
 
 - **Une icône « Aide » dans l'en-tête**, à côté de la cloche : un panneau mène au chapitre qui décrit l'écran courant, et au
   sommaire du manuel. Les pages `/aide` et `/aide/<chapitre>` lisent le manuel, réservé aux personnes connectées.
@@ -231,7 +250,7 @@ d'exécuter le code attendu.
   la pile et le seed. Publication : 514 fichiers dans le bucket `manual`, rejouable sans effet.
 - **Prête à livrer** (`[P]`) : avec le lot 0106 à 0140, par la session de livraison (`docs/PROD_MIGRATIONS.md` §3).
 
-### `CRM-077` onzième tranche — débloquer l'effacement d'un track
+#### `CRM-077` onzième tranche — débloquer l'effacement d'un track
 
 - **Un track dont un budget porte la dépense d'une affaire d'un autre track n'est pas effacé** : le produit ne détruit
   pas cette dépense. La corbeille le dit (« Bloqué ») et propose aux administrateurs **« Réaffecter les dépenses »** :
@@ -239,7 +258,7 @@ d'exécuter le code attendu.
   réaffecte après sa réouverture, proposée sur place.
 - **Migration `0123`** ; aucune donnée existante ne change.
 
-### `CRM-077` dixième tranche — la corbeille se vide seule au bout de 30 jours
+#### `CRM-077` dixième tranche — la corbeille se vide seule au bout de 30 jours
 
 - **Un objet reste 30 jours dans la corbeille, puis il est effacé définitivement**, chaque nuit, avec ce qu'il contient.
   Chaque effacement est inscrit au journal d'audit, avec ce qu'il a emporté. **Le temps saisi n'est pas perdu** : avant
@@ -252,7 +271,7 @@ d'exécuter le code attendu.
 - **Migration `0120`** ; la première nuit qui suit sa livraison, ce qui est en corbeille depuis plus de 30 jours est
   effacé (`docs/PROD_MIGRATIONS.md`).
 
-### `CRM-072` T3 — exporter et anonymiser un contact (RGPD)
+#### `CRM-072` T3 — exporter et anonymiser un contact (RGPD)
 
 - **Sur la fiche d'un contact, une zone « Données personnelles (RGPD) »**, réservée aux administrateurs de l'espace :
   **exporter** toutes les données de la personne dans un fichier JSON téléchargé (fiche, organisation, affaires et
@@ -263,7 +282,7 @@ d'exécuter le code attendu.
   gestes sont inscrits au journal d'audit, **sans le nom de la personne**.
 - **Migration `0118`** ; le seed démontre un contact exporté puis anonymisé, « Régis Anonyme ».
 
-### `CRM-116` — une couleur pour les channels, et un sélecteur de couleur lisible
+#### `CRM-116` — une couleur pour les channels, et un sélecteur de couleur lisible
 
 - **La couleur d'un track ou d'un channel se choisit parmi cinq options nommées**, chacune avec sa pastille — Bleu, Vert,
   Jaune, Rouge, Gris —, à la place d'une liste de noms techniques (`brand`, `success`…). Un même groupe de boutons radio
@@ -275,7 +294,7 @@ d'exécuter le code attendu.
 - **Migration `0116`** : la colonne `channels.color` et son privilège de mise à jour ; les channels existants prennent
   Gris. **Le seed** colore cinq channels et en laisse au défaut. Pas de connecteur MCP (décision 729).
 
-### `CRM-072` T2 — l'écran « Journal d'audit »
+#### `CRM-072` T2 — l'écran « Journal d'audit »
 
 - **« Réglages ▸ Journal d'audit »**, après « Membres » : les gestes sensibles de l'espace, les plus récents en tête, en
   tableau — date, acteur, geste en phrase, détail de ce qui a changé. Un contact y est nommé par le carnet, au moment de
@@ -286,7 +305,7 @@ d'exécuter le code attendu.
   rend « Réservé aux administrateurs ». Le journal de la plateforme apprend le geste « Journaux purgés ».
 - Aucune migration : l'écran lit la table de la migration `0115`.
 
-### `CRM-072` T1 — le journal d'audit en base
+#### `CRM-072` T1 — le journal d'audit en base
 
 - **Les gestes sensibles d'un espace sont journalisés par la base elle-même** : appartenances, invitations et accès aux
   tracks et channels ; configuration (espace, tracks, channels, workflows et leurs publications, étapes, transitions,
@@ -300,7 +319,7 @@ d'exécuter le code attendu.
 - **Migration `0115`** ; la preuve de refus n° 8 est désormais entière. L'écran du journal et le volet RGPD des contacts
   suivent (T2, T3).
 
-### `CRM-066` tranche 4 — les deux scores de santé d'une affaire
+#### `CRM-066` tranche 4 — les deux scores de santé d'une affaire
 
 - **Deux notes sur 100**, calculées à chaque lecture : la **dynamique** (100 moins des pénalités affichées une à une —
   étape figée, prochaine action en retard ou absente, contact trop ancien) dit quoi faire ; la **santé commerciale**
@@ -313,7 +332,7 @@ d'exécuter le code attendu.
 - **Migration `0113`** : deux colonnes calculées `SECURITY INVOKER`, aucune donnée écrite. **Le seed** démontre les trois
   paliers des deux scores et le vérifie.
 
-### `CRM-058` tranche 2 — copie cachée et pièces jointes à l'envoi
+#### `CRM-058` tranche 2 — copie cachée et pièces jointes à l'envoi
 
 - **« Ajouter Cci »** dans le formulaire d'envoi, depuis l'affaire comme depuis l'inbox : la copie cachée est remise par
   l'enveloppe, aucun en-tête ne la révèle aux destinataires ; elle reste lisible dans l'affaire (« Cci : … »).
@@ -348,8 +367,6 @@ d'exécuter le code attendu.
 - **`CRM-111` T2.3.0 — un rattachement s'écrit** (migration `0110`, décision 705). Le responsable, le montant, la probabilité, la prochaine action, la position et l'archivage s'écrivent désormais aussi sur le rattachement, par qui écrit son channel, et l'affaire suit ; la timeline d'un rattachement est tenue par sa propre table. Rien de visible ne change : c'est la fondation sur laquelle chaque geste passera au rattachement.
 - **`CRM-111` T2.2 — les lectures passent aux rattachements** (migration `0109`, décision 705). Les valeurs de formulaire, les inscriptions aux cadences et les événements de déplacement, d'archivage, de sommeil ou de champ désignent désormais le rattachement qu'ils concernent ; les droits sur une affaire, les affaires figées, l'entonnoir, la recherche, la rentabilité, le temps valorisé et le classement du courrier se calculent sur les rattachements. Rien de visible ne change : mesuré, chaque lecture rend exactement ce qu'elle rendait.
 - **`CRM-111` T2.1 — la table des rattachements** (migration `0108`, décision 705). Chaque affaire reçoit un rattachement, `card_placements`, qui reprend son channel, son étape, son responsable, son montant, sa prochaine action, son sommeil et son archivage ; un déclencheur le tient égal à l'affaire à chaque écriture. Rien de visible ne change : c'est la première des quatre étapes de la bascule vers plusieurs rattachements par affaire. La table se lit selon les droits du channel, et personne ne l'écrit directement.
-
-## [Publié]
 
 ### Déployé en production, 2026-10-26 — migrations 102 à 105, la webapp de `main` et l'image `mcp`
 

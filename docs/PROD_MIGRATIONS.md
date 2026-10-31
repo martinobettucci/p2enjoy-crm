@@ -33,9 +33,9 @@ source d'identité.
 | Élément | État |
 |---|---|
 | Environnement de production | Cellule Spark `crm` (`docs/SPEC-deploiement-spark.md`), assemblage à trois fichiers : neuf services sains et deux conteneurs à usage unique (runner, bucket) ; GoTrue retiré le 2026-09-24 |
-| Schéma appliqué | Les **105 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03), 87 par `CRM-098` T5 et 88 par `CRM-099` T3 (2026-10-11), 89 par `CRM-101` T5 et 90 par `CRM-102` T5 (2026-10-21), 91 à 98 par une même fenêtre (2026-10-23 : `CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-108`, `CRM-070`, `CRM-109`), 99 par une seconde fenêtre le même jour (`CRM-109` T3), 100 par la troisième (`CRM-067`), 101 le 2026-10-24 (`CRM-114`), 102 à 105 par une même fenêtre le 2026-10-26 (`CRM-113` T1 et T5, `CRM-013` INC-238, `CRM-057` tranche 2 ; décisions 717 et 718). **Le registre `app.migrations_appliquees` le dit** : 105 lignes — les 82 premières en `adoption`, les 83 à 105 en `application` —, empreintes égales à celles du dépôt livré |
-| Dernière migration appliquée | `0099_attentes_refus.sql`, par la seconde fenêtre du 2026-10-23 — relue en base en lecture seule : 99 lignes au registre ; `plateforme_attentes` rend `refus_motif`, `refus_premier`, `refus_dernier`, `refus_nombre` ; `401` sans session par la route publique. Avant elle : `0098_refus_admission.sql` et les 91 à 97, par la première fenêtre du même jour |
-| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`a95e15f7`** le 2026-10-24 (aucune migration ; image `mcp` reconstruite : `CRM-104` T6) ; après `62654375` le même jour (aucune migration ; image `mcp` reconstruite : `CRM-104` T5) ; après `bf45dc14` le même jour (aucune migration ; image `mcp` reconstruite : `CRM-104` T4) ; après `5e55a437` le même jour (migration 101, webapp et image `mcp` reconstruite : `CRM-114` T1 à T4) ; après `e4f8a8e5` le même jour (aucune migration ; image `mcp` reconstruite : `CRM-104` T3) ; après `20ad7541` le même jour (`CRM-104` T1) ; après `b57de7b5` le 2026-10-23, cinquième fenêtre (aucune migration ; image `mcp` reconstruite : `CRM-104` T2.b) ; après `0242d845` le même jour, quatrième fenêtre (aucune migration ; **image `mcp` reconstruite** : `CRM-104` T2.a, outils « Recettes » de `CRM-108`, `CRM-102` T6, `opentelemetry-api` 1.45.1) ; après `77b17fa1` le même jour, troisième fenêtre (migration 100 et webapp de `CRM-067` T1 à T3 ; image `mcp` non reconstruite) ; après `e9255249` le même jour, seconde fenêtre (migration 99, `CRM-109` T3, `CRM-110`, `CRM-103` T3 ; image `mcp` non reconstruite) ; après `8026e90e` le même jour (migrations 91 à 98, webapp et échangeur de session de `CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-105`, `CRM-106`, `CRM-107`, `CRM-108`, `CRM-070`, `CRM-109` ; **l'image `mcp` n'est pas reconstruite** — elle reste celle du 2026-10-21) ; après `85d8bb7b` le 2026-10-21 (`CRM-101` T1 à T4 et `CRM-102` T1 à T4, migrations 89 et 90, service `mcp`), après **`7d819786`** — `CRM-099` T1 et T2, migration 88 —, après `521b3f5d` — `CRM-098` T1 à T4, migration 87, et la webapp de `CRM-100` —, après `38237656` — `CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 —, après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
+| Schéma appliqué | Les **141 migrations** du dépôt : 1 à 73 par `--migrate --premier-deploiement` sur une base mesurée vierge (2026-09-23), 74 à 79 par la reprise `CRM-092` (2026-09-24), 80 par `CRM-094` (2026-09-28), 81 par `CRM-095` (2026-09-29), 82 par `CRM-096` (2026-10-01), 83 à 86 par `CRM-097` T4 (2026-10-03), 87 par `CRM-098` T5 et 88 par `CRM-099` T3 (2026-10-11), 89 par `CRM-101` T5 et 90 par `CRM-102` T5 (2026-10-21), 91 à 98 par une même fenêtre (2026-10-23 : `CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-108`, `CRM-070`, `CRM-109`), 99 par une seconde fenêtre le même jour (`CRM-109` T3), 100 par la troisième (`CRM-067`), 101 le 2026-10-24 (`CRM-114`), 102 à 105 par une même fenêtre le 2026-10-26 (`CRM-113` T1 et T5, `CRM-013` INC-238, `CRM-057` tranche 2 ; décisions 717 et 718), 106 à 141 par une même fenêtre le 2026-11-01 (décisions 786 et 792). **Le registre `app.migrations_appliquees` le dit** : 141 lignes (105 avant la fenêtre du 2026-11-01) — les 82 premières en `adoption`, les 83 à 105 en `application` —, empreintes égales à celles du dépôt livré |
+| Dernière migration appliquée | `0141_texte_pieces_jointes.sql`, par la fenêtre du 2026-11-01 — relue en base en lecture seule : 141 lignes au registre, `max(fichier)` = `0141_texte_pieces_jointes.sql` (§8). Auparavant, `0099_attentes_refus.sql`, par la seconde fenêtre du 2026-10-23 — relue en base en lecture seule : 99 lignes au registre ; `plateforme_attentes` rend `refus_motif`, `refus_premier`, `refus_dernier`, `refus_nombre` ; `401` sans session par la route publique. Avant elle : `0098_refus_admission.sql` et les 91 à 97, par la première fenêtre du même jour |
+| Version déployée | La révision inscrite dans `/srv/crm/REVISION` — celle que `scripts/spark/verifier.sh` compare au `HEAD` du poste ; **`6d94d829`** le 2026-11-01 (archive déposée sans démarrage pour INC-327, la publication du manuel) ; après `6e7d6266` le même jour (fenêtre 106 à 141 : webapp, images `mcp` et `mail-sync` reconstruites, `functions` redémarré) ; après `8934079d` le 2026-10-26 ; après `a95e15f7` le 2026-10-24 (aucune migration ; image `mcp` reconstruite : `CRM-104` T6) ; après `62654375` le même jour (aucune migration ; image `mcp` reconstruite : `CRM-104` T5) ; après `bf45dc14` le même jour (aucune migration ; image `mcp` reconstruite : `CRM-104` T4) ; après `5e55a437` le même jour (migration 101, webapp et image `mcp` reconstruite : `CRM-114` T1 à T4) ; après `e4f8a8e5` le même jour (aucune migration ; image `mcp` reconstruite : `CRM-104` T3) ; après `20ad7541` le même jour (`CRM-104` T1) ; après `b57de7b5` le 2026-10-23, cinquième fenêtre (aucune migration ; image `mcp` reconstruite : `CRM-104` T2.b) ; après `0242d845` le même jour, quatrième fenêtre (aucune migration ; **image `mcp` reconstruite** : `CRM-104` T2.a, outils « Recettes » de `CRM-108`, `CRM-102` T6, `opentelemetry-api` 1.45.1) ; après `77b17fa1` le même jour, troisième fenêtre (migration 100 et webapp de `CRM-067` T1 à T3 ; image `mcp` non reconstruite) ; après `e9255249` le même jour, seconde fenêtre (migration 99, `CRM-109` T3, `CRM-110`, `CRM-103` T3 ; image `mcp` non reconstruite) ; après `8026e90e` le même jour (migrations 91 à 98, webapp et échangeur de session de `CRM-093`, `CRM-101` T6, `CRM-103`, `CRM-105`, `CRM-106`, `CRM-107`, `CRM-108`, `CRM-070`, `CRM-109` ; **l'image `mcp` n'est pas reconstruite** — elle reste celle du 2026-10-21) ; après `85d8bb7b` le 2026-10-21 (`CRM-101` T1 à T4 et `CRM-102` T1 à T4, migrations 89 et 90, service `mcp`), après **`7d819786`** — `CRM-099` T1 et T2, migration 88 —, après `521b3f5d` — `CRM-098` T1 à T4, migration 87, et la webapp de `CRM-100` —, après `38237656` — `CRM-097` T1 à T3, INC-266, INC-268, INC-270, migrations 83 à 86 —, après `2ff0c703` — `CRM-096`, migration 82 —, INC-262 et INC-263 — `09d3abcc` —, `CRM-095` et INC-258 à INC-261 — `796aa3c1`, migration 81 —, `CRM-094`, INC-254 et INC-255) |
 | Assistant IA | Variables `OLLAMA_HOST`, `OLLAMA_CONTEXT_LENGTH` et secret `OLLAMA_API_KEY` **présents** dans la cellule et remis à `functions` (relevé du 2026-10-03, présence seule) ; `OLLAMA_MODEL` absent, d'où le défaut `gemma4:e2b` de Compose. Refusée le 2026-10-03 (403), la cellule est **autorisée par LeLabs** : `GET /functions/v1/ia/etat` rend `{"disponible":true,"modele":"gemma4:e2b"}` le 2026-10-11 (§2.9, geste 7) |
 | Données | Un espace, « P2Enjoy CRM » (`crm`), réamorcé par la reprise `CRM-092`, et les données qu'y écrit le responsable — relevé du 2026-10-01, en lecture seule : 2 profils, 2 workflows dont celui de départ, 8 affaires ; aucun seed. La ligne `auth.users` de l'ancien compte invité reste, inerte |
 | Route publique | `crm.lelabs.tech 8080 tls`, active : `https://crm.lelabs.tech`, certificat Let's Encrypt présenté par la Forge (décision 576) |
@@ -544,7 +544,7 @@ le retour ne fonctionne que si la cellule les garde en cache — ne pas purger l
 Le serveur de 2025 relit un volume ouvert par celui de 2026 tant qu'aucune fonction nouvelle n'a été activée (aucune
 ne l'est par ce changement) ; en cas de doute, restaurer l'instantané du geste 1.
 
-### 2.19 INC-292 — aucune fonction edge ne rend `204` (EN ATTENTE de l'instruction du responsable)
+### 2.19 INC-292 — aucune fonction edge ne rend `204` (gestes 1 et 2 accomplis le 2026-11-01 par la fenêtre 106 à 141 : `functions` redémarré, aucune ligne `edge_reponse_204` ; le constat 3 du responsable reste à faire)
 
 Le runtime des fonctions perdait par intermittence la réponse `204` d'un worker : le serveur de base rendait `503` à la
 place (12 fois sur 3000 mesuré en développement), ce qui laissait une erreur dans la console du navigateur lors d'une
@@ -562,7 +562,7 @@ accepte l'ancien et le nouveau contrat : l'ordre des deux gestes ci-dessous est 
 **Retour arrière** : relivrer la révision précédente ; la webapp nouvelle tolère l'ancien `204`. **Risque** : un
 `verifier.sh` ancien, joué contre la production nouvelle, rendrait « 204 attendu » — employer celui de la révision livrée.
 
-### 2.20 `CRM-037`, INC-134 et décision 690 — la mention d'une question obligatoire et le nom de l'étape (EN ATTENTE de l'instruction du responsable)
+### 2.20 `CRM-037`, INC-134 et décision 690 — la mention d'une question obligatoire et le nom de l'étape (webapp livrée le 2026-11-01 par la fenêtre 106 à 141 ; les constats 3 à 5 du responsable restent à faire)
 
 Sur la fiche d'une affaire, la mention d'une question obligatoire à l'étape courante devient « Requis à l'étape
 <étape> » (décision 688). **Webapp seule : aucune migration, aucune fonction, aucune variable, aucun secret, aucun
@@ -620,7 +620,7 @@ variable.** Kong et Realtime sont recréés par le `up` ordinaire : leur défini
 **Retour arrière** : relivrer la révision précédente ; Kong reprend le nom de conteneur, que la production porte
 toujours. **Risque** : aucun connu — l'alias et le nom désignent le même conteneur sur le même réseau.
 
-### 2.23 INC-309, décision 704 — `anyio` épinglé dans l'image de `mail-sync` (EN ATTENTE de l'instruction du responsable)
+### 2.23 INC-309, décision 704 — `anyio` épinglé dans l'image de `mail-sync` (accomplie le 2026-11-01 : image reconstruite par la fenêtre 106 à 141, `mail-sync` `healthy`, `pip show anyio` rend 4.14.2)
 
 `mail-sync/requirements.txt` fige désormais `anyio==4.14.2`, dépendance de `starlette` qui n'était pas épinglée : une
 reconstruction de l'image tirait 4.15.1, qui déprécie un alias qu'emploie `starlette` 1.3.1. **Aucune migration, aucune
@@ -635,6 +635,10 @@ variable, aucun secret** ; le comportement du service est inchangé.
 dépréciation.
 
 ## 3. Migrations en attente
+
+**Aucune migration en attente depuis le 2026-11-01** : la fenêtre décrite au §8 (« 2026-11-01 — migrations 106 à
+141 ») les a appliquées ; le registre de production compte **141** lignes. *Historique de l'attente, conservé pour ses
+gestes et ses vérifications* :
 
 **Un seul lot, de la 106 à la 141** (décision 786, 2026-10-31 ; **étendu à la 141 par la décision 792**, 2026-11-01 — la
 fenêtre est ordonnée ce jour-là) : une seule fenêtre (§3.1) applique les migrations `0106` à
@@ -1973,6 +1977,34 @@ publique sert le module d'objectifs de ce build (`200`). La baseline reste **81*
   compteur antérieur, et une révision comparée au `HEAD` local qu'une autre session venait d'avancer d'un commit de
   documentation seule (`88caf34f`), sans code livrable.
 - **Reste** : le constat du responsable, un assistant connecté qui lit ou compose un canevas.
+
+### 2026-11-01 — migrations 106 à 141, la webapp de `main`, les images `mcp` et `mail-sync`, le manuel (`CRM-117` T6)
+
+- **Instruction** : « Oui, avec la 0141 », « Celui de ce matin suffit », « Oui, les supprimer » (décision 792) — le lot de
+  la décision 786 étendu à la 141, l'instantané de VM du 2026-10-31 au matin comme retour arrière. **Production relue
+  inchangée avant la fenêtre**, en lecture seule : révision `8934079d`, registre à 105 lignes, `0105_mail_message_reads.sql`.
+- **Fenêtre** : `scripts/spark/livrer.sh -- --migrate --instantane-verifie` par les IP, révision **`6e7d6266`**, « Migrations
+  appliquées avec succès — cache de schéma rechargé par le runner » ; puis dans la cellule
+  `compose_prod up -d --build --no-deps --wait mcp mail-sync` (les deux sains) et `docker restart p2enjoy-functions`.
+- **Le manuel** : `scripts/manuel/publier.sh --spark` refusait dans la cellule (« jq est introuvable ») — INC-327, corrigé
+  et prouvé (`6d94d829`), livré par `livrer.sh --sans-lancer` ; deux publications de **518 fichiers**, la seconde « 0 objet(s)
+  retiré(s) ».
+- **Constat, en lecture seule** : registre à **141** lignes, `max` = `0141_texte_pieces_jointes.sql` ; aucune affaire sans
+  rattachement (94 affaires, 94 rattachements) ; aucune des colonnes retirées par la 134 sur `cards` ; les jobs
+  `p2enjoy-digest-quotidien` et `p2enjoy-webhooks-remise` présents ; `POST /functions/v1/webhooks/remettre` sans secret
+  `401` ; bucket `manual` privé, 518 objets ; `mail-sync` porte `extraction_demarree`, sans erreur (aucune pièce jointe en
+  production à extraire), `anyio` 4.14.2 et `pypdf` 6.21.4 ; aucune ligne `edge_reponse_204` ; `verifier.sh` **33/34** —
+  le seul échec est le compteur de redémarrage de `kong` et `rest`, antérieur et déjà relevé.
+- **Ce que la fenêtre emporte** : `CRM-058` tranche 2, `CRM-066` tranche 4, `CRM-068`, `CRM-069`, `CRM-071`, `CRM-072`,
+  `CRM-073`, `CRM-074`, `CRM-077` dixième et onzième tranches, `CRM-111` T2, `CRM-116`, `CRM-117`, `CRM-118`, `CRM-119`,
+  INC-323, INC-327 ; et, par la même occasion, les gestes 1 et 2 du §2.19, la webapp du §2.20 et le §2.23.
+- **Ce qu'elle n'emporte pas** : `--migrate` ne recrée que le runner, et aucun `./runProd.sh --spark` ordinaire n'a été
+  joué. **MinIO (§2.18), Kong et Caddy (§2.21), Kong et Realtime (§2.22) gardent leur définition d'avant** — relevé en
+  lecture seule : MinIO sur l'image de `quay.io`, Kong à la révision `crm-092`, Caddy à `crm-102`. Ces trois sections
+  restent en attente de l'instruction du responsable ; la webapp livrée ne dépend d'aucune d'elles.
+- **Reste** : le constat du responsable — l'aide et le manuel connecté et déconnecté, l'aperçu d'une pièce jointe, un
+  assistant connecté qui lit une pièce (`crm_mail_attachment_get`), un webhook réellement remis, le digest du matin, les
+  imports et exports CSV, la corbeille, le journal d'audit.
 
 ### 2026-10-26 — migrations 102 à 105, la webapp de `main` et l'image `mcp` (`CRM-057` tranche 2, `CRM-113`, `CRM-013`)
 
