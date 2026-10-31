@@ -8188,6 +8188,8 @@ l'ingestion écarte tout message reçu de l'identité système de l'espace. Conn
 change, le message n'existe plus).
 
 **Arbitrée le 2026-10-31 (décision 780)** : l'issue proposée est retenue, à spécifier puis livrer sous `CRM-069`.
+**Corrigée le 2026-10-31** (`CRM-069` T6, `docs/SPEC-etiquettes-digest.md` §5.3 bis) : en-tête et filtre en conjonction ;
+unitaires `mail-sync` 265, E2E `e2e/mail/digest.spec.ts` vert, `recherche.spec.ts` et `sommeil-fil.spec.ts` rejoués verts.
 
 ### INC-322 — Deux preuves d'API archivent le workflow par défaut du seed, que la garde de `CRM-118` T1.b refuse d'archiver
 

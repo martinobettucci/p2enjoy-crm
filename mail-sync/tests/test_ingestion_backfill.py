@@ -1,3 +1,4 @@
+# @verifies CRM-069 (docs/BACKLOG.md) — tranche T6 : la base factice rend les adresses de service (aucune), la relève inchangée
 # @verifies CRM-059 (docs/BACKLOG.md) — la relève cesse de redescendre la boîte entière
 # @verifies docs/SPEC-mail-subsystem.md §20.6 bis.1 (`search(["ALL"])` disparaît), §20.6 bis.3
 #           (le courant d'abord), §20.6 bis.4 (premier contact), §20.6 bis.2 (la progression n'est
@@ -61,6 +62,10 @@ class BaseFactice:
         self._backfill_months = backfill_months
         self._sync_state = sync_state or {}
         self.progressions_ecrites: list[dict] = []
+
+    def adresses_de_service(self, _workspace_id):
+        # `CRM-069` T6 : aucune identité de service — rien n'est écarté, la relève se conduit comme avant.
+        return frozenset()
 
     def lire_progression(self, _account_id):
         return self._backfill_months, dict(self._sync_state)

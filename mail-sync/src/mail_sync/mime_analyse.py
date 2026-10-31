@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T6 : le CRM n'ingère pas ses propres courriels (docs/SPEC-etiquettes-digest.md §5.3 bis,
+#       INC-321, décision 780)
 # @spec CRM-054 (docs/BACKLOG.md) — analyse MIME, empreinte de repli, assainissement des noms
 # @spec docs/SPEC-mail-subsystem.md §4.2 (dédoublonnage), §4.3 (pièces jointes), §15.3 (empreinte
 #       de repli et sa canonisation), §15.5 (nom assaini, chemin sans nom de fichier)
@@ -74,6 +76,8 @@ class MessageAnalyse:
     pieces: list[PieceJointe] = field(default_factory=list)
     #: Vrai lorsque l'identifiant a dû être DÉRIVÉ, faute de `Message-ID` (§15.3).
     identifiant_derive: bool = False
+    #: Vrai lorsque le message porte un `Auto-Submitted` autre que `no` (RFC 3834) : un courriel écrit par une machine.
+    automatique: bool = False
 
 
 def assainir_nom(nom: str | None) -> str:
@@ -224,7 +228,17 @@ def analyser(brut: bytes) -> MessageAnalyse:
         references=references,
         pieces=pieces,
         identifiant_derive=derive,
+        automatique=est_automatique(message["Auto-Submitted"]),
     )
+
+
+def est_automatique(entete: object) -> bool:
+    """`Auto-Submitted` (RFC 3834) : absent ou `no`, un courriel écrit par une personne ; toute autre valeur —
+    `auto-generated`, `auto-replied`, avec ou sans paramètres — un courriel automatique."""
+    if entete is None:
+        return False
+    valeur = str(entete).split(";")[0].strip().lower()
+    return valeur not in ("", "no")
 
 
 #: Signatures reconnues par inspection. La liste est courte et le restera : elle ne sert qu'à

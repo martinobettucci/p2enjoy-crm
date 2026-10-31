@@ -7499,7 +7499,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
 | CRM-068 | Checklists et modèles de cards | `[P]` |
-| CRM-069 | Étiquettes et digest quotidien — **arbitrée** (décision 769) : catalogue d'étiquettes par espace (administrateurs ; palette fermée ; archivable), posées par qui écrit l'affaire ; digest quotidien par email consenti (7 h, `pg_cron`, identité de service) ; connecteur : étiquettes oui, famille `affaires` existante ; digest non. Spécification `docs/SPEC-etiquettes-digest.md` **validée** (décision 771) | `[~]` (INC-321) |
+| CRM-069 | Étiquettes et digest quotidien — **arbitrée** (décision 769) : catalogue d'étiquettes par espace (administrateurs ; palette fermée ; archivable), posées par qui écrit l'affaire ; digest quotidien par email consenti (7 h, `pg_cron`, identité de service) ; connecteur : étiquettes oui, famille `affaires` existante ; digest non. Spécification `docs/SPEC-etiquettes-digest.md` **validée** (décision 771) | `[P]` |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées, import et export CSV — les six tranches livrées et prouvées en développement ; reste la livraison (migrations `0135` à `0138`, webapp, image `mcp`) | `[P]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |
@@ -10803,17 +10803,21 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       été rejouée — elle n'est la Definition of Done d'aucune unité (décision 553) et reste l'objet
       d'une session dédiée. Les trois harnais que ce changement touche l'ont été.
 
-### CRM-069 — Étiquettes et digest quotidien `[~]`
+### CRM-069 — Étiquettes et digest quotidien `[P]`
 
-*Revenue à `[~]` le 2026-10-31* : défaut constaté en développement, **INC-321** — le digest d'une personne dont la boîte
-est synchronisée est ingéré par le CRM comme un message à classer. **Arbitrée** (décision 780) : le digest porte
-`Auto-Submitted: auto-generated` et l'ingestion de `mail-sync` écarte les messages de l'identité système de l'espace.
+*Revenue à `[~]` le 2026-10-31 pour **INC-321** — le digest d'une personne dont la boîte est synchronisée était ingéré par
+le CRM comme un message à classer —, repassée `[P]` le même jour* : T6 corrige le défaut (décision 780). Il ne reste que
+la livraison, avec l'image `mail-sync` de `main`.
 
-- [@] **T6 — le CRM n'ingère pas ses propres courriels (INC-321)** : spécification (`docs/SPEC-etiquettes-digest.md`),
+- [x] **T6 — le CRM n'ingère pas ses propres courriels (INC-321)** : spécification (`docs/SPEC-etiquettes-digest.md`),
       en-tête du digest, filtre d'ingestion de `mail-sync` ; unitaires, intégration, E2E mail. Connecteur MCP : sans objet.
-      *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-31 09:24 UTC — état avant : [ ]*
       *Spécification §5.3 bis écrite le 2026-10-31, avant le code (en-tête et identité de service, en conjonction).*
-      La livraison de `CRM-071` l'attend (décision 781).
+      **Écrite et prouvée le 2026-10-31** : `composition.py` (`Envoi.automatique`, `Auto-Submitted: auto-generated`),
+      `envoi.py` (un envoi sans affaire est automatique), `mime_analyse.py` (`est_automatique`), `postgrest.py`
+      (`adresses_de_service`), `ingestion.py` (`ecarter`, `messages_ecartes`), `app.py` (`messages_skipped`) ; unitaires
+      `test_courriels_automatiques.py` **5/5**, suite `mail-sync` **265/265** ; E2E `e2e/mail/digest.spec.ts` **1/1** (l'en-tête
+      lu dans la boîte, la relève réelle de la boîte de Driss, aucun message ingéré) ; `recherche.spec.ts` et
+      `sommeil-fil.spec.ts` rejoués **31/31** ; manuel 5.6 ; changelog, contrat de déploiement, INC-321 close.
 
 Arbitrée par la décision 769, spécification validée par la décision 771 : `docs/SPEC-etiquettes-digest.md`. Connecteur :
 étiquettes dans la famille `affaires` existante ; digest hors connecteur. Tranches (§7) :

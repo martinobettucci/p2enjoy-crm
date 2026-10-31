@@ -666,7 +666,9 @@ l'image `mail-sync` de `main`**, qui lisent les rattachements depuis T2.4.1 et T
 **La 133 aussi** (`CRM-069` T4 — le récapitulatif quotidien ; sa ligne au §3.2), **après la 132**, avec l'image
 `mail-sync` de `main` et sa variable `SITE_URL` (l'adresse publique de la webapp, la même que celle des autres services ;
 Compose la passe désormais à `mail-sync`). Sans identité de service dans un espace, aucun digest n'y part, et
-`digest_runs` l'inscrit. Appliquée en développement le 2026-10-28.
+`digest_runs` l'inscrit. Appliquée en développement le 2026-10-28. **`CRM-069` T6 (INC-321)**, sans migration : la même
+image `mail-sync` de `main` pose `Auto-Submitted` sur le digest et écarte, à la relève, un courriel automatique de
+l'identité de service — à livrer avec la 133, sinon le digest d'une personne qui synchronise sa boîte revient dans le CRM.
 
 **La 132 aussi** (`CRM-069` T1 — les étiquettes ; sa ligne au §3.2), **après la 131**. Seule, elle n'est lue par rien :
 ses écrans arrivent avec `CRM-069` T2. Aucune donnée ne change. Appliquée en développement le 2026-10-28.

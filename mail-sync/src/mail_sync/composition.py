@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T6 : le CRM n'ingère pas ses propres courriels (docs/SPEC-etiquettes-digest.md §5.3 bis,
+#       INC-321, décision 780)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans affaire — aucun `Reply-To`, le jeton `{site}` remplacé par `SITE_URL`
 #       (docs/SPEC-etiquettes-digest.md §5.3, décision 772)
 # @spec CRM-058 (docs/BACKLOG.md) — composition d'un message sortant
@@ -52,6 +54,8 @@ class Envoi:
     #: La copie cachée — dans l'ENVELOPPE seulement (§19 bis.2 point 1).
     bcc_addrs: tuple[str, ...] = ()
     pieces: tuple[PieceEnvoi, ...] = ()
+    #: Vrai pour un envoi que le CRM écrit seul — le digest (`CRM-069` T6) : il porte `Auto-Submitted: auto-generated`.
+    automatique: bool = False
 
 
 #: Objet de repli. Un message sans objet arrive chez le destinataire sous une ligne vide, que la
@@ -107,6 +111,10 @@ def composer(envoi: Envoi, identifiant: str) -> EmailMessage:
     # serveur d'où le destinataire répond (§5).
     if envoi.reply_to is not None:
         message["Reply-To"] = envoi.reply_to
+    # UN COURRIEL DU CRM SE DÉCLARE AUTOMATIQUE (RFC 3834) : la relève d'une boîte synchronisée le reconnaît et ne le
+    # réingère pas (§5.3 bis), et un répondeur bien élevé ne lui répond pas.
+    if envoi.automatique:
+        message["Auto-Submitted"] = "auto-generated"
 
     references = chaine_references(envoi)
     if envoi.in_reply_to:

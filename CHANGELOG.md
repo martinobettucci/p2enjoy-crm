@@ -43,6 +43,11 @@ d'exécuter le code attendu.
 
 ### `CRM-069` — les étiquettes et le digest quotidien
 
+- **Le CRM n'ingère plus ses propres courriels** (T6, INC-321, décision 780) : le digest porte l'en-tête
+  `Auto-Submitted: auto-generated`, et la relève d'une boîte synchronisée écarte un courriel automatique de l'identité de
+  service de l'espace — le digest n'apparaît plus dans l'Inbox ni dans la recherche. Image `mail-sync` à reconstruire.
+  Manuel 5.6.
+
 *En développement seulement. La migration `0132` attend la prochaine fenêtre de production.*
 
 - **Migration `0132`** (T1) : le catalogue d'étiquettes d'un espace, tenu par ses administrateurs (un nom, une couleur de

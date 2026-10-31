@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T6 : le CRM n'ingère pas ses propres courriels (docs/SPEC-etiquettes-digest.md §5.3 bis,
+#       INC-321, décision 780)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans affaire — aucun `Reply-To`, le jeton `{site}` remplacé par `SITE_URL`
 #       (docs/SPEC-etiquettes-digest.md §5.3, décision 772)
 # @spec CRM-058 (docs/BACKLOG.md) — le worker qui vide la file d'envoi
@@ -219,6 +221,8 @@ def vider_la_file(
             references_ids=tuple(ligne.get("references_ids") or ()),
             bcc_addrs=tuple(ligne.get("bcc_addrs") or ()),
             pieces=pieces,
+            # Un envoi SANS AFFAIRE est le digest, seul de son espèce (§5.3) : le CRM l'écrit seul (§5.3 bis).
+            automatique=ligne.get("card_id") is None,
         )
         identifiant = identifiant_message(_domaine(envoi.from_address))
         message = composer(envoi, identifiant)

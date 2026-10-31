@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T6 : le CRM n'ingère pas ses propres courriels (docs/SPEC-etiquettes-digest.md §5.3 bis,
+#       INC-321, décision 780)
 # @spec CRM-052 (docs/BACKLOG.md) — accès du service aux comptes entrants
 # @spec CRM-053 (docs/BACKLOG.md) — et aux identités sortantes, par le même chemin
 # @spec docs/SPEC-mail-subsystem.md §13.5 et §14.4 (la seule voie de sortie d'un secret)
@@ -238,6 +240,19 @@ class PostgrestClient:
                 )
             )
         return comptes
+
+    def adresses_de_service(self, workspace_id: str) -> frozenset[str]:
+        """Les adresses des identités de service d'un espace (`owner_id` nul), en minuscules — `CRM-069` T6, §5.3 bis.
+
+        Lues par une requête REST, comme la progression : seule l'adresse est lue, jamais un secret.
+        """
+
+        _, corps = self._rest(
+            "GET",
+            f"/rest/v1/mail_outbound_identities?workspace_id=eq.{workspace_id}&owner_id=is.null&select=from_address",
+        )
+        lignes = json.loads(corps) if corps else []
+        return frozenset(str(ligne["from_address"]).strip().lower() for ligne in lignes if ligne.get("from_address"))
 
     def lire_progression(self, account_id: str) -> tuple[int, dict[str, Any]]:
         """La profondeur d'historique déclarée et la progression par dossier — `CRM-059`, §20.6.

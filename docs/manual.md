@@ -771,6 +771,9 @@ s'enregistre dès que vous la basculez, et une phrase sous elle confirme votre c
   connexion. Cette adresse est visible des autres membres de l'espace de travail.
 - **Un espace à la fois.** Le récapitulatif se demande espace par espace : changez d'espace de travail pour le régler
   dans un autre. Décocher la case l'arrête dès le lendemain.
+- **Il ne revient pas dans le CRM.** Si votre boîte est reliée au CRM, le récapitulatif y arrive comme tout email, mais
+  le CRM le reconnaît comme l'un des siens : il n'apparaît ni dans l'Inbox, ni dans la recherche, ni dans le fil d'une
+  affaire.
 
 ### 5.7 Ce qui n'est pas encore là
 

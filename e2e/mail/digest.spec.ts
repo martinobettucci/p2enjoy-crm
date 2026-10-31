@@ -3,6 +3,8 @@
 // @verifies docs/SPEC-etiquettes-digest.md §5.2 (le contenu, ses liens), §5.3 (l'identité de service, aucun `Reply-To`),
 //           §5.4 (le job à 7 h de Paris) ; docs/JOURNAL.md décision 772 (le jeton `{site}` remplacé par `SITE_URL`) ;
 //           CLAUDE.md §8 (aucune trace fabriquée), §15 (un chemin déterministe : le job appelé pour 7 h 15)
+// @verifies CRM-069 (docs/BACKLOG.md) — tranche T6 : le digest se déclare automatique, et la relève de la boîte de Driss,
+//           synchronisée, ne le réingère pas (docs/SPEC-etiquettes-digest.md §5.3 bis, INC-321, décision 780)
 //
 // LE JOB EST APPELÉ PAR SA FONCTION, POUR UN INSTANT DE 7 H 15 À PARIS — le chemin déterministe que `CLAUDE.md` §15 permet :
 // attendre 7 h ne prouverait rien de plus, et `pg_cron` est prouvé par la pgTAP `0124`. Tout le reste est le vrai chemin.
@@ -66,6 +68,25 @@ except urllib.error.HTTPError as e:
 	return JSON.parse(brut) as Record<string, number>
 }
 
+/** La relève d'un compte par la route interne du service — le vrai chemin de la synchronisation. */
+function relever(compte: string): Record<string, number> {
+	const brut = python(
+		`
+import os, urllib.error, urllib.request
+requete = urllib.request.Request(
+    "http://mail-sync:8080/internal/v1/inbound-accounts/" + os.environ["COMPTE"] + "/poll", data=b"", method="POST")
+requete.add_header("Authorization", "Bearer " + os.environ["JETON"])
+try:
+    with urllib.request.urlopen(requete, timeout=300) as r:
+        print(r.read().decode(), end="")
+except urllib.error.HTTPError as e:
+    print(e.read().decode(), end="")
+`,
+		{ COMPTE: compte, JETON },
+	)
+	return JSON.parse(brut) as Record<string, number>
+}
+
 /** Le digest reçu dans la boîte de Driss : ses en-têtes et son corps. */
 function digestRecu(): { entetes: Record<string, string>; corps: string } {
 	const brut = python(
@@ -81,7 +102,7 @@ if uids:
     typ, brut = c.fetch(uids[-1], "(BODY.PEEK[])")
     # La politique moderne décode les en-têtes encodés (RFC 2047) : le sujet porte « é ».
     message = email.message_from_bytes(brut[0][1], policy=email.policy.default)
-    resultat["entetes"] = {cle: str(message.get(cle)) for cle in ("From", "To", "Subject", "Reply-To") if message.get(cle) is not None}
+    resultat["entetes"] = {cle: str(message.get(cle)) for cle in ("From", "To", "Subject", "Reply-To", "Auto-Submitted") if message.get(cle) is not None}
     partie = message.get_body(preferencelist=("plain",)) or message
     resultat["corps"] = partie.get_content()
 c.logout()
@@ -131,6 +152,19 @@ test.describe('le récapitulatif quotidien — du job à la boîte', () => {
 			const site = lireEnv('SITE_URL').replace(/\/$/, '')
 			expect(corps).toContain(`${site}/tracks/`)
 			expect(corps).not.toContain('{site}')
+
+			// `CRM-069` T6 (§5.3 bis) : le digest se déclare automatique, et la relève de la boîte de Driss — synchronisée —
+			// le tient pour relevé sans l'ingérer : aucun message de l'espace ne naît de lui.
+			expect(entetes['Auto-Submitted']).toBe('auto-generated')
+			const comptes = await request.get(`${URL_API}/rest/v1/mail_inbound_accounts?owner_id=eq.${DRISS}&select=id`, { headers: service })
+			const [compte] = (await comptes.json()) as { id: string }[]
+			const releve = relever(compte!.id)
+			expect(releve['messages_skipped'], `relève = ${JSON.stringify(releve)}`).toBeGreaterThanOrEqual(1)
+			const ingeres = await request.get(
+				`${URL_API}/rest/v1/mail_messages?workspace_id=eq.${ESPACE}&subject=like.${encodeURIComponent(MOTIF + '*')}&created_at=gte.${encodeURIComponent(debut)}&select=id`,
+				{ headers: service },
+			)
+			expect(await ingeres.json()).toEqual([])
 		} finally {
 			if (file !== undefined) await request.delete(`${URL_API}/rest/v1/mail_outbox?id=eq.${file}`, { headers: service })
 			await rendreLesBoites(request, { boites: BOITES, motif: MOTIF, avant: dossiersAvant, debut })

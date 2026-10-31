@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T6 : la relève rend les courriels automatiques écartés (`messages_skipped`,
+#       docs/SPEC-etiquettes-digest.md §5.3 bis)
 # @spec CRM-069 (docs/BACKLOG.md) — tranche T4 : le digest sans affaire — aucun `Reply-To`, le jeton `{site}` remplacé par `SITE_URL`
 #       (docs/SPEC-etiquettes-digest.md §5.3, décision 772)
 # @spec CRM-051 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §12.3 et §12.5 — santé, API
@@ -103,6 +105,8 @@ class ReleveResponse(StrictModel):
     filed: int
     filed_retried: int
     renamed: int
+    #: `CRM-069` T6 (docs/SPEC-etiquettes-digest.md §5.3 bis) : les courriels automatiques du CRM relevés et écartés.
+    messages_skipped: int = 0
 
 
 class CheckpointResponse(StrictModel):
@@ -480,6 +484,7 @@ def create_app(
             filed=resultat.dossiers_crees,
             filed_retried=resultat.rangements_repris,
             renamed=resultat.dossiers_renommes,
+            messages_skipped=resultat.messages_ecartes,
         )
         return ReleveResponse(
             account_id=account_id,
@@ -493,6 +498,7 @@ def create_app(
             filed=resultat.dossiers_crees,
             filed_retried=resultat.rangements_repris,
             renamed=resultat.dossiers_renommes,
+            messages_skipped=resultat.messages_ecartes,
         )
 
     # --- Envoi sortant — `CRM-058` ------------------------------------------------------------

@@ -1,3 +1,5 @@
+# @spec CRM-069 (docs/BACKLOG.md) — tranche T6 : le CRM n'ingère pas ses propres courriels (docs/SPEC-etiquettes-digest.md §5.3 bis,
+#       INC-321, décision 780)
 # @spec CRM-054 (docs/BACKLOG.md) — relève, dédoublonnage, occurrences, pièces jointes
 # @spec CRM-055 (docs/BACKLOG.md) — le classement suit l'ingestion, et ne la conditionne pas
 # @spec docs/SPEC-mail-subsystem.md §4.1 (boucle), §4.2 (dédoublonnage), §4.3 (pièces jointes),
@@ -34,7 +36,7 @@ from mail_sync.dossiers import (
     renommer_dossier,
     supporte_les_dossiers,
 )
-from mail_sync.mime_analyse import analyser
+from mail_sync.mime_analyse import MessageAnalyse, analyser
 from mail_sync.backfill import (
     EtatDossier,
     PlanDossier,
@@ -65,6 +67,19 @@ class ResultatReleve:
     dossiers_crees: int = 0
     dossiers_renommes: int = 0
     rangements_repris: int = 0
+    #: `CRM-069` T6 (§5.3 bis) : les courriels automatiques du CRM, relevés mais écartés.
+    messages_ecartes: int = 0
+
+
+def ecarter(analyse: MessageAnalyse, adresses_service: frozenset[str]) -> bool:
+    """Un courriel automatique du CRM — `Auto-Submitted` **et** l'adresse d'une identité de service de l'espace (§5.3 bis).
+
+    LA CONJONCTION EST VOULUE : l'identité de service envoie aussi des courriels écrits par une personne (un envoi depuis
+    une affaire), qui doivent rester dans le fil ; et un `Auto-Submitted` d'ailleurs — un répondeur d'absence d'un
+    contact — est un vrai message de l'échange.
+    """
+
+    return analyse.automatique and analyse.from_address.strip().lower() in adresses_service
 
 
 def chemin_de_depot(workspace_id: str, message_id: str, sha256: str) -> str:
@@ -257,7 +272,9 @@ def _relever_compte(
     donc rien de neuf, ce qui rend la preuve rejouable sans nettoyage.
     """
 
-    vus = nouveaux = classes = occurrences = pieces = infectees = ranges = renommes = reprises = 0
+    vus = nouveaux = classes = occurrences = pieces = infectees = ranges = renommes = reprises = ecartes = 0
+    # Les adresses de service de l'espace, lues une fois par relève : elles ne changent pas pendant le tour (§5.3 bis).
+    adresses_service = client_base.adresses_de_service(workspace_id)
     imap = _connecter(compte, timeout)
     try:
         # LA CAPACITÉ EST RELUE APRÈS AUTHENTIFICATION (§15.1) : `IDLE` n'est pas annoncé avant, et
@@ -346,6 +363,13 @@ def _relever_compte(
                 uids_traites.append(int(uid))
                 vus += 1
                 analyse = analyser(brut)
+
+                if ecarter(analyse, adresses_service):
+                    # UN COURRIEL AUTOMATIQUE DU CRM N'EST PAS UN MESSAGE DE L'ESPACE (§5.3 bis) : ni enregistré, ni classé,
+                    # ni rangé. Son UID est tenu pour relevé — sinon il serait relu à chaque tour —, et rien de son
+                    # contenu n'est journalisé.
+                    ecartes += 1
+                    continue
 
                 message_id, cree = client_base.enregistrer_message(
                     workspace_id=workspace_id,
@@ -470,4 +494,5 @@ def _relever_compte(
         dossiers_crees=ranges,
         dossiers_renommes=renommes,
         rangements_repris=reprises,
+        messages_ecartes=ecartes,
     )

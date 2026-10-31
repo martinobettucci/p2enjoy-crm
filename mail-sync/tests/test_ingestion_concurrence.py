@@ -1,3 +1,4 @@
+# @verifies CRM-069 (docs/BACKLOG.md) — tranche T6 : la base factice rend les adresses de service (aucune), la relève inchangée
 # @verifies INC-266 (docs/INCONSISTENCY_REPORT.md, décision 619) — deux relèves d'un même compte ne se chevauchent pas
 # @verifies docs/SPEC-mail-subsystem.md §4.5 (le renommage précède la relève, sur une liste relue à chaque tour)
 #
@@ -104,6 +105,10 @@ class Base:
 
     def reparenter_dossiers(self, _account_id, _ancien, _nouveau):
         return None
+
+    def adresses_de_service(self, _workspace_id):
+        # `CRM-069` T6 : aucune identité de service — rien n'est écarté, la relève se conduit comme avant.
+        return frozenset()
 
     def lire_progression(self, _account_id):
         return 0, {}

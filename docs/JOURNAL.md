@@ -37007,3 +37007,13 @@ redémarrage de `kong` et `rest`, antérieur). Livrer `CRM-071` revient donc à 
 unique attend que `CRM-111` soit close (`[P]`) **et** qu'INC-321 soit corrigée (`CRM-069` T6) ; l'instantané de la machine
 virtuelle n'est pas pris, il sera demandé au moment de `--migrate`.
 
+### `CRM-069` T6 : INC-321 corrigée (2026-10-31)
+
+**Problème** : le digest d'une personne dont la boîte est synchronisée revenait dans le CRM (INC-321). **Précision à la
+décision 780**, écrite au §5.3 bis avant le code : l'identité de service envoie aussi de vrais courriels (un envoi depuis
+une affaire, par l'écran ou le connecteur) ; écarter « tout message » de cette identité aurait effacé de vrais échanges.
+La relève écarte donc la **conjonction** d'un `Auto-Submitted` autre que `no` et de l'adresse d'une identité de service
+de l'espace. **Vérifications** : unitaires `mail-sync` 265/265 (dont 5 neufs) ; E2E mail du digest vert (l'en-tête relu
+dans la boîte, la relève réelle de la boîte de Driss rend `messages_skipped` ≥ 1, aucun message ingéré) ; les sept
+scénarios qu'INC-321 faisait tomber rejoués verts. `CRM-069` repasse `[P]`.
+

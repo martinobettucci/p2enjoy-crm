@@ -1130,6 +1130,26 @@
 							}
 						]
 					}
+				],
+				[
+					{
+						"type": "paragraph",
+						"content": [
+							{
+								"type": "strong",
+								"content": [
+									{
+										"type": "text",
+										"text": "Il ne revient pas dans le CRM."
+									}
+								]
+							},
+							{
+								"type": "text",
+								"text": " Si votre boîte est reliée au CRM, le récapitulatif y arrive comme tout email, mais\nle CRM le reconnaît comme l'un des siens : il n'apparaît ni dans l'Inbox, ni dans la recherche, ni dans le fil d'une\naffaire."
+							}
+						]
+					}
 				]
 			]
 		},
