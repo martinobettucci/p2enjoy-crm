@@ -10811,7 +10811,8 @@ est synchronisée est ingéré par le CRM comme un message à classer. **Arbitr�
 
 - [@] **T6 — le CRM n'ingère pas ses propres courriels (INC-321)** : spécification (`docs/SPEC-etiquettes-digest.md`),
       en-tête du digest, filtre d'ingestion de `mail-sync` ; unitaires, intégration, E2E mail. Connecteur MCP : sans objet.
-      *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-31 02:05 UTC — état avant : [ ]*
+      *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-31 09:24 UTC — état avant : [ ]*
+      *Spécification §5.3 bis écrite le 2026-10-31, avant le code (en-tête et identité de service, en conjonction).*
       La livraison de `CRM-071` l'attend (décision 781).
 
 Arbitrée par la décision 769, spécification validée par la décision 771 : `docs/SPEC-etiquettes-digest.md`. Connecteur :

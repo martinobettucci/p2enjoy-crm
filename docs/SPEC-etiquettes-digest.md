@@ -129,6 +129,24 @@ n'appartient à aucune affaire. La file gagne une colonne `kind`, valant `card` 
 - **le job tourne à la minute 2** de chaque heure, qu'aucune autre tâche n'occupe. Il s'appelle
   `p2enjoy-digest-quotidien`, comme les autres tâches du produit.
 
+### 5.3 bis Le CRM n'ingère pas ses propres courriels (INC-321, décision 780 ; `CRM-069` T6)
+
+*Écrit le 2026-10-31, avant le code.* Un digest envoyé à une personne dont la boîte est synchronisée revenait dans le CRM
+comme un message entrant à classer (INC-321).
+
+- **À l'envoi**, `mail-sync` pose sur un envoi **sans affaire** — le digest, seul de son espèce (§5.3) — l'en-tête
+  `Auto-Submitted: auto-generated` (RFC 3834). Un envoi d'affaire n'en porte jamais : c'est un courriel écrit par une
+  personne.
+- **À la relève**, `mail-sync` **écarte** un message qui porte un `Auto-Submitted` autre que `no` **et** dont l'expéditeur
+  est l'adresse d'une identité de service de l'espace (`mail_outbound_identities.owner_id` nul). Il n'est ni enregistré, ni
+  classé, ni rangé, ni journalisé avec son contenu ; son UID est tenu pour relevé, et la relève compte les messages
+  écartés.
+- **Précision à la décision 780** : l'énoncé visait « tout message reçu de l'identité système ». Or l'identité de service
+  envoie aussi des courriels écrits par une personne (un envoi depuis une affaire, par l'écran ou par le connecteur) ; les
+  écarter tous effacerait de vrais échanges. La règle retient donc la conjonction de l'en-tête et de l'identité : un
+  courriel automatique du CRM, et lui seul.
+- Connecteur MCP : sans objet. Aucune migration.
+
 ### 5.4 Le job — `pg_cron`, idempotent
 
 `app.envoyer_digests(p_maintenant timestamptz default now())` est appelée **toutes les heures à la minute 0**. Elle
