@@ -289,7 +289,8 @@ pid_a=''
 if [ -n "$pid_b" ]; then
 	if wait "$pid_b"; then
 		fail "l'insertion sous l'ancien workflow passe après le remappage"
-	elif grep -q 'cards_channel_id_workflow_id_fkey' "$WORK/concurrence-b.log"; then
+	# `CRM-111` T2.4.5 (migration 0134) : la clé channel/workflow est celle du RATTACHEMENT.
+	elif grep -q 'card_placements_channel_workflow_fk' "$WORK/concurrence-b.log"; then
 		ok "après le commit, la FK refuse réellement la card concurrente devenue incohérente"
 	else
 		fail "l'insertion concurrente échoue pour une cause inattendue"

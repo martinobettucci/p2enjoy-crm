@@ -240,7 +240,9 @@ empreinte() {
 }
 
 avant=$(empreinte)
-psql_db -c "alter table public.cards drop constraint cards_id_workflow_id_key cascade;" >/dev/null
+# `CRM-111` T2.4.5 (migration 0134) : l'unicité (identifiant, workflow) sur laquelle s'appuient les valeurs est celle du
+# RATTACHEMENT — `card_field_values_placement_workflow_fk` la référence, et le `cascade` l'emporte avec elle.
+psql_db -c "alter table public.card_placements drop constraint card_placements_id_workflow_key cascade;" >/dev/null
 psql_db -c "
 	alter table public.card_field_values
 		drop constraint if exists card_field_values_field_id_workflow_id_fkey;
@@ -249,7 +251,8 @@ psql_db -c "
 		foreign key (field_id) references public.form_fields (id) on delete cascade;
 " >/dev/null
 psql_db -c "grant delete on public.card_field_values to authenticated, anon;" >/dev/null
-[ "$(psql_db -c "select count(*) from pg_constraint where conname = 'cards_id_workflow_id_key';")" = "0" ] \
+[ "$(psql_db -c "select count(*) from pg_constraint where conname in ('card_placements_id_workflow_key',
+                  'card_field_values_placement_workflow_fk');")" = "0" ] \
 	&& [ "$(psql_db -c "select has_table_privilege('authenticated','public.card_field_values','DELETE');")" = "t" ] \
 	&& ok "trois dégradations de structure posées : unicité retirée, clé composite réduite, privilège relâché" \
 	|| fail "les dégradations de structure n'ont pas pris : le contrôle qui suit ne prouverait rien"
@@ -262,9 +265,10 @@ else
 fi
 
 [ "$(psql_db -c "select count(*) from pg_constraint
-                  where conrelid = 'public.cards'::regclass
-                    and conname = 'cards_id_workflow_id_key';")" = "1" ] \
-	&& ok "l'unicité retirée à la main sur \`cards\` est **rétablie** : le répertoire répare, il ne constate pas" \
+                  where (conrelid = 'public.card_placements'::regclass and conname = 'card_placements_id_workflow_key')
+                     or (conrelid = 'public.card_field_values'::regclass
+                         and conname = 'card_field_values_placement_workflow_fk');")" = "2" ] \
+	&& ok "l'unicité retirée à la main sur le rattachement est **rétablie**, et la clé des valeurs avec elle : le répertoire répare, il ne constate pas" \
 	|| fail "l'unicité retirée n'est pas rétablie"
 definition=$(psql_db -c "select pg_get_constraintdef(oid) from pg_constraint
                           where conname = 'card_field_values_field_id_workflow_id_fkey';")
@@ -417,7 +421,9 @@ vide=$(psql_db -c "select (value is null)::text from public.card_field_values
 # LA DÉGRADATION EST ICI, au plus près de ce qu'elle éprouve. RÉVISÉE PAR `CRM-111` T2.3.3 : la migration 13 rejouée seule
 # ramenait le validateur d'AVANT la résolution, mais elle ne se rejoue plus sur une base à jour. Le validateur est
 # dégradé dans sa définition EN BASE : la résolution des types `contact` et `user` est court-circuitée, et rien d'autre.
-if degradation_fonction 'app.card_field_values_valider()' \
+# RÉVISÉE PAR `CRM-111` T2.4.5 : depuis la migration 0131 (`CRM-097`), la résolution vit dans `app.valider_valeur_champ`,
+# que le déclencheur appelle et que les modèles d'affaires partagent ; c'est elle qui se dégrade.
+if degradation_fonction 'app.valider_valeur_champ(public.form_fields,jsonb,uuid)' \
 	$'\n\t\t\tif v_champ.type = \'contact\' then\n' \
 	$'\n\t\t\tif true then null; elsif v_champ.type = \'contact\' then\n'; then
 	code=$(poster_valeur "$T_ADMIN" "$CARD_C6" "$CHAMP_SONDE_CONTACT" "\"$UUID_MORT\"")

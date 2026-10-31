@@ -270,14 +270,20 @@ fi
 
 titre "4. Les colonnes fermées d'avance (décision 214)"
 
-for table in cards card_placements; do
-	for colonne in channel_id workflow_id current_step_id; do
-		if [ "$(psql_db -c "select has_column_privilege('authenticated','public.$table','$colonne','update')")" = f ]; then
-			ok "$table.$colonne est FERMÉE à authenticated — la garde était close avant d'exister"
-		else
-			fail "$table.$colonne est OUVERTE : la RPC deviendrait une commodité facultative"
-		fi
-	done
+# RÉVISÉ PAR `CRM-111` T2.4.5 (migration 0134) : `cards` ne porte plus ces trois colonnes — leur absence se constate,
+# elle ferme la porte plus sûrement qu'un privilège — et la garde se tient sur le RATTACHEMENT, qui les porte.
+for colonne in channel_id workflow_id current_step_id; do
+	if [ "$(psql_db -c "select count(*) from information_schema.columns
+		where table_schema='public' and table_name='cards' and column_name='$colonne'")" = 0 ]; then
+		ok "cards.$colonne est RETIRÉE : l'affaire ne se déplace plus par sa propre ligne"
+	else
+		fail "cards.$colonne est revenue sur l'affaire : la RPC pourrait être contournée"
+	fi
+	if [ "$(psql_db -c "select has_column_privilege('authenticated','public.card_placements','$colonne','update')")" = f ]; then
+		ok "card_placements.$colonne est FERMÉE à authenticated — la garde était close avant d'exister"
+	else
+		fail "card_placements.$colonne est OUVERTE : la RPC deviendrait une commodité facultative"
+	fi
 done
 
 ouvertes=$(psql_db -c "select count(*) from information_schema.column_privileges
@@ -296,7 +302,7 @@ else
 	fail "$ouvertes colonnes ouvertes au lieu de 4 : une migration a élargi ou rétréci le privilège"
 fi
 
-if [ "$(psql_db -c "select has_column_privilege('service_role','public.cards','channel_id','update')")" = t ]; then
+if [ "$(psql_db -c "select has_column_privilege('service_role','public.card_placements','channel_id','update')")" = t ]; then
 	ok "service_role conserve l'écriture — limite nommée, et le trigger la rend VISIBLE (§6.8)"
 else
 	fail "service_role a perdu l'écriture : le seed en dépend"
@@ -441,8 +447,8 @@ degrader_et_verifier \
 
 degrader_et_verifier \
 	"channel_id rendue à authenticated — la garde deviendrait facultative (décision 214)" \
-	"grant update (channel_id) on public.cards to authenticated" \
-	"revoke update (channel_id) on public.cards from authenticated"
+	"grant update (channel_id) on public.card_placements to authenticated" \
+	"revoke update (channel_id) on public.card_placements from authenticated"
 
 # LE `NOT VALID` N'EST PAS UNE COMMODITÉ, ET IL DIT QUELQUE CHOSE DU PRODUIT. La dégradation
 # naïve — rétrécir le CHECK à huit valeurs — ÉCHOUE : le seed a produit deux `channel_changed`, et

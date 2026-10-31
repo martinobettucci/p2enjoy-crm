@@ -114,6 +114,7 @@ CH_MAINTENANCE=5eed0000-0000-4000-8000-000000000035
 CARD_MAINTENANCE=5eed0000-0000-4000-8000-0000000000c5
 NOEUD_LIBRE=c0400000-0000-4000-8000-00000000ff01
 ETAPE_LIBRE=c0400000-0000-4000-8000-00000000ff02
+CARD_NOEUD_LIBRE=c0400000-0000-4000-8000-00000000ff03
 MAIL_ADMIN=admin@p2enjoy.test
 MAIL_BIZDEV=bizdev@p2enjoy.test
 MAIL_VIEWER=viewer@p2enjoy.test
@@ -421,9 +422,21 @@ code=$(creer "$T_BIZDEV" 'tst-crm040-bizdev-maint' "$CH_MAINTENANCE")
 	&& ok "…et il est refusé dans \`maintenance\`, où un droit fin le met en lecture seule (ligne l)" \
 	|| fail "création dans maintenance par le business developer : $code, attendu 403"
 
-code=$(creer "$T_VIEWER" 'tst-crm040-viewer')
-[ "$code" = "403" ] && ok "le \`viewer\` est refusé : créer exige le droit d'ÉCRITURE (ligne m)" \
-	|| fail "création par le viewer : $code, attendu 403"
+# `CRM-111` T2.4.5 (décision 768) : `creer_affaire` lit le channel avant d'éprouver l'écriture. Le refus d'écriture
+# s'éprouve donc là où le `viewer` LIT — `maintenance` — et le channel qu'il ne lit pas reste introuvable, sans rien
+# révéler de son existence (`P0002`, que PostgREST rend en 500 : le refus se lit à son message).
+code=$(creer "$T_VIEWER" 'tst-crm040-viewer' "$CH_MAINTENANCE")
+[ "$code" = "403" ] && ok "le \`viewer\` est refusé là où il lit : créer exige le droit d'ÉCRITURE (ligne m)" \
+	|| fail "création par le viewer dans maintenance : $code, attendu 403"
+
+code=$(creer "$T_VIEWER" 'tst-crm040-viewer-gc')
+message=$(jq -r '.message // empty' "$CORPS")
+[ "$code" != "200" ] && [ "$message" = "channel introuvable" ] \
+	&& ok "…et un channel qu'il ne lit pas lui reste introuvable : « channel introuvable », rien de créé" \
+	|| fail "création par le viewer dans grands-comptes : $code / « $message »"
+[ "$(psql_db -c "select count(*) from public.cards where title like 'tst-crm040-viewer%';")" = "0" ] \
+	&& ok "aucune affaire du \`viewer\` en base" \
+	|| fail "une affaire du viewer a été créée malgré le refus"
 
 # Preuve n° 4 sur les cards : la table N'EST PAS VIDE, constaté d'abord avec la base.
 reelles=$(psql_db -c "select count(*) from public.card_placements where channel_id = '$CH_GRANDS_COMPTES';")
@@ -479,11 +492,14 @@ psql_db -c "insert into public.workflow_nodes_catalog
 	            insert into public.workflow_steps
 	              (id, workflow_id, workspace_id, node_id, position, is_initial)
 	            values ('$ETAPE_LIBRE', '$WF_GLOBAL', '$WS_SEED', '$NOEUD_LIBRE', 999, false);
-	            insert into public.cards
-	              (workspace_id, channel_id, workflow_id, current_step_id, title, position,
-	               archived_at)
-	            values ('$WS_SEED', '$CH_GRANDS_COMPTES', '$WF_GLOBAL', '$ETAPE_LIBRE',
-	                    'tst-crm040-noeud-libre', 999, '2026-05-01T09:00:00Z');" >/dev/null
+	            begin;
+	            insert into public.cards (id, workspace_id, title)
+	            values ('$CARD_NOEUD_LIBRE', '$WS_SEED', 'tst-crm040-noeud-libre');
+	            insert into public.card_placements
+	              (card_id, workspace_id, channel_id, workflow_id, current_step_id, archived_at)
+	            values ('$CARD_NOEUD_LIBRE', '$WS_SEED', '$CH_GRANDS_COMPTES', '$WF_GLOBAL', '$ETAPE_LIBRE',
+	                    '2026-05-01T09:00:00Z');
+	            commit;" >/dev/null
 code=$(http PATCH "$API/rest/v1/workflow_nodes_catalog?id=eq.$NOEUD_LIBRE" \
 	        -H "apikey: $ANON_KEY" -H "Authorization: Bearer $T_ADMIN" \
 	        -H 'Content-Type: application/json' -d '{"archived_at":"2026-05-01T10:00:00Z"}')

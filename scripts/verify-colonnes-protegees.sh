@@ -73,8 +73,6 @@ node_toolchain_prepare "$PWD/.nvmrc" || exit 1
 
 TEST_FILE=supabase/tests/0015_colonnes_protegees.test.sql
 MIGRATION_FILE=supabase/migrations/0014_colonnes_protegees.sql
-# `CRM-111` T2.3.2 : la dernière autorité sur les privilèges de colonne de `cards`.
-MIGRATION_RATTACHEMENT=supabase/migrations/0112_colonnes_ouvertes_par_rattachement.sql
 # LA MIGRATION 12 REND CE QUE LA 14 RETIRE, et ce n'est pas une hypothèse : sa section 2 réapplique
 # les privilèges de colonne avec `email_local_part` DANS la liste (INC-050, à l'époque non résolue).
 # La section 5 s'en sert pour mesurer la dépendance d'ordre dans les deux sens.
@@ -192,6 +190,8 @@ jeton_de() {
 }
 
 prive() { psql_db -c "select has_column_privilege('$1', 'public.cards', '$2', '$3');"; }
+# `CRM-111` T2.4.5 (migration 0134) : l'étape courante vit sur le RATTACHEMENT ; sa fermeture s'y mesure.
+prive_rattachement() { psql_db -c "select has_column_privilege('$1', 'public.card_placements', '$2', '$3');"; }
 
 # LA RESTAURATION EST POSÉE AVANT TOUTE DÉGRADATION : une interruption ne doit jamais laisser la
 # base avec la porte que cette unité ferme. Elle rejoue la migration plutôt que de rejouer un
@@ -272,8 +272,8 @@ titre "2. L'état des privilèges de colonne"
 	&& ok "service_role conserve l'écriture : le seed est inchangé — limite NOMMÉE au §4.4.3" \
 	|| fail "service_role a perdu l'écriture : le seed ne peut plus s'appliquer"
 
-[ "$(prive authenticated current_step_id update)" = "f" ] \
-	&& ok "current_step_id reste fermée par CRM-034 : cette unité ne la rouvre pas (INC-049)" \
+[ "$(prive_rattachement authenticated current_step_id update)" = "f" ] \
+	&& ok "current_step_id reste fermée par CRM-034, sur le rattachement : cette unité ne la rouvre pas (INC-049)" \
 	|| fail "current_step_id a été rouverte : move_card redevient contournable"
 
 # LE COMPTE EXACT. Sans lui, une fermeture trop large — le risque réel du mécanisme du §4.3 —
@@ -437,17 +437,16 @@ code=$(http PATCH "$API/rest/v1/cards?id=eq.$CARD_C1" \
 
 titre "4. La migration est rejouable, et CONVERGENTE"
 
-# RÉVISÉ PAR `CRM-111` T2.3.2 : la 14 accorde la mise à jour de `cards` sur une liste où figurent encore les sept colonnes
-# de rattachement, que la 112 a fermées. Chaque rejeu de la 14 est donc suivi de la 112, dernière autorité sur ces
-# privilèges — sans quoi ce harnais sortirait avec les colonnes de rattachement rouvertes sur l'affaire.
+# RÉVISÉ PAR `CRM-111` T2.4.5 (décision 682, comme `scripts/verify-cards.sh`) : la 14 et la 112 nomment des colonnes
+# que la 134 a retirées de `cards` (`position`, `owner_id`…) ; elles ne se rejouent plus sur une base à jour. Le rejeu
+# est celui du répertoire entier, dans l'ordre, par la RECONSTRUCTION : c'est elle qui doit refermer la porte.
 rejouer_14() {
-	psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_FILE" >/dev/null 2>&1 \
-		&& psql_db -v ON_ERROR_STOP=1 -f - < "$MIGRATION_RATTACHEMENT" >/dev/null 2>&1
+	reconstruire_base_dev > "$P2ENJOY_TMP/p2enjoy-colonnes-rejeu.log" 2>&1
 }
 if rejouer_14; then
-	ok "la migration se rejoue sans erreur sur une base déjà migrée, la 112 derrière elle"
+	ok "le répertoire se rejoue sans erreur, la 14 et la 112 à leur rang"
 else
-	fail "la migration échoue au rejeu"
+	fail "la reconstruction échoue — voir $P2ENJOY_TMP/p2enjoy-colonnes-rejeu.log"
 fi
 [ "$(prive authenticated email_local_part update)" = "f" ] \
 	&& ok "le rejeu laisse email_local_part fermée" \
@@ -484,7 +483,8 @@ titre "5. Le RÉPERTOIRE fait l'état : la reconstruction referme ce qu'une écr
 # fichier, APRÈS en avoir appliqué une partie (la 13 ramène même `app.can_write_card` à sa forme d'origine). La propriété
 # qui compte — l'ordre du répertoire produit la fermeture, et la garde complète — se prouve par la reconstruction : la
 # colonne rouverte à la main, la base reconstruite dans l'ordre l'a refermée, sans rien rouvrir d'autre.
-psql_db -c "grant update (email_local_part, current_step_id) on public.cards to authenticated;" >/dev/null
+psql_db -c "grant update (email_local_part) on public.cards to authenticated;
+              grant update (current_step_id) on public.card_placements to authenticated;" >/dev/null
 [ "$(prive authenticated email_local_part update)" = "t" ] \
 	&& ok "dégradation posée : \`email_local_part\` et \`current_step_id\` rouvertes à la main" \
 	|| fail "la dégradation n'a pas pris effet — le contrôle qui suit ne prouverait rien"
@@ -494,7 +494,7 @@ reconstruire_base_dev > "$P2ENJOY_TMP/p2enjoy-colonnes-reconstruction.log" 2>&1 
 [ "$(prive authenticated email_local_part update)" = "f" ] \
 	&& ok "…et \`email_local_part\` est REFERMÉE : l'ordre du répertoire produit la fermeture" \
 	|| fail "la reconstruction laisse \`email_local_part\` ouverte"
-[ "$(prive authenticated current_step_id update)" = "f" ] \
+[ "$(prive_rattachement authenticated current_step_id update)" = "f" ] \
 	&& ok "…\`current_step_id\` aussi : la garde de \`move_card\` n'est pas contournable" \
 	|| fail "la reconstruction laisse \`current_step_id\` ouverte"
 [ "$(psql_db -c "select pg_get_functiondef('public.move_card(uuid,uuid,text)'::regprocedure) like '%missing_required_fields%';")" = "t" ] \

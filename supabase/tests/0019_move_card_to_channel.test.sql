@@ -744,19 +744,21 @@ select throws_ok(
 -- n'a rien à retirer : `CRM-013` avait fermé `channel_id` et `workflow_id` « par voie de
 -- conséquence », sans nommer la conséquence. La nommer ne suffit pas à la tenir — un privilège
 -- qu'aucune migration ne pose est un privilège qu'aucune migration ne défend. La défense est ici.
+-- RÉVISÉES PAR `CRM-111` T2.4.5 (décision 51) : depuis la 134, les trois colonnes vivent sur le RATTACHEMENT seul ;
+-- la défense s'y tient, faute de quoi elle ne défendrait plus rien.
 
 select ok(
-	not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'channel_id') then has_column_privilege('authenticated', 'public.cards', 'channel_id', 'update') else false end),
+	not has_column_privilege('authenticated', 'public.card_placements', 'channel_id', 'update'),
 	'`channel_id` est FERMÉE à `authenticated` : la garde était close AVANT d''exister, et c''est '
 	'`CRM-013` qui l''avait fermée (décision 214). **Preuve de refus n° 5** reconduite');
 
 select ok(
-	not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'workflow_id') then has_column_privilege('authenticated', 'public.cards', 'workflow_id', 'update') else false end),
+	not has_column_privilege('authenticated', 'public.card_placements', 'workflow_id', 'update'),
 	'`workflow_id` est FERMÉE elle aussi : sans quoi un `PATCH` direct ouvrirait la seule '
 	'combinaison que la clé composite refuse');
 
 select ok(
-	not (case when exists (select 1 from information_schema.columns where table_schema = 'public' and table_name = 'cards' and column_name = 'current_step_id') then has_column_privilege('authenticated', 'public.cards', 'current_step_id', 'update') else false end),
+	not has_column_privilege('authenticated', 'public.card_placements', 'current_step_id', 'update'),
 	'`current_step_id` reste fermée : `CRM-045` ne rouvre pas ce que `CRM-034` avait fermé');
 
 select is(

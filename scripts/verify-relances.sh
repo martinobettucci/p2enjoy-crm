@@ -377,9 +377,22 @@ echo "6. Non-complaisance : sept dégradations réelles, une par règle portée"
 # =================================================================================================
 # Chacune retire UNE règle du produit et exige que la suite pgTAP la dénonce. La restauration est
 # CONSTATÉE en fin de section, jamais supposée.
+#
+# RÉVISÉ PAR `CRM-111` T2.4.5 : la 53 ne se rejoue plus sur une base à jour (son corps lit `cards.current_step_id`,
+# retirée par la 134), et la définition en vigueur de `public.cards_figees` est celle de la 109, par rattachement, au
+# milieu d'une migration qui ne se rejoue pas par morceaux. La dégradation part donc de la DÉFINITION EN BASE — comme
+# `scripts/verify-move-card-to-channel.sh` —, et la restauration réapplique cette même définition avec les privilèges
+# nominatifs de la 53, qu'aucune migration n'a changés depuis.
+DEFINITION_EN_BASE="$TRAVAIL/cards_figees-en-base.sql"
+{
+	psql_db -c "select pg_get_functiondef('public.cards_figees()'::regprocedure);"
+	printf ';\nrevoke all on function public.cards_figees() from public, anon;\n'
+	printf 'grant execute on function public.cards_figees() to authenticated, service_role;\n'
+} > "$DEFINITION_EN_BASE"
+MIGRATION_COURANTE="$DEFINITION_EN_BASE"
 
 eprouver_degradation "exclusion des archivées" \
-	"	 where c.archived_at is null
+	"	 where pl.archived_at is null
 	   and c.deleted_at is null" \
 	"	 where c.deleted_at is null"
 
@@ -390,12 +403,12 @@ eprouver_degradation "exclusion de la corbeille" \
 "
 
 eprouver_degradation "exclusion du sommeil" \
-	"	   and (c.snoozed_until is null or c.snoozed_until <= now())" \
+	"	   and (pl.snoozed_until is null or pl.snoozed_until <= now())" \
 	"	   and true"
 
 eprouver_degradation "le sommeil ÉCHU protégerait encore" \
-	"	   and (c.snoozed_until is null or c.snoozed_until <= now())" \
-	"	   and c.snoozed_until is null"
+	"	   and (pl.snoozed_until is null or pl.snoozed_until <= now())" \
+	"	   and pl.snoozed_until is null"
 
 eprouver_degradation "borne stricte au lieu de large" \
 	"	       >= coalesce(ws.stale_after_days, n.default_stale_after_days)" \
@@ -598,7 +611,7 @@ else
 fi
 restaurer
 
-MIGRATION_COURANTE="$MIGRATION"
+MIGRATION_COURANTE="$DEFINITION_EN_BASE"
 SUITE_COURANTE="$SUITE_SQL"
 
 # =================================================================================================

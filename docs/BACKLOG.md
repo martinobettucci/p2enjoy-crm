@@ -16962,7 +16962,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           `0122` ; `change_channel_workflow` rend `SETOF card_placements`. pgTAP 104 fichiers sans anomalie,
           unitaires 4514/4514, API 1230/1231 (`ingestion.spec.ts:91`, étranger), `verify-change-channel-workflow.sh`
           24/24.
-      - [@] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
+      - [x] **T2.4 — le retrait** : colonnes de rattachement retirées de `cards`, déclencheurs de synchronisation retirés,
         `creer_affaire` écrit le rattachement elle-même (venu de T2.3.7, décision 738),
         politique de `cards` sous la forme optimisée ; types régénérés. *Transporte aussi vers `card_placements` les deux
         colonnes calculées de santé de `CRM-066` tranche 4 (`health_momentum`, `health_commercial`, et leur appui
@@ -16970,7 +16970,6 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         (`docs/SPEC-analytique.md` §13.5 ; accord des deux sessions, 2026-10-26).* Preuve : aucun changement visible, toute la suite
         verte ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière possible tant que chaque affaire
         n'a qu'un rattachement).
-        *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-31 09:59 UTC — état avant : [~] — reprise d'une prise expirée (session du 2026-10-23, prise du 2026-10-27, aucun commit d'elle depuis) ; la livraison l'attend (décision 782)*
         **Découpage, arrêté le 2026-10-26 (journal, entrée « `CRM-111` T2.4 — le découpage »)** — une étape poussée chacune,
         `main` vert à chaque fois. Mesuré avant (base jetable, `docs/mesures/CRM-111/02-fonctions-cassees.sql`) : le
         retrait casse encore **dix fonctions** — les deux miroirs, `app.card_events_apres_insertion_card`,
@@ -16998,7 +16997,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           échéances, workflow et channel sur `card_placements`. **Sa création reste celle de l'affaire**, dont le miroir
           pose le rattachement, tant que `cards` porte ses colonnes non nulles : la poste du rattachement passe à T2.4.5.
           Aucun autre script que les harnais de preuve (T2.4.4) ne lit une colonne de rattachement. Preuves au journal.
-        - [~] **T2.4.4 — les preuves** : pgTAP et specs lisent le rattachement là où elles lisaient `cards`.
+        - [x] **T2.4.4 — les preuves** : pgTAP et specs lisent le rattachement là où elles lisaient `cards`.
           *État au 2026-10-26 (session arrêtée sur consigne)* : pgTAP, specs API, mail et d'interface converties et vertes
           (étapes 1 à 3) ; seize harnais `verify-*` convertis (étape 4), dont **vérifiés verts** analytique, liste,
           seed-demo ; ma-journee et formulaire rouges sur la suite unitaire pendant le passage — rouge passager du
@@ -17028,7 +17027,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           d'interface, harnais `verify-*` (24 scripts). Les **créations** d'affaires des preuves (12 fichiers pgTAP, 4
           specs API) restent celles de l'affaire, dont le miroir pose le rattachement, et passent à T2.4.5 avec le seed :
           `cards` porte ses colonnes non nulles jusque-là.
-        - [~] **T2.4.5 — le retrait en base** *(exécution précisée par la décision 768 : création par
+        - [x] **T2.4.5 — le retrait en base** *(exécution précisée par la décision 768 : création par
           `app.poser_premier_rattachement` et invariant différé, événement `created` à la validation, rang par déclencheur
           du rattachement, prédicat de purge partagé, santé sur le rattachement, politiques de `cards`)* : colonnes, miroirs et index de `cards` retirés ; les dix fonctions
           réécrites ; `creer_affaire` écrit le rattachement ; le seed et les preuves (pgTAP, API) postent l'affaire
@@ -17055,6 +17054,15 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           rendu-modeles-emails, ce dernier corrigé : sa source est la dernière autorité du rendu). **Reste** : les huit
           harnais qui reconstruisent la base (timeline, move-card, cards, colonnes-protegees, valeurs-champs,
           move-card-to-channel, change-channel-workflow, relances), avec l'accord des sessions actives.
+          *Clos le 2026-10-31 par la reprise de T2.4 (journal, « `CRM-111` T2.4.5 — les huit harnais qui reconstruisent »)* :
+          les huit harnais rejoués après révision de leurs gardes — elles lisaient encore les colonnes, déclencheurs et clés
+          que la `0134` a retirés de `cards` (révisées, jamais retirées, décision 51) ; la pgTAP `0019` (n° 60 à 62) tient la
+          garde de la décision 214 sur `card_placements`, là où elle ne testait plus rien. **Verts** : move-card-to-channel
+          56/56, change-channel-workflow 21/21, relances 92/92. **Rouges sur la seule suite d'API**, par INC-322 (deux
+          preuves étrangères qui archivent le workflow par défaut) : move-card, colonnes-protegees, valeurs-champs ; cards et
+          timeline le sont aussi par la suite d'interface complète qu'ils jouent. Suite d'API 1280/1282 (INC-322) ; suite
+          d'interface 1017/1019, les deux rouges (`commentaires-gestes:192`, réponse transitoire ; `premier-lancement:182`,
+          instable connu) verts rejoués seuls, 12/12 ; pgTAP, unitaires, typecheck, types et build verts (harnais cards).
       *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses

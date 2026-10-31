@@ -120,8 +120,10 @@ for fichier in "$MIGRATION" "$TEST_SQL" "$SPEC_API" "$MODULE" "$COMPOSANT" "$TES
 	if [ -f "$fichier" ]; then ok "$fichier est livré"; else fail "$fichier est ABSENT"; fi
 done
 
+# Le premier bloc de commentaires, et non les trois premières lignes : les unités qui ont étendu le composant
+# (`CRM-093`, `CRM-069`, `CRM-071`) inscrivent leur `@spec` en tête, au-dessus de celui de `CRM-044`.
 for fichier in "$MIGRATION" "$MODULE" "$COMPOSANT"; do
-	if head -3 "$fichier" | grep -q '@spec CRM-044'; then
+	if sed -n '/^\(\/\/\|--\)/!q;p' "$fichier" | grep -q '@spec CRM-044'; then
 		ok "$(basename "$fichier") porte son commentaire @spec"
 	else
 		fail "$(basename "$fichier") ne cite pas son unité de backlog"
@@ -191,13 +193,18 @@ else
 	fail "created_at a pour défaut « $defaut » : l'ordre du fil cesserait d'être signifiant"
 fi
 
-for trigger in card_events_apres_insertion card_events_apres_maj; do
-	if [ "$(psql_db -c "select count(*) from pg_trigger where tgrelid='public.cards'::regclass and tgname='$trigger'")" = 1 ]; then
-		ok "le trigger $trigger est posé sur cards"
-	else
-		fail "le trigger $trigger est ABSENT de cards"
-	fi
-done
+# RÉVISÉ PAR `CRM-111` T2.4.5 (décision 768, migration 0134) : la NAISSANCE s'écrit à la validation, depuis le premier
+# rattachement (`card_placements_evenement_creation`) ; le déclencheur de `cards` garde la corbeille et l'affaire.
+if [ "$(psql_db -c "select count(*) from pg_trigger where tgrelid='public.cards'::regclass and tgname='card_events_apres_maj'")" = 1 ]; then
+	ok "le trigger card_events_apres_maj est posé sur cards"
+else
+	fail "le trigger card_events_apres_maj est ABSENT de cards"
+fi
+if [ "$(psql_db -c "select count(*) from pg_trigger where tgrelid='public.card_placements'::regclass and tgname='card_placements_evenement_creation'")" = 1 ]; then
+	ok "le trigger card_placements_evenement_creation est posé : la naissance s'écrit au premier rattachement"
+else
+	fail "le trigger card_placements_evenement_creation est ABSENT : une affaire naîtrait sans trace"
+fi
 
 # `CRM-111` T2.3.0 (migration 0110) : les déplacements, l'attribution, l'archivage et le sommeil écrivent leur événement
 # depuis la table du RATTACHEMENT ; le déclencheur de `cards` garde la naissance et la corbeille.
@@ -220,7 +227,7 @@ else
 fi
 
 secdef=$(psql_db -c "select count(*) from pg_proc where pronamespace='app'::regnamespace
-	and proname in ('card_event_ecrire','card_events_apres_insertion_card',
+	and proname in ('card_event_ecrire','card_placements_evenement_creation',
 	                'card_events_apres_maj_card','card_events_apres_ecriture_valeur')
 	and prosecdef and coalesce(proconfig, '{}') @> array['search_path=\"\"']")
 if [ "$secdef" = 4 ]; then

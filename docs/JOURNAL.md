@@ -37028,3 +37028,47 @@ lui a été reposée en ces termes.
 rouges et les huit harnais qui reconstruisent la base. Le responsable a répondu « Oui, pris maintenant » à la question de
 l'instantané de la machine virtuelle ; aucune fenêtre n'a suivi, et l'instantané sera redemandé au moment de `--migrate`.
 
+
+### `CRM-111` T2.4.5 — les huit harnais qui reconstruisent : T2.4 close (2026-10-31)
+
+**Problème** : les huit harnais qui reconstruisent la base (timeline, move-card, cards, colonnes-protegees,
+valeurs-champs, move-card-to-channel, change-channel-workflow, relances), rejoués une seule fois après le retrait comme
+décidé le 2026-10-28, rendaient tous un échec au premier passage.
+
+**Observations** : aucun défaut du produit. Les gardes mesuraient encore ce que la `0134` a retiré de `cards`, ou ce que
+la décision 768 a déplacé :
+- *timeline* attendait le déclencheur de naissance sur `cards` — la naissance s'écrit au premier rattachement
+  (`card_placements_evenement_creation`) ; sa vérification de traçabilité lisait les trois premières lignes, où les unités
+  qui ont étendu le composant inscrivent désormais leur `@spec` ;
+- *cards* attendait `403` d'un `viewer` dans un channel qu'il **ne lit pas** : `creer_affaire` lit le channel avant
+  d'éprouver l'écriture et répond « channel introuvable » (`P0002`) ; le refus d'écriture s'éprouve là où il lit
+  (`maintenance`, `403`), l'introuvable reste prouvé à part ; sa fixture de nœud libre posait l'affaire avec ses
+  anciennes colonnes ;
+- *colonnes-protegees* rejouait la `0014` et la `0112`, qui nomment des colonnes retirées : le rejeu devient la
+  reconstruction (décision 682, comme `verify-cards.sh`) ; `current_step_id` se mesure sur le rattachement ;
+- *move-card-to-channel* : les trois colonnes se constatent **absentes** de `cards` et fermées sur `card_placements` ;
+  la dégradation porte sur `card_placements`. **La pgTAP `0019` (n° 60 à 62) avait été affaiblie** pendant la bascule :
+  « si la colonne existe sur `cards` », donc rien sur une base à jour — la dégradation restait invisible. Elle tient
+  désormais la garde de la décision 214 sur `card_placements` (vérifié : 71/71, et rouge sous dégradation) ;
+- *change-channel-workflow* attendait le nom de l'ancienne clé de l'affaire (`cards_channel_id_workflow_id_fkey`) : le
+  refus vient désormais de celle du rattachement, `card_placements_channel_workflow_fk` ;
+- *valeurs-champs* dégradait l'unicité `cards_id_workflow_id_key` (devenue `card_placements_id_workflow_key`, que
+  référence `card_field_values_placement_workflow_fk`) et le validateur, dont la résolution des types `contact` et `user`
+  vit depuis la `0131` (`CRM-097`) dans `app.valider_valeur_champ` ;
+- *relances* rejouait une copie dégradée de la `0053`, dont le corps lit `cards.current_step_id` : la dégradation part
+  de la **définition en base** (celle de la `0109`), restaurée avec les privilèges nominatifs de la `0053`.
+
+**Incident, de cette session.** Pour mesurer si la `0014` se rejouait, je l'ai appliquée **hors transaction** à la base
+partagée : son `revoke update on public.cards from authenticated` (ligne 96) est passé, puis le fichier s'est arrêté
+sur une colonne absente (ligne 129). `authenticated` n'avait plus aucune colonne ouverte sur `cards` ; la pgTAP `0019`
+l'a dit (« have: 0, want: 4 »). La base a été **reconstruite** aussitôt (`reconstruire_base_dev`, code 0), les quatre
+colonnes rouvertes constatées. Aucune autre session n'écrivait alors (la session de `CRM-117` attendait la fin des
+harnais). Leçon : une mesure de rejeu se fait dans `begin … rollback`, jamais nue.
+
+**Vérifications** : move-card-to-channel 56/56, change-channel-workflow 21/21, relances 92/92 ; move-card,
+colonnes-protegees et valeurs-champs rouges **sur la seule suite d'API**, par INC-322 (suite d'API 1280/1282 :
+`copie-workflow:416`, `restauration-version-workflow:765`) ; cards et timeline aussi par la suite d'interface complète
+qu'ils jouent — 1017/1019, `commentaires-gestes:192` (une réponse qui n'était pas une liste, transitoire) et
+`premier-lancement:182` (instable connu) verts rejoués seuls, 12/12. pgTAP, unitaires, typecheck, types et build verts
+(harnais cards). Base reconstruite et seed rétabli en fin de série. **Décision** : T2.4.4, T2.4.5 et T2.4 passent `[x]` ;
+INC-322 se corrige ensuite, dans son propre commit. La fenêtre de livraison de la décision 782 peut être reproposée.
