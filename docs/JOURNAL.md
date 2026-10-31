@@ -37566,3 +37566,19 @@ compte attendu passe de 514 à 518, à cause des quatre images de `CRM-074` T3. 
 
 **Vérifications** : le contrat de déploiement, §8, « 2026-11-01 ». **Conséquences** : les unités du lot restent `[P]`
 jusqu'au constat du responsable, et `CRM-117` T6 passe `[P]`.
+
+### Les gestes d'infrastructure en attente, maintenant : §2.18, §2.21, §2.22 (2026-11-01, décision 793)
+
+**Contexte** : la fenêtre 106 à 141 est livrée et vérifiée (entrée précédente). MinIO, Kong, Caddy et Realtime tournent
+sur leurs définitions d'avant ; seul un `./runProd.sh --spark` ordinaire les recrée.
+
+**Décision 793, du responsable, en séance** : « Oui, les trois ». Les gestes des §2.18 (MinIO depuis Chainguard), §2.21
+(Kong et Caddy ferment une connexion amont inactive après 3 s) et §2.22 (Kong joint Realtime par alias réseau) sont
+appliqués maintenant, sous l'instantané de VM du 2026-10-31 au matin, qui reste le retour arrière de la journée : la
+production n'a changé depuis que par la fenêtre de ce jour.
+
+**Exécution prévue** : `./runProd.sh --spark` dans la cellule, sans `--migrate`. Ensuite, les vérifications propres à
+chaque section : `minio` sain, `minio-createbucket` terminé en `0`, et une pièce relue par l'API de stockage (§2.18) ;
+Kong à `upstream_keepalive_idle_timeout = 3` et Caddy à `crm-001` (§2.21) ; Kong à `crm-115`, l'alias
+`realtime-dev.realtime` résolu, les noms de conteneurs inchangés (§2.22) ; puis `verifier.sh`. Les images de `quay.io`
+restent en cache dans la cellule et ne seront pas purgées avant le constat (§2.18, limite du retour arrière).
