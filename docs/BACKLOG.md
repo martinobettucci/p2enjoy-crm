@@ -10806,7 +10806,11 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
 ### CRM-069 — Étiquettes et digest quotidien `[~]`
 
 *Revenue à `[~]` le 2026-10-31* : défaut constaté en développement, **INC-321** — le digest d'une personne dont la boîte
-est synchronisée est ingéré par le CRM comme un message à classer. Correction soumise à l'arbitrage du responsable.
+est synchronisée est ingéré par le CRM comme un message à classer. **Arbitrée** (décision 780) : le digest porte
+`Auto-Submitted: auto-generated` et l'ingestion de `mail-sync` écarte les messages de l'identité système de l'espace.
+
+- [ ] **T6 — le CRM n'ingère pas ses propres courriels (INC-321)** : spécification (`docs/SPEC-etiquettes-digest.md`),
+      en-tête du digest, filtre d'ingestion de `mail-sync` ; unitaires, intégration, E2E mail. Connecteur MCP : sans objet.
 
 Arbitrée par la décision 769, spécification validée par la décision 771 : `docs/SPEC-etiquettes-digest.md`. Connecteur :
 étiquettes dans la famille `affaires` existante ; digest hors connecteur. Tranches (§7) :

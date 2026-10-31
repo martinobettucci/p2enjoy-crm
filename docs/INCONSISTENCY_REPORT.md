@@ -8187,6 +8187,8 @@ l'identité système. **Non corrigé** : la correction touche l'ingestion (`mail
 l'ingestion écarte tout message reçu de l'identité système de l'espace. Connecteur MCP : sans objet (rien de visible ne
 change, le message n'existe plus).
 
+**Arbitrée le 2026-10-31 (décision 780)** : l'issue proposée est retenue, à spécifier puis livrer sous `CRM-069`.
+
 ### INC-322 — Deux preuves d'API archivent le workflow par défaut du seed, que la garde de `CRM-118` T1.b refuse d'archiver
 
 *Constaté le 2026-10-31 par la campagne de clôture de `CRM-071`.* `e2e/api/copie-workflow.spec.ts:416` (ligne h) et

@@ -36981,3 +36981,17 @@ qui est en ajout seul.
 chapitre 9 dans `CHAPITRES_ILLUSTRES` ; `manuel:construire` 33 chapitres sans avertissement ; `verify-manual.sh`
 **165 contrôles, sans anomalie**. Base relue après le passage : aucune affaire ni channel jetable, Driss Lemoine
 `business_developer`, aucune vue « Portails publics » ni étiquette « Grand compte ».
+
+### INC-321 arbitrée : le CRM écarte ses propres courriels à l'ingestion ; livraison de `CRM-071` demandée (2026-10-31, décision 780)
+
+**Problème.** INC-321 : le digest quotidien (`CRM-069`) d'une personne dont la boîte est synchronisée revient dans le CRM
+comme un message entrant à classer.
+
+**Décision 780, du responsable, en séance.**
+- **Écarter les courriels du CRM** : le digest porte l'en-tête `Auto-Submitted: auto-generated` (RFC 3834), et
+  l'ingestion de `mail-sync` écarte tout message reçu de l'identité système de l'espace. À spécifier dans
+  `docs/SPEC-etiquettes-digest.md`, puis prouver (unitaire, intégration `mail-sync`, E2E mail) ; `CRM-069` repasse alors
+  `[P]`. Connecteur MCP : sans objet — rien de visible n'y change.
+- **Livrer `CRM-071` maintenant** : migrations `0135` à `0138`, après la `0134`, avec la webapp et l'image `mcp` de `main`,
+  selon `docs/PROD_MIGRATIONS.md` §3, chaque geste de production soumis au responsable.
+
