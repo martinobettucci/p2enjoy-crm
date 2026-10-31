@@ -37140,3 +37140,21 @@ l'instantané : « Celui de ce matin suffit » — l'instantané de la machine v
 retour arrière, **à condition qu'aucune écriture n'ait lieu en production d'ici là** (à revérifier en lecture seule le
 jour de la fenêtre : révision servie et registre des migrations inchangés). En attendant, le backlog continue :
 `CRM-073` (spécification des webhooks), puis `CRM-074` et la file des incohérences.
+
+### `CRM-073` : la spécification des webhooks validée (2026-10-31, décision 784)
+
+**Proposition** : `docs/SPEC-webhooks.md`, écrite d'après la décision 779. La base décide (déclencheurs qui inscrivent
+une remise par webhook concerné, dans la transaction du changement), la fonction edge `webhooks` remet (signature
+HMAC-SHA256 horodatée, cinq essais à délais croissants, refus des adresses internes), `pg_cron` cadence chaque minute
+par `pg_net` sur le réseau interne — l'emplacement que la décision 260 réservait aux webhooks. Neuf événements tirés de
+`card_events` et des écritures sur `contacts` ; secret dans Vault, rendu une seule fois ; écran Réglages ▸ Webhooks
+réservé à l'administrateur.
+
+**Décision 784, du responsable, en séance** — les six points du §11 acceptés tels que proposés : (1) la charge utile
+porte les identifiants et les champs du changement, pas l'objet entier ; (2) un webhook limité à un channel ne reçoit pas
+les événements de contact ; (3) l'anonymisation d'un contact émet `contact.deleted` (son seul identifiant) ;
+(4) aucune désactivation automatique d'un webhook qui échoue ; (5) historique des remises gardé 30 jours ; (6) un
+récepteur local (`webhook-sink`) entre dans la pile de développement. Le découpage en trois tranches (base, remise,
+écran) est accepté. **Connecteur MCP : non**, réponse déjà donnée aux deux questions (décision 779).
+
+**Conséquences** : la section `CRM-073` du backlog porte les tranches ; T1 (en base) commence après ce commit.

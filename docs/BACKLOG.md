@@ -7503,7 +7503,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
 | CRM-071 | Vues sauvegardées, import et export CSV — les six tranches livrées et prouvées en développement ; reste la livraison (migrations `0135` à `0138`, webapp, image `mcp`) | `[P]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |
-| CRM-073 | Webhooks sortants signés — **arbitrée** (décision 779) : webhooks seuls, **jetons d'API abandonnés** (le connecteur MCP suffit) ; événements de la vie des affaires et des contacts ; connecteur MCP : non. Spécification à écrire (`docs/SPEC-webhooks.md`) — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-30 17:47 UTC — état avant : [ ]* | `[@]` |
+| CRM-073 | Webhooks sortants signés — **arbitrée** (décision 779) : webhooks seuls, **jetons d'API abandonnés** (le connecteur MCP suffit) ; connecteur MCP : non. **Spécification validée** (`docs/SPEC-webhooks.md`, décision 784) ; tranches à la section `CRM-073` — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-30 17:47 UTC — état avant : [ ]* | `[@]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
@@ -12658,6 +12658,25 @@ messages d'un contact anonymisé restent intacts).
       - [x] Seed §26 (« Régis Anonyme » exporté puis anonymisé par les vraies fonctions), rejoué au repos rc=0 ; la
             vérification §25 lit une famille à la fois (une lecture unique rendait mille entrées et manquait l'export).
       - [x] Manuel (chapitre 3 *ter*), `SCHEMA.md`, `PROD_MIGRATIONS.md`, `SPEC-seed.md` §26, CHANGELOG.
+
+### CRM-073 — Webhooks sortants signés `[@]`
+
+*Spécification : `docs/SPEC-webhooks.md`, validée le 2026-10-31 telle que proposée (décision 784) — charge utile
+« identifiants et changement », pas d'événements de contact sous filtre de channel, l'anonymisation émet
+`contact.deleted`, aucune désactivation automatique, historique de 30 jours, récepteur local de développement.
+Connecteur MCP : **non**, aux deux questions (décision 779) — aucune famille nouvelle.*
+
+- [ ] **T1 — en base** (§3, §4, §6) : migration — `webhook_endpoints`, `webhook_deliveries`, secret dans Vault,
+      `create_webhook_endpoint`, `rotate_webhook_secret`, `redeliver_webhook`, déclencheurs des neuf événements et filtre
+      de channel, purge à 30 jours, type d'entité `webhook` du journal ; pgTAP ; API aux jetons réels ; types régénérés ;
+      `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md`.
+- [ ] **T2 — la remise** (§2, §5, §6, §8) : fonction edge `webhooks` (signature HMAC-SHA256 horodatée, cinq essais à
+      1 min, 5 min, 30 min, 2 h, refus des adresses internes), tâche `pg_cron` par `pg_net`, récepteur local
+      `webhook-sink` ; variables `WEBHOOKS_DISPATCH_SECRET`, `WEBHOOKS_ALLOWED_HOSTS` ; unitaires Deno ; intégration
+      jusqu'au récepteur ; contrat de déploiement.
+- [ ] **T3 — l'écran** (§7, §8) : `docs/DESIGN_SYSTEM.md` avant le code, Réglages ▸ Webhooks ; seed par la vraie chaîne ;
+      unitaires ; E2E ; captures aux quatre paliers ; manuel, chapitre « Webhooks ».
+- [ ] **Livraison en production**, sur instruction du responsable.
 
 ### CRM-075 — Administration des tracks et des channels `[x]`
 *Créée le 2026-08-11 par arbitrage du responsable — INC-086, option 2, `docs/JOURNAL.md` décision
