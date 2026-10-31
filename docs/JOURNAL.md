@@ -37255,3 +37255,25 @@ fait observer une à une celles qui changent visiblement (tri par écart de pixe
 tout en un seul commit. Pour le lot 0106 à 0140 (décision 786), ce renouvellement se fait pendant la campagne finale de
 `CRM-117` (T5). La restauration du jour reste juste : ces 885 images n'avaient pas été observées, et la campagne les
 reproduit. `CRM-122` est réécrite en conséquence.
+
+### `CRM-074` : l'aperçu des pièces jointes et l'extraction de texte arbitrés (2026-10-31, décision 788)
+
+**Contexte** : `CRM-074` n'avait qu'une ligne de table. Les pièces jointes reçues vivent dans `mail_attachments` et le
+bucket privé `mail-attachments` ; seule une pièce `clean` se télécharge, par un lien signé de cinq minutes (`CRM-057`,
+migration `0029`). Questions posées au responsable : les types montrés, l'extraction et son usage, les écrans, et les deux
+questions du connecteur (CLAUDE.md, décisions 627 et 659).
+
+**Décision 788, du responsable, en séance** :
+1. **Aperçu** : images et PDF (« Images et PDF ») — PNG, JPEG, GIF, WebP et PDF, pour les seules pièces saines ; ni SVG
+   ni HTML, qui peuvent porter du script.
+2. **Extraction** : « PDF et Office, sans recherche » — `mail-sync` extrait le texte des PDF, Word, Excel et OpenDocument
+   après l'antivirus, sans service externe ; le texte est montré dans l'aperçu, et **n'entre pas** dans la recherche
+   globale.
+3. **Écrans** : « Boîte de réception et fil de l'affaire » — partout où une pièce est listée aujourd'hui.
+4. **Connecteur MCP** : « oui dans la famille messagerie, mais il récupère les PJ en binaire pour laisser l'agent IA lire
+   les fichiers à sa façon » — action « consulter » de la famille existante `messagerie` ; l'outil rend le fichier
+   lui-même, et non le texte extrait. Aucune famille nouvelle.
+
+**Conséquences** : la section `CRM-074` du backlog porte l'arbitrage ; la spécification `docs/SPEC-pieces-jointes.md` est
+écrite ensuite et soumise au responsable avant le code.
+

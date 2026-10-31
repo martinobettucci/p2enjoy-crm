@@ -7504,7 +7504,7 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-071 | Vues sauvegardées, import et export CSV — les six tranches livrées et prouvées en développement ; reste la livraison (migrations `0135` à `0138`, webapp, image `mcp`) | `[P]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |
 | CRM-073 | Webhooks sortants signés — **arbitrée** (décision 779) : webhooks seuls, **jetons d'API abandonnés** (le connecteur MCP suffit) ; connecteur MCP : non. **Spécification validée** (`docs/SPEC-webhooks.md`, décision 784) ; T1 à T3 livrées et prouvées en développement (migrations `0139`, `0140`, fonction `webhooks`, Réglages ▸ Webhooks, chapitre 34 du manuel) ; reste la livraison — tranches à la section `CRM-073` | `[P]` |
-| CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
+| CRM-074 | Aperçu des pièces jointes et extraction de texte — **arbitrée** (décision 788) : aperçu des images et des PDF sains, boîte de réception et fil de l'affaire ; texte extrait des PDF et des fichiers Office, montré dans l'aperçu, **hors recherche** ; connecteur MCP : **oui**, famille `messagerie` existante, la pièce rendue en binaire ; tranches à la section `CRM-074` | `[@]` |
 | CRM-075 | **Administration des tracks et des channels** | `[x]` |
 | CRM-076 | Éditeur administrateur de workflows | `[x]` |
 | CRM-077 | Corbeille et restauration des objets métier | `[P]` |
@@ -12704,6 +12704,19 @@ Connecteur MCP : **non**, aux deux questions (décision 779) — aucune famille 
       verts avec le nouveau seed (API 8/8, interface 14/14) ; compteur du harnais (1 029 scénarios d'interface).
 - [ ] **Livraison en production**, sur instruction du responsable — **dans le lot unique des migrations `0106` à `0140`**
       (décision 786), après la fin de `CRM-117` (décision 783) ; `docs/PROD_MIGRATIONS.md` §3.
+
+### CRM-074 — Aperçu des pièces jointes et extraction de texte `[@]`
+*Prise en charge : session interactive 4522fa9c depuis 2026-10-31 17:53 UTC — état avant : [ ]*
+
+*Arbitrée le 2026-10-31 (décision 788).* (1) **Aperçu** des images (PNG, JPEG, GIF, WebP) et des PDF, dans une
+visionneuse, pour les seules pièces saines (`clean`), par le lien signé existant ; ni SVG ni HTML. (2) **Extraction de
+texte** des PDF et des fichiers Office (Word, Excel, OpenDocument) par `mail-sync`, après l'antivirus, sans service
+externe ; le texte est montré dans l'aperçu, pour copier un passage — **il n'entre pas dans la recherche globale**.
+(3) L'aperçu s'ouvre **dans la boîte de réception et dans le fil de l'affaire**. (4) **Connecteur MCP : oui**, famille
+**`messagerie`** existante, action « consulter » — aucune famille nouvelle ; l'outil rend **la pièce elle-même, en
+binaire**, pour que l'agent la lise à sa façon.
+
+- [ ] **Spécification** (`docs/SPEC-pieces-jointes.md`), soumise au responsable avant le code ; découpage en tranches.
 
 ### CRM-075 — Administration des tracks et des channels `[x]`
 *Créée le 2026-08-11 par arbitrage du responsable — INC-086, option 2, `docs/JOURNAL.md` décision
