@@ -7499,9 +7499,9 @@ Chaque unité est indépendamment livrable et suit la Definition of Done commune
 | CRM-066 | Analytique de conversion et prévisionnel pondéré | `[P]` |
 | CRM-067 | Activités typées : appels, réunions, visios — spécification validée (`docs/SPEC-activites.md`, décisions 647 à 649) ; tranches à la section `CRM-067` ci-dessous | `[P]` |
 | CRM-068 | Checklists et modèles de cards | `[P]` |
-| CRM-069 | Étiquettes et digest quotidien — **arbitrée** (décision 769) : catalogue d'étiquettes par espace (administrateurs ; palette fermée ; archivable), posées par qui écrit l'affaire ; digest quotidien par email consenti (7 h, `pg_cron`, identité de service) ; connecteur : étiquettes oui, famille `affaires` existante ; digest non. Spécification `docs/SPEC-etiquettes-digest.md` **validée** (décision 771) | `[P]` |
+| CRM-069 | Étiquettes et digest quotidien — **arbitrée** (décision 769) : catalogue d'étiquettes par espace (administrateurs ; palette fermée ; archivable), posées par qui écrit l'affaire ; digest quotidien par email consenti (7 h, `pg_cron`, identité de service) ; connecteur : étiquettes oui, famille `affaires` existante ; digest non. Spécification `docs/SPEC-etiquettes-digest.md` **validée** (décision 771) | `[~]` (INC-321) |
 | CRM-070 | Administration des permissions fines **et invitation d'un membre** | `[x]` |
-| CRM-071 | Vues sauvegardées et import CSV — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-28 10:35 UTC — état avant : [ ]* | `[@]` |
+| CRM-071 | Vues sauvegardées, import et export CSV — les six tranches livrées et prouvées en développement ; reste la livraison (migrations `0135` à `0138`, webapp, image `mcp`) | `[P]` |
 | CRM-072 | Journal d'audit consultable et conformité RGPD — **prochaine unité du chunk 5** ; connecteur MCP : **non** (décision 707) ; **arbitrée** (décision 708) : gestes sensibles journalisés, consultés par les administrateurs (et le superadministrateur pour la plateforme), conservés 1 an puis effacés en le journalisant, export JSON et anonymisation d'un contact, journal en ajout seul tenu en base. Prête à spécifier | `[P]` |
 | CRM-073 | Webhooks sortants signés — **arbitrée** (décision 779) : webhooks seuls, **jetons d'API abandonnés** (le connecteur MCP suffit) ; événements de la vie des affaires et des contacts ; connecteur MCP : non. Spécification à écrire (`docs/SPEC-webhooks.md`) — *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-30 17:47 UTC — état avant : [ ]* | `[@]` |
 | CRM-074 | Aperçu des pièces jointes et extraction de texte | `[ ]` |
@@ -10803,7 +10803,10 @@ rejouée : elle n'est la Definition of Done d'aucune unité (décision 553).
       été rejouée — elle n'est la Definition of Done d'aucune unité (décision 553) et reste l'objet
       d'une session dédiée. Les trois harnais que ce changement touche l'ont été.
 
-### CRM-069 — Étiquettes et digest quotidien `[P]`
+### CRM-069 — Étiquettes et digest quotidien `[~]`
+
+*Revenue à `[~]` le 2026-10-31* : défaut constaté en développement, **INC-321** — le digest d'une personne dont la boîte
+est synchronisée est ingéré par le CRM comme un message à classer. Correction soumise à l'arbitrage du responsable.
 
 Arbitrée par la décision 769, spécification validée par la décision 771 : `docs/SPEC-etiquettes-digest.md`. Connecteur :
 étiquettes dans la famille `affaires` existante ; digest hors connecteur. Tranches (§7) :
@@ -12492,7 +12495,21 @@ modèles stockés et « Enregistrer comme modèle » ; connecteur : les checklis
       migration ; preuves unitaires, d'intégration contre la vraie base, et E2E (un point coché par le connecteur sur la
       fiche).
 
-### CRM-071 — Vues sauvegardées, import et export CSV `[@]`
+### CRM-071 — Vues sauvegardées, import et export CSV `[P]`
+
+*`[P]` depuis le 2026-10-31* : les six tranches sont livrées et prouvées en développement. **Campagne de clôture**, après
+synchronisation : pgTAP 118 fichiers et 4543 assertions sans anomalie ; unitaires 4993/4993, typecheck et build verts ;
+API 1278/1282, interface 1007/1021 (deux non joués). Chaque échec est expliqué : **un seul venait de l'unité**, la garde
+de `formulaire-selecteurs.spec.ts` (les contacts importés par le seed de T5), révisée (décision 51) et rejouée verte ;
+`manuel.spec.ts` M1, le bucket non republié depuis le paragraphe 9.11, republié en développement, vert ; `workflows.spec.ts`
+W0 et `coherence-workflow.spec.ts` (deux), un workflow laissé par `mcp/tests/test_integration_workflows.py`, dont le
+nettoyage effaçait l'ancien avant sa copie et dont l'affaire était encore écrite avec les colonnes retirées par la `0134` —
+le test est corrigé (12/12, plus aucun reste) et les trois scénarios rejoués verts ; `copie-workflow.spec.ts:416` et
+`restauration-version-workflow.spec.ts:765`, **INC-322** (preuves de `CRM-032` et `CRM-097` contredites par la garde de
+`CRM-118` T1.b) ; `recherche.spec.ts` (six) et `sommeil-fil.spec.ts:158`, **INC-321** (le digest de `CRM-069` ingéré) ;
+`plateforme-mcp.spec.ts:195`, INC-320 connue ; `premier-lancement.spec.ts:182`, instable, vert rejoué seul (4/4). Il ne
+reste que la **livraison** (`docs/PROD_MIGRATIONS.md` §3 : migrations `0135` à `0138` après la `0134`, la webapp et l'image
+`mcp` de `main`), sur instruction du responsable.
 
 **Arbitrée le 2026-10-30 (décision 774).** Spécification `docs/SPEC-vues-import-export.md`
 **validée telle quelle le 2026-10-30** (décision 776). Tranches (§8) :
@@ -16983,6 +17000,9 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           `probability_override` et `owner_id` sur `cards`), `test_integration_workflows.py::test_l_entete_et_le_changement_de_workflow_par_l_administratrice`
           (`POST /channels` refusé en 400), `test_integration_droits_fins.py::test_m1_un_droit_member_rouvre_en_ecriture_a_la_lectrice`
           (`POST /cards` avec les colonnes de rattachement, puis `cards.channel_id`) : `verify-mcp.sh` rend 3 échecs d'intégration.
+          *Corrigé le 2026-10-31 par la clôture de `CRM-071`* : `test_integration_workflows.py` pose son affaire puis son
+          rattachement, et son nettoyage efface la copie avant l'ancien (qui restait en base et faussait `workflows.spec.ts`
+          W0 et `coherence-workflow.spec.ts`) — 12/12, aucun reste. **Restent deux** échecs d'intégration du connecteur.
           **restent à rejouer** : timeline (interrompu), rendu-modeles-emails, move-card, cards, colonnes-protegees,
           valeurs-champs, move-card-to-channel, change-channel-workflow, relances, board. Résidu relevé pour T1 ter :
           `verify-mail-classement.sh` restaure une définition d'`app.card_par_adresse` antérieure à T2.2.

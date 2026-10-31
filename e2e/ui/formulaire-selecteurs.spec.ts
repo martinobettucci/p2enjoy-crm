@@ -1,3 +1,4 @@
+// @verifies CRM-071 (docs/BACKLOG.md) — tranche T5 : garde révisée pour les contacts importés par le seed (décision 51)
 // @verifies CRM-060 (docs/BACKLOG.md) — contacts et organisations, tranche 4 sous-tranche 4d
 // @verifies docs/SPEC-contacts.md §13.1 (ce que la sous-tranche livre), §13.3 (les deux lectures),
 //           §13.5 (cas a à d et f, éprouvés sur la pile réelle), §13.6 (le seed enrichi),
@@ -96,8 +97,9 @@ test.describe('sélecteurs de contact et de membre (docs/SPEC-contacts.md §13)'
 		const contact = await selecteurPret(page, 'contact-principal')
 		// Trois contacts seedés, plus l'option vide du §4 bis.5 : elle est le moyen de VIDER.
 		// Cinq depuis `CRM-072` T3 (décision 51) : l'option vide, et le contact anonymisé du seed parmi les quatre
-		// contacts (docs/SPEC-seed.md §26).
-		await expect(contact.locator('option')).toHaveCount(5)
+		// contacts (docs/SPEC-seed.md §26). Douze depuis `CRM-071` T5 (décision 51) : les sept contacts que le seed importe
+		// de son fichier de salon (§33).
+		await expect(contact.locator('option')).toHaveCount(12)
 		await expect(contact.locator('option', { hasText: '— Aucun choix —' })).toHaveCount(1)
 		await expect(contact.locator('option', { hasText: 'Sophie Dupont' })).toHaveCount(1)
 

@@ -8168,3 +8168,35 @@ outils, qui repoussent celui du seed hors de la première page. Vert à 01:26 le
 preuve qui suppose une base fraîchement seedée. **Non corrigé** : le fichier relève de `CRM-103`. **Issues proposées** :
 filtrer aussi par compte (le filtre existe dans la RPC, `p_sub`) ou lire le journal propre de la fiche de Driss ; ou
 reseeder avant la preuve.
+
+### INC-321 — Le digest quotidien est ingéré par la synchronisation de la boîte de son destinataire
+
+*Constaté le 2026-10-31 par la campagne de clôture de `CRM-071`.* Le digest de Driss (`CRM-069` T4, abonné par le seed,
+`docs/SPEC-seed.md` §31) est mis en file par la tâche horaire, envoyé par l'identité système (`systeme@crm.p2enjoy.test`)
+à `bizdev@p2enjoy.test` — une boîte **synchronisée** par `mail-sync` — et revient dans le CRM comme un message entrant
+`unclassified` de l'espace (« Votre journée dans P2Enjoy SAS — … », reçu le 2026-10-30 à 18:01 UTC). Effets mesurés : la
+recherche globale de l'administratrice rend un résultat de plus pour « sogexia » (six scénarios de
+`e2e/ui/recherche.spec.ts`), et le dossier « Non classés » de l'inbox n'est plus vide (`e2e/ui/sommeil-fil.spec.ts:158`).
+En développement, un message de plus chaque jour.
+
+**Le défaut est du produit, pas des preuves** : en production, une personne qui synchronise sa propre boîte recevra son
+digest dans le CRM, comme un courriel à classer — le CRM se lirait lui-même. Ni `docs/SPEC-etiquettes-digest.md` ni
+`mail-sync` ne prévoient le cas : le digest ne porte pas d'en-tête `Auto-Submitted`, et l'ingestion ne reconnaît pas
+l'identité système. **Non corrigé** : la correction touche l'ingestion (`mail-sync`) et sort de la tâche autorisée ;
+`CRM-069` revient à `[~]`. **Issue proposée** : le digest porte `Auto-Submitted: auto-generated` (RFC 3834), et
+l'ingestion écarte tout message reçu de l'identité système de l'espace. Connecteur MCP : sans objet (rien de visible ne
+change, le message n'existe plus).
+
+### INC-322 — Deux preuves d'API archivent le workflow par défaut du seed, que la garde de `CRM-118` T1.b refuse d'archiver
+
+*Constaté le 2026-10-31 par la campagne de clôture de `CRM-071`.* `e2e/api/copie-workflow.spec.ts:416` (ligne h) et
+`e2e/api/restauration-version-workflow.spec.ts:765` (ligne q) archivent « Cycle commercial standard »
+(`5eed…0051`) par un `PATCH archived_at` du jeton administrateur, et attendent `204`. La base rend `400` : ce workflow est
+le **défaut** de l'espace et sert sept channels, et la garde `app.workflows_garder_archivage` (migration `0130`,
+`docs/SCHEMA.md` « Migration `0130` ») refuse d'archiver un workflow par défaut ou employé.
+
+**Le produit se conduit comme spécifié** ; ce sont les deux preuves, antérieures à la garde, qui supposent un archivage
+libre. **Non corrigé** : les fichiers relèvent de `CRM-032` et `CRM-097`. **Issue proposée** : y archiver un workflow
+jetable, non défaut et inemployé, créé par la preuve — comme les trois suites pgTAP l'ont fait (garde suspendue le temps
+de leur transaction).
+

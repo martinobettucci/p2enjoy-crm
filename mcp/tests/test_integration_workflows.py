@@ -1,3 +1,4 @@
+# @verifies CRM-111 T2.4.5 (docs/BACKLOG.md) — l'affaire de la preuve est posée par son rattachement (migration 0134)
 # @verifies CRM-118 (docs/BACKLOG.md) — tranches T2.a à T2.d : les outils de la famille `workflows` contre le vrai Keycloak,
 #           la vraie base et le vrai service `mcp`, par le parcours OAuth réel
 # @verifies docs/SPEC-mcp.md §13 (par outil : succès, refus par la matrice, refus par le CRM malgré la matrice ouverte,
@@ -404,8 +405,11 @@ async def _nettoyer_t2e() -> None:
     await _service("PATCH", "/workflows", params={"id": f"eq.{WORKFLOW_DEFAUT}"}, json={"is_default": True})
     await _service("DELETE", "/cards", params={"id": f"eq.{CARD_T2E}"})
     await _service("DELETE", "/channels", params={"id": f"eq.{CHANNEL_T2E}"})
-    for nom in (NOM_ANCIEN, NOM_NOUVEAU, NOM_COPIE):
-        await _service("DELETE", "/workflows", params={"workspace_id": f"eq.{ESPACE_SEEDE}", "name": f"eq.{nom}"})
+    # La copie d'abord : elle désigne l'ancien (`copied_from_workflow_id`), qui ne s'efface pas tant qu'elle existe — dans
+    # l'ordre inverse, l'ancien restait en base et faussait les gardes des workflows globaux du seed.
+    for nom in (NOM_COPIE, NOM_NOUVEAU, NOM_ANCIEN):
+        reponse = await _service("DELETE", "/workflows", params={"workspace_id": f"eq.{ESPACE_SEEDE}", "name": f"eq.{nom}"})
+        assert reponse.status_code == 204, reponse.text
 
 
 async def test_l_entete_et_le_changement_de_workflow_par_l_administratrice():
@@ -453,10 +457,15 @@ async def test_l_entete_et_le_changement_de_workflow_par_l_administratrice():
                 "id": CHANNEL_T2E, "workspace_id": ESPACE_SEEDE, "track_id": TRACK_CONSEIL, "workflow_id": ancien,
                 "name": "Channel MCP T2.e", "slug": "mcp-t2e",
             })).status_code == 201
-            assert (await _service("POST", "/cards", json={
-                "id": CARD_T2E, "workspace_id": ESPACE_SEEDE, "channel_id": CHANNEL_T2E, "workflow_id": ancien,
-                "current_step_id": relance, "title": "Affaire MCP T2.e",
-            })).status_code == 201
+            # L'affaire, puis son rattachement : depuis la migration 0134, le channel, le workflow et l'étape vivent sur le
+            # rattachement (`CRM-111` T2.4.5) ; la clé de service est exemptée de l'invariant différé.
+            creee = await _service("POST", "/cards", json={"id": CARD_T2E, "workspace_id": ESPACE_SEEDE, "title": "Affaire MCP T2.e"})
+            assert creee.status_code == 201, creee.text
+            pose = await _service("POST", "/card_placements", json={
+                "card_id": CARD_T2E, "workspace_id": ESPACE_SEEDE, "channel_id": CHANNEL_T2E, "workflow_id": ancien,
+                "current_step_id": relance,
+            })
+            assert pose.status_code == 201, pose.text
             await refuse("crm_channel_workflow_change", {
                 "channel_id": CHANNEL_T2E, "workflow_id": nouveau, "step_mapping": [],
             }, rf"step_mapping_incomplete — .*\({relance}, 1 affaire")
