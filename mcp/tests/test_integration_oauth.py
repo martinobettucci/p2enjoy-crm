@@ -1,3 +1,5 @@
+# @verifies INC-324 (docs/INCONSISTENCY_REPORT.md) — l'égalité stricte des outils visibles attend l'échéance de la visibilité
+#           calculée (2 s), au lieu de dépendre de l'ordre des fichiers de la suite
 # @verifies CRM-071 (docs/BACKLOG.md) — tranche T3 : `crm_view_list` dans les consultations de la famille `affaires` (révision)
 # @spec CRM-102 (docs/BACKLOG.md) — tranche T3 : le parcours OAuth complet, contre la vraie pile de développement
 # @verifies CRM-102 T3 — docs/SPEC-mcp.md §3.1 (flux : 401, métadonnées, enregistrement, consentement, SSO, retour,
@@ -21,6 +23,7 @@ sinon : la suite unitaire n'a besoin d'aucune pile.
 
 from __future__ import annotations
 
+import asyncio
 import base64
 import hashlib
 import os
@@ -32,6 +35,7 @@ import pytest
 from fastmcp import Client
 
 from crm_mcp.autorisation import VerificateurRole
+from crm_mcp.politique import DUREE_VISIBILITE_S
 
 from .parcours_oauth import (  # noqa: F401 — réexportés pour `test_integration_recettes.py`
     ADMIN_SSO,
@@ -84,6 +88,13 @@ async def _espaces(jeton: str, *, outils_exacts: frozenset[str] | None = None) -
     `CRM-108`), d'où l'inclusion ; l'égalité stricte n'est affirmée que pour un compte dont on connaît la matrice."""
     async with Client(f"{MCP}/mcp", auth=jeton) as client:
         visibles = {o.name for o in await client.list_tools()}
+        # La visibilité calculée sert `DUREE_VISIBILITE_S` (2 s) par compte (crm_mcp/politique.py) : une preuve jouée juste
+        # après une autre qui ouvrait d'autres cases au même compte relit d'abord l'ancienne. L'égalité stricte attend donc
+        # l'échéance avant d'être affirmée (INC-324 : la suite rendait rouge ce test, joué juste après la messagerie).
+        echeance = asyncio.get_running_loop().time() + 3 * DUREE_VISIBILITE_S
+        while outils_exacts is not None and visibles != outils_exacts and asyncio.get_running_loop().time() < echeance:
+            await asyncio.sleep(0.5)
+            visibles = {o.name for o in await client.list_tools()}
         assert "crm_workspace_list" in visibles
         if outils_exacts is not None:
             assert visibles == outils_exacts

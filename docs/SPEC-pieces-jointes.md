@@ -208,3 +208,16 @@ Sans changer un point validé :
 - Les cinq pièces de démonstration (§8) sont produites par `supabase/seed/pieces-jointes/generer.py`, bibliothèque standard
   seule et sortie reproductible ; T2 les emploie déjà dans sa preuve d'intégration.
 
+## 15. Précisions d'exécution (`CRM-074` T4, connecteur)
+
+- La pièce est lue par `GET /storage/v1/object/authenticated/mail-attachments/<chemin>` **sous le jeton interne** de la
+  personne : la politique de la migration `0029` décide. Le refus est vérifié dans l'ordre : statut de la pièce, taille de
+  la ligne, puis taille réellement lue (la lecture s'interrompt au-delà de 25 Mo) ; un objet illisible rend le refus
+  uniforme du connecteur (« introuvable ou hors de votre périmètre »).
+- Une ressource embarquée porte l'adresse `crm://attachments/<id>/<nom>` ; le contenu porte aussi les métadonnées en
+  texte, pour un client qui ne lit pas le contenu structuré.
+- La garde de taille de l'audit du connecteur ne mesure que le texte et le contenu structuré : le binaire est borné par
+  les 25 Mo seuls (décision 789).
+- `docs/SPEC-mcp.md` §9.2 decies est révisée en conséquence. La mention de l'outil dans le manuel (chapitre du
+  connecteur) arrive avec T3, en même temps que le reste du manuel de l'unité.
+

@@ -6,12 +6,16 @@
 #           docs/SPEC-mail-subsystem.md §18 bis.5 ; décision 708 (M1 B)
 # @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : `bcc` transmis à la file, rendu, jamais une pièce jointe ;
 #           docs/SPEC-mail-subsystem.md §19 bis.2 point 9 ; décision 708 (M2 B)
+# @verifies CRM-074 (docs/BACKLOG.md) — tranche T4 : les pièces listées dans les deux lectures, `crm_mail_attachment_get`
+#           (ancre `attachment`, la pièce rendue en binaire — image ou ressource embarquée —, lue sous le jeton de la
+#           personne, refus d'une pièce non saine, trop grande, absente) ; docs/SPEC-pieces-jointes.md §6 ; décisions 788, 789
 """Le CRM simulé rend le fil d'une affaire (un message texte, un message HTML seul, une pièce jointe), un message d'une
 autre affaire, et trois identités dont celle d'une collègue ; la vraie base est éprouvée par
 `tests/test_integration_messagerie.py`."""
 
 from __future__ import annotations
 
+import base64
 from typing import Any
 
 import pytest
@@ -26,6 +30,7 @@ from crm_mcp.audit import AuditOutils
 from crm_mcp.crm import ClientCrm
 from crm_mcp.jeton_interne import Identite
 from crm_mcp.outils import messagerie, reference
+from crm_mcp.outils.messagerie import PIECE_MAX_OCTETS
 from crm_mcp.outils.messagerie import corps_affichable, extrait, objet_de_reponse, reduire_html_en_texte
 from crm_mcp.politique import MoteurPolitique, PolitiqueOutils
 from crm_mcp.registre import Registre
@@ -38,7 +43,14 @@ AUTRE_CARD = "a0000000-0000-4000-8000-0000000000c2"
 MESSAGE_TEXTE = "a0000000-0000-4000-8000-0000000000e1"
 MESSAGE_HTML = "a0000000-0000-4000-8000-0000000000e2"
 MESSAGE_AILLEURS = "a0000000-0000-4000-8000-0000000000e3"
-OUTILS = {"crm_card_mail_list", "crm_mail_get", "crm_mail_send"}
+OUTILS = {"crm_card_mail_list", "crm_mail_get", "crm_mail_send", "crm_mail_attachment_get"}
+PIECE_PDF = "a0000000-0000-4000-8000-0000000000f1"
+PIECE_IMAGE = "a0000000-0000-4000-8000-0000000000f2"
+PIECE_INFECTEE = "a0000000-0000-4000-8000-0000000000f3"
+PIECE_ENORME = "a0000000-0000-4000-8000-0000000000f4"
+PIECE_ORPHELINE = "a0000000-0000-4000-8000-0000000000f5"
+OCTETS_PDF = b"%PDF-1.4 devis"
+OCTETS_PNG = b"\x89PNG\r\n\x1a\nimage"
 
 
 class CrmMessagerie(CrmSimule):
@@ -47,6 +59,8 @@ class CrmMessagerie(CrmSimule):
         self.lectures: list[tuple[str, dict[str, str]]] = []
         self.envois: list[dict[str, Any]] = []
         self.refus_envoi: tuple[int, Any] | None = None
+        self.objets_lus: list[tuple[str, str]] = []
+        self.objets = {"ws/m1/pdf": OCTETS_PDF, "ws/m1/png": OCTETS_PNG}
         self.identites = [
             {"id": "id-thomas", "workspace_id": ESPACE_A, "label": "Thomas", "from_address": "Thomas@Atelier.test",
              "owner_id": "sujet-thomas"},
@@ -60,22 +74,53 @@ class CrmMessagerie(CrmSimule):
              "direction": "inbound", "sent_at": None, "received_at": "2026-10-01T09:00:00Z",
              "from_address": "client@exemple.test", "from_name": "Client", "to_addresses": ["c1@atelier.test"],
              "cc_addresses": [], "subject": "Devis", "body_text": "  Bonjour,\n\n  voici   le devis.  " + "x" * 400,
-             "body_html": None, "mail_attachments": [{"count": 2}], "is_read": False},
+             "body_html": None, "is_read": False,
+             "mail_attachments": [
+                 {"id": PIECE_INFECTEE, "filename": "virus.exe", "mime_type": "application/x-msdownload", "size_bytes": 9,
+                  "av_status": "infected"},
+                 {"id": PIECE_PDF, "filename": "devis.pdf", "mime_type": "application/pdf", "size_bytes": 14,
+                  "av_status": "clean"},
+             ]},
             {"id": MESSAGE_HTML, "workspace_id": ESPACE_A, "card_id": CARD, "classification": "outbound",
              "direction": "outbound", "sent_at": "2026-10-02T10:00:00Z", "received_at": "2026-10-02T10:00:01Z",
              "from_address": "thomas@atelier.test", "from_name": None, "to_addresses": ["client@exemple.test"],
              "cc_addresses": ["chef@exemple.test"], "subject": "Re: Devis", "body_text": " ",
              "body_html": "<style>p{}</style><p>Merci&nbsp;&amp; à bientôt</p><br>Thomas",
-             "mail_attachments": [{"count": 0}], "is_read": True},
+             "mail_attachments": [], "is_read": True},
             {"id": MESSAGE_AILLEURS, "workspace_id": ESPACE_A, "card_id": AUTRE_CARD, "classification": "manual",
              "direction": "inbound", "sent_at": None, "received_at": "2026-10-03T10:00:00Z",
              "from_address": "x@exemple.test", "from_name": None, "to_addresses": [], "cc_addresses": [],
              "subject": "Autre", "body_text": "autre", "body_html": None, "mail_attachments": []},
         ]
 
+    def pieces(self) -> list[dict[str, Any]]:
+        commun = {"message_id": MESSAGE_TEXTE, "message": {"workspace_id": ESPACE_A}}
+        return [
+            {**commun, "id": PIECE_PDF, "filename": "devis.pdf", "mime_type": "application/pdf", "size_bytes": 14,
+             "av_status": "clean", "storage_path": "ws/m1/pdf"},
+            {**commun, "id": PIECE_IMAGE, "filename": "maquette.png", "mime_type": "image/png", "size_bytes": 13,
+             "av_status": "clean", "storage_path": "ws/m1/png"},
+            {**commun, "id": PIECE_INFECTEE, "filename": "virus.exe", "mime_type": "application/x-msdownload",
+             "size_bytes": 9, "av_status": "infected", "storage_path": "ws/m1/exe"},
+            {**commun, "id": PIECE_ENORME, "filename": "video.mp4", "mime_type": "video/mp4",
+             "size_bytes": PIECE_MAX_OCTETS + 1, "av_status": "clean", "storage_path": "ws/m1/mp4"},
+            {**commun, "id": PIECE_ORPHELINE, "filename": "perdu.pdf", "mime_type": "application/pdf", "size_bytes": 5,
+             "av_status": "clean", "storage_path": "ws/m1/perdu"},
+        ]
+
+    async def objet(self, requete: Request) -> Response:
+        jeton = requete.headers.get("authorization", "")
+        chemin = requete.path_params["chemin"]
+        self.objets_lus.append((requete.path_params["bucket"], chemin))
+        if self._personne(requete) is None or jeton.endswith(CLE_SERVICE):
+            return JSONResponse({"message": "refusé"}, status_code=400)
+        if chemin not in self.objets:
+            return JSONResponse({"statusCode": "404", "error": "not_found"}, status_code=400)
+        return Response(self.objets[chemin], media_type="application/octet-stream")
+
     async def table_messagerie(self, requete: Request) -> Response:
         nom = requete.path_params["table"]
-        if nom not in ("mail_messages", "mail_outbound_identities", "cards"):
+        if nom not in ("mail_messages", "mail_outbound_identities", "cards", "mail_attachments"):
             return await self.table(requete)
         if self._personne(requete) is None:
             return JSONResponse({"message": "JWT invalide"}, status_code=401)
@@ -85,6 +130,8 @@ class CrmMessagerie(CrmSimule):
             lignes = [{"id": CARD, "workspace_id": ESPACE_A}, {"id": AUTRE_CARD, "workspace_id": ESPACE_A}]
         elif nom == "mail_messages":
             lignes = self.messages()
+        elif nom == "mail_attachments":
+            lignes = self.pieces()
         else:
             lignes = self.identites
         filtres = {k: v.removeprefix("eq.") for k, v in parametres.items() if v.startswith("eq.")}
@@ -103,6 +150,7 @@ class CrmMessagerie(CrmSimule):
         return Starlette(routes=[
             Route("/rest/v1/rpc/{fonction}", self.rpc_messagerie, methods=["POST"]),
             Route("/rest/v1/{table}", self.table_messagerie, methods=["GET"]),
+            Route("/storage/v1/object/authenticated/{bucket}/{chemin:path}", self.objet, methods=["GET"]),
         ])
 
 
@@ -128,6 +176,11 @@ class Monde:
         self.moteur._visibilites.clear()
         async with Client(self.mcp) as client:
             return (await client.call_tool(outil, arguments)).structured_content
+
+    async def appel_complet(self, outil: str, arguments: dict[str, Any]) -> Any:
+        self.moteur._visibilites.clear()
+        async with Client(self.mcp) as client:
+            return await client.call_tool(outil, arguments)
 
     async def outils(self) -> dict[str, Any]:
         self.moteur._visibilites.clear()
@@ -172,14 +225,21 @@ async def test_trois_outils_l_envoi_destructif_avec_sa_case_aussi(monde: Monde) 
 
 async def test_le_fil_dans_l_ordre_avec_extrait_et_nombre_de_pieces(monde: Monde) -> None:
     fil = await monde.appel("crm_card_mail_list", {"card_id": CARD, "limit": 2})
-    assert [(m["id"], m["attachment_count"]) for m in fil["messages"]] == [(MESSAGE_TEXTE, 2), (MESSAGE_HTML, 0)]
+    assert [(m["id"], len(m["attachments"])) for m in fil["messages"]] == [(MESSAGE_TEXTE, 2), (MESSAGE_HTML, 0)]
+    # Par nom, avec leur statut dans le vocabulaire du connecteur — jamais leur contenu ni leur chemin de stockage.
+    assert fil["messages"][0]["attachments"] == [
+        {"id": PIECE_PDF, "filename": "devis.pdf", "mime_type": "application/pdf", "size_bytes": 14, "status": "available"},
+        {"id": PIECE_INFECTEE, "filename": "virus.exe", "mime_type": "application/x-msdownload", "size_bytes": 9,
+         "status": "infected"},
+    ]
     assert fil["messages"][0]["excerpt"].startswith("Bonjour, voici le devis. xxx")
     assert fil["messages"][1]["excerpt"] == "Merci & à bientôt Thomas"
     assert fil["messages"][1]["cc"] == ["chef@exemple.test"]
     assert fil["has_more"] is True
     lecture = next(p for n, p in monde.simule.lectures if n == "mail_messages" and "order" in p)
     assert (lecture["order"], lecture["limit"], lecture["offset"]) == ("received_at.asc,id.asc", "2", "0")
-    assert "mail_attachments(count)" in lecture["select"]
+    assert "mail_attachments(id,filename,mime_type,size_bytes,av_status)" in lecture["select"]
+    assert "storage_path" not in lecture["select"]
 
 
 async def test_un_message_rend_son_corps_affichable_jamais_le_html(monde: Monde) -> None:
@@ -189,7 +249,7 @@ async def test_un_message_rend_son_corps_affichable_jamais_le_html(monde: Monde)
     )
     assert "body_html" not in lu and "excerpt" not in lu
     texte = await monde.appel("crm_mail_get", {"message_id": MESSAGE_TEXTE})
-    assert texte["body_from_html"] is False and texte["attachment_count"] == 2
+    assert texte["body_from_html"] is False and [p["id"] for p in texte["attachments"]] == [PIECE_PDF, PIECE_INFECTEE]
 
 
 async def test_l_envoi_passe_par_la_file_avec_l_identite_designee(monde: Monde) -> None:
@@ -278,3 +338,47 @@ async def test_la_copie_cachee_est_transmise_a_la_file_et_rendue(monde: Monde) -
     with pytest.raises(ToolError):
         await monde.appel("crm_mail_send", {"card_id": CARD, "to": ["a@b.test"], "subject": "s", "body": "b",
                                             "attachments": ["x"]})
+
+
+async def test_la_piece_s_ancre_a_son_message_et_se_lit_en_consulter(monde: Monde) -> None:
+    declaration = monde.moteur.declarations["crm_mail_attachment_get"]
+    assert (declaration.famille, declaration.action, declaration.espace) == ("messagerie", "consulter", "attachment:attachment_id")
+    assert (await monde.outils())["crm_mail_attachment_get"].annotations.read_only_hint is True
+
+
+async def test_un_pdf_sain_est_rendu_en_ressource_binaire_lue_sous_le_jeton_de_la_personne(monde: Monde) -> None:
+    resultat = await monde.appel_complet("crm_mail_attachment_get", {"attachment_id": PIECE_PDF})
+    assert resultat.structured_content == {"id": PIECE_PDF, "message_id": MESSAGE_TEXTE, "filename": "devis.pdf",
+                                           "mime_type": "application/pdf", "size_bytes": len(OCTETS_PDF)}
+    ressource = next(b for b in resultat.content if b.type == "resource").resource
+    assert ressource.mime_type == "application/pdf"
+    assert str(ressource.uri) == f"crm://attachments/{PIECE_PDF}/devis.pdf"
+    assert base64.b64decode(ressource.blob) == OCTETS_PDF
+    assert monde.simule.objets_lus == [("mail-attachments", "ws/m1/pdf")]
+
+
+async def test_une_image_saine_est_rendue_en_contenu_image(monde: Monde) -> None:
+    resultat = await monde.appel_complet("crm_mail_attachment_get", {"attachment_id": PIECE_IMAGE})
+    image = next(b for b in resultat.content if b.type == "image")
+    assert image.mime_type == "image/png" and base64.b64decode(image.data) == OCTETS_PNG
+
+
+async def test_une_piece_non_saine_trop_grande_absente_ou_inconnue_est_refusee_sans_lecture_inutile(monde: Monde) -> None:
+    with pytest.raises(ToolError, match="attachment_not_available — this attachment is infected"):
+        await monde.appel("crm_mail_attachment_get", {"attachment_id": PIECE_INFECTEE})
+    with pytest.raises(ToolError, match="attachment_too_large"):
+        await monde.appel("crm_mail_attachment_get", {"attachment_id": PIECE_ENORME})
+    assert monde.simule.objets_lus == [], "ni une pièce infectée ni une pièce trop grande ne sont lues au stockage"
+    with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre : pièce jointe"):
+        await monde.appel("crm_mail_attachment_get", {"attachment_id": PIECE_ORPHELINE})
+    with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+        await monde.appel("crm_mail_attachment_get", {"attachment_id": "a0000000-0000-4000-8000-0000000000ff"})
+
+
+async def test_un_objet_plus_grand_que_sa_ligne_ne_le_dit_est_interrompu(monde: Monde, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(messagerie, "PIECE_MAX_OCTETS", 8)
+    monkeypatch.setattr(monde.simule, "pieces", lambda: [
+        {"id": PIECE_PDF, "message_id": MESSAGE_TEXTE, "message": {"workspace_id": ESPACE_A}, "filename": "devis.pdf",
+         "mime_type": "application/pdf", "size_bytes": 4, "av_status": "clean", "storage_path": "ws/m1/pdf"}])
+    with pytest.raises(ToolError, match="attachment_too_large"):
+        await monde.appel("crm_mail_attachment_get", {"attachment_id": PIECE_PDF})

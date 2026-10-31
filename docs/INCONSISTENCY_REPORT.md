@@ -8226,3 +8226,19 @@ entrée pour `contact.imported` (il connaît `contact.exported`), et le catalogu
 produit. **Issue proposée** : une phrase « Contacts importés » et un détail qui reprend les quatre nombres, avec son test
 unitaire de présentation. L'image `le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/journal.jpg` montre la ligne
 vide ; elle sera reprise en `CRM-117` T5 si la correction arrive avant. Connecteur MCP : sans objet.
+
+
+### INC-324 — La preuve OAuth du connecteur dépend de l'ordre des fichiers de la suite d'intégration
+
+*Constaté le 2026-10-31 par `CRM-074` T4, en rejouant toute l'intégration du connecteur.*
+`mcp/tests/test_integration_oauth.py::test_un_droit_suffit_pour_entrer_dans_la_matrice_et_la_rls` affirme l'égalité
+stricte des outils visibles de Farida, qui n'a que « Affaires ▸ Consulter ». Joué juste après
+`test_integration_messagerie.py` — l'ordre alphabétique de la suite —, il voit en plus toute la famille `messagerie` : la
+dernière preuve de messagerie venait d'ouvrir ces cases à Farida, et la visibilité calculée d'un compte sert
+`DUREE_VISIBILITE_S` (2 s, `crm_mcp/politique.py`) — comportement voulu du connecteur. Mesuré : seul, le test est vert ;
+messagerie puis OAuth, rouge, avec le fichier de messagerie d'avant `CRM-074` comme avec le nouveau.
+
+**Le produit se conduit comme spécifié** ; c'est la preuve qui supposait une visibilité recalculée à chaque liste.
+**Corrigée le 2026-10-31**, preuve seule : l'égalité stricte relit la liste jusqu'à trois fois la durée de la visibilité
+avant d'être affirmée. Connecteur MCP : la preuve est la sienne ; aucun outil ne change.
+

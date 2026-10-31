@@ -13,7 +13,7 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-074` — aperçu des pièces jointes et extraction de texte (T1, T2)
+### `CRM-074` — aperçu des pièces jointes et extraction de texte (T1, T2, T4)
 
 - **Le texte extrait des pièces jointes, en base** (T1, migration `0141`) : chaque pièce saine d'un PDF, d'un fichier Word,
   Excel ou OpenDocument est marquée « à extraire » — les pièces déjà reçues comprises ; l'extraction elle-même et son
@@ -23,6 +23,11 @@ d'exécuter le code attendu.
   PDF par `pypdf`, Word, Excel et OpenDocument par la bibliothèque standard —, dans un processus séparé limité en temps et
   en mémoire ; un document numérisé est reconnu « sans texte lisible », un fichier qui n'est pas ce qu'il annonce « non
   reconnu ». Aucun service externe, aucune variable nouvelle ; l'image `mail-sync` est à reconstruire.
+- **Le connecteur MCP lit les pièces jointes** (T4, famille « Messagerie », action « Consulter », aucune case nouvelle) :
+  la lecture d'un message et celle du fil d'une affaire listent désormais les pièces (nom, type, taille, statut), et le
+  nouvel outil `crm_mail_attachment_get` rend une pièce saine elle-même, jusqu'à 25 Mo — une image comme image, tout autre
+  fichier en binaire —, pour que l'assistant la lise à sa façon. L'envoi d'une pièce par le connecteur reste exclu.
+  L'image `mcp` est à reconstruire.
 
 ### `CRM-073` — webhooks sortants signés (T1 à T3)
 

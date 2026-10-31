@@ -12741,8 +12741,16 @@ binaire**, pour que l'agent la lise à sa façon.
       boucle ; compteur du harnais (48 scénarios mail). *Précisions d'exécution* : `docs/SPEC-pieces-jointes.md` §14.
 - [ ] **T3 — l'écran** (§5, §8) : `docs/DESIGN_SYSTEM.md` avant le code ; visionneuse dans la boîte de réception et le fil
       de l'affaire ; seed par la vraie chaîne ; unitaires, E2E, captures ; manuel.
-- [ ] **T4 — le connecteur** (§6) : `crm_mail_attachment_get`, `attachments` dans `crm_card_mail_list` et `crm_mail_get` ;
+- [x] **T4 — le connecteur** (§6) : `crm_mail_attachment_get`, `attachments` dans `crm_card_mail_list` et `crm_mail_get` ;
       `docs/SPEC-mcp.md` §9.2 decies ; tests.
+      *Livrée en développement le 2026-10-31* — `mcp/crm_mcp/outils/messagerie.py` (pièces listées, outil rendant la pièce
+      en contenu image ou en ressource binaire, refus `attachment_not_available` et `attachment_too_large`), ancre
+      `attachment` (`politique.py`), `ClientCrm.lire_objet` (lecture du stockage sous le jeton de la personne, bornée à
+      25 Mo) ; `docs/SPEC-mcp.md` §9.2 decies révisée. Preuves : pytest du connecteur 287 passés (dont 5 nouveaux et les
+      lectures révisées), intégration 76/76 contre la vraie pile, service `mcp` reconstruit — Driss lit en binaire une
+      pièce saine posée sur un vrai message, la pièce infectée est refusée, la lectrice reçoit le refus uniforme ; INC-324
+      (la preuve OAuth dépendait de l'ordre des fichiers) corrigée en chemin. *Reste à T3* : la mention de l'outil au
+      chapitre du connecteur dans le manuel. *Précisions d'exécution* : `docs/SPEC-pieces-jointes.md` §15.
 - [ ] **Livraison en production**, sur instruction du responsable.
 
 ### CRM-075 — Administration des tracks et des channels `[x]`

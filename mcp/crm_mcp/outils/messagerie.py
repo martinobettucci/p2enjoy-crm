@@ -9,6 +9,9 @@
 #       docs/SPEC-mcp.md §9.2 decies
 # @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : `bcc` dans `crm_mail_send`, la copie cachée seule, aucune pièce jointe
 #       (décision 708, M2 B) ; docs/SPEC-mail-subsystem.md §19 bis.2 point 9
+# @spec CRM-074 (docs/BACKLOG.md) — tranche T4 : les pièces jointes listées dans les deux lectures, et
+#       `crm_mail_attachment_get`, qui rend la pièce elle-même en binaire (décisions 788 et 789 ; docs/SPEC-pieces-jointes.md
+#       §6, qui révise la ligne « ni lues ni envoyées » de docs/SPEC-mcp.md §9.2 decies : elles se lisent, l'envoi reste exclu)
 """La messagerie d'une affaire, sous l'identité de la personne : lire son fil, lire un message, envoyer un email.
 
 Les mêmes tables et la même fonction que l'écran : `mail_messages`, `mail_outbound_identities`, et
@@ -18,11 +21,16 @@ message part par le worker de `mail-sync`, puis paraît dans le fil de l'affaire
 
 from __future__ import annotations
 
+import base64
+import json
 import re
 from typing import Annotated, Any
+from urllib.parse import quote
 
 from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
+from fastmcp.tools.base import ToolResult
+from mcp.types import BlobResourceContents, EmbeddedResource, ImageContent, TextContent
 from pydantic import Field
 
 from crm_mcp.crm import ClientCrm, Reponse
@@ -34,8 +42,14 @@ LONGUEUR_EXTRAIT = 280
 DESTINATAIRES_MAX = 50
 COLONNES_FIL = (
     "id,direction,sent_at,received_at,from_address,from_name,to_addresses,cc_addresses,subject,body_text,body_html,"
-    "mail_attachments(count),is_read"
+    "mail_attachments(id,filename,mime_type,size_bytes,av_status),is_read"
 )
+#: La borne d'une pièce rendue au connecteur (décision 789 : tout fichier sain jusqu'à 25 Mo).
+PIECE_MAX_OCTETS = 25 * 1024 * 1024
+#: Le statut d'une pièce, dans le vocabulaire du connecteur : seule `available` se lit.
+STATUTS_PIECE = {"clean": "available", "pending": "scanning", "infected": "infected", "skipped": "not_scanned"}
+#: Les types rendus comme contenu image ; tout autre fichier est une ressource binaire embarquée.
+TYPES_IMAGE = frozenset({"image/png", "image/jpeg", "image/gif", "image/webp"})
 COLONNES_MESSAGE = f"{COLONNES_FIL},card_id,classification"
 
 # La réduction du HTML de l'écran (`reduireHtmlEnTexte`, webapp/src/lib/inbox.ts), reprise à l'identique : deux surfaces
@@ -94,9 +108,19 @@ def objet_de_reponse(objet: str | None) -> str:
     return propre if re.match(r"^re\s*:", propre, re.IGNORECASE) else f"Re: {propre}"
 
 
-def nombre_de_pieces(m: dict[str, Any]) -> int:
-    compte = m.get("mail_attachments") or [{"count": 0}]
-    return int(compte[0].get("count") or 0)
+def pieces(m: dict[str, Any]) -> list[dict[str, Any]]:
+    """Les pièces d'un message, par nom : de quoi les demander à `crm_mail_attachment_get`, jamais leur contenu."""
+    return [
+        {
+            "id": p["id"],
+            "filename": p.get("filename"),
+            "mime_type": p.get("mime_type"),
+            "size_bytes": p.get("size_bytes"),
+            "status": STATUTS_PIECE.get(p.get("av_status") or "", "not_scanned"),
+        }
+        for p in sorted(m.get("mail_attachments") or [], key=lambda p: (p.get("filename") or "", p.get("id") or ""))
+        if isinstance(p, dict) and "id" in p
+    ]
 
 
 def message_lu(m: dict[str, Any]) -> dict[str, Any]:
@@ -111,7 +135,7 @@ def message_lu(m: dict[str, Any]) -> dict[str, Any]:
         "cc": m.get("cc_addresses") or [],
         "subject": m.get("subject"),
         "excerpt": extrait(corps),
-        "attachment_count": nombre_de_pieces(m),
+        "attachments": pieces(m),
         # L'état lu DE LA PERSONNE que le connecteur représente (`is_read`, §18 bis.5). Le lire n'écrit rien : seul l'écran
         # de l'inbox marque. Une valeur absente n'est pas « lu ».
         "read": m.get("is_read") is True,
@@ -189,7 +213,7 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         )
         return {
             "messages": [message_lu(m) for m in lignes],
-            "note": "Attachments are counted, never readable through the connector.",
+            "note": "Read an attachment whose status is available with crm_mail_attachment_get.",
             "limit": limit,
             "offset": offset,
             "has_more": len(lignes) == limit,
@@ -202,8 +226,9 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         titre="List the emails of an affaire",
         description=(
             "Lists the emails filed in an affaire (card), oldest first: direction, dates, sender, recipients, subject, a "
-            "short excerpt, the number of attachments (never their content) and whether the person has read it in the "
-            "inbox (read; reading here does not mark it). Read one in full with crm_mail_get."
+            "short excerpt, its attachments (id, file name, type, size and status — never their content) and whether the "
+            "person has read it in the inbox (read; reading here does not mark it). Read one in full with crm_mail_get, "
+            "and an available attachment with crm_mail_attachment_get."
         ),
     )
 
@@ -229,8 +254,71 @@ def ajouter(serveur: FastMCP, moteur: MoteurPolitique, crm: ClientCrm) -> None:
         titre="Read an email",
         description=(
             "Reads one email: headers, the affaire it is filed in, and its text. When the sender wrote only HTML, the "
-            "text is reduced from it as the web app does (body_from_html). Attachments are counted, never returned. "
-            "read tells whether the person has read it in the inbox; reading it here does not mark it read."
+            "text is reduced from it as the web app does (body_from_html). Its attachments are listed (id, file name, "
+            "type, size, status); read an available one with crm_mail_attachment_get. read tells whether the person has "
+            "read it in the inbox; reading it here does not mark it read."
+        ),
+    )
+
+    async def crm_mail_attachment_get(
+        attachment_id: Annotated[str, Field(description="The attachment id, from crm_mail_get or crm_card_mail_list")],
+    ) -> ToolResult:
+        appel = appel_courant()
+        p = _une_ligne(
+            await crm.lire(
+                appel.jeton,
+                "mail_attachments",
+                {"id": f"eq.{attachment_id}", "select": "id,message_id,filename,mime_type,size_bytes,av_status,storage_path"},
+            ),
+            "attachment",
+            attachment_id,
+        )
+        statut = STATUTS_PIECE.get(p.get("av_status") or "", "not_scanned")
+        if statut != "available":
+            raise RefusCrm(
+                f"Refusé par le CRM : attachment_not_available — this attachment is {statut}; only an attachment the "
+                "antivirus found clean can be read."
+            )
+        trop_grande = (
+            "Refusé par le CRM : attachment_too_large — this attachment is larger than 25 MB; ask the person to open it in "
+            "the CRM."
+        )
+        if int(p.get("size_bytes") or 0) > PIECE_MAX_OCTETS:
+            raise RefusCrm(trop_grande)
+        # SOUS LE JETON DE LA PERSONNE : la politique de stockage de la migration 0029 (pièce saine, message lisible)
+        # s'applique telle quelle, sans accès de service.
+        code, contenu = await crm.lire_objet(appel.jeton, "mail-attachments", p["storage_path"], PIECE_MAX_OCTETS)
+        if code == 413:
+            raise RefusCrm(trop_grande)
+        if contenu is None:
+            raise RefusCrm(introuvable("attachment", attachment_id))
+        type_ = (p.get("mime_type") or "application/octet-stream").split(";", 1)[0].strip().lower()
+        nom = p.get("filename") or "attachment"
+        metadonnees = {"id": p["id"], "message_id": p.get("message_id"), "filename": nom, "mime_type": type_,
+                       "size_bytes": len(contenu)}
+        donnees = base64.b64encode(contenu).decode("ascii")
+        if type_ in TYPES_IMAGE:
+            bloc: ImageContent | EmbeddedResource = ImageContent(type="image", data=donnees, mime_type=type_)
+        else:
+            bloc = EmbeddedResource(
+                type="resource",
+                resource=BlobResourceContents(uri=f"crm://attachments/{p['id']}/{quote(nom)}", mime_type=type_, blob=donnees),
+            )
+        return ToolResult(
+            content=[TextContent(type="text", text=json.dumps(metadonnees, ensure_ascii=False)), bloc],
+            structured_content=metadonnees,
+        )
+
+    moteur.enregistrer(
+        serveur,
+        crm_mail_attachment_get,
+        Declaration(famille="messagerie", action="consulter", espace="attachment:attachment_id"),
+        titre="Read an email attachment",
+        description=(
+            "Returns one attachment of an email, the file itself: an image as image content, any other file as an "
+            "embedded binary resource with its type and file name, so you can read it your own way. Only an attachment "
+            "whose status is available (found clean by the antivirus) can be read, up to 25 MB. Find attachment ids "
+            "with crm_mail_get or crm_card_mail_list."
         ),
     )
 

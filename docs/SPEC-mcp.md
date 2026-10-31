@@ -881,8 +881,24 @@ marque, et lire par le connecteur ne marque pas. Même action `consulter`, aucun
 point 9) : `crm_mail_send` prend `bcc` (cinquante adresses au plus), transmis en `p_bcc` ; remise par l'enveloppe, jamais
 montrée aux destinataires. Même action `ajouter`, aucune case nouvelle.
 
+**Les pièces jointes lues, ajoutées par `CRM-074` T4** (décisions 788 et 789 ; `docs/SPEC-pieces-jointes.md` §6) — elles
+**révisent** la ligne « ni lues ni envoyées » ci-dessous, pour la lecture seulement. Même famille, même action
+`consulter`, **aucune case nouvelle** :
+- `crm_card_mail_list` et `crm_mail_get` remplacent `attachment_count` par **`attachments`** : pour chaque pièce, par nom,
+  `id`, `filename`, `mime_type`, `size_bytes` et `status` (`available` pour une pièce saine, `scanning`, `infected`,
+  `not_scanned`) ; jamais le contenu ni le chemin de stockage ;
+- **`crm_mail_attachment_get`**, ancre **`attachment:attachment_id`** (genre d'ancre nouveau : `mail_attachments`, résolue
+  jusqu'à l'espace par son message), rend **la pièce elle-même** : une image (PNG, JPEG, GIF, WebP) en contenu image, tout
+  autre fichier en **ressource embarquée binaire** (`crm://attachments/<id>/<nom>`, avec son type), les métadonnées en
+  contenu structuré. Seule une pièce `available` se rend (`attachment_not_available` sinon), **jusqu'à 25 Mo**
+  (`attachment_too_large`, vérifié sur la ligne puis pendant la lecture). La lecture passe **sous le jeton interne de la
+  personne** par l'API de stockage : la politique de la migration `0029` (pièce saine, message lisible) s'applique telle
+  quelle ; un objet illisible rend le refus uniforme. La garde de taille de l'audit (§9.1) ne mesure que le texte et le
+  contenu structuré : le contenu binaire est borné par les 25 Mo.
+
 **Ce que la tranche ne fait pas, et pourquoi.**
-- **Les pièces jointes** : ni lues ni envoyées — y compris depuis `CRM-058` tranche 2 (décision 708).
+- **Les pièces jointes** : ni lues ni envoyées — y compris depuis `CRM-058` tranche 2 (décision 708). *Révisé par
+  `CRM-074` T4 : elles se lisent (ci-dessus) ; l'envoi reste exclu.*
 - **Classer, déclasser ou mettre en sommeil un fil** de la boîte de réception : gestes de l'écran.
 - **Les modèles et les séquences** : gestes de l'écran.
 

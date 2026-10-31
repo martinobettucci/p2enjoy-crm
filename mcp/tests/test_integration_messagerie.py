@@ -7,6 +7,9 @@
 #           connecteur n'écrit aucune lecture ; docs/SPEC-mail-subsystem.md §18 bis.5 ; décision 708 (M1 B)
 # @verifies CRM-058 (docs/BACKLOG.md) — tranche 2 : la copie cachée du connecteur arrive dans la vraie file ;
 #           docs/SPEC-mail-subsystem.md §19 bis.2 point 9 ; décision 708 (M2 B)
+# @verifies CRM-074 (docs/BACKLOG.md) — tranche T4 : une pièce saine lue en binaire par Driss sous son propre jeton, par la
+#           vraie API de stockage et sa politique (migration 0029) ; une pièce infectée refusée ; la lectrice, à qui la RLS
+#           cache l'affaire, refusée ; docs/SPEC-pieces-jointes.md §6 ; décisions 788 et 789
 """Joué par `scripts/verify-mcp.sh` dans l'image `dev`, sur le réseau Compose (`CRM_MCP_INTEGRATION=1`) ; ignoré sinon.
 
 LE SEED : l'affaire « Refonte du site vitrine » (`c1`) porte deux messages reçus, « Demande de devis — refonte » puis sa
@@ -15,12 +18,17 @@ le quota de l'identité remis tel quel ; les cases de la matrice que le seed n'a
 
 from __future__ import annotations
 
+import base64
+import hashlib
+
+import httpx2
 import pytest
 from fastmcp import Client
 from fastmcp.exceptions import ToolError
 
 from .test_integration_budgets import _manquantes
 from .test_integration_contacts import _poser, _retirer
+from .parcours_oauth import API, CLE_SERVICE
 from .test_integration_oauth import FARIDA, MCP, _service, pytestmark  # noqa: F401
 from .test_integration_recettes import DRISS, _attendre_outils, _attendre_visible, _dernier_journal, _jeton
 
@@ -58,7 +66,7 @@ async def test_lire_le_fil_et_repondre_par_la_file_de_l_ecran():
 
             fil = (await appeler("crm_card_mail_list", {"card_id": CARD}))["messages"]
             assert [m["subject"] for m in fil][:2] == [OBJET, f"Re: {OBJET}"]
-            assert all(m["direction"] == "inbound" and m["attachment_count"] == 0 for m in fil[:2])
+            assert all(m["direction"] == "inbound" and m["attachments"] == [] for m in fil[:2])
             premier = fil[0]
             lu = await appeler("crm_mail_get", {"message_id": premier["id"]})
             assert (lu["card_id"], lu["subject"]) == (CARD, OBJET)
@@ -176,3 +184,62 @@ async def test_l_etat_lu_est_celui_de_la_personne_et_lire_ne_marque_pas():
         await _service("DELETE", "/mail_message_reads", params=filtre)
         if avant:
             await _service("POST", "/mail_message_reads", json=avant)
+
+
+ESPACE = "5eed0000-0000-4000-8000-000000000001"
+CONTENU_PIECE = "Note d'intégration du connecteur : la pièce lue en binaire.\n".encode()
+
+
+async def _sous_cle_de_service(methode: str, url: str, entetes: dict[str, str] | None = None, **options) -> httpx2.Response:
+    """Le stockage, ou une écriture qui demande un en-tête de plus, sous la clé de service — la mise en place de la preuve."""
+    async with httpx2.AsyncClient(timeout=10) as http:
+        return await http.request(methode, url, headers={
+            "apikey": CLE_SERVICE, "Authorization": f"Bearer {CLE_SERVICE}", **(entetes or {})}, **options)
+
+
+async def test_driss_lit_une_piece_saine_en_binaire_et_ni_une_infectee_ni_la_lectrice_ne_passent():
+    message = (await _service("GET", "/mail_messages", params={
+        "card_id": f"eq.{CARD}", "subject": f"eq.{OBJET}", "select": "id", "limit": "1"})).json()[0]["id"]
+    empreinte = hashlib.sha256(CONTENU_PIECE).hexdigest()
+    chemin = f"{ESPACE}/{message}/{empreinte}"
+    depot = await _sous_cle_de_service("POST", f"{API}/storage/v1/object/mail-attachments/{chemin}", content=CONTENU_PIECE,
+                                       entetes={"Content-Type": "text/plain", "x-upsert": "true"})
+    assert depot.status_code in (200, 201), depot.text
+    lignes = (await _sous_cle_de_service("POST", f"{API}/rest/v1/mail_attachments",
+                                         entetes={"Prefer": "return=representation"}, json=[
+        {"message_id": message, "card_id": CARD, "filename": "tst-crm074-note.txt", "mime_type": "text/plain",
+         "size_bytes": len(CONTENU_PIECE), "storage_path": chemin, "sha256": empreinte, "av_status": "clean"},
+        {"message_id": message, "card_id": CARD, "filename": "tst-crm074-virus.txt", "mime_type": "text/plain",
+         "size_bytes": len(CONTENU_PIECE), "storage_path": chemin, "sha256": empreinte, "av_status": "infected"},
+    ])).json()
+    saine, infectee = (next(l["id"] for l in lignes if l["filename"] == nom)
+                       for nom in ("tst-crm074-note.txt", "tst-crm074-virus.txt"))
+    posees = await _manquantes(DRISS, [("messagerie", "consulter")])
+    await _poser(DRISS, posees)
+    posees_farida = await _manquantes(FARIDA, [("messagerie", "consulter")])
+    await _poser(FARIDA, posees_farida)
+    try:
+        async with Client(f"{MCP}/mcp", auth=await _jeton(DRISS)) as client:
+            await _attendre_visible(client, "crm_mail_attachment_get")
+            lu = (await client.call_tool("crm_mail_get", {"message_id": message})).structured_content
+            par_nom = {p["filename"]: p for p in lu["attachments"]}
+            assert par_nom["tst-crm074-note.txt"]["status"] == "available"
+            assert par_nom["tst-crm074-virus.txt"]["status"] == "infected"
+            resultat = await client.call_tool("crm_mail_attachment_get", {"attachment_id": saine})
+            assert await _dernier_journal(DRISS[1]) == ("crm_mail_attachment_get", "ok")
+            ressource = next(b for b in resultat.content if b.type == "resource").resource
+            assert base64.b64decode(ressource.blob) == CONTENU_PIECE
+            assert resultat.structured_content["filename"] == "tst-crm074-note.txt"
+            with pytest.raises(ToolError, match="attachment_not_available"):
+                await client.call_tool("crm_mail_attachment_get", {"attachment_id": infectee})
+            assert await _dernier_journal(DRISS[1]) == ("crm_mail_attachment_get", "refus_crm")
+        async with Client(f"{MCP}/mcp", auth=await _jeton(FARIDA)) as client:
+            await _attendre_visible(client, "crm_mail_attachment_get")
+            with pytest.raises(ToolError, match="Introuvable ou hors de votre périmètre"):
+                await client.call_tool("crm_mail_attachment_get", {"attachment_id": saine})
+    finally:
+        await _retirer(DRISS, posees)
+        await _retirer(FARIDA, posees_farida)
+        await _service("DELETE", "/mail_attachments", params={"filename": "like.tst-crm074*"})
+        await _sous_cle_de_service("DELETE", f"{API}/storage/v1/object/mail-attachments", json={"prefixes": [chemin]})
+

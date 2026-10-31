@@ -105,6 +105,8 @@ RESOLUTIONS: dict[str, tuple[str, str, tuple[str, ...]]] = {
     "block": ("goal_blocks", "board:goal_boards(workspace_id)", ("board", "workspace_id")),
     # `CRM-104` T7 : un email, qui porte son espace (décision 684).
     "message": ("mail_messages", "workspace_id", ("workspace_id",)),
+    # `CRM-074` T4 : une pièce jointe, résolue jusqu'à l'espace par son message (docs/SPEC-pieces-jointes.md §6).
+    "attachment": ("mail_attachments", "message:mail_messages(workspace_id)", ("message", "workspace_id")),
     # `CRM-068` T5 : un point de checklist d'une affaire porte son espace (docs/SPEC-mcp.md §9.2 duodecies, décision 767).
     "card_checklist_item": ("card_checklist_items", "workspace_id", ("workspace_id",)),
     # Une occurrence de budget, résolue par son budget puis son track : tout identifiant passé à un outil est une ancre.
@@ -139,6 +141,7 @@ LIBELLES = {
     "occurrence": "occurrence de budget",
     "block": "bloc d'objectif",
     "message": "message",
+    "attachment": "pièce jointe",
     "card_checklist_item": "point de checklist",
 }
 

@@ -3,6 +3,8 @@
 #       §9.1 : les mêmes tables que la webapp ; docs/SPEC-recettes.md §7)
 # @spec CRM-104 (docs/BACKLOG.md) — tranche T2.b : `ecrire(..., fusion=True)`, l'`upsert` des réponses au formulaire, le
 #       même que la webapp (`card_field_values`, conflit sur `(card_id, field_id)`, docs/SPEC-mcp.md §9.2 ter)
+# @spec CRM-074 (docs/BACKLOG.md) — tranche T4 : `lire_objet`, la lecture d'une pièce jointe au stockage sous le jeton de la
+#       personne, bornée en taille (docs/SPEC-pieces-jointes.md §6)
 # @spec docs/SPEC-mcp.md §5 (toute donnée sous le jeton interne ; la clé de service pour le seul registre), §9.3
 #       (traduction des refus), §11 (aucun jeton journalisé) ; CLAUDE.md §19 (délai, erreurs, aucun secret dans les traces)
 """Appels HTTP vers PostgREST, par Kong, sur le réseau Compose.
@@ -16,6 +18,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from typing import Any
+from urllib.parse import quote
 
 import httpx2
 
@@ -25,6 +28,8 @@ DELAI_S = 10.0
 #: Une reprise, une seule, après une erreur de TRANSPORT, et pour un appel IDEMPOTENT seulement : une écriture
 #: n'est jamais rejouée, elle a peut-être abouti.
 TENTATIVES_IDEMPOTENTES = 2
+#: Le délai d'une lecture d'objet au stockage : une pièce de 25 Mo sur le réseau interne (`CRM-074`).
+DELAI_OBJET_S = 60.0
 
 
 class CrmIndisponible(Exception):
@@ -48,6 +53,7 @@ class Reponse:
 
 class ClientCrm:
     def __init__(self, api: str, cle_anonyme: str, cle_service: str, transport: httpx2.AsyncBaseTransport | None = None) -> None:
+        self._api = api
         self._cle_anonyme = cle_anonyme
         self._cle_service = cle_service
         self.http = httpx2.AsyncClient(base_url=f"{api}/rest/v1", timeout=DELAI_S, transport=transport)
@@ -136,6 +142,28 @@ class ClientCrm:
     ) -> Reponse:
         """Une RPC du REGISTRE, sous la clé de service. Jamais une donnée métier (docs/SPEC-mcp.md §5)."""
         return await self._envoyer("POST", f"/rpc/{fonction}", None, idempotent=idempotent, json=arguments or {})
+
+    async def lire_objet(self, jeton: str, bucket: str, chemin: str, max_octets: int) -> tuple[int, bytes | None]:
+        """Un objet du stockage, sous le jeton interne de la personne : la politique du bucket s'applique telle quelle
+        (`CRM-074`, migration `0029` pour `mail-attachments`). Rend le statut et le contenu ; au-delà de `max_octets`, la
+        lecture s'interrompt et rend `413`."""
+        url = f"{self._api}/storage/v1/object/authenticated/{bucket}/{quote(chemin, safe='/')}"
+        try:
+            async with self.http.stream("GET", url, headers=self._entetes(jeton), timeout=DELAI_OBJET_S) as reponse:
+                if reponse.status_code != 200:
+                    await reponse.aread()
+                    return reponse.status_code, None
+                morceaux: list[bytes] = []
+                total = 0
+                async for morceau in reponse.aiter_bytes():
+                    total += len(morceau)
+                    if total > max_octets:
+                        return 413, None
+                    morceaux.append(morceau)
+                return 200, b"".join(morceaux)
+        except httpx2.HTTPError as erreur:
+            journal.warning("crm_injoignable", extra={"chemin": "storage", "erreur": type(erreur).__name__, "tentative": 1})
+            raise CrmIndisponible() from erreur
 
     async def sonder(self) -> int:
         """Le statut de `rest` à travers Kong, sous la clé anonyme, pour `/pret` (docs/SPEC-mcp.md §11).

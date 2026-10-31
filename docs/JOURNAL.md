@@ -37377,3 +37377,26 @@ manuel, sans modifier le seed partagé. **Observations et décisions d'exécutio
 **Vérifications** : 25 scénarios verts (`17-arborescence` 5, `18-workflows` 8, `19-22-administration` 12) ; images
 observées sur planches ; `manuel:construire` 34 chapitres sans avertissement ; `verify-manual` 166 contrôles sans
 anomalie ; base relue après chaque passage (rôles, corbeille, points de checklist, modèles, suggestions : état du seed).
+
+### `CRM-074` T4 : le connecteur lit les pièces jointes (2026-10-31)
+
+**Réalisé** : les deux lectures de la famille `messagerie` listent les pièces ; `crm_mail_attachment_get` rend la pièce
+elle-même (`docs/SPEC-pieces-jointes.md` §6, précisions au §15 ; `docs/SPEC-mcp.md` §9.2 decies révisée).
+
+**Choix et observations** :
+- *Lecture sous le jeton de la personne* : le connecteur lit le stockage par `/object/authenticated/` avec le jeton
+  interne, si bien que la politique de la migration `0029` décide seule — aucun accès de service. Mesuré contre la pile :
+  le jeton interne est accepté par l'API de stockage.
+- *Forme du résultat* : contenu image pour PNG, JPEG, GIF et WebP ; ressource embarquée binaire pour tout autre fichier,
+  avec les métadonnées en contenu structuré et en texte. Les noms de champs suivent le SDK MCP 2 (`mime_type`).
+- *Garde de taille* : celle de l'audit ne mesure que le texte et le contenu structuré ; le binaire n'est borné que par les
+  25 Mo de la décision 789 — vérifiés sur la ligne, puis pendant la lecture.
+- *INC-324* : en rejouant toute l'intégration, la preuve OAuth échouait juste après la messagerie — la visibilité calculée
+  d'un compte sert 2 s, et la dernière preuve de messagerie venait d'ouvrir des cases à Farida. Mesuré : rouge aussi avec
+  le fichier de messagerie d'avant l'unité. Preuve corrigée (elle attend l'échéance), produit inchangé.
+- *Pile partagée* : deux fenêtres demandées à la session de `CRM-117`, aucune reconstruction ; aucun état laissé.
+- *Manuel* : `docs/manual.md` porte les modifications en cours de `CRM-117` ; la mention de l'outil au chapitre du
+  connecteur viendra avec T3, en accord avec cette session.
+
+**Vérifications** : pytest du connecteur 287 passés ; intégration 76/76.
+
