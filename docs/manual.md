@@ -2782,6 +2782,8 @@ le courrier et de le ranger dans les affaires ([chapitre 12](#l-inbox-lire-trier
 d'expédition** lui permet d'écrire en votre nom. Ce chapitre dit comment les déclarer, et ce que le produit garantit
 ensuite.
 
+![L'écran Comptes de messagerie entrante : trois boîtes, dont une « Connectée », et le bouton « Configurer une boîte »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/comptes-de-messagerie.jpg)
+
 ### 11.1 Les boîtes de réception déclarées
 
 **Ce que le produit sait faire.** Un espace de travail peut déclarer une **boîte système** — celle
@@ -2792,6 +2794,10 @@ Une boîte porte un serveur, un port, un mode de sécurité, un identifiant et u
 liste les boîtes que vous voyez, avec leur connexion et leur état, et porte un formulaire pour les
 déclarer ou les corriger. Il vient **avant** « État de la messagerie » dans la liste des réglages :
 on configure une boîte avant d'en superviser la relève.
+
+![La liste des réglages : « Comptes de messagerie entrante » vient avant « État de la messagerie »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/reglages-boites.jpg)
+
+![La liste des boîtes : serveur, sécurité, identifiant, état « En attente » ou « Connectée », et « Configurer » sur chaque ligne](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/liste-des-boites.jpg)
 
 - **Choisissez d'abord la boîte visée.** La liste propose les boîtes que vous voyez, plus celle que
   vous pouvez créer — la vôtre si vous n'en avez pas encore, et la boîte système de l'espace de
@@ -2809,6 +2815,8 @@ on configure une boîte avant d'en superviser la relève.
   connexion* — l'essai est fait par le service de messagerie, et son résultat s'affiche dans l'état
   de la boîte ; aucune **suppression** de boîte ; aucun réglage des dossiers relevés ni de la
   profondeur d'historique, que l'écran ne touche jamais.
+
+![Le formulaire d'une boîte : boîte visée, libellé, serveur, port, sécurité, identifiant, mot de passe vide, « Enregistrer »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-boite.jpg)
 
 Le reste du chapitre décrit ce que le produit garantit une fois la boîte déclarée.
 
@@ -2849,6 +2857,10 @@ les adresses que vous voyez, avec leur connexion et leur état, et porte un form
 déclarer ou les corriger. Il vient **après** « Comptes de messagerie entrante » et **avant** « État
 de la messagerie » : on reçoit avant d'expédier, et on configure avant de superviser.
 
+![L'entrée « Identités d'expédition » de la liste des réglages](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/reglages-adresses.jpg)
+
+![La liste des adresses d'expédition : chaque adresse, ses pastilles « Par défaut » et « Signature », son serveur et « Configurer »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/liste-des-adresses.jpg)
+
 - **Une ligne commence par l'adresse**, précédée du nom affiché quand il est renseigné — sous la
   forme `Nom <adresse>`, celle que verront vos destinataires. C'est cette adresse qui distingue
   deux identités, et non leur libellé, qui peut être le même.
@@ -2877,6 +2889,8 @@ de la messagerie » : on reçoit avant d'expédier, et on configure avant de sup
   de l'identité ; aucune **suppression** ; aucun réglage du **plafond quotidien** d'envois (voir plus bas). La
   **signature**, elle, se règle sur ce même écran ([chapitre 15](#signer-les-messages-expedies-depuis-une-identite)).
 
+![Le formulaire d'une adresse d'expédition, avec la case « Identité par défaut pour cet expéditeur » cochée](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-adresse.jpg)
+
 Le reste du chapitre décrit ce que le produit garantit une fois l'adresse déclarée.
 
 **Recevoir et expédier sont deux choses distinctes.** Une personne peut relever sa boîte
@@ -2903,11 +2917,15 @@ Quand un plafond est atteint, tout nouveau message est refusé au moment où vou
 d'expédition a atteint son plafond du jour. » — et le compte repart au jour suivant, compté en temps universel. Les messages déjà en attente
 d'envoi comptent : le plafond protège le serveur d'envoi, pas une statistique.
 
+![Le formulaire d'envoi refusé : « Cette adresse d'expédition a atteint son plafond du jour. »](manuel/images/les-boites-de-reception-et-les-adresses-d-expedition/plafond-du-jour.jpg)
+
 ## 12. L'inbox : lire, trier et répondre
 
 L'**Inbox** de la barre latérale rassemble le courrier que le CRM a relevé dans les boîtes déclarées
 ([chapitre 11](#les-boites-de-reception-et-les-adresses-d-expedition)) : celui qu'il a rangé dans les affaires, et
 celui qui attend d'être trié. On y lit, on y range, et l'on écrit depuis une affaire.
+
+![L'inbox et ses trois panneaux : les dossiers, la liste des messages non classés, et un message ouvert](manuel/images/l-inbox-lire-trier-et-repondre/inbox.jpg)
 
 ### 12.1 Ce que le produit fait d'un message reçu
 
@@ -2947,6 +2965,8 @@ vous pouvez voir**, ce qui explique que deux personnes n'y lisent pas les mêmes
 dossier contient des messages que vous n'avez pas encore lus, une **pastille bleue** en donne le
 nombre, juste avant ce total, et le nom du dossier passe en gras.
 
+![L'entrée Inbox de la barre latérale et le dossier « Non classés », en tête des dossiers](manuel/images/l-inbox-lire-trier-et-repondre/dossiers.jpg)
+
 **Qui voit quoi.** Un message déjà rangé dans une affaire se lit comme l'affaire : si vous pouvez
 la lire, vous lisez son courrier. Un message **non classé**, lui, n'appartient encore à aucune
 affaire : il est visible par le **propriétaire de la boîte** où il est arrivé, et par les
@@ -2968,6 +2988,8 @@ conversation en compte plusieurs, un encadré « Messages de ce fil » apparaît
 un bouton par message — le plus récent d'abord. Choisissez-en un autre et le panneau de lecture
 change, **sans que la ligne perde sa sélection** : vous naviguez à l'intérieur de ce que vous avez
 choisi, pas ailleurs.
+
+![L'encadré « Messages de ce fil », un bouton par message de la conversation](manuel/images/l-inbox-lire-trier-et-repondre/messages-de-ce-fil.jpg)
 
 **Lu et non lu.** Chaque personne a **son propre** état de lecture : ce que vous avez lu reste non
 lu pour vos collègues, et inversement. Une conversation non lue se reconnaît à un **trait bleu** sur
@@ -2999,6 +3021,8 @@ message n'a été envoyé qu'en HTML, le produit vous le dit et n'en affiche que
 cours d'analyse, écartée par l'antivirus ou non analysée n'en a **pas** : son état est écrit en
 toutes lettres à côté de son nom. Un bouton grisé promettrait ce que le serveur refuserait.
 
+![Une pièce jointe déclarée saine, son nom et son bouton « Télécharger »](manuel/images/l-inbox-lire-trier-et-repondre/telecharger.jpg)
+
 **Ranger un message.** Un message non classé propose « Classer dans une affaire ». Choisissez
 l'affaire dans la liste, puis validez : le message rejoint l'affaire, son historique en garde la
 trace, et vous le retrouvez ensuite **des deux côtés** — dans l'affaire et sous son dossier dans
@@ -3011,6 +3035,8 @@ un encadré « **Suggestion de classement** » apparaît au-dessus du bouton « 
 affaire ». Il nomme l'affaire, la rend cliquable pour que vous puissiez aller la vérifier, écrit la
 raison de la suggestion — « l'expéditeur est un contact rattaché à cette affaire » —, et propose
 « **Classer dans cette affaire** », qui range le message d'un seul geste.
+
+![L'encadré « Suggestion de classement » : l'affaire proposée, sa raison et « Classer dans cette affaire », au-dessus de « Classer dans une affaire »](manuel/images/l-inbox-lire-trier-et-repondre/suggestion-de-classement.jpg)
 
 C'est une **suggestion, pas une décision** :
 
@@ -3047,6 +3073,10 @@ votre choix. Une fois le fil endormi :
   reconnaissables à leur pastille. Si un dossier ne contient plus que des fils endormis, la liste
   vous le dit et vous propose la case au lieu d'un vide muet.
 
+![Le bouton « Mettre le fil en sommeil », sous l'en-tête du message](manuel/images/l-inbox-lire-trier-et-repondre/mettre-le-fil-en-sommeil.jpg)
+
+![Le panneau « Jusqu'à quand ? » : quatre échéances usuelles, une autre échéance, « Mettre le fil en sommeil » et « Annuler »](manuel/images/l-inbox-lire-trier-et-repondre/jusqu-a-quand.jpg)
+
 Le sommeil est **partagé** : un fil endormi l'est pour toute personne qui le voit. Il n'a pas besoin
 d'être réveillé à la main — une échéance passée n'est plus un sommeil, et le fil revient tout seul.
 Une échéance déjà passée est refusée, avec son motif écrit sous le champ.
@@ -3056,6 +3086,8 @@ le lien à un collègue sans que la case se décoche. Elle vaut pour **tous les 
 est cochée, et le bouton « Précédent » du navigateur la décoche comme il défait n'importe quel autre
 geste. C'est exactement ce que fait déjà la case « Afficher les affaires en sommeil » du tableau et
 de la vue liste d'un channel.
+
+![La case « Afficher les affaires en sommeil » du tableau d'un channel](manuel/images/l-inbox-lire-trier-et-repondre/afficher-les-affaires-en-sommeil.jpg)
 
 **Retirer un message d'une affaire.** Un message rangé dans la mauvaise affaire n'y reste pas.
 Sous le message ouvert, en bas et séparée du reste, la commande « **Retirer de l'affaire** »
@@ -3069,6 +3101,10 @@ demande d'abord confirmation. La confirmation dit deux choses, et elles comptent
   est plus ouvert, et c'est à une personne qui suit la boîte de le ranger de nouveau. La phrase
   vous le dit **avant** le geste, jamais après.
 
+![La commande « Retirer de l'affaire », sous le message ouvert](manuel/images/l-inbox-lire-trier-et-repondre/retirer-de-l-affaire.jpg)
+
+![La confirmation du retrait : rien n'est supprimé, vous pourriez cesser de voir le message ; « Retirer » et « Annuler »](manuel/images/l-inbox-lire-trier-et-repondre/confirmer-le-retrait.jpg)
+
 « Annuler » referme sans rien envoyer. Si vous ne pouvez pas modifier l'affaire où le message est
 rangé, la commande est grisée et un bandeau dit pourquoi ([section 3.11](#les-commandes-grisees-ce-que-votre-role-vous-laisse-faire)). Le serveur reste la règle :
 s'il refuse malgré tout, l'écran vous l'écrit sous la confirmation.
@@ -3077,6 +3113,8 @@ s'il refuse malgré tout, l'écran vous l'écrit sous la confirmation.
 « Message reçu » **reste** — le courrier y est bien arrivé, et le produit ne réécrit pas ce qui a
 eu lieu — et une ligne « **Message retiré de l'affaire** » vient s'ajouter, avec l'objet du message
 et le nom de la personne qui l'a retiré. Le geste se fait entièrement au clavier.
+
+![La ligne « Message reçu » dans l'historique de l'affaire](manuel/images/l-inbox-lire-trier-et-repondre/message-recu.jpg)
 
 **Ce qui n'est pas encore là.** L'inbox n'a pas de recherche propre — la recherche de l'en-tête trouve les messages
 ([chapitre 4](#retrouver-n-importe-quoi-la-recherche)). La liste montre les cinquante messages les plus récents d'un
@@ -3094,15 +3132,21 @@ choisis, voyez les séquences ([chapitre 16](#enchainer-des-relances-les-sequenc
 d'expédition, un ou plusieurs destinataires — séparés par une virgule ou un point-virgule —, un
 objet et un message, puis « Mettre en file ».
 
+![Le bouton « Écrire un message » de la fiche d'une affaire](manuel/images/l-inbox-lire-trier-et-repondre/ecrire-un-message.jpg)
+
 **Une copie cachée.** Sous les destinataires, le lien « **Ajouter Cci** » ouvre le champ « Copie cachée (Cci) ». Ces
 adresses reçoivent le message **sans qu'aucun autre destinataire ne le sache** : rien, dans le message reçu, ne les
 nomme. Elles restent en revanche **visibles dans l'affaire** — l'inbox affiche « Cci : … » sur le message envoyé —, parce
 que la copie cachée est cachée aux destinataires, pas à votre équipe.
 
+![Le formulaire d'envoi : la copie cachée remplie, deux pièces jointes, leur total « 2 fichiers, 3,2 Mo sur 10 Mo » et « Mettre en file »](manuel/images/l-inbox-lire-trier-et-repondre/formulaire-d-envoi.jpg)
+
 **Des pièces jointes.** « **Joindre des fichiers** » (le trombone) ouvre le sélecteur de votre ordinateur ; vous pouvez
 aussi déposer des fichiers sur le formulaire. Chaque fichier part aussitôt vers le produit — la ligne dit « Envoi du
 fichier… » — puis s'affiche avec sa taille et un bouton pour le retirer. Sous la liste, le total est écrit : « 2 fichiers,
 3,4 Mo sur 10 Mo ».
+
+![Une pièce jointe en cours d'envoi : « Envoi du fichier… »](manuel/images/l-inbox-lire-trier-et-repondre/envoi-du-fichier.jpg)
 
 - **Dix fichiers et 10 Mo au total**, au plus, par message. Au-delà, le bouton « Mettre en file » s'éteint et le
   formulaire dit lequel des deux plafonds est dépassé ; retirez des fichiers pour continuer. Le bouton reste aussi éteint
@@ -3119,6 +3163,8 @@ fichier… » — puis s'affiche avec sa taille et un bouton pour le retirer. So
 destinataire et l'objet sont déjà remplis, et votre réponse reste rattachée à la conversation. Un
 message **non classé** n'offre pas de réponse : tant qu'il n'appartient à aucune affaire, il n'y a
 pas d'adresse à laquelle votre correspondant pourrait répondre. Classez-le d'abord.
+
+![Le bouton « Répondre » d'un message rangé dans une affaire](manuel/images/l-inbox-lire-trier-et-repondre/repondre.jpg)
 
 **Les réponses de votre correspondant reviennent dans l'affaire**, quelle que soit sa messagerie :
 le produit place dans chaque message qu'il envoie une adresse de retour qui pointe vers l'affaire.
@@ -3149,10 +3195,14 @@ ordinateur. Un message qui échoue à partir est marqué en échec et le dit.
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « État de la messagerie ».
 
+![L'écran État de la messagerie : les deux compteurs et le tableau des boîtes](manuel/images/consulter-l-etat-de-la-messagerie/etat-de-la-messagerie.jpg)
+
 **Qui.** Un administrateur de l'espace de travail voit **tous** les comptes de messagerie entrante
 du workspace, la boîte système comprise. Un membre ordinaire ne voit que **sa propre boîte**, s'il en
 possède une ; sans boîte propre et sans droit d'administration, l'écran affiche « Aucune boîte à
 superviser » plutôt qu'un tableau vide qui prétendrait avoir cherché sans rien trouver.
+
+![L'état vide « Aucune boîte à superviser »](manuel/images/consulter-l-etat-de-la-messagerie/aucune-boite.jpg)
 
 **Ce que le tableau montre, par boîte :**
 
@@ -3162,6 +3212,20 @@ superviser » plutôt qu'un tableau vide qui prétendrait avoir cherché sans ri
   refusée », « Hôte injoignable », « Connexion refusée », « Échec TLS », « Délai dépassé » ou
   « Erreur de protocole ». Le produit ne montre jamais le message technique brut renvoyé par votre
   serveur mail, qui peut contenir des détails de connexion.
+
+![Une boîte « Jamais relevée »](manuel/images/consulter-l-etat-de-la-messagerie/jamais-relevee.jpg)
+
+![Une boîte en échec : « Authentification refusée »](manuel/images/consulter-l-etat-de-la-messagerie/incident-auth-failed.jpg)
+
+![Une boîte en échec : « Hôte injoignable »](manuel/images/consulter-l-etat-de-la-messagerie/incident-host-unreachable.jpg)
+
+![Une boîte en échec : « Connexion refusée »](manuel/images/consulter-l-etat-de-la-messagerie/incident-connection-refused.jpg)
+
+![Une boîte en échec : « Échec TLS »](manuel/images/consulter-l-etat-de-la-messagerie/incident-tls-failed.jpg)
+
+![Une boîte en échec : « Délai dépassé »](manuel/images/consulter-l-etat-de-la-messagerie/incident-timeout.jpg)
+
+![Une boîte en échec : « Erreur de protocole »](manuel/images/consulter-l-etat-de-la-messagerie/incident-protocol-error.jpg)
 
 **Ce que les deux chiffres montrent :** le nombre de messages **en attente d'envoi** (mis en file ou
 en cours d'envoi) et le nombre d'**échecs définitifs** — un envoi qui a épuisé ses tentatives de
@@ -3182,6 +3246,8 @@ rafraîchissez la page pour la mettre à jour.
 ## 14. Écrire des modèles d'emails et les prévisualiser
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « Modèles d'emails ».
+
+![L'écran Modèles d'emails : une ligne par modèle, son objet, « Prévisualiser », « Modifier » et « Nouveau modèle »](manuel/images/ecrire-des-modeles-d-emails-et-les-previsualiser/modeles-d-emails.jpg)
 
 **À quoi cela sert.** Un modèle est un texte que vous écrivez **une fois** et que tout l'espace de
 travail réemploie : une relance sans réponse, une prise de contact. Il porte des **trous** —
@@ -3205,6 +3271,8 @@ Trois champs : le **nom**, l'**objet** et le **corps du message**.
 **Les variables disponibles sont proposées sous le corps**, en douze boutons. Un clic insère la
 variable **à l'endroit du curseur**, dans le champ que vous venez de quitter — l'objet ou le corps.
 Vous pouvez aussi les taper à la main : rien ne vous en empêche.
+
+![La fiche d'un nouveau modèle : le corps du message, les variables disponibles et « Enregistrer »](manuel/images/ecrire-des-modeles-d-emails-et-les-previsualiser/nouveau-modele.jpg)
 
 **Une variable qui n'existe pas est refusée**, et le produit dit **dans quel champ** elle se trouve :
 « L'objet emploie une variable qui n'existe pas ». C'est le serveur qui refuse, pas l'écran — ce qui
@@ -3235,6 +3303,8 @@ valeur — et l'écrit sous le message : « 2 variables sans valeur », suivi de
 concernées, dans la graphie exacte que vous avez tapée. C'est ce qui vous permet de voir le manque
 **avant** l'envoi, plutôt que le destinataire après.
 
+![La prévisualisation d'un modèle sur une affaire : l'objet, le corps rendu et la liste des variables sans valeur](manuel/images/ecrire-des-modeles-d-emails-et-les-previsualiser/previsualisation.jpg)
+
 Quand toutes les variables employées ont une valeur, **rien n'est affiché** : l'absence de message
 dit déjà que tout est rempli.
 
@@ -3248,6 +3318,8 @@ droits vous cachent.
 Le bouton vit **dans la fiche** du modèle, et non sur sa ligne : un geste qui détruit ne se déclenche
 pas depuis une liste qu'on parcourt du regard. Il demande une confirmation qui **nomme** le modèle et
 dit ce qui est perdu : « Le texte du modèle est définitivement perdu. »
+
+![La confirmation de suppression, qui nomme le modèle : « Le texte du modèle est définitivement perdu. »](manuel/images/ecrire-des-modeles-d-emails-et-les-previsualiser/supprimer.jpg)
 
 Il n'y a **pas de corbeille** pour un modèle : il ne contient aucun travail, c'est un texte. Une fois
 supprimé, il faut le réécrire.
@@ -3263,10 +3335,14 @@ supprimé, il faut le réécrire.
   exprimée en temps universel : le produit ne connaît pas encore le fuseau de votre espace de
   travail. Un destinataire français lira donc 09:00 là où le rendez-vous est à 11:00 en heure d'été.
 
+![Le bouton « Écrire un message » de la fiche d'une affaire, dont le formulaire ne part pas encore d'un modèle](manuel/images/ecrire-des-modeles-d-emails-et-les-previsualiser/ecrire-un-message.jpg)
+
 ## 15. Signer les messages expédiés depuis une identité
 
 **Où.** Barre latérale ▸ **Réglages** ▸ « Identités d'expédition », puis « Configurer » sur
 l'identité concernée.
+
+![L'écran Identités d'expédition et le bouton « Configurer » d'une identité](manuel/images/signer-les-messages-expedies-depuis-une-identite/identites-d-expedition.jpg)
 
 **À quoi cela sert.** Une signature est le pied de message que vos destinataires liront sous chaque
 courriel parti depuis cette adresse : votre nom, votre fonction, votre société, un téléphone. Vous
@@ -3285,12 +3361,16 @@ Le champ **Signature** se trouve dans le formulaire, juste après le nom d'expé
 plusieurs lignes, et les conserve telles que vous les écrivez : les retours à la ligne et les
 alignements que vous posez sont ceux que votre destinataire verra.
 
+![Le bouton « Configurer » d'une identité d'expédition](manuel/images/signer-les-messages-expedies-depuis-une-identite/configurer.jpg)
+
 - **Écrire** : remplissez le champ, puis « Enregistrer ». C'est immédiat, et cela vaut pour le
   prochain message.
 - **Modifier** : rouvrez « Configurer ». Le champ est prérempli avec la signature enregistrée — le
   produit ne vous demande jamais de la réécrire de mémoire.
 - **Supprimer** : **videz le champ**, puis « Enregistrer ». La signature disparaît, et les messages
   suivants partent sans elle.
+
+![Le formulaire d'une identité, son champ Signature rempli sur deux lignes, et « Enregistrer »](manuel/images/signer-les-messages-expedies-depuis-une-identite/champ-signature.jpg)
 
 Une signature est limitée à **2 000 caractères**. Au-delà, l'enregistrement est refusé et le produit
 vous le dit : rien n'est écrit à moitié.
@@ -3319,6 +3399,8 @@ votre destinataire a reçu.
 La signature elle-même n'y est pas montrée — elle serait trop longue pour une ligne de liste ; c'est
 sa **présence** qui vous intéresse d'un coup d'œil.
 
+![Une identité de la liste, avec sa pastille « Signature »](manuel/images/signer-les-messages-expedies-depuis-une-identite/signature.jpg)
+
 ### 15.3 Ce qui n'est pas offert
 
 - **Une signature est du texte, jamais de la mise en forme riche.** Pas de gras, pas de logo, pas de
@@ -3338,9 +3420,13 @@ sa **présence** qui vous intéresse d'un coup d'œil.
 **Réglages** ▸ « Séquences de relance » ; elle **s'arme** depuis la fiche de l'affaire qu'elle doit
 relancer, dans le bloc « Relance automatique », sous les coûts.
 
+![L'écran Séquences de relance : la séquence « Relance en trois temps », ses trois paliers, et « Nouvelle séquence »](manuel/images/enchainer-des-relances-les-sequences/sequences.jpg)
+
 **À quoi cela sert.** Une séquence enchaîne plusieurs **modèles d'emails** ([chapitre 14](#ecrire-des-modeles-d-emails-et-les-previsualiser)) à des délais
 choisis. Armée sur une affaire qui n'avance plus, elle expédie le premier modèle après son délai, le
 deuxième après le sien, et ainsi de suite — **et elle s'arrête dès qu'une réponse arrive**.
+
+![Le bloc « Relance automatique » de la fiche d'une affaire figée : la séquence et l'adresse d'expédition à choisir](manuel/images/enchainer-des-relances-les-sequences/relance-automatique.jpg)
 
 **Qui.** Tout membre de l'espace de travail **lit** les séquences. Les **écrire** — créer, modifier,
 réordonner, supprimer — est réservé aux administrateurs et aux business developers. **Armer** une relance sur une
@@ -3357,9 +3443,13 @@ unique dans l'espace de travail.
 d'écran : un palier appartient à une séquence, et il ne peut pas être posé avant qu'elle existe. La
 fiche vous le dit — « Enregistrez la séquence pour lui ajouter des paliers ».
 
+![La fiche d'une nouvelle séquence : le nom, « Enregistrer », et « Enregistrez la séquence pour lui ajouter des paliers »](manuel/images/enchainer-des-relances-les-sequences/nouvelle-sequence.jpg)
+
 **Un palier, c'est un modèle et un délai.** Choisissez le modèle dans la liste, tapez le délai en
 jours, « Ajouter le palier ». Le palier prend le **rang suivant** : vous n'avez jamais à saisir une
 position.
+
+![Le bouton « Ajouter le palier »](manuel/images/enchainer-des-relances-les-sequences/ajouter-le-palier.jpg)
 
 **LE DÉLAI SE COMPTE DEPUIS LE PALIER PRÉCÉDENT**, et le tout premier depuis l'armement. C'est ce
 que « J+3 », « J+7 », « J+14 » veulent dire dans la liste : trois jours après l'armement, puis sept
@@ -3377,6 +3467,8 @@ que celui qui le précède, ce qui n'est pas une cadence mais un doublon.
 Deux flèches par ligne, **Monter** et **Descendre**. La flèche qui n'a pas de sens — monter le
 premier, descendre le dernier — reste **visible mais inactive** : elle ne disparaît pas, sans quoi
 les boutons sauteraient d'une ligne à l'autre sous votre curseur.
+
+![Les trois paliers d'une cadence, J+3, J+7 et J+14, avec leurs flèches Monter et Descendre et leur bouton « Retirer »](manuel/images/enchainer-des-relances-les-sequences/paliers.jpg)
 
 **L'ordre est enregistré immédiatement**, et la liste est **relue** : ce que vous voyez après un
 déplacement est ce que le produit a réellement retenu, jamais un affichage optimiste. Si vos droits
@@ -3405,6 +3497,8 @@ Ouvrez la fiche de l'affaire, descendez jusqu'au bloc **« Relance automatique �
 **séquence**, et l'**adresse d'expédition** depuis laquelle les messages partiront. Aucun des deux
 n'est présélectionné — le produit ne choisit pas à votre place l'adresse qui signera vos relances.
 
+![Le bloc « Relance automatique » rempli : la séquence, l'adresse d'expédition, et « Armer la relance »](manuel/images/enchainer-des-relances-les-sequences/armer.jpg)
+
 **L'affaire doit être « figée »**, c'est-à-dire immobile dans son étape depuis plus longtemps que le
 seuil de relance de cette étape ([chapitre 7](#les-affaires-figees-ce-qui-dort-depuis-trop-longtemps)). Si elle ne l'est pas, le produit vous le
 dit : « Cette affaire n'a pas dépassé le seuil d'inactivité de son étape ». Faites avancer l'affaire,
@@ -3415,6 +3509,8 @@ produit refuse la seconde plutôt que d'envoyer deux fois.
 
 **Ce que le bloc montre ensuite** : le nom de la séquence, l'adresse qui expédie, et où en est la
 cadence — « Aucun palier envoyé pour l'instant », puis « Palier 2 envoyé le 12/09/2026 ».
+
+![Une relance armée : la séquence, l'adresse qui expédie, « Aucun palier envoyé pour l'instant » et « Interrompre la relance »](manuel/images/enchainer-des-relances-les-sequences/relance-armee.jpg)
 
 **« Interrompre la relance »** ferme la cadence. Le bloc revient alors à son geste, et il ne
 l'annonce qu'après avoir **vérifié** que la relance est bien close.

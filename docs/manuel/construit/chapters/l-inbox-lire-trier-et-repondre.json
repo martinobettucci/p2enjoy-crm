@@ -41,6 +41,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/inbox.jpg",
+			"alt": "L'inbox et ses trois panneaux : les dossiers, la liste des messages non classés, et un message ouvert",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "ce-que-le-produit-fait-d-un-message-recu",
@@ -315,6 +322,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/dossiers.jpg",
+			"alt": "L'entrée Inbox de la barre latérale et le dossier « Non classés », en tête des dossiers",
+			"width": 543,
+			"height": 112
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -493,6 +507,13 @@
 					"text": " : vous naviguez à l'intérieur de ce que vous avez\nchoisi, pas ailleurs."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/messages-de-ce-fil.jpg",
+			"alt": "L'encadré « Messages de ce fil », un bouton par message de la conversation",
+			"width": 536,
+			"height": 155
 		},
 		{
 			"type": "paragraph",
@@ -757,6 +778,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/telecharger.jpg",
+			"alt": "Une pièce jointe déclarée saine, son nom et son bouton « Télécharger »",
+			"width": 338,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -882,6 +910,13 @@
 					"text": " », qui range le message d'un seul geste."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/suggestion-de-classement.jpg",
+			"alt": "L'encadré « Suggestion de classement » : l'affaire proposée, sa raison et « Classer dans cette affaire », au-dessus de « Classer dans une affaire »",
+			"width": 536,
+			"height": 251
 		},
 		{
 			"type": "paragraph",
@@ -1220,6 +1255,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/mettre-le-fil-en-sommeil.jpg",
+			"alt": "Le bouton « Mettre le fil en sommeil », sous l'en-tête du message",
+			"width": 219,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/jusqu-a-quand.jpg",
+			"alt": "Le panneau « Jusqu'à quand ? » : quatre échéances usuelles, une autre échéance, « Mettre le fil en sommeil » et « Annuler »",
+			"width": 536,
+			"height": 248
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1271,6 +1320,13 @@
 					"text": " de la boîte tant qu'elle\nest cochée, et le bouton « Précédent » du navigateur la décoche comme il défait n'importe quel autre\ngeste. C'est exactement ce que fait déjà la case « Afficher les affaires en sommeil » du tableau et\nde la vue liste d'un channel."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/afficher-les-affaires-en-sommeil.jpg",
+			"alt": "La case « Afficher les affaires en sommeil » du tableau d'un channel",
+			"width": 280,
+			"height": 72
 		},
 		{
 			"type": "paragraph",
@@ -1364,6 +1420,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/retirer-de-l-affaire.jpg",
+			"alt": "La commande « Retirer de l'affaire », sous le message ouvert",
+			"width": 215,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/confirmer-le-retrait.jpg",
+			"alt": "La confirmation du retrait : rien n'est supprimé, vous pourriez cesser de voir le message ; « Retirer » et « Annuler »",
+			"width": 536,
+			"height": 170
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1432,6 +1502,13 @@
 					"text": " » vient s'ajouter, avec l'objet du message\net le nom de la personne qui l'a retiré. Le geste se fait entièrement au clavier."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/message-recu.jpg",
+			"alt": "La ligne « Message reçu » dans l'historique de l'affaire",
+			"width": 519,
+			"height": 76
 		},
 		{
 			"type": "paragraph",
@@ -1544,6 +1621,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/ecrire-un-message.jpg",
+			"alt": "Le bouton « Écrire un message » de la fiche d'une affaire",
+			"width": 519,
+			"height": 72
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1601,6 +1685,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/formulaire-d-envoi.jpg",
+			"alt": "Le formulaire d'envoi : la copie cachée remplie, deux pièces jointes, leur total « 2 fichiers, 3,2 Mo sur 10 Mo » et « Mettre en file »",
+			"width": 519,
+			"height": 602
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1630,6 +1721,13 @@
 					"text": " » (le trombone) ouvre le sélecteur de votre ordinateur ; vous pouvez\naussi déposer des fichiers sur le formulaire. Chaque fichier part aussitôt vers le produit — la ligne dit « Envoi du\nfichier… » — puis s'affiche avec sa taille et un bouton pour le retirer. Sous la liste, le total est écrit : « 2 fichiers,\n3,4 Mo sur 10 Mo »."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/envoi-du-fichier.jpg",
+			"alt": "Une pièce jointe en cours d'envoi : « Envoi du fichier… »",
+			"width": 519,
+			"height": 74
 		},
 		{
 			"type": "list",
@@ -1761,6 +1859,13 @@
 					"text": " n'offre pas de réponse : tant qu'il n'appartient à aucune affaire, il n'y a\npas d'adresse à laquelle votre correspondant pourrait répondre. Classez-le d'abord."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-inbox-lire-trier-et-repondre/repondre.jpg",
+			"alt": "Le bouton « Répondre » d'un message rangé dans une affaire",
+			"width": 536,
+			"height": 73
 		},
 		{
 			"type": "paragraph",

@@ -34,6 +34,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "ecrire-des-modeles-d-emails-et-les-previsualiser/modeles-d-emails.jpg",
+			"alt": "L'écran Modèles d'emails : une ligne par modèle, son objet, « Prévisualiser », « Modifier » et « Nouveau modèle »",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -302,6 +309,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "ecrire-des-modeles-d-emails-et-les-previsualiser/nouveau-modele.jpg",
+			"alt": "La fiche d'un nouveau modèle : le corps du message, les variables disponibles et « Enregistrer »",
+			"width": 899,
+			"height": 585
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -521,6 +535,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "ecrire-des-modeles-d-emails-et-les-previsualiser/previsualisation.jpg",
+			"alt": "La prévisualisation d'un modèle sur une affaire : l'objet, le corps rendu et la liste des variables sans valeur",
+			"width": 925,
+			"height": 718
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -605,6 +626,13 @@
 					"text": " le modèle et\ndit ce qui est perdu : « Le texte du modèle est définitivement perdu. »"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "ecrire-des-modeles-d-emails-et-les-previsualiser/supprimer.jpg",
+			"alt": "La confirmation de suppression, qui nomme le modèle : « Le texte du modèle est définitivement perdu. »",
+			"width": 899,
+			"height": 195
 		},
 		{
 			"type": "paragraph",
@@ -750,6 +778,13 @@
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "ecrire-des-modeles-d-emails-et-les-previsualiser/ecrire-un-message.jpg",
+			"alt": "Le bouton « Écrire un message » de la fiche d'une affaire, dont le formulaire ne part pas encore d'un modèle",
+			"width": 519,
+			"height": 72
 		}
 	]
 }

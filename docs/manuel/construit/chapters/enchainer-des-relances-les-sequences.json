@@ -60,6 +60,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/sequences.jpg",
+			"alt": "L'écran Séquences de relance : la séquence « Relance en trois temps », ses trois paliers, et « Nouvelle séquence »",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -118,6 +125,13 @@
 					"text": "."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/relance-automatique.jpg",
+			"alt": "Le bloc « Relance automatique » de la fiche d'une affaire figée : la séquence et l'adresse d'expédition à choisir",
+			"width": 650,
+			"height": 376
 		},
 		{
 			"type": "paragraph",
@@ -258,6 +272,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/nouvelle-sequence.jpg",
+			"alt": "La fiche d'une nouvelle séquence : le nom, « Enregistrer », et « Enregistrez la séquence pour lui ajouter des paliers »",
+			"width": 891,
+			"height": 165
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -287,6 +308,13 @@
 					"text": " : vous n'avez jamais à saisir une\nposition."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/ajouter-le-palier.jpg",
+			"alt": "Le bouton « Ajouter le palier »",
+			"width": 203,
+			"height": 73
 		},
 		{
 			"type": "paragraph",
@@ -400,6 +428,13 @@
 					"text": " : elle ne disparaît pas, sans quoi\nles boutons sauteraient d'une ligne à l'autre sous votre curseur."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/paliers.jpg",
+			"alt": "Les trois paliers d'une cadence, J+3, J+7 et J+14, avec leurs flèches Monter et Descendre et leur bouton « Retirer »",
+			"width": 889,
+			"height": 155
 		},
 		{
 			"type": "paragraph",
@@ -608,6 +643,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/armer.jpg",
+			"alt": "Le bloc « Relance automatique » rempli : la séquence, l'adresse d'expédition, et « Armer la relance »",
+			"width": 650,
+			"height": 376
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -676,6 +718,13 @@
 					"text": " : le nom de la séquence, l'adresse qui expédie, et où en est la\ncadence — « Aucun palier envoyé pour l'instant », puis « Palier 2 envoyé le 12/09/2026 »."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "enchainer-des-relances-les-sequences/relance-armee.jpg",
+			"alt": "Une relance armée : la séquence, l'adresse qui expédie, « Aucun palier envoyé pour l'instant » et « Interrompre la relance »",
+			"width": 650,
+			"height": 223
 		},
 		{
 			"type": "paragraph",

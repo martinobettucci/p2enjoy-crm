@@ -17403,7 +17403,17 @@ responsable** : traitée juste après `CRM-116`.*
               **Défaut produit constaté le 2026-10-30, hors de `CRM-117`, soumis au responsable** : un changement de
               responsable fait depuis l'en-tête n'est pas relu par le fil (seules les étiquettes appellent
               `onEvenement`) ; « Responsable modifié » n'y paraît qu'après relecture de la page (journal).
-      - [ ] **T4.3 — la messagerie** : chapitres 11 à 16. Scénarios écrits, jamais passés.
+      - [x] **T4.3 — la messagerie** : chapitres 11 à 16, le 2026-10-31. **48 images** produites par
+            `e2e/manuel/11`, `12`, `13` et `14-16` (13 scénarios verts en un passage) sur la pile et le seed, toutes
+            observées (planches de contrôle), placées avec leur texte alternatif ; les six chapitres entrent dans
+            `CHAPITRES_ILLUSTRES` : `verify-manual.sh` **165 contrôles, sans anomalie** (seize chapitres, 237 images).
+            Deux exceptions de plus au §11.3, **soumises au responsable** (18 en tout) : « par défaut » (ch. 14, une
+            propriété des identités) et « Retirer » d'un palier (ch. 16, une croix dont le nom accessible nomme le
+            palier). Six défauts des scénarios écrits hors pile, corrigés au premier passage (journal) ; l'un avait
+            laissé les deux adresses d'expédition plafonnées à zéro dans la base partagée, rendues aussitôt au seed
+            (`daily_quota` nul) — le plafond est désormais rendu par un `afterEach`. Rien d'autre n'est laissé : la
+            relance armée sur l'affaire figée est retirée (armer n'écrit rien au fil, migration 0119), les fichiers
+            joints jamais envoyés aussi.
       - [ ] **T4.4 — l'administration** : chapitres 17 à 22. Scénarios des chapitres 19 à 22 écrits, jamais passés ;
             17 et 18 restent à écrire.
       - [ ] **T4.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33. Scénarios des chapitres 23 à

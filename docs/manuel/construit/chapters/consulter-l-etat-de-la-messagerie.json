@@ -34,6 +34,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "consulter-l-etat-de-la-messagerie/etat-de-la-messagerie.jpg",
+			"alt": "L'écran État de la messagerie : les deux compteurs et le tableau des boîtes",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -76,6 +83,13 @@
 					"text": ", s'il en\npossède une ; sans boîte propre et sans droit d'administration, l'écran affiche « Aucune boîte à\nsuperviser » plutôt qu'un tableau vide qui prétendrait avoir cherché sans rien trouver."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "consulter-l-etat-de-la-messagerie/aucune-boite.jpg",
+			"alt": "L'état vide « Aucune boîte à superviser »",
+			"width": 548,
+			"height": 212
 		},
 		{
 			"type": "paragraph",
@@ -137,6 +151,55 @@
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "consulter-l-etat-de-la-messagerie/jamais-relevee.jpg",
+			"alt": "Une boîte « Jamais relevée »",
+			"width": 1192,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "consulter-l-etat-de-la-messagerie/incident-auth-failed.jpg",
+			"alt": "Une boîte en échec : « Authentification refusée »",
+			"width": 1192,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "consulter-l-etat-de-la-messagerie/incident-host-unreachable.jpg",
+			"alt": "Une boîte en échec : « Hôte injoignable »",
+			"width": 1192,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "consulter-l-etat-de-la-messagerie/incident-connection-refused.jpg",
+			"alt": "Une boîte en échec : « Connexion refusée »",
+			"width": 1192,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "consulter-l-etat-de-la-messagerie/incident-tls-failed.jpg",
+			"alt": "Une boîte en échec : « Échec TLS »",
+			"width": 1192,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "consulter-l-etat-de-la-messagerie/incident-timeout.jpg",
+			"alt": "Une boîte en échec : « Délai dépassé »",
+			"width": 1192,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "consulter-l-etat-de-la-messagerie/incident-protocol-error.jpg",
+			"alt": "Une boîte en échec : « Erreur de protocole »",
+			"width": 1192,
+			"height": 73
 		},
 		{
 			"type": "paragraph",

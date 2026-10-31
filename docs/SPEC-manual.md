@@ -456,8 +456,10 @@ est autorisée en début de chapitre. »
 | « Votre compte n'a pas le droit de retirer cette affaire. » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | exige un refus explicite du serveur ; des droits retirés se traduisent par une écriture sans effet, montrée sous « Aucune modification : votre compte ne peut pas écrire dans cette affaire. » |
 | « Mes vues » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | groupe d'une liste déroulante native : il ne paraît que dans la liste ouverte par le système, hors de toute capture de page |
 | « Vues de l'espace » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | même cause : groupe de la liste native « Vue » |
+| « par défaut » | `ecrire-des-modeles-d-emails-et-les-previsualiser` | cité comme une propriété des identités (« plusieurs identités peuvent être « par défaut » »), non comme un texte de la prévisualisation ; la pastille « Par défaut » est montrée au chapitre 11 |
+| « Retirer » | `enchainer-des-relances-les-sequences` | MONTRÉ, sur l'image `paliers` : le bouton d'un palier est une croix sans texte, dont le nom accessible nomme le palier (« Retirer le palier … ») ; le contrôle compare des libellés entiers et ne l'y reconnaît pas |
 
-*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28), T4.2a et T4.2b (2026-10-30, les dernières), soumises au responsable.*
+*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28), T4.2a et T4.2b (2026-10-30), T4.3 (2026-10-31, les deux dernières), soumises au responsable.*
 
 ### 11.4 Le contrat technique des images
 

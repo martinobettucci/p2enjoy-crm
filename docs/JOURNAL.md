@@ -37083,3 +37083,45 @@ ni défaut ni employé, l'archive par le jeton de l'administratrice et le retire
 jetable et son affaire. Les deux fichiers ont été joués avant les prises de vue de `CRM-117`, à sa demande, pour qu'aucun
 workflow jetable n'apparaisse dans une image du manuel. **Vérifications** : 29/29, aucun workflow jetable en base,
 typecheck vert.
+
+### `CRM-117` T4.3, clôture : la messagerie illustrée, chapitres 11 à 16 (2026-10-31)
+
+**Problème.** Les scénarios des chapitres 11 à 16 (`e2e/manuel/11`, `12`, `13`, `14-16`) avaient été écrits hors pile
+et jamais joués ; aucun des six chapitres n'avait d'image.
+
+**Coordination.** La pile et la base sont partagées avec la session de `CRM-111` : les prises de vue ont attendu la fin
+de ses harnais de reconstruction, de sa campagne d'interface, puis de ses deux fichiers d'INC-322, joués d'abord à ma
+demande pour qu'aucun workflow jetable ne paraisse sur une image.
+
+**Observations, au premier passage** (9 scénarios verts sur 13) :
+- deux images du chapitre 11 portaient le même nom (`reglages`), ce qu'`illustrer` refuse : une image par section,
+  chacune sur ses entrées ;
+- « Expédier depuis » ne propose qu'une adresse à l'administratrice du seed : le choix de la deuxième attendait sans
+  fin. Le test, dépassé, n'a pas pu rendre le plafond dans son `finally` (contexte de requête fermé) : **les deux
+  adresses d'expédition sont restées plafonnées à zéro** dans la base partagée. Constaté aussitôt, rendu au seed
+  (`daily_quota` nul, migration 0033) ; le plafond est désormais rendu par un `afterEach`, comme Driss Lemoine depuis
+  T4.2a ;
+- trois boutons cèdent leur place à leur panneau (« Mettre le fil en sommeil », « Nouveau modèle », « Nouvelle
+  séquence ») : le bouton s'illustre avant le clic, ou par l'image pleine page du chapitre, et le panneau seul après ;
+- `ouvrir-modele` et `ouvrir-sequence` sont « Nouveau modèle » et « Nouvelle séquence » : un modèle existant se
+  prévisualise depuis sa ligne et se supprime depuis sa fiche (« Modifier ») ; une séquence s'ouvre par « Modifier » ;
+- Échap ne referme pas le panneau de sommeil : son « Annuler » le fait ;
+- le refus du plafond s'écrit avec une apostrophe droite, comme la citation du manuel ;
+- la prévisualisation dépasse la fenêtre de 900 px : 1 400 px le temps de cette image.
+
+**Vérification de la base.** Armer une relance n'écrit rien au fil (migration 0119, manuel 16.6) : la jouer sur l'affaire
+figée du seed ne laisse aucune trace une fois l'inscription retirée ; un premier palier mis en file par un tic du
+planificateur serait retiré avec elle. Après les passages : plafonds nuls, boîtes « En attente », aucune inscription,
+aucun envoi ni fichier hors du seed.
+
+**Couverture.** Le premier contrôle laissait huit éléments cités sans image. Six sont désormais montrés : « État de la
+messagerie » (11.2), « Copie cachée (Cci) », « Télécharger » — sur la seule pièce saine du seed, jointe au message
+envoyé de « Refonte du monitoring » —, « Écrire un message » (14.4), « Configurer » (15.1) et la pastille « Signature »
+(15.2, ce que la section décrit, à la place du champ). Deux deviennent des exceptions du §11.3, proposées au
+responsable : « par défaut » au chapitre 14, une propriété des identités et non un texte de l'écran ; « Retirer » d'un
+palier, montré sur l'image `paliers` mais sous la forme d'une croix dont le nom accessible est « Retirer le palier … ».
+
+**Vérifications.** 13 scénarios verts en un passage ; 48 images observées sur planches ; `verify-manual.sh` : 165
+contrôles, aucune anomalie (seize chapitres, 237 images) ; manuel construit, 33 chapitres, sans avertissement ;
+typecheck vert.
+

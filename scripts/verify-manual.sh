@@ -103,6 +103,12 @@ CHAPITRES_ILLUSTRES=(
 	les-objectifs-le-tableau-blanc-de-l-equipe
 	l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre
 	le-carnet-de-contacts
+	les-boites-de-reception-et-les-adresses-d-expedition
+	l-inbox-lire-trier-et-repondre
+	consulter-l-etat-de-la-messagerie
+	ecrire-des-modeles-d-emails-et-les-previsualiser
+	signer-les-messages-expedies-depuis-une-identite
+	enchainer-des-relances-les-sequences
 )
 
 ok()    { checks=$((checks + 1)); printf '  \033[32mOK\033[0m    %s\n' "$1"; }

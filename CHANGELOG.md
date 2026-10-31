@@ -178,7 +178,7 @@ d'exécuter le code attendu.
 - **Le manuel est rangé par sujet**, en trente-trois chapitres numérotés simplement, et ses renvois sont des liens.
 - **Le manuel est réécrit pour ses lecteurs**, et **illustré** : chaque bouton, champ ou fenêtre qu'il cite a son image,
   au plus près du texte.
-- **En cours** : les images couvrent les chapitres 1 à 10 ; les chapitres 11 à 33 restent à illustrer. L'unité ne se
+- **En cours** : les images couvrent les chapitres 1 à 16 ; les chapitres 17 à 33 restent à illustrer. L'unité ne se
   livre pas en l'état.
 
 ### `CRM-077` onzième tranche — débloquer l'effacement d'un track

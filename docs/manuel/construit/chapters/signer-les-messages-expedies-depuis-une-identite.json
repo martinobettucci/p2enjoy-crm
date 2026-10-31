@@ -34,6 +34,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "signer-les-messages-expedies-depuis-une-identite/identites-d-expedition.jpg",
+			"alt": "L'écran Identités d'expédition et le bouton « Configurer » d'une identité",
+			"width": 333,
+			"height": 221
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -145,6 +152,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "signer-les-messages-expedies-depuis-une-identite/configurer.jpg",
+			"alt": "Le bouton « Configurer » d'une identité d'expédition",
+			"width": 138,
+			"height": 73
+		},
+		{
 			"type": "list",
 			"ordered": false,
 			"start": null,
@@ -223,6 +237,13 @@
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "signer-les-messages-expedies-depuis-une-identite/champ-signature.jpg",
+			"alt": "Le formulaire d'une identité, son champ Signature rempli sur deux lignes, et « Enregistrer »",
+			"width": 925,
+			"height": 703
 		},
 		{
 			"type": "paragraph",
@@ -331,6 +352,13 @@
 					"text": " qui vous intéresse d'un coup d'œil."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "signer-les-messages-expedies-depuis-une-identite/signature.jpg",
+			"alt": "Une identité de la liste, avec sa pastille « Signature »",
+			"width": 923,
+			"height": 130
 		},
 		{
 			"type": "heading",

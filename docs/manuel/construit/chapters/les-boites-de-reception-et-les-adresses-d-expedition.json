@@ -54,6 +54,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/comptes-de-messagerie.jpg",
+			"alt": "L'écran Comptes de messagerie entrante : trois boîtes, dont une « Connectée », et le bouton « Configurer une boîte »",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "les-boites-de-reception-declarees",
@@ -138,6 +145,20 @@
 					"text": " « État de la messagerie » dans la liste des réglages :\non configure une boîte avant d'en superviser la relève."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/reglages-boites.jpg",
+			"alt": "La liste des réglages : « Comptes de messagerie entrante » vient avant « État de la messagerie »",
+			"width": 545,
+			"height": 471
+		},
+		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/liste-des-boites.jpg",
+			"alt": "La liste des boîtes : serveur, sécurité, identifiant, état « En attente » ou « Connectée », et « Configurer » sur chaque ligne",
+			"width": 925,
+			"height": 205
 		},
 		{
 			"type": "list",
@@ -314,6 +335,13 @@
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-boite.jpg",
+			"alt": "Le formulaire d'une boîte : boîte visée, libellé, serveur, port, sécurité, identifiant, mot de passe vide, « Enregistrer »",
+			"width": 925,
+			"height": 327
 		},
 		{
 			"type": "paragraph",
@@ -646,6 +674,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/reglages-adresses.jpg",
+			"alt": "L'entrée « Identités d'expédition » de la liste des réglages",
+			"width": 545,
+			"height": 379
+		},
+		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/liste-des-adresses.jpg",
+			"alt": "La liste des adresses d'expédition : chaque adresse, ses pastilles « Par défaut » et « Signature », son serveur et « Configurer »",
+			"width": 925,
+			"height": 188
+		},
+		{
 			"type": "list",
 			"ordered": false,
 			"start": null,
@@ -958,6 +1000,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/configurer-une-adresse.jpg",
+			"alt": "Le formulaire d'une adresse d'expédition, avec la case « Identité par défaut pour cet expéditeur » cochée",
+			"width": 925,
+			"height": 703
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1114,6 +1163,13 @@
 					"text": " Par défaut, elle n'en a aucun, et l'écran ne le règle pas.\nQuand un plafond est atteint, tout nouveau message est refusé au moment où vous l'envoyez — « Cette adresse\nd'expédition a atteint son plafond du jour. » — et le compte repart au jour suivant, compté en temps universel. Les messages déjà en attente\nd'envoi comptent : le plafond protège le serveur d'envoi, pas une statistique."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "les-boites-de-reception-et-les-adresses-d-expedition/plafond-du-jour.jpg",
+			"alt": "Le formulaire d'envoi refusé : « Cette adresse d'expédition a atteint son plafond du jour. »",
+			"width": 519,
+			"height": 519
 		}
 	]
 }
