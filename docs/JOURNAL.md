@@ -37490,3 +37490,16 @@ d'abord : il est en ajout seul, et les nettoyages des autres scénarios y écriv
 **Conséquence.** `CRM-117` passe `[P]`. T6 (les migrations 0126 et 0127, la webapp, `scripts/manuel/publier.sh --spark`)
 revient à la session de livraison (décision 790), dans le lot 0106 à 0140 (décision 786). Ses gestes et leur
 vérification sont au `docs/PROD_MIGRATIONS.md` §3.
+
+### INC-323 corrigée : quatre gestes d'import et d'export nommés au journal (2026-10-31)
+
+**Problème** : le journal d'audit rendait l'import de contacts du seed sans geste ni détail (relevé par la session de
+`CRM-117`). **Observation** : la présentation ignorait aussi l'import d'affaires et les deux exports CSV de `CRM-071`, et le
+filtre de familles ignorait `import`, famille que la base écrit depuis la migration 0137. **Décision** : quatre phrases, un
+détail par clé (comptes d'un import, lignes d'un export), une septième famille « Imports » au filtre (`docs/DESIGN_SYSTEM.md`
+§5.66). Aucune donnée ni fonction de la base ne change. **Vérifications** : unitaires, E2E 6/6, capture observée. **Incident
+de la session** : en vérifiant INC-296 (déjà corrigée le 2026-10-25, `0f63edb3`), `scripts/verify-commentaires.sh --rapide`
+a reconstruit la base pendant la campagne finale de `CRM-117`, faute d'avoir été relu avant d'être lancé ; la pile est
+revenue saine, la session de `CRM-117` a rejoué ses preuves. Leçon : un script de vérification se lit avant d'être lancé
+sur une pile partagée.
+

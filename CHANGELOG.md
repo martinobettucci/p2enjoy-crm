@@ -13,6 +13,11 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### INC-323 — les imports et les exports CSV nommés au journal d'audit
+
+- Le journal d'audit nomme l'import de contacts et d'affaires et l'export CSV du carnet et de la vue liste, avec leurs
+  comptes ; le filtre « Famille » gagne « Imports ».
+
 ### `CRM-074` — aperçu des pièces jointes et extraction de texte (T1, T2, T4)
 
 - **Le texte extrait des pièces jointes, en base** (T1, migration `0141`) : chaque pièce saine d'un PDF, d'un fichier Word,

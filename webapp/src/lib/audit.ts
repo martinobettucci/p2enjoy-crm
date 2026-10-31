@@ -11,7 +11,8 @@ import { classerErreur, enErreur, pret, type EtatAsync } from './async'
 import type { ClientCrm } from './supabase'
 
 /** Les six familles de `audit_log.family` (`docs/SPEC-audit.md` §4), dans l'ordre de l'écran. */
-export const FAMILLES_AUDIT = ['access', 'configuration', 'sign_in', 'export', 'deletion', 'retention'] as const
+// INC-323 : `import`, la famille que la migration 0137 écrit pour les imports CSV (`CRM-071` T5, T6), manquait au filtre.
+export const FAMILLES_AUDIT = ['access', 'configuration', 'sign_in', 'export', 'import', 'deletion', 'retention'] as const
 export type FamilleAudit = (typeof FAMILLES_AUDIT)[number]
 
 /** La valeur d'adresse du filtre « Système ou compte supprimé » : les entrées sans acteur. */

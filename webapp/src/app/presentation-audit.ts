@@ -2,6 +2,8 @@
 // @spec docs/SPEC-audit.md §4 (les paires objet / action), §5 (ce que `details` porte), §7.3 (le nom d'un contact, lu à
 //       l'affichage) ; docs/DESIGN_SYSTEM.md §5.66 (phrase par clé, paire inconnue laissée vide, détail par clé, acteur
 //       nul nommé « Système ou compte supprimé »), §10 (aucune phrase par concaténation) ; docs/JOURNAL.md décision 728
+// @spec INC-323 (docs/INCONSISTENCY_REPORT.md) — les imports et les exports CSV de `CRM-071` (T4 à T6) nommés au journal ;
+//       docs/SPEC-vues-import-export.md §5, §6 ; docs/SPEC-audit.md §4
 
 import { t, type CleTraduction } from '../i18n'
 import type { EntreeAudit, FamilleAudit } from '../lib/audit'
@@ -13,6 +15,7 @@ export const CLES_FAMILLE: Readonly<Record<FamilleAudit, CleTraduction>> = {
 	configuration: 'audit.family.configuration',
 	sign_in: 'audit.family.sign_in',
 	export: 'audit.family.export',
+	import: 'audit.family.import',
 	deletion: 'audit.family.deletion',
 	retention: 'audit.family.retention',
 }
@@ -82,6 +85,11 @@ const CLES_GESTE: Readonly<Record<string, CleTraduction>> = {
 	'contact.deleted': 'audit.geste.contact.deleted',
 	'contact.anonymized': 'audit.geste.contact.anonymized',
 	'contact.exported': 'audit.geste.contact.exported',
+	// INC-323 (`CRM-071` T4 à T6) : les imports et les exports CSV, que le journal écrivait sans que l'écran les nomme.
+	'contact.imported': 'audit.geste.contact.imported',
+	'card.imported': 'audit.geste.card.imported',
+	'contact_list.exported': 'audit.geste.contact_list.exported',
+	'card_list.exported': 'audit.geste.card_list.exported',
 	'organization.deleted': 'audit.geste.organization.deleted',
 	'session.signed_in': 'audit.geste.session.signed_in',
 	'audit_log.purged': 'audit.geste.audit_log.purged',
@@ -219,6 +227,20 @@ export function detailAudit(entree: EntreeAudit): string {
 			if (typeof d['required_field_added'] === 'string') return t('audit.detail.exigenceAjoutee')
 			if (typeof d['required_field_removed'] === 'string') return t('audit.detail.exigenceRetiree')
 			return detailModification(d)
+		// INC-323 : les comptes d'un import, et le nombre de lignes d'un export, par clé (§10).
+		case 'contact.imported':
+		case 'card.imported': {
+			const compte = (cle: string) => String(typeof d[cle] === 'number' ? d[cle] : 0)
+			const base = t('audit.detail.import', { crees: compte('created'), ignores: compte('skipped'), refuses: compte('refused') })
+			return entree.objet === 'contact' && typeof d['organizations_created'] === 'number' && d['organizations_created'] > 0
+				? t('audit.detail.importOrganisations', { base, organisations: compte('organizations_created') })
+				: base
+		}
+		case 'contact_list.exported':
+		case 'card_list.exported': {
+			const nombre = typeof d['count'] === 'number' ? d['count'] : 0
+			return t(nombre === 1 ? 'audit.detail.export.un' : 'audit.detail.export.plusieurs', { nombre: String(nombre) })
+		}
 		case 'audit_log.purged': {
 			const nombre = typeof d['count'] === 'number' ? d['count'] : 0
 			return t(nombre === 1 ? 'audit.detail.purge.un' : 'audit.detail.purge.plusieurs', { nombre: String(nombre) })

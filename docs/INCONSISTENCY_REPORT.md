@@ -8231,6 +8231,16 @@ produit. **Issue proposée** : une phrase « Contacts importés » et un détail
 unitaire de présentation. L'image `le-journal-d-audit-ce-qui-s-est-fait-dans-votre-espace/journal.jpg` montre la ligne
 vide ; elle sera reprise en `CRM-117` T5 si la correction arrive avant. Connecteur MCP : sans objet.
 
+**Corrigée le 2026-10-31**, à la demande de la file des incohérences. La mesure a trouvé **quatre** gestes muets, et non un :
+l'import de contacts et l'import d'affaires (`contact.imported`, `card.imported`, migrations 0137 et 0138), l'export CSV du
+carnet et de la vue liste (`contact_list.exported`, `card_list.exported`, migration 0136) ; et la famille `import` manquait
+au filtre « Famille ». L'écran dit désormais « Contacts importés », « Affaires importées », « Carnet exporté en CSV »,
+« Affaires exportées en CSV », avec en détail les comptes d'un import (« Créées : 8 · ignorées : 1 · refusées : 1 ·
+organisations créées : 4 ») ou le nombre de lignes d'un export, accordé par clé ; le filtre gagne « Imports »
+(`docs/DESIGN_SYSTEM.md` §5.66). Preuves : unitaires de présentation (la liste des paires de la base, qui ne citait ni ces
+quatre-là ni les trois de `webhook`, est complétée), suite i18n verte ; E2E `e2e/ui/journal-audit.spec.ts` 6/6 dont la
+preuve neuve sur l'import du seed, capture observée. L'image du chapitre 22 du manuel est reprise avec `CRM-074` T3.
+
 
 ### INC-324 — La preuve OAuth du connecteur dépend de l'ordre des fichiers de la suite d'intégration
 

@@ -3,6 +3,7 @@
 //           acteur), §8 (l'écran, ses filtres dans l'adresse) ; docs/DESIGN_SYSTEM.md §5.66 (entrée d'index, tableau, filtres,
 //           paliers), §5.59 (l'entrée devient un texte pour qui n'administre pas) ; CLAUDE.md §16 (captures observées)
 // @verifies CRM-092 (docs/BACKLOG.md), docs/SPEC-session-sso.md §13 — connexion par la vraie page du SSO
+// @verifies INC-323 (docs/INCONSISTENCY_REPORT.md) — l'import du seed nommé et chiffré, sous la famille « Imports »
 //
 // LE GESTE ÉPROUVÉ EST CELUI DE L'ÉCRAN DES MEMBRES : Camille pose à Farida un droit de lecture sur le track « Formation »,
 // puis le rend à « hérité ». Le seed n'en porte aucun, et la spec des membres ne touche pas ce track : l'état du seed est
@@ -63,6 +64,19 @@ test.describe('l’administratrice — Camille Aubert', () => {
 		expect(new Set(familles)).toEqual(new Set(['sign_in']))
 		await expect(page.getByTestId('ligne-audit').first()).toContainText('Connexion')
 		await capturer(page, 'journal-filtre-connexions-1440', UNITE)
+	})
+
+	// INC-323 : l'import de contacts du seed (docs/SPEC-seed.md, volet `CRM-071` T5) se lit avec son geste et ses comptes,
+	// sous la famille « Imports » qui manquait au filtre.
+	test('INC-323 : la famille « Imports » rend l’import du seed, nommé et chiffré', async ({ page }) => {
+		await page.goto(JOURNAL)
+		await expect(page.getByTestId('ligne-audit').first()).toBeVisible()
+		await page.getByLabel('Famille').selectOption({ label: 'Imports' })
+		await expect(page).toHaveURL(/\?famille=import$/)
+		const ligne = page.getByTestId('ligne-audit').filter({ hasText: 'Contacts importés' })
+		await expect(ligne).toHaveCount(1)
+		await expect(ligne).toContainText('Créées\u00a0: 8 · ignorées\u00a0: 1 · refusées\u00a0: 1 · organisations créées\u00a0: 4')
+		await capturer(page, 'journal-filtre-imports-1440', UNITE)
 	})
 
 	test('les quatre paliers : le tableau défile dans son conteneur, jamais la page', async ({ page }) => {

@@ -3,6 +3,8 @@
 //           réglages jamais leurs valeurs), §7.3 (le nom d'un contact lu à l'affichage) ; docs/DESIGN_SYSTEM.md §5.66
 //           (paire inconnue laissée vide, « Système ou compte supprimé », « sans libellé »), §5.56 (`logs_purged`) ;
 //           docs/JOURNAL.md décision 728
+// @verifies INC-323 (docs/INCONSISTENCY_REPORT.md) — les imports et les exports CSV de `CRM-071` nommés, leurs comptes en
+//           détail ; et les paires `webhook` de `CRM-073` T3 (docs/DESIGN_SYSTEM.md §5.79)
 
 import { describe, expect, it } from 'vitest'
 import { fr } from '../i18n/fr'
@@ -41,6 +43,9 @@ const PAIRES = [
 	['mail_identity', 'deleted'], ['card', 'trashed'], ['card', 'restored'], ['card', 'destroyed'], ['comment', 'deleted'],
 	['activity', 'deleted'], ['contact', 'deleted'], ['contact', 'anonymized'], ['contact', 'exported'],
 	['organization', 'deleted'], ['session', 'signed_in'], ['audit_log', 'purged'],
+	// `CRM-071` (migrations 0136 à 0138), rattrapées par INC-323 ; `CRM-073` T3 (migration 0139).
+	['contact', 'imported'], ['card', 'imported'], ['contact_list', 'exported'], ['card_list', 'exported'],
+	['webhook', 'created'], ['webhook', 'updated'], ['webhook', 'deleted'],
 ] as const
 
 describe('la phrase du geste', () => {
@@ -123,6 +128,21 @@ describe('le détail', () => {
 		expect(detailAudit(entree({ ...maj, details: { changed: ['slug', 'secret_id', 'inconnue'] } }))).toBe(
 			'Modifié : identifiant court, mot de passe, inconnue',
 		)
+	})
+
+	it('INC-323 : dit les comptes d’un import et le nombre de lignes d’un export, accordé par clé', () => {
+		expect(detailAudit(entree({ objet: 'contact', action: 'imported', details: { created: 8, skipped: 1, refused: 1, organizations_created: 4 } }))).toBe(
+			'Créées\u00a0: 8 · ignorées\u00a0: 1 · refusées\u00a0: 1 · organisations créées\u00a0: 4',
+		)
+		expect(detailAudit(entree({ objet: 'card', action: 'imported', details: { created: 3, skipped: 0, refused: 2, channel_id: 'c' } }))).toBe(
+			'Créées\u00a0: 3 · ignorées\u00a0: 0 · refusées\u00a0: 2',
+		)
+		expect(detailAudit(entree({ objet: 'contact', action: 'imported', details: { created: 2, skipped: 0, refused: 0, organizations_created: 0 } }))).toBe(
+			'Créées\u00a0: 2 · ignorées\u00a0: 0 · refusées\u00a0: 0',
+		)
+		expect(detailAudit(entree({ objet: 'card_list', action: 'exported', details: { count: 1 } }))).toBe('1 ligne exportée')
+		expect(detailAudit(entree({ objet: 'contact_list', action: 'exported', details: { count: 12 } }))).toBe('12 lignes exportées')
+		expect(libelleGesteAudit(entree({ objet: 'contact', action: 'imported', idObjet: null }), AUCUN)).toBe('Contacts importés')
 	})
 
 	it('un détail sans objet rend un texte vide', () => {

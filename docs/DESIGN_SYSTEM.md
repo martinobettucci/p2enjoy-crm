@@ -6437,7 +6437,8 @@ journal de la plateforme (§5.56)** : deux journaux du même produit se lisent d
 - **LES FILTRES VIVENT EN TÊTE, SUR UNE LIGNE QUI SE REPLIE**, au-dessus du tableau qu'ils qualifient (§5.48 bis, §5.60).
   - **« Famille »** est un `select` du §5.7, avec une option vide en tête qui le lève (§5.22). Ses six options
     s'écrivent en toutes lettres : « Droits et appartenances », « Configuration », « Connexions », « Exports »,
-    « Effacements et corbeille », « Rétention ».
+    « Effacements et corbeille », « Rétention ». *Une septième, « Imports », après « Exports », depuis INC-323 (2026-10-31) :
+    la base écrit la famille `import` depuis `CRM-071` T5, et le filtre l'ignorait.*
   - **« Acteur »** est un `select` des membres de l'espace, avec une option vide en tête, puis « Système ou compte
     supprimé » (les entrées sans acteur, voir la colonne « Acteur »).
   - **« Du » et « Au »** sont deux champs `date` libellés (§5.60). « Au » inclut le jour qu'il nomme.
