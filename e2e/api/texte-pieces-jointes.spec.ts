@@ -5,7 +5,13 @@
 //
 // Les pièces de la preuve sont des lignes posées par la clé de service sur le message envoyé du seed qui porte
 // `proposition-monitoring.txt` ; leur nom commence par `tst-crm074`, et elles sont retirées à la fin. Aucun objet n'est
-// déposé au stockage : la preuve porte sur la base, l'extraction réelle sur `mail-sync` (T2).
+// déposé au stockage : la preuve porte sur la base, l'extraction réelle sur `mail-sync` (T2,
+// `e2e/mail/extraction-texte.spec.ts`).
+//
+// LA BOUCLE DE `mail-sync` TOURNE PENDANT LA PREUVE (T2) : elle peut prendre la pièce avant la preuve. La première preuve
+// accepte donc les deux chemins — sa propre prise, ou celle de la boucle, qui trouve l'objet absent et clôt la pièce en
+// `failed` — et vérifie dans les deux cas que seule la clé de service a écrit. La seconde emploie une image, qui n'est
+// jamais à extraire : aucune course possible.
 
 import { createHash } from 'node:crypto'
 import { expect, test, type APIRequestContext } from '@playwright/test'
@@ -65,30 +71,40 @@ test.describe('le texte extrait des pièces jointes — hors interface (docs/SPE
 		const prise = await request.post(`${RPC}/claim_attachment_texts`, { headers: json(enTetesService()), data: { p_limit: 50 } })
 		expect(prise.status(), await prise.text()).toBe(200)
 		const prises = (await prise.json()) as { attachment_id: string; storage_path: string; mime_type: string; attempt: number }[]
-		const notre = prises.find((x) => x.attachment_id === pdf.id)
-		expect(notre).toMatchObject({ mime_type: 'application/pdf', attempt: 1 })
 		expect(prises.some((x) => x.attachment_id === image.id)).toBe(false)
+		const notre = prises.find((x) => x.attachment_id === pdf.id)
 
-		const resultat = await request.post(`${RPC}/record_attachment_text`, {
-			headers: json(enTetesService()),
-			data: { p_attachment: pdf.id, p_status: 'extracted', p_text: 'Devis n° 42 — refonte du monitoring' },
-		})
-		expect(resultat.status(), await resultat.text()).toBe(200)
-		expect(await resultat.json()).toBe('extracted')
+		let attendu: { text_status: string; extracted_text: string | null; text_truncated: boolean }
+		if (notre !== undefined) {
+			expect(notre).toMatchObject({ mime_type: 'application/pdf', attempt: 1 })
+			const resultat = await request.post(`${RPC}/record_attachment_text`, {
+				headers: json(enTetesService()),
+				data: { p_attachment: pdf.id, p_status: 'extracted', p_text: 'Devis n° 42 — refonte du monitoring' },
+			})
+			expect(resultat.status(), await resultat.text()).toBe(200)
+			expect(await resultat.json()).toBe('extracted')
+			attendu = { text_status: 'extracted', extracted_text: 'Devis n° 42 — refonte du monitoring', text_truncated: false }
+		} else {
+			// La boucle l'a prise la première : l'objet n'existant pas, elle la clôt en `failed`.
+			attendu = { text_status: 'failed', extracted_text: null, text_truncated: false }
+		}
 
 		const admin = await jetonDe('admin@p2enjoy.test')
-		const lu = await request.get(`${REST}/mail_attachments?id=eq.${pdf.id}&select=text_status,extracted_text,text_truncated`, {
-			headers: enTetesAuthentifies(admin),
-		})
-		expect(lu.status()).toBe(200)
-		expect(await lu.json()).toEqual([{ text_status: 'extracted', extracted_text: 'Devis n° 42 — refonte du monitoring', text_truncated: false }])
+		await expect
+			.poll(async () => {
+				const lu = await request.get(`${REST}/mail_attachments?id=eq.${pdf.id}&select=text_status,extracted_text,text_truncated`, {
+					headers: enTetesAuthentifies(admin),
+				})
+				return lu.status() === 200 ? await lu.json() : lu.status()
+			}, { timeout: 30_000 })
+			.toEqual([attendu])
 	})
 
 	test('refus directs : ni l’administratrice ni l’anonyme n’écrivent un texte, ne prennent ni ne rendent une extraction', async ({
 		request,
 	}) => {
 		const p = await porteur(request)
-		const pdf = await piece(request, p, 'tst-crm074-refus.pdf', 'application/pdf')
+		const pdf = await piece(request, p, 'tst-crm074-refus.png', 'image/png')
 		const admin = await jetonDe('admin@p2enjoy.test')
 
 		const ecriture = await request.patch(`${REST}/mail_attachments?id=eq.${pdf.id}`, {
@@ -108,6 +124,6 @@ test.describe('le texte extrait des pièces jointes — hors interface (docs/SPE
 		expect(anonyme.status()).toBe(401)
 
 		const relu = await request.get(`${REST}/mail_attachments?id=eq.${pdf.id}&select=text_status,extracted_text`, { headers: enTetesService() })
-		expect(await relu.json(), 'la pièce est restée à extraire, sans texte').toEqual([{ text_status: 'pending', extracted_text: null }])
+		expect(await relu.json(), 'la pièce n’a reçu aucun texte').toEqual([{ text_status: null, extracted_text: null }])
 	})
 })

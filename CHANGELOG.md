@@ -13,12 +13,16 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
-### `CRM-074` — aperçu des pièces jointes et extraction de texte (T1)
+### `CRM-074` — aperçu des pièces jointes et extraction de texte (T1, T2)
 
 - **Le texte extrait des pièces jointes, en base** (T1, migration `0141`) : chaque pièce saine d'un PDF, d'un fichier Word,
   Excel ou OpenDocument est marquée « à extraire » — les pièces déjà reçues comprises ; l'extraction elle-même et son
   affichage arrivent avec les tranches suivantes. Le texte se lit sous les mêmes droits que la pièce ; seule la clé de
   service l'écrit.
+- **L'extraction** (T2, service `mail-sync`) : toutes les trente secondes, le service lit le texte des pièces à extraire —
+  PDF par `pypdf`, Word, Excel et OpenDocument par la bibliothèque standard —, dans un processus séparé limité en temps et
+  en mémoire ; un document numérisé est reconnu « sans texte lisible », un fichier qui n'est pas ce qu'il annonce « non
+  reconnu ». Aucun service externe, aucune variable nouvelle ; l'image `mail-sync` est à reconstruire.
 
 ### `CRM-073` — webhooks sortants signés (T1 à T3)
 

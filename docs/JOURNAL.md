@@ -37322,3 +37322,26 @@ règle n'est pas inscrite dans CLAUDE.md : elle s'y ajoute sur instruction du re
 
 **Vérifications** : pgTAP `0131` 23/23, suite 121 fichiers sans anomalie ; API 2/2 (et webhooks 4/4) ; typecheck vert.
 
+### `CRM-074` T2 : l'extraction du texte dans `mail-sync` (2026-10-31)
+
+**Réalisé** : `mail_sync/extraction.py`, la boucle et la route interne, `pypdf` 6.21.4 ; cinq pièces de démonstration
+générées (`supabase/seed/pieces-jointes/`) ; tests du service et intégration par le vrai service (`docs/SPEC-pieces-jointes.md`
+§4, précisions au §14).
+
+**Choix et observations** :
+- *`pypdf`* : licence BSD-3, pur Python, sans dépendance sous Python 3.13, aucune vulnérabilité connue pour 6.21.4 (OSV,
+  relevé du jour) ; ses avis passés (temps et mémoire sur PDF malformé, corrigés jusqu'en 6.19) confirment le processus
+  enfant. Office par la bibliothèque standard : aucune dépendance de plus.
+- *`spawn` plutôt que `fork`* : le service a des fils (Uvicorn, la veille) ; un `fork` copierait des verrous tenus ailleurs.
+- *Défaut trouvé par le test* : une fin de ligne `\r\n` devenait une ligne vide ; corrigé avant le commit.
+- *Journal* : la liste fermée des champs du journal de `mail-sync` écartait l'identifiant de la pièce ; `attachment_id` et
+  `text_status` y entrent, jamais le nom ni le texte.
+- *Course avec la boucle* : la boucle tourne pendant les preuves. La preuve d'API de T1 posait des pièces à extraire sans
+  objet ; la boucle pouvait les prendre avant elle. La preuve accepte désormais les deux chemins, et sa preuve de refus
+  emploie une image, jamais à extraire.
+- *Pile partagée* : l'image `mail-sync` reconstruite et le service recréé deux fois avec l'accord de la session de
+  `CRM-117` (ses chapitres ne passent pas par la messagerie).
+
+**Vérifications** : pytest 21 nouveaux, suite 286/286 ; intégration mail 2/2 ; relève et envoi avec pièces 4/4 ; API de T1
+2/2.
+

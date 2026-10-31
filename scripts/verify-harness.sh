@@ -1867,7 +1867,10 @@ SCENARIOS_UI=1029
 # — « Total: 45 tests in 12 files ».
 # **+1 par `CRM-069` T5, 2026-10-28** : `e2e/mail/digest.spec.ts`, fichier NEUF — le job de 7 h, la file, le worker, la
 # boîte de Driss : le digest par l'identité de service, sans `Reply-To`, ses liens complets. 45 + 1 = 46, COMPTÉE.
-SCENARIOS_MAIL=46
+# **+2 par `CRM-074` T2, 2026-10-31** : `e2e/mail/extraction-texte.spec.ts`, fichier NEUF — l'extraction par la route
+# interne de `mail-sync` (PDF, scan, Word, Excel, image, faux fichier, objet absent), puis par la boucle seule. 46 + 2 =
+# 48, COMPTÉE — « Total: 48 tests in 14 files ».
+SCENARIOS_MAIL=48
 
 failures=0
 checks=0

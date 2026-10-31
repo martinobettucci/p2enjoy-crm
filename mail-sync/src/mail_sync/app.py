@@ -6,6 +6,8 @@
 # @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : antivirus des pièces envoyées et purge des dépôts abandonnés —
 #       docs/SPEC-mail-subsystem.md §19 bis.2 points 6 et 8
 # interne, autorisation backend, corrélation et bornes ; la portée couvre toutes les routes.
+# @spec CRM-074 (docs/BACKLOG.md) — tranche T2 : la route interne qui extrait un lot de textes de pièces jointes
+#       (docs/SPEC-pieces-jointes.md §4.1)
 
 from __future__ import annotations
 
@@ -21,6 +23,7 @@ from pydantic import BaseModel, ConfigDict
 from mail_sync import __version__
 from mail_sync.config import Settings
 from mail_sync.envoi import vider_la_file
+from mail_sync.extraction import traiter_lot
 from mail_sync.imap_probe import probe_inbound_account
 from mail_sync.postgrest import PostgrestClient, PostgrestError
 from mail_sync.ingestion import relever_compte
@@ -89,6 +92,18 @@ class EnvoiResponse(StrictModel):
     rescheduled: int = 0
     #: Orphelins repris d'un worker mort (§20.4).
     orphans: int = 0
+
+
+class ExtractionResponse(StrictModel):
+    """Ce qu'un lot d'extraction a produit (`CRM-074` §4.1) — des comptes, jamais un texte ni un nom de fichier."""
+
+    claimed: int
+    extracted: int
+    empty: int
+    unsupported: int
+    failed: int
+    #: Rendues à extraire après une panne passagère, sous bail.
+    retried: int
 
 
 class ReleveResponse(StrictModel):
@@ -578,6 +593,39 @@ def create_app(
             failed=resultat.echoues,
             rescheduled=resultat.reprogrammes,
             orphans=resultat.orphelins,
+        )
+
+    # L'EXTRACTION D'UN LOT, DÉCLENCHÉE (`CRM-074` §4.1). La boucle du service fait la même chose toutes les trente
+    # secondes ; la route rend le lot observable et rejouable, ce qu'une preuve mesure. Les deux prennent par la base, avec
+    # bail : elles ne traitent jamais la même pièce.
+    @application.post(
+        "/internal/v1/attachments/extract",
+        response_model=ExtractionResponse,
+        dependencies=[Depends(require_internal_token)],
+    )
+    def extract_attachment_texts(request: Request, limit: int = 10) -> ExtractionResponse:
+        settings_courants: Settings = request.app.state.settings
+        client = PostgrestClient(
+            settings_courants.SUPABASE_URL,
+            settings_courants.SERVICE_ROLE_KEY.get_secret_value(),
+            timeout=60.0,
+        )
+        try:
+            bilan = traiter_lot(
+                client,
+                limite=max(1, min(limit, 50)),
+                journal=lambda evenement, **details: log_event(app_logger, logging.INFO, evenement, **details),
+            )
+        except PostgrestError as erreur:
+            log_event(app_logger, logging.ERROR, "attachment_texts_failed", postgrest_status=erreur.status_code)
+            raise HTTPException(status_code=502, detail="Base indisponible") from None
+        return ExtractionResponse(
+            claimed=bilan.prises,
+            extracted=bilan.extraites,
+            empty=bilan.vides,
+            unsupported=bilan.non_reconnues,
+            failed=bilan.echouees,
+            retried=bilan.reprises,
         )
 
     @application.get(

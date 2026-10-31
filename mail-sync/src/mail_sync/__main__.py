@@ -2,6 +2,8 @@
 # d'entrée unique du conteneur ; la portée couvre le chargement, les logs et l'écoute Uvicorn.
 # @spec CRM-059 (docs/BACKLOG.md), docs/SPEC-mail-subsystem.md §20.10 — démarrage et arrêt de la
 #       boucle de veille ; `docs/JOURNAL.md` décision 341.
+# @spec CRM-074 (docs/BACKLOG.md) — tranche T2 : démarrage et arrêt de la boucle d'extraction des textes de pièces jointes
+#       (docs/SPEC-pieces-jointes.md §4.1), démarrée ici pour la même raison que la veille.
 #
 # LA VEILLE EST DÉMARRÉE ICI, ET NON DANS `create_app`, délibérément. `create_app` est construite
 # par chaque preuve d'API ; y démarrer un fil ferait tourner une veille dans des dizaines de tests
@@ -16,6 +18,7 @@ import uvicorn
 
 from mail_sync.app import create_app
 from mail_sync.config import ConfigurationError, load_settings
+from mail_sync.extraction import PiloteExtraction, traiter_lot
 from mail_sync.postgrest import PostgrestClient
 from mail_sync.structured_logging import configure_logging, log_event
 from mail_sync.veille import CompteAVeiller, PiloteVeille
@@ -86,6 +89,23 @@ def _relever_via_api_interne(settings, logger):
     return relever
 
 
+def _extraire_un_lot(settings, logger):
+    """Un lot d'extraction, avec un client neuf — le même chemin que la route interne de `CRM-074`."""
+
+    def executer():
+        client = PostgrestClient(
+            settings.SUPABASE_URL,
+            settings.SERVICE_ROLE_KEY.get_secret_value(),
+            timeout=60.0,
+        )
+        return traiter_lot(
+            client,
+            journal=lambda evenement, **details: log_event(logger, logging.INFO, evenement, **details),
+        )
+
+    return executer
+
+
 def main() -> int:
     try:
         settings = load_settings()
@@ -108,6 +128,8 @@ def main() -> int:
         logger=logger,
     )
     pilote.demarrer()
+    extraction = PiloteExtraction(executer=_extraire_un_lot(settings, logger), logger=logger)
+    extraction.demarrer()
     try:
         uvicorn.run(
             application,
@@ -122,6 +144,7 @@ def main() -> int:
         # une exception dans certains cas, et un fil de veille laissé derrière retiendrait le
         # processus jusqu'à ce que l'orchestrateur le tue.
         pilote.arreter()
+        extraction.arreter()
     return 0
 
 

@@ -403,7 +403,8 @@ et la construit dans l'ordre. Mode opératoire, coût mesuré et preuves : `docs
 
 ### 3.3 `mail-sync` — service Python
 
-Seul composant autorisé à parler IMAP et SMTP. Quatre responsabilités :
+Seul composant autorisé à parler IMAP et SMTP. Quatre responsabilités, et l'extraction du texte des pièces jointes depuis
+`CRM-074` :
 
 | Sous-composant | Rôle |
 |---|---|
@@ -411,6 +412,7 @@ Seul composant autorisé à parler IMAP et SMTP. Quatre responsabilités :
 | `smtp_worker` | Consommation de la file `mail_outbox` : envoi via l'identité SMTP de l'utilisateur, retry avec backoff, respect des quotas, archivage du message envoyé |
 | ~~`scheduler`~~ | **Retiré du périmètre** par la décision 261. Relances, séquences, digest, purge RGPD et recalcul du score de santé passent à `pg_cron` — `CRM-017` |
 | API interne | Test de connexion IMAP/SMTP, déclenchement d'un backfill, exposition de l'état de synchronisation, et endpoints réservés aux tests en environnement de développement |
+| `extraction` (`CRM-074` T2) | Texte des pièces jointes saines (PDF, Word, Excel, OpenDocument) : une boucle de trente secondes prend dix pièces par `claim_attachment_texts`, lit chacune au stockage sous la clé de service, extrait dans un **processus enfant** (`spawn`, 20 s de calcul, 512 Mo, 30 s de durée ; archive Office ≤ 1 000 entrées et 50 Mo décompressés) et rend le résultat par `record_attachment_text` ; route interne `POST /internal/v1/attachments/extract` pour le déclencher. Le journal nomme la pièce par son identifiant et son statut, jamais par son nom ni son texte (`docs/SPEC-pieces-jointes.md` §4) |
 
 Il se connecte à PostgreSQL avec le rôle `service_role`. C'est **le seul** consommateur des
 secrets de messagerie déchiffrés. Cette capacité était future : le socle `CRM-051` ne recevait pas
@@ -1527,6 +1529,7 @@ livraison contre une cellule simulée, avec leurs dégradations.
 | `@supabase/supabase-js` | Accès aux données | Typé par le schéma généré ; réessaie **trois fois** une lecture en échec (1 s, 2 s, 4 s) — mesuré |
 | IMAPClient 3.1.0 | Connexions UID/IDLE et manipulation future des dossiers (`CRM-052`/`CRM-054`) | BSD-3-Clause, maintenu, Python 3.13 ; choisi par `CRM-051` mais installé seulement avec son premier consommateur ; contexte TLS vérificateur explicite |
 | FastMCP 4.0.11 (SDK MCP 2.3.0) | Serveur MCP distant et mandataire OAuth du connecteur (`CRM-102`) | Apache-2.0, maintenu ; déjà en production dans le connecteur Evoliz du même responsable ; le mandataire s'appuie sur des points internes, d'où la version épinglée et les tests rejoués à chaque montée (`docs/SPEC-mcp.md` §14) |
+| `pypdf` 6.21.4 | Texte des PDF reçus en pièce jointe (`CRM-074` T2), dans `mail-sync` | Mesuré le 2026-10-31 (`CLAUDE.md` §19) : licence BSD-3-Clause, pur Python, aucune dépendance sous Python 3.13, roue de 410 Ko, aucune vulnérabilité connue pour cette version (OSV) ; ses avis anciens de temps et de mémoire sur PDF malformé justifient le processus enfant borné. Word, Excel et OpenDocument se lisent par la bibliothèque standard (`zipfile`, `xml.etree`) |
 | ClamAV | Analyse antivirale | Base de signatures à rafraîchir |
 | Serveur Ollama de LeLabs (`gemma4:e2b`) | Génération des suggestions de l'assistant IA (`CRM-097`) | Service externe opéré par LeLabs ; clé liée à une plage d'adresses ; borne de 120 s, aucune nouvelle tentative automatique, mode dégradé ; simulateur local pour les tests (`docs/SPEC-ia.md`) |
 | Caddy | TLS et service des fichiers statiques | Production uniquement |

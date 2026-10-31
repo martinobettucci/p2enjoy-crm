@@ -12728,8 +12728,17 @@ binaire**, pour que l'agent la lise à sa façon.
       deux preuves de webhooks rejouées vertes (4/4) ; types régénérés — ils rattrapent aussi `verify_webhook_dispatch` de
       la `0140` —, témoin révisé, typecheck vert ; compteurs du harnais (121 fichiers SQL, 1 288 scénarios d'API).
       *Précisions d'exécution* : `docs/SPEC-pieces-jointes.md` §13.
-- [ ] **T2 — l'extraction** (§4) : boucle de `mail-sync`, `pypdf`, Office par la bibliothèque standard, processus enfant
+- [x] **T2 — l'extraction** (§4) : boucle de `mail-sync`, `pypdf`, Office par la bibliothèque standard, processus enfant
       borné ; tests du service ; intégration jusqu'à la base ; DAT.
+      *Livrée en développement le 2026-10-31* — `mail-sync/src/mail_sync/extraction.py` (formats, normalisation, enfant
+      `spawn` borné, lot, boucle `PiloteExtraction`), route interne `POST /internal/v1/attachments/extract`, `pypdf`
+      6.21.4 (vérifications du CLAUDE.md §19 au DAT §15) ; cinq pièces de démonstration reproductibles
+      (`supabase/seed/pieces-jointes/generer.py`, bibliothèque standard). Preuves : pytest `test_extraction.py` 21/21 (dont
+      une fin de ligne `\r\n` qui doublait les sauts de ligne, trouvée et corrigée), suite 286/286 (conteneur jetable
+      Python 3.13.13) ; intégration `e2e/mail/extraction-texte.spec.ts` 2/2 par le vrai service reconstruit — la route
+      (PDF, scan, Word, Excel, image ignorée, faux fichier, objet absent), puis la boucle seule, journal sans nom ni texte ;
+      relève et envoi avec pièces rejoués verts (4/4) ; la preuve d'API de T1 rendue indifférente à la course avec la
+      boucle ; compteur du harnais (48 scénarios mail). *Précisions d'exécution* : `docs/SPEC-pieces-jointes.md` §14.
 - [ ] **T3 — l'écran** (§5, §8) : `docs/DESIGN_SYSTEM.md` avant le code ; visionneuse dans la boîte de réception et le fil
       de l'affaire ; seed par la vraie chaîne ; unitaires, E2E, captures ; manuel.
 - [ ] **T4 — le connecteur** (§6) : `crm_mail_attachment_get`, `attachments` dans `crm_card_mail_list` et `crm_mail_get` ;

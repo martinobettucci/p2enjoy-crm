@@ -194,3 +194,17 @@ Sans changer un point validé :
 - Une pièce qui **cesse d'être saine** perd tout texte (déclencheur), ce que la contrainte `mail_attachments_text_clean_only`
   exige.
 
+## 14. Précisions d'exécution (`CRM-074` T2, `mail-sync`)
+
+- La boucle est un fil du service (`PiloteExtraction`, sur le modèle de la veille) ; un lot revenu plein est suivi d'un
+  autre sans attendre, ce qui écoule la reprise de l'existant. Une **route interne** authentifiée,
+  `POST /internal/v1/attachments/extract`, fait le même lot à la demande : elle rend l'extraction observable et
+  rejouable par les preuves, comme la relève et l'envoi. Les deux prennent par la base, sous bail.
+- Un objet absent du stockage est **définitif** (`failed`) ; une panne de lecture est passagère (`retry`).
+- Une erreur imprévue de l'analyseur sur un fichier malformé rend `unsupported` ; un dépassement de borne, de mémoire ou de
+  durée rend `failed`.
+- Les champs `attachment_id` et `text_status` entrent dans la liste fermée des champs du journal du service ; le nom du
+  fichier et le texte n'y entrent pas.
+- Les cinq pièces de démonstration (§8) sont produites par `supabase/seed/pieces-jointes/generer.py`, bibliothèque standard
+  seule et sortie reproductible ; T2 les emploie déjà dans sa preuve d'intégration.
+

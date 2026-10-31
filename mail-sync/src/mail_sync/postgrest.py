@@ -8,6 +8,8 @@
 # @spec CRM-058 (docs/BACKLOG.md) — tranche 2 : la lecture et l'effacement des pièces à envoyer, l'archive des pièces
 #       envoyées — docs/SPEC-mail-subsystem.md §19 bis.2 points 7 et 8, §19 bis.4
 # @spec CRM-111 T2.4.2 (docs/BACKLOG.md) — le channel d'une card se lit sur son plus ancien rattachement (docs/SPEC-rattachements.md §7)
+# @spec CRM-074 (docs/BACKLOG.md) — tranche T2 : la prise et le résultat des extractions de texte, la lecture d'une pièce reçue
+#       (docs/SPEC-pieces-jointes.md §3, §4.1)
 #
 # POURQUOI `urllib` ET NON UN CLIENT HTTP DE PLUS.
 #
@@ -599,6 +601,43 @@ class PostgrestClient:
 
         requete = urllib.request.Request(
             f"{self._base_url}/storage/v1/object/mail-outbound-attachments/{urllib.parse.quote(chemin)}",
+            method="GET",
+            headers={"apikey": self._key, "Authorization": f"Bearer {self._key}"},
+        )
+        try:
+            with urllib.request.urlopen(requete, timeout=self._timeout) as reponse:
+                return reponse.read()
+        except urllib.error.HTTPError as erreur:
+            if erreur.code in (400, 404):
+                return None
+            raise PostgrestError(erreur.code) from None
+        except urllib.error.URLError:
+            raise PostgrestError(0) from None
+
+    def prendre_extractions(self, limite: int = 10) -> list[dict[str, Any]]:
+        """Prend les pièces dont le texte est à extraire (`CRM-074`, docs/SPEC-pieces-jointes.md §3).
+
+        LA BASE PREND ET POSE LE BAIL dans la même instruction : deux boucles ne prennent jamais la même pièce.
+        """
+
+        return list(self._rpc("claim_attachment_texts", {"p_limit": limite}) or [])
+
+    def rendre_extraction(self, attachment_id: str, statut: str, texte: str | None, tronque: bool) -> str:
+        """Rend le résultat d'une extraction prise ; la base dit l'état final (`retry` peut devenir `failed`)."""
+
+        return self._rpc(
+            "record_attachment_text",
+            {"p_attachment": attachment_id, "p_status": statut, "p_text": texte, "p_truncated": tronque},
+        )
+
+    def lire_piece(self, chemin: str) -> bytes | None:
+        """Lit une pièce de `mail-attachments` sous la clé de service (`CRM-074` §4.1).
+
+        `None` pour un objet absent (`400` ou `404`) ; toute autre erreur est une panne (`PostgrestError`), qui se rejoue.
+        """
+
+        requete = urllib.request.Request(
+            f"{self._base_url}/storage/v1/object/mail-attachments/{urllib.parse.quote(chemin)}",
             method="GET",
             headers={"apikey": self._key, "Authorization": f"Bearer {self._key}"},
         )

@@ -19,6 +19,10 @@ SAFE_FIELDS: Final = (
     "boot_count",
     # Construit par `config._describe` : noms de variables et règles, jamais de valeur.
     "reason",
+    # `CRM-074` T2 (docs/SPEC-pieces-jointes.md §4.3) : une pièce se nomme par son identifiant et son statut d'extraction,
+    # jamais par son nom de fichier ni son texte.
+    "attachment_id",
+    "text_status",
 )
 
 
