@@ -16970,7 +16970,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
         (`docs/SPEC-analytique.md` §13.5 ; accord des deux sessions, 2026-10-26).* Preuve : aucun changement visible, toute la suite
         verte ; `docs/SCHEMA.md`, `docs/DAT.md`, `docs/PROD_MIGRATIONS.md` (retour arrière possible tant que chaque affaire
         n'a qu'un rattachement).
-        *Prise en charge : session interactive 2026-10-23 14:00 UTC (Claude Code, poste du responsable) depuis 2026-10-27 17:09 UTC — état avant : [~]*
+        *Prise en charge : session interactive 4522fa9c (Claude Code, poste du responsable) depuis 2026-10-31 09:59 UTC — état avant : [~] — reprise d'une prise expirée (session du 2026-10-23, prise du 2026-10-27, aucun commit d'elle depuis) ; la livraison l'attend (décision 782)*
         **Découpage, arrêté le 2026-10-26 (journal, entrée « `CRM-111` T2.4 — le découpage »)** — une étape poussée chacune,
         `main` vert à chaque fois. Mesuré avant (base jetable, `docs/mesures/CRM-111/02-fonctions-cassees.sql`) : le
         retrait casse encore **dix fonctions** — les deux miroirs, `app.card_events_apres_insertion_card`,

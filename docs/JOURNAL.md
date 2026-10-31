@@ -37017,3 +37017,14 @@ de l'espace. **Vérifications** : unitaires `mail-sync` 265/265 (dont 5 neufs) ;
 dans la boîte, la relève réelle de la boîte de Driss rend `messages_skipped` ≥ 1, aucun message ingéré) ; les sept
 scénarios qu'INC-321 faisait tomber rejoués verts. `CRM-069` repasse `[P]`.
 
+### La fenêtre attend la bascule de `CRM-111` — la décision 781 rectifiée (2026-10-31, décision 782)
+
+**Rectification.** La décision 781 ajoutait la clôture de `CRM-111` à la correction d'INC-321 ; l'option choisie par le
+responsable disait seulement « corriger le digest, puis livrer le tout ». INC-321 corrigée (`CRM-069` T6), la question
+lui a été reposée en ces termes.
+
+**Décision 782, du responsable, en séance** (« Attendre CRM-111 ») : la fenêtre des migrations `0106` à `0138` attend la
+**clôture des preuves de la bascule de `CRM-111`** — T2.4.4 et T2.4.5 : les deux tests d'intégration du connecteur encore
+rouges et les huit harnais qui reconstruisent la base. Le responsable a répondu « Oui, pris maintenant » à la question de
+l'instantané de la machine virtuelle ; aucune fenêtre n'a suivi, et l'instantané sera redemandé au moment de `--migrate`.
+
