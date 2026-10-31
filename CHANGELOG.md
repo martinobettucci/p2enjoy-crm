@@ -13,6 +13,12 @@ d'exécuter le code attendu.
 
 ## [Non publié]
 
+### INC-327 — la publication du manuel s'exécute dans la cellule de production
+
+- `scripts/manuel/publier.sh --spark` lit ses réponses JSON avec `python3`, et non plus avec `jq`, que la cellule n'a pas ;
+  il prend le port et la clé de service dans la fusion des fichiers injectés. `scripts/verify-spark.sh` §9 le prouve
+  dans une cellule simulée.
+
 ### INC-323 — les imports et les exports CSV nommés au journal d'audit
 
 - Le journal d'audit nomme l'import de contacts et d'affaires et l'export CSV du carnet et de la vue liste, avec leurs

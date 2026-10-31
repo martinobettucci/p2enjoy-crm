@@ -8282,6 +8282,25 @@ et l'archivage d'un envoi la pose (0106). La colonne est donc incomplète sur le
 aussi la colonne, et qu'une migration rattrape les pièces existantes — ou retirer la colonne, que plus rien ne lit ; à
 arbitrer. Connecteur MCP : sans objet (il lit par le message).
 
+### INC-327 — `scripts/manuel/publier.sh --spark` ne s'exécute pas dans la cellule : il exige `jq` et ne fusionne pas les fichiers injectés
+
+*Constaté le 2026-11-01, à la fenêtre de la décision 792 (`CRM-117` T6).* Joué dans la cellule après la livraison, le
+script refuse avant toute écriture : « jq est introuvable ». La cellule n'a ni Node ni `jq`, et ses scripts n'emploient
+que `sh`, `python3` et `openssl` (`docs/SPEC-deploiement-spark.md`, contrainte S5). Derrière ce refus, un second défaut :
+sous `--spark`, le script lisait le port et la clé de service dans `ENV_FILE`, c'est-à-dire le `.env` du dépôt, absent de
+la cellule, au lieu de la fusion des fichiers injectés (§4.1), comme `./runProd.sh --spark` et `amorcer-espace.sh`. Aucune
+preuve ne jouait le script dans les conditions de la cellule : la publication n'avait été éprouvée que sur la pile de
+développement.
+
+**Corrigé** : les trois lectures et écritures JSON passent par `python3`, et `--spark` fusionne les fichiers injectés
+(`P2ENJOY_ENV_FILE` la remplace pour un harnais). **Preuve** : `scripts/verify-spark.sh` §9 rejoue la cellule, avec des
+fichiers injectés jetables, un `PATH` sans `jq` ni `node`, et une API de stockage simulée qui n'accepte que la clé de la
+fusion. Elle échoue sur le script d'avant (trois anomalies, « jq est introuvable ») et passe sur le script corrigé :
+518 fichiers déposés, l'objet obsolète retiré, le miroir exact, puis aucun retrait au second passage. Le mode de
+développement est inchangé : 518 fichiers publiés sur la pile, et `e2e/api/manuel.spec.ts` passe à 9/9. **Le compte
+attendu passe de 514 à 518** : `CRM-074` T3 a ajouté quatre images au chapitre 12, si bien que le manuel compte
+483 images. Connecteur MCP : sans objet.
+
 ### INC-328 — La dégradation « SITE_URL retirée du connecteur » de `verify-spark.sh` ne retirait plus rien au connecteur
 
 *Constaté le 2026-11-01, en rejouant `scripts/verify-spark.sh` pour INC-327.* Le contrôle retirait la **première**

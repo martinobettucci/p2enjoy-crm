@@ -963,6 +963,91 @@ else
 	skip "pile de développement injoignable : amorçage non éprouvé"
 fi
 
+# --- 9. publier.sh --spark dans une cellule simulée -------------------------------------------------
+#
+# @verifies CRM-117 (docs/BACKLOG.md) — tranche T6 : la publication du manuel dans la cellule ;
+#           docs/SPEC-manual.md §15 ; docs/SPEC-deploiement-spark.md §4.1 (fusion), S5 (ni Node ni `jq`) ; INC-327
+# MESURÉ à la fenêtre du 2026-11-01 : `publier.sh --spark` refusait dans la cellule, faute de `jq`, et n'y aurait de toute
+# façon lu ni le port ni la clé, faute de fusionner les fichiers injectés. La preuve rejoue la cellule : fichiers injectés
+# jetables, un PATH sans `jq` ni `node`, et une API de stockage simulée qui n'accepte que la clé de service de la fusion.
+
+echo
+echo "9. scripts/manuel/publier.sh --spark dans une cellule simulée"
+
+P="$WORK/publication"
+fichiers_conformes "$P"
+mkdir -p "$P/bin"
+for binaire in /usr/bin/* /bin/*; do
+	case "$(basename "$binaire")" in jq|node|nodejs) continue ;; esac
+	[ -f "$binaire" ] && [ -x "$binaire" ] && ln -sf "$binaire" "$P/bin/$(basename "$binaire")"
+done
+SR_P=$(env_get "$P/secrets" SERVICE_ROLE_KEY)
+printf '%s\n' 'images/obsolete/ancienne.jpg' > "$P/objets"
+cat > "$P/api.py" <<-'EOF'
+	import json, sys
+	from http.server import BaseHTTPRequestHandler, HTTPServer
+	cle, objets, port_fichier = sys.argv[1], sys.argv[2], sys.argv[3]
+	def lire():
+	    return set(l for l in open(objets).read().splitlines() if l)
+	def ecrire(s):
+	    open(objets, 'w').write(''.join(c + '\n' for c in sorted(s)))
+	class Api(BaseHTTPRequestHandler):
+	    def log_message(self, *a): pass
+	    def repondre(self, code, corps):
+	        brut = json.dumps(corps).encode()
+	        self.send_response(code); self.send_header('Content-Type', 'application/json')
+	        self.send_header('Content-Length', str(len(brut))); self.end_headers(); self.wfile.write(brut)
+	    def corps(self):
+	        return self.rfile.read(int(self.headers.get('Content-Length', 0)))
+	    def autorise(self):
+	        return self.headers.get('apikey') == cle and self.headers.get('Authorization') == 'Bearer ' + cle
+	    def do_POST(self):
+	        corps = self.corps()
+	        if not self.autorise(): return self.repondre(401, {'error': 'cle'})
+	        if self.path == '/storage/v1/object/list/manual':
+	            prefixe = json.loads(corps)['prefix']; vus = {}
+	            for c in lire():
+	                if c.startswith(prefixe):
+	                    reste = c[len(prefixe):]
+	                    if '/' in reste: vus[reste.split('/', 1)[0]] = None
+	                    else: vus[reste] = 'id'
+	            return self.repondre(200, [{'name': n, 'id': i} for n, i in sorted(vus.items())])
+	        if self.path.startswith('/storage/v1/object/manual/'):
+	            s = lire(); s.add(self.path[len('/storage/v1/object/manual/'):]); ecrire(s)
+	            return self.repondre(200, {})
+	        self.repondre(404, {})
+	    def do_DELETE(self):
+	        corps = self.corps()
+	        if not self.autorise() or self.path != '/storage/v1/object/manual': return self.repondre(401, {})
+	        ecrire(lire() - set(json.loads(corps)['prefixes'])); self.repondre(200, [])
+	serveur = HTTPServer(('127.0.0.1', 0), Api)
+	open(port_fichier, 'w').write(str(serveur.server_port))
+	serveur.serve_forever()
+EOF
+python3 "$P/api.py" "$SR_P" "$P/objets" "$P/port" &
+API_PID=$!
+for _ in $(seq 50); do [ -s "$P/port" ] && break; sleep 0.1; done
+if [ -s "$P/port" ]; then
+	sed -i "s/^SPARK_HTTP_PORT=.*/SPARK_HTTP_PORT=$(cat "$P/port")/" "$P/env"
+	attendus=$( { echo contents.json; for f in docs/manuel/construit/chapters/*.json; do echo "chapters/$(basename "$f")"; done
+		find docs/manuel/images -mindepth 2 -maxdepth 2 -name '*.jpg' -printf 'images/%P\n'; } | LC_ALL=C sort)
+	nombre=$(printf '%s\n' "$attendus" | wc -l)
+	publier() { env -u P2ENJOY_MANUEL_API -u P2ENJOY_ENV_FILE PATH="$P/bin" SPARK_ENV_FILE="$P/env" SPARK_SECRETS_FILE="$P/secrets" \
+		P2ENJOY_SPARK_RUNTIME_DIR="$P/run" "$REPO_ROOT/scripts/manuel/publier.sh" --spark 2>&1; }
+	out=$(publier)
+	case "$out" in *"Manuel publié : $nombre fichier(s) déposé(s), 1 objet(s) retiré(s)"*)
+		ok "sans jq ni node, la fusion donne le port et la clé : $nombre fichier(s) déposé(s), l'objet obsolète retiré" ;;
+		*) fail "premier passage : $(printf '%s' "$out" | tail -n 2 | tr '\n' ' ')" ;; esac
+	[ "$(LC_ALL=C sort "$P/objets")" = "$attendus" ] && ok "le bucket simulé est le miroir exact de la source" \
+		|| fail "le bucket simulé diffère de la source"
+	out=$(publier)
+	case "$out" in *"$nombre fichier(s) déposé(s), 0 objet(s) retiré(s)"*) ok "rejouée, la publication ne retire rien" ;;
+		*) fail "second passage : $(printf '%s' "$out" | tail -n 2 | tr '\n' ' ')" ;; esac
+else
+	fail "l'API de stockage simulée n'a pas démarré"
+fi
+kill "$API_PID" 2>/dev/null; wait "$API_PID" 2>/dev/null
+
 # --- Bilan -------------------------------------------------------------------------------------------
 
 echo

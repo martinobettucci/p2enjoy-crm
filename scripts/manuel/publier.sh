@@ -2,6 +2,8 @@
 # @spec CRM-117 (docs/BACKLOG.md) — tranche T2 : la publication du manuel dans le bucket `manual`
 # @spec docs/SPEC-manual.md §14.1 (le bucket), §15 (la publication, en miroir) ; docs/DAT.md §3.7 quater ;
 #       docs/PROD_MIGRATIONS.md ; docs/JOURNAL.md décision 751
+# @spec CRM-117 (docs/BACKLOG.md) — tranche T6 : jouable dans la cellule — `python3` et non `jq`, fusion des fichiers
+#       injectés sous `--spark` (docs/SPEC-deploiement-spark.md §4.1, S5 ; INC-327)
 #
 # Recopie le manuel construit (docs/manuel/construit/) et ses images (docs/manuel/images/*/*.jpg) dans le bucket
 # privé `manual`, avec la clé de service, puis retire du bucket tout objet que la source ne porte plus : le bucket est
@@ -33,7 +35,15 @@ while [ $# -gt 0 ]; do
 done
 
 command -v curl >/dev/null 2>&1 || die "curl est introuvable : la publication passe par l'API de stockage."
-command -v jq   >/dev/null 2>&1 || die "jq est introuvable : la publication lit des réponses JSON."
+# PYTHON3 ET NON `jq` : la cellule n'a ni Node ni `jq` (docs/SPEC-deploiement-spark.md, S5) ; mesuré à la
+# fenêtre du 2026-11-01, la publication y refusait (INC-327).
+command -v python3 >/dev/null 2>&1 || die "python3 est introuvable : la publication lit des réponses JSON."
+
+# DANS LA CELLULE, aucun `.env` : le port et la clé de service viennent de la fusion des fichiers injectés, comme pour
+# `./runProd.sh --spark` (docs/SPEC-deploiement-spark.md §4.1 ; INC-327). `P2ENJOY_ENV_FILE` la remplace pour un harnais.
+if [ "$SPARK" = 1 ] && [ -z "${P2ENJOY_ENV_FILE:-}" ]; then
+	ENV_FILE=$(spark_env_merge)
+fi
 
 if [ "$SPARK" = 1 ]; then
 	API="${P2ENJOY_MANUEL_API:-http://127.0.0.1:$(env_get "$ENV_FILE" SPARK_HTTP_PORT)}"
@@ -91,12 +101,13 @@ lister() {
 	local prefixe=$1 code
 	code=$(curl -sS -o "$REPONSE" -w '%{http_code}' -X POST "$API/storage/v1/object/list/$BUCKET" \
 		-H "apikey: $SERVICE" -H "Authorization: Bearer $SERVICE" -H 'Content-Type: application/json' \
-		--data "$(jq -nc --arg p "$prefixe" '{prefix: $p, limit: 1000, offset: 0}')")
+		--data "$(python3 -c 'import json, sys; print(json.dumps({"prefix": sys.argv[1], "limit": 1000, "offset": 0}))' "$prefixe")")
 	[ "$code" = 200 ] || die "liste du bucket refusée ($code) sur « $prefixe » : $(head -c 300 "$REPONSE")"
 	# « D » pour un dossier, « F » pour un objet : un identifiant vide en tête de ligne serait mangé par `read` (une
 	# tabulation est un blanc pour IFS), et le dossier passerait pour un objet sans nom.
 	local entrees genre nom
-	entrees=$(jq -r '.[] | (if .id == null then "D" else "F" end) + " " + .name' "$REPONSE")
+	entrees=$(python3 -c 'import json, sys
+for e in json.load(open(sys.argv[1])): print(("D" if e.get("id") is None else "F") + " " + e["name"])' "$REPONSE")
 	while read -r genre nom; do
 		[ -n "$nom" ] || continue
 		if [ "$genre" = D ]; then lister "$prefixe$nom/"; else printf '%s\n' "$prefixe$nom"; fi
@@ -112,7 +123,7 @@ done
 if [ "${#superflus[@]}" -gt 0 ]; then
 	code=$(curl -sS -o "$REPONSE" -w '%{http_code}' -X DELETE "$API/storage/v1/object/$BUCKET" \
 		-H "apikey: $SERVICE" -H "Authorization: Bearer $SERVICE" -H 'Content-Type: application/json' \
-		--data "$(printf '%s\n' "${superflus[@]}" | jq -R . | jq -sc '{prefixes: .}')")
+		--data "$(python3 -c 'import json, sys; print(json.dumps({"prefixes": sys.argv[1:]}))' "${superflus[@]}")")
 	[ "$code" = 200 ] || die "retrait de ${#superflus[@]} objet(s) refusé ($code) : $(head -c 300 "$REPONSE")"
 fi
 

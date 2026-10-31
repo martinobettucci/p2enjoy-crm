@@ -709,9 +709,9 @@ n'emploie. Appliquée en développement le 2026-10-26.
 non inscrit qui précède le dernier inscrit, §3.1). **Après la fenêtre, publier le manuel** : `scripts/manuel/publier.sh
 --spark` dans la cellule — sans quoi l'aide de la webapp rend « Le manuel n'a pas pu être chargé ». Aucune donnée ne
 change. `CRM-117` est **terminée en développement** (`[P]` le 2026-10-31) : le manuel est réécrit pour ses lecteurs,
-34 chapitres et 479 images. **Gestes de la fenêtre** : (1) les 126 et 127 à leur rang ; (2) la webapp de `main`, qui porte
-l'icône « Aide » et les pages `/aide` ; (3) `scripts/manuel/publier.sh --spark`, qui doit dire « Manuel publié : 514
-fichier(s) déposé(s) » — 34 chapitres, le sommaire, 479 images — et, rejoué, ne rien retirer (« 0 objet(s) retiré(s) »).
+34 chapitres et 483 images (479 à la clôture de `CRM-117`, quatre de plus au chapitre 12 par `CRM-074` T3). **Gestes de la fenêtre** : (1) les 126 et 127 à leur rang ; (2) la webapp de `main`, qui porte
+l'icône « Aide » et les pages `/aide` ; (3) `scripts/manuel/publier.sh --spark`, qui doit dire « Manuel publié : 518
+fichier(s) déposé(s) » — 34 chapitres, le sommaire, 483 images ; le script s'exécute dans la cellule depuis INC-327 — et, rejoué, ne rien retirer (« 0 objet(s) retiré(s) »).
 **Vérification** : connecté, l'icône « Aide » d'un écran ouvre son panneau et mène au chapitre de cet écran ; `/aide`
 montre le sommaire, un chapitre ses images ; déconnecté, `/aide` mène à la connexion. **Retrait** : celui des lignes 126
 et 127 du §3.2 ; la webapp précédente n'a pas d'aide et n'en lit rien.
