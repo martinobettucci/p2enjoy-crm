@@ -639,12 +639,13 @@ dépréciation.
 **Un seul lot, de la 106 à la 140** (décision 786, 2026-10-31) — la 141 (`CRM-074` T1), arrivée après la décision, n'y
 entre que sur décision du responsable : une seule fenêtre (§3.1) applique les migrations `0106` à
 `0140`, avec la webapp de `main` et les images `mcp` et `mail-sync` reconstruites, ainsi que la fonction edge `webhooks` et le
-redémarrage de `functions` (ligne 140 du §3.2). La fenêtre **attend toujours la fin de `CRM-117`** (décision 783) ; l'instantané de la machine virtuelle du
+redémarrage de `functions` (ligne 140 du §3.2). La condition de la décision 783 — la fin de `CRM-117` — est **remplie le
+2026-10-31** : l'unité est `[P]`, sa campagne finale (T5) close ; l'instantané de la machine virtuelle du
 2026-10-31 au matin en est le retour arrière, à condition que la production soit restée inchangée (révision servie et
 registre des migrations relus en lecture seule le jour de la fenêtre). La condition posée sur `CRM-073` T3 — close avant
 la fenêtre — est remplie. **Une seule session livre** (décision 790) : elle ouvre la fenêtre et y
-fait aussi `CRM-117` T6 (les deux migrations du manuel, `scripts/manuel/publier.sh`, la webapp), que `CRM-117` décrit
-ici pendant sa T5.
+fait aussi `CRM-117` T6 (les deux migrations du manuel, `scripts/manuel/publier.sh`, la webapp), décrits ci-dessous (« Les
+126 et 127 aussi »).
 
 **La 138 aussi** (`CRM-071` T6 — l'import des affaires ; sa ligne au §3.2), **après la 137**. Cinq fonctions et le
 déclencheur de création redéfini, sans donnée existante touchée ; la webapp de `main` porte « Importer un fichier » dans
@@ -707,8 +708,13 @@ n'emploie. Appliquée en développement le 2026-10-26.
 `authenticated` ; leurs lignes au §3.2), **après la 125 et avant la 128**, dans cet ordre (le runner refuse un fichier
 non inscrit qui précède le dernier inscrit, §3.1). **Après la fenêtre, publier le manuel** : `scripts/manuel/publier.sh
 --spark` dans la cellule — sans quoi l'aide de la webapp rend « Le manuel n'a pas pu être chargé ». Aucune donnée ne
-change. **À ne livrer qu'avec `CRM-117` terminée** (T2 est en cours : la réécriture du manuel n'est pas faite, et le
-manuel actuel porte des références internes).
+change. `CRM-117` est **terminée en développement** (`[P]` le 2026-10-31) : le manuel est réécrit pour ses lecteurs,
+34 chapitres et 479 images. **Gestes de la fenêtre** : (1) les 126 et 127 à leur rang ; (2) la webapp de `main`, qui porte
+l'icône « Aide » et les pages `/aide` ; (3) `scripts/manuel/publier.sh --spark`, qui doit dire « Manuel publié : 514
+fichier(s) déposé(s) » — 34 chapitres, le sommaire, 479 images — et, rejoué, ne rien retirer (« 0 objet(s) retiré(s) »).
+**Vérification** : connecté, l'icône « Aide » d'un écran ouvre son panneau et mène au chapitre de cet écran ; `/aide`
+montre le sommaire, un chapitre ses images ; déconnecté, `/aide` mène à la connexion. **Retrait** : celui des lignes 126
+et 127 du §3.2 ; la webapp précédente n'a pas d'aide et n'en lit rien.
 
 **La 116 aussi** (`CRM-116` — la couleur d'un channel ; sa ligne au §3.2), **après la 115 de `CRM-072`, jamais avant** :
 le runner refuse un fichier non inscrit qui précède le dernier inscrit (§3.1), si bien qu'une 116 livrée avant la 115

@@ -68,9 +68,10 @@ test('l’inbox : les dossiers, un fil, le classement', async ({ page }) => {
 
 	// Le même message, dans le fil de l'affaire.
 	await page.getByTestId('inbox-pilule-card').click()
-	const recu = page.getByText('Message reçu', { exact: true }).first()
+	// Le fil écrit le genre et l'objet sur une même ligne : « Message reçu·<objet> ».
+	const recu = page.getByRole('listitem').filter({ hasText: /^\s*Message reçu/ }).first()
 	await expect(recu).toBeVisible()
-	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'message-recu', cibles: [recu.locator('xpath=ancestor::li[1]')] })
+	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'message-recu', cibles: [recu] })
 	await page.goto('/tracks/conseil-ia/grands-comptes')
 	await illustrer(page, { chapitre: CHAPITRE, section: LIRE, nom: 'afficher-les-affaires-en-sommeil', cibles: [page.getByTestId('barre-sommeil-board')] })
 

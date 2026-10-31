@@ -203,17 +203,18 @@ d'exécuter le code attendu.
   (18.10), les modèles d'affaires (18.15) et les deux outils du connecteur ; l'aide de Réglages ▸ Modèles d'affaires
   mène à sa section. Les outils de l'éditeur des checklists sont livrés par `CRM-118`.
 
-### `CRM-117` — le manuel joignable depuis la webapp (en cours)
+### `CRM-117` — le manuel joignable depuis la webapp
 
 - **Une icône « Aide » dans l'en-tête**, à côté de la cloche : un panneau mène au chapitre qui décrit l'écran courant, et au
   sommaire du manuel. Les pages `/aide` et `/aide/<chapitre>` lisent le manuel, réservé aux personnes connectées.
 - **Migrations `0126` et `0127`** : le bucket privé `manual` et sa politique de lecture. Le seed publie le manuel.
 - **Le fil d'Ariane** : un ancêtre au nom court, comme « Aide », n'est plus écarté du titre qui le suit.
-- **Le manuel est rangé par sujet**, en trente-trois chapitres numérotés simplement, et ses renvois sont des liens.
+- **Le manuel est rangé par sujet**, en trente-quatre chapitres numérotés simplement, et ses renvois sont des liens.
 - **Le manuel est réécrit pour ses lecteurs**, et **illustré** : chaque bouton, champ ou fenêtre qu'il cite a son image,
   au plus près du texte.
-- **En cours** : les images couvrent les 34 chapitres (479 images) ; reste la campagne finale (T5). L'unité ne se
-  livre pas en l'état.
+- **479 images sur les 34 chapitres**, prises dans un navigateur en français (« Choisir un fichier », « jj/mm/aaaa ») sur
+  la pile et le seed. Publication : 514 fichiers dans le bucket `manual`, rejouable sans effet.
+- **Prête à livrer** (`[P]`) : avec le lot 0106 à 0140, par la session de livraison (`docs/PROD_MIGRATIONS.md` §3).
 
 ### `CRM-077` onzième tranche — débloquer l'effacement d'un track
 

@@ -314,7 +314,9 @@ test('la rentabilité vue par une lectrice', async ({ page }) => {
 test('la plateforme et le connecteur : les commandes, les issues du journal des appels', async ({ page, request }) => {
 	await connecterAvecLeLabs(page, SABINE)
 	await page.goto('/plateforme/espaces/p2enjoy')
-	await illustrer(page, { chapitre: PLATEFORME, section: 'modifier-ou-supprimer-un-espace', nom: 'supprimer-l-espace', cibles: [page.getByTestId('supprimer-espace')] })
+	const supprimer = page.getByTestId('supprimer-espace')
+	await supprimer.evaluate((e) => e.scrollIntoView({ block: 'center' }))
+	await illustrer(page, { chapitre: PLATEFORME, section: 'modifier-ou-supprimer-un-espace', nom: 'supprimer-l-espace', cibles: [supprimer] })
 	await page.goto('/plateforme/utilisateurs')
 	const ligne = page.getByTestId('ligne-utilisateur').filter({ hasText: 'Farida Nowak' })
 	await illustrer(page, { chapitre: PLATEFORME, section: 'les-utilisateurs', nom: 'rechercher', cibles: [page.getByText('Rechercher un utilisateur', { exact: true }).first(), page.getByLabel('Rechercher un utilisateur')] })

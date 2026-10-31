@@ -37439,3 +37439,54 @@ flux, comme « Voir le corps » des webhooks. La règle « aucune modale » tien
 nouvelle, `ScanEye`. La reprise des images du manuel touchées (chapitres 12 et 33, et le journal si le seed le change)
 relève de T3, la campagne finale de `CRM-117` étant en cours au moment de la décision.
 
+
+### `CRM-117` T5, clôture : la campagne finale ; l'unité passe `[P]` (2026-10-31)
+
+**Ordre suivi.** La base est reconstruite au seed (178 lignes au journal d'audit). Le journal est photographié seul et
+d'abord : il est en ajout seul, et les nettoyages des autres scénarios y écrivent. Viennent ensuite les 25 fichiers de
+`e2e/manuel` dans le Chromium complet en français (§11.4), puis les preuves de la partie II §16 et deux publications.
+
+**Observations.**
+- **112 images changent sur 479.** Les autres sont identiques à l'octet, le rendu étant déterministe. Les changements
+  sont les dates et heures du seed rejoué, le navigateur en français (« jj/mm/aaaa »), et quelques états du seed rendus
+  plus fidèlement. Toutes ont été observées sur planches, sans régression.
+- **Trois scénarios réparés.**
+  - Le fil d'une affaire écrit désormais « Message reçu·<objet> » sur une seule ligne : le scénario de l'inbox cherche
+    la ligne qui commence ainsi.
+  - « Supprimer l'espace » touchait le bas de la fenêtre : le bouton est centré avant l'image.
+  - L'historique des remises de « Tableur commercial » dépassait la fenêtre. La campagne avait déclenché 29 vraies
+    remises de webhook (les gestes des autres scénarios sont des événements). Elles ont été retirées de la base de
+    développement, et seules restent les trois remises du seed.
+- **Deux citations avaient perdu leur image**, l'état ayant bougé pendant la campagne.
+  - « Aucune remise » : rendu par le retrait des remises de la campagne.
+  - « Sans profil dans le CRM » : l'exploitante n'est jamais connectée par le seed (`docs/SPEC-seed.md` §22). La vraie
+    connexion OAuth de `e2e/ui/connecteur-mcp.spec.ts` l'inscrit au registre, puis les images du connecteur sont reprises.
+- **Un build contaminé, écarté.** Les specs construisent la webapp depuis l'arbre de travail. Après 23 h 09, cet arbre
+  portait les modifications non commitées de `CRM-074` T3, menée par une autre session : la liste des pièces jointes
+  affichait la taille, « 76 o ». Le scénario de l'inbox a donc été rejoué depuis un export de `HEAD` (`git archive`, hors
+  dépôt, sans branche ni worktree), et ses onze images recopiées. `telecharger.jpg` y est redevenue identique à la
+  version committée. Les specs d'interface de l'aide et du manuel ont été jouées depuis le même export.
+- **Une reconstruction de la base pendant les specs d'interface**, déclenchée par une autre session
+  (`scripts/verify-commentaires.sh --rapide` reconstruit la base). Les 502 de la passe interrompue ont disparu au rejeu,
+  sur la pile reconstruite.
+
+**Hors de cette unité, laissé à qui le porte.**
+- La reprise des images des chapitres 12 et 33, et de `journal.jpg` (chapitre 22) après la correction d'INC-323, relève
+  de `CRM-074` T3 et de la session qui la mène.
+- Le renouvellement outillé reste `CRM-122`. Ses T1 et T2 ne sont pas faites, et sa T3 précède la livraison du lot.
+- Les 54 exceptions du `docs/SPEC-manual.md` §11.3 attendent l'arbitrage du responsable.
+
+**Vérifications.**
+- `e2e/manuel` : 132 scénarios verts.
+- `manuel:construire` : 34 chapitres, sans avertissement ; `manuel:verifier` à jour.
+- `verify-manual` : 166 contrôles sans anomalie, contre-épreuve MORD.
+- Unitaires : 127 et 19.
+- pgTAP 0119 : 10/10.
+- `e2e/api/manuel.spec.ts` : 9/9.
+- `e2e/ui/aide.spec.ts` et `e2e/ui/manuel.spec.ts` : 22/22, captures de l'aide aux quatre paliers observées.
+- Publication : deux passes, 514 fichiers déposés, 0 retiré. Le bucket a été comparé à la source objet par objet :
+  514 chemins identiques, aucun octet différent.
+
+**Conséquence.** `CRM-117` passe `[P]`. T6 (les migrations 0126 et 0127, la webapp, `scripts/manuel/publier.sh --spark`)
+revient à la session de livraison (décision 790), dans le lot 0106 à 0140 (décision 786). Ses gestes et leur
+vérification sont au `docs/PROD_MIGRATIONS.md` §3.

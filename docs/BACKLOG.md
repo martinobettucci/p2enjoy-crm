@@ -17339,8 +17339,10 @@ décision 729) : une couleur propre au channel, des pastilles nommées, pas de c
       corrigé ; manuel 3.2 ter, 5.1, 5.2 ; campagnes pgTAP, API et interface des écrans touchés (`docs/JOURNAL.md`
       « `CRM-116` T2 à T4 »).
 - [ ] **T5 — livraison** : migration en fenêtre et reconstruction de la webapp, sur instruction du responsable.
-### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[@]`
-*Prise en charge : session interactive 2026-10-23 (fil d'Ariane `CRM-110`, Claude Code, poste du responsable) depuis 2026-10-26 21:33 UTC — état avant : [~]*
+### CRM-117 — Rendre le manuel utilisateur joignable depuis la webapp `[P]`
+*Développement terminé et prouvé le 2026-10-31 (T1 à T5) ; reste T6 — livrer les migrations `0126` et `0127`, la webapp
+et la publication du manuel, par la session de livraison, avec le lot 0106 à 0140 (`docs/PROD_MIGRATIONS.md` §3), puis
+son constat.*
 *Créée le 2026-10-26 — constat du responsable : « on a un manuel mais il n'est joignable nulle part depuis la webapp ;
 est-ce dans le backlog ou c'est un loupé ? ». Mesuré le même jour : un loupé. La webapp ne porte aucun lien ni entrée
 « Aide » vers `docs/manual.md` ; aucune unité ne le prévoit — les mentions du manuel au backlog portent sur sa
@@ -17526,10 +17528,17 @@ responsable** : traitée juste après `CRM-116`.*
             responsable (54 en tout), dont « Aucun espace de travail » : une session sans espace est renvoyée à la
             connexion (« Accès en attente »), l'état n'est pas atteignable. Un réel de 12 € laissé par un premier passage
             (nettoyage sur une table mal nommée) a été retiré.
-- [ ] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
+- [x] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
       toutes les images du manuel reprises par le projet `manuel` dans le navigateur en français (`docs/SPEC-manual.md`
       §11.4 ; les chapitres illustrés avant le 2026-10-31 montrent encore « Choose File » et « mm/dd/yyyy »),
-      `CHANGELOG.md`, contrat de déploiement.
+      `CHANGELOG.md`, contrat de déploiement. **Close le 2026-10-31** : base reconstruite au seed, journal d'audit
+      photographié seul et d'abord ; les 25 fichiers de `e2e/manuel` rejoués (132 scénarios verts, trois scénarios
+      réparés) ; **112 images renouvelées sur 479** — les autres sont identiques à l'octet —, toutes observées sur
+      planches ; `manuel:verifier` à jour ; `verify-manual` 166 contrôles sans anomalie, contre-épreuve MORD ; unitaires
+      127 et 19 ; pgTAP 0119 10/10 ; API `manuel` 9/9 ; interface `aide` et `manuel` 22/22, captures de l'aide aux
+      quatre paliers observées ; deux publications de 514 fichiers, la seconde sans retrait, le bucket identique à la
+      source à l'octet près (514 objets comparés). Les images et captures sont prises sur un build de `HEAD`, sans les
+      modifications non commitées d'une autre session (journal).
 - [ ] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.
       **Faite par la session de livraison, et elle seule** (décision 790), dans le lot 0106 à 0140 (décision 786) :
       la session de `CRM-117` passe l'unité à `[P]` au terme de T5, avec ses gestes décrits au contrat de déploiement,
@@ -17765,5 +17774,6 @@ confirmer par le responsable).
 - [ ] **T1 — spécification** : la forme des deux demandes, le rapport de tri et son seuil, la place du renouvellement
       dans la préparation d'une livraison.
 - [ ] **T2 — l'aide, le tri, leurs tests, la documentation**, et une campagne ordinaire complète constatée propre.
-- [ ] **T3 — premier renouvellement**, pendant la campagne finale de `CRM-117` (T5), avant la livraison du lot 0106 à
-      0140 (décision 786).
+- [ ] **T3 — premier renouvellement**, avant la livraison du lot 0106 à 0140 (décision 786). La campagne finale de
+      `CRM-117` (T5) s'est close le 2026-10-31 sans lui, T1 et T2 n'étant pas faites : elle a renouvelé les seules images
+      du manuel et les captures de `CRM-117`.
