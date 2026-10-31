@@ -37525,3 +37525,18 @@ du journal du chapitre 22 reprise après INC-323.
 **Vérifications** : unitaires 5 101/5 101 ; E2E 7/7 et 26/26 rejoués ; pgTAP 121 fichiers ; manuel 12, 22, 32-33 et
 `verify-manual` sans anomalie.
 
+### Livraison : le lot 0106 à 0141, maintenant (2026-11-01, décision 792)
+
+**Contexte** : `CRM-117` est close (`[P]`, campagne finale poussée en `f60aaf87`) — la condition de la décision 783 est
+remplie ; `CRM-074` est close en développement (`[P]`, `9706b2a3`), avec sa migration `0141` arrivée après la décision 786.
+
+**Décision 792, du responsable, en séance** : « Oui, avec la 0141 » — la fenêtre livre **les migrations `0106` à `0141`**,
+la webapp de `main`, les images `mcp` et `mail-sync` reconstruites, la fonction `webhooks` avec le redémarrage de
+`functions`, et la publication du manuel (`CRM-117` T6, décision 790) ; « Celui de ce matin suffit » — l'instantané de la
+machine virtuelle du 2026-10-31 au matin en est le retour arrière, **à condition** que la production soit restée inchangée,
+relu en lecture seule avant la fenêtre (révision servie `8934079d`, registre à 105 lignes) ; « Oui, les supprimer » — les
+deux fichiers `.orig` du 26/10 et `webapp/tsconfig.tsbuildinfo`, qui bloquaient l'arbre propre exigé par `livrer.sh`.
+
+**Conséquences** : `docs/PROD_MIGRATIONS.md` §3 porte le lot étendu à la 141 ; si la relecture montre une production
+modifiée, la fenêtre s'arrête et la question revient au responsable.
+

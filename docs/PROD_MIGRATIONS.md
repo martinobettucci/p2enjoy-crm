@@ -636,9 +636,9 @@ dépréciation.
 
 ## 3. Migrations en attente
 
-**Un seul lot, de la 106 à la 140** (décision 786, 2026-10-31) — la 141 (`CRM-074` T1), arrivée après la décision, n'y
-entre que sur décision du responsable : une seule fenêtre (§3.1) applique les migrations `0106` à
-`0140`, avec la webapp de `main` et les images `mcp` et `mail-sync` reconstruites, ainsi que la fonction edge `webhooks` et le
+**Un seul lot, de la 106 à la 141** (décision 786, 2026-10-31 ; **étendu à la 141 par la décision 792**, 2026-11-01 — la
+fenêtre est ordonnée ce jour-là) : une seule fenêtre (§3.1) applique les migrations `0106` à
+`0141`, avec la webapp de `main` et les images `mcp` et `mail-sync` reconstruites, ainsi que la fonction edge `webhooks` et le
 redémarrage de `functions` (ligne 140 du §3.2). La condition de la décision 783 — la fin de `CRM-117` — est **remplie le
 2026-10-31** : l'unité est `[P]`, sa campagne finale (T5) close ; l'instantané de la machine virtuelle du
 2026-10-31 au matin en est le retour arrière, à condition que la production soit restée inchangée (révision servie et
