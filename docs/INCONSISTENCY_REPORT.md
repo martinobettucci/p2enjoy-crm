@@ -8204,3 +8204,11 @@ libre. **Non corrigé** : les fichiers relèvent de `CRM-032` et `CRM-097`. **Is
 jetable, non défaut et inemployé, créé par la preuve — comme les trois suites pgTAP l'ont fait (garde suspendue le temps
 de leur transaction).
 
+**Précision à la correction** : seule la ligne h archivait le workflow par défaut ; la ligne q archivait déjà un workflow
+jetable, mais **employé** par le channel jetable de sa fixture — refusé par la même garde (`workflow_in_use`).
+**Corrigée le 2026-10-31**, preuves seules, produit inchangé : la ligne h pose un workflow jetable de l'espace du seed,
+l'archive par le jeton de l'administratrice, constate qu'il est introuvable à la copie et le retire ; la ligne q retire
+d'abord le channel jetable et son affaire, puis archive. Les deux fichiers 29/29, aucun workflow jetable laissé en base ;
+typecheck vert. La suite d'API, à 1280/1282 par ces seules deux lignes, n'a plus de rouge connu. Connecteur MCP : sans
+objet.
+

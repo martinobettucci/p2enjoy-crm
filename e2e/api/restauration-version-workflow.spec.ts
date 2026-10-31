@@ -8,6 +8,8 @@
 // @verifies docs/SPEC-permissions-rls.md §7 (preuve de refus n° 3 au niveau des versions)
 // @verifies docs/SPEC-test-harness.md §4.3 (projet `api`, hors interface)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies docs/INCONSISTENCY_REPORT.md INC-322 — l'archivage éprouvé porte sur un workflow jetable sorti du service,
+//           la garde de CRM-118 T1.b (docs/SCHEMA.md « Migration 0130 ») refusant le défaut et l'employé
 // @verifies CRM-111 (docs/BACKLOG.md) — tranche T2.4.5 : les fixtures posent l'affaire puis son rattachement ; l'étape
 //           remappée se relit sur le rattachement (docs/SPEC-rattachements.md §3.2)
 //
@@ -768,6 +770,11 @@ test.describe('N7 — les refus d’autorisation et d’existence (lignes m, n, 
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
 		const f = await fixture(request, jeton, 'ligne q')
 		try {
+			// RÉVISÉE PAR INC-322 : la garde de `CRM-118` T1.b (migration 0130) refuse d'archiver un workflow qu'un channel
+			// emploie (`workflow_in_use`). Le channel jetable de la fixture, et son affaire, sont retirés d'abord : le
+			// workflow, sorti du service, s'archive — et sa version publiée reste celle qu'on tente de restaurer.
+			await supprimerAffairesDuChannel(request, f.channel, enTetesService())
+			await request.delete(`${CHANNELS}?id=eq.${f.channel}`, { headers: enTetesService() })
 			const archivage = await request.patch(`${WF}?id=eq.${f.workflow}`, {
 				headers: enTetesService(),
 				data: { archived_at: new Date().toISOString() },

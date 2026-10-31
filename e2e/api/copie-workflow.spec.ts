@@ -6,6 +6,8 @@
 // @verifies docs/INCONSISTENCY_REPORT.md INC-037 (formulaire remappé), INC-038 (suppression
 //           détectée), INC-056 (liaison remappée)
 // @verifies CLAUDE.md §10 (toute règle d'accès se prouve hors interface, avec le jeton réel)
+// @verifies docs/INCONSISTENCY_REPORT.md INC-322 — l'archivage éprouvé porte sur un workflow jetable sorti du service,
+//           la garde de CRM-118 T1.b (docs/SCHEMA.md « Migration 0130 ») refusant le défaut et l'employé
 //
 // Ces scénarios exercent le backend **sans passer par l'interface**, avec les jetons réels des
 // trois profils seedés, obtenus par la véritable route de connexion. Aucun navigateur n'est lancé —
@@ -416,17 +418,33 @@ test.describe('C3 — ce qui ne se copie pas (§4.9, lignes f, g, h, i, j, k)', 
 	test('ligne h — un workflow archivé est introuvable', async ({ request }) => {
 		const jeton = await jetonDe(COMPTES_SEED[0].adresse)
 
-		// L'archivage passe par l'API, avec le jeton de l'administrateur : c'est le geste réel du
-		// produit, et il est réversible.
-		const archive = await request.patch(`${WF}?id=eq.${WORKFLOW_SEED}`, {
-			headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
-			data: { archived_at: '2026-01-01T00:00:00Z' },
+		// RÉVISÉE PAR INC-322 : la ligne archivait le workflow par défaut du seed, que la garde de `CRM-118` T1.b
+		// (migration 0130) refuse désormais d'archiver — il est le défaut de l'espace et sert ses channels. Elle archive un
+		// workflow JETABLE de l'espace du seed, ni défaut ni employé, retiré à la fin.
+		const jetable = randomUUID()
+		const pose = await request.post(WF, {
+			headers: { ...enTetesService(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+			data: { id: jetable, workspace_id: WORKSPACE_SEED, name: `tst-crm032 archivé ${jetable}` },
 		})
-		expect(archive.status()).toBe(204)
+		expect(pose.status(), await pose.text()).toBe(201)
 
 		try {
+			// L'archivage passe par l'API, avec le jeton de l'administrateur : c'est le geste réel du produit.
+			const archive = await request.patch(`${WF}?id=eq.${jetable}`, {
+				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
+				data: { archived_at: '2026-01-01T00:00:00Z' },
+			})
+			expect(archive.status()).toBe(204)
+			// L'existence de la ligne est constatée : sans cela, « introuvable » serait vrai pour la mauvaise raison.
+			const presence = await request.get(`${WF}?id=eq.${jetable}&select=archived_at`, {
+				headers: enTetesService(),
+			})
+			expect((await presence.json()) as { archived_at: string | null }[]).toEqual([
+				{ archived_at: expect.any(String) },
+			])
+
 			const { statut, texte } = await copier(request, enTetesAuthentifies(jeton), {
-				workflow_id: WORKFLOW_SEED,
+				workflow_id: jetable,
 				track_id: TRACK_STUDIO,
 			})
 			expect(statut).toBe(400)
@@ -435,10 +453,7 @@ test.describe('C3 — ce qui ne se copie pas (§4.9, lignes f, g, h, i, j, k)', 
 				'on ne copie pas ce que le produit a retiré de ses sélecteurs',
 			).toBe('workflow_not_found')
 		} finally {
-			await request.patch(`${WF}?id=eq.${WORKFLOW_SEED}`, {
-				headers: { ...enTetesAuthentifies(jeton), 'Content-Type': 'application/json' },
-				data: { archived_at: null },
-			})
+			await request.delete(`${WF}?id=eq.${jetable}`, { headers: enTetesService() })
 		}
 	})
 

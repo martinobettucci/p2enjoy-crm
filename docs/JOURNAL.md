@@ -37072,3 +37072,14 @@ qu'ils jouent — 1017/1019, `commentaires-gestes:192` (une réponse qui n'étai
 `premier-lancement:182` (instable connu) verts rejoués seuls, 12/12. pgTAP, unitaires, typecheck, types et build verts
 (harnais cards). Base reconstruite et seed rétabli en fin de série. **Décision** : T2.4.4, T2.4.5 et T2.4 passent `[x]` ;
 INC-322 se corrige ensuite, dans son propre commit. La fenêtre de livraison de la décision 782 peut être reproposée.
+
+### INC-322 corrigée : deux preuves d'API archivent un workflow sorti du service (2026-10-31)
+
+**Problème** : `copie-workflow.spec.ts` (ligne h) et `restauration-version-workflow.spec.ts` (ligne q) attendaient `204` à
+l'archivage d'un workflow que la garde de `CRM-118` T1.b refuse d'archiver. **Observation à la correction** : la ligne h
+archivait le défaut du seed ; la ligne q, un workflow jetable mais employé par le channel de sa fixture
+(`workflow_in_use`). **Décision** : le produit reste tel quel ; la ligne h pose un workflow jetable de l'espace du seed,
+ni défaut ni employé, l'archive par le jeton de l'administratrice et le retire ; la ligne q retire d'abord son channel
+jetable et son affaire. Les deux fichiers ont été joués avant les prises de vue de `CRM-117`, à sa demande, pour qu'aucun
+workflow jetable n'apparaisse dans une image du manuel. **Vérifications** : 29/29, aucun workflow jetable en base,
+typecheck vert.

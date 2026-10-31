@@ -17063,6 +17063,7 @@ décision 658 — `card_placements`, `attach_card`, `detach_card`.
           timeline le sont aussi par la suite d'interface complète qu'ils jouent. Suite d'API 1280/1282 (INC-322) ; suite
           d'interface 1017/1019, les deux rouges (`commentaires-gestes:192`, réponse transitoire ; `premier-lancement:182`,
           instable connu) verts rejoués seuls, 12/12 ; pgTAP, unitaires, typecheck, types et build verts (harnais cards).
+          *INC-322 corrigée le même jour* (preuves seules) : les deux lignes vertes, 29/29 sur leurs deux fichiers.
       *Contenu d'ensemble, inchangé (§3, §4, §5, §10) :* migration — `card_placements`, reprise d'un
       rattachement par affaire, `card_field_values` par rattachement, `placement_id` dans `card_events` et
       `card_sequence_enrollments`, invariants, politiques de lecture sous la **forme optimisée** (`app.readable_channel_ids()`, décision 667) avec ses
