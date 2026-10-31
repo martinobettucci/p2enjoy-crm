@@ -36995,3 +36995,15 @@ comme un message entrant à classer.
 - **Livrer `CRM-071` maintenant** : migrations `0135` à `0138`, après la `0134`, avec la webapp et l'image `mcp` de `main`,
   selon `docs/PROD_MIGRATIONS.md` §3, chaque geste de production soumis au responsable.
 
+### La fenêtre de livraison attend la clôture de `CRM-111` et la correction d'INC-321 (2026-10-31, décision 781)
+
+**Constat, en lecture seule** : la production porte la révision `8934079d` et **105** migrations au registre
+(`0105_mail_message_reads.sql`) ; `verifier.sh` 32/34, les deux écarts attendus (révision en retard ; le compteur de
+redémarrage de `kong` et `rest`, antérieur). Livrer `CRM-071` revient donc à appliquer d'un passage les **33** migrations
+`0106` à `0138` — dont la `0134` de `CRM-111`, qui supprime treize colonnes de `cards` — puis à reconstruire les images
+`mcp` et `mail-sync`.
+
+**Décision 781, du responsable, en séance** (« Attendre aussi INC-321 ») : **ne pas livrer maintenant**. La fenêtre
+unique attend que `CRM-111` soit close (`[P]`) **et** qu'INC-321 soit corrigée (`CRM-069` T6) ; l'instantané de la machine
+virtuelle n'est pas pris, il sera demandé au moment de `--migrate`.
+
