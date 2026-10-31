@@ -163,9 +163,16 @@ export default defineConfig({
 				baseURL: URL_BASE,
 				...devices['Desktop Chrome'],
 				viewport: { width: 1440, height: 900 },
-				...(CHROMIUM_FOURNI === ''
-					? {}
-					: { launchOptions: { executablePath: CHROMIUM_FOURNI } }),
+				// Le manuel s'adresse à une équipe francophone : ses images montrent les contrôles natifs du navigateur en
+				// français, comme sur son écran — « Choisir un fichier », « jj/mm/aaaa ». Chromium les tire de la langue de
+				// son environnement, et seul le Chromium complet en porte les ressources : la coquille sans interface
+				// (`chromium-headless-shell`) les écrit en anglais quoi qu'on lui dise (docs/SPEC-manual.md §11.4).
+				locale: 'fr-FR',
+				...(CHROMIUM_FOURNI === '' ? { channel: 'chromium' } : {}),
+				launchOptions: {
+					env: { ...process.env, LANGUAGE: 'fr', LANG: 'fr_FR.UTF-8', LC_ALL: 'fr_FR.UTF-8' },
+					...(CHROMIUM_FOURNI === '' ? {} : { executablePath: CHROMIUM_FOURNI }),
+				},
 			},
 		},
 	],

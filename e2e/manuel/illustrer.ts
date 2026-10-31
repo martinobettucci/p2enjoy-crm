@@ -130,7 +130,9 @@ export async function illustrer(page: Page, illustration: Illustration): Promise
 		: cadrer(boites, { largeur: fenetre.width, hauteur: fenetre.height })
 	for (const b of boites)
 		if (b.y < 0 || b.y + b.height > fenetre.height)
-			throw new Error(`les cibles de ${chapitre}/${nom} ne tiennent pas ensemble dans la fenêtre : découpez en deux images`)
+			throw new Error(
+				`les cibles de ${chapitre}/${nom} ne tiennent pas ensemble dans la fenêtre (une boîte de ${Math.round(b.y)} à ${Math.round(b.y + b.height)} px pour ${fenetre.height}) : découpez en deux images`,
+			)
 
 	const fichier = `${chapitre}/${nom}.jpg`
 	mkdirSync(join(IMAGES, chapitre), { recursive: true })

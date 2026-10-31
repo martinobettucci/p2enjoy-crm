@@ -134,7 +134,7 @@ test('une affaire neuve : le refus du déplacement, la reprise, l’en-tête, le
 		const edition = page.getByTestId('entete-card-edition')
 		await expect(edition).toBeVisible()
 		const ecriture = retenir()
-		await page.route('**/rest/v1/cards?*', async (route) => {
+		await page.route('**/rest/v1/card_placements?*', async (route) => {
 			if (route.request().method() === 'PATCH') await ecriture.attendre
 			await route.continue()
 		})
@@ -144,7 +144,7 @@ test('une affaire neuve : le refus du déplacement, la reprise, l’en-tête, le
 		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'enregistrement', cibles: [edition] })
 		ecriture.liberer()
 		await expect(edition.getByText('Enregistré', { exact: true }).first()).toBeVisible()
-		await page.unroute('**/rest/v1/cards?*')
+		await page.unroute('**/rest/v1/card_placements?*')
 		await edition.getByLabel('Responsable').selectOption({ label: 'Driss Lemoine' })
 		await expect(edition.getByText('Enregistré', { exact: true }).first()).toBeVisible()
 		await illustrer(page, { chapitre: CHAPITRE, section: S.fiche, nom: 'en-saisie', cibles: [edition, page.getByTestId('entete-card-terminer')] })

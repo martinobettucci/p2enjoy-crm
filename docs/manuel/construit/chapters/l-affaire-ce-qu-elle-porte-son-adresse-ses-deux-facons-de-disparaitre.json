@@ -38,6 +38,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fiche.jpg",
+			"alt": "La fiche d'une affaire : son en-tête, sa santé, son formulaire et, à droite, son historique",
+			"width": 1440,
+			"height": 900
+		},
+		{
 			"type": "heading",
 			"level": 3,
 			"anchor": "ce-qu-une-affaire-porte",
@@ -47,6 +54,20 @@
 					"text": "9.1 Ce qu'une affaire porte"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/sante.jpg",
+			"alt": "Le bloc Santé de l'affaire : la dynamique et la santé, avec le détail de chaque critère et son poids",
+			"width": 650,
+			"height": 251
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/ma-journee.jpg",
+			"alt": "L'entrée Ma journée de la barre latérale",
+			"width": 251,
+			"height": 72
 		},
 		{
 			"type": "table",
@@ -532,6 +553,20 @@
 					"text": "9.3 Faire avancer une affaire : ce que le produit autorise, et ce qu'il refuse"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/menu-actions.jpg",
+			"alt": "Le menu d'une carte : les étapes vers lesquelles la déplacer, puis les durées de sommeil",
+			"width": 264,
+			"height": 554
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/refus-champs-manquants.jpg",
+			"alt": "Le déplacement refusé : le bandeau nomme le champ à renseigner et propose de le faire",
+			"width": 1160,
+			"height": 151
 		},
 		{
 			"type": "paragraph",
@@ -1467,6 +1502,97 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/entete.jpg",
+			"alt": "L'en-tête d'une affaire sans responsable : ses commandes, et l'adresse email de l'affaire à copier",
+			"width": 650,
+			"height": 284
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/copier-l-adresse.jpg",
+			"alt": "L'adresse email de l'affaire, et le bouton qui la copie, passé à Copié",
+			"width": 412,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/archivee.jpg",
+			"alt": "Le titre d'une affaire archivée, avec sa pilule Archivé",
+			"width": 318,
+			"height": 62
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/card-introuvable.jpg",
+			"alt": "L'adresse d'une affaire qui n'existe pas",
+			"width": 167,
+			"height": 52
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/renseigner-ces-champs.jpg",
+			"alt": "Le bandeau du déplacement refusé, avec le bouton qui mène au champ à renseigner",
+			"width": 1160,
+			"height": 151
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/exige-par-le-deplacement.jpg",
+			"alt": "Le champ exigé par le déplacement demandé, signalé sous son libellé",
+			"width": 650,
+			"height": 146
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/formulaire-de-l-etape.jpg",
+			"alt": "Le formulaire de l'étape : les champs requis signalés, et le champ renseigné marqué Enregistré",
+			"width": 650,
+			"height": 867
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/informations-d-autres-etapes.jpg",
+			"alt": "La section dépliée des informations d'autres étapes, avec la réponse donnée à une autre étape",
+			"width": 650,
+			"height": 162
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/liste-illisible.jpg",
+			"alt": "Un champ dont la liste n'a pas pu être lue, avec le bouton Réessayer",
+			"width": 650,
+			"height": 117
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/enregistrement.jpg",
+			"alt": "L'en-tête en saisie pendant l'envoi d'un montant",
+			"width": 616,
+			"height": 482
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/en-saisie.jpg",
+			"alt": "L'en-tête en saisie : le responsable choisi et le montant enregistrés, avec le bouton Terminer",
+			"width": 616,
+			"height": 506
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/responsable-modifie.jpg",
+			"alt": "La ligne Responsable modifié dans l'historique de l'affaire",
+			"width": 519,
+			"height": 76
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rien-n-a-ete-enregistre.jpg",
+			"alt": "L'en-tête en saisie quand le compte ne peut plus modifier l'affaire : rien n'a été enregistré",
+			"width": 616,
+			"height": 518
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -1906,7 +2032,7 @@
 							},
 							{
 								"type": "text",
-								"text": ", le bouton reste proposé — c'est\nvolontaire —, mais l'écran vous répond « Rien n'a été enregistré : votre compte ne peut pas\nmodifier cette affaire ». Vous savez ainsi que la tentative a bien eu lieu, et qu'elle a été\nrefusée ;"
+								"text": ", le bouton reste proposé — c'est\nvolontaire —, mais l'écran vous répond « Rien n'a été enregistré : votre compte ne peut pas\nmodifier cette affaire. » Vous savez ainsi que la tentative a bien eu lieu, et qu'elle a été\nrefusée ;"
 							}
 						]
 					}
@@ -2829,6 +2955,48 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/contacts-de-l-affaire.jpg",
+			"alt": "Le bloc des contacts d'une affaire, avec le rôle de chacun et la commande pour détacher",
+			"width": 650,
+			"height": 182
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/modifier-le-role.jpg",
+			"alt": "La commande Modifier le rôle, sur la fiche d'un contact",
+			"width": 165,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattacher-un-contact.jpg",
+			"alt": "Le formulaire de rattachement d'un contact à l'affaire, avec son rôle",
+			"width": 650,
+			"height": 368
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/detacher.jpg",
+			"alt": "La confirmation qui détache un contact de l'affaire",
+			"width": 650,
+			"height": 344
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/detachement-sans-effet.jpg",
+			"alt": "Le détachement resté sans effet, signalé sous la ligne du contact",
+			"width": 650,
+			"height": 230
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachement-refuse.jpg",
+			"alt": "Le rattachement refusé faute de droit de modifier l'affaire",
+			"width": 650,
+			"height": 441
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -3320,6 +3488,34 @@
 					"text": "9.8 Les activités d'une affaire : appels, réunions, visios"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/activites.jpg",
+			"alt": "Le bloc des activités : un compte rendu déplié, ses participants, et la commande pour consigner",
+			"width": 650,
+			"height": 591
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/temps.jpg",
+			"alt": "L'entrée Temps de la barre latérale",
+			"width": 251,
+			"height": 72
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/consigner-une-activite.jpg",
+			"alt": "Le formulaire d'une activité : son type, sa date, sa durée, son sujet, son compte rendu et ses participants",
+			"width": 650,
+			"height": 723
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/activite-retiree.jpg",
+			"alt": "Une activité retirée, qui reste dans la liste à sa date",
+			"width": 650,
+			"height": 92
 		},
 		{
 			"type": "paragraph",
@@ -4175,6 +4371,34 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/checklist.jpg",
+			"alt": "La checklist d'une affaire : ses points par étape, cochés avec leur auteur, et un point libre en cours de saisie",
+			"width": 650,
+			"height": 475
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucun-point.jpg",
+			"alt": "La checklist d'une affaire dont l'étape ne porte aucun point",
+			"width": 650,
+			"height": 205
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fil-point-coche.jpg",
+			"alt": "Les filtres de l'historique, et la ligne Point de checklist coché",
+			"width": 519,
+			"height": 236
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/cocher-ces-points.jpg",
+			"alt": "Le déplacement refusé faute de points cochés, avec le lien qui y mène",
+			"width": 1160,
+			"height": 151
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -4699,6 +4923,62 @@
 					"text": "9.10 Le tableau kanban d'un channel"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/barre-du-tableau.jpg",
+			"alt": "La barre du tableau : Nouvelle affaire et la case qui affiche les affaires en sommeil",
+			"width": 1160,
+			"height": 72
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/actions-de-la-carte.jpg",
+			"alt": "Le bouton Actions d'une carte du tableau et son menu : les étapes où la déplacer, puis les durées de sommeil",
+			"width": 294,
+			"height": 424
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/nouvelle-affaire.jpg",
+			"alt": "Le bouton Nouvelle affaire",
+			"width": 200,
+			"height": 72
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/formulaire-nouvelle-affaire.jpg",
+			"alt": "Le formulaire de création d'une affaire : son titre et son modèle",
+			"width": 1160,
+			"height": 259
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/creation-en-cours.jpg",
+			"alt": "La création en cours : le bouton affiche Création…",
+			"width": 1160,
+			"height": 259
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/toutes-en-sommeil.jpg",
+			"alt": "Le tableau d'un channel dont toutes les affaires sont en sommeil, avec le geste qui les révèle",
+			"width": 548,
+			"height": 287
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/barre-sommeil-board.jpg",
+			"alt": "La case Afficher les affaires en sommeil, cochée, au-dessus des colonnes",
+			"width": 280,
+			"height": 72
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/track-introuvable.jpg",
+			"alt": "L'adresse d'un track qui n'existe pas",
+			"width": 174,
+			"height": 52
 		},
 		{
 			"type": "paragraph",
@@ -5573,6 +5853,55 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/vue-liste.jpg",
+			"alt": "La vue liste d'un channel : sa barre, ses filtres, le compte des affaires et le tableau",
+			"width": 1160,
+			"height": 446
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/pagination.jpg",
+			"alt": "La pagination de la vue liste",
+			"width": 1160,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucune-affaire-ne-correspond.jpg",
+			"alt": "La vue liste sans résultat pour les filtres, avec le bouton qui les efface",
+			"width": 1160,
+			"height": 447
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucune-affaire-eveillee.jpg",
+			"alt": "Un channel dont aucune affaire n'est éveillée, avec le geste qui affiche les affaires en sommeil",
+			"width": 548,
+			"height": 287
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/channel-vide.jpg",
+			"alt": "Un channel sans aucune affaire",
+			"width": 438,
+			"height": 212
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/page-disparue.jpg",
+			"alt": "Une page de la liste qui n'existe plus",
+			"width": 222,
+			"height": 52
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/track-introuvable-liste.jpg",
+			"alt": "L'adresse d'un track qui n'existe pas, depuis la vue liste",
+			"width": 174,
+			"height": 52
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -6319,6 +6648,34 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/selecteur-de-vue.jpg",
+			"alt": "La liste Vue, sans vue choisie, et le bouton qui enregistre une vue",
+			"width": 452,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/vue-choisie.jpg",
+			"alt": "Une vue de l'espace choisie, avec les commandes pour la modifier et la supprimer",
+			"width": 704,
+			"height": 97
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtres-modifies.jpg",
+			"alt": "Un filtre changé après le choix d'une vue : l'écart est signalé, et la vue peut être mise à jour",
+			"width": 871,
+			"height": 121
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/enregistrer-la-vue.jpg",
+			"alt": "Le panneau d'enregistrement d'une vue : son nom, et la case qui la publie pour tout l'espace",
+			"width": 1160,
+			"height": 259
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -6361,6 +6718,13 @@
 					"text": " les affaires que\nles filtres et le tri retiennent — pas seulement la page affichée —, dans le même ordre : le titre, les étiquettes, le\nresponsable, l'étape, le montant et sa devise, la prochaine action et son échéance, puis l'adresse de la fiche. Le\nfichier s'ouvre dans un tableur : encodage UTF-8, point-virgule entre les colonnes ; une cellule qui commencerait par\n« = », « + », « - » ou « @ » est précédée d'une apostrophe, pour qu'un tableur ne la prenne pas pour une formule. Il\nne contient que ce que vous pouvez lire, n'est conservé nulle part, et chaque export est inscrit au journal d'audit de\nl'espace. Un export porte au plus 5 000 lignes : au-delà, l'écran demande de filtrer d'abord."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/exporter-importer.jpg",
+			"alt": "Les boutons d'export et d'import, au bout de la barre de filtres",
+			"width": 339,
+			"height": 73
 		},
 		{
 			"type": "paragraph",
@@ -6540,6 +6904,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/importer-des-affaires.jpg",
+			"alt": "Le panneau d'import de la vue liste, ouvert sous la barre",
+			"width": 1160,
+			"height": 227
+		},
+		{
 			"type": "list",
 			"ordered": false,
 			"start": null,
@@ -6678,6 +7049,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/affaire-creee-par-import.jpg",
+			"alt": "La première ligne du fil d'une affaire importée : Affaire créée par import, avec la date et le nom de la personne",
+			"width": 519,
+			"height": 76
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -6744,6 +7122,34 @@
 					"text": "9.12 L'historique et la discussion d'une affaire"
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/mentionner.jpg",
+			"alt": "Le bouton Mentionner, sous le champ de commentaire",
+			"width": 153,
+			"height": 73
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/dossier-change.jpg",
+			"alt": "La ligne Dossier changé dans l'historique d'une affaire",
+			"width": 519,
+			"height": 76
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/workflow-modifie.jpg",
+			"alt": "La ligne Workflow modifié dans l'historique d'une affaire",
+			"width": 519,
+			"height": 77
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucun-element-filtres.jpg",
+			"alt": "Toutes les familles du fil désactivées : aucun élément pour ces filtres",
+			"width": 519,
+			"height": 249
 		},
 		{
 			"type": "paragraph",
@@ -8262,6 +8668,34 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/panneau-sommeil.jpg",
+			"alt": "Le panneau de sommeil : les échéances usuelles, ou une autre échéance à saisir",
+			"width": 616,
+			"height": 190
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/en-sommeil.jpg",
+			"alt": "Le titre d'une affaire endormie, avec la date de son réveil",
+			"width": 519,
+			"height": 61
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/afficher-les-affaires-en-sommeil.jpg",
+			"alt": "La case cochée, et une carte endormie qui reparaît dans sa colonne",
+			"width": 997,
+			"height": 334
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/compte-de-la-liste.jpg",
+			"alt": "Le compte des affaires de la vue liste",
+			"width": 97,
+			"height": 53
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -8861,6 +9295,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/dossier-change-dans-le-fil.jpg",
+			"alt": "Un changement de dossier, tel que l'historique de l'affaire l'inscrit",
+			"width": 519,
+			"height": 76
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -9433,6 +9874,41 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/confirmation.jpg",
+			"alt": "La confirmation de mise à la corbeille d'une affaire",
+			"width": 650,
+			"height": 186
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/mise-a-la-corbeille.jpg",
+			"alt": "L'affaire mise à la corbeille, avec les liens vers son channel et vers la corbeille",
+			"width": 650,
+			"height": 232
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/corbeille-refusee.jpg",
+			"alt": "La mise à la corbeille restée sans effet, faute de droit d'écrire dans l'affaire",
+			"width": 634,
+			"height": 211
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/card-introuvable-corbeille.jpg",
+			"alt": "L'adresse d'une affaire qui n'existe plus",
+			"width": 167,
+			"height": 52
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/cycle-de-vie.jpg",
+			"alt": "Le filtre Cycle de vie de l'historique",
+			"width": 145,
+			"height": 73
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -9933,6 +10409,13 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/poser-une-etiquette.jpg",
+			"alt": "La liste des étiquettes de l'affaire : une case par étiquette, une cochée, et le bouton qui la ferme",
+			"width": 616,
+			"height": 254
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -9964,6 +10447,20 @@
 			]
 		},
 		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtre-etiquette.jpg",
+			"alt": "La liste Étiquette de la barre de filtres, sur Toutes les étiquettes",
+			"width": 224,
+			"height": 97
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtre-pose.jpg",
+			"alt": "Le filtre posé sur une étiquette, avec le bouton qui efface les filtres",
+			"width": 424,
+			"height": 125
+		},
+		{
 			"type": "paragraph",
 			"content": [
 				{
@@ -9993,6 +10490,20 @@
 					"text": ", après « Modèles d'affaires », tient la liste des étiquettes de\nl'espace."
 				}
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/entree-etiquettes.jpg",
+			"alt": "L'index des réglages : l'entrée Étiquettes, sous Modèles d'affaires",
+			"width": 545,
+			"height": 216
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/reglages-etiquettes.jpg",
+			"alt": "Réglages, Étiquettes : la liste des étiquettes de l'espace, avec leurs commandes",
+			"width": 925,
+			"height": 353
 		},
 		{
 			"type": "list",
@@ -10136,6 +10647,20 @@
 					}
 				]
 			]
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/nouvelle-etiquette.jpg",
+			"alt": "La fiche d'une nouvelle étiquette : son nom et sa couleur, à choisir parmi cinq",
+			"width": 925,
+			"height": 259
+		},
+		{
+			"type": "image",
+			"src": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/etiquette-archivee.jpg",
+			"alt": "Les étiquettes archivées affichées, l'une avec la commande qui la désarchive",
+			"width": 923,
+			"height": 261
 		},
 		{
 			"type": "paragraph",

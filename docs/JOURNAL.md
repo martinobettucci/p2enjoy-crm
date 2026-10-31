@@ -36941,3 +36941,43 @@ signés pour que le CRM prévienne un outil tiers.
 d'`api_tokens` (`docs/SCHEMA.md`, `docs/DAT.md`, `docs/SPEC-permissions-rls.md` §2.1, §5, §6) sont révisées : la table
 n'existera pas, et la cible de `CRM-013` qui la visait tombe avec elle.
 
+
+### `CRM-117` T4.2b, clôture : le chapitre 9 illustré (2026-10-31)
+
+**Problème.** Le premier passage (2026-10-30) laissait environ quarante éléments cités du chapitre 9 sans image, et
+les 53 images produites n'étaient pas placées.
+
+**Observations, au premier passage de `e2e/manuel/09c`** (écrit hors pile pendant la campagne de `CRM-071`) :
+- trois identifiants de test supposés n'étaient pas les bons, et deux boutons cèdent leur place à leur panneau
+  (« Importer un fichier », « Étiquettes ») : leur panneau s'illustre seul ;
+- la case d'une étiquette ne se coche qu'une fois la pose enregistrée : `check()` échoue, le clic suivi de l'attente
+  de l'état réussit ;
+- « Workflow modifié » ne naît que d'un channel qui change de workflow, l'affaire y restant (`0110`) ; déplacer
+  l'affaire vers un autre channel écrit « Dossier changé ». La clé `(channel_id, workflow_id)` interdit l'écriture
+  directe ; `change_channel_workflow` exige un administrateur. Le scénario crée un channel jetable et l'administratrice
+  l'y fait passer par la fonction, avec son jeton — le vrai chemin de l'écran d'administration ;
+- un champ sans règle est visible : « Budget estimé » n'est caché qu'à la première étape du workflow global, où
+  l'affaire jetable est ramenée ;
+- le client relit une liste avant de conclure à l'échec : l'état « La liste des contacts n'a pas pu être lue » se
+  laisse attendre jusqu'à 30 s, comme au chapitre 7 ;
+- le menu « Actions » d'une carte s'ouvre dans la carte, et la colonne s'arrête au bas de la fenêtre : il dépassait
+  d'une fraction de pixel. Une fenêtre de 1 100 px de haut, le temps de cette image, le laisse entier. L'erreur
+  d'`illustrer` dit désormais la boîte mesurée ;
+- « Prioritaire » ne filtre rien dans « Grands comptes » : le filtre est illustré sur « Refonte de site ».
+
+**Le navigateur en français.** Le panneau d'import montrait « Choose File No file chosen », et le panneau de sommeil
+« mm/dd/yyyy, --:-- -- » : le projet `manuel` tournait en anglais. Essais isolés : `locale: 'fr-FR'` seul ne change
+rien ; `--lang` non plus ; la langue de l'environnement (`LANGUAGE`, `LANG`, `LC_ALL`) remet le jour en tête mais
+laisse les mots anglais sur la coquille sans interface (`chromium-headless-shell`) ; le Chromium complet
+(`channel: 'chromium'`) avec cette langue écrit « Choisir un fichier » et « jj/mm/aaaa », comme l'écran d'une équipe
+francophone. **Décision (choix de l'agent)** : le projet `manuel` lance le Chromium complet en français
+(`docs/SPEC-manual.md` §11.4). Les images des chapitres 1 à 8 et 10 ont été prises avant : T5 les reprend toutes.
+
+**« Affaire créée par import »** (9.11, `CRM-071` T6) : le scénario importe réellement une affaire d'une ligne par le
+panneau, l'illustre dans son fil, puis la retire. Comme l'import du chapitre 10, il laisse sa ligne au journal d'audit,
+qui est en ajout seul.
+
+**Vérifications.** 13 scénarios du chapitre 9 verts en un passage ; 75 images observées sur planches ; placées ;
+chapitre 9 dans `CHAPITRES_ILLUSTRES` ; `manuel:construire` 33 chapitres sans avertissement ; `verify-manual.sh`
+**165 contrôles, sans anomalie**. Base relue après le passage : aucune affaire ni channel jetable, Driss Lemoine
+`business_developer`, aucune vue « Portails publics » ni étiquette « Grand compte ».

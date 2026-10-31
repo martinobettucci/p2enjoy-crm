@@ -25,10 +25,14 @@ const WORKFLOW_GLOBAL = '5eed0000-0000-4000-8000-000000000051'
 const ETAPE_SIGNATURE = '5eed0000-0000-4000-8000-000000000064'
 const TRACK_CONSEIL = '5eed0000-0000-4000-8000-000000000021'
 const CHANNEL_VIDE = 'e1170000-0000-4000-8000-0000000009c1'
+const ENDORMIE = { id: 'e1170000-0000-4000-8000-0000000009c3', titre: 'Partenariat Lucéo' } as const
 
 
 // Les affaires jetables sont retirées même quand un test dépasse son délai.
-test.afterEach(async ({ request }) => retablirLeSeed(request, ['Diagnostic data Ormeau', 'Renouvellement Ostrea']))
+test.afterEach(async ({ request }) => {
+	await retablirLeSeed(request, ['Diagnostic data Ormeau', 'Renouvellement Ostrea', ENDORMIE.titre])
+	await service(request, 'delete', `channels?id=eq.${CHANNEL_VIDE}`)
+})
 
 test('le tableau : sa barre, la création d’une affaire', async ({ page, request }) => {
 	const titre = 'Diagnostic data Ormeau'
@@ -37,6 +41,16 @@ test('le tableau : sa barre, la création d’une affaire', async ({ page, reque
 		await page.goto(GRANDS_COMPTES)
 		await expect(page.getByTestId('carte-card').first()).toBeVisible()
 		await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'barre-du-tableau', cibles: [page.getByTestId('barre-board')] })
+		// Le menu d'une carte, par son bouton « Actions » : le même que celui de la section « Faire avancer ».
+		const premiere = page.getByTestId('carte-card').first()
+		const actions = premiere.getByRole('button', { name: /^Actions/ })
+		// Le menu s'ouvre dans la carte, et la colonne s'arrête au bas de la fenêtre : une fenêtre plus haute le laisse entier.
+		await page.setViewportSize({ width: 1440, height: 1100 })
+		await actions.click()
+		await expect(page.getByTestId('menu-carte')).toBeVisible()
+		await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'actions-de-la-carte', cibles: [actions, page.getByTestId('menu-carte')] })
+		await page.keyboard.press('Escape')
+		await page.setViewportSize({ width: 1440, height: 900 })
 
 		// « Nouvelle affaire » cède sa place au formulaire : le bouton d'abord, puis le formulaire.
 		await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'nouvelle-affaire', cibles: [page.getByTestId('nouvelle-affaire')] })
@@ -103,7 +117,16 @@ test('la vue liste : le compte, la pagination, les vides', async ({ page, reques
 		await expect(bascule).toBeChecked()
 		await expect(aucune).toContainText('Aucune affaire dans ce channel')
 		await illustrer(page, { chapitre: CHAPITRE, section: S.liste, nom: 'channel-vide', cibles: [aucune] })
+
+		// Une seule affaire, endormie : le tableau le dit, et propose de la révéler.
+		await poserAffaire(request, { id: ENDORMIE.id, titre: ENDORMIE.titre, channel: CHANNEL_VIDE, workflow: WORKFLOW_GLOBAL, etape: ETAPE_SIGNATURE })
+		await service(request, 'patch', `card_placements?card_id=eq.${ENDORMIE.id}`, { snoozed_until: new Date(Date.now() + 7 * 86_400_000).toISOString() })
+		await page.goto('/tracks/conseil-ia/partenariats')
+		const endormies = page.getByText('Toutes les affaires de ce channel sont en sommeil', { exact: true }).first()
+		await expect(endormies).toBeVisible()
+		await illustrer(page, { chapitre: CHAPITRE, section: S.board, nom: 'toutes-en-sommeil', cibles: [endormies.locator('xpath=ancestor::*[@data-testid][1]')] })
 	} finally {
+		await detruireAffaire(request, ENDORMIE.id)
 		await service(request, 'delete', `channels?id=eq.${CHANNEL_VIDE}`)
 	}
 })

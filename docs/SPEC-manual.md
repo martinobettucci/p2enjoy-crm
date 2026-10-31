@@ -449,8 +449,15 @@ est autorisée en début de chapitre. »
 | « extrémité hors de portée » | `les-objectifs-le-tableau-blanc-de-l-equipe` | MONTRÉ, sur l'image `extremite-hors-de-portee`, mais fondu dans le libellé du lien (« extrémité hors de portée → Industrialiser la maintenance ») : le contrôle compare des libellés entiers et ne l'y reconnaît pas |
 | « Organisation enregistrée » | `le-carnet-de-contacts` | annonce réservée aux lecteurs d'écran (`LiveRegion`, `sr-only`) : rien ne paraît à l'écran, la fiche relue le montre |
 | « Le nom est requis. » | `le-carnet-de-contacts` | refus du serveur à un nom d'organisation vide (`btrim(name) <> ''`) ; « Créer » reste grisé tant que le nom, rogné, est vide — un contrôle au moins aussi strict —, l'écran n'envoie donc jamais ce nom |
+| « Enregistrer » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | cité pour dire que le formulaire de la fiche n'a pas ce bouton ; le « Enregistrer » d'une étiquette, en 9.16, est montré |
+| « Aucun événement pour le moment » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | toute affaire porte au moins « Affaire créée », que sa création inscrit : un fil vide ne se produit pas |
+| « Nouveau contact » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | renvoi au bouton du carnet, montré au chapitre 10 ; le bloc des contacts d'une affaire n'y renvoie que pour un carnet vide, ce que le seed n'est pas |
+| « Étape supprimée » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | exige qu'une étape soit supprimée de son workflow après qu'une affaire y a coché des points ; aucun état du seed ne le produit |
+| « Votre compte n'a pas le droit de retirer cette affaire. » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | exige un refus explicite du serveur ; des droits retirés se traduisent par une écriture sans effet, montrée sous « Aucune modification : votre compte ne peut pas écrire dans cette affaire. » |
+| « Mes vues » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | groupe d'une liste déroulante native : il ne paraît que dans la liste ouverte par le système, hors de toute capture de page |
+| « Vues de l'espace » | `l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre` | même cause : groupe de la liste native « Vue » |
 
-*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28) et T4.2a (2026-10-30, la dernière), soumises au responsable.*
+*Lignes proposées par l'agent avec `CRM-117` T4.1 (2026-10-28), T4.2a et T4.2b (2026-10-30, les dernières), soumises au responsable.*
 
 ### 11.4 Le contrat technique des images
 
@@ -474,6 +481,12 @@ sections).*
 - **Le projet Playwright `manuel`** (`e2e/manuel/`) joue les scénarios, sur la pile de développement et le seed, comme
   `ui` ; il n'est pas compté dans les campagnes de non-régression : ses scénarios produisent des images, et la preuve est
   celle du §16.
+- **Le navigateur parle français** (*choix de l'agent, 2026-10-31, T4.2b*) : le projet `manuel` lance le Chromium
+  complet (`channel: 'chromium'`), en `fr-FR` et avec la langue de son environnement (`LANGUAGE`, `LANG`, `LC_ALL`) en
+  français. Un contrôle natif s'y montre comme sur l'écran d'une équipe francophone — « Choisir un fichier »,
+  « jj/mm/aaaa ». La coquille sans interface (`chromium-headless-shell`), choisie par défaut, les écrit en anglais
+  (« Choose File », « mm/dd/yyyy ») quelle que soit la langue demandée. Les images prises avant ce choix sont reprises
+  par la campagne finale (T5).
 - **La preuve grandit avec T4**, comme celle des références internes avec T3 : les contrôles d'images portent sur les
   chapitres déjà illustrés, liste qui couvre tout le manuel à la fin de T4.
 

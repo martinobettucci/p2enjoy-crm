@@ -17348,7 +17348,7 @@ responsable** : traitée juste après `CRM-116`.*
             (§11.3) **soumises au responsable**. Ce que les scénarios posent pour faire paraître un écran est retiré ou
             rendu tel qu'il a été lu ; deux scénarios interrompus avaient laissé une trace, retirée à la main et le
             scénario corrigé (journal).
-      - [~] **T4.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10, en deux tranches comme T3.2.
+      - [x] **T4.2 — le suivi quotidien et l'affaire** : chapitres 6 à 10, en deux tranches comme T3.2.
         - [x] **T4.2a** (6, 7, 8, 10), le 2026-10-30 : 64 images produites par `e2e/manuel/06`, `07`, `08` et `10`
               (22 scénarios verts) sur la pile et le seed, toutes observées, placées avec leur texte alternatif ;
               `CHAPITRES_ILLUSTRES` couvre neuf chapitres : `verify-manual.sh` **165 contrôles, sans anomalie**.
@@ -17364,23 +17364,30 @@ responsable** : traitée juste après `CRM-116`.*
               illustré dans l'introduction du chapitre 10 ; un test interrompu par son délai avait laissé Driss
               Lemoine « viewer » dans la base partagée (rétabli) : `retablirLeSeed`, appelé en `afterEach`, rend son rôle
               et retire les affaires jetables même après un dépassement de délai.
-        - [~] **T4.2b** (9, la fiche, le board, la liste). **Le 2026-10-30** : `e2e/manuel/09a` et `09b` passés et
-              corrigés, 7 scénarios verts, 53 images produites et observées, **pas encore placées** ; le chapitre 9
-              n'est pas encore dans `CHAPITRES_ILLUSTRES`. Restent, mesurés par le contrôle 9 sur le chapitre :
-              environ 40 éléments cités sans image — les vues sauvegardées et « Exporter en CSV » de `CRM-071` (9.11),
-              les étiquettes (9.16), « Dossier changé » et « Workflow modifié » au fil, les états vides du fil,
-              « Informations d'autres étapes », « Étape supprimée », « Toutes les affaires de ce channel sont en
-              sommeil », le second refus de la corbeille ; « Enregistrement… » (l'écriture de l'en-tête n'est plus
-              sur `cards` depuis `CRM-111`) ; la citation de « Rien n'a été enregistré… » sans son point final.
-              **Défaut produit constaté, hors de `CRM-117`, soumis au responsable** : un changement de responsable
-              fait depuis l'en-tête n'est pas relu par le fil (seules les étiquettes appellent `onEvenement`) ;
-              « Responsable modifié » n'y paraît qu'après relecture de la page (journal).
+        - [x] **T4.2b** (9, la fiche, le board, la liste), le 2026-10-31 : **75 images** produites par
+              `e2e/manuel/09a`, `09b` et `09c` (13 scénarios verts) sur la pile et le seed, toutes observées (planches
+              de contrôle), placées avec leur texte alternatif ; le chapitre 9 entre dans `CHAPITRES_ILLUSTRES` :
+              `verify-manual.sh` **165 contrôles, sans anomalie** (dix chapitres). Sept exceptions de plus au §11.3,
+              **soumises au responsable** (16 en tout). `09c` couvre les vues sauvegardées, l'export et l'import de la
+              liste — dont une affaire réellement importée par le panneau, pour « Affaire créée par import » —, les
+              étiquettes (fiche, filtre, réglages), « Dossier changé », « Workflow modifié » (un channel jetable passé
+              à un autre workflow par l'administratrice, avec ses droits), le fil filtré à vide, « Informations
+              d'autres étapes » et une liste de référence illisible (vraie panne réseau). Rien n'est laissé dans la
+              base : affaires et channel jetables, vues et étiquettes jamais enregistrées. **Le navigateur du projet
+              `manuel` parle désormais français** (§11.4) : « Choose File » et « mm/dd/yyyy » paraissaient sur les
+              images ; les chapitres illustrés avant restent à reprendre (T5). La citation de « Rien n'a été
+              enregistré… » porte son point final.
+              **Défaut produit constaté le 2026-10-30, hors de `CRM-117`, soumis au responsable** : un changement de
+              responsable fait depuis l'en-tête n'est pas relu par le fil (seules les étiquettes appellent
+              `onEvenement`) ; « Responsable modifié » n'y paraît qu'après relecture de la page (journal).
       - [ ] **T4.3 — la messagerie** : chapitres 11 à 16. Scénarios écrits, jamais passés.
       - [ ] **T4.4 — l'administration** : chapitres 17 à 22. Scénarios des chapitres 19 à 22 écrits, jamais passés ;
             17 et 18 restent à écrire.
       - [ ] **T4.5 — le pilotage, la plateforme et le connecteur** : chapitres 23 à 33. Scénarios des chapitres 23 à
             29 écrits, jamais passés ; 30 à 33 restent à écrire.
 - [ ] **T5 — la campagne finale** : toutes les preuves de la partie II §16, captures de l'aide aux quatre paliers,
+      toutes les images du manuel reprises par le projet `manuel` dans le navigateur en français (`docs/SPEC-manual.md`
+      §11.4 ; les chapitres illustrés avant le 2026-10-31 montrent encore « Choose File » et « mm/dd/yyyy »),
       `CHANGELOG.md`, contrat de déploiement.
 - [ ] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.
 

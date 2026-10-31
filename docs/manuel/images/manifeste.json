@@ -1,6 +1,26 @@
 {
 	"images": [
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/actions-de-la-carte.jpg",
+			"largeur": 294,
+			"hauteur": 424,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "le-tableau-kanban-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"Actions",
+				"Actions Audit sécurité applicative",
+				"Dans trois jours",
+				"Demain",
+				"Déplacer vers",
+				"La semaine prochaine",
+				"Le mois prochain",
+				"Marquer perdu",
+				"Relancer",
+				"Sommeil"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/activite-retiree.jpg",
 			"largeur": 650,
 			"hauteur": 92,
@@ -8,9 +28,9 @@
 			"section": "les-activites-d-une-affaire-appels-reunions-visios",
 			"pleinePage": false,
 			"libelles": [
-				"30/10/2026 17:47",
+				"31/10/2026 02:42",
 				"Activité retirée",
-				"Activité retirée 30/10/2026 17:47",
+				"Activité retirée 31/10/2026 02:42",
 				"Activités de l'affaire, la plus récente en tête"
 			]
 		},
@@ -58,6 +78,21 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/affaire-creee-par-import.jpg",
+			"largeur": 519,
+			"hauteur": 76,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-vue-liste-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"31/10/2026 02:45",
+				"31/10/2026 02:45par Camille Aubert",
+				"Affaire créée par import",
+				"Affaire créée par import 31/10/2026 02:45par Camille Aubert",
+				"par Camille Aubert"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/afficher-les-affaires-en-sommeil.jpg",
 			"largeur": 997,
 			"hauteur": 334,
@@ -67,10 +102,10 @@
 			"libelles": [
 				"0",
 				"0 j dans cette étape",
+				"01/11/2026",
 				"1",
 				"173 000 €",
 				"2",
-				"31/10/2026",
 				"48",
 				"48 000 €",
 				"75",
@@ -86,12 +121,11 @@
 				"Dynamique 75 sur 100, sain",
 				"Dynamique 85",
 				"Dynamique 85 sur 100, sain",
-				"En sommeil jusqu'au 31/10/2026",
+				"En sommeil jusqu'au 01/11/2026",
 				"Négociation",
 				"Négociation 0 Aucune affaire à cette étape.",
 				"Refonte du site vitrine",
 				"Relance",
-				"Relancer la DSI après la démo",
 				"Renouvellement Ostrea",
 				"Santé",
 				"Santé 48",
@@ -100,7 +134,8 @@
 				"Santé 82 sur 100, sain",
 				"Signature",
 				"j dans cette étape",
-				"on"
+				"on",
+				"sonde colonnes-protegees"
 			]
 		},
 		{
@@ -113,6 +148,33 @@
 			"libelles": [
 				"Archivé",
 				"Contrat cadre 2025"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucun-element-filtres.jpg",
+			"largeur": 519,
+			"hauteur": 249,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "l-historique-et-la-discussion-d-une-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"0",
+				"1",
+				"Activités",
+				"Activités 0",
+				"Aucun élément pour ces filtres",
+				"Champs",
+				"Champs 0",
+				"Cycle de vie",
+				"Cycle de vie 1",
+				"Discussion",
+				"Discussion 0",
+				"Discussion 0 Activités 0 Étapes 0 Champs 0 Organisation 1 Cycle de vie 1",
+				"Filtres du fil",
+				"Organisation",
+				"Organisation 1",
+				"Étapes",
+				"Étapes 0"
 			]
 		},
 		{
@@ -159,6 +221,7 @@
 				"Exporter en CSV",
 				"Exporter en CSV les affaires de « Grands comptes »",
 				"Filtres de la liste",
+				"Importer un fichier",
 				"Rechercher",
 				"Rechercher une affaire",
 				"Toutes les étapes",
@@ -311,7 +374,7 @@
 			"section": "les-activites-d-une-affaire-appels-reunions-visios",
 			"pleinePage": false,
 			"libelles": [
-				"2026-10-30T17:47",
+				"2026-10-31T02:42",
 				"Annuler",
 				"Appel",
 				"Appel de découverte avec la DSI",
@@ -456,6 +519,36 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/dossier-change-dans-le-fil.jpg",
+			"largeur": 519,
+			"hauteur": 76,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "ranger-une-affaire-dans-un-autre-dossier",
+			"pleinePage": false,
+			"libelles": [
+				"28/10/2026 11:49",
+				"28/10/2026 11:49par Camille Aubert",
+				"Dossier changé",
+				"Dossier changé 28/10/2026 11:49par Camille Aubert",
+				"par Camille Aubert"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/dossier-change.jpg",
+			"largeur": 519,
+			"hauteur": 76,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "l-historique-et-la-discussion-d-une-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"28/10/2026 11:49",
+				"28/10/2026 11:49par Camille Aubert",
+				"Dossier changé",
+				"Dossier changé 28/10/2026 11:49par Camille Aubert",
+				"par Camille Aubert"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/en-saisie.jpg",
 			"largeur": 616,
 			"hauteur": 506,
@@ -485,7 +578,7 @@
 			"section": "mettre-une-affaire-en-sommeil-et-la-retrouver",
 			"pleinePage": false,
 			"libelles": [
-				"En sommeil jusqu'au 31/10/2026",
+				"En sommeil jusqu'au 01/11/2026",
 				"Renouvellement Ostrea"
 			]
 		},
@@ -501,7 +594,7 @@
 				"Aucun responsable",
 				"Devise",
 				"EUR",
-				"Enregistré",
+				"Enregistrement…",
 				"Montant",
 				"Prochaine action",
 				"Refonte de l'intranet Valdor",
@@ -509,6 +602,25 @@
 				"Terminer",
 				"Titre",
 				"Échéance"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/enregistrer-la-vue.jpg",
+			"largeur": 1160,
+			"hauteur": 259,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-vue-liste-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"Annuler",
+				"Enregistrer",
+				"Enregistrer la vue",
+				"Nom de la vue",
+				"Nom de la vue Publier pour tout l'espace Tous les membres qui lisent ce channel la verront. Enregistrer Annuler",
+				"Portails publics",
+				"Publier pour tout l'espace",
+				"Tous les membres qui lisent ce channel la verront.",
+				"on"
 			]
 		},
 		{
@@ -530,8 +642,55 @@
 				"Modifier les informations de l'affaire",
 				"Refonte de l'intranet Valdor",
 				"Responsable",
-				"c-dv90q0pz@crm.p2enjoy.test",
+				"c-w1s73j49@crm.p2enjoy.test",
 				"Étiquettes"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/entree-etiquettes.jpg",
+			"largeur": 545,
+			"hauteur": 216,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "les-etiquettes-d-une-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"Modèles d'affaires",
+				"Modèles d'affaires Préparer les affaires qui se ressemblent : un titre proposé, une description, un montant et des points de checklist, repris à la création d'une affaire.",
+				"Préparer les affaires qui se ressemblent : un titre proposé, une description, un montant et des points de checklist, repris à la création d'une affaire.",
+				"Préparer les étiquettes de l'espace : un nom et une couleur, que l'équipe pose ensuite sur ses affaires pour les qualifier et les filtrer.",
+				"Étiquettes",
+				"Étiquettes Préparer les étiquettes de l'espace : un nom et une couleur, que l'équipe pose ensuite sur ses affaires pour les qualifier et les filtrer."
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/etiquette-archivee.jpg",
+			"largeur": 923,
+			"hauteur": 261,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "les-etiquettes-d-une-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"Afficher les archivées",
+				"Archiver",
+				"Archiver l'étiquette Partenaire",
+				"Archiver l'étiquette Prioritaire",
+				"Archivée",
+				"Désarchiver",
+				"Désarchiver l'étiquette Salon 2025",
+				"Modifier",
+				"Modifier Archiver",
+				"Modifier l'étiquette Partenaire",
+				"Modifier l'étiquette Prioritaire",
+				"Nouvelle étiquette",
+				"Partenaire",
+				"Partenaire Modifier Archiver",
+				"Prioritaire",
+				"Prioritaire Modifier Archiver",
+				"Salon 2025",
+				"Salon 2025 Archivée",
+				"Salon 2025 Archivée Désarchiver",
+				"Salon 2025, étiquette archivée",
+				"on"
 			]
 		},
 		{
@@ -547,6 +706,19 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/exporter-importer.jpg",
+			"largeur": 339,
+			"hauteur": 73,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-vue-liste-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"Exporter en CSV",
+				"Exporter en CSV les affaires de « Refonte de site »",
+				"Importer un fichier"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fiche.jpg",
 			"largeur": 1440,
 			"hauteur": 900,
@@ -555,11 +727,10 @@
 			"pleinePage": true,
 			"libelles": [
 				"/",
-				"0",
 				"0/100, poids 20 %",
 				"1",
 				"100/100, poids 15 %",
-				"11",
+				"12",
 				"125 000,00",
 				"14/10/2026 10:30",
 				"14/10/2026 10:3030 minpar Driss Lemoine",
@@ -573,7 +744,7 @@
 				"3",
 				"30 min",
 				"30/10/2026 16:50",
-				"4",
+				"37",
 				"41",
 				"45000",
 				"70/100, poids 25 %",
@@ -608,7 +779,7 @@
 				"Champ renseignéRéférent technique",
 				"Champ renseignéRéférent technique 28/10/2026 11:49",
 				"Champs",
-				"Champs 4",
+				"Champs 12",
 				"Channels du track courant",
 				"Conseil & IA",
 				"Conseil & IA /",
@@ -626,8 +797,8 @@
 				"Cycle de vie",
 				"Cycle de vie 1",
 				"Discussion",
-				"Discussion 0",
-				"Discussion 0 Activités 3 Étapes 0 Champs 4 Organisation 11 Cycle de vie 1",
+				"Discussion 1",
+				"Discussion 1 Activités 3 Étapes 12 Champs 12 Organisation 37 Cycle de vie 1",
 				"Driss Lemoine",
 				"Dynamique",
 				"Dynamique 75",
@@ -665,7 +836,7 @@
 				"Objectifs",
 				"Obtenir le cadrage technique",
 				"Organisation",
-				"Organisation 11",
+				"Organisation 37",
 				"Origine du contact",
 				"P2Enjoy CRM",
 				"P2Enjoy SAS",
@@ -714,7 +885,7 @@
 				"Étape courante :",
 				"Étape courante : Relance",
 				"Étapes",
-				"Étapes 0",
+				"Étapes 12",
 				"Étiquettes",
 				"à surveiller",
 				"−",
@@ -755,6 +926,51 @@
 				"par Driss Lemoine",
 				"Étapes",
 				"Étapes 1"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtre-etiquette.jpg",
+			"largeur": 224,
+			"hauteur": 97,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "les-etiquettes-d-une-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"Toutes les étiquettes",
+				"Étiquette"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtre-pose.jpg",
+			"largeur": 424,
+			"hauteur": 125,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "les-etiquettes-d-une-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"Effacer les filtres",
+				"Prioritaire",
+				"Toutes les étapes"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtres-modifies.jpg",
+			"largeur": 871,
+			"hauteur": 121,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-vue-liste-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"Enregistrer la vue",
+				"Filtres modifiés depuis la vue",
+				"Mettre à jour la vue",
+				"Mettre à jour la vue « Secteur public, par échéance » avec les filtres actuels",
+				"Modifier",
+				"Modifier la vue « Secteur public, par échéance »",
+				"Secteur public, par échéance",
+				"Supprimer la vue",
+				"Supprimer la vue « Secteur public, par échéance »",
+				"Vue"
 			]
 		},
 		{
@@ -805,6 +1021,50 @@
 				"Nouvelle affaire",
 				"Titre",
 				"Titre Modèle Aucun modèle Audit flash Créer Annuler"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/importer-des-affaires.jpg",
+			"largeur": 1160,
+			"hauteur": 227,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-vue-liste-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"1 000 lignes et 2 Mo au plus ; séparateur point-virgule ou virgule.",
+				"Annuler",
+				"Fichier",
+				"Fichier CSV",
+				"Fichier Fichier CSV 1 000 lignes et 2 Mo au plus ; séparateur point-virgule ou virgule. Annuler",
+				"Importer des affaires depuis un fichier CSV"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/informations-d-autres-etapes.jpg",
+			"largeur": 650,
+			"hauteur": 162,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
+			"pleinePage": false,
+			"libelles": [
+				"48000",
+				"Budget estimé",
+				"Ces champs ne sont pas demandés à l'étape courante : ils sont consultables, pas modifiables.",
+				"Informations d'autres étapes"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/liste-illisible.jpg",
+			"largeur": 650,
+			"hauteur": 117,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
+			"pleinePage": false,
+			"libelles": [
+				"La liste des contacts n'a pas pu être lue.",
+				"La liste des contacts n'a pas pu être lue. Réessayer",
+				"Réessayer",
+				"— Aucun choix —"
 			]
 		},
 		{
@@ -898,6 +1158,33 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/nouvelle-etiquette.jpg",
+			"largeur": 925,
+			"hauteur": 259,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "les-etiquettes-d-une-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"Annuler",
+				"Bleu",
+				"Couleur",
+				"Enregistrer",
+				"Grand compte",
+				"Gris",
+				"Jaune",
+				"Nom",
+				"Nom Couleur Bleu Vert Jaune Rouge Gris Enregistrer Annuler",
+				"Nouvelle étiquette",
+				"Rouge",
+				"Vert",
+				"accent",
+				"brand",
+				"danger",
+				"neutral",
+				"success"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/page-disparue.jpg",
 			"largeur": 222,
 			"hauteur": 52,
@@ -941,6 +1228,22 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/poser-une-etiquette.jpg",
+			"largeur": 616,
+			"hauteur": 254,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "les-etiquettes-d-une-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"Fermer",
+				"Partenaire",
+				"Prioritaire",
+				"Secteur public",
+				"on",
+				"Étiquettes de l'affaire"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachement-refuse.jpg",
 			"largeur": 650,
 			"hauteur": 441,
@@ -949,8 +1252,8 @@
 			"pleinePage": false,
 			"libelles": [
 				"Annuler",
+				"Camille Roy — Ville d'Annecy",
 				"Contact",
-				"Contact anonymisé",
 				"Contacts de l'affaire",
 				"Détacher",
 				"Liste des contacts rattachés",
@@ -999,6 +1302,36 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/reglages-etiquettes.jpg",
+			"largeur": 925,
+			"hauteur": 353,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "les-etiquettes-d-une-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"Afficher les archivées",
+				"Archiver",
+				"Archiver l'étiquette Partenaire",
+				"Archiver l'étiquette Prioritaire",
+				"Archiver l'étiquette Secteur public",
+				"Les étiquettes qualifient les affaires d'un mot commun à l'équipe. Toute personne qui peut modifier une affaire y pose une étiquette de cette liste.",
+				"Modifier",
+				"Modifier Archiver",
+				"Modifier l'étiquette Partenaire",
+				"Modifier l'étiquette Prioritaire",
+				"Modifier l'étiquette Secteur public",
+				"Nouvelle étiquette",
+				"Partenaire",
+				"Partenaire Modifier Archiver",
+				"Prioritaire",
+				"Prioritaire Modifier Archiver",
+				"Secteur public",
+				"Secteur public Modifier Archiver",
+				"on",
+				"Étiquettes"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/renseigner-ces-champs.jpg",
 			"largeur": 1160,
 			"hauteur": 151,
@@ -1021,10 +1354,10 @@
 			"section": "la-fiche-d-une-affaire-son-en-tete-son-formulaire-et-ce-qu-ils-montrent",
 			"pleinePage": false,
 			"libelles": [
-				"30/10/2026 17:47",
-				"30/10/2026 17:47par Camille Aubert",
+				"31/10/2026 02:42",
+				"31/10/2026 02:42par Camille Aubert",
 				"Responsable modifié",
-				"Responsable modifié 30/10/2026 17:47par Camille Aubert",
+				"Responsable modifié 31/10/2026 02:42par Camille Aubert",
 				"par Camille Aubert"
 			]
 		},
@@ -1094,6 +1427,18 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/selecteur-de-vue.jpg",
+			"largeur": 452,
+			"hauteur": 73,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-vue-liste-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"Aucune vue",
+				"Enregistrer la vue"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/temps.jpg",
 			"largeur": 251,
 			"hauteur": 72,
@@ -1102,6 +1447,19 @@
 			"pleinePage": false,
 			"libelles": [
 				"Temps"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/toutes-en-sommeil.jpg",
+			"largeur": 548,
+			"hauteur": 287,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "le-tableau-kanban-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"Afficher les affaires en sommeil",
+				"Aucune affaire éveillée ne reste à traiter ici. Affichez les affaires en sommeil pour les retrouver.",
+				"Toutes les affaires de ce channel sont en sommeil"
 			]
 		},
 		{
@@ -1127,6 +1485,23 @@
 			]
 		},
 		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/vue-choisie.jpg",
+			"largeur": 704,
+			"hauteur": 97,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "la-vue-liste-d-un-channel",
+			"pleinePage": false,
+			"libelles": [
+				"Enregistrer la vue",
+				"Modifier",
+				"Modifier la vue « Secteur public, par échéance »",
+				"Secteur public, par échéance",
+				"Supprimer la vue",
+				"Supprimer la vue « Secteur public, par échéance »",
+				"Vue"
+			]
+		},
+		{
 			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/vue-liste.jpg",
 			"largeur": 1160,
 			"hauteur": 446,
@@ -1145,12 +1520,14 @@
 				"Affaires : 4",
 				"Afficher les affaires en sommeil",
 				"Audit sécurité applicative",
+				"Audit sécurité applicative sonde de non-régression CRM-034",
 				"Camille Aubert",
 				"Driss Lemoine",
 				"Enregistrer la vue",
 				"Exporter en CSV",
 				"Exporter en CSV les affaires de « Grands comptes »",
 				"Filtres de la liste",
+				"Importer un fichier",
 				"Livré",
 				"Migration ERP Sogexia",
 				"Migration ERP Sogexia Bascule de l'ancien progiciel de gestion vers la nouvelle plateforme comptable. Décision attendue de la direction financière avant la clôture de l'exercice.",
@@ -1165,7 +1542,6 @@
 				"Rechercher une affaire",
 				"Refonte du site vitrine",
 				"Relance",
-				"Relancer la DSI après la démo",
 				"Responsable",
 				"Socle analytique — Vertuo",
 				"Socle analytique — Vertuo Entrepôt de données et tableaux de bord pour les équipes commerciales.",
@@ -1175,11 +1551,27 @@
 				"Trier par Montant",
 				"Trier par Échéance",
 				"on",
+				"sonde colonnes-protegees",
 				"Échéance",
 				"Étape",
 				"Étape Toutes les étapes Prospection Relance Négociation Signature Réalisation en cours Livré Perdu Étiquette Toutes les étiquettes Partenaire Prioritaire Secteur public Rechercher une affaire Rechercher Afficher les affaires en sommeil Affaires : 4",
 				"Étiquette",
 				"Étiquettes"
+			]
+		},
+		{
+			"fichier": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/workflow-modifie.jpg",
+			"largeur": 519,
+			"hauteur": 77,
+			"chapitre": "l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre",
+			"section": "l-historique-et-la-discussion-d-une-affaire",
+			"pleinePage": false,
+			"libelles": [
+				"31/10/2026 02:43",
+				"31/10/2026 02:43par Camille Aubert",
+				"Workflow modifié",
+				"Workflow modifié 31/10/2026 02:43par Camille Aubert",
+				"par Camille Aubert"
 			]
 		},
 		{

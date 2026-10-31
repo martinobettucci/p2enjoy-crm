@@ -101,6 +101,7 @@ CHAPITRES_ILLUSTRES=(
 	ma-journee-ce-qui-est-en-retard-ce-qui-est-du-aujourd-hui
 	les-affaires-figees-ce-qui-dort-depuis-trop-longtemps
 	les-objectifs-le-tableau-blanc-de-l-equipe
+	l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre
 	le-carnet-de-contacts
 )
 

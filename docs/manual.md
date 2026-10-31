@@ -1148,7 +1148,13 @@ une opportunité, un dossier, un projet. Elle vit dans un onglet (channel), à u
 que cet onglet suit, et c'est à elle que se rattacheront les commentaires, les documents et les
 échanges de messagerie.
 
+![La fiche d'une affaire : son en-tête, sa santé, son formulaire et, à droite, son historique](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fiche.jpg)
+
 ### 9.1 Ce qu'une affaire porte
+
+![Le bloc Santé de l'affaire : la dynamique et la santé, avec le détail de chaque critère et son poids](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/sante.jpg)
+
+![L'entrée Ma journée de la barre latérale](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/ma-journee.jpg)
 
 | Ce que vous renseignez | Ce que cela sert |
 |---|---|
@@ -1198,6 +1204,10 @@ hasard par une adresse triviale pour que n'importe qui puisse écrire à l'affai
 mot de passe.
 
 ### 9.3 Faire avancer une affaire : ce que le produit autorise, et ce qu'il refuse
+
+![Le menu d'une carte : les étapes vers lesquelles la déplacer, puis les durées de sommeil](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/menu-actions.jpg)
+
+![Le déplacement refusé : le bandeau nomme le champ à renseigner et propose de le faire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/refus-champs-manquants.jpg)
 
 Une affaire change d'étape par **un seul chemin**, et c'est délibéré : le produit refuse désormais
 qu'on écrive directement l'étape d'une affaire, même à une administratrice. Tout déplacement passe
@@ -1293,6 +1303,32 @@ refuse, plutôt que de faire disparaître une colonne du tableau sous les affair
 
 ### 9.6 La fiche d'une affaire : son en-tête, son formulaire, et ce qu'ils montrent
 
+![L'en-tête d'une affaire sans responsable : ses commandes, et l'adresse email de l'affaire à copier](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/entete.jpg)
+
+![L'adresse email de l'affaire, et le bouton qui la copie, passé à Copié](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/copier-l-adresse.jpg)
+
+![Le titre d'une affaire archivée, avec sa pilule Archivé](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/archivee.jpg)
+
+![L'adresse d'une affaire qui n'existe pas](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/card-introuvable.jpg)
+
+![Le bandeau du déplacement refusé, avec le bouton qui mène au champ à renseigner](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/renseigner-ces-champs.jpg)
+
+![Le champ exigé par le déplacement demandé, signalé sous son libellé](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/exige-par-le-deplacement.jpg)
+
+![Le formulaire de l'étape : les champs requis signalés, et le champ renseigné marqué Enregistré](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/formulaire-de-l-etape.jpg)
+
+![La section dépliée des informations d'autres étapes, avec la réponse donnée à une autre étape](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/informations-d-autres-etapes.jpg)
+
+![Un champ dont la liste n'a pas pu être lue, avec le bouton Réessayer](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/liste-illisible.jpg)
+
+![L'en-tête en saisie pendant l'envoi d'un montant](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/enregistrement.jpg)
+
+![L'en-tête en saisie : le responsable choisi et le montant enregistrés, avec le bouton Terminer](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/en-saisie.jpg)
+
+![La ligne Responsable modifié dans l'historique de l'affaire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/responsable-modifie.jpg)
+
+![L'en-tête en saisie quand le compte ne peut plus modifier l'affaire : rien n'a été enregistré](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rien-n-a-ete-enregistre.jpg)
+
 Une affaire s'ouvre depuis sa carte du tableau, sa ligne de la vue liste, ou tout lien qui la nomme ; son adresse se
 partage. Cet écran affiche à gauche **l'en-tête de l'affaire** puis le **formulaire de l'étape où elle se
 trouve**, et à droite son **historique et sa discussion** ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
@@ -1328,7 +1364,7 @@ Quelques points à connaître :
   saisie** : rien n'est effacé à votre place ;
 - **si votre compte n'a pas le droit de modifier cette affaire**, le bouton reste proposé — c'est
   volontaire —, mais l'écran vous répond « Rien n'a été enregistré : votre compte ne peut pas
-  modifier cette affaire ». Vous savez ainsi que la tentative a bien eu lieu, et qu'elle a été
+  modifier cette affaire. » Vous savez ainsi que la tentative a bien eu lieu, et qu'elle a été
   refusée ;
 - **changer le responsable apparaît dans l'historique** de l'affaire ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)), sous la forme
   « Responsable modifié ». Les autres champs ne laissent pas de trace dans ce fil.
@@ -1436,6 +1472,18 @@ l'adresse mène à l'écran de connexion, qui y ramène une fois connecté.
 
 ### 9.7 Les contacts d'une affaire : les rattacher, les détacher
 
+![Le bloc des contacts d'une affaire, avec le rôle de chacun et la commande pour détacher](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/contacts-de-l-affaire.jpg)
+
+![La commande Modifier le rôle, sur la fiche d'un contact](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/modifier-le-role.jpg)
+
+![Le formulaire de rattachement d'un contact à l'affaire, avec son rôle](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattacher-un-contact.jpg)
+
+![La confirmation qui détache un contact de l'affaire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/detacher.jpg)
+
+![Le détachement resté sans effet, signalé sous la ligne du contact](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/detachement-sans-effet.jpg)
+
+![Le rattachement refusé faute de droit de modifier l'affaire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/rattachement-refuse.jpg)
+
 **Où.** Dans la colonne de gauche de la fiche, **entre le formulaire et le bouton de mise à la
 corbeille** : le bloc **« Contacts de l'affaire »**. Il dit qui, dans le carnet de l'espace
 ([chapitre 10](#le-carnet-de-contacts)), est associé à cette affaire.
@@ -1479,6 +1527,14 @@ fiche d'organisation — le geste part toujours de l'affaire ou de la fiche du c
 rattachement n'apparaît **pas** dans l'historique de l'affaire ([chapitre 9.12](#l-historique-et-la-discussion-d-une-affaire)).
 
 ### 9.8 Les activités d'une affaire : appels, réunions, visios
+
+![Le bloc des activités : un compte rendu déplié, ses participants, et la commande pour consigner](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/activites.jpg)
+
+![L'entrée Temps de la barre latérale](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/temps.jpg)
+
+![Le formulaire d'une activité : son type, sa date, sa durée, son sujet, son compte rendu et ses participants](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/consigner-une-activite.jpg)
+
+![Une activité retirée, qui reste dans la liste à sa date](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/activite-retiree.jpg)
 
 **À quoi cela sert.** Garder la trace de ce qui **a eu lieu** avec le client hors du CRM : un appel, une réunion, une
 visio. La « prochaine action » de l'en-tête dit ce qui **vient** ; les activités disent ce qui **s'est passé**.
@@ -1544,6 +1600,14 @@ geste de l'écran.
 
 ### 9.9 La checklist d'une affaire : les points à cocher
 
+![La checklist d'une affaire : ses points par étape, cochés avec leur auteur, et un point libre en cours de saisie](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/checklist.jpg)
+
+![La checklist d'une affaire dont l'étape ne porte aucun point](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucun-point.jpg)
+
+![Les filtres de l'historique, et la ligne Point de checklist coché](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/fil-point-coche.jpg)
+
+![Le déplacement refusé faute de points cochés, avec le lien qui y mène](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/cocher-ces-points.jpg)
+
 **À quoi cela sert.** Dire ce qu'il reste à faire sur une affaire, point par point, et savoir qui l'a fait. Certains
 points viennent de l'**étape** où se trouve l'affaire ; d'autres sont **libres**, ajoutés à la main sur une affaire.
 
@@ -1589,6 +1653,22 @@ grisés, et le bandeau en tête de la fiche dit pourquoi ([chapitre 3.11](#les-c
 bloc, le premier point exigé non coché prêt à être coché.
 
 ### 9.10 Le tableau kanban d'un channel
+
+![La barre du tableau : Nouvelle affaire et la case qui affiche les affaires en sommeil](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/barre-du-tableau.jpg)
+
+![Le bouton Actions d'une carte du tableau et son menu : les étapes où la déplacer, puis les durées de sommeil](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/actions-de-la-carte.jpg)
+
+![Le bouton Nouvelle affaire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/nouvelle-affaire.jpg)
+
+![Le formulaire de création d'une affaire : son titre et son modèle](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/formulaire-nouvelle-affaire.jpg)
+
+![La création en cours : le bouton affiche Création…](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/creation-en-cours.jpg)
+
+![Le tableau d'un channel dont toutes les affaires sont en sommeil, avec le geste qui les révèle](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/toutes-en-sommeil.jpg)
+
+![La case Afficher les affaires en sommeil, cochée, au-dessus des colonnes](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/barre-sommeil-board.jpg)
+
+![L'adresse d'un track qui n'existe pas](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/track-introuvable.jpg)
 
 Ouvrir un onglet de channel affiche son **tableau** : une colonne par étape de son workflow, dans
 l'ordre de ces étapes.
@@ -1671,6 +1751,20 @@ le tableau réel est atteint et les déplacements consentis sont exécutables de
 glisser-déposer. Sans connexion, l'adresse mène à l'écran de connexion.
 
 ### 9.11 La vue liste d'un channel
+
+![La vue liste d'un channel : sa barre, ses filtres, le compte des affaires et le tableau](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/vue-liste.jpg)
+
+![La pagination de la vue liste](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/pagination.jpg)
+
+![La vue liste sans résultat pour les filtres, avec le bouton qui les efface](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucune-affaire-ne-correspond.jpg)
+
+![Un channel dont aucune affaire n'est éveillée, avec le geste qui affiche les affaires en sommeil](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucune-affaire-eveillee.jpg)
+
+![Un channel sans aucune affaire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/channel-vide.jpg)
+
+![Une page de la liste qui n'existe plus](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/page-disparue.jpg)
+
+![L'adresse d'un track qui n'existe pas, depuis la vue liste](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/track-introuvable-liste.jpg)
 
 À côté du tableau, un channel se lit aussi **en liste**. La bascule **Tableau / Liste**, en haut de
 la zone principale, passe de l'une à l'autre ; chaque vue a sa propre adresse.
@@ -1756,6 +1850,14 @@ public, par échéance » — s'enregistre comme une **vue**, et se retrouve en 
 - **Une vue ne contourne aucun droit.** Elle ne fait que remplir des filtres : la liste ne montre jamais que les affaires
   que vous pouvez lire. Une vue dont l'étape ou l'étiquette a été retirée s'ouvre quand même, ce filtre en moins.
 
+![La liste Vue, sans vue choisie, et le bouton qui enregistre une vue](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/selecteur-de-vue.jpg)
+
+![Une vue de l'espace choisie, avec les commandes pour la modifier et la supprimer](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/vue-choisie.jpg)
+
+![Un filtre changé après le choix d'une vue : l'écart est signalé, et la vue peut être mise à jour](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtres-modifies.jpg)
+
+![Le panneau d'enregistrement d'une vue : son nom, et la case qui la publie pour tout l'espace](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/enregistrer-la-vue.jpg)
+
 **Exporter la liste.** **« Exporter en CSV »**, au bout de la barre de filtres, télécharge **toutes** les affaires que
 les filtres et le tri retiennent — pas seulement la page affichée —, dans le même ordre : le titre, les étiquettes, le
 responsable, l'étape, le montant et sa devise, la prochaine action et son échéance, puis l'adresse de la fiche. Le
@@ -1764,12 +1866,16 @@ fichier s'ouvre dans un tableur : encodage UTF-8, point-virgule entre les colonn
 ne contient que ce que vous pouvez lire, n'est conservé nulle part, et chaque export est inscrit au journal d'audit de
 l'espace. Un export porte au plus 5 000 lignes : au-delà, l'écran demande de filtrer d'abord.
 
+![Les boutons d'export et d'import, au bout de la barre de filtres](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/exporter-importer.jpg)
+
 **Importer des affaires.** **« Importer un fichier »**, après « Exporter en CSV », ouvre sous la barre le même panneau en
 trois étapes que celui du carnet ([chapitre 10](#le-carnet-de-contacts)) : le fichier, ses colonnes, puis une
 vérification qui juge chaque ligne **sans rien écrire**, avant « Importer » et son rapport. Les colonnes d'un export de la
 liste sont reconnues d'office : un fichier exporté, retouché dans un tableur, se réimporte tel quel. Les champs sont le
 **titre** (obligatoire), l'**étape**, le **responsable**, le **montant**, la **devise**, la **probabilité**, la **prochaine
 action**, l'**échéance** et le **contact** ; l'identifiant, les étiquettes et l'adresse de la fiche sont ignorés.
+
+![Le panneau d'import de la vue liste, ouvert sous la barre](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/importer-des-affaires.jpg)
 
 - **L'affaire naît à l'étape nommée**, sans passer par les précédentes : un import est une création, pas un déplacement,
   et les conditions d'une transition ne s'appliquent pas. Sans étape, elle entre à l'étape initiale du workflow.
@@ -1786,6 +1892,8 @@ Le fil de chaque affaire importée commence par « Affaire créée par import »
 journal d'audit de l'espace, avec ses comptes. La commande suit votre droit d'écrire dans le channel, comme « Nouvelle
 affaire » : sans ce droit, elle reste visible mais inactive.
 
+![La première ligne du fil d'une affaire importée : Affaire créée par import, avec la date et le nom de la personne](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/affaire-creee-par-import.jpg)
+
 **Ce que la liste ne fait pas.** En dehors de la création et de l'import, elle **lit** : on n'y modifie, n'y archive et n'y déplace
 aucune affaire. Le déplacement est le geste du tableau ([section 9.10](#le-tableau-kanban-d-un-channel)) ; le reste se
 fait sur la fiche.
@@ -1795,6 +1903,14 @@ pour le tableau. Sinon, la liste réelle est consultable, triable et filtrable. 
 l'adresse mène à l'écran de connexion.
 
 ### 9.12 L'historique et la discussion d'une affaire
+
+![Le bouton Mentionner, sous le champ de commentaire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/mentionner.jpg)
+
+![La ligne Dossier changé dans l'historique d'une affaire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/dossier-change.jpg)
+
+![La ligne Workflow modifié dans l'historique d'une affaire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/workflow-modifie.jpg)
+
+![Toutes les familles du fil désactivées : aucun élément pour ces filtres](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/aucun-element-filtres.jpg)
 
 À droite de la fiche d'une affaire — sous le formulaire lorsque l'écran est étroit — se trouve
 **Historique et discussion**. C'est **un seul fil**, du plus ancien en haut au plus récent en bas
@@ -1932,6 +2048,14 @@ le channel. Un profil en lecture seule reçoit un refus explicite et conserve so
 
 ### 9.13 Mettre une affaire en sommeil, et la retrouver
 
+![Le panneau de sommeil : les échéances usuelles, ou une autre échéance à saisir](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/panneau-sommeil.jpg)
+
+![Le titre d'une affaire endormie, avec la date de son réveil](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/en-sommeil.jpg)
+
+![La case cochée, et une carte endormie qui reparaît dans sa colonne](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/afficher-les-affaires-en-sommeil.jpg)
+
+![Le compte des affaires de la vue liste](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/compte-de-la-liste.jpg)
+
 Certaines affaires n'attendent rien de vous avant plusieurs semaines : un client qui rappellera
 après ses congés, une décision reportée au prochain comité. Les laisser dans le tableau et dans la
 liste les fait relire chaque jour pour rien. Le **sommeil** les range jusqu'à une échéance que vous
@@ -2002,6 +2126,8 @@ La **vue liste** n'offre pas le geste : elle laisse la case d'affichage et le li
 
 ### 9.14 Ranger une affaire dans un autre dossier
 
+![Un changement de dossier, tel que l'historique de l'affaire l'inscrit](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/dossier-change-dans-le-fil.jpg)
+
 Une affaire peut **changer d'onglet** — de dossier. Le geste répond à une situation banale : une
 affaire a été ouverte au mauvais endroit, ou elle a changé de nature et relève désormais d'une
 autre activité.
@@ -2052,6 +2178,16 @@ pas les dossiers avant/après, car il ne résout pas leurs noms historiques ([ch
 **Ce rangement ne se fait pas encore depuis l'écran** : aucune commande de la fiche ne le propose.
 
 ### 9.15 Mettre une affaire à la corbeille
+
+![La confirmation de mise à la corbeille d'une affaire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/confirmation.jpg)
+
+![L'affaire mise à la corbeille, avec les liens vers son channel et vers la corbeille](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/mise-a-la-corbeille.jpg)
+
+![La mise à la corbeille restée sans effet, faute de droit d'écrire dans l'affaire](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/corbeille-refusee.jpg)
+
+![L'adresse d'une affaire qui n'existe plus](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/card-introuvable-corbeille.jpg)
+
+![Le filtre Cycle de vie de l'historique](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/cycle-de-vie.jpg)
 
 **Où.** En bas de la colonne de gauche de la fiche, sous le formulaire : le bouton **« Mettre à la
 corbeille »**. C'est le seul endroit d'où une affaire se retire — ni le tableau kanban ni la vue
@@ -2108,12 +2244,22 @@ s'enregistre aussitôt. Si l'enregistrement est refusé, la case revient, et la 
 **« Fermer »**, ou la touche Échap, referme la liste. L'historique de l'affaire garde chaque pose et chaque retrait, avec
 le nom de la personne ([section 9.12](#l-historique-et-la-discussion-d-une-affaire)).
 
+![La liste des étiquettes de l'affaire : une case par étiquette, une cochée, et le bouton qui la ferme](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/poser-une-etiquette.jpg)
+
 **Filtrer la vue liste.** La liste **« Étiquette »** de la barre de filtres ne montre que les affaires qui portent
 l'étiquette choisie ; « Toutes les étiquettes » retire le filtre, comme « Effacer les filtres ». Le filtre est gardé
 dans l'adresse de la page.
 
+![La liste Étiquette de la barre de filtres, sur Toutes les étiquettes](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtre-etiquette.jpg)
+
+![Le filtre posé sur une étiquette, avec le bouton qui efface les filtres](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/filtre-pose.jpg)
+
 **Préparer les étiquettes.** **Réglages ▸ Étiquettes**, après « Modèles d'affaires », tient la liste des étiquettes de
 l'espace.
+
+![L'index des réglages : l'entrée Étiquettes, sous Modèles d'affaires](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/entree-etiquettes.jpg)
+
+![Réglages, Étiquettes : la liste des étiquettes de l'espace, avec leurs commandes](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/reglages-etiquettes.jpg)
 
 - **« Nouvelle étiquette »** ouvre une fiche : le **nom**, jusqu'à quarante caractères, et la **couleur**, à choisir
   parmi « Bleu », « Vert », « Jaune », « Rouge » et « Gris ». « Enregistrer » la pose ; « Annuler » ou Échap referme.
@@ -2123,6 +2269,10 @@ l'espace.
   libère son nom.
 - Deux étiquettes non archivées ne portent jamais **le même nom**, majuscules comprises : l'écran le dit sous le champ
   et garde votre saisie.
+
+![La fiche d'une nouvelle étiquette : son nom et sa couleur, à choisir parmi cinq](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/nouvelle-etiquette.jpg)
+
+![Les étiquettes archivées affichées, l'une avec la commande qui la désarchive](manuel/images/l-affaire-ce-qu-elle-porte-son-adresse-ses-deux-facons-de-disparaitre/etiquette-archivee.jpg)
 
 **Qui peut le faire.** Préparer les étiquettes est réservé aux **administrateurs de l'espace** ; les autres voient
 l'entrée des réglages grisée. Poser ou retirer une étiquette est ouvert à quiconque peut modifier l'affaire ; pour les
