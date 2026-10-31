@@ -17493,6 +17493,9 @@ responsable** : traitée juste après `CRM-116`.*
       §11.4 ; les chapitres illustrés avant le 2026-10-31 montrent encore « Choose File » et « mm/dd/yyyy »),
       `CHANGELOG.md`, contrat de déploiement.
 - [ ] **T6 — livraison**, sur instruction du responsable : les deux migrations, la publication du manuel, la webapp.
+      **Faite par la session de livraison, et elle seule** (décision 790), dans le lot 0106 à 0140 (décision 786) :
+      la session de `CRM-117` passe l'unité à `[P]` au terme de T5, avec ses gestes décrits au contrat de déploiement,
+      et la lui remet.
 
 ### CRM-118 — Connecteur MCP : la famille `workflows` `[P]`
 *Développement terminé et prouvé le 2026-10-27 (T1.b, T2.a à T2.e, les checklists d'étape) ; reste T3 — livrer les
