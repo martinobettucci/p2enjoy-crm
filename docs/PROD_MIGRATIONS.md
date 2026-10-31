@@ -641,7 +641,9 @@ dépréciation.
 redémarrage de `functions` (ligne 140 du §3.2). La fenêtre **attend toujours la fin de `CRM-117`** (décision 783) ; l'instantané de la machine virtuelle du
 2026-10-31 au matin en est le retour arrière, à condition que la production soit restée inchangée (révision servie et
 registre des migrations relus en lecture seule le jour de la fenêtre). La condition posée sur `CRM-073` T3 — close avant
-la fenêtre — est remplie.
+la fenêtre — est remplie. **Une seule session livre** (décision 790) : elle ouvre la fenêtre et y
+fait aussi `CRM-117` T6 (les deux migrations du manuel, `scripts/manuel/publier.sh`, la webapp), que `CRM-117` décrit
+ici pendant sa T5.
 
 **La 138 aussi** (`CRM-071` T6 — l'import des affaires ; sa ligne au §3.2), **après la 137**. Cinq fonctions et le
 déclencheur de création redéfini, sans donnée existante touchée ; la webapp de `main` porte « Importer un fichier » dans

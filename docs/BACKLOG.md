@@ -12716,9 +12716,18 @@ externe ; le texte est montré dans l'aperçu, pour copier un passage — **il n
 **`messagerie`** existante, action « consulter » — aucune famille nouvelle ; l'outil rend **la pièce elle-même, en
 binaire**, pour que l'agent la lise à sa façon.
 
-- [ ] **Spécification** (`docs/SPEC-pieces-jointes.md`), soumise au responsable avant le code ; découpage en tranches.
-      *Proposée le 2026-10-31* : une migration (texte extrait sur `mail_attachments`), une boucle d'extraction dans
-      `mail-sync`, la visionneuse, l'outil `crm_mail_attachment_get` ; quatre tranches (§10), cinq points soumis (§11).
+- [x] **Spécification** (`docs/SPEC-pieces-jointes.md`) : **validée le 2026-10-31** (décision 789) — le fil de l'affaire
+      liste les pièces ; le connecteur rend tout fichier sain jusqu'à 25 Mo ; le reste du §11 tel quel.
+- [ ] **T1 — en base** (§3, §7) : migration — colonnes du texte sur `mail_attachments`, éligibilité, déclencheur, reprise
+      de l'existant, `claim_attachment_texts` et `record_attachment_text` réservées à `service_role` ; pgTAP (refus
+      compris) ; API ; types ; `docs/SCHEMA.md`, `docs/PROD_MIGRATIONS.md`.
+- [ ] **T2 — l'extraction** (§4) : boucle de `mail-sync`, `pypdf`, Office par la bibliothèque standard, processus enfant
+      borné ; tests du service ; intégration jusqu'à la base ; DAT.
+- [ ] **T3 — l'écran** (§5, §8) : `docs/DESIGN_SYSTEM.md` avant le code ; visionneuse dans la boîte de réception et le fil
+      de l'affaire ; seed par la vraie chaîne ; unitaires, E2E, captures ; manuel.
+- [ ] **T4 — le connecteur** (§6) : `crm_mail_attachment_get`, `attachments` dans `crm_card_mail_list` et `crm_mail_get` ;
+      `docs/SPEC-mcp.md` §9.2 decies ; tests.
+- [ ] **Livraison en production**, sur instruction du responsable.
 
 ### CRM-075 — Administration des tracks et des channels `[x]`
 *Créée le 2026-08-11 par arbitrage du responsable — INC-086, option 2, `docs/JOURNAL.md` décision

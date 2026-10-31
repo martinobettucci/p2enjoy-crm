@@ -37277,3 +37277,29 @@ questions du connecteur (CLAUDE.md, décisions 627 et 659).
 **Conséquences** : la section `CRM-074` du backlog porte l'arbitrage ; la spécification `docs/SPEC-pieces-jointes.md` est
 écrite ensuite et soumise au responsable avant le code.
 
+### `CRM-074` : la spécification de l'aperçu des pièces jointes validée (2026-10-31, décision 789)
+
+**Proposition** : `docs/SPEC-pieces-jointes.md` (commit `2a0e6dc3`), écrite d'après la décision 788. Le texte extrait vit
+sur `mail_attachments`, sous sa RLS ; une boucle de `mail-sync` l'extrait dans un processus enfant borné ; la visionneuse
+lit le fichier par le client de stockage et le montre depuis une adresse `blob:` au type forcé, parce que Caddy envoie
+`X-Frame-Options: DENY` sur toute réponse, stockage compris, et que l'assouplir ouvrirait l'encadrement à tout le site ; le
+connecteur gagne `crm_mail_attachment_get`.
+
+**Décision 789, du responsable, en séance** : « Oui, lister les pièces » — le fil de l'affaire liste les pièces de chaque
+courrier ; « Tout fichier sain, 25 Mo » — le connecteur rend tout fichier sain jusqu'à 25 Mo (la proposition disait 10) ;
+le reste du §11 « validé tel quel ».
+
+**Conséquences** : la spécification passe « validée » (§12) ; le backlog porte quatre tranches ; T1 commence après ce
+commit.
+
+### Une seule session livre (2026-10-31, décision 790)
+
+**Décision 790, du responsable**, transmise par la session de `CRM-117` : **une seule session livre** — celle qui a pour
+objectif de livrer chaque unité dès qu'elle est terminée (la session interactive `4522fa9c`, qui porte les décisions 783 et
+786 et la boucle « livre entre chaque itération stable »). Les autres sessions ne travaillent que sur les unités.
+
+**Conséquences** : à la fin de sa T5, la session de `CRM-117` passe l'unité `[P]` et la remet ; la session qui livre fait
+**T6** dans le lot 0106 à 0140 (décision 786) — les deux migrations du manuel, la publication du manuel
+(`scripts/manuel/publier.sh`) et la webapp —, que la session de `CRM-117` décrit au contrat de déploiement pendant T5. La
+règle n'est pas inscrite dans CLAUDE.md : elle s'y ajoute sur instruction du responsable seulement.
+

@@ -1,7 +1,7 @@
 # Spécification — Aperçu des pièces jointes et extraction de texte (`CRM-074`)
 
-*Unité : `CRM-074` (`docs/BACKLOG.md`). Arbitrage : décision 788 du 2026-10-31 (`docs/JOURNAL.md`). Statut : **proposée**,
-soumise au responsable avant le code.*
+*Unité : `CRM-074` (`docs/BACKLOG.md`). Arbitrage : décision 788 du 2026-10-31 (`docs/JOURNAL.md`). Statut : **validée** le
+2026-10-31 (décision 789, §12).*
 
 ## 1. Intention et frontière
 
@@ -125,7 +125,7 @@ se **lisent** ; l'envoi reste exclu.
 - Seule une pièce `available` (`clean`) se rend ; les autres sont refusées en le disant (`attachment_not_available`).
 - La pièce est lue **sous le jeton interne de la personne**, par l'API de stockage : la politique de la migration `0029`
   s'applique telle quelle — aucun accès de service.
-- Borne : **10 Mo** ; au-delà, refus `attachment_too_large`, qui invite à ouvrir la pièce dans le CRM.
+- Borne : **25 Mo** (décision 789) ; au-delà, refus `attachment_too_large`, qui invite à ouvrir la pièce dans le CRM.
 - Tout type de fichier sain se rend, pas seulement ceux de l'aperçu : c'est l'agent qui lit.
 - Aucune famille nouvelle, aucune migration de la matrice ; l'**image `mcp`** est à reconstruire.
 
@@ -170,5 +170,13 @@ d'environnement nouvelle. Les pièces existantes sont extraites après la fenêt
 2. Le texte est borné à **200 000 caractères** ; les bornes de l'extraction (§4.3) sont celles ci-dessus.
 3. Le fil de l'affaire **liste désormais les pièces** de chaque courrier, ce qu'il ne faisait pas.
 4. Le connecteur rend **tout fichier sain jusqu'à 10 Mo**, et ses deux outils de lecture listent les pièces au lieu de
-   les compter.
+   les compter. *(Révisé : 25 Mo, §12.)*
 5. Les pièces déjà reçues sont extraites après la livraison (reprise de l'existant).
+
+## 12. Points validés (décision 789, 2026-10-31)
+
+Le responsable a validé la spécification : (1) le fil de l'affaire **liste les pièces** de chaque courrier, avec « Aperçu »
+et « Télécharger » (« Oui, lister les pièces ») ; (2) le connecteur rend **tout fichier sain jusqu'à 25 Mo** (« Tout
+fichier sain, 25 Mo » — la taille maximale d'une pièce reçue par défaut), et ses deux outils de lecture listent les pièces ;
+(3) les autres points du §11 « validés tels quels » : pièces envoyées et du digest comprises, texte borné à 200 000
+caractères, bornes de l'extraction du §4.3, reprise de l'existant après la livraison, quatre tranches.
